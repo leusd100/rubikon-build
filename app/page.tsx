@@ -21,6 +21,18 @@ const services = [
     text: 'Комплексна реалізація: основа, каркас, огороджувальні конструкції та монтаж.',
     href: '/napryamky#zernoskhovyshcha',
   },
+  {
+    number: '04',
+    title: 'Бетонні роботи',
+    text: 'Фундаменти, промислові підлоги, монолітні ділянки та основи під конструкції й обладнання.',
+    href: '/napryamky#betonni-roboty',
+  },
+  {
+    number: '05',
+    title: 'Фасадні системи',
+    text: 'Монтаж, утеплення та оновлення фасадів з увагою до герметичності й складних примикань.',
+    href: '/napryamky#fasady',
+  },
 ];
 
 const steps = [
@@ -52,12 +64,30 @@ const directions = [
   },
   {
     number: '03',
-    title: 'Комплексні рішення',
-    text: 'Зерносховища, фасади, комплектування та координація суміжних робіт.',
+    title: 'Зерносховища',
+    text: 'Основа, металевий каркас, огороджувальні конструкції та координація монтажу.',
     image: '/media/steel-beams.jpg',
-    alt: 'Склад металевих балок для промислового будівництва',
+    alt: 'Сталеві елементи для аграрної та промислової споруди',
     className: 'compact',
-    href: '/napryamky',
+    href: '/napryamky#zernoskhovyshcha',
+  },
+  {
+    number: '04',
+    title: 'Бетонні роботи',
+    text: 'Фундаменти, основи, промислові підлоги та монолітні елементи під задачу об’єкта.',
+    image: '/media/industrial-yard.jpg',
+    alt: 'Промисловий майданчик із будівельними конструкціями',
+    className: 'concrete',
+    href: '/napryamky#betonni-roboty',
+  },
+  {
+    number: '05',
+    title: 'Фасади та огородження',
+    text: 'Фасадні системи, утеплення, герметизація та влаштування складних примикань.',
+    image: '/images/architectural-sketch.jpg',
+    alt: 'Архітектурний ескіз фасаду сучасної будівлі',
+    className: 'facade',
+    href: '/napryamky#fasady',
   },
 ];
 
@@ -111,9 +141,11 @@ export default function Home() {
       <section className="services section" id="services">
         <span className="ghost-word" aria-hidden="true">STEEL</span>
         <div className="shell">
-          <div className="section-head">
-            <p className="eyebrow"><span /> Ключові напрямки</p>
-            <h2>Що можемо<br />взяти на себе.</h2>
+          <div className="section-head section-head-balanced">
+            <div className="section-heading-copy">
+              <p className="eyebrow"><span /> Ключові напрямки</p>
+              <h2>Що можемо<br />взяти на себе.</h2>
+            </div>
             <p>
               Основна спеціалізація — металоконструкції та промислові споруди. За потреби
               беремо на себе комплекс суміжних робіт.
@@ -205,8 +237,8 @@ export default function Home() {
 
       <section className="process section" id="process">
         <div className="shell">
-          <div className="section-head horizontal">
-            <div>
+          <div className="section-head section-head-balanced">
+            <div className="section-heading-copy">
               <p className="eyebrow"><span /> Як ми працюємо</p>
               <h2>Від першої розмови<br />до здачі об’єкта</h2>
             </div>
