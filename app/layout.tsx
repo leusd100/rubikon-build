@@ -14,9 +14,9 @@ const condensed = IBM_Plex_Sans_Condensed({
   weight: ['400', '500', '600', '700'],
 });
 
-const logo = Jost({
-  variable: '--font-logo',
-  subsets: ['latin'],
+const display = Jost({
+  variable: '--font-display',
+  subsets: ['cyrillic', 'latin'],
   weight: ['400', '500'],
 });
 
@@ -81,7 +81,7 @@ const organizationData = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="uk">
-      <body className={`${manrope.variable} ${condensed.variable} ${logo.variable}`}>
+      <body className={`${manrope.variable} ${condensed.variable} ${display.variable}`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
