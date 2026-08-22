@@ -230,7 +230,7 @@ export default function Home() {
             <div className="promise-visual engineering-plan-visual">
               <Image
                 src="/media/engineering-planning.jpg"
-                alt="Інженери узгоджують креслення безпосередньо на будівельному майданчику"
+                alt="Фахівець опрацьовує архітектурні креслення та технічні плани"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
