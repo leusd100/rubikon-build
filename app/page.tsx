@@ -36,15 +36,43 @@ const steps = [
   ['05', 'Здача об’єкта', 'Перевіряємо результат і відповідаємо за виконану роботу.'],
 ];
 
+const directions = [
+  {
+    number: '01',
+    title: 'Несучі металоконструкції',
+    text: 'Виготовлення та монтаж каркасів, балок, ферм і складних металевих вузлів.',
+    image: '/media/steel-welding.jpg',
+    alt: 'Зварювання великої сталевої балки на виробничому майданчику',
+    className: 'wide',
+  },
+  {
+    number: '02',
+    title: 'Ангари та склади',
+    text: 'Швидкомонтовані споруди для виробництва, логістики, агросектору та зберігання.',
+    image: '/media/industrial-yard.jpg',
+    alt: 'Промисловий складський майданчик зі сталевими конструкціями',
+    className: 'tall',
+  },
+  {
+    number: '03',
+    title: 'Сталь і комплектування',
+    text: 'Продумані конструктивні рішення, підбір матеріалів і контроль кожного етапу.',
+    image: '/media/steel-beams.jpg',
+    alt: 'Склад металевих балок для промислового будівництва',
+    className: 'compact',
+  },
+];
+
 function Brand() {
   return (
-    <span className="brand" aria-label="Рубікон Білд">
+    <span className="brand" aria-label="Rubicon Build">
       <span className="brand-mark" aria-hidden="true">
-        <span>R</span>
+        <span className="brand-r">R</span>
+        <span className="brand-b">B</span>
       </span>
       <span className="brand-name">
-        <b>РУБІКОН</b>
-        <small>БІЛД</small>
+        <b>RUBICON BUILD</b>
+        <small>Steel &amp; construction</small>
       </span>
     </span>
   );
@@ -60,6 +88,7 @@ export default function Home() {
           </a>
           <nav className="desktop-nav" aria-label="Основна навігація">
             <a href="#services">Послуги</a>
+            <a href="#directions">Напрямки</a>
             <a href="#about">Про компанію</a>
             <a href="#process">Як працюємо</a>
           </nav>
@@ -70,52 +99,43 @@ export default function Home() {
       </header>
 
       <section className="hero" id="top">
+        <div className="hero-media" aria-hidden="true">
+          <video autoPlay muted loop playsInline poster="/media/hero-welding.jpg">
+            <source src="/media/hero-welding.mp4" type="video/mp4" />
+          </video>
+        </div>
+        <div className="hero-shade" aria-hidden="true" />
         <div className="hero-grid" aria-hidden="true" />
         <div className="shell hero-layout">
           <div className="hero-copy">
-            <p className="eyebrow"><span /> Родинна будівельна компанія</p>
+            <p className="eyebrow"><span /> Family construction / Ukraine</p>
             <h1>
-              Металоконструкції та ангари — <em>під ключ</em>
+              Металоконструкції<br />та промислові об’єкти<br /><em>під ключ</em>
             </h1>
             <p className="hero-lead">
-              Понад 30 років практичного досвіду в будівництві. Поєднуємо інженерний підхід,
-              відповідальність родини та якість, за яку відповідаємо власним ім’ям.
+              Понад 30 років практичного досвіду. Проєктуємо, виготовляємо та монтуємо —
+              з інженерною точністю і відповідальністю родини за результат.
             </p>
             <div className="hero-actions">
               <a className="button button-primary" href="#contact">
-                Обговорити ваш об’єкт <span aria-hidden="true">↗</span>
+                Обговорити об’єкт <span aria-hidden="true">↗</span>
               </a>
               <a className="text-link" href="#services">
-                Наші напрямки <span aria-hidden="true">↓</span>
+                Дивитися напрямки <span aria-hidden="true">↓</span>
               </a>
             </div>
-            <div className="hero-meta" aria-label="Ключові факти">
-              <div><strong>30+</strong><span>років у будівництві</span></div>
-              <div><strong>2</strong><span>покоління досвіду</span></div>
-              <div><strong>Дніпро</strong><span>та інші регіони</span></div>
-            </div>
           </div>
-
-          <div className="hero-visual">
-            <div className="hero-image-wrap">
-              <Image
-                src="/images/architectural-sketch.jpg"
-                alt="Архітектурний ескіз сучасної будівлі"
-                fill
-                priority
-                sizes="(max-width: 900px) 100vw, 48vw"
-              />
-            </div>
-            <div className="visual-caption">
-              <span>Від металу</span>
-              <strong>до готового об’єкта</strong>
-            </div>
-            <div className="corner-label">R / B</div>
+          <div className="hero-rail" aria-label="Ключові факти">
+            <div><strong>30+</strong><span>років досвіду</span></div>
+            <div><strong>02</strong><span>покоління</span></div>
+            <div><strong>UA</strong><span>географія робіт</span></div>
           </div>
         </div>
+        <div className="hero-signature" aria-hidden="true">RUBICON / BUILD</div>
       </section>
 
       <section className="services section" id="services">
+        <span className="ghost-word" aria-hidden="true">STEEL</span>
         <div className="shell">
           <div className="section-head">
             <p className="eyebrow"><span /> Що ми будуємо</p>
@@ -135,6 +155,43 @@ export default function Home() {
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="directions section" id="directions">
+        <div className="shell">
+          <div className="directions-head">
+            <div>
+              <p className="eyebrow light"><span /> Сфери компетенції</p>
+              <h2>Працюємо там, де потрібні міцність, масштаб і відповідальність.</h2>
+            </div>
+            <p>
+              Поєднуємо практику будівельного майданчика з сучасним інженерним підходом —
+              від окремого металевого вузла до готової промислової споруди.
+            </p>
+          </div>
+          <div className="direction-grid">
+            {directions.map((direction) => (
+              <article className={`direction-card ${direction.className}`} key={direction.number}>
+                <Image
+                  src={direction.image}
+                  alt={direction.alt}
+                  fill
+                  sizes={direction.className === 'wide' ? '(max-width: 800px) 100vw, 65vw' : '(max-width: 800px) 100vw, 35vw'}
+                />
+                <div className="direction-shade" />
+                <span className="direction-number">{direction.number}</span>
+                <div className="direction-copy">
+                  <h3>{direction.title}</h3>
+                  <p>{direction.text}</p>
+                </div>
+                <span className="direction-arrow" aria-hidden="true">↗</span>
+              </article>
+            ))}
+          </div>
+          <p className="media-note">
+            Візуальні матеріали ілюструють напрямки робіт. Портфоліо реалізованих об’єктів готується.
+          </p>
         </div>
       </section>
 
@@ -255,7 +312,7 @@ export default function Home() {
         <div className="shell footer-grid">
           <Brand />
           <p>Металоконструкції та промислове будівництво</p>
-          <span>© {new Date().getFullYear()} Рубікон Білд</span>
+          <span>© {new Date().getFullYear()} RUBICON BUILD</span>
         </div>
       </footer>
     </main>

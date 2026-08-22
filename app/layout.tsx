@@ -14,11 +14,11 @@ const oswald = Oswald({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://rubicon-build.bronze-spoon-6603.chatgpt.site'),
-  title: 'Рубікон Білд — металоконструкції та ангари під ключ',
+  title: 'RUBICON BUILD — металоконструкції та ангари під ключ',
   description:
     'Родинна будівельна компанія з понад 30-річним досвідом. Металоконструкції, ангари, зерносховища та фасадні роботи у Дніпропетровській області й інших регіонах України.',
   openGraph: {
-    title: 'Рубікон Білд — будуємо з відповідальністю родини',
+    title: 'RUBICON BUILD — будуємо з відповідальністю родини',
     description: 'Металоконструкції, ангари та промислові об’єкти під ключ.',
     type: 'website',
     locale: 'uk_UA',
@@ -27,13 +27,13 @@ export const metadata: Metadata = {
         url: '/og.png',
         width: 1730,
         height: 909,
-        alt: 'Рубікон Білд — металоконструкції та ангари під ключ',
+        alt: 'RUBICON BUILD — металоконструкції та ангари під ключ',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Рубікон Білд',
+    title: 'RUBICON BUILD',
     description: 'Металоконструкції, ангари та промислові об’єкти під ключ.',
     images: ['/og.png'],
   },
