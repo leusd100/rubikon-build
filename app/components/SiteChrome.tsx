@@ -1,5 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { CalendarClock, Factory, MapPin, Ruler } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export function Brand() {
   return (
@@ -81,11 +83,11 @@ export function Breadcrumbs({ items }: { items: Array<{ label: string; href: str
 }
 
 export function EstimateBrief() {
-  const items = [
-    ['01', 'Призначення', 'Що планується всередині: виробництво, склад, техніка, зерно або інша задача.'],
-    ['02', 'Орієнтовні розміри', 'Довжина, ширина, висота та необхідні прольоти — навіть якщо дані поки попередні.'],
-    ['03', 'Місце будівництва', 'Місто або область, стан майданчика та наявність під’їзду для техніки.'],
-    ['04', 'Бажані строки', 'Коли плануєте почати роботи та коли об’єкт має бути готовим до використання.'],
+  const items: Array<[string, string, string, LucideIcon]> = [
+    ['01', 'Призначення', 'Що планується всередині: виробництво, склад, техніка, зерно або інша задача.', Factory],
+    ['02', 'Орієнтовні розміри', 'Довжина, ширина, висота та необхідні прольоти — навіть якщо дані поки попередні.', Ruler],
+    ['03', 'Місце будівництва', 'Місто або область, стан майданчика та наявність під’їзду для техніки.', MapPin],
+    ['04', 'Бажані строки', 'Коли плануєте почати роботи та коли об’єкт має бути готовим до використання.', CalendarClock],
   ];
 
   return (
@@ -99,8 +101,13 @@ export function EstimateBrief() {
           <p>Не обов’язково мати готовий проєкт. Надішліть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку.</p>
         </div>
         <div className="brief-grid">
-          {items.map(([number, title, text]) => (
-            <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>
+          {items.map(([number, title, text, Icon]) => (
+            <article key={number}>
+              <span>{number}</span>
+              <Icon className="brief-icon" aria-hidden="true" />
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
           ))}
         </div>
         <Link className="section-link" href="/#contact">Підготувати запит <span aria-hidden="true">↗</span></Link>

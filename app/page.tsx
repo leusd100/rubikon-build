@@ -1,5 +1,22 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import {
+  BadgeCheck,
+  ClipboardList,
+  DraftingCompass,
+  Handshake,
+  HardHat,
+  Layers3,
+  Mail,
+  MessagesSquare,
+  PanelsTopLeft,
+  Phone,
+  Ruler,
+  Send,
+  Warehouse,
+  Wheat,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { EstimateBrief, TeamSection } from './components/SiteChrome';
 
 const services = [
@@ -8,39 +25,44 @@ const services = [
     title: 'Металоконструкції',
     text: 'Проєктування, виготовлення та монтаж каркасів, ферм, балок і складних металевих вузлів.',
     href: '/metalokonstruktsii',
+    icon: DraftingCompass,
   },
   {
     number: '02',
     title: 'Ангари та склади',
     text: 'Швидкомонтовані споруди для виробництва, логістики, агросектору й комерційних задач.',
     href: '/angary',
+    icon: Warehouse,
   },
   {
     number: '03',
     title: 'Зерносховища під ключ',
     text: 'Комплексна реалізація: основа, каркас, огороджувальні конструкції та монтаж.',
     href: '/napryamky#zernoskhovyshcha',
+    icon: Wheat,
   },
   {
     number: '04',
     title: 'Бетонні роботи',
     text: 'Фундаменти, промислові підлоги, монолітні ділянки та основи під конструкції й обладнання.',
     href: '/napryamky#betonni-roboty',
+    icon: Layers3,
   },
   {
     number: '05',
     title: 'Фасадні системи',
     text: 'Монтаж, утеплення та оновлення фасадів з увагою до герметичності й складних примикань.',
     href: '/napryamky#fasady',
+    icon: PanelsTopLeft,
   },
 ];
 
-const steps = [
-  ['01', 'Знайомство', 'Уточнюємо задачу, тип об’єкта, умови та бажаний результат.'],
-  ['02', 'Виїзд і заміри', 'Оглядаємо майданчик, фіксуємо обсяги та технічні особливості.'],
-  ['03', 'Рішення та кошторис', 'Готуємо пропозицію з переліком робіт, строками й бюджетом.'],
-  ['04', 'Виготовлення і монтаж', 'Організовуємо процес та контролюємо якість ключових етапів.'],
-  ['05', 'Перевірка і здача', 'Разом перевіряємо результат і закриваємо виконані роботи.'],
+const steps: Array<[string, string, string, LucideIcon]> = [
+  ['01', 'Знайомство', 'Уточнюємо задачу, тип об’єкта, умови та бажаний результат.', Handshake],
+  ['02', 'Виїзд і заміри', 'Оглядаємо майданчик, фіксуємо обсяги та технічні особливості.', Ruler],
+  ['03', 'Рішення та кошторис', 'Готуємо пропозицію з переліком робіт, строками й бюджетом.', ClipboardList],
+  ['04', 'Виготовлення і монтаж', 'Організовуємо процес та контролюємо якість ключових етапів.', HardHat],
+  ['05', 'Перевірка і здача', 'Разом перевіряємо результат і закриваємо виконані роботи.', BadgeCheck],
 ];
 
 const directions = [
@@ -152,14 +174,18 @@ export default function Home() {
             </p>
           </div>
           <div className="service-list">
-            {services.map((service) => (
-              <Link className="service-card" href={service.href} key={service.number}>
-                <span className="service-number">{service.number}</span>
-                <h3>{service.title}</h3>
-                <p>{service.text}</p>
-                <span className="service-arrow" aria-hidden="true">↗</span>
-              </Link>
-            ))}
+            {services.map((service) => {
+              const Icon = service.icon;
+              return (
+                <Link className="service-card" href={service.href} key={service.number}>
+                  <span className="service-number">{service.number}</span>
+                  <Icon className="service-icon" aria-hidden="true" />
+                  <h3>{service.title}</h3>
+                  <p>{service.text}</p>
+                  <span className="service-arrow" aria-hidden="true">↗</span>
+                </Link>
+              );
+            })}
           </div>
           <Link className="section-link" href="/napryamky">Усі напрямки робіт <span aria-hidden="true">↗</span></Link>
         </div>
@@ -245,9 +271,10 @@ export default function Home() {
             <p>Кожен проєкт має власні умови. Незмінними залишаються порядок, прозора комунікація та контроль результату.</p>
           </div>
           <ol className="steps">
-            {steps.map(([number, title, text]) => (
+            {steps.map(([number, title, text, Icon]) => (
               <li key={number}>
                 <span>{number}</span>
+                <Icon className="step-icon" aria-hidden="true" />
                 <h3>{title}</h3>
                 <p>{text}</p>
               </li>
@@ -282,10 +309,10 @@ export default function Home() {
               Уточнимо вихідні дані та пояснимо, що потрібно для попередньої оцінки.
             </p>
             <div className="contact-links" id="contact-note">
-              <span className="pending-contact">Телефон <i>буде додано</i></span>
-              <span className="pending-contact">Email <i>буде додано</i></span>
-              <span className="pending-contact">Telegram <i>буде додано</i></span>
-              <span className="pending-contact">WhatsApp / Viber <i>буде додано</i></span>
+              <span className="pending-contact"><b><Phone aria-hidden="true" />Телефон</b><i>буде додано</i></span>
+              <span className="pending-contact"><b><Mail aria-hidden="true" />Email</b><i>буде додано</i></span>
+              <span className="pending-contact"><b><Send aria-hidden="true" />Telegram</b><i>буде додано</i></span>
+              <span className="pending-contact"><b><MessagesSquare aria-hidden="true" />WhatsApp / Viber</b><i>буде додано</i></span>
             </div>
           </div>
         </div>
