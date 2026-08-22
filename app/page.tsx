@@ -253,7 +253,7 @@ export default function Home() {
           <article className="story-row story-row-reverse">
             <div className="promise-copy">
               <p className="eyebrow light"><span /> Як працюємо</p>
-              <h2>Практика майданчика та системний контроль</h2>
+              <h2 className="workflow-heading"><span>Практика майданчика</span><span>та системний контроль</span></h2>
               <div className="principles">
                 <div><b>01</b><span><strong>Рішення до початку робіт</strong>Уточнюємо вихідні дані, конструктив і склад відповідальності.</span></div>
                 <div><b>02</b><span><strong>Контроль ключових етапів</strong>Особисто стежимо за тим, що визначає міцність і довговічність.</span></div>

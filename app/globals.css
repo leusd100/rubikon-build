@@ -28,6 +28,27 @@ img { display: block; }
 .section { padding: 120px 0; }
 section[id] { scroll-margin-top: 98px; }
 
+:where(
+  .hero-lead,
+  .section-head > p:last-child,
+  .directions-head > p,
+  .promise-lead,
+  .story-support,
+  .contact-panel > p,
+  .service-subhero-content > p:last-child,
+  .subhero-side > p,
+  .split-heading > p,
+  .copy-column > p:not(.eyebrow),
+  .faq-list p,
+  .page-cta-grid > div:last-child > p,
+  .logo-lab-intro > .shell > p:last-child,
+  .logo-option-copy p
+) {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
 .site-header {
   position: fixed;
   top: 0;
@@ -177,6 +198,8 @@ section[id] { scroll-margin-top: 98px; }
 .image-note { position: absolute; z-index: 2; right: 0; bottom: 0; width: 245px; padding: 22px; color: white; background: var(--accent); font-size: 11px; font-weight: 800; line-height: 1.45; letter-spacing: .04em; text-transform: uppercase; }
 .promise-copy .eyebrow.light { color: var(--muted); }
 .promise-copy h2 { max-width: 780px; }
+.promise-copy .workflow-heading { font-size: clamp(46px, 4.25vw, 60px); }
+.workflow-heading span { display: block; white-space: nowrap; }
 .promise-lead { margin: 32px 0 42px; color: #59615c; font-size: 16px; line-height: 1.8; }
 .story-support { margin: -18px 0 0; color: #68716b; font-size: 14px; line-height: 1.8; }
 .principles { border-top: 1px solid rgba(21,24,22,.16); }
@@ -456,6 +479,7 @@ footer .brand-name small { color: #8e9690; }
   .section-head-balanced > p:last-child { max-width: 560px; padding-bottom: 0; font-size: 16px; }
   .section-heading-copy .eyebrow { margin-bottom: 22px; }
   .section-head h2, .promise-copy h2 { font-size: 44px; }
+  .promise-copy .workflow-heading { font-size: clamp(34px, 9vw, 44px); }
   .team-heading-title > em { font-size: 1.12em; }
   .section-head-balanced, .directions-head, .split-heading { padding-bottom: 28px; }
   .section-head-balanced > p:last-child, .directions-head > p, .split-heading > p { padding-left: 20px; }
@@ -527,6 +551,7 @@ footer .brand-name small { color: #8e9690; }
 }
 
 @media (max-width: 600px) {
+  .workflow-heading span { white-space: normal; }
   .person-card { grid-template-columns: 1fr; }
   .person-photo { width: 100%; aspect-ratio: 3 / 4; }
   .person-info { padding: 30px 26px 32px; }
