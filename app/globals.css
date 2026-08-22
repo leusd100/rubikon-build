@@ -470,7 +470,7 @@ footer .brand-name small { color: #8e9690; }
   .steps { grid-template-columns: 1fr; }
   .steps li { min-height: 210px; }
   .steps h3 { margin-top: 24px; }
-  .contact h2 { font-size: 58px; }
+  .contact h2 { max-width: 620px; font-size: clamp(42px, 11vw, 46px); line-height: 1.03; }
   .subhero, .service-subhero { min-height: 660px; }
   .subhero-layout { grid-template-columns: 1fr; gap: 42px; padding-top: 148px; padding-bottom: 56px; }
   .breadcrumb { margin-bottom: 34px; }
