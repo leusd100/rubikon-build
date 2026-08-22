@@ -144,10 +144,13 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="hero-rail" aria-label="Ключові факти">
-            <div><strong>30+</strong><span>років досвіду керівника</span></div>
-            <div><strong>02</strong><span>покоління</span></div>
-            <div><strong>DN</strong><span>основний регіон — Дніпро</span></div>
+          <div className="hero-cycle" aria-label="Повний цикл робіт">
+            <p>Повний цикл робіт</p>
+            <ol>
+              <li><b>01</b><span>Інженерне рішення</span></li>
+              <li><b>02</b><span>Виготовлення</span></li>
+              <li><b>03</b><span>Монтаж на об’єкті</span></li>
+            </ol>
           </div>
         </div>
         <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>
