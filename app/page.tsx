@@ -307,18 +307,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="region section">
-        <div className="shell region-card">
-          <div className="region-mark" aria-hidden="true">UA</div>
-          <div>
-            <p className="eyebrow light"><span /> Географія робіт</p>
-            <h2>Дніпро та область — наша основна територія.</h2>
-            <p>Для масштабних промислових, складських та аграрних об’єктів працюємо також в інших регіонах України.</p>
-          </div>
-          <Link className="round-link" href="#contact" aria-label="Обговорити об’єкт в іншому регіоні">↗</Link>
-        </div>
-      </section>
-
       <EstimateBrief />
 
       <section className="contact section" id="contact">
