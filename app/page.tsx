@@ -1,39 +1,40 @@
 import Image from 'next/image';
+import BeforeAfter from './BeforeAfter';
 
 const services = [
   {
     number: '01',
     title: 'Металоконструкції',
-    text: 'Від інженерного рішення до виготовлення та монтажу несучих металевих конструкцій.',
+    text: 'Проєктування, виготовлення та монтаж каркасів, ферм, балок і складних металевих вузлів.',
   },
   {
     number: '02',
     title: 'Ангари та склади',
-    text: 'Будівництво швидкомонтованих промислових, складських і комерційних споруд.',
+    text: 'Швидкомонтовані споруди для виробництва, логістики, агросектору й комерційних задач.',
   },
   {
     number: '03',
     title: 'Зерносховища під ключ',
-    text: 'Комплексна реалізація об’єкта: основи, каркас, огороджувальні конструкції та монтаж.',
+    text: 'Комплексна реалізація: підготовка основи, каркас, огороджувальні конструкції та монтаж.',
   },
   {
     number: '04',
     title: 'Фасадні роботи',
-    text: 'Монтаж, утеплення та оновлення фасадів із увагою до довговічності кожного вузла.',
+    text: 'Монтаж, утеплення й оновлення фасадів із контролем герметичності та довговічності вузлів.',
   },
   {
     number: '05',
     title: 'Комплексне будівництво',
-    text: 'Беремо на себе суміжні будівельні роботи та координуємо процес до готового результату.',
+    text: 'Координуємо суміжні будівельні роботи та ведемо об’єкт від першого рішення до здачі.',
   },
 ];
 
 const steps = [
-  ['01', 'Знайомство', 'Обговорюємо задачу, умови та очікуваний результат.'],
-  ['02', 'Виїзд і оцінка', 'Оглядаємо об’єкт, уточнюємо обсяги й технічні деталі.'],
-  ['03', 'Рішення та кошторис', 'Формуємо зрозумілий план робіт, строки й бюджет.'],
-  ['04', 'Реалізація', 'Організовуємо роботи та контролюємо якість на кожному етапі.'],
-  ['05', 'Здача об’єкта', 'Перевіряємо результат і відповідаємо за виконану роботу.'],
+  ['01', 'Знайомство', 'Уточнюємо задачу, тип об’єкта, умови та бажаний результат.'],
+  ['02', 'Виїзд і заміри', 'Оглядаємо майданчик, фіксуємо обсяги та технічні особливості.'],
+  ['03', 'Рішення та кошторис', 'Готуємо пропозицію з переліком робіт, строками й бюджетом.'],
+  ['04', 'Виготовлення і монтаж', 'Організовуємо процес та контролюємо якість ключових етапів.'],
+  ['05', 'Перевірка і здача', 'Разом перевіряємо результат і закриваємо виконані роботи.'],
 ];
 
 const directions = [
@@ -89,19 +90,20 @@ export default function Home() {
           <nav className="desktop-nav" aria-label="Основна навігація">
             <a href="#services">Послуги</a>
             <a href="#directions">Напрямки</a>
+            <a href="#result">До / після</a>
             <a href="#about">Про компанію</a>
             <a href="#process">Як працюємо</a>
           </nav>
           <a className="header-cta" href="#contact">
-            Обговорити проєкт <span aria-hidden="true">↗</span>
+            Отримати оцінку <span aria-hidden="true">↗</span>
           </a>
         </div>
       </header>
 
       <section className="hero" id="top">
         <div className="hero-media" aria-hidden="true">
-          <video autoPlay muted loop playsInline poster="/media/hero-welding.jpg">
-            <source src="/media/hero-welding.mp4" type="video/mp4" />
+          <video autoPlay muted loop playsInline preload="metadata" poster="/media/hero-welding.jpg">
+            <source src="/media/hero-welding.mp4" type="video/mp4" media="(min-width: 761px)" />
           </video>
         </div>
         <div className="hero-shade" aria-hidden="true" />
@@ -110,15 +112,15 @@ export default function Home() {
           <div className="hero-copy">
             <p className="eyebrow"><span /> Family construction / Ukraine</p>
             <h1>
-              Металоконструкції<br />та промислові об’єкти<br /><em>під ключ</em>
+              Металоконструкції, ангари<br />та промислові об’єкти<br /><em>під ключ</em>
             </h1>
             <p className="hero-lead">
-              Понад 30 років практичного досвіду. Проєктуємо, виготовляємо та монтуємо —
-              з інженерною точністю і відповідальністю родини за результат.
+              Проєктуємо, виготовляємо та монтуємо у Дніпрі й Дніпропетровській області.
+              Для масштабних промислових та аграрних об’єктів працюємо по Україні.
             </p>
             <div className="hero-actions">
               <a className="button button-primary" href="#contact">
-                Обговорити об’єкт <span aria-hidden="true">↗</span>
+                Отримати попередню оцінку <span aria-hidden="true">↗</span>
               </a>
               <a className="text-link" href="#services">
                 Дивитися напрямки <span aria-hidden="true">↓</span>
@@ -195,6 +197,22 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="transformation section" id="result">
+        <div className="shell">
+          <div className="transformation-head">
+            <div>
+              <p className="eyebrow"><span /> Результат у деталях</p>
+              <h2>Від робочого процесу — до готового простору.</h2>
+            </div>
+            <p>
+              Будівництво має цінність лише тоді, коли ним зручно користуватися. Порівняйте стан
+              приміщення під час робіт і після завершення оздоблення.
+            </p>
+          </div>
+          <BeforeAfter />
+        </div>
+      </section>
+
       <section className="promise section" id="about">
         <div className="shell promise-grid">
           <div className="promise-visual">
@@ -210,9 +228,9 @@ export default function Home() {
             <p className="eyebrow light"><span /> Наша основа</p>
             <h2>Репутація будується довше, ніж будь-який об’єкт.</h2>
             <p className="promise-lead">
-              «Рубікон Білд» об’єднує більш ніж 30-річний практичний досвід батька та сучасну
-              інженерну освіту сина. Це родинна справа, тому якість для нас — не рекламна
-              обіцянка, а особиста відповідальність.
+              RUBICON BUILD об’єднує понад 30 років практичного досвіду Сергія Івановича
+              та сучасну інженерну освіту Дмитра Сергійовича. Ми особисто контролюємо ключові
+              етапи й відповідаємо за результат власним ім’ям.
             </p>
             <div className="principles">
               <div><b>01</b><span><strong>Якість у деталях</strong>Працюємо так, щоб не повертатися до переробок.</span></div>
@@ -233,22 +251,22 @@ export default function Home() {
           <div className="team-grid">
             <article className="person-card">
               <div className="person-photo">
-                <Image src="/images/founder.png" alt="Засновник родинної будівельної справи" fill sizes="(max-width: 700px) 100vw, 40vw" />
+                <Image src="/images/founder.png" alt="Леус Сергій Іванович — засновник будівельного напрямку RUBICON BUILD" fill sizes="(max-width: 700px) 100vw, 40vw" />
               </div>
               <div className="person-info">
-                <span>Засновник практичного досвіду</span>
-                <h3>Понад 30 років у будівництві</h3>
-                <p>Глибоке знання процесів, організація робіт і вимогливість до якості на майданчику.</p>
+                <span>Засновник / керівник будівельного напрямку</span>
+                <h3>Леус Сергій Іванович</h3>
+                <p>Понад 30 років практичного досвіду, організація робіт і особистий контроль якості на майданчику.</p>
               </div>
             </article>
-            <article className="person-card offset">
+            <article className="person-card">
               <div className="person-photo">
-                <Image src="/images/next-generation.png" alt="Представник нового покоління Рубікон Білд" fill sizes="(max-width: 700px) 100vw, 40vw" />
+                <Image src="/images/next-generation.png" alt="Леус Дмитро Сергійович — інженер RUBICON BUILD" fill sizes="(max-width: 700px) 100vw, 40vw" />
               </div>
               <div className="person-info">
-                <span>Нове покоління</span>
-                <h3>Інженерний підхід і розвиток</h3>
-                <p>Освіта у сфері цивільного та промислового будівництва, сучасна комунікація й системність.</p>
+                <span>Інженер / розвиток компанії</span>
+                <h3>Леус Дмитро Сергійович</h3>
+                <p>Фахова освіта у сфері цивільного та промислового будівництва, сучасна комунікація й системний підхід.</p>
               </div>
             </article>
           </div>
@@ -281,8 +299,8 @@ export default function Home() {
           <div className="region-mark" aria-hidden="true">UA</div>
           <div>
             <p className="eyebrow light"><span /> Географія робіт</p>
-            <h2>Дніпропетровська область — наша основна територія.</h2>
-            <p>Для справді цікавих і масштабних об’єктів готові працювати в інших регіонах України.</p>
+            <h2>Дніпро та Дніпропетровська область — наша основна територія.</h2>
+            <p>Для масштабних промислових, складських та аграрних об’єктів працюємо також в інших регіонах України.</p>
           </div>
           <a className="round-link" href="#contact" aria-label="Обговорити об’єкт в іншому регіоні">↗</a>
         </div>
@@ -292,11 +310,12 @@ export default function Home() {
         <div className="shell contact-grid">
           <div>
             <p className="eyebrow light"><span /> Почнемо з розмови</p>
-            <h2>Є об’єкт?<br />Давайте обговоримо.</h2>
+            <h2>Потрібна оцінка?<br />Обговорімо об’єкт.</h2>
           </div>
           <div className="contact-panel">
             <p>
-              Розкажіть коротко про задачу — відповімо на запитання та домовимося про наступний крок.
+              Опишіть тип об’єкта, орієнтовні розміри та бажані строки. Уточнимо задачу,
+              відповімо на запитання й запропонуємо наступний крок.
             </p>
             <div className="contact-links" id="contact-note">
               <span className="pending-contact">Телефон <i>буде додано</i></span>
