@@ -118,8 +118,8 @@ export default function Home() {
     <main>
       <section className="hero" id="top">
         <div className="hero-media" aria-hidden="true">
-          <video autoPlay muted loop playsInline preload="metadata" poster="/media/hero-welding.jpg">
-            <source src="/media/hero-welding.mp4" type="video/mp4" media="(min-width: 761px)" />
+          <video autoPlay muted loop playsInline preload="metadata" poster="/media/hero-steel-frame.jpg">
+            <source src="/media/hero-steel-frame.mp4" type="video/mp4" media="(min-width: 761px)" />
           </video>
         </div>
         <div className="hero-shade" aria-hidden="true" />
