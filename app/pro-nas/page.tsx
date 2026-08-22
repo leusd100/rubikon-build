@@ -5,14 +5,14 @@ import { Breadcrumbs, PageCta, TeamSection } from '../components/SiteChrome';
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
 export const metadata: Metadata = {
-  title: 'Про родинну будівельну компанію | RUBICON BUILD',
-  description: 'RUBICON BUILD — родинна будівельна компанія з Дніпра. Понад 30 років практичного досвіду та інженерний підхід нового покоління.',
+  title: 'Про родинну будівельну компанію | RUBIKON BUILD',
+  description: 'RUBIKON BUILD — родинна будівельна компанія з Дніпра. Понад 30 років практичного досвіду та інженерний підхід нового покоління.',
   alternates: { canonical: '/pro-nas' },
   openGraph: {
-    title: 'Про RUBICON BUILD — досвід двох поколінь',
+    title: 'Про RUBIKON BUILD — досвід двох поколінь',
     description: 'Родинна відповідальність, 30+ років практики та сучасний інженерний підхід.',
     url: '/pro-nas',
-    images: [{ url: `${liveUrl}/images/concept-sketch.jpg`, alt: 'RUBICON BUILD — про родинну будівельну компанію' }],
+    images: [{ url: `${liveUrl}/images/concept-sketch.jpg`, alt: 'RUBIKON BUILD — про родинну будівельну компанію' }],
   },
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/images/concept-sketch.jpg`] },
 };
@@ -29,7 +29,7 @@ export default function AboutPage() {
             <h1>Репутація,<br />за якою стоять<br /><em>наші імена.</em></h1>
           </div>
           <div className="subhero-side">
-            <p>RUBICON BUILD об’єднує досвід батька, інженерну освіту сина та спільну відповідальність за кожне рішення на об’єкті.</p>
+            <p>RUBIKON BUILD об’єднує досвід батька, інженерну освіту сина та спільну відповідальність за кожне рішення на об’єкті.</p>
             <div className="subhero-stats">
               <div><strong>30+</strong><span>років практики</span></div>
               <div><strong>02</strong><span>покоління</span></div>
@@ -47,7 +47,7 @@ export default function AboutPage() {
             <p className="eyebrow"><span /> Як усе почалося</p>
             <h2>Досвід, який став основою спільної компанії.</h2>
             <p className="lead-copy">Леус Сергій Іванович працює у будівельному напрямку понад 30 років. За цей час сформувався головний принцип: якість видно не лише після здачі, а в кожному прихованому вузлі.</p>
-            <p>Леус Дмитро Сергійович здобув освіту за напрямом цивільного та промислового будівництва. Ідея RUBICON BUILD — поєднати практику майданчика з проєктним мисленням, системною комунікацією та розвитком сучасної будівельної компанії.</p>
+            <p>Леус Дмитро Сергійович здобув освіту за напрямом цивільного та промислового будівництва. Ідея RUBIKON BUILD — поєднати практику майданчика з проєктним мисленням, системною комунікацією та розвитком сучасної будівельної компанії.</p>
             <p>Ключові технічні й організаційні рішення приймаємо особисто. Під конкретний об’єкт формуємо необхідний склад фахівців, контролюємо відповідальні етапи та відповідаємо за домовленості власним ім’ям.</p>
           </div>
         </div>

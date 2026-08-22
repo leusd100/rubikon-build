@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Sans_Condensed, Manrope } from 'next/font/google';
+import { IBM_Plex_Sans_Condensed, Jost, Manrope } from 'next/font/google';
 import './globals.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 
@@ -14,34 +14,40 @@ const condensed = IBM_Plex_Sans_Condensed({
   weight: ['400', '500', '600', '700'],
 });
 
+const logo = Jost({
+  variable: '--font-logo',
+  subsets: ['latin'],
+  weight: ['400', '500'],
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://rubicon-build.bronze-spoon-6603.chatgpt.site'),
-  title: 'Металоконструкції та будівництво ангарів у Дніпрі | RUBICON BUILD',
+  title: 'Металоконструкції та будівництво ангарів у Дніпрі | RUBIKON BUILD',
   description:
     'Виготовлення та монтаж металоконструкцій, будівництво ангарів, складів і зерносховищ під ключ у Дніпрі та області. Понад 30 років практичного досвіду.',
   alternates: {
     canonical: '/',
   },
-  creator: 'RUBICON BUILD',
+  creator: 'RUBIKON BUILD',
   openGraph: {
-    title: 'Металоконструкції та ангари під ключ | RUBICON BUILD',
+    title: 'Металоконструкції та ангари під ключ | RUBIKON BUILD',
     description: 'Родинна будівельна компанія у Дніпрі. Понад 30 років практичного досвіду.',
     type: 'website',
     locale: 'uk_UA',
-    siteName: 'RUBICON BUILD',
+    siteName: 'RUBIKON BUILD',
     url: '/',
     images: [
       {
         url: '/og.png',
         width: 1730,
         height: 909,
-        alt: 'RUBICON BUILD — металоконструкції та ангари під ключ',
+        alt: 'RUBIKON BUILD — металоконструкції та ангари під ключ',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Металоконструкції та ангари під ключ | RUBICON BUILD',
+    title: 'Металоконструкції та ангари під ключ | RUBIKON BUILD',
     description: 'Родинна будівельна компанія у Дніпрі. Понад 30 років практичного досвіду.',
     images: ['/og.png'],
   },
@@ -50,7 +56,7 @@ export const metadata: Metadata = {
 const organizationData = {
   '@context': 'https://schema.org',
   '@type': 'GeneralContractor',
-  name: 'RUBICON BUILD',
+  name: 'RUBIKON BUILD',
   alternateName: 'Рубікон Білд',
   url: 'https://rubicon-build.bronze-spoon-6603.chatgpt.site',
   description:
@@ -75,7 +81,7 @@ const organizationData = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="uk">
-      <body className={`${manrope.variable} ${condensed.variable}`}>
+      <body className={`${manrope.variable} ${condensed.variable} ${logo.variable}`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}

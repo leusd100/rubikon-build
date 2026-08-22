@@ -3,16 +3,11 @@ import Link from 'next/link';
 
 export function Brand() {
   return (
-    <span className="brand" aria-label="RUBICON BUILD">
-      <span className="brand-mark" aria-hidden="true">
-        <span className="brand-pillar pillar-left" />
-        <span className="brand-pillar pillar-right" />
-        <span className="brand-crossing" />
-        <span className="brand-deck" />
-      </span>
+    <span className="brand" aria-label="RUBIKON BUILD — Construction and Engineering">
+      <span className="brand-slash" aria-hidden="true" />
       <span className="brand-name">
-        <b><span>RUBICON</span> <em>BUILD</em></b>
-        <small>Family steel construction</small>
+        <b><span>RUBIKON</span> <em>BUILD</em></b>
+        <small>Construction &amp; Engineering</small>
       </span>
     </span>
   );
@@ -22,7 +17,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell nav-wrap">
-        <Link className="brand-link" href="/#top" aria-label="RUBICON BUILD — на головну">
+        <Link className="brand-link" href="/#top" aria-label="RUBIKON BUILD — на головну">
           <Brand />
         </Link>
         <nav className="desktop-nav" aria-label="Основна навігація">
@@ -43,7 +38,7 @@ export function SiteFooter() {
   return (
     <footer>
       <div className="shell footer-grid">
-        <Link className="brand-link" href="/#top" aria-label="RUBICON BUILD — на головну">
+        <Link className="brand-link" href="/#top" aria-label="RUBIKON BUILD — на головну">
           <Brand />
         </Link>
         <nav className="footer-nav" aria-label="Навігація у підвалі">
@@ -51,7 +46,7 @@ export function SiteFooter() {
           <Link href="/pro-nas">Про нас</Link>
           <Link href="/#contact">Контакти</Link>
         </nav>
-        <span>© {new Date().getFullYear()} RUBICON BUILD</span>
+        <span>© {new Date().getFullYear()} RUBIKON BUILD</span>
       </div>
     </footer>
   );
@@ -125,7 +120,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
         <div className="team-grid">
           <article className="person-card">
             <div className="person-photo">
-              <Image src="/images/founder.png" alt="Леус Сергій Іванович — засновник будівельного напрямку RUBICON BUILD" fill sizes="(max-width: 700px) 100vw, 40vw" />
+              <Image src="/images/founder.png" alt="Леус Сергій Іванович — засновник будівельного напрямку RUBIKON BUILD" fill sizes="(max-width: 700px) 100vw, 40vw" />
             </div>
             <div className="person-info">
               <span>Засновник / керівник будівельного напрямку</span>
@@ -135,7 +130,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
           </article>
           <article className="person-card">
             <div className="person-photo">
-              <Image src="/images/next-generation.png" alt="Леус Дмитро Сергійович — інженер RUBICON BUILD" fill sizes="(max-width: 700px) 100vw, 40vw" />
+              <Image src="/images/next-generation.png" alt="Леус Дмитро Сергійович — інженер RUBIKON BUILD" fill sizes="(max-width: 700px) 100vw, 40vw" />
             </div>
             <div className="person-info">
               <span>Інженер / розвиток компанії</span>

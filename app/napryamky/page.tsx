@@ -6,14 +6,14 @@ import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
 export const metadata: Metadata = {
-  title: 'Напрямки будівництва у Дніпрі та області | RUBICON BUILD',
+  title: 'Напрямки будівництва у Дніпрі та області | RUBIKON BUILD',
   description: 'Металоконструкції, ангари, склади, зерносховища, бетонні та фасадні роботи, комплексне промислове будівництво у Дніпрі й області.',
   alternates: { canonical: '/napryamky' },
   openGraph: {
-    title: 'Напрямки робіт RUBICON BUILD',
+    title: 'Напрямки робіт RUBIKON BUILD',
     description: 'Від металевого вузла до готової промислової споруди.',
     url: '/napryamky',
-    images: [{ url: `${liveUrl}/media/industrial-yard.jpg`, alt: 'Промислове будівництво RUBICON BUILD' }],
+    images: [{ url: `${liveUrl}/media/industrial-yard.jpg`, alt: 'Промислове будівництво RUBIKON BUILD' }],
   },
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/industrial-yard.jpg`] },
 };

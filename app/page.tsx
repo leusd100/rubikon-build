@@ -127,10 +127,10 @@ export default function Home() {
             <div><strong>DN</strong><span>основний регіон — Дніпро</span></div>
           </div>
         </div>
-        <div className="hero-signature" aria-hidden="true">RUBICON / BUILD</div>
+        <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>
       </section>
 
-      <section className="manifesto" aria-label="Принципи RUBICON BUILD">
+      <section className="manifesto" aria-label="Принципи RUBIKON BUILD">
         <div className="shell manifesto-grid">
           <span>01</span><strong>Досвід.</strong>
           <span>02</span><strong>Інженерія.</strong>
@@ -217,7 +217,7 @@ export default function Home() {
             <p className="eyebrow light"><span /> Наша основа</p>
             <h2>За кожен об’єкт відповідаємо власним ім’ям.</h2>
             <p className="promise-lead">
-              RUBICON BUILD об’єднує понад 30 років практичного досвіду Сергія Івановича
+              RUBIKON BUILD об’єднує понад 30 років практичного досвіду Сергія Івановича
               та сучасну інженерну освіту Дмитра Сергійовича. Ми особисто контролюємо ключові
               етапи й відповідаємо за результат власним ім’ям.
             </p>

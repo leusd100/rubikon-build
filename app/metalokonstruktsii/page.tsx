@@ -5,14 +5,14 @@ import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
 export const metadata: Metadata = {
-  title: 'Виготовлення та монтаж металоконструкцій у Дніпрі | RUBICON BUILD',
+  title: 'Виготовлення та монтаж металоконструкцій у Дніпрі | RUBIKON BUILD',
   description: 'Проєктування, виготовлення й монтаж металоконструкцій у Дніпрі та області: каркаси, колони, балки, ферми й нестандартні металеві вузли.',
   alternates: { canonical: '/metalokonstruktsii' },
   openGraph: {
-    title: 'Металоконструкції у Дніпрі | RUBICON BUILD',
+    title: 'Металоконструкції у Дніпрі | RUBIKON BUILD',
     description: 'Каркаси, ферми, балки, колони та монтаж металевих конструкцій.',
     url: '/metalokonstruktsii',
-    images: [{ url: `${liveUrl}/media/steel-welding.jpg`, alt: 'Виготовлення металоконструкцій RUBICON BUILD' }],
+    images: [{ url: `${liveUrl}/media/steel-welding.jpg`, alt: 'Виготовлення металоконструкцій RUBIKON BUILD' }],
   },
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/steel-welding.jpg`] },
 };

@@ -5,14 +5,14 @@ import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
 export const metadata: Metadata = {
-  title: 'Будівництво ангарів і складів під ключ у Дніпрі | RUBICON BUILD',
+  title: 'Будівництво ангарів і складів під ключ у Дніпрі | RUBIKON BUILD',
   description: 'Будівництво швидкомонтованих ангарів, складів і виробничих споруд у Дніпрі та області: конструкції, огородження, монтаж і координація робіт.',
   alternates: { canonical: '/angary' },
   openGraph: {
-    title: 'Ангари та склади під ключ | RUBICON BUILD',
+    title: 'Ангари та склади під ключ | RUBIKON BUILD',
     description: 'Швидкомонтовані споруди для виробництва, логістики, агросектору та зберігання.',
     url: '/angary',
-    images: [{ url: `${liveUrl}/media/industrial-yard.jpg`, alt: 'Ангари та склади RUBICON BUILD' }],
+    images: [{ url: `${liveUrl}/media/industrial-yard.jpg`, alt: 'Ангари та склади RUBIKON BUILD' }],
   },
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/industrial-yard.jpg`] },
 };
