@@ -232,14 +232,14 @@ export default function Home() {
       <section className="promise section" id="about">
         <div className="shell story-checker">
           <article className="story-row">
-            <div className="promise-visual">
+            <div className="promise-visual engineering-plan-visual">
               <Image
-                src="/images/concept-sketch.jpg"
-                alt="Ескіз сучасної будівлі на етапі проєктування"
+                src="/media/engineering-planning.jpg"
+                alt="Інженери узгоджують креслення безпосередньо на будівельному майданчику"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
-              <span className="image-note">Проєктуємо з думкою про реалізацію</span>
+              <span className="image-note">Від креслення — до технічного рішення</span>
             </div>
             <div className="promise-copy">
               <p className="eyebrow light"><span /> Наша основа</p>
@@ -269,14 +269,14 @@ export default function Home() {
               </div>
               <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно</blockquote>
             </div>
-            <div className="promise-visual story-site-visual">
+            <div className="promise-visual site-control-visual">
               <Image
-                src="/media/hero-steel-frame.jpg"
-                alt="Монтаж сталевого каркаса на будівельному майданчику"
+                src="/media/site-quality-control.jpg"
+                alt="Перевірка точності металевої конструкції перед монтажем"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
-              <span className="image-note">Від технічного рішення — до монтажу</span>
+              <span className="image-note">Точність перевіряємо на кожному етапі</span>
             </div>
           </article>
         </div>
