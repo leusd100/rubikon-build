@@ -203,6 +203,8 @@ section[id] { scroll-margin-top: 98px; }
 .contact-links { border-top: 1px solid rgba(255,255,255,.15); }
 .pending-contact { display: flex; justify-content: space-between; gap: 20px; padding: 17px 0; border-bottom: 1px solid rgba(255,255,255,.15); font: 600 18px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .pending-contact b { display: inline-flex; align-items: center; gap: 13px; font: inherit; }
+.pending-contact b span { display: grid; gap: 4px; }
+.pending-contact b small { color: #8c958e; font: 500 8px/1.35 var(--font-manrope), sans-serif; letter-spacing: .08em; }
 .pending-contact b svg { width: 20px; height: 20px; color: var(--accent); stroke-width: 1.6; }
 .pending-contact i { color: #8c958e; font: 500 10px/1.5 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 

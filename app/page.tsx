@@ -12,7 +12,6 @@ import {
   PanelsTopLeft,
   Phone,
   Ruler,
-  Send,
   Warehouse,
   Wheat,
 } from 'lucide-react';
@@ -317,8 +316,13 @@ export default function Home() {
             <div className="contact-links" id="contact-note">
               <span className="pending-contact"><b><Phone aria-hidden="true" />Телефон</b><i>буде додано</i></span>
               <span className="pending-contact"><b><Mail aria-hidden="true" />Email</b><i>буде додано</i></span>
-              <span className="pending-contact"><b><Send aria-hidden="true" />Telegram</b><i>буде додано</i></span>
-              <span className="pending-contact"><b><MessagesSquare aria-hidden="true" />WhatsApp / Viber</b><i>буде додано</i></span>
+              <span className="pending-contact">
+                <b>
+                  <MessagesSquare aria-hidden="true" />
+                  <span>Месенджери<small>Telegram · WhatsApp · Viber</small></span>
+                </b>
+                <i>буде додано</i>
+              </span>
             </div>
           </div>
         </div>
