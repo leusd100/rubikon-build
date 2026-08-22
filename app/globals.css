@@ -51,8 +51,17 @@ section[id] { scroll-margin-top: 98px; }
 .desktop-nav a { position: relative; }
 .desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: -7px; height: 2px; background: var(--accent); transition: right .25s ease; }
 .desktop-nav a:hover::after { right: 0; }
-.header-cta { display: inline-flex; align-items: center; gap: 16px; color: white; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.38); padding: 14px 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; transition: background .2s ease, border-color .2s ease; }
-.header-cta:hover { background: var(--accent); }
+.header-contacts { display: flex; align-items: stretch; border: 1px solid rgba(255,255,255,.26); background: rgba(255,255,255,.045); }
+.header-contact { min-width: 132px; display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 10px; padding: 11px 14px; transition: color .2s ease, background .2s ease; }
+.header-contact + .header-contact { border-left: 1px solid rgba(255,255,255,.18); }
+.header-contact svg { width: 18px; height: 18px; color: var(--accent); stroke-width: 1.7; }
+.header-contact span { display: grid; gap: 3px; }
+.header-contact small { color: rgba(255,255,255,.78); font-size: 9px; font-weight: 800; line-height: 1; letter-spacing: .09em; text-transform: uppercase; }
+.header-contact strong { color: rgba(255,255,255,.45); font-size: 7px; font-weight: 700; line-height: 1; letter-spacing: .08em; text-transform: uppercase; }
+.header-contact:hover { color: white; background: var(--accent); }
+.header-contact:hover svg, .header-contact:hover small, .header-contact:hover strong { color: white; }
+.header-contact-mobile { display: none; align-items: center; gap: 9px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.3); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.header-contact-mobile svg { width: 17px; height: 17px; color: var(--accent); }
 
 .hero { position: relative; min-height: 900px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #101012; }
 .hero-media { position: absolute; inset: 0; }
@@ -361,8 +370,8 @@ footer .brand-name small { color: #8e9690; }
   .brand-slash { width: 4px; height: 38px; }
   .brand-name b { font-size: 17px; letter-spacing: .055em; }
   .brand-name small { display: none; }
-  .header-cta { padding: 11px 13px; font-size: 10px; }
-  .header-cta span { display: none; }
+  .header-contacts { display: none; }
+  .header-contact-mobile { display: inline-flex; }
   .hero { min-height: 790px; height: auto; }
   .hero-media video { object-position: 66% center; }
   .hero-grid { background-size: 46px 46px; }

@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CalendarClock, Factory, MapPin, Ruler } from 'lucide-react';
+import { CalendarClock, Factory, Mail, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export function Brand() {
@@ -28,8 +28,18 @@ export function SiteHeader() {
           <Link href="/pro-nas">Про компанію</Link>
           <Link href="/#contact">Контакти</Link>
         </nav>
-        <Link className="header-cta" href="/#contact">
-          Оцінити проєкт <span aria-hidden="true">↗</span>
+        <div className="header-contacts" aria-label="Контакти компанії">
+          <Link className="header-contact" href="/#contact" aria-label="Перейти до телефону компанії">
+            <Phone aria-hidden="true" />
+            <span><small>Телефон</small><strong>буде додано</strong></span>
+          </Link>
+          <Link className="header-contact" href="/#contact" aria-label="Перейти до електронної пошти компанії">
+            <Mail aria-hidden="true" />
+            <span><small>Email</small><strong>буде додано</strong></span>
+          </Link>
+        </div>
+        <Link className="header-contact-mobile" href="/#contact">
+          <Phone aria-hidden="true" /> Контакти
         </Link>
       </div>
     </header>
