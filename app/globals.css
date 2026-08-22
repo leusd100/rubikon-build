@@ -173,8 +173,8 @@ section[id] { scroll-margin-top: 98px; }
 .brand-credo span { display: block; margin-bottom: 13px; color: var(--accent-dark); font: 700 9px/1 var(--font-manrope), sans-serif; letter-spacing: .13em; text-transform: uppercase; }
 
 .team { background: var(--warm); }
-.section-head.compact { position: relative; grid-template-columns: .7fr 1.3fr; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--line); }
-.section-head.compact::after { content: ''; position: absolute; left: 0; bottom: -1px; width: 72px; height: 2px; background: var(--accent); }
+.team-heading { margin-bottom: 60px; }
+.team-heading h2 em { color: var(--accent-dark); font-style: normal; }
 .team-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; gap: 32px; }
 .person-card { display: grid; grid-template-columns: 3fr 2fr; min-height: 500px; background: #e5e4de; }
 .person-photo { position: relative; min-height: 500px; overflow: hidden; background: #384038; }
@@ -378,13 +378,12 @@ footer .brand-name small { color: #8e9690; }
   .hero-cycle b { display: block; margin-bottom: 7px; }
   .hero-cycle span { font-size: 8px; line-height: 1.4; }
   .hero-signature { display: none; }
-  .section-head, .section-head.compact, .section-head.section-head-balanced { grid-template-columns: 1fr; gap: 26px; margin-bottom: 42px; }
+  .section-head, .section-head.section-head-balanced { grid-template-columns: 1fr; gap: 26px; margin-bottom: 42px; }
   .section-head > p:last-child { grid-column: auto; }
   .section-head-balanced > p:last-child { max-width: 560px; padding-bottom: 0; font-size: 16px; }
   .section-heading-copy .eyebrow { margin-bottom: 22px; }
   .section-head h2, .promise-copy h2 { font-size: 44px; }
   .section-head-balanced, .directions-head, .split-heading { padding-bottom: 28px; }
-  .section-head.compact { padding-bottom: 26px; }
   .section-head-balanced > p:last-child, .directions-head > p, .split-heading > p { padding-left: 20px; }
   .service-list { grid-template-columns: 1fr; }
   .service-card, .service-card:nth-child(4), .service-card:nth-child(5) { grid-column: auto; min-height: 250px; }

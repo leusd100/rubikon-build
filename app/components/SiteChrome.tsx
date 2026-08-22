@@ -121,9 +121,15 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
   return (
     <section className={`team section${compact ? ' team-compact' : ''}`}>
       <div className="shell">
-        <div className="section-head compact">
-          <p className="eyebrow"><span /> Люди за результатом</p>
-          <h2>Досвід двох поколінь</h2>
+        <div className="section-head section-head-balanced team-heading">
+          <div className="section-heading-copy">
+            <p className="eyebrow"><span /> Родина в основі компанії</p>
+            <h2>Два покоління.<br /><em>Одна справа</em></h2>
+          </div>
+          <p>
+            Сергій Іванович відповідає за практику майданчика й контроль якості.
+            Дмитро Сергійович — за інженерний підхід, комунікацію та розвиток компанії.
+          </p>
         </div>
         <div className="team-grid">
           <article className="person-card">
