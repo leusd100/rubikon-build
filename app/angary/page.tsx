@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     title: 'Ангари та склади під ключ | RUBIKON BUILD',
     description: 'Швидкомонтовані споруди для виробництва, логістики, агросектору та зберігання.',
     url: '/angary',
-    images: [{ url: `${liveUrl}/media/industrial-yard.jpg`, alt: 'Ангари та склади RUBIKON BUILD' }],
+    images: [{ url: `${liveUrl}/media/competence-hangar.jpg`, alt: 'Ангари та склади RUBIKON BUILD' }],
   },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/industrial-yard.jpg`] },
+  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/competence-hangar.jpg`] },
 };
 
 const stages = [
@@ -35,7 +35,7 @@ export default function HangarsPage() {
   return (
     <main className="inner-page">
       <section className="service-subhero">
-        <div className="service-subhero-media"><Image src="/media/industrial-yard.jpg" alt="Промисловий складський комплекс" fill priority sizes="100vw" /></div>
+        <div className="service-subhero-media"><Image src="/media/competence-hangar.jpg" alt="Промисловий ангар і складська споруда" fill priority sizes="100vw" /></div>
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Ангари', href: '/angary' }]} />
@@ -77,7 +77,7 @@ export default function HangarsPage() {
             <p className="lead-copy">Габарити прольотів, висота, крок колон, тип огородження, ворота та майбутні навантаження впливають на вартість і зручність споруди.</p>
             <p>Тому на старті ставимо питання про технологію роботи всередині, рух транспорту, потребу в утепленні й можливе розширення об’єкта.</p>
           </div>
-          <div className="page-image"><Image src="/media/steel-beams.jpg" alt="Комплект металевих балок для будівництва ангару" fill sizes="(max-width: 850px) 100vw, 48vw" /></div>
+          <div className="page-image"><Image src="/media/hero-steel-frame.jpg" alt="Монтаж каркаса майбутнього ангару" fill sizes="(max-width: 850px) 100vw, 48vw" /></div>
         </div>
       </section>
 

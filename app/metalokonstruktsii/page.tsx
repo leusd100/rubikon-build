@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     title: 'Металоконструкції у Дніпрі | RUBIKON BUILD',
     description: 'Каркаси, ферми, балки, колони та монтаж металевих конструкцій.',
     url: '/metalokonstruktsii',
-    images: [{ url: `${liveUrl}/media/steel-welding.jpg`, alt: 'Виготовлення металоконструкцій RUBIKON BUILD' }],
+    images: [{ url: `${liveUrl}/media/competence-steel.jpg`, alt: 'Виготовлення металоконструкцій RUBIKON BUILD' }],
   },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/steel-welding.jpg`] },
+  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/competence-steel.jpg`] },
 };
 
 const steps = [
@@ -35,7 +35,7 @@ export default function SteelPage() {
   return (
     <main className="inner-page">
       <section className="service-subhero">
-        <div className="service-subhero-media"><Image src="/media/steel-welding.jpg" alt="Зварювання сталевої конструкції" fill priority sizes="100vw" /></div>
+        <div className="service-subhero-media"><Image src="/media/competence-steel.jpg" alt="Зварювання несучої сталевої конструкції" fill priority sizes="100vw" /></div>
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Металоконструкції', href: '/metalokonstruktsii' }]} />
@@ -74,7 +74,7 @@ export default function SteelPage() {
 
       <section className="page-section">
         <div className="shell page-two-col">
-          <div className="page-image"><Image src="/media/steel-beams.jpg" alt="Склад металевих балок" fill sizes="(max-width: 850px) 100vw, 48vw" /></div>
+          <div className="page-image"><Image src="/media/hero-steel-frame.jpg" alt="Монтаж металевого каркаса будівлі" fill sizes="(max-width: 850px) 100vw, 48vw" /></div>
           <div className="copy-column">
             <p className="eyebrow"><span /> Контроль якості</p>
             <h2>Увага до вузлів, які визначають надійність.</h2>

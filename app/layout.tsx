@@ -22,7 +22,7 @@ const logo = Jost({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://rubicon-build.bronze-spoon-6603.chatgpt.site'),
-  title: 'Металоконструкції та будівництво ангарів у Дніпрі | RUBIKON BUILD',
+  title: 'Металоконструкції та промислові споруди під ключ у Дніпрі | RUBIKON BUILD',
   description:
     'Виготовлення та монтаж металоконструкцій, будівництво ангарів, складів і зерносховищ під ключ у Дніпрі та області. Понад 30 років практичного досвіду.',
   alternates: {
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   },
   creator: 'RUBIKON BUILD',
   openGraph: {
-    title: 'Металоконструкції та ангари під ключ | RUBIKON BUILD',
-    description: 'Родинна будівельна компанія у Дніпрі. Понад 30 років практичного досвіду.',
+    title: 'Металоконструкції та промислові споруди під ключ | RUBIKON BUILD',
+    description: 'Ангари, склади, зерносховища та несучі каркаси у Дніпрі й області. Понад 30 років практичного досвіду.',
     type: 'website',
     locale: 'uk_UA',
     siteName: 'RUBIKON BUILD',
@@ -41,14 +41,14 @@ export const metadata: Metadata = {
         url: '/og.png',
         width: 1730,
         height: 909,
-        alt: 'RUBIKON BUILD — металоконструкції та ангари під ключ',
+        alt: 'RUBIKON BUILD — металоконструкції та промислові споруди під ключ',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Металоконструкції та ангари під ключ | RUBIKON BUILD',
-    description: 'Родинна будівельна компанія у Дніпрі. Понад 30 років практичного досвіду.',
+    title: 'Металоконструкції та промислові споруди під ключ | RUBIKON BUILD',
+    description: 'Ангари, склади, зерносховища та несучі каркаси у Дніпрі й області. Понад 30 років практичного досвіду.',
     images: ['/og.png'],
   },
 };

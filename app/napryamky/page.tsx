@@ -13,9 +13,9 @@ export const metadata: Metadata = {
     title: 'Напрямки робіт RUBIKON BUILD',
     description: 'Від металевого вузла до готової промислової споруди.',
     url: '/napryamky',
-    images: [{ url: `${liveUrl}/media/industrial-yard.jpg`, alt: 'Промислове будівництво RUBIKON BUILD' }],
+    images: [{ url: `${liveUrl}/media/hero-steel-frame.jpg`, alt: 'Промислове будівництво RUBIKON BUILD' }],
   },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/industrial-yard.jpg`] },
+  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/hero-steel-frame.jpg`] },
 };
 
 const services = [
@@ -31,13 +31,13 @@ export default function DirectionsPage() {
   return (
     <main className="inner-page">
       <section className="subhero subhero-media">
-        <Image src="/media/industrial-yard.jpg" alt="Промисловий складський майданчик" fill priority sizes="100vw" />
+        <Image src="/media/hero-steel-frame.jpg" alt="Монтаж сталевого каркаса промислової споруди" fill priority sizes="100vw" />
         <div className="subhero-overlay" />
         <div className="shell subhero-layout">
           <div>
             <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }]} />
             <p className="eyebrow light"><span /> Сфери компетенції</p>
-            <h1>Будуємо з металу.<br /><em>Від вузла — до об’єкта.</em></h1>
+            <h1>Комплексні рішення.<br /><em>Від конструкції — до готового об’єкта.</em></h1>
           </div>
           <div className="subhero-side">
             <p>Формуємо склад робіт під конкретну задачу: від окремих конструкцій до комплексної реалізації промислової або аграрної споруди.</p>
@@ -75,8 +75,8 @@ export default function DirectionsPage() {
 
       <section className="page-section page-media-band">
         <div className="shell page-media-grid">
-          <div className="media-tile media-tile-large"><Image src="/media/steel-welding.jpg" alt="Зварювання сталевої конструкції" fill sizes="(max-width: 800px) 100vw, 60vw" /></div>
-          <div className="media-tile"><Image src="/media/steel-beams.jpg" alt="Сталеві балки для промислового будівництва" fill sizes="(max-width: 800px) 100vw, 40vw" /></div>
+          <div className="media-tile media-tile-large"><Image src="/media/competence-steel.jpg" alt="Зварювання несучої сталевої конструкції" fill sizes="(max-width: 800px) 100vw, 60vw" /></div>
+          <div className="media-tile"><Image src="/media/competence-grain.jpg" alt="Промислове зерносховище біля поля" fill sizes="(max-width: 800px) 100vw, 40vw" /></div>
         </div>
         <p className="shell media-note dark-note">Візуальні матеріали ілюструють напрямки робіт. Власне портфоліо буде додано окремим розділом.</p>
       </section>

@@ -128,7 +128,7 @@ export default function Home() {
           <div className="hero-copy">
             <p className="eyebrow"><span /> Промислове будівництво / Дніпро та Україна</p>
             <h1>
-              Металоконструкції та промислові споруди<br /><em>під ключ</em>
+              Металоконструкції та<br />промислові споруди <em>під ключ</em>
             </h1>
             <p className="hero-lead">
               Проєктуємо, виготовляємо й монтуємо ангари, склади, зерносховища та несучі каркаси
@@ -231,33 +231,55 @@ export default function Home() {
       </section>
 
       <section className="promise section" id="about">
-        <div className="shell promise-grid">
-          <div className="promise-visual">
-            <Image
-              src="/images/concept-sketch.jpg"
-              alt="Ескіз сучасної будівлі на етапі проєктування"
-              fill
-              sizes="(max-width: 900px) 100vw, 46vw"
-            />
-            <span className="image-note">Проєктуємо з думкою про реалізацію</span>
-          </div>
-          <div className="promise-copy">
-            <p className="eyebrow light"><span /> Наша основа</p>
-            <h2>За кожен об’єкт відповідаємо власним ім’ям.</h2>
-            <p className="promise-lead">
-              RUBIKON BUILD об’єднує понад 30 років практичного досвіду Сергія Івановича
-              та сучасну інженерну освіту Дмитра Сергійовича. Ми особисто контролюємо ключові
-              етапи й відповідаємо за результат власним ім’ям.
-            </p>
-            <div className="principles">
-              <div><b>01</b><span><strong>Рішення до початку робіт</strong>Уточнюємо вихідні дані, конструктив і склад відповідальності.</span></div>
-              <div><b>02</b><span><strong>Контроль ключових етапів</strong>Особисто стежимо за тим, що визначає міцність і довговічність.</span></div>
-              <div><b>03</b><span><strong>Відкрита комунікація</strong>Пояснюємо рішення, погоджуємо зміни й не приховуємо складних моментів.</span></div>
-              <div><b>04</b><span><strong>Родинна відповідальність</strong>Репутація компанії напряму пов’язана з нашими іменами.</span></div>
+        <div className="shell story-checker">
+          <article className="story-row">
+            <div className="promise-visual">
+              <Image
+                src="/images/concept-sketch.jpg"
+                alt="Ескіз сучасної будівлі на етапі проєктування"
+                fill
+                sizes="(max-width: 1050px) 100vw, 46vw"
+              />
+              <span className="image-note">Проєктуємо з думкою про реалізацію</span>
             </div>
-            <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно.</blockquote>
-            <Link className="section-link" href="/pro-nas">Більше про компанію <span aria-hidden="true">↗</span></Link>
-          </div>
+            <div className="promise-copy">
+              <p className="eyebrow light"><span /> Наша основа</p>
+              <h2>За кожен об’єкт відповідаємо власним ім’ям.</h2>
+              <p className="promise-lead">
+                RUBIKON BUILD об’єднує понад 30 років практичного досвіду Сергія Івановича
+                та сучасну інженерну освіту Дмитра Сергійовича. Ми особисто контролюємо ключові
+                етапи й відповідаємо за результат власним ім’ям.
+              </p>
+              <p className="story-support">
+                Практика будівельного майданчика допомагає бачити реальні ризики, а інженерний
+                підхід — заздалегідь перетворювати їх на зрозумілі технічні рішення.
+              </p>
+              <Link className="section-link" href="/pro-nas">Більше про компанію <span aria-hidden="true">↗</span></Link>
+            </div>
+          </article>
+
+          <article className="story-row story-row-reverse">
+            <div className="promise-copy">
+              <p className="eyebrow light"><span /> Як працюємо</p>
+              <h2>Практика майданчика та системний контроль.</h2>
+              <div className="principles">
+                <div><b>01</b><span><strong>Рішення до початку робіт</strong>Уточнюємо вихідні дані, конструктив і склад відповідальності.</span></div>
+                <div><b>02</b><span><strong>Контроль ключових етапів</strong>Особисто стежимо за тим, що визначає міцність і довговічність.</span></div>
+                <div><b>03</b><span><strong>Відкрита комунікація</strong>Пояснюємо рішення, погоджуємо зміни й не приховуємо складних моментів.</span></div>
+                <div><b>04</b><span><strong>Родинна відповідальність</strong>Репутація компанії напряму пов’язана з нашими іменами.</span></div>
+              </div>
+              <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно.</blockquote>
+            </div>
+            <div className="promise-visual story-site-visual">
+              <Image
+                src="/media/hero-steel-frame.jpg"
+                alt="Монтаж сталевого каркаса на будівельному майданчику"
+                fill
+                sizes="(max-width: 1050px) 100vw, 46vw"
+              />
+              <span className="image-note">Від технічного рішення — до монтажу</span>
+            </div>
+          </article>
         </div>
       </section>
 
