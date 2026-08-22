@@ -47,7 +47,7 @@ section[id] { scroll-margin-top: 98px; }
 .brand-name b { font: 400 24px/1 var(--font-logo), var(--font-manrope), sans-serif; letter-spacing: .075em; white-space: nowrap; }
 .brand-name b em { color: inherit; font-style: normal; font-weight: 400; }
 .brand-name small { margin-top: 8px; color: rgba(255,255,255,.58); font: 500 8px/1 var(--font-logo), var(--font-manrope), sans-serif; letter-spacing: .23em; text-transform: uppercase; white-space: nowrap; }
-.desktop-nav { display: flex; align-items: center; gap: 42px; font-size: 14px; font-weight: 750; letter-spacing: .025em; }
+.desktop-nav { display: flex; align-items: center; gap: 36px; font-size: 16px; font-weight: 720; letter-spacing: .012em; }
 .desktop-nav a { position: relative; }
 .desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: -7px; height: 2px; background: var(--accent); transition: right .25s ease; }
 .desktop-nav a:hover::after { right: 0; }

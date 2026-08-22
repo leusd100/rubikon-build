@@ -24,9 +24,9 @@ export function SiteHeader() {
         </Link>
         <nav className="desktop-nav" aria-label="Основна навігація">
           <Link href="/napryamky">Напрямки</Link>
-          <Link href="/metalokonstruktsii">Металоконструкції</Link>
-          <Link href="/angary">Ангари</Link>
-          <Link href="/pro-nas">Про нас</Link>
+          <Link href="/#process">Як працюємо</Link>
+          <Link href="/pro-nas">Про компанію</Link>
+          <Link href="/#contact">Контакти</Link>
         </nav>
         <Link className="header-cta" href="/#contact">
           Оцінити проєкт <span aria-hidden="true">↗</span>
@@ -45,7 +45,8 @@ export function SiteFooter() {
         </Link>
         <nav className="footer-nav" aria-label="Навігація у підвалі">
           <Link href="/napryamky">Напрямки</Link>
-          <Link href="/pro-nas">Про нас</Link>
+          <Link href="/#process">Як працюємо</Link>
+          <Link href="/pro-nas">Про компанію</Link>
           <Link href="/#contact">Контакти</Link>
         </nav>
         <span>© {new Date().getFullYear()} RUBIKON BUILD</span>
