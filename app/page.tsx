@@ -156,14 +156,6 @@ export default function Home() {
         <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>
       </section>
 
-      <section className="manifesto" aria-label="Принципи RUBIKON BUILD">
-        <div className="shell manifesto-grid">
-          <span>01</span><strong>Досвід</strong>
-          <span>02</span><strong>Інженерія</strong>
-          <span>03</span><strong>Відповідальність</strong>
-        </div>
-      </section>
-
       <section className="services section" id="services">
         <span className="ghost-word" aria-hidden="true">STEEL</span>
         <div className="shell">
