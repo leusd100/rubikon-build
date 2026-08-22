@@ -1,15 +1,17 @@
 import type { Metadata } from 'next';
-import { Manrope, Oswald } from 'next/font/google';
+import { IBM_Plex_Sans_Condensed, Manrope } from 'next/font/google';
 import './globals.css';
+import { SiteFooter, SiteHeader } from './components/SiteChrome';
 
 const manrope = Manrope({
   variable: '--font-manrope',
   subsets: ['cyrillic', 'latin'],
 });
 
-const oswald = Oswald({
-  variable: '--font-oswald',
-  subsets: ['cyrillic', 'latin'],
+const condensed = IBM_Plex_Sans_Condensed({
+  variable: '--font-condensed',
+  subsets: ['cyrillic-ext', 'latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -73,12 +75,14 @@ const organizationData = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="uk">
-      <body className={`${manrope.variable} ${oswald.variable}`}>
+      <body className={`${manrope.variable} ${condensed.variable}`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
         />
+        <SiteHeader />
         {children}
+        <SiteFooter />
       </body>
     </html>
   );
