@@ -134,7 +134,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
         <div className="section-head section-head-balanced team-heading">
           <div className="section-heading-copy">
             <p className="eyebrow"><span /> Родина в основі компанії</p>
-            <h2>Два покоління.<br /><em>Одна справа</em></h2>
+            <h2 className="team-heading-title"><span>Два покоління</span><em>Одна справа</em></h2>
           </div>
           <p>
             Сергій Іванович відповідає за практику майданчика й контроль якості.

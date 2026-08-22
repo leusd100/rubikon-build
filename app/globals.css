@@ -184,7 +184,10 @@ section[id] { scroll-margin-top: 98px; }
 .team { background: var(--warm); }
 .team-heading { margin-bottom: 60px; }
 .team-heading::after { display: none; }
+.team-heading-title { display: inline-grid; width: max-content; max-width: 100%; }
+.team-heading-title > span, .team-heading-title > em { display: block; white-space: nowrap; }
 .team-heading h2 em { color: var(--accent-dark); font-style: normal; }
+.team-heading-title > em { font-size: 1.16em; line-height: .92; letter-spacing: -.045em; }
 .team-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; gap: 32px; }
 .person-card { display: grid; grid-template-columns: 3fr 2fr; min-height: 500px; background: #e5e4de; }
 .person-photo { position: relative; min-height: 500px; overflow: hidden; background: #384038; }
@@ -447,6 +450,7 @@ footer .brand-name small { color: #8e9690; }
   .section-head-balanced > p:last-child { max-width: 560px; padding-bottom: 0; font-size: 16px; }
   .section-heading-copy .eyebrow { margin-bottom: 22px; }
   .section-head h2, .promise-copy h2 { font-size: 44px; }
+  .team-heading-title > em { font-size: 1.12em; }
   .section-head-balanced, .directions-head, .split-heading { padding-bottom: 28px; }
   .section-head-balanced > p:last-child, .directions-head > p, .split-heading > p { padding-left: 20px; }
   .service-list { grid-template-columns: 1fr; }
