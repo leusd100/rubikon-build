@@ -40,7 +40,7 @@ export default function SteelPage() {
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Металоконструкції', href: '/metalokonstruktsii' }]} />
           <p className="eyebrow light"><span /> Напрямок 01</p>
-          <h1>Металоконструкції<br /><em>від деталі до монтажу.</em></h1>
+          <h1>Металоконструкції<br /><em>від деталі до монтажу</em></h1>
           <p>Виготовляємо та монтуємо металеві конструкції для промислових, складських, аграрних і комерційних об’єктів.</p>
         </div>
       </section>
@@ -49,7 +49,7 @@ export default function SteelPage() {
         <div className="shell page-two-col align-start">
           <div className="sticky-heading">
             <p className="eyebrow"><span /> Що виконуємо</p>
-            <h2>Несуча основа, розрахована на реальну експлуатацію.</h2>
+            <h2>Несуча основа, розрахована на реальну експлуатацію</h2>
           </div>
           <div className="feature-list">
             <article><span>01</span><h3>Каркаси будівель</h3><p>Колони, ригелі, балки та зв’язки для промислових, складських і комерційних споруд.</p></article>
@@ -63,7 +63,7 @@ export default function SteelPage() {
       <section className="page-section page-section-dark">
         <div className="shell">
           <div className="page-heading split-heading">
-            <div><p className="eyebrow light"><span /> Послідовність</p><h2>Керуємо не лише металом, а всім процесом.</h2></div>
+            <div><p className="eyebrow light"><span /> Послідовність</p><h2>Керуємо не лише металом, а всім процесом</h2></div>
             <p>Надійність конструкції залежить від точності вихідних даних, якості виготовлення та правильної роботи на монтажі.</p>
           </div>
           <ol className="detail-steps">
@@ -77,7 +77,7 @@ export default function SteelPage() {
           <div className="page-image"><Image src="/media/hero-steel-frame.jpg" alt="Монтаж металевого каркаса будівлі" fill sizes="(max-width: 850px) 100vw, 48vw" /></div>
           <div className="copy-column">
             <p className="eyebrow"><span /> Контроль якості</p>
-            <h2>Увага до вузлів, які визначають надійність.</h2>
+            <h2>Увага до вузлів, які визначають надійність</h2>
             <p className="lead-copy">Перевіряємо геометрію, відповідність елементів, підготовку поверхонь і якість ключових з’єднань на етапах виготовлення та монтажу.</p>
             <p>Остаточний склад контролю залежить від проєкту, призначення конструкції та вимог замовника. Технічні рішення погоджуємо до початку виконання робіт.</p>
           </div>
@@ -87,7 +87,7 @@ export default function SteelPage() {
       <section className="page-section cost-section">
         <div className="shell">
           <div className="page-heading split-heading">
-            <div><p className="eyebrow"><span /> Формування кошторису</p><h2>Вартість визначає конструкція, а не одна цифра за тонну.</h2></div>
+            <div><p className="eyebrow"><span /> Формування кошторису</p><h2>Вартість визначає конструкція, а не одна цифра за тонну</h2></div>
             <p>Для попередньої оцінки потрібні креслення або базові параметри майбутньої конструкції. Після цього можна предметно оцінити склад робіт.</p>
           </div>
           <div className="cost-grid">
@@ -106,7 +106,7 @@ export default function SteelPage() {
           </div>
         </div>
       </section>
-      <PageCta eyebrow="Обговорити металоконструкції" title="Є креслення або лише задача? Почнемо з вихідних даних." />
+      <PageCta eyebrow="Обговорити металоконструкції" title="Є креслення або лише задача? Почнемо з вихідних даних" />
     </main>
   );
 }

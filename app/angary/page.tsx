@@ -40,14 +40,14 @@ export default function HangarsPage() {
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Ангари', href: '/angary' }]} />
           <p className="eyebrow light"><span /> Напрямок 02</p>
-          <h1>Ангари та склади<br /><em>під задачу бізнесу.</em></h1>
+          <h1>Ангари та склади<br /><em>під задачу бізнесу</em></h1>
           <p>Будуємо швидкомонтовані споруди з урахуванням технології, логістики, зберігання та майбутньої експлуатації.</p>
         </div>
       </section>
 
       <section className="page-section">
         <div className="shell page-heading split-heading">
-          <div><p className="eyebrow"><span /> Типи об’єктів</p><h2>Простір, який працює на ваш процес.</h2></div>
+          <div><p className="eyebrow"><span /> Типи об’єктів</p><h2>Простір, який працює на ваш процес</h2></div>
           <p>Починаємо не з універсального шаблону, а з функції споруди: що всередині, як рухається техніка, де потрібні ворота, світло й інженерні мережі.</p>
         </div>
         <div className="shell use-case-grid">
@@ -60,7 +60,7 @@ export default function HangarsPage() {
       <section className="page-section page-section-dark">
         <div className="shell">
           <div className="page-heading split-heading">
-            <div><p className="eyebrow light"><span /> Етапи</p><h2>Від задуму — до готового контуру.</h2></div>
+            <div><p className="eyebrow light"><span /> Етапи</p><h2>Від задуму — до готового контуру</h2></div>
             <p>Склад робіт може включати основу, металевий каркас, покрівлю, стіни, ворота та координацію суміжних спеціалістів.</p>
           </div>
           <ol className="detail-steps">
@@ -73,7 +73,7 @@ export default function HangarsPage() {
         <div className="shell page-two-col reverse-mobile">
           <div className="copy-column">
             <p className="eyebrow"><span /> Продумані рішення</p>
-            <h2>Враховуємо експлуатацію ще до монтажу.</h2>
+            <h2>Враховуємо експлуатацію ще до монтажу</h2>
             <p className="lead-copy">Габарити прольотів, висота, крок колон, тип огородження, ворота та майбутні навантаження впливають на вартість і зручність споруди.</p>
             <p>Тому на старті ставимо питання про технологію роботи всередині, рух транспорту, потребу в утепленні й можливе розширення об’єкта.</p>
           </div>
@@ -84,7 +84,7 @@ export default function HangarsPage() {
       <section className="page-section cost-section">
         <div className="shell">
           <div className="page-heading split-heading">
-            <div><p className="eyebrow"><span /> Формування кошторису</p><h2>Ціна ангара починається з його майбутньої функції.</h2></div>
+            <div><p className="eyebrow"><span /> Формування кошторису</p><h2>Ціна ангара починається з його майбутньої функції</h2></div>
             <p>Однакова площа не означає однакову вартість. На рішення впливають проліт, висота, утеплення, навантаження, комплектація та умови майданчика.</p>
           </div>
           <div className="cost-grid">
@@ -103,7 +103,7 @@ export default function HangarsPage() {
           </div>
         </div>
       </section>
-      <PageCta eyebrow="Обговорити ангар" title="Опишіть майбутню споруду — сформуємо наступний крок." />
+      <PageCta eyebrow="Обговорити ангар" title="Опишіть майбутню споруду — сформуємо наступний крок" />
     </main>
   );
 }

@@ -37,7 +37,7 @@ export default function DirectionsPage() {
           <div>
             <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }]} />
             <p className="eyebrow light"><span /> Сфери компетенції</p>
-            <h1>Комплексні рішення.<br /><em>Від конструкції — до готового об’єкта.</em></h1>
+            <h1>Комплексні рішення<br /><em>Від конструкції — до готового об’єкта</em></h1>
           </div>
           <div className="subhero-side">
             <p>Формуємо склад робіт під конкретну задачу: від окремих конструкцій до комплексної реалізації промислової або аграрної споруди.</p>
@@ -50,7 +50,7 @@ export default function DirectionsPage() {
           <div className="page-heading split-heading">
             <div>
               <p className="eyebrow"><span /> Що ми робимо</p>
-              <h2>Шість напрямків. Один відповідальний підхід.</h2>
+              <h2>Шість напрямків. Один відповідальний підхід</h2>
             </div>
             <p>Точний перелік робіт визначаємо після знайомства з об’єктом, вихідними даними та очікуваним результатом.</p>
           </div>

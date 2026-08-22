@@ -156,9 +156,9 @@ export default function Home() {
 
       <section className="manifesto" aria-label="Принципи RUBIKON BUILD">
         <div className="shell manifesto-grid">
-          <span>01</span><strong>Досвід.</strong>
-          <span>02</span><strong>Інженерія.</strong>
-          <span>03</span><strong>Відповідальність.</strong>
+          <span>01</span><strong>Досвід</strong>
+          <span>02</span><strong>Інженерія</strong>
+          <span>03</span><strong>Відповідальність</strong>
         </div>
       </section>
 
@@ -168,7 +168,7 @@ export default function Home() {
           <div className="section-head section-head-balanced">
             <div className="section-heading-copy">
               <p className="eyebrow"><span /> Ключові напрямки</p>
-              <h2>Що можемо<br />взяти на себе.</h2>
+              <h2>Що можемо<br />взяти на себе</h2>
             </div>
             <p>
               Основна спеціалізація — металоконструкції та промислові споруди. За потреби
@@ -198,7 +198,7 @@ export default function Home() {
           <div className="directions-head">
             <div>
               <p className="eyebrow light"><span /> Сфери компетенції</p>
-              <h2>Каркаси та споруди для бізнесу й агросектору.</h2>
+              <h2>Каркаси та споруди для бізнесу й агросектору</h2>
             </div>
             <p>
               Поєднуємо практику будівельного майданчика з сучасним інженерним підходом —
@@ -244,7 +244,7 @@ export default function Home() {
             </div>
             <div className="promise-copy">
               <p className="eyebrow light"><span /> Наша основа</p>
-              <h2>За кожен об’єкт відповідаємо власним ім’ям.</h2>
+              <h2>За кожен об’єкт відповідаємо власним ім’ям</h2>
               <p className="promise-lead">
                 RUBIKON BUILD об’єднує понад 30 років практичного досвіду Сергія Івановича
                 та сучасну інженерну освіту Дмитра Сергійовича. Ми особисто контролюємо ключові
@@ -261,14 +261,14 @@ export default function Home() {
           <article className="story-row story-row-reverse">
             <div className="promise-copy">
               <p className="eyebrow light"><span /> Як працюємо</p>
-              <h2>Практика майданчика та системний контроль.</h2>
+              <h2>Практика майданчика та системний контроль</h2>
               <div className="principles">
                 <div><b>01</b><span><strong>Рішення до початку робіт</strong>Уточнюємо вихідні дані, конструктив і склад відповідальності.</span></div>
                 <div><b>02</b><span><strong>Контроль ключових етапів</strong>Особисто стежимо за тим, що визначає міцність і довговічність.</span></div>
                 <div><b>03</b><span><strong>Відкрита комунікація</strong>Пояснюємо рішення, погоджуємо зміни й не приховуємо складних моментів.</span></div>
                 <div><b>04</b><span><strong>Родинна відповідальність</strong>Репутація компанії напряму пов’язана з нашими іменами.</span></div>
               </div>
-              <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно.</blockquote>
+              <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно</blockquote>
             </div>
             <div className="promise-visual story-site-visual">
               <Image
@@ -313,7 +313,7 @@ export default function Home() {
         <div className="shell contact-grid">
           <div>
             <p className="eyebrow light"><span /> Почнемо з розмови</p>
-            <h2>Потрібна оцінка?<br />Обговорімо об’єкт.</h2>
+            <h2>Потрібна оцінка?<br />Обговорімо об’єкт</h2>
           </div>
           <div className="contact-panel">
             <p>
