@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { PageCta } from '../components/SiteChrome';
+import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
@@ -24,6 +24,13 @@ const stages = [
   ['04', 'Будівництво', 'Виконуємо або координуємо основу, каркас, огороджувальні конструкції та завершальні етапи.'],
 ];
 
+const costFactors = [
+  ['01', 'Габарити й проліт', 'Довжина, ширина, висота та схема без внутрішніх або з проміжними опорами.'],
+  ['02', 'Теплий чи холодний контур', 'Профільований лист, сендвіч-панелі, утеплення та вимоги до експлуатації.'],
+  ['03', 'Отвори й обладнання', 'Ворота, двері, світлові прорізи, вентиляція та майбутні технологічні навантаження.'],
+  ['04', 'Майданчик і логістика', 'Основа, під’їзд для техніки, регіон будівництва та умови виконання монтажу.'],
+];
+
 export default function HangarsPage() {
   return (
     <main className="inner-page">
@@ -31,7 +38,7 @@ export default function HangarsPage() {
         <div className="service-subhero-media"><Image src="/media/industrial-yard.jpg" alt="Промисловий складський комплекс" fill priority sizes="100vw" /></div>
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
-          <p className="breadcrumb">Головна / Напрямки / Ангари</p>
+          <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Ангари', href: '/angary' }]} />
           <p className="eyebrow light"><span /> Напрямок 02</p>
           <h1>Ангари та склади<br /><em>під задачу бізнесу.</em></h1>
           <p>Будуємо швидкомонтовані споруди з урахуванням технології, логістики, зберігання та майбутньої експлуатації.</p>
@@ -71,6 +78,18 @@ export default function HangarsPage() {
             <p>Тому на старті ставимо питання про технологію роботи всередині, рух транспорту, потребу в утепленні й можливе розширення об’єкта.</p>
           </div>
           <div className="page-image"><Image src="/media/steel-beams.jpg" alt="Комплект металевих балок для будівництва ангару" fill sizes="(max-width: 850px) 100vw, 48vw" /></div>
+        </div>
+      </section>
+
+      <section className="page-section cost-section">
+        <div className="shell">
+          <div className="page-heading split-heading">
+            <div><p className="eyebrow"><span /> Формування кошторису</p><h2>Ціна ангара починається з його майбутньої функції.</h2></div>
+            <p>Однакова площа не означає однакову вартість. На рішення впливають проліт, висота, утеплення, навантаження, комплектація та умови майданчика.</p>
+          </div>
+          <div className="cost-grid">
+            {costFactors.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
+          </div>
         </div>
       </section>
 

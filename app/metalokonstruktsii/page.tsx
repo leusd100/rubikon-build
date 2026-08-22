@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { PageCta } from '../components/SiteChrome';
+import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
@@ -24,6 +24,13 @@ const steps = [
   ['04', 'Монтаж', 'Доставляємо елементи на об’єкт, виконуємо складання та контролюємо ключові з’єднання.'],
 ];
 
+const costFactors = [
+  ['01', 'Обсяг металу', 'Тоннаж, довжина елементів і загальна кількість деталей у комплекті.'],
+  ['02', 'Складність вузлів', 'Кількість операцій, типи з’єднань, точність і повторюваність елементів.'],
+  ['03', 'Захист поверхні', 'Підготовка металу, ґрунтування, фарбування або інший погоджений захист.'],
+  ['04', 'Умови монтажу', 'Відстань до об’єкта, доступ техніки, висота робіт і організація майданчика.'],
+];
+
 export default function SteelPage() {
   return (
     <main className="inner-page">
@@ -31,7 +38,7 @@ export default function SteelPage() {
         <div className="service-subhero-media"><Image src="/media/steel-welding.jpg" alt="Зварювання сталевої конструкції" fill priority sizes="100vw" /></div>
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
-          <p className="breadcrumb">Головна / Напрямки / Металоконструкції</p>
+          <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Металоконструкції', href: '/metalokonstruktsii' }]} />
           <p className="eyebrow light"><span /> Напрямок 01</p>
           <h1>Металоконструкції<br /><em>від деталі до монтажу.</em></h1>
           <p>Виготовляємо та монтуємо металеві конструкції для промислових, складських, аграрних і комерційних об’єктів.</p>
@@ -73,6 +80,18 @@ export default function SteelPage() {
             <h2>Увага до вузлів, які визначають надійність.</h2>
             <p className="lead-copy">Перевіряємо геометрію, відповідність елементів, підготовку поверхонь і якість ключових з’єднань на етапах виготовлення та монтажу.</p>
             <p>Остаточний склад контролю залежить від проєкту, призначення конструкції та вимог замовника. Технічні рішення погоджуємо до початку виконання робіт.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="page-section cost-section">
+        <div className="shell">
+          <div className="page-heading split-heading">
+            <div><p className="eyebrow"><span /> Формування кошторису</p><h2>Вартість визначає конструкція, а не одна цифра за тонну.</h2></div>
+            <p>Для попередньої оцінки потрібні креслення або базові параметри майбутньої конструкції. Після цього можна предметно оцінити склад робіт.</p>
+          </div>
+          <div className="cost-grid">
+            {costFactors.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
           </div>
         </div>
       </section>

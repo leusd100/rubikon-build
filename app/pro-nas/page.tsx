@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { PageCta, TeamSection } from '../components/SiteChrome';
+import { Breadcrumbs, PageCta, TeamSection } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
@@ -24,7 +24,7 @@ export default function AboutPage() {
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
           <div>
-            <p className="breadcrumb">Головна / Про нас</p>
+            <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Про нас', href: '/pro-nas' }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
             <h1>Репутація,<br />за якою стоять<br /><em>наші імена.</em></h1>
           </div>
@@ -48,7 +48,7 @@ export default function AboutPage() {
             <h2>Досвід, який став основою спільної компанії.</h2>
             <p className="lead-copy">Леус Сергій Іванович працює у будівельному напрямку понад 30 років. За цей час сформувався головний принцип: якість видно не лише після здачі, а в кожному прихованому вузлі.</p>
             <p>Леус Дмитро Сергійович здобув освіту за напрямом цивільного та промислового будівництва. Ідея RUBICON BUILD — поєднати практику майданчика з проєктним мисленням, системною комунікацією та розвитком сучасної будівельної компанії.</p>
-            <p>Ми не намагаємося здаватися більшими, ніж є. Ключові рішення приймаємо особисто, залучаємо перевірених фахівців під конкретне завдання та відповідаємо за домовленості власним ім’ям.</p>
+            <p>Ключові технічні й організаційні рішення приймаємо особисто. Під конкретний об’єкт формуємо необхідний склад фахівців, контролюємо відповідальні етапи та відповідаємо за домовленості власним ім’ям.</p>
           </div>
         </div>
       </section>
@@ -72,7 +72,7 @@ export default function AboutPage() {
       </section>
 
       <TeamSection compact />
-      <PageCta title="Розкажіть, що потрібно побудувати." text="Почнемо з короткої розмови про задачу, майданчик і бажані строки. Контактні дані додамо після вашого підтвердження." />
+      <PageCta title="Розкажіть, що потрібно побудувати." text="Почнемо з короткої розмови про задачу, майданчик і бажані строки. Підкажемо, які вихідні дані потрібні для наступного кроку." />
     </main>
   );
 }

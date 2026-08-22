@@ -16,9 +16,9 @@ const condensed = IBM_Plex_Sans_Condensed({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://rubicon-build.bronze-spoon-6603.chatgpt.site'),
-  title: 'Металоконструкції та ангари під ключ у Дніпрі | RUBICON BUILD',
+  title: 'Металоконструкції та будівництво ангарів у Дніпрі | RUBICON BUILD',
   description:
-    'Проєктування, виготовлення та монтаж металоконструкцій, ангарів, зерносховищ і фасадів у Дніпрі та області. Понад 30 років будівельного досвіду.',
+    'Виготовлення та монтаж металоконструкцій, будівництво ангарів, складів і зерносховищ під ключ у Дніпрі та області. Понад 30 років практичного досвіду.',
   alternates: {
     canonical: '/',
   },

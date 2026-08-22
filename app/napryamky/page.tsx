@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PageCta } from '../components/SiteChrome';
+import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
@@ -34,7 +34,7 @@ export default function DirectionsPage() {
         <div className="subhero-overlay" />
         <div className="shell subhero-layout">
           <div>
-            <p className="breadcrumb">Головна / Напрямки</p>
+            <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }]} />
             <p className="eyebrow light"><span /> Сфери компетенції</p>
             <h1>Будуємо з металу.<br /><em>Від вузла — до об’єкта.</em></h1>
           </div>

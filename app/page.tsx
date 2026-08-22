@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { TeamSection } from './components/SiteChrome';
+import { EstimateBrief, TeamSection } from './components/SiteChrome';
 
 const services = [
   {
@@ -76,11 +76,11 @@ export default function Home() {
           <div className="hero-copy">
             <p className="eyebrow"><span /> Родинна будівельна компанія / Україна</p>
             <h1>
-              Металоконструкції, ангари<br />та промислові об’єкти<br /><em>під ключ</em>
+              Металоконструкції та ангари<br /><em>під ключ у Дніпрі</em>
             </h1>
             <p className="hero-lead">
-              Проєктуємо, виготовляємо та монтуємо у Дніпрі й Дніпропетровській області.
-              Для масштабних промислових та аграрних об’єктів працюємо по Україні.
+              Проєктуємо, виготовляємо та монтуємо каркаси, ангари, склади й зерносховища.
+              Основний регіон — Дніпро та область; масштабні промислові й аграрні об’єкти розглядаємо по Україні.
             </p>
             <div className="hero-actions">
               <Link className="button button-primary" href="#contact">
@@ -92,12 +92,20 @@ export default function Home() {
             </div>
           </div>
           <div className="hero-rail" aria-label="Ключові факти">
-            <div><strong>30+</strong><span>років досвіду</span></div>
+            <div><strong>30+</strong><span>років досвіду керівника</span></div>
             <div><strong>02</strong><span>покоління</span></div>
-            <div><strong>UA</strong><span>географія робіт</span></div>
+            <div><strong>DN</strong><span>основний регіон — Дніпро</span></div>
           </div>
         </div>
         <div className="hero-signature" aria-hidden="true">RUBICON / BUILD</div>
+      </section>
+
+      <section className="manifesto" aria-label="Принципи RUBICON BUILD">
+        <div className="shell manifesto-grid">
+          <span>01</span><strong>Досвід.</strong>
+          <span>02</span><strong>Інженерія.</strong>
+          <span>03</span><strong>Відповідальність.</strong>
+        </div>
       </section>
 
       <section className="services section" id="services">
@@ -105,7 +113,7 @@ export default function Home() {
         <div className="shell">
           <div className="section-head">
             <p className="eyebrow"><span /> Ключові напрямки</p>
-            <h2>Складні задачі.<br />Зрозумілий результат.</h2>
+            <h2>Що можемо<br />взяти на себе.</h2>
             <p>
               Основна спеціалізація — металоконструкції та промислові споруди. За потреби
               беремо на себе комплекс суміжних робіт.
@@ -130,7 +138,7 @@ export default function Home() {
           <div className="directions-head">
             <div>
               <p className="eyebrow light"><span /> Сфери компетенції</p>
-              <h2>Міцність, масштаб і відповідальність.</h2>
+              <h2>Каркаси та споруди для бізнесу й агросектору.</h2>
             </div>
             <p>
               Поєднуємо практику будівельного майданчика з сучасним інженерним підходом —
@@ -175,18 +183,19 @@ export default function Home() {
           </div>
           <div className="promise-copy">
             <p className="eyebrow light"><span /> Наша основа</p>
-            <h2>Репутація будується довше, ніж будь-який об’єкт.</h2>
+            <h2>За кожен об’єкт відповідаємо власним ім’ям.</h2>
             <p className="promise-lead">
               RUBICON BUILD об’єднує понад 30 років практичного досвіду Сергія Івановича
               та сучасну інженерну освіту Дмитра Сергійовича. Ми особисто контролюємо ключові
               етапи й відповідаємо за результат власним ім’ям.
             </p>
             <div className="principles">
-              <div><b>01</b><span><strong>Якість у деталях</strong>Працюємо так, щоб не повертатися до переробок.</span></div>
-              <div><b>02</b><span><strong>Реалістичні строки</strong>Плануємо етапи й відкрито говоримо про перебіг робіт.</span></div>
-              <div><b>03</b><span><strong>Інженерний підхід</strong>Рішення мають бути обґрунтованими та надійними.</span></div>
-              <div><b>04</b><span><strong>Особиста відповідальність</strong>Фіксуємо домовленості та контролюємо результат.</span></div>
+              <div><b>01</b><span><strong>Рішення до початку робіт</strong>Уточнюємо вихідні дані, конструктив і склад відповідальності.</span></div>
+              <div><b>02</b><span><strong>Контроль ключових етапів</strong>Особисто стежимо за тим, що визначає міцність і довговічність.</span></div>
+              <div><b>03</b><span><strong>Відкрита комунікація</strong>Пояснюємо рішення, погоджуємо зміни й не приховуємо складних моментів.</span></div>
+              <div><b>04</b><span><strong>Родинна відповідальність</strong>Репутація компанії напряму пов’язана з нашими іменами.</span></div>
             </div>
+            <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно.</blockquote>
             <Link className="section-link" href="/pro-nas">Більше про компанію <span aria-hidden="true">↗</span></Link>
           </div>
         </div>
@@ -227,6 +236,8 @@ export default function Home() {
         </div>
       </section>
 
+      <EstimateBrief />
+
       <section className="contact section" id="contact">
         <div className="shell contact-grid">
           <div>
@@ -235,8 +246,8 @@ export default function Home() {
           </div>
           <div className="contact-panel">
             <p>
-              Опишіть тип об’єкта, орієнтовні розміри та бажані строки. Уточнимо задачу,
-              відповімо на запитання й запропонуємо наступний крок.
+              Надішліть призначення об’єкта, місто та орієнтовні довжину, ширину й висоту.
+              Уточнимо вихідні дані та пояснимо, що потрібно для попередньої оцінки.
             </p>
             <div className="contact-links" id="contact-note">
               <span className="pending-contact">Телефон <i>буде додано</i></span>
