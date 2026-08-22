@@ -270,6 +270,58 @@ section[id] { scroll-margin-top: 98px; }
 .detail-card p { margin: 0; color: rgba(255,255,255,.58); font-size: 13px; line-height: 1.7; }
 .team-compact { background: #e8e7e1; }
 
+.logo-lab { min-height: 100vh; background: var(--paper); }
+.logo-lab-intro { padding: 180px 0 86px; color: white; background: #101214; }
+.logo-lab-back { display: inline-block; margin-bottom: 64px; color: rgba(255,255,255,.56); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.logo-lab-intro h1 { max-width: 920px; margin: 0; font: 400 clamp(56px, 7vw, 98px)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.045em; }
+.logo-lab-intro h1 em { color: var(--accent); font-style: normal; }
+.logo-lab-intro .eyebrow { margin-bottom: 30px; }
+.logo-lab-intro > .shell > p:last-child { max-width: 650px; margin: 34px 0 0; color: rgba(255,255,255,.62); font-size: 17px; line-height: 1.75; }
+.logo-lab-options { padding: 86px 0 110px; }
+.logo-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.logo-option { overflow: hidden; border: 1px solid var(--line); background: var(--warm); }
+.logo-option-meta { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.logo-option-meta > span { color: var(--accent); font: 600 13px/1 var(--font-condensed), sans-serif; }
+.logo-option-meta small { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.logo-preview { min-height: 210px; display: grid; place-items: center; padding: 34px; }
+.logo-preview-dark { color: white; background: #111315; }
+.logo-preview-light { min-height: 142px; color: var(--ink); background: #eeede7; border-bottom: 1px solid var(--line); }
+.proposal-lockup { display: inline-flex; align-items: center; gap: 20px; }
+.proposal-wordmark { display: grid; }
+.proposal-wordmark b { font: 400 28px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .065em; white-space: nowrap; }
+.proposal-wordmark small { margin-top: 9px; color: currentColor; opacity: .55; font: 500 8px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+.proposal-mark { position: relative; width: 72px; height: 72px; flex: 0 0 auto; color: currentColor; }
+.mark-monogram { border: 1px solid currentColor; }
+.mark-monogram::after { content: ''; position: absolute; inset: 8px; border-top: 1px solid currentColor; border-right: 1px solid currentColor; opacity: .34; }
+.mark-monogram b, .mark-monogram strong { position: absolute; z-index: 2; font: 500 22px/1 var(--font-display), sans-serif; }
+.mark-monogram b { left: 10px; top: 10px; }
+.mark-monogram strong { right: 9px; bottom: 8px; }
+.mark-monogram i { position: absolute; z-index: 1; left: 32px; top: -5px; width: 7px; height: 82px; background: var(--accent); transform: skew(-17deg); }
+.mark-portal::before, .mark-portal::after { content: ''; position: absolute; top: 8px; width: 7px; height: 56px; background: var(--accent); transform: skew(-9deg); }
+.mark-portal::before { left: 9px; }
+.mark-portal::after { right: 9px; }
+.mark-portal i:first-child { position: absolute; left: 14px; right: 8px; top: 8px; height: 7px; background: currentColor; transform: skew(-9deg); }
+.mark-portal i:nth-child(2) { position: absolute; left: 20px; right: 15px; bottom: 8px; height: 2px; background: currentColor; opacity: .5; }
+.mark-portal b { position: absolute; left: 32px; top: 31px; width: 10px; height: 10px; background: currentColor; transform: rotate(45deg); }
+.mark-module { transform: translateY(2px); }
+.mark-module::before, .mark-module::after, .mark-module i:first-child { content: ''; position: absolute; width: 35px; height: 35px; border: 3px solid currentColor; transform: rotate(30deg) skewY(-10deg); }
+.mark-module::before { left: 9px; top: 13px; }
+.mark-module::after { right: 5px; top: 24px; border-color: var(--accent); }
+.mark-module i:first-child { left: 20px; top: 30px; opacity: .38; }
+.mark-module i:nth-child(2) { position: absolute; left: 8px; bottom: 5px; width: 57px; height: 3px; background: currentColor; }
+.mark-module b { position: absolute; right: 3px; top: 6px; width: 8px; height: 8px; background: var(--accent); }
+.mark-shield { border: 2px solid currentColor; }
+.mark-shield::before, .mark-shield::after { content: ''; position: absolute; width: 23px; height: 6px; background: var(--accent); }
+.mark-shield::before { left: -8px; top: 10px; transform: skew(-17deg); }
+.mark-shield::after { right: -8px; bottom: 10px; transform: skew(-17deg); }
+.mark-shield b { position: absolute; inset: 0; display: grid; place-items: center; font: 500 24px/1 var(--font-display), sans-serif; letter-spacing: -.05em; }
+.mark-shield i:first-of-type { position: absolute; left: 10px; top: 10px; width: 8px; height: 8px; border-top: 1px solid currentColor; border-left: 1px solid currentColor; opacity: .45; }
+.mark-shield i:last-of-type { position: absolute; right: 10px; bottom: 10px; width: 8px; height: 8px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; opacity: .45; }
+.logo-option-copy { padding: 28px 30px 32px; }
+.logo-option-copy h2 { margin: 0 0 13px; font: 400 34px/1.08 var(--font-display), var(--font-manrope), sans-serif; }
+.logo-option-copy p { max-width: 520px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.75; }
+.logo-choice-note { margin: 38px 0 0; padding: 24px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+
 .route-service-list { border-top: 1px solid var(--line); }
 .route-service { display: grid; grid-template-columns: 90px 1fr 64px; align-items: center; min-height: 185px; border-bottom: 1px solid var(--line); transition: color .25s ease, background .25s ease, padding .25s ease; }
 a.route-service:hover { padding-inline: 26px; color: white; background: var(--deep); }
@@ -449,6 +501,19 @@ footer .brand-name small { color: #8e9690; }
   .footer-grid { min-height: 190px; grid-template-columns: 1fr; gap: 18px; padding-block: 30px; }
   .footer-nav { justify-content: flex-start; flex-wrap: wrap; }
   .footer-grid > span:last-child { margin: 0; text-align: left; }
+  .logo-lab-intro { padding: 132px 0 68px; }
+  .logo-lab-back { margin-bottom: 46px; }
+  .logo-lab-intro h1 { font-size: 48px; }
+  .logo-lab-intro > .shell > p:last-child { font-size: 15px; }
+  .logo-lab-options { padding: 58px 0 82px; }
+  .logo-options-grid { grid-template-columns: 1fr; }
+  .logo-preview { min-height: 186px; padding: 24px 18px; }
+  .logo-preview-light { min-height: 130px; }
+  .proposal-lockup { gap: 14px; }
+  .proposal-mark { width: 58px; height: 58px; transform: scale(.82); }
+  .proposal-wordmark b { font-size: 20px; }
+  .proposal-wordmark small { font-size: 6px; letter-spacing: .16em; }
+  .logo-option-copy { padding: 24px; }
 }
 
 @media (max-width: 600px) {
