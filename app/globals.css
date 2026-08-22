@@ -131,12 +131,14 @@ section[id] { scroll-margin-top: 98px; }
 .direction-card { position: relative; min-height: 320px; overflow: hidden; background: #272a30; }
 .direction-card.wide { grid-row: 1 / span 2; }
 .direction-card img { object-fit: cover; filter: saturate(.55) contrast(1.08); transition: transform .65s cubic-bezier(.2,.7,.1,1), filter .4s ease; }
-.direction-card.tall img { object-position: center 60%; }
-.direction-card.compact img { object-position: center 46%; }
+.direction-card.wide img { object-position: center 44%; }
+.direction-card.tall img { object-position: center 52%; }
+.direction-card.compact img { object-position: center 48%; }
+.direction-card.concrete img { object-position: center 42%; }
 .direction-card:hover img { transform: scale(1.035); filter: saturate(.8) contrast(1.05); }
 .direction-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,9,11,.08), rgba(8,9,11,.86)); }
 .direction-card.facade .direction-shade { background: linear-gradient(180deg, rgba(8,9,11,.42), rgba(8,9,11,.9)); }
-.direction-card.facade img { object-fit: cover; object-position: center; filter: grayscale(1) contrast(.96) brightness(.72); }
+.direction-card.facade img { object-position: center 50%; }
 .direction-number { position: absolute; top: 30px; left: 34px; color: white; font: 600 14px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; }
 .direction-copy { position: absolute; left: 36px; right: 106px; bottom: 34px; }
 .direction-copy strong { display: block; margin: 0; font: 500 clamp(30px, 3.15vw, 48px)/1.02 var(--font-manrope), sans-serif; letter-spacing: -.045em; }
