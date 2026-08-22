@@ -215,7 +215,7 @@ section[id] { scroll-margin-top: 98px; }
 
 .contact { color: white; background: #151816; }
 .contact-grid { display: grid; grid-template-columns: 1fr .72fr; gap: 100px; }
-.contact h2 { font-size: clamp(62px, 8vw, 112px); }
+.contact h2 { max-width: 680px; font-size: clamp(48px, 5.5vw, 78px); line-height: 1.04; }
 .contact-panel { align-self: end; }
 .contact-panel > p { max-width: 520px; margin: 0 0 40px; color: #aeb7b0; font-size: 15px; }
 .contact-links { border-top: 1px solid rgba(255,255,255,.15); }
