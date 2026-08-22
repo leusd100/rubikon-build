@@ -6,7 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 export function Brand() {
   return (
     <span className="brand" aria-label="RUBIKON BUILD — Construction and Engineering">
-      <span className="brand-slash" aria-hidden="true" />
+      <span className="brand-module-mark" aria-hidden="true"><i /><i /><b /></span>
       <span className="brand-name">
         <b><span>RUBIKON</span> <em>BUILD</em></b>
         <small>Construction &amp; Engineering</small>

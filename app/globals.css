@@ -42,7 +42,13 @@ section[id] { scroll-margin-top: 98px; }
 .nav-wrap { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .brand-link { display: inline-flex; }
 .brand { display: inline-flex; align-items: center; gap: 15px; line-height: 1; }
-.brand-slash { width: 6px; height: 52px; flex: 0 0 auto; background: var(--accent); transform: skew(-17deg); transform-origin: center; }
+.brand-module-mark { position: relative; width: 50px; height: 50px; flex: 0 0 auto; color: currentColor; }
+.brand-module-mark::before, .brand-module-mark::after, .brand-module-mark i:first-child { content: ''; position: absolute; width: 50%; height: 50%; border: 2px solid currentColor; transform: rotate(30deg) skewY(-10deg); }
+.brand-module-mark::before { left: 12%; top: 18%; }
+.brand-module-mark::after { right: 6%; top: 33%; border-color: var(--accent); }
+.brand-module-mark i:first-child { left: 27%; top: 42%; opacity: .38; }
+.brand-module-mark i:nth-child(2) { position: absolute; left: 12%; bottom: 7%; width: 80%; height: 2px; background: currentColor; }
+.brand-module-mark b { position: absolute; right: 4%; top: 7%; width: 11%; height: 11%; background: var(--accent); }
 .brand-name { display: grid; letter-spacing: .06em; }
 .brand-name b { font: 400 24px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .075em; white-space: nowrap; }
 .brand-name b em { color: inherit; font-style: normal; font-weight: 400; }
@@ -422,7 +428,7 @@ footer .brand-name small { color: #8e9690; }
   .section { padding: 82px 0; }
   .nav-wrap { min-height: 72px; }
   .brand { gap: 10px; }
-  .brand-slash { width: 4px; height: 38px; }
+  .brand-module-mark { width: 38px; height: 38px; }
   .brand-name b { font-size: 17px; letter-spacing: .055em; }
   .brand-name small { display: none; }
   .header-contacts { display: none; }
