@@ -174,6 +174,7 @@ section[id] { scroll-margin-top: 98px; }
 
 .team { background: var(--warm); }
 .team-heading { margin-bottom: 60px; }
+.team-heading::after { display: none; }
 .team-heading h2 em { color: var(--accent-dark); font-style: normal; }
 .team-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; gap: 32px; }
 .person-card { display: grid; grid-template-columns: 3fr 2fr; min-height: 500px; background: #e5e4de; }
