@@ -38,9 +38,18 @@ export function SiteHeader() {
             <span><small>Email</small><strong>буде додано</strong></span>
           </Link>
         </div>
-        <Link className="header-contact-mobile" href="/#contact">
-          <Phone aria-hidden="true" /> Контакти
-        </Link>
+        <details className="mobile-menu">
+          <summary aria-label="Відкрити меню">
+            <span>Меню</span>
+            <i aria-hidden="true"><b /><b /></i>
+          </summary>
+          <nav aria-label="Мобільна навігація">
+            <Link href="/napryamky"><small>01</small> Напрямки</Link>
+            <Link href="/#process"><small>02</small> Як працюємо</Link>
+            <Link href="/pro-nas"><small>03</small> Про компанію</Link>
+            <Link href="/#contact"><small>04</small> Контакти</Link>
+          </nav>
+        </details>
       </div>
     </header>
   );
