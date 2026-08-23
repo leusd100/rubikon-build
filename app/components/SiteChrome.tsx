@@ -1,5 +1,5 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- regular anchors avoid the hosted vinext Link runtime failure */
 import Image from 'next/image';
-import Link from 'next/link';
 import { CalendarClock, Factory, Mail, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -19,24 +19,24 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell nav-wrap">
-        <Link className="brand-link" href="/#top" aria-label="RUBIKON BUILD — на головну">
+        <a className="brand-link" href="/#top" aria-label="RUBIKON BUILD — на головну">
           <Brand />
-        </Link>
+        </a>
         <nav className="desktop-nav" aria-label="Основна навігація">
-          <Link href="/napryamky">Напрямки</Link>
-          <Link href="/#process">Як працюємо</Link>
-          <Link href="/pro-nas">Про компанію</Link>
-          <Link href="/#contact">Контакти</Link>
+          <a href="/napryamky">Напрямки</a>
+          <a href="/#process">Як працюємо</a>
+          <a href="/pro-nas">Про компанію</a>
+          <a href="/#contact">Контакти</a>
         </nav>
         <div className="header-contacts" aria-label="Контакти компанії">
           <a className="header-contact header-phone" href="tel:+380682614264" aria-label="Зателефонувати до RUBIKON BUILD">
             <Phone aria-hidden="true" />
             <span><small>Телефон</small><strong>+38 068 261 42 64</strong></span>
           </a>
-          <Link className="header-contact" href="/#contact" aria-label="Перейти до електронної пошти компанії">
+          <a className="header-contact" href="/#contact" aria-label="Перейти до електронної пошти компанії">
             <Mail aria-hidden="true" />
             <span><small>Email</small><strong>буде додано</strong></span>
-          </Link>
+          </a>
         </div>
         <details className="mobile-menu">
           <summary aria-label="Відкрити меню">
@@ -44,10 +44,10 @@ export function SiteHeader() {
             <i aria-hidden="true"><b /><b /></i>
           </summary>
           <nav aria-label="Мобільна навігація">
-            <Link href="/napryamky"><small>01</small> Напрямки</Link>
-            <Link href="/#process"><small>02</small> Як працюємо</Link>
-            <Link href="/pro-nas"><small>03</small> Про компанію</Link>
-            <Link href="/#contact"><small>04</small> Контакти</Link>
+            <a href="/napryamky"><small>01</small> Напрямки</a>
+            <a href="/#process"><small>02</small> Як працюємо</a>
+            <a href="/pro-nas"><small>03</small> Про компанію</a>
+            <a href="/#contact"><small>04</small> Контакти</a>
           </nav>
         </details>
       </div>
@@ -59,14 +59,14 @@ export function SiteFooter() {
   return (
     <footer>
       <div className="shell footer-grid">
-        <Link className="brand-link" href="/#top" aria-label="RUBIKON BUILD — на головну">
+        <a className="brand-link" href="/#top" aria-label="RUBIKON BUILD — на головну">
           <Brand />
-        </Link>
+        </a>
         <nav className="footer-nav" aria-label="Навігація у підвалі">
-          <Link href="/napryamky">Напрямки</Link>
-          <Link href="/#process">Як працюємо</Link>
-          <Link href="/pro-nas">Про компанію</Link>
-          <Link href="/#contact">Контакти</Link>
+          <a href="/napryamky">Напрямки</a>
+          <a href="/#process">Як працюємо</a>
+          <a href="/pro-nas">Про компанію</a>
+          <a href="/#contact">Контакти</a>
         </nav>
         <span>© {new Date().getFullYear()} RUBIKON BUILD</span>
       </div>
@@ -94,7 +94,7 @@ export function Breadcrumbs({ items }: { items: Array<{ label: string; href: str
         {items.map((item, index) => (
           <span key={item.href}>
             {index > 0 && <i aria-hidden="true">/</i>}
-            {index === items.length - 1 ? <b>{item.label}</b> : <Link href={item.href}>{item.label}</Link>}
+            {index === items.length - 1 ? <b>{item.label}</b> : <a href={item.href}>{item.label}</a>}
           </span>
         ))}
       </nav>
@@ -130,7 +130,7 @@ export function EstimateBrief() {
             </article>
           ))}
         </div>
-        <Link className="section-link" href="/#contact">Підготувати запит <span aria-hidden="true">↗</span></Link>
+        <a className="section-link" href="/#contact">Підготувати запит <span aria-hidden="true">↗</span></a>
       </div>
     </section>
   );
@@ -196,9 +196,9 @@ export function PageCta({
         </div>
         <div>
           <p>{text}</p>
-          <Link className="button button-primary" href="/#contact">
+          <a className="button button-primary" href="/#contact">
             Перейти до контактів <span aria-hidden="true">↗</span>
-          </Link>
+          </a>
         </div>
       </div>
     </section>

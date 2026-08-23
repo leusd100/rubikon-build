@@ -1,5 +1,5 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- regular anchors avoid the hosted vinext Link runtime failure */
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Варіанти логотипа | RUBIKON BUILD',
@@ -71,7 +71,7 @@ export default function LogoVariantsPage() {
     <main className="logo-lab">
       <section className="logo-lab-intro">
         <div className="shell">
-          <Link className="logo-lab-back" href="/">← Повернутися на сайт</Link>
+          <a className="logo-lab-back" href="/">← Повернутися на сайт</a>
           <p className="eyebrow light"><span /> Робочі концепції</p>
           <h1>Новий знак для<br /><em>RUBIKON BUILD</em></h1>
           <p>Шрифт і назву залишаємо. Порівнюємо лише знак — від виразної монограми до стриманого інженерного символу.</p>

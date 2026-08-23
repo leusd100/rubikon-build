@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubikonbuild.com';
@@ -64,7 +63,7 @@ export default function DirectionsPage() {
                 </>
               );
               return service.href ? (
-                <Link className="route-service" href={service.href} id={service.id} key={service.number}>{content}</Link>
+                <a className="route-service" href={service.href} id={service.id} key={service.number}>{content}</a>
               ) : (
                 <article className="route-service" id={service.id} key={service.number}>{content}</article>
               );

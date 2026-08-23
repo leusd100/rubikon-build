@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   BadgeCheck,
   ClipboardList,
@@ -132,12 +131,12 @@ export default function Home() {
               комплексно або виконуємо окремі етапи як підрядник чи субпідрядник.
             </p>
             <div className="hero-actions">
-              <Link className="button button-primary" href="#contact">
+              <a className="button button-primary" href="#contact">
                 Отримати попередню оцінку <span aria-hidden="true">↗</span>
-              </Link>
-              <Link className="text-link" href="/napryamky">
+              </a>
+              <a className="text-link" href="/napryamky">
                 Дивитися напрямки <span aria-hidden="true">↗</span>
-              </Link>
+              </a>
             </div>
           </div>
           <div className="hero-cycle" aria-label="Формати співпраці">
@@ -169,17 +168,17 @@ export default function Home() {
             {services.map((service) => {
               const Icon = service.icon;
               return (
-                <Link className="service-card" href={service.href} key={service.number}>
+                <a className="service-card" href={service.href} key={service.number}>
                   <span className="service-number">{service.number}</span>
                   <Icon className="service-icon" aria-hidden="true" />
                   <h3>{service.title}</h3>
                   <p>{service.text}</p>
                   <span className="service-arrow" aria-hidden="true">↗</span>
-                </Link>
+                </a>
               );
             })}
           </div>
-          <Link className="section-link" href="/napryamky">Усі напрямки робіт <span aria-hidden="true">↗</span></Link>
+          <a className="section-link" href="/napryamky">Усі напрямки робіт <span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
@@ -197,7 +196,7 @@ export default function Home() {
           </div>
           <div className="direction-grid">
             {directions.map((direction) => (
-              <Link className={`direction-card ${direction.className}`} href={direction.href} key={direction.number}>
+              <a className={`direction-card ${direction.className}`} href={direction.href} key={direction.number}>
                 <Image
                   src={direction.image}
                   alt={direction.alt}
@@ -211,7 +210,7 @@ export default function Home() {
                   <small>{direction.text}</small>
                 </span>
                 <span className="direction-arrow" aria-hidden="true">↗</span>
-              </Link>
+              </a>
             ))}
           </div>
           <p className="media-note">
@@ -244,7 +243,7 @@ export default function Home() {
                 Практика будівельного майданчика допомагає бачити реальні ризики, а інженерний
                 підхід — заздалегідь перетворювати їх на зрозумілі технічні рішення.
               </p>
-              <Link className="section-link" href="/pro-nas">Більше про компанію <span aria-hidden="true">↗</span></Link>
+              <a className="section-link" href="/pro-nas">Більше про компанію <span aria-hidden="true">↗</span></a>
             </div>
           </article>
 

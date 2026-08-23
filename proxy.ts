@@ -28,6 +28,15 @@ const responseHeaders = {
 const cacheablePages = new Set(['/', '/napryamky', '/metalokonstruktsii', '/angary', '/pro-nas']);
 
 export function proxy(request: NextRequest) {
+  if (request.nextUrl.hostname === 'www.rubikonbuild.com') {
+    const canonicalUrl = request.nextUrl.clone();
+    canonicalUrl.protocol = 'https:';
+    canonicalUrl.hostname = 'rubikonbuild.com';
+    canonicalUrl.port = '';
+
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
+
   const response = NextResponse.next();
 
   for (const [key, value] of Object.entries(responseHeaders)) {
