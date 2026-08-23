@@ -6,7 +6,7 @@ const liveUrl = 'https://rubikonbuild.com';
 
 export const metadata: Metadata = {
   title: 'Напрямки будівництва у Дніпрі | RUBIKON BUILD',
-  description: 'Металоконструкції, ангари, склади, зерносховища, бетонні та фасадні роботи у Дніпрі й області: під ключ або як окремий етап.',
+  description: 'Ангари, склади, зерносховища, металоконструкції, бетонні та покрівельні роботи у Дніпрі й області: під ключ або як окремий етап.',
   alternates: { canonical: '/napryamky' },
   openGraph: {
     title: 'Напрямки робіт RUBIKON BUILD',
@@ -18,12 +18,11 @@ export const metadata: Metadata = {
 };
 
 const services = [
-  { number: '01', title: 'Металоконструкції', text: 'Каркаси, колони, балки, ферми, опорні та нестандартні металеві вузли. Організовуємо виготовлення, доставку й монтаж.', href: '/metalokonstruktsii', id: 'metalokonstruktsii' },
-  { number: '02', title: 'Ангари та склади', text: 'Швидкомонтовані споруди для виробництва, логістики, техніки, матеріалів і готової продукції.', href: '/angary', id: 'angary' },
-  { number: '03', title: 'Зерносховища під ключ', text: 'Підготовка основи, металевий каркас, огороджувальні конструкції, монтаж і координація суміжних етапів.', id: 'zernoskhovyshcha' },
-  { number: '04', title: 'Бетонні роботи', text: 'Фундаменти, основи під конструкції та обладнання, промислові підлоги й монолітні ділянки відповідно до задачі об’єкта.', id: 'betonni-roboty' },
-  { number: '05', title: 'Фасадні роботи', text: 'Монтаж, утеплення та оновлення фасадів із увагою до герметичності, примикань і довговічності системи.', id: 'fasady' },
-  { number: '06', title: 'Комплексне будівництво', text: 'Підбираємо склад робіт під задачу й координуємо процес від підготовки майданчика до перевірки результату.', id: 'kompleksne-budivnytstvo' },
+  { number: '01', title: 'Ангари та склади', text: 'Швидкомонтовані споруди для виробництва, логістики, техніки, матеріалів і готової продукції.', href: '/angary', id: 'angary' },
+  { number: '02', title: 'Зерносховища під ключ', text: 'Підготовка основи, металевий каркас, огороджувальні конструкції, монтаж і координація суміжних етапів.', href: '/zernoskhovyshcha', id: 'zernoskhovyshcha' },
+  { number: '03', title: 'Металоконструкції', text: 'Каркаси, колони, балки, ферми, опорні та нестандартні металеві вузли. Організовуємо виготовлення, доставку й монтаж.', href: '/metalokonstruktsii', id: 'metalokonstruktsii' },
+  { number: '04', title: 'Бетонні роботи', text: 'Фундаменти, основи під конструкції та обладнання, промислові підлоги й монолітні ділянки відповідно до задачі об’єкта.', href: '/betonni-roboty', id: 'betonni-roboty' },
+  { number: '05', title: 'Покрівельні роботи', text: 'Монтаж і ремонт покрівель промислових, складських та аграрних споруд із герметизацією вузлів і примикань.', href: '/pokrivelni-roboty', id: 'pokrivelni-roboty' },
 ];
 
 export default function DirectionsPage() {
@@ -49,7 +48,7 @@ export default function DirectionsPage() {
           <div className="page-heading split-heading">
             <div>
               <p className="eyebrow"><span /> Що ми робимо</p>
-              <h2>Шість напрямків. Один відповідальний підхід</h2>
+              <h2>П’ять напрямків. Один відповідальний підхід</h2>
             </div>
             <p>Точний перелік робіт визначаємо після знайомства з об’єктом. Можемо сформувати весь цикл або долучитися лише там, де потрібна наша компетенція.</p>
           </div>
@@ -62,11 +61,7 @@ export default function DirectionsPage() {
                   <b aria-hidden="true">{service.href ? '↗' : '—'}</b>
                 </>
               );
-              return service.href ? (
-                <a className="route-service" href={service.href} id={service.id} key={service.number}>{content}</a>
-              ) : (
-                <article className="route-service" id={service.id} key={service.number}>{content}</article>
-              );
+              return <a className="route-service" href={service.href} id={service.id} key={service.number}>{content}</a>;
             })}
           </div>
         </div>
@@ -74,7 +69,7 @@ export default function DirectionsPage() {
 
       <section className="page-section page-media-band">
         <div className="shell page-media-grid">
-          <div className="media-tile media-tile-large"><Image src="/media/competence-steel.jpg" alt="Зварювання несучої сталевої конструкції" fill sizes="(max-width: 800px) 100vw, 60vw" /></div>
+          <div className="media-tile media-tile-large"><Image src="/media/competence-hangar.jpg" alt="Промислові ангари та складські споруди" fill sizes="(max-width: 800px) 100vw, 60vw" /></div>
           <div className="media-tile"><Image src="/media/competence-grain.jpg" alt="Промислове зерносховище біля поля" fill sizes="(max-width: 800px) 100vw, 40vw" /></div>
         </div>
         <p className="shell media-note dark-note">Візуальні матеріали ілюструють напрямки робіт. Власне портфоліо буде додано окремим розділом.</p>

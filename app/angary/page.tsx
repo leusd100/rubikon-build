@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { ClipboardList, DraftingCompass, HardHat, MapPinned } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubikonbuild.com';
@@ -17,11 +19,11 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/competence-hangar.jpg`] },
 };
 
-const stages = [
-  ['01', 'Задача і майданчик', 'Визначаємо призначення споруди, потрібні габарити, режим експлуатації та особливості ділянки.'],
-  ['02', 'Концепція', 'Погоджуємо конструктивну схему, огородження, ворота, інженерні потреби та склад робіт.'],
-  ['03', 'Підготовка', 'Формуємо кошторис, послідовність робіт, комплектування та план організації монтажу.'],
-  ['04', 'Будівництво', 'Виконуємо або координуємо основу, каркас, огороджувальні конструкції та завершальні етапи.'],
+const stages: Array<[string, string, string, LucideIcon]> = [
+  ['01', 'Задача і майданчик', 'Визначаємо призначення споруди, потрібні габарити, режим експлуатації та особливості ділянки.', MapPinned],
+  ['02', 'Концепція', 'Погоджуємо конструктивну схему, огородження, ворота, інженерні потреби та склад робіт.', DraftingCompass],
+  ['03', 'Підготовка', 'Формуємо кошторис, послідовність робіт, комплектування та план організації монтажу.', ClipboardList],
+  ['04', 'Будівництво', 'Виконуємо або координуємо основу, каркас, огороджувальні конструкції та завершальні етапи.', HardHat],
 ];
 
 const costFactors = [
@@ -39,7 +41,7 @@ export default function HangarsPage() {
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Ангари', href: '/angary' }]} />
-          <p className="eyebrow light"><span /> Напрямок 02</p>
+          <p className="eyebrow light"><span /> Напрямок 01</p>
           <h1>Ангари та склади<br /><em>під задачу бізнесу</em></h1>
           <p>Реалізуємо швидкомонтовані споруди під ключ або беремо на себе окремі етапи — від каркаса й огородження до монтажу на об’єкті.</p>
         </div>
@@ -64,7 +66,7 @@ export default function HangarsPage() {
             <p>Для повного циклу координуємо основу, каркас, покрівлю, стіни, ворота й суміжні роботи. За потреби виконуємо лише погоджену частину цього комплексу.</p>
           </div>
           <ol className="detail-steps">
-            {stages.map(([number, title, text]) => <li key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></li>)}
+            {stages.map(([number, title, text, Icon]) => <li key={number}><span>{number}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{title}</h3><p>{text}</p></li>)}
           </ol>
         </div>
       </section>

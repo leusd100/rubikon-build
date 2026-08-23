@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { ClipboardList, DraftingCompass, Factory, HardHat } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubikonbuild.com';
@@ -17,11 +19,11 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/competence-steel.jpg`] },
 };
 
-const steps = [
-  ['01', 'Вихідні дані', 'Уточнюємо призначення конструкції, геометрію, навантаження та умови монтажу.'],
-  ['02', 'Технічне рішення', 'Формуємо конструктивну схему, вузли, склад матеріалів і послідовність робіт.'],
-  ['03', 'Виготовлення', 'Організовуємо заготівлю, складання, зварювання та підготовку конструкцій до монтажу.'],
-  ['04', 'Монтаж', 'Доставляємо елементи на об’єкт, виконуємо складання та контролюємо ключові з’єднання.'],
+const steps: Array<[string, string, string, LucideIcon]> = [
+  ['01', 'Вихідні дані', 'Уточнюємо призначення конструкції, геометрію, навантаження та умови монтажу.', ClipboardList],
+  ['02', 'Технічне рішення', 'Формуємо конструктивну схему, вузли, склад матеріалів і послідовність робіт.', DraftingCompass],
+  ['03', 'Виготовлення', 'Організовуємо заготівлю, складання, зварювання та підготовку конструкцій до монтажу.', Factory],
+  ['04', 'Монтаж', 'Доставляємо елементи на об’єкт, виконуємо складання та контролюємо ключові з’єднання.', HardHat],
 ];
 
 const costFactors = [
@@ -39,7 +41,7 @@ export default function SteelPage() {
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Металоконструкції', href: '/metalokonstruktsii' }]} />
-          <p className="eyebrow light"><span /> Напрямок 01</p>
+          <p className="eyebrow light"><span /> Напрямок 03</p>
           <h1>Металоконструкції<br /><em>від деталі до монтажу</em></h1>
           <p>Закриваємо весь цикл робіт із металоконструкціями або окремо виконуємо виготовлення, доставку чи монтаж у форматі підряду та субпідряду.</p>
         </div>
@@ -67,7 +69,7 @@ export default function SteelPage() {
             <p>Надійність конструкції залежить від точності вихідних даних, якості виготовлення та правильної роботи на монтажі.</p>
           </div>
           <ol className="detail-steps">
-            {steps.map(([number, title, text]) => <li key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></li>)}
+            {steps.map(([number, title, text, Icon]) => <li key={number}><span>{number}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{title}</h3><p>{text}</p></li>)}
           </ol>
         </div>
       </section>
