@@ -15,7 +15,6 @@ import {
   Wheat,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { HeroVideo } from './components/HeroVideo';
 import { EstimateBrief, MessengerLinks, TeamSection } from './components/SiteChrome';
 
 const services = [
@@ -117,7 +116,15 @@ export default function Home() {
     <main>
       <section className="hero" id="top">
         <div className="hero-media" aria-hidden="true">
-          <HeroVideo />
+          <video
+            src="/media/hero-steel-frame.mp4"
+            poster="/media/hero-steel-frame.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
         </div>
         <div className="hero-shade" aria-hidden="true" />
         <div className="hero-grid" aria-hidden="true" />

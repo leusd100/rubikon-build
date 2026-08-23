@@ -3,11 +3,11 @@ import Image from 'next/image';
 import { CalendarClock, Factory, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { CookieSettingsButton } from './AnalyticsConsent';
+import ViberContactButton from './ViberContactButton';
 
 const messengerLinks: Array<{ label: string; href: string; icon: string; shortName: string; kind: string }> = [
   { label: 'Написати в Telegram', href: 'https://t.me/+380682614264', icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
   { label: 'Написати у WhatsApp', href: 'https://wa.me/380682614264', icon: '/brands/whatsapp.svg', shortName: 'WA', kind: 'whatsapp' },
-  { label: 'Написати у Viber', href: 'viber://chat?number=%2B380682614264', icon: '/brands/viber.svg', shortName: 'VB', kind: 'viber' },
 ];
 
 export function MessengerLinks({ className }: { className: string }) {
@@ -18,14 +18,17 @@ export function MessengerLinks({ className }: { className: string }) {
           className={`messenger-link messenger-${kind}`}
           href={href}
           key={kind}
+          data-contact-method={kind}
           aria-label={label}
           title={label}
-          {...(href.startsWith('https://') ? { target: '_blank', rel: 'noreferrer' } : {})}
+          target="_blank"
+          rel="noreferrer"
         >
           <Image className="messenger-brand-icon" src={icon} width={24} height={24} alt="" aria-hidden="true" />
           <span>{shortName}</span>
         </a>
       ))}
+      <ViberContactButton />
     </div>
   );
 }

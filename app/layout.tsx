@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/next-script-for-ga -- Consent mode must run before the external Google tag. */
 import type { Metadata } from 'next';
 import { IBM_Plex_Sans_Condensed, Jost, Manrope } from 'next/font/google';
 import './globals.css';
@@ -90,6 +91,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="uk">
       <head>
+        <link
+          rel="preload"
+          href="/media/hero-steel-frame.jpg"
+          as="image"
+          type="image/jpeg"
+          fetchPriority="high"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

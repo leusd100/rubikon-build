@@ -90,7 +90,7 @@ section[id] { scroll-margin-top: 98px; }
 .header-contact:hover { color: white; background: var(--accent); }
 .header-contact:hover svg, .header-contact:hover small, .header-contact:hover strong { color: white; }
 .header-messengers { display: flex; align-items: stretch; }
-.messenger-link { display: grid; place-items: center; color: rgba(255,255,255,.78); transition: color .2s ease, background .2s ease, transform .2s ease; }
+.messenger-link { display: grid; place-items: center; padding: 0; color: rgba(255,255,255,.78); border: 0; border-radius: 0; background: transparent; font: inherit; cursor: pointer; appearance: none; transition: color .2s ease, background .2s ease, transform .2s ease; }
 .messenger-brand-icon { width: 21px; height: 21px; display: block; object-fit: contain; transition: transform .2s ease, filter .2s ease; }
 .messenger-link span { font-size: 8px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
 .header-messengers .messenger-link { width: 44px; border-left: 1px solid rgba(255,255,255,.18); }
@@ -111,8 +111,8 @@ section[id] { scroll-margin-top: 98px; }
 .mobile-menu nav a:last-child { border-bottom: 0; }
 .mobile-menu nav small { color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: .08em; }
 .mobile-messengers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px 0 8px; border-top: 1px solid rgba(255,255,255,.12); }
-.mobile-menu nav .mobile-messengers a { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(255,255,255,.15); font-size: 8px; }
-.mobile-menu nav .mobile-messengers a:hover { border-color: var(--accent); }
+  .mobile-menu nav .mobile-messengers .messenger-link { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(255,255,255,.15); font-size: 8px; }
+  .mobile-menu nav .mobile-messengers .messenger-link:hover { border-color: var(--accent); }
 .mobile-menu nav .mobile-messengers .messenger-brand-icon { width: 22px; height: 22px; }
 
 .hero { position: relative; min-height: 900px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #101012; }

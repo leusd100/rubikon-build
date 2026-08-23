@@ -20,11 +20,14 @@ function updateAnalyticsConsent(choice: ConsentChoice) {
   window.gtag('consent', 'update', { analytics_storage: choice });
 }
 
-function contactType(href: string) {
+function contactType(element: HTMLElement) {
+  const explicitType = element.dataset.contactMethod;
+  if (explicitType) return explicitType;
+
+  const href = element instanceof HTMLAnchorElement ? element.href : '';
   if (href.startsWith('tel:')) return 'phone';
   if (href.includes('t.me')) return 'telegram';
   if (href.includes('wa.me')) return 'whatsapp';
-  if (href.startsWith('viber:')) return 'viber';
   return null;
 }
 
@@ -46,13 +49,18 @@ export default function AnalyticsConsent() {
 
   useEffect(() => {
     const savedChoice = window.localStorage.getItem(storageKey) as ConsentChoice | null;
-    setChoice(savedChoice);
-    setShowBanner(savedChoice === null);
-    if (savedChoice) updateAnalyticsConsent(savedChoice);
+    const frame = window.requestAnimationFrame(() => {
+      setChoice(savedChoice);
+      setShowBanner(savedChoice === null);
+      if (savedChoice) updateAnalyticsConsent(savedChoice);
+    });
 
     const showSettings = () => setShowBanner(true);
     window.addEventListener(settingsEvent, showSettings);
-    return () => window.removeEventListener(settingsEvent, showSettings);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener(settingsEvent, showSettings);
+    };
   }, []);
 
   useEffect(() => {
@@ -60,9 +68,9 @@ export default function AnalyticsConsent() {
 
     const trackContact = (event: MouseEvent) => {
       const target = event.target as Element | null;
-      const link = target?.closest<HTMLAnchorElement>('a[href]');
-      if (!link) return;
-      const type = contactType(link.href);
+      const contact = target?.closest<HTMLElement>('[data-contact-method], a[href^="tel:"]');
+      if (!contact) return;
+      const type = contactType(contact);
       if (type) window.gtag?.('event', 'contact_click', { contact_method: type });
     };
 

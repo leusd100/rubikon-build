@@ -4,12 +4,12 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${isDevelopment ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com",
   "media-src 'self'",
   "font-src 'self' data:",
-  `connect-src 'self'${isDevelopment ? ' ws: http://localhost:*' : ''}`,
+  `connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com${isDevelopment ? ' ws: http://localhost:*' : ''}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },
-      ...['/', '/napryamky', '/metalokonstruktsii', '/angary', '/pro-nas'].map((source) => ({
+      ...['/', '/napryamky', '/metalokonstruktsii', '/angary', '/zernoskhovyshcha', '/betonni-roboty', '/pokrivelni-roboty', '/pro-nas', '/polityka-konfidentsiinosti'].map((source) => ({
         source,
         headers: [cacheHeader],
       })),
