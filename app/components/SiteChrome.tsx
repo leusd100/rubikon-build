@@ -1,7 +1,33 @@
 /* eslint-disable @next/next/no-html-link-for-pages -- regular anchors avoid the hosted vinext Link runtime failure */
 import Image from 'next/image';
-import { CalendarClock, Factory, Mail, MapPin, Phone, Ruler } from 'lucide-react';
+import { CalendarClock, Factory, MapPin, MessageCircle, MessagesSquare, Phone, Ruler, Send } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+
+const messengerLinks: Array<{ label: string; href: string; icon: LucideIcon; kind: string }> = [
+  { label: 'Написати в Telegram', href: 'https://t.me/+380682614264', icon: Send, kind: 'telegram' },
+  { label: 'Написати у WhatsApp', href: 'https://wa.me/380682614264', icon: MessageCircle, kind: 'whatsapp' },
+  { label: 'Написати у Viber', href: 'viber://chat?number=%2B380682614264', icon: MessagesSquare, kind: 'viber' },
+];
+
+export function MessengerLinks({ className }: { className: string }) {
+  return (
+    <div className={className} aria-label="Месенджери RUBIKON BUILD">
+      {messengerLinks.map(({ label, href, icon: Icon, kind }) => (
+        <a
+          className={`messenger-link messenger-${kind}`}
+          href={href}
+          key={kind}
+          aria-label={label}
+          title={label}
+          {...(href.startsWith('https://') ? { target: '_blank', rel: 'noreferrer' } : {})}
+        >
+          <Icon aria-hidden="true" />
+          <span>{kind === 'telegram' ? 'TG' : kind === 'whatsapp' ? 'WA' : 'VB'}</span>
+        </a>
+      ))}
+    </div>
+  );
+}
 
 export function Brand() {
   return (
@@ -33,10 +59,7 @@ export function SiteHeader() {
             <Phone aria-hidden="true" />
             <span><small>Телефон</small><strong>+38 068 261 42 64</strong></span>
           </a>
-          <a className="header-contact" href="/#contact" aria-label="Перейти до електронної пошти компанії">
-            <Mail aria-hidden="true" />
-            <span><small>Email</small><strong>буде додано</strong></span>
-          </a>
+          <MessengerLinks className="header-messengers" />
         </div>
         <details className="mobile-menu">
           <summary aria-label="Відкрити меню">
@@ -48,6 +71,7 @@ export function SiteHeader() {
             <a href="/#process"><small>02</small> Як працюємо</a>
             <a href="/pro-nas"><small>03</small> Про компанію</a>
             <a href="/#contact"><small>04</small> Контакти</a>
+            <MessengerLinks className="mobile-messengers" />
           </nav>
         </details>
       </div>
@@ -68,7 +92,14 @@ export function SiteFooter() {
           <a href="/pro-nas">Про компанію</a>
           <a href="/#contact">Контакти</a>
         </nav>
-        <span>© {new Date().getFullYear()} RUBIKON BUILD</span>
+        <div className="footer-contact-stack">
+          <a className="footer-phone" href="tel:+380682614264">
+            <Phone aria-hidden="true" />
+            <span>+38 068 261 42 64</span>
+          </a>
+          <MessengerLinks className="footer-messengers" />
+          <span>© {new Date().getFullYear()} RUBIKON BUILD</span>
+        </div>
       </div>
     </footer>
   );

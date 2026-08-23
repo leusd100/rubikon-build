@@ -89,6 +89,13 @@ section[id] { scroll-margin-top: 98px; }
 .header-phone strong { color: white; font-size: 11px; letter-spacing: .025em; text-transform: none; white-space: nowrap; }
 .header-contact:hover { color: white; background: var(--accent); }
 .header-contact:hover svg, .header-contact:hover small, .header-contact:hover strong { color: white; }
+.header-messengers { display: flex; align-items: stretch; }
+.messenger-link { display: grid; place-items: center; color: rgba(255,255,255,.78); transition: color .2s ease, background .2s ease, transform .2s ease; }
+.messenger-link svg { width: 18px; height: 18px; stroke-width: 1.7; }
+.messenger-link span { font-size: 8px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
+.header-messengers .messenger-link { width: 44px; border-left: 1px solid rgba(255,255,255,.18); }
+.header-messengers .messenger-link span { display: none; }
+.messenger-link:hover { color: white; background: var(--accent); }
 .mobile-menu { position: relative; display: none; }
 .mobile-menu summary { min-width: 106px; height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 15px; border: 1px solid rgba(255,255,255,.3); cursor: pointer; list-style: none; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .mobile-menu summary::-webkit-details-marker { display: none; }
@@ -102,6 +109,9 @@ section[id] { scroll-margin-top: 98px; }
 .mobile-menu nav a { min-height: 58px; display: grid; grid-template-columns: 30px 1fr; align-items: center; border-bottom: 1px solid rgba(255,255,255,.12); font-size: 16px; font-weight: 680; }
 .mobile-menu nav a:last-child { border-bottom: 0; }
 .mobile-menu nav small { color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.mobile-messengers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px 0 8px; border-top: 1px solid rgba(255,255,255,.12); }
+.mobile-menu nav .mobile-messengers a { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(255,255,255,.15); font-size: 8px; }
+.mobile-menu nav .mobile-messengers a:hover { border-color: var(--accent); }
 
 .hero { position: relative; min-height: 900px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #101012; }
 .hero-media { position: absolute; inset: 0; }
@@ -264,6 +274,10 @@ section[id] { scroll-margin-top: 98px; }
 .contact-phone { transition: color .2s ease; }
 .contact-phone i { color: white; font-size: 14px; font-style: normal; letter-spacing: .02em; text-transform: none; }
 .contact-phone:hover { color: var(--accent); }
+.contact-messenger-row { align-items: center; }
+.contact-messengers { display: flex; gap: 8px; }
+.contact-messengers .messenger-link { width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.17); }
+.contact-messengers .messenger-link span { display: none; }
 
 .inner-page { background: var(--warm); }
 .subhero { position: relative; min-height: 720px; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #171a19; }
@@ -424,13 +438,19 @@ a.route-service:hover p { color: rgba(255,255,255,.62); }
 .page-cta-grid > div:last-child > p { margin: 0 0 30px; color: rgba(255,255,255,.65); font-size: 15px; line-height: 1.75; }
 
 footer { color: #a8b0aa; background: #0e100f; border-top: 1px solid rgba(255,255,255,.1); }
-.footer-grid { min-height: 120px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; gap: 32px; font-size: 11px; }
+.footer-grid { min-height: 142px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; gap: 32px; font-size: 11px; }
 footer .brand-name b { color: white; }
 footer .brand-name small { color: #8e9690; }
 .footer-nav { display: flex; justify-content: center; gap: 24px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
 .footer-nav a { transition: color .2s ease; }
 .footer-nav a:hover { color: white; }
-.footer-grid > span:last-child { text-align: right; }
+.footer-contact-stack { display: grid; justify-items: end; gap: 12px; }
+.footer-phone { display: inline-flex; align-items: center; gap: 9px; color: white; font-size: 13px; font-weight: 700; letter-spacing: .025em; }
+.footer-phone svg { width: 17px; height: 17px; color: var(--accent); stroke-width: 1.7; }
+.footer-messengers { display: flex; gap: 7px; }
+.footer-messengers .messenger-link { width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.16); }
+.footer-messengers .messenger-link span { display: none; }
+.footer-contact-stack > span { color: #737c75; font-size: 9px; letter-spacing: .06em; }
 
 @media (max-width: 1050px) {
   .desktop-nav { gap: 22px; }
@@ -552,7 +572,7 @@ footer .brand-name small { color: #8e9690; }
   .faq-list h3 { font-size: 21px; }
   .footer-grid { min-height: 190px; grid-template-columns: 1fr; gap: 18px; padding-block: 30px; }
   .footer-nav { justify-content: flex-start; flex-wrap: wrap; }
-  .footer-grid > span:last-child { margin: 0; text-align: left; }
+  .footer-contact-stack { justify-items: start; margin-top: 8px; }
   .logo-lab-intro { padding: 132px 0 68px; }
   .logo-lab-back { margin-bottom: 46px; }
   .logo-lab-intro h1 { font-size: 48px; }

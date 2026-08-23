@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { HeroVideo } from './components/HeroVideo';
-import { EstimateBrief, TeamSection } from './components/SiteChrome';
+import { EstimateBrief, MessengerLinks, TeamSection } from './components/SiteChrome';
 
 const services = [
   {
@@ -314,13 +314,13 @@ export default function Home() {
                 <b><Phone aria-hidden="true" />Телефон</b><i>+38 068 261 42 64</i>
               </a>
               <span className="pending-contact"><b><Mail aria-hidden="true" />Email</b><i>буде додано</i></span>
-              <span className="pending-contact">
+              <div className="pending-contact contact-messenger-row">
                 <b>
                   <MessagesSquare aria-hidden="true" />
                   <span>Месенджери<small>Telegram · WhatsApp · Viber</small></span>
                 </b>
-                <i>буде додано</i>
-              </span>
+                <MessengerLinks className="contact-messengers" />
+              </div>
             </div>
           </div>
         </div>
