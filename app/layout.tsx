@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { IBM_Plex_Sans_Condensed, Jost, Manrope } from 'next/font/google';
 import './globals.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
+import AnalyticsConsent from './components/AnalyticsConsent';
 
 const manrope = Manrope({
   variable: '--font-manrope',
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SiteHeader />
         {children}
         <SiteFooter />
+        <AnalyticsConsent />
       </body>
     </html>
   );

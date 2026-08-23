@@ -458,6 +458,27 @@ footer .brand-name small { color: #8e9690; }
 .footer-messengers .messenger-brand-icon { width: 19px; height: 19px; }
 .footer-messengers .messenger-link span { display: none; }
 .footer-contact-stack > span { color: #737c75; font-size: 9px; letter-spacing: .06em; }
+.footer-legal { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 6px 14px; color: #8e9690; font-size: 9px; letter-spacing: .035em; }
+.footer-legal a, .footer-legal-link { color: inherit; transition: color .2s ease; }
+.footer-legal-link { padding: 0; border: 0; font: inherit; letter-spacing: inherit; background: none; cursor: pointer; }
+.footer-legal a:hover, .footer-legal-link:hover { color: white; }
+
+.cookie-banner { position: fixed; z-index: 200; right: 24px; bottom: 24px; width: min(620px, calc(100% - 48px)); display: grid; grid-template-columns: 1fr auto; gap: 28px; padding: 28px; color: white; background: #171a18; border: 1px solid rgba(255,255,255,.2); box-shadow: 0 20px 70px rgba(0,0,0,.35); }
+.cookie-banner strong { display: block; margin-bottom: 8px; font: 600 23px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.cookie-banner p { max-width: 430px; margin: 0; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.65; }
+.cookie-banner a { display: inline-block; margin-top: 10px; color: #d96a35; font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.cookie-actions { display: grid; align-content: end; gap: 8px; }
+.cookie-actions button { min-height: 42px; padding: 0 16px; color: white; border: 1px solid rgba(255,255,255,.28); background: transparent; font: 700 10px/1 var(--font-manrope), sans-serif; letter-spacing: .055em; text-transform: uppercase; cursor: pointer; }
+.cookie-actions .cookie-accept { border-color: var(--accent); background: var(--accent); }
+
+.privacy-hero { padding: 180px 0 80px; color: white; background: #151817; }
+.privacy-hero h1 { max-width: 980px; margin: 28px 0 24px; font: 400 clamp(56px, 8vw, 106px)/.92 var(--font-display), sans-serif; letter-spacing: -.045em; }
+.privacy-hero > .shell > p:last-child { margin: 0; color: rgba(255,255,255,.58); font-size: 13px; }
+.privacy-content { max-width: 980px; }
+.privacy-content article { display: grid; grid-template-columns: .7fr 1.3fr; gap: 60px; padding: 36px 0; border-bottom: 1px solid var(--line); }
+.privacy-content h2 { margin: 0; font: 600 27px/1.12 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.privacy-content p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.8; }
+.privacy-content a { color: var(--accent-dark); font-weight: 700; }
 
 @media (max-width: 1050px) {
   .desktop-nav { gap: 22px; }
@@ -580,6 +601,12 @@ footer .brand-name small { color: #8e9690; }
   .footer-grid { min-height: 190px; grid-template-columns: 1fr; gap: 18px; padding-block: 30px; }
   .footer-nav { justify-content: flex-start; flex-wrap: wrap; }
   .footer-contact-stack { justify-items: start; margin-top: 8px; }
+  .footer-legal { justify-content: flex-start; }
+  .cookie-banner { right: 16px; bottom: 16px; width: calc(100% - 32px); grid-template-columns: 1fr; gap: 20px; padding: 22px; }
+  .cookie-actions { grid-template-columns: 1fr; }
+  .privacy-hero { padding: 132px 0 62px; }
+  .privacy-hero h1 { font-size: clamp(45px, 13vw, 64px); }
+  .privacy-content article { grid-template-columns: 1fr; gap: 16px; }
   .logo-lab-intro { padding: 132px 0 68px; }
   .logo-lab-back { margin-bottom: 46px; }
   .logo-lab-intro h1 { font-size: 48px; }

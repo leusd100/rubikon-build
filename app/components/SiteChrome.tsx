@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { CalendarClock, Factory, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { CookieSettingsButton } from './AnalyticsConsent';
 
 const messengerLinks: Array<{ label: string; href: string; icon: string; shortName: string; kind: string }> = [
   { label: 'Написати в Telegram', href: 'https://t.me/+380682614264', icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
@@ -98,6 +99,10 @@ export function SiteFooter() {
             <span>+38 068 261 42 64</span>
           </a>
           <MessengerLinks className="footer-messengers" />
+          <div className="footer-legal">
+            <a href="/polityka-konfidentsiinosti">Політика конфіденційності</a>
+            <CookieSettingsButton />
+          </div>
           <span>© {new Date().getFullYear()} RUBIKON BUILD</span>
         </div>
       </div>
