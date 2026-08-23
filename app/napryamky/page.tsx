@@ -6,7 +6,7 @@ import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
 export const metadata: Metadata = {
-  title: 'Напрямки будівництва у Дніпрі та області | RUBIKON BUILD',
+  title: 'Напрямки будівництва у Дніпрі | RUBIKON BUILD',
   description: 'Металоконструкції, ангари, склади, зерносховища, бетонні та фасадні роботи у Дніпрі й області: під ключ або як окремий етап.',
   alternates: { canonical: '/napryamky' },
   openGraph: {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Варіанти логотипа | RUBIKON BUILD',
   description: 'Робочі концепції фірмового знака RUBIKON BUILD.',
+  robots: { index: false, follow: false },
 };
 
 const variants = [

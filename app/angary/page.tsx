@@ -5,7 +5,7 @@ import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
 export const metadata: Metadata = {
-  title: 'Будівництво ангарів і складів під ключ у Дніпрі | RUBIKON BUILD',
+  title: 'Ангари та склади під ключ у Дніпрі | RUBIKON BUILD',
   description: 'Будівництво швидкомонтованих ангарів, складів і виробничих споруд у Дніпрі та області: конструкції, огородження, монтаж і координація робіт.',
   alternates: { canonical: '/angary' },
   openGraph: {

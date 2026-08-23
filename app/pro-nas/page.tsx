@@ -5,7 +5,7 @@ import { Breadcrumbs, PageCta, TeamSection } from '../components/SiteChrome';
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
 export const metadata: Metadata = {
-  title: 'Про родинну будівельну компанію | RUBIKON BUILD',
+  title: 'Про родинну компанію | RUBIKON BUILD',
   description: 'RUBIKON BUILD — родинна будівельна компанія з Дніпра. Понад 30 років практичного досвіду та інженерний підхід нового покоління.',
   alternates: { canonical: '/pro-nas' },
   openGraph: {

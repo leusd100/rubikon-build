@@ -1,0 +1,49 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "media-src 'self'",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+  'upgrade-insecure-requests',
+].join('; ');
+
+const responseHeaders = {
+  'Content-Security-Policy': contentSecurityPolicy,
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+};
+
+const cacheablePages = new Set(['/', '/napryamky', '/metalokonstruktsii', '/angary', '/pro-nas']);
+
+export function proxy(request: NextRequest) {
+  const response = NextResponse.next();
+
+  for (const [key, value] of Object.entries(responseHeaders)) {
+    response.headers.set(key, value);
+  }
+
+  if (cacheablePages.has(request.nextUrl.pathname)) {
+    response.headers.set(
+      'Cache-Control',
+      'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+    );
+  }
+
+  return response;
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image).*)'],
+};

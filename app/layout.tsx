@@ -22,13 +22,17 @@ const display = Jost({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://rubicon-build.bronze-spoon-6603.chatgpt.site'),
-  title: 'Металоконструкції та промислові споруди під ключ у Дніпрі | RUBIKON BUILD',
+  title: 'Металоконструкції та ангари у Дніпрі | RUBIKON BUILD',
   description:
     'Металоконструкції, ангари, склади й зерносховища у Дніпрі та області: будівництво під ключ або окремі роботи у форматі підряду та субпідряду.',
   alternates: {
     canonical: '/',
   },
   creator: 'RUBIKON BUILD',
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.svg',
+  },
   openGraph: {
     title: 'Металоконструкції та промислові споруди під ключ | RUBIKON BUILD',
     description: 'Промислові споруди під ключ або окремі роботи з металоконструкцій, бетонування, фасадів і монтажу у Дніпрі та області.',
@@ -38,9 +42,9 @@ export const metadata: Metadata = {
     url: '/',
     images: [
       {
-        url: '/og.png',
-        width: 1730,
-        height: 909,
+        url: '/og.jpg',
+        width: 1200,
+        height: 630,
         alt: 'RUBIKON BUILD — металоконструкції та промислові споруди під ключ',
       },
     ],
@@ -49,9 +53,11 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Металоконструкції та промислові споруди під ключ | RUBIKON BUILD',
     description: 'Промислові споруди під ключ або окремі роботи у форматі підряду та субпідряду.',
-    images: ['/og.png'],
+    images: ['/og.jpg'],
   },
 };
+
+export const dynamic = 'force-static';
 
 const organizationData = {
   '@context': 'https://schema.org',

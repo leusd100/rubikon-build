@@ -5,7 +5,7 @@ import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
 
 export const metadata: Metadata = {
-  title: 'Виготовлення та монтаж металоконструкцій у Дніпрі | RUBIKON BUILD',
+  title: 'Металоконструкції у Дніпрі | RUBIKON BUILD',
   description: 'Проєктування, виготовлення й монтаж металоконструкцій у Дніпрі та області: каркаси, колони, балки, ферми й нестандартні металеві вузли.',
   alternates: { canonical: '/metalokonstruktsii' },
   openGraph: {
