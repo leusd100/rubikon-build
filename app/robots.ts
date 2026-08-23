@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
+const liveUrl = 'https://rubikonbuild.com';
 
 export default function robots(): MetadataRoute.Robots {
   return {

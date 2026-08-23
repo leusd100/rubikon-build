@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 
-const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
+const liveUrl = 'https://rubikonbuild.com';
 
 export const metadata: Metadata = {
   title: 'Металоконструкції у Дніпрі | RUBIKON BUILD',

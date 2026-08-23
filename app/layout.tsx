@@ -21,7 +21,7 @@ const display = Jost({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://rubicon-build.bronze-spoon-6603.chatgpt.site'),
+  metadataBase: new URL('https://rubikonbuild.com'),
   title: 'Промислове будівництво у Дніпрі | RUBIKON BUILD',
   description:
     'Промислове будівництво у Дніпрі та області: комплексна реалізація об’єктів або окремі роботи у форматі підряду й субпідряду.',
@@ -64,7 +64,7 @@ const organizationData = {
   '@type': 'GeneralContractor',
   name: 'RUBIKON BUILD',
   alternateName: 'Рубікон Білд',
-  url: 'https://rubicon-build.bronze-spoon-6603.chatgpt.site',
+  url: 'https://rubikonbuild.com',
   description:
     'Родинна будівельна компанія: промислові споруди під ключ та окремі роботи з металоконструкцій, бетонування, фасадів і монтажу.',
   areaServed: [

@@ -75,7 +75,7 @@ export function SiteFooter() {
 }
 
 export function Breadcrumbs({ items }: { items: Array<{ label: string; href: string }> }) {
-  const baseUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
+  const baseUrl = 'https://rubikonbuild.com';
   const data = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

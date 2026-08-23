@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const liveUrl = 'https://rubicon-build.bronze-spoon-6603.chatgpt.site';
+const liveUrl = 'https://rubikonbuild.com';
 const lastModified = new Date('2026-08-23');
 
 export default function sitemap(): MetadataRoute.Sitemap {
