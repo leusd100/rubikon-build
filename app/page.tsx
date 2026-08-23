@@ -311,7 +311,9 @@ export default function Home() {
               Уточнимо вихідні дані та пояснимо, що потрібно для попередньої оцінки.
             </p>
             <div className="contact-links" id="contact-note">
-              <span className="pending-contact"><b><Phone aria-hidden="true" />Телефон</b><i>буде додано</i></span>
+              <a className="pending-contact contact-phone" href="tel:+380682614264" aria-label="Зателефонувати за номером +38 068 261 42 64">
+                <b><Phone aria-hidden="true" />Телефон</b><i>+38 068 261 42 64</i>
+              </a>
               <span className="pending-contact"><b><Mail aria-hidden="true" />Email</b><i>буде додано</i></span>
               <span className="pending-contact">
                 <b>

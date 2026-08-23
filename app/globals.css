@@ -85,6 +85,8 @@ section[id] { scroll-margin-top: 98px; }
 .header-contact span { display: grid; gap: 3px; }
 .header-contact small { color: rgba(255,255,255,.78); font-size: 9px; font-weight: 800; line-height: 1; letter-spacing: .09em; text-transform: uppercase; }
 .header-contact strong { color: rgba(255,255,255,.45); font-size: 7px; font-weight: 700; line-height: 1; letter-spacing: .08em; text-transform: uppercase; }
+.header-phone { min-width: 178px; }
+.header-phone strong { color: white; font-size: 11px; letter-spacing: .025em; text-transform: none; white-space: nowrap; }
 .header-contact:hover { color: white; background: var(--accent); }
 .header-contact:hover svg, .header-contact:hover small, .header-contact:hover strong { color: white; }
 .mobile-menu { position: relative; display: none; }
@@ -259,6 +261,9 @@ section[id] { scroll-margin-top: 98px; }
 .pending-contact b small { color: #8c958e; font: 500 8px/1.35 var(--font-manrope), sans-serif; letter-spacing: .08em; }
 .pending-contact b svg { width: 20px; height: 20px; color: var(--accent); stroke-width: 1.6; }
 .pending-contact i { color: #8c958e; font: 500 10px/1.5 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.contact-phone { transition: color .2s ease; }
+.contact-phone i { color: white; font-size: 14px; font-style: normal; letter-spacing: .02em; text-transform: none; }
+.contact-phone:hover { color: var(--accent); }
 
 .inner-page { background: var(--warm); }
 .subhero { position: relative; min-height: 720px; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #171a19; }

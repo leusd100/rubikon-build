@@ -65,6 +65,7 @@ const organizationData = {
   name: 'RUBIKON BUILD',
   alternateName: 'Рубікон Білд',
   url: 'https://rubikonbuild.com',
+  telephone: '+380682614264',
   description:
     'Родинна будівельна компанія: промислові споруди під ключ та окремі роботи з металоконструкцій, бетонування, фасадів і монтажу.',
   areaServed: [

@@ -29,10 +29,10 @@ export function SiteHeader() {
           <Link href="/#contact">Контакти</Link>
         </nav>
         <div className="header-contacts" aria-label="Контакти компанії">
-          <Link className="header-contact" href="/#contact" aria-label="Перейти до телефону компанії">
+          <a className="header-contact header-phone" href="tel:+380682614264" aria-label="Зателефонувати до RUBIKON BUILD">
             <Phone aria-hidden="true" />
-            <span><small>Телефон</small><strong>буде додано</strong></span>
-          </Link>
+            <span><small>Телефон</small><strong>+38 068 261 42 64</strong></span>
+          </a>
           <Link className="header-contact" href="/#contact" aria-label="Перейти до електронної пошти компанії">
             <Mail aria-hidden="true" />
             <span><small>Email</small><strong>буде додано</strong></span>
