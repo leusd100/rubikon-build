@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-const measurementId = 'G-WYRXJV71WG';
 const storageKey = 'rubikon-analytics-consent';
 const settingsEvent = 'rubikon:cookie-settings';
 
@@ -15,20 +14,10 @@ declare global {
   }
 }
 
-function initializeAnalytics() {
-  if (document.getElementById('rubikon-google-analytics')) return;
-
+function updateAnalyticsConsent(choice: ConsentChoice) {
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer.push(args));
-  window.gtag('js', new Date());
-  window.gtag('consent', 'update', { analytics_storage: 'granted' });
-  window.gtag('config', measurementId, { anonymize_ip: true });
-
-  const script = document.createElement('script');
-  script.id = 'rubikon-google-analytics';
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-  document.head.appendChild(script);
+  window.gtag('consent', 'update', { analytics_storage: choice });
 }
 
 function contactType(href: string) {
@@ -59,7 +48,7 @@ export default function AnalyticsConsent() {
     const savedChoice = window.localStorage.getItem(storageKey) as ConsentChoice | null;
     setChoice(savedChoice);
     setShowBanner(savedChoice === null);
-    if (savedChoice === 'granted') initializeAnalytics();
+    if (savedChoice) updateAnalyticsConsent(savedChoice);
 
     const showSettings = () => setShowBanner(true);
     window.addEventListener(settingsEvent, showSettings);
@@ -86,11 +75,7 @@ export default function AnalyticsConsent() {
     setChoice(nextChoice);
     setShowBanner(false);
 
-    if (nextChoice === 'granted') {
-      initializeAnalytics();
-    } else {
-      window.gtag?.('consent', 'update', { analytics_storage: 'denied' });
-    }
+    updateAnalyticsConsent(nextChoice);
   };
 
   if (!showBanner) return null;
