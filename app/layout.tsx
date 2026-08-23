@@ -22,9 +22,9 @@ const display = Jost({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://rubicon-build.bronze-spoon-6603.chatgpt.site'),
-  title: 'Металоконструкції та ангари у Дніпрі | RUBIKON BUILD',
+  title: 'Промислове будівництво у Дніпрі | RUBIKON BUILD',
   description:
-    'Металоконструкції, ангари, склади й зерносховища у Дніпрі та області: будівництво під ключ або окремі роботи у форматі підряду та субпідряду.',
+    'Промислове будівництво у Дніпрі та області: комплексна реалізація об’єктів або окремі роботи у форматі підряду й субпідряду.',
   alternates: {
     canonical: '/',
   },
@@ -34,8 +34,8 @@ export const metadata: Metadata = {
     shortcut: '/favicon.svg',
   },
   openGraph: {
-    title: 'Металоконструкції та промислові споруди під ключ | RUBIKON BUILD',
-    description: 'Промислові споруди під ключ або окремі роботи з металоконструкцій, бетонування, фасадів і монтажу у Дніпрі та області.',
+    title: 'Промислове будівництво під ключ | RUBIKON BUILD',
+    description: 'Промислові, складські й аграрні об’єкти під ключ або окремі роботи у форматі підряду та субпідряду у Дніпрі та області.',
     type: 'website',
     locale: 'uk_UA',
     siteName: 'RUBIKON BUILD',
@@ -45,14 +45,14 @@ export const metadata: Metadata = {
         url: '/og.jpg',
         width: 1200,
         height: 630,
-        alt: 'RUBIKON BUILD — металоконструкції та промислові споруди під ключ',
+        alt: 'RUBIKON BUILD — промислове будівництво під ключ',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Металоконструкції та промислові споруди під ключ | RUBIKON BUILD',
-    description: 'Промислові споруди під ключ або окремі роботи у форматі підряду та субпідряду.',
+    title: 'Промислове будівництво під ключ | RUBIKON BUILD',
+    description: 'Промислові, складські й аграрні об’єкти під ключ або окремі роботи у форматі підряду та субпідряду.',
     images: ['/og.jpg'],
   },
 };
