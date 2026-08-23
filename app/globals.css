@@ -91,11 +91,12 @@ section[id] { scroll-margin-top: 98px; }
 .header-contact:hover svg, .header-contact:hover small, .header-contact:hover strong { color: white; }
 .header-messengers { display: flex; align-items: stretch; }
 .messenger-link { display: grid; place-items: center; color: rgba(255,255,255,.78); transition: color .2s ease, background .2s ease, transform .2s ease; }
-.messenger-link svg { width: 18px; height: 18px; stroke-width: 1.7; }
+.messenger-brand-icon { width: 21px; height: 21px; display: block; object-fit: contain; transition: transform .2s ease, filter .2s ease; }
 .messenger-link span { font-size: 8px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
 .header-messengers .messenger-link { width: 44px; border-left: 1px solid rgba(255,255,255,.18); }
 .header-messengers .messenger-link span { display: none; }
-.messenger-link:hover { color: white; background: var(--accent); }
+.messenger-link:hover { color: white; background: rgba(255,255,255,.08); }
+.messenger-link:hover .messenger-brand-icon { transform: translateY(-1px) scale(1.08); filter: saturate(1.15) brightness(1.08); }
 .mobile-menu { position: relative; display: none; }
 .mobile-menu summary { min-width: 106px; height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 15px; border: 1px solid rgba(255,255,255,.3); cursor: pointer; list-style: none; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .mobile-menu summary::-webkit-details-marker { display: none; }
@@ -112,6 +113,7 @@ section[id] { scroll-margin-top: 98px; }
 .mobile-messengers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px 0 8px; border-top: 1px solid rgba(255,255,255,.12); }
 .mobile-menu nav .mobile-messengers a { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(255,255,255,.15); font-size: 8px; }
 .mobile-menu nav .mobile-messengers a:hover { border-color: var(--accent); }
+.mobile-menu nav .mobile-messengers .messenger-brand-icon { width: 22px; height: 22px; }
 
 .hero { position: relative; min-height: 900px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #101012; }
 .hero-media { position: absolute; inset: 0; }
@@ -277,6 +279,7 @@ section[id] { scroll-margin-top: 98px; }
 .contact-messenger-row { align-items: center; }
 .contact-messengers { display: flex; gap: 8px; }
 .contact-messengers .messenger-link { width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.17); }
+.contact-messengers .messenger-brand-icon { width: 23px; height: 23px; }
 .contact-messengers .messenger-link span { display: none; }
 
 .inner-page { background: var(--warm); }
@@ -452,6 +455,7 @@ footer .brand-name small { color: #8e9690; }
 .footer-phone svg { width: 17px; height: 17px; color: var(--accent); stroke-width: 1.7; }
 .footer-messengers { display: flex; gap: 7px; }
 .footer-messengers .messenger-link { width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.16); }
+.footer-messengers .messenger-brand-icon { width: 19px; height: 19px; }
 .footer-messengers .messenger-link span { display: none; }
 .footer-contact-stack > span { color: #737c75; font-size: 9px; letter-spacing: .06em; }
 

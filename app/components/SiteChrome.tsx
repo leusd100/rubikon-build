@@ -1,18 +1,18 @@
 /* eslint-disable @next/next/no-html-link-for-pages -- regular anchors avoid the hosted vinext Link runtime failure */
 import Image from 'next/image';
-import { CalendarClock, Factory, MapPin, MessageCircle, MessagesSquare, Phone, Ruler, Send } from 'lucide-react';
+import { CalendarClock, Factory, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const messengerLinks: Array<{ label: string; href: string; icon: LucideIcon; kind: string }> = [
-  { label: 'Написати в Telegram', href: 'https://t.me/+380682614264', icon: Send, kind: 'telegram' },
-  { label: 'Написати у WhatsApp', href: 'https://wa.me/380682614264', icon: MessageCircle, kind: 'whatsapp' },
-  { label: 'Написати у Viber', href: 'viber://chat?number=%2B380682614264', icon: MessagesSquare, kind: 'viber' },
+const messengerLinks: Array<{ label: string; href: string; icon: string; shortName: string; kind: string }> = [
+  { label: 'Написати в Telegram', href: 'https://t.me/+380682614264', icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
+  { label: 'Написати у WhatsApp', href: 'https://wa.me/380682614264', icon: '/brands/whatsapp.svg', shortName: 'WA', kind: 'whatsapp' },
+  { label: 'Написати у Viber', href: 'viber://chat?number=%2B380682614264', icon: '/brands/viber.svg', shortName: 'VB', kind: 'viber' },
 ];
 
 export function MessengerLinks({ className }: { className: string }) {
   return (
     <div className={className} aria-label="Месенджери RUBIKON BUILD">
-      {messengerLinks.map(({ label, href, icon: Icon, kind }) => (
+      {messengerLinks.map(({ label, href, icon, shortName, kind }) => (
         <a
           className={`messenger-link messenger-${kind}`}
           href={href}
@@ -21,8 +21,8 @@ export function MessengerLinks({ className }: { className: string }) {
           title={label}
           {...(href.startsWith('https://') ? { target: '_blank', rel: 'noreferrer' } : {})}
         >
-          <Icon aria-hidden="true" />
-          <span>{kind === 'telegram' ? 'TG' : kind === 'whatsapp' ? 'WA' : 'VB'}</span>
+          <Image className="messenger-brand-icon" src={icon} width={24} height={24} alt="" aria-hidden="true" />
+          <span>{shortName}</span>
         </a>
       ))}
     </div>
