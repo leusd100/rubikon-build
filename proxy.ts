@@ -25,18 +25,6 @@ const responseHeaders = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 };
 
-const cacheablePages = new Set([
-  '/',
-  '/napryamky',
-  '/metalokonstruktsii',
-  '/angary',
-  '/zernoskhovyshcha',
-  '/betonni-roboty',
-  '/pokrivelni-roboty',
-  '/pro-nas',
-  '/polityka-konfidentsiinosti',
-]);
-
 export function proxy(request: NextRequest) {
   if (request.nextUrl.hostname === 'www.rubikonbuild.com') {
     const canonicalUrl = request.nextUrl.clone();
@@ -53,11 +41,12 @@ export function proxy(request: NextRequest) {
     response.headers.set(key, value);
   }
 
-  if (cacheablePages.has(request.nextUrl.pathname)) {
+  if (request.headers.get('accept')?.includes('text/html')) {
     response.headers.set(
       'Cache-Control',
-      'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+      'no-store, max-age=0, must-revalidate',
     );
+    response.headers.set('CDN-Cache-Control', 'no-store');
   }
 
   return response;
