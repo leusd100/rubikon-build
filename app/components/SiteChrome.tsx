@@ -236,7 +236,7 @@ export function PageCta({
         <div>
           <p>{text}</p>
           <a className="button button-primary" href="/#contact">
-            Перейти до контактів <span aria-hidden="true">↗</span>
+            Обговорити проєкт <span aria-hidden="true">↗</span>
           </a>
         </div>
       </div>

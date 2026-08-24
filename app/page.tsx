@@ -7,7 +7,6 @@ import {
   HardHat,
   Hammer,
   Layers3,
-  Mail,
   MessagesSquare,
   Phone,
   Ruler,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { EstimateBrief, MessengerLinks, TeamSection } from './components/SiteChrome';
+import ProjectInquiryForm from './components/ProjectInquiryForm';
 
 const services = [
   {
@@ -139,7 +139,7 @@ export default function Home() {
             </p>
             <div className="hero-actions">
               <a className="button button-primary" href="#contact">
-                Отримати попередню оцінку <span aria-hidden="true">↗</span>
+                Обговорити проєкт <span aria-hidden="true">↗</span>
               </a>
               <a className="text-link" href="/napryamky">
                 Дивитися напрямки <span aria-hidden="true">↗</span>
@@ -309,20 +309,17 @@ export default function Home() {
 
       <section className="contact section" id="contact">
         <div className="shell contact-grid">
-          <div>
+          <div className="contact-intro">
             <p className="eyebrow light"><span /> Почнемо з розмови</p>
-            <h2>Потрібна оцінка?<br />Обговорімо об’єкт</h2>
-          </div>
-          <div className="contact-panel">
+            <h2>Розкажіть коротко<br />про задачу</h2>
             <p>
-              Надішліть призначення об’єкта, місто та орієнтовні довжину, ширину й висоту.
-              Уточнимо вихідні дані та пояснимо, що потрібно для попередньої оцінки.
+              Залиште контакт і кілька вихідних даних. Ми ознайомимося із запитом,
+              зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.
             </p>
             <div className="contact-links" id="contact-note">
               <a className="pending-contact contact-phone" href="tel:+380682614264" aria-label="Зателефонувати за номером +38 068 261 42 64">
                 <b><Phone aria-hidden="true" />Телефон</b><i>+38 068 261 42 64</i>
               </a>
-              <span className="pending-contact"><b><Mail aria-hidden="true" />Email</b><i>буде додано</i></span>
               <div className="pending-contact contact-messenger-row">
                 <b>
                   <MessagesSquare aria-hidden="true" />
@@ -332,6 +329,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+          <ProjectInquiryForm />
         </div>
       </section>
     </main>
