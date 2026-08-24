@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import { ClipboardList, DraftingCompass, HardHat, MapPinned } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
@@ -72,18 +71,6 @@ export default function HangarsPage() {
           <ol className="detail-steps">
             {stages.map(([number, title, text, Icon]) => <li key={number}><span>{number}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{title}</h3><p>{text}</p></li>)}
           </ol>
-        </div>
-      </section>
-
-      <section className="page-section">
-        <div className="shell page-two-col reverse-mobile">
-          <div className="copy-column">
-            <p className="eyebrow"><span /> Продумані рішення</p>
-            <h2>Враховуємо експлуатацію ще до монтажу</h2>
-            <p className="lead-copy">Габарити прольотів, висота, крок колон, тип огородження, ворота та майбутні навантаження впливають на вартість і зручність споруди.</p>
-            <p>Тому на старті ставимо питання про технологію роботи всередині, рух транспорту, потребу в утепленні й можливе розширення об’єкта.</p>
-          </div>
-          <div className="page-image"><Image src="/media/hero-steel-frame.jpg" alt="Монтаж каркаса майбутнього ангару" fill sizes="(max-width: 850px) 100vw, 48vw" /></div>
         </div>
       </section>
 

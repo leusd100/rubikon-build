@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import { ClipboardList, DraftingCompass, Factory, HardHat } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
@@ -75,18 +74,6 @@ export default function SteelPage() {
           <ol className="detail-steps">
             {steps.map(([number, title, text, Icon]) => <li key={number}><span>{number}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{title}</h3><p>{text}</p></li>)}
           </ol>
-        </div>
-      </section>
-
-      <section className="page-section">
-        <div className="shell page-two-col">
-          <div className="page-image"><Image src="/media/hero-steel-frame.jpg" alt="Монтаж металевого каркаса будівлі" fill sizes="(max-width: 850px) 100vw, 48vw" /></div>
-          <div className="copy-column">
-            <p className="eyebrow"><span /> Контроль якості</p>
-            <h2>Увага до вузлів, які визначають надійність</h2>
-            <p className="lead-copy">Перевіряємо геометрію, відповідність елементів, підготовку поверхонь і якість ключових з’єднань на етапах виготовлення та монтажу.</p>
-            <p>Остаточний склад контролю залежить від проєкту, призначення конструкції та вимог замовника. Технічні рішення погоджуємо до початку виконання робіт.</p>
-          </div>
         </div>
       </section>
 

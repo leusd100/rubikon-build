@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     title: 'Про RUBIKON BUILD — досвід двох поколінь',
     description: 'Родинна відповідальність, 30+ років практики та сучасний інженерний підхід.',
     url: '/pro-nas',
-    images: [{ url: `${liveUrl}/images/concept-sketch.jpg`, alt: 'RUBIKON BUILD — про родинну будівельну компанію' }],
+    images: [{ url: `${liveUrl}/media/engineering-planning.jpg`, alt: 'RUBIKON BUILD — інженерна підготовка будівельного проєкту' }],
   },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/images/concept-sketch.jpg`] },
+  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/engineering-planning.jpg`] },
 };
 
 export default function AboutPage() {
@@ -38,18 +38,45 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="page-section">
-        <div className="shell page-two-col">
-          <div className="page-image page-image-tall">
-            <Image src="/images/concept-sketch.jpg" alt="Архітектурний ескіз будівлі" fill sizes="(max-width: 850px) 100vw, 46vw" />
-          </div>
-          <div className="copy-column">
-            <p className="eyebrow"><span /> Як усе почалося</p>
-            <h2>Досвід, який став основою спільної компанії</h2>
-            <p className="lead-copy">Леус Сергій Іванович працює у будівельному напрямку понад 30 років. За цей час сформувався головний принцип: якість видно не лише після здачі, а в кожному прихованому вузлі.</p>
-            <p>Леус Дмитро Сергійович здобув освіту за напрямом цивільного та промислового будівництва. Ідея RUBIKON BUILD — поєднати практику майданчика з проєктним мисленням, системною комунікацією та розвитком сучасної будівельної компанії.</p>
-            <p>Ключові технічні й організаційні рішення приймаємо особисто. Під конкретний об’єкт формуємо необхідний склад фахівців, контролюємо відповідальні етапи та відповідаємо за домовленості власним ім’ям.</p>
-          </div>
+      <section className="page-section about-story-section">
+        <div className="shell story-checker about-story-checker">
+          <article className="story-row">
+            <div className="promise-visual about-planning-visual">
+              <Image
+                src="/media/engineering-planning.jpg"
+                alt="Опрацювання технічних креслень перед початком будівництва"
+                fill
+                sizes="(max-width: 1050px) 100vw, 46vw"
+              />
+              <span className="visual-index">01 / ДОСВІД</span>
+              <span className="image-note">Від практичного досвіду — до технічного рішення</span>
+            </div>
+            <div className="promise-copy about-story-copy">
+              <p className="eyebrow light"><span /> Як усе почалося</p>
+              <h2>Досвід, який став основою спільної компанії</h2>
+              <p className="promise-lead">Леус Сергій Іванович працює у будівельному напрямку понад 30 років. За цей час сформувався головний принцип: якість видно не лише після здачі, а в кожному прихованому вузлі.</p>
+              <p className="story-support">Леус Дмитро Сергійович здобув освіту за напрямом цивільного та промислового будівництва. Ідея RUBIKON BUILD — поєднати практику майданчика з проєктним мисленням і розвитком сучасної будівельної компанії.</p>
+            </div>
+          </article>
+
+          <article className="story-row story-row-reverse">
+            <div className="promise-copy about-story-copy">
+              <p className="eyebrow light"><span /> Спільний підхід</p>
+              <h2>Два покоління — одна відповідальність за результат</h2>
+              <p className="promise-lead">Практичний досвід допомагає бачити ризики ще до початку робіт, а інженерний підхід — перетворювати їх на зрозумілі технічні й організаційні рішення.</p>
+              <p className="story-support">Ключові рішення приймаємо особисто. Під конкретний об’єкт формуємо необхідний склад фахівців, контролюємо відповідальні етапи та відповідаємо за домовленості власним ім’ям.</p>
+            </div>
+            <div className="promise-visual about-control-visual">
+              <Image
+                src="/media/site-quality-control.jpg"
+                alt="Перевірка геометрії металевої конструкції на будівельному майданчику"
+                fill
+                sizes="(max-width: 1050px) 100vw, 46vw"
+              />
+              <span className="visual-index">02 / КОНТРОЛЬ</span>
+              <span className="image-note">Особисто контролюємо рішення, що визначають якість</span>
+            </div>
+          </article>
         </div>
       </section>
 

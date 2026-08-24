@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from './SiteChrome';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
@@ -86,13 +85,6 @@ export function DirectionDetail({
             ))}
           </ol>
         </div>
-      </section>
-
-      <section className="page-section">
-        <div className="shell page-media-grid single-direction-media">
-          <div className="media-tile media-tile-large"><Image src={image} alt={imageAlt} fill sizes="100vw" /></div>
-        </div>
-        <p className="shell media-note dark-note">Візуальний матеріал ілюструє напрямок робіт. Власне портфоліо буде додано окремим розділом.</p>
       </section>
 
       <PageCta eyebrow={ctaEyebrow} title={ctaTitle} />

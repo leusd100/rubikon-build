@@ -236,6 +236,7 @@ export default function Home() {
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
+              <span className="visual-index">01 / РІШЕННЯ</span>
               <span className="image-note">Від креслення — до технічного рішення</span>
             </div>
             <div className="promise-copy">
@@ -273,6 +274,7 @@ export default function Home() {
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
+              <span className="visual-index">02 / КОНТРОЛЬ</span>
               <span className="image-note">Точність перевіряємо на кожному етапі</span>
             </div>
           </article>
