@@ -50,6 +50,7 @@ export function DirectionDetail({
           <DirectionHeroVideo sources={[video]} poster={image} />
         </div>
         <div className="service-subhero-overlay" />
+        <div className="subhero-grid" aria-hidden="true" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: title, href: '#' }]} />
           <p className="eyebrow light"><span /> Напрямок {number}</p>

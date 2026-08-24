@@ -42,6 +42,7 @@ export default function SteelPage() {
           <DirectionHeroVideo sources={["/media/directions/steel.mp4"]} poster="/media/competence-steel.jpg" />
         </div>
         <div className="service-subhero-overlay" />
+        <div className="subhero-grid" aria-hidden="true" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Металоконструкції', href: '/metalokonstruktsii' }]} />
           <p className="eyebrow light"><span /> Напрямок 03</p>

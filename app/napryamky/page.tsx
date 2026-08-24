@@ -40,6 +40,7 @@ export default function DirectionsPage() {
           poster="/media/hero-steel-frame.jpg"
         />
         <div className="subhero-overlay" />
+        <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
           <div>
             <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }]} />
