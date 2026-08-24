@@ -315,6 +315,7 @@ section[id] { scroll-margin-top: 98px; }
 .inquiry-form textarea { resize: vertical; min-height: 108px; padding: 13px 14px; }
 .inquiry-form input:focus, .inquiry-form select:focus, .inquiry-form textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(182,83,44,.12); }
 .inquiry-form input::placeholder, .inquiry-form textarea::placeholder { color: #9a9f9b; }
+.inquiry-field-hint { margin-top: -3px; color: #7f8781; font-size: 9px; line-height: 1.4; }
 .inquiry-choice { margin: 22px 0; padding: 0; border: 0; }
 .inquiry-choice legend { margin-bottom: 10px; }
 .inquiry-choice > div { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }

@@ -82,10 +82,12 @@ export default function ProjectInquiryForm() {
             inputMode="tel"
             pattern="[+0-9 ()-]{10,20}"
             maxLength={20}
-            placeholder="+38 0__ ___ __ __"
+            defaultValue="+380"
+            aria-describedby="phone-hint"
             autoComplete="tel"
             required
           />
+          <small id="phone-hint" className="inquiry-field-hint">Додайте ще 9 цифр номера</small>
         </label>
       </div>
 
@@ -161,7 +163,7 @@ export default function ProjectInquiryForm() {
       </label>
 
       <button className="button button-primary inquiry-submit" type="submit">
-        Надіслати запит <Send aria-hidden="true" />
+        Надіслати запит у WhatsApp <Send aria-hidden="true" />
       </button>
       <p className="inquiry-submit-note">
         Відкриється WhatsApp із готовим текстом — вам залишиться підтвердити надсилання
