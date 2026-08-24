@@ -30,13 +30,7 @@ export default function DirectionsPage() {
     <main className="inner-page">
       <section className="subhero subhero-media">
         <DirectionHeroVideo
-          sources={[
-            '/media/directions/hangars.mp4',
-            '/media/directions/grain.mp4',
-            '/media/directions/steel.mp4',
-            '/media/directions/concrete.mp4',
-            '/media/directions/roofing.mp4',
-          ]}
+          sources={['/media/directions/directions-montage.mp4']}
           poster="/media/hero-steel-frame.jpg"
         />
         <div className="subhero-overlay" />

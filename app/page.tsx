@@ -146,13 +146,13 @@ export default function Home() {
               </a>
             </div>
           </div>
-          <div className="hero-cycle" aria-label="Формати співпраці">
-            <p>Формат співпраці</p>
-            <ol>
-              <li><b>01</b><span>Об’єкт під ключ</span></li>
-              <li><b>02</b><span>Окремий етап</span></li>
-              <li><b>03</b><span>Підряд / субпідряд</span></li>
-            </ol>
+          <div className="hero-contact-card">
+            <p>Є будівельна задача?</p>
+            <a href="tel:+380682614264">
+              <span>Замовити дзвінок</span>
+              <b aria-hidden="true">↗</b>
+            </a>
+            <small>Натисніть — відкриється дзвінок</small>
           </div>
         </div>
         <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>
