@@ -4,8 +4,11 @@ import { useState, type FormEvent } from 'react';
 import { ChevronDown, Send } from 'lucide-react';
 
 const companyPhone = '380682614264';
+const companyPhoneInternational = `+${companyPhone}`;
 
-const contactMethods: Array<[string, string]> = [
+type ContactMethod = 'Дзвінок' | 'Telegram' | 'WhatsApp' | 'Viber';
+
+const contactMethods: Array<[string, ContactMethod]> = [
   ['Дзвінок', 'Дзвінок'],
   ['Telegram', 'Telegram'],
   ['WhatsApp', 'WhatsApp'],
@@ -27,7 +30,8 @@ function value(formData: FormData, key: string) {
 }
 
 export default function ProjectInquiryForm() {
-  const [sent, setSent] = useState(false);
+  const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
+  const [status, setStatus] = useState('');
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,12 +58,30 @@ export default function ProjectInquiryForm() {
       project_direction: value(formData, 'direction'),
     });
 
-    setSent(true);
-    window.open(
-      `https://wa.me/${companyPhone}?text=${encodeURIComponent(details.join('\n'))}`,
-      '_blank',
-      'noopener,noreferrer',
-    );
+    const message = details.join('\n');
+    const encodedMessage = encodeURIComponent(message);
+
+    if (contactMethod === 'Дзвінок') {
+      setStatus('Номер підготовлено. Зателефонуйте нам — короткі дані із форми допоможуть швидше обговорити задачу.');
+      window.location.assign(`tel:${companyPhoneInternational}`);
+      return;
+    }
+
+    if (contactMethod === 'Telegram') {
+      setStatus('Запит підготовлено. Підтвердьте його надсилання у Telegram.');
+      window.open(`https://t.me/+${companyPhone}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (contactMethod === 'Viber') {
+      void navigator.clipboard?.writeText(message).catch(() => undefined);
+      setStatus('Текст заявки скопійовано. У Viber вставте його в чат і підтвердьте надсилання.');
+      window.location.assign(`viber://chat?number=%2B${companyPhone}`);
+      return;
+    }
+
+    setStatus('Запит підготовлено. Підтвердьте його надсилання у WhatsApp.');
+    window.open(`https://wa.me/${companyPhone}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
   }
 
   return (
@@ -94,9 +116,18 @@ export default function ProjectInquiryForm() {
       <fieldset className="inquiry-choice">
         <legend>Як зручно зв’язатися *</legend>
         <div>
-          {contactMethods.map(([label, method], index) => (
+          {contactMethods.map(([label, method]) => (
             <label key={method}>
-              <input type="radio" name="contactMethod" value={method} defaultChecked={index === 0} />
+              <input
+                type="radio"
+                name="contactMethod"
+                value={method}
+                checked={contactMethod === method}
+                onChange={() => {
+                  setContactMethod(method);
+                  setStatus('');
+                }}
+              />
               <span>{label}</span>
             </label>
           ))}
@@ -163,15 +194,18 @@ export default function ProjectInquiryForm() {
       </label>
 
       <button className="button button-primary inquiry-submit" type="submit">
-        Надіслати запит у WhatsApp <Send aria-hidden="true" />
+        {contactMethod === 'Дзвінок' ? 'Зателефонувати' : `Надіслати у ${contactMethod}`} <Send aria-hidden="true" />
       </button>
       <p className="inquiry-submit-note">
-        Відкриється WhatsApp із готовим текстом — вам залишиться підтвердити надсилання
+        {contactMethod === 'Дзвінок'
+          ? 'Відкриється набір номера — без автоматичного дзвінка'
+          : contactMethod === 'Viber'
+            ? 'Відкриється Viber, а текст заявки буде скопійовано'
+            : `Відкриється ${contactMethod} із готовим текстом — підтвердьте надсилання`}
       </p>
 
-      <p className={`inquiry-status${sent ? ' is-visible' : ''}`} role="status" aria-live="polite">
-        Запит підготовлено. Підтвердьте його надсилання у WhatsApp. Якщо месенджер не
-        відкрився, скористайтеся контактами поруч.
+      <p className={`inquiry-status${status ? ' is-visible' : ''}`} role="status" aria-live="polite">
+        {status} {status && 'Якщо застосунок не відкрився, скористайтеся контактами поруч.'}
       </p>
     </form>
   );
