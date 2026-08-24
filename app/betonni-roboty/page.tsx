@@ -16,6 +16,7 @@ export default function ConcreteWorksPage() {
     intro="Виконуємо фундаменти, основи, промислові підлоги та монолітні елементи як частину комплексного будівництва або окремий етап підряду."
     image="/media/competence-concrete.jpg"
     imageAlt="Армування залізобетонної основи на будівельному майданчику"
+    video="/media/directions/concrete.mp4"
     overviewEyebrow="Що виконуємо"
     overviewTitle="Основа, від якої залежить весь об’єкт"
     overviewText="До бетонування перевіряємо геометрію, відмітки, армування, закладні елементи та готовність майданчика."

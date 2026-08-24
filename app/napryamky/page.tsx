@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
+import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 
 const liveUrl = 'https://rubikonbuild.com';
 
@@ -29,7 +29,16 @@ export default function DirectionsPage() {
   return (
     <main className="inner-page">
       <section className="subhero subhero-media">
-        <Image src="/media/hero-steel-frame.jpg" alt="Монтаж сталевого каркаса промислової споруди" fill priority sizes="100vw" />
+        <DirectionHeroVideo
+          sources={[
+            '/media/directions/hangars.mp4',
+            '/media/directions/grain.mp4',
+            '/media/directions/steel.mp4',
+            '/media/directions/concrete.mp4',
+            '/media/directions/roofing.mp4',
+          ]}
+          poster="/media/hero-steel-frame.jpg"
+        />
         <div className="subhero-overlay" />
         <div className="shell subhero-layout">
           <div>
@@ -39,6 +48,7 @@ export default function DirectionsPage() {
           </div>
           <div className="subhero-side">
             <p>Беремо об’єкти під ключ або виконуємо визначений етап як підрядник чи субпідрядник. Межі відповідальності узгоджуємо до початку робіт.</p>
+            <p className="stock-video-note">Відеоматеріали ілюструють напрямки робіт. Власне портфоліо буде додано окремим розділом.</p>
           </div>
         </div>
       </section>
@@ -65,14 +75,6 @@ export default function DirectionsPage() {
             })}
           </div>
         </div>
-      </section>
-
-      <section className="page-section page-media-band">
-        <div className="shell page-media-grid">
-          <div className="media-tile media-tile-large"><Image src="/media/competence-hangar.jpg" alt="Промислові ангари та складські споруди" fill sizes="(max-width: 800px) 100vw, 60vw" /></div>
-          <div className="media-tile"><Image src="/media/competence-grain.jpg" alt="Промислове зерносховище біля поля" fill sizes="(max-width: 800px) 100vw, 40vw" /></div>
-        </div>
-        <p className="shell media-note dark-note">Візуальні матеріали ілюструють напрямки робіт. Власне портфоліо буде додано окремим розділом.</p>
       </section>
 
       <section className="page-section faq-section">

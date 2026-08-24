@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { ClipboardList, DraftingCompass, HardHat, MapPinned } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
+import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 
 const liveUrl = 'https://rubikonbuild.com';
 
@@ -37,7 +38,9 @@ export default function HangarsPage() {
   return (
     <main className="inner-page">
       <section className="service-subhero">
-        <div className="service-subhero-media"><Image src="/media/competence-hangar.jpg" alt="Промисловий ангар і складська споруда" fill priority sizes="100vw" /></div>
+        <div className="service-subhero-media">
+          <DirectionHeroVideo sources={["/media/directions/hangars.mp4"]} poster="/media/competence-hangar.jpg" />
+        </div>
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Ангари', href: '/angary' }]} />

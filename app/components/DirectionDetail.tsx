@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from './SiteChrome';
+import { DirectionHeroVideo } from './DirectionHeroVideo';
 
 type DirectionItem = [string, string, string];
 type DirectionStep = [string, string, string, LucideIcon];
@@ -12,6 +13,7 @@ type DirectionDetailProps = {
   intro: string;
   image: string;
   imageAlt: string;
+  video: string;
   overviewEyebrow: string;
   overviewTitle: string;
   overviewText: string;
@@ -30,6 +32,7 @@ export function DirectionDetail({
   intro,
   image,
   imageAlt,
+  video,
   overviewEyebrow,
   overviewTitle,
   overviewText,
@@ -43,7 +46,9 @@ export function DirectionDetail({
   return (
     <main className="inner-page">
       <section className="service-subhero">
-        <div className="service-subhero-media"><Image src={image} alt={imageAlt} fill priority sizes="100vw" /></div>
+        <div className="service-subhero-media">
+          <DirectionHeroVideo sources={[video]} poster={image} />
+        </div>
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: title, href: '#' }]} />

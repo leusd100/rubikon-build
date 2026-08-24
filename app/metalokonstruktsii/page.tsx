@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { ClipboardList, DraftingCompass, Factory, HardHat } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
+import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 
 const liveUrl = 'https://rubikonbuild.com';
 
@@ -37,7 +38,9 @@ export default function SteelPage() {
   return (
     <main className="inner-page">
       <section className="service-subhero">
-        <div className="service-subhero-media"><Image src="/media/competence-steel.jpg" alt="Зварювання несучої сталевої конструкції" fill priority sizes="100vw" /></div>
+        <div className="service-subhero-media">
+          <DirectionHeroVideo sources={["/media/directions/steel.mp4"]} poster="/media/competence-steel.jpg" />
+        </div>
         <div className="service-subhero-overlay" />
         <div className="shell service-subhero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Металоконструкції', href: '/metalokonstruktsii' }]} />
