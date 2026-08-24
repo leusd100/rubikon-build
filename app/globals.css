@@ -16,6 +16,7 @@
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
+  visibility: visible !important;
   background: var(--warm);
   color: var(--ink);
   font-family: var(--font-manrope), Arial, sans-serif;

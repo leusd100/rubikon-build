@@ -3,12 +3,12 @@ import type { NextRequest } from 'next/server';
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://www.google-analytics.com https://*.google-analytics.com",
   "media-src 'self'",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -25,7 +25,17 @@ const responseHeaders = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 };
 
-const cacheablePages = new Set(['/', '/napryamky', '/metalokonstruktsii', '/angary', '/pro-nas']);
+const cacheablePages = new Set([
+  '/',
+  '/napryamky',
+  '/metalokonstruktsii',
+  '/angary',
+  '/zernoskhovyshcha',
+  '/betonni-roboty',
+  '/pokrivelni-roboty',
+  '/pro-nas',
+  '/polityka-konfidentsiinosti',
+]);
 
 export function proxy(request: NextRequest) {
   if (request.nextUrl.hostname === 'www.rubikonbuild.com') {

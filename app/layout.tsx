@@ -91,6 +91,25 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="uk">
       <head>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              html { background: #f7f5ef; }
+              html:not(.site-css-timeout) body { visibility: hidden; }
+              html.site-css-timeout body { visibility: visible; }
+            `,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.setTimeout(function () {
+                document.documentElement.classList.add('site-css-timeout');
+              }, 4000);
+            `,
+          }}
+        />
+        <noscript><style>{'body { visibility: visible !important; }'}</style></noscript>
         <link
           rel="preload"
           href="/media/hero-steel-frame.jpg"
