@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { ChevronDown, Send } from 'lucide-react';
+import { ChevronDown, Copy, Phone, Send } from 'lucide-react';
 
 const companyPhone = '380682614264';
 const companyPhoneInternational = `+${companyPhone}`;
@@ -32,6 +32,11 @@ function value(formData: FormData, key: string) {
 export default function ProjectInquiryForm() {
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
+  const [statusAction, setStatusAction] = useState<'phone' | 'viber' | null>(null);
+
+  function copyText(text: string) {
+    return navigator.clipboard?.writeText(text).catch(() => undefined);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,10 +65,16 @@ export default function ProjectInquiryForm() {
 
     const message = details.join('\n');
     const encodedMessage = encodeURIComponent(message);
+    setStatusAction(null);
 
     if (contactMethod === 'Дзвінок') {
-      setStatus('Номер підготовлено. Зателефонуйте нам — короткі дані із форми допоможуть швидше обговорити задачу.');
-      window.location.assign(`tel:${companyPhoneInternational}`);
+      void copyText(companyPhoneInternational);
+      const canStartPhoneCall = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      setStatus(canStartPhoneCall
+        ? 'Відкриваємо набір номера. Підтвердьте дзвінок у телефоні.'
+        : 'Браузер на ноутбуці не може самостійно здійснити дзвінок. Номер компанії скопійовано — зателефонуйте з телефону або скористайтеся месенджером.');
+      setStatusAction('phone');
+      if (canStartPhoneCall) window.location.assign(`tel:${companyPhoneInternational}`);
       return;
     }
 
@@ -74,9 +85,17 @@ export default function ProjectInquiryForm() {
     }
 
     if (contactMethod === 'Viber') {
-      void navigator.clipboard?.writeText(message).catch(() => undefined);
-      setStatus('Текст заявки скопійовано. У Viber вставте його в чат і підтвердьте надсилання.');
-      window.location.assign(`viber://chat?number=%2B${companyPhone}`);
+      const viberMessage = [
+        'Запит для RUBIKON BUILD',
+        `${value(formData, 'name')}, ${value(formData, 'phone')}`,
+        value(formData, 'direction'),
+        'Бажаний зв’язок: Viber',
+      ].join('\n');
+
+      void copyText(message);
+      setStatus('Відкриваємо офіційне вікно надсилання Viber із коротким запитом. Оберіть чат RUBIKON BUILD і підтвердьте надсилання. Повний текст заявки також скопійовано.');
+      setStatusAction('viber');
+      window.location.assign(`viber://forward?text=${encodeURIComponent(viberMessage)}`);
       return;
     }
 
@@ -126,6 +145,7 @@ export default function ProjectInquiryForm() {
                 onChange={() => {
                   setContactMethod(method);
                   setStatus('');
+                  setStatusAction(null);
                 }}
               />
               <span>{label}</span>
@@ -194,18 +214,38 @@ export default function ProjectInquiryForm() {
       </label>
 
       <button className="button button-primary inquiry-submit" type="submit">
-        {contactMethod === 'Дзвінок' ? 'Зателефонувати' : `Надіслати у ${contactMethod}`} <Send aria-hidden="true" />
+        {contactMethod === 'Дзвінок'
+          ? 'Підготувати дзвінок'
+          : contactMethod === 'Viber'
+            ? 'Відкрити Viber'
+            : `Надіслати у ${contactMethod}`}{' '}
+        {contactMethod === 'Дзвінок' ? <Phone aria-hidden="true" /> : <Send aria-hidden="true" />}
       </button>
       <p className="inquiry-submit-note">
         {contactMethod === 'Дзвінок'
-          ? 'Відкриється набір номера — без автоматичного дзвінка'
+          ? 'Смартфон відкриє набір номера; на ноутбуці номер буде скопійовано'
           : contactMethod === 'Viber'
-            ? 'Відкриється Viber, а текст заявки буде скопійовано'
+            ? 'Відкриється Viber із коротким запитом, а повна заявка буде скопійована'
             : `Відкриється ${contactMethod} із готовим текстом — підтвердьте надсилання`}
       </p>
 
       <p className={`inquiry-status${status ? ' is-visible' : ''}`} role="status" aria-live="polite">
-        {status} {status && 'Якщо застосунок не відкрився, скористайтеся контактами поруч.'}
+        {status}
+        {statusAction === 'phone' && (
+          <span className="inquiry-status-actions">
+            <a href={`tel:${companyPhoneInternational}`}><Phone aria-hidden="true" /> {companyPhoneInternational}</a>
+            <button type="button" onClick={() => void copyText(companyPhoneInternational)}>
+              <Copy aria-hidden="true" /> Скопіювати номер
+            </button>
+          </span>
+        )}
+        {statusAction === 'viber' && (
+          <span className="inquiry-status-actions">
+            <button type="button" onClick={() => void copyText(companyPhoneInternational)}>
+              <Copy aria-hidden="true" /> Скопіювати номер
+            </button>
+          </span>
+        )}
       </p>
     </form>
   );

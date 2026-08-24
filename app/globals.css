@@ -340,6 +340,10 @@ section[id] { scroll-margin-top: 98px; }
 .inquiry-submit-note { margin: 10px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; text-align: center; }
 .inquiry-status { display: none; margin: 18px 0 0; padding: 14px 16px; color: #edf4ef; background: #26352c; border-left: 3px solid #5e9c72; font-size: 12px; line-height: 1.55; }
 .inquiry-status.is-visible { display: block; }
+.inquiry-status-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.inquiry-status-actions a, .inquiry-status-actions button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 8px 11px; color: #fff; border: 1px solid rgba(255,255,255,.34); background: transparent; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+.inquiry-status-actions a:hover, .inquiry-status-actions button:hover { border-color: #fff; background: rgba(255,255,255,.08); }
+.inquiry-status-actions svg { width: 15px; height: 15px; }
 .form-trap { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
 
 .inner-page { background: var(--warm); }
