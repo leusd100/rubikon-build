@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     title: 'Про RUBIKON BUILD — досвід двох поколінь',
     description: 'Родинна відповідальність, 30+ років практики та сучасний інженерний підхід.',
     url: '/pro-nas',
-    images: [{ url: `${liveUrl}/media/engineering-planning.jpg`, alt: 'RUBIKON BUILD — інженерна підготовка будівельного проєкту' }],
+    images: [{ url: `${liveUrl}/media/about-industrial-concept.jpg`, alt: 'RUBIKON BUILD — від інженерної концепції до промислової споруди' }],
   },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/engineering-planning.jpg`] },
+  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/about-industrial-concept.jpg`] },
 };
 
 export default function AboutPage() {
@@ -43,8 +43,8 @@ export default function AboutPage() {
           <article className="story-row">
             <div className="promise-visual about-planning-visual">
               <Image
-                src="/media/engineering-planning.jpg"
-                alt="Опрацювання технічних креслень перед початком будівництва"
+                src="/media/about-industrial-concept.jpg"
+                alt="Архітектурна концепція промислової споруди з кресленнями металевого каркаса"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
@@ -68,8 +68,8 @@ export default function AboutPage() {
             </div>
             <div className="promise-visual about-control-visual">
               <Image
-                src="/media/site-quality-control.jpg"
-                alt="Перевірка геометрії металевої конструкції на будівельному майданчику"
+                src="/media/about-quality-control.jpg"
+                alt="Контроль сталевого вузла за технічним кресленням на будівельному майданчику"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />

@@ -252,8 +252,8 @@ section[id] { scroll-margin-top: 98px; }
 .about-story-checker { gap: clamp(92px, 9vw, 138px); }
 .about-story-copy h2 { max-width: 720px; font-size: clamp(48px, 4.8vw, 70px); }
 .about-story-copy .promise-lead { margin-bottom: 28px; }
-.about-planning-visual img { object-position: center 55%; filter: saturate(.64) contrast(1.04) brightness(.94); }
-.about-control-visual img { object-position: 48% center; filter: saturate(.48) contrast(1.07) brightness(.88); }
+.about-planning-visual img { object-position: center; filter: saturate(.9) contrast(1.02); }
+.about-control-visual img { object-position: center; filter: saturate(.9) contrast(1.02); }
 
 .team { background: var(--warm); }
 .team-heading { margin-bottom: 60px; }
