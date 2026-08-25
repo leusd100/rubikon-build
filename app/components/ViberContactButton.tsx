@@ -1,8 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-
-const viberUrl = 'viber://chat?number=%2B380682614264';
+import { companyContactLinks } from '../data/company';
 
 export default function ViberContactButton() {
   return (
@@ -12,7 +11,7 @@ export default function ViberContactButton() {
       data-contact-method="viber"
       aria-label="Написати у Viber"
       title="Написати у Viber"
-      onClick={() => window.location.assign(viberUrl)}
+      onClick={() => window.location.assign(companyContactLinks.viber)}
     >
       <Image
         className="messenger-brand-icon"

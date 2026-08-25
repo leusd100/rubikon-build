@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Condensed, Jost, Manrope } from 'next/font/google';
 import './globals.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
+import { company } from './data/company';
 
 const manrope = Manrope({
   variable: '--font-manrope',
@@ -22,7 +23,7 @@ const display = Jost({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://rubikonbuild.com'),
+  metadataBase: new URL(company.siteUrl),
   title: 'Промислове будівництво у Дніпрі | RUBIKON BUILD',
   description:
     'Промислове будівництво у Дніпрі та області: комплексна реалізація об’єктів або окремі роботи у форматі підряду й субпідряду.',
@@ -63,10 +64,10 @@ export const dynamic = 'force-static';
 const organizationData = {
   '@context': 'https://schema.org',
   '@type': 'GeneralContractor',
-  name: 'RUBIKON BUILD',
-  alternateName: 'Рубікон Білд',
-  url: 'https://rubikonbuild.com',
-  telephone: '+380682614264',
+  name: company.name,
+  alternateName: company.alternateName,
+  url: company.siteUrl,
+  telephone: company.phone.international,
   description:
     'Родинна будівельна компанія: промислові споруди під ключ та окремі роботи з ангарів, зерносховищ, металоконструкцій, бетонування, покрівлі й монтажу.',
   areaServed: [

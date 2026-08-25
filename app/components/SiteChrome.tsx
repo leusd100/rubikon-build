@@ -5,10 +5,11 @@ import type { LucideIcon } from 'lucide-react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import MobileMenu from './MobileMenu';
 import ViberContactButton from './ViberContactButton';
+import { company, companyContactLinks } from '../data/company';
 
 const messengerLinks: Array<{ label: string; href: string; icon: string; shortName: string; kind: string }> = [
-  { label: 'Написати в Telegram', href: 'tg://resolve?phone=380682614264', icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
-  { label: 'Написати у WhatsApp', href: 'https://wa.me/380682614264', icon: '/brands/whatsapp.svg', shortName: 'WA', kind: 'whatsapp' },
+  { label: 'Написати в Telegram', href: companyContactLinks.telegram, icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
+  { label: 'Написати у WhatsApp', href: companyContactLinks.whatsapp, icon: '/brands/whatsapp.svg', shortName: 'WA', kind: 'whatsapp' },
 ];
 
 export function MessengerLinks({ className }: { className: string }) {
@@ -60,9 +61,9 @@ export function SiteHeader() {
           <a href="/#contact">Контакти</a>
         </nav>
         <div className="header-contacts" aria-label="Контакти компанії">
-          <a className="header-contact header-phone" href="tel:+380682614264" aria-label="Зателефонувати до RUBIKON BUILD">
+          <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати до ${company.name}`}>
             <Phone aria-hidden="true" />
-            <span><small>Телефон</small><strong>+38 068 261 42 64</strong></span>
+            <span><small>Телефон</small><strong>{company.phone.display}</strong></span>
           </a>
           <MessengerLinks className="header-messengers" />
         </div>
@@ -98,9 +99,9 @@ export function SiteFooter() {
           <a href="/#contact">Контакти</a>
         </nav>
         <div className="footer-contact-stack">
-          <a className="footer-phone" href="tel:+380682614264">
+          <a className="footer-phone" href={companyContactLinks.phone}>
             <Phone aria-hidden="true" />
-            <span>+38 068 261 42 64</span>
+            <span>{company.phone.display}</span>
           </a>
           <MessengerLinks className="footer-messengers" />
           <div className="footer-legal">
@@ -115,7 +116,7 @@ export function SiteFooter() {
 }
 
 export function Breadcrumbs({ items }: { items: Array<{ label: string; href: string }> }) {
-  const baseUrl = 'https://rubikonbuild.com';
+  const baseUrl = company.siteUrl;
   const data = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

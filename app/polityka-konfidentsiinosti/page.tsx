@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Breadcrumbs } from '../components/SiteChrome';
+import { company, companyContactLinks } from '../data/company';
 
 export const metadata: Metadata = {
   title: 'Політика конфіденційності | RUBIKON BUILD',
@@ -35,7 +36,7 @@ export default function PrivacyPolicyPage() {
           </article>
           <article>
             <h2>Контакт</h2>
-            <p>З питань щодо даних і роботи сайту зв’яжіться з RUBIKON BUILD за номером <a href="tel:+380682614264">+38 068 261 42 64</a>.</p>
+            <p>З питань щодо даних і роботи сайту зв’яжіться з RUBIKON BUILD за номером <a href={companyContactLinks.phone}>{company.phone.display}</a>.</p>
           </article>
         </div>
       </section>

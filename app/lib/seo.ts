@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { company } from '../data/company';
 
-export const siteUrl = 'https://rubikonbuild.com';
-export const siteName = 'RUBIKON BUILD';
+export const siteUrl = company.siteUrl;
+export const siteName = company.name;
 
 type PageMetadataInput = {
   path: string;

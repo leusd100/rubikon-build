@@ -18,6 +18,7 @@ import { EstimateBrief, MessengerLinks, TeamSection } from './components/SiteChr
 import { DirectionHeroVideo } from './components/DirectionHeroVideo';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
 import { directions, type DirectionId } from './data/directions';
+import { company, companyContactLinks } from './data/company';
 
 const directionIcons: Record<DirectionId, LucideIcon> = {
   angary: Warehouse,
@@ -67,7 +68,7 @@ export default function Home() {
           </div>
           <div className="hero-contact-card">
             <p>Є будівельна задача?</p>
-            <a href="tel:+380682614264">
+            <a href={companyContactLinks.phone}>
               <span>Зателефонувати</span>
               <b aria-hidden="true">↗</b>
             </a>
@@ -236,8 +237,8 @@ export default function Home() {
               зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.
             </p>
             <div className="contact-links" id="contact-note">
-              <a className="pending-contact contact-phone" href="tel:+380682614264" aria-label="Зателефонувати за номером +38 068 261 42 64">
-                <b><Phone aria-hidden="true" />Телефон</b><i>+38 068 261 42 64</i>
+              <a className="pending-contact contact-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати за номером ${company.phone.display}`}>
+                <b><Phone aria-hidden="true" />Телефон</b><i>{company.phone.display}</i>
               </a>
               <div className="pending-contact contact-messenger-row">
                 <b>

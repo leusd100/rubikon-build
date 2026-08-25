@@ -3,8 +3,7 @@ import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { directions } from '../data/directions';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
-
-const liveUrl = 'https://rubikonbuild.com';
+import { siteUrl } from '../lib/seo';
 
 export const metadata: Metadata = {
   title: 'Напрямки будівництва у Дніпрі | RUBIKON BUILD',
@@ -14,9 +13,9 @@ export const metadata: Metadata = {
     title: 'Напрямки робіт RUBIKON BUILD',
     description: 'Повний цикл будівництва або окремі роботи як підрядник чи субпідрядник.',
     url: '/napryamky',
-    images: [{ url: `${liveUrl}/media/hero-steel-frame.jpg`, alt: 'Промислове будівництво RUBIKON BUILD' }],
+    images: [{ url: `${siteUrl}/media/hero-steel-frame.jpg`, alt: 'Промислове будівництво RUBIKON BUILD' }],
   },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/hero-steel-frame.jpg`] },
+  twitter: { card: 'summary_large_image', images: [`${siteUrl}/media/hero-steel-frame.jpg`] },
 };
 
 export default function DirectionsPage() {

@@ -3,9 +3,10 @@
 import { useState, type FormEvent } from 'react';
 import { ChevronDown, Copy, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
+import { company, companyContactLinks } from '../data/company';
 
-const companyPhone = '380682614264';
-const companyPhoneInternational = `+${companyPhone}`;
+const companyPhone = company.phone.digits;
+const companyPhoneInternational = company.phone.international;
 
 type ContactMethod = 'Дзвінок' | 'Telegram' | 'WhatsApp' | 'Viber';
 
@@ -101,7 +102,7 @@ export default function ProjectInquiryForm() {
     }
 
     setStatus('Запит підготовлено. Підтвердьте його надсилання у WhatsApp.');
-    window.open(`https://wa.me/${companyPhone}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+      window.open(`${companyContactLinks.whatsapp}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
   }
 
   return (

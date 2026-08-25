@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next';
-
-const liveUrl = 'https://rubikonbuild.com';
+import { siteUrl } from './lib/seo';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/logo-variants',
     },
-    sitemap: `${liveUrl}/sitemap.xml`,
-    host: liveUrl,
+    sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   };
 }

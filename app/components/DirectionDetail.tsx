@@ -3,6 +3,7 @@ import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
 import { getDirection } from '../data/directions';
+import { company } from '../data/company';
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
@@ -43,7 +44,7 @@ export function DirectionHero({
       '@type': 'GeneralContractor',
       name: siteName,
       url: siteUrl,
-      telephone: '+380682614264',
+      telephone: company.phone.international,
     },
   };
 

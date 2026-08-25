@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Breadcrumbs, PageCta, TeamSection } from '../components/SiteChrome';
-
-const liveUrl = 'https://rubikonbuild.com';
+import { siteUrl } from '../lib/seo';
 
 export const metadata: Metadata = {
   title: 'Про родинну компанію | RUBIKON BUILD',
@@ -12,9 +11,9 @@ export const metadata: Metadata = {
     title: 'Про RUBIKON BUILD — досвід двох поколінь',
     description: 'Родинна відповідальність, 30+ років практики та сучасний інженерний підхід.',
     url: '/pro-nas',
-    images: [{ url: `${liveUrl}/media/about-industrial-concept.jpg`, alt: 'RUBIKON BUILD — від інженерної концепції до промислової споруди' }],
+    images: [{ url: `${siteUrl}/media/about-industrial-concept.jpg`, alt: 'RUBIKON BUILD — від інженерної концепції до промислової споруди' }],
   },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/about-industrial-concept.jpg`] },
+  twitter: { card: 'summary_large_image', images: [`${siteUrl}/media/about-industrial-concept.jpg`] },
 };
 
 export default function AboutPage() {
