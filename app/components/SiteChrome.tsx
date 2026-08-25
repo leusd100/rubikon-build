@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-html-link-for-pages -- regular anchors avoid the hosted vinext Link runtime failure */
 import Image from 'next/image';
 import { CalendarClock, Factory, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -6,6 +5,7 @@ import { CookieSettingsButton } from './AnalyticsConsent';
 import MobileMenu from './MobileMenu';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
+import { primaryNavigation, siteRoutes } from '../data/navigation';
 
 const messengerLinks: Array<{ label: string; href: string; icon: string; shortName: string; kind: string }> = [
   { label: 'Написати в Telegram', href: companyContactLinks.telegram, icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
@@ -51,14 +51,11 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell nav-wrap">
-        <a className="brand-link" href="/" aria-label="RUBIKON BUILD — на головну">
+        <a className="brand-link" href={siteRoutes.home} aria-label="RUBIKON BUILD — на головну">
           <Brand />
         </a>
         <nav className="desktop-nav" aria-label="Основна навігація">
-          <a href="/napryamky">Напрямки</a>
-          <a href="/#process">Як працюємо</a>
-          <a href="/pro-nas">Про компанію</a>
-          <a href="/#contact">Контакти</a>
+          {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
         <div className="header-contacts" aria-label="Контакти компанії">
           <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати до ${company.name}`}>
@@ -73,10 +70,9 @@ export function SiteHeader() {
             <i aria-hidden="true"><b /><b /></i>
           </summary>
           <nav aria-label="Мобільна навігація">
-            <a href="/napryamky"><small>01</small> Напрямки</a>
-            <a href="/#process"><small>02</small> Як працюємо</a>
-            <a href="/pro-nas"><small>03</small> Про компанію</a>
-            <a href="/#contact"><small>04</small> Контакти</a>
+            {primaryNavigation.map((item, index) => (
+              <a href={item.href} key={item.href}><small>{String(index + 1).padStart(2, '0')}</small> {item.label}</a>
+            ))}
             <MessengerLinks className="mobile-messengers" />
           </nav>
         </MobileMenu>
@@ -89,14 +85,11 @@ export function SiteFooter() {
   return (
     <footer>
       <div className="shell footer-grid">
-        <a className="brand-link" href="/" aria-label="RUBIKON BUILD — на головну">
+        <a className="brand-link" href={siteRoutes.home} aria-label="RUBIKON BUILD — на головну">
           <Brand />
         </a>
         <nav className="footer-nav" aria-label="Навігація у підвалі">
-          <a href="/napryamky">Напрямки</a>
-          <a href="/#process">Як працюємо</a>
-          <a href="/pro-nas">Про компанію</a>
-          <a href="/#contact">Контакти</a>
+          {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
         <div className="footer-contact-stack">
           <a className="footer-phone" href={companyContactLinks.phone}>
@@ -105,7 +98,7 @@ export function SiteFooter() {
           </a>
           <MessengerLinks className="footer-messengers" />
           <div className="footer-legal">
-            <a href="/polityka-konfidentsiinosti">Політика конфіденційності</a>
+            <a href={siteRoutes.privacy}>Політика конфіденційності</a>
             <CookieSettingsButton />
           </div>
           <span>© {new Date().getFullYear()} RUBIKON BUILD</span>
@@ -171,7 +164,7 @@ export function EstimateBrief() {
             </article>
           ))}
         </div>
-        <a className="section-link" href="/#contact">Підготувати запит <span aria-hidden="true">↗</span></a>
+        <a className="section-link" href={siteRoutes.contact}>Підготувати запит <span aria-hidden="true">↗</span></a>
       </div>
     </section>
   );
@@ -237,7 +230,7 @@ export function PageCta({
         </div>
         <div>
           <p>{text}</p>
-          <a className="button button-primary" href="/#contact">
+          <a className="button button-primary" href={siteRoutes.contact}>
             Обговорити проєкт <span aria-hidden="true">↗</span>
           </a>
         </div>
