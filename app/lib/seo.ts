@@ -4,6 +4,13 @@ import { company } from '../data/company';
 export const siteUrl = company.siteUrl;
 export const siteName = company.name;
 
+type BasicPageMetadataInput = {
+  title: string;
+  description: string;
+  path?: string;
+  robots?: Metadata['robots'];
+};
+
 type PageMetadataInput = {
   path: string;
   title: string;
@@ -13,6 +20,20 @@ type PageMetadataInput = {
   socialTitle?: string;
   socialDescription?: string;
 };
+
+export function createBasicPageMetadata({
+  title,
+  description,
+  path,
+  robots,
+}: BasicPageMetadataInput): Metadata {
+  return {
+    title,
+    description,
+    ...(path ? { alternates: { canonical: path } } : {}),
+    ...(robots ? { robots } : {}),
+  };
+}
 
 export function createPageMetadata({
   path,
@@ -27,9 +48,7 @@ export function createPageMetadata({
   const imageUrl = new URL(image, siteUrl).toString();
 
   return {
-    title,
-    description,
-    alternates: { canonical: path },
+    ...createBasicPageMetadata({ title, description, path }),
     openGraph: {
       title: socialTitle,
       description: socialDescription,

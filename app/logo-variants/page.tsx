@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-html-link-for-pages -- regular anchors avoid the hosted vinext Link runtime failure */
-import type { Metadata } from 'next';
+import { createBasicPageMetadata } from '../lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = createBasicPageMetadata({
   title: 'Варіанти логотипа | RUBIKON BUILD',
   description: 'Робочі концепції фірмового знака RUBIKON BUILD.',
   robots: { index: false, follow: false },
-};
+});
 
 const variants = [
   {

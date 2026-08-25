@@ -1,12 +1,12 @@
-import type { Metadata } from 'next';
 import { Breadcrumbs } from '../components/SiteChrome';
 import { company, companyContactLinks } from '../data/company';
+import { createBasicPageMetadata } from '../lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = createBasicPageMetadata({
+  path: '/polityka-konfidentsiinosti',
   title: 'Політика конфіденційності | RUBIKON BUILD',
   description: 'Інформація про обробку даних і використання Google Analytics на сайті RUBIKON BUILD.',
-  alternates: { canonical: '/polityka-konfidentsiinosti' },
-};
+});
 
 export default function PrivacyPolicyPage() {
   return (
