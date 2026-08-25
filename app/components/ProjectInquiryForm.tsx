@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ChevronDown, Copy, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
 import { company, companyContactLinks } from '../data/company';
+import { siteRoutes } from '../data/navigation';
 
 const companyPhone = company.phone.digits;
 const companyPhoneInternational = company.phone.international;
@@ -207,7 +208,7 @@ export default function ProjectInquiryForm() {
         <input type="checkbox" required />
         <span>
           Погоджуюся на обробку даних для відповіді на запит відповідно до{' '}
-          <a href="/polityka-konfidentsiinosti">політики конфіденційності</a>
+          <a href={siteRoutes.privacy}>політики конфіденційності</a>
         </span>
       </label>
 

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Breadcrumbs, PageCta, TeamSection } from '../components/SiteChrome';
 import { createPageMetadata } from '../lib/seo';
+import { siteRoutes } from '../data/navigation';
 
 export const metadata = createPageMetadata({
   path: '/pro-nas',
@@ -19,7 +20,7 @@ export default function AboutPage() {
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
           <div>
-            <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Про нас', href: '/pro-nas' }]} />
+            <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про нас', href: siteRoutes.about }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
             <h1>Репутація,<br />за якою стоять<br /><em>наші імена</em></h1>
           </div>

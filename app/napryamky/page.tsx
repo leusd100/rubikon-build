@@ -3,6 +3,7 @@ import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { directions } from '../data/directions';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
 import { createPageMetadata } from '../lib/seo';
+import { siteRoutes } from '../data/navigation';
 
 export const metadata = createPageMetadata({
   path: '/napryamky',
@@ -32,7 +33,7 @@ export default function DirectionsPage() {
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
           <div>
-            <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }]} />
+            <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }]} />
             <p className="eyebrow light"><span /> Сфери компетенції</p>
             <h1>Від окремої роботи<br /><em>до готового об’єкта</em></h1>
           </div>

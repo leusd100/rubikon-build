@@ -19,6 +19,7 @@ import { DirectionHeroVideo } from './components/DirectionHeroVideo';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
 import { directions, type DirectionId } from './data/directions';
 import { company, companyContactLinks } from './data/company';
+import { siteRoutes } from './data/navigation';
 
 const directionIcons: Record<DirectionId, LucideIcon> = {
   angary: Warehouse,
@@ -61,7 +62,7 @@ export default function Home() {
               <a className="button button-primary" href="#contact">
                 Обговорити проєкт <span aria-hidden="true">↗</span>
               </a>
-              <a className="text-link" href="/napryamky">
+              <a className="text-link" href={siteRoutes.directions}>
                 Дивитися напрямки <span aria-hidden="true">↗</span>
               </a>
             </div>
@@ -105,7 +106,7 @@ export default function Home() {
               );
             })}
           </div>
-          <a className="section-link" href="/napryamky">Усі напрямки робіт <span aria-hidden="true">↗</span></a>
+          <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
@@ -171,7 +172,7 @@ export default function Home() {
                 Практика будівельного майданчика допомагає бачити реальні ризики, а інженерний
                 підхід — заздалегідь перетворювати їх на зрозумілі технічні рішення.
               </p>
-              <a className="section-link" href="/pro-nas">Більше про компанію <span aria-hidden="true">↗</span></a>
+              <a className="section-link" href={siteRoutes.about}>Більше про компанію <span aria-hidden="true">↗</span></a>
             </div>
           </article>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { siteRoutes } from '../data/navigation';
 
 const storageKey = 'rubikon-analytics-consent';
 const settingsEvent = 'rubikon:cookie-settings';
@@ -132,7 +133,7 @@ export default function AnalyticsConsent() {
           За вашою згодою використовуємо Google Analytics, щоб розуміти, які сторінки
           корисні відвідувачам. Необхідні функції сайту працюють у будь-якому разі.
         </p>
-        <a href="/polityka-konfidentsiinosti">Докладніше про конфіденційність</a>
+        <a href={siteRoutes.privacy}>Докладніше про конфіденційність</a>
       </div>
       <div className="cookie-actions">
         <button type="button" onClick={() => saveChoice('denied')}>Лише необхідні</button>

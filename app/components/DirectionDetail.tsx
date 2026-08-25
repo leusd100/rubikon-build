@@ -4,6 +4,7 @@ import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
 import { getDirection } from '../data/directions';
 import { company } from '../data/company';
+import { siteRoutes } from '../data/navigation';
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
@@ -57,7 +58,7 @@ export function DirectionHero({
       <div className="service-subhero-overlay" />
       <div className="subhero-grid" aria-hidden="true" />
       <div className="shell service-subhero-content">
-        <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: breadcrumbLabel, href: path }]} />
+        <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }, { label: breadcrumbLabel, href: path }]} />
         <p className="eyebrow light"><span /> Напрямок {number}</p>
         <h1>{title}<br /><em>{accent}</em></h1>
         <p>{intro}</p>

@@ -1,5 +1,6 @@
 import { Breadcrumbs } from '../components/SiteChrome';
 import { company, companyContactLinks } from '../data/company';
+import { siteRoutes } from '../data/navigation';
 import { createBasicPageMetadata } from '../lib/seo';
 
 export const metadata = createBasicPageMetadata({
@@ -13,7 +14,7 @@ export default function PrivacyPolicyPage() {
     <main className="inner-page privacy-page" id="main-content">
       <section className="privacy-hero">
         <div className="shell">
-          <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Політика конфіденційності', href: '/polityka-konfidentsiinosti' }]} />
+          <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Політика конфіденційності', href: siteRoutes.privacy }]} />
           <p className="eyebrow light"><span /> Дані та конфіденційність</p>
           <h1>Політика<br />конфіденційності</h1>
           <p>Останнє оновлення: 23 серпня 2026 року</p>
