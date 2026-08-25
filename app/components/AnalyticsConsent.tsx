@@ -120,7 +120,12 @@ export default function AnalyticsConsent() {
   if (!showBanner) return null;
 
   return (
-    <aside className="cookie-banner" role="region" aria-labelledby="analytics-consent-title">
+    <aside
+      className="cookie-banner"
+      role="region"
+      aria-live="polite"
+      aria-labelledby="analytics-consent-title"
+    >
       <div>
         <strong id="analytics-consent-title">Аналітика сайту</strong>
         <p>

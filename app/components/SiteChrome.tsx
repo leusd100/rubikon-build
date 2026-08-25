@@ -13,7 +13,7 @@ const messengerLinks: Array<{ label: string; href: string; icon: string; shortNa
 
 export function MessengerLinks({ className }: { className: string }) {
   return (
-    <div className={className} aria-label="Месенджери RUBIKON BUILD">
+    <div className={className} role="group" aria-label="Месенджери RUBIKON BUILD">
       {messengerLinks.map(({ label, href, icon, shortName, kind }) => (
         <a
           className={`messenger-link messenger-${kind}`}

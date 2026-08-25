@@ -90,13 +90,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="uk" suppressHydrationWarning>
       <head>
-        <link
-          rel="preload"
-          href="/media/hero-steel-frame.jpg"
-          as="image"
-          type="image/jpeg"
-          fetchPriority="high"
-        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
