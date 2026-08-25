@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="inner-page">
+    <main className="inner-page" id="main-content">
       <section className="subhero">
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">

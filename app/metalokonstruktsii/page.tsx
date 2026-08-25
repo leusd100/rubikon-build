@@ -45,7 +45,7 @@ const faqItems: DirectionFaqItem[] = [
 
 export default function SteelPage() {
   return (
-    <main className="inner-page">
+    <main className="inner-page" id="main-content">
       <DirectionHero
         path="/metalokonstruktsii"
         number="03"

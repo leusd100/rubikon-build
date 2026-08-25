@@ -27,7 +27,7 @@ export default function DirectionsPage() {
   ];
 
   return (
-    <main className="inner-page">
+    <main className="inner-page" id="main-content">
       <section className="subhero subhero-media">
         <DirectionHeroVideo
           sources={['/media/directions/directions-montage.mp4']}

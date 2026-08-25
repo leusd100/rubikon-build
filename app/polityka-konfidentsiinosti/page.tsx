@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="inner-page privacy-page">
+    <main className="inner-page privacy-page" id="main-content">
       <section className="privacy-hero">
         <div className="shell">
           <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Політика конфіденційності', href: '/polityka-konfidentsiinosti' }]} />

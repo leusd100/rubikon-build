@@ -68,7 +68,7 @@ function LogoLockup({ variant }: { variant: (typeof variants)[number]['key'] }) 
 
 export default function LogoVariantsPage() {
   return (
-    <main className="logo-lab">
+    <main className="logo-lab" id="main-content">
       <section className="logo-lab-intro">
         <div className="shell">
           <a className="logo-lab-back" href="/">← Повернутися на сайт</a>

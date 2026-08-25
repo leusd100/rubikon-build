@@ -37,7 +37,7 @@ const steps: Array<[string, string, string, LucideIcon]> = [
 
 export default function Home() {
   return (
-    <main>
+    <main id="main-content">
       <section className="hero" id="top">
         <div className="hero-media" aria-hidden="true">
           <DirectionHeroVideo

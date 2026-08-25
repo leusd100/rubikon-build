@@ -180,7 +180,7 @@ export function DirectionDetail({
   ctaTitle,
 }: DirectionDetailProps) {
   return (
-    <main className="inner-page">
+    <main className="inner-page" id="main-content">
       <DirectionHero
         path={path}
         number={number}

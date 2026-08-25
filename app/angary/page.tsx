@@ -45,7 +45,7 @@ const faqItems: DirectionFaqItem[] = [
 
 export default function HangarsPage() {
   return (
-    <main className="inner-page">
+    <main className="inner-page" id="main-content">
       <DirectionHero
         path="/angary"
         number="01"

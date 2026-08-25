@@ -120,9 +120,9 @@ export default function AnalyticsConsent() {
   if (!showBanner) return null;
 
   return (
-    <aside className="cookie-banner" aria-label="Налаштування аналітичних cookies">
+    <aside className="cookie-banner" role="region" aria-labelledby="analytics-consent-title">
       <div>
-        <strong>Аналітика сайту</strong>
+        <strong id="analytics-consent-title">Аналітика сайту</strong>
         <p>
           За вашою згодою використовуємо Google Analytics, щоб розуміти, які сторінки
           корисні відвідувачам. Необхідні функції сайту працюють у будь-якому разі.

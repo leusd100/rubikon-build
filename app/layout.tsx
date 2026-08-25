@@ -118,6 +118,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
         />
+        <a className="skip-link" href="#main-content">Перейти до основного вмісту</a>
         <SiteHeader />
         {children}
         <SiteFooter />
