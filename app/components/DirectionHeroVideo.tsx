@@ -21,6 +21,7 @@ export function DirectionHeroVideo({
   const [reduceMotion, setReduceMotion] = useState(false);
   const [saveData, setSaveData] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [canLoadVideo, setCanLoadVideo] = useState(false);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const activeSourceRef = useRef(0);
   const sourceKey = sources.join('|');
@@ -42,6 +43,28 @@ export function DirectionHeroVideo({
   }, []);
 
   useEffect(() => {
+    if (reduceMotion || saveData || !isVisible) return;
+
+    let timeoutId: number | undefined;
+    let idleId: number | undefined;
+    const enableVideo = () => setCanLoadVideo(true);
+    const requestIdle = window.requestIdleCallback;
+
+    if (requestIdle) {
+      idleId = requestIdle(enableVideo, { timeout: 900 });
+    } else {
+      timeoutId = window.setTimeout(enableVideo, 450);
+    }
+
+    return () => {
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, [isVisible, reduceMotion, saveData]);
+
+  const shouldAttachVideo = canLoadVideo && !reduceMotion && !saveData && isVisible;
+
+  useEffect(() => {
     const target = videoRefs.current[0];
     if (!target || typeof IntersectionObserver === 'undefined') return;
 
@@ -57,7 +80,7 @@ export function DirectionHeroVideo({
     activeSourceRef.current = 0;
 
     const firstVideo = videoRefs.current[0];
-    const shouldPlay = !reduceMotion && !saveData && isVisible;
+    const shouldPlay = shouldAttachVideo;
     if (!shouldPlay) {
       videoRefs.current.forEach((video) => video?.pause());
       return;
@@ -105,7 +128,7 @@ export function DirectionHeroVideo({
       if (pauseTimer) clearTimeout(pauseTimer);
       document.removeEventListener('visibilitychange', playActiveVideo);
     };
-  }, [clipDurationMs, isVisible, reduceMotion, saveData, sourceKey, sources.length]);
+  }, [clipDurationMs, isVisible, reduceMotion, saveData, shouldAttachVideo, sourceKey, sources.length]);
 
   if (!sources.length) return null;
 
@@ -114,12 +137,12 @@ export function DirectionHeroVideo({
       key={source}
       ref={(video) => { videoRefs.current[index] = video; }}
       className={[className, 'direction-hero-video', index === activeSource ? 'is-active' : ''].filter(Boolean).join(' ')}
-      src={source}
+      src={shouldAttachVideo ? source : undefined}
       poster={poster}
-      autoPlay={index === 0 && !reduceMotion && !saveData}
+      autoPlay={shouldAttachVideo && index === 0}
       muted
       playsInline
-      preload={index < 2 ? 'metadata' : 'none'}
+      preload={shouldAttachVideo && index === activeSource ? 'auto' : 'none'}
       loop={sources.length === 1}
       aria-hidden="true"
     />

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 const storageKey = 'rubikon-analytics-consent';
 const settingsEvent = 'rubikon:cookie-settings';
+const measurementId = 'G-WYRXJV71WG';
 
 type ConsentChoice = 'granted' | 'denied';
 
@@ -18,6 +19,22 @@ function updateAnalyticsConsent(choice: ConsentChoice) {
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer.push(args));
   window.gtag('consent', 'update', { analytics_storage: choice });
+}
+
+function loadAnalytics() {
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer.push(args));
+
+  if (!document.querySelector(`script[data-rubikon-analytics="${measurementId}"]`)) {
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+    script.dataset.rubikonAnalytics = measurementId;
+    document.head.appendChild(script);
+  }
+
+  window.gtag('js', new Date());
+  window.gtag('config', measurementId, { anonymize_ip: true });
 }
 
 function contactType(element: HTMLElement) {
@@ -58,7 +75,10 @@ export default function AnalyticsConsent() {
     const frame = window.requestAnimationFrame(() => {
       setChoice(savedChoice);
       setShowBanner(savedChoice === null);
-      if (savedChoice) updateAnalyticsConsent(savedChoice);
+      if (savedChoice) {
+        updateAnalyticsConsent(savedChoice);
+        if (savedChoice === 'granted') loadAnalytics();
+      }
     });
 
     const showSettings = () => setShowBanner(true);
@@ -94,6 +114,7 @@ export default function AnalyticsConsent() {
     setShowBanner(false);
 
     updateAnalyticsConsent(nextChoice);
+    if (nextChoice === 'granted') loadAnalytics();
   };
 
   if (!showBanner) return null;

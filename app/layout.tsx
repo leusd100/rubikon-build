@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/next-script-for-ga -- Consent mode must run before the external Google tag. */
 import type { Metadata } from 'next';
 import { IBM_Plex_Sans_Condensed, Jost, Manrope } from 'next/font/google';
 import './globals.css';
@@ -13,7 +12,7 @@ const manrope = Manrope({
 const condensed = IBM_Plex_Sans_Condensed({
   variable: '--font-condensed',
   subsets: ['cyrillic-ext', 'latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['500', '600', '700'],
 });
 
 const display = Jost({
@@ -110,12 +109,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 ad_personalization: 'denied',
                 wait_for_update: 500
               });
-              gtag('js', new Date());
-              gtag('config', 'G-WYRXJV71WG', { anonymize_ip: true });
             `,
           }}
         />
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-WYRXJV71WG" />
       </head>
       <body className={`${manrope.variable} ${condensed.variable} ${display.variable}`}>
         <script
