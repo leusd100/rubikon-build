@@ -19,6 +19,8 @@ export function DirectionHeroVideo({
 }: DirectionHeroVideoProps) {
   const [activeSource, setActiveSource] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [saveData, setSaveData] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const activeSourceRef = useRef(0);
   const sourceKey = sources.join('|');
@@ -26,25 +28,48 @@ export function DirectionHeroVideo({
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const updateMotionPreference = () => setReduceMotion(mediaQuery.matches);
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    const preferenceTimer = window.setTimeout(() => {
+      updateMotionPreference();
+      setSaveData(Boolean(connection?.saveData));
+    }, 0);
 
-    updateMotionPreference();
     mediaQuery.addEventListener('change', updateMotionPreference);
-    return () => mediaQuery.removeEventListener('change', updateMotionPreference);
+    return () => {
+      window.clearTimeout(preferenceTimer);
+      mediaQuery.removeEventListener('change', updateMotionPreference);
+    };
   }, []);
 
   useEffect(() => {
+    const target = videoRefs.current[0];
+    if (!target || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { rootMargin: '160px 0px', threshold: 0.01 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [sourceKey]);
+
+  useEffect(() => {
     activeSourceRef.current = 0;
-    setActiveSource(0);
 
     const firstVideo = videoRefs.current[0];
-    if (reduceMotion) {
+    const shouldPlay = !reduceMotion && !saveData && isVisible;
+    if (!shouldPlay) {
       videoRefs.current.forEach((video) => video?.pause());
       return;
     }
 
     const playActiveVideo = () => {
-      if (document.visibilityState !== 'visible') return;
-      void firstVideo?.play().catch(() => undefined);
+      const activeVideo = videoRefs.current[activeSourceRef.current] || firstVideo;
+      if (document.visibilityState !== 'visible') {
+        videoRefs.current.forEach((video) => video?.pause());
+        return;
+      }
+      void activeVideo?.play().catch(() => undefined);
     };
 
     playActiveVideo();
@@ -56,6 +81,7 @@ export function DirectionHeroVideo({
 
     let pauseTimer: ReturnType<typeof setTimeout> | undefined;
     const cycleTimer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
       const previousIndex = activeSourceRef.current;
       const nextIndex = (previousIndex + 1) % sources.length;
       const nextVideo = videoRefs.current[nextIndex];
@@ -79,7 +105,7 @@ export function DirectionHeroVideo({
       if (pauseTimer) clearTimeout(pauseTimer);
       document.removeEventListener('visibilitychange', playActiveVideo);
     };
-  }, [clipDurationMs, reduceMotion, sourceKey, sources.length]);
+  }, [clipDurationMs, isVisible, reduceMotion, saveData, sourceKey, sources.length]);
 
   if (!sources.length) return null;
 
@@ -90,7 +116,7 @@ export function DirectionHeroVideo({
       className={[className, 'direction-hero-video', index === activeSource ? 'is-active' : ''].filter(Boolean).join(' ')}
       src={source}
       poster={poster}
-      autoPlay={index === 0 && !reduceMotion}
+      autoPlay={index === 0 && !reduceMotion && !saveData}
       muted
       playsInline
       preload={index < 2 ? 'metadata' : 'none'}

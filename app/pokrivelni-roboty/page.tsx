@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 
 export default function RoofingWorksPage() {
   return <DirectionDetail
+    path="/pokrivelni-roboty"
     number="05"
     title="Покрівельні роботи"
     accent="для промислових споруд"
     intro="Монтуємо й ремонтуємо покрівлі ангарів, складів, виробничих та аграрних споруд. Працюємо в складі комплексного будівництва або як окремий підрядник."
     image="/media/competence-roofing.jpg"
-    imageAlt="Роботи на металевій покрівлі промислової споруди"
     video="/media/directions/roofing.mp4"
     overviewEyebrow="Склад робіт"
     overviewTitle="Надійний контур без слабких примикань"

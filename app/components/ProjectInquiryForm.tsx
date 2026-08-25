@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { ChevronDown, Copy, Phone, Send } from 'lucide-react';
+import { inquiryDirectionOptions } from '../data/directions';
 
 const companyPhone = '380682614264';
 const companyPhoneInternational = `+${companyPhone}`;
@@ -13,16 +14,6 @@ const contactMethods: Array<[string, ContactMethod]> = [
   ['Telegram', 'Telegram'],
   ['WhatsApp', 'WhatsApp'],
   ['Viber', 'Viber'],
-];
-
-const directions = [
-  'Ангар або склад',
-  'Зерносховище',
-  'Металоконструкції',
-  'Бетонні роботи',
-  'Покрівельні роботи',
-  'Комплексний об’єкт під ключ',
-  'Інше',
 ];
 
 function value(formData: FormData, key: string) {
@@ -58,14 +49,20 @@ export default function ProjectInquiryForm() {
       value(formData, 'comment') && `Коментар: ${value(formData, 'comment')}`,
     ].filter(Boolean);
 
-    window.gtag?.('event', 'generate_lead', {
-      contact_method: value(formData, 'contactMethod'),
-      project_direction: value(formData, 'direction'),
-    });
-
     const message = details.join('\n');
     const encodedMessage = encodeURIComponent(message);
     setStatusAction(null);
+
+    try {
+      if (window.localStorage.getItem('rubikon-analytics-consent') === 'granted') {
+        window.gtag?.('event', 'inquiry_contact_attempt', {
+          contact_method: contactMethod.toLowerCase(),
+          project_direction: value(formData, 'direction'),
+        });
+      }
+    } catch {
+      // Do not send analytics when the visitor's consent state cannot be read.
+    }
 
     if (contactMethod === 'Дзвінок') {
       void copyText(companyPhoneInternational);
@@ -121,9 +118,10 @@ export default function ProjectInquiryForm() {
             name="phone"
             type="tel"
             inputMode="tel"
-            pattern="[+0-9 ()-]{10,20}"
-            maxLength={20}
+            pattern="\+380[0-9]{9}"
+            maxLength={13}
             defaultValue="+380"
+            title="Введіть номер у форматі +380XXXXXXXXX"
             aria-describedby="phone-hint"
             autoComplete="tel"
             required
@@ -158,7 +156,7 @@ export default function ProjectInquiryForm() {
         <span>Що плануєте *</span>
         <select name="direction" defaultValue="" required>
           <option value="" disabled>Оберіть напрямок</option>
-          {directions.map((direction) => <option key={direction}>{direction}</option>)}
+          {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
         </select>
       </label>
 

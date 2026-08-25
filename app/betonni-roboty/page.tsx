@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 
 export default function ConcreteWorksPage() {
   return <DirectionDetail
+    path="/betonni-roboty"
     number="04"
     title="Бетонні роботи"
     accent="під навантаження об’єкта"
     intro="Виконуємо фундаменти, основи, промислові підлоги та монолітні елементи як частину комплексного будівництва або окремий етап підряду."
     image="/media/competence-concrete.jpg"
-    imageAlt="Армування залізобетонної основи на будівельному майданчику"
     video="/media/directions/concrete.mp4"
     overviewEyebrow="Що виконуємо"
     overviewTitle="Основа, від якої залежить весь об’єкт"

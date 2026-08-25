@@ -15,45 +15,17 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { EstimateBrief, MessengerLinks, TeamSection } from './components/SiteChrome';
+import { DirectionHeroVideo } from './components/DirectionHeroVideo';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
+import { directions, type DirectionId } from './data/directions';
 
-const services = [
-  {
-    number: '01',
-    title: 'Ангари та склади',
-    text: 'Швидкомонтовані споруди для виробництва, логістики, агросектору й комерційних задач.',
-    href: '/angary',
-    icon: Warehouse,
-  },
-  {
-    number: '02',
-    title: 'Зерносховища під ключ',
-    text: 'Комплексна реалізація: основа, каркас, огороджувальні конструкції та монтаж.',
-    href: '/zernoskhovyshcha',
-    icon: Wheat,
-  },
-  {
-    number: '03',
-    title: 'Металоконструкції',
-    text: 'Проєктування, виготовлення та монтаж каркасів, ферм, балок і складних металевих вузлів.',
-    href: '/metalokonstruktsii',
-    icon: DraftingCompass,
-  },
-  {
-    number: '04',
-    title: 'Бетонні роботи',
-    text: 'Фундаменти, промислові підлоги, монолітні ділянки та основи під конструкції й обладнання.',
-    href: '/betonni-roboty',
-    icon: Layers3,
-  },
-  {
-    number: '05',
-    title: 'Покрівельні роботи',
-    text: 'Монтаж і ремонт покрівель промислових, складських та аграрних споруд із герметизацією вузлів і примикань.',
-    href: '/pokrivelni-roboty',
-    icon: Hammer,
-  },
-];
+const directionIcons: Record<DirectionId, LucideIcon> = {
+  angary: Warehouse,
+  zernoskhovyshcha: Wheat,
+  metalokonstruktsii: DraftingCompass,
+  'betonni-roboty': Layers3,
+  'pokrivelni-roboty': Hammer,
+};
 
 const steps: Array<[string, string, string, LucideIcon]> = [
   ['01', 'Знайомство', 'Уточнюємо задачу, тип об’єкта, умови та бажаний результат.', Handshake],
@@ -63,67 +35,14 @@ const steps: Array<[string, string, string, LucideIcon]> = [
   ['05', 'Перевірка і здача', 'Разом перевіряємо результат і закриваємо виконані роботи.', BadgeCheck],
 ];
 
-const directions = [
-  {
-    number: '01',
-    title: 'Ангари та склади',
-    text: 'Швидкомонтовані споруди для виробництва, логістики, агросектору та зберігання.',
-    image: '/media/competence-hangar.jpg',
-    alt: 'Промисловий ангар і складська будівля',
-    className: 'wide',
-    href: '/angary',
-  },
-  {
-    number: '02',
-    title: 'Зерносховища',
-    text: 'Основа, металевий каркас, огороджувальні конструкції та координація монтажу.',
-    image: '/media/competence-grain.jpg',
-    alt: 'Промислове зерносховище біля поля',
-    className: 'tall',
-    href: '/zernoskhovyshcha',
-  },
-  {
-    number: '03',
-    title: 'Несучі металоконструкції',
-    text: 'Виготовлення та монтаж каркасів, балок, ферм і складних металевих вузлів.',
-    image: '/media/competence-steel.jpg',
-    alt: 'Монтаж і зварювання несучого сталевого каркаса',
-    className: 'compact',
-    href: '/metalokonstruktsii',
-  },
-  {
-    number: '04',
-    title: 'Бетонні роботи',
-    text: 'Фундаменти, основи, промислові підлоги та монолітні елементи під задачу об’єкта.',
-    image: '/media/competence-concrete.jpg',
-    alt: 'Армування залізобетонної основи на будівельному майданчику',
-    className: 'concrete',
-    href: '/betonni-roboty',
-  },
-  {
-    number: '05',
-    title: 'Покрівельні роботи',
-    text: 'Монтаж, ремонт і герметизація покрівель промислових, складських та аграрних споруд.',
-    image: '/media/competence-roofing.jpg',
-    alt: 'Роботи на металевій покрівлі промислової споруди',
-    className: 'roof',
-    href: '/pokrivelni-roboty',
-  },
-];
-
 export default function Home() {
   return (
     <main>
       <section className="hero" id="top">
         <div className="hero-media" aria-hidden="true">
-          <video
-            src="/media/hero-steel-frame.mp4"
+          <DirectionHeroVideo
+            sources={['/media/hero-steel-frame.mp4']}
             poster="/media/hero-steel-frame.jpg"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
           />
         </div>
         <div className="hero-shade" aria-hidden="true" />
@@ -172,14 +91,14 @@ export default function Home() {
             </p>
           </div>
           <div className="service-list">
-            {services.map((service) => {
-              const Icon = service.icon;
+            {directions.map((direction) => {
+              const Icon = directionIcons[direction.id];
               return (
-                <a className="service-card" href={service.href} key={service.number}>
-                  <span className="service-number">{service.number}</span>
+                <a className="service-card" href={direction.href} key={direction.id}>
+                  <span className="service-number">{direction.number}</span>
                   <Icon className="service-icon" aria-hidden="true" />
-                  <h3>{service.title}</h3>
-                  <p>{service.text}</p>
+                  <h3>{direction.serviceTitle}</h3>
+                  <p>{direction.serviceText}</p>
                   <span className="service-arrow" aria-hidden="true">↗</span>
                 </a>
               );
@@ -203,18 +122,18 @@ export default function Home() {
           </div>
           <div className="direction-grid">
             {directions.map((direction) => (
-              <a className={`direction-card ${direction.className}`} href={direction.href} key={direction.number}>
+              <a className={`direction-card ${direction.cardClassName}`} href={direction.href} key={direction.id}>
                 <Image
                   src={direction.image}
-                  alt={direction.alt}
+                  alt={direction.imageAlt}
                   fill
-                  sizes={direction.className === 'wide' ? '(max-width: 800px) 100vw, 65vw' : '(max-width: 800px) 100vw, 35vw'}
+                  sizes={direction.cardClassName === 'wide' ? '(max-width: 800px) 100vw, 65vw' : '(max-width: 800px) 100vw, 35vw'}
                 />
                 <span className="direction-shade" />
                 <span className="direction-number">{direction.number}</span>
                 <span className="direction-copy">
-                  <strong>{direction.title}</strong>
-                  <small>{direction.text}</small>
+                  <strong>{direction.cardTitle}</strong>
+                  <small>{direction.cardText}</small>
                 </span>
                 <span className="direction-arrow" aria-hidden="true">↗</span>
               </a>

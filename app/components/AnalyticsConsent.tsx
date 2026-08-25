@@ -48,7 +48,13 @@ export default function AnalyticsConsent() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    const savedChoice = window.localStorage.getItem(storageKey) as ConsentChoice | null;
+    let savedChoice: ConsentChoice | null = null;
+    try {
+      const storedValue = window.localStorage.getItem(storageKey);
+      savedChoice = storedValue === 'granted' || storedValue === 'denied' ? storedValue : null;
+    } catch {
+      savedChoice = null;
+    }
     const frame = window.requestAnimationFrame(() => {
       setChoice(savedChoice);
       setShowBanner(savedChoice === null);
@@ -79,7 +85,11 @@ export default function AnalyticsConsent() {
   }, [choice]);
 
   const saveChoice = (nextChoice: ConsentChoice) => {
-    window.localStorage.setItem(storageKey, nextChoice);
+    try {
+      window.localStorage.setItem(storageKey, nextChoice);
+    } catch {
+      // Consent still applies for the current page when storage is unavailable.
+    }
     setChoice(nextChoice);
     setShowBanner(false);
 

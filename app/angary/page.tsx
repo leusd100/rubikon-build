@@ -1,8 +1,15 @@
 import type { Metadata } from 'next';
 import { ClipboardList, DraftingCompass, HardHat, MapPinned } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { Breadcrumbs, PageCta } from '../components/SiteChrome';
-import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
+import {
+  DirectionCostSection,
+  DirectionFaq,
+  DirectionHero,
+  DirectionProcess,
+  type DirectionFaqItem,
+  type DirectionItem,
+  type DirectionStep,
+} from '../components/DirectionDetail';
+import { PageCta } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubikonbuild.com';
 
@@ -19,36 +26,39 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/competence-hangar.jpg`] },
 };
 
-const stages: Array<[string, string, string, LucideIcon]> = [
+const stages: DirectionStep[] = [
   ['01', 'Задача і майданчик', 'Визначаємо призначення споруди, потрібні габарити, режим експлуатації та особливості ділянки.', MapPinned],
   ['02', 'Концепція', 'Погоджуємо конструктивну схему, огородження, ворота, інженерні потреби та склад робіт.', DraftingCompass],
   ['03', 'Підготовка', 'Формуємо кошторис, послідовність робіт, комплектування та план організації монтажу.', ClipboardList],
   ['04', 'Будівництво', 'Виконуємо або координуємо основу, каркас, огороджувальні конструкції та завершальні етапи.', HardHat],
 ];
 
-const costFactors = [
+const costFactors: DirectionItem[] = [
   ['01', 'Габарити й проліт', 'Довжина, ширина, висота та схема без внутрішніх або з проміжними опорами.'],
   ['02', 'Теплий чи холодний контур', 'Профільований лист, сендвіч-панелі, утеплення та вимоги до експлуатації.'],
   ['03', 'Отвори й обладнання', 'Ворота, двері, світлові прорізи, вентиляція та майбутні технологічні навантаження.'],
   ['04', 'Майданчик і логістика', 'Основа, під’їзд для техніки, регіон будівництва та умови виконання монтажу.'],
 ];
 
+const faqItems: DirectionFaqItem[] = [
+  ['Чи будуєте ангари під ключ?', 'Так. Також можемо долучитися до окремого етапу як підрядник або субпідрядник — наприклад, виготовити каркас, виконати монтаж чи огородження.'],
+  ['Чи працюєте за межами області?', 'Так, розглядаємо масштабні промислові, складські та аграрні об’єкти в інших регіонах України.'],
+  ['Що потрібно для попередньої оцінки?', 'Призначення споруди, орієнтовні довжина, ширина й висота, місце будівництва та бажані строки.'],
+];
+
 export default function HangarsPage() {
   return (
     <main className="inner-page">
-      <section className="service-subhero">
-        <div className="service-subhero-media">
-          <DirectionHeroVideo sources={["/media/directions/hangars.mp4"]} poster="/media/competence-hangar.jpg" />
-        </div>
-        <div className="service-subhero-overlay" />
-        <div className="subhero-grid" aria-hidden="true" />
-        <div className="shell service-subhero-content">
-          <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Ангари', href: '/angary' }]} />
-          <p className="eyebrow light"><span /> Напрямок 01</p>
-          <h1>Ангари та склади<br /><em>під задачу бізнесу</em></h1>
-          <p>Реалізуємо швидкомонтовані споруди під ключ або беремо на себе окремі етапи — від каркаса й огородження до монтажу на об’єкті.</p>
-        </div>
-      </section>
+      <DirectionHero
+        path="/angary"
+        number="01"
+        breadcrumbLabel="Ангари"
+        title="Ангари та склади"
+        accent="під задачу бізнесу"
+        intro="Реалізуємо швидкомонтовані споруди під ключ або беремо на себе окремі етапи — від каркаса й огородження до монтажу на об’єкті."
+        poster="/media/competence-hangar.jpg"
+        video="/media/directions/hangars.mp4"
+      />
 
       <section className="page-section">
         <div className="shell page-heading split-heading">
@@ -62,40 +72,18 @@ export default function HangarsPage() {
         </div>
       </section>
 
-      <section className="page-section page-section-dark">
-        <div className="shell">
-          <div className="page-heading split-heading">
-            <div><p className="eyebrow light"><span /> Етапи</p><h2>Від задуму — до готового контуру</h2></div>
-            <p>Для повного циклу координуємо основу, каркас, покрівлю, стіни, ворота й суміжні роботи. За потреби виконуємо лише погоджену частину цього комплексу.</p>
-          </div>
-          <ol className="detail-steps">
-            {stages.map(([number, title, text, Icon]) => <li key={number}><span>{number}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{title}</h3><p>{text}</p></li>)}
-          </ol>
-        </div>
-      </section>
-
-      <section className="page-section cost-section">
-        <div className="shell">
-          <div className="page-heading split-heading">
-            <div><p className="eyebrow"><span /> Формування кошторису</p><h2>Ціна ангара починається з його майбутньої функції</h2></div>
-            <p>Однакова площа не означає однакову вартість. На рішення впливають проліт, висота, утеплення, навантаження, комплектація та умови майданчика.</p>
-          </div>
-          <div className="cost-grid">
-            {costFactors.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section faq-section">
-        <div className="shell faq-grid">
-          <div><p className="eyebrow"><span /> Питання</p><h2>Перед будівництвом</h2></div>
-          <div className="faq-list">
-            <article><h3>Чи будуєте ангари під ключ?</h3><p>Так. Також можемо долучитися до окремого етапу як підрядник або субпідрядник — наприклад, виготовити каркас, виконати монтаж чи огородження.</p></article>
-            <article><h3>Чи працюєте за межами області?</h3><p>Так, розглядаємо масштабні промислові, складські та аграрні об’єкти в інших регіонах України.</p></article>
-            <article><h3>Що потрібно для попередньої оцінки?</h3><p>Призначення споруди, орієнтовні довжина, ширина й висота, місце будівництва та бажані строки.</p></article>
-          </div>
-        </div>
-      </section>
+      <DirectionProcess
+        eyebrow="Етапи"
+        title="Від задуму — до готового контуру"
+        text="Для повного циклу координуємо основу, каркас, покрівлю, стіни, ворота й суміжні роботи. За потреби виконуємо лише погоджену частину цього комплексу."
+        steps={stages}
+      />
+      <DirectionCostSection
+        title="Ціна ангара починається з його майбутньої функції"
+        text="Однакова площа не означає однакову вартість. На рішення впливають проліт, висота, утеплення, навантаження, комплектація та умови майданчика."
+        items={costFactors}
+      />
+      <DirectionFaq title="Перед будівництвом" items={faqItems} />
       <PageCta eyebrow="Обговорити ангар" title="Опишіть майбутню споруду — сформуємо наступний крок" />
     </main>
   );

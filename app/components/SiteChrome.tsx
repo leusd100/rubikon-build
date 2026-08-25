@@ -49,7 +49,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell nav-wrap">
-        <a className="brand-link" href="/#top" aria-label="RUBIKON BUILD — на головну">
+        <a className="brand-link" href="/" aria-label="RUBIKON BUILD — на головну">
           <Brand />
         </a>
         <nav className="desktop-nav" aria-label="Основна навігація">
@@ -87,7 +87,7 @@ export function SiteFooter() {
   return (
     <footer>
       <div className="shell footer-grid">
-        <a className="brand-link" href="/#top" aria-label="RUBIKON BUILD — на головну">
+        <a className="brand-link" href="/" aria-label="RUBIKON BUILD — на головну">
           <Brand />
         </a>
         <nav className="footer-nav" aria-label="Навігація у підвалі">

@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 
 export default function GrainStoragePage() {
   return <DirectionDetail
+    path="/zernoskhovyshcha"
     number="02"
     title="Зерносховища"
     accent="від основи до готового контуру"
     intro="Реалізуємо зерносховища комплексно або беремо на себе визначений етап — бетонну основу, металевий каркас, огородження, покрівлю чи монтаж."
     image="/media/competence-grain.jpg"
-    imageAlt="Промислове зерносховище біля поля"
     video="/media/directions/grain.mp4"
     overviewEyebrow="Склад робіт"
     overviewTitle="Рішення під технологію зберігання"

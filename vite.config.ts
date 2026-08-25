@@ -46,6 +46,12 @@ export default defineConfig(async () => {
 
   return {
     css: { postcss: { plugins: [tailwindcss()] } },
+    // RSC client modules must not be pre-bundled differently between the
+    // server and browser environments. Excluding them prevents Vite from
+    // repeatedly invalidating the dependency graph during local startup.
+    optimizeDeps: {
+      exclude: ['vinext'],
+    },
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,

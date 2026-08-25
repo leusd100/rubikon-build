@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
+import { directions } from '../data/directions';
 
 const liveUrl = 'https://rubikonbuild.com';
 
@@ -16,14 +17,6 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/hero-steel-frame.jpg`] },
 };
-
-const services = [
-  { number: '01', title: 'Ангари та склади', text: 'Швидкомонтовані споруди для виробництва, логістики, техніки, матеріалів і готової продукції.', href: '/angary', id: 'angary' },
-  { number: '02', title: 'Зерносховища під ключ', text: 'Підготовка основи, металевий каркас, огороджувальні конструкції, монтаж і координація суміжних етапів.', href: '/zernoskhovyshcha', id: 'zernoskhovyshcha' },
-  { number: '03', title: 'Металоконструкції', text: 'Каркаси, колони, балки, ферми, опорні та нестандартні металеві вузли. Організовуємо виготовлення, доставку й монтаж.', href: '/metalokonstruktsii', id: 'metalokonstruktsii' },
-  { number: '04', title: 'Бетонні роботи', text: 'Фундаменти, основи під конструкції та обладнання, промислові підлоги й монолітні ділянки відповідно до задачі об’єкта.', href: '/betonni-roboty', id: 'betonni-roboty' },
-  { number: '05', title: 'Покрівельні роботи', text: 'Монтаж і ремонт покрівель промислових, складських та аграрних споруд із герметизацією вузлів і примикань.', href: '/pokrivelni-roboty', id: 'pokrivelni-roboty' },
-];
 
 export default function DirectionsPage() {
   return (
@@ -58,15 +51,15 @@ export default function DirectionsPage() {
             <p>Точний перелік робіт визначаємо після знайомства з об’єктом. Можемо сформувати весь цикл або долучитися лише там, де потрібна наша компетенція.</p>
           </div>
           <div className="route-service-list">
-            {services.map((service) => {
+            {directions.map((direction) => {
               const content = (
                 <>
-                  <span>{service.number}</span>
-                  <div><h3>{service.title}</h3><p>{service.text}</p></div>
-                  <b aria-hidden="true">{service.href ? '↗' : '—'}</b>
+                  <span>{direction.number}</span>
+                  <div><h3>{direction.serviceTitle}</h3><p>{direction.routeText}</p></div>
+                  <b aria-hidden="true">↗</b>
                 </>
               );
-              return <a className="route-service" href={service.href} id={service.id} key={service.number}>{content}</a>;
+              return <a className="route-service" href={direction.href} id={direction.id} key={direction.id}>{content}</a>;
             })}
           </div>
         </div>

@@ -1,8 +1,15 @@
 import type { Metadata } from 'next';
 import { ClipboardList, DraftingCompass, Factory, HardHat } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { Breadcrumbs, PageCta } from '../components/SiteChrome';
-import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
+import {
+  DirectionCostSection,
+  DirectionFaq,
+  DirectionHero,
+  DirectionProcess,
+  type DirectionFaqItem,
+  type DirectionItem,
+  type DirectionStep,
+} from '../components/DirectionDetail';
+import { PageCta } from '../components/SiteChrome';
 
 const liveUrl = 'https://rubikonbuild.com';
 
@@ -19,36 +26,39 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/competence-steel.jpg`] },
 };
 
-const steps: Array<[string, string, string, LucideIcon]> = [
+const steps: DirectionStep[] = [
   ['01', 'Вихідні дані', 'Уточнюємо призначення конструкції, геометрію, навантаження та умови монтажу.', ClipboardList],
   ['02', 'Технічне рішення', 'Формуємо конструктивну схему, вузли, склад матеріалів і послідовність робіт.', DraftingCompass],
   ['03', 'Виготовлення', 'Організовуємо заготівлю, складання, зварювання та підготовку конструкцій до монтажу.', Factory],
   ['04', 'Монтаж', 'Доставляємо елементи на об’єкт, виконуємо складання та контролюємо ключові з’єднання.', HardHat],
 ];
 
-const costFactors = [
+const costFactors: DirectionItem[] = [
   ['01', 'Обсяг металу', 'Тоннаж, довжина елементів і загальна кількість деталей у комплекті.'],
   ['02', 'Складність вузлів', 'Кількість операцій, типи з’єднань, точність і повторюваність елементів.'],
   ['03', 'Захист поверхні', 'Підготовка металу, ґрунтування, фарбування або інший погоджений захист.'],
   ['04', 'Умови монтажу', 'Відстань до об’єкта, доступ техніки, висота робіт і організація майданчика.'],
 ];
 
+const faqItems: DirectionFaqItem[] = [
+  ['Чи працюєте за готовим проєктом?', 'Так. Спочатку перевіряємо комплектність вихідних даних і погоджуємо межі відповідальності.'],
+  ['Чи можна замовити окремо виготовлення або монтаж?', 'Так. Погоджуємо конкретний етап, вхідні дані та межі відповідальності. Для монтажу конструкції й документація мають бути придатними до безпечного виконання робіт.'],
+  ['Як формується вартість?', 'На неї впливають тоннаж, складність вузлів, покриття, логістика, умови майданчика та обсяг монтажу.'],
+];
+
 export default function SteelPage() {
   return (
     <main className="inner-page">
-      <section className="service-subhero">
-        <div className="service-subhero-media">
-          <DirectionHeroVideo sources={["/media/directions/steel.mp4"]} poster="/media/competence-steel.jpg" />
-        </div>
-        <div className="service-subhero-overlay" />
-        <div className="subhero-grid" aria-hidden="true" />
-        <div className="shell service-subhero-content">
-          <Breadcrumbs items={[{ label: 'Головна', href: '/' }, { label: 'Напрямки', href: '/napryamky' }, { label: 'Металоконструкції', href: '/metalokonstruktsii' }]} />
-          <p className="eyebrow light"><span /> Напрямок 03</p>
-          <h1>Металоконструкції<br /><em>від деталі до монтажу</em></h1>
-          <p>Закриваємо весь цикл робіт із металоконструкціями або окремо виконуємо виготовлення, доставку чи монтаж у форматі підряду та субпідряду.</p>
-        </div>
-      </section>
+      <DirectionHero
+        path="/metalokonstruktsii"
+        number="03"
+        breadcrumbLabel="Металоконструкції"
+        title="Металоконструкції"
+        accent="від деталі до монтажу"
+        intro="Закриваємо весь цикл робіт із металоконструкціями або окремо виконуємо виготовлення, доставку чи монтаж у форматі підряду та субпідряду."
+        poster="/media/competence-steel.jpg"
+        video="/media/directions/steel.mp4"
+      />
 
       <section className="page-section">
         <div className="shell page-two-col align-start">
@@ -65,40 +75,17 @@ export default function SteelPage() {
         </div>
       </section>
 
-      <section className="page-section page-section-dark">
-        <div className="shell">
-          <div className="page-heading split-heading">
-            <div><p className="eyebrow light"><span /> Послідовність</p><h2>Керуємо не лише металом, а всім процесом</h2></div>
-            <p>Надійність конструкції залежить від точності вихідних даних, якості виготовлення та правильної роботи на монтажі.</p>
-          </div>
-          <ol className="detail-steps">
-            {steps.map(([number, title, text, Icon]) => <li key={number}><span>{number}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{title}</h3><p>{text}</p></li>)}
-          </ol>
-        </div>
-      </section>
-
-      <section className="page-section cost-section">
-        <div className="shell">
-          <div className="page-heading split-heading">
-            <div><p className="eyebrow"><span /> Формування кошторису</p><h2>Вартість визначає конструкція, а не одна цифра за тонну</h2></div>
-            <p>Для попередньої оцінки потрібні креслення або базові параметри майбутньої конструкції. Після цього можна предметно оцінити склад робіт.</p>
-          </div>
-          <div className="cost-grid">
-            {costFactors.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section faq-section">
-        <div className="shell faq-grid">
-          <div><p className="eyebrow"><span /> Питання</p><h2>Перед замовленням</h2></div>
-          <div className="faq-list">
-            <article><h3>Чи працюєте за готовим проєктом?</h3><p>Так. Спочатку перевіряємо комплектність вихідних даних і погоджуємо межі відповідальності.</p></article>
-            <article><h3>Чи можна замовити окремо виготовлення або монтаж?</h3><p>Так. Погоджуємо конкретний етап, вхідні дані та межі відповідальності. Для монтажу конструкції й документація мають бути придатними до безпечного виконання робіт.</p></article>
-            <article><h3>Як формується вартість?</h3><p>На неї впливають тоннаж, складність вузлів, покриття, логістика, умови майданчика та обсяг монтажу.</p></article>
-          </div>
-        </div>
-      </section>
+      <DirectionProcess
+        title="Керуємо не лише металом, а всім процесом"
+        text="Надійність конструкції залежить від точності вихідних даних, якості виготовлення та правильної роботи на монтажі."
+        steps={steps}
+      />
+      <DirectionCostSection
+        title="Вартість визначає конструкція, а не одна цифра за тонну"
+        text="Для попередньої оцінки потрібні креслення або базові параметри майбутньої конструкції. Після цього можна предметно оцінити склад робіт."
+        items={costFactors}
+      />
+      <DirectionFaq title="Перед замовленням" items={faqItems} />
       <PageCta eyebrow="Обговорити металоконструкції" title="Є креслення або лише задача? Почнемо з вихідних даних" />
     </main>
   );
