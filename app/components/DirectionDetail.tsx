@@ -37,10 +37,10 @@ export function DirectionHero({
     description: intro,
     url: absoluteUrl(path),
     image: absoluteUrl(poster),
-    areaServed: [
-      { '@type': 'AdministrativeArea', name: 'Дніпропетровська область' },
-      { '@type': 'Country', name: 'Україна' },
-    ],
+    areaServed: company.serviceAreas.map((name, index) => ({
+      '@type': index === 0 ? 'AdministrativeArea' : 'Country',
+      name,
+    })),
     provider: {
       '@type': 'GeneralContractor',
       name: siteName,

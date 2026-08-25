@@ -14,7 +14,7 @@ const messengerLinks: Array<{ label: string; href: string; icon: string; shortNa
 
 export function MessengerLinks({ className }: { className: string }) {
   return (
-    <div className={className} role="group" aria-label="Месенджери RUBIKON BUILD">
+    <div className={className} role="group" aria-label={`Месенджери ${company.name}`}>
       {messengerLinks.map(({ label, href, icon, shortName, kind }) => (
         <a
           className={`messenger-link messenger-${kind}`}
@@ -37,7 +37,7 @@ export function MessengerLinks({ className }: { className: string }) {
 
 export function Brand() {
   return (
-    <span className="brand" aria-label="RUBIKON BUILD — Construction and Engineering">
+    <span className="brand" aria-label={`${company.name} — Construction and Engineering`}>
       <span className="brand-module-mark" aria-hidden="true"><i /><i /><b /></span>
       <span className="brand-name">
         <b><span>RUBIKON</span> <em>BUILD</em></b>
@@ -51,7 +51,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell nav-wrap">
-        <a className="brand-link" href={siteRoutes.home} aria-label="RUBIKON BUILD — на головну">
+        <a className="brand-link" href={siteRoutes.home} aria-label={`${company.name} — на головну`}>
           <Brand />
         </a>
         <nav className="desktop-nav" aria-label="Основна навігація">
@@ -85,7 +85,7 @@ export function SiteFooter() {
   return (
     <footer>
       <div className="shell footer-grid">
-        <a className="brand-link" href={siteRoutes.home} aria-label="RUBIKON BUILD — на головну">
+        <a className="brand-link" href={siteRoutes.home} aria-label={`${company.name} — на головну`}>
           <Brand />
         </a>
         <nav className="footer-nav" aria-label="Навігація у підвалі">
@@ -101,7 +101,7 @@ export function SiteFooter() {
             <a href={siteRoutes.privacy}>Політика конфіденційності</a>
             <CookieSettingsButton />
           </div>
-          <span>© {new Date().getFullYear()} RUBIKON BUILD</span>
+          <span>© {new Date().getFullYear()} {company.name}</span>
         </div>
       </div>
     </footer>
@@ -188,7 +188,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
         <div className="team-grid">
           <article className="person-card">
             <div className="person-photo">
-              <Image src="/images/founder.png" alt="Леус Сергій Іванович — засновник будівельного напрямку RUBIKON BUILD" fill sizes="(max-width: 700px) 100vw, 40vw" />
+              <Image src="/images/founder.png" alt={`${company.founders[0]} — засновник будівельного напрямку ${company.name}`} fill sizes="(max-width: 700px) 100vw, 40vw" />
             </div>
             <div className="person-info">
               <span>Засновник / керівник будівельного напрямку</span>
@@ -198,7 +198,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
           </article>
           <article className="person-card">
             <div className="person-photo">
-              <Image src="/images/next-generation.png" alt="Леус Дмитро Сергійович — інженер RUBIKON BUILD" fill sizes="(max-width: 700px) 100vw, 40vw" />
+              <Image src="/images/next-generation.png" alt={`${company.founders[1]} — інженер ${company.name}`} fill sizes="(max-width: 700px) 100vw, 40vw" />
             </div>
             <div className="person-info">
               <span>Інженер / розвиток компанії</span>
