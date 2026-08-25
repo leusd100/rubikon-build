@@ -3,10 +3,11 @@ import Image from 'next/image';
 import { CalendarClock, Factory, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { CookieSettingsButton } from './AnalyticsConsent';
+import MobileMenu from './MobileMenu';
 import ViberContactButton from './ViberContactButton';
 
 const messengerLinks: Array<{ label: string; href: string; icon: string; shortName: string; kind: string }> = [
-  { label: 'Написати в Telegram', href: 'https://t.me/+380682614264', icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
+  { label: 'Написати в Telegram', href: 'tg://resolve?phone=380682614264', icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
   { label: 'Написати у WhatsApp', href: 'https://wa.me/380682614264', icon: '/brands/whatsapp.svg', shortName: 'WA', kind: 'whatsapp' },
 ];
 
@@ -21,8 +22,8 @@ export function MessengerLinks({ className }: { className: string }) {
           data-contact-method={kind}
           aria-label={label}
           title={label}
-          target="_blank"
-          rel="noreferrer"
+          target={href.startsWith('https://') ? '_blank' : undefined}
+          rel={href.startsWith('https://') ? 'noreferrer' : undefined}
         >
           <Image className="messenger-brand-icon" src={icon} width={24} height={24} alt="" aria-hidden="true" />
           <span>{shortName}</span>
@@ -65,8 +66,8 @@ export function SiteHeader() {
           </a>
           <MessengerLinks className="header-messengers" />
         </div>
-        <details className="mobile-menu">
-          <summary aria-label="Відкрити меню">
+        <MobileMenu>
+          <summary aria-label="Відкрити або закрити меню">
             <span>Меню</span>
             <i aria-hidden="true"><b /><b /></i>
           </summary>
@@ -77,7 +78,7 @@ export function SiteHeader() {
             <a href="/#contact"><small>04</small> Контакти</a>
             <MessengerLinks className="mobile-messengers" />
           </nav>
-        </details>
+        </MobileMenu>
       </div>
     </header>
   );

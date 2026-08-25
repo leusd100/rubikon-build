@@ -68,10 +68,10 @@ export default function Home() {
           <div className="hero-contact-card">
             <p>Є будівельна задача?</p>
             <a href="tel:+380682614264">
-              <span>Замовити дзвінок</span>
+              <span>Зателефонувати</span>
               <b aria-hidden="true">↗</b>
             </a>
-            <small>Натисніть — відкриється дзвінок</small>
+            <small>Відкриється набір номера</small>
           </div>
         </div>
         <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>

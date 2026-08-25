@@ -23,7 +23,8 @@ function value(formData: FormData, key: string) {
 export default function ProjectInquiryForm() {
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
-  const [statusAction, setStatusAction] = useState<'phone' | 'viber' | null>(null);
+  const [statusAction, setStatusAction] = useState<'phone' | 'telegram' | 'viber' | null>(null);
+  const [preparedMessage, setPreparedMessage] = useState('');
 
   function copyText(text: string) {
     return navigator.clipboard?.writeText(text).catch(() => undefined);
@@ -51,6 +52,7 @@ export default function ProjectInquiryForm() {
 
     const message = details.join('\n');
     const encodedMessage = encodeURIComponent(message);
+    setPreparedMessage(message);
     setStatusAction(null);
 
     try {
@@ -76,8 +78,10 @@ export default function ProjectInquiryForm() {
     }
 
     if (contactMethod === 'Telegram') {
-      setStatus('Запит підготовлено. Підтвердьте його надсилання у Telegram.');
-      window.open(`https://t.me/+${companyPhone}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+      void copyText(message);
+      setStatus('Відкриваємо Telegram. Повний текст заявки скопійовано — вставте його в чат і підтвердьте надсилання.');
+      setStatusAction('telegram');
+      window.location.assign(`tg://resolve?phone=${companyPhone}&text=${encodedMessage}`);
       return;
     }
 
@@ -241,6 +245,16 @@ export default function ProjectInquiryForm() {
           <span className="inquiry-status-actions">
             <button type="button" onClick={() => void copyText(companyPhoneInternational)}>
               <Copy aria-hidden="true" /> Скопіювати номер
+            </button>
+          </span>
+        )}
+        {statusAction === 'telegram' && (
+          <span className="inquiry-status-actions">
+            <a href={`tg://resolve?phone=${companyPhone}`} data-contact-method="telegram">
+              <Send aria-hidden="true" /> Відкрити Telegram
+            </a>
+            <button type="button" onClick={() => void copyText(preparedMessage)}>
+              <Copy aria-hidden="true" /> Скопіювати заявку
             </button>
           </span>
         )}
