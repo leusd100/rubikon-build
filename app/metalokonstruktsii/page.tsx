@@ -10,21 +10,18 @@ import {
   type DirectionStep,
 } from '../components/DirectionDetail';
 import { PageCta } from '../components/SiteChrome';
+import { getDirection } from '../data/directions';
+import { createPageMetadata } from '../lib/seo';
 
-const liveUrl = 'https://rubikonbuild.com';
+const direction = getDirection('metalokonstruktsii');
 
-export const metadata: Metadata = {
-  title: 'Металоконструкції у Дніпрі | RUBIKON BUILD',
-  description: 'Проєктування, виготовлення й монтаж металоконструкцій у Дніпрі та області: каркаси, колони, балки, ферми й нестандартні металеві вузли.',
-  alternates: { canonical: '/metalokonstruktsii' },
-  openGraph: {
-    title: 'Металоконструкції у Дніпрі | RUBIKON BUILD',
-    description: 'Каркаси, ферми, балки, колони та монтаж металевих конструкцій.',
-    url: '/metalokonstruktsii',
-    images: [{ url: `${liveUrl}/media/competence-steel.jpg`, alt: 'Виготовлення металоконструкцій RUBIKON BUILD' }],
-  },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/competence-steel.jpg`] },
-};
+export const metadata: Metadata = createPageMetadata({
+  path: direction.href,
+  title: direction.seoTitle,
+  description: direction.seoDescription,
+  image: direction.image,
+  imageAlt: direction.imageAlt,
+});
 
 const steps: DirectionStep[] = [
   ['01', 'Вихідні дані', 'Уточнюємо призначення конструкції, геометрію, навантаження та умови монтажу.', ClipboardList],

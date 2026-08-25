@@ -19,6 +19,8 @@ export type Direction = {
   image: string;
   imageAlt: string;
   cardClassName: string;
+  seoTitle: string;
+  seoDescription: string;
 };
 
 export const directions: readonly Direction[] = [
@@ -36,6 +38,8 @@ export const directions: readonly Direction[] = [
     image: '/media/competence-hangar.jpg',
     imageAlt: 'Промисловий ангар і складська будівля',
     cardClassName: 'wide',
+    seoTitle: 'Ангари та склади під ключ у Дніпрі | RUBIKON BUILD',
+    seoDescription: 'Будівництво швидкомонтованих ангарів, складів і виробничих споруд у Дніпрі та області: конструкції, огородження, монтаж і координація робіт.',
   },
   {
     id: 'zernoskhovyshcha',
@@ -51,6 +55,8 @@ export const directions: readonly Direction[] = [
     image: '/media/competence-grain.jpg',
     imageAlt: 'Промислове зерносховище біля поля',
     cardClassName: 'tall',
+    seoTitle: 'Зерносховища під ключ у Дніпрі | RUBIKON BUILD',
+    seoDescription: 'Будівництво зерносховищ у Дніпрі та Україні: основа, металевий каркас, огородження, покрівля, монтаж і координація робіт.',
   },
   {
     id: 'metalokonstruktsii',
@@ -66,6 +72,8 @@ export const directions: readonly Direction[] = [
     image: '/media/competence-steel.jpg',
     imageAlt: 'Монтаж і зварювання несучого сталевого каркаса',
     cardClassName: 'compact',
+    seoTitle: 'Металоконструкції у Дніпрі | RUBIKON BUILD',
+    seoDescription: 'Проєктування, виготовлення й монтаж металоконструкцій у Дніпрі та області: каркаси, колони, балки, ферми й нестандартні металеві вузли.',
   },
   {
     id: 'betonni-roboty',
@@ -81,6 +89,8 @@ export const directions: readonly Direction[] = [
     image: '/media/competence-concrete.jpg',
     imageAlt: 'Армування залізобетонної основи на будівельному майданчику',
     cardClassName: 'concrete',
+    seoTitle: 'Бетонні роботи у Дніпрі | RUBIKON BUILD',
+    seoDescription: 'Бетонні роботи у Дніпрі та області: фундаменти, основи під конструкції й обладнання, промислові підлоги та монолітні ділянки.',
   },
   {
     id: 'pokrivelni-roboty',
@@ -96,8 +106,20 @@ export const directions: readonly Direction[] = [
     image: '/media/competence-roofing.jpg',
     imageAlt: 'Роботи на металевій покрівлі промислової споруди',
     cardClassName: 'roof',
+    seoTitle: 'Покрівельні роботи у Дніпрі | RUBIKON BUILD',
+    seoDescription: 'Монтаж і ремонт промислових покрівель у Дніпрі та області: профільований лист, утеплені системи, герметизація вузлів і примикань.',
   },
 ] as const;
+
+export function getDirection(id: DirectionId): Direction {
+  const direction = directions.find((item) => item.id === id);
+
+  if (!direction) {
+    throw new Error(`Unknown direction: ${id}`);
+  }
+
+  return direction;
+}
 
 export const inquiryDirectionOptions = [
   ...directions.map(({ formLabel }) => formLabel),

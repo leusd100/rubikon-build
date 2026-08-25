@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 import { ClipboardCheck, Hammer, Ruler, ShieldCheck } from 'lucide-react';
 import { DirectionDetail } from '../components/DirectionDetail';
+import { getDirection } from '../data/directions';
+import { createPageMetadata } from '../lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Покрівельні роботи у Дніпрі | RUBIKON BUILD',
-  description: 'Монтаж і ремонт промислових покрівель у Дніпрі та області: профільований лист, утеплені системи, герметизація вузлів і примикань.',
-  alternates: { canonical: '/pokrivelni-roboty' },
-};
+const direction = getDirection('pokrivelni-roboty');
+
+export const metadata: Metadata = createPageMetadata({
+  path: direction.href,
+  title: direction.seoTitle,
+  description: direction.seoDescription,
+  image: direction.image,
+  imageAlt: direction.imageAlt,
+});
 
 export default function RoofingWorksPage() {
   return <DirectionDetail

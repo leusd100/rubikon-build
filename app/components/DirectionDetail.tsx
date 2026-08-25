@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from './SiteChrome';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
+import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
 
 export type DirectionItem = [string, string, string];
 export type DirectionStep = [string, string, string, LucideIcon];
@@ -27,8 +28,29 @@ export function DirectionHero({
   poster,
   video,
 }: DirectionHeroProps) {
+  const serviceData = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: title,
+    serviceType: title,
+    description: intro,
+    url: absoluteUrl(path),
+    image: absoluteUrl(poster),
+    areaServed: [
+      { '@type': 'AdministrativeArea', name: 'Дніпропетровська область' },
+      { '@type': 'Country', name: 'Україна' },
+    ],
+    provider: {
+      '@type': 'GeneralContractor',
+      name: siteName,
+      url: siteUrl,
+      telephone: '+380682614264',
+    },
+  };
+
   return (
     <section className="service-subhero">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
         <DirectionHeroVideo key={video} sources={[video]} poster={poster} />
       </div>
@@ -97,8 +119,19 @@ export function DirectionCostSection({
 }
 
 export function DirectionFaq({ title, items }: { title: string; items: DirectionFaqItem[] }) {
+  const faqData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map(([question, answer]) => ({
+      '@type': 'Question',
+      name: question,
+      acceptedAnswer: { '@type': 'Answer', text: answer },
+    })),
+  };
+
   return (
     <section className="page-section faq-section">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }} />
       <div className="shell faq-grid">
         <div><p className="eyebrow"><span /> Питання</p><h2>{title}</h2></div>
         <div className="faq-list">

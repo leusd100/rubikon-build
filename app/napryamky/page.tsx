@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { directions } from '../data/directions';
+import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
 
 const liveUrl = 'https://rubikonbuild.com';
 
@@ -19,6 +20,12 @@ export const metadata: Metadata = {
 };
 
 export default function DirectionsPage() {
+  const faqItems: DirectionFaqItem[] = [
+    ['Де ви працюєте?', 'Основний регіон — Дніпро та Дніпропетровська область. Цікаві масштабні об’єкти розглядаємо по всій Україні.'],
+    ['Під ключ чи окремий етап?', 'Працюємо в обох форматах: ведемо погоджений комплекс робіт або долучаємося як підрядник чи субпідрядник до конкретного етапу.'],
+    ['З чого починається робота?', 'Із короткого опису задачі, вивчення вихідних даних та, за потреби, виїзду на майданчик.'],
+  ];
+
   return (
     <main className="inner-page">
       <section className="subhero subhero-media">
@@ -65,16 +72,7 @@ export default function DirectionsPage() {
         </div>
       </section>
 
-      <section className="page-section faq-section">
-        <div className="shell faq-grid">
-          <div><p className="eyebrow"><span /> Перед стартом</p><h2>Коротко про головне</h2></div>
-          <div className="faq-list">
-            <article><h3>Де ви працюєте?</h3><p>Основний регіон — Дніпро та Дніпропетровська область. Цікаві масштабні об’єкти розглядаємо по всій Україні.</p></article>
-            <article><h3>Під ключ чи окремий етап?</h3><p>Працюємо в обох форматах: ведемо погоджений комплекс робіт або долучаємося як підрядник чи субпідрядник до конкретного етапу.</p></article>
-            <article><h3>З чого починається робота?</h3><p>Із короткого опису задачі, вивчення вихідних даних та, за потреби, виїзду на майданчик.</p></article>
-          </div>
-        </div>
-      </section>
+      <DirectionFaq title="Коротко про головне" items={faqItems} />
       <PageCta />
     </main>
   );

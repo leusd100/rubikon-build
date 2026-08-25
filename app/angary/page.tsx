@@ -10,21 +10,18 @@ import {
   type DirectionStep,
 } from '../components/DirectionDetail';
 import { PageCta } from '../components/SiteChrome';
+import { getDirection } from '../data/directions';
+import { createPageMetadata } from '../lib/seo';
 
-const liveUrl = 'https://rubikonbuild.com';
+const direction = getDirection('angary');
 
-export const metadata: Metadata = {
-  title: 'Ангари та склади під ключ у Дніпрі | RUBIKON BUILD',
-  description: 'Будівництво швидкомонтованих ангарів, складів і виробничих споруд у Дніпрі та області: конструкції, огородження, монтаж і координація робіт.',
-  alternates: { canonical: '/angary' },
-  openGraph: {
-    title: 'Ангари та склади під ключ | RUBIKON BUILD',
-    description: 'Швидкомонтовані споруди для виробництва, логістики, агросектору та зберігання.',
-    url: '/angary',
-    images: [{ url: `${liveUrl}/media/competence-hangar.jpg`, alt: 'Ангари та склади RUBIKON BUILD' }],
-  },
-  twitter: { card: 'summary_large_image', images: [`${liveUrl}/media/competence-hangar.jpg`] },
-};
+export const metadata: Metadata = createPageMetadata({
+  path: direction.href,
+  title: direction.seoTitle,
+  description: direction.seoDescription,
+  image: direction.image,
+  imageAlt: direction.imageAlt,
+});
 
 const stages: DirectionStep[] = [
   ['01', 'Задача і майданчик', 'Визначаємо призначення споруди, потрібні габарити, режим експлуатації та особливості ділянки.', MapPinned],

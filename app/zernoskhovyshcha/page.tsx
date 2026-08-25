@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 import { ClipboardList, DraftingCompass, HardHat, Layers3 } from 'lucide-react';
 import { DirectionDetail } from '../components/DirectionDetail';
+import { getDirection } from '../data/directions';
+import { createPageMetadata } from '../lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Зерносховища під ключ у Дніпрі | RUBIKON BUILD',
-  description: 'Будівництво зерносховищ у Дніпрі та Україні: основа, металевий каркас, огородження, покрівля, монтаж і координація робіт.',
-  alternates: { canonical: '/zernoskhovyshcha' },
-};
+const direction = getDirection('zernoskhovyshcha');
+
+export const metadata: Metadata = createPageMetadata({
+  path: direction.href,
+  title: direction.seoTitle,
+  description: direction.seoDescription,
+  image: direction.image,
+  imageAlt: direction.imageAlt,
+});
 
 export default function GrainStoragePage() {
   return <DirectionDetail

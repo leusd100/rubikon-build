@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 import { ClipboardList, Construction, Layers3, Ruler } from 'lucide-react';
 import { DirectionDetail } from '../components/DirectionDetail';
+import { getDirection } from '../data/directions';
+import { createPageMetadata } from '../lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Бетонні роботи у Дніпрі | RUBIKON BUILD',
-  description: 'Бетонні роботи у Дніпрі та області: фундаменти, основи під конструкції й обладнання, промислові підлоги та монолітні ділянки.',
-  alternates: { canonical: '/betonni-roboty' },
-};
+const direction = getDirection('betonni-roboty');
+
+export const metadata: Metadata = createPageMetadata({
+  path: direction.href,
+  title: direction.seoTitle,
+  description: direction.seoDescription,
+  image: direction.image,
+  imageAlt: direction.imageAlt,
+});
 
 export default function ConcreteWorksPage() {
   return <DirectionDetail
