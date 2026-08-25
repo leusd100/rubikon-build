@@ -2,6 +2,10 @@ export const company = {
   name: 'RUBIKON BUILD',
   alternateName: 'Рубікон Білд',
   siteUrl: 'https://rubikonbuild.com',
+  description:
+    'Родинна будівельна компанія: промислові споруди під ключ та окремі роботи у форматі підряду й субпідряду.',
+  serviceAreas: ['Дніпропетровська область', 'Україна'],
+  founders: ['Леус Сергій Іванович', 'Леус Дмитро Сергійович'],
   phone: {
     digits: '380682614264',
     international: '+380682614264',

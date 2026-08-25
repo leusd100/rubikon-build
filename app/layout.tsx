@@ -4,6 +4,7 @@ import './globals.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
 import { company } from './data/company';
+import { directions } from './data/directions';
 
 const manrope = Manrope({
   variable: '--font-manrope',
@@ -24,36 +25,36 @@ const display = Jost({
 
 export const metadata: Metadata = {
   metadataBase: new URL(company.siteUrl),
-  title: 'Промислове будівництво у Дніпрі | RUBIKON BUILD',
+  title: `Промислове будівництво у Дніпрі | ${company.name}`,
   description:
     'Промислове будівництво у Дніпрі та області: комплексна реалізація об’єктів або окремі роботи у форматі підряду й субпідряду.',
   alternates: {
     canonical: '/',
   },
-  creator: 'RUBIKON BUILD',
+  creator: company.name,
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
     shortcut: '/favicon.svg',
   },
   openGraph: {
-    title: 'Промислове будівництво під ключ | RUBIKON BUILD',
+    title: `Промислове будівництво під ключ | ${company.name}`,
     description: 'Промислові, складські й аграрні об’єкти під ключ або окремі роботи у форматі підряду та субпідряду у Дніпрі та області.',
     type: 'website',
     locale: 'uk_UA',
-    siteName: 'RUBIKON BUILD',
+    siteName: company.name,
     url: '/',
     images: [
       {
         url: '/og.jpg',
         width: 1200,
         height: 630,
-        alt: 'RUBIKON BUILD — промислове будівництво під ключ',
+        alt: `${company.name} — промислове будівництво під ключ`,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Промислове будівництво під ключ | RUBIKON BUILD',
+    title: `Промислове будівництво під ключ | ${company.name}`,
     description: 'Промислові, складські й аграрні об’єкти під ключ або окремі роботи у форматі підряду та субпідряду.',
     images: ['/og.jpg'],
   },
@@ -68,23 +69,13 @@ const organizationData = {
   alternateName: company.alternateName,
   url: company.siteUrl,
   telephone: company.phone.international,
-  description:
-    'Родинна будівельна компанія: промислові споруди під ключ та окремі роботи з ангарів, зерносховищ, металоконструкцій, бетонування, покрівлі й монтажу.',
-  areaServed: [
-    { '@type': 'AdministrativeArea', name: 'Дніпропетровська область' },
-    { '@type': 'Country', name: 'Україна' },
-  ],
-  founder: [
-    { '@type': 'Person', name: 'Леус Сергій Іванович' },
-    { '@type': 'Person', name: 'Леус Дмитро Сергійович' },
-  ],
-  knowsAbout: [
-    'Металоконструкції',
-    'Ангари',
-    'Зерносховища',
-    'Покрівельні роботи',
-    'Промислове будівництво',
-  ],
+  description: company.description,
+  areaServed: company.serviceAreas.map((name, index) => ({
+    '@type': index === 0 ? 'AdministrativeArea' : 'Country',
+    name,
+  })),
+  founder: company.founders.map((name) => ({ '@type': 'Person', name })),
+  knowsAbout: directions.map(({ serviceTitle }) => serviceTitle),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
