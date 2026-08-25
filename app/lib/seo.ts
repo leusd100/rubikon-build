@@ -10,6 +10,8 @@ type PageMetadataInput = {
   description: string;
   image: string;
   imageAlt: string;
+  socialTitle?: string;
+  socialDescription?: string;
 };
 
 export function createPageMetadata({
@@ -18,6 +20,8 @@ export function createPageMetadata({
   description,
   image,
   imageAlt,
+  socialTitle = title,
+  socialDescription = description,
 }: PageMetadataInput): Metadata {
   const pageUrl = new URL(path, siteUrl).toString();
   const imageUrl = new URL(image, siteUrl).toString();
@@ -27,8 +31,8 @@ export function createPageMetadata({
     description,
     alternates: { canonical: path },
     openGraph: {
-      title,
-      description,
+      title: socialTitle,
+      description: socialDescription,
       type: 'website',
       locale: 'uk_UA',
       siteName,
@@ -37,8 +41,8 @@ export function createPageMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
+      title: socialTitle,
+      description: socialDescription,
       images: [imageUrl],
     },
   };

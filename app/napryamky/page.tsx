@@ -1,22 +1,18 @@
-import type { Metadata } from 'next';
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { directions } from '../data/directions';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
-import { siteUrl } from '../lib/seo';
+import { createPageMetadata } from '../lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
+  path: '/napryamky',
   title: 'Напрямки будівництва у Дніпрі | RUBIKON BUILD',
   description: 'Ангари, склади, зерносховища, металоконструкції, бетонні та покрівельні роботи у Дніпрі й області: під ключ або як окремий етап.',
-  alternates: { canonical: '/napryamky' },
-  openGraph: {
-    title: 'Напрямки робіт RUBIKON BUILD',
-    description: 'Повний цикл будівництва або окремі роботи як підрядник чи субпідрядник.',
-    url: '/napryamky',
-    images: [{ url: `${siteUrl}/media/hero-steel-frame.jpg`, alt: 'Промислове будівництво RUBIKON BUILD' }],
-  },
-  twitter: { card: 'summary_large_image', images: [`${siteUrl}/media/hero-steel-frame.jpg`] },
-};
+  socialTitle: 'Напрямки робіт RUBIKON BUILD',
+  socialDescription: 'Повний цикл будівництва або окремі роботи як підрядник чи субпідрядник.',
+  image: '/media/hero-steel-frame.jpg',
+  imageAlt: 'Промислове будівництво RUBIKON BUILD',
+});
 
 export default function DirectionsPage() {
   const faqItems: DirectionFaqItem[] = [
