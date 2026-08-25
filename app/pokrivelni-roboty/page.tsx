@@ -1,46 +1,8 @@
-import type { Metadata } from 'next';
-import { ClipboardCheck, Hammer, Ruler, ShieldCheck } from 'lucide-react';
-import { DirectionDetail } from '../components/DirectionDetail';
-import { getDirection } from '../data/directions';
-import { createPageMetadata } from '../lib/seo';
+import { DirectionPage } from '../components/DirectionDetail';
+import { createDirectionMetadata, getDirectionPage } from '../data/directionPages';
 
-const direction = getDirection('pokrivelni-roboty');
-
-export const metadata: Metadata = createPageMetadata({
-  path: direction.href,
-  title: direction.seoTitle,
-  description: direction.seoDescription,
-  image: direction.image,
-  imageAlt: direction.imageAlt,
-});
+export const metadata = createDirectionMetadata('pokrivelni-roboty');
 
 export default function RoofingWorksPage() {
-  return <DirectionDetail
-    path="/pokrivelni-roboty"
-    number="05"
-    title="Покрівельні роботи"
-    accent="для промислових споруд"
-    intro="Монтуємо й ремонтуємо покрівлі ангарів, складів, виробничих та аграрних споруд. Працюємо в складі комплексного будівництва або як окремий підрядник."
-    image="/media/competence-roofing.jpg"
-    video="/media/directions/roofing.mp4"
-    overviewEyebrow="Склад робіт"
-    overviewTitle="Надійний контур без слабких примикань"
-    overviewText="Тип покрівлі, ухил, основа, утеплення та водовідведення погоджуємо з урахуванням призначення споруди й режиму експлуатації."
-    items={[
-      ['01', 'Нові покрівлі', 'Монтаж профільованого листа або утепленої системи на підготовлену несучу основу.'],
-      ['02', 'Ремонт і заміна', 'Локальний ремонт пошкоджених ділянок або поетапна заміна наявного покриття.'],
-      ['03', 'Вузли й примикання', 'Коники, карнизи, проходи, стики та інші місця, що визначають герметичність системи.'],
-      ['04', 'Водовідведення', 'Організація відведення опадів і захисту конструкцій від системного зволоження.'],
-    ]}
-    processTitle="Від огляду основи до перевірки герметичності"
-    processText="До монтажу перевіряємо стан несучої конструкції, геометрію та готовність основи. Після завершення контролюємо стики й критичні вузли."
-    steps={[
-      ['01', 'Огляд і заміри', 'Фіксуємо площу, ухили, стан основи, примикання та умови доступу.', Ruler],
-      ['02', 'Комплектація', 'Погоджуємо матеріал, утеплення, кріплення, планки й порядок монтажу.', ClipboardCheck],
-      ['03', 'Монтаж або ремонт', 'Виконуємо укладання покриття та формуємо всі необхідні вузли.', Hammer],
-      ['04', 'Перевірка', 'Контролюємо кріплення, стики, примикання та захищеність контуру.', ShieldCheck],
-    ]}
-    ctaEyebrow="Обговорити покрівлю"
-    ctaTitle="Опишіть споруду й стан покрівлі — визначимо наступний крок"
-  />;
+  return <DirectionPage config={getDirectionPage('pokrivelni-roboty')} />;
 }

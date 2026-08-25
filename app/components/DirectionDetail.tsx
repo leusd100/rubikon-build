@@ -1,11 +1,10 @@
-import type { LucideIcon } from 'lucide-react';
 import { Breadcrumbs, PageCta } from './SiteChrome';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
+import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
+import { getDirection } from '../data/directions';
 
-export type DirectionItem = [string, string, string];
-export type DirectionStep = [string, string, string, LucideIcon];
-export type DirectionFaqItem = [string, string];
+export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
 type DirectionHeroProps = {
   path: string;
@@ -75,7 +74,7 @@ export function DirectionProcess({
   eyebrow?: string;
   title: string;
   text: string;
-  steps: DirectionStep[];
+  steps: readonly DirectionStep[];
 }) {
   return (
     <section className="page-section page-section-dark">
@@ -101,7 +100,7 @@ export function DirectionCostSection({
 }: {
   title: string;
   text: string;
-  items: DirectionItem[];
+  items: readonly DirectionItem[];
 }) {
   return (
     <section className="page-section cost-section">
@@ -118,7 +117,7 @@ export function DirectionCostSection({
   );
 }
 
-export function DirectionFaq({ title, items }: { title: string; items: DirectionFaqItem[] }) {
+export function DirectionFaq({ title, items }: { title: string; items: readonly DirectionFaqItem[] }) {
   const faqData = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -142,74 +141,51 @@ export function DirectionFaq({ title, items }: { title: string; items: Direction
   );
 }
 
-type DirectionDetailProps = {
-  path: string;
-  number: string;
-  title: string;
-  accent: string;
-  intro: string;
-  image: string;
-  video: string;
-  overviewEyebrow: string;
-  overviewTitle: string;
-  overviewText: string;
-  items: DirectionItem[];
-  processTitle: string;
-  processText: string;
-  steps: DirectionStep[];
-  ctaEyebrow: string;
-  ctaTitle: string;
-};
+export function DirectionPage({ config }: { config: DirectionPageConfig }) {
+  const direction = getDirection(config.id);
 
-export function DirectionDetail({
-  path,
-  number,
-  title,
-  accent,
-  intro,
-  image,
-  video,
-  overviewEyebrow,
-  overviewTitle,
-  overviewText,
-  items,
-  processTitle,
-  processText,
-  steps,
-  ctaEyebrow,
-  ctaTitle,
-}: DirectionDetailProps) {
   return (
     <main className="inner-page" id="main-content">
       <DirectionHero
-        path={path}
-        number={number}
-        breadcrumbLabel={title}
-        title={title}
-        accent={accent}
-        intro={intro}
-        poster={image}
-        video={video}
+        path={direction.href}
+        number={direction.number}
+        breadcrumbLabel={config.hero.breadcrumbLabel}
+        title={config.hero.title}
+        accent={config.hero.accent}
+        intro={config.hero.intro}
+        poster={direction.image}
+        video={config.hero.video}
       />
 
       <section className="page-section">
-        <div className="shell page-two-col align-start">
-          <div className="sticky-heading">
-            <p className="eyebrow"><span /> {overviewEyebrow}</p>
-            <h2>{overviewTitle}</h2>
-            <p className="lead-copy">{overviewText}</p>
+        {config.overview.layout === 'use-cases' ? (
+          <>
+            <div className="shell page-heading split-heading">
+              <div><p className="eyebrow"><span /> {config.overview.eyebrow}</p><h2>{config.overview.title}</h2></div>
+              {config.overview.text && <p>{config.overview.text}</p>}
+            </div>
+            <div className="shell use-case-grid">
+              {config.overview.items.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
+            </div>
+          </>
+        ) : (
+          <div className="shell page-two-col align-start">
+            <div className="sticky-heading">
+              <p className="eyebrow"><span /> {config.overview.eyebrow}</p>
+              <h2>{config.overview.title}</h2>
+              {config.overview.text && <p className="lead-copy">{config.overview.text}</p>}
+            </div>
+            <div className="feature-list">
+              {config.overview.items.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
+            </div>
           </div>
-          <div className="feature-list">
-            {items.map(([itemNumber, itemTitle, itemText]) => (
-              <article key={itemNumber}><span>{itemNumber}</span><h3>{itemTitle}</h3><p>{itemText}</p></article>
-            ))}
-          </div>
-        </div>
+        )}
       </section>
 
-      <DirectionProcess title={processTitle} text={processText} steps={steps} />
-
-      <PageCta eyebrow={ctaEyebrow} title={ctaTitle} />
+      <DirectionProcess {...config.process} />
+      {config.cost && <DirectionCostSection {...config.cost} />}
+      {config.faq && <DirectionFaq {...config.faq} />}
+      <PageCta {...config.cta} />
     </main>
   );
 }
