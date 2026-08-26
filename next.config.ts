@@ -31,6 +31,11 @@ const cacheHeader = {
   value: 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
 };
 
+const mediaCacheHeader = {
+  key: 'Cache-Control',
+  value: 'public, max-age=86400, s-maxage=31536000, stale-while-revalidate=604800',
+};
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
@@ -39,6 +44,7 @@ const nextConfig: NextConfig = {
         source,
         headers: [cacheHeader],
       })),
+      { source: '/media/:path*', headers: [mediaCacheHeader] },
     ];
   },
 };
