@@ -9,6 +9,5 @@ export default function robots(): MetadataRoute.Robots {
       disallow: '/logo-variants',
     },
     sitemap: `${siteUrl}/sitemap.xml`,
-    host: siteUrl,
   };
 }

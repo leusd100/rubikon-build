@@ -65,9 +65,15 @@ export const dynamic = 'force-static';
 const organizationData = {
   '@context': 'https://schema.org',
   '@type': 'GeneralContractor',
+  '@id': `${company.siteUrl}/#organization`,
   name: company.name,
-  alternateName: company.alternateName,
+  alternateName: company.alternateNames,
   url: company.siteUrl,
+  logo: {
+    '@type': 'ImageObject',
+    url: `${company.siteUrl}/favicon.svg`,
+  },
+  image: `${company.siteUrl}/og.jpg`,
   telephone: company.phone.international,
   description: company.description,
   areaServed: company.serviceAreas.map((name, index) => ({
@@ -76,6 +82,19 @@ const organizationData = {
   })),
   founder: company.founders.map((name) => ({ '@type': 'Person', name })),
   knowsAbout: directions.map(({ serviceTitle }) => serviceTitle),
+};
+
+const websiteData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': `${company.siteUrl}/#website`,
+  url: company.siteUrl,
+  name: company.name,
+  alternateName: company.alternateNames,
+  inLanguage: 'uk-UA',
+  publisher: {
+    '@id': `${company.siteUrl}/#organization`,
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -102,6 +121,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteData) }}
         />
         <a className="skip-link" href="#main-content">Перейти до основного вмісту</a>
         <SiteHeader />

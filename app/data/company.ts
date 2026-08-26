@@ -1,6 +1,6 @@
 export const company = {
   name: 'RUBIKON BUILD',
-  alternateName: 'Рубікон Білд',
+  alternateNames: ['Rubikon Build', 'rubikonbuild', 'Рубікон Білд'],
   siteUrl: 'https://rubikonbuild.com',
   description:
     'Родинна будівельна компанія: промислові споруди під ключ та окремі роботи у форматі підряду й субпідряду.',
