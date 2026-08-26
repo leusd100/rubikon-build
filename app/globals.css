@@ -625,6 +625,11 @@ footer .brand-name small { color: #8e9690; }
   .desktop-nav { display: none; }
   .header-contacts { display: none; }
   .mobile-menu { display: block; }
+  .footer-grid { min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(230px, .72fr); align-items: start; gap: 20px 32px; padding-block: 30px; }
+  .footer-grid > .brand-link { min-width: 0; }
+  .footer-nav { grid-column: 1; justify-content: flex-start; flex-wrap: wrap; }
+  .footer-contact-stack { grid-column: 2; grid-row: 1 / span 2; min-width: 0; }
+  .footer-phone { white-space: nowrap; }
 }
 
 @media (max-width: 760px) {
