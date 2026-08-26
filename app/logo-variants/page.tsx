@@ -1,9 +1,10 @@
-import { createBasicPageMetadata } from '../lib/seo';
+import { brandedTitle, createBasicPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
+import { company } from '../data/company';
 
 export const metadata = createBasicPageMetadata({
-  title: 'Варіанти логотипа | RUBIKON BUILD',
-  description: 'Робочі концепції фірмового знака RUBIKON BUILD.',
+  title: brandedTitle('Варіанти логотипа'),
+  description: `Робочі концепції фірмового знака ${company.name}.`,
   robots: { index: false, follow: false },
 });
 

@@ -4,6 +4,10 @@ import { company } from '../data/company';
 export const siteUrl = company.siteUrl;
 export const siteName = company.name;
 
+export function brandedTitle(title: string) {
+  return `${title} | ${siteName}`;
+}
+
 type BasicPageMetadataInput = {
   title: string;
   description: string;

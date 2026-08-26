@@ -2,17 +2,18 @@ import { Breadcrumbs, PageCta } from '../components/SiteChrome';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { directions } from '../data/directions';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
-import { createPageMetadata } from '../lib/seo';
+import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
+import { company } from '../data/company';
 
 export const metadata = createPageMetadata({
   path: '/napryamky',
-  title: 'Напрямки будівництва у Дніпрі | RUBIKON BUILD',
+  title: brandedTitle('Напрямки будівництва у Дніпрі'),
   description: 'Ангари, склади, зерносховища, металоконструкції, бетонні та покрівельні роботи у Дніпрі й області: під ключ або як окремий етап.',
-  socialTitle: 'Напрямки робіт RUBIKON BUILD',
+  socialTitle: `Напрямки робіт ${company.name}`,
   socialDescription: 'Повний цикл будівництва або окремі роботи як підрядник чи субпідрядник.',
   image: '/media/hero-steel-frame.jpg',
-  imageAlt: 'Промислове будівництво RUBIKON BUILD',
+  imageAlt: `Промислове будівництво ${company.name}`,
 });
 
 export default function DirectionsPage() {

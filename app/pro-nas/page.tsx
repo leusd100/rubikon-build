@@ -1,16 +1,17 @@
 import Image from 'next/image';
 import { Breadcrumbs, PageCta, TeamSection } from '../components/SiteChrome';
-import { createPageMetadata } from '../lib/seo';
+import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
+import { company } from '../data/company';
 
 export const metadata = createPageMetadata({
   path: '/pro-nas',
-  title: 'Про родинну компанію | RUBIKON BUILD',
-  description: 'RUBIKON BUILD — родинна будівельна компанія з Дніпра. Понад 30 років практичного досвіду та інженерний підхід нового покоління.',
-  socialTitle: 'Про RUBIKON BUILD — досвід двох поколінь',
+  title: brandedTitle('Про родинну компанію'),
+  description: `${company.name} — родинна будівельна компанія з Дніпра. Понад 30 років практичного досвіду та інженерний підхід нового покоління.`,
+  socialTitle: `Про ${company.name} — досвід двох поколінь`,
   socialDescription: 'Родинна відповідальність, 30+ років практики та сучасний інженерний підхід.',
   image: '/media/about-industrial-concept.jpg',
-  imageAlt: 'RUBIKON BUILD — від інженерної концепції до промислової споруди',
+  imageAlt: `${company.name} — від інженерної концепції до промислової споруди`,
 });
 
 export default function AboutPage() {
