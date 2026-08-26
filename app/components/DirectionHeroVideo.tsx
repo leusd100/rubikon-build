@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
 
@@ -19,6 +20,7 @@ export function DirectionHeroVideo({
   clipDurationMs = 6000,
 }: DirectionHeroVideoProps) {
   const [activeSource, setActiveSource] = useState(0);
+  const [readySources, setReadySources] = useState<Record<number, boolean>>({});
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const observationRef = useRef<HTMLVideoElement>(null);
   const activeSourceRef = useRef(0);
@@ -85,22 +87,39 @@ export function DirectionHeroVideo({
 
   if (!sources.length) return null;
 
-  return sources.map((source, index) => (
-    <video
-      key={source}
-      ref={(video) => {
-        videoRefs.current[index] = video;
-        if (index === 0) observationRef.current = video;
-      }}
-      className={[className, 'direction-hero-video', index === activeSource ? 'is-active' : ''].filter(Boolean).join(' ')}
-      src={shouldAttachVideo ? source : undefined}
-      poster={poster}
-      autoPlay={shouldAttachVideo && index === 0}
-      muted
-      playsInline
-      preload={shouldAttachVideo && index === activeSource ? 'auto' : 'none'}
-      loop={sources.length === 1}
-      aria-hidden="true"
-    />
-  ));
+  return (
+    <>
+      <Image
+        className="direction-hero-poster"
+        src={poster}
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        aria-hidden="true"
+      />
+      {sources.map((source, index) => (
+        <video
+          key={source}
+          ref={(video) => {
+            videoRefs.current[index] = video;
+            if (index === 0) observationRef.current = video;
+          }}
+          className={[
+            className,
+            'direction-hero-video',
+            index === activeSource && readySources[index] ? 'is-active' : '',
+          ].filter(Boolean).join(' ')}
+          src={shouldAttachVideo ? source : undefined}
+          autoPlay={shouldAttachVideo && index === 0}
+          muted
+          playsInline
+          preload={shouldAttachVideo && index === activeSource ? 'auto' : 'none'}
+          loop={sources.length === 1}
+          onCanPlay={() => setReadySources((current) => ({ ...current, [index]: true }))}
+          aria-hidden="true"
+        />
+      ))}
+    </>
+  );
 }
