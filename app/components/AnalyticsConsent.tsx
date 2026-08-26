@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { siteRoutes } from '../data/navigation';
 
 const storageKey = 'rubikon-analytics-consent';
@@ -62,6 +63,8 @@ export function CookieSettingsButton() {
 }
 
 export default function AnalyticsConsent() {
+  const pathname = usePathname();
+  const trackedPath = useRef<string | null>(null);
   const [choice, setChoice] = useState<ConsentChoice | null>(null);
   const [showBanner, setShowBanner] = useState(false);
 
@@ -89,6 +92,25 @@ export default function AnalyticsConsent() {
       window.removeEventListener(settingsEvent, showSettings);
     };
   }, []);
+
+  useEffect(() => {
+    if (choice !== 'granted') return;
+
+    // The initial page view is sent by gtag('config'). Track only later
+    // client-side route changes so Next.js navigation is not undercounted.
+    if (trackedPath.current === null) {
+      trackedPath.current = pathname;
+      return;
+    }
+
+    if (trackedPath.current === pathname) return;
+    trackedPath.current = pathname;
+    window.gtag?.('event', 'page_view', {
+      page_location: window.location.href,
+      page_path: pathname,
+      page_title: document.title,
+    });
+  }, [choice, pathname]);
 
   useEffect(() => {
     if (choice !== 'granted') return;
