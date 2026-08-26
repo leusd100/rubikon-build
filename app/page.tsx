@@ -2,32 +2,19 @@ import Image from 'next/image';
 import {
   BadgeCheck,
   ClipboardList,
-  DraftingCompass,
   Handshake,
   HardHat,
-  Hammer,
-  Layers3,
   MessagesSquare,
   Phone,
   Ruler,
-  Warehouse,
-  Wheat,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { DirectionImageCards, DirectionServiceCards } from './components/DirectionCards';
 import { EstimateBrief, MessengerLinks, TeamSection } from './components/SiteChrome';
 import { DirectionHeroVideo } from './components/DirectionHeroVideo';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
-import { directions, type DirectionId } from './data/directions';
 import { company, companyContactLinks } from './data/company';
 import { siteRoutes } from './data/navigation';
-
-const directionIcons: Record<DirectionId, LucideIcon> = {
-  angary: Warehouse,
-  zernoskhovyshcha: Wheat,
-  metalokonstruktsii: DraftingCompass,
-  'betonni-roboty': Layers3,
-  'pokrivelni-roboty': Hammer,
-};
 
 const steps: Array<[string, string, string, LucideIcon]> = [
   ['01', 'Знайомство', 'Уточнюємо задачу, тип об’єкта, умови та бажаний результат.', Handshake],
@@ -92,20 +79,7 @@ export default function Home() {
               більшого будівельного проєкту.
             </p>
           </div>
-          <div className="service-list">
-            {directions.map((direction) => {
-              const Icon = directionIcons[direction.id];
-              return (
-                <a className="service-card" href={direction.href} key={direction.id}>
-                  <span className="service-number">{direction.number}</span>
-                  <Icon className="service-icon" aria-hidden="true" />
-                  <h3>{direction.serviceTitle}</h3>
-                  <p>{direction.serviceText}</p>
-                  <span className="service-arrow" aria-hidden="true">↗</span>
-                </a>
-              );
-            })}
-          </div>
+          <DirectionServiceCards />
           <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
         </div>
       </section>
@@ -122,25 +96,7 @@ export default function Home() {
               формат участі під задачу, документацію та межі відповідальності.
             </p>
           </div>
-          <div className="direction-grid">
-            {directions.map((direction) => (
-              <a className={`direction-card ${direction.cardClassName}`} href={direction.href} key={direction.id}>
-                <Image
-                  src={direction.image}
-                  alt={direction.imageAlt}
-                  fill
-                  sizes={direction.cardClassName === 'wide' ? '(max-width: 800px) 100vw, 65vw' : '(max-width: 800px) 100vw, 35vw'}
-                />
-                <span className="direction-shade" />
-                <span className="direction-number">{direction.number}</span>
-                <span className="direction-copy">
-                  <strong>{direction.cardTitle}</strong>
-                  <small>{direction.cardText}</small>
-                </span>
-                <span className="direction-arrow" aria-hidden="true">↗</span>
-              </a>
-            ))}
-          </div>
+          <DirectionImageCards />
           <p className="media-note">
             Візуальні матеріали ілюструють напрямки робіт. Портфоліо реалізованих об’єктів готується.
           </p>

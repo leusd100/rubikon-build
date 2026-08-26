@@ -1,6 +1,6 @@
 import { Breadcrumbs, PageCta } from '../components/SiteChrome';
+import { DirectionRouteList } from '../components/DirectionCards';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
-import { directions } from '../data/directions';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
@@ -54,18 +54,7 @@ export default function DirectionsPage() {
             </div>
             <p>Точний перелік робіт визначаємо після знайомства з об’єктом. Можемо сформувати весь цикл або долучитися лише там, де потрібна наша компетенція.</p>
           </div>
-          <div className="route-service-list">
-            {directions.map((direction) => {
-              const content = (
-                <>
-                  <span>{direction.number}</span>
-                  <div><h3>{direction.serviceTitle}</h3><p>{direction.routeText}</p></div>
-                  <b aria-hidden="true">↗</b>
-                </>
-              );
-              return <a className="route-service" href={direction.href} id={direction.id} key={direction.id}>{content}</a>;
-            })}
-          </div>
+          <DirectionRouteList />
         </div>
       </section>
 
