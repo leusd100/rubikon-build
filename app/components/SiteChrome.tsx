@@ -1,8 +1,8 @@
 import Image from 'next/image';
-import { CalendarClock, Factory, MapPin, Phone, Ruler } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import MobileMenu from './MobileMenu';
+import { EstimateBriefCards } from './ProcessCards';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
 import { primaryNavigation, siteRoutes } from '../data/navigation';
@@ -137,13 +137,6 @@ export function Breadcrumbs({ items }: { items: Array<{ label: string; href: str
 }
 
 export function EstimateBrief() {
-  const items: Array<[string, string, string, LucideIcon]> = [
-    ['01', 'Призначення', 'Що планується всередині: виробництво, склад, техніка, зерно або інша задача.', Factory],
-    ['02', 'Орієнтовні розміри', 'Довжина, ширина, висота та необхідні прольоти — навіть якщо дані поки попередні.', Ruler],
-    ['03', 'Місце будівництва', 'Місто або область, стан майданчика та наявність під’їзду для техніки.', MapPin],
-    ['04', 'Бажані строки', 'Коли плануєте почати роботи та коли об’єкт має бути готовим до використання.', CalendarClock],
-  ];
-
   return (
     <section className="estimate-brief section" id="estimate-brief">
       <div className="shell">
@@ -154,16 +147,7 @@ export function EstimateBrief() {
           </div>
           <p>Не обов’язково мати готовий проєкт. Надішліть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку.</p>
         </div>
-        <div className="brief-grid">
-          {items.map(([number, title, text, Icon]) => (
-            <article key={number}>
-              <span>{number}</span>
-              <Icon className="brief-icon" aria-hidden="true" />
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
-          ))}
-        </div>
+        <EstimateBriefCards />
         <a className="section-link" href={siteRoutes.contact}>Підготувати запит <span aria-hidden="true">↗</span></a>
       </div>
     </section>

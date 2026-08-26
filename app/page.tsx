@@ -1,28 +1,12 @@
 import Image from 'next/image';
-import {
-  BadgeCheck,
-  ClipboardList,
-  Handshake,
-  HardHat,
-  MessagesSquare,
-  Phone,
-  Ruler,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { MessagesSquare, Phone } from 'lucide-react';
 import { DirectionImageCards, DirectionServiceCards } from './components/DirectionCards';
 import { EstimateBrief, MessengerLinks, TeamSection } from './components/SiteChrome';
 import { DirectionHeroVideo } from './components/DirectionHeroVideo';
+import { ProjectProcessSteps } from './components/ProcessCards';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
 import { company, companyContactLinks } from './data/company';
 import { siteRoutes } from './data/navigation';
-
-const steps: Array<[string, string, string, LucideIcon]> = [
-  ['01', 'Знайомство', 'Уточнюємо задачу, тип об’єкта, умови та бажаний результат.', Handshake],
-  ['02', 'Виїзд і заміри', 'Оглядаємо майданчик, фіксуємо обсяги та технічні особливості.', Ruler],
-  ['03', 'Рішення та кошторис', 'Готуємо пропозицію з переліком робіт, строками й бюджетом.', ClipboardList],
-  ['04', 'Виготовлення і монтаж', 'Організовуємо процес та контролюємо якість ключових етапів.', HardHat],
-  ['05', 'Перевірка і здача', 'Разом перевіряємо результат і закриваємо виконані роботи.', BadgeCheck],
-];
 
 export default function Home() {
   return (
@@ -169,16 +153,7 @@ export default function Home() {
             </div>
             <p>Для об’єкта під ключ формуємо повний маршрут. Для окремого етапу чітко фіксуємо межі відповідальності, вимоги на вході та результат на виході.</p>
           </div>
-          <ol className="steps">
-            {steps.map(([number, title, text, Icon]) => (
-              <li key={number}>
-                <span>{number}</span>
-                <Icon className="step-icon" aria-hidden="true" />
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </li>
-            ))}
-          </ol>
+          <ProjectProcessSteps />
         </div>
       </section>
 
