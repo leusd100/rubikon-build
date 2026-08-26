@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Image from 'next/image';
 import { ChevronDown, Copy, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
 import { company, companyContactLinks } from '../data/company';
-import { contactMethodOptions, type ContactMethod } from '../data/contactMethods';
+import { contactMethodOptions, messengerContacts, type ContactMethod } from '../data/contactMethods';
 import { siteRoutes } from '../data/navigation';
 
 const companyPhone = company.phone.digits;
@@ -12,6 +13,18 @@ const companyPhoneInternational = company.phone.international;
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || '').trim();
+}
+
+function ContactMethodIcon({ method }: { method: ContactMethod }) {
+  if (method === 'Дзвінок') return <Phone aria-hidden="true" />;
+
+  const messenger = method === 'Telegram'
+    ? messengerContacts.telegram
+    : method === 'WhatsApp'
+      ? messengerContacts.whatsapp
+      : messengerContacts.viber;
+
+  return <Image src={messenger.icon} width={18} height={18} alt="" aria-hidden="true" />;
 }
 
 export default function ProjectInquiryForm() {
@@ -144,7 +157,7 @@ export default function ProjectInquiryForm() {
                   setStatusAction(null);
                 }}
               />
-              <span>{label}</span>
+              <span><ContactMethodIcon method={method} /> {label}</span>
             </label>
           ))}
         </div>

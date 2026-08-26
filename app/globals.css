@@ -345,9 +345,9 @@ section[id] { scroll-margin-top: 98px; }
 .inquiry-form-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-bottom: 26px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .inquiry-form-heading > span { font: 600 24px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .inquiry-form-heading p { margin: 0; color: var(--muted); font-size: 10px; }
-.inquiry-fields { display: grid; gap: 16px; }
+.inquiry-fields { display: grid; align-items: start; gap: 16px; }
 .inquiry-fields-two { grid-template-columns: 1fr 1fr; }
-.inquiry-form label, .inquiry-select { display: grid; gap: 8px; }
+.inquiry-form label, .inquiry-select { display: grid; align-content: start; gap: 8px; }
 .inquiry-form label > span, .inquiry-choice legend { color: #4e5650; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .inquiry-form input, .inquiry-form select, .inquiry-form textarea { width: 100%; min-width: 0; border: 1px solid #cfd1ca; border-radius: 0; outline: none; color: var(--ink); background: white; font: 500 14px/1.4 var(--font-manrope), sans-serif; transition: border-color .2s ease, box-shadow .2s ease; }
 .inquiry-form input, .inquiry-form select { min-height: 50px; padding: 0 14px; }
@@ -360,7 +360,9 @@ section[id] { scroll-margin-top: 98px; }
 .inquiry-choice > div { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .inquiry-choice label { position: relative; display: block; cursor: pointer; }
 .inquiry-choice input { position: absolute; opacity: 0; pointer-events: none; }
-.inquiry-choice label > span { min-height: 42px; display: grid; place-items: center; padding: 8px; color: #555c57; border: 1px solid #cfd1ca; background: transparent; font-size: 10px; text-align: center; transition: color .2s ease, border-color .2s ease, background .2s ease; }
+.inquiry-choice label > span { min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px; color: #555c57; border: 1px solid #cfd1ca; background: transparent; font-size: 10px; text-align: center; transition: color .2s ease, border-color .2s ease, background .2s ease; }
+.inquiry-choice label > span svg, .inquiry-choice label > span img { flex: 0 0 auto; width: 17px; height: 17px; }
+.inquiry-choice label > span svg { stroke-width: 1.8; }
 .inquiry-choice input:checked + span { color: white; border-color: var(--accent); background: var(--accent); }
 .inquiry-choice input:focus-visible + span { outline: 3px solid rgba(182,83,44,.22); outline-offset: 2px; }
 .inquiry-select { margin-top: 2px; }
