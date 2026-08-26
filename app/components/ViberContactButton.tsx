@@ -1,7 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { companyContactLinks } from '../data/company';
+import { messengerContacts } from '../data/contactMethods';
+
+const viber = messengerContacts.viber;
 
 export default function ViberContactButton() {
   return (
@@ -9,19 +11,19 @@ export default function ViberContactButton() {
       className="messenger-link messenger-viber"
       type="button"
       data-contact-method="viber"
-      aria-label="Написати у Viber"
-      title="Написати у Viber"
-      onClick={() => window.location.assign(companyContactLinks.viber)}
+      aria-label={viber.label}
+      title={viber.label}
+      onClick={() => window.location.assign(viber.href)}
     >
       <Image
         className="messenger-brand-icon"
-        src="/brands/viber.svg"
+        src={viber.icon}
         width={24}
         height={24}
         alt=""
         aria-hidden="true"
       />
-      <span>VB</span>
+      <span>{viber.shortName}</span>
     </button>
   );
 }

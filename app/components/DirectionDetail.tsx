@@ -8,6 +8,26 @@ import { siteRoutes } from '../data/navigation';
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
+function DirectionItemCards({
+  className,
+  items,
+}: {
+  className: string;
+  items: readonly DirectionItem[];
+}) {
+  return (
+    <div className={className}>
+      {items.map(([number, title, text]) => (
+        <article key={number}>
+          <span>{number}</span>
+          <h3>{title}</h3>
+          <p>{text}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 type DirectionHeroProps = {
   path: string;
   number: string;
@@ -111,9 +131,7 @@ export function DirectionCostSection({
           <div><p className="eyebrow"><span /> Формування кошторису</p><h2>{title}</h2></div>
           <p>{text}</p>
         </div>
-        <div className="cost-grid">
-          {items.map(([number, itemTitle, itemText]) => <article key={number}><span>{number}</span><h3>{itemTitle}</h3><p>{itemText}</p></article>)}
-        </div>
+        <DirectionItemCards className="cost-grid" items={items} />
       </div>
     </section>
   );
@@ -166,9 +184,7 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
               <div><p className="eyebrow"><span /> {config.overview.eyebrow}</p><h2>{config.overview.title}</h2></div>
               {config.overview.text && <p>{config.overview.text}</p>}
             </div>
-            <div className="shell use-case-grid">
-              {config.overview.items.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
-            </div>
+            <DirectionItemCards className="shell use-case-grid" items={config.overview.items} />
           </>
         ) : (
           <div className="shell page-two-col align-start">
@@ -177,9 +193,7 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
               <h2>{config.overview.title}</h2>
               {config.overview.text && <p className="lead-copy">{config.overview.text}</p>}
             </div>
-            <div className="feature-list">
-              {config.overview.items.map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}
-            </div>
+            <DirectionItemCards className="feature-list" items={config.overview.items} />
           </div>
         )}
       </section>

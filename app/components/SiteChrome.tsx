@@ -5,17 +5,18 @@ import MobileMenu from './MobileMenu';
 import { EstimateBriefCards } from './ProcessCards';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
+import { messengerContacts } from '../data/contactMethods';
 import { primaryNavigation, siteRoutes } from '../data/navigation';
 
-const messengerLinks: Array<{ label: string; href: string; icon: string; shortName: string; kind: string }> = [
-  { label: 'Написати в Telegram', href: companyContactLinks.telegram, icon: '/brands/telegram.svg', shortName: 'TG', kind: 'telegram' },
-  { label: 'Написати у WhatsApp', href: companyContactLinks.whatsapp, icon: '/brands/whatsapp.svg', shortName: 'WA', kind: 'whatsapp' },
-];
+const messengerLinks = [
+  ['telegram', messengerContacts.telegram],
+  ['whatsapp', messengerContacts.whatsapp],
+] as const;
 
 export function MessengerLinks({ className }: { className: string }) {
   return (
     <div className={className} role="group" aria-label={`Месенджери ${company.name}`}>
-      {messengerLinks.map(({ label, href, icon, shortName, kind }) => (
+      {messengerLinks.map(([kind, { label, href, icon, shortName }]) => (
         <a
           className={`messenger-link messenger-${kind}`}
           href={href}

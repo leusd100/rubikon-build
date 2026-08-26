@@ -4,19 +4,11 @@ import { useState, type FormEvent } from 'react';
 import { ChevronDown, Copy, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
 import { company, companyContactLinks } from '../data/company';
+import { contactMethodOptions, type ContactMethod } from '../data/contactMethods';
 import { siteRoutes } from '../data/navigation';
 
 const companyPhone = company.phone.digits;
 const companyPhoneInternational = company.phone.international;
-
-type ContactMethod = 'Дзвінок' | 'Telegram' | 'WhatsApp' | 'Viber';
-
-const contactMethods: Array<[string, ContactMethod]> = [
-  ['Дзвінок', 'Дзвінок'],
-  ['Telegram', 'Telegram'],
-  ['WhatsApp', 'WhatsApp'],
-  ['Viber', 'Viber'],
-];
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || '').trim();
@@ -139,7 +131,7 @@ export default function ProjectInquiryForm() {
       <fieldset className="inquiry-choice">
         <legend>Як зручно зв’язатися *</legend>
         <div>
-          {contactMethods.map(([label, method]) => (
+          {contactMethodOptions.map(([label, method]) => (
             <label key={method}>
               <input
                 type="radio"
