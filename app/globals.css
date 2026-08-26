@@ -220,7 +220,7 @@ section[id] { scroll-margin-top: 98px; }
 .service-number { color: var(--accent); font: 500 13px/1 var(--font-condensed), sans-serif; }
 .service-icon { position: absolute; top: 70px; left: 28px; width: 34px; height: 34px; color: var(--accent-dark); stroke-width: 1.45; transition: color .25s ease, transform .25s ease; }
 .service-card:hover .service-icon, .service-card:focus-visible .service-icon { color: var(--accent); transform: translateY(-2px); }
-.service-card h3 { margin: 122px 0 12px; max-width: 300px; overflow-wrap: break-word; font: 600 27px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.service-card h3 { margin: 122px 0 12px; max-width: 300px; overflow-wrap: normal; word-break: normal; hyphens: none; text-wrap: balance; font: 600 clamp(21px, 1.9vw, 27px)/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .service-card p { max-width: 340px; margin: 0; color: var(--muted); font-size: 14px; transition: color .25s ease; }
 .service-card:hover p, .service-card:focus-visible p { color: #b9c1bb; }
 .service-arrow { position: absolute; top: 27px; right: 28px; font-size: 20px; }
