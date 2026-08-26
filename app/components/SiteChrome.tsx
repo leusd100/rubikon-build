@@ -173,7 +173,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
         <div className="team-grid">
           <article className="person-card">
             <div className="person-photo">
-              <Image src="/images/founder.png" alt={`${company.founders[0]} — засновник будівельного напрямку ${company.name}`} fill sizes="(max-width: 700px) 100vw, 40vw" />
+              <Image src="/images/founder.webp" alt={`${company.founders[0]} — засновник будівельного напрямку ${company.name}`} fill sizes="(max-width: 700px) 100vw, 40vw" />
             </div>
             <div className="person-info">
               <span>Засновник / керівник будівельного напрямку</span>
@@ -183,7 +183,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
           </article>
           <article className="person-card">
             <div className="person-photo">
-              <Image src="/images/next-generation.png" alt={`${company.founders[1]} — інженер ${company.name}`} fill sizes="(max-width: 700px) 100vw, 40vw" />
+              <Image src="/images/next-generation.webp" alt={`${company.founders[1]} — інженер ${company.name}`} fill sizes="(max-width: 700px) 100vw, 40vw" />
             </div>
             <div className="person-info">
               <span>Інженер / розвиток компанії</span>

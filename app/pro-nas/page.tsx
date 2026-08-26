@@ -40,7 +40,7 @@ export default function AboutPage() {
           <article className="story-row">
             <div className="promise-visual about-planning-visual">
               <Image
-                src="/media/about-industrial-concept.jpg"
+                src="/media/about-industrial-concept.webp"
                 alt="Архітектурна концепція промислової споруди з кресленнями металевого каркаса"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
@@ -65,7 +65,7 @@ export default function AboutPage() {
             </div>
             <div className="promise-visual about-control-visual">
               <Image
-                src="/media/about-quality-control.jpg"
+                src="/media/about-quality-control.webp"
                 alt="Контроль сталевого вузла за технічним кресленням на будівельному майданчику"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
