@@ -83,8 +83,8 @@ export default function Home() {
           <article className="story-row">
             <div className="promise-visual engineering-plan-visual">
               <Image
-                src="/media/engineering-planning.webp"
-                alt="Фахівець опрацьовує архітектурні креслення та технічні плани"
+                src="/media/about-industrial-concept.webp"
+                alt="Промисловий сталевий каркас переходить із креслення у конструкцію"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
@@ -121,8 +121,8 @@ export default function Home() {
             </div>
             <div className="promise-visual site-control-visual">
               <Image
-                src="/media/site-quality-control.webp"
-                alt="Перевірка точності металевої конструкції перед монтажем"
+                src="/media/about-quality-control.webp"
+                alt="Технічне креслення та відповідальний вузол сталевого каркаса"
                 fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
