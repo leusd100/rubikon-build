@@ -102,6 +102,8 @@ export function DirectionHeroVideo({
 
   if (!sources.length) return null;
 
+  const nextSource = sources.length > 1 ? (activeSource + 1) % sources.length : activeSource;
+
   return (
     <>
       <Image
@@ -130,7 +132,7 @@ export function DirectionHeroVideo({
           autoPlay={shouldAttachVideo && index === 0}
           muted
           playsInline
-          preload={shouldAttachVideo && index === activeSource ? 'auto' : 'none'}
+          preload={shouldAttachVideo && (index === activeSource || index === nextSource) ? 'auto' : 'none'}
           loop={sources.length === 1}
           onCanPlay={(event) => {
             event.currentTarget.playbackRate = playbackRate;

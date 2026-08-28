@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { Breadcrumbs, PageCta, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
@@ -18,7 +19,19 @@ export default function AboutPage() {
   return (
     <main className="inner-page" id="main-content">
       <section className="subhero about-subhero">
-        <div className="about-hero-media" aria-hidden="true" />
+        <div className="about-hero-media" aria-hidden="true">
+          <DirectionHeroVideo
+            sources={[
+              '/media/about/architect.m4v',
+              '/media/about/blueprint.m4v',
+              '/media/about/welding.m4v',
+              '/media/about/structure.m4v',
+            ]}
+            poster="/media/about-industrial-concept.webp"
+            clipDurationMs={3800}
+            playbackRate={0.85}
+          />
+        </div>
         <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
