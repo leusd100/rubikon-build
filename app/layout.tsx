@@ -33,9 +33,13 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   creator: company.name,
+  manifest: '/site.webmanifest',
   icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
-    shortcut: '/favicon.svg',
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
@@ -78,7 +82,9 @@ const organizationData = {
   url: company.siteUrl,
   logo: {
     '@type': 'ImageObject',
-    url: `${company.siteUrl}/favicon.svg`,
+    url: `${company.siteUrl}/icon-512x512.png`,
+    width: 512,
+    height: 512,
   },
   image: `${company.siteUrl}/og.jpg`,
   telephone: company.phone.international,
