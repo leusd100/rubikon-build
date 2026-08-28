@@ -23,6 +23,13 @@ export type DirectionPageConfig = {
     video: string;
   };
   overview: DirectionOverview;
+  editorial: {
+    eyebrow: string;
+    title: string;
+    text: string;
+    image: string;
+    imageAlt: string;
+  };
   process: {
     eyebrow?: string;
     title: string;

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Breadcrumbs, PageCta, SectionHeader } from './SiteChrome';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
@@ -131,6 +132,28 @@ export function DirectionCostSection({
   );
 }
 
+function DirectionEditorial({ editorial }: { editorial: DirectionPageConfig['editorial'] }) {
+  return (
+    <section className="page-section direction-editorial-section">
+      <div className="shell direction-editorial-grid">
+        <div className="direction-editorial-copy">
+          <p className="eyebrow"><span /> {editorial.eyebrow}</p>
+          <h2>{editorial.title}</h2>
+          <p>{editorial.text}</p>
+        </div>
+        <figure className="direction-editorial-media">
+          <Image
+            src={editorial.image}
+            alt={editorial.imageAlt}
+            fill
+            sizes="(max-width: 760px) calc(100vw - 32px), 64vw"
+          />
+        </figure>
+      </div>
+    </section>
+  );
+}
+
 export function DirectionFaq({ title, items }: { title: string; items: readonly DirectionFaqItem[] }) {
   const faqData = {
     '@context': 'https://schema.org',
@@ -194,6 +217,7 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
         )}
       </section>
 
+      <DirectionEditorial editorial={config.editorial} />
       <DirectionProcess {...config.process} />
       {config.cost && <DirectionCostSection {...config.cost} />}
       {config.faq && <DirectionFaq {...config.faq} />}
