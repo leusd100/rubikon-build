@@ -41,10 +41,10 @@ export default function AboutPage() {
             <h1>Репутація,<br />за якою стоять<br /><em>наші імена</em></h1>
           </div>
           <div className="subhero-side">
-            <p>RUBIKON BUILD — родинна компанія, у якій поєднуються понад 30 років практичного досвіду Сергія Івановича та сучасний підхід до розвитку бізнесу й роботи з клієнтами.</p>
+            <p>Понад 30 років практичного досвіду в будівництві поєднуємо із системним розвитком компанії та зрозумілою роботою з клієнтами.</p>
             <div className="subhero-stats">
-              <div><strong>30+</strong><span>років практики</span></div>
-              <div><strong>02</strong><span>покоління</span></div>
+              <div><strong>30+</strong><span>років у будівництві</span></div>
+              <div><strong>2</strong><span>покоління в команді</span></div>
             </div>
           </div>
         </div>

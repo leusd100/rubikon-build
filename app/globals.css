@@ -428,6 +428,7 @@ section[id] { scroll-margin-top: 116px; }
 .about-subhero .subhero-grid { opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
 .about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
 .about-subhero .subhero-side > p { color: rgba(255,255,255,.8); }
+.about-subhero .subhero-stats span { color: rgba(255,255,255,.68); }
 .breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 48px; color: rgba(255,255,255,.47); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .breadcrumb span { display: inline-flex; gap: 8px; }
 .breadcrumb a { transition: color .2s ease; }
@@ -772,6 +773,12 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .subhero h1, .service-subhero h1 { font-size: var(--title-page); }
   .subhero-side > p { font-size: 15px; }
   .subhero-stats { max-width: 360px; margin-top: 30px; }
+  .about-subhero .subhero-side { max-width: 520px; padding: 22px 20px 20px; border-left: 2px solid var(--accent); background: rgba(10,12,11,.62); backdrop-filter: blur(7px); }
+  .about-subhero .subhero-side > p { color: rgba(255,255,255,.92); line-height: 1.65; }
+  .about-subhero .subhero-stats { max-width: none; margin-top: 20px; }
+  .about-subhero .subhero-stats div { padding-top: 18px; }
+  .about-subhero .subhero-stats strong { font-size: 34px; }
+  .about-subhero .subhero-stats span { color: rgba(255,255,255,.72); line-height: 1.45; }
   .service-subhero-content { padding-top: 150px; padding-bottom: 58px; }
   .service-subhero-content > p:last-child { margin-top: 26px; font-size: 15px; }
   .page-section { padding-block: var(--section-space); }
