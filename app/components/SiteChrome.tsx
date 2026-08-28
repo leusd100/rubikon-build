@@ -203,7 +203,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
         <SectionHeader
           className="team-heading"
           eyebrow="Родина в основі компанії"
-          title="Родинна компанія. Досвід двох поколінь."
+          title="Досвід двох поколінь — в одній команді"
           supporting="Практичний досвід будівництва поєднуємо із системною організацією роботи, зрозумілою комунікацією та сучасними інструментами."
         />
         <div className="team-stories">
