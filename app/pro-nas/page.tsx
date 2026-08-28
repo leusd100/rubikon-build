@@ -40,13 +40,6 @@ export default function AboutPage() {
             <p className="eyebrow light"><span /> Родинна справа</p>
             <h1>Репутація,<br />за якою стоять<br /><em>наші імена</em></h1>
           </div>
-          <div className="subhero-side">
-            <p>Понад 30 років практичного досвіду в будівництві поєднуємо із системним розвитком компанії та зрозумілою роботою з клієнтами.</p>
-            <div className="subhero-stats">
-              <div><strong>30+</strong><span>років у будівництві</span></div>
-              <div><strong>2</strong><span>покоління в команді</span></div>
-            </div>
-          </div>
         </div>
       </section>
 
