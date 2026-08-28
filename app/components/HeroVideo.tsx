@@ -38,7 +38,7 @@ export function HeroVideo() {
     <video
       ref={videoRef}
       src={shouldAttachVideo ? '/media/hero-steel-frame.mp4' : undefined}
-      poster="/media/hero-steel-frame.jpg"
+      poster="/media/hero-steel-frame.webp"
       autoPlay={shouldAttachVideo}
       muted
       loop

@@ -15,7 +15,7 @@ export default function Home() {
         <div className="hero-media" aria-hidden="true">
           <DirectionHeroVideo
             sources={['/media/hero-steel-frame.mp4']}
-            poster="/media/hero-steel-frame.jpg"
+            poster="/media/hero-steel-frame.webp"
             playbackRate={0.85}
           />
         </div>
@@ -158,7 +158,7 @@ export default function Home() {
               зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.
             </p>
             <div className="contact-links" id="contact-note">
-              <a className="pending-contact contact-phone" href={companyContactLinks.phone} aria-label={`Телефон ${company.phone.display} — зателефонувати`}>
+              <a className="pending-contact contact-phone" href={companyContactLinks.phone}>
                 <b><Phone aria-hidden="true" />Телефон</b><i>{company.phone.display}</i>
               </a>
               <div className="pending-contact contact-messenger-row">
