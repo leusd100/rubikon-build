@@ -41,7 +41,7 @@ export default function Home() {
           </div>
           <div className="hero-contact-card">
             <p>Зручний зв’язок</p>
-            <a className="hero-contact-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати за номером ${company.phone.display}`}>
+            <a className="hero-contact-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, телефон ${company.phone.display}`}>
               <span className="hero-contact-desktop"><small>Телефон</small><strong>{company.phone.display}</strong></span>
               <span className="hero-contact-mobile">Зателефонувати</span>
               <b aria-hidden="true">↗</b>
@@ -158,7 +158,7 @@ export default function Home() {
               зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.
             </p>
             <div className="contact-links" id="contact-note">
-              <a className="pending-contact contact-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати за номером ${company.phone.display}`}>
+              <a className="pending-contact contact-phone" href={companyContactLinks.phone} aria-label={`Телефон ${company.phone.display} — зателефонувати`}>
                 <b><Phone aria-hidden="true" />Телефон</b><i>{company.phone.display}</i>
               </a>
               <div className="pending-contact contact-messenger-row">

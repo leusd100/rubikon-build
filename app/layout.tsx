@@ -15,6 +15,7 @@ const condensed = IBM_Plex_Sans_Condensed({
   variable: '--font-condensed',
   subsets: ['cyrillic-ext', 'latin'],
   weight: ['500', '600', '700'],
+  preload: false,
 });
 
 const display = Jost({

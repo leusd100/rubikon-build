@@ -85,14 +85,14 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell nav-wrap">
-        <a className="brand-link" href={siteRoutes.home} aria-label={`${company.name} — на головну`}>
+        <a className="brand-link" href={siteRoutes.home}>
           <Brand />
         </a>
         <nav className="desktop-nav" aria-label="Основна навігація">
           {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
         <div className="header-contacts" aria-label="Контакти компанії">
-          <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати до ${company.name}`}>
+          <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Телефон ${company.phone.display} — зателефонувати`}>
             <Phone aria-hidden="true" />
             <span><small>Телефон</small><strong>{company.phone.display}</strong></span>
           </a>
@@ -120,7 +120,7 @@ export function SiteFooter() {
     <footer>
       <SectionDivider variant="accent" />
       <div className="shell footer-grid">
-        <a className="brand-link" href={siteRoutes.home} aria-label={`${company.name} — на головну`}>
+        <a className="brand-link" href={siteRoutes.home}>
           <Brand />
         </a>
         <nav className="footer-nav" aria-label="Навігація у підвалі">

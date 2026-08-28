@@ -110,6 +110,7 @@ export function DirectionHeroVideo({
         alt=""
         fill
         priority
+        unoptimized
         sizes="100vw"
         aria-hidden="true"
       />
