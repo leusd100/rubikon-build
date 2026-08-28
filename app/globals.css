@@ -108,13 +108,14 @@ section[id] { scroll-margin-top: 116px; }
 .nav-wrap { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: clamp(22px, 2.2vw, 40px); }
 .brand-link { display: inline-flex; }
 .brand { display: inline-flex; align-items: center; gap: 15px; line-height: 1; }
-.brand-module-mark { position: relative; width: 50px; height: 50px; flex: 0 0 auto; color: currentColor; }
-.brand-module-mark::before, .brand-module-mark::after, .brand-module-mark i:first-child { content: ''; position: absolute; width: 50%; height: 50%; border: 2px solid currentColor; transform: rotate(30deg) skewY(-10deg); }
-.brand-module-mark::before { left: 12%; top: 18%; }
-.brand-module-mark::after { right: 6%; top: 33%; border-color: var(--accent); }
-.brand-module-mark i:first-child { left: 27%; top: 42%; opacity: .38; }
-.brand-module-mark i:nth-child(2) { position: absolute; left: 12%; bottom: 7%; width: 80%; height: 2px; background: currentColor; }
-.brand-module-mark b { position: absolute; right: 4%; top: 7%; width: 11%; height: 11%; background: var(--accent); }
+.engineering-mark { --mark-stroke: 2px; --mark-node-surface: #111315; position: relative; display: block; flex: 0 0 auto; color: currentColor; }
+.engineering-mark::before { content: ''; position: absolute; inset: 10% 14% 14%; border: var(--mark-stroke) solid currentColor; border-bottom-width: calc(var(--mark-stroke) * 2); }
+.engineering-mark::after { content: ''; position: absolute; left: 5%; right: 5%; bottom: 5%; height: var(--mark-stroke); background: currentColor; opacity: .46; }
+.engineering-mark i:first-child { position: absolute; z-index: 2; left: 46%; top: 5%; width: 9%; height: 88%; background: var(--accent); transform: skew(-8deg); }
+.engineering-mark i:nth-child(2) { position: absolute; left: 24%; top: 50%; width: 54%; height: var(--mark-stroke); background: currentColor; transform: rotate(-33deg); transform-origin: center; opacity: .62; }
+.engineering-mark b { position: absolute; z-index: 3; left: 41%; top: 42%; width: 18%; aspect-ratio: 1; border: var(--mark-stroke) solid currentColor; background: var(--mark-node-surface); transform: rotate(45deg); }
+.engineering-mark em { position: absolute; right: 5%; top: 5%; width: 26%; height: calc(var(--mark-stroke) + 1px); background: var(--accent); transform: skew(-14deg); }
+.brand-frame-mark { width: 50px; height: 50px; --mark-node-surface: #0c0d0f; }
 .brand-name { display: grid; letter-spacing: .06em; }
 .brand-name b { font: 400 24px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .075em; white-space: nowrap; }
 .brand-name b em { color: inherit; font-style: normal; font-weight: 400; }
@@ -477,8 +478,12 @@ section[id] { scroll-margin-top: 116px; }
 .logo-lab-intro .eyebrow { margin-bottom: 30px; }
 .logo-lab-intro > .shell > p:last-child { max-width: 650px; margin: 34px 0 0; color: rgba(255,255,255,.62); font-size: 17px; line-height: 1.75; }
 .logo-lab-options { padding: 86px 0 110px; }
-.logo-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.logo-options-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 22px; }
 .logo-option { overflow: hidden; border: 1px solid var(--line); background: var(--warm); }
+.logo-option.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(182,83,44,.12); }
+.logo-option.is-selected .logo-option-meta { color: white; background: var(--accent); border-bottom-color: var(--accent); }
+.logo-option.is-selected .logo-option-meta > span,
+.logo-option.is-selected .logo-option-meta small { color: white; }
 .logo-option-meta { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--line); }
 .logo-option-meta > span { color: var(--accent); font: 600 13px/1 var(--font-condensed), sans-serif; }
 .logo-option-meta small { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
@@ -489,37 +494,45 @@ section[id] { scroll-margin-top: 116px; }
 .proposal-wordmark { display: grid; }
 .proposal-wordmark b { font: 400 28px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .065em; white-space: nowrap; }
 .proposal-wordmark small { margin-top: 9px; color: currentColor; opacity: .55; font: 500 8px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
-.proposal-mark { position: relative; width: 72px; height: 72px; flex: 0 0 auto; color: currentColor; }
-.mark-monogram { border: 1px solid currentColor; }
-.mark-monogram::after { content: ''; position: absolute; inset: 8px; border-top: 1px solid currentColor; border-right: 1px solid currentColor; opacity: .34; }
+.proposal-mark { --mark-stroke: 3px; position: relative; width: 72px; height: 72px; flex: 0 0 auto; color: currentColor; }
+.mark-evolution { transform: translateY(2px); }
+.mark-evolution::before, .mark-evolution::after, .mark-evolution i:first-child { content: ''; position: absolute; width: 35px; height: 35px; border: 3px solid currentColor; transform: rotate(30deg) skewY(-10deg); }
+.mark-evolution::before { left: 8px; top: 11px; }
+.mark-evolution::after { right: 4px; top: 23px; border-color: var(--accent); }
+.mark-evolution i:first-child { left: 19px; top: 29px; opacity: .32; }
+.mark-evolution i:nth-child(2) { position: absolute; left: 7px; bottom: 4px; width: 58px; height: 3px; background: currentColor; }
+.mark-evolution i:nth-child(3) { position: absolute; right: 4px; top: 4px; width: 2px; height: 13px; background: var(--accent); }
+.mark-evolution b { position: absolute; right: 0; top: 2px; width: 8px; height: 8px; background: var(--accent); }
+.logo-preview-dark .engineering-mark,
+.proposal-icon-tile .engineering-mark { --mark-node-surface: #111315; }
+.logo-preview-light .engineering-mark { --mark-node-surface: #eeede7; }
+.proposal-compact .engineering-mark { --mark-node-surface: #deddd6; }
+.mark-monogram { border: 2px solid currentColor; }
+.mark-monogram::after { content: ''; position: absolute; inset: 8px; border-top: 1px solid currentColor; border-right: 1px solid currentColor; opacity: .3; }
 .mark-monogram b, .mark-monogram strong { position: absolute; z-index: 2; font: 500 22px/1 var(--font-display), sans-serif; }
 .mark-monogram b { left: 10px; top: 10px; }
 .mark-monogram strong { right: 9px; bottom: 8px; }
 .mark-monogram i { position: absolute; z-index: 1; left: 32px; top: -5px; width: 7px; height: 82px; background: var(--accent); transform: skew(-17deg); }
-.mark-portal::before, .mark-portal::after { content: ''; position: absolute; top: 8px; width: 7px; height: 56px; background: var(--accent); transform: skew(-9deg); }
-.mark-portal::before { left: 9px; }
-.mark-portal::after { right: 9px; }
-.mark-portal i:first-child { position: absolute; left: 14px; right: 8px; top: 8px; height: 7px; background: currentColor; transform: skew(-9deg); }
-.mark-portal i:nth-child(2) { position: absolute; left: 20px; right: 15px; bottom: 8px; height: 2px; background: currentColor; opacity: .5; }
-.mark-portal b { position: absolute; left: 32px; top: 31px; width: 10px; height: 10px; background: currentColor; transform: rotate(45deg); }
-.mark-module { transform: translateY(2px); }
-.mark-module::before, .mark-module::after, .mark-module i:first-child { content: ''; position: absolute; width: 35px; height: 35px; border: 3px solid currentColor; transform: rotate(30deg) skewY(-10deg); }
-.mark-module::before { left: 9px; top: 13px; }
-.mark-module::after { right: 5px; top: 24px; border-color: var(--accent); }
-.mark-module i:first-child { left: 20px; top: 30px; opacity: .38; }
-.mark-module i:nth-child(2) { position: absolute; left: 8px; bottom: 5px; width: 57px; height: 3px; background: currentColor; }
-.mark-module b { position: absolute; right: 3px; top: 6px; width: 8px; height: 8px; background: var(--accent); }
-.mark-shield { border: 2px solid currentColor; }
-.mark-shield::before, .mark-shield::after { content: ''; position: absolute; width: 23px; height: 6px; background: var(--accent); }
-.mark-shield::before { left: -8px; top: 10px; transform: skew(-17deg); }
-.mark-shield::after { right: -8px; bottom: 10px; transform: skew(-17deg); }
-.mark-shield b { position: absolute; inset: 0; display: grid; place-items: center; font: 500 24px/1 var(--font-display), sans-serif; letter-spacing: -.05em; }
-.mark-shield i:first-of-type { position: absolute; left: 10px; top: 10px; width: 8px; height: 8px; border-top: 1px solid currentColor; border-left: 1px solid currentColor; opacity: .45; }
-.mark-shield i:last-of-type { position: absolute; right: 10px; bottom: 10px; width: 8px; height: 8px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; opacity: .45; }
+.mark-monogram em { position: absolute; right: 6px; top: 6px; width: 6px; height: 6px; background: currentColor; }
+.logo-utility-row { min-height: 126px; display: grid; grid-template-columns: 1fr 88px 1.2fr; align-items: stretch; border-bottom: 1px solid var(--line); background: #deddd6; }
+.proposal-compact { display: flex; align-items: center; justify-content: center; gap: 4px; border-right: 1px solid var(--line); }
+.proposal-compact .proposal-mark { width: 42px; height: 42px; flex-basis: 42px; transform: scale(.58); }
+.proposal-compact b { margin-left: -6px; font: 500 20px/1 var(--font-display), sans-serif; letter-spacing: .03em; }
+.proposal-icon-tile { display: grid; place-items: center; color: white; background: #171918; }
+.proposal-icon-tile .proposal-mark { transform: scale(.58); }
+.proposal-document-sample { position: relative; align-self: center; justify-self: center; width: 118px; height: 74px; display: grid; align-content: end; padding: 10px; color: #202321; background: #f7f6f1; box-shadow: 0 8px 20px rgba(21,24,22,.12); }
+.proposal-document-sample i { position: absolute; left: 10px; top: 10px; width: 28px; height: 3px; background: var(--accent); }
+.proposal-document-sample b { font: 600 9px/1 var(--font-display), sans-serif; letter-spacing: .045em; }
+.proposal-document-sample small { margin-top: 4px; color: var(--muted); font-size: 4px; font-weight: 800; letter-spacing: .09em; }
 .logo-option-copy { padding: 28px 30px 32px; }
 .logo-option-copy h2 { margin: 0 0 13px; font: 400 34px/1.08 var(--font-display), var(--font-manrope), sans-serif; }
 .logo-option-copy p { max-width: 520px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.75; }
+.logo-option-facts { display: grid; gap: 14px; margin: 24px 0 0; padding-top: 22px; border-top: 1px solid var(--line); }
+.logo-option-facts div { display: grid; gap: 6px; }
+.logo-option-facts dt { color: var(--accent-dark); font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.logo-option-facts dd { margin: 0; color: var(--text-secondary); font-size: 12px; line-height: 1.55; }
 .logo-choice-note { margin: 38px 0 0; padding: 24px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+.logo-choice-note strong { color: var(--accent-dark); }
 
 .route-service-list { border-top: 1px solid var(--line); }
 .route-service { display: grid; grid-template-columns: 90px 1fr 64px; align-items: center; min-height: 185px; border-bottom: 1px solid var(--line); transition: color .25s ease, background .25s ease, padding .25s ease; }
@@ -652,6 +665,8 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .brief-grid, .cost-grid { grid-template-columns: repeat(2, 1fr); }
   .page-two-col { gap: var(--grid-gap); }
   .faq-grid { gap: var(--grid-gap); }
+  .logo-options-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .logo-option:last-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 960px) {
@@ -680,7 +695,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   section[id] { scroll-margin-top: 88px; }
   .nav-wrap { min-height: 76px; gap: 12px; }
   .brand { gap: 10px; }
-  .brand-module-mark { width: 38px; height: 38px; }
+  .brand-frame-mark { width: 38px; height: 38px; }
   .brand-name b { font-size: 17px; letter-spacing: .055em; }
   .brand-name small { margin-top: 6px; font-size: 6px; letter-spacing: .17em; }
   .mobile-menu summary { min-width: 92px; height: 42px; padding-inline: 13px; }
@@ -795,8 +810,10 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .logo-lab-intro > .shell > p:last-child { font-size: 15px; }
   .logo-lab-options { padding: 58px 0 82px; }
   .logo-options-grid { grid-template-columns: 1fr; }
+  .logo-option:last-child { grid-column: auto; }
   .logo-preview { min-height: 186px; padding: 24px 18px; }
   .logo-preview-light { min-height: 130px; }
+  .logo-utility-row { grid-template-columns: 1fr 76px 1.15fr; }
   .proposal-lockup { gap: 14px; }
   .proposal-mark { width: 58px; height: 58px; transform: scale(.82); }
   .proposal-wordmark b { font-size: 20px; }
@@ -831,7 +848,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
 
 @media (max-width: 380px) {
   .brand { gap: 8px; }
-  .brand-module-mark { width: 34px; height: 34px; }
+  .brand-frame-mark { width: 34px; height: 34px; }
   .brand-name b { font-size: 15px; }
   .brand-name small { font-size: 5px; letter-spacing: .14em; }
   .mobile-menu summary { min-width: 82px; padding-inline: 10px; }

@@ -1,6 +1,7 @@
 import { brandedTitle, createBasicPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
+import { BrandMark } from '../components/SiteChrome';
 
 export const metadata = createBasicPageMetadata({
   title: brandedTitle('Варіанти логотипа'),
@@ -11,48 +12,45 @@ export const metadata = createBasicPageMetadata({
 const variants = [
   {
     number: '01',
-    key: 'monogram',
-    title: 'Монограма RB',
-    note: 'Найбільш універсальний',
-    description: 'Літери R і B з’єднані діагоналлю — знаком руху, переходу та розвитку. Добре працює окремо від назви.',
+    key: 'evolution',
+    title: 'Еволюція',
+    note: 'Найбезпечніший розвиток',
+    description: 'Зберігає впізнавану модульну геометрію поточного знака, але робить її чистішою, стійкішою та виразнішою у малому розмірі.',
+    strength: 'Спадкоємність без різкої зміни образу компанії.',
+    use: 'Основний логотип, документи, транспорт і будівельні каски.',
   },
   {
     number: '02',
-    key: 'portal',
-    title: 'Портал',
-    note: 'Архітектурний',
-    description: 'Абстрактний вхід або каркас. Передає будівництво ширше, ніж металоконструкції, і підтримує ідею переходу через Рубікон.',
+    key: 'frame',
+    title: 'Інженерна рама',
+    note: 'Найінженерніший',
+    description: 'Знак побудований як конструктивна рама з центральною віссю та вузлом. Він прямо підтримує мову креслень, каркасів і точних рішень.',
+    strength: 'Найсильніше пов’язує айдентику з інженерією та будівництвом.',
+    use: 'Сайт, вивіска, технічні матеріали та навігація на об’єктах.',
   },
   {
     number: '03',
-    key: 'module',
-    title: 'Модуль',
-    note: 'Інженерний',
-    description: 'Об’ємна конструкція з трьох площин. Асоціації з точністю, простором і комплексною реалізацією об’єкта.',
-  },
-  {
-    number: '04',
-    key: 'shield',
-    title: 'Технічний шильд',
-    note: 'Найсолідніший',
-    description: 'Стриманий знак із монограмою в системі кутів. Добре виглядатиме на документах, касках, транспорті та вивісці.',
+    key: 'monogram',
+    title: 'Геометрична монограма',
+    note: 'Найкомпактніший',
+    description: 'Літери R і B зібрані в технічний шильд і перетнуті помаранчевою діагоналлю — знаком руху, переходу та розвитку.',
+    strength: 'Найкраще працює як самостійний цифровий знак та іконка.',
+    use: 'Favicon, соціальні мережі, аватар, маркування інструментів і спецодягу.',
   },
 ] as const;
 
+const selectedVariant = 'frame';
+
 function ProposalMark({ variant }: { variant: (typeof variants)[number]['key'] }) {
-  if (variant === 'monogram') {
-    return <span className="proposal-mark mark-monogram" aria-hidden="true"><b>R</b><strong>B</strong><i /></span>;
+  if (variant === 'evolution') {
+    return <span className="proposal-mark mark-evolution" aria-hidden="true"><i /><i /><i /><b /></span>;
   }
 
-  if (variant === 'portal') {
-    return <span className="proposal-mark mark-portal" aria-hidden="true"><i /><i /><b /></span>;
+  if (variant === 'frame') {
+    return <BrandMark className="proposal-mark" />;
   }
 
-  if (variant === 'module') {
-    return <span className="proposal-mark mark-module" aria-hidden="true"><i /><i /><b /></span>;
-  }
-
-  return <span className="proposal-mark mark-shield" aria-hidden="true"><b>RB</b><i /><i /></span>;
+  return <span className="proposal-mark mark-monogram" aria-hidden="true"><b>R</b><strong>B</strong><i /><em /></span>;
 }
 
 function LogoLockup({ variant }: { variant: (typeof variants)[number]['key'] }) {
@@ -73,9 +71,9 @@ export default function LogoVariantsPage() {
       <section className="logo-lab-intro">
         <div className="shell">
           <a className="logo-lab-back" href={siteRoutes.home}>← Повернутися на сайт</a>
-          <p className="eyebrow light"><span /> Робочі концепції</p>
-          <h1>Новий знак для<br /><em>RUBIKON BUILD</em></h1>
-          <p>Шрифт і назву залишаємо. Порівнюємо лише знак — від виразної монограми до стриманого інженерного символу.</p>
+          <p className="eyebrow light"><span /> Brand Identity Refresh</p>
+          <h1>Три напрями розвитку<br /><em>фірмового знака</em></h1>
+          <p>Обрано напрям 02 — «Інженерна рама». Інші концепції залишаємо поруч, щоб зберегти логіку рішення й бачити різницю характерів.</p>
         </div>
       </section>
 
@@ -83,10 +81,10 @@ export default function LogoVariantsPage() {
         <div className="shell">
           <div className="logo-options-grid">
             {variants.map((variant) => (
-              <article className="logo-option" key={variant.key}>
+              <article className={`logo-option${variant.key === selectedVariant ? ' is-selected' : ''}`} key={variant.key}>
                 <div className="logo-option-meta">
                   <span>{variant.number}</span>
-                  <small>{variant.note}</small>
+                  <small>{variant.key === selectedVariant ? 'Обрано · Інженерна система' : variant.note}</small>
                 </div>
                 <div className="logo-preview logo-preview-dark">
                   <LogoLockup variant={variant.key} />
@@ -94,14 +92,30 @@ export default function LogoVariantsPage() {
                 <div className="logo-preview logo-preview-light">
                   <LogoLockup variant={variant.key} />
                 </div>
+                <div className="logo-utility-row" aria-label={`Компактне застосування концепції ${variant.number}`}>
+                  <span className="proposal-compact">
+                    <ProposalMark variant={variant.key} />
+                    <b>RB</b>
+                  </span>
+                  <span className="proposal-icon-tile"><ProposalMark variant={variant.key} /></span>
+                  <span className="proposal-document-sample">
+                    <i />
+                    <b>RUBIKON BUILD</b>
+                    <small>CONSTRUCTION &amp; ENGINEERING</small>
+                  </span>
+                </div>
                 <div className="logo-option-copy">
                   <h2>{variant.title}</h2>
                   <p>{variant.description}</p>
+                  <dl className="logo-option-facts">
+                    <div><dt>Сильна сторона</dt><dd>{variant.strength}</dd></div>
+                    <div><dt>Найкраще застосування</dt><dd>{variant.use}</dd></div>
+                  </dl>
                 </div>
               </article>
             ))}
           </div>
-          <p className="logo-choice-note">Для вибору достатньо написати номер варіанта — 01, 02, 03 або 04.</p>
+          <p className="logo-choice-note"><strong>Обрано 02.</strong> Цей знак стає основою primary, compact, icon/favicon і dark/light версій Rubikon Build.</p>
         </div>
       </section>
     </main>

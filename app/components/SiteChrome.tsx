@@ -40,11 +40,19 @@ export function MessengerLinks({ className }: { className: string }) {
 export function Brand() {
   return (
     <span className="brand" aria-label={`${company.name} — Construction and Engineering`}>
-      <span className="brand-module-mark" aria-hidden="true"><i /><i /><b /></span>
+      <BrandMark className="brand-frame-mark" />
       <span className="brand-name">
         <b><span>RUBIKON</span> <em>BUILD</em></b>
         <small>Construction &amp; Engineering</small>
       </span>
+    </span>
+  );
+}
+
+export function BrandMark({ className = '' }: { className?: string }) {
+  return (
+    <span className={`engineering-mark${className ? ` ${className}` : ''}`} aria-hidden="true">
+      <i /><i /><b /><em />
     </span>
   );
 }
