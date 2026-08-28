@@ -125,6 +125,6 @@ export function getDirection(id: DirectionId): Direction {
 
 export const inquiryDirectionOptions = [
   ...directions.map(({ formLabel }) => formLabel),
-  'Комплексний об’єкт під ключ',
+  'Комплексне будівництво',
   'Інше',
 ] as const;

@@ -59,7 +59,7 @@ export default function Home() {
           <SectionHeader
             eyebrow="Ключові напрямки"
             title="Що можемо взяти на себе"
-            supporting="Можемо відповідати за весь об’єкт або виконати визначений етап робіт у межах більшого будівельного проєкту."
+            supporting="Можемо вести комплекс робіт або виконати визначений етап у межах більшого будівельного проєкту."
           />
           <DirectionServiceCards />
           <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
@@ -114,10 +114,10 @@ export default function Home() {
               <div className="principles">
                 <div><b>01</b><span><strong>Рішення до початку робіт</strong>Уточнюємо вихідні дані, конструктив і склад відповідальності.</span></div>
                 <div><b>02</b><span><strong>Контроль ключових етапів</strong>Особисто стежимо за тим, що визначає міцність і довговічність.</span></div>
-                <div><b>03</b><span><strong>Відкрита комунікація</strong>Пояснюємо рішення, погоджуємо зміни й не приховуємо складних моментів.</span></div>
+                <div><b>03</b><span><strong>Відкрита комунікація</strong>Пояснюємо рішення, погоджуємо зміни й завчасно говоримо про ризики.</span></div>
                 <div><b>04</b><span><strong>Родинна відповідальність</strong>Репутація компанії напряму пов’язана з нашими іменами.</span></div>
               </div>
-              <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно</blockquote>
+              <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно.</blockquote>
             </div>
             <div className="promise-visual site-control-visual">
               <Image
@@ -154,7 +154,7 @@ export default function Home() {
             <p className="eyebrow light"><span /> Почнемо з розмови</p>
             <h2>Розкажіть коротко<br />про завдання</h2>
             <p>
-              Залиште контакт і кілька вихідних даних. Ми ознайомимося із запитом,
+              Залиште контактні дані й коротко опишіть завдання. Ознайомимося із запитом,
               зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.
             </p>
             <div className="contact-links" id="contact-note">

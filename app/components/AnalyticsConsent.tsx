@@ -59,7 +59,7 @@ export function openCookieSettings() {
 export function CookieSettingsButton() {
   return (
     <button className="footer-legal-link" type="button" onClick={openCookieSettings}>
-      Налаштування cookies
+      Налаштування cookie
     </button>
   );
 }

@@ -36,7 +36,7 @@ export default function AboutPage() {
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
           <div>
-            <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про нас', href: siteRoutes.about }]} />
+            <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
             <h1>Репутація,<br />за якою стоять<br /><em>наші імена</em></h1>
           </div>
@@ -66,7 +66,7 @@ export default function AboutPage() {
             <div className="promise-copy about-story-copy">
               <p className="eyebrow light"><span /> Практична основа</p>
               <h2>Досвід, який став основою родинної компанії</h2>
-              <p className="promise-lead">Понад 30 років у будівництві дали Сергію Івановичу практичний досвід організації робіт, управління командами та контролю якості безпосередньо на об’єктах.</p>
+              <p className="promise-lead">Сергій Іванович має понад 30 років практичного досвіду в будівництві: від організації робіт і управління командами до контролю якості безпосередньо на об’єктах.</p>
               <p className="story-support">Цей досвід допомагає бачити ризики до початку робіт, перевіряти відповідальні вузли та приймати рішення з урахуванням реальних умов майданчика.</p>
             </div>
           </article>
@@ -103,7 +103,7 @@ export default function AboutPage() {
           />
           <div className="detail-grid values-grid">
             <article className="detail-card"><span>01</span><h3>Чесна оцінка</h3><p>Відкрито говоримо про обсяг робіт, ризики та межі відповідальності.</p></article>
-            <article className="detail-card"><span>02</span><h3>Якість вузлів</h3><p>Контролюємо те, що впливає на міцність, довговічність і безпечну експлуатацію.</p></article>
+            <article className="detail-card"><span>02</span><h3>Контроль відповідальних вузлів</h3><p>Перевіряємо те, що впливає на міцність, довговічність і безпечну експлуатацію.</p></article>
             <article className="detail-card"><span>03</span><h3>Особистий контроль</h3><p>Власники компанії залучені до ключових етапів, а не лише до першої зустрічі.</p></article>
             <article className="detail-card"><span>04</span><h3>Повага до слова</h3><p>Фіксуємо домовленості й завчасно повідомляємо про зміни, якщо вони виникають.</p></article>
           </div>

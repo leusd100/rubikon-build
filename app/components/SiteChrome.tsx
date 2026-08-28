@@ -39,7 +39,7 @@ export function MessengerLinks({ className }: { className: string }) {
 
 export function Brand() {
   return (
-    <span className="brand" aria-label={`${company.name} — Construction and Engineering`}>
+    <span className="brand" aria-label={`${company.name} — будівництво та інженерні рішення`}>
       <BrandMark className="brand-frame-mark" />
       <span className="brand-name">
         <b><span>RUBIKON</span> <em>BUILD</em></b>
@@ -131,7 +131,7 @@ export function SiteFooter() {
         <a className="brand-link" href={siteRoutes.home}>
           <Brand />
         </a>
-        <nav className="footer-nav" aria-label="Навігація у підвалі">
+        <nav className="footer-nav" aria-label="Навігація в нижній частині сайту">
           {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
         <div className="footer-contact-stack">
@@ -187,7 +187,7 @@ export function EstimateBrief() {
           className="page-heading"
           eyebrow="Для першої оцінки"
           title="Що потрібно для першої оцінки"
-          supporting="Не обов’язково мати готовий проєкт. Надішліть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку."
+          supporting="Не обов’язково мати готовий проєкт. Вкажіть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку."
         />
         <EstimateBriefCards />
         <a className="section-link" href={siteRoutes.contact}>Підготувати запит <span aria-hidden="true">↗</span></a>

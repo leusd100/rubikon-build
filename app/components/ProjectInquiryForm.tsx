@@ -56,8 +56,8 @@ export default function ProjectInquiryForm() {
       `Ім’я: ${value(formData, 'name')}`,
       `Телефон: ${value(formData, 'phone')}`,
       `Зручний спосіб зв’язку: ${value(formData, 'contactMethod')}`,
-      `Напрямок: ${value(formData, 'direction')}`,
-      value(formData, 'location') && `Місто / область: ${value(formData, 'location')}`,
+      `Напрям робіт: ${value(formData, 'direction')}`,
+      value(formData, 'location') && `Місто або область: ${value(formData, 'location')}`,
       value(formData, 'dimensions') && `Орієнтовні розміри: ${value(formData, 'dimensions')}`,
       value(formData, 'cooperation') && `Формат співпраці: ${value(formData, 'cooperation')}`,
       value(formData, 'startDate') && `Бажаний початок робіт: ${value(formData, 'startDate')}`,
@@ -84,8 +84,8 @@ export default function ProjectInquiryForm() {
       void copyText(companyPhoneInternational);
       const canStartPhoneCall = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       setStatus(canStartPhoneCall
-        ? 'Відкриваємо набір номера. Підтвердьте дзвінок у телефоні.'
-        : 'Браузер на ноутбуці не може самостійно здійснити дзвінок. Номер компанії скопійовано — зателефонуйте з телефону або скористайтеся месенджером.');
+        ? 'Відкриваємо номер у телефоні. Підтвердьте дзвінок.'
+        : 'Номер компанії скопійовано. Зателефонуйте з телефону або оберіть месенджер.');
       setStatusAction('phone');
       if (canStartPhoneCall) window.location.assign(`tel:${companyPhoneInternational}`);
       return;
@@ -93,7 +93,7 @@ export default function ProjectInquiryForm() {
 
     if (contactMethod === 'Telegram') {
       void copyText(message);
-      setStatus('Відкриваємо Telegram через захищене вебпосилання. Повний текст заявки скопійовано — вставте його в чат і підтвердьте надсилання.');
+      setStatus('Відкриваємо Telegram. Текст запиту скопійовано — вставте його в чат і підтвердьте надсилання.');
       setStatusAction('telegram');
       window.location.assign(`${companyContactLinks.telegram}?text=${encodedMessage}`);
       return;
@@ -104,17 +104,17 @@ export default function ProjectInquiryForm() {
         'Запит для RUBIKON BUILD',
         `${value(formData, 'name')}, ${value(formData, 'phone')}`,
         value(formData, 'direction'),
-        'Бажаний зв’язок: Viber',
+        'Зручний спосіб зв’язку: Viber',
       ].join('\n');
 
       void copyText(message);
-      setStatus('Відкриваємо офіційне вікно надсилання Viber із коротким запитом. Оберіть чат RUBIKON BUILD і підтвердьте надсилання. Повний текст заявки також скопійовано.');
+      setStatus('Відкриваємо Viber із коротким запитом. Оберіть чат RUBIKON BUILD і підтвердьте надсилання. Повний текст запиту скопійовано.');
       setStatusAction('viber');
       window.location.assign(`viber://forward?text=${encodeURIComponent(viberMessage)}`);
       return;
     }
 
-    setStatus('Запит підготовлено. Підтвердьте його надсилання у WhatsApp.');
+    setStatus('Відкриваємо WhatsApp із підготовленим запитом. Підтвердьте надсилання.');
       window.open(`${companyContactLinks.whatsapp}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
   }
 
@@ -122,7 +122,7 @@ export default function ProjectInquiryForm() {
     <form className="inquiry-form" onSubmit={handleSubmit}>
       <div className="inquiry-form-heading">
         <span>Коротка форма запиту</span>
-        <p>Поля зі знаком * обов’язкові</p>
+        <p>Поля, позначені *, обов’язкові</p>
       </div>
 
       <div className="inquiry-fields inquiry-fields-two">
@@ -144,12 +144,12 @@ export default function ProjectInquiryForm() {
             autoComplete="tel"
             required
           />
-          <small id="phone-hint" className="inquiry-field-hint">Додайте ще 9 цифр номера</small>
+          <small id="phone-hint" className="inquiry-field-hint">Після +380 введіть 9 цифр</small>
         </label>
       </div>
 
       <fieldset className="inquiry-choice">
-        <legend>Як зручно зв’язатися *</legend>
+        <legend>Як з вами зв’язатися *</legend>
         <div>
           {contactMethodOptions.map(([label, method]) => (
             <label key={method}>
@@ -172,9 +172,9 @@ export default function ProjectInquiryForm() {
       </fieldset>
 
       <label className="inquiry-select">
-        <span>Що плануєте *</span>
+        <span>Напрям робіт *</span>
         <select name="direction" defaultValue="" required>
-          <option value="" disabled>Оберіть напрямок</option>
+          <option value="" disabled>Оберіть напрям</option>
           {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
         </select>
       </label>
@@ -187,7 +187,7 @@ export default function ProjectInquiryForm() {
         <div className="inquiry-details-body">
           <div className="inquiry-fields inquiry-fields-two">
             <label>
-              <span>Місто / область</span>
+              <span>Місто або область</span>
               <input name="location" type="text" maxLength={100} autoComplete="address-level1" />
             </label>
             <label>
@@ -202,7 +202,7 @@ export default function ProjectInquiryForm() {
                 <option value="">Ще не визначено</option>
                 <option>Об’єкт під ключ</option>
                 <option>Окремий етап робіт</option>
-                <option>Підряд / субпідряд</option>
+                <option>Підряд або субпідряд</option>
               </select>
             </label>
             <label>
@@ -248,7 +248,7 @@ export default function ProjectInquiryForm() {
         {contactMethod === 'Дзвінок'
           ? 'Смартфон відкриє набір номера; на ноутбуці номер буде скопійовано'
           : contactMethod === 'Viber'
-            ? 'Відкриється Viber із коротким запитом, а повна заявка буде скопійована'
+            ? 'Відкриється Viber із коротким запитом, а повний текст буде скопійовано'
             : `Відкриється ${contactMethod} із готовим текстом — підтвердьте надсилання`}
       </p>
 
@@ -256,7 +256,7 @@ export default function ProjectInquiryForm() {
         {status}
         {statusAction === 'phone' && (
           <span className="inquiry-status-actions">
-            <a href={`tel:${companyPhoneInternational}`}><Phone aria-hidden="true" /> {companyPhoneInternational}</a>
+            <a href={`tel:${companyPhoneInternational}`}><Phone aria-hidden="true" /> {company.phone.display}</a>
             <button type="button" onClick={() => void copyText(companyPhoneInternational)}>
               <Copy aria-hidden="true" /> Скопіювати номер
             </button>
@@ -275,7 +275,7 @@ export default function ProjectInquiryForm() {
               <Send aria-hidden="true" /> Відкрити Telegram
             </a>
             <button type="button" onClick={() => void copyText(preparedMessage)}>
-              <Copy aria-hidden="true" /> Скопіювати заявку
+              <Copy aria-hidden="true" /> Скопіювати запит
             </button>
           </span>
         )}
