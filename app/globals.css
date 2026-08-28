@@ -422,8 +422,10 @@ section[id] { scroll-margin-top: 116px; }
 .subhero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: 1.25fr .55fr; align-items: end; gap: 100px; padding-top: 190px; padding-bottom: 90px; }
 .directions-subhero .subhero-layout { padding-bottom: clamp(180px, 24vh, 240px); }
 .about-hero-media { position: absolute; inset: 0; background: radial-gradient(circle at 72% 42%, rgba(182,83,44,.16), transparent 30%), linear-gradient(120deg, #1c201e, #111413 72%); }
-.about-hero-media > :is(img, video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; filter: saturate(.52) contrast(1.1) brightness(.82); }
-.about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.95), rgba(10,11,12,.74) 55%, rgba(10,11,12,.42)), linear-gradient(0deg, rgba(10,11,12,.64), transparent 60%); }
+.about-hero-media > :is(img, video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; filter: saturate(.62) contrast(1.08) brightness(.9); }
+.about-subhero .subhero-grid { opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
+.about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
+.about-subhero .subhero-side > p { color: rgba(255,255,255,.8); }
 .breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 48px; color: rgba(255,255,255,.47); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .breadcrumb span { display: inline-flex; gap: 8px; }
 .breadcrumb a { transition: color .2s ease; }
@@ -715,6 +717,8 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .hero-contact-desktop, .hero-messengers, .hero-contact-card > small { display: none; }
   .hero-contact-mobile { display: block; }
   .hero-signature { display: none; }
+  .about-hero-media > :is(img, video) { filter: saturate(.58) contrast(1.08) brightness(.84); }
+  .about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.86), rgba(10,11,12,.58)), linear-gradient(0deg, rgba(10,11,12,.78), transparent 66%); }
   .section-head, .section-head.section-head-balanced { grid-template-columns: 1fr; gap: 26px; margin-bottom: 42px; }
   .section-head > p:last-child { grid-column: auto; }
   .section-head-balanced > p:last-child { max-width: 560px; padding-bottom: 0; font-size: 16px; }
