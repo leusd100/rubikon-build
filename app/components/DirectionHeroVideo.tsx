@@ -22,7 +22,9 @@ export function DirectionHeroVideo({
   playbackRate = 1,
 }: DirectionHeroVideoProps) {
   const [activeSource, setActiveSource] = useState(0);
+  const [outgoingSource, setOutgoingSource] = useState<number | null>(null);
   const [readySources, setReadySources] = useState<Record<number, boolean>>({});
+  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const [canUseVideo, setCanUseVideo] = useState(false);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const observationRef = useRef<HTMLVideoElement>(null);
@@ -80,15 +82,20 @@ export function DirectionHeroVideo({
       const nextVideo = videoRefs.current[nextIndex];
 
       if (!nextVideo) return;
+      if (nextVideo.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return;
 
       nextVideo.currentTime = 0;
-      void nextVideo.play().catch(() => undefined);
-      activeSourceRef.current = nextIndex;
-      setActiveSource(nextIndex);
+      void nextVideo.play().then(() => {
+        setReadySources((current) => ({ ...current, [nextIndex]: true }));
+        setOutgoingSource(previousIndex);
+        activeSourceRef.current = nextIndex;
+        setActiveSource(nextIndex);
 
-      pauseTimer = setTimeout(() => {
-        videoRefs.current[previousIndex]?.pause();
-      }, FADE_DURATION_MS);
+        pauseTimer = setTimeout(() => {
+          videoRefs.current[previousIndex]?.pause();
+          setOutgoingSource((current) => current === previousIndex ? null : current);
+        }, FADE_DURATION_MS);
+      }).catch(() => undefined);
     }, clipDurationMs);
 
     document.addEventListener('visibilitychange', playActiveVideo);
@@ -107,7 +114,7 @@ export function DirectionHeroVideo({
   return (
     <>
       <Image
-        className="direction-hero-poster"
+        className={`direction-hero-poster${hasStartedPlayback ? ' is-hidden' : ''}`}
         src={poster}
         alt=""
         fill
@@ -126,7 +133,7 @@ export function DirectionHeroVideo({
           className={[
             className,
             'direction-hero-video',
-            index === activeSource && readySources[index] ? 'is-active' : '',
+            (index === activeSource || index === outgoingSource) && readySources[index] ? 'is-active' : '',
           ].filter(Boolean).join(' ')}
           src={shouldAttachVideo ? source : undefined}
           autoPlay={shouldAttachVideo && index === 0}
@@ -137,6 +144,9 @@ export function DirectionHeroVideo({
           onCanPlay={(event) => {
             event.currentTarget.playbackRate = playbackRate;
             setReadySources((current) => ({ ...current, [index]: true }));
+          }}
+          onPlaying={() => {
+            if (index === activeSourceRef.current) setHasStartedPlayback(true);
           }}
           aria-hidden="true"
         />
