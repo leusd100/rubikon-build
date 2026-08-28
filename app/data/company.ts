@@ -3,7 +3,7 @@ export const company = {
   alternateNames: ['Rubikon Build', 'rubikonbuild', 'Рубікон Білд'],
   siteUrl: 'https://rubikonbuild.com',
   description:
-    'Родинна будівельна компанія: промислові споруди під ключ та окремі роботи у форматі підряду й субпідряду.',
+    'Родинна будівельна компанія: комплексна реалізація промислових споруд та окремі роботи у форматі підряду й субпідряду.',
   serviceAreas: ['Дніпропетровська область', 'Україна'],
   founders: ['Леус Сергій Іванович', 'Леус Дмитро Сергійович'],
   phone: {
@@ -16,7 +16,7 @@ export const company = {
 
 export const companyContactLinks = {
   phone: `tel:${company.phone.international}`,
-  telegram: `tg://resolve?phone=${company.phone.digits}`,
+  telegram: `https://t.me/+${company.phone.digits}`,
   whatsapp: `https://wa.me/${company.phone.digits}`,
   viber: `viber://chat?number=${company.phone.encodedInternational}`,
 } as const;

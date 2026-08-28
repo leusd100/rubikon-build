@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { MessagesSquare, Phone } from 'lucide-react';
 import { DirectionImageCards, DirectionServiceCards } from './components/DirectionCards';
-import { EstimateBrief, MessengerLinks, TeamSection } from './components/SiteChrome';
+import { EstimateBrief, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
 import { DirectionHeroVideo } from './components/DirectionHeroVideo';
 import { ProjectProcessSteps } from './components/ProcessCards';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
@@ -16,6 +16,7 @@ export default function Home() {
           <DirectionHeroVideo
             sources={['/media/hero-steel-frame.mp4']}
             poster="/media/hero-steel-frame.jpg"
+            playbackRate={0.85}
           />
         </div>
         <div className="hero-shade" aria-hidden="true" />
@@ -39,12 +40,14 @@ export default function Home() {
             </div>
           </div>
           <div className="hero-contact-card">
-            <p>Є будівельна задача?</p>
-            <a href={companyContactLinks.phone}>
-              <span>Зателефонувати</span>
+            <p>Зручний зв’язок</p>
+            <a className="hero-contact-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати за номером ${company.phone.display}`}>
+              <span className="hero-contact-desktop"><small>Телефон</small><strong>{company.phone.display}</strong></span>
+              <span className="hero-contact-mobile">Зателефонувати</span>
               <b aria-hidden="true">↗</b>
             </a>
-            <small>Відкриється набір номера</small>
+            <MessengerLinks className="hero-messengers" />
+            <small>Телефон · Telegram · WhatsApp · Viber</small>
           </div>
         </div>
         <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>
@@ -53,16 +56,11 @@ export default function Home() {
       <section className="services section" id="services">
         <span className="ghost-word" aria-hidden="true">STEEL</span>
         <div className="shell">
-          <div className="section-head section-head-balanced">
-            <div className="section-heading-copy">
-              <p className="eyebrow"><span /> Ключові напрямки</p>
-              <h2>Що можемо<br />взяти на себе</h2>
-            </div>
-            <p>
-              Можемо відповідати за весь об’єкт або виконати визначений етап робіт у межах
-              більшого будівельного проєкту.
-            </p>
-          </div>
+          <SectionHeader
+            eyebrow="Ключові напрямки"
+            title="Що можемо взяти на себе"
+            supporting="Можемо відповідати за весь об’єкт або виконати визначений етап робіт у межах більшого будівельного проєкту."
+          />
           <DirectionServiceCards />
           <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
         </div>
@@ -70,20 +68,13 @@ export default function Home() {
 
       <section className="directions section" id="directions">
         <div className="shell">
-          <div className="directions-head">
-            <div>
-              <p className="eyebrow light"><span /> Сфери компетенції</p>
-              <h2>Каркаси та споруди для бізнесу й агросектору</h2>
-            </div>
-            <p>
-              Від окремого металевого вузла до готової промислової споруди — підбираємо
-              формат участі під задачу, документацію та межі відповідальності.
-            </p>
-          </div>
+          <SectionHeader
+            eyebrow="Сфери компетенції"
+            title="Каркаси та споруди для бізнесу й агросектору"
+            supporting="Від окремого металевого вузла до готової промислової споруди — підбираємо формат участі відповідно до завдання, документації та меж відповідальності."
+            inverse
+          />
           <DirectionImageCards />
-          <p className="media-note">
-            Візуальні матеріали ілюструють напрямки робіт. Портфоліо реалізованих об’єктів готується.
-          </p>
         </div>
       </section>
 
@@ -104,13 +95,13 @@ export default function Home() {
               <p className="eyebrow light"><span /> Наша основа</p>
               <h2>За кожен об’єкт відповідаємо власним ім’ям</h2>
               <p className="promise-lead">
-                RUBIKON BUILD об’єднує понад 30 років практичного досвіду Сергія Івановича
-                та сучасну інженерну освіту Дмитра Сергійовича. Ми особисто контролюємо ключові
-                етапи й відповідаємо за результат власним ім’ям.
+                RUBIKON BUILD — родинна компанія, у якій поєднуються понад 30 років практичного
+                досвіду Сергія Івановича та сучасний підхід до розвитку бізнесу й роботи з клієнтами.
+                Ми разом приймаємо ключові рішення і особисто відповідаємо за результат.
               </p>
               <p className="story-support">
-                Практика будівельного майданчика допомагає бачити реальні ризики, а інженерний
-                підхід — заздалегідь перетворювати їх на зрозумілі технічні рішення.
+                Для нас репутація — не рекламна теза. Вона формується на кожному об’єкті:
+                якістю роботи, виконаними домовленостями та ставленням до замовника.
               </p>
               <a className="section-link" href={siteRoutes.about}>Більше про компанію <span aria-hidden="true">↗</span></a>
             </div>
@@ -144,15 +135,13 @@ export default function Home() {
 
       <TeamSection />
 
-      <section className="process section" id="process">
+      <section className="process section" id="how-we-work">
         <div className="shell">
-          <div className="section-head section-head-balanced">
-            <div className="section-heading-copy">
-              <p className="eyebrow"><span /> Як ми працюємо</p>
-              <h2>Від узгодження задачі<br />до приймання робіт</h2>
-            </div>
-            <p>Для об’єкта під ключ формуємо повний маршрут. Для окремого етапу чітко фіксуємо межі відповідальності, вимоги на вході та результат на виході.</p>
-          </div>
+          <SectionHeader
+            eyebrow="Як ми працюємо"
+            title="Від узгодження завдання до приймання робіт"
+            supporting="Для об’єкта під ключ формуємо повний маршрут. Для окремого етапу чітко фіксуємо межі відповідальності, вимоги на вході та результат на виході."
+          />
           <ProjectProcessSteps />
         </div>
       </section>
@@ -163,7 +152,7 @@ export default function Home() {
         <div className="shell contact-grid">
           <div className="contact-intro">
             <p className="eyebrow light"><span /> Почнемо з розмови</p>
-            <h2>Розкажіть коротко<br />про задачу</h2>
+            <h2>Розкажіть коротко<br />про завдання</h2>
             <p>
               Залиште контакт і кілька вихідних даних. Ми ознайомимося із запитом,
               зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.

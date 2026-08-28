@@ -17,7 +17,7 @@ export const messengerContacts = {
     shortName: 'TG',
   },
   whatsapp: {
-    label: 'Написати у WhatsApp',
+    label: 'Написати в WhatsApp',
     href: companyContactLinks.whatsapp,
     icon: '/brands/whatsapp.svg',
     shortName: 'WA',

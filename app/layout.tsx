@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans_Condensed, Jost, Manrope } from 'next/font/google';
 import './globals.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
@@ -61,6 +61,11 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-static';
+
+export const viewport: Viewport = {
+  themeColor: '#141416',
+  colorScheme: 'light dark',
+};
 
 const organizationData = {
   '@context': 'https://schema.org',

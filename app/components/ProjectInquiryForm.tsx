@@ -8,8 +8,13 @@ import { company, companyContactLinks } from '../data/company';
 import { contactMethodOptions, messengerContacts, type ContactMethod } from '../data/contactMethods';
 import { siteRoutes } from '../data/navigation';
 
-const companyPhone = company.phone.digits;
 const companyPhoneInternational = company.phone.international;
+const submitLabels: Record<ContactMethod, string> = {
+  Дзвінок: 'Зателефонувати',
+  Telegram: 'Написати в Telegram',
+  WhatsApp: 'Написати в WhatsApp',
+  Viber: 'Написати у Viber',
+};
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || '').trim();
@@ -32,6 +37,7 @@ export default function ProjectInquiryForm() {
   const [status, setStatus] = useState('');
   const [statusAction, setStatusAction] = useState<'phone' | 'telegram' | 'viber' | null>(null);
   const [preparedMessage, setPreparedMessage] = useState('');
+  const [consentError, setConsentError] = useState(false);
 
   function copyText(text: string) {
     return navigator.clipboard?.writeText(text).catch(() => undefined);
@@ -39,12 +45,13 @@ export default function ProjectInquiryForm() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setConsentError(false);
     const formData = new FormData(event.currentTarget);
 
     if (value(formData, 'companyWebsite')) return;
 
     const details = [
-      'Вітаю! Хочу обговорити будівельну задачу з RUBIKON BUILD.',
+      'Вітаю! Хочу обговорити будівельне завдання з RUBIKON BUILD.',
       '',
       `Ім’я: ${value(formData, 'name')}`,
       `Телефон: ${value(formData, 'phone')}`,
@@ -86,9 +93,9 @@ export default function ProjectInquiryForm() {
 
     if (contactMethod === 'Telegram') {
       void copyText(message);
-      setStatus('Відкриваємо Telegram. Повний текст заявки скопійовано — вставте його в чат і підтвердьте надсилання.');
+      setStatus('Відкриваємо Telegram через захищене вебпосилання. Повний текст заявки скопійовано — вставте його в чат і підтвердьте надсилання.');
       setStatusAction('telegram');
-      window.location.assign(`tg://resolve?phone=${companyPhone}&text=${encodedMessage}`);
+      window.location.assign(`${companyContactLinks.telegram}?text=${encodedMessage}`);
       return;
     }
 
@@ -150,6 +157,7 @@ export default function ProjectInquiryForm() {
                 type="radio"
                 name="contactMethod"
                 value={method}
+                required
                 checked={contactMethod === method}
                 onChange={() => {
                   setContactMethod(method);
@@ -204,17 +212,27 @@ export default function ProjectInquiryForm() {
           </div>
           <label>
             <span>Коментар</span>
-            <textarea name="comment" rows={4} maxLength={800} placeholder="Що ще важливо знати про задачу" />
+            <textarea name="comment" rows={4} maxLength={800} placeholder="Що ще важливо знати про завдання" />
           </label>
         </div>
       </details>
 
-      <label className="inquiry-consent">
-        <input type="checkbox" required />
+      <label className={`inquiry-consent${consentError ? ' is-invalid' : ''}`}>
+        <input
+          name="privacyConsent"
+          type="checkbox"
+          value="accepted"
+          required
+          aria-invalid={consentError}
+          aria-describedby={consentError ? 'privacy-consent-error' : undefined}
+          onInvalid={() => setConsentError(true)}
+          onChange={() => setConsentError(false)}
+        />
         <span>
-          Погоджуюся на обробку даних для відповіді на запит відповідно до{' '}
-          <a href={siteRoutes.privacy}>політики конфіденційності</a>
+          Погоджуюся на обробку персональних даних для опрацювання мого запиту відповідно до{' '}
+          <a href={siteRoutes.privacy}>Політики конфіденційності</a>.
         </span>
+        {consentError && <small id="privacy-consent-error">Підтвердьте згоду на обробку персональних даних.</small>}
       </label>
 
       <label className="form-trap" aria-hidden="true">
@@ -223,11 +241,7 @@ export default function ProjectInquiryForm() {
       </label>
 
       <button className="button button-primary inquiry-submit" type="submit">
-        {contactMethod === 'Дзвінок'
-          ? 'Підготувати дзвінок'
-          : contactMethod === 'Viber'
-            ? 'Відкрити Viber'
-            : `Надіслати у ${contactMethod}`}{' '}
+        {submitLabels[contactMethod]}{' '}
         {contactMethod === 'Дзвінок' ? <Phone aria-hidden="true" /> : <Send aria-hidden="true" />}
       </button>
       <p className="inquiry-submit-note">
@@ -257,7 +271,7 @@ export default function ProjectInquiryForm() {
         )}
         {statusAction === 'telegram' && (
           <span className="inquiry-status-actions">
-            <a href={`tg://resolve?phone=${companyPhone}`} data-contact-method="telegram">
+            <a href={companyContactLinks.telegram} data-contact-method="telegram" target="_blank" rel="noreferrer">
               <Send aria-hidden="true" /> Відкрити Telegram
             </a>
             <button type="button" onClick={() => void copyText(preparedMessage)}>

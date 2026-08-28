@@ -1,7 +1,7 @@
 export const siteRoutes = {
   home: '/',
   directions: '/napryamky',
-  process: '/#process',
+  process: '/#how-we-work',
   about: '/pro-nas',
   contact: '/#contact',
   privacy: '/polityka-konfidentsiinosti',

@@ -1,4 +1,4 @@
-import { Breadcrumbs, PageCta } from '../components/SiteChrome';
+import { Breadcrumbs, PageCta, SectionHeader } from '../components/SiteChrome';
 import { DirectionRouteList } from '../components/DirectionCards';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
@@ -20,15 +20,16 @@ export default function DirectionsPage() {
   const faqItems: DirectionFaqItem[] = [
     ['Де ви працюєте?', 'Основний регіон — Дніпро та Дніпропетровська область. Цікаві масштабні об’єкти розглядаємо по всій Україні.'],
     ['Під ключ чи окремий етап?', 'Працюємо в обох форматах: ведемо погоджений комплекс робіт або долучаємося як підрядник чи субпідрядник до конкретного етапу.'],
-    ['З чого починається робота?', 'Із короткого опису задачі, вивчення вихідних даних та, за потреби, виїзду на майданчик.'],
+    ['З чого починається робота?', 'Із короткого опису завдання, вивчення вихідних даних та, за потреби, виїзду на майданчик.'],
   ];
 
   return (
     <main className="inner-page" id="main-content">
-      <section className="subhero subhero-media">
+      <section className="subhero subhero-media directions-subhero">
         <DirectionHeroVideo
           sources={['/media/directions/directions-montage.mp4']}
           poster="/media/hero-steel-frame.jpg"
+          playbackRate={0.85}
         />
         <div className="subhero-overlay" />
         <div className="subhero-grid" aria-hidden="true" />
@@ -40,20 +41,18 @@ export default function DirectionsPage() {
           </div>
           <div className="subhero-side">
             <p>Беремо об’єкти під ключ або виконуємо визначений етап як підрядник чи субпідрядник. Межі відповідальності узгоджуємо до початку робіт.</p>
-            <p className="stock-video-note">Відеоматеріали ілюструють напрямки робіт. Власне портфоліо буде додано окремим розділом.</p>
           </div>
         </div>
       </section>
 
       <section className="page-section">
         <div className="shell">
-          <div className="page-heading split-heading">
-            <div>
-              <p className="eyebrow"><span /> Що ми робимо</p>
-              <h2>П’ять напрямків. Один відповідальний підхід</h2>
-            </div>
-            <p>Точний перелік робіт визначаємо після знайомства з об’єктом. Можемо сформувати весь цикл або долучитися лише там, де потрібна наша компетенція.</p>
-          </div>
+          <SectionHeader
+            className="page-heading"
+            eyebrow="Що ми робимо"
+            title="П’ять напрямків. Один відповідальний підхід"
+            supporting="Точний перелік робіт визначаємо після знайомства з об’єктом. Можемо сформувати весь цикл або долучитися лише там, де потрібна наша компетенція."
+          />
           <DirectionRouteList />
         </div>
       </section>

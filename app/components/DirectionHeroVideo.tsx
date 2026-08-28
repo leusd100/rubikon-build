@@ -9,6 +9,7 @@ type DirectionHeroVideoProps = {
   poster: string;
   className?: string;
   clipDurationMs?: number;
+  playbackRate?: number;
 };
 
 const FADE_DURATION_MS = 1100;
@@ -18,9 +19,11 @@ export function DirectionHeroVideo({
   poster,
   className,
   clipDurationMs = 6000,
+  playbackRate = 1,
 }: DirectionHeroVideoProps) {
   const [activeSource, setActiveSource] = useState(0);
   const [readySources, setReadySources] = useState<Record<number, boolean>>({});
+  const [canUseVideo, setCanUseVideo] = useState(false);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const observationRef = useRef<HTMLVideoElement>(null);
   const activeSourceRef = useRef(0);
@@ -29,12 +32,24 @@ export function DirectionHeroVideo({
     fallbackDelayMs: 450,
     observeKey: sourceKey,
   });
-  const shouldAttachVideo = shouldLoadMedia && isVisible;
+  const shouldAttachVideo = shouldLoadMedia && isVisible && canUseVideo;
+
+  useEffect(() => {
+    const desktopMedia = window.matchMedia('(min-width: 761px)');
+    const updateVideoPreference = () => setCanUseVideo(desktopMedia.matches);
+
+    updateVideoPreference();
+    desktopMedia.addEventListener('change', updateVideoPreference);
+    return () => desktopMedia.removeEventListener('change', updateVideoPreference);
+  }, []);
 
   useEffect(() => {
     activeSourceRef.current = 0;
 
     const firstVideo = videoRefs.current[0];
+    videoRefs.current.forEach((video) => {
+      if (video) video.playbackRate = playbackRate;
+    });
     const shouldPlay = shouldAttachVideo;
     if (!shouldPlay) {
       videoRefs.current.forEach((video) => video?.pause());
@@ -83,7 +98,7 @@ export function DirectionHeroVideo({
       if (pauseTimer) clearTimeout(pauseTimer);
       document.removeEventListener('visibilitychange', playActiveVideo);
     };
-  }, [clipDurationMs, isVisible, shouldAttachVideo, sourceKey, sources.length]);
+  }, [clipDurationMs, isVisible, playbackRate, shouldAttachVideo, sourceKey, sources.length]);
 
   if (!sources.length) return null;
 
@@ -116,7 +131,10 @@ export function DirectionHeroVideo({
           playsInline
           preload={shouldAttachVideo && index === activeSource ? 'auto' : 'none'}
           loop={sources.length === 1}
-          onCanPlay={() => setReadySources((current) => ({ ...current, [index]: true }))}
+          onCanPlay={(event) => {
+            event.currentTarget.playbackRate = playbackRate;
+            setReadySources((current) => ({ ...current, [index]: true }));
+          }}
           aria-hidden="true"
         />
       ))}

@@ -35,6 +35,8 @@ function loadAnalytics() {
     document.head.appendChild(script);
   }
 
+  if (document.documentElement.dataset.rubikonAnalyticsConfigured === measurementId) return;
+  document.documentElement.dataset.rubikonAnalyticsConfigured = measurementId;
   window.gtag('js', new Date());
   window.gtag('config', measurementId, { anonymize_ip: true });
 }

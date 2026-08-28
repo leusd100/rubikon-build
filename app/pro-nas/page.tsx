@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Breadcrumbs, PageCta, TeamSection } from '../components/SiteChrome';
+import { Breadcrumbs, PageCta, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
@@ -7,9 +7,9 @@ import { company } from '../data/company';
 export const metadata = createPageMetadata({
   path: '/pro-nas',
   title: brandedTitle('Про родинну компанію'),
-  description: `${company.name} — родинна будівельна компанія з Дніпра. Понад 30 років практичного досвіду та інженерний підхід нового покоління.`,
+  description: `${company.name} — родинна будівельна компанія з Дніпра. Понад 30 років практичного досвіду, особиста відповідальність і сучасний підхід до роботи з клієнтами.`,
   socialTitle: `Про ${company.name} — досвід двох поколінь`,
-  socialDescription: 'Родинна відповідальність, 30+ років практики та сучасний інженерний підхід.',
+  socialDescription: 'Родинна відповідальність, понад 30 років практики та сучасний підхід до розвитку компанії.',
   image: '/media/about-industrial-concept.jpg',
   imageAlt: `${company.name} — від інженерної концепції до промислової споруди`,
 });
@@ -17,7 +17,9 @@ export const metadata = createPageMetadata({
 export default function AboutPage() {
   return (
     <main className="inner-page" id="main-content">
-      <section className="subhero">
+      <section className="subhero about-subhero">
+        <div className="about-hero-media" aria-hidden="true" />
+        <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
           <div>
@@ -26,7 +28,7 @@ export default function AboutPage() {
             <h1>Репутація,<br />за якою стоять<br /><em>наші імена</em></h1>
           </div>
           <div className="subhero-side">
-            <p>RUBIKON BUILD об’єднує досвід батька, інженерну освіту сина та спільну відповідальність за кожне рішення на об’єкті.</p>
+            <p>RUBIKON BUILD — родинна компанія, у якій поєднуються понад 30 років практичного досвіду Сергія Івановича та сучасний підхід до розвитку бізнесу й роботи з клієнтами.</p>
             <div className="subhero-stats">
               <div><strong>30+</strong><span>років практики</span></div>
               <div><strong>02</strong><span>покоління</span></div>
@@ -49,19 +51,19 @@ export default function AboutPage() {
               <span className="image-note">Від практичного досвіду — до технічного рішення</span>
             </div>
             <div className="promise-copy about-story-copy">
-              <p className="eyebrow light"><span /> Як усе почалося</p>
-              <h2>Досвід, який став основою спільної компанії</h2>
-              <p className="promise-lead">Леус Сергій Іванович працює у будівельному напрямку понад 30 років. За цей час сформувався головний принцип: якість видно не лише після здачі, а в кожному прихованому вузлі.</p>
-              <p className="story-support">Леус Дмитро Сергійович здобув освіту за напрямом цивільного та промислового будівництва. Ідея RUBIKON BUILD — поєднати практику майданчика з проєктним мисленням і розвитком сучасної будівельної компанії.</p>
+              <p className="eyebrow light"><span /> Практична основа</p>
+              <h2>Досвід, який став основою родинної компанії</h2>
+              <p className="promise-lead">Понад 30 років у будівництві дали Сергію Івановичу практичний досвід організації робіт, управління командами та контролю якості безпосередньо на об’єктах.</p>
+              <p className="story-support">Цей досвід допомагає бачити ризики до початку робіт, перевіряти відповідальні вузли та приймати рішення з урахуванням реальних умов майданчика.</p>
             </div>
           </article>
 
           <article className="story-row story-row-reverse">
             <div className="promise-copy about-story-copy">
               <p className="eyebrow light"><span /> Спільний підхід</p>
-              <h2>Два покоління — одна відповідальність за результат</h2>
-              <p className="promise-lead">Практичний досвід допомагає бачити ризики ще до початку робіт, а інженерний підхід — перетворювати їх на зрозумілі технічні й організаційні рішення.</p>
-              <p className="story-support">Ключові рішення приймаємо особисто. Під конкретний об’єкт формуємо необхідний склад фахівців, контролюємо відповідальні етапи та відповідаємо за домовленості власним ім’ям.</p>
+              <h2>Ключові рішення приймаємо разом</h2>
+              <p className="promise-lead">Ми разом приймаємо ключові рішення, формуємо необхідний склад фахівців і особисто відповідаємо за результат.</p>
+              <p className="story-support">Для нас репутація — не рекламна теза. Вона формується на кожному об’єкті: якістю роботи, виконаними домовленостями та ставленням до замовника.</p>
             </div>
             <div className="promise-visual about-control-visual">
               <Image
@@ -79,13 +81,13 @@ export default function AboutPage() {
 
       <section className="page-section page-section-dark">
         <div className="shell">
-          <div className="page-heading split-heading">
-            <div>
-              <p className="eyebrow light"><span /> Наші принципи</p>
-              <h2>Спокійна впевненість замість гучних обіцянок</h2>
-            </div>
-            <p>Строки, бюджет і технічні рішення залежать від конкретного об’єкта. Тому спочатку вивчаємо задачу, а потім фіксуємо реалістичні домовленості.</p>
-          </div>
+          <SectionHeader
+            className="page-heading"
+            eyebrow="Наші принципи"
+            title="Спокійна впевненість замість гучних обіцянок"
+            supporting="Строки, бюджет і технічні рішення залежать від конкретного об’єкта. Тому спочатку вивчаємо завдання, а потім фіксуємо реалістичні домовленості."
+            inverse
+          />
           <div className="detail-grid values-grid">
             <article className="detail-card"><span>01</span><h3>Чесна оцінка</h3><p>Відкрито говоримо про обсяг робіт, ризики та межі відповідальності.</p></article>
             <article className="detail-card"><span>02</span><h3>Якість вузлів</h3><p>Контролюємо те, що впливає на міцність, довговічність і безпечну експлуатацію.</p></article>
@@ -96,7 +98,7 @@ export default function AboutPage() {
       </section>
 
       <TeamSection compact />
-      <PageCta title="Розкажіть, що потрібно побудувати" text="Почнемо з короткої розмови про задачу, майданчик і бажані строки. Підкажемо, які вихідні дані потрібні для наступного кроку." />
+      <PageCta title="Розкажіть, що потрібно побудувати" text="Почнемо з короткої розмови про завдання, майданчик і бажані строки. Підкажемо, які вихідні дані потрібні для наступного кроку." />
     </main>
   );
 }

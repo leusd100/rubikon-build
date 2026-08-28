@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Phone } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import MobileMenu from './MobileMenu';
 import { EstimateBriefCards } from './ProcessCards';
@@ -48,6 +49,38 @@ export function Brand() {
   );
 }
 
+export function SectionHeader({
+  eyebrow,
+  title,
+  supporting,
+  inverse = false,
+  className = '',
+}: {
+  eyebrow: string;
+  title: ReactNode;
+  supporting: ReactNode;
+  inverse?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`section-header${inverse ? ' section-header-inverse' : ''}${className ? ` ${className}` : ''}`}>
+      <div className="section-header-copy">
+        <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {eyebrow}</p>
+        <h2>{title}</h2>
+      </div>
+      <p className="section-header-support">{supporting}</p>
+    </div>
+  );
+}
+
+export function SectionDivider({
+  variant = 'neutral',
+}: {
+  variant?: 'accent' | 'neutral' | 'dark' | 'inverse';
+}) {
+  return <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />;
+}
+
 export function SiteHeader() {
   return (
     <header className="site-header">
@@ -85,6 +118,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer>
+      <SectionDivider variant="accent" />
       <div className="shell footer-grid">
         <a className="brand-link" href={siteRoutes.home} aria-label={`${company.name} — на головну`}>
           <Brand />
@@ -141,13 +175,12 @@ export function EstimateBrief() {
   return (
     <section className="estimate-brief section" id="estimate-brief">
       <div className="shell">
-        <div className="page-heading split-heading">
-          <div>
-            <p className="eyebrow"><span /> Для першої оцінки</p>
-            <h2>Чотири речі, з яких починається предметна розмова</h2>
-          </div>
-          <p>Не обов’язково мати готовий проєкт. Надішліть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку.</p>
-        </div>
+        <SectionHeader
+          className="page-heading"
+          eyebrow="Для першої оцінки"
+          title="Що потрібно для першої оцінки"
+          supporting="Не обов’язково мати готовий проєкт. Надішліть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку."
+        />
         <EstimateBriefCards />
         <a className="section-link" href={siteRoutes.contact}>Підготувати запит <span aria-hidden="true">↗</span></a>
       </div>
@@ -159,36 +192,31 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
   return (
     <section className={`team section${compact ? ' team-compact' : ''}`}>
       <div className="shell">
-        <div className="section-head section-head-balanced team-heading">
-          <div className="section-heading-copy">
-            <p className="eyebrow"><span /> Родина в основі компанії</p>
-            <h2 className="team-heading-title"><span>Два покоління</span><em>Одна справа</em></h2>
-          </div>
-          <p>
-            Два покоління об’єднали понад 30 років практичного досвіду та сучасний
-            інженерний підхід. Родинна відповідальність для нас — це особисте слово
-            за якість, надійність і результат кожного проєкту.
-          </p>
-        </div>
-        <div className="team-grid">
-          <article className="person-card">
+        <SectionHeader
+          className="team-heading"
+          eyebrow="Родина в основі компанії"
+          title="Родинна компанія. Досвід двох поколінь."
+          supporting="Поєднуємо понад 30 років практичного досвіду з сучасним підходом до розвитку компанії, комунікації та організації роботи."
+        />
+        <div className="team-stories">
+          <article className="person-story">
             <div className="person-photo">
-              <Image src="/images/founder.webp" alt={`${company.founders[0]} — засновник будівельного напрямку ${company.name}`} fill sizes="(max-width: 700px) 100vw, 40vw" />
+              <Image src="/images/founder.webp" alt={`${company.founders[0]} — засновник і керівник будівельного напряму ${company.name}`} fill sizes="(max-width: 760px) 100vw, 47vw" />
             </div>
             <div className="person-info">
-              <span>Засновник / керівник будівельного напрямку</span>
-              <h3>Леус Сергій<br />Іванович</h3>
-              <p>Понад 30 років практичного досвіду, організація робіт і особистий контроль якості на майданчику.</p>
+              <span>ЗАСНОВНИК / КЕРІВНИК БУДІВЕЛЬНОГО НАПРЯМУ</span>
+              <h3>Леус Сергій Іванович</h3>
+              <p>Понад 30 років у будівництві. Практичний досвід організації робіт, управління командами та контролю якості безпосередньо на об’єктах.</p>
             </div>
           </article>
-          <article className="person-card">
-            <div className="person-photo">
-              <Image src="/images/next-generation.webp" alt={`${company.founders[1]} — інженер ${company.name}`} fill sizes="(max-width: 700px) 100vw, 40vw" />
-            </div>
+          <article className="person-story person-story-reverse">
             <div className="person-info">
-              <span>Інженер / розвиток компанії</span>
-              <h3>Леус Дмитро<br />Сергійович</h3>
-              <p>Фахова освіта у сфері цивільного та промислового будівництва, сучасна комунікація й системний підхід.</p>
+              <span>РОЗВИТОК КОМПАНІЇ / РОБОТА З КЛІЄНТАМИ</span>
+              <h3>Леус Дмитро Сергійович</h3>
+              <p>Розвиток Rubikon Build, комунікація з клієнтами, цифрові процеси та системний підхід до організації роботи компанії.</p>
+            </div>
+            <div className="person-photo">
+              <Image src="/images/next-generation.webp" alt={`${company.founders[1]} — розвиток компанії та робота з клієнтами ${company.name}`} fill sizes="(max-width: 760px) 100vw, 47vw" />
             </div>
           </article>
         </div>
@@ -199,7 +227,7 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
 
 export function PageCta({
   eyebrow = 'Почнемо з розмови',
-  title = 'Маєте будівельну задачу? Обговорімо її',
+  title = 'Маєте будівельне завдання? Обговорімо його',
   text = 'Опишіть об’єкт або окремий етап робіт, орієнтовні розміри та бажані строки. Ми уточнимо вихідні дані й запропонуємо наступний крок.',
 }: {
   eyebrow?: string;

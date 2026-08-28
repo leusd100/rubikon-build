@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
@@ -13,7 +15,7 @@ const contentSecurityPolicy = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'self'",
-  'upgrade-insecure-requests',
+  ...(!isDevelopment ? ['upgrade-insecure-requests'] : []),
 ].join('; ');
 
 const responseHeaders = {

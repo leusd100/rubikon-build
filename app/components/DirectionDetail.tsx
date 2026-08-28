@@ -1,4 +1,4 @@
-import { Breadcrumbs, PageCta } from './SiteChrome';
+import { Breadcrumbs, PageCta, SectionHeader } from './SiteChrome';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
@@ -101,10 +101,7 @@ export function DirectionProcess({
   return (
     <section className="page-section page-section-dark">
       <div className="shell">
-        <div className="page-heading split-heading">
-          <div><p className="eyebrow light"><span /> {eyebrow}</p><h2>{title}</h2></div>
-          <p>{text}</p>
-        </div>
+        <SectionHeader className="page-heading" eyebrow={eyebrow} title={title} supporting={text} inverse />
         <ol className="detail-steps">
           {steps.map(([stepNumber, stepTitle, stepText, Icon]) => (
             <li key={stepNumber}><span>{stepNumber}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{stepTitle}</h3><p>{stepText}</p></li>
@@ -127,10 +124,7 @@ export function DirectionCostSection({
   return (
     <section className="page-section cost-section">
       <div className="shell">
-        <div className="page-heading split-heading">
-          <div><p className="eyebrow"><span /> Формування кошторису</p><h2>{title}</h2></div>
-          <p>{text}</p>
-        </div>
+        <SectionHeader className="page-heading" eyebrow="Формування кошторису" title={title} supporting={text} />
         <DirectionItemCards className="cost-grid" items={items} />
       </div>
     </section>
@@ -180,10 +174,12 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
       <section className="page-section">
         {config.overview.layout === 'use-cases' ? (
           <>
-            <div className="shell page-heading split-heading">
-              <div><p className="eyebrow"><span /> {config.overview.eyebrow}</p><h2>{config.overview.title}</h2></div>
-              {config.overview.text && <p>{config.overview.text}</p>}
-            </div>
+            <SectionHeader
+              className="shell page-heading"
+              eyebrow={config.overview.eyebrow}
+              title={config.overview.title}
+              supporting={config.overview.text || ''}
+            />
             <DirectionItemCards className="shell use-case-grid" items={config.overview.items} />
           </>
         ) : (
