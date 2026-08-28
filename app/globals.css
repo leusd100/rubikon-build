@@ -327,7 +327,9 @@ section[id] { scroll-margin-top: 116px; }
 .person-info::before { content: ''; position: absolute; top: clamp(34px, 4vw, 58px); left: clamp(44px, 6vw, 88px); width: 74px; height: 2px; background: var(--accent); }
 .person-info > span { max-width: 440px; color: var(--accent-dark); font-size: 12px; font-weight: 800; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; }
 .person-info h3 { max-width: 620px; margin: 20px 0 24px; font: 600 clamp(34px, 3.25vw, 48px)/1.06 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.person-info p { max-width: 590px; margin: 0; color: var(--text-secondary); font-size: 15px; line-height: 1.75; }
+.person-info p { max-width: 610px; margin: 0; color: var(--text-secondary); font-size: 15px; line-height: 1.75; }
+.person-info p:first-of-type { color: var(--text-primary); font-size: 16px; }
+.person-info p + p { margin-top: 16px; }
 
 .process { padding-top: 84px; background: white; }
 .steps { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
