@@ -20,6 +20,7 @@ export type Direction = {
   cardText: string;
   image: string;
   heroPoster: string;
+  heroPosterMobile: string;
   imageAlt: string;
   cardClassName: string;
   seoTitle: string;
@@ -40,6 +41,7 @@ export const directions: readonly Direction[] = [
     cardText: 'Швидкомонтовані споруди для виробництва, логістики, агросектору та зберігання.',
     image: '/media/concepts/direction-hangars-v2.jpg',
     heroPoster: '/media/directions/hangars-poster.webp',
+    heroPosterMobile: '/media/directions/hangars-poster-768w.webp',
     imageAlt: 'Каркас промислового ангара з повторюваними сталевими рамами',
     cardClassName: 'wide',
     seoTitle: brandedTitle('Ангари та склади у Дніпрі'),
@@ -58,6 +60,7 @@ export const directions: readonly Direction[] = [
     cardText: 'Основа, металевий каркас, огороджувальні конструкції та координація монтажу.',
     image: '/media/concepts/direction-grain-v2.jpg',
     heroPoster: '/media/directions/grain-poster.webp',
+    heroPosterMobile: '/media/directions/grain-poster-768w.webp',
     imageAlt: 'Конструкція зерносховища з оцинкованим силосом і сталевими опорами',
     cardClassName: 'tall',
     seoTitle: brandedTitle('Зерносховища у Дніпрі'),
@@ -76,6 +79,7 @@ export const directions: readonly Direction[] = [
     cardText: 'Виготовлення та монтаж каркасів, балок, ферм і складних металевих вузлів.',
     image: '/media/concepts/direction-steel-v2.jpg',
     heroPoster: '/media/directions/steel-poster.webp',
+    heroPosterMobile: '/media/directions/steel-poster-768w.webp',
     imageAlt: 'Болтовий вузол несучої металоконструкції з фасонними пластинами',
     cardClassName: 'compact',
     seoTitle: brandedTitle('Металоконструкції у Дніпрі'),
@@ -94,6 +98,7 @@ export const directions: readonly Direction[] = [
     cardText: 'Фундаменти, основи, промислові підлоги та монолітні елементи відповідно до завдання об’єкта.',
     image: '/media/concepts/direction-concrete-v2.jpg',
     heroPoster: '/media/directions/concrete-poster.webp',
+    heroPosterMobile: '/media/directions/concrete-poster-768w.webp',
     imageAlt: 'Армування промислового фундаменту з анкерною групою',
     cardClassName: 'concrete',
     seoTitle: brandedTitle('Бетонні роботи у Дніпрі'),
@@ -112,6 +117,7 @@ export const directions: readonly Direction[] = [
     cardText: 'Монтаж, ремонт і герметизація покрівель промислових, складських та аграрних споруд.',
     image: '/media/concepts/direction-roofing-v2.jpg',
     heroPoster: '/media/directions/roofing-poster.webp',
+    heroPosterMobile: '/media/directions/roofing-poster-768w.webp',
     imageAlt: 'Монтаж вузла металевої покрівлі промислової споруди',
     cardClassName: 'roof',
     seoTitle: brandedTitle('Покрівельні роботи у Дніпрі'),

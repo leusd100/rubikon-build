@@ -29,6 +29,7 @@ export default function AboutPage() {
               '/media/about/structure.m4v',
             ]}
             poster="/media/about/architect-poster.webp"
+            mobilePoster="/media/about/architect-poster-768w.webp"
             clipDurationMs={3800}
             playbackRate={0.85}
           />

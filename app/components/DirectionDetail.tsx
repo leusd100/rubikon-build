@@ -38,6 +38,7 @@ type DirectionHeroProps = {
   accent: string;
   intro: string;
   poster: string;
+  mobilePoster: string;
   video: string;
 };
 
@@ -49,6 +50,7 @@ export function DirectionHero({
   accent,
   intro,
   poster,
+  mobilePoster,
   video,
 }: DirectionHeroProps) {
   const serviceData = {
@@ -75,7 +77,13 @@ export function DirectionHero({
     <section className="service-subhero">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
-        <DirectionHeroVideo key={video} sources={[video]} poster={poster} playbackRate={0.85} />
+        <DirectionHeroVideo
+          key={video}
+          sources={[video]}
+          poster={poster}
+          mobilePoster={mobilePoster}
+          playbackRate={0.85}
+        />
       </div>
       <div className="service-subhero-overlay" />
       <div className="subhero-grid" aria-hidden="true" />
@@ -194,6 +202,7 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
         accent={config.hero.accent}
         intro={config.hero.intro}
         poster={direction.heroPoster}
+        mobilePoster={direction.heroPosterMobile}
         video={config.hero.video}
       />
 

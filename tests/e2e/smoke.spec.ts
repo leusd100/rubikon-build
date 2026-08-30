@@ -130,6 +130,20 @@ test.describe('public route smoke tests', () => {
           await hero.locator('img, video').count(),
           `${route.path} should retain its hero media`,
         ).toBeGreaterThan(0);
+
+        const heroPosterSource = await hero.locator('img.direction-hero-poster').evaluate(
+          (element) => (element as HTMLImageElement).currentSrc,
+        );
+
+        if ((page.viewportSize()?.width ?? 0) <= 760) {
+          expect(heroPosterSource, `${route.path} should use its mobile hero poster`).toContain(
+            '-768w.webp',
+          );
+        } else {
+          expect(heroPosterSource, `${route.path} should retain its desktop hero poster`).not.toContain(
+            '-768w.webp',
+          );
+        }
       }
 
       const essentialCookiesButton = page.getByRole('button', {

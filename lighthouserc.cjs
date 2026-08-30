@@ -25,11 +25,11 @@ module.exports = {
         ],
         'largest-contentful-paint': [
           'error',
-          { maxNumericValue: 6_000, aggregationMethod: median },
+          { maxNumericValue: 5_750, aggregationMethod: median },
         ],
         'total-byte-weight': [
           'error',
-          { maxNumericValue: 1_000_000, aggregationMethod: median },
+          { maxNumericValue: 900_000, aggregationMethod: median },
         ],
         'errors-in-console': ['error', { minScore: 1, aggregationMethod: median }],
         'uses-responsive-images': ['error', { minScore: 0.5, aggregationMethod: median }],
