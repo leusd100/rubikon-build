@@ -29,13 +29,14 @@ pnpm dev       # vinext dev — local dev server
 pnpm build     # vinext build — production build
 pnpm start     # vinext start — run a production build locally
 pnpm lint      # eslint . --ignore-pattern dist --ignore-pattern .next
-pnpm test:e2e  # Playwright smoke tests for public routes and critical links
+pnpm test:unit # Vitest tests for lead validation, idempotency, and rate limiting
+pnpm test:e2e  # Playwright route smoke and critical form-flow tests
 ```
 
 Install the Chromium browser once before the first local smoke-test run with
-`pnpm exec playwright install chromium`. There is currently **no `typecheck` or unit-test script**
-in `package.json`. If one is added later (e.g. `"typecheck": "tsc --noEmit"`), update this section
-and the CI workflow together.
+`pnpm exec playwright install chromium`. There is currently **no `typecheck` script** in
+`package.json`. If one is added later (e.g. `"typecheck": "tsc --noEmit"`), update this section and
+the CI workflow together.
 
 Requires Node.js `>=22.13.0` (see `engines` in `package.json`).
 

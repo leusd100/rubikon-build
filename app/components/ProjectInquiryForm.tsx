@@ -18,6 +18,11 @@ const submitLabels: Record<ContactMethod, string> = {
   Viber: 'Написати у Viber',
 };
 
+type LeadApiResult = {
+  ok?: boolean;
+  isNew?: boolean;
+};
+
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || '').trim();
 }
@@ -136,7 +141,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
           companyWebsite: value(formData, 'companyWebsite'),
         }),
       });
-      const result = await response.json().catch(() => null);
+      const result = await response.json().catch(() => null) as LeadApiResult | null;
       saved = Boolean(result?.ok);
       // A retry that lands on the idempotent-duplicate branch is still a save (saved=true)
       // but must not count as a second conversion for the same underlying lead.
