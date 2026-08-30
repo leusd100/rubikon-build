@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { Breadcrumbs, SectionHeader, TeamSection } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
+import ResponsiveImage from '../components/ResponsiveImage';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
@@ -51,10 +51,9 @@ export default function AboutPage() {
         <div className="shell story-checker about-story-checker">
           <article className="story-row">
             <div className="promise-visual about-planning-visual">
-              <Image
+              <ResponsiveImage
                 src="/media/concepts/about-experience-v2.jpg"
                 alt="Деталь сталевого вузла зі слідами перевірки та експлуатації"
-                fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
               <span className="visual-index">01 / ДОСВІД</span>
@@ -76,10 +75,9 @@ export default function AboutPage() {
               <p className="story-support">Для нас репутація — не рекламна теза. Вона формується на кожному об’єкті: якістю роботи, виконаними домовленостями та ставленням до замовника.</p>
             </div>
             <div className="promise-visual about-control-visual">
-              <Image
+              <ResponsiveImage
                 src="/media/concepts/about-shared-approach-v2.jpg"
                 alt="Два конструктивні елементи сходяться у точному сталевому вузлі"
-                fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
               <span className="visual-index">02 / КОНТРОЛЬ</span>
