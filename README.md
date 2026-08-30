@@ -31,6 +31,7 @@ pnpm start     # vinext start — run a production build locally
 pnpm lint      # eslint . --ignore-pattern dist --ignore-pattern .next
 pnpm test:unit # Vitest tests for lead validation, idempotency, and rate limiting
 pnpm test:e2e  # Playwright route, form-flow, and visual regression tests
+pnpm test:lighthouse # Lighthouse mobile quality budgets for / and /angary (requires pnpm build)
 ```
 
 Install the Chromium browser once before the first local smoke-test run with
@@ -42,6 +43,14 @@ Visual baselines cover the homepage hero, directions, team and inquiry sections,
 directions hub and representative cost/FAQ sections at 375, 768 and 1440px. After an intentional
 visual change, review the rendered diff before updating them with
 `pnpm exec playwright test tests/e2e/visual.spec.ts --project=visual-chromium --update-snapshots=all`.
+
+Lighthouse CI runs three mobile-emulated passes against the production build for the homepage and
+`/angary`, then evaluates their median results. It fails on regressions below the current quality
+floor: performance 70, accessibility/SEO/best practices 95, CLS 0.05, LCP 6 seconds, one megabyte
+of transferred resources, or any browser console error. The LCP budget is an initial regression
+guard; the next performance-optimization pass should ratchet it toward the 3-second product target.
+The route smoke suite also decodes every page image, rejects failed image requests, and confirms
+that pages with responsive media actually select a generated `/media-responsive/` variant.
 
 Requires Node.js `>=22.13.0` (see `engines` in `package.json`).
 

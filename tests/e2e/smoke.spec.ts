@@ -4,18 +4,24 @@ type PublicRoute = {
   path: string;
   hasProjectCta: boolean;
   hasHeroMedia: boolean;
+  hasResponsiveImages: boolean;
 };
 
 const publicRoutes: PublicRoute[] = [
-  { path: '/', hasProjectCta: true, hasHeroMedia: true },
-  { path: '/napryamky', hasProjectCta: true, hasHeroMedia: true },
-  { path: '/angary', hasProjectCta: true, hasHeroMedia: true },
-  { path: '/zernoskhovyshcha', hasProjectCta: true, hasHeroMedia: true },
-  { path: '/metalokonstruktsii', hasProjectCta: true, hasHeroMedia: true },
-  { path: '/betonni-roboty', hasProjectCta: true, hasHeroMedia: true },
-  { path: '/pokrivelni-roboty', hasProjectCta: true, hasHeroMedia: true },
-  { path: '/pro-nas', hasProjectCta: true, hasHeroMedia: true },
-  { path: '/polityka-konfidentsiinosti', hasProjectCta: false, hasHeroMedia: false },
+  { path: '/', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  { path: '/napryamky', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: false },
+  { path: '/angary', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  { path: '/zernoskhovyshcha', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  { path: '/metalokonstruktsii', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  { path: '/betonni-roboty', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  { path: '/pokrivelni-roboty', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  { path: '/pro-nas', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  {
+    path: '/polityka-konfidentsiinosti',
+    hasProjectCta: false,
+    hasHeroMedia: false,
+    hasResponsiveImages: false,
+  },
 ];
 
 function collectRuntimeErrors(page: Page) {
@@ -29,6 +35,60 @@ function collectRuntimeErrors(page: Page) {
   return errors;
 }
 
+function collectImageFailures(page: Page) {
+  const failures: string[] = [];
+
+  page.on('response', (response) => {
+    if (response.request().resourceType() === 'image' && response.status() >= 400) {
+      failures.push(`${response.status()} ${response.url()}`);
+    }
+  });
+  page.on('requestfailed', (request) => {
+    if (request.resourceType() === 'image') {
+      failures.push(`${request.failure()?.errorText ?? 'request failed'} ${request.url()}`);
+    }
+  });
+
+  return failures;
+}
+
+async function loadAndInspectImages(page: Page) {
+  const images = page.locator('img');
+  const currentSources: string[] = [];
+
+  for (let index = 0; index < await images.count(); index += 1) {
+    const image = images.nth(index);
+
+    const result = await image.evaluate(async (element) => {
+      const htmlImage = element as HTMLImageElement;
+
+      htmlImage.loading = 'eager';
+      htmlImage.scrollIntoView({ block: 'center' });
+
+      try {
+        await htmlImage.decode();
+      } catch {
+        // Report a concise assertion below using the browser's final image state.
+      }
+
+      return {
+        alt: htmlImage.alt,
+        complete: htmlImage.complete,
+        currentSrc: htmlImage.currentSrc,
+        naturalWidth: htmlImage.naturalWidth,
+      };
+    });
+
+    expect(
+      result.complete && result.naturalWidth > 0,
+      `image should load: ${result.alt || result.currentSrc}`,
+    ).toBe(true);
+    currentSources.push(result.currentSrc);
+  }
+
+  return currentSources;
+}
+
 test.describe('public route smoke tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -37,6 +97,7 @@ test.describe('public route smoke tests', () => {
   for (const route of publicRoutes) {
     test(`${route.path} renders its critical shell`, async ({ page }) => {
       const runtimeErrors = collectRuntimeErrors(page);
+      const imageFailures = collectImageFailures(page);
       const response = await page.goto(route.path, { waitUntil: 'load' });
 
       expect(response?.status(), `${route.path} should return HTTP 200`).toBe(200);
@@ -71,7 +132,24 @@ test.describe('public route smoke tests', () => {
         ).toBeGreaterThan(0);
       }
 
+      const essentialCookiesButton = page.getByRole('button', {
+        name: 'Лише необхідні',
+        exact: true,
+      });
+      await expect(essentialCookiesButton).toBeVisible({ timeout: 10_000 });
+      await essentialCookiesButton.click();
+
+      const currentImageSources = await loadAndInspectImages(page);
+
+      if (route.hasResponsiveImages) {
+        expect(
+          currentImageSources.some((source) => source.includes('/media-responsive/')),
+          `${route.path} should deliver at least one generated responsive image variant`,
+        ).toBe(true);
+      }
+
       expect(runtimeErrors, `${route.path} should not emit browser runtime errors`).toEqual([]);
+      expect(imageFailures, `${route.path} should not request broken images`).toEqual([]);
     });
   }
 

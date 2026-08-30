@@ -55,4 +55,5 @@ desktop.ini
 /screenshots/
 /test-results/
 /playwright-report/
+/.lighthouseci/
 *.log
