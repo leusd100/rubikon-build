@@ -1,0 +1,23 @@
+# Cache content-hashed assets immutably. Restated explicitly here (previously only
+# observed as an implicit build artifact whose source could not be confirmed against
+# the pinned vinext version — see Step 02 report) so this policy no longer depends on
+# an unverified implicit mechanism.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Step 02: pre-generated responsive image variants. Filenames carry a content hash
+# (see app/data/responsiveImageManifest.ts), so a content change always produces a
+# new URL — safe for the longest, immutable cache. Deliberately a top-level path,
+# NOT nested under /media/, so this rule and the /media/* rule below never both
+# match the same file: Cloudflare's asset-worker applies the first matching rule's
+# header via `set` but APPENDS a second Cache-Control value for every further
+# matching rule (confirmed in workers-shared/asset-worker/src/utils/rules-engine.ts)
+# — two overlapping globs here would have produced a broken dual Cache-Control header.
+/media-responsive/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Step 02: existing unhashed media originals (literal filenames — replacing a file's
+# content does not change its URL). Moderate cache only, not immutable, so a future
+# content swap is visible to already-cached visitors within a week rather than never.
+/media/*
+  Cache-Control: public, max-age=604800

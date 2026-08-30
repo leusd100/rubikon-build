@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import { Breadcrumbs, SectionHeader } from './SiteChrome';
 import InquirySection from './InquirySection';
+import ResponsiveImage from './ResponsiveImage';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
@@ -146,10 +146,9 @@ function DirectionEditorial({ editorial }: { editorial: DirectionPageConfig['edi
           <p>{editorial.text}</p>
         </div>
         <figure className="direction-editorial-media">
-          <Image
+          <ResponsiveImage
             src={editorial.image}
             alt={editorial.imageAlt}
-            fill
             sizes="(max-width: 760px) calc(100vw - 32px), 64vw"
           />
         </figure>

@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import { DraftingCompass, Hammer, Layers3, Warehouse, Wheat } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { directions, type DirectionId } from '../data/directions';
+import ResponsiveImage from './ResponsiveImage';
 
 const directionIcons: Record<DirectionId, LucideIcon> = {
   angary: Warehouse,
@@ -36,10 +36,9 @@ export function DirectionImageCards() {
     <div className="direction-grid">
       {directions.map((direction) => (
         <a className={`direction-card ${direction.cardClassName}`} href={direction.href} key={direction.id}>
-          <Image
+          <ResponsiveImage
             src={direction.image}
             alt={direction.imageAlt}
-            fill
             sizes={direction.cardClassName === 'wide' ? '(max-width: 800px) 100vw, 65vw' : '(max-width: 800px) 100vw, 35vw'}
           />
           <span className="direction-shade" />
