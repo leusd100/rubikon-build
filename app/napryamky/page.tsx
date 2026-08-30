@@ -29,7 +29,7 @@ export default function DirectionsPage() {
       <section className="subhero subhero-media directions-subhero">
         <DirectionHeroVideo
           sources={['/media/directions/directions-montage.mp4']}
-          poster="/media/hero-steel-frame.webp"
+          poster="/media/directions/directions-montage-poster.webp"
           playbackRate={0.85}
         />
         <div className="subhero-overlay" />

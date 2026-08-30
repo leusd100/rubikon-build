@@ -28,7 +28,7 @@ export default function AboutPage() {
               '/media/about/welding.m4v',
               '/media/about/structure.m4v',
             ]}
-            poster="/media/about-industrial-concept.webp"
+            poster="/media/about/architect-poster.webp"
             clipDurationMs={3800}
             playbackRate={0.85}
           />
