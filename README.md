@@ -46,9 +46,10 @@ visual change, review the rendered diff before updating them with
 
 Lighthouse CI runs three mobile-emulated passes against the production build for the homepage and
 `/angary`, then evaluates their median results. It fails on regressions below the current quality
-floor: performance 70, accessibility/SEO/best practices 95, CLS 0.05, LCP 6 seconds, one megabyte
-of transferred resources, or any browser console error. The LCP budget is an initial regression
-guard; the next performance-optimization pass should ratchet it toward the 3-second product target.
+floor: performance 70, accessibility/SEO/best practices 95, CLS 0.05, LCP 5.75 seconds, 900 kB of
+transferred resources, or any browser console error. The LCP and transfer budgets remain regression
+guards on the local uncompressed server while production measurements continue to target LCP below
+3 seconds.
 The route smoke suite also decodes every page image, rejects failed image requests, and confirms
 that pages with responsive media actually select a generated `/media-responsive/` variant.
 

@@ -16,6 +16,7 @@ export default function Home() {
           <DirectionHeroVideo
             sources={['/media/hero-steel-frame.mp4']}
             poster="/media/hero-steel-frame.webp"
+            mobilePoster="/media/hero-steel-frame-768w.webp"
             playbackRate={0.85}
           />
         </div>

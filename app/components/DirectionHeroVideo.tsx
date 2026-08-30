@@ -1,12 +1,12 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
 
 type DirectionHeroVideoProps = {
   sources: string[];
   poster: string;
+  mobilePoster: string;
   className?: string;
   clipDurationMs?: number;
   playbackRate?: number;
@@ -17,6 +17,7 @@ const FADE_DURATION_MS = 1100;
 export function DirectionHeroVideo({
   sources,
   poster,
+  mobilePoster,
   className,
   clipDurationMs = 6000,
   playbackRate = 1,
@@ -113,16 +114,33 @@ export function DirectionHeroVideo({
 
   return (
     <>
-      <Image
-        className={`direction-hero-poster${hasStartedPlayback ? ' is-hidden' : ''}`}
-        src={poster}
-        alt=""
-        fill
-        priority
-        unoptimized
-        sizes="100vw"
-        aria-hidden="true"
+      <link
+        rel="preload"
+        as="image"
+        href={mobilePoster}
+        media="(max-width: 760px)"
+        fetchPriority="high"
       />
+      <link
+        rel="preload"
+        as="image"
+        href={poster}
+        media="(min-width: 761px)"
+        fetchPriority="high"
+      />
+      <picture>
+        <source media="(max-width: 760px)" srcSet={mobilePoster} />
+        <img
+          aria-hidden="true"
+          className={`direction-hero-poster${hasStartedPlayback ? ' is-hidden' : ''}`}
+          src={poster}
+          alt=""
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        />
+      </picture>
       {sources.map((source, index) => (
         <video
           key={source}
