@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { siteRoutes } from '../data/navigation';
+import { ensureAttributionCaptured } from '../lib/attribution';
 
 const storageKey = 'rubikon-analytics-consent';
 const settingsEvent = 'rubikon:cookie-settings';
@@ -69,6 +70,13 @@ export default function AnalyticsConsent() {
   const trackedPath = useRef<string | null>(null);
   const [choice, setChoice] = useState<ConsentChoice | null>(null);
   const [showBanner, setShowBanner] = useState(false);
+
+  useEffect(() => {
+    // Independent of analytics consent below: this only writes UTM/click-ID params already
+    // present in the URL into sessionStorage, so the inquiry form can attribute a lead later
+    // in the same visit. Nothing is sent anywhere until the visitor submits that form themselves.
+    ensureAttributionCaptured();
+  }, []);
 
   useEffect(() => {
     let savedChoice: ConsentChoice | null = null;

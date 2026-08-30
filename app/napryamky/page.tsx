@@ -1,4 +1,5 @@
-import { Breadcrumbs, PageCta, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, SectionHeader } from '../components/SiteChrome';
+import InquirySection from '../components/InquirySection';
 import { DirectionRouteList } from '../components/DirectionCards';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
@@ -41,6 +42,9 @@ export default function DirectionsPage() {
           </div>
           <div className="subhero-side">
             <p>Беремо на себе комплексну реалізацію об’єкта або виконуємо визначений етап як підрядник чи субпідрядник. Межі відповідальності узгоджуємо до початку робіт.</p>
+            <a className="button button-primary subhero-side-cta" href="#inquiry">
+              Обговорити проєкт <span aria-hidden="true">↗</span>
+            </a>
           </div>
         </div>
       </section>
@@ -58,7 +62,7 @@ export default function DirectionsPage() {
       </section>
 
       <DirectionFaq title="Коротко про головне" items={faqItems} />
-      <PageCta />
+      <InquirySection eyebrow="Почнемо з розмови" title="Маєте будівельне завдання? Обговорімо його" />
     </main>
   );
 }

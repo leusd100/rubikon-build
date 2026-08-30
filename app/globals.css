@@ -404,6 +404,8 @@ section[id] { scroll-margin-top: 116px; }
 .inquiry-submit-note { margin: 10px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; text-align: center; }
 .inquiry-status { display: none; margin: 18px 0 0; padding: 14px 16px; color: #edf4ef; background: #26352c; border-left: 3px solid #5e9c72; font-size: 12px; line-height: 1.55; }
 .inquiry-status.is-visible { display: block; }
+.inquiry-status.is-error { color: #f7e6e1; background: #3a221c; border-left-color: #c0533a; }
+.inquiry-submit:disabled { opacity: .7; cursor: progress; }
 .inquiry-status-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .inquiry-status-actions a, .inquiry-status-actions button { display: inline-flex; align-items: center; gap: 7px; min-height: var(--control-min-height); padding: 8px 11px; color: #fff; border: 1px solid rgba(255,255,255,.55); background: transparent; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
 .inquiry-status-actions a:hover, .inquiry-status-actions button:hover { border-color: #fff; background: rgba(255,255,255,.08); }
@@ -450,7 +452,10 @@ section[id] { scroll-margin-top: 116px; }
 .service-subhero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,9,10,.95), rgba(8,9,10,.72) 52%, rgba(8,9,10,.18)), linear-gradient(0deg, rgba(8,9,10,.72), transparent 64%); }
 .service-subhero-content { position: relative; z-index: 2; padding-top: 190px; padding-bottom: 84px; }
 .service-subhero-content h1 { max-width: 1040px; }
-.service-subhero-content > p:last-child { max-width: 650px; margin: 34px 0 0; color: rgba(255,255,255,.7); font-size: 17px; line-height: 1.75; }
+.service-subhero-content .service-subhero-lead { max-width: 650px; margin: 34px 0 0; color: rgba(255,255,255,.7); font-size: 17px; line-height: 1.75; }
+.service-subhero-content .button { margin-top: 40px; }
+.about-hero-cta { margin-top: 40px; }
+.subhero-side-cta { margin-top: 28px; }
 
 .page-section { padding-block: var(--section-space); background: var(--warm); }
 .page-section-dark { color: white; background: var(--deep); }

@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { ChevronDown, Copy, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
 import { company, companyContactLinks } from '../data/company';
 import { contactMethodOptions, messengerContacts, type ContactMethod } from '../data/contactMethods';
 import { siteRoutes } from '../data/navigation';
+import { readAttribution } from '../lib/attribution';
 
 const companyPhoneInternational = company.phone.international;
 const submitLabels: Record<ContactMethod, string> = {
@@ -18,6 +20,16 @@ const submitLabels: Record<ContactMethod, string> = {
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || '').trim();
+}
+
+function generateSubmissionId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback for the rare environment without crypto.randomUUID (very old browsers, or a
+  // non-secure context where the API is unavailable by spec). Not cryptographically strong,
+  // but unique enough for an idempotency key — collisions are effectively impossible.
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 }
 
 function ContactMethodIcon({ method }: { method: ContactMethod }) {
@@ -32,31 +44,49 @@ function ContactMethodIcon({ method }: { method: ContactMethod }) {
   return <Image src={messenger.icon} width={18} height={18} alt="" aria-hidden="true" />;
 }
 
-export default function ProjectInquiryForm() {
+export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultDirection?: string }) {
+  const pathname = usePathname();
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
-  const [statusAction, setStatusAction] = useState<'phone' | 'telegram' | 'viber' | null>(null);
+  const [statusAction, setStatusAction] = useState<'phone' | 'telegram' | 'viber' | 'error' | null>(null);
   const [preparedMessage, setPreparedMessage] = useState('');
   const [consentError, setConsentError] = useState(false);
+  const [consentAt, setConsentAt] = useState('');
+  const [submissionId] = useState(() => generateSubmissionId());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function copyText(text: string) {
     return navigator.clipboard?.writeText(text).catch(() => undefined);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function hasAnalyticsConsent() {
+    try {
+      return window.localStorage.getItem('rubikon-analytics-consent') === 'granted';
+    } catch {
+      return false;
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setConsentError(false);
     const formData = new FormData(event.currentTarget);
 
+    // Honeypot — a filled hidden field means a bot. Say nothing, do nothing.
     if (value(formData, 'companyWebsite')) return;
+
+    const name = value(formData, 'name');
+    const phone = value(formData, 'phone');
+    const direction = value(formData, 'direction');
+    const attribution = readAttribution();
 
     const details = [
       'Вітаю! Хочу обговорити будівельне завдання з RUBIKON BUILD.',
       '',
-      `Ім’я: ${value(formData, 'name')}`,
-      `Телефон: ${value(formData, 'phone')}`,
-      `Зручний спосіб зв’язку: ${value(formData, 'contactMethod')}`,
-      `Напрям робіт: ${value(formData, 'direction')}`,
+      `Ім’я: ${name}`,
+      `Телефон: ${phone}`,
+      `Зручний спосіб зв’язку: ${contactMethod}`,
+      `Напрям робіт: ${direction}`,
       value(formData, 'location') && `Місто або область: ${value(formData, 'location')}`,
       value(formData, 'dimensions') && `Орієнтовні розміри: ${value(formData, 'dimensions')}`,
       value(formData, 'cooperation') && `Формат співпраці: ${value(formData, 'cooperation')}`,
@@ -69,23 +99,74 @@ export default function ProjectInquiryForm() {
     setPreparedMessage(message);
     setStatusAction(null);
 
+    if (hasAnalyticsConsent()) {
+      window.gtag?.('event', 'inquiry_contact_attempt', {
+        contact_method: contactMethod.toLowerCase(),
+        project_direction: direction,
+      });
+    }
+
+    setIsSubmitting(true);
+    let saved = false;
+    let isNewLead = true;
     try {
-      if (window.localStorage.getItem('rubikon-analytics-consent') === 'granted') {
-        window.gtag?.('event', 'inquiry_contact_attempt', {
-          contact_method: contactMethod.toLowerCase(),
-          project_direction: value(formData, 'direction'),
-        });
-      }
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          submissionId,
+          name,
+          phone,
+          contactMethod,
+          direction,
+          details: {
+            location: value(formData, 'location'),
+            dimensions: value(formData, 'dimensions'),
+            cooperation: value(formData, 'cooperation'),
+            startDate: value(formData, 'startDate'),
+            comment: value(formData, 'comment'),
+          },
+          sourcePage: pathname,
+          landingPage: attribution.landingPage,
+          referrer: attribution.referrer,
+          utm: attribution.utm,
+          clickIds: attribution.clickIds,
+          consentAt: consentAt || new Date().toISOString(),
+          privacyVersion: company.privacyVersion,
+          companyWebsite: value(formData, 'companyWebsite'),
+        }),
+      });
+      const result = await response.json().catch(() => null);
+      saved = Boolean(result?.ok);
+      // A retry that lands on the idempotent-duplicate branch is still a save (saved=true)
+      // but must not count as a second conversion for the same underlying lead.
+      isNewLead = result?.isNew !== false;
     } catch {
-      // Do not send analytics when the visitor's consent state cannot be read.
+      saved = false;
+    }
+    setIsSubmitting(false);
+
+    if (!saved) {
+      setStatus(
+        'Не вдалося зберегти запит через тимчасову технічну проблему. Зателефонуйте нам напряму, або спробуйте ще раз за хвилину.',
+      );
+      setStatusAction('error');
+      return;
+    }
+
+    if (isNewLead && hasAnalyticsConsent()) {
+      window.gtag?.('event', 'generate_lead', {
+        contact_method: contactMethod.toLowerCase(),
+        project_direction: direction,
+      });
     }
 
     if (contactMethod === 'Дзвінок') {
       void copyText(companyPhoneInternational);
       const canStartPhoneCall = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       setStatus(canStartPhoneCall
-        ? 'Відкриваємо номер у телефоні. Підтвердьте дзвінок.'
-        : 'Номер компанії скопійовано. Зателефонуйте з телефону або оберіть месенджер.');
+        ? 'Заявку збережено. Відкриваємо номер у телефоні — підтвердьте дзвінок.'
+        : 'Заявку збережено, номер компанії скопійовано. Зателефонуйте з телефону або оберіть месенджер.');
       setStatusAction('phone');
       if (canStartPhoneCall) window.location.assign(`tel:${companyPhoneInternational}`);
       return;
@@ -93,7 +174,7 @@ export default function ProjectInquiryForm() {
 
     if (contactMethod === 'Telegram') {
       void copyText(message);
-      setStatus('Відкриваємо Telegram. Текст запиту скопійовано — вставте його в чат і підтвердьте надсилання.');
+      setStatus('Заявку збережено. Відкриваємо Telegram — текст запиту скопійовано, вставте його в чат і підтвердьте надсилання.');
       setStatusAction('telegram');
       window.location.assign(`${companyContactLinks.telegram}?text=${encodedMessage}`);
       return;
@@ -102,24 +183,24 @@ export default function ProjectInquiryForm() {
     if (contactMethod === 'Viber') {
       const viberMessage = [
         'Запит для RUBIKON BUILD',
-        `${value(formData, 'name')}, ${value(formData, 'phone')}`,
-        value(formData, 'direction'),
+        `${name}, ${phone}`,
+        direction,
         'Зручний спосіб зв’язку: Viber',
       ].join('\n');
 
       void copyText(message);
-      setStatus('Відкриваємо Viber із коротким запитом. Оберіть чат RUBIKON BUILD і підтвердьте надсилання. Повний текст запиту скопійовано.');
+      setStatus('Заявку збережено. Відкриваємо Viber із коротким запитом — оберіть чат RUBIKON BUILD і підтвердьте надсилання. Повний текст запиту скопійовано.');
       setStatusAction('viber');
       window.location.assign(`viber://forward?text=${encodeURIComponent(viberMessage)}`);
       return;
     }
 
-    setStatus('Відкриваємо WhatsApp із підготовленим запитом. Підтвердьте надсилання.');
-      window.open(`${companyContactLinks.whatsapp}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+    setStatus('Заявку збережено. Відкриваємо WhatsApp із підготовленим запитом — підтвердьте надсилання.');
+    window.open(`${companyContactLinks.whatsapp}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
   }
 
   return (
-    <form className="inquiry-form" onSubmit={handleSubmit}>
+    <form className="inquiry-form" onSubmit={(event) => void handleSubmit(event)}>
       <div className="inquiry-form-heading">
         <span>Коротка форма запиту</span>
         <p>Поля, позначені *, обов’язкові</p>
@@ -173,7 +254,7 @@ export default function ProjectInquiryForm() {
 
       <label className="inquiry-select">
         <span>Напрям робіт *</span>
-        <select name="direction" defaultValue="" required>
+        <select name="direction" defaultValue={defaultDirection} required>
           <option value="" disabled>Оберіть напрям</option>
           {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
         </select>
@@ -226,7 +307,10 @@ export default function ProjectInquiryForm() {
           aria-invalid={consentError}
           aria-describedby={consentError ? 'privacy-consent-error' : undefined}
           onInvalid={() => setConsentError(true)}
-          onChange={() => setConsentError(false)}
+          onChange={(event) => {
+            setConsentError(false);
+            if (event.target.checked) setConsentAt(new Date().toISOString());
+          }}
         />
         <span>
           Погоджуюся на обробку персональних даних для опрацювання мого запиту відповідно до{' '}
@@ -240,9 +324,9 @@ export default function ProjectInquiryForm() {
         <input name="companyWebsite" type="text" tabIndex={-1} autoComplete="off" />
       </label>
 
-      <button className="button button-primary inquiry-submit" type="submit">
-        {submitLabels[contactMethod]}{' '}
-        {contactMethod === 'Дзвінок' ? <Phone aria-hidden="true" /> : <Send aria-hidden="true" />}
+      <button className="button button-primary inquiry-submit" type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Зберігаємо…' : submitLabels[contactMethod]}{' '}
+        {!isSubmitting && (contactMethod === 'Дзвінок' ? <Phone aria-hidden="true" /> : <Send aria-hidden="true" />)}
       </button>
       <p className="inquiry-submit-note">
         {contactMethod === 'Дзвінок'
@@ -252,7 +336,7 @@ export default function ProjectInquiryForm() {
             : `Відкриється ${contactMethod} із готовим текстом — підтвердьте надсилання`}
       </p>
 
-      <p className={`inquiry-status${status ? ' is-visible' : ''}`} role="status" aria-live="polite">
+      <p className={`inquiry-status${status ? ' is-visible' : ''}${statusAction === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
         {status}
         {statusAction === 'phone' && (
           <span className="inquiry-status-actions">
@@ -277,6 +361,11 @@ export default function ProjectInquiryForm() {
             <button type="button" onClick={() => void copyText(preparedMessage)}>
               <Copy aria-hidden="true" /> Скопіювати запит
             </button>
+          </span>
+        )}
+        {statusAction === 'error' && (
+          <span className="inquiry-status-actions">
+            <a href={`tel:${companyPhoneInternational}`}><Phone aria-hidden="true" /> {company.phone.display}</a>
           </span>
         )}
       </p>

@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { Breadcrumbs, PageCta, SectionHeader } from './SiteChrome';
+import { Breadcrumbs, SectionHeader } from './SiteChrome';
+import InquirySection from './InquirySection';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
@@ -74,7 +75,7 @@ export function DirectionHero({
     <section className="service-subhero">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
-        <DirectionHeroVideo key={video} sources={[video]} poster={poster} />
+        <DirectionHeroVideo key={video} sources={[video]} poster={poster} playbackRate={0.85} />
       </div>
       <div className="service-subhero-overlay" />
       <div className="subhero-grid" aria-hidden="true" />
@@ -82,7 +83,10 @@ export function DirectionHero({
         <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }, { label: breadcrumbLabel, href: path }]} />
         <p className="eyebrow light"><span /> Напрямок {number}</p>
         <h1>{title}<br /><em>{accent}</em></h1>
-        <p>{intro}</p>
+        <p className="service-subhero-lead">{intro}</p>
+        <a className="button button-primary" href="#inquiry">
+          Обговорити проєкт <span aria-hidden="true">↗</span>
+        </a>
       </div>
     </section>
   );
@@ -221,7 +225,7 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
       <DirectionProcess {...config.process} />
       {config.cost && <DirectionCostSection {...config.cost} />}
       {config.faq && <DirectionFaq {...config.faq} />}
-      <PageCta {...config.cta} />
+      <InquirySection eyebrow={config.cta.eyebrow} title={config.cta.title} defaultDirection={direction.formLabel} />
     </main>
   );
 }

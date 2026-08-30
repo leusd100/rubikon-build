@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
-import { Breadcrumbs, PageCta, SectionHeader, TeamSection } from '../components/SiteChrome';
+import { Breadcrumbs, SectionHeader, TeamSection } from '../components/SiteChrome';
+import InquirySection from '../components/InquirySection';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
@@ -39,6 +40,9 @@ export default function AboutPage() {
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
             <h1>Репутація,<br />за якою стоять<br /><em>наші імена</em></h1>
+            <a className="button button-primary about-hero-cta" href="#inquiry">
+              Обговорити проєкт <span aria-hidden="true">↗</span>
+            </a>
           </div>
         </div>
       </section>
@@ -104,7 +108,11 @@ export default function AboutPage() {
       </section>
 
       <TeamSection compact />
-      <PageCta title="Розкажіть, що потрібно побудувати" text="Почнемо з короткої розмови про завдання, майданчик і бажані строки. Підкажемо, які вихідні дані потрібні для наступного кроку." />
+      <InquirySection
+        eyebrow="Почнемо з розмови"
+        title="Розкажіть, що потрібно побудувати"
+        text="Почнемо з короткої розмови про завдання, майданчик і бажані строки. Підкажемо, які вихідні дані потрібні для наступного кроку."
+      />
     </main>
   );
 }

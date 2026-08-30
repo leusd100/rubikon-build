@@ -31,7 +31,7 @@ export default function Home() {
               комплексно або виконуємо окремі етапи як підрядник чи субпідрядник.
             </p>
             <div className="hero-actions">
-              <a className="button button-primary" href="#contact">
+              <a className="button button-primary" href="#inquiry">
                 Обговорити проєкт <span aria-hidden="true">↗</span>
               </a>
               <a className="text-link" href={siteRoutes.directions}>
@@ -148,7 +148,7 @@ export default function Home() {
 
       <EstimateBrief />
 
-      <section className="contact section" id="contact">
+      <section className="contact section" id="inquiry">
         <div className="shell contact-grid">
           <div className="contact-intro">
             <p className="eyebrow light"><span /> Почнемо з розмови</p>
