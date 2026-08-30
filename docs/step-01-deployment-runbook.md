@@ -187,7 +187,7 @@ rollback happens mid-incident, any leads already saved stay saved and recoverabl
 |---|---|---|
 | `/api/leads` returns `404` | Code not actually deployed yet, or the deploy pipeline didn't pick up the new route file | Confirm the deployed Worker's build actually includes `app/api/leads/route.ts` — this was the exact symptom found on the still-old production build on 29.08.2026 |
 | `/api/leads` returns `500` on every submission | `DB` binding missing or misnamed | Worker → Settings → Bindings — confirm a D1 binding literally named `DB` exists |
-| Leads save fine in D1, but rate-limiting never blocks anything even after many rapid submissions | `IP_HASH_SALT` unset — the code falls back to an empty-string salt silently rather than failing (`workerEnv.IP_HASH_SALT \|\| ''`), so hashing still "works" but isn't what's expected. Rate-limiting itself would still function (just with a weaker hash), so this specific symptom more likely points at `CF-Connecting-IP` not being present in the request (unusual, would need investigating separately) | Check the secret exists at all; check `lead_submit_log.ip_hash` values aren't literally identical across genuinely-different visitors (a sign the salt isn't varying anything useful) |
+| Every submission returns `ok:false, error:"server"` (500), immediately, before any D1 row is written | `IP_HASH_SALT` unset — the route now fails loudly and returns 500 rather than silently hashing with an empty salt | Confirm the `IP_HASH_SALT` secret exists on the Worker at all |
 | Leads accumulate in D1, but no Telegram messages ever arrive | `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` missing, wrong, or the bot was never actually messaged first (Telegram bots can't message a chat that hasn't messaged them first) | `lead_notify_failures` table — every failed notification attempt is logged there with the error text; check it before assuming the bot itself is broken |
 | A lead submission returns `ok:false, error:"validation"` unexpectedly | Client and server field-length/format rules drifted (e.g. phone format, or a new value added to direction options on one side but not the other) | Compare `PHONE_PATTERN`/`DIRECTION_ALLOWLIST`/`CONTACT_METHODS` in `app/api/leads/route.ts` against the actual form inputs in `ProjectInquiryForm.tsx` and `data/directions.ts` |
 | Same visitor sees "Заявку збережено" but the header "Контакти" link scrolls nowhere useful | Only expected on `/logo-variants` — a disclosed, accepted exception (noindexed internal page, not a real nav destination); anywhere else is a real regression | Confirm `id="inquiry"` exists on the current page — every real page except `/logo-variants` should have one |
@@ -210,3 +210,18 @@ All of the following, not a subset:
 
 Once every box above is checked, Step 01 is closed and Step 02 (Cloudflare image delivery + cache
 headers) can start on its own explicit go-ahead.
+
+## 11. Known operational follow-ups (recorded, not built)
+
+Accepted as out-of-scope for Step 01 itself — tracked here so they aren't lost, not implemented
+now:
+
+- **`lead_submit_log` pruning.** The migration's own comment says this table is kept separate from
+  `leads` "so it can be pruned independently," but nothing prunes it yet — rows accumulate
+  indefinitely (one row per accepted-then-reserved submission attempt, most of them within the
+  10-minute rate-limit window). It's small (one `ip_hash` + one timestamp per row) and doesn't
+  affect correctness, so this is a low-urgency housekeeping item, not a blocker. When picked up:
+  a periodic `DELETE FROM lead_submit_log WHERE created_at < datetime('now', '-1 day')` (or similar)
+  is enough — no scheduler exists in this repo today, so this would need its own explicit go-ahead
+  before adding one (Cron Triggers, an external cron hitting an authenticated endpoint, or a manual
+  occasional cleanup query are all options to weigh then, not now).
