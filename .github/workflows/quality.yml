@@ -50,6 +50,9 @@ jobs:
       - name: Run browser smoke tests
         run: pnpm test:e2e
 
+      - name: Run Lighthouse quality budgets
+        run: pnpm test:lighthouse
+
       - name: Upload Playwright diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
@@ -58,5 +61,6 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            .lighthouseci/
           if-no-files-found: ignore
           retention-days: 7
