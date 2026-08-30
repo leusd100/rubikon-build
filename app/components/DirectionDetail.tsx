@@ -19,9 +19,10 @@ function DirectionItemCards({
 }) {
   return (
     <div className={className}>
-      {items.map(([number, title, text]) => (
+      {items.map(([number, title, text, Icon]) => (
         <article key={number}>
           <span>{number}</span>
+          {Icon && <Icon className="card-icon" aria-hidden="true" />}
           <h3>{title}</h3>
           <p>{text}</p>
         </article>

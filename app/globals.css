@@ -477,7 +477,7 @@ section[id] { scroll-margin-top: 116px; }
 .detail-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(255,255,255,.2); border-left: 1px solid rgba(255,255,255,.2); }
 .detail-card { min-height: 290px; padding: 28px; border-right: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); }
 .detail-card > span { color: var(--accent); font: 500 12px/1 var(--font-condensed), sans-serif; }
-.detail-card h3 { margin: 82px 0 15px; font: 600 23px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.detail-card h3 { margin: 24px 0 15px; font: 600 23px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .detail-card p { margin: 0; color: var(--text-on-dark-muted); font-size: 13px; line-height: 1.7; }
 .team-compact { background: #e8e7e1; }
 
@@ -572,7 +572,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 .cost-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(21,24,22,.17); border-left: 1px solid rgba(21,24,22,.17); }
 .cost-grid article { min-height: 275px; padding: 28px; border-right: 1px solid rgba(21,24,22,.17); border-bottom: 1px solid rgba(21,24,22,.17); }
 .cost-grid h3 { font: 600 22px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.cost-grid h3 { margin: 78px 0 14px; }
+.cost-grid h3 { margin: 24px 0 14px; }
 .cost-grid p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .cost-section { background: #efeee8; }
 
@@ -586,12 +586,16 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 .detail-steps li { min-height: 300px; padding: 28px; border-right: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); }
 .detail-steps span { color: var(--accent); font: 500 12px/1 var(--font-condensed), sans-serif; }
 .detail-step-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--accent); stroke-width: 1.45; }
+/* Shared icon token for .detail-card / .cost-grid / .use-case-grid — the same treatment as
+   .detail-step-icon above (process cards, the visual reference), reused rather than duplicated
+   with different values so all bordered-card families read as one system. */
+.card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--accent); stroke-width: 1.45; }
 .detail-steps h3 { margin: 24px 0 15px; font: 600 22px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .detail-steps p { margin: 0; color: var(--text-on-dark-muted); font-size: 13px; line-height: 1.7; }
 .use-case-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .use-case-grid article { min-height: 310px; padding: 30px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .use-case-grid span { color: var(--accent); font: 500 12px/1 var(--font-condensed), sans-serif; }
-.use-case-grid h3 { margin: 92px 0 16px; font: 600 26px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.use-case-grid h3 { margin: 24px 0 16px; font: 600 26px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .use-case-grid p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 
 .direction-editorial-section { background: #e8e7e1; }
@@ -807,9 +811,8 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .estimate-list, .cost-grid { grid-template-columns: 1fr; }
   .detail-card, .detail-steps li, .use-case-grid article { min-height: 245px; }
   .cost-grid article { min-height: 230px; }
-  .detail-card h3, .detail-steps h3, .use-case-grid h3 { margin-top: 64px; }
+  .detail-card h3, .detail-steps h3, .use-case-grid h3, .cost-grid h3 { margin-top: 64px; }
   .estimate-list li { grid-template-columns: 38px 38px minmax(0, 1fr); column-gap: 12px; padding-block: 26px; }
-  .cost-grid h3 { margin-top: 58px; }
   .route-service { grid-template-columns: 48px 1fr 30px; min-height: 190px; gap: 12px; }
   .route-service h3 { font-size: 25px; }
   .route-service p { font-size: 13px; }
