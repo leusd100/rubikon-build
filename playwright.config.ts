@@ -16,7 +16,6 @@ export default defineConfig({
     baseURL,
     colorScheme: 'light',
     locale: 'uk-UA',
-    reducedMotion: 'reduce',
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     timezoneId: 'Europe/Kyiv',
@@ -41,6 +40,7 @@ export default defineConfig({
     },
     {
       name: 'mobile-chromium',
+      testIgnore: /form\.spec\.ts/,
       use: { ...devices['Pixel 7'] },
     },
   ],

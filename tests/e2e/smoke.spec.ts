@@ -30,6 +30,10 @@ function collectRuntimeErrors(page: Page) {
 }
 
 test.describe('public route smoke tests', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  });
+
   for (const route of publicRoutes) {
     test(`${route.path} renders its critical shell`, async ({ page }) => {
       const runtimeErrors = collectRuntimeErrors(page);
