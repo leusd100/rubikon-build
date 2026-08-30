@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import type { D1Database } from '@cloudflare/workers-types';
 import { inquiryDirectionOptions } from '../../data/directions';
+import { company } from '../../data/company';
 
 // Bindings expected on the Worker (created via the Cloudflare Dashboard, not wrangler.jsonc
 // in this project — see the Lead Architecture Spec for how each one is provisioned):
@@ -57,6 +58,22 @@ function clip(value: unknown, maxLength: number): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
 }
 
+// Sanity bound for consent_at: must parse as a real date, not be from before this feature
+// could possibly have shipped, and not be meaningfully in the future (small clock-skew
+// allowance only). This doesn't prove the consent is genuine — that's inherent to a public
+// endpoint — but it stops obviously-garbage or nonsensical timestamps from being accepted
+// into an audit column whose whole purpose is to be trustworthy on inspection.
+const CONSENT_EARLIEST = Date.parse('2026-08-01T00:00:00.000Z');
+const CONSENT_FUTURE_SKEW_MS = 5 * 60 * 1000;
+
+function isPlausibleConsentTimestamp(value: string): boolean {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return false;
+  if (parsed < CONSENT_EARLIEST) return false;
+  if (parsed > Date.now() + CONSENT_FUTURE_SKEW_MS) return false;
+  return true;
+}
+
 async function hashIp(ip: string, salt: string): Promise<string> {
   const bytes = new TextEncoder().encode(`${salt}:${ip}`);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
@@ -93,8 +110,11 @@ export async function POST(request: Request) {
   if (!PHONE_PATTERN.test(phone)) fieldErrors.push('phone');
   if (!CONTACT_METHODS.includes(contactMethod)) fieldErrors.push('contactMethod');
   if (!DIRECTION_ALLOWLIST.includes(direction)) fieldErrors.push('direction');
-  if (!consentAt) fieldErrors.push('consentAt');
-  if (!privacyVersion) fieldErrors.push('privacyVersion');
+  if (!consentAt || !isPlausibleConsentTimestamp(consentAt)) fieldErrors.push('consentAt');
+  // Must match the server's own current privacy-policy version, not merely be non-empty —
+  // a client (or a direct API caller) claiming consent under a version we didn't actually
+  // serve would make the audit column meaningless.
+  if (privacyVersion !== company.privacyVersion) fieldErrors.push('privacyVersion');
 
   if (fieldErrors.length) {
     return json({ ok: false, error: 'validation', fields: fieldErrors }, 400);
@@ -120,19 +140,33 @@ export async function POST(request: Request) {
   const gbraid = clip(body.clickIds?.gbraid, 200);
   const wbraid = clip(body.clickIds?.wbraid, 200);
 
+  // A missing salt must fail loudly, not silently hash with an empty string — that would
+  // quietly weaken the rate-limit hash instead of surfacing the misconfiguration.
+  if (!workerEnv.IP_HASH_SALT) {
+    return json({ ok: false, error: 'server' }, 500);
+  }
+
   const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const ipHash = await hashIp(clientIp, workerEnv.IP_HASH_SALT || '');
+  const ipHash = await hashIp(clientIp, workerEnv.IP_HASH_SALT);
 
-  const rateCheck = await workerEnv.DB.prepare(
-    `SELECT COUNT(*) as count FROM lead_submit_log WHERE ip_hash = ? AND created_at > datetime('now', ?)`,
+  // Atomic check-and-reserve: the COUNT and the reservation INSERT are one SQLite statement,
+  // so no concurrent request can read the same pre-increment count before either writes back
+  // (the previous separate SELECT-then-INSERT had exactly that race). `meta.changes === 0`
+  // means the WHERE clause suppressed the insert, i.e. the caller is already at the limit.
+  const reservation = await workerEnv.DB.prepare(
+    `INSERT INTO lead_submit_log (ip_hash)
+     SELECT ? WHERE (
+       SELECT COUNT(*) FROM lead_submit_log WHERE ip_hash = ? AND created_at > datetime('now', ?)
+     ) < ?`,
   )
-    .bind(ipHash, RATE_LIMIT_WINDOW)
-    .first<{ count: number }>();
+    .bind(ipHash, ipHash, RATE_LIMIT_WINDOW, RATE_LIMIT_MAX)
+    .run();
 
-  if (rateCheck && rateCheck.count >= RATE_LIMIT_MAX) {
+  if (!reservation.meta.changes) {
     return json({ ok: false, error: 'rate_limited' }, 429);
   }
 
+  const rateLogRowId = reservation.meta.last_row_id;
   let leadId: number;
 
   try {
@@ -157,6 +191,15 @@ export async function POST(request: Request) {
     // A duplicate submission_id means the client retried a request we already accepted —
     // that is success, not an error, and must never create a second row.
     if (String(error).includes('UNIQUE constraint failed')) {
+      // This retry didn't produce a new lead — undo the rate-limit reservation made above so
+      // retries of the same submissionId never count against the visitor's own limit. Best
+      // effort: if this delete fails for some reason, the lead lookup below still succeeds and
+      // the client still gets the correct response; the reservation just isn't rolled back.
+      try {
+        await workerEnv.DB.prepare('DELETE FROM lead_submit_log WHERE rowid = ?').bind(rateLogRowId).run();
+      } catch {
+        // Non-fatal — see comment above.
+      }
       const existing = await workerEnv.DB.prepare('SELECT id FROM leads WHERE submission_id = ?')
         .bind(submissionId)
         .first<{ id: number }>();
@@ -166,10 +209,6 @@ export async function POST(request: Request) {
     }
     return json({ ok: false, error: 'server' }, 500);
   }
-
-  // Only a genuinely new lead counts toward the rate limit — retries of the same
-  // submissionId (already handled above) must never lock a visitor out of their own form.
-  await workerEnv.DB.prepare('INSERT INTO lead_submit_log (ip_hash) VALUES (?)').bind(ipHash).run();
 
   // D1 already has the lead — from here on, nothing can turn this response into a failure.
   // Notification is best-effort and happens after the fact is already true.
