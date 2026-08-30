@@ -120,6 +120,18 @@ export async function POST(request: Request) {
     return json({ ok: false, error: 'validation', fields: fieldErrors }, 400);
   }
 
+  // Idempotent retry, checked before the rate limiter: a sequential retry of an
+  // already-accepted submissionId must always succeed and must never touch the rate-limit
+  // bucket — regardless of whether that bucket happens to be full right now. This only runs
+  // after full field validation above, so a garbage payload paired with a guessed/known
+  // submissionId still can't get a 200 without ever having passed validation for that data.
+  const alreadyAccepted = await workerEnv.DB.prepare('SELECT id FROM leads WHERE submission_id = ?')
+    .bind(submissionId)
+    .first<{ id: number }>();
+  if (alreadyAccepted) {
+    return json({ ok: true, id: alreadyAccepted.id, isNew: false });
+  }
+
   const details = JSON.stringify({
     location: clip(body.details?.location, 100),
     dimensions: clip(body.details?.dimensions, 100),
@@ -188,13 +200,16 @@ export async function POST(request: Request) {
 
     leadId = Number(insert.meta.last_row_id ?? 0);
   } catch (error) {
-    // A duplicate submission_id means the client retried a request we already accepted —
-    // that is success, not an error, and must never create a second row.
+    // The early lookup above already handles a sequential retry of an existing submissionId,
+    // so reaching a UNIQUE-constraint failure here means a genuine concurrent race: two
+    // requests for the same brand-new submissionId passed the early lookup at the same time
+    // (neither saw the other's row yet), both reserved a rate-limit slot, and both attempted
+    // this insert — exactly one wins. This is the loser's path, not a duplicate-retry path.
     if (String(error).includes('UNIQUE constraint failed')) {
-      // This retry didn't produce a new lead — undo the rate-limit reservation made above so
-      // retries of the same submissionId never count against the visitor's own limit. Best
-      // effort: if this delete fails for some reason, the lead lookup below still succeeds and
-      // the client still gets the correct response; the reservation just isn't rolled back.
+      // The loser produced no new lead — undo its rate-limit reservation so this race never
+      // costs the visitor a slot they didn't actually use. Best effort: if this delete fails
+      // for some reason, the lead lookup below still succeeds and the client still gets the
+      // correct response; the reservation just isn't rolled back.
       try {
         await workerEnv.DB.prepare('DELETE FROM lead_submit_log WHERE rowid = ?').bind(rateLogRowId).run();
       } catch {
