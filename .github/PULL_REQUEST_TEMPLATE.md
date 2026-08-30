@@ -20,6 +20,7 @@
 
 - [ ] `pnpm lint` passes
 - [ ] `pnpm build` succeeds locally
+- [ ] `pnpm test:e2e` passes
 - [ ] Typecheck — *(no `typecheck` script exists yet; run `pnpm exec tsc --noEmit` manually until one is added)*
 
 ## Accessibility
