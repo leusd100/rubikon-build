@@ -193,7 +193,7 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
         title={config.hero.title}
         accent={config.hero.accent}
         intro={config.hero.intro}
-        poster={direction.image}
+        poster={direction.heroPoster}
         video={config.hero.video}
       />
 
