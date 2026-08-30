@@ -12,6 +12,7 @@ export default defineConfig({
   reporter: process.env.CI
     ? [['github'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],
+  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}',
   use: {
     baseURL,
     colorScheme: 'light',
@@ -33,6 +34,7 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-chromium',
+      testIgnore: /visual\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
@@ -40,8 +42,13 @@ export default defineConfig({
     },
     {
       name: 'mobile-chromium',
-      testIgnore: /form\.spec\.ts/,
+      testIgnore: /form\.spec\.ts|visual\.spec\.ts/,
       use: { ...devices['Pixel 7'] },
+    },
+    {
+      name: 'visual-chromium',
+      testMatch: /visual\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 });

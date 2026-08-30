@@ -30,13 +30,18 @@ pnpm build     # vinext build — production build
 pnpm start     # vinext start — run a production build locally
 pnpm lint      # eslint . --ignore-pattern dist --ignore-pattern .next
 pnpm test:unit # Vitest tests for lead validation, idempotency, and rate limiting
-pnpm test:e2e  # Playwright route smoke and critical form-flow tests
+pnpm test:e2e  # Playwright route, form-flow, and visual regression tests
 ```
 
 Install the Chromium browser once before the first local smoke-test run with
 `pnpm exec playwright install chromium`. There is currently **no `typecheck` script** in
 `package.json`. If one is added later (e.g. `"typecheck": "tsc --noEmit"`), update this section and
 the CI workflow together.
+
+Visual baselines cover the homepage hero, directions, team and inquiry sections, plus the
+directions hub and representative cost/FAQ sections at 375, 768 and 1440px. After an intentional
+visual change, review the rendered diff before updating them with
+`pnpm exec playwright test tests/e2e/visual.spec.ts --project=visual-chromium --update-snapshots=all`.
 
 Requires Node.js `>=22.13.0` (see `engines` in `package.json`).
 
