@@ -1,3 +1,4 @@
+import { ClipboardCheck, FileSignature, ShieldCheck, UserCheck } from 'lucide-react';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { Breadcrumbs, SectionHeader, TeamSection } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
@@ -98,10 +99,10 @@ export default function AboutPage() {
             inverse
           />
           <div className="detail-grid values-grid">
-            <article className="detail-card"><span>01</span><h3>Чесна оцінка</h3><p>Відкрито говоримо про обсяг робіт, ризики та межі відповідальності.</p></article>
-            <article className="detail-card"><span>02</span><h3>Контроль відповідальних вузлів</h3><p>Перевіряємо те, що впливає на міцність, довговічність і безпечну експлуатацію.</p></article>
-            <article className="detail-card"><span>03</span><h3>Особистий контроль</h3><p>Власники компанії залучені до ключових етапів, а не лише до першої зустрічі.</p></article>
-            <article className="detail-card"><span>04</span><h3>Повага до слова</h3><p>Фіксуємо домовленості й завчасно повідомляємо про зміни, якщо вони виникають.</p></article>
+            <article className="detail-card"><span>01</span><ClipboardCheck className="card-icon" aria-hidden="true" /><h3>Чесна оцінка</h3><p>Відкрито говоримо про обсяг робіт, ризики та межі відповідальності.</p></article>
+            <article className="detail-card"><span>02</span><ShieldCheck className="card-icon" aria-hidden="true" /><h3>Контроль відповідальних вузлів</h3><p>Перевіряємо те, що впливає на міцність, довговічність і безпечну експлуатацію.</p></article>
+            <article className="detail-card"><span>03</span><UserCheck className="card-icon" aria-hidden="true" /><h3>Особистий контроль</h3><p>Власники компанії залучені до ключових етапів, а не лише до першої зустрічі.</p></article>
+            <article className="detail-card"><span>04</span><FileSignature className="card-icon" aria-hidden="true" /><h3>Повага до слова</h3><p>Фіксуємо домовленості й завчасно повідомляємо про зміни, якщо вони виникають.</p></article>
           </div>
         </div>
       </section>
