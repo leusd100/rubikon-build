@@ -26,9 +26,11 @@ export default function InquirySection({
     <section className="contact section" id="inquiry">
       <div className="shell contact-grid">
         <div className="contact-intro">
-          <p className="eyebrow light"><span /> {eyebrow}</p>
-          <h2>{title}</h2>
-          <p>{text}</p>
+          <div className="contact-copy">
+            <p className="eyebrow light"><span /> {eyebrow}</p>
+            <h2>{title}</h2>
+            <p>{text}</p>
+          </div>
           <div className="contact-links">
             <a className="pending-contact contact-phone" href={companyContactLinks.phone}>
               <b><Phone aria-hidden="true" />Телефон</b><i>{company.phone.display}</i>

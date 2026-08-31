@@ -156,12 +156,14 @@ export default function Home() {
       <section className="contact section" id="inquiry">
         <div className="shell contact-grid">
           <div className="contact-intro">
-            <p className="eyebrow light"><span /> Почнемо з розмови</p>
-            <h2>Розкажіть коротко<br />про завдання</h2>
-            <p>
-              Залиште контактні дані й коротко опишіть завдання. Ознайомимося із запитом,
-              зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.
-            </p>
+            <div className="contact-copy">
+              <p className="eyebrow light"><span /> Почнемо з розмови</p>
+              <h2>Розкажіть коротко<br />про завдання</h2>
+              <p>
+                Залиште контактні дані й коротко опишіть завдання. Ознайомимося із запитом,
+                зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.
+              </p>
+            </div>
             <div className="contact-links" id="contact-note">
               <a className="pending-contact contact-phone" href={companyContactLinks.phone}>
                 <b><Phone aria-hidden="true" />Телефон</b><i>{company.phone.display}</i>
