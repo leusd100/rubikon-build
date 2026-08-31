@@ -690,7 +690,9 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .person-story-reverse .person-photo { order: -1; justify-self: end; }
   .person-photo { width: min(82vw, 720px); min-height: 0; aspect-ratio: 1; }
   .person-info { min-height: 0; }
-  .steps { grid-template-columns: repeat(3, 1fr); }
+  .steps { grid-template-columns: repeat(6, 1fr); }
+  .steps li { grid-column: span 2; }
+  .steps li:nth-child(n + 4) { grid-column: span 3; }
   .contact-grid { grid-template-columns: minmax(0, 1fr); gap: var(--grid-gap); }
   .contact-intro { position: static; }
   .subhero-layout { grid-template-columns: 1fr .55fr; gap: 56px; }
@@ -793,7 +795,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .person-info h3 { margin-top: 18px; font-size: clamp(34px, 10vw, 44px); }
   .person-info p { font-size: 14px; }
   .steps { grid-template-columns: 1fr; }
-  .steps li { min-height: 210px; }
+  .steps li, .steps li:nth-child(n + 4) { grid-column: auto; min-height: 210px; }
   .steps h3 { margin-top: 24px; }
   .contact h2 { max-width: 620px; font-size: var(--title-section); line-height: 1.03; }
   .inquiry-form { padding: 26px 22px; border-radius: 0 var(--radius-md) 0 var(--radius-md); }
