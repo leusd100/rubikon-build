@@ -46,9 +46,7 @@ export default function Home() {
               <span>Відповідаємо особисто</span>
             </div>
             <a className="hero-contact-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, телефон ${company.phone.display}`}>
-              <span className="hero-contact-desktop"><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
-              <span className="hero-contact-mobile">Зателефонувати</span>
-              <b aria-hidden="true">↗</b>
+              <span className="hero-contact-action"><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
             </a>
             <div className="hero-contact-options">
               <span>Або напишіть у месенджер</span>
