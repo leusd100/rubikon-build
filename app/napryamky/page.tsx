@@ -1,4 +1,4 @@
-import { Breadcrumbs, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, GhostWord, SectionHeader } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import { DirectionRouteList } from '../components/DirectionCards';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
@@ -50,7 +50,8 @@ export default function DirectionsPage() {
         </div>
       </section>
 
-      <section className="page-section">
+      <section className="page-section ghost-section">
+        <GhostWord word="STRUCTURE" />
         <div className="shell">
           <SectionHeader
             className="page-heading"
