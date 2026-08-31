@@ -9,9 +9,10 @@ async function fillValidInquiry(page: Page) {
   await essentialCookiesButton.click();
 
   await form.getByText('Telegram', { exact: true }).click();
-  await expect(form.getByRole('button', { name: 'Написати в Telegram', exact: true })).toBeVisible();
+  await expect(form.getByRole('radio', { name: 'Telegram', exact: true })).toBeChecked();
   await form.getByText('Дзвінок', { exact: true }).click();
-  await expect(form.getByRole('button', { name: 'Зателефонувати', exact: true })).toBeVisible();
+  await expect(form.getByRole('radio', { name: 'Дзвінок', exact: true })).toBeChecked();
+  await expect(form.getByRole('button', { name: 'Надіслати запит', exact: true })).toBeVisible();
 
   await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
   await form.getByLabel(/Телефон/).fill('+380671234567');
@@ -34,10 +35,10 @@ test.describe('project inquiry form', () => {
     await page.goto('/', { waitUntil: 'load' });
     await fillValidInquiry(page);
 
-    await page.getByRole('button', { name: 'Зателефонувати', exact: true }).click();
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
 
-    await expect(page.locator('.inquiry-status')).toContainText('Заявку збережено');
-    await expect(page.locator('.inquiry-status a[href="tel:+380682614264"]')).toBeVisible();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо! Запит надіслано');
+    await expect(page.locator('.inquiry-status')).toContainText('зв’яжеться з вами способом, який ви обрали');
     expect(submittedPayload).toMatchObject({
       name: 'Іван Петренко',
       phone: '+380671234567',
@@ -57,7 +58,7 @@ test.describe('project inquiry form', () => {
     await page.goto('/', { waitUntil: 'load' });
     await fillValidInquiry(page);
 
-    await page.getByRole('button', { name: 'Зателефонувати', exact: true }).click();
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
 
     const status = page.locator('.inquiry-status');
     await expect(status).toContainText('Не вдалося зберегти запит');

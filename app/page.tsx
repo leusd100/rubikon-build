@@ -23,10 +23,10 @@ export default function Home() {
         <div className="hero-shade" aria-hidden="true" />
         <div className="hero-grid" aria-hidden="true" />
         <div className="shell hero-layout">
+          <h1>
+            Промислове будівництво — від окремих робіт до об’єкта <em>під ключ</em>
+          </h1>
           <div className="hero-copy">
-            <h1>
-              Промислове будівництво — від окремих робіт до об’єкта <em>під ключ</em>
-            </h1>
             <p className="hero-lead">
               Будуємо промислові, складські й аграрні об’єкти — від узгодженого технічного
               рішення до виконання будівельних робіт. Працюємо комплексно або виконуємо
@@ -158,7 +158,7 @@ export default function Home() {
           <div className="contact-intro">
             <div className="contact-copy">
               <p className="eyebrow light"><span /> Почнемо з розмови</p>
-              <h2>Розкажіть коротко<br />про завдання</h2>
+              <h2>Розкажіть коротко<br className="contact-title-break" /> про завдання</h2>
               <p>
                 Залиште контактні дані й коротко опишіть завдання. Ознайомимося із запитом,
                 зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.

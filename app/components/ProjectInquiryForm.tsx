@@ -3,20 +3,12 @@
 import { useState, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { ChevronDown, Copy, Phone, Send } from 'lucide-react';
+import { ChevronDown, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
 import { company, companyContactLinks } from '../data/company';
 import { contactMethodOptions, messengerContacts, type ContactMethod } from '../data/contactMethods';
 import { siteRoutes } from '../data/navigation';
 import { readAttribution } from '../lib/attribution';
-
-const companyPhoneInternational = company.phone.international;
-const submitLabels: Record<ContactMethod, string> = {
-  Дзвінок: 'Зателефонувати',
-  Telegram: 'Написати в Telegram',
-  WhatsApp: 'Написати в WhatsApp',
-  Viber: 'Написати у Viber',
-};
 
 type LeadApiResult = {
   ok?: boolean;
@@ -53,16 +45,11 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
   const pathname = usePathname();
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
-  const [statusAction, setStatusAction] = useState<'phone' | 'telegram' | 'viber' | 'error' | null>(null);
-  const [preparedMessage, setPreparedMessage] = useState('');
+  const [statusAction, setStatusAction] = useState<'error' | null>(null);
   const [consentError, setConsentError] = useState(false);
   const [consentAt, setConsentAt] = useState('');
   const [submissionId] = useState(() => generateSubmissionId());
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  function copyText(text: string) {
-    return navigator.clipboard?.writeText(text).catch(() => undefined);
-  }
 
   function hasAnalyticsConsent() {
     try {
@@ -84,24 +71,6 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
     const phone = value(formData, 'phone');
     const direction = value(formData, 'direction');
     const attribution = readAttribution();
-
-    const details = [
-      'Вітаю! Хочу обговорити будівельне завдання з RUBIKON BUILD.',
-      '',
-      `Ім’я: ${name}`,
-      `Телефон: ${phone}`,
-      `Зручний спосіб зв’язку: ${contactMethod}`,
-      `Напрям робіт: ${direction}`,
-      value(formData, 'location') && `Місто або область: ${value(formData, 'location')}`,
-      value(formData, 'dimensions') && `Орієнтовні розміри: ${value(formData, 'dimensions')}`,
-      value(formData, 'cooperation') && `Формат співпраці: ${value(formData, 'cooperation')}`,
-      value(formData, 'startDate') && `Бажаний початок робіт: ${value(formData, 'startDate')}`,
-      value(formData, 'comment') && `Коментар: ${value(formData, 'comment')}`,
-    ].filter(Boolean);
-
-    const message = details.join('\n');
-    const encodedMessage = encodeURIComponent(message);
-    setPreparedMessage(message);
     setStatusAction(null);
 
     if (hasAnalyticsConsent()) {
@@ -166,211 +135,176 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
       });
     }
 
-    if (contactMethod === 'Дзвінок') {
-      void copyText(companyPhoneInternational);
-      const canStartPhoneCall = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      setStatus(canStartPhoneCall
-        ? 'Заявку збережено. Відкриваємо номер у телефоні — підтвердьте дзвінок.'
-        : 'Заявку збережено, номер компанії скопійовано. Зателефонуйте з телефону або оберіть месенджер.');
-      setStatusAction('phone');
-      if (canStartPhoneCall) window.location.assign(`tel:${companyPhoneInternational}`);
-      return;
-    }
-
-    if (contactMethod === 'Telegram') {
-      void copyText(message);
-      setStatus('Заявку збережено. Відкриваємо Telegram — текст запиту скопійовано, вставте його в чат і підтвердьте надсилання.');
-      setStatusAction('telegram');
-      window.location.assign(`${companyContactLinks.telegram}?text=${encodedMessage}`);
-      return;
-    }
-
-    if (contactMethod === 'Viber') {
-      const viberMessage = [
-        'Запит для RUBIKON BUILD',
-        `${name}, ${phone}`,
-        direction,
-        'Зручний спосіб зв’язку: Viber',
-      ].join('\n');
-
-      void copyText(message);
-      setStatus('Заявку збережено. Відкриваємо Viber із коротким запитом — оберіть чат RUBIKON BUILD і підтвердьте надсилання. Повний текст запиту скопійовано.');
-      setStatusAction('viber');
-      window.location.assign(`viber://forward?text=${encodeURIComponent(viberMessage)}`);
-      return;
-    }
-
-    setStatus('Заявку збережено. Відкриваємо WhatsApp із підготовленим запитом — підтвердьте надсилання.');
-    window.open(`${companyContactLinks.whatsapp}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+    setStatus('Дякуємо! Запит надіслано. Наш спеціаліст найближчим часом зв’яжеться з вами способом, який ви обрали.');
   }
 
   return (
     <form className="inquiry-form" onSubmit={(event) => void handleSubmit(event)}>
       <div className="inquiry-form-heading">
-        <span>Коротка форма запиту</span>
+        <div>
+          <small>Запит на проєкт</small>
+          <span>Коротка форма запиту</span>
+        </div>
         <p>Поля, позначені *, обов’язкові</p>
       </div>
 
-      <div className="inquiry-fields inquiry-fields-two">
-        <label>
-          <span>Ваше ім’я *</span>
-          <input name="name" type="text" minLength={2} maxLength={80} autoComplete="name" required />
-        </label>
-        <label>
-          <span>Телефон *</span>
-          <input
-            name="phone"
-            type="tel"
-            inputMode="tel"
-            pattern="\+380[0-9]{9}"
-            maxLength={13}
-            defaultValue="+380"
-            title="Введіть номер у форматі +380XXXXXXXXX"
-            aria-describedby="phone-hint"
-            autoComplete="tel"
-            required
-          />
-          <small id="phone-hint" className="inquiry-field-hint">Після +380 введіть 9 цифр</small>
-        </label>
-      </div>
-
-      <fieldset className="inquiry-choice">
-        <legend>Як з вами зв’язатися *</legend>
-        <div>
-          {contactMethodOptions.map(([label, method]) => (
-            <label key={method}>
+      <section className="inquiry-form-section" aria-labelledby="inquiry-contact-heading">
+        <div className="inquiry-form-section-heading">
+          <span>01</span>
+          <h3 id="inquiry-contact-heading">Контакт</h3>
+        </div>
+        <div className="inquiry-form-section-body">
+          <div className="inquiry-fields inquiry-fields-two">
+            <label>
+              <span>Ваше ім’я *</span>
+              <input name="name" type="text" minLength={2} maxLength={80} autoComplete="name" required />
+            </label>
+            <label>
+              <span>Телефон *</span>
               <input
-                type="radio"
-                name="contactMethod"
-                value={method}
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                pattern="\+380[0-9]{9}"
+                maxLength={13}
+                defaultValue="+380"
+                title="Введіть номер у форматі +380XXXXXXXXX"
+                aria-describedby="phone-hint"
+                autoComplete="tel"
                 required
-                checked={contactMethod === method}
-                onChange={() => {
-                  setContactMethod(method);
-                  setStatus('');
-                  setStatusAction(null);
-                }}
               />
-              <span><ContactMethodIcon method={method} /> {label}</span>
+              <small id="phone-hint" className="inquiry-field-hint">Після +380 введіть 9 цифр</small>
             </label>
-          ))}
+          </div>
+
+          <fieldset className="inquiry-choice">
+            <legend>Як з вами зв’язатися *</legend>
+            <div>
+              {contactMethodOptions.map(([label, method]) => (
+                <label key={method}>
+                  <input
+                    type="radio"
+                    name="contactMethod"
+                    value={method}
+                    required
+                    checked={contactMethod === method}
+                    onChange={() => {
+                      setContactMethod(method);
+                      setStatus('');
+                      setStatusAction(null);
+                    }}
+                  />
+                  <span><ContactMethodIcon method={method} /> {label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </div>
-      </fieldset>
+      </section>
 
-      <label className="inquiry-select">
-        <span>Напрям робіт *</span>
-        <select name="direction" defaultValue={defaultDirection} required>
-          <option value="" disabled>Оберіть напрям</option>
-          {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
-        </select>
-      </label>
-
-      <details className="inquiry-details">
-        <summary>
-          <span>Додати деталі про об’єкт</span>
-          <ChevronDown aria-hidden="true" />
-        </summary>
-        <div className="inquiry-details-body">
-          <div className="inquiry-fields inquiry-fields-two">
-            <label>
-              <span>Місто або область</span>
-              <input name="location" type="text" maxLength={100} autoComplete="address-level1" />
-            </label>
-            <label>
-              <span>Орієнтовні розміри</span>
-              <input name="dimensions" type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
-            </label>
-          </div>
-          <div className="inquiry-fields inquiry-fields-two">
-            <label>
-              <span>Формат співпраці</span>
-              <select name="cooperation" defaultValue="">
-                <option value="">Ще не визначено</option>
-                <option>Об’єкт під ключ</option>
-                <option>Окремий етап робіт</option>
-                <option>Підряд або субпідряд</option>
-              </select>
-            </label>
-            <label>
-              <span>Бажаний початок робіт</span>
-              <input name="startDate" type="text" maxLength={80} placeholder="Наприклад: осінь 2026" />
-            </label>
-          </div>
-          <label>
-            <span>Коментар</span>
-            <textarea name="comment" rows={4} maxLength={800} placeholder="Що ще важливо знати про завдання" />
+      <section className="inquiry-form-section" aria-labelledby="inquiry-project-heading">
+        <div className="inquiry-form-section-heading">
+          <span>02</span>
+          <h3 id="inquiry-project-heading">Завдання</h3>
+        </div>
+        <div className="inquiry-form-section-body">
+          <label className="inquiry-select">
+            <span>Напрям робіт *</span>
+            <select name="direction" defaultValue={defaultDirection} required>
+              <option value="" disabled>Оберіть напрям</option>
+              {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
+            </select>
           </label>
-        </div>
-      </details>
 
-      <label className={`inquiry-consent${consentError ? ' is-invalid' : ''}`}>
-        <input
-          name="privacyConsent"
-          type="checkbox"
-          value="accepted"
-          required
-          aria-invalid={consentError}
-          aria-describedby={consentError ? 'privacy-consent-error' : undefined}
-          onInvalid={() => setConsentError(true)}
-          onChange={(event) => {
-            setConsentError(false);
-            if (event.target.checked) setConsentAt(new Date().toISOString());
-          }}
-        />
-        <span>
-          Погоджуюся на обробку персональних даних для опрацювання мого запиту відповідно до{' '}
-          <a href={siteRoutes.privacy}>Політики конфіденційності</a>.
-        </span>
-        {consentError && <small id="privacy-consent-error">Підтвердьте згоду на обробку персональних даних.</small>}
-      </label>
+          <details className="inquiry-details">
+            <summary>
+              <span>Додати деталі про об’єкт</span>
+              <ChevronDown aria-hidden="true" />
+            </summary>
+            <div className="inquiry-details-body">
+              <div className="inquiry-fields inquiry-fields-two">
+                <label>
+                  <span>Місто або область</span>
+                  <input name="location" type="text" maxLength={100} autoComplete="address-level1" />
+                </label>
+                <label>
+                  <span>Орієнтовні розміри</span>
+                  <input name="dimensions" type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
+                </label>
+              </div>
+              <div className="inquiry-fields inquiry-fields-two">
+                <label>
+                  <span>Формат співпраці</span>
+                  <select name="cooperation" defaultValue="">
+                    <option value="">Ще не визначено</option>
+                    <option>Об’єкт під ключ</option>
+                    <option>Окремий етап робіт</option>
+                    <option>Підряд або субпідряд</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Бажаний початок робіт</span>
+                  <input name="startDate" type="text" maxLength={80} placeholder="Наприклад: осінь 2026" />
+                </label>
+              </div>
+              <label>
+                <span>Коментар</span>
+                <textarea name="comment" rows={4} maxLength={800} placeholder="Що ще важливо знати про завдання" />
+              </label>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section className="inquiry-form-section inquiry-form-section-submit" aria-labelledby="inquiry-submit-heading">
+        <div className="inquiry-form-section-heading">
+          <span>03</span>
+          <h3 id="inquiry-submit-heading">Підтвердження</h3>
+        </div>
+        <div className="inquiry-form-section-body inquiry-form-submit-layout">
+          <label className={`inquiry-consent${consentError ? ' is-invalid' : ''}`}>
+            <input
+              name="privacyConsent"
+              type="checkbox"
+              value="accepted"
+              required
+              aria-invalid={consentError}
+              aria-describedby={consentError ? 'privacy-consent-error' : undefined}
+              onInvalid={() => setConsentError(true)}
+              onChange={(event) => {
+                setConsentError(false);
+                if (event.target.checked) setConsentAt(new Date().toISOString());
+              }}
+            />
+            <span>
+              Погоджуюся на обробку персональних даних для опрацювання мого запиту відповідно до{' '}
+              <a href={siteRoutes.privacy}>Політики конфіденційності</a>.
+            </span>
+            {consentError && <small id="privacy-consent-error">Підтвердьте згоду на обробку персональних даних.</small>}
+          </label>
+
+          <div className="inquiry-submit-group">
+            <button className="button button-primary inquiry-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Надсилаємо…' : 'Надіслати запит'}{' '}
+              {!isSubmitting && <Send aria-hidden="true" />}
+            </button>
+            <p className="inquiry-submit-note">
+              Заявка потрапить до нас, а обраний канал використаємо для відповіді
+            </p>
+          </div>
+        </div>
+      </section>
 
       <label className="form-trap" aria-hidden="true">
         Сайт компанії
         <input name="companyWebsite" type="text" tabIndex={-1} autoComplete="off" />
       </label>
 
-      <button className="button button-primary inquiry-submit" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Зберігаємо…' : submitLabels[contactMethod]}{' '}
-        {!isSubmitting && (contactMethod === 'Дзвінок' ? <Phone aria-hidden="true" /> : <Send aria-hidden="true" />)}
-      </button>
-      <p className="inquiry-submit-note">
-        {contactMethod === 'Дзвінок'
-          ? 'Смартфон відкриє набір номера; на ноутбуці номер буде скопійовано'
-          : contactMethod === 'Viber'
-            ? 'Відкриється Viber із коротким запитом, а повний текст буде скопійовано'
-            : `Відкриється ${contactMethod} із готовим текстом — підтвердьте надсилання`}
-      </p>
-
       <p className={`inquiry-status${status ? ' is-visible' : ''}${statusAction === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
         {status}
-        {statusAction === 'phone' && (
-          <span className="inquiry-status-actions">
-            <a href={`tel:${companyPhoneInternational}`}><Phone aria-hidden="true" /> {company.phone.display}</a>
-            <button type="button" onClick={() => void copyText(companyPhoneInternational)}>
-              <Copy aria-hidden="true" /> Скопіювати номер
-            </button>
-          </span>
-        )}
-        {statusAction === 'viber' && (
-          <span className="inquiry-status-actions">
-            <button type="button" onClick={() => void copyText(companyPhoneInternational)}>
-              <Copy aria-hidden="true" /> Скопіювати номер
-            </button>
-          </span>
-        )}
-        {statusAction === 'telegram' && (
-          <span className="inquiry-status-actions">
-            <a href={companyContactLinks.telegram} data-contact-method="telegram" target="_blank" rel="noreferrer">
-              <Send aria-hidden="true" /> Відкрити Telegram
-            </a>
-            <button type="button" onClick={() => void copyText(preparedMessage)}>
-              <Copy aria-hidden="true" /> Скопіювати запит
-            </button>
-          </span>
-        )}
         {statusAction === 'error' && (
           <span className="inquiry-status-actions">
-            <a href={`tel:${companyPhoneInternational}`}><Phone aria-hidden="true" /> {company.phone.display}</a>
+            <a href={companyContactLinks.phone}><Phone aria-hidden="true" /> {company.phone.display}</a>
           </span>
         )}
       </p>
