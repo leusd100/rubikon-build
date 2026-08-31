@@ -780,8 +780,8 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .hero-lead { margin-top: 24px; font-size: 15px; }
   .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, .72fr); align-items: stretch; gap: 12px; }
   .button { width: 100%; }
-  .hero-actions .text-link { width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; align-self: stretch; padding: 0 18px; border: 1px solid rgba(255,255,255,.38); }
-  .hero-actions .text-link span { margin-left: 0; }
+  .hero-actions .text-link { position: relative; width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: center; align-self: stretch; padding: 0 48px; border: 1px solid rgba(255,255,255,.38); text-align: center; }
+  .hero-actions .text-link span { position: absolute; right: 18px; margin-left: 0; }
   .hero-contact-card { width: 100%; padding: 15px 0 0; background: linear-gradient(90deg, rgba(12,14,13,.58), rgba(12,14,13,.12)); }
   .hero-contact-kicker { margin-bottom: 9px; }
   .hero-contact-card > a { min-height: 60px; }
