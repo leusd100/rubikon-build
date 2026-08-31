@@ -131,7 +131,15 @@ test.describe('public route smoke tests', () => {
           `${route.path} should retain its hero media`,
         ).toBeGreaterThan(0);
 
-        const heroPosterSource = await hero.locator('img.direction-hero-poster').evaluate(
+        const heroPoster = hero.locator('img.direction-hero-poster');
+
+        await expect
+          .poll(() => heroPoster.evaluate((element) => (element as HTMLImageElement).currentSrc), {
+            message: `${route.path} hero poster should finish selecting its responsive source`,
+          })
+          .not.toBe('');
+
+        const heroPosterSource = await heroPoster.evaluate(
           (element) => (element as HTMLImageElement).currentSrc,
         );
 
