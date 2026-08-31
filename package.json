@@ -11,7 +11,9 @@
     "start": "vinext start",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=desktop-chromium --project=mobile-chromium",
+    "test:visual": "playwright test --project=visual-chromium",
+    "test:visual:update": "playwright test --project=visual-chromium --update-snapshots",
     "test:lighthouse": "lhci autorun"
   },
   "dependencies": {
