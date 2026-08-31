@@ -131,14 +131,28 @@ test.describe('public route smoke tests', () => {
           `${route.path} should retain its hero media`,
         ).toBeGreaterThan(0);
 
-        const heroPosterSource = await hero.locator('img.direction-hero-poster').evaluate(
+        const heroPoster = hero.locator('img.direction-hero-poster');
+
+        await expect
+          .poll(() => heroPoster.evaluate((element) => (element as HTMLImageElement).currentSrc), {
+            message: `${route.path} hero poster should finish selecting its responsive source`,
+          })
+          .not.toBe('');
+
+        const heroPosterSource = await heroPoster.evaluate(
           (element) => (element as HTMLImageElement).currentSrc,
         );
 
         if ((page.viewportSize()?.width ?? 0) <= 760) {
-          expect(heroPosterSource, `${route.path} should use its mobile hero poster`).toContain(
-            '-768w.webp',
-          );
+          if (route.path === '/') {
+            expect(heroPosterSource, 'Home should use its dedicated phone poster').toContain(
+              '/media/about/home-phone-poster.webp',
+            );
+          } else {
+            expect(heroPosterSource, `${route.path} should use its mobile hero poster`).toContain(
+              '-768w.webp',
+            );
+          }
         } else {
           expect(heroPosterSource, `${route.path} should retain its desktop hero poster`).not.toContain(
             '-768w.webp',
@@ -178,6 +192,146 @@ test.describe('public route smoke tests', () => {
 
     await expect(page).toHaveURL(/\/#inquiry$/);
     await expect(page.locator('#inquiry')).toBeVisible();
+  });
+
+  test('homepage hero preserves poster-only media preferences', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+
+    const hero = page.locator('.hero');
+    const videos = hero.locator('video.direction-hero-video');
+    const expectedVideoCount = (page.viewportSize()?.width ?? 0) <= 600 ? 1 : 5;
+
+    await expect(videos).toHaveCount(expectedVideoCount);
+    expect(await videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))))
+      .toEqual(Array.from({ length: expectedVideoCount }, () => null));
+    await expect(hero.locator('img.direction-hero-poster')).not.toHaveClass(/is-hidden/);
+  });
+
+  test('homepage hero remains poster-only when Save-Data is enabled', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.addInitScript(() => {
+      Object.defineProperty(window.navigator, 'connection', {
+        configurable: true,
+        value: { saveData: true },
+      });
+    });
+    await page.goto('/', { waitUntil: 'load' });
+
+    const hero = page.locator('.hero');
+    const videos = hero.locator('video.direction-hero-video');
+    const expectedVideoCount = (page.viewportSize()?.width ?? 0) <= 600 ? 1 : 5;
+
+    await expect(videos).toHaveCount(expectedVideoCount);
+    expect(await videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))))
+      .toEqual(Array.from({ length: expectedVideoCount }, () => null));
+    await expect(hero.locator('img.direction-hero-poster')).not.toHaveClass(/is-hidden/);
+  });
+
+  test('homepage hero advances the five-clip montage before a clip can end', async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) <= 760, 'Phone and portrait tablet use baked montages.');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/', { waitUntil: 'load' });
+
+    const videos = page.locator('.hero video.direction-hero-video');
+    const expectedSources = [
+      '/media/about/straight-line-14377591.mp4',
+      '/media/about/blueprint.m4v',
+      '/media/about/drilling-29913842.m4v',
+      '/media/about/welding.m4v',
+      '/media/about/structure.m4v',
+    ];
+
+    await expect.poll(
+      () => videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))),
+      { timeout: 10_000 },
+    ).toEqual(expectedSources);
+    expect(
+      await videos.evaluateAll((elements) => elements.map((video) => getComputedStyle(video).position)),
+    ).toEqual(['absolute', 'absolute', 'absolute', 'absolute', 'absolute']);
+    expect(
+      await videos.evaluateAll((elements) => elements.map((video) => getComputedStyle(video).transitionDuration)),
+    ).toEqual(['0.8s', '0.8s', '0.8s', '0.8s', '0.8s']);
+    expect(
+      await page.locator('.hero').evaluate((hero) => ({
+        grid: getComputedStyle(hero.querySelector('.hero-grid') as Element).zIndex,
+        layout: getComputedStyle(hero.querySelector('.hero-layout') as Element).zIndex,
+        media: getComputedStyle(hero.querySelector('.hero-media') as Element).zIndex,
+        shade: getComputedStyle(hero.querySelector('.hero-shade') as Element).zIndex,
+      })),
+    ).toEqual({ grid: '1', layout: '2', media: '0', shade: '1' });
+    await expect.poll(
+      () => videos.nth(1).evaluate((video) => video.classList.contains('is-active')),
+      { timeout: 10_000 },
+    ).toBe(true);
+
+    const firstClip = await videos.first().evaluate((element) => {
+      const video = element as HTMLVideoElement;
+      return { currentTime: video.currentTime, duration: video.duration, ended: video.ended };
+    });
+
+    expect(firstClip.ended).toBe(false);
+    expect(firstClip.currentTime).toBeLessThan(firstClip.duration);
+    expect(await videos.evaluateAll((elements) => elements.map((video) => video.loop))).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+  });
+
+  test('homepage hero uses its dedicated phone montage', async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) > 600, 'Dedicated phone montage test.');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/', { waitUntil: 'load' });
+
+    const video = page.locator('.hero video.direction-hero-video');
+
+    await expect(video).toHaveCount(1);
+    await expect.poll(() => video.getAttribute('src'), { timeout: 10_000 })
+      .toBe('/media/about/home-phone-montage.mp4');
+    await expect.poll(
+      () => video.evaluate((element) => ({
+        height: (element as HTMLVideoElement).videoHeight,
+        width: (element as HTMLVideoElement).videoWidth,
+      })),
+      { timeout: 10_000 },
+    ).toEqual({ height: 1280, width: 720 });
+    expect(await video.evaluate((element) => (element as HTMLVideoElement).loop)).toBe(true);
+  });
+
+  test('homepage hero switches between portrait tablet and landscape media', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop browser viewport test.');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto('/', { waitUntil: 'load' });
+
+    const videos = page.locator('.hero video.direction-hero-video');
+
+    await expect(videos).toHaveCount(1);
+    await expect.poll(() => videos.first().getAttribute('src'), { timeout: 10_000 })
+      .toBe('/media/about/home-tablet-montage.mp4');
+    await expect.poll(
+      () => videos.first().evaluate((element) => ({
+        height: (element as HTMLVideoElement).videoHeight,
+        width: (element as HTMLVideoElement).videoWidth,
+      })),
+      { timeout: 10_000 },
+    ).toEqual({ height: 960, width: 720 });
+    expect(await videos.first().evaluate((element) => (element as HTMLVideoElement).loop)).toBe(true);
+
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect(videos).toHaveCount(5);
+    await expect.poll(
+      () => videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))),
+      { timeout: 10_000 },
+    ).toEqual([
+      '/media/about/straight-line-14377591.mp4',
+      '/media/about/blueprint.m4v',
+      '/media/about/drilling-29913842.m4v',
+      '/media/about/welding.m4v',
+      '/media/about/structure.m4v',
+    ]);
   });
 
   test('directions page links to every direction route', async ({ page }) => {

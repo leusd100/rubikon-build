@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { MessagesSquare, Phone } from 'lucide-react';
 import { DirectionImageCards, EngagementFormatCards } from './components/DirectionCards';
 import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
-import { DirectionHeroVideo } from './components/DirectionHeroVideo';
+import { HomeHeroVideo } from './components/HomeHeroVideo';
 import { ProjectProcessSteps } from './components/ProcessCards';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
 import { company, companyContactLinks } from './data/company';
@@ -13,12 +13,7 @@ export default function Home() {
     <main id="main-content">
       <section className="hero" id="top">
         <div className="hero-media" aria-hidden="true">
-          <DirectionHeroVideo
-            sources={['/media/hero-steel-frame.mp4']}
-            poster="/media/hero-steel-frame.webp"
-            mobilePoster="/media/hero-steel-frame-768w.webp"
-            playbackRate={0.85}
-          />
+          <HomeHeroVideo />
         </div>
         <div className="hero-shade" aria-hidden="true" />
         <div className="hero-grid" aria-hidden="true" />

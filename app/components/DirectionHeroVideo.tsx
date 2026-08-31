@@ -9,10 +9,13 @@ type DirectionHeroVideoProps = {
   mobilePoster: string;
   className?: string;
   clipDurationMs?: number;
+  fadeDurationMs?: number;
+  loopSingleSource?: boolean;
   playbackRate?: number;
+  videoMediaQuery?: string;
 };
 
-const FADE_DURATION_MS = 1100;
+const DEFAULT_FADE_DURATION_MS = 1100;
 
 export function DirectionHeroVideo({
   sources,
@@ -20,7 +23,10 @@ export function DirectionHeroVideo({
   mobilePoster,
   className,
   clipDurationMs = 6000,
+  fadeDurationMs = DEFAULT_FADE_DURATION_MS,
+  loopSingleSource = true,
   playbackRate = 1,
+  videoMediaQuery = '(min-width: 761px)',
 }: DirectionHeroVideoProps) {
   const [activeSource, setActiveSource] = useState(0);
   const [outgoingSource, setOutgoingSource] = useState<number | null>(null);
@@ -38,13 +44,13 @@ export function DirectionHeroVideo({
   const shouldAttachVideo = shouldLoadMedia && isVisible && canUseVideo;
 
   useEffect(() => {
-    const desktopMedia = window.matchMedia('(min-width: 761px)');
-    const updateVideoPreference = () => setCanUseVideo(desktopMedia.matches);
+    const preferredMedia = window.matchMedia(videoMediaQuery);
+    const updateVideoPreference = () => setCanUseVideo(preferredMedia.matches);
 
     updateVideoPreference();
-    desktopMedia.addEventListener('change', updateVideoPreference);
-    return () => desktopMedia.removeEventListener('change', updateVideoPreference);
-  }, []);
+    preferredMedia.addEventListener('change', updateVideoPreference);
+    return () => preferredMedia.removeEventListener('change', updateVideoPreference);
+  }, [videoMediaQuery]);
 
   useEffect(() => {
     activeSourceRef.current = 0;
@@ -95,7 +101,7 @@ export function DirectionHeroVideo({
         pauseTimer = setTimeout(() => {
           videoRefs.current[previousIndex]?.pause();
           setOutgoingSource((current) => current === previousIndex ? null : current);
-        }, FADE_DURATION_MS);
+        }, fadeDurationMs);
       }).catch(() => undefined);
     }, clipDurationMs);
 
@@ -106,7 +112,7 @@ export function DirectionHeroVideo({
       if (pauseTimer) clearTimeout(pauseTimer);
       document.removeEventListener('visibilitychange', playActiveVideo);
     };
-  }, [clipDurationMs, isVisible, playbackRate, shouldAttachVideo, sourceKey, sources.length]);
+  }, [clipDurationMs, fadeDurationMs, isVisible, playbackRate, shouldAttachVideo, sourceKey, sources.length]);
 
   if (!sources.length) return null;
 
@@ -153,12 +159,13 @@ export function DirectionHeroVideo({
             'direction-hero-video',
             (index === activeSource || index === outgoingSource) && readySources[index] ? 'is-active' : '',
           ].filter(Boolean).join(' ')}
+          style={{ transitionDuration: `${fadeDurationMs}ms` }}
           src={shouldAttachVideo ? source : undefined}
           autoPlay={shouldAttachVideo && index === 0}
           muted
           playsInline
           preload={shouldAttachVideo && (index === activeSource || index === nextSource) ? 'auto' : 'none'}
-          loop={sources.length === 1}
+          loop={sources.length === 1 && loopSingleSource}
           onCanPlay={(event) => {
             event.currentTarget.playbackRate = playbackRate;
             setReadySources((current) => ({ ...current, [index]: true }));

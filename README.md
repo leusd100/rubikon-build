@@ -44,12 +44,14 @@ directions hub and representative cost/FAQ sections at 375, 768 and 1440px. Afte
 visual change, review the rendered diff before updating them with
 `pnpm exec playwright test tests/e2e/visual.spec.ts --project=visual-chromium --update-snapshots=all`.
 
-Lighthouse CI runs three mobile-emulated passes against the production build for the homepage and
-`/angary`, then evaluates their median results. It fails on regressions below the current quality
-floor: performance 70, accessibility/SEO/best practices 95, CLS 0.05, LCP 5.75 seconds, 900 kB of
-transferred resources, or any browser console error. The LCP and transfer budgets remain regression
-guards on the local uncompressed server while production measurements continue to target LCP below
-3 seconds.
+Lighthouse CI runs three mobile-emulated passes per route against the production build, then
+evaluates their median results. The homepage has an intentional responsive autoplay hero and a
+6 MB transfer ceiling; `/angary` retains the strict 900 kB ceiling used for standard pages. Both
+profiles fail on regressions below the current quality floor: performance 70,
+accessibility/SEO/best practices 95, CLS 0.05, LCP 5.75 seconds, or any browser console error. Unit
+tests additionally cap each responsive Home hero video asset at 5 MB. The LCP and transfer budgets
+remain regression guards on the local uncompressed server while production measurements continue
+to target LCP below 3 seconds.
 The route smoke suite also decodes every page image, rejects failed image requests, and confirms
 that pages with responsive media actually select a generated `/media-responsive/` variant.
 

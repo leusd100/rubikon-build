@@ -1,12 +1,32 @@
 const median = 'median';
+const profileName = process.env.LHCI_PROFILE;
+const port = process.env.LHCI_PORT || '4174';
+const baseUrl = `http://127.0.0.1:${port}`;
+
+const profiles = {
+  home: {
+    maxTotalBytes: 6_000_000,
+    url: `${baseUrl}/`,
+  },
+  standard: {
+    maxTotalBytes: 900_000,
+    url: `${baseUrl}/angary`,
+  },
+};
+
+if (!profiles[profileName]) {
+  throw new Error('Set LHCI_PROFILE to either "home" or "standard".');
+}
+
+const profile = profiles[profileName];
 
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: 'pnpm start --hostname 127.0.0.1 --port 4174',
+      startServerCommand: `pnpm start --hostname 127.0.0.1 --port ${port}`,
       startServerReadyPattern: 'Production server running',
       startServerReadyTimeout: 120_000,
-      url: ['http://127.0.0.1:4174/', 'http://127.0.0.1:4174/angary'],
+      url: [profile.url],
       numberOfRuns: 3,
       settings: {
         chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage',
@@ -29,7 +49,7 @@ module.exports = {
         ],
         'total-byte-weight': [
           'error',
-          { maxNumericValue: 900_000, aggregationMethod: median },
+          { maxNumericValue: profile.maxTotalBytes, aggregationMethod: median },
         ],
         'errors-in-console': ['error', { minScore: 1, aggregationMethod: median }],
         'uses-responsive-images': ['error', { minScore: 0.5, aggregationMethod: median }],
