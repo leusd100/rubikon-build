@@ -716,6 +716,19 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .logo-option:last-child { grid-column: 1 / -1; }
 }
 
+/* Keep the full desktop header compact through the width where every item fits comfortably. */
+@media (min-width: 1051px) and (max-width: 1180px) {
+  .nav-wrap { gap: 10px; }
+  .brand { gap: 10px; }
+  .brand-frame-mark { width: 42px; height: 42px; }
+  .brand-name b { font-size: 22px; letter-spacing: .065em; }
+  .brand-name small { margin-top: 7px; font-size: 8px; letter-spacing: .17em; }
+  .desktop-nav { gap: clamp(11px, 1.25vw, 14px); font-size: clamp(14px, 1.45vw, 15px); }
+  .header-contact { padding-inline: 10px; }
+  .header-phone { min-width: 150px; }
+  .header-messengers .messenger-link { width: 40px; }
+}
+
 @media (max-width: 960px) {
   .desktop-nav { display: none; }
   .header-contacts { display: none; }
@@ -725,6 +738,12 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .footer-nav { grid-column: 1; justify-content: flex-start; flex-wrap: wrap; }
   .footer-contact-stack { grid-column: 2; grid-row: 1 / span 2; min-width: 0; }
   .footer-phone { white-space: nowrap; }
+}
+
+/* The compact desktop header reaches its safe minimum at 1001px. */
+@media (max-width: 1000px) {
+  .desktop-nav, .header-contacts { display: none; }
+  .mobile-menu { display: block; }
 }
 
 @media (min-width: 961px) and (max-width: 1050px) {
