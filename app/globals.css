@@ -626,7 +626,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
 .footer-nav { display: grid; grid-template-columns: 1fr 1fr; justify-content: start; gap: 17px 26px; padding-top: 5px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
 .footer-nav a { transition: color .2s ease; }
 .footer-nav a:hover { color: white; }
-.footer-contact-stack { display: grid; justify-items: start; justify-self: center; gap: 12px; }
+.footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
 .footer-phone { display: inline-flex; align-items: center; gap: 9px; color: white; font-size: 13px; font-weight: 700; letter-spacing: .025em; }
 .footer-phone svg { width: 17px; height: 17px; color: var(--accent); stroke-width: 1.7; }
 .footer-messengers { display: flex; gap: 7px; }
