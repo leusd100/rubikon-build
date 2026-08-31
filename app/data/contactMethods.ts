@@ -11,18 +11,21 @@ export const contactMethodOptions: ReadonlyArray<readonly [string, ContactMethod
 
 export const messengerContacts = {
   telegram: {
+    name: 'Telegram',
     label: 'Написати в Telegram',
     href: companyContactLinks.telegram,
     icon: '/brands/telegram.svg',
     shortName: 'TG',
   },
   whatsapp: {
+    name: 'WhatsApp',
     label: 'Написати в WhatsApp',
     href: companyContactLinks.whatsapp,
     icon: '/brands/whatsapp.svg',
     shortName: 'WA',
   },
   viber: {
+    name: 'Viber',
     label: 'Написати у Viber',
     href: companyContactLinks.viber,
     icon: '/brands/viber.svg',
