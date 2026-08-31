@@ -327,7 +327,6 @@ section[id] { scroll-margin-top: 116px; }
 .person-photo { position: relative; min-height: 0; aspect-ratio: 7 / 8; overflow: hidden; background: #384038; }
 .person-photo img { object-fit: cover; object-position: center top; filter: saturate(.65) contrast(1.04); }
 .person-info { position: relative; display: flex; flex-direction: column; justify-content: center; min-height: 440px; padding: clamp(44px, 6vw, 88px); }
-.person-info::before { content: ''; position: absolute; top: clamp(34px, 4vw, 58px); left: clamp(44px, 6vw, 88px); width: 74px; height: 2px; background: var(--accent); }
 .person-info > span { max-width: 440px; color: var(--accent-dark); font-size: 12px; font-weight: 800; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; }
 .person-info h3 { max-width: 620px; margin: 20px 0 24px; font: 600 clamp(34px, 3.25vw, 48px)/1.06 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .person-info p { max-width: 610px; margin: 0; color: var(--text-secondary); font-size: 15px; line-height: 1.75; }
@@ -859,7 +858,6 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .team-stories { gap: 54px; }
   .person-photo { width: 100%; min-height: 0; aspect-ratio: 3 / 4; }
   .person-info { justify-content: flex-start; padding: 28px 20px 20px; border-bottom: 0; }
-  .person-info::before { display: none; }
   .person-info > span { max-width: none; font-size: 10px; line-height: 1.45; letter-spacing: .09em; }
   .person-info h3 { margin: 18px 0; font-size: clamp(32px, 8.4vw, 38px); line-height: 1.02; }
   .person-info p, .person-info p:first-of-type { font-size: 14px; line-height: 1.65; }
