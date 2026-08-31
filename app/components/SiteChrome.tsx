@@ -87,6 +87,25 @@ export function SectionHeader({
   );
 }
 
+export function GhostWord({
+  word,
+  tone = 'light',
+  align = 'end',
+}: {
+  word: string;
+  tone?: 'light' | 'dark';
+  align?: 'start' | 'end';
+}) {
+  return (
+    <span
+      className={`ghost-word ghost-word-${tone} ghost-word-${align}`}
+      aria-hidden="true"
+    >
+      {word}
+    </span>
+  );
+}
+
 export function SectionDivider({
   variant = 'neutral',
 }: {

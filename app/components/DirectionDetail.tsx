@@ -1,4 +1,4 @@
-import { Breadcrumbs, SectionHeader } from './SiteChrome';
+import { Breadcrumbs, GhostWord, SectionHeader } from './SiteChrome';
 import InquirySection from './InquirySection';
 import ResponsiveImage from './ResponsiveImage';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
@@ -7,6 +7,14 @@ import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionSte
 import { getDirection } from '../data/directions';
 import { company } from '../data/company';
 import { siteRoutes } from '../data/navigation';
+
+const directionGhostWords: Record<DirectionPageConfig['id'], string> = {
+  angary: 'HANGAR',
+  zernoskhovyshcha: 'GRAIN',
+  metalokonstruktsii: 'STEEL',
+  'betonni-roboty': 'CONCRETE',
+  'pokrivelni-roboty': 'ROOF',
+};
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
@@ -207,7 +215,8 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
         video={config.hero.video}
       />
 
-      <section className="page-section">
+      <section className="page-section ghost-section">
+        <GhostWord word={directionGhostWords[config.id]} />
         {config.overview.layout === 'use-cases' ? (
           <>
             <SectionHeader

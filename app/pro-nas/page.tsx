@@ -1,6 +1,6 @@
 import { ClipboardCheck, FileSignature, ShieldCheck } from 'lucide-react';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
-import { Breadcrumbs, SectionHeader, TeamSection } from '../components/SiteChrome';
+import { Breadcrumbs, GhostWord, SectionHeader, TeamSection } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import ResponsiveImage from '../components/ResponsiveImage';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
@@ -49,7 +49,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="page-section about-story-section">
+      <section className="page-section about-story-section ghost-section">
+        <GhostWord word="EXPERIENCE" />
         <div className="shell story-checker about-story-checker">
           <article className="story-row">
             <div className="promise-visual about-planning-visual">
@@ -89,7 +90,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="page-section page-section-dark">
+      <section className="page-section page-section-dark ghost-section">
+        <GhostWord word="TRUST" tone="dark" align="start" />
         <div className="shell">
           <SectionHeader
             className="page-heading"

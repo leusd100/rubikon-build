@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { MessagesSquare, Phone } from 'lucide-react';
 import { DirectionImageCards, EngagementFormatCards } from './components/DirectionCards';
-import { EstimateBrief, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
+import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
 import { DirectionHeroVideo } from './components/DirectionHeroVideo';
 import { ProjectProcessSteps } from './components/ProcessCards';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
@@ -58,8 +58,8 @@ export default function Home() {
         <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>
       </section>
 
-      <section className="services section" id="services">
-        <span className="ghost-word" aria-hidden="true">STEEL</span>
+      <section className="services section ghost-section" id="services">
+        <GhostWord word="BUILD" />
         <div className="shell">
           <SectionHeader
             eyebrow="Формат участі"
@@ -71,7 +71,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="directions section" id="directions">
+      <section className="directions section ghost-section" id="directions">
+        <GhostWord word="STRUCTURE" tone="dark" align="start" />
         <div className="shell">
           <SectionHeader
             eyebrow="Сфери компетенції"
@@ -140,7 +141,8 @@ export default function Home() {
 
       <TeamSection />
 
-      <section className="process section" id="how-we-work">
+      <section className="process section ghost-section" id="how-we-work">
+        <GhostWord word="PROCESS" />
         <div className="shell">
           <SectionHeader
             eyebrow="Як ми працюємо"
