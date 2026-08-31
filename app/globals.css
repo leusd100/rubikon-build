@@ -346,7 +346,8 @@ section[id] { scroll-margin-top: 116px; }
 .contact-grid > * { min-width: 0; }
 .contact h2 { max-width: 680px; font-size: clamp(48px, 5.5vw, 78px); line-height: 1.04; }
 .contact-intro { position: sticky; top: 142px; }
-.contact-intro > p:not(.eyebrow) { max-width: 520px; margin: 30px 0 40px; color: #aeb7b0; font-size: 15px; }
+.contact-copy { min-width: 0; }
+.contact-copy > p:not(.eyebrow) { max-width: 520px; margin: 30px 0 40px; color: #aeb7b0; font-size: 15px; }
 .contact-links { border-top: 1px solid rgba(255,255,255,.15); }
 .pending-contact { display: flex; justify-content: space-between; gap: 20px; padding: 17px 0; border-bottom: 1px solid rgba(255,255,255,.15); font: 600 18px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .pending-contact b { display: inline-flex; align-items: center; gap: 13px; font: inherit; }
@@ -719,6 +720,20 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .logo-option:last-child { grid-column: 1 / -1; }
 }
 
+/* Keep the intro useful at laptop widths without leaving a tall empty column beside the form. */
+@media (max-width: 1180px) {
+  .contact-grid { grid-template-columns: minmax(0, 1fr); gap: clamp(30px, 4.5vw, 48px); }
+  .contact-intro {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(300px, .88fr);
+    align-items: end;
+    gap: clamp(32px, 5vw, 64px);
+  }
+  .contact-copy > p:not(.eyebrow) { margin-bottom: 0; }
+  .contact-links { align-self: end; }
+}
+
 /* Keep the full desktop header compact through the width where every item fits comfortably. */
 @media (min-width: 1051px) and (max-width: 1180px) {
   .nav-wrap { gap: 10px; }
@@ -767,6 +782,9 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   }
   .shell { width: min(100% - 32px, 620px); }
   .section { padding-block: var(--section-space); }
+  .contact-grid { gap: 28px; }
+  .contact-intro { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .contact-copy > p:not(.eyebrow) { margin-top: 22px; }
   .ghost-word { display: none; }
   section[id] { scroll-margin-top: 88px; }
   .nav-wrap { min-height: 76px; gap: 12px; }
@@ -909,7 +927,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
     .directions-head > p,
     .promise-lead,
     .story-support,
-    .contact-intro > p:not(.eyebrow),
+    .contact-copy > p:not(.eyebrow),
     .service-subhero-content > p:last-child,
     .subhero-side > p,
     .split-heading > p,
@@ -945,12 +963,12 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
 }
 
 /* Compact contact mode for low-height laptop viewports. */
-@media (min-width: 1051px) and (max-height: 900px) {
+@media (min-width: 1181px) and (max-height: 900px) {
   .contact.section { padding-block: 48px; }
   .contact-grid { gap: clamp(42px, 4.5vw, 68px); }
   .contact h2 { max-width: 600px; font-size: clamp(48px, 4.7vw, 64px); }
   .contact-intro { top: 118px; }
-  .contact-intro > p:not(.eyebrow) { margin: 20px 0 26px; font-size: 14px; line-height: 1.6; }
+  .contact-copy > p:not(.eyebrow) { margin: 20px 0 26px; font-size: 14px; line-height: 1.6; }
   .pending-contact { padding-block: 13px; }
   .inquiry-form { padding: 24px 28px; }
   .inquiry-form-heading { margin-bottom: 18px; padding-bottom: 14px; }
