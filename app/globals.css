@@ -840,10 +840,11 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .promise-visual { min-height: 430px; }
   .story-checker { gap: 88px; }
   .team-grid { grid-template-columns: 1fr; }
-  .team-stories { gap: 72px; }
+  .team.section { padding-bottom: 64px; }
+  .team-stories { gap: 54px; }
   .person-photo { width: 100%; min-height: 0; aspect-ratio: 3 / 4; }
-  .person-info { justify-content: flex-start; padding: 30px 20px 32px; border-bottom: 1px solid var(--border-default); }
-  .person-info::before { top: 0; left: 20px; width: 52px; }
+  .person-info { justify-content: flex-start; padding: 28px 20px 20px; border-bottom: 0; }
+  .person-info::before { display: none; }
   .person-info > span { max-width: none; font-size: 10px; line-height: 1.45; letter-spacing: .09em; }
   .person-info h3 { margin: 18px 0; font-size: clamp(32px, 8.4vw, 38px); line-height: 1.02; }
   .person-info p, .person-info p:first-of-type { font-size: 14px; line-height: 1.65; }
