@@ -41,14 +41,17 @@ export default function Home() {
             </div>
           </div>
           <div className="hero-contact-card">
-            <p>Зручний зв’язок</p>
+            <div className="hero-contact-kicker">
+              <p>Зручний зв’язок</p>
+              <span>Відповідаємо особисто</span>
+            </div>
             <a className="hero-contact-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, телефон ${company.phone.display}`}>
-              <span className="hero-contact-desktop"><small>Телефон</small><strong>{company.phone.display}</strong></span>
-              <span className="hero-contact-mobile">Зателефонувати</span>
-              <b aria-hidden="true">↗</b>
+              <span className="hero-contact-action"><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
             </a>
-            <MessengerLinks className="hero-messengers" />
-            <small>Телефон · Telegram · WhatsApp · Viber</small>
+            <div className="hero-contact-options">
+              <span>Або напишіть у месенджер</span>
+              <MessengerLinks className="hero-messengers" showFullLabels />
+            </div>
           </div>
         </div>
         <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>

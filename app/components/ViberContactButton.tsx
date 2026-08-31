@@ -5,7 +5,7 @@ import { messengerContacts } from '../data/contactMethods';
 
 const viber = messengerContacts.viber;
 
-export default function ViberContactButton() {
+export default function ViberContactButton({ showFullLabel = false }: { showFullLabel?: boolean }) {
   return (
     <button
       className="messenger-link messenger-viber"
@@ -23,7 +23,7 @@ export default function ViberContactButton() {
         alt=""
         aria-hidden="true"
       />
-      <span>{viber.shortName}</span>
+      <span>{showFullLabel ? viber.name : viber.shortName}</span>
     </button>
   );
 }

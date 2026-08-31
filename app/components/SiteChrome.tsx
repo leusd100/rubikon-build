@@ -14,7 +14,13 @@ const messengerLinks = [
   ['whatsapp', messengerContacts.whatsapp],
 ] as const;
 
-export function MessengerLinks({ className }: { className: string }) {
+export function MessengerLinks({
+  className,
+  showFullLabels = false,
+}: {
+  className: string;
+  showFullLabels?: boolean;
+}) {
   return (
     <div className={className} role="group" aria-label={`Месенджери ${company.name}`}>
       {messengerLinks.map(([kind, { label, href, icon, shortName }]) => (
@@ -29,10 +35,10 @@ export function MessengerLinks({ className }: { className: string }) {
           rel={href.startsWith('https://') ? 'noreferrer' : undefined}
         >
           <Image className="messenger-brand-icon" src={icon} width={24} height={24} alt="" aria-hidden="true" />
-          <span>{shortName}</span>
+          <span>{showFullLabels ? messengerContacts[kind].name : shortName}</span>
         </a>
       ))}
-      <ViberContactButton />
+      <ViberContactButton showFullLabel={showFullLabels} />
     </div>
   );
 }
