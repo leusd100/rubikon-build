@@ -340,8 +340,15 @@ section[id] { scroll-margin-top: 116px; }
 .steps p { margin: 0; color: var(--muted); font-size: 12px; }
 
 .contact { color: white; background: #151816; }
-.contact-grid { display: grid; grid-template-columns: minmax(0, .78fr) minmax(560px, 1.22fr); align-items: start; gap: var(--grid-gap); }
+.contact-grid { display: grid; grid-template-columns: minmax(0, .95fr) minmax(480px, 1.05fr); align-items: start; gap: var(--grid-gap); }
 .contact-grid > * { min-width: 0; }
+/* Cap the form card itself in the side-by-side desktop layout only (>1050px, see the
+   .contact-grid single-column breakpoint below) — without this the card stretches to fill
+   its whole grid column on laptop/wide screens, leaving individual inputs oddly short and
+   wide. Scoped to desktop so the single-column mobile/tablet stack is untouched. */
+@media (min-width: 1051px) {
+  .inquiry-form { max-width: 560px; }
+}
 .contact h2 { max-width: 680px; font-size: clamp(48px, 5.5vw, 78px); line-height: 1.04; }
 .contact-intro { position: sticky; top: 142px; }
 .contact-intro > p:not(.eyebrow) { max-width: 520px; margin: 30px 0 40px; color: #aeb7b0; font-size: 15px; }
