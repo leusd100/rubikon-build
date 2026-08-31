@@ -20,9 +20,10 @@ async function preparePage(page: Page, path: string) {
 
   const form = page.locator('form.inquiry-form');
   await form.getByText('Telegram', { exact: true }).click();
-  await expect(form.getByRole('button', { name: 'Написати в Telegram', exact: true })).toBeVisible();
+  await expect(form.getByRole('radio', { name: 'Telegram', exact: true })).toBeChecked();
   await form.getByText('Дзвінок', { exact: true }).click();
-  await expect(form.getByRole('button', { name: 'Зателефонувати', exact: true })).toBeVisible();
+  await expect(form.getByRole('radio', { name: 'Дзвінок', exact: true })).toBeChecked();
+  await expect(form.getByRole('button', { name: 'Надіслати запит', exact: true })).toBeVisible();
 
   await page.addStyleTag({
     content: `
