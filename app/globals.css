@@ -481,6 +481,9 @@ section[id] { scroll-margin-top: 116px; }
 .detail-card > span { color: var(--accent); font: 500 12px/1 var(--font-condensed), sans-serif; }
 .detail-card h3 { margin: 24px 0 15px; font: 600 23px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .detail-card p { margin: 0; color: var(--text-on-dark-muted); font-size: 13px; line-height: 1.7; }
+/* /pro-nas Values is 3 cards, not the 4 .detail-grid assumes elsewhere — override just this
+   instance rather than leaving a hole in the fourth column. */
+.values-grid { grid-template-columns: repeat(3, 1fr); }
 .team-compact { background: #e8e7e1; }
 
 .logo-lab { min-height: 100vh; background: var(--paper); }

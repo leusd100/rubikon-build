@@ -202,9 +202,51 @@ export function EstimateBrief() {
   );
 }
 
-export function TeamSection({ compact = false }: { compact?: boolean }) {
+type TeamVariant = 'home' | 'about';
+
+type TeamBio = { role: string; paragraphs: readonly string[] };
+
+// Two genuinely different bio sets, not one CSS toggle over one bio — Home gets a quick-trust
+// summary, `/pro-nas` gets real depth (responsibility split, how the two founders hand off to
+// each other). See the content audit's TeamSection finding for why this used to be a no-op prop.
+const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
+  home: {
+    sergii: {
+      role: 'Засновник / керівник будівельного напряму',
+      paragraphs: [
+        'Понад 30 років практичного досвіду в будівництві — від організації робіт на майданчику до контролю якості та ключових технічних рішень.',
+      ],
+    },
+    dmytro: {
+      role: 'Розвиток компанії / робота з клієнтами',
+      paragraphs: [
+        'Відповідає за розвиток RUBIKON BUILD, комунікацію з клієнтами та системну організацію роботи — від першого звернення до узгодження формату співпраці.',
+      ],
+    },
+  },
+  about: {
+    sergii: {
+      role: 'Засновник / керівник будівельного напряму',
+      paragraphs: [
+        'Понад 30 років у будівництві: від роботи безпосередньо на майданчику до організації бригад, контролю якості та відповідальних етапів на об’єктах різного масштабу. Цей практичний досвід лежить в основі підходу RUBIKON BUILD до технічних рішень і організації робіт.',
+        'Сергій Іванович залучається до оцінки ключових технічних рішень, послідовності робіт і відповідальних конструктивних вузлів у межах проєкту.',
+      ],
+    },
+    dmytro: {
+      role: 'Розвиток компанії / робота з клієнтами',
+      paragraphs: [
+        'Відповідає за розвиток RUBIKON BUILD, комунікацію з клієнтами та системну організацію роботи компанії.',
+        'Супроводжує клієнта від першого звернення: допомагає структурувати завдання, зібрати вихідні дані й підготувати питання до технічного обговорення. Стежить, щоб формат співпраці, склад робіт і межі відповідальності залишалися зрозумілими для обох сторін.',
+      ],
+    },
+  },
+};
+
+export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
+  const { sergii, dmytro } = teamContent[variant];
+
   return (
-    <section className={`team section${compact ? ' team-compact' : ''}`}>
+    <section className={`team section${variant === 'about' ? ' team-compact' : ''}`}>
       <div className="shell">
         <SectionHeader
           className="team-heading"
@@ -218,18 +260,16 @@ export function TeamSection({ compact = false }: { compact?: boolean }) {
               <Image src="/images/founder.webp" alt={`${company.founders[0]} — засновник і керівник будівельного напряму ${company.name}`} fill sizes="(max-width: 760px) 100vw, 47vw" />
             </div>
             <div className="person-info">
-              <span>ЗАСНОВНИК / КЕРІВНИК БУДІВЕЛЬНОГО НАПРЯМУ</span>
+              <span>{sergii.role}</span>
               <h3>Леус Сергій Іванович</h3>
-              <p>Понад 30 років у будівництві — від організації робіт на майданчику до управління командами й контролю якості безпосередньо на об’єктах.</p>
-              <p>У Rubikon Build відповідає за оцінку технічних рішень, послідовність виконання робіт і контроль відповідальних етапів. Практичний досвід допомагає завчасно бачити ризики та приймати рішення з урахуванням реальних умов майданчика.</p>
+              {sergii.paragraphs.map((text) => <p key={text}>{text}</p>)}
             </div>
           </article>
           <article className="person-story person-story-reverse">
             <div className="person-info">
-              <span>РОЗВИТОК КОМПАНІЇ / РОБОТА З КЛІЄНТАМИ</span>
+              <span>{dmytro.role}</span>
               <h3>Леус Дмитро Сергійович</h3>
-              <p>Відповідає за розвиток Rubikon Build, комунікацію з клієнтами, цифрові процеси та системну організацію роботи компанії.</p>
-              <p>Супроводжує комунікацію від першого звернення: допомагає сформулювати завдання, зібрати вихідні дані та узгодити наступні кроки. Працює над тим, щоб домовленості, строки й межі відповідальності були зрозумілими для клієнта на кожному етапі.</p>
+              {dmytro.paragraphs.map((text) => <p key={text}>{text}</p>)}
             </div>
             <div className="person-photo">
               <Image src="/images/next-generation.webp" alt={`${company.founders[1]} — розвиток компанії та робота з клієнтами ${company.name}`} fill sizes="(max-width: 760px) 100vw, 47vw" />
