@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { MessagesSquare, Phone } from 'lucide-react';
-import { DirectionImageCards, DirectionServiceCards } from './components/DirectionCards';
+import { DirectionImageCards, EngagementFormatCards } from './components/DirectionCards';
 import { EstimateBrief, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
 import { DirectionHeroVideo } from './components/DirectionHeroVideo';
 import { ProjectProcessSteps } from './components/ProcessCards';
@@ -62,11 +62,11 @@ export default function Home() {
         <span className="ghost-word" aria-hidden="true">STEEL</span>
         <div className="shell">
           <SectionHeader
-            eyebrow="Ключові напрямки"
+            eyebrow="Формат участі"
             title="Що можемо взяти на себе"
-            supporting="Можемо вести комплекс робіт або виконати визначений етап у межах більшого будівельного проєкту."
+            supporting="Можемо виконати комплексний обсяг робіт або долучитися до окремого етапу як підрядник чи субпідрядник. Формат і межі відповідальності погоджуємо до початку робіт."
           />
-          <DirectionServiceCards />
+          <EngagementFormatCards />
           <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
         </div>
       </section>

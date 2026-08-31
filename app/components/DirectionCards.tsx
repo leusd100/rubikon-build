@@ -1,6 +1,7 @@
 import { DraftingCompass, Hammer, Layers3, Warehouse, Wheat } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { directions, type DirectionId } from '../data/directions';
+import { engagementFormats } from '../data/engagementFormats';
 import ResponsiveImage from './ResponsiveImage';
 
 const directionIcons: Record<DirectionId, LucideIcon> = {
@@ -27,6 +28,25 @@ export function DirectionServiceCards() {
           </a>
         );
       })}
+    </div>
+  );
+}
+
+// Homepage "Формат участі" (Services) cards — reuses the existing `.cost-grid` treatment
+// (light, 4-column, non-link info cards) rather than `.service-card`, since these formats don't
+// each point at a page the way directions do. See `data/engagementFormats.ts` for why this is a
+// separate data shape instead of another view of `directions`.
+export function EngagementFormatCards() {
+  return (
+    <div className="cost-grid">
+      {engagementFormats.map(({ number, title, text, icon: Icon }) => (
+        <article key={number}>
+          <span>{number}</span>
+          <Icon className="card-icon" aria-hidden="true" />
+          <h3>{title}</h3>
+          <p>{text}</p>
+        </article>
+      ))}
     </div>
   );
 }

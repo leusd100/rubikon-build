@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileSignature, ShieldCheck, UserCheck } from 'lucide-react';
+import { ClipboardCheck, FileSignature, ShieldCheck } from 'lucide-react';
 import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
 import { Breadcrumbs, SectionHeader, TeamSection } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
@@ -99,15 +99,14 @@ export default function AboutPage() {
             inverse
           />
           <div className="detail-grid values-grid">
-            <article className="detail-card"><span>01</span><ClipboardCheck className="card-icon" aria-hidden="true" /><h3>Чесна оцінка</h3><p>Відкрито говоримо про обсяг робіт, ризики та межі відповідальності.</p></article>
-            <article className="detail-card"><span>02</span><ShieldCheck className="card-icon" aria-hidden="true" /><h3>Контроль відповідальних вузлів</h3><p>Перевіряємо те, що впливає на міцність, довговічність і безпечну експлуатацію.</p></article>
-            <article className="detail-card"><span>03</span><UserCheck className="card-icon" aria-hidden="true" /><h3>Особистий контроль</h3><p>Власники компанії залучені до ключових етапів, а не лише до першої зустрічі.</p></article>
-            <article className="detail-card"><span>04</span><FileSignature className="card-icon" aria-hidden="true" /><h3>Повага до слова</h3><p>Фіксуємо домовленості й завчасно повідомляємо про зміни, якщо вони виникають.</p></article>
+            <article className="detail-card"><span>01</span><ClipboardCheck className="card-icon" aria-hidden="true" /><h3>Прямота у складних ситуаціях</h3><p>Якщо під час підготовки або робіт змінюються вихідні умови, обсяг чи технічні вимоги, обговорюємо це до того, як рішення вплине на наступні етапи.</p></article>
+            <article className="detail-card"><span>02</span><ShieldCheck className="card-icon" aria-hidden="true" /><h3>Контроль відповідальних рішень</h3><p>Ключові конструктивні вузли та етапи не залишаємо без уваги: вони мають бути зрозумілими до переходу до наступної частини робіт.</p></article>
+            <article className="detail-card"><span>03</span><FileSignature className="card-icon" aria-hidden="true" /><h3>Чіткі межі відповідальності</h3><p>До початку робіт погоджуємо, що входить у нашу частину проєкту, а що залишається відповідальністю інших учасників.</p></article>
           </div>
         </div>
       </section>
 
-      <TeamSection compact />
+      <TeamSection variant="about" />
       <InquirySection
         eyebrow="Почнемо з розмови"
         title="Розкажіть, що потрібно побудувати"
