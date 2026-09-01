@@ -1,5 +1,5 @@
 import { ClipboardCheck, FileSignature, ShieldCheck } from 'lucide-react';
-import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
+import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, GhostWord, SectionHeader, TeamSection } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import ResponsiveImage from '../components/ResponsiveImage';
@@ -22,20 +22,7 @@ export default function AboutPage() {
     <main className="inner-page" id="main-content">
       <section className="subhero about-subhero">
         <div className="about-hero-media" aria-hidden="true">
-          <DirectionHeroVideo
-            sources={[
-              '/media/about/about-precision-9617516.mp4',
-              '/media/about/about-floor-plan-8725798.mp4',
-              '/media/about/about-grinder-14488798.mp4',
-              '/media/about/about-welding-20507417.mp4',
-              '/media/about/about-structure-40721.mp4',
-            ]}
-            poster="/media/about/about-precision-9617516-poster.webp"
-            mobilePoster="/media/about/about-precision-9617516-poster-768w.webp"
-            clipDurationMs={3800}
-            fadeDurationMs={1100}
-            playbackRate={0.85}
-          />
+          <AboutHeroVideo />
         </div>
         <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
