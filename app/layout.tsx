@@ -75,7 +75,12 @@ export const viewport: Viewport = {
 
 const organizationData = {
   '@context': 'https://schema.org',
-  '@type': 'GeneralContractor',
+  // HomeAndConstructionBusiness, not the more specific GeneralContractor — that subtype asserts
+  // a contractual role (being *the* general contractor on a job) the site doesn't claim; the
+  // company's own copy explicitly says it works as either підрядник or субпідрядник depending on
+  // the project. This parent type stays construction-specific for rich-result eligibility
+  // without the unsupported role claim.
+  '@type': 'HomeAndConstructionBusiness',
   '@id': `${company.siteUrl}/#organization`,
   name: company.name,
   alternateName: company.alternateNames,

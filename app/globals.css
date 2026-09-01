@@ -1084,6 +1084,16 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .hero-contact-card { grid-area: contact; margin-top: 0; }
 }
 
+/* 961–1050px only: the "contact" column shrinks slower than the viewport does (capped at
+   min(320px, 26vw), floored at 224px), so title/copy get proportionally squeezed and the
+   18px row-gap above reads tighter here than at 1440px — or at 768px, where the column is
+   already at its 224px floor and the ratio stops worsening. Not an overlap — verified the
+   title/contact grid rows never touch, at any width, via getBoundingClientRect — just extra
+   breathing room for this one narrow band. Scoped to leave 768px untouched. */
+@media (min-width: 961px) and (max-width: 1050px) {
+  .hero-layout { row-gap: 32px; }
+}
+
 @media (min-width: 761px) and (max-height: 700px) {
   .hero-layout { row-gap: 14px; }
   .hero h1 { font-size: clamp(48px, 4.5vw, 60px); }

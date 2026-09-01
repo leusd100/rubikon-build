@@ -72,7 +72,8 @@ export function DirectionHero({
       name,
     })),
     provider: {
-      '@type': 'GeneralContractor',
+      // Same reasoning as the organization-level schema in layout.tsx — see that comment.
+      '@type': 'HomeAndConstructionBusiness',
       name: siteName,
       url: siteUrl,
       telephone: company.phone.international,
