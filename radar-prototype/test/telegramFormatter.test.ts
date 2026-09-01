@@ -30,7 +30,7 @@ test('formatTelegramAlert produces a message containing the key facts', () => {
   assert.match(message, /Ангари та склади/);
   assert.match(message, /Дніпропетровська область/);
   assert.match(message, /2026-09-19/);
-  assert.match(message, new RegExp(opportunity.url.replace(/[/.]/g, '\\$&')));
+  assert.ok(message.includes(opportunity.url));
 });
 
 test('formatTelegramAlert handles a missing deadline without throwing', () => {
