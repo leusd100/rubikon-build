@@ -24,14 +24,16 @@ export default function AboutPage() {
         <div className="about-hero-media" aria-hidden="true">
           <DirectionHeroVideo
             sources={[
-              '/media/about/architect.m4v',
-              '/media/about/blueprint.m4v',
-              '/media/about/welding.m4v',
-              '/media/about/structure.m4v',
+              '/media/about/about-precision-9617516.mp4',
+              '/media/about/about-floor-plan-8725798.mp4',
+              '/media/about/about-grinder-14488798.mp4',
+              '/media/about/about-welding-20507417.mp4',
+              '/media/about/about-structure-40721.mp4',
             ]}
-            poster="/media/about/architect-poster.webp"
-            mobilePoster="/media/about/architect-poster-768w.webp"
+            poster="/media/about/about-precision-9617516-poster.webp"
+            mobilePoster="/media/about/about-precision-9617516-poster-768w.webp"
             clipDurationMs={3800}
+            fadeDurationMs={1100}
             playbackRate={0.85}
           />
         </div>

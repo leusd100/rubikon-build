@@ -280,6 +280,68 @@ test.describe('public route smoke tests', () => {
     ]);
   });
 
+  test('about hero advances the requested five-clip sequence before a clip can end', async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) <= 760, 'Phones retain the deferred poster-only experience.');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/pro-nas', { waitUntil: 'load' });
+
+    const videos = page.locator('.about-subhero video.direction-hero-video');
+    const expectedSources = [
+      '/media/about/about-precision-9617516.mp4',
+      '/media/about/about-floor-plan-8725798.mp4',
+      '/media/about/about-grinder-14488798.mp4',
+      '/media/about/about-welding-20507417.mp4',
+      '/media/about/about-structure-40721.mp4',
+    ];
+
+    await expect(videos).toHaveCount(5);
+    await expect.poll(
+      () => videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))),
+      { timeout: 10_000 },
+    ).toEqual(expectedSources);
+    expect(
+      await videos.evaluateAll((elements) => elements.map((video) => getComputedStyle(video).transitionDuration)),
+    ).toEqual(['1.1s', '1.1s', '1.1s', '1.1s', '1.1s']);
+    expect(
+      await page.locator('.about-subhero').evaluate((hero) => ({
+        grid: getComputedStyle(hero.querySelector('.subhero-grid') as Element).zIndex,
+        layout: getComputedStyle(hero.querySelector('.subhero-layout') as Element).zIndex,
+        overlay: getComputedStyle(hero.querySelector('.subhero-overlay') as Element).zIndex,
+        video: getComputedStyle(hero.querySelector('.direction-hero-video') as Element).zIndex,
+      })),
+    ).toEqual({ grid: '1', layout: '2', overlay: '1', video: '1' });
+    await expect.poll(
+      () => videos.nth(1).evaluate((video) => video.classList.contains('is-active')),
+      { timeout: 10_000 },
+    ).toBe(true);
+
+    const firstClip = await videos.first().evaluate((element) => {
+      const video = element as HTMLVideoElement;
+      return { currentTime: video.currentTime, duration: video.duration, ended: video.ended };
+    });
+
+    expect(firstClip.ended).toBe(false);
+    expect(firstClip.currentTime).toBeLessThan(firstClip.duration);
+    expect(await videos.evaluateAll((elements) => elements.map((video) => video.loop))).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    await expect.poll(
+      () => videos.evaluateAll((elements) => elements.map((element) => {
+        const video = element as HTMLVideoElement;
+        return {
+          duration: Number(video.duration.toFixed(1)),
+          height: video.videoHeight,
+          width: video.videoWidth,
+        };
+      })),
+      { timeout: 20_000 },
+    ).toEqual(Array.from({ length: 5 }, () => ({ duration: 4.8, height: 720, width: 1280 })));
+  });
+
   test('homepage hero uses its dedicated phone montage', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) > 600, 'Dedicated phone montage test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
