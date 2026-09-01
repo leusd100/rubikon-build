@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
-
-type AboutHeroVariant = 'desktop' | 'phone' | 'tablet';
+import { useViewportVariant, type ViewportVariant } from '../hooks/useViewportVariant';
 
 const desktopSources = [
   '/media/about/about-precision-9617516.mp4',
@@ -29,37 +27,14 @@ const variantConfig = {
     poster: '/media/about/about-tablet-poster.webp',
     mobilePoster: '/media/about/about-tablet-poster.webp',
   },
-} satisfies Record<AboutHeroVariant, {
+} satisfies Record<ViewportVariant, {
   sources: string[];
   poster: string;
   mobilePoster: string;
 }>;
 
 export function AboutHeroVideo() {
-  const [variant, setVariant] = useState<AboutHeroVariant>('desktop');
-  const [hasResolvedViewport, setHasResolvedViewport] = useState(false);
-
-  useEffect(() => {
-    const phoneMedia = window.matchMedia('(max-width: 600px)');
-    const tabletPortraitMedia = window.matchMedia(
-      '(min-width: 601px) and (max-width: 1100px) and (orientation: portrait)',
-    );
-
-    const updateVariant = () => {
-      setVariant(phoneMedia.matches ? 'phone' : tabletPortraitMedia.matches ? 'tablet' : 'desktop');
-      setHasResolvedViewport(true);
-    };
-
-    updateVariant();
-    phoneMedia.addEventListener('change', updateVariant);
-    tabletPortraitMedia.addEventListener('change', updateVariant);
-
-    return () => {
-      phoneMedia.removeEventListener('change', updateVariant);
-      tabletPortraitMedia.removeEventListener('change', updateVariant);
-    };
-  }, []);
-
+  const { variant, hasResolvedViewport } = useViewportVariant();
   const config = variantConfig[variant];
   const isDesktop = variant === 'desktop';
 
