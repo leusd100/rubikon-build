@@ -9,12 +9,12 @@ import { company } from '../data/company';
 
 export const metadata = createPageMetadata({
   path: '/napryamky',
-  title: brandedTitle('Напрями промислового будівництва у Дніпрі'),
-  description: 'Ангари, склади, зерносховища, металоконструкції, бетонні та покрівельні роботи у Дніпрі й області: під ключ або як окремий етап.',
-  socialTitle: `Напрями робіт ${company.name}`,
-  socialDescription: 'Комплексне промислове будівництво або окремі роботи у форматі підряду чи субпідряду.',
-  image: '/media/hero-steel-frame.jpg',
-  imageAlt: `Промислове будівництво ${company.name}`,
+  title: brandedTitle('Оберіть напрям будівництва у Дніпрі'),
+  description: 'Ангари, зерносховища, металоконструкції, бетонні й покрівельні роботи у Дніпрі. Оберіть напрям або опишіть завдання, якщо об’єкт поєднує кілька видів робіт.',
+  socialTitle: `Оберіть напрям будівництва — ${company.name}`,
+  socialDescription: 'П’ять напрямів промислового будівництва у Дніпрі. Один об’єкт може поєднувати кілька — підкажемо, які саме.',
+  image: '/media-responsive/directions-sequence-angary-1200w.bf92dcbc.webp',
+  imageAlt: `Промислові напрями будівництва ${company.name} — металевий каркас на будівельному майданчику`,
 });
 
 export default function DirectionsPage() {

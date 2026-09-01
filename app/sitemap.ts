@@ -6,7 +6,7 @@ import { siteRoutes } from './data/navigation';
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: siteUrl, changeFrequency: 'monthly', priority: 1 },
-    { url: `${siteUrl}${siteRoutes.directions}`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${siteUrl}${siteRoutes.directions}`, changeFrequency: 'monthly', priority: 0.7 },
     ...directions.map((direction) => ({
       url: `${siteUrl}${direction.href}`,
       changeFrequency: 'monthly' as const,
