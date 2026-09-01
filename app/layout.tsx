@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Condensed, Jost, Manrope } from 'next/font/google';
 import './globals.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
+import { SmoothScroll } from './components/SmoothScroll';
 import { company } from './data/company';
 import { directions } from './data/directions';
 
@@ -149,6 +150,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <SiteFooter />
         <AnalyticsConsent />
+        <SmoothScroll />
       </body>
     </html>
   );

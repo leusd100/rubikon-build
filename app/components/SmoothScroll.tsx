@@ -7,22 +7,23 @@ import Lenis from 'lenis';
 // as "roomy desktop" elsewhere (see the 1181px compact-contact-mode boundary in
 // globals.css) rather than inventing a new breakpoint. Tablets — including landscape,
 // which would otherwise slip under a narrower cutoff — and cramped laptop widths stay on
-// native scroll for this first pass; that's an explicit experiment-scope choice, not an
-// oversight.
+// native scroll deliberately: touch already has good native momentum scrolling, layering
+// this on top of it fights the finger rather than helping (it's also why Lenis's own
+// syncTouch default is off, not just this component's choice). Not a "for now" gap to
+// close later so much as the intended shape — desktop pointer input benefits from
+// smoothing in a way touch input doesn't.
 const DESKTOP_QUERY = '(min-width: 1181px)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 /**
- * A very restrained Lenis smooth-scroll layer, mounted only while the viewport matches
- * DESKTOP_QUERY and the user hasn't asked for reduced motion. Renders nothing and touches
- * no layout: no `wrapper`/`content` options are passed, so Lenis smooths the real
- * window/document scroll in place rather than faking position on a wrapper element —
- * sticky positioning, the native scrollbar, keyboard scrolling, and scroll restoration all
- * keep working. No custom rAF loop either (`autoRaf` lets Lenis drive its own single frame
- * loop) — this component is the smoothing foundation only, nothing scroll-triggered.
- *
- * Scope is entirely up to the caller: mount this wherever smooth-scroll should apply
- * (currently: Home only, see app/page.tsx).
+ * A very restrained Lenis smooth-scroll layer, mounted sitewide (see app/layout.tsx) but
+ * only active while the viewport matches DESKTOP_QUERY and the user hasn't asked for
+ * reduced motion. Renders nothing and touches no layout: no `wrapper`/`content` options are
+ * passed, so Lenis smooths the real window/document scroll in place rather than faking
+ * position on a wrapper element — sticky positioning, the native scrollbar, keyboard
+ * scrolling, and scroll restoration all keep working. No custom rAF loop either (`autoRaf`
+ * lets Lenis drive its own single frame loop) — this component is the smoothing foundation
+ * only, nothing scroll-triggered.
  */
 export function SmoothScroll() {
   useEffect(() => {
@@ -37,10 +38,11 @@ export function SmoothScroll() {
 
       if (shouldRun && !lenis) {
         lenis = new Lenis({
-          // Subtle: closer to native than Lenis's own default (0.1) lerp, just enough
-          // added inertia on a mouse-wheel tick to read as smoothed rather than floaty —
-          // roughly the "10-20% on top of native" the experiment asked for.
-          lerp: 0.12,
+          // Tuned live against Lenis's own 0.1 default: 0.12 read as fine on Home alone,
+          // but felt too floaty once compared side-by-side against snappier values, so
+          // settled here — enough inertia to read as smoothed, not enough to add
+          // noticeable lag on a quick scroll. Higher = less smoothing/closer to native.
+          lerp: 0.18,
           wheelMultiplier: 1,
           // Never smooth touch input — belt-and-suspenders, since this only ever mounts
           // above DESKTOP_QUERY anyway.
