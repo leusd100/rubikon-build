@@ -41,6 +41,8 @@ function collectRuntimeErrors(page: Page) {
 
 test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   test('desktop viewport (1440) mounts smooth scroll on Home', async ({ page }, testInfo) => {
+    // Desktop-only assertion (see reason string) — skipped rather than moved to its own
+    // file so it stays next to the other viewport cases it's directly comparing against.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop viewport test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -50,6 +52,7 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('laptop viewport (1366) mounts smooth scroll on Home', async ({ page }, testInfo) => {
+    // Same viewport-only rationale as the 1440 case above.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop viewport test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -59,6 +62,7 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('tablet-width viewport (1180, just under the desktop gate) stays native', async ({ page }, testInfo) => {
+    // Same viewport-only rationale as the desktop-mount cases above.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop-project viewport test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 1180, height: 900 });
@@ -68,6 +72,8 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('mobile viewport (390) stays native on Home', async ({ page }, testInfo) => {
+    // Explicit 390px is desktop-project-only by design — the real mobile device profile
+    // is covered separately below, so this isn't skipped there for lack of coverage.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Explicit 390px check; mobile-chromium covers a real device below.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 390, height: 844 });
@@ -77,6 +83,8 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('a real mobile device profile stays native on Home', async ({ page }, testInfo) => {
+    // Inverse of every other case in this file: this one only makes sense on an actual
+    // mobile device profile, so it's skipped everywhere except mobile-chromium.
     test.skip(testInfo.project.name !== 'mobile-chromium', 'Real mobile device profile.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/', { waitUntil: 'load' });
@@ -85,6 +93,7 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('reduced motion disables smooth scroll even on a desktop viewport', async ({ page }, testInfo) => {
+    // Same viewport-only rationale as the desktop-mount cases above.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop viewport test.');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -94,6 +103,7 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('crossing the desktop breakpoint mounts and destroys smooth scroll live, without errors', async ({ page }, testInfo) => {
+    // Same viewport-only rationale as the desktop-mount cases above.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop viewport test.');
     const runtimeErrors = collectRuntimeErrors(page);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -112,6 +122,7 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('other pages do not mount smooth scroll (Home-only scope)', async ({ page }, testInfo) => {
+    // Same viewport-only rationale as the desktop-mount cases above.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop viewport test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -127,6 +138,7 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('keyboard scrolling (End/Home/PageDown) still moves the page with smooth scroll active', async ({ page }, testInfo) => {
+    // Same viewport-only rationale as the desktop-mount cases above.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop viewport test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -149,6 +161,7 @@ test.describe('smooth scroll experiment (Home, desktop-only)', () => {
   });
 
   test('the hero CTA still reaches the inquiry section with smooth scroll active', async ({ page }, testInfo) => {
+    // Same viewport-only rationale as the desktop-mount cases above.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop viewport test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 1440, height: 900 });
