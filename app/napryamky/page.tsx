@@ -1,7 +1,7 @@
 import { Breadcrumbs, GhostWord, SectionHeader } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import { DirectionRouteList } from '../components/DirectionCards';
-import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
+import { DirectionsHeroImageSequence } from '../components/DirectionsHeroImageSequence';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
@@ -27,12 +27,7 @@ export default function DirectionsPage() {
   return (
     <main className="inner-page" id="main-content">
       <section className="subhero subhero-media directions-subhero">
-        <DirectionHeroVideo
-          sources={['/media/directions/directions-montage.mp4']}
-          poster="/media/directions/directions-montage-poster.webp"
-          mobilePoster="/media/directions/directions-montage-poster-768w.webp"
-          playbackRate={0.85}
-        />
+        <DirectionsHeroImageSequence />
         <div className="subhero-overlay" />
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">

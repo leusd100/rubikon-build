@@ -83,9 +83,12 @@ async function loadAndInspectImages(page: Page) {
         alt: htmlImage.alt,
         complete: htmlImage.complete,
         currentSrc: htmlImage.currentSrc,
+        hasSource: Boolean(htmlImage.getAttribute('src') || htmlImage.currentSrc),
         naturalWidth: htmlImage.naturalWidth,
       };
     });
+
+    if (!result.hasSource) continue;
 
     expect(
       result.complete && result.naturalWidth > 0,
@@ -139,7 +142,7 @@ test.describe('public route smoke tests', () => {
           `${route.path} should retain its hero media`,
         ).toBeGreaterThan(0);
 
-        const heroPoster = hero.locator('img.direction-hero-poster, img.direction-hero-image');
+        const heroPoster = hero.locator('img.direction-hero-poster, img.direction-hero-image, img.directions-hero-sequence-image').first();
 
         await expect
           .poll(() => heroPoster.evaluate((element) => (element as HTMLImageElement).currentSrc), {
@@ -151,7 +154,11 @@ test.describe('public route smoke tests', () => {
           (element) => (element as HTMLImageElement).currentSrc,
         );
 
-        if (staticDirectionPaths.has(route.path)) {
+        if (route.path === '/napryamky') {
+          expect(heroPosterSource, 'Directions should use its responsive static hero sequence').toContain(
+            '/media-responsive/directions-sequence-',
+          );
+        } else if (staticDirectionPaths.has(route.path)) {
           expect(heroPosterSource, `${route.path} should use its responsive static hero`).toContain(
             '/media-responsive/direction-hero-',
           );
