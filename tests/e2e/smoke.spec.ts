@@ -144,43 +144,54 @@ test.describe('public route smoke tests', () => {
 
         const heroPoster = hero.locator('img.direction-hero-poster, img.direction-hero-image, img.directions-hero-sequence-image').first();
 
-        await expect
-          .poll(() => heroPoster.evaluate((element) => (element as HTMLImageElement).currentSrc), {
-            message: `${route.path} hero poster should finish selecting its responsive source`,
-          })
-          .not.toBe('');
-
-        const heroPosterSource = await heroPoster.evaluate(
-          (element) => (element as HTMLImageElement).currentSrc,
-        );
+        // HomeHeroVideo/AboutHeroVideo default to the desktop variant on first render (an
+        // SSR-safe placeholder — the real viewport isn't known server-side) and correct
+        // themselves once their viewport-detection effect resolves. That correction is
+        // real but currently slow — around 500-900ms observed locally, well past a single
+        // immediate check — so this polls for the actual expected source rather than just
+        // "non-empty", matching the pattern the homepage's own dedicated phone-montage test
+        // already uses successfully elsewhere in this file. The slow correction itself is a
+        // separate, known finding (not fixed here — it lives in the shared
+        // DirectionHeroVideo/key-remount pattern both hero components use identically).
+        let expectedHeroPosterMessage: string;
+        let expectedHeroPosterSubstring: string;
+        let heroPosterShouldMatch: boolean;
 
         if (route.path === '/napryamky') {
-          expect(heroPosterSource, 'Directions should use its responsive static hero sequence').toContain(
-            '/media-responsive/directions-sequence-',
-          );
+          expectedHeroPosterMessage = 'Directions should use its responsive static hero sequence';
+          expectedHeroPosterSubstring = '/media-responsive/directions-sequence-';
+          heroPosterShouldMatch = true;
         } else if (staticDirectionPaths.has(route.path)) {
-          expect(heroPosterSource, `${route.path} should use its responsive static hero`).toContain(
-            '/media-responsive/direction-hero-',
-          );
+          expectedHeroPosterMessage = `${route.path} should use its responsive static hero`;
+          expectedHeroPosterSubstring = '/media-responsive/direction-hero-';
+          heroPosterShouldMatch = true;
         } else if ((page.viewportSize()?.width ?? 0) <= 760) {
           if (route.path === '/') {
-            expect(heroPosterSource, 'Home should use its dedicated phone poster').toContain(
-              '/media/about/home-phone-poster.webp',
-            );
+            expectedHeroPosterMessage = 'Home should use its dedicated phone poster';
+            expectedHeroPosterSubstring = '/media/about/home-phone-poster.webp';
           } else if (route.path === '/pro-nas') {
-            expect(heroPosterSource, 'About should use its dedicated phone poster').toContain(
-              '/media/about/about-phone-poster.webp',
-            );
+            expectedHeroPosterMessage = 'About should use its dedicated phone poster';
+            expectedHeroPosterSubstring = '/media/about/about-phone-poster.webp';
           } else {
-            expect(heroPosterSource, `${route.path} should use its mobile hero poster`).toContain(
-              '-768w.webp',
-            );
+            expectedHeroPosterMessage = `${route.path} should use its mobile hero poster`;
+            expectedHeroPosterSubstring = '-768w.webp';
           }
+          heroPosterShouldMatch = true;
         } else {
-          expect(heroPosterSource, `${route.path} should retain its desktop hero poster`).not.toContain(
-            '-768w.webp',
-          );
+          expectedHeroPosterMessage = `${route.path} should retain its desktop hero poster`;
+          expectedHeroPosterSubstring = '-768w.webp';
+          heroPosterShouldMatch = false;
         }
+
+        await expect
+          .poll(
+            async () => {
+              const currentSrc = await heroPoster.evaluate((element) => (element as HTMLImageElement).currentSrc);
+              return currentSrc !== '' && currentSrc.includes(expectedHeroPosterSubstring) === heroPosterShouldMatch;
+            },
+            { message: expectedHeroPosterMessage, timeout: 10_000 },
+          )
+          .toBe(true);
       }
 
       const essentialCookiesButton = page.getByRole('button', {

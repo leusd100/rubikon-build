@@ -125,7 +125,7 @@ export function SiteHeader() {
           {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
         <div className="header-contacts" aria-label="Контакти компанії">
-          <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Телефон ${company.phone.display} — зателефонувати`}>
+          <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Телефон, ${company.phone.display}`}>
             <Phone aria-hidden="true" />
             <span><small>Телефон</small><strong>{company.phone.display}</strong></span>
           </a>
