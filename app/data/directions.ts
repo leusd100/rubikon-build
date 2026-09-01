@@ -1,4 +1,5 @@
 import { brandedTitle } from '../lib/seo';
+import { directionHeroImageAssets, type DirectionHeroImageAsset } from './directionHeroImageManifest';
 
 export type DirectionId =
   | 'angary'
@@ -21,6 +22,7 @@ export type Direction = {
   image: string;
   heroPoster: string;
   heroPosterMobile: string;
+  heroImage: DirectionHeroImageAsset;
   imageAlt: string;
   cardClassName: string;
   seoTitle: string;
@@ -42,6 +44,7 @@ export const directions: readonly Direction[] = [
     image: '/media/concepts/direction-hangars-v2.jpg',
     heroPoster: '/media/directions/hangars-poster.webp',
     heroPosterMobile: '/media/directions/hangars-poster-768w.webp',
+    heroImage: directionHeroImageAssets.angary,
     imageAlt: 'Каркас промислового ангара з повторюваними сталевими рамами',
     cardClassName: 'wide',
     seoTitle: brandedTitle('Ангари та склади у Дніпрі'),
@@ -61,6 +64,7 @@ export const directions: readonly Direction[] = [
     image: '/media/concepts/direction-grain-v2.jpg',
     heroPoster: '/media/directions/grain-poster.webp',
     heroPosterMobile: '/media/directions/grain-poster-768w.webp',
+    heroImage: directionHeroImageAssets.zernoskhovyshcha,
     imageAlt: 'Конструкція зерносховища з оцинкованим силосом і сталевими опорами',
     cardClassName: 'tall',
     seoTitle: brandedTitle('Зерносховища у Дніпрі'),
@@ -80,6 +84,7 @@ export const directions: readonly Direction[] = [
     image: '/media/concepts/direction-steel-v2.jpg',
     heroPoster: '/media/directions/steel-poster.webp',
     heroPosterMobile: '/media/directions/steel-poster-768w.webp',
+    heroImage: directionHeroImageAssets.metalokonstruktsii,
     imageAlt: 'Болтовий вузол несучої металоконструкції з фасонними пластинами',
     cardClassName: 'compact',
     seoTitle: brandedTitle('Металоконструкції у Дніпрі'),
@@ -99,6 +104,7 @@ export const directions: readonly Direction[] = [
     image: '/media/concepts/direction-concrete-v2.jpg',
     heroPoster: '/media/directions/concrete-poster.webp',
     heroPosterMobile: '/media/directions/concrete-poster-768w.webp',
+    heroImage: directionHeroImageAssets['betonni-roboty'],
     imageAlt: 'Армування промислового фундаменту з анкерною групою',
     cardClassName: 'concrete',
     seoTitle: brandedTitle('Бетонні роботи у Дніпрі'),
@@ -118,6 +124,7 @@ export const directions: readonly Direction[] = [
     image: '/media/concepts/direction-roofing-v2.jpg',
     heroPoster: '/media/directions/roofing-poster.webp',
     heroPosterMobile: '/media/directions/roofing-poster-768w.webp',
+    heroImage: directionHeroImageAssets['pokrivelni-roboty'],
     imageAlt: 'Монтаж вузла металевої покрівлі промислової споруди',
     cardClassName: 'roof',
     seoTitle: brandedTitle('Покрівельні роботи у Дніпрі'),
