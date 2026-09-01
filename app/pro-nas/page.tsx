@@ -1,5 +1,5 @@
 import { ClipboardCheck, FileSignature, ShieldCheck } from 'lucide-react';
-import { DirectionHeroVideo } from '../components/DirectionHeroVideo';
+import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, GhostWord, SectionHeader, TeamSection } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import ResponsiveImage from '../components/ResponsiveImage';
@@ -22,18 +22,7 @@ export default function AboutPage() {
     <main className="inner-page" id="main-content">
       <section className="subhero about-subhero">
         <div className="about-hero-media" aria-hidden="true">
-          <DirectionHeroVideo
-            sources={[
-              '/media/about/architect.m4v',
-              '/media/about/blueprint.m4v',
-              '/media/about/welding.m4v',
-              '/media/about/structure.m4v',
-            ]}
-            poster="/media/about/architect-poster.webp"
-            mobilePoster="/media/about/architect-poster-768w.webp"
-            clipDurationMs={3800}
-            playbackRate={0.85}
-          />
+          <AboutHeroVideo />
         </div>
         <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
