@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceManifest';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
 
-const CLIP_DURATION_MS = 4000;
-const FADE_DURATION_MS = 700;
+const CLIP_DURATION_MS = 3000;
+const FADE_DURATION_MS = 2000;
 
 export function DirectionsHeroImageSequence() {
   const [activeIndex, setActiveIndex] = useState(0);
