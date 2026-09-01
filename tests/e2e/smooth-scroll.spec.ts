@@ -121,6 +121,8 @@ test.describe('smooth scroll (sitewide, desktop-only)', () => {
   });
 
   test('other pages mount smooth scroll on desktop, stay native on mobile (sitewide scope)', async ({ page }, testInfo) => {
+    // Same viewport-only rationale as the desktop-mount cases above — this test sets both
+    // a desktop and a mobile viewport itself, so it doesn't need the mobile-chromium project.
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Sets both a desktop and a mobile viewport itself, see below.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
 
