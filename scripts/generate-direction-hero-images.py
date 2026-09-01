@@ -14,16 +14,24 @@ import os
 from PIL import Image
 
 
-SRC_DIR = "public/media/direction-hero-source"
 OUT_DIR = "public/media-responsive"
 WIDTHS = [480, 768, 1200, 1536]
 QUALITY = 90
-FILES = [
-    "angary.png",
-    "zernoskhovyshcha.png",
-    "metalokonstruktsii.png",
-    "betonni-roboty.png",
-    "pokrivelni-roboty.png",
+IMAGE_SETS = [
+    ("public/media/direction-hero-source", "direction-hero", [
+        "angary.png",
+        "zernoskhovyshcha.png",
+        "metalokonstruktsii.png",
+        "betonni-roboty.png",
+        "pokrivelni-roboty.png",
+    ]),
+    ("public/media/directions-sequence-source", "directions-sequence", [
+        "angary.png",
+        "zernoskhovyshcha.png",
+        "metalokonstruktsii.png",
+        "betonni-roboty.png",
+        "pokrivelni-roboty.png",
+    ]),
 ]
 
 
@@ -31,27 +39,28 @@ def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     results = []
 
-    for filename in FILES:
-        source_path = os.path.join(SRC_DIR, filename)
-        base = filename.rsplit(".", 1)[0]
-        image = Image.open(source_path).convert("RGB")
-        source_width, source_height = image.size
+    for source_dir, output_prefix, files in IMAGE_SETS:
+        for filename in files:
+            source_path = os.path.join(source_dir, filename)
+            base = filename.rsplit(".", 1)[0]
+            image = Image.open(source_path).convert("RGB")
+            source_width, source_height = image.size
 
-        for width in WIDTHS:
-            target_width = min(width, source_width)
-            target_height = round(source_height * (target_width / source_width))
-            resized = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
+            for width in WIDTHS:
+                target_width = min(width, source_width)
+                target_height = round(source_height * (target_width / source_width))
+                resized = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
 
-            buffer = io.BytesIO()
-            resized.save(buffer, format="WEBP", quality=QUALITY, method=6)
-            encoded = buffer.getvalue()
-            digest = hashlib.sha256(encoded).hexdigest()[:8]
-            output_name = f"direction-hero-{base}-{width}w.{digest}.webp"
+                buffer = io.BytesIO()
+                resized.save(buffer, format="WEBP", quality=QUALITY, method=6)
+                encoded = buffer.getvalue()
+                digest = hashlib.sha256(encoded).hexdigest()[:8]
+                output_name = f"{output_prefix}-{base}-{width}w.{digest}.webp"
 
-            with open(os.path.join(OUT_DIR, output_name), "wb") as output:
-                output.write(encoded)
+                with open(os.path.join(OUT_DIR, output_name), "wb") as output:
+                    output.write(encoded)
 
-            results.append((filename, output_name, len(encoded)))
+                results.append((f"{output_prefix}/{filename}", output_name, len(encoded)))
 
     total_bytes = sum(result[2] for result in results)
     print(f"Generated {len(results)} files, total {total_bytes / 1024:.1f} KiB")
