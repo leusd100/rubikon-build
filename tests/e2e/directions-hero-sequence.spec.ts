@@ -28,15 +28,35 @@ test('directions static hero sequence crossfades in the approved order without v
     { timeout: 2_000 },
   ).toEqual([true, false, false, false, false]);
 
+  // Progressive loading, one slide ahead of whatever's active — not all 5 at once. Only the
+  // active slide (0) and the next one up (1) should have a real source this early.
   await expect.poll(
     () => frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))),
     { timeout: 2_000 },
-  ).toEqual(sequenceNames.map((name) => expect.stringContaining(`directions-sequence-${name}`)));
+  ).toEqual([
+    expect.stringContaining(`directions-sequence-${sequenceNames[0]}`),
+    expect.stringContaining(`directions-sequence-${sequenceNames[1]}`),
+    null,
+    null,
+    null,
+  ]);
 
   await expect.poll(
     () => frames.evaluateAll((images) => images.map((image) => image.classList.contains('is-active'))),
     { timeout: 6_000 },
   ).toEqual([false, true, false, false, false]);
+
+  // By the time slide 1 becomes active, slide 2 should already be unlocked one step ahead of
+  // it (same monotonic rule) — slides 3/4 still shouldn't have loaded yet.
+  await expect.poll(
+    () => frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))),
+  ).toEqual([
+    expect.stringContaining(`directions-sequence-${sequenceNames[0]}`),
+    expect.stringContaining(`directions-sequence-${sequenceNames[1]}`),
+    expect.stringContaining(`directions-sequence-${sequenceNames[2]}`),
+    null,
+    null,
+  ]);
 
   expect(mediaRequests).toEqual([]);
 });

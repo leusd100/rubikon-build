@@ -25,7 +25,6 @@ export type DirectionPageConfig = {
     title: string;
     accent: string;
     intro: string;
-    video: string;
   };
   overview: DirectionOverview;
   editorial: {
