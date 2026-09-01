@@ -1,10 +1,11 @@
 import { Breadcrumbs, GhostWord, SectionHeader } from './SiteChrome';
 import InquirySection from './InquirySection';
 import ResponsiveImage from './ResponsiveImage';
-import { DirectionHeroVideo } from './DirectionHeroVideo';
+import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
 import { getDirection } from '../data/directions';
+import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
 import { company } from '../data/company';
 import { siteRoutes } from '../data/navigation';
 
@@ -46,9 +47,7 @@ type DirectionHeroProps = {
   title: string;
   accent: string;
   intro: string;
-  poster: string;
-  mobilePoster: string;
-  video: string;
+  heroImage: DirectionHeroImageAsset;
 };
 
 export function DirectionHero({
@@ -58,9 +57,7 @@ export function DirectionHero({
   title,
   accent,
   intro,
-  poster,
-  mobilePoster,
-  video,
+  heroImage,
 }: DirectionHeroProps) {
   const serviceData = {
     '@context': 'https://schema.org',
@@ -69,7 +66,7 @@ export function DirectionHero({
     serviceType: title,
     description: intro,
     url: absoluteUrl(path),
-    image: absoluteUrl(poster),
+    image: absoluteUrl(heroImage.fallbackSrc),
     areaServed: company.serviceAreas.map((name, index) => ({
       '@type': index === 0 ? 'AdministrativeArea' : 'Country',
       name,
@@ -86,13 +83,7 @@ export function DirectionHero({
     <section className="service-subhero">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
-        <DirectionHeroVideo
-          key={video}
-          sources={[video]}
-          poster={poster}
-          mobilePoster={mobilePoster}
-          playbackRate={0.85}
-        />
+        <DirectionHeroImage asset={heroImage} />
       </div>
       <div className="service-subhero-overlay" />
       <div className="subhero-grid" aria-hidden="true" />
@@ -210,9 +201,7 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
         title={config.hero.title}
         accent={config.hero.accent}
         intro={config.hero.intro}
-        poster={direction.heroPoster}
-        mobilePoster={direction.heroPosterMobile}
-        video={config.hero.video}
+        heroImage={direction.heroImage}
       />
 
       <section className="page-section ghost-section">

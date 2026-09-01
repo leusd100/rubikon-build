@@ -7,6 +7,14 @@ type PublicRoute = {
   hasResponsiveImages: boolean;
 };
 
+const staticDirectionPaths = new Set([
+  '/angary',
+  '/zernoskhovyshcha',
+  '/metalokonstruktsii',
+  '/betonni-roboty',
+  '/pokrivelni-roboty',
+]);
+
 const publicRoutes: PublicRoute[] = [
   { path: '/', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
   { path: '/napryamky', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: false },
@@ -131,7 +139,7 @@ test.describe('public route smoke tests', () => {
           `${route.path} should retain its hero media`,
         ).toBeGreaterThan(0);
 
-        const heroPoster = hero.locator('img.direction-hero-poster');
+        const heroPoster = hero.locator('img.direction-hero-poster, img.direction-hero-image');
 
         await expect
           .poll(() => heroPoster.evaluate((element) => (element as HTMLImageElement).currentSrc), {
@@ -143,7 +151,11 @@ test.describe('public route smoke tests', () => {
           (element) => (element as HTMLImageElement).currentSrc,
         );
 
-        if ((page.viewportSize()?.width ?? 0) <= 760) {
+        if (staticDirectionPaths.has(route.path)) {
+          expect(heroPosterSource, `${route.path} should use its responsive static hero`).toContain(
+            '/media-responsive/direction-hero-',
+          );
+        } else if ((page.viewportSize()?.width ?? 0) <= 760) {
           if (route.path === '/') {
             expect(heroPosterSource, 'Home should use its dedicated phone poster').toContain(
               '/media/about/home-phone-poster.webp',

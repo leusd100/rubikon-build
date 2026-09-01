@@ -482,6 +482,7 @@ section[id] { scroll-margin-top: 116px; }
 .service-subhero-media { position: absolute; inset: 0; }
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
+.direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%) !important; }
 .service-subhero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,9,10,.95), rgba(8,9,10,.72) 52%, rgba(8,9,10,.18)), linear-gradient(0deg, rgba(8,9,10,.72), transparent 64%); }
 .service-subhero-content { position: relative; z-index: 2; padding-top: 190px; padding-bottom: 84px; }
 .service-subhero-content h1 { max-width: 1040px; }
@@ -906,6 +907,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .subhero-side > p { font-size: 15px; }
   .subhero-stats { max-width: 360px; margin-top: 30px; }
   .service-subhero-content { padding-top: 150px; padding-bottom: 58px; }
+  .direction-hero-image { object-position: var(--direction-hero-image-position-mobile, center 60%) !important; }
   .service-subhero-content > p:last-child { margin-top: 26px; font-size: 15px; }
   .page-section { padding-block: var(--section-space); }
   .page-two-col, .split-heading, .faq-grid, .page-cta-grid { grid-template-columns: 1fr; gap: 44px; }
