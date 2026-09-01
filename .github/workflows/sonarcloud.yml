@@ -30,6 +30,26 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 11.19.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Generates coverage/lcov.info, which sonar.javascript.lcov.reportPaths in
+      # sonar-project.properties points the scan step at. Only the plain unit suite runs
+      # here — this workflow doesn't need build/e2e/Lighthouse, those are quality.yml's job.
+      - name: Unit tests with coverage
+        run: pnpm test:unit:coverage
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
