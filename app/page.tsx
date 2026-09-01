@@ -5,12 +5,15 @@ import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } 
 import { HomeHeroVideo } from './components/HomeHeroVideo';
 import { ProjectProcessSteps } from './components/ProcessCards';
 import ProjectInquiryForm from './components/ProjectInquiryForm';
+import { SmoothScroll } from './components/SmoothScroll';
 import { company, companyContactLinks } from './data/company';
 import { siteRoutes } from './data/navigation';
 
 export default function Home() {
   return (
     <main id="main-content">
+      {/* Experimental: desktop-only smooth scroll, Home page only for this first pass. */}
+      <SmoothScroll />
       <section className="hero" id="top">
         <div className="hero-media" aria-hidden="true">
           <HomeHeroVideo />
