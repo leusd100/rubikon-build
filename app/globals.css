@@ -576,13 +576,17 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 .dark-note { color: var(--muted); }
 
 .estimate-brief { color: var(--ink); background: #e8e7e1; }
-.estimate-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(42px, 6vw, 88px); margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(21,24,22,.22); }
-.estimate-list li { display: grid; grid-template-columns: 46px 42px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 16px; align-items: start; padding: 30px 0 32px; border-bottom: 1px solid rgba(21,24,22,.22); }
+/* Single-column, deliberately compact — this sits beside .copy-column's statement as a quick
+   checklist, not another full-weight card grid. Row padding/heading size are intentionally
+   smaller than .feature-list's: the point of this composition is that it reads lighter than
+   Process, not that it repeats Process's weight in a narrower column. */
+.estimate-list { display: grid; grid-template-columns: 1fr; margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(21,24,22,.22); }
+.estimate-list li { display: grid; grid-template-columns: 38px 30px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 14px; align-items: start; padding: 20px 0; border-bottom: 1px solid rgba(21,24,22,.22); }
 .estimate-list span, .cost-grid span { color: var(--accent-dark); font: 600 14px/1.4 var(--font-condensed), sans-serif; }
 .estimate-list span { grid-row: 1 / span 2; }
-.brief-icon { grid-row: 1 / span 2; display: block; width: 36px; height: 36px; color: var(--accent-dark); stroke-width: 1.45; }
-.estimate-list h3 { margin: 0 0 10px; font: 600 23px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.estimate-list p { margin: 0; color: var(--text-muted); font-size: 13px; line-height: 1.7; }
+.brief-icon { grid-row: 1 / span 2; display: block; width: 28px; height: 28px; color: var(--accent-dark); stroke-width: 1.45; }
+.estimate-list h3 { margin: 0 0 6px; font: 600 17px/1.15 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.estimate-list p { margin: 0; color: var(--text-muted); font-size: 13px; line-height: 1.65; }
 .cost-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(21,24,22,.17); border-left: 1px solid rgba(21,24,22,.17); }
 .cost-grid article { min-height: 275px; padding: 28px; border-right: 1px solid rgba(21,24,22,.17); border-bottom: 1px solid rgba(21,24,22,.17); }
 .cost-grid h3 { font: 600 22px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
@@ -923,11 +927,10 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .direction-editorial-copy h2 { font-size: var(--title-section); }
   .direction-editorial-copy > p:not(.eyebrow) { margin-top: 22px; font-size: 14px; }
   .direction-editorial-media { min-height: 0; aspect-ratio: 3 / 2; border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 10px 10px 0 rgba(197,83,41,.1); }
-  .estimate-list, .cost-grid { grid-template-columns: 1fr; }
+  .cost-grid { grid-template-columns: 1fr; }
   .detail-card, .detail-steps li, .use-case-grid article { min-height: 245px; }
   .cost-grid article { min-height: 230px; }
   .detail-card h3, .detail-steps h3, .use-case-grid h3, .cost-grid h3 { margin-top: 64px; }
-  .estimate-list li { grid-template-columns: 38px 38px minmax(0, 1fr); column-gap: 12px; padding-block: 26px; }
   .route-service { grid-template-columns: 48px 1fr 30px; min-height: 190px; gap: 12px; }
   .route-service h3 { font-size: 25px; }
   .route-service p { font-size: 13px; }
