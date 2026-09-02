@@ -602,6 +602,20 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 .cost-grid p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .cost-section { background: #efeee8; }
 
+/* Cost factors on direction pages — deliberately NOT .cost-grid (that class is untouched, still
+   used by the homepage Services section). Process, right above this, is a sequence: four equal
+   bordered cards is the correct shape for four ordered steps. Cost factors are simultaneous
+   considerations, not steps — a full-width band list reads as a technical spec sheet instead of
+   a second copy of Process's card grid. Index mark stays small and de-emphasized (not a bold
+   01-04) since these aren't ranked; the icon that DirectionItemCards always renders is hidden
+   here on purpose — restrained/typographic rather than repeating Process's icon-per-item look. */
+.cost-list { border-top: 1px solid rgba(21,24,22,.17); }
+.cost-list article { display: grid; grid-template-columns: 34px minmax(160px, .34fr) minmax(0, 1fr); column-gap: 24px; align-items: baseline; padding: 24px 0; border-bottom: 1px solid rgba(21,24,22,.17); }
+.cost-list .card-icon { display: none; }
+.cost-list span { color: var(--text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
+.cost-list h3 { margin: 0; font: 600 19px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.cost-list p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+
 /* Related directions — compact cross-navigation between adjacent stages of one object.
    Reuses the .cost-grid hairline vocabulary (container border-top/left, cell border-right/bottom)
    so it reads as part of the existing system; capped column width keeps it visibly lighter than
@@ -944,6 +958,9 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .detail-card, .detail-steps li, .use-case-grid article { min-height: 245px; }
   .cost-grid article { min-height: 230px; }
   .detail-card h3, .detail-steps h3, .use-case-grid h3, .cost-grid h3 { margin-top: 64px; }
+  .cost-list article { grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 12px; padding: 18px 0; }
+  .cost-list h3 { grid-column: 2; }
+  .cost-list p { grid-column: 1 / -1; margin-top: 8px; }
   .route-service { grid-template-columns: 48px 1fr 30px; min-height: 190px; gap: 12px; }
   .route-service h3 { font-size: 25px; }
   .route-service p { font-size: 13px; }
