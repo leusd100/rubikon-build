@@ -243,8 +243,7 @@
   transition: stroke var(--duration-fast) var(--ease-premium), stroke-width var(--duration-fast) var(--ease-premium), fill var(--duration-medium) var(--ease-premium), opacity var(--duration-medium) var(--ease-premium);
 }
 
-.hc-layer.is-active polygon,
-.hc-foundation.is-active {
+.hc-layer.is-active polygon {
   stroke: var(--accent);
   stroke-width: 2.25;
 }
@@ -260,9 +259,14 @@
 
 .hc-foundation { fill: rgba(28, 31, 30, .85); }
 
+/* Deliberately short of fully opaque even once "has-fill" — an enclosed shell must still read as
+   built-up, not become a flat solid box. Each segment's own stroke (from `.hc-layer polygon`
+   above) already outlines every bay seam regardless of fill, and the frame (columns/trusses/
+   purlins) is painted after these groups in the DOM specifically so it stays visible on top —
+   this fill-opacity is the third leg of "the structural logic stays readable after enclosure". */
 .hc-top polygon.has-roof,
 .hc-side polygon.has-walls,
-.hc-front polygon.has-walls { fill-opacity: 1; }
+.hc-front polygon.has-walls { fill-opacity: .88; }
 
 .hc-top polygon.no-roof { fill: none; stroke-dasharray: 4 4; }
 .hc-side polygon.no-walls,
@@ -274,38 +278,53 @@
 .hc-envelope-insulated polygon.has-roof,
 .hc-envelope-insulated polygon.has-walls { fill: url(#hc-pattern-insulated); }
 
+/* `fill-opacity`, not `opacity` — `opacity` is reserved for the build-up lifecycle's fade (see
+   .hc-buildlayer below); using it here too would fight that transition every time this envelope
+   choice is active (confirmed live: the two would compete for the same computed property). */
 .hc-envelope-undecided polygon.has-roof,
-.hc-envelope-undecided polygon.has-walls { fill: url(#hc-pattern-undecided); opacity: .8; }
+.hc-envelope-undecided polygon.has-walls { fill: url(#hc-pattern-undecided); fill-opacity: .8; }
 
 .hc-pattern-base { fill: #4b5563; }
 .hc-pattern-line { stroke: rgba(255, 255, 255, .28); stroke-width: 1; }
 
+/* Gates: the final, lowest-emphasis reveal — already the shortest duration and smallest stagger
+   span in buildUpSequence.ts; no separate visual treatment needed beyond that and the existing
+   dark, low-contrast fill/outline below. */
 .hc-gate { fill: #0e1110; }
 .hc-gate-outline polygon {
   fill: none;
   stroke: var(--text-on-dark-muted);
   stroke-width: 1;
-  transition: stroke var(--duration-fast) var(--ease-premium), stroke-width var(--duration-fast) var(--ease-premium);
 }
-.hc-gate-outline.is-active polygon { stroke: var(--accent); stroke-width: 2; }
 
+/* Columns/trusses read as the primary structural moment (full stroke weight); purlins are
+   deliberately lighter — thinner stroke on top of their already-faster/smaller timing budget in
+   buildUpSequence.ts — so secondary structure never competes visually with the primary frame. */
 .hc-columns line,
-.hc-trusses line,
-.hc-purlins line {
+.hc-trusses line {
   stroke: var(--text-on-dark-muted);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
-  transition: stroke var(--duration-fast) var(--ease-premium), stroke-width var(--duration-fast) var(--ease-premium);
 }
-.hc-purlins.is-active line { stroke: var(--accent); stroke-width: 1.75; }
+.hc-purlins line {
+  stroke: var(--text-on-dark-subtle);
+  stroke-width: .75;
+  vector-effect: non-scaling-stroke;
+}
 
-/* ---------- Build-up layers (Phase 2A: foundation/columns/trusses) ----------
-   Every lifecycle-driven element stays in the DOM across every phase (never conditionally
-   unmounted) specifically so hidden→materializing has a real "from" state to animate out of — a
-   freshly-mounted element has nothing to transition from. `transitionDuration`/`transitionDelay`
-   arrive as inline styles from useLayerLifecycle (already zeroed under reduced motion, stagger
-   included per element) so this stylesheet only needs to declare *which* CSS properties
-   transition and their two endpoint values. */
+/* ---------- Build-up layers ----------
+   Every scope-driven layer (foundation/columns/trusses/purlins/walls/roof/gates) shares this one
+   set of rules — no per-layer animation system, only the phase class and the inline
+   transitionDuration/transitionDelay from useLayerLifecycle differ per element. Every element
+   stays in the DOM across all four phases (never conditionally unmounted) specifically so
+   hidden→materializing has a real "from" state to animate out of — a freshly-mounted element has
+   nothing to transition from.
+   `transition-property` is declared here at low specificity (one class) so it composes with, and
+   is easily overridden by, a more specific per-layer selector (e.g. `.hc-columns line` above) —
+   but any such override MUST keep `opacity`/`transform` in its own list, or this layer's fade
+   silently stops animating (confirmed live: `.hc-columns line`'s previous `transition: stroke,
+   stroke-width` shorthand did exactly this — replaced with the layer-identity rules above, which
+   no longer declare `transition` at all, leaving this rule in sole charge of it). */
 .hc-buildlayer {
   transition-property: opacity, transform;
   transition-timing-function: var(--ease-premium);

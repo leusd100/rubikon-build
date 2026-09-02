@@ -7,6 +7,7 @@ import {
   projectIsometricScene,
   type DimensionGuide,
   type FrameLine,
+  type Point,
 } from '../../lib/configurator/isometricProjection';
 import { buildHangarScene } from '../../lib/configurator/sceneModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs, staggerDelayMs } from '../../lib/configurator/buildUpSequence';
@@ -58,6 +59,21 @@ function FrameLineEl({
   return <line className={className} style={style} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
 }
 
+/** One lifecycle-driven segment/cutout polygon — the shared shape every per-bay wall/roof
+ * segment and every gate cutout renders through, so there is exactly one place that turns
+ * `{points, className, style}` into markup, whichever layer it belongs to. */
+function BuildLayerPolygon({
+  points,
+  className,
+  style,
+}: {
+  points: Point[];
+  className: string;
+  style: CSSProperties;
+}) {
+  return <polygon className={className} style={style} points={pointsAttr(points)} />;
+}
+
 export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
   const { dimensions, envelope, scope, gates } = domain;
   // State → Domain (already done by the caller) → Scene (renderer-neutral, metres) → this SVG
@@ -67,28 +83,36 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
   // immediately without touching any layer's animation phase below.
   const scene = projectIsometricScene(buildHangarScene(domain));
 
+  // Dimension changes keep the lightweight flash — never the full build-up lifecycle below, per
+  // the brief's trigger rule. These stay the only `useLayerHighlight` consumers now that every
+  // scope-driven layer (including walls/roof/purlins/gates as of Phase 2B) has its own lifecycle,
+  // which already gives a scope toggle a much stronger signal than a colour flash — stacking a
+  // flash on top of a materialize/dematerialize transition would just be visual noise.
   const widthActive = useLayerHighlight(dimensions.widthM);
   const lengthActive = useLayerHighlight(dimensions.lengthM);
   const heightActive = useLayerHighlight(dimensions.heightM);
-  const wallsActive = useLayerHighlight(`${scope.walls}:${envelope}`);
-  const roofActive = useLayerHighlight(scope.roof);
-  const gatesActive = useLayerHighlight(gates);
-  // Purlins keep the simple flash-on-change treatment for this pass — full lifecycle build-up
-  // for purlins/walls/roof/gates is Phase 2B, gated on foundation/columns/trusses (below) first
-  // proving out stable across the full test run (see the Phase 2 brief's internal-gate note).
-  const purlinsActive = useLayerHighlight(scope.frame);
 
-  // Phase 2A core: foundation, columns and trusses each get the full materialize/dematerialize
-  // lifecycle, staged in build order via layerStartOffsetMs. `scope.foundation`/`scope.frame` are
-  // discrete booleans — flipping one of them is the only thing that (re)starts a transition here;
-  // a dimension change never touches these hooks' first argument, so it can never replay one.
+  // Every scope-driven layer uses the exact same hook and the exact same per-layer timing table —
+  // no per-layer special-casing, only the (visible, duration, sequencing-offset) inputs differ.
+  // `scope.foundation`/`scope.frame`/`scope.walls`/`scope.roof` are discrete booleans and `gates`
+  // is a small count; flipping one of these is the only thing that (re)starts a transition here.
+  // A dimension change never touches any of these hooks' first argument, so it can never replay
+  // one — geometry still updates immediately every render via `scene` above, independent of phase.
   const foundation = useLayerLifecycle(scope.foundation, LAYER_DURATION_MS.foundation, layerStartOffsetMs('foundation'));
   const columns = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.columns, layerStartOffsetMs('columns'));
   const trusses = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.trusses, layerStartOffsetMs('trusses'));
+  const purlins = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.purlins, layerStartOffsetMs('purlins'));
+  const walls = useLayerLifecycle(scope.walls, LAYER_DURATION_MS.walls, layerStartOffsetMs('walls'));
+  const roof = useLayerLifecycle(scope.roof, LAYER_DURATION_MS.roof, layerStartOffsetMs('roof'));
+  // Gates only replay on the discrete "some gates exist" ↔ "no gates" transition — flipping the
+  // count between 1 and 2 never touches this boolean, so it updates the two cutouts' positions
+  // immediately without restarting the reveal (the same rule dimension changes get, applied to a
+  // count instead of a continuous value).
+  const gateLayer = useLayerLifecycle(gates > 0, LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
 
-  const facadeActive = widthActive || heightActive || wallsActive;
-  const sideActive = lengthActive || heightActive || wallsActive;
-  const topActive = widthActive || lengthActive || roofActive;
+  const facadeActive = widthActive || heightActive;
+  const sideActive = lengthActive || heightActive;
+  const topActive = widthActive || lengthActive;
 
   const { minX, minY, maxX, maxY } = scene.bounds;
   const viewBox = `${minX - VIEWBOX_PADDING} ${minY - VIEWBOX_PADDING} ${maxX - minX + VIEWBOX_PADDING * 2} ${maxY - minY + VIEWBOX_PADDING * 2}`;
@@ -124,48 +148,59 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
         points={pointsAttr(scene.foundation.points)}
       />
 
-      <g
-        className={`hc-layer hc-top hc-envelope-${envelope} ${topActive ? 'is-active' : ''}`}
-      >
+      {/* Paint order here is z-stacking, not build order (see buildUpSequence.ts for the actual
+          staged sequence) — walls/roof are painted before the frame specifically so columns/
+          trusses/purlins always render on top of an enclosed shell, per the brief's "the
+          structural logic should remain readable after enclosure appears" requirement. */}
+      <g className={`hc-layer hc-top hc-envelope-${envelope} ${topActive ? 'is-active' : ''}`}>
         {scene.roofSegments.map((segment, index) => (
-          <polygon
+          <BuildLayerPolygon
             key={index}
-            className={segment.hasFill ? 'has-roof' : 'no-roof'}
-            points={pointsAttr(segment.points)}
+            points={segment.points}
+            className={`hc-buildlayer hc-phase-${roof.phase} ${segment.hasFill ? 'has-roof' : 'no-roof'}`}
+            style={transitionStyle(roof, staggerDelayMs('roof', index, scene.roofSegments.length))}
           />
         ))}
       </g>
 
-      <g
-        className={`hc-layer hc-side hc-envelope-${envelope} ${sideActive ? 'is-active' : ''}`}
-      >
+      <g className={`hc-layer hc-side hc-envelope-${envelope} ${sideActive ? 'is-active' : ''}`}>
         {scene.wallSegments.side.map((segment, index) => (
-          <polygon
+          <BuildLayerPolygon
             key={index}
-            className={segment.hasFill ? 'has-walls' : 'no-walls'}
-            points={pointsAttr(segment.points)}
+            points={segment.points}
+            className={`hc-buildlayer hc-phase-${walls.phase} ${segment.hasFill ? 'has-walls' : 'no-walls'}`}
+            style={transitionStyle(walls, staggerDelayMs('walls', index, scene.wallSegments.side.length))}
           />
         ))}
       </g>
 
-      <g
-        className={`hc-layer hc-front hc-envelope-${envelope} ${facadeActive ? 'is-active' : ''}`}
-      >
+      <g className={`hc-layer hc-front hc-envelope-${envelope} ${facadeActive ? 'is-active' : ''}`}>
         {scene.wallSegments.front.map((segment, index) => (
-          <polygon
+          <BuildLayerPolygon
             key={index}
-            className={segment.hasFill ? 'has-walls' : 'no-walls'}
-            points={pointsAttr(segment.points)}
+            points={segment.points}
+            className={`hc-buildlayer hc-phase-${walls.phase} ${segment.hasFill ? 'has-walls' : 'no-walls'}`}
+            style={transitionStyle(walls, staggerDelayMs('walls', index, scene.wallSegments.front.length))}
           />
         ))}
         {scene.gates.map((gate, index) => (
-          <polygon key={index} className="hc-gate" points={pointsAttr(gate.points)} />
+          <BuildLayerPolygon
+            key={index}
+            points={gate.points}
+            className={`hc-buildlayer hc-phase-${gateLayer.phase} hc-gate`}
+            style={transitionStyle(gateLayer, staggerDelayMs('gates', index, scene.gates.length))}
+          />
         ))}
       </g>
       {scene.gates.length > 0 && (
-        <g className={`hc-gate-outline ${gatesActive ? 'is-active' : ''}`} aria-hidden="true">
+        <g className="hc-gate-outline" aria-hidden="true">
           {scene.gates.map((gate, index) => (
-            <polygon key={index} points={pointsAttr(gate.points)} />
+            <BuildLayerPolygon
+              key={index}
+              points={gate.points}
+              className={`hc-buildlayer hc-phase-${gateLayer.phase}`}
+              style={transitionStyle(gateLayer, staggerDelayMs('gates', index, scene.gates.length))}
+            />
           ))}
         </g>
       )}
@@ -200,9 +235,14 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
         ))}
       </g>
 
-      <g className={`hc-layer hc-purlins ${purlinsActive ? 'is-active' : ''}`}>
+      <g className="hc-layer hc-purlins">
         {scene.frame.purlins.map((line, index) => (
-          <FrameLineEl key={index} line={line} className="" style={{}} />
+          <FrameLineEl
+            key={index}
+            line={line}
+            className={`hc-buildlayer hc-phase-${purlins.phase}`}
+            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.purlins.length))}
+          />
         ))}
       </g>
 
