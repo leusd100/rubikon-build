@@ -122,6 +122,42 @@ test.describe('hangar configurator POC — mobile', () => {
   });
 });
 
+// Tablet is a distinct testing tier for this feature per the Phase 2 brief, even though these
+// exact widths (768/820/1024) aren't sitewide CSS breakpoints (see docs/ui-system-v1.md's
+// breakpoint table) — all three sit under .hc-layout's single existing ≤1023px breakpoint
+// (configurator.css), so this confirms that one rule holds up across the full tablet range, not
+// just at its edges.
+for (const width of [768, 820, 1024]) {
+  test.describe(`hangar configurator POC — tablet ${width}`, () => {
+    test.use({ viewport: { width, height: 1180 } });
+
+    test('has no horizontal overflow, keeps controls before the preview, and renders a legible frame', async ({ page }) => {
+      await openConfigurator(page);
+
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      );
+      expect(overflow).toBe(false);
+
+      const order = await page.evaluate(() => {
+        const root = document.querySelector('.hangar-configurator');
+        const controls = root?.querySelector('.hc-controls');
+        const preview = root?.querySelector('.hc-preview-pane');
+        if (!controls || !preview) return null;
+        return controls.compareDocumentPosition(preview) === Node.DOCUMENT_POSITION_FOLLOWING;
+      });
+      expect(order).toBe(true);
+
+      // The frame must still read as real lines, not have collapsed to zero-width/invisible.
+      const frameLineWidth = await page
+        .locator('.hc-columns line')
+        .first()
+        .evaluate((el) => parseFloat(getComputedStyle(el).strokeWidth));
+      expect(frameLineWidth).toBeGreaterThan(0);
+    });
+  });
+}
+
 // Phase 2A build-up lifecycle: foundation/columns/trusses are driven by useLayerLifecycle
 // (app/components/configurator/useLayerLifecycle.ts) rather than a plain flash-on-change class,
 // so these assert the actual FSM phase classes it applies, not just the end-state geometry —
