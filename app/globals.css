@@ -705,15 +705,6 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
 .privacy-content a { color: var(--accent-dark); font-weight: 700; }
 
 @media (max-width: 1050px) {
-  .nav-wrap { gap: 10px; }
-  .brand { gap: 10px; }
-  .brand-frame-mark { width: 42px; height: 42px; }
-  .brand-name b { font-size: 22px; letter-spacing: .065em; }
-  .brand-name small { margin-top: 7px; font-size: 8px; letter-spacing: .17em; }
-  .desktop-nav { gap: clamp(11px, 1.25vw, 14px); font-size: clamp(14px, 1.45vw, 15px); }
-  .header-contact { padding-inline: 10px; }
-  .header-phone { min-width: 150px; }
-  .header-messengers .messenger-link { width: 40px; }
   .hero { min-height: 820px; }
   .hero-layout { grid-template-columns: minmax(0, 1fr) minmax(224px, 250px); gap: 38px; padding-top: 150px; }
   .hero-actions { gap: 16px; }
@@ -757,7 +748,12 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .logo-option:last-child { grid-column: 1 / -1; }
 }
 
-/* Keep the intro useful at laptop widths without leaving a tall empty column beside the form. */
+/* Keep the intro useful at laptop widths without leaving a tall empty column beside the form.
+   Also carries the compact-desktop-header rules that used to live in their own, separate
+   min-width:1051px/max-width:1180px block: that block and the header-compact block further up
+   (max-width:1050px) together covered exactly this same max-width:1180px range with byte-
+   identical declarations — a single query, split into two adjacent, non-overlapping ranges for
+   no functional reason. Co-located here rather than re-adding a third small header-only block. */
 @media (max-width: 1180px) {
   .contact-grid { grid-template-columns: minmax(0, 1fr); gap: clamp(30px, 4.5vw, 48px); }
   .contact-intro {
@@ -773,10 +769,6 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .contact-links { align-self: stretch; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .contact-links .pending-contact:first-child { padding-right: clamp(22px, 3vw, 36px); }
   .contact-links .pending-contact:last-child { padding-left: clamp(22px, 3vw, 36px); border-left: 1px solid rgba(255,255,255,.15); }
-}
-
-/* Keep the full desktop header compact through the width where every item fits comfortably. */
-@media (min-width: 1051px) and (max-width: 1180px) {
   .nav-wrap { gap: 10px; }
   .brand { gap: 10px; }
   .brand-frame-mark { width: 42px; height: 42px; }
@@ -788,10 +780,12 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .header-messengers .messenger-link { width: 40px; }
 }
 
+/* Nav switches to the mobile menu at the wider max-width:1000px block below (960 < 1000, so
+   that block already covers this whole range) — this block now only owns the footer's tablet
+   layout. The two thresholds are deliberately different: 1000/1001px is where the compact
+   desktop header itself runs out of room; 960px is where the footer's own 3-column tablet
+   composition starts looking right. Kept distinct rather than merged into one number. */
 @media (max-width: 960px) {
-  .desktop-nav { display: none; }
-  .header-contacts { display: none; }
-  .mobile-menu { display: block; }
   .footer-grid { min-height: 0; grid-template-columns: auto auto minmax(215px, auto); justify-content: space-between; align-items: start; gap: 32px 56px; padding-block: 36px; }
   /* Full span, not just column 1 — otherwise column 2/row 1 sits empty above "Напрямки" (the
      brand only reached column 1, leaving a dead cell; the contact stack's row-span made it easy
