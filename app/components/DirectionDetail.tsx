@@ -2,9 +2,10 @@ import { Breadcrumbs, GhostWord, SectionHeader } from './SiteChrome';
 import InquirySection from './InquirySection';
 import ResponsiveImage from './ResponsiveImage';
 import { DirectionHeroImage } from './DirectionHeroImage';
-import { absoluteUrl, siteName, siteUrl } from '../lib/seo';
+import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
 import { getDirection } from '../data/directions';
+import { relatedDirections } from '../data/relatedDirections';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
 import { company } from '../data/company';
 import { siteRoutes } from '../data/navigation';
@@ -72,11 +73,9 @@ export function DirectionHero({
       name,
     })),
     provider: {
-      // Same reasoning as the organization-level schema in layout.tsx — see that comment.
-      '@type': 'HomeAndConstructionBusiness',
-      name: siteName,
-      url: siteUrl,
-      telephone: company.phone.international,
+      // Reference the single Organization node declared in layout.tsx rather than restating it
+      // inline: an inline copy produces a second, disconnected company entity in the graph.
+      '@id': `${siteUrl}/#organization`,
     },
   };
 
@@ -190,6 +189,34 @@ export function DirectionFaq({ title, items }: { title: string; items: readonly 
   );
 }
 
+function RelatedDirections({ id }: { id: DirectionPageConfig['id'] }) {
+  const related = relatedDirections[id];
+
+  if (!related.length) return null;
+
+  return (
+    <section className="page-section related-directions-section">
+      <div className="shell">
+        <p className="eyebrow"><span /> Суміжні роботи</p>
+        <h2 className="related-directions-title">Пов’язані напрямки</h2>
+        <nav className="related-grid" aria-label="Пов’язані напрямки робіт">
+          {related.map(({ id: relatedId, relation }) => {
+            const direction = getDirection(relatedId);
+
+            return (
+              <a className="related-card" href={direction.href} key={relatedId}>
+                <h3>{direction.title}</h3>
+                <span aria-hidden="true">↗</span>
+                <p>{relation}</p>
+              </a>
+            );
+          })}
+        </nav>
+      </div>
+    </section>
+  );
+}
+
 export function DirectionPage({ config }: { config: DirectionPageConfig }) {
   const direction = getDirection(config.id);
 
@@ -233,6 +260,7 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
       <DirectionProcess {...config.process} />
       {config.cost && <DirectionCostSection {...config.cost} />}
       {config.faq && <DirectionFaq {...config.faq} />}
+      <RelatedDirections id={config.id} />
       <InquirySection eyebrow={config.cta.eyebrow} title={config.cta.title} defaultDirection={direction.formLabel} />
     </main>
   );

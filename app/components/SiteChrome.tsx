@@ -6,6 +6,7 @@ import MobileMenu from './MobileMenu';
 import { EstimateBriefCards } from './ProcessCards';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
+import { directions } from '../data/directions';
 import { messengerContacts } from '../data/contactMethods';
 import { primaryNavigation, siteRoutes } from '../data/navigation';
 
@@ -158,6 +159,15 @@ export function SiteFooter() {
         </a>
         <nav className="footer-nav" aria-label="Навігація в нижній частині сайту">
           {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
+        </nav>
+        {/* Direct routes to the five commercial pages. Deliberately plain navigation with the
+            direction's own name as the anchor — the same label the cards and the /napryamky
+            route list already use — not an SEO keyword list. */}
+        <nav className="footer-directions" aria-label="Напрямки робіт">
+          <p className="footer-directions-title">Напрямки</p>
+          {directions.map((direction) => (
+            <a href={direction.href} key={direction.id}>{direction.title}</a>
+          ))}
         </nav>
         <div className="footer-contact-stack">
           <a className="footer-phone" href={companyContactLinks.phone}>

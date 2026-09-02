@@ -619,6 +619,20 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 .cost-grid p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .cost-section { background: #efeee8; }
 
+/* Related directions — compact cross-navigation between adjacent stages of one object.
+   Reuses the .cost-grid hairline vocabulary (container border-top/left, cell border-right/bottom)
+   so it reads as part of the existing system; capped column width keeps it visibly lighter than
+   /napryamky's full-width .route-service list. */
+.related-directions-section { background: #efeee8; }
+.related-directions-title { margin: 14px 0 32px; font: 600 clamp(24px, 2.5vw, 32px)/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.related-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+.related-card { flex: 0 1 300px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: start; gap: 12px 16px; padding: 22px 24px 24px; border: 1px solid rgba(21,24,22,.17); transition: background .25s ease, border-color .25s ease; }
+.related-card:hover { border-color: rgba(21,24,22,.34); }
+.related-card h3 { grid-column: 1; margin: 0; font: 600 19px/1.12 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.related-card > span { grid-column: 2; grid-row: 1; color: var(--accent); font: 500 17px/1 var(--font-condensed), sans-serif; }
+.related-card p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.related-card:hover { background: #e7e5dd; }
+
 .sticky-heading { position: sticky; top: 145px; }
 .feature-list { border-top: 1px solid var(--line); }
 .feature-list article { display: grid; grid-template-columns: 54px 1fr; column-gap: 24px; padding: 28px 0 30px; border-bottom: 1px solid var(--line); }
@@ -664,12 +678,16 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 footer { color: #a8b0aa; background: #0e100f; }
 footer > .section-divider { position: relative; z-index: 1; }
 footer > .section-divider-accent { width: 100%; height: 2px; }
-.footer-grid { min-height: 230px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr) minmax(280px, .9fr); align-items: start; gap: clamp(36px, 5vw, 76px); padding-block: 52px; font-size: 11px; }
+.footer-grid { min-height: 230px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(175px, .58fr) minmax(158px, .52fr) minmax(250px, .82fr); align-items: start; gap: clamp(26px, 3.2vw, 52px); padding-block: 52px; font-size: 11px; }
 footer .brand-name b { color: white; }
 footer .brand-name small { color: var(--text-on-dark-subtle); }
 .footer-nav { display: grid; grid-template-columns: 1fr 1fr; justify-content: start; gap: 17px 26px; padding-top: 5px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
 .footer-nav a { transition: color .2s ease; }
 .footer-nav a:hover { color: white; }
+.footer-directions { display: grid; justify-content: start; align-content: start; gap: 9px; padding-top: 5px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.footer-directions-title { color: var(--text-on-dark-subtle); font-size: 9px; font-weight: 750; letter-spacing: .1em; }
+.footer-directions a { transition: color .2s ease; }
+.footer-directions a:hover { color: white; }
 .footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
 .footer-phone { display: inline-flex; align-items: center; gap: 9px; color: white; font-size: 13px; font-weight: 700; letter-spacing: .025em; }
 .footer-phone svg { width: 17px; height: 17px; color: var(--accent); stroke-width: 1.7; }
@@ -795,7 +813,8 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .footer-grid { min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(260px, .8fr); align-items: start; gap: 26px 32px; padding-block: 36px; }
   .footer-grid > .brand-link { min-width: 0; }
   .footer-nav { grid-column: 1; justify-content: flex-start; flex-wrap: wrap; }
-  .footer-contact-stack { grid-column: 2; grid-row: 1 / span 2; min-width: 0; }
+  .footer-directions { grid-column: 1; padding-top: 0; }
+  .footer-contact-stack { grid-column: 2; grid-row: 1 / span 3; min-width: 0; }
   .footer-phone { white-space: nowrap; }
 }
 
@@ -947,7 +966,10 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .footer-grid { min-height: 0; grid-template-columns: 1fr; gap: 0; padding-block: 30px; }
   .footer-grid > .brand-link { order: 1; margin-bottom: 22px; }
   .footer-nav { order: 2; grid-column: auto; grid-template-columns: 1fr 1fr; justify-content: start; gap: 16px 24px; margin: 0; padding: 20px 0; border-top: 1px solid rgba(255,255,255,.13); border-bottom: 1px solid rgba(255,255,255,.13); }
-  .footer-contact-stack { order: 3; grid-column: auto; grid-row: auto; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-items: start; justify-self: stretch; gap: 16px 18px; margin-top: 22px; padding-top: 0; }
+  .related-card { flex: 1 1 100%; }
+  .footer-directions { order: 3; grid-column: auto; grid-template-columns: 1fr 1fr; gap: 14px 24px; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,.13); }
+  .footer-directions-title { grid-column: 1 / -1; }
+  .footer-contact-stack { order: 4; grid-column: auto; grid-row: auto; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-items: start; justify-self: stretch; gap: 16px 18px; margin-top: 22px; padding-top: 0; }
   .footer-phone { grid-column: 1; grid-row: 1; min-height: 42px; margin: 0; }
   .footer-messengers { grid-column: 2; grid-row: 1; justify-self: end; margin: 0; }
   .footer-messengers .messenger-link { width: 42px; height: 42px; }
