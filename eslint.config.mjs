@@ -19,6 +19,12 @@ const eslintConfig = defineConfig([
     // local `pnpm test:unit:coverage && pnpm lint` picks up the report's own bundled JS
     // and floods the output with bogus findings on minified code.
     'coverage/**',
+    // Playwright's own generated report/output — same reasoning as coverage/** above.
+    // Already gitignored, but a local `pnpm test:e2e && pnpm lint` (or `test:visual`)
+    // otherwise lints Playwright's bundled trace-viewer JS in playwright-report/ and
+    // floods the output with bogus findings on minified code.
+    'playwright-report/**',
+    'test-results/**',
   ]),
 ]);
 
