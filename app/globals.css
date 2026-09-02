@@ -492,7 +492,7 @@ section[id] { scroll-margin-top: 116px; }
 .detail-card p { margin: 0; color: var(--text-on-dark-muted); font-size: 13px; line-height: 1.7; }
 /* /pro-nas Values is 3 cards, not the 4 .detail-grid assumes elsewhere — override just this
    instance rather than leaving a hole in the fourth column. */
-.values-grid { grid-template-columns: repeat(3, 1fr); }
+.values-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .team-compact { background: #e8e7e1; }
 
 .logo-lab { min-height: 100vh; background: var(--paper); }
@@ -597,6 +597,14 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 .related-directions-section { background: #efeee8; }
 .related-directions-title { margin: 14px 0 32px; font: 600 clamp(24px, 2.5vw, 32px)/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .related-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+/* Exactly-3-item variant (angary is currently the only direction page with 3 related entries,
+   every other page has 2 — see relatedDirections.ts): the shared flex-wrap layout above is
+   correct for 2 items (a short, intentionally left-aligned row) but wraps 3 items into an
+   accidental 2+1 orphan as soon as the row can't fit three 300px cards, and leaves an
+   unbalanced gap at full desktop width when it does fit. [data-count="3"] switches to a
+   deterministic 3-column grid instead — 2-item (and any future non-3-item) pages are
+   untouched, they keep the flex mechanic above exactly as before. */
+.related-grid[data-count="3"] { display: grid; grid-template-columns: repeat(3, 1fr); }
 .related-card { flex: 0 1 300px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: start; gap: 12px 16px; padding: 22px 24px 24px; border: 1px solid rgba(21,24,22,.17); transition: background .25s ease, border-color .25s ease; }
 .related-card h3 { grid-column: 1; margin: 0; font: 600 19px/1.12 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .related-card > span { grid-column: 2; grid-row: 1; color: var(--accent); font: 500 17px/1 var(--font-condensed), sans-serif; }
@@ -735,6 +743,12 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .subhero-layout { grid-template-columns: 1fr .55fr; gap: 56px; }
   .page-cta-grid { grid-template-columns: 1fr .65fr; gap: var(--grid-gap); }
   .detail-grid, .detail-steps { grid-template-columns: repeat(2, 1fr); }
+  /* .values-grid shares .detail-grid's 4-column base but is a genuine 3-item set (see the
+     unconditional rule above) — without this, .detail-grid's 2-column override here wins the
+     cascade (same specificity, later in source) and silently collapses 3 cards to a 2+1 orphan
+     layout on tablet. Re-assert 3-across explicitly rather than let a 3-item set inherit an
+     even-column override by accident. */
+  .values-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .brief-grid, .cost-grid { grid-template-columns: repeat(2, 1fr); }
   .page-two-col { gap: var(--grid-gap); }
   .direction-editorial-grid { grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr); gap: var(--grid-gap); }
@@ -779,7 +793,10 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .header-contacts { display: none; }
   .mobile-menu { display: block; }
   .footer-grid { min-height: 0; grid-template-columns: auto auto minmax(215px, auto); justify-content: space-between; align-items: start; gap: 32px 56px; padding-block: 36px; }
-  .footer-grid > .brand-link { grid-column: 1; grid-row: 1; min-width: 0; }
+  /* Full span, not just column 1 — otherwise column 2/row 1 sits empty above "Напрямки" (the
+     brand only reached column 1, leaving a dead cell; the contact stack's row-span made it easy
+     to miss since row 1 still looked occupied on the right). */
+  .footer-grid > .brand-link { grid-column: 1 / -1; grid-row: 1; min-width: 0; }
   .footer-nav { grid-column: 1; grid-row: 2; padding-top: 0; }
   .footer-directions { grid-column: 2; grid-row: 2; padding-top: 0; }
   /* Spans both rows so it starts level with the brand instead of leaving the whole
@@ -830,6 +847,12 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .button { width: 100%; }
   .hero-actions .text-link { position: relative; width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: center; align-self: stretch; padding: 0 48px; border: 1px solid rgba(255,255,255,.38); text-align: center; }
   .hero-actions .text-link span { position: absolute; right: 18px; margin-left: 0; }
+  /* Give the primary button the same trailing-edge arrow geometry as its sibling .text-link
+     above — without this it keeps the base in-flow/gap arrow mechanic, which lands at a
+     different horizontal offset than the pinned .text-link arrow right below it. Scoped to
+     .hero-actions .button only; every other .button on the site keeps its normal mechanic. */
+  .hero-actions .button { position: relative; padding: 0 48px; }
+  .hero-actions .button span { position: absolute; right: 18px; margin-left: 0; }
   .hero-contact-card { width: 100%; margin-top: 38px; padding: 15px 0 0; background: linear-gradient(90deg, rgba(12,14,13,.58), rgba(12,14,13,.12)); }
   .hero-contact-kicker { margin-bottom: 9px; }
   .hero-contact-card > a { min-height: 60px; }
@@ -900,7 +923,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2, .page-cta h2 { font-size: var(--title-section); }
   .copy-column .lead-copy { font-size: 16px; }
   .page-heading { margin-bottom: 42px; }
-  .detail-grid, .detail-steps, .use-case-grid { grid-template-columns: 1fr; }
+  .detail-grid, .detail-steps, .use-case-grid, .values-grid { grid-template-columns: 1fr; }
   .direction-editorial-grid { grid-template-columns: 1fr; gap: 36px; }
   .direction-editorial-copy { padding: 0; }
   .direction-editorial-copy h2 { font-size: var(--title-section); }
@@ -922,6 +945,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .footer-grid { min-height: 0; grid-template-columns: 1fr 1fr; gap: 0 28px; padding-block: 30px; }
   .footer-grid > .brand-link { grid-column: 1 / -1; grid-row: 1; margin-bottom: 0; padding-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,.13); }
   .related-card { flex: 1 1 100%; }
+  .related-grid[data-count="3"] { grid-template-columns: 1fr; }
   /* Side by side, but each still a single column of links — same logic as every other
      breakpoint, just placed in two tracks so the footer does not run nine links tall. */
   .footer-nav, .footer-directions { grid-row: 2; grid-template-columns: 1fr; gap: 14px; margin: 0; padding: 20px 0; }
