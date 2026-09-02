@@ -1,36 +1,6 @@
-import { DraftingCompass, Hammer, Layers3, Warehouse, Wheat } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { directions, type DirectionId } from '../data/directions';
+import { directions } from '../data/directions';
 import { engagementFormats } from '../data/engagementFormats';
 import ResponsiveImage from './ResponsiveImage';
-
-const directionIcons: Record<DirectionId, LucideIcon> = {
-  angary: Warehouse,
-  zernoskhovyshcha: Wheat,
-  metalokonstruktsii: DraftingCompass,
-  'betonni-roboty': Layers3,
-  'pokrivelni-roboty': Hammer,
-};
-
-export function DirectionServiceCards() {
-  return (
-    <div className="service-list">
-      {directions.map((direction) => {
-        const Icon = directionIcons[direction.id];
-
-        return (
-          <a className="service-card" href={direction.href} key={direction.id}>
-            <span className="service-number">{direction.number}</span>
-            <Icon className="service-icon" aria-hidden="true" />
-            <h3>{direction.serviceTitle}</h3>
-            <p>{direction.serviceText}</p>
-            <span className="service-arrow" aria-hidden="true">↗</span>
-          </a>
-        );
-      })}
-    </div>
-  );
-}
 
 // Homepage "Формат участі" (Services) cards — reuses the existing `.cost-grid` treatment
 // (light, 4-column, non-link info cards) rather than `.service-card`, since these formats don't

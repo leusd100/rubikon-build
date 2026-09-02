@@ -15,7 +15,6 @@ export type Direction = {
   title: string;
   formLabel: string;
   serviceTitle: string;
-  serviceText: string;
   routeText: string;
   cardTitle: string;
   cardText: string;
@@ -37,7 +36,6 @@ export const directions: readonly Direction[] = [
     title: 'Ангари та склади',
     formLabel: 'Ангари та склади',
     serviceTitle: 'Ангари та склади',
-    serviceText: 'Швидкомонтовані споруди для виробництва, логістики, агросектору й комерційних завдань.',
     routeText: 'Якщо потрібна швидкомонтована споруда під виробництво, логістику, техніку або зберігання.',
     cardTitle: 'Ангари та склади',
     cardText: 'Каркас, огородження та ворота — під виробництво, логістику, техніку або зберігання.',
@@ -57,7 +55,6 @@ export const directions: readonly Direction[] = [
     title: 'Зерносховища',
     formLabel: 'Зерносховища',
     serviceTitle: 'Зерносховища',
-    serviceText: 'Комплексна реалізація: основа, каркас, огороджувальні конструкції та монтаж.',
     routeText: 'Якщо будівельну частину потрібно узгодити з вимогами обладнання для зберігання та переміщення зерна.',
     cardTitle: 'Зерносховища',
     cardText: 'Основа, металевий каркас і огороджувальний контур з урахуванням вимог технологічного обладнання.',
@@ -77,7 +74,6 @@ export const directions: readonly Direction[] = [
     title: 'Металоконструкції',
     formLabel: 'Металоконструкції',
     serviceTitle: 'Металоконструкції',
-    serviceText: 'Проєктування, виготовлення та монтаж каркасів, ферм, балок і складних металевих вузлів.',
     routeText: 'Якщо потрібне виготовлення або монтаж каркаса, ферм чи окремих металевих вузлів за погодженою документацією.',
     cardTitle: 'Металоконструкції',
     cardText: 'Виготовлення та монтаж каркасів, ферм і окремих конструктивних вузлів за погодженою документацією.',
@@ -88,7 +84,7 @@ export const directions: readonly Direction[] = [
     imageAlt: 'Болтовий вузол несучої металоконструкції з фасонними пластинами',
     cardClassName: 'compact',
     seoTitle: brandedTitle('Металоконструкції у Дніпрі'),
-    seoDescription: 'Проєктування, виготовлення й монтаж металоконструкцій у Дніпрі та області: каркаси, колони, балки, ферми й нестандартні металеві вузли.',
+    seoDescription: 'Виготовлення й монтаж металоконструкцій у Дніпрі та області: каркаси, колони, балки, ферми та нестандартні вузли за наданою документацією.',
   },
   {
     id: 'betonni-roboty',
@@ -97,7 +93,6 @@ export const directions: readonly Direction[] = [
     title: 'Бетонні роботи',
     formLabel: 'Бетонні роботи',
     serviceTitle: 'Бетонні роботи',
-    serviceText: 'Фундаменти, промислові підлоги, монолітні ділянки та основи під конструкції й обладнання.',
     routeText: 'Якщо потрібен фундамент, основа під обладнання, бетонна площадка або промислова підлога.',
     cardTitle: 'Бетонні роботи',
     cardText: 'Фундаменти, основи під обладнання та промислові підлоги з урахуванням навантажень і умов експлуатації.',
@@ -117,7 +112,6 @@ export const directions: readonly Direction[] = [
     title: 'Покрівельні роботи',
     formLabel: 'Покрівельні роботи',
     serviceTitle: 'Покрівельні роботи',
-    serviceText: 'Монтаж і ремонт покрівель промислових, складських та аграрних споруд із герметизацією вузлів і примикань.',
     routeText: 'Якщо потрібен монтаж нової покрівлі, заміна існуючої або ремонт проблемних ділянок і примикань.',
     cardTitle: 'Покрівельні роботи',
     cardText: 'Монтаж нових покрівель і ремонт існуючих — з увагою до вузлів, примикань та герметичності.',
@@ -131,16 +125,6 @@ export const directions: readonly Direction[] = [
     seoDescription: 'Монтаж і ремонт промислових покрівель у Дніпрі та області: профільований лист, утеплені системи, герметизація вузлів і примикань.',
   },
 ] as const;
-
-export function getDirection(id: DirectionId): Direction {
-  const direction = directions.find((item) => item.id === id);
-
-  if (!direction) {
-    throw new Error(`Unknown direction: ${id}`);
-  }
-
-  return direction;
-}
 
 export const inquiryDirectionOptions = [
   ...directions.map(({ formLabel }) => formLabel),

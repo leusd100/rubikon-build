@@ -65,10 +65,3 @@ export const responsiveWebpVariants: Record<string, { w480: string; w768: string
     w1200: '/media-responsive/direction-steel-v2-1200w.60a364c4.webp',
   },
 };
-
-/** Builds a srcSet string (webp variants only) for a known original image path. */
-export function webpSrcSet(originalSrc: string): string | undefined {
-  const variants = responsiveWebpVariants[originalSrc];
-  if (!variants) return undefined;
-  return `${variants.w480} 480w, ${variants.w768} 768w, ${variants.w1200} 1200w`;
-}

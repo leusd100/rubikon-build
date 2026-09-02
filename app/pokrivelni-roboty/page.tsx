@@ -1,5 +1,5 @@
 import { DirectionPage } from '../components/DirectionDetail';
-import { createDirectionMetadata, getDirectionPage } from '../data/directionPages';
+import { createDirectionMetadata, getDirectionPage } from '../lib/directions';
 
 export const metadata = createDirectionMetadata('pokrivelni-roboty');
 

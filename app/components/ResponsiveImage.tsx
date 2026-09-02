@@ -2,7 +2,7 @@
    resizing is a no-op in this vinext/Cloudflare deployment (redirects to the original
    file — see the Step 02 design report), so this component uses <picture>/<img> with
    pre-generated variants instead. Not an accidental regression. */
-import { webpSrcSet } from '../data/responsiveImageManifest';
+import { webpSrcSet } from '../lib/responsiveImages';
 
 type ResponsiveImageProps = {
   src: string;

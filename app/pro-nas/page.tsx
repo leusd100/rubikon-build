@@ -10,7 +10,7 @@ import { company } from '../data/company';
 export const metadata = createPageMetadata({
   path: '/pro-nas',
   title: brandedTitle('Про родинну компанію'),
-  description: `${company.name} — родинна будівельна компанія з Дніпра. Понад 30 років практичного досвіду, особиста відповідальність і сучасний підхід до роботи з клієнтами.`,
+  description: `${company.name} — родинна будівельна компанія з Дніпра. В основі — понад 30 років досвіду Сергія Івановича, особиста відповідальність і системний підхід.`,
   socialTitle: `Про ${company.name} — досвід двох поколінь`,
   socialDescription: 'Родинна відповідальність, понад 30 років практики та сучасний підхід до розвитку компанії.',
   image: '/media/about-industrial-concept.jpg',
@@ -65,6 +65,7 @@ export default function AboutPage() {
               <h2>Ключові рішення приймаємо разом</h2>
               <p className="promise-lead">Ми разом приймаємо ключові рішення, формуємо необхідний склад фахівців і особисто відповідаємо за результат.</p>
               <p className="story-support">Для нас відповідальність починається не на будівельному майданчику, а ще під час обговорення завдання. Важливо одразу зрозуміти обсяг робіт, технічні умови й межі відповідальності, щоб ключові рішення не залишалися «на потім».</p>
+              <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
             </div>
             <div className="promise-visual about-control-visual">
               <ResponsiveImage
