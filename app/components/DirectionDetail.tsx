@@ -134,11 +134,16 @@ export function DirectionCostSection({
   text: string;
   items: readonly DirectionItem[];
 }) {
+  // Process (right above this section) is a sequence — ordered steps, a bordered card grid says
+  // that correctly. Cost factors aren't ordered — they're simultaneous considerations, so this
+  // deliberately does NOT reuse .cost-grid's box-grid logic (that class stays exactly as-is for
+  // the homepage Services section, which is a separate, unrelated use of it). .cost-list is a
+  // full-width technical band list instead — reads as a spec sheet, not a second copy of Process.
   return (
     <section className="page-section cost-section">
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow="Формування кошторису" title={title} supporting={text} />
-        <DirectionItemCards className="cost-grid" items={items} />
+        <DirectionItemCards className="cost-list" items={items} />
       </div>
     </section>
   );
@@ -199,7 +204,10 @@ function RelatedDirections({ id }: { id: DirectionPageConfig['id'] }) {
       <div className="shell">
         <p className="eyebrow"><span /> Суміжні роботи</p>
         <h2 className="related-directions-title">Пов’язані напрямки</h2>
-        <nav className="related-grid" aria-label="Пов’язані напрямки робіт">
+        {/* data-count drives the exactly-3-item grid variant in globals.css (.related-grid[data-count="3"])
+            — angary is currently the only direction with 3 related entries; every other count keeps the
+            default flex layout untouched. */}
+        <nav className="related-grid" data-count={related.length} aria-label="Пов’язані напрямки робіт">
           {related.map(({ id: relatedId, relation }) => {
             const direction = getDirection(relatedId);
 

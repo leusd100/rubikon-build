@@ -34,7 +34,7 @@ export default function DirectionsPage() {
           <div>
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }]} />
             <p className="eyebrow light"><span /> Сфери компетенції</p>
-            <h1>П’ять напрямків робіт.<br /><em>Один об’єкт може поєднувати кілька.</em></h1>
+            <h1>П’ять напрямків робіт<br /><em>Один об’єкт може поєднувати кілька</em></h1>
           </div>
           <div className="subhero-side">
             <p>Кожен напрямок має свою специфіку — від металевого каркаса й бетонної основи до покрівлі та будівельної частини зерносховища. Оберіть потрібний напрямок або коротко опишіть завдання, якщо ваш об’єкт поєднує кілька видів робіт.</p>
@@ -58,25 +58,26 @@ export default function DirectionsPage() {
         </div>
       </section>
 
+      {/* Was two separate page-section scenes with near-identical grammar and no media/structure —
+          individually fine, back to back they read as one section accidentally split in half.
+          Merged into one scene: two named modes of cooperation under a single shared frame,
+          divided by one hairline instead of two full section-spaces of near-empty whitespace.
+          Both original messages are kept in full — nothing cut, nothing new claimed. */}
       <section className="page-section">
         <div className="shell">
-          <SectionHeader
-            className="page-heading"
-            eyebrow="Комплексні об’єкти"
-            title="Коли один об’єкт поєднує кілька напрямків"
-            supporting="Багато промислових та аграрних об’єктів не обмежуються одним видом робіт. Наприклад, ангар може одночасно включати бетонну основу, металевий каркас і покрівлю. У такому випадку важливо узгодити послідовність етапів, стики між ними та межі відповідальності ще до початку робіт."
-          />
-        </div>
-      </section>
-
-      <section className="page-section">
-        <div className="shell">
-          <SectionHeader
-            className="page-heading"
-            eyebrow="Якщо проєкт уже сформований"
-            title="Можемо долучитися до окремої частини робіт"
-            supporting="Якщо у вас уже є проєкт, документація або визначений обсяг робіт, можемо долучитися як підрядник або субпідрядник на конкретний етап. До початку робіт уточнюємо вихідні дані, технічні вимоги, склад робіт і межі нашої відповідальності."
-          />
+          <p className="eyebrow"><span /> Формати співпраці</p>
+          <div className="cooperation-split">
+            <article className="cooperation-mode">
+              <span>Комплексні об’єкти</span>
+              <h2>Коли один об’єкт поєднує кілька напрямків</h2>
+              <p>Багато промислових та аграрних об’єктів не обмежуються одним видом робіт. Наприклад, ангар може одночасно включати бетонну основу, металевий каркас і покрівлю. У такому випадку важливо узгодити послідовність етапів, стики між ними та межі відповідальності ще до початку робіт.</p>
+            </article>
+            <article className="cooperation-mode">
+              <span>Якщо проєкт уже сформований</span>
+              <h2>Можемо долучитися до окремої частини робіт</h2>
+              <p>Якщо у вас уже є проєкт, документація або визначений обсяг робіт, можемо долучитися як підрядник або субпідрядник на конкретний етап. До початку робіт уточнюємо вихідні дані, технічні вимоги, склад робіт і межі нашої відповідальності.</p>
+            </article>
+          </div>
         </div>
       </section>
 
