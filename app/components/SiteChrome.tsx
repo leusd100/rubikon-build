@@ -217,18 +217,23 @@ export function Breadcrumbs({ items }: { items: Array<{ label: string; href: str
   );
 }
 
+// Deliberately NOT a SectionHeader-above/grid-below composition like Process right before it:
+// two "here's a list" sections back to back went visually flat right before the conversion ask.
+// This is one asymmetric split instead — a quiet statement column (which is where the CTA now
+// lives) beside a single-column, intentionally compact checklist. Weight drops going into
+// Contact rather than staying flat. Reuses .page-two-col/.copy-column verbatim (the same split
+// already used on direction pages) rather than inventing a new grid.
 export function EstimateBrief() {
   return (
     <section className="estimate-brief section" id="estimate-brief">
-      <div className="shell">
-        <SectionHeader
-          className="page-heading"
-          eyebrow="Для першої оцінки"
-          title="Що потрібно для першої оцінки"
-          supporting="Не обов’язково мати готовий проєкт. Вкажіть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку."
-        />
+      <div className="shell page-two-col align-start">
+        <div className="copy-column">
+          <p className="eyebrow"><span /> Для першої оцінки</p>
+          <h2>Що потрібно для першої оцінки</h2>
+          <p>Не обов’язково мати готовий проєкт. Вкажіть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку.</p>
+          <a className="section-link" href={siteRoutes.contact}>Підготувати запит <span aria-hidden="true">↗</span></a>
+        </div>
         <EstimateBriefCards />
-        <a className="section-link" href={siteRoutes.contact}>Підготувати запит <span aria-hidden="true">↗</span></a>
       </div>
     </section>
   );
