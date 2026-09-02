@@ -249,24 +249,33 @@
   stroke-width: 2.25;
 }
 
-.hc-foundation { fill: #1c1f1e; opacity: .85; }
+/* Ground reference — always on, never scope-driven, never part of the build sequence. */
+.hc-terrain {
+  fill: var(--surface-dark);
+  stroke: var(--text-on-dark-subtle);
+  stroke-width: .75;
+  stroke-opacity: .4;
+  vector-effect: non-scaling-stroke;
+}
 
-.hc-top.has-roof polygon,
-.hc-side.has-walls polygon,
-.hc-front.has-walls polygon { fill-opacity: 1; }
+.hc-foundation { fill: rgba(28, 31, 30, .85); }
 
-.hc-top.no-roof polygon { fill: none; stroke-dasharray: 4 4; }
-.hc-side.no-walls polygon,
-.hc-front.no-walls polygon { fill: none; stroke-dasharray: 4 4; }
+.hc-top polygon.has-roof,
+.hc-side polygon.has-walls,
+.hc-front polygon.has-walls { fill-opacity: 1; }
 
-.hc-envelope-cold.has-roof polygon,
-.hc-envelope-cold.has-walls polygon { fill: #4b5563; }
+.hc-top polygon.no-roof { fill: none; stroke-dasharray: 4 4; }
+.hc-side polygon.no-walls,
+.hc-front polygon.no-walls { fill: none; stroke-dasharray: 4 4; }
 
-.hc-envelope-insulated.has-roof polygon,
-.hc-envelope-insulated.has-walls polygon { fill: url(#hc-pattern-insulated); }
+.hc-envelope-cold polygon.has-roof,
+.hc-envelope-cold polygon.has-walls { fill: #4b5563; }
 
-.hc-envelope-undecided.has-roof polygon,
-.hc-envelope-undecided.has-walls polygon { fill: url(#hc-pattern-undecided); opacity: .8; }
+.hc-envelope-insulated polygon.has-roof,
+.hc-envelope-insulated polygon.has-walls { fill: url(#hc-pattern-insulated); }
+
+.hc-envelope-undecided polygon.has-roof,
+.hc-envelope-undecided polygon.has-walls { fill: url(#hc-pattern-undecided); opacity: .8; }
 
 .hc-pattern-base { fill: #4b5563; }
 .hc-pattern-line { stroke: rgba(255, 255, 255, .28); stroke-width: 1; }
@@ -280,13 +289,39 @@
 }
 .hc-gate-outline.is-active polygon { stroke: var(--accent); stroke-width: 2; }
 
-.hc-frame line {
+.hc-columns line,
+.hc-trusses line,
+.hc-purlins line {
   stroke: var(--text-on-dark-muted);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
   transition: stroke var(--duration-fast) var(--ease-premium), stroke-width var(--duration-fast) var(--ease-premium);
 }
-.hc-frame.is-active line { stroke: var(--accent); stroke-width: 1.75; }
+.hc-purlins.is-active line { stroke: var(--accent); stroke-width: 1.75; }
+
+/* ---------- Build-up layers (Phase 2A: foundation/columns/trusses) ----------
+   Every lifecycle-driven element stays in the DOM across every phase (never conditionally
+   unmounted) specifically so hidden→materializing has a real "from" state to animate out of — a
+   freshly-mounted element has nothing to transition from. `transitionDuration`/`transitionDelay`
+   arrive as inline styles from useLayerLifecycle (already zeroed under reduced motion, stagger
+   included per element) so this stylesheet only needs to declare *which* CSS properties
+   transition and their two endpoint values. */
+.hc-buildlayer {
+  transition-property: opacity, transform;
+  transition-timing-function: var(--ease-premium);
+}
+
+.hc-buildlayer.hc-phase-hidden,
+.hc-buildlayer.hc-phase-dematerializing { opacity: 0; }
+.hc-buildlayer.hc-phase-materializing,
+.hc-buildlayer.hc-phase-visible { opacity: 1; }
+
+/* Foundation gets a small rise on top of the shared fade — "settling into place" rather than a
+   flat fade, matching its "fade/rise" character from the build-up brief. */
+.hc-foundation.hc-phase-hidden,
+.hc-foundation.hc-phase-dematerializing { transform: translateY(6px); }
+.hc-foundation.hc-phase-materializing,
+.hc-foundation.hc-phase-visible { transform: translateY(0); }
 
 .hc-dimension line {
   stroke: var(--text-on-dark-subtle);
