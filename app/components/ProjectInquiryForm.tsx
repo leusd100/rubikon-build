@@ -8,7 +8,8 @@ import { inquiryDirectionOptions } from '../data/directions';
 import { company, companyContactLinks } from '../data/company';
 import { contactMethodOptions, messengerContacts, type ContactMethod } from '../data/contactMethods';
 import { siteRoutes } from '../data/navigation';
-import { readAttribution } from '../lib/attribution';
+import { filterAttributionForConsent, readAttribution } from '../lib/attribution';
+import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
 
 type LeadApiResult = {
   ok?: boolean;
@@ -51,14 +52,6 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
   const [submissionId] = useState(() => generateSubmissionId());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function hasAnalyticsConsent() {
-    try {
-      return window.localStorage.getItem('rubikon-analytics-consent') === 'granted';
-    } catch {
-      return false;
-    }
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setConsentError(false);
@@ -70,7 +63,12 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
     const name = value(formData, 'name');
     const phone = value(formData, 'phone');
     const direction = value(formData, 'direction');
-    const attribution = readAttribution();
+    // landingPage/referrer/utm are lead-context data and always kept; gclid/gbraid/wbraid exist
+    // only to match this lead to a Google Ads click, so they're stripped here unless the visitor
+    // has granted Advertising consent as of this exact submission — see filterAttributionForConsent.
+    const attribution = filterAttributionForConsent(readAttribution(), {
+      advertisingGranted: hasAdvertisingConsent(),
+    });
     setStatusAction(null);
 
     if (hasAnalyticsConsent()) {

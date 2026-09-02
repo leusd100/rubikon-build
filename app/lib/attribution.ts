@@ -68,3 +68,26 @@ export function readAttribution(): Attribution {
   }
   return captureAttribution();
 }
+
+/**
+ * `landingPage`/`referrer`/`utm` are lead-context data: they never leave RUBIKON's own records
+ * and are covered by the lead form's own consent checkbox, so they're always kept. `clickIds`
+ * (gclid/gbraid/wbraid) exist for exactly one purpose — matching this lead to a click in Google's
+ * ad account — so they're the one part of attribution gated on the Advertising consent category,
+ * independently of Analytics. Capture itself (above) stays unconditional and ephemeral: the
+ * click ID is only ever observable in the URL of the very first pageview, long before a visitor
+ * could have made any consent choice, so gating capture instead of transmission would make the
+ * field permanently uncapturable rather than merely consent-gated. Pure — takes the already-read
+ * Attribution and an explicit boolean rather than reading consent itself, so this stays
+ * independently testable from app/lib/consent.ts.
+ */
+export function filterAttributionForConsent(
+  attribution: Attribution,
+  { advertisingGranted }: { advertisingGranted: boolean },
+): Attribution {
+  if (advertisingGranted) return attribution;
+  return {
+    ...attribution,
+    clickIds: { gclid: '', gbraid: '', wbraid: '' },
+  };
+}
