@@ -57,3 +57,4 @@ desktop.ini
 /playwright-report/
 /.lighthouseci/
 *.log
+tsconfig.tsbuildinfo
