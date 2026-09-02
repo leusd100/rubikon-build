@@ -127,9 +127,6 @@ test.describe('hangar configurator POC — mobile', () => {
 // so these assert the actual FSM phase classes it applies, not just the end-state geometry —
 // see docs/hangar-build-up-phase-2 (this file) for the trigger/interruption rules being verified.
 test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () => {
-  function firstFoundationClass(page: Page) {
-    return page.locator('.hc-foundation').first().getAttribute('class');
-  }
   function firstColumnClass(page: Page) {
     return page.locator('.hc-columns line').first().getAttribute('class');
   }
@@ -204,5 +201,105 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
     // Never observe an in-flight phase — it must resolve to hidden on the very next paint.
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 300 });
     await expect(page.locator('.hc-foundation')).not.toHaveAttribute('class', /hc-phase-dematerializing/);
+  });
+});
+
+// Phase 2B: the exact same useLayerLifecycle mechanism extended to purlins/walls/roof/gates — no
+// separate animation system per layer, only the (visible, duration, sequencing-offset) inputs
+// differ (see buildUpSequence.ts). These assert that extension specifically: purlins sequence
+// after trusses, walls/roof get real transitions of their own, gates only replay on the 0↔some
+// transition (never on a 1↔2 count change), and enclosing the shell never hides the frame.
+test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () => {
+  test('purlins sequence after trusses, not simultaneously with them', async ({ page }) => {
+    await openConfigurator(page);
+
+    // The inline transitionDelay is set on every render regardless of phase (see
+    // useLayerLifecycle.ts), so the default (already-visible) mount already carries the real
+    // sequencing offsets — no toggle needed to observe them.
+    const trussesDelay = await page.locator('.hc-trusses line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
+    const purlinsDelay = await page.locator('.hc-purlins line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
+    expect(parseFloat(purlinsDelay)).toBeGreaterThan(parseFloat(trussesDelay));
+  });
+
+  test('walls stage a real materialize/dematerialize transition', async ({ page }) => {
+    await openConfigurator(page);
+    await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
+
+    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
+    await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-dematerializing/);
+    // Walls are independently triggered (their own checkbox, not part of the frame group) — zero
+    // start offset, so this settles within its own ~250ms duration; timeout padded well past
+    // that purely for headroom under parallel test-run contention, not because it needs it.
+    await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 2500 });
+  });
+
+  test('roof stages a real materialize/dematerialize transition, independent of walls', async ({ page }) => {
+    await openConfigurator(page);
+    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls off
+
+    // Roof must be unaffected by the walls toggle above (no cross-layer replay)...
+    await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
+
+    // ...but does stage its own transition when its own scope item changes.
+    await page.getByText('Покрівля', { exact: true }).click();
+    await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-dematerializing/);
+  });
+
+  test('gates replay on the 0↔some transition, never on a 1↔2 count change', async ({ page }) => {
+    await openConfigurator(page);
+    await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
+
+    // 1 → 2 gates: never touches the gate layer's phase.
+    await page.locator('.hc-option-card', { hasText: '2' }).click();
+    await page.waitForTimeout(50);
+    await expect(page.locator('.hc-gate').first()).toHaveAttribute('class', /hc-phase-visible/);
+    await expect(page.locator('.hc-gate').first()).not.toHaveAttribute('class', /hc-phase-materializing/);
+
+    // some → 0: a real discrete toggle. The gate layer's FSM does receive a REQUEST_HIDDEN, but
+    // gate geometry (unlike foundation/frame) isn't geometry-safe — position depends on the count
+    // itself, so there is nothing left to render a fade-out from once count hits 0 (a disclosed,
+    // low-impact limitation: gates are the lowest-emphasis layer, and the fade-*in* on 0→some is
+    // unaffected). Observable behaviour is the outline/cutout disappearing with the geometry.
+    await page.locator('.hc-option-card', { hasText: '0' }).click();
+    await expect(page.locator('.hc-gate-outline')).toHaveCount(0);
+  });
+
+  test('an enclosed shell (walls + roof both on) never hides the frame underneath', async ({ page }) => {
+    await openConfigurator(page);
+    // Default scope already has everything on — confirm frame is genuinely visible, not just
+    // present in the DOM with zero opacity.
+    const frameOpacity = await page.locator('.hc-columns line').first().evaluate((el) => getComputedStyle(el).opacity);
+    const wallOpacity = await page.locator('.hc-front polygon.has-walls').first().evaluate((el) => getComputedStyle(el).fillOpacity);
+
+    expect(parseFloat(frameOpacity)).toBe(1);
+    // The enclosed wall must be short of fully opaque, per the brief's "must not read as a flat
+    // opaque box" requirement.
+    expect(parseFloat(wallOpacity)).toBeLessThan(1);
+    expect(parseFloat(wallOpacity)).toBeGreaterThan(0.5); // still a real, legible wall — not washed out
+  });
+
+  test('a dimension change never restarts walls/roof/purlins/gates either', async ({ page }) => {
+    await openConfigurator(page);
+    await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
+    await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
+    await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
+
+    const widthInput = page.locator('#hc-dimension-width');
+    await widthInput.fill('40');
+    await widthInput.blur();
+
+    await expect(page.locator('.hc-preview-svg')).toContainText('40 м');
+    await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
+    await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
+    await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
+  });
+
+  test('reduced motion resolves walls/roof/gates immediately too', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openConfigurator(page);
+
+    await page.getByText('Покрівля', { exact: true }).click();
+    await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 300 });
+    await expect(page.locator('.hc-top polygon').first()).not.toHaveAttribute('class', /hc-phase-dematerializing/);
   });
 });
