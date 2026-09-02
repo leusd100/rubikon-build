@@ -48,13 +48,18 @@ One shared skeleton, deliberately different content per page:
 
 ```
 media layer → overlay gradient → engineering-grid texture → breadcrumb (inner pages only)
-→ eyebrow → H1 (text-wrap:balance, no forced line-break, no trailing period) → optional lead
-paragraph → CTA row (1–2 actions) → optional page-specific extra
+→ eyebrow (inner pages only) → H1 (text-wrap:balance, no forced line-break, no trailing period)
+→ optional lead paragraph → CTA row (1–2 actions) → optional page-specific extra
 ```
 
 Known, intentional variants — don't "fix" these into matching each other:
 - **Home** (`.hero`): cinematic, 2 CTAs (primary button + text-link), the only hero with a
-  persistent quick-contact card.
+  persistent quick-contact card. **Deliberately has no eyebrow.** The eyebrow's job everywhere
+  else is orientation — "you are within X part of the site" (`/napryamky`'s "Сфери компетенції",
+  `/pro-nas`'s "Родинна справа", each direction's "Напрямок 0N"). Home has no parent context to
+  orient within — it's the root. Adding one just to match the other three would be noise with no
+  new information, not consistency. Confirmed as an intentional exception, not a gap — don't add
+  eyebrow markup here even though every other hero has one.
 - **`/napryamky`** (`.subhero.directions-subhero`): technical — crossfading still-image sequence,
   not video.
 - **`/pro-nas`** (`.subhero.about-subhero`): story-driven — the only genuinely single-column hero.
