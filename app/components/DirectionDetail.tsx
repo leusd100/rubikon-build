@@ -199,7 +199,10 @@ function RelatedDirections({ id }: { id: DirectionPageConfig['id'] }) {
       <div className="shell">
         <p className="eyebrow"><span /> Суміжні роботи</p>
         <h2 className="related-directions-title">Пов’язані напрямки</h2>
-        <nav className="related-grid" aria-label="Пов’язані напрямки робіт">
+        {/* data-count drives the exactly-3-item grid variant in globals.css (.related-grid[data-count="3"])
+            — angary is currently the only direction with 3 related entries; every other count keeps the
+            default flex layout untouched. */}
+        <nav className="related-grid" data-count={related.length} aria-label="Пов’язані напрямки робіт">
           {related.map(({ id: relatedId, relation }) => {
             const direction = getDirection(relatedId);
 
