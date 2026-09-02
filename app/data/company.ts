@@ -8,8 +8,8 @@ export const company = {
   founders: ['Леус Сергій Іванович', 'Леус Дмитро Сергійович'],
   // Single source of truth for "consent under which policy version" — bump this string
   // (and the matching date on the privacy policy page) whenever that page's content changes.
-  privacyVersion: '2026-08-29',
-  privacyUpdatedDisplay: '29 серпня 2026 року',
+  privacyVersion: '2026-09-02',
+  privacyUpdatedDisplay: '2 вересня 2026 року',
   phone: {
     digits: '380682614264',
     international: '+380682614264',
