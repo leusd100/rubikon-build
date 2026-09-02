@@ -964,9 +964,10 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .footer-grid { min-height: 0; grid-template-columns: 1fr; gap: 0; padding-block: 30px; }
   .footer-grid > .brand-link { order: 1; margin-bottom: 22px; }
   .related-card { flex: 1 1 100%; }
-  .footer-nav { order: 2; grid-column: auto; grid-row: auto; grid-template-columns: 1fr 1fr; gap: 14px 24px; margin: 0; padding: 20px 0; border-top: 1px solid rgba(255,255,255,.13); }
-  .footer-directions { order: 3; grid-column: auto; grid-row: auto; grid-template-columns: 1fr; gap: 14px; padding: 20px 0; border-top: 1px solid rgba(255,255,255,.13); }
-  .footer-nav .footer-group-title, .footer-directions .footer-group-title { grid-column: 1 / -1; margin-bottom: 4px; }
+  .footer-nav, .footer-directions { grid-column: auto; grid-row: auto; grid-template-columns: 1fr; gap: 14px; margin: 0; padding: 20px 0; border-top: 1px solid rgba(255,255,255,.13); }
+  .footer-nav { order: 2; }
+  .footer-directions { order: 3; }
+  .footer-group-title { margin-bottom: 4px; }
   .footer-contact-stack { order: 4; grid-column: auto; grid-row: auto; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-items: start; justify-self: stretch; gap: 16px 18px; margin-top: 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.13); }
   .footer-phone { grid-column: 1; grid-row: 1; min-height: 42px; margin: 0; }
   .footer-messengers { grid-column: 2; grid-row: 1; justify-self: end; margin: 0; }
