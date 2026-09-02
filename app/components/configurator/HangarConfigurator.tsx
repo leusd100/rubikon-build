@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { ConfiguratorControls } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
@@ -8,6 +9,10 @@ import { HangarPreview } from './HangarPreview';
 
 export function HangarConfigurator() {
   const [state, setState] = useState<ConfiguratorState>(DEFAULT_CONFIGURATOR_STATE);
+  // Derived once here, not inside Preview/Summary — both read the same DomainModel so they can
+  // never disagree about what "walls present" or "area" means. Controls keeps reading/writing
+  // raw ConfiguratorState below — it edits user input, not the derived object.
+  const domain = useMemo(() => deriveDomainModel(state), [state]);
 
   return (
     <div className="hangar-configurator">
@@ -26,9 +31,9 @@ export function HangarConfigurator() {
         <ConfiguratorControls state={state} onChange={setState} />
         <div className="hc-preview-pane">
           <div className="hc-preview-surface">
-            <HangarPreview state={state} />
+            <HangarPreview domain={domain} />
           </div>
-          <ConfiguratorSummary state={state} />
+          <ConfiguratorSummary domain={domain} />
         </div>
       </div>
     </div>

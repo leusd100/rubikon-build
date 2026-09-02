@@ -1,10 +1,10 @@
 'use client';
 
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
-import type { ConfiguratorState } from '../../lib/configurator/types';
+import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 
-export function ConfiguratorSummary({ state }: { state: ConfiguratorState }) {
-  const summary = deriveSummary(state);
+export function ConfiguratorSummary({ domain }: { domain: HangarDomainModel }) {
+  const summary = deriveSummary(domain);
 
   return (
     <details className="hc-summary" open>

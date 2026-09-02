@@ -1,12 +1,13 @@
 'use client';
 
-import { computeScene, pointsAttr, type DimensionGuide } from '../../lib/configurator/isometricGeometry';
-import type { ConfiguratorState } from '../../lib/configurator/types';
+import type { HangarDomainModel } from '../../lib/configurator/domainModel';
+import { pointsAttr, projectIsometricScene, type DimensionGuide } from '../../lib/configurator/isometricProjection';
+import { buildHangarScene } from '../../lib/configurator/sceneModel';
 import { useLayerHighlight } from './useLayerHighlight';
 
 const VIEWBOX_PADDING = 48;
 
-function DimensionGuideGroup({ guide, label }: { guide: DimensionGuide; label: string }) {
+function DimensionGuideGroup({ guide }: { guide: DimensionGuide }) {
   const [a, b] = guide.line;
   return (
     <g className="hc-dimension" aria-hidden="true">
@@ -14,28 +15,26 @@ function DimensionGuideGroup({ guide, label }: { guide: DimensionGuide; label: s
       <line x1={guide.ticks[0][0].x} y1={guide.ticks[0][0].y} x2={guide.ticks[0][1].x} y2={guide.ticks[0][1].y} />
       <line x1={guide.ticks[1][0].x} y1={guide.ticks[1][0].y} x2={guide.ticks[1][1].x} y2={guide.ticks[1][1].y} />
       <text x={guide.label.x} y={guide.label.y} textAnchor={guide.anchor}>
-        {label}
+        {guide.valueM} м
       </text>
     </g>
   );
 }
 
-export function HangarPreview({ state }: { state: ConfiguratorState }) {
-  const { dimensions, envelope, scope, gates } = state;
-  const scene = computeScene(dimensions, gates);
+export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
+  const { dimensions, envelope, scope, gates } = domain;
+  // State → Domain (already done by the caller) → Scene (renderer-neutral, metres) → this SVG
+  // projection (pixels). A future renderer consumes the same buildHangarScene() output and does
+  // its own projection step instead of this one — see app/lib/configurator/sceneModel.ts.
+  const scene = projectIsometricScene(buildHangarScene(domain));
 
-  const hasFoundation = scope.includes('foundation');
-  const hasFrame = scope.includes('frame');
-  const hasWalls = scope.includes('walls');
-  const hasRoof = scope.includes('roof');
-
-  const widthActive = useLayerHighlight(dimensions.width);
-  const lengthActive = useLayerHighlight(dimensions.length);
-  const heightActive = useLayerHighlight(dimensions.height);
-  const foundationActive = useLayerHighlight(hasFoundation);
-  const frameActive = useLayerHighlight(hasFrame);
-  const wallsActive = useLayerHighlight(`${hasWalls}:${envelope}`);
-  const roofActive = useLayerHighlight(hasRoof);
+  const widthActive = useLayerHighlight(dimensions.widthM);
+  const lengthActive = useLayerHighlight(dimensions.lengthM);
+  const heightActive = useLayerHighlight(dimensions.heightM);
+  const foundationActive = useLayerHighlight(scope.foundation);
+  const frameActive = useLayerHighlight(scope.frame);
+  const wallsActive = useLayerHighlight(`${scope.walls}:${envelope}`);
+  const roofActive = useLayerHighlight(scope.roof);
   const gatesActive = useLayerHighlight(gates);
 
   const facadeActive = widthActive || heightActive || wallsActive;
@@ -45,14 +44,12 @@ export function HangarPreview({ state }: { state: ConfiguratorState }) {
   const { minX, minY, maxX, maxY } = scene.bounds;
   const viewBox = `${minX - VIEWBOX_PADDING} ${minY - VIEWBOX_PADDING} ${maxX - minX + VIEWBOX_PADDING * 2} ${maxY - minY + VIEWBOX_PADDING * 2}`;
 
-  const envelopeClass = `hc-envelope-${envelope}`;
-
   return (
     <svg
       className="hc-preview-svg"
       viewBox={viewBox}
       role="img"
-      aria-label={`Схематичний ескіз ангара: ${dimensions.width} на ${dimensions.length} метрів, висота стін ${dimensions.height} м`}
+      aria-label={`Схематичний ескіз ангара: ${dimensions.widthM} на ${dimensions.lengthM} метрів, висота стін ${dimensions.heightM} м`}
     >
       <defs>
         {/* Envelope state is never colour-only: "Утеплений" gets a ribbed panel texture,
@@ -69,23 +66,23 @@ export function HangarPreview({ state }: { state: ConfiguratorState }) {
         </pattern>
       </defs>
 
-      {hasFoundation && (
+      {scene.foundation && (
         <polygon
           className={`hc-layer hc-foundation ${foundationActive ? 'is-active' : ''}`}
-          points={pointsAttr(scene.foundation ?? [])}
+          points={pointsAttr(scene.foundation)}
         />
       )}
 
-      <g className={`hc-layer hc-top ${envelopeClass} ${topActive ? 'is-active' : ''} ${hasRoof ? 'has-roof' : 'no-roof'}`}>
-        <polygon points={pointsAttr(scene.box.top)} />
+      <g className={`hc-layer hc-top hc-envelope-${scene.box.top.envelope ?? envelope} ${topActive ? 'is-active' : ''} ${scene.box.top.hasFill ? 'has-roof' : 'no-roof'}`}>
+        <polygon points={pointsAttr(scene.box.top.points)} />
       </g>
 
-      <g className={`hc-layer hc-side ${envelopeClass} ${sideActive ? 'is-active' : ''} ${hasWalls ? 'has-walls' : 'no-walls'}`}>
-        <polygon points={pointsAttr(scene.box.side)} />
+      <g className={`hc-layer hc-side hc-envelope-${scene.box.side.envelope ?? envelope} ${sideActive ? 'is-active' : ''} ${scene.box.side.hasFill ? 'has-walls' : 'no-walls'}`}>
+        <polygon points={pointsAttr(scene.box.side.points)} />
       </g>
 
-      <g className={`hc-layer hc-front ${envelopeClass} ${facadeActive ? 'is-active' : ''} ${hasWalls ? 'has-walls' : 'no-walls'}`}>
-        <polygon points={pointsAttr(scene.box.front)} />
+      <g className={`hc-layer hc-front hc-envelope-${scene.box.front.envelope ?? envelope} ${facadeActive ? 'is-active' : ''} ${scene.box.front.hasFill ? 'has-walls' : 'no-walls'}`}>
+        <polygon points={pointsAttr(scene.box.front.points)} />
         {scene.gates.map((gate, index) => (
           <polygon key={index} className="hc-gate" points={pointsAttr(gate.points)} />
         ))}
@@ -98,7 +95,7 @@ export function HangarPreview({ state }: { state: ConfiguratorState }) {
         </g>
       )}
 
-      {hasFrame && (
+      {scope.frame && (
         <g className={`hc-layer hc-frame ${frameActive ? 'is-active' : ''}`}>
           {scene.frame.frontColumns.map(([a, b], index) => (
             <line key={`f${index}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
@@ -109,9 +106,9 @@ export function HangarPreview({ state }: { state: ConfiguratorState }) {
         </g>
       )}
 
-      <DimensionGuideGroup guide={scene.dimensions.width} label={`${dimensions.width} м`} />
-      <DimensionGuideGroup guide={scene.dimensions.length} label={`${dimensions.length} м`} />
-      <DimensionGuideGroup guide={scene.dimensions.height} label={`${dimensions.height} м`} />
+      <DimensionGuideGroup guide={scene.dimensions.width} />
+      <DimensionGuideGroup guide={scene.dimensions.length} />
+      <DimensionGuideGroup guide={scene.dimensions.height} />
     </svg>
   );
 }
