@@ -4,7 +4,7 @@ import ResponsiveImage from './ResponsiveImage';
 import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
-import { getDirection } from '../data/directions';
+import { getDirection } from '../lib/directions';
 import { relatedDirections } from '../data/relatedDirections';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
 import { company } from '../data/company';

@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import {
   Blocks,
   Boxes,
@@ -29,9 +28,8 @@ import {
   Weight,
   Wheat,
 } from 'lucide-react';
-import { createPageMetadata } from '../lib/seo';
 import type { DirectionPageConfig } from '../types/directionPage';
-import { getDirection, type DirectionId } from './directions';
+import type { DirectionId } from './directions';
 
 export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   angary: {
@@ -323,18 +321,3 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     cta: { eyebrow: 'Обговорити покрівлю', title: 'Опишіть споруду й стан покрівлі — визначимо наступний крок' },
   },
 };
-
-export function getDirectionPage(id: DirectionId): DirectionPageConfig {
-  return directionPages[id];
-}
-
-export function createDirectionMetadata(id: DirectionId): Metadata {
-  const direction = getDirection(id);
-  return createPageMetadata({
-    path: direction.href,
-    title: direction.seoTitle,
-    description: direction.seoDescription,
-    image: direction.image,
-    imageAlt: direction.imageAlt,
-  });
-}

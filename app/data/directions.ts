@@ -126,16 +126,6 @@ export const directions: readonly Direction[] = [
   },
 ] as const;
 
-export function getDirection(id: DirectionId): Direction {
-  const direction = directions.find((item) => item.id === id);
-
-  if (!direction) {
-    throw new Error(`Unknown direction: ${id}`);
-  }
-
-  return direction;
-}
-
 export const inquiryDirectionOptions = [
   ...directions.map(({ formLabel }) => formLabel),
   'Комплексне будівництво',
