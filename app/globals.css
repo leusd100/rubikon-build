@@ -485,6 +485,14 @@ section[id] { scroll-margin-top: 116px; }
 .copy-column > p:not(.eyebrow) { margin: 22px 0 0; color: var(--muted); font-size: 15px; line-height: 1.85; }
 .copy-column .lead-copy { margin-top: 32px; color: #444b46; font-size: 18px; line-height: 1.7; }
 .page-heading { margin-bottom: 54px; }
+/* Two named modes of cooperation, one shared frame — a true 50/50 pair (unlike .page-two-col's
+   asymmetric split), since both scenarios are genuinely equal, parallel options rather than a
+   primary/secondary pairing. One hairline divider between them, not two separate sections. */
+.cooperation-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); margin-top: clamp(48px, 5vw, 68px); padding-top: 40px; border-top: 1px solid var(--line); }
+.cooperation-mode + .cooperation-mode { border-left: 1px solid var(--line); padding-left: var(--grid-gap); }
+.cooperation-mode > span { display: block; margin-bottom: 14px; color: var(--accent-dark); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.cooperation-mode h2 { margin: 0 0 16px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(30px, 2.8vw, 40px); font-weight: 400; line-height: 1.1; letter-spacing: -.03em; text-wrap: balance; }
+.cooperation-mode p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.8; }
 .detail-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(255,255,255,.2); border-left: 1px solid rgba(255,255,255,.2); }
 .detail-card { min-height: 290px; padding: 28px; border-right: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); }
 .detail-card > span { color: var(--accent); font: 500 12px/1 var(--font-condensed), sans-serif; }
@@ -576,19 +584,37 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 .dark-note { color: var(--muted); }
 
 .estimate-brief { color: var(--ink); background: #e8e7e1; }
-.estimate-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(42px, 6vw, 88px); margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(21,24,22,.22); }
-.estimate-list li { display: grid; grid-template-columns: 46px 42px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 16px; align-items: start; padding: 30px 0 32px; border-bottom: 1px solid rgba(21,24,22,.22); }
+/* Single-column, deliberately compact — this sits beside .copy-column's statement as a quick
+   checklist, not another full-weight card grid. Row padding/heading size are intentionally
+   smaller than .feature-list's: the point of this composition is that it reads lighter than
+   Process, not that it repeats Process's weight in a narrower column. */
+.estimate-list { display: grid; grid-template-columns: 1fr; margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(21,24,22,.22); }
+.estimate-list li { display: grid; grid-template-columns: 38px 30px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 14px; align-items: start; padding: 20px 0; border-bottom: 1px solid rgba(21,24,22,.22); }
 .estimate-list span, .cost-grid span { color: var(--accent-dark); font: 600 14px/1.4 var(--font-condensed), sans-serif; }
 .estimate-list span { grid-row: 1 / span 2; }
-.brief-icon { grid-row: 1 / span 2; display: block; width: 36px; height: 36px; color: var(--accent-dark); stroke-width: 1.45; }
-.estimate-list h3 { margin: 0 0 10px; font: 600 23px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.estimate-list p { margin: 0; color: var(--text-muted); font-size: 13px; line-height: 1.7; }
+.brief-icon { grid-row: 1 / span 2; display: block; width: 28px; height: 28px; color: var(--accent-dark); stroke-width: 1.45; }
+.estimate-list h3 { margin: 0 0 6px; font: 600 17px/1.15 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.estimate-list p { margin: 0; color: var(--text-muted); font-size: 13px; line-height: 1.65; }
 .cost-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(21,24,22,.17); border-left: 1px solid rgba(21,24,22,.17); }
 .cost-grid article { min-height: 275px; padding: 28px; border-right: 1px solid rgba(21,24,22,.17); border-bottom: 1px solid rgba(21,24,22,.17); }
 .cost-grid h3 { font: 600 22px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .cost-grid h3 { margin: 24px 0 14px; }
 .cost-grid p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .cost-section { background: #efeee8; }
+
+/* Cost factors on direction pages — deliberately NOT .cost-grid (that class is untouched, still
+   used by the homepage Services section). Process, right above this, is a sequence: four equal
+   bordered cards is the correct shape for four ordered steps. Cost factors are simultaneous
+   considerations, not steps — a full-width band list reads as a technical spec sheet instead of
+   a second copy of Process's card grid. Index mark stays small and de-emphasized (not a bold
+   01-04) since these aren't ranked; the icon that DirectionItemCards always renders is hidden
+   here on purpose — restrained/typographic rather than repeating Process's icon-per-item look. */
+.cost-list { border-top: 1px solid rgba(21,24,22,.17); }
+.cost-list article { display: grid; grid-template-columns: 34px minmax(160px, .34fr) minmax(0, 1fr); column-gap: 24px; align-items: baseline; padding: 24px 0; border-bottom: 1px solid rgba(21,24,22,.17); }
+.cost-list .card-icon { display: none; }
+.cost-list span { color: var(--text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
+.cost-list h3 { margin: 0; font: 600 19px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.cost-list p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 
 /* Related directions — compact cross-navigation between adjacent stages of one object.
    Reuses the .cost-grid hairline vocabulary (container border-top/left, cell border-right/bottom)
@@ -746,6 +772,11 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .faq-grid { gap: var(--grid-gap); }
   .logo-options-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .logo-option:last-child { grid-column: 1 / -1; }
+  /* Stack before the two paragraph columns get cramped on tablet portrait widths — each mode
+     carries 3-4 sentences, not a short label, so this needs to fold earlier than a typical
+     icon+heading split would. */
+  .cooperation-split { grid-template-columns: 1fr; gap: 36px; }
+  .cooperation-mode + .cooperation-mode { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 36px; }
 }
 
 /* Keep the intro useful at laptop widths without leaving a tall empty column beside the form.
@@ -923,11 +954,13 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .direction-editorial-copy h2 { font-size: var(--title-section); }
   .direction-editorial-copy > p:not(.eyebrow) { margin-top: 22px; font-size: 14px; }
   .direction-editorial-media { min-height: 0; aspect-ratio: 3 / 2; border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 10px 10px 0 rgba(197,83,41,.1); }
-  .estimate-list, .cost-grid { grid-template-columns: 1fr; }
+  .cost-grid { grid-template-columns: 1fr; }
   .detail-card, .detail-steps li, .use-case-grid article { min-height: 245px; }
   .cost-grid article { min-height: 230px; }
   .detail-card h3, .detail-steps h3, .use-case-grid h3, .cost-grid h3 { margin-top: 64px; }
-  .estimate-list li { grid-template-columns: 38px 38px minmax(0, 1fr); column-gap: 12px; padding-block: 26px; }
+  .cost-list article { grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 12px; padding: 18px 0; }
+  .cost-list h3 { grid-column: 2; }
+  .cost-list p { grid-column: 1 / -1; margin-top: 8px; }
   .route-service { grid-template-columns: 48px 1fr 30px; min-height: 190px; gap: 12px; }
   .route-service h3 { font-size: 25px; }
   .route-service p { font-size: 13px; }

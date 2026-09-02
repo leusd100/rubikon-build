@@ -134,11 +134,16 @@ export function DirectionCostSection({
   text: string;
   items: readonly DirectionItem[];
 }) {
+  // Process (right above this section) is a sequence — ordered steps, a bordered card grid says
+  // that correctly. Cost factors aren't ordered — they're simultaneous considerations, so this
+  // deliberately does NOT reuse .cost-grid's box-grid logic (that class stays exactly as-is for
+  // the homepage Services section, which is a separate, unrelated use of it). .cost-list is a
+  // full-width technical band list instead — reads as a spec sheet, not a second copy of Process.
   return (
     <section className="page-section cost-section">
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow="Формування кошторису" title={title} supporting={text} />
-        <DirectionItemCards className="cost-grid" items={items} />
+        <DirectionItemCards className="cost-list" items={items} />
       </div>
     </section>
   );
