@@ -36,11 +36,12 @@ describe('buildHangarScene — renderer-neutral, all in metres', () => {
     expect(json).not.toMatch(/"x":|"y":|points/);
   });
 
-  it('always emits exactly one foundation-slab, visible following scope.foundation', () => {
-    // Present-but-invisible (not omitted) on purpose, matching envelope-panel/roof-plane below —
-    // its footprint must still participate in scene bounds even when hidden (see the comment on
-    // the ScenePrimitive type). A future renderer that only cares about visible geometry can
-    // filter on `.visible` itself; the scene model always describes the full object.
+  it('always emits exactly one foundation-slab, visible following scope.foundation, geometry-safe (present but invisible) when out of scope', () => {
+    // Present-but-invisible (not omitted) on purpose — its footprint must still participate in
+    // scene bounds even when hidden, and a build-up dematerialize transition needs somewhere to
+    // fade *from* (see the comment on the ScenePrimitive type). A future renderer that only cares
+    // about visible geometry can filter on `.visible` itself; the scene model always describes
+    // the full object.
     const withFoundation = buildHangarScene(domainFor({ scope: ['foundation'], dimensions: { width: 20, length: 40, height: 8 } }));
     const withoutFoundation = buildHangarScene(domainFor({ scope: ['frame', 'walls', 'roof'], dimensions: { width: 20, length: 40, height: 8 } }));
 
@@ -52,10 +53,33 @@ describe('buildHangarScene — renderer-neutral, all in metres', () => {
     ]);
   });
 
-  it('emits zero frame-column and frame-truss primitives when frame is not in scope', () => {
-    const scene = buildHangarScene(domainFor({ scope: ['foundation', 'walls', 'roof'] }));
-    expect(primitivesOfKind(scene, 'frame-column')).toHaveLength(0);
-    expect(primitivesOfKind(scene, 'frame-truss')).toHaveLength(0);
+  it('always emits a terrain-plane, independent of scope', () => {
+    const withNothing = buildHangarScene(domainFor({ scope: [], dimensions: { width: 20, length: 40, height: 8 } }));
+    expect(primitivesOfKind(withNothing, 'terrain-plane')).toEqual([{ kind: 'terrain-plane', widthM: 20, lengthM: 40 }]);
+  });
+
+  it('always emits frame-column/frame-truss/frame-purlin primitives, geometry-safe: `visible` follows scope.frame but the members are never omitted', () => {
+    const withFrame = buildHangarScene(domainFor({ scope: ['frame'] }));
+    const withoutFrame = buildHangarScene(domainFor({ scope: ['foundation', 'walls', 'roof'] }));
+
+    expect(primitivesOfKind(withFrame, 'frame-column').length).toBeGreaterThan(0);
+    expect(primitivesOfKind(withFrame, 'frame-column').every((c) => c.visible)).toBe(true);
+    expect(primitivesOfKind(withFrame, 'frame-truss').every((t) => t.visible)).toBe(true);
+    expect(primitivesOfKind(withFrame, 'frame-purlin').every((p) => p.visible)).toBe(true);
+
+    // Same counts either way — only `visible` changes, never presence, so a dematerialize
+    // transition always has real geometry to fade from.
+    expect(primitivesOfKind(withoutFrame, 'frame-column')).toHaveLength(primitivesOfKind(withFrame, 'frame-column').length);
+    expect(primitivesOfKind(withoutFrame, 'frame-truss')).toHaveLength(primitivesOfKind(withFrame, 'frame-truss').length);
+    expect(primitivesOfKind(withoutFrame, 'frame-purlin')).toHaveLength(primitivesOfKind(withFrame, 'frame-purlin').length);
+    expect(primitivesOfKind(withoutFrame, 'frame-column').every((c) => !c.visible)).toBe(true);
+    expect(primitivesOfKind(withoutFrame, 'frame-truss').every((t) => !t.visible)).toBe(true);
+    expect(primitivesOfKind(withoutFrame, 'frame-purlin').every((p) => !p.visible)).toBe(true);
+  });
+
+  it('emits exactly 2 frame-purlin primitives (the two stylised height levels), regardless of scope', () => {
+    const scene = buildHangarScene(domainFor({ scope: [] }));
+    expect(primitivesOfKind(scene, 'frame-purlin')).toHaveLength(2);
   });
 
   it('emits one truss per side-bay position, matching the side column count', () => {
@@ -65,21 +89,24 @@ describe('buildHangarScene — renderer-neutral, all in metres', () => {
     expect(trusses).toHaveLength(sideColumns.length);
   });
 
-  it('always emits front and side envelope-panel primitives, fill following scope.walls', () => {
-    const withWalls = buildHangarScene(domainFor({ scope: ['walls'] }));
-    const withoutWalls = buildHangarScene(domainFor({ scope: [] }));
+  it('always emits front and side wall-segment primitives, segmented by structural bay, fill following scope.walls', () => {
+    const withWalls = buildHangarScene(domainFor({ scope: ['walls'], dimensions: { width: 24, length: 60, height: 8 } }));
+    const withoutWalls = buildHangarScene(domainFor({ scope: [], dimensions: { width: 24, length: 60, height: 8 } }));
 
-    expect(primitivesOfKind(withWalls, 'envelope-panel').every((p) => p.hasFill)).toBe(true);
-    expect(primitivesOfKind(withoutWalls, 'envelope-panel').every((p) => !p.hasFill)).toBe(true);
+    const frontSegments = primitivesOfKind(withWalls, 'wall-segment').filter((s) => s.face === 'front');
+    expect(frontSegments).toHaveLength(frameBayCount(24));
+    expect(frontSegments.every((s) => s.hasFill)).toBe(true);
+    expect(primitivesOfKind(withoutWalls, 'wall-segment').every((s) => !s.hasFill)).toBe(true);
   });
 
-  it('always emits exactly one roof-plane, fill following scope.roof', () => {
-    const withRoof = buildHangarScene(domainFor({ scope: ['roof'] }));
-    const withoutRoof = buildHangarScene(domainFor({ scope: [] }));
+  it('always emits roof-segment primitives, segmented along the length, fill following scope.roof', () => {
+    const withRoof = buildHangarScene(domainFor({ scope: ['roof'], dimensions: { width: 24, length: 60, height: 8 } }));
+    const withoutRoof = buildHangarScene(domainFor({ scope: [], dimensions: { width: 24, length: 60, height: 8 } }));
 
-    expect(primitivesOfKind(withRoof, 'roof-plane')).toHaveLength(1);
-    expect(primitivesOfKind(withRoof, 'roof-plane')[0].hasFill).toBe(true);
-    expect(primitivesOfKind(withoutRoof, 'roof-plane')[0].hasFill).toBe(false);
+    const roofSegments = primitivesOfKind(withRoof, 'roof-segment');
+    expect(roofSegments).toHaveLength(frameBayCount(60));
+    expect(roofSegments.every((s) => s.hasFill)).toBe(true);
+    expect(primitivesOfKind(withoutRoof, 'roof-segment').every((s) => !s.hasFill)).toBe(true);
   });
 
   it('emits exactly `gates` opening-cutout primitives, all within the facade width', () => {

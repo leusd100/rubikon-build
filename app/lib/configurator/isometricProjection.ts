@@ -2,9 +2,10 @@ import type { ScenePrimitive, SceneModel } from './sceneModel';
 import type { EnvelopeChoice } from './types';
 
 // The SVG renderer's own projection step: takes a renderer-neutral SceneModel (metres) and
-// produces plain {x,y} pixel points. This is the *only* place isometric trigonometry and pixel
-// scale live — a future renderer (R3F, etc.) consumes the same SceneModel and does its own
-// projection (or none, if it works in real 3D space directly), never this module.
+// produces plain {x,y} pixel points. This is the *only* place isometric trigonometry, pixel
+// scale, and rendering-only choices like "how much ground to show around the footprint" live —
+// a future renderer (R3F, etc.) consumes the same SceneModel and does its own projection (or
+// none, if it works in real 3D space directly), never this module.
 
 // One shared scale for width, length AND height on purpose — a true isometric cube, not a
 // fudged one. A much longer building should genuinely look elongated; the SVG's viewBox (see
@@ -14,6 +15,8 @@ export const PX_PER_METRE = 8;
 const ISO_ANGLE_RAD = Math.PI / 6; // 30°, the standard isometric receding angle
 const FOUNDATION_OVERHANG_PX = 10;
 const FOUNDATION_THICKNESS_PX = 10;
+const TERRAIN_MARGIN_RATIO = 0.3; // how far the ground reference extends past the footprint —
+                                   // a rendering/framing choice, not a fact about the object.
 
 export type Point = { x: number; y: number };
 
@@ -37,64 +40,61 @@ function lerp(a: Point, b: Point, t: number): Point {
   return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
 }
 
-export type BoxFace = {
-  points: Point[];
-  hasFill: boolean;
-  envelope: EnvelopeChoice | undefined;
-};
+export type BoxFace = { points: Point[]; hasFill: boolean; envelope: EnvelopeChoice | undefined };
 
-export type BoxFaces = {
-  /** Facade — the only face gates cut into. */
-  front: BoxFace;
-  /** Receding side face, depicts `length`. */
-  side: BoxFace;
-  /** Top face — doubles as the roof plane. */
-  top: BoxFace;
-};
+/** One structural bay's worth of cladding — a sub-quad of the full front/side/roof plane. */
+export type ProjectedSegment = { points: Point[]; hasFill: boolean; envelope: EnvelopeChoice | undefined };
+
+/** One structural member's projected line, plus whether the scope that member belongs to is
+ * currently on — carried through rather than filtered out, same as `ProjectedSegment.hasFill`,
+ * so the renderer can animate a member fading out instead of it just disappearing the instant
+ * `visible` flips false. */
+export type FrameLine = { points: [Point, Point]; visible: boolean };
 
 export type FrameLines = {
-  /** Vertical column lines on the front facade. */
-  frontColumns: [Point, Point][];
-  /** Vertical column lines on the side face. */
-  sideColumns: [Point, Point][];
+  frontColumns: FrameLine[];
+  sideColumns: FrameLine[];
+  trusses: FrameLine[];
+  purlins: FrameLine[];
 };
 
 export type GateRect = { points: Point[] };
 
 export type DimensionGuide = {
-  /** The two ends of the dimension line itself (parallel to the measured edge, offset out). */
   line: [Point, Point];
-  /** Short perpendicular ticks at each end, technical-drawing style (not arrowheads). */
   ticks: [[Point, Point], [Point, Point]];
-  /** Where the numeric label should sit (already offset off the line). */
   label: Point;
-  /** Text anchor to use for the label — keeps labels readable regardless of which edge. */
   anchor: 'middle' | 'start' | 'end';
   valueM: number;
 };
 
 export type IsometricScene = {
-  box: BoxFaces;
-  foundation: Point[] | null;
+  terrain: Point[];
+  /** Always the slab's real footprint polygon, regardless of `scope.foundation` — never `null`.
+   * Geometry is a fact about the object; whether to *show* it (and how to animate that) is the
+   * renderer's call, driven by the primitive's own `visible` flag via the build-up lifecycle, not
+   * by this module withholding the points. */
+  foundation: { points: Point[]; visible: boolean };
   frame: FrameLines;
+  wallSegments: { front: ProjectedSegment[]; side: ProjectedSegment[] };
+  roofSegments: ProjectedSegment[];
   gates: GateRect[];
-  dimensions: {
-    width: DimensionGuide;
-    length: DimensionGuide;
-    height: DimensionGuide;
-  };
+  dimensions: { width: DimensionGuide; length: DimensionGuide; height: DimensionGuide };
   /** Tight bounding box around every element above, in the same local coordinate space. */
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
 };
+
+function findPrimitives<K extends ScenePrimitive['kind']>(
+  scene: SceneModel,
+  kind: K,
+): Extract<ScenePrimitive, { kind: K }>[] {
+  return scene.primitives.filter((p): p is Extract<ScenePrimitive, { kind: K }> => p.kind === kind);
+}
 
 /**
  * Pure: a SceneModel in, an isometric scene of plain {x,y} points out. No React, no DOM —
  * `HangarPreview` is the only thing that turns this into actual SVG markup. Stays
  * unit-testable on its own (see tests/unit/configurator/isometricProjection.test.ts).
- *
- * Note this deliberately ignores `frame-truss` primitives — the current SVG rendering has no
- * visual concept of a truss distinct from a column line, and this batch's brief is "adapt to
- * SceneModel without a visual redesign". The R3F spike is the renderer that does render trusses.
  */
 export function projectIsometricScene(scene: SceneModel): IsometricScene {
   const { widthM, lengthM, heightM } = scene.dimensions;
@@ -111,38 +111,55 @@ export function projectIsometricScene(scene: SceneModel): IsometricScene {
   const BTR = translate(FTR, iso);
   const BBR = translate(FBR, iso);
 
-  const frontPanel = findPrimitive(scene, 'envelope-panel', (p) => p.face === 'front');
-  const sidePanel = findPrimitive(scene, 'envelope-panel', (p) => p.face === 'side');
-  const roofPlane = findPrimitive(scene, 'roof-plane');
+  const terrain = buildTerrainPolygon(W, H, depthPx);
 
-  const box: BoxFaces = {
-    front: { points: [FTL, FTR, FBR, FBL], hasFill: frontPanel?.hasFill ?? false, envelope: frontPanel?.envelope },
-    side: { points: [FTR, BTR, BBR, FBR], hasFill: sidePanel?.hasFill ?? false, envelope: sidePanel?.envelope },
-    top: { points: [FTL, FTR, BTR, BTL], hasFill: roofPlane?.hasFill ?? false, envelope: roofPlane?.envelope },
-  };
-
-  // Computed unconditionally, same as the box faces above — its footprint always participates
-  // in bounds/framing (see the comment on ScenePrimitive's foundation-slab variant). Only
-  // whether HangarPreview actually draws it depends on `visible`.
-  const foundationPrimitive = findPrimitive(scene, 'foundation-slab');
+  const foundationPrimitive = findPrimitives(scene, 'foundation-slab')[0];
   const foundationPolygon = buildFoundationPolygon(W, H, depthPx);
-  const foundation = foundationPrimitive?.visible ? foundationPolygon : null;
+  const foundation = { points: foundationPolygon, visible: foundationPrimitive?.visible ?? false };
 
-  const frontColumns: [Point, Point][] = scene.primitives
-    .filter((p): p is Extract<ScenePrimitive, { kind: 'frame-column' }> => p.kind === 'frame-column' && p.face === 'front')
+  const frontColumns: FrameLine[] = findPrimitives(scene, 'frame-column')
+    .filter((p) => p.face === 'front')
     .map((p) => {
       const t = p.positionM / widthM;
-      return [lerp(FTL, FTR, t), lerp(FBL, FBR, t)] as [Point, Point];
+      return { points: [lerp(FTL, FTR, t), lerp(FBL, FBR, t)] as [Point, Point], visible: p.visible };
     });
-  const sideColumns: [Point, Point][] = scene.primitives
-    .filter((p): p is Extract<ScenePrimitive, { kind: 'frame-column' }> => p.kind === 'frame-column' && p.face === 'side')
+  const sideColumns: FrameLine[] = findPrimitives(scene, 'frame-column')
+    .filter((p) => p.face === 'side')
     .map((p) => {
       const t = p.positionM / lengthM;
-      return [lerp(FTR, BTR, t), lerp(FBR, BBR, t)] as [Point, Point];
+      return { points: [lerp(FTR, BTR, t), lerp(FBR, BBR, t)] as [Point, Point], visible: p.visible };
     });
 
-  const gates = scene.primitives.filter((p): p is Extract<ScenePrimitive, { kind: 'opening-cutout' }> => p.kind === 'opening-cutout');
-  const gateRects: GateRect[] = gates.map((gate) => {
+  const trusses: FrameLine[] = findPrimitives(scene, 'frame-truss').map((truss) => {
+    const depthOffset = isoOffset(truss.positionM * PX_PER_METRE);
+    return {
+      points: [translate(FTL, depthOffset), translate(FTR, depthOffset)] as [Point, Point],
+      visible: truss.visible,
+    };
+  });
+
+  const purlins: FrameLine[] = findPrimitives(scene, 'frame-purlin').map((purlin) => {
+    // heightM here is the purlin's height *level* (already an absolute metre value from the
+    // ground), not the building's full height — see sceneModel.ts's PURLIN_LEVELS.
+    const levelY = H - purlin.positionM * PX_PER_METRE;
+    const near: Point = { x: W, y: levelY };
+    const far: Point = translate(near, isoOffset(purlin.lengthM * PX_PER_METRE));
+    return { points: [near, far] as [Point, Point], visible: purlin.visible };
+  });
+
+  const wallSegments = {
+    front: findPrimitives(scene, 'wall-segment')
+      .filter((s) => s.face === 'front')
+      .map((s) => projectFrontSegment(s, FTL, FTR, FBL, FBR)),
+    side: findPrimitives(scene, 'wall-segment')
+      .filter((s) => s.face === 'side')
+      .map((s) => projectSideSegment(s, FTR, BTR, FBR, BBR)),
+  };
+
+  const roofSegments = findPrimitives(scene, 'roof-segment').map((s) => projectRoofSegment(s, FTL, FTR, BTL, BTR));
+
+  const gatePrimitives = findPrimitives(scene, 'opening-cutout');
+  const gateRects: GateRect[] = gatePrimitives.map((gate) => {
     const left = gate.positionM * PX_PER_METRE;
     const right = left + gate.widthM * PX_PER_METRE;
     const gateTop = H - gate.heightM * PX_PER_METRE;
@@ -163,12 +180,15 @@ export function projectIsometricScene(scene: SceneModel): IsometricScene {
   };
 
   const allPoints = [
-    ...box.front.points,
-    ...box.side.points,
-    ...box.top.points,
+    ...terrain,
     ...foundationPolygon,
-    ...frontColumns.flat(),
-    ...sideColumns.flat(),
+    ...frontColumns.flatMap((f) => f.points),
+    ...sideColumns.flatMap((f) => f.points),
+    ...trusses.flatMap((f) => f.points),
+    ...purlins.flatMap((f) => f.points),
+    ...wallSegments.front.flatMap((s) => s.points),
+    ...wallSegments.side.flatMap((s) => s.points),
+    ...roofSegments.flatMap((s) => s.points),
     ...gateRects.flatMap((g) => g.points),
     dims.width.line[0], dims.width.line[1], dims.width.label,
     dims.length.line[0], dims.length.line[1], dims.length.label,
@@ -176,23 +196,54 @@ export function projectIsometricScene(scene: SceneModel): IsometricScene {
   ];
 
   return {
-    box,
+    terrain,
     foundation,
-    frame: { frontColumns, sideColumns },
+    frame: { frontColumns, sideColumns, trusses, purlins },
+    wallSegments,
+    roofSegments,
     gates: gateRects,
     dimensions: dims,
     bounds: boundsOf(allPoints),
   };
 }
 
-function findPrimitive<K extends ScenePrimitive['kind']>(
-  scene: SceneModel,
-  kind: K,
-  extra?: (p: Extract<ScenePrimitive, { kind: K }>) => boolean,
-): Extract<ScenePrimitive, { kind: K }> | undefined {
-  return scene.primitives.find(
-    (p): p is Extract<ScenePrimitive, { kind: K }> => p.kind === kind && (!extra || extra(p as Extract<ScenePrimitive, { kind: K }>)),
-  );
+function projectFrontSegment(
+  segment: Extract<ScenePrimitive, { kind: 'wall-segment' }>,
+  FTL: Point,
+  FTR: Point,
+  FBL: Point,
+  FBR: Point,
+): ProjectedSegment {
+  const t0 = segment.index / segment.segmentCount;
+  const t1 = (segment.index + 1) / segment.segmentCount;
+  const points = [lerp(FTL, FTR, t0), lerp(FTL, FTR, t1), lerp(FBL, FBR, t1), lerp(FBL, FBR, t0)];
+  return { points, hasFill: segment.hasFill, envelope: segment.envelope };
+}
+
+function projectSideSegment(
+  segment: Extract<ScenePrimitive, { kind: 'wall-segment' }>,
+  FTR: Point,
+  BTR: Point,
+  FBR: Point,
+  BBR: Point,
+): ProjectedSegment {
+  const t0 = segment.index / segment.segmentCount;
+  const t1 = (segment.index + 1) / segment.segmentCount;
+  const points = [lerp(FTR, BTR, t0), lerp(FTR, BTR, t1), lerp(FBR, BBR, t1), lerp(FBR, BBR, t0)];
+  return { points, hasFill: segment.hasFill, envelope: segment.envelope };
+}
+
+function projectRoofSegment(
+  segment: Extract<ScenePrimitive, { kind: 'roof-segment' }>,
+  FTL: Point,
+  FTR: Point,
+  BTL: Point,
+  BTR: Point,
+): ProjectedSegment {
+  const t0 = segment.index / segment.segmentCount;
+  const t1 = (segment.index + 1) / segment.segmentCount;
+  const points = [lerp(FTL, BTL, t0), lerp(FTR, BTR, t0), lerp(FTR, BTR, t1), lerp(FTL, BTL, t1)];
+  return { points, hasFill: segment.hasFill, envelope: segment.envelope };
 }
 
 function buildFoundationPolygon(W: number, H: number, depthPx: number): Point[] {
@@ -204,6 +255,19 @@ function buildFoundationPolygon(W: number, H: number, depthPx: number): Point[] 
   const fBTR = translate(fFTR, foundationIso);
   const fBBR = translate(fFBR, foundationIso);
   return [fFTL, fFTR, fBTR, fBBR, fFBR, fFBL];
+}
+
+/** A flat ground reference, larger than the footprint by a fixed ratio — framing/context only,
+ * never toggled by scope. Deliberately included in scene bounds (see `allPoints` below): a
+ * little visible ground around the object is the point, not an accident to exclude. */
+function buildTerrainPolygon(W: number, H: number, depthPx: number): Point[] {
+  const marginPx = Math.max(W, depthPx) * TERRAIN_MARGIN_RATIO;
+  const tFTL: Point = { x: -marginPx, y: H };
+  const tFTR: Point = { x: W + marginPx, y: H };
+  const tIso = isoOffset(depthPx + marginPx * 2);
+  const tBTL = translate(tFTL, tIso);
+  const tBTR = translate(tFTR, tIso);
+  return [tFTL, tFTR, tBTR, tBTL];
 }
 
 function widthGuide(FBL: Point, FBR: Point, wallHeightPx: number, valueM: number): DimensionGuide {
