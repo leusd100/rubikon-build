@@ -19,10 +19,23 @@ describe('buildUpSequence timing', () => {
     expect(totalSequenceDurationMs()).toBeLessThanOrEqual(3000);
   });
 
-  it('stages layers strictly in the confirmed build order (each starts no earlier than the previous)', () => {
-    const offsets = BUILD_LAYER_ORDER.map((layer) => layerStartOffsetMs(layer));
-    for (let i = 1; i < offsets.length; i += 1) {
-      expect(offsets[i]).toBeGreaterThan(offsets[i - 1]);
+  it('stages columns→trusses→purlins in sequence — the only layers that ever fire together', () => {
+    const columns = layerStartOffsetMs('columns');
+    const trusses = layerStartOffsetMs('trusses');
+    const purlins = layerStartOffsetMs('purlins');
+    expect(columns).toBe(0);
+    expect(trusses).toBeGreaterThan(columns);
+    expect(purlins).toBeGreaterThan(trusses);
+  });
+
+  it('gives every independently-triggered layer a zero start offset — nothing waits on a layer it was not triggered alongside', () => {
+    // foundation/walls/roof/gates are each toggled by their own checkbox (or the gate count's
+    // 0↔some transition); by the time a user acts on one, nothing else is "still building" for
+    // it to wait on, regardless of where it sits in the naming convention BUILD_LAYER_ORDER
+    // documents. This is the fix for a real bug caught live: an earlier version made unchecking
+    // "walls" alone wait out foundation+columns+trusses+purlins' entire combined span first.
+    for (const layer of ['foundation', 'walls', 'roof', 'gates'] as const) {
+      expect(layerStartOffsetMs(layer)).toBe(0);
     }
   });
 
