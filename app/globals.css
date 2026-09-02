@@ -164,7 +164,17 @@ section[id] { scroll-margin-top: 116px; }
 
 .hero { position: relative; min-height: 900px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #101012; }
 .hero-media { position: absolute; z-index: 0; inset: 0; }
-.hero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% center; filter: saturate(.66) contrast(1.1) brightness(.82); }
+/* brightness(.85), not .82: tested .82/.85/.87 side by side at 390/820/1440 plus a filtered-
+   pixel luminance sample behind the H1/lead/actions/contact-card regions. .82 was never actually
+   crushed or illegible — the .hero-shade gradient (a separate layer, independent of this filter)
+   protects text regardless of the value tried. But sampling showed Home's text-region brightness
+   (88.6) sits well below /pro-nas's (142.8) and isn't simply "the dark one" — /napryamky's own
+   active-image region measured even darker (60.3), so there's no single target to match. .85 is
+   the smallest step that reads as a genuine, if modest, lift in openness without giving up the
+   cinematic mood or approaching .87's tendency to pull focus onto background detail (visible
+   hand/blueprint texture competing with the H1 at 390px). Overlay/.hero-shade intentionally left
+   untouched — one variable changed, not two. */
+.hero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% center; filter: saturate(.66) contrast(1.1) brightness(.85); }
 .hero-shade { position: absolute; z-index: 1; inset: 0; background: linear-gradient(90deg, rgba(9,10,12,.95) 0%, rgba(9,10,12,.79) 42%, rgba(9,10,12,.23) 75%, rgba(9,10,12,.55) 100%), linear-gradient(0deg, rgba(9,10,12,.78) 0%, transparent 48%, rgba(9,10,12,.3) 100%); pointer-events: none; }
 .hero-grid { position: absolute; z-index: 1; inset: 0; opacity: .21; background-image: linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px); background-size: 96px 96px; mask-image: linear-gradient(90deg, black, transparent 82%); pointer-events: none; }
 .hero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(292px, 320px); min-height: 100%; align-items: end; gap: var(--grid-gap); padding-top: 180px; padding-bottom: 78px; }
