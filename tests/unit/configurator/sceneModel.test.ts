@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { deriveDomainModel, type HangarDomainModel } from '../../../app/lib/configurator/domainModel';
 import { buildHangarScene, frameBayCount, type ScenePrimitive } from '../../../app/lib/configurator/sceneModel';
-import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
+import { DEFAULT_CONFIGURATOR_STATE, DIMENSION_BOUNDS, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
 function domainFor(overrides: Partial<ConfiguratorState>): HangarDomainModel {
   return deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides });
@@ -135,5 +135,39 @@ describe('buildHangarScene — renderer-neutral, all in metres', () => {
     expect(guides.find((g) => g.axis === 'width')?.valueM).toBe(15);
     expect(guides.find((g) => g.axis === 'length')?.valueM).toBe(45);
     expect(guides.find((g) => g.axis === 'height')?.valueM).toBe(9);
+  });
+
+  it('is deterministic: the same domain model always produces an identical scene', () => {
+    const domain = domainFor({ dimensions: { width: 24, length: 60, height: 8 }, gates: 2 });
+    expect(buildHangarScene(domain)).toEqual(buildHangarScene(domain));
+  });
+
+  it('produces a valid, non-empty scene at both DIMENSION_BOUNDS extremes without NaN/negative fields', () => {
+    const { width, length, height } = DIMENSION_BOUNDS;
+    const minScene = buildHangarScene(domainFor({ dimensions: { width: width.min, length: length.min, height: height.min } }));
+    const maxScene = buildHangarScene(domainFor({ dimensions: { width: width.max, length: length.max, height: height.max } }));
+
+    for (const scene of [minScene, maxScene]) {
+      expect(scene.primitives.length).toBeGreaterThan(0);
+      for (const primitive of scene.primitives) {
+        for (const [key, value] of Object.entries(primitive)) {
+          if (typeof value !== 'number') continue;
+          expect(Number.isFinite(value), `${primitive.kind}.${key} must be finite`).toBe(true);
+          expect(value, `${primitive.kind}.${key} must not be negative`).toBeGreaterThanOrEqual(0);
+        }
+      }
+    }
+  });
+
+  it('orders primitives in the confirmed build sequence: terrain, foundation, frame, walls, roof, gates, dimensions', () => {
+    const scene = buildHangarScene(domainFor({ scope: ['foundation', 'frame', 'walls', 'roof'], gates: 2 }));
+    const order = ['terrain-plane', 'foundation-slab', 'frame-column', 'frame-truss', 'frame-purlin', 'wall-segment', 'roof-segment', 'opening-cutout', 'dimension-guide'];
+    const seenKindIndices = scene.primitives.map((p) => order.indexOf(p.kind));
+
+    // Every primitive's build-order index must be >= the previous one's — i.e. once the scene
+    // moves on to a later kind, it never goes back to an earlier one.
+    for (let i = 1; i < seenKindIndices.length; i += 1) {
+      expect(seenKindIndices[i]).toBeGreaterThanOrEqual(seenKindIndices[i - 1]);
+    }
   });
 });

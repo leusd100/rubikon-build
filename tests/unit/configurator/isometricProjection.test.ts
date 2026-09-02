@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { deriveDomainModel, type HangarDomainModel } from '../../../app/lib/configurator/domainModel';
 import { PX_PER_METRE, pointsAttr, projectIsometricScene, type Point } from '../../../app/lib/configurator/isometricProjection';
 import { buildHangarScene } from '../../../app/lib/configurator/sceneModel';
-import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
+import { DEFAULT_CONFIGURATOR_STATE, DIMENSION_BOUNDS, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
 function domainFor(overrides: Partial<ConfiguratorState>): HangarDomainModel {
   return deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides });
@@ -196,5 +196,27 @@ describe('projectIsometricScene — bounds', () => {
     const withoutFrame = sceneFor({ scope: ['foundation', 'walls', 'roof'] });
 
     expect(withFrame.bounds).toEqual(withoutFrame.bounds);
+  });
+
+  it('keeps bounds stable whether or not foundation is in scope — the exact regression the always-present + `visible` flag pattern exists to prevent (see sceneModel.ts)', () => {
+    const withFoundation = sceneFor({ scope: ['foundation', 'frame', 'walls', 'roof'] });
+    const withoutFoundation = sceneFor({ scope: ['frame', 'walls', 'roof'] });
+
+    expect(withFoundation.bounds).toEqual(withoutFoundation.bounds);
+  });
+
+  it('produces finite, non-degenerate bounds at both DIMENSION_BOUNDS extremes', () => {
+    const { width, length, height } = DIMENSION_BOUNDS;
+    const minScene = sceneFor({ dimensions: { width: width.min, length: length.min, height: height.min } });
+    const maxScene = sceneFor({ dimensions: { width: width.max, length: length.max, height: height.max } });
+
+    for (const scene of [minScene, maxScene]) {
+      expect(Number.isFinite(scene.bounds.minX)).toBe(true);
+      expect(Number.isFinite(scene.bounds.maxX)).toBe(true);
+      expect(Number.isFinite(scene.bounds.minY)).toBe(true);
+      expect(Number.isFinite(scene.bounds.maxY)).toBe(true);
+      expect(scene.bounds.maxX).toBeGreaterThan(scene.bounds.minX);
+      expect(scene.bounds.maxY).toBeGreaterThan(scene.bounds.minY);
+    }
   });
 });
