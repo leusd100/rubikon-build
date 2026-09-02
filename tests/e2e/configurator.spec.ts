@@ -45,10 +45,14 @@ test.describe('hangar configurator POC', () => {
   test('unchecking a scope item removes its fill layer and updates the summary list', async ({ page }) => {
     await openConfigurator(page);
 
-    await expect(page.locator('.hc-front.has-walls')).toHaveCount(1);
+    // The front wall is segmented per structural bay (see sceneModel.ts's frameBayCount) — the
+    // default 24m-wide hangar gets 4 segments, each carrying its own has-walls/no-walls class.
+    await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(4);
+    await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(0);
     await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
 
-    await expect(page.locator('.hc-front.no-walls')).toHaveCount(1);
+    await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(4);
+    await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(0);
     await expect(page.locator('.hc-summary-facts')).not.toContainText('Стіни');
   });
 
@@ -115,5 +119,90 @@ test.describe('hangar configurator POC — mobile', () => {
 
     await summary.locator('summary').click();
     await expect(summary).toHaveJSProperty('open', false);
+  });
+});
+
+// Phase 2A build-up lifecycle: foundation/columns/trusses are driven by useLayerLifecycle
+// (app/components/configurator/useLayerLifecycle.ts) rather than a plain flash-on-change class,
+// so these assert the actual FSM phase classes it applies, not just the end-state geometry —
+// see docs/hangar-build-up-phase-2 (this file) for the trigger/interruption rules being verified.
+test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () => {
+  function firstFoundationClass(page: Page) {
+    return page.locator('.hc-foundation').first().getAttribute('class');
+  }
+  function firstColumnClass(page: Page) {
+    return page.locator('.hc-columns line').first().getAttribute('class');
+  }
+
+  test('a discrete scope toggle stages a real materialize transition, not an instant snap', async ({ page }) => {
+    await openConfigurator(page);
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/);
+
+    await page.getByText('Фундамент', { exact: true }).click();
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-dematerializing/);
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 2000 });
+
+    await page.getByText('Фундамент', { exact: true }).click();
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-materializing/);
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/, { timeout: 2000 });
+  });
+
+  test('columns and trusses stage in sequence — trusses only start once columns have (a real build order, not simultaneous)', async ({ page }) => {
+    await openConfigurator(page);
+    await page.getByText('Металокаркас', { exact: true }).click(); // off
+
+    const columnsDelay = await page.locator('.hc-columns line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
+    const trussesDelay = await page.locator('.hc-trusses line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
+    expect(parseFloat(trussesDelay)).toBeGreaterThan(parseFloat(columnsDelay));
+  });
+
+  test('a dimension change never restarts an already-settled layer\'s build-up', async ({ page }) => {
+    await openConfigurator(page);
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/);
+
+    const widthInput = page.locator('#hc-dimension-width');
+    await widthInput.fill('40');
+    await widthInput.blur();
+
+    // Geometry updates immediately...
+    await expect(page.locator('.hc-preview-svg')).toContainText('40 м');
+    // ...but the layer's own phase is untouched — never dips through materializing/dematerializing.
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/);
+  });
+
+  test('toggling one scope item never replays an unrelated layer\'s build-up', async ({ page }) => {
+    await openConfigurator(page);
+    const before = await firstColumnClass(page);
+    expect(before).toMatch(/hc-phase-visible/);
+
+    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls, not frame
+    await page.waitForTimeout(50);
+    const after = await firstColumnClass(page);
+    expect(after).toBe(before); // no transitional class was ever entered
+  });
+
+  test('rapid ON/OFF/ON settles cleanly on the final requested state', async ({ page }) => {
+    await openConfigurator(page);
+    const foundationToggle = page.getByText('Фундамент', { exact: true });
+
+    await foundationToggle.click();
+    await foundationToggle.click();
+    await foundationToggle.click(); // odd number of clicks → ends hidden
+
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 2000 });
+  });
+
+  test('reduced motion resolves the build-up immediately — no materializing/dematerializing frame is ever observed', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openConfigurator(page);
+
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/);
+    const duration = await page.locator('.hc-foundation').evaluate((el) => (el as HTMLElement).style.transitionDuration);
+    expect(parseFloat(duration)).toBe(0);
+
+    await page.getByText('Фундамент', { exact: true }).click();
+    // Never observe an in-flight phase — it must resolve to hidden on the very next paint.
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 300 });
+    await expect(page.locator('.hc-foundation')).not.toHaveAttribute('class', /hc-phase-dematerializing/);
   });
 });
