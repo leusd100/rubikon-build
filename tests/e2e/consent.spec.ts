@@ -19,7 +19,7 @@ test.describe('cookie consent banner', () => {
 
     await expect(page.locator('.cookie-banner')).toHaveCount(0);
     expect(await readStoredConsent(page)).toEqual({ analytics: 'denied', advertising: 'denied' });
-    expect(await page.locator(GA_SCRIPT_SELECTOR).count()).toBe(0);
+    await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(0);
   });
 
   test('"Прийняти все" grants both categories and loads the GA4 script', async ({ page }) => {
@@ -41,7 +41,7 @@ test.describe('cookie consent banner', () => {
     expect(await readStoredConsent(page)).toEqual({ analytics: 'denied', advertising: 'granted' });
     // Advanced Consent Mode is deferred — granting Advertising alone must not load gtag.js,
     // since only the Analytics category ever triggers loadAnalytics().
-    expect(await page.locator(GA_SCRIPT_SELECTOR).count()).toBe(0);
+    await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(0);
   });
 
   test('the choice persists across a reload and the banner does not reappear', async ({ page }) => {
