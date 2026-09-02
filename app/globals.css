@@ -806,11 +806,13 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .desktop-nav { display: none; }
   .header-contacts { display: none; }
   .mobile-menu { display: block; }
-  .footer-grid { min-height: 0; grid-template-columns: auto auto minmax(230px, 1fr); align-items: start; gap: 30px 40px; padding-block: 36px; }
-  .footer-grid > .brand-link { grid-column: 1 / -1; grid-row: 1; min-width: 0; }
+  .footer-grid { min-height: 0; grid-template-columns: auto auto minmax(215px, auto); justify-content: space-between; align-items: start; gap: 32px 56px; padding-block: 36px; }
+  .footer-grid > .brand-link { grid-column: 1; grid-row: 1; min-width: 0; }
   .footer-nav { grid-column: 1; grid-row: 2; padding-top: 0; }
   .footer-directions { grid-column: 2; grid-row: 2; padding-top: 0; }
-  .footer-contact-stack { grid-column: 3; grid-row: 2; justify-self: end; min-width: 0; }
+  /* Spans both rows so it starts level with the brand instead of leaving the whole
+     top-right corner empty above it. */
+  .footer-contact-stack { grid-column: 3; grid-row: 1 / span 2; justify-self: end; min-width: 0; }
   .footer-phone { white-space: nowrap; }
 }
 
@@ -959,14 +961,16 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .media-tile { min-height: 370px; }
   .sticky-heading { position: static; }
   .faq-list h3 { font-size: 21px; }
-  .footer-grid { min-height: 0; grid-template-columns: 1fr; gap: 0; padding-block: 30px; }
-  .footer-grid > .brand-link { order: 1; margin-bottom: 22px; }
+  .footer-grid { min-height: 0; grid-template-columns: 1fr 1fr; gap: 0 28px; padding-block: 30px; }
+  .footer-grid > .brand-link { grid-column: 1 / -1; grid-row: 1; margin-bottom: 0; padding-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,.13); }
   .related-card { flex: 1 1 100%; }
-  .footer-nav, .footer-directions { grid-column: auto; grid-row: auto; grid-template-columns: 1fr; gap: 14px; margin: 0; padding: 20px 0; border-top: 1px solid rgba(255,255,255,.13); }
-  .footer-nav { order: 2; }
-  .footer-directions { order: 3; }
+  /* Side by side, but each still a single column of links — same logic as every other
+     breakpoint, just placed in two tracks so the footer does not run nine links tall. */
+  .footer-nav, .footer-directions { grid-row: 2; grid-template-columns: 1fr; gap: 14px; margin: 0; padding: 20px 0; }
+  .footer-nav { grid-column: 1; }
+  .footer-directions { grid-column: 2; }
   .footer-group-title { margin-bottom: 4px; }
-  .footer-contact-stack { order: 4; grid-column: auto; grid-row: auto; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-items: start; justify-self: stretch; gap: 16px 18px; margin-top: 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.13); }
+  .footer-contact-stack { grid-column: 1 / -1; grid-row: 3; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-items: start; justify-self: stretch; gap: 16px 18px; margin-top: 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.13); }
   .footer-phone { grid-column: 1; grid-row: 1; min-height: 42px; margin: 0; }
   .footer-messengers { grid-column: 2; grid-row: 1; justify-self: end; margin: 0; }
   .footer-messengers .messenger-link { width: 42px; height: 42px; }
