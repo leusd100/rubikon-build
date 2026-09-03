@@ -5,7 +5,7 @@ import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { ConfiguratorControls } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
-import { HangarPreview } from './HangarPreview';
+import { HangarPreviewModes } from './HangarPreviewModes';
 
 export function HangarConfigurator() {
   const [state, setState] = useState<ConfiguratorState>(DEFAULT_CONFIGURATOR_STATE);
@@ -30,9 +30,7 @@ export function HangarConfigurator() {
       <div className="hc-layout">
         <ConfiguratorControls state={state} onChange={setState} />
         <div className="hc-preview-pane">
-          <div className="hc-preview-surface">
-            <HangarPreview domain={domain} />
-          </div>
+          <HangarPreviewModes domain={domain} />
           <ConfiguratorSummary domain={domain} />
         </div>
       </div>
