@@ -283,7 +283,7 @@
 
 /* Deliberately short of fully opaque even once "has-fill" — an enclosed shell must still read as
    built-up, not become a flat solid box. Each segment's own stroke (from `.hc-layer polygon`
-   above) already outlines every bay seam regardless of fill, and the frame (columns/trusses/
+   above) already outlines every bay seam regardless of fill, and the frame (columns/rafters/
    purlins) is painted after these groups in the DOM specifically so it stays visible on top —
    this fill-opacity is the third leg of "the structural logic stays readable after enclosure".
    Nudged down slightly further (.88→.85, Visual Refinement Pass v1) alongside the calmer
@@ -291,11 +291,28 @@
    rather than "another equally strong line system". */
 .hc-top polygon.has-roof,
 .hc-side polygon.has-walls,
+.hc-gable polygon.has-walls,
 .hc-front polygon.has-walls { fill-opacity: .85; }
 
 .hc-top polygon.no-roof { fill: none; stroke-dasharray: 4 4; }
 .hc-side polygon.no-walls,
+.hc-gable polygon.no-walls,
 .hc-front polygon.no-walls { fill: none; stroke-dasharray: 4 4; }
+
+/* The rear gable is fully occluded by the building's own volume from this fixed viewpoint. It is
+   still drawn (geometry is a fact, and it keeps the model honest for a future camera), but it must
+   never bleed through the roof it sits behind. */
+.hc-gable-rear { display: none; }
+
+/* The gable profile is the building's defining silhouette, not a surface subdivision, so it sits
+   one step above envelope seams in the stroke hierarchy and one step below the primary frame:
+   frame 1.5 > gable outline 1.25 > bay seams .85. Without this the pentagon's fold into the roof
+   planes vanished — same fill, same seam weight, so the eave line simply disappeared. */
+.hc-gable polygon {
+  stroke: var(--text-on-dark-muted);
+  stroke-width: 1.25;
+  stroke-opacity: .9;
+}
 
 .hc-envelope-cold polygon.has-roof,
 .hc-envelope-cold polygon.has-walls { fill: #4b5563; }
@@ -326,15 +343,24 @@
   stroke-width: 1;
 }
 
-/* Structural hierarchy (Visual Refinement Pass v1): columns/trusses are the strongest line
+/* Structural hierarchy (Visual Refinement Pass v1): columns/rafters are the strongest line
    weight in the whole scene — the primary structural read the eye should land on first, wider
    than envelope seams (.85px above) and dimension lines (.8px below). Purlins are deliberately
    much quieter than a simple "slightly thinner" delta could achieve — half the width *and* lower
    opacity, so secondary structure stays legible without ever competing with the primary frame,
    on top of their already-faster/smaller timing budget in buildUpSequence.ts. */
 .hc-columns line,
-.hc-trusses line {
+.hc-rafters line {
   stroke: var(--text-on-dark-muted);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The ridge is the one line that defines the gable — drawn at the primary frame's weight but in
+   the brighter foreground ink, because it is the silhouette's defining edge rather than one more
+   repeated member. */
+.hc-ridge line {
+  stroke: var(--text-on-dark);
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
@@ -346,7 +372,7 @@
 }
 
 /* ---------- Build-up layers ----------
-   Every scope-driven layer (foundation/columns/trusses/purlins/walls/roof/gates) shares this one
+   Every scope-driven layer (foundation/columns/rafters/purlins/walls/roof/gates) shares this one
    set of rules — no per-layer animation system, only the phase class and the inline
    transitionDuration/transitionDelay from useLayerLifecycle differ per element. Every element
    stays in the DOM across all four phases (never conditionally unmounted) specifically so
@@ -385,6 +411,12 @@
   stroke-opacity: .8;
   vector-effect: non-scaling-stroke;
 }
+
+/* The ridge guide is DERIVED (width + pitch), not a value the user chose. It is drawn one step
+   quieter than the three user-set dimensions and its label carries a "~" in the markup, so it can
+   never be mistaken for another control's readout. */
+.hc-dimension.is-derived line { stroke-opacity: .5; stroke-dasharray: 3 3; }
+.hc-dimension.is-derived text { fill: var(--text-on-dark-muted); font-size: 14px; }
 
 .hc-dimension text {
   fill: var(--text-on-dark);

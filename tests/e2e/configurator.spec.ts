@@ -45,13 +45,15 @@ test.describe('hangar configurator POC', () => {
   test('unchecking a scope item removes its fill layer and updates the summary list', async ({ page }) => {
     await openConfigurator(page);
 
-    // The front wall is segmented per structural bay (see sceneModel.ts's frameBayCount) — the
-    // default 24m-wide hangar gets 4 segments, each carrying its own has-walls/no-walls class.
-    await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(4);
+    // Since Phase 3-0 the front face is a GABLE END — one pentagon following the roof pitch,
+    // not a row of rectangular bay segments. The bay rhythm now lives on the side walls, which
+    // is where the structural bays actually run.
+    await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(1);
     await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(0);
+    await expect(page.locator('.hc-side-left polygon.has-walls')).toHaveCount(10);
     await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
 
-    await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(4);
+    await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(1);
     await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(0);
     await expect(page.locator('.hc-summary-facts')).not.toContainText('Стіни');
   });
@@ -180,13 +182,13 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/, { timeout: 2000 });
   });
 
-  test('columns and trusses stage in sequence — trusses only start once columns have (a real build order, not simultaneous)', async ({ page }) => {
+  test('columns and rafters stage in sequence — rafters only start once columns have (a real build order, not simultaneous)', async ({ page }) => {
     await openConfigurator(page);
     await page.getByText('Металокаркас', { exact: true }).click(); // off
 
     const columnsDelay = await page.locator('.hc-columns line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
-    const trussesDelay = await page.locator('.hc-trusses line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
-    expect(parseFloat(trussesDelay)).toBeGreaterThan(parseFloat(columnsDelay));
+    const raftersDelay = await page.locator('.hc-rafters line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
+    expect(parseFloat(raftersDelay)).toBeGreaterThan(parseFloat(columnsDelay));
   });
 
   test('a dimension change never restarts an already-settled layer\'s build-up', async ({ page }) => {
@@ -246,15 +248,15 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
 // after trusses, walls/roof get real transitions of their own, gates only replay on the 0↔some
 // transition (never on a 1↔2 count change), and enclosing the shell never hides the frame.
 test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () => {
-  test('purlins sequence after trusses, not simultaneously with them', async ({ page }) => {
+  test('purlins sequence after rafters, not simultaneously with them', async ({ page }) => {
     await openConfigurator(page);
 
     // The inline transitionDelay is set on every render regardless of phase (see
     // useLayerLifecycle.ts), so the default (already-visible) mount already carries the real
     // sequencing offsets — no toggle needed to observe them.
-    const trussesDelay = await page.locator('.hc-trusses line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
+    const raftersDelay = await page.locator('.hc-rafters line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
     const purlinsDelay = await page.locator('.hc-purlins line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
-    expect(parseFloat(purlinsDelay)).toBeGreaterThan(parseFloat(trussesDelay));
+    expect(parseFloat(purlinsDelay)).toBeGreaterThan(parseFloat(raftersDelay));
   });
 
   test('walls stage a real materialize/dematerialize transition', async ({ page }) => {

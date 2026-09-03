@@ -1,38 +1,45 @@
-import type { ScenePrimitive, SceneModel } from './sceneModel';
+import type { ScenePrimitive, TechnicalSceneModel, Vec3 } from './technicalSceneModel';
 import type { EnvelopeChoice } from './types';
 
-// The SVG renderer's own projection step: takes a renderer-neutral SceneModel (metres) and
-// produces plain {x,y} pixel points. This is the *only* place isometric trigonometry, pixel
-// scale, and rendering-only choices like "how much ground to show around the footprint" live —
-// a future renderer (R3F, etc.) consumes the same SceneModel and does its own projection (or
-// none, if it works in real 3D space directly), never this module.
+// The SVG renderer's projection step: takes the TechnicalSceneModel's real metre points and
+// produces plain {x,y} pixel points.
+//
+// Phase 3-0 reduced this module's job to exactly that. It used to *derive the building* —
+// computing every corner from `dimensions` and lerping primitives between them — which meant
+// the shape of the hangar lived in the SVG renderer. It doesn't any more: `project()` below is
+// a pure axonometric transform, and the only thing this file still authors is annotation
+// placement, which is genuinely 2D-drawing-specific and does not transfer to a 3D renderer.
 
-// One shared scale for width, length AND height on purpose — a true isometric cube, not a
-// fudged one. A much longer building should genuinely look elongated; the SVG's viewBox (see
-// `bounds` below) auto-fits around whatever shape results, so an extreme aspect ratio never
-// clips instead of being visually dishonest.
+// One shared scale for width, length AND height — a true axonometric, not a fudged one.
 export const PX_PER_METRE = 8;
-// 24°, not the textbook isometric 30° — Visual Refinement Pass v1 (2026-09-03). A true 30°
-// isometric spends more of its vertical rise on the receding depth axis (sin(30°)=.5), reading as
-// looking *down onto* the roof; a shallower angle spends less of it there (sin(24°)≈.407),
-// leaving more of the frame for the front elevation and wall height — "less top-down flattening,
-// more assertive front elevation" without becoming a true front elevation (that's angle→0) or a
-// perspective camera. Still one fixed angle applied identically to every hangar size — this is a
-// dimetric-leaning axonometric choice, not a orbiting/tunable camera. PX_PER_METRE is untouched:
-// this changes the *viewing angle*, not the axis scale — the object is still undistorted.
+// 24°, not the textbook 30° (Visual Refinement Pass v1): a shallower angle spends less of the
+// vertical rise on the receding depth axis, leaving more of the frame for the front elevation.
 const ISO_ANGLE_RAD = (24 * Math.PI) / 180;
-const FOUNDATION_OVERHANG_PX = 10;
-const FOUNDATION_THICKNESS_PX = 10;
-// How far the ground reference visually extends past the footprint — a rendering/framing choice,
-// not a fact about the object. Reduced from an earlier 0.3 (Visual Refinement Pass v1): the
-// terrain polygon was the sole driver of the scene's bounding box (its own corners *were* the
-// overall bounds, confirmed by direct measurement), so the hangar itself occupied under 20% of
-// the viewport at default size. 0.15 plus the smaller VIEWBOX_PADDING in HangarPreview.tsx lands
-// the building's perceived presence ~28% larger while still reading as staged on visible ground,
-// not filling the frame edge-to-edge.
-const TERRAIN_MARGIN_RATIO = 0.15;
+
+const ISO_COS = Math.cos(ISO_ANGLE_RAD);
+const ISO_SIN = Math.sin(ISO_ANGLE_RAD);
 
 export type Point = { x: number; y: number };
+
+/**
+ * Building space (metres, Y-up, Z into the scene) → screen space (pixels, Y-down).
+ *
+ * The ONE place a 3D point becomes a 2D point. Screen Y is negated because building Y is up
+ * while SVG Y grows downward; the bounds-fitted viewBox absorbs the resulting offset, so the
+ * drawing is framed identically regardless of the building's absolute height.
+ */
+export function project(v: Vec3): Point {
+  return {
+    // `+ 0` normalises negative zero: the Y term negates, so a point on the ground line would
+    // otherwise serialise as -0 and compare unequal to 0 for any consumer using strict equality.
+    x: v.x * PX_PER_METRE + ISO_COS * v.z * PX_PER_METRE + 0,
+    y: -v.y * PX_PER_METRE - ISO_SIN * v.z * PX_PER_METRE + 0,
+  };
+}
+
+function projectAll(points: Vec3[]): Point[] {
+  return points.map(project);
+}
 
 export function pointsAttr(points: Point[]): string {
   return points.map((p) => `${round(p.x)},${round(p.y)}`).join(' ');
@@ -42,305 +49,267 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function isoOffset(depthPx: number): Point {
-  return { x: Math.cos(ISO_ANGLE_RAD) * depthPx, y: -Math.sin(ISO_ANGLE_RAD) * depthPx };
-}
+/** A projected envelope surface. `face`/`slope` are carried through from the scene model so
+ *  consumers can pick surfaces by identity instead of re-correlating them by array index. */
+export type ProjectedSegment = {
+  points: Point[];
+  hasFill: boolean;
+  envelope: EnvelopeChoice | undefined;
+  face?: 'front' | 'rear' | 'left' | 'right';
+  slope?: 'left' | 'right';
+};
 
-function translate(p: Point, offset: Point): Point {
-  return { x: p.x + offset.x, y: p.y + offset.y };
-}
-
-function lerp(a: Point, b: Point, t: number): Point {
-  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
-}
-
-export type BoxFace = { points: Point[]; hasFill: boolean; envelope: EnvelopeChoice | undefined };
-
-/** One structural bay's worth of cladding — a sub-quad of the full front/side/roof plane. */
-export type ProjectedSegment = { points: Point[]; hasFill: boolean; envelope: EnvelopeChoice | undefined };
-
-/** One structural member's projected line, plus whether the scope that member belongs to is
- * currently on — carried through rather than filtered out, same as `ProjectedSegment.hasFill`,
- * so the renderer can animate a member fading out instead of it just disappearing the instant
- * `visible` flips false. */
+/** One structural member's projected line, plus whether its scope is currently on — carried
+ *  through rather than filtered out so the renderer can animate a member fading out. */
 export type FrameLine = { points: [Point, Point]; visible: boolean };
 
 export type FrameLines = {
-  frontColumns: FrameLine[];
-  sideColumns: FrameLine[];
-  trusses: FrameLine[];
+  columns: FrameLine[];
+  rafters: FrameLine[];
   purlins: FrameLine[];
+  ridge: FrameLine | null;
 };
-
-export type GateRect = { points: Point[] };
 
 export type DimensionGuide = {
   line: [Point, Point];
   ticks: [[Point, Point], [Point, Point]];
   label: Point;
   anchor: 'middle' | 'start' | 'end';
+  /** The exact string the renderer draws. Owned here, not in the component, because the bounds
+   *  calculation has to know how wide the label will be — see `labelExtent()`. */
+  text: string;
   valueM: number;
+  derived: boolean;
 };
+
+/** Font sizes the stylesheet gives dimension labels, mirrored here only to estimate extents. */
+const LABEL_FONT_PX = 16;
+const DERIVED_LABEL_FONT_PX = 14;
+/** Condensed 600-weight averages well under 0.6em per glyph; 0.62 leaves deliberate headroom. */
+const LABEL_CHAR_WIDTH_EM = 0.62;
+
+function formatMetres(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function labelText(valueM: number, derived: boolean): string {
+  return derived ? `Коник ~${formatMetres(valueM)} м` : `${formatMetres(valueM)} м`;
+}
+
+/**
+ * The horizontal span a label will actually occupy once rendered.
+ *
+ * Bounds used to include only the label's anchor POINT, which silently clipped any label wider
+ * than the margin the terrain happened to provide. It went unnoticed because the default 24×60
+ * hangar has a terrain polygon reaching x≈-138 — far past the labels — while a narrow 14×20 one
+ * reaches only x≈-46 and cut the leading digit off the ridge value ("15.7 м" rendered as "5.7 м").
+ * Estimated rather than measured on purpose: this module is pure and has no DOM to measure with.
+ */
+function labelExtent(guide: Omit<DimensionGuide, 'ticks' | 'line'>): Point[] {
+  const fontPx = guide.derived ? DERIVED_LABEL_FONT_PX : LABEL_FONT_PX;
+  const width = guide.text.length * fontPx * LABEL_CHAR_WIDTH_EM;
+  const { x, y } = guide.label;
+  const left = guide.anchor === 'end' ? x - width : guide.anchor === 'middle' ? x - width / 2 : x;
+  return [
+    { x: left, y: y - fontPx },
+    { x: left + width, y: y + fontPx * 0.35 },
+  ];
+}
 
 export type IsometricScene = {
   terrain: Point[];
-  /** Always the slab's real footprint polygon, regardless of `scope.foundation` — never `null`.
-   * Geometry is a fact about the object; whether to *show* it (and how to animate that) is the
-   * renderer's call, driven by the primitive's own `visible` flag via the build-up lifecycle, not
-   * by this module withholding the points. */
   foundation: { points: Point[]; visible: boolean };
   frame: FrameLines;
-  wallSegments: { front: ProjectedSegment[]; side: ProjectedSegment[] };
+  wallSegments: ProjectedSegment[];
+  gableEnds: ProjectedSegment[];
   roofSegments: ProjectedSegment[];
-  gates: GateRect[];
-  dimensions: { width: DimensionGuide; length: DimensionGuide; height: DimensionGuide };
-  /** Tight bounding box around every element above, in the same local coordinate space. */
+  gates: { points: Point[] }[];
+  dimensions: {
+    width: DimensionGuide;
+    length: DimensionGuide;
+    eave: DimensionGuide;
+    ridge: DimensionGuide;
+  };
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
 };
 
 function findPrimitives<K extends ScenePrimitive['kind']>(
-  scene: SceneModel,
+  scene: TechnicalSceneModel,
   kind: K,
 ): Extract<ScenePrimitive, { kind: K }>[] {
   return scene.primitives.filter((p): p is Extract<ScenePrimitive, { kind: K }> => p.kind === kind);
 }
 
 /**
- * Pure: a SceneModel in, an isometric scene of plain {x,y} points out. No React, no DOM —
- * `HangarPreview` is the only thing that turns this into actual SVG markup. Stays
- * unit-testable on its own (see tests/unit/configurator/isometricProjection.test.ts).
+ * Slab silhouette: the top face plus the two side faces the camera can see, so the foundation
+ * still reads as a slab with thickness rather than a flat outline. Derived from the slab's real
+ * corners — the thickness extrusion direction is the only rendering choice here.
  */
-export function projectIsometricScene(scene: SceneModel): IsometricScene {
-  const { widthM, lengthM, heightM } = scene.dimensions;
-  const W = widthM * PX_PER_METRE;
-  const H = heightM * PX_PER_METRE;
-  const depthPx = lengthM * PX_PER_METRE;
-  const iso = isoOffset(depthPx);
+function foundationSilhouette(corners: Vec3[], thicknessM: number): Point[] {
+  const [fl, fr, br] = [corners[0], corners[1], corners[2]];
+  const drop = (v: Vec3): Vec3 => ({ x: v.x, y: v.y - thicknessM, z: v.z });
+  return projectAll([fl, fr, br, drop(br), drop(fr), drop(fl)]);
+}
 
-  const FTL: Point = { x: 0, y: 0 };
-  const FTR: Point = { x: W, y: 0 };
-  const FBL: Point = { x: 0, y: H };
-  const FBR: Point = { x: W, y: H };
-  const BTL = translate(FTL, iso);
-  const BTR = translate(FTR, iso);
-  const BBR = translate(FBR, iso);
+/**
+ * Pure: a TechnicalSceneModel in, an isometric scene of plain {x,y} points out. No React, no
+ * DOM — `HangarPreview` is the only thing that turns this into actual SVG markup.
+ */
+export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScene {
+  const { widthM, lengthM, eaveHeightM, ridgeHeightM } = scene.dimensions;
 
-  const terrain = buildTerrainPolygon(W, H, depthPx);
+  const terrainPrimitive = findPrimitives(scene, 'terrain-plane')[0];
+  const terrain = terrainPrimitive ? projectAll(terrainPrimitive.corners) : [];
 
-  const foundationPrimitive = findPrimitives(scene, 'foundation-slab')[0];
-  const foundationPolygon = buildFoundationPolygon(W, H, depthPx);
-  const foundation = { points: foundationPolygon, visible: foundationPrimitive?.visible ?? false };
+  const slabPrimitive = findPrimitives(scene, 'foundation-slab')[0];
+  const foundationPoints = slabPrimitive
+    ? foundationSilhouette(slabPrimitive.corners, slabPrimitive.thicknessM)
+    : [];
+  const foundation = { points: foundationPoints, visible: slabPrimitive?.visible ?? false };
 
-  const frontColumns: FrameLine[] = findPrimitives(scene, 'frame-column')
-    .filter((p) => p.face === 'front')
-    .map((p) => {
-      const t = p.positionM / widthM;
-      return { points: [lerp(FTL, FTR, t), lerp(FBL, FBR, t)] as [Point, Point], visible: p.visible };
-    });
-  const sideColumns: FrameLine[] = findPrimitives(scene, 'frame-column')
-    .filter((p) => p.face === 'side')
-    .map((p) => {
-      const t = p.positionM / lengthM;
-      return { points: [lerp(FTR, BTR, t), lerp(FBR, BBR, t)] as [Point, Point], visible: p.visible };
-    });
-
-  const trusses: FrameLine[] = findPrimitives(scene, 'frame-truss').map((truss) => {
-    const depthOffset = isoOffset(truss.positionM * PX_PER_METRE);
-    return {
-      points: [translate(FTL, depthOffset), translate(FTR, depthOffset)] as [Point, Point],
-      visible: truss.visible,
-    };
+  const asLine = (p: { a: Vec3; b: Vec3; visible: boolean }): FrameLine => ({
+    points: [project(p.a), project(p.b)],
+    visible: p.visible,
   });
 
-  const purlins: FrameLine[] = findPrimitives(scene, 'frame-purlin').map((purlin) => {
-    // heightM here is the purlin's height *level* (already an absolute metre value from the
-    // ground), not the building's full height — see sceneModel.ts's PURLIN_LEVELS.
-    const levelY = H - purlin.positionM * PX_PER_METRE;
-    const near: Point = { x: W, y: levelY };
-    const far: Point = translate(near, isoOffset(purlin.lengthM * PX_PER_METRE));
-    return { points: [near, far] as [Point, Point], visible: purlin.visible };
-  });
+  const columns = findPrimitives(scene, 'frame-column').map(asLine);
+  const rafters = findPrimitives(scene, 'frame-rafter').map(asLine);
+  const purlins = findPrimitives(scene, 'frame-purlin').map(asLine);
+  const ridgePrimitive = findPrimitives(scene, 'ridge-line')[0];
+  const ridge = ridgePrimitive ? asLine(ridgePrimitive) : null;
 
-  const wallSegments = {
-    front: findPrimitives(scene, 'wall-segment')
-      .filter((s) => s.face === 'front')
-      .map((s) => projectFrontSegment(s, FTL, FTR, FBL, FBR)),
-    side: findPrimitives(scene, 'wall-segment')
-      .filter((s) => s.face === 'side')
-      .map((s) => projectSideSegment(s, FTR, BTR, FBR, BBR)),
-  };
+  const wallSegments: ProjectedSegment[] = findPrimitives(scene, 'wall-segment').map((s) => ({
+    points: projectAll(s.corners),
+    hasFill: s.hasFill,
+    envelope: s.envelope,
+    face: s.face,
+  }));
 
-  const roofSegments = findPrimitives(scene, 'roof-segment').map((s) => projectRoofSegment(s, FTL, FTR, BTL, BTR));
+  const gableEnds: ProjectedSegment[] = findPrimitives(scene, 'gable-end').map((g) => ({
+    points: projectAll(g.outline),
+    hasFill: g.hasFill,
+    envelope: g.envelope,
+    face: g.face,
+  }));
 
-  const gatePrimitives = findPrimitives(scene, 'opening-cutout');
-  const gateRects: GateRect[] = gatePrimitives.map((gate) => {
-    const left = gate.positionM * PX_PER_METRE;
-    const right = left + gate.widthM * PX_PER_METRE;
-    const gateTop = H - gate.heightM * PX_PER_METRE;
-    return {
-      points: [
-        { x: left, y: gateTop },
-        { x: right, y: gateTop },
-        { x: right, y: H },
-        { x: left, y: H },
-      ],
-    };
-  });
+  const roofSegments: ProjectedSegment[] = findPrimitives(scene, 'roof-segment').map((s) => ({
+    points: projectAll(s.corners),
+    hasFill: s.hasFill,
+    envelope: s.envelope,
+    slope: s.slope,
+  }));
+
+  const gates = findPrimitives(scene, 'opening-cutout').map((g) => ({ points: projectAll(g.corners) }));
 
   const dims = {
-    width: widthGuide(FBL, FBR, H, widthM),
-    length: lengthGuide(FBR, BBR, iso, H, lengthM),
-    height: heightGuide(FTL, FBL, heightM),
+    width: widthGuide(widthM, eaveHeightM),
+    length: lengthGuide(widthM, lengthM, eaveHeightM),
+    eave: heightGuide(eaveHeightM, -28, false),
+    ridge: heightGuide(ridgeHeightM, -62, true),
   };
 
   const allPoints = [
     ...terrain,
-    ...foundationPolygon,
-    ...frontColumns.flatMap((f) => f.points),
-    ...sideColumns.flatMap((f) => f.points),
-    ...trusses.flatMap((f) => f.points),
+    ...foundationPoints,
+    ...columns.flatMap((f) => f.points),
+    ...rafters.flatMap((f) => f.points),
     ...purlins.flatMap((f) => f.points),
-    ...wallSegments.front.flatMap((s) => s.points),
-    ...wallSegments.side.flatMap((s) => s.points),
+    ...(ridge ? ridge.points : []),
+    ...wallSegments.flatMap((s) => s.points),
+    ...gableEnds.flatMap((s) => s.points),
     ...roofSegments.flatMap((s) => s.points),
-    ...gateRects.flatMap((g) => g.points),
-    dims.width.line[0], dims.width.line[1], dims.width.label,
-    dims.length.line[0], dims.length.line[1], dims.length.label,
-    dims.height.line[0], dims.height.line[1], dims.height.label,
+    ...gates.flatMap((g) => g.points),
+    ...Object.values(dims).flatMap((d) => [d.line[0], d.line[1], d.label, ...labelExtent(d)]),
   ];
 
   return {
     terrain,
     foundation,
-    frame: { frontColumns, sideColumns, trusses, purlins },
+    frame: { columns, rafters, purlins, ridge },
     wallSegments,
+    gableEnds,
     roofSegments,
-    gates: gateRects,
+    gates,
     dimensions: dims,
     bounds: boundsOf(allPoints),
   };
 }
 
-function projectFrontSegment(
-  segment: Extract<ScenePrimitive, { kind: 'wall-segment' }>,
-  FTL: Point,
-  FTR: Point,
-  FBL: Point,
-  FBR: Point,
-): ProjectedSegment {
-  const t0 = segment.index / segment.segmentCount;
-  const t1 = (segment.index + 1) / segment.segmentCount;
-  const points = [lerp(FTL, FTR, t0), lerp(FTL, FTR, t1), lerp(FBL, FBR, t1), lerp(FBL, FBR, t0)];
-  return { points, hasFill: segment.hasFill, envelope: segment.envelope };
-}
-
-function projectSideSegment(
-  segment: Extract<ScenePrimitive, { kind: 'wall-segment' }>,
-  FTR: Point,
-  BTR: Point,
-  FBR: Point,
-  BBR: Point,
-): ProjectedSegment {
-  const t0 = segment.index / segment.segmentCount;
-  const t1 = (segment.index + 1) / segment.segmentCount;
-  const points = [lerp(FTR, BTR, t0), lerp(FTR, BTR, t1), lerp(FBR, BBR, t1), lerp(FBR, BBR, t0)];
-  return { points, hasFill: segment.hasFill, envelope: segment.envelope };
-}
-
-function projectRoofSegment(
-  segment: Extract<ScenePrimitive, { kind: 'roof-segment' }>,
-  FTL: Point,
-  FTR: Point,
-  BTL: Point,
-  BTR: Point,
-): ProjectedSegment {
-  const t0 = segment.index / segment.segmentCount;
-  const t1 = (segment.index + 1) / segment.segmentCount;
-  const points = [lerp(FTL, BTL, t0), lerp(FTR, BTR, t0), lerp(FTR, BTR, t1), lerp(FTL, BTL, t1)];
-  return { points, hasFill: segment.hasFill, envelope: segment.envelope };
-}
-
-function buildFoundationPolygon(W: number, H: number, depthPx: number): Point[] {
-  const foundationIso = isoOffset(depthPx + FOUNDATION_OVERHANG_PX * 2);
-  const fFTL: Point = { x: -FOUNDATION_OVERHANG_PX, y: H };
-  const fFTR: Point = { x: W + FOUNDATION_OVERHANG_PX, y: H };
-  const fFBL: Point = { x: -FOUNDATION_OVERHANG_PX, y: H + FOUNDATION_THICKNESS_PX };
-  const fFBR: Point = { x: W + FOUNDATION_OVERHANG_PX, y: H + FOUNDATION_THICKNESS_PX };
-  const fBTR = translate(fFTR, foundationIso);
-  const fBBR = translate(fFBR, foundationIso);
-  return [fFTL, fFTR, fBTR, fBBR, fFBR, fFBL];
-}
-
-/** A flat ground reference, larger than the footprint by a fixed ratio — framing/context only,
- * never toggled by scope. Deliberately included in scene bounds (see `allPoints` below): a
- * little visible ground around the object is the point, not an accident to exclude. */
-function buildTerrainPolygon(W: number, H: number, depthPx: number): Point[] {
-  const marginPx = Math.max(W, depthPx) * TERRAIN_MARGIN_RATIO;
-  const tFTL: Point = { x: -marginPx, y: H };
-  const tFTR: Point = { x: W + marginPx, y: H };
-  const tIso = isoOffset(depthPx + marginPx * 2);
-  const tBTL = translate(tFTL, tIso);
-  const tBTR = translate(tFTR, tIso);
-  return [tFTL, tFTR, tBTR, tBTL];
-}
-
-function widthGuide(FBL: Point, FBR: Point, wallHeightPx: number, valueM: number): DimensionGuide {
-  const offset = wallHeightPx * 0.28 + 20;
-  const a = { x: FBL.x, y: FBL.y + offset };
-  const b = { x: FBR.x, y: FBR.y + offset };
+/** Below the front elevation, running along the width. */
+function widthGuide(widthM: number, eaveHeightM: number): DimensionGuide {
+  const a = project({ x: 0, y: 0, z: 0 });
+  const b = project({ x: widthM, y: 0, z: 0 });
+  const offset = eaveHeightM * PX_PER_METRE * 0.28 + 20;
+  const A = { x: a.x, y: a.y + offset };
+  const B = { x: b.x, y: b.y + offset };
   return {
-    line: [a, b],
+    line: [A, B],
     ticks: [
-      [{ x: a.x, y: a.y - 6 }, { x: a.x, y: a.y + 6 }],
-      [{ x: b.x, y: b.y - 6 }, { x: b.x, y: b.y + 6 }],
+      [{ x: A.x, y: A.y - 6 }, { x: A.x, y: A.y + 6 }],
+      [{ x: B.x, y: B.y - 6 }, { x: B.x, y: B.y + 6 }],
     ],
-    label: { x: (a.x + b.x) / 2, y: a.y + 20 },
+    label: { x: (A.x + B.x) / 2, y: A.y + 20 },
     anchor: 'middle',
-    valueM,
+    text: labelText(widthM, false),
+    valueM: widthM,
+    derived: false,
   };
 }
 
-function lengthGuide(FBR: Point, BBR: Point, iso: Point, wallHeightPx: number, valueM: number): DimensionGuide {
-  const perpendicular = { x: iso.y, y: -iso.x };
+/** Offset perpendicular to the receding side wall. Scales with eave height — a flat offset put
+ *  the guide inside the side-wall polygon at every hangar size (confirmed by point-in-polygon
+ *  testing, not a bounding-box approximation, which under-reports this class of overlap). */
+function lengthGuide(widthM: number, lengthM: number, eaveHeightM: number): DimensionGuide {
+  const a = project({ x: widthM, y: 0, z: 0 });
+  const b = project({ x: widthM, y: 0, z: lengthM });
+  const dir = { x: b.x - a.x, y: b.y - a.y };
+  const perpendicular = { x: dir.y, y: -dir.x };
   const norm = Math.hypot(perpendicular.x, perpendicular.y) || 1;
-  // Scales with wall height, same shape as widthGuide's own offset — a flat 26px (this function's
-  // previous value) put the guide's line/label *inside* the side wall/roof polygon at every
-  // hangar size, not just small ones (confirmed by point-in-polygon testing against the actual
-  // projected shapes, not a bounding-box approximation, which under-reports this class of
-  // overlap). Tuned empirically across DIMENSION_BOUNDS' full range plus two elongated aspect
-  // ratios (10×120 and 60×10) rather than picking a number that only happens to work by
-  // coincidence at the default size.
-  const offsetDist = wallHeightPx * 0.9 + 40;
-  const offset = { x: (perpendicular.x / norm) * offsetDist, y: (perpendicular.y / norm) * offsetDist };
-  const a = translate(FBR, offset);
-  const b = translate(BBR, offset);
-  const mid = lerp(a, b, 0.5);
-  const labelOffset = { x: (perpendicular.x / norm) * 16, y: (perpendicular.y / norm) * 16 };
+  const offsetDist = eaveHeightM * PX_PER_METRE * 0.9 + 40;
+  const off = { x: (perpendicular.x / norm) * offsetDist, y: (perpendicular.y / norm) * offsetDist };
+  const A = { x: a.x + off.x, y: a.y + off.y };
+  const B = { x: b.x + off.x, y: b.y + off.y };
+  const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+  const labelOff = { x: (perpendicular.x / norm) * 16, y: (perpendicular.y / norm) * 16 };
   return {
-    line: [a, b],
+    line: [A, B],
     ticks: [
-      [{ x: a.x - 6, y: a.y }, { x: a.x + 6, y: a.y }],
-      [{ x: b.x - 6, y: b.y }, { x: b.x + 6, y: b.y }],
+      [{ x: A.x - 6, y: A.y }, { x: A.x + 6, y: A.y }],
+      [{ x: B.x - 6, y: B.y }, { x: B.x + 6, y: B.y }],
     ],
-    label: translate(mid, labelOffset),
+    label: { x: mid.x + labelOff.x, y: mid.y + labelOff.y },
     anchor: 'middle',
-    valueM,
+    text: labelText(lengthM, false),
+    valueM: lengthM,
+    derived: false,
   };
 }
 
-function heightGuide(FTL: Point, FBL: Point, valueM: number): DimensionGuide {
-  const offset = -28;
-  const a = { x: FTL.x + offset, y: FTL.y };
-  const b = { x: FBL.x + offset, y: FBL.y };
+/**
+ * A vertical guide at the front-left corner. Two of these stack as a nested dimension chain —
+ * eave inside, ridge outside — which is ordinary technical-drawing practice and keeps the
+ * derived ridge value visually subordinate to the height the user actually chose.
+ */
+function heightGuide(valueM: number, offsetPx: number, derived: boolean): DimensionGuide {
+  const base = project({ x: 0, y: 0, z: 0 });
+  const top = project({ x: 0, y: valueM, z: 0 });
+  const A = { x: top.x + offsetPx, y: top.y };
+  const B = { x: base.x + offsetPx, y: base.y };
   return {
-    line: [a, b],
+    line: [A, B],
     ticks: [
-      [{ x: a.x - 6, y: a.y }, { x: a.x + 6, y: a.y }],
-      [{ x: b.x - 6, y: b.y }, { x: b.x + 6, y: b.y }],
+      [{ x: A.x - 6, y: A.y }, { x: A.x + 6, y: A.y }],
+      [{ x: B.x - 6, y: B.y }, { x: B.x + 6, y: B.y }],
     ],
-    label: { x: a.x - 10, y: (a.y + b.y) / 2 },
+    // A nested chain puts two labels on the same short stretch of drawing, and centring both
+    // collides them (confirmed on screen: "Коник ~10.6 м" ran straight into "8 м"). The derived
+    // outer guide is annotated at its own top tick — beside the ridge height it actually marks —
+    // while the user-set inner guide keeps the conventional centred position.
+    label: derived ? { x: A.x - 10, y: A.y + 5 } : { x: A.x - 10, y: (A.y + B.y) / 2 },
     anchor: 'end',
+    text: labelText(valueM, derived),
     valueM,
+    derived,
   };
 }
 
