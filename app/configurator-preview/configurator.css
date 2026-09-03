@@ -127,15 +127,32 @@
   accent-color: var(--accent);
 }
 
-.hc-field-controls input[type='number'] {
+.hc-field-controls input[type='text'] {
   min-height: var(--control-min-height);
-  padding: 0 8px;
+  padding: 0 10px;
   border: 1px solid var(--border-control);
   border-radius: 4px;
   background: var(--surface-page);
   color: var(--text-primary);
   font: 600 13px/1 var(--font-manrope), sans-serif;
-  text-align: center;
+  /* Right-aligned so the typed value sits under the readout above it, which the field head
+     right-aligns — the two numbers share a column and previously sat on different axes. Tabular
+     figures keep the digits from shifting as the value changes. */
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.hc-field-controls input[type='text']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Range for a field whose limits move with other fields (the ridge) — kept quiet so it reads as
+   guidance, not another value. */
+.hc-field-hint {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font: 500 11px/1.45 var(--font-manrope), sans-serif;
 }
 
 .hc-field-note {

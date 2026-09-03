@@ -175,6 +175,19 @@ const PITCH_AT_MAX_WIDTH_DEG = 7;
 const PITCH_MIN_WIDTH_M = 10;
 const PITCH_MAX_WIDTH_M = 60;
 
+/**
+ * The "reasonable limits" a user-set ridge is held inside.
+ *
+ * Below ~5° a gable stops reading as a pitched roof at all and drainage stops being credible;
+ * above ~20° an industrial portal frame starts looking like a house. The span rule above still
+ * supplies the DEFAULT ridge; these bounds only constrain how far it can then be adjusted.
+ * Neither is an engineering limit — final roof geometry is a project decision.
+ */
+export const ROOF_PITCH_MIN_DEG = 5;
+export const ROOF_PITCH_MAX_DEG = 20;
+/** Ridge height is adjusted in whole decimetres — finer than that is false precision here. */
+export const RIDGE_HEIGHT_STEP_M = 0.1;
+
 const SLAB_OVERHANG_M = 0.35;
 const SLAB_THICKNESS_M = 0.3;
 
@@ -221,6 +234,45 @@ export function frameBayCount(spanMetres: number): number {
 /** Ridge height for a symmetric gable. The ONLY place this formula exists. */
 export function ridgeHeightM(widthM: number, eaveHeightM: number, pitchDeg: number): number {
   return round(eaveHeightM + (widthM / 2) * Math.tan(pitchDeg * DEG));
+}
+
+/**
+ * The range a ridge height may occupy for a given footprint and eave height, derived from the
+ * pitch limits. Both ends move when width or eave height change, which is why the ridge control
+ * reads its bounds from here on every render rather than from a static table like DIMENSION_BOUNDS.
+ */
+export function ridgeHeightRangeM(widthM: number, eaveHeightM: number): { min: number; max: number } {
+  const halfSpan = widthM / 2;
+  const toRidge = (deg: number) => eaveHeightM + halfSpan * Math.tan(deg * DEG);
+  // Snap inward to the adjustment step so every reachable slider position is also a legal one.
+  const min = Math.ceil(toRidge(ROOF_PITCH_MIN_DEG) / RIDGE_HEIGHT_STEP_M) * RIDGE_HEIGHT_STEP_M;
+  const max = Math.floor(toRidge(ROOF_PITCH_MAX_DEG) / RIDGE_HEIGHT_STEP_M) * RIDGE_HEIGHT_STEP_M;
+  return { min: round(min, 2), max: round(max, 2) };
+}
+
+/** Holds a ridge height inside the legal range for the current footprint, snapped to the step. */
+export function clampRidgeHeightM(valueM: number, widthM: number, eaveHeightM: number): number {
+  const { min, max } = ridgeHeightRangeM(widthM, eaveHeightM);
+  if (!Number.isFinite(valueM)) return defaultRidgeHeightM(widthM, eaveHeightM);
+  const snapped = Math.round(valueM / RIDGE_HEIGHT_STEP_M) * RIDGE_HEIGHT_STEP_M;
+  return round(Math.min(max, Math.max(min, snapped)), 2);
+}
+
+/** The ridge the span rule produces — the value the configurator starts from, and what a reset
+ *  would return to. */
+export function defaultRidgeHeightM(widthM: number, eaveHeightM: number): number {
+  const { min, max } = ridgeHeightRangeM(widthM, eaveHeightM);
+  const fromSpanRule = eaveHeightM + (widthM / 2) * Math.tan(roofPitchDegForWidth(widthM) * DEG);
+  const snapped = Math.round(fromSpanRule / RIDGE_HEIGHT_STEP_M) * RIDGE_HEIGHT_STEP_M;
+  return round(Math.min(max, Math.max(min, snapped)), 2);
+}
+
+/** The inverse of ridgeHeightM(): the pitch a given ridge implies. Kept here so the pitch↔ridge
+ *  relationship exists in exactly one module, in both directions. */
+export function pitchDegForRidge(widthM: number, eaveHeightM: number, ridgeM: number): number {
+  const halfSpan = widthM / 2;
+  if (halfSpan <= 0) return ROOF_PITCH_MIN_DEG;
+  return round(Math.atan((ridgeM - eaveHeightM) / halfSpan) / DEG, 4);
 }
 
 function buildBayStations(lengthM: number, count: number): number[] {

@@ -89,11 +89,16 @@ const DERIVED_LABEL_FONT_PX = 14;
 const LABEL_CHAR_WIDTH_EM = 0.62;
 
 function formatMetres(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  // Ukrainian decimal comma, matching the control panel's own readouts — the drawing and the
+  // fields must not print the same number two different ways.
+  return value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
 }
 
 function labelText(valueM: number, derived: boolean): string {
-  return derived ? `Коник ~${formatMetres(valueM)} м` : `${formatMetres(valueM)} м`;
+  // The ridge keeps its name (it labels *which* height) but no longer carries a "~": since the
+  // ridge became a user-adjustable value rather than an output of the span rule, an approximation
+  // marker would misrepresent it as something the tool guessed.
+  return derived ? `Коник ${formatMetres(valueM)} м` : `${formatMetres(valueM)} м`;
 }
 
 /**

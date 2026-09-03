@@ -1,4 +1,4 @@
-import { roofPitchDegForWidth } from './parametricModel';
+import { clampRidgeHeightM, pitchDegForRidge } from './parametricModel';
 import type { ConfiguratorState, EnvelopeChoice, GatesCount } from './types';
 
 // The normalized, always-JSON-serializable business object derived from ConfiguratorState.
@@ -28,9 +28,15 @@ export type HangarDomainModel = {
    * description of the object — a future lead payload or saved configuration should not
    * have to re-run a geometry rule to know what was quoted.
    *
-   * Deliberately NOT a user control: pitch is an engineering outcome (snow load, span,
-   * cladding), and exposing it would invite a wrong answer and imply precision this tool
-   * does not have.
+   * The user adjusts the RIDGE HEIGHT in metres (the "коник"), which is the number the drawing
+   * annotates and the number a customer actually cares about for clearance. Pitch is derived from
+   * it here, in degrees, because that is what the geometry needs — it is never stored, so the two
+   * can never disagree.
+   *
+   * Phase 3-0 deliberately did not expose this at all, on the grounds that pitch is an engineering
+   * outcome. That still holds for *pitch*; what changed is the control surface — a ridge height in
+   * metres, held inside limits that keep the roof credible, is a proportion choice rather than a
+   * structural claim. The schematic disclaimer is unchanged.
    */
   roof: { type: RoofType; pitchDeg: number };
   /**
@@ -56,7 +62,10 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   return {
     objectType: 'hangar',
     dimensions: { widthM: width, lengthM: length, eaveHeightM: height },
-    roof: { type: 'gable', pitchDeg: roofPitchDegForWidth(width) },
+    // Re-clamped on every derivation: the legal ridge range moves when width or eave height
+    // change, so a ridge that was legal at 24 m may not be at 60 m. Clamping here rather than in
+    // the control means the model is always self-consistent regardless of how state was produced.
+    roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, clampRidgeHeightM(state.ridgeHeightM, width, height)) },
     envelope: { walls: state.envelope, roof: state.envelope },
     scope: {
       foundation: state.scope.includes('foundation'),
