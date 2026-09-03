@@ -12,11 +12,25 @@ import type { EnvelopeChoice } from './types';
 // `bounds` below) auto-fits around whatever shape results, so an extreme aspect ratio never
 // clips instead of being visually dishonest.
 export const PX_PER_METRE = 8;
-const ISO_ANGLE_RAD = Math.PI / 6; // 30°, the standard isometric receding angle
+// 24°, not the textbook isometric 30° — Visual Refinement Pass v1 (2026-09-03). A true 30°
+// isometric spends more of its vertical rise on the receding depth axis (sin(30°)=.5), reading as
+// looking *down onto* the roof; a shallower angle spends less of it there (sin(24°)≈.407),
+// leaving more of the frame for the front elevation and wall height — "less top-down flattening,
+// more assertive front elevation" without becoming a true front elevation (that's angle→0) or a
+// perspective camera. Still one fixed angle applied identically to every hangar size — this is a
+// dimetric-leaning axonometric choice, not a orbiting/tunable camera. PX_PER_METRE is untouched:
+// this changes the *viewing angle*, not the axis scale — the object is still undistorted.
+const ISO_ANGLE_RAD = (24 * Math.PI) / 180;
 const FOUNDATION_OVERHANG_PX = 10;
 const FOUNDATION_THICKNESS_PX = 10;
-const TERRAIN_MARGIN_RATIO = 0.3; // how far the ground reference extends past the footprint —
-                                   // a rendering/framing choice, not a fact about the object.
+// How far the ground reference visually extends past the footprint — a rendering/framing choice,
+// not a fact about the object. Reduced from an earlier 0.3 (Visual Refinement Pass v1): the
+// terrain polygon was the sole driver of the scene's bounding box (its own corners *were* the
+// overall bounds, confirmed by direct measurement), so the hangar itself occupied under 20% of
+// the viewport at default size. 0.15 plus the smaller VIEWBOX_PADDING in HangarPreview.tsx lands
+// the building's perceived presence ~28% larger while still reading as staged on visible ground,
+// not filling the frame edge-to-edge.
+const TERRAIN_MARGIN_RATIO = 0.15;
 
 export type Point = { x: number; y: number };
 
@@ -175,7 +189,7 @@ export function projectIsometricScene(scene: SceneModel): IsometricScene {
 
   const dims = {
     width: widthGuide(FBL, FBR, H, widthM),
-    length: lengthGuide(FBR, BBR, iso, lengthM),
+    length: lengthGuide(FBR, BBR, iso, H, lengthM),
     height: heightGuide(FTL, FBL, heightM),
   };
 
@@ -286,10 +300,17 @@ function widthGuide(FBL: Point, FBR: Point, wallHeightPx: number, valueM: number
   };
 }
 
-function lengthGuide(FBR: Point, BBR: Point, iso: Point, valueM: number): DimensionGuide {
+function lengthGuide(FBR: Point, BBR: Point, iso: Point, wallHeightPx: number, valueM: number): DimensionGuide {
   const perpendicular = { x: iso.y, y: -iso.x };
   const norm = Math.hypot(perpendicular.x, perpendicular.y) || 1;
-  const offsetDist = 26;
+  // Scales with wall height, same shape as widthGuide's own offset — a flat 26px (this function's
+  // previous value) put the guide's line/label *inside* the side wall/roof polygon at every
+  // hangar size, not just small ones (confirmed by point-in-polygon testing against the actual
+  // projected shapes, not a bounding-box approximation, which under-reports this class of
+  // overlap). Tuned empirically across DIMENSION_BOUNDS' full range plus two elongated aspect
+  // ratios (10×120 and 60×10) rather than picking a number that only happens to work by
+  // coincidence at the default size.
+  const offsetDist = wallHeightPx * 0.9 + 40;
   const offset = { x: (perpendicular.x / norm) * offsetDist, y: (perpendicular.y / norm) * offsetDist };
   const a = translate(FBR, offset);
   const b = translate(BBR, offset);

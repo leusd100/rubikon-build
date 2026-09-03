@@ -14,7 +14,10 @@ import { LAYER_DURATION_MS, layerStartOffsetMs, staggerDelayMs } from '../../lib
 import { useLayerHighlight } from './useLayerHighlight';
 import { useLayerLifecycle, type LayerTransitionStyle } from './useLayerLifecycle';
 
-const VIEWBOX_PADDING = 48;
+// Reduced from 48 (Visual Refinement Pass v1) alongside isometricProjection.ts's smaller
+// TERRAIN_MARGIN_RATIO — together they're what actually controls perceived scale, not a
+// disconnected "zoom" hack layered on top of the existing bounds-fit viewBox.
+const VIEWBOX_PADDING = 32;
 
 function DimensionGuideGroup({ guide }: { guide: DimensionGuide }) {
   const [a, b] = guide.line;
@@ -127,11 +130,12 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
       <defs>
         {/* Envelope state is never colour-only: "Утеплений" gets a ribbed panel texture,
             "Ще не визначився" a diagonal hatch — both real technical-drawing conventions for
-            "insulated layer" and "not yet specified" respectively, not decoration. */}
-        <pattern id="hc-pattern-insulated" width="10" height="10" patternUnits="userSpaceOnUse">
-          <rect width="10" height="10" className="hc-pattern-base" />
-          <line x1="0" y1="3" x2="10" y2="3" className="hc-pattern-line" />
-          <line x1="0" y1="7" x2="10" y2="7" className="hc-pattern-line" />
+            "insulated layer" and "not yet specified" respectively, not decoration. One line per
+            16px tile (down from two per 10px, Visual Refinement Pass v1) — the denser version
+            read as its own competing line grid across every panel instead of a quiet texture. */}
+        <pattern id="hc-pattern-insulated" width="10" height="16" patternUnits="userSpaceOnUse">
+          <rect width="10" height="16" className="hc-pattern-base" />
+          <line x1="0" y1="8" x2="10" y2="8" className="hc-pattern-line" />
         </pattern>
         <pattern id="hc-pattern-undecided" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="10" height="10" className="hc-pattern-base" />
