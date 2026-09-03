@@ -1,0 +1,118 @@
+/* Scoped to /r3f-spike only (imported directly by this route's page.tsx) — same reasoning as
+   configurator-preview/configurator.css: this dev-only comparison spike must never add to the
+   critical CSS any real commercial page downloads. Built from the site's existing tokens. */
+
+.r3f-spike {
+  padding: 132px 0 96px;
+  background: var(--surface-page);
+}
+
+.r3f-hero {
+  max-width: var(--content-copy);
+  margin: 0 auto 32px;
+  padding-inline: var(--container-gutter);
+}
+
+.r3f-eyebrow {
+  margin: 0 0 14px;
+  color: var(--accent-dark);
+  font: 700 11px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.r3f-hero h1 {
+  margin: 0 0 14px;
+  font: 400 clamp(30px, 4vw, 46px)/1.1 var(--font-display), var(--font-manrope), sans-serif;
+  letter-spacing: -.03em;
+  color: var(--text-primary);
+}
+
+.r3f-lede {
+  margin: 0 0 16px;
+  max-width: 62ch;
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.r3f-disclaimer {
+  display: inline-block;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.r3f-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: var(--grid-gap);
+  align-items: start;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding-inline: var(--container-gutter);
+}
+
+.r3f-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 22px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: white;
+}
+
+.r3f-field-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font: 600 12px/1 var(--font-manrope), sans-serif;
+}
+
+.r3f-field-label b {
+  color: var(--accent-dark);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+.r3f-field input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.r3f-metric {
+  margin: 8px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-default);
+  color: var(--text-muted);
+  font: 500 11.5px/1.4 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+.r3f-canvas-surface {
+  height: clamp(360px, 46vw, 560px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-dark);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.r3f-spike-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+@media (max-width: 1023px) {
+  .r3f-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 759px) {
+  .r3f-spike { padding-top: 108px; }
+  .r3f-hero, .r3f-layout { padding-inline: 20px; }
+  .r3f-canvas-surface { height: 62vw; min-height: 260px; }
+}

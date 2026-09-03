@@ -1,0 +1,515 @@
+/* Scoped to /configurator-preview only (imported directly by this route's page.tsx) — kept out
+   of globals.css deliberately so this dev-only POC never adds to the critical CSS every real
+   commercial page has to download. Built entirely from the site's existing design tokens
+   (:root in ../globals.css) — no new palette. */
+
+.hangar-configurator {
+  padding: 132px 0 96px;
+  background: var(--surface-page);
+}
+
+.hc-hero {
+  max-width: var(--content-copy);
+  margin: 0 auto 40px;
+  padding-inline: var(--container-gutter);
+}
+
+.hc-eyebrow {
+  margin: 0 0 14px;
+  color: var(--accent-dark);
+  font: 700 11px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.hc-hero h1 {
+  margin: 0 0 14px;
+  font: 400 clamp(34px, 4.4vw, 54px)/1.05 var(--font-display), var(--font-manrope), sans-serif;
+  letter-spacing: -.03em;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+.hc-lede {
+  margin: 0 0 16px;
+  max-width: 60ch;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.hc-disclaimer {
+  display: inline-block;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.hc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: var(--grid-gap);
+  align-items: start;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding-inline: var(--container-gutter);
+}
+
+/* ---------- Controls ----------
+   Visual Refinement Pass v1 (2026-09-03): one unified panel with divider rules between sections,
+   not four separate floating white cards — the repeated bordered-card pattern was the biggest
+   contributor to the "generic form prototype" read. Functionality/markup unchanged (still 4
+   independent <section>s); only the container chrome moved from each section to the shared
+   wrapper. */
+
+.hc-controls {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: white;
+  overflow: hidden; /* keeps divider rules and the rounded corners clean at the panel's edges */
+}
+
+.hc-control-group {
+  padding: 22px 22px 26px;
+}
+
+.hc-control-group + .hc-control-group {
+  border-top: 1px solid var(--border-default);
+}
+
+.hc-control-group h2 {
+  margin: 0 0 18px;
+  color: var(--text-primary);
+  font: 600 12px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.hc-field + .hc-field { margin-top: 18px; }
+
+.hc-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.hc-field-head label {
+  color: var(--text-secondary);
+  font: 600 12px/1 var(--font-manrope), sans-serif;
+}
+
+/* Final QA pass (2026-09-03): color moved from --accent-dark to a neutral dark — with 3 dimension
+   values plus 2 selected-state fills, the panel had 5 simultaneous orange elements in a totally
+   neutral state ("no overuse of orange" review). Emphasis now comes from weight/size alone, which
+   also makes the genuinely *interactive* selected states (envelope/gates) read as the only
+   orange, more singular signal instead of one among several. */
+.hc-field-value {
+  font: 700 13px/1 var(--font-condensed), sans-serif;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.hc-field-controls {
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  gap: 12px;
+  align-items: center;
+}
+
+.hc-field-controls input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.hc-field-controls input[type='number'] {
+  min-height: var(--control-min-height);
+  padding: 0 8px;
+  border: 1px solid var(--border-control);
+  border-radius: 4px;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font: 600 13px/1 var(--font-manrope), sans-serif;
+  text-align: center;
+}
+
+.hc-field-note {
+  margin: 14px 0 0;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.hc-option-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.hc-option-cards-compact { max-width: 220px; }
+
+.hc-option-card {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.hc-option-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hc-option-card span {
+  display: flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  border: 1px solid var(--border-control);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  background: var(--surface-page);
+  font: 600 12px/1.25 var(--font-manrope), sans-serif;
+  text-align: center;
+  transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium), background var(--duration-fast) var(--ease-premium);
+}
+
+.hc-option-card input:checked + span {
+  color: white;
+  border-color: var(--accent-dark);
+  background: var(--accent);
+}
+
+.hc-option-card input:focus-visible + span {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hc-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hc-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--control-min-height);
+  padding: 4px 2px;
+  cursor: pointer;
+}
+
+.hc-checkbox-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.hc-checkbox-row input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hc-checkbox-row span {
+  color: var(--text-secondary);
+  font: 500 13px/1.3 var(--font-manrope), sans-serif;
+}
+
+/* ---------- Preview pane ---------- */
+
+.hc-preview-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 24px;
+}
+
+.hc-preview-surface {
+  padding: 24px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-dark);
+  box-shadow: var(--shadow-card);
+}
+
+.hc-preview-svg {
+  display: block;
+  width: 100%;
+  /* Raised from clamp(320px, 40vw, 480px) — Visual Refinement Pass v1. Measured: the controls
+     column (908px at 1440 with its default content) was actually *taller* than the whole preview
+     pane (817px, surface+summary), backwards from "the preview should be the visual hero." This
+     alone brings them within ~20px of each other at 1440 without touching the controls' own
+     content or usability. */
+  height: clamp(360px, 46vw, 560px);
+}
+
+/* Visual hierarchy (Visual Refinement Pass v1, 2026-09-03): envelope seams are deliberately
+   lighter than the primary frame below — a bay seam is a surface subdivision, not a structural
+   member, and the two were reading as equally important (envelope seams were previously *heavier*
+   than the frame, at 1.25 vs 1px, backwards from the intended hierarchy). */
+.hc-layer polygon,
+.hc-foundation {
+  stroke: var(--text-on-dark-subtle);
+  stroke-width: .85;
+  stroke-opacity: .75;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke var(--duration-fast) var(--ease-premium), stroke-width var(--duration-fast) var(--ease-premium), fill var(--duration-medium) var(--ease-premium), opacity var(--duration-medium) var(--ease-premium);
+}
+
+.hc-layer.is-active polygon {
+  stroke: var(--accent);
+  stroke-width: 2.25;
+}
+
+/* Ground reference — always on, never scope-driven, never part of the build sequence. */
+.hc-terrain {
+  fill: var(--surface-dark);
+  stroke: var(--text-on-dark-subtle);
+  stroke-width: .75;
+  stroke-opacity: .4;
+  vector-effect: non-scaling-stroke;
+}
+
+.hc-foundation { fill: rgba(28, 31, 30, .85); }
+
+/* Deliberately short of fully opaque even once "has-fill" — an enclosed shell must still read as
+   built-up, not become a flat solid box. Each segment's own stroke (from `.hc-layer polygon`
+   above) already outlines every bay seam regardless of fill, and the frame (columns/trusses/
+   purlins) is painted after these groups in the DOM specifically so it stays visible on top —
+   this fill-opacity is the third leg of "the structural logic stays readable after enclosure".
+   Nudged down slightly further (.88→.85, Visual Refinement Pass v1) alongside the calmer
+   insulation-ribbing pattern below — together they read as "envelope placed over structure"
+   rather than "another equally strong line system". */
+.hc-top polygon.has-roof,
+.hc-side polygon.has-walls,
+.hc-front polygon.has-walls { fill-opacity: .85; }
+
+.hc-top polygon.no-roof { fill: none; stroke-dasharray: 4 4; }
+.hc-side polygon.no-walls,
+.hc-front polygon.no-walls { fill: none; stroke-dasharray: 4 4; }
+
+.hc-envelope-cold polygon.has-roof,
+.hc-envelope-cold polygon.has-walls { fill: #4b5563; }
+
+.hc-envelope-insulated polygon.has-roof,
+.hc-envelope-insulated polygon.has-walls { fill: url(#hc-pattern-insulated); }
+
+/* `fill-opacity`, not `opacity` — `opacity` is reserved for the build-up lifecycle's fade (see
+   .hc-buildlayer below); using it here too would fight that transition every time this envelope
+   choice is active (confirmed live: the two would compete for the same computed property). */
+.hc-envelope-undecided polygon.has-roof,
+.hc-envelope-undecided polygon.has-walls { fill: url(#hc-pattern-undecided); fill-opacity: .8; }
+
+.hc-pattern-base { fill: #4b5563; }
+/* Calmed down (.28→.16 opacity, Visual Refinement Pass v1) alongside a wider, single-line tile
+   (see HangarPreview.tsx's <pattern> defs) — the ribbing was reading as its own competing line
+   grid across every panel instead of a quiet surface texture; envelope should read as "cladding",
+   not "more structure". */
+.hc-pattern-line { stroke: rgba(255, 255, 255, .16); stroke-width: 1; }
+
+/* Gates: the final, lowest-emphasis reveal — already the shortest duration and smallest stagger
+   span in buildUpSequence.ts; no separate visual treatment needed beyond that and the existing
+   dark, low-contrast fill/outline below. */
+.hc-gate { fill: #0e1110; }
+.hc-gate-outline polygon {
+  fill: none;
+  stroke: var(--text-on-dark-muted);
+  stroke-width: 1;
+}
+
+/* Structural hierarchy (Visual Refinement Pass v1): columns/trusses are the strongest line
+   weight in the whole scene — the primary structural read the eye should land on first, wider
+   than envelope seams (.85px above) and dimension lines (.8px below). Purlins are deliberately
+   much quieter than a simple "slightly thinner" delta could achieve — half the width *and* lower
+   opacity, so secondary structure stays legible without ever competing with the primary frame,
+   on top of their already-faster/smaller timing budget in buildUpSequence.ts. */
+.hc-columns line,
+.hc-trusses line {
+  stroke: var(--text-on-dark-muted);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.hc-purlins line {
+  stroke: var(--text-on-dark-subtle);
+  stroke-width: .5;
+  stroke-opacity: .7;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ---------- Build-up layers ----------
+   Every scope-driven layer (foundation/columns/trusses/purlins/walls/roof/gates) shares this one
+   set of rules — no per-layer animation system, only the phase class and the inline
+   transitionDuration/transitionDelay from useLayerLifecycle differ per element. Every element
+   stays in the DOM across all four phases (never conditionally unmounted) specifically so
+   hidden→materializing has a real "from" state to animate out of — a freshly-mounted element has
+   nothing to transition from.
+   `transition-property` is declared here at low specificity (one class) so it composes with, and
+   is easily overridden by, a more specific per-layer selector (e.g. `.hc-columns line` above) —
+   but any such override MUST keep `opacity`/`transform` in its own list, or this layer's fade
+   silently stops animating (confirmed live: `.hc-columns line`'s previous `transition: stroke,
+   stroke-width` shorthand did exactly this — replaced with the layer-identity rules above, which
+   no longer declare `transition` at all, leaving this rule in sole charge of it). */
+.hc-buildlayer {
+  transition-property: opacity, transform;
+  transition-timing-function: var(--ease-premium);
+}
+
+.hc-buildlayer.hc-phase-hidden,
+.hc-buildlayer.hc-phase-dematerializing { opacity: 0; }
+.hc-buildlayer.hc-phase-materializing,
+.hc-buildlayer.hc-phase-visible { opacity: 1; }
+
+/* Foundation gets a small rise on top of the shared fade — "settling into place" rather than a
+   flat fade, matching its "fade/rise" character from the build-up brief. */
+.hc-foundation.hc-phase-hidden,
+.hc-foundation.hc-phase-dematerializing { transform: translateY(6px); }
+.hc-foundation.hc-phase-materializing,
+.hc-foundation.hc-phase-visible { transform: translateY(0); }
+
+/* Annotations get their own, deliberately lighter visual language (Visual Refinement Pass v1) —
+   thinner than every structural line above (.85 primary frame, .85 envelope) so measurement
+   graphics never compete with geometry, per "improve separation between building geometry and
+   measurement graphics". */
+.hc-dimension line {
+  stroke: var(--text-on-dark-subtle);
+  stroke-width: .75;
+  stroke-opacity: .8;
+  vector-effect: non-scaling-stroke;
+}
+
+.hc-dimension text {
+  fill: var(--text-on-dark);
+  font: 600 16px var(--font-condensed), sans-serif;
+  letter-spacing: .01em;
+  /* A soft same-color-as-viewport halo behind each label (not a hard-edged background chip) —
+     keeps the number legible over whatever geometry happens to sit behind it (roof, wall,
+     terrain) without a new box competing for attention. paint-order draws the stroke first so the
+     fill sits cleanly on top. */
+  paint-order: stroke;
+  stroke: var(--surface-dark);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+/* ---------- Summary ---------- */
+
+.hc-summary {
+  padding: 20px 22px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: white;
+}
+
+.hc-summary summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+}
+
+.hc-summary summary::-webkit-details-marker { display: none; }
+
+.hc-summary-title {
+  color: var(--text-primary);
+  font: 600 13px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.hc-summary-toggle {
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform var(--duration-fast) var(--ease-premium);
+}
+
+.hc-summary[open] .hc-summary-toggle { transform: rotate(-135deg); }
+
+.hc-summary-body { margin-top: 16px; }
+
+.hc-summary-kind {
+  margin: 0 0 4px;
+  color: var(--accent-dark);
+  font: 700 11px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.hc-summary-dimensions {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font: 400 26px/1.1 var(--font-display), var(--font-manrope), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.hc-summary-area {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  font: 600 14px/1.3 var(--font-manrope), sans-serif;
+}
+
+.hc-summary-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-default);
+}
+
+.hc-summary-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hc-summary-facts dt {
+  color: var(--text-muted);
+  font: 600 11px/1.3 var(--font-condensed), sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.hc-summary-facts dd {
+  margin: 0;
+  max-width: 60%;
+  color: var(--text-primary);
+  font: 500 13px/1.35 var(--font-manrope), sans-serif;
+  text-align: right;
+}
+
+.hc-summary-formula {
+  margin: 0;
+  color: var(--text-muted);
+  font: 500 11px/1 var(--font-manrope), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1023px) {
+  .hc-layout { grid-template-columns: 1fr; }
+  .hc-preview-pane { position: static; }
+}
+
+@media (max-width: 759px) {
+  .hangar-configurator { padding-top: 108px; }
+  .hc-hero,
+  .hc-layout { padding-inline: 20px; }
+  .hc-option-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hc-field-controls { grid-template-columns: 1fr 64px; }
+  /* Raised from 62vw/260px (Visual Refinement Pass v1) — "the model must still feel worth
+     showing on mobile", not merely technically responsive. */
+  .hc-preview-svg { height: 74vw; min-height: 290px; }
+}
