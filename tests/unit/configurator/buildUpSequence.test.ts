@@ -6,7 +6,7 @@ import {
   staggerDelayMs,
   totalSequenceDurationMs,
 } from '../../../app/lib/configurator/buildUpSequence';
-import { buildHangarScene } from '../../../app/lib/configurator/sceneModel';
+import { buildTechnicalScene } from '../../../app/lib/configurator/technicalSceneModel';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
@@ -19,13 +19,13 @@ describe('buildUpSequence timing', () => {
     expect(totalSequenceDurationMs()).toBeLessThanOrEqual(3000);
   });
 
-  it('stages columns→trusses→purlins in sequence — the only layers that ever fire together', () => {
+  it('stages columns→rafters→purlins in sequence — the only layers that ever fire together', () => {
     const columns = layerStartOffsetMs('columns');
-    const trusses = layerStartOffsetMs('trusses');
+    const rafters = layerStartOffsetMs('rafters');
     const purlins = layerStartOffsetMs('purlins');
     expect(columns).toBe(0);
-    expect(trusses).toBeGreaterThan(columns);
-    expect(purlins).toBeGreaterThan(trusses);
+    expect(rafters).toBeGreaterThan(columns);
+    expect(purlins).toBeGreaterThan(rafters);
   });
 
   it('gives every independently-triggered layer a zero start offset — nothing waits on a layer it was not triggered alongside', () => {
@@ -33,7 +33,7 @@ describe('buildUpSequence timing', () => {
     // 0↔some transition); by the time a user acts on one, nothing else is "still building" for
     // it to wait on, regardless of where it sits in the naming convention BUILD_LAYER_ORDER
     // documents. This is the fix for a real bug caught live: an earlier version made unchecking
-    // "walls" alone wait out foundation+columns+trusses+purlins' entire combined span first.
+    // "walls" alone wait out foundation+columns+rafters+purlins' entire combined span first.
     for (const layer of ['foundation', 'walls', 'roof', 'gates'] as const) {
       expect(layerStartOffsetMs(layer)).toBe(0);
     }
@@ -59,7 +59,7 @@ describe('buildUpSequence timing', () => {
 
   it('maps every scene primitive kind to a build layer, or explicitly to none for terrain/annotations', () => {
     const domain = deriveDomainModel(stateWith({}));
-    const scene = buildHangarScene(domain);
+    const scene = buildTechnicalScene(domain);
     for (const primitive of scene.primitives) {
       const layer = buildLayerForPrimitive(primitive);
       if (primitive.kind === 'terrain-plane' || primitive.kind === 'dimension-guide') {

@@ -1,0 +1,312 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildParametricModel,
+  frameBayCount,
+  ridgeHeightM,
+  roofPitchDegForWidth,
+  type ParametricBuildingModel,
+  type Vec3,
+} from '../../../app/lib/configurator/parametricModel';
+import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
+import {
+  DEFAULT_CONFIGURATOR_STATE,
+  DIMENSION_BOUNDS,
+  type ConfiguratorState,
+} from '../../../app/lib/configurator/types';
+
+// Behavioural numeric assertions, deliberately not a giant JSON snapshot: a snapshot would go
+// red on every intentional visual change and tell us nothing about *which* geometric invariant
+// broke. These are the invariants a future 3D renderer will silently depend on.
+
+const W = DIMENSION_BOUNDS.width;
+const L = DIMENSION_BOUNDS.length;
+const H = DIMENSION_BOUNDS.height;
+
+function modelFor(overrides: Partial<ConfiguratorState['dimensions']> = {}, rest: Partial<ConfiguratorState> = {}) {
+  const state: ConfiguratorState = {
+    ...DEFAULT_CONFIGURATOR_STATE,
+    ...rest,
+    dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, ...overrides },
+  };
+  return buildParametricModel(deriveDomainModel(state));
+}
+
+function allPoints(m: ParametricBuildingModel): Vec3[] {
+  return [
+    ...m.frames.flatMap((f) => [f.leftColumn.a, f.leftColumn.b, f.rightColumn.a, f.rightColumn.b,
+      f.leftRafter.a, f.leftRafter.b, f.rightRafter.a, f.rightRafter.b, f.ridgePoint]),
+    ...m.envelope.wallSegments.flatMap((s) => s.corners),
+    ...m.envelope.roofSegments.flatMap((s) => s.corners),
+    ...m.envelope.gableEnds.flatMap((g) => g.outline),
+    ...m.girts.flatMap((g) => [g.a, g.b]),
+    ...m.openings.flatMap((o) => o.corners),
+    ...m.slab.corners,
+  ];
+}
+
+describe('coordinate convention', () => {
+  // This is the frozen contract from parametricModel.ts's header. It is tested rather than left
+  // to a comment because a front/rear face mismatch between the model and a camera already cost
+  // this project a real debugging session during the R3F spike.
+  const m = modelFor();
+
+  it('puts the FRONT facade at z = 0 and the REAR at z = lengthM', () => {
+    const front = m.envelope.gableEnds.find((g) => g.face === 'front');
+    const rear = m.envelope.gableEnds.find((g) => g.face === 'rear');
+
+    expect(front!.outline.every((p) => p.z === 0)).toBe(true);
+    expect(rear!.outline.every((p) => p.z === m.footprint.lengthM)).toBe(true);
+  });
+
+  it('puts the LEFT wall at x = 0 and the RIGHT wall at x = widthM', () => {
+    const left = m.envelope.wallSegments.filter((s) => s.face === 'left');
+    const right = m.envelope.wallSegments.filter((s) => s.face === 'right');
+
+    expect(left.length).toBeGreaterThan(0);
+    expect(left.every((s) => s.corners.every((p) => p.x === 0))).toBe(true);
+    expect(right.every((s) => s.corners.every((p) => p.x === m.footprint.widthM))).toBe(true);
+  });
+
+  it('treats Y as up, with the ground/slab line at y = 0 and the ridge as the highest point', () => {
+    const ys = allPoints(m).map((p) => p.y);
+
+    expect(Math.min(...ys)).toBe(0);
+    expect(Math.max(...ys)).toBeCloseTo(m.heights.ridgeM, 6);
+  });
+
+  it('runs the ridge along Z at mid-width', () => {
+    for (const frame of m.frames) {
+      expect(frame.ridgePoint.x).toBeCloseTo(m.footprint.widthM / 2, 6);
+      expect(frame.ridgePoint.y).toBeCloseTo(m.heights.ridgeM, 6);
+    }
+    const zs = m.frames.map((f) => f.ridgePoint.z);
+    expect(Math.min(...zs)).toBe(0);
+    expect(Math.max(...zs)).toBe(m.footprint.lengthM);
+  });
+});
+
+describe('ridge derivation', () => {
+  it('is the one formula: ridge = eave + (width/2)·tan(pitch)', () => {
+    const m = modelFor({ width: 24, height: 8 });
+    const expected = 8 + 12 * Math.tan((m.roof.pitchDeg * Math.PI) / 180);
+
+    expect(m.heights.ridgeM).toBeCloseTo(expected, 6);
+    expect(ridgeHeightM(24, 8, m.roof.pitchDeg)).toBeCloseTo(expected, 6);
+  });
+
+  it('keeps riseM consistent with the two heights it sits between', () => {
+    const m = modelFor({ width: 30, height: 7 });
+    expect(m.roof.riseM).toBeCloseTo(m.heights.ridgeM - m.heights.eaveM, 6);
+    expect(m.heights.ridgeM).toBeGreaterThan(m.heights.eaveM);
+  });
+
+  it('shallows the pitch as the span widens — a fixed pitch is wrong across a 10–60 m range', () => {
+    const pitches = [10, 24, 40, 60].map(roofPitchDegForWidth);
+
+    expect(pitches).toEqual([...pitches].sort((a, b) => b - a));
+    // A fixed 12° would put the ridge 6.38 m above the eave on a 60 m span — taller than the
+    // 4 m minimum wall it sits on. The span rule keeps the widest case sane.
+    const widest = modelFor({ width: W.max, height: H.min });
+    expect(widest.roof.riseM).toBeLessThan(widest.heights.eaveM);
+  });
+
+  it('clamps the pitch rule outside the supported width range instead of extrapolating', () => {
+    expect(roofPitchDegForWidth(W.min - 20)).toBe(roofPitchDegForWidth(W.min));
+    expect(roofPitchDegForWidth(W.max + 20)).toBe(roofPitchDegForWidth(W.max));
+  });
+});
+
+describe('roof symmetry', () => {
+  it('mirrors the two slopes about mid-width', () => {
+    const m = modelFor({ width: 24, length: 60, height: 8 });
+    const left = m.envelope.roofSegments.filter((s) => s.slope === 'left');
+    const right = m.envelope.roofSegments.filter((s) => s.slope === 'right');
+
+    expect(left).toHaveLength(right.length);
+    for (let i = 0; i < left.length; i += 1) {
+      const leftEave = left[i].corners.filter((p) => p.y === m.heights.eaveM);
+      const rightEave = right[i].corners.filter((p) => p.y === m.heights.eaveM);
+      expect(leftEave.every((p) => p.x === 0)).toBe(true);
+      expect(rightEave.every((p) => p.x === m.footprint.widthM)).toBe(true);
+    }
+  });
+
+  it('gives both rafters of a portal frame the same run and the same rise', () => {
+    const m = modelFor({ width: 36, height: 9 });
+    const frame = m.frames[0];
+    const runLeft = Math.abs(frame.leftRafter.b.x - frame.leftRafter.a.x);
+    const runRight = Math.abs(frame.rightRafter.b.x - frame.rightRafter.a.x);
+
+    expect(runLeft).toBeCloseTo(runRight, 6);
+    expect(frame.leftRafter.b.y).toBeCloseTo(frame.rightRafter.b.y, 6);
+    expect(frame.leftRafter.a.y).toBeCloseTo(frame.rightRafter.a.y, 6);
+  });
+});
+
+describe('bay stations', () => {
+  it('are strictly increasing and span exactly 0…lengthM', () => {
+    for (const length of [L.min, 37, 60, L.max]) {
+      const m = modelFor({ length });
+      const s = m.bays.stationsM;
+
+      expect(s[0]).toBe(0);
+      expect(s[s.length - 1]).toBeCloseTo(length, 6);
+      for (let i = 1; i < s.length; i += 1) expect(s[i]).toBeGreaterThan(s[i - 1]);
+      expect(s).toHaveLength(m.bays.count + 1);
+    }
+  });
+
+  it('stays inside the legible 2–10 bay clamp even at maximum length', () => {
+    expect(frameBayCount(L.min)).toBeGreaterThanOrEqual(2);
+    expect(frameBayCount(L.max)).toBeLessThanOrEqual(10);
+    // The clamp is what bounds member count for BOTH renderers: a 120 m hangar gets 10 bays.
+    expect(modelFor({ length: L.max }).frames).toHaveLength(frameBayCount(L.max) + 1);
+  });
+
+  it('places one portal frame per station', () => {
+    const m = modelFor({ length: 60 });
+    expect(m.frames.map((f) => f.stationM)).toEqual(m.bays.stationsM);
+  });
+});
+
+describe('gable ends', () => {
+  it('are pentagons that close, with the apex at the ridge and mid-width', () => {
+    const m = modelFor({ width: 24, height: 8 });
+
+    for (const gable of m.envelope.gableEnds) {
+      expect(gable.outline).toHaveLength(5);
+      const apex = gable.outline.reduce((a, b) => (b.y > a.y ? b : a));
+      expect(apex.y).toBeCloseTo(m.heights.ridgeM, 6);
+      expect(apex.x).toBeCloseTo(m.footprint.widthM / 2, 6);
+
+      const base = gable.outline.filter((p) => p.y === 0);
+      const eaves = gable.outline.filter((p) => p.y === m.heights.eaveM);
+      expect(base).toHaveLength(2);
+      expect(eaves).toHaveLength(2);
+    }
+  });
+});
+
+describe('openings', () => {
+  it('stay inside the front face — on it, within its width, and below the eave', () => {
+    for (const gates of [1, 2] as const) {
+      for (const width of [W.min, 24, W.max]) {
+        const m = modelFor({ width }, { gates });
+        expect(m.openings).toHaveLength(gates);
+
+        for (const opening of m.openings) {
+          expect(opening.face).toBe('front');
+          expect(opening.corners.every((p) => p.z === 0)).toBe(true);
+          expect(opening.rect.xM).toBeGreaterThanOrEqual(0);
+          expect(opening.rect.xM + opening.rect.widthM).toBeLessThanOrEqual(m.footprint.widthM);
+          // Below the eave, so the opening never collides with the sloped part of the gable.
+          expect(opening.rect.heightM).toBeLessThan(m.heights.eaveM);
+        }
+      }
+    }
+  });
+
+  it('never overlap each other when two gates are configured', () => {
+    const m = modelFor({ width: 24 }, { gates: 2 });
+    const [a, b] = m.openings;
+    expect(a.rect.xM + a.rect.widthM).toBeLessThanOrEqual(b.rect.xM);
+  });
+
+  it('produces no openings when the configuration has no gates', () => {
+    expect(modelFor({}, { gates: 0 }).openings).toHaveLength(0);
+  });
+});
+
+describe('slab', () => {
+  it('always exists, even when the foundation is out of scope — invisible is not nonexistent', () => {
+    // Omitting slab geometry when out of scope silently tightened the SVG viewBox once already
+    // (caught by visual regression, ~3792px diff). Geometry is a fact; visibility is a renderer's.
+    const withFoundation = modelFor({}, { scope: ['foundation', 'frame', 'walls', 'roof'] });
+    const without = modelFor({}, { scope: ['frame'] });
+
+    expect(without.slab).not.toBeNull();
+    expect(without.slab.corners).toEqual(withFoundation.slab.corners);
+  });
+
+  it('matches the footprint plus a symmetric overhang', () => {
+    const m = modelFor({ width: 24, length: 60 });
+    const o = m.slab.overhangM;
+
+    expect(m.slab.widthM).toBeCloseTo(24 + o * 2, 6);
+    expect(m.slab.lengthM).toBeCloseTo(60 + o * 2, 6);
+    expect(Math.min(...m.slab.corners.map((p) => p.x))).toBeCloseTo(-o, 6);
+    expect(Math.max(...m.slab.corners.map((p) => p.x))).toBeCloseTo(24 + o, 6);
+    expect(m.slab.corners.every((p) => p.y === 0)).toBe(true);
+  });
+});
+
+describe('robustness across the whole supported range', () => {
+  const corners: Array<[number, number, number]> = [
+    [W.min, L.min, H.min],
+    [W.min, L.max, H.max],
+    [W.max, L.min, H.max],
+    [W.max, L.max, H.min],
+    [24, 60, 8],
+  ];
+
+  it.each(corners)('produces finite, non-negative geometry at %d × %d × %d', (width, length, height) => {
+    const m = modelFor({ width, length, height });
+
+    for (const p of allPoints(m)) {
+      for (const axis of ['x', 'y', 'z'] as const) {
+        expect(Number.isFinite(p[axis])).toBe(true);
+        expect(Number.isNaN(p[axis])).toBe(false);
+      }
+      // Y is the only axis with a hard floor: nothing sits below the slab line.
+      expect(p.y).toBeGreaterThanOrEqual(0);
+    }
+    expect(m.heights.ridgeM).toBeGreaterThan(m.heights.eaveM);
+    expect(m.roof.halfSpanM).toBeCloseTo(width / 2, 6);
+  });
+
+  it('is deterministic — same input, byte-identical output', () => {
+    const a = modelFor({ width: 31, length: 77, height: 9.5 });
+    const b = modelFor({ width: 31, length: 77, height: 9.5 });
+
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+
+  it('is plain JSON-serializable data, no class instances', () => {
+    const m = modelFor();
+    expect(JSON.parse(JSON.stringify(m))).toEqual(m);
+  });
+});
+
+describe('cross-renderer contract', () => {
+  // Phase 3-0 exists because the SVG technical view and the R3F spike drew DIFFERENT buildings
+  // (flat roof at 8 m vs a 12° gable ridging at 10.55 m on the same 24×60×8 config). These
+  // assertions are what make that class of divergence impossible: any renderer that reads the
+  // parametric model reads these exact numbers, and there is nowhere else to get them from.
+  it('exposes a single ridge/eave/footprint every renderer must share', () => {
+    const m = modelFor({ width: 24, length: 60, height: 8 });
+
+    expect(m.heights.eaveM).toBe(8);
+    expect(m.heights.ridgeM).toBeGreaterThan(8);
+    expect(m.footprint).toEqual({ widthM: 24, lengthM: 60 });
+  });
+
+  it('lets a minimal ThreeSceneModel-shaped adapter agree with the model without re-deriving anything', () => {
+    // A stand-in for a future 3D adapter: it may only *read* geometry, never recompute it.
+    const m = modelFor({ width: 30, length: 48, height: 7 });
+    const adapter = {
+      meshes: m.frames.flatMap((f) => [f.leftColumn, f.rightColumn, f.leftRafter, f.rightRafter]),
+      ridgeY: m.heights.ridgeM,
+      stations: m.bays.stationsM,
+      openings: m.openings.map((o) => o.rect),
+    };
+
+    expect(adapter.ridgeY).toBe(m.heights.ridgeM);
+    expect(adapter.stations).toEqual(m.bays.stationsM);
+    expect(adapter.meshes).toHaveLength(m.frames.length * 4);
+    // Every rafter must terminate exactly on the shared ridge height.
+    for (const frame of m.frames) {
+      expect(frame.leftRafter.b.y).toBe(m.heights.ridgeM);
+      expect(frame.rightRafter.b.y).toBe(m.heights.ridgeM);
+    }
+  });
+});

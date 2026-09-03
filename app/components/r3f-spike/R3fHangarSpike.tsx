@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
-import { buildHangarScene } from '../../lib/configurator/sceneModel';
+import { buildParametricModel } from '../../lib/configurator/parametricModel';
 import { DIMENSION_BOUNDS, clampDimension, type ConfiguratorState } from '../../lib/configurator/types';
 import { HangarSpikeScene } from './HangarSpikeScene';
 
@@ -52,16 +52,16 @@ export function R3fHangarSpike() {
   const changeStartedAt = useRef<number | null>(null);
 
   const domain = useMemo(() => deriveDomainModel(state), [state]);
-  const scene = useMemo(() => buildHangarScene(domain), [domain]);
+  const building = useMemo(() => buildParametricModel(domain), [domain]);
 
   useEffect(() => {
     if (changeStartedAt.current === null) return;
     // Measured end-to-end: state commit → this effect, after React has re-rendered and the
     // Canvas has committed the new meshes — closer to "does this feel responsive" than timing
-    // buildHangarScene() alone would be. See docs/renderer-foundation-spike.md for the numbers.
+    // buildParametricModel() alone would be. See docs/renderer-foundation-spike.md for the numbers.
     setLastRebuildMs(performance.now() - changeStartedAt.current);
     changeStartedAt.current = null;
-  }, [scene]);
+  }, [building]);
 
   function setDimension(key: keyof ConfiguratorState['dimensions'], value: number) {
     changeStartedAt.current = performance.now();
@@ -88,11 +88,11 @@ export function R3fHangarSpike() {
           <DimensionSlider fieldKey="length" label="Довжина" value={state.dimensions.length} onChange={(v) => setDimension('length', v)} />
           <DimensionSlider fieldKey="height" label="Висота" value={state.dimensions.height} onChange={(v) => setDimension('height', v)} />
           {lastRebuildMs !== null && (
-            <p className="r3f-metric">buildHangarScene → paint: {lastRebuildMs.toFixed(1)}ms</p>
+            <p className="r3f-metric">buildParametricModel → paint: {lastRebuildMs.toFixed(1)}ms</p>
           )}
         </div>
         <div className="r3f-canvas-surface">
-          <HangarSpikeScene scene={scene} />
+          <HangarSpikeScene building={building} showFoundation={domain.scope.foundation} showFrame={domain.scope.frame} />
         </div>
       </div>
     </div>
