@@ -19,6 +19,13 @@ export type ScopeItem = 'foundation' | 'frame' | 'walls' | 'roof';
 /** 0, 1 or 2 gates on the front facade — deliberately not a general opening system (see brief). */
 export type GatesCount = 0 | 1 | 2;
 
+/**
+ * Gate size class. `double` is the wide, tall opening used to drive equipment in — the case
+ * customers ask about by name. It is a size choice, not a leaf-count claim: this tool does not
+ * model hardware, and the drawing shows an opening, not a door.
+ */
+export type GateType = 'standard' | 'double';
+
 export type ConfiguratorState = {
   dimensions: Dimensions;
   /**
@@ -34,6 +41,7 @@ export type ConfiguratorState = {
   /** Which scope items are included in this request — a scope list, not a structural claim. */
   scope: ScopeItem[];
   gates: GatesCount;
+  gateType: GateType;
 };
 
 export type DimensionBounds = { min: number; max: number; step: number };
@@ -65,6 +73,13 @@ export const SCOPE_ORDER: ScopeItem[] = ['foundation', 'frame', 'walls', 'roof']
 
 export const GATES_OPTIONS: GatesCount[] = [0, 1, 2];
 
+export const GATE_TYPE_LABELS: Record<GateType, string> = {
+  standard: 'Стандартні',
+  double: 'Для заїзду техніки',
+};
+
+export const GATE_TYPE_ORDER: GateType[] = ['standard', 'double'];
+
 /** 24×60×8 — the same reference object used as the brief's own "Ваш об'єкт" example. */
 export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   dimensions: { width: 24, length: 60, height: 8 },
@@ -74,6 +89,7 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   envelope: 'insulated',
   scope: ['foundation', 'frame', 'walls', 'roof'],
   gates: 1,
+  gateType: 'standard',
 };
 
 export function clampDimension(key: keyof Dimensions, value: number): number {

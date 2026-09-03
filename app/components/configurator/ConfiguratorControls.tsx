@@ -10,6 +10,8 @@ import {
   DIMENSION_BOUNDS,
   ENVELOPE_LABELS,
   GATES_OPTIONS,
+  GATE_TYPE_LABELS,
+  GATE_TYPE_ORDER,
   SCOPE_LABELS,
   SCOPE_ORDER,
   clampDimension,
@@ -18,6 +20,7 @@ import {
   type ConfiguratorState,
   type Dimensions,
   type EnvelopeChoice,
+  type GateType,
   type GatesCount,
 } from '../../lib/configurator/types';
 
@@ -168,6 +171,10 @@ export function ConfiguratorControls({ state, onChange }: Props) {
     onChange({ ...state, gates });
   }
 
+  function setGateType(gateType: GateType) {
+    onChange({ ...state, gateType });
+  }
+
   function setScope(item: (typeof SCOPE_ORDER)[number]) {
     onChange({ ...state, scope: toggleScopeItem(state.scope, item) });
   }
@@ -246,6 +253,32 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             </label>
           ))}
         </div>
+        {/* Only meaningful once there is a gate to size, so it is hidden at zero rather than
+            shown disabled — a control that cannot do anything is noise. */}
+        {state.gates > 0 && (
+          <div
+            className="hc-option-cards hc-gate-types"
+            role="radiogroup"
+            aria-label="Тип воріт"
+          >
+            {GATE_TYPE_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-gate-type"
+                  checked={state.gateType === option}
+                  onChange={() => setGateType(option)}
+                />
+                <span>{GATE_TYPE_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        {state.gates > 0 && (
+          <p className="hc-field-note">
+            «Для заїзду техніки» — ширший і вищий проріз. Розміри орієнтовні, а не проєктні.
+          </p>
+        )}
       </section>
     </div>
   );

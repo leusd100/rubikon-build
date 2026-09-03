@@ -58,6 +58,36 @@ test.describe('hangar configurator POC', () => {
     await expect(page.locator('.hc-summary-facts')).not.toContainText('Стіни');
   });
 
+  test('gate size class widens and heightens the opening, and is only offered when a gate exists', async ({ page }) => {
+    await openConfigurator(page);
+
+    const equipmentOption = page.getByText('Для заїзду техніки', { exact: true });
+    await expect(equipmentOption).toBeVisible();
+
+    const standardBox = await page.locator('.hc-preview-svg .hc-gate').first().boundingBox();
+    await equipmentOption.click();
+    const wideBox = await page.locator('.hc-preview-svg .hc-gate').first().boundingBox();
+
+    expect(wideBox!.width).toBeGreaterThan(standardBox!.width);
+    expect(wideBox!.height).toBeGreaterThan(standardBox!.height);
+
+    // With no gate there is nothing to size, so the choice is withdrawn rather than shown inert.
+    await page.locator('.hc-option-card', { hasText: '0' }).click();
+    await expect(equipmentOption).toHaveCount(0);
+  });
+
+  test('the gate size class survives a switch to 3D and back', async ({ page }) => {
+    await openConfigurator(page);
+    await page.getByText('Для заїзду техніки', { exact: true }).click();
+
+    await page.getByRole('button', { name: '3D', exact: true }).click();
+    await expect(page.locator('.hc-preview-surface canvas')).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('button', { name: 'Технічний вид', exact: true }).click();
+
+    await expect(page.locator('.hc-preview-svg')).toBeVisible();
+    await expect(page.getByText('Для заїзду техніки', { exact: true })).toBeVisible();
+  });
+
   // Reported bug: the dimension boxes clamped on every keystroke, so clearing one produced
   // Number('') === 0, which snapped to the minimum and overwrote the entry. Typing a value whose
   // first digit is below the minimum was therefore impossible.

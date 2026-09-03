@@ -149,6 +149,12 @@
 
 /* Range for a field whose limits move with other fields (the ridge) — kept quiet so it reads as
    guidance, not another value. */
+/* Gate size choice sits under the count, so it needs a little separation from it without
+   becoming its own titled section. */
+.hc-gate-types {
+  margin-top: 10px;
+}
+
 .hc-field-hint {
   margin: 6px 0 0;
   color: var(--text-muted);

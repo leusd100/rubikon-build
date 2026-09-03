@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { ThreeSceneModel } from '../../../lib/configurator/threeSceneModel';
+import { cameraDirection as sharedCameraDirection } from '../../../lib/configurator/viewProjection';
 
 // Fixed architectural camera. No orbit, no pan, no zoom, no auto-rotate — Phase 3A is explicit
 // about that, and a configurator's job is to communicate proportions, not to be spun.
@@ -12,38 +13,17 @@ import type { ThreeSceneModel } from '../../../lib/configurator/threeSceneModel'
 // equal on screen, which is what makes the two views read as the same object rather than as a
 // drawing and a photograph.
 
-/**
- * Camera elevation. The technical view's axonometric uses 24°; a true isometric direction would
- * be 35.3°. This sits between them on purpose: at 24° the portal frames overlap almost exactly
- * in the frame-only state (the readability problem the earlier spike lost on), while 35° starts
- * reading as looking down onto the roof instead of at the building. 28° separates the bays
- * without flattening the front elevation.
- */
-const ELEVATION_DEG = 28;
-/**
- * Rotation about the vertical axis. Negative Z keeps the camera on the FRONT side (the domain's
- * front facade is at z=0) — getting that sign wrong is what hid the front wall behind the
- * building's own volume in the earlier spike.
- *
- * The sign is negative so the length axis recedes to the upper RIGHT on screen, matching the
- * technical view's axonometric. At +45° the 3D view came out horizontally mirrored against the
- * drawing: the gable with the gate sat at the lower right and the building receded left, while the
- * technical view puts that same gable at the lower left. Two mirrored compositions read as two
- * different buildings, which is precisely the impression this whole mode switch has to avoid.
- */
-const AZIMUTH_DEG = -45;
 /** Fraction of the canvas the building's projected extent should fill. */
 const FIT_MARGIN = 0.86;
 
+/**
+ * Elevation and azimuth are NOT defined here. They come from viewProjection.ts, which the SVG
+ * technical view projects through as well — one camera, two renderers. Defining them twice is
+ * exactly how the two views ended up subtly mirrored against each other along the width axis.
+ */
 function cameraDirection(): THREE.Vector3 {
-  const el = (ELEVATION_DEG * Math.PI) / 180;
-  const az = (AZIMUTH_DEG * Math.PI) / 180;
-  const horizontal = Math.cos(el);
-  return new THREE.Vector3(
-    horizontal * Math.sin(az),
-    Math.sin(el),
-    -horizontal * Math.cos(az),
-  ).normalize();
+  const d = sharedCameraDirection();
+  return new THREE.Vector3(d.x, d.y, d.z).normalize();
 }
 
 export function FitOrthographicCamera({ scene }: { scene: ThreeSceneModel }) {

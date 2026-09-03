@@ -1,5 +1,5 @@
 import { clampRidgeHeightM, pitchDegForRidge } from './parametricModel';
-import type { ConfiguratorState, EnvelopeChoice, GatesCount } from './types';
+import type { ConfiguratorState, EnvelopeChoice, GateType, GatesCount } from './types';
 
 // The normalized, always-JSON-serializable business object derived from ConfiguratorState.
 // This is the layer both the summary and the parametric building model read from — neither
@@ -54,6 +54,8 @@ export type HangarDomainModel = {
     roof: boolean;
   };
   gates: GatesCount;
+  /** Size class of those gates — drives the opening's proportions, not any hardware detail. */
+  gateType: GateType;
   areaSqm: number;
 };
 
@@ -74,6 +76,7 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
       roof: state.scope.includes('roof'),
     },
     gates: state.gates,
+    gateType: state.gateType,
     areaSqm: Math.round(width * length),
   };
 }
