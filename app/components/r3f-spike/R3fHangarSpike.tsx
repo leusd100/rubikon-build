@@ -17,6 +17,7 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   envelope: 'cold',
   scope: ['foundation', 'frame'],
   gates: 0,
+  gateType: 'standard',
 };
 
 function DimensionSlider({

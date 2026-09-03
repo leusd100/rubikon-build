@@ -1,5 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
-import type { EnvelopeChoice } from './types';
+import type { EnvelopeChoice, GateType } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE SINGLE SOURCE OF GEOMETRIC TRUTH (Phase 3-0, 2026-09-03)
@@ -372,18 +372,30 @@ function buildGirts(widthM: number, lengthM: number, eaveM: number): Member[] {
   return members;
 }
 
-// Gate placement ratios — carried over unchanged from the previous scene model
-// so gate positions do not silently move in this refactor.
-const GATE_HEIGHT_RATIO = 0.72;
-const GATE_WIDTH_RATIO = 0.22;
+// Gate placement ratios. `standard` is carried over unchanged from the previous scene model so
+// existing gate positions do not silently move; `double` is the wide, tall opening for driving
+// equipment in — proportionally wider AND taller, because a vehicle opening that is only wider
+// still reads as a personnel door.
+//
+// Both remain visual proportions, not opening schedules: the drawing shows a hole in a wall.
+const GATE_PROPORTIONS: Record<GateType, { widthRatio: number; heightRatio: number }> = {
+  standard: { widthRatio: 0.22, heightRatio: 0.72 },
+  double: { widthRatio: 0.34, heightRatio: 0.85 },
+};
 const GATE_GAP_RATIO = 0.08;
 const GATE_MARGIN_RATIO = 0.06;
 
-function buildOpenings(gates: number, widthM: number, eaveM: number): OpeningGeometry[] {
+function buildOpenings(
+  gates: number,
+  gateType: GateType,
+  widthM: number,
+  eaveM: number,
+): OpeningGeometry[] {
   if (gates === 0) return [];
 
-  const gateHeightM = round(eaveM * GATE_HEIGHT_RATIO);
-  const gateWidthM = round(widthM * GATE_WIDTH_RATIO);
+  const { widthRatio, heightRatio } = GATE_PROPORTIONS[gateType];
+  const gateHeightM = round(eaveM * heightRatio);
+  const gateWidthM = round(widthM * widthRatio);
   const gapM = widthM * GATE_GAP_RATIO;
   const marginM = widthM * GATE_MARGIN_RATIO;
   const usableM = widthM - marginM * 2;
@@ -453,7 +465,7 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
       roofEnvelope: domain.envelope.roof,
     },
     girts: buildGirts(widthM, lengthM, eaveHeightM),
-    openings: buildOpenings(domain.gates, widthM, eaveHeightM),
+    openings: buildOpenings(domain.gates, domain.gateType, widthM, eaveHeightM),
     slab: buildSlab(widthM, lengthM),
   };
 }

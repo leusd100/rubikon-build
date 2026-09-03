@@ -167,6 +167,37 @@ labels now format through `uk-UA`, so a value can no longer print as "7.5 м" ab
 "7,5". The ridge annotation dropped its "~" at the same time: it is a chosen value now, not a
 guess.
 
+## 12. One shared perspective, gate size class, dimension placement (follow-up 2)
+
+**One camera, two renderers.** `viewProjection.ts` now owns elevation (28°) and azimuth (−45°);
+the SVG projects through it and the R3F camera is positioned along it. Neither defines an angle.
+
+They previously could not agree, and tuning numbers would never have fixed it: the drawing used an
+**oblique** projection (+X straight right, +Z receding up-right), which corresponds to no actual
+viewpoint. With a real camera positioned to see the front facade at z = 0, the width and length
+axes necessarily fall to **opposite** sides of the screen. The result was a quietly mirrored width
+axis — the drawing showed the x = widthM wall, the 3D showed x = 0. Unifying made the technical view
+a true axonometric, which is also the more honest drawing. `viewProjection.test.ts` asserts the SVG
+is the shared projection times a scale and nothing else.
+
+**Dimension guides no longer sit on the building.** Placement is now computed relative to the
+drawing: each guide offsets perpendicular to its own edge *away from the building's projected
+centroid*, sizes that offset from the footprint, and picks its text anchor from the direction it
+ends up facing. A guide that assumed "+X is screen-right" would have pointed into the building the
+moment the basis changed. Verified by **point-in-polygon** sampling along every guide against the
+actual projected surfaces at five sizes — not a bounding-box check, which for a diagonal mass
+reports overlaps that do not exist.
+
+**Framing.** The terrain no longer drives the bounds. It is staging, and letting it size the drawing
+is what left the hangar occupying a fraction of the viewport while the 3D filled its frame.
+
+**Gate size class.** `gateType: 'standard' | 'double'` — the second is the wide, tall opening for
+driving equipment in (0.34 × 0.85 of width/eave against 0.22 × 0.72). Proportionally wider *and*
+taller, because an opening that is only wider still reads as a personnel door. It is a size choice,
+not a leaf-count or hardware claim. The control is withdrawn when the gate count is zero rather than
+shown inert. Both renderers picked it up with no renderer changes — it travels through
+`ParametricBuildingModel.openings` like every other geometric fact.
+
 ## 9. Known limitations
 
 - No roof overhang (see §2). The eave is a clean edge.
