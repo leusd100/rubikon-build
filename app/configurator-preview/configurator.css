@@ -60,26 +60,33 @@
   padding-inline: var(--container-gutter);
 }
 
-/* ---------- Controls ---------- */
+/* ---------- Controls ----------
+   Visual Refinement Pass v1 (2026-09-03): one unified panel with divider rules between sections,
+   not four separate floating white cards — the repeated bordered-card pattern was the biggest
+   contributor to the "generic form prototype" read. Functionality/markup unchanged (still 4
+   independent <section>s); only the container chrome moved from each section to the shared
+   wrapper. */
 
 .hc-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-
-.hc-control-group {
-  padding: 20px 22px 24px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
   background: white;
+  overflow: hidden; /* keeps divider rules and the rounded corners clean at the panel's edges */
+}
+
+.hc-control-group {
+  padding: 22px 22px 26px;
+}
+
+.hc-control-group + .hc-control-group {
+  border-top: 1px solid var(--border-default);
 }
 
 .hc-control-group h2 {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   color: var(--text-primary);
-  font: 600 13px/1 var(--font-condensed), sans-serif;
-  letter-spacing: .06em;
+  font: 600 12px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .1em;
   text-transform: uppercase;
 }
 
@@ -119,7 +126,7 @@
   min-height: var(--control-min-height);
   padding: 0 8px;
   border: 1px solid var(--border-control);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--surface-page);
   color: var(--text-primary);
   font: 600 13px/1 var(--font-manrope), sans-serif;
@@ -160,7 +167,7 @@
   justify-content: center;
   padding: 8px 6px;
   border: 1px solid var(--border-control);
-  border-radius: 6px;
+  border-radius: 4px;
   color: var(--text-secondary);
   background: var(--surface-page);
   font: 600 12px/1.25 var(--font-manrope), sans-serif;
@@ -231,13 +238,23 @@
 .hc-preview-svg {
   display: block;
   width: 100%;
-  height: clamp(320px, 40vw, 480px);
+  /* Raised from clamp(320px, 40vw, 480px) — Visual Refinement Pass v1. Measured: the controls
+     column (908px at 1440 with its default content) was actually *taller* than the whole preview
+     pane (817px, surface+summary), backwards from "the preview should be the visual hero." This
+     alone brings them within ~20px of each other at 1440 without touching the controls' own
+     content or usability. */
+  height: clamp(360px, 46vw, 560px);
 }
 
+/* Visual hierarchy (Visual Refinement Pass v1, 2026-09-03): envelope seams are deliberately
+   lighter than the primary frame below — a bay seam is a surface subdivision, not a structural
+   member, and the two were reading as equally important (envelope seams were previously *heavier*
+   than the frame, at 1.25 vs 1px, backwards from the intended hierarchy). */
 .hc-layer polygon,
 .hc-foundation {
   stroke: var(--text-on-dark-subtle);
-  stroke-width: 1.25;
+  stroke-width: .85;
+  stroke-opacity: .75;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   transition: stroke var(--duration-fast) var(--ease-premium), stroke-width var(--duration-fast) var(--ease-premium), fill var(--duration-medium) var(--ease-premium), opacity var(--duration-medium) var(--ease-premium);
@@ -263,10 +280,13 @@
    built-up, not become a flat solid box. Each segment's own stroke (from `.hc-layer polygon`
    above) already outlines every bay seam regardless of fill, and the frame (columns/trusses/
    purlins) is painted after these groups in the DOM specifically so it stays visible on top —
-   this fill-opacity is the third leg of "the structural logic stays readable after enclosure". */
+   this fill-opacity is the third leg of "the structural logic stays readable after enclosure".
+   Nudged down slightly further (.88→.85, Visual Refinement Pass v1) alongside the calmer
+   insulation-ribbing pattern below — together they read as "envelope placed over structure"
+   rather than "another equally strong line system". */
 .hc-top polygon.has-roof,
 .hc-side polygon.has-walls,
-.hc-front polygon.has-walls { fill-opacity: .88; }
+.hc-front polygon.has-walls { fill-opacity: .85; }
 
 .hc-top polygon.no-roof { fill: none; stroke-dasharray: 4 4; }
 .hc-side polygon.no-walls,
@@ -285,7 +305,11 @@
 .hc-envelope-undecided polygon.has-walls { fill: url(#hc-pattern-undecided); fill-opacity: .8; }
 
 .hc-pattern-base { fill: #4b5563; }
-.hc-pattern-line { stroke: rgba(255, 255, 255, .28); stroke-width: 1; }
+/* Calmed down (.28→.16 opacity, Visual Refinement Pass v1) alongside a wider, single-line tile
+   (see HangarPreview.tsx's <pattern> defs) — the ribbing was reading as its own competing line
+   grid across every panel instead of a quiet surface texture; envelope should read as "cladding",
+   not "more structure". */
+.hc-pattern-line { stroke: rgba(255, 255, 255, .16); stroke-width: 1; }
 
 /* Gates: the final, lowest-emphasis reveal — already the shortest duration and smallest stagger
    span in buildUpSequence.ts; no separate visual treatment needed beyond that and the existing
@@ -297,18 +321,22 @@
   stroke-width: 1;
 }
 
-/* Columns/trusses read as the primary structural moment (full stroke weight); purlins are
-   deliberately lighter — thinner stroke on top of their already-faster/smaller timing budget in
-   buildUpSequence.ts — so secondary structure never competes visually with the primary frame. */
+/* Structural hierarchy (Visual Refinement Pass v1): columns/trusses are the strongest line
+   weight in the whole scene — the primary structural read the eye should land on first, wider
+   than envelope seams (.85px above) and dimension lines (.8px below). Purlins are deliberately
+   much quieter than a simple "slightly thinner" delta could achieve — half the width *and* lower
+   opacity, so secondary structure stays legible without ever competing with the primary frame,
+   on top of their already-faster/smaller timing budget in buildUpSequence.ts. */
 .hc-columns line,
 .hc-trusses line {
   stroke: var(--text-on-dark-muted);
-  stroke-width: 1;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .hc-purlins line {
   stroke: var(--text-on-dark-subtle);
-  stroke-width: .75;
+  stroke-width: .5;
+  stroke-opacity: .7;
   vector-effect: non-scaling-stroke;
 }
 
@@ -342,9 +370,14 @@
 .hc-foundation.hc-phase-materializing,
 .hc-foundation.hc-phase-visible { transform: translateY(0); }
 
+/* Annotations get their own, deliberately lighter visual language (Visual Refinement Pass v1) —
+   thinner than every structural line above (.85 primary frame, .85 envelope) so measurement
+   graphics never compete with geometry, per "improve separation between building geometry and
+   measurement graphics". */
 .hc-dimension line {
   stroke: var(--text-on-dark-subtle);
-  stroke-width: 1;
+  stroke-width: .75;
+  stroke-opacity: .8;
   vector-effect: non-scaling-stroke;
 }
 
@@ -352,6 +385,14 @@
   fill: var(--text-on-dark);
   font: 600 16px var(--font-condensed), sans-serif;
   letter-spacing: .01em;
+  /* A soft same-color-as-viewport halo behind each label (not a hard-edged background chip) —
+     keeps the number legible over whatever geometry happens to sit behind it (roof, wall,
+     terrain) without a new box competing for attention. paint-order draws the stroke first so the
+     fill sits cleanly on top. */
+  paint-order: stroke;
+  stroke: var(--surface-dark);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
 
 /* ---------- Summary ---------- */
@@ -463,5 +504,7 @@
   .hc-layout { padding-inline: 20px; }
   .hc-option-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hc-field-controls { grid-template-columns: 1fr 64px; }
-  .hc-preview-svg { height: 62vw; min-height: 260px; }
+  /* Raised from 62vw/260px (Visual Refinement Pass v1) — "the model must still feel worth
+     showing on mobile", not merely technically responsive. */
+  .hc-preview-svg { height: 74vw; min-height: 290px; }
 }
