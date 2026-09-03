@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  PX_PER_METRE,
   pointsAttr,
   project,
   projectIsometricScene,
+  type Point,
 } from '../../../app/lib/configurator/isometricProjection';
 import { buildTechnicalScene } from '../../../app/lib/configurator/technicalSceneModel';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
@@ -35,18 +35,34 @@ describe('project', () => {
     expect(project({ x: 0, y: 0, z: 0 })).toEqual({ x: 0, y: 0 });
   });
 
-  it('maps building X to screen X at the shared metre scale', () => {
-    expect(project({ x: 3, y: 0, z: 0 })).toEqual({ x: 3 * PX_PER_METRE, y: 0 });
+  it('sends building Y straight up the screen, with no horizontal drift', () => {
+    const up = project({ x: 0, y: 5, z: 0 });
+    expect(up.x).toBeCloseTo(0, 9);
+    expect(up.y).toBeLessThan(0); // screen Y grows downward
   });
 
-  it('sends building Y (up) to negative screen Y (SVG grows downward)', () => {
-    expect(project({ x: 0, y: 5, z: 0 }).y).toBe(-5 * PX_PER_METRE);
-  });
-
-  it('recedes +Z up and to the right — the fixed axonometric direction', () => {
+  it('recedes +Z up and to the right — the composition the drawing has always had', () => {
     const far = project({ x: 0, y: 0, z: 10 });
     expect(far.x).toBeGreaterThan(0);
     expect(far.y).toBeLessThan(0);
+  });
+
+  it('sends +X to the opposite horizontal side from +Z — the mark of a real viewpoint', () => {
+    // An oblique projection can put both axes on the same side; a camera that actually sees the
+    // front facade cannot. This is the property that was silently mirroring the two views against
+    // each other before the shared basis existed.
+    const alongWidth = project({ x: 10, y: 0, z: 0 });
+    const alongLength = project({ x: 0, y: 0, z: 10 });
+    expect(Math.sign(alongWidth.x)).toBe(-Math.sign(alongLength.x));
+  });
+
+  it('preserves equal metres as equal screen distance on each axis (orthographic, not perspective)', () => {
+    const near = project({ x: 0, y: 0, z: 0 });
+    const mid = project({ x: 0, y: 0, z: 20 });
+    const far = project({ x: 0, y: 0, z: 40 });
+    expect(Math.hypot(mid.x - near.x, mid.y - near.y)).toBeCloseTo(
+      Math.hypot(far.x - mid.x, far.y - mid.y), 9,
+    );
   });
 
   it('is linear, so equal metre steps project to equal screen steps', () => {
@@ -158,14 +174,13 @@ describe('projectIsometricScene', () => {
 });
 
 describe('bounds', () => {
-  it('encloses the terrain, every envelope surface, the foundation and every dimension label', () => {
+  it('encloses every envelope surface, the foundation and every dimension label', () => {
     const scene = projectFor();
     const { minX, minY, maxX, maxY } = scene.bounds;
     const inside = (p: { x: number; y: number }) =>
       p.x >= minX - 1e-6 && p.x <= maxX + 1e-6 && p.y >= minY - 1e-6 && p.y <= maxY + 1e-6;
 
     for (const p of [
-      ...scene.terrain,
       ...scene.foundation.points,
       ...scene.wallSegments.flatMap((s) => s.points),
       ...scene.gableEnds.flatMap((s) => s.points),
@@ -173,6 +188,73 @@ describe('bounds', () => {
       ...Object.values(scene.dimensions).map((d) => d.label),
     ]) {
       expect(inside(p)).toBe(true);
+    }
+  });
+
+  it('excludes the terrain from framing so the building stays the subject', () => {
+    // The terrain is staging. Letting it drive the bounds is what left the hangar occupying a
+    // fraction of the viewport while the 3D view filled its frame. It is still drawn — it just no
+    // longer decides how far the drawing zooms out, so it may now run past the framed area.
+    const scene = projectFor();
+    const { minX, minY, maxX, maxY } = scene.bounds;
+    const outside = scene.terrain.filter(
+      (p) => p.x < minX - 1e-6 || p.x > maxX + 1e-6 || p.y < minY - 1e-6 || p.y > maxY + 1e-6,
+    );
+
+    expect(outside.length).toBeGreaterThan(0);
+  });
+
+  it('keeps dimension guides clear of the building at every size', () => {
+    // "Розміри не мають залазити на будівлю."
+    //
+    // Tested against the ACTUAL projected polygons, not their bounding box: the building is a
+    // diagonal mass, so its axis-aligned box covers a great deal of empty screen that a guide is
+    // perfectly entitled to occupy. A box check here reports overlaps that do not exist — the
+    // mirror image of the mistake noted in lengthGuide's own history, where a box check missed
+    // overlaps that did.
+    const inPolygon = (p: Point, poly: Point[]) => {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const a = poly[i];
+        const b = poly[j];
+        if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) {
+          inside = !inside;
+        }
+      }
+      return inside;
+    };
+
+    for (const dims of [
+      { width: 10, length: 10, height: 4 },
+      { width: 24, length: 60, height: 8 },
+      { width: 60, length: 120, height: 15 },
+      { width: 12, length: 110, height: 5 },
+      { width: 60, length: 30, height: 6 },
+    ]) {
+      const scene = projectFor({ dimensions: dims });
+      const shell = [
+        ...scene.wallSegments.map((s) => s.points),
+        ...scene.gableEnds.map((s) => s.points),
+        ...scene.roofSegments.map((s) => s.points),
+      ];
+
+      for (const [name, guide] of Object.entries(scene.dimensions)) {
+        // Sample along the guide line as well as its ends — a line can clear both endpoints and
+        // still cut across a surface in between.
+        const [a, b] = guide.line;
+        const samples = [guide.label];
+        for (let t = 0; t <= 1.0001; t += 0.1) {
+          samples.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+        }
+
+        for (const point of samples) {
+          const overlaps = shell.some((poly) => inPolygon(point, poly));
+          expect(
+            overlaps,
+            `${name} guide crosses the building at ${dims.width}×${dims.length}×${dims.height}`,
+          ).toBe(false);
+        }
+      }
     }
   });
 
@@ -243,7 +325,9 @@ describe('dimension label framing', () => {
     const dims = projectFor().dimensions;
 
     expect(dims.eave.text).toMatch(/^\d/);
+    // The ridge keeps its name so the reader knows WHICH height it is, but carries no "~": it is
+    // a value the user sets now, not one the span rule guessed.
     expect(dims.ridge.text).toContain('Коник');
-    expect(dims.ridge.text).toContain('~');
+    expect(dims.ridge.text).not.toContain('~');
   });
 });

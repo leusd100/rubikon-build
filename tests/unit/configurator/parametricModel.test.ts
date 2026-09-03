@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ROOF_PITCH_MAX_DEG,
+  ROOF_PITCH_MIN_DEG,
   buildParametricModel,
+  clampRidgeHeightM,
+  defaultRidgeHeightM,
   frameBayCount,
+  pitchDegForRidge,
   ridgeHeightM,
+  ridgeHeightRangeM,
   roofPitchDegForWidth,
   type ParametricBuildingModel,
   type Vec3,
@@ -100,14 +106,54 @@ describe('ridge derivation', () => {
     expect(m.heights.ridgeM).toBeGreaterThan(m.heights.eaveM);
   });
 
-  it('shallows the pitch as the span widens — a fixed pitch is wrong across a 10–60 m range', () => {
+  it('shallows the DEFAULT pitch as the span widens — a fixed pitch is wrong across a 10–60 m range', () => {
     const pitches = [10, 24, 40, 60].map(roofPitchDegForWidth);
 
     expect(pitches).toEqual([...pitches].sort((a, b) => b - a));
-    // A fixed 12° would put the ridge 6.38 m above the eave on a 60 m span — taller than the
-    // 4 m minimum wall it sits on. The span rule keeps the widest case sane.
-    const widest = modelFor({ width: W.max, height: H.min });
-    expect(widest.roof.riseM).toBeLessThan(widest.heights.eaveM);
+    // A fixed 12° would put the ridge 6.38 m above the eave on a 60 m span. The span rule keeps
+    // the *starting* ridge sane; once the ridge became user-adjustable, the pitch clamp below is
+    // what keeps it sane thereafter.
+    const widestDefault = defaultRidgeHeightM(W.max, H.min);
+    expect(widestDefault - H.min).toBeLessThan(H.min);
+  });
+
+  it('keeps the resulting pitch inside the credible range for ANY stored ridge', () => {
+    // The ridge is user-set, so the model must stay sane even if state carries something absurd.
+    for (const [width, height] of [[W.min, H.min], [24, 8], [W.max, H.max], [W.max, H.min]] as const) {
+      for (const attempted of [-50, 0, 3, 11, 40, 500]) {
+        const ridge = clampRidgeHeightM(attempted, width, height);
+        const pitch = pitchDegForRidge(width, height, ridge);
+
+        expect(pitch).toBeGreaterThanOrEqual(ROOF_PITCH_MIN_DEG - 0.05);
+        expect(pitch).toBeLessThanOrEqual(ROOF_PITCH_MAX_DEG + 0.05);
+        expect(ridge).toBeGreaterThan(height);
+      }
+    }
+  });
+
+  it('moves the legal ridge range with width and eave height', () => {
+    const narrow = ridgeHeightRangeM(12, 8);
+    const wide = ridgeHeightRangeM(48, 8);
+    const taller = ridgeHeightRangeM(12, 12);
+
+    // A wider span reaches higher at the same pitch...
+    expect(wide.max).toBeGreaterThan(narrow.max);
+    // ...and raising the walls lifts the whole range with them.
+    expect(taller.min).toBeGreaterThan(narrow.min);
+    for (const range of [narrow, wide, taller]) expect(range.max).toBeGreaterThan(range.min);
+  });
+
+  it('round-trips ridge height and pitch — the two directions agree', () => {
+    for (const [width, eave, ridge] of [[24, 8, 10.6], [40, 6, 9.4], [12, 5, 6.2]] as const) {
+      const pitch = pitchDegForRidge(width, eave, ridge);
+      expect(ridgeHeightM(width, eave, pitch)).toBeCloseTo(ridge, 4);
+    }
+  });
+
+  it('starts from the span rule, snapped to the adjustment step', () => {
+    const fromRule = 8 + 12 * Math.tan((roofPitchDegForWidth(24) * Math.PI) / 180);
+    expect(defaultRidgeHeightM(24, 8)).toBeCloseTo(Math.round(fromRule / 0.1) * 0.1, 6);
+    expect(defaultRidgeHeightM(24, 8)).toBe(DEFAULT_CONFIGURATOR_STATE.ridgeHeightM);
   });
 
   it('clamps the pitch rule outside the supported width range instead of extrapolating', () => {

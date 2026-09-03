@@ -1,4 +1,5 @@
 import type { ScenePrimitive, TechnicalSceneModel, Vec3 } from './technicalSceneModel';
+import { projectToView } from './viewProjection';
 import type { EnvelopeChoice } from './types';
 
 // The SVG renderer's projection step: takes the TechnicalSceneModel's real metre points and
@@ -12,29 +13,20 @@ import type { EnvelopeChoice } from './types';
 
 // One shared scale for width, length AND height — a true axonometric, not a fudged one.
 export const PX_PER_METRE = 8;
-// 24°, not the textbook 30° (Visual Refinement Pass v1): a shallower angle spends less of the
-// vertical rise on the receding depth axis, leaving more of the frame for the front elevation.
-const ISO_ANGLE_RAD = (24 * Math.PI) / 180;
-
-const ISO_COS = Math.cos(ISO_ANGLE_RAD);
-const ISO_SIN = Math.sin(ISO_ANGLE_RAD);
 
 export type Point = { x: number; y: number };
 
 /**
- * Building space (metres, Y-up, Z into the scene) → screen space (pixels, Y-down).
+ * Building space (metres, Y-up) → screen space (pixels, Y-down).
  *
- * The ONE place a 3D point becomes a 2D point. Screen Y is negated because building Y is up
- * while SVG Y grows downward; the bounds-fitted viewBox absorbs the resulting offset, so the
- * drawing is framed identically regardless of the building's absolute height.
+ * The angle is NOT defined here: it comes from viewProjection.ts, the one camera definition the
+ * 3D renderer also uses. This module only applies the metre-to-pixel scale. Before that module
+ * existed the drawing used its own oblique projection and the two views were subtly mirrored
+ * against each other along the width axis.
  */
 export function project(v: Vec3): Point {
-  return {
-    // `+ 0` normalises negative zero: the Y term negates, so a point on the ground line would
-    // otherwise serialise as -0 and compare unequal to 0 for any consumer using strict equality.
-    x: v.x * PX_PER_METRE + ISO_COS * v.z * PX_PER_METRE + 0,
-    y: -v.y * PX_PER_METRE - ISO_SIN * v.z * PX_PER_METRE + 0,
-  };
+  const p = projectToView(v);
+  return { x: p.x * PX_PER_METRE, y: p.y * PX_PER_METRE };
 }
 
 function projectAll(points: Vec3[]): Point[] {
@@ -89,11 +81,16 @@ const DERIVED_LABEL_FONT_PX = 14;
 const LABEL_CHAR_WIDTH_EM = 0.62;
 
 function formatMetres(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  // Ukrainian decimal comma, matching the control panel's own readouts — the drawing and the
+  // fields must not print the same number two different ways.
+  return value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
 }
 
 function labelText(valueM: number, derived: boolean): string {
-  return derived ? `Коник ~${formatMetres(valueM)} м` : `${formatMetres(valueM)} м`;
+  // The ridge keeps its name (it labels *which* height) but no longer carries a "~": since the
+  // ridge became a user-adjustable value rather than an output of the span rule, an approximation
+  // marker would misrepresent it as something the tool guessed.
+  return derived ? `Коник ${formatMetres(valueM)} м` : `${formatMetres(valueM)} м`;
 }
 
 /**
@@ -201,23 +198,40 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
 
   const gates = findPrimitives(scene, 'opening-cutout').map((g) => ({ points: projectAll(g.corners) }));
 
-  const dims = {
-    width: widthGuide(widthM, eaveHeightM),
-    length: lengthGuide(widthM, lengthM, eaveHeightM),
-    eave: heightGuide(eaveHeightM, -28, false),
-    ridge: heightGuide(ridgeHeightM, -62, true),
-  };
-
-  const allPoints = [
-    ...terrain,
+  // The building's own projected extent drives guide placement and framing. The terrain is
+  // deliberately NOT part of it: it is staging, and letting it set the bounds is what made the
+  // hangar occupy a fraction of the viewport while the 3D view filled its frame.
+  const buildingPoints = [
     ...foundationPoints,
-    ...columns.flatMap((f) => f.points),
-    ...rafters.flatMap((f) => f.points),
-    ...purlins.flatMap((f) => f.points),
-    ...(ridge ? ridge.points : []),
     ...wallSegments.flatMap((s) => s.points),
     ...gableEnds.flatMap((s) => s.points),
     ...roofSegments.flatMap((s) => s.points),
+    ...columns.flatMap((f) => f.points),
+    ...rafters.flatMap((f) => f.points),
+  ];
+  const buildingBounds = boundsOf(buildingPoints);
+  const centroid = {
+    x: (buildingBounds.minX + buildingBounds.maxX) / 2,
+    y: (buildingBounds.minY + buildingBounds.maxY) / 2,
+  };
+
+  // Offsets scale with the building so guides clear it at every size instead of at one.
+  const footprintPx = Math.max(buildingBounds.maxX - buildingBounds.minX, 1);
+  const edgeOffset = Math.max(26, Math.min(footprintPx * 0.06, 54));
+  const heightOffset = Math.max(30, Math.min(footprintPx * 0.05, 46));
+
+  const dims = {
+    width: edgeGuide({ x: 0, y: 0, z: 0 }, { x: widthM, y: 0, z: 0 }, centroid, edgeOffset, widthM),
+    length: edgeGuide({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: lengthM }, centroid, edgeOffset, lengthM),
+    // Both height chains hang off the same corner — the one the width edge ends at, which the
+    // camera basis puts on the outside of the drawing.
+    eave: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, heightOffset, false),
+    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, heightOffset + 34, true),
+  };
+
+  const allPoints = [
+    ...buildingPoints,
+    ...(ridge ? ridge.points : []),
     ...gates.flatMap((g) => g.points),
     ...Object.values(dims).flatMap((d) => [d.line[0], d.line[1], d.label, ...labelExtent(d)]),
   ];
@@ -235,78 +249,105 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   };
 }
 
-/** Below the front elevation, running along the width. */
-function widthGuide(widthM: number, eaveHeightM: number): DimensionGuide {
-  const a = project({ x: 0, y: 0, z: 0 });
-  const b = project({ x: widthM, y: 0, z: 0 });
-  const offset = eaveHeightM * PX_PER_METRE * 0.28 + 20;
-  const A = { x: a.x, y: a.y + offset };
-  const B = { x: b.x, y: b.y + offset };
+/**
+ * Guide placement is computed RELATIVE TO THE DRAWING, not to a hard-coded axis direction.
+ *
+ * Which way is "outward" depends on the camera basis, and that basis now lives in one shared
+ * module — so a guide that assumed "+X is screen-right" would silently point into the building
+ * the moment the view changed. Each guide offsets perpendicular to its own edge, away from the
+ * building's projected centroid, and picks its text anchor from the direction it ended up facing.
+ */
+function offsetAway(a: Point, b: Point, centroid: Point, distance: number) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const length = Math.hypot(dx, dy) || 1;
+  let px = dy / length;
+  let py = -dx / length;
+
+  const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  const towards = (sx: number, sy: number) => (mid.x + sx - centroid.x) ** 2 + (mid.y + sy - centroid.y) ** 2;
+  if (towards(px, py) < towards(-px, -py)) {
+    px = -px;
+    py = -py;
+  }
+
   return {
-    line: [A, B],
-    ticks: [
-      [{ x: A.x, y: A.y - 6 }, { x: A.x, y: A.y + 6 }],
-      [{ x: B.x, y: B.y - 6 }, { x: B.x, y: B.y + 6 }],
-    ],
-    label: { x: (A.x + B.x) / 2, y: A.y + 20 },
-    anchor: 'middle',
-    text: labelText(widthM, false),
-    valueM: widthM,
-    derived: false,
+    A: { x: a.x + px * distance, y: a.y + py * distance },
+    B: { x: b.x + px * distance, y: b.y + py * distance },
+    nx: px,
+    ny: py,
   };
 }
 
-/** Offset perpendicular to the receding side wall. Scales with eave height — a flat offset put
- *  the guide inside the side-wall polygon at every hangar size (confirmed by point-in-polygon
- *  testing, not a bounding-box approximation, which under-reports this class of overlap). */
-function lengthGuide(widthM: number, lengthM: number, eaveHeightM: number): DimensionGuide {
-  const a = project({ x: widthM, y: 0, z: 0 });
-  const b = project({ x: widthM, y: 0, z: lengthM });
-  const dir = { x: b.x - a.x, y: b.y - a.y };
-  const perpendicular = { x: dir.y, y: -dir.x };
-  const norm = Math.hypot(perpendicular.x, perpendicular.y) || 1;
-  const offsetDist = eaveHeightM * PX_PER_METRE * 0.9 + 40;
-  const off = { x: (perpendicular.x / norm) * offsetDist, y: (perpendicular.y / norm) * offsetDist };
-  const A = { x: a.x + off.x, y: a.y + off.y };
-  const B = { x: b.x + off.x, y: b.y + off.y };
+/** Ticks sit along the guide's own direction, so they read as end stops whatever its angle. */
+function ticksFor(A: Point, B: Point): [[Point, Point], [Point, Point]] {
+  const dx = B.x - A.x;
+  const dy = B.y - A.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const tx = (dy / length) * 6;
+  const ty = (-dx / length) * 6;
+  return [
+    [{ x: A.x - tx, y: A.y - ty }, { x: A.x + tx, y: A.y + ty }],
+    [{ x: B.x - tx, y: B.y - ty }, { x: B.x + tx, y: B.y + ty }],
+  ];
+}
+
+function anchorFor(nx: number): DimensionGuide['anchor'] {
+  if (nx < -0.4) return 'end';
+  if (nx > 0.4) return 'start';
+  return 'middle';
+}
+
+/** A guide along one edge of the footprint — used for both width and length. */
+function edgeGuide(
+  from: Vec3,
+  to: Vec3,
+  centroid: Point,
+  distancePx: number,
+  valueM: number,
+): DimensionGuide {
+  const { A, B, nx, ny } = offsetAway(project(from), project(to), centroid, distancePx);
   const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
-  const labelOff = { x: (perpendicular.x / norm) * 16, y: (perpendicular.y / norm) * 16 };
   return {
     line: [A, B],
-    ticks: [
-      [{ x: A.x - 6, y: A.y }, { x: A.x + 6, y: A.y }],
-      [{ x: B.x - 6, y: B.y }, { x: B.x + 6, y: B.y }],
-    ],
-    label: { x: mid.x + labelOff.x, y: mid.y + labelOff.y },
-    anchor: 'middle',
-    text: labelText(lengthM, false),
-    valueM: lengthM,
+    ticks: ticksFor(A, B),
+    label: { x: mid.x + nx * 16, y: mid.y + ny * 16 + 5 },
+    anchor: anchorFor(nx),
+    text: labelText(valueM, false),
+    valueM,
     derived: false,
   };
 }
 
 /**
- * A vertical guide at the front-left corner. Two of these stack as a nested dimension chain —
- * eave inside, ridge outside — which is ordinary technical-drawing practice and keeps the
- * derived ridge value visually subordinate to the height the user actually chose.
+ * A vertical guide, anchored at whichever front corner sits furthest from the drawing's centre —
+ * so the height chain always lands in open space rather than across the building.
  */
-function heightGuide(valueM: number, offsetPx: number, derived: boolean): DimensionGuide {
-  const base = project({ x: 0, y: 0, z: 0 });
-  const top = project({ x: 0, y: valueM, z: 0 });
-  const A = { x: top.x + offsetPx, y: top.y };
-  const B = { x: base.x + offsetPx, y: base.y };
+function heightGuide(
+  anchor: Vec3,
+  centroid: Point,
+  valueM: number,
+  offsetPx: number,
+  derived: boolean,
+): DimensionGuide {
+  const base = project({ x: anchor.x, y: 0, z: anchor.z });
+  const top = project({ x: anchor.x, y: valueM, z: anchor.z });
+  const direction = base.x <= centroid.x ? -1 : 1;
+  const A = { x: top.x + offsetPx * direction, y: top.y };
+  const B = { x: base.x + offsetPx * direction, y: base.y };
   return {
     line: [A, B],
     ticks: [
       [{ x: A.x - 6, y: A.y }, { x: A.x + 6, y: A.y }],
       [{ x: B.x - 6, y: B.y }, { x: B.x + 6, y: B.y }],
     ],
-    // A nested chain puts two labels on the same short stretch of drawing, and centring both
-    // collides them (confirmed on screen: "Коник ~10.6 м" ran straight into "8 м"). The derived
-    // outer guide is annotated at its own top tick — beside the ridge height it actually marks —
-    // while the user-set inner guide keeps the conventional centred position.
-    label: derived ? { x: A.x - 10, y: A.y + 5 } : { x: A.x - 10, y: (A.y + B.y) / 2 },
-    anchor: 'end',
+    // The derived ridge is annotated at its own top tick; centring both labels on such a short
+    // shared stretch collided them.
+    label: {
+      x: A.x + 10 * direction,
+      y: derived ? A.y + 5 : (A.y + B.y) / 2,
+    },
+    anchor: direction < 0 ? 'end' : 'start',
     text: labelText(valueM, derived),
     valueM,
     derived,

@@ -12,9 +12,12 @@ import { HangarSpikeScene } from './HangarSpikeScene';
 // and gates are fixed to values the scene never visualises here.
 const SPIKE_BASE_STATE: ConfiguratorState = {
   dimensions: { width: 24, length: 60, height: 8 },
+  // Re-clamped per dimension change below; this is just the span rule's default for 24 x 8.
+  ridgeHeightM: 10.6,
   envelope: 'cold',
   scope: ['foundation', 'frame'],
   gates: 0,
+  gateType: 'standard',
 };
 
 function DimensionSlider({
