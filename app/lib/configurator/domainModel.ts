@@ -1,20 +1,52 @@
-import type { ConfiguratorState, EnvelopeChoice, GatesCount } from './types';
+import { clampRidgeHeightM, pitchDegForRidge } from './parametricModel';
+import type { ConfiguratorState, EnvelopeChoice, GateType, GatesCount } from './types';
 
 // The normalized, always-JSON-serializable business object derived from ConfiguratorState.
-// This is the layer both the summary and the scene model read from — neither reads raw
-// ConfiguratorState directly, so a future object type (grain storage, etc.) only needs its own
-// deriveDomainModel-equivalent, not changes to Summary/Scene consumers. It's also, by
-// construction, the same shape a future "structured project brief" for lead handoff would need
-// (see docs/configurator-poc.md §17/§N of the architecture recommendation) — kept plain data on
-// purpose, no functions, nothing renderer-specific.
+// This is the layer both the summary and the parametric building model read from — neither
+// reads raw ConfiguratorState directly, so a future object type (grain storage, etc.) only
+// needs its own deriveDomainModel-equivalent, not changes to Summary/Geometry consumers.
+// Kept plain data on purpose: no functions, nothing renderer-specific.
+
+export type RoofType = 'gable';
 
 export type HangarDomainModel = {
   objectType: 'hangar';
-  dimensions: { widthM: number; lengthM: number; heightM: number };
-  envelope: EnvelopeChoice;
-  // Resolved booleans, not a raw scope[] array — every consumer asks "is walls present?", not
-  // "does the array contain the string 'walls'?". Resolving this once here means Summary/Scene
-  // never re-implement the same `.includes()` check independently.
+  dimensions: {
+    widthM: number;
+    lengthM: number;
+    /**
+     * Wall / eave height — renamed from the previous ambiguous `heightM` in Phase 3-0.
+     * With a real gable roof, "the height of the building" is no longer one number:
+     * this is where the wall stops and the roof starts. Overall height is the ridge,
+     * derived in parametricModel.ts and never stored here.
+     */
+    eaveHeightM: number;
+  };
+  /**
+   * Roof form. `pitchDeg` is RESOLVED here (from the span rule in parametricModel.ts)
+   * rather than left implicit, so the domain object stays a complete, serializable
+   * description of the object — a future lead payload or saved configuration should not
+   * have to re-run a geometry rule to know what was quoted.
+   *
+   * The user adjusts the RIDGE HEIGHT in metres (the "коник"), which is the number the drawing
+   * annotates and the number a customer actually cares about for clearance. Pitch is derived from
+   * it here, in degrees, because that is what the geometry needs — it is never stored, so the two
+   * can never disagree.
+   *
+   * Phase 3-0 deliberately did not expose this at all, on the grounds that pitch is an engineering
+   * outcome. That still holds for *pitch*; what changed is the control surface — a ridge height in
+   * metres, held inside limits that keep the roof credible, is a proportion choice rather than a
+   * structural claim. The schematic disclaimer is unchanged.
+   */
+  roof: { type: RoofType; pitchDeg: number };
+  /**
+   * Split into walls/roof in Phase 3-0. The UI still offers one choice and maps it to
+   * both — but the *model* can now express "cold walls, insulated roof", which is a real
+   * configuration RUBIKON sells and the previous single-value shape could not represent.
+   */
+  envelope: { walls: EnvelopeChoice; roof: EnvelopeChoice };
+  // Resolved booleans, not a raw scope[] array — every consumer asks "is walls present?",
+  // not "does the array contain the string 'walls'?".
   scope: {
     foundation: boolean;
     frame: boolean;
@@ -22,6 +54,8 @@ export type HangarDomainModel = {
     roof: boolean;
   };
   gates: GatesCount;
+  /** Size class of those gates — drives the opening's proportions, not any hardware detail. */
+  gateType: GateType;
   areaSqm: number;
 };
 
@@ -29,8 +63,12 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   const { width, length, height } = state.dimensions;
   return {
     objectType: 'hangar',
-    dimensions: { widthM: width, lengthM: length, heightM: height },
-    envelope: state.envelope,
+    dimensions: { widthM: width, lengthM: length, eaveHeightM: height },
+    // Re-clamped on every derivation: the legal ridge range moves when width or eave height
+    // change, so a ridge that was legal at 24 m may not be at 60 m. Clamping here rather than in
+    // the control means the model is always self-consistent regardless of how state was produced.
+    roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, clampRidgeHeightM(state.ridgeHeightM, width, height)) },
+    envelope: { walls: state.envelope, roof: state.envelope },
     scope: {
       foundation: state.scope.includes('foundation'),
       frame: state.scope.includes('frame'),
@@ -38,6 +76,7 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
       roof: state.scope.includes('roof'),
     },
     gates: state.gates,
+    gateType: state.gateType,
     areaSqm: Math.round(width * length),
   };
 }

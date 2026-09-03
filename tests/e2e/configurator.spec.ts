@@ -45,15 +45,136 @@ test.describe('hangar configurator POC', () => {
   test('unchecking a scope item removes its fill layer and updates the summary list', async ({ page }) => {
     await openConfigurator(page);
 
-    // The front wall is segmented per structural bay (see sceneModel.ts's frameBayCount) — the
-    // default 24m-wide hangar gets 4 segments, each carrying its own has-walls/no-walls class.
-    await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(4);
+    // Since Phase 3-0 the front face is a GABLE END — one pentagon following the roof pitch,
+    // not a row of rectangular bay segments. The bay rhythm now lives on the side walls, which
+    // is where the structural bays actually run.
+    await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(1);
     await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(0);
+    await expect(page.locator('.hc-side-left polygon.has-walls')).toHaveCount(10);
     await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
 
-    await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(4);
+    await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(1);
     await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(0);
     await expect(page.locator('.hc-summary-facts')).not.toContainText('Стіни');
+  });
+
+  test('gate size class widens and heightens the opening, and is only offered when a gate exists', async ({ page }) => {
+    await openConfigurator(page);
+
+    const equipmentOption = page.getByText('Для заїзду техніки', { exact: true });
+    await expect(equipmentOption).toBeVisible();
+
+    const standardBox = await page.locator('.hc-preview-svg .hc-gate').first().boundingBox();
+    await equipmentOption.click();
+    const wideBox = await page.locator('.hc-preview-svg .hc-gate').first().boundingBox();
+
+    expect(wideBox!.width).toBeGreaterThan(standardBox!.width);
+    expect(wideBox!.height).toBeGreaterThan(standardBox!.height);
+
+    // With no gate there is nothing to size, so the choice is withdrawn rather than shown inert.
+    await page.locator('.hc-option-card', { hasText: '0' }).click();
+    await expect(equipmentOption).toHaveCount(0);
+  });
+
+  test('the gate size class survives a switch to 3D and back', async ({ page }) => {
+    await openConfigurator(page);
+    await page.getByText('Для заїзду техніки', { exact: true }).click();
+
+    await page.getByRole('button', { name: '3D', exact: true }).click();
+    await expect(page.locator('.hc-preview-surface canvas')).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('button', { name: 'Технічний вид', exact: true }).click();
+
+    await expect(page.locator('.hc-preview-svg')).toBeVisible();
+    await expect(page.getByText('Для заїзду техніки', { exact: true })).toBeVisible();
+  });
+
+  // Reported bug: the dimension boxes clamped on every keystroke, so clearing one produced
+  // Number('') === 0, which snapped to the minimum and overwrote the entry. Typing a value whose
+  // first digit is below the minimum was therefore impossible.
+  test('a dimension box accepts a value typed digit by digit after being cleared', async ({ page }) => {
+    await openConfigurator(page);
+
+    const length = page.locator('#hc-dimension-length');
+    await length.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('Backspace');
+    // The field must stay empty rather than snapping back to the minimum.
+    await expect(length).toHaveValue('');
+
+    await page.keyboard.type('3');
+    await expect(length, 'an intermediate "3" must not be rewritten to the minimum').toHaveValue('3');
+
+    await page.keyboard.type('7');
+    await expect(length).toHaveValue('37');
+
+    await length.blur();
+    await expect(length).toHaveValue('37');
+    await expect(page.locator('.hc-summary-dimensions')).toContainText('37');
+  });
+
+  test('an out-of-range typed value is clamped once, on blur', async ({ page }) => {
+    await openConfigurator(page);
+
+    const width = page.locator('#hc-dimension-width');
+    await width.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('999');
+    // Still exactly what was typed while the caret is in the field.
+    await expect(width).toHaveValue('999');
+
+    await width.blur();
+    await expect(width).toHaveValue('60');
+  });
+
+  test('abandoning an empty box restores the previous value rather than the minimum', async ({ page }) => {
+    await openConfigurator(page);
+
+    const width = page.locator('#hc-dimension-width');
+    await width.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('Backspace');
+    await width.blur();
+
+    await expect(width).toHaveValue('24');
+  });
+
+  test('the ridge height is adjustable and clamped to the range shown for the current width', async ({ page }) => {
+    await openConfigurator(page);
+
+    const ridge = page.locator('#hc-dimension-ridge');
+    await expect(ridge).toHaveValue('10,6');
+
+    await ridge.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('12');
+    await ridge.blur();
+    await expect(ridge).toHaveValue('12');
+    await expect(page.locator('.hc-preview-svg .hc-dimension.is-derived text')).toContainText('Коник 12 м');
+
+    // Beyond the credible pitch range it is held at the maximum, not accepted.
+    await ridge.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('30');
+    await ridge.blur();
+    await expect(ridge).toHaveValue('12,3');
+  });
+
+  test('widening the building keeps the ridge legal for the new footprint', async ({ page }) => {
+    await openConfigurator(page);
+
+    const ridge = page.locator('#hc-dimension-ridge');
+    await ridge.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('12,3');
+    await ridge.blur();
+    await expect(ridge).toHaveValue('12,3');
+
+    // A wider span raises the minimum ridge, so the stored value must be lifted with it.
+    await page.locator('#hc-dimension-width').fill('60');
+    await page.locator('#hc-dimension-width').blur();
+
+    const value = Number((await ridge.inputValue()).replace(',', '.'));
+    expect(value).toBeGreaterThanOrEqual(8 + 30 * Math.tan((5 * Math.PI) / 180));
   });
 
   test('gate count controls how many gate shapes render and what the summary says', async ({ page }) => {
@@ -180,13 +301,13 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/, { timeout: 2000 });
   });
 
-  test('columns and trusses stage in sequence — trusses only start once columns have (a real build order, not simultaneous)', async ({ page }) => {
+  test('columns and rafters stage in sequence — rafters only start once columns have (a real build order, not simultaneous)', async ({ page }) => {
     await openConfigurator(page);
     await page.getByText('Металокаркас', { exact: true }).click(); // off
 
     const columnsDelay = await page.locator('.hc-columns line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
-    const trussesDelay = await page.locator('.hc-trusses line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
-    expect(parseFloat(trussesDelay)).toBeGreaterThan(parseFloat(columnsDelay));
+    const raftersDelay = await page.locator('.hc-rafters line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
+    expect(parseFloat(raftersDelay)).toBeGreaterThan(parseFloat(columnsDelay));
   });
 
   test('a dimension change never restarts an already-settled layer\'s build-up', async ({ page }) => {
@@ -246,15 +367,15 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
 // after trusses, walls/roof get real transitions of their own, gates only replay on the 0↔some
 // transition (never on a 1↔2 count change), and enclosing the shell never hides the frame.
 test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () => {
-  test('purlins sequence after trusses, not simultaneously with them', async ({ page }) => {
+  test('purlins sequence after rafters, not simultaneously with them', async ({ page }) => {
     await openConfigurator(page);
 
     // The inline transitionDelay is set on every render regardless of phase (see
     // useLayerLifecycle.ts), so the default (already-visible) mount already carries the real
     // sequencing offsets — no toggle needed to observe them.
-    const trussesDelay = await page.locator('.hc-trusses line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
+    const raftersDelay = await page.locator('.hc-rafters line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
     const purlinsDelay = await page.locator('.hc-purlins line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
-    expect(parseFloat(purlinsDelay)).toBeGreaterThan(parseFloat(trussesDelay));
+    expect(parseFloat(purlinsDelay)).toBeGreaterThan(parseFloat(raftersDelay));
   });
 
   test('walls stage a real materialize/dematerialize transition', async ({ page }) => {

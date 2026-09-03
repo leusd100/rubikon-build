@@ -10,14 +10,14 @@
 // number per layer — reversing a build-up should look like rewinding it, not like a different
 // animation — so there is deliberately no separate "hide" timing table.
 
-import type { ScenePrimitive } from './sceneModel';
+import type { ScenePrimitive } from './technicalSceneModel';
 
 /** Every layer the build-up sequence stages independently, in build order. Dimension-guides are
  * excluded on purpose — annotations are not part of the build sequence (per brief: "not part of
  * the build sequence unless there's a good reason," and legibility during geometry changes is
  * more important than a materialize moment for a label). Terrain is excluded too: it's always-on
  * context, never a build step. */
-export type BuildLayer = 'foundation' | 'columns' | 'trusses' | 'purlins' | 'walls' | 'roof' | 'gates';
+export type BuildLayer = 'foundation' | 'columns' | 'rafters' | 'purlins' | 'walls' | 'roof' | 'gates';
 
 /** Documents the conceptual build order (foundation supports frame supports envelope supports
  * gates) and drives `buildLayerForPrimitive`'s grouping — but this is NOT one global timeline.
@@ -28,7 +28,7 @@ export type BuildLayer = 'foundation' | 'columns' | 'trusses' | 'purlins' | 'wal
 export const BUILD_LAYER_ORDER: readonly BuildLayer[] = [
   'foundation',
   'columns',
-  'trusses',
+  'rafters',
   'purlins',
   'walls',
   'roof',
@@ -40,14 +40,14 @@ export const BUILD_LAYER_ORDER: readonly BuildLayer[] = [
  * `BUILD_LAYER_ORDER` is the sole member of its own trigger (its own checkbox, or the gate
  * count's 0↔some transition), so by the time a user toggles it independently there is nothing
  * "still building" left to wait for, however that layer is ordered in the wider convention above. */
-const FRAME_GROUP: readonly BuildLayer[] = ['columns', 'trusses', 'purlins'];
+const FRAME_GROUP: readonly BuildLayer[] = ['columns', 'rafters', 'purlins'];
 
 /** Duration (ms) of one layer's own materialize transition — how long a single instance of that
  * layer's CSS transition runs, independent of how many staggered instances there are. */
 export const LAYER_DURATION_MS: Record<BuildLayer, number> = {
   foundation: 350,
   columns: 350,
-  trusses: 300,
+  rafters: 300,
   purlins: 150,
   walls: 250,
   roof: 250,
@@ -61,7 +61,7 @@ export const LAYER_DURATION_MS: Record<BuildLayer, number> = {
 const RAW_STAGGER_STEP_MS: Record<BuildLayer, number> = {
   foundation: 0,
   columns: 90,
-  trusses: 60,
+  rafters: 60,
   purlins: 40,
   walls: 45,
   roof: 45,
@@ -74,7 +74,7 @@ const RAW_STAGGER_STEP_MS: Record<BuildLayer, number> = {
 const MAX_STAGGER_SPAN_MS: Record<BuildLayer, number> = {
   foundation: 0,
   columns: 350,
-  trusses: 150,
+  rafters: 150,
   purlins: 100,
   walls: 120,
   roof: 120,
@@ -98,8 +98,8 @@ export function staggerDelayMs(layer: BuildLayer, index: number, instanceCount: 
 
 /**
  * The delay (ms), relative to the moment its own trigger fires, before a layer's *first* instance
- * begins materializing. Zero for every layer except columns/trusses/purlins — the only layers
- * that fire together off one trigger (`scope.frame`) — where trusses waits for columns' own span
+ * begins materializing. Zero for every layer except columns/rafters/purlins — the only layers
+ * that fire together off one trigger (`scope.frame`) — where rafters waits for columns' own span
  * to visually finish, and purlins waits for both, so "the frame is complete" reads as a real
  * moment rather than a blur of everything fading in at once.
  *
@@ -107,7 +107,7 @@ export function staggerDelayMs(layer: BuildLayer, index: number, instanceCount: 
  * gates are each independently triggered by their own checkbox, so a later, unrelated toggle
  * must never sit idle waiting for an earlier layer that finished settling long ago (confirmed
  * live: an earlier version of this function did exactly that — unchecking "walls" alone waited
- * out foundation+columns+trusses+purlins' entire combined span, ~1.75s of nothing happening,
+ * out foundation+columns+rafters+purlins' entire combined span, ~1.75s of nothing happening,
  * before the wall even started fading).
  */
 export function layerStartOffsetMs(layer: BuildLayer): number {
@@ -122,7 +122,7 @@ export function layerStartOffsetMs(layer: BuildLayer): number {
 }
 
 /** The longest any single user action's build-up can take — i.e. the frame group's own span
- * (columns+trusses+purlins all fire together off one checkbox) — since every other layer is
+ * (columns+rafters+purlins all fire together off one checkbox) — since every other layer is
  * independently triggered and therefore never waits on another layer at all. Comfortably under
  * the brief's ~3s per-action ceiling regardless of hangar size, since every layer's own stagger
  * span is independently capped above. */
@@ -140,13 +140,15 @@ export function buildLayerForPrimitive(primitive: ScenePrimitive): BuildLayer | 
       return 'foundation';
     case 'frame-column':
       return 'columns';
-    case 'frame-truss':
-      return 'trusses';
+    case 'frame-rafter':
+      return 'rafters';
     case 'frame-purlin':
       return 'purlins';
     case 'wall-segment':
+    case 'gable-end':
       return 'walls';
     case 'roof-segment':
+    case 'ridge-line':
       return 'roof';
     case 'opening-cutout':
       return 'gates';

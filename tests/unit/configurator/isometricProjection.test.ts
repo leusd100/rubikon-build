@@ -1,222 +1,333 @@
 import { describe, expect, it } from 'vitest';
-import { deriveDomainModel, type HangarDomainModel } from '../../../app/lib/configurator/domainModel';
-import { PX_PER_METRE, pointsAttr, projectIsometricScene, type Point } from '../../../app/lib/configurator/isometricProjection';
-import { buildHangarScene } from '../../../app/lib/configurator/sceneModel';
-import { DEFAULT_CONFIGURATOR_STATE, DIMENSION_BOUNDS, type ConfiguratorState } from '../../../app/lib/configurator/types';
+import {
+  pointsAttr,
+  project,
+  projectIsometricScene,
+  type Point,
+} from '../../../app/lib/configurator/isometricProjection';
+import { buildTechnicalScene } from '../../../app/lib/configurator/technicalSceneModel';
+import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
+import {
+  DEFAULT_CONFIGURATOR_STATE,
+  DIMENSION_BOUNDS,
+  type ConfiguratorState,
+} from '../../../app/lib/configurator/types';
 
-function domainFor(overrides: Partial<ConfiguratorState>): HangarDomainModel {
-  return deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides });
+function projectFor(overrides: Partial<ConfiguratorState> = {}) {
+  return projectIsometricScene(buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides })));
 }
 
-function sceneFor(overrides: Partial<ConfiguratorState>) {
-  return projectIsometricScene(buildHangarScene(domainFor(overrides)));
-}
-
-function widthOf(points: Point[]): number {
-  return Math.max(...points.map((p) => p.x)) - Math.min(...points.map((p) => p.x));
-}
-
-function heightOf(points: Point[]): number {
-  return Math.max(...points.map((p) => p.y)) - Math.min(...points.map((p) => p.y));
+function span(points: { x: number; y: number }[], axis: 'x' | 'y') {
+  const vs = points.map((p) => p[axis]);
+  return Math.max(...vs) - Math.min(...vs);
 }
 
 describe('pointsAttr', () => {
   it('formats points as an SVG "x,y x,y" list, rounded to 2 decimals', () => {
-    expect(pointsAttr([{ x: 1, y: 2 }, { x: 3.14159, y: 4 }])).toBe('1,2 3.14,4');
+    expect(pointsAttr([{ x: 1.006, y: -2.5 }, { x: 3, y: 4 }])).toBe('1.01,-2.5 3,4');
   });
 });
 
-describe('projectIsometricScene — foundation', () => {
+describe('project', () => {
+  // Phase 3-0 reduced this module to one transform. These assertions pin the axis convention it
+  // implements, so a future 3D camera can be checked against the same rules.
+  it('maps the building origin to the screen origin', () => {
+    expect(project({ x: 0, y: 0, z: 0 })).toEqual({ x: 0, y: 0 });
+  });
+
+  it('sends building Y straight up the screen, with no horizontal drift', () => {
+    const up = project({ x: 0, y: 5, z: 0 });
+    expect(up.x).toBeCloseTo(0, 9);
+    expect(up.y).toBeLessThan(0); // screen Y grows downward
+  });
+
+  it('recedes +Z up and to the right — the composition the drawing has always had', () => {
+    const far = project({ x: 0, y: 0, z: 10 });
+    expect(far.x).toBeGreaterThan(0);
+    expect(far.y).toBeLessThan(0);
+  });
+
+  it('sends +X to the opposite horizontal side from +Z — the mark of a real viewpoint', () => {
+    // An oblique projection can put both axes on the same side; a camera that actually sees the
+    // front facade cannot. This is the property that was silently mirroring the two views against
+    // each other before the shared basis existed.
+    const alongWidth = project({ x: 10, y: 0, z: 0 });
+    const alongLength = project({ x: 0, y: 0, z: 10 });
+    expect(Math.sign(alongWidth.x)).toBe(-Math.sign(alongLength.x));
+  });
+
+  it('preserves equal metres as equal screen distance on each axis (orthographic, not perspective)', () => {
+    const near = project({ x: 0, y: 0, z: 0 });
+    const mid = project({ x: 0, y: 0, z: 20 });
+    const far = project({ x: 0, y: 0, z: 40 });
+    expect(Math.hypot(mid.x - near.x, mid.y - near.y)).toBeCloseTo(
+      Math.hypot(far.x - mid.x, far.y - mid.y), 9,
+    );
+  });
+
+  it('is linear, so equal metre steps project to equal screen steps', () => {
+    const a = project({ x: 0, y: 0, z: 0 });
+    const b = project({ x: 1, y: 0, z: 1 });
+    const c = project({ x: 2, y: 0, z: 2 });
+    expect(b.x - a.x).toBeCloseTo(c.x - b.x, 9);
+    expect(b.y - a.y).toBeCloseTo(c.y - b.y, 9);
+  });
+});
+
+describe('projectIsometricScene', () => {
   it('always returns 6 foundation points, `visible` following scope.foundation (never omitted)', () => {
-    const withFoundation = sceneFor({ scope: ['foundation'] });
-    const withoutFoundation = sceneFor({ scope: [] });
+    const on = projectFor({ scope: ['foundation'] });
+    const off = projectFor({ scope: ['frame'] });
 
-    expect(withFoundation.foundation.points).toHaveLength(6);
-    expect(withFoundation.foundation.visible).toBe(true);
-    // Same geometry either way — only `visible` changes — so a dematerialize transition always
-    // has real points to fade from instead of the slab just disappearing.
-    expect(withoutFoundation.foundation.points).toHaveLength(6);
-    expect(withoutFoundation.foundation.visible).toBe(false);
-  });
-});
-
-describe('projectIsometricScene — wall/roof segments', () => {
-  it('scales the combined front wall span proportionally with the width input', () => {
-    const narrow = sceneFor({ dimensions: { width: 10, length: 60, height: 8 } });
-    const wide = sceneFor({ dimensions: { width: 40, length: 60, height: 8 } });
-
-    const frontPoints = (s: ReturnType<typeof sceneFor>) => s.wallSegments.front.flatMap((seg) => seg.points);
-
-    expect(widthOf(frontPoints(narrow))).toBeCloseTo(10 * PX_PER_METRE, 1);
-    expect(widthOf(frontPoints(wide))).toBeCloseTo(40 * PX_PER_METRE, 1);
-    expect(widthOf(frontPoints(wide))).toBeGreaterThan(widthOf(frontPoints(narrow)));
+    expect(on.foundation.points).toHaveLength(6);
+    expect(on.foundation.visible).toBe(true);
+    expect(off.foundation.points).toEqual(on.foundation.points);
+    expect(off.foundation.visible).toBe(false);
   });
 
-  it('scales the front wall height proportionally with the height input', () => {
-    const short = sceneFor({ dimensions: { width: 24, length: 60, height: 4 } });
-    const tall = sceneFor({ dimensions: { width: 24, length: 60, height: 15 } });
+  it('scales the front elevation proportionally with the width input', () => {
+    const narrow = projectFor({ dimensions: { width: 12, length: 60, height: 8 } });
+    const wide = projectFor({ dimensions: { width: 36, length: 60, height: 8 } });
+    const front = (s: ReturnType<typeof projectFor>) => s.gableEnds.find((g) => g.face === 'front')!.points;
 
-    const frontPoints = (s: ReturnType<typeof sceneFor>) => s.wallSegments.front.flatMap((seg) => seg.points);
-
-    expect(heightOf(frontPoints(tall))).toBeGreaterThan(heightOf(frontPoints(short)));
-    expect(heightOf(frontPoints(short))).toBeCloseTo(4 * PX_PER_METRE, 1);
+    expect(span(front(wide), 'x')).toBeCloseTo(span(front(narrow), 'x') * 3, 6);
   });
 
-  it('recedes the side wall further as length grows, without changing the front wall', () => {
-    const short = sceneFor({ dimensions: { width: 24, length: 10, height: 8 } });
-    const long = sceneFor({ dimensions: { width: 24, length: 120, height: 8 } });
+  it('renders the front gable as a 5-point pentagon whose apex sits above the eave corners', () => {
+    const scene = projectFor();
+    const front = scene.gableEnds.find((g) => g.face === 'front')!;
 
-    expect(long.wallSegments.front.flatMap((s) => s.points)).toEqual(short.wallSegments.front.flatMap((s) => s.points));
-
-    const depthOf = (s: ReturnType<typeof sceneFor>) => {
-      const points = s.wallSegments.side.flatMap((seg) => seg.points);
-      return Math.hypot(widthOf(points), heightOf(points));
-    };
-    expect(depthOf(long)).toBeGreaterThan(depthOf(short));
+    expect(front.points).toHaveLength(5);
+    // Screen Y grows downward, so the apex is the MINIMUM y.
+    const apex = front.points.reduce((a, b) => (b.y < a.y ? b : a));
+    const others = front.points.filter((p) => p !== apex);
+    expect(others.every((p) => p.y > apex.y)).toBe(true);
   });
 
-  it('segments the front wall into exactly frameBayCount(width) quads', () => {
-    const scene = sceneFor({ dimensions: { width: 24, length: 60, height: 8 } }); // 24/6 = 4 bays
-    expect(scene.wallSegments.front).toHaveLength(4);
-    for (const segment of scene.wallSegments.front) {
-      expect(segment.points).toHaveLength(4);
-    }
+  it('projects both roof slopes, meeting at a common ridge height on screen', () => {
+    const scene = projectFor();
+    const left = scene.roofSegments.filter((s) => s.slope === 'left');
+    const right = scene.roofSegments.filter((s) => s.slope === 'right');
+
+    expect(left.length).toBeGreaterThan(0);
+    expect(left).toHaveLength(right.length);
+    expect(scene.frame.ridge).not.toBeNull();
   });
 
-  it('segments the roof into exactly frameBayCount(length) quads', () => {
-    const scene = sceneFor({ dimensions: { width: 24, length: 60, height: 8 } }); // 60/6 = 10 bays
-    expect(scene.roofSegments).toHaveLength(10);
+  it('segments each side wall and each roof slope into one quad per structural bay', () => {
+    const scene = projectFor();
+    const bays = buildTechnicalScene(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE)).building.bays.count;
+
+    expect(scene.wallSegments.filter((w) => w.face === 'left')).toHaveLength(bays);
+    expect(scene.roofSegments.filter((s) => s.slope === 'right')).toHaveLength(bays);
+    expect(scene.wallSegments.every((s) => s.points.length === 4)).toBe(true);
   });
 
-  it('reflects hasFill/envelope from the scene model on wall and roof segments', () => {
-    const filled = sceneFor({ scope: ['walls', 'roof'], envelope: 'cold' });
-    const empty = sceneFor({ scope: [], envelope: 'cold' });
+  it('reflects hasFill/envelope from the scene model on wall and roof surfaces', () => {
+    const scene = projectFor({ scope: ['walls'], envelope: 'cold' });
 
-    expect(filled.wallSegments.front.every((s) => s.hasFill)).toBe(true);
-    expect(filled.roofSegments.every((s) => s.hasFill)).toBe(true);
-    expect(filled.wallSegments.front[0].envelope).toBe('cold');
-    expect(empty.wallSegments.front.every((s) => !s.hasFill)).toBe(true);
-    expect(empty.roofSegments.every((s) => !s.hasFill)).toBe(true);
-  });
-});
-
-describe('projectIsometricScene — gates', () => {
-  it('renders no gate rectangles when gates is 0', () => {
-    expect(sceneFor({ gates: 0 }).gates).toHaveLength(0);
+    expect(scene.wallSegments.every((s) => s.hasFill && s.envelope === 'cold')).toBe(true);
+    expect(scene.roofSegments.every((s) => !s.hasFill)).toBe(true);
   });
 
-  it('renders exactly one gate rectangle (4 points) when gates is 1', () => {
-    const scene = sceneFor({ gates: 1 });
-    expect(scene.gates).toHaveLength(1);
-    expect(scene.gates[0].points).toHaveLength(4);
+  it('renders no gate rectangles when gates is 0, and one 4-point rect per gate otherwise', () => {
+    expect(projectFor({ gates: 0 }).gates).toHaveLength(0);
+    expect(projectFor({ gates: 1 }).gates).toHaveLength(1);
+    expect(projectFor({ gates: 2 }).gates).toHaveLength(2);
+    expect(projectFor({ gates: 1 }).gates[0].points).toHaveLength(4);
   });
 
-  it('renders two non-overlapping gate rectangles when gates is 2', () => {
-    const scene = sceneFor({ gates: 2 });
-    expect(scene.gates).toHaveLength(2);
-
-    const [left, right] = scene.gates
-      .map((gate) => ({
-        minX: Math.min(...gate.points.map((p) => p.x)),
-        maxX: Math.max(...gate.points.map((p) => p.x)),
-      }))
-      .sort((a, b) => a.minX - b.minX);
-
-    expect(left.maxX).toBeLessThanOrEqual(right.minX);
-  });
-
-  it('keeps every gate within the front facade\'s own width', () => {
-    const scene = sceneFor({ gates: 2 });
-    const frontPoints = scene.wallSegments.front.flatMap((s) => s.points);
-    const facadeMaxX = Math.max(...frontPoints.map((p) => p.x));
-    const facadeMinX = Math.min(...frontPoints.map((p) => p.x));
+  it("keeps every gate within the front gable's own projected width", () => {
+    const scene = projectFor({ gates: 2 });
+    const front = scene.gableEnds.find((g) => g.face === 'front')!.points;
+    const minX = Math.min(...front.map((p) => p.x));
+    const maxX = Math.max(...front.map((p) => p.x));
 
     for (const gate of scene.gates) {
-      for (const point of gate.points) {
-        expect(point.x).toBeGreaterThanOrEqual(facadeMinX);
-        expect(point.x).toBeLessThanOrEqual(facadeMaxX);
+      for (const p of gate.points) {
+        expect(p.x).toBeGreaterThanOrEqual(minX);
+        expect(p.x).toBeLessThanOrEqual(maxX);
       }
     }
   });
-});
 
-describe('projectIsometricScene — frame', () => {
-  it('adds more column bays for a wider facade, within the clamped 2-10 range', () => {
-    const narrow = sceneFor({ scope: ['frame'], dimensions: { width: 10, length: 60, height: 8 } });
-    const wide = sceneFor({ scope: ['frame'], dimensions: { width: 60, length: 60, height: 8 } });
+  it('never omits frame lines when frame is out of scope — `visible` goes false instead', () => {
+    const on = projectFor({ scope: ['frame'] });
+    const off = projectFor({ scope: [] });
 
-    expect(narrow.frame.frontColumns.length).toBeGreaterThanOrEqual(3); // 2 bays + 1
-    expect(wide.frame.frontColumns.length).toBeGreaterThan(narrow.frame.frontColumns.length);
-    expect(wide.frame.frontColumns.length).toBeLessThanOrEqual(11); // 10 bays + 1
+    expect(off.frame.columns).toHaveLength(on.frame.columns.length);
+    expect(off.frame.rafters).toHaveLength(on.frame.rafters.length);
+    expect(off.frame.columns.every((l) => !l.visible)).toBe(true);
+    expect(on.frame.rafters.every((l) => l.visible)).toBe(true);
   });
 
-  it('one truss per side-bay position, matching the side column count', () => {
-    const scene = sceneFor({ scope: ['frame'], dimensions: { width: 24, length: 60, height: 8 } });
-    expect(scene.frame.trusses).toHaveLength(scene.frame.sideColumns.length);
-  });
+  it('emits four dimension guides, with the ridge one flagged derived', () => {
+    const dims = projectFor().dimensions;
 
-  it('emits 2 purlin lines (the two stylised height levels), regardless of scope', () => {
-    expect(sceneFor({ scope: [] }).frame.purlins).toHaveLength(2);
-  });
-
-  it('never omits column/truss/purlin lines when frame is out of scope — `visible` goes false instead (geometry-safe, so a fade-out has something to animate)', () => {
-    const withFrame = sceneFor({ scope: ['frame'] });
-    const withoutFrame = sceneFor({ scope: ['foundation', 'walls', 'roof'] });
-
-    expect(withoutFrame.frame.frontColumns).toHaveLength(withFrame.frame.frontColumns.length);
-    expect(withoutFrame.frame.sideColumns).toHaveLength(withFrame.frame.sideColumns.length);
-    expect(withoutFrame.frame.trusses).toHaveLength(withFrame.frame.trusses.length);
-    expect(withoutFrame.frame.frontColumns.every((c) => !c.visible)).toBe(true);
-    expect(withFrame.frame.frontColumns.every((c) => c.visible)).toBe(true);
+    expect(dims.width.derived).toBe(false);
+    expect(dims.eave.derived).toBe(false);
+    expect(dims.ridge.derived).toBe(true);
+    expect(dims.ridge.valueM).toBeGreaterThan(dims.eave.valueM);
+    // Nested dimension chain: the derived ridge guide sits outside the eave guide.
+    expect(dims.ridge.line[0].x).toBeLessThan(dims.eave.line[0].x);
   });
 });
 
-describe('projectIsometricScene — bounds', () => {
-  it('encloses the terrain, every wall/roof segment, the foundation, and every dimension label', () => {
-    const scene = sceneFor({ scope: ['foundation', 'frame', 'walls', 'roof'], gates: 2 });
-    const allPoints = [
-      ...scene.terrain,
-      ...scene.wallSegments.front.flatMap((s) => s.points),
-      ...scene.wallSegments.side.flatMap((s) => s.points),
-      ...scene.roofSegments.flatMap((s) => s.points),
+describe('bounds', () => {
+  it('encloses every envelope surface, the foundation and every dimension label', () => {
+    const scene = projectFor();
+    const { minX, minY, maxX, maxY } = scene.bounds;
+    const inside = (p: { x: number; y: number }) =>
+      p.x >= minX - 1e-6 && p.x <= maxX + 1e-6 && p.y >= minY - 1e-6 && p.y <= maxY + 1e-6;
+
+    for (const p of [
       ...scene.foundation.points,
-      scene.dimensions.width.label, scene.dimensions.length.label, scene.dimensions.height.label,
-    ];
-
-    for (const point of allPoints) {
-      expect(point.x).toBeGreaterThanOrEqual(scene.bounds.minX);
-      expect(point.x).toBeLessThanOrEqual(scene.bounds.maxX);
-      expect(point.y).toBeGreaterThanOrEqual(scene.bounds.minY);
-      expect(point.y).toBeLessThanOrEqual(scene.bounds.maxY);
+      ...scene.wallSegments.flatMap((s) => s.points),
+      ...scene.gableEnds.flatMap((s) => s.points),
+      ...scene.roofSegments.flatMap((s) => s.points),
+      ...Object.values(scene.dimensions).map((d) => d.label),
+    ]) {
+      expect(inside(p)).toBe(true);
     }
   });
 
-  it('keeps bounds stable whether or not frame is in scope (frame sits within the wall/roof extent already in bounds)', () => {
-    const withFrame = sceneFor({ scope: ['foundation', 'frame', 'walls', 'roof'] });
-    const withoutFrame = sceneFor({ scope: ['foundation', 'walls', 'roof'] });
+  it('excludes the terrain from framing so the building stays the subject', () => {
+    // The terrain is staging. Letting it drive the bounds is what left the hangar occupying a
+    // fraction of the viewport while the 3D view filled its frame. It is still drawn — it just no
+    // longer decides how far the drawing zooms out, so it may now run past the framed area.
+    const scene = projectFor();
+    const { minX, minY, maxX, maxY } = scene.bounds;
+    const outside = scene.terrain.filter(
+      (p) => p.x < minX - 1e-6 || p.x > maxX + 1e-6 || p.y < minY - 1e-6 || p.y > maxY + 1e-6,
+    );
 
-    expect(withFrame.bounds).toEqual(withoutFrame.bounds);
+    expect(outside.length).toBeGreaterThan(0);
   });
 
-  it('keeps bounds stable whether or not foundation is in scope — the exact regression the always-present + `visible` flag pattern exists to prevent (see sceneModel.ts)', () => {
-    const withFoundation = sceneFor({ scope: ['foundation', 'frame', 'walls', 'roof'] });
-    const withoutFoundation = sceneFor({ scope: ['frame', 'walls', 'roof'] });
+  it('keeps dimension guides clear of the building at every size', () => {
+    // "Розміри не мають залазити на будівлю."
+    //
+    // Tested against the ACTUAL projected polygons, not their bounding box: the building is a
+    // diagonal mass, so its axis-aligned box covers a great deal of empty screen that a guide is
+    // perfectly entitled to occupy. A box check here reports overlaps that do not exist — the
+    // mirror image of the mistake noted in lengthGuide's own history, where a box check missed
+    // overlaps that did.
+    const inPolygon = (p: Point, poly: Point[]) => {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const a = poly[i];
+        const b = poly[j];
+        if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) {
+          inside = !inside;
+        }
+      }
+      return inside;
+    };
 
-    expect(withFoundation.bounds).toEqual(withoutFoundation.bounds);
+    for (const dims of [
+      { width: 10, length: 10, height: 4 },
+      { width: 24, length: 60, height: 8 },
+      { width: 60, length: 120, height: 15 },
+      { width: 12, length: 110, height: 5 },
+      { width: 60, length: 30, height: 6 },
+    ]) {
+      const scene = projectFor({ dimensions: dims });
+      const shell = [
+        ...scene.wallSegments.map((s) => s.points),
+        ...scene.gableEnds.map((s) => s.points),
+        ...scene.roofSegments.map((s) => s.points),
+      ];
+
+      for (const [name, guide] of Object.entries(scene.dimensions)) {
+        // Sample along the guide line as well as its ends — a line can clear both endpoints and
+        // still cut across a surface in between.
+        const [a, b] = guide.line;
+        const samples = [guide.label];
+        for (let t = 0; t <= 1.0001; t += 0.1) {
+          samples.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+        }
+
+        for (const point of samples) {
+          const overlaps = shell.some((poly) => inPolygon(point, poly));
+          expect(
+            overlaps,
+            `${name} guide crosses the building at ${dims.width}×${dims.length}×${dims.height}`,
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('grows vertically when the roof is pitched — the ridge is above the eave in the framing', () => {
+    const scene = projectFor();
+    const ridgeY = scene.frame.ridge!.points[0].y;
+    const eaveY = project({ x: 0, y: DEFAULT_CONFIGURATOR_STATE.dimensions.height, z: 0 }).y;
+
+    expect(ridgeY).toBeLessThan(eaveY); // screen Y grows downward
+    expect(scene.bounds.minY).toBeLessThanOrEqual(ridgeY);
+  });
+
+  it('keeps bounds stable whether or not foundation is in scope — the exact regression the always-present + `visible` pattern exists to prevent', () => {
+    const withF = projectFor({ scope: ['foundation', 'frame', 'walls', 'roof'] }).bounds;
+    const withoutF = projectFor({ scope: ['frame', 'walls', 'roof'] }).bounds;
+
+    expect(withoutF).toEqual(withF);
+  });
+
+  it('keeps bounds stable whether or not frame is in scope', () => {
+    const withFrame = projectFor({ scope: ['foundation', 'frame', 'walls', 'roof'] }).bounds;
+    const withoutFrame = projectFor({ scope: ['foundation', 'walls', 'roof'] }).bounds;
+
+    expect(withoutFrame).toEqual(withFrame);
   });
 
   it('produces finite, non-degenerate bounds at both DIMENSION_BOUNDS extremes', () => {
-    const { width, length, height } = DIMENSION_BOUNDS;
-    const minScene = sceneFor({ dimensions: { width: width.min, length: length.min, height: height.min } });
-    const maxScene = sceneFor({ dimensions: { width: width.max, length: length.max, height: height.max } });
-
-    for (const scene of [minScene, maxScene]) {
-      expect(Number.isFinite(scene.bounds.minX)).toBe(true);
-      expect(Number.isFinite(scene.bounds.maxX)).toBe(true);
-      expect(Number.isFinite(scene.bounds.minY)).toBe(true);
-      expect(Number.isFinite(scene.bounds.maxY)).toBe(true);
-      expect(scene.bounds.maxX).toBeGreaterThan(scene.bounds.minX);
-      expect(scene.bounds.maxY).toBeGreaterThan(scene.bounds.minY);
+    for (const dims of [
+      { width: DIMENSION_BOUNDS.width.min, length: DIMENSION_BOUNDS.length.min, height: DIMENSION_BOUNDS.height.min },
+      { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
+    ]) {
+      const { minX, minY, maxX, maxY } = projectFor({ dimensions: dims }).bounds;
+      for (const v of [minX, minY, maxX, maxY]) expect(Number.isFinite(v)).toBe(true);
+      expect(maxX).toBeGreaterThan(minX);
+      expect(maxY).toBeGreaterThan(minY);
     }
+  });
+});
+
+describe('dimension label framing', () => {
+  // Regression: bounds used to include only a label's anchor POINT, so a label wider than the
+  // margin the terrain happened to supply was clipped by the viewBox. The default 24×60 hangar
+  // hid it (its terrain reaches x≈-138); a narrow 14×20 one cut the leading digit off the ridge
+  // value, rendering "15.7 м" as "5.7 м".
+  it('keeps every dimension label fully inside the bounds, including narrow hangars', () => {
+    for (const dims of [
+      { width: 14, length: 20, height: 14 },
+      { width: DIMENSION_BOUNDS.width.min, length: DIMENSION_BOUNDS.length.min, height: DIMENSION_BOUNDS.height.max },
+      { width: 24, length: 60, height: 8 },
+      { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
+    ]) {
+      const scene = projectFor({ dimensions: dims });
+      const { minX, maxX } = scene.bounds;
+
+      for (const guide of Object.values(scene.dimensions)) {
+        // Conservative estimate of the rendered run, matching the projection's own model.
+        const fontPx = guide.derived ? 14 : 16;
+        const width = guide.text.length * fontPx * 0.62;
+        const left = guide.anchor === 'end' ? guide.label.x - width : guide.label.x - width / 2;
+
+        expect(left).toBeGreaterThanOrEqual(minX);
+        expect(left + width).toBeLessThanOrEqual(maxX);
+      }
+    }
+  });
+
+  it('labels the derived ridge distinctly from the user-set dimensions', () => {
+    const dims = projectFor().dimensions;
+
+    expect(dims.eave.text).toMatch(/^\d/);
+    // The ridge keeps its name so the reader knows WHICH height it is, but carries no "~": it is
+    // a value the user sets now, not one the span rule guessed.
+    expect(dims.ridge.text).toContain('Коник');
+    expect(dims.ridge.text).not.toContain('~');
   });
 });

@@ -1,9 +1,17 @@
 'use client';
 
+import { useState } from 'react';
+import {
+  RIDGE_HEIGHT_STEP_M,
+  clampRidgeHeightM,
+  ridgeHeightRangeM,
+} from '../../lib/configurator/parametricModel';
 import {
   DIMENSION_BOUNDS,
   ENVELOPE_LABELS,
   GATES_OPTIONS,
+  GATE_TYPE_LABELS,
+  GATE_TYPE_ORDER,
   SCOPE_LABELS,
   SCOPE_ORDER,
   clampDimension,
@@ -12,6 +20,7 @@ import {
   type ConfiguratorState,
   type Dimensions,
   type EnvelopeChoice,
+  type GateType,
   type GatesCount,
 } from '../../lib/configurator/types';
 
@@ -20,53 +29,138 @@ type Props = {
   onChange: (next: ConfiguratorState) => void;
 };
 
-function DimensionField({
-  fieldKey,
+/**
+ * Numbers are shown with the Ukrainian decimal comma so the readout above a field and the value
+ * inside it never disagree — a native `type="number"` localises its own display, which is how
+ * "7.5 м" ended up sitting over a box reading "7,5".
+ */
+function formatMetres(value: number): string {
+  return value.toLocaleString('uk-UA', { maximumFractionDigits: 2 });
+}
+
+/** Accepts either decimal separator, since the field now displays a comma but keyboards and
+ *  pasted values commonly supply a dot. Returns null for anything not yet a number — including
+ *  an empty field and a lone "-", both of which are legitimate mid-typing states. */
+function parseMetres(raw: string): number | null {
+  const normalised = raw.replace(',', '.').trim();
+  if (normalised === '' || normalised === '-' || normalised === '.') return null;
+  const parsed = Number(normalised);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * A dimension entry: slider plus a typed value.
+ *
+ * The typed field is `type="text"` with `inputMode="decimal"`, not `type="number"`, and it keeps a
+ * local draft while focused. Both choices fix the same reported bug: the field used to clamp on
+ * every keystroke, so clearing it produced `Number('') === 0`, which clamped to the minimum and
+ * overwrote the entry — typing "37" into a field with a minimum of 10 was impossible, because the
+ * intermediate "3" was rewritten to "10" before the "7" arrived.
+ *
+ * Now a partially-typed value is simply held: it is committed the moment it becomes legal, and
+ * clamped once on blur. Nothing rewrites the box while the caret is in it.
+ */
+function NumericField({
+  inputId,
   label,
   value,
-  onChange,
+  min,
+  max,
+  step,
+  hint,
+  clamp,
+  onCommit,
 }: {
-  fieldKey: keyof Dimensions;
+  inputId: string;
   label: string;
   value: number;
-  onChange: (value: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  hint?: string;
+  clamp: (value: number) => number;
+  onCommit: (value: number) => void;
 }) {
-  const bounds = DIMENSION_BOUNDS[fieldKey];
-  const inputId = `hc-dimension-${fieldKey}`;
+  const [draft, setDraft] = useState<string | null>(null);
+
+  function handleTyped(raw: string) {
+    setDraft(raw);
+    const parsed = parseMetres(raw);
+    // Commit live only once the entry is already within range, so the preview keeps up with
+    // typing without the field ever being rewritten underneath the caret.
+    if (parsed !== null && parsed >= min && parsed <= max) onCommit(clamp(parsed));
+  }
+
+  function handleBlur() {
+    const parsed = parseMetres(draft ?? '');
+    // An abandoned or nonsensical entry falls back to the last good value rather than to the
+    // minimum — clearing the field and clicking away should not silently reset the object.
+    onCommit(parsed === null ? value : clamp(parsed));
+    setDraft(null);
+  }
 
   return (
     <div className="hc-field">
       <div className="hc-field-head">
         <label htmlFor={inputId}>{label}</label>
-        <span className="hc-field-value">{value} м</span>
+        <span className="hc-field-value">{formatMetres(value)} м</span>
       </div>
       <div className="hc-field-controls">
         <input
           type="range"
           aria-label={`${label}, слайдер`}
-          min={bounds.min}
-          max={bounds.max}
-          step={bounds.step}
+          min={min}
+          max={max}
+          step={step}
           value={value}
-          onChange={(event) => onChange(clampDimension(fieldKey, Number(event.target.value)))}
+          onChange={(event) => onCommit(clamp(Number(event.target.value)))}
         />
         <input
           id={inputId}
-          type="number"
-          min={bounds.min}
-          max={bounds.max}
-          step={bounds.step}
-          value={value}
-          onChange={(event) => onChange(clampDimension(fieldKey, Number(event.target.value)))}
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          aria-describedby={hint ? `${inputId}-hint` : undefined}
+          value={draft ?? formatMetres(value)}
+          onChange={(event) => handleTyped(event.target.value)}
+          onBlur={handleBlur}
         />
       </div>
+      {hint && (
+        <p className="hc-field-hint" id={`${inputId}-hint`}>
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
 
+const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
+  width: 'Ширина',
+  length: 'Довжина',
+  height: 'Висота стін',
+};
+
 export function ConfiguratorControls({ state, onChange }: Props) {
+  // The ridge's legal range depends on the CURRENT width and eave height, so it is recomputed on
+  // every render rather than read from a static table, and the stored value is re-clamped with it:
+  // widening the building can make a previously-legal ridge too shallow.
+  const ridgeRange = ridgeHeightRangeM(state.dimensions.width, state.dimensions.height);
+  const ridgeValue = clampRidgeHeightM(state.ridgeHeightM, state.dimensions.width, state.dimensions.height);
+
   function setDimension(key: keyof Dimensions, value: number) {
-    onChange({ ...state, dimensions: { ...state.dimensions, [key]: value } });
+    const dimensions = { ...state.dimensions, [key]: value };
+    onChange({
+      ...state,
+      dimensions,
+      // Keep the ridge legal for the new footprint in the same update, so the two can never be
+      // committed out of step with each other.
+      ridgeHeightM: clampRidgeHeightM(state.ridgeHeightM, dimensions.width, dimensions.height),
+    });
+  }
+
+  function setRidge(ridgeHeightM: number) {
+    onChange({ ...state, ridgeHeightM });
   }
 
   function setEnvelope(envelope: EnvelopeChoice) {
@@ -77,6 +171,10 @@ export function ConfiguratorControls({ state, onChange }: Props) {
     onChange({ ...state, gates });
   }
 
+  function setGateType(gateType: GateType) {
+    onChange({ ...state, gateType });
+  }
+
   function setScope(item: (typeof SCOPE_ORDER)[number]) {
     onChange({ ...state, scope: toggleScopeItem(state.scope, item) });
   }
@@ -85,9 +183,30 @@ export function ConfiguratorControls({ state, onChange }: Props) {
     <div className="hc-controls">
       <section className="hc-control-group" aria-labelledby="hc-dimensions-heading">
         <h2 id="hc-dimensions-heading">Розміри</h2>
-        <DimensionField fieldKey="width" label="Ширина" value={state.dimensions.width} onChange={(v) => setDimension('width', v)} />
-        <DimensionField fieldKey="length" label="Довжина" value={state.dimensions.length} onChange={(v) => setDimension('length', v)} />
-        <DimensionField fieldKey="height" label="Висота стін" value={state.dimensions.height} onChange={(v) => setDimension('height', v)} />
+        {(['width', 'length', 'height'] as const).map((key) => (
+          <NumericField
+            key={key}
+            inputId={`hc-dimension-${key}`}
+            label={DIMENSION_FIELD_LABELS[key]}
+            value={state.dimensions[key]}
+            min={DIMENSION_BOUNDS[key].min}
+            max={DIMENSION_BOUNDS[key].max}
+            step={DIMENSION_BOUNDS[key].step}
+            clamp={(v) => clampDimension(key, v)}
+            onCommit={(v) => setDimension(key, v)}
+          />
+        ))}
+        <NumericField
+          inputId="hc-dimension-ridge"
+          label="Висота в коньку"
+          value={ridgeValue}
+          min={ridgeRange.min}
+          max={ridgeRange.max}
+          step={RIDGE_HEIGHT_STEP_M}
+          hint={`Від ${formatMetres(ridgeRange.min)} до ${formatMetres(ridgeRange.max)} м для цієї ширини — межі рухаються разом із шириною та висотою стін.`}
+          clamp={(v) => clampRidgeHeightM(v, state.dimensions.width, state.dimensions.height)}
+          onCommit={setRidge}
+        />
         <p className="hc-field-note">Орієнтовні межі для зручності — не будівельні нормативи.</p>
       </section>
 
@@ -134,6 +253,32 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             </label>
           ))}
         </div>
+        {/* Only meaningful once there is a gate to size, so it is hidden at zero rather than
+            shown disabled — a control that cannot do anything is noise. */}
+        {state.gates > 0 && (
+          <div
+            className="hc-option-cards hc-gate-types"
+            role="radiogroup"
+            aria-label="Тип воріт"
+          >
+            {GATE_TYPE_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-gate-type"
+                  checked={state.gateType === option}
+                  onChange={() => setGateType(option)}
+                />
+                <span>{GATE_TYPE_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        {state.gates > 0 && (
+          <p className="hc-field-note">
+            «Для заїзду техніки» — ширший і вищий проріз. Розміри орієнтовні, а не проєктні.
+          </p>
+        )}
       </section>
     </div>
   );
