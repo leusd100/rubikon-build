@@ -21,6 +21,15 @@ export type GatesCount = 0 | 1 | 2;
 
 export type ConfiguratorState = {
   dimensions: Dimensions;
+  /**
+   * Ridge height above the slab, in metres — the "коник".
+   *
+   * Held here rather than derived on the fly because it is now a user choice. Its legal range
+   * depends on the current width and eave height (see parametricModel.ts's ridgeHeightRangeM),
+   * which is exactly why it is NOT part of `dimensions`: DIMENSION_BOUNDS is a static table, and
+   * this one moves. Roof pitch is derived from it, never stored.
+   */
+  ridgeHeightM: number;
   envelope: EnvelopeChoice;
   /** Which scope items are included in this request — a scope list, not a structural claim. */
   scope: ScopeItem[];
@@ -59,6 +68,9 @@ export const GATES_OPTIONS: GatesCount[] = [0, 1, 2];
 /** 24×60×8 — the same reference object used as the brief's own "Ваш об'єкт" example. */
 export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   dimensions: { width: 24, length: 60, height: 8 },
+  // The span rule's own answer for 24 m × 8 m (12.04° → 10.56 m), snapped to the 0.1 m
+  // adjustment step. Kept as a literal so this module stays free of geometry imports.
+  ridgeHeightM: 10.6,
   envelope: 'insulated',
   scope: ['foundation', 'frame', 'walls', 'roof'],
   gates: 1,

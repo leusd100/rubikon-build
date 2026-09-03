@@ -243,7 +243,9 @@ describe('dimension label framing', () => {
     const dims = projectFor().dimensions;
 
     expect(dims.eave.text).toMatch(/^\d/);
+    // The ridge keeps its name so the reader knows WHICH height it is, but carries no "~": it is
+    // a value the user sets now, not one the span rule guessed.
     expect(dims.ridge.text).toContain('Коник');
-    expect(dims.ridge.text).toContain('~');
+    expect(dims.ridge.text).not.toContain('~');
   });
 });

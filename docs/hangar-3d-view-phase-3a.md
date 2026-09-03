@@ -133,6 +133,40 @@ geometries and ~90 materials per change.
 - The mode switch is a `role="group"` of two `aria-pressed` buttons — keyboard operable with no
   custom key handling.
 
+## 11. Ridge control and dimension-entry fixes (follow-up)
+
+Three reported issues, fixed on this branch after the initial 3A implementation.
+
+**Ridge is now adjustable.** The user sets the **ridge height in metres** — the number the drawing
+already annotated as "Коник" — and pitch is derived from it, never stored, so the two cannot
+disagree. Limits come from a 5°–20° pitch clamp: below 5° a gable stops reading as pitched, above
+20° an industrial portal frame starts looking like a house. Neither is an engineering limit.
+
+The range **moves** with width and eave height, which is why `ridgeHeightM` lives beside
+`dimensions` rather than inside it — `DIMENSION_BOUNDS` is a static table and this one is not. The
+stored ridge is re-clamped whenever a dimension changes, in the same state update, so state can
+never be committed out of step. The control shows its current range as a hint.
+
+Because both renderers read `roof.pitchDeg` from the domain model, the 3D view picked this up with
+no renderer changes at all — the parity tests still pass unmodified. That is the Phase 3-0
+architecture doing its job.
+
+**Dimension boxes accept typed values again.** They were fully controlled and clamped on every
+keystroke, so clearing one produced `Number('') === 0`, which clamped to the minimum and overwrote
+the entry — typing "37" into a field with a minimum of 10 was impossible, because the intermediate
+"3" became "10" before the "7" arrived. The field now keeps a local draft while focused: a partial
+entry is held, committed the moment it becomes legal, and clamped once on blur. An abandoned empty
+box restores the previous value rather than the minimum. `type="number"` was replaced with
+`type="text"` + `inputMode="decimal"` so the browser cannot coerce or re-localise the entry
+mid-typing.
+
+**Numerals are aligned and use one decimal separator.** The typed value is right-aligned with
+tabular figures so it sits under the readout above it, which the field head right-aligns — the two
+numbers share a column and previously sat on different axes. Both the readout and the drawing's own
+labels now format through `uk-UA`, so a value can no longer print as "7.5 м" above a box reading
+"7,5". The ridge annotation dropped its "~" at the same time: it is a chosen value now, not a
+guess.
+
 ## 9. Known limitations
 
 - No roof overhang (see §2). The eave is a clean edge.

@@ -91,9 +91,13 @@ Two independent checks on that curve:
 - The user-supplied reference warehouse model measures a **28.2 m span with a 2.84 m rise**
   (≈11.4–12.0°). This rule predicts **2.86 m** at that span — a 2 cm match from an independent source.
 
-**It stays a visual rule.** Pitch is not exposed as a control: it is an engineering outcome (snow
-load, span, cladding system), and exposing it would invite a wrong answer and imply precision this
-tool does not have.
+**It stays a visual rule**, and it is still what supplies the *default* ridge.
+
+> **Updated after Phase 3A:** the ridge height is now user-adjustable (see
+> `docs/hangar-3d-view-phase-3a.md` §11). Pitch itself is still not a control — the user adjusts the
+> **ridge height in metres**, the number the drawing annotates, and pitch is derived from it. The
+> span rule above provides the starting value; a 5°–20° pitch clamp keeps every adjusted value
+> credible. Roof geometry on a real project remains an engineering decision made off this tool.
 
 ## 5. Honesty boundary
 

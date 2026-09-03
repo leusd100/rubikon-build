@@ -58,6 +58,95 @@ test.describe('hangar configurator POC', () => {
     await expect(page.locator('.hc-summary-facts')).not.toContainText('Стіни');
   });
 
+  // Reported bug: the dimension boxes clamped on every keystroke, so clearing one produced
+  // Number('') === 0, which snapped to the minimum and overwrote the entry. Typing a value whose
+  // first digit is below the minimum was therefore impossible.
+  test('a dimension box accepts a value typed digit by digit after being cleared', async ({ page }) => {
+    await openConfigurator(page);
+
+    const length = page.locator('#hc-dimension-length');
+    await length.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('Backspace');
+    // The field must stay empty rather than snapping back to the minimum.
+    await expect(length).toHaveValue('');
+
+    await page.keyboard.type('3');
+    await expect(length, 'an intermediate "3" must not be rewritten to the minimum').toHaveValue('3');
+
+    await page.keyboard.type('7');
+    await expect(length).toHaveValue('37');
+
+    await length.blur();
+    await expect(length).toHaveValue('37');
+    await expect(page.locator('.hc-summary-dimensions')).toContainText('37');
+  });
+
+  test('an out-of-range typed value is clamped once, on blur', async ({ page }) => {
+    await openConfigurator(page);
+
+    const width = page.locator('#hc-dimension-width');
+    await width.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('999');
+    // Still exactly what was typed while the caret is in the field.
+    await expect(width).toHaveValue('999');
+
+    await width.blur();
+    await expect(width).toHaveValue('60');
+  });
+
+  test('abandoning an empty box restores the previous value rather than the minimum', async ({ page }) => {
+    await openConfigurator(page);
+
+    const width = page.locator('#hc-dimension-width');
+    await width.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('Backspace');
+    await width.blur();
+
+    await expect(width).toHaveValue('24');
+  });
+
+  test('the ridge height is adjustable and clamped to the range shown for the current width', async ({ page }) => {
+    await openConfigurator(page);
+
+    const ridge = page.locator('#hc-dimension-ridge');
+    await expect(ridge).toHaveValue('10,6');
+
+    await ridge.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('12');
+    await ridge.blur();
+    await expect(ridge).toHaveValue('12');
+    await expect(page.locator('.hc-preview-svg .hc-dimension.is-derived text')).toContainText('Коник 12 м');
+
+    // Beyond the credible pitch range it is held at the maximum, not accepted.
+    await ridge.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('30');
+    await ridge.blur();
+    await expect(ridge).toHaveValue('12,3');
+  });
+
+  test('widening the building keeps the ridge legal for the new footprint', async ({ page }) => {
+    await openConfigurator(page);
+
+    const ridge = page.locator('#hc-dimension-ridge');
+    await ridge.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('12,3');
+    await ridge.blur();
+    await expect(ridge).toHaveValue('12,3');
+
+    // A wider span raises the minimum ridge, so the stored value must be lifted with it.
+    await page.locator('#hc-dimension-width').fill('60');
+    await page.locator('#hc-dimension-width').blur();
+
+    const value = Number((await ridge.inputValue()).replace(',', '.'));
+    expect(value).toBeGreaterThanOrEqual(8 + 30 * Math.tan((5 * Math.PI) / 180));
+  });
+
   test('gate count controls how many gate shapes render and what the summary says', async ({ page }) => {
     await openConfigurator(page);
 
