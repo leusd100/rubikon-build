@@ -104,9 +104,14 @@
   font: 600 12px/1 var(--font-manrope), sans-serif;
 }
 
+/* Final QA pass (2026-09-03): color moved from --accent-dark to a neutral dark — with 3 dimension
+   values plus 2 selected-state fills, the panel had 5 simultaneous orange elements in a totally
+   neutral state ("no overuse of orange" review). Emphasis now comes from weight/size alone, which
+   also makes the genuinely *interactive* selected states (envelope/gates) read as the only
+   orange, more singular signal instead of one among several. */
 .hc-field-value {
   font: 700 13px/1 var(--font-condensed), sans-serif;
-  color: var(--accent-dark);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
