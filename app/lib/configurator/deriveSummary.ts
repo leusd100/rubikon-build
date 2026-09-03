@@ -32,13 +32,13 @@ function formatGatesLabel(gates: HangarDomainModel['gates']): string {
  * assumptions this POC hasn't made.
  */
 export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
-  const { widthM, lengthM, heightM } = domain.dimensions;
+  const { widthM, lengthM, eaveHeightM } = domain.dimensions;
   const orderedScope = SCOPE_ORDER.filter((item) => domain.scope[item]);
 
   return {
     areaSqm: domain.areaSqm,
-    dimensionsLabel: `${formatMeters(widthM)} × ${formatMeters(lengthM)} × ${formatMeters(heightM)} м`,
-    envelopeLabel: ENVELOPE_LABELS[domain.envelope],
+    dimensionsLabel: `${formatMeters(widthM)} × ${formatMeters(lengthM)} × ${formatMeters(eaveHeightM)} м`,
+    envelopeLabel: ENVELOPE_LABELS[domain.envelope.walls],
     scopeLabels: orderedScope.map((item) => SCOPE_LABELS[item]),
     scopeSummaryLabel: orderedScope.length
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')
