@@ -15,7 +15,16 @@ import { LAYER_DURATION_MS, layerStartOffsetMs, staggerDelayMs } from '../../lib
 import { useLayerHighlight } from './useLayerHighlight';
 import { useLayerLifecycle, type LayerTransitionStyle } from './useLayerLifecycle';
 
-const VIEWBOX_PADDING = 32;
+/** Floor and ceiling for the proportional viewBox padding below — same clamped-proportional shape
+ *  already used nearby for `edgeOffset`/`heightOffset` in isometricProjection.ts ("Offsets scale
+ *  with the building so guides clear it at every size instead of at one"), applied here to the
+ *  outer frame margin for the same reason: a flat pixel value means a tiny 10×10m hangar gets a
+ *  huge RELATIVE margin (looks lost in empty space) while a 60×120m one gets a tiny one (reads as
+ *  cramped) — reported live, alongside a request to bring this in line with the 3D view's own
+ *  proportional FIT_MARGIN. */
+const VIEWBOX_PADDING_MIN = 32;
+const VIEWBOX_PADDING_MAX = 90;
+const VIEWBOX_PADDING_RATIO = 0.05;
 
 function formatMetres(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
@@ -114,7 +123,11 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
   const topActive = widthActive || lengthActive;
 
   const { minX, minY, maxX, maxY } = scene.bounds;
-  const viewBox = `${minX - VIEWBOX_PADDING} ${minY - VIEWBOX_PADDING} ${maxX - minX + VIEWBOX_PADDING * 2} ${maxY - minY + VIEWBOX_PADDING * 2}`;
+  const viewboxPadding = Math.max(
+    VIEWBOX_PADDING_MIN,
+    Math.min(Math.max(maxX - minX, maxY - minY) * VIEWBOX_PADDING_RATIO, VIEWBOX_PADDING_MAX),
+  );
+  const viewBox = `${minX - viewboxPadding} ${minY - viewboxPadding} ${maxX - minX + viewboxPadding * 2} ${maxY - minY + viewboxPadding * 2}`;
 
   // Painter's order for this fixed axonometric: the camera sees the FRONT gable (z=0) and the
   // RIGHT wall (x=widthM), so the rear gable and left wall are drawn first and end up occluded.
