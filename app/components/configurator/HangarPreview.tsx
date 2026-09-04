@@ -171,6 +171,19 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
         points={pointsAttr(scene.foundation.points)}
       />
 
+      {/* Phase 3D — isolated footings, the slab's alternative. Same `foundation` build-up layer:
+          never both visible (see isometricProjection.ts/technicalSceneModel.ts), so sharing the
+          one lifecycle is correct, not a coincidence — whichever representation is on screen
+          follows the exact same scope.foundation timing the slab alone used to. */}
+      {scene.footings.map((f) => (
+        <polygon
+          key={f.id}
+          className={`hc-layer hc-buildlayer hc-footing hc-phase-${foundation.phase}`}
+          style={transitionStyle(foundation)}
+          points={pointsAttr(f.points)}
+        />
+      ))}
+
       {/* Occluded faces first (painter's order) — the rear gable and the left wall sit behind
           the building's own volume from this fixed viewpoint. */}
       {rearGable && (

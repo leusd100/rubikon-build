@@ -1,11 +1,18 @@
 import type { HangarDomainModel } from './domainModel';
-import { ENVELOPE_LABELS, SCOPE_LABELS, SCOPE_ORDER } from './types';
+import { CLADDING_SYSTEM_LABELS, ENVELOPE_LABELS, FOUNDATION_TYPE_LABELS, SCOPE_LABELS, SCOPE_ORDER } from './types';
 
 export type ConfiguratorSummary = {
   /** width × length, m² — the one derived number the brief signs off on for the POC. */
   areaSqm: number;
   dimensionsLabel: string;
   envelopeLabel: string;
+  /**
+   * Phase 3D: cladding system, shown as one combined label when walls and roof agree (the common
+   * case, and the only one either control currently produces on its own) — "Профнастил" rather
+   * than "Профнастил / Профнастил" — and spelled out per-surface only when they genuinely differ.
+   */
+  claddingSystemLabel: string;
+  foundationTypeLabel: string;
   /** Scope items in a fixed, readable order — not the order they were toggled in. */
   scopeLabels: string[];
   scopeSummaryLabel: string;
@@ -15,6 +22,12 @@ export type ConfiguratorSummary = {
 function formatMeters(value: number): string {
   // Whole metres print without a decimal (24, not 24.0); half-metre steps keep one.
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function formatCladdingSystemLabel(envelope: HangarDomainModel['envelope']): string {
+  const wall = CLADDING_SYSTEM_LABELS[envelope.wallSystem];
+  const roof = CLADDING_SYSTEM_LABELS[envelope.roofSystem];
+  return wall === roof ? wall : `Стіни: ${wall}, покрівля: ${roof}`;
 }
 
 function formatGatesLabel(gates: HangarDomainModel['gates']): string {
@@ -39,6 +52,8 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     areaSqm: domain.areaSqm,
     dimensionsLabel: `${formatMeters(widthM)} × ${formatMeters(lengthM)} × ${formatMeters(eaveHeightM)} м`,
     envelopeLabel: ENVELOPE_LABELS[domain.envelope.walls],
+    claddingSystemLabel: formatCladdingSystemLabel(domain.envelope),
+    foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],
     scopeLabels: orderedScope.map((item) => SCOPE_LABELS[item]),
     scopeSummaryLabel: orderedScope.length
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')

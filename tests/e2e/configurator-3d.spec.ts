@@ -69,7 +69,10 @@ test.describe('configurator 3D mode (Phase 3A)', () => {
 
     await page.locator('#hc-dimension-width').fill('36');
     await page.locator('#hc-dimension-width').blur();
-    await page.getByText('Покрівля', { exact: true }).click(); // roof off
+    // Scoped to the scope-of-work group specifically: Phase 3D's own new "Огороджувальні
+    // конструкції" section added its own "Покрівля" (roof cladding system) heading to the same
+    // page, so an unscoped text match now resolves to two elements.
+    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click(); // roof off
     await page.locator('.hc-option-card', { hasText: '2' }).click(); // two gates
 
     const summaryBefore = await page.locator('.hc-summary-facts').innerText();

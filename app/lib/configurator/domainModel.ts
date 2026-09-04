@@ -1,5 +1,5 @@
 import { clampRidgeHeightM, pitchDegForRidge } from './parametricModel';
-import type { ConfiguratorState, EnvelopeChoice, GateType, GatesCount } from './types';
+import type { CladdingSystem, ConfiguratorState, EnvelopeChoice, FoundationType, GateType, GatesCount } from './types';
 
 // The normalized, always-JSON-serializable business object derived from ConfiguratorState.
 // This is the layer both the summary and the parametric building model read from — neither
@@ -44,7 +44,22 @@ export type HangarDomainModel = {
    * both — but the *model* can now express "cold walls, insulated roof", which is a real
    * configuration RUBIKON sells and the previous single-value shape could not represent.
    */
-  envelope: { walls: EnvelopeChoice; roof: EnvelopeChoice };
+  envelope: {
+    walls: EnvelopeChoice;
+    roof: EnvelopeChoice;
+    /**
+     * Phase 3D: the physical cladding system, orthogonal to the thermal choice above (see
+     * `CladdingSystem`'s own doc comment in types.ts — a customer can want an insulated
+     * sandwich-panel building or an insulated profiled-sheet one equally validly).
+     */
+    wallSystem: CladdingSystem;
+    roofSystem: CladdingSystem;
+  };
+  /**
+   * Phase 3D: a real configuration fact — which foundation RUBIKON would actually supply — not
+   * presentation state, unlike Phase 3C's colour presets. See `FoundationType`'s own doc comment.
+   */
+  foundation: { type: FoundationType };
   // Resolved booleans, not a raw scope[] array — every consumer asks "is walls present?",
   // not "does the array contain the string 'walls'?".
   scope: {
@@ -68,7 +83,8 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     // change, so a ridge that was legal at 24 m may not be at 60 m. Clamping here rather than in
     // the control means the model is always self-consistent regardless of how state was produced.
     roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, clampRidgeHeightM(state.ridgeHeightM, width, height)) },
-    envelope: { walls: state.envelope, roof: state.envelope },
+    envelope: { walls: state.envelope, roof: state.envelope, wallSystem: state.wallSystem, roofSystem: state.roofSystem },
+    foundation: { type: state.foundationType },
     scope: {
       foundation: state.scope.includes('foundation'),
       frame: state.scope.includes('frame'),

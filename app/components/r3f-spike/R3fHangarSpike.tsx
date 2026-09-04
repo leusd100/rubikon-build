@@ -15,6 +15,11 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   // Re-clamped per dimension change below; this is just the span rule's default for 24 x 8.
   ridgeHeightM: 10.6,
   envelope: 'cold',
+  // Fixed, same as envelope/gates above — this spike never visualises cladding system or
+  // foundation type either.
+  wallSystem: 'profiled-sheet',
+  roofSystem: 'profiled-sheet',
+  foundationType: 'slab',
   scope: ['foundation', 'frame'],
   gates: 0,
   gateType: 'standard',

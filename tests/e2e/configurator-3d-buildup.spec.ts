@@ -81,6 +81,14 @@ async function readDrawCalls(page: Page): Promise<number> {
 
 test.describe('configurator 3D build-up (Phase 3B)', () => {
   test('every layer materializes and dematerializes in 3D with no runtime error, in either direction', async ({ page }) => {
+    // This is the heaviest test in the file: a 20s budget just to reach a visible canvas
+    // (enterThreeMode), then 4 layers toggled off and back on with explicit settle waits. Under
+    // CI's shared/software-rendered WebGL and workers:2 cap that combination sits right at the
+    // default 30s test timeout — observed failing there as "Target page, context or browser has
+    // been closed" (a timeout-driven context teardown, not a real crash: this suite's own
+    // reduced-motion and interruption variants of the same flow, and this exact test run
+    // repeatedly locally, all pass clean). Double the budget rather than trim real coverage.
+    test.setTimeout(60000);
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);

@@ -1,5 +1,6 @@
 import { buildParametricModel, type ParametricBuildingModel, type Vec3 } from './parametricModel';
 import type { HangarDomainModel } from './domainModel';
+import type { CladdingSystem } from './types';
 
 // The 3D VIEW's scene description — a sibling of technicalSceneModel.ts, not a consumer of it.
 //
@@ -14,10 +15,12 @@ import type { HangarDomainModel } from './domainModel';
 // decision (member sections are "renderer styling ... a member schedule would be a construction
 // claim"), not building facts.
 //
-// Deliberately absent: roof overhang. It would change the building's silhouette, so it is a
-// genuine geometric fact that belongs upstream in ParametricBuildingModel where BOTH renderers
-// would see it — adding it here alone would recreate the exact flat-roof-vs-gable divergence
-// Phase 3-0 was built to eliminate. Deferred rather than faked.
+// Historical note on the rule above, not a caveat to it: roof overhang and the slab's own overhang
+// both used to be absent, for exactly the reason the rule states — they change the building's
+// silhouette, so a renderer inventing one alone would have recreated the flat-roof-vs-gable
+// divergence Phase 3-0 was built to eliminate. Both now live upstream in ParametricBuildingModel
+// (`roof.overhangM`, `slab.overhangM`) for that same reason, and this file still adds none of its
+// own — `roofSegments`/`slab.corners` below are copied verbatim, overhang included.
 
 export type MaterialKey =
   | 'frame-primary'
@@ -25,6 +28,8 @@ export type MaterialKey =
   | 'wall'
   | 'roof'
   | 'slab'
+  | 'footing'
+  | 'gate'
   | 'gate-recess'
   | 'ground';
 
@@ -47,31 +52,84 @@ export type StrutMesh = {
 };
 
 /** A planar surface given real thickness. Corners come straight from the parametric model; the
- *  renderer derives the box basis from them (that transform is renderer mechanics). */
+ *  renderer derives the box basis from them (that transform is renderer mechanics).
+ *
+ *  `claddingSystem` is undefined for panels the cladding-system choice does not apply to (slab,
+ *  gate-recess — carried on `PanelMesh` only because those share the type, not because they have
+ *  a system). Present on every wall/roof panel: which surface pattern (profiled sheet vs sandwich
+ *  panel — see CladdingSystem in types.ts) `ThreeHangarView` should build the panel's geometry
+ *  with. Still presentation, not a building fact — same reasoning as `material` above — which is
+ *  why this is a renderer-styling field here rather than something threading further upstream. */
 export type PanelMesh = {
   id: string;
   corners: [Vec3, Vec3, Vec3, Vec3];
   thicknessM: number;
   material: MaterialKey;
+  claddingSystem?: CladdingSystem;
 };
 
 export type Point2 = { x: number; y: number };
 
-/** A gable end extruded from its real pentagon profile, with gate openings as actual holes. */
+/** A gable end extruded from its real pentagon profile, with gate openings as actual holes.
+ *  `claddingSystem` drives both the cladding colour/material AND (Phase 3D.1) a matching cladding
+ *  overlay on the gable's own outward face — see ThreeHangarView's `Gable` component. */
 export type GableMesh = {
   id: string;
   outline: Point2[];
+  /** The same three numbers `outline`'s 5 points already encode, exposed directly rather than
+   *  left for a consumer to re-derive by indexing into the outline array — Phase 3D.1's cladding
+   *  overlay (`buildGableCladdingOverlay`) needs exactly these three to compute its own roofline
+   *  clipping, and reading them from named fields is more robust than depending on point order. */
+  widthM: number;
+  eaveM: number;
+  ridgeM: number;
   holes: Point2[][];
   /** Near edge of the extrusion along Z; the renderer extrudes toward +Z by `thicknessM`. */
   zM: number;
   thicknessM: number;
   material: MaterialKey;
+  claddingSystem: CladdingSystem;
+  /** Phase 3D.1: which local extrusion end is the OUTWARD (visible, cladding) face — front's is at
+   *  local Z=0, rear's is at local Z=+thicknessM, because both gables extrude toward +Z (into the
+   *  building) from wherever `zM` places them, but sit on opposite ends of the building's own
+   *  length. `Gable` needs this to know which end its cladding overlay belongs flush against. */
+  face: 'front' | 'rear';
 };
 
 export type SlabMesh = {
   id: string;
   corners: [Vec3, Vec3, Vec3, Vec3];
   thicknessM: number;
+  material: MaterialKey;
+};
+
+/** A schematic isolated footing (pad + pedestal) under one column — see FootingGeometry's own doc
+ *  comment in parametricModel.ts, which this copies verbatim (position, dimensions) with no maths
+ *  of its own, matching this file's own rule at the top. */
+export type FootingMesh = {
+  id: string;
+  xM: number;
+  zM: number;
+  padWidthM: number;
+  padThicknessM: number;
+  pedestalWidthM: number;
+  pedestalHeightM: number;
+  material: MaterialKey;
+};
+
+/**
+ * Phase 3D.1 — the gate's own door leaf, sitting just inside `recesses`' existing dark backdrop.
+ * Carries the opening's real width/height verbatim (no margin/banding maths here — see this file's
+ * own header rule); `envelopePanelGeometry.ts`'s `buildGateLeafGeometry` turns those into an inset,
+ * sectioned panel, the same "renderer decides the pattern, this file supplies the real dimensions"
+ * split every other cladding surface already follows.
+ */
+export type GateLeafMesh = {
+  id: string;
+  xM: number;
+  widthM: number;
+  heightM: number;
+  zM: number;
   material: MaterialKey;
 };
 
@@ -83,15 +141,40 @@ export type ThreeSceneModel = {
   panels: PanelMesh[];
   gables: GableMesh[];
   slab: SlabMesh | null;
+  /** Always populated (one per column) regardless of `foundation.type` — same "geometry is a
+   *  fact, visibility is the renderer's business" rule `slab` already follows. Whether these are
+   *  actually shown is `visible.footings`, driven by `domain.foundation.type === 'isolated'`. */
+  footings: FootingMesh[];
   /** Dark recessed planes behind each opening, so a gate reads as depth rather than a decal. */
   recesses: PanelMesh[];
+  /** Phase 3D.1 — the actual door leaf sitting in front of each recess. Always one-to-one with
+   *  `recesses` (both come from `building.openings`), kept as a separate array rather than folded
+   *  into `recesses` because the two are genuinely different meshes: a plain `PanelMesh` box for
+   *  the dark backdrop, a banded/inset one for the leaf — see `GateLeafMesh`'s own doc comment. */
+  leaves: GateLeafMesh[];
   ground: { yM: number; sizeM: number };
   /** `gates` mirrors SVG's own `gates > 0` boolean (buildUpSequence's `gates` layer trigger) —
    *  independent of `walls`, because a gate opening is only meaningful once there is an envelope
-   *  to cut it into, but its OWN build-up layer fires off the gate count, not the walls toggle. */
-  visible: { slab: boolean; frame: boolean; walls: boolean; roof: boolean; gates: boolean };
+   *  to cut it into, but its OWN build-up layer fires off the gate count, not the walls toggle.
+   *
+   *  `slab` and `footings` are mutually exclusive foundation REPRESENTATIONS, not two independent
+   *  scope items — see deriveFoundationVisibility below for exactly which `foundation.type` shows
+   *  which, and why `engineeringDecision` renders as the slab rather than as nothing. */
+  visible: { slab: boolean; footings: boolean; frame: boolean; walls: boolean; roof: boolean; gates: boolean };
   building: ParametricBuildingModel;
 };
+
+/**
+ * Isolated is the only foundation type this renderer draws differently. `slab` and
+ * `engineeringDecision` share one representation deliberately (brief §7's own "engineering
+ * honesty" section): a customer who has not had a foundation engineered yet still needs to see
+ * SOMETHING under the building, and a generic flat foundation plane makes no claim about
+ * ISOLATED-footing/column-spacing details the way rendering discrete pads would — it reads as
+ * "there is a foundation here", not as "here is the answer".
+ */
+function deriveFoundationVisibility(foundationType: HangarDomainModel['foundation']['type']): { slab: boolean; footings: boolean } {
+  return foundationType === 'isolated' ? { slab: false, footings: true } : { slab: true, footings: false };
+}
 
 // ── Presentation constants (renderer styling, NOT building facts) ───────────
 // Section sizes exist only so a centre-line can be drawn as a solid. The ~2.7× primary-to-
@@ -106,7 +189,16 @@ const RAFTER_SECTION_M = 0.28;
 const GIRT_SECTION_M = 0.12;
 const WALL_THICKNESS_M = 0.16;
 const ROOF_THICKNESS_M = 0.14;
-const GATE_RECESS_INSET_M = 0.35;
+// Phase 3D.1: shallower than the original 0.35 m — that depth was tuned back when the recess WAS
+// the gate (brief §3A: "an opening is the absence of light"), reading as a loading-dock void. Now
+// that a real door leaf (see `GateLeafMesh`, `leaves` below) sits in front of it at
+// `GATE_LEAF_DEPTH_M`, this only has to stay visibly further back than the leaf's own face so the
+// leaf's inset margin still reads as a shadowed reveal rather than z-fighting the leaf.
+const GATE_RECESS_INSET_M = 0.16;
+// How far in front of the wall's own outer cladding face the door leaf sits — a believable frame/
+// jamb reveal depth, not the full recess depth above (a real sectional door sits close behind its
+// opening, it does not sit at the back of a half-metre tunnel).
+const GATE_LEAF_DEPTH_M = 0.08;
 // Generous on purpose: at 0.55 the ground plane's own straight edge was visible inside the
 // camera frame at default dimensions, which read as a stage prop rather than as ground.
 const GROUND_MARGIN_RATIO = 3;
@@ -139,6 +231,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
   const panels: PanelMesh[] = [];
   const gables: GableMesh[] = [];
   const recesses: PanelMesh[] = [];
+  const leaves: GateLeafMesh[] = [];
 
   // ── Primary frame: two columns + two rafters per portal frame, straight from the model ──
   for (const frame of building.frames) {
@@ -162,6 +255,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       corners: segment.corners,
       thicknessM: WALL_THICKNESS_M,
       material: 'wall',
+      claddingSystem: domain.envelope.wallSystem,
     });
   }
   for (const segment of building.envelope.roofSegments) {
@@ -170,6 +264,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       corners: segment.corners,
       thicknessM: ROOF_THICKNESS_M,
       material: 'roof',
+      claddingSystem: domain.envelope.roofSystem,
     });
   }
 
@@ -179,6 +274,9 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     gables.push({
       id: `gable-${gable.face}`,
       outline: gable.outline.map((p) => ({ x: p.x, y: p.y })),
+      widthM,
+      eaveM: building.heights.eaveM,
+      ridgeM: building.heights.ridgeM,
       holes: onThisFace.map((o) => [
         { x: o.rect.xM, y: o.rect.yM },
         { x: o.rect.xM + o.rect.widthM, y: o.rect.yM },
@@ -190,6 +288,8 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       zM: gable.face === 'front' ? 0 : lengthM - WALL_THICKNESS_M,
       thicknessM: WALL_THICKNESS_M,
       material: 'wall',
+      claddingSystem: domain.envelope.wallSystem,
+      face: gable.face,
     });
   }
 
@@ -208,6 +308,14 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       thicknessM: 0.02,
       material: 'gate-recess',
     });
+    leaves.push({
+      id: `leaf-${opening.index}`,
+      xM,
+      widthM: gw,
+      heightM: gh,
+      zM: GATE_LEAF_DEPTH_M,
+      material: 'gate',
+    });
   }
 
   const slab: SlabMesh = {
@@ -217,13 +325,28 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     material: 'slab',
   };
 
+  const footings: FootingMesh[] = building.footings.map((f) => ({
+    id: f.id,
+    xM: f.xM,
+    zM: f.zM,
+    padWidthM: f.padWidthM,
+    padThicknessM: f.padThicknessM,
+    pedestalWidthM: f.pedestalWidthM,
+    pedestalHeightM: f.pedestalHeightM,
+    material: 'slab', // same concrete material as the slab — a different shape, not a different substance
+  }));
+
+  const foundationVisibility = deriveFoundationVisibility(domain.foundation.type);
+
   // Camera frames the BUILDING, not the staging ground — so framing does not jump when the
-  // ground plane's own margin changes.
+  // ground plane's own margin changes. Footings included alongside the slab for the same reason
+  // slab always is: stable framing regardless of which foundation representation ends up visible.
   const bounds = boundsOf([
     ...building.envelope.gableEnds.flatMap((g) => g.outline),
     ...building.envelope.wallSegments.flatMap((s) => s.corners),
     ...building.envelope.roofSegments.flatMap((s) => s.corners),
     ...building.slab.corners,
+    ...building.footings.map((f) => ({ x: f.xM, y: 0, z: f.zM })),
   ]);
 
   return {
@@ -232,10 +355,13 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     panels,
     gables,
     slab,
+    footings,
     recesses,
+    leaves,
     ground: { yM: -building.slab.thicknessM, sizeM: Math.max(widthM, lengthM) * (1 + GROUND_MARGIN_RATIO) },
     visible: {
-      slab: domain.scope.foundation,
+      slab: domain.scope.foundation && foundationVisibility.slab,
+      footings: domain.scope.foundation && foundationVisibility.footings,
       frame: domain.scope.frame,
       walls: domain.scope.walls,
       roof: domain.scope.roof,

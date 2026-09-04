@@ -22,6 +22,14 @@ export function ConfiguratorSummary({ domain }: { domain: HangarDomainModel }) {
             <dd>{summary.envelopeLabel}</dd>
           </div>
           <div>
+            <dt>Огородження</dt>
+            <dd>{summary.claddingSystemLabel}</dd>
+          </div>
+          <div>
+            <dt>Основа</dt>
+            <dd>{summary.foundationTypeLabel}</dd>
+          </div>
+          <div>
             <dt>Обсяг</dt>
             <dd>{summary.scopeSummaryLabel}</dd>
           </div>

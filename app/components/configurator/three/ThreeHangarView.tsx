@@ -4,14 +4,19 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type {
+  FootingMesh,
   GableMesh,
+  GateLeafMesh,
   MaterialKey,
   PanelMesh,
   StrutMesh,
   ThreeSceneModel,
 } from '../../../lib/configurator/threeSceneModel';
+import type { ParametricBuildingModel } from '../../../lib/configurator/parametricModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
 import { MATERIALS, VIEWPORT_BG } from './materials';
+import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
+import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
 import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
 import { useBuildProgress } from './useBuildProgress';
@@ -125,6 +130,67 @@ function StaticStrut({ strut, castShadow }: { strut: StrutMesh; castShadow: bool
       material={sharedMaterial(strut.material)}
       matrix={matrix}
       matrixAutoUpdate={false}
+      castShadow={castShadow}
+      receiveShadow
+    />
+  );
+}
+
+/**
+ * Phase 3D — one schematic isolated footing: a buried pad plus a short pedestal stub, both simple
+ * axis-aligned boxes (no oblique-quad basis math needed, unlike `Panel`/`EnvelopePanel` — a
+ * footing never tilts). The pad shares `sharedMaterial('slab')` with the continuous-slab
+ * representation — same concrete, buried, never trying to stand out. The pedestal (Phase 3D.1,
+ * item 6: readability via material/shadow/contrast, explicitly NOT by enlarging it again) wears
+ * its own `footing` material instead — a half-step lighter, so the one part of a footing that is
+ * actually visible above grade reads as a distinct object against the ground/shadow rather than
+ * blending into either. Both materials have their own driver on the SAME `foundation` layer (see
+ * this file's own driver block), so pad and pedestal still fade in lockstep despite the split.
+ */
+function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: boolean }) {
+  const padMaterial = sharedMaterial(footing.material);
+  const pedestalMaterial = sharedMaterial('footing');
+  return (
+    <group position={[footing.xM, 0, footing.zM]}>
+      {/* Pad: centred on the column, buried below grade. */}
+      <mesh
+        geometry={UNIT_BOX}
+        material={padMaterial}
+        position={[0, -footing.padThicknessM / 2, 0]}
+        scale={[footing.padWidthM, footing.padThicknessM, footing.padWidthM]}
+        receiveShadow
+      />
+      {/* Pedestal: the short stub the column base actually sits on, rising above grade. */}
+      <mesh
+        geometry={UNIT_BOX}
+        material={pedestalMaterial}
+        position={[0, footing.pedestalHeightM / 2, 0]}
+        scale={[footing.pedestalWidthM, footing.pedestalHeightM, footing.pedestalWidthM]}
+        castShadow={castShadow}
+        receiveShadow
+      />
+    </group>
+  );
+}
+
+/**
+ * Phase 3D.1 — the gate's own door leaf. See `buildGateLeafGeometry`'s own doc comment in
+ * envelopePanelGeometry.ts for the geometry and why it needs no placement basis matrix: like
+ * `recesses` (the plain dark plane this sits in front of), a gate opening only ever lives on the
+ * front face at a fixed depth, so a straight position translation is enough. Shares
+ * `sharedMaterial('gate')` — a real, distinct material rather than the recess's near-black void —
+ * and mounts on the SAME `gateLayer` as the recess it sits in front of, so the two arrive and leave
+ * together with no separate driver of their own.
+ */
+function GateLeaf({ leaf, castShadow }: { leaf: GateLeafMesh; castShadow: boolean }) {
+  const geometry = useMemo(() => buildGateLeafGeometry(leaf.widthM, leaf.heightM), [leaf]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <mesh
+      geometry={geometry}
+      material={sharedMaterial(leaf.material)}
+      position={[leaf.xM, 0, leaf.zM]}
       castShadow={castShadow}
       receiveShadow
     />
@@ -251,8 +317,102 @@ function Panel({
   );
 }
 
-/** A gable end extruded from its real pentagon, with gate openings as actual holes in the mesh
- *  rather than dark rectangles painted on top. */
+/** Keyed on the panel's own real dimensions (rounded to the millimetre) and cladding system, not
+ *  on panel identity — most bay panels in a real building share one width, so this lets neighbours
+ *  reuse a single geometry instance instead of each generating its own copy of an identical wave.
+ *  Cache, not `useMemo`, for the same reason `MATERIAL_CACHE` above is a cache: identity needs to
+ *  survive across DIFFERENT panels, which per-component `useMemo` cannot do by itself. */
+const ENVELOPE_GEOMETRY_CACHE = new Map<string, THREE.BufferGeometry>();
+
+function envelopeGeometryFor(widthM: number, heightM: number, thicknessM: number, system: CladdingSystem | undefined): THREE.BufferGeometry {
+  const key = `${system ?? 'flat'}:${widthM.toFixed(3)}:${heightM.toFixed(3)}:${thicknessM.toFixed(3)}`;
+  const existing = ENVELOPE_GEOMETRY_CACHE.get(key);
+  if (existing) return existing;
+  const geometry = buildEnvelopePanelGeometry(widthM, heightM, thicknessM, system);
+  ENVELOPE_GEOMETRY_CACHE.set(key, geometry);
+  return geometry;
+}
+
+/**
+ * Phase 3D — wall and roof panels specifically (never slab/gate-recess, which stay on the plain
+ * symmetric `Panel` above): builds real corrugated/seamed geometry via `envelopePanelGeometry.ts`
+ * instead of a flat scaled box.
+ *
+ * Deliberately its own component rather than a branch inside `Panel`: the two need different
+ * placement math, not just different geometry. `Panel`'s box is symmetric about its own local
+ * Z=0, so "which way does thickness grow" is resolved entirely by shifting the CENTRE point — the
+ * basis itself always keeps `+normal` as local Z (required for `setFromRotationMatrix` to stay
+ * proper/right-handed; see `Panel`'s own comment on that). This component's geometry is NOT
+ * symmetric — its front face (where the ribs/seams live) is authored at local Z=0 specifically,
+ * extending to -thicknessM — so centring cannot place it, and outward-facing envelope panels are
+ * the ONLY case this component handles (unlike `Panel`, no `thicknessDirection` prop). When the
+ * quad's own natural `un × wn` normal already points outward, the basis is used as-is; when it
+ * points inward (true for exactly one of every left/right or front/back pair, same ambiguity
+ * `Panel` resolves via `interiorPoint`), `un` is negated instead of swapping `un`/`wn` — negating
+ * one edge flips a cross product's sign (giving an outward, still-proper right-handed basis)
+ * without swapping which local axis is width vs height, which swapping `un`/`wn` would have done
+ * and would have rotated every rib/seam 90° on exactly the panels that needed the flip.
+ */
+function EnvelopePanel({
+  panel,
+  interiorPoint,
+  castShadow,
+}: {
+  panel: PanelMesh;
+  interiorPoint: THREE.Vector3;
+  castShadow: boolean;
+}) {
+  const { matrix, geometry } = useMemo(() => {
+    const [c0, c1, , c3] = panel.corners.map(v);
+    const u = new THREE.Vector3().subVectors(c1, c0);
+    const w = new THREE.Vector3().subVectors(c3, c0);
+    const lu = u.length() || 1e-6;
+    const lw = w.length() || 1e-6;
+    const wn = w.clone().normalize();
+
+    const naturalUn = u.clone().normalize();
+    const naturalNormal = new THREE.Vector3().crossVectors(naturalUn, wn).normalize();
+    const centre = panel.corners.map(v).reduce((acc, p) => acc.add(p), new THREE.Vector3()).multiplyScalar(0.25);
+    const towardInterior = new THREE.Vector3().subVectors(interiorPoint, centre);
+    const pointsInward = towardInterior.dot(naturalNormal) >= 0;
+
+    const un = pointsInward ? naturalUn.clone().negate() : naturalUn;
+    const origin = pointsInward ? c1 : c0;
+    const normal = new THREE.Vector3().crossVectors(un, wn).normalize();
+
+    const basis = new THREE.Matrix4().makeBasis(un, wn, normal);
+    const quaternion = new THREE.Quaternion().setFromRotationMatrix(basis);
+    const matrix = new THREE.Matrix4().compose(origin, quaternion, new THREE.Vector3(1, 1, 1));
+
+    return { matrix, geometry: envelopeGeometryFor(lu, lw, panel.thicknessM, panel.claddingSystem) };
+  }, [panel, interiorPoint]);
+
+  return (
+    <mesh
+      geometry={geometry}
+      material={sharedMaterial(panel.material)}
+      matrix={matrix}
+      matrixAutoUpdate={false}
+      castShadow={castShadow}
+      receiveShadow
+    />
+  );
+}
+
+/**
+ * A gable end extruded from its real pentagon, with gate openings as actual holes in the mesh
+ * rather than dark rectangles painted on top. Phase 3D.1 adds a cladding overlay (ribs for
+ * profiled sheet, seam caps for sandwich panel — see `buildGableCladdingOverlay`'s own module
+ * note) matching the side walls, as a SECOND mesh protruding from the field's existing outward
+ * face rather than reshaping the field itself: the field's own geometry/position is untouched
+ * (zero risk to the fit already proven against the roof/wall corners), and the overlay simply
+ * sits flush against whichever end is outward.
+ *
+ * "Outward" flips between the front and rear gable — both extrude toward local +Z (into the
+ * building) from wherever `zM` places them, but they sit at opposite ends of the building's own
+ * length, so the front's outward face is its NEAR (local Z=0) end and the rear's is its FAR
+ * (local Z=+thicknessM) end. See `GableMesh.face`'s own doc comment.
+ */
 function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean }) {
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
@@ -271,11 +431,65 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
+  const overlay = useMemo(
+    () => buildGableCladdingOverlay(gable.widthM, gable.eaveM, gable.ridgeM, gable.holes, gable.claddingSystem),
+    [gable],
+  );
+  useEffect(() => () => overlay?.geometry.dispose(), [overlay]);
+
+  const overlayZ = overlay
+    ? gable.face === 'front'
+      ? gable.zM - overlay.depthM // protrudes further toward the viewer (−Z) than the field's own near face
+      : gable.zM + gable.thicknessM // protrudes further away (+Z) than the field's own far face
+    : 0;
+
+  return (
+    <>
+      <mesh
+        geometry={geometry}
+        material={sharedMaterial(gable.material)}
+        position={[0, 0, gable.zM]}
+        castShadow={castShadow}
+        receiveShadow
+      />
+      {overlay && (
+        <mesh
+          geometry={overlay.geometry}
+          material={sharedMaterial(gable.material)}
+          position={[0, 0, overlayZ]}
+          castShadow={castShadow}
+          receiveShadow
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * Phase 3D.1 — the ridge cap: see `buildRidgeCapGeometry`'s own doc comment in
+ * envelopePanelGeometry.ts for why this is the one finishing piece added among the brief's three
+ * candidates, and for the geometry itself. Built directly from `building`'s own real dimensions
+ * (no placement basis matrix needed — the shape is already authored in world (X, Y) and extrudes
+ * along world Z, which is exactly the ridge's own run direction), so this component only has to
+ * memoize the geometry and mount a single mesh. Shares `sharedMaterial('roof')` with the roof
+ * panels themselves — same coil colour a real ridge cap is ordered in — so it needs no opacity
+ * driver of its own and fades in lockstep with the roof for free, same reasoning as `Footing`
+ * sharing the slab's own material/driver above.
+ */
+function RidgeCap({ building, castShadow }: { building: ParametricBuildingModel; castShadow: boolean }) {
+  const { widthM, lengthM } = building.footprint;
+  const { ridgeM } = building.heights;
+  const { pitchDeg } = building.roof;
+  const geometry = useMemo(
+    () => buildRidgeCapGeometry(widthM, lengthM, ridgeM, pitchDeg),
+    [widthM, lengthM, ridgeM, pitchDeg],
+  );
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
   return (
     <mesh
       geometry={geometry}
-      material={sharedMaterial(gable.material)}
-      position={[0, 0, gable.zM]}
+      material={sharedMaterial('roof')}
       castShadow={castShadow}
       receiveShadow
     />
@@ -462,7 +676,14 @@ export function ThreeHangarView({
 
   // The build-up lifecycle, reused verbatim from the SVG renderer (same hook, same timing table —
   // see the module doc). Seven layers, matching buildUpSequence.ts's BUILD_LAYER_ORDER exactly.
-  const foundation = useLayerLifecycle(visible.slab, LAYER_DURATION_MS.foundation, layerStartOffsetMs('foundation'));
+  //
+  // Phase 3D: `visible.slab` OR `visible.footings` — never both, per deriveFoundationVisibility in
+  // threeSceneModel.ts, but this ONE layer still has to track "is the foundation in scope at all",
+  // the same question it always answered, regardless of which representation ends up rendering.
+  // Keying it to `visible.slab` alone (as before Phase 3D, when that was the only representation)
+  // silently stopped the whole foundation layer from ever mounting for isolated footings — caught
+  // live, not hypothetical: footings simply never appeared under any camera angle before this fix.
+  const foundation = useLayerLifecycle(visible.slab || visible.footings, LAYER_DURATION_MS.foundation, layerStartOffsetMs('foundation'));
   const columns = useLayerLifecycle(visible.frame, LAYER_DURATION_MS.columns, layerStartOffsetMs('columns'));
   const rafters = useLayerLifecycle(visible.frame, LAYER_DURATION_MS.rafters, layerStartOffsetMs('rafters'));
   const girts = useLayerLifecycle(visible.frame, LAYER_DURATION_MS.purlins, layerStartOffsetMs('purlins'));
@@ -514,10 +735,19 @@ export function ThreeHangarView({
           useBuildProgress.ts), so a layer's fade starts the instant its phase changes without
           waiting for a remount. */}
       <MaterialOpacityDriver materialKey="slab" layer={foundation} />
+      {/* Phase 3D.1: the isolated footing's pedestal now wears its own material (`footing`, item 6
+          — see materials.ts) rather than reusing `slab`, so it needs its own driver on the SAME
+          `foundation` layer to keep fading in lockstep with the pad beside it and the slab it
+          alternates with — two drivers on one layer, not a second animation system. */}
+      <MaterialOpacityDriver materialKey="footing" layer={foundation} />
       <MaterialOpacityDriver materialKey="frame-secondary" layer={girts} />
       <MaterialOpacityDriver materialKey="wall" layer={walls} />
       <MaterialOpacityDriver materialKey="roof" layer={roof} />
       <MaterialOpacityDriver materialKey="gate-recess" layer={gateLayer} />
+      {/* Phase 3D.1: the gate leaf (item 4) wears its own `gate` material, sitting in front of
+          `gate-recess` on the very same `gateLayer` — without this it would pop in at full opacity
+          instead of fading in with the recess it sits in front of. */}
+      <MaterialOpacityDriver materialKey="gate" layer={gateLayer} />
 
       {/* Shadow catcher, not a floor. `shadowMaterial` is invisible except where something casts
           onto it, which is exactly what this needs: the building has to read as an object standing
@@ -557,6 +787,14 @@ export function ThreeHangarView({
         </SettlingSlab>
       )}
 
+      {/* Isolated footings — the slab's alternative, never both at once (scene.visible already
+          resolves that mutual exclusion; see deriveFoundationVisibility in threeSceneModel.ts).
+          Mounted on the SAME `foundation` layer as the slab above, so switching foundation type
+          uses the identical build-up timing either representation would have used alone. */}
+      {foundation.mounted && scene.visible.footings && scene.footings.map((footing) => (
+        <Footing key={footing.id} footing={footing} castShadow={shadows} />
+      ))}
+
       {columns.mounted && columnStruts.map((strut) => (
         <AnimatedStrut key={strut.id} strut={strut} castShadow={frameCastsShadow} layer={columns} />
       ))}
@@ -568,7 +806,7 @@ export function ThreeHangarView({
       ))}
 
       {walls.mounted && wallPanels.map((panel) => (
-        <Panel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={false} />
+        <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={false} />
       ))}
       {walls.mounted && scene.gables.map((gable) => (
         <Gable key={gable.id} gable={gable} castShadow={envelopeCastsShadow} />
@@ -586,10 +824,14 @@ export function ThreeHangarView({
           castShadow={false}
         />
       ))}
+      {gateLayer.mounted && scene.leaves.map((leaf) => (
+        <GateLeaf key={leaf.id} leaf={leaf} castShadow={envelopeCastsShadow} />
+      ))}
 
       {roof.mounted && roofPanels.map((panel) => (
-        <Panel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={envelopeCastsShadow} />
+        <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={envelopeCastsShadow} />
       ))}
+      {roof.mounted && <RidgeCap building={building} castShadow={envelopeCastsShadow} />}
     </Canvas>
   );
 }

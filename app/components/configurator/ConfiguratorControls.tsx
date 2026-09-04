@@ -7,8 +7,12 @@ import {
   ridgeHeightRangeM,
 } from '../../lib/configurator/parametricModel';
 import {
+  CLADDING_SYSTEM_LABELS,
+  CLADDING_SYSTEM_ORDER,
   DIMENSION_BOUNDS,
   ENVELOPE_LABELS,
+  FOUNDATION_TYPE_LABELS,
+  FOUNDATION_TYPE_ORDER,
   GATES_OPTIONS,
   GATE_TYPE_LABELS,
   GATE_TYPE_ORDER,
@@ -17,9 +21,11 @@ import {
   clampDimension,
   hasScopeItem,
   toggleScopeItem,
+  type CladdingSystem,
   type ConfiguratorState,
   type Dimensions,
   type EnvelopeChoice,
+  type FoundationType,
   type GateType,
   type GatesCount,
 } from '../../lib/configurator/types';
@@ -167,6 +173,18 @@ export function ConfiguratorControls({ state, onChange }: Props) {
     onChange({ ...state, envelope });
   }
 
+  function setWallSystem(wallSystem: CladdingSystem) {
+    onChange({ ...state, wallSystem });
+  }
+
+  function setRoofSystem(roofSystem: CladdingSystem) {
+    onChange({ ...state, roofSystem });
+  }
+
+  function setFoundationType(foundationType: FoundationType) {
+    onChange({ ...state, foundationType });
+  }
+
   function setGates(gates: GatesCount) {
     onChange({ ...state, gates });
   }
@@ -225,6 +243,67 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             </label>
           ))}
         </div>
+      </section>
+
+      <section className="hc-control-group" aria-labelledby="hc-cladding-heading">
+        <h2 id="hc-cladding-heading">Огороджувальні конструкції</h2>
+        <div className="hc-field">
+          <div className="hc-field-head">
+            <span id="hc-wall-system-label">Стіни</span>
+          </div>
+          <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-wall-system-label">
+            {CLADDING_SYSTEM_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-wall-system"
+                  checked={state.wallSystem === option}
+                  onChange={() => setWallSystem(option)}
+                />
+                <span>{CLADDING_SYSTEM_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="hc-field">
+          <div className="hc-field-head">
+            <span id="hc-roof-system-label">Покрівля</span>
+          </div>
+          <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-roof-system-label">
+            {CLADDING_SYSTEM_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-roof-system"
+                  checked={state.roofSystem === option}
+                  onChange={() => setRoofSystem(option)}
+                />
+                <span>{CLADDING_SYSTEM_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="hc-control-group" aria-labelledby="hc-foundation-heading">
+        <h2 id="hc-foundation-heading">Основа / фундамент</h2>
+        <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-foundation-heading">
+          {FOUNDATION_TYPE_ORDER.map((option) => (
+            <label key={option} className="hc-option-card">
+              <input
+                type="radio"
+                name="hc-foundation-type"
+                checked={state.foundationType === option}
+                onChange={() => setFoundationType(option)}
+              />
+              <span>{FOUNDATION_TYPE_LABELS[option]}</span>
+            </label>
+          ))}
+        </div>
+        <p className="hc-field-note">
+          Сайт не виконує розрахунок фундаменту. Показані варіанти — це схематичне уявлення для
+          попереднього брифу, а не проєктне рішення.
+        </p>
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-scope-heading">

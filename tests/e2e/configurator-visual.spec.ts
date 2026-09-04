@@ -42,7 +42,10 @@ test.describe('hangar configurator visual states', () => {
     await openConfigurator(page);
     await page.getByText('Фундамент', { exact: true }).click();
     await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
-    await page.getByText('Покрівля', { exact: true }).click();
+    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
+    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
+    // text match now resolves to two elements.
+    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-frame-only.png');
   });
 
@@ -62,14 +65,20 @@ test.describe('hangar configurator visual states — named build states (A–F)'
     await openConfigurator(page);
     await page.getByText('Металокаркас', { exact: true }).click();
     await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
-    await page.getByText('Покрівля', { exact: true }).click();
+    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
+    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
+    // text match now resolves to two elements.
+    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-a-foundation-only.png');
   });
 
   test('(B) foundation + frame', async ({ page }) => {
     await openConfigurator(page);
     await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
-    await page.getByText('Покрівля', { exact: true }).click();
+    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
+    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
+    // text match now resolves to two elements.
+    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-b-foundation-frame.png');
   });
 
@@ -78,7 +87,10 @@ test.describe('hangar configurator visual states — named build states (A–F)'
 
   test('(D) frame + walls, no roof yet', async ({ page }) => {
     await openConfigurator(page);
-    await page.getByText('Покрівля', { exact: true }).click();
+    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
+    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
+    // text match now resolves to two elements.
+    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-d-frame-walls.png');
   });
 
@@ -125,7 +137,10 @@ test.describe('hangar configurator visual states — edge scenarios (J–L)', ()
     // Two real toggles after load, both under reduced motion — the point is confirming the FSM
     // still converges to the correct final visual through an actual interaction, not only when
     // reduced motion was already active before anything ever mounted.
-    await page.getByText('Покрівля', { exact: true }).click();
+    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
+    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
+    // text match now resolves to two elements.
+    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
     await page.locator('.hc-option-card', { hasText: '2' }).click();
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-j-reduced-motion-interaction.png');
   });
