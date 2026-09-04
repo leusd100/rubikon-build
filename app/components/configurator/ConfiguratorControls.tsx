@@ -2,9 +2,13 @@
 
 import { useState } from 'react';
 import {
+  GATE_DIMENSIONS_M,
   RIDGE_HEIGHT_STEP_M,
+  clampGateSelection,
   clampRidgeHeightM,
   deriveStructuralVisualization,
+  gateHeightFits,
+  maxGateCountThatFits,
   ridgeHeightRangeM,
 } from '../../lib/configurator/parametricModel';
 import {
@@ -169,6 +173,11 @@ export function ConfiguratorControls({ state, onChange }: Props) {
       // Keep the ridge legal for the new footprint in the same update, so the two can never be
       // committed out of step with each other.
       ridgeHeightM: clampRidgeHeightM(state.ridgeHeightM, dimensions.width, dimensions.height),
+      // Phase 3F.1: same reasoning — a fixed-size gate selection legal at the OLD footprint may
+      // not be at the new one (see clampGateSelection's own doc comment in parametricModel.ts).
+      // The control panel below also disables an option before it can be picked in the first
+      // place; this is the reactive fallback for a selection the customer already made.
+      ...clampGateSelection(state.gates, state.gateType, dimensions.width, dimensions.height),
     });
   }
 
@@ -357,12 +366,25 @@ export function ConfiguratorControls({ state, onChange }: Props) {
       <section className="hc-control-group" aria-labelledby="hc-gates-heading">
         <h2 id="hc-gates-heading">Ворота</h2>
         <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-gates-heading">
-          {GATES_OPTIONS.map((option) => (
-            <label key={option} className="hc-option-card">
-              <input type="radio" name="hc-gates" checked={state.gates === option} onChange={() => setGates(option)} />
-              <span>{option}</span>
-            </label>
-          ))}
+          {GATES_OPTIONS.map((option) => {
+            // Phase 3F.1, brief §B2-B3: a gate count is only offered if the CURRENTLY selected
+            // gate type actually fits that many times at the current width/eave height — real,
+            // fixed-size gates (GATE_DIMENSIONS_M), not scaled to fit. 0 is always available.
+            const disabled = option > 0 && (!gateHeightFits(state.gateType, state.dimensions.height)
+              || option > maxGateCountThatFits(state.gateType, state.dimensions.width));
+            return (
+              <label key={option} className="hc-option-card" aria-disabled={disabled}>
+                <input
+                  type="radio"
+                  name="hc-gates"
+                  checked={state.gates === option}
+                  disabled={disabled}
+                  onChange={() => setGates(option)}
+                />
+                <span>{option}</span>
+              </label>
+            );
+          })}
         </div>
         {/* Only meaningful once there is a gate to size, so it is hidden at zero rather than
             shown disabled — a control that cannot do anything is noise. */}
@@ -372,22 +394,38 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             role="radiogroup"
             aria-label="Тип воріт"
           >
-            {GATE_TYPE_ORDER.map((option) => (
-              <label key={option} className="hc-option-card">
-                <input
-                  type="radio"
-                  name="hc-gate-type"
-                  checked={state.gateType === option}
-                  onChange={() => setGateType(option)}
-                />
-                <span>{GATE_TYPE_LABELS[option]}</span>
-              </label>
-            ))}
+            {GATE_TYPE_ORDER.map((option) => {
+              // Phase 3F.1: a type is only offered if it clears the eave line at the CURRENT
+              // count already selected — switching type never silently rescales anything.
+              const disabled = !gateHeightFits(option, state.dimensions.height)
+                || state.gates > maxGateCountThatFits(option, state.dimensions.width);
+              return (
+                <label key={option} className="hc-option-card" aria-disabled={disabled}>
+                  <input
+                    type="radio"
+                    name="hc-gate-type"
+                    checked={state.gateType === option}
+                    disabled={disabled}
+                    onChange={() => setGateType(option)}
+                  />
+                  <span>{GATE_TYPE_LABELS[option]}</span>
+                </label>
+              );
+            })}
           </div>
         )}
         {state.gates > 0 && (
           <p className="hc-field-note">
-            «Для заїзду техніки» — ширший і вищий проріз. Розміри орієнтовні, а не проєктні.
+            Стандартні ворота — {GATE_DIMENSIONS_M.standard.widthM}×{GATE_DIMENSIONS_M.standard.heightM} м,
+            для заїзду техніки — {GATE_DIMENSIONS_M.double.widthM}×{GATE_DIMENSIONS_M.double.heightM} м.
+            Це конфігураційні розміри RUBIKON BUILD, а не будівельний стандарт.
+          </p>
+        )}
+        {state.gates > 0 && (!gateHeightFits(state.gateType, state.dimensions.height)
+          || state.gates > maxGateCountThatFits(state.gateType, state.dimensions.width)) && (
+          <p className="hc-field-note hc-field-note-warning">
+            Обрані ворота не поміщаються за поточних розмірів будівлі — оберіть менший тип або
+            кількість воріт, або збільште ширину чи висоту стін.
           </p>
         )}
       </section>

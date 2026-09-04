@@ -1,8 +1,10 @@
 import type { HangarDomainModel } from './domainModel';
+import { GATE_DIMENSIONS_M } from './parametricModel';
 import {
   CLADDING_SYSTEM_LABELS,
   ENVELOPE_LABELS,
   FOUNDATION_TYPE_LABELS,
+  GATE_TYPE_LABELS,
   ROOF_STRUCTURE_LABELS,
   SCOPE_LABELS,
   SCOPE_ORDER,
@@ -70,10 +72,17 @@ function formatEnvelopeLabel(envelope: HangarDomainModel['envelope']): string {
   return 'Індивідуальна конфігурація';
 }
 
-function formatGatesLabel(gates: HangarDomainModel['gates']): string {
+/**
+ * Phase 3F.1, brief §D — includes the gate's own real, fixed size (GATE_DIMENSIONS_M) alongside
+ * the count and type, matching the brief's own worked example ("1 × стандартні, 4×4 м"). Gate
+ * count and type are customer inputs; the size that comes with a chosen type is a real product
+ * fact worth carrying into a lead brief the same way `foundationTypeLabel` already is — not
+ * manufacturer/model detail, just the dimension the type itself implies.
+ */
+function formatGatesLabel(gates: HangarDomainModel['gates'], gateType: HangarDomainModel['gateType']): string {
   if (gates === 0) return 'Без воріт';
-  if (gates === 1) return '1 ворота';
-  return `${gates} воріт`;
+  const { widthM, heightM } = GATE_DIMENSIONS_M[gateType];
+  return `${gates} × ${GATE_TYPE_LABELS[gateType].toLowerCase()}, ${widthM}×${heightM} м`;
 }
 
 /**
@@ -99,6 +108,6 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     scopeSummaryLabel: orderedScope.length
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')
       : 'Обсяг робіт ще не обрано',
-    gatesLabel: formatGatesLabel(domain.gates),
+    gatesLabel: formatGatesLabel(domain.gates, domain.gateType),
   };
 }

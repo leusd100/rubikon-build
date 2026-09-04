@@ -1,4 +1,4 @@
-import { clampRidgeHeightM, deriveStructuralVisualization, pitchDegForRidge } from './parametricModel';
+import { clampGateSelection, clampRidgeHeightM, deriveStructuralVisualization, pitchDegForRidge } from './parametricModel';
 import type {
   CladdingSystem,
   ConfiguratorState,
@@ -87,8 +87,16 @@ export type HangarDomainModel = {
     walls: boolean;
     roof: boolean;
   };
+  /**
+   * Phase 3F.1 — re-clamped here on every derivation, same pattern and rationale as `roof.pitchDeg`
+   * above: a gate count/type combination that was legal at one width/eave height may not be at
+   * another (fixed-size gates, brief §B1-B2 — see GATE_DIMENSIONS_M's own doc comment in
+   * parametricModel.ts). Clamping here means the model is always self-consistent regardless of how
+   * state was produced, the same guarantee `clampRidgeHeightM` already gives `roof.pitchDeg`.
+   */
   gates: GatesCount;
-  /** Size class of those gates — drives the opening's proportions, not any hardware detail. */
+  /** Size class of those gates — a real, fixed real-world size (see GATE_DIMENSIONS_M), not an
+   *  engineered specification. */
   gateType: GateType;
   areaSqm: number;
 };
@@ -112,8 +120,7 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
       walls: state.scope.includes('walls'),
       roof: state.scope.includes('roof'),
     },
-    gates: state.gates,
-    gateType: state.gateType,
+    ...clampGateSelection(state.gates, state.gateType, width, height),
     areaSqm: Math.round(width * length),
   };
 }

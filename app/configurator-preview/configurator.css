@@ -168,6 +168,17 @@
   line-height: 1.5;
 }
 
+/* Phase 3F.1 — a note that explains why a selection stopped being valid (brief §B2's own
+   "transparent UI feedback"), not a system error: same restrained accent language the rest of
+   this panel already uses for "pay attention", never an alarming red. */
+.hc-field-note-warning {
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent-dark);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 /* Phase 3E.1 — the read-only derived-structure line ("Попередня конструктивна схема"). Reads as a
    single value, same weight family as .hc-field-value, but a size up: it is the entire content of
    its section now that the two radiogroups it replaced are gone, not a readout above a control. */
@@ -221,6 +232,21 @@
 .hc-option-card input:focus-visible + span {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Phase 3F.1 — an option that would not fit at the current dimensions (a fixed-size gate too
+   large for the current width/eave height, brief §B2). Dimmed and inert rather than hidden: the
+   customer can still see the option exists and why it's unavailable (the field-note beside it),
+   just cannot select it — "explicit UI honesty over silent mutation", the brief's own words. */
+.hc-option-card:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.hc-option-card input:disabled + span {
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-color: var(--border-default);
+  opacity: 0.6;
 }
 
 .hc-option-list {
