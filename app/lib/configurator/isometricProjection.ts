@@ -236,7 +236,39 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
     ...Object.values(dims).flatMap((d) => [d.line[0], d.line[1], d.label, ...labelExtent(d)]),
   ];
 
-  const bounds = boundsOf(allPoints);
+  // Framing centres on the BUILDING, not on the naive box around building+annotations combined.
+  //
+  // The eave/ridge height guides both hang off one corner and extend outward on ONE side only
+  // (see the comment above `dims.eave`/`dims.ridge`) — a real, deliberate asymmetry in the
+  // drawing's own annotation layout, not a bug. But `boundsOf(allPoints)` folding that straight
+  // into the viewBox WAS one: SVG centres the viewBox inside its container by default (`xMidYMid`,
+  // unset here), so a box that already leans toward one side because of a one-sided label put the
+  // BUILDING itself well off-centre — measured on the default 24×60m hangar: ~174px of the box's
+  // own width was the empty margin the label needed on its side, ~12px on the other, so the
+  // building's own midpoint sat ~81px right of the box's midpoint. Caught live, not by this
+  // module's own tests, which check clipping and building/guide relationships but never asserted
+  // where the building ends up sitting inside its own frame.
+  //
+  // Fix: find how far annotations extend past the building's own edge on EACH side, then apply
+  // the LARGER of each opposing pair symmetrically around the building's own bounds — guaranteeing
+  // every label still has at least as much room as it needed (nothing new can clip), while the
+  // building's own midpoint becomes the frame's midpoint on both axes. The side that needed less
+  // room accepts a bit of unused margin; that trade is exactly what "the building is the subject"
+  // means in practice.
+  const rawBounds = boundsOf(allPoints);
+  const marginLeft = Math.max(buildingBounds.minX - rawBounds.minX, 0);
+  const marginRight = Math.max(rawBounds.maxX - buildingBounds.maxX, 0);
+  const marginTop = Math.max(buildingBounds.minY - rawBounds.minY, 0);
+  const marginBottom = Math.max(rawBounds.maxY - buildingBounds.maxY, 0);
+  const marginX = Math.max(marginLeft, marginRight);
+  const marginY = Math.max(marginTop, marginBottom);
+
+  const bounds = {
+    minX: buildingBounds.minX - marginX,
+    maxX: buildingBounds.maxX + marginX,
+    minY: buildingBounds.minY - marginY,
+    maxY: buildingBounds.maxY + marginY,
+  };
 
   // The terrain plane's own corners are a fixed margin in METRE space (terrainCorners in
   // technicalSceneModel.ts), but this projection is oblique — a uniform world-space margin does
