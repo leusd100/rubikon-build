@@ -192,6 +192,29 @@ test.describe('hangar configurator POC', () => {
     await expect(page.locator('.hc-summary-facts')).toContainText('Без воріт');
   });
 
+  test('a gate cannot stay visible with walls out of scope — it is an opening cut into a wall, not an independent shape', async ({ page }) => {
+    // Real bug caught live on the running preview (both this SVG renderer and the 3D one
+    // independently keyed the gate layer off `gates > 0` alone): a gate rectangle stayed VISIBLE
+    // after switching walls out of scope, which is physically incoherent — there is nothing left
+    // for the opening to be cut into. Fixed by requiring walls in scope too, in both renderers
+    // (HangarPreview.tsx's gateLayer, threeSceneModel.ts's visible.gates).
+    //
+    // Asserted on the phase class, not element count: like every build-up layer, `.hc-gate` stays
+    // mounted across all four phases so hidden→materializing has a real "from" state to animate
+    // out of (see buildUpSequence.ts's own doc comment) — geometry existing and the layer reading
+    // as VISIBLE are different questions, and this bug was specifically about the second one.
+    await openConfigurator(page);
+    const gate = page.locator('.hc-preview-svg .hc-gate').first();
+    await expect(gate).toHaveAttribute('class', /hc-phase-visible/);
+
+    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls off
+    await expect(gate).toHaveAttribute('class', /hc-phase-(dematerializing|hidden)/);
+    await expect(gate).not.toHaveAttribute('class', /hc-phase-visible/);
+
+    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls back on
+    await expect(gate).toHaveAttribute('class', /hc-phase-(materializing|visible)/);
+  });
+
   test('respects prefers-reduced-motion — no animation classes block the update', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openConfigurator(page);

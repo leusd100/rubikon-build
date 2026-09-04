@@ -4,6 +4,7 @@ import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
 import { HangarPreview } from './HangarPreview';
+import { ThreeDimensionOverlay } from './three/ThreeDimensionOverlay';
 import { ThreeErrorBoundary } from './three/ThreeErrorBoundary';
 import { useConfiguratorMobile } from './three/useConfiguratorMobile';
 import { useWebglSupport } from './three/useWebglSupport';
@@ -114,6 +115,17 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
                 />
               </Suspense>
             </ThreeErrorBoundary>
+            {/* Plain HTML, not WebGL text (brief §27) — renders immediately, independent of the
+                lazy three.js chunk, so the numbers are there even while "Завантаження 3D…" is
+                still showing. Outside ThreeErrorBoundary on purpose: a renderer failure should
+                still leave this orientation readout on screen right up until the fallback to
+                Technical actually happens. */}
+            <ThreeDimensionOverlay
+              widthM={domain.dimensions.widthM}
+              lengthM={domain.dimensions.lengthM}
+              eaveM={domain.dimensions.eaveHeightM}
+              ridgeM={threeScene.building.heights.ridgeM}
+            />
           </div>
         ) : (
           <HangarPreview domain={domain} />
