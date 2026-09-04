@@ -42,6 +42,32 @@ export type CladdingSystem = 'profiled-sheet' | 'sandwich-panel';
  */
 export type FoundationType = 'slab' | 'isolated' | 'engineeringDecision';
 
+/**
+ * Phase 3E — the structural LAYOUT: whether the building has an internal support line, as
+ * distinct from `RoofStructure` below (what spans between supports) — a customer can equally
+ * validly want a clear-span roof of either portal or truss construction, or a centre-supported
+ * one of either.
+ *
+ * `centerSupport` is a customer-facing LAYOUT PREFERENCE ("I don't mind a column down the
+ * middle"), not a structural requirement claim — this configurator never asserts that a given
+ * span NEEDS internal support (see `structuralSchemeAdvisory` in parametricModel.ts, a UX
+ * heuristic only). `engineeringDecision` follows `FoundationType`'s own precedent exactly: the
+ * serious, honest default (see `DEFAULT_CONFIGURATOR_STATE` below) for a customer who has not had
+ * a structural scheme engineered yet, rendering identically to `clearSpan` until a real decision
+ * is made — see `deriveStructuralVisibility` in threeSceneModel.ts.
+ */
+export type StructuralScheme = 'clearSpan' | 'centerSupport' | 'engineeringDecision';
+
+/**
+ * Phase 3E — what spans between supports, as distinct from `StructuralScheme` above. `truss` is
+ * a visually distinct alternative to the existing portal/rafter system (see parametricModel.ts's
+ * own `buildTruss` doc comment for the schematic assumptions); `engineeringDecision` renders
+ * identically to `portalRafter` — same "undecided defaults to the plain, always-available
+ * baseline" pattern as `StructuralScheme.engineeringDecision` above and `FoundationType`'s own
+ * `engineeringDecision`/`slab` pairing.
+ */
+export type RoofStructure = 'portalRafter' | 'truss' | 'engineeringDecision';
+
 export type ScopeItem = 'foundation' | 'frame' | 'walls' | 'roof';
 
 /** 0, 1 or 2 gates on the front facade — deliberately not a general opening system (see brief). */
@@ -70,6 +96,10 @@ export type ConfiguratorState = {
   wallSystem: CladdingSystem;
   roofSystem: CladdingSystem;
   foundationType: FoundationType;
+  /** Phase 3E — see `StructuralScheme`'s own doc comment. */
+  structuralScheme: StructuralScheme;
+  /** Phase 3E — see `RoofStructure`'s own doc comment. */
+  roofStructure: RoofStructure;
   /** Which scope items are included in this request — a scope list, not a structural claim. */
   scope: ScopeItem[];
   gates: GatesCount;
@@ -111,6 +141,27 @@ export const FOUNDATION_TYPE_LABELS: Record<FoundationType, string> = {
 // comment — rather than defaulting the display order to whichever reads most impressive.
 export const FOUNDATION_TYPE_ORDER: FoundationType[] = ['engineeringDecision', 'slab', 'isolated'];
 
+export const STRUCTURAL_SCHEME_LABELS: Record<StructuralScheme, string> = {
+  clearSpan: 'Без внутрішніх опор',
+  centerSupport: 'Центральний ряд опор',
+  engineeringDecision: 'Визначити після розрахунку',
+};
+
+// Unlike FOUNDATION_TYPE_ORDER, this leads with the two concrete layouts and puts the honest
+// "not yet decided" option last — matching the brief's own control mockup for this specific
+// choice. `DEFAULT_CONFIGURATOR_STATE` below still *defaults the stored value* to
+// `engineeringDecision`, same honest-by-default principle as `FoundationType`; only the display
+// order differs here, deliberately, per the brief.
+export const STRUCTURAL_SCHEME_ORDER: StructuralScheme[] = ['clearSpan', 'centerSupport', 'engineeringDecision'];
+
+export const ROOF_STRUCTURE_LABELS: Record<RoofStructure, string> = {
+  portalRafter: 'Рама',
+  truss: 'Металева ферма',
+  engineeringDecision: 'Визначити після розрахунку',
+};
+
+export const ROOF_STRUCTURE_ORDER: RoofStructure[] = ['portalRafter', 'truss', 'engineeringDecision'];
+
 export const SCOPE_LABELS: Record<ScopeItem, string> = {
   foundation: 'Фундамент',
   frame: 'Металокаркас',
@@ -143,6 +194,11 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   // Honest-by-default (see FoundationType's own doc comment): a fresh configurator has not had a
   // foundation engineered, so it should not silently claim "slab" on the customer's behalf.
   foundationType: 'engineeringDecision',
+  // Same honest-by-default principle, applied to the two new Phase 3E structural dimensions —
+  // both render identically to their plain/always-available baseline (clearSpan, portalRafter)
+  // until a real decision is made, so this changes no default geometry, only what is claimed.
+  structuralScheme: 'engineeringDecision',
+  roofStructure: 'engineeringDecision',
   scope: ['foundation', 'frame', 'walls', 'roof'],
   gates: 1,
   gateType: 'standard',

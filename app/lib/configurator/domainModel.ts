@@ -1,5 +1,14 @@
 import { clampRidgeHeightM, pitchDegForRidge } from './parametricModel';
-import type { CladdingSystem, ConfiguratorState, EnvelopeChoice, FoundationType, GateType, GatesCount } from './types';
+import type {
+  CladdingSystem,
+  ConfiguratorState,
+  EnvelopeChoice,
+  FoundationType,
+  GateType,
+  GatesCount,
+  RoofStructure,
+  StructuralScheme,
+} from './types';
 
 // The normalized, always-JSON-serializable business object derived from ConfiguratorState.
 // This is the layer both the summary and the parametric building model read from — neither
@@ -60,6 +69,13 @@ export type HangarDomainModel = {
    * presentation state, unlike Phase 3C's colour presets. See `FoundationType`'s own doc comment.
    */
   foundation: { type: FoundationType };
+  /**
+   * Phase 3E: the structural layout/roof-system preference — real configuration facts the same
+   * way `foundation.type` is, not renderer styling. See `StructuralScheme`/`RoofStructure`'s own
+   * doc comments in types.ts for why each is a preference/deferred-decision, never an engineering
+   * claim.
+   */
+  structural: { scheme: StructuralScheme; roofStructure: RoofStructure };
   // Resolved booleans, not a raw scope[] array — every consumer asks "is walls present?",
   // not "does the array contain the string 'walls'?".
   scope: {
@@ -85,6 +101,7 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, clampRidgeHeightM(state.ridgeHeightM, width, height)) },
     envelope: { walls: state.envelope, roof: state.envelope, wallSystem: state.wallSystem, roofSystem: state.roofSystem },
     foundation: { type: state.foundationType },
+    structural: { scheme: state.structuralScheme, roofStructure: state.roofStructure },
     scope: {
       foundation: state.scope.includes('foundation'),
       frame: state.scope.includes('frame'),
