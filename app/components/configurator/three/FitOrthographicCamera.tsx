@@ -14,7 +14,7 @@ import { cameraDirection as sharedCameraDirection } from '../../../lib/configura
 // drawing and a photograph.
 
 /** Fraction of the canvas the building's projected extent should fill. */
-const FIT_MARGIN = 0.86;
+const FIT_MARGIN = 0.74;
 
 /**
  * Elevation and azimuth are NOT defined here. They come from viewProjection.ts, which the SVG
