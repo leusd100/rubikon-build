@@ -1,22 +1,33 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { useEffect, useMemo, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type {
   GableMesh,
+  MaterialKey,
   PanelMesh,
   StrutMesh,
   ThreeSceneModel,
 } from '../../../lib/configurator/threeSceneModel';
+import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
 import { MATERIALS, VIEWPORT_BG } from './materials';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
+import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
+import { useBuildProgress } from './useBuildProgress';
+import { initialProgressForFreshMount } from './buildUpAnimation';
 
-// Phase 3A production 3D view. Fixed camera, procedural geometry, no textures, no post-processing.
+// Phase 3A production 3D view, extended in Phase 3B with 3D build-up (§23-26 of the brief).
 //
 // Everything geometric here is read from ThreeSceneModel, which in turn copies
 // ParametricBuildingModel. The only maths below turns a centre-line or a quad into a box transform
 // — renderer mechanics, not building rules.
+//
+// Build-up reuses the EXACT SAME lifecycle/FSM the SVG renderer drives (useLayerLifecycle,
+// buildUpSequence's LAYER_DURATION_MS/layerStartOffsetMs) — no parallel timing table, no second
+// state machine. What is new here is turning that shared (phase, duration, delay) triple into a
+// per-frame progress value a WebGL mesh can read, since a <canvas> has no CSS `transition` to hand
+// that off to (see useBuildProgress.ts / buildUpAnimation.ts).
 
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 
@@ -34,7 +45,12 @@ function v(p: { x: number; y: number; z: number }): THREE.Vector3 {
  */
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
 
-/** Shared material instances, one per key rather than one per mesh — same reasoning. */
+/** Shared material instances, one per key rather than one per mesh — same reasoning. Build-up
+ *  opacity (Phase 3B) mutates these SAME cached instances in place: every material key here maps
+ *  to exactly one build-up layer group (frame-primary is the one exception — see below — and it
+ *  is animated by growth, not opacity, so it never needs this). Reusing the instance means no new
+ *  per-layer material allocation, just a `.opacity` write, so the material count stays exactly
+ *  what Phase 3A measured regardless of how many transitions ever run. */
 const MATERIAL_CACHE = new Map<keyof typeof MATERIALS, THREE.MeshStandardMaterial>();
 
 function sharedMaterial(key: keyof typeof MATERIALS): THREE.MeshStandardMaterial {
@@ -51,25 +67,106 @@ function sharedMaterial(key: keyof typeof MATERIALS): THREE.MeshStandardMaterial
 }
 
 /**
- * A structural member drawn as a box along its own centre-line. Orientation comes from a
- * quaternion rotating the box's local +X onto the member direction — the general solution. The
- * earlier spike hand-computed rotated centre positions and produced a real, confirmed
- * mispositioning bug; this avoids that class entirely.
+ * Drives one shared material's opacity from a layer's build-up progress — the opacity half of
+ * Phase 3B's visual vocabulary (foundation, secondary structure, walls, roof, gates: "opacity /
+ * reveal", per the brief). Renders nothing itself; every mesh using `materialKey` already reads
+ * this same cached instance, so one driver per key animates all of them in lockstep with zero
+ * extra material allocation.
+ *
+ * `frame-primary` (columns/rafters) deliberately has NO driver: those two roles are animated by
+ * growth (see AnimatedStrut below), where a zero-length box is already invisible — opacity would
+ * be redundant, and columns/rafters share one material instance so mutating its opacity would
+ * incorrectly apply to both at once even though they run on independently offset timings.
  */
-function Strut({ strut, castShadow }: { strut: StrutMesh; castShadow: boolean }) {
-  const matrix = useMemo(() => {
-    const a = v(strut.a);
-    const b = v(strut.b);
-    const dir = new THREE.Vector3().subVectors(b, a);
-    const len = dir.length() || 1e-6;
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(X_AXIS, dir.clone().normalize());
-    const position = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5);
-    const scale = new THREE.Vector3(len, strut.sectionM, strut.sectionM);
-    return new THREE.Matrix4().compose(position, quaternion, scale);
-  }, [strut]);
+function MaterialOpacityDriver({ materialKey, layer }: { materialKey: MaterialKey; layer: LayerTransitionStyle }) {
+  const progressRef = useBuildProgress(layer);
+  useFrame(() => {
+    const material = sharedMaterial(materialKey);
+    const p = progressRef.current;
+    const settled = p >= 1;
+    if (material.transparent !== !settled) material.transparent = !settled;
+    material.opacity = settled ? 1 : p;
+  });
+  return null;
+}
+
+/**
+ * A structural member drawn as a box along its own centre-line, from `a` toward `b`. `progress`
+ * (default 1, i.e. fully built) lets a caller draw only the PORTION from `a` to `a + progress·(b
+ * − a)` — the "grow from base" / "materialize along the rafter axis" vocabulary the brief asks
+ * for (§23). At progress = 1 this is exactly the original full-length transform, so a settled
+ * member is pixel-identical to Phase 3A's own output — growth is a generalisation, not a
+ * different code path bolted on afterwards.
+ */
+function grownMatrix(a: THREE.Vector3, b: THREE.Vector3, sectionM: number, progress: number): THREE.Matrix4 {
+  const dir = new THREE.Vector3().subVectors(b, a);
+  const len = dir.length() || 1e-6;
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(X_AXIS, dir.clone().normalize());
+  // A zero-length box degenerates its matrix (and, on some drivers, its bounding sphere), so the
+  // grown length floors just above zero rather than at exactly 0 — invisible in practice (a few
+  // millimetres at any real hangar scale) but numerically well-behaved every frame.
+  const grownLen = Math.max(len * progress, 1e-4);
+  const position = new THREE.Vector3().copy(a).addScaledVector(dir, progress / 2);
+  const scale = new THREE.Vector3(grownLen, sectionM, sectionM);
+  return new THREE.Matrix4().compose(position, quaternion, scale);
+}
+
+/** Girts: exactly Phase 3A's original component, byte-for-byte — a single static matrix, no
+ *  `useFrame`, no build-up hook of any kind. Girts get a plain opacity reveal instead (driven by
+ *  `MaterialOpacityDriver`, keyed on their shared `frame-secondary` material), so there is nothing
+ *  for this component to animate — and it costs nothing extra to render one, unlike a growth-
+ *  capable strut which needs a `useFrame` subscription whether or not it is currently animating. */
+function StaticStrut({ strut, castShadow }: { strut: StrutMesh; castShadow: boolean }) {
+  const matrix = useMemo(() => grownMatrix(v(strut.a), v(strut.b), strut.sectionM, 1), [strut]);
+  return (
+    <mesh
+      geometry={UNIT_BOX}
+      material={sharedMaterial(strut.material)}
+      matrix={matrix}
+      matrixAutoUpdate={false}
+      castShadow={castShadow}
+      receiveShadow
+    />
+  );
+}
+
+/** Columns and rafters: the brief's "grow from base" / "materialize along the rafter axis"
+ *  vocabulary (§23). `layer` is required (unlike the old single `Strut`) precisely so a girt can
+ *  never accidentally pay for this component's `useFrame` subscription — see StaticStrut above. */
+function AnimatedStrut({
+  strut,
+  castShadow,
+  layer,
+}: {
+  strut: StrutMesh;
+  castShadow: boolean;
+  layer: LayerTransitionStyle;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const progressRef = useBuildProgress(layer);
+  const a = useMemo(() => v(strut.a), [strut]);
+  const b = useMemo(() => v(strut.b), [strut]);
+
+  // Correct on the very FIRST paint of a fresh materialize (progress starts at 0 — see
+  // initialProgressForFreshMount, called directly here rather than reading `progressRef.current`:
+  // refs must not be read during render) as well as on any later geometry change (a dimension
+  // edit recomputes `strut.a`/`b` immediately, independent of whatever this layer's animation is
+  // doing — dimension changes are not supposed to replay the build sequence). `useFrame` below is
+  // what keeps the mesh current on every subsequent animation frame; this memo only has to be
+  // right at the instant `a`/`b`/`layer.phase` actually change.
+  const matrix = useMemo(
+    () => grownMatrix(a, b, strut.sectionM, initialProgressForFreshMount(layer.phase)),
+    [a, b, strut.sectionM, layer.phase],
+  );
+
+  useFrame(() => {
+    if (!meshRef.current) return;
+    meshRef.current.matrix.copy(grownMatrix(a, b, strut.sectionM, progressRef.current));
+  });
 
   return (
     <mesh
+      ref={meshRef}
       geometry={UNIT_BOX}
       material={sharedMaterial(strut.material)}
       matrix={matrix}
@@ -184,6 +281,35 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
   );
 }
 
+/** Foundation's own build-up vocabulary is "opacity + a very subtle vertical settle" (brief §23),
+ *  distinct from every other layer's plain opacity reveal — so the slab gets one small wrapping
+ *  group instead of touching Panel's shared matrix maths for a single, one-off use. The offset is
+ *  proportional to the slab's own thickness rather than a fixed metre value, so it stays
+ *  "subtle" relative to the object at any hangar scale instead of reading as a fixed jolt on a
+ *  small building and nothing at all on a large one. */
+function SettlingSlab({
+  children,
+  layer,
+  thicknessM,
+}: {
+  children: React.ReactNode;
+  layer: LayerTransitionStyle;
+  thicknessM: number;
+}) {
+  // Must be called from IN here, not passed down as a ready-made ref: useBuildProgress calls
+  // useThree/useFrame internally, and those only work inside <Canvas>'s own React tree — calling
+  // it in ThreeHangarView's body (the component that RENDERS <Canvas>, and so sits OUTSIDE it)
+  // throws "Hooks can only be used within the Canvas component" at runtime. Caught live, not by
+  // any static check — typecheck/lint/unit tests all passed with the outside-Canvas version.
+  const progressRef = useBuildProgress(layer);
+  const groupRef = useRef<THREE.Group>(null);
+  useFrame(() => {
+    if (!groupRef.current) return;
+    groupRef.current.position.y = -(1 - progressRef.current) * thicknessM * 1.5;
+  });
+  return <group ref={groupRef}>{children}</group>;
+}
+
 /**
  * Lighting: ambient + hemisphere fill + one directional key + a weak opposing fill, plus linear
  * fog. Simple on purpose (no HDRI, no bloom, no post-processing stack).
@@ -223,8 +349,8 @@ function SceneLighting({ scene, shadows }: { scene: ThreeSceneModel; shadows: bo
           portal frames from the far ones, which is the cheapest available fix for the frame-only
           readability the earlier spike lost to SVG — one line instead of an outline post-processing
           pass. Deliberately restrained: an earlier range fogged the object's own centre by ~43%,
-          which just made the whole building muddy. Starting the ramp at the camera distance means
-          the near half is untouched and only the far end grades away. */}
+          which just made everything muddy. Starting the ramp at the camera distance means the near
+          half is untouched and only the far end grades away. */}
       <fog attach="fog" args={[VIEWPORT_BG, radius * 2, radius * 3.8]} />
 
       <ambientLight intensity={0.78} />
@@ -287,6 +413,16 @@ export function ThreeHangarView({
     [building],
   );
 
+  // The build-up lifecycle, reused verbatim from the SVG renderer (same hook, same timing table —
+  // see the module doc). Seven layers, matching buildUpSequence.ts's BUILD_LAYER_ORDER exactly.
+  const foundation = useLayerLifecycle(visible.slab, LAYER_DURATION_MS.foundation, layerStartOffsetMs('foundation'));
+  const columns = useLayerLifecycle(visible.frame, LAYER_DURATION_MS.columns, layerStartOffsetMs('columns'));
+  const rafters = useLayerLifecycle(visible.frame, LAYER_DURATION_MS.rafters, layerStartOffsetMs('rafters'));
+  const girts = useLayerLifecycle(visible.frame, LAYER_DURATION_MS.purlins, layerStartOffsetMs('purlins'));
+  const walls = useLayerLifecycle(visible.walls, LAYER_DURATION_MS.walls, layerStartOffsetMs('walls'));
+  const roof = useLayerLifecycle(visible.roof, LAYER_DURATION_MS.roof, layerStartOffsetMs('roof'));
+  const gateLayer = useLayerLifecycle(visible.gates, LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
+
   // Shadow-caster policy — a real budget decision, measured rather than assumed. Casting from
   // every mesh doubled the frame cost (175 draw calls at maximum dimensions against a 120 budget),
   // because each caster is drawn again in the shadow pass. Casting is therefore restricted to the
@@ -298,11 +434,12 @@ export function ThreeHangarView({
   //     and the physically honest one: an enclosed frame casts nothing outside the building. It is
   //     also the state where those shadows matter most, since ground shadows are doing much of the
   //     work of separating the portal frames in the frame-only view.
-  const frameCastsShadow = shadows && !visible.roof;
+  const frameCastsShadow = shadows && roof.phase === 'hidden';
   const envelopeCastsShadow = shadows;
 
-  const frameStruts = scene.struts.filter((s) => s.material === 'frame-primary');
-  const secondaryStruts = scene.struts.filter((s) => s.material === 'frame-secondary');
+  const columnStruts = scene.struts.filter((s) => s.role === 'column');
+  const rafterStruts = scene.struts.filter((s) => s.role === 'rafter');
+  const girtStruts = scene.struts.filter((s) => s.role === 'girt');
   const wallPanels = scene.panels.filter((p) => p.material === 'wall');
   const roofPanels = scene.panels.filter((p) => p.material === 'roof');
 
@@ -324,6 +461,16 @@ export function ThreeHangarView({
       <InvalidateOnChange scene={scene} />
       <SceneLighting scene={scene} shadows={shadows} />
 
+      {/* Opacity drivers — one per material key that animates by fade rather than growth. Always
+          mounted (cheap: no geometry, and useFrame only runs on already-invalidated frames — see
+          useBuildProgress.ts), so a layer's fade starts the instant its phase changes without
+          waiting for a remount. */}
+      <MaterialOpacityDriver materialKey="slab" layer={foundation} />
+      <MaterialOpacityDriver materialKey="frame-secondary" layer={girts} />
+      <MaterialOpacityDriver materialKey="wall" layer={walls} />
+      <MaterialOpacityDriver materialKey="roof" layer={roof} />
+      <MaterialOpacityDriver materialKey="gate-recess" layer={gateLayer} />
+
       {/* Shadow catcher, not a floor. `shadowMaterial` is invisible except where something casts
           onto it, which is exactly what this needs: the building has to read as an object standing
           on a surface, but an actual shaded ground plane fills the canvas edge to edge and turns
@@ -343,35 +490,44 @@ export function ThreeHangarView({
         </mesh>
       )}
 
-      {visible.slab && scene.slab && (
-        <Panel
-          panel={scene.slab}
-          // The slab's plane is the ground line and its material grows DOWN from it, so the
-          // interior reference sits below grade.
-          interiorPoint={new THREE.Vector3(
-            building.footprint.widthM / 2,
-            -building.slab.thicknessM * 2,
-            building.footprint.lengthM / 2,
-          )}
-          thicknessDirection="inward"
-          castShadow={false}
-        />
+      {foundation.mounted && scene.slab && (
+        <SettlingSlab layer={foundation} thicknessM={building.slab.thicknessM}>
+          <Panel
+            panel={scene.slab}
+            // The slab's plane is the ground line and its material grows DOWN from it, so the
+            // interior reference sits below grade.
+            interiorPoint={new THREE.Vector3(
+              building.footprint.widthM / 2,
+              -building.slab.thicknessM * 2,
+              building.footprint.lengthM / 2,
+            )}
+            thicknessDirection="inward"
+            castShadow={false}
+          />
+        </SettlingSlab>
       )}
 
-      {visible.frame && frameStruts.map((strut) => (
-        <Strut key={strut.id} strut={strut} castShadow={frameCastsShadow} />
+      {columns.mounted && columnStruts.map((strut) => (
+        <AnimatedStrut key={strut.id} strut={strut} castShadow={frameCastsShadow} layer={columns} />
       ))}
-      {visible.frame && secondaryStruts.map((strut) => (
-        <Strut key={strut.id} strut={strut} castShadow={false} />
+      {rafters.mounted && rafterStruts.map((strut) => (
+        <AnimatedStrut key={strut.id} strut={strut} castShadow={frameCastsShadow} layer={rafters} />
+      ))}
+      {girts.mounted && girtStruts.map((strut) => (
+        <StaticStrut key={strut.id} strut={strut} castShadow={false} />
       ))}
 
-      {visible.walls && wallPanels.map((panel) => (
+      {walls.mounted && wallPanels.map((panel) => (
         <Panel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={false} />
       ))}
-      {visible.walls && scene.gables.map((gable) => (
+      {walls.mounted && scene.gables.map((gable) => (
         <Gable key={gable.id} gable={gable} castShadow={envelopeCastsShadow} />
       ))}
-      {visible.walls && scene.recesses.map((recess) => (
+
+      {/* Gates mount off their OWN layer, not `walls` — matching the technical view's documented
+          behaviour (a gate opening still reads even when the walls scope is off), and giving the
+          gate reveal its own independently timed materialization per buildUpSequence.ts. */}
+      {gateLayer.mounted && scene.recesses.map((recess) => (
         <Panel
           key={recess.id}
           panel={recess}
@@ -381,7 +537,7 @@ export function ThreeHangarView({
         />
       ))}
 
-      {visible.roof && roofPanels.map((panel) => (
+      {roof.mounted && roofPanels.map((panel) => (
         <Panel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={envelopeCastsShadow} />
       ))}
     </Canvas>
