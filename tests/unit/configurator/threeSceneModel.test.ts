@@ -190,14 +190,22 @@ describe('buildThreeScene', () => {
     const columns = three.struts.filter((s) => s.role === 'column');
     const rafters = three.struts.filter((s) => s.role === 'rafter');
     const girts = three.struts.filter((s) => s.role === 'girt');
+    // Phase 3E: bracing is always present (not scheme/roofStructure-gated — brief §13's own "not
+    // a user control"), so it is part of the total at default state even though internal-column/
+    // truss-chord/truss-web are legitimately empty there (engineeringDecision renders as the
+    // plain clearSpan/portalRafter baseline — see StructuralScheme/RoofStructure's own doc
+    // comments in types.ts).
+    const braces = three.struts.filter((s) => s.role === 'brace');
 
     expect(columns.length).toBeGreaterThan(0);
     expect(rafters.length).toBeGreaterThan(0);
     expect(girts.length).toBeGreaterThan(0);
-    expect(columns.length + rafters.length + girts.length).toBe(three.struts.length);
+    expect(braces.length).toBeGreaterThan(0);
+    expect(columns.length + rafters.length + girts.length + braces.length).toBe(three.struts.length);
     expect(columns.every((s) => s.material === 'frame-primary')).toBe(true);
     expect(rafters.every((s) => s.material === 'frame-primary')).toBe(true);
     expect(girts.every((s) => s.material === 'frame-secondary')).toBe(true);
+    expect(braces.every((s) => s.material === 'frame-secondary')).toBe(true);
   });
 
   it('is deterministic and JSON-serialisable', () => {

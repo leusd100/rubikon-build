@@ -55,6 +55,9 @@ export type ScenePrimitive =
   // slab/footing-marker's own pattern above.
   | { kind: 'truss-chord'; visible: boolean; index: number; a: Vec3; b: Vec3 }
   | { kind: 'truss-web'; visible: boolean; index: number; webIndex: number; a: Vec3; b: Vec3 }
+  // Phase 3E, brief §13/§15 — a few restrained X marks, never omitted (see BraceMember's own doc
+  // comment — always at least the first/last bay, at any supported length).
+  | { kind: 'wall-brace'; visible: boolean; face: 'left' | 'right'; bayIndex: number; a: Vec3; b: Vec3 }
   // One primitive per structural bay so the envelope materialises section-by-section.
   | {
       kind: 'wall-segment';
@@ -196,6 +199,13 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
 
   building.girts.forEach((girt, index) => {
     primitives.push({ kind: 'frame-purlin', visible: frameVisible, index, a: girt.a, b: girt.b });
+  });
+
+  // Phase 3E — wall bracing, same `frameVisible` gating as girts (both secondary steel, both
+  // always present wherever ParametricBuildingModel put them — brief §11/§13).
+  building.bracing.forEach((brace) => {
+    primitives.push({ kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, a: brace.diagonalA.a, b: brace.diagonalA.b });
+    primitives.push({ kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, a: brace.diagonalB.a, b: brace.diagonalB.b });
   });
 
   for (const segment of building.envelope.wallSegments) {

@@ -644,3 +644,90 @@ describe('truss webs (Phase 3E, brief §7-10)', () => {
     expect(JSON.stringify(a.trusses)).toBe(JSON.stringify(b.trusses));
   });
 });
+
+describe('wall bracing (Phase 3E, brief §13)', () => {
+  it('braces the first and last bay on both side walls for a short building', () => {
+    const m = modelFor({ width: 24, length: L.min }); // min length clamps to 2 bays
+    const segmentCount = m.envelope.wallSegments[0].segmentCount;
+    for (const face of ['left', 'right'] as const) {
+      const bays = m.bracing.filter((b) => b.face === face).map((b) => b.bayIndex).sort((a, b) => a - b);
+      expect(bays).toEqual([0, segmentCount - 1]);
+    }
+  });
+
+  it('adds a middle bay once there are enough bays to call it a middle zone', () => {
+    const m = modelFor({ width: 24, length: 60 }); // default: 10 bays at 6 m spacing
+    const segmentCount = m.envelope.wallSegments[0].segmentCount;
+    expect(segmentCount).toBeGreaterThanOrEqual(6);
+    const leftBays = m.bracing.filter((b) => b.face === 'left').map((b) => b.bayIndex).sort((a, b) => a - b);
+    expect(leftBays).toHaveLength(3);
+    expect(leftBays[0]).toBe(0);
+    expect(leftBays[leftBays.length - 1]).toBe(segmentCount - 1);
+    expect(leftBays[1]).toBeGreaterThan(0);
+    expect(leftBays[1]).toBeLessThan(segmentCount - 1);
+  });
+
+  it('never exceeds 3 braced bays per wall, at any supported length — bounded count', () => {
+    for (const length of [L.min, 24, 60, L.max]) {
+      const m = modelFor({ length });
+      const perWall = m.bracing.filter((b) => b.face === 'left').length;
+      expect(perWall).toBeLessThanOrEqual(3);
+      expect(perWall).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('is symmetric — left and right walls brace the exact same bay indices', () => {
+    const m = modelFor({ width: 30, length: 84 });
+    const left = m.bracing.filter((b) => b.face === 'left').map((b) => b.bayIndex).sort((a, b) => a - b);
+    const right = m.bracing.filter((b) => b.face === 'right').map((b) => b.bayIndex).sort((a, b) => a - b);
+    expect(left).toEqual(right);
+  });
+
+  it('each brace is the exact X of its own bay rectangle — both diagonals span the bay, at the correct X and Y range', () => {
+    const m = modelFor({ width: 24, length: 60 });
+    const widthM = m.footprint.widthM;
+    for (const brace of m.bracing) {
+      const expectedX = brace.face === 'left' ? 0 : widthM;
+      for (const diag of [brace.diagonalA, brace.diagonalB]) {
+        expect(diag.a.x).toBeCloseTo(expectedX, 6);
+        expect(diag.b.x).toBeCloseTo(expectedX, 6);
+        // One end at eave height, the other at grade — a real diagonal, not a degenerate line.
+        expect(Math.abs(diag.a.y - diag.b.y)).toBeCloseTo(m.heights.eaveM, 6);
+        expect(diag.a.z).not.toBe(diag.b.z);
+      }
+      // The two diagonals actually cross (opposite corners), not the same line twice.
+      expect(brace.diagonalA.a.z).not.toBe(brace.diagonalB.a.z);
+    }
+  });
+
+  it('can never intersect a gate opening — braces live only on the side walls, which no gate ever touches (face is always "front")', () => {
+    for (const gates of [1, 2] as const) {
+      const m = modelFor({}, { gates, gateType: 'double' });
+      expect(m.bracing.every((b) => b.face === 'left' || b.face === 'right')).toBe(true);
+      expect(m.openings.every((o) => o.face === 'front')).toBe(true);
+      // Disjoint by construction: no brace X (0 or widthM) ever equals a gate's own face plane.
+    }
+  });
+
+  it('is deterministic', () => {
+    const a = modelFor({ width: 33, length: 51 });
+    const b = modelFor({ width: 33, length: 51 });
+    expect(JSON.stringify(a.bracing)).toBe(JSON.stringify(b.bracing));
+  });
+});
+
+describe('girts (Phase 3E, brief §12 audit)', () => {
+  it('now run on both side walls, not just one', () => {
+    const m = modelFor();
+    const xs = new Set(m.girts.map((g) => g.a.x));
+    expect(xs.has(0)).toBe(true);
+    expect(xs.has(m.footprint.widthM)).toBe(true);
+  });
+
+  it('each wall still gets exactly 2 levels, matching GIRT_LEVELS — no accidental duplication', () => {
+    const m = modelFor();
+    const perWall = m.girts.filter((g) => g.a.x === 0).length;
+    expect(perWall).toBe(2);
+    expect(m.girts).toHaveLength(4);
+  });
+});

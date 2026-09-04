@@ -345,6 +345,16 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
             style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.purlins.length))}
           />
         ))}
+        {/* Phase 3E, brief §13/§15 — a few restrained X marks, same `purlins` layer/phase as
+            girts: both are secondary steel, always present, not a user control. */}
+        {scene.frame.bracing.map((line, index) => (
+          <FrameLineEl
+            key={`brace-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${purlins.phase} hc-brace`}
+            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.bracing.length))}
+          />
+        ))}
       </g>
 
       {/* The ridge is the gable's defining line — drawn with the roof layer, above the slopes. */}

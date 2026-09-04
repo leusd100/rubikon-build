@@ -152,6 +152,9 @@ export function buildLayerForPrimitive(primitive: ScenePrimitive): BuildLayer | 
     case 'truss-web':
       return 'rafters';
     case 'frame-purlin':
+    // Phase 3E: wall bracing shares the girts' own layer — both secondary steel, both always
+    // present, neither a user control.
+    case 'wall-brace':
       return 'purlins';
     case 'wall-segment':
     case 'gable-end':

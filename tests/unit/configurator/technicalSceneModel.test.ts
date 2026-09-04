@@ -199,4 +199,15 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
     expect(kinds(scene, 'truss-chord').every((p) => !p.visible)).toBe(true);
     expect(kinds(scene, 'truss-web').every((p) => !p.visible)).toBe(true);
   });
+
+  it('wall-brace primitives are always present (2 per brace, one per diagonal) and respect scope.frame', () => {
+    const scene = sceneFor();
+    const building = buildParametricModel(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE));
+    expect(kinds(scene, 'wall-brace')).toHaveLength(building.bracing.length * 2);
+    expect(kinds(scene, 'wall-brace').every((p) => p.visible)).toBe(true);
+
+    const frameOff = sceneFor({ scope: ['foundation', 'walls', 'roof'] });
+    expect(kinds(frameOff, 'wall-brace').every((p) => !p.visible)).toBe(true);
+    expect(kinds(frameOff, 'wall-brace')).toHaveLength(building.bracing.length * 2); // still present, just invisible
+  });
 });

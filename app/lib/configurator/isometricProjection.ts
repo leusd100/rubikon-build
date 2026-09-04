@@ -73,6 +73,9 @@ export type FrameLines = {
    *  follows — with `visible: false` on every entry unless roofStructure is 'truss'. */
   trussChords: FrameLine[];
   trussWebs: FrameLine[];
+  /** Phase 3E, brief §13 — a few restrained X marks. Not scope/scheme-conditional the way the
+   *  other groups above are: always populated wherever ParametricBuildingModel selected a bay. */
+  bracing: FrameLine[];
 };
 
 export type DimensionGuide = {
@@ -201,6 +204,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const internalColumnProps = findPrimitives(scene, 'internal-column-prop').map(asLine);
   const trussChords = findPrimitives(scene, 'truss-chord').map(asLine);
   const trussWebs = findPrimitives(scene, 'truss-web').map(asLine);
+  const bracing = findPrimitives(scene, 'wall-brace').map(asLine);
 
   const wallSegments: ProjectedSegment[] = findPrimitives(scene, 'wall-segment').map((s) => ({
     points: projectAll(s.corners),
@@ -327,7 +331,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
     terrain,
     foundation,
     footings,
-    frame: { columns, rafters, purlins, ridge, internalColumns, internalColumnProps, trussChords, trussWebs },
+    frame: { columns, rafters, purlins, ridge, internalColumns, internalColumnProps, trussChords, trussWebs, bracing },
     wallSegments,
     gableEnds,
     roofSegments,

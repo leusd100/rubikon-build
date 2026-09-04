@@ -713,7 +713,9 @@ export function ThreeHangarView({
   // exploding the FSM").
   const columnStruts = scene.struts.filter((s) => s.role === 'column' || s.role === 'internal-column');
   const rafterStruts = scene.struts.filter((s) => s.role === 'rafter' || s.role === 'truss-chord' || s.role === 'truss-web');
-  const girtStruts = scene.struts.filter((s) => s.role === 'girt');
+  // Phase 3E: wall bracing mounts on the SAME `girts` layer/phase — both are the same "secondary
+  // steel, always present, not a user control" kind of thing (brief §11).
+  const girtStruts = scene.struts.filter((s) => s.role === 'girt' || s.role === 'brace');
   const wallPanels = scene.panels.filter((p) => p.material === 'wall');
   const roofPanels = scene.panels.filter((p) => p.material === 'roof');
 

@@ -139,6 +139,20 @@ export type TrussWebs = {
   webs: Member[];
 };
 
+/**
+ * Phase 3E, brief §13 — one X-brace in a side-wall bay: the two diagonals of the bay's own
+ * rectangle, from `WallSegment.corners` verbatim (no bracing-specific geometry rule of its own —
+ * see `buildBracing`'s own doc comment). NOT a user control (brief §13's own "this is not a new
+ * user control") — always present wherever `buildBracing` selected a bay, same "geometry is a
+ * fact, visibility is scope.frame's business" pattern as girts.
+ */
+export type BraceMember = {
+  face: 'left' | 'right';
+  bayIndex: number;
+  diagonalA: Member;
+  diagonalB: Member;
+};
+
 export type OpeningGeometry = {
   index: number;
   face: 'front';
@@ -218,6 +232,10 @@ export type ParametricBuildingModel = {
   };
   /** Secondary horizontal members on the side walls (girts) — visual weight only. */
   girts: Member[];
+  /** Phase 3E, brief §13 — see `BraceMember`'s own doc comment. Never empty by omission at a
+   *  small building size the way `internalColumns` legitimately can be — every supported length
+   *  has at least the first/last bay braced. */
+  bracing: BraceMember[];
   openings: OpeningGeometry[];
   /**
    * ALWAYS present, never null — even when `scope.foundation` is false.
@@ -542,13 +560,57 @@ function buildGableEnds(widthM: number, lengthM: number, eaveM: number, ridgeM: 
   });
 }
 
+/**
+ * Phase 3E, brief §12 — audited and extended: this used to run girts along X = widthM only (one
+ * side wall), which read as too sparse once the frame itself gained a centre column line and a
+ * visible truss web (brief's own "too sparse or generic, refine them"). Both side walls now get
+ * the same two levels — still exactly the visual-rhythm stand-in `GIRT_LEVELS`'s own doc comment
+ * already describes, just no longer missing from half the building.
+ */
 function buildGirts(widthM: number, lengthM: number, eaveM: number): Member[] {
   const members: Member[] = [];
-  for (const level of GIRT_LEVELS) {
-    const y = round(eaveM * level);
-    members.push({ a: v3(widthM, y, 0), b: v3(widthM, y, lengthM) });
+  for (const x of [0, widthM]) {
+    for (const level of GIRT_LEVELS) {
+      const y = round(eaveM * level);
+      members.push({ a: v3(x, y, 0), b: v3(x, y, lengthM) });
+    }
   }
   return members;
+}
+
+/**
+ * Phase 3E, brief §13 — a few strategically placed side-wall braces, deterministic and NOT a user
+ * control (see BraceMember's own doc comment). Deliberately side walls only, never the gable ends:
+ * gates only ever cut into the front gable (`buildOpenings`'s own `face: 'front'` literal), so
+ * restricting bracing to the side walls means it can never geometrically overlap a gate opening AT
+ * ALL — brief §13's own "braces must avoid gate openings" requirement, satisfied by construction
+ * rather than by a conflict check this function would otherwise need (compare `buildInternalColumns`,
+ * which DOES need one, because its centreline genuinely can land on the one face gates use).
+ *
+ * Bay selection: first bay, last bay ("near one end, near the opposite end" — brief's own words),
+ * plus the middle bay once there are enough of them for a third braced zone to read as "a middle
+ * zone" rather than "the same end again" — six bays is the point `frameBayCount` itself starts
+ * meaning a genuinely long building (its own target spacing is 6 m, so six bays is a ~36 m run).
+ * Both side walls get the same bay indices, for the plan-symmetry a real building would have.
+ */
+function buildBracing(wallSegments: WallSegment[]): BraceMember[] {
+  const segmentCount = wallSegments[0]?.segmentCount ?? 0;
+  if (segmentCount === 0) return [];
+
+  const bracedIndices = new Set<number>([0, segmentCount - 1]);
+  const LONG_BUILDING_BAY_THRESHOLD = 6;
+  if (segmentCount >= LONG_BUILDING_BAY_THRESHOLD) bracedIndices.add(Math.floor(segmentCount / 2));
+
+  return wallSegments
+    .filter((s) => bracedIndices.has(s.index))
+    .map((s) => ({
+      face: s.face as 'left' | 'right',
+      bayIndex: s.index,
+      // corners = [top-z0, top-z1, bottom-z1, bottom-z0] (buildWallSegments' own order) — the two
+      // diagonals of that rectangle are 0↔2 and 1↔3.
+      diagonalA: { a: s.corners[0], b: s.corners[2] },
+      diagonalB: { a: s.corners[1], b: s.corners[3] },
+    }));
 }
 
 // Gate placement ratios. `standard` is carried over unchanged from the previous scene model so
@@ -795,6 +857,7 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
   const internalColumns = buildInternalColumns(
     widthM, eaveHeightM, ridgeM, stationsM, openings, domain.structural.scheme, domain.structural.roofStructure,
   );
+  const wallSegments = buildWallSegments(widthM, lengthM, eaveHeightM, stationsM);
 
   return {
     footprint: { widthM, lengthM },
@@ -811,13 +874,14 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
     internalColumns,
     trusses: buildTrussWebs(widthM, eaveHeightM, ridgeM, stationsM),
     envelope: {
-      wallSegments: buildWallSegments(widthM, lengthM, eaveHeightM, stationsM),
+      wallSegments,
       roofSegments: buildRoofSegments(widthM, eaveHeightM, ridgeM, stationsM, pitchDeg, ROOF_OVERHANG_M),
       gableEnds: buildGableEnds(widthM, lengthM, eaveHeightM, ridgeM),
       walls: domain.envelope.walls,
       roofEnvelope: domain.envelope.roof,
     },
     girts: buildGirts(widthM, lengthM, eaveHeightM),
+    bracing: buildBracing(wallSegments),
     openings,
     slab: buildSlab(widthM, lengthM),
     // External + internal column footings merged into one array — see FootingGeometry's own doc

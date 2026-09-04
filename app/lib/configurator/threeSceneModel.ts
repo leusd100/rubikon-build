@@ -40,7 +40,7 @@ export type MaterialKey =
  * (every column and rafter is `frame-primary`) but the two answer different questions: `material`
  * is "what does this look like", `role` is "when does this arrive". Keeping them separate means a
  * future material change can never silently break the build-up grouping by accident. */
-export type StrutRole = 'column' | 'rafter' | 'girt' | 'internal-column' | 'truss-chord' | 'truss-web';
+export type StrutRole = 'column' | 'rafter' | 'girt' | 'internal-column' | 'truss-chord' | 'truss-web' | 'brace';
 
 export type StrutMesh = {
   id: string;
@@ -260,6 +260,15 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
   // ── Secondary structure: side-wall girts, visually subordinate ──
   building.girts.forEach((girt, index) => {
     struts.push({ id: `girt-${index}`, a: girt.a, b: girt.b, sectionM: GIRT_SECTION_M, material: 'frame-secondary', role: 'girt' });
+  });
+
+  // ── Phase 3E: wall bracing — always a few bays, same secondary treatment as girts (brief §11:
+  // "SECONDARY: purlins, wall girts, selected braces" groups all three) ──
+  building.bracing.forEach((brace, index) => {
+    struts.push(
+      { id: `brace-${index}-a`, a: brace.diagonalA.a, b: brace.diagonalA.b, sectionM: GIRT_SECTION_M, material: 'frame-secondary', role: 'brace' },
+      { id: `brace-${index}-b`, a: brace.diagonalB.a, b: brace.diagonalB.b, sectionM: GIRT_SECTION_M, material: 'frame-secondary', role: 'brace' },
+    );
   });
 
   // ── Phase 3E: the centre support line — empty unless structuralScheme is centerSupport, see
