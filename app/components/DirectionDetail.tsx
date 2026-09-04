@@ -9,6 +9,7 @@ import { relatedDirections } from '../data/relatedDirections';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
 import { company } from '../data/company';
 import { siteRoutes } from '../data/navigation';
+import type { ReactNode } from 'react';
 
 const directionGhostWords: Record<DirectionPageConfig['id'], string> = {
   angary: 'HANGAR',
@@ -225,7 +226,17 @@ function RelatedDirections({ id }: { id: DirectionPageConfig['id'] }) {
   );
 }
 
-export function DirectionPage({ config }: { config: DirectionPageConfig }) {
+export function DirectionPage({
+  config,
+  signatureExperience,
+  technicalChapter,
+  hideCost = false,
+}: {
+  config: DirectionPageConfig;
+  signatureExperience?: ReactNode;
+  technicalChapter?: ReactNode;
+  hideCost?: boolean;
+}) {
   const direction = getDirection(config.id);
 
   return (
@@ -239,6 +250,8 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
         intro={config.hero.intro}
         heroImage={direction.heroImage}
       />
+
+      {signatureExperience}
 
       <section className="page-section ghost-section">
         <GhostWord word={directionGhostWords[config.id]} />
@@ -265,8 +278,9 @@ export function DirectionPage({ config }: { config: DirectionPageConfig }) {
       </section>
 
       <DirectionEditorial editorial={config.editorial} />
+      {technicalChapter}
       <DirectionProcess {...config.process} />
-      {config.cost && <DirectionCostSection {...config.cost} />}
+      {!hideCost && config.cost && <DirectionCostSection {...config.cost} />}
       {config.faq && <DirectionFaq {...config.faq} />}
       <RelatedDirections id={config.id} />
       <InquirySection eyebrow={config.cta.eyebrow} title={config.cta.title} defaultDirection={direction.formLabel} />
