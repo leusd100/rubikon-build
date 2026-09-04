@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { buildEnvelopePanelGeometry, buildGableCladdingOverlay } from '../../../app/components/configurator/three/envelopePanelGeometry';
+import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildRidgeCapGeometry } from '../../../app/components/configurator/three/envelopePanelGeometry';
 
 // Real geometric behaviour, not implementation trivia: these tests exist to catch exactly the
 // class of bug hand-rolling this geometry produced during development — a disconnected back face,
@@ -210,5 +210,58 @@ describe('buildGableCladdingOverlay (Phase 3D.1)', () => {
     const b = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, [gateHole], 'profiled-sheet')!;
     expect(a.geometry.attributes.position.count).toBe(b.geometry.attributes.position.count);
     expect(a.depthM).toBe(b.depthM);
+  });
+});
+
+describe('buildRidgeCapGeometry (Phase 3D.1)', () => {
+  const RIDGE_WIDTH = 24;
+  const RIDGE_LENGTH = 60;
+  const RIDGE_M = 10.6;
+  const PITCH = 12.04;
+
+  it('spans the building’s own full length along Z, matching the roof segments and both gables', () => {
+    const b = bounds(buildRidgeCapGeometry(RIDGE_WIDTH, RIDGE_LENGTH, RIDGE_M, PITCH));
+    expect(b.minZ).toBeCloseTo(0, 6);
+    expect(b.maxZ).toBeCloseTo(RIDGE_LENGTH, 6);
+  });
+
+  it('sits astride the ridge: crown above ridgeM, skirts resting at-or-below it, centred on width/2', () => {
+    const b = bounds(buildRidgeCapGeometry(RIDGE_WIDTH, RIDGE_LENGTH, RIDGE_M, PITCH));
+    expect(b.maxY).toBeGreaterThan(RIDGE_M); // the crown pokes up above the actual ridge line
+    expect(b.minY).toBeLessThan(RIDGE_M); // the skirts sit down-slope, below the ridge line
+    const midX = RIDGE_WIDTH / 2;
+    // Symmetric about the ridge's own X centre — left and right skirts overlap their own roof
+    // plane by the same amount, so the whole cap is centred on the building's mid-width.
+    expect(midX - b.minX).toBeCloseTo(b.maxX - midX, 6);
+  });
+
+  it('stays a small, cheap cross-section — a handful of vertices, not a heavy mesh', () => {
+    const g = buildRidgeCapGeometry(RIDGE_WIDTH, RIDGE_LENGTH, RIDGE_M, PITCH);
+    // A triangular prism extrusion: three side faces (2 triangles/4 verts each in three.js's own
+    // non-indexed ExtrudeGeometry output) plus two end caps (1 triangle/3 verts each) — comfortably
+    // under a few dozen vertices regardless of the building's own dimensions, unlike a ribbed panel
+    // whose vertex count scales with width. A loose upper bound, not a magic exact count, since
+    // that layout is three.js's own implementation detail, not this file's contract.
+    expect(vertexCount(g)).toBeLessThan(60);
+  });
+
+  it('has no NaN/Infinity vertices across the full supported pitch range (5°–20°)', () => {
+    for (const pitchDeg of [5, 12.04, 20]) {
+      const g = buildRidgeCapGeometry(RIDGE_WIDTH, RIDGE_LENGTH, RIDGE_M, pitchDeg);
+      expect(hasNoNaN(g)).toBe(true);
+    }
+  });
+
+  it('is deterministic', () => {
+    const a = bounds(buildRidgeCapGeometry(RIDGE_WIDTH, RIDGE_LENGTH, RIDGE_M, PITCH));
+    const b = bounds(buildRidgeCapGeometry(RIDGE_WIDTH, RIDGE_LENGTH, RIDGE_M, PITCH));
+    expect(a).toEqual(b);
+  });
+
+  it('scales its Z span with the building’s own length, not a fixed size', () => {
+    const short = bounds(buildRidgeCapGeometry(RIDGE_WIDTH, 12, RIDGE_M, PITCH));
+    const long = bounds(buildRidgeCapGeometry(RIDGE_WIDTH, 120, RIDGE_M, PITCH));
+    expect(short.maxZ).toBeCloseTo(12, 6);
+    expect(long.maxZ).toBeCloseTo(120, 6);
   });
 });

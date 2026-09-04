@@ -11,9 +11,10 @@ import type {
   StrutMesh,
   ThreeSceneModel,
 } from '../../../lib/configurator/threeSceneModel';
+import type { ParametricBuildingModel } from '../../../lib/configurator/parametricModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
 import { MATERIALS, VIEWPORT_BG } from './materials';
-import { buildEnvelopePanelGeometry, buildGableCladdingOverlay } from './envelopePanelGeometry';
+import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildRidgeCapGeometry } from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
 import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
@@ -437,6 +438,37 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
   );
 }
 
+/**
+ * Phase 3D.1 — the ridge cap: see `buildRidgeCapGeometry`'s own doc comment in
+ * envelopePanelGeometry.ts for why this is the one finishing piece added among the brief's three
+ * candidates, and for the geometry itself. Built directly from `building`'s own real dimensions
+ * (no placement basis matrix needed — the shape is already authored in world (X, Y) and extrudes
+ * along world Z, which is exactly the ridge's own run direction), so this component only has to
+ * memoize the geometry and mount a single mesh. Shares `sharedMaterial('roof')` with the roof
+ * panels themselves — same coil colour a real ridge cap is ordered in — so it needs no opacity
+ * driver of its own and fades in lockstep with the roof for free, same reasoning as `Footing`
+ * sharing the slab's own material/driver above.
+ */
+function RidgeCap({ building, castShadow }: { building: ParametricBuildingModel; castShadow: boolean }) {
+  const { widthM, lengthM } = building.footprint;
+  const { ridgeM } = building.heights;
+  const { pitchDeg } = building.roof;
+  const geometry = useMemo(
+    () => buildRidgeCapGeometry(widthM, lengthM, ridgeM, pitchDeg),
+    [widthM, lengthM, ridgeM, pitchDeg],
+  );
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <mesh
+      geometry={geometry}
+      material={sharedMaterial('roof')}
+      castShadow={castShadow}
+      receiveShadow
+    />
+  );
+}
+
 /** Foundation's own build-up vocabulary is "opacity + a very subtle vertical settle" (brief §23),
  *  distinct from every other layer's plain opacity reveal — so the slab gets one small wrapping
  *  group instead of touching Panel's shared matrix maths for a single, one-off use. The offset is
@@ -760,6 +792,7 @@ export function ThreeHangarView({
       {roof.mounted && roofPanels.map((panel) => (
         <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={envelopeCastsShadow} />
       ))}
+      {roof.mounted && <RidgeCap building={building} castShadow={envelopeCastsShadow} />}
     </Canvas>
   );
 }

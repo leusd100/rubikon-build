@@ -299,3 +299,88 @@ export function buildGableCladdingOverlay(
   const geometry = new THREE.ExtrudeGeometry(shapes, { depth: depthM, bevelEnabled: false, curveSegments: 1 });
   return { geometry, depthM };
 }
+
+// ── Phase 3D.1 — ridge cap ───────────────────────────────────────────────────
+//
+// Chosen as the single highest-payoff finishing piece among the brief's three candidates (ridge
+// cap / eave trim / corner flashing) after live comparison, not by default: the ridge is the one
+// edge that sits on the building's own top silhouette from every camera angle this configurator
+// uses, and before this it was a bare mitred seam — the two roof slopes' own panel geometry simply
+// meeting edge-to-edge with no response to it at all, the most visibly "two planes glued together"
+// spot on the whole model. The eave edge already reads as a real edge (the roof panel's own
+// thickness gives it a lit face), and the wall corners already read cleanly at this render scale
+// (see the Phase 3D.1 report's visual-comparison section) — adding trim there too was judged not
+// worth the extra geometry for the visible gain, so this file adds ONLY the ridge cap.
+//
+// Real ridge caps are a folded sheet-metal cap straddling the ridge, overlapping a short distance
+// down each roof plane. Modelled here as the simplest solid that shape implies: a triangle (one
+// point resting on each roof plane a short distance down from the ridge, one apex above it),
+// extruded the building's own length — same "one shape, one extrude, one draw call" discipline as
+// every other envelope piece in this file.
+const RIDGE_CAP_SKIRT_M = 0.22; // how far down each roof plane the cap overlaps, along the slope
+const RIDGE_CAP_RISE_M = 0.05; // how far above the ridge line the cap's own crown sits
+const RIDGE_CAP_LIFT_M = 0.003; // tiny stand-off along each slope's own normal, at the two points
+// that actually touch the roof surface, so those two edges don't sit exactly coplanar with the
+// panel beneath them (the same z-fighting concern `buildGableCladdingOverlay` avoids at its own
+// strip edges — see its "Depth convention" note above).
+
+/**
+ * The ridge cap's own geometry, built directly in the building's real (X = width, Y = height)
+ * coordinates rather than a per-panel local frame: unlike a wall/roof bay panel, this piece is
+ * never re-oriented by a placement basis matrix (see `RidgeCap`'s call site in ThreeHangarView.tsx)
+ * — the ridge already runs along the building's own +Z, exactly the direction `ExtrudeGeometry`
+ * sweeps a shape by default, so authoring the cross-section in real world (X, Y) and extruding
+ * `lengthM` along Z needs no rotation at all, unlike `extrudeCrossSection` above.
+ *
+ * The cap's cross-section is deliberately just a triangle (skirt point, apex, skirt point — no
+ * fourth vertex closing it back through the ridge point itself): the straight edge `closePath`
+ * draws from the right skirt point back to the left one is a CHORD across the two roof planes'
+ * own "tent" shape, and a chord across a tent always lies at-or-below the tent's own two slopes
+ * between the same two points (basic concavity — a peak's chord never rises above the peak's own
+ * sides). That guarantees the cap's underside never floats clear of the roof surface anywhere along
+ * its width, without needing a fourth point or any explicit gap-closing logic.
+ */
+function buildRidgeCapGeometry(widthM: number, lengthM: number, ridgeM: number, pitchDeg: number): THREE.BufferGeometry {
+  const midX = widthM / 2;
+  const pitchRad = pitchDeg * (Math.PI / 180);
+  const cos = Math.cos(pitchRad);
+  const sin = Math.sin(pitchRad);
+
+  // Unit "down-slope" direction from the ridge, along each roof plane's own surface.
+  const downL: [number, number] = [-cos, -sin];
+  const downR: [number, number] = [cos, -sin];
+  // Each plane's own outward (up-off-the-surface) unit normal, for the tiny stand-off lift.
+  const normalL: [number, number] = [-sin, cos];
+  const normalR: [number, number] = [sin, cos];
+
+  const pL: [number, number] = [
+    midX + downL[0] * RIDGE_CAP_SKIRT_M + normalL[0] * RIDGE_CAP_LIFT_M,
+    ridgeM + downL[1] * RIDGE_CAP_SKIRT_M + normalL[1] * RIDGE_CAP_LIFT_M,
+  ];
+  const pR: [number, number] = [
+    midX + downR[0] * RIDGE_CAP_SKIRT_M + normalR[0] * RIDGE_CAP_LIFT_M,
+    ridgeM + downR[1] * RIDGE_CAP_SKIRT_M + normalR[1] * RIDGE_CAP_LIFT_M,
+  ];
+  const apex: [number, number] = [midX, ridgeM + RIDGE_CAP_RISE_M];
+
+  // Winding matters here and nowhere else in this file: every other shape in this file is swept
+  // through `extrudeCrossSection`'s own `rotateX(-Math.PI / 2)`, which this one deliberately skips
+  // (see this function's own doc comment — the ridge already runs along world +Z, so no rotation
+  // is needed). That rotation was quietly fixing the winding along with the axes everywhere else;
+  // without it, this shape's two visible sloped side faces need the RIGHT winding directly. Three.js
+  // treats a shape's contour as counter-clockwise = front-facing; pL → apex → pR (skirt, up, skirt,
+  // the "natural" reading order) is wound CLOCKWISE here because Y decreases from apex to each
+  // skirt point, which puts the visible faces' normals INWARD — confirmed live (a double-sided
+  // debug material showed the cap in full; the real single-sided roof material showed nothing,
+  // silently backface-culled). Visiting the skirts before the apex fixes it without changing the
+  // triangle's shape at all.
+  const shape = new THREE.Shape();
+  shape.moveTo(pL[0], pL[1]);
+  shape.lineTo(pR[0], pR[1]);
+  shape.lineTo(apex[0], apex[1]);
+  shape.closePath();
+
+  return new THREE.ExtrudeGeometry(shape, { depth: lengthM, bevelEnabled: false, curveSegments: 1 });
+}
+
+export { buildRidgeCapGeometry };
