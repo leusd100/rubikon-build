@@ -16,6 +16,7 @@ import { FitOrthographicCamera } from './FitOrthographicCamera';
 import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
 import { useBuildProgress } from './useBuildProgress';
 import { initialProgressForFreshMount } from './buildUpAnimation';
+import { ScaleFigure } from './ScaleFigure';
 
 // Phase 3A production 3D view, extended in Phase 3B with 3D build-up (§23-26 of the brief).
 //
@@ -393,14 +394,48 @@ function InvalidateOnChange({ scene }: { scene: ThreeSceneModel }) {
   return null;
 }
 
+/**
+ * Phase 3C — applies the selected wall/roof colour presets (materialPresets.ts) to the SAME
+ * cached material instances `sharedMaterial` already hands out, rather than creating new ones:
+ * mutating `.color` in place preserves the shared-instance identity the build-up opacity drivers
+ * (`MaterialOpacityDriver`) depend on, costs zero new allocations, and needs no geometry rebuild.
+ *
+ * Deliberately its own tiny component rather than a `useEffect` inside `ThreeHangarView`'s own
+ * body: mutating a material needs no Canvas context by itself, but making the change actually
+ * VISIBLE under `frameloop="demand"` needs `invalidate()`, which only exists inside `<Canvas>`'s
+ * own React tree — calling `useThree` from `ThreeHangarView`'s body (the component that RENDERS
+ * Canvas, not a child of it) is exactly the mistake that threw "Hooks can only be used within
+ * the Canvas component!" earlier this project (see SettlingSlab's own doc comment) — same fix
+ * shape here, applied before repeating it.
+ */
+function MaterialColorSync({ wallColor, roofColor }: { wallColor: string; roofColor: string }) {
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    sharedMaterial('wall').color.set(wallColor);
+    sharedMaterial('roof').color.set(roofColor);
+    invalidate();
+  }, [wallColor, roofColor, invalidate]);
+  return null;
+}
+
 export function ThreeHangarView({
   scene,
   shadows = true,
   maxDpr = 2,
+  wallColor,
+  roofColor,
+  showScaleFigure = false,
 }: {
   scene: ThreeSceneModel;
   shadows?: boolean;
   maxDpr?: number;
+  /** Phase 3C colour presets (materialPresets.ts) — RenderPresets only, not a geometric or
+   *  domain fact (see that module's own architecture note). Default to the base palette's own
+   *  colours (materials.ts) so an unset prop renders exactly as before Phase 3C. */
+  wallColor?: string;
+  roofColor?: string;
+  /** Phase 3C optional scale reference — off by default (brief §6: "do not clutter the scene"). */
+  showScaleFigure?: boolean;
 }) {
   const { visible, building } = scene;
   const interiorPoint = useMemo(
@@ -412,6 +447,18 @@ export function ThreeHangarView({
       ),
     [building],
   );
+
+  // Standing just outside the front face, centred on the first gate if one is configured
+  // (the natural "someone walking up to the building" framing) — else centred on the front
+  // facade. Never part of `scene.bounds` (computed upstream in threeSceneModel.ts from the
+  // building's own geometry only), so this can never affect camera framing — same "staging, not
+  // the object" rule the ground plane already follows.
+  const scaleFigurePosition = useMemo<[number, number, number]>(() => {
+    const firstOpening = building.openings[0];
+    const x = firstOpening ? firstOpening.rect.xM + firstOpening.rect.widthM / 2 : building.footprint.widthM / 2;
+    const FIGURE_STANDOFF_M = 1.4; // clear of the slab/gate recess, reads as standing in front of it
+    return [x, 0, -FIGURE_STANDOFF_M];
+  }, [building]);
 
   // The build-up lifecycle, reused verbatim from the SVG renderer (same hook, same timing table —
   // see the module doc). Seven layers, matching buildUpSequence.ts's BUILD_LAYER_ORDER exactly.
@@ -460,6 +507,7 @@ export function ThreeHangarView({
       <FitOrthographicCamera scene={scene} />
       <InvalidateOnChange scene={scene} />
       <SceneLighting scene={scene} shadows={shadows} />
+      <MaterialColorSync wallColor={wallColor ?? MATERIALS.wall.color} roofColor={roofColor ?? MATERIALS.roof.color} />
 
       {/* Opacity drivers — one per material key that animates by fade rather than growth. Always
           mounted (cheap: no geometry, and useFrame only runs on already-invalidated frames — see
@@ -489,6 +537,8 @@ export function ThreeHangarView({
           <shadowMaterial opacity={0.46} />
         </mesh>
       )}
+
+      {showScaleFigure && <ScaleFigure position={scaleFigurePosition} />}
 
       {foundation.mounted && scene.slab && (
         <SettlingSlab layer={foundation} thicknessM={building.slab.thicknessM}>
