@@ -7,6 +7,7 @@ import {
   SCOPE_LABELS,
   SCOPE_ORDER,
   STRUCTURAL_SCHEME_LABELS,
+  envelopeMatchesPreset,
 } from './types';
 
 export type ConfiguratorSummary = {
@@ -43,6 +44,23 @@ function formatCladdingSystemLabel(envelope: HangarDomainModel['envelope']): str
   return wall === roof ? wall : `Стіни: ${wall}, покрівля: ${roof}`;
 }
 
+/**
+ * Phase 3E, brief §18 — the high-level "Контур" label, honest about drift from its own preset.
+ * `envelope.walls`/`envelope.roof` (the stored intent) still always equal what the customer last
+ * clicked in "Контур будівлі" — this function does not change that, it only decides what the
+ * SUMMARY calls it: as soon as a manual wall/roof system override means the actual materials no
+ * longer match what "Холодний"/"Утеплений" would imply, claiming that simple label would
+ * misrepresent a now-mixed configuration (brief's own explicit "must no longer claim a simple
+ * preset if that would be semantically misleading") — surfaced as "Індивідуальна конфігурація"
+ * instead, with the real systems still fully visible in `claddingSystemLabel` right below it.
+ */
+function formatEnvelopeLabel(envelope: HangarDomainModel['envelope']): string {
+  if (envelopeMatchesPreset(envelope.walls, envelope.wallSystem, envelope.roofSystem)) {
+    return ENVELOPE_LABELS[envelope.walls];
+  }
+  return 'Індивідуальна конфігурація';
+}
+
 function formatGatesLabel(gates: HangarDomainModel['gates']): string {
   if (gates === 0) return 'Без воріт';
   if (gates === 1) return '1 ворота';
@@ -64,7 +82,7 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
   return {
     areaSqm: domain.areaSqm,
     dimensionsLabel: `${formatMeters(widthM)} × ${formatMeters(lengthM)} × ${formatMeters(eaveHeightM)} м`,
-    envelopeLabel: ENVELOPE_LABELS[domain.envelope.walls],
+    envelopeLabel: formatEnvelopeLabel(domain.envelope),
     claddingSystemLabel: formatCladdingSystemLabel(domain.envelope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],
     structuralSchemeLabel: STRUCTURAL_SCHEME_LABELS[domain.structural.scheme],

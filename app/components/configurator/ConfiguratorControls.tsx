@@ -12,6 +12,7 @@ import {
   CLADDING_SYSTEM_ORDER,
   DIMENSION_BOUNDS,
   ENVELOPE_LABELS,
+  ENVELOPE_MATERIAL_PRESET,
   FOUNDATION_TYPE_LABELS,
   FOUNDATION_TYPE_ORDER,
   GATES_OPTIONS,
@@ -179,7 +180,16 @@ export function ConfiguratorControls({ state, onChange }: Props) {
   }
 
   function setEnvelope(envelope: EnvelopeChoice) {
-    onChange({ ...state, envelope });
+    // brief §18: cold/insulated set a sensible STARTING wall/roof system, not a locked rule — a
+    // later independent override of either still sticks (see ENVELOPE_MATERIAL_PRESET's own doc
+    // comment). `undecided` applies nothing: "independent material choices remain available" is
+    // the brief's own wording for that specific option.
+    const preset = envelope === 'undecided' ? null : ENVELOPE_MATERIAL_PRESET[envelope];
+    onChange({
+      ...state,
+      envelope,
+      ...(preset ? { wallSystem: preset.wallSystem, roofSystem: preset.roofSystem } : {}),
+    });
   }
 
   function setWallSystem(wallSystem: CladdingSystem) {

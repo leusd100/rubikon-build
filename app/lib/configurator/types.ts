@@ -28,6 +28,38 @@ export type EnvelopeChoice = 'cold' | 'insulated' | 'undecided';
 export type CladdingSystem = 'profiled-sheet' | 'sandwich-panel';
 
 /**
+ * Phase 3E, brief §18 — the DEFAULT wall/roof system a `cold`/`insulated` envelope choice starts
+ * a customer at, not a rule this state enforces. `cold` → profiled sheet (the plainer, more
+ * economical unheated-building product); `insulated` → sandwich panel (the common insulated-
+ * envelope product). `undecided` has no entry — see `applyEnvelopePreset`'s own doc comment,
+ * which is where this table is actually used, for why: picking "not yet decided" must never
+ * silently pick materials on the customer's behalf either.
+ *
+ * This is intentionally the ONLY place `envelope` and `wallSystem`/`roofSystem` interact.
+ * `CladdingSystem`'s own doc comment above still holds — the two remain genuinely orthogonal
+ * domain facts, both stored independently, both able to diverge — this table only supplies a
+ * sensible STARTING POINT when the high-level choice changes, per the brief's own explicit
+ * "do NOT hard-lock mixed combinations" instruction.
+ */
+export const ENVELOPE_MATERIAL_PRESET: Record<'cold' | 'insulated', { wallSystem: CladdingSystem; roofSystem: CladdingSystem }> = {
+  cold: { wallSystem: 'profiled-sheet', roofSystem: 'profiled-sheet' },
+  insulated: { wallSystem: 'sandwich-panel', roofSystem: 'sandwich-panel' },
+};
+
+/**
+ * Whether the CURRENT wallSystem/roofSystem still match what `envelope` would imply by default —
+ * `undecided` trivially always "matches" (it never implied anything). Used by the summary layer
+ * (see deriveSummary.ts) to stop claiming a simple "Холодний"/"Утеплений" label the moment a
+ * customer manually overrides one system away from that preset — see brief §18's own "the state
+ * must no longer claim a simple preset if that would be semantically misleading".
+ */
+export function envelopeMatchesPreset(envelope: EnvelopeChoice, wallSystem: CladdingSystem, roofSystem: CladdingSystem): boolean {
+  if (envelope === 'undecided') return true;
+  const preset = ENVELOPE_MATERIAL_PRESET[envelope];
+  return wallSystem === preset.wallSystem && roofSystem === preset.roofSystem;
+}
+
+/**
  * Foundation TYPE — a real configuration fact (which product RUBIKON would actually quote/supply),
  * not a presentation choice, which is why it lives here next to `envelope`/`scope` rather than as
  * 3D-only state the way Phase 3C's colour presets do. See parametricModel.ts's own doc comment on
@@ -186,7 +218,13 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   // The span rule's own answer for 24 m × 8 m (12.04° → 10.56 m), snapped to the 0.1 m
   // adjustment step. Kept as a literal so this module stays free of geometry imports.
   ridgeHeightM: 10.6,
-  envelope: 'insulated',
+  // Phase 3E, brief §18: kept consistent with the wallSystem/roofSystem default right below —
+  // 'insulated' here with 'profiled-sheet' materials was exactly the "Контур" no longer matches
+  // the actual system" state this phase's own preset-drift logic exists to detect and label
+  // honestly (envelopeMatchesPreset), which is the wrong thing for a FRESH configurator nobody
+  // has touched yet to already be in. 'cold' is `ENVELOPE_MATERIAL_PRESET`'s own match for
+  // profiled sheet.
+  envelope: 'cold',
   // Profiled sheet is the more common, more economical choice for this product category —
   // sandwich panel is typically the upgrade, not the default.
   wallSystem: 'profiled-sheet',
