@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { buildNoiseField, normalByteFromGradient, roughnessNoiseByte } from './noiseField';
 
 /**
  * Phase 3F — the ONLY texture assets this 3D view ever creates: two small, procedurally generated,
@@ -16,72 +17,19 @@ import * as THREE from 'three';
  * every time this module loads, matching this whole codebase's "same input, same output" rule for
  * anything that isn't explicit user state — a re-render must never make the steel's micro-detail
  * silently shift.
+ *
+ * Phase 3F.1 — the actual noise/PRNG/pixel-encoding MATH lives in noiseField.ts, a pure module
+ * with no canvas/DOM dependency, and carries real unit tests there. What remains HERE is a thin
+ * canvas-drawing shell: `document.createElement('canvas')`, `getContext('2d')`, THREE.Texture
+ * wiring — genuinely untestable under this project's plain-node Vitest environment (no
+ * `HTMLCanvasElement` 2D context without a canvas polyfill this repo deliberately doesn't carry,
+ * the exact same "needs a real browser, not jsdom" reasoning sonar-project.properties/
+ * vitest.config.ts already apply to .tsx components and component-scoped hooks). Verified by live
+ * browser inspection and the Phase 3F/3F.1 visual-regression suite instead — see this file's own
+ * entry in sonar.coverage.exclusions.
  */
 
 const NOISE_SIZE = 64;
-
-/** A small, fast, seeded PRNG (mulberry32) — good enough for visual noise, not for anything else.
- *  `Math.random()` would make this module non-deterministic between loads, which the module's own
- *  doc comment above explicitly rules out. */
-function mulberry32(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** A smooth-ish value-noise field, `size × size`, values in [0, 1]. Built by blending several
- *  octaves of blocky random values at different scales (a cheap value-noise stand-in — this does
- *  not need to be true Perlin noise; it only has to avoid looking like flat static at a glance). */
-function buildNoiseField(size: number, seed: number): Float32Array {
-  const field = new Float32Array(size * size);
-  const rand = mulberry32(seed);
-  const octaves: Array<{ cells: number; weight: number }> = [
-    { cells: 4, weight: 0.5 },
-    { cells: 8, weight: 0.3 },
-    { cells: 16, weight: 0.2 },
-  ];
-
-  for (const { cells, weight } of octaves) {
-    // One random value per coarse cell, bilinearly sampled up to the full field size — cheap and
-    // seed-deterministic, with no visible hard block edges once the octaves are summed.
-    const grid = Array.from({ length: cells * cells }, () => rand());
-    for (let y = 0; y < size; y += 1) {
-      for (let x = 0; x < size; x += 1) {
-        const gx = (x / size) * cells;
-        const gy = (y / size) * cells;
-        const x0 = Math.floor(gx) % cells;
-        const y0 = Math.floor(gy) % cells;
-        const x1 = (x0 + 1) % cells;
-        const y1 = (y0 + 1) % cells;
-        const fx = gx - Math.floor(gx);
-        const fy = gy - Math.floor(gy);
-        const v00 = grid[y0 * cells + x0];
-        const v10 = grid[y0 * cells + x1];
-        const v01 = grid[y1 * cells + x0];
-        const v11 = grid[y1 * cells + x1];
-        const top = v00 + (v10 - v00) * fx;
-        const bottom = v01 + (v11 - v01) * fx;
-        field[y * size + x] += (top + (bottom - top) * fy) * weight;
-      }
-    }
-  }
-
-  // Normalise to [0, 1] so downstream consumers can rely on the range regardless of octave weights.
-  let min = Infinity;
-  let max = -Infinity;
-  for (const v of field) {
-    if (v < min) min = v;
-    if (v > max) max = v;
-  }
-  const range = max - min || 1;
-  for (let i = 0; i < field.length; i += 1) field[i] = (field[i] - min) / range;
-  return field;
-}
 
 let cachedRoughnessTexture: THREE.Texture | null = null;
 let cachedNormalTexture: THREE.Texture | null = null;
@@ -103,10 +51,7 @@ export function getNoiseRoughnessTexture(): THREE.Texture {
   const ctx = canvas.getContext('2d')!;
   const image = ctx.createImageData(NOISE_SIZE, NOISE_SIZE);
   for (let i = 0; i < field.length; i += 1) {
-    // Compressed toward the middle of the 0-255 range: this is a MULTIPLIER on a material's own
-    // roughness scalar (three.js samples the green channel), not the roughness value itself — a
-    // gentle ±20% swing around 0.8, not a texture that swings from mirror to chalk.
-    const value = Math.round(160 + field[i] * 70);
+    const value = roughnessNoiseByte(field[i]);
     const idx = i * 4;
     image.data[idx] = value;
     image.data[idx + 1] = value;
@@ -145,18 +90,11 @@ export function getNoiseNormalTexture(): THREE.Texture {
     for (let x = 0; x < NOISE_SIZE; x += 1) {
       const dx = at(x + 1, y) - at(x - 1, y);
       const dy = at(x, y + 1) - at(x, y - 1);
-      // Standard tangent-space encoding: (nx, ny, nz) in [-1,1] -> [0,255]. `strength` keeps the
-      // perturbation gentle at the source too, on top of the even-gentler normalScale applied
-      // where this texture is actually used.
-      const strength = 1.4;
-      const nx = -dx * strength;
-      const ny = -dy * strength;
-      const nz = 1;
-      const len = Math.hypot(nx, ny, nz) || 1;
+      const { r, g, b } = normalByteFromGradient(dx, dy);
       const idx = (y * NOISE_SIZE + x) * 4;
-      image.data[idx] = Math.round(((nx / len) * 0.5 + 0.5) * 255);
-      image.data[idx + 1] = Math.round(((ny / len) * 0.5 + 0.5) * 255);
-      image.data[idx + 2] = Math.round(((nz / len) * 0.5 + 0.5) * 255);
+      image.data[idx] = r;
+      image.data[idx + 1] = g;
+      image.data[idx + 2] = b;
       image.data[idx + 3] = 255;
     }
   }

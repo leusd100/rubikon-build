@@ -662,6 +662,60 @@ function InvalidateOnChange({ scene }: { scene: ThreeSceneModel }) {
 }
 
 /**
+ * Phase 3F.1 — test-only render/compositor synchronisation, root-caused during Phase 3F's own
+ * visual-regression work: a screenshot taken immediately after `invalidate()` can capture a STALE
+ * browser-compositor frame even though the underlying WebGL framebuffer already holds the correct,
+ * newly-rendered pixels (confirmed directly via `gl.readPixels` under Playwright, which read the
+ * exact new value while `toHaveScreenshot()` on the same page kept matching the OLD baseline byte-
+ * for-byte). Screenshot APIs (Playwright's, and Chrome DevTools Protocol's `Page.captureScreenshot`
+ * underneath it) read from the compositor, not from WebGL's own drawing buffer — and a
+ * `frameloop="demand"` canvas that only repaints on `invalidate()` does not reliably trigger enough
+ * repaint/composite cycles on its own for the compositor to have caught up by the time a screenshot
+ * is requested right after.
+ *
+ * `invalidateAndWaitForFrame()` fixes exactly that ordering: it (1) waits for a genuine R3F render
+ * to actually happen (via `useFrame`, which frameloop="demand" only calls during a real triggered
+ * render — never a busy-poll), THEN (2) waits two further animation frames so the browser's own
+ * compositor has a chance to pick up the new canvas content before resolving. Nothing here adds a
+ * continuous render loop: outside of an explicit call, this component does no work at all.
+ *
+ * Test/dev only — `process.env.NODE_ENV === 'production'` skips mounting the global entirely, so
+ * this never ships as product-visible surface area. No renderer internals are exposed beyond the
+ * one method a screenshot test actually needs.
+ */
+function TestRenderSyncAPI() {
+  const invalidate = useThree((s) => s.invalidate);
+  const pendingRef = useRef<Array<() => void>>([]);
+
+  useFrame(() => {
+    if (pendingRef.current.length === 0) return;
+    const resolvers = pendingRef.current;
+    pendingRef.current = [];
+    for (const resolve of resolvers) resolve();
+  });
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const api = {
+      invalidateAndWaitForFrame: () =>
+        new Promise<void>((resolve) => {
+          pendingRef.current.push(() => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+          });
+          invalidate();
+        }),
+    };
+    const w = window as unknown as { __HANGAR_3D_TEST_API__?: typeof api };
+    w.__HANGAR_3D_TEST_API__ = api;
+    return () => {
+      delete w.__HANGAR_3D_TEST_API__;
+    };
+  }, [invalidate]);
+
+  return null;
+}
+
+/**
  * Phase 3C — applies the selected wall/roof colour presets (materialPresets.ts) to the SAME
  * cached material instances `sharedMaterial` already hands out, rather than creating new ones:
  * mutating `.color` in place preserves the shared-instance identity the build-up opacity drivers
@@ -803,6 +857,7 @@ export function ThreeHangarView({
     >
       <FitOrthographicCamera scene={scene} />
       <InvalidateOnChange scene={scene} />
+      <TestRenderSyncAPI />
       <SceneLighting scene={scene} shadows={shadows} shadowMapSize={shadowMapSize} />
       {/* Phase 3F: 'wall-profiled'/'roof-profiled' default colours are the same values the old
           bare 'wall'/'roof' keys used — both cladding-system variants of each share one default

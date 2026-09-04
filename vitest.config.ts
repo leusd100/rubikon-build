@@ -48,9 +48,28 @@ export default defineConfig({
       // behaviour — getDirection, getDirectionPage, createDirectionMetadata, webpSrcSet —
       // now lives in app/lib and is covered by real behavioural tests. Keep that boundary:
       // if a function needs writing, it belongs in app/lib, not next to the data it reads.
+      //
+      // proceduralTextures.ts (Phase 3F.1) is the newest instance of this same "needs a real
+      // browser, not jsdom" rule, just via a different DOM API: it calls
+      // `document.createElement('canvas').getContext('2d')`, which this repo's plain-node Vitest
+      // environment cannot provide without a canvas polyfill this project deliberately doesn't
+      // carry (identical reasoning to .tsx/hooks above — not a new exception, the same one).
+      // Critically, the actual algorithmic content (the PRNG, the noise field, the per-pixel
+      // byte-encoding formulas) was deliberately pulled OUT into noiseField.ts, a pure module with
+      // no canvas dependency at all — that file carries full, real unit tests and stays IN this
+      // metric. What's excluded here is only the thin remaining shell: canvas creation,
+      // `getContext('2d')`, and THREE.Texture/CanvasTexture wiring — verified live in-browser and
+      // by the Phase 3F/3F.1 visual-regression suite instead.
       // sonar-project.properties' coverage.exclusions mirrors this list exactly.
       include: ['app/**/*.ts'],
-      exclude: ['app/**/*.tsx', 'app/hooks/**', 'app/components/**/use*.ts', 'app/types/**', 'app/data/**'],
+      exclude: [
+        'app/**/*.tsx',
+        'app/hooks/**',
+        'app/components/**/use*.ts',
+        'app/types/**',
+        'app/data/**',
+        'app/components/configurator/three/proceduralTextures.ts',
+      ],
     },
   },
 });
