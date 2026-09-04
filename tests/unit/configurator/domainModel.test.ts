@@ -59,7 +59,24 @@ describe('deriveDomainModel', () => {
 
     // Envelope is split into walls/roof in Phase 3-0. The UI still offers one choice, so both
     // sides resolve to it — but the model can now express them independently.
-    expect(domain.envelope).toEqual({ walls: 'cold', roof: 'cold' });
+    expect(domain.envelope).toEqual({
+      walls: 'cold',
+      roof: 'cold',
+      // Phase 3D: cladding system, independent of the thermal choice above — see the same test's
+      // sibling below for that independence actually being exercised.
+      wallSystem: 'profiled-sheet',
+      roofSystem: 'profiled-sheet',
+    });
     expect(domain.gates).toBe(2);
+  });
+
+  it('Phase 3D: passes wall/roof cladding system and foundation type through independently of the thermal envelope', () => {
+    const domain = deriveDomainModel(
+      withState({ wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet', foundationType: 'isolated' }),
+    );
+
+    expect(domain.envelope.wallSystem).toBe('sandwich-panel');
+    expect(domain.envelope.roofSystem).toBe('profiled-sheet');
+    expect(domain.foundation).toEqual({ type: 'isolated' });
   });
 });
