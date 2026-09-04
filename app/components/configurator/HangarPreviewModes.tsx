@@ -129,7 +129,17 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
             // Mobile keeps the geometry identical and only lowers presentation density —
             // no separate mobile building model.
             shadows={!isMobile}
-            maxDpr={isMobile ? 1.5 : 2}
+            // Phase 3F §14 — the fullscreen quality tier. Same Canvas, same mount, same scene the
+            // whole time (`threeCanvas` above is one JSX subtree regardless of `isFullscreen`;
+            // `FullscreenPreviewFrame` only repositions it — see that component's own doc comment
+            // for why a second Canvas/WebGL context was explicitly rejected) — only these two
+            // presentation props change when the user asks for fullscreen, both already reactive
+            // props R3F/Three re-read on change rather than baking in at creation (see
+            // SceneLighting's own `ShadowMapResize`-equivalent effect for the shadow-map half of
+            // this). Mobile's own lower ceiling always wins over the fullscreen bump — a phone in
+            // fullscreen still has a phone GPU.
+            maxDpr={isMobile ? 1.5 : isFullscreen ? 3 : 2}
+            shadowMapSize={isFullscreen ? 2048 : 1024}
             wallColor={wallPresetColor(wallPreset)}
             roofColor={roofPresetColor(roofPreset)}
             showScaleFigure={showScaleFigure}

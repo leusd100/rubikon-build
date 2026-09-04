@@ -272,6 +272,17 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Phase 3F: the 3D view's own studio backdrop (materials.ts's STUDIO_BACKGROUND, #0e0f11) is
+   deliberately darker than --surface-dark (#141416) — see that constant's own doc comment for why.
+   Left unmatched, the 24px padding ring above would show the lighter site-wide token around a
+   darker WebGL canvas, a visible seam this scoped override (3D mode only — Technical view's own
+   surface keeps --surface-dark untouched) exists to close. Kept as a literal, not a shared build
+   constant, because one side is TypeScript/WebGL and the other a static stylesheet — see
+   STUDIO_BACKGROUND's own comment for the "keep these two equal by hand" pairing. */
+.hc-preview-surface:has(.hc-preview-canvas) {
+  background: #0e0f11;
+}
+
 /* Mode switch above the preview. Sits in the preview pane's flex flow, so the surface below it
    keeps its own size and switching modes never shifts the layout. Phase 3C's secondary actions
    (currently just "Розгорнути") join the same right-packed group, appearing before the mode
