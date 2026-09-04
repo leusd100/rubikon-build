@@ -138,17 +138,6 @@ function findPrimitives<K extends ScenePrimitive['kind']>(
 }
 
 /**
- * Slab silhouette: the top face plus the two side faces the camera can see, so the foundation
- * still reads as a slab with thickness rather than a flat outline. Derived from the slab's real
- * corners — the thickness extrusion direction is the only rendering choice here.
- */
-function foundationSilhouette(corners: Vec3[], thicknessM: number): Point[] {
-  const [fl, fr, br] = [corners[0], corners[1], corners[2]];
-  const drop = (v: Vec3): Vec3 => ({ x: v.x, y: v.y - thicknessM, z: v.z });
-  return projectAll([fl, fr, br, drop(br), drop(fr), drop(fl)]);
-}
-
-/**
  * Pure: a TechnicalSceneModel in, an isometric scene of plain {x,y} points out. No React, no
  * DOM — `HangarPreview` is the only thing that turns this into actual SVG markup.
  */
@@ -158,10 +147,13 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const terrainPrimitive = findPrimitives(scene, 'terrain-plane')[0];
   const rawTerrain = terrainPrimitive ? projectAll(terrainPrimitive.corners) : [];
 
+  // Flat, deliberately — an earlier version drew the slab as a small extruded box (top face plus
+  // the two visible side faces), which read as a "parallelepiped the hangar stands on" rather
+  // than a foundation line. The technical view is a line drawing of the footprint, not a 3D
+  // rendering — the 3D view (threeSceneModel.ts / ThreeHangarView) is where the slab's real
+  // thickness (ParametricBuildingModel.slab.thicknessM) actually belongs, and still shows it.
   const slabPrimitive = findPrimitives(scene, 'foundation-slab')[0];
-  const foundationPoints = slabPrimitive
-    ? foundationSilhouette(slabPrimitive.corners, slabPrimitive.thicknessM)
-    : [];
+  const foundationPoints = slabPrimitive ? projectAll(slabPrimitive.corners) : [];
   const foundation = { points: foundationPoints, visible: slabPrimitive?.visible ?? false };
 
   const asLine = (p: { a: Vec3; b: Vec3; visible: boolean }): FrameLine => ({
