@@ -139,21 +139,23 @@ function StaticStrut({ strut, castShadow }: { strut: StrutMesh; castShadow: bool
 /**
  * Phase 3D — one schematic isolated footing: a buried pad plus a short pedestal stub, both simple
  * axis-aligned boxes (no oblique-quad basis math needed, unlike `Panel`/`EnvelopePanel` — a
- * footing never tilts). Shares `sharedMaterial('slab')` with the continuous-slab representation —
- * same concrete, different shape — which is also why this needs no material-opacity driver of its
- * own: the existing `<MaterialOpacityDriver materialKey="slab" layer={foundation} />` already
- * mutates that one shared instance, and every mesh reading it (this one included) animates in
- * lockstep for free. That is the whole "reuse the Phase 2/3B lifecycle architecture" requirement
- * satisfied by construction, not by adding a second driver that happens to agree with the first.
+ * footing never tilts). The pad shares `sharedMaterial('slab')` with the continuous-slab
+ * representation — same concrete, buried, never trying to stand out. The pedestal (Phase 3D.1,
+ * item 6: readability via material/shadow/contrast, explicitly NOT by enlarging it again) wears
+ * its own `footing` material instead — a half-step lighter, so the one part of a footing that is
+ * actually visible above grade reads as a distinct object against the ground/shadow rather than
+ * blending into either. Both materials have their own driver on the SAME `foundation` layer (see
+ * this file's own driver block), so pad and pedestal still fade in lockstep despite the split.
  */
 function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: boolean }) {
-  const material = sharedMaterial(footing.material);
+  const padMaterial = sharedMaterial(footing.material);
+  const pedestalMaterial = sharedMaterial('footing');
   return (
     <group position={[footing.xM, 0, footing.zM]}>
       {/* Pad: centred on the column, buried below grade. */}
       <mesh
         geometry={UNIT_BOX}
-        material={material}
+        material={padMaterial}
         position={[0, -footing.padThicknessM / 2, 0]}
         scale={[footing.padWidthM, footing.padThicknessM, footing.padWidthM]}
         receiveShadow
@@ -161,7 +163,7 @@ function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: bo
       {/* Pedestal: the short stub the column base actually sits on, rising above grade. */}
       <mesh
         geometry={UNIT_BOX}
-        material={material}
+        material={pedestalMaterial}
         position={[0, footing.pedestalHeightM / 2, 0]}
         scale={[footing.pedestalWidthM, footing.pedestalHeightM, footing.pedestalWidthM]}
         castShadow={castShadow}
@@ -733,10 +735,19 @@ export function ThreeHangarView({
           useBuildProgress.ts), so a layer's fade starts the instant its phase changes without
           waiting for a remount. */}
       <MaterialOpacityDriver materialKey="slab" layer={foundation} />
+      {/* Phase 3D.1: the isolated footing's pedestal now wears its own material (`footing`, item 6
+          — see materials.ts) rather than reusing `slab`, so it needs its own driver on the SAME
+          `foundation` layer to keep fading in lockstep with the pad beside it and the slab it
+          alternates with — two drivers on one layer, not a second animation system. */}
+      <MaterialOpacityDriver materialKey="footing" layer={foundation} />
       <MaterialOpacityDriver materialKey="frame-secondary" layer={girts} />
       <MaterialOpacityDriver materialKey="wall" layer={walls} />
       <MaterialOpacityDriver materialKey="roof" layer={roof} />
       <MaterialOpacityDriver materialKey="gate-recess" layer={gateLayer} />
+      {/* Phase 3D.1: the gate leaf (item 4) wears its own `gate` material, sitting in front of
+          `gate-recess` on the very same `gateLayer` — without this it would pop in at full opacity
+          instead of fading in with the recess it sits in front of. */}
+      <MaterialOpacityDriver materialKey="gate" layer={gateLayer} />
 
       {/* Shadow catcher, not a floor. `shadowMaterial` is invisible except where something casts
           onto it, which is exactly what this needs: the building has to read as an object standing

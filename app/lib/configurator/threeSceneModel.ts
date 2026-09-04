@@ -28,6 +28,7 @@ export type MaterialKey =
   | 'wall'
   | 'roof'
   | 'slab'
+  | 'footing'
   | 'gate'
   | 'gate-recess'
   | 'ground';
