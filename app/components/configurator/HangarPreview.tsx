@@ -281,6 +281,26 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
             style={transitionStyle(columns, staggerDelayMs('columns', index, scene.frame.columns.length))}
           />
         ))}
+        {/* Phase 3E — the centre support line. Empty array unless structuralScheme is
+            centerSupport (see InternalColumn's own doc comment), so no extra gating needed here —
+            same SAME `columns` layer/phase as the external columns above (brief §14's own
+            "columns arrive" grouping). */}
+        {scene.frame.internalColumns.map((line, index) => (
+          <FrameLineEl
+            key={`internal-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${columns.phase}`}
+            style={transitionStyle(columns, staggerDelayMs('columns', index, scene.frame.internalColumns.length))}
+          />
+        ))}
+        {scene.frame.internalColumnProps.map((line, index) => (
+          <FrameLineEl
+            key={`internal-prop-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${columns.phase}`}
+            style={transitionStyle(columns, staggerDelayMs('columns', index, scene.frame.internalColumnProps.length))}
+          />
+        ))}
       </g>
 
       <g className="hc-layer hc-rafters">
@@ -290,6 +310,28 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
             line={line}
             className={`hc-buildlayer hc-phase-${rafters.phase}`}
             style={transitionStyle(rafters, staggerDelayMs('rafters', index, scene.frame.rafters.length))}
+          />
+        ))}
+        {/* Phase 3E — the truss's own bottom chord + web. `building.trusses` (and therefore this
+            array) is ALWAYS populated regardless of roofStructure — same "geometry is a fact"
+            rule TrussWebs itself follows — so the `visible` flag technicalSceneModel.ts already
+            computed (frame scope AND roofStructure === 'truss') is what actually gates these,
+            not omission. Same `rafters` layer/phase as the top chord above — one truss, one
+            "roof framing arrives" moment. */}
+        {domain.structural.roofStructure === 'truss' && scene.frame.trussChords.map((line, index) => (
+          <FrameLineEl
+            key={`truss-chord-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${rafters.phase}`}
+            style={transitionStyle(rafters, staggerDelayMs('rafters', index, scene.frame.trussChords.length))}
+          />
+        ))}
+        {domain.structural.roofStructure === 'truss' && scene.frame.trussWebs.map((line, index) => (
+          <FrameLineEl
+            key={`truss-web-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${rafters.phase} hc-truss-web`}
+            style={transitionStyle(rafters, staggerDelayMs('rafters', index, scene.frame.trussWebs.length))}
           />
         ))}
       </g>

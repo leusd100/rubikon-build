@@ -344,3 +344,42 @@ describe('dimension label framing', () => {
     expect(dims.ridge.text).not.toContain('~');
   });
 });
+
+describe('Phase 3E structural line projections', () => {
+  it('projects exactly as many internal-column lines as the technical scene has primitives (1:1, no drops/dupes)', () => {
+    const scene = buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, structuralScheme: 'centerSupport' }));
+    const projected = projectIsometricScene(scene);
+    const primitiveCount = scene.primitives.filter((p) => p.kind === 'internal-column').length;
+    expect(projected.frame.internalColumns).toHaveLength(primitiveCount);
+    expect(primitiveCount).toBeGreaterThan(0);
+  });
+
+  it('every projected structural line is a well-formed 2-point line', () => {
+    const scene = buildTechnicalScene(deriveDomainModel({
+      ...DEFAULT_CONFIGURATOR_STATE,
+      structuralScheme: 'centerSupport',
+      roofStructure: 'truss',
+    }));
+    const projected = projectIsometricScene(scene);
+    for (const group of [projected.frame.internalColumns, projected.frame.internalColumnProps, projected.frame.trussChords, projected.frame.trussWebs]) {
+      for (const line of group) {
+        expect(line.points).toHaveLength(2);
+        for (const p of line.points) {
+          expect(Number.isFinite(p.x)).toBe(true);
+          expect(Number.isFinite(p.y)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('truss chord/web visibility carries through the projection unchanged', () => {
+    const portalScene = buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, roofStructure: 'portalRafter' }));
+    const portalProjected = projectIsometricScene(portalScene);
+    expect(portalProjected.frame.trussChords.every((l) => !l.visible)).toBe(true);
+
+    const trussScene = buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, roofStructure: 'truss' }));
+    const trussProjected = projectIsometricScene(trussScene);
+    expect(trussProjected.frame.trussChords.every((l) => l.visible)).toBe(true);
+    expect(trussProjected.frame.trussWebs.every((l) => l.visible)).toBe(true);
+  });
+});

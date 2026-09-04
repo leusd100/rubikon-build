@@ -738,6 +738,16 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* Phase 3E — truss web members: real steel (not the much-quieter secondary treatment purlins
+   above get — brief §8 needs these "clearly perceived" for a truss to read as a truss at all),
+   but visibly thinner than the chords/columns they zigzag between, matching the same primary-
+   but-lighter distinction the 3D view's own TRUSS_WEB_SECTION_M makes. Rafters' own `line`
+   selector already gives internal-column/truss-chord lines the SAME weight as columns/rafters —
+   for free, by sharing their `<g>` — so only this one override is needed. */
+.hc-rafters line.hc-truss-web {
+  stroke-width: 1;
+}
+
 /* ---------- Build-up layers ----------
    Every scope-driven layer (foundation/columns/rafters/purlins/walls/roof/gates) shares this one
    set of rules — no per-layer animation system, only the phase class and the inline

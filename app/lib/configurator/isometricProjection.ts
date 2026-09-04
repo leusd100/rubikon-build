@@ -60,6 +60,19 @@ export type FrameLines = {
   rafters: FrameLine[];
   purlins: FrameLine[];
   ridge: FrameLine | null;
+  /** Phase 3E — the centre support line: empty unless structuralScheme is centerSupport (mirrors
+   *  `internal-column`'s own doc comment in technicalSceneModel.ts). Kept as its own field rather
+   *  than merged into `columns`, so a renderer that wants to distinguish it visually (or simply
+   *  reuse the exact same column styling) can choose either without re-deriving which is which. */
+  internalColumns: FrameLine[];
+  /** The short king-post prop from an internal column's top to the ridge — portalRafter/
+   *  engineeringDecision only, see InternalColumn.ridgeProp's own doc comment. */
+  internalColumnProps: FrameLine[];
+  /** Phase 3E — the truss's own bottom chord + web. ALWAYS populated (one per frame station,
+   *  every panel) regardless of roofStructure — same "geometry is a fact" rule TrussWebs itself
+   *  follows — with `visible: false` on every entry unless roofStructure is 'truss'. */
+  trussChords: FrameLine[];
+  trussWebs: FrameLine[];
 };
 
 export type DimensionGuide = {
@@ -184,6 +197,10 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const purlins = findPrimitives(scene, 'frame-purlin').map(asLine);
   const ridgePrimitive = findPrimitives(scene, 'ridge-line')[0];
   const ridge = ridgePrimitive ? asLine(ridgePrimitive) : null;
+  const internalColumns = findPrimitives(scene, 'internal-column').map(asLine);
+  const internalColumnProps = findPrimitives(scene, 'internal-column-prop').map(asLine);
+  const trussChords = findPrimitives(scene, 'truss-chord').map(asLine);
+  const trussWebs = findPrimitives(scene, 'truss-web').map(asLine);
 
   const wallSegments: ProjectedSegment[] = findPrimitives(scene, 'wall-segment').map((s) => ({
     points: projectAll(s.corners),
@@ -310,7 +327,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
     terrain,
     foundation,
     footings,
-    frame: { columns, rafters, purlins, ridge },
+    frame: { columns, rafters, purlins, ridge, internalColumns, internalColumnProps, trussChords, trussWebs },
     wallSegments,
     gableEnds,
     roofSegments,

@@ -5,6 +5,7 @@ import {
   type ScenePrimitive,
 } from '../../../app/lib/configurator/technicalSceneModel';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
+import { buildParametricModel } from '../../../app/lib/configurator/parametricModel';
 import {
   DEFAULT_CONFIGURATOR_STATE,
   DIMENSION_BOUNDS,
@@ -155,5 +156,47 @@ describe('buildTechnicalScene', () => {
     expect(firstOf('wall-segment')).toBeLessThan(firstOf('roof-segment'));
     expect(firstOf('roof-segment')).toBeLessThan(firstOf('opening-cutout'));
     expect(firstOf('opening-cutout')).toBeLessThan(firstOf('dimension-guide'));
+  });
+});
+
+describe('Phase 3E structural primitives — parity with ParametricBuildingModel', () => {
+  it('internal-column primitives are absent for clearSpan, present (gate-conflict-adjusted) for centerSupport', () => {
+    const clearSpan = sceneFor({ structuralScheme: 'clearSpan' });
+    expect(kinds(clearSpan, 'internal-column')).toHaveLength(0);
+
+    const centerSupport = sceneFor({ structuralScheme: 'centerSupport' });
+    const building = buildParametricModel(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, structuralScheme: 'centerSupport' }));
+    expect(kinds(centerSupport, 'internal-column')).toHaveLength(building.internalColumns.length);
+    expect(building.internalColumns.length).toBeGreaterThan(0);
+  });
+
+  it('internal-column-prop exists per column for portalRafter, is absent for truss', () => {
+    const portal = sceneFor({ structuralScheme: 'centerSupport', roofStructure: 'portalRafter' });
+    const truss = sceneFor({ structuralScheme: 'centerSupport', roofStructure: 'truss' });
+    expect(kinds(portal, 'internal-column-prop').length).toBe(kinds(portal, 'internal-column').length);
+    expect(kinds(truss, 'internal-column-prop')).toHaveLength(0);
+  });
+
+  it('internal columns respect scope.frame the same way external columns do', () => {
+    const scene = sceneFor({ structuralScheme: 'centerSupport', scope: ['foundation', 'walls', 'roof'] });
+    expect(kinds(scene, 'internal-column').every((p) => !p.visible)).toBe(true);
+    expect(kinds(scene, 'frame-column').every((p) => !p.visible)).toBe(true);
+  });
+
+  it('truss-chord/truss-web are ALWAYS computed (one chord per frame station) regardless of roofStructure — visibility, not omission, gates them', () => {
+    for (const roofStructure of ['portalRafter', 'truss', 'engineeringDecision'] as const) {
+      const scene = sceneFor({ roofStructure });
+      const building = buildParametricModel(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, roofStructure }));
+      expect(kinds(scene, 'truss-chord')).toHaveLength(building.frames.length);
+      const shouldBeVisible = roofStructure === 'truss';
+      expect(kinds(scene, 'truss-chord').every((p) => p.visible === shouldBeVisible)).toBe(true);
+      expect(kinds(scene, 'truss-web').every((p) => p.visible === shouldBeVisible)).toBe(true);
+    }
+  });
+
+  it('truss visibility also respects scope.frame — off scope means invisible even in truss mode', () => {
+    const scene = sceneFor({ roofStructure: 'truss', scope: ['foundation', 'walls', 'roof'] });
+    expect(kinds(scene, 'truss-chord').every((p) => !p.visible)).toBe(true);
+    expect(kinds(scene, 'truss-web').every((p) => !p.visible)).toBe(true);
   });
 });
