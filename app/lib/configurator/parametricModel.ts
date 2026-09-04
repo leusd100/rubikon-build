@@ -118,6 +118,8 @@ export type ParametricBuildingModel = {
     halfSpanM: number;
     /** Vertical rise from eave to ridge. `ridgeM - eaveM`, kept explicit. */
     riseM: number;
+    /** How far the roof plane cantilevers past the wall face, at eave height, on the long sides. */
+    overhangM: number;
   };
   bays: { count: number; stationsM: number[] };
   frames: PortalFrame[];
@@ -188,8 +190,20 @@ export const ROOF_PITCH_MAX_DEG = 20;
 /** Ridge height is adjusted in whole decimetres — finer than that is false precision here. */
 export const RIDGE_HEIGHT_STEP_M = 0.1;
 
-const SLAB_OVERHANG_M = 0.35;
+// Product review, iterated live rather than picked once: the original 0.35 m slab overhang and
+// 0 m roof overhang both read as too subtle to see at a glance — a hangar's foundation and eave
+// overhang are supposed to be a visible "the roof sheds water clear of the wall, the slab sits
+// clear of the drip line" cue, not a detail you have to zoom in to find. First pass landed on
+// 1.0–1.5 m slab / 0.7 m roof; current values push both further after a second live look. Treat
+// these two constants as the place a further adjustment lands, not values to rederive — they are
+// a design call, not something computed from the building's own dimensions.
+const SLAB_OVERHANG_M = 2;
 const SLAB_THICKNESS_M = 0.3;
+/** How far the roof plane cantilevers past the wall face, at eave height, on the long sides.
+ *  Zero before this change — the roof plane used to stop exactly flush with the wall. See the
+ *  slab overhang comment above — same iterative live-comparison process, same "design call"
+ *  caveat. */
+const ROOF_OVERHANG_M = 1.5;
 
 /** Side-wall girt heights, as a fraction of eave height. Stylised "secondary
  *  structure exists here", matching the previous model's two levels. */
@@ -320,13 +334,25 @@ function buildRoofSegments(
   eaveM: number,
   ridgeM: number,
   stationsM: number[],
+  pitchDeg: number,
+  overhangM: number,
 ): RoofSegment[] {
   const segmentCount = stationsM.length - 1;
   const midX = widthM / 2;
   const segments: RoofSegment[] = [];
 
+  // The overhang is the SAME roof plane continued past the wall, not a separate flat lip kinked on
+  // at eave height — a real rafter tail keeps the same slope past the wall face. So the outer edge
+  // sits `overhangM` further out in X, and correspondingly lower in Y by however much that slope
+  // drops over that run; the eave point itself (x = wall face, y = eaveM) is not a corner of the
+  // quad any more, but it stays exactly on the line between the outer tip and the ridge by
+  // construction, so the wall still reads as meeting the underside of the roof at the same height
+  // as before.
+  const overhangDropM = overhangM * Math.tan(pitchDeg * DEG);
+  const outerEaveYM = round(eaveM - overhangDropM);
+
   for (const slope of ['left', 'right'] as const) {
-    const eaveX = slope === 'left' ? 0 : widthM;
+    const outerX = slope === 'left' ? -overhangM : widthM + overhangM;
     for (let i = 0; i < segmentCount; i += 1) {
       const z0 = stationsM[i];
       const z1 = stationsM[i + 1];
@@ -335,8 +361,8 @@ function buildRoofSegments(
         index: i,
         segmentCount,
         corners: quad(
-          v3(eaveX, eaveM, z0),
-          v3(eaveX, eaveM, z1),
+          v3(outerX, outerEaveYM, z0),
+          v3(outerX, outerEaveYM, z1),
           v3(midX, ridgeM, z1),
           v3(midX, ridgeM, z0),
         ),
@@ -454,12 +480,13 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
       pitchDeg,
       halfSpanM: round(widthM / 2),
       riseM: round(ridgeM - eaveHeightM),
+      overhangM: ROOF_OVERHANG_M,
     },
     bays: { count, stationsM },
     frames: buildFrames(widthM, eaveHeightM, ridgeM, stationsM),
     envelope: {
       wallSegments: buildWallSegments(widthM, lengthM, eaveHeightM, stationsM),
-      roofSegments: buildRoofSegments(widthM, eaveHeightM, ridgeM, stationsM),
+      roofSegments: buildRoofSegments(widthM, eaveHeightM, ridgeM, stationsM, pitchDeg, ROOF_OVERHANG_M),
       gableEnds: buildGableEnds(widthM, lengthM, eaveHeightM, ridgeM),
       walls: domain.envelope.walls,
       roofEnvelope: domain.envelope.roof,

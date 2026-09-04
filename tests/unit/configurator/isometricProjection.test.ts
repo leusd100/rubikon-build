@@ -75,11 +75,14 @@ describe('project', () => {
 });
 
 describe('projectIsometricScene', () => {
-  it('always returns 6 foundation points, `visible` following scope.foundation (never omitted)', () => {
+  it('always returns the 4 flat footprint points, `visible` following scope.foundation (never omitted)', () => {
+    // Flat, deliberately — the technical view draws the slab as a footprint line, not an extruded
+    // box (see isometricProjection.ts's own comment at the call site this exercises). The 3D
+    // view is where the slab's real thickness is actually rendered.
     const on = projectFor({ scope: ['foundation'] });
     const off = projectFor({ scope: ['frame'] });
 
-    expect(on.foundation.points).toHaveLength(6);
+    expect(on.foundation.points).toHaveLength(4);
     expect(on.foundation.visible).toBe(true);
     expect(off.foundation.points).toEqual(on.foundation.points);
     expect(off.foundation.visible).toBe(false);

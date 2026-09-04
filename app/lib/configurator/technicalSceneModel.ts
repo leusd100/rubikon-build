@@ -28,8 +28,10 @@ export type ScenePrimitive =
   | { kind: 'terrain-plane'; corners: Poly3 }
   // `visible` (not omission) on purpose: the slab's footprint always participates in scene
   // bounds/framing. Omitting it when out of scope tightened the viewBox — a real regression
-  // this pattern exists to prevent.
-  | { kind: 'foundation-slab'; visible: boolean; corners: Poly3; thicknessM: number }
+  // this pattern exists to prevent. Flat by design — no `thicknessM` here, unlike
+  // ParametricBuildingModel.slab: the technical view draws the footprint as a line drawing, not
+  // an extruded box (see isometricProjection.ts's own comment at the one place this is drawn).
+  | { kind: 'foundation-slab'; visible: boolean; corners: Poly3 }
   // Frame members as centre-lines. Section thickness is renderer styling (a stroke width here,
   // a box in 3D) — deliberately not modelled as geometry: this is object form, not a member schedule.
   | { kind: 'frame-column'; visible: boolean; face: 'left' | 'right'; index: number; a: Vec3; b: Vec3 }
@@ -107,7 +109,6 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
     kind: 'foundation-slab',
     visible: domain.scope.foundation,
     corners: building.slab.corners,
-    thicknessM: building.slab.thicknessM,
   });
 
   const frameVisible = domain.scope.frame;
