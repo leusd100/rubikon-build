@@ -123,7 +123,7 @@ test.describe('hangar configurator POC', () => {
     await expect(width).toHaveValue('999');
 
     await width.blur();
-    await expect(width).toHaveValue('60');
+    await expect(width).toHaveValue('50');
   });
 
   test('abandoning an empty box restores the previous value rather than the minimum', async ({ page }) => {
@@ -170,11 +170,11 @@ test.describe('hangar configurator POC', () => {
     await expect(ridge).toHaveValue('12,3');
 
     // A wider span raises the minimum ridge, so the stored value must be lifted with it.
-    await page.locator('#hc-dimension-width').fill('60');
+    await page.locator('#hc-dimension-width').fill('50');
     await page.locator('#hc-dimension-width').blur();
 
     const value = Number((await ridge.inputValue()).replace(',', '.'));
-    expect(value).toBeGreaterThanOrEqual(8 + 30 * Math.tan((5 * Math.PI) / 180));
+    expect(value).toBeGreaterThanOrEqual(8 + 25 * Math.tan((5 * Math.PI) / 180));
   });
 
   test('gate count controls how many gate shapes render and what the summary says', async ({ page }) => {

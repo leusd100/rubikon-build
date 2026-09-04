@@ -26,6 +26,10 @@ export function ConfiguratorSummary({ domain }: { domain: HangarDomainModel }) {
             <dd>{summary.claddingSystemLabel}</dd>
           </div>
           <div>
+            <dt>Попередня конструктивна схема</dt>
+            <dd>{summary.structuralVisualizationLabel}</dd>
+          </div>
+          <div>
             <dt>Основа</dt>
             <dd>{summary.foundationTypeLabel}</dd>
           </div>

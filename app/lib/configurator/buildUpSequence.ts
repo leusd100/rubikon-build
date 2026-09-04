@@ -140,10 +140,21 @@ export function buildLayerForPrimitive(primitive: ScenePrimitive): BuildLayer | 
     case 'footing-marker':
       return 'foundation';
     case 'frame-column':
+    // Phase 3E: the centre support line arrives with the external columns — one "columns arrive"
+    // moment, not a second one (brief §14's own "prefer grouping over exploding the FSM").
+    case 'internal-column':
+    case 'internal-column-prop':
       return 'columns';
     case 'frame-rafter':
+    // Phase 3E: a truss's bottom chord + web arrive with its own top chord (frame-rafter) — one
+    // "roof framing arrives" moment, matching how a real truss is erected as one assembled unit.
+    case 'truss-chord':
+    case 'truss-web':
       return 'rafters';
     case 'frame-purlin':
+    // Phase 3E: wall bracing shares the girts' own layer — both secondary steel, both always
+    // present, neither a user control.
+    case 'wall-brace':
       return 'purlins';
     case 'wall-segment':
     case 'gable-end':

@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  PITCH_MAX_WIDTH_M,
+  PITCH_MIN_WIDTH_M,
   ROOF_PITCH_MAX_DEG,
   ROOF_PITCH_MIN_DEG,
+  STRUCTURAL_VISUALIZATION_THRESHOLDS,
   buildParametricModel,
   clampRidgeHeightM,
   defaultRidgeHeightM,
+  deriveStructuralVisualization,
   frameBayCount,
   pitchDegForRidge,
   ridgeHeightM,
@@ -18,6 +22,8 @@ import {
   DEFAULT_CONFIGURATOR_STATE,
   DIMENSION_BOUNDS,
   type ConfiguratorState,
+  type RoofStructure,
+  type StructuralScheme,
 } from '../../../app/lib/configurator/types';
 
 // Behavioural numeric assertions, deliberately not a giant JSON snapshot: a snapshot would go
@@ -35,6 +41,31 @@ function modelFor(overrides: Partial<ConfiguratorState['dimensions']> = {}, rest
     dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, ...overrides },
   };
   return buildParametricModel(deriveDomainModel(state));
+}
+
+/**
+ * Phase 3E.1: `structuralScheme`/`roofStructure` are no longer part of `ConfiguratorState` — they
+ * are derived from width (see `deriveStructuralVisualization`). The structural-geometry tests
+ * below (internal columns, internal-column footings, truss webs) still need to exercise the FULL
+ * matrix the underlying geometry functions support, INCLUDING `portalRafter` + `centerSupport`,
+ * which the width-only derivation itself never produces — see `deriveStructuralVisualization`'s
+ * own doc comment on why that combination is intentionally unreachable through it, and this
+ * module's own header on "keep the implementation reusable internally". This helper builds the
+ * `HangarDomainModel` directly and overrides `structural` after deriving it from `state`, the same
+ * "test the geometry layer independently of the derivation" pattern the rest of this suite already
+ * uses for other domain facts.
+ */
+function modelForStructural(
+  structural: { scheme: StructuralScheme; roofStructure: RoofStructure },
+  overrides: Partial<ConfiguratorState['dimensions']> = {},
+  rest: Partial<ConfiguratorState> = {},
+) {
+  const state: ConfiguratorState = {
+    ...DEFAULT_CONFIGURATOR_STATE,
+    ...rest,
+    dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, ...overrides },
+  };
+  return buildParametricModel({ ...deriveDomainModel(state), structural });
 }
 
 function allPoints(m: ParametricBuildingModel): Vec3[] {
@@ -156,9 +187,13 @@ describe('ridge derivation', () => {
     expect(defaultRidgeHeightM(24, 8)).toBe(DEFAULT_CONFIGURATOR_STATE.ridgeHeightM);
   });
 
-  it('clamps the pitch rule outside the supported width range instead of extrapolating', () => {
-    expect(roofPitchDegForWidth(W.min - 20)).toBe(roofPitchDegForWidth(W.min));
-    expect(roofPitchDegForWidth(W.max + 20)).toBe(roofPitchDegForWidth(W.max));
+  it('clamps the pitch rule outside its own curve range instead of extrapolating', () => {
+    // Phase 3E.1: asserted against the pitch curve's OWN anchors (PITCH_MIN/MAX_WIDTH_M), not
+    // DIMENSION_BOUNDS.width — the two were deliberately decoupled when the public width max
+    // dropped to 50 while this curve's own upper anchor stayed at 60 (see
+    // roofPitchDegForWidth's own doc comment for why).
+    expect(roofPitchDegForWidth(PITCH_MIN_WIDTH_M - 20)).toBe(roofPitchDegForWidth(PITCH_MIN_WIDTH_M));
+    expect(roofPitchDegForWidth(PITCH_MAX_WIDTH_M + 20)).toBe(roofPitchDegForWidth(PITCH_MAX_WIDTH_M));
   });
 });
 
@@ -348,7 +383,11 @@ describe('roof overhang', () => {
 describe('footings (Phase 3D — isolated foundation)', () => {
   it('always exists — one pair per portal frame — regardless of foundation type, same "geometry is a fact" rule the slab already follows', () => {
     const m = modelFor({ width: 24, length: 60, height: 8 });
-    expect(m.footings).toHaveLength(m.frames.length * 2);
+    // Phase 3E.1: filtered to the external pair this test is actually about — at 24 m width the
+    // derivation now also produces centre footings (deriveStructuralVisualization derives
+    // centerSupport at width >= 24), which are real and correct but not what "one pair per portal
+    // frame" describes; see the dedicated internal-column-footings describe block above for those.
+    expect(m.footings.filter((f) => f.side !== 'center')).toHaveLength(m.frames.length * 2);
   });
 
   it('sits exactly at each column base point, never offset or hand-placed', () => {
@@ -455,5 +494,297 @@ describe('cross-renderer contract', () => {
       expect(frame.leftRafter.b.y).toBe(m.heights.ridgeM);
       expect(frame.rightRafter.b.y).toBe(m.heights.ridgeM);
     }
+  });
+});
+
+describe('deriveStructuralVisualization (Phase 3E.1 — width-based auto-derivation, brief §4-5)', () => {
+  it('10 <= width < 18: portal frame, clear span', () => {
+    for (const width of [DIMENSION_BOUNDS.width.min, 12, 17.99]) {
+      expect(deriveStructuralVisualization(width)).toEqual({ scheme: 'clearSpan', roofStructure: 'portalRafter' });
+    }
+  });
+
+  it('18 <= width < 24: truss, still clear span', () => {
+    for (const width of [18, 20, 23.99]) {
+      expect(deriveStructuralVisualization(width)).toEqual({ scheme: 'clearSpan', roofStructure: 'truss' });
+    }
+  });
+
+  it('24 <= width <= 50: truss, centre support', () => {
+    for (const width of [24, 36, DIMENSION_BOUNDS.width.max]) {
+      expect(deriveStructuralVisualization(width)).toEqual({ scheme: 'centerSupport', roofStructure: 'truss' });
+    }
+  });
+
+  it('the 17.99 / 18.00 boundary flips roofStructure only, not scheme', () => {
+    expect(deriveStructuralVisualization(17.99)).toEqual({ scheme: 'clearSpan', roofStructure: 'portalRafter' });
+    expect(deriveStructuralVisualization(18)).toEqual({ scheme: 'clearSpan', roofStructure: 'truss' });
+  });
+
+  it('the 23.99 / 24.00 boundary flips scheme only, not roofStructure', () => {
+    expect(deriveStructuralVisualization(23.99)).toEqual({ scheme: 'clearSpan', roofStructure: 'truss' });
+    expect(deriveStructuralVisualization(24)).toEqual({ scheme: 'centerSupport', roofStructure: 'truss' });
+  });
+
+  it('is a pure function of width — deterministic, no hidden state', () => {
+    expect(deriveStructuralVisualization(31)).toEqual(deriveStructuralVisualization(31));
+  });
+
+  it('never produces portalRafter + centerSupport — CENTER_SUPPORT_FROM_WIDTH_M is always >= TRUSS_FROM_WIDTH_M', () => {
+    expect(STRUCTURAL_VISUALIZATION_THRESHOLDS.CENTER_SUPPORT_FROM_WIDTH_M)
+      .toBeGreaterThanOrEqual(STRUCTURAL_VISUALIZATION_THRESHOLDS.TRUSS_FROM_WIDTH_M);
+    for (let width = DIMENSION_BOUNDS.width.min; width <= DIMENSION_BOUNDS.width.max; width += 0.5) {
+      const { scheme, roofStructure } = deriveStructuralVisualization(width);
+      expect(scheme === 'centerSupport' && roofStructure === 'portalRafter').toBe(false);
+    }
+  });
+});
+
+describe('internal columns — centreline support (Phase 3E, brief §3-4)', () => {
+  it('clearSpan generates zero internal columns', () => {
+    expect(modelForStructural({ scheme: 'clearSpan', roofStructure: 'portalRafter' }).internalColumns).toHaveLength(0);
+    expect(modelForStructural({ scheme: 'clearSpan', roofStructure: 'truss' }).internalColumns).toHaveLength(0);
+  });
+
+  it('centerSupport with no gate (gates: 0) generates one column per frame station, on the centreline', () => {
+    const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates: 0 });
+    expect(m.internalColumns).toHaveLength(m.bays.stationsM.length);
+    const midX = m.footprint.widthM / 2;
+    for (const col of m.internalColumns) {
+      expect(col.column.a.x).toBeCloseTo(midX, 6);
+      expect(col.column.b.x).toBeCloseTo(midX, 6);
+      expect(col.column.a.y).toBe(0);
+      expect(col.column.b.y).toBe(m.heights.eaveM);
+    }
+    // Every station is represented, in order — the line is continuous with nothing skipped.
+    expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM);
+  });
+
+  it('a single centred gate (the default) excludes the conflicting z=0 support and continues deeper in', () => {
+    const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates: 1, gateType: 'standard' });
+    expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(false);
+    // Nothing else was skipped — every OTHER station still has its column.
+    expect(m.internalColumns).toHaveLength(m.bays.stationsM.length - 1);
+    expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM.filter((z) => z !== 0));
+  });
+
+  it('two gates leave the centreline clear at z=0 (the gap between them), so no support is skipped', () => {
+    const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates: 2, gateType: 'standard' });
+    expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(true);
+    expect(m.internalColumns).toHaveLength(m.bays.stationsM.length);
+  });
+
+  it('no internal column at z=0 may ever fall inside a gate rect, for either gate type/count — the hard rule, checked directly rather than trusting the skip logic alone', () => {
+    for (const gates of [1, 2] as const) {
+      for (const gateType of ['standard', 'double'] as const) {
+        const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates, gateType });
+        const frontColumn = m.internalColumns.find((c) => c.stationM === 0);
+        if (!frontColumn) continue; // skipped entirely — the safe outcome
+        const x = frontColumn.column.a.x;
+        for (const o of m.openings) {
+          const inside = x > o.rect.xM && x < o.rect.xM + o.rect.widthM;
+          expect(inside).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('portalRafter gets a king-post prop to the ridge point; truss does not', () => {
+    const portal = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' });
+    const truss = modelForStructural({ scheme: 'centerSupport', roofStructure: 'truss' });
+
+    for (const col of portal.internalColumns) {
+      expect(col.ridgeProp).not.toBeNull();
+      expect(col.ridgeProp!.a.y).toBe(portal.heights.eaveM);
+      expect(col.ridgeProp!.b.y).toBe(portal.heights.ridgeM);
+    }
+    for (const col of truss.internalColumns) expect(col.ridgeProp).toBeNull();
+  });
+
+  it('support positions are deterministic across dimension extremes', () => {
+    for (const [width, length] of [[W.min, L.min], [W.max, L.max], [24, 60]] as const) {
+      const a = modelForStructural({ scheme: 'centerSupport', roofStructure: 'truss' }, { width, length });
+      const b = modelForStructural({ scheme: 'centerSupport', roofStructure: 'truss' }, { width, length });
+      expect(JSON.stringify(a.internalColumns)).toBe(JSON.stringify(b.internalColumns));
+    }
+  });
+});
+
+describe('internal-column footings (Phase 3E, brief §5)', () => {
+  it('every internal column gets exactly one matching centre footing — no orphans either way', () => {
+    const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'truss' }, {}, { gates: 1 });
+    const centerFootings = m.footings.filter((f) => f.side === 'center');
+    expect(centerFootings).toHaveLength(m.internalColumns.length);
+    for (const col of m.internalColumns) {
+      const match = centerFootings.find((f) => f.zM === col.stationM);
+      expect(match).toBeDefined();
+      expect(match!.xM).toBeCloseTo(col.column.a.x, 6);
+    }
+  });
+
+  it('clearSpan has zero centre footings — nothing to be orphaned', () => {
+    const m = modelForStructural({ scheme: 'clearSpan', roofStructure: 'truss' });
+    expect(m.footings.filter((f) => f.side === 'center')).toHaveLength(0);
+  });
+
+  it('uses the same schematic pad/pedestal dimensions as external footings — no invented engineered difference', () => {
+    const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'truss' }, {}, { gates: 0 });
+    const external = m.footings.find((f) => f.side === 'left')!;
+    const internal = m.footings.find((f) => f.side === 'center')!;
+    expect(internal.padWidthM).toBe(external.padWidthM);
+    expect(internal.padThicknessM).toBe(external.padThicknessM);
+    expect(internal.pedestalWidthM).toBe(external.pedestalWidthM);
+    expect(internal.pedestalHeightM).toBe(external.pedestalHeightM);
+  });
+});
+
+describe('truss webs (Phase 3E, brief §7-10)', () => {
+  it('are ALWAYS computed, one per frame station, regardless of scheme/roofStructure', () => {
+    for (const roofStructure of ['portalRafter', 'truss'] as const) {
+      for (const scheme of ['clearSpan', 'centerSupport'] as const) {
+        const m = modelForStructural({ scheme, roofStructure });
+        expect(m.trusses).toHaveLength(m.frames.length);
+      }
+    }
+  });
+
+  it("the bottom chord is flat at eave height and spans the full width, at every station's own Z", () => {
+    const m = modelFor({ width: 30 });
+    for (const t of m.trusses) {
+      expect(t.bottomChord.a).toEqual({ x: 0, y: m.heights.eaveM, z: t.stationM });
+      expect(t.bottomChord.b).toEqual({ x: 30, y: m.heights.eaveM, z: t.stationM });
+    }
+  });
+
+  it('panel count is bounded across the full supported width range — no degenerate/unbounded web', () => {
+    for (const width of [W.min, 24, W.max]) {
+      const m = modelFor({ width });
+      const webCount = m.trusses[0].webs.length;
+      expect(webCount).toBeGreaterThanOrEqual(6); // 2 * TRUSS_PANELS_MIN_PER_HALF
+      expect(webCount).toBeLessThanOrEqual(16); // 2 * TRUSS_PANELS_MAX_PER_HALF
+      expect(webCount % 2).toBe(0); // always mirrored halves
+    }
+  });
+
+  it('no degenerate (zero-length) web members', () => {
+    const m = modelFor({ width: 45 });
+    for (const t of m.trusses) {
+      for (const w of t.webs) {
+        const dx = w.b.x - w.a.x;
+        const dy = w.b.y - w.a.y;
+        expect(Math.hypot(dx, dy)).toBeGreaterThan(0.01);
+      }
+    }
+  });
+
+  it('the web pattern is symmetric about the centreline', () => {
+    const m = modelFor({ width: 24 });
+    const t = m.trusses[0];
+    const midX = m.footprint.widthM / 2;
+    const mirroredX = (x: number) => 2 * midX - x;
+    // Every web, mirrored across X = midX, should match some other web in the set (same two
+    // endpoints up to the mirror and up to which end is `a` vs `b`).
+    const key = (p: { x: number; y: number }) => `${p.x.toFixed(3)}:${p.y.toFixed(3)}`;
+    const edgeKeys = new Set(
+      t.webs.map((w) => [key(w.a), key(w.b)].sort().join('|')),
+    );
+    for (const w of t.webs) {
+      const mirroredA = { x: mirroredX(w.a.x), y: w.a.y };
+      const mirroredB = { x: mirroredX(w.b.x), y: w.b.y };
+      expect(edgeKeys.has([key(mirroredA), key(mirroredB)].sort().join('|'))).toBe(true);
+    }
+  });
+
+  it('is deterministic', () => {
+    const a = modelFor({ width: 37 });
+    const b = modelFor({ width: 37 });
+    expect(JSON.stringify(a.trusses)).toBe(JSON.stringify(b.trusses));
+  });
+});
+
+describe('wall bracing (Phase 3E, brief §13)', () => {
+  it('braces the first and last bay on both side walls for a short building', () => {
+    const m = modelFor({ width: 24, length: L.min }); // min length clamps to 2 bays
+    const segmentCount = m.envelope.wallSegments[0].segmentCount;
+    for (const face of ['left', 'right'] as const) {
+      const bays = m.bracing.filter((b) => b.face === face).map((b) => b.bayIndex).sort((a, b) => a - b);
+      expect(bays).toEqual([0, segmentCount - 1]);
+    }
+  });
+
+  it('adds a middle bay once there are enough bays to call it a middle zone', () => {
+    const m = modelFor({ width: 24, length: 60 }); // default: 10 bays at 6 m spacing
+    const segmentCount = m.envelope.wallSegments[0].segmentCount;
+    expect(segmentCount).toBeGreaterThanOrEqual(6);
+    const leftBays = m.bracing.filter((b) => b.face === 'left').map((b) => b.bayIndex).sort((a, b) => a - b);
+    expect(leftBays).toHaveLength(3);
+    expect(leftBays[0]).toBe(0);
+    expect(leftBays[leftBays.length - 1]).toBe(segmentCount - 1);
+    expect(leftBays[1]).toBeGreaterThan(0);
+    expect(leftBays[1]).toBeLessThan(segmentCount - 1);
+  });
+
+  it('never exceeds 3 braced bays per wall, at any supported length — bounded count', () => {
+    for (const length of [L.min, 24, 60, L.max]) {
+      const m = modelFor({ length });
+      const perWall = m.bracing.filter((b) => b.face === 'left').length;
+      expect(perWall).toBeLessThanOrEqual(3);
+      expect(perWall).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('is symmetric — left and right walls brace the exact same bay indices', () => {
+    const m = modelFor({ width: 30, length: 84 });
+    const left = m.bracing.filter((b) => b.face === 'left').map((b) => b.bayIndex).sort((a, b) => a - b);
+    const right = m.bracing.filter((b) => b.face === 'right').map((b) => b.bayIndex).sort((a, b) => a - b);
+    expect(left).toEqual(right);
+  });
+
+  it('each brace is the exact X of its own bay rectangle — both diagonals span the bay, at the correct X and Y range', () => {
+    const m = modelFor({ width: 24, length: 60 });
+    const widthM = m.footprint.widthM;
+    for (const brace of m.bracing) {
+      const expectedX = brace.face === 'left' ? 0 : widthM;
+      for (const diag of [brace.diagonalA, brace.diagonalB]) {
+        expect(diag.a.x).toBeCloseTo(expectedX, 6);
+        expect(diag.b.x).toBeCloseTo(expectedX, 6);
+        // One end at eave height, the other at grade — a real diagonal, not a degenerate line.
+        expect(Math.abs(diag.a.y - diag.b.y)).toBeCloseTo(m.heights.eaveM, 6);
+        expect(diag.a.z).not.toBe(diag.b.z);
+      }
+      // The two diagonals actually cross (opposite corners), not the same line twice.
+      expect(brace.diagonalA.a.z).not.toBe(brace.diagonalB.a.z);
+    }
+  });
+
+  it('can never intersect a gate opening — braces live only on the side walls, which no gate ever touches (face is always "front")', () => {
+    for (const gates of [1, 2] as const) {
+      const m = modelFor({}, { gates, gateType: 'double' });
+      expect(m.bracing.every((b) => b.face === 'left' || b.face === 'right')).toBe(true);
+      expect(m.openings.every((o) => o.face === 'front')).toBe(true);
+      // Disjoint by construction: no brace X (0 or widthM) ever equals a gate's own face plane.
+    }
+  });
+
+  it('is deterministic', () => {
+    const a = modelFor({ width: 33, length: 51 });
+    const b = modelFor({ width: 33, length: 51 });
+    expect(JSON.stringify(a.bracing)).toBe(JSON.stringify(b.bracing));
+  });
+});
+
+describe('girts (Phase 3E, brief §12 audit)', () => {
+  it('now run on both side walls, not just one', () => {
+    const m = modelFor();
+    const xs = new Set(m.girts.map((g) => g.a.x));
+    expect(xs.has(0)).toBe(true);
+    expect(xs.has(m.footprint.widthM)).toBe(true);
+  });
+
+  it('each wall still gets exactly 2 levels, matching GIRT_LEVELS — no accidental duplication', () => {
+    const m = modelFor();
+    const perWall = m.girts.filter((g) => g.a.x === 0).length;
+    expect(perWall).toBe(2);
+    expect(m.girts).toHaveLength(4);
   });
 });

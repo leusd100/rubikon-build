@@ -34,11 +34,16 @@ describe('deriveSummary', () => {
   });
 
   it.each([
-    ['cold', 'Холодний'],
-    ['insulated', 'Утеплений'],
-    ['undecided', 'Ще не визначився'],
-  ] as const)('labels envelope "%s" as "%s"', (envelope, label) => {
-    expect(summaryFor({ envelope }).envelopeLabel).toBe(label);
+    ['cold', 'Холодний', 'profiled-sheet'],
+    ['insulated', 'Утеплений', 'sandwich-panel'],
+    ['undecided', 'Ще не визначився', 'profiled-sheet'],
+  ] as const)('labels envelope "%s" as "%s" when the actual wall/roof system matches its own preset', (envelope, label, system) => {
+    // Phase 3E, brief §18: the simple label only holds while the materials still match what this
+    // envelope choice implies — set them explicitly here (rather than relying on
+    // DEFAULT_CONFIGURATOR_STATE's own profiled-sheet default, which only happens to match
+    // 'cold') so this test exercises the "matches" case specifically, not an accident of the
+    // default state. The "mismatch" case has its own describe block below.
+    expect(summaryFor({ envelope, wallSystem: system, roofSystem: system }).envelopeLabel).toBe(label);
   });
 
   it('lists scope items in a fixed reading order regardless of toggle order', () => {
@@ -61,5 +66,31 @@ describe('deriveSummary', () => {
     [2, '2 воріт'],
   ] as const)('labels %i gates as "%s"', (gates, label) => {
     expect(summaryFor({ gates }).gatesLabel).toBe(label);
+  });
+});
+
+describe('envelope preset drift (Phase 3E, brief §18)', () => {
+  it('stops claiming "Утеплений" the moment one system is manually overridden away from its preset', () => {
+    const summary = summaryFor({ envelope: 'insulated', wallSystem: 'profiled-sheet', roofSystem: 'sandwich-panel' });
+    expect(summary.envelopeLabel).toBe('Індивідуальна конфігурація');
+    // The real systems are still fully visible right below it — nothing is hidden, just not
+    // mislabelled as the simple preset any more.
+    expect(summary.claddingSystemLabel).toBe('Стіни: Профнастил, покрівля: Сендвіч-панель');
+  });
+
+  it('stops claiming "Холодний" the same way, in the other direction', () => {
+    const summary = summaryFor({ envelope: 'cold', wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' });
+    expect(summary.envelopeLabel).toBe('Індивідуальна конфігурація');
+  });
+
+  it('"Ще не визначився" never drifts — it never implied a system to begin with', () => {
+    const summary = summaryFor({ envelope: 'undecided', wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' });
+    expect(summary.envelopeLabel).toBe('Ще не визначився');
+  });
+
+  it('dimensions and every other summary fact stay unaffected by a mismatched envelope/system pair', () => {
+    const summary = summaryFor({ envelope: 'insulated', wallSystem: 'profiled-sheet', roofSystem: 'sandwich-panel' });
+    expect(summary.dimensionsLabel).toBe('24 × 60 × 8 м');
+    expect(summary.areaSqm).toBe(1440);
   });
 });

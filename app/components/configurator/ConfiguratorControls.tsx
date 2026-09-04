@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   RIDGE_HEIGHT_STEP_M,
   clampRidgeHeightM,
+  deriveStructuralVisualization,
   ridgeHeightRangeM,
 } from '../../lib/configurator/parametricModel';
 import {
@@ -11,13 +12,16 @@ import {
   CLADDING_SYSTEM_ORDER,
   DIMENSION_BOUNDS,
   ENVELOPE_LABELS,
+  ENVELOPE_MATERIAL_PRESET,
   FOUNDATION_TYPE_LABELS,
   FOUNDATION_TYPE_ORDER,
   GATES_OPTIONS,
   GATE_TYPE_LABELS,
   GATE_TYPE_ORDER,
+  ROOF_STRUCTURE_LABELS,
   SCOPE_LABELS,
   SCOPE_ORDER,
+  STRUCTURAL_SCHEME_LABELS,
   clampDimension,
   hasScopeItem,
   toggleScopeItem,
@@ -153,6 +157,9 @@ export function ConfiguratorControls({ state, onChange }: Props) {
   // widening the building can make a previously-legal ridge too shallow.
   const ridgeRange = ridgeHeightRangeM(state.dimensions.width, state.dimensions.height);
   const ridgeValue = clampRidgeHeightM(state.ridgeHeightM, state.dimensions.width, state.dimensions.height);
+  // Phase 3E.1: read-only, derived straight from width — see deriveStructuralVisualization's own
+  // doc comment. Nothing here is a stored choice any more; there is no setter for this value.
+  const structural = deriveStructuralVisualization(state.dimensions.width);
 
   function setDimension(key: keyof Dimensions, value: number) {
     const dimensions = { ...state.dimensions, [key]: value };
@@ -170,7 +177,16 @@ export function ConfiguratorControls({ state, onChange }: Props) {
   }
 
   function setEnvelope(envelope: EnvelopeChoice) {
-    onChange({ ...state, envelope });
+    // brief §18: cold/insulated set a sensible STARTING wall/roof system, not a locked rule — a
+    // later independent override of either still sticks (see ENVELOPE_MATERIAL_PRESET's own doc
+    // comment). `undecided` applies nothing: "independent material choices remain available" is
+    // the brief's own wording for that specific option.
+    const preset = envelope === 'undecided' ? null : ENVELOPE_MATERIAL_PRESET[envelope];
+    onChange({
+      ...state,
+      envelope,
+      ...(preset ? { wallSystem: preset.wallSystem, roofSystem: preset.roofSystem } : {}),
+    });
   }
 
   function setWallSystem(wallSystem: CladdingSystem) {
@@ -283,6 +299,22 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Phase 3E.1: the two manual radiogroups this section used to hold (Конструктивна схема,
+          Несуча система покрівлі) were removed per the follow-up brief — the customer no longer
+          chooses these directly. What is left is informational only: no radiogroup role, no
+          inputs, nothing to select — see deriveStructuralVisualization's own doc comment for where
+          this value actually comes from. */}
+      <section className="hc-control-group" aria-labelledby="hc-structural-info-heading">
+        <h2 id="hc-structural-info-heading">Попередня конструктивна схема</h2>
+        <p className="hc-structural-summary">
+          {ROOF_STRUCTURE_LABELS[structural.roofStructure]} · {STRUCTURAL_SCHEME_LABELS[structural.scheme]}
+        </p>
+        <p className="hc-field-note">
+          Схема формується автоматично для попередньої візуалізації та уточнюється після
+          конструктивного розрахунку.
+        </p>
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-foundation-heading">

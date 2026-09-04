@@ -1,5 +1,14 @@
 import type { HangarDomainModel } from './domainModel';
-import { CLADDING_SYSTEM_LABELS, ENVELOPE_LABELS, FOUNDATION_TYPE_LABELS, SCOPE_LABELS, SCOPE_ORDER } from './types';
+import {
+  CLADDING_SYSTEM_LABELS,
+  ENVELOPE_LABELS,
+  FOUNDATION_TYPE_LABELS,
+  ROOF_STRUCTURE_LABELS,
+  SCOPE_LABELS,
+  SCOPE_ORDER,
+  STRUCTURAL_SCHEME_LABELS,
+  envelopeMatchesPreset,
+} from './types';
 
 export type ConfiguratorSummary = {
   /** width × length, m² — the one derived number the brief signs off on for the POC. */
@@ -13,6 +22,20 @@ export type ConfiguratorSummary = {
    */
   claddingSystemLabel: string;
   foundationTypeLabel: string;
+  /**
+   * Phase 3E, brief §19: a real business-relevant configuration fact, same status as
+   * `foundationTypeLabel` above — not a renderer-only detail (compare: panel count, web pattern,
+   * section sizes — none of that belongs in a lead brief).
+   *
+   * Phase 3E.1: combined into ONE label (was two separate fields, `structuralSchemeLabel` +
+   * `roofStructureLabel`) specifically because the brief's own §10 draws a hard line between USER
+   * INPUT and DERIVED PRELIMINARY VISUALIZATION — two `dt`/`dd` rows reading "Конструктивна схема"
+   * / "Несуча система покрівлі" look exactly like two things the customer picked, which is no
+   * longer true for either. One row, headed "Попередня конструктивна схема", makes the derived,
+   * preliminary nature of the whole value part of its own label rather than something a reader has
+   * to already know.
+   */
+  structuralVisualizationLabel: string;
   /** Scope items in a fixed, readable order — not the order they were toggled in. */
   scopeLabels: string[];
   scopeSummaryLabel: string;
@@ -28,6 +51,23 @@ function formatCladdingSystemLabel(envelope: HangarDomainModel['envelope']): str
   const wall = CLADDING_SYSTEM_LABELS[envelope.wallSystem];
   const roof = CLADDING_SYSTEM_LABELS[envelope.roofSystem];
   return wall === roof ? wall : `Стіни: ${wall}, покрівля: ${roof}`;
+}
+
+/**
+ * Phase 3E, brief §18 — the high-level "Контур" label, honest about drift from its own preset.
+ * `envelope.walls`/`envelope.roof` (the stored intent) still always equal what the customer last
+ * clicked in "Контур будівлі" — this function does not change that, it only decides what the
+ * SUMMARY calls it: as soon as a manual wall/roof system override means the actual materials no
+ * longer match what "Холодний"/"Утеплений" would imply, claiming that simple label would
+ * misrepresent a now-mixed configuration (brief's own explicit "must no longer claim a simple
+ * preset if that would be semantically misleading") — surfaced as "Індивідуальна конфігурація"
+ * instead, with the real systems still fully visible in `claddingSystemLabel` right below it.
+ */
+function formatEnvelopeLabel(envelope: HangarDomainModel['envelope']): string {
+  if (envelopeMatchesPreset(envelope.walls, envelope.wallSystem, envelope.roofSystem)) {
+    return ENVELOPE_LABELS[envelope.walls];
+  }
+  return 'Індивідуальна конфігурація';
 }
 
 function formatGatesLabel(gates: HangarDomainModel['gates']): string {
@@ -51,9 +91,10 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
   return {
     areaSqm: domain.areaSqm,
     dimensionsLabel: `${formatMeters(widthM)} × ${formatMeters(lengthM)} × ${formatMeters(eaveHeightM)} м`,
-    envelopeLabel: ENVELOPE_LABELS[domain.envelope.walls],
+    envelopeLabel: formatEnvelopeLabel(domain.envelope),
     claddingSystemLabel: formatCladdingSystemLabel(domain.envelope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],
+    structuralVisualizationLabel: `${ROOF_STRUCTURE_LABELS[domain.structural.roofStructure]} · ${STRUCTURAL_SCHEME_LABELS[domain.structural.scheme]}`,
     scopeLabels: orderedScope.map((item) => SCOPE_LABELS[item]),
     scopeSummaryLabel: orderedScope.length
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')

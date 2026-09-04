@@ -147,8 +147,8 @@ test.describe('hangar configurator visual states — edge scenarios (J–L)', ()
 
   test('(K) large hangar — max width/length/height', async ({ page }) => {
     await openConfigurator(page);
-    // DIMENSION_BOUNDS: width max 60, length max 120, height max 15 (app/lib/configurator/types.ts).
-    await page.locator('#hc-dimension-width').fill('60');
+    // DIMENSION_BOUNDS: width max 50 (Phase 3E.1), length max 120, height max 15 (app/lib/configurator/types.ts).
+    await page.locator('#hc-dimension-width').fill('50');
     await page.locator('#hc-dimension-length').fill('120');
     await page.locator('#hc-dimension-height').fill('15');
     await page.locator('#hc-dimension-height').blur();

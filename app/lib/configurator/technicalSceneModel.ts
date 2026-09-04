@@ -43,6 +43,21 @@ export type ScenePrimitive =
   | { kind: 'frame-column'; visible: boolean; face: 'left' | 'right'; index: number; a: Vec3; b: Vec3 }
   | { kind: 'frame-rafter'; visible: boolean; slope: 'left' | 'right'; index: number; a: Vec3; b: Vec3 }
   | { kind: 'frame-purlin'; visible: boolean; index: number; a: Vec3; b: Vec3 }
+  // Phase 3E — the centre support line (empty when structuralScheme !== 'centerSupport', same
+  // "genuinely absent, not hidden" rule InternalColumn's own doc comment in parametricModel.ts
+  // states). `internal-column-prop` only exists per column when ParametricBuildingModel actually
+  // generated one (portalRafter/engineeringDecision roof structure) — see InternalColumn.ridgeProp.
+  | { kind: 'internal-column'; visible: boolean; index: number; a: Vec3; b: Vec3 }
+  | { kind: 'internal-column-prop'; visible: boolean; index: number; a: Vec3; b: Vec3 }
+  // Phase 3E — the truss's own bottom chord + web, drawn ONLY when roofStructure is 'truss' (see
+  // buildTechnicalScene's own visibility logic) — unlike internal columns, ParametricBuildingModel
+  // always computes `trusses`, so `visible` (not omission) is what actually gates these, matching
+  // slab/footing-marker's own pattern above.
+  | { kind: 'truss-chord'; visible: boolean; index: number; a: Vec3; b: Vec3 }
+  | { kind: 'truss-web'; visible: boolean; index: number; webIndex: number; a: Vec3; b: Vec3 }
+  // Phase 3E, brief §13/§15 — a few restrained X marks, never omitted (see BraceMember's own doc
+  // comment — always at least the first/last bay, at any supported length).
+  | { kind: 'wall-brace'; visible: boolean; face: 'left' | 'right'; bayIndex: number; a: Vec3; b: Vec3 }
   // One primitive per structural bay so the envelope materialises section-by-section.
   | {
       kind: 'wall-segment';
@@ -145,6 +160,18 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
       a: frame.rightColumn.a, b: frame.rightColumn.b,
     });
   }
+  // Phase 3E — the centre support line, pushed alongside the external columns above (same
+  // build-up moment: brief §14's "prefer grouping over exploding the FSM", mirrored from
+  // threeSceneModel.ts's identical decision). `building.internalColumns` is already empty for
+  // anything but centerSupport, so `visible` here only has to track `frameVisible` — no separate
+  // scheme check needed.
+  building.internalColumns.forEach((col) => {
+    primitives.push({ kind: 'internal-column', visible: frameVisible, index: col.index, a: col.column.a, b: col.column.b });
+    if (col.ridgeProp) {
+      primitives.push({ kind: 'internal-column-prop', visible: frameVisible, index: col.index, a: col.ridgeProp.a, b: col.ridgeProp.b });
+    }
+  });
+
   // Rafters are pushed after every column so the build-up's per-instance stagger indexes run
   // over a contiguous run of same-kind primitives, matching how columns are staged.
   for (const frame of building.frames) {
@@ -158,8 +185,27 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
     });
   }
 
+  // Phase 3E — the truss's own bottom chord + web, pushed alongside the rafters (top chord)
+  // above: one "roof framing arrives" moment either way. `building.trusses` is ALWAYS computed
+  // (see TrussWebs's own doc comment) so, unlike internal columns, `visible` is what actually
+  // gates these on `roofStructure === 'truss'`, not their own presence in the array.
+  const trussVisible = frameVisible && domain.structural.roofStructure === 'truss';
+  for (const truss of building.trusses) {
+    primitives.push({ kind: 'truss-chord', visible: trussVisible, index: truss.index, a: truss.bottomChord.a, b: truss.bottomChord.b });
+    truss.webs.forEach((web, webIndex) => {
+      primitives.push({ kind: 'truss-web', visible: trussVisible, index: truss.index, webIndex, a: web.a, b: web.b });
+    });
+  }
+
   building.girts.forEach((girt, index) => {
     primitives.push({ kind: 'frame-purlin', visible: frameVisible, index, a: girt.a, b: girt.b });
+  });
+
+  // Phase 3E — wall bracing, same `frameVisible` gating as girts (both secondary steel, both
+  // always present wherever ParametricBuildingModel put them — brief §11/§13).
+  building.bracing.forEach((brace) => {
+    primitives.push({ kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, a: brace.diagonalA.a, b: brace.diagonalA.b });
+    primitives.push({ kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, a: brace.diagonalB.a, b: brace.diagonalB.b });
   });
 
   for (const segment of building.envelope.wallSegments) {

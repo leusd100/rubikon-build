@@ -84,6 +84,13 @@ describe('buildThreeScene', () => {
         ...model.frames.flatMap((f) => [f.leftColumn.a, f.leftColumn.b, f.rightColumn.a, f.rightColumn.b,
           f.leftRafter.a, f.leftRafter.b, f.rightRafter.a, f.rightRafter.b]),
         ...model.girts.flatMap((g) => [g.a, g.b]),
+        // Phase 3E.1: the default state (width 24) now derives centerSupport + truss (see
+        // deriveStructuralVisualization), so these are no longer empty at the domain default the
+        // way they were when this test was last touched — bracing (always present regardless)
+        // was already the reason this set could not stay frames+girts-only.
+        ...model.internalColumns.flatMap((c) => [c.column.a, c.column.b, ...(c.ridgeProp ? [c.ridgeProp.a, c.ridgeProp.b] : [])]),
+        ...model.trusses.flatMap((t) => [t.bottomChord.a, t.bottomChord.b, ...t.webs.flatMap((w) => [w.a, w.b])]),
+        ...model.bracing.flatMap((b) => [b.diagonalA.a, b.diagonalA.b, b.diagonalB.a, b.diagonalB.b]),
       ].map((p) => `${p.x},${p.y},${p.z}`),
     );
 
@@ -102,7 +109,11 @@ describe('buildThreeScene', () => {
   });
 
   it('emits two columns and two rafters per portal frame, plus subordinate secondary members', () => {
-    const three = buildThreeScene(domainFor());
+    // Phase 3E.1: pinned to a width below the truss/centerSupport thresholds (see
+    // deriveStructuralVisualization) so this stays a test of the plain portal-frame baseline —
+    // the domain default (width 24) now derives centerSupport + truss, which legitimately adds
+    // MORE frame-primary struts (internal columns, truss chord/webs) than "two per frame" alone.
+    const three = buildThreeScene(domainFor({ dimensions: { width: 12, length: 60, height: 8 } }));
     const frames = three.building.frames.length;
 
     expect(three.struts.filter((s) => s.material === 'frame-primary')).toHaveLength(frames * 4);
@@ -155,7 +166,9 @@ describe('buildThreeScene', () => {
   });
 
   it('Phase 3D: footings sit exactly at the portal frames’ own column base points — never hand-placed', () => {
-    const scene = buildThreeScene(domainFor({ foundationType: 'isolated' }));
+    // Phase 3E.1: same width pin as the portal-frame test above — the domain default now derives
+    // centerSupport at width 24, which legitimately adds centre footings this test is not about.
+    const scene = buildThreeScene(domainFor({ foundationType: 'isolated', dimensions: { width: 12, length: 60, height: 8 } }));
 
     expect(scene.footings).toHaveLength(scene.building.frames.length * 2);
     for (const frame of scene.building.frames) {
@@ -190,14 +203,35 @@ describe('buildThreeScene', () => {
     const columns = three.struts.filter((s) => s.role === 'column');
     const rafters = three.struts.filter((s) => s.role === 'rafter');
     const girts = three.struts.filter((s) => s.role === 'girt');
+    // Phase 3E: bracing is always present (not scheme/roofStructure-gated — brief §13's own "not
+    // a user control"), so it is part of the total at every width.
+    const braces = three.struts.filter((s) => s.role === 'brace');
+    // Phase 3E.1: internal-column/truss-chord/truss-web are no longer empty at the domain default
+    // either — width 24 now derives centerSupport + truss (see deriveStructuralVisualization), so
+    // this completeness check must account for every StrutRole that exists, not just the four
+    // that used to be the whole story at default state.
+    const internalColumns = three.struts.filter((s) => s.role === 'internal-column');
+    const trussChords = three.struts.filter((s) => s.role === 'truss-chord');
+    const trussWebs = three.struts.filter((s) => s.role === 'truss-web');
 
     expect(columns.length).toBeGreaterThan(0);
     expect(rafters.length).toBeGreaterThan(0);
     expect(girts.length).toBeGreaterThan(0);
-    expect(columns.length + rafters.length + girts.length).toBe(three.struts.length);
+    expect(braces.length).toBeGreaterThan(0);
+    expect(internalColumns.length).toBeGreaterThan(0);
+    expect(trussChords.length).toBeGreaterThan(0);
+    expect(trussWebs.length).toBeGreaterThan(0);
+    expect(
+      columns.length + rafters.length + girts.length + braces.length
+        + internalColumns.length + trussChords.length + trussWebs.length,
+    ).toBe(three.struts.length);
     expect(columns.every((s) => s.material === 'frame-primary')).toBe(true);
     expect(rafters.every((s) => s.material === 'frame-primary')).toBe(true);
+    expect(internalColumns.every((s) => s.material === 'frame-primary')).toBe(true);
+    expect(trussChords.every((s) => s.material === 'frame-primary')).toBe(true);
+    expect(trussWebs.every((s) => s.material === 'frame-primary')).toBe(true);
     expect(girts.every((s) => s.material === 'frame-secondary')).toBe(true);
+    expect(braces.every((s) => s.material === 'frame-secondary')).toBe(true);
   });
 
   it('is deterministic and JSON-serialisable', () => {

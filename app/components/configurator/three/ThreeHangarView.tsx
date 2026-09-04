@@ -705,9 +705,17 @@ export function ThreeHangarView({
   const frameCastsShadow = shadows && roof.phase === 'hidden';
   const envelopeCastsShadow = shadows;
 
-  const columnStruts = scene.struts.filter((s) => s.role === 'column');
-  const rafterStruts = scene.struts.filter((s) => s.role === 'rafter');
-  const girtStruts = scene.struts.filter((s) => s.role === 'girt');
+  // Phase 3E: the centre support column mounts on the SAME `columns` layer as the external ones —
+  // one "columns arrive" moment, not a second one. The truss's bottom chord + webs mount on the
+  // SAME `rafters` layer as the top chord (frame.leftRafter/rightRafter, role 'rafter') — a real
+  // truss is erected as one assembled unit, not staggered chord-then-web, so it should arrive as
+  // one visual moment too. Neither is a new BuildLayer (brief §14's own "prefer grouping over
+  // exploding the FSM").
+  const columnStruts = scene.struts.filter((s) => s.role === 'column' || s.role === 'internal-column');
+  const rafterStruts = scene.struts.filter((s) => s.role === 'rafter' || s.role === 'truss-chord' || s.role === 'truss-web');
+  // Phase 3E: wall bracing mounts on the SAME `girts` layer/phase — both are the same "secondary
+  // steel, always present, not a user control" kind of thing (brief §11).
+  const girtStruts = scene.struts.filter((s) => s.role === 'girt' || s.role === 'brace');
   const wallPanels = scene.panels.filter((p) => p.material === 'wall');
   const roofPanels = scene.panels.filter((p) => p.material === 'roof');
 
