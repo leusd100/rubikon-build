@@ -43,8 +43,12 @@ test.describe('configurator 3D visual states', () => {
 
   test('2 — frame only, desktop (the readability case)', async ({ page }) => {
     await openConfigurator(page);
+    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
+    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
+    // text match on that one label now resolves to two elements.
+    const scopeGroup = page.getByLabel('Обсяг заявки');
     for (const label of ['Фундамент', 'Стіни / огороджувальний контур', 'Покрівля']) {
-      await page.getByText(label, { exact: true }).click();
+      await scopeGroup.getByText(label, { exact: true }).click();
     }
     await enterThreeMode(page);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-3d-frame-only.png');

@@ -420,8 +420,10 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     // Roof must be unaffected by the walls toggle above (no cross-layer replay)...
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
 
-    // ...but does stage its own transition when its own scope item changes.
-    await page.getByText('Покрівля', { exact: true }).click();
+    // ...but does stage its own transition when its own scope item changes. Scoped to the
+    // scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section added its own
+    // "Покрівля" heading to the same page.
+    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-dematerializing/);
   });
 
@@ -478,7 +480,8 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openConfigurator(page);
 
-    await page.getByText('Покрівля', { exact: true }).click();
+    // Scoped to the scope-of-work group — see the same fix earlier in this file.
+    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 300 });
     await expect(page.locator('.hc-top polygon').first()).not.toHaveAttribute('class', /hc-phase-dematerializing/);
   });
