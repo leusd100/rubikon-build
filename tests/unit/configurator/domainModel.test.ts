@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
+import { deriveStructuralVisualization } from '../../../app/lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
 function withState(overrides: Partial<ConfiguratorState>): ConfiguratorState {
@@ -41,10 +42,10 @@ describe('deriveDomainModel', () => {
 
   it('resolves a gable roof with a pitch derived from the span, not left implicit', () => {
     const narrow = deriveDomainModel(withState({ dimensions: { width: 10, length: 30, height: 6 } }));
-    const wide = deriveDomainModel(withState({ dimensions: { width: 60, length: 30, height: 6 } }));
+    const wide = deriveDomainModel(withState({ dimensions: { width: 50, length: 30, height: 6 } }));
 
     expect(narrow.roof.type).toBe('gable');
-    // Wider spans get a shallower pitch — a fixed pitch would put an absurd roof on a 60m span.
+    // Wider spans get a shallower pitch — a fixed pitch would put an absurd roof on a wide span.
     expect(wide.roof.pitchDeg).toBeLessThan(narrow.roof.pitchDeg);
   });
 
@@ -78,5 +79,26 @@ describe('deriveDomainModel', () => {
     expect(domain.envelope.wallSystem).toBe('sandwich-panel');
     expect(domain.envelope.roofSystem).toBe('profiled-sheet');
     expect(domain.foundation).toEqual({ type: 'isolated' });
+  });
+
+  describe('Phase 3E.1: `structural` is derived from width alone, not read from stored state', () => {
+    it('resolves to the same value deriveStructuralVisualization(width) would, for a few representative widths', () => {
+      for (const width of [12, 20, 30]) {
+        const domain = deriveDomainModel(withState({ dimensions: { width, length: 40, height: 6 } }));
+        expect(domain.structural).toEqual(deriveStructuralVisualization(width));
+      }
+    });
+
+    it('is unaffected by anything else in state — length, height, envelope, foundation, gates', () => {
+      const a = deriveDomainModel(withState({ dimensions: { width: 30, length: 40, height: 6 } }));
+      const b = deriveDomainModel(withState({
+        dimensions: { width: 30, length: 90, height: 12 },
+        envelope: 'insulated',
+        foundationType: 'isolated',
+        gates: 2,
+        gateType: 'double',
+      }));
+      expect(a.structural).toEqual(b.structural);
+    });
   });
 });

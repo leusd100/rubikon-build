@@ -10,10 +10,26 @@ import {
   DEFAULT_CONFIGURATOR_STATE,
   DIMENSION_BOUNDS,
   type ConfiguratorState,
+  type RoofStructure,
+  type StructuralScheme,
 } from '../../../app/lib/configurator/types';
 
 function sceneFor(overrides: Partial<ConfiguratorState> = {}) {
   return buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides }));
+}
+
+/** Phase 3E.1: same rationale as parametricModel.test.ts's own `modelForStructural` — structural
+ *  scheme/roof structure are derived from width now, not stored state, so a test that needs a
+ *  SPECIFIC combination (including portalRafter + centerSupport, which the width-only derivation
+ *  itself never produces) overrides `structural` directly on the domain model instead. */
+function sceneForStructural(structural: { scheme: StructuralScheme; roofStructure: RoofStructure }, overrides: Partial<ConfiguratorState> = {}) {
+  const domain = deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides });
+  return buildTechnicalScene({ ...domain, structural });
+}
+
+function buildingForStructural(structural: { scheme: StructuralScheme; roofStructure: RoofStructure }, overrides: Partial<ConfiguratorState> = {}) {
+  const domain = deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides });
+  return buildParametricModel({ ...domain, structural });
 }
 
 function kinds<K extends ScenePrimitive['kind']>(scene: ReturnType<typeof sceneFor>, kind: K) {
@@ -141,7 +157,12 @@ describe('buildTechnicalScene', () => {
     ]) {
       const scene = buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, dimensions: dims }));
       expect(scene.primitives.length).toBeGreaterThan(0);
-      expect(JSON.stringify(scene)).not.toMatch(/null|NaN/);
+      // Phase 3E.1: NaN only, not "null" — `null` is now a legitimate value in the embedded
+      // parametric model (InternalColumn.ridgeProp is null in truss mode, see its own doc
+      // comment), which the DIMENSION_BOUNDS.width.max case above genuinely reaches (width 50
+      // derives centerSupport + truss). This test's actual concern is numeric corruption at
+      // extreme dimensions, which NaN alone already covers.
+      expect(JSON.stringify(scene)).not.toMatch(/NaN/);
     }
   });
 
@@ -161,32 +182,32 @@ describe('buildTechnicalScene', () => {
 
 describe('Phase 3E structural primitives — parity with ParametricBuildingModel', () => {
   it('internal-column primitives are absent for clearSpan, present (gate-conflict-adjusted) for centerSupport', () => {
-    const clearSpan = sceneFor({ structuralScheme: 'clearSpan' });
+    const clearSpan = sceneForStructural({ scheme: 'clearSpan', roofStructure: 'truss' });
     expect(kinds(clearSpan, 'internal-column')).toHaveLength(0);
 
-    const centerSupport = sceneFor({ structuralScheme: 'centerSupport' });
-    const building = buildParametricModel(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, structuralScheme: 'centerSupport' }));
+    const centerSupport = sceneForStructural({ scheme: 'centerSupport', roofStructure: 'truss' });
+    const building = buildingForStructural({ scheme: 'centerSupport', roofStructure: 'truss' });
     expect(kinds(centerSupport, 'internal-column')).toHaveLength(building.internalColumns.length);
     expect(building.internalColumns.length).toBeGreaterThan(0);
   });
 
   it('internal-column-prop exists per column for portalRafter, is absent for truss', () => {
-    const portal = sceneFor({ structuralScheme: 'centerSupport', roofStructure: 'portalRafter' });
-    const truss = sceneFor({ structuralScheme: 'centerSupport', roofStructure: 'truss' });
+    const portal = sceneForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' });
+    const truss = sceneForStructural({ scheme: 'centerSupport', roofStructure: 'truss' });
     expect(kinds(portal, 'internal-column-prop').length).toBe(kinds(portal, 'internal-column').length);
     expect(kinds(truss, 'internal-column-prop')).toHaveLength(0);
   });
 
   it('internal columns respect scope.frame the same way external columns do', () => {
-    const scene = sceneFor({ structuralScheme: 'centerSupport', scope: ['foundation', 'walls', 'roof'] });
+    const scene = sceneForStructural({ scheme: 'centerSupport', roofStructure: 'truss' }, { scope: ['foundation', 'walls', 'roof'] });
     expect(kinds(scene, 'internal-column').every((p) => !p.visible)).toBe(true);
     expect(kinds(scene, 'frame-column').every((p) => !p.visible)).toBe(true);
   });
 
   it('truss-chord/truss-web are ALWAYS computed (one chord per frame station) regardless of roofStructure — visibility, not omission, gates them', () => {
-    for (const roofStructure of ['portalRafter', 'truss', 'engineeringDecision'] as const) {
-      const scene = sceneFor({ roofStructure });
-      const building = buildParametricModel(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, roofStructure }));
+    for (const roofStructure of ['portalRafter', 'truss'] as const) {
+      const scene = sceneForStructural({ scheme: 'clearSpan', roofStructure });
+      const building = buildingForStructural({ scheme: 'clearSpan', roofStructure });
       expect(kinds(scene, 'truss-chord')).toHaveLength(building.frames.length);
       const shouldBeVisible = roofStructure === 'truss';
       expect(kinds(scene, 'truss-chord').every((p) => p.visible === shouldBeVisible)).toBe(true);
@@ -195,7 +216,7 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
   });
 
   it('truss visibility also respects scope.frame — off scope means invisible even in truss mode', () => {
-    const scene = sceneFor({ roofStructure: 'truss', scope: ['foundation', 'walls', 'roof'] });
+    const scene = sceneForStructural({ scheme: 'clearSpan', roofStructure: 'truss' }, { scope: ['foundation', 'walls', 'roof'] });
     expect(kinds(scene, 'truss-chord').every((p) => !p.visible)).toBe(true);
     expect(kinds(scene, 'truss-web').every((p) => !p.visible)).toBe(true);
   });

@@ -11,10 +11,19 @@ import {
   DEFAULT_CONFIGURATOR_STATE,
   DIMENSION_BOUNDS,
   type ConfiguratorState,
+  type RoofStructure,
+  type StructuralScheme,
 } from '../../../app/lib/configurator/types';
 
 function projectFor(overrides: Partial<ConfiguratorState> = {}) {
   return projectIsometricScene(buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides })));
+}
+
+/** Phase 3E.1: structural scheme/roof structure are derived from width now, not stored state —
+ *  see parametricModel.test.ts's own `modelForStructural` for the same pattern applied here. */
+function projectForStructural(structural: { scheme: StructuralScheme; roofStructure: RoofStructure }, overrides: Partial<ConfiguratorState> = {}) {
+  const domain = deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides });
+  return projectIsometricScene(buildTechnicalScene({ ...domain, structural }));
 }
 
 function span(points: { x: number; y: number }[], axis: 'x' | 'y') {
@@ -240,9 +249,9 @@ describe('bounds', () => {
     for (const dims of [
       { width: 10, length: 10, height: 4 },
       { width: 24, length: 60, height: 8 },
-      { width: 60, length: 120, height: 15 },
+      { width: 50, length: 120, height: 15 },
       { width: 12, length: 110, height: 5 },
-      { width: 60, length: 30, height: 6 },
+      { width: 50, length: 30, height: 6 },
     ]) {
       const scene = projectFor({ dimensions: dims });
       const shell = [
@@ -347,7 +356,9 @@ describe('dimension label framing', () => {
 
 describe('Phase 3E structural line projections', () => {
   it('projects exactly as many internal-column lines as the technical scene has primitives (1:1, no drops/dupes)', () => {
-    const scene = buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, structuralScheme: 'centerSupport' }));
+    const domain = deriveDomainModel(DEFAULT_CONFIGURATOR_STATE);
+    const structural = { scheme: 'centerSupport' as const, roofStructure: 'truss' as const };
+    const scene = buildTechnicalScene({ ...domain, structural });
     const projected = projectIsometricScene(scene);
     const primitiveCount = scene.primitives.filter((p) => p.kind === 'internal-column').length;
     expect(projected.frame.internalColumns).toHaveLength(primitiveCount);
@@ -355,12 +366,7 @@ describe('Phase 3E structural line projections', () => {
   });
 
   it('every projected structural line is a well-formed 2-point line', () => {
-    const scene = buildTechnicalScene(deriveDomainModel({
-      ...DEFAULT_CONFIGURATOR_STATE,
-      structuralScheme: 'centerSupport',
-      roofStructure: 'truss',
-    }));
-    const projected = projectIsometricScene(scene);
+    const projected = projectForStructural({ scheme: 'centerSupport', roofStructure: 'truss' });
     for (const group of [projected.frame.internalColumns, projected.frame.internalColumnProps, projected.frame.trussChords, projected.frame.trussWebs]) {
       for (const line of group) {
         expect(line.points).toHaveLength(2);
@@ -373,12 +379,10 @@ describe('Phase 3E structural line projections', () => {
   });
 
   it('truss chord/web visibility carries through the projection unchanged', () => {
-    const portalScene = buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, roofStructure: 'portalRafter' }));
-    const portalProjected = projectIsometricScene(portalScene);
+    const portalProjected = projectForStructural({ scheme: 'clearSpan', roofStructure: 'portalRafter' });
     expect(portalProjected.frame.trussChords.every((l) => !l.visible)).toBe(true);
 
-    const trussScene = buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, roofStructure: 'truss' }));
-    const trussProjected = projectIsometricScene(trussScene);
+    const trussProjected = projectForStructural({ scheme: 'clearSpan', roofStructure: 'truss' });
     expect(trussProjected.frame.trussChords.every((l) => l.visible)).toBe(true);
     expect(trussProjected.frame.trussWebs.every((l) => l.visible)).toBe(true);
   });
