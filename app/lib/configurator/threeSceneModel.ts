@@ -28,13 +28,22 @@ export type MaterialKey =
   | 'gate-recess'
   | 'ground';
 
-/** A structural member as a centre-line plus the section it should be DRAWN at. */
+/** A structural member as a centre-line plus the section it should be DRAWN at.
+ *
+ * `role` is presentation grouping for the build-up animation (Phase 3B) — which independently
+ * timed layer (per buildUpSequence.ts) a member belongs to. It is redundant with `material` today
+ * (every column and rafter is `frame-primary`) but the two answer different questions: `material`
+ * is "what does this look like", `role` is "when does this arrive". Keeping them separate means a
+ * future material change can never silently break the build-up grouping by accident. */
+export type StrutRole = 'column' | 'rafter' | 'girt';
+
 export type StrutMesh = {
   id: string;
   a: Vec3;
   b: Vec3;
   sectionM: number;
   material: MaterialKey;
+  role: StrutRole;
 };
 
 /** A planar surface given real thickness. Corners come straight from the parametric model; the
@@ -77,7 +86,10 @@ export type ThreeSceneModel = {
   /** Dark recessed planes behind each opening, so a gate reads as depth rather than a decal. */
   recesses: PanelMesh[];
   ground: { yM: number; sizeM: number };
-  visible: { slab: boolean; frame: boolean; walls: boolean; roof: boolean };
+  /** `gates` mirrors SVG's own `gates > 0` boolean (buildUpSequence's `gates` layer trigger) —
+   *  independent of `walls`, because a gate opening is only meaningful once there is an envelope
+   *  to cut it into, but its OWN build-up layer fires off the gate count, not the walls toggle. */
+  visible: { slab: boolean; frame: boolean; walls: boolean; roof: boolean; gates: boolean };
   building: ParametricBuildingModel;
 };
 
@@ -131,16 +143,16 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
   // ── Primary frame: two columns + two rafters per portal frame, straight from the model ──
   for (const frame of building.frames) {
     struts.push(
-      { id: `col-l-${frame.index}`, a: frame.leftColumn.a, b: frame.leftColumn.b, sectionM: COLUMN_SECTION_M, material: 'frame-primary' },
-      { id: `col-r-${frame.index}`, a: frame.rightColumn.a, b: frame.rightColumn.b, sectionM: COLUMN_SECTION_M, material: 'frame-primary' },
-      { id: `raf-l-${frame.index}`, a: frame.leftRafter.a, b: frame.leftRafter.b, sectionM: RAFTER_SECTION_M, material: 'frame-primary' },
-      { id: `raf-r-${frame.index}`, a: frame.rightRafter.a, b: frame.rightRafter.b, sectionM: RAFTER_SECTION_M, material: 'frame-primary' },
+      { id: `col-l-${frame.index}`, a: frame.leftColumn.a, b: frame.leftColumn.b, sectionM: COLUMN_SECTION_M, material: 'frame-primary', role: 'column' },
+      { id: `col-r-${frame.index}`, a: frame.rightColumn.a, b: frame.rightColumn.b, sectionM: COLUMN_SECTION_M, material: 'frame-primary', role: 'column' },
+      { id: `raf-l-${frame.index}`, a: frame.leftRafter.a, b: frame.leftRafter.b, sectionM: RAFTER_SECTION_M, material: 'frame-primary', role: 'rafter' },
+      { id: `raf-r-${frame.index}`, a: frame.rightRafter.a, b: frame.rightRafter.b, sectionM: RAFTER_SECTION_M, material: 'frame-primary', role: 'rafter' },
     );
   }
 
   // ── Secondary structure: side-wall girts, visually subordinate ──
   building.girts.forEach((girt, index) => {
-    struts.push({ id: `girt-${index}`, a: girt.a, b: girt.b, sectionM: GIRT_SECTION_M, material: 'frame-secondary' });
+    struts.push({ id: `girt-${index}`, a: girt.a, b: girt.b, sectionM: GIRT_SECTION_M, material: 'frame-secondary', role: 'girt' });
   });
 
   // ── Envelope: side walls and both roof slopes, per bay ──
@@ -227,6 +239,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       frame: domain.scope.frame,
       walls: domain.scope.walls,
       roof: domain.scope.roof,
+      gates: domain.gates > 0,
     },
     building,
   };

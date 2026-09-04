@@ -125,11 +125,35 @@ describe('buildThreeScene', () => {
     const on = buildThreeScene(domainFor({ scope: ['foundation', 'frame', 'walls', 'roof'] }));
     const off = buildThreeScene(domainFor({ scope: [] }));
 
-    expect(on.visible).toEqual({ slab: true, frame: true, walls: true, roof: true });
-    expect(off.visible).toEqual({ slab: false, frame: false, walls: false, roof: false });
+    expect(on.visible).toEqual({ slab: true, frame: true, walls: true, roof: true, gates: true });
+    expect(off.visible).toEqual({ slab: false, frame: false, walls: false, roof: false, gates: true });
     // Geometry is a fact; visibility is the renderer's business — counts must not change.
     expect(off.struts).toHaveLength(on.struts.length);
     expect(off.panels).toHaveLength(on.panels.length);
+  });
+
+  it('gates visibility follows the gate count independently of walls/roof — matching SVG\'s own gates > 0 trigger', () => {
+    const noGates = buildThreeScene(domainFor({ gates: 0 }));
+    const withGates = buildThreeScene(domainFor({ gates: 2 }));
+
+    expect(noGates.visible.gates).toBe(false);
+    expect(withGates.visible.gates).toBe(true);
+  });
+
+  it('tags every strut with a build-up role, distinguishing columns from rafters from girts', () => {
+    const three = buildThreeScene(domainFor());
+
+    const columns = three.struts.filter((s) => s.role === 'column');
+    const rafters = three.struts.filter((s) => s.role === 'rafter');
+    const girts = three.struts.filter((s) => s.role === 'girt');
+
+    expect(columns.length).toBeGreaterThan(0);
+    expect(rafters.length).toBeGreaterThan(0);
+    expect(girts.length).toBeGreaterThan(0);
+    expect(columns.length + rafters.length + girts.length).toBe(three.struts.length);
+    expect(columns.every((s) => s.material === 'frame-primary')).toBe(true);
+    expect(rafters.every((s) => s.material === 'frame-primary')).toBe(true);
+    expect(girts.every((s) => s.material === 'frame-secondary')).toBe(true);
   });
 
   it('is deterministic and JSON-serialisable', () => {
