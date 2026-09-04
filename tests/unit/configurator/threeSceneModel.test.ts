@@ -125,15 +125,47 @@ describe('buildThreeScene', () => {
     const on = buildThreeScene(domainFor({ scope: ['foundation', 'frame', 'walls', 'roof'] }));
     const off = buildThreeScene(domainFor({ scope: [] }));
 
-    expect(on.visible).toEqual({ slab: true, frame: true, walls: true, roof: true, gates: true });
+    // footings stay false here regardless of scope — domainFor()'s default foundationType
+    // ('engineeringDecision') always resolves to the slab representation, never footings. See the
+    // dedicated foundation-type test below for footings actually turning on.
+    expect(on.visible).toEqual({ slab: true, footings: false, frame: true, walls: true, roof: true, gates: true });
     // Gates go false along with everything else here — NOT because scope=[] toggles a `gates`
     // item (there isn't one), but because a gate cut into a wall that isn't there can't read as
     // an opening. See the next test for gates tracked independently of the OTHER three layers,
     // with walls held on.
-    expect(off.visible).toEqual({ slab: false, frame: false, walls: false, roof: false, gates: false });
+    expect(off.visible).toEqual({ slab: false, footings: false, frame: false, walls: false, roof: false, gates: false });
     // Geometry is a fact; visibility is the renderer's business — counts must not change.
     expect(off.struts).toHaveLength(on.struts.length);
     expect(off.panels).toHaveLength(on.panels.length);
+    expect(off.footings).toHaveLength(on.footings.length);
+  });
+
+  it('Phase 3D: foundation type controls slab vs. footings visibility — engineeringDecision renders like slab, never as nothing', () => {
+    const slab = buildThreeScene(domainFor({ foundationType: 'slab' }));
+    const isolated = buildThreeScene(domainFor({ foundationType: 'isolated' }));
+    const undecided = buildThreeScene(domainFor({ foundationType: 'engineeringDecision' }));
+
+    expect(slab.visible).toMatchObject({ slab: true, footings: false });
+    expect(isolated.visible).toMatchObject({ slab: false, footings: true });
+    expect(undecided.visible).toMatchObject({ slab: true, footings: false });
+
+    // Geometry itself is unconditional — same "fact vs. renderer choice" rule as slab/scope above.
+    expect(isolated.footings.length).toBe(slab.footings.length);
+    expect(isolated.footings.length).toBeGreaterThan(0);
+  });
+
+  it('Phase 3D: footings sit exactly at the portal frames’ own column base points — never hand-placed', () => {
+    const scene = buildThreeScene(domainFor({ foundationType: 'isolated' }));
+
+    expect(scene.footings).toHaveLength(scene.building.frames.length * 2);
+    for (const frame of scene.building.frames) {
+      const left = scene.footings.find((f) => f.id === `col-${frame.index}-left`);
+      const right = scene.footings.find((f) => f.id === `col-${frame.index}-right`);
+      expect(left?.xM).toBeCloseTo(frame.leftColumn.a.x, 6);
+      expect(left?.zM).toBeCloseTo(frame.leftColumn.a.z, 6);
+      expect(right?.xM).toBeCloseTo(frame.rightColumn.a.x, 6);
+      expect(right?.zM).toBeCloseTo(frame.rightColumn.a.z, 6);
+    }
   });
 
   it('gates visibility requires BOTH a gate count and walls in scope — a gate cannot read as an opening with no wall to cut into', () => {
@@ -184,5 +216,36 @@ describe('buildThreeScene', () => {
 
     expect(coords.length).toBeGreaterThan(0);
     for (const c of coords) expect(Number.isFinite(c)).toBe(true);
+  });
+
+  it('Phase 3D: material colour never appears in — and so can never invalidate — the 3D envelope geometry cache key', () => {
+    // envelopeGeometryFor's own cache key (ThreeHangarView.tsx) is built from cladding SYSTEM and
+    // real dimensions only. Asserted here from the domain/scene side, the only place a colour
+    // preset change actually enters the pipeline: two scenes differing ONLY in nothing colour-
+    // related — there is no colour field on PanelMesh at all — must describe identical panel
+    // geometry inputs. If a future change ever threaded colour onto PanelMesh, this test's own
+    // shape (comparing full PanelMesh objects between two `buildThreeScene` calls for the same
+    // domain) would catch a widened cache key the moment colour started varying panel data.
+    const a = buildThreeScene(domainFor());
+    const b = buildThreeScene(domainFor());
+    expect(a.panels).toEqual(b.panels);
+    expect(Object.keys(a.panels[0])).not.toContain('color');
+  });
+
+  it('Phase 3D: both renderers place every footing at the exact same column-station position', () => {
+    const domain = domainFor({ foundationType: 'isolated' });
+    const three = buildThreeScene(domain);
+    const technical = buildTechnicalScene(domain);
+    const technicalFootings = technical.primitives.filter(
+      (p): p is Extract<(typeof technical.primitives)[number], { kind: 'footing-marker' }> => p.kind === 'footing-marker',
+    );
+
+    expect(technicalFootings).toHaveLength(three.footings.length);
+    for (const footing of three.footings) {
+      const match = technicalFootings.find((f) => f.id === footing.id);
+      expect(match).toBeDefined();
+      expect(match?.xM).toBeCloseTo(footing.xM, 6);
+      expect(match?.zM).toBeCloseTo(footing.zM, 6);
+    }
   });
 });

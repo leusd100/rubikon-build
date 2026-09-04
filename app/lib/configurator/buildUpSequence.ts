@@ -137,6 +137,7 @@ export function totalSequenceDurationMs(): number {
 export function buildLayerForPrimitive(primitive: ScenePrimitive): BuildLayer | null {
   switch (primitive.kind) {
     case 'foundation-slab':
+    case 'footing-marker':
       return 'foundation';
     case 'frame-column':
       return 'columns';
