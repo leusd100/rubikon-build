@@ -619,7 +619,8 @@
    member, and the two were reading as equally important (envelope seams were previously *heavier*
    than the frame, at 1.25 vs 1px, backwards from the intended hierarchy). */
 .hc-layer polygon,
-.hc-foundation {
+.hc-foundation,
+.hc-footing {
   stroke: var(--text-on-dark-subtle);
   stroke-width: .85;
   stroke-opacity: .75;
@@ -643,6 +644,9 @@
 }
 
 .hc-foundation { fill: rgba(28, 31, 30, .85); }
+/* Phase 3D — isolated footings: the slab's alternative, same concrete fill (same material, a
+   different shape) — see HangarPreview.tsx's own comment on why they share one build-up layer. */
+.hc-footing { fill: rgba(28, 31, 30, .85); }
 
 /* Deliberately short of fully opaque even once "has-fill" — an enclosed shell must still read as
    built-up, not become a flat solid box. Each segment's own stroke (from `.hc-layer polygon`
@@ -758,11 +762,16 @@
 .hc-buildlayer.hc-phase-visible { opacity: 1; }
 
 /* Foundation gets a small rise on top of the shared fade — "settling into place" rather than a
-   flat fade, matching its "fade/rise" character from the build-up brief. */
+   flat fade, matching its "fade/rise" character from the build-up brief. Footings share it (same
+   build-up layer, same "settling" character — see HangarPreview.tsx's own comment). */
 .hc-foundation.hc-phase-hidden,
-.hc-foundation.hc-phase-dematerializing { transform: translateY(6px); }
+.hc-footing.hc-phase-hidden,
+.hc-foundation.hc-phase-dematerializing,
+.hc-footing.hc-phase-dematerializing { transform: translateY(6px); }
 .hc-foundation.hc-phase-materializing,
-.hc-foundation.hc-phase-visible { transform: translateY(0); }
+.hc-footing.hc-phase-materializing,
+.hc-foundation.hc-phase-visible,
+.hc-footing.hc-phase-visible { transform: translateY(0); }
 
 /* Annotations get their own, deliberately lighter visual language (Visual Refinement Pass v1) —
    thinner than every structural line above (.85 primary frame, .85 envelope) so measurement

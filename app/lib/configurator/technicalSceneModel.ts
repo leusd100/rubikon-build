@@ -32,6 +32,12 @@ export type ScenePrimitive =
   // ParametricBuildingModel.slab: the technical view draws the footprint as a line drawing, not
   // an extruded box (see isometricProjection.ts's own comment at the one place this is drawn).
   | { kind: 'foundation-slab'; visible: boolean; corners: Poly3 }
+  // Phase 3D — the slab's alternative representation, never both visible at once (see
+  // `buildTechnicalScene`'s own foundation-visibility logic, mirroring threeSceneModel.ts's
+  // `deriveFoundationVisibility`). One per column, same positions the 3D view's own footings use
+  // (both come from `building.footings`) — brief §8's "both renderers stay consistent where the
+  // foundation choice affects geometry", satisfied by construction rather than by convention.
+  | { kind: 'footing-marker'; visible: boolean; id: string; xM: number; zM: number; padWidthM: number }
   // Frame members as centre-lines. Section thickness is renderer styling (a stroke width here,
   // a box in 3D) — deliberately not modelled as geometry: this is object form, not a member schedule.
   | { kind: 'frame-column'; visible: boolean; face: 'left' | 'right'; index: number; a: Vec3; b: Vec3 }
@@ -105,11 +111,27 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
 
   primitives.push({ kind: 'terrain-plane', corners: terrainCorners(widthM, lengthM) });
 
+  // Isolated is the only foundation type this view draws differently — `slab` and
+  // `engineeringDecision` share the flat slab representation, same reasoning as
+  // threeSceneModel.ts's own `deriveFoundationVisibility` (a customer with no foundation
+  // engineered yet still needs to see something, and the slab makes no isolated-footing/
+  // column-spacing claim the way discrete markers would).
+  const showFootings = domain.foundation.type === 'isolated';
   primitives.push({
     kind: 'foundation-slab',
-    visible: domain.scope.foundation,
+    visible: domain.scope.foundation && !showFootings,
     corners: building.slab.corners,
   });
+  for (const footing of building.footings) {
+    primitives.push({
+      kind: 'footing-marker',
+      visible: domain.scope.foundation && showFootings,
+      id: footing.id,
+      xM: footing.xM,
+      zM: footing.zM,
+      padWidthM: footing.padWidthM,
+    });
+  }
 
   const frameVisible = domain.scope.frame;
 

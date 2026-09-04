@@ -116,6 +116,9 @@ function labelExtent(guide: Omit<DimensionGuide, 'ticks' | 'line'>): Point[] {
 export type IsometricScene = {
   terrain: Point[];
   foundation: { points: Point[]; visible: boolean };
+  /** Phase 3D — one square outline per column, the isolated-foundation alternative to `foundation`
+   *  above. Never both visible — see `buildTechnicalScene`'s own foundation-visibility logic. */
+  footings: { id: string; points: Point[]; visible: boolean }[];
   frame: FrameLines;
   wallSegments: ProjectedSegment[];
   gableEnds: ProjectedSegment[];
@@ -156,6 +159,21 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const foundationPoints = slabPrimitive ? projectAll(slabPrimitive.corners) : [];
   const foundation = { points: foundationPoints, visible: slabPrimitive?.visible ?? false };
 
+  // Same flat-footprint convention as the slab above — a square OUTLINE in the ground plane, not
+  // an extruded pedestal symbol. `padWidthM` (not the smaller pedestal) sizes it: the pad is what
+  // actually marks the footing's footprint on the ground, matching what a real foundation plan
+  // would call out here.
+  const footings = findPrimitives(scene, 'footing-marker').map((f) => {
+    const half = f.padWidthM / 2;
+    const corners: Vec3[] = [
+      { x: f.xM - half, y: 0, z: f.zM - half },
+      { x: f.xM + half, y: 0, z: f.zM - half },
+      { x: f.xM + half, y: 0, z: f.zM + half },
+      { x: f.xM - half, y: 0, z: f.zM + half },
+    ];
+    return { id: f.id, points: projectAll(corners), visible: f.visible };
+  });
+
   const asLine = (p: { a: Vec3; b: Vec3; visible: boolean }): FrameLine => ({
     points: [project(p.a), project(p.b)],
     visible: p.visible,
@@ -195,6 +213,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   // hangar occupy a fraction of the viewport while the 3D view filled its frame.
   const buildingPoints = [
     ...foundationPoints,
+    ...footings.flatMap((f) => f.points),
     ...wallSegments.flatMap((s) => s.points),
     ...gableEnds.flatMap((s) => s.points),
     ...roofSegments.flatMap((s) => s.points),
@@ -290,6 +309,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   return {
     terrain,
     foundation,
+    footings,
     frame: { columns, rafters, purlins, ridge },
     wallSegments,
     gableEnds,
