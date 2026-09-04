@@ -22,11 +22,20 @@ export type ConfiguratorSummary = {
    */
   claddingSystemLabel: string;
   foundationTypeLabel: string;
-  /** Phase 3E, brief §19: a real business-relevant configuration fact, same status as
-   *  `foundationTypeLabel` above — not a renderer-only detail (compare: panel count, web
-   *  pattern, section sizes — none of that belongs in a lead brief). */
-  structuralSchemeLabel: string;
-  roofStructureLabel: string;
+  /**
+   * Phase 3E, brief §19: a real business-relevant configuration fact, same status as
+   * `foundationTypeLabel` above — not a renderer-only detail (compare: panel count, web pattern,
+   * section sizes — none of that belongs in a lead brief).
+   *
+   * Phase 3E.1: combined into ONE label (was two separate fields, `structuralSchemeLabel` +
+   * `roofStructureLabel`) specifically because the brief's own §10 draws a hard line between USER
+   * INPUT and DERIVED PRELIMINARY VISUALIZATION — two `dt`/`dd` rows reading "Конструктивна схема"
+   * / "Несуча система покрівлі" look exactly like two things the customer picked, which is no
+   * longer true for either. One row, headed "Попередня конструктивна схема", makes the derived,
+   * preliminary nature of the whole value part of its own label rather than something a reader has
+   * to already know.
+   */
+  structuralVisualizationLabel: string;
   /** Scope items in a fixed, readable order — not the order they were toggled in. */
   scopeLabels: string[];
   scopeSummaryLabel: string;
@@ -85,8 +94,7 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     envelopeLabel: formatEnvelopeLabel(domain.envelope),
     claddingSystemLabel: formatCladdingSystemLabel(domain.envelope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],
-    structuralSchemeLabel: STRUCTURAL_SCHEME_LABELS[domain.structural.scheme],
-    roofStructureLabel: ROOF_STRUCTURE_LABELS[domain.structural.roofStructure],
+    structuralVisualizationLabel: `${ROOF_STRUCTURE_LABELS[domain.structural.roofStructure]} · ${STRUCTURAL_SCHEME_LABELS[domain.structural.scheme]}`,
     scopeLabels: orderedScope.map((item) => SCOPE_LABELS[item]),
     scopeSummaryLabel: orderedScope.length
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')

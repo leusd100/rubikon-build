@@ -4,8 +4,8 @@ import { useState } from 'react';
 import {
   RIDGE_HEIGHT_STEP_M,
   clampRidgeHeightM,
+  deriveStructuralVisualization,
   ridgeHeightRangeM,
-  structuralSchemeAdvisory,
 } from '../../lib/configurator/parametricModel';
 import {
   CLADDING_SYSTEM_LABELS,
@@ -19,11 +19,9 @@ import {
   GATE_TYPE_LABELS,
   GATE_TYPE_ORDER,
   ROOF_STRUCTURE_LABELS,
-  ROOF_STRUCTURE_ORDER,
   SCOPE_LABELS,
   SCOPE_ORDER,
   STRUCTURAL_SCHEME_LABELS,
-  STRUCTURAL_SCHEME_ORDER,
   clampDimension,
   hasScopeItem,
   toggleScopeItem,
@@ -34,8 +32,6 @@ import {
   type FoundationType,
   type GateType,
   type GatesCount,
-  type RoofStructure,
-  type StructuralScheme,
 } from '../../lib/configurator/types';
 
 type Props = {
@@ -161,8 +157,9 @@ export function ConfiguratorControls({ state, onChange }: Props) {
   // widening the building can make a previously-legal ridge too shallow.
   const ridgeRange = ridgeHeightRangeM(state.dimensions.width, state.dimensions.height);
   const ridgeValue = clampRidgeHeightM(state.ridgeHeightM, state.dimensions.width, state.dimensions.height);
-  // brief §2: a soft UX suggestion only — see structuralSchemeAdvisory's own doc comment.
-  const structuralAdvisory = structuralSchemeAdvisory(state.dimensions.width, state.structuralScheme);
+  // Phase 3E.1: read-only, derived straight from width — see deriveStructuralVisualization's own
+  // doc comment. Nothing here is a stored choice any more; there is no setter for this value.
+  const structural = deriveStructuralVisualization(state.dimensions.width);
 
   function setDimension(key: keyof Dimensions, value: number) {
     const dimensions = { ...state.dimensions, [key]: value };
@@ -202,14 +199,6 @@ export function ConfiguratorControls({ state, onChange }: Props) {
 
   function setFoundationType(foundationType: FoundationType) {
     onChange({ ...state, foundationType });
-  }
-
-  function setStructuralScheme(structuralScheme: StructuralScheme) {
-    onChange({ ...state, structuralScheme });
-  }
-
-  function setRoofStructure(roofStructure: RoofStructure) {
-    onChange({ ...state, roofStructure });
   }
 
   function setGates(gates: GatesCount) {
@@ -312,39 +301,20 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         </div>
       </section>
 
-      <section className="hc-control-group" aria-labelledby="hc-structural-scheme-heading">
-        <h2 id="hc-structural-scheme-heading">Конструктивна схема</h2>
-        <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-structural-scheme-heading">
-          {STRUCTURAL_SCHEME_ORDER.map((option) => (
-            <label key={option} className="hc-option-card">
-              <input
-                type="radio"
-                name="hc-structural-scheme"
-                checked={state.structuralScheme === option}
-                onChange={() => setStructuralScheme(option)}
-              />
-              <span>{STRUCTURAL_SCHEME_LABELS[option]}</span>
-            </label>
-          ))}
-        </div>
-        {structuralAdvisory && <p className="hc-field-note">{structuralAdvisory}</p>}
-      </section>
-
-      <section className="hc-control-group" aria-labelledby="hc-roof-structure-heading">
-        <h2 id="hc-roof-structure-heading">Несуча система покрівлі</h2>
-        <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-roof-structure-heading">
-          {ROOF_STRUCTURE_ORDER.map((option) => (
-            <label key={option} className="hc-option-card">
-              <input
-                type="radio"
-                name="hc-roof-structure"
-                checked={state.roofStructure === option}
-                onChange={() => setRoofStructure(option)}
-              />
-              <span>{ROOF_STRUCTURE_LABELS[option]}</span>
-            </label>
-          ))}
-        </div>
+      {/* Phase 3E.1: the two manual radiogroups this section used to hold (Конструктивна схема,
+          Несуча система покрівлі) were removed per the follow-up brief — the customer no longer
+          chooses these directly. What is left is informational only: no radiogroup role, no
+          inputs, nothing to select — see deriveStructuralVisualization's own doc comment for where
+          this value actually comes from. */}
+      <section className="hc-control-group" aria-labelledby="hc-structural-info-heading">
+        <h2 id="hc-structural-info-heading">Попередня конструктивна схема</h2>
+        <p className="hc-structural-summary">
+          {ROOF_STRUCTURE_LABELS[structural.roofStructure]} · {STRUCTURAL_SCHEME_LABELS[structural.scheme]}
+        </p>
+        <p className="hc-field-note">
+          Схема формується автоматично для попередньої візуалізації та уточнюється після
+          конструктивного розрахунку.
+        </p>
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-foundation-heading">

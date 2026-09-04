@@ -20,9 +20,6 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   wallSystem: 'profiled-sheet',
   roofSystem: 'profiled-sheet',
   foundationType: 'slab',
-  // Fixed too — this spike predates Phase 3E and never visualises structural scheme/roof system.
-  structuralScheme: 'clearSpan',
-  roofStructure: 'portalRafter',
   scope: ['foundation', 'frame'],
   gates: 0,
   gateType: 'standard',
