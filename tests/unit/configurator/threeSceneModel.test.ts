@@ -126,18 +126,30 @@ describe('buildThreeScene', () => {
     const off = buildThreeScene(domainFor({ scope: [] }));
 
     expect(on.visible).toEqual({ slab: true, frame: true, walls: true, roof: true, gates: true });
-    expect(off.visible).toEqual({ slab: false, frame: false, walls: false, roof: false, gates: true });
+    // Gates go false along with everything else here — NOT because scope=[] toggles a `gates`
+    // item (there isn't one), but because a gate cut into a wall that isn't there can't read as
+    // an opening. See the next test for gates tracked independently of the OTHER three layers,
+    // with walls held on.
+    expect(off.visible).toEqual({ slab: false, frame: false, walls: false, roof: false, gates: false });
     // Geometry is a fact; visibility is the renderer's business — counts must not change.
     expect(off.struts).toHaveLength(on.struts.length);
     expect(off.panels).toHaveLength(on.panels.length);
   });
 
-  it('gates visibility follows the gate count independently of walls/roof — matching SVG\'s own gates > 0 trigger', () => {
-    const noGates = buildThreeScene(domainFor({ gates: 0 }));
-    const withGates = buildThreeScene(domainFor({ gates: 2 }));
+  it('gates visibility requires BOTH a gate count and walls in scope — a gate cannot read as an opening with no wall to cut into', () => {
+    // Real bug, not a hypothetical: caught live on the running preview (both this renderer and
+    // SVG's HangarPreview.tsx independently had `gates > 0` alone as the trigger), a gate stayed
+    // on screen after switching walls out of scope. Fixed identically in both places.
+    const noGates = buildThreeScene(domainFor({ gates: 0, scope: ['foundation', 'frame', 'walls', 'roof'] }));
+    const gatesNoWalls = buildThreeScene(domainFor({ gates: 2, scope: ['foundation', 'frame', 'roof'] }));
+    const gatesWithWalls = buildThreeScene(domainFor({ gates: 2, scope: ['foundation', 'frame', 'walls', 'roof'] }));
 
     expect(noGates.visible.gates).toBe(false);
-    expect(withGates.visible.gates).toBe(true);
+    expect(gatesNoWalls.visible.gates).toBe(false);
+    expect(gatesWithWalls.visible.gates).toBe(true);
+    // Geometry is unaffected either way — this is a visibility rule, not a geometric one. The
+    // recess meshes still exist in the scene; the renderer just doesn't mount them without walls.
+    expect(gatesNoWalls.recesses).toHaveLength(gatesWithWalls.recesses.length);
   });
 
   it('tags every strut with a build-up role, distinguishing columns from rafters from girts', () => {

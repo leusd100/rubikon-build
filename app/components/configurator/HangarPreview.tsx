@@ -101,7 +101,13 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
   const purlins = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.purlins, layerStartOffsetMs('purlins'));
   const walls = useLayerLifecycle(scope.walls, LAYER_DURATION_MS.walls, layerStartOffsetMs('walls'));
   const roof = useLayerLifecycle(scope.roof, LAYER_DURATION_MS.roof, layerStartOffsetMs('roof'));
-  const gateLayer = useLayerLifecycle(gates > 0, LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
+  // A gate is an opening CUT INTO a wall — it cannot read as an opening with no wall to cut into,
+  // so it materializes only when both are true. (Real bug, not a hypothetical: this used to be
+  // `gates > 0` alone, letting a gate rectangle stay on screen after switching walls out of scope
+  // — caught live by a user testing the running preview, on both this view and the 3D one, which
+  // mirrored the same `gates > 0` condition in threeSceneModel.ts's `visible.gates`. Fixed in both
+  // places with the same rule; see that file's matching comment.)
+  const gateLayer = useLayerLifecycle(scope.walls && gates > 0, LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
 
   const facadeActive = widthActive || heightActive;
   const sideActive = lengthActive || heightActive;

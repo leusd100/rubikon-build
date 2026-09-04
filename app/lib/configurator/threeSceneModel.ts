@@ -239,7 +239,11 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       frame: domain.scope.frame,
       walls: domain.scope.walls,
       roof: domain.scope.roof,
-      gates: domain.gates > 0,
+      // A gate is an opening cut INTO a wall — it cannot read as an opening with no wall to cut
+      // into, so it's visible only when both are true. (Real bug caught live, not hypothetical:
+      // this was `domain.gates > 0` alone, which left a gate recess on screen after switching
+      // walls out of scope — same fix, same reasoning, in HangarPreview.tsx's `gateLayer`.)
+      gates: domain.scope.walls && domain.gates > 0,
     },
     building,
   };
