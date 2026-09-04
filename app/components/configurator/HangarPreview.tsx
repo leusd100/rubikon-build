@@ -20,11 +20,14 @@ import { useLayerLifecycle, type LayerTransitionStyle } from './useLayerLifecycl
  *  with the building so guides clear it at every size instead of at one"), applied here to the
  *  outer frame margin for the same reason: a flat pixel value means a tiny 10×10m hangar gets a
  *  huge RELATIVE margin (looks lost in empty space) while a 60×120m one gets a tiny one (reads as
- *  cramped) — reported live, alongside a request to bring this in line with the 3D view's own
- *  proportional FIT_MARGIN. */
-const VIEWBOX_PADDING_MIN = 32;
-const VIEWBOX_PADDING_MAX = 90;
-const VIEWBOX_PADDING_RATIO = 0.05;
+ *  cramped). Tightened from the original 32/90/0.05 to bring the technical view's own fill
+ *  fraction closer to the 3D view's (FitOrthographicCamera's FIT_MARGIN) — this layer alone was a
+ *  smaller contributor than the annotation-clearance margin upstream (see the comment above
+ *  `edgeOffset` in isometricProjection.ts, tightened alongside this), but every bit of unforced
+ *  outer margin counts toward the same comparison. */
+const VIEWBOX_PADDING_MIN = 18;
+const VIEWBOX_PADDING_MAX = 60;
+const VIEWBOX_PADDING_RATIO = 0.035;
 
 function formatMetres(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);

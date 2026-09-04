@@ -207,10 +207,16 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
     y: (buildingBounds.minY + buildingBounds.maxY) / 2,
   };
 
-  // Offsets scale with the building so guides clear it at every size instead of at one.
+  // Offsets scale with the building so guides clear it at every size instead of at one. Tightened
+  // from the original clamp(26/54, ×0.06) / clamp(30/46, ×0.05): live comparison against the 3D
+  // view's own FIT_MARGIN showed the technical view filling noticeably less of its own frame —
+  // most of that gap was room reserved for the two height guides (they stack on one corner, see
+  // `dims` below), not the building itself. Tightened here, at the source, rather than by shrinking
+  // an outer padding layer that was never the dominant contributor — see isometricProjection.test.ts
+  // for the anti-clip/anti-overlap invariants this stays inside.
   const footprintPx = Math.max(buildingBounds.maxX - buildingBounds.minX, 1);
-  const edgeOffset = Math.max(26, Math.min(footprintPx * 0.06, 54));
-  const heightOffset = Math.max(30, Math.min(footprintPx * 0.05, 46));
+  const edgeOffset = Math.max(18, Math.min(footprintPx * 0.045, 38));
+  const heightOffset = Math.max(20, Math.min(footprintPx * 0.038, 34));
 
   const dims = {
     width: edgeGuide({ x: 0, y: 0, z: 0 }, { x: widthM, y: 0, z: 0 }, centroid, edgeOffset, widthM),
@@ -218,7 +224,9 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
     // Both height chains hang off the same corner — the one the width edge ends at, which the
     // camera basis puts on the outside of the drawing.
     eave: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, heightOffset, false),
-    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, heightOffset + 34, true),
+    // +24, not the original +34 — still enough clearance to keep the ridge chain's own ticks and
+    // label from colliding with the eave chain's (verified live), just tighter to match.
+    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, heightOffset + 24, true),
   };
 
   const allPoints = [
