@@ -40,8 +40,15 @@ const scopeLabel = {
   roof: 'Покрівля',
 } as const;
 
+// Scoped to the scope-of-work group specifically (not a bare page-wide text match): Phase 3C's
+// material colour presets added their own "Покрівля" / "Обшивка" swatch-group legends to the same
+// 3D view, so an unscoped `getByText('Покрівля')` now matches two elements once in 3D mode.
+function scopeGroup(page: Page) {
+  return page.getByLabel('Обсяг заявки');
+}
+
 async function toggleScope(page: Page, item: keyof typeof scopeLabel) {
-  await page.getByText(scopeLabel[item], { exact: true }).click();
+  await scopeGroup(page).getByText(scopeLabel[item], { exact: true }).click();
 }
 
 /** Instruments the canvas's WebGL context to count draw calls, without touching app code — the
@@ -99,7 +106,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await openConfigurator(page);
     await enterThreeMode(page);
 
-    const roof = page.getByText(scopeLabel.roof, { exact: true });
+    const roof = scopeGroup(page).getByText(scopeLabel.roof, { exact: true });
     await roof.click(); // off
     await roof.click(); // on — interrupts the dematerialize that just started
     await roof.click(); // off again — interrupts the materialize that just started
