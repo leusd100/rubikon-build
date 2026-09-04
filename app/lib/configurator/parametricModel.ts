@@ -265,12 +265,20 @@ const FRAME_MAX_BAYS = 10;
 /**
  * Roof pitch as a function of span.
  *
- * A single fixed pitch is the wrong abstraction across this configurator's
- * supported 10–60 m width range, and that was verified rather than assumed: a
- * fixed 12° puts the ridge 6.38 m above the eave on a 60 m span, which on the
- * 4 m minimum eave height is a roof 1.6× taller than the walls it sits on.
- * Real wide-span portal frames go the other way — the wider the span, the
- * shallower the pitch.
+ * A single fixed pitch is the wrong abstraction across this configurator's supported width range
+ * (10–50 m as of the Phase 3E.1 follow-up brief, which lowered the public maximum from 60 m — see
+ * DIMENSION_BOUNDS's own doc comment), and that was verified rather than assumed: a fixed 12° puts
+ * the ridge 6.38 m above the eave on a 60 m span, which on the 4 m minimum eave height is a roof
+ * 1.6× taller than the walls it sits on. Real wide-span portal frames go the other way — the wider
+ * the span, the shallower the pitch.
+ *
+ * `PITCH_MAX_WIDTH_M` below is still 60, not 50 — deliberately left unchanged rather than
+ * recalibrated, per the follow-up brief's own "audit only... do NOT change [other limits] except
+ * width unless there is a concrete bug" instruction. This is not a bug: the curve still produces a
+ * smooth, valid pitch across the entire current 10–50 m range (8.4° at the new 50 m maximum,
+ * instead of the 7° it would reach at a now-unreachable 60 m), and moving the anchor would disturb
+ * the two independently-verified calibration points documented below. Flagged in the Phase 3E.1
+ * final report as a candidate for a future product decision, not changed silently here.
  *
  * So pitch interpolates from steeper-at-narrow to shallower-at-wide, clamped at
  * both ends. Two independent checks on the numbers below:
@@ -285,8 +293,11 @@ const FRAME_MAX_BAYS = 10;
  */
 const PITCH_AT_MIN_WIDTH_DEG = 14;
 const PITCH_AT_MAX_WIDTH_DEG = 7;
-const PITCH_MIN_WIDTH_M = 10;
-const PITCH_MAX_WIDTH_M = 60;
+// Exported (Phase 3E.1) so tests can assert the clamp boundary directly, without hardcoding 60 —
+// see roofPitchDegForWidth's own doc comment above for why this deliberately no longer matches
+// DIMENSION_BOUNDS.width.max (50).
+export const PITCH_MIN_WIDTH_M = 10;
+export const PITCH_MAX_WIDTH_M = 60;
 
 /**
  * The "reasonable limits" a user-set ridge is held inside.
@@ -342,13 +353,9 @@ const GIRT_LEVELS = [1 / 3, 2 / 3] as const;
 
 // ── Phase 3E — structural systems ───────────────────────────────────────────
 // All of the constants in this section are the SAME kind of thing as the visual-rhythm rules
-// above: UX/visual heuristics, never engineering calculations. See structuralSchemeAdvisory's own
-// doc comment and the brief's own "engineering honesty" requirement — none of this may be
-// presented as a structural determination.
-
-/** A UX heuristic only (see `structuralSchemeAdvisory`) — not the width above which a centre
- *  support becomes structurally necessary. This tool does not know that. */
-const STRUCTURAL_SCHEME_ADVISORY_WIDTH_M = 24;
+// above: UX/visual heuristics, never engineering calculations. See
+// `STRUCTURAL_VISUALIZATION_THRESHOLDS`'s own doc comment and the brief's own "engineering
+// honesty" requirement — none of this may be presented as a structural determination.
 
 /** Believable real-world truss panel width, used only to pick a panel COUNT that looks right at
  *  a given span — see `buildTrussWebs`. Clamped so neither a narrow nor a very wide supported
@@ -399,21 +406,59 @@ export function frameBayCount(spanMetres: number): number {
 }
 
 /**
- * Phase 3E, brief §2 — a SOFT, UX-only suggestion, never an engineering rule. Returns the advisory
- * copy to show when a wide span might benefit from a centre support line the customer has not
- * already chosen, or `null` when there is nothing to say (already `centerSupport`, or the span is
- * under the advisory width).
+ * Phase 3E.1 (the "structural auto-derivation" follow-up brief) — PRODUCT / VISUALIZATION
+ * heuristics, explicitly NOT engineering limits (see the brief's own §5 "THIS IS NOT AN
+ * ENGINEERING RULE"). These two width thresholds pick which of the structural representations this
+ * configurator already knows how to draw — portal/rafter clear-span, truss clear-span, or truss
+ * with a centre-support line — a given span shows BY DEFAULT, purely so the preliminary
+ * visualization looks plausible at a glance. This is never a claim that a shorter span "does not
+ * need" a truss, or that a wider one "requires" a centre column: a real structural engineer may
+ * reach a completely different conclusion for the same building, off information (loads, soil,
+ * code) this tool has no access to.
  *
- * `STRUCTURAL_SCHEME_ADVISORY_WIDTH_M` is a product/UX threshold picked to start the conversation
- * at roughly the span where a clear-span portal frame starts looking ambitious for this product
- * category — it is NOT derived from any span/load calculation and must never be presented as one.
- * The copy itself says exactly that ("остаточне рішення визначається конструктивним розрахунком"),
- * on purpose, every time it renders — see the brief's own §20 engineering-honesty requirement.
+ * Deliberately NOT named `ENGINEERING_LIMIT` / `REQUIRED_TRUSS_SPAN` / `MAX_CLEAR_SPAN` — see this
+ * module's own header on why naming matters here as much as the numbers do. Consumed by exactly
+ * one function, `deriveStructuralVisualization` below — see its own doc comment for the single
+ * authoritative call site this whole derivation resolves through.
+ *
+ * `CENTER_SUPPORT_FROM_WIDTH_M` is always >= `TRUSS_FROM_WIDTH_M`: centre support never appears
+ * before truss does, so this heuristic never produces the portal-frame + centre-support
+ * combination. The geometry layer underneath (`buildInternalColumns`, `buildTrussWebs`) still
+ * supports that combination fully — it is just not one this width-only heuristic ever selects; see
+ * this module's own tests for how it is still exercised directly.
  */
-export function structuralSchemeAdvisory(widthM: number, scheme: StructuralScheme): string | null {
-  if (scheme === 'centerSupport') return null;
-  if (widthM <= STRUCTURAL_SCHEME_ADVISORY_WIDTH_M) return null;
-  return 'Для такого прольоту може застосовуватися схема з внутрішнім рядом опор. Остаточне рішення визначається конструктивним розрахунком.';
+export const STRUCTURAL_VISUALIZATION_THRESHOLDS = {
+  /** Below this width: portal/rafter roof. At or above: truss. */
+  TRUSS_FROM_WIDTH_M: 18,
+  /** Below this width: clear span (no internal columns). At or above: one internal centre-column
+   *  line, at every frame station gate geometry allows (see `buildInternalColumns`). */
+  CENTER_SUPPORT_FROM_WIDTH_M: 24,
+} as const;
+
+/**
+ * Phase 3E.1 — THE single authoritative derivation path from width to a preliminary structural
+ * visualization (brief §6's own "one authoritative derivation path... renderers consume derived
+ * structural data"). Called exactly once, from `domainModel.ts`'s `deriveDomainModel`; every
+ * renderer, the summary, and the read-only control-panel info line all consume its OUTPUT
+ * (`HangarDomainModel.structural`) — none of them re-implements these thresholds, which is the
+ * entire point of this function existing as a single named export rather than inline arithmetic
+ * wherever a scheme/roofStructure value was previously read from state.
+ *
+ * Deliberately width-only, even though the brief frames the derivation conceptually as
+ * "width + gates/openings + foundation configuration → derived structural visualization": gates
+ * and foundation do not change WHICH representation is selected here (the classification itself),
+ * they change how that already-selected representation is realised downstream — a gate can still
+ * cause one station's column to be skipped (`buildInternalColumns`'s own gate-conflict check,
+ * unchanged by this phase), and a foundation type still decides whether a footing is drawn under
+ * it (`buildInternalColumnFootings`, also unchanged) — both of which already run *after* this
+ * function's result is known, on inputs this function does not need. Adding unused parameters here
+ * to *look* more complete would be the wrong kind of honesty for a function whose whole job is to
+ * say plainly what actually drives it.
+ */
+export function deriveStructuralVisualization(widthM: number): { scheme: StructuralScheme; roofStructure: RoofStructure } {
+  const roofStructure: RoofStructure = widthM < STRUCTURAL_VISUALIZATION_THRESHOLDS.TRUSS_FROM_WIDTH_M ? 'portalRafter' : 'truss';
+  const scheme: StructuralScheme = widthM < STRUCTURAL_VISUALIZATION_THRESHOLDS.CENTER_SUPPORT_FROM_WIDTH_M ? 'clearSpan' : 'centerSupport';
+  return { scheme, roofStructure };
 }
 
 /** Ridge height for a symmetric gable. The ONLY place this formula exists. */
@@ -683,9 +728,8 @@ function buildInternalColumns(
 ): InternalColumn[] {
   if (scheme !== 'centerSupport') return [];
   const midX = widthM / 2;
-  // `engineeringDecision` renders as the plain portal/rafter system today (see RoofStructure's
-  // own doc comment), so it needs the same king-post prop `portalRafter` does — `truss` is the
-  // only case where the column instead meets a real bottom chord directly.
+  // portalRafter needs a king-post prop up to the ridge point; truss is the only case where the
+  // column instead meets a real bottom chord directly (see InternalColumn's own doc comment).
   const needsKingPost = roofStructure !== 'truss';
 
   const columns: InternalColumn[] = [];

@@ -1,4 +1,4 @@
-import { clampRidgeHeightM, pitchDegForRidge } from './parametricModel';
+import { clampRidgeHeightM, deriveStructuralVisualization, pitchDegForRidge } from './parametricModel';
 import type {
   CladdingSystem,
   ConfiguratorState,
@@ -70,10 +70,13 @@ export type HangarDomainModel = {
    */
   foundation: { type: FoundationType };
   /**
-   * Phase 3E: the structural layout/roof-system preference — real configuration facts the same
-   * way `foundation.type` is, not renderer styling. See `StructuralScheme`/`RoofStructure`'s own
-   * doc comments in types.ts for why each is a preference/deferred-decision, never an engineering
-   * claim.
+   * Phase 3E; re-derived from width in Phase 3E.1 (see below). A real configuration fact the same
+   * way `foundation.type` is, not renderer styling — but, unlike every other field on this object,
+   * NOT copied from `ConfiguratorState`: as of Phase 3E.1 it is computed fresh by
+   * `deriveStructuralVisualization` every time this function runs, from `dimensions.widthM` alone.
+   * See `StructuralScheme`/`RoofStructure`'s own doc comments in types.ts for why neither is a
+   * customer-facing choice any more, and `deriveStructuralVisualization`'s own doc comment in
+   * parametricModel.ts for why this is the one and only place that call happens.
    */
   structural: { scheme: StructuralScheme; roofStructure: RoofStructure };
   // Resolved booleans, not a raw scope[] array — every consumer asks "is walls present?",
@@ -101,7 +104,8 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, clampRidgeHeightM(state.ridgeHeightM, width, height)) },
     envelope: { walls: state.envelope, roof: state.envelope, wallSystem: state.wallSystem, roofSystem: state.roofSystem },
     foundation: { type: state.foundationType },
-    structural: { scheme: state.structuralScheme, roofStructure: state.roofStructure },
+    // Width-derived, not read from state — see `structural`'s own doc comment above.
+    structural: deriveStructuralVisualization(width),
     scope: {
       foundation: state.scope.includes('foundation'),
       frame: state.scope.includes('frame'),

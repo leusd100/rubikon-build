@@ -76,29 +76,35 @@ export type FoundationType = 'slab' | 'isolated' | 'engineeringDecision';
 
 /**
  * Phase 3E — the structural LAYOUT: whether the building has an internal support line, as
- * distinct from `RoofStructure` below (what spans between supports) — a customer can equally
- * validly want a clear-span roof of either portal or truss construction, or a centre-supported
- * one of either.
+ * distinct from `RoofStructure` below (what spans between supports).
  *
- * `centerSupport` is a customer-facing LAYOUT PREFERENCE ("I don't mind a column down the
- * middle"), not a structural requirement claim — this configurator never asserts that a given
- * span NEEDS internal support (see `structuralSchemeAdvisory` in parametricModel.ts, a UX
- * heuristic only). `engineeringDecision` follows `FoundationType`'s own precedent exactly: the
- * serious, honest default (see `DEFAULT_CONFIGURATOR_STATE` below) for a customer who has not had
- * a structural scheme engineered yet, rendering identically to `clearSpan` until a real decision
- * is made — see `deriveStructuralVisibility` in threeSceneModel.ts.
+ * Phase 3E.1 (the "structural auto-derivation" follow-up brief) removed the manual public control
+ * for this: a customer no longer picks a scheme directly, and this is no longer stored in
+ * `ConfiguratorState` at all. It is now DERIVED entirely from `dimensions.width` by
+ * `deriveStructuralVisualization` in parametricModel.ts, every time the domain model is built —
+ * see that function's own doc comment, and `STRUCTURAL_VISUALIZATION_THRESHOLDS` for why the
+ * thresholds are a visualization heuristic, never an engineering requirement claim. There is no
+ * `engineeringDecision` value any more for this specific fact: a width always resolves to a
+ * concrete scheme, so there is nothing left "undecided" once the customer has entered a width.
+ *
+ * The type itself, and every geometry function keyed on it (`buildInternalColumns` and friends in
+ * parametricModel.ts), still accept and produce BOTH values freely — the derivation is the only
+ * thing that narrowed to a specific width-driven mapping; the underlying geometric capability
+ * remains fully general and is exercised directly (bypassing the derivation) by tests that need a
+ * combination the derivation itself never produces, e.g. `portalRafter` + `centerSupport`.
  */
-export type StructuralScheme = 'clearSpan' | 'centerSupport' | 'engineeringDecision';
+export type StructuralScheme = 'clearSpan' | 'centerSupport';
 
 /**
  * Phase 3E — what spans between supports, as distinct from `StructuralScheme` above. `truss` is
  * a visually distinct alternative to the existing portal/rafter system (see parametricModel.ts's
- * own `buildTruss` doc comment for the schematic assumptions); `engineeringDecision` renders
- * identically to `portalRafter` — same "undecided defaults to the plain, always-available
- * baseline" pattern as `StructuralScheme.engineeringDecision` above and `FoundationType`'s own
- * `engineeringDecision`/`slab` pairing.
+ * own `buildTrussWebs` doc comment for the schematic assumptions).
+ *
+ * Same Phase 3E.1 note as `StructuralScheme` above: no longer a stored, customer-facing choice —
+ * derived from width by `deriveStructuralVisualization`, no `engineeringDecision` value left for
+ * the same reason (a width always resolves to a concrete answer).
  */
-export type RoofStructure = 'portalRafter' | 'truss' | 'engineeringDecision';
+export type RoofStructure = 'portalRafter' | 'truss';
 
 export type ScopeItem = 'foundation' | 'frame' | 'walls' | 'roof';
 
@@ -128,10 +134,6 @@ export type ConfiguratorState = {
   wallSystem: CladdingSystem;
   roofSystem: CladdingSystem;
   foundationType: FoundationType;
-  /** Phase 3E — see `StructuralScheme`'s own doc comment. */
-  structuralScheme: StructuralScheme;
-  /** Phase 3E — see `RoofStructure`'s own doc comment. */
-  roofStructure: RoofStructure;
   /** Which scope items are included in this request — a scope list, not a structural claim. */
   scope: ScopeItem[];
   gates: GatesCount;
@@ -143,9 +145,16 @@ export type DimensionBounds = { min: number; max: number; step: number };
 /**
  * UX-only slider/input boundaries — not construction norms. Chosen to keep the isometric
  * preview legible across the whole range, not derived from any building code.
+ *
+ * `width.max` was lowered from 60 to 50 in the Phase 3E.1 follow-up brief — a deliberate scope
+ * decision ("keeps the product within a deliberate scope... avoids implying that every extreme
+ * industrial building can be represented by this preliminary tool"), not a bug fix. `clampDimension`
+ * below is the ONLY place a stored width is ever reconciled against this bound, so lowering it here
+ * is also the complete migration path for any width value that predates the change: the very next
+ * render clamps it down to 50, the same way any other out-of-range value already gets handled.
  */
 export const DIMENSION_BOUNDS: Record<keyof Dimensions, DimensionBounds> = {
-  width: { min: 10, max: 60, step: 1 },
+  width: { min: 10, max: 50, step: 1 },
   length: { min: 10, max: 120, step: 1 },
   height: { min: 4, max: 15, step: 0.5 },
 };
@@ -173,26 +182,18 @@ export const FOUNDATION_TYPE_LABELS: Record<FoundationType, string> = {
 // comment — rather than defaulting the display order to whichever reads most impressive.
 export const FOUNDATION_TYPE_ORDER: FoundationType[] = ['engineeringDecision', 'slab', 'isolated'];
 
+// Labels for the DERIVED result only now (Phase 3E.1) — there is no radiogroup to order any more,
+// see StructuralScheme/RoofStructure's own doc comments, so the `_ORDER` arrays that used to drive
+// those controls were removed along with them.
 export const STRUCTURAL_SCHEME_LABELS: Record<StructuralScheme, string> = {
   clearSpan: 'Без внутрішніх опор',
   centerSupport: 'Центральний ряд опор',
-  engineeringDecision: 'Визначити після розрахунку',
 };
-
-// Unlike FOUNDATION_TYPE_ORDER, this leads with the two concrete layouts and puts the honest
-// "not yet decided" option last — matching the brief's own control mockup for this specific
-// choice. `DEFAULT_CONFIGURATOR_STATE` below still *defaults the stored value* to
-// `engineeringDecision`, same honest-by-default principle as `FoundationType`; only the display
-// order differs here, deliberately, per the brief.
-export const STRUCTURAL_SCHEME_ORDER: StructuralScheme[] = ['clearSpan', 'centerSupport', 'engineeringDecision'];
 
 export const ROOF_STRUCTURE_LABELS: Record<RoofStructure, string> = {
   portalRafter: 'Рама',
   truss: 'Металева ферма',
-  engineeringDecision: 'Визначити після розрахунку',
 };
-
-export const ROOF_STRUCTURE_ORDER: RoofStructure[] = ['portalRafter', 'truss', 'engineeringDecision'];
 
 export const SCOPE_LABELS: Record<ScopeItem, string> = {
   foundation: 'Фундамент',
@@ -232,11 +233,9 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   // Honest-by-default (see FoundationType's own doc comment): a fresh configurator has not had a
   // foundation engineered, so it should not silently claim "slab" on the customer's behalf.
   foundationType: 'engineeringDecision',
-  // Same honest-by-default principle, applied to the two new Phase 3E structural dimensions —
-  // both render identically to their plain/always-available baseline (clearSpan, portalRafter)
-  // until a real decision is made, so this changes no default geometry, only what is claimed.
-  structuralScheme: 'engineeringDecision',
-  roofStructure: 'engineeringDecision',
+  // Structural scheme / roof structure are no longer stored here at all (Phase 3E.1) — they are
+  // derived from `dimensions.width` on every render by deriveStructuralVisualization. At this
+  // default 24 m width that derivation yields truss + centerSupport.
   scope: ['foundation', 'frame', 'walls', 'roof'],
   gates: 1,
   gateType: 'standard',
