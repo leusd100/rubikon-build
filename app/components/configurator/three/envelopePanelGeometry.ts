@@ -384,3 +384,95 @@ function buildRidgeCapGeometry(widthM: number, lengthM: number, ridgeM: number, 
 }
 
 export { buildRidgeCapGeometry };
+
+// ── Phase 3D.1 — gate door leaf ──────────────────────────────────────────────
+//
+// Before this, a gate was a hole in the gable plus one flat, near-black plane set back behind it
+// (`gate-recess` in materials.ts, `recesses` in threeSceneModel.ts) — legible as "there is an
+// opening here" but not as "there is a door here". This adds the door leaf itself: a real surface,
+// inset a small margin inside the rough opening (so the existing recess still shows as a shadowed
+// jamb reveal around it, not replaced), sitting flush with the ground (no inset at the bottom — a
+// real door's threshold meets the slab directly), and broken into a few horizontal bands with a
+// narrow gap between them so the recess shows through as shadow lines — a sectional/roll-up door's
+// own panel seams, not a fabricated grille. Band count is DERIVED from the opening's own real
+// height, not fixed, so a machinery gate (taller, per GATE_PROPORTIONS in parametricModel.ts) gets
+// proportionally more bands rather than a few stretched ones — the brief's own "standard vs
+// machinery should differ where domain geometry already differs", for free, with no new gate
+// configurator surface.
+//
+// Same "array of independent shapes, one ExtrudeGeometry call" technique as the gable overlay above
+// — the gaps between bands are simply not covered by any shape, so the (existing, unchanged) recess
+// plane behind shows through them as a dark groove; no boolean/CSG subtraction needed.
+const GATE_LEAF_MARGIN_SIDE_M = 0.05;
+const GATE_LEAF_MARGIN_TOP_M = 0.06;
+const GATE_LEAF_THICKNESS_M = 0.03;
+const GATE_BAND_GAP_M = 0.025;
+const GATE_BAND_TARGET_HEIGHT_M = 0.65;
+const GATE_BAND_MIN_COUNT = 3;
+const GATE_BAND_MAX_COUNT = 8;
+
+/**
+ * The door leaf's own geometry, occupying local [0,widthM] × [0,heightM] × [0,thicknessM] — the
+ * SAME footprint the opening itself has (margins are baked into the bands drawn inside it, not
+ * subtracted from the returned bounds), so the caller positions this exactly like `recesses`'
+ * existing plane: at the opening's own (xM, 0, zM) origin, no separate offset maths.
+ *
+ * Winding: same clockwise-in-shoelace-terms order as `buildGableCladdingOverlay`'s own strips
+ * above (bottom-left → bottom-right → top-right → top-left) — that is the order already proven, on
+ * this exact "shape authored directly in world (X, Y), extruded along Z with no rotation, meant to
+ * face outward toward −Z" setup, to put the visible faces' normals the right way round (see
+ * `buildRidgeCapGeometry`'s own doc comment for the setup where getting this backwards silently
+ * culled a whole mesh).
+ */
+function buildGateLeafGeometry(widthM: number, heightM: number): THREE.BufferGeometry {
+  const x0 = GATE_LEAF_MARGIN_SIDE_M;
+  const x1 = widthM - GATE_LEAF_MARGIN_SIDE_M;
+  const availableHeightM = heightM - GATE_LEAF_MARGIN_TOP_M;
+
+  if (x1 <= x0 || availableHeightM <= 0) {
+    // Degenerate/undersized opening (never the default or typical configuration — see this file's
+    // own "falls back to flat below minimum width" precedent in buildEnvelopePanelGeometry): one
+    // plain unbanded leaf rather than a negative-height band.
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0);
+    shape.lineTo(widthM, 0);
+    shape.lineTo(widthM, heightM);
+    shape.lineTo(0, heightM);
+    shape.closePath();
+    return new THREE.ExtrudeGeometry(shape, { depth: GATE_LEAF_THICKNESS_M, bevelEnabled: false, curveSegments: 1 });
+  }
+
+  const rawBandCount = Math.round(availableHeightM / GATE_BAND_TARGET_HEIGHT_M);
+  const bandCount = Math.min(GATE_BAND_MAX_COUNT, Math.max(GATE_BAND_MIN_COUNT, rawBandCount));
+  const totalGapM = GATE_BAND_GAP_M * (bandCount - 1);
+  const bandHeightM = (availableHeightM - totalGapM) / bandCount;
+
+  const shapes: THREE.Shape[] = [];
+  if (bandHeightM <= 0) {
+    // The margin/gap budget doesn't fit even the minimum band count at this opening's real size —
+    // same fallback as above, one plain leaf rather than zero-or-negative-height bands.
+    const shape = new THREE.Shape();
+    shape.moveTo(x0, 0);
+    shape.lineTo(x1, 0);
+    shape.lineTo(x1, availableHeightM);
+    shape.lineTo(x0, availableHeightM);
+    shape.closePath();
+    shapes.push(shape);
+  } else {
+    for (let i = 0; i < bandCount; i += 1) {
+      const y0 = i * (bandHeightM + GATE_BAND_GAP_M);
+      const y1 = y0 + bandHeightM;
+      const shape = new THREE.Shape();
+      shape.moveTo(x0, y0);
+      shape.lineTo(x1, y0);
+      shape.lineTo(x1, y1);
+      shape.lineTo(x0, y1);
+      shape.closePath();
+      shapes.push(shape);
+    }
+  }
+
+  return new THREE.ExtrudeGeometry(shapes, { depth: GATE_LEAF_THICKNESS_M, bevelEnabled: false, curveSegments: 1 });
+}
+
+export { buildGateLeafGeometry };

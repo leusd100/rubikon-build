@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildRidgeCapGeometry } from '../../../app/components/configurator/three/envelopePanelGeometry';
+import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from '../../../app/components/configurator/three/envelopePanelGeometry';
 
 // Real geometric behaviour, not implementation trivia: these tests exist to catch exactly the
 // class of bug hand-rolling this geometry produced during development — a disconnected back face,
@@ -263,5 +263,77 @@ describe('buildRidgeCapGeometry (Phase 3D.1)', () => {
     const long = bounds(buildRidgeCapGeometry(RIDGE_WIDTH, 120, RIDGE_M, PITCH));
     expect(short.maxZ).toBeCloseTo(12, 6);
     expect(long.maxZ).toBeCloseTo(120, 6);
+  });
+});
+
+describe('buildGateLeafGeometry (Phase 3D.1)', () => {
+  // A standard gate at the default 24 m building (GATE_PROPORTIONS in parametricModel.ts:
+  // widthRatio 0.22, heightRatio 0.72 of an 8 m eave) and the taller/wider machinery one.
+  const STANDARD_W = 5.28;
+  const STANDARD_H = 5.76;
+  const MACHINERY_W = 8.16;
+  const MACHINERY_H = 6.8;
+
+  it('stays within its own real footprint — inset from the sides/top, flush with the ground', () => {
+    const b = bounds(buildGateLeafGeometry(STANDARD_W, STANDARD_H));
+    expect(b.minX).toBeGreaterThan(0); // side margin — the recess still shows as a reveal
+    expect(b.maxX).toBeLessThan(STANDARD_W);
+    expect(b.minY).toBeCloseTo(0, 6); // NO bottom margin — threshold meets the slab directly
+    expect(b.maxY).toBeLessThan(STANDARD_H); // top margin present
+    expect(b.minZ).toBeCloseTo(0, 6);
+    expect(b.maxZ).toBeGreaterThan(0); // has real thickness
+  });
+
+  it('is centred left-right — equal margin on both sides', () => {
+    const b = bounds(buildGateLeafGeometry(STANDARD_W, STANDARD_H));
+    expect(b.minX).toBeCloseTo(STANDARD_W - b.maxX, 6);
+  });
+
+  it('a taller opening gets more bands than a shorter one, up to the legibility cap', () => {
+    // Isolate height specifically (both below the max-band clamp, so the difference is real and
+    // not just both saturating it) — same "richer geometry for a bigger real surface" property
+    // buildEnvelopePanelGeometry's own rib count already has for width.
+    const short = buildGateLeafGeometry(5, 2);
+    const tall = buildGateLeafGeometry(5, 4);
+    expect(vertexCount(tall)).toBeGreaterThan(vertexCount(short));
+  });
+
+  it('clamps band count at the legibility ceiling instead of growing without bound', () => {
+    // A very tall machinery-scale opening should not produce absurdly many thin bands.
+    const veryTall = buildGateLeafGeometry(8, 12);
+    const tall = buildGateLeafGeometry(8, 7);
+    // Both comfortably past the clamp — same vertex count (same band count), not still climbing.
+    expect(vertexCount(veryTall)).toBe(vertexCount(tall));
+  });
+
+  it('standard vs. machinery gate proportions (parametricModel.ts GATE_PROPORTIONS) read as different doors', () => {
+    const standard = bounds(buildGateLeafGeometry(STANDARD_W, STANDARD_H));
+    const machinery = bounds(buildGateLeafGeometry(MACHINERY_W, MACHINERY_H));
+    expect(machinery.maxX).toBeGreaterThan(standard.maxX);
+    expect(machinery.maxY).toBeGreaterThan(standard.maxY);
+  });
+
+  it('never produces zero-height bands or a crash at a small/degenerate opening', () => {
+    for (const [w, h] of [[0.5, 0.3], [1, 0.5], [0.2, 0.2]] as const) {
+      const g = buildGateLeafGeometry(w, h);
+      expect(hasNoNaN(g)).toBe(true);
+      expect(vertexCount(g)).toBeGreaterThan(0);
+      const b = bounds(g);
+      expect(b.maxY).toBeLessThanOrEqual(h + 1e-6);
+      expect(b.maxX).toBeLessThanOrEqual(w + 1e-6);
+    }
+  });
+
+  it('has no NaN/Infinity vertices at typical sizes', () => {
+    for (const [w, h] of [[STANDARD_W, STANDARD_H], [MACHINERY_W, MACHINERY_H]] as const) {
+      expect(hasNoNaN(buildGateLeafGeometry(w, h))).toBe(true);
+    }
+  });
+
+  it('is deterministic', () => {
+    const a = bounds(buildGateLeafGeometry(STANDARD_W, STANDARD_H));
+    const b = bounds(buildGateLeafGeometry(STANDARD_W, STANDARD_H));
+    expect(a).toEqual(b);
+    expect(vertexCount(buildGateLeafGeometry(STANDARD_W, STANDARD_H))).toBe(vertexCount(buildGateLeafGeometry(STANDARD_W, STANDARD_H)));
   });
 });

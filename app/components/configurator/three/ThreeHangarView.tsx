@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import type {
   FootingMesh,
   GableMesh,
+  GateLeafMesh,
   MaterialKey,
   PanelMesh,
   StrutMesh,
@@ -14,7 +15,7 @@ import type {
 import type { ParametricBuildingModel } from '../../../lib/configurator/parametricModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
 import { MATERIALS, VIEWPORT_BG } from './materials';
-import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildRidgeCapGeometry } from './envelopePanelGeometry';
+import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
 import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
@@ -167,6 +168,30 @@ function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: bo
         receiveShadow
       />
     </group>
+  );
+}
+
+/**
+ * Phase 3D.1 — the gate's own door leaf. See `buildGateLeafGeometry`'s own doc comment in
+ * envelopePanelGeometry.ts for the geometry and why it needs no placement basis matrix: like
+ * `recesses` (the plain dark plane this sits in front of), a gate opening only ever lives on the
+ * front face at a fixed depth, so a straight position translation is enough. Shares
+ * `sharedMaterial('gate')` — a real, distinct material rather than the recess's near-black void —
+ * and mounts on the SAME `gateLayer` as the recess it sits in front of, so the two arrive and leave
+ * together with no separate driver of their own.
+ */
+function GateLeaf({ leaf, castShadow }: { leaf: GateLeafMesh; castShadow: boolean }) {
+  const geometry = useMemo(() => buildGateLeafGeometry(leaf.widthM, leaf.heightM), [leaf]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <mesh
+      geometry={geometry}
+      material={sharedMaterial(leaf.material)}
+      position={[leaf.xM, 0, leaf.zM]}
+      castShadow={castShadow}
+      receiveShadow
+    />
   );
 }
 
@@ -787,6 +812,9 @@ export function ThreeHangarView({
           thicknessDirection="inward"
           castShadow={false}
         />
+      ))}
+      {gateLayer.mounted && scene.leaves.map((leaf) => (
+        <GateLeaf key={leaf.id} leaf={leaf} castShadow={envelopeCastsShadow} />
       ))}
 
       {roof.mounted && roofPanels.map((panel) => (

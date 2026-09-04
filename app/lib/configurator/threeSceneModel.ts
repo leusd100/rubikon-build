@@ -28,6 +28,7 @@ export type MaterialKey =
   | 'wall'
   | 'roof'
   | 'slab'
+  | 'gate'
   | 'gate-recess'
   | 'ground';
 
@@ -115,6 +116,22 @@ export type FootingMesh = {
   material: MaterialKey;
 };
 
+/**
+ * Phase 3D.1 — the gate's own door leaf, sitting just inside `recesses`' existing dark backdrop.
+ * Carries the opening's real width/height verbatim (no margin/banding maths here — see this file's
+ * own header rule); `envelopePanelGeometry.ts`'s `buildGateLeafGeometry` turns those into an inset,
+ * sectioned panel, the same "renderer decides the pattern, this file supplies the real dimensions"
+ * split every other cladding surface already follows.
+ */
+export type GateLeafMesh = {
+  id: string;
+  xM: number;
+  widthM: number;
+  heightM: number;
+  zM: number;
+  material: MaterialKey;
+};
+
 export type ThreeSceneModel = {
   /** Axis-aligned bounds over the building's own parametric geometry — what the camera frames.
    *  Excludes the ground plane, which is staging, not the object. */
@@ -129,6 +146,11 @@ export type ThreeSceneModel = {
   footings: FootingMesh[];
   /** Dark recessed planes behind each opening, so a gate reads as depth rather than a decal. */
   recesses: PanelMesh[];
+  /** Phase 3D.1 — the actual door leaf sitting in front of each recess. Always one-to-one with
+   *  `recesses` (both come from `building.openings`), kept as a separate array rather than folded
+   *  into `recesses` because the two are genuinely different meshes: a plain `PanelMesh` box for
+   *  the dark backdrop, a banded/inset one for the leaf — see `GateLeafMesh`'s own doc comment. */
+  leaves: GateLeafMesh[];
   ground: { yM: number; sizeM: number };
   /** `gates` mirrors SVG's own `gates > 0` boolean (buildUpSequence's `gates` layer trigger) —
    *  independent of `walls`, because a gate opening is only meaningful once there is an envelope
@@ -166,7 +188,16 @@ const RAFTER_SECTION_M = 0.28;
 const GIRT_SECTION_M = 0.12;
 const WALL_THICKNESS_M = 0.16;
 const ROOF_THICKNESS_M = 0.14;
-const GATE_RECESS_INSET_M = 0.35;
+// Phase 3D.1: shallower than the original 0.35 m — that depth was tuned back when the recess WAS
+// the gate (brief §3A: "an opening is the absence of light"), reading as a loading-dock void. Now
+// that a real door leaf (see `GateLeafMesh`, `leaves` below) sits in front of it at
+// `GATE_LEAF_DEPTH_M`, this only has to stay visibly further back than the leaf's own face so the
+// leaf's inset margin still reads as a shadowed reveal rather than z-fighting the leaf.
+const GATE_RECESS_INSET_M = 0.16;
+// How far in front of the wall's own outer cladding face the door leaf sits — a believable frame/
+// jamb reveal depth, not the full recess depth above (a real sectional door sits close behind its
+// opening, it does not sit at the back of a half-metre tunnel).
+const GATE_LEAF_DEPTH_M = 0.08;
 // Generous on purpose: at 0.55 the ground plane's own straight edge was visible inside the
 // camera frame at default dimensions, which read as a stage prop rather than as ground.
 const GROUND_MARGIN_RATIO = 3;
@@ -199,6 +230,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
   const panels: PanelMesh[] = [];
   const gables: GableMesh[] = [];
   const recesses: PanelMesh[] = [];
+  const leaves: GateLeafMesh[] = [];
 
   // ── Primary frame: two columns + two rafters per portal frame, straight from the model ──
   for (const frame of building.frames) {
@@ -275,6 +307,14 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       thicknessM: 0.02,
       material: 'gate-recess',
     });
+    leaves.push({
+      id: `leaf-${opening.index}`,
+      xM,
+      widthM: gw,
+      heightM: gh,
+      zM: GATE_LEAF_DEPTH_M,
+      material: 'gate',
+    });
   }
 
   const slab: SlabMesh = {
@@ -316,6 +356,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     slab,
     footings,
     recesses,
+    leaves,
     ground: { yM: -building.slab.thicknessM, sizeM: Math.max(widthM, lengthM) * (1 + GROUND_MARGIN_RATIO) },
     visible: {
       slab: domain.scope.foundation && foundationVisibility.slab,
