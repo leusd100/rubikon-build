@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildThreeScene } from '../../../app/lib/configurator/threeSceneModel';
+import { buildThreeScene, claddingMaterialKey } from '../../../app/lib/configurator/threeSceneModel';
+import { MATERIALS } from '../../../app/components/configurator/three/materials';
 import { buildTechnicalScene } from '../../../app/lib/configurator/technicalSceneModel';
 import { buildParametricModel } from '../../../app/lib/configurator/parametricModel';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
@@ -281,5 +282,82 @@ describe('buildThreeScene', () => {
       expect(match?.xM).toBeCloseTo(footing.xM, 6);
       expect(match?.zM).toBeCloseTo(footing.zM, 6);
     }
+  });
+});
+
+describe('Phase 3F — cladding-system material split', () => {
+  it('claddingMaterialKey maps every (surface, system) pair to the expected key, and nowhere else duplicates this mapping', () => {
+    expect(claddingMaterialKey('wall', 'profiled-sheet')).toBe('wall-profiled');
+    expect(claddingMaterialKey('wall', 'sandwich-panel')).toBe('wall-sandwich');
+    expect(claddingMaterialKey('roof', 'profiled-sheet')).toBe('roof-profiled');
+    expect(claddingMaterialKey('roof', 'sandwich-panel')).toBe('roof-sandwich');
+  });
+
+  it('wall panels wear the wall system\'s own material key, never the roof\'s and never the other system\'s', () => {
+    const profiled = buildThreeScene(domainFor({ wallSystem: 'profiled-sheet' }));
+    const sandwich = buildThreeScene(domainFor({ wallSystem: 'sandwich-panel' }));
+
+    const wallPanels = (scene: ReturnType<typeof buildThreeScene>) => scene.panels.filter((p) => p.id.startsWith('wall-'));
+    expect(wallPanels(profiled).length).toBeGreaterThan(0);
+    expect(wallPanels(profiled).every((p) => p.material === 'wall-profiled')).toBe(true);
+    expect(wallPanels(sandwich).every((p) => p.material === 'wall-sandwich')).toBe(true);
+  });
+
+  it('roof panels wear the roof system\'s own material key, independently of the wall system', () => {
+    // Deliberately mismatched wall/roof systems — the two are genuinely independent domain facts
+    // (see CladdingSystem's own doc comment in types.ts) and this split must respect that: a
+    // profiled roof over sandwich walls (or vice versa) is a real, valid, orthogonal combination.
+    const scene = buildThreeScene(domainFor({ wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' }));
+    const wallPanels = scene.panels.filter((p) => p.id.startsWith('wall-'));
+    const roofPanels = scene.panels.filter((p) => p.id.startsWith('roof-'));
+
+    expect(wallPanels.every((p) => p.material === 'wall-sandwich')).toBe(true);
+    expect(roofPanels.every((p) => p.material === 'roof-profiled')).toBe(true);
+  });
+
+  it('the front and rear gables follow the WALL system, matching the side walls they extrude alongside', () => {
+    const scene = buildThreeScene(domainFor({ wallSystem: 'sandwich-panel' }));
+    expect(scene.gables).toHaveLength(2);
+    expect(scene.gables.every((g) => g.material === 'wall-sandwich')).toBe(true);
+  });
+
+  it('exposes the two cladding systems at the top level too, for consumers (the ridge cap) with no panel of their own to read', () => {
+    const scene = buildThreeScene(domainFor({ wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' }));
+    expect(scene.envelope).toEqual({ wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' });
+  });
+
+  it('every MaterialKey MATERIALS defines has physically valid roughness/metalness (both in [0, 1])', () => {
+    for (const [key, spec] of Object.entries(MATERIALS)) {
+      expect(spec.roughness, `${key}.roughness out of [0,1]`).toBeGreaterThanOrEqual(0);
+      expect(spec.roughness, `${key}.roughness out of [0,1]`).toBeLessThanOrEqual(1);
+      expect(spec.metalness, `${key}.metalness out of [0,1]`).toBeGreaterThanOrEqual(0);
+      expect(spec.metalness, `${key}.metalness out of [0,1]`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('sandwich panel materials are meaningfully more matte (higher roughness, lower metalness) than their profiled counterpart at the same nominal colour — the whole point of the split (brief §3)', () => {
+    expect(MATERIALS['wall-sandwich'].color).toBe(MATERIALS['wall-profiled'].color);
+    expect(MATERIALS['wall-sandwich'].roughness).toBeGreaterThan(MATERIALS['wall-profiled'].roughness);
+    expect(MATERIALS['wall-sandwich'].metalness).toBeLessThan(MATERIALS['wall-profiled'].metalness);
+
+    expect(MATERIALS['roof-sandwich'].roughness).toBeGreaterThan(MATERIALS['roof-profiled'].roughness);
+    expect(MATERIALS['roof-sandwich'].metalness).toBeLessThan(MATERIALS['roof-profiled'].metalness);
+  });
+
+  it('galvanized structural steel (frame-primary) reads as metallic but not mirror-like — metalness up from the pre-3F baseline, roughness still comfortably above 0 (brief §4)', () => {
+    expect(MATERIALS['frame-primary'].metalness).toBeGreaterThanOrEqual(0.5);
+    expect(MATERIALS['frame-primary'].roughness).toBeGreaterThan(0.2);
+  });
+
+  it('the gate reads a visibly different roughness from either wall system (brief §6)', () => {
+    expect(MATERIALS.gate.roughness).not.toBeCloseTo(MATERIALS['wall-profiled'].roughness, 1);
+    expect(MATERIALS.gate.roughness).not.toBeCloseTo(MATERIALS['wall-sandwich'].roughness, 1);
+  });
+
+  it('neither cladding-system material key carries colour, for either system — a colour preset still cannot invalidate the panel geometry cache regardless of which system is active (extends the pre-existing Phase 3D guarantee to both new keys)', () => {
+    const profiled = buildThreeScene(domainFor({ wallSystem: 'profiled-sheet' }));
+    const sandwich = buildThreeScene(domainFor({ wallSystem: 'sandwich-panel' }));
+    expect(Object.keys(profiled.panels[0])).not.toContain('color');
+    expect(Object.keys(sandwich.panels[0])).not.toContain('color');
   });
 });

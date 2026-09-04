@@ -11,11 +11,14 @@ import { MATERIALS } from '../../../app/components/configurator/three/materials'
 
 describe('materialPresets', () => {
   it('the default wall preset reproduces materials.ts\'s own base wall colour exactly — "no selection made" must render pixel-identical to every pre-Phase-3C baseline', () => {
-    expect(wallPresetColor(DEFAULT_WALL_PRESET)).toBe(MATERIALS.wall.color);
+    // Phase 3F: 'wall' split into 'wall-profiled'/'wall-sandwich' — both share the same default
+    // colour by design (see materials.ts's own doc comment), so either is a valid reference here;
+    // 'wall-profiled' is picked as the one materialPresets.ts's own comment already names.
+    expect(wallPresetColor(DEFAULT_WALL_PRESET)).toBe(MATERIALS['wall-profiled'].color);
   });
 
   it('the default roof preset reproduces materials.ts\'s own base roof colour exactly', () => {
-    expect(roofPresetColor(DEFAULT_ROOF_PRESET)).toBe(MATERIALS.roof.color);
+    expect(roofPresetColor(DEFAULT_ROOF_PRESET)).toBe(MATERIALS['roof-profiled'].color);
   });
 
   it('every preset is a restrained industrial neutral — no RUBIKON orange, no saturated hue, matching materials.ts\'s own rule that orange stays UI/accent language', () => {
