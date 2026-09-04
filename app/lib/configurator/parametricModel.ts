@@ -272,13 +272,18 @@ const FRAME_MAX_BAYS = 10;
  * 1.6× taller than the walls it sits on. Real wide-span portal frames go the other way — the wider
  * the span, the shallower the pitch.
  *
- * `PITCH_MAX_WIDTH_M` below is still 60, not 50 — deliberately left unchanged rather than
- * recalibrated, per the follow-up brief's own "audit only... do NOT change [other limits] except
- * width unless there is a concrete bug" instruction. This is not a bug: the curve still produces a
- * smooth, valid pitch across the entire current 10–50 m range (8.4° at the new 50 m maximum,
- * instead of the 7° it would reach at a now-unreachable 60 m), and moving the anchor would disturb
- * the two independently-verified calibration points documented below. Flagged in the Phase 3E.1
- * final report as a candidate for a future product decision, not changed silently here.
+ * PRODUCT DECISION (settled, not open): `PITCH_MAX_WIDTH_M` below stays 60, not 50 — the curve's
+ * internal calibration anchor is deliberately allowed to sit BEYOND the public width range.
+ *   • Public configurator max width = 50 (DIMENSION_BOUNDS.width.max).
+ *   • This pitch curve's own calibration anchor (PITCH_MAX_WIDTH_M) sits beyond that public
+ *     range, at 60.
+ *   • That is intentional, not an oversight: re-anchoring the curve to 50 would only buy a
+ *     shallower pitch at the single new extreme (7° instead of 8.4° at 50 m, itself not an
+ *     obvious problem on its own), at the cost of re-stretching the whole curve and disturbing
+ *     the two independently-verified calibration points below, which cover the 18–36 m range
+ *     most real requests actually land in. Not every internal mathematical anchor has to line up
+ *     with a UI bound — this is that case, deliberately.
+ * Not a bug, not a TODO — do not "fix" this without a product decision to revisit it.
  *
  * So pitch interpolates from steeper-at-narrow to shallower-at-wide, clamped at
  * both ends. Two independent checks on the numbers below:
