@@ -345,6 +345,48 @@ describe('roof overhang', () => {
   });
 });
 
+describe('footings (Phase 3D — isolated foundation)', () => {
+  it('always exists — one pair per portal frame — regardless of foundation type, same "geometry is a fact" rule the slab already follows', () => {
+    const m = modelFor({ width: 24, length: 60, height: 8 });
+    expect(m.footings).toHaveLength(m.frames.length * 2);
+  });
+
+  it('sits exactly at each column base point, never offset or hand-placed', () => {
+    const m = modelFor({ width: 24, length: 60, height: 8 });
+    for (const frame of m.frames) {
+      const left = m.footings.find((f) => f.id === `col-${frame.index}-left`);
+      const right = m.footings.find((f) => f.id === `col-${frame.index}-right`);
+      expect(left).toBeDefined();
+      expect(right).toBeDefined();
+      expect(left?.xM).toBeCloseTo(frame.leftColumn.a.x, 6);
+      expect(left?.zM).toBeCloseTo(frame.leftColumn.a.z, 6);
+      expect(right?.xM).toBeCloseTo(frame.rightColumn.a.x, 6);
+      expect(right?.zM).toBeCloseTo(frame.rightColumn.a.z, 6);
+    }
+  });
+
+  it('never overlaps a neighbouring footing, even at the tightest legal bay spacing', () => {
+    // Shortest length ⇒ fewest, closest-together bays (frameBayCount clamps to a 2-bay minimum),
+    // which is the actual worst case for footing pads colliding along Z.
+    const m = modelFor({ width: W.min, length: L.min, height: H.min });
+    const stationsZ = [...new Set(m.footings.map((f) => f.zM))].sort((a, b) => a - b);
+    for (let i = 1; i < stationsZ.length; i += 1) {
+      const gap = stationsZ[i] - stationsZ[i - 1];
+      expect(gap).toBeGreaterThan(m.footings[0].padWidthM);
+    }
+  });
+
+  it('is a placeholder/schematic value, not derived from span, height or any other building dimension', () => {
+    // The whole point (see FootingGeometry's own doc comment): this configurator does not run a
+    // footing-sizing calculation. Same pad/pedestal size at both dimension extremes is the
+    // behavioural proof of that, not just a comment's claim.
+    const small = modelFor({ width: W.min, length: L.min, height: H.min });
+    const large = modelFor({ width: W.max, length: L.max, height: H.max });
+    expect(small.footings[0].padWidthM).toBe(large.footings[0].padWidthM);
+    expect(small.footings[0].pedestalHeightM).toBe(large.footings[0].pedestalHeightM);
+  });
+});
+
 describe('robustness across the whole supported range', () => {
   const corners: Array<[number, number, number]> = [
     [W.min, L.min, H.min],

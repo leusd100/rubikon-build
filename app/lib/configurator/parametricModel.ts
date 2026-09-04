@@ -108,6 +108,33 @@ export type SlabGeometry = {
   overhangM: number;
 };
 
+/**
+ * Phase 3D — a schematic isolated footing under one portal-frame column: a buried pad plus a short
+ * pedestal stub the column base actually sits on (ground → pad → pedestal → column, per the
+ * brief's own hierarchy). Positioned at the column's own base point — never hand-placed by a
+ * renderer — so both the technical and 3D views can key a footing to the exact same column by `id`
+ * and never drift apart.
+ *
+ * EXPLICITLY NOT an engineering output. Every dimension below is a fixed, round, schematic value —
+ * this configurator does not run a bearing-capacity or footing-sizing calculation, and these
+ * numbers must never be presented as though it did (see FoundationType's own doc comment and
+ * FOOTING_* constants below). A real footing's size depends on soil conditions and structural load,
+ * neither of which this tool knows.
+ */
+export type FootingGeometry = {
+  /** `col-{frame index}-{left|right}` — matches the column it sits under one-to-one. */
+  id: string;
+  side: 'left' | 'right';
+  frameIndex: number;
+  /** Column base point, in plan — the pad and pedestal are both centred here. */
+  xM: number;
+  zM: number;
+  padWidthM: number;
+  padThicknessM: number;
+  pedestalWidthM: number;
+  pedestalHeightM: number;
+};
+
 export type ParametricBuildingModel = {
   footprint: { widthM: number; lengthM: number };
   heights: { eaveM: number; ridgeM: number };
@@ -141,6 +168,13 @@ export type ParametricBuildingModel = {
    * diff). Visibility is the renderer's business; the footprint is a fact.
    */
   slab: SlabGeometry;
+  /**
+   * ALWAYS present too, same "invisible ≠ nonexistent" rule as `slab` — one per column,
+   * regardless of `foundation.type`. Which foundation representation a renderer actually shows
+   * (the continuous slab, or these discrete footings) is a presentation choice driven by
+   * `domain.foundation.type`, not a reason to leave either geometry unset.
+   */
+  footings: FootingGeometry[];
 };
 
 // ── Tunable visual constants ────────────────────────────────────────────────
@@ -204,6 +238,26 @@ const SLAB_THICKNESS_M = 0.3;
  *  slab overhang comment above — same iterative live-comparison process, same "design call"
  *  caveat. */
 const ROOF_OVERHANG_M = 1.5;
+
+// Phase 3D — isolated-footing schematic dimensions. Fixed and round on purpose (see
+// FootingGeometry's own doc comment: this is a visualisation, never an engineering output).
+// Sized to read clearly next to the column sections below without ever touching a neighbouring
+// footing at the tightest bay spacing this configurator allows (FRAME_TARGET_SPACING_M = 6 m,
+// clamped to a 2-bay minimum — even a 10 m-long building still spaces columns 5 m apart, well
+// clear of even the larger pad below).
+//
+// The pedestal specifically was tuned up from an initial 0.6×0.3 m after live comparison against
+// the slab representation: at that size the ONLY visible part (the pad is buried; only the
+// pedestal stub shows above grade) measurably changed the render — confirmed by pixel-diffing
+// isolated against slab, not assumed — but read as indistinguishable from the building's own
+// contact shadow at the default camera distance, which fails the brief's own "does this visually
+// explain how the frame meets the ground" bar. Taller/wider reads as a real pedestal a column
+// base plate could sit on; still visually modest next to an 8 m+ eave, and still explicitly not
+// an engineered dimension.
+const FOOTING_PAD_WIDTH_M = 1.6;
+const FOOTING_PAD_THICKNESS_M = 0.4;
+const FOOTING_PEDESTAL_WIDTH_M = 0.8;
+const FOOTING_PEDESTAL_HEIGHT_M = 0.6;
 
 /** Side-wall girt heights, as a fraction of eave height. Stylised "secondary
  *  structure exists here", matching the previous model's two levels. */
@@ -444,6 +498,35 @@ function buildOpenings(
   });
 }
 
+/** One footing per column (two per frame) — see FootingGeometry's own doc comment for what this
+ *  is and, just as importantly, what it deliberately is not. */
+function buildFootings(frames: PortalFrame[]): FootingGeometry[] {
+  return frames.flatMap((frame) => [
+    {
+      id: `col-${frame.index}-left`,
+      side: 'left' as const,
+      frameIndex: frame.index,
+      xM: frame.leftColumn.a.x,
+      zM: frame.leftColumn.a.z,
+      padWidthM: FOOTING_PAD_WIDTH_M,
+      padThicknessM: FOOTING_PAD_THICKNESS_M,
+      pedestalWidthM: FOOTING_PEDESTAL_WIDTH_M,
+      pedestalHeightM: FOOTING_PEDESTAL_HEIGHT_M,
+    },
+    {
+      id: `col-${frame.index}-right`,
+      side: 'right' as const,
+      frameIndex: frame.index,
+      xM: frame.rightColumn.a.x,
+      zM: frame.rightColumn.a.z,
+      padWidthM: FOOTING_PAD_WIDTH_M,
+      padThicknessM: FOOTING_PAD_THICKNESS_M,
+      pedestalWidthM: FOOTING_PEDESTAL_WIDTH_M,
+      pedestalHeightM: FOOTING_PEDESTAL_HEIGHT_M,
+    },
+  ]);
+}
+
 function buildSlab(widthM: number, lengthM: number): SlabGeometry {
   const o = SLAB_OVERHANG_M;
   return {
@@ -471,6 +554,7 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
 
   const count = frameBayCount(lengthM);
   const stationsM = buildBayStations(lengthM, count);
+  const frames = buildFrames(widthM, eaveHeightM, ridgeM, stationsM);
 
   return {
     footprint: { widthM, lengthM },
@@ -483,7 +567,7 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
       overhangM: ROOF_OVERHANG_M,
     },
     bays: { count, stationsM },
-    frames: buildFrames(widthM, eaveHeightM, ridgeM, stationsM),
+    frames,
     envelope: {
       wallSegments: buildWallSegments(widthM, lengthM, eaveHeightM, stationsM),
       roofSegments: buildRoofSegments(widthM, eaveHeightM, ridgeM, stationsM, pitchDeg, ROOF_OVERHANG_M),
@@ -494,5 +578,6 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
     girts: buildGirts(widthM, lengthM, eaveHeightM),
     openings: buildOpenings(domain.gates, domain.gateType, widthM, eaveHeightM),
     slab: buildSlab(widthM, lengthM),
+    footings: buildFootings(frames),
   };
 }
