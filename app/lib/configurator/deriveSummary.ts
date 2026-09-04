@@ -1,5 +1,13 @@
 import type { HangarDomainModel } from './domainModel';
-import { CLADDING_SYSTEM_LABELS, ENVELOPE_LABELS, FOUNDATION_TYPE_LABELS, SCOPE_LABELS, SCOPE_ORDER } from './types';
+import {
+  CLADDING_SYSTEM_LABELS,
+  ENVELOPE_LABELS,
+  FOUNDATION_TYPE_LABELS,
+  ROOF_STRUCTURE_LABELS,
+  SCOPE_LABELS,
+  SCOPE_ORDER,
+  STRUCTURAL_SCHEME_LABELS,
+} from './types';
 
 export type ConfiguratorSummary = {
   /** width × length, m² — the one derived number the brief signs off on for the POC. */
@@ -13,6 +21,11 @@ export type ConfiguratorSummary = {
    */
   claddingSystemLabel: string;
   foundationTypeLabel: string;
+  /** Phase 3E, brief §19: a real business-relevant configuration fact, same status as
+   *  `foundationTypeLabel` above — not a renderer-only detail (compare: panel count, web
+   *  pattern, section sizes — none of that belongs in a lead brief). */
+  structuralSchemeLabel: string;
+  roofStructureLabel: string;
   /** Scope items in a fixed, readable order — not the order they were toggled in. */
   scopeLabels: string[];
   scopeSummaryLabel: string;
@@ -54,6 +67,8 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     envelopeLabel: ENVELOPE_LABELS[domain.envelope.walls],
     claddingSystemLabel: formatCladdingSystemLabel(domain.envelope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],
+    structuralSchemeLabel: STRUCTURAL_SCHEME_LABELS[domain.structural.scheme],
+    roofStructureLabel: ROOF_STRUCTURE_LABELS[domain.structural.roofStructure],
     scopeLabels: orderedScope.map((item) => SCOPE_LABELS[item]),
     scopeSummaryLabel: orderedScope.length
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')
