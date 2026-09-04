@@ -1,5 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
-import type { EnvelopeChoice, GateType } from './types';
+import type { EnvelopeChoice, GateType, RoofStructure, StructuralScheme } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE SINGLE SOURCE OF GEOMETRIC TRUTH (Phase 3-0, 2026-09-03)
@@ -90,6 +90,55 @@ export type PortalFrame = {
   ridgePoint: Vec3;
 };
 
+/**
+ * Phase 3E — one internal (centre-line) column, at the SAME Z stations `PortalFrame`s use — see
+ * `buildInternalColumns`'s own doc comment for why a station is skipped instead of generated
+ * through a gate, and for the `ridgeProp` field's own meaning. ALWAYS present when
+ * `structuralScheme === 'centerSupport'`, at every station gate geometry allows — which stations
+ * were skipped, and why, is not represented here; a renderer that needs to explain that reads
+ * `openings` and `bays.stationsM` itself, the same source this function used.
+ */
+export type InternalColumn = {
+  stationM: number;
+  index: number;
+  /** Grade to eave — the SAME height as the external columns at this station, matching
+   *  `PortalFrame.leftColumn`/`rightColumn`'s own span, so isolated footings and material
+   *  hierarchy treat it identically (see FootingGeometry's own doc comment). */
+  column: Member;
+  /**
+   * `portalRafter` only: a short prop from the column's own top (eave height) up to the ridge
+   * point, where the two rafters already meet — a real, legible detail (a king-post-style prop),
+   * not a fabricated one, and the only way this column actually SUPPORTS anything in portal mode
+   * (there is no bottom chord there to land on). `null` in truss mode, where the column's own top
+   * already lands exactly on the truss's flat bottom chord (see `buildTrussWebs`) — nothing more
+   * is needed.
+   */
+  ridgeProp: Member | null;
+};
+
+/**
+ * Phase 3E — the steel truss ADDED at a station already carrying a `PortalFrame`: the frame's own
+ * `leftRafter`/`rightRafter` already ARE the truss's top chord (same two lines, not duplicated
+ * here — see this type's own field comments), so this only carries what a truss has and a plain
+ * rafter pair does not: a bottom chord and the web members between the two.
+ *
+ * ALWAYS computed, at every station, regardless of `roofStructure` — same "geometry is a fact,
+ * visibility is the renderer's business" rule `slab`/`footings` already follow (see
+ * `ParametricBuildingModel`'s own doc comments on those). Which representation (plain rafters, or
+ * rafters + this) a renderer actually shows is `domain.structural.roofStructure`, not a reason to
+ * leave this unset.
+ */
+export type TrussWebs = {
+  stationM: number;
+  index: number;
+  /** Flat, at eave height, spanning the full width — see `buildTrussWebs`'s own doc comment for
+   *  why a flat bottom chord (not one shaped to the roof) was the chosen schematic language. */
+  bottomChord: Member;
+  /** Alternating diagonals between the (implicit, from `PortalFrame`) top chord and this bottom
+   *  chord — a simplified Warren pattern; see `buildTrussWebs`'s own doc comment. */
+  webs: Member[];
+};
+
 export type OpeningGeometry = {
   index: number;
   face: 'front';
@@ -122,9 +171,11 @@ export type SlabGeometry = {
  * neither of which this tool knows.
  */
 export type FootingGeometry = {
-  /** `col-{frame index}-{left|right}` — matches the column it sits under one-to-one. */
+  /** `col-{frame index}-{left|right}` for a portal-frame column, `col-{internal column
+   *  index}-center` for a Phase 3E internal column — matches the column it sits under one-to-one
+   *  either way. */
   id: string;
-  side: 'left' | 'right';
+  side: 'left' | 'right' | 'center';
   frameIndex: number;
   /** Column base point, in plan — the pad and pedestal are both centred here. */
   xM: number;
@@ -150,6 +201,14 @@ export type ParametricBuildingModel = {
   };
   bays: { count: number; stationsM: number[] };
   frames: PortalFrame[];
+  /** Phase 3E — see `InternalColumn`'s own doc comment. Empty for `structuralScheme !==
+   *  'centerSupport'` — unlike `slab`/`footings`, there is no "always one per station" baseline
+   *  to stay honest about: a clear-span building genuinely has none, so an empty array here IS
+   *  the fact, not a placeholder for one being hidden. */
+  internalColumns: InternalColumn[];
+  /** Phase 3E — see `TrussWebs`'s own doc comment: ALWAYS one per frame station, regardless of
+   *  `roofStructure` (same "geometry is a fact" rule as `slab`/`footings`). */
+  trusses: TrussWebs[];
   envelope: {
     wallSegments: WallSegment[];
     roofSegments: RoofSegment[];
@@ -263,6 +322,28 @@ const FOOTING_PEDESTAL_HEIGHT_M = 0.6;
  *  structure exists here", matching the previous model's two levels. */
 const GIRT_LEVELS = [1 / 3, 2 / 3] as const;
 
+// ── Phase 3E — structural systems ───────────────────────────────────────────
+// All of the constants in this section are the SAME kind of thing as the visual-rhythm rules
+// above: UX/visual heuristics, never engineering calculations. See structuralSchemeAdvisory's own
+// doc comment and the brief's own "engineering honesty" requirement — none of this may be
+// presented as a structural determination.
+
+/** A UX heuristic only (see `structuralSchemeAdvisory`) — not the width above which a centre
+ *  support becomes structurally necessary. This tool does not know that. */
+const STRUCTURAL_SCHEME_ADVISORY_WIDTH_M = 24;
+
+/** Believable real-world truss panel width, used only to pick a panel COUNT that looks right at
+ *  a given span — see `buildTrussWebs`. Clamped so neither a narrow nor a very wide supported
+ *  span can produce a degenerate (too sparse or too dense) web pattern. */
+const TRUSS_PANEL_TARGET_WIDTH_M = 1.8;
+const TRUSS_PANELS_MIN_PER_HALF = 3;
+const TRUSS_PANELS_MAX_PER_HALF = 8;
+
+/** Half-width safety margin around a gate opening's own rect that an internal column's centreline
+ *  must clear — generous relative to any column's own real section, so "does this conflict"
+ *  never comes down to sub-decimetre rounding. */
+const INTERNAL_COLUMN_GATE_CLEARANCE_M = 0.3;
+
 const DEG = Math.PI / 180;
 
 function round(value: number, dp = 6): number {
@@ -297,6 +378,24 @@ export function roofPitchDegForWidth(widthM: number): number {
 export function frameBayCount(spanMetres: number): number {
   const raw = Math.round(spanMetres / FRAME_TARGET_SPACING_M);
   return Math.min(FRAME_MAX_BAYS, Math.max(FRAME_MIN_BAYS, raw));
+}
+
+/**
+ * Phase 3E, brief §2 — a SOFT, UX-only suggestion, never an engineering rule. Returns the advisory
+ * copy to show when a wide span might benefit from a centre support line the customer has not
+ * already chosen, or `null` when there is nothing to say (already `centerSupport`, or the span is
+ * under the advisory width).
+ *
+ * `STRUCTURAL_SCHEME_ADVISORY_WIDTH_M` is a product/UX threshold picked to start the conversation
+ * at roughly the span where a clear-span portal frame starts looking ambitious for this product
+ * category — it is NOT derived from any span/load calculation and must never be presented as one.
+ * The copy itself says exactly that ("остаточне рішення визначається конструктивним розрахунком"),
+ * on purpose, every time it renders — see the brief's own §20 engineering-honesty requirement.
+ */
+export function structuralSchemeAdvisory(widthM: number, scheme: StructuralScheme): string | null {
+  if (scheme === 'centerSupport') return null;
+  if (widthM <= STRUCTURAL_SCHEME_ADVISORY_WIDTH_M) return null;
+  return 'Для такого прольоту може застосовуватися схема з внутрішнім рядом опор. Остаточне рішення визначається конструктивним розрахунком.';
 }
 
 /** Ridge height for a symmetric gable. The ONLY place this formula exists. */
@@ -498,6 +597,118 @@ function buildOpenings(
   });
 }
 
+/**
+ * Phase 3E — the centre support line (brief §3-4): one column at X = widthM/2 for every frame
+ * station EXCEPT one that would sit inside a gate opening — skipped entirely rather than faked
+ * (brief §4: "do not fake a transfer structure"), continuing the line at every OTHER station
+ * regardless. Gates only ever sit on the front face today (`buildOpenings`'s own `face: 'front'`
+ * literal), so in practice only the z=0 station can ever conflict — this checks generally, by
+ * X-range against z=0, rather than assuming that, so a future gate placement cannot silently
+ * reintroduce a column-through-a-door bug this function exists to prevent.
+ *
+ * Returns `[]` for anything other than `centerSupport` — see `InternalColumn`'s own doc comment
+ * on why an empty array here is a genuine fact, not a hidden placeholder the way `slab`/`footings`
+ * staying populated-but-invisible is.
+ */
+function buildInternalColumns(
+  widthM: number,
+  eaveM: number,
+  ridgeM: number,
+  stationsM: number[],
+  openings: OpeningGeometry[],
+  scheme: StructuralScheme,
+  roofStructure: RoofStructure,
+): InternalColumn[] {
+  if (scheme !== 'centerSupport') return [];
+  const midX = widthM / 2;
+  // `engineeringDecision` renders as the plain portal/rafter system today (see RoofStructure's
+  // own doc comment), so it needs the same king-post prop `portalRafter` does — `truss` is the
+  // only case where the column instead meets a real bottom chord directly.
+  const needsKingPost = roofStructure !== 'truss';
+
+  const columns: InternalColumn[] = [];
+  let index = 0;
+  for (const z of stationsM) {
+    const conflictsWithGate = z === 0 && openings.some((o) => {
+      const loX = o.rect.xM - INTERNAL_COLUMN_GATE_CLEARANCE_M;
+      const hiX = o.rect.xM + o.rect.widthM + INTERNAL_COLUMN_GATE_CLEARANCE_M;
+      return midX >= loX && midX <= hiX;
+    });
+    if (conflictsWithGate) continue;
+
+    columns.push({
+      stationM: z,
+      index,
+      column: { a: v3(midX, 0, z), b: v3(midX, eaveM, z) },
+      ridgeProp: needsKingPost ? { a: v3(midX, eaveM, z), b: v3(midX, ridgeM, z) } : null,
+    });
+    index += 1;
+  }
+  return columns;
+}
+
+/**
+ * Phase 3E — the steel truss's own web (brief §7-10): a flat bottom chord and a repeating,
+ * alternating-diagonal ("Warren") pattern between it and the frame's own rafter lines — those
+ * already ARE the truss's top chord, so they are not duplicated here; see `TrussWebs`'s own doc
+ * comment.
+ *
+ * Schematic assumptions, spelled out because none of them is an engineering calculation (brief
+ * §8-9, §20):
+ *   - the bottom chord is FLAT, at eave height, the full width — not shaped to mirror the roof
+ *     slope. A flat bottom chord is the immediately-recognisable "this is a truss, not a pair of
+ *     rafters" cue from every angle (a shaped one would still read as "two rafters" from a
+ *     distance), and is also what most real long-span gable trusses of this kind actually use.
+ *   - panel count is derived from span alone (`TRUSS_PANEL_TARGET_WIDTH_M`, clamped both ends —
+ *     see that constant's own doc comment), never from any load or member-capacity calculation.
+ *   - panel count is always EVEN: two mirrored halves meeting at X = widthM / 2, specifically so a
+ *     panel POINT — not a panel's midpoint — always lands exactly on the centreline. That is the
+ *     exact point `buildInternalColumns`'s own centre column meets in truss mode, so the two stay
+ *     geometrically consistent by construction, not by a separate alignment check.
+ *   - the web is a plain alternating (Warren) zigzag, no verticals. A specific NAMED engineered
+ *     pattern (Fink/Pratt/Howe…) would claim a precision this tool does not have; Warren is the
+ *     simplest pattern that still reads unambiguously as "chords + diagonal webs" from every
+ *     camera angle this configurator uses, with no near-zero-length member risk directly under
+ *     the ridge the way a verticals-included pattern would have there.
+ */
+function buildTrussWebs(widthM: number, eaveM: number, ridgeM: number, stationsM: number[]): TrussWebs[] {
+  const halfSpanM = widthM / 2;
+  const panelsPerHalf = Math.min(
+    TRUSS_PANELS_MAX_PER_HALF,
+    Math.max(TRUSS_PANELS_MIN_PER_HALF, Math.round(halfSpanM / TRUSS_PANEL_TARGET_WIDTH_M)),
+  );
+  const panelCount = panelsPerHalf * 2;
+  const panelWidthM = widthM / panelCount;
+
+  // Top-chord Y at a given X — the SAME two lines PortalFrame's own rafters already trace.
+  const topChordY = (x: number): number => {
+    if (x <= halfSpanM) return eaveM + (ridgeM - eaveM) * (x / halfSpanM);
+    return ridgeM - (ridgeM - eaveM) * ((x - halfSpanM) / halfSpanM);
+  };
+
+  return stationsM.map((z, index) => {
+    const webs: Member[] = [];
+    for (let i = 0; i < panelCount; i += 1) {
+      const x0 = i * panelWidthM;
+      const x1 = (i + 1) * panelWidthM;
+      const bottom0 = v3(x0, eaveM, z);
+      const bottom1 = v3(x1, eaveM, z);
+      const top0 = v3(x0, topChordY(x0), z);
+      const top1 = v3(x1, topChordY(x1), z);
+      // Alternating zigzag, symmetric about the centreline by construction (panelCount is always
+      // even — see this function's own doc comment): even panels rise bottom-to-next-top, odd
+      // panels fall top-to-next-bottom.
+      webs.push(i % 2 === 0 ? { a: bottom0, b: top1 } : { a: top0, b: bottom1 });
+    }
+    return {
+      stationM: z,
+      index,
+      bottomChord: { a: v3(0, eaveM, z), b: v3(widthM, eaveM, z) },
+      webs,
+    };
+  });
+}
+
 /** One footing per column (two per frame) — see FootingGeometry's own doc comment for what this
  *  is and, just as importantly, what it deliberately is not. */
 function buildFootings(frames: PortalFrame[]): FootingGeometry[] {
@@ -525,6 +736,29 @@ function buildFootings(frames: PortalFrame[]): FootingGeometry[] {
       pedestalHeightM: FOOTING_PEDESTAL_HEIGHT_M,
     },
   ]);
+}
+
+/**
+ * Phase 3E, brief §5 — one footing per internal column, same schematic dimensions as the external
+ * ones (`FOOTING_*` above): "do not create different engineered footing dimensions... unless
+ * there is a compelling visual reason" — there is not one here, an internal column is drawn at
+ * the same section as an external one, so it gets the same footing. Positions come straight from
+ * `buildInternalColumns`'s own output, which has already resolved the gate-conflict skip — this
+ * function adds no column-placement logic of its own, so an orphan footing (one with no column
+ * above it) cannot occur by construction, not by a separate check.
+ */
+function buildInternalColumnFootings(internalColumns: InternalColumn[]): FootingGeometry[] {
+  return internalColumns.map((col) => ({
+    id: `col-${col.index}-center`,
+    side: 'center' as const,
+    frameIndex: col.index,
+    xM: col.column.a.x,
+    zM: col.column.a.z,
+    padWidthM: FOOTING_PAD_WIDTH_M,
+    padThicknessM: FOOTING_PAD_THICKNESS_M,
+    pedestalWidthM: FOOTING_PEDESTAL_WIDTH_M,
+    pedestalHeightM: FOOTING_PEDESTAL_HEIGHT_M,
+  }));
 }
 
 function buildSlab(widthM: number, lengthM: number): SlabGeometry {
@@ -555,6 +789,12 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
   const count = frameBayCount(lengthM);
   const stationsM = buildBayStations(lengthM, count);
   const frames = buildFrames(widthM, eaveHeightM, ridgeM, stationsM);
+  // Hoisted: buildInternalColumns needs the real gate rectangles to resolve its own conflict
+  // check (brief §4) — never a reason for a renderer to invent its own copy of this call.
+  const openings = buildOpenings(domain.gates, domain.gateType, widthM, eaveHeightM);
+  const internalColumns = buildInternalColumns(
+    widthM, eaveHeightM, ridgeM, stationsM, openings, domain.structural.scheme, domain.structural.roofStructure,
+  );
 
   return {
     footprint: { widthM, lengthM },
@@ -568,6 +808,8 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
     },
     bays: { count, stationsM },
     frames,
+    internalColumns,
+    trusses: buildTrussWebs(widthM, eaveHeightM, ridgeM, stationsM),
     envelope: {
       wallSegments: buildWallSegments(widthM, lengthM, eaveHeightM, stationsM),
       roofSegments: buildRoofSegments(widthM, eaveHeightM, ridgeM, stationsM, pitchDeg, ROOF_OVERHANG_M),
@@ -576,8 +818,11 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
       roofEnvelope: domain.envelope.roof,
     },
     girts: buildGirts(widthM, lengthM, eaveHeightM),
-    openings: buildOpenings(domain.gates, domain.gateType, widthM, eaveHeightM),
+    openings,
     slab: buildSlab(widthM, lengthM),
-    footings: buildFootings(frames),
+    // External + internal column footings merged into one array — see FootingGeometry's own doc
+    // comment: both are "one footing per column", distinguished by `side`, not by which array
+    // they live in, so a renderer that iterates `footings` picks up internal ones for free.
+    footings: [...buildFootings(frames), ...buildInternalColumnFootings(internalColumns)],
   };
 }

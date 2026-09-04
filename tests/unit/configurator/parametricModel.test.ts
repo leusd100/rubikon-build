@@ -10,6 +10,7 @@ import {
   ridgeHeightM,
   ridgeHeightRangeM,
   roofPitchDegForWidth,
+  structuralSchemeAdvisory,
   type ParametricBuildingModel,
   type Vec3,
 } from '../../../app/lib/configurator/parametricModel';
@@ -455,5 +456,191 @@ describe('cross-renderer contract', () => {
       expect(frame.leftRafter.b.y).toBe(m.heights.ridgeM);
       expect(frame.rightRafter.b.y).toBe(m.heights.ridgeM);
     }
+  });
+});
+
+describe('structuralSchemeAdvisory (Phase 3E, brief §2 — UX heuristic only)', () => {
+  it('says nothing once centerSupport is already chosen, at any width', () => {
+    expect(structuralSchemeAdvisory(10, 'centerSupport')).toBeNull();
+    expect(structuralSchemeAdvisory(60, 'centerSupport')).toBeNull();
+  });
+
+  it('says nothing under the advisory width for either other scheme', () => {
+    expect(structuralSchemeAdvisory(24, 'clearSpan')).toBeNull();
+    expect(structuralSchemeAdvisory(20, 'engineeringDecision')).toBeNull();
+  });
+
+  it('advises above the threshold width, for clearSpan and engineeringDecision alike', () => {
+    expect(structuralSchemeAdvisory(30, 'clearSpan')).toEqual(expect.any(String));
+    expect(structuralSchemeAdvisory(30, 'engineeringDecision')).toEqual(expect.any(String));
+  });
+
+  it('never claims a calculated/required answer — engineering-honesty wording check', () => {
+    const advisory = structuralSchemeAdvisory(40, 'clearSpan')!;
+    expect(advisory).toContain('конструктивним розрахунком');
+    expect(advisory).not.toContain('потрібн'); // "потрібна"/"потрібно" — a requirement claim
+    expect(advisory).not.toMatch(/розрахован/); // "розрахована" — a calculated-answer claim
+  });
+});
+
+describe('internal columns — centreline support (Phase 3E, brief §3-4)', () => {
+  it('clearSpan and engineeringDecision both generate zero internal columns', () => {
+    expect(modelFor({}, { structuralScheme: 'clearSpan' }).internalColumns).toHaveLength(0);
+    expect(modelFor({}, { structuralScheme: 'engineeringDecision' }).internalColumns).toHaveLength(0);
+  });
+
+  it('centerSupport with no gate (gates: 0) generates one column per frame station, on the centreline', () => {
+    const m = modelFor({}, { structuralScheme: 'centerSupport', gates: 0 });
+    expect(m.internalColumns).toHaveLength(m.bays.stationsM.length);
+    const midX = m.footprint.widthM / 2;
+    for (const col of m.internalColumns) {
+      expect(col.column.a.x).toBeCloseTo(midX, 6);
+      expect(col.column.b.x).toBeCloseTo(midX, 6);
+      expect(col.column.a.y).toBe(0);
+      expect(col.column.b.y).toBe(m.heights.eaveM);
+    }
+    // Every station is represented, in order — the line is continuous with nothing skipped.
+    expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM);
+  });
+
+  it('a single centred gate (the default) excludes the conflicting z=0 support and continues deeper in', () => {
+    const m = modelFor({}, { structuralScheme: 'centerSupport', gates: 1, gateType: 'standard' });
+    expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(false);
+    // Nothing else was skipped — every OTHER station still has its column.
+    expect(m.internalColumns).toHaveLength(m.bays.stationsM.length - 1);
+    expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM.filter((z) => z !== 0));
+  });
+
+  it('two gates leave the centreline clear at z=0 (the gap between them), so no support is skipped', () => {
+    const m = modelFor({}, { structuralScheme: 'centerSupport', gates: 2, gateType: 'standard' });
+    expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(true);
+    expect(m.internalColumns).toHaveLength(m.bays.stationsM.length);
+  });
+
+  it('no internal column at z=0 may ever fall inside a gate rect, for either gate type/count — the hard rule, checked directly rather than trusting the skip logic alone', () => {
+    for (const gates of [1, 2] as const) {
+      for (const gateType of ['standard', 'double'] as const) {
+        const m = modelFor({}, { structuralScheme: 'centerSupport', gates, gateType });
+        const frontColumn = m.internalColumns.find((c) => c.stationM === 0);
+        if (!frontColumn) continue; // skipped entirely — the safe outcome
+        const x = frontColumn.column.a.x;
+        for (const o of m.openings) {
+          const inside = x > o.rect.xM && x < o.rect.xM + o.rect.widthM;
+          expect(inside).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('portalRafter/engineeringDecision get a king-post prop to the ridge point; truss does not', () => {
+    const portal = modelFor({}, { structuralScheme: 'centerSupport', roofStructure: 'portalRafter' });
+    const undecided = modelFor({}, { structuralScheme: 'centerSupport', roofStructure: 'engineeringDecision' });
+    const truss = modelFor({}, { structuralScheme: 'centerSupport', roofStructure: 'truss' });
+
+    for (const col of portal.internalColumns) {
+      expect(col.ridgeProp).not.toBeNull();
+      expect(col.ridgeProp!.a.y).toBe(portal.heights.eaveM);
+      expect(col.ridgeProp!.b.y).toBe(portal.heights.ridgeM);
+    }
+    for (const col of undecided.internalColumns) expect(col.ridgeProp).not.toBeNull();
+    for (const col of truss.internalColumns) expect(col.ridgeProp).toBeNull();
+  });
+
+  it('support positions are deterministic across dimension extremes', () => {
+    for (const [width, length] of [[W.min, L.min], [W.max, L.max], [24, 60]] as const) {
+      const a = modelFor({ width, length }, { structuralScheme: 'centerSupport' });
+      const b = modelFor({ width, length }, { structuralScheme: 'centerSupport' });
+      expect(JSON.stringify(a.internalColumns)).toBe(JSON.stringify(b.internalColumns));
+    }
+  });
+});
+
+describe('internal-column footings (Phase 3E, brief §5)', () => {
+  it('every internal column gets exactly one matching centre footing — no orphans either way', () => {
+    const m = modelFor({}, { structuralScheme: 'centerSupport', gates: 1 });
+    const centerFootings = m.footings.filter((f) => f.side === 'center');
+    expect(centerFootings).toHaveLength(m.internalColumns.length);
+    for (const col of m.internalColumns) {
+      const match = centerFootings.find((f) => f.zM === col.stationM);
+      expect(match).toBeDefined();
+      expect(match!.xM).toBeCloseTo(col.column.a.x, 6);
+    }
+  });
+
+  it('clearSpan has zero centre footings — nothing to be orphaned', () => {
+    const m = modelFor({}, { structuralScheme: 'clearSpan' });
+    expect(m.footings.filter((f) => f.side === 'center')).toHaveLength(0);
+  });
+
+  it('uses the same schematic pad/pedestal dimensions as external footings — no invented engineered difference', () => {
+    const m = modelFor({}, { structuralScheme: 'centerSupport', gates: 0 });
+    const external = m.footings.find((f) => f.side === 'left')!;
+    const internal = m.footings.find((f) => f.side === 'center')!;
+    expect(internal.padWidthM).toBe(external.padWidthM);
+    expect(internal.padThicknessM).toBe(external.padThicknessM);
+    expect(internal.pedestalWidthM).toBe(external.pedestalWidthM);
+    expect(internal.pedestalHeightM).toBe(external.pedestalHeightM);
+  });
+});
+
+describe('truss webs (Phase 3E, brief §7-10)', () => {
+  it('are ALWAYS computed, one per frame station, regardless of roofStructure', () => {
+    for (const roofStructure of ['portalRafter', 'truss', 'engineeringDecision'] as const) {
+      const m = modelFor({}, { roofStructure });
+      expect(m.trusses).toHaveLength(m.frames.length);
+    }
+  });
+
+  it("the bottom chord is flat at eave height and spans the full width, at every station's own Z", () => {
+    const m = modelFor({ width: 30 });
+    for (const t of m.trusses) {
+      expect(t.bottomChord.a).toEqual({ x: 0, y: m.heights.eaveM, z: t.stationM });
+      expect(t.bottomChord.b).toEqual({ x: 30, y: m.heights.eaveM, z: t.stationM });
+    }
+  });
+
+  it('panel count is bounded across the full supported width range — no degenerate/unbounded web', () => {
+    for (const width of [W.min, 24, W.max]) {
+      const m = modelFor({ width });
+      const webCount = m.trusses[0].webs.length;
+      expect(webCount).toBeGreaterThanOrEqual(6); // 2 * TRUSS_PANELS_MIN_PER_HALF
+      expect(webCount).toBeLessThanOrEqual(16); // 2 * TRUSS_PANELS_MAX_PER_HALF
+      expect(webCount % 2).toBe(0); // always mirrored halves
+    }
+  });
+
+  it('no degenerate (zero-length) web members', () => {
+    const m = modelFor({ width: 45 });
+    for (const t of m.trusses) {
+      for (const w of t.webs) {
+        const dx = w.b.x - w.a.x;
+        const dy = w.b.y - w.a.y;
+        expect(Math.hypot(dx, dy)).toBeGreaterThan(0.01);
+      }
+    }
+  });
+
+  it('the web pattern is symmetric about the centreline', () => {
+    const m = modelFor({ width: 24 });
+    const t = m.trusses[0];
+    const midX = m.footprint.widthM / 2;
+    const mirroredX = (x: number) => 2 * midX - x;
+    // Every web, mirrored across X = midX, should match some other web in the set (same two
+    // endpoints up to the mirror and up to which end is `a` vs `b`).
+    const key = (p: { x: number; y: number }) => `${p.x.toFixed(3)}:${p.y.toFixed(3)}`;
+    const edgeKeys = new Set(
+      t.webs.map((w) => [key(w.a), key(w.b)].sort().join('|')),
+    );
+    for (const w of t.webs) {
+      const mirroredA = { x: mirroredX(w.a.x), y: w.a.y };
+      const mirroredB = { x: mirroredX(w.b.x), y: w.b.y };
+      expect(edgeKeys.has([key(mirroredA), key(mirroredB)].sort().join('|'))).toBe(true);
+    }
+  });
+
+  it('is deterministic', () => {
+    const a = modelFor({ width: 37 });
+    const b = modelFor({ width: 37 });
+    expect(JSON.stringify(a.trusses)).toBe(JSON.stringify(b.trusses));
   });
 });
