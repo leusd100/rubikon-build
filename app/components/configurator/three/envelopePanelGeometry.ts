@@ -176,3 +176,126 @@ export function buildEnvelopePanelGeometry(
   }
   return buildFlatPanel(widthM, heightM, thicknessM);
 }
+
+// ── Phase 3D.1 — gable/end-wall cladding overlay ────────────────────────────
+//
+// The gable is a pentagon (rectangle + triangular peak) with a rectangular gate hole, extruded by
+// `THREE.ExtrudeGeometry` in `Gable` (ThreeHangarView.tsx) — unlike a wall/roof bay, its own top
+// boundary is not a straight line, it follows the roof slope, so `buildProfiledSheetPanel`'s own
+// "swept cross-section" technique does not apply directly: that technique sweeps ONE profile along
+// a straight extrusion axis, and the gable's usable height varies with X.
+//
+// Solution: keep the gable's existing pentagon EXACTLY as it is today — geometry, position,
+// everything — as the "field", and add a SEPARATE overlay mesh of thin vertical strips (comb
+// teeth), one per rib or seam, each individually clipped to the pentagon's own roofline AND to
+// whichever gate hole it might pass over. This sidesteps needing a variable-height sweep or any
+// boolean/CSG subtraction (this project adds no CSG dependency): every strip is a simple rectangle,
+// `THREE.ExtrudeGeometry` accepts an ARRAY of shapes and merges them into ONE geometry, so the
+// whole comb is still one mesh / one draw call, the same discipline as every other envelope panel.
+//
+// Depth convention, to land the overlay flush with the ADJACENT WALL's own crest at the corner
+// (brief's own "no obvious gaps/intersections" requirement): the field is shifted back by the
+// overlay's own depth first (see `Gable`'s own call site), so the comb's outer tip — not the flat
+// field behind it — lands at local Z=0, exactly where a wall panel's own crest already sits.
+//
+// Real profiled sheet has PROTRUDING ribs; real sandwich panel has a RECESSED seam groove (already
+// modelled that way on the wall/roof, via one continuous swept cross-section — no subtraction
+// needed there because the whole face is one profile, not a field-plus-overlay). Reproducing a true
+// recess here would need cutting holes in the field and building a second, deeper backing surface
+// behind each one — real, but meaningfully more topology for a detail this small. The gable's own
+// sandwich treatment is instead a shallow PROTRUDING batten cap at each seam — a legitimate real
+// sandwich-panel detail in its own right (a cover strip over the seam), not a fabricated one, and
+// visually reads as "a seam is here" at normal viewing distance just as the wall's recessed groove
+// does. Documented as a deliberate simplification, not an inconsistency overlooked — see the
+// Phase 3D.1 report.
+
+const GABLE_SANDWICH_CAP_HEIGHT_M = 0.006;
+const GABLE_SANDWICH_CAP_WIDTH_M = 0.06;
+
+type Rect = { minX: number; maxX: number; maxY: number };
+
+/** The gable's own roofline height at a given X — eave-to-ridge on one side, ridge-to-eave on the
+ *  other, meeting at the peak (`widthM / 2`). Mirrors `buildGableEnds`'s pentagon exactly (see
+ *  parametricModel.ts) — not re-derived from anywhere else, so a future roof-shape change cannot
+ *  silently make this module clip against a boundary the actual gable no longer has. */
+function gableRooflineY(xM: number, widthM: number, eaveM: number, ridgeM: number): number {
+  const midX = widthM / 2;
+  if (xM <= midX) return eaveM + (ridgeM - eaveM) * (xM / midX);
+  return ridgeM - (ridgeM - eaveM) * ((xM - midX) / midX);
+}
+
+function holeBoundsFrom(holes: Array<Array<{ x: number; y: number }>>): Rect[] {
+  return holes.map((hole) => {
+    const xs = hole.map((p) => p.x);
+    const ys = hole.map((p) => p.y);
+    return { minX: Math.min(...xs), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+  });
+}
+
+/** A strip that would pass over a gate hole stops at the hole's own top (a lintel), not at the
+ *  ground — the hole is real geometry cut through the gable, not a decal, so nothing may cross it. */
+function stripBottomY(x0: number, x1: number, holes: Rect[]): number {
+  let bottom = 0;
+  for (const hole of holes) {
+    if (x1 > hole.minX && x0 < hole.maxX) bottom = Math.max(bottom, hole.maxY);
+  }
+  return bottom;
+}
+
+/**
+ * The gable's cladding overlay — see the module note above for the full design. Returns `null`
+ * when there is nothing to draw (flat/undefined system, or every strip fell entirely inside a gate
+ * hole — e.g. an unrealistically small gable, never the default/typical configuration), so the
+ * caller can skip mounting a mesh entirely rather than rendering an empty one.
+ *
+ * Returns the overlay geometry AND the depth the caller must shift the existing flat pentagon back
+ * by, so the two compose into one flush surface — see `Gable`'s own call site.
+ */
+export function buildGableCladdingOverlay(
+  widthM: number,
+  eaveM: number,
+  ridgeM: number,
+  holes: Array<Array<{ x: number; y: number }>>,
+  system: CladdingSystem | undefined,
+): { geometry: THREE.BufferGeometry; depthM: number } | null {
+  if (system !== 'profiled-sheet' && system !== 'sandwich-panel') return null;
+  const minWidth = system === 'profiled-sheet' ? MIN_PROFILED_WIDTH_M : MIN_SANDWICH_WIDTH_M;
+  if (widthM < minWidth) return null;
+
+  const holeBounds = holeBoundsFrom(holes);
+  const shapes: THREE.Shape[] = [];
+  const addStrip = (x0: number, x1: number) => {
+    const yTop = Math.min(gableRooflineY(x0, widthM, eaveM, ridgeM), gableRooflineY(x1, widthM, eaveM, ridgeM));
+    const yBottom = stripBottomY(x0, x1, holeBounds);
+    if (yTop <= yBottom) return; // entirely consumed by a gate hole or past the roofline
+    const shape = new THREE.Shape();
+    shape.moveTo(x0, yBottom);
+    shape.lineTo(x1, yBottom);
+    shape.lineTo(x1, yTop);
+    shape.lineTo(x0, yTop);
+    shape.closePath();
+    shapes.push(shape);
+  };
+
+  let depthM: number;
+  if (system === 'profiled-sheet') {
+    depthM = PROFILED_RIB_HEIGHT_M;
+    const periods = Math.max(1, Math.round(widthM / PROFILED_RIB_PITCH_M));
+    const pitch = widthM / periods;
+    const crestW = pitch * PROFILED_CREST_FRACTION;
+    for (let i = 0, x = 0; i < periods; i += 1, x += pitch) addStrip(x, x + crestW);
+  } else {
+    depthM = GABLE_SANDWICH_CAP_HEIGHT_M;
+    const modules = Math.max(1, Math.round(widthM / SANDWICH_MODULE_WIDTH_M));
+    const moduleWidth = widthM / modules;
+    const capHalf = GABLE_SANDWICH_CAP_WIDTH_M / 2;
+    for (let i = 1; i < modules; i += 1) {
+      const seamCentre = i * moduleWidth;
+      addStrip(seamCentre - capHalf, seamCentre + capHalf);
+    }
+  }
+
+  if (shapes.length === 0) return null;
+  const geometry = new THREE.ExtrudeGeometry(shapes, { depth: depthM, bevelEnabled: false, curveSegments: 1 });
+  return { geometry, depthM };
+}

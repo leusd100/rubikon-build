@@ -69,18 +69,29 @@ export type PanelMesh = {
 export type Point2 = { x: number; y: number };
 
 /** A gable end extruded from its real pentagon profile, with gate openings as actual holes.
- *  `claddingSystem` is carried for colour/material consistency with the side walls even though
- *  the renderer does not (yet) rib the gable's own extrusion — see ThreeHangarView's own note on
- *  why, and the Phase 3D report's "remaining realism gaps" section. */
+ *  `claddingSystem` drives both the cladding colour/material AND (Phase 3D.1) a matching cladding
+ *  overlay on the gable's own outward face — see ThreeHangarView's `Gable` component. */
 export type GableMesh = {
   id: string;
   outline: Point2[];
+  /** The same three numbers `outline`'s 5 points already encode, exposed directly rather than
+   *  left for a consumer to re-derive by indexing into the outline array — Phase 3D.1's cladding
+   *  overlay (`buildGableCladdingOverlay`) needs exactly these three to compute its own roofline
+   *  clipping, and reading them from named fields is more robust than depending on point order. */
+  widthM: number;
+  eaveM: number;
+  ridgeM: number;
   holes: Point2[][];
   /** Near edge of the extrusion along Z; the renderer extrudes toward +Z by `thicknessM`. */
   zM: number;
   thicknessM: number;
   material: MaterialKey;
   claddingSystem: CladdingSystem;
+  /** Phase 3D.1: which local extrusion end is the OUTWARD (visible, cladding) face — front's is at
+   *  local Z=0, rear's is at local Z=+thicknessM, because both gables extrude toward +Z (into the
+   *  building) from wherever `zM` places them, but sit on opposite ends of the building's own
+   *  length. `Gable` needs this to know which end its cladding overlay belongs flush against. */
+  face: 'front' | 'rear';
 };
 
 export type SlabMesh = {
@@ -230,6 +241,9 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     gables.push({
       id: `gable-${gable.face}`,
       outline: gable.outline.map((p) => ({ x: p.x, y: p.y })),
+      widthM,
+      eaveM: building.heights.eaveM,
+      ridgeM: building.heights.ridgeM,
       holes: onThisFace.map((o) => [
         { x: o.rect.xM, y: o.rect.yM },
         { x: o.rect.xM + o.rect.widthM, y: o.rect.yM },
@@ -242,6 +256,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       thicknessM: WALL_THICKNESS_M,
       material: 'wall',
       claddingSystem: domain.envelope.wallSystem,
+      face: gable.face,
     });
   }
 

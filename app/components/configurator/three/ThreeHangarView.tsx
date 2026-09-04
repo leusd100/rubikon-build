@@ -13,7 +13,7 @@ import type {
 } from '../../../lib/configurator/threeSceneModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
 import { MATERIALS, VIEWPORT_BG } from './materials';
-import { buildEnvelopePanelGeometry } from './envelopePanelGeometry';
+import { buildEnvelopePanelGeometry, buildGableCladdingOverlay } from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
 import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
@@ -371,8 +371,20 @@ function EnvelopePanel({
   );
 }
 
-/** A gable end extruded from its real pentagon, with gate openings as actual holes in the mesh
- *  rather than dark rectangles painted on top. */
+/**
+ * A gable end extruded from its real pentagon, with gate openings as actual holes in the mesh
+ * rather than dark rectangles painted on top. Phase 3D.1 adds a cladding overlay (ribs for
+ * profiled sheet, seam caps for sandwich panel — see `buildGableCladdingOverlay`'s own module
+ * note) matching the side walls, as a SECOND mesh protruding from the field's existing outward
+ * face rather than reshaping the field itself: the field's own geometry/position is untouched
+ * (zero risk to the fit already proven against the roof/wall corners), and the overlay simply
+ * sits flush against whichever end is outward.
+ *
+ * "Outward" flips between the front and rear gable — both extrude toward local +Z (into the
+ * building) from wherever `zM` places them, but they sit at opposite ends of the building's own
+ * length, so the front's outward face is its NEAR (local Z=0) end and the rear's is its FAR
+ * (local Z=+thicknessM) end. See `GableMesh.face`'s own doc comment.
+ */
 function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean }) {
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
@@ -391,14 +403,37 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
+  const overlay = useMemo(
+    () => buildGableCladdingOverlay(gable.widthM, gable.eaveM, gable.ridgeM, gable.holes, gable.claddingSystem),
+    [gable],
+  );
+  useEffect(() => () => overlay?.geometry.dispose(), [overlay]);
+
+  const overlayZ = overlay
+    ? gable.face === 'front'
+      ? gable.zM - overlay.depthM // protrudes further toward the viewer (−Z) than the field's own near face
+      : gable.zM + gable.thicknessM // protrudes further away (+Z) than the field's own far face
+    : 0;
+
   return (
-    <mesh
-      geometry={geometry}
-      material={sharedMaterial(gable.material)}
-      position={[0, 0, gable.zM]}
-      castShadow={castShadow}
-      receiveShadow
-    />
+    <>
+      <mesh
+        geometry={geometry}
+        material={sharedMaterial(gable.material)}
+        position={[0, 0, gable.zM]}
+        castShadow={castShadow}
+        receiveShadow
+      />
+      {overlay && (
+        <mesh
+          geometry={overlay.geometry}
+          material={sharedMaterial(gable.material)}
+          position={[0, 0, overlayZ]}
+          castShadow={castShadow}
+          receiveShadow
+        />
+      )}
+    </>
   );
 }
 

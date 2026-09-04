@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { buildEnvelopePanelGeometry } from '../../../app/components/configurator/three/envelopePanelGeometry';
+import { buildEnvelopePanelGeometry, buildGableCladdingOverlay } from '../../../app/components/configurator/three/envelopePanelGeometry';
 
 // Real geometric behaviour, not implementation trivia: these tests exist to catch exactly the
 // class of bug hand-rolling this geometry produced during development — a disconnected back face,
@@ -123,5 +123,92 @@ describe('buildEnvelopePanelGeometry — sandwich panel', () => {
       expect(hasNoNaN(buildEnvelopePanelGeometry(w, h, 0.16, 'sandwich-panel'))).toBe(true);
       expect(hasNoNaN(buildEnvelopePanelGeometry(w, h, 0.16, 'profiled-sheet'))).toBe(true);
     }
+  });
+});
+
+describe('buildGableCladdingOverlay (Phase 3D.1)', () => {
+  // A representative default-sized gable: 24 m wide, 8 m eave, 10.6 m ridge — the same reference
+  // object used throughout this project's own tests.
+  const WIDTH = 24;
+  const EAVE = 8;
+  const RIDGE = 10.6;
+  const noHoles: Array<Array<{ x: number; y: number }>> = [];
+  const gateHole = [
+    { x: 10, y: 0 }, { x: 15, y: 0 }, { x: 15, y: 5 }, { x: 10, y: 5 },
+  ];
+
+  it('is null for a flat/undefined system or an undersized gable — nothing to draw, no empty mesh', () => {
+    expect(buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, undefined)).toBeNull();
+    expect(buildGableCladdingOverlay(0.05, EAVE, RIDGE, noHoles, 'profiled-sheet')).toBeNull();
+  });
+
+  it('every strip stays within the gable’s own footprint and roofline — nothing pokes past the pentagon', () => {
+    const result = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, 'profiled-sheet');
+    expect(result).not.toBeNull();
+    const { geometry } = result!;
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox!;
+    expect(box.min.x).toBeGreaterThanOrEqual(-1e-6);
+    expect(box.max.x).toBeLessThanOrEqual(WIDTH + 1e-6);
+    expect(box.min.y).toBeGreaterThanOrEqual(-1e-6);
+    // The roofline never exceeds the ridge — no strip may either.
+    expect(box.max.y).toBeLessThanOrEqual(RIDGE + 1e-6);
+  });
+
+  it('a strip crossing the gate hole stops at the lintel, never reaching the ground through the opening', () => {
+    const withoutHole = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, 'profiled-sheet')!;
+    const withHole = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, [gateHole], 'profiled-sheet')!;
+    withHole.geometry.computeBoundingBox();
+    // Ribs crossing the hole are CLIPPED to the lintel height, not removed outright (the roofline
+    // sits well above a 5 m-tall hole at this width, so every affected rib still has exposed area
+    // above it) — same shape COUNT either way. The real proof of correct clipping is the next
+    // assertion (no vertex inside the hole itself), not a vertex-count drop; a rib only ever drops
+    // out entirely when the hole reaches all the way to the roofline, exercised separately if the
+    // hole were tall enough — not this one, deliberately, since a gate that tall is not realistic.
+    expect(withHole.geometry.attributes.position.count).toBe(withoutHole.geometry.attributes.position.count);
+
+    // No vertex of the overlay sits inside the hole's own rectangle (x in [10,15], y in [0,5]).
+    const pos = withHole.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i += 1) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const insideHoleX = x > 10 + 1e-6 && x < 15 - 1e-6;
+      if (insideHoleX) expect(y).toBeGreaterThanOrEqual(5 - 1e-6);
+    }
+  });
+
+  it('a rib fully consumed by a tall enough hole is dropped from the overlay entirely', () => {
+    const tallHole = [{ x: 10, y: 0 }, { x: 15, y: 0 }, { x: 15, y: 10.5 }, { x: 10, y: 10.5 }];
+    const withoutHole = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, 'profiled-sheet')!;
+    const withTallHole = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, [tallHole], 'profiled-sheet');
+    expect(withTallHole).not.toBeNull();
+    expect(withTallHole!.geometry.attributes.position.count).toBeLessThan(withoutHole.geometry.attributes.position.count);
+  });
+
+  it('sandwich produces far fewer, wider-spaced strips than profiled sheet at the same width', () => {
+    const profiled = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, 'profiled-sheet')!;
+    const sandwich = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, 'sandwich-panel')!;
+    expect(sandwich.geometry.attributes.position.count).toBeLessThan(profiled.geometry.attributes.position.count);
+    // Sandwich caps are shallower than profiled ribs.
+    expect(sandwich.depthM).toBeLessThan(profiled.depthM);
+  });
+
+  it('has no NaN/Infinity vertices, including a rib straddling the exact ridge peak (width/2)', () => {
+    // A width chosen so a rib period lands exactly on the peak, the one case the roofline's slope
+    // discontinuity could produce a bad value if the two linear halves were not both sampled.
+    const w = 24;
+    for (const system of ['profiled-sheet', 'sandwich-panel'] as const) {
+      const result = buildGableCladdingOverlay(w, EAVE, RIDGE, noHoles, system);
+      expect(result).not.toBeNull();
+      const arr = result!.geometry.attributes.position.array;
+      for (let i = 0; i < arr.length; i += 1) expect(Number.isFinite(arr[i])).toBe(true);
+    }
+  });
+
+  it('is deterministic', () => {
+    const a = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, [gateHole], 'profiled-sheet')!;
+    const b = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, [gateHole], 'profiled-sheet')!;
+    expect(a.geometry.attributes.position.count).toBe(b.geometry.attributes.position.count);
+    expect(a.depthM).toBe(b.depthM);
   });
 });
