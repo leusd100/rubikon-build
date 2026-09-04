@@ -154,7 +154,13 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
         </pattern>
       </defs>
 
-      <polygon className="hc-terrain" points={pointsAttr(scene.terrain)} aria-hidden="true" />
+      {/* Terrain plane deliberately not drawn, for now: with the slab's own overhang widened and
+          the slab itself flattened to a plain footprint outline (see isometricProjection.ts),
+          the terrain's own outline sat right next to the slab's — two nested parallelogram
+          outlines at the base read as a second, unrelated "box" the hangar sits on. Product call,
+          not a data change: `scene.terrain` is still computed (isometricProjection.ts,
+          technicalSceneModel.ts) and still deliberately excluded from bounds/framing exactly as
+          before — only this one consumer stopped drawing it. */}
 
       <polygon
         className={`hc-layer hc-buildlayer hc-foundation hc-phase-${foundation.phase}`}
