@@ -191,17 +191,27 @@ describe('bounds', () => {
     }
   });
 
-  it('excludes the terrain from framing so the building stays the subject', () => {
+  it('excludes the terrain from framing so the building stays the subject, but keeps it inside the frame', () => {
     // The terrain is staging. Letting it drive the bounds is what left the hangar occupying a
-    // fraction of the viewport while the 3D view filled its frame. It is still drawn — it just no
-    // longer decides how far the drawing zooms out, so it may now run past the framed area.
-    const scene = projectFor();
-    const { minX, minY, maxX, maxY } = scene.bounds;
-    const outside = scene.terrain.filter(
-      (p) => p.x < minX - 1e-6 || p.x > maxX + 1e-6 || p.y < minY - 1e-6 || p.y > maxY + 1e-6,
-    );
+    // fraction of the viewport while the 3D view filled its frame — so `bounds` is still computed
+    // from the building + guides alone, terrain excluded. But the terrain's OWN points must not
+    // be allowed to fall outside the bounds that decision produces: this projection is oblique, so
+    // a uniform world-space margin (terrainCorners in technicalSceneModel.ts) does not project to
+    // a uniform screen-space one, and on a long/narrow hangar one corner genuinely landed past the
+    // frame — visible on screen as the terrain's stroke outline running off the edge of the
+    // drawing and getting hard-clipped there (caught live, not by this suite, on a 24×80m hangar:
+    // a terrain corner projected to x≈588 against a bounds right edge at x≈500). Terrain is
+    // staging, not a technical claim, so clamping a corner onto the boundary rather than letting
+    // it sit past it costs nothing real.
+    for (const [width, length] of [[24, 60], [24, 80], [24, 120], [60, 24], [10, 10], [60, 120]] as const) {
+      const scene = projectFor({ dimensions: { width, length, height: 8 } });
+      const { minX, minY, maxX, maxY } = scene.bounds;
+      const outside = scene.terrain.filter(
+        (p) => p.x < minX - 1e-6 || p.x > maxX + 1e-6 || p.y < minY - 1e-6 || p.y > maxY + 1e-6,
+      );
 
-    expect(outside.length).toBeGreaterThan(0);
+      expect(outside, `terrain corner escaped bounds at ${width}×${length}`).toHaveLength(0);
+    }
   });
 
   it('keeps dimension guides clear of the building at every size', () => {

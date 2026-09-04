@@ -156,7 +156,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const { widthM, lengthM, eaveHeightM, ridgeHeightM } = scene.dimensions;
 
   const terrainPrimitive = findPrimitives(scene, 'terrain-plane')[0];
-  const terrain = terrainPrimitive ? projectAll(terrainPrimitive.corners) : [];
+  const rawTerrain = terrainPrimitive ? projectAll(terrainPrimitive.corners) : [];
 
   const slabPrimitive = findPrimitives(scene, 'foundation-slab')[0];
   const foundationPoints = slabPrimitive
@@ -236,6 +236,25 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
     ...Object.values(dims).flatMap((d) => [d.line[0], d.line[1], d.label, ...labelExtent(d)]),
   ];
 
+  const bounds = boundsOf(allPoints);
+
+  // The terrain plane's own corners are a fixed margin in METRE space (terrainCorners in
+  // technicalSceneModel.ts), but this projection is oblique — a uniform world-space margin does
+  // NOT produce a uniform screen-space margin, because each corner's excess can land along either
+  // screen axis depending on the building's own aspect ratio. On a long, narrow hangar this let
+  // one corner's projected position land outside `bounds` (confirmed: a 24×80m hangar projects a
+  // terrain corner to x≈588, ~89px past the ~500px right edge `bounds` itself computes) — visible
+  // on screen as the terrain's stroke outline running off the edge of the drawing and getting hard
+  // -clipped there, exactly the "territory exceeds the scene" a live check caught. `bounds`
+  // deliberately excludes the terrain (see the comment above `buildingPoints`) so terrain must
+  // never be allowed to WIDEN it — instead, clamp terrain's own points to fit inside whatever
+  // `bounds` the building+guides already produced. Terrain is staging, not a technical claim, so
+  // a corner landing exactly on the boundary rather than slightly past it costs nothing real.
+  const terrain = rawTerrain.map((p) => ({
+    x: Math.min(Math.max(p.x, bounds.minX), bounds.maxX),
+    y: Math.min(Math.max(p.y, bounds.minY), bounds.maxY),
+  }));
+
   return {
     terrain,
     foundation,
@@ -245,7 +264,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
     roofSegments,
     gates,
     dimensions: dims,
-    bounds: boundsOf(allPoints),
+    bounds,
   };
 }
 
