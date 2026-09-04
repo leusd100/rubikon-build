@@ -167,13 +167,19 @@ describe('roof symmetry', () => {
     const m = modelFor({ width: 24, length: 60, height: 8 });
     const left = m.envelope.roofSegments.filter((s) => s.slope === 'left');
     const right = m.envelope.roofSegments.filter((s) => s.slope === 'right');
+    const o = m.roof.overhangM;
 
     expect(left).toHaveLength(right.length);
     for (let i = 0; i < left.length; i += 1) {
-      const leftEave = left[i].corners.filter((p) => p.y === m.heights.eaveM);
-      const rightEave = right[i].corners.filter((p) => p.y === m.heights.eaveM);
-      expect(leftEave.every((p) => p.x === 0)).toBe(true);
-      expect(rightEave.every((p) => p.x === m.footprint.widthM)).toBe(true);
+      // The outer (non-ridge) pair of each segment's quad — identified by NOT being at ridge
+      // height, since the overhang means it is no longer at exactly eave height either (see the
+      // 'roof overhang' block below for that relationship).
+      const leftOuter = left[i].corners.filter((p) => p.y !== m.heights.ridgeM);
+      const rightOuter = right[i].corners.filter((p) => p.y !== m.heights.ridgeM);
+      expect(leftOuter.every((p) => p.x === -o)).toBe(true);
+      expect(rightOuter.every((p) => p.x === m.footprint.widthM + o)).toBe(true);
+      // Both slopes cantilever the same horizontal distance, so they drop the same amount too.
+      expect(leftOuter.map((p) => p.y)).toEqual(rightOuter.map((p) => p.y));
     }
   });
 
@@ -283,6 +289,59 @@ describe('slab', () => {
     expect(Math.min(...m.slab.corners.map((p) => p.x))).toBeCloseTo(-o, 6);
     expect(Math.max(...m.slab.corners.map((p) => p.x))).toBeCloseTo(24 + o, 6);
     expect(m.slab.corners.every((p) => p.y === 0)).toBe(true);
+  });
+});
+
+describe('roof overhang', () => {
+  it('cantilevers the same roof plane past the wall, not a separate flat lip', () => {
+    const m = modelFor({ width: 24, length: 60, height: 8 });
+    const o = m.roof.overhangM;
+    const pitchRad = (m.roof.pitchDeg * Math.PI) / 180;
+    const expectedOuterY = m.heights.eaveM - o * Math.tan(pitchRad);
+
+    const left = m.envelope.roofSegments.find((s) => s.slope === 'left');
+    if (!left) throw new Error('expected at least one left-slope roof segment');
+    const outer = left.corners.filter((p) => p.y !== m.heights.ridgeM);
+
+    expect(outer).toHaveLength(2); // both z-ends of this one segment's outer edge
+    for (const p of outer) {
+      expect(p.x).toBeCloseTo(-o, 6);
+      expect(p.y).toBeCloseTo(expectedOuterY, 6);
+    }
+    // The overhang is a continuation of the SAME slope, so the eave point (wall face, eave
+    // height) sits exactly on the line from the outer tip to the ridge — not above or below it,
+    // which is what a kinked, flat-lip overhang would produce instead.
+    const ridgePoint = { x: m.footprint.widthM / 2, y: m.heights.ridgeM };
+    const outerPoint = { x: -o, y: expectedOuterY };
+    const eaveFraction = (0 - outerPoint.x) / (ridgePoint.x - outerPoint.x);
+    const yAtWallFace = outerPoint.y + eaveFraction * (ridgePoint.y - outerPoint.y);
+    expect(yAtWallFace).toBeCloseTo(m.heights.eaveM, 6);
+  });
+
+  it('is zero-safe: the outer tip never drops to or below the slab line across the supported range', () => {
+    // Steepest allowed pitch (roof pitch is user-adjustable up to ROOF_PITCH_MAX_DEG) combined
+    // with the shortest allowed eave is the worst case for the overhang tip dropping toward y = 0.
+    const m = modelFor({ width: W.min, height: H.min }, { ridgeHeightM: clampRidgeHeightM(999, W.min, H.min) });
+    // Confirms this really is close to the worst case — not exactly ROOF_PITCH_MAX_DEG, because
+    // clampRidgeHeightM snaps to RIDGE_HEIGHT_STEP_M first, but well within a step of it.
+    expect(m.roof.pitchDeg).toBeGreaterThan(ROOF_PITCH_MAX_DEG - 1);
+    const left = m.envelope.roofSegments.find((s) => s.slope === 'left');
+    if (!left) throw new Error('expected at least one left-slope roof segment');
+    const outer = left.corners.filter((p) => p.y !== m.heights.ridgeM);
+    for (const p of outer) {
+      expect(p.y).toBeGreaterThan(0);
+    }
+  });
+
+  it("does not change the roof's own footprint bounds used for framing (the wall face is still on the line, not a corner, by construction above)", () => {
+    // Regression guard for the "0 → non-zero overhang" change itself: widening the overhang must
+    // widen the model's own points accordingly, so a camera/viewBox that frames off `allPoints`
+    // picks it up automatically — this is the whole point of it living in the parametric model
+    // rather than being added per-renderer.
+    const m = modelFor({ width: 24, length: 60, height: 8 });
+    const xs = allPoints(m).map((p) => p.x);
+    expect(Math.min(...xs)).toBeCloseTo(Math.min(-m.roof.overhangM, -m.slab.overhangM), 6);
+    expect(Math.max(...xs)).toBeCloseTo(Math.max(m.footprint.widthM + m.roof.overhangM, m.footprint.widthM + m.slab.overhangM), 6);
   });
 });
 
