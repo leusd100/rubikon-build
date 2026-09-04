@@ -40,7 +40,7 @@ export type MaterialKey =
  * (every column and rafter is `frame-primary`) but the two answer different questions: `material`
  * is "what does this look like", `role` is "when does this arrive". Keeping them separate means a
  * future material change can never silently break the build-up grouping by accident. */
-export type StrutRole = 'column' | 'rafter' | 'girt';
+export type StrutRole = 'column' | 'rafter' | 'girt' | 'internal-column' | 'truss-chord' | 'truss-web';
 
 export type StrutMesh = {
   id: string;
@@ -187,6 +187,20 @@ function deriveFoundationVisibility(foundationType: HangarDomainModel['foundatio
 const COLUMN_SECTION_M = 0.32;
 const RAFTER_SECTION_M = 0.28;
 const GIRT_SECTION_M = 0.12;
+// Phase 3E — the internal support column and its king-post prop share the external columns' and
+// rafters' own sections exactly: brief §5's "do not invent an engineered difference" applies to
+// visual weight, not just footing size — a centre column is not a visually lesser member.
+const INTERNAL_COLUMN_SECTION_M = COLUMN_SECTION_M;
+const KING_POST_SECTION_M = RAFTER_SECTION_M;
+// The truss's own bottom chord reads as strongly as the top chord it mirrors (brief §11: "rafters
+// / truss chords" are both PRIMARY) — same section as a rafter. Webs are genuinely secondary in
+// real truss design (they resist shear, not the primary bending the chords carry) but still need
+// to stay clearly perceivable as "a truss, not a rafter" from every angle (brief §8) — using
+// `frame-secondary`'s own much darker material would risk them disappearing against the sky the
+// way girts already deliberately do; a thinner PRIMARY-material section reads as "real but
+// lighter steel" without either problem.
+const TRUSS_CHORD_SECTION_M = RAFTER_SECTION_M;
+const TRUSS_WEB_SECTION_M = 0.16;
 const WALL_THICKNESS_M = 0.16;
 const ROOF_THICKNESS_M = 0.14;
 // Phase 3D.1: shallower than the original 0.35 m — that depth was tuned back when the recess WAS
@@ -247,6 +261,54 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
   building.girts.forEach((girt, index) => {
     struts.push({ id: `girt-${index}`, a: girt.a, b: girt.b, sectionM: GIRT_SECTION_M, material: 'frame-secondary', role: 'girt' });
   });
+
+  // ── Phase 3E: the centre support line — empty unless structuralScheme is centerSupport, see
+  // buildInternalColumns's own doc comment in parametricModel.ts. ──
+  for (const col of building.internalColumns) {
+    struts.push({
+      id: `col-c-${col.index}`,
+      a: col.column.a,
+      b: col.column.b,
+      sectionM: INTERNAL_COLUMN_SECTION_M,
+      material: 'frame-primary',
+      role: 'internal-column',
+    });
+    if (col.ridgeProp) {
+      struts.push({
+        id: `col-c-${col.index}-prop`,
+        a: col.ridgeProp.a,
+        b: col.ridgeProp.b,
+        sectionM: KING_POST_SECTION_M,
+        material: 'frame-primary',
+        role: 'internal-column',
+      });
+    }
+  }
+
+  // ── Phase 3E: the truss's own bottom chord + web, ONLY in truss mode — the top chord is
+  // building.frames' own leftRafter/rightRafter, already pushed above; nothing to add there. ──
+  if (domain.structural.roofStructure === 'truss') {
+    for (const truss of building.trusses) {
+      struts.push({
+        id: `truss-bottom-${truss.index}`,
+        a: truss.bottomChord.a,
+        b: truss.bottomChord.b,
+        sectionM: TRUSS_CHORD_SECTION_M,
+        material: 'frame-primary',
+        role: 'truss-chord',
+      });
+      truss.webs.forEach((web, webIndex) => {
+        struts.push({
+          id: `truss-web-${truss.index}-${webIndex}`,
+          a: web.a,
+          b: web.b,
+          sectionM: TRUSS_WEB_SECTION_M,
+          material: 'frame-primary',
+          role: 'truss-web',
+        });
+      });
+    }
+  }
 
   // ── Envelope: side walls and both roof slopes, per bay ──
   for (const segment of building.envelope.wallSegments) {
