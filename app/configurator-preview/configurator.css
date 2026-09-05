@@ -27,8 +27,7 @@
   grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
   grid-template-areas:
     "eyebrow eyebrow"
-    "title lede"
-    "title disclaimer";
+    "title lede";
   gap: 16px var(--grid-gap);
   max-width: var(--container-max);
   margin-bottom: 54px;
@@ -37,7 +36,6 @@
 .hangar-configurator-embedded .hc-eyebrow { grid-area: eyebrow; }
 .hangar-configurator-embedded .hc-hero :is(h1, h2) { grid-area: title; margin: 0; max-width: 14ch; }
 .hangar-configurator-embedded .hc-lede { grid-area: lede; margin: 0; }
-.hangar-configurator-embedded .hc-disclaimer { grid-area: disclaimer; align-self: end; }
 
 .hc-eyebrow {
   display: flex;
@@ -70,30 +68,6 @@
   color: var(--text-secondary);
   font-size: 15px;
   line-height: 1.6;
-}
-
-/* Softened from a bordered/backgrounded callout box to a plain caption line — a schematic-scope
-   disclaimer is a footnote, not a warning, and boxing it the same way as an actual warning state
-   (see .hc-field-note-warning) overstated it. The accent mark now lives in a small inline dash
-   before the text, echoing .hc-eyebrow's own marker, instead of a heavy left border. */
-.hc-disclaimer {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 0;
-  max-width: 60ch;
-  color: var(--text-muted);
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-
-.hc-disclaimer::before {
-  content: '';
-  flex: none;
-  width: 14px;
-  height: 2px;
-  margin-top: 7px;
-  background: var(--border-default);
 }
 
 .hc-layout {
@@ -346,18 +320,42 @@
   background: #0e0f11;
 }
 
-/* Mode switch above the preview. Sits in the preview pane's flex flow, so the surface below it
-   keeps its own size and switching modes never shifts the layout. Phase 3C's secondary actions
-   (currently just "Розгорнути") join the same right-packed group, appearing before the mode
-   switch in DOM order so `flex-end` reads left-to-right as [secondary actions][mode switch] —
-   matching the brief's own suggested hierarchy: mode switch stays the anchor, extra actions stay
-   clearly secondary beside it, never their own competing toolbar. */
+/* Preview context and controls share one quiet editorial row above the model. The schematic note
+   belongs to the visualisation it qualifies, while the view controls stay anchored to the right. */
 .hc-preview-toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px 24px;
+  flex-wrap: wrap;
+}
+
+.hc-preview-disclaimer {
+  display: flex;
+  flex: 1 1 360px;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.hc-preview-disclaimer::before {
+  content: '';
+  flex: none;
+  width: 18px;
+  height: 2px;
+  margin-top: 9px;
+  background: var(--accent);
+}
+
+.hc-preview-toolbar-actions {
+  display: flex;
+  flex: none;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .hc-preview-secondary-actions {
@@ -993,12 +991,32 @@
   font-variant-numeric: tabular-nums;
 }
 
+.hc-summary-handoff {
+  display: grid;
+  grid-template-columns: minmax(220px, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 14px 18px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-default);
+}
+
+.hc-summary-action { min-height: 52px; }
+
+.hc-summary-handoff p {
+  margin: 0;
+  max-width: 34ch;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1023px) {
   .hangar-configurator-embedded .hc-hero {
     grid-template-columns: 1fr;
-    grid-template-areas: "eyebrow" "title" "lede" "disclaimer";
+    grid-template-areas: "eyebrow" "title" "lede";
   }
 
   .hc-layout { grid-template-columns: 1fr; }
@@ -1011,6 +1029,9 @@
   .hc-layout { padding-inline: 20px; }
   .hc-option-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hc-field-controls { grid-template-columns: 1fr 64px; }
+  .hc-summary-handoff { grid-template-columns: 1fr; }
+  .hc-summary-action { width: 100%; }
+  .hc-preview-disclaimer { flex-basis: 100%; max-width: none; }
   /* Raised from 62vw/260px (Visual Refinement Pass v1) — "the model must still feel worth
      showing on mobile", not merely technically responsive. */
   .hc-preview-svg,

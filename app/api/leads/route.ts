@@ -36,6 +36,7 @@ type LeadPayload = {
     cooperation?: string;
     startDate?: string;
     comment?: string;
+    configuration?: string;
   };
   sourcePage?: string;
   landingPage?: string;
@@ -132,13 +133,15 @@ export async function POST(request: Request) {
     return json({ ok: true, id: alreadyAccepted.id, isNew: false });
   }
 
-  const details = JSON.stringify({
+  const leadDetails = {
     location: clip(body.details?.location, 100),
     dimensions: clip(body.details?.dimensions, 100),
     cooperation: clip(body.details?.cooperation, 100),
     startDate: clip(body.details?.startDate, 100),
     comment: clip(body.details?.comment, 800),
-  });
+    configuration: clip(body.details?.configuration, 1600),
+  };
+  const details = JSON.stringify(leadDetails);
 
   const sourcePage = clip(body.sourcePage, 300);
   const landingPage = clip(body.landingPage, 300);
@@ -228,7 +231,7 @@ export async function POST(request: Request) {
   // D1 already has the lead — from here on, nothing can turn this response into a failure.
   // Notification is best-effort and happens after the fact is already true.
   try {
-    await notifyTelegram(workerEnv, { name, phone, direction, contactMethod, sourcePage });
+    await notifyTelegram(workerEnv, { name, phone, direction, contactMethod, sourcePage, details: leadDetails });
   } catch (error) {
     try {
       await workerEnv.DB.prepare(
@@ -246,11 +249,34 @@ export async function POST(request: Request) {
 
 async function notifyTelegram(
   targetEnv: Env,
-  lead: { name: string; phone: string; direction: string; contactMethod: string; sourcePage: string },
+  lead: {
+    name: string;
+    phone: string;
+    direction: string;
+    contactMethod: string;
+    sourcePage: string;
+    details: {
+      location: string;
+      dimensions: string;
+      cooperation: string;
+      startDate: string;
+      comment: string;
+      configuration: string;
+    };
+  },
 ) {
   if (!targetEnv.TELEGRAM_BOT_TOKEN || !targetEnv.TELEGRAM_CHAT_ID) {
     throw new Error('telegram not configured');
   }
+
+  const detailLines = [
+    lead.details.location && `Локація: ${lead.details.location}`,
+    lead.details.dimensions && `Габарити: ${lead.details.dimensions}`,
+    lead.details.cooperation && `Формат співпраці: ${lead.details.cooperation}`,
+    lead.details.startDate && `Бажаний старт: ${lead.details.startDate}`,
+    lead.details.comment && `Коментар: ${lead.details.comment}`,
+    lead.details.configuration && `Конфігурація ангара:\n${lead.details.configuration}`,
+  ].filter(Boolean);
 
   const text = [
     '🆕 Нова заявка з сайту',
@@ -259,6 +285,7 @@ async function notifyTelegram(
     `Напрям: ${lead.direction}`,
     `Зв'язок: ${lead.contactMethod}`,
     `Сторінка: ${lead.sourcePage || '—'}`,
+    ...detailLines,
   ].join('\n');
 
   const response = await fetch(`https://api.telegram.org/bot${targetEnv.TELEGRAM_BOT_TOKEN}/sendMessage`, {

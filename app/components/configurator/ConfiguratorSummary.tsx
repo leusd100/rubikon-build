@@ -3,7 +3,15 @@
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 
-export function ConfiguratorSummary({ domain }: { domain: HangarDomainModel }) {
+export function ConfiguratorSummary({
+  domain,
+  showInquiryAction = false,
+  onInquiryAction,
+}: {
+  domain: HangarDomainModel;
+  showInquiryAction?: boolean;
+  onInquiryAction?: () => void;
+}) {
   const summary = deriveSummary(domain);
 
   return (
@@ -43,6 +51,14 @@ export function ConfiguratorSummary({ domain }: { domain: HangarDomainModel }) {
           </div>
         </dl>
         <p className="hc-summary-formula">Площа = ширина × довжина</p>
+        {showInquiryAction && (
+          <div className="hc-summary-handoff">
+            <a className="button button-primary hc-summary-action" href="#inquiry" onClick={onInquiryAction}>
+              Обговорити цю конфігурацію <span aria-hidden="true">↗</span>
+            </a>
+            <p>Параметри автоматично додамо до заявки.</p>
+          </div>
+        )}
       </div>
     </details>
   );

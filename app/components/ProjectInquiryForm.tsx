@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { ChevronDown, Phone, Send } from 'lucide-react';
@@ -10,6 +10,9 @@ import { contactMethodOptions, messengerContacts, type ContactMethod } from '../
 import { siteRoutes } from '../data/navigation';
 import { filterAttributionForConsent, readAttribution } from '../lib/attribution';
 import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
+import { deriveDomainModel } from '../lib/configurator/domainModel';
+import { createHangarInquiryBrief, formatHangarInquiryBrief } from '../lib/configurator/inquiryBrief';
+import { useHangarInquiryContext } from './configurator/HangarInquiryContext';
 
 type LeadApiResult = {
   ok?: boolean;
@@ -44,6 +47,17 @@ function ContactMethodIcon({ method }: { method: ContactMethod }) {
 
 export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultDirection?: string }) {
   const pathname = usePathname();
+  const hangarInquiry = useHangarInquiryContext();
+  const hangarBrief = useMemo(
+    () => hangarInquiry?.isAttached
+      ? createHangarInquiryBrief(deriveDomainModel(hangarInquiry.state))
+      : null,
+    [hangarInquiry],
+  );
+  const hangarConfiguration = useMemo(
+    () => hangarBrief ? formatHangarInquiryBrief(hangarBrief) : '',
+    [hangarBrief],
+  );
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
   const [statusAction, setStatusAction] = useState<'error' | null>(null);
@@ -97,6 +111,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
             cooperation: value(formData, 'cooperation'),
             startDate: value(formData, 'startDate'),
             comment: value(formData, 'comment'),
+            configuration: hangarConfiguration,
           },
           sourcePage: pathname,
           landingPage: attribution.landingPage,
@@ -206,6 +221,27 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
           <h3 id="inquiry-project-heading">Завдання</h3>
         </div>
         <div className="inquiry-form-section-body">
+          {hangarBrief && (
+            <aside className="inquiry-config-brief" aria-labelledby="inquiry-config-brief-title">
+              <div className="inquiry-config-brief-heading">
+                <div>
+                  <small>Додано з конфігуратора</small>
+                  <strong id="inquiry-config-brief-title">Ангар · {hangarBrief.dimensionsLabel}</strong>
+                  <span>≈ {hangarBrief.areaSqm.toLocaleString('uk-UA')} м² площі забудови</span>
+                </div>
+                <a href="#configurator">Змінити параметри ↑</a>
+              </div>
+              <dl>
+                <div><dt>Контур</dt><dd>{hangarBrief.envelopeLabel}</dd></div>
+                <div><dt>Огородження</dt><dd>{hangarBrief.claddingSystemLabel}</dd></div>
+                <div><dt>Схема</dt><dd>{hangarBrief.structuralVisualizationLabel}</dd></div>
+                <div><dt>Основа</dt><dd>{hangarBrief.foundationTypeLabel}</dd></div>
+                <div><dt>Обсяг</dt><dd>{hangarBrief.scopeSummaryLabel}</dd></div>
+                <div><dt>Ворота</dt><dd>{hangarBrief.gatesLabel}</dd></div>
+              </dl>
+            </aside>
+          )}
+
           <label className="inquiry-select">
             <span>Напрям робіт *</span>
             <select name="direction" defaultValue={defaultDirection} required>
@@ -227,7 +263,11 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
                 </label>
                 <label>
                   <span>Орієнтовні розміри</span>
-                  <input name="dimensions" type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
+                  {hangarBrief ? (
+                    <input name="dimensions" type="text" value={hangarBrief.dimensionsLabel} readOnly />
+                  ) : (
+                    <input name="dimensions" type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
+                  )}
                 </label>
               </div>
               <div className="inquiry-fields inquiry-fields-two">
