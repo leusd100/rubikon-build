@@ -152,13 +152,10 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
   }
 
   return (
-    <form className="inquiry-form" onSubmit={(event) => void handleSubmit(event)}>
+    <form className="inquiry-form" aria-label="Запит на проєкт" onSubmit={(event) => void handleSubmit(event)}>
       <div className="inquiry-form-heading">
-        <div>
-          <small>Запит на проєкт</small>
-          <span>Коротка форма запиту</span>
-        </div>
-        <p>Поля, позначені *, обов’язкові</p>
+        <p className="inquiry-form-kicker"><span aria-hidden="true" /> Короткий запит</p>
+        <p className="inquiry-required-note">Поля, позначені *, обов’язкові</p>
       </div>
 
       <section className="inquiry-form-section" aria-labelledby="inquiry-contact-heading">
@@ -250,9 +247,24 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
             </select>
           </label>
 
+          <div className="inquiry-task-summary">
+            <label htmlFor="inquiry-comment"><span>Коротко про завдання</span></label>
+            <textarea
+              id="inquiry-comment"
+              name="comment"
+              rows={3}
+              maxLength={800}
+              placeholder="Що потрібно побудувати або який етап виконати"
+              aria-describedby="inquiry-comment-hint"
+            />
+            <small id="inquiry-comment-hint" className="inquiry-field-hint">
+              Якщо маєте креслення або специфікацію, напишіть про це — узгодимо передачу файлів у відповідь.
+            </small>
+          </div>
+
           <details className="inquiry-details">
             <summary>
-              <span>Додати деталі про об’єкт</span>
+              <span>Додати параметри об’єкта</span>
               <ChevronDown aria-hidden="true" />
             </summary>
             <div className="inquiry-details-body">
@@ -285,10 +297,6 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
                   <input name="startDate" type="text" maxLength={80} placeholder="Наприклад: осінь 2026" />
                 </label>
               </div>
-              <label>
-                <span>Коментар</span>
-                <textarea name="comment" rows={4} maxLength={800} placeholder="Що ще важливо знати про завдання" />
-              </label>
             </div>
           </details>
         </div>
@@ -327,7 +335,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
               {!isSubmitting && <Send aria-hidden="true" />}
             </button>
             <p className="inquiry-submit-note">
-              Заявка потрапить до нас, а обраний канал використаємо для відповіді
+              Після надсилання спеціаліст зв’яжеться з вами обраним способом.
             </p>
           </div>
         </div>

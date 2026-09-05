@@ -24,7 +24,7 @@ test.describe('configurator to inquiry handoff', () => {
 
     const form = page.locator('form.inquiry-form');
     await expect(form.locator('.inquiry-config-brief')).toHaveCount(0);
-    await form.getByText('Додати деталі про об’єкт', { exact: true }).click();
+    await form.getByText('Додати параметри об’єкта', { exact: true }).click();
     await expect(form.getByLabel('Орієнтовні розміри', { exact: true })).toHaveValue('');
   });
 
@@ -53,7 +53,7 @@ test.describe('configurator to inquiry handoff', () => {
     await expect(brief).toContainText('1 500 м²');
     await expect(form.getByLabel(/Напрям робіт/)).toHaveValue('Ангари та склади');
 
-    await form.getByText('Додати деталі про об’єкт', { exact: true }).click();
+    await form.getByText('Додати параметри об’єкта', { exact: true }).click();
     await expect(form.getByLabel('Орієнтовні розміри', { exact: true })).toHaveValue('30 × 50 × 8 м');
 
     await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');

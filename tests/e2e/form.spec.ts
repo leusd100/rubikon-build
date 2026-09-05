@@ -25,6 +25,7 @@ async function fillInquiryFields(page: Page) {
   await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
   await form.getByLabel(/Телефон/).fill('+380671234567');
   await form.getByLabel(/Напрям робіт/).selectOption({ index: 1 });
+  await form.getByLabel('Коротко про завдання', { exact: true }).fill('Потрібен виробничий ангар');
   await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
 }
 
@@ -57,7 +58,21 @@ test.describe('project inquiry form', () => {
       phone: '+380671234567',
       contactMethod: 'Дзвінок',
       sourcePage: '/',
+      details: {
+        comment: 'Потрібен виробничий ангар',
+      },
     });
+  });
+
+  test('shows the short task field immediately and keeps secondary parameters progressive', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+
+    const form = page.locator('form.inquiry-form');
+    await expect(form.getByLabel('Коротко про завдання', { exact: true })).toBeVisible();
+    await expect(form.getByLabel('Місто або область', { exact: true })).toBeHidden();
+    await form.getByText('Додати параметри об’єкта', { exact: true }).click();
+    await expect(form.getByLabel('Місто або область', { exact: true })).toBeVisible();
   });
 
   test('shows the recoverable error state after a failed API response', async ({ page }) => {
