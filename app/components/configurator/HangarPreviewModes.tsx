@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useId, useMemo, useState } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
 import { HangarPreview } from './HangarPreview';
@@ -89,6 +89,7 @@ function ThreeLoading() {
 
 export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
   const [mode, setMode] = useState<Mode>('technical');
+  const descriptionId = useId();
   const [threeFailed, setThreeFailed] = useState(false);
   const webgl = useWebglSupport();
   const isMobile = useConfiguratorMobile();
@@ -157,6 +158,13 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
         eaveM={domain.dimensions.eaveHeightM}
         ridgeM={threeScene.building.heights.ridgeM}
       />
+      {/* Travels with the same Canvas into fullscreen, where the rest of the page is inert.
+          Remains available even when the visitor hides the visual dimension overlay. */}
+      <p id={descriptionId} className="hc-visually-hidden">
+        {`Тривимірна візуалізація ангара: ${domain.dimensions.widthM} на ${domain.dimensions.lengthM} метрів, `
+          + `висота стін ${domain.dimensions.eaveHeightM} м, двосхила покрівля, висота в коньку приблизно `
+          + `${threeScene.building.heights.ridgeM.toFixed(1)} м. Повний опис конфігурації — у полях керування та підсумку.`}
+      </p>
     </div>
   ) : null;
 
@@ -183,7 +191,7 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
 
       <div className="hc-preview-surface">
         {showThree ? (
-          <FullscreenPreviewFrame active={isFullscreen} onExit={exitFullscreen} labelledBy="Розгорнутий перегляд 3D-моделі ангара">
+          <FullscreenPreviewFrame active={isFullscreen} onExit={exitFullscreen} labelledBy="Розгорнутий перегляд 3D-моделі ангара" describedBy={descriptionId}>
             {threeCanvas}
           </FullscreenPreviewFrame>
         ) : (
@@ -213,17 +221,6 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
             Показати людину для масштабу
           </label>
         </div>
-      )}
-
-      {/* The canvas itself is aria-hidden, so in 3D mode this carries the same description the
-          technical SVG exposes through its own role="img" label. No configuration information is
-          only available visually, in either mode. */}
-      {showThree && (
-        <p className="hc-visually-hidden">
-          {`Тривимірна візуалізація ангара: ${domain.dimensions.widthM} на ${domain.dimensions.lengthM} метрів, `
-            + `висота стін ${domain.dimensions.eaveHeightM} м, двосхила покрівля, висота в коньку приблизно `
-            + `${threeScene.building.heights.ridgeM.toFixed(1)} м. Повний опис конфігурації — у полях керування та підсумку нижче.`}
-        </p>
       )}
     </>
   );

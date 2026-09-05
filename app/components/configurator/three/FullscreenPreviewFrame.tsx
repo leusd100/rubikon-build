@@ -40,12 +40,15 @@ export function FullscreenPreviewFrame({
   active,
   onExit,
   labelledBy,
+  describedBy,
   children,
 }: {
   active: boolean;
   onExit: () => void;
   /** Accessible label for the fullscreen dialog. */
   labelledBy?: string;
+  /** ID of the model description inside the portaled content. */
+  describedBy?: string;
   children: ReactNode;
 }) {
   // Created lazily, once, only on the client — see the module doc for why this is `useState`
@@ -57,6 +60,7 @@ export function FullscreenPreviewFrame({
   );
   const inlineAnchorRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   // Moves `portalHost` between its two possible physical parents. `portalHost` appears here only
@@ -74,18 +78,51 @@ export function FullscreenPreviewFrame({
   }, [active, portalHost]);
 
   useEffect(() => {
-    if (!active) return undefined;
+    if (!active || !portalHost) return undefined;
 
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
     closeButtonRef.current?.focus();
+
+    // aria-modal alone does not prevent keyboard focus from reaching the covered page.
+    // The stable portal host is already a body child; isolate its siblings and restore their
+    // previous state on exit (including siblings that were inert before this dialog opened).
+    const background = Array.from(document.body.children)
+      .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== portalHost)
+      .map((element) => ({ element, inert: element.inert }));
+    for (const { element } of background) element.inert = true;
+
+    function focusableControls() {
+      return Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]',
+      ) ?? []).filter((element) => element.tabIndex >= 0
+        && !element.matches(':disabled') && !element.closest('[inert]')
+        && element.getClientRects().length > 0);
+    }
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         event.preventDefault();
         onExit();
+      } else if (event.key === 'Tab') {
+        const controls = focusableControls();
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    }
+    function onFocusIn(event: FocusEvent) {
+      if (event.target instanceof Node && !dialogRef.current?.contains(event.target)) {
+        closeButtonRef.current?.focus();
       }
     }
     document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('focusin', onFocusIn);
     // A fullscreen overlay covering the whole viewport should stop the page itself from
     // scrolling behind it — this is a modal, not a tall page section.
     const previousOverflow = document.body.style.overflow;
@@ -93,12 +130,14 @@ export function FullscreenPreviewFrame({
 
     return () => {
       document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('focusin', onFocusIn);
       document.body.style.overflow = previousOverflow;
+      for (const { element, inert } of background) element.inert = inert;
       // Focus restoration: back to whatever triggered fullscreen (the "Розгорнути" button),
       // matching the brief's explicit requirement.
-      previouslyFocusedRef.current?.focus();
+      previouslyFocusedRef.current?.focus({ preventScroll: true });
     };
-  }, [active, onExit]);
+  }, [active, onExit, portalHost]);
 
   if (!portalHost) return <>{children}</>; // SSR fallback — see the guarded useState above
 
@@ -114,10 +153,12 @@ export function FullscreenPreviewFrame({
         // differ. See the module doc: a conditionally-included/excluded element here would
         // reintroduce the exact remount bug this file exists to avoid, one level deeper.
         <div
+          ref={dialogRef}
           className={active ? 'hc-fullscreen-overlay' : undefined}
           role={active ? 'dialog' : undefined}
           aria-modal={active ? 'true' : undefined}
           aria-label={active ? (labelledBy ?? 'Розгорнутий перегляд 3D-моделі') : undefined}
+          aria-describedby={active ? describedBy : undefined}
         >
           <button
             type="button"
