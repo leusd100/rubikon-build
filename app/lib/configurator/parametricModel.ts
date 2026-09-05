@@ -1,5 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
-import type { EnvelopeChoice, GatesCount, GateType, RoofStructure, StructuralScheme } from './types';
+import type { EnvelopeChoice, FoundationType, GatesCount, GateType, RoofStructure, StructuralScheme } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE SINGLE SOURCE OF GEOMETRIC TRUTH (Phase 3-0, 2026-09-03)
@@ -326,6 +326,17 @@ export const RIDGE_HEIGHT_STEP_M = 0.1;
 // a design call, not something computed from the building's own dimensions.
 const SLAB_OVERHANG_M = 2;
 const SLAB_THICKNESS_M = 0.3;
+/**
+ * Live product review, Phase 3F.1: a slab this thin read as an afterthought once the customer has
+ * actually, explicitly committed to "Монолітна плита" — a real monolithic slab foundation is a
+ * substantial pour, and the drawing should say so. Deliberately NOT applied to `engineeringDecision`
+ * (still the honest, undecided-by-default representation — showing a bold, confident thick slab
+ * there would claim a decision the customer hasn't made) or to `isolated` (its own footing pad/
+ * pedestal dimensions are untouched, per this same review: "ця ж товщина фундаменту яка і зараз").
+ * A visual-weight decision, not an engineering one — same "design call, not derived" status as
+ * `SLAB_OVERHANG_M` above.
+ */
+const SLAB_THICKNESS_CONFIRMED_MULTIPLIER = 3;
 /** How far the roof plane cantilevers past the wall face, at eave height, on the long sides.
  *  Zero before this change — the roof plane used to stop exactly flush with the wall. See the
  *  slab overhang comment above — same iterative live-comparison process, same "design call"
@@ -953,13 +964,21 @@ function buildInternalColumnFootings(internalColumns: InternalColumn[]): Footing
   }));
 }
 
-function buildSlab(widthM: number, lengthM: number): SlabGeometry {
+/**
+ * Phase 3F.1 — the slab's own thickness now depends on whether the customer has actually,
+ * explicitly chosen "Монолітна плита" (`slab`) — see SLAB_THICKNESS_CONFIRMED_MULTIPLIER's own
+ * doc comment for why `isolated` and `engineeringDecision` both keep the unchanged base value.
+ * A single source of geometric truth, same as every other fact in this file: both renderers pick
+ * up whichever thickness this returns, never a 3D-only visual embellishment layered on top.
+ */
+function buildSlab(widthM: number, lengthM: number, foundationType: FoundationType): SlabGeometry {
   const o = SLAB_OVERHANG_M;
+  const thicknessM = foundationType === 'slab' ? SLAB_THICKNESS_M * SLAB_THICKNESS_CONFIRMED_MULTIPLIER : SLAB_THICKNESS_M;
   return {
     corners: quad(v3(-o, 0, -o), v3(widthM + o, 0, -o), v3(widthM + o, 0, lengthM + o), v3(-o, 0, lengthM + o)),
     widthM: round(widthM + o * 2),
     lengthM: round(lengthM + o * 2),
-    thicknessM: SLAB_THICKNESS_M,
+    thicknessM,
     overhangM: o,
   };
 }
@@ -1013,7 +1032,7 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
     girts: buildGirts(widthM, lengthM, eaveHeightM),
     bracing: buildBracing(wallSegments),
     openings,
-    slab: buildSlab(widthM, lengthM),
+    slab: buildSlab(widthM, lengthM, domain.foundation.type),
     // External + internal column footings merged into one array — see FootingGeometry's own doc
     // comment: both are "one footing per column", distinguished by `side`, not by which array
     // they live in, so a renderer that iterates `footings` picks up internal ones for free.

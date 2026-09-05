@@ -174,8 +174,17 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
       {/* Phase 3D — isolated footings, the slab's alternative. Same `foundation` build-up layer:
           never both visible (see isometricProjection.ts/technicalSceneModel.ts), so sharing the
           one lifecycle is correct, not a coincidence — whichever representation is on screen
-          follows the exact same scope.foundation timing the slab alone used to. */}
-      {scene.footings.map((f) => (
+          follows the exact same scope.foundation timing the slab alone used to.
+          Phase 3F.1 bug fix: this used to render every entry in `scene.footings` unconditionally,
+          never reading `f.visible` (technicalSceneModel.ts's own `domain.scope.foundation &&
+          domain.foundation.type === 'isolated'` computation, threaded through by
+          isometricProjection.ts) — footing markers stayed on screen after switching to
+          "Монолітна плита", since `scene.footings` is always populated regardless of which
+          foundation representation is actually selected (footings are geometry, same "always
+          present, visibility is the renderer's business" rule the slab polygon above already
+          follows). Filtering on `f.visible` here — the one flag that already encodes the correct
+          condition — rather than re-deriving `domain.foundation.type === 'isolated'` a second time. */}
+      {scene.footings.filter((f) => f.visible).map((f) => (
         <polygon
           key={f.id}
           className={`hc-layer hc-buildlayer hc-footing hc-phase-${foundation.phase}`}

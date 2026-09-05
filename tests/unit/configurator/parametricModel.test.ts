@@ -441,6 +441,26 @@ describe('slab', () => {
     expect(Math.max(...m.slab.corners.map((p) => p.x))).toBeCloseTo(24 + o, 6);
     expect(m.slab.corners.every((p) => p.y === 0)).toBe(true);
   });
+
+  it('Phase 3F.1: is 3x thicker once the customer explicitly confirms a monolithic slab, not before', () => {
+    const undecided = modelFor({}, { foundationType: 'engineeringDecision' });
+    const isolated = modelFor({}, { foundationType: 'isolated' });
+    const confirmed = modelFor({}, { foundationType: 'slab' });
+
+    expect(confirmed.slab.thicknessM).toBeCloseTo(undecided.slab.thicknessM * 3, 6);
+    // Neither the honest "not yet decided" default nor an isolated-footing choice gets the
+    // thicker treatment — only an explicit, real "Монолітна плита" commitment does.
+    expect(isolated.slab.thicknessM).toBeCloseTo(undecided.slab.thicknessM, 6);
+  });
+
+  it("Phase 3F.1: the thicker slab never touches isolated footings' own dimensions — those stay exactly as they were", () => {
+    const isolated = modelFor({}, { foundationType: 'isolated' });
+    const confirmedSlab = modelFor({}, { foundationType: 'slab' });
+    const isolatedFooting = isolated.footings.find((f) => f.side !== 'center')!;
+    const slabModeFooting = confirmedSlab.footings.find((f) => f.side !== 'center')!;
+    expect(slabModeFooting.padThicknessM).toBe(isolatedFooting.padThicknessM);
+    expect(slabModeFooting.pedestalHeightM).toBe(isolatedFooting.pedestalHeightM);
+  });
 });
 
 describe('roof overhang', () => {

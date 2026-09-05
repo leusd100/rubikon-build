@@ -6,7 +6,6 @@ import {
   RIDGE_HEIGHT_STEP_M,
   clampGateSelection,
   clampRidgeHeightM,
-  deriveStructuralVisualization,
   gateHeightFits,
   maxGateCountThatFits,
   ridgeHeightRangeM,
@@ -22,10 +21,8 @@ import {
   GATES_OPTIONS,
   GATE_TYPE_LABELS,
   GATE_TYPE_ORDER,
-  ROOF_STRUCTURE_LABELS,
   SCOPE_LABELS,
   SCOPE_ORDER,
-  STRUCTURAL_SCHEME_LABELS,
   clampDimension,
   hasScopeItem,
   toggleScopeItem,
@@ -161,9 +158,6 @@ export function ConfiguratorControls({ state, onChange }: Props) {
   // widening the building can make a previously-legal ridge too shallow.
   const ridgeRange = ridgeHeightRangeM(state.dimensions.width, state.dimensions.height);
   const ridgeValue = clampRidgeHeightM(state.ridgeHeightM, state.dimensions.width, state.dimensions.height);
-  // Phase 3E.1: read-only, derived straight from width — see deriveStructuralVisualization's own
-  // doc comment. Nothing here is a stored choice any more; there is no setter for this value.
-  const structural = deriveStructuralVisualization(state.dimensions.width);
 
   function setDimension(key: keyof Dimensions, value: number) {
     const dimensions = { ...state.dimensions, [key]: value };
@@ -310,21 +304,11 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         </div>
       </section>
 
-      {/* Phase 3E.1: the two manual radiogroups this section used to hold (Конструктивна схема,
-          Несуча система покрівлі) were removed per the follow-up brief — the customer no longer
-          chooses these directly. What is left is informational only: no radiogroup role, no
-          inputs, nothing to select — see deriveStructuralVisualization's own doc comment for where
-          this value actually comes from. */}
-      <section className="hc-control-group" aria-labelledby="hc-structural-info-heading">
-        <h2 id="hc-structural-info-heading">Попередня конструктивна схема</h2>
-        <p className="hc-structural-summary">
-          {ROOF_STRUCTURE_LABELS[structural.roofStructure]} · {STRUCTURAL_SCHEME_LABELS[structural.scheme]}
-        </p>
-        <p className="hc-field-note">
-          Схема формується автоматично для попередньої візуалізації та уточнюється після
-          конструктивного розрахунку.
-        </p>
-      </section>
+      {/* Phase 3F.1: the read-only "Попередня конструктивна схема" info block that used to live
+          here was removed — it duplicated the exact same fact already shown in the summary panel
+          ("Ваш об'єкт") one scroll away, and having it in two places read as noise rather than
+          information (live product review). The derived value itself (deriveStructuralVisualization)
+          is unchanged and still surfaces exactly once, in ConfiguratorSummary.tsx. */}
 
       <section className="hc-control-group" aria-labelledby="hc-foundation-heading">
         <h2 id="hc-foundation-heading">Основа / фундамент</h2>
