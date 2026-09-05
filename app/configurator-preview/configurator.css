@@ -993,6 +993,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+.hc-summary-handoff {
+  display: grid;
+  grid-template-columns: minmax(220px, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 14px 18px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-default);
+}
+
+.hc-summary-action { min-height: 52px; }
+
+.hc-summary-handoff p {
+  margin: 0;
+  max-width: 34ch;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1023px) {
@@ -1011,6 +1031,8 @@
   .hc-layout { padding-inline: 20px; }
   .hc-option-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hc-field-controls { grid-template-columns: 1fr 64px; }
+  .hc-summary-handoff { grid-template-columns: 1fr; }
+  .hc-summary-action { width: 100%; }
   /* Raised from 62vw/260px (Visual Refinement Pass v1) — "the model must still feel worth
      showing on mobile", not merely technically responsive. */
   .hc-preview-svg,

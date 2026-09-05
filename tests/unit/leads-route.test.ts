@@ -66,6 +66,7 @@ class FakeD1Statement {
       const id = this.database.nextLeadId;
       this.database.nextLeadId += 1;
       this.database.leads.set(submissionId, id);
+      this.database.lastLeadDetails = String(this.bindings[5]);
       return { meta: { changes: 1, last_row_id: id } };
     }
 
@@ -95,6 +96,7 @@ class FakeD1Database {
   rateReservations = 0;
   lastRateRowId = 0;
   nextLeadId = 1;
+  lastLeadDetails = '';
 
   prepare(query: string) {
     const normalizedQuery = query.replace(/\s+/g, ' ').trim();
@@ -205,6 +207,32 @@ describe('POST /api/leads', () => {
     expect(database.leads.get('submission-new')).toBe(1);
     expect(database.rateReservations).toBe(1);
     expect(telegramFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('stores configurator details and includes them in the Telegram handoff', async () => {
+    const configuration = [
+      'Габарити: 30 × 50 × 8 м',
+      'Площа забудови: ≈ 1 500 м²',
+      'Контур: Утеплений',
+    ].join('\n');
+    const response = await POST(leadRequest(validPayload({
+      direction: 'Ангари та склади',
+      details: {
+        dimensions: '30 × 50 × 8 м',
+        configuration,
+      },
+    })));
+
+    expect(response.status).toBe(200);
+    expect(JSON.parse(database.lastLeadDetails)).toMatchObject({
+      dimensions: '30 × 50 × 8 м',
+      configuration,
+    });
+
+    const telegramRequest = telegramFetch.mock.calls[0]?.[1] as RequestInit | undefined;
+    const telegramBody = JSON.parse(String(telegramRequest?.body)) as { text: string };
+    expect(telegramBody.text).toContain('Конфігурація ангара:');
+    expect(telegramBody.text).toContain(configuration);
   });
 
   it('returns the existing lead before a full rate-limit bucket is touched', async () => {

@@ -5,10 +5,14 @@ import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { ConfiguratorControls } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
+import { useHangarInquiryContext } from './HangarInquiryContext';
 import { HangarPreviewModes } from './HangarPreviewModes';
 
 export function HangarConfigurator({ embedded = false }: { embedded?: boolean }) {
-  const [state, setState] = useState<ConfiguratorState>(DEFAULT_CONFIGURATOR_STATE);
+  const sharedInquiry = useHangarInquiryContext();
+  const [localState, setLocalState] = useState<ConfiguratorState>(DEFAULT_CONFIGURATOR_STATE);
+  const state = sharedInquiry?.state ?? localState;
+  const setState = sharedInquiry?.setState ?? setLocalState;
   // Derived once here, not inside Preview/Summary — both read the same DomainModel so they can
   // never disagree about what "walls present" or "area" means. Controls keeps reading/writing
   // raw ConfiguratorState below — it edits user input, not the derived object.
@@ -44,7 +48,11 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         <ConfiguratorControls state={state} onChange={setState} />
         <div className="hc-preview-pane">
           <HangarPreviewModes domain={domain} />
-          <ConfiguratorSummary domain={domain} />
+          <ConfiguratorSummary
+            domain={domain}
+            showInquiryAction={embedded}
+            onInquiryAction={sharedInquiry?.attachConfiguration}
+          />
         </div>
       </div>
     </section>

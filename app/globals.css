@@ -408,6 +408,17 @@ section[id] { scroll-margin-top: 116px; }
 .inquiry-choice input:checked + span { color: white; border-color: #272c29; background: #272c29; }
 .inquiry-choice input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 1px var(--focus-gap); }
 .inquiry-select { margin-top: 0; }
+.inquiry-config-brief { margin: 0 0 20px; padding: 18px 20px 20px; border: 1px solid rgba(19,22,20,.2); border-left: 3px solid var(--accent); background: rgba(255,255,255,.42); }
+.inquiry-config-brief-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(19,22,20,.15); }
+.inquiry-config-brief-heading > div { display: grid; gap: 5px; }
+.inquiry-config-brief-heading small { color: var(--accent-dark); font-size: 9px; font-weight: 800; line-height: 1; letter-spacing: .11em; text-transform: uppercase; }
+.inquiry-config-brief-heading strong { color: var(--ink); font: 600 20px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.inquiry-config-brief-heading span { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.inquiry-config-brief-heading a { flex: none; color: var(--accent-dark); font-size: 10px; font-weight: 800; line-height: 1.3; letter-spacing: .04em; text-decoration: underline; text-underline-offset: 4px; text-transform: uppercase; }
+.inquiry-config-brief dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 22px; margin: 15px 0 0; }
+.inquiry-config-brief dl > div { min-width: 0; }
+.inquiry-config-brief dt { margin-bottom: 4px; color: var(--muted); font-size: 9px; font-weight: 800; line-height: 1.25; letter-spacing: .07em; text-transform: uppercase; }
+.inquiry-config-brief dd { margin: 0; color: var(--ink); font-size: 11px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
 .inquiry-details { margin-top: 20px; border-top: 1px solid rgba(19,22,20,.18); border-bottom: 1px solid rgba(19,22,20,.18); }
 .inquiry-details summary { min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 18px; cursor: pointer; list-style: none; color: var(--ink); font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .inquiry-details summary::-webkit-details-marker { display: none; }
@@ -944,6 +955,9 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .inquiry-form-section-heading { display: flex; align-items: baseline; gap: 12px; padding-top: 0; }
   .inquiry-form-section-heading h3 { font-size: 12px; }
   .inquiry-fields-two { grid-template-columns: 1fr; }
+  .inquiry-config-brief { padding: 16px; }
+  .inquiry-config-brief-heading { flex-direction: column; gap: 12px; }
+  .inquiry-config-brief dl { grid-template-columns: 1fr; gap: 10px; }
   .inquiry-choice > div { grid-template-columns: 1fr 1fr; }
   .inquiry-form-submit-layout { grid-template-columns: 1fr; gap: 22px; }
   .inquiry-status { padding-inline: 20px; }
