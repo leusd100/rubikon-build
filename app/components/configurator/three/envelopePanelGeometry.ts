@@ -483,7 +483,10 @@ function buildGateLeafGeometry(widthM: number, heightM: number): THREE.BufferGeo
  * door read as a door rather than as a painted rectangle.
  */
 function buildDoorLeafGeometry(widthM: number, heightM: number): THREE.BufferGeometry {
-  const inset = Math.min(0.05, widthM * 0.06);
+  // 0.03 m, not 0.05: the reveal it exposes is near-black, and on a 1 m leaf a 5 cm ring each side
+  // was a tenth of the door's apparent width in shadow — enough to close the opening up visually.
+  // Still wide enough to read as a frame rather than a flush panel.
+  const inset = Math.min(0.03, widthM * 0.04);
   const x0 = inset;
   const x1 = Math.max(x0 + 0.01, widthM - inset);
   const y0 = 0;
