@@ -16,6 +16,7 @@ import { claddingMaterialKey } from '../../../lib/configurator/threeSceneModel';
 import type { ParametricBuildingModel } from '../../../lib/configurator/parametricModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
 import { MATERIALS, STUDIO_BACKGROUND } from './materials';
+import { getGroundFalloffTexture } from './proceduralTextures';
 import { getRepeatedNoiseTexture } from './proceduralTextures';
 import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
@@ -889,14 +890,42 @@ export function ThreeHangarView({
           instead of fading in with the recess it sits in front of. */}
       <MaterialOpacityDriver materialKey="gate" layer={gateLayer} />
 
-      {/* Shadow catcher, not a floor. `shadowMaterial` is invisible except where something casts
-          onto it, which is exactly what this needs: the building has to read as an object standing
-          on a surface, but an actual shaded ground plane fills the canvas edge to edge and turns
-          the preview into a framed picture sitting inside its own container (confirmed on screen —
-          a lit plane large enough not to show its own edge necessarily covers the whole frame).
-          This gives the contact shadow and nothing else, so the viewport stays continuous with the
-          surrounding surface. Skipped entirely when shadows are off (mobile), where there would be
-          nothing for it to show. */}
+      {/* The building has to read as standing on a surface, not floating in a dark void — the
+          single biggest thing separating this from an architectural presentation. A plain lit
+          floor was tried and rejected before (recorded here): one large enough to hide its own
+          edge necessarily fills the frame, and the preview stops being a continuous surface and
+          becomes a framed picture inside its container.
+          This plane answers that objection with an alpha ramp (getGroundFalloffTexture) instead of
+          a bigger plane: it is opaque under the model and fully transparent well before its own
+          rim, so it dissolves into the studio background and never shows an edge or a horizon.
+          It sits 1 cm below the shadow catcher so the two never z-fight, and it receives the same
+          key-light shadow — which is the actual point. The shadow used to fall on nothing and read
+          as a smear floating in black; now it lands on a surface and reads as contact.
+          Studied against the alternatives at equal camera/model (§5): no floor at all left the
+          object ungrounded, and a lighter floor (#33383d, opaque) reached too close to the frame
+          edge and started competing with the building for attention. */}
+      {(
+        <mesh
+          position={[building.footprint.widthM / 2, scene.ground.yM - 0.01, building.footprint.lengthM / 2]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          receiveShadow
+        >
+          <planeGeometry args={[scene.ground.sizeM, scene.ground.sizeM]} />
+          <meshStandardMaterial
+            color={MATERIALS.ground.color}
+            roughness={MATERIALS.ground.roughness}
+            metalness={MATERIALS.ground.metalness}
+            alphaMap={getGroundFalloffTexture()}
+            transparent
+            opacity={0.9}
+          />
+        </mesh>
+      )}
+
+      {/* Shadow catcher. Kept separate from the floor above rather than folded into it: the floor
+          fades out radially, so a shadow drawn only by the floor's own material would fade with
+          it. This stays a full-strength `shadowMaterial` so contact stays crisp under the model
+          even where the floor beneath it has already gone transparent. */}
       {shadows && (
         <mesh
           position={[building.footprint.widthM / 2, scene.ground.yM, building.footprint.lengthM / 2]}

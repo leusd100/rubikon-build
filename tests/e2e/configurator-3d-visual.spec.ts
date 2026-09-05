@@ -159,21 +159,30 @@ test.describe('configurator 3D visual states', () => {
 // instead of individual pixels. Measured on this machine:
 //
 //   KEY_INTENSITY   lit-mean   delta     pixel diff
-//   2.3 (shipped)   66.3984    —         —
+//   2.3             66.3984    —         —
 //   2.346 (+2%)     67.0425    +0.644    passes (missed)
 //   2.45  (+6.5%)   68.3171    +1.919    passes (missed)
 //
+// (Those figures were measured before the studio floor landed, which is why they do not match the
+// baseline below — the floor adds a large dim-but-not-background area, so the lit mean dropped to
+// 39.4413 and the lit fraction rose to 0.5646. The sensitivity argument is unchanged; the floor
+// itself was caught by BOTH this guard and the pixel diff, which is the intended behaviour for a
+// change that large.)
+//
 // Run-to-run noise across separate browser launches is 0.0000 — the readback is fully
 // deterministic, so the tolerance below is bounded by driver drift, not by measurement noise.
-// `litMean` ignores the near-black studio background (luma > 26) so it tracks the lit object
-// rather than how much empty space happens to be in frame; `litFrac` is the silhouette's share of
-// the frame, which catches a camera/geometry regression without depending on tone at all.
+// The luma > 40 cutoff is not a guess: a histogram of the rendered frame has the background and
+// the studio floor together occupying 20-39 (80.5% of all pixels) and the building's lit surfaces
+// sitting at 40 and above, so 40 is the empty valley between the two. `litMean` therefore tracks
+// the tone of the BUILDING rather than of whatever floor is behind it, and `litFrac` — the
+// building's share of the frame — stays a real camera/geometry guard instead of being swamped by
+// the floor (at a luma > 26 cutoff it read 0.70 and barely moved).
 //
 // These are absolute numbers, so they are machine-pinned in exactly the same way this file's
 // `*-darwin.png` baselines already are (see the header) — a GPU/driver change re-baselines both
 // together. Tolerance ±0.30 catches a ~1% lighting change while leaving room for a driver point
 // release; ±0.002 on litFrac is ~1000 pixels of silhouette.
-const RENDER_TONE = { litMean: 66.3984, litFrac: 0.1923 } as const;
+const RENDER_TONE = { litMean: 73.9597, litFrac: 0.1593 } as const;
 const LIT_MEAN_TOLERANCE = 0.3;
 const LIT_FRAC_TOLERANCE = 0.002;
 
@@ -187,6 +196,7 @@ async function readRenderTone(page: Page) {
       await api.invalidateAndWaitForFrame();
       await api.invalidateAndWaitForFrame();
     }
+    const LIT_LUMA_CUTOFF = 40;
     const canvas = document.querySelector('canvas');
     if (!canvas) throw new Error('no canvas');
     const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | null;
@@ -198,7 +208,7 @@ async function readRenderTone(page: Page) {
     let litSum = 0;
     for (let i = 0; i < buffer.length; i += 4) {
       const luma = 0.2126 * buffer[i] + 0.7152 * buffer[i + 1] + 0.0722 * buffer[i + 2];
-      if (luma > 26) { litCount += 1; litSum += luma; }
+      if (luma > LIT_LUMA_CUTOFF) { litCount += 1; litSum += luma; }
     }
     const pixels = buffer.length / 4;
     return { litMean: litSum / Math.max(litCount, 1), litFrac: litCount / pixels };

@@ -121,7 +121,9 @@ export const MATERIALS: Record<MaterialKey, MaterialSpec> = {
   // The reveal/backdrop AROUND and BEHIND the leaf above — an opening is the absence of light, not
   // a dark-painted panel.
   'gate-recess': { color: '#0b0d0e', roughness: 1, metalness: 0 },
-  // Retained for completeness of the MaterialKey map. The view does NOT paint a lit ground: a
+  // The studio floor (see ThreeHangarView's own ground plane): a dark, fully matte surface the
+  // building stands on, faded out radially by an alpha ramp so it never shows its own edge.
+  // Historical note — this used to be unused, back when the view painted no ground at all: a
   // plane large enough to hide its own edge necessarily fills the canvas, which made the preview
   // read as a framed picture inside its container. The ground is a `shadowMaterial` catcher
   // instead — invisible except where the building casts onto it.
