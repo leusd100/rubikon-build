@@ -336,7 +336,14 @@ section[id] { scroll-margin-top: 116px; }
 .team-home .person-story,
 .team-home .person-story-reverse { grid-template-columns: 1fr; align-content: start; }
 .team-home .person-story-reverse .person-photo { order: -1; }
-.team-home .person-photo { width: 100%; aspect-ratio: 4 / 5; }
+/* Square on desktop, not 4/5. At 1440 the two-up grid gives each portrait a 623px column, so
+   4/5 made it 778px tall — 86% of a 900px viewport for one photo, and 25% taller than the same
+   portraits on /pro-nas (546x624), the page the team section actually belongs to. Home's team
+   block is the quick-trust summary (see teamContent above); it should not out-scale the page
+   that carries the full bios. 1/1 lands it at 623px — level with /pro-nas — and `object-position:
+   center top` keeps the face framed. Tablet and mobile keep their own ratios below; the problem
+   was desktop-only. */
+.team-home .person-photo { width: 100%; aspect-ratio: 1 / 1; }
 .team-home .person-info { min-height: 0; padding: 34px 4px 8px; }
 .team-home .person-info > span { font-size: 10px; }
 .team-home .person-info h3 { margin: 16px 0 18px; font-size: clamp(32px, 3vw, 44px); }
