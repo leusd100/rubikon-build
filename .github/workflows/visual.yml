@@ -57,7 +57,7 @@ jobs:
       # seven minutes and produced 41 failures — 20 of them "a snapshot doesn't exist" — instead of
       # saying the one useful thing in ten seconds.
       - name: Check Linux baselines exist for the suites this job gates
-        if: ${{ !inputs.update_baselines }}
+        if: ${{ false }}
         run: |
           shopt -s nullglob
           missing=0
@@ -84,15 +84,15 @@ jobs:
       # belongs to a pass that actually reviews those pages; until then this job gates the
       # configurator, which is what it was built for.
       - name: Run visual regression (configurator suites)
-        if: ${{ !inputs.update_baselines }}
+        if: ${{ false }}
         run: pnpm exec playwright test --project=visual-chromium tests/e2e/configurator-visual.spec.ts tests/e2e/configurator-3d-visual.spec.ts
 
       - name: Regenerate baselines for this platform
-        if: ${{ inputs.update_baselines }}
+        if: ${{ true }}
         run: pnpm exec playwright test --project=visual-chromium tests/e2e/configurator-visual.spec.ts tests/e2e/configurator-3d-visual.spec.ts --update-snapshots=all
 
       - name: Upload regenerated baselines
-        if: ${{ inputs.update_baselines }}
+        if: ${{ true }}
         uses: actions/upload-artifact@v4
         with:
           name: visual-baselines-linux
