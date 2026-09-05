@@ -182,7 +182,12 @@ test.describe('configurator 3D visual states', () => {
 // `*-darwin.png` baselines already are (see the header) — a GPU/driver change re-baselines both
 // together. Tolerance ±0.30 catches a ~1% lighting change while leaving room for a driver point
 // release; ±0.002 on litFrac is ~1000 pixels of silhouette.
-const RENDER_TONE = { litMean: 73.9597, litFrac: 0.1593 } as const;
+// litMean moved 73.9597 -> 64.2769 when the profiled sheet's modelled rib depth dropped from 16 mm
+// to 8 mm (envelopePanelGeometry.ts's own note on why): shallower ribs catch less key light, so the
+// lit surfaces average darker. litFrac did NOT move, which is the useful half of that observation —
+// the silhouette is identical, so the change is shading only and touched no extent, exactly what a
+// depth-only edit should do. This guard caught the change on its own, before the PNG diff was read.
+const RENDER_TONE = { litMean: 64.2769, litFrac: 0.1593 } as const;
 const LIT_MEAN_TOLERANCE = 0.3;
 const LIT_FRAC_TOLERANCE = 0.002;
 

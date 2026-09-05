@@ -35,7 +35,29 @@ import type { CladdingSystem } from '../../../lib/configurator/types';
  *  that is what the actual product looks like, and it is also cheaper (4 X-samples per period
  *  instead of a smoothly sampled curve). */
 const PROFILED_RIB_PITCH_M = 0.2;
-const PROFILED_RIB_HEIGHT_M = 0.016;
+/**
+ * Modelled rib DEPTH — a presentation amplitude, not a product dimension, and deliberately
+ * shallower than a real sheet's 20-60 mm.
+ *
+ * At the honest 16 mm this started from, the roof aliased badly: ribs repeat every 0.2 m, so a
+ * 60 m building carries ~300 of them, and the fixed camera sees the near slope at a grazing angle
+ * where they project to well under a pixel each. The result was a crosshatch moire that read as a
+ * dirty mesh rather than as sheeting. Measured at 390px with a real deviceScaleFactor of 3, and
+ * NOT a mobile-only problem despite where it was first reported: it is just as visible at 820px
+ * (which already renders at DPR 2) and on a DPR-1 desktop, and raising the device pixel ratio only
+ * clears it at 3 — four times the fragments of the current mobile tier, on the hardware least able
+ * to afford them.
+ *
+ * Depth is the lever that works at every resolution, because the moire's amplitude is the
+ * shading difference between crest and trough. Probed at 16 / 8 / 4 mm: 16 mm moires, 4 mm reads
+ * as flat sheet with the profile lost, 8 mm keeps the directional profiled texture and the panel
+ * seams legible with the moire gone.
+ *
+ * Rib PITCH above is untouched — that is the geometric fact about the product, and it still drives
+ * the rib count from real metres, so a 12 m bay still shows twice the ribs of a 6 m one. Only how
+ * far they stand proud of the sheet is reduced.
+ */
+const PROFILED_RIB_HEIGHT_M = 0.008;
 /** Fraction of one pitch spent on the flat crest (the rest splits between trough and the two
  *  sloped transitions) — a real profiled sheet's crest is narrower than its trough. */
 const PROFILED_CREST_FRACTION = 0.32;
