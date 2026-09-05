@@ -19,7 +19,7 @@ type InquirySectionProps = {
 export default function InquirySection({
   eyebrow,
   title,
-  text = 'Залиште контактні дані й коротко опишіть завдання. Ознайомимося із запитом, зв’яжемося з вами та підкажемо, що потрібно для предметного обговорення проєкту.',
+  text = 'Залиште контакт і коротко опишіть завдання. Ми уточнимо вихідні дані та запропонуємо наступний крок.',
   defaultDirection,
 }: InquirySectionProps) {
   return (
