@@ -1158,3 +1158,80 @@ describe('bay layout (final micro-polish: real bay rhythm, not stretched frames)
     }
   });
 });
+
+describe('narrow-facade opening composition', () => {
+  // The four combinations the final pass names, at the four narrow widths it names. The rule under
+  // test is not "everything fits" — it is that whatever the model reports is HONEST: fixed presets
+  // are never squeezed, openings never overlap each other or the centre-support line, and anything
+  // that cannot fit is dropped rather than drawn somewhere invalid.
+  const widths = [10, 12, 16, 18];
+  const combos = [
+    { gates: 1 as const, gateType: 'standard' as const },
+    { gates: 1 as const, gateType: 'double' as const },
+    { gates: 2 as const, gateType: 'standard' as const },
+    { gates: 2 as const, gateType: 'double' as const },
+  ];
+
+  it('never squeezes a preset, overlaps an opening, or crosses a corner', () => {
+    for (const width of widths) {
+      for (const combo of combos) {
+        const model = modelFor({ width }, { ...combo, doors: 1 });
+        const gates = model.openings.filter((o) => o.kind === 'gate');
+        const doors = model.openings.filter((o) => o.kind === 'door');
+
+        // Presets are never scaled to make something fit.
+        for (const gate of gates) {
+          expect(gate.rect.widthM, `${width}m ${combo.gates}x${combo.gateType}`)
+            .toBe(GATE_DIMENSIONS_M[combo.gateType].widthM);
+          expect(gate.rect.heightM).toBe(GATE_DIMENSIONS_M[combo.gateType].heightM);
+        }
+        for (const door of doors) {
+          expect(door.rect.widthM).toBe(DOOR_DIMENSIONS_M.widthM);
+          expect(door.rect.heightM).toBe(DOOR_DIMENSIONS_M.heightM);
+        }
+
+        // No two openings overlap, whatever survived.
+        const sorted = [...model.openings].sort((a, b) => a.rect.xM - b.rect.xM);
+        for (let i = 1; i < sorted.length; i += 1) {
+          const previous = sorted[i - 1];
+          expect(previous.rect.xM + previous.rect.widthM, `${width}m overlap`)
+            .toBeLessThanOrEqual(sorted[i].rect.xM + 1e-9);
+        }
+
+        // Everything stays inside the facade.
+        for (const opening of model.openings) {
+          expect(opening.rect.xM, `${width}m left edge`).toBeGreaterThanOrEqual(0);
+          expect(opening.rect.xM + opening.rect.widthM, `${width}m right edge`).toBeLessThanOrEqual(width);
+        }
+
+        // A door never removes a structural centre support.
+        const withoutDoor = modelFor({ width }, { ...combo, doors: 0 });
+        expect(model.internalColumns.length, `${width}m ${combo.gates}x${combo.gateType} columns`)
+          .toBe(withoutDoor.internalColumns.length);
+      }
+    }
+  });
+
+  it('reports what actually fits, and the control agrees with the geometry', () => {
+    const rows: string[] = [];
+    for (const width of widths) {
+      for (const combo of combos) {
+        const domain = deriveDomainModel({
+          ...DEFAULT_CONFIGURATOR_STATE,
+          dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width },
+          ...combo,
+          doors: 1,
+        });
+        const model = modelFor({ width }, { ...combo, doors: 1 });
+        const gates = model.openings.filter((o) => o.kind === 'gate').length;
+        const doors = model.openings.filter((o) => o.kind === 'door').length;
+
+        // Whatever the domain clamped to is exactly what the geometry drew — no silent divergence.
+        expect(gates, `${width}m gates`).toBe(domain.gates);
+        expect(doors, `${width}m doors`).toBe(domain.doors);
+        rows.push(`${width}m ${combo.gates}x${combo.gateType} -> ${gates} gate(s), ${doors} door`);
+      }
+    }
+    expect(rows).toHaveLength(widths.length * combos.length);
+  });
+});
