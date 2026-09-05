@@ -26,7 +26,16 @@ export default defineConfig({
     : {
         command: 'pnpm exec vinext dev --hostname 127.0.0.1 --port 4173',
         url: baseURL,
-        reuseExistingServer: !process.env.CI,
+        // Deliberately false, including locally. `reuseExistingServer: true` only checks that
+        // SOMETHING answers on the port — not that it is this checkout. A dev server left running
+        // on 4173 by another worktree was silently adopted by the whole visual suite, so every
+        // screenshot compared against a different codebase: a deliberate `STUDIO_BACKGROUND`
+        // mutation still reported "5 passed" because the server under test never had it. A busy
+        // port now fails loudly ("port is already used") instead of quietly testing a stranger.
+        // Cost is a few seconds of server startup per run; the alternative is a suite that cannot
+        // be trusted to be testing the code in front of you. Use PLAYWRIGHT_BASE_URL to point at
+        // an already-running server on purpose.
+        reuseExistingServer: false,
         timeout: 120_000,
         stdout: 'pipe',
         stderr: 'pipe',
