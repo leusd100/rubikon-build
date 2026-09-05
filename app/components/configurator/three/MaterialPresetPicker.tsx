@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import {
   ROOF_PRESETS,
   WALL_PRESETS,
@@ -23,19 +24,38 @@ function SwatchGroup<Id extends string>({
   selected: Id;
   onSelect: (id: Id) => void;
 }) {
+  const buttons = useRef<Array<HTMLButtonElement | null>>([]);
+
   return (
     <fieldset className="hc-material-swatch-group">
       <legend>{legend}</legend>
       <div className="hc-material-swatch-row" role="radiogroup" aria-label={legend}>
-        {presets.map((preset) => (
+        {presets.map((preset, index) => (
           <button
             key={preset.id}
             type="button"
             role="radio"
             aria-checked={preset.id === selected}
+            tabIndex={preset.id === selected ? 0 : -1}
+            ref={(element) => { buttons.current[index] = element; }}
             className={preset.id === selected ? 'is-selected' : undefined}
             title={preset.label}
             onClick={() => onSelect(preset.id)}
+            onKeyDown={(event) => {
+              let next: number;
+              switch (event.key) {
+                case 'ArrowRight':
+                case 'ArrowDown': next = (index + 1) % presets.length; break;
+                case 'ArrowLeft':
+                case 'ArrowUp': next = (index - 1 + presets.length) % presets.length; break;
+                case 'Home': next = 0; break;
+                case 'End': next = presets.length - 1; break;
+                default: return;
+              }
+              event.preventDefault();
+              onSelect(presets[next].id);
+              buttons.current[next]?.focus();
+            }}
           >
             <span className="hc-material-swatch-dot" style={{ backgroundColor: preset.color }} aria-hidden="true" />
             <span className="hc-material-swatch-label">{preset.label}</span>
