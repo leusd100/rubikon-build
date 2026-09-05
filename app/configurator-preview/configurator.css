@@ -1026,8 +1026,19 @@
     grid-template-areas: "eyebrow" "title" "lede";
   }
 
+  /* Stacked below 1024px, and the preview goes FIRST. Measured on a 390px viewport before this
+     changed: the preview sat at y=2255 with 1,948px of controls above it, so the whole
+     configuration happened before the building was ever on screen — a form with a picture at the
+     end rather than a live configurator. Visual order only; the DOM keeps controls first, so
+     reading order and the existing order assertion are unchanged. */
   .hc-layout { grid-template-columns: 1fr; }
-  .hc-preview-pane { position: static; }
+  /* `display: contents` promotes the pane's two children to grid items so the preview and the
+     summary can be ordered independently: see the building (1), configure it (2), review it (3).
+     Previously the summary sat between them, putting 438px of read-only review between the model
+     and the first control. */
+  .hc-preview-pane { display: contents; }
+  .hc-controls { order: 2; }
+  .hc-summary { order: 3; }
 }
 
 @media (max-width: 759px) {
