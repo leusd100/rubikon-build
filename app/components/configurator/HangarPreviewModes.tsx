@@ -139,6 +139,20 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
             // SceneLighting's own `ShadowMapResize`-equivalent effect for the shadow-map half of
             // this). Mobile's own lower ceiling always wins over the fullscreen bump — a phone in
             // fullscreen still has a phone GPU.
+            // The mobile ceiling is also what bounds roof rib legibility on long buildings, and
+            // that was measured rather than assumed. Roof ribs are real swept geometry at a
+            // constant 0.2 m pitch (envelopePanelGeometry.ts), so a 50 m building carries ~250 of
+            // them; the camera frames it into ~200 CSS px of preview, which is well under one
+            // rib per pixel, and the far slope reads as a moire speckle rather than as profiled
+            // sheet. It is NOT the procedural noise maps: removing `normalMap` from every
+            // material outright moves the frame by at most 2/255, so anisotropy and repeat are
+            // the wrong lever. Raising this ceiling is the right one, and it works — probed at
+            // 390px with a 50 m building, 2 visibly evens the dashes and 3 resolves them into
+            // clean continuous ribs — but 3 is 4x the fragments of 1.5 on the device least able
+            // to afford them, and no phone-hardware frame timing has been taken to justify that
+            // trade. Left at 1.5 deliberately: a cosmetic gain at long lengths does not outrank a
+            // deliberate perf tier, and the fix is recorded here so it can be taken as a decision
+            // with device testing rather than discovered again from the symptom.
             maxDpr={isMobile ? 1.5 : isFullscreen ? 3 : 2}
             shadowMapSize={isFullscreen ? 2048 : 1024}
             wallColor={wallPresetColor(wallPreset)}
