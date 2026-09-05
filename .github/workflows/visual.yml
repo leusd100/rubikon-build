@@ -1,0 +1,99 @@
+name: Visual regression
+
+# Separate from Quality on purpose. Quality is the gate for "is this correct" (lint, unit, build,
+# route/flow e2e); this is the gate for "does it still LOOK right", which fails for different
+# reasons, needs different artifacts to diagnose, and is the only thing standing between a
+# material/lighting/scene change and silent drift. Keeping it its own job means a render failure
+# is legible at a glance instead of buried in an otherwise-unrelated log.
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: 'Regenerate baselines for this runner platform and upload them as an artifact (does not commit)'
+        type: boolean
+        default: false
+
+# Runs on every PR rather than behind a paths filter. The suite renders whole pages, so its real
+# dependency surface is the app's CSS tokens, the shared layout, the design system and the
+# configurator's own geometry/material modules — a path list covering that honestly would be most
+# of app/, and a list that MISSES one of them fails silently, which is exactly the failure this
+# job exists to prevent. One extra ubuntu job per PR is the cheaper mistake.
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    name: WebGL / layout visual regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # The suite starts its own dev server from THIS checkout (playwright.config's webServer, with
+      # reuseExistingServer: false — see the comment there for the worktree-adoption incident that
+      # setting exists to prevent). Nothing external is reused.
+      - name: Check baselines exist for this platform
+        if: ${{ !inputs.update_baselines }}
+        run: |
+          shopt -s nullglob
+          linux_baselines=(tests/e2e/*-snapshots/*-linux.png)
+          if [ ${#linux_baselines[@]} -eq 0 ]; then
+            echo "::error::No *-linux.png baselines are committed, so this job has nothing to compare against."
+            echo "Playwright names snapshots per platform, and the repository currently carries"
+            echo "macOS (*-darwin.png) baselines only — they were generated on a developer machine."
+            echo ""
+            echo "Bootstrap once: run this workflow via workflow_dispatch with update_baselines=true,"
+            echo "download the 'visual-baselines-linux' artifact, review the images, and commit them"
+            echo "under the matching tests/e2e/*-snapshots/ directories."
+            exit 1
+          fi
+          echo "Found ${#linux_baselines[@]} Linux baselines."
+
+      - name: Run visual regression
+        if: ${{ !inputs.update_baselines }}
+        run: pnpm test:visual
+
+      - name: Regenerate baselines for this platform
+        if: ${{ inputs.update_baselines }}
+        run: pnpm exec playwright test --project=visual-chromium --update-snapshots=all
+
+      - name: Upload regenerated baselines
+        if: ${{ inputs.update_baselines }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux
+          path: tests/e2e/**/*-linux.png
+          if-no-files-found: error
+          retention-days: 14
+
+      # expected / actual / diff for every failed comparison, plus traces. Without these a red
+      # visual job is unactionable — the whole point is being able to see WHAT changed.
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14
