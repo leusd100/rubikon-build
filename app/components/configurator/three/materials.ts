@@ -22,8 +22,10 @@ import type { MaterialKey } from '../../../lib/configurator/threeSceneModel';
 // tiling densities, never a bespoke texture per material.
 //
 // Value ladder, lightest to darkest:
-//   frame-primary        #99a4ac   galvanized structural steel — the structural read, lightest
-//                                   thing in the scene
+//   gate                   #c3c9cd  the door leaf — deliberately the LIGHTEST surface in the
+//                                   scene (see its own entry below for why), breaking the ladder's
+//                                   own ordering on purpose
+//   frame-primary        #99a4ac   galvanized structural steel — the structural read
 //   footing               #8b8e86  isolated footing pedestals, a half-step lighter than the slab
 //   slab                  #7c7f78  cast concrete, the one surface allowed a warm shift
 //   wall-sandwich          #6f787f  insulated cladding — flatter, more matte than profiled sheet
@@ -31,7 +33,6 @@ import type { MaterialKey } from '../../../lib/configurator/threeSceneModel';
 //   roof-sandwich          #525a62  sandwich roof, one step below the wall pairing
 //   roof-profiled          #4e565e  profiled roof, clearly a step below the walls
 //   frame-secondary        #454e56  girts/bracing: present but subordinate
-//   gate                   #3d434a  the door leaf — a real painted-steel surface
 //   ground                 #262a2e  staging
 //   gate-recess             #0b0d0e  an opening is the absence of light
 
@@ -107,12 +108,14 @@ export const MATERIALS: Record<MaterialKey, MaterialSpec> = {
   // tipping into "dirty" or "grainy", both explicitly ruled out.
   slab: { color: '#7c7f78', roughness: 0.97, metalness: 0, roughnessNoiseRepeat: 5 },
   footing: { color: '#8b8e86', roughness: 0.9, metalness: 0, roughnessNoiseRepeat: 5 },
-  // The gate leaf (brief §6): "slightly different roughness from walls" — noticeably smoother than
-  // either wall material (a real sectional/roll-up door is smoother painted steel than a profiled
-  // cladding panel), with its own light normal-noise for the recessed panel seams to catch a
-  // faint highlight break rather than reading as one dead-flat plane.
+  // The gate leaf (live product review): originally a dark painted-steel tone close in value to
+  // the walls around it — correct in isolation, but next to `gate-recess`'s near-black backdrop it
+  // visually merged into one flat dark hole rather than reading as an actual door. Lightened well
+  // past the wall/frame tones specifically for CONTRAST against that dark recess, not for material
+  // realism — a deliberate simplification (the fuller fix, revealing real interior structure
+  // through an open gate, is tracked separately). Roughness/metalness untouched.
   gate: {
-    color: '#3d434a', roughness: 0.44, metalness: 0.26,
+    color: '#c3c9cd', roughness: 0.44, metalness: 0.26,
     normalNoise: { repeat: 30, scale: 0.04 },
   },
   // The reveal/backdrop AROUND and BEHIND the leaf above — an opening is the absence of light, not
