@@ -10,16 +10,29 @@
 
 .hc-hero {
   max-width: var(--content-copy);
-  margin: 0 auto 40px;
+  margin: 0 auto 44px;
   padding-inline: var(--container-gutter);
 }
 
+/* Brought in line with the site-wide .eyebrow pattern (globals.css) — same flex layout and
+   accent-dash marker as every other eyebrow on the site, rather than a one-off plain label.
+   Colour and tracking stay this page's own (a warmer accent, not the muted site default) since
+   this label is doing extra work: flagging a dev-only research screen, not a normal section. */
 .hc-eyebrow {
-  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
   color: var(--accent-dark);
   font: 700 11px/1 var(--font-condensed), sans-serif;
   letter-spacing: .14em;
   text-transform: uppercase;
+}
+
+.hc-eyebrow span {
+  width: 20px;
+  height: 2px;
+  background: var(--accent-dark);
 }
 
 .hc-hero h1 {
@@ -31,23 +44,35 @@
 }
 
 .hc-lede {
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   max-width: 60ch;
   color: var(--text-secondary);
   font-size: 15px;
   line-height: 1.6;
 }
 
+/* Softened from a bordered/backgrounded callout box to a plain caption line — a schematic-scope
+   disclaimer is a footnote, not a warning, and boxing it the same way as an actual warning state
+   (see .hc-field-note-warning) overstated it. The accent mark now lives in a small inline dash
+   before the text, echoing .hc-eyebrow's own marker, instead of a heavy left border. */
 .hc-disclaimer {
-  display: inline-block;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   margin: 0;
-  padding: 10px 14px;
-  border: 1px solid var(--border-default);
-  border-left: 3px solid var(--accent);
-  background: var(--surface-muted);
+  max-width: 60ch;
   color: var(--text-muted);
   font-size: 12.5px;
   line-height: 1.5;
+}
+
+.hc-disclaimer::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 2px;
+  margin-top: 7px;
+  background: var(--border-default);
 }
 
 .hc-layout {
