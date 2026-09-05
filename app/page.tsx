@@ -1,10 +1,9 @@
-import Image from 'next/image';
-import { MessagesSquare, Phone } from 'lucide-react';
 import { DirectionImageCards, EngagementFormatCards } from './components/DirectionCards';
 import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
 import { HomeHeroVideo } from './components/HomeHeroVideo';
+import ResponsiveImage from './components/ResponsiveImage';
+import InquirySection from './components/InquirySection';
 import { ProjectProcessSteps } from './components/ProcessCards';
-import ProjectInquiryForm from './components/ProjectInquiryForm';
 import { company, companyContactLinks } from './data/company';
 import { siteRoutes } from './data/navigation';
 
@@ -83,10 +82,9 @@ export default function Home() {
         <div className="shell story-checker">
           <article className="story-row">
             <div className="promise-visual engineering-plan-visual">
-              <Image
+              <ResponsiveImage
                 src="/media/about-industrial-concept.webp"
                 alt="Промисловий сталевий каркас переходить із креслення у конструкцію"
-                fill
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
               <span className="visual-index">01 / РІШЕННЯ</span>
@@ -127,33 +125,10 @@ export default function Home() {
 
       <EstimateBrief />
 
-      <section className="contact section" id="inquiry">
-        <div className="shell contact-grid">
-          <div className="contact-intro">
-            <div className="contact-copy">
-              <p className="eyebrow light"><span /> Почнемо з розмови</p>
-              <h2>Розкажіть коротко<br className="contact-title-break" /> про завдання</h2>
-              <p>
-                Залиште контакт і коротко опишіть завдання. Ми уточнимо вихідні дані
-                та запропонуємо наступний крок.
-              </p>
-            </div>
-            <div className="contact-links" id="contact-note">
-              <a className="pending-contact contact-phone" href={companyContactLinks.phone}>
-                <b><Phone aria-hidden="true" />Телефон</b><i>{company.phone.display}</i>
-              </a>
-              <div className="pending-contact contact-messenger-row">
-                <b>
-                  <MessagesSquare aria-hidden="true" />
-                  <span>Месенджери<small>Telegram · WhatsApp · Viber</small></span>
-                </b>
-                <MessengerLinks className="contact-messengers" />
-              </div>
-            </div>
-          </div>
-          <ProjectInquiryForm />
-        </div>
-      </section>
+      <InquirySection
+        eyebrow="Почнемо з розмови"
+        title={<>Розкажіть коротко<br className="contact-title-break" /> про завдання</>}
+      />
     </main>
   );
 }
