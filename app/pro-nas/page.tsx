@@ -27,10 +27,16 @@ export default function AboutPage() {
         <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
-          <div>
+          <div className="subhero-copy">
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
-            <h1>Репутація,<br />за якою стоять<br /><em>наші імена</em></h1>
+            <h1>
+              <span className="subhero-title-line">Репутація, за якою</span>
+              <span className="subhero-title-line">стоять <em>наші імена</em></span>
+            </h1>
+          </div>
+          <div className="subhero-side about-subhero-side">
+            <p>RUBIKON BUILD — родинна компанія з Дніпра. В основі — понад 30 років практичного досвіду, особиста відповідальність і системний підхід.</p>
             <a className="button button-primary about-hero-cta" href="#inquiry">
               Обговорити проєкт <span aria-hidden="true">↗</span>
             </a>
