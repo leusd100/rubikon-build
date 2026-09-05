@@ -44,43 +44,26 @@ export default function AboutPage() {
         </div>
       </section>
 
+      <TeamSection variant="about" />
+
       <section className="page-section about-story-section ghost-section">
         <GhostWord word="EXPERIENCE" />
         <div className="shell story-checker about-story-checker">
           <article className="story-row">
             <div className="promise-visual about-planning-visual">
               <ResponsiveImage
-                src="/media/concepts/about-experience-v2.jpg"
-                alt="Деталь сталевого вузла зі слідами перевірки та експлуатації"
+                src="/media/about-quality-control.webp"
+                alt="Зіставлення робочого креслення з відповідальним вузлом сталевого каркаса"
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
               <span className="visual-index">01 / ДОСВІД</span>
-              <span className="image-note">Від практичного досвіду — до технічного рішення</span>
+              <span className="image-note">Від креслення — до перевірки на майданчику</span>
             </div>
             <div className="promise-copy about-story-copy">
-              <p className="eyebrow light"><span /> Практична основа</p>
-              <h2>Досвід, який став основою родинної компанії</h2>
-              <p className="promise-lead">Сергій Іванович має понад 30 років практичного досвіду в будівництві: від організації робіт і управління командами до контролю якості безпосередньо на об’єктах.</p>
-              <p className="story-support">Цей досвід допомагає бачити ризики до початку робіт, перевіряти відповідальні вузли та приймати рішення з урахуванням реальних умов майданчика.</p>
-            </div>
-          </article>
-
-          <article className="story-row story-row-reverse">
-            <div className="promise-copy about-story-copy">
-              <p className="eyebrow light"><span /> Спільний підхід</p>
-              <h2>Ключові рішення приймаємо разом</h2>
-              <p className="promise-lead">Ми разом приймаємо ключові рішення, формуємо необхідний склад фахівців і особисто відповідаємо за результат.</p>
-              <p className="story-support">Для нас відповідальність починається не на будівельному майданчику, а ще під час обговорення завдання. Важливо одразу зрозуміти обсяг робіт, технічні умови й межі відповідальності, щоб ключові рішення не залишалися «на потім».</p>
-              <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
-            </div>
-            <div className="promise-visual about-control-visual">
-              <ResponsiveImage
-                src="/media/concepts/about-shared-approach-v2.jpg"
-                alt="Два конструктивні елементи сходяться у точному сталевому вузлі"
-                sizes="(max-width: 1050px) 100vw, 46vw"
-              />
-              <span className="visual-index">02 / КОНТРОЛЬ</span>
-              <span className="image-note">Особисто контролюємо рішення, що визначають якість</span>
+              <p className="eyebrow light"><span /> Досвід у роботі</p>
+              <h2>Практика допомагає бачити ризики до початку робіт</h2>
+              <p className="promise-lead">До виходу на майданчик уточнюємо вихідні дані, послідовність етапів і відповідальні конструктивні вузли.</p>
+              <p className="story-support">Так рішення враховують реальні умови виконання, а склад робіт і межі відповідальності залишаються зрозумілими для всіх учасників.</p>
             </div>
           </article>
         </div>
@@ -103,8 +86,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      <TeamSection variant="about" />
       <InquirySection
         eyebrow="Почнемо з розмови"
         title="Розкажіть, що потрібно побудувати"

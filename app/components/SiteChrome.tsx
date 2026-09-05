@@ -265,15 +265,13 @@ const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
     sergii: {
       role: 'Засновник / керівник будівельного напряму',
       paragraphs: [
-        'Понад 30 років у будівництві: від роботи безпосередньо на майданчику до організації бригад, контролю якості та відповідальних етапів на об’єктах різного масштабу. Цей практичний досвід лежить в основі підходу RUBIKON BUILD до технічних рішень і організації робіт.',
-        'Сергій Іванович залучається до оцінки ключових технічних рішень, послідовності робіт і відповідальних конструктивних вузлів у межах проєкту.',
+        'Понад 30 років у будівництві — від роботи на майданчику до організації бригад, контролю якості та відповідальних етапів. Сергій Іванович залучається до оцінки ключових технічних рішень і конструктивних вузлів проєкту.',
       ],
     },
     dmytro: {
       role: 'Розвиток компанії / робота з клієнтами',
       paragraphs: [
-        'Відповідає за розвиток RUBIKON BUILD, комунікацію з клієнтами та системну організацію роботи компанії.',
-        'Супроводжує клієнта від першого звернення: допомагає структурувати завдання, зібрати вихідні дані й підготувати питання до технічного обговорення. Стежить, щоб формат співпраці, склад робіт і межі відповідальності залишалися зрозумілими для обох сторін.',
+        'Відповідає за розвиток RUBIKON BUILD і роботу з клієнтами. Допомагає структурувати завдання, зібрати вихідні дані та підготуватися до технічного обговорення, щоб склад робіт і межі відповідальності були зрозумілими обом сторонам.',
       ],
     },
   },
@@ -281,20 +279,23 @@ const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
 
 export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
   const { sergii, dmytro } = teamContent[variant];
+  const isHome = variant === 'home';
 
   return (
-    <section className={`team section${variant === 'about' ? ' team-compact' : ''}`}>
+    <section className={`team section team-${variant}`}>
       <div className="shell">
         <SectionHeader
           className="team-heading"
           eyebrow="Родина в основі компанії"
-          title="Досвід двох поколінь — в одній команді"
-          supporting="Практичний досвід будівництва поєднуємо із системною організацією роботи, зрозумілою комунікацією та сучасними інструментами."
+          title={isHome ? 'Два покоління. Одна відповідальність' : 'Досвід двох поколінь — в одній команді'}
+          supporting={isHome
+            ? 'Сергій Іванович відповідає за будівельний напрям і технічні рішення. Дмитро — за розвиток компанії та роботу з клієнтами.'
+            : 'Практичний досвід будівництва поєднуємо із системною організацією роботи, зрозумілою комунікацією та сучасними інструментами.'}
         />
         <div className="team-stories">
           <article className="person-story">
             <div className="person-photo">
-              <Image src="/images/founder.webp" alt={`${company.founders[0]} — засновник і керівник будівельного напряму ${company.name}`} fill sizes="(max-width: 760px) 100vw, 47vw" />
+              <Image src="/images/founder.webp" alt={`${company.founders[0]} — засновник і керівник будівельного напряму ${company.name}`} fill sizes="(max-width: 1050px) 82vw, 47vw" />
             </div>
             <div className="person-info">
               <span>{sergii.role}</span>
@@ -309,10 +310,15 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
               {dmytro.paragraphs.map((text) => <p key={text}>{text}</p>)}
             </div>
             <div className="person-photo">
-              <Image src="/images/next-generation.webp" alt={`${company.founders[1]} — розвиток компанії та робота з клієнтами ${company.name}`} fill sizes="(max-width: 760px) 100vw, 47vw" />
+              <Image src="/images/next-generation.webp" alt={`${company.founders[1]} — розвиток компанії та робота з клієнтами ${company.name}`} fill sizes="(max-width: 1050px) 82vw, 47vw" />
             </div>
           </article>
         </div>
+        {isHome && (
+          <a className="section-link team-home-link" href={siteRoutes.about}>
+            Познайомитися з командою <span aria-hidden="true">↗</span>
+          </a>
+        )}
       </div>
     </section>
   );

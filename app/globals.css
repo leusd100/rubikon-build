@@ -320,6 +320,12 @@ section[id] { scroll-margin-top: 116px; }
 .brand-credo span { display: block; margin-bottom: 13px; color: var(--accent-dark); font: 700 9px/1 var(--font-manrope), sans-serif; letter-spacing: .13em; text-transform: uppercase; }
 
 .about-story-section { background: var(--warm); }
+.about-story-section .ghost-word {
+  top: clamp(42px, 5vw, 72px);
+  right: max(24px, calc((100vw - var(--container-max)) / 2));
+  font-size: clamp(82px, 9vw, 144px);
+  transform: none;
+}
 .about-story-checker { gap: clamp(92px, 9vw, 138px); }
 .about-story-copy h2 { max-width: 900px; font-size: clamp(48px, 4.35vw, 66px); }
 .about-story-copy .promise-lead { margin-bottom: 28px; }
@@ -339,6 +345,18 @@ section[id] { scroll-margin-top: 116px; }
 .person-info p { max-width: 610px; margin: 0; color: var(--text-secondary); font-size: 15px; line-height: 1.75; }
 .person-info p:first-of-type { color: var(--text-primary); font-size: 16px; }
 .person-info p + p { margin-top: 16px; }
+.team-home .team-heading { margin-bottom: 42px; }
+.team-home .team-stories { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); }
+.team-home .person-story,
+.team-home .person-story-reverse { grid-template-columns: 1fr; align-content: start; }
+.team-home .person-story-reverse .person-photo { order: -1; }
+.team-home .person-photo { width: 100%; aspect-ratio: 4 / 5; }
+.team-home .person-info { min-height: 0; padding: 34px 4px 8px; }
+.team-home .person-info > span { font-size: 10px; }
+.team-home .person-info h3 { margin: 16px 0 18px; font-size: clamp(32px, 3vw, 44px); }
+.team-home .person-info p,
+.team-home .person-info p:first-of-type { font-size: 15px; line-height: 1.7; }
+.team-home-link { margin-top: 42px; }
 
 .process { padding-top: 84px; background: white; }
 .steps { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
@@ -783,6 +801,18 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .person-story-reverse .person-photo { order: -1; justify-self: end; }
   .person-photo { width: min(82vw, 720px); min-height: 0; aspect-ratio: 1; }
   .person-info { min-height: 0; }
+  .team-home .team-stories { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .team-home .person-photo { width: 100%; aspect-ratio: 4 / 5; }
+  .team-about .team-stories { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); }
+  .team-about .person-story,
+  .team-about .person-story-reverse { grid-template-columns: 1fr; align-content: start; }
+  .team-about .person-story-reverse .person-photo { order: -1; justify-self: stretch; }
+  .team-about .person-story .person-photo { width: 100%; aspect-ratio: 4 / 5; justify-self: stretch; }
+  .team-about .person-info { min-height: 0; padding: 34px 4px 8px; }
+  .team-about .person-info > span { font-size: 10px; }
+  .team-about .person-info h3 { margin: 16px 0 18px; font-size: clamp(23px, 2.55vw, 28px); letter-spacing: -.025em; white-space: nowrap; }
+  .team-about .person-info p,
+  .team-about .person-info p:first-of-type { font-size: 15px; line-height: 1.7; }
   .steps { grid-template-columns: repeat(6, 1fr); }
   .steps li { grid-column: span 2; }
   .steps li:nth-child(n + 4) { grid-column: span 3; }
@@ -942,10 +972,15 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .team-grid { grid-template-columns: 1fr; }
   .team.section { padding-bottom: 64px; }
   .team-stories { gap: 54px; }
+  .team-home .team-stories { grid-template-columns: 1fr; gap: 48px; }
+  .team-about .team-stories { grid-template-columns: 1fr; gap: 48px; }
   .person-photo { width: 100%; min-height: 0; aspect-ratio: 3 / 4; }
+  .team-home .person-photo { aspect-ratio: 3 / 4; }
+  .team-about .person-story .person-photo { aspect-ratio: 3 / 4; }
   .person-info { justify-content: flex-start; padding: 28px 20px 20px; border-bottom: 0; }
   .person-info > span { max-width: none; font-size: 10px; line-height: 1.45; letter-spacing: .09em; }
   .person-info h3 { margin: 18px 0; font-size: clamp(32px, 8.4vw, 38px); line-height: 1.02; }
+  .team-about .person-info h3 { font-size: clamp(30px, 8.2vw, 38px); letter-spacing: normal; white-space: normal; }
   .person-info p, .person-info p:first-of-type { font-size: 14px; line-height: 1.65; }
   .steps { grid-template-columns: 1fr; }
   .steps li, .steps li:nth-child(n + 4) { grid-column: auto; min-height: 210px; }
@@ -1186,7 +1221,9 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .person-story { grid-template-columns: minmax(320px, .8fr) minmax(0, 1.2fr); }
   .person-story-reverse { grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr); }
   .person-story .person-photo { width: 100%; aspect-ratio: 7 / 8; justify-self: stretch; }
+  .team-home .person-story .person-photo { aspect-ratio: 4 / 5; }
   .person-story-reverse .person-photo { order: initial; }
+  .team-home .person-story-reverse .person-photo { order: -1; }
   .hero-layout { row-gap: 32px; }
 }
 

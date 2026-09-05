@@ -104,31 +104,8 @@ export default function Home() {
                 Для нас репутація — не рекламна теза. Вона формується на кожному об’єкті:
                 якістю роботи, виконаними домовленостями та ставленням до замовника.
               </p>
-              <a className="section-link" href={siteRoutes.about}>Більше про компанію <span aria-hidden="true">↗</span></a>
-            </div>
-          </article>
-
-          <article className="story-row story-row-reverse">
-            <div className="promise-copy">
-              <p className="eyebrow light"><span /> Як працюємо</p>
-              <h2 className="workflow-heading"><span>Практика майданчика</span><span>та системний контроль</span></h2>
-              <div className="principles">
-                <div><b>01</b><span><strong>Рішення до початку робіт</strong>Уточнюємо вихідні дані, конструктив і склад відповідальності.</span></div>
-                <div><b>02</b><span><strong>Контроль ключових етапів</strong>Особисто стежимо за тим, що визначає міцність і довговічність.</span></div>
-                <div><b>03</b><span><strong>Відкрита комунікація</strong>Пояснюємо рішення, погоджуємо зміни й завчасно говоримо про ризики.</span></div>
-                <div><b>04</b><span><strong>Родинна відповідальність</strong>Репутація компанії напряму пов’язана з нашими іменами.</span></div>
-              </div>
               <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно.</blockquote>
-            </div>
-            <div className="promise-visual site-control-visual">
-              <Image
-                src="/media/about-quality-control.webp"
-                alt="Технічне креслення та відповідальний вузол сталевого каркаса"
-                fill
-                sizes="(max-width: 1050px) 100vw, 46vw"
-              />
-              <span className="visual-index">02 / КОНТРОЛЬ</span>
-              <span className="image-note">Точність перевіряємо на кожному етапі</span>
+              <a className="section-link" href={siteRoutes.about}>Більше про компанію <span aria-hidden="true">↗</span></a>
             </div>
           </article>
         </div>
