@@ -26,7 +26,7 @@ test('homepage team portraits keep a deliberate portrait crop at each layout', a
       const image = portrait.locator('img');
       await expect(image).toBeVisible();
       await expect(image).toHaveCSS('object-fit', 'cover');
-      await expect.poll(() => image.evaluate((node) => node.naturalWidth > 0 && node.naturalHeight > 0)).toBe(true);
+      await expect.poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth > 0 && node.naturalHeight > 0)).toBe(true);
     }
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

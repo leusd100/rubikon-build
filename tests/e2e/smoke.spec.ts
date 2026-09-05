@@ -308,7 +308,7 @@ test.describe('public route smoke tests', () => {
 
     expect(firstClip.ended).toBe(false);
     expect(firstClip.currentTime).toBeLessThan(firstClip.duration);
-    expect(await videos.evaluateAll((elements) => elements.map((video) => video.loop))).toEqual([
+    expect(await videos.evaluateAll((elements) => elements.map((video) => (video as HTMLVideoElement).loop))).toEqual([
       false,
       false,
       false,
@@ -359,7 +359,7 @@ test.describe('public route smoke tests', () => {
 
     expect(firstClip.ended).toBe(false);
     expect(firstClip.currentTime).toBeLessThan(firstClip.duration);
-    expect(await videos.evaluateAll((elements) => elements.map((video) => video.loop))).toEqual([
+    expect(await videos.evaluateAll((elements) => elements.map((video) => (video as HTMLVideoElement).loop))).toEqual([
       false,
       false,
       false,
