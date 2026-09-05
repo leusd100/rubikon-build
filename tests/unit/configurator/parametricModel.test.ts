@@ -15,7 +15,7 @@ import {
   clampRidgeHeightM,
   defaultRidgeHeightM,
   deriveStructuralVisualization,
-  frameBayCount,
+  deriveBayLayout,
   gateHeightFits,
   gateSelectionFits,
   maxGateCountThatFits,
@@ -253,10 +253,10 @@ describe('bay stations', () => {
   });
 
   it('stays inside the legible 2–10 bay clamp even at maximum length', () => {
-    expect(frameBayCount(L.min)).toBeGreaterThanOrEqual(2);
-    expect(frameBayCount(L.max)).toBeLessThanOrEqual(10);
+    expect(deriveBayLayout(L.min).bayCount).toBeGreaterThanOrEqual(2);
+    expect(deriveBayLayout(L.max).bayCount).toBe(20);
     // The clamp is what bounds member count for BOTH renderers: a 120 m hangar gets 10 bays.
-    expect(modelFor({ length: L.max }).frames).toHaveLength(frameBayCount(L.max) + 1);
+    expect(modelFor({ length: L.max }).frames).toHaveLength(deriveBayLayout(L.max).frameCount);
   });
 
   it('places one portal frame per station', () => {
@@ -544,7 +544,7 @@ describe('footings (Phase 3D — isolated foundation)', () => {
   });
 
   it('never overlaps a neighbouring footing, even at the tightest legal bay spacing', () => {
-    // Shortest length ⇒ fewest, closest-together bays (frameBayCount clamps to a 2-bay minimum),
+    // Shortest length ⇒ fewest, closest-together bays (deriveBayLayout keeps a 2-bay minimum),
     // which is the actual worst case for footing pads colliding along Z.
     const m = modelFor({ width: W.min, length: L.min, height: H.min });
     const stationsZ = [...new Set(m.footings.map((f) => f.zM))].sort((a, b) => a - b);
@@ -1039,5 +1039,122 @@ describe('personnel door (product surface pass)', () => {
   it('is carried by the domain model as customer input', () => {
     expect(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, doors: 1 }).doors).toBe(1);
     expect(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, doors: 0 }).doors).toBe(0);
+  });
+});
+
+describe('bay layout (final micro-polish: real bay rhythm, not stretched frames)', () => {
+  const L = DIMENSION_BOUNDS.length;
+
+  it('produces the intended layout at the reference lengths', () => {
+    // The four the product decision names, plus the two ends of the range.
+    expect(deriveBayLayout(40)).toMatchObject({ bayCount: 5, spacingM: 8 });
+    expect(deriveBayLayout(60)).toMatchObject({ bayCount: 10, spacingM: 6 });
+    expect(deriveBayLayout(80)).toMatchObject({ bayCount: 10, spacingM: 8 });
+    expect(deriveBayLayout(90)).toMatchObject({ bayCount: 15, spacingM: 6 });
+    expect(deriveBayLayout(120)).toMatchObject({ bayCount: 20, spacingM: 6 });
+  });
+
+  it('buys frames with length instead of stretching a fixed count', () => {
+    // The regression this whole change exists for: 120 m used to draw the same 10 bays as 60 m,
+    // 12 m apart, because the old bay count was clamped.
+    expect(deriveBayLayout(120).bayCount).toBe(deriveBayLayout(60).bayCount * 2);
+    expect(deriveBayLayout(120).bayCount).toBeGreaterThan(deriveBayLayout(60).bayCount);
+    expect(deriveBayLayout(60).bayCount).toBeGreaterThan(deriveBayLayout(30).bayCount);
+  });
+
+  // Honest about the one discontinuity the two-nominal rule has, rather than pretending it does
+  // not exist: because both 6 m and 8 m are legitimate targets, there are lengths where the 8 m
+  // family wins and the frame count therefore DROPS as the building gets longer (79 m -> 13 bays
+  // at 6.08 m, 80 m -> 10 bays at 8.00 m). Each layout is uniform and in band, but the transition
+  // is visible when dragging the length slider. Bounded and asserted so it cannot get worse.
+  it('changes bay family at a bounded, known set of lengths', () => {
+    const drops: number[] = [];
+    let previous = deriveBayLayout(L.min).bayCount;
+    for (let lengthM = L.min + 1; lengthM <= L.max; lengthM += 1) {
+      const { bayCount } = deriveBayLayout(lengthM);
+      if (bayCount < previous) {
+        drops.push(lengthM);
+        expect(previous - bayCount, `${lengthM}m drop`).toBeLessThanOrEqual(4);
+      }
+      previous = bayCount;
+    }
+    expect(drops).toEqual([32, 39, 56, 63, 80, 87, 104, 111]);
+  });
+
+  it('keeps every bay within a believable spacing band at every allowed length', () => {
+    for (let lengthM = L.min; lengthM <= L.max; lengthM += 1) {
+      const { spacingM } = deriveBayLayout(lengthM);
+      expect(spacingM, `${lengthM}m`).toBeGreaterThanOrEqual(5);
+      expect(spacingM, `${lengthM}m`).toBeLessThanOrEqual(8.25);
+    }
+  });
+
+  it('never produces a tiny leftover end bay — bays are uniform by construction', () => {
+    for (let lengthM = L.min; lengthM <= L.max; lengthM += 1) {
+      const { bayWidthsM, spacingM } = deriveBayLayout(lengthM);
+      for (const widthM of bayWidthsM) {
+        // Uniform to within the 0.01 m rounding the model rounds every coordinate to.
+        expect(Math.abs(widthM - spacingM), `${lengthM}m bay ${widthM}`).toBeLessThanOrEqual(0.011);
+      }
+    }
+  });
+
+  it('emits ascending stations spanning exactly 0..length, with no zero or negative bay', () => {
+    for (const lengthM of [L.min, 17, 40, 60, 73, 100, L.max]) {
+      const { stationsM, bayWidthsM, frameCount, bayCount } = deriveBayLayout(lengthM);
+      expect(stationsM[0]).toBe(0);
+      expect(stationsM[stationsM.length - 1]).toBeCloseTo(lengthM, 6);
+      expect(frameCount).toBe(bayCount + 1);
+      expect(stationsM).toHaveLength(frameCount);
+      for (let i = 1; i < stationsM.length; i += 1) {
+        expect(stationsM[i], `${lengthM}m station ${i}`).toBeGreaterThan(stationsM[i - 1]);
+      }
+      for (const widthM of bayWidthsM) expect(widthM).toBeGreaterThan(0);
+    }
+  });
+
+  it('is deterministic', () => {
+    for (const lengthM of [40, 60, 100, 120]) {
+      expect(deriveBayLayout(lengthM)).toEqual(deriveBayLayout(lengthM));
+    }
+  });
+
+  it('is the single source every structural system is built from', () => {
+    for (const lengthM of [40, 60, 80, 100, 120]) {
+      const { stationsM, frameCount } = deriveBayLayout(lengthM);
+      const model = modelFor({ length: lengthM, width: 30 }, { foundationType: 'isolated' });
+
+      // Frames sit on the stations, one per station.
+      expect(model.frames.map((f) => f.stationM)).toEqual(stationsM);
+      expect(model.frames).toHaveLength(frameCount);
+
+      // Centre supports (30 m width ⇒ centerSupport scheme) use the same stations.
+      expect(model.internalColumns.length).toBeGreaterThan(0);
+      for (const column of model.internalColumns) {
+        expect(stationsM, `${lengthM}m centre support`).toContain(column.stationM);
+      }
+
+      // Every isolated footing sits at a station too — no foundation without a frame above it.
+      for (const footing of model.footings) {
+        expect(stationsM, `${lengthM}m footing z=${footing.zM}`).toContain(footing.zM);
+      }
+    }
+  });
+
+  it('braces only ever land on real bays of the derived layout', () => {
+    for (const lengthM of [40, 60, 80, 100, 120]) {
+      const { stationsM } = deriveBayLayout(lengthM);
+      const model = modelFor({ length: lengthM });
+      for (const brace of model.bracing) {
+        // Braces are the diagonals of a wall segment, and wall segments are cut at the stations —
+        // so every brace endpoint must land on one, with no brace spanning a phantom bay.
+        const zs = [brace.diagonalA.a, brace.diagonalA.b, brace.diagonalB.a, brace.diagonalB.b].map((p) => p.z);
+        for (const z of zs) {
+          expect(stationsM.some((s) => Math.abs(s - z) < 0.011), `${lengthM}m brace z=${z}`).toBe(true);
+        }
+        expect(brace.bayIndex).toBeGreaterThanOrEqual(0);
+        expect(brace.bayIndex).toBeLessThan(stationsM.length - 1);
+      }
+    }
   });
 });

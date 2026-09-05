@@ -262,9 +262,7 @@ export type ParametricBuildingModel = {
 // All of these are VISUAL RHYTHM / VISUAL FORM rules. None of them is an
 // engineering calculation, and no UI copy may present them as one.
 
-const FRAME_TARGET_SPACING_M = 6;
 const FRAME_MIN_BAYS = 2;
-const FRAME_MAX_BAYS = 10;
 
 /**
  * Roof pitch as a function of span.
@@ -350,7 +348,7 @@ const ROOF_OVERHANG_M = 1.5;
 // Phase 3D — isolated-footing schematic dimensions. Fixed and round on purpose (see
 // FootingGeometry's own doc comment: this is a visualisation, never an engineering output).
 // Sized to read clearly next to the column sections below without ever touching a neighbouring
-// footing at the tightest bay spacing this configurator allows (FRAME_TARGET_SPACING_M = 6 m,
+// footing at the tightest bay spacing this configurator allows (deriveBayLayout's 6 m nominal,
 // clamped to a 2-bay minimum — even a 10 m-long building still spaces columns 5 m apart, well
 // clear of even the larger pad below).
 //
@@ -415,15 +413,78 @@ export function roofPitchDegForWidth(widthM: number): number {
 }
 
 /**
- * How many structural bays a span gets — a visual-rhythm heuristic (target ~6 m,
- * clamped to a legible 2–10), NOT a structural span calculation. Keep it framed
- * that way in any UI copy. The clamp also bounds member count for both
- * renderers: a 120 m hangar gets 10 bays, not 20.
+ * The one authoritative longitudinal bay layout. Every structural system — portal/truss frames,
+ * external columns, centre supports, isolated footings, wall/roof segmentation, bracing selection,
+ * the technical view and the build-up sequence — reads its stations from here. Nothing derives its
+ * own spacing.
+ *
+ * WHAT THIS REPLACED, and why it was wrong: bays used to be `round(length / 6)` clamped to a
+ * maximum of 10, then divided uniformly. The clamp meant that past ~80 m the frames simply
+ * stretched — a 120 m hangar got the same 10 bays as a 60 m one, at 12 m spacing, and the old
+ * comment said so explicitly ("a 120 m hangar gets 10 bays, not 20") because the clamp existed to
+ * bound member count. Lengths that were not multiples of 6 also produced arbitrary grids (40 m ->
+ * 7 bays at 5.71 m). Both read as a stretched drawing rather than a building.
+ *
+ * THE RULE: bays are always UNIFORM, and the bay count is chosen so the resulting spacing lands as
+ * close as possible to one of two preferred values — 6 m or 8 m — with 6 m winning a tie because
+ * the denser rhythm reads better. That is all. It is a visualisation rhythm, not a structural span
+ * calculation, and no UI copy should imply otherwise.
+ *
+ * It reproduces the intended layouts exactly:
+ *   40 m -> 5 bays x 8.00 m      60 m -> 10 bays x 6.00 m     80 m -> 10 bays x 8.00 m
+ *   90 m -> 15 bays x 6.00 m    120 m -> 20 bays x 6.00 m
+ * and 120 m is genuinely twice 60 m's frame count rather than the same frames twice as far apart.
+ *
+ * Across every length this configurator allows (10-120 m) spacing stays within 5.00-8.25 m, and
+ * only 12 of those 111 lengths land more than 0.35 m from a nominal 6 or 8 — 11 of them at 28 m or
+ * shorter, where a building is only 2-5 bays long and any layout is coarse.
+ *
+ * A mixed 6/8 layout was evaluated for those outliers (20 m = 6+6+8 exactly, 22 m = 6+8+8, and so
+ * on) and rejected. It buys exact nominal widths on five short lengths — the odd lengths cannot be
+ * expressed as 6a+8b at all, since both are even — and pays for them with bays of unequal width in
+ * every renderer, an arrangement question with no symmetric answer for several of those lengths
+ * (26 m has no palindromic 6/8 decomposition), and a second code path to test. Identical bays are
+ * worth more here than exact nominal widths on a handful of short buildings: uniform spacing is
+ * more visually regular, is trivially deterministic, and makes a tiny leftover end bay literally
+ * impossible rather than merely avoided.
  */
-export function frameBayCount(spanMetres: number): number {
-  const raw = Math.round(spanMetres / FRAME_TARGET_SPACING_M);
-  return Math.min(FRAME_MAX_BAYS, Math.max(FRAME_MIN_BAYS, raw));
+const PREFERRED_BAY_SPACINGS_M = [6, 8] as const;
+
+export type BayLayout = {
+  /** Frame positions along the length, ascending, always starting at 0 and ending at lengthM. */
+  stationsM: number[];
+  /** Width of each bay between consecutive stations. Uniform by construction. */
+  bayWidthsM: number[];
+  /** Frames (portals/trusses), i.e. stations — always bayCount + 1. */
+  frameCount: number;
+  bayCount: number;
+  /** The preferred spacing this layout was fitted to (6 or 8), for reporting/tests. */
+  nominalSpacingM: number;
+  /** The actual uniform bay width. */
+  spacingM: number;
+};
+
+export function deriveBayLayout(lengthM: number): BayLayout {
+  let best: { bayCount: number; spacingM: number; nominalSpacingM: number; deviation: number } | null = null;
+
+  for (const nominalSpacingM of PREFERRED_BAY_SPACINGS_M) {
+    const bayCount = Math.max(FRAME_MIN_BAYS, Math.round(lengthM / nominalSpacingM));
+    const spacingM = lengthM / bayCount;
+    const deviation = Math.abs(spacingM - nominalSpacingM);
+    // Strict `<` so an exact tie keeps the earlier (6 m) candidate — at 120 m both 20x6 and 15x8
+    // are exact, and the denser rhythm is the better drawing.
+    if (!best || deviation < best.deviation - 1e-9) {
+      best = { bayCount, spacingM, nominalSpacingM, deviation };
+    }
+  }
+
+  const { bayCount, spacingM, nominalSpacingM } = best!;
+  const stationsM = Array.from({ length: bayCount + 1 }, (_, i) => round((i / bayCount) * lengthM));
+  const bayWidthsM = stationsM.slice(1).map((z, i) => round(z - stationsM[i]));
+
+  return { stationsM, bayWidthsM, frameCount: stationsM.length, bayCount, nominalSpacingM, spacingM: round(spacingM) };
 }
+
 
 /**
  * Phase 3E.1 (the "structural auto-derivation" follow-up brief) — PRODUCT / VISUALIZATION
@@ -523,10 +584,6 @@ export function pitchDegForRidge(widthM: number, eaveHeightM: number, ridgeM: nu
   const halfSpan = widthM / 2;
   if (halfSpan <= 0) return ROOF_PITCH_MIN_DEG;
   return round(Math.atan((ridgeM - eaveHeightM) / halfSpan) / DEG, 4);
-}
-
-function buildBayStations(lengthM: number, count: number): number[] {
-  return Array.from({ length: count + 1 }, (_, i) => round((i / count) * lengthM));
 }
 
 function buildFrames(widthM: number, eaveM: number, ridgeM: number, stationsM: number[]): PortalFrame[] {
@@ -654,7 +711,7 @@ function buildGirts(widthM: number, lengthM: number, eaveM: number): Member[] {
  *
  * Bay selection: first bay, last bay ("near one end, near the opposite end" — brief's own words),
  * plus the middle bay once there are enough of them for a third braced zone to read as "a middle
- * zone" rather than "the same end again" — six bays is the point `frameBayCount` itself starts
+ * zone" rather than "the same end again" — six bays is the point `deriveBayLayout` itself starts
  * meaning a genuinely long building (its own target spacing is 6 m, so six bays is a ~36 m run).
  * Both side walls get the same bay indices, for the plan-symmetry a real building would have.
  */
@@ -1111,8 +1168,9 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
   const pitchDeg = domain.roof.pitchDeg;
   const ridgeM = ridgeHeightM(widthM, eaveHeightM, pitchDeg);
 
-  const count = frameBayCount(lengthM);
-  const stationsM = buildBayStations(lengthM, count);
+  const bayLayout = deriveBayLayout(lengthM);
+  const { stationsM } = bayLayout;
+  const count = bayLayout.bayCount;
   const frames = buildFrames(widthM, eaveHeightM, ridgeM, stationsM);
   // Hoisted: buildInternalColumns needs the real gate rectangles to resolve its own conflict
   // check (brief §4) — never a reason for a renderer to invent its own copy of this call.
