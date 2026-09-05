@@ -4,6 +4,21 @@
 // disjoint from /media/* so the two Cache-Control _headers rules never both match the
 // same file (see public/_headers and the Step 02 report for why that matters).
 export const responsiveWebpVariants: Record<string, { w480: string; w768: string; w1200: string }> = {
+  '/images/founder.webp': {
+    w480: '/media-responsive/founder-480w.b8e54c4b.webp',
+    w768: '/media-responsive/founder-768w.28f82529.webp',
+    w1200: '/media-responsive/founder-1200w.d059d756.webp',
+  },
+  '/images/next-generation.webp': {
+    w480: '/media-responsive/next-generation-480w.c707f02c.webp',
+    w768: '/media-responsive/next-generation-768w.951a8879.webp',
+    w1200: '/media-responsive/next-generation-1200w.3ca3df33.webp',
+  },
+  '/media/about-industrial-concept.webp': {
+    w480: '/media-responsive/about-industrial-concept-480w.83ddca2e.webp',
+    w768: '/media-responsive/about-industrial-concept-768w.538c1b1a.webp',
+    w1200: '/media-responsive/about-industrial-concept-1200w.f3088c18.webp',
+  },
   '/media/about-quality-control.webp': {
     w480: '/media-responsive/about-quality-control-480w.2a50c10f.webp',
     w768: '/media-responsive/about-quality-control-768w.dd8e3cd8.webp',

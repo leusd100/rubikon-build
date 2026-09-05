@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import MobileMenu from './MobileMenu';
 import { EstimateBriefCards } from './ProcessCards';
+import ResponsiveImage from './ResponsiveImage';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
 import { directions } from '../data/directions';
@@ -295,7 +296,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
         <div className="team-stories">
           <article className="person-story">
             <div className="person-photo">
-              <Image src="/images/founder.webp" alt={`${company.founders[0]} — засновник і керівник будівельного напряму ${company.name}`} fill sizes="(max-width: 1050px) 82vw, 47vw" />
+              <ResponsiveImage src="/images/founder.webp" alt={`${company.founders[0]} — засновник і керівник будівельного напряму ${company.name}`} sizes="(max-width: 1050px) 82vw, 47vw" />
             </div>
             <div className="person-info">
               <span>{sergii.role}</span>
@@ -310,7 +311,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
               {dmytro.paragraphs.map((text) => <p key={text}>{text}</p>)}
             </div>
             <div className="person-photo">
-              <Image src="/images/next-generation.webp" alt={`${company.founders[1]} — розвиток компанії та робота з клієнтами ${company.name}`} fill sizes="(max-width: 1050px) 82vw, 47vw" />
+              <ResponsiveImage src="/images/next-generation.webp" alt={`${company.founders[1]} — розвиток компанії та робота з клієнтами ${company.name}`} sizes="(max-width: 1050px) 82vw, 47vw" />
             </div>
           </article>
         </div>
@@ -319,33 +320,6 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
             Познайомитися з командою <span aria-hidden="true">↗</span>
           </a>
         )}
-      </div>
-    </section>
-  );
-}
-
-export function PageCta({
-  eyebrow = 'Почнемо з розмови',
-  title = 'Маєте будівельне завдання? Обговорімо його',
-  text = 'Опишіть об’єкт або окремий етап робіт, орієнтовні розміри та бажані строки. Ми уточнимо вихідні дані й запропонуємо наступний крок.',
-}: {
-  eyebrow?: string;
-  title?: string;
-  text?: string;
-}) {
-  return (
-    <section className="page-cta section">
-      <div className="shell page-cta-grid">
-        <div>
-          <p className="eyebrow light"><span /> {eyebrow}</p>
-          <h2>{title}</h2>
-        </div>
-        <div>
-          <p>{text}</p>
-          <a className="button button-primary" href={siteRoutes.contact}>
-            Обговорити проєкт <span aria-hidden="true">↗</span>
-          </a>
-        </div>
       </div>
     </section>
   );

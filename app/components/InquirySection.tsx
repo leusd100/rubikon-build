@@ -2,19 +2,26 @@ import { MessagesSquare, Phone } from 'lucide-react';
 import ProjectInquiryForm from './ProjectInquiryForm';
 import { MessengerLinks } from './SiteChrome';
 import { company, companyContactLinks } from '../data/company';
+import type { ReactNode } from 'react';
 
 type InquirySectionProps = {
   eyebrow: string;
-  title: string;
+  /** ReactNode, not string: the homepage's own title carries a deliberate <br> so the two lines
+   *  break where the editorial wants them to, not wherever the column happens to end. */
+  title: ReactNode;
   text?: string;
   defaultDirection?: string;
 };
 
 /**
- * The local, on-page counterpart to the homepage's #inquiry section — embedded at the end of
- * every direction page, /pro-nas and /napryamky so a visitor never has to leave the page they
- * landed on (and lose their direction context) just to reach the form. Reuses the homepage's
- * .contact styling directly rather than inventing a parallel set of classes.
+ * The one #inquiry section on the site — the homepage's own conversion section and the copy
+ * embedded at the end of every direction page, /pro-nas and /napryamky, so a visitor never has
+ * to leave the page they landed on (and lose their direction context) to reach the form.
+ *
+ * The homepage used to carry its own hand-written copy of this markup. The two drifted (the
+ * homepage's copy still had an `id="contact-note"` nothing referenced), which is exactly the
+ * failure mode owning it in one place prevents: the phone/messenger block below is the contact
+ * detail for the whole site, and it is now edited once.
  */
 export default function InquirySection({
   eyebrow,

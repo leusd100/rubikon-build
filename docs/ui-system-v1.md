@@ -18,7 +18,7 @@ Breakpoints correspond to a real, observable layout transition — never a devic
 |---|---|
 | ≤380px | Smallest-phone micro-adjustments (brand mark, footer contact stack) |
 | ≤520px | `.hero-actions` drops to 1 column |
-| ≤600px | `.person-card`/`.person-photo` aspect changes |
+| ≤600px | `.person-photo` aspect changes |
 | ≤760px | The mobile tier — most of the file's responsive rules live here |
 | ≤960px | Footer's tablet 3-column composition starts |
 | ≤1000px | Desktop header switches to the mobile hamburger menu (its own, deliberately

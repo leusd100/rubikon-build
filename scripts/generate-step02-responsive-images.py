@@ -27,25 +27,33 @@ import os
 
 from PIL import Image
 
-SRC_DIR = "public/media"
+SRC_DIR = "public"
 OUT_DIR = "public/media-responsive"
 WIDTHS = [480, 768, 1200]
 QUALITY = 78
 
+# Paths are relative to public/ (not to public/media/) so sources outside media/ — the two
+# team portraits in public/images/ — can use the same pipeline. Output names are still derived
+# from the basename alone, so every pre-existing variant keeps its exact filename and hash.
 FILES = [
-    "concepts/direction-hangars-v2.jpg",
-    "concepts/direction-grain-v2.jpg",
-    "concepts/direction-steel-v2.jpg",
-    "concepts/direction-concrete-v2.jpg",
-    "concepts/direction-roofing-v2.jpg",
-    "concepts/detail-hangars-v2.jpg",
-    "concepts/detail-grain-v2.jpg",
-    "concepts/detail-steel-v2.jpg",
-    "concepts/detail-concrete-v2.jpg",
-    "concepts/detail-roofing-v2.jpg",
-    "concepts/about-experience-v2.jpg",
-    "concepts/about-shared-approach-v2.jpg",
-    "about-quality-control.webp",
+    "media/concepts/direction-hangars-v2.jpg",
+    "media/concepts/direction-grain-v2.jpg",
+    "media/concepts/direction-steel-v2.jpg",
+    "media/concepts/direction-concrete-v2.jpg",
+    "media/concepts/direction-roofing-v2.jpg",
+    "media/concepts/detail-hangars-v2.jpg",
+    "media/concepts/detail-grain-v2.jpg",
+    "media/concepts/detail-steel-v2.jpg",
+    "media/concepts/detail-concrete-v2.jpg",
+    "media/concepts/detail-roofing-v2.jpg",
+    "media/concepts/about-experience-v2.jpg",
+    "media/concepts/about-shared-approach-v2.jpg",
+    "media/about-quality-control.webp",
+    # Added in the final hardening pass: these three were still going through next/image, whose
+    # resizing is a no-op in this deployment, so every viewport got the full-resolution original.
+    "media/about-industrial-concept.webp",
+    "images/founder.webp",
+    "images/next-generation.webp",
 ]
 
 
