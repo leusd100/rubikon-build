@@ -19,6 +19,11 @@ const directionGhostWords: Record<DirectionPageConfig['id'], string> = {
   'pokrivelni-roboty': 'ROOF',
 };
 
+const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
+  'zernoskhovyshcha',
+  'betonni-roboty',
+]);
+
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
 function DirectionItemCards({
@@ -150,10 +155,18 @@ export function DirectionCostSection({
   );
 }
 
-function DirectionEditorial({ editorial }: { editorial: DirectionPageConfig['editorial'] }) {
+function DirectionEditorial({
+  directionId,
+  editorial,
+}: {
+  directionId: DirectionPageConfig['id'];
+  editorial: DirectionPageConfig['editorial'];
+}) {
+  const layout = mediaFirstEditorialDirections.has(directionId) ? 'media-first' : 'copy-first';
+
   return (
     <section className="page-section direction-editorial-section">
-      <div className="shell direction-editorial-grid">
+      <div className="shell direction-editorial-grid" data-layout={layout}>
         <div className="direction-editorial-copy">
           <p className="eyebrow"><span /> {editorial.eyebrow}</p>
           <h2>{editorial.title}</h2>
@@ -277,7 +290,7 @@ export function DirectionPage({
         )}
       </section>
 
-      <DirectionEditorial editorial={config.editorial} />
+      <DirectionEditorial directionId={config.id} editorial={config.editorial} />
       {technicalChapter}
       <DirectionProcess {...config.process} />
       {!hideCost && config.cost && <DirectionCostSection {...config.cost} />}
