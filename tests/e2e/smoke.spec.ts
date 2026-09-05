@@ -129,7 +129,10 @@ test.describe('public route smoke tests', () => {
       );
 
       if (route.hasProjectCta) {
-        const projectCta = hero.getByRole('link', { name: 'Обговорити проєкт', exact: true });
+        const projectCta = hero.getByRole('link', {
+          name: route.path === '/napryamky' ? 'Описати завдання' : 'Обговорити проєкт',
+          exact: true,
+        });
 
         await expect(projectCta).toBeVisible();
         await expect(projectCta).toHaveAttribute('href', '#inquiry');

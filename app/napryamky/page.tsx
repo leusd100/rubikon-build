@@ -1,4 +1,4 @@
-import { Breadcrumbs, GhostWord, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, SectionHeader } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import { DirectionRouteList } from '../components/DirectionCards';
 import { DirectionsHeroImageSequence } from '../components/DirectionsHeroImageSequence';
@@ -35,27 +35,31 @@ export default function DirectionsPage() {
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }]} />
             <p className="eyebrow light"><span /> Сфери компетенції</p>
             <h1>
-              <span className="subhero-title-line">П’ять напрямків робіт</span>
-              <span className="subhero-title-line"><em>Один об’єкт</em> може поєднувати кілька</span>
+              <span className="subhero-title-line">Оберіть напрям робіт</span>
+              <span className="subhero-title-line">або опишіть <em>комплексне завдання</em></span>
             </h1>
           </div>
           <div className="subhero-side">
-            <p>Кожен напрямок має свою специфіку — від металевого каркаса й бетонної основи до покрівлі та будівельної частини зерносховища. Оберіть потрібний напрямок або коротко опишіть завдання, якщо ваш об’єкт поєднує кілька видів робіт.</p>
-            <a className="button button-primary subhero-side-cta" href="#inquiry">
-              Обговорити проєкт <span aria-hidden="true">↗</span>
-            </a>
+            <p>Перейдіть до потрібного виду робіт. Якщо об’єкт поєднує кілька напрямків — одразу опишіть завдання, і ми допоможемо визначити склад робіт.</p>
+            <div className="directions-hero-actions">
+              <a className="button button-primary subhero-side-cta" href="#directions-list">
+                Обрати напрям <span aria-hidden="true">↓</span>
+              </a>
+              <a className="text-link" href="#inquiry">
+                Описати завдання <span aria-hidden="true">↗</span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="page-section ghost-section">
-        <GhostWord word="STRUCTURE" />
+      <section className="page-section directions-index" id="directions-list">
         <div className="shell">
           <SectionHeader
             className="page-heading"
-            eyebrow="Що ми робимо"
-            title="Оберіть напрямок"
-            supporting="Точний перелік робіт визначаємо після знайомства з об’єктом. Можемо виконати комплекс робіт або долучитися до визначеного етапу."
+            eyebrow="П’ять напрямків"
+            title="Оберіть потрібний вид робіт"
+            supporting="Кожен пункт веде до конкретних можливостей, процесу й орієнтирів вартості. Для комплексного об’єкта можна почати з будь-якого близького напрямку."
           />
           <DirectionRouteList />
         </div>
