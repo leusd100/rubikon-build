@@ -1009,13 +1009,18 @@ describe('personnel door (product surface pass)', () => {
     for (const width of [W.min, 12, 16, 24, W.max]) {
       for (const gates of [0, 1, 2] as const) {
         for (const gateType of ['standard', 'double'] as const) {
-          const fits = doorFits(gates, gateType, width);
-          const model = modelFor({ width }, { doors: 1, gates, gateType });
-          const placed = doorOf(model) !== undefined;
-          // The model clamps the gates first, so only compare where the gate selection survived.
-          if (model.gates === gates && model.gateType === gateType) {
-            expect(placed, `${width}m / ${gates} ${gateType}`).toBe(fits);
-          }
+          // Compare against the CLAMPED selection the geometry actually saw: the domain model may
+          // have dropped a gate that did not fit, which legitimately changes the door's options.
+          const domain = deriveDomainModel({
+            ...DEFAULT_CONFIGURATOR_STATE,
+            dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width },
+            doors: 1,
+            gates,
+            gateType,
+          });
+          const fits = doorFits(domain.gates, domain.gateType, width);
+          const placed = doorOf(modelFor({ width }, { doors: 1, gates, gateType })) !== undefined;
+          expect(placed, `${width}m / ${gates} ${gateType}`).toBe(fits);
         }
       }
     }
