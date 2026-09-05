@@ -131,3 +131,57 @@ export function getRepeatedNoiseTexture(kind: 'roughness' | 'normal', repeat: nu
   repeatedVariants.set(cacheKey, variant);
   return variant;
 }
+
+let cachedGroundFalloffTexture: THREE.Texture | null = null;
+
+/**
+ * A radial alpha ramp: opaque at the centre, fully transparent well before the edge.
+ *
+ * This exists to answer the objection recorded against a studio floor in ThreeHangarView (a lit
+ * plane big enough to hide its own edge necessarily fills the frame, so the preview stops reading
+ * as a continuous surface and starts reading as a framed picture inside its container). A plane
+ * wearing this as its `alphaMap` has no visible edge at all — it dissolves into the studio
+ * background before it reaches one — so the building gets a surface to stand on without the
+ * viewport gaining a horizon or a rectangle.
+ *
+ * 128x128 and generated once, same shared/cached rule as the two noise textures above. The ramp is
+ * smoothstepped rather than linear so the falloff has no visible banding ring, and it starts
+ * fading immediately (no flat opaque plateau) so there is never a hard "pool of floor" outline
+ * under the model.
+ */
+export function getGroundFalloffTexture(): THREE.Texture {
+  if (cachedGroundFalloffTexture) return cachedGroundFalloffTexture;
+
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('2D context unavailable for the ground falloff texture');
+
+  const image = context.createImageData(size, size);
+  const centre = (size - 1) / 2;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const dx = (x - centre) / centre;
+      const dy = (y - centre) / centre;
+      // Radial distance, clamped to the inscribed circle so the corners are fully transparent
+      // (a square alpha map with opaque corners would put the plane's own corners back on screen).
+      const t = Math.min(1, Math.hypot(dx, dy));
+      const eased = 1 - t * t * (3 - 2 * t); // smoothstep, inverted: 1 at centre, 0 at the rim
+      const index = (y * size + x) * 4;
+      image.data[index] = 255;
+      image.data[index + 1] = 255;
+      image.data[index + 2] = 255;
+      image.data[index + 3] = Math.round(eased * 255);
+    }
+  }
+  context.putImageData(image, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.needsUpdate = true;
+  cachedGroundFalloffTexture = texture;
+  return texture;
+}

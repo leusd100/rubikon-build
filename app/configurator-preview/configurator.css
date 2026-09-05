@@ -467,6 +467,11 @@
   z-index: 1;
   display: grid;
   grid-auto-flow: column;
+  /* Two explicit rows plus `display: contents` on each pair below: every label lands in row 1 and
+     every value in row 2, so the values keep a shared baseline even when one label wraps. Without
+     this, "Висота в коньку" wraps to two lines at 390px, making its own column taller and dropping
+     its value below the other three. */
+  grid-template-rows: auto auto;
   gap: 16px;
   margin: 0;
   padding: 10px 14px;
@@ -476,6 +481,8 @@
   backdrop-filter: blur(6px);
   pointer-events: none; /* never competes with the (currently absent) camera interaction */
 }
+
+.hc-three-overlay > div { display: contents; }
 
 .hc-three-overlay dt {
   color: var(--text-on-dark-subtle);
