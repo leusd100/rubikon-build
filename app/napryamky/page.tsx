@@ -31,10 +31,13 @@ export default function DirectionsPage() {
         <div className="subhero-overlay" />
         <div className="subhero-grid" aria-hidden="true" />
         <div className="shell subhero-layout">
-          <div>
+          <div className="subhero-copy">
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }]} />
             <p className="eyebrow light"><span /> Сфери компетенції</p>
-            <h1>П’ять напрямків робіт<br /><em>Один об’єкт може поєднувати кілька</em></h1>
+            <h1>
+              <span className="subhero-title-line">П’ять напрямків робіт</span>
+              <span className="subhero-title-line"><em>Один об’єкт</em> може поєднувати кілька</span>
+            </h1>
           </div>
           <div className="subhero-side">
             <p>Кожен напрямок має свою специфіку — від металевого каркаса й бетонної основи до покрівлі та будівельної частини зерносховища. Оберіть потрібний напрямок або коротко опишіть завдання, якщо ваш об’єкт поєднує кілька видів робіт.</p>
