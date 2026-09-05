@@ -2,7 +2,7 @@
 """Regenerates the Step 02 responsive WebP variants under public/media-responsive/.
 
 Not wired into `pnpm build` — this is a one-time/manual generation step. Run it again
-by hand whenever one of the 12 source JPEGs listed below is replaced, then commit the
+by hand whenever one of the source images listed below is replaced, then commit the
 new output files (their content-hashed names mean stale variants left behind are
 simply orphaned, not silently served — delete old files for that source manually).
 
@@ -27,24 +27,25 @@ import os
 
 from PIL import Image
 
-SRC_DIR = "public/media/concepts"
+SRC_DIR = "public/media"
 OUT_DIR = "public/media-responsive"
 WIDTHS = [480, 768, 1200]
 QUALITY = 78
 
 FILES = [
-    "direction-hangars-v2.jpg",
-    "direction-grain-v2.jpg",
-    "direction-steel-v2.jpg",
-    "direction-concrete-v2.jpg",
-    "direction-roofing-v2.jpg",
-    "detail-hangars-v2.jpg",
-    "detail-grain-v2.jpg",
-    "detail-steel-v2.jpg",
-    "detail-concrete-v2.jpg",
-    "detail-roofing-v2.jpg",
-    "about-experience-v2.jpg",
-    "about-shared-approach-v2.jpg",
+    "concepts/direction-hangars-v2.jpg",
+    "concepts/direction-grain-v2.jpg",
+    "concepts/direction-steel-v2.jpg",
+    "concepts/direction-concrete-v2.jpg",
+    "concepts/direction-roofing-v2.jpg",
+    "concepts/detail-hangars-v2.jpg",
+    "concepts/detail-grain-v2.jpg",
+    "concepts/detail-steel-v2.jpg",
+    "concepts/detail-concrete-v2.jpg",
+    "concepts/detail-roofing-v2.jpg",
+    "concepts/about-experience-v2.jpg",
+    "concepts/about-shared-approach-v2.jpg",
+    "about-quality-control.webp",
 ]
 
 
@@ -54,7 +55,7 @@ def main() -> None:
 
     for fname in FILES:
         src_path = os.path.join(SRC_DIR, fname)
-        base = fname.rsplit(".", 1)[0]
+        base = os.path.basename(fname).rsplit(".", 1)[0]
         im = Image.open(src_path).convert("RGB")
         src_w, src_h = im.size
 
