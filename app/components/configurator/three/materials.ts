@@ -22,7 +22,7 @@ import type { MaterialKey } from '../../../lib/configurator/threeSceneModel';
 // tiling densities, never a bespoke texture per material.
 //
 // Value ladder, lightest to darkest:
-//   gate                   #c3c9cd  the door leaf — deliberately the LIGHTEST surface in the
+//   gate                   #c3c9cd  the gate leaf — deliberately the LIGHTEST surface in the
 //                                   scene (see its own entry below for why), breaking the ladder's
 //                                   own ordering on purpose
 //   frame-primary        #99a4ac   galvanized structural steel — the structural read
@@ -118,6 +118,11 @@ export const MATERIALS: Record<MaterialKey, MaterialSpec> = {
     color: '#c3c9cd', roughness: 0.44, metalness: 0.26,
     normalNoise: { repeat: 30, scale: 0.04 },
   },
+  // The personnel door leaf. Deliberately a step DARKER than the gate: the gate is the facade's
+  // one deliberate light accent, and a 1 m door rendered in the same tone would read as a second
+  // one competing with it at a fifth of the size. Same coated-steel response (roughness/metalness
+  // carried over) so it still reads as the same substance class, just a different element.
+  door: { color: '#8f959b', roughness: 0.44, metalness: 0.26, normalNoise: { repeat: 30, scale: 0.04 } },
   // The reveal/backdrop AROUND and BEHIND the leaf above — an opening is the absence of light, not
   // a dark-painted panel.
   'gate-recess': { color: '#0b0d0e', roughness: 1, metalness: 0 },

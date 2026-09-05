@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import {
+  DOOR_DIMENSIONS_M,
   GATE_DIMENSIONS_M,
   RIDGE_HEIGHT_STEP_M,
+  clampDoorSelection,
   clampGateSelection,
   clampRidgeHeightM,
+  doorFits,
   gateHeightFits,
   maxGateCountThatFits,
   ridgeHeightRangeM,
@@ -18,6 +21,8 @@ import {
   ENVELOPE_MATERIAL_PRESET,
   FOUNDATION_TYPE_LABELS,
   FOUNDATION_TYPE_ORDER,
+  DOOR_LABELS,
+  DOOR_OPTIONS,
   GATES_OPTIONS,
   GATE_TYPE_LABELS,
   GATE_TYPE_ORDER,
@@ -28,6 +33,7 @@ import {
   toggleScopeItem,
   type CladdingSystem,
   type ConfiguratorState,
+  type DoorCount,
   type Dimensions,
   type EnvelopeChoice,
   type FoundationType,
@@ -172,6 +178,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
       // The control panel below also disables an option before it can be picked in the first
       // place; this is the reactive fallback for a selection the customer already made.
       ...clampGateSelection(state.gates, state.gateType, dimensions.width, dimensions.height),
+      ...clampDoorSelection(state.doors, state.gates, state.gateType, dimensions.width),
     });
   }
 
@@ -204,12 +211,18 @@ export function ConfiguratorControls({ state, onChange }: Props) {
     onChange({ ...state, foundationType });
   }
 
+  // Changing the gates changes where a door may legally go, so the door is re-clamped with them
+  // — the same reason `setDimension` re-clamps both.
   function setGates(gates: GatesCount) {
-    onChange({ ...state, gates });
+    onChange({ ...state, gates, ...clampDoorSelection(state.doors, gates, state.gateType, state.dimensions.width) });
   }
 
   function setGateType(gateType: GateType) {
-    onChange({ ...state, gateType });
+    onChange({ ...state, gateType, ...clampDoorSelection(state.doors, state.gates, gateType, state.dimensions.width) });
+  }
+
+  function setDoors(doors: DoorCount) {
+    onChange({ ...state, doors });
   }
 
   function setScope(item: (typeof SCOPE_ORDER)[number]) {
@@ -348,8 +361,11 @@ export function ConfiguratorControls({ state, onChange }: Props) {
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-gates-heading">
-        <h2 id="hc-gates-heading">Ворота</h2>
-        <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-gates-heading">
+        <h2 id="hc-gates-heading">Прорізи</h2>
+        <div className="hc-field-head">
+          <label id="hc-gate-count-label">Ворота</label>
+        </div>
+        <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-gate-count-label">
           {GATES_OPTIONS.map((option) => {
             // Phase 3F.1, brief §B2-B3: a gate count is only offered if the CURRENTLY selected
             // gate type actually fits that many times at the current width/eave height — real,
@@ -405,6 +421,38 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             Це конфігураційні розміри RUBIKON BUILD, а не будівельний стандарт.
           </p>
         )}
+        <div className="hc-field hc-door-field">
+          <div className="hc-field-head">
+            <label id="hc-doors-label">Двері</label>
+          </div>
+          <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-doors-label">
+            {DOOR_OPTIONS.map((option) => {
+              // Disabled rather than hidden, and only ever for a real reason: at this width the
+              // door has no position clear of the corners, the gates and the centre-support line.
+              const disabled = option > 0 && !doorFits(state.gates, state.gateType, state.dimensions.width);
+              return (
+                <label className="hc-option-card" key={option}>
+                  <input
+                    type="radio"
+                    name="hc-doors"
+                    value={option}
+                    checked={state.doors === option}
+                    disabled={disabled}
+                    aria-disabled={disabled}
+                    onChange={() => setDoors(option)}
+                  />
+                  <span>{DOOR_LABELS[option]}</span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="hc-field-note">
+            Службові двері — {DOOR_DIMENSIONS_M.widthM.toString().replace('.', ',')}×
+            {DOOR_DIMENSIONS_M.heightM.toString().replace('.', ',')} м. Розташування визначається
+            автоматично: поруч із воротами, поза їх прорізом і без перетину з колонами.
+          </p>
+        </div>
+
         {state.gates > 0 && (!gateHeightFits(state.gateType, state.dimensions.height)
           || state.gates > maxGateCountThatFits(state.gateType, state.dimensions.width)) && (
           <p className="hc-field-note hc-field-note-warning">

@@ -155,6 +155,10 @@ export type BraceMember = {
 
 export type OpeningGeometry = {
   index: number;
+  /** Which product opening this is. Every consumer — gable holes, the internal-column conflict
+   *  check, the technical view, the 3D recess/leaf pair — reads the same array, so a door
+   *  participates in all of them by existing rather than by being special-cased anywhere. */
+  kind: 'gate' | 'door';
   face: 'front';
   /** Origin-relative rectangle on the face, for renderers that prefer 2D. */
   rect: { xM: number; yM: number; widthM: number; heightM: number };
@@ -771,11 +775,87 @@ export function clampGateSelection(gates: number, gateType: GateType, widthM: nu
   return { gates: 0, gateType };
 }
 
-function buildOpenings(
+/**
+ * The personnel door, as a RUBIKON BUILD configurator preset — 1.0 x 2.1 m. Like GATE_DIMENSIONS_M
+ * this is a product size, not a construction standard, and it never scales with the building.
+ */
+export const DOOR_DIMENSIONS_M = { widthM: 1, heightM: 2.1 } as const;
+
+/** Clear distance the door keeps from a building corner, so it never lands in the wall's own
+ *  return where a corner column and the side-wall bracing already are. */
+const DOOR_CORNER_CLEARANCE_M = 1.2;
+/** Clear distance from a gate opening, so the two never share a jamb. */
+const DOOR_GATE_CLEARANCE_M = 0.8;
+/** Clear distance from the centre-support column line. The door avoids that line rather than the
+ *  column avoiding the door: a door must never be the reason a structural column disappears, and
+ *  keeping the avoidance on this side leaves `buildInternalColumns` independent of doors entirely
+ *  (it would otherwise skip a column for a 1 m opening, which is not how a real building works). */
+const DOOR_COLUMN_CLEARANCE_M = 0.6;
+
+/** Every X where a 1 m door would be legal on the front face, in preference order. Pure, and
+ *  shared by the fit check and the geometry builder so the UI can never offer a door the model
+ *  then refuses to place. */
+function doorCandidateXs(gates: number, gateType: GateType, widthM: number): number[] {
+  const { widthM: doorWidthM } = DOOR_DIMENSIONS_M;
+  const gateRects = buildGateRects(gates, gateType, widthM);
+  const midX = widthM / 2;
+
+  const minX = DOOR_CORNER_CLEARANCE_M;
+  const maxX = widthM - DOOR_CORNER_CLEARANCE_M - doorWidthM;
+  if (maxX < minX) return [];
+
+  // Preference order, deliberately deterministic: beside the gates first (a personnel door next to
+  // the vehicle opening is where one actually goes), then the facade thirds as a fallback for a
+  // building with no gates at all.
+  const preferred: number[] = [];
+  if (gateRects.length > 0) {
+    const rightmost = gateRects[gateRects.length - 1];
+    const leftmost = gateRects[0];
+    preferred.push(rightmost.xM + rightmost.widthM + DOOR_GATE_CLEARANCE_M);
+    preferred.push(leftmost.xM - DOOR_GATE_CLEARANCE_M - doorWidthM);
+  }
+  preferred.push(widthM * 0.25 - doorWidthM / 2, widthM * 0.75 - doorWidthM / 2, minX, maxX);
+
+  const clearOfGates = (xM: number) => gateRects.every((rect) => (
+    xM + doorWidthM + DOOR_GATE_CLEARANCE_M <= rect.xM
+    || xM >= rect.xM + rect.widthM + DOOR_GATE_CLEARANCE_M
+  ));
+  const clearOfColumnLine = (xM: number) => (
+    xM + doorWidthM + DOOR_COLUMN_CLEARANCE_M <= midX || xM >= midX + DOOR_COLUMN_CLEARANCE_M
+  );
+
+  return preferred
+    .map((xM) => round(xM))
+    .filter((xM) => xM >= minX && xM <= maxX && clearOfGates(xM) && clearOfColumnLine(xM));
+}
+
+/** Can a door be placed at all at these dimensions? Same answer the geometry builder will give,
+ *  because both read `doorCandidateXs`. Consumed by the controls (to disable the option) and by
+ *  `clampDoorSelection` (so the model stays self-consistent however state was produced). */
+export function doorFits(gates: number, gateType: GateType, widthM: number): boolean {
+  return doorCandidateXs(gates, gateType, widthM).length > 0;
+}
+
+/** Domain-level safety net, exactly mirroring `clampGateSelection`: a door that cannot be placed
+ *  is dropped rather than drawn somewhere invalid. Never resizes or relocates it silently. */
+export function clampDoorSelection(
+  doors: number,
   gates: number,
   gateType: GateType,
   widthM: number,
-): OpeningGeometry[] {
+): { doors: 0 | 1 } {
+  if (doors <= 0) return { doors: 0 };
+  return { doors: doorFits(gates, gateType, widthM) ? 1 : 0 };
+}
+
+/** Where the gates sit on the front face, as plain rectangles. Extracted so the door's placement
+ *  can read the exact same numbers the gates are drawn from — `maxGateCountThatFits` already
+ *  documents why this placement formula must have exactly one home. */
+function buildGateRects(
+  gates: number,
+  gateType: GateType,
+  widthM: number,
+): { xM: number; widthM: number; heightM: number }[] {
   if (gates === 0) return [];
 
   const { widthM: gateWidthM, heightM: gateHeightM } = GATE_DIMENSIONS_M[gateType];
@@ -785,20 +865,54 @@ function buildOpenings(
   const totalWidthM = gates * gateWidthM + (gates - 1) * gapM;
   const startM = marginM + Math.max(0, (usableM - totalWidthM) / 2);
 
-  return Array.from({ length: gates }, (_, index) => {
-    const xM = round(startM + index * (gateWidthM + gapM));
-    return {
-      index,
-      face: 'front' as const,
-      rect: { xM, yM: 0, widthM: gateWidthM, heightM: gateHeightM },
-      corners: quad(
-        v3(xM, gateHeightM, 0),
-        v3(xM + gateWidthM, gateHeightM, 0),
-        v3(xM + gateWidthM, 0, 0),
-        v3(xM, 0, 0),
-      ),
-    };
-  });
+  return Array.from({ length: gates }, (_, index) => ({
+    xM: round(startM + index * (gateWidthM + gapM)),
+    widthM: gateWidthM,
+    heightM: gateHeightM,
+  }));
+}
+
+function openingFromRect(
+  index: number,
+  kind: OpeningGeometry['kind'],
+  rect: { xM: number; widthM: number; heightM: number },
+): OpeningGeometry {
+  const { xM, widthM: openingWidthM, heightM } = rect;
+  return {
+    index,
+    kind,
+    face: 'front' as const,
+    rect: { xM, yM: 0, widthM: openingWidthM, heightM },
+    corners: quad(
+      v3(xM, heightM, 0),
+      v3(xM + openingWidthM, heightM, 0),
+      v3(xM + openingWidthM, 0, 0),
+      v3(xM, 0, 0),
+    ),
+  };
+}
+
+function buildOpenings(
+  gates: number,
+  gateType: GateType,
+  doors: number,
+  widthM: number,
+): OpeningGeometry[] {
+  const openings = buildGateRects(gates, gateType, widthM)
+    .map((rect, index) => openingFromRect(index, 'gate', rect));
+
+  if (doors > 0) {
+    // First candidate wins — `doorCandidateXs` is already ordered by preference and has already
+    // rejected anything too close to a corner, a gate or the centre-support line, so there is no
+    // second-guessing to do here. No candidate means no door: the opening is dropped rather than
+    // forced somewhere invalid, and the control offering it is disabled by the same predicate.
+    const [xM] = doorCandidateXs(gates, gateType, widthM);
+    if (xM !== undefined) {
+      openings.push(openingFromRect(openings.length, 'door', { xM, ...DOOR_DIMENSIONS_M }));
+    }
+  }
+
+  return openings;
 }
 
 /**
@@ -1002,7 +1116,7 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
   const frames = buildFrames(widthM, eaveHeightM, ridgeM, stationsM);
   // Hoisted: buildInternalColumns needs the real gate rectangles to resolve its own conflict
   // check (brief §4) — never a reason for a renderer to invent its own copy of this call.
-  const openings = buildOpenings(domain.gates, domain.gateType, widthM);
+  const openings = buildOpenings(domain.gates, domain.gateType, domain.doors, widthM);
   const internalColumns = buildInternalColumns(
     widthM, eaveHeightM, ridgeM, stationsM, openings, domain.structural.scheme, domain.structural.roofStructure,
   );

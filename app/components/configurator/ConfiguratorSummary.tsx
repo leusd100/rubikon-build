@@ -49,6 +49,10 @@ export function ConfiguratorSummary({
             <dt>Ворота</dt>
             <dd>{summary.gatesLabel}</dd>
           </div>
+          <div>
+            <dt>Двері</dt>
+            <dd>{summary.doorsLabel}</dd>
+          </div>
         </dl>
         <p className="hc-summary-formula">Площа = ширина × довжина</p>
         {showInquiryAction && (

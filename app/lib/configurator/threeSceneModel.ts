@@ -43,6 +43,7 @@ export type MaterialKey =
   | 'footing'
   | 'gate'
   | 'gate-recess'
+  | 'door'
   | 'ground';
 
 /** The single mapping from a cladding system to its material key — see `MaterialKey`'s own doc
@@ -146,6 +147,10 @@ export type FootingMesh = {
  */
 export type GateLeafMesh = {
   id: string;
+  /** Which opening this leaf closes. The two are genuinely different objects — a sectional gate
+   *  is a stack of horizontal panels, a personnel door is one flush leaf — so the renderer builds
+   *  different geometry for each rather than scaling one down. */
+  kind: 'gate' | 'door';
   xM: number;
   widthM: number;
   heightM: number;
@@ -238,6 +243,8 @@ const GATE_RECESS_INSET_M = 0.16;
 // jamb reveal depth, not the full recess depth above (a real sectional door sits close behind its
 // opening, it does not sit at the back of a half-metre tunnel).
 const GATE_LEAF_DEPTH_M = 0.08;
+/** Slightly deeper than a gate leaf so the door reads as recessed in a frame, not stuck on. */
+const DOOR_LEAF_DEPTH_M = 0.1;
 // Generous on purpose: at 0.55 the ground plane's own straight edge was visible inside the
 // camera frame at default dimensions, which read as a stage prop rather than as ground.
 const GROUND_MARGIN_RATIO = 3;
@@ -406,11 +413,14 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     });
     leaves.push({
       id: `leaf-${opening.index}`,
+      kind: opening.kind,
       xM,
       widthM: gw,
       heightM: gh,
-      zM: GATE_LEAF_DEPTH_M,
-      material: 'gate',
+      // The door sits a little deeper than a gate: a sectional gate hangs just inside its opening,
+      // a personnel door is set back in a frame. Both stay well in front of the recess plane.
+      zM: opening.kind === 'door' ? DOOR_LEAF_DEPTH_M : GATE_LEAF_DEPTH_M,
+      material: opening.kind === 'door' ? 'door' : 'gate',
     });
   }
 

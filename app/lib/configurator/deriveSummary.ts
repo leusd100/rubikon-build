@@ -1,5 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
-import { GATE_DIMENSIONS_M } from './parametricModel';
+import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M } from './parametricModel';
 import {
   CLADDING_SYSTEM_LABELS,
   ENVELOPE_LABELS,
@@ -42,6 +42,7 @@ export type ConfiguratorSummary = {
   scopeLabels: string[];
   scopeSummaryLabel: string;
   gatesLabel: string;
+  doorsLabel: string;
 };
 
 function formatMeters(value: number): string {
@@ -79,6 +80,14 @@ function formatEnvelopeLabel(envelope: HangarDomainModel['envelope']): string {
  * fact worth carrying into a lead brief the same way `foundationTypeLabel` already is — not
  * manufacturer/model detail, just the dimension the type itself implies.
  */
+/** Customer input, not derived visualization — the door is something the customer asked for, so
+ *  it belongs in the summary (and in any future lead brief) with its real fixed size. */
+function formatDoorsLabel(doors: HangarDomainModel['doors']): string {
+  if (doors === 0) return 'Не передбачені';
+  const { widthM, heightM } = DOOR_DIMENSIONS_M;
+  return `${doors} × ${widthM.toString().replace('.', ',')}×${heightM.toString().replace('.', ',')} м`;
+}
+
 function formatGatesLabel(gates: HangarDomainModel['gates'], gateType: HangarDomainModel['gateType']): string {
   if (gates === 0) return 'Без воріт';
   const { widthM, heightM } = GATE_DIMENSIONS_M[gateType];
@@ -109,5 +118,6 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')
       : 'Обсяг робіт ще не обрано',
     gatesLabel: formatGatesLabel(domain.gates, domain.gateType),
+    doorsLabel: formatDoorsLabel(domain.doors),
   };
 }

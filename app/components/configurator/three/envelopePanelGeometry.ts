@@ -475,4 +475,32 @@ function buildGateLeafGeometry(widthM: number, heightM: number): THREE.BufferGeo
   return new THREE.ExtrudeGeometry(shapes, { depth: GATE_LEAF_THICKNESS_M, bevelEnabled: false, curveSegments: 1 });
 }
 
-export { buildGateLeafGeometry };
+/**
+ * The personnel-door leaf: one flush panel with a shallow perimeter reveal, not the banded stack a
+ * sectional gate gets. At 1 x 2.1 m the gate's own band rhythm would be illegible anyway — this
+ * reads correctly at the distance the door is actually seen from, and costs one extruded shape.
+ * The inset leaves a visible frame line around the leaf inside its opening, which is what makes a
+ * door read as a door rather than as a painted rectangle.
+ */
+function buildDoorLeafGeometry(widthM: number, heightM: number): THREE.BufferGeometry {
+  const inset = Math.min(0.05, widthM * 0.06);
+  const x0 = inset;
+  const x1 = Math.max(x0 + 0.01, widthM - inset);
+  const y0 = 0;
+  const y1 = Math.max(y0 + 0.01, heightM - inset);
+
+  const shape = new THREE.Shape();
+  shape.moveTo(x0, y0);
+  shape.lineTo(x1, y0);
+  shape.lineTo(x1, y1);
+  shape.lineTo(x0, y1);
+  shape.closePath();
+
+  return new THREE.ExtrudeGeometry(shape, {
+    depth: GATE_LEAF_THICKNESS_M,
+    bevelEnabled: false,
+    curveSegments: 1,
+  });
+}
+
+export { buildDoorLeafGeometry, buildGateLeafGeometry };

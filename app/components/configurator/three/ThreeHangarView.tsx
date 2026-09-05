@@ -18,7 +18,7 @@ import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator
 import { MATERIALS, STUDIO_BACKGROUND } from './materials';
 import { getGroundFalloffTexture } from './proceduralTextures';
 import { getRepeatedNoiseTexture } from './proceduralTextures';
-import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
+import { buildDoorLeafGeometry, buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
 import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
@@ -197,7 +197,12 @@ function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: bo
  * together with no separate driver of their own.
  */
 function GateLeaf({ leaf, castShadow }: { leaf: GateLeafMesh; castShadow: boolean }) {
-  const geometry = useMemo(() => buildGateLeafGeometry(leaf.widthM, leaf.heightM), [leaf]);
+  const geometry = useMemo(
+    () => (leaf.kind === 'door'
+      ? buildDoorLeafGeometry(leaf.widthM, leaf.heightM)
+      : buildGateLeafGeometry(leaf.widthM, leaf.heightM)),
+    [leaf],
+  );
   useEffect(() => () => geometry.dispose(), [geometry]);
 
   return (
@@ -789,7 +794,9 @@ export function ThreeHangarView({
   // building's own geometry only), so this can never affect camera framing — same "staging, not
   // the object" rule the ground plane already follows.
   const scaleFigurePosition = useMemo<[number, number, number]>(() => {
-    const firstOpening = building.openings[0];
+    // Explicitly the first GATE, not the first opening: with a door present the door can be
+    // opening 0, and a human figure scaled against a 1 m door instead of the 4 m gate reads wrong.
+    const firstOpening = building.openings.find((o) => o.kind === 'gate') ?? building.openings[0];
     const x = firstOpening ? firstOpening.rect.xM + firstOpening.rect.widthM / 2 : building.footprint.widthM / 2;
     const FIGURE_STANDOFF_M = 1.4; // clear of the slab/gate recess, reads as standing in front of it
     return [x, 0, -FIGURE_STANDOFF_M];
@@ -889,6 +896,10 @@ export function ThreeHangarView({
           `gate-recess` on the very same `gateLayer` — without this it would pop in at full opacity
           instead of fading in with the recess it sits in front of. */}
       <MaterialOpacityDriver materialKey="gate" layer={gateLayer} />
+      {/* The door rides the same gate layer — both are openings in the same facade and arrive
+          together in the build-up, so they must fade together too or the door pops in at full
+          opacity over a still-materializing gate. */}
+      <MaterialOpacityDriver materialKey="door" layer={gateLayer} />
 
       {/* The building has to read as standing on a surface, not floating in a dark void — the
           single biggest thing separating this from an architectural presentation. A plain lit

@@ -110,6 +110,9 @@ export type ScopeItem = 'foundation' | 'frame' | 'walls' | 'roof';
 
 /** 0, 1 or 2 gates on the front facade — deliberately not a general opening system (see brief). */
 export type GatesCount = 0 | 1 | 2;
+/** One standard personnel door, or none. Deliberately not a number: the product offers a single
+ *  fixed-preset door, not a door count the customer tunes (see DOOR_DIMENSIONS_M). */
+export type DoorCount = 0 | 1;
 
 /**
  * Gate size class. `double` is the wide, tall opening used to drive equipment in — the case
@@ -138,6 +141,7 @@ export type ConfiguratorState = {
   scope: ScopeItem[];
   gates: GatesCount;
   gateType: GateType;
+  doors: DoorCount;
 };
 
 export type DimensionBounds = { min: number; max: number; step: number };
@@ -205,6 +209,8 @@ export const SCOPE_LABELS: Record<ScopeItem, string> = {
 export const SCOPE_ORDER: ScopeItem[] = ['foundation', 'frame', 'walls', 'roof'];
 
 export const GATES_OPTIONS: GatesCount[] = [0, 1, 2];
+export const DOOR_OPTIONS: DoorCount[] = [0, 1];
+export const DOOR_LABELS: Record<DoorCount, string> = { 0: 'Немає', 1: '1' };
 
 export const GATE_TYPE_LABELS: Record<GateType, string> = {
   standard: 'Стандартні',
@@ -239,6 +245,9 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   scope: ['foundation', 'frame', 'walls', 'roof'],
   gates: 1,
   gateType: 'standard',
+  // A personnel door is a real, common part of a hangar facade, but it is the customer's call —
+  // defaulted off so a fresh configurator claims nothing that was not chosen.
+  doors: 0,
 };
 
 export function clampDimension(key: keyof Dimensions, value: number): number {

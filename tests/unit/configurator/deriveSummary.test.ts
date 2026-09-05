@@ -99,3 +99,13 @@ describe('envelope preset drift (Phase 3E, brief §18)', () => {
     expect(summary.areaSqm).toBe(1440);
   });
 });
+
+describe('personnel door label', () => {
+  it('reports the real fixed size when a door is configured', () => {
+    expect(summaryFor({ doors: 1 }).doorsLabel).toBe('1 × 1×2,1 м');
+  });
+
+  it('says so plainly when there is none, rather than omitting the row', () => {
+    expect(summaryFor({ doors: 0 }).doorsLabel).toBe('Не передбачені');
+  });
+});

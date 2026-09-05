@@ -1,10 +1,11 @@
-import { clampGateSelection, clampRidgeHeightM, deriveStructuralVisualization, pitchDegForRidge } from './parametricModel';
+import { clampDoorSelection, clampGateSelection, clampRidgeHeightM, deriveStructuralVisualization, pitchDegForRidge } from './parametricModel';
 import type {
   CladdingSystem,
   ConfiguratorState,
   EnvelopeChoice,
   FoundationType,
   GateType,
+  DoorCount,
   GatesCount,
   RoofStructure,
   StructuralScheme,
@@ -95,6 +96,10 @@ export type HangarDomainModel = {
    * state was produced, the same guarantee `clampRidgeHeightM` already gives `roof.pitchDeg`.
    */
   gates: GatesCount;
+  /** Personnel doors the customer asked for, re-clamped here the same way `gates` is: a door that
+   *  cannot be placed clear of the corners, the gates and the centre-support line is dropped, so
+   *  the model never carries a door the geometry then refuses to draw. */
+  doors: DoorCount;
   /** Size class of those gates — a real, fixed real-world size (see GATE_DIMENSIONS_M), not an
    *  engineered specification. */
   gateType: GateType;
@@ -103,6 +108,8 @@ export type HangarDomainModel = {
 
 export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   const { width, length, height } = state.dimensions;
+  const gateSelection = clampGateSelection(state.gates, state.gateType, width, height);
+
   return {
     objectType: 'hangar',
     dimensions: { widthM: width, lengthM: length, eaveHeightM: height },
@@ -120,7 +127,10 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
       walls: state.scope.includes('walls'),
       roof: state.scope.includes('roof'),
     },
-    ...clampGateSelection(state.gates, state.gateType, width, height),
+    ...gateSelection,
+    // Door placement reads the CLAMPED gate selection, not the raw state: if a gate was just
+    // dropped for not fitting, the door's legal positions change with it.
+    ...clampDoorSelection(state.doors, gateSelection.gates, gateSelection.gateType, width),
     areaSqm: Math.round(width * length),
   };
 }

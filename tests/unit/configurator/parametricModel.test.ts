@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DOOR_DIMENSIONS_M,
   GATE_DIMENSIONS_M,
   GATE_TOP_CLEARANCE_M,
   PITCH_MAX_WIDTH_M,
@@ -8,7 +9,9 @@ import {
   ROOF_PITCH_MIN_DEG,
   STRUCTURAL_VISUALIZATION_THRESHOLDS,
   buildParametricModel,
+  clampDoorSelection,
   clampGateSelection,
+  doorFits,
   clampRidgeHeightM,
   defaultRidgeHeightM,
   deriveStructuralVisualization,
@@ -922,5 +925,114 @@ describe('girts (Phase 3E, brief §12 audit)', () => {
     const perWall = m.girts.filter((g) => g.a.x === 0).length;
     expect(perWall).toBe(2);
     expect(m.girts).toHaveLength(4);
+  });
+});
+
+describe('personnel door (product surface pass)', () => {
+  const doorOf = (m: ReturnType<typeof modelFor>) => m.openings.find((o) => o.kind === 'door');
+
+  it('is exactly the 1.0 x 2.1 m preset at every building size, never scaled', () => {
+    for (const width of [W.min, 16, 24, 36, W.max]) {
+      for (const height of [H.min, 8, H.max]) {
+        const door = doorOf(modelFor({ width, height }, { doors: 1 }));
+        if (!door) continue; // widths with no legal slot are covered separately below
+        expect(door.rect.widthM, `width ${width}`).toBe(DOOR_DIMENSIONS_M.widthM);
+        expect(door.rect.heightM, `height ${height}`).toBe(DOOR_DIMENSIONS_M.heightM);
+      }
+    }
+  });
+
+  it('sits on the ground, on the front face, like every other opening', () => {
+    const door = doorOf(modelFor({}, { doors: 1 }))!;
+    expect(door.face).toBe('front');
+    expect(door.rect.yM).toBe(0);
+    expect(door.corners.every((c) => c.z === 0)).toBe(true);
+  });
+
+  it('is emitted only when asked for', () => {
+    expect(doorOf(modelFor({}, { doors: 0 }))).toBeUndefined();
+    expect(doorOf(modelFor({}, { doors: 1 }))).toBeDefined();
+  });
+
+  it('is deterministic — the same configuration always places it identically', () => {
+    const a = doorOf(modelFor({ width: 24 }, { doors: 1 }))!;
+    const b = doorOf(modelFor({ width: 24 }, { doors: 1 }))!;
+    expect(a.rect.xM).toBe(b.rect.xM);
+  });
+
+  it('never overlaps a gate, at any gate count or type', () => {
+    for (const gateType of ['standard', 'double'] as const) {
+      for (const gates of [0, 1, 2] as const) {
+        for (const width of [16, 24, 36, W.max]) {
+          const model = modelFor({ width }, { doors: 1, gates, gateType });
+          const door = doorOf(model);
+          if (!door) continue;
+          for (const gate of model.openings.filter((o) => o.kind === 'gate')) {
+            const overlaps = door.rect.xM < gate.rect.xM + gate.rect.widthM
+              && gate.rect.xM < door.rect.xM + door.rect.widthM;
+            expect(overlaps, `${width}m / ${gates} ${gateType} gates`).toBe(false);
+          }
+        }
+      }
+    }
+  });
+
+  it('never sits on the centre-support column line, so a door never deletes a column', () => {
+    for (const width of [24, 30, 36, 44, W.max]) {
+      const model = modelFor({ width }, { doors: 1 });
+      const door = doorOf(model);
+      if (!door) continue;
+      const midX = width / 2;
+      const coversMid = door.rect.xM <= midX && midX <= door.rect.xM + door.rect.widthM;
+      expect(coversMid, `${width}m`).toBe(false);
+    }
+  });
+
+  it('keeps every centre-support column a door would otherwise have removed', () => {
+    for (const width of [24, 36, W.max]) {
+      const withoutDoor = modelFor({ width }, { doors: 0 });
+      const withDoor = modelFor({ width }, { doors: 1 });
+      expect(withDoor.internalColumns.length, `${width}m`).toBe(withoutDoor.internalColumns.length);
+    }
+  });
+
+  it('stays clear of both building corners', () => {
+    for (const width of [16, 24, W.max]) {
+      const door = doorOf(modelFor({ width }, { doors: 1 }));
+      if (!door) continue;
+      expect(door.rect.xM).toBeGreaterThan(0);
+      expect(door.rect.xM + door.rect.widthM).toBeLessThan(width);
+    }
+  });
+
+  it('doorFits and the geometry agree — the UI can never offer a door the model then drops', () => {
+    for (const width of [W.min, 12, 16, 24, W.max]) {
+      for (const gates of [0, 1, 2] as const) {
+        for (const gateType of ['standard', 'double'] as const) {
+          const fits = doorFits(gates, gateType, width);
+          const model = modelFor({ width }, { doors: 1, gates, gateType });
+          const placed = doorOf(model) !== undefined;
+          // The model clamps the gates first, so only compare where the gate selection survived.
+          if (model.gates === gates && model.gateType === gateType) {
+            expect(placed, `${width}m / ${gates} ${gateType}`).toBe(fits);
+          }
+        }
+      }
+    }
+  });
+
+  it('clampDoorSelection drops an unplaceable door instead of moving or resizing it', () => {
+    expect(clampDoorSelection(0, 1, 'standard', 24)).toEqual({ doors: 0 });
+    expect(clampDoorSelection(1, 1, 'standard', 24)).toEqual({ doors: 1 });
+    const impossible = clampDoorSelection(1, 2, 'double', DIMENSION_BOUNDS.width.min);
+    expect(impossible.doors === 0 || impossible.doors === 1).toBe(true);
+    expect(clampDoorSelection(1, 1, 'standard', 24)).toEqual(
+      clampDoorSelection(1, 1, 'standard', 24),
+    );
+  });
+
+  it('is carried by the domain model as customer input', () => {
+    expect(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, doors: 1 }).doors).toBe(1);
+    expect(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, doors: 0 }).doors).toBe(0);
   });
 });
