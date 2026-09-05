@@ -1124,6 +1124,20 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .inquiry-submit-note { margin-top: 7px; }
 }
 
+/* Same idea as the hero block below, applied to the home team band: laptops are wide but short,
+   and the portrait's height is driven by its column width (width:100% + aspect-ratio), so the
+   wider the laptop the taller the photo — the worst possible pairing with a ~700px usable height.
+   At 1440x800 the full card (photo + role + name + bio) was 812px against 699px of usable height,
+   so scrolling to it showed two faces and nothing else. 5/4 brings the card inside one screen on
+   every common laptop (1366x768 +18px, 1440x800 +22px, 1512x845 +40px); 1280x720 keeps everything
+   but the last line of the longer bio. Deliberately NOT pushed further (4/3 fits 1280x720 too, but
+   crops the chin on the closer-framed portrait — a worse trade than one bio line at the fold).
+   Monitors (>900px tall) keep the square. */
+@media (min-width: 1051px) and (max-height: 900px) {
+  .team-home .person-photo { aspect-ratio: 5 / 4; }
+  .team-home .person-info { padding-top: 24px; }
+}
+
 /* Compact desktop viewport: keep the complete hero visible on 13–14″ laptops. */
 @media (min-width: 761px) and (max-height: 820px) {
   .hero { min-height: 0; height: 100svh; }
