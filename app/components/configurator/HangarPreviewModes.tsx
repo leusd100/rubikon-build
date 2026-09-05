@@ -163,17 +163,22 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
   return (
     <>
       <div className="hc-preview-toolbar">
-        <ModeSwitch mode={effectiveMode} onSelect={setMode} threeAvailable={threeAvailable} />
-        {/* Secondary actions — brief §10's own suggested hierarchy: mode switch stays primary,
-            everything else stays a small, clearly secondary action beside it. Only meaningful in
-            3D, so only shown there — no dead controls in Technical mode. */}
-        {showThree && (
-          <div className="hc-preview-secondary-actions">
-            <button type="button" className="hc-secondary-action" onClick={() => setIsFullscreen(true)}>
-              Розгорнути
-            </button>
-          </div>
-        )}
+        <p className="hc-preview-disclaimer" role="note">
+          Візуалізація є схематичною і не є проєктною або конструкторською документацією.
+        </p>
+        <div className="hc-preview-toolbar-actions">
+          {/* Secondary actions — brief §10's own suggested hierarchy: mode switch stays primary,
+              everything else stays a small, clearly secondary action beside it. Only meaningful in
+              3D, so only shown there — no dead controls in Technical mode. */}
+          {showThree && (
+            <div className="hc-preview-secondary-actions">
+              <button type="button" className="hc-secondary-action" onClick={() => setIsFullscreen(true)}>
+                Розгорнути
+              </button>
+            </div>
+          )}
+          <ModeSwitch mode={effectiveMode} onSelect={setMode} threeAvailable={threeAvailable} />
+        </div>
       </div>
 
       <div className="hc-preview-surface">

@@ -16,7 +16,12 @@ test.describe('hangar configurator POC', () => {
 
   test('shows the schematic-not-engineering disclaimer', async ({ page }) => {
     await openConfigurator(page);
-    await expect(page.getByText('не є проєктною або конструкторською документацією')).toBeVisible();
+    const disclaimer = page.locator('.hc-preview-toolbar .hc-preview-disclaimer');
+    await expect(disclaimer).toContainText('не є проєктною або конструкторською документацією');
+    await expect(disclaimer).toBeVisible();
+    await expect(page.locator('.hc-hero .hc-preview-disclaimer')).toHaveCount(0);
+    const fontSize = await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
+    expect(fontSize).toBeGreaterThanOrEqual(14);
   });
 
   test('changing a dimension updates both the summary text and the on-screen dimension label', async ({ page }) => {
