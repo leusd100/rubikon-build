@@ -1134,7 +1134,13 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
    crops the chin on the closer-framed portrait — a worse trade than one bio line at the fold).
    Monitors (>900px tall) keep the square. */
 @media (min-width: 1051px) and (max-height: 900px) {
-  .team-home .person-photo { aspect-ratio: 5 / 4; }
+  /* The ratio alone cannot bound the height: the photo is `width: 100%` of its column, so its
+     height follows the COLUMN, not the window — a short-but-wide window (a browser that isn't
+     full height, a 16:10 laptop at 700px) still pushed the name and bio below the fold. The cap
+     is what actually guarantees the fit; the ratio just decides the shape while there is room
+     for it. 320px is the header (101) plus the info block (up to ~200 once the bio wraps to
+     three lines in a narrow column) plus a safety margin. */
+  .team-home .person-photo { aspect-ratio: 5 / 4; max-height: calc(100vh - 320px); }
   /* The crop window moves down with the frame. `center top` (the default for these portraits)
      anchors the top edge, so a shorter frame takes the whole loss off the bottom — which is the
      chin on the closer-framed portrait. At 40% the loss is shared with the background above the
