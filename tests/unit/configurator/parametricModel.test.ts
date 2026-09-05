@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
+  GATE_DIMENSIONS_M,
+  GATE_TOP_CLEARANCE_M,
   PITCH_MAX_WIDTH_M,
   PITCH_MIN_WIDTH_M,
   ROOF_PITCH_MAX_DEG,
   ROOF_PITCH_MIN_DEG,
   STRUCTURAL_VISUALIZATION_THRESHOLDS,
   buildParametricModel,
+  clampGateSelection,
   clampRidgeHeightM,
   defaultRidgeHeightM,
   deriveStructuralVisualization,
   frameBayCount,
+  gateHeightFits,
+  gateSelectionFits,
+  maxGateCountThatFits,
   pitchDegForRidge,
   ridgeHeightM,
   ridgeHeightRangeM,
@@ -304,6 +310,116 @@ describe('openings', () => {
   });
 });
 
+describe('fixed gate presets (Phase 3F.1, brief §B1-B2)', () => {
+  it('a standard gate is exactly 4x4 m, at every supported width and eave height', () => {
+    for (const width of [W.min, 24, W.max]) {
+      for (const height of [H.min, 8, H.max]) {
+        if (!gateHeightFits('standard', height)) continue; // not this test's concern — see the compatibility describe block below
+        const m = modelFor({ width, height }, { gates: 1, gateType: 'standard' });
+        expect(m.openings[0].rect.widthM).toBe(4);
+        expect(m.openings[0].rect.heightM).toBe(4);
+      }
+    }
+  });
+
+  it('a machinery gate is exactly 5x5 m, at every supported width and eave height it fits', () => {
+    for (const width of [W.min, 24, W.max]) {
+      for (const height of [H.min, 8, H.max]) {
+        if (!gateHeightFits('double', height)) continue;
+        const m = modelFor({ width, height }, { gates: 1, gateType: 'double' });
+        expect(m.openings[0].rect.widthM).toBe(5);
+        expect(m.openings[0].rect.heightM).toBe(5);
+      }
+    }
+  });
+
+  it('GATE_DIMENSIONS_M itself is exactly the brief\'s own two product presets', () => {
+    expect(GATE_DIMENSIONS_M.standard).toEqual({ widthM: 4, heightM: 4 });
+    expect(GATE_DIMENSIONS_M.double).toEqual({ widthM: 5, heightM: 5 });
+  });
+
+  it('gate size does not vary with building width — the exact defect this phase fixes', () => {
+    const narrow = modelFor({ width: W.min }, { gates: 1, gateType: 'standard' });
+    const wide = modelFor({ width: W.max }, { gates: 1, gateType: 'standard' });
+    expect(narrow.openings[0].rect.widthM).toBe(wide.openings[0].rect.widthM);
+    expect(narrow.openings[0].rect.heightM).toBe(wide.openings[0].rect.heightM);
+  });
+});
+
+describe('gate/building compatibility (Phase 3F.1, brief §B2)', () => {
+  it('gateHeightFits requires the eave to clear the gate height plus the visualisation top clearance', () => {
+    expect(gateHeightFits('standard', 4 + GATE_TOP_CLEARANCE_M)).toBe(true);
+    expect(gateHeightFits('standard', 4 + GATE_TOP_CLEARANCE_M - 0.01)).toBe(false);
+    expect(gateHeightFits('double', 5 + GATE_TOP_CLEARANCE_M)).toBe(true);
+    expect(gateHeightFits('double', 5 + GATE_TOP_CLEARANCE_M - 0.01)).toBe(false);
+  });
+
+  it('at the minimum supported eave height (4 m), no gate clears the top clearance — an honest, expected edge case, not a bug', () => {
+    expect(gateHeightFits('standard', H.min)).toBe(false);
+    expect(gateHeightFits('double', H.min)).toBe(false);
+  });
+
+  it('maxGateCountThatFits never exceeds this configurator\'s own supported gate count (0/1/2)', () => {
+    for (const width of [W.min, 24, W.max]) {
+      for (const gateType of ['standard', 'double'] as const) {
+        const count = maxGateCountThatFits(gateType, width);
+        expect([0, 1, 2]).toContain(count);
+      }
+    }
+  });
+
+  it('two machinery gates do not fit on the narrowest supported building; one does', () => {
+    expect(maxGateCountThatFits('double', W.min)).toBe(1);
+  });
+
+  it('two standard gates fit on the narrowest supported building', () => {
+    expect(maxGateCountThatFits('standard', W.min)).toBe(2);
+  });
+
+  it('gateSelectionFits agrees with the two underlying checks — height AND count both matter, and 0 gates always fits', () => {
+    expect(gateSelectionFits('double', 0, W.min, H.min)).toBe(true);
+    expect(gateSelectionFits('double', 2, W.min, 8)).toBe(false); // count fails
+    expect(gateSelectionFits('standard', 1, 24, H.min)).toBe(false); // height fails
+    expect(gateSelectionFits('standard', 1, 24, 8)).toBe(true);
+  });
+});
+
+describe('clampGateSelection (Phase 3F.1, brief §B2 — the domain-model safety net)', () => {
+  it('leaves an already-compatible selection completely untouched', () => {
+    expect(clampGateSelection(2, 'standard', 24, 8)).toEqual({ gates: 2, gateType: 'standard' });
+  });
+
+  it('reduces gate COUNT first, keeping the requested type, when only count stops fitting', () => {
+    // 2 machinery gates do not fit at 10 m wide; 1 does (see the compatibility block above).
+    expect(clampGateSelection(2, 'double', W.min, 8)).toEqual({ gates: 1, gateType: 'double' });
+  });
+
+  it('never fakes a fit by scaling — falls back to the smaller standard preset, never a resized gate, when the type itself does not fit', () => {
+    // width=5: a single 5x5 machinery gate does not clear its own margins (usable width 4.4 m <
+    // 5 m), but a single 4x4 standard gate does (4 m <= 4.4 m) — isolates a WIDTH-only fallback,
+    // not conflated with the height check.
+    expect(maxGateCountThatFits('double', 5)).toBe(0);
+    expect(maxGateCountThatFits('standard', 5)).toBeGreaterThanOrEqual(1);
+    const result = clampGateSelection(1, 'double', 5, 8);
+    expect(result.gateType).toBe('standard');
+    expect(result.gates).toBe(1);
+  });
+
+  it('falls all the way back to zero gates when nothing fits — honest absence, never a gate touching the eave line', () => {
+    expect(clampGateSelection(1, 'standard', 24, H.min)).toEqual({ gates: 0, gateType: 'standard' });
+  });
+
+  it('0 gates is always a no-op, regardless of dimensions', () => {
+    expect(clampGateSelection(0, 'double', W.min, H.min)).toEqual({ gates: 0, gateType: 'double' });
+  });
+
+  it('is idempotent — clamping an already-clamped selection changes nothing further', () => {
+    const once = clampGateSelection(2, 'double', W.min, 8);
+    const twice = clampGateSelection(once.gates, once.gateType, W.min, 8);
+    expect(twice).toEqual(once);
+  });
+});
+
 describe('slab', () => {
   it('always exists, even when the foundation is out of scope — invisible is not nonexistent', () => {
     // Omitting slab geometry when out of scope silently tightened the SVG viewBox once already
@@ -324,6 +440,26 @@ describe('slab', () => {
     expect(Math.min(...m.slab.corners.map((p) => p.x))).toBeCloseTo(-o, 6);
     expect(Math.max(...m.slab.corners.map((p) => p.x))).toBeCloseTo(24 + o, 6);
     expect(m.slab.corners.every((p) => p.y === 0)).toBe(true);
+  });
+
+  it('Phase 3F.1: is 3x thicker once the customer explicitly confirms a monolithic slab, not before', () => {
+    const undecided = modelFor({}, { foundationType: 'engineeringDecision' });
+    const isolated = modelFor({}, { foundationType: 'isolated' });
+    const confirmed = modelFor({}, { foundationType: 'slab' });
+
+    expect(confirmed.slab.thicknessM).toBeCloseTo(undecided.slab.thicknessM * 3, 6);
+    // Neither the honest "not yet decided" default nor an isolated-footing choice gets the
+    // thicker treatment — only an explicit, real "Монолітна плита" commitment does.
+    expect(isolated.slab.thicknessM).toBeCloseTo(undecided.slab.thicknessM, 6);
+  });
+
+  it("Phase 3F.1: the thicker slab never touches isolated footings' own dimensions — those stay exactly as they were", () => {
+    const isolated = modelFor({}, { foundationType: 'isolated' });
+    const confirmedSlab = modelFor({}, { foundationType: 'slab' });
+    const isolatedFooting = isolated.footings.find((f) => f.side !== 'center')!;
+    const slabModeFooting = confirmedSlab.footings.find((f) => f.side !== 'center')!;
+    expect(slabModeFooting.padThicknessM).toBe(isolatedFooting.padThicknessM);
+    expect(slabModeFooting.pedestalHeightM).toBe(isolatedFooting.pedestalHeightM);
   });
 });
 

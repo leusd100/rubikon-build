@@ -12,9 +12,11 @@ import type {
   StrutMesh,
   ThreeSceneModel,
 } from '../../../lib/configurator/threeSceneModel';
+import { claddingMaterialKey } from '../../../lib/configurator/threeSceneModel';
 import type { ParametricBuildingModel } from '../../../lib/configurator/parametricModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
-import { MATERIALS, VIEWPORT_BG } from './materials';
+import { MATERIALS, STUDIO_BACKGROUND } from './materials';
+import { getRepeatedNoiseTexture } from './proceduralTextures';
 import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
@@ -68,6 +70,17 @@ function sharedMaterial(key: keyof typeof MATERIALS): THREE.MeshStandardMaterial
     roughness: spec.roughness,
     metalness: spec.metalness,
   });
+  // Phase 3F — the shared micro-detail layer (proceduralTextures.ts). Both maps come from the
+  // SAME two small canvas textures this whole view ever creates, tiled at whatever repeat this
+  // specific material key wants (see materials.ts's own doc comment on why the repeat differs by
+  // material) — never a bespoke texture asset per material.
+  if (spec.roughnessNoiseRepeat) {
+    material.roughnessMap = getRepeatedNoiseTexture('roughness', spec.roughnessNoiseRepeat);
+  }
+  if (spec.normalNoise) {
+    material.normalMap = getRepeatedNoiseTexture('normal', spec.normalNoise.repeat);
+    material.normalScale = new THREE.Vector2(spec.normalNoise.scale, spec.normalNoise.scale);
+  }
   MATERIAL_CACHE.set(key, material);
   return material;
 }
@@ -471,12 +484,13 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
  * candidates, and for the geometry itself. Built directly from `building`'s own real dimensions
  * (no placement basis matrix needed — the shape is already authored in world (X, Y) and extrudes
  * along world Z, which is exactly the ridge's own run direction), so this component only has to
- * memoize the geometry and mount a single mesh. Shares `sharedMaterial('roof')` with the roof
- * panels themselves — same coil colour a real ridge cap is ordered in — so it needs no opacity
- * driver of its own and fades in lockstep with the roof for free, same reasoning as `Footing`
- * sharing the slab's own material/driver above.
+ * memoize the geometry and mount a single mesh. Shares the roof's own cladding-system material
+ * with the roof panels themselves (Phase 3F: `roofSystem` picks `roof-profiled` vs
+ * `roof-sandwich` — same coil colour AND response a real ridge cap is ordered in) — so it needs no
+ * opacity driver of its own and fades in lockstep with the roof for free, same reasoning as
+ * `Footing` sharing the slab's own material/driver above.
  */
-function RidgeCap({ building, castShadow }: { building: ParametricBuildingModel; castShadow: boolean }) {
+function RidgeCap({ building, roofSystem, castShadow }: { building: ParametricBuildingModel; roofSystem: CladdingSystem; castShadow: boolean }) {
   const { widthM, lengthM } = building.footprint;
   const { ridgeM } = building.heights;
   const { pitchDeg } = building.roof;
@@ -489,7 +503,7 @@ function RidgeCap({ building, castShadow }: { building: ParametricBuildingModel;
   return (
     <mesh
       geometry={geometry}
-      material={sharedMaterial('roof')}
+      material={sharedMaterial(claddingMaterialKey('roof', roofSystem))}
       castShadow={castShadow}
       receiveShadow
     />
@@ -534,17 +548,55 @@ function SettlingSlab({
  * frame-only readability the earlier spike lost to SVG, and it costs one line instead of an
  * outline post-processing pass.
  */
-function SceneLighting({ scene, shadows }: { scene: ThreeSceneModel; shadows: boolean }) {
+/**
+ * Phase 3F §10 — the chosen result of a three-way controlled lighting study (same camera, model
+ * and material config for all three, compared live before deciding — see the Phase 3F final
+ * report's own section N for screenshots and reasoning). PREMIUM INDUSTRIAL won over CLEAN STUDIO
+ * (too flat/generic — closest to the pre-3F default, did not read as "premium") and ARCHITECTURAL
+ * DAYLIGHT (softer directional depth, but not distinctly different from the studio option at
+ * normal viewing distance): lower ambient/fill and a stronger key let the roof's two slopes read
+ * with real contrast against each other, the darker background recedes rather than reading as a
+ * void, and — the deciding factor given Phase 3F's own material work — the added contrast is what
+ * actually shows off the new metallic response instead of washing it out under flat, bright
+ * fill. Still fully readable: nothing here crushes to black, and there is no bloom/DOF/vignette —
+ * brief's own "no cinematic gimmicks".
+ *
+ * The other two studies are intentionally NOT in this codebase (brief's own "do not permanently
+ * ship all three... rejected experiments must not remain in production code") — their exact
+ * parameters are recorded in the final report only.
+ */
+const AMBIENT_INTENSITY = 0.42;
+const HEMISPHERE_INTENSITY = 0.48;
+const KEY_INTENSITY = 2.3;
+const FILL_INTENSITY = 0.28;
+
+function SceneLighting({ scene, shadows, shadowMapSize }: { scene: ThreeSceneModel; shadows: boolean; shadowMapSize: number }) {
   const { center, size: extent } = scene.bounds;
   const radius = Math.max(Math.hypot(extent.x, extent.y, extent.z), 1);
   const { ridgeM } = scene.building.heights;
   const { widthM, lengthM } = scene.building.footprint;
+  const keyLightRef = useRef<THREE.DirectionalLight>(null);
 
   // A directional light aims at its `target`, which defaults to the world origin — and this
   // building's origin is its front-left-bottom CORNER, not its centre. Left at the default the key
   // light rakes across the object at an odd angle and the shadow camera is centred on the corner
   // too. This target sits at the model's real centroid.
   const target = useMemo(() => new THREE.Object3D(), []);
+
+  // Phase 3F §14: `shadow-mapSize` is a prop THREE.js only reads when it first ALLOCATES the
+  // shadow map's render target — changing it on an already-rendered light updates `.mapSize`
+  // (the number) but leaves the existing GPU texture at its old resolution, since Three only
+  // reallocates when `.map` is null. Explicitly disposing it here on every `shadowMapSize` change
+  // is what makes the fullscreen-quality bump (embedded 1024 -> fullscreen 2048) actually visible
+  // on the SAME light/SAME Canvas rather than requiring a remount (which the brief's own §14
+  // explicitly rules out: "no second Canvas, no duplicated WebGL context").
+  useEffect(() => {
+    const light = keyLightRef.current;
+    if (!light) return;
+    light.shadow.mapSize.set(shadowMapSize, shadowMapSize);
+    light.shadow.map?.dispose();
+    light.shadow.map = null;
+  }, [shadowMapSize]);
 
   const keyPosition = useMemo<[number, number, number]>(
     // Tuned on screen against two failure modes, not guessed. Too low (an early ridge-relative
@@ -559,25 +611,26 @@ function SceneLighting({ scene, shadows }: { scene: ThreeSceneModel; shadows: bo
 
   return (
     <>
-      <color attach="background" args={[VIEWPORT_BG]} />
+      <color attach="background" args={[STUDIO_BACKGROUND]} />
       {/* Depth-graded contrast, doing real work rather than atmosphere: it separates the near
           portal frames from the far ones, which is the cheapest available fix for the frame-only
           readability the earlier spike lost to SVG — one line instead of an outline post-processing
           pass. Deliberately restrained: an earlier range fogged the object's own centre by ~43%,
           which just made everything muddy. Starting the ramp at the camera distance means the near
           half is untouched and only the far end grades away. */}
-      <fog attach="fog" args={[VIEWPORT_BG, radius * 2, radius * 3.8]} />
+      <fog attach="fog" args={[STUDIO_BACKGROUND, radius * 2, radius * 3.8]} />
 
-      <ambientLight intensity={0.78} />
-      <hemisphereLight args={['#ccd6dc', '#22252a', 0.7]} />
+      <ambientLight intensity={AMBIENT_INTENSITY} />
+      <hemisphereLight args={['#ccd6dc', '#22252a', HEMISPHERE_INTENSITY]} />
 
       <primitive object={target} position={[center.x, center.y, center.z]} />
       <directionalLight
+        ref={keyLightRef}
         position={keyPosition}
         target={target}
-        intensity={1.85}
+        intensity={KEY_INTENSITY}
         castShadow={shadows}
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-left={-radius * 0.75}
         shadow-camera-right={radius * 0.75}
         shadow-camera-top={radius * 0.75}
@@ -592,7 +645,7 @@ function SceneLighting({ scene, shadows }: { scene: ThreeSceneModel; shadows: bo
       <directionalLight
         position={[center.x - widthM * 1.2, center.y + ridgeM * 0.9, center.z + lengthM * 1.1]}
         target={target}
-        intensity={0.42}
+        intensity={FILL_INTENSITY}
       />
     </>
   );
@@ -605,6 +658,60 @@ function InvalidateOnChange({ scene }: { scene: ThreeSceneModel }) {
   useEffect(() => {
     invalidate();
   }, [scene, invalidate]);
+  return null;
+}
+
+/**
+ * Phase 3F.1 — test-only render/compositor synchronisation, root-caused during Phase 3F's own
+ * visual-regression work: a screenshot taken immediately after `invalidate()` can capture a STALE
+ * browser-compositor frame even though the underlying WebGL framebuffer already holds the correct,
+ * newly-rendered pixels (confirmed directly via `gl.readPixels` under Playwright, which read the
+ * exact new value while `toHaveScreenshot()` on the same page kept matching the OLD baseline byte-
+ * for-byte). Screenshot APIs (Playwright's, and Chrome DevTools Protocol's `Page.captureScreenshot`
+ * underneath it) read from the compositor, not from WebGL's own drawing buffer — and a
+ * `frameloop="demand"` canvas that only repaints on `invalidate()` does not reliably trigger enough
+ * repaint/composite cycles on its own for the compositor to have caught up by the time a screenshot
+ * is requested right after.
+ *
+ * `invalidateAndWaitForFrame()` fixes exactly that ordering: it (1) waits for a genuine R3F render
+ * to actually happen (via `useFrame`, which frameloop="demand" only calls during a real triggered
+ * render — never a busy-poll), THEN (2) waits two further animation frames so the browser's own
+ * compositor has a chance to pick up the new canvas content before resolving. Nothing here adds a
+ * continuous render loop: outside of an explicit call, this component does no work at all.
+ *
+ * Test/dev only — `process.env.NODE_ENV === 'production'` skips mounting the global entirely, so
+ * this never ships as product-visible surface area. No renderer internals are exposed beyond the
+ * one method a screenshot test actually needs.
+ */
+function TestRenderSyncAPI() {
+  const invalidate = useThree((s) => s.invalidate);
+  const pendingRef = useRef<Array<() => void>>([]);
+
+  useFrame(() => {
+    if (pendingRef.current.length === 0) return;
+    const resolvers = pendingRef.current;
+    pendingRef.current = [];
+    for (const resolve of resolvers) resolve();
+  });
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const api = {
+      invalidateAndWaitForFrame: () =>
+        new Promise<void>((resolve) => {
+          pendingRef.current.push(() => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+          });
+          invalidate();
+        }),
+    };
+    const w = window as unknown as { __HANGAR_3D_TEST_API__?: typeof api };
+    w.__HANGAR_3D_TEST_API__ = api;
+    return () => {
+      delete w.__HANGAR_3D_TEST_API__;
+    };
+  }, [invalidate]);
+
   return null;
 }
 
@@ -625,8 +732,14 @@ function InvalidateOnChange({ scene }: { scene: ThreeSceneModel }) {
 function MaterialColorSync({ wallColor, roofColor }: { wallColor: string; roofColor: string }) {
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => {
-    sharedMaterial('wall').color.set(wallColor);
-    sharedMaterial('roof').color.set(roofColor);
+    // Phase 3F: both cladding-system variants set unconditionally, every time — only one of each
+    // pair is ever actually rendered for a given `envelope.wallSystem`/`roofSystem` (see
+    // MaterialKey's own doc comment), so there is no need to branch on which is active; setting
+    // both keeps this in sync regardless, with no conditional logic to get out of step.
+    sharedMaterial('wall-profiled').color.set(wallColor);
+    sharedMaterial('wall-sandwich').color.set(wallColor);
+    sharedMaterial('roof-profiled').color.set(roofColor);
+    sharedMaterial('roof-sandwich').color.set(roofColor);
     invalidate();
   }, [wallColor, roofColor, invalidate]);
   return null;
@@ -636,6 +749,7 @@ export function ThreeHangarView({
   scene,
   shadows = true,
   maxDpr = 2,
+  shadowMapSize = 1024,
   wallColor,
   roofColor,
   showScaleFigure = false,
@@ -643,6 +757,12 @@ export function ThreeHangarView({
   scene: ThreeSceneModel;
   shadows?: boolean;
   maxDpr?: number;
+  /** Phase 3F §14 — the fullscreen quality tier's second lever, alongside `maxDpr`: embedded mode
+   *  keeps the pre-3F default (1024, the value already measured against the draw-call budget),
+   *  fullscreen asks for a sharper `2048` — see `HangarPreviewModes.tsx`'s own call site and
+   *  `ShadowMapResize` below for why a size change needs an explicit dispose to actually take
+   *  effect on an already-rendered light. */
+  shadowMapSize?: number;
   /** Phase 3C colour presets (materialPresets.ts) — RenderPresets only, not a geometric or
    *  domain fact (see that module's own architecture note). Default to the base palette's own
    *  colours (materials.ts) so an unset prop renders exactly as before Phase 3C. */
@@ -716,8 +836,10 @@ export function ThreeHangarView({
   // Phase 3E: wall bracing mounts on the SAME `girts` layer/phase — both are the same "secondary
   // steel, always present, not a user control" kind of thing (brief §11).
   const girtStruts = scene.struts.filter((s) => s.role === 'girt' || s.role === 'brace');
-  const wallPanels = scene.panels.filter((p) => p.material === 'wall');
-  const roofPanels = scene.panels.filter((p) => p.material === 'roof');
+  // Phase 3F: matched against BOTH cladding-system variants — see MaterialKey's own doc comment
+  // in threeSceneModel.ts for why `wall`/`roof` split into `-profiled`/`-sandwich`.
+  const wallPanels = scene.panels.filter((p) => p.material === 'wall-profiled' || p.material === 'wall-sandwich');
+  const roofPanels = scene.panels.filter((p) => p.material === 'roof-profiled' || p.material === 'roof-sandwich');
 
   return (
     <Canvas
@@ -735,8 +857,12 @@ export function ThreeHangarView({
     >
       <FitOrthographicCamera scene={scene} />
       <InvalidateOnChange scene={scene} />
-      <SceneLighting scene={scene} shadows={shadows} />
-      <MaterialColorSync wallColor={wallColor ?? MATERIALS.wall.color} roofColor={roofColor ?? MATERIALS.roof.color} />
+      <TestRenderSyncAPI />
+      <SceneLighting scene={scene} shadows={shadows} shadowMapSize={shadowMapSize} />
+      {/* Phase 3F: 'wall-profiled'/'roof-profiled' default colours are the same values the old
+          bare 'wall'/'roof' keys used — both cladding-system variants of each share one default
+          colour by design (materialPresets.ts's own DEFAULT_WALL_PRESET/DEFAULT_ROOF_PRESET). */}
+      <MaterialColorSync wallColor={wallColor ?? MATERIALS['wall-profiled'].color} roofColor={roofColor ?? MATERIALS['roof-profiled'].color} />
 
       {/* Opacity drivers — one per material key that animates by fade rather than growth. Always
           mounted (cheap: no geometry, and useFrame only runs on already-invalidated frames — see
@@ -749,8 +875,14 @@ export function ThreeHangarView({
           alternates with — two drivers on one layer, not a second animation system. */}
       <MaterialOpacityDriver materialKey="footing" layer={foundation} />
       <MaterialOpacityDriver materialKey="frame-secondary" layer={girts} />
-      <MaterialOpacityDriver materialKey="wall" layer={walls} />
-      <MaterialOpacityDriver materialKey="roof" layer={roof} />
+      {/* Phase 3F: one driver per cladding-system variant — only one of each pair is ever actually
+          rendered (see MaterialKey's own doc comment), but both need to stay in lockstep with
+          `walls`/`roof`'s build-up phase regardless of which is active, same reasoning as
+          MaterialColorSync setting colour on both unconditionally. */}
+      <MaterialOpacityDriver materialKey="wall-profiled" layer={walls} />
+      <MaterialOpacityDriver materialKey="wall-sandwich" layer={walls} />
+      <MaterialOpacityDriver materialKey="roof-profiled" layer={roof} />
+      <MaterialOpacityDriver materialKey="roof-sandwich" layer={roof} />
       <MaterialOpacityDriver materialKey="gate-recess" layer={gateLayer} />
       {/* Phase 3D.1: the gate leaf (item 4) wears its own `gate` material, sitting in front of
           `gate-recess` on the very same `gateLayer` — without this it would pop in at full opacity
@@ -839,7 +971,7 @@ export function ThreeHangarView({
       {roof.mounted && roofPanels.map((panel) => (
         <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={envelopeCastsShadow} />
       ))}
-      {roof.mounted && <RidgeCap building={building} castShadow={envelopeCastsShadow} />}
+      {roof.mounted && <RidgeCap building={building} roofSystem={scene.envelope.roofSystem} castShadow={envelopeCastsShadow} />}
     </Canvas>
   );
 }

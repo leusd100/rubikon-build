@@ -1,6 +1,7 @@
 import type { MaterialKey } from '../../../lib/configurator/threeSceneModel';
 
-// RUBIKON BUILD architectural visualisation palette — Phase 3A.
+// RUBIKON BUILD architectural visualisation palette — Phase 3A, extended Phase 3F ("premium
+// render & real materials").
 //
 // The brief's diagnosis of the earlier spike was that it "looked too much like a generic WebGL
 // prototype". Two things caused that: every surface sat in the same narrow mid-grey value band, so
@@ -11,67 +12,114 @@ import type { MaterialKey } from '../../../lib/configurator/threeSceneModel';
 // Hues stay in a narrow cool-steel range on purpose. RUBIKON orange is deliberately absent — it
 // remains UI/accent language and must never become the building's material.
 //
+// PHASE 3F: `wall`/`roof` split into `-profiled`/`-sandwich` variants — see MaterialKey's own doc
+// comment in threeSceneModel.ts for why. Every material below now also carries a RESPONSE, not
+// just a colour: roughness/metalness were tuned so each material class reads as a distinct
+// PHYSICAL SUBSTANCE at normal camera distance, not merely a different value on the same generic
+// grey-plastic response curve — the brief's own repeated "must not look like coloured mesh"
+// requirement. `roughnessNoise`/`normalNoise` are the micro-detail layer (see proceduralTextures.ts):
+// present only where it is visibly useful, always the SAME two small shared textures at different
+// tiling densities, never a bespoke texture per material.
+//
 // Value ladder, lightest to darkest:
-//   frame-primary  #98a3ab   the structural read — lightest thing in the scene
-//   footing        #8b8e86   Phase 3D.1 — isolated footing pedestals, a half-step lighter than the
-//                             slab so they read as a distinct object against the ground/shadow
-//   slab           #7c7f78   matte concrete, the only warm-shifted surface
-//   wall           #6b747c   neutral industrial cladding
-//   roof           #4e565e   profiled sheet, clearly a step below the walls
-//   frame-secondary#454e56   girts: present but subordinate
-//   gate           #3d434a   Phase 3D.1 — the door leaf: a real painted-steel surface, deliberately
-//                             darker than roof/wall (it sits recessed, in shadow) but nowhere near
-//                             gate-recess's near-black — see that entry's own note below
-//   ground         #262a2e   staging: dark, but far enough above the viewport that a contact
-//                             shadow has something to darken
-//   gate-recess    #0b0d0e   Phase 3A: "an opening is the absence of light" — still true of the
-//                             THIN MARGIN and backdrop still visible around/behind the door leaf
-//                             above (a jamb reveal has to read as shadow, not as more cladding),
-//                             just no longer the whole gate the way it was before Phase 3D.1 added
-//                             an actual leaf in front of it
+//   gate                   #c3c9cd  the door leaf — deliberately the LIGHTEST surface in the
+//                                   scene (see its own entry below for why), breaking the ladder's
+//                                   own ordering on purpose
+//   frame-primary        #99a4ac   galvanized structural steel — the structural read
+//   footing               #8b8e86  isolated footing pedestals, a half-step lighter than the slab
+//   slab                  #7c7f78  cast concrete, the one surface allowed a warm shift
+//   wall-sandwich          #6f787f  insulated cladding — flatter, more matte than profiled sheet
+//   wall-profiled          #6b747c  coated profiled steel — a touch more specular than sandwich
+//   roof-sandwich          #525a62  sandwich roof, one step below the wall pairing
+//   roof-profiled          #4e565e  profiled roof, clearly a step below the walls
+//   frame-secondary        #454e56  girts/bracing: present but subordinate
+//   ground                 #262a2e  staging
+//   gate-recess             #0b0d0e  an opening is the absence of light
 
-export const VIEWPORT_BG = '#141416'; // matches --surface-dark, so fog blends into the frame edge
+// Phase 3F §10/§11 — the chosen "Premium Industrial" study's backdrop (see SceneLighting's own
+// doc comment in ThreeHangarView.tsx for the full study comparison). Deliberately darker than
+// `--surface-dark` (#141416, the previous value, which matched the CSS token on purpose) — the
+// darker backdrop is part of what makes this study read as premium rather than a void, but it
+// means the CSS token no longer matches: see configurator.css's own `.hc-preview-surface:has(.hc-preview-canvas)`
+// rule, which must be kept equal to this value by hand (two places, not a build-time shared
+// constant, because one is TS/WebGL and the other is a static stylesheet).
+export const STUDIO_BACKGROUND = '#0e0f11';
 
 export type MaterialSpec = {
   color: string;
   roughness: number;
   metalness: number;
+  /** Repeat density for the shared roughness-noise texture (proceduralTextures.ts), or omitted
+   *  for a material that stays at its flat scalar roughness. A LOW number is a few broad tiles
+   *  across the surface (concrete); a HIGH number is fine-grained micro-breakup (steel). */
+  roughnessNoiseRepeat?: number;
+  /** Repeat density + `normalScale` for the shared normal-noise texture, or omitted for a
+   *  perfectly flat-shaded surface. `scale` is deliberately tiny everywhere it appears — see
+   *  proceduralTextures.ts's own doc comment: "a faint break-up of an otherwise perfectly flat
+   *  specular highlight", never a visible bump pattern. */
+  normalNoise?: { repeat: number; scale: number };
 };
 
 export const MATERIALS: Record<MaterialKey, MaterialSpec> = {
-  // Painted structural steel. Lighter than everything it sits against so an exposed frame reads
-  // clearly — the single biggest lever on the frame-only legibility the spike lost to SVG.
-  'frame-primary': { color: '#98a3ab', roughness: 0.5, metalness: 0.34 },
-  // Girts. Two full value steps below the primary frame, not the "slightly thinner" delta the
-  // spike used, so secondary structure never competes for the structural read.
-  'frame-secondary': { color: '#454e56', roughness: 0.62, metalness: 0.22 },
-  // Sandwich/cold cladding. Matte, so large wall planes stay calm under the key light.
-  wall: { color: '#6b747c', roughness: 0.78, metalness: 0.08 },
-  // Profiled metal sheet: a touch more specular than the walls and a clear value step darker, so
-  // roof and wall never merge into one silhouette the way they did in the spike.
-  roof: { color: '#4e565e', roughness: 0.54, metalness: 0.26 },
-  // Cast concrete: the one surface allowed a warm shift, which is what makes it read as concrete
-  // rather than as more grey steel. Phase 3D.1: roughness pushed further up (0.94 -> 0.97) and
-  // metalness to a true 0 (was 0.03) — restrained, lighting-response-only tuning per the brief's
-  // own scope (no texture map), so a highlight falls off softer and wider than it did, reading as
-  // a dry, chalky cast surface rather than the faint sheen a still-slightly-specular grey plastic
-  // has under the same key light.
-  slab: { color: '#7c7f78', roughness: 0.97, metalness: 0 },
-  // Phase 3D.1, item 6: the isolated footing's own PEDESTAL (its only part standing above grade —
-  // see `Footing` in ThreeHangarView.tsx, the buried pad still shares `slab` above) — a deliberate
-  // half-step lighter than the slab, not a size change (the brief's own instruction: readability
-  // via material/shadow/contrast, not by enlarging it again). At the tightest bay spacing this
-  // configurator allows, a pedestal this close in value to the slab/ground around it kept reading
-  // as the building's own contact shadow rather than as a distinct object; a real precast/formed
-  // pedestal stub is often visibly less weathered than a broad poured slab anyway, so the lighter
-  // value is not an invented contrast, just a plausible one.
-  footing: { color: '#8b8e86', roughness: 0.9, metalness: 0 },
-  // The door leaf itself (Phase 3D.1). A bit more specular than the wall — real sectional/roll-up
-  // doors are smoother painted steel than a profiled cladding panel — and a clear value step below
-  // roof, since it sits back in its own recess and never wants to compete with the sunlit envelope.
-  gate: { color: '#3d434a', roughness: 0.5, metalness: 0.24 },
+  // Galvanized structural steel (brief §4). Cooler and more metallic than the previous painted-
+  // steel tuning (metalness 0.34 -> 0.52), but roughness held high enough (0.4) that it stays
+  // "diffuse enough to remain readable" rather than mirror-like — the brief's own explicit
+  // boundary. The normal-noise gives it the "subtle irregularity" a real hot-dip galvanized
+  // surface has (a mottled spangle pattern, not a mirror finish) without ever reading as a visible
+  // bump map at normal camera distance.
+  'frame-primary': {
+    color: '#99a4ac', roughness: 0.4, metalness: 0.52,
+    roughnessNoiseRepeat: 18,
+    normalNoise: { repeat: 24, scale: 0.06 },
+  },
+  // Same galvanized language, scaled down: two full value steps below the primary frame (unchanged
+  // from Phase 3A) so secondary structure never competes for the structural read. No normal-noise
+  // — these members are visually thin enough that per-brief §9 ("if it cannot be seen... do not
+  // pay for it") a normal perturbation would never actually be legible on them.
+  'frame-secondary': { color: '#454e56', roughness: 0.55, metalness: 0.42, roughnessNoiseRepeat: 14 },
+  // Coated profiled steel wall (brief §2): restrained metalness, moderate-high roughness, a
+  // controlled specular response rather than a flat colour. The normal-noise is deliberately at a
+  // HIGHER repeat than the frame's — profiled sheet's real micro-texture (the coil coating's own
+  // slight orange-peel) is finer-grained than a structural member's mill surface.
+  'wall-profiled': {
+    color: '#6b747c', roughness: 0.56, metalness: 0.26,
+    roughnessNoiseRepeat: 20,
+    normalNoise: { repeat: 40, scale: 0.045 },
+  },
+  // Sandwich panel wall (brief §3): the material response itself, not just the geometry, has to
+  // read as a DIFFERENT substance from profiled sheet at the same nominal colour — flatter face,
+  // softer highlight, more matte. Lower metalness, higher roughness, no normal-noise at all (the
+  // panel's macro geometry already carries the broad flat-face-plus-joint language; adding the
+  // same fine steel-coil micro-detail here would blur the two systems back together, which is
+  // exactly what this split exists to prevent).
+  'wall-sandwich': { color: '#6b747c', roughness: 0.84, metalness: 0.1, roughnessNoiseRepeat: 10 },
+  // Roof pairing, one value step below the wall pairing (unchanged hierarchy) — same profiled/
+  // sandwich response split as the walls, just applied to the roof's own base colour.
+  'roof-profiled': {
+    color: '#4e565e', roughness: 0.52, metalness: 0.28,
+    roughnessNoiseRepeat: 20,
+    normalNoise: { repeat: 40, scale: 0.045 },
+  },
+  'roof-sandwich': { color: '#525a62', roughness: 0.82, metalness: 0.12, roughnessNoiseRepeat: 10 },
+  // Cast concrete (brief §5): the roughness value itself stays very high (a dry, chalky cast
+  // surface, unchanged from Phase 3D.1's own tuning) — what Phase 3F adds is the roughness-noise
+  // at a LOW repeat (a few broad, gentle mottled patches across a slab, not fine grain), which is
+  // the "very subtle procedural noise... tiny roughness breakup" the brief asks for without
+  // tipping into "dirty" or "grainy", both explicitly ruled out.
+  slab: { color: '#7c7f78', roughness: 0.97, metalness: 0, roughnessNoiseRepeat: 5 },
+  footing: { color: '#8b8e86', roughness: 0.9, metalness: 0, roughnessNoiseRepeat: 5 },
+  // The gate leaf (live product review): originally a dark painted-steel tone close in value to
+  // the walls around it — correct in isolation, but next to `gate-recess`'s near-black backdrop it
+  // visually merged into one flat dark hole rather than reading as an actual door. Lightened well
+  // past the wall/frame tones specifically for CONTRAST against that dark recess, not for material
+  // realism — a deliberate simplification (the fuller fix, revealing real interior structure
+  // through an open gate, is tracked separately). Roughness/metalness untouched.
+  gate: {
+    color: '#c3c9cd', roughness: 0.44, metalness: 0.26,
+    normalNoise: { repeat: 30, scale: 0.04 },
+  },
   // The reveal/backdrop AROUND and BEHIND the leaf above — an opening is the absence of light, not
-  // a dark-painted panel, which is still true of the shadow gap a real recessed door leaves.
+  // a dark-painted panel.
   'gate-recess': { color: '#0b0d0e', roughness: 1, metalness: 0 },
   // Retained for completeness of the MaterialKey map. The view does NOT paint a lit ground: a
   // plane large enough to hide its own edge necessarily fills the canvas, which made the preview

@@ -60,12 +60,17 @@ describe('deriveSummary', () => {
     expect(summary.scopeLabels).toEqual([]);
   });
 
+  it('labels 0 gates as "Без воріт", with no size mentioned', () => {
+    expect(summaryFor({ gates: 0 }).gatesLabel).toBe('Без воріт');
+  });
+
   it.each([
-    [0, 'Без воріт'],
-    [1, '1 ворота'],
-    [2, '2 воріт'],
-  ] as const)('labels %i gates as "%s"', (gates, label) => {
-    expect(summaryFor({ gates }).gatesLabel).toBe(label);
+    [1, 'standard', '1 × стандартні, 4×4 м'],
+    [2, 'standard', '2 × стандартні, 4×4 м'],
+    [1, 'double', '1 × для заїзду техніки, 5×5 м'],
+    [2, 'double', '2 × для заїзду техніки, 5×5 м'],
+  ] as const)('labels %i %s gate(s) with their real, fixed size (Phase 3F.1, brief §D): "%s"', (gates, gateType, label) => {
+    expect(summaryFor({ gates, gateType }).gatesLabel).toBe(label);
   });
 });
 

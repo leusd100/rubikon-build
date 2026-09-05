@@ -10,16 +10,29 @@
 
 .hc-hero {
   max-width: var(--content-copy);
-  margin: 0 auto 40px;
+  margin: 0 auto 44px;
   padding-inline: var(--container-gutter);
 }
 
+/* Brought in line with the site-wide .eyebrow pattern (globals.css) — same flex layout and
+   accent-dash marker as every other eyebrow on the site, rather than a one-off plain label.
+   Colour and tracking stay this page's own (a warmer accent, not the muted site default) since
+   this label is doing extra work: flagging a dev-only research screen, not a normal section. */
 .hc-eyebrow {
-  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
   color: var(--accent-dark);
   font: 700 11px/1 var(--font-condensed), sans-serif;
   letter-spacing: .14em;
   text-transform: uppercase;
+}
+
+.hc-eyebrow span {
+  width: 20px;
+  height: 2px;
+  background: var(--accent-dark);
 }
 
 .hc-hero h1 {
@@ -31,23 +44,35 @@
 }
 
 .hc-lede {
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   max-width: 60ch;
   color: var(--text-secondary);
   font-size: 15px;
   line-height: 1.6;
 }
 
+/* Softened from a bordered/backgrounded callout box to a plain caption line — a schematic-scope
+   disclaimer is a footnote, not a warning, and boxing it the same way as an actual warning state
+   (see .hc-field-note-warning) overstated it. The accent mark now lives in a small inline dash
+   before the text, echoing .hc-eyebrow's own marker, instead of a heavy left border. */
 .hc-disclaimer {
-  display: inline-block;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   margin: 0;
-  padding: 10px 14px;
-  border: 1px solid var(--border-default);
-  border-left: 3px solid var(--accent);
-  background: var(--surface-muted);
+  max-width: 60ch;
   color: var(--text-muted);
   font-size: 12.5px;
   line-height: 1.5;
+}
+
+.hc-disclaimer::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 2px;
+  margin-top: 7px;
+  background: var(--border-default);
 }
 
 .hc-layout {
@@ -168,13 +193,15 @@
   line-height: 1.5;
 }
 
-/* Phase 3E.1 — the read-only derived-structure line ("Попередня конструктивна схема"). Reads as a
-   single value, same weight family as .hc-field-value, but a size up: it is the entire content of
-   its section now that the two radiogroups it replaced are gone, not a readout above a control. */
-.hc-structural-summary {
-  margin: 0;
+/* Phase 3F.1 — a note that explains why a selection stopped being valid (brief §B2's own
+   "transparent UI feedback"), not a system error: same restrained accent language the rest of
+   this panel already uses for "pay attention", never an alarming red. */
+.hc-field-note-warning {
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent-dark);
+  background: var(--surface-muted);
   color: var(--text-primary);
-  font: 700 14px/1.3 var(--font-condensed), sans-serif;
+  font-weight: 600;
 }
 
 .hc-option-cards {
@@ -221,6 +248,21 @@
 .hc-option-card input:focus-visible + span {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Phase 3F.1 — an option that would not fit at the current dimensions (a fixed-size gate too
+   large for the current width/eave height, brief §B2). Dimmed and inert rather than hidden: the
+   customer can still see the option exists and why it's unavailable (the field-note beside it),
+   just cannot select it — "explicit UI honesty over silent mutation", the brief's own words. */
+.hc-option-card:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.hc-option-card input:disabled + span {
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-color: var(--border-default);
+  opacity: 0.6;
 }
 
 .hc-option-list {
@@ -270,6 +312,17 @@
   border-radius: var(--radius-md);
   background: var(--surface-dark);
   box-shadow: var(--shadow-card);
+}
+
+/* Phase 3F: the 3D view's own studio backdrop (materials.ts's STUDIO_BACKGROUND, #0e0f11) is
+   deliberately darker than --surface-dark (#141416) — see that constant's own doc comment for why.
+   Left unmatched, the 24px padding ring above would show the lighter site-wide token around a
+   darker WebGL canvas, a visible seam this scoped override (3D mode only — Technical view's own
+   surface keeps --surface-dark untouched) exists to close. Kept as a literal, not a shared build
+   constant, because one side is TypeScript/WebGL and the other a static stylesheet — see
+   STUDIO_BACKGROUND's own comment for the "keep these two equal by hand" pairing. */
+.hc-preview-surface:has(.hc-preview-canvas) {
+  background: #0e0f11;
 }
 
 /* Mode switch above the preview. Sits in the preview pane's flex flow, so the surface below it

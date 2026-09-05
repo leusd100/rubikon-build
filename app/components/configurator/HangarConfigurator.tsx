@@ -17,7 +17,9 @@ export function HangarConfigurator() {
   return (
     <div className="hangar-configurator">
       <header className="hc-hero">
-        <p className="hc-eyebrow">Proof of concept · дослідницький екран</p>
+        <p className="hc-eyebrow">
+          <span /> Proof of concept · дослідницький екран
+        </p>
         <h1>Живий конфігуратор ангара</h1>
         <p className="hc-lede">
           Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.

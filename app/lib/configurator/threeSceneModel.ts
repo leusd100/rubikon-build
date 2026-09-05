@@ -22,16 +22,36 @@ import type { CladdingSystem } from './types';
 // (`roof.overhangM`, `slab.overhangM`) for that same reason, and this file still adds none of its
 // own — `roofSegments`/`slab.corners` below are copied verbatim, overhang included.
 
+/**
+ * Phase 3F — `wall`/`roof` split into per-cladding-system variants (`-profiled`/`-sandwich`), so
+ * the two systems can wear genuinely different material RESPONSE (roughness, metalness, micro-
+ * detail — see materials.ts), not just different colour. Before this phase both systems shared one
+ * `wall`/`roof` material instance and only the geometry (`PanelMesh.claddingSystem`, unchanged)
+ * differed — which is exactly why "graphite profiled sheet" and "graphite sandwich panel" used to
+ * look identical at normal camera distance (brief §3's own diagnosis). `claddingMaterialKey` below
+ * is the ONE place that maps a `CladdingSystem` to its material key — never duplicate that mapping
+ * at a call site.
+ */
 export type MaterialKey =
   | 'frame-primary'
   | 'frame-secondary'
-  | 'wall'
-  | 'roof'
+  | 'wall-profiled'
+  | 'wall-sandwich'
+  | 'roof-profiled'
+  | 'roof-sandwich'
   | 'slab'
   | 'footing'
   | 'gate'
   | 'gate-recess'
   | 'ground';
+
+/** The single mapping from a cladding system to its material key — see `MaterialKey`'s own doc
+ *  comment. `surface` picks the wall/roof half of the key; `system` picks the profiled/sandwich
+ *  half. Used at every panel/gable push site below, and nowhere else computes this mapping. */
+export function claddingMaterialKey(surface: 'wall' | 'roof', system: CladdingSystem): MaterialKey {
+  const variant = system === 'sandwich-panel' ? 'sandwich' : 'profiled';
+  return `${surface}-${variant}` as MaterialKey;
+}
 
 /** A structural member as a centre-line plus the section it should be DRAWN at.
  *
@@ -162,6 +182,11 @@ export type ThreeSceneModel = {
    *  which, and why `engineeringDecision` renders as the slab rather than as nothing. */
   visible: { slab: boolean; footings: boolean; frame: boolean; walls: boolean; roof: boolean; gates: boolean };
   building: ParametricBuildingModel;
+  /** Phase 3F — the two cladding systems in force, exposed at the top level (not just per-panel via
+   *  `PanelMesh.claddingSystem`) for the ONE mesh that has no panel of its own to read it from: the
+   *  ridge cap, which needs to know the roof's system to pick `roof-profiled` vs `roof-sandwich`
+   *  without scanning `panels` for one. */
+  envelope: { wallSystem: CladdingSystem; roofSystem: CladdingSystem };
 };
 
 /**
@@ -325,7 +350,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       id: `wall-${segment.face}-${segment.index}`,
       corners: segment.corners,
       thicknessM: WALL_THICKNESS_M,
-      material: 'wall',
+      material: claddingMaterialKey('wall', domain.envelope.wallSystem),
       claddingSystem: domain.envelope.wallSystem,
     });
   }
@@ -334,7 +359,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       id: `roof-${segment.slope}-${segment.index}`,
       corners: segment.corners,
       thicknessM: ROOF_THICKNESS_M,
-      material: 'roof',
+      material: claddingMaterialKey('roof', domain.envelope.roofSystem),
       claddingSystem: domain.envelope.roofSystem,
     });
   }
@@ -358,7 +383,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       // the far face so its extrusion lands exactly on it.
       zM: gable.face === 'front' ? 0 : lengthM - WALL_THICKNESS_M,
       thicknessM: WALL_THICKNESS_M,
-      material: 'wall',
+      material: claddingMaterialKey('wall', domain.envelope.wallSystem),
       claddingSystem: domain.envelope.wallSystem,
       face: gable.face,
     });
@@ -443,5 +468,6 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       gates: domain.scope.walls && domain.gates > 0,
     },
     building,
+    envelope: { wallSystem: domain.envelope.wallSystem, roofSystem: domain.envelope.roofSystem },
   };
 }

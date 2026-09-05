@@ -1,5 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
-import type { EnvelopeChoice, GateType, RoofStructure, StructuralScheme } from './types';
+import type { EnvelopeChoice, FoundationType, GatesCount, GateType, RoofStructure, StructuralScheme } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE SINGLE SOURCE OF GEOMETRIC TRUTH (Phase 3-0, 2026-09-03)
@@ -326,6 +326,17 @@ export const RIDGE_HEIGHT_STEP_M = 0.1;
 // a design call, not something computed from the building's own dimensions.
 const SLAB_OVERHANG_M = 2;
 const SLAB_THICKNESS_M = 0.3;
+/**
+ * Live product review, Phase 3F.1: a slab this thin read as an afterthought once the customer has
+ * actually, explicitly committed to "Монолітна плита" — a real monolithic slab foundation is a
+ * substantial pour, and the drawing should say so. Deliberately NOT applied to `engineeringDecision`
+ * (still the honest, undecided-by-default representation — showing a bold, confident thick slab
+ * there would claim a decision the customer hasn't made) or to `isolated` (its own footing pad/
+ * pedestal dimensions are untouched, per this same review: "ця ж товщина фундаменту яка і зараз").
+ * A visual-weight decision, not an engineering one — same "design call, not derived" status as
+ * `SLAB_OVERHANG_M` above.
+ */
+const SLAB_THICKNESS_CONFIRMED_MULTIPLIER = 3;
 /** How far the roof plane cantilevers past the wall face, at eave height, on the long sides.
  *  Zero before this change — the roof plane used to stop exactly flush with the wall. See the
  *  slab overhang comment above — same iterative live-comparison process, same "design call"
@@ -663,30 +674,111 @@ function buildBracing(wallSegments: WallSegment[]): BraceMember[] {
     }));
 }
 
-// Gate placement ratios. `standard` is carried over unchanged from the previous scene model so
-// existing gate positions do not silently move; `double` is the wide, tall opening for driving
-// equipment in — proportionally wider AND taller, because a vehicle opening that is only wider
-// still reads as a personnel door.
-//
-// Both remain visual proportions, not opening schedules: the drawing shows a hole in a wall.
-const GATE_PROPORTIONS: Record<GateType, { widthRatio: number; heightRatio: number }> = {
-  standard: { widthRatio: 0.22, heightRatio: 0.72 },
-  double: { widthRatio: 0.34, heightRatio: 0.85 },
+/**
+ * Phase 3F.1, brief §B1 — FIXED, real-world metre dimensions, replacing the previous width/eave-
+ * proportional sizing (which produced a "standard" gate anywhere from ~2.2×2.9 m on the smallest
+ * supported hangar to ~11×10.8 m on the widest — not how a real gate product works: a customer
+ * orders a catalogue size, not a fraction of the building it's installed in). These two values are
+ * RUBIKON BUILD configurator product presets, not universal construction standards — see
+ * GATE_TYPE_LABELS in types.ts for the customer-facing names ("Стандартні" / "Для заїзду техніки").
+ */
+export const GATE_DIMENSIONS_M: Record<GateType, { widthM: number; heightM: number }> = {
+  standard: { widthM: 4, heightM: 4 },
+  double: { widthM: 5, heightM: 5 },
 };
+
+// Placement spacing stays proportional — brief §B1 only fixes gate SIZE, not the margin/gap a
+// renderer places them with, and a wider building still reasonably wants more breathing room
+// around a fixed-size gate than a narrow one does.
 const GATE_GAP_RATIO = 0.08;
 const GATE_MARGIN_RATIO = 0.06;
+
+/**
+ * Phase 3F.1, brief §B2 — a configurator VISUALIZATION constraint, not a sourced engineering
+ * headroom requirement (the brief's own explicit instruction: "do not invent an engineering
+ * headroom requirement unless sourced from a real product system"): the smallest clearance that
+ * keeps a gate's own head from visually touching the eave line it sits under. Deliberately small —
+ * this is about the drawing reading correctly, not a structural lintel allowance.
+ */
+export const GATE_TOP_CLEARANCE_M = 0.3;
+
+/** Whether a gate TYPE's fixed height leaves the brief's own required top clearance under the
+ *  CURRENT eave height — independent of gate count (every gate on the front face shares the same
+ *  eave line). */
+export function gateHeightFits(gateType: GateType, eaveHeightM: number): boolean {
+  return eaveHeightM >= GATE_DIMENSIONS_M[gateType].heightM + GATE_TOP_CLEARANCE_M;
+}
+
+/** The largest gate COUNT (0, 1 or 2 — this configurator's own supported range, see GatesCount in
+ *  types.ts) of a given fixed-size gate type that fits within the current building width, using
+ *  the exact same margin/gap placement formula `buildOpenings` itself uses below — one source of
+ *  truth for "does this fit", never a second copy of the placement maths at a UI call site.
+ *  A small epsilon absorbs float rounding at an exact-fit boundary (e.g. two 4 m standard gates on
+ *  a 10 m wide building lands exactly on the usable width, not a hair over it). */
+export function maxGateCountThatFits(gateType: GateType, widthM: number): 0 | 1 | 2 {
+  const gateWidthM = GATE_DIMENSIONS_M[gateType].widthM;
+  const gapM = widthM * GATE_GAP_RATIO;
+  const marginM = widthM * GATE_MARGIN_RATIO;
+  const usableM = widthM - marginM * 2;
+  const EPSILON_M = 0.01;
+  for (const count of [2, 1] as const) {
+    const totalWidthM = count * gateWidthM + (count - 1) * gapM;
+    if (totalWidthM <= usableM + EPSILON_M) return count;
+  }
+  return 0;
+}
+
+/** Combines both fit checks — the one function a control panel or a defensive domain-model clamp
+ *  should ever call, never re-deriving either check itself. */
+export function gateSelectionFits(gateType: GateType, gates: number, widthM: number, eaveHeightM: number): boolean {
+  if (gates === 0) return true;
+  return gateHeightFits(gateType, eaveHeightM) && gates <= maxGateCountThatFits(gateType, widthM);
+}
+
+/**
+ * Phase 3F.1, brief §B2 — the domain-model-level safety net, same pattern and same rationale as
+ * `clampRidgeHeightM`: "Clamping here rather than in the control means the model is always
+ * self-consistent regardless of how state was produced." If the customer's current gate count/type
+ * no longer fits after a dimension change, this falls back to the largest still-compatible, HONEST
+ * preset — never a scaled-down fake fit (brief's own explicit "do not fake-fit a gate by scaling
+ * it down") — preferring to keep the requested TYPE and only reduce count, then falling back to
+ * the smaller type, then to no gate at all if even one standard gate cannot clear the eave line.
+ * The control panel (ConfiguratorControls.tsx) additionally disables an incompatible option before
+ * a customer can ever select it — this function is the fallback for the state that already exists
+ * when a dimension changes out from under it, not the primary UX.
+ */
+export function clampGateSelection(gates: number, gateType: GateType, widthM: number, eaveHeightM: number): { gates: GatesCount; gateType: GateType } {
+  if (gates === 0) return { gates: 0, gateType };
+  if (gateSelectionFits(gateType, gates, widthM, eaveHeightM)) {
+    return { gates: gates as GatesCount, gateType };
+  }
+  // Same type, fewer gates.
+  const fitCount = maxGateCountThatFits(gateType, widthM);
+  if (gateHeightFits(gateType, eaveHeightM) && fitCount > 0) {
+    return { gates: Math.min(gates, fitCount) as GatesCount, gateType };
+  }
+  // Fall back to the smaller preset entirely.
+  const fallbackType: GateType = 'standard';
+  if (gateSelectionFits(fallbackType, gates, widthM, eaveHeightM)) {
+    return { gates: gates as GatesCount, gateType: fallbackType };
+  }
+  const fallbackCount = maxGateCountThatFits(fallbackType, widthM);
+  if (gateHeightFits(fallbackType, eaveHeightM) && fallbackCount > 0) {
+    return { gates: Math.min(gates, fallbackCount) as GatesCount, gateType: fallbackType };
+  }
+  // Nothing fits (e.g. the building is at or near minimum eave height) — honestly no gate, rather
+  // than a gate that visually touches or exceeds the eave line.
+  return { gates: 0, gateType };
+}
 
 function buildOpenings(
   gates: number,
   gateType: GateType,
   widthM: number,
-  eaveM: number,
 ): OpeningGeometry[] {
   if (gates === 0) return [];
 
-  const { widthRatio, heightRatio } = GATE_PROPORTIONS[gateType];
-  const gateHeightM = round(eaveM * heightRatio);
-  const gateWidthM = round(widthM * widthRatio);
+  const { widthM: gateWidthM, heightM: gateHeightM } = GATE_DIMENSIONS_M[gateType];
   const gapM = widthM * GATE_GAP_RATIO;
   const marginM = widthM * GATE_MARGIN_RATIO;
   const usableM = widthM - marginM * 2;
@@ -872,13 +964,21 @@ function buildInternalColumnFootings(internalColumns: InternalColumn[]): Footing
   }));
 }
 
-function buildSlab(widthM: number, lengthM: number): SlabGeometry {
+/**
+ * Phase 3F.1 — the slab's own thickness now depends on whether the customer has actually,
+ * explicitly chosen "Монолітна плита" (`slab`) — see SLAB_THICKNESS_CONFIRMED_MULTIPLIER's own
+ * doc comment for why `isolated` and `engineeringDecision` both keep the unchanged base value.
+ * A single source of geometric truth, same as every other fact in this file: both renderers pick
+ * up whichever thickness this returns, never a 3D-only visual embellishment layered on top.
+ */
+function buildSlab(widthM: number, lengthM: number, foundationType: FoundationType): SlabGeometry {
   const o = SLAB_OVERHANG_M;
+  const thicknessM = foundationType === 'slab' ? SLAB_THICKNESS_M * SLAB_THICKNESS_CONFIRMED_MULTIPLIER : SLAB_THICKNESS_M;
   return {
     corners: quad(v3(-o, 0, -o), v3(widthM + o, 0, -o), v3(widthM + o, 0, lengthM + o), v3(-o, 0, lengthM + o)),
     widthM: round(widthM + o * 2),
     lengthM: round(lengthM + o * 2),
-    thicknessM: SLAB_THICKNESS_M,
+    thicknessM,
     overhangM: o,
   };
 }
@@ -902,7 +1002,7 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
   const frames = buildFrames(widthM, eaveHeightM, ridgeM, stationsM);
   // Hoisted: buildInternalColumns needs the real gate rectangles to resolve its own conflict
   // check (brief §4) — never a reason for a renderer to invent its own copy of this call.
-  const openings = buildOpenings(domain.gates, domain.gateType, widthM, eaveHeightM);
+  const openings = buildOpenings(domain.gates, domain.gateType, widthM);
   const internalColumns = buildInternalColumns(
     widthM, eaveHeightM, ridgeM, stationsM, openings, domain.structural.scheme, domain.structural.roofStructure,
   );
@@ -932,7 +1032,7 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
     girts: buildGirts(widthM, lengthM, eaveHeightM),
     bracing: buildBracing(wallSegments),
     openings,
-    slab: buildSlab(widthM, lengthM),
+    slab: buildSlab(widthM, lengthM, domain.foundation.type),
     // External + internal column footings merged into one array — see FootingGeometry's own doc
     // comment: both are "one footing per column", distinguished by `side`, not by which array
     // they live in, so a renderer that iterates `footings` picks up internal ones for free.

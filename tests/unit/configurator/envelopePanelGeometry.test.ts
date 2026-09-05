@@ -267,8 +267,11 @@ describe('buildRidgeCapGeometry (Phase 3D.1)', () => {
 });
 
 describe('buildGateLeafGeometry (Phase 3D.1)', () => {
-  // A standard gate at the default 24 m building (GATE_PROPORTIONS in parametricModel.ts:
-  // widthRatio 0.22, heightRatio 0.72 of an 8 m eave) and the taller/wider machinery one.
+  // Representative dimensions for this geometry function's own tests — it takes width/height as
+  // plain parameters and has no opinion on where they came from (Phase 3F.1 fixed the app's own
+  // gate sizes to real metres, GATE_DIMENSIONS_M in parametricModel.ts; these numbers here predate
+  // that and are kept only as "one plausible standard-ish size, one plausible machinery-ish size"
+  // for exercising the geometry builder's own behaviour, not as a claim about current app sizing).
   const STANDARD_W = 5.28;
   const STANDARD_H = 5.76;
   const MACHINERY_W = 8.16;
