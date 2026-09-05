@@ -14,6 +14,13 @@ on:
         type: boolean
         default: false
 
+# Same minimum as quality.yml and sonarcloud.yml: this job only ever reads the repo. It checks out,
+# installs, renders pages and uploads an artifact — it never writes back, and the baseline
+# regeneration path deliberately hands its PNGs over as an artifact for review rather than
+# committing them, so nothing here needs a writable token.
+permissions:
+  contents: read
+
 # Runs on every PR rather than behind a paths filter. The suite renders whole pages, so its real
 # dependency surface is the app's CSS tokens, the shared layout, the design system and the
 # configurator's own geometry/material modules — a path list covering that honestly would be most
