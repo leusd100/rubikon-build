@@ -102,6 +102,8 @@ const LABEL_CHAR_WIDTH_EM = 0.62;
 const HEIGHT_LABEL_GAP_PX = 10;
 /** Breathing room left between the eave label's far edge and the ridge chain's line. */
 const HEIGHT_CHAIN_CLEARANCE_PX = 8;
+/** Breathing room left between the foundation's projected edge and the eave chain's line. */
+const FOUNDATION_CLEARANCE_PX = 10;
 
 function formatMetres(value: number): string {
   // Ukrainian decimal comma, matching the control panel's own readouts — the drawing and the
@@ -272,9 +274,24 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   // the ridge line sat at 58 — straight through the text. Deriving the offset from the label's own
   // estimated width fixes it at every value, including the wider ones ("10,6 м", "12,5 м") where a
   // constant would have had to be tuned for the worst case and waste room in every other.
-  const eaveGuide = heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, heightOffset, false);
+  // The two height chains hang off the building's own base corner, but the FOUNDATION reaches
+  // SLAB_OVERHANG_M past it on every side, and the slab's projected corner lands on the same side
+  // the chains run to. At the base offset the eave chain's lower tick was drawn on top of the slab
+  // edge — reported from the live product. Clearing the foundation's real projected excess fixes it
+  // at every size instead of at the one a bumped constant would be tuned for, and it is measured
+  // from `foundationPoints`, which exist whether or not the foundation is in SCOPE, so guide
+  // placement stays scope-independent (see the bounds-stability tests).
+  const heightAnchor = project({ x: widthM, y: 0, z: 0 });
+  const heightDirection = heightAnchor.x <= centroid.x ? -1 : 1;
+  const foundationExcessPx = foundationPoints.reduce(
+    (worst, p) => Math.max(worst, (p.x - heightAnchor.x) * heightDirection),
+    0,
+  );
+  const clearedHeightOffset = Math.max(heightOffset, foundationExcessPx + FOUNDATION_CLEARANCE_PX);
+
+  const eaveGuide = heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, clearedHeightOffset, false);
   const eaveLabelWidthPx = eaveGuide.text.length * LABEL_FONT_PX * LABEL_CHAR_WIDTH_EM;
-  const ridgeOffset = heightOffset + HEIGHT_LABEL_GAP_PX + eaveLabelWidthPx + HEIGHT_CHAIN_CLEARANCE_PX;
+  const ridgeOffset = clearedHeightOffset + HEIGHT_LABEL_GAP_PX + eaveLabelWidthPx + HEIGHT_CHAIN_CLEARANCE_PX;
 
   const dims = {
     width: edgeGuide({ x: 0, y: 0, z: 0 }, { x: widthM, y: 0, z: 0 }, centroid, edgeOffset, widthM),

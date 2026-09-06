@@ -375,6 +375,34 @@ describe('dimension label framing', () => {
     }
   });
 
+  // Regression: the height chains are anchored to the BUILDING's base corner, but the foundation
+  // slab reaches SLAB_OVERHANG_M past it and its projected corner falls on the same side the
+  // chains run to, so the eave chain's lower tick was drawn on top of the slab edge. Reported from
+  // the live product. Asserted against the foundation's own projected points, which exist whether
+  // or not the foundation is in scope — guide placement must not depend on scope.
+  it('keeps the height chains clear of the foundation, not just of the building', () => {
+    for (const dims of [
+      { width: 24, length: 60, height: 8 },
+      { width: DIMENSION_BOUNDS.width.min, length: DIMENSION_BOUNDS.length.min, height: DIMENSION_BOUNDS.height.min },
+      { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
+      { width: 30, length: 40, height: 12 },
+    ]) {
+      const scene = projectFor({ dimensions: dims });
+      const { eave, ridge } = scene.dimensions;
+      const label = `${dims.width}x${dims.length}x${dims.height}`;
+
+      for (const guide of [eave, ridge]) {
+        const guideX = guide.line[0].x;
+        for (const p of scene.foundation.points) {
+          // Both chains sit outboard of the slab: whichever side they run to, no slab corner may
+          // lie beyond the chain's own line.
+          if (guide.anchor === 'end') expect(guideX, `${label} ${guide.text}`).toBeLessThan(p.x);
+          else expect(guideX, `${label} ${guide.text}`).toBeGreaterThan(p.x);
+        }
+      }
+    }
+  });
+
   it('labels the derived ridge distinctly from the user-set dimensions', () => {
     const dims = projectFor().dimensions;
 
