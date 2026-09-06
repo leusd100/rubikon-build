@@ -12,7 +12,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
   const sharedInquiry = useHangarInquiryContext();
   const [localState, setLocalState] = useState<ConfiguratorState>(DEFAULT_CONFIGURATOR_STATE);
   const state = sharedInquiry?.state ?? localState;
-  const setState = sharedInquiry?.setState ?? setLocalState;
+  const updateBusinessConfiguration = sharedInquiry?.updateBusinessConfiguration ?? setLocalState;
   // Derived once here, not inside Preview/Summary — both read the same DomainModel so they can
   // never disagree about what "walls present" or "area" means. Controls keeps reading/writing
   // raw ConfiguratorState below — it edits user input, not the derived object.
@@ -42,7 +42,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
       </header>
 
       <div className="hc-layout">
-        <ConfiguratorControls state={state} onChange={setState} />
+        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} />
         <div className="hc-preview-pane">
           <HangarPreviewModes domain={domain} />
           <ConfiguratorSummary
