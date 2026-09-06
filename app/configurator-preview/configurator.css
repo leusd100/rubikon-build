@@ -871,25 +871,30 @@
 .hc-foundation.hc-phase-visible,
 .hc-footing.hc-phase-visible { transform: translateY(0); }
 
-/* Annotations get their own, deliberately lighter visual language (Visual Refinement Pass v1) —
-   thinner than every structural line above (.85 primary frame, .85 envelope) so measurement
-   graphics never compete with geometry, per "improve separation between building geometry and
-   measurement graphics". */
+/* Annotations get their own visual language, and it is now a COLOUR one rather than a weight one.
+   Previously they were separated from the structure by being fainter and thinner than it (.75 vs
+   the .85 of frame and envelope) — a difference of grey against grey, which meant the only way to
+   make them more legible was to make them compete with the geometry.
+
+   Moving the annotation layer onto the accent separates the two by hue instead, which is both the
+   clearer split and the ordinary drafting convention: the dimension layer gets its own colour. The
+   tint is --accent-on-dark, NOT --accent — see that token for why the brand orange itself would
+   have made these lines less legible than the grey they replace, not more. */
 .hc-dimension line {
-  stroke: var(--text-on-dark-subtle);
-  stroke-width: .75;
-  stroke-opacity: .8;
+  stroke: var(--accent-on-dark);
+  stroke-width: 1;
+  stroke-opacity: 1;
   vector-effect: non-scaling-stroke;
 }
 
 /* The ridge guide is DERIVED (width + pitch), not a value the user chose. It is drawn one step
    quieter than the three user-set dimensions and its label carries a "~" in the markup, so it can
    never be mistaken for another control's readout. */
-.hc-dimension.is-derived line { stroke-opacity: .5; stroke-dasharray: 3 3; }
-.hc-dimension.is-derived text { fill: var(--text-on-dark-muted); font-size: 14px; }
+.hc-dimension.is-derived line { stroke-opacity: .6; stroke-dasharray: 3 3; }
+.hc-dimension.is-derived text { fill: var(--accent-on-dark); opacity: .8; font-size: 14px; }
 
 .hc-dimension text {
-  fill: var(--text-on-dark);
+  fill: var(--accent-on-dark);
   font: 600 16px var(--font-condensed), sans-serif;
   letter-spacing: .01em;
   /* A soft same-color-as-viewport halo behind each label (not a hard-edged background chip) —

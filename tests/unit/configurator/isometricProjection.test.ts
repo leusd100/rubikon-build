@@ -343,6 +343,38 @@ describe('dimension label framing', () => {
     }
   });
 
+  // Regression: the two height chains hang off the SAME corner and run outward on the same side,
+  // and the ridge chain used to be placed a fixed +24px beyond the eave's line. That cleared the
+  // eave's LINE but not its LABEL, which starts 10px past that line and runs outward from there —
+  // so on the default 24x60 building the ridge's line was drawn straight through the text "8 м".
+  // Reported from the live product, not caught here, because every existing assertion in this file
+  // checks a guide against the BUILDING or against the bounds, and none checked the two height
+  // chains against each other.
+  it('never lets the ridge chain run through the eave chain, at any size', () => {
+    for (const dims of [
+      { width: 24, length: 60, height: 8 },
+      { width: DIMENSION_BOUNDS.width.min, length: DIMENSION_BOUNDS.length.min, height: DIMENSION_BOUNDS.height.min },
+      { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
+      { width: 16, length: 24, height: 6 },
+      { width: 30, length: 90, height: 12.5 },
+    ]) {
+      const { eave, ridge } = projectFor({ dimensions: dims }).dimensions;
+
+      // The eave label's far edge, on the side both chains run toward.
+      const eaveLabelWidth = eave.text.length * 16 * 0.62;
+      const eaveFarEdge = eave.anchor === 'end' ? eave.label.x - eaveLabelWidth : eave.label.x + eaveLabelWidth;
+      const ridgeLineX = ridge.line[0].x;
+      const label = `${dims.width}x${dims.length}x${dims.height}`;
+
+      // Both chains extend the same way, so "beyond" is whichever direction that is.
+      if (eave.anchor === 'end') {
+        expect(ridgeLineX, label).toBeLessThan(eaveFarEdge);
+      } else {
+        expect(ridgeLineX, label).toBeGreaterThan(eaveFarEdge);
+      }
+    }
+  });
+
   it('labels the derived ridge distinctly from the user-set dimensions', () => {
     const dims = projectFor().dimensions;
 

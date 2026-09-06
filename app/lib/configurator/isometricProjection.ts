@@ -96,6 +96,13 @@ const DERIVED_LABEL_FONT_PX = 14;
 /** Condensed 600-weight averages well under 0.6em per glyph; 0.62 leaves deliberate headroom. */
 const LABEL_CHAR_WIDTH_EM = 0.62;
 
+/** Gap between a height chain's own line and where its label starts (see `heightGuide`). Named
+ *  because the ridge chain's offset below has to reason about it to clear the eave chain's LABEL,
+ *  not merely its line. */
+const HEIGHT_LABEL_GAP_PX = 10;
+/** Breathing room left between the eave label's far edge and the ridge chain's line. */
+const HEIGHT_CHAIN_CLEARANCE_PX = 8;
+
 function formatMetres(value: number): string {
   // Ukrainian decimal comma, matching the control panel's own readouts — the drawing and the
   // fields must not print the same number two different ways.
@@ -258,15 +265,24 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const edgeOffset = Math.max(18, Math.min(footprintPx * 0.045, 38));
   const heightOffset = Math.max(20, Math.min(footprintPx * 0.038, 34));
 
+  // Both height chains hang off the same corner and run outward on the same side, so the ridge
+  // chain's line has to clear the eave chain's LABEL — not just its line, which is what a fixed
+  // `+24` assumed. It did not: the eave label starts HEIGHT_LABEL_GAP_PX past its own line and
+  // runs outward from there, so on the default 24x60 building "8 м" occupied offsets 44..74 while
+  // the ridge line sat at 58 — straight through the text. Deriving the offset from the label's own
+  // estimated width fixes it at every value, including the wider ones ("10,6 м", "12,5 м") where a
+  // constant would have had to be tuned for the worst case and waste room in every other.
+  const eaveGuide = heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, heightOffset, false);
+  const eaveLabelWidthPx = eaveGuide.text.length * LABEL_FONT_PX * LABEL_CHAR_WIDTH_EM;
+  const ridgeOffset = heightOffset + HEIGHT_LABEL_GAP_PX + eaveLabelWidthPx + HEIGHT_CHAIN_CLEARANCE_PX;
+
   const dims = {
     width: edgeGuide({ x: 0, y: 0, z: 0 }, { x: widthM, y: 0, z: 0 }, centroid, edgeOffset, widthM),
     length: edgeGuide({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: lengthM }, centroid, edgeOffset, lengthM),
     // Both height chains hang off the same corner — the one the width edge ends at, which the
     // camera basis puts on the outside of the drawing.
-    eave: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, heightOffset, false),
-    // +24, not the original +34 — still enough clearance to keep the ridge chain's own ticks and
-    // label from colliding with the eave chain's (verified live), just tighter to match.
-    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, heightOffset + 24, true),
+    eave: eaveGuide,
+    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, ridgeOffset, true),
   };
 
   const allPoints = [
@@ -295,20 +311,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   // building's own midpoint becomes the frame's midpoint on both axes. The side that needed less
   // room accepts a bit of unused margin; that trade is exactly what "the building is the subject"
   // means in practice.
-  const rawBounds = boundsOf(allPoints);
-  const marginLeft = Math.max(buildingBounds.minX - rawBounds.minX, 0);
-  const marginRight = Math.max(rawBounds.maxX - buildingBounds.maxX, 0);
-  const marginTop = Math.max(buildingBounds.minY - rawBounds.minY, 0);
-  const marginBottom = Math.max(rawBounds.maxY - buildingBounds.maxY, 0);
-  const marginX = Math.max(marginLeft, marginRight);
-  const marginY = Math.max(marginTop, marginBottom);
-
-  const bounds = {
-    minX: buildingBounds.minX - marginX,
-    maxX: buildingBounds.maxX + marginX,
-    minY: buildingBounds.minY - marginY,
-    maxY: buildingBounds.maxY + marginY,
-  };
+  const bounds = boundsOf(allPoints);
 
   // The terrain plane's own corners are a fixed margin in METRE space (terrainCorners in
   // technicalSceneModel.ts), but this projection is oblique — a uniform world-space margin does
@@ -436,7 +439,7 @@ function heightGuide(
     // The derived ridge is annotated at its own top tick; centring both labels on such a short
     // shared stretch collided them.
     label: {
-      x: A.x + 10 * direction,
+      x: A.x + HEIGHT_LABEL_GAP_PX * direction,
       y: derived ? A.y + 5 : (A.y + B.y) / 2,
     },
     anchor: direction < 0 ? 'end' : 'start',

@@ -25,9 +25,9 @@ import { useLayerLifecycle, type LayerTransitionStyle } from './useLayerLifecycl
  *  smaller contributor than the annotation-clearance margin upstream (see the comment above
  *  `edgeOffset` in isometricProjection.ts, tightened alongside this), but every bit of unforced
  *  outer margin counts toward the same comparison. */
-const VIEWBOX_PADDING_MIN = 18;
-const VIEWBOX_PADDING_MAX = 60;
-const VIEWBOX_PADDING_RATIO = 0.035;
+const VIEWBOX_PADDING_MIN = 12;
+const VIEWBOX_PADDING_MAX = 32;
+const VIEWBOX_PADDING_RATIO = 0.02;
 
 function formatMetres(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
