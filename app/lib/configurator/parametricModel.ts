@@ -886,14 +886,21 @@ function doorCandidateXs(gates: number, gateType: GateType, widthM: number): num
   // Preference order, deliberately deterministic: beside the gates first (a personnel door next to
   // the vehicle opening is where one actually goes), then the facade thirds as a fallback for a
   // building with no gates at all.
-  const preferred: number[] = [];
-  if (gateRects.length > 0) {
-    const rightmost = gateRects[gateRects.length - 1];
-    const leftmost = gateRects[0];
-    preferred.push(rightmost.xM + rightmost.widthM + DOOR_GATE_CLEARANCE_M);
-    preferred.push(leftmost.xM - DOOR_GATE_CLEARANCE_M - doorWidthM);
-  }
-  preferred.push(widthM * 0.25 - doorWidthM / 2, widthM * 0.75 - doorWidthM / 2, minX, maxX);
+  const rightmost = gateRects.at(-1);
+  const leftmost = gateRects.at(0);
+  const besideGates = rightmost && leftmost
+    ? [
+      rightmost.xM + rightmost.widthM + DOOR_GATE_CLEARANCE_M,
+      leftmost.xM - DOOR_GATE_CLEARANCE_M - doorWidthM,
+    ]
+    : [];
+  const preferred: number[] = [
+    ...besideGates,
+    widthM * 0.25 - doorWidthM / 2,
+    widthM * 0.75 - doorWidthM / 2,
+    minX,
+    maxX,
+  ];
 
   const clearOfGates = (xM: number) => gateRects.every((rect) => (
     xM + doorWidthM + DOOR_GATE_CLEARANCE_M <= rect.xM

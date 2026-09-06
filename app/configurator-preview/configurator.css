@@ -119,7 +119,12 @@
   margin-bottom: 8px;
 }
 
-.hc-field-head label {
+/* Tag-agnostic on purpose. A field head names either a single control (a <label>, correctly
+   associated) or a RADIOGROUP (a <span> the group points at with aria-labelledby — a <label> with
+   no control is invalid HTML and announces as a label for nothing). Targeting `label` alone left
+   every radiogroup head unstyled, so "Стіни" and "Покрівля" rendered larger and darker than
+   "Ширина" or "Довжина" for no reason anyone chose. */
+.hc-field-head :is(label, span) {
   color: var(--text-secondary);
   font: 600 12px/1 var(--font-manrope), sans-serif;
 }

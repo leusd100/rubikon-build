@@ -401,7 +401,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           </p>
         )}
         <div className="hc-field-head">
-          <label id="hc-gate-count-label">Ворота</label>
+          <span id="hc-gate-count-label">Ворота</span>
         </div>
         <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-gate-count-label">
           {GATES_OPTIONS.map((option) => {
@@ -463,7 +463,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         )}
         <div className="hc-field hc-door-field">
           <div className="hc-field-head">
-            <label id="hc-doors-label">Двері</label>
+            <span id="hc-doors-label">Двері</span>
           </div>
           <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-doors-label">
             {DOOR_OPTIONS.map((option) => {
