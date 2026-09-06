@@ -759,6 +759,7 @@ export function ThreeHangarView({
   wallColor,
   roofColor,
   showScaleFigure = false,
+  bottomInsetPx = 0,
 }: {
   scene: ThreeSceneModel;
   shadows?: boolean;
@@ -772,6 +773,9 @@ export function ThreeHangarView({
   /** Phase 3C colour presets (materialPresets.ts) — RenderPresets only, not a geometric or
    *  domain fact (see that module's own architecture note). Default to the base palette's own
    *  colours (materials.ts) so an unset prop renders exactly as before Phase 3C. */
+  /** Height of the overlay band along the canvas's bottom edge, measured by the readout that
+   *  draws it. Framing only — see `FitOrthographicCamera`. */
+  bottomInsetPx?: number;
   wallColor?: string;
   roofColor?: string;
   /** Phase 3C optional scale reference — off by default (brief §6: "do not clutter the scene"). */
@@ -863,7 +867,7 @@ export function ThreeHangarView({
       // configuration, and HangarPreviewModes supplies the accessible text alternative.
       aria-hidden="true"
     >
-      <FitOrthographicCamera scene={scene} />
+      <FitOrthographicCamera scene={scene} bottomInsetPx={bottomInsetPx} />
       <InvalidateOnChange scene={scene} />
       <TestRenderSyncAPI />
       <SceneLighting scene={scene} shadows={shadows} shadowMapSize={shadowMapSize} />

@@ -187,7 +187,11 @@ test.describe('configurator 3D visual states', () => {
 // lit surfaces average darker. litFrac did NOT move, which is the useful half of that observation —
 // the silhouette is identical, so the change is shading only and touched no extent, exactly what a
 // depth-only edit should do. This guard caught the change on its own, before the PNG diff was read.
-const RENDER_TONE = { litMean: 64.2769, litFrac: 0.1593 } as const;
+// litFrac moved 0.1593 -> 0.2357 when the camera was reframed to use the scene (FIT_MARGIN 0.74 ->
+// 0.9, plus reserving the dimension readout's band). litMean did NOT move, and that split is the
+// useful part: this guard separates "the scene is shaded differently" from "the model occupies a
+// different share of the frame", and a pure reframing must move only the second. It did.
+const RENDER_TONE = { litMean: 64.2769, litFrac: 0.2357 } as const;
 const LIT_MEAN_TOLERANCE = 0.3;
 const LIT_FRAC_TOLERANCE = 0.002;
 

@@ -99,6 +99,9 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
   const [roofPreset, setRoofPreset] = useState<RoofPresetId>(DEFAULT_ROOF_PRESET);
   const [showScaleFigure, setShowScaleFigure] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // How much of the canvas's bottom edge the dimension readout covers, measured by the overlay
+  // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
+  const [overlayInsetPx, setOverlayInsetPx] = useState(0);
 
   // Built here, from the same DomainModel the technical view consumes, so both representations
   // are guaranteed to describe the same configuration. Memoised so a mode switch alone never
@@ -158,6 +161,7 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
             wallColor={wallPresetColor(wallPreset)}
             roofColor={roofPresetColor(roofPreset)}
             showScaleFigure={showScaleFigure}
+            bottomInsetPx={overlayInsetPx}
           />
         </Suspense>
       </ThreeErrorBoundary>
@@ -167,6 +171,7 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
           still leave this orientation readout on screen right up until the fallback to
           Technical actually happens. */}
       <ThreeDimensionOverlay
+        onBottomInsetChange={setOverlayInsetPx}
         widthM={domain.dimensions.widthM}
         lengthM={domain.dimensions.lengthM}
         eaveM={domain.dimensions.eaveHeightM}
