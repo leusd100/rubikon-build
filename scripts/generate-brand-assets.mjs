@@ -35,7 +35,7 @@ function svg(width, height, content, label = 'RUBIKON BUILD') {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill-rule="evenodd" role="img" aria-label="${label}">${content}</svg>\n`;
 }
 function lockup(ink, accent) {
-  return svg(471, 100, `<path fill="${accent}" d="${mark}"/><g fill="${ink}" transform="translate(135 22) scale(.72)">${word('RUBIKON', 12)}</g><g fill="${accent}" transform="translate(135 81) scale(.2)">${word('BUILD', 130)}</g>`);
+  return svg(471, 100, `<path fill="${accent}" d="${mark}"/><g fill="${ink}" transform="translate(135 0) scale(.72)">${word('RUBIKON', 12)}</g><g fill="${accent}" transform="translate(135 77.2) scale(.3)">${word('BUILD', 130)}</g>`);
 }
 const variants = {
   'rubikon-build-dark': lockup(ivory, copper),
