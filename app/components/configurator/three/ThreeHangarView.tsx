@@ -18,7 +18,7 @@ import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator
 import { MATERIALS, STUDIO_BACKGROUND } from './materials';
 import { getGroundFalloffTexture } from './proceduralTextures';
 import { getRepeatedNoiseTexture } from './proceduralTextures';
-import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
+import { buildDoorLeafGeometry, buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
 import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
@@ -197,7 +197,12 @@ function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: bo
  * together with no separate driver of their own.
  */
 function GateLeaf({ leaf, castShadow }: { leaf: GateLeafMesh; castShadow: boolean }) {
-  const geometry = useMemo(() => buildGateLeafGeometry(leaf.widthM, leaf.heightM), [leaf]);
+  const geometry = useMemo(
+    () => (leaf.kind === 'door'
+      ? buildDoorLeafGeometry(leaf.widthM, leaf.heightM)
+      : buildGateLeafGeometry(leaf.widthM, leaf.heightM)),
+    [leaf],
+  );
   useEffect(() => () => geometry.dispose(), [geometry]);
 
   return (
@@ -338,12 +343,54 @@ function Panel({
  *  survive across DIFFERENT panels, which per-component `useMemo` cannot do by itself. */
 const ENVELOPE_GEOMETRY_CACHE = new Map<string, THREE.BufferGeometry>();
 
+/**
+ * Bounded, because the key is a real dimension and dimensions are a SLIDER. Every step of a drag
+ * produces panel sizes that have never been seen before, so an unbounded map keeps one corrugated
+ * geometry — and its GPU buffers — for every size the visitor ever passed through, none of which
+ * they will pass through again. Measured before capping: sweeping length 20 -> 120 and returning
+ * to the starting 60 m left 78 extra live GPU buffers held, a width sweep added 30 more, and the
+ * session went from 36 live buffers to 174 without the building ever changing shape at the end.
+ *
+ * The cap was measured rather than picked. Sweeping length 20 -> 120 and then width 12 -> 48:
+ *
+ *   unbounded   +78 buffers, then +30 more   174 live
+ *   cap 48      +78,                +30      174   (never reached, so it bounds nothing)
+ *   cap 32      +78,                +12      156
+ *   cap 24      +66,                  0      132   <- steady state reached
+ *   cap 8       +18,                  -9      75   (bounds hardest, but regenerates more)
+ *
+ * 24 is where the second sweep stops adding anything, i.e. the cache has reached a steady state
+ * instead of tracking the visitor's history. It is also comfortably above what one configuration
+ * needs: the LARGEST building this tool allows (50 x 120 x 15) uses 36 GPU buffers in total for
+ * the whole scene, and six re-renders that change nothing geometric allocate zero — so there is no
+ * thrash inside a single configuration, which is the failure mode a too-small cap would cause.
+ */
+const ENVELOPE_GEOMETRY_CACHE_MAX = 24;
+
 function envelopeGeometryFor(widthM: number, heightM: number, thicknessM: number, system: CladdingSystem | undefined): THREE.BufferGeometry {
   const key = `${system ?? 'flat'}:${widthM.toFixed(3)}:${heightM.toFixed(3)}:${thicknessM.toFixed(3)}`;
   const existing = ENVELOPE_GEOMETRY_CACHE.get(key);
-  if (existing) return existing;
+  if (existing) {
+    // Re-insert so the Map's own insertion order doubles as recency — the least recently USED
+    // entry is then simply the first one, which is what eviction below takes.
+    ENVELOPE_GEOMETRY_CACHE.delete(key);
+    ENVELOPE_GEOMETRY_CACHE.set(key, existing);
+    return existing;
+  }
+
   const geometry = buildEnvelopePanelGeometry(widthM, heightM, thicknessM, system);
   ENVELOPE_GEOMETRY_CACHE.set(key, geometry);
+
+  while (ENVELOPE_GEOMETRY_CACHE.size > ENVELOPE_GEOMETRY_CACHE_MAX) {
+    const oldestKey = ENVELOPE_GEOMETRY_CACHE.keys().next().value;
+    if (oldestKey === undefined) break;
+    const evicted = ENVELOPE_GEOMETRY_CACHE.get(oldestKey);
+    ENVELOPE_GEOMETRY_CACHE.delete(oldestKey);
+    // Disposing is the whole point of evicting: dropping the reference alone would leave the GPU
+    // buffers allocated until the context goes away.
+    evicted?.dispose();
+  }
+
   return geometry;
 }
 
@@ -754,6 +801,7 @@ export function ThreeHangarView({
   wallColor,
   roofColor,
   showScaleFigure = false,
+  bottomInsetPx = 0,
 }: {
   scene: ThreeSceneModel;
   shadows?: boolean;
@@ -767,6 +815,9 @@ export function ThreeHangarView({
   /** Phase 3C colour presets (materialPresets.ts) — RenderPresets only, not a geometric or
    *  domain fact (see that module's own architecture note). Default to the base palette's own
    *  colours (materials.ts) so an unset prop renders exactly as before Phase 3C. */
+  /** Height of the overlay band along the canvas's bottom edge, measured by the readout that
+   *  draws it. Framing only — see `FitOrthographicCamera`. */
+  bottomInsetPx?: number;
   wallColor?: string;
   roofColor?: string;
   /** Phase 3C optional scale reference — off by default (brief §6: "do not clutter the scene"). */
@@ -789,7 +840,9 @@ export function ThreeHangarView({
   // building's own geometry only), so this can never affect camera framing — same "staging, not
   // the object" rule the ground plane already follows.
   const scaleFigurePosition = useMemo<[number, number, number]>(() => {
-    const firstOpening = building.openings[0];
+    // Explicitly the first GATE, not the first opening: with a door present the door can be
+    // opening 0, and a human figure scaled against a 1 m door instead of the 4 m gate reads wrong.
+    const firstOpening = building.openings.find((o) => o.kind === 'gate') ?? building.openings[0];
     const x = firstOpening ? firstOpening.rect.xM + firstOpening.rect.widthM / 2 : building.footprint.widthM / 2;
     const FIGURE_STANDOFF_M = 1.4; // clear of the slab/gate recess, reads as standing in front of it
     return [x, 0, -FIGURE_STANDOFF_M];
@@ -856,7 +909,7 @@ export function ThreeHangarView({
       // configuration, and HangarPreviewModes supplies the accessible text alternative.
       aria-hidden="true"
     >
-      <FitOrthographicCamera scene={scene} />
+      <FitOrthographicCamera scene={scene} bottomInsetPx={bottomInsetPx} />
       <InvalidateOnChange scene={scene} />
       <TestRenderSyncAPI />
       <SceneLighting scene={scene} shadows={shadows} shadowMapSize={shadowMapSize} />
@@ -889,6 +942,10 @@ export function ThreeHangarView({
           `gate-recess` on the very same `gateLayer` — without this it would pop in at full opacity
           instead of fading in with the recess it sits in front of. */}
       <MaterialOpacityDriver materialKey="gate" layer={gateLayer} />
+      {/* The door rides the same gate layer — both are openings in the same facade and arrive
+          together in the build-up, so they must fade together too or the door pops in at full
+          opacity over a still-materializing gate. */}
+      <MaterialOpacityDriver materialKey="door" layer={gateLayer} />
 
       {/* The building has to read as standing on a surface, not floating in a dark void — the
           single biggest thing separating this from an architectural presentation. A plain lit

@@ -22,6 +22,7 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   foundationType: 'slab',
   scope: ['foundation', 'frame'],
   gates: 0,
+  doors: 0,
   gateType: 'standard',
 };
 

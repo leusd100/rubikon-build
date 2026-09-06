@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DOOR_DIMENSIONS_M,
   GATE_DIMENSIONS_M,
   GATE_TOP_CLEARANCE_M,
   PITCH_MAX_WIDTH_M,
@@ -8,11 +9,13 @@ import {
   ROOF_PITCH_MIN_DEG,
   STRUCTURAL_VISUALIZATION_THRESHOLDS,
   buildParametricModel,
+  clampDoorSelection,
   clampGateSelection,
+  doorFits,
   clampRidgeHeightM,
   defaultRidgeHeightM,
   deriveStructuralVisualization,
-  frameBayCount,
+  deriveBayLayout,
   gateHeightFits,
   gateSelectionFits,
   maxGateCountThatFits,
@@ -250,10 +253,10 @@ describe('bay stations', () => {
   });
 
   it('stays inside the legible 2–10 bay clamp even at maximum length', () => {
-    expect(frameBayCount(L.min)).toBeGreaterThanOrEqual(2);
-    expect(frameBayCount(L.max)).toBeLessThanOrEqual(10);
+    expect(deriveBayLayout(L.min).bayCount).toBeGreaterThanOrEqual(2);
+    expect(deriveBayLayout(L.max).bayCount).toBe(20);
     // The clamp is what bounds member count for BOTH renderers: a 120 m hangar gets 10 bays.
-    expect(modelFor({ length: L.max }).frames).toHaveLength(frameBayCount(L.max) + 1);
+    expect(modelFor({ length: L.max }).frames).toHaveLength(deriveBayLayout(L.max).frameCount);
   });
 
   it('places one portal frame per station', () => {
@@ -541,7 +544,7 @@ describe('footings (Phase 3D — isolated foundation)', () => {
   });
 
   it('never overlaps a neighbouring footing, even at the tightest legal bay spacing', () => {
-    // Shortest length ⇒ fewest, closest-together bays (frameBayCount clamps to a 2-bay minimum),
+    // Shortest length ⇒ fewest, closest-together bays (deriveBayLayout keeps a 2-bay minimum),
     // which is the actual worst case for footing pads colliding along Z.
     const m = modelFor({ width: W.min, length: L.min, height: H.min });
     const stationsZ = [...new Set(m.footings.map((f) => f.zM))].sort((a, b) => a - b);
@@ -696,12 +699,44 @@ describe('internal columns — centreline support (Phase 3E, brief §3-4)', () =
     expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM);
   });
 
-  it('a single centred gate (the default) excludes the conflicting z=0 support and continues deeper in', () => {
+  // Behaviour deliberately REVERSED (live product review). A single gate lands centred on a
+  // symmetric gable, which is exactly the column line, and the old rule resolved that by deleting
+  // the column — so the gable frame stood without its centre support and the row began one bay in.
+  // The gate now steps aside instead, which is the rule the door has always followed: the opening
+  // avoids the column, so the column and its isolated footing survive, and the doorway is still
+  // something you can walk or drive through.
+  it('a single centred gate steps aside so the z=0 support survives, rather than deleting it', () => {
     const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates: 1, gateType: 'standard' });
-    expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(false);
-    // Nothing else was skipped — every OTHER station still has its column.
-    expect(m.internalColumns).toHaveLength(m.bays.stationsM.length - 1);
-    expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM.filter((z) => z !== 0));
+    const midX = m.footprint.widthM / 2;
+
+    expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(true);
+    expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM);
+
+    // The gate moved off the centreline, and it is the GATE that moved: still full preset width.
+    const gate = m.openings.find((o) => o.kind === 'gate')!;
+    expect(gate.rect.widthM).toBe(GATE_DIMENSIONS_M.standard.widthM);
+    expect(midX < gate.rect.xM || midX > gate.rect.xM + gate.rect.widthM).toBe(true);
+
+    // ...and it moved only as far as it had to: still inside the facade, not shoved to a corner.
+    expect(gate.rect.xM).toBeGreaterThan(0);
+    expect(gate.rect.xM + gate.rect.widthM).toBeLessThan(m.footprint.widthM);
+  });
+
+  // The clash test must be per GATE, not across the group's overall span: with two gates the
+  // column line sits in the GAP between them, which is harmless and where a real building would
+  // want it. A span-based test called that a clash and shoved the pair sideways for nothing —
+  // on a 24 m facade, out to 12.5..16.5 and 18.4..22.4, jammed against the far corner.
+  it('leaves a gate pair alone when the column line falls in the gap between them', () => {
+    for (const gateType of ['standard', 'double'] as const) {
+      const shifted = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates: 2, gateType });
+      const midX = shifted.footprint.widthM / 2;
+      const gates = shifted.openings.filter((o) => o.kind === 'gate');
+
+      // The pair still straddles the centreline — i.e. nothing pushed it to one side.
+      expect(gates.some((g) => g.rect.xM + g.rect.widthM < midX), gateType).toBe(true);
+      expect(gates.some((g) => g.rect.xM > midX), gateType).toBe(true);
+      expect(shifted.internalColumns.some((c) => c.stationM === 0), gateType).toBe(true);
+    }
   });
 
   it('two gates leave the centreline clear at z=0 (the gap between them), so no support is skipped', () => {
@@ -922,5 +957,313 @@ describe('girts (Phase 3E, brief §12 audit)', () => {
     const perWall = m.girts.filter((g) => g.a.x === 0).length;
     expect(perWall).toBe(2);
     expect(m.girts).toHaveLength(4);
+  });
+});
+
+describe('personnel door (product surface pass)', () => {
+  const doorOf = (m: ReturnType<typeof modelFor>) => m.openings.find((o) => o.kind === 'door');
+
+  it('is exactly the 1.0 x 2.1 m preset at every building size, never scaled', () => {
+    for (const width of [W.min, 16, 24, 36, W.max]) {
+      for (const height of [H.min, 8, H.max]) {
+        const door = doorOf(modelFor({ width, height }, { doors: 1 }));
+        if (!door) continue; // widths with no legal slot are covered separately below
+        expect(door.rect.widthM, `width ${width}`).toBe(DOOR_DIMENSIONS_M.widthM);
+        expect(door.rect.heightM, `height ${height}`).toBe(DOOR_DIMENSIONS_M.heightM);
+      }
+    }
+  });
+
+  it('sits on the ground, on the front face, like every other opening', () => {
+    const door = doorOf(modelFor({}, { doors: 1 }))!;
+    expect(door.face).toBe('front');
+    expect(door.rect.yM).toBe(0);
+    expect(door.corners.every((c) => c.z === 0)).toBe(true);
+  });
+
+  it('is emitted only when asked for', () => {
+    expect(doorOf(modelFor({}, { doors: 0 }))).toBeUndefined();
+    expect(doorOf(modelFor({}, { doors: 1 }))).toBeDefined();
+  });
+
+  it('is deterministic — the same configuration always places it identically', () => {
+    const a = doorOf(modelFor({ width: 24 }, { doors: 1 }))!;
+    const b = doorOf(modelFor({ width: 24 }, { doors: 1 }))!;
+    expect(a.rect.xM).toBe(b.rect.xM);
+  });
+
+  it('never overlaps a gate, at any gate count or type', () => {
+    for (const gateType of ['standard', 'double'] as const) {
+      for (const gates of [0, 1, 2] as const) {
+        for (const width of [16, 24, 36, W.max]) {
+          const model = modelFor({ width }, { doors: 1, gates, gateType });
+          const door = doorOf(model);
+          if (!door) continue;
+          for (const gate of model.openings.filter((o) => o.kind === 'gate')) {
+            const overlaps = door.rect.xM < gate.rect.xM + gate.rect.widthM
+              && gate.rect.xM < door.rect.xM + door.rect.widthM;
+            expect(overlaps, `${width}m / ${gates} ${gateType} gates`).toBe(false);
+          }
+        }
+      }
+    }
+  });
+
+  it('never sits on the centre-support column line, so a door never deletes a column', () => {
+    for (const width of [24, 30, 36, 44, W.max]) {
+      const model = modelFor({ width }, { doors: 1 });
+      const door = doorOf(model);
+      if (!door) continue;
+      const midX = width / 2;
+      const coversMid = door.rect.xM <= midX && midX <= door.rect.xM + door.rect.widthM;
+      expect(coversMid, `${width}m`).toBe(false);
+    }
+  });
+
+  it('keeps every centre-support column a door would otherwise have removed', () => {
+    for (const width of [24, 36, W.max]) {
+      const withoutDoor = modelFor({ width }, { doors: 0 });
+      const withDoor = modelFor({ width }, { doors: 1 });
+      expect(withDoor.internalColumns.length, `${width}m`).toBe(withoutDoor.internalColumns.length);
+    }
+  });
+
+  it('stays clear of both building corners', () => {
+    for (const width of [16, 24, W.max]) {
+      const door = doorOf(modelFor({ width }, { doors: 1 }));
+      if (!door) continue;
+      expect(door.rect.xM).toBeGreaterThan(0);
+      expect(door.rect.xM + door.rect.widthM).toBeLessThan(width);
+    }
+  });
+
+  it('doorFits and the geometry agree — the UI can never offer a door the model then drops', () => {
+    for (const width of [W.min, 12, 16, 24, W.max]) {
+      for (const gates of [0, 1, 2] as const) {
+        for (const gateType of ['standard', 'double'] as const) {
+          // Compare against the CLAMPED selection the geometry actually saw: the domain model may
+          // have dropped a gate that did not fit, which legitimately changes the door's options.
+          const domain = deriveDomainModel({
+            ...DEFAULT_CONFIGURATOR_STATE,
+            dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width },
+            doors: 1,
+            gates,
+            gateType,
+          });
+          const fits = doorFits(domain.gates, domain.gateType, width);
+          const placed = doorOf(modelFor({ width }, { doors: 1, gates, gateType })) !== undefined;
+          expect(placed, `${width}m / ${gates} ${gateType}`).toBe(fits);
+        }
+      }
+    }
+  });
+
+  it('clampDoorSelection drops an unplaceable door instead of moving or resizing it', () => {
+    expect(clampDoorSelection(0, 1, 'standard', 24)).toEqual({ doors: 0 });
+    expect(clampDoorSelection(1, 1, 'standard', 24)).toEqual({ doors: 1 });
+    const impossible = clampDoorSelection(1, 2, 'double', DIMENSION_BOUNDS.width.min);
+    expect(impossible.doors === 0 || impossible.doors === 1).toBe(true);
+    expect(clampDoorSelection(1, 1, 'standard', 24)).toEqual(
+      clampDoorSelection(1, 1, 'standard', 24),
+    );
+  });
+
+  it('is carried by the domain model as customer input', () => {
+    expect(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, doors: 1 }).doors).toBe(1);
+    expect(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, doors: 0 }).doors).toBe(0);
+  });
+});
+
+describe('bay layout (final micro-polish: real bay rhythm, not stretched frames)', () => {
+  const L = DIMENSION_BOUNDS.length;
+
+  it('produces the intended layout at the reference lengths', () => {
+    // The four the product decision names, plus the two ends of the range.
+    expect(deriveBayLayout(40)).toMatchObject({ bayCount: 5, spacingM: 8 });
+    expect(deriveBayLayout(60)).toMatchObject({ bayCount: 10, spacingM: 6 });
+    expect(deriveBayLayout(80)).toMatchObject({ bayCount: 10, spacingM: 8 });
+    expect(deriveBayLayout(90)).toMatchObject({ bayCount: 15, spacingM: 6 });
+    expect(deriveBayLayout(120)).toMatchObject({ bayCount: 20, spacingM: 6 });
+  });
+
+  it('buys frames with length instead of stretching a fixed count', () => {
+    // The regression this whole change exists for: 120 m used to draw the same 10 bays as 60 m,
+    // 12 m apart, because the old bay count was clamped.
+    expect(deriveBayLayout(120).bayCount).toBe(deriveBayLayout(60).bayCount * 2);
+    expect(deriveBayLayout(120).bayCount).toBeGreaterThan(deriveBayLayout(60).bayCount);
+    expect(deriveBayLayout(60).bayCount).toBeGreaterThan(deriveBayLayout(30).bayCount);
+  });
+
+  // Honest about the one discontinuity the two-nominal rule has, rather than pretending it does
+  // not exist: because both 6 m and 8 m are legitimate targets, there are lengths where the 8 m
+  // family wins and the frame count therefore DROPS as the building gets longer (79 m -> 13 bays
+  // at 6.08 m, 80 m -> 10 bays at 8.00 m). Each layout is uniform and in band, but the transition
+  // is visible when dragging the length slider. Bounded and asserted so it cannot get worse.
+  it('changes bay family at a bounded, known set of lengths', () => {
+    const drops: number[] = [];
+    let previous = deriveBayLayout(L.min).bayCount;
+    for (let lengthM = L.min + 1; lengthM <= L.max; lengthM += 1) {
+      const { bayCount } = deriveBayLayout(lengthM);
+      if (bayCount < previous) {
+        drops.push(lengthM);
+        expect(previous - bayCount, `${lengthM}m drop`).toBeLessThanOrEqual(4);
+      }
+      previous = bayCount;
+    }
+    expect(drops).toEqual([32, 39, 56, 63, 80, 87, 104, 111]);
+  });
+
+  it('keeps every bay within a believable spacing band at every allowed length', () => {
+    for (let lengthM = L.min; lengthM <= L.max; lengthM += 1) {
+      const { spacingM } = deriveBayLayout(lengthM);
+      expect(spacingM, `${lengthM}m`).toBeGreaterThanOrEqual(5);
+      expect(spacingM, `${lengthM}m`).toBeLessThanOrEqual(8.25);
+    }
+  });
+
+  it('never produces a tiny leftover end bay — bays are uniform by construction', () => {
+    for (let lengthM = L.min; lengthM <= L.max; lengthM += 1) {
+      const { bayWidthsM, spacingM } = deriveBayLayout(lengthM);
+      for (const widthM of bayWidthsM) {
+        // Uniform to within the 0.01 m rounding the model rounds every coordinate to.
+        expect(Math.abs(widthM - spacingM), `${lengthM}m bay ${widthM}`).toBeLessThanOrEqual(0.011);
+      }
+    }
+  });
+
+  it('emits ascending stations spanning exactly 0..length, with no zero or negative bay', () => {
+    for (const lengthM of [L.min, 17, 40, 60, 73, 100, L.max]) {
+      const { stationsM, bayWidthsM, frameCount, bayCount } = deriveBayLayout(lengthM);
+      expect(stationsM[0]).toBe(0);
+      expect(stationsM[stationsM.length - 1]).toBeCloseTo(lengthM, 6);
+      expect(frameCount).toBe(bayCount + 1);
+      expect(stationsM).toHaveLength(frameCount);
+      for (let i = 1; i < stationsM.length; i += 1) {
+        expect(stationsM[i], `${lengthM}m station ${i}`).toBeGreaterThan(stationsM[i - 1]);
+      }
+      for (const widthM of bayWidthsM) expect(widthM).toBeGreaterThan(0);
+    }
+  });
+
+  it('is deterministic', () => {
+    for (const lengthM of [40, 60, 100, 120]) {
+      expect(deriveBayLayout(lengthM)).toEqual(deriveBayLayout(lengthM));
+    }
+  });
+
+  it('is the single source every structural system is built from', () => {
+    for (const lengthM of [40, 60, 80, 100, 120]) {
+      const { stationsM, frameCount } = deriveBayLayout(lengthM);
+      const model = modelFor({ length: lengthM, width: 30 }, { foundationType: 'isolated' });
+
+      // Frames sit on the stations, one per station.
+      expect(model.frames.map((f) => f.stationM)).toEqual(stationsM);
+      expect(model.frames).toHaveLength(frameCount);
+
+      // Centre supports (30 m width ⇒ centerSupport scheme) use the same stations.
+      expect(model.internalColumns.length).toBeGreaterThan(0);
+      for (const column of model.internalColumns) {
+        expect(stationsM, `${lengthM}m centre support`).toContain(column.stationM);
+      }
+
+      // Every isolated footing sits at a station too — no foundation without a frame above it.
+      for (const footing of model.footings) {
+        expect(stationsM, `${lengthM}m footing z=${footing.zM}`).toContain(footing.zM);
+      }
+    }
+  });
+
+  it('braces only ever land on real bays of the derived layout', () => {
+    for (const lengthM of [40, 60, 80, 100, 120]) {
+      const { stationsM } = deriveBayLayout(lengthM);
+      const model = modelFor({ length: lengthM });
+      for (const brace of model.bracing) {
+        // Braces are the diagonals of a wall segment, and wall segments are cut at the stations —
+        // so every brace endpoint must land on one, with no brace spanning a phantom bay.
+        const zs = [brace.diagonalA.a, brace.diagonalA.b, brace.diagonalB.a, brace.diagonalB.b].map((p) => p.z);
+        for (const z of zs) {
+          expect(stationsM.some((s) => Math.abs(s - z) < 0.011), `${lengthM}m brace z=${z}`).toBe(true);
+        }
+        expect(brace.bayIndex).toBeGreaterThanOrEqual(0);
+        expect(brace.bayIndex).toBeLessThan(stationsM.length - 1);
+      }
+    }
+  });
+});
+
+describe('narrow-facade opening composition', () => {
+  // The four combinations the final pass names, at the four narrow widths it names. The rule under
+  // test is not "everything fits" — it is that whatever the model reports is HONEST: fixed presets
+  // are never squeezed, openings never overlap each other or the centre-support line, and anything
+  // that cannot fit is dropped rather than drawn somewhere invalid.
+  const widths = [10, 12, 16, 18];
+  const combos = [
+    { gates: 1 as const, gateType: 'standard' as const },
+    { gates: 1 as const, gateType: 'double' as const },
+    { gates: 2 as const, gateType: 'standard' as const },
+    { gates: 2 as const, gateType: 'double' as const },
+  ];
+
+  it('never squeezes a preset, overlaps an opening, or crosses a corner', () => {
+    for (const width of widths) {
+      for (const combo of combos) {
+        const model = modelFor({ width }, { ...combo, doors: 1 });
+        const gates = model.openings.filter((o) => o.kind === 'gate');
+        const doors = model.openings.filter((o) => o.kind === 'door');
+
+        // Presets are never scaled to make something fit.
+        for (const gate of gates) {
+          expect(gate.rect.widthM, `${width}m ${combo.gates}x${combo.gateType}`)
+            .toBe(GATE_DIMENSIONS_M[combo.gateType].widthM);
+          expect(gate.rect.heightM).toBe(GATE_DIMENSIONS_M[combo.gateType].heightM);
+        }
+        for (const door of doors) {
+          expect(door.rect.widthM).toBe(DOOR_DIMENSIONS_M.widthM);
+          expect(door.rect.heightM).toBe(DOOR_DIMENSIONS_M.heightM);
+        }
+
+        // No two openings overlap, whatever survived.
+        const sorted = [...model.openings].sort((a, b) => a.rect.xM - b.rect.xM);
+        for (let i = 1; i < sorted.length; i += 1) {
+          const previous = sorted[i - 1];
+          expect(previous.rect.xM + previous.rect.widthM, `${width}m overlap`)
+            .toBeLessThanOrEqual(sorted[i].rect.xM + 1e-9);
+        }
+
+        // Everything stays inside the facade.
+        for (const opening of model.openings) {
+          expect(opening.rect.xM, `${width}m left edge`).toBeGreaterThanOrEqual(0);
+          expect(opening.rect.xM + opening.rect.widthM, `${width}m right edge`).toBeLessThanOrEqual(width);
+        }
+
+        // A door never removes a structural centre support.
+        const withoutDoor = modelFor({ width }, { ...combo, doors: 0 });
+        expect(model.internalColumns.length, `${width}m ${combo.gates}x${combo.gateType} columns`)
+          .toBe(withoutDoor.internalColumns.length);
+      }
+    }
+  });
+
+  it('reports what actually fits, and the control agrees with the geometry', () => {
+    const rows: string[] = [];
+    for (const width of widths) {
+      for (const combo of combos) {
+        const domain = deriveDomainModel({
+          ...DEFAULT_CONFIGURATOR_STATE,
+          dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width },
+          ...combo,
+          doors: 1,
+        });
+        const model = modelFor({ width }, { ...combo, doors: 1 });
+        const gates = model.openings.filter((o) => o.kind === 'gate').length;
+        const doors = model.openings.filter((o) => o.kind === 'door').length;
+
+        // Whatever the domain clamped to is exactly what the geometry drew — no silent divergence.
+        expect(gates, `${width}m gates`).toBe(domain.gates);
+        expect(doors, `${width}m doors`).toBe(domain.doors);
+        rows.push(`${width}m ${combo.gates}x${combo.gateType} -> ${gates} gate(s), ${doors} door`);
+      }
+    }
+    expect(rows).toHaveLength(widths.length * combos.length);
   });
 });

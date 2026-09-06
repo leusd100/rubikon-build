@@ -18,7 +18,7 @@ import type { EnvelopeChoice } from './types';
 // ParametricBuildingModel and emits meshes instead of polylines.
 
 export type { Vec3 } from './parametricModel';
-export { frameBayCount } from './parametricModel';
+export { deriveBayLayout } from './parametricModel';
 
 /** A closed polygon in building space, metres. */
 export type Poly3 = Vec3[];

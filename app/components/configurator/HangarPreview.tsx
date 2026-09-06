@@ -25,9 +25,9 @@ import { useLayerLifecycle, type LayerTransitionStyle } from './useLayerLifecycl
  *  smaller contributor than the annotation-clearance margin upstream (see the comment above
  *  `edgeOffset` in isometricProjection.ts, tightened alongside this), but every bit of unforced
  *  outer margin counts toward the same comparison. */
-const VIEWBOX_PADDING_MIN = 18;
-const VIEWBOX_PADDING_MAX = 60;
-const VIEWBOX_PADDING_RATIO = 0.035;
+const VIEWBOX_PADDING_MIN = 12;
+const VIEWBOX_PADDING_MAX = 32;
+const VIEWBOX_PADDING_RATIO = 0.02;
 
 function formatMetres(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
@@ -42,7 +42,15 @@ function DimensionGuideGroup({ guide }: { guide: DimensionGuide }) {
       <line x1={guide.ticks[1][0].x} y1={guide.ticks[1][0].y} x2={guide.ticks[1][1].x} y2={guide.ticks[1][1].y} />
       {/* Text comes from the projection, not composed here: the bounds calculation has to know
           the label's width to keep it inside the viewBox, so one module owns the string. */}
-      <text x={guide.label.x} y={guide.label.y} textAnchor={guide.anchor}>{guide.text}</text>
+      <text
+        x={guide.label.x}
+        y={guide.label.y}
+        textAnchor={guide.anchor}
+        transform={guide.rotated ? `rotate(-90 ${guide.label.x} ${guide.label.y})` : undefined}
+        dominantBaseline={guide.rotated ? 'middle' : undefined}
+      >
+        {guide.text}
+      </text>
     </g>
   );
 }

@@ -80,15 +80,31 @@ async function readDrawCalls(page: Page): Promise<number> {
 }
 
 test.describe('configurator 3D build-up (Phase 3B)', () => {
+  /**
+   * One budget for the whole file, because the pressure is on the FILE and not on any one test.
+   *
+   * Every test here pays the same fixed toll before it asserts anything: reach a visible WebGL
+   * canvas (a 20s budget on its own), then drive layer transitions with real settle waits. On CI
+   * that runs against software-rendered WebGL at workers:2, and the same suite takes 12.2 min
+   * there against ~5 min locally — a factor of about 2.4. Measured locally and scaled by it:
+   *
+   *   every layer materializes/dematerializes   36.3s -> ~89s   (had 60s: flaky, passed on retry)
+   *   rapid ON -> OFF -> ON                     21.7s -> ~53s   (had 30s: FAILED, both retries)
+   *   reduced motion                            14.3s -> ~35s   (had 30s)
+   *   mode switch mid build-up                  13.4s -> ~33s   (had 30s)
+   *   dimension change mid-transition           13.3s -> ~33s   (had 30s)
+   *   idle draw calls                            9.7s -> ~24s   (had 30s)
+   *
+   * Five of the six were over budget; only one had ever been given more, which is why this looked
+   * like one flaky test instead of a file-wide shortfall. 150s is ~1.7x the worst estimate, so the
+   * headroom survives a slower runner without hiding a real hang — a genuinely stuck transition
+   * still fails, just 150s later, and none of the coverage is trimmed to fit.
+   */
+  test.describe.configure({ timeout: 150_000 });
   test('every layer materializes and dematerializes in 3D with no runtime error, in either direction', async ({ page }) => {
-    // This is the heaviest test in the file: a 20s budget just to reach a visible canvas
-    // (enterThreeMode), then 4 layers toggled off and back on with explicit settle waits. Under
-    // CI's shared/software-rendered WebGL and workers:2 cap that combination sits right at the
-    // default 30s test timeout — observed failing there as "Target page, context or browser has
-    // been closed" (a timeout-driven context teardown, not a real crash: this suite's own
-    // reduced-motion and interruption variants of the same flow, and this exact test run
-    // repeatedly locally, all pass clean). Double the budget rather than trim real coverage.
-    test.setTimeout(60000);
+    // Still the heaviest test in the file — 4 layers toggled off and back on with explicit settle
+    // waits — but its budget now comes from the describe above, which covers every test here for
+    // the same reason rather than singling this one out.
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);

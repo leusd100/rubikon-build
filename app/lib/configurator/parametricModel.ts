@@ -155,6 +155,10 @@ export type BraceMember = {
 
 export type OpeningGeometry = {
   index: number;
+  /** Which product opening this is. Every consumer — gable holes, the internal-column conflict
+   *  check, the technical view, the 3D recess/leaf pair — reads the same array, so a door
+   *  participates in all of them by existing rather than by being special-cased anywhere. */
+  kind: 'gate' | 'door';
   face: 'front';
   /** Origin-relative rectangle on the face, for renderers that prefer 2D. */
   rect: { xM: number; yM: number; widthM: number; heightM: number };
@@ -258,9 +262,7 @@ export type ParametricBuildingModel = {
 // All of these are VISUAL RHYTHM / VISUAL FORM rules. None of them is an
 // engineering calculation, and no UI copy may present them as one.
 
-const FRAME_TARGET_SPACING_M = 6;
 const FRAME_MIN_BAYS = 2;
-const FRAME_MAX_BAYS = 10;
 
 /**
  * Roof pitch as a function of span.
@@ -346,7 +348,7 @@ const ROOF_OVERHANG_M = 1.5;
 // Phase 3D — isolated-footing schematic dimensions. Fixed and round on purpose (see
 // FootingGeometry's own doc comment: this is a visualisation, never an engineering output).
 // Sized to read clearly next to the column sections below without ever touching a neighbouring
-// footing at the tightest bay spacing this configurator allows (FRAME_TARGET_SPACING_M = 6 m,
+// footing at the tightest bay spacing this configurator allows (deriveBayLayout's 6 m nominal,
 // clamped to a 2-bay minimum — even a 10 m-long building still spaces columns 5 m apart, well
 // clear of even the larger pad below).
 //
@@ -411,15 +413,78 @@ export function roofPitchDegForWidth(widthM: number): number {
 }
 
 /**
- * How many structural bays a span gets — a visual-rhythm heuristic (target ~6 m,
- * clamped to a legible 2–10), NOT a structural span calculation. Keep it framed
- * that way in any UI copy. The clamp also bounds member count for both
- * renderers: a 120 m hangar gets 10 bays, not 20.
+ * The one authoritative longitudinal bay layout. Every structural system — portal/truss frames,
+ * external columns, centre supports, isolated footings, wall/roof segmentation, bracing selection,
+ * the technical view and the build-up sequence — reads its stations from here. Nothing derives its
+ * own spacing.
+ *
+ * WHAT THIS REPLACED, and why it was wrong: bays used to be `round(length / 6)` clamped to a
+ * maximum of 10, then divided uniformly. The clamp meant that past ~80 m the frames simply
+ * stretched — a 120 m hangar got the same 10 bays as a 60 m one, at 12 m spacing, and the old
+ * comment said so explicitly ("a 120 m hangar gets 10 bays, not 20") because the clamp existed to
+ * bound member count. Lengths that were not multiples of 6 also produced arbitrary grids (40 m ->
+ * 7 bays at 5.71 m). Both read as a stretched drawing rather than a building.
+ *
+ * THE RULE: bays are always UNIFORM, and the bay count is chosen so the resulting spacing lands as
+ * close as possible to one of two preferred values — 6 m or 8 m — with 6 m winning a tie because
+ * the denser rhythm reads better. That is all. It is a visualisation rhythm, not a structural span
+ * calculation, and no UI copy should imply otherwise.
+ *
+ * It reproduces the intended layouts exactly:
+ *   40 m -> 5 bays x 8.00 m      60 m -> 10 bays x 6.00 m     80 m -> 10 bays x 8.00 m
+ *   90 m -> 15 bays x 6.00 m    120 m -> 20 bays x 6.00 m
+ * and 120 m is genuinely twice 60 m's frame count rather than the same frames twice as far apart.
+ *
+ * Across every length this configurator allows (10-120 m) spacing stays within 5.00-8.25 m, and
+ * only 12 of those 111 lengths land more than 0.35 m from a nominal 6 or 8 — 11 of them at 28 m or
+ * shorter, where a building is only 2-5 bays long and any layout is coarse.
+ *
+ * A mixed 6/8 layout was evaluated for those outliers (20 m = 6+6+8 exactly, 22 m = 6+8+8, and so
+ * on) and rejected. It buys exact nominal widths on five short lengths — the odd lengths cannot be
+ * expressed as 6a+8b at all, since both are even — and pays for them with bays of unequal width in
+ * every renderer, an arrangement question with no symmetric answer for several of those lengths
+ * (26 m has no palindromic 6/8 decomposition), and a second code path to test. Identical bays are
+ * worth more here than exact nominal widths on a handful of short buildings: uniform spacing is
+ * more visually regular, is trivially deterministic, and makes a tiny leftover end bay literally
+ * impossible rather than merely avoided.
  */
-export function frameBayCount(spanMetres: number): number {
-  const raw = Math.round(spanMetres / FRAME_TARGET_SPACING_M);
-  return Math.min(FRAME_MAX_BAYS, Math.max(FRAME_MIN_BAYS, raw));
+const PREFERRED_BAY_SPACINGS_M = [6, 8] as const;
+
+export type BayLayout = {
+  /** Frame positions along the length, ascending, always starting at 0 and ending at lengthM. */
+  stationsM: number[];
+  /** Width of each bay between consecutive stations. Uniform by construction. */
+  bayWidthsM: number[];
+  /** Frames (portals/trusses), i.e. stations — always bayCount + 1. */
+  frameCount: number;
+  bayCount: number;
+  /** The preferred spacing this layout was fitted to (6 or 8), for reporting/tests. */
+  nominalSpacingM: number;
+  /** The actual uniform bay width. */
+  spacingM: number;
+};
+
+export function deriveBayLayout(lengthM: number): BayLayout {
+  let best: { bayCount: number; spacingM: number; nominalSpacingM: number; deviation: number } | null = null;
+
+  for (const nominalSpacingM of PREFERRED_BAY_SPACINGS_M) {
+    const bayCount = Math.max(FRAME_MIN_BAYS, Math.round(lengthM / nominalSpacingM));
+    const spacingM = lengthM / bayCount;
+    const deviation = Math.abs(spacingM - nominalSpacingM);
+    // Strict `<` so an exact tie keeps the earlier (6 m) candidate — at 120 m both 20x6 and 15x8
+    // are exact, and the denser rhythm is the better drawing.
+    if (!best || deviation < best.deviation - 1e-9) {
+      best = { bayCount, spacingM, nominalSpacingM, deviation };
+    }
+  }
+
+  const { bayCount, spacingM, nominalSpacingM } = best!;
+  const stationsM = Array.from({ length: bayCount + 1 }, (_, i) => round((i / bayCount) * lengthM));
+  const bayWidthsM = stationsM.slice(1).map((z, i) => round(z - stationsM[i]));
+
+  return { stationsM, bayWidthsM, frameCount: stationsM.length, bayCount, nominalSpacingM, spacingM: round(spacingM) };
 }
+
 
 /**
  * Phase 3E.1 (the "structural auto-derivation" follow-up brief) — PRODUCT / VISUALIZATION
@@ -471,9 +536,16 @@ export const STRUCTURAL_VISUALIZATION_THRESHOLDS = {
  * to *look* more complete would be the wrong kind of honesty for a function whose whole job is to
  * say plainly what actually drives it.
  */
+/** Whether this width gets a centre-support column row. Extracted so the gate placement, the door
+ *  placement and the column builder all read ONE rule rather than three copies of a threshold
+ *  comparison — the same single-source discipline `deriveBayLayout` exists for. */
+export function hasCentreSupport(widthM: number): boolean {
+  return widthM >= STRUCTURAL_VISUALIZATION_THRESHOLDS.CENTER_SUPPORT_FROM_WIDTH_M;
+}
+
 export function deriveStructuralVisualization(widthM: number): { scheme: StructuralScheme; roofStructure: RoofStructure } {
   const roofStructure: RoofStructure = widthM < STRUCTURAL_VISUALIZATION_THRESHOLDS.TRUSS_FROM_WIDTH_M ? 'portalRafter' : 'truss';
-  const scheme: StructuralScheme = widthM < STRUCTURAL_VISUALIZATION_THRESHOLDS.CENTER_SUPPORT_FROM_WIDTH_M ? 'clearSpan' : 'centerSupport';
+  const scheme: StructuralScheme = hasCentreSupport(widthM) ? 'centerSupport' : 'clearSpan';
   return { scheme, roofStructure };
 }
 
@@ -519,10 +591,6 @@ export function pitchDegForRidge(widthM: number, eaveHeightM: number, ridgeM: nu
   const halfSpan = widthM / 2;
   if (halfSpan <= 0) return ROOF_PITCH_MIN_DEG;
   return round(Math.atan((ridgeM - eaveHeightM) / halfSpan) / DEG, 4);
-}
-
-function buildBayStations(lengthM: number, count: number): number[] {
-  return Array.from({ length: count + 1 }, (_, i) => round((i / count) * lengthM));
 }
 
 function buildFrames(widthM: number, eaveM: number, ridgeM: number, stationsM: number[]): PortalFrame[] {
@@ -650,7 +718,7 @@ function buildGirts(widthM: number, lengthM: number, eaveM: number): Member[] {
  *
  * Bay selection: first bay, last bay ("near one end, near the opposite end" — brief's own words),
  * plus the middle bay once there are enough of them for a third braced zone to read as "a middle
- * zone" rather than "the same end again" — six bays is the point `frameBayCount` itself starts
+ * zone" rather than "the same end again" — six bays is the point `deriveBayLayout` itself starts
  * meaning a genuinely long building (its own target spacing is 6 m, so six bays is a ~36 m run).
  * Both side walls get the same bay indices, for the plan-symmetry a real building would have.
  */
@@ -771,11 +839,109 @@ export function clampGateSelection(gates: number, gateType: GateType, widthM: nu
   return { gates: 0, gateType };
 }
 
-function buildOpenings(
+/**
+ * The personnel door, as a RUBIKON BUILD configurator preset — 1.0 x 2.1 m. Like GATE_DIMENSIONS_M
+ * this is a product size, not a construction standard, and it never scales with the building.
+ */
+export const DOOR_DIMENSIONS_M = { widthM: 1, heightM: 2.1 } as const;
+
+/** Clear distance the door keeps from a building corner, so it never lands in the wall's own
+ *  return where a corner column and the side-wall bracing already are. */
+const DOOR_CORNER_CLEARANCE_M = 1.2;
+/** Clear distance from a gate opening, so the two never share a jamb. */
+const DOOR_GATE_CLEARANCE_M = 0.8;
+/** Clear distance from the centre-support column line. The door avoids that line rather than the
+ *  column avoiding the door: a door must never be the reason a structural column disappears, and
+ *  keeping the avoidance on this side leaves `buildInternalColumns` independent of doors entirely
+ *  (it would otherwise skip a column for a 1 m opening, which is not how a real building works). */
+const DOOR_COLUMN_CLEARANCE_M = 0.6;
+
+/** The gates' version of DOOR_COLUMN_CLEARANCE_M, and the same principle applied consistently:
+ *  the OPENING avoids the centre-support line, never the other way round.
+ *
+ *  That principle was already written down for the door — "a door must never be the reason a
+ *  structural column disappears" — but gates were still allowed to delete the first column of the
+ *  centre row. On the default 24x60 building a single gate lands dead centre (10..14 m against a
+ *  column line at 12), so the row simply began one bay in and the gable frame stood without its
+ *  centre support. Gates now step aside by this much instead, which restores the column and its
+ *  footing while leaving the doorway genuinely walk-through — the point of the whole rule.
+ *
+ *  Larger than the door's 0.6 m because this is the opening people drive through, and because the
+ *  gate is wide enough that a hair's clearance would read as "the column is in the doorway" even
+ *  when it geometrically is not. */
+const GATE_COLUMN_CLEARANCE_M = 0.5;
+
+/** Every X where a 1 m door would be legal on the front face, in preference order. Pure, and
+ *  shared by the fit check and the geometry builder so the UI can never offer a door the model
+ *  then refuses to place. */
+function doorCandidateXs(gates: number, gateType: GateType, widthM: number): number[] {
+  const { widthM: doorWidthM } = DOOR_DIMENSIONS_M;
+  const gateRects = buildGateRects(gates, gateType, widthM);
+  const midX = widthM / 2;
+
+  const minX = DOOR_CORNER_CLEARANCE_M;
+  const maxX = widthM - DOOR_CORNER_CLEARANCE_M - doorWidthM;
+  if (maxX < minX) return [];
+
+  // Preference order, deliberately deterministic: beside the gates first (a personnel door next to
+  // the vehicle opening is where one actually goes), then the facade thirds as a fallback for a
+  // building with no gates at all.
+  const rightmost = gateRects.at(-1);
+  const leftmost = gateRects.at(0);
+  const besideGates = rightmost && leftmost
+    ? [
+      rightmost.xM + rightmost.widthM + DOOR_GATE_CLEARANCE_M,
+      leftmost.xM - DOOR_GATE_CLEARANCE_M - doorWidthM,
+    ]
+    : [];
+  const preferred: number[] = [
+    ...besideGates,
+    widthM * 0.25 - doorWidthM / 2,
+    widthM * 0.75 - doorWidthM / 2,
+    minX,
+    maxX,
+  ];
+
+  const clearOfGates = (xM: number) => gateRects.every((rect) => (
+    xM + doorWidthM + DOOR_GATE_CLEARANCE_M <= rect.xM
+    || xM >= rect.xM + rect.widthM + DOOR_GATE_CLEARANCE_M
+  ));
+  const clearOfColumnLine = (xM: number) => (
+    xM + doorWidthM + DOOR_COLUMN_CLEARANCE_M <= midX || xM >= midX + DOOR_COLUMN_CLEARANCE_M
+  );
+
+  return preferred
+    .map((xM) => round(xM))
+    .filter((xM) => xM >= minX && xM <= maxX && clearOfGates(xM) && clearOfColumnLine(xM));
+}
+
+/** Can a door be placed at all at these dimensions? Same answer the geometry builder will give,
+ *  because both read `doorCandidateXs`. Consumed by the controls (to disable the option) and by
+ *  `clampDoorSelection` (so the model stays self-consistent however state was produced). */
+export function doorFits(gates: number, gateType: GateType, widthM: number): boolean {
+  return doorCandidateXs(gates, gateType, widthM).length > 0;
+}
+
+/** Domain-level safety net, exactly mirroring `clampGateSelection`: a door that cannot be placed
+ *  is dropped rather than drawn somewhere invalid. Never resizes or relocates it silently. */
+export function clampDoorSelection(
+  doors: number,
   gates: number,
   gateType: GateType,
   widthM: number,
-): OpeningGeometry[] {
+): { doors: 0 | 1 } {
+  if (doors <= 0) return { doors: 0 };
+  return { doors: doorFits(gates, gateType, widthM) ? 1 : 0 };
+}
+
+/** Where the gates sit on the front face, as plain rectangles. Extracted so the door's placement
+ *  can read the exact same numbers the gates are drawn from — `maxGateCountThatFits` already
+ *  documents why this placement formula must have exactly one home. */
+function buildGateRects(
+  gates: number,
+  gateType: GateType,
+  widthM: number,
+): { xM: number; widthM: number; heightM: number }[] {
   if (gates === 0) return [];
 
   const { widthM: gateWidthM, heightM: gateHeightM } = GATE_DIMENSIONS_M[gateType];
@@ -783,22 +949,121 @@ function buildOpenings(
   const marginM = widthM * GATE_MARGIN_RATIO;
   const usableM = widthM - marginM * 2;
   const totalWidthM = gates * gateWidthM + (gates - 1) * gapM;
-  const startM = marginM + Math.max(0, (usableM - totalWidthM) / 2);
+  const centredStartM = marginM + Math.max(0, (usableM - totalWidthM) / 2);
+  const pitchM = gateWidthM + gapM;
+  const startM = clearOfCentreColumn(centredStartM, { gates, gateWidthM, pitchM, totalWidthM, marginM, widthM });
 
-  return Array.from({ length: gates }, (_, index) => {
-    const xM = round(startM + index * (gateWidthM + gapM));
-    return {
-      index,
-      face: 'front' as const,
-      rect: { xM, yM: 0, widthM: gateWidthM, heightM: gateHeightM },
-      corners: quad(
-        v3(xM, gateHeightM, 0),
-        v3(xM + gateWidthM, gateHeightM, 0),
-        v3(xM + gateWidthM, 0, 0),
-        v3(xM, 0, 0),
-      ),
-    };
+  return Array.from({ length: gates }, (_, index) => ({
+    xM: round(startM + index * (gateWidthM + gapM)),
+    widthM: gateWidthM,
+    heightM: gateHeightM,
+  }));
+}
+
+/**
+ * Slides the gate group sideways, as a group, until the centre-support column line is clear of
+ * every gate.
+ *
+ * Moves the WHOLE group rather than re-spacing it: the gap and margin ratios are the drawing's own
+ * composition, and re-deriving them per case would put two gates at spacings no other width
+ * produces. The group keeps its shape and simply steps aside.
+ *
+ * The clash test is per GATE, never per group. A group-level span test was written first and was
+ * wrong in a way worth recording: with two gates the column line sits in the GAP between them —
+ * harmless, and exactly where a real building would want it — but a span test sees it inside the
+ * group's overall extent and shoves the pair sideways for nothing. On a 24 m building that pushed
+ * them to 12.5..16.5 and 18.4..22.4, jammed against the far corner, to avoid a column that was
+ * never in anybody's way.
+ *
+ * Candidate positions are the starts that put one gate's edge exactly on its clearance line, in
+ * either direction; the one nearest the centred position wins, so the facade moves as little as it
+ * has to. On a tie — one gate on a symmetric gable, the common case — the stable sort leaves the
+ * left candidate first. That is an arbitrary but deterministic choice, and deliberately described
+ * as one: both directions were checked and they are equivalent for the door, which lands beside
+ * the gate either way because `doorCandidateXs` avoids the column line on its own account.
+ *
+ * Returns the centred start unchanged when the building has no centre row, when nothing clashes,
+ * or when no candidate fits between the margins. That last case is a real dead end rather than a
+ * silent squeeze, and `buildInternalColumns` still drops the column there.
+ */
+function clearOfCentreColumn(
+  centredStartM: number,
+  geom: { gates: number; gateWidthM: number; pitchM: number; totalWidthM: number; marginM: number; widthM: number },
+): number {
+  const { gates, gateWidthM, pitchM, totalWidthM, marginM, widthM } = geom;
+  if (!hasCentreSupport(widthM)) return centredStartM;
+
+  const midX = widthM / 2;
+  const offsets = Array.from({ length: gates }, (_, index) => index * pitchM);
+  // Strictly inside the forbidden band, with a hair of tolerance. Every candidate below is built
+  // to land EXACTLY on its clearance line, so an inclusive test rejects each of its own solutions
+  // and the group never moves at all — which is precisely what happened: the single centred gate
+  // stayed at 10..14 and the column stayed deleted, with the shift silently doing nothing. The
+  // tolerance also keeps the answer stable against the floating-point noise of computing a
+  // candidate and then re-deriving the same edge from it.
+  const TOUCHING_M = 1e-6;
+  const clashes = (startM: number) => offsets.some((offsetM) => {
+    const loM = startM + offsetM - GATE_COLUMN_CLEARANCE_M + TOUCHING_M;
+    const hiM = startM + offsetM + gateWidthM + GATE_COLUMN_CLEARANCE_M - TOUCHING_M;
+    return midX > loM && midX < hiM;
   });
+  if (!clashes(centredStartM)) return centredStartM;
+
+  const minStartM = marginM;
+  const maxStartM = widthM - marginM - totalWidthM;
+
+  const candidates = offsets
+    .flatMap((offsetM) => [
+      midX - GATE_COLUMN_CLEARANCE_M - offsetM - gateWidthM,
+      midX + GATE_COLUMN_CLEARANCE_M - offsetM,
+    ])
+    .filter((startM) => startM >= minStartM && startM <= maxStartM && !clashes(startM))
+    .sort((a, b) => Math.abs(a - centredStartM) - Math.abs(b - centredStartM));
+
+  return candidates[0] ?? centredStartM;
+}
+
+function openingFromRect(
+  index: number,
+  kind: OpeningGeometry['kind'],
+  rect: { xM: number; widthM: number; heightM: number },
+): OpeningGeometry {
+  const { xM, widthM: openingWidthM, heightM } = rect;
+  return {
+    index,
+    kind,
+    face: 'front' as const,
+    rect: { xM, yM: 0, widthM: openingWidthM, heightM },
+    corners: quad(
+      v3(xM, heightM, 0),
+      v3(xM + openingWidthM, heightM, 0),
+      v3(xM + openingWidthM, 0, 0),
+      v3(xM, 0, 0),
+    ),
+  };
+}
+
+function buildOpenings(
+  gates: number,
+  gateType: GateType,
+  doors: number,
+  widthM: number,
+): OpeningGeometry[] {
+  const openings = buildGateRects(gates, gateType, widthM)
+    .map((rect, index) => openingFromRect(index, 'gate', rect));
+
+  if (doors > 0) {
+    // First candidate wins — `doorCandidateXs` is already ordered by preference and has already
+    // rejected anything too close to a corner, a gate or the centre-support line, so there is no
+    // second-guessing to do here. No candidate means no door: the opening is dropped rather than
+    // forced somewhere invalid, and the control offering it is disabled by the same predicate.
+    const [xM] = doorCandidateXs(gates, gateType, widthM);
+    if (xM !== undefined) {
+      openings.push(openingFromRect(openings.length, 'door', { xM, ...DOOR_DIMENSIONS_M }));
+    }
+  }
+
+  return openings;
 }
 
 /**
@@ -832,6 +1097,11 @@ function buildInternalColumns(
   const columns: InternalColumn[] = [];
   let index = 0;
   for (const z of stationsM) {
+    // Last resort, not the normal path. Gates now step aside from this line themselves
+    // (`clearOfCentreColumn`), which is the same principle the door has always followed: the
+    // OPENING avoids the column, so the column and its footing survive. This branch only fires
+    // where no shifted position fits between the facade margins, and dropping the column is still
+    // better than drawing one in the middle of a doorway.
     const conflictsWithGate = z === 0 && openings.some((o) => {
       const loX = o.rect.xM - INTERNAL_COLUMN_GATE_CLEARANCE_M;
       const hiX = o.rect.xM + o.rect.widthM + INTERNAL_COLUMN_GATE_CLEARANCE_M;
@@ -997,12 +1267,13 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
   const pitchDeg = domain.roof.pitchDeg;
   const ridgeM = ridgeHeightM(widthM, eaveHeightM, pitchDeg);
 
-  const count = frameBayCount(lengthM);
-  const stationsM = buildBayStations(lengthM, count);
+  const bayLayout = deriveBayLayout(lengthM);
+  const { stationsM } = bayLayout;
+  const count = bayLayout.bayCount;
   const frames = buildFrames(widthM, eaveHeightM, ridgeM, stationsM);
   // Hoisted: buildInternalColumns needs the real gate rectangles to resolve its own conflict
   // check (brief §4) — never a reason for a renderer to invent its own copy of this call.
-  const openings = buildOpenings(domain.gates, domain.gateType, widthM);
+  const openings = buildOpenings(domain.gates, domain.gateType, domain.doors, widthM);
   const internalColumns = buildInternalColumns(
     widthM, eaveHeightM, ridgeM, stationsM, openings, domain.structural.scheme, domain.structural.roofStructure,
   );

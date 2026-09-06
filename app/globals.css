@@ -23,6 +23,12 @@
   --text-on-dark: #c7cec9;
   --text-on-dark-muted: #aeb7b0;
   --text-on-dark-subtle: #939c95;
+  /* The accent, lightened for dark surfaces. --accent (#b6532c) is a burnt terracotta and scores
+     only 3.89:1 on the configurator's near-black canvas — DARKER than --text-on-dark-subtle's
+     6.78:1 — so using the brand colour as-is on a dark ground makes a mark less legible, not more.
+     This tint reaches 8.02:1, so it is both unmistakably the brand family and more readable than
+     the neutral it replaces. For marks ON dark surfaces only; --accent stays the accent on light. */
+  --accent-on-dark: #e3956c;
   --focus-ring: #b6532c;
   --focus-gap: #ffffff;
 

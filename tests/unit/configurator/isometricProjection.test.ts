@@ -317,6 +317,24 @@ describe('bounds', () => {
 });
 
 describe('dimension label framing', () => {
+  // Mirrors `labelExtent` in the projection, INCLUDING its rotated branch. Kept in one place here
+  // because three assertions below depend on it, and a rotated label's horizontal extent is its
+  // leading rather than its run — get that backwards and every one of them silently checks the
+  // wrong box.
+  function labelSpanX(guide: { text: string; derived: boolean; rotated?: boolean; anchor: string; label: { x: number } }) {
+    const fontPx = guide.derived ? 12 : 14;
+    const run = guide.text.length * fontPx * 0.62;
+    if (guide.rotated) return { x0: guide.label.x - fontPx, x1: guide.label.x + fontPx * 0.35 };
+    const left = guide.anchor === 'end' ? guide.label.x - run : guide.anchor === 'middle' ? guide.label.x - run / 2 : guide.label.x;
+    return { x0: left, x1: left + run };
+  }
+
+  /** Which way a height chain runs, taken from geometry rather than from `anchor` — turned labels
+   *  are all anchored 'middle', so anchor no longer encodes direction. */
+  function chainDirection(guide: { label: { x: number }; line: { x: number }[] }) {
+    return Math.sign(guide.label.x - guide.line[0].x) || -1;
+  }
+
   // Regression: bounds used to include only a label's anchor POINT, so a label wider than the
   // margin the terrain happened to supply was clipped by the viewBox. The default 24×60 hangar
   // hid it (its terrain reaches x≈-138); a narrow 14×20 one cut the leading digit off the ridge
@@ -332,25 +350,90 @@ describe('dimension label framing', () => {
       const { minX, maxX } = scene.bounds;
 
       for (const guide of Object.values(scene.dimensions)) {
-        // Conservative estimate of the rendered run, matching the projection's own model.
-        const fontPx = guide.derived ? 14 : 16;
-        const width = guide.text.length * fontPx * 0.62;
-        const left = guide.anchor === 'end' ? guide.label.x - width : guide.label.x - width / 2;
-
-        expect(left).toBeGreaterThanOrEqual(minX);
-        expect(left + width).toBeLessThanOrEqual(maxX);
+        const { x0, x1 } = labelSpanX(guide);
+        expect(x0).toBeGreaterThanOrEqual(minX);
+        expect(x1).toBeLessThanOrEqual(maxX);
       }
     }
   });
 
-  it('labels the derived ridge distinctly from the user-set dimensions', () => {
-    const dims = projectFor().dimensions;
+  // Regression: the two height chains hang off the SAME corner and run outward on the same side,
+  // and the ridge chain used to be placed a fixed +24px beyond the eave's line. That cleared the
+  // eave's LINE but not its LABEL, which starts 10px past that line and runs outward from there —
+  // so on the default 24x60 building the ridge's line was drawn straight through the text "8 м".
+  // Reported from the live product, not caught here, because every existing assertion in this file
+  // checks a guide against the BUILDING or against the bounds, and none checked the two height
+  // chains against each other.
+  it('never lets the ridge chain run through the eave chain, at any size', () => {
+    for (const dims of [
+      { width: 24, length: 60, height: 8 },
+      { width: DIMENSION_BOUNDS.width.min, length: DIMENSION_BOUNDS.length.min, height: DIMENSION_BOUNDS.height.min },
+      { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
+      { width: 16, length: 24, height: 6 },
+      { width: 30, length: 90, height: 12.5 },
+    ]) {
+      const { eave, ridge } = projectFor({ dimensions: dims }).dimensions;
+      const direction = chainDirection(eave);
+      const span = labelSpanX(eave);
+      // The eave label's far edge, on the side both chains run toward.
+      const eaveFarEdge = direction < 0 ? span.x0 : span.x1;
+      const ridgeLineX = ridge.line[0].x;
+      const label = `${dims.width}x${dims.length}x${dims.height}`;
 
-    expect(dims.eave.text).toMatch(/^\d/);
-    // The ridge keeps its name so the reader knows WHICH height it is, but carries no "~": it is
-    // a value the user sets now, not one the span rule guessed.
-    expect(dims.ridge.text).toContain('Коник');
-    expect(dims.ridge.text).not.toContain('~');
+      if (direction < 0) expect(ridgeLineX, label).toBeLessThan(eaveFarEdge);
+      else expect(ridgeLineX, label).toBeGreaterThan(eaveFarEdge);
+    }
+  });
+
+  // Regression: the height chains are anchored to the BUILDING's base corner, but the foundation
+  // slab reaches SLAB_OVERHANG_M past it and its projected corner falls on the same side the
+  // chains run to, so the eave chain's lower tick was drawn on top of the slab edge. Reported from
+  // the live product. Asserted against the foundation's own projected points, which exist whether
+  // or not the foundation is in scope — guide placement must not depend on scope.
+  it('keeps the height chains clear of the foundation, not just of the building', () => {
+    for (const dims of [
+      { width: 24, length: 60, height: 8 },
+      { width: DIMENSION_BOUNDS.width.min, length: DIMENSION_BOUNDS.length.min, height: DIMENSION_BOUNDS.height.min },
+      { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
+      { width: 30, length: 40, height: 12 },
+    ]) {
+      const scene = projectFor({ dimensions: dims });
+      const { eave, ridge } = scene.dimensions;
+      const label = `${dims.width}x${dims.length}x${dims.height}`;
+
+      for (const guide of [eave, ridge]) {
+        const guideX = guide.line[0].x;
+        const direction = chainDirection(guide);
+        for (const p of scene.foundation.points) {
+          // Both chains sit outboard of the slab: whichever side they run to, no slab corner may
+          // lie beyond the chain's own line.
+          if (direction < 0) expect(guideX, `${label} ${guide.text}`).toBeLessThan(p.x);
+          else expect(guideX, `${label} ${guide.text}`).toBeGreaterThan(p.x);
+        }
+      }
+    }
+  });
+
+  it('gives both heights a bare value, and separates them by drawing rather than by wording', () => {
+    const { eave, ridge } = projectFor().dimensions;
+
+    // The ridge label used to read "Коник 10,6 м". The word went when the height labels were
+    // turned along their chains: it was the widest thing in the drawing, on the axis that decides
+    // the scale, and two stacked height chains off one corner already say eave-and-ridge on their
+    // own. What still tells them apart is the DRAWING — `derived`, which the renderer dashes and
+    // quietens, and the ridge chain visibly reaching higher.
+    expect(eave.text).toMatch(/^\d/);
+    expect(ridge.text).toMatch(/^\d/);
+    expect(ridge.text).not.toContain('Коник');
+    expect(ridge.text).not.toContain('~');
+
+    expect(ridge.derived).toBe(true);
+    expect(eave.derived).toBe(false);
+    expect(ridge.valueM).toBeGreaterThan(eave.valueM);
+
+    // Both are turned; that is what made dropping the word worth doing.
+    expect(eave.rotated).toBe(true);
+    expect(ridge.rotated).toBe(true);
   });
 });
 

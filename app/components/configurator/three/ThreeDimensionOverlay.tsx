@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Phase 3B — minimal technical overlay for the 3D view (brief §27).
 //
@@ -33,18 +33,49 @@ export function ThreeDimensionOverlay({
   lengthM,
   eaveM,
   ridgeM,
+  onBottomInsetChange,
 }: {
   widthM: number;
   lengthM: number;
   eaveM: number;
   ridgeM: number;
+  /** Reports how much of the canvas's bottom edge this overlay covers, so the camera can frame the
+   *  building in what is left instead of behind it. Measured rather than assumed: the readout is
+   *  one row on a desktop and two at 390px, and it disappears entirely when the visitor hides it —
+   *  at which point the building should get that space back. */
+  onBottomInsetChange?: (px: number) => void;
 }) {
   const [visible, setVisible] = useState(true);
+  const bandRef = useRef<HTMLElement | null>(null);
+
+  // The band the camera must stay clear of is whichever element currently sits on the bottom edge:
+  // the readout when it is shown, the toggle on its own when it is not. Both are positioned the
+  // same distance from the edge, so the inset is that offset plus the element's own height.
+  const measure = useCallback(() => {
+    const el = bandRef.current;
+    if (!el || !onBottomInsetChange) return;
+    const parent = el.offsetParent as HTMLElement | null;
+    const parentHeight = parent?.clientHeight ?? el.getBoundingClientRect().height;
+    const rect = el.getBoundingClientRect();
+    const parentRect = parent?.getBoundingClientRect();
+    const fromBottom = parentRect ? parentRect.bottom - rect.top : rect.height;
+    onBottomInsetChange(Math.max(0, Math.min(fromBottom, parentHeight)));
+  }, [onBottomInsetChange]);
+
+  useEffect(() => {
+    measure();
+    const el = bandRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    if (el.offsetParent instanceof HTMLElement) observer.observe(el.offsetParent);
+    return () => observer.disconnect();
+  }, [measure, visible, widthM, lengthM, eaveM, ridgeM]);
 
   return (
     <>
       {visible && (
-        <dl className="hc-three-overlay" aria-hidden="true">
+        <dl className="hc-three-overlay" aria-hidden="true" ref={bandRef as React.RefObject<HTMLDListElement>}>
           <div>
             <dt>Ширина</dt>
             <dd>{formatMetres(widthM)} м</dd>
@@ -67,6 +98,7 @@ export function ThreeDimensionOverlay({
         type="button"
         className="hc-three-overlay-toggle"
         aria-pressed={visible}
+        ref={visible ? undefined : (bandRef as React.RefObject<HTMLButtonElement>)}
         onClick={() => setVisible((v) => !v)}
       >
         {visible ? 'Сховати розміри' : 'Показати розміри'}

@@ -99,3 +99,54 @@ describe('envelope preset drift (Phase 3E, brief §18)', () => {
     expect(summary.areaSqm).toBe(1440);
   });
 });
+
+describe('personnel door label', () => {
+  it('reports the real fixed size when a door is configured', () => {
+    expect(summaryFor({ doors: 1 }).doorsLabel).toBe('1 × 1×2,1 м');
+  });
+
+  it('says so plainly when there is none, rather than omitting the row', () => {
+    expect(summaryFor({ doors: 0 }).doorsLabel).toBe('Не передбачені');
+  });
+});
+
+describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 3F.2)', () => {
+  // Reported live: with walls out of scope, the brief printed "Обсяг: Фундамент + Металокаркас +
+  // Покрівля" and then, one line later, "Ворота: 2 × стандартні" — an order for openings in walls
+  // nobody had asked for. The 3D renderer already refused to DRAW them in that state
+  // (threeSceneModel: "a gate is an opening cut INTO a wall"); the summary simply did not know the
+  // rule, which is the same bug one layer up.
+  const noWalls = { scope: ['foundation', 'frame', 'roof'] as ConfiguratorState['scope'] };
+
+  it('drops gates and doors from the request entirely when walls are not ordered', () => {
+    const summary = summaryFor({ ...noWalls, gates: 2, gateType: 'standard', doors: 1 });
+
+    // null, not a "поза обсягом" caveat: there is nothing for an opening to be cut into, so it is
+    // not part of this request at all. The choice itself survives in the controls, which are
+    // disabled rather than cleared, and returns with the walls.
+    expect(summary.gatesLabel).toBeNull();
+    expect(summary.doorsLabel).toBeNull();
+  });
+
+  it('restores them as soon as walls are ordered again', () => {
+    const summary = summaryFor({ gates: 2, gateType: 'standard', doors: 1 });
+
+    expect(summary.gatesLabel).toBe('2 × стандартні, 4×4 м');
+    expect(summary.doorsLabel).toBe('1 × 1×2,1 м');
+  });
+
+  it('still says "no gates" as a real answer when walls ARE ordered', () => {
+    const summary = summaryFor({ gates: 0, doors: 0 });
+
+    expect(summary.gatesLabel).toBe('Без воріт');
+    expect(summary.doorsLabel).toBe('Не передбачені');
+  });
+
+  it('names only the clad surfaces the customer is asking for', () => {
+    expect(summaryFor({ ...noWalls }).claddingSystemLabel).toMatch(/^Покрівля: /);
+    expect(summaryFor({ scope: ['foundation', 'frame', 'walls'] }).claddingSystemLabel).toMatch(/^Стіни: /);
+    expect(summaryFor({ scope: ['foundation', 'frame'] }).claddingSystemLabel).toBe('Поза обсягом заявки');
+    // Both in scope and agreeing: still the single combined label, unchanged.
+    expect(summaryFor({}).claddingSystemLabel).not.toContain(':');
+  });
+});

@@ -35,7 +35,29 @@ import type { CladdingSystem } from '../../../lib/configurator/types';
  *  that is what the actual product looks like, and it is also cheaper (4 X-samples per period
  *  instead of a smoothly sampled curve). */
 const PROFILED_RIB_PITCH_M = 0.2;
-const PROFILED_RIB_HEIGHT_M = 0.016;
+/**
+ * Modelled rib DEPTH — a presentation amplitude, not a product dimension, and deliberately
+ * shallower than a real sheet's 20-60 mm.
+ *
+ * At the honest 16 mm this started from, the roof aliased badly: ribs repeat every 0.2 m, so a
+ * 60 m building carries ~300 of them, and the fixed camera sees the near slope at a grazing angle
+ * where they project to well under a pixel each. The result was a crosshatch moire that read as a
+ * dirty mesh rather than as sheeting. Measured at 390px with a real deviceScaleFactor of 3, and
+ * NOT a mobile-only problem despite where it was first reported: it is just as visible at 820px
+ * (which already renders at DPR 2) and on a DPR-1 desktop, and raising the device pixel ratio only
+ * clears it at 3 — four times the fragments of the current mobile tier, on the hardware least able
+ * to afford them.
+ *
+ * Depth is the lever that works at every resolution, because the moire's amplitude is the
+ * shading difference between crest and trough. Probed at 16 / 8 / 4 mm: 16 mm moires, 4 mm reads
+ * as flat sheet with the profile lost, 8 mm keeps the directional profiled texture and the panel
+ * seams legible with the moire gone.
+ *
+ * Rib PITCH above is untouched — that is the geometric fact about the product, and it still drives
+ * the rib count from real metres, so a 12 m bay still shows twice the ribs of a 6 m one. Only how
+ * far they stand proud of the sheet is reduced.
+ */
+const PROFILED_RIB_HEIGHT_M = 0.008;
 /** Fraction of one pitch spent on the flat crest (the rest splits between trough and the two
  *  sloped transitions) — a real profiled sheet's crest is narrower than its trough. */
 const PROFILED_CREST_FRACTION = 0.32;
@@ -475,4 +497,35 @@ function buildGateLeafGeometry(widthM: number, heightM: number): THREE.BufferGeo
   return new THREE.ExtrudeGeometry(shapes, { depth: GATE_LEAF_THICKNESS_M, bevelEnabled: false, curveSegments: 1 });
 }
 
-export { buildGateLeafGeometry };
+/**
+ * The personnel-door leaf: one flush panel with a shallow perimeter reveal, not the banded stack a
+ * sectional gate gets. At 1 x 2.1 m the gate's own band rhythm would be illegible anyway — this
+ * reads correctly at the distance the door is actually seen from, and costs one extruded shape.
+ * The inset leaves a visible frame line around the leaf inside its opening, which is what makes a
+ * door read as a door rather than as a painted rectangle.
+ */
+function buildDoorLeafGeometry(widthM: number, heightM: number): THREE.BufferGeometry {
+  // 0.03 m, not 0.05: the reveal it exposes is near-black, and on a 1 m leaf a 5 cm ring each side
+  // was a tenth of the door's apparent width in shadow — enough to close the opening up visually.
+  // Still wide enough to read as a frame rather than a flush panel.
+  const inset = Math.min(0.03, widthM * 0.04);
+  const x0 = inset;
+  const x1 = Math.max(x0 + 0.01, widthM - inset);
+  const y0 = 0;
+  const y1 = Math.max(y0 + 0.01, heightM - inset);
+
+  const shape = new THREE.Shape();
+  shape.moveTo(x0, y0);
+  shape.lineTo(x1, y0);
+  shape.lineTo(x1, y1);
+  shape.lineTo(x0, y1);
+  shape.closePath();
+
+  return new THREE.ExtrudeGeometry(shape, {
+    depth: GATE_LEAF_THICKNESS_M,
+    bevelEnabled: false,
+    curveSegments: 1,
+  });
+}
+
+export { buildDoorLeafGeometry, buildGateLeafGeometry };

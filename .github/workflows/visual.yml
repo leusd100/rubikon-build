@@ -1,0 +1,123 @@
+name: Visual regression
+
+# Separate from Quality on purpose. Quality is the gate for "is this correct" (lint, unit, build,
+# route/flow e2e); this is the gate for "does it still LOOK right", which fails for different
+# reasons, needs different artifacts to diagnose, and is the only thing standing between a
+# material/lighting/scene change and silent drift. Keeping it its own job means a render failure
+# is legible at a glance instead of buried in an otherwise-unrelated log.
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: 'Regenerate baselines for this runner platform and upload them as an artifact (does not commit)'
+        type: boolean
+        default: false
+
+# Same minimum as quality.yml and sonarcloud.yml: this job only ever reads the repo. It checks out,
+# installs, renders pages and uploads an artifact — it never writes back, and the baseline
+# regeneration path deliberately hands its PNGs over as an artifact for review rather than
+# committing them, so nothing here needs a writable token.
+permissions:
+  contents: read
+
+# Runs on every PR rather than behind a paths filter. The suite renders whole pages, so its real
+# dependency surface is the app's CSS tokens, the shared layout, the design system and the
+# configurator's own geometry/material modules — a path list covering that honestly would be most
+# of app/, and a list that MISSES one of them fails silently, which is exactly the failure this
+# job exists to prevent. One extra ubuntu job per PR is the cheaper mistake.
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    name: WebGL / layout visual regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # The suite starts its own dev server from THIS checkout (playwright.config's webServer, with
+      # reuseExistingServer: false — see the comment there for the worktree-adoption incident that
+      # setting exists to prevent). Nothing external is reused.
+      # Per suite, not repo-wide. The first version of this check asked whether ANY *-linux.png
+      # existed anywhere and was satisfied by 21 unrelated site-page baselines, so the job ran for
+      # seven minutes and produced 41 failures — 20 of them "a snapshot doesn't exist" — instead of
+      # saying the one useful thing in ten seconds.
+      - name: Check Linux baselines exist for the suites this job gates
+        if: ${{ !inputs.update_baselines }}
+        run: |
+          shopt -s nullglob
+          missing=0
+          for dir in tests/e2e/configurator-visual.spec.ts-snapshots tests/e2e/configurator-3d-visual.spec.ts-snapshots; do
+            linux=("$dir"/*-linux.png)
+            if [ ${#linux[@]} -eq 0 ]; then
+              echo "::error::$dir has no *-linux.png baselines."
+              missing=1
+            else
+              echo "$dir: ${#linux[@]} Linux baselines."
+            fi
+          done
+          if [ $missing -eq 1 ]; then
+            echo "Playwright names snapshots per platform. Bootstrap by running this workflow via"
+            echo "workflow_dispatch with update_baselines=true, then review and commit the"
+            echo "'visual-baselines-linux' artifact into the matching snapshot directories."
+            exit 1
+          fi
+
+      # Scoped to the configurator suites on purpose. tests/e2e/visual.spec.ts (the site pages) has
+      # 21 committed Linux baselines that no longer match what the runner renders — a pre-existing
+      # drift on pages this track does not touch. Including it would make this job permanently red
+      # for unrelated reasons, and a permanently red job is one nobody reads. Refreshing those
+      # belongs to a pass that actually reviews those pages; until then this job gates the
+      # configurator, which is what it was built for.
+      - name: Run visual regression (configurator suites)
+        if: ${{ !inputs.update_baselines }}
+        run: pnpm exec playwright test --project=visual-chromium tests/e2e/configurator-visual.spec.ts tests/e2e/configurator-3d-visual.spec.ts
+
+      - name: Regenerate baselines for this platform
+        if: ${{ inputs.update_baselines }}
+        run: pnpm exec playwright test --project=visual-chromium tests/e2e/configurator-visual.spec.ts tests/e2e/configurator-3d-visual.spec.ts --update-snapshots=all
+
+      - name: Upload regenerated baselines
+        if: ${{ inputs.update_baselines }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux
+          path: tests/e2e/**/*-linux.png
+          if-no-files-found: error
+          retention-days: 14
+
+      # expected / actual / diff only. The first version uploaded all of test-results/ plus the
+      # HTML report and produced a 441 MB artifact, because Playwright writes a trace zip per
+      # failed test and this suite can fail 40 at once. The PNG triplet is what actually tells you
+      # what changed; traces are for flaky-interaction debugging, which is not this job's failure
+      # mode.
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff
+          path: |
+            test-results/**/*.png
+          if-no-files-found: warn
+          retention-days: 14

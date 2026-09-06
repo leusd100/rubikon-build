@@ -24,3 +24,34 @@ describe('hangar inquiry brief', () => {
     expect(formatted).toContain('Ворота: 2 × стандартні, 4×4 м');
   });
 });
+
+describe('inquiry brief — Phase 3F.2', () => {
+  // The door was collected by the configurator and shown in "Ваш об'єкт", then never reached the
+  // request: `createHangarInquiryBrief` simply had no doorsLabel field. A customer input dropped
+  // silently between the screen and the lead.
+  it('carries the personnel door, which it used to drop entirely', () => {
+    const text = formatHangarInquiryBrief(
+      createHangarInquiryBrief(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, doors: 1 })),
+    );
+
+    expect(text).toContain('Двері: 1 × 1×2,1 м');
+  });
+
+  it('omits openings entirely from a request that excludes walls', () => {
+    const text = formatHangarInquiryBrief(
+      createHangarInquiryBrief(deriveDomainModel({
+        ...DEFAULT_CONFIGURATOR_STATE,
+        scope: ['foundation', 'frame', 'roof'],
+        gates: 2,
+        doors: 1,
+      })),
+    );
+
+    // There is no wall for an opening to be cut into, so quoting one would be quoting work nobody
+    // asked for. The lines are absent, not caveated.
+    expect(text).toContain('Обсяг: Фундамент + Металокаркас + Покрівля');
+    expect(text).not.toContain('Ворота:');
+    expect(text).not.toContain('Двері:');
+    expect(text).toContain('Огородження: Покрівля:');
+  });
+});

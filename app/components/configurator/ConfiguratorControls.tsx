@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import {
+  DOOR_DIMENSIONS_M,
   GATE_DIMENSIONS_M,
   RIDGE_HEIGHT_STEP_M,
+  clampDoorSelection,
   clampGateSelection,
   clampRidgeHeightM,
+  doorFits,
   gateHeightFits,
   maxGateCountThatFits,
   ridgeHeightRangeM,
@@ -18,6 +21,8 @@ import {
   ENVELOPE_MATERIAL_PRESET,
   FOUNDATION_TYPE_LABELS,
   FOUNDATION_TYPE_ORDER,
+  DOOR_LABELS,
+  DOOR_OPTIONS,
   GATES_OPTIONS,
   GATE_TYPE_LABELS,
   GATE_TYPE_ORDER,
@@ -28,6 +33,7 @@ import {
   toggleScopeItem,
   type CladdingSystem,
   type ConfiguratorState,
+  type DoorCount,
   type Dimensions,
   type EnvelopeChoice,
   type FoundationType,
@@ -172,6 +178,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
       // The control panel below also disables an option before it can be picked in the first
       // place; this is the reactive fallback for a selection the customer already made.
       ...clampGateSelection(state.gates, state.gateType, dimensions.width, dimensions.height),
+      ...clampDoorSelection(state.doors, state.gates, state.gateType, dimensions.width),
     });
   }
 
@@ -204,20 +211,38 @@ export function ConfiguratorControls({ state, onChange }: Props) {
     onChange({ ...state, foundationType });
   }
 
+  // Changing the gates changes where a door may legally go, so the door is re-clamped with them
+  // — the same reason `setDimension` re-clamps both.
   function setGates(gates: GatesCount) {
-    onChange({ ...state, gates });
+    onChange({ ...state, gates, ...clampDoorSelection(state.doors, gates, state.gateType, state.dimensions.width) });
   }
 
   function setGateType(gateType: GateType) {
-    onChange({ ...state, gateType });
+    onChange({ ...state, gateType, ...clampDoorSelection(state.doors, state.gates, gateType, state.dimensions.width) });
+  }
+
+  function setDoors(doors: DoorCount) {
+    onChange({ ...state, doors });
   }
 
   function setScope(item: (typeof SCOPE_ORDER)[number]) {
     onChange({ ...state, scope: toggleScopeItem(state.scope, item) });
   }
 
+  const wallsInScope = state.scope.includes('walls');
+  const roofInScope = state.scope.includes('roof');
+  const foundationInScope = state.scope.includes('foundation');
+  // "Контур" sets the wall AND roof systems together, so it stays available while either surface
+  // is being asked for.
+  const hasEnvelopeScope = wallsInScope || roofInScope;
+
   return (
     <div className="hc-controls">
+      {/* "Обсяг заявки" is the master fact for everything below it. A cladding system, a colour
+          or an opening for a surface the customer is not asking for is not something they can
+          order, and offering it is how the summary ended up contradicting its own Обсяг line. The
+          controls are DISABLED, never cleared: dropping walls to look at the frame and putting
+          them back must not cost the visitor their gate choice. */}
       <section className="hc-control-group" aria-labelledby="hc-dimensions-heading">
         <h2 id="hc-dimensions-heading">Розміри</h2>
         {(['width', 'length', 'height'] as const).map((key) => (
@@ -251,17 +276,23 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         <h2 id="hc-envelope-heading">Контур будівлі</h2>
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-envelope-heading">
           {(Object.keys(ENVELOPE_LABELS) as EnvelopeChoice[]).map((option) => (
-            <label key={option} className="hc-option-card">
+            <label key={option} className="hc-option-card" aria-disabled={!hasEnvelopeScope}>
               <input
                 type="radio"
                 name="hc-envelope"
                 checked={state.envelope === option}
+                disabled={!hasEnvelopeScope}
                 onChange={() => setEnvelope(option)}
               />
               <span>{ENVELOPE_LABELS[option]}</span>
             </label>
           ))}
         </div>
+        {!hasEnvelopeScope && (
+          <p className="hc-field-note hc-field-note-warning">
+            Контур описує стіни та покрівлю — увімкніть їх в «Обсязі заявки», щоб обрати.
+          </p>
+        )}
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-cladding-heading">
@@ -272,17 +303,21 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           </div>
           <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-wall-system-label">
             {CLADDING_SYSTEM_ORDER.map((option) => (
-              <label key={option} className="hc-option-card">
+              <label key={option} className="hc-option-card" aria-disabled={!wallsInScope}>
                 <input
                   type="radio"
                   name="hc-wall-system"
                   checked={state.wallSystem === option}
+                  disabled={!wallsInScope}
                   onChange={() => setWallSystem(option)}
                 />
                 <span>{CLADDING_SYSTEM_LABELS[option]}</span>
               </label>
             ))}
           </div>
+          {!wallsInScope && (
+            <p className="hc-field-note">Стіни не входять в обсяг заявки.</p>
+          )}
         </div>
         <div className="hc-field">
           <div className="hc-field-head">
@@ -290,17 +325,21 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           </div>
           <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-roof-system-label">
             {CLADDING_SYSTEM_ORDER.map((option) => (
-              <label key={option} className="hc-option-card">
+              <label key={option} className="hc-option-card" aria-disabled={!roofInScope}>
                 <input
                   type="radio"
                   name="hc-roof-system"
                   checked={state.roofSystem === option}
+                  disabled={!roofInScope}
                   onChange={() => setRoofSystem(option)}
                 />
                 <span>{CLADDING_SYSTEM_LABELS[option]}</span>
               </label>
             ))}
           </div>
+          {!roofInScope && (
+            <p className="hc-field-note">Покрівля не входить в обсяг заявки.</p>
+          )}
         </div>
       </section>
 
@@ -314,17 +353,23 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         <h2 id="hc-foundation-heading">Основа / фундамент</h2>
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-foundation-heading">
           {FOUNDATION_TYPE_ORDER.map((option) => (
-            <label key={option} className="hc-option-card">
+            <label key={option} className="hc-option-card" aria-disabled={!foundationInScope}>
               <input
                 type="radio"
                 name="hc-foundation-type"
                 checked={state.foundationType === option}
+                disabled={!foundationInScope}
                 onChange={() => setFoundationType(option)}
               />
               <span>{FOUNDATION_TYPE_LABELS[option]}</span>
             </label>
           ))}
         </div>
+        {!foundationInScope && (
+          <p className="hc-field-note hc-field-note-warning">
+            Фундамент не входить в обсяг заявки.
+          </p>
+        )}
         <p className="hc-field-note">
           Сайт не виконує розрахунок фундаменту. Показані варіанти — це схематичне уявлення для
           попереднього брифу, а не проєктне рішення.
@@ -348,13 +393,23 @@ export function ConfiguratorControls({ state, onChange }: Props) {
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-gates-heading">
-        <h2 id="hc-gates-heading">Ворота</h2>
-        <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-gates-heading">
+        <h2 id="hc-gates-heading">Прорізи</h2>
+        {!wallsInScope && (
+          <p className="hc-field-note hc-field-note-warning">
+            Ворота і двері — це прорізи у стінах. Увімкніть «Стіни / огороджувальний контур» в
+            «Обсязі заявки», щоб їх обрати. Поточний вибір збережеться.
+          </p>
+        )}
+        <div className="hc-field-head">
+          <span id="hc-gate-count-label">Ворота</span>
+        </div>
+        <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-gate-count-label">
           {GATES_OPTIONS.map((option) => {
             // Phase 3F.1, brief §B2-B3: a gate count is only offered if the CURRENTLY selected
             // gate type actually fits that many times at the current width/eave height — real,
             // fixed-size gates (GATE_DIMENSIONS_M), not scaled to fit. 0 is always available.
-            const disabled = option > 0 && (!gateHeightFits(state.gateType, state.dimensions.height)
+            const disabled = option > 0 && (!wallsInScope
+              || !gateHeightFits(state.gateType, state.dimensions.height)
               || option > maxGateCountThatFits(state.gateType, state.dimensions.width));
             return (
               <label key={option} className="hc-option-card" aria-disabled={disabled}>
@@ -381,7 +436,8 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             {GATE_TYPE_ORDER.map((option) => {
               // Phase 3F.1: a type is only offered if it clears the eave line at the CURRENT
               // count already selected — switching type never silently rescales anything.
-              const disabled = !gateHeightFits(option, state.dimensions.height)
+              const disabled = !wallsInScope
+                || !gateHeightFits(option, state.dimensions.height)
                 || state.gates > maxGateCountThatFits(option, state.dimensions.width);
               return (
                 <label key={option} className="hc-option-card" aria-disabled={disabled}>
@@ -405,6 +461,38 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             Це конфігураційні розміри RUBIKON BUILD, а не будівельний стандарт.
           </p>
         )}
+        <div className="hc-field hc-door-field">
+          <div className="hc-field-head">
+            <span id="hc-doors-label">Двері</span>
+          </div>
+          <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-doors-label">
+            {DOOR_OPTIONS.map((option) => {
+              // Disabled rather than hidden, and only ever for a real reason: at this width the
+              // door has no position clear of the corners, the gates and the centre-support line.
+              const disabled = option > 0 && (!wallsInScope || !doorFits(state.gates, state.gateType, state.dimensions.width));
+              return (
+                <label className="hc-option-card" key={option}>
+                  <input
+                    type="radio"
+                    name="hc-doors"
+                    value={option}
+                    checked={state.doors === option}
+                    disabled={disabled}
+                    aria-disabled={disabled}
+                    onChange={() => setDoors(option)}
+                  />
+                  <span>{DOOR_LABELS[option]}</span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="hc-field-note">
+            Службові двері — {DOOR_DIMENSIONS_M.widthM.toString().replace('.', ',')}×
+            {DOOR_DIMENSIONS_M.heightM.toString().replace('.', ',')} м. Розташування визначається
+            автоматично: поруч із воротами, поза їх прорізом і без перетину з колонами.
+          </p>
+        </div>
+
         {state.gates > 0 && (!gateHeightFits(state.gateType, state.dimensions.height)
           || state.gates > maxGateCountThatFits(state.gateType, state.dimensions.width)) && (
           <p className="hc-field-note hc-field-note-warning">

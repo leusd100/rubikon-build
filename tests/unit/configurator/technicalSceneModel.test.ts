@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildTechnicalScene,
-  frameBayCount,
+  deriveBayLayout,
   type ScenePrimitive,
 } from '../../../app/lib/configurator/technicalSceneModel';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
@@ -36,17 +36,21 @@ function kinds<K extends ScenePrimitive['kind']>(scene: ReturnType<typeof sceneF
   return scene.primitives.filter((p): p is Extract<ScenePrimitive, { kind: K }> => p.kind === kind);
 }
 
-describe('frameBayCount', () => {
-  it('clamps to the minimum for a small span', () => {
-    expect(frameBayCount(DIMENSION_BOUNDS.width.min)).toBe(2);
+describe('deriveBayLayout', () => {
+  it('keeps a minimum of two bays on the shortest building', () => {
+    expect(deriveBayLayout(DIMENSION_BOUNDS.length.min).bayCount).toBe(2);
   });
 
-  it('clamps to the maximum for a very large span', () => {
-    expect(frameBayCount(DIMENSION_BOUNDS.length.max)).toBe(10);
+  it('adds bays with length instead of stretching a fixed count', () => {
+    // The behaviour this replaced clamped at 10 bays, so 120 m drew the same frames as 60 m,
+    // 12 m apart. Length must now buy frames.
+    expect(deriveBayLayout(60).bayCount).toBe(10);
+    expect(deriveBayLayout(DIMENSION_BOUNDS.length.max).bayCount).toBe(20);
   });
 
-  it('targets roughly one bay per 6 metres in between', () => {
-    expect(frameBayCount(36)).toBe(6);
+  it('lands on the preferred 6 m rhythm where the length divides cleanly', () => {
+    expect(deriveBayLayout(36).bayCount).toBe(6);
+    expect(deriveBayLayout(36).spacingM).toBe(6);
   });
 });
 

@@ -154,7 +154,9 @@ test.describe('hangar configurator POC', () => {
     await page.keyboard.type('12');
     await ridge.blur();
     await expect(ridge).toHaveValue('12');
-    await expect(page.locator('.hc-preview-svg .hc-dimension.is-derived text')).toContainText('Коник 12 м');
+    // Bare value: the ridge chain no longer spells out "Коник" — see isometricProjection's own
+    // labelText, and the unit test that pins how the two heights stay distinguishable without it.
+    await expect(page.locator('.hc-preview-svg .hc-dimension.is-derived text')).toContainText('12 м');
 
     // Beyond the credible pitch range it is held at the maximum, not accepted.
     await ridge.click();

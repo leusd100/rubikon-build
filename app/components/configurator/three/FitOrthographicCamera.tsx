@@ -13,8 +13,15 @@ import { cameraDirection as sharedCameraDirection } from '../../../lib/configura
 // equal on screen, which is what makes the two views read as the same object rather than as a
 // drawing and a photograph.
 
-/** Fraction of the canvas the building's projected extent should fill. */
-const FIT_MARGIN = 0.74;
+/**
+ * Fraction of the USABLE frame the building's projected extent should fill.
+ *
+ * Raised from 0.74 after a live review of fullscreen: at 0.74 the building filled 74% of the
+ * frame's width and, because an isometric hangar is a roughly 2.2:1 shape inside a ~1.4:1 canvas,
+ * only about half its height — a lot of empty scene around a small object. The remaining 10% is
+ * genuine breathing room, not slack; a drawing that touches its own frame reads as cropped.
+ */
+const FIT_MARGIN = 0.9;
 
 /**
  * Elevation and azimuth are NOT defined here. They come from viewProjection.ts, which the SVG
@@ -26,7 +33,17 @@ function cameraDirection(): THREE.Vector3 {
   return new THREE.Vector3(d.x, d.y, d.z).normalize();
 }
 
-export function FitOrthographicCamera({ scene }: { scene: ThreeSceneModel }) {
+export function FitOrthographicCamera({
+  scene,
+  bottomInsetPx = 0,
+}: {
+  scene: ThreeSceneModel;
+  /** Height of the overlay band along the canvas's bottom edge (the dimension readout and its
+   *  toggle). The building is framed in what is left ABOVE it rather than centred on the whole
+   *  canvas and drawn behind it — reported live, where the model's near corner sat under the
+   *  readout. Zero when nothing covers the edge, which puts the framing back to plain centring. */
+  bottomInsetPx?: number;
+}) {
   const { camera, size, invalidate } = useThree();
   const { min, max, center, size: extent } = scene.bounds;
 
@@ -66,18 +83,27 @@ export function FitOrthographicCamera({ scene }: { scene: ThreeSceneModel }) {
     const projectedH = Math.max(maxY - minY, 1e-6);
     const aspect = size.width / size.height;
 
-    // Half-extents in world units, chosen so BOTH axes fit, then expressed through the camera's
-    // own aspect so the object never stretches.
-    const halfH = Math.max(projectedH / 2, projectedW / 2 / aspect) / FIT_MARGIN;
+    // Fit against the USABLE band — the canvas minus whatever covers its bottom edge — then grow
+    // the frustum back to cover the whole canvas, so the building is sized for the space it can
+    // actually occupy while the camera still renders edge to edge.
+    const usableHeightPx = Math.max(size.height - bottomInsetPx, 1);
+    const usableAspect = size.width / usableHeightPx;
+    const halfUsable = Math.max(projectedH / 2, projectedW / 2 / usableAspect) / FIT_MARGIN;
+    const halfH = halfUsable * (size.height / usableHeightPx);
     const halfW = halfH * aspect;
+
+    // ...and slide the frustum DOWN by half the inset, which lifts the building by the same amount
+    // on screen, centring it in the usable band. Sign is easy to get backwards: the object sits at
+    // camera-space y = 0, so lowering the window's centre raises where the object lands in frame.
+    const shiftY = (bottomInsetPx / 2) * ((2 * halfH) / size.height);
 
     /* eslint-disable react-hooks/immutability -- three.js cameras are mutated imperatively by
        design; there is no immutable setter for frustum bounds. R3F hands this object out
        specifically to be driven this way. */
     camera.left = -halfW;
     camera.right = halfW;
-    camera.top = halfH;
-    camera.bottom = -halfH;
+    camera.top = halfH - shiftY;
+    camera.bottom = -halfH - shiftY;
     camera.near = 0.01;
     camera.far = distance * 4;
     /* eslint-enable react-hooks/immutability */
@@ -85,7 +111,7 @@ export function FitOrthographicCamera({ scene }: { scene: ThreeSceneModel }) {
 
     // frameloop="demand" means nothing renders unless we ask, including after a reframe.
     invalidate();
-  }, [camera, size, invalidate, min, max, center, extent]);
+  }, [camera, size, invalidate, min, max, center, extent, bottomInsetPx]);
 
   return null;
 }

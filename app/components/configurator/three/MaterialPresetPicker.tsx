@@ -18,16 +18,18 @@ function SwatchGroup<Id extends string>({
   presets,
   selected,
   onSelect,
+  disabled = false,
 }: {
   legend: string;
   presets: ReadonlyArray<{ id: Id; label: string; color: string }>;
   selected: Id;
   onSelect: (id: Id) => void;
+  disabled?: boolean;
 }) {
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
 
   return (
-    <fieldset className="hc-material-swatch-group">
+    <fieldset className="hc-material-swatch-group" disabled={disabled}>
       <legend>{legend}</legend>
       <div className="hc-material-swatch-row" role="radiogroup" aria-label={legend}>
         {presets.map((preset, index) => (
@@ -36,6 +38,8 @@ function SwatchGroup<Id extends string>({
             type="button"
             role="radio"
             aria-checked={preset.id === selected}
+            aria-disabled={disabled}
+            disabled={disabled}
             tabIndex={preset.id === selected ? 0 : -1}
             ref={(element) => { buttons.current[index] = element; }}
             className={preset.id === selected ? 'is-selected' : undefined}
@@ -71,16 +75,23 @@ export function MaterialPresetPicker({
   roofPreset,
   onWallPresetChange,
   onRoofPresetChange,
+  wallsInScope = true,
+  roofInScope = true,
 }: {
   wallPreset: WallPresetId;
   roofPreset: RoofPresetId;
   onWallPresetChange: (id: WallPresetId) => void;
   onRoofPresetChange: (id: RoofPresetId) => void;
+  /** "Обсяг заявки" gates these the same way it gates the cladding systems themselves: a colour
+   *  for a surface the customer is not asking for is not a choice they can make. Disabled rather
+   *  than hidden, and never reset — the selection comes back with the surface. */
+  wallsInScope?: boolean;
+  roofInScope?: boolean;
 }) {
   return (
     <div className="hc-material-presets">
-      <SwatchGroup legend="Обшивка" presets={WALL_PRESETS} selected={wallPreset} onSelect={onWallPresetChange} />
-      <SwatchGroup legend="Покрівля" presets={ROOF_PRESETS} selected={roofPreset} onSelect={onRoofPresetChange} />
+      <SwatchGroup legend="Обшивка" presets={WALL_PRESETS} selected={wallPreset} onSelect={onWallPresetChange} disabled={!wallsInScope} />
+      <SwatchGroup legend="Покрівля" presets={ROOF_PRESETS} selected={roofPreset} onSelect={onRoofPresetChange} disabled={!roofInScope} />
     </div>
   );
 }
