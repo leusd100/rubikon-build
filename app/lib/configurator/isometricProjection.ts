@@ -83,6 +83,10 @@ export type DimensionGuide = {
   ticks: [[Point, Point], [Point, Point]];
   label: Point;
   anchor: 'middle' | 'start' | 'end';
+  /** Drawn turned a quarter, reading bottom-to-top along its own chain — the height chains only.
+   *  Lives here rather than in CSS because `labelExtent` has to swap the text's run and its
+   *  leading when it measures a turned label for the bounds. */
+  rotated?: boolean;
   /** The exact string the renderer draws. Owned here, not in the component, because the bounds
    *  calculation has to know how wide the label will be — see `labelExtent()`. */
   text: string;
@@ -91,16 +95,16 @@ export type DimensionGuide = {
 };
 
 /** Font sizes the stylesheet gives dimension labels, mirrored here only to estimate extents. */
-const LABEL_FONT_PX = 16;
-const DERIVED_LABEL_FONT_PX = 14;
+const LABEL_FONT_PX = 14;
+const DERIVED_LABEL_FONT_PX = 12;
 /** Condensed 600-weight averages well under 0.6em per glyph; 0.62 leaves deliberate headroom. */
 const LABEL_CHAR_WIDTH_EM = 0.62;
 
-/** Gap between a height chain's own line and where its label starts (see `heightGuide`). Named
- *  because the ridge chain's offset below has to reason about it to clear the eave chain's LABEL,
- *  not merely its line. */
-const HEIGHT_LABEL_GAP_PX = 10;
-/** Breathing room left between the eave label's far edge and the ridge chain's line. */
+/** How far a turned label is nudged outboard of its own chain line before it is drawn. */
+const TURNED_LABEL_NUDGE_PX = Math.round(LABEL_FONT_PX * 0.35);
+/** How far a turned label reaches outboard of its chain in total: the nudge plus one leading. */
+const TURNED_LABEL_REACH_PX = TURNED_LABEL_NUDGE_PX + LABEL_FONT_PX;
+/** Breathing room between the eave chain's turned label and the ridge chain's line. */
 const HEIGHT_CHAIN_CLEARANCE_PX = 8;
 /** Breathing room left between the foundation's projected edge and the eave chain's line. */
 const FOUNDATION_CLEARANCE_PX = 10;
@@ -111,11 +115,19 @@ function formatMetres(value: number): string {
   return value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
 }
 
-function labelText(valueM: number, derived: boolean): string {
-  // The ridge keeps its name (it labels *which* height) but no longer carries a "~": since the
-  // ridge became a user-adjustable value rather than an output of the span rule, an approximation
-  // marker would misrepresent it as something the tool guessed.
-  return derived ? `Коник ${formatMetres(valueM)} м` : `${formatMetres(valueM)} м`;
+/**
+ * Every dimension label is now just its value. The ridge used to read "Коник 10,6 м" so the label
+ * said WHICH height it was, which earned its keep while both labels sat horizontally in a stack
+ * with nothing else to tell them apart. Turned along their own chains they are self-describing:
+ * two stacked height chains off one corner is the ordinary drafting arrangement for eave and
+ * ridge, the ridge chain visibly reaches higher, and it stays dashed and quieter besides. The word
+ * was also the single widest thing in the drawing, on the axis that decides the scale.
+ *
+ * It takes no `derived` flag any more, because it no longer varies by it — the distinction lives
+ * in the drawing (dash, opacity, type size), which is where it belongs and where it still is.
+ */
+function labelText(valueM: number): string {
+  return `${formatMetres(valueM)} м`;
 }
 
 /**
@@ -129,7 +141,16 @@ function labelText(valueM: number, derived: boolean): string {
  */
 function labelExtent(guide: Omit<DimensionGuide, 'ticks' | 'line'>): Point[] {
   const fontPx = guide.derived ? DERIVED_LABEL_FONT_PX : LABEL_FONT_PX;
-  const width = guide.text.length * fontPx * LABEL_CHAR_WIDTH_EM;
+  const run = guide.text.length * fontPx * LABEL_CHAR_WIDTH_EM;
+  if (guide.rotated) {
+    // Turned a quarter: the run is now vertical and only the leading costs width. That swap IS the
+    // reason to turn them — the frame is short of width and has spare height.
+    return [
+      { x: guide.label.x - fontPx, y: guide.label.y - run / 2 },
+      { x: guide.label.x + fontPx * 0.35, y: guide.label.y + run / 2 },
+    ];
+  }
+  const width = run;
   const { x, y } = guide.label;
   const left = guide.anchor === 'end' ? x - width : guide.anchor === 'middle' ? x - width / 2 : x;
   return [
@@ -268,12 +289,11 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const heightOffset = Math.max(20, Math.min(footprintPx * 0.038, 34));
 
   // Both height chains hang off the same corner and run outward on the same side, so the ridge
-  // chain's line has to clear the eave chain's LABEL — not just its line, which is what a fixed
-  // `+24` assumed. It did not: the eave label starts HEIGHT_LABEL_GAP_PX past its own line and
-  // runs outward from there, so on the default 24x60 building "8 м" occupied offsets 44..74 while
-  // the ridge line sat at 58 — straight through the text. Deriving the offset from the label's own
-  // estimated width fixes it at every value, including the wider ones ("10,6 м", "12,5 м") where a
-  // constant would have had to be tuned for the worst case and waste room in every other.
+  // chain's line has to clear whatever the eave chain occupies — not just its line, which is what
+  // a fixed `+24` once assumed, and it did not: the eave's horizontal label ran outward from its
+  // own line and the ridge was drawn straight through the text. Turned labels made that cheap
+  // rather than merely correct, since the eave now occupies only its leading.
+  //
   // The two height chains hang off the building's own base corner, but the FOUNDATION reaches
   // SLAB_OVERHANG_M past it on every side, and the slab's projected corner lands on the same side
   // the chains run to. At the base offset the eave chain's lower tick was drawn on top of the slab
@@ -290,8 +310,11 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const clearedHeightOffset = Math.max(heightOffset, foundationExcessPx + FOUNDATION_CLEARANCE_PX);
 
   const eaveGuide = heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, clearedHeightOffset, false);
-  const eaveLabelWidthPx = eaveGuide.text.length * LABEL_FONT_PX * LABEL_CHAR_WIDTH_EM;
-  const ridgeOffset = clearedHeightOffset + HEIGHT_LABEL_GAP_PX + eaveLabelWidthPx + HEIGHT_CHAIN_CLEARANCE_PX;
+  // Turned labels sit ALONG their chain, so the ridge clears the eave label's outward REACH — the
+  // nudge plus one leading — rather than the full run of "8,5 м", which is why this offset shrank
+  // instead of growing. Derived from the same constants the label is drawn from, so the two cannot
+  // drift apart the way a tuned number would.
+  const ridgeOffset = clearedHeightOffset + TURNED_LABEL_REACH_PX + HEIGHT_CHAIN_CLEARANCE_PX;
 
   const dims = {
     width: edgeGuide({ x: 0, y: 0, z: 0 }, { x: widthM, y: 0, z: 0 }, centroid, edgeOffset, widthM),
@@ -425,7 +448,7 @@ function edgeGuide(
     ticks: ticksFor(A, B),
     label: { x: mid.x + nx * 16, y: mid.y + ny * 16 + 5 },
     anchor: anchorFor(nx),
-    text: labelText(valueM, false),
+    text: labelText(valueM),
     valueM,
     derived: false,
   };
@@ -453,14 +476,18 @@ function heightGuide(
       [{ x: A.x - 6, y: A.y }, { x: A.x + 6, y: A.y }],
       [{ x: B.x - 6, y: B.y }, { x: B.x + 6, y: B.y }],
     ],
-    // The derived ridge is annotated at its own top tick; centring both labels on such a short
-    // shared stretch collided them.
+    // Centred on the chain and read bottom-to-top, the way a drafted vertical dimension is set.
+    // Laid out horizontally these two were the drawing's single biggest cost: a "Коник 10,6 м" ran
+    // ~93px of pure horizontal budget, and width is what decides the scale, while the building sat
+    // at 62% of the frame's height with the space above and below unused. Turned, the same label
+    // spends that free height instead and costs only its leading.
     label: {
-      x: A.x + HEIGHT_LABEL_GAP_PX * direction,
-      y: derived ? A.y + 5 : (A.y + B.y) / 2,
+      x: A.x + TURNED_LABEL_NUDGE_PX * direction,
+      y: (A.y + B.y) / 2,
     },
-    anchor: direction < 0 ? 'end' : 'start',
-    text: labelText(valueM, derived),
+    anchor: 'middle',
+    rotated: true,
+    text: labelText(valueM),
     valueM,
     derived,
   };

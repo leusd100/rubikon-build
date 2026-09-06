@@ -891,11 +891,13 @@
    quieter than the three user-set dimensions and its label carries a "~" in the markup, so it can
    never be mistaken for another control's readout. */
 .hc-dimension.is-derived line { stroke-opacity: .6; stroke-dasharray: 3 3; }
-.hc-dimension.is-derived text { fill: var(--accent-on-dark); opacity: .8; font-size: 14px; }
+.hc-dimension.is-derived text { fill: var(--accent-on-dark); opacity: .8; font-size: 12px; }
 
 .hc-dimension text {
   fill: var(--accent-on-dark);
-  font: 600 16px var(--font-condensed), sans-serif;
+  /* Mirrored by LABEL_FONT_PX in isometricProjection.ts, which estimates each label's extent to
+     keep it inside the viewBox — change one and change the other. */
+  font: 600 14px var(--font-condensed), sans-serif;
   letter-spacing: .01em;
   /* A soft same-color-as-viewport halo behind each label (not a hard-edged background chip) —
      keeps the number legible over whatever geometry happens to sit behind it (roof, wall,
