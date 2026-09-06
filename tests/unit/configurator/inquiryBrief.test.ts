@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
-import { createHangarInquiryBrief, formatHangarInquiryBrief } from '../../../app/lib/configurator/inquiryBrief';
+import {
+  createHangarInquiryBrief,
+  createHangarInquiryBriefSections,
+  formatHangarInquiryBrief,
+} from '../../../app/lib/configurator/inquiryBrief';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../../app/lib/configurator/types';
 
 describe('hangar inquiry brief', () => {
@@ -22,6 +26,26 @@ describe('hangar inquiry brief', () => {
     expect(formatted).toContain('Контур: Утеплений');
     expect(formatted).toContain('Огородження: Сендвіч-панель');
     expect(formatted).toContain('Ворота: 2 × стандартні, 4×4 м');
+  });
+
+  it('uses the same non-empty rows for the visible summary and submitted payload', () => {
+    const brief = createHangarInquiryBrief(deriveDomainModel({
+      ...DEFAULT_CONFIGURATOR_STATE,
+      doors: 1,
+    }));
+    const sections = createHangarInquiryBriefSections(brief);
+    const formatted = formatHangarInquiryBrief(brief);
+
+    expect(formatted).toContain('Вибрана конфігурація:');
+    expect(formatted).toContain('Системні попередні дані:');
+    for (const row of [...sections.selected, ...sections.preliminary]) {
+      expect(row.value).not.toBe('');
+      expect(formatted).toContain(`${row.label}: ${row.value}`);
+    }
+    expect(sections.preliminary.map((row) => row.label)).toEqual([
+      'Площа забудови',
+      'Попередня конструктивна схема',
+    ]);
   });
 });
 

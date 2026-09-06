@@ -2,6 +2,11 @@ import type { HangarDomainModel } from './domainModel';
 import { deriveSummary } from './deriveSummary';
 
 export type HangarInquiryBrief = ReturnType<typeof createHangarInquiryBrief>;
+export type HangarInquiryBriefRow = { label: string; value: string };
+export type HangarInquiryBriefSections = {
+  selected: HangarInquiryBriefRow[];
+  preliminary: HangarInquiryBriefRow[];
+};
 
 export function createHangarInquiryBrief(domain: HangarDomainModel) {
   const summary = deriveSummary(domain);
@@ -21,19 +26,43 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
   };
 }
 
+/**
+ * One canonical row model for both the visible form summary and the submitted string. Optional
+ * opening rows are removed here, so neither consumer can accidentally display or send ghost work.
+ */
+export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): HangarInquiryBriefSections {
+  const selected: Array<HangarInquiryBriefRow | null> = [
+    { label: 'Габарити', value: brief.dimensionsLabel },
+    { label: 'Контур', value: brief.envelopeLabel },
+    { label: 'Огородження', value: brief.claddingSystemLabel },
+    { label: 'Основа', value: brief.foundationTypeLabel },
+    { label: 'Обсяг', value: brief.scopeSummaryLabel },
+    brief.gatesLabel === null ? null : { label: 'Ворота', value: brief.gatesLabel },
+    brief.doorsLabel === null ? null : { label: 'Двері', value: brief.doorsLabel },
+  ];
+
+  return {
+    selected: selected.filter((row): row is HangarInquiryBriefRow => row !== null && row.value !== ''),
+    preliminary: [
+      {
+        label: 'Площа забудови',
+        value: `≈ ${brief.areaSqm.toLocaleString('uk-UA')} м²`,
+      },
+      {
+        label: 'Попередня конструктивна схема',
+        value: brief.structuralVisualizationLabel,
+      },
+    ],
+  };
+}
+
 export function formatHangarInquiryBrief(brief: HangarInquiryBrief): string {
-  // Openings are omitted outright when walls are out of scope — `deriveSummary` returns null for
-  // them, and null means "not part of this request". Quoting gates for a building with no walls
-  // would be quoting work nobody asked for.
+  const sections = createHangarInquiryBriefSections(brief);
+
   return [
-    `Габарити: ${brief.dimensionsLabel}`,
-    `Площа забудови: ≈ ${brief.areaSqm.toLocaleString('uk-UA')} м²`,
-    `Контур: ${brief.envelopeLabel}`,
-    `Огородження: ${brief.claddingSystemLabel}`,
-    `Попередня конструктивна схема: ${brief.structuralVisualizationLabel}`,
-    `Основа: ${brief.foundationTypeLabel}`,
-    `Обсяг: ${brief.scopeSummaryLabel}`,
-    brief.gatesLabel === null ? null : `Ворота: ${brief.gatesLabel}`,
-    brief.doorsLabel === null ? null : `Двері: ${brief.doorsLabel}`,
-  ].filter((line): line is string => line !== null).join('\n');
+    'Вибрана конфігурація:',
+    ...sections.selected.map((row) => `${row.label}: ${row.value}`),
+    'Системні попередні дані:',
+    ...sections.preliminary.map((row) => `${row.label}: ${row.value}`),
+  ].join('\n');
 }
