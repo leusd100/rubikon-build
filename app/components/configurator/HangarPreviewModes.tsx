@@ -124,6 +124,38 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
 
   const exitFullscreen = useCallback(() => setIsFullscreen(false), []);
 
+  /**
+   * The Canvas is mounted only while 3D is the active mode, so switching back to Technical
+   * unmounts it and the next switch to 3D builds a fresh WebGL context. That was investigated as
+   * a performance defect and the answer is: LEAVE IT. Recorded here because the investigation was
+   * expensive and the wrong conclusion is very easy to reach from CI numbers.
+   *
+   * Measured on real hardware (Apple M1, ANGLE Metal, hardware WebGL), repeat Technical -> 3D:
+   *
+   *   first real frame        median 115 ms   (93-122 over 8 runs)
+   *   fully settled           median 172 ms   (144-181)
+   *   main thread blocked     median  62 ms   (51-64)
+   *
+   * That is inside the product target of <200 ms with no long tail and no bimodality.
+   *
+   * The SAME measurement under Playwright's headless Chromium reports a 1.3-1.7 s main-thread
+   * block on every switch, and a 0.8-1.4 s "intermittent tail". Both are artefacts of the test
+   * environment, not of this code. A CPU profile of that block is 1529 ms of `(program)` (native
+   * driver work) plus 89 ms of `getProgramInfoLog` — Three blocking synchronously while the driver
+   * links the 7 shader programs a new context cannot inherit. Headless Chromium renders through a
+   * software GL where `KHR_parallel_shader_compile` is UNAVAILABLE, so that link has to block; on
+   * the M1 the same extension IS available and the driver compiles off-thread, which is the whole
+   * difference between 1.5 s and 62 ms.
+   *
+   * So: do not "fix" this from a CI timing, and do not keep the Canvas mounted to chase it. Keeping
+   * it mounted would trade a 62 ms cost for a permanently resident WebGL context, a hidden scene
+   * that must be provably paused, and the loss of the guarantee that a visitor who never opens 3D
+   * pays nothing for it.
+   *
+   * What IS real, and accepted: one WebGL context per switch (20 cycles -> 20 contexts, 1 canvas
+   * node). The browser evicts the stale ones — 11 of 12 observed being reclaimed — so this is
+   * bounded by the browser rather than by us, and each rebuild costs the 62 ms above.
+   */
   const threeCanvas = showThree ? (
     <div className="hc-preview-canvas">
       <ThreeErrorBoundary onError={handleThreeError}>
