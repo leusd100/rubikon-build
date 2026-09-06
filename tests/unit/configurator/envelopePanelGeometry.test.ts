@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from '../../../app/components/configurator/three/envelopePanelGeometry';
+import { buildDoorLeafGeometry, buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from '../../../app/components/configurator/three/envelopePanelGeometry';
 
 // Real geometric behaviour, not implementation trivia: these tests exist to catch exactly the
 // class of bug hand-rolling this geometry produced during development — a disconnected back face,
@@ -338,5 +338,65 @@ describe('buildGateLeafGeometry (Phase 3D.1)', () => {
     const b = bounds(buildGateLeafGeometry(STANDARD_W, STANDARD_H));
     expect(a).toEqual(b);
     expect(vertexCount(buildGateLeafGeometry(STANDARD_W, STANDARD_H))).toBe(vertexCount(buildGateLeafGeometry(STANDARD_W, STANDARD_H)));
+  });
+});
+
+// The leaf builders' own fallback branches. They were never exercised by a test — they are only
+// reachable through ThreeHangarView, which is a .tsx and so outside this suite's coverage scope by
+// this project's own documented policy. That is exactly why they are worth pinning here: a
+// negative-height band does not throw, it silently produces a leaf with inverted geometry.
+describe('gate and door leaf fallbacks', () => {
+  const MARGIN_SIDE_M = 0.05;
+
+  it('falls back to one full-width leaf when the opening is too narrow to inset', () => {
+    // x1 = width - 0.05 collapses onto x0 = 0.05 at width <= 0.1.
+    const geometry = buildGateLeafGeometry(0.08, 4);
+    const b = bounds(geometry);
+
+    expect(Number.isFinite(b.minX) && Number.isFinite(b.maxX)).toBe(true);
+    // The fallback deliberately spans the WHOLE opening rather than insetting into nothing.
+    expect(b.minX).toBeCloseTo(0, 6);
+    expect(b.maxX).toBeCloseTo(0.08, 6);
+    expect(b.maxY).toBeGreaterThan(b.minY);
+  });
+
+  it('falls back the same way when the opening is too short for a band', () => {
+    // available = height - 0.06; the minimum 3 bands need 0.05 of gap, so band height goes
+    // non-positive between height 0.06 (the branch above) and 0.11.
+    const geometry = buildGateLeafGeometry(4, 0.1);
+    const b = bounds(geometry);
+
+    expect(b.maxY).toBeGreaterThan(b.minY);
+    expect(b.maxX - b.minX).toBeGreaterThan(0);
+    // Still inset sideways here — only the banding was abandoned, not the side margins.
+    expect(b.minX).toBeCloseTo(MARGIN_SIDE_M, 6);
+  });
+
+  it('a normal gate leaf IS banded, so the fallbacks above are a different shape', () => {
+    const banded = buildGateLeafGeometry(4, 4);
+    const fallback = buildGateLeafGeometry(4, 0.1);
+
+    // More bands means more extruded shapes means more vertices — the cheapest honest way to
+    // show the two branches produce genuinely different geometry rather than both "working".
+    expect(banded.getAttribute('position').count).toBeGreaterThan(fallback.getAttribute('position').count);
+  });
+
+  it('the personnel door leaf is inset on every side it should be', () => {
+    const widthM = 1;
+    const heightM = 2.1;
+    const b = bounds(buildDoorLeafGeometry(widthM, heightM));
+
+    expect(b.minX).toBeGreaterThan(0);
+    expect(b.maxX).toBeLessThan(widthM);
+    // Sits ON the ground, and reveals a frame line at the head.
+    expect(b.minY).toBeCloseTo(0, 6);
+    expect(b.maxY).toBeLessThan(heightM);
+  });
+
+  it('the door leaf stays non-degenerate even at an absurdly small size', () => {
+    const b = bounds(buildDoorLeafGeometry(0.02, 0.02));
+
+    expect(b.maxX).toBeGreaterThan(b.minX);
+    expect(b.maxY).toBeGreaterThan(b.minY);
   });
 });

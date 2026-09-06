@@ -741,14 +741,11 @@
   stroke-width: 2.25;
 }
 
-/* Ground reference — always on, never scope-driven, never part of the build sequence. */
-.hc-terrain {
-  fill: var(--surface-dark);
-  stroke: var(--text-on-dark-subtle);
-  stroke-width: .75;
-  stroke-opacity: .4;
-  vector-effect: non-scaling-stroke;
-}
+/* The `.hc-terrain` ground-reference rule that used to live here is gone: its element stopped
+   being drawn (HangarPreview.tsx explains that product call at the polygon it removed), so the
+   rule had no consumer left. The terrain DATA is still computed on purpose, so if the plane ever
+   comes back it comes back with a deliberate style rather than inheriting a rule nobody could
+   tell was live. */
 
 .hc-foundation { fill: rgba(28, 31, 30, .85); }
 /* Phase 3D — isolated footings: the slab's alternative, same concrete fill (same material, a

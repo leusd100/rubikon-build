@@ -45,7 +45,7 @@ export function MessengerLinks({
   );
 }
 
-export function Brand() {
+function Brand() {
   return (
     <span className="brand" aria-label={`${company.name} — будівництво та інженерні рішення`}>
       <BrandMark className="brand-frame-mark" />
@@ -108,7 +108,7 @@ export function GhostWord({
   );
 }
 
-export function SectionDivider({
+function SectionDivider({
   variant = 'neutral',
 }: {
   variant?: 'accent' | 'neutral' | 'dark' | 'inverse';

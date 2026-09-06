@@ -57,7 +57,7 @@ type DirectionHeroProps = {
   heroImage: DirectionHeroImageAsset;
 };
 
-export function DirectionHero({
+function DirectionHero({
   path,
   number,
   breadcrumbLabel,
@@ -106,7 +106,7 @@ export function DirectionHero({
   );
 }
 
-export function DirectionProcess({
+function DirectionProcess({
   eyebrow = 'Послідовність',
   title,
   text,
@@ -131,7 +131,7 @@ export function DirectionProcess({
   );
 }
 
-export function DirectionCostSection({
+function DirectionCostSection({
   title,
   text,
   items,

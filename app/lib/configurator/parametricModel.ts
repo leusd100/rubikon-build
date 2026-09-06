@@ -539,7 +539,7 @@ export const STRUCTURAL_VISUALIZATION_THRESHOLDS = {
 /** Whether this width gets a centre-support column row. Extracted so the gate placement, the door
  *  placement and the column builder all read ONE rule rather than three copies of a threshold
  *  comparison — the same single-source discipline `deriveBayLayout` exists for. */
-export function hasCentreSupport(widthM: number): boolean {
+function hasCentreSupport(widthM: number): boolean {
   return widthM >= STRUCTURAL_VISUALIZATION_THRESHOLDS.CENTER_SUPPORT_FROM_WIDTH_M;
 }
 
