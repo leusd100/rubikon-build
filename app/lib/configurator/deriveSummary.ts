@@ -41,24 +41,13 @@ export type ConfiguratorSummary = {
   /** Scope items in a fixed, readable order — not the order they were toggled in. */
   scopeLabels: string[];
   scopeSummaryLabel: string;
-  gatesLabel: string;
-  doorsLabel: string;
+  /** `null` when walls are out of scope — the opening is not part of the request at all. */
+  gatesLabel: string | null;
+  /** `null` when walls are out of scope — see `gatesLabel`. */
+  doorsLabel: string | null;
 };
 
 const OUT_OF_SCOPE_LABEL = 'Поза обсягом заявки';
-/**
- * Phase 3F.2 — a gate and a door are openings cut INTO a wall, so neither can be part of a request
- * that does not include walls. The 3D renderer already refused to draw them in that state, in its
- * own words: "a gate is an opening cut INTO a wall — it cannot read as an opening with no wall to
- * cut into" (threeSceneModel.ts). The summary and the lead brief did not know that rule, so a
- * request for foundation + frame + roof still told the reader "Ворота: 2 × стандартні" one line
- * under "Обсяг: Фундамент + Металокаркас + Покрівля" — a brief contradicting itself.
- *
- * The selection is CARRIED rather than dropped, deliberately: that the customer wants two gates
- * once they do order walls is real information for the person reading the lead. It just must not
- * read as something they ordered.
- */
-const OUT_OF_SCOPE_SUFFIX = ' · поза обсягом заявки (стіни не замовлені)';
 
 function formatMeters(value: number): string {
   // Whole metres print without a decimal (24, not 24.0); half-metre steps keep one.
@@ -111,22 +100,39 @@ function formatEnvelopeLabel(envelope: HangarDomainModel['envelope']): string {
  */
 /** Customer input, not derived visualization — the door is something the customer asked for, so
  *  it belongs in the summary (and in any future lead brief) with its real fixed size. */
-function formatDoorsLabel(doors: HangarDomainModel['doors'], wallsInScope: boolean): string {
+function formatDoorsLabel(doors: HangarDomainModel['doors'], wallsInScope: boolean): string | null {
+  if (!wallsInScope) return null;
   if (doors === 0) return 'Не передбачені';
   const { widthM, heightM } = DOOR_DIMENSIONS_M;
-  const spec = `${doors} × ${widthM.toString().replace('.', ',')}×${heightM.toString().replace('.', ',')} м`;
-  return wallsInScope ? spec : `${spec}${OUT_OF_SCOPE_SUFFIX}`;
+  return `${doors} × ${widthM.toString().replace('.', ',')}×${heightM.toString().replace('.', ',')} м`;
 }
 
+/**
+ * Phase 3F.2 — `null` when walls are out of scope, and null MEANS "not part of this request", not
+ * "unknown". A gate and a door are openings cut INTO a wall, so neither can belong to a request
+ * that excludes walls: there is nothing for them to be cut into, and quoting them would be quoting
+ * work nobody asked for. The 3D renderer has refused to draw them in this state for phases, in its
+ * own words — "a gate is an opening cut INTO a wall — it cannot read as an opening with no wall to
+ * cut into" (threeSceneModel.ts). The summary and the lead brief did not know the rule, so a
+ * request for foundation + frame + roof still announced "Ворота: 2 × стандартні" one line under
+ * "Обсяг: Фундамент + Металокаркас + Покрівля".
+ *
+ * The customer's CHOICE is still kept — in the controls, which are disabled rather than cleared,
+ * so putting walls back restores it. It just does not travel into a request that has no walls.
+ *
+ * Modelled as null rather than as a "поза обсягом" string on purpose: an absence should be an
+ * absence, so every consumer has to decide what to do with it instead of accidentally printing a
+ * caveat as though it were a line item.
+ */
 function formatGatesLabel(
   gates: HangarDomainModel['gates'],
   gateType: HangarDomainModel['gateType'],
   wallsInScope: boolean,
-): string {
+): string | null {
+  if (!wallsInScope) return null;
   if (gates === 0) return 'Без воріт';
   const { widthM, heightM } = GATE_DIMENSIONS_M[gateType];
-  const spec = `${gates} × ${GATE_TYPE_LABELS[gateType].toLowerCase()}, ${widthM}×${heightM} м`;
-  return wallsInScope ? spec : `${spec}${OUT_OF_SCOPE_SUFFIX}`;
+  return `${gates} × ${GATE_TYPE_LABELS[gateType].toLowerCase()}, ${widthM}×${heightM} м`;
 }
 
 /**

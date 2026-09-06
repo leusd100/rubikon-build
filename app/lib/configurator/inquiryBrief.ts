@@ -22,6 +22,9 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
 }
 
 export function formatHangarInquiryBrief(brief: HangarInquiryBrief): string {
+  // Openings are omitted outright when walls are out of scope — `deriveSummary` returns null for
+  // them, and null means "not part of this request". Quoting gates for a building with no walls
+  // would be quoting work nobody asked for.
   return [
     `Габарити: ${brief.dimensionsLabel}`,
     `Площа забудови: ≈ ${brief.areaSqm.toLocaleString('uk-UA')} м²`,
@@ -30,7 +33,7 @@ export function formatHangarInquiryBrief(brief: HangarInquiryBrief): string {
     `Попередня конструктивна схема: ${brief.structuralVisualizationLabel}`,
     `Основа: ${brief.foundationTypeLabel}`,
     `Обсяг: ${brief.scopeSummaryLabel}`,
-    `Ворота: ${brief.gatesLabel}`,
-    `Двері: ${brief.doorsLabel}`,
-  ].join('\n');
+    brief.gatesLabel === null ? null : `Ворота: ${brief.gatesLabel}`,
+    brief.doorsLabel === null ? null : `Двері: ${brief.doorsLabel}`,
+  ].filter((line): line is string => line !== null).join('\n');
 }

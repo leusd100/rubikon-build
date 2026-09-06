@@ -37,7 +37,7 @@ describe('inquiry brief — Phase 3F.2', () => {
     expect(text).toContain('Двері: 1 × 1×2,1 м');
   });
 
-  it('does not order openings in walls the request excludes', () => {
+  it('omits openings entirely from a request that excludes walls', () => {
     const text = formatHangarInquiryBrief(
       createHangarInquiryBrief(deriveDomainModel({
         ...DEFAULT_CONFIGURATOR_STATE,
@@ -47,10 +47,11 @@ describe('inquiry brief — Phase 3F.2', () => {
       })),
     );
 
-    // The Обсяг line and the openings lines must agree with each other.
+    // There is no wall for an opening to be cut into, so quoting one would be quoting work nobody
+    // asked for. The lines are absent, not caveated.
     expect(text).toContain('Обсяг: Фундамент + Металокаркас + Покрівля');
-    expect(text).toMatch(/Ворота:.*поза обсягом заявки/);
-    expect(text).toMatch(/Двері:.*поза обсягом заявки/);
+    expect(text).not.toContain('Ворота:');
+    expect(text).not.toContain('Двері:');
     expect(text).toContain('Огородження: Покрівля:');
   });
 });

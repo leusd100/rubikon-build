@@ -45,14 +45,21 @@ export function ConfiguratorSummary({
             <dt>Обсяг</dt>
             <dd>{summary.scopeSummaryLabel}</dd>
           </div>
-          <div>
-            <dt>Ворота</dt>
-            <dd>{summary.gatesLabel}</dd>
-          </div>
-          <div>
-            <dt>Двері</dt>
-            <dd>{summary.doorsLabel}</dd>
-          </div>
+          {/* Dropped entirely, not shown as "поза обсягом": an opening in a wall nobody ordered is
+              not part of this request, so it has no row. The choice itself is not lost — the
+              controls keep it, disabled, and it comes back with the walls. */}
+          {summary.gatesLabel !== null && (
+            <div>
+              <dt>Ворота</dt>
+              <dd>{summary.gatesLabel}</dd>
+            </div>
+          )}
+          {summary.doorsLabel !== null && (
+            <div>
+              <dt>Двері</dt>
+              <dd>{summary.doorsLabel}</dd>
+            </div>
+          )}
         </dl>
         <p className="hc-summary-formula">Площа = ширина × довжина</p>
         {showInquiryAction && (
