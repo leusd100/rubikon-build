@@ -47,7 +47,7 @@ function contactType(element: HTMLElement) {
   return null;
 }
 
-export function openCookieSettings() {
+function openCookieSettings() {
   window.dispatchEvent(new Event(settingsEvent));
 }
 

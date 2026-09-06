@@ -41,7 +41,7 @@ let cachedNormalTexture: THREE.Texture | null = null;
  * on concrete (the brief's §5 "tiny roughness breakup") and, at a different repeat, as a subtle
  * roughness variation on coated steel.
  */
-export function getNoiseRoughnessTexture(): THREE.Texture {
+function getNoiseRoughnessTexture(): THREE.Texture {
   if (cachedRoughnessTexture) return cachedRoughnessTexture;
 
   const field = buildNoiseField(NOISE_SIZE, 1337);
@@ -75,7 +75,7 @@ export function getNoiseRoughnessTexture(): THREE.Texture {
  * reaches the eye is only a faint break-up of an otherwise perfectly flat specular highlight —
  * "subtle irregularity, not mirror-like" (brief §4), never a visible bump pattern.
  */
-export function getNoiseNormalTexture(): THREE.Texture {
+function getNoiseNormalTexture(): THREE.Texture {
   if (cachedNormalTexture) return cachedNormalTexture;
 
   const field = buildNoiseField(NOISE_SIZE, 4242);

@@ -30,6 +30,19 @@ import type { CladdingSystem } from '../../../lib/configurator/types';
 // only for the two envelope surfaces this phase actually targets (gable ends stay flat — see
 // ThreeHangarView's own note on why).
 
+/** An axis-aligned rectangle as a `THREE.Shape`, in the winding `ExtrudeGeometry` expects.
+ *  Five call sites in this file built this by hand, which is five chances to transpose a corner
+ *  and get a bow-tie that extrudes into nothing. */
+function rectShape(x0: number, y0: number, x1: number, y1: number): THREE.Shape {
+  const shape = new THREE.Shape();
+  shape.moveTo(x0, y0);
+  shape.lineTo(x1, y0);
+  shape.lineTo(x1, y1);
+  shape.lineTo(x0, y1);
+  shape.closePath();
+  return shape;
+}
+
 /** Real corrugated ("профнастил") sheet — a repeating trapezoidal wave: flat crest, sloped
  *  transition, flat trough, sloped transition back up. Deliberately trapezoidal, not sinusoidal:
  *  that is what the actual product looks like, and it is also cheaper (4 X-samples per period
@@ -290,13 +303,7 @@ export function buildGableCladdingOverlay(
     const yTop = Math.min(gableRooflineY(x0, widthM, eaveM, ridgeM), gableRooflineY(x1, widthM, eaveM, ridgeM));
     const yBottom = stripBottomY(x0, x1, holeBounds);
     if (yTop <= yBottom) return; // entirely consumed by a gate hole or past the roofline
-    const shape = new THREE.Shape();
-    shape.moveTo(x0, yBottom);
-    shape.lineTo(x1, yBottom);
-    shape.lineTo(x1, yTop);
-    shape.lineTo(x0, yTop);
-    shape.closePath();
-    shapes.push(shape);
+    shapes.push(rectShape(x0, yBottom, x1, yTop));
   };
 
   let depthM: number;
@@ -455,13 +462,7 @@ function buildGateLeafGeometry(widthM: number, heightM: number): THREE.BufferGeo
     // Degenerate/undersized opening (never the default or typical configuration — see this file's
     // own "falls back to flat below minimum width" precedent in buildEnvelopePanelGeometry): one
     // plain unbanded leaf rather than a negative-height band.
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0);
-    shape.lineTo(widthM, 0);
-    shape.lineTo(widthM, heightM);
-    shape.lineTo(0, heightM);
-    shape.closePath();
-    return new THREE.ExtrudeGeometry(shape, { depth: GATE_LEAF_THICKNESS_M, bevelEnabled: false, curveSegments: 1 });
+    return new THREE.ExtrudeGeometry(rectShape(0, 0, widthM, heightM), { depth: GATE_LEAF_THICKNESS_M, bevelEnabled: false, curveSegments: 1 });
   }
 
   const rawBandCount = Math.round(availableHeightM / GATE_BAND_TARGET_HEIGHT_M);
@@ -473,24 +474,12 @@ function buildGateLeafGeometry(widthM: number, heightM: number): THREE.BufferGeo
   if (bandHeightM <= 0) {
     // The margin/gap budget doesn't fit even the minimum band count at this opening's real size —
     // same fallback as above, one plain leaf rather than zero-or-negative-height bands.
-    const shape = new THREE.Shape();
-    shape.moveTo(x0, 0);
-    shape.lineTo(x1, 0);
-    shape.lineTo(x1, availableHeightM);
-    shape.lineTo(x0, availableHeightM);
-    shape.closePath();
-    shapes.push(shape);
+    shapes.push(rectShape(x0, 0, x1, availableHeightM));
   } else {
     for (let i = 0; i < bandCount; i += 1) {
       const y0 = i * (bandHeightM + GATE_BAND_GAP_M);
       const y1 = y0 + bandHeightM;
-      const shape = new THREE.Shape();
-      shape.moveTo(x0, y0);
-      shape.lineTo(x1, y0);
-      shape.lineTo(x1, y1);
-      shape.lineTo(x0, y1);
-      shape.closePath();
-      shapes.push(shape);
+      shapes.push(rectShape(x0, y0, x1, y1));
     }
   }
 
@@ -514,14 +503,7 @@ function buildDoorLeafGeometry(widthM: number, heightM: number): THREE.BufferGeo
   const y0 = 0;
   const y1 = Math.max(y0 + 0.01, heightM - inset);
 
-  const shape = new THREE.Shape();
-  shape.moveTo(x0, y0);
-  shape.lineTo(x1, y0);
-  shape.lineTo(x1, y1);
-  shape.lineTo(x0, y1);
-  shape.closePath();
-
-  return new THREE.ExtrudeGeometry(shape, {
+  return new THREE.ExtrudeGeometry(rectShape(x0, y0, x1, y1), {
     depth: GATE_LEAF_THICKNESS_M,
     bevelEnabled: false,
     curveSegments: 1,
