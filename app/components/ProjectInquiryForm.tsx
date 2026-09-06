@@ -11,7 +11,11 @@ import { siteRoutes } from '../data/navigation';
 import { filterAttributionForConsent, readAttribution } from '../lib/attribution';
 import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
 import { deriveDomainModel } from '../lib/configurator/domainModel';
-import { createHangarInquiryBrief, formatHangarInquiryBrief } from '../lib/configurator/inquiryBrief';
+import {
+  createHangarInquiryBrief,
+  createHangarInquiryBriefSections,
+  formatHangarInquiryBrief,
+} from '../lib/configurator/inquiryBrief';
 import { useHangarInquiryContext } from './configurator/HangarInquiryContext';
 
 type LeadApiResult = {
@@ -56,6 +60,10 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
   );
   const hangarConfiguration = useMemo(
     () => hangarBrief ? formatHangarInquiryBrief(hangarBrief) : '',
+    [hangarBrief],
+  );
+  const hangarBriefSections = useMemo(
+    () => hangarBrief ? createHangarInquiryBriefSections(hangarBrief) : null,
     [hangarBrief],
   );
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
@@ -111,7 +119,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
             cooperation: value(formData, 'cooperation'),
             startDate: value(formData, 'startDate'),
             comment: value(formData, 'comment'),
-            configuration: hangarConfiguration,
+            ...(hangarConfiguration ? { configuration: hangarConfiguration } : {}),
           },
           sourcePage: pathname,
           landingPage: attribution.landingPage,
@@ -218,24 +226,40 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
           <h3 id="inquiry-project-heading">Завдання</h3>
         </div>
         <div className="inquiry-form-section-body">
-          {hangarBrief && (
+          {hangarBrief && hangarBriefSections && (
             <aside className="inquiry-config-brief" aria-labelledby="inquiry-config-brief-title">
               <div className="inquiry-config-brief-heading">
                 <div>
-                  <small>Додано з конфігуратора</small>
-                  <strong id="inquiry-config-brief-title">Ангар · {hangarBrief.dimensionsLabel}</strong>
-                  <span>≈ {hangarBrief.areaSqm.toLocaleString('uk-UA')} м² площі забудови</span>
+                  <small id="inquiry-config-brief-title">До заявки додано вашу конфігурацію</small>
+                  <strong>Ангар · {hangarBrief.dimensionsLabel}</strong>
                 </div>
-                <a href="#configurator">Змінити параметри ↑</a>
+                <button type="button" onClick={() => hangarInquiry?.detachConfiguration()}>Не додавати</button>
               </div>
-              <dl>
-                <div><dt>Контур</dt><dd>{hangarBrief.envelopeLabel}</dd></div>
-                <div><dt>Огородження</dt><dd>{hangarBrief.claddingSystemLabel}</dd></div>
-                <div><dt>Схема</dt><dd>{hangarBrief.structuralVisualizationLabel}</dd></div>
-                <div><dt>Основа</dt><dd>{hangarBrief.foundationTypeLabel}</dd></div>
-                <div><dt>Обсяг</dt><dd>{hangarBrief.scopeSummaryLabel}</dd></div>
-                <div><dt>Ворота</dt><dd>{hangarBrief.gatesLabel}</dd></div>
-              </dl>
+              <details className="inquiry-config-brief-details">
+                <summary>
+                  Переглянути параметри
+                  <ChevronDown aria-hidden="true" />
+                </summary>
+                <div className="inquiry-config-brief-sections">
+                  <section aria-labelledby="inquiry-config-selected-heading">
+                    <h4 id="inquiry-config-selected-heading">Вибрана конфігурація</h4>
+                    <dl>
+                      {hangarBriefSections.selected.map((row) => (
+                        <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
+                      ))}
+                    </dl>
+                  </section>
+                  <section aria-labelledby="inquiry-config-preliminary-heading">
+                    <h4 id="inquiry-config-preliminary-heading">Системні попередні дані</h4>
+                    <dl>
+                      {hangarBriefSections.preliminary.map((row) => (
+                        <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
+                      ))}
+                    </dl>
+                  </section>
+                  <a className="inquiry-config-edit" href="#configurator">Змінити у конфігураторі ↑</a>
+                </div>
+              </details>
             </aside>
           )}
 
