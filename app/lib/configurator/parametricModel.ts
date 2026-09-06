@@ -536,9 +536,16 @@ export const STRUCTURAL_VISUALIZATION_THRESHOLDS = {
  * to *look* more complete would be the wrong kind of honesty for a function whose whole job is to
  * say plainly what actually drives it.
  */
+/** Whether this width gets a centre-support column row. Extracted so the gate placement, the door
+ *  placement and the column builder all read ONE rule rather than three copies of a threshold
+ *  comparison — the same single-source discipline `deriveBayLayout` exists for. */
+export function hasCentreSupport(widthM: number): boolean {
+  return widthM >= STRUCTURAL_VISUALIZATION_THRESHOLDS.CENTER_SUPPORT_FROM_WIDTH_M;
+}
+
 export function deriveStructuralVisualization(widthM: number): { scheme: StructuralScheme; roofStructure: RoofStructure } {
   const roofStructure: RoofStructure = widthM < STRUCTURAL_VISUALIZATION_THRESHOLDS.TRUSS_FROM_WIDTH_M ? 'portalRafter' : 'truss';
-  const scheme: StructuralScheme = widthM < STRUCTURAL_VISUALIZATION_THRESHOLDS.CENTER_SUPPORT_FROM_WIDTH_M ? 'clearSpan' : 'centerSupport';
+  const scheme: StructuralScheme = hasCentreSupport(widthM) ? 'centerSupport' : 'clearSpan';
   return { scheme, roofStructure };
 }
 
@@ -849,6 +856,21 @@ const DOOR_GATE_CLEARANCE_M = 0.8;
  *  (it would otherwise skip a column for a 1 m opening, which is not how a real building works). */
 const DOOR_COLUMN_CLEARANCE_M = 0.6;
 
+/** The gates' version of DOOR_COLUMN_CLEARANCE_M, and the same principle applied consistently:
+ *  the OPENING avoids the centre-support line, never the other way round.
+ *
+ *  That principle was already written down for the door — "a door must never be the reason a
+ *  structural column disappears" — but gates were still allowed to delete the first column of the
+ *  centre row. On the default 24x60 building a single gate lands dead centre (10..14 m against a
+ *  column line at 12), so the row simply began one bay in and the gable frame stood without its
+ *  centre support. Gates now step aside by this much instead, which restores the column and its
+ *  footing while leaving the doorway genuinely walk-through — the point of the whole rule.
+ *
+ *  Larger than the door's 0.6 m because this is the opening people drive through, and because the
+ *  gate is wide enough that a hair's clearance would read as "the column is in the doorway" even
+ *  when it geometrically is not. */
+const GATE_COLUMN_CLEARANCE_M = 0.5;
+
 /** Every X where a 1 m door would be legal on the front face, in preference order. Pure, and
  *  shared by the fit check and the geometry builder so the UI can never offer a door the model
  *  then refuses to place. */
@@ -920,13 +942,78 @@ function buildGateRects(
   const marginM = widthM * GATE_MARGIN_RATIO;
   const usableM = widthM - marginM * 2;
   const totalWidthM = gates * gateWidthM + (gates - 1) * gapM;
-  const startM = marginM + Math.max(0, (usableM - totalWidthM) / 2);
+  const centredStartM = marginM + Math.max(0, (usableM - totalWidthM) / 2);
+  const pitchM = gateWidthM + gapM;
+  const startM = clearOfCentreColumn(centredStartM, { gates, gateWidthM, pitchM, totalWidthM, marginM, widthM });
 
   return Array.from({ length: gates }, (_, index) => ({
     xM: round(startM + index * (gateWidthM + gapM)),
     widthM: gateWidthM,
     heightM: gateHeightM,
   }));
+}
+
+/**
+ * Slides the gate group sideways, as a group, until the centre-support column line is clear of
+ * every gate.
+ *
+ * Moves the WHOLE group rather than re-spacing it: the gap and margin ratios are the drawing's own
+ * composition, and re-deriving them per case would put two gates at spacings no other width
+ * produces. The group keeps its shape and simply steps aside.
+ *
+ * The clash test is per GATE, never per group. A group-level span test was written first and was
+ * wrong in a way worth recording: with two gates the column line sits in the GAP between them —
+ * harmless, and exactly where a real building would want it — but a span test sees it inside the
+ * group's overall extent and shoves the pair sideways for nothing. On a 24 m building that pushed
+ * them to 12.5..16.5 and 18.4..22.4, jammed against the far corner, to avoid a column that was
+ * never in anybody's way.
+ *
+ * Candidate positions are the starts that put one gate's edge exactly on its clearance line, in
+ * either direction; the one nearest the centred position wins, so the facade moves as little as it
+ * has to. On a tie — one gate on a symmetric gable, the common case — the stable sort leaves the
+ * left candidate first. That is an arbitrary but deterministic choice, and deliberately described
+ * as one: both directions were checked and they are equivalent for the door, which lands beside
+ * the gate either way because `doorCandidateXs` avoids the column line on its own account.
+ *
+ * Returns the centred start unchanged when the building has no centre row, when nothing clashes,
+ * or when no candidate fits between the margins. That last case is a real dead end rather than a
+ * silent squeeze, and `buildInternalColumns` still drops the column there.
+ */
+function clearOfCentreColumn(
+  centredStartM: number,
+  geom: { gates: number; gateWidthM: number; pitchM: number; totalWidthM: number; marginM: number; widthM: number },
+): number {
+  const { gates, gateWidthM, pitchM, totalWidthM, marginM, widthM } = geom;
+  if (!hasCentreSupport(widthM)) return centredStartM;
+
+  const midX = widthM / 2;
+  const offsets = Array.from({ length: gates }, (_, index) => index * pitchM);
+  // Strictly inside the forbidden band, with a hair of tolerance. Every candidate below is built
+  // to land EXACTLY on its clearance line, so an inclusive test rejects each of its own solutions
+  // and the group never moves at all — which is precisely what happened: the single centred gate
+  // stayed at 10..14 and the column stayed deleted, with the shift silently doing nothing. The
+  // tolerance also keeps the answer stable against the floating-point noise of computing a
+  // candidate and then re-deriving the same edge from it.
+  const TOUCHING_M = 1e-6;
+  const clashes = (startM: number) => offsets.some((offsetM) => {
+    const loM = startM + offsetM - GATE_COLUMN_CLEARANCE_M + TOUCHING_M;
+    const hiM = startM + offsetM + gateWidthM + GATE_COLUMN_CLEARANCE_M - TOUCHING_M;
+    return midX > loM && midX < hiM;
+  });
+  if (!clashes(centredStartM)) return centredStartM;
+
+  const minStartM = marginM;
+  const maxStartM = widthM - marginM - totalWidthM;
+
+  const candidates = offsets
+    .flatMap((offsetM) => [
+      midX - GATE_COLUMN_CLEARANCE_M - offsetM - gateWidthM,
+      midX + GATE_COLUMN_CLEARANCE_M - offsetM,
+    ])
+    .filter((startM) => startM >= minStartM && startM <= maxStartM && !clashes(startM))
+    .sort((a, b) => Math.abs(a - centredStartM) - Math.abs(b - centredStartM));
+
+  return candidates[0] ?? centredStartM;
 }
 
 function openingFromRect(
@@ -1003,6 +1090,11 @@ function buildInternalColumns(
   const columns: InternalColumn[] = [];
   let index = 0;
   for (const z of stationsM) {
+    // Last resort, not the normal path. Gates now step aside from this line themselves
+    // (`clearOfCentreColumn`), which is the same principle the door has always followed: the
+    // OPENING avoids the column, so the column and its footing survive. This branch only fires
+    // where no shifted position fits between the facade margins, and dropping the column is still
+    // better than drawing one in the middle of a doorway.
     const conflictsWithGate = z === 0 && openings.some((o) => {
       const loX = o.rect.xM - INTERNAL_COLUMN_GATE_CLEARANCE_M;
       const hiX = o.rect.xM + o.rect.widthM + INTERNAL_COLUMN_GATE_CLEARANCE_M;

@@ -699,12 +699,44 @@ describe('internal columns — centreline support (Phase 3E, brief §3-4)', () =
     expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM);
   });
 
-  it('a single centred gate (the default) excludes the conflicting z=0 support and continues deeper in', () => {
+  // Behaviour deliberately REVERSED (live product review). A single gate lands centred on a
+  // symmetric gable, which is exactly the column line, and the old rule resolved that by deleting
+  // the column — so the gable frame stood without its centre support and the row began one bay in.
+  // The gate now steps aside instead, which is the rule the door has always followed: the opening
+  // avoids the column, so the column and its isolated footing survive, and the doorway is still
+  // something you can walk or drive through.
+  it('a single centred gate steps aside so the z=0 support survives, rather than deleting it', () => {
     const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates: 1, gateType: 'standard' });
-    expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(false);
-    // Nothing else was skipped — every OTHER station still has its column.
-    expect(m.internalColumns).toHaveLength(m.bays.stationsM.length - 1);
-    expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM.filter((z) => z !== 0));
+    const midX = m.footprint.widthM / 2;
+
+    expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(true);
+    expect(m.internalColumns.map((c) => c.stationM)).toEqual(m.bays.stationsM);
+
+    // The gate moved off the centreline, and it is the GATE that moved: still full preset width.
+    const gate = m.openings.find((o) => o.kind === 'gate')!;
+    expect(gate.rect.widthM).toBe(GATE_DIMENSIONS_M.standard.widthM);
+    expect(midX < gate.rect.xM || midX > gate.rect.xM + gate.rect.widthM).toBe(true);
+
+    // ...and it moved only as far as it had to: still inside the facade, not shoved to a corner.
+    expect(gate.rect.xM).toBeGreaterThan(0);
+    expect(gate.rect.xM + gate.rect.widthM).toBeLessThan(m.footprint.widthM);
+  });
+
+  // The clash test must be per GATE, not across the group's overall span: with two gates the
+  // column line sits in the GAP between them, which is harmless and where a real building would
+  // want it. A span-based test called that a clash and shoved the pair sideways for nothing —
+  // on a 24 m facade, out to 12.5..16.5 and 18.4..22.4, jammed against the far corner.
+  it('leaves a gate pair alone when the column line falls in the gap between them', () => {
+    for (const gateType of ['standard', 'double'] as const) {
+      const shifted = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates: 2, gateType });
+      const midX = shifted.footprint.widthM / 2;
+      const gates = shifted.openings.filter((o) => o.kind === 'gate');
+
+      // The pair still straddles the centreline — i.e. nothing pushed it to one side.
+      expect(gates.some((g) => g.rect.xM + g.rect.widthM < midX), gateType).toBe(true);
+      expect(gates.some((g) => g.rect.xM > midX), gateType).toBe(true);
+      expect(shifted.internalColumns.some((c) => c.stationM === 0), gateType).toBe(true);
+    }
   });
 
   it('two gates leave the centreline clear at z=0 (the gap between them), so no support is skipped', () => {
