@@ -105,19 +105,19 @@ test.describe('configurator attachment contract', () => {
     { name: 'eave height', edit: (page) => setDimension(page, 'height', '9') },
     {
       name: 'envelope/material',
-      edit: async (page) => page.getByRole('radio', { name: 'Утеплений', exact: true }).check({ force: true }),
+      edit: async (page) => page.locator('label:has(input[name="hc-envelope"])').filter({ hasText: 'Утеплений' }).click(),
     },
     {
       name: 'foundation',
-      edit: async (page) => page.getByRole('radio', { name: 'Монолітна плита', exact: true }).check({ force: true }),
+      edit: async (page) => page.locator('label:has(input[name="hc-foundation-type"])').filter({ hasText: 'Монолітна плита' }).click(),
     },
     {
       name: 'gate',
-      edit: async (page) => page.getByRole('radiogroup', { name: 'Ворота' }).getByRole('radio', { name: '2' }).check({ force: true }),
+      edit: async (page) => page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^2$/ }).click(),
     },
     {
       name: 'personnel door',
-      edit: async (page) => page.getByRole('radiogroup', { name: 'Двері' }).getByRole('radio', { name: '1' }).check({ force: true }),
+      edit: async (page) => page.locator('label:has(input[name="hc-doors"][value="1"])').click(),
     },
     {
       name: 'application scope',
@@ -199,7 +199,7 @@ test.describe('configurator attachment contract', () => {
     const submitted = await mockLeadSubmission(page);
     await openHangarPage(page);
     await setDimension(page, 'width', '30');
-    await page.getByRole('radiogroup', { name: 'Двері' }).getByRole('radio', { name: '1' }).check({ force: true });
+    await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
 
     const brief = attachmentCard(page);
     await brief.getByText('Переглянути параметри', { exact: true }).click();
@@ -224,7 +224,7 @@ test.describe('configurator attachment contract', () => {
   test('walls outside scope omit gates and door from both summary and payload', async ({ page }) => {
     const submitted = await mockLeadSubmission(page);
     await openHangarPage(page);
-    await page.getByRole('radiogroup', { name: 'Двері' }).getByRole('radio', { name: '1' }).check({ force: true });
+    await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
     await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
 
     const brief = attachmentCard(page);
