@@ -47,21 +47,15 @@ export function MessengerLinks({
 
 function Brand() {
   return (
-    <span className="brand" aria-label={`${company.name} — будівництво та інженерні рішення`}>
-      <BrandMark className="brand-frame-mark" />
-      <span className="brand-name">
-        <b><span>RUBIKON</span> <em>BUILD</em></b>
-        <small>Construction &amp; Engineering</small>
-      </span>
-    </span>
-  );
-}
-
-export function BrandMark({ className = '' }: { className?: string }) {
-  return (
-    <span className={`engineering-mark${className ? ` ${className}` : ''}`} aria-hidden="true">
-      <i /><i /><b /><em />
-    </span>
+    <Image
+      className="brand"
+      src="/brand/rubikon-build-dark.svg"
+      width={471}
+      height={100}
+      alt={`${company.name} — будівництво та інженерні рішення`}
+      priority
+      unoptimized
+    />
   );
 }
 

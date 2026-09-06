@@ -119,20 +119,8 @@ section[id] { scroll-margin-top: 116px; }
   backdrop-filter: blur(18px);
 }
 .nav-wrap { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: clamp(22px, 2.2vw, 40px); }
-.brand-link { display: inline-flex; }
-.brand { display: inline-flex; align-items: center; gap: 15px; line-height: 1; }
-.engineering-mark { --mark-stroke: 2px; --mark-node-surface: #111315; position: relative; display: block; flex: 0 0 auto; color: currentColor; }
-.engineering-mark::before { content: ''; position: absolute; inset: 10% 14% 14%; border: var(--mark-stroke) solid currentColor; border-bottom-width: calc(var(--mark-stroke) * 2); }
-.engineering-mark::after { content: ''; position: absolute; left: 5%; right: 5%; bottom: 5%; height: var(--mark-stroke); background: currentColor; opacity: .46; }
-.engineering-mark i:first-child { position: absolute; z-index: 2; left: 46%; top: 5%; width: 9%; height: 88%; background: var(--accent); transform: skew(-8deg); }
-.engineering-mark i:nth-child(2) { position: absolute; left: 24%; top: 50%; width: 54%; height: var(--mark-stroke); background: currentColor; transform: rotate(-33deg); transform-origin: center; opacity: .62; }
-.engineering-mark b { position: absolute; z-index: 3; left: 41%; top: 42%; width: 18%; aspect-ratio: 1; border: var(--mark-stroke) solid currentColor; background: var(--mark-node-surface); transform: rotate(45deg); }
-.engineering-mark em { position: absolute; right: 5%; top: 5%; width: 26%; height: calc(var(--mark-stroke) + 1px); background: var(--accent); transform: skew(-14deg); }
-.brand-frame-mark { width: 50px; height: 50px; --mark-node-surface: #0c0d0f; }
-.brand-name { display: grid; letter-spacing: .06em; }
-.brand-name b { font: 400 24px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .075em; white-space: nowrap; }
-.brand-name b em { color: inherit; font-style: normal; font-weight: 400; }
-.brand-name small { margin-top: 8px; color: var(--text-on-dark-subtle); font: 500 9px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+.brand-link { display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 44px; }
+.brand { display: block; width: 256px; height: auto; aspect-ratio: 471 / 100; }
 .desktop-nav { display: flex; align-items: center; gap: clamp(24px, 2.15vw, 40px); font-size: 16px; font-weight: 720; letter-spacing: .012em; }
 .desktop-nav a { position: relative; white-space: nowrap; }
 .desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: -7px; height: 2px; background: var(--accent); transition: right .25s ease; }
@@ -570,10 +558,6 @@ section[id] { scroll-margin-top: 116px; }
 .mark-evolution i:nth-child(2) { position: absolute; left: 7px; bottom: 4px; width: 58px; height: 3px; background: currentColor; }
 .mark-evolution i:nth-child(3) { position: absolute; right: 4px; top: 4px; width: 2px; height: 13px; background: var(--accent); }
 .mark-evolution b { position: absolute; right: 0; top: 2px; width: 8px; height: 8px; background: var(--accent); }
-.logo-preview-dark .engineering-mark,
-.proposal-icon-tile .engineering-mark { --mark-node-surface: #111315; }
-.logo-preview-light .engineering-mark { --mark-node-surface: #eeede7; }
-.proposal-compact .engineering-mark { --mark-node-surface: #deddd6; }
 .mark-monogram { border: 2px solid currentColor; }
 .mark-monogram::after { content: ''; position: absolute; inset: 8px; border-top: 1px solid currentColor; border-right: 1px solid currentColor; opacity: .3; }
 .mark-monogram b, .mark-monogram strong { position: absolute; z-index: 2; font: 500 22px/1 var(--font-display), sans-serif; }
@@ -713,8 +697,6 @@ footer { color: #a8b0aa; background: #0e100f; }
 footer > .section-divider { position: relative; z-index: 1; }
 footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-grid { min-height: 230px; display: grid; grid-template-columns: auto auto auto auto; justify-content: space-between; align-items: start; gap: clamp(30px, 3.6vw, 72px); padding-block: 52px; font-size: 11px; }
-footer .brand-name b { color: white; }
-footer .brand-name small { color: var(--text-on-dark-subtle); }
 .footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 11px; padding-top: 3px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
 .footer-group-title { margin-bottom: 3px; color: var(--text-on-dark-subtle); font-size: 9px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
 .footer-nav a, .footer-directions a { white-space: nowrap; transition: color var(--duration-fast) ease; }
@@ -843,10 +825,7 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .contact-links .pending-contact:first-child { padding-right: clamp(22px, 3vw, 36px); }
   .contact-links .pending-contact:last-child { padding-left: clamp(22px, 3vw, 36px); border-left: 1px solid rgba(255,255,255,.15); }
   .nav-wrap { gap: 10px; }
-  .brand { gap: 10px; }
-  .brand-frame-mark { width: 42px; height: 42px; }
-  .brand-name b { font-size: 22px; letter-spacing: .065em; }
-  .brand-name small { margin-top: 7px; font-size: 8px; letter-spacing: .17em; }
+  .brand { width: 226px; }
   .desktop-nav { gap: clamp(11px, 1.25vw, 14px); font-size: clamp(14px, 1.45vw, 15px); }
   .header-contact { padding-inline: 10px; }
   .header-phone { min-width: 150px; }
@@ -896,13 +875,10 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
   .ghost-word { display: none; }
   section[id] { scroll-margin-top: 88px; }
   .nav-wrap { min-height: 76px; gap: 12px; }
-  .brand { gap: 10px; }
-  .brand-frame-mark { width: 38px; height: 38px; }
-  .brand-name b { font-size: 17px; letter-spacing: .055em; }
+  .brand { width: 210px; }
   /* font-size/letter-spacing here are the a11y-legibility values (previously set by a
      duplicate, separately-declared max-width:760px block further down the file — merged in
      place; computed output is unchanged). */
-  .brand-name small { margin-top: 6px; font-size: 8px; letter-spacing: .14em; }
   .mobile-menu summary { min-width: 92px; height: 42px; padding-inline: 13px; }
   .hero { min-height: 790px; height: auto; }
   .hero-media video { object-position: 66% center; }
@@ -1082,14 +1058,11 @@ footer .brand-name small { color: var(--text-on-dark-subtle); }
 }
 
 @media (max-width: 380px) {
-  .brand { gap: 8px; }
-  .brand-frame-mark { width: 34px; height: 34px; }
-  .brand-name b { font-size: 15px; }
+  .brand { width: 188px; }
   /* font-size/letter-spacing here are the a11y-legibility values (previously set by a
      duplicate, separately-declared max-width:380px block further down the file — merged in
      place; computed output is unchanged; margin-top is unset here so it keeps inheriting the
      760px tier's 6px). */
-  .brand-name small { font-size: 8px; letter-spacing: .12em; }
   .mobile-menu summary { min-width: 82px; padding-inline: 10px; }
   .footer-contact-stack { gap: 14px 12px; }
   .footer-phone { font-size: 12px; }
