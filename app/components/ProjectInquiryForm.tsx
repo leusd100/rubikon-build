@@ -300,9 +300,9 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
                 <label>
                   <span>Орієнтовні розміри</span>
                   {hangarBrief ? (
-                    <input name="dimensions" type="text" value={hangarBrief.dimensionsLabel} readOnly />
+                    <input key="attached" name="dimensions" type="text" value={hangarBrief.dimensionsLabel} readOnly />
                   ) : (
-                    <input name="dimensions" type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
+                    <input key="manual" name="dimensions" type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
                   )}
                 </label>
               </div>
