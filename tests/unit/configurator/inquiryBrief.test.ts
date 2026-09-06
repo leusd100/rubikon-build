@@ -24,3 +24,33 @@ describe('hangar inquiry brief', () => {
     expect(formatted).toContain('Ворота: 2 × стандартні, 4×4 м');
   });
 });
+
+describe('inquiry brief — Phase 3F.2', () => {
+  // The door was collected by the configurator and shown in "Ваш об'єкт", then never reached the
+  // request: `createHangarInquiryBrief` simply had no doorsLabel field. A customer input dropped
+  // silently between the screen and the lead.
+  it('carries the personnel door, which it used to drop entirely', () => {
+    const text = formatHangarInquiryBrief(
+      createHangarInquiryBrief(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, doors: 1 })),
+    );
+
+    expect(text).toContain('Двері: 1 × 1×2,1 м');
+  });
+
+  it('does not order openings in walls the request excludes', () => {
+    const text = formatHangarInquiryBrief(
+      createHangarInquiryBrief(deriveDomainModel({
+        ...DEFAULT_CONFIGURATOR_STATE,
+        scope: ['foundation', 'frame', 'roof'],
+        gates: 2,
+        doors: 1,
+      })),
+    );
+
+    // The Обсяг line and the openings lines must agree with each other.
+    expect(text).toContain('Обсяг: Фундамент + Металокаркас + Покрівля');
+    expect(text).toMatch(/Ворота:.*поза обсягом заявки/);
+    expect(text).toMatch(/Двері:.*поза обсягом заявки/);
+    expect(text).toContain('Огородження: Покрівля:');
+  });
+});

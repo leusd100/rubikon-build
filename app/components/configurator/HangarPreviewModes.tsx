@@ -230,6 +230,8 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
             roofPreset={roofPreset}
             onWallPresetChange={setWallPreset}
             onRoofPresetChange={setRoofPreset}
+            wallsInScope={domain.scope.walls}
+            roofInScope={domain.scope.roof}
           />
           <label className="hc-scale-figure-toggle">
             <input

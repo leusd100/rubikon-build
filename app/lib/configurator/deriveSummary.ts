@@ -45,14 +45,43 @@ export type ConfiguratorSummary = {
   doorsLabel: string;
 };
 
+const OUT_OF_SCOPE_LABEL = 'Поза обсягом заявки';
+/**
+ * Phase 3F.2 — a gate and a door are openings cut INTO a wall, so neither can be part of a request
+ * that does not include walls. The 3D renderer already refused to draw them in that state, in its
+ * own words: "a gate is an opening cut INTO a wall — it cannot read as an opening with no wall to
+ * cut into" (threeSceneModel.ts). The summary and the lead brief did not know that rule, so a
+ * request for foundation + frame + roof still told the reader "Ворота: 2 × стандартні" one line
+ * under "Обсяг: Фундамент + Металокаркас + Покрівля" — a brief contradicting itself.
+ *
+ * The selection is CARRIED rather than dropped, deliberately: that the customer wants two gates
+ * once they do order walls is real information for the person reading the lead. It just must not
+ * read as something they ordered.
+ */
+const OUT_OF_SCOPE_SUFFIX = ' · поза обсягом заявки (стіни не замовлені)';
+
 function formatMeters(value: number): string {
   // Whole metres print without a decimal (24, not 24.0); half-metre steps keep one.
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-function formatCladdingSystemLabel(envelope: HangarDomainModel['envelope']): string {
+/**
+ * Phase 3F.2 — narrowed to the surfaces the customer is actually asking for.
+ *
+ * "Обсяг заявки" is the master fact: a cladding system for a surface nobody ordered is not part of
+ * the request, and printing it made the brief contradict its own Обсяг line one row above. So the
+ * label names only the surfaces in scope, and says so plainly when neither is.
+ */
+function formatCladdingSystemLabel(
+  envelope: HangarDomainModel['envelope'],
+  scope: HangarDomainModel['scope'],
+): string {
   const wall = CLADDING_SYSTEM_LABELS[envelope.wallSystem];
   const roof = CLADDING_SYSTEM_LABELS[envelope.roofSystem];
+
+  if (!scope.walls && !scope.roof) return OUT_OF_SCOPE_LABEL;
+  if (!scope.walls) return `Покрівля: ${roof}`;
+  if (!scope.roof) return `Стіни: ${wall}`;
   return wall === roof ? wall : `Стіни: ${wall}, покрівля: ${roof}`;
 }
 
@@ -82,16 +111,22 @@ function formatEnvelopeLabel(envelope: HangarDomainModel['envelope']): string {
  */
 /** Customer input, not derived visualization — the door is something the customer asked for, so
  *  it belongs in the summary (and in any future lead brief) with its real fixed size. */
-function formatDoorsLabel(doors: HangarDomainModel['doors']): string {
+function formatDoorsLabel(doors: HangarDomainModel['doors'], wallsInScope: boolean): string {
   if (doors === 0) return 'Не передбачені';
   const { widthM, heightM } = DOOR_DIMENSIONS_M;
-  return `${doors} × ${widthM.toString().replace('.', ',')}×${heightM.toString().replace('.', ',')} м`;
+  const spec = `${doors} × ${widthM.toString().replace('.', ',')}×${heightM.toString().replace('.', ',')} м`;
+  return wallsInScope ? spec : `${spec}${OUT_OF_SCOPE_SUFFIX}`;
 }
 
-function formatGatesLabel(gates: HangarDomainModel['gates'], gateType: HangarDomainModel['gateType']): string {
+function formatGatesLabel(
+  gates: HangarDomainModel['gates'],
+  gateType: HangarDomainModel['gateType'],
+  wallsInScope: boolean,
+): string {
   if (gates === 0) return 'Без воріт';
   const { widthM, heightM } = GATE_DIMENSIONS_M[gateType];
-  return `${gates} × ${GATE_TYPE_LABELS[gateType].toLowerCase()}, ${widthM}×${heightM} м`;
+  const spec = `${gates} × ${GATE_TYPE_LABELS[gateType].toLowerCase()}, ${widthM}×${heightM} м`;
+  return wallsInScope ? spec : `${spec}${OUT_OF_SCOPE_SUFFIX}`;
 }
 
 /**
@@ -110,14 +145,14 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     areaSqm: domain.areaSqm,
     dimensionsLabel: `${formatMeters(widthM)} × ${formatMeters(lengthM)} × ${formatMeters(eaveHeightM)} м`,
     envelopeLabel: formatEnvelopeLabel(domain.envelope),
-    claddingSystemLabel: formatCladdingSystemLabel(domain.envelope),
+    claddingSystemLabel: formatCladdingSystemLabel(domain.envelope, domain.scope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],
     structuralVisualizationLabel: `${ROOF_STRUCTURE_LABELS[domain.structural.roofStructure]} · ${STRUCTURAL_SCHEME_LABELS[domain.structural.scheme]}`,
     scopeLabels: orderedScope.map((item) => SCOPE_LABELS[item]),
     scopeSummaryLabel: orderedScope.length
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')
       : 'Обсяг робіт ще не обрано',
-    gatesLabel: formatGatesLabel(domain.gates, domain.gateType),
-    doorsLabel: formatDoorsLabel(domain.doors),
+    gatesLabel: formatGatesLabel(domain.gates, domain.gateType, domain.scope.walls),
+    doorsLabel: formatDoorsLabel(domain.doors, domain.scope.walls),
   };
 }

@@ -260,6 +260,20 @@
   opacity: 0.6;
 }
 
+/* Phase 3F.2 — a disabled option can now BE the current selection, which it never could before.
+   Scope gating disables the cladding, colour and opening controls without CLEARING what the
+   customer picked, so that dropping walls to look at the frame does not cost them their gate
+   choice. Without this rule the selection rendered exactly like every other disabled option, and
+   the promise "your choice is kept" was true in the state and invisible on screen — which reads
+   as a reset. The accent stays, as an outline rather than a fill: still legibly the selection,
+   still legibly not available right now. */
+.hc-option-card input:checked:disabled + span {
+  color: var(--accent-dark);
+  background: var(--surface-page);
+  border-color: var(--accent-dark);
+  opacity: 0.75;
+}
+
 .hc-option-list {
   display: flex;
   flex-direction: column;

@@ -109,3 +109,45 @@ describe('personnel door label', () => {
     expect(summaryFor({ doors: 0 }).doorsLabel).toBe('Не передбачені');
   });
 });
+
+describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 3F.2)', () => {
+  // Reported live: with walls out of scope, the brief printed "Обсяг: Фундамент + Металокаркас +
+  // Покрівля" and then, one line later, "Ворота: 2 × стандартні" — an order for openings in walls
+  // nobody had asked for. The 3D renderer already refused to DRAW them in that state
+  // (threeSceneModel: "a gate is an opening cut INTO a wall"); the summary simply did not know the
+  // rule, which is the same bug one layer up.
+  const noWalls = { scope: ['foundation', 'frame', 'roof'] as ConfiguratorState['scope'] };
+
+  it('marks gates and doors as outside the request when walls are not ordered', () => {
+    const summary = summaryFor({ ...noWalls, gates: 2, gateType: 'standard', doors: 1 });
+
+    // The choice is still legible — a salesperson wants to know the customer intends two gates.
+    expect(summary.gatesLabel).toContain('2 × стандартні');
+    expect(summary.doorsLabel).toContain('1 × 1×2,1 м');
+    // ...but it must not read as something ordered.
+    expect(summary.gatesLabel).toContain('поза обсягом заявки');
+    expect(summary.doorsLabel).toContain('поза обсягом заявки');
+  });
+
+  it('leaves gates and doors unqualified once walls are ordered', () => {
+    const summary = summaryFor({ gates: 2, gateType: 'standard', doors: 1 });
+
+    expect(summary.gatesLabel).not.toContain('поза обсягом');
+    expect(summary.doorsLabel).not.toContain('поза обсягом');
+  });
+
+  it('never qualifies an absence — "no gates" is not out of scope, it is a choice', () => {
+    const summary = summaryFor({ ...noWalls, gates: 0, doors: 0 });
+
+    expect(summary.gatesLabel).toBe('Без воріт');
+    expect(summary.doorsLabel).toBe('Не передбачені');
+  });
+
+  it('names only the clad surfaces the customer is asking for', () => {
+    expect(summaryFor({ ...noWalls }).claddingSystemLabel).toMatch(/^Покрівля: /);
+    expect(summaryFor({ scope: ['foundation', 'frame', 'walls'] }).claddingSystemLabel).toMatch(/^Стіни: /);
+    expect(summaryFor({ scope: ['foundation', 'frame'] }).claddingSystemLabel).toBe('Поза обсягом заявки');
+    // Both in scope and agreeing: still the single combined label, unchanged.
+    expect(summaryFor({}).claddingSystemLabel).not.toContain(':');
+  });
+});

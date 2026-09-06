@@ -15,6 +15,9 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     foundationTypeLabel: summary.foundationTypeLabel,
     scopeSummaryLabel: summary.scopeSummaryLabel,
     gatesLabel: summary.gatesLabel,
+    // The door was collected by the configurator, shown in "Ваш об'єкт", and then never reached
+    // the request at all — a customer input silently dropped between the screen and the lead.
+    doorsLabel: summary.doorsLabel,
   };
 }
 
@@ -28,5 +31,6 @@ export function formatHangarInquiryBrief(brief: HangarInquiryBrief): string {
     `Основа: ${brief.foundationTypeLabel}`,
     `Обсяг: ${brief.scopeSummaryLabel}`,
     `Ворота: ${brief.gatesLabel}`,
+    `Двері: ${brief.doorsLabel}`,
   ].join('\n');
 }
