@@ -34,14 +34,15 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   creator: company.name,
-  manifest: '/site.webmanifest',
+  manifest: '/site.webmanifest?v=frame-01',
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
-      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon.svg?v=frame-01', sizes: 'any', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=frame-01', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/favicon-48x48.png?v=frame-01', sizes: '48x48', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico',
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon.ico?v=frame-01',
+    apple: [{ url: '/apple-touch-icon.png?v=frame-01', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     title: `Промислове будівництво у Дніпрі | ${company.name}`,
@@ -88,7 +89,7 @@ const organizationData = {
   url: company.siteUrl,
   logo: {
     '@type': 'ImageObject',
-    url: `${company.siteUrl}/icon-512x512.png`,
+    url: `${company.siteUrl}/icon-512x512.png?v=frame-01`,
     width: 512,
     height: 512,
   },
