@@ -55,6 +55,7 @@ type DirectionHeroProps = {
   accent: string;
   intro: string;
   heroImage: DirectionHeroImageAsset;
+  flagship?: boolean;
 };
 
 function DirectionHero({
@@ -65,6 +66,7 @@ function DirectionHero({
   accent,
   intro,
   heroImage,
+  flagship = false,
 }: DirectionHeroProps) {
   const serviceData = {
     '@context': 'https://schema.org',
@@ -86,7 +88,7 @@ function DirectionHero({
   };
 
   return (
-    <section className="service-subhero">
+    <section className={`service-subhero${flagship ? ' angary-service-subhero' : ''}`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
         <DirectionHeroImage asset={heroImage} />
@@ -98,9 +100,20 @@ function DirectionHero({
         <p className="eyebrow light"><span /> Напрямок {number}</p>
         <h1>{title}<br /><em>{accent}</em></h1>
         <p className="service-subhero-lead">{intro}</p>
-        <a className="button button-primary" href="#inquiry">
-          Обговорити проєкт <span aria-hidden="true">↗</span>
-        </a>
+        {flagship ? (
+          <div className="angary-hero-actions">
+            <a className="button button-primary" href="#configurator">
+              Зібрати конфігурацію <span aria-hidden="true">↓</span>
+            </a>
+            <a className="button angary-hero-secondary" href="#inquiry">
+              Обговорити завдання <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        ) : (
+          <a className="button button-primary" href="#inquiry">
+            Обговорити проєкт <span aria-hidden="true">↗</span>
+          </a>
+        )}
       </div>
     </section>
   );
@@ -253,7 +266,7 @@ export function DirectionPage({
   const direction = getDirection(config.id);
 
   return (
-    <main className="inner-page" id="main-content">
+    <main className={`inner-page${config.id === 'angary' ? ' angary-page' : ''}`} id="main-content">
       <DirectionHero
         path={direction.href}
         number={direction.number}
@@ -262,6 +275,7 @@ export function DirectionPage({
         accent={config.hero.accent}
         intro={config.hero.intro}
         heroImage={direction.heroImage}
+        flagship={config.id === 'angary'}
       />
 
       {signatureExperience}

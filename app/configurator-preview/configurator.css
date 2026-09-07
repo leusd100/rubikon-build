@@ -27,7 +27,8 @@
   grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
   grid-template-areas:
     "eyebrow eyebrow"
-    "title lede";
+    "title lede"
+    "vocabulary vocabulary";
   gap: 16px var(--grid-gap);
   max-width: var(--container-max);
   margin-bottom: 54px;
@@ -36,6 +37,43 @@
 .hangar-configurator-embedded .hc-eyebrow { grid-area: eyebrow; }
 .hangar-configurator-embedded .hc-hero :is(h1, h2) { grid-area: title; margin: 0; max-width: 14ch; }
 .hangar-configurator-embedded .hc-lede { grid-area: lede; margin: 0; }
+
+.hc-vocabulary {
+  grid-area: vocabulary;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin: 22px 0 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--border-default);
+  list-style: none;
+}
+
+.hc-vocabulary li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.hc-vocabulary li + li {
+  padding-left: 18px;
+  border-left: 1px solid var(--border-default);
+}
+
+.hc-vocabulary span {
+  color: var(--accent-dark);
+  font: 700 11px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .08em;
+}
+
+.hc-vocabulary strong {
+  color: var(--text-primary);
+  font: 600 15px/1.2 var(--font-condensed), sans-serif;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
 
 .hc-eyebrow {
   display: flex;
@@ -693,6 +731,11 @@
   .hc-material-presets { gap: 18px; }
 }
 
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-preview-secondary-panel { flex-direction: column; align-items: flex-start; }
+  .hangar-configurator-embedded .hc-material-presets { gap: 18px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hc-preview-loading-bar { animation: none; background-position: 50% 0; }
 }
@@ -944,11 +987,24 @@
 
 .hc-summary summary::-webkit-details-marker { display: none; }
 
+.hc-summary-flagship { padding: 24px; }
+
+.hc-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(210px, .85fr);
+  column-gap: clamp(28px, 3vw, 44px);
+}
+
 .hc-summary-title {
   color: var(--text-primary);
   font: 600 13px/1 var(--font-condensed), sans-serif;
   letter-spacing: .06em;
   text-transform: uppercase;
+}
+
+.hc-summary-flagship .hc-summary-title {
+  margin: 0 0 22px;
+  letter-spacing: .1em;
 }
 
 .hc-summary-toggle {
@@ -964,6 +1020,18 @@
 
 .hc-summary-body { margin-top: 16px; }
 
+.hc-summary-selected,
+.hc-summary-preliminary {
+  min-width: 0;
+}
+
+.hc-summary-preliminary {
+  display: flex;
+  flex-direction: column;
+  padding-left: clamp(28px, 3vw, 44px);
+  border-left: 1px solid var(--border-default);
+}
+
 .hc-summary-kind {
   margin: 0 0 4px;
   color: var(--accent-dark);
@@ -977,6 +1045,17 @@
   color: var(--text-primary);
   font: 400 26px/1.1 var(--font-display), var(--font-manrope), sans-serif;
   font-variant-numeric: tabular-nums;
+}
+
+.hc-summary-flagship .hc-summary-dimensions {
+  font: 600 clamp(28px, 2.8vw, 40px)/1.05 var(--font-condensed), sans-serif;
+  letter-spacing: -.015em;
+}
+
+.hc-summary-dimensions-unit {
+  font-size: .74em;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .hc-summary-area {
@@ -1021,6 +1100,30 @@
   font-variant-numeric: tabular-nums;
 }
 
+.hc-summary-structure {
+  margin: 0;
+  color: var(--text-primary);
+  font: 600 clamp(22px, 2.2vw, 30px)/1.14 var(--font-condensed), sans-serif;
+  text-transform: uppercase;
+}
+
+.hc-summary-structure-line {
+  display: block;
+}
+
+.hc-summary-structure-line + .hc-summary-structure-line {
+  margin-top: 4px;
+}
+
+.hc-summary-disclaimer {
+  margin: auto 0 0;
+  padding-top: 20px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-default);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
 .hc-summary-handoff {
   display: grid;
   grid-template-columns: minmax(220px, max-content) minmax(0, 1fr);
@@ -1030,6 +1133,8 @@
   padding-top: 18px;
   border-top: 1px solid var(--border-default);
 }
+
+.hc-summary-flagship .hc-summary-handoff { grid-column: 1 / -1; }
 
 .hc-summary-action { min-height: 52px; }
 
@@ -1046,8 +1151,11 @@
 @media (max-width: 1023px) {
   .hangar-configurator-embedded .hc-hero {
     grid-template-columns: 1fr;
-    grid-template-areas: "eyebrow" "title" "lede";
+    grid-template-areas: "eyebrow" "title" "lede" "vocabulary";
   }
+
+  .hc-vocabulary { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 18px; }
+  .hc-vocabulary li:nth-child(odd) { padding-left: 0; border-left: 0; }
 
   /* Stacked below 1024px, and the preview goes FIRST. Measured on a 390px viewport before this
      changed: the preview sat at y=2255 with 1,948px of controls above it, so the whole
@@ -1072,10 +1180,42 @@
   .hc-field-controls { grid-template-columns: 1fr 64px; }
   .hc-summary-handoff { grid-template-columns: 1fr; }
   .hc-summary-action { width: 100%; }
+  .hc-summary-grid { grid-template-columns: 1fr; }
+  .hc-summary-preliminary {
+    margin-top: 24px;
+    padding: 24px 0 0;
+    border-top: 1px solid var(--border-default);
+    border-left: 0;
+  }
+  .hc-summary-disclaimer { margin-top: 22px; }
   .hc-preview-disclaimer { flex-basis: 100%; max-width: none; }
   /* Raised from 62vw/260px (Visual Refinement Pass v1) — "the model must still feel worth
      showing on mobile", not merely technically responsive. */
   .hc-preview-svg,
   .hc-preview-canvas,
   .hc-preview-loading { height: 74vw; min-height: 290px; }
+}
+
+/* `/angary` standardises its page-local mobile edge at 760px. Keep the isolated POC and the
+   renderer's own frozen 759px policy unchanged; only the embedded presentation receives the
+   additional boundary pixel. */
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-hero,
+  .hangar-configurator-embedded .hc-layout { padding-inline: 20px; }
+  .hangar-configurator-embedded .hc-option-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hangar-configurator-embedded .hc-field-controls { grid-template-columns: 1fr 64px; }
+  .hangar-configurator-embedded .hc-summary-handoff { grid-template-columns: 1fr; }
+  .hangar-configurator-embedded .hc-summary-action { width: 100%; }
+  .hangar-configurator-embedded .hc-summary-grid { grid-template-columns: 1fr; }
+  .hangar-configurator-embedded .hc-summary-preliminary {
+    margin-top: 24px;
+    padding: 24px 0 0;
+    border-top: 1px solid var(--border-default);
+    border-left: 0;
+  }
+  .hangar-configurator-embedded .hc-summary-disclaimer { margin-top: 22px; }
+  .hangar-configurator-embedded .hc-preview-disclaimer { flex-basis: 100%; max-width: none; }
+  .hangar-configurator-embedded .hc-preview-svg,
+  .hangar-configurator-embedded .hc-preview-canvas,
+  .hangar-configurator-embedded .hc-preview-loading { height: 74vw; min-height: 290px; }
 }

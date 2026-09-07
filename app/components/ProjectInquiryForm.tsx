@@ -71,6 +71,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
   const [statusAction, setStatusAction] = useState<'error' | null>(null);
   const [consentError, setConsentError] = useState(false);
   const [consentAt, setConsentAt] = useState('');
+  const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const [submissionId] = useState(() => generateSubmissionId());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -231,35 +232,53 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
               <div className="inquiry-config-brief-heading">
                 <div>
                   <small id="inquiry-config-brief-title">До заявки додано вашу конфігурацію</small>
-                  <strong>Ангар · {hangarBrief.dimensionsLabel}</strong>
+                  <strong>{hangarBrief.dimensionsLabel} · {hangarBrief.envelopeLabel}</strong>
                 </div>
-                <button type="button" onClick={() => hangarInquiry?.detachConfiguration()}>Не додавати</button>
+                <div className="inquiry-config-brief-actions">
+                  <button
+                    className="inquiry-config-brief-toggle"
+                    type="button"
+                    aria-expanded={isBriefExpanded}
+                    aria-controls="inquiry-config-brief-parameters"
+                    onClick={() => setIsBriefExpanded((expanded) => !expanded)}
+                  >
+                    Переглянути параметри
+                    <ChevronDown aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsBriefExpanded(false);
+                      hangarInquiry?.detachConfiguration();
+                    }}
+                  >
+                    Не додавати
+                  </button>
+                </div>
               </div>
-              <details className="inquiry-config-brief-details">
-                <summary>
-                  Переглянути параметри
-                  <ChevronDown aria-hidden="true" />
-                </summary>
-                <div className="inquiry-config-brief-sections">
-                  <section aria-labelledby="inquiry-config-selected-heading">
-                    <h4 id="inquiry-config-selected-heading">Вибрана конфігурація</h4>
-                    <dl>
-                      {hangarBriefSections.selected.map((row) => (
-                        <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
-                      ))}
-                    </dl>
-                  </section>
-                  <section aria-labelledby="inquiry-config-preliminary-heading">
-                    <h4 id="inquiry-config-preliminary-heading">Системні попередні дані</h4>
-                    <dl>
-                      {hangarBriefSections.preliminary.map((row) => (
-                        <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
-                      ))}
-                    </dl>
-                  </section>
-                  <a className="inquiry-config-edit" href="#configurator">Змінити у конфігураторі ↑</a>
-                </div>
-              </details>
+              <div
+                className="inquiry-config-brief-sections"
+                id="inquiry-config-brief-parameters"
+                hidden={!isBriefExpanded}
+              >
+                <section aria-labelledby="inquiry-config-selected-heading">
+                  <h4 id="inquiry-config-selected-heading">Вибрана конфігурація</h4>
+                  <dl>
+                    {hangarBriefSections.selected.map((row) => (
+                      <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
+                    ))}
+                  </dl>
+                </section>
+                <section aria-labelledby="inquiry-config-preliminary-heading">
+                  <h4 id="inquiry-config-preliminary-heading">Системні попередні дані</h4>
+                  <dl>
+                    {hangarBriefSections.preliminary.map((row) => (
+                      <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
+                    ))}
+                  </dl>
+                </section>
+                <a className="inquiry-config-edit" href="#configurator">Змінити у конфігураторі ↑</a>
+              </div>
             </aside>
           )}
 
@@ -293,18 +312,18 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
             </summary>
             <div className="inquiry-details-body">
               <div className="inquiry-fields inquiry-fields-two">
-                <label>
+                <label className={hangarBrief ? 'inquiry-field-full' : undefined}>
                   <span>Місто або область</span>
                   <input name="location" type="text" maxLength={100} autoComplete="address-level1" />
                 </label>
-                <label>
-                  <span>Орієнтовні розміри</span>
-                  {hangarBrief ? (
-                    <input key="attached" name="dimensions" type="text" value={hangarBrief.dimensionsLabel} readOnly />
-                  ) : (
+                {hangarBrief ? (
+                  <input name="dimensions" type="hidden" value={hangarBrief.dimensionsLabel} />
+                ) : (
+                  <label>
+                    <span>Орієнтовні розміри</span>
                     <input key="manual" name="dimensions" type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
-                  )}
-                </label>
+                  </label>
+                )}
               </div>
               <div className="inquiry-fields inquiry-fields-two">
                 <label>
