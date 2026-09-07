@@ -109,6 +109,9 @@ test('/angary keeps content readable with enlarged text', async ({ page }, testI
 test('/angary process stage follows the authoritative attachment state', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract runs once');
   await page.goto('/angary', { waitUntil: 'load' });
+  const essentialCookies = page.getByRole('button', { name: 'Лише необхідні', exact: true });
+  await expect(essentialCookies).toBeVisible({ timeout: 10_000 });
+  await essentialCookies.click();
 
   const firstStage = page.locator('#process li').first();
   await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');

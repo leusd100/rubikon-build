@@ -1,7 +1,8 @@
 'use client';
 
-import { Suspense, lazy, useCallback, useId, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
+import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
 import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
 import { HangarPreview } from './HangarPreview';
 import { ThreeDimensionOverlay } from './three/ThreeDimensionOverlay';
@@ -87,7 +88,15 @@ function ThreeLoading() {
   );
 }
 
-export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
+export function HangarPreviewModes({
+  domain,
+  presentationDemo,
+  onEndPresentationDemo,
+}: {
+  domain: HangarDomainModel;
+  presentationDemo?: HangarPresentationDemo | null;
+  onEndPresentationDemo?: () => void;
+}) {
   const [mode, setMode] = useState<Mode>('technical');
   const descriptionId = useId();
   const [threeFailed, setThreeFailed] = useState(false);
@@ -102,6 +111,12 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
   // How much of the canvas's bottom edge the dimension readout covers, measured by the overlay
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
+  const demoStatusRef = useRef<HTMLDivElement>(null);
+  const modeSwitchAnchorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (presentationDemo) demoStatusRef.current?.focus({ preventScroll: true });
+  }, [presentationDemo]);
 
   // Built here, from the same DomainModel the technical view consumes, so both representations
   // are guaranteed to describe the same configuration. Memoised so a mode switch alone never
@@ -123,6 +138,10 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
   const showThree = effectiveMode === 'three';
 
   const exitFullscreen = useCallback(() => setIsFullscreen(false), []);
+  const handleEndPresentationDemo = useCallback(() => {
+    onEndPresentationDemo?.();
+    requestAnimationFrame(() => modeSwitchAnchorRef.current?.querySelector<HTMLButtonElement>('button')?.focus());
+  }, [onEndPresentationDemo]);
 
   /**
    * The Canvas is mounted only while 3D is the active mode, so switching back to Technical
@@ -221,6 +240,20 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
 
   return (
     <>
+      {presentationDemo && (
+        <div
+          className="hc-preview-demo-status"
+          role="status"
+          aria-live="polite"
+          tabIndex={-1}
+          ref={demoStatusRef}
+        >
+          <span>{presentationDemo.label} · ваш вибір не змінено</span>
+          <button type="button" onClick={handleEndPresentationDemo}>
+            Повернутись до мого вибору
+          </button>
+        </div>
+      )}
       <div className="hc-preview-toolbar">
         <p className="hc-preview-disclaimer" role="note">
           Візуалізація є схематичною і не є проєктною або конструкторською документацією.
@@ -236,7 +269,9 @@ export function HangarPreviewModes({ domain }: { domain: HangarDomainModel }) {
               </button>
             </div>
           )}
-          <ModeSwitch mode={effectiveMode} onSelect={setMode} threeAvailable={threeAvailable} />
+          <div ref={modeSwitchAnchorRef}>
+            <ModeSwitch mode={effectiveMode} onSelect={setMode} threeAvailable={threeAvailable} />
+          </div>
         </div>
       </div>
 

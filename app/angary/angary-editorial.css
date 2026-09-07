@@ -26,6 +26,9 @@
 .angary-current-choice { position: absolute; top: 0; right: 0; max-width: 54%; color: var(--text-muted); font: 600 10px/1.25 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: right; text-transform: uppercase; }
 .angary-decision-copy h3 { max-width: 520px; margin: 0; font: 600 clamp(30px, 3.2vw, 46px)/1.02 var(--font-condensed), sans-serif; letter-spacing: -.02em; text-transform: uppercase; text-wrap: balance; }
 .angary-decision-copy > p { max-width: 520px; margin: 24px 0 0; color: var(--text-secondary); font-size: 15px; line-height: 1.75; }
+.angary-preview-action { align-self: flex-start; display: inline-flex; align-items: center; gap: 16px; min-height: 44px; margin-top: 28px; padding: 0 0 6px; border: 0; border-bottom: 1px solid currentColor; color: var(--ink); background: transparent; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; cursor: pointer; transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium); }
+.angary-preview-action:hover, .angary-preview-action[aria-pressed="true"] { color: var(--accent-dark); }
+.angary-preview-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
 .angary-consequence-compare, .angary-render-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--border-strong); border-block: 1px solid var(--border-strong); }
 .angary-consequence-compare > div { min-height: 330px; padding: clamp(30px, 4vw, 54px); background: var(--warm); }
 .angary-consequence-compare strong, .angary-render-compare figcaption strong { display: block; font: 600 clamp(18px, 1.6vw, 23px)/1.15 var(--font-condensed), sans-serif; text-transform: uppercase; }
@@ -47,6 +50,7 @@
 .angary-structure { background: #efeee8; }
 .angary-structure-heading { margin-bottom: 54px; }
 .angary-structure-heading .angary-honesty-note { max-width: none; padding: 17px 0; border-block: 1px solid var(--border-strong); color: var(--ink); font: 600 14px/1.4 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.angary-structure-heading .angary-preview-action { margin-top: 22px; }
 .angary-transverse-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); }
 .angary-diagram { margin: 0; border-top: 1px solid var(--border-strong); }
 .angary-diagram svg { display: block; width: 100%; height: auto; color: var(--ink); }
@@ -108,6 +112,12 @@
 .angary-page .related-directions-section.is-compact .related-card:last-child { border-right: 1px solid var(--border-strong); }
 .angary-page .related-directions-section.is-compact .related-card:hover { background: rgba(255, 255, 255, .34); transform: none; }
 
+/* The fixed conversion action exists only for a deliberately attached configuration. Its
+   visibility is further gated in HangarMobileInquiryCta while the form, another overlay or an
+   input interaction already owns the screen. */
+.angary-mobile-inquiry-cta { display: none; }
+.angary-mobile-inquiry-cta[hidden] { display: none; }
+
 @media (min-width: 1024px) and (max-width: 1366px) {
   .angary-page .service-subhero.angary-service-subhero { min-height: min(86svh, 700px); }
   .angary-diagram figcaption { grid-template-columns: 100px minmax(145px, .6fr) minmax(0, 1fr); gap: 14px; }
@@ -159,6 +169,7 @@
   .angary-current-choice { max-width: 58%; font-size: 9px; }
   .angary-decision-copy h3 { font-size: clamp(27px, 8vw, 34px); }
   .angary-decision-copy > p { margin-top: 18px; font-size: 14px; }
+  .angary-preview-action { margin-top: 22px; }
   .angary-consequence-compare > div { min-height: 0; padding: 26px 18px; }
   .angary-consequence-compare strong { font-size: 16px; }
   .angary-consequence-compare ul { margin-top: 24px; }
@@ -198,4 +209,6 @@
   .angary-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
   .angary-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 24px 0; border-left: 0; border-bottom: 1px solid var(--border-strong); }
   .angary-page .related-directions-section.is-compact .related-card:last-child { border-right: 0; border-bottom: 0; }
+  .angary-mobile-inquiry-cta:not([hidden]) { position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 58px; padding: 15px 24px calc(15px + env(safe-area-inset-bottom)); color: white; background: var(--accent-dark); border-top: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 -10px 36px rgba(0, 0, 0, .24); font: 800 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .angary-mobile-inquiry-cta:focus-visible { outline: 3px solid white; outline-offset: -6px; }
 }

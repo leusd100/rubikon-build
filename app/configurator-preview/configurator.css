@@ -351,6 +351,7 @@
 /* ---------- Preview pane ---------- */
 
 .hc-preview-pane {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -358,7 +359,43 @@
   top: 24px;
 }
 
+.hc-preview-demo-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  min-height: 44px;
+  padding: 10px 14px;
+  color: white;
+  background: var(--surface-dark);
+  border-left: 2px solid var(--accent);
+  scroll-margin-top: 90px;
+}
+
+.hc-preview-demo-status > span {
+  font: 650 12px/1.4 var(--font-manrope), sans-serif;
+}
+
+.hc-preview-demo-status button {
+  flex: none;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .58);
+  color: white;
+  background: transparent;
+  font: 700 10px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.hc-preview-demo-status button:hover { border-color: var(--accent); color: var(--accent); }
+.hc-preview-demo-status:focus-visible,
+.hc-preview-demo-status button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
 .hc-preview-surface {
+  min-width: 0;
   padding: 24px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
@@ -1218,4 +1255,5 @@
   .hangar-configurator-embedded .hc-preview-svg,
   .hangar-configurator-embedded .hc-preview-canvas,
   .hangar-configurator-embedded .hc-preview-loading { height: 74vw; min-height: 290px; }
+  .hangar-configurator-embedded .hc-preview-demo-status { align-items: flex-start; flex-direction: column; padding-block: 12px; }
 }
