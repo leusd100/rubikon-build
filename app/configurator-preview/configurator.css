@@ -1026,6 +1026,8 @@
 }
 
 .hc-summary-preliminary {
+  display: flex;
+  flex-direction: column;
   padding-left: clamp(28px, 3vw, 44px);
   border-left: 1px solid var(--border-default);
 }
@@ -1046,8 +1048,14 @@
 }
 
 .hc-summary-flagship .hc-summary-dimensions {
-  font: 700 clamp(28px, 3.2vw, 44px)/1.05 var(--font-condensed), sans-serif;
-  letter-spacing: -.025em;
+  font: 600 clamp(28px, 2.8vw, 40px)/1.05 var(--font-condensed), sans-serif;
+  letter-spacing: -.015em;
+}
+
+.hc-summary-dimensions-unit {
+  font-size: .74em;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .hc-summary-area {
@@ -1099,8 +1107,16 @@
   text-transform: uppercase;
 }
 
+.hc-summary-structure-line {
+  display: block;
+}
+
+.hc-summary-structure-line + .hc-summary-structure-line {
+  margin-top: 4px;
+}
+
 .hc-summary-disclaimer {
-  margin: 22px 0 0;
+  margin: auto 0 0;
   padding-top: 20px;
   color: var(--text-secondary);
   border-top: 1px solid var(--border-default);
@@ -1171,6 +1187,7 @@
     border-top: 1px solid var(--border-default);
     border-left: 0;
   }
+  .hc-summary-disclaimer { margin-top: 22px; }
   .hc-preview-disclaimer { flex-basis: 100%; max-width: none; }
   /* Raised from 62vw/260px (Visual Refinement Pass v1) — "the model must still feel worth
      showing on mobile", not merely technically responsive. */
@@ -1196,6 +1213,7 @@
     border-top: 1px solid var(--border-default);
     border-left: 0;
   }
+  .hangar-configurator-embedded .hc-summary-disclaimer { margin-top: 22px; }
   .hangar-configurator-embedded .hc-preview-disclaimer { flex-basis: 100%; max-width: none; }
   .hangar-configurator-embedded .hc-preview-svg,
   .hangar-configurator-embedded .hc-preview-canvas,

@@ -7,7 +7,7 @@
    service-subhero rule at 1366×800. */
 .angary-page .service-subhero.angary-service-subhero {
   height: auto;
-  min-height: min(86svh, 760px);
+  min-height: min(86svh, 840px);
 }
 
 .angary-page .service-subhero-content {

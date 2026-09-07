@@ -55,6 +55,7 @@ for (const viewport of viewports) {
 
     await expect(configurator.getByRole('heading', { name: 'Ви обрали' })).toBeVisible();
     await expect(configurator.getByRole('heading', { name: 'Попередня схема' })).toBeVisible();
+    await expect(configurator.locator('.hc-summary-structure-line')).toHaveCount(2);
     const disclaimer = configurator.locator('.hc-summary-disclaimer');
     await expect(disclaimer).toBeVisible();
     expect(await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)))

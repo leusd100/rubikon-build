@@ -13,6 +13,8 @@ export function ConfiguratorSummary({
   onInquiryAction?: () => void;
 }) {
   const summary = deriveSummary(domain);
+  const dimensionsWithoutUnit = summary.dimensionsLabel.replace(/\s+м$/, '');
+  const structuralParts = summary.structuralVisualizationLabel.split(' · ');
 
   if (!showInquiryAction) {
     return (
@@ -71,7 +73,9 @@ export function ConfiguratorSummary({
         <div className="hc-summary-selected">
           <h3 className="hc-summary-title">Ви обрали</h3>
           <p className="hc-summary-kind">Ангар</p>
-          <p className="hc-summary-dimensions">{summary.dimensionsLabel}</p>
+          <p className="hc-summary-dimensions">
+            {dimensionsWithoutUnit}<span className="hc-summary-dimensions-unit"> м</span>
+          </p>
           <p className="hc-summary-area">≈ {summary.areaSqm.toLocaleString('uk-UA')} м² площі забудови</p>
           <dl className="hc-summary-facts">
             <div>
@@ -111,7 +115,11 @@ export function ConfiguratorSummary({
 
         <div className="hc-summary-preliminary">
           <h3 className="hc-summary-title">Попередня схема</h3>
-          <p className="hc-summary-structure">{summary.structuralVisualizationLabel}</p>
+          <p className="hc-summary-structure" aria-label={summary.structuralVisualizationLabel}>
+            {structuralParts.map((part) => (
+              <span className="hc-summary-structure-line" aria-hidden="true" key={part}>{part}</span>
+            ))}
+          </p>
           <p className="hc-summary-disclaimer">
             Це попередня візуалізація, а не готове інженерне рішення. Конструктивну схему уточнюємо
             після розрахунку навантажень і умов майданчика.
