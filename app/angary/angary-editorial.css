@@ -2,6 +2,54 @@
   background: #efeee8;
 }
 
+/* The flagship hero is a deliberate reveal rather than a full-screen gate. The extra
+   specificity keeps this page-local height:auto contract ahead of the shared low-height
+   service-subhero rule at 1366×800. */
+.angary-page .service-subhero.angary-service-subhero {
+  height: auto;
+  min-height: min(86svh, 760px);
+}
+
+.angary-page .service-subhero-content {
+  padding-top: 150px;
+  padding-bottom: 75px;
+}
+
+.angary-page .angary-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 40px;
+}
+
+.angary-page .service-subhero-content .angary-hero-actions .button {
+  margin-top: 0;
+}
+
+.angary-page .angary-hero-secondary {
+  color: white;
+  border-color: rgba(255, 255, 255, .58);
+  background: rgba(12, 13, 15, .18);
+}
+
+.angary-page .angary-hero-secondary:hover {
+  border-color: white;
+  background: rgba(255, 255, 255, .09);
+  transform: translateY(-2px);
+}
+
+.angary-page .hangar-configurator-embedded {
+  padding-block: 40px clamp(88px, 8vw, 116px);
+  background: var(--warm);
+  border-top: 2px solid var(--accent);
+}
+
+.angary-page .contact-grid .inquiry-form {
+  width: 100%;
+  max-width: var(--content-copy);
+  justify-self: end;
+}
+
 .hangar-decision-grid {
   display: grid;
   grid-template-columns: minmax(300px, .72fr) minmax(0, 1.28fr);
@@ -76,7 +124,86 @@
   }
 }
 
-@media (max-width: 759px) {
+@media (min-width: 1024px) and (max-width: 1366px) {
+  .angary-page .service-subhero.angary-service-subhero {
+    min-height: min(86svh, 700px);
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1023px) {
+  .angary-page {
+    --section-space: 72px;
+    --section-space-compact: 56px;
+    --grid-gap: 36px;
+  }
+
+  .angary-page .service-subhero.angary-service-subhero {
+    min-height: min(74svh, 640px);
+  }
+
+  .angary-page .service-subhero-content {
+    padding-top: 132px;
+    padding-bottom: 32px;
+  }
+
+  .angary-page .hangar-configurator-embedded {
+    padding-block: 56px 88px;
+  }
+
+  .angary-page .hangar-configurator-embedded :is(.hc-hero, .hc-layout) {
+    width: 100%;
+    max-width: var(--content-copy);
+  }
+
+  .angary-page .contact-grid .inquiry-form {
+    justify-self: center;
+  }
+
+  .hangar-decision-grid {
+    gap: var(--grid-gap);
+  }
+}
+
+@media (min-width: 761px) and (max-height: 820px) {
+  .angary-page .service-subhero-content {
+    padding-top: 112px;
+    padding-bottom: 36px;
+  }
+}
+
+@media (max-width: 760px) {
+  .angary-page .service-subhero.angary-service-subhero {
+    min-height: 0;
+  }
+
+  .angary-page .service-subhero-content {
+    padding-top: 126px;
+    padding-bottom: 50px;
+  }
+
+  .angary-page .angary-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-top: 30px;
+  }
+
+  .angary-page .hangar-configurator-embedded {
+    padding-block: 48px 82px;
+  }
+
+  .angary-page :is(
+    .ghost-section .page-heading h2,
+    .direction-editorial-copy h2,
+    .hangar-decision-heading h2,
+    .page-section-dark .page-heading h2
+  ) {
+    font-size: clamp(30px, 9vw, 36px);
+  }
+
+  .angary-page .contact-grid .inquiry-form {
+    justify-self: stretch;
+  }
+
   .hangar-decision-list li {
     grid-template-columns: 26px 1fr;
     gap: 12px;

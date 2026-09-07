@@ -39,6 +39,14 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
             ? 'Задайте габарити, контур і бажаний обсяг робіт. Візуалізація допоможе сформувати предметний запит, а технічне рішення ми уточнимо разом.'
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
+        {embedded && (
+          <ol className="hc-vocabulary" aria-label="Чотири складові конфігурації">
+            <li><span>01</span><strong>Габарити</strong></li>
+            <li><span>02</span><strong>Контур</strong></li>
+            <li><span>03</span><strong>Огородження</strong></li>
+            <li><span>04</span><strong>Основа</strong></li>
+          </ol>
+        )}
       </header>
 
       <div className="hc-layout">
