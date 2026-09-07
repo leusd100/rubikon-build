@@ -197,7 +197,15 @@ function DirectionEditorial({
   );
 }
 
-export function DirectionFaq({ title, items }: { title: string; items: readonly DirectionFaqItem[] }) {
+export function DirectionFaq({
+  title,
+  items,
+  collapsible = false,
+}: {
+  title: string;
+  items: readonly DirectionFaqItem[];
+  collapsible?: boolean;
+}) {
   const faqData = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -212,22 +220,29 @@ export function DirectionFaq({ title, items }: { title: string; items: readonly 
     <section className="page-section faq-section">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }} />
       <div className="shell faq-grid">
-        <div><p className="eyebrow"><span /> Питання</p><h2>{title}</h2></div>
+        <div className="faq-heading"><p className="eyebrow"><span /> Питання</p><h2>{title}</h2></div>
         <div className="faq-list">
-          {items.map(([question, answer]) => <article key={question}><h3>{question}</h3><p>{answer}</p></article>)}
+          {items.map(([question, answer]) => collapsible ? (
+            <details key={question}>
+              <summary><h3>{question}</h3><span aria-hidden="true">+</span></summary>
+              <p>{answer}</p>
+            </details>
+          ) : (
+            <article key={question}><h3>{question}</h3><p>{answer}</p></article>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function RelatedDirections({ id }: { id: DirectionPageConfig['id'] }) {
+function RelatedDirections({ id, compact = false }: { id: DirectionPageConfig['id']; compact?: boolean }) {
   const related = relatedDirections[id];
 
   if (!related.length) return null;
 
   return (
-    <section className="page-section related-directions-section">
+    <section className={`page-section related-directions-section${compact ? ' is-compact' : ''}`}>
       <div className="shell">
         <p className="eyebrow"><span /> Суміжні роботи</p>
         <h2 className="related-directions-title">Пов’язані напрямки</h2>
@@ -255,13 +270,11 @@ function RelatedDirections({ id }: { id: DirectionPageConfig['id'] }) {
 export function DirectionPage({
   config,
   signatureExperience,
-  technicalChapter,
-  hideCost = false,
+  editorialArchitecture,
 }: {
   config: DirectionPageConfig;
   signatureExperience?: ReactNode;
-  technicalChapter?: ReactNode;
-  hideCost?: boolean;
+  editorialArchitecture?: ReactNode;
 }) {
   const direction = getDirection(config.id);
 
@@ -280,36 +293,39 @@ export function DirectionPage({
 
       {signatureExperience}
 
-      <section className="page-section ghost-section">
-        <GhostWord word={directionGhostWords[config.id]} />
-        {config.overview.layout === 'use-cases' ? (
-          <>
-            <SectionHeader
-              className="shell page-heading"
-              eyebrow={config.overview.eyebrow}
-              title={config.overview.title}
-              supporting={config.overview.text || ''}
-            />
-            <DirectionItemCards className="shell use-case-grid" items={config.overview.items} />
-          </>
-        ) : (
-          <div className="shell page-two-col align-start">
-            <div className="sticky-heading">
-              <p className="eyebrow"><span /> {config.overview.eyebrow}</p>
-              <h2>{config.overview.title}</h2>
-              {config.overview.text && <p className="lead-copy">{config.overview.text}</p>}
-            </div>
-            <DirectionItemCards className="feature-list" items={config.overview.items} />
-          </div>
-        )}
-      </section>
+      {editorialArchitecture ?? (
+        <>
+          <section className="page-section ghost-section">
+            <GhostWord word={directionGhostWords[config.id]} />
+            {config.overview.layout === 'use-cases' ? (
+              <>
+                <SectionHeader
+                  className="shell page-heading"
+                  eyebrow={config.overview.eyebrow}
+                  title={config.overview.title}
+                  supporting={config.overview.text || ''}
+                />
+                <DirectionItemCards className="shell use-case-grid" items={config.overview.items} />
+              </>
+            ) : (
+              <div className="shell page-two-col align-start">
+                <div className="sticky-heading">
+                  <p className="eyebrow"><span /> {config.overview.eyebrow}</p>
+                  <h2>{config.overview.title}</h2>
+                  {config.overview.text && <p className="lead-copy">{config.overview.text}</p>}
+                </div>
+                <DirectionItemCards className="feature-list" items={config.overview.items} />
+              </div>
+            )}
+          </section>
 
-      <DirectionEditorial directionId={config.id} editorial={config.editorial} />
-      {technicalChapter}
-      <DirectionProcess {...config.process} />
-      {!hideCost && config.cost && <DirectionCostSection {...config.cost} />}
-      {config.faq && <DirectionFaq {...config.faq} />}
-      <RelatedDirections id={config.id} />
+          <DirectionEditorial directionId={config.id} editorial={config.editorial} />
+          <DirectionProcess {...config.process} />
+          {config.cost && <DirectionCostSection {...config.cost} />}
+        </>
+      )}
+      {config.faq && <DirectionFaq {...config.faq} collapsible={config.id === 'angary'} />}
+      <RelatedDirections id={config.id} compact={config.id === 'angary'} />
       <InquirySection eyebrow={config.cta.eyebrow} title={config.cta.title} defaultDirection={direction.formLabel} />
     </main>
   );
