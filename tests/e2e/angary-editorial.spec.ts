@@ -27,10 +27,10 @@ for (const viewport of viewports) {
     const sequence = await page.locator([
       '.service-subhero',
       '#configurator',
-      '.ghost-section',
-      '.direction-editorial-section',
-      '.hangar-decision-section',
-      '.page-section-dark',
+      '#decisions',
+      '#structure',
+      '#process',
+      '#responsibility',
       '.faq-section',
       '.related-directions-section',
       '#inquiry',
@@ -81,7 +81,14 @@ for (const viewport of viewports) {
       expect(metrics.heroOverflow).toBeLessThanOrEqual(1);
     }
 
-    await expect(page.locator('.hangar-decision-section')).toContainText('Що визначає майбутній ангар');
+    await expect(page.locator('#decisions [data-decision]')).toHaveCount(4);
+    await expect(page.locator('#structure .angary-diagram')).toHaveCount(3);
+    await expect(page.locator('#structure')).toContainText('6–8 м і уточнюється після розрахунку');
+    await expect(page.locator('#process li')).toHaveCount(5);
+    await expect(page.locator('#responsibility figure')).toHaveCount(2);
+    await expect(page.locator('.faq-list details')).toHaveCount(6);
+    await expect(page.locator('.faq-list details[open]')).toHaveCount(0);
+    await expect(page.locator('.related-directions-section .related-card')).toHaveCount(3);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
   });
@@ -97,4 +104,18 @@ test('/angary keeps content readable with enlarged text', async ({ page }, testI
   await expect(page.locator('.hc-summary-disclaimer')).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test('/angary process stage follows the authoritative attachment state', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract runs once');
+  await page.goto('/angary', { waitUntil: 'load' });
+
+  const firstStage = page.locator('#process li').first();
+  await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
+
+  await page.getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
+  await expect(firstStage).toContainText('Конфігурацію додано до заявки.');
+
+  await page.getByRole('button', { name: 'Не додавати' }).click();
+  await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
 });

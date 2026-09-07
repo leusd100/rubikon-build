@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 const directions = [
-  { path: '/angary', layout: 'copy-first' },
+  // /angary has its own approved flagship architecture and dedicated breakpoint matrix in
+  // angary-editorial.spec.ts; this suite protects the shared legacy editorial block only.
   { path: '/zernoskhovyshcha', layout: 'media-first' },
   { path: '/metalokonstruktsii', layout: 'copy-first' },
   { path: '/betonni-roboty', layout: 'media-first' },
