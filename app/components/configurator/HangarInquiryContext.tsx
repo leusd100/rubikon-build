@@ -7,15 +7,23 @@ import {
   transitionHangarAttachment,
   type HangarAttachmentState,
 } from '../../lib/configurator/attachmentContract';
+import {
+  createHangarPresentationDemo,
+  type HangarPresentationDemo,
+  type HangarPresentationDemoKind,
+} from '../../lib/configurator/presentationDemo';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 
 type HangarInquiryContextValue = {
   state: ConfiguratorState;
   attachment: HangarAttachmentState;
   isAttached: boolean;
+  presentationDemo: HangarPresentationDemo | null;
   updateBusinessConfiguration: (state: ConfiguratorState) => void;
   attachConfiguration: () => void;
   detachConfiguration: () => void;
+  startPresentationDemo: (kind: HangarPresentationDemoKind) => void;
+  endPresentationDemo: () => void;
 };
 
 const HangarInquiryContext = createContext<HangarInquiryContextValue | null>(null);
@@ -23,16 +31,20 @@ const HangarInquiryContext = createContext<HangarInquiryContextValue | null>(nul
 type HangarInquiryState = {
   configuration: ConfiguratorState;
   attachment: HangarAttachmentState;
+  presentationDemo: HangarPresentationDemo | null;
 };
 
 type HangarInquiryAction =
   | { type: 'business-edit'; configuration: ConfiguratorState }
   | { type: 'explicit-attach' }
-  | { type: 'explicit-detach' };
+  | { type: 'explicit-detach' }
+  | { type: 'start-presentation'; kind: HangarPresentationDemoKind }
+  | { type: 'end-presentation' };
 
 const INITIAL_HANGAR_INQUIRY_STATE: HangarInquiryState = {
   configuration: DEFAULT_CONFIGURATOR_STATE,
   attachment: INITIAL_HANGAR_ATTACHMENT,
+  presentationDemo: null,
 };
 
 function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryAction): HangarInquiryState {
@@ -43,6 +55,24 @@ function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryA
     return {
       configuration: action.configuration,
       attachment: transitionHangarAttachment(current.attachment, { type: 'business-edit' }),
+      presentationDemo: null,
+    };
+  }
+
+  if (action.type === 'start-presentation') {
+    return {
+      ...current,
+      attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
+      presentationDemo: createHangarPresentationDemo(action.kind, current.configuration),
+    };
+  }
+
+  if (action.type === 'end-presentation') {
+    if (!current.presentationDemo) return current;
+    return {
+      ...current,
+      attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
+      presentationDemo: null,
     };
   }
 
@@ -61,11 +91,16 @@ export function HangarInquiryProvider({ children }: { children: ReactNode }) {
       state: model.configuration,
       attachment: model.attachment,
       isAttached: model.attachment.status === 'attached',
+      presentationDemo: model.presentationDemo,
       updateBusinessConfiguration: (configuration: ConfiguratorState) => {
         dispatch({ type: 'business-edit', configuration });
       },
       attachConfiguration: () => dispatch({ type: 'explicit-attach' }),
       detachConfiguration: () => dispatch({ type: 'explicit-detach' }),
+      startPresentationDemo: (kind: HangarPresentationDemoKind) => {
+        dispatch({ type: 'start-presentation', kind });
+      },
+      endPresentationDemo: () => dispatch({ type: 'end-presentation' }),
     }),
     [model],
   );

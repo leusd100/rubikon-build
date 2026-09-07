@@ -2,6 +2,7 @@
 
 import ResponsiveImage from '../ResponsiveImage';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
+import { alternativeCladdingDemo } from '../../lib/configurator/presentationDemo';
 import {
   CLADDING_SYSTEM_LABELS,
   ENVELOPE_LABELS,
@@ -18,6 +19,20 @@ function EditorialImage({ src, alt }: { src: string; alt: string }) {
       <ResponsiveImage src={src} alt={alt} sizes="(max-width: 760px) calc(50vw - 24px), 30vw" />
     </span>
   );
+}
+
+function revealLivePreview() {
+  window.requestAnimationFrame(() => {
+    const preview = document.querySelector<HTMLElement>('.hc-preview-demo-status')
+      ?? document.getElementById('hangar-live-preview');
+    if (!preview) return;
+    const rect = preview.getBoundingClientRect();
+    const isMobile = window.matchMedia('(max-width: 760px)').matches;
+    const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+    if (!isMobile && isVisible) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    preview.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+  });
 }
 
 function TransverseDiagram({ type }: { type: 'portal' | 'truss' }) {
@@ -68,6 +83,15 @@ export function HangarEditorialArchitecture() {
   const openings = state
     ? `${state.gates === 0 ? 'Без воріт' : `${state.gates} × ворота`}${state.doors ? ' + двері' : ''}`
     : '1 × ворота';
+  const claddingDemo = state ? alternativeCladdingDemo(state) : 'sandwich-panel';
+  const claddingDemoLabel = claddingDemo === 'sandwich-panel'
+    ? 'Порівняти із сендвіч-панеллю'
+    : 'Порівняти з профнастилом';
+
+  function startPresentationDemo(kind: 'frame' | 'profiled-sheet' | 'sandwich-panel') {
+    inquiry?.startPresentationDemo(kind);
+    revealLivePreview();
+  }
 
   return (
     <>
@@ -105,6 +129,14 @@ export function HangarEditorialArchitecture() {
                 <CurrentChoice>{materials}</CurrentChoice>
                 <h3>Матеріал стін і покрівлі</h3>
                 <p>Профнастил і сендвіч-панель дають різну комплектацію контуру. Стіни та покрівля можуть уточнюватися окремо під функцію об’єкта.</p>
+                <button
+                  type="button"
+                  className="angary-preview-action"
+                  aria-pressed={inquiry?.presentationDemo?.kind === claddingDemo}
+                  onClick={() => startPresentationDemo(claddingDemo)}
+                >
+                  {claddingDemoLabel} <span aria-hidden="true">→</span>
+                </button>
               </div>
               <div className="angary-render-compare">
                 <figure>
@@ -160,6 +192,14 @@ export function HangarEditorialArchitecture() {
             <p className="eyebrow"><span /> Попередня схема</p>
             <h2 id="angary-structure-title">Що визначає схему каркаса</h2>
             <p className="angary-honesty-note">Попередня конструктивна схема уточнюється після розрахунку.</p>
+            <button
+              type="button"
+              className="angary-preview-action"
+              aria-pressed={inquiry?.presentationDemo?.kind === 'frame'}
+              onClick={() => startPresentationDemo('frame')}
+            >
+              Подивитись каркас <span aria-hidden="true">→</span>
+            </button>
           </header>
 
           <div className="angary-transverse-grid">

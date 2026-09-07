@@ -1,5 +1,6 @@
 import { DirectionPage } from '../components/DirectionDetail';
 import { HangarEditorialArchitecture } from '../components/angary/HangarEditorialArchitecture';
+import { HangarMobileInquiryCta } from '../components/angary/HangarMobileInquiryCta';
 import { HangarConfigurator } from '../components/configurator/HangarConfigurator';
 import { HangarInquiryProvider } from '../components/configurator/HangarInquiryContext';
 import { createDirectionMetadata, getDirectionPage } from '../lib/directions';
@@ -18,6 +19,7 @@ export default function HangarsPage() {
         signatureExperience={<HangarConfigurator embedded />}
         editorialArchitecture={<HangarEditorialArchitecture />}
       />
+      <HangarMobileInquiryCta />
     </HangarInquiryProvider>
   );
 }

@@ -13,10 +13,12 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
   const [localState, setLocalState] = useState<ConfiguratorState>(DEFAULT_CONFIGURATOR_STATE);
   const state = sharedInquiry?.state ?? localState;
   const updateBusinessConfiguration = sharedInquiry?.updateBusinessConfiguration ?? setLocalState;
-  // Derived once here, not inside Preview/Summary — both read the same DomainModel so they can
-  // never disagree about what "walls present" or "area" means. Controls keeps reading/writing
-  // raw ConfiguratorState below — it edits user input, not the derived object.
-  const domain = useMemo(() => deriveDomainModel(state), [state]);
+  // Both models are derived here, not inside Preview/Summary. Summary always receives the
+  // authoritative business model; only Preview may receive a temporary presentation demo.
+  // Controls keep reading/writing raw business state, so a demo can never become lead data.
+  const businessDomain = useMemo(() => deriveDomainModel(state), [state]);
+  const previewState = sharedInquiry?.presentationDemo?.configuration ?? state;
+  const previewDomain = useMemo(() => deriveDomainModel(previewState), [previewState]);
 
   return (
     <section
@@ -51,10 +53,14 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
 
       <div className="hc-layout">
         <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} />
-        <div className="hc-preview-pane">
-          <HangarPreviewModes domain={domain} />
+        <div className="hc-preview-pane" id="hangar-live-preview">
+          <HangarPreviewModes
+            domain={previewDomain}
+            presentationDemo={sharedInquiry?.presentationDemo}
+            onEndPresentationDemo={sharedInquiry?.endPresentationDemo}
+          />
           <ConfiguratorSummary
-            domain={domain}
+            domain={businessDomain}
             showInquiryAction={embedded}
             onInquiryAction={sharedInquiry?.attachConfiguration}
           />
