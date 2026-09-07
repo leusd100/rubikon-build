@@ -25,14 +25,16 @@ function TransverseDiagram({ type }: { type: 'portal' | 'truss' }) {
   return (
     <svg viewBox="0 0 520 250" role="img" aria-label={truss ? 'Схема поперечної металевої ферми з центральним рядом опор' : 'Схема поперечної портальної рами без внутрішніх опор'}>
       <path className="diagram-ground" d="M45 218H475" />
-      <path className="diagram-main" d="M86 218V105L260 45L434 105V218" />
       {truss ? (
         <>
-          <path className="diagram-main" d="M86 105L260 78L434 105M260 78V218" />
-          <path className="diagram-secondary" d="M86 105L128 98L107 78L170 91L149 71L212 84L191 64L260 78L233 55M260 78L287 55M260 78L329 64L308 84L371 71L350 91L413 78L392 98L434 105" />
+          <path className="diagram-main" d="M86 218V105M86 105L260 45L434 105M86 105H434M434 105V218M260 105V218" />
+          <path className="diagram-secondary" d="M86 105L108 97.4L130 105L152 82.2L174 105L196 67.1L218 105L238 52.6L260 105L282 52.6L302 105L324 67.1L346 105L368 82.2L390 105L412 97.4L434 105" />
         </>
       ) : (
-        <path className="diagram-secondary" d="M86 105L260 45L434 105" />
+        <>
+          <path className="diagram-main" d="M86 218V105L260 45L434 105V218" />
+          <path className="diagram-secondary" d="M86 105L260 45L434 105" />
+        </>
       )}
       <path className="diagram-accent" d="M86 230H434M86 223V237M434 223V237" />
       <text x="260" y="246" textAnchor="middle">ПРОЛІТ</text>
