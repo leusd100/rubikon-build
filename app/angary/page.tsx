@@ -1,6 +1,6 @@
 import { DirectionPage } from '../components/DirectionDetail';
+import { HangarEditorialArchitecture } from '../components/angary/HangarEditorialArchitecture';
 import { HangarConfigurator } from '../components/configurator/HangarConfigurator';
-import { HangarDecisionChapter } from '../components/configurator/HangarDecisionChapter';
 import { HangarInquiryProvider } from '../components/configurator/HangarInquiryContext';
 import { createDirectionMetadata, getDirectionPage } from '../lib/directions';
 import '../configurator-preview/configurator.css';
@@ -16,8 +16,7 @@ export default function HangarsPage() {
       <DirectionPage
         config={config}
         signatureExperience={<HangarConfigurator embedded />}
-        technicalChapter={config.cost ? <HangarDecisionChapter items={config.cost.items} /> : null}
-        hideCost
+        editorialArchitecture={<HangarEditorialArchitecture />}
       />
     </HangarInquiryProvider>
   );

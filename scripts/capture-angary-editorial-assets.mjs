@@ -1,0 +1,46 @@
+import { mkdir } from 'node:fs/promises';
+import { chromium } from '@playwright/test';
+
+const baseUrl = process.env.ANGARY_CAPTURE_URL ?? 'http://127.0.0.1:4182';
+const outputDir = new URL('../public/media/angary/', import.meta.url);
+
+await mkdir(outputDir, { recursive: true });
+
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
+await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
+await page.goto(`${baseUrl}/angary#configurator`, { waitUntil: 'load' });
+
+const essentialCookies = page.getByRole('button', { name: 'Лише необхідні', exact: true });
+if (await essentialCookies.isVisible()) {
+  await essentialCookies.click();
+  await page.locator('.cookie-banner').waitFor({ state: 'hidden' });
+}
+await page.addStyleTag({ content: '.cookie-banner, .hc-three-overlay, .hc-preview-canvas button { display: none !important; }' });
+
+const canvas = page.locator('.hc-preview-canvas');
+await page.getByRole('button', { name: '3D', exact: true }).click();
+await canvas.waitFor({ state: 'visible' });
+
+async function capture(name) {
+  await page.waitForTimeout(350);
+  await canvas.screenshot({
+    path: new URL(name, outputDir).pathname,
+    type: 'jpeg',
+    quality: 90,
+  });
+}
+
+await page.getByRole('radio', { name: 'Холодний', exact: true }).check({ force: true });
+await capture('envelope-cold.jpg');
+
+await page.getByRole('radio', { name: 'Утеплений', exact: true }).check({ force: true });
+await capture('envelope-insulated.jpg');
+
+await page.getByRole('radio', { name: 'Монолітна плита', exact: true }).check({ force: true });
+await capture('foundation-slab.jpg');
+
+await page.getByRole('radio', { name: 'Окремі фундаменти під колони', exact: true }).check({ force: true });
+await capture('foundation-isolated.jpg');
+
+await browser.close();
