@@ -140,7 +140,7 @@ test.describe('configurator attachment contract', () => {
 
     const brief = attachmentCard(page);
     await expect(brief).toContainText('До заявки додано вашу конфігурацію');
-    await expect(brief).toContainText('Ангар · 24 × 60 × 8 м');
+    await expect(brief).toContainText('24 × 60 × 8 м · Холодний');
   });
 
   test('explicit configurator CTA attaches an untouched default', async ({ page }) => {
@@ -148,7 +148,7 @@ test.describe('configurator attachment contract', () => {
     await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
 
     await expect(page).toHaveURL(/#inquiry$/);
-    await expect(attachmentCard(page)).toContainText('Ангар · 24 × 60 × 8 м');
+    await expect(attachmentCard(page)).toContainText('24 × 60 × 8 м · Холодний');
   });
 
   test('explicit detach removes the current configuration from the lead', async ({ page }) => {
@@ -174,7 +174,7 @@ test.describe('configurator attachment contract', () => {
     await attachmentCard(page).getByRole('button', { name: 'Не додавати', exact: true }).click();
 
     await setDimension(page, 'length', '50');
-    await expect(attachmentCard(page)).toContainText('Ангар · 30 × 50 × 8 м');
+    await expect(attachmentCard(page)).toContainText('30 × 50 × 8 м · Холодний');
   });
 
   test('a business edit reaches the normal form and payload without using the configurator CTA', async ({ page }) => {
@@ -184,7 +184,9 @@ test.describe('configurator attachment contract', () => {
     await setDimension(page, 'length', '50');
 
     const brief = attachmentCard(page);
-    await expect(brief).toContainText('Ангар · 30 × 50 × 8 м');
+    await expect(brief).toContainText('30 × 50 × 8 м · Холодний');
+    await expect(page.locator('form.inquiry-form').getByLabel('Орієнтовні розміри', { exact: true })).toHaveCount(0);
+    await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue('30 × 50 × 8 м');
     await submitInquiry(page);
 
     expect(submitted()).toMatchObject({

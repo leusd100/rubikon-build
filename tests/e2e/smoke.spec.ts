@@ -130,7 +130,11 @@ test.describe('public route smoke tests', () => {
 
       if (route.hasProjectCta) {
         const projectCta = hero.getByRole('link', {
-          name: route.path === '/napryamky' ? 'Описати завдання' : 'Обговорити проєкт',
+          name: route.path === '/napryamky'
+            ? 'Описати завдання'
+            : route.path === '/angary'
+              ? 'Обговорити завдання'
+              : 'Обговорити проєкт',
           exact: true,
         });
 
