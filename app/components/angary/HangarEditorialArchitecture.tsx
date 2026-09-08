@@ -15,7 +15,11 @@ function CurrentChoice({ children }: { children: ReactNode }) {
 function EditorialImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
   return (
     <span className={`angary-editorial-image${className ? ` ${className}` : ''}`}>
-      <ResponsiveImage src={src} alt={alt} sizes="(max-width: 760px) calc(50vw - 24px), 30vw" />
+      <ResponsiveImage
+        src={src}
+        alt={alt}
+        sizes="(max-width: 760px) calc(50vw - 17px), (max-width: 1023px) calc(25vw - 18px), 25vw"
+      />
     </span>
   );
 }
@@ -152,11 +156,11 @@ export function HangarEditorialArchitecture() {
               </div>
               <div className="angary-render-compare">
                 <figure>
-                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-slab-accent.jpg" alt="Попередня візуалізація ангара на монолітній плиті, виділеній теракотовим кольором" />
+                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-slab-detail.jpg" alt="Фрагмент ангара: колони каркаса спираються на монолітну плиту, виділену теракотовим кольором" />
                   <figcaption><strong>Монолітна плита</strong><span>Суцільна основа споруди</span></figcaption>
                 </figure>
                 <figure>
-                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-isolated-accent.jpg" alt="Попередня візуалізація окремих фундаментів під колони ангара, виділених теракотовим кольором" />
+                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-isolated-detail.jpg" alt="Фрагмент ангара: кожна колона каркаса спирається на окремий фундамент, виділений теракотовим кольором" />
                   <figcaption><strong>Окремі фундаменти</strong><span>Опори під колони каркаса</span></figcaption>
                 </figure>
               </div>
@@ -198,16 +202,19 @@ export function HangarEditorialArchitecture() {
           <div className="angary-transverse-grid">
             <figure className="angary-diagram">
               <TransverseDiagram type="portal" />
+              <p className="angary-diagram-key"><span>Проліт</span><strong>Між крайніми опорами</strong></p>
               <figcaption><span>ПОПЕРЕЧНА СХЕМА 01</span><strong>Портальна рама</strong><p>Вільний простір без внутрішніх опор — якщо це підтвердить розрахунок.</p></figcaption>
             </figure>
             <figure className="angary-diagram">
               <TransverseDiagram type="truss" />
+              <p className="angary-diagram-key"><span>Проліт</span><strong>Між крайніми опорами</strong></p>
               <figcaption><span>ПОПЕРЕЧНА СХЕМА 02</span><strong>Ферма та ряд опор</strong><p>Інший шлях передавання навантажень для ширших або особливих об’єктів.</p></figcaption>
             </figure>
           </div>
 
           <figure className="angary-diagram angary-longitudinal-diagram">
             <LongitudinalDiagram />
+            <p className="angary-diagram-key"><span>Крок рам</span><strong>Попередньо 6–8 м · уточнюється після розрахунку</strong></p>
             <figcaption><span>ПОЗДОВЖНЯ СХЕМА</span><strong>Ритм рам і в’язі</strong><p>У попередній схемі ритм рам формується орієнтовно в діапазоні 6–8 м і уточнюється після розрахунку.</p></figcaption>
           </figure>
         </div>

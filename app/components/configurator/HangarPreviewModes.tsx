@@ -152,8 +152,10 @@ export function HangarPreviewModes({
   const exitFullscreen = useCallback(() => setIsFullscreen(false), []);
   const handleEndPresentationDemo = useCallback(() => {
     onEndPresentationDemo?.();
-    requestAnimationFrame(() => modeSwitchAnchorRef.current?.querySelector<HTMLButtonElement>('button')?.focus());
-  }, [onEndPresentationDemo]);
+    if (!isFullscreen) {
+      requestAnimationFrame(() => modeSwitchAnchorRef.current?.querySelector<HTMLButtonElement>('button')?.focus());
+    }
+  }, [isFullscreen, onEndPresentationDemo]);
 
   /**
    * The Canvas is mounted only while 3D is the active mode, so switching back to Technical
@@ -252,9 +254,11 @@ export function HangarPreviewModes({
 
   return (
     <>
-      <p className="hc-visually-hidden" role="status" aria-live="polite" aria-atomic="true">
-        {presentationAnnouncement}
-      </p>
+      {!isFullscreen && (
+        <p className="hc-visually-hidden hc-presentation-announcement" role="status" aria-live="polite" aria-atomic="true">
+          {presentationAnnouncement}
+        </p>
+      )}
       {presentationDemo && !isFullscreen && (
         <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
       )}
@@ -286,6 +290,7 @@ export function HangarPreviewModes({
             onExit={exitFullscreen}
             labelledBy="Розгорнутий перегляд 3D-моделі ангара"
             describedBy={descriptionId}
+            announcement={presentationAnnouncement}
             status={presentationDemo
               ? <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
               : null}

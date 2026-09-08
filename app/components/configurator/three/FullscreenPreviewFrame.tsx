@@ -42,6 +42,7 @@ export function FullscreenPreviewFrame({
   labelledBy,
   describedBy,
   status,
+  announcement,
   children,
 }: {
   active: boolean;
@@ -52,6 +53,8 @@ export function FullscreenPreviewFrame({
   describedBy?: string;
   /** Presentation-only context that must remain operable inside the modal. */
   status?: ReactNode;
+  /** The single active live region moves into the modal while its background is inert. */
+  announcement?: ReactNode;
   children: ReactNode;
 }) {
   // Created lazily, once, only on the client — see the module doc for why this is `useState`
@@ -65,6 +68,8 @@ export function FullscreenPreviewFrame({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const previousStatusVisibleRef = useRef(false);
+  const hasStatus = Boolean(status);
 
   // Moves `portalHost` between its two possible physical parents. `portalHost` appears here only
   // as an ARGUMENT to `appendChild`/`removeChild` — never as the receiver of a property write or
@@ -142,6 +147,15 @@ export function FullscreenPreviewFrame({
     };
   }, [active, onExit, portalHost]);
 
+  // Returning from a presentation demo removes the button that owned focus. While fullscreen
+  // remains open, move focus to the dialog's stable close control rather than trying to focus the
+  // inert mode switch behind the modal.
+  useEffect(() => {
+    const statusWasRemoved = active && previousStatusVisibleRef.current && !hasStatus;
+    previousStatusVisibleRef.current = active && hasStatus;
+    if (statusWasRemoved) closeButtonRef.current?.focus({ preventScroll: true });
+  }, [active, hasStatus]);
+
   if (!portalHost) return <>{children}</>; // SSR fallback — see the guarded useState above
 
   return (
@@ -172,6 +186,14 @@ export function FullscreenPreviewFrame({
           >
             Закрити ✕
           </button>
+          <p
+            className="hc-visually-hidden hc-presentation-announcement"
+            role={active ? 'status' : undefined}
+            aria-live={active ? 'polite' : undefined}
+            aria-atomic={active ? 'true' : undefined}
+          >
+            {active ? announcement : null}
+          </p>
           <div className="hc-fullscreen-status" hidden={!active || !status}>
             {status}
           </div>

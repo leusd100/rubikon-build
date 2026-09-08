@@ -93,11 +93,17 @@ test.describe('angary presentation-only previews', () => {
     const dialog = page.getByRole('dialog');
     await expect(dialog).toContainText('Показ огородження · сендвіч-панель · ваш вибір не змінено');
     await expect(dialog.getByRole('button', { name: 'Повернути мій варіант', exact: true })).toBeVisible();
+    const activeAnnouncement = dialog.locator('.hc-presentation-announcement[role="status"]');
+    await expect(activeAnnouncement).toHaveCount(1);
+    await expect(page.locator('.hc-presentation-announcement[role="status"]')).toHaveCount(1);
+    expect(await activeAnnouncement.evaluate((element) => Boolean(element.closest('[inert]')))).toBe(false);
     await expect(page.locator('canvas')).toHaveCount(1);
 
     await dialog.getByRole('button', { name: 'Повернути мій варіант', exact: true }).click();
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('.hc-preview-demo-status')).toHaveCount(0);
+    await expect(dialog.getByRole('button', { name: /Закрити/ })).toBeFocused();
+    await expect(activeAnnouncement).toContainText('Повернуто ваш варіант.');
     await expect(page.locator('canvas')).toHaveCount(1);
     expect(await page.locator('.hc-summary-flagship').innerText()).toBe(summaryBefore);
     await dialog.getByRole('button', { name: /Закрити/ }).click();
@@ -164,6 +170,18 @@ test('mobile inquiry CTA follows attachment, form and overlay conditions', async
   const stickyCta = page.getByRole('link', { name: /До заявки/ });
   await expect(stickyCta).toBeHidden();
   await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
+  await expect(stickyCta).toBeHidden();
+
+  // A direct jump can skip every IntersectionObserver transition. The CTA must still derive its
+  // state from the summary's real viewport position on the resulting scroll frame.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(stickyCta).toBeHidden();
+  await page.evaluate(() => {
+    const target = document.getElementById('process');
+    if (target) window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top);
+  });
+  await expect(stickyCta).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await expect(stickyCta).toBeHidden();
 
   const summary = page.locator('.hc-summary-flagship');

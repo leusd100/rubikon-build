@@ -146,3 +146,51 @@ test('/angary process stage follows the authoritative attachment state', async (
   await page.getByRole('button', { name: 'Не додавати' }).click();
   await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
 });
+
+for (const width of [320, 390, 760, 761, 820, 1000]) {
+  test(`structural HTML captions remain readable at ${width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize({ width, height: width <= 390 ? 844 : 1024 });
+    await page.goto('/angary', { waitUntil: 'load' });
+
+    const captions = page.locator('#structure :is(.angary-diagram-key, figcaption > span, figcaption > p)');
+    await expect(captions).toHaveCount(9);
+    const sizes = await captions.evaluateAll((elements) => elements.map(
+      (element) => Number.parseFloat(getComputedStyle(element).fontSize),
+    ));
+    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(13);
+    await expect(page.locator('.angary-longitudinal-diagram .angary-diagram-key')).toContainText(
+      'Попередньо 6–8 м · уточнюється після розрахунку',
+    );
+  });
+}
+
+for (const dpr of [1, 2]) {
+  test.describe(`editorial responsive images at DPR ${dpr}`, () => {
+    test.use({ deviceScaleFactor: dpr, viewport: { width: 1440, height: 900 } });
+
+    test('selects generated WebP candidates', async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name === 'mobile-chromium', 'the DPR matrix runs once');
+      await page.goto('/angary', { waitUntil: 'load' });
+      for (const selector of ['[data-decision="enclosure"]', '[data-decision="foundation"]']) {
+        const section = page.locator(selector);
+        await section.scrollIntoViewIfNeeded();
+        await section.locator('img').evaluateAll((images) => Promise.all(
+          (images as HTMLImageElement[]).map((image) => image.decode()),
+        ));
+      }
+
+      const selected = await page.locator([
+        '[data-decision="enclosure"] img',
+        '[data-decision="foundation"] img',
+      ].join(', ')).evaluateAll((images) => (
+        images as HTMLImageElement[]
+      ).map((image) => image.currentSrc));
+      expect(selected).toHaveLength(4);
+      for (const source of selected) {
+        expect(source).toContain('/media-responsive/');
+        expect(source).toContain(dpr === 1 ? '-480w.' : '-768w.');
+      }
+    });
+  });
+}

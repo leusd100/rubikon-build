@@ -38,7 +38,7 @@
 .angary-editorial-image { position: relative; display: block; aspect-ratio: 1.43; overflow: hidden; background: #0e0f11; }
 .angary-editorial-image img { object-fit: cover; }
 .angary-editorial-image.is-envelope-crop img { object-position: center center; }
-.angary-editorial-image.is-foundation-crop img { object-position: center center; transform: scale(3); transform-origin: 55% 90%; }
+.angary-editorial-image.is-foundation-crop img { object-position: center center; }
 .angary-render-compare figcaption { padding: 22px 20px 24px; }
 .angary-render-compare figcaption span { display: block; margin-top: 8px; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
 .angary-openings-row { grid-template-columns: minmax(280px, .7fr) minmax(0, 1.3fr); }
@@ -62,8 +62,11 @@
 .angary-diagram .diagram-secondary { stroke: rgba(21, 24, 22, .52); stroke-width: 1; }
 .angary-diagram .diagram-accent { stroke: var(--accent-dark); stroke-width: 1.5; }
 .angary-diagram text { fill: var(--text-muted); font: 600 11px var(--font-condensed), sans-serif; letter-spacing: .08em; }
+.angary-diagram-key { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 20px; margin: 0; padding: 14px 0; border-top: 1px solid var(--border-default); color: var(--text-secondary); font: 600 13px/1.4 var(--font-condensed), sans-serif; }
+.angary-diagram-key span { color: var(--accent-dark); letter-spacing: .08em; text-transform: uppercase; }
+.angary-diagram-key strong { font: inherit; }
 .angary-diagram figcaption { display: grid; grid-template-columns: 120px minmax(160px, .6fr) minmax(0, 1fr); gap: 20px; align-items: baseline; padding: 24px 0 28px; border-bottom: 1px solid var(--border-strong); }
-.angary-diagram figcaption > span { color: var(--accent-dark); font: 700 10px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; }
+.angary-diagram figcaption > span { color: var(--accent-dark); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; }
 .angary-diagram figcaption strong { font: 600 19px/1.15 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .angary-diagram figcaption p { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
 .angary-longitudinal-diagram { margin-top: var(--grid-gap); }
@@ -187,11 +190,10 @@
   .angary-structure-heading .angary-honesty-note { font-size: 13px; }
   .angary-transverse-grid { grid-template-columns: 1fr; gap: 44px; }
   .angary-longitudinal-diagram { margin-top: 44px; }
+  .angary-diagram-key { grid-template-columns: 1fr; gap: 6px; }
   .angary-diagram figcaption, .angary-longitudinal-diagram figcaption { grid-template-columns: 1fr; gap: 10px; }
   .angary-diagram figcaption > span { font-size: 13px; }
   .angary-diagram figcaption p { font-size: 13px; }
-  .angary-transverse-grid .angary-diagram svg text { font-size: 20px; letter-spacing: .04em; }
-  .angary-longitudinal-diagram svg text { font-size: 38px; letter-spacing: .01em; transform: translateX(313px); }
   .angary-process .angary-section-heading { margin-bottom: 50px; }
   .angary-process-rail { grid-template-columns: 1fr; }
   .angary-process-rail::before { top: 0; bottom: 0; left: 5px; right: auto; width: 1px; height: auto; }

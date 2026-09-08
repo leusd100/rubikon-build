@@ -24,11 +24,25 @@ export function HangarMobileInquiryCta() {
 
   useEffect(() => {
     const inquirySection = document.getElementById('inquiry');
-    const summary = document.querySelector('.hc-summary-flagship');
+    const summary = document.querySelector<HTMLElement>('.hc-summary-flagship');
     if (!inquirySection || !summary) return;
 
+    let visibilityFrame = 0;
+    const measurePosition = () => {
+      visibilityFrame = 0;
+      const summaryIsPassed = summary.getBoundingClientRect().bottom <= 0;
+      const inquiryRect = inquirySection.getBoundingClientRect();
+      const inquiryIsVisible = inquiryRect.top < window.innerHeight && inquiryRect.bottom > 0;
+      setSummaryPassed((current) => current === summaryIsPassed ? current : summaryIsPassed);
+      setInquiryVisible((current) => current === inquiryIsVisible ? current : inquiryIsVisible);
+    };
+    const schedulePositionMeasure = () => {
+      if (visibilityFrame) return;
+      visibilityFrame = window.requestAnimationFrame(measurePosition);
+    };
+
     const inquiryObserver = new IntersectionObserver(
-      ([entry]) => setInquiryVisible(entry.isIntersecting),
+      schedulePositionMeasure,
       { threshold: 0.05 },
     );
     inquiryObserver.observe(inquirySection);
@@ -36,10 +50,12 @@ export function HangarMobileInquiryCta() {
     // "Not intersecting" is ambiguous: the summary may still be below the viewport. Its bottom
     // edge must have crossed the viewport's top edge before the fixed conversion action is useful.
     const summaryObserver = new IntersectionObserver(
-      ([entry]) => setSummaryPassed(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0),
+      schedulePositionMeasure,
       { threshold: [0, 1] },
     );
     summaryObserver.observe(summary);
+    window.addEventListener('scroll', schedulePositionMeasure, { passive: true });
+    window.addEventListener('resize', schedulePositionMeasure);
 
     const mutationObserver = new MutationObserver(updateBlockers);
     mutationObserver.observe(document.body, {
@@ -57,6 +73,7 @@ export function HangarMobileInquiryCta() {
     document.addEventListener('focusin', updateBlockers);
     document.addEventListener('focusout', updateAfterFocusLeaves);
     const initialCheck = window.requestAnimationFrame(updateBlockers);
+    schedulePositionMeasure();
 
     return () => {
       inquiryObserver.disconnect();
@@ -64,6 +81,9 @@ export function HangarMobileInquiryCta() {
       mutationObserver.disconnect();
       window.cancelAnimationFrame(initialCheck);
       window.cancelAnimationFrame(focusCheck);
+      window.cancelAnimationFrame(visibilityFrame);
+      window.removeEventListener('scroll', schedulePositionMeasure);
+      window.removeEventListener('resize', schedulePositionMeasure);
       document.removeEventListener('focusin', updateBlockers);
       document.removeEventListener('focusout', updateAfterFocusLeaves);
     };
