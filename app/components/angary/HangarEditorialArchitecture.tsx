@@ -1,22 +1,25 @@
 'use client';
 
+import { useMemo, type ReactNode } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { alternativeCladdingDemo } from '../../lib/configurator/presentationDemo';
-import {
-  CLADDING_SYSTEM_LABELS,
-  ENVELOPE_LABELS,
-  FOUNDATION_TYPE_LABELS,
-} from '../../lib/configurator/types';
+import { deriveDomainModel } from '../../lib/configurator/domainModel';
+import { deriveSummary } from '../../lib/configurator/deriveSummary';
+import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 
-function CurrentChoice({ children }: { children: React.ReactNode }) {
+function CurrentChoice({ children }: { children: ReactNode }) {
   return <span className="angary-current-choice">Зараз: {children}</span>;
 }
 
-function EditorialImage({ src, alt }: { src: string; alt: string }) {
+function EditorialImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
   return (
-    <span className="angary-editorial-image">
-      <ResponsiveImage src={src} alt={alt} sizes="(max-width: 760px) calc(50vw - 24px), 30vw" />
+    <span className={`angary-editorial-image${className ? ` ${className}` : ''}`}>
+      <ResponsiveImage
+        src={src}
+        alt={alt}
+        sizes="(max-width: 760px) calc(50vw - 17px), (max-width: 1023px) calc(25vw - 18px), 25vw"
+      />
     </span>
   );
 }
@@ -74,40 +77,43 @@ function LongitudinalDiagram() {
 
 export function HangarEditorialArchitecture() {
   const inquiry = useHangarInquiryContext();
-  const state = inquiry?.state;
-  const enclosure = state ? ENVELOPE_LABELS[state.envelope] : 'Холодний';
-  const materials = state
-    ? `${CLADDING_SYSTEM_LABELS[state.wallSystem]} / ${CLADDING_SYSTEM_LABELS[state.roofSystem]}`
-    : 'Профнастил / профнастил';
-  const foundation = state ? FOUNDATION_TYPE_LABELS[state.foundationType] : 'Визначити після розрахунку';
-  const openings = state
-    ? `${state.gates === 0 ? 'Без воріт' : `${state.gates} × ворота`}${state.doors ? ' + двері' : ''}`
-    : '1 × ворота';
-  const claddingDemo = state ? alternativeCladdingDemo(state) : 'sandwich-panel';
+  const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
+  const current = useMemo(() => deriveSummary(deriveDomainModel(state)), [state]);
+  const claddingDemo = alternativeCladdingDemo(state);
   const claddingDemoLabel = claddingDemo === 'sandwich-panel'
     ? 'Порівняти із сендвіч-панеллю'
     : 'Порівняти з профнастилом';
 
-  function startPresentationDemo(kind: 'frame' | 'profiled-sheet' | 'sandwich-panel') {
-    inquiry?.startPresentationDemo(kind);
-    revealLivePreview();
+  function togglePresentationDemo(kind: 'frame' | 'profiled-sheet' | 'sandwich-panel') {
+    const isActive = inquiry?.presentationDemo?.kind === kind;
+    inquiry?.togglePresentationDemo(kind);
+    if (!isActive) revealLivePreview();
   }
 
   return (
     <>
       <section className="page-section angary-decisions" id="decisions" aria-labelledby="angary-decisions-title">
         <div className="shell">
-          <header className="angary-section-heading">
-            <p className="eyebrow"><span /> Рішення, які приймаєте ви</p>
-            <h2 id="angary-decisions-title">Від призначення — до зрозумілого технічного завдання</h2>
-            <p>Чотири групи рішень визначають склад майбутнього об’єкта. Тут — не повтор полів, а коротке пояснення наслідків кожного вибору.</p>
-          </header>
+          <div className="angary-decisions-intro">
+            <header className="angary-section-heading">
+              <p className="eyebrow"><span /> Рішення, які приймаєте ви</p>
+              <h2 id="angary-decisions-title">Від призначення — до зрозумілого технічного завдання</h2>
+              <p>Чотири групи рішень визначають склад майбутнього об’єкта. Тут — не повтор полів, а коротке пояснення наслідків кожного вибору.</p>
+            </header>
+            <figure className="angary-decisions-intro-visual">
+              <ResponsiveImage
+                src="/media/concepts/direction-hangars-v2.jpg"
+                alt="Металевий каркас ангара, поєднаний із технічними кресленнями майбутньої споруди"
+                sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 64px), 38vw"
+              />
+            </figure>
+          </div>
 
           <div className="angary-decision-list">
             <article className="angary-decision-row" data-decision="contour">
               <div className="angary-decision-copy">
                 <span className="angary-decision-number">01 / КОНТУР</span>
-                <CurrentChoice>{enclosure}</CurrentChoice>
+                <CurrentChoice>{current.envelopeLabel}</CurrentChoice>
                 <h3>Режим роботи всередині</h3>
                 <p>Температурний режим задає вимоги до огороджувального контуру. Його обирають від реального сценарію використання, а не від назви споруди.</p>
               </div>
@@ -126,26 +132,26 @@ export function HangarEditorialArchitecture() {
             <article className="angary-decision-row is-media-first" data-decision="enclosure">
               <div className="angary-decision-copy">
                 <span className="angary-decision-number">02 / ОГОРОДЖЕННЯ</span>
-                <CurrentChoice>{materials}</CurrentChoice>
+                <CurrentChoice>{current.claddingSystemLabel}</CurrentChoice>
                 <h3>Матеріал стін і покрівлі</h3>
-                <p>Профнастил і сендвіч-панель дають різну комплектацію контуру. Стіни та покрівля можуть уточнюватися окремо під функцію об’єкта.</p>
+                <p>Профнастил формує легкий неутеплений контур. Сендвіч-панель поєднує дві металеві обшивки з утеплювачем між ними. Стіни та покрівля можуть уточнюватися окремо.</p>
                 <button
                   type="button"
                   className="angary-preview-action"
                   aria-pressed={inquiry?.presentationDemo?.kind === claddingDemo}
-                  onClick={() => startPresentationDemo(claddingDemo)}
+                  onClick={() => togglePresentationDemo(claddingDemo)}
                 >
                   {claddingDemoLabel} <span aria-hidden="true">→</span>
                 </button>
               </div>
               <div className="angary-render-compare">
                 <figure>
-                  <EditorialImage src="/media/angary/envelope-cold.jpg" alt="Ангар з огородженням із профільованого листа" />
-                  <figcaption><strong>Профнастил</strong><span>Легкий зовнішній контур</span></figcaption>
+                  <EditorialImage className="is-envelope-crop" src="/media/angary/envelope-profiled-cutaway.jpg" alt="Розріз холодного контуру ангара з тонким профільованим листом і відкритим каркасом без утеплення" />
+                  <figcaption><strong>Профнастил</strong><span>Тонкий профільований лист · без утеплення</span></figcaption>
                 </figure>
                 <figure>
-                  <EditorialImage src="/media/angary/envelope-insulated.jpg" alt="Ангар з огородженням із сендвіч-панелей" />
-                  <figcaption><strong>Сендвіч-панель</strong><span>Готовий утеплений контур</span></figcaption>
+                  <EditorialImage className="is-envelope-crop" src="/media/angary/envelope-sandwich-cutaway.jpg" alt="Розріз утепленого контуру ангара із сендвіч-панеллю та видимим шаром утеплювача" />
+                  <figcaption><strong>Сендвіч-панель</strong><span>Дві обшивки · утеплювач усередині</span></figcaption>
                 </figure>
               </div>
             </article>
@@ -153,17 +159,17 @@ export function HangarEditorialArchitecture() {
             <article className="angary-decision-row" data-decision="foundation">
               <div className="angary-decision-copy">
                 <span className="angary-decision-number">03 / ОСНОВА</span>
-                <CurrentChoice>{foundation}</CurrentChoice>
+                <CurrentChoice>{current.foundationTypeLabel}</CurrentChoice>
                 <h3>Основа залежить від майданчика</h3>
                 <p>Тип фундаменту не можна визначити лише за виглядом ангара. Остаточне рішення приймають після вихідних даних майданчика та розрахунку.</p>
               </div>
               <div className="angary-render-compare">
                 <figure>
-                  <EditorialImage src="/media/angary/foundation-slab.jpg" alt="Попередня візуалізація ангара на монолітній плиті" />
+                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-slab-detail.jpg" alt="Фрагмент ангара: колони каркаса спираються на монолітну плиту, виділену теракотовим кольором" />
                   <figcaption><strong>Монолітна плита</strong><span>Суцільна основа споруди</span></figcaption>
                 </figure>
                 <figure>
-                  <EditorialImage src="/media/angary/foundation-isolated.jpg" alt="Попередня візуалізація окремих фундаментів під колони ангара" />
+                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-isolated-detail.jpg" alt="Фрагмент ангара: кожна колона каркаса спирається на окремий фундамент, виділений теракотовим кольором" />
                   <figcaption><strong>Окремі фундаменти</strong><span>Опори під колони каркаса</span></figcaption>
                 </figure>
               </div>
@@ -172,7 +178,7 @@ export function HangarEditorialArchitecture() {
             <article className="angary-decision-row angary-openings-row" data-decision="openings">
               <div className="angary-decision-copy">
                 <span className="angary-decision-number">04 / ОТВОРИ</span>
-                <CurrentChoice>{openings}</CurrentChoice>
+                <CurrentChoice>{current.openingsLabel}</CurrentChoice>
                 <h3>Рух людей і техніки</h3>
                 <p>Ворота та двері прив’язуються до логістики всередині й зовні. Положення та реальні розміри уточнюємо разом із плануванням.</p>
               </div>
@@ -196,7 +202,7 @@ export function HangarEditorialArchitecture() {
               type="button"
               className="angary-preview-action"
               aria-pressed={inquiry?.presentationDemo?.kind === 'frame'}
-              onClick={() => startPresentationDemo('frame')}
+              onClick={() => togglePresentationDemo('frame')}
             >
               Подивитись каркас <span aria-hidden="true">→</span>
             </button>
@@ -205,16 +211,19 @@ export function HangarEditorialArchitecture() {
           <div className="angary-transverse-grid">
             <figure className="angary-diagram">
               <TransverseDiagram type="portal" />
+              <p className="angary-diagram-key"><span>Проліт</span><strong>Між крайніми опорами</strong></p>
               <figcaption><span>ПОПЕРЕЧНА СХЕМА 01</span><strong>Портальна рама</strong><p>Вільний простір без внутрішніх опор — якщо це підтвердить розрахунок.</p></figcaption>
             </figure>
             <figure className="angary-diagram">
               <TransverseDiagram type="truss" />
+              <p className="angary-diagram-key"><span>Проліт</span><strong>Між крайніми опорами</strong></p>
               <figcaption><span>ПОПЕРЕЧНА СХЕМА 02</span><strong>Ферма та ряд опор</strong><p>Інший шлях передавання навантажень для ширших або особливих об’єктів.</p></figcaption>
             </figure>
           </div>
 
           <figure className="angary-diagram angary-longitudinal-diagram">
             <LongitudinalDiagram />
+            <p className="angary-diagram-key"><span>Крок рам</span><strong>Попередньо 6–8 м · уточнюється після розрахунку</strong></p>
             <figcaption><span>ПОЗДОВЖНЯ СХЕМА</span><strong>Ритм рам і в’язі</strong><p>У попередній схемі ритм рам формується орієнтовно в діапазоні 6–8 м і уточнюється після розрахунку.</p></figcaption>
           </figure>
         </div>

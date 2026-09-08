@@ -38,6 +38,8 @@ export type ConfiguratorSummary = {
    * to already know.
    */
   structuralVisualizationLabel: string;
+  /** Plain-language description of what the preliminary renderer currently shows. */
+  structuralVisualizationDescription: string;
   /** Scope items in a fixed, readable order — not the order they were toggled in. */
   scopeLabels: string[];
   scopeSummaryLabel: string;
@@ -45,6 +47,8 @@ export type ConfiguratorSummary = {
   gatesLabel: string | null;
   /** `null` when walls are out of scope — see `gatesLabel`. */
   doorsLabel: string | null;
+  /** One canonical editorial label for openings, derived from the same scope-aware facts. */
+  openingsLabel: string;
 };
 
 const OUT_OF_SCOPE_LABEL = 'Поза обсягом заявки';
@@ -135,6 +139,20 @@ function formatGatesLabel(
   return `${gates} × ${GATE_TYPE_LABELS[gateType].toLowerCase()}, ${widthM}×${heightM} м`;
 }
 
+function formatOpeningsLabel(gatesLabel: string | null, doorsLabel: string | null): string {
+  if (gatesLabel === null || doorsLabel === null) return OUT_OF_SCOPE_LABEL;
+  if (doorsLabel === 'Не передбачені') return `${gatesLabel} · двері не передбачені`;
+  return `${gatesLabel} · двері: ${doorsLabel}`;
+}
+
+function formatStructuralVisualizationDescription(domain: HangarDomainModel): string {
+  const roof = domain.structural.roofStructure === 'truss' ? 'ферму' : 'портальну раму';
+  const supports = domain.structural.scheme === 'centerSupport'
+    ? 'з центральним рядом опор'
+    : 'без внутрішніх опор';
+  return `Для ширини ${formatMeters(domain.dimensions.widthM)} м у попередній візуалізації показано ${roof} ${supports}.`;
+}
+
 /**
  * Pure: no DOM, no rounding surprises hidden in a component. Reads the already-resolved
  * `HangarDomainModel` (not raw ConfiguratorState) — the same domain object the scene model is
@@ -146,6 +164,8 @@ function formatGatesLabel(
 export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
   const { widthM, lengthM, eaveHeightM } = domain.dimensions;
   const orderedScope = SCOPE_ORDER.filter((item) => domain.scope[item]);
+  const gatesLabel = formatGatesLabel(domain.gates, domain.gateType, domain.scope.walls);
+  const doorsLabel = formatDoorsLabel(domain.doors, domain.scope.walls);
 
   return {
     areaSqm: domain.areaSqm,
@@ -154,11 +174,13 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     claddingSystemLabel: formatCladdingSystemLabel(domain.envelope, domain.scope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],
     structuralVisualizationLabel: `${ROOF_STRUCTURE_LABELS[domain.structural.roofStructure]} · ${STRUCTURAL_SCHEME_LABELS[domain.structural.scheme]}`,
+    structuralVisualizationDescription: formatStructuralVisualizationDescription(domain),
     scopeLabels: orderedScope.map((item) => SCOPE_LABELS[item]),
     scopeSummaryLabel: orderedScope.length
       ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')
       : 'Обсяг робіт ще не обрано',
-    gatesLabel: formatGatesLabel(domain.gates, domain.gateType, domain.scope.walls),
-    doorsLabel: formatDoorsLabel(domain.doors, domain.scope.walls),
+    gatesLabel,
+    doorsLabel,
+    openingsLabel: formatOpeningsLabel(gatesLabel, doorsLabel),
   };
 }

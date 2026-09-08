@@ -54,7 +54,7 @@
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 10px;
-  align-items: baseline;
+  align-items: start;
 }
 
 .hc-vocabulary li + li {
@@ -69,10 +69,18 @@
 }
 
 .hc-vocabulary strong {
+  display: block;
   color: var(--text-primary);
   font: 600 15px/1.2 var(--font-condensed), sans-serif;
   letter-spacing: .035em;
   text-transform: uppercase;
+}
+
+.hc-vocabulary p {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .hc-eyebrow {
@@ -378,8 +386,8 @@
 
 .hc-preview-demo-status button {
   flex: none;
-  min-height: 30px;
-  padding: 0;
+  min-height: 44px;
+  padding: 0 4px;
   border: 0;
   border-bottom: 1px solid rgba(255, 255, 255, .58);
   color: white;
@@ -391,7 +399,6 @@
 }
 
 .hc-preview-demo-status button:hover { border-color: var(--accent); color: var(--accent); }
-.hc-preview-demo-status:focus-visible,
 .hc-preview-demo-status button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 .hc-preview-surface {
@@ -644,6 +651,13 @@
   min-height: 0;
   position: relative;
 }
+
+.hc-fullscreen-status {
+  width: min(100%, 720px);
+  margin: 0 auto 12px;
+}
+
+.hc-fullscreen-status[hidden] { display: none; }
 
 /* The canvas fills whatever this slot's own size is — R3F's Canvas is 100%/100% by default
    (see ThreeHangarView's own comment on this), so making THIS element fullscreen-sized is the
@@ -1138,10 +1152,20 @@
 }
 
 .hc-summary-structure {
+  margin: 14px 0 0;
+  max-width: 32ch;
+  color: var(--text-secondary);
+  font: 500 15px/1.6 var(--font-manrope), sans-serif;
+}
+
+.hc-summary-scheme-label {
   margin: 0;
+  max-width: 22ch;
   color: var(--text-primary);
-  font: 600 clamp(22px, 2.2vw, 30px)/1.14 var(--font-condensed), sans-serif;
+  font: 600 clamp(20px, 1.7vw, 22px)/1.15 var(--font-condensed), sans-serif;
+  letter-spacing: -.01em;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 .hc-summary-structure-line {
@@ -1154,7 +1178,7 @@
 
 .hc-summary-disclaimer {
   margin: auto 0 0;
-  padding-top: 20px;
+  padding-top: 22px;
   color: var(--text-secondary);
   border-top: 1px solid var(--border-default);
   font-size: 14px;

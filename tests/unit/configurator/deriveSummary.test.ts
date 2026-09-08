@@ -13,6 +13,9 @@ describe('deriveSummary', () => {
 
     expect(summary.dimensionsLabel).toBe('24 × 60 × 8 м');
     expect(summary.areaSqm).toBe(1440);
+    expect(summary.structuralVisualizationDescription).toBe(
+      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
+    );
   });
 
   it('recalculates area as width × length whenever a dimension changes', () => {
@@ -126,6 +129,7 @@ describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 
     // disabled rather than cleared, and returns with the walls.
     expect(summary.gatesLabel).toBeNull();
     expect(summary.doorsLabel).toBeNull();
+    expect(summary.openingsLabel).toBe('Поза обсягом заявки');
   });
 
   it('restores them as soon as walls are ordered again', () => {
@@ -133,6 +137,7 @@ describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 
 
     expect(summary.gatesLabel).toBe('2 × стандартні, 4×4 м');
     expect(summary.doorsLabel).toBe('1 × 1×2,1 м');
+    expect(summary.openingsLabel).toBe('2 × стандартні, 4×4 м · двері: 1 × 1×2,1 м');
   });
 
   it('still says "no gates" as a real answer when walls ARE ordered', () => {

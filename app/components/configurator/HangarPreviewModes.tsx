@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useId, useMemo, useRef, useState } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
 import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
@@ -88,13 +88,30 @@ function ThreeLoading() {
   );
 }
 
+function DemoStatusStrip({
+  demo,
+  onReturn,
+}: {
+  demo: HangarPresentationDemo;
+  onReturn: () => void;
+}) {
+  return (
+    <div className="hc-preview-demo-status">
+      <span>{demo.label} · ваш вибір не змінено</span>
+      <button type="button" onClick={onReturn}>Повернути мій варіант</button>
+    </div>
+  );
+}
+
 export function HangarPreviewModes({
   domain,
   presentationDemo,
+  presentationAnnouncement,
   onEndPresentationDemo,
 }: {
   domain: HangarDomainModel;
   presentationDemo?: HangarPresentationDemo | null;
+  presentationAnnouncement?: string;
   onEndPresentationDemo?: () => void;
 }) {
   const [mode, setMode] = useState<Mode>('technical');
@@ -111,12 +128,7 @@ export function HangarPreviewModes({
   // How much of the canvas's bottom edge the dimension readout covers, measured by the overlay
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
-  const demoStatusRef = useRef<HTMLDivElement>(null);
   const modeSwitchAnchorRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (presentationDemo) demoStatusRef.current?.focus({ preventScroll: true });
-  }, [presentationDemo]);
 
   // Built here, from the same DomainModel the technical view consumes, so both representations
   // are guaranteed to describe the same configuration. Memoised so a mode switch alone never
@@ -140,8 +152,10 @@ export function HangarPreviewModes({
   const exitFullscreen = useCallback(() => setIsFullscreen(false), []);
   const handleEndPresentationDemo = useCallback(() => {
     onEndPresentationDemo?.();
-    requestAnimationFrame(() => modeSwitchAnchorRef.current?.querySelector<HTMLButtonElement>('button')?.focus());
-  }, [onEndPresentationDemo]);
+    if (!isFullscreen) {
+      requestAnimationFrame(() => modeSwitchAnchorRef.current?.querySelector<HTMLButtonElement>('button')?.focus());
+    }
+  }, [isFullscreen, onEndPresentationDemo]);
 
   /**
    * The Canvas is mounted only while 3D is the active mode, so switching back to Technical
@@ -240,19 +254,13 @@ export function HangarPreviewModes({
 
   return (
     <>
-      {presentationDemo && (
-        <div
-          className="hc-preview-demo-status"
-          role="status"
-          aria-live="polite"
-          tabIndex={-1}
-          ref={demoStatusRef}
-        >
-          <span>{presentationDemo.label} · ваш вибір не змінено</span>
-          <button type="button" onClick={handleEndPresentationDemo}>
-            Повернутись до мого вибору
-          </button>
-        </div>
+      {!isFullscreen && (
+        <p className="hc-visually-hidden hc-presentation-announcement" role="status" aria-live="polite" aria-atomic="true">
+          {presentationAnnouncement}
+        </p>
+      )}
+      {presentationDemo && !isFullscreen && (
+        <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
       )}
       <div className="hc-preview-toolbar">
         <p className="hc-preview-disclaimer" role="note">
@@ -277,7 +285,16 @@ export function HangarPreviewModes({
 
       <div className="hc-preview-surface">
         {showThree ? (
-          <FullscreenPreviewFrame active={isFullscreen} onExit={exitFullscreen} labelledBy="Розгорнутий перегляд 3D-моделі ангара" describedBy={descriptionId}>
+          <FullscreenPreviewFrame
+            active={isFullscreen}
+            onExit={exitFullscreen}
+            labelledBy="Розгорнутий перегляд 3D-моделі ангара"
+            describedBy={descriptionId}
+            announcement={presentationAnnouncement}
+            status={presentationDemo
+              ? <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
+              : null}
+          >
             {threeCanvas}
           </FullscreenPreviewFrame>
         ) : (

@@ -15,6 +15,7 @@ function overlayBlocksStickyCta() {
 export function HangarMobileInquiryCta() {
   const inquiry = useHangarInquiryContext();
   const [inquiryVisible, setInquiryVisible] = useState(false);
+  const [summaryPassed, setSummaryPassed] = useState(false);
   const [uiBlocked, setUiBlocked] = useState(true);
 
   const updateBlockers = useCallback(() => {
@@ -23,13 +24,38 @@ export function HangarMobileInquiryCta() {
 
   useEffect(() => {
     const inquirySection = document.getElementById('inquiry');
-    if (!inquirySection) return;
+    const summary = document.querySelector<HTMLElement>('.hc-summary-flagship');
+    if (!inquirySection || !summary) return;
 
-    const intersectionObserver = new IntersectionObserver(
-      ([entry]) => setInquiryVisible(entry.isIntersecting),
+    let visibilityFrame = 0;
+    const measurePosition = () => {
+      visibilityFrame = 0;
+      const summaryIsPassed = summary.getBoundingClientRect().bottom <= 0;
+      const inquiryRect = inquirySection.getBoundingClientRect();
+      const inquiryIsVisible = inquiryRect.top < window.innerHeight && inquiryRect.bottom > 0;
+      setSummaryPassed((current) => current === summaryIsPassed ? current : summaryIsPassed);
+      setInquiryVisible((current) => current === inquiryIsVisible ? current : inquiryIsVisible);
+    };
+    const schedulePositionMeasure = () => {
+      if (visibilityFrame) return;
+      visibilityFrame = window.requestAnimationFrame(measurePosition);
+    };
+
+    const inquiryObserver = new IntersectionObserver(
+      schedulePositionMeasure,
       { threshold: 0.05 },
     );
-    intersectionObserver.observe(inquirySection);
+    inquiryObserver.observe(inquirySection);
+
+    // "Not intersecting" is ambiguous: the summary may still be below the viewport. Its bottom
+    // edge must have crossed the viewport's top edge before the fixed conversion action is useful.
+    const summaryObserver = new IntersectionObserver(
+      schedulePositionMeasure,
+      { threshold: [0, 1] },
+    );
+    summaryObserver.observe(summary);
+    window.addEventListener('scroll', schedulePositionMeasure, { passive: true });
+    window.addEventListener('resize', schedulePositionMeasure);
 
     const mutationObserver = new MutationObserver(updateBlockers);
     mutationObserver.observe(document.body, {
@@ -47,12 +73,17 @@ export function HangarMobileInquiryCta() {
     document.addEventListener('focusin', updateBlockers);
     document.addEventListener('focusout', updateAfterFocusLeaves);
     const initialCheck = window.requestAnimationFrame(updateBlockers);
+    schedulePositionMeasure();
 
     return () => {
-      intersectionObserver.disconnect();
+      inquiryObserver.disconnect();
+      summaryObserver.disconnect();
       mutationObserver.disconnect();
       window.cancelAnimationFrame(initialCheck);
       window.cancelAnimationFrame(focusCheck);
+      window.cancelAnimationFrame(visibilityFrame);
+      window.removeEventListener('scroll', schedulePositionMeasure);
+      window.removeEventListener('resize', schedulePositionMeasure);
       document.removeEventListener('focusin', updateBlockers);
       document.removeEventListener('focusout', updateAfterFocusLeaves);
     };
@@ -64,7 +95,7 @@ export function HangarMobileInquiryCta() {
     <a
       className="angary-mobile-inquiry-cta"
       href="#inquiry"
-      hidden={inquiryVisible || uiBlocked}
+      hidden={!summaryPassed || inquiryVisible || uiBlocked}
     >
       До заявки <span aria-hidden="true">↓</span>
     </a>
