@@ -94,11 +94,20 @@ export function HangarEditorialArchitecture() {
     <>
       <section className="page-section angary-decisions" id="decisions" aria-labelledby="angary-decisions-title">
         <div className="shell">
-          <header className="angary-section-heading">
-            <p className="eyebrow"><span /> Рішення, які приймаєте ви</p>
-            <h2 id="angary-decisions-title">Від призначення — до зрозумілого технічного завдання</h2>
-            <p>Чотири групи рішень визначають склад майбутнього об’єкта. Тут — не повтор полів, а коротке пояснення наслідків кожного вибору.</p>
-          </header>
+          <div className="angary-decisions-intro">
+            <header className="angary-section-heading">
+              <p className="eyebrow"><span /> Рішення, які приймаєте ви</p>
+              <h2 id="angary-decisions-title">Від призначення — до зрозумілого технічного завдання</h2>
+              <p>Чотири групи рішень визначають склад майбутнього об’єкта. Тут — не повтор полів, а коротке пояснення наслідків кожного вибору.</p>
+            </header>
+            <figure className="angary-decisions-intro-visual">
+              <ResponsiveImage
+                src="/media/concepts/direction-hangars-v2.jpg"
+                alt="Металевий каркас ангара, поєднаний із технічними кресленнями майбутньої споруди"
+                sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 64px), 38vw"
+              />
+            </figure>
+          </div>
 
           <div className="angary-decision-list">
             <article className="angary-decision-row" data-decision="contour">
