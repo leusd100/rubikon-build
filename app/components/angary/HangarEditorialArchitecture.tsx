@@ -121,7 +121,7 @@ export function HangarEditorialArchitecture() {
                 <span className="angary-decision-number">02 / ОГОРОДЖЕННЯ</span>
                 <CurrentChoice>{current.claddingSystemLabel}</CurrentChoice>
                 <h3>Матеріал стін і покрівлі</h3>
-                <p>Профнастил і сендвіч-панель дають різну комплектацію контуру. Стіни та покрівля можуть уточнюватися окремо під функцію об’єкта.</p>
+                <p>Профнастил формує легкий неутеплений контур. Сендвіч-панель поєднує дві металеві обшивки з утеплювачем між ними. Стіни та покрівля можуть уточнюватися окремо.</p>
                 <button
                   type="button"
                   className="angary-preview-action"
@@ -133,12 +133,12 @@ export function HangarEditorialArchitecture() {
               </div>
               <div className="angary-render-compare">
                 <figure>
-                  <EditorialImage className="is-envelope-crop" src="/media/angary/envelope-cold.jpg" alt="Ангар з огородженням із профільованого листа" />
-                  <figcaption><strong>Профнастил</strong><span>Легкий зовнішній контур</span></figcaption>
+                  <EditorialImage className="is-envelope-crop" src="/media/angary/envelope-profiled-cutaway.jpg" alt="Розріз холодного контуру ангара з тонким профільованим листом і відкритим каркасом без утеплення" />
+                  <figcaption><strong>Профнастил</strong><span>Тонкий профільований лист · без утеплення</span></figcaption>
                 </figure>
                 <figure>
-                  <EditorialImage className="is-envelope-crop" src="/media/angary/envelope-insulated.jpg" alt="Ангар з огородженням із сендвіч-панелей" />
-                  <figcaption><strong>Сендвіч-панель</strong><span>Готовий утеплений контур</span></figcaption>
+                  <EditorialImage className="is-envelope-crop" src="/media/angary/envelope-sandwich-cutaway.jpg" alt="Розріз утепленого контуру ангара із сендвіч-панеллю та видимим шаром утеплювача" />
+                  <figcaption><strong>Сендвіч-панель</strong><span>Дві обшивки · утеплювач усередині</span></figcaption>
                 </figure>
               </div>
             </article>
