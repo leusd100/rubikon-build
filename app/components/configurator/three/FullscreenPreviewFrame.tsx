@@ -41,6 +41,7 @@ export function FullscreenPreviewFrame({
   onExit,
   labelledBy,
   describedBy,
+  status,
   children,
 }: {
   active: boolean;
@@ -49,6 +50,8 @@ export function FullscreenPreviewFrame({
   labelledBy?: string;
   /** ID of the model description inside the portaled content. */
   describedBy?: string;
+  /** Presentation-only context that must remain operable inside the modal. */
+  status?: ReactNode;
   children: ReactNode;
 }) {
   // Created lazily, once, only on the client — see the module doc for why this is `useState`
@@ -169,6 +172,9 @@ export function FullscreenPreviewFrame({
           >
             Закрити ✕
           </button>
+          <div className="hc-fullscreen-status" hidden={!active || !status}>
+            {status}
+          </div>
           <div className={active ? 'hc-fullscreen-canvas-slot' : undefined}>{children}</div>
         </div>,
         portalHost,

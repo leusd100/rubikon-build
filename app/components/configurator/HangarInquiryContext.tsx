@@ -19,10 +19,11 @@ type HangarInquiryContextValue = {
   attachment: HangarAttachmentState;
   isAttached: boolean;
   presentationDemo: HangarPresentationDemo | null;
+  presentationAnnouncement: string;
   updateBusinessConfiguration: (state: ConfiguratorState) => void;
   attachConfiguration: () => void;
   detachConfiguration: () => void;
-  startPresentationDemo: (kind: HangarPresentationDemoKind) => void;
+  togglePresentationDemo: (kind: HangarPresentationDemoKind) => void;
   endPresentationDemo: () => void;
 };
 
@@ -32,19 +33,21 @@ type HangarInquiryState = {
   configuration: ConfiguratorState;
   attachment: HangarAttachmentState;
   presentationDemo: HangarPresentationDemo | null;
+  presentationAnnouncement: string;
 };
 
 type HangarInquiryAction =
   | { type: 'business-edit'; configuration: ConfiguratorState }
   | { type: 'explicit-attach' }
   | { type: 'explicit-detach' }
-  | { type: 'start-presentation'; kind: HangarPresentationDemoKind }
+  | { type: 'toggle-presentation'; kind: HangarPresentationDemoKind }
   | { type: 'end-presentation' };
 
 const INITIAL_HANGAR_INQUIRY_STATE: HangarInquiryState = {
   configuration: DEFAULT_CONFIGURATOR_STATE,
   attachment: INITIAL_HANGAR_ATTACHMENT,
   presentationDemo: null,
+  presentationAnnouncement: '',
 };
 
 function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryAction): HangarInquiryState {
@@ -56,14 +59,27 @@ function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryA
       configuration: action.configuration,
       attachment: transitionHangarAttachment(current.attachment, { type: 'business-edit' }),
       presentationDemo: null,
+      presentationAnnouncement: current.presentationDemo
+        ? 'Показ завершено. Застосовано нові параметри.'
+        : current.presentationAnnouncement,
     };
   }
 
-  if (action.type === 'start-presentation') {
+  if (action.type === 'toggle-presentation') {
+    if (current.presentationDemo?.kind === action.kind) {
+      return {
+        ...current,
+        attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
+        presentationDemo: null,
+        presentationAnnouncement: 'Повернуто ваш варіант.',
+      };
+    }
+    const presentationDemo = createHangarPresentationDemo(action.kind, current.configuration);
     return {
       ...current,
       attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
-      presentationDemo: createHangarPresentationDemo(action.kind, current.configuration),
+      presentationDemo,
+      presentationAnnouncement: `${presentationDemo.label}. Ваш вибір не змінено.`,
     };
   }
 
@@ -73,6 +89,7 @@ function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryA
       ...current,
       attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
       presentationDemo: null,
+      presentationAnnouncement: 'Повернуто ваш варіант.',
     };
   }
 
@@ -92,13 +109,14 @@ export function HangarInquiryProvider({ children }: { children: ReactNode }) {
       attachment: model.attachment,
       isAttached: model.attachment.status === 'attached',
       presentationDemo: model.presentationDemo,
+      presentationAnnouncement: model.presentationAnnouncement,
       updateBusinessConfiguration: (configuration: ConfiguratorState) => {
         dispatch({ type: 'business-edit', configuration });
       },
       attachConfiguration: () => dispatch({ type: 'explicit-attach' }),
       detachConfiguration: () => dispatch({ type: 'explicit-detach' }),
-      startPresentationDemo: (kind: HangarPresentationDemoKind) => {
-        dispatch({ type: 'start-presentation', kind });
+      togglePresentationDemo: (kind: HangarPresentationDemoKind) => {
+        dispatch({ type: 'toggle-presentation', kind });
       },
       endPresentationDemo: () => dispatch({ type: 'end-presentation' }),
     }),

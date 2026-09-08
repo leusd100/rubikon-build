@@ -15,6 +15,7 @@ function overlayBlocksStickyCta() {
 export function HangarMobileInquiryCta() {
   const inquiry = useHangarInquiryContext();
   const [inquiryVisible, setInquiryVisible] = useState(false);
+  const [summaryPassed, setSummaryPassed] = useState(false);
   const [uiBlocked, setUiBlocked] = useState(true);
 
   const updateBlockers = useCallback(() => {
@@ -23,13 +24,22 @@ export function HangarMobileInquiryCta() {
 
   useEffect(() => {
     const inquirySection = document.getElementById('inquiry');
-    if (!inquirySection) return;
+    const summary = document.querySelector('.hc-summary-flagship');
+    if (!inquirySection || !summary) return;
 
-    const intersectionObserver = new IntersectionObserver(
+    const inquiryObserver = new IntersectionObserver(
       ([entry]) => setInquiryVisible(entry.isIntersecting),
       { threshold: 0.05 },
     );
-    intersectionObserver.observe(inquirySection);
+    inquiryObserver.observe(inquirySection);
+
+    // "Not intersecting" is ambiguous: the summary may still be below the viewport. Its bottom
+    // edge must have crossed the viewport's top edge before the fixed conversion action is useful.
+    const summaryObserver = new IntersectionObserver(
+      ([entry]) => setSummaryPassed(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0),
+      { threshold: [0, 1] },
+    );
+    summaryObserver.observe(summary);
 
     const mutationObserver = new MutationObserver(updateBlockers);
     mutationObserver.observe(document.body, {
@@ -49,7 +59,8 @@ export function HangarMobileInquiryCta() {
     const initialCheck = window.requestAnimationFrame(updateBlockers);
 
     return () => {
-      intersectionObserver.disconnect();
+      inquiryObserver.disconnect();
+      summaryObserver.disconnect();
       mutationObserver.disconnect();
       window.cancelAnimationFrame(initialCheck);
       window.cancelAnimationFrame(focusCheck);
@@ -64,7 +75,7 @@ export function HangarMobileInquiryCta() {
     <a
       className="angary-mobile-inquiry-cta"
       href="#inquiry"
-      hidden={inquiryVisible || uiBlocked}
+      hidden={!summaryPassed || inquiryVisible || uiBlocked}
     >
       До заявки <span aria-hidden="true">↓</span>
     </a>

@@ -43,10 +43,10 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         </p>
         {embedded && (
           <ol className="hc-vocabulary" aria-label="Чотири складові конфігурації">
-            <li><span>01</span><strong>Габарити</strong></li>
-            <li><span>02</span><strong>Контур</strong></li>
-            <li><span>03</span><strong>Огородження</strong></li>
-            <li><span>04</span><strong>Основа</strong></li>
+            <li><span>01</span><div><strong>Габарити</strong><p>ширина, довжина, висота стін.</p></div></li>
+            <li><span>02</span><div><strong>Контур</strong><p>холодний або утеплений залежно від використання.</p></div></li>
+            <li><span>03</span><div><strong>Огородження</strong><p>профнастил або сендвіч-панель.</p></div></li>
+            <li><span>04</span><div><strong>Основа</strong><p>рішення уточнюється з урахуванням майданчика.</p></div></li>
           </ol>
         )}
       </header>
@@ -57,6 +57,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
           <HangarPreviewModes
             domain={previewDomain}
             presentationDemo={sharedInquiry?.presentationDemo}
+            presentationAnnouncement={sharedInquiry?.presentationAnnouncement}
             onEndPresentationDemo={sharedInquiry?.endPresentationDemo}
           />
           <ConfiguratorSummary
