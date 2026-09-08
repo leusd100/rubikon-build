@@ -152,11 +152,11 @@ export function HangarEditorialArchitecture() {
               </div>
               <div className="angary-render-compare">
                 <figure>
-                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-slab.jpg" alt="Попередня візуалізація ангара на монолітній плиті" />
+                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-slab-accent.jpg" alt="Попередня візуалізація ангара на монолітній плиті, виділеній теракотовим кольором" />
                   <figcaption><strong>Монолітна плита</strong><span>Суцільна основа споруди</span></figcaption>
                 </figure>
                 <figure>
-                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-isolated.jpg" alt="Попередня візуалізація окремих фундаментів під колони ангара" />
+                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-isolated-accent.jpg" alt="Попередня візуалізація окремих фундаментів під колони ангара, виділених теракотовим кольором" />
                   <figcaption><strong>Окремі фундаменти</strong><span>Опори під колони каркаса</span></figcaption>
                 </figure>
               </div>

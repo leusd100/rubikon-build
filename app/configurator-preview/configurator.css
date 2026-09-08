@@ -1152,10 +1152,20 @@
 }
 
 .hc-summary-structure {
-  margin: 0;
+  margin: 14px 0 0;
   max-width: 32ch;
   color: var(--text-secondary);
   font: 500 15px/1.6 var(--font-manrope), sans-serif;
+}
+
+.hc-summary-scheme-label {
+  margin: 0;
+  max-width: 22ch;
+  color: var(--text-primary);
+  font: 600 clamp(20px, 1.7vw, 22px)/1.15 var(--font-condensed), sans-serif;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
 }
 
 .hc-summary-structure-line {
@@ -1168,7 +1178,7 @@
 
 .hc-summary-disclaimer {
   margin: auto 0 0;
-  padding-top: 20px;
+  padding-top: 22px;
   color: var(--text-secondary);
   border-top: 1px solid var(--border-default);
   font-size: 14px;

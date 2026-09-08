@@ -114,6 +114,7 @@ export function ConfiguratorSummary({
 
         <div className="hc-summary-preliminary">
           <h3 className="hc-summary-title">Попередня схема</h3>
+          <p className="hc-summary-scheme-label">{summary.structuralVisualizationLabel}</p>
           <p className="hc-summary-structure">{summary.structuralVisualizationDescription}</p>
           <p className="hc-summary-disclaimer">
             Це попередня візуалізація, а не готове інженерне рішення. Конструктивну схему уточнюємо
