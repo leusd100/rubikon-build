@@ -11,7 +11,7 @@
 .angary-page .contact-grid .inquiry-form { width: 100%; max-width: var(--content-copy); justify-self: end; }
 
 /* ---------- Shared flagship editorial heading ---------- */
-.angary-section-heading { max-width: 890px; margin-bottom: clamp(56px, 6vw, 88px); }
+.angary-section-heading { max-width: 890px; margin-bottom: clamp(48px, 5vw, 72px); }
 .angary-section-heading h2 { max-width: 850px; margin: 0; font: 400 var(--title-section)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
 .angary-section-heading > p:not(.eyebrow) { max-width: 650px; margin: 28px 0 0; color: var(--text-secondary); font-size: 16px; line-height: 1.75; }
 .angary-section-heading.is-inverse h2 { color: white; }
@@ -19,29 +19,31 @@
 /* ---------- Decisions ---------- */
 .angary-decisions { background: var(--warm); }
 .angary-decision-list { border-top: 1px solid var(--border-strong); }
-.angary-decision-row { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(0, 1.18fr); gap: clamp(48px, 7vw, 108px); align-items: center; padding-block: var(--section-space-compact); border-bottom: 1px solid var(--border-strong); }
+.angary-decision-row { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(0, 1.18fr); gap: clamp(48px, 7vw, 108px); align-items: center; padding-block: clamp(64px, 6vw, 82px); border-bottom: 1px solid var(--border-strong); }
 .angary-decision-row.is-media-first > :last-child { order: -1; }
 .angary-decision-copy { position: relative; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
-.angary-decision-number { display: block; margin-bottom: 46px; color: var(--accent-dark); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; }
-.angary-current-choice { position: absolute; top: 0; right: 0; max-width: 54%; color: var(--text-muted); font: 600 10px/1.25 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: right; text-transform: uppercase; }
+.angary-decision-number { display: block; margin-bottom: 36px; color: var(--accent-dark); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; }
+.angary-current-choice { position: absolute; top: 0; right: 0; max-width: 54%; color: var(--text-muted); font: 600 13px/1.35 var(--font-condensed), sans-serif; letter-spacing: .04em; text-align: right; text-transform: uppercase; }
 .angary-decision-copy h3 { max-width: 520px; margin: 0; font: 600 clamp(30px, 3.2vw, 46px)/1.02 var(--font-condensed), sans-serif; letter-spacing: -.02em; text-transform: uppercase; text-wrap: balance; }
 .angary-decision-copy > p { max-width: 520px; margin: 24px 0 0; color: var(--text-secondary); font-size: 15px; line-height: 1.75; }
 .angary-preview-action { align-self: flex-start; display: inline-flex; align-items: center; gap: 16px; min-height: 44px; margin-top: 28px; padding: 0 0 6px; border: 0; border-bottom: 1px solid currentColor; color: var(--ink); background: transparent; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; cursor: pointer; transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium); }
 .angary-preview-action:hover, .angary-preview-action[aria-pressed="true"] { color: var(--accent-dark); }
 .angary-preview-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
 .angary-consequence-compare, .angary-render-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--border-strong); border-block: 1px solid var(--border-strong); }
-.angary-consequence-compare > div { min-height: 330px; padding: clamp(30px, 4vw, 54px); background: var(--warm); }
+.angary-consequence-compare > div { min-height: 280px; padding: clamp(30px, 4vw, 54px); background: var(--warm); }
 .angary-consequence-compare strong, .angary-render-compare figcaption strong { display: block; font: 600 clamp(18px, 1.6vw, 23px)/1.15 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .angary-consequence-compare ul { margin: 34px 0 0; padding: 0; list-style: none; }
 .angary-consequence-compare li { padding: 14px 0; border-top: 1px solid var(--border-default); color: var(--text-secondary); font-size: 13px; line-height: 1.45; }
 .angary-render-compare figure { min-width: 0; margin: 0; background: var(--warm); }
 .angary-editorial-image { position: relative; display: block; aspect-ratio: 1.43; overflow: hidden; background: #0e0f11; }
 .angary-editorial-image img { object-fit: cover; }
+.angary-editorial-image.is-envelope-crop img { object-position: center center; }
+.angary-editorial-image.is-foundation-crop img { object-position: center center; transform: scale(3); transform-origin: 55% 90%; }
 .angary-render-compare figcaption { padding: 22px 20px 24px; }
 .angary-render-compare figcaption span { display: block; margin-top: 8px; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
 .angary-openings-row { grid-template-columns: minmax(280px, .7fr) minmax(0, 1.3fr); }
 .angary-opening-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--border-strong); }
-.angary-opening-options > div { min-height: 210px; padding: 34px 28px; border-left: 1px solid var(--border-strong); }
+.angary-opening-options > div { min-height: 180px; padding: 30px 28px; border-left: 1px solid var(--border-strong); }
 .angary-opening-options > div:last-child { border-right: 1px solid var(--border-strong); }
 .angary-opening-options strong { display: block; font: 600 clamp(17px, 1.45vw, 21px)/1.15 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .angary-opening-options span { display: block; margin-top: 56px; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
@@ -131,7 +133,7 @@
   .angary-page .hangar-configurator-embedded :is(.hc-hero, .hc-layout) { width: 100%; max-width: var(--content-copy); }
   .angary-page .contact-grid .inquiry-form { justify-self: center; }
   .angary-section-heading { max-width: var(--content-copy); }
-  .angary-decision-row { grid-template-columns: minmax(240px, .76fr) minmax(0, 1.24fr); gap: var(--grid-gap); }
+  .angary-decision-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); }
   .angary-decision-copy h3 { font-size: clamp(27px, 3.8vw, 36px); }
   .angary-consequence-compare > div { min-height: 300px; padding: 26px 22px; }
   .angary-opening-options { grid-template-columns: 1fr; }
@@ -155,39 +157,41 @@
 }
 
 @media (max-width: 760px) {
+  .angary-page { --section-space: 72px; --section-space-compact: 52px; }
   .angary-page .service-subhero.angary-service-subhero { min-height: 0; }
   .angary-page .service-subhero-content { padding-top: 126px; padding-bottom: 50px; }
   .angary-page .angary-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 30px; }
   .angary-page .hangar-configurator-embedded { padding-block: 48px 82px; }
   .angary-page :is(.angary-section-heading h2, .angary-people-copy h2, .faq-grid h2) { font-size: clamp(30px, 9vw, 36px); }
   .angary-page .contact-grid .inquiry-form { justify-self: stretch; }
-  .angary-section-heading { margin-bottom: 44px; }
+  .angary-section-heading { margin-bottom: 38px; }
   .angary-section-heading > p:not(.eyebrow) { margin-top: 22px; font-size: 14px; }
-  .angary-decision-row { grid-template-columns: 1fr; gap: 34px; padding-block: 48px; }
+  .angary-decision-row { grid-template-columns: 1fr; gap: 28px; padding-block: 42px; }
   .angary-decision-row.is-media-first > :last-child { order: initial; }
-  .angary-decision-number { margin-bottom: 34px; }
-  .angary-current-choice { max-width: 58%; font-size: 9px; }
+  .angary-decision-number { margin-bottom: 28px; }
+  .angary-current-choice { max-width: 62%; font-size: 13px; }
   .angary-decision-copy h3 { font-size: clamp(27px, 8vw, 34px); }
   .angary-decision-copy > p { margin-top: 18px; font-size: 14px; }
   .angary-preview-action { margin-top: 22px; }
   .angary-consequence-compare > div { min-height: 0; padding: 26px 18px; }
   .angary-consequence-compare strong { font-size: 16px; }
   .angary-consequence-compare ul { margin-top: 24px; }
-  .angary-consequence-compare li { font-size: 12px; }
+  .angary-consequence-compare li { font-size: 13px; }
   .angary-render-compare figcaption { padding: 16px 12px 18px; }
   .angary-render-compare figcaption strong { font-size: 15px; }
-  .angary-render-compare figcaption span { font-size: 11px; }
+  .angary-render-compare figcaption span { font-size: 13px; }
   .angary-opening-options { grid-template-columns: 1fr; }
   .angary-opening-options > div { min-height: 0; padding: 21px 0; border: 0; border-top: 1px solid var(--border-strong); }
   .angary-opening-options > div:last-child { border-bottom: 1px solid var(--border-strong); border-right: 0; }
   .angary-opening-options span { margin-top: 9px; }
-  .angary-structure-heading .angary-honesty-note { font-size: 12px; }
+  .angary-structure-heading .angary-honesty-note { font-size: 13px; }
   .angary-transverse-grid { grid-template-columns: 1fr; gap: 44px; }
   .angary-longitudinal-diagram { margin-top: 44px; }
   .angary-diagram figcaption, .angary-longitudinal-diagram figcaption { grid-template-columns: 1fr; gap: 10px; }
-  .angary-diagram figcaption > span { font-size: 9px; }
+  .angary-diagram figcaption > span { font-size: 13px; }
   .angary-diagram figcaption p { font-size: 13px; }
-  .angary-longitudinal-diagram svg text { display: none; }
+  .angary-transverse-grid .angary-diagram svg text { font-size: 20px; letter-spacing: .04em; }
+  .angary-longitudinal-diagram svg text { font-size: 38px; letter-spacing: .01em; transform: translateX(313px); }
   .angary-process .angary-section-heading { margin-bottom: 50px; }
   .angary-process-rail { grid-template-columns: 1fr; }
   .angary-process-rail::before { top: 0; bottom: 0; left: 5px; right: auto; width: 1px; height: auto; }
@@ -195,7 +199,7 @@
   .angary-process-rail li::before { position: absolute; top: 0; left: 1px; margin: 0; }
   .angary-process-rail li > span { position: static; display: block; margin-bottom: 10px; }
   .angary-process-rail strong { max-width: 320px; font-size: 18px; }
-  .angary-process-rail p { max-width: 320px; }
+  .angary-process-rail p { max-width: 320px; font-size: 13px; }
   .angary-people-layout { grid-template-columns: 1fr; gap: 44px; }
   .angary-people-copy p { margin-top: 24px; font-size: 14px; }
   .angary-people-copy a { margin-top: 26px; }

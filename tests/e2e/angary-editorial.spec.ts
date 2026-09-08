@@ -45,8 +45,16 @@ for (const viewport of viewports) {
 
     const configurator = page.locator('#configurator');
     await expect(configurator).toContainText('Сформуйте базову конфігурацію ангара');
-    await expect(configurator.locator('.hc-vocabulary li')).toHaveCount(4);
-    await expect(configurator.locator('.hc-vocabulary')).toContainText('01Габарити02Контур03Огородження04Основа');
+    const vocabulary = configurator.locator('.hc-vocabulary li');
+    await expect(vocabulary).toHaveCount(4);
+    for (const [index, text] of [
+      '01Габаритиширина, довжина, висота стін.',
+      '02Контурхолодний або утеплений залежно від використання.',
+      '03Огородженняпрофнастил або сендвіч-панель.',
+      '04Основарішення уточнюється з урахуванням майданчика.',
+    ].entries()) {
+      await expect(vocabulary.nth(index)).toHaveText(text);
+    }
 
     const vocabularyColumns = await configurator.locator('.hc-vocabulary').evaluate(
       (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
@@ -55,7 +63,9 @@ for (const viewport of viewports) {
 
     await expect(configurator.getByRole('heading', { name: 'Ви обрали' })).toBeVisible();
     await expect(configurator.getByRole('heading', { name: 'Попередня схема' })).toBeVisible();
-    await expect(configurator.locator('.hc-summary-structure-line')).toHaveCount(2);
+    await expect(configurator.locator('.hc-summary-structure')).toContainText(
+      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
+    );
     const disclaimer = configurator.locator('.hc-summary-disclaimer');
     await expect(disclaimer).toBeVisible();
     expect(await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)))
@@ -65,6 +75,20 @@ for (const viewport of viewports) {
       (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
     );
     expect(summaryColumns).toBe(viewport.width <= 760 ? 1 : 2);
+
+    if (viewport.width === 820) {
+      const decisionColumns = await page.locator('.angary-decision-row').first().evaluate(
+        (element) => getComputedStyle(element).gridTemplateColumns.split(' ').map(Number.parseFloat),
+      );
+      expect(Math.abs(decisionColumns[0] - decisionColumns[1])).toBeLessThanOrEqual(1);
+    }
+
+    if (viewport.width <= 760) {
+      const currentChoiceSize = await page.locator('.angary-current-choice').first().evaluate(
+        (element) => Number.parseFloat(getComputedStyle(element).fontSize),
+      );
+      expect(currentChoiceSize).toBeGreaterThanOrEqual(13);
+    }
 
     if (viewport.heroReveal) {
       const metrics = await page.evaluate(() => {
