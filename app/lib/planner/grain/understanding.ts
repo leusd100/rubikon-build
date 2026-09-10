@@ -5,7 +5,7 @@
  */
 import type { Tension } from '../core/types';
 import { formatCapacityInfo, parseCapacity, type Answers } from './answers';
-import { logicLabels } from './labels';
+import { developmentLabel, logicLabels, uiLabels } from './labels';
 import {
   countUnknowns,
   decisionBlockingUnknowns,
@@ -108,4 +108,40 @@ export function synthesizeScenario(answers: Answers) {
   // Unknowns are stated, never smoothed over: the sentence must not sound more certain than the answers.
   const partial = decisionBlockingUnknowns(answers).length > 0 || countUnknowns(answers) >= 3;
   return partial ? `${lead} Контекст поки визначений частково.` : lead;
+}
+
+/**
+ * One-line summary of a completed theme, shown on its collapsed card. From the prototype's
+ * app/planner.tsx; reads the UI label map, not the logic one.
+ */
+export function themeSummary(index: number, answers: Answers, capacityLabel: string) {
+  if (index === 0) return [capacityLabel, answers.crops.length ? formatCropCount(answers.crops.length) : '', answers.separation && uiLabels[answers.separation]].filter(Boolean).join(' · ');
+  if (index === 1) return [answers.operation && uiLabels[answers.operation], answers.handling && uiLabels[answers.handling]].filter(Boolean).join(' · ');
+  if (index === 2) return answers.processing ? uiLabels[answers.processing] : 'Ще не визначено';
+  if (index === 3) return [answers.site && uiLabels[answers.site], answers.sitePressure && uiLabels[answers.sitePressure]].filter(Boolean).join(' · ');
+  return [answers.development.map(developmentLabel).join(' · '), requiresFutureHandling(answers) && answers.futureHandling ? `у майбутньому: ${uiLabels[answers.futureHandling]}` : ''].filter(Boolean).join(' · ');
+}
+
+/** Why a decision driver matters, shown when the driver is opened. From the prototype's app/planner.tsx. */
+export function driverExplanation(driver: string) {
+  const map: Record<string, string> = {
+    'Масштаб зберігання': 'Орієнтовна місткість описує масштаб задачі. Тип сховища вона не визначає без продуктивності, партій, майданчика та інженерно підтверджених порогів.',
+    'Розділення партій': 'Незалежне зберігання впливає на зонування та спосіб організації сховища.',
+    'Інтенсивна логістика': 'Місткість не описує, як швидко зерно має проходити через приймання й відвантаження.',
+    'Очищення + сушіння': 'Технологічну підготовку потрібно узгоджувати зі зберіганням і переміщенням як єдину систему.',
+    'Очищення': 'Очищення створює окремий етап між прийманням і зберіганням.',
+    'Сушіння': 'Сушіння змінює структуру потоку й інтеграцію технологічної частини.',
+    'Компактність': 'На обмеженій ділянці важлива займана площа всього комплексу та його транспортних маршрутів.',
+    'Майбутній розвиток': 'Концепцію потрібно оцінювати не лише на першу чергу, а й на сумісність із майбутніми змінами.',
+    'Базовий сценарій': 'Немає підтверджених факторів, які вимагали б складної технологічної інтеграції або передчасно звужували вибір сховища.',
+  };
+  return map[driver] ?? 'Цей підтверджений факт змінює спосіб порівняння концепцій.';
+}
+
+export function formatCropCount(value: number) {
+  const lastTwo = value % 100;
+  if (lastTwo >= 11 && lastTwo <= 14) return `${value} культур`;
+  if (value % 10 === 1) return `${value} культура`;
+  if (value % 10 >= 2 && value % 10 <= 4) return `${value} культури`;
+  return `${value} культур`;
 }

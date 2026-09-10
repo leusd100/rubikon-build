@@ -3,8 +3,18 @@
  * clarify, and what only design can settle. Verbatim from the prototype
  * (`819f163`, app/planner-logic.ts).
  */
+import type { ReadinessState } from '../core/types';
 import { parseCapacity, type Answers } from './answers';
-import { existingSiteTypes, hasActiveProcessing, requiresFutureHandling, requiresHandling, stationaryHandling } from './rules';
+import {
+  countUnknowns,
+  decisionBlockingUnknowns,
+  existingSiteTypes,
+  hasActiveProcessing,
+  requiresFutureHandling,
+  requiresHandling,
+  routeDecision,
+  stationaryHandling,
+} from './rules';
 
 export function scenarioClientQuestions(answers: Answers) {
   const questions: string[] = [];
@@ -42,4 +52,43 @@ export function buildUnknowns(answers: Answers) {
 
 export function engineeringGates(answers: Answers) {
   return ['Точна конфігурація та геометрія сховищ', 'Фундаменти й конструктивна схема', 'Пожежні та інженерні рішення', (hasActiveProcessing(answers.processing) || stationaryHandling.includes(answers.handling ?? '') || stationaryHandling.includes(answers.futureHandling ?? '')) && 'Технологічна схема та опори обладнання', existingSiteTypes.includes(answers.site ?? '') && 'Придатність і фактичний стан наявних конструкцій', (answers.operation === 'high' || hasActiveProcessing(answers.processing)) && 'Продуктивність ділянок і транспортні зв’язки', 'Режими зберігання та потреба в аерації'].filter(Boolean) as string[];
+}
+
+/** The readiness check's three verdicts. From the prototype's PlannerApp (app/planner.tsx). */
+export function readinessState(answers: Answers): ReadinessState {
+  const unknownCount = countUnknowns(answers);
+  const blockingUnknownCount = decisionBlockingUnknowns(answers).length;
+  const outcome = routeDecision(answers);
+  return {
+    understanding: blockingUnknownCount ? 'Частково' : unknownCount ? 'Попереднє' : 'Готове',
+    decision: outcome === 'candidateComparison' ? 'Можна порівнювати' : 'Потрібні уточнення',
+    brief: unknownCount ? 'Попереднє' : 'Готове',
+  };
+}
+
+/** Clarification-map copy for one unknown. From the prototype's app/planner.tsx. */
+export function clarificationWhy(item: string) {
+  if (item.includes('місткість')) return 'Масштаб задає, скільки зерна лежить одночасно, і від нього залежить, які підходи взагалі варто порівнювати.';
+  if (item.includes('культури')) return 'Склад продукції визначає, чи доведеться тримати партії окремо, і що саме має витримувати сховище.';
+  if (item.includes('режим роботи')) return 'Режим визначає, наскільки важливими стануть швидкість приймання, внутрішнє переміщення та відвантаження.';
+  if (item.includes('очищення або сушіння')) return 'Очищення чи сушіння перетворюють задачу зі сховища на технологічний комплекс із власними звʼязками.';
+  if (item.includes('стратегія розвитку')) return 'Майбутнє збільшення місткості чи продуктивності може змінити вимоги вже до першої черги й до майданчика.';
+  if (item.includes('розділення')) return 'Воно може істотно змінити зонування зберігання та доречність концепцій.';
+  if (item.includes('переміщення')) return 'Спосіб переміщення впливає на технологічні зв’язки, маршрути й експлуатаційну логіку.';
+  if (item.includes('площі') || item.includes('майданчика')) return 'Займана площа може стати ключовим обмеженням для всього комплексу.';
+  if (item.includes('підготов')) return 'Очищення або сушіння додають технологічні зв’язки, які потрібно перевірити разом зі зберіганням.';
+  return 'Ця відповідь суттєво зменшить простір невизначеності перед порівнянням.';
+}
+
+export function clarificationHow(item: string) {
+  if (item.includes('площі') || item.includes('майданчика')) return 'Достатньо меж ділянки, фото або короткої розмови про доступний простір.';
+  if (item.includes('розділення')) return 'Назвати культури й чи можуть вони фізично змішуватися в один період.';
+  if (item.includes('переміщення')) return 'Описати, що планується: навантажувач, стаціонарна система або обидва підходи.';
+  return 'Коротко описати поточний задум; точні інженерні параметри поки не потрібні.';
+}
+
+export function formatUnknownCount(value: number) {
+  if (value % 10 === 1 && value % 100 !== 11) return `${value} важлива невідома`;
+  if (value % 10 >= 2 && value % 10 <= 4 && !(value % 100 >= 12 && value % 100 <= 14)) return `${value} важливі невідомі`;
+  return `${value} важливих невідомих`;
 }

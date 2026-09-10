@@ -86,3 +86,14 @@ export function comparisonRows(answers: Answers) {
   if (hasDevelopmentIntent(answers)) rows.push('Майбутній розвиток');
   return rows.length ? rows : ['Базовий сценарій'];
 }
+
+/** One cell of the side-by-side comparison. From the prototype's ComparisonMatrix (app/planner.tsx). */
+export function comparisonCell(key: CandidateKey, row: string) {
+  if (row === 'Орієнтовна місткість') return 'Перевірити компонування під заданий масштаб';
+  if (row === 'Розділення партій') return key === 'silo' ? 'Перевірити кількість незалежних ємностей' : 'Перевірити спосіб зонування';
+  if (row === 'Інтенсивна логістика') return 'Перевірити продуктивність і маршрути';
+  if (row === 'Підготовка зерна') return 'Перевірити технологічні зв’язки';
+  if (row === 'Компактний майданчик') return 'Порівняти повну займану площу';
+  if (row === 'Майбутній розвиток') return 'Перевірити сумісність етапів';
+  return 'Порівняти експлуатаційну схему';
+}

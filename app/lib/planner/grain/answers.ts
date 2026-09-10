@@ -57,3 +57,9 @@ export function formatCapacityInfo(info: CapacityInfo) {
 function formatNumber(value: number) {
   return new Intl.NumberFormat('uk-UA').format(value);
 }
+
+/** A consultation nobody has started yet (prototype `EMPTY`). */
+export const EMPTY_GRAIN_ANSWERS: Answers = {
+  crops: [], capacity: '', separation: null, operation: null, handling: null,
+  processing: null, site: null, sitePressure: null, development: [], futureHandling: null,
+};
