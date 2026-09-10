@@ -72,3 +72,10 @@ export { grainDiagramModel } from './diagram';
 
 export type { GrainFlowAction, GrainFlowState } from './flow';
 export { GRAIN_READINESS_STEP, INITIAL_GRAIN_FLOW, reduceGrainFlow } from './flow';
+
+export { GRAIN_BRIEF_TEXT_LIMIT, createGrainBrief, formatGrainBriefText, grainBriefHeadline, grainBriefTaskRows } from './brief';
+
+export type { GrainPlannerStateV1 } from './state';
+export { GRAIN_PLANNER_STATE_SCHEMA, createGrainPlannerState, validateGrainPlannerState } from './state';
+
+export { GRAIN_PLANNER_VERSION } from './version';
