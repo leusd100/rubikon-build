@@ -6,7 +6,7 @@
  */
 import assert from 'node:assert/strict';
 import { test } from 'vitest';
-import { choiceOptionId } from '../../../../app/lib/planner/core/choiceOptionId';
+import { choiceOptionId } from '../../../../app/components/planner/choiceOptionId';
 import {
   buildCandidates,
   expansionTension,
