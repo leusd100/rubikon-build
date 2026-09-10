@@ -2,9 +2,37 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
 
+// Planner layers: the universal core knows no domain and no framework, the grain domain is pure
+// TypeScript, and universal planner UI never reaches into a specific domain — it gets grain data
+// through props. Regex patterns so relative paths (`../grain`) are caught as well as aliases.
+const plannerCoreBoundary = [
+  { regex: '^react(-dom)?(/|$)', message: 'Planner core is framework-free: no React.' },
+  { regex: '(^|/)grain(/|$)', message: 'Planner core must not depend on a domain such as grain.' },
+  { regex: '(^|/)components(/|$)', message: 'Planner core must not depend on UI components.' },
+];
+const plannerGrainBoundary = [
+  { regex: '^react(-dom)?(/|$)', message: 'The grain domain is pure TypeScript: no React.' },
+  { regex: '(^|/)components(/|$)', message: 'The grain domain must not depend on UI components.' },
+];
+const plannerUiBoundary = [
+  { regex: '(^|/)lib/planner/grain(/|$)', message: 'Universal planner UI must not import a domain; pass grain data in through props.' },
+];
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ['app/lib/planner/core/**/*.{ts,tsx}'],
+    rules: { 'no-restricted-imports': ['error', { patterns: plannerCoreBoundary }] },
+  },
+  {
+    files: ['app/lib/planner/grain/**/*.{ts,tsx}'],
+    rules: { 'no-restricted-imports': ['error', { patterns: plannerGrainBoundary }] },
+  },
+  {
+    files: ['app/components/planner/**/*.{ts,tsx}'],
+    rules: { 'no-restricted-imports': ['error', { patterns: plannerUiBoundary }] },
+  },
   globalIgnores([
     '.next/**',
     'out/**',
