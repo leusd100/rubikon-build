@@ -85,13 +85,28 @@ describe.each(fixtureNames)('preliminary brief — %s', (name) => {
 });
 
 describe('brief headline', () => {
-  it('names what is confirmed of scale, batches and preparation', () => {
+  const nothing: Answers = { ...fixtures.C1, processing: 'unknown' };
+
+  it('with enough context, joins what is confirmed of scale, batches and preparation', () => {
     expect(normalize(grainBriefHeadline(fixtures.B))).toBe('≈ 12 000 т · окремі партії · очищення + сушіння');
     expect(normalize(grainBriefHeadline(fixtures.A))).toBe('≈ 3 000 т · спільне зберігання можливе');
   });
 
-  it('falls back to a neutral title when nothing of the three is confirmed', () => {
-    expect(grainBriefHeadline({ ...fixtures.C1, processing: 'unknown' })).toBe('Опис задачі зерносховища');
+  it('a single meaningful signal is filed under «Зерносховище · …», never as one word', () => {
+    expect(grainBriefHeadline(fixtures.C1)).toBe('Зерносховище · сушіння');
+    expect(normalize(grainBriefHeadline({ ...nothing, capacity: '3000' }))).toBe('Зерносховище · ≈ 3 000 т');
+    expect(grainBriefHeadline({ ...nothing, separation: 'required' })).toBe('Зерносховище · окремі партії');
+  });
+
+  it('when almost nothing is decided, falls back to a neutral title', () => {
+    expect(grainBriefHeadline(nothing)).toBe('Опис задачі зерносховища');
+  });
+
+  it('is never a single word anywhere in the answer space', () => {
+    for (const answers of answerSpace()) {
+      const headline = grainBriefHeadline(answers);
+      if (headline !== 'Опис задачі зерносховища' && !headline.includes(' · ')) throw new Error(`«${headline}» for ${JSON.stringify(answers)}`);
+    }
   });
 });
 
