@@ -1,6 +1,3 @@
-'use client';
-
-import { useId } from 'react';
 import type { CandidateKey } from '../../lib/planner/grain';
 
 const titles: Record<CandidateKey, string> = {
@@ -9,13 +6,15 @@ const titles: Record<CandidateKey, string> = {
   arch: 'безкаркасного арочного сховища',
 };
 
-/** Conceptual line drawing of an approach — no scale, no dimensions. Geometry from the prototype. */
+/**
+ * Conceptual line drawing of an approach — no scale, no dimensions. Geometry from the prototype.
+ * Named with aria-label rather than a useId-linked <title>: the generic overview renders this
+ * inside a server component handed to a client band, and generated ids there could mismatch on
+ * hydration.
+ */
 export function GrainCandidateVisual({ type }: { type: CandidateKey }) {
-  const titleId = useId();
-
   return (
-    <svg className="planner-approach-visual" viewBox="0 0 360 170" role="img" aria-labelledby={titleId}>
-      <title id={titleId}>{`Концептуальна схема ${titles[type]}`}</title>
+    <svg className="planner-approach-visual" viewBox="0 0 360 170" role="img" aria-label={`Концептуальна схема ${titles[type]}`}>
       <path className="ground" d="M20 140H340" />
       {type === 'silo' && (
         <>
