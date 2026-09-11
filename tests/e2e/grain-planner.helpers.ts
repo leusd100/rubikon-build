@@ -40,8 +40,16 @@ export async function tick(page: Page, question: string, option: string) {
   await planner(page).getByRole('group', { name: question, exact: true }).getByRole('checkbox', { name: new RegExp(`^${escape(option)}`) }).check();
 }
 
+/** Waits until the planner has moved focus to the heading of wherever it just scrolled. */
+export async function plannerSettled(page: Page) {
+  await page.waitForFunction(() => document.activeElement?.matches('[data-planner-focus]') ?? false);
+}
+
 export async function next(page: Page) {
   await planner(page).getByRole('button', { name: /^(Продовжити|Перевірити готовність)/ }).click();
+  // «Продовжити» smooth-scrolls to the next step a tick later and then focuses its heading; the
+  // next click must not race that scroll.
+  await plannerSettled(page);
 }
 
 export async function reveal(page: Page) {

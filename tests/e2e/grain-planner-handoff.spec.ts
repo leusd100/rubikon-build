@@ -6,6 +6,7 @@ import {
   next,
   openPlanner,
   planner,
+  plannerSettled,
   questions,
   result,
   reveal,
@@ -159,6 +160,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
     await expect(attachmentCard(page)).toBeVisible();
 
     await planner(page).getByRole('button', { name: 'Почати спочатку' }).click();
+    await plannerSettled(page);
     await expect(attachmentCard(page)).toHaveCount(0);
     await submitInquiry(page);
     expect(lastLead()?.details).not.toHaveProperty('configuration');

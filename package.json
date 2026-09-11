@@ -15,7 +15,7 @@
     "test:e2e": "playwright test --project=desktop-chromium --project=mobile-chromium",
     "test:visual": "playwright test --project=visual-chromium",
     "test:visual:update": "playwright test --project=visual-chromium --update-snapshots",
-    "test:lighthouse": "LHCI_PROFILE=home lhci autorun && LHCI_PROFILE=standard lhci autorun"
+    "test:lighthouse": "LHCI_PROFILE=home lhci autorun && LHCI_PROFILE=standard lhci autorun && LHCI_PROFILE=grain lhci autorun"
   },
   "dependencies": {
     "@react-three/fiber": "9.7.0",
