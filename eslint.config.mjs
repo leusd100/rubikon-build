@@ -17,6 +17,12 @@ const plannerGrainBoundary = [
 const plannerUiBoundary = [
   { regex: '(^|/)lib/planner/grain(/|$)', message: 'Universal planner UI must not import a domain; pass grain data in through props.' },
 ];
+// The inquiry form and its attachment UI read the shared InquiryAttachment only. What is attached
+// — a hangar configuration, a grain brief — is the page source's business, never the form's.
+const inquiryBoundary = [
+  { regex: '(^|/)lib/(planner|configurator)(/|$)', message: 'Shared inquiry UI is kind-agnostic: read InquiryAttachment (app/lib/inquiry), not a planner or configurator.' },
+  { regex: '(^|/)(configurator|grain-planner|angary|planner)(/|$)', message: 'Shared inquiry UI must not import a source’s components; the source publishes through InquiryAttachmentProvider.' },
+];
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -32,6 +38,10 @@ const eslintConfig = defineConfig([
   {
     files: ['app/components/planner/**/*.{ts,tsx}'],
     rules: { 'no-restricted-imports': ['error', { patterns: plannerUiBoundary }] },
+  },
+  {
+    files: ['app/components/inquiry/**/*.{ts,tsx}', 'app/components/ProjectInquiryForm.tsx', 'app/components/InquirySection.tsx'],
+    rules: { 'no-restricted-imports': ['error', { patterns: inquiryBoundary }] },
   },
   globalIgnores([
     '.next/**',

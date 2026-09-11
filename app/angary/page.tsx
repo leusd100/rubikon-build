@@ -3,6 +3,7 @@ import { HangarEditorialArchitecture } from '../components/angary/HangarEditoria
 import { HangarMobileInquiryCta } from '../components/angary/HangarMobileInquiryCta';
 import { HangarConfigurator } from '../components/configurator/HangarConfigurator';
 import { HangarInquiryProvider } from '../components/configurator/HangarInquiryContext';
+import { InquiryAttachmentProvider } from '../components/inquiry/InquiryAttachmentProvider';
 import { createDirectionMetadata, getDirectionPage } from '../lib/directions';
 import '../configurator-preview/configurator.css';
 import './angary-editorial.css';
@@ -13,13 +14,15 @@ export default function HangarsPage() {
   const config = getDirectionPage('angary');
 
   return (
-    <HangarInquiryProvider>
-      <DirectionPage
-        config={config}
-        signatureExperience={<HangarConfigurator embedded />}
-        editorialArchitecture={<HangarEditorialArchitecture />}
-      />
-      <HangarMobileInquiryCta />
-    </HangarInquiryProvider>
+    <InquiryAttachmentProvider>
+      <HangarInquiryProvider>
+        <DirectionPage
+          config={config}
+          signatureExperience={<HangarConfigurator embedded />}
+          editorialArchitecture={<HangarEditorialArchitecture />}
+        />
+        <HangarMobileInquiryCta />
+      </HangarInquiryProvider>
+    </InquiryAttachmentProvider>
   );
 }
