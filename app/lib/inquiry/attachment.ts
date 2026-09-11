@@ -121,6 +121,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** No kind means a client from before this contract (/angary): a hangar configuration. */
+function resolveLeadAttachmentKind(kind: unknown): InquiryAttachmentKind | null {
+  if (kind === undefined || kind === null || kind === '') return 'hangar-configuration';
+  return isInquiryAttachmentKind(kind) ? kind : null;
+}
+
 /**
  * Reads details.attachment of a lead. Nothing here can reject a lead: an unknown kind loses its
  * metadata but keeps the text under a generic label; data that is too large, invalid or of a kind
@@ -136,8 +142,7 @@ export function parseLeadAttachment(
 ): ParsedLeadAttachment | null {
   if (!configuration) return null;
   const meta = isRecord(raw) ? raw : {};
-  const legacy = meta.kind === undefined || meta.kind === null || meta.kind === '';
-  const kind: InquiryAttachmentKind | null = legacy ? 'hangar-configuration' : isInquiryAttachmentKind(meta.kind) ? meta.kind : null;
+  const kind = resolveLeadAttachmentKind(meta.kind);
   const hasData = meta.data !== undefined && meta.data !== null;
 
   if (!kind) {
@@ -153,6 +158,6 @@ export function parseLeadAttachment(
 
   const validate = validators[kind];
   if (JSON.stringify(meta.data).length > INQUIRY_ATTACHMENT_DATA_LIMIT) return { ...parsed, dataDropped: 'too-large' };
-  if (!validate || !validate(meta.data)) return { ...parsed, dataDropped: 'invalid' };
+  if (!validate?.(meta.data)) return { ...parsed, dataDropped: 'invalid' };
   return { ...parsed, data: meta.data };
 }

@@ -26,6 +26,11 @@ const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
+/** The class names that are set, space-separated. */
+function classNames(...names: (string | undefined)[]) {
+  return names.filter(Boolean).join(' ');
+}
+
 function DirectionItemCards({
   className,
   items,
@@ -55,7 +60,7 @@ type DirectionHeroProps = {
   accent: string;
   intro: string;
   heroImage: DirectionHeroImageAsset;
-  actions?: DirectionPageConfig['hero']['actions'];
+  actions?: NonNullable<DirectionPageConfig['hero']['actions']>;
 };
 
 function DirectionHero({
@@ -88,7 +93,7 @@ function DirectionHero({
   };
 
   return (
-    <section className={`service-subhero${actions?.sectionClassName ? ` ${actions.sectionClassName}` : ''}`}>
+    <section className={classNames('service-subhero', actions?.sectionClassName)}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
         <DirectionHeroImage asset={heroImage} />
@@ -278,7 +283,7 @@ export function DirectionPage({
   const direction = getDirection(config.id);
 
   return (
-    <main className={`inner-page${config.pageClassName ? ` ${config.pageClassName}` : ''}`} id="main-content">
+    <main className={classNames('inner-page', config.pageClassName)} id="main-content">
       <DirectionHero
         path={direction.href}
         number={direction.number}
