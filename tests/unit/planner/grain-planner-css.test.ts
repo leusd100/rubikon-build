@@ -33,9 +33,12 @@ function styleRuleSelectors(source: string) {
 describe('grain-planner.css', () => {
   const selectors = styleRuleSelectors(css);
 
-  it('scopes every selector to the planner bands', () => {
+  // Three roots: the two planner bands, and the phone handoff CTA — the one element the planner page
+  // adds outside them, because nothing inside the planner may be fixed.
+  it('scopes every selector to the planner bands or the handoff CTA', () => {
     expect(selectors.length).toBeGreaterThan(100);
-    const unscoped = selectors.filter(({ selector }) => !/^\.grain-planner-root(?=[\s.:[>]|$)/.test(selector) && !/^\.grain-result-band(?=[\s.:[>]|$)/.test(selector));
+    const roots = [/^\.grain-planner-root(?=[\s.:[>]|$)/, /^\.grain-result-band(?=[\s.:[>]|$)/, /^\.grain-handoff-cta(?=[\s.:[>]|$)/];
+    const unscoped = selectors.filter(({ selector }) => !roots.some((root) => root.test(selector)));
     expect(unscoped).toEqual([]);
   });
 

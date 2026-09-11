@@ -1,15 +1,19 @@
 'use client';
 
-import { createContext, useContext, useMemo, useReducer, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useReducer, useState, type ReactNode } from 'react';
+import { INITIAL_ATTACHMENT_STATUS, transitionAttachment, type AttachmentStatus } from '../../lib/inquiry/attachment';
 import {
   GRAIN_READINESS_STEP,
   INITIAL_GRAIN_FLOW,
   buildFacts,
+  createGrainAttachment,
+  reduceGrainAttachment,
   reduceGrainFlow,
   type Answers,
   type GrainFlowAction,
   type GrainFlowState,
 } from '../../lib/planner/grain';
+import { useInquiryAttachmentSource } from '../inquiry/InquiryAttachmentProvider';
 import { scrollAfterRender } from '../planner/plannerScroll';
 
 type GrainPlannerContextValue = {
@@ -18,14 +22,38 @@ type GrainPlannerContextValue = {
   latestFact: string | null;
   changeOpen: boolean;
   setChangeOpen: (open: boolean) => void;
+  /** Whether the brief is attached to the inquiry form right now. */
+  briefAttached: boolean;
   answer: <K extends keyof Answers>(key: K, value: Answers[K]) => void;
   continueTheme: (theme: number) => void;
   editTheme: (theme: number, fromResult?: boolean) => void;
   reveal: () => void;
   reset: () => void;
+  /** «Передати опис RUBIKON»: attach the brief, also after «Не додавати». */
+  attachBrief: () => void;
 };
 
 const GrainPlannerContext = createContext<GrainPlannerContextValue | null>(null);
+
+/** The consultation and its inquiry attachment change together, so no render sees one without the other. */
+type GrainSession = { flow: GrainFlowState; attachment: AttachmentStatus };
+type GrainSessionAction = GrainFlowAction | { type: 'attach-brief' } | { type: 'detach-brief' };
+
+const INITIAL_GRAIN_SESSION: GrainSession = { flow: INITIAL_GRAIN_FLOW, attachment: INITIAL_ATTACHMENT_STATUS };
+
+function reduceGrainSession(session: GrainSession, action: GrainSessionAction): GrainSession {
+  switch (action.type) {
+    case 'attach-brief':
+      return { ...session, attachment: transitionAttachment(session.attachment, { type: 'explicit-attach' }) };
+    case 'detach-brief':
+      return { ...session, attachment: transitionAttachment(session.attachment, { type: 'explicit-detach' }) };
+    default:
+      return {
+        flow: reduceGrainFlow(session.flow, action),
+        attachment: reduceGrainAttachment(session.attachment, session.flow, action),
+      };
+  }
+}
 
 const activeStep = () => document.querySelector('.planner-active-step');
 const questionFor = (theme: number) => () => document.querySelector(`.planner-question[data-planner-theme="${theme}"]`);
@@ -33,18 +61,33 @@ const resultBand = () => document.querySelector('#result [data-planner-anchor]')
 
 /**
  * One consultation shared by the planner band and the result band. State transitions are the
- * domain reducer (app/lib/planner/grain/flow.ts); this adds only where the page scrolls next.
+ * domain reducers (app/lib/planner/grain: flow.ts and attachment.ts); this adds where the page
+ * scrolls next, and publishes the brief to the page's inquiry form while it is attached.
  */
 export function GrainPlannerProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reduceGrainFlow, INITIAL_GRAIN_FLOW);
+  const [session, dispatch] = useReducer(reduceGrainSession, INITIAL_GRAIN_SESSION);
   const [latestFact, setLatestFact] = useState<string | null>(null);
   const [changeOpen, setChangeOpen] = useState(false);
+  const state = session.flow;
+  const briefAttached = session.attachment.status === 'attached';
+
+  const detachBrief = useCallback(() => dispatch({ type: 'detach-brief' }), []);
+  const attachment = useMemo(
+    () => (briefAttached ? createGrainAttachment(state.answers) : null),
+    [briefAttached, state.answers],
+  );
+  const source = useMemo(
+    () => ({ attachment, status: session.attachment, detach: detachBrief }),
+    [attachment, session.attachment, detachBrief],
+  );
+  useInquiryAttachmentSource(source);
 
   const value = useMemo<GrainPlannerContextValue>(() => ({
     state,
     latestFact,
     changeOpen,
     setChangeOpen,
+    briefAttached,
     answer: (key, value) => {
       // Same rule as the prototype's effect, computed in the event instead: the newest added fact,
       // kept while nothing new appears, cleared when no facts remain.
@@ -78,7 +121,8 @@ export function GrainPlannerProvider({ children }: { children: ReactNode }) {
       setChangeOpen(false);
       scrollAfterRender(() => document.getElementById('planner'));
     },
-  }), [state, latestFact, changeOpen]);
+    attachBrief: () => dispatch({ type: 'attach-brief' }),
+  }), [state, latestFact, changeOpen, briefAttached]);
 
   return <GrainPlannerContext.Provider value={value}>{children}</GrainPlannerContext.Provider>;
 }

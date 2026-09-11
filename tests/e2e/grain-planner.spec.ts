@@ -148,15 +148,17 @@ test.describe('Grain Planner preview — page contract', () => {
     await expect(result(page).locator('.planner-scenario')).toBeVisible();
   });
 
-  test('the brief CTA only scrolls to the site’s inquiry form', async ({ page }) => {
+  // Phase 3: the CTA hands the brief over (tests/e2e/grain-planner-handoff.spec.ts covers the
+  // attachment itself); here it is the page contract — one CTA, into the site's one form.
+  test('the brief CTA leads into the site’s inquiry form with the description attached', async ({ page }) => {
     await openPlanner(page);
     await scenarios.A(page);
     await reveal(page);
-    const cta = result(page).getByRole('link', { name: /Обговорити задачу з RUBIKON/ });
+    const cta = result(page).getByRole('link', { name: /Передати опис RUBIKON/ });
     await expect(cta).toHaveAttribute('href', '#inquiry');
     await cta.click();
     await expect(page.locator('#inquiry')).toBeInViewport({ timeout: 5_000 });
-    await expect(page.locator('form.inquiry-form .inquiry-config-brief')).toHaveCount(0);
+    await expect(page.locator('form.inquiry-form .inquiry-config-brief')).toContainText('До заявки додано ваш опис задачі');
   });
 
   test('stays out of search: noindex, robots disallow, not in the sitemap', async ({ page, request }) => {

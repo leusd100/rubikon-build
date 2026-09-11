@@ -35,7 +35,7 @@ import { useGrainPlanner } from './GrainPlannerProvider';
  * gives for this width. The block order is DOM order, so reading order matches the screen.
  */
 export function GrainResultBand({ generic }: { generic: ReactNode }) {
-  const { state, editTheme, changeOpen, setChangeOpen } = useGrainPlanner();
+  const { state, editTheme, changeOpen, setChangeOpen, briefAttached, attachBrief } = useGrainPlanner();
   const mobile = usePlannerMediaQuery('(max-width: 1050px)');
   const narrow = usePlannerMediaQuery('(max-width: 760px)');
   const presentation = grainPlannerPresentation;
@@ -66,10 +66,16 @@ export function GrainResultBand({ generic }: { generic: ReactNode }) {
   const clarifyTheme = firstClarificationTheme(answers);
   const collapsed = (block: 'boundary') => narrow && presentation.result.collapsedOnMobile.includes(block);
 
+  // The handoff attaches the brief before it scrolls — also after «Не додавати» — so the form the
+  // visitor lands on always carries the description the button promised.
   const handoff = (
     <div className="planner-handoff">
-      <a className="button button-primary" href="#inquiry">Обговорити задачу з RUBIKON <ArrowDown aria-hidden="true" /></a>
-      <p>Коротка форма нижче: залиште контакт, і інженер RUBIKON зв’яжеться з вами.</p>
+      <a className="button button-primary" href="#inquiry" onClick={attachBrief}>Передати опис RUBIKON <ArrowDown aria-hidden="true" /></a>
+      <p>
+        {briefAttached
+          ? 'Опис уже додано до короткої форми нижче: залиште контакт, і інженер RUBIKON зв’яжеться з вами.'
+          : 'Кнопка додасть опис до короткої форми нижче: залиште контакт, і інженер RUBIKON зв’яжеться з вами.'}
+      </p>
     </div>
   );
 

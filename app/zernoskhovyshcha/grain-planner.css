@@ -444,3 +444,13 @@
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
+
+/* The phone shortcut to the form while the brief is attached (AttachedBriefCta). It lives outside
+   the planner bands — nothing inside the planner is fixed — and looks exactly like /angary's. */
+.grain-handoff-cta { display: none; }
+.grain-handoff-cta[hidden] { display: none; }
+
+@media (max-width: 760px) {
+  .grain-handoff-cta:not([hidden]) { position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 58px; padding: 15px 24px calc(15px + env(safe-area-inset-bottom)); color: white; background: var(--accent-dark); border-top: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 -10px 36px rgba(0, 0, 0, .24); font: 800 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .grain-handoff-cta:focus-visible { outline: 3px solid white; outline-offset: -6px; }
+}
