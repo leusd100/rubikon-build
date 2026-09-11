@@ -41,7 +41,12 @@ export function grainBriefTaskRows(answers: Answers): BriefRow[] {
   return rows.map(([label, value, themeIndex]) => ({ label, value, themeIndex }));
 }
 
-/** «≈ 12 000 т · окремі партії · очищення + сушіння» — whatever of the three is confirmed. */
+/**
+ * The title the brief is filed under, built from what is confirmed of scale, batches and
+ * preparation. Two or more → «≈ 12 000 т · окремі партії · очищення + сушіння». Exactly one →
+ * «Зерносховище · сушіння», so a lone signal never stands as a one-word title. None → the neutral
+ * «Опис задачі зерносховища».
+ */
 export function grainBriefHeadline(answers: Answers) {
   const capacity = parseCapacity(answers.capacity);
   const parts = [
@@ -49,7 +54,9 @@ export function grainBriefHeadline(answers: Answers) {
     answers.separation && answers.separation !== 'unknown' ? uiLabels[answers.separation] : '',
     hasActiveProcessing(answers.processing) ? uiLabels[answers.processing ?? ''] : '',
   ].filter(Boolean);
-  return parts.length ? parts.join(' · ') : 'Опис задачі зерносховища';
+  if (parts.length >= 2) return parts.join(' · ');
+  if (parts.length === 1) return `Зерносховище · ${parts[0]}`;
+  return 'Опис задачі зерносховища';
 }
 
 export function createGrainBrief(answers: Answers): PreliminaryBrief {

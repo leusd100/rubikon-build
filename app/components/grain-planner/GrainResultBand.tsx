@@ -1,0 +1,167 @@
+'use client';
+
+import { ArrowDown } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { grainPlannerPresentation, type GrainResultBlock } from '../../data/grainPlannerPresentation';
+import {
+  buildFacts,
+  buildUnknowns,
+  clarificationHow,
+  clarificationWhy,
+  createGrainBrief,
+  engineeringGates,
+  firstClarificationTheme,
+  formatCapacityInfo,
+  hasExpansionTension,
+  parseCapacity,
+  routeDecision,
+  scenarioClientQuestions,
+  themes,
+} from '../../lib/planner/grain';
+import { BriefTable } from '../planner/BriefTable';
+import { ChangeBanner } from '../planner/ChangeBanner';
+import { ClarificationMap } from '../planner/ClarificationMap';
+import { DecisionBoundary } from '../planner/DecisionBoundary';
+import { ResultHeading } from '../planner/ResultHeading';
+import { ScenarioStrip } from '../planner/ScenarioStrip';
+import { usePlannerMediaQuery } from '../planner/usePlannerMediaQuery';
+import { GrainCandidateComparison } from './GrainCandidateComparison';
+import { GrainDevelopmentExplorer } from './GrainDevelopmentExplorer';
+import { useGrainPlanner } from './GrainPlannerProvider';
+
+/**
+ * The standalone result band (#result). Before a consultation it shows the server-rendered
+ * `generic` overview; after reveal, the personalised blocks in the order grainPlannerPresentation
+ * gives for this width. The block order is DOM order, so reading order matches the screen.
+ */
+export function GrainResultBand({ generic }: { generic: ReactNode }) {
+  const { state, editTheme, changeOpen, setChangeOpen } = useGrainPlanner();
+  const mobile = usePlannerMediaQuery('(max-width: 1050px)');
+  const narrow = usePlannerMediaQuery('(max-width: 760px)');
+  const presentation = grainPlannerPresentation;
+
+  if (!state.resultVisible) {
+    const editingResult = state.editing !== null && state.completed.length === 5;
+    return (
+      <section id="result" className="page-section grain-planner-root grain-result-band is-generic" aria-labelledby="grain-overview-title">
+        <div className="shell">
+          {editingResult && (
+            <p className="planner-editing-note" role="status">Ви змінюєте відповіді. Результат оновиться, щойно ви натиснете «Продовжити».</p>
+          )}
+          {generic}
+        </div>
+      </section>
+    );
+  }
+
+  const { answers } = state;
+  const comparison = routeDecision(answers) === 'candidateComparison';
+  const capacityLabel = formatCapacityInfo(parseCapacity(answers.capacity));
+  const facts = buildFacts(answers);
+  const unknowns = buildUnknowns(answers);
+  const followUps = scenarioClientQuestions(answers).filter((item) => !unknowns.includes(item));
+  const brief = createGrainBrief(answers);
+  const taskRows = brief.sections.find((section) => section.id === 'task')?.rows ?? [];
+  const decisionRows = brief.sections.find((section) => section.id === 'decision')?.rows ?? [];
+  const clarifyTheme = firstClarificationTheme(answers);
+  const collapsed = (block: 'boundary') => narrow && presentation.result.collapsedOnMobile.includes(block);
+
+  const handoff = (
+    <div className="planner-handoff">
+      <a className="button button-primary" href="#inquiry">Обговорити задачу з RUBIKON <ArrowDown aria-hidden="true" /></a>
+      <p>Коротка форма нижче: залиште контакт, і інженер RUBIKON зв’яжеться з вами.</p>
+    </div>
+  );
+
+  const boundary = (
+    <DecisionBoundary
+      eyebrow="Межа відповідальності"
+      heading="Вам не потрібно знати все, щоб почати."
+      lead="Невідомі відповіді, питання першої розмови та інженерні перевірки показані окремо."
+      undecided={{ label: 'Ви ще не визначили', items: unknowns }}
+      undecidedEmpty="Ключові відповіді для цього етапу зафіксовані."
+      firstCall={{ label: 'На першій розмові уточнимо', items: followUps }}
+      gates={{ label: 'Визначає лише проєктування', items: engineeringGates(answers) }}
+    />
+  );
+
+  const blocks: Record<GrainResultBlock, ReactNode> = {
+    change: state.changeNotes.length > 0 && (
+      <ChangeBanner
+        id="grain-change-notes"
+        title="Результат оновлено"
+        subtitle="Інші відповіді не було скинуто."
+        toggleLabel="Що змінилося?"
+        notes={state.changeNotes}
+        open={changeOpen}
+        onToggle={() => setChangeOpen(!changeOpen)}
+      />
+    ),
+    scenario: (
+      <ScenarioStrip
+        label="Ваш сценарій"
+        headline={capacityLabel || 'Місткість уточнюється'}
+        facts={facts.filter((fact) => fact !== capacityLabel)}
+        editLabel="Редагувати"
+        onEdit={() => editTheme(0, true)}
+      />
+    ),
+    outcome: (
+      <>
+        {comparison ? (
+          <GrainCandidateComparison answers={answers} narrow={narrow} />
+        ) : (
+          <ClarificationMap
+            heading={(
+              <ResultHeading
+                id="grain-result-title"
+                eyebrow="Результат · потрібні уточнення"
+                heading="Вибір концепції ще зарано робити — але ми вже знаємо, що саме з’ясувати."
+                lead="«Не знаю» не зупинило планувальник: відповідь стала картою наступних корисних дій."
+              />
+            )}
+            cards={unknowns.map((title) => ({ title, why: clarificationWhy(title), how: clarificationHow(title) }))}
+            density={presentation.clarificationDensity}
+            whyLabel="Чому це важливо"
+            howLabel="Як це зрозуміти"
+            editLabel={`Уточнити: ${themes[clarifyTheme].toLowerCase()}`}
+            onEdit={() => editTheme(clarifyTheme, true)}
+          />
+        )}
+        {presentation.handoff.position === 'after-outcome' && handoff}
+      </>
+    ),
+    development: comparison && hasExpansionTension(answers) && <GrainDevelopmentExplorer />,
+    boundary: collapsed('boundary') ? (
+      <details className="planner-disclosure">
+        <summary>Що ви ще не визначили, що уточнимо і що вирішує проєктування</summary>
+        {boundary}
+      </details>
+    ) : boundary,
+    brief: (
+      <BriefTable
+        eyebrow="Попередній опис"
+        heading="Постановка задачі для першої розмови."
+        note="Сформовано планувальником · без інженерних розрахунків"
+        rows={taskRows.map((row) => ({
+          label: row.label,
+          value: row.value,
+          onEdit: row.themeIndex === undefined ? undefined : () => editTheme(row.themeIndex as number, true),
+        }))}
+        asideTitle="Карта рішення"
+        aside={[...decisionRows, { label: 'Підтверджено фактів', value: String(facts.length) }]}
+        action={presentation.handoff.position === 'after-brief' ? handoff : undefined}
+      />
+    ),
+  };
+
+  const order = mobile ? presentation.result.mobile : presentation.result.desktop;
+
+  return (
+    <section id="result" className="page-section grain-planner-root grain-result-band" aria-labelledby="grain-result-title">
+      <div className="shell">
+        {order.map((key) => (blocks[key] ? <div className="planner-result-block" data-block={key} key={key}>{blocks[key]}</div> : null))}
+      </div>
+    </section>
+  );
+}

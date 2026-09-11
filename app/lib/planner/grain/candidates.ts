@@ -11,6 +11,25 @@ export type CandidateKey = 'silo' | 'framed' | 'arch';
 
 export type Candidate = CandidateApproach<CandidateKey> & { label: 'До порівняння' };
 
+/**
+ * How each approach is described regardless of the answers — used by buildCandidates and by the
+ * result band's generic state before a consultation. One source, so the two can never drift.
+ */
+export const candidateCatalog: Record<CandidateKey, Pick<Candidate, 'category' | 'title' | 'summary'>> = {
+  silo: {
+    category: 'СИЛОСНА СИСТЕМА', title: 'Силосна система',
+    summary: 'Показана як технологічно інтегрований підхід, який потрібно перевірити поруч з альтернативами — без вибору переможця.',
+  },
+  framed: {
+    category: 'КАРКАСНЕ ПІДЛОГОВЕ СХОВИЩЕ', title: 'Каркасне підлогове',
+    summary: 'Базова підлогова альтернатива з гнучким внутрішнім простором; зонування, потоки та можливість використання наявних конструкцій перевіряються окремо.',
+  },
+  arch: {
+    category: 'БЕЗКАРКАСНЕ АРОЧНЕ СХОВИЩЕ', title: 'Безкаркасне арочне',
+    summary: 'Показане як окрема підлогова альтернатива; його придатність залежить від фактичного майданчика, зонування та експлуатаційної схеми.',
+  },
+};
+
 function siloReasons(answers: Answers) {
   const currentMobile = answers.handling === 'mobile';
   return [
@@ -40,8 +59,7 @@ export function visibleCandidateKeys(answers: Answers): CandidateKey[] {
 
 export function buildCandidates(answers: Answers): Candidate[] {
   const silo: Candidate = {
-    key: 'silo', category: 'СИЛОСНА СИСТЕМА', title: 'Силосна система', label: 'До порівняння',
-    summary: 'Показана як технологічно інтегрований підхід, який потрібно перевірити поруч з альтернативами — без вибору переможця.',
+    key: 'silo', ...candidateCatalog.silo, label: 'До порівняння',
     reasons: siloReasons(answers),
     careful: ['Фактичну продуктивність усіх ділянок потоку', 'Транспортні маршрути й точки приймання', hasDevelopmentIntent(answers) && 'Сумісність першої черги з майбутнім розвитком', 'Займану площу всього комплексу, а не лише сховищ'].filter(Boolean) as string[],
   };
@@ -54,8 +72,7 @@ export function buildCandidates(answers: Answers): Candidate[] {
     existingSiteTypes.includes(answers.site ?? '') && `Ви вказали ${siteAccusative[answers.site ?? '']} — можливість використати наявний об’єкт не припускається автоматично й потребує обстеження.`,
   ].filter(Boolean) as string[];
   const framed: Candidate = {
-    key: 'framed', category: 'КАРКАСНЕ ПІДЛОГОВЕ СХОВИЩЕ', title: 'Каркасне підлогове', label: 'До порівняння',
-    summary: 'Базова підлогова альтернатива з гнучким внутрішнім простором; зонування, потоки та можливість використання наявних конструкцій перевіряються окремо.',
+    key: 'framed', ...candidateCatalog.framed, label: 'До порівняння',
     reasons: framedReasons.length ? framedReasons : ['Підтверджені відповіді поки не звужують задачу до інтегрованої технологічної системи.'],
     careful: [answers.separation === 'required' && 'Схему фізичного розділення партій', stationaryHandling.includes(answers.handling ?? '') && 'Інтеграцію поточного стаціонарного переміщення', 'Робочі й транспортні зони', answers.sitePressure === 'compact' && 'Фактичну займану площу на компактному майданчику'].filter(Boolean) as string[],
   };
@@ -67,8 +84,7 @@ export function buildCandidates(answers: Answers): Candidate[] {
     answers.separation === 'required' && 'Ви вказали окремі партії — тому для арочного об’єму окремо перевіряється можливість зонування.',
   ].filter(Boolean) as string[];
   const arch: Candidate = {
-    key: 'arch', category: 'БЕЗКАРКАСНЕ АРОЧНЕ СХОВИЩЕ', title: 'Безкаркасне арочне', label: 'До порівняння',
-    summary: 'Показане як окрема підлогова альтернатива; його придатність залежить від фактичного майданчика, зонування та експлуатаційної схеми.',
+    key: 'arch', ...candidateCatalog.arch, label: 'До порівняння',
     reasons: archReasons.length ? archReasons : ['Підлоговий підхід зберігається як контрольна альтернатива, доки майданчик і експлуатаційна схема не виключають його.'],
     careful: [answers.separation === 'required' && 'Можливість зонування незалежних партій', hasActiveProcessing(answers.processing) && 'Спосіб інтеграції технологічних зон', existingSiteTypes.includes(answers.site ?? '') && 'Можливість розміщення нового об’єкта поруч із наявною забудовою', 'Експлуатаційну логіку й доступ техніки'].filter(Boolean) as string[],
   };

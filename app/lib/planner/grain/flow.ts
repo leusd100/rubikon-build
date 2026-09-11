@@ -75,9 +75,9 @@ export function reduceGrainFlow(state: GrainFlowState, action: GrainFlowAction):
       return { ...state, resultVisible: true };
 
     case 'reset':
-      // Parity with 819f163: the prototype's reset() clears answers, progress, the result and the
-      // notes, but leaves an edit that was in progress untouched. Kept as-is in this port; whether
-      // reset should also end the edit is a product decision for Phase 2, not a silent fix here.
-      return { ...state, answers: EMPTY_GRAIN_ANSWERS, completed: [], activeTheme: 0, resultVisible: false, changeNotes: [] };
+      // «Почати спочатку» returns to the canonical initial state — including ending an edit in
+      // progress. Deliberate change from prototype 819f163, whose reset() kept the edit snapshot:
+      // the next «Продовжити» then explained the fresh answers against the abandoned consultation.
+      return INITIAL_GRAIN_FLOW;
   }
 }

@@ -78,9 +78,23 @@ describe('grain flow reducer — parity with the prototype PlannerApp handlers',
     expect(editing.editing?.snapshot.development).not.toBe(revealedDemo.answers.development);
   });
 
-  it('reset clears answers, progress, result and notes — and, like 819f163, leaves an edit in progress', () => {
-    const midEdit = run([{ type: 'edit', theme: 2, fromResult: true }], revealedDemo);
-    const state = reduceGrainFlow(midEdit, { type: 'reset' });
-    expect(state).toEqual({ ...INITIAL_GRAIN_FLOW, editing: midEdit.editing });
+  it('reset returns to the canonical initial state, ending an edit in progress', () => {
+    const midEdit = run([{ type: 'edit', theme: 2, fromResult: true }, { type: 'answer', key: 'processing', value: 'none' }], revealedDemo);
+    expect(midEdit.editing).not.toBeNull();
+    expect(reduceGrainFlow(midEdit, { type: 'reset' })).toEqual(INITIAL_GRAIN_FLOW);
+  });
+
+  it('after a reset mid-edit, the next consultation is not explained against the abandoned one', () => {
+    const midEdit = run([{ type: 'edit', theme: 3, fromResult: true }], revealedDemo);
+    const fresh = run([
+      { type: 'reset' },
+      { type: 'answer', key: 'crops', value: ['Пшениця'] },
+      { type: 'answer', key: 'capacity', value: '3000' },
+      { type: 'answer', key: 'separation', value: 'shared' },
+      { type: 'continue', theme: 0 },
+    ], midEdit);
+    expect(fresh.activeTheme).toBe(1);
+    expect(fresh.changeNotes).toEqual([]);
+    expect(fresh.editing).toBeNull();
   });
 });
