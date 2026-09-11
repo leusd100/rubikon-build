@@ -2,6 +2,14 @@ import { env } from 'cloudflare:workers';
 import type { D1Database } from '@cloudflare/workers-types';
 import { inquiryDirectionOptions } from '../../data/directions';
 import { company } from '../../data/company';
+import {
+  GENERIC_ATTACHMENT_TELEGRAM_LABEL,
+  INQUIRY_ATTACHMENT_TEXT_LIMIT,
+  parseLeadAttachment,
+  type InquiryAttachmentDataValidators,
+  type ParsedLeadAttachment,
+} from '../../lib/inquiry/attachment';
+import { validateGrainPlannerState } from '../../lib/planner/grain';
 
 // Bindings expected on the Worker (created via the Cloudflare Dashboard, not wrangler.jsonc
 // in this project — see the Lead Architecture Spec for how each one is provisioned):
@@ -24,6 +32,12 @@ const PHONE_PATTERN = /^\+380\d{9}$/;
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW = '-10 minutes';
 
+// Structured attachment data is kept only when its kind's own validator accepts it. A kind without
+// a validator here (the hangar configuration) carries text only.
+const ATTACHMENT_DATA_VALIDATORS: InquiryAttachmentDataValidators = {
+  'grain-brief': validateGrainPlannerState,
+};
+
 type LeadPayload = {
   submissionId?: string;
   name?: string;
@@ -37,6 +51,8 @@ type LeadPayload = {
     startDate?: string;
     comment?: string;
     configuration?: string;
+    /** { kind, version, data } of the attached brief; optional, and never a reason to reject. */
+    attachment?: unknown;
   };
   sourcePage?: string;
   landingPage?: string;
@@ -73,6 +89,21 @@ function isPlausibleConsentTimestamp(value: string): boolean {
   if (parsed < CONSENT_EARLIEST) return false;
   if (parsed > Date.now() + CONSENT_FUTURE_SKEW_MS) return false;
   return true;
+}
+
+/**
+ * The attachment's metadata as extra keys of the stored details JSON — only the ones that exist, so
+ * a lead without an attachment stores exactly the keys it always has. No D1 migration: details is
+ * a TEXT column of JSON.
+ */
+function attachmentDetails(attachment: ParsedLeadAttachment | null) {
+  if (!attachment) return {};
+  return {
+    ...(attachment.kind ? { attachmentKind: attachment.kind } : {}),
+    ...(attachment.version ? { attachmentVersion: attachment.version } : {}),
+    ...(attachment.data === undefined ? {} : { attachmentData: attachment.data }),
+    ...(attachment.dataDropped ? { attachmentDataDropped: attachment.dataDropped } : {}),
+  };
 }
 
 async function hashIp(ip: string, salt: string): Promise<string> {
@@ -133,13 +164,18 @@ export async function POST(request: Request) {
     return json({ ok: true, id: alreadyAccepted.id, isNew: false });
   }
 
+  // The lead is always worth more than its attachment: nothing about details.attachment can turn
+  // this request into a 400 — see parseLeadAttachment.
+  const configuration = clip(body.details?.configuration, INQUIRY_ATTACHMENT_TEXT_LIMIT);
+  const attachment = parseLeadAttachment(body.details?.attachment, configuration, ATTACHMENT_DATA_VALIDATORS);
   const leadDetails = {
     location: clip(body.details?.location, 100),
     dimensions: clip(body.details?.dimensions, 100),
     cooperation: clip(body.details?.cooperation, 100),
     startDate: clip(body.details?.startDate, 100),
     comment: clip(body.details?.comment, 800),
-    configuration: clip(body.details?.configuration, 1600),
+    configuration,
+    ...attachmentDetails(attachment),
   };
   const details = JSON.stringify(leadDetails);
 
@@ -231,7 +267,15 @@ export async function POST(request: Request) {
   // D1 already has the lead — from here on, nothing can turn this response into a failure.
   // Notification is best-effort and happens after the fact is already true.
   try {
-    await notifyTelegram(workerEnv, { name, phone, direction, contactMethod, sourcePage, details: leadDetails });
+    await notifyTelegram(workerEnv, {
+      name,
+      phone,
+      direction,
+      contactMethod,
+      sourcePage,
+      details: leadDetails,
+      attachmentLabel: attachment?.telegramLabel ?? GENERIC_ATTACHMENT_TELEGRAM_LABEL,
+    });
   } catch (error) {
     try {
       await workerEnv.DB.prepare(
@@ -263,6 +307,8 @@ async function notifyTelegram(
       comment: string;
       configuration: string;
     };
+    /** INQUIRY_ATTACHMENT_LABELS[kind].telegram — structured attachment data never goes to Telegram. */
+    attachmentLabel: string;
   },
 ) {
   if (!targetEnv.TELEGRAM_BOT_TOKEN || !targetEnv.TELEGRAM_CHAT_ID) {
@@ -275,7 +321,7 @@ async function notifyTelegram(
     lead.details.cooperation && `Формат співпраці: ${lead.details.cooperation}`,
     lead.details.startDate && `Бажаний старт: ${lead.details.startDate}`,
     lead.details.comment && `Коментар: ${lead.details.comment}`,
-    lead.details.configuration && `Конфігурація ангара:\n${lead.details.configuration}`,
+    lead.details.configuration && `${lead.attachmentLabel}:\n${lead.details.configuration}`,
   ].filter(Boolean);
 
   const text = [
