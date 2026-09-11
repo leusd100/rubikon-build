@@ -79,3 +79,5 @@ export type { GrainPlannerStateV1 } from './state';
 export { GRAIN_PLANNER_STATE_SCHEMA, createGrainPlannerState, validateGrainPlannerState } from './state';
 
 export { GRAIN_PLANNER_VERSION } from './version';
+
+export { createGrainAttachment, grainAttachmentEvent, reduceGrainAttachment, sameGrainAnswers } from './attachment';

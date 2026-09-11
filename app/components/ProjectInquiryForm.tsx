@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { ChevronDown, Phone, Send } from 'lucide-react';
@@ -10,13 +10,9 @@ import { contactMethodOptions, messengerContacts, type ContactMethod } from '../
 import { siteRoutes } from '../data/navigation';
 import { filterAttributionForConsent, readAttribution } from '../lib/attribution';
 import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
-import { deriveDomainModel } from '../lib/configurator/domainModel';
-import {
-  createHangarInquiryBrief,
-  createHangarInquiryBriefSections,
-  formatHangarInquiryBrief,
-} from '../lib/configurator/inquiryBrief';
-import { useHangarInquiryContext } from './configurator/HangarInquiryContext';
+import { toInquiryAttachmentPayload } from '../lib/inquiry/attachment';
+import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
+import { InquiryAttachmentSummary } from './inquiry/InquiryAttachmentSummary';
 
 type LeadApiResult = {
   ok?: boolean;
@@ -51,27 +47,15 @@ function ContactMethodIcon({ method }: { method: ContactMethod }) {
 
 export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultDirection?: string }) {
   const pathname = usePathname();
-  const hangarInquiry = useHangarInquiryContext();
-  const hangarBrief = useMemo(
-    () => hangarInquiry?.isAttached
-      ? createHangarInquiryBrief(deriveDomainModel(hangarInquiry.state))
-      : null,
-    [hangarInquiry],
-  );
-  const hangarConfiguration = useMemo(
-    () => hangarBrief ? formatHangarInquiryBrief(hangarBrief) : '',
-    [hangarBrief],
-  );
-  const hangarBriefSections = useMemo(
-    () => hangarBrief ? createHangarInquiryBriefSections(hangarBrief) : null,
-    [hangarBrief],
-  );
+  // Whatever the page's configurator or planner attached — the form knows neither of them.
+  const inquiryAttachment = useInquiryAttachment();
+  const attachment = inquiryAttachment?.attachment ?? null;
+  const dimensionsField = attachment?.dimensionsField ?? { mode: 'manual' as const };
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
   const [statusAction, setStatusAction] = useState<'error' | null>(null);
   const [consentError, setConsentError] = useState(false);
   const [consentAt, setConsentAt] = useState('');
-  const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const [submissionId] = useState(() => generateSubmissionId());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -120,7 +104,8 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
             cooperation: value(formData, 'cooperation'),
             startDate: value(formData, 'startDate'),
             comment: value(formData, 'comment'),
-            ...(hangarConfiguration ? { configuration: hangarConfiguration } : {}),
+            // configuration keeps its pre-attachment key and text; attachment adds kind/version/data.
+            ...(attachment ? { configuration: attachment.text, attachment: toInquiryAttachmentPayload(attachment) } : {}),
           },
           sourcePage: pathname,
           landingPage: attribution.landingPage,
@@ -227,59 +212,8 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
           <h3 id="inquiry-project-heading">Завдання</h3>
         </div>
         <div className="inquiry-form-section-body">
-          {hangarBrief && hangarBriefSections && (
-            <aside className="inquiry-config-brief" aria-labelledby="inquiry-config-brief-title">
-              <div className="inquiry-config-brief-heading">
-                <div>
-                  <small id="inquiry-config-brief-title">До заявки додано вашу конфігурацію</small>
-                  <strong>{hangarBrief.dimensionsLabel} · {hangarBrief.envelopeLabel}</strong>
-                </div>
-                <div className="inquiry-config-brief-actions">
-                  <button
-                    className="inquiry-config-brief-toggle"
-                    type="button"
-                    aria-expanded={isBriefExpanded}
-                    aria-controls="inquiry-config-brief-parameters"
-                    onClick={() => setIsBriefExpanded((expanded) => !expanded)}
-                  >
-                    Переглянути параметри
-                    <ChevronDown aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsBriefExpanded(false);
-                      hangarInquiry?.detachConfiguration();
-                    }}
-                  >
-                    Не додавати
-                  </button>
-                </div>
-              </div>
-              <div
-                className="inquiry-config-brief-sections"
-                id="inquiry-config-brief-parameters"
-                hidden={!isBriefExpanded}
-              >
-                <section aria-labelledby="inquiry-config-selected-heading">
-                  <h4 id="inquiry-config-selected-heading">Вибрана конфігурація</h4>
-                  <dl>
-                    {hangarBriefSections.selected.map((row) => (
-                      <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
-                    ))}
-                  </dl>
-                </section>
-                <section aria-labelledby="inquiry-config-preliminary-heading">
-                  <h4 id="inquiry-config-preliminary-heading">Системні попередні дані</h4>
-                  <dl>
-                    {hangarBriefSections.preliminary.map((row) => (
-                      <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
-                    ))}
-                  </dl>
-                </section>
-                <a className="inquiry-config-edit" href="#configurator">Змінити у конфігураторі ↑</a>
-              </div>
-            </aside>
+          {attachment && inquiryAttachment && (
+            <InquiryAttachmentSummary attachment={attachment} onDetach={inquiryAttachment.detach} />
           )}
 
           <label className="inquiry-select">
@@ -312,13 +246,14 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
             </summary>
             <div className="inquiry-details-body">
               <div className="inquiry-fields inquiry-fields-two">
-                <label className={hangarBrief ? 'inquiry-field-full' : undefined}>
+                <label className={dimensionsField.mode === 'manual' ? undefined : 'inquiry-field-full'}>
                   <span>Місто або область</span>
                   <input name="location" type="text" maxLength={100} autoComplete="address-level1" />
                 </label>
-                {hangarBrief ? (
-                  <input name="dimensions" type="hidden" value={hangarBrief.dimensionsLabel} />
-                ) : (
+                {dimensionsField.mode === 'fixed' && (
+                  <input name="dimensions" type="hidden" value={dimensionsField.value} />
+                )}
+                {dimensionsField.mode === 'manual' && (
                   <label>
                     <span>Орієнтовні розміри</span>
                     <input key="manual" name="dimensions" type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />

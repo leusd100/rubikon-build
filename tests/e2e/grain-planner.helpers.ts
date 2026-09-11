@@ -46,6 +46,9 @@ export async function next(page: Page) {
 
 export async function reveal(page: Page) {
   await planner(page).getByRole('button', { name: /^(Показати концепції|Показати карту уточнень)/ }).click();
+  // The reveal smooth-scrolls to the result a tick later and then focuses its heading. Waiting for
+  // that focus means a test's own scrolling or anchor click never races the planner's scroll.
+  await expect(result(page).locator('h2[data-planner-focus]')).toBeFocused();
 }
 
 function escape(value: string) {

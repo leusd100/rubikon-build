@@ -1,12 +1,14 @@
 'use client';
 
-import { createContext, useContext, useMemo, useReducer, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from 'react';
 import {
   INITIAL_HANGAR_ATTACHMENT,
   sameBusinessConfiguration,
   transitionHangarAttachment,
   type HangarAttachmentState,
 } from '../../lib/configurator/attachmentContract';
+import { createHangarAttachment } from '../../lib/configurator/hangarAttachment';
+import { useInquiryAttachmentSource } from '../inquiry/InquiryAttachmentProvider';
 import {
   createHangarPresentationDemo,
   type HangarPresentationDemo,
@@ -101,8 +103,13 @@ function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryA
   };
 }
 
+/**
+ * Owns the hangar configuration, its attachment state and the presentation demo. The attachment is
+ * also published to the page's shared InquiryAttachmentProvider, which is what the form reads.
+ */
 export function HangarInquiryProvider({ children }: { children: ReactNode }) {
   const [model, dispatch] = useReducer(reduceHangarInquiry, INITIAL_HANGAR_INQUIRY_STATE);
+  const detachConfiguration = useCallback(() => dispatch({ type: 'explicit-detach' }), []);
   const value = useMemo(
     () => ({
       state: model.configuration,
@@ -114,14 +121,27 @@ export function HangarInquiryProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'business-edit', configuration });
       },
       attachConfiguration: () => dispatch({ type: 'explicit-attach' }),
-      detachConfiguration: () => dispatch({ type: 'explicit-detach' }),
+      detachConfiguration,
       togglePresentationDemo: (kind: HangarPresentationDemoKind) => {
         dispatch({ type: 'toggle-presentation', kind });
       },
       endPresentationDemo: () => dispatch({ type: 'end-presentation' }),
     }),
-    [model],
+    [model, detachConfiguration],
   );
+
+  // The brief is built only while attached, as the form did before; the demo never reaches it
+  // because it lives outside model.configuration.
+  const isAttached = model.attachment.status === 'attached';
+  const attachment = useMemo(
+    () => (isAttached ? createHangarAttachment(model.configuration) : null),
+    [isAttached, model.configuration],
+  );
+  const source = useMemo(
+    () => ({ attachment, status: model.attachment, detach: detachConfiguration }),
+    [attachment, model.attachment, detachConfiguration],
+  );
+  useInquiryAttachmentSource(source);
 
   return <HangarInquiryContext.Provider value={value}>{children}</HangarInquiryContext.Provider>;
 }

@@ -18,6 +18,14 @@ type DirectionOverview = {
   layout: 'features' | 'use-cases';
 };
 
+export type DirectionHeroAction = {
+  label: string;
+  href: string;
+  className: string;
+  /** ↓ for a tool further down this page, ↗ for the conversation. */
+  arrow: '↓' | '↗';
+};
+
 export type DirectionPageConfig = {
   id: DirectionId;
   hero: {
@@ -25,7 +33,20 @@ export type DirectionPageConfig = {
     title: string;
     accent: string;
     intro: string;
+    /**
+     * Replaces the single «Обговорити проєкт ↗» link — for a page whose hero leads into its own
+     * tool first. `sectionClassName` marks the hero variant the page's stylesheet targets.
+     */
+    actions?: {
+      className: string;
+      sectionClassName?: string;
+      items: readonly DirectionHeroAction[];
+    };
   };
+  /** An extra class on <main>, for a page with a stylesheet of its own. */
+  pageClassName?: string;
+  /** Related directions as the compact band. */
+  related?: { compact?: boolean };
   overview: DirectionOverview;
   editorial: {
     eyebrow: string;
@@ -48,6 +69,8 @@ export type DirectionPageConfig = {
   faq?: {
     title: string;
     items: readonly DirectionFaqItem[];
+    /** Answers behind <details> instead of always open. */
+    collapsible?: boolean;
   };
   cta: {
     eyebrow: string;

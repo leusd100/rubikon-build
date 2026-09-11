@@ -34,11 +34,21 @@ import type { DirectionId } from './directions';
 export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   angary: {
     id: 'angary',
+    pageClassName: 'angary-page',
+    related: { compact: true },
     hero: {
       breadcrumbLabel: 'Ангари',
       title: 'Ангари та склади',
       accent: 'за вашою конфігурацією',
       intro: 'Прольоти, висота та схема каркаса залежать від того, що відбуватиметься всередині — виробництво, зберігання, логістика чи розміщення техніки. Будуємо ангари та склади під конкретне функціональне завдання — комплексно або як окремий етап робіт.',
+      actions: {
+        className: 'angary-hero-actions',
+        sectionClassName: 'angary-service-subhero',
+        items: [
+          { label: 'Зібрати конфігурацію', href: '#configurator', className: 'button button-primary', arrow: '↓' },
+          { label: 'Обговорити завдання', href: '#inquiry', className: 'button angary-hero-secondary', arrow: '↗' },
+        ],
+      },
     },
     overview: {
       eyebrow: 'Типи об’єктів',
@@ -81,6 +91,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     },
     faq: {
       title: 'Перед будівництвом',
+      collapsible: true,
       items: [
         ['Чи будуєте ангари під ключ?', 'Так. Також можемо долучитися до окремого етапу як підрядник або субпідрядник — наприклад, виготовити каркас, виконати монтаж чи огородження.'],
         ['Чи можна замовити лише металокаркас?', 'Так. Склад робіт узгоджуємо окремо: це може бути лише виготовлення каркаса, його монтаж або комплексний обсяг з основою та огородженням.'],
