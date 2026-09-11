@@ -1,7 +1,10 @@
-'use client';
-
-import { useId } from 'react';
 import { grainDiagramModel, type Answers } from '../../lib/planner/grain';
+
+/** The 24-unit background grid as plain lines: no <pattern>, so no document-level ids to keep unique. */
+const GRID = [
+  ...Array.from({ length: Math.ceil(330 / 24) }, (_, index) => `M0 ${index * 24}H400`),
+  ...Array.from({ length: Math.ceil(400 / 24) }, (_, index) => `M${index * 24} 0V330`),
+].join('');
 
 function DiagramNode({ x, y, w, title, sub, active = false }: { x: number; y: number; w: number; title: string; sub?: string; active?: boolean }) {
   return (
@@ -17,9 +20,10 @@ function DiagramNode({ x, y, w, title, sub, active = false }: { x: number; y: nu
  * The conceptual process diagram. Content comes from grainDiagramModel; the geometry is the
  * prototype's two-row 400 × 330 layout (batch #3), sized so labels stay ≥ 11 px effective on
  * desktop and ≥ 10 px on a 390 px phone. Flow, storage and phase only — no dimensions.
+ * It carries no generated ids (aria-label, plain grid lines): useId-based ids here intermittently
+ * hydrated differently from the server HTML, and the diagram can be on the page twice.
  */
 export function GrainProcessDiagram({ answers }: { answers: Answers }) {
-  const ids = useId();
   const model = grainDiagramModel(answers);
   const { row } = model;
   const nodeW = 118; const gap = 9; const x0 = 14; const rowY = 46;
@@ -31,14 +35,8 @@ export function GrainProcessDiagram({ answers }: { answers: Answers }) {
   return (
     <figure className="planner-diagram">
       <figcaption><span>Концептуальна схема</span><small>не є генеральним планом чи технологічною схемою</small></figcaption>
-      <svg viewBox="0 0 400 330" role="img" aria-labelledby={`${ids}-title`}>
-        <title id={`${ids}-title`}>Абстрактна схема підтверджених і невідомих етапів комплексу</title>
-        <defs>
-          <pattern id={`${ids}-grid`} width="24" height="24" patternUnits="userSpaceOnUse">
-            <path className="grid-line" d="M24 0L0 0 0 24" fill="none" />
-          </pattern>
-        </defs>
-        <rect width="400" height="330" fill={`url(#${ids}-grid)`} />
+      <svg viewBox="0 0 400 330" role="img" aria-label="Абстрактна схема підтверджених і невідомих етапів комплексу">
+        <path className="grid-line" d={GRID} fill="none" />
         <path className="site-boundary" d="M6 6H394V324H6Z" />
         <text className="site-caption" x="16" y="30">{model.siteCaption}</text>
         {row.length > 1 && <path className="flow-line" d={`M${x0 + nodeW / 2} ${rowY + 33}H${lastCenter}`} />}
