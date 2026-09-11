@@ -41,7 +41,7 @@ export {
 } from './rules';
 
 export type { Candidate, CandidateKey } from './candidates';
-export { buildCandidates, comparisonCell, comparisonRows, visibleCandidateKeys } from './candidates';
+export { buildCandidates, candidateCatalog, comparisonCell, comparisonRows, visibleCandidateKeys } from './candidates';
 
 export type { TensionNote } from './understanding';
 export {
