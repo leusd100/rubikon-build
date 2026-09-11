@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   choose,
+  clickInPageLink,
   collectRuntimeErrors,
   horizontalOverflow,
   next,
@@ -147,7 +148,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
     await reveal(page);
     await detach(page);
 
-    await result(page).getByRole('link', { name: /Передати опис RUBIKON/ }).click();
+    await clickInPageLink(page, result(page).getByRole('link', { name: /Передати опис RUBIKON/ }));
     await expect(page.locator('#inquiry')).toBeInViewport({ timeout: 5_000 });
     await expect(attachmentCard(page)).toContainText('До заявки додано ваш опис задачі');
   });

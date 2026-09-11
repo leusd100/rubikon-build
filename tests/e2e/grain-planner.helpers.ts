@@ -55,8 +55,30 @@ export async function next(page: Page) {
 export async function reveal(page: Page) {
   await planner(page).getByRole('button', { name: /^(Показати концепції|Показати карту уточнень)/ }).click();
   // The reveal smooth-scrolls to the result a tick later and then focuses its heading. Waiting for
-  // that focus means a test's own scrolling or anchor click never races the planner's scroll.
+  // that focus — and for the scroll to come to rest — means a test's own scrolling or anchor click
+  // never races the planner's scroll.
   await expect(result(page).locator('h2[data-planner-focus]')).toBeFocused();
+  await scrollSettled(page);
+}
+
+/**
+ * Clicks an in-page link the way a person does: already on screen, with the page at rest. On
+ * desktop Lenis computes an anchor's target from its own scroll position, which catches up with
+ * a native scroll one frame later — Playwright's scroll-into-view straight before the click would
+ * send it short by exactly that scroll.
+ */
+export async function clickInPageLink(page: Page, link: Locator) {
+  await link.scrollIntoViewIfNeeded();
+  await scrollSettled(page);
+  await link.click();
+}
+
+/** Resolves once the page has stopped scrolling (two samples 150 ms apart agree). */
+export async function scrollSettled(page: Page) {
+  await page.waitForFunction(() => new Promise<boolean>((resolve) => {
+    const before = window.scrollY;
+    window.setTimeout(() => resolve(window.scrollY === before), 150);
+  }));
 }
 
 function escape(value: string) {
