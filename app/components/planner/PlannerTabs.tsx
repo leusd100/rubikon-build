@@ -4,6 +4,17 @@ import { useRef, type KeyboardEvent, type ReactNode } from 'react';
 
 export type PlannerTab = { id: string; label: string };
 
+/** Where a key moves the selection: arrows wrap around, Home/End jump; null for any other key. */
+function tabTargetIndex(key: string, index: number, last: number): number | null {
+  switch (key) {
+    case 'ArrowRight': return index === last ? 0 : index + 1;
+    case 'ArrowLeft': return index === 0 ? last : index - 1;
+    case 'Home': return 0;
+    case 'End': return last;
+    default: return null;
+  }
+}
+
 /**
  * WAI-ARIA tabs with automatic activation: ←/→ move and select, Home/End jump to the ends, and
  * only the selected tab is in the tab order. Only the active panel renders its content.
@@ -26,12 +37,7 @@ export function PlannerTabs({
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const last = tabs.length - 1;
-    const next = event.key === 'ArrowRight' ? (index === last ? 0 : index + 1)
-      : event.key === 'ArrowLeft' ? (index === 0 ? last : index - 1)
-        : event.key === 'Home' ? 0
-          : event.key === 'End' ? last
-            : null;
+    const next = tabTargetIndex(event.key, index, tabs.length - 1);
     if (next === null) return;
     event.preventDefault();
     onChange(tabs[next].id);

@@ -10,6 +10,12 @@ export type PanelProgressItem = { title: string; state: ThemeState; current: boo
  * domain diagram, one derived insight, one tension and theme progress. `panel` sits beside the
  * consultation on wide screens; `summary` is the compact version shown at readiness on narrow ones.
  */
+function progressMarker(state: ThemeState, current: boolean) {
+  if (state === 'confirmed') return <Check />;
+  if (state === 'unknown') return <CircleHelp />;
+  return current ? '•' : '○';
+}
+
 export function LiveUnderstandingPanel({
   variant,
   label,
@@ -54,7 +60,7 @@ export function LiveUnderstandingPanel({
         <ol className="planner-progress">
           {progress.map((item) => (
             <li key={item.title} data-state={item.state} className={item.current ? 'is-current' : undefined}>
-              <span aria-hidden="true">{item.state === 'confirmed' ? <Check /> : item.state === 'unknown' ? <CircleHelp /> : item.current ? '•' : '○'}</span>
+              <span aria-hidden="true">{progressMarker(item.state, item.current)}</span>
               <b>{item.title}</b>
             </li>
           ))}

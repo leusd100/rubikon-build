@@ -11,7 +11,8 @@ export function ComparisonTable({
   rows: readonly { label: string; cells: readonly string[] }[];
 }) {
   return (
-    <div className="planner-comparison" role="region" aria-label={caption} tabIndex={0}>
+    // Focusable so keyboard users can scroll the table sideways on narrow screens.
+    <section className="planner-comparison" aria-label={caption} tabIndex={0}>
       <table>
         <caption className="planner-sr-only">{caption}</caption>
         <thead>
@@ -29,6 +30,6 @@ export function ComparisonTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </section>
   );
 }

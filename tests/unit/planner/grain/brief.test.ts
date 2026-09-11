@@ -103,10 +103,10 @@ describe('brief headline', () => {
   });
 
   it('is never a single word anywhere in the answer space', () => {
-    for (const answers of answerSpace()) {
-      const headline = grainBriefHeadline(answers);
-      if (headline !== 'Опис задачі зерносховища' && !headline.includes(' · ')) throw new Error(`«${headline}» for ${JSON.stringify(answers)}`);
-    }
+    const oneWord = [...answerSpace()]
+      .map((answers) => ({ headline: grainBriefHeadline(answers), answers }))
+      .filter(({ headline }) => headline !== 'Опис задачі зерносховища' && !headline.includes(' · '));
+    expect(oneWord).toEqual([]);
   });
 });
 

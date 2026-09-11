@@ -3,6 +3,12 @@ import type { ThemeState } from '../../lib/planner/core/types';
 
 export type ThemeRailItem = { title: string; note: string; state: ThemeState };
 
+function themeMarker(state: ThemeState, index: number) {
+  if (state === 'confirmed') return <Check />;
+  if (state === 'unknown') return <CircleHelp />;
+  return String(index + 1).padStart(2, '0');
+}
+
 /** The consultation's themes in order — the cover before the first answer, progress after. */
 export function ThemeRail({ items, active, label }: { items: readonly ThemeRailItem[]; active: number; label: string }) {
   return (
@@ -15,7 +21,7 @@ export function ThemeRail({ items, active, label }: { items: readonly ThemeRailI
           aria-current={index === active ? 'step' : undefined}
         >
           <span className="planner-theme-marker" aria-hidden="true">
-            {item.state === 'confirmed' ? <Check /> : item.state === 'unknown' ? <CircleHelp /> : String(index + 1).padStart(2, '0')}
+            {themeMarker(item.state, index)}
           </span>
           <b>{item.title}</b>
           <small>{item.note}</small>

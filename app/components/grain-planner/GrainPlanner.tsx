@@ -48,6 +48,8 @@ const QUESTIONS = [
  * The consultation: themes, the active question, finished themes and readiness — beside the live
  * understanding panel on wide screens, with the phone strip and a compact summary on narrow ones.
  */
+const blockingVerb = (count: number) => (count === 1 ? 'робить' : 'роблять');
+
 export function GrainPlanner() {
   const { state, latestFact, answer, continueTheme, editTheme, reveal, reset } = useGrainPlanner();
   const { answers, activeTheme, completed } = state;
@@ -137,7 +139,7 @@ export function GrainPlanner() {
                 heading={comparison ? 'Контексту достатньо, щоб порівняти перші концепції.' : 'Ми вже бачимо, що потрібно уточнити перед порівнянням концепцій.'}
                 body={comparison
                   ? 'Планувальник сформував ключові фактори й може пояснити появу кожного підходу у вашому сценарії.'
-                  : `${formatUnknownCount(unknownCount)} поки ${unknownCount === 1 ? 'робить' : 'роблять'} пряме порівняння передчасним — але наступні дії вже зрозумілі.`}
+                  : `${formatUnknownCount(unknownCount)} поки ${blockingVerb(unknownCount)} пряме порівняння передчасним — але наступні дії вже зрозумілі.`}
                 items={[
                   { label: 'Розуміння задачі', value: readiness.understanding, ready: readiness.understanding === 'Готове' },
                   { label: 'Готовність маршруту', value: readiness.decision, ready: readiness.decision === 'Можна порівнювати' },

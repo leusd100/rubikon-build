@@ -51,7 +51,8 @@ export function GrainPlannerProvider({ children }: { children: ReactNode }) {
       const before = buildFacts(state.answers);
       const after = buildFacts({ ...state.answers, [key]: value });
       const added = after.filter((fact) => !before.includes(fact));
-      if (added.length) setLatestFact(added[added.length - 1]);
+      const newest = added.at(-1);
+      if (newest) setLatestFact(newest);
       else if (!after.length) setLatestFact(null);
       dispatch({ type: 'answer', key, value } as GrainFlowAction);
     },

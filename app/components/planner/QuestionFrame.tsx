@@ -2,6 +2,12 @@ import { ArrowRight, Check, CircleHelp } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ThemeState } from '../../lib/planner/core/types';
 
+function answerStatus(canContinue: boolean, answerState: ThemeState) {
+  if (!canContinue) return 'Оберіть відповідь, щоб продовжити';
+  if (answerState === 'unknown') return <><CircleHelp aria-hidden="true" /> Відповідь зафіксовано; лишилося уточнення</>;
+  return <><Check aria-hidden="true" /> Підтверджені дані зафіксовано</>;
+}
+
 /** The active step: theme label, the question, its answers and the way forward. */
 export function QuestionFrame({
   themeIndex,
@@ -36,11 +42,7 @@ export function QuestionFrame({
       {children}
       <div className="planner-question-footer">
         <p className="planner-question-status" aria-live="polite">
-          {canContinue
-            ? answerState === 'unknown'
-              ? <><CircleHelp aria-hidden="true" /> Відповідь зафіксовано; лишилося уточнення</>
-              : <><Check aria-hidden="true" /> Підтверджені дані зафіксовано</>
-            : 'Оберіть відповідь, щоб продовжити'}
+          {answerStatus(canContinue, answerState)}
         </p>
         <button type="button" className="button button-primary planner-continue" disabled={!canContinue} onClick={onContinue}>
           {continueLabel} <ArrowRight aria-hidden="true" />

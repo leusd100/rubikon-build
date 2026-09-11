@@ -106,9 +106,10 @@ export function GrainCandidateComparison({ answers, narrow }: { answers: Answers
               open={expanded.includes(candidate.key)}
               onToggle={(event) => {
                 const open = event.currentTarget.open;
-                setExpanded((current) => (open
-                  ? (current.includes(candidate.key) ? current : [...current, candidate.key])
-                  : current.filter((key) => key !== candidate.key)));
+                setExpanded((current) => {
+                  if (!open) return current.filter((key) => key !== candidate.key);
+                  return current.includes(candidate.key) ? current : [...current, candidate.key];
+                });
               }}
             >
               <summary>{candidate.title}</summary>
