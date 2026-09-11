@@ -73,4 +73,32 @@ describe('plannerScroll', () => {
     expect(find).toHaveBeenCalledOnce();
     expect(heading.scrollIntoView).toHaveBeenCalledOnce();
   });
+
+  it('waits for a target that is still loading, then scrolls to it', () => {
+    vi.useFakeTimers();
+    const heading = new FakeElement(true);
+    let rendered = false;
+    const find = vi.fn(() => (rendered ? asElement(heading) : null));
+    const fallback = new FakeElement(false);
+    scrollAfterRender(find, 'start', () => asElement(fallback));
+    vi.advanceTimersByTime(60 * 4);
+    expect(heading.scrollIntoView).not.toHaveBeenCalled();
+    rendered = true;
+    vi.advanceTimersByTime(60);
+    expect(heading.scrollIntoView).toHaveBeenCalledOnce();
+    expect(heading.focus).toHaveBeenCalledOnce();
+    expect(fallback.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('gives up after about a second and scrolls to the fallback instead', () => {
+    vi.useFakeTimers();
+    const fallback = new FakeElement(false);
+    const find = vi.fn(() => null);
+    scrollAfterRender(find, 'start', () => asElement(fallback));
+    vi.advanceTimersByTime(60 * 25);
+    expect(find).toHaveBeenCalledTimes(21);
+    expect(fallback.scrollIntoView).toHaveBeenCalledOnce();
+    expect(() => scrollAfterRender(() => null)).not.toThrow();
+    vi.advanceTimersByTime(60 * 25);
+  });
 });

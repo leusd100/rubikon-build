@@ -17,7 +17,27 @@ export function scrollToPlannerTarget(target: Element | null | undefined, block:
   if (heading instanceof HTMLElement) heading.focus({ preventScroll: true });
 }
 
-/** Scroll once React has rendered the next step (the target may not exist yet). */
-export function scrollAfterRender(find: () => Element | null, block: ScrollLogicalPosition = 'start') {
-  window.setTimeout(() => scrollToPlannerTarget(find(), block), 60);
+const RENDER_TICK_MS = 60;
+const MAX_WAIT_TICKS = 20;
+
+/**
+ * Scroll once React has rendered the next step. A target that is still loading (the result is
+ * fetched on demand) gets up to ~1.2 s; after that the scroll goes to `fallback`, if any.
+ */
+export function scrollAfterRender(
+  find: () => Element | null,
+  block: ScrollLogicalPosition = 'start',
+  fallback?: () => Element | null,
+) {
+  let ticks = 0;
+  const attempt = () => {
+    const target = find();
+    if (target || ticks >= MAX_WAIT_TICKS) {
+      scrollToPlannerTarget(target ?? fallback?.(), block);
+      return;
+    }
+    ticks += 1;
+    window.setTimeout(attempt, RENDER_TICK_MS);
+  };
+  window.setTimeout(attempt, RENDER_TICK_MS);
 }

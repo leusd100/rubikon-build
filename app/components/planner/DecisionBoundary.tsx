@@ -1,4 +1,5 @@
 import { CircleHelp } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 export type BoundaryList = { label: string; items: readonly string[] };
 
@@ -14,6 +15,7 @@ export function DecisionBoundary({
   undecidedEmpty,
   firstCall,
   gates,
+  note,
 }: {
   eyebrow: string;
   heading: string;
@@ -22,6 +24,8 @@ export function DecisionBoundary({
   undecidedEmpty: string;
   firstCall: BoundaryList;
   gates: BoundaryList;
+  /** Under the columns — the domain's responsibility note. */
+  note?: ReactNode;
 }) {
   return (
     <div className="planner-boundary" aria-labelledby="planner-boundary-title">
@@ -44,6 +48,7 @@ export function DecisionBoundary({
           <ol>{gates.items.map((item, index) => <li key={item}><i aria-hidden="true">{String(index + 1).padStart(2, '0')}</i>{item}</li>)}</ol>
         </div>
       </div>
+      {note}
     </div>
   );
 }

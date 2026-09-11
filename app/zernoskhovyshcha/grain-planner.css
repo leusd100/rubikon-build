@@ -317,6 +317,8 @@
 .grain-planner-root .planner-boundary-intro h3 { margin: 0; font-family: var(--planner-display); font-size: clamp(32px, 3.2vw, 46px); font-weight: 400; line-height: 1.05; letter-spacing: -.02em; }
 .grain-planner-root .planner-boundary-intro p { margin: 0; padding-left: 22px; border-left: 2px solid var(--accent); color: var(--text-secondary); font-size: 16px; line-height: 1.65; }
 .grain-planner-root .planner-boundary-intro .eyebrow + h3 { margin-top: 0; }
+.grain-planner-root .planner-responsibility { max-width: 920px; margin: 18px 0 0; padding: 16px 20px; border-left: 2px solid var(--accent); background: var(--planner-surface); color: var(--text-secondary); font-size: 14px; line-height: 1.65; }
+.grain-planner-root .planner-responsibility b { color: var(--ink); font-weight: 700; }
 .grain-planner-root .planner-boundary-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 32px; }
 .grain-planner-root .planner-boundary-columns > div { padding: clamp(22px, 2.6vw, 32px); border: 1px solid var(--planner-line-strong); border-top: 3px solid var(--accent); background: var(--planner-surface); }
 .grain-planner-root .planner-boundary-columns > div.planner-gates { border-top-color: var(--ink); background: #e8e5de; }
