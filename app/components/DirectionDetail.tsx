@@ -55,7 +55,7 @@ type DirectionHeroProps = {
   accent: string;
   intro: string;
   heroImage: DirectionHeroImageAsset;
-  flagship?: boolean;
+  actions?: DirectionPageConfig['hero']['actions'];
 };
 
 function DirectionHero({
@@ -66,7 +66,7 @@ function DirectionHero({
   accent,
   intro,
   heroImage,
-  flagship = false,
+  actions,
 }: DirectionHeroProps) {
   const serviceData = {
     '@context': 'https://schema.org',
@@ -88,7 +88,7 @@ function DirectionHero({
   };
 
   return (
-    <section className={`service-subhero${flagship ? ' angary-service-subhero' : ''}`}>
+    <section className={`service-subhero${actions?.sectionClassName ? ` ${actions.sectionClassName}` : ''}`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
         <DirectionHeroImage asset={heroImage} />
@@ -100,14 +100,13 @@ function DirectionHero({
         <p className="eyebrow light"><span /> Напрямок {number}</p>
         <h1>{title}<br /><em>{accent}</em></h1>
         <p className="service-subhero-lead">{intro}</p>
-        {flagship ? (
-          <div className="angary-hero-actions">
-            <a className="button button-primary" href="#configurator">
-              Зібрати конфігурацію <span aria-hidden="true">↓</span>
-            </a>
-            <a className="button angary-hero-secondary" href="#inquiry">
-              Обговорити завдання <span aria-hidden="true">↗</span>
-            </a>
+        {actions ? (
+          <div className={actions.className}>
+            {actions.items.map((action) => (
+              <a key={action.href} className={action.className} href={action.href}>
+                {`${action.label} `}<span aria-hidden="true">{action.arrow}</span>
+              </a>
+            ))}
           </div>
         ) : (
           <a className="button button-primary" href="#inquiry">
@@ -279,7 +278,7 @@ export function DirectionPage({
   const direction = getDirection(config.id);
 
   return (
-    <main className={`inner-page${config.id === 'angary' ? ' angary-page' : ''}`} id="main-content">
+    <main className={`inner-page${config.pageClassName ? ` ${config.pageClassName}` : ''}`} id="main-content">
       <DirectionHero
         path={direction.href}
         number={direction.number}
@@ -288,7 +287,7 @@ export function DirectionPage({
         accent={config.hero.accent}
         intro={config.hero.intro}
         heroImage={direction.heroImage}
-        flagship={config.id === 'angary'}
+        actions={config.hero.actions}
       />
 
       {signatureExperience}
@@ -324,8 +323,8 @@ export function DirectionPage({
           {config.cost && <DirectionCostSection {...config.cost} />}
         </>
       )}
-      {config.faq && <DirectionFaq {...config.faq} collapsible={config.id === 'angary'} />}
-      <RelatedDirections id={config.id} compact={config.id === 'angary'} />
+      {config.faq && <DirectionFaq {...config.faq} />}
+      <RelatedDirections id={config.id} compact={config.related?.compact} />
       <InquirySection eyebrow={config.cta.eyebrow} title={config.cta.title} defaultDirection={direction.formLabel} />
     </main>
   );
