@@ -1,3 +1,4 @@
+import { transitionAttachment } from '../inquiry/attachment';
 import type { ConfiguratorState } from './types';
 
 export type HangarAttachmentState =
@@ -24,21 +25,15 @@ export const INITIAL_HANGAR_ATTACHMENT: HangarAttachmentState = {
  * A real business edit re-attaches after an explicit detach. That is the least surprising version
  * of the automatic contract: "Не додавати" applies to the current configuration, while a later
  * parameter change is fresh intent. An unchanged commit is filtered before this transition.
+ *
+ * The state machine itself is the shared inquiry contract (app/lib/inquiry/attachment.ts); for
+ * these four events it is exactly this contract, so the result never carries a planner-only reason.
  */
 export function transitionHangarAttachment(
   current: HangarAttachmentState,
   event: HangarAttachmentEvent,
 ): HangarAttachmentState {
-  switch (event.type) {
-    case 'business-edit':
-      return { status: 'attached', reason: 'business-edit' };
-    case 'explicit-attach':
-      return { status: 'attached', reason: 'explicit-action' };
-    case 'explicit-detach':
-      return { status: 'detached', reason: 'explicit-detach' };
-    case 'presentation-only':
-      return current;
-  }
+  return transitionAttachment(current, event) as HangarAttachmentState;
 }
 
 /** Exact business-state equality. Presentation state is intentionally absent from this type. */
