@@ -1,7 +1,7 @@
 'use client';
 
 import { Bean, Check, CircleHelp, Flower2, Sprout, Vegan, Wheat } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { cropOptions, parseCapacity, separationOptions } from '../../../lib/planner/grain';
 import { CheckOptionGrid } from '../../planner/CheckOptionGrid';
 import { ChoiceGroup } from '../../planner/ChoiceGroup';
@@ -17,8 +17,15 @@ const cropIcons: Record<string, ReactNode> = {
   'Ще не визначили': <CircleHelp />,
 };
 
+/**
+ * The first question is the one the server renders, so its ids are fixed rather than generated:
+ * useId-based ids here intermittently hydrated differently from the server HTML (vinext dev), and
+ * this question appears only once on a page.
+ */
+const IDS = 'grain-storage';
+
 export function StorageQuestion({ answers, answer }: GrainQuestionProps) {
-  const ids = useId();
+  const ids = IDS;
   const capacityId = `${ids}-capacity`;
   const hintId = `${ids}-hint`;
   const errorId = `${ids}-error`;
@@ -38,6 +45,7 @@ export function StorageQuestion({ answers, answer }: GrainQuestionProps) {
       <CheckOptionGrid
         legend="Що потрібно зберігати?"
         variant="tiles"
+        idBase={`${IDS}-crops`}
         options={cropOptions.map((crop) => ({ value: crop, title: crop, icon: cropIcons[crop] }))}
         selected={answers.crops}
         onToggle={toggleCrop}
