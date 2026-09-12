@@ -34,15 +34,15 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   creator: company.name,
-  manifest: '/site.webmanifest?v=frame-01',
+  manifest: '/site.webmanifest?v=rubikon-02',
   icons: {
     icon: [
-      { url: '/favicon.svg?v=frame-01', sizes: 'any', type: 'image/svg+xml' },
-      { url: '/favicon.ico?v=frame-01', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
-      { url: '/favicon-48x48.png?v=frame-01', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon.svg?v=rubikon-02', sizes: 'any', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=rubikon-02', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/favicon-48x48.png?v=rubikon-02', sizes: '48x48', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico?v=frame-01',
-    apple: [{ url: '/apple-touch-icon.png?v=frame-01', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon.ico?v=rubikon-02',
+    apple: [{ url: '/apple-touch-icon.png?v=rubikon-02', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     title: `Промислове будівництво у Дніпрі | ${company.name}`,
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     url: '/',
     images: [
       {
-        url: '/og.jpg',
+        url: '/og.jpg?v=rubikon-02',
         width: 1200,
         height: 630,
         alt: `${company.name} — промислове будівництво у Дніпрі`,
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: `Промислове будівництво у Дніпрі | ${company.name}`,
     description: 'Промислові, складські й аграрні об’єкти під ключ або окремі роботи у форматі підряду та субпідряду.',
-    images: ['/og.jpg'],
+    images: ['/og.jpg?v=rubikon-02'],
   },
 };
 
@@ -89,11 +89,11 @@ const organizationData = {
   url: company.siteUrl,
   logo: {
     '@type': 'ImageObject',
-    url: `${company.siteUrl}/icon-512x512.png?v=frame-01`,
+    url: `${company.siteUrl}/icon-512x512.png?v=rubikon-02`,
     width: 512,
     height: 512,
   },
-  image: `${company.siteUrl}/og.jpg`,
+  image: `${company.siteUrl}/og.jpg?v=rubikon-02`,
   telephone: company.phone.international,
   email: company.email,
   description: company.description,

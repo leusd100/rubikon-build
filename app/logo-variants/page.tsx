@@ -4,14 +4,35 @@ import { siteRoutes } from '../data/navigation';
 
 export const metadata = createBasicPageMetadata({
   title: brandedTitle('Фірмовий знак'),
-  description: 'Обраний логотип RUBIKON BUILD — «Каркас». Версії для темного та світлого тла.',
+  description: 'Затверджений логотип RUBIKON BUILD. Основний горизонтальний знак і компактна літера R.',
   robots: { index: false, follow: false },
 });
 
 const versions = [
-  { key: 'dark', title: 'Темне тло', text: 'Мідний знак і світлий напис. Основна версія для шапки та підвалу сайту.' },
-  { key: 'light', title: 'Світле тло', text: 'Графітовий напис і темніша мідь для світлих поверхонь.' },
-  { key: 'black', title: 'Один колір', text: 'Монохромна версія для документів і друку.' },
+  {
+    asset: 'rubikon-build-horizontal-dark',
+    context: 'dark',
+    title: 'Основний логотип',
+    text: 'Горизонтальна композиція R | RUBIKON / BUILD без слогану. Основна версія для шапки та підвалу сайту.',
+    width: 1270,
+    height: 272,
+  },
+  {
+    asset: 'rubikon-build-horizontal-light',
+    context: 'light',
+    title: 'Для світлого тла',
+    text: 'Той самий горизонтальний логотип із графітовим написом і темнішим помаранчевим акцентом.',
+    width: 1270,
+    height: 272,
+  },
+  {
+    asset: 'rubikon-mark-dark',
+    context: 'dark mark',
+    title: 'Компактний знак R',
+    text: 'Окремий знак для favicon, app icon, avatar та інших контекстів малого розміру. Без декоративного кола.',
+    width: 320,
+    height: 280,
+  },
 ] as const;
 
 export default function LogoVariantsPage() {
@@ -21,22 +42,22 @@ export default function LogoVariantsPage() {
         <div className="shell">
           <a className="logo-lab-back" href={siteRoutes.home}>← Повернутися на сайт</a>
           <p className="eyebrow light"><span /> RUBIKON BUILD · Айдентика</p>
-          <h1>Обраний знак — <em>«Каркас»</em></h1>
-          <p>Варіант 01. Вертикальна опора, верхня балка та діагональ утворюють літеру R.</p>
+          <h1>Затверджений <em>логотип</em></h1>
+          <p>Основний горизонтальний знак і компактна літера R відтворені як чисті векторні контури.</p>
         </div>
       </section>
       <section className="logo-lab-options">
         <div className="shell">
           <div className="logo-options-grid">
-            {versions.map(({ key, title, text }) => (
-              <article className="logo-option" key={key}>
-                <div className={`logo-preview logo-preview-${key === 'dark' ? 'dark' : 'light'}`}>
-                  <Image src={`/brand/rubikon-build-${key}.svg`} width={471} height={100} alt={`RUBIKON BUILD — ${title}`} unoptimized style={{ width: '100%', height: 'auto' }} />
+            {versions.map(({ asset, context, title, text, width, height }) => (
+              <article className="logo-option" key={asset}>
+                <div className={`logo-preview logo-preview-${context.split(' ').join(' logo-preview-')}`}>
+                  <Image src={`/brand/${asset}.svg`} width={width} height={height} alt={`RUBIKON BUILD — ${title}`} unoptimized style={{ width: '100%', height: 'auto' }} />
                 </div>
                 <div className="logo-option-copy">
                   <h2>{title}</h2>
                   <p>{text}</p>
-                  <a className="section-link" href={`/brand/rubikon-build-${key}.svg`} download>Завантажити SVG <span aria-hidden="true">↓</span></a>
+                  <a className="section-link" href={`/brand/${asset}.svg`} download>Завантажити SVG <span aria-hidden="true">↓</span></a>
                 </div>
               </article>
             ))}

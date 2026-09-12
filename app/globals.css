@@ -120,7 +120,7 @@ section[id] { scroll-margin-top: 116px; }
 }
 .nav-wrap { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: clamp(22px, 2.2vw, 40px); }
 .brand-link { display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 44px; }
-.brand { display: block; width: 256px; height: auto; aspect-ratio: 471 / 100; }
+.brand { display: block; width: 256px; height: auto; aspect-ratio: 1270 / 272; }
 .desktop-nav { display: flex; align-items: center; gap: clamp(24px, 2.15vw, 40px); font-size: 16px; font-weight: 720; letter-spacing: .012em; }
 .desktop-nav a { position: relative; white-space: nowrap; }
 .desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: -7px; height: 2px; background: var(--accent); transition: right .25s ease; }
@@ -565,6 +565,7 @@ section[id] { scroll-margin-top: 116px; }
 .logo-preview { min-height: 210px; display: grid; place-items: center; padding: 34px; }
 .logo-preview-dark { color: white; background: #111315; }
 .logo-preview-light { min-height: 142px; color: var(--ink); background: #eeede7; border-bottom: 1px solid var(--line); }
+.logo-preview-mark img { max-width: 180px; }
 .proposal-lockup { display: inline-flex; align-items: center; gap: 20px; }
 .proposal-wordmark { display: grid; }
 .proposal-wordmark b { font: 400 28px/1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: .065em; white-space: nowrap; }
