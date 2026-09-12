@@ -11,7 +11,7 @@ async function loadPersonalizedResult(): Promise<PersonalizedResultModule> {
   try {
     return await import('./GrainPersonalizedResult');
   } catch (error) {
-    const url = error instanceof Error ? error.message.match(/https?:\/\/\S+/)?.[0] : undefined;
+    const url = error instanceof Error ? /https?:\/\/\S+/.exec(error.message)?.[0] : undefined;
     if (url) failedPersonalizedResultUrl = url;
     throw error;
   }

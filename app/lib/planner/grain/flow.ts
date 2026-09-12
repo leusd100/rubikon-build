@@ -44,30 +44,33 @@ export const INITIAL_GRAIN_FLOW: GrainFlowState = {
   changeNotes: [],
 };
 
+function continueGrainFlow(state: GrainFlowState, action: Extract<GrainFlowAction, { type: 'continue' }>): GrainFlowState {
+  if (!isThemeComplete(action.theme, state.answers)) return state;
+  const editing = state.editing;
+  // `state.completed` is the list *before* this theme is added, as in the prototype's closure.
+  const next = editing && state.completed.length === 5 ? GRAIN_READINESS_STEP : action.theme === 4 ? GRAIN_READINESS_STEP : action.theme + 1;
+  return {
+    ...state,
+    committedAnswers: {
+      ...state.answers,
+      crops: [...state.answers.crops],
+      development: [...state.answers.development],
+    },
+    completed: Array.from(new Set([...state.completed, action.theme])),
+    activeTheme: next,
+    editing: null,
+    changeNotes: editing ? explainChanges(editing.snapshot, state.answers) : state.changeNotes,
+    resultVisible: next === GRAIN_READINESS_STEP && editing ? true : state.resultVisible,
+  };
+}
+
 export function reduceGrainFlow(state: GrainFlowState, action: GrainFlowAction): GrainFlowState {
   switch (action.type) {
     case 'answer':
       return { ...state, answers: { ...state.answers, [action.key]: action.value } };
 
-    case 'continue': {
-      if (!isThemeComplete(action.theme, state.answers)) return state;
-      const editing = state.editing;
-      // `state.completed` is the list *before* this theme is added, as in the prototype's closure.
-      const next = editing && state.completed.length === 5 ? GRAIN_READINESS_STEP : action.theme === 4 ? GRAIN_READINESS_STEP : action.theme + 1;
-      return {
-        ...state,
-        committedAnswers: {
-          ...state.answers,
-          crops: [...state.answers.crops],
-          development: [...state.answers.development],
-        },
-        completed: Array.from(new Set([...state.completed, action.theme])),
-        activeTheme: next,
-        editing: null,
-        changeNotes: editing ? explainChanges(editing.snapshot, state.answers) : state.changeNotes,
-        resultVisible: next === GRAIN_READINESS_STEP && editing ? true : state.resultVisible,
-      };
-    }
+    case 'continue':
+      return continueGrainFlow(state, action);
 
     case 'edit':
       return {

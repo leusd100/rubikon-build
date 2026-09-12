@@ -11,7 +11,7 @@ import { siteRoutes } from '../data/navigation';
 import { filterAttributionForConsent, readAttribution } from '../lib/attribution';
 import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
 import { toInquiryAttachmentPayload } from '../lib/inquiry/attachment';
-import { createSubmissionId, submissionIdAfterAttempt } from '../lib/inquiry/submissionId';
+import { createSubmissionId, nextSubmissionIdAfterSuccess } from '../lib/inquiry/submissionId';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
 import { InquiryAttachmentSummary } from './inquiry/InquiryAttachmentSummary';
 
@@ -25,6 +25,10 @@ function value(formData: FormData, key: string) {
 }
 
 const subscribeToHydration = () => () => undefined;
+
+function enabledFieldName(jsReady: boolean, name: string): string | undefined {
+  return jsReady ? name : undefined;
+}
 
 function ContactMethodIcon({ method }: { method: ContactMethod }) {
   if (method === 'Дзвінок') return <Phone aria-hidden="true" />;
@@ -140,7 +144,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
 
     // Retries before success keep the same key. A confirmed save completes that lifecycle, so the
     // next explicit submit on this mounted page is a genuinely new lead with a fresh key.
-    setSubmissionId((current) => submissionIdAfterAttempt(current, true));
+    setSubmissionId(() => nextSubmissionIdAfterSuccess());
     setStatus('Дякуємо! Запит надіслано. Наш спеціаліст найближчим часом зв’яжеться з вами способом, який ви обрали.');
   }
 
@@ -160,12 +164,12 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
           <div className="inquiry-fields inquiry-fields-two">
             <label>
               <span>Ваше ім’я *</span>
-              <input name={jsReady ? 'name' : undefined} type="text" minLength={2} maxLength={80} autoComplete="name" required />
+              <input name={enabledFieldName(jsReady, 'name')} type="text" minLength={2} maxLength={80} autoComplete="name" required />
             </label>
             <label>
               <span>Телефон *</span>
               <input
-                name={jsReady ? 'phone' : undefined}
+                name={enabledFieldName(jsReady, 'phone')}
                 type="tel"
                 inputMode="tel"
                 pattern="\+380[0-9]{9}"
@@ -187,7 +191,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
                 <label key={method}>
                   <input
                     type="radio"
-                    name={jsReady ? 'contactMethod' : undefined}
+                    name={enabledFieldName(jsReady, 'contactMethod')}
                     value={method}
                     required
                     checked={contactMethod === method}
@@ -217,7 +221,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
 
           <label className="inquiry-select">
             <span>Напрям робіт *</span>
-            <select name={jsReady ? 'direction' : undefined} defaultValue={defaultDirection} required>
+            <select name={enabledFieldName(jsReady, 'direction')} defaultValue={defaultDirection} required>
               <option value="" disabled>Оберіть напрям</option>
               {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
             </select>
@@ -227,7 +231,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
             <label htmlFor="inquiry-comment"><span>Коротко про завдання</span></label>
             <textarea
               id="inquiry-comment"
-              name={jsReady ? 'comment' : undefined}
+              name={enabledFieldName(jsReady, 'comment')}
               rows={3}
               maxLength={800}
               placeholder="Що потрібно побудувати або який етап виконати"
@@ -247,22 +251,22 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
               <div className="inquiry-fields inquiry-fields-two">
                 <label className={dimensionsField.mode === 'manual' ? undefined : 'inquiry-field-full'}>
                   <span>Місто або область</span>
-                  <input name={jsReady ? 'location' : undefined} type="text" maxLength={100} autoComplete="address-level1" />
+                  <input name={enabledFieldName(jsReady, 'location')} type="text" maxLength={100} autoComplete="address-level1" />
                 </label>
                 {dimensionsField.mode === 'fixed' && (
-                  <input name={jsReady ? 'dimensions' : undefined} type="hidden" value={dimensionsField.value} />
+                  <input name={enabledFieldName(jsReady, 'dimensions')} type="hidden" value={dimensionsField.value} />
                 )}
                 {dimensionsField.mode === 'manual' && (
                   <label>
                     <span>Орієнтовні розміри</span>
-                    <input key="manual" name={jsReady ? 'dimensions' : undefined} type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
+                    <input key="manual" name={enabledFieldName(jsReady, 'dimensions')} type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
                   </label>
                 )}
               </div>
               <div className="inquiry-fields inquiry-fields-two">
                 <label>
                   <span>Формат співпраці</span>
-                  <select name={jsReady ? 'cooperation' : undefined} defaultValue="">
+                  <select name={enabledFieldName(jsReady, 'cooperation')} defaultValue="">
                     <option value="">Ще не визначено</option>
                     <option>Об’єкт під ключ</option>
                     <option>Окремий етап робіт</option>
@@ -271,7 +275,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
                 </label>
                 <label>
                   <span>Бажаний початок робіт</span>
-                  <input name={jsReady ? 'startDate' : undefined} type="text" maxLength={80} placeholder="Наприклад: осінь 2026" />
+                  <input name={enabledFieldName(jsReady, 'startDate')} type="text" maxLength={80} placeholder="Наприклад: осінь 2026" />
                 </label>
               </div>
             </div>
@@ -287,7 +291,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
         <div className="inquiry-form-section-body inquiry-form-submit-layout">
           <label className={`inquiry-consent${consentError ? ' is-invalid' : ''}`}>
             <input
-              name={jsReady ? 'privacyConsent' : undefined}
+              name={enabledFieldName(jsReady, 'privacyConsent')}
               type="checkbox"
               value="accepted"
               required
@@ -326,7 +330,8 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
 
       <label className="form-trap" aria-hidden="true">
         Сайт компанії
-        <input name={jsReady ? 'companyWebsite' : undefined} type="text" tabIndex={-1} autoComplete="off" />
+        {' '}
+        <input name={enabledFieldName(jsReady, 'companyWebsite')} type="text" tabIndex={-1} autoComplete="off" />
       </label>
 
       <p className={`inquiry-status${status ? ' is-visible' : ''}${statusAction === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
