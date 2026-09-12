@@ -80,7 +80,7 @@ test.describe('Grain Planner stabilization regressions', () => {
     // A failed module request intentionally opens vinext's diagnostic overlay in the CI dev
     // server. Activate the real fallback control through the DOM so that overlay cannot turn this
     // recovery assertion into a pointer-interception test; production has no such dev overlay.
-    await page.getByRole('button', { name: 'Спробувати ще раз' }).evaluate((button) => button.click());
+    await page.getByRole('button', { name: 'Спробувати ще раз' }).evaluate((button) => (button as HTMLElement).click());
     await expect(result(page).locator('.planner-scenario')).toBeVisible();
   });
 

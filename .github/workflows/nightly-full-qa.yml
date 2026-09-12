@@ -1,0 +1,190 @@
+name: Nightly Full QA
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-full-qa
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build nightly artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - name: Lint
+        run: pnpm lint
+      - name: Explicit typecheck
+        run: pnpm typecheck
+      - name: Unit tests with coverage
+        run: pnpm test:unit:coverage
+      - name: Build
+        run: pnpm build
+      - name: Upload production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-production-build
+          path: dist/
+          if-no-files-found: error
+          retention-days: 2
+
+  e2e:
+    name: Nightly E2E (${{ matrix.shard }}/4)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
+      PLAYWRIGHT_BLOB_REPORT: 'true'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: nightly-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run full E2E shard
+        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --shard=${{ matrix.shard }}/4
+      - name: Upload shard report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-e2e-blob-${{ matrix.shard }}
+          path: blob-report/
+          if-no-files-found: error
+          retention-days: 7
+
+  visual:
+    name: Nightly visual (${{ matrix.shard }}/2)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    env:
+      PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
+      PLAYWRIGHT_BLOB_REPORT: 'true'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: nightly-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run site-wide visual shard
+        run: pnpm exec playwright test --project=visual-chromium --shard=${{ matrix.shard }}/2
+      - name: Upload shard report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-visual-blob-${{ matrix.shard }}
+          path: blob-report/
+          if-no-files-found: error
+          retention-days: 7
+
+  accessibility:
+    name: Nightly accessibility
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: nightly-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run accessibility interaction suites
+        run: >-
+          pnpm exec playwright test --project=desktop-chromium
+          tests/e2e/configurator-fullscreen-accessibility.spec.ts
+          tests/e2e/configurator-palette-accessibility.spec.ts
+
+  lighthouse:
+    name: Lighthouse (${{ matrix.profile }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [home, standard, grain]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: nightly-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run Lighthouse profile
+        env:
+          LHCI_PROFILE: ${{ matrix.profile }}
+        run: pnpm exec lhci autorun
+      - name: Upload Lighthouse diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-${{ matrix.profile }}
+          path: .lighthouseci/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  report:
+    name: Nightly Full QA
+    if: ${{ !cancelled() }}
+    needs: [e2e, visual, accessibility, lighthouse]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - name: Download shard reports
+        uses: actions/download-artifact@v5
+        with:
+          pattern: nightly-*-blob-*
+          path: all-blob-reports
+          merge-multiple: true
+      - name: Merge Playwright report
+        run: pnpm exec playwright merge-reports --reporter=html ./all-blob-reports
+      - name: Upload merged report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-playwright-report
+          path: playwright-report/
+          retention-days: 14
+      - name: Preserve full QA result
+        env:
+          E2E: ${{ needs.e2e.result }}
+          VISUAL: ${{ needs.visual.result }}
+          ACCESSIBILITY: ${{ needs.accessibility.result }}
+          LIGHTHOUSE: ${{ needs.lighthouse.result }}
+        run: >-
+          test "$E2E" = success &&
+          test "$VISUAL" = success &&
+          test "$ACCESSIBILITY" = success &&
+          test "$LIGHTHOUSE" = success

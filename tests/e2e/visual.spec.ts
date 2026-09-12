@@ -121,7 +121,9 @@ for (const viewport of viewports) {
     });
 
     test('representative direction cost', async ({ page }) => {
-      await preparePage(page, '/angary');
+      // /angary now has its own editorial architecture; keep cost coverage on a
+      // representative direction page that still renders the shared cost section.
+      await preparePage(page, '/betonni-roboty');
       await expectStableScreenshot(
         page.locator('.cost-section > .shell'),
         `direction-cost-${viewport.name}.png`,

@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL;
 const baseURL = externalBaseURL ?? 'http://127.0.0.1:4173';
+const useProductionBuild = process.env.PLAYWRIGHT_USE_PRODUCTION_BUILD === 'true';
+const useBlobReporter = process.env.PLAYWRIGHT_BLOB_REPORT === 'true';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -10,7 +12,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI
-    ? [['github'], ['html', { open: 'never' }]]
+    ? useBlobReporter
+      ? [['blob']]
+      : [['github'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],
   snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}',
   use: {
@@ -24,7 +28,9 @@ export default defineConfig({
   webServer: externalBaseURL
     ? undefined
     : {
-        command: 'pnpm exec vinext dev --hostname 127.0.0.1 --port 4173',
+        command: useProductionBuild
+          ? 'pnpm start --hostname 127.0.0.1 --port 4173'
+          : 'pnpm exec vinext dev --hostname 127.0.0.1 --port 4173',
         url: baseURL,
         // Deliberately false, including locally. `reuseExistingServer: true` only checks that
         // SOMETHING answers on the port — not that it is this checkout. A dev server left running
