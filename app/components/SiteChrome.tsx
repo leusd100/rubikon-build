@@ -49,9 +49,9 @@ function Brand() {
   return (
     <Image
       className="brand"
-      src="/brand/rubikon-build-dark.svg"
-      width={471}
-      height={100}
+      src="/brand/rubikon-build-horizontal-dark.svg?v=rubikon-05"
+      width={1270}
+      height={272}
       alt={`${company.name} — будівництво та інженерні рішення`}
       priority
       unoptimized
