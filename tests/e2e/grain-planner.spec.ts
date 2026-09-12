@@ -18,7 +18,7 @@ import {
 
 // Runs on desktop-chromium and mobile-chromium. Layout-specific checks guard on the project.
 
-test.describe('Grain Planner preview — scenarios', () => {
+test.describe('Grain Planner — scenarios', () => {
   test('A (known task, simple): two floor approaches with WHY from the client’s answer', async ({ page }, testInfo) => {
     const errors = collectRuntimeErrors(page);
     await openPlanner(page);
@@ -76,7 +76,7 @@ test.describe('Grain Planner preview — scenarios', () => {
   });
 });
 
-test.describe('Grain Planner preview — edits explain their consequences', () => {
+test.describe('Grain Planner — edits explain their consequences', () => {
   test('compact→space, separation required→shared, high→seasonal', async ({ page }) => {
     await openPlanner(page);
     await scenarios.B(page);
@@ -119,7 +119,7 @@ test.describe('Grain Planner preview — edits explain their consequences', () =
   });
 });
 
-test.describe('Grain Planner preview — page contract', () => {
+test.describe('Grain Planner — page contract', () => {
   test('one site header, one h1, one form, no prototype chrome', async ({ page }) => {
     const errors = collectRuntimeErrors(page);
     await openPlanner(page);
@@ -170,7 +170,7 @@ test.describe('Grain Planner preview — page contract', () => {
   });
 });
 
-test.describe('Grain Planner preview — accessibility', () => {
+test.describe('Grain Planner — accessibility', () => {
   test('answers are native radios and checkboxes inside named fieldsets', async ({ page }) => {
     await openPlanner(page);
     const crops = planner(page).getByRole('group', { name: questions.crops, exact: true });
@@ -249,7 +249,7 @@ test.describe('Grain Planner preview — accessibility', () => {
   });
 });
 
-test.describe('Grain Planner preview — desktop layout', () => {
+test.describe('Grain Planner — desktop layout', () => {
   test.skip(({ isMobile }) => isMobile, 'Desktop breakpoints — desktop-chromium project only.');
 
   test('from 1051 px the panel sits beside the consultation; at 1050 px it gives way to the strip', async ({ page }) => {

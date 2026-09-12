@@ -109,7 +109,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
     });
     expect(lead?.details?.attachment?.data?.answers).toMatchObject({ capacity: '12 000', separation: 'required', processing: 'both' });
     expect(lead?.details?.dimensions).toBe('');
-    expect(lead?.sourcePage).toBe('/planner-preview');
+    expect(lead?.sourcePage).toBe('/zernoskhovyshcha');
   });
 
   test('«Не додавати» takes the brief out of the lead', async ({ page }) => {
