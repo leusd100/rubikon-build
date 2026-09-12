@@ -16,10 +16,13 @@ export const company = {
     display: '+38 068 261 42 64',
     encodedInternational: '%2B380682614264',
   },
+  // The one public mailbox. Other role addresses are not public channels yet.
+  email: 'office@rubikonbuild.com',
 } as const;
 
 export const companyContactLinks = {
   phone: `tel:${company.phone.international}`,
+  email: `mailto:${company.email}`,
   telegram: `https://t.me/+${company.phone.digits}`,
   whatsapp: `https://wa.me/${company.phone.digits}`,
   viber: `viber://chat?number=${company.phone.encodedInternational}`,

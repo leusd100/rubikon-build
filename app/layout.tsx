@@ -95,6 +95,7 @@ const organizationData = {
   },
   image: `${company.siteUrl}/og.jpg`,
   telephone: company.phone.international,
+  email: company.email,
   description: company.description,
   areaServed: company.serviceAreas.map((name, index) => ({
     '@type': index === 0 ? 'AdministrativeArea' : 'Country',

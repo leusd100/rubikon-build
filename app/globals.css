@@ -142,6 +142,8 @@ section[id] { scroll-margin-top: 116px; }
 .messenger-link span { font-size: 10px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
 .header-messengers .messenger-link { width: 44px; border-left: 1px solid rgba(255,255,255,.18); }
 .header-messengers .messenger-link span { display: none; }
+.header-email { width: 44px; border-left: 1px solid rgba(255,255,255,.18); }
+.header-email svg { width: 18px; height: 18px; color: var(--accent); stroke-width: 1.7; }
 .messenger-link:hover, .messenger-link:focus-visible { color: white; background: rgba(255,255,255,.08); }
 .messenger-link:hover .messenger-brand-icon, .messenger-link:focus-visible .messenger-brand-icon { transform: translateY(-1px) scale(1.08); filter: saturate(1.15) brightness(1.08); }
 .messenger-link:active .messenger-brand-icon { transform: translateY(0) scale(.96); }
@@ -162,6 +164,8 @@ section[id] { scroll-margin-top: 116px; }
   .mobile-menu nav .mobile-messengers .messenger-link { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(255,255,255,.15); font-size: 8px; }
   .mobile-menu nav .mobile-messengers .messenger-link:hover { border-color: var(--accent); }
 .mobile-menu nav .mobile-messengers .messenger-brand-icon { width: 22px; height: 22px; }
+.mobile-menu nav .mobile-email { border-top: 1px solid rgba(255,255,255,.12); font-size: 14px; font-weight: 600; letter-spacing: .01em; }
+.mobile-menu nav .mobile-email svg { width: 18px; height: 18px; color: var(--accent); stroke-width: 1.7; }
 
 .hero { position: relative; min-height: 900px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #101012; }
 .hero-media { position: absolute; z-index: 0; inset: 0; }
@@ -221,6 +225,9 @@ section[id] { scroll-margin-top: 116px; }
 .hero-messengers .messenger-link + .messenger-link { border-left: 1px solid rgba(255,255,255,.15); }
 .hero-messengers .messenger-link span { display: inline; color: rgba(255,255,255,.72); font-size: 10px; letter-spacing: .025em; text-transform: none; }
 .hero-messengers .messenger-brand-icon { width: 18px; height: 18px; }
+.hero-email { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 7px; border-bottom: 1px solid rgba(255,255,255,.15); }
+.hero-email svg { width: 17px; height: 17px; color: var(--accent); stroke-width: 1.7; }
+.hero-email span { color: rgba(255,255,255,.72); font-size: 10px; letter-spacing: .025em; text-transform: none; }
 .hero-signature { position: absolute; z-index: 2; right: -9px; top: 49%; color: rgba(255,255,255,.57); font-size: 9px; font-weight: 800; letter-spacing: .28em; writing-mode: vertical-rl; transform: rotate(180deg); }
 
 .services { background: var(--surface-muted); }
@@ -360,9 +367,10 @@ section[id] { scroll-margin-top: 116px; }
 .pending-contact b small { color: #8c958e; font: 500 8px/1.35 var(--font-manrope), sans-serif; letter-spacing: .08em; }
 .pending-contact b svg { width: 20px; height: 20px; color: var(--accent); stroke-width: 1.6; }
 .pending-contact i { color: #8c958e; font: 500 10px/1.5 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
-.contact-phone { align-items: center; transition: color var(--duration-fast) ease; }
-.contact-phone i { color: white; font-size: 14px; font-style: normal; letter-spacing: .02em; text-transform: none; }
-.contact-phone:hover { color: var(--accent); }
+.contact-phone, .contact-email { align-items: center; transition: color var(--duration-fast) ease; }
+.contact-phone i, .contact-email i { color: white; font-size: 14px; font-style: normal; letter-spacing: .02em; text-transform: none; }
+.contact-email i { min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.contact-phone:hover, .contact-email:hover { color: var(--accent); }
 .contact-messenger-row { align-items: center; }
 .contact-messengers { display: flex; gap: 8px; }
 .contact-messengers .messenger-link { width: var(--control-min-height); height: var(--control-min-height); border: 1px solid rgba(255,255,255,.17); }
@@ -714,8 +722,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-nav a, .footer-directions a { white-space: nowrap; transition: color var(--duration-fast) ease; }
 .footer-nav a:hover, .footer-directions a:hover { color: white; }
 .footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
-.footer-phone { display: inline-flex; align-items: center; gap: 9px; color: white; font-size: 13px; font-weight: 700; letter-spacing: .025em; }
-.footer-phone svg { width: 17px; height: 17px; color: var(--accent); stroke-width: 1.7; }
+.footer-phone, .footer-email { display: inline-flex; align-items: center; gap: 9px; color: white; font-size: 13px; font-weight: 700; letter-spacing: .025em; }
+.footer-phone svg, .footer-email svg { width: 17px; height: 17px; color: var(--accent); stroke-width: 1.7; }
 .footer-messengers { display: flex; gap: 7px; }
 .footer-messengers .messenger-link { width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.16); }
 .footer-messengers .messenger-brand-icon { width: 19px; height: 19px; }
@@ -834,14 +842,16 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .contact-title-break { display: none; }
   .contact-copy > p:not(.eyebrow) { max-width: 720px; margin-bottom: 0; }
   .contact-links { align-self: stretch; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .contact-links .pending-contact:first-child { padding-right: clamp(22px, 3vw, 36px); }
-  .contact-links .pending-contact:last-child { padding-left: clamp(22px, 3vw, 36px); border-left: 1px solid rgba(255,255,255,.15); }
+  .contact-links .contact-phone { padding-right: clamp(22px, 3vw, 36px); }
+  .contact-links .contact-messenger-row { padding-left: clamp(22px, 3vw, 36px); border-left: 1px solid rgba(255,255,255,.15); }
+  .contact-links .contact-email { grid-column: 1 / -1; }
   .nav-wrap { gap: 10px; }
   .brand { width: 226px; }
   .desktop-nav { gap: clamp(11px, 1.25vw, 14px); font-size: clamp(14px, 1.45vw, 15px); }
   .header-contact { padding-inline: 10px; }
   .header-phone { min-width: 150px; }
   .header-messengers .messenger-link { width: 40px; }
+  .header-email { width: 40px; }
 }
 
 /* Nav switches to the mobile menu at the wider max-width:1000px block below (960 < 1000, so
@@ -862,7 +872,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   /* Spans both rows so it starts level with the brand instead of leaving the whole
      top-right corner empty above it. */
   .footer-contact-stack { grid-column: 3; grid-row: 1 / span 2; justify-self: end; min-width: 0; }
-  .footer-phone { white-space: nowrap; }
+  .footer-phone, .footer-email { white-space: nowrap; }
 }
 
 /* The compact desktop header reaches its safe minimum at 1001px. */
@@ -964,7 +974,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .inquiry-form-submit-layout { grid-template-columns: 1fr; gap: 22px; }
   .inquiry-status { padding-inline: 20px; }
   .contact-links { display: block; }
-  .contact-links .pending-contact:first-child, .contact-links .pending-contact:last-child { padding-inline: 0; border-left: 0; }
+  .pending-contact { padding-block: 13px; }
+  .contact-links .contact-phone, .contact-links .contact-messenger-row { padding-inline: 0; border-left: 0; }
   .subhero, .service-subhero { min-height: 660px; height: auto; }
   .subhero-grid { background-size: 46px 46px; }
   .directions-hero-sequence-image { object-position: var(--directions-hero-image-position-mobile, center 60%); }
@@ -1018,12 +1029,13 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .footer-nav { grid-column: 1; }
   .footer-directions { grid-column: 2; }
   .footer-group-title { margin-bottom: 4px; }
-  .footer-contact-stack { grid-column: 1 / -1; grid-row: 3; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-items: start; justify-self: stretch; gap: 16px 18px; margin-top: 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.13); }
+  .footer-contact-stack { grid-column: 1 / -1; grid-row: 3; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-items: start; justify-self: stretch; gap: 10px 18px; margin-top: 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.13); }
   .footer-phone { grid-column: 1; grid-row: 1; min-height: 42px; margin: 0; }
+  .footer-email { grid-column: 1 / -1; grid-row: 2; min-height: 42px; margin: 0; }
   .footer-messengers { grid-column: 2; grid-row: 1; justify-self: end; margin: 0; }
   .footer-messengers .messenger-link { width: 42px; height: 42px; }
-  .footer-legal { grid-column: 1 / -1; grid-row: 2; width: 100%; margin: 2px 0 0; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.1); }
-  .footer-contact-stack > span { grid-column: 1 / -1; grid-row: 3; }
+  .footer-legal { grid-column: 1 / -1; grid-row: 3; width: 100%; margin: 2px 0 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); }
+  .footer-contact-stack > span { grid-column: 1 / -1; grid-row: 4; }
   .cookie-banner { right: 16px; bottom: 16px; width: calc(100% - 32px); max-height: calc(100vh - 24px); grid-template-columns: 1fr; gap: 20px; padding: 22px; }
   .cookie-actions { grid-template-columns: 1fr; }
   .cookie-toggle-options { max-width: none; }
@@ -1078,11 +1090,13 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
      place; computed output is unchanged; margin-top is unset here so it keeps inheriting the
      760px tier's 6px). */
   .mobile-menu summary { min-width: 82px; padding-inline: 10px; }
-  .footer-contact-stack { gap: 14px 12px; }
-  .footer-phone { font-size: 12px; }
+  .footer-contact-stack { gap: 10px 12px; }
+  .footer-phone, .footer-email { font-size: 12px; }
   .footer-messengers .messenger-link { width: 38px; height: 38px; }
-  .contact-messenger-row { align-items: flex-start; flex-direction: column; gap: 12px; }
-  .contact-messengers { margin-left: 33px; }
+  /* One row, as on every wider phone: the label, then the three 44 px buttons packed a little
+     closer. Below ~354 px there is no room for both, so the buttons wrap under the label. */
+  .contact-messenger-row { flex-wrap: wrap; gap: 12px; }
+  .contact-messengers { gap: 6px; }
 }
 
 /* Compact contact mode for low-height laptop viewports. */
