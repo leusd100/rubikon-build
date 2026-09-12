@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { releaseFlags } from '../../../app/data/releaseFlags';
+import { grainPlannerRouteMode } from '../../../app/data/releaseFlags';
 import robots from '../../../app/robots';
 import sitemap from '../../../app/sitemap';
 
@@ -23,15 +23,16 @@ describe('/planner-preview stays a private review surface', () => {
     expect(page).toMatch(/robots:\s*\{\s*index:\s*false,\s*follow:\s*false\s*\}/);
   });
 
-  it('has switched /zernoskhovyshcha to the planner composition (Phase 5)', () => {
-    expect(releaseFlags.grainPlannerOnZernoskhovyshcha).toBe(true);
+  it('selects the planner with the flag on and the legacy direction with it off', () => {
+    expect(grainPlannerRouteMode(true)).toBe('planner');
+    expect(grainPlannerRouteMode(false)).toBe('legacy');
   });
 
-  it('loads the grain stylesheets on /zernoskhovyshcha exactly when the flag is on', () => {
+  it('keeps both route branches available for the release flag', () => {
     const route = readFileSync(join(process.cwd(), 'app', 'zernoskhovyshcha', 'page.tsx'), 'utf8');
-    const imports = ['grain-planner', 'grain-editorial'].map((name) => new RegExp(`^import '\\./${name}\\.css';$`, 'm').test(route));
-    const on = releaseFlags.grainPlannerOnZernoskhovyshcha;
-    expect(imports).toEqual([on, on]);
+    expect(route).toContain("grainPlannerRouteMode(releaseFlags.grainPlannerOnZernoskhovyshcha) === 'planner'");
+    expect(route).toContain('<GrainPlannerPage />');
+    expect(route).toContain("<DirectionPage config={getDirectionPage('zernoskhovyshcha')} />");
   });
 
   it('loads both grain stylesheets on the preview', () => {

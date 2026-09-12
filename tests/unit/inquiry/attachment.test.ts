@@ -174,4 +174,18 @@ describe('parseLeadAttachment', () => {
     expect(JSON.stringify(atLimit)).toHaveLength(INQUIRY_ATTACHMENT_DATA_LIMIT);
     expect(parseLeadAttachment({ kind: 'grain-brief', data: atLimit }, 'text', validators)).toHaveProperty('data', atLimit);
   });
+
+  it('gracefully drops pathologically deep data when serialization overflows', () => {
+    const root: Record<string, unknown> = { ok: true };
+    let cursor = root;
+    for (let index = 0; index < 50_000; index += 1) {
+      const child: Record<string, unknown> = {};
+      cursor.child = child;
+      cursor = child;
+    }
+
+    expect(() => parseLeadAttachment({ kind: 'grain-brief', data: root }, 'text', validators)).not.toThrow();
+    expect(parseLeadAttachment({ kind: 'grain-brief', data: root }, 'text', validators))
+      .toMatchObject({ kind: 'grain-brief', dataDropped: 'invalid' });
+  });
 });

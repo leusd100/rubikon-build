@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(join(process.cwd(), 'app', 'zernoskhovyshcha', 'grain-planner.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const editorialCss = readFileSync(join(process.cwd(), 'app', 'zernoskhovyshcha', 'grain-editorial.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
 /** Every style rule's selectors, with the at-rule (if any) each sits in. Keyframe steps are skipped. */
 function styleRuleSelectors(source: string) {
@@ -60,5 +61,10 @@ describe('grain-planner.css', () => {
       expect(lastMotionQuery, `motion outside the no-preference query: ${block.trim().slice(0, 80)}`).toBeGreaterThan(-1);
     }
     expect(animated.length).toBeGreaterThan(0);
+  });
+
+  it('uses the AA-safe dark accent for small editorial step numbers', () => {
+    expect(editorialCss).toMatch(/\.direction-editorial-points span\s*\{[^}]*color:\s*var\(--accent-dark\)/);
+    expect(editorialCss).not.toMatch(/\.direction-editorial-points span\s*\{[^}]*color:\s*var\(--accent\);/);
   });
 });

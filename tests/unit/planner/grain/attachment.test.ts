@@ -165,15 +165,27 @@ describe('grain attachment lifecycle', () => {
     expect(open.status).toEqual({ status: 'detached', reason: 'explicit-detach' });
   });
 
-  it('attaches nothing for an edit made before the first reveal', () => {
+  it('attaches when a readiness edit is the action that first reveals the result', () => {
     const earlyEdit = run([
       ...answerAll(fixtures.A),
       { type: 'edit', theme: 0 },
       { type: 'answer', key: 'capacity', value: '5000' },
       { type: 'continue', theme: 0 },
     ]);
-    expect(earlyEdit.status).toEqual({ status: 'untouched', reason: null });
-    expect(run([reveal], earlyEdit).status).toEqual({ status: 'attached', reason: 'result-reveal' });
+    expect(earlyEdit.status).toEqual({ status: 'attached', reason: 'result-reveal' });
+    expect(run([reveal], earlyEdit).status).toBe(earlyEdit.status);
+  });
+
+  it('uses the canonical reveal attachment transition when a readiness edit first shows the result', () => {
+    const ready = run(answerAll(fixtures.A));
+    const edited = run([
+      { type: 'edit', theme: 0 },
+      { type: 'answer', key: 'capacity', value: '5000' },
+      { type: 'continue', theme: 0 },
+    ], ready);
+
+    expect(edited.flow.resultVisible).toBe(true);
+    expect(edited.status).toEqual({ status: 'attached', reason: 'result-reveal' });
   });
 
   it('attaches explicitly after «Не додавати» (the handoff CTA)', () => {

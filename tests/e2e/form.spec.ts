@@ -93,6 +93,47 @@ test.describe('project inquiry form', () => {
     await expect(status).toHaveClass(/is-error/);
     await expect(status.locator('a[href="tel:+380682614264"]')).toBeVisible();
   });
+
+  test('keeps one submissionId through retries, then rotates it after confirmed success', async ({ page }) => {
+    const ids: string[] = [];
+    await page.route('**/api/leads', async (route) => {
+      ids.push((route.request().postDataJSON() as { submissionId: string }).submissionId);
+      const ok = ids.length > 1;
+      await route.fulfill({
+        status: ok ? 200 : 500,
+        contentType: 'application/json',
+        body: JSON.stringify(ok ? { ok: true, id: ids.length, isNew: true } : { ok: false, error: 'server' }),
+      });
+    });
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+    const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+
+    await submit.click();
+    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    await submit.click();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+    await submit.click();
+    await expect.poll(() => ids.length).toBe(3);
+
+    expect(ids[0]).toBe(ids[1]);
+    expect(ids[2]).not.toBe(ids[1]);
+  });
+
+  test('a double click while one request is in flight sends one lead', async ({ page }) => {
+    const ids: string[] = [];
+    await page.route('**/api/leads', async (route) => {
+      ids.push((route.request().postDataJSON() as { submissionId: string }).submissionId);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 1, isNew: true }) });
+    });
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).dblclick();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+    expect(ids).toHaveLength(1);
+  });
 });
 
 test.describe('advertising-gated attribution on submit', () => {
