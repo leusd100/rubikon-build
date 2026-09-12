@@ -42,6 +42,41 @@ test.describe('the corporate email', () => {
     expect(await page.content()).not.toMatch(/\b(info|sales|projects)@rubikonbuild\.com/);
   });
 
+  test('the desktop header has a mail button next to the messengers, without crowding it', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'below 1000 px the header contacts move into the menu');
+    for (const width of [1001, 1100, 1181, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/', { waitUntil: 'load' });
+      const button = page.locator('.header-contacts').getByRole('link', { name: EMAIL });
+      await expect(button, `${width}px`).toHaveAttribute('href', MAILTO);
+      await expect(button, `${width}px`).toBeVisible();
+      const fits = await page.evaluate(() => {
+        const contacts = document.querySelector('.header-contacts')?.getBoundingClientRect();
+        const brand = document.querySelector('.site-header .brand-link')?.getBoundingClientRect();
+        return Boolean(contacts && brand && contacts.right <= document.documentElement.clientWidth && Math.abs(contacts.top - brand.top) < brand.height);
+      });
+      expect(fits, `${width}px: contacts stay on the brand's row inside the viewport`).toBe(true);
+      expect(await horizontalOverflow(page), `${width}px`).toBeLessThanOrEqual(0);
+    }
+  });
+
+  test('the homepage contact card offers it under the messengers', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'below 520 px the card keeps only the phone');
+    await page.goto('/', { waitUntil: 'load' });
+    const link = page.locator('.hero-contact-card').getByRole('link', { name: EMAIL });
+    await expect(link).toHaveAttribute('href', MAILTO);
+    await expect(link).toBeVisible();
+  });
+
+  test('the mobile menu lists it after the messengers', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'on phones the menu stands in for the header contacts');
+    await page.goto('/', { waitUntil: 'load' });
+    await page.locator('.mobile-menu summary').click();
+    const link = page.locator('.mobile-menu nav').getByRole('link', { name: EMAIL });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', MAILTO);
+  });
+
   test('no horizontal overflow at 360 px, loaded fresh at that width', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'phone widths');
     await page.setViewportSize({ width: 360, height: 800 });

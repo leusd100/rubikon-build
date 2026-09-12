@@ -1,3 +1,4 @@
+import { Mail } from 'lucide-react';
 import { DirectionImageCards, EngagementFormatCards } from './components/DirectionCards';
 import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
 import { HomeHeroVideo } from './components/HomeHeroVideo';
@@ -44,8 +45,12 @@ export default function Home() {
               <span className="hero-contact-action"><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
             </a>
             <div className="hero-contact-options">
-              <span>Або напишіть у месенджер</span>
+              <span>Або напишіть</span>
               <MessengerLinks className="hero-messengers" showFullLabels />
+              <a className="messenger-link hero-email" href={companyContactLinks.email}>
+                <Mail aria-hidden="true" />
+                <span>{company.email}</span>
+              </a>
             </div>
           </div>
         </div>

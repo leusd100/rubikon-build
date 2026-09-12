@@ -126,6 +126,9 @@ export function SiteHeader() {
             <span><small>Телефон</small><strong>{company.phone.display}</strong></span>
           </a>
           <MessengerLinks className="header-messengers" />
+          <a className="messenger-link header-email" href={companyContactLinks.email} aria-label={`Email, ${company.email}`} title={company.email}>
+            <Mail aria-hidden="true" />
+          </a>
         </div>
         <MobileMenu>
           <summary aria-label="Відкрити або закрити меню">
@@ -137,6 +140,7 @@ export function SiteHeader() {
               <a href={item.href} key={item.href}><small>{String(index + 1).padStart(2, '0')}</small> {item.label}</a>
             ))}
             <MessengerLinks className="mobile-messengers" />
+            <a className="mobile-email" href={companyContactLinks.email}><Mail aria-hidden="true" /> {company.email}</a>
           </nav>
         </MobileMenu>
       </div>
