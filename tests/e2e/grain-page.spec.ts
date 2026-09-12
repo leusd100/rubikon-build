@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { GRAIN_RESPONSIBILITY_STATEMENT } from '../../app/data/grainPage';
-import { PREVIEW, collectRuntimeErrors, horizontalOverflow, openPlanner, result, reveal, scenarios } from './grain-planner.helpers';
+import { GRAIN_PAGE, PREVIEW, collectRuntimeErrors, horizontalOverflow, openPlanner, result, reveal, scenarios } from './grain-planner.helpers';
 
 /** The main bands in DOM order, named by what they are. */
 async function bands(page: Page) {
@@ -17,8 +17,8 @@ async function bands(page: Page) {
   }));
 }
 
-test.describe('Grain page composition on /planner-preview', () => {
-  test('is the full future page, in order, with one h1, one form and one #inquiry', async ({ page }) => {
+test.describe('Grain page composition on /zernoskhovyshcha', () => {
+  test('is the full page, in order, indexable, with one h1, one form and one #inquiry', async ({ page }) => {
     const errors = collectRuntimeErrors(page);
     await openPlanner(page);
     expect(await bands(page)).toEqual(['hero', 'planner', 'result', 'implementation', 'process', 'faq', 'related', 'inquiry']);
@@ -31,6 +31,7 @@ test.describe('Grain page composition on /planner-preview', () => {
       return Boolean(planner && resultBand && planner.nextElementSibling === resultBand && !planner.contains(resultBand));
     })).toBe(true);
     await expect(page.getByText('Реальні об’єкти')).toHaveCount(0);
+    expect(await page.evaluate(() => document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '')).not.toMatch(/noindex/);
     expect(errors).toEqual([]);
   });
 
@@ -62,6 +63,28 @@ test.describe('Grain page composition on /planner-preview', () => {
     expect(['', '#planner', '#result', '#inquiry']).toContain(url.hash);
   });
 
+  test('keeps personal answers out of the server HTML and out of browser storage', async ({ page }) => {
+    await openPlanner(page);
+    await scenarios.B(page);
+    await reveal(page);
+    const headline = 'окремі партії · очищення + сушіння';
+    await expect(page.locator('form.inquiry-form .inquiry-config-brief strong')).toContainText(headline);
+    // The page is statically rendered: what a crawler (or the next visitor) gets is the initial state.
+    const html = await (await page.request.get(GRAIN_PAGE)).text();
+    expect(html).not.toContain(headline);
+    expect(html).toContain('Що потрібно зберігати?');
+    // The brief and the attached card render only in the browser. The RSC payload does name the
+    // CTA's gate selector, so the elements are looked for in the markup, scripts aside.
+    const markup = await page.evaluate((source) => {
+      const doc = new DOMParser().parseFromString(source, 'text/html');
+      for (const script of doc.querySelectorAll('script')) script.remove();
+      return doc.documentElement.outerHTML;
+    }, html);
+    for (const element of ['data-planner-brief', 'inquiry-config-brief']) expect(markup).not.toContain(element);
+    const stored = await page.evaluate(() => [...Object.keys(localStorage), ...Object.keys(sessionStorage)].filter((key) => /planner|grain|brief|inquiry/i.test(key)));
+    expect(stored).toEqual([]);
+  });
+
   test('never skips a heading level', async ({ page }) => {
     await openPlanner(page);
     const levels = await page.locator('main').locator('h1, h2, h3, h4, h5, h6').evaluateAll((headings) => headings.map((heading) => Number(heading.tagName.slice(1))));
@@ -78,9 +101,8 @@ test.describe('Grain page composition on /planner-preview', () => {
   });
 });
 
-// The spec's budget — 7.3 screens at 1440×900, 11.7 at 390×844 — is the height of the page the
-// planner replaces. Measuring that page in the same run keeps the check honest under any font
-// rendering (CI fonts are wider than macOS ones): the new composition may not be taller than it.
+// The spec's budget before the planner is used — 7.3 screens at 1440×900, 11.7 at 390×844 — is the
+// height of the page the planner replaced (measured in Phase 4: 7.31 and 11.70 screens).
 async function settledHeight(page: Page, path: string) {
   await page.goto(path, { waitUntil: 'load' });
   const essential = page.getByRole('button', { name: 'Лише необхідні', exact: true });
@@ -90,22 +112,20 @@ async function settledHeight(page: Page, path: string) {
 }
 
 test.describe('Grain page height budget (before the planner is used)', () => {
-  test('desktop 1440×900: no taller than the page it replaces (spec budget 7.3 screens)', async ({ page, isMobile }) => {
+  test('desktop 1440×900: within 7.3 screens', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop budget');
     await page.setViewportSize({ width: 1440, height: 900 });
-    const current = await settledHeight(page, '/zernoskhovyshcha');
-    const composition = await settledHeight(page, PREVIEW);
-    test.info().annotations.push({ type: 'height', description: `composition ${(composition / 900).toFixed(2)} screens, current page ${(current / 900).toFixed(2)}` });
-    expect(composition).toBeLessThanOrEqual(current);
+    const screens = (await settledHeight(page, GRAIN_PAGE)) / 900;
+    test.info().annotations.push({ type: 'height', description: `${screens.toFixed(2)} screens` });
+    expect(screens, 'screens at 1440×900').toBeLessThanOrEqual(7.3);
   });
 
-  test('phone 390×844: no taller than the page it replaces (spec budget 11.7 screens), no overflow at 390 or 360', async ({ page, isMobile }) => {
+  test('phone 390×844: within 11.7 screens, no overflow at 390 or 360', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'phone budget');
     await page.setViewportSize({ width: 390, height: 844 });
-    const current = await settledHeight(page, '/zernoskhovyshcha');
-    const composition = await settledHeight(page, PREVIEW);
-    test.info().annotations.push({ type: 'height', description: `composition ${(composition / 844).toFixed(2)} screens, current page ${(current / 844).toFixed(2)}` });
-    expect(composition).toBeLessThanOrEqual(current);
+    const screens = (await settledHeight(page, GRAIN_PAGE)) / 844;
+    test.info().annotations.push({ type: 'height', description: `${screens.toFixed(2)} screens` });
+    expect(screens, 'screens at 390×844').toBeLessThanOrEqual(11.7);
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
     await page.setViewportSize({ width: 360, height: 800 });
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
@@ -116,7 +136,7 @@ test.describe('Grain page without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
   test('the server HTML already carries the page', async ({ page }) => {
-    await page.goto(PREVIEW, { waitUntil: 'load' });
+    await page.goto(GRAIN_PAGE, { waitUntil: 'load' });
     await expect(page.locator('h1')).toHaveCount(1);
     const jsonLd = (await page.locator('script[type="application/ld+json"]').allTextContents()).join('\n');
     expect(jsonLd).toContain('"@type":"Service"');
@@ -133,14 +153,11 @@ test.describe('Grain page without JavaScript', () => {
   });
 });
 
-test.describe('/zernoskhovyshcha while the flag is off', () => {
-  test('is still the current page — no planner, the old bands, the old FAQ', async ({ page }) => {
-    await page.goto('/zernoskhovyshcha', { waitUntil: 'load' });
-    await expect(page.locator('#planner')).toHaveCount(0);
-    await expect(page.locator('#result')).toHaveCount(0);
-    await expect(page.locator('main')).toContainText('Склад робіт');
-    await expect(page.locator('.cost-section')).toHaveCount(1);
-    await expect(page.locator('main')).toContainText('лише за орієнтовною місткістю');
+test.describe('/planner-preview after the switch', () => {
+  test('renders the same composition and stays noindex', async ({ page }) => {
+    await openPlanner(page, PREVIEW);
+    expect(await bands(page)).toEqual(['hero', 'planner', 'result', 'implementation', 'process', 'faq', 'related', 'inquiry']);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
     await expect(page.locator('h1')).toHaveCount(1);
   });
 });

@@ -1,10 +1,12 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+/** The composition's production route since Phase 5; the noindex preview renders the same page. */
+export const GRAIN_PAGE = '/zernoskhovyshcha';
 export const PREVIEW = '/planner-preview';
 
-/** Opens the preview and settles the consent banner (client-only, so this also proves hydration). */
-export async function openPlanner(page: Page) {
-  await page.goto(PREVIEW, { waitUntil: 'load' });
+/** Opens the grain page and settles the consent banner (client-only, so this also proves hydration). */
+export async function openPlanner(page: Page, path: string = GRAIN_PAGE) {
+  await page.goto(path, { waitUntil: 'load' });
   const essential = page.getByRole('button', { name: 'Лише необхідні', exact: true });
   await expect(essential).toBeVisible({ timeout: 15_000 });
   await essential.click();

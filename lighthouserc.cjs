@@ -12,15 +12,10 @@ const profiles = {
     maxTotalBytes: 900_000,
     url: `${baseUrl}/angary`,
   },
-  // The grain composition: /planner-preview while releaseFlags.grainPlannerOnZernoskhovyshcha is
-  // off (Phase 4); the PR that turns the flag on points this at /zernoskhovyshcha.
+  // The Grain Planner composition on its production route (Phase 5).
   grain: {
     maxTotalBytes: 900_000,
-    url: `${baseUrl}/planner-preview`,
-    // The preview is noindex by design, so «Page is blocked from indexing» is the intended state
-    // there, not an SEO defect; every other SEO audit still counts. Drop this when the profile
-    // moves to /zernoskhovyshcha.
-    skipAudits: ['is-crawlable'],
+    url: `${baseUrl}/zernoskhovyshcha`,
   },
 };
 
@@ -46,7 +41,6 @@ module.exports = {
       settings: {
         chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage',
         maxWaitForLoad: 90_000,
-        ...(profile.skipAudits ? { skipAudits: profile.skipAudits } : {}),
       },
     },
     assert: {

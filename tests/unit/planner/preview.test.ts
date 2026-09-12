@@ -23,8 +23,8 @@ describe('/planner-preview stays a private review surface', () => {
     expect(page).toMatch(/robots:\s*\{\s*index:\s*false,\s*follow:\s*false\s*\}/);
   });
 
-  it('does not switch /zernoskhovyshcha to the planner yet', () => {
-    expect(releaseFlags.grainPlannerOnZernoskhovyshcha).toBe(false);
+  it('has switched /zernoskhovyshcha to the planner composition (Phase 5)', () => {
+    expect(releaseFlags.grainPlannerOnZernoskhovyshcha).toBe(true);
   });
 
   it('loads the grain stylesheets on /zernoskhovyshcha exactly when the flag is on', () => {

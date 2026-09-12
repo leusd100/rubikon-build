@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { directionPages } from '../../../app/data/directionPages';
 import { directions } from '../../../app/data/directions';
 import { GRAIN_RESPONSIBILITY_STATEMENT, grainPage } from '../../../app/data/grainPage';
+import { relatedDirections } from '../../../app/data/relatedDirections';
 
 // Decision 1 of the Grain Planner Implementation Spec v1, as the owner approved it.
 const DECISION_1 = 'RUBIKON BUILD може вести комплексну реалізацію зерносховища, координуючи будівельну частину, технологічні вимоги та стики між системами; спеціалізоване обладнання, його підбір і монтаж за потреби виконують профільні партнери в межах узгодженого рішення.';
@@ -63,7 +64,8 @@ describe('grain page copy', () => {
 
   it('keeps concrete and steel and adds roofing to the related directions', () => {
     const ids = new Set<string>(directions.map((direction) => direction.id));
-    const related = config.related?.items ?? [];
+    expect(config.related?.compact).toBe(true);
+    const related = config.related?.items ?? relatedDirections[config.id];
     expect(related.map(({ id }) => id)).toEqual(['betonni-roboty', 'metalokonstruktsii', 'pokrivelni-roboty']);
     for (const { id, relation } of related) {
       expect(ids.has(id)).toBe(true);
@@ -76,7 +78,7 @@ describe('grain page copy', () => {
     expect(grainPage.cases).toEqual([]);
   });
 
-  it('leaves the live /zernoskhovyshcha content untouched while the flag is off', () => {
+  it('keeps the previous /zernoskhovyshcha content for the flag-off rollback', () => {
     const live = directionPages.zernoskhovyshcha;
     expect(live.hero.actions).toBeUndefined();
     expect(live.overview?.eyebrow).toBe('Склад робіт');
