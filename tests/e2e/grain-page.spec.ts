@@ -71,8 +71,16 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     await expect(page.locator('form.inquiry-form .inquiry-config-brief strong')).toContainText(headline);
     // The page is statically rendered: what a crawler (or the next visitor) gets is the initial state.
     const html = await (await page.request.get(GRAIN_PAGE)).text();
-    for (const personal of [headline, 'data-planner-brief', 'inquiry-config-brief']) expect(html).not.toContain(personal);
+    expect(html).not.toContain(headline);
     expect(html).toContain('Що потрібно зберігати?');
+    // The brief and the attached card render only in the browser. The RSC payload does name the
+    // CTA's gate selector, so the elements are looked for in the markup, scripts aside.
+    const markup = await page.evaluate((source) => {
+      const doc = new DOMParser().parseFromString(source, 'text/html');
+      for (const script of doc.querySelectorAll('script')) script.remove();
+      return doc.documentElement.outerHTML;
+    }, html);
+    for (const element of ['data-planner-brief', 'inquiry-config-brief']) expect(markup).not.toContain(element);
     const stored = await page.evaluate(() => [...Object.keys(localStorage), ...Object.keys(sessionStorage)].filter((key) => /planner|grain|brief|inquiry/i.test(key)));
     expect(stored).toEqual([]);
   });

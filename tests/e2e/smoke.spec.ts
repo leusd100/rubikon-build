@@ -15,6 +15,13 @@ const staticDirectionPaths = new Set([
   '/pokrivelni-roboty',
 ]);
 
+/** Pages whose hero names the inquiry CTA after their own conversation; the rest say «Обговорити проєкт». */
+const heroInquiryCta: Partial<Record<string, string>> = {
+  '/napryamky': 'Описати завдання',
+  '/angary': 'Обговорити завдання',
+  '/zernoskhovyshcha': 'Обговорити з інженером',
+};
+
 const publicRoutes: PublicRoute[] = [
   { path: '/', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
   { path: '/napryamky', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: false },
@@ -130,11 +137,7 @@ test.describe('public route smoke tests', () => {
 
       if (route.hasProjectCta) {
         const projectCta = hero.getByRole('link', {
-          name: route.path === '/napryamky'
-            ? 'Описати завдання'
-            : route.path === '/angary'
-              ? 'Обговорити завдання'
-              : 'Обговорити проєкт',
+          name: heroInquiryCta[route.path] ?? 'Обговорити проєкт',
           exact: true,
         });
 
