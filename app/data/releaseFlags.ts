@@ -9,3 +9,8 @@
 export const releaseFlags = {
   grainPlannerOnZernoskhovyshcha: true,
 } as const;
+
+/** Testable route decision: the rollback branch must remain real for either flag value. */
+export function grainPlannerRouteMode(enabled: boolean): 'planner' | 'legacy' {
+  return enabled ? 'planner' : 'legacy';
+}

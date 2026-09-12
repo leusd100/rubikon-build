@@ -12,7 +12,7 @@ import {
 } from '../../inquiry/attachment';
 import { parseCapacity, type Answers } from './answers';
 import { createGrainBrief, formatGrainBriefText } from './brief';
-import type { GrainFlowAction, GrainFlowState } from './flow';
+import { reduceGrainFlow, type GrainFlowAction, type GrainFlowState } from './flow';
 import { createGrainPlannerState } from './state';
 import { synthesizeScenario } from './understanding';
 import { GRAIN_PLANNER_VERSION } from './version';
@@ -74,6 +74,7 @@ export function grainAttachmentEvent(status: AttachmentStatus, flow: GrainFlowSt
     case 'reset':
       return { type: 'reset' };
     case 'continue':
+      if (status.status === 'untouched' && !flow.resultVisible && reduceGrainFlow(flow, action).resultVisible) return { type: 'result-reveal' };
       if (!flow.editing || status.status === 'untouched' || sameGrainAnswers(flow.editing.snapshot, flow.answers)) return null;
       return { type: 'business-edit' };
     default:

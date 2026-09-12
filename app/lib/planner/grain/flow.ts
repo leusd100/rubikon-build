@@ -9,12 +9,16 @@
  */
 import { EMPTY_GRAIN_ANSWERS, type Answers } from './answers';
 import { explainChanges } from './changes';
+import { isThemeComplete } from './rules';
 
 /** Theme indices 0–4 are questions; 5 is the readiness check. */
 export const GRAIN_READINESS_STEP = 5;
 
 export type GrainFlowState = {
+  /** Live answers while the visitor is editing. */
   answers: Answers;
+  /** Last answers accepted by a completed, valid theme; inquiry data is derived only from this. */
+  committedAnswers: Answers;
   activeTheme: number;
   completed: number[];
   /** The theme being edited and the answers as they were when editing started. */
@@ -32,6 +36,7 @@ export type GrainFlowAction =
 
 export const INITIAL_GRAIN_FLOW: GrainFlowState = {
   answers: EMPTY_GRAIN_ANSWERS,
+  committedAnswers: EMPTY_GRAIN_ANSWERS,
   activeTheme: 0,
   completed: [],
   editing: null,
@@ -45,11 +50,17 @@ export function reduceGrainFlow(state: GrainFlowState, action: GrainFlowAction):
       return { ...state, answers: { ...state.answers, [action.key]: action.value } };
 
     case 'continue': {
+      if (!isThemeComplete(action.theme, state.answers)) return state;
       const editing = state.editing;
       // `state.completed` is the list *before* this theme is added, as in the prototype's closure.
       const next = editing && state.completed.length === 5 ? GRAIN_READINESS_STEP : action.theme === 4 ? GRAIN_READINESS_STEP : action.theme + 1;
       return {
         ...state,
+        committedAnswers: {
+          ...state.answers,
+          crops: [...state.answers.crops],
+          development: [...state.answers.development],
+        },
         completed: Array.from(new Set([...state.completed, action.theme])),
         activeTheme: next,
         editing: null,

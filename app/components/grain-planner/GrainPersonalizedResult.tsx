@@ -42,7 +42,9 @@ export default function GrainPersonalizedResult() {
   const narrow = usePlannerMediaQuery('(max-width: 760px)');
   const presentation = grainPlannerPresentation;
 
-  const { answers } = state;
+  // If the planner is edited while the result remains mounted, keep every result/brief block on
+  // the last completed valid snapshot until Continue commits the draft.
+  const answers = state.editing ? state.committedAnswers : state.answers;
   const comparison = routeDecision(answers) === 'candidateComparison';
   const capacityLabel = formatCapacityInfo(parseCapacity(answers.capacity));
   const facts = buildFacts(answers);

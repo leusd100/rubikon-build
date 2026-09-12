@@ -74,8 +74,8 @@ export function GrainPlannerProvider({ children }: { children: ReactNode }) {
 
   const detachBrief = useCallback(() => dispatch({ type: 'detach-brief' }), []);
   const attachment = useMemo(
-    () => (briefAttached ? createGrainAttachment(state.answers) : null),
-    [briefAttached, state.answers],
+    () => (briefAttached ? createGrainAttachment(state.committedAnswers) : null),
+    [briefAttached, state.committedAnswers],
   );
   const source = useMemo(
     () => ({ attachment, status: session.attachment, detach: detachBrief }),
