@@ -26,13 +26,14 @@ const dividerLight = '#5A6062';
 // One approved R master is shared by the horizontal lockup and platform icons.
 // The two clean structural planes preserve the reference silhouette while the
 // inset orange diagonal remains visually separate at both header and icon scale.
-const markInk = 'M0 0H182C240 0 278 34 278 85C278 139 240 173 186 173H74V130H181C210 130 227 113 227 87C227 59 209 44 181 44H39ZM0 130H139L278 280H208L115 181H52V280H0Z';
+const markTop = 'M0 0H182C240 0 278 34 278 85C278 139 240 173 186 173H74V130H181C210 130 227 113 227 87C227 59 209 44 181 44H39Z';
+const markBase = 'M0 130H139L278 280H208L115 181H52V280H0Z';
 const markAccent = 'M79 190H117L203 280H161Z';
 
 // The primary web treatment uses only lightweight gradients. The premium
 // export adds a restrained brushed texture and shallow volume for large-format
 // brand applications; favicons always use the flat master below.
-const webMetalDefs = `<defs><linearGradient id="mark-steel" x1="0" y1="0" x2="1" y2=".18"><stop offset="0" stop-color="#FBFCFC"/><stop offset=".24" stop-color="#D5DBDE"/><stop offset=".48" stop-color="#F4F6F6"/><stop offset=".72" stop-color="#C3CBCF"/><stop offset="1" stop-color="#EDF0F1"/></linearGradient><linearGradient id="word-steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F8F9F9"/><stop offset=".52" stop-color="#E1E5E7"/><stop offset="1" stop-color="#F4F5F5"/></linearGradient></defs>`;
+const webMetalDefs = `<defs><linearGradient id="mark-steel" x1="0" y1="0" x2="1" y2=".18"><stop offset="0" stop-color="#FBFCFC"/><stop offset=".24" stop-color="#D5DBDE"/><stop offset=".48" stop-color="#F4F6F6"/><stop offset=".72" stop-color="#C3CBCF"/><stop offset="1" stop-color="#EDF0F1"/></linearGradient><linearGradient id="word-steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F8F9F9"/><stop offset=".52" stop-color="#E1E5E7"/><stop offset="1" stop-color="#F4F5F5"/></linearGradient><filter id="final-brushed" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".003 .68" numOctaves="1" seed="19" result="grain"/><feColorMatrix in="grain" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .04 0" result="soft-grain"/><feComposite in="soft-grain" in2="SourceAlpha" operator="in" result="clipped-grain"/><feBlend in="SourceGraphic" in2="clipped-grain" mode="soft-light"/></filter></defs>`;
 const premiumMetalDefs = `<defs><linearGradient id="mark-premium" x1="0" y1="0" x2="1" y2=".18"><stop offset="0" stop-color="#FCFDFD"/><stop offset=".16" stop-color="#C9D0D4"/><stop offset=".34" stop-color="#F5F7F7"/><stop offset=".55" stop-color="#AEB8BE"/><stop offset=".73" stop-color="#E9EDEF"/><stop offset="1" stop-color="#C5CDD1"/></linearGradient><linearGradient id="word-premium" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F7F8F8"/><stop offset=".5" stop-color="#D3D9DC"/><stop offset="1" stop-color="#ECEFF0"/></linearGradient><filter id="premium-finish" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".003 .56" numOctaves="1" seed="12" result="grain"/><feColorMatrix in="grain" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .065 0" result="soft-grain"/><feComposite in="soft-grain" in2="SourceAlpha" operator="in" result="clipped-grain"/><feBlend in="SourceGraphic" in2="clipped-grain" mode="soft-light"/><feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000" flood-opacity=".22"/></filter></defs>`;
 
 // The approved reference lettering is outlined so production output never
@@ -44,9 +45,9 @@ function svg(width, height, content, label = 'RUBIKON BUILD', viewBox = `0 0 ${w
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}" fill-rule="evenodd" role="img" aria-label="${label}">${content}</svg>\n`;
 }
 
-function markGroup(ink, accent, transform = '', pathAttributes = '') {
+function markGroup(ink, accent, transform = '', inkGroupAttributes = '') {
   const transformAttribute = transform ? ` transform="${transform}"` : '';
-  return `<g${transformAttribute}><path fill="${ink}"${pathAttributes} d="${markInk}"/><path fill="${accent}" d="${markAccent}"/></g>`;
+  return `<g${transformAttribute}><g${inkGroupAttributes}><path fill="${ink}" d="${markTop}"/><path fill="${ink}" d="${markBase}"/></g><path fill="${accent}" d="${markAccent}"/></g>`;
 }
 
 function horizontalLockup(ink, accent, divider, options = {}) {
@@ -55,12 +56,13 @@ function horizontalLockup(ink, accent, divider, options = {}) {
     markFill = ink,
     wordFill = ink,
     markAttributes = '',
+    label = 'RUBIKON BUILD',
   } = options;
   return svg(
     1270,
     272,
     `${defs}${markGroup(markFill, accent, 'translate(88 103) scale(.82)', markAttributes)}<rect x="429" y="98" width="7" height="247" rx="2" fill="${divider}"/><path fill="${wordFill}" d="${wordmarkInk}"/><path fill="${accent}" d="${wordmarkAccent}"/>`,
-    'RUBIKON BUILD',
+    label,
     '72 88 1270 272',
   );
 }
@@ -76,6 +78,8 @@ const horizontalDark = horizontalLockup(ivory, orangeDark, dividerDark, {
   defs: webMetalDefs,
   markFill: 'url(#mark-steel)',
   wordFill: 'url(#word-steel)',
+  markAttributes: ' filter="url(#final-brushed)"',
+  label: 'Final RUBIKON BUILD logo',
 });
 const horizontalLight = horizontalLockup(graphite, orangeLight, dividerLight);
 const horizontalPremium = horizontalLockup(ivory, orangeDark, dividerDark, {
@@ -87,6 +91,7 @@ const horizontalPremium = horizontalLockup(ivory, orangeDark, dividerDark, {
 const markDark = standaloneMark(ivory, orangeDark, {
   defs: webMetalDefs,
   markFill: 'url(#mark-steel)',
+  markAttributes: ' filter="url(#final-brushed)"',
 });
 const markPremium = standaloneMark(ivory, orangeDark, {
   defs: premiumMetalDefs,

@@ -8,19 +8,19 @@
   "theme_color": "#161A1B",
   "icons": [
     {
-      "src": "/icon-192x192.png?v=rubikon-04",
+      "src": "/icon-192x192.png?v=rubikon-05",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512x512.png?v=rubikon-04",
+      "src": "/icon-512x512.png?v=rubikon-05",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-maskable-512x512.png?v=rubikon-04",
+      "src": "/icon-maskable-512x512.png?v=rubikon-05",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

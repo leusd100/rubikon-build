@@ -10,7 +10,7 @@ describe('approved RUBIKON BUILD brand assets', () => {
   it('uses one outlined horizontal logo in both shared site-chrome locations', () => {
     const siteChrome = read('app/components/SiteChrome.tsx');
 
-    expect(siteChrome).toContain('src="/brand/rubikon-build-horizontal-dark.svg?v=rubikon-04"');
+    expect(siteChrome).toContain('src="/brand/rubikon-build-horizontal-dark.svg?v=rubikon-05"');
     expect(siteChrome).toContain('width={1270}');
     expect(siteChrome).toContain('height={272}');
     expect(siteChrome).toContain('alt={`${company.name} — будівництво та інженерні рішення`}');
@@ -63,8 +63,8 @@ describe('approved RUBIKON BUILD brand assets', () => {
 
     expect(layout).not.toContain('frame-01');
     expect(manifest).not.toContain('frame-01');
-    expect(layout.match(/rubikon-04/g)?.length).toBeGreaterThanOrEqual(6);
-    expect(manifest.match(/rubikon-04/g)).toHaveLength(3);
+    expect(layout.match(/rubikon-05/g)?.length).toBeGreaterThanOrEqual(6);
+    expect(manifest.match(/rubikon-05/g)).toHaveLength(3);
   });
 
   it('exports every expected native favicon size', () => {
