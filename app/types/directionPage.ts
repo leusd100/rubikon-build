@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { DirectionId } from '../data/directions';
+import type { RelatedDirection } from '../data/relatedDirections';
 
 // The 4th element is an optional trailing tuple member, not a forced 4-tuple: every existing
 // 3-element item literal (across both overview.items and cost.items, every direction) stays
@@ -45,13 +46,19 @@ export type DirectionPageConfig = {
   };
   /** An extra class on <main>, for a page with a stylesheet of its own. */
   pageClassName?: string;
-  /** Related directions as the compact band. */
-  related?: { compact?: boolean };
-  overview: DirectionOverview;
+  /**
+   * Related directions as the compact band; `items` replaces relatedDirections[id] for a page
+   * composition that is not live yet, so the live page's list stays as it is.
+   */
+  related?: { compact?: boolean; items?: readonly RelatedDirection[] };
+  /** Optional for a page whose own editorial architecture replaces the overview band. */
+  overview?: DirectionOverview;
   editorial: {
     eyebrow: string;
     title: string;
     text: string;
+    /** Work points listed under the text, in the copy column. */
+    points?: readonly DirectionItem[];
     image: string;
     imageAlt: string;
   };

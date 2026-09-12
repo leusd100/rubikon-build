@@ -1,3 +1,4 @@
+import { grainPage } from '../../data/grainPage';
 import { SectionHeader } from '../SiteChrome';
 import { GrainPlanner } from './GrainPlanner';
 
@@ -8,9 +9,9 @@ export function GrainPlannerBand() {
       <div className="shell">
         <SectionHeader
           className="planner-section-header"
-          eyebrow="Починаємо з вашої задачі"
-          title="Який зерновий об’єкт вам насправді потрібен?"
-          supporting="Відповіді формують інженерний контекст — без передчасного вибору будівлі."
+          eyebrow={grainPage.planner.eyebrow}
+          title={grainPage.planner.title}
+          supporting={grainPage.planner.supporting}
         />
         <GrainPlanner />
       </div>

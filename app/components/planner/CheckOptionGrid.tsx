@@ -12,6 +12,7 @@ export function CheckOptionGrid({
   selected,
   onToggle,
   variant,
+  idBase,
 }: {
   legend: string;
   options: readonly CheckOption[];
@@ -19,8 +20,14 @@ export function CheckOptionGrid({
   onToggle: (value: string) => void;
   /** `tiles` — short labels with a pictogram; `cards` — a title with a description. */
   variant: 'tiles' | 'cards';
+  /**
+   * A fixed id prefix for a group that is server-rendered: generated ids there can hydrate
+   * differently from the server HTML. Client-only groups can leave it to useId.
+   */
+  idBase?: string;
 }) {
-  const group = useId();
+  const generated = useId();
+  const group = idBase ?? generated;
 
   return (
     <fieldset className={`planner-check-grid is-${variant}`}>

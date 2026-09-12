@@ -57,7 +57,8 @@ function reduceGrainSession(session: GrainSession, action: GrainSessionAction): 
 
 const activeStep = () => document.querySelector('.planner-active-step');
 const questionFor = (theme: number) => () => document.querySelector(`.planner-question[data-planner-theme="${theme}"]`);
-const resultBand = () => document.querySelector('#result [data-planner-anchor]') ?? document.getElementById('result');
+const resultHeading = () => document.querySelector('#result [data-planner-anchor]');
+const resultSection = () => document.getElementById('result');
 
 /**
  * One consultation shared by the planner band and the result band. State transitions are the
@@ -104,7 +105,7 @@ export function GrainPlannerProvider({ children }: { children: ReactNode }) {
       if (state.editing) setChangeOpen(false);
       dispatch({ type: 'continue', theme });
       if (next.activeTheme < GRAIN_READINESS_STEP) scrollAfterRender(activeStep);
-      else if (next.resultVisible && state.editing) scrollAfterRender(resultBand);
+      else if (next.resultVisible && state.editing) scrollAfterRender(resultHeading, 'start', resultSection);
       else scrollAfterRender(() => document.querySelector('.planner-readiness'), 'center');
     },
     editTheme: (theme, fromResult = false) => {
@@ -113,7 +114,7 @@ export function GrainPlannerProvider({ children }: { children: ReactNode }) {
     },
     reveal: () => {
       dispatch({ type: 'reveal' });
-      scrollAfterRender(resultBand);
+      scrollAfterRender(resultHeading, 'start', resultSection);
     },
     reset: () => {
       dispatch({ type: 'reset' });

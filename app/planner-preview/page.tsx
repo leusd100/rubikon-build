@@ -1,6 +1,7 @@
 import { GrainPlannerPage } from '../components/grain-planner/GrainPlannerPage';
 import { createBasicPageMetadata } from '../lib/seo';
 import '../zernoskhovyshcha/grain-planner.css';
+import '../zernoskhovyshcha/grain-editorial.css';
 
 // Isolated review surface for the Grain Planner integration — same noindex treatment as
 // /configurator-preview (see robots.ts). Not in the sitemap; /zernoskhovyshcha is unchanged until

@@ -3,6 +3,7 @@ import {
   PREVIEW,
   approachTitles,
   choose,
+  clickInPageLink,
   collectRuntimeErrors,
   next,
   openPlanner,
@@ -156,7 +157,7 @@ test.describe('Grain Planner preview — page contract', () => {
     await reveal(page);
     const cta = result(page).getByRole('link', { name: /Передати опис RUBIKON/ });
     await expect(cta).toHaveAttribute('href', '#inquiry');
-    await cta.click();
+    await clickInPageLink(page, cta);
     await expect(page.locator('#inquiry')).toBeInViewport({ timeout: 5_000 });
     await expect(page.locator('form.inquiry-form .inquiry-config-brief')).toContainText('До заявки додано ваш опис задачі');
   });

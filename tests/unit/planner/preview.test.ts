@@ -26,4 +26,16 @@ describe('/planner-preview stays a private review surface', () => {
   it('does not switch /zernoskhovyshcha to the planner yet', () => {
     expect(releaseFlags.grainPlannerOnZernoskhovyshcha).toBe(false);
   });
+
+  it('loads the grain stylesheets on /zernoskhovyshcha exactly when the flag is on', () => {
+    const route = readFileSync(join(process.cwd(), 'app', 'zernoskhovyshcha', 'page.tsx'), 'utf8');
+    const imports = ['grain-planner', 'grain-editorial'].map((name) => new RegExp(`^import '\\./${name}\\.css';$`, 'm').test(route));
+    const on = releaseFlags.grainPlannerOnZernoskhovyshcha;
+    expect(imports).toEqual([on, on]);
+  });
+
+  it('loads both grain stylesheets on the preview', () => {
+    const page = readFileSync(join(process.cwd(), 'app', 'planner-preview', 'page.tsx'), 'utf8');
+    for (const name of ['grain-planner', 'grain-editorial']) expect(page).toMatch(new RegExp(`^import '\\.\\./zernoskhovyshcha/${name}\\.css';$`, 'm'));
+  });
 });

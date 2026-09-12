@@ -5,7 +5,7 @@ import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
 import { getDirection } from '../lib/directions';
-import { relatedDirections } from '../data/relatedDirections';
+import { relatedDirections, type RelatedDirection } from '../data/relatedDirections';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
 import { company } from '../data/company';
 import { siteRoutes } from '../data/navigation';
@@ -123,19 +123,21 @@ function DirectionHero({
   );
 }
 
-function DirectionProcess({
+export function DirectionProcess({
   eyebrow = 'Послідовність',
   title,
   text,
   steps,
+  className,
 }: {
   eyebrow?: string;
   title: string;
   text: string;
   steps: readonly DirectionStep[];
+  className?: string;
 }) {
   return (
-    <section className="page-section page-section-dark">
+    <section className={classNames('page-section page-section-dark', className)}>
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow={eyebrow} title={title} supporting={text} inverse />
         <ol className="detail-steps">
@@ -172,22 +174,31 @@ function DirectionCostSection({
   );
 }
 
-function DirectionEditorial({
+export function DirectionEditorial({
   directionId,
   editorial,
+  className,
 }: {
   directionId: DirectionPageConfig['id'];
   editorial: DirectionPageConfig['editorial'];
+  className?: string;
 }) {
   const layout = mediaFirstEditorialDirections.has(directionId) ? 'media-first' : 'copy-first';
 
   return (
-    <section className="page-section direction-editorial-section">
+    <section className={classNames('page-section direction-editorial-section', className)}>
       <div className="shell direction-editorial-grid" data-layout={layout}>
         <div className="direction-editorial-copy">
           <p className="eyebrow"><span /> {editorial.eyebrow}</p>
           <h2>{editorial.title}</h2>
           <p>{editorial.text}</p>
+          {editorial.points && (
+            <ol className="direction-editorial-points">
+              {editorial.points.map(([number, title, text]) => (
+                <li key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></li>
+              ))}
+            </ol>
+          )}
         </div>
         <figure className="direction-editorial-media">
           <ResponsiveImage
@@ -240,8 +251,16 @@ export function DirectionFaq({
   );
 }
 
-function RelatedDirections({ id, compact = false }: { id: DirectionPageConfig['id']; compact?: boolean }) {
-  const related = relatedDirections[id];
+function RelatedDirections({
+  id,
+  compact = false,
+  items,
+}: {
+  id: DirectionPageConfig['id'];
+  compact?: boolean;
+  items?: readonly RelatedDirection[];
+}) {
+  const related = items ?? relatedDirections[id];
 
   if (!related.length) return null;
 
@@ -299,6 +318,7 @@ export function DirectionPage({
 
       {editorialArchitecture ?? (
         <>
+          {config.overview && (
           <section className="page-section ghost-section">
             <GhostWord word={directionGhostWords[config.id]} />
             {config.overview.layout === 'use-cases' ? (
@@ -322,6 +342,7 @@ export function DirectionPage({
               </div>
             )}
           </section>
+          )}
 
           <DirectionEditorial directionId={config.id} editorial={config.editorial} />
           <DirectionProcess {...config.process} />
@@ -329,7 +350,7 @@ export function DirectionPage({
         </>
       )}
       {config.faq && <DirectionFaq {...config.faq} />}
-      <RelatedDirections id={config.id} compact={config.related?.compact} />
+      <RelatedDirections id={config.id} compact={config.related?.compact} items={config.related?.items} />
       <InquirySection eyebrow={config.cta.eyebrow} title={config.cta.title} defaultDirection={direction.formLabel} />
     </main>
   );

@@ -1,11 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   choose,
+  clickInPageLink,
   collectRuntimeErrors,
   horizontalOverflow,
   next,
   openPlanner,
   planner,
+  plannerSettled,
   questions,
   result,
   reveal,
@@ -146,7 +148,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
     await reveal(page);
     await detach(page);
 
-    await result(page).getByRole('link', { name: /Передати опис RUBIKON/ }).click();
+    await clickInPageLink(page, result(page).getByRole('link', { name: /Передати опис RUBIKON/ }));
     await expect(page.locator('#inquiry')).toBeInViewport({ timeout: 5_000 });
     await expect(attachmentCard(page)).toContainText('До заявки додано ваш опис задачі');
   });
@@ -159,6 +161,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
     await expect(attachmentCard(page)).toBeVisible();
 
     await planner(page).getByRole('button', { name: 'Почати спочатку' }).click();
+    await plannerSettled(page);
     await expect(attachmentCard(page)).toHaveCount(0);
     await submitInquiry(page);
     expect(lastLead()?.details).not.toHaveProperty('configuration');
