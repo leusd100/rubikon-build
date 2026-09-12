@@ -10,9 +10,11 @@
     "build": "vinext build",
     "start": "vinext start",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "typecheck": "tsc --noEmit --incremental false",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "test:e2e": "playwright test --project=desktop-chromium --project=mobile-chromium",
+    "test:e2e:critical": "playwright test tests/e2e/pr-critical.spec.ts --project=desktop-chromium",
     "test:visual": "playwright test --project=visual-chromium",
     "test:visual:update": "playwright test --project=visual-chromium --update-snapshots",
     "test:lighthouse": "LHCI_PROFILE=home lhci autorun && LHCI_PROFILE=standard lhci autorun && LHCI_PROFILE=grain lhci autorun"

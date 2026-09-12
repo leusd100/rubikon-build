@@ -19,6 +19,10 @@ permissions:
   contents: read
   pull-requests: read
 
+concurrency:
+  group: sonar-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sonar:
     name: SonarQube Cloud Scan
@@ -46,7 +50,7 @@ jobs:
 
       # Generates coverage/lcov.info, which sonar.javascript.lcov.reportPaths in
       # sonar-project.properties points the scan step at. Only the plain unit suite runs
-      # here — this workflow doesn't need build/e2e/Lighthouse, those are quality.yml's job.
+      # here — this workflow doesn't need build/E2E/Lighthouse; the tiered workflows own them.
       - name: Unit tests with coverage
         run: pnpm test:unit:coverage
 

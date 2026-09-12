@@ -1,0 +1,243 @@
+name: PR Fast Gate
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
+
+jobs:
+  classify:
+    name: Classify changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      planner: ${{ steps.changes.outputs.planner }}
+      inquiry: ${{ steps.changes.outputs.inquiry }}
+      leads: ${{ steps.changes.outputs.leads }}
+      configurator: ${{ steps.changes.outputs.configurator }}
+      visual: ${{ steps.changes.outputs.visual }}
+      wide_visual: ${{ steps.changes.outputs.wide_visual }}
+      brand_visual: ${{ steps.changes.outputs.brand_visual }}
+    steps:
+      - name: Check out repository with PR history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Apply auditable path rules
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci/classify-changes.mjs "$BASE_SHA" "$HEAD_SHA"
+
+  fast:
+    name: Fast Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-ci
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Explicit typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Share production build with focused jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-production-build
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+      - uses: ./.github/actions/setup-playwright
+
+      - name: Critical desktop/mobile routes and mocked lead submit
+        run: pnpm test:e2e:critical
+
+      - name: Upload Fast Gate diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-fast-gate-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  planner:
+    name: Planner regression (${{ matrix.shard }}/2)
+    if: needs.classify.outputs.planner == 'true'
+    needs: [classify, fast]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: pr-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run planner suites
+        run: >-
+          pnpm exec playwright test
+          --project=desktop-chromium --project=mobile-chromium
+          --shard=${{ matrix.shard }}/2
+          tests/e2e/grain-page.spec.ts
+          tests/e2e/grain-planner.spec.ts
+          tests/e2e/grain-planner-mobile.spec.ts
+          tests/e2e/grain-planner-stabilization.spec.ts
+          tests/e2e/grain-planner-handoff.spec.ts
+
+  inquiry:
+    name: Inquiry regression
+    if: needs.classify.outputs.inquiry == 'true'
+    needs: [classify, fast]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: pr-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run inquiry and attachment suites
+        run: >-
+          pnpm exec playwright test --project=desktop-chromium
+          tests/e2e/form.spec.ts
+          tests/e2e/consent.spec.ts
+          tests/e2e/configurator-inquiry-handoff.spec.ts
+          tests/e2e/grain-planner-handoff.spec.ts
+
+  leads:
+    name: Leads API regression
+    if: needs.classify.outputs.leads == 'true'
+    needs: [classify, fast]
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: pr-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run mocked lead submission suite
+        run: pnpm exec playwright test --project=desktop-chromium tests/e2e/form.spec.ts
+
+  configurator:
+    name: Configurator regression (${{ matrix.shard }}/2)
+    if: needs.classify.outputs.configurator == 'true'
+    needs: [classify, fast]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: pr-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run configurator suites
+        run: >-
+          pnpm exec playwright test
+          --project=desktop-chromium --project=mobile-chromium
+          --shard=${{ matrix.shard }}/2
+          tests/e2e/configurator.spec.ts
+          tests/e2e/configurator-3d.spec.ts
+          tests/e2e/configurator-3d-buildup.spec.ts
+          tests/e2e/configurator-3d-enhancements.spec.ts
+          tests/e2e/configurator-fullscreen-accessibility.spec.ts
+          tests/e2e/configurator-inquiry-handoff.spec.ts
+          tests/e2e/configurator-palette-accessibility.spec.ts
+
+  visual:
+    name: Changed-area visual regression
+    if: needs.classify.outputs.visual == 'true'
+    needs: [classify, fast]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: pr-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run selected visual suites
+        env:
+          WIDE_VISUAL: ${{ needs.classify.outputs.wide_visual }}
+          BRAND_VISUAL: ${{ needs.classify.outputs.brand_visual }}
+          CONFIGURATOR: ${{ needs.classify.outputs.configurator }}
+          PLANNER: ${{ needs.classify.outputs.planner }}
+        run: node scripts/ci/run-visual-scope.mjs
+      - name: Upload visual diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: changed-area-visual-diff
+          path: test-results/**/*.png
+          if-no-files-found: ignore
+          retention-days: 14
+
+  pr-gate:
+    name: PR Gate
+    if: always()
+    needs: [classify, fast, planner, inquiry, leads, configurator, visual]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Fast Gate and every selected regression suite
+        env:
+          CLASSIFY: ${{ needs.classify.result }}
+          FAST: ${{ needs.fast.result }}
+          PLANNER: ${{ needs.planner.result }}
+          INQUIRY: ${{ needs.inquiry.result }}
+          LEADS: ${{ needs.leads.result }}
+          CONFIGURATOR: ${{ needs.configurator.result }}
+          VISUAL: ${{ needs.visual.result }}
+        run: |
+          test "$CLASSIFY" = success
+          test "$FAST" = success
+          for result in "$PLANNER" "$INQUIRY" "$LEADS" "$CONFIGURATOR" "$VISUAL"; do
+            test "$result" = success || test "$result" = skipped
+          done
