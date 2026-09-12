@@ -1093,8 +1093,10 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .footer-contact-stack { gap: 10px 12px; }
   .footer-phone, .footer-email { font-size: 12px; }
   .footer-messengers .messenger-link { width: 38px; height: 38px; }
-  .contact-messenger-row { align-items: flex-start; flex-direction: column; gap: 12px; }
-  .contact-messengers { margin-left: 33px; }
+  /* One row, as on every wider phone: the label, then the three 44 px buttons packed a little
+     closer. Below ~354 px there is no room for both, so the buttons wrap under the label. */
+  .contact-messenger-row { flex-wrap: wrap; gap: 12px; }
+  .contact-messengers { gap: 6px; }
 }
 
 /* Compact contact mode for low-height laptop viewports. */
