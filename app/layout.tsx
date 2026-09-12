@@ -34,15 +34,15 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   creator: company.name,
-  manifest: '/site.webmanifest?v=rubikon-02',
+  manifest: '/site.webmanifest?v=rubikon-03',
   icons: {
     icon: [
-      { url: '/favicon.svg?v=rubikon-02', sizes: 'any', type: 'image/svg+xml' },
-      { url: '/favicon.ico?v=rubikon-02', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
-      { url: '/favicon-48x48.png?v=rubikon-02', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon.svg?v=rubikon-03', sizes: 'any', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=rubikon-03', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/favicon-48x48.png?v=rubikon-03', sizes: '48x48', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico?v=rubikon-02',
-    apple: [{ url: '/apple-touch-icon.png?v=rubikon-02', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon.ico?v=rubikon-03',
+    apple: [{ url: '/apple-touch-icon.png?v=rubikon-03', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     title: `Промислове будівництво у Дніпрі | ${company.name}`,
@@ -89,7 +89,7 @@ const organizationData = {
   url: company.siteUrl,
   logo: {
     '@type': 'ImageObject',
-    url: `${company.siteUrl}/icon-512x512.png?v=rubikon-02`,
+    url: `${company.siteUrl}/icon-512x512.png?v=rubikon-03`,
     width: 512,
     height: 512,
   },

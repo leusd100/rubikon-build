@@ -85,19 +85,20 @@ for (const viewport of [headerViewports[0], headerViewports[3]]) {
   });
 }
 
-test('dark, light, and compact logo contexts', async ({ page }) => {
+test('web, light, premium, and compact logo contexts', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await loadBrandPage(page, '/logo-variants');
 
   const previews = page.locator('.logo-preview');
-  await expect(previews).toHaveCount(3);
-  for (let index = 0; index < 3; index += 1) {
+  await expect(previews).toHaveCount(4);
+  for (let index = 0; index < 4; index += 1) {
     await waitForImage(previews.nth(index).locator('img'));
   }
 
   await expectBrandScreenshot(previews.nth(0), 'horizontal-logo-dark-context.png');
   await expectBrandScreenshot(previews.nth(1), 'horizontal-logo-light-context.png');
-  await expectBrandScreenshot(previews.nth(2), 'compact-r-dark-context.png');
+  await expectBrandScreenshot(previews.nth(2), 'horizontal-logo-premium-context.png');
+  await expectBrandScreenshot(previews.nth(3), 'compact-r-dark-context.png');
 });
 
 test('favicon remains legible at native 16, 32, and 48 pixel sizes', async ({ page, request }) => {

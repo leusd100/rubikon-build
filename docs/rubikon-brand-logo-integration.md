@@ -30,10 +30,16 @@ New production exports:
 
 - `rubikon-build-horizontal-dark.svg/.png` — header, footer, and dark surfaces;
 - `rubikon-build-horizontal-light.svg/.png` — light surfaces;
+- `rubikon-build-horizontal-premium.svg/.png` — presentation, hero, print, and signage;
 - `rubikon-mark-dark.svg/.png` — compact mark on dark surfaces;
 - `rubikon-mark-light.svg/.png` — compact mark on light surfaces;
+- `rubikon-mark-premium.svg/.png` — large-format premium mark;
 - platform favicon/app-icon sizes generated from the same R master;
 - refreshed `og.jpg` and `og.png`, preserving the approved hall image and existing subtitle.
+
+The primary dark lockup uses a lightweight steel gradient without a runtime texture filter. The
+premium exports add restrained brushed texture and shallow volume, while the orange diagonal stays
+flat in every version. Platform icons deliberately use the flat master for small-size clarity.
 
 The compact mark deliberately has no enclosing circle. Normal icons fill 74% of the canvas,
 16 px uses a slightly larger 78% optical size, and the maskable icon stays inside a 58% safe zone.

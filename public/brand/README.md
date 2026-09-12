@@ -1,6 +1,7 @@
-# RUBIKON BUILD — 01 / Каркас
+# RUBIKON BUILD — refined industrial identity
 
-Затверджений напрям: конструктивна літера R, мідь, графіт та світлий напис.
+Затверджений напрям: спрощена конструктивна літера R, холодний steel tone,
+плоский помаранчевий accent і графітове тло.
 
 ## Файли
 
@@ -11,9 +12,15 @@
 - rubikon-mark-copper.svg / .png — окремий мідний знак R.
 - rubikon-mark-black.svg / .png — графітовий знак R.
 - rubikon-mark-white.svg / .png — білий знак R.
+- rubikon-build-horizontal-dark.svg / .png — основний легкий metallic lockup для web.
+- rubikon-build-horizontal-light.svg / .png — плоский lockup для світлого тла.
+- rubikon-build-horizontal-premium.svg / .png — brushed-metal версія для великих форматів.
+- rubikon-mark-dark.svg / .png — легкий metallic знак для темного тла.
+- rubikon-mark-light.svg / .png — плоский знак для світлого тла.
+- rubikon-mark-premium.svg / .png — premium знак для hero, print і signage.
 
 SVG — майстер-файли. Усі літери у векторних контурах, зовнішні шрифти не потрібні.
-PNG — прозорі: повні логотипи 1884 × 400 px, знаки 356 × 400 px.
+PNG — прозорі: повні логотипи 2540 × 544 px, окремі знаки 1280 × 1120 px.
 
 ## Кольори
 
@@ -22,9 +29,9 @@ PNG — прозорі: повні логотипи 1884 × 400 px, знаки 3
 - Графіт: #161A1B.
 - Світлий: #F4F1EA.
 
-Не розтягувати, не додавати тіні, градієнти чи світіння. Зберігати вільне поле
+Не розтягувати, не додавати сильні тіні, chrome-ефекти чи світіння. Зберігати вільне поле
 не менше ширини вертикальної опори знака. Для дуже малих квадратних місць
-використовувати знак R без напису.
+використовувати плоский знак R без напису та metallic texture.
 
 ## Іконки сайту (у public/)
 

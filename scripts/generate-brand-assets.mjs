@@ -23,9 +23,17 @@ const orangeLight = '#B84A1E';
 const dividerDark = '#A6A7A5';
 const dividerLight = '#5A6062';
 
-// One compact R master is shared by the horizontal lockup and platform icons.
-const markInk = 'M0 0H183C241 0 280 35 280 86C280 142 240 177 185 177H74V132H181C211 132 229 115 229 88C229 60 210 45 181 45H38ZM0 132H140L280 280H210L116 180H50V280H0Z';
-const markAccent = 'M75 190H117L205 280H160Z';
+// One approved R master is shared by the horizontal lockup and platform icons.
+// The two clean structural planes preserve the reference silhouette while the
+// inset orange diagonal remains visually separate at both header and icon scale.
+const markInk = 'M0 0H182C240 0 278 34 278 85C278 139 240 173 186 173H74V130H181C210 130 227 113 227 87C227 59 209 44 181 44H39ZM0 130H139L278 280H208L115 181H52V280H0Z';
+const markAccent = 'M79 190H117L203 280H161Z';
+
+// The primary web treatment uses only lightweight gradients. The premium
+// export adds a restrained brushed texture and shallow volume for large-format
+// brand applications; favicons always use the flat master below.
+const webMetalDefs = `<defs><linearGradient id="mark-steel" x1="0" y1="0" x2="1" y2=".18"><stop offset="0" stop-color="#FBFCFC"/><stop offset=".24" stop-color="#D5DBDE"/><stop offset=".48" stop-color="#F4F6F6"/><stop offset=".72" stop-color="#C3CBCF"/><stop offset="1" stop-color="#EDF0F1"/></linearGradient><linearGradient id="word-steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F8F9F9"/><stop offset=".52" stop-color="#E1E5E7"/><stop offset="1" stop-color="#F4F5F5"/></linearGradient></defs>`;
+const premiumMetalDefs = `<defs><linearGradient id="mark-premium" x1="0" y1="0" x2="1" y2=".18"><stop offset="0" stop-color="#FCFDFD"/><stop offset=".16" stop-color="#C9D0D4"/><stop offset=".34" stop-color="#F5F7F7"/><stop offset=".55" stop-color="#AEB8BE"/><stop offset=".73" stop-color="#E9EDEF"/><stop offset="1" stop-color="#C5CDD1"/></linearGradient><linearGradient id="word-premium" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F7F8F8"/><stop offset=".5" stop-color="#D3D9DC"/><stop offset="1" stop-color="#ECEFF0"/></linearGradient><filter id="premium-finish" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".003 .56" numOctaves="1" seed="12" result="grain"/><feColorMatrix in="grain" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .065 0" result="soft-grain"/><feComposite in="soft-grain" in2="SourceAlpha" operator="in" result="clipped-grain"/><feBlend in="SourceGraphic" in2="clipped-grain" mode="soft-light"/><feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000" flood-opacity=".22"/></filter></defs>`;
 
 // The approved reference lettering is outlined so production output never
 // depends on a locally installed display font.
@@ -36,29 +44,55 @@ function svg(width, height, content, label = 'RUBIKON BUILD', viewBox = `0 0 ${w
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}" fill-rule="evenodd" role="img" aria-label="${label}">${content}</svg>\n`;
 }
 
-function markGroup(ink, accent, transform = '') {
+function markGroup(ink, accent, transform = '', pathAttributes = '') {
   const transformAttribute = transform ? ` transform="${transform}"` : '';
-  return `<g${transformAttribute}><path fill="${ink}" d="${markInk}"/><path fill="${accent}" d="${markAccent}"/></g>`;
+  return `<g${transformAttribute}><path fill="${ink}"${pathAttributes} d="${markInk}"/><path fill="${accent}" d="${markAccent}"/></g>`;
 }
 
-function horizontalLockup(ink, accent, divider) {
+function horizontalLockup(ink, accent, divider, options = {}) {
+  const {
+    defs = '',
+    markFill = ink,
+    wordFill = ink,
+    markAttributes = '',
+  } = options;
   return svg(
     1270,
     272,
-    `${markGroup(ink, accent, 'translate(88 103) scale(.82)')}<rect x="429" y="98" width="7" height="247" rx="2" fill="${divider}"/><path fill="${ink}" d="${wordmarkInk}"/><path fill="${accent}" d="${wordmarkAccent}"/>`,
+    `${defs}${markGroup(markFill, accent, 'translate(88 103) scale(.82)', markAttributes)}<rect x="429" y="98" width="7" height="247" rx="2" fill="${divider}"/><path fill="${wordFill}" d="${wordmarkInk}"/><path fill="${accent}" d="${wordmarkAccent}"/>`,
     'RUBIKON BUILD',
     '72 88 1270 272',
   );
 }
 
-function standaloneMark(ink, accent) {
-  return svg(320, 280, markGroup(ink, accent), 'RUBIKON BUILD');
+function standaloneMark(ink, accent, options = {}) {
+  const { defs = '', markFill = ink, markAttributes = '' } = options;
+  return svg(320, 280, `${defs}${markGroup(markFill, accent, '', markAttributes)}`, 'RUBIKON BUILD');
 }
 
 // New names are deliberate: the previously shipped assets remain available
 // while the application moves to this approved identity.
-const horizontalDark = horizontalLockup(ivory, orangeDark, dividerDark);
+const horizontalDark = horizontalLockup(ivory, orangeDark, dividerDark, {
+  defs: webMetalDefs,
+  markFill: 'url(#mark-steel)',
+  wordFill: 'url(#word-steel)',
+});
 const horizontalLight = horizontalLockup(graphite, orangeLight, dividerLight);
+const horizontalPremium = horizontalLockup(ivory, orangeDark, dividerDark, {
+  defs: premiumMetalDefs,
+  markFill: 'url(#mark-premium)',
+  wordFill: 'url(#word-premium)',
+  markAttributes: ' filter="url(#premium-finish)"',
+});
+const markDark = standaloneMark(ivory, orangeDark, {
+  defs: webMetalDefs,
+  markFill: 'url(#mark-steel)',
+});
+const markPremium = standaloneMark(ivory, orangeDark, {
+  defs: premiumMetalDefs,
+  markFill: 'url(#mark-premium)',
+  markAttributes: ' filter="url(#premium-finish)"',
+});
 
 const variants = {
   'rubikon-build-horizontal-dark': {
@@ -69,12 +103,20 @@ const variants = {
     source: horizontalLight,
     rasterWidth: 2540,
   },
+  'rubikon-build-horizontal-premium': {
+    source: horizontalPremium,
+    rasterWidth: 2540,
+  },
   'rubikon-mark-dark': {
-    source: standaloneMark(ivory, orangeDark),
+    source: markDark,
     rasterWidth: 1280,
   },
   'rubikon-mark-light': {
     source: standaloneMark(graphite, orangeLight),
+    rasterWidth: 1280,
+  },
+  'rubikon-mark-premium': {
+    source: markPremium,
     rasterWidth: 1280,
   },
 };
@@ -87,34 +129,35 @@ for (const [name, { source, rasterWidth }] of Object.entries(variants)) {
     .toFile(path.join(brand, `${name}.png`));
 }
 
-// Keep the approved industrial-hall social artwork and its existing subtitle;
-// only the previous generic text lockup is covered and replaced with the new
-// vector master. The frozen source makes repeated generation deterministic.
-const socialBackground = await readFile(path.join(brand, 'og-social-background.jpg'));
-const socialLogo = await sharp(Buffer.from(horizontalDark), { density: 288 })
-  .resize({ width: 670 })
-  .png()
-  .toBuffer();
-const socialCover = Buffer.from(`
-  <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
-    <defs>
-      <filter id="soft-cover" x="-10%" y="-30%" width="120%" height="160%">
-        <feGaussianBlur stdDeviation="12"/>
-      </filter>
-    </defs>
-    <rect x="78" y="233" width="870" height="136" fill="#111416" filter="url(#soft-cover)"/>
-  </svg>
-`);
-const socialPng = await sharp(socialBackground)
-  .resize(1200, 630, { fit: 'cover' })
-  .composite([
-    { input: socialCover, top: 0, left: 0 },
-    { input: socialLogo, top: 204, left: 110 },
-  ])
-  .png()
-  .toBuffer();
-await writeFile(path.join(root, 'public/og.png'), socialPng);
-await sharp(socialPng).jpeg({ quality: 90, chromaSubsampling: '4:4:4' }).toFile(path.join(root, 'public/og.jpg'));
+// Social artwork is opt-in (`--social`) so routine logo/icon regeneration does
+// not silently change Open Graph media without explicit approval.
+if (process.argv.includes('--social')) {
+  const socialBackground = await readFile(path.join(brand, 'og-social-background.jpg'));
+  const socialLogo = await sharp(Buffer.from(horizontalDark), { density: 288 })
+    .resize({ width: 670 })
+    .png()
+    .toBuffer();
+  const socialCover = Buffer.from(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+      <defs>
+        <filter id="soft-cover" x="-10%" y="-30%" width="120%" height="160%">
+          <feGaussianBlur stdDeviation="12"/>
+        </filter>
+      </defs>
+      <rect x="78" y="233" width="870" height="136" fill="#111416" filter="url(#soft-cover)"/>
+    </svg>
+  `);
+  const socialPng = await sharp(socialBackground)
+    .resize(1200, 630, { fit: 'cover' })
+    .composite([
+      { input: socialCover, top: 0, left: 0 },
+      { input: socialLogo, top: 204, left: 110 },
+    ])
+    .png()
+    .toBuffer();
+  await writeFile(path.join(root, 'public/og.png'), socialPng);
+  await sharp(socialPng).jpeg({ quality: 90, chromaSubsampling: '4:4:4' }).toFile(path.join(root, 'public/og.jpg'));
+}
 
 function icon(size, maskable = false) {
   const fraction = maskable ? 0.58 : size === 16 ? 0.78 : 0.74;
@@ -175,4 +218,4 @@ await writeFile(
   Buffer.concat([header, ...icoImages.map(({ png }) => png)]),
 );
 
-console.log('Generated approved horizontal lockups, standalone marks, and platform icons.');
+console.log('Generated refined horizontal lockups, standalone marks, and platform icons.');

@@ -26,6 +26,14 @@ const versions = [
     height: 272,
   },
   {
+    asset: 'rubikon-build-horizontal-premium',
+    context: 'dark',
+    title: 'Преміальна металева версія',
+    text: 'Виразніший brushed-metal treatment для презентацій, hero-композицій, друку та signage. Не використовується у шапці сайту.',
+    width: 1270,
+    height: 272,
+  },
+  {
     asset: 'rubikon-mark-dark',
     context: 'dark mark',
     title: 'Компактний знак R',
@@ -52,7 +60,7 @@ export default function LogoVariantsPage() {
             {versions.map(({ asset, context, title, text, width, height }) => (
               <article className="logo-option" key={asset}>
                 <div className={`logo-preview logo-preview-${context.split(' ').join(' logo-preview-')}`}>
-                  <Image src={`/brand/${asset}.svg`} width={width} height={height} alt={`RUBIKON BUILD — ${title}`} unoptimized style={{ width: '100%', height: 'auto' }} />
+                  <Image src={`/brand/${asset}.svg?v=rubikon-03`} width={width} height={height} alt={`RUBIKON BUILD — ${title}`} unoptimized style={{ width: '100%', height: 'auto' }} />
                 </div>
                 <div className="logo-option-copy">
                   <h2>{title}</h2>
