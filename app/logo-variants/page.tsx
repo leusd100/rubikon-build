@@ -60,7 +60,7 @@ export default function LogoVariantsPage() {
             {versions.map(({ asset, context, title, text, width, height }) => (
               <article className="logo-option" key={asset}>
                 <div className={`logo-preview logo-preview-${context.split(' ').join(' logo-preview-')}`}>
-                  <Image src={`/brand/${asset}.svg?v=rubikon-03`} width={width} height={height} alt={`RUBIKON BUILD — ${title}`} unoptimized style={{ width: '100%', height: 'auto' }} />
+                  <Image src={`/brand/${asset}.svg?v=rubikon-04`} width={width} height={height} alt={`RUBIKON BUILD — ${title}`} unoptimized style={{ width: '100%', height: 'auto' }} />
                 </div>
                 <div className="logo-option-copy">
                   <h2>{title}</h2>
