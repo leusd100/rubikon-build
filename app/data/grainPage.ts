@@ -1,7 +1,6 @@
 import { ClipboardList, DraftingCompass, HardHat, MessagesSquare } from 'lucide-react';
 import type { DirectionPageConfig } from '../types/directionPage';
 import { directionPages } from './directionPages';
-import { relatedDirections } from './relatedDirections';
 
 /**
  * What RUBIKON does on a grain object and what specialised partners do — decision 1 of the Grain
@@ -15,10 +14,11 @@ export const GRAIN_RESPONSIBILITY_STATEMENT =
 export type GrainCase = { title: string; location: string; scope: string; image: string; imageAlt: string };
 
 /**
- * The future /zernoskhovyshcha as a direction-page config: hero (01), «Як RUBIKON реалізує» (04,
- * editorial with the work points), the process after the brief (05), FAQ v2 (07), related
- * directions with roofing (08) and the inquiry (09). Bands 02–03 are the planner. The current
- * directionPages.zernoskhovyshcha stays untouched until the flag is on (Phase 5).
+ * /zernoskhovyshcha as a direction-page config: hero (01), «Як RUBIKON реалізує» (04, editorial
+ * with the work points), the process after the brief (05), FAQ v2 (07), related directions (08,
+ * relatedDirections.zernoskhovyshcha) and the inquiry (09). Bands 02–03 are the planner.
+ * directionPages.zernoskhovyshcha keeps the previous page for the flag-off rollback until the
+ * cleanup PR moves this content there.
  */
 const grainDirection: DirectionPageConfig = {
   id: 'zernoskhovyshcha',
@@ -73,13 +73,7 @@ const grainDirection: DirectionPageConfig = {
       ['У яких регіонах ви будуєте зерносховища?', 'Основний регіон — Дніпро та Дніпропетровська область. Масштабні промислові й аграрні об’єкти розглядаємо по всій Україні.'],
     ],
   },
-  related: {
-    compact: true,
-    items: [
-      ...relatedDirections.zernoskhovyshcha,
-      { id: 'pokrivelni-roboty', relation: 'Покрівля й огородження підлогових зерносховищ — контур, вузли та примикання.' },
-    ],
-  },
+  related: { compact: true },
   cta: directionPages.zernoskhovyshcha.cta,
 };
 

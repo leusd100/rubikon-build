@@ -23,6 +23,7 @@ export const relatedDirections: Record<DirectionId, readonly RelatedDirection[]>
   zernoskhovyshcha: [
     { id: 'betonni-roboty', relation: 'Бетонні основи під силоси, каркас і технологічне обладнання.' },
     { id: 'metalokonstruktsii', relation: 'Несучі елементи, майданчики та опорні конструкції.' },
+    { id: 'pokrivelni-roboty', relation: 'Покрівля й огородження підлогових зерносховищ — контур, вузли та примикання.' },
   ],
   metalokonstruktsii: [
     { id: 'angary', relation: 'Готова споруда, для якої виготовляється й монтується каркас.' },
