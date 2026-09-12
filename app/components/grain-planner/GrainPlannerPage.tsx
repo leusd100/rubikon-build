@@ -10,11 +10,11 @@ import { GrainPlannerProvider } from './GrainPlannerProvider';
 import { GrainResultBand } from './GrainResultBand';
 
 /**
- * The future /zernoskhovyshcha: hero (01), the planner (02) and its standalone result (03),
+ * /zernoskhovyshcha: hero (01), the planner (02) and its standalone result (03),
  * «Як RUBIKON реалізує» (04), the process after the brief (05), FAQ v2 (07), related directions
  * (08) and the site's one #inquiry form (09), which receives the brief through the shared
- * InquiryAttachmentProvider. Content: app/data/grainPage.ts. Rendered by /planner-preview, and
- * by /zernoskhovyshcha once releaseFlags.grainPlannerOnZernoskhovyshcha is on (Phase 5).
+ * InquiryAttachmentProvider. Content: app/data/grainPage.ts. Rendered by /zernoskhovyshcha
+ * (releaseFlags.grainPlannerOnZernoskhovyshcha) and by the noindex /planner-preview.
  * The page stylesheets (grain-planner.css, grain-editorial.css) are imported by those routes.
  */
 export function GrainPlannerPage() {
