@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import MobileMenu from './MobileMenu';
@@ -171,6 +171,10 @@ export function SiteFooter() {
           <a className="footer-phone" href={companyContactLinks.phone}>
             <Phone aria-hidden="true" />
             <span>{company.phone.display}</span>
+          </a>
+          <a className="footer-email" href={companyContactLinks.email}>
+            <Mail aria-hidden="true" />
+            <span>{company.email}</span>
           </a>
           <MessengerLinks className="footer-messengers" />
           <div className="footer-legal">

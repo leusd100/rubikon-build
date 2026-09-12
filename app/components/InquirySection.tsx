@@ -1,4 +1,4 @@
-import { MessagesSquare, Phone } from 'lucide-react';
+import { Mail, MessagesSquare, Phone } from 'lucide-react';
 import ProjectInquiryForm from './ProjectInquiryForm';
 import { MessengerLinks } from './SiteChrome';
 import { company, companyContactLinks } from '../data/company';
@@ -20,8 +20,8 @@ type InquirySectionProps = {
  *
  * The homepage used to carry its own hand-written copy of this markup. The two drifted (the
  * homepage's copy still had an `id="contact-note"` nothing referenced), which is exactly the
- * failure mode owning it in one place prevents: the phone/messenger block below is the contact
- * detail for the whole site, and it is now edited once.
+ * failure mode owning it in one place prevents: the phone/messenger/email block below is the
+ * contact detail for the whole site, and it is now edited once.
  */
 export default function InquirySection({
   eyebrow,
@@ -49,6 +49,9 @@ export default function InquirySection({
               </b>
               <MessengerLinks className="contact-messengers" />
             </div>
+            <a className="pending-contact contact-email" href={companyContactLinks.email}>
+              <b><Mail aria-hidden="true" />Email</b>{' '}<i>{company.email}</i>
+            </a>
           </div>
         </div>
         <ProjectInquiryForm defaultDirection={defaultDirection} />
