@@ -157,7 +157,13 @@ export function parseLeadAttachment(
   if (!hasData) return parsed;
 
   const validate = validators[kind];
-  if (JSON.stringify(meta.data).length > INQUIRY_ATTACHMENT_DATA_LIMIT) return { ...parsed, dataDropped: 'too-large' };
+  let serializedLength: number;
+  try {
+    serializedLength = JSON.stringify(meta.data).length;
+  } catch {
+    return { ...parsed, dataDropped: 'invalid' };
+  }
+  if (serializedLength > INQUIRY_ATTACHMENT_DATA_LIMIT) return { ...parsed, dataDropped: 'too-large' };
   if (!validate?.(meta.data)) return { ...parsed, dataDropped: 'invalid' };
   return { ...parsed, data: meta.data };
 }

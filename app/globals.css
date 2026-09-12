@@ -446,10 +446,12 @@ section[id] { scroll-margin-top: 116px; }
 .inquiry-submit { width: 100%; margin-top: 0; border: 0; cursor: pointer; }
 .inquiry-submit svg { width: 17px; height: 17px; }
 .inquiry-submit-note { margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; text-align: center; }
+.inquiry-noscript { margin: 10px 0 0; padding: 10px 12px; color: var(--ink); background: rgba(182,83,44,.09); border-left: 3px solid var(--accent); font-size: 11px; line-height: 1.5; }
+.inquiry-noscript a { color: var(--accent-dark); font-weight: 800; }
 .inquiry-status { display: none; margin: 0; padding: 16px clamp(24px, 2.5vw, 36px); color: #edf4ef; background: #26352c; border-left: 3px solid #5e9c72; font-size: 12px; line-height: 1.55; }
 .inquiry-status.is-visible { display: block; }
 .inquiry-status.is-error { color: #f7e6e1; background: #3a221c; border-left-color: #c0533a; }
-.inquiry-submit:disabled { opacity: .7; cursor: progress; }
+.inquiry-submit:disabled { opacity: .7; cursor: not-allowed; }
 .inquiry-status-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .inquiry-status-actions a, .inquiry-status-actions button { display: inline-flex; align-items: center; gap: 7px; min-height: var(--control-min-height); padding: 8px 11px; color: #fff; border: 1px solid rgba(255,255,255,.55); background: transparent; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
 .inquiry-status-actions a:hover, .inquiry-status-actions button:hover { border-color: #fff; background: rgba(255,255,255,.08); }
