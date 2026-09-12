@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { handlingOptions, hasActiveProcessing, processingOptions, shouldAskHandlingInProcessing, uiLabels } from '../../../lib/planner/grain';
 import { ChoiceGroup } from '../../planner/ChoiceGroup';
 import { Clarifier } from '../../planner/Clarifier';
@@ -8,12 +9,19 @@ import type { GrainQuestionProps } from './types';
 export function ProcessingQuestion({ answers, answer }: GrainQuestionProps) {
   const askHandling = shouldAskHandlingInProcessing(answers);
   const knownHandling = hasActiveProcessing(answers.processing) && Boolean(answers.handling);
+  const contextRef = useRef<HTMLParagraphElement>(null);
+  const previouslyKnown = useRef(knownHandling);
+
+  useEffect(() => {
+    if (knownHandling && !previouslyKnown.current) contextRef.current?.focus();
+    previouslyKnown.current = knownHandling;
+  }, [knownHandling]);
 
   return (
     <>
       <ChoiceGroup legend="Чи потрібна підготовка зерна перед зберіганням?" value={answers.processing} options={processingOptions} onChange={(value) => answer('processing', value)} />
       {knownHandling && (
-        <p className="planner-context">
+        <p className="planner-context" ref={contextRef} tabIndex={-1}>
           {answers.handling === 'unknown'
             ? <>Спосіб переміщення з кроку «Робота об’єкта» ще не визначено — він лишиться уточненням.</>
             : <>Переміщення враховано з кроку «Робота об’єкта»: <b>{uiLabels[answers.handling ?? '']}</b>. Змінити можна в тій темі.</>}

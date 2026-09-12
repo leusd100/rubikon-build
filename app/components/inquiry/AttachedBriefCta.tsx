@@ -106,22 +106,29 @@ export function AttachedBriefCta({ gate, className, label = 'До заявки' 
   // and may still be loading then — so an attached source waits for its gate to render.
   useEffect(() => {
     const inquirySection = document.getElementById('inquiry');
-    if (!inquirySection) return undefined;
+    if (!inquirySection || !attached) return undefined;
 
-    const existing = document.querySelector<HTMLElement>(gate);
-    if (existing) return watchGate(inquirySection, existing, setSummaryPassed, setInquiryVisible, updateBlockers);
-    if (!attached) return undefined;
-
+    let currentGate: HTMLElement | null = null;
     let stopWatching: (() => void) | undefined;
-    const waiting = new MutationObserver(() => {
-      const summary = document.querySelector<HTMLElement>(gate);
-      if (!summary) return;
-      waiting.disconnect();
-      stopWatching = watchGate(inquirySection, summary, setSummaryPassed, setInquiryVisible, updateBlockers);
-    });
-    waiting.observe(document.body, { childList: true, subtree: true });
+    const bindCurrentGate = () => {
+      const nextGate = document.querySelector<HTMLElement>(gate);
+      if (nextGate === currentGate) return;
+      stopWatching?.();
+      stopWatching = undefined;
+      currentGate = nextGate;
+      // A removed/replaced summary has no valid measurements. Keep the CTA hidden until the
+      // current node has been observed and measured rather than carrying stale geometry forward.
+      setSummaryPassed(false);
+      setInquiryVisible(false);
+      updateBlockers();
+      if (nextGate) stopWatching = watchGate(inquirySection, nextGate, setSummaryPassed, setInquiryVisible, updateBlockers);
+    };
+
+    bindCurrentGate();
+    const gateObserver = new MutationObserver(bindCurrentGate);
+    gateObserver.observe(document.body, { childList: true, subtree: true });
     return () => {
-      waiting.disconnect();
+      gateObserver.disconnect();
       stopWatching?.();
     };
   }, [gate, attached, updateBlockers]);

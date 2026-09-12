@@ -84,6 +84,16 @@ describe('grain flow reducer — parity with the prototype PlannerApp handlers',
     expect(reduceGrainFlow(midEdit, { type: 'reset' })).toEqual(INITIAL_GRAIN_FLOW);
   });
 
+  it('keeps the last committed valid answers while an edit is incomplete', () => {
+    const editing = run([
+      { type: 'edit', theme: 0, fromResult: true },
+      { type: 'answer', key: 'capacity', value: '' },
+    ], revealedDemo);
+
+    expect(editing.answers.capacity).toBe('');
+    expect(editing.committedAnswers.capacity).toBe(fixtures.DEMO.capacity);
+  });
+
   it('after a reset mid-edit, the next consultation is not explained against the abandoned one', () => {
     const midEdit = run([{ type: 'edit', theme: 3, fromResult: true }], revealedDemo);
     const fresh = run([

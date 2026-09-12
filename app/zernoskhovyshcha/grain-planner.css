@@ -18,6 +18,10 @@
 }
 
 .grain-planner-root.grain-result-band { background: var(--surface-muted); border-top: 3px solid var(--accent); }
+.grain-planner-root.grain-result-error .shell { max-width: 760px; }
+.grain-planner-root.grain-result-error h2 { max-width: 700px; margin: 12px 0 14px; font-family: var(--planner-display); font-size: clamp(32px, 4vw, 52px); font-weight: 400; line-height: 1.08; }
+.grain-planner-root.grain-result-error h2 + p { max-width: 640px; color: var(--text-secondary); line-height: 1.65; }
+.grain-planner-root .grain-result-error-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .grain-planner-root .planner-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .grain-planner-root [data-planner-anchor] { scroll-margin-top: 116px; }
 .grain-planner-root .planner-section-header { margin-bottom: 40px; }
