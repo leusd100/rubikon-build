@@ -242,7 +242,8 @@ section[id] { scroll-margin-top: 116px; }
   display: block;
   color: var(--ghost-fill);
   -webkit-text-stroke: 1px var(--ghost-stroke);
-  font: 650 clamp(112px, 14vw, 230px)/.78 var(--font-condensed), sans-serif;
+  /* 700, not 650: the condensed face ships 500/600/700 only, and 650 always resolved to the Bold face. */
+  font: 700 clamp(112px, 14vw, 230px)/.78 var(--font-condensed), sans-serif;
   letter-spacing: -.055em;
   white-space: nowrap;
   pointer-events: none;
