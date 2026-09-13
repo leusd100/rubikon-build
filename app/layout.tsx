@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Sans_Condensed, Jost, Manrope } from 'next/font/google';
+import { Jost, Manrope } from 'next/font/google';
+// Self-hosted rather than next/font/google: Google's copy of Plex Sans Condensed has no Cyrillic.
+import './fonts/ibm-plex-sans-condensed.css';
 import './globals.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
@@ -10,13 +12,6 @@ import { directions } from './data/directions';
 const manrope = Manrope({
   variable: '--font-manrope',
   subsets: ['cyrillic', 'latin'],
-});
-
-const condensed = IBM_Plex_Sans_Condensed({
-  variable: '--font-condensed',
-  subsets: ['cyrillic-ext', 'latin'],
-  weight: ['500', '600', '700'],
-  preload: false,
 });
 
 const display = Jost({
@@ -138,7 +133,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
       </head>
-      <body className={`${manrope.variable} ${condensed.variable} ${display.variable}`}>
+      <body className={`${manrope.variable} ${display.variable}`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
