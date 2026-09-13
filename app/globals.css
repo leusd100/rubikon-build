@@ -1015,8 +1015,12 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .cost-list article { grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 12px; padding: 18px 0; }
   .cost-list h3 { grid-column: 2; }
   .cost-list p { grid-column: 1 / -1; margin-top: 8px; }
-  .route-service { grid-template-columns: 48px 1fr 30px; min-height: 190px; gap: 12px; }
-  .route-service h3 { font-size: 25px; }
+  /* minmax(0, 1fr), not 1fr: a 1fr track can't shrink below the title's longest word, so at 360–375px
+     «МЕТАЛОКОНСТРУКЦІЇ» (~246px) widened it and pushed the ↗ column past the card and the viewport. */
+  .route-service { grid-template-columns: 48px minmax(0, 1fr) 30px; min-height: 190px; gap: 12px; }
+  /* With the track capped, the global heading rule would break that word mid-letter («…КЦІ / Ї»).
+     Keep it whole instead: it runs on into the empty top of the ↗ column, and the ↗ sits lower, centred in the card. */
+  .route-service h3 { font-size: 25px; overflow-wrap: normal; }
   .route-service p { font-size: 13px; }
   a.route-service:hover { padding-inline: 12px; }
   .sticky-heading { position: static; }
