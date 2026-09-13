@@ -12,11 +12,15 @@ import {
   startStage,
 } from '../../app/lib/deliveryModel';
 import type {
+  Capability,
   CapabilityLayerId,
+  DeliveryFormat,
   DeliveryFormatId,
+  DeliveryModel,
   DocumentBasis,
   EntryStateId,
   Party,
+  ResponsibilityCell,
   StageId,
 } from '../../app/types/deliveryModel';
 
@@ -39,8 +43,48 @@ const STATEMENTS_BY_VERSION: Record<string, typeof deliveryModel.statements> = {
   },
 };
 
-// Claims the public site must not make until they are true, and phrases the model replaces.
-const FORBIDDEN_CLAIMS = [/генеральн/i, /гаранті/i, /ліценз/i, /сертифікат/i, /штат/i, /\d+\s?(хв|хвилин|год)/i, /грн|₴|\$|€/, /від\s*\d[^.]*м²/i];
+// Frozen responsibility matrix v1.0.0 in the contract's legend: В виконує, К координує, П партнер,
+// З замовник, Г генпідрядник, Д визначається договором, — поза обсягом. Columns: comprehensive | work-package | subcontract.
+const LEGEND: Record<Party, string> = { rubikon: 'В', 'rubikon-coordinates': 'К', partner: 'П', client: 'З', 'general-contractor': 'Г' };
+const FROZEN_MATRIX: Record<string, string> = {
+  'task-framing': 'В | В | ГВ',
+  'site-inputs': 'З | З | Г',
+  surveys: 'Д | Д | Г',
+  design: 'ПЗК | ПЗ | ПГ',
+  interfaces: 'К | ЗВ | Г',
+  estimate: 'В | В | В',
+  materials: 'ВЗ | ВЗ | ВГ',
+  steel: 'В | В | В',
+  roofing: 'В | В | В',
+  foundations: 'В | В | В',
+  'flexible-packages': 'ВП | ВП | ВП',
+  'engineering-systems': 'ПК | — | —',
+  'process-equipment': 'ПК | — | —',
+  'quality-control': 'В | В | В',
+  permits: 'Д | Д | Д',
+  supervision: 'Д | Д | Д',
+  acceptance: 'З | З | Г',
+  'as-built-documents': 'Д | Д | Д',
+};
+
+function matrixCode(cell: ResponsibilityCell): string {
+  if (cell === 'contract-defined') return 'Д';
+  if (cell === 'out-of-scope') return '—';
+  return cell.map((party) => LEGEND[party]).join('');
+}
+
+// Claims the public site must not make until they are true, each with a claim its pattern must catch.
+const FORBIDDEN_CLAIMS: readonly (readonly [RegExp, string])[] = [
+  [/генеральн/i, 'Генеральний підрядник'],
+  [/гаранті/i, 'Гарантія на всі роботи'],
+  [/ліценз/i, 'Ліцензія на будівництво'],
+  [/сертифікат/i, 'Сертифікат якості'],
+  [/штат/i, 'Штатні інженери'],
+  [/\d+\s?(хв|хвилин|год)/i, 'Передзвонимо за 15 хвилин'],
+  [/грн|₴|\$|€/, 'Від 1 200 грн'],
+  [/від\s*\d[^.]*м²/i, 'Від 500 м²'],
+];
+// Phrases the model replaces on the site.
 const DISALLOWED_PUBLIC_PHRASES = [
   'Об’єкт під ключ',
   'Робота за наявною документацією',
@@ -55,6 +99,40 @@ const DISALLOWED_PUBLIC_PHRASES = [
   'інженер RUBIKON',
   'В основі — понад 30 років',
 ];
+
+// Keys that hold stable ids or id references.
+const ID_KEYS = new Set(['id', 'anchor', 'startStage', 'directionId']);
+// Keys whose strings are never shown as copy: ids and id references, enums, metadata and the internal fields.
+const NON_COPY_KEYS = new Set([
+  ...ID_KEYS,
+  'number',
+  'layer',
+  'group',
+  'basis',
+  'cells',
+  'ledByGeneralContractorIn',
+  'version',
+  'frozenAt',
+  'contractTerm',
+  'legacyCooperationLabels',
+  'internalNote',
+  'legalLayer',
+]);
+
+/** Every stable id in the model — ids, anchors and id references — wherever it sits. */
+function stableIds(value: unknown): string[] {
+  if (Array.isArray(value)) return value.flatMap((item) => stableIds(item));
+  if (!value || typeof value !== 'object') return [];
+  return Object.entries(value).flatMap(([key, child]) => (ID_KEYS.has(key) && typeof child === 'string' ? [child] : stableIds(child)));
+}
+
+/** Every string in the model outside NON_COPY_KEYS: the copy a page could render. */
+function copyStrings(value: unknown): string[] {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap((item) => copyStrings(item));
+  if (!value || typeof value !== 'object') return [];
+  return Object.entries(value).flatMap(([key, child]) => (NON_COPY_KEYS.has(key) ? [] : copyStrings(child)));
+}
 
 describe('delivery model: formats and entry states', () => {
   it('has exactly the three frozen formats, in order', () => {
@@ -144,6 +222,14 @@ describe('delivery model: responsibility', () => {
     expect(legalRows.map((row) => row.id)).toEqual(['permits', 'supervision', 'as-built-documents']);
     for (const row of legalRows) expect(Object.values(row.cells), row.id).toEqual(['contract-defined', 'contract-defined', 'contract-defined']);
   });
+
+  it('matches the frozen responsibility matrix v1.0.0', () => {
+    const matrix = Object.fromEntries(
+      deliveryModel.responsibility.map((row) => [row.id, FORMAT_IDS.map((format) => matrixCode(row.cells[format])).join(' | ')]),
+    );
+
+    expect(matrix).toEqual(FROZEN_MATRIX);
+  });
 });
 
 describe('delivery model: public wording', () => {
@@ -155,9 +241,17 @@ describe('delivery model: public wording', () => {
 
   it('makes no claim the site cannot stand behind and uses none of the replaced phrases', () => {
     for (const text of publicTexts(deliveryModel)) {
-      for (const pattern of FORBIDDEN_CLAIMS) expect(text, String(pattern)).not.toMatch(pattern);
+      for (const [pattern] of FORBIDDEN_CLAIMS) expect(text, String(pattern)).not.toMatch(pattern);
       for (const phrase of DISALLOWED_PUBLIC_PHRASES) expect(text).not.toContain(phrase);
     }
+  });
+
+  it('catches each claim the guard is meant to block', () => {
+    for (const [pattern, claim] of FORBIDDEN_CLAIMS) expect(claim).toMatch(pattern);
+  });
+
+  it('gives the guard exactly the copy in the model', () => {
+    expect(new Set(publicTexts(deliveryModel))).toEqual(new Set(copyStrings(deliveryModel)));
   });
 
   it('leaves internal fields out of the public texts', () => {
@@ -176,6 +270,22 @@ describe('delivery model: public wording', () => {
 
     expect(internalTopics.map((item) => item.id)).toEqual(['general-contract-term', 'warranty', 'contract-documents']);
     for (const item of internalTopics) expect(texts).not.toContain(item.topic);
+  });
+
+  it('never reads the internal fields, whatever they hold', () => {
+    const marker = 'INTERNAL-ONLY';
+    const probe: DeliveryModel = {
+      ...deliveryModel,
+      formats: deliveryModel.formats.map((format): DeliveryFormat => ({
+        ...format,
+        contractTerm: { label: marker, status: 'pending-legal' },
+        legacyCooperationLabels: [marker],
+      })),
+      capabilities: deliveryModel.capabilities.map((capability): Capability => ({ ...capability, internalNote: marker })),
+      legalLayer: deliveryModel.legalLayer.map((item) => ({ ...item, topic: marker })),
+    };
+
+    expect(publicTexts(probe).join('\n')).not.toContain(marker);
   });
 });
 
@@ -209,8 +319,29 @@ describe('delivery model: helpers', () => {
 });
 
 describe('delivery model: data contract', () => {
-  it('is plain JSON — no functions, icons or class instances', () => {
-    expect(JSON.parse(JSON.stringify(deliveryModel))).toEqual(deliveryModel);
+  it('uses latin kebab-case ids, unique within each list', () => {
+    const ids = stableIds(deliveryModel);
+    const lists: readonly (readonly { id: string }[])[] = [
+      deliveryModel.formats,
+      deliveryModel.entryStates,
+      deliveryModel.capabilities,
+      deliveryModel.stages,
+      deliveryModel.responsibility,
+      deliveryModel.budgetFactors,
+      deliveryModel.inputs,
+      deliveryModel.legalLayer,
+    ];
+
+    expect(ids).toEqual(expect.arrayContaining([...FORMAT_IDS, ...STAGE_IDS, 'kompleksna-realizatsiia', 'metalokonstruktsii']));
+    for (const id of ids) expect(id).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    for (const list of lists) {
+      const listIds = list.map((item) => item.id);
+      expect(new Set(listIds).size, listIds.join(', ')).toBe(listIds.length);
+    }
+  });
+
+  it('is plain JSON — no functions, icons, class instances or undefined values', () => {
+    expect(JSON.parse(JSON.stringify(deliveryModel))).toStrictEqual(deliveryModel);
   });
 
   it('matches its human-readable version in docs/delivery-model.md', () => {
