@@ -13,8 +13,14 @@ const { d1, r2 } = hostingConfig;
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === 'seatbelt';
 
 const localBindingConfig = {
-  main: 'vinext/server/app-router-entry',
+  main: './worker.ts',
   compatibility_flags: ['nodejs_compat'],
+  // Sites currently serves matching files before the Worker and does not apply
+  // public/_headers. Route only version-safe assets through our thin header adapter.
+  assets: {
+    binding: 'ASSETS',
+    run_worker_first: ['/_next/static/*', '/media-responsive/*'],
+  },
   d1_databases: d1
     ? [
         {
