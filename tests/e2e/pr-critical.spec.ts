@@ -296,6 +296,31 @@ test('/yak-pratsyuiemo keeps every model fact in the server HTML, however the pa
   expect(text.legend).toEqual(FORMAT_LABELS.map((label, index) => `0${index + 1} ${label}`));
 });
 
+test('/yak-pratsyuiemo visual language is decoration beside the words, never instead of them', async ({ page }) => {
+  const text = await serverText(page, DELIVERY_PAGE, {
+    icons: '.delivery-page svg.role-icon::aria-hidden',
+    labels: '.delivery-page :has(> svg.role-icon)',
+    ghosts: '.delivery-page .ghost-word',
+    ghostsHidden: '.delivery-page .ghost-word::aria-hidden',
+    route: '.delivery-thread-route::aria-hidden',
+    routePoints: '.delivery-thread-route li',
+    design: '.delivery-thread-route .delivery-thread-point-design',
+    change: '.delivery-thread-route .delivery-thread-point-change',
+  });
+
+  // Six per stage (result, three roles, documents, why) and one beside each of two section eyebrows.
+  expect(text.icons).toHaveLength(deliveryModel.stages.length * 6 + 2);
+  expect(new Set(text.icons)).toEqual(new Set(['true']));
+  expect(text.labels).toHaveLength(text.icons.length);
+  expect(text.labels.filter((label) => label.length === 0)).toEqual([]);
+  expect(text.ghosts).toEqual(['PROCESS', 'RESPONSIBILITY', 'EXPERIENCE']);
+  expect(text.ghostsHidden).toEqual(['true', 'true', 'true']);
+  expect(text.route).toEqual(['true']);
+  expect(text.routePoints).toEqual(deliveryModel.stages.map((stage) => stage.number));
+  expect(text.design).toEqual(['03', '06']);
+  expect(text.change).toEqual(['07']);
+});
+
 test('/yak-pratsyuiemo stage details open from the keyboard, in reading order', async ({ page }) => {
   await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
   const details = page.locator('ol.delivery-stages details').first();
@@ -353,8 +378,11 @@ for (const width of [360, 375, 390, 768]) {
     });
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    // Each section's content, not the section itself: a ghost word is decoration that deliberately
+    // runs past the edge and is clipped there, and the document-width check above already proves
+    // nothing makes the page scroll sideways.
     const overflowing = await page
-      .locator('.delivery-page > section[id]:not(#inquiry), .delivery-page > nav')
+      .locator('.delivery-page > section[id]:not(#inquiry) > .shell, .delivery-page > nav')
       .evaluateAll((sections) => sections.filter((section) => section.scrollWidth > section.clientWidth + 1).map((section) => section.id || section.className));
     expect(overflowing).toEqual([]);
   });

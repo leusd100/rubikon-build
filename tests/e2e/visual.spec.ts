@@ -162,5 +162,20 @@ for (const viewport of viewports) {
       await preparePage(page, '/yak-pratsyuiemo');
       await expectStableScreenshot(page.locator('#dokumenty > .shell'), `delivery-documents-${viewport.name}.png`);
     });
+
+    test('delivery page who does the work', async ({ page }) => {
+      await preparePage(page, '/yak-pratsyuiemo');
+      await expectStableScreenshot(page.locator('#khto-vykonuie > .shell'), `delivery-who-${viewport.name}.png`);
+    });
+
+    test('delivery page design thread', async ({ page }) => {
+      await preparePage(page, '/yak-pratsyuiemo');
+      await expectStableScreenshot(page.locator('#proiektuvannia > .shell'), `delivery-thread-${viewport.name}.png`);
+    });
+
+    test('delivery page changes', async ({ page }) => {
+      await preparePage(page, '/yak-pratsyuiemo');
+      await expectStableScreenshot(page.locator('#zminy > .shell'), `delivery-changes-${viewport.name}.png`);
+    });
   });
 }

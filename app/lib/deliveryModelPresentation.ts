@@ -178,11 +178,25 @@ export function stageCards(): readonly StageCard[] {
   }));
 }
 
+// Where a change meets the design on the route. The model files «Погоджені зміни» — the record of an
+// agreed change — under construction, so «під час реалізації» is marked on that stage.
+const CHANGE_STAGE: StageId = 'construction';
+
+export type ThreadMark = 'design' | 'change';
+
 export type DesignThread = {
   statement: string;
   stages: readonly { number: string; title: string; anchor: string; documents: readonly string[] }[];
   change: string;
+  changeStage: { number: string; anchor: string };
+  /** The eight stages as a mini-route, with the design stages and the change stage marked. */
+  route: readonly { number: string; mark?: ThreadMark }[];
 };
+
+function threadMark(stage: DeliveryModel['stages'][number]): ThreadMark | undefined {
+  if (stage.designThread) return 'design';
+  return stage.id === CHANGE_STAGE ? 'change' : undefined;
+}
 
 /**
  * Design as a thread through the route: the frozen design statement, the stages it runs through
@@ -201,6 +215,11 @@ export function designThread(): DesignThread {
       })),
     // «Оцінюємо вплив … якщо зачеплено проєкт — через проєктувальника»: the step where a change meets the design.
     change: deliveryModel.changePolicy.steps[1],
+    changeStage: { number: stageById(CHANGE_STAGE).number, anchor: stageAnchor(CHANGE_STAGE) },
+    route: model.stages.map((stage) => {
+      const mark = threadMark(stage);
+      return mark ? { number: stage.number, mark } : { number: stage.number };
+    }),
   };
 }
 

@@ -20,7 +20,7 @@
 .delivery-index { color: var(--accent-dark); font: 600 13px/1 var(--font-condensed), sans-serif; }
 .delivery-lead { max-width: 640px; margin: 0; color: var(--muted); font-size: 16px; line-height: 1.8; }
 .delivery-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: var(--grid-gap); align-items: start; }
-.delivery-split h2 { margin: 0 0 18px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(34px, 3.4vw, 52px); font-weight: 400; line-height: 1.05; letter-spacing: -.03em; text-wrap: balance; }
+.delivery-split h2, .delivery-changes-head h2 { margin: 0 0 18px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(34px, 3.4vw, 52px); font-weight: 400; line-height: 1.05; letter-spacing: -.03em; text-wrap: balance; }
 
 /* Format tokens: 01 / 02 / 03 stand for a format wherever a text repeats per format. */
 .delivery-tokens { display: inline-flex; flex-wrap: wrap; gap: 3px; }
@@ -60,11 +60,19 @@
 .delivery-token-legend a { display: inline-flex; align-items: center; gap: 8px; color: white; }
 .delivery-token-legend a:hover { color: var(--accent-on-dark); }
 .delivery-stages { margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(255,255,255,.18); }
-.delivery-stage { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 2fr); gap: 14px var(--grid-gap); align-items: start; padding: 30px 0; border-bottom: 1px solid rgba(255,255,255,.18); }
+.delivery-stage { --rail-node: 42px; position: relative; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 2fr); gap: 14px var(--grid-gap); align-items: start; padding: 30px 0 30px 38px; border-bottom: 1px solid rgba(255,255,255,.18); }
 .delivery-stage h3 { margin: 0; font: 600 clamp(22px, 2.2vw, 30px)/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .delivery-stage-number { color: var(--accent-on-dark); }
+/* The route as one line through 01–08: a node level with each stage title, a segment down to the
+   next node. Structure only — lighting a stage up is the route map's job. */
+.delivery-stage::before { content: ''; position: absolute; z-index: 1; top: var(--rail-node); left: 0; box-sizing: border-box; width: 9px; height: 9px; border: 1.5px solid rgba(255,255,255,.6); background: var(--deep); }
+.delivery-stage::after { content: ''; position: absolute; top: var(--rail-node); bottom: calc(-1 * var(--rail-node)); left: 4px; width: 1px; background: rgba(255,255,255,.24); }
+.delivery-stage:last-child::after { display: none; }
 .delivery-stage-result { margin: 0; color: var(--text-on-dark-muted); font-size: 15px; line-height: 1.7; }
 .delivery-stage-result b { color: white; font-weight: 600; }
+/* Role icons stay secondary: a thin line in a quieter tone than the label beside it. */
+.delivery-stage-result .role-icon { margin-right: 6px; color: var(--text-on-dark-subtle); }
+.delivery-stage-inner h4 .role-icon { color: var(--text-on-dark-subtle); }
 .delivery-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
 .delivery-tags li { padding: 5px 10px; border: 1px solid rgba(255,255,255,.28); color: var(--text-on-dark-muted); font: 600 11px/1.3 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .delivery-stage-details { margin-top: 18px; }
@@ -75,7 +83,7 @@
 
 /* Inside a stage: what happens and the gate first, then who does what, then documents, then why. */
 .delivery-stage-inner { display: grid; gap: 22px; margin-top: 24px; }
-.delivery-stage-inner h4 { margin: 0 0 8px; color: var(--accent-on-dark); font: 600 11px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.delivery-stage-inner h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; color: var(--accent-on-dark); font: 600 11px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .delivery-stage-inner p, .delivery-stage-inner li { color: var(--text-on-dark-muted); font-size: 14px; line-height: 1.7; }
 .delivery-stage-inner p { margin: 0; }
 .delivery-stage-lead { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px 32px; }
@@ -91,18 +99,27 @@
 .delivery-why { padding-left: 16px; border-left: 2px solid var(--accent-on-dark); }
 .delivery-why p { color: white; }
 
-/* Design as a thread. */
-.delivery-thread-steps { display: grid; margin: 0; padding: 0 0 0 28px; list-style: none; border-left: 2px solid var(--accent); }
-.delivery-thread-steps li { position: relative; padding-bottom: 26px; }
-.delivery-thread-steps li:last-child { padding-bottom: 0; }
-.delivery-thread-steps li::before { content: ''; position: absolute; top: 6px; left: -35px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
-.delivery-thread-steps a, .delivery-thread-steps b { font: 600 18px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
+/* Design as a thread: the eight stages as a mini-route with 03, 06 and the change stage marked,
+   then the three points in words. The route is a picture of the list below it, hidden from AT. */
+.delivery-thread-body { display: grid; gap: 30px; }
+.delivery-thread-route { position: relative; display: flex; justify-content: space-between; margin: 0; padding: 0; list-style: none; }
+.delivery-thread-route::before { content: ''; position: absolute; top: 5px; right: 12px; left: 12px; height: 1px; background: var(--border-strong); }
+.delivery-thread-route li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 24px; color: var(--muted); font: 600 12px/1 var(--font-condensed), sans-serif; }
+.delivery-thread-route li::before { content: ''; box-sizing: border-box; width: 11px; height: 11px; border: 1.5px solid var(--border-strong); background: var(--warm); }
+.delivery-thread-route .delivery-thread-point-design::before { border-color: var(--accent); background: var(--accent); }
+.delivery-thread-route .delivery-thread-point-change::before { border: 2px solid var(--accent); }
+.delivery-thread-route .delivery-thread-point-design, .delivery-thread-route .delivery-thread-point-change { color: var(--ink); }
+.delivery-thread-steps { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.delivery-thread-steps li { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.delivery-thread-steps a { font: 600 18px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .delivery-thread-steps a span { color: var(--accent-dark); }
 .delivery-thread-steps p { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 
-/* Who does the work. */
-.delivery-layers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid rgba(255,255,255,.2); border-left: 1px solid rgba(255,255,255,.2); }
-.delivery-layer { padding: 30px; border-right: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); }
+/* Who does the work, as nested layers: the core inside the flexible packages, both inside the partners. */
+.delivery-layers { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); padding: 12px; border: 1px solid rgba(255,255,255,.2); }
+.delivery-layers-middle { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 12px; border: 1px solid rgba(255,255,255,.3); }
+.delivery-layer { padding: 26px; }
+.delivery-layer-core { border: 1px solid rgba(255,255,255,.6); }
 .delivery-layer h3 { margin: 0 0 16px; font: 600 22px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .delivery-layer-core h3 { color: var(--accent-on-dark); }
 .delivery-layer ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -165,8 +182,20 @@
 .delivery-change-steps span { color: var(--accent-on-dark); font: 600 13px/1.6 var(--font-condensed), sans-serif; }
 .delivery-change-steps p { margin: 0; font-size: 15px; line-height: 1.6; }
 .delivery-not-promised { margin-top: 28px; }
+/* Head above the steps; below 1051 px the same single column, with the same spacing, as before. */
+.delivery-changes-layout { display: grid; gap: var(--grid-gap); }
+.delivery-changes-head { max-width: 760px; }
 .delivery-not-promised h3 { margin: 0 0 14px; color: var(--text-on-dark-muted); font: 600 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .delivery-not-promised ul { display: grid; gap: 6px; margin: 0; padding-left: 18px; color: var(--text-on-dark-muted); font-size: 14px; line-height: 1.7; }
+
+@media (min-width: 1051px) {
+  /* On a wide screen the four steps read as one flow, left to right. */
+  .delivery-change-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 44px; border-top: 0; }
+  .delivery-change-steps li { position: relative; display: block; padding: 18px 0 0; border-top: 1px solid rgba(255,255,255,.2); border-bottom: 0; }
+  .delivery-change-steps li span { display: block; margin-bottom: 10px; }
+  .delivery-change-steps li:not(:last-child)::after { content: ''; position: absolute; top: 28px; right: -34px; width: 24px; height: 1px; background: rgba(255,255,255,.55); }
+  .delivery-change-steps li:not(:last-child)::before { content: ''; position: absolute; top: 25px; right: -34px; box-sizing: border-box; width: 7px; height: 7px; border-top: 1px solid rgba(255,255,255,.55); border-right: 1px solid rgba(255,255,255,.55); transform: rotate(45deg); }
+}
 
 /* Documents: every document once, in route order, with the bases it depends on. */
 .delivery-basis-legend { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 0 0 30px; }
@@ -200,7 +229,8 @@
 .delivery-experience-layout .section-link { margin-top: 0; }
 
 @media (max-width: 1050px) {
-  .delivery-format-grid, .delivery-layers { grid-template-columns: minmax(0, 1fr); }
+  .delivery-format-grid, .delivery-layers, .delivery-layers-middle { grid-template-columns: minmax(0, 1fr); }
+  .delivery-stage { --rail-node: 37px; }
   .delivery-stage { grid-template-columns: minmax(0, 1fr); }
   .delivery-split { grid-template-columns: minmax(0, 1fr); }
   .delivery-shared { grid-template-columns: minmax(0, 1fr); }
@@ -216,13 +246,14 @@
   .delivery-contents ol::-webkit-scrollbar { display: none; }
   .delivery-contents li:last-child { padding-right: 32px; }
   .delivery-format, .delivery-layer { padding: 22px 20px; }
+  .delivery-layers, .delivery-layers-middle { padding: 8px; }
   .delivery-format { gap: 12px; }
   .delivery-format dl { gap: 10px; padding-top: 12px; }
   .delivery-entry-list { grid-template-columns: minmax(0, 1fr); }
   .delivery-entry-list li { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 14px 0; }
   .delivery-entry-list a { text-align: left; }
   .delivery-token-legend { gap: 6px 16px; }
-  .delivery-stage { padding: 24px 0; }
+  .delivery-stage { --rail-node: 31px; padding: 24px 0 24px 28px; }
   .delivery-stage-inner { gap: 18px; }
   .delivery-stage-lead, .delivery-stage-roles { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .delivery-stage-gate { padding-left: 14px; }

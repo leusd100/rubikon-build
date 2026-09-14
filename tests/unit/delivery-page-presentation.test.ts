@@ -156,7 +156,17 @@ describe('delivery page: who does what', () => {
         { number: '06', title: 'Підготовка реалізації', anchor: 'etap-06', documents: ['Робоча документація', 'Проєкт виконання робіт — де він потрібен'] },
       ],
       change: deliveryModel.changePolicy.steps[1],
+      changeStage: { number: '07', anchor: 'etap-07' },
+      route: [
+        { number: '01' }, { number: '02' }, { number: '03', mark: 'design' }, { number: '04' },
+        { number: '05' }, { number: '06', mark: 'design' }, { number: '07', mark: 'change' }, { number: '08' },
+      ],
     });
+  });
+
+  it('marks «під час реалізації» on the stage where the model files the agreed changes', () => {
+    const stage = deliveryModel.stages.find((item) => item.number === designThread().changeStage.number);
+    expect(stage?.documents.map((document) => document.label)).toContain('Погоджені зміни');
   });
 });
 
