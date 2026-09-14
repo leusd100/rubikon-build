@@ -75,7 +75,8 @@ test.describe('project inquiry form', () => {
 
     const form = page.locator('form.inquiry-form');
     await form.getByText('Додати параметри об’єкта', { exact: true }).click();
-    const cooperation = form.getByLabel('Формат співпраці', { exact: true });
+    // A <select> inside its <label> takes the chosen option into its accessible name, so match the start.
+    const cooperation = form.getByLabel(/^Формат співпраці/);
     await expect(cooperation.locator('option')).toHaveText(['Ще не визначено', ...deliveryModel.formats.map((format) => format.label)]);
     await cooperation.selectOption('Окремий підряд');
     await form.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
