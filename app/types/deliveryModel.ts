@@ -55,7 +55,13 @@ export type DeliveryFormat = {
 };
 
 /** «Що у вас уже є» — where a visitor enters the eight stages. Not a format. */
-export type EntryState = { id: EntryStateId; label: string; startStage: StageId };
+export type EntryState = {
+  id: EntryStateId;
+  label: string;
+  startStage: StageId;
+  /** Public: what happens first at the start stage, when that differs from the stage itself. Quoted verbatim. */
+  startNote?: string;
+};
 
 export type Capability = {
   id: CapabilityId;

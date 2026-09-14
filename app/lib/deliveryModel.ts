@@ -62,7 +62,7 @@ export function publicTexts(source: DeliveryModel): readonly string[] {
     ...source.positioning.primary,
     ...source.positioning.secondary,
     ...source.formats.flatMap((format) => [format.label, format.summary, format.coordination, format.interfaces]),
-    ...source.entryStates.map((state) => state.label),
+    ...source.entryStates.flatMap((state) => (state.startNote ? [state.label, state.startNote] : [state.label])),
     ...source.capabilities.flatMap((capability) => (capability.statement ? [capability.label, capability.statement] : [capability.label])),
     ...source.stages.flatMap((stage) => [
       stage.title,

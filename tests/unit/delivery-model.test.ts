@@ -30,17 +30,20 @@ const PARTIES: Party[] = ['rubikon', 'rubikon-coordinates', 'partner', 'client',
 const BASES: DocumentBasis[] = ['typical', 'contract', 'project', 'law'];
 
 // Frozen public wording, per model version. Rewording a statement means a new version and a new entry.
-const STATEMENTS_BY_VERSION: Record<string, typeof deliveryModel.statements> = {
-  '1.0.0': {
-    principle: 'RUBIKON не обіцяє, що одна команда робить абсолютно все. RUBIKON виконує своє ядро та координує інших виконавців у погодженому обсязі.',
-    team: 'Власна будівельна команда та профільні субпідрядники — залежно від обсягу й специфіки проєкту.',
-    design: 'Проєктування виконує профільна проєктна організація. Залежно від формату проєкту її залучає замовник або робота з нею організовується в межах комплексної реалізації. RUBIKON координує будівельні рішення та стики в погодженому обсязі.',
-    flexiblePackages: 'Огородження, ворота, промислові підлоги та інші будівельні роботи виконуємо власною командою або залучаємо профільного виконавця — залежно від обсягу та рішення.',
-    materials: 'Матеріали закуповує RUBIKON або надає замовник — залежно від договору.',
-    firstContact: 'Після заявки зв’яжемося, щоб уточнити задачу, вихідні дані та можливий формат нашої участі.',
-    experience: 'За RUBIKON BUILD стоять понад 30 років особистої практики Сергія Івановича в будівництві.',
-    boundary: 'За що відповідає кожен учасник, фіксуємо в договорі до початку робіт.',
-  },
+const STATEMENTS_V1 = {
+  principle: 'RUBIKON не обіцяє, що одна команда робить абсолютно все. RUBIKON виконує своє ядро та координує інших виконавців у погодженому обсязі.',
+  team: 'Власна будівельна команда та профільні субпідрядники — залежно від обсягу й специфіки проєкту.',
+  design: 'Проєктування виконує профільна проєктна організація. Залежно від формату проєкту її залучає замовник або робота з нею організовується в межах комплексної реалізації. RUBIKON координує будівельні рішення та стики в погодженому обсязі.',
+  flexiblePackages: 'Огородження, ворота, промислові підлоги та інші будівельні роботи виконуємо власною командою або залучаємо профільного виконавця — залежно від обсягу та рішення.',
+  materials: 'Матеріали закуповує RUBIKON або надає замовник — залежно від договору.',
+  firstContact: 'Після заявки зв’яжемося, щоб уточнити задачу, вихідні дані та можливий формат нашої участі.',
+  experience: 'За RUBIKON BUILD стоять понад 30 років особистої практики Сергія Івановича в будівництві.',
+  boundary: 'За що відповідає кожен учасник, фіксуємо в договорі до початку робіт.',
+};
+const STATEMENTS_BY_VERSION: Record<string, Record<keyof typeof deliveryModel.statements, string>> = { '1.0.0': STATEMENTS_V1, '1.1.0': STATEMENTS_V1 };
+// Entry-state notes, added in 1.1.0 and quoted verbatim like the statements.
+const START_NOTES_BY_VERSION: Record<string, readonly (readonly [EntryStateId, string])[]> = {
+  '1.1.0': [['design-docs', 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.']],
 };
 
 // Frozen responsibility matrix v1.0.0 in the contract's legend: В виконує, К координує, П партнер,
@@ -134,6 +137,8 @@ function copyStrings(value: unknown): string[] {
   return Object.entries(value).flatMap(([key, child]) => (NON_COPY_KEYS.has(key) ? [] : copyStrings(child)));
 }
 
+const startNotes = () => deliveryModel.entryStates.flatMap((state) => ('startNote' in state ? [[state.id, state.startNote] as const] : []));
+
 describe('delivery model: formats and entry states', () => {
   it('has exactly the three frozen formats, in order', () => {
     expect(deliveryModel.formats.map((format) => format.id)).toEqual(FORMAT_IDS);
@@ -153,6 +158,10 @@ describe('delivery model: formats and entry states', () => {
     const starts = Object.fromEntries(deliveryModel.entryStates.map((state) => [state.id, startStage(state.id).id]));
 
     expect(starts).toEqual({ 'task-only': 'request', 'site-inputs': 'inputs', concept: 'scope-budget', 'design-docs': 'scope-budget' });
+  });
+
+  it('notes the documentation check for design documents, verbatim and only there', () => {
+    expect(startNotes()).toEqual(START_NOTES_BY_VERSION[deliveryModel.version]);
   });
 });
 
@@ -234,7 +243,7 @@ describe('delivery model: responsibility', () => {
 
 describe('delivery model: public wording', () => {
   it('keeps the frozen statements verbatim for its version', () => {
-    expect(deliveryModel.version).toBe('1.0.0');
+    expect(deliveryModel.version).toBe('1.1.0');
     expect(STATEMENTS_BY_VERSION[deliveryModel.version]).toEqual(deliveryModel.statements);
     expect(deliveryModel.contactRoles.constructionLead.cta).toBe('Обговорити з керівником будівельного напряму');
   });
@@ -351,5 +360,6 @@ describe('delivery model: data contract', () => {
     for (const format of deliveryModel.formats) expect(doc, format.label).toContain(format.label);
     for (const stage of deliveryModel.stages) expect(doc, stage.title).toContain(`${stage.number} ${stage.title}`);
     for (const text of Object.values(deliveryModel.statements)) expect(doc).toContain(text);
+    for (const [id, note] of startNotes()) expect(doc, id).toContain(note);
   });
 });
