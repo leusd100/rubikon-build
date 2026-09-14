@@ -160,13 +160,13 @@ export function stageCards(): readonly StageCard[] {
 
 export type DesignThread = {
   statement: string;
-  stages: readonly { number: string; title: string; anchor: string; document: string }[];
+  stages: readonly { number: string; title: string; anchor: string; documents: readonly string[] }[];
   change: string;
 };
 
 /**
  * Design as a thread through the route: the frozen design statement, the stages it runs through
- * with their design document, and where a change reaches the design during construction.
+ * with the documents that depend on the project, and where a change reaches the design during construction.
  */
 export function designThread(): DesignThread {
   return {
@@ -177,7 +177,7 @@ export function designThread(): DesignThread {
         number: stage.number,
         title: stage.title,
         anchor: stageAnchor(stage.id),
-        document: stage.documents.find((document) => document.basis.includes('project'))?.label ?? '',
+        documents: stage.documents.filter((document) => document.basis.includes('project')).map((document) => document.label),
       })),
     // «Оцінюємо вплив … якщо зачеплено проєкт — через проєктувальника»: the step where a change meets the design.
     change: deliveryModel.changePolicy.steps[1],

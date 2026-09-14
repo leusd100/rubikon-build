@@ -108,8 +108,8 @@ describe('delivery page: who does what', () => {
     expect(designThread()).toEqual({
       statement: deliveryModel.statements.design,
       stages: [
-        { number: '03', title: 'Інженерне опрацювання', anchor: 'etap-03', document: 'Концептуальне рішення або схема' },
-        { number: '06', title: 'Підготовка реалізації', anchor: 'etap-06', document: 'Робоча документація' },
+        { number: '03', title: 'Інженерне опрацювання', anchor: 'etap-03', documents: ['Концептуальне рішення або схема', 'Технологічні вимоги постачальника обладнання'] },
+        { number: '06', title: 'Підготовка реалізації', anchor: 'etap-06', documents: ['Робоча документація', 'Проєкт виконання робіт — де він потрібен'] },
       ],
       change: deliveryModel.changePolicy.steps[1],
     });

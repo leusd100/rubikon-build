@@ -53,7 +53,7 @@ const CONTENTS = [
   ['biudzhet', 'Бюджет і строки'],
 ] as const;
 
-function PerFormatText({ rows }: { rows: readonly PerFormatRow[] }) {
+function PerFormatText({ rows }: Readonly<{ rows: readonly PerFormatRow[] }>) {
   if (rows.length === 1 && rows[0]?.formats.length === 0) return <p>{rows[0].text}</p>;
   return (
     <ul className="delivery-per-format">
@@ -219,7 +219,7 @@ export default function DeliveryModelPage() {
           </div>
           <ol className="delivery-thread-steps">
             {designThread().stages.map((stage) => (
-              <li key={stage.anchor}><a href={`#${stage.anchor}`}><span>{stage.number}</span> {stage.title}</a><p>{stage.document}</p></li>
+              <li key={stage.anchor}><a href={`#${stage.anchor}`}><span>{stage.number}</span> {stage.title}</a><p>{stage.documents.join(' · ')}</p></li>
             ))}
             <li><b>Під час реалізації</b><p>{designThread().change}</p></li>
           </ol>
