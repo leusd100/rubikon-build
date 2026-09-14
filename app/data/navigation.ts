@@ -1,7 +1,7 @@
 export const siteRoutes = {
   home: '/',
   directions: '/napryamky',
-  process: '/#how-we-work',
+  process: '/yak-pratsyuiemo',
   about: '/pro-nas',
   // Page-relative on purpose (no leading "/"): every page now has its own #inquiry section
   // (homepage's own contact form, or a per-page InquirySection) — this lets the same nav

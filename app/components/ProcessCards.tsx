@@ -1,13 +1,4 @@
-import {
-  BadgeCheck,
-  CalendarClock,
-  ClipboardList,
-  Factory,
-  Handshake,
-  HardHat,
-  MapPin,
-  Ruler,
-} from 'lucide-react';
+import { CalendarClock, Factory, MapPin, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type ProcessCard = {
@@ -17,14 +8,8 @@ type ProcessCard = {
   icon: LucideIcon;
 };
 
-const projectSteps: readonly ProcessCard[] = [
-  { number: '01', title: 'Знайомство', text: 'Уточнюємо завдання, тип об’єкта, умови та бажаний результат.', icon: Handshake },
-  { number: '02', title: 'Огляд і заміри', text: 'Оглядаємо майданчик, фіксуємо обсяги та технічні особливості.', icon: Ruler },
-  { number: '03', title: 'Рішення та кошторис', text: 'Готуємо пропозицію з переліком робіт, строками й орієнтовним бюджетом.', icon: ClipboardList },
-  { number: '04', title: 'Виконання робіт', text: 'Організовуємо роботи та контролюємо якість ключових етапів.', icon: HardHat },
-  { number: '05', title: 'Перевірка й приймання', text: 'Разом перевіряємо результат і приймаємо виконані роботи.', icon: BadgeCheck },
-];
-
+// The homepage's quick brief checklist. The five-step «how we work» list that used to live here is
+// gone: the process is the Delivery Model's eight stages, and they live on /yak-pratsyuiemo.
 const estimateItems: readonly ProcessCard[] = [
   { number: '01', title: 'Призначення', text: 'Що планується всередині: виробництво, склад, техніка, зерно або інше завдання.', icon: Factory },
   { number: '02', title: 'Орієнтовні розміри', text: 'Довжина, ширина, висота та необхідні прольоти. Для першої оцінки достатньо попередніх даних.', icon: Ruler },
@@ -42,18 +27,6 @@ function CardContent({ item, iconClassName }: { item: ProcessCard; iconClassName
       <h3>{item.title}</h3>
       <p>{item.text}</p>
     </>
-  );
-}
-
-export function ProjectProcessSteps() {
-  return (
-    <ol className="steps">
-      {projectSteps.map((item) => (
-        <li key={item.number}>
-          <CardContent item={item} iconClassName="step-icon" />
-        </li>
-      ))}
-    </ol>
   );
 }
 

@@ -142,5 +142,15 @@ for (const viewport of viewports) {
         `direction-faq-${viewport.name}.png`,
       );
     });
+
+    test('delivery page formats', async ({ page }) => {
+      await preparePage(page, '/yak-pratsyuiemo');
+      await expectStableScreenshot(page.locator('#formaty > .shell'), `delivery-formats-${viewport.name}.png`);
+    });
+
+    test('delivery page stages', async ({ page }) => {
+      await preparePage(page, '/yak-pratsyuiemo');
+      await expectStableScreenshot(page.locator('#etapy > .shell'), `delivery-stages-${viewport.name}.png`);
+    });
   });
 }

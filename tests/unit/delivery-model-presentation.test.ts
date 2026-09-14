@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { deliveryModel } from '../../app/data/deliveryModel';
@@ -22,6 +22,7 @@ const MODEL_CONSUMERS = [
   'app/components/InquirySection.tsx',
   'app/components/ProjectInquiryForm.tsx',
   'app/napryamky/page.tsx',
+  'app/yak-pratsyuiemo/page.tsx',
 ];
 const MODEL_FILE = path.join('app', 'data', 'deliveryModel.ts');
 
@@ -117,7 +118,9 @@ describe('delivery model presentation: single source of truth', () => {
     }
   });
 
-  it('has no navigation entry for /yak-pratsyuiemo before the page exists', () => {
-    expect(JSON.stringify(navigation)).not.toContain('yak-pratsyuiemo');
+  it('sends «Як працюємо» to /yak-pratsyuiemo, and that page exists', () => {
+    expect(navigation.siteRoutes.process).toBe('/yak-pratsyuiemo');
+    expect(navigation.primaryNavigation.find((item) => item.label === 'Як працюємо')?.href).toBe('/yak-pratsyuiemo');
+    expect(existsSync('app/yak-pratsyuiemo/page.tsx')).toBe(true);
   });
 });
