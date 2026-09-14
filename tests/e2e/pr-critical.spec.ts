@@ -256,7 +256,47 @@ test('the navigation, footer and homepage teaser lead to /yak-pratsyuiemo', asyn
   expect(home.oldAnchor).toHaveLength(0);
 });
 
-test('/yak-pratsyuiemo stage details open from the keyboard', async ({ page }) => {
+test('/yak-pratsyuiemo keeps every model fact in the server HTML, however the page folds it', async ({ page }) => {
+  const text = await serverText(page, DELIVERY_PAGE, {
+    stages: 'ol.delivery-stages > li > h3',
+    shared: '#vidpovidalnist .delivery-shared .delivery-activity',
+    compared: '#vidpovidalnist .delivery-matrix tbody th .delivery-activity',
+    panels: '#vidpovidalnist .delivery-compare-mobile details::id',
+    panelActivities: '#vidpovidalnist .delivery-compare-mobile details .delivery-activity',
+    notes: '#vidpovidalnist .delivery-notes li',
+    documents: '#dokumenty .delivery-docs-desktop .delivery-doc-label',
+    phoneDocuments: '#dokumenty .delivery-docs-mobile .delivery-doc-label',
+    factors: '#biudzhet .delivery-chips li',
+    budget: '#biudzhet',
+    inputs: '#inquiry .contact-checklist li',
+    checklistTitle: '#inquiry .contact-checklist h3',
+    contents: '.delivery-contents a',
+    legend: '.delivery-token-legend a',
+  });
+  const activities = deliveryModel.responsibility.map((row) => row.activity);
+  const documents = deliveryModel.stages.flatMap((stage) => stage.documents.map((document) => document.label));
+  const notes = deliveryModel.responsibility.flatMap((row) => ('note' in row ? [row.note] : []));
+
+  expect(text.stages).toEqual(deliveryModel.stages.map((stage) => `${stage.number} ${stage.title}`));
+  expect([...text.shared, ...text.compared].sort()).toEqual([...activities].sort());
+  expect(text.compared).toHaveLength(9);
+  expect(text.panels).toEqual(deliveryModel.formats.map((format) => `vidpovidalnist-${format.anchor}`));
+  expect(text.panelActivities).toEqual([...text.compared, ...text.compared, ...text.compared]);
+  expect(text.notes).toHaveLength(notes.length);
+  notes.forEach((note, index) => expect(text.notes[index]).toContain(note));
+  expect(text.documents).toEqual(documents);
+  expect(text.phoneDocuments).toEqual(documents);
+  expect(new Set(documents).size).toBe(19);
+  expect([...text.factors].sort()).toEqual(deliveryModel.budgetFactors.map((factor) => factor.label).sort());
+  expect(text.factors).toHaveLength(13);
+  expect(text.inputs).toEqual(deliveryModel.inputs.map((input) => input.label));
+  expect(text.checklistTitle).toEqual(['Що допоможе на першій розмові']);
+  expect(text.budget.join(' ')).not.toContain('Що потрібно на старті');
+  expect(text.contents.filter((label) => /\d/.test(label))).toEqual([]);
+  expect(text.legend).toEqual(FORMAT_LABELS.map((label, index) => `0${index + 1} ${label}`));
+});
+
+test('/yak-pratsyuiemo stage details open from the keyboard, in reading order', async ({ page }) => {
   await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
   const details = page.locator('ol.delivery-stages details').first();
   const summary = details.locator('summary');
@@ -266,13 +306,49 @@ test('/yak-pratsyuiemo stage details open from the keyboard', async ({ page }) =
   await page.keyboard.press('Enter');
   await expect(details).toHaveAttribute('open', '');
   await expect(details.getByText(deliveryModel.stages[0].why)).toBeVisible();
+  await expect(details.locator('h4')).toHaveText(['Що відбувається', 'Перехід далі, коли…', 'RUBIKON', 'Замовник', 'Учасники', 'Документи', 'Чому це важливо']);
 });
 
-for (const width of [360, 375, 390]) {
-  test(`/yak-pratsyuiemo fits a ${width}px phone with every stage open`, async ({ page }) => {
+test.describe('/yak-pratsyuiemo without JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('reads and unfolds every layer natively', async ({ page }) => {
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const stage = page.locator('#etap-04 details');
+    const notes = page.locator('#vidpovidalnist .delivery-notes');
+
+    await stage.locator('summary').click();
+    await expect(stage).toHaveAttribute('open', '');
+    await expect(stage.getByText(deliveryModel.stages[3].why)).toBeVisible();
+    await expect(page.locator('#vidpovidalnist .delivery-matrix tbody tr')).toHaveCount(9);
+    await notes.locator('summary').click();
+    await expect(notes.locator('li')).toHaveCount(7);
+    await expect(notes.locator('li').first()).toBeVisible();
+    await expect(page.locator('#dokumenty .delivery-docs-desktop .delivery-doc-label')).toHaveCount(19);
+    await expect(page.locator('#inquiry .contact-checklist li')).toHaveCount(11);
+  });
+
+  test('folds responsibility and documents into one-at-a-time panels on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const panel = page.locator('#vidpovidalnist-okremyi-pidriad');
+    const phase = page.locator('#dokumenty .delivery-docs-mobile details').first();
+
+    await expect(page.locator('#vidpovidalnist .delivery-matrix')).toBeHidden();
+    await panel.locator('summary').click();
+    await expect(panel.locator('.delivery-activity').first()).toBeVisible();
+    await expect(page.locator('#dokumenty .delivery-docs-desktop')).toBeHidden();
+    await phase.locator('summary').click();
+    await expect(phase.locator('.delivery-doc-label')).toHaveCount(10);
+    await expect(phase.locator('.delivery-doc-label').first()).toBeVisible();
+  });
+});
+
+for (const width of [360, 375, 390, 768]) {
+  test(`/yak-pratsyuiemo fits a ${width}px screen with every layer open`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    await page.locator('ol.delivery-stages details').evaluateAll((all) => {
+    await page.locator('.delivery-page details').evaluateAll((all) => {
       for (const element of all) (element as HTMLDetailsElement).open = true;
     });
 

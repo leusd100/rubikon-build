@@ -92,19 +92,30 @@ export function formatDetails(): readonly FormatDetail[] {
   });
 }
 
-export type PerFormatRow = { formats: readonly string[]; text: string };
+export type FormatToken = { id: DeliveryFormatId; number: string; label: string; anchor: string };
+
+/**
+ * The presentation tokens 01 / 02 / 03 — the formats' own card numbers — that stand for a format
+ * wherever a text repeats per format, so the long names are read once, in the legend.
+ */
+export function formatTokens(): readonly FormatToken[] {
+  return formatCards().map((card) => ({ id: card.id, number: card.number, label: card.title, anchor: formatById(card.id).anchor }));
+}
+
+export type PerFormatRow = { formats: readonly FormatToken[]; text: string };
 
 /**
  * A per-format text as rows of «which formats → which wording». Formats that share a wording share
- * a row; a row that covers every format carries no format labels at all.
+ * a row; a row that covers every format carries no format tokens at all.
  */
 export function perFormatRows(value: PerFormat<string>): readonly PerFormatRow[] {
-  const rows = new Map<string, string[]>();
-  for (const format of model.formats) {
-    const text = value[format.id] ?? value.default;
-    rows.set(text, [...(rows.get(text) ?? []), format.label]);
+  const tokens = formatTokens();
+  const rows = new Map<string, FormatToken[]>();
+  for (const token of tokens) {
+    const text = value[token.id] ?? value.default;
+    rows.set(text, [...(rows.get(text) ?? []), token]);
   }
-  return [...rows].map(([text, labels]) => ({ formats: labels.length === model.formats.length ? [] : labels, text }));
+  return [...rows].map(([text, formats]) => ({ formats: formats.length === tokens.length ? [] : formats, text }));
 }
 
 // How a document's basis reads: as a tag beside the document, and as the title of its group.
@@ -114,6 +125,15 @@ const BASIS: Record<DocumentBasis, { tag: string; title: string }> = {
   project: { tag: 'проєкт', title: 'Залежить від проєкту' },
   law: { tag: 'закон', title: 'Регулюється законодавством' },
 };
+
+export type BasisBadge = { basis: DocumentBasis; tag: string; title: string };
+
+const basisBadge = (basis: DocumentBasis): BasisBadge => ({ basis, tag: BASIS[basis].tag, title: BASIS[basis].title });
+
+/** The four document bases, in the order their badges are explained. */
+export function basisLegend(): readonly BasisBadge[] {
+  return (Object.keys(BASIS) as DocumentBasis[]).map(basisBadge);
+}
 
 /** A stage's anchor on /yak-pratsyuiemo. */
 export function stageAnchor(id: StageId): string {
@@ -132,13 +152,13 @@ export type StageCard = {
   rubikon: readonly PerFormatRow[];
   client: readonly PerFormatRow[];
   involved: readonly PerFormatRow[];
-  documents: readonly { label: string; tags: readonly string[] }[];
+  documents: readonly { label: string; badges: readonly BasisBadge[] }[];
   designThread: boolean;
   /** Labels of the formats in which the client's general contractor leads the stage. */
   ledByGeneralContractorIn: readonly string[];
 };
 
-/** The eight stages with every public field, per-format texts as rows and documents with their basis tags. */
+/** The eight stages with every public field, per-format texts as rows and documents with their basis badges. */
 export function stageCards(): readonly StageCard[] {
   return model.stages.map((stage) => ({
     id: stage.id,
@@ -152,7 +172,7 @@ export function stageCards(): readonly StageCard[] {
     rubikon: perFormatRows(stage.rubikon),
     client: perFormatRows(stage.client),
     involved: perFormatRows(stage.involved),
-    documents: stage.documents.map((document) => ({ label: document.label, tags: document.basis.map((basis) => BASIS[basis].tag) })),
+    documents: stage.documents.map((document) => ({ label: document.label, badges: document.basis.map(basisBadge) })),
     designThread: stage.designThread,
     ledByGeneralContractorIn: stage.ledByGeneralContractorIn.map((id) => formatById(id).label),
   }));
@@ -214,9 +234,10 @@ export function capabilityLayers(): readonly CapabilityLayer[] {
 }
 
 type Holder = Party | 'contract-defined' | 'out-of-scope';
+type ResponsibilityRow = DeliveryModel['responsibility'][number];
 
-// The groups of the per-format view, in reading order: RUBIKON first, then the others, then the
-// contract and scope markers.
+// Who holds an activity, in reading order: RUBIKON first, then the others, then the contract and
+// scope markers.
 const HOLDERS: readonly (readonly [Holder, string])[] = [
   ['rubikon', 'RUBIKON виконує'],
   ['rubikon-coordinates', 'RUBIKON координує'],
@@ -227,54 +248,98 @@ const HOLDERS: readonly (readonly [Holder, string])[] = [
   ['out-of-scope', 'Поза обсягом'],
 ];
 
-export type ResponsibilityGroup = { holder: Holder; title: string; activities: readonly string[] };
-export type FormatResponsibility = {
-  id: DeliveryFormatId;
-  anchor: string;
-  label: string;
-  coordination: string;
-  interfaces: string;
-  groups: readonly ResponsibilityGroup[];
+export type HolderLabel = { holder: Holder; title: string };
+export type ResponsibilityActivity = { activity: string; note?: number };
+export type SharedResponsibility = { title: string; holders: readonly HolderLabel[]; activities: readonly ResponsibilityActivity[] };
+export type ComparedResponsibility = ResponsibilityActivity & { cells: readonly { format: FormatToken; holders: readonly HolderLabel[] }[] };
+export type FormatResponsibility = FormatToken & {
+  panel: string;
+  rows: readonly (ResponsibilityActivity & { holders: readonly HolderLabel[] })[];
+};
+export type ResponsibilityComparison = {
+  shared: readonly SharedResponsibility[];
+  compared: readonly ComparedResponsibility[];
+  byFormat: readonly FormatResponsibility[];
+  notes: readonly { number: number; activity: string; note: string }[];
 };
 
-function holds(cell: ResponsibilityCell, holder: Holder): boolean {
-  return typeof cell === 'string' ? cell === holder : cell.includes(holder as Party);
+function holdersOf(cell: ResponsibilityCell): HolderLabel[] {
+  return HOLDERS.filter(([holder]) => (typeof cell === 'string' ? cell === holder : cell.includes(holder as Party))).map(([holder, title]) => ({ holder, title }));
 }
 
-/** The responsibility matrix read one format at a time: each activity under whoever holds it. */
-export function responsibilityByFormat(): readonly FormatResponsibility[] {
-  return model.formats.map((format) => ({
-    id: format.id,
-    anchor: `vidpovidalnist-${format.anchor}`,
-    label: format.label,
-    coordination: format.coordination,
-    interfaces: format.interfaces,
-    groups: HOLDERS.map(([holder, title]) => ({
-      holder,
-      title,
-      activities: model.responsibility.filter((row) => holds(row.cells[format.id], holder)).map((row) => row.activity),
-    })).filter((group) => group.activities.length > 0),
-  }));
+const holderKey = (holders: readonly HolderLabel[]) => holders.map((label) => label.holder).join('+');
+
+/**
+ * The responsibility matrix, regrouped for reading without changing a cell. Activities whose holders
+ * are the same in every format are listed once; the others are compared format by format — as a
+ * matrix on wide screens and, on phones, one format at a time: that format's column of the matrix. The notes are numbered in model order
+ * and each activity that has one carries its number.
+ */
+export function responsibilityComparison(): ResponsibilityComparison {
+  const tokens = formatTokens();
+  const notes = model.responsibility
+    .flatMap((row) => (row.note ? [{ id: row.id, activity: row.activity, note: row.note }] : []))
+    .map((item, index) => ({ ...item, number: index + 1 }));
+  const activityOf = (row: ResponsibilityRow): ResponsibilityActivity => {
+    const note = notes.find((item) => item.id === row.id)?.number;
+    return note ? { activity: row.activity, note } : { activity: row.activity };
+  };
+  // Every format is compared against the first one; a row is shared when none of them differs.
+  const reference = (row: ResponsibilityRow) => holdersOf(row.cells.comprehensive);
+  const isShared = (row: ResponsibilityRow) => tokens.every((token) => holderKey(holdersOf(row.cells[token.id])) === holderKey(reference(row)));
+
+  const shared = new Map<string, { title: string; holders: HolderLabel[]; activities: ResponsibilityActivity[] }>();
+  for (const row of model.responsibility.filter(isShared)) {
+    const holders = reference(row);
+    const group = shared.get(holderKey(holders)) ?? { title: holders.map((label) => label.title).join(' · '), holders, activities: [] };
+    group.activities.push(activityOf(row));
+    shared.set(holderKey(holders), group);
+  }
+  const compared = model.responsibility.filter((row) => !isShared(row));
+
+  return {
+    shared: [...shared.values()],
+    compared: compared.map((row) => ({ ...activityOf(row), cells: tokens.map((format) => ({ format, holders: holdersOf(row.cells[format.id]) })) })),
+    byFormat: tokens.map((format) => ({
+      ...format,
+      panel: `vidpovidalnist-${format.anchor}`,
+      rows: compared.map((row) => ({ ...activityOf(row), holders: holdersOf(row.cells[format.id]) })),
+    })),
+    notes: notes.map(({ number, activity, note }) => ({ number, activity, note })),
+  };
 }
 
-/** The matrix notes: the «або», «залежно» and scope nuances the grouped view cannot carry. */
-export function responsibilityNotes(): readonly { activity: string; note: string }[] {
-  return model.responsibility.flatMap((row) => (row.note ? [{ activity: row.activity, note: row.note }] : []));
-}
+// The phases the documents are read in: the stages up to the contract together, then each later
+// stage on its own. A phase without a title takes its stage's title.
+const DOCUMENT_PHASES: readonly { from: StageId; to: StageId; title?: string }[] = [
+  { from: 'request', to: 'contract', title: 'Від запиту до договору' },
+  { from: 'preparation', to: 'preparation' },
+  { from: 'construction', to: 'construction' },
+  { from: 'handover', to: 'handover' },
+];
 
-export type DocumentGroup = { basis: DocumentBasis; title: string; documents: readonly { label: string; stage: string }[] };
+export type RouteDocument = { label: string; stage: { number: string; title: string; anchor: string }; badges: readonly BasisBadge[] };
+export type DocumentPhase = { id: string; title: string; range: string; documents: readonly RouteDocument[] };
 
-/** Every stage document grouped by what it depends on; a document with several bases sits in each group. */
-export function documentGroups(): readonly DocumentGroup[] {
-  return (Object.keys(BASIS) as DocumentBasis[]).map((basis) => ({
-    basis,
-    title: BASIS[basis].title,
-    documents: model.stages.flatMap((stage) =>
-      stage.documents
-        .filter((document) => document.basis.includes(basis))
-        .map((document) => ({ label: document.label, stage: `${stage.number} ${stage.title}` })),
-    ),
-  }));
+/** Every stage document once, in route order, grouped by phase and badged with each basis it depends on. */
+export function documentRoute(): readonly DocumentPhase[] {
+  const index = (id: StageId) => model.stages.findIndex((stage) => stage.id === id);
+  return DOCUMENT_PHASES.map((phase) => {
+    const first = stageById(phase.from);
+    const last = stageById(phase.to);
+    return {
+      id: `dokumenty-${first.number}`,
+      title: phase.title ?? first.title,
+      range: first.number === last.number ? first.number : `${first.number}–${last.number}`,
+      documents: model.stages.slice(index(phase.from), index(phase.to) + 1).flatMap((stage) =>
+        stage.documents.map((document) => ({
+          label: document.label,
+          stage: { number: stage.number, title: stage.title, anchor: stageAnchor(stage.id) },
+          badges: document.basis.map(basisBadge),
+        })),
+      ),
+    };
+  });
 }
 
 const BUDGET_GROUP_TITLES = { object: 'Об’єкт', site: 'Майданчик', organisation: 'Організація робіт' } as const;

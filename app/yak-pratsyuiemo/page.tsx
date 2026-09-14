@@ -6,19 +6,24 @@ import { deliveryModel } from '../data/deliveryModel';
 import { siteRoutes } from '../data/navigation';
 import { startStage } from '../lib/deliveryModel';
 import {
+  basisLegend,
   budgetGroups,
   capabilityLayers,
   deliveryFaq,
   designThread,
-  documentGroups,
+  documentRoute,
   entryPoints,
   formatDetails,
-  responsibilityByFormat,
-  responsibilityNotes,
+  formatTokens,
+  responsibilityComparison,
   stageAnchor,
   stageCards,
   startInputs,
+  type BasisBadge,
+  type FormatToken,
   type PerFormatRow,
+  type ResponsibilityActivity,
+  type RouteDocument,
 } from '../lib/deliveryModelPresentation';
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
 import './delivery.css';
@@ -26,8 +31,10 @@ import './delivery.css';
 // /yak-pratsyuiemo — the Delivery Model shown to a client: formats, entry points, the eight
 // stages, who does the work, responsibility, changes, documents and what drives budget and time.
 // Server-rendered and complete without JavaScript: every business fact comes from deliveryModel
-// through lib/deliveryModelPresentation; this file only composes. The interactive route map is
-// the next step, built on top of this markup.
+// through lib/deliveryModelPresentation; this file only composes. It reads in layers — headings,
+// numbers and results to scan, a sentence to understand, native <details> for the rest — and
+// folding never removes a fact from the HTML. The interactive route map is a later step, built on
+// top of this markup.
 
 const PAGE_TITLE = 'Як працює RUBIKON BUILD';
 const DESCRIPTION = 'Три формати участі, вісім етапів від запиту до здачі, хто за що відповідає, як погоджуємо зміни й від чого залежать бюджет і строки.';
@@ -41,6 +48,7 @@ export const metadata = createPageMetadata({
   imageAlt: `${company.name} — модель реалізації від запиту до здачі`,
 });
 
+// Plain labels: the only numbers on this page are the formats' and the stages', which are real sequences.
 const CONTENTS = [
   ['formaty', 'Формати участі'],
   ['shcho-vzhe-ye', 'Що у вас уже є'],
@@ -53,14 +61,77 @@ const CONTENTS = [
   ['biudzhet', 'Бюджет і строки'],
 ] as const;
 
+/** Ukrainian plural for a count: 1 документ, 2–4 документи, 5+ документів. */
+function plural(count: number, [one, few, many]: readonly [string, string, string]): string {
+  const tail = count % 10;
+  const tens = count % 100;
+  if (tail === 1 && tens !== 11) return `${count} ${one}`;
+  if (tail >= 2 && tail <= 4 && (tens < 12 || tens > 14)) return `${count} ${few}`;
+  return `${count} ${many}`;
+}
+
+/** Format tokens 01 / 02 / 03: the numbers are seen, the full names are what a screen reader reads. */
+function FormatTokens({ formats }: Readonly<{ formats: readonly FormatToken[] }>) {
+  return (
+    <span className="delivery-tokens">
+      <span className="visually-hidden">{formats.map((format) => format.label).join(', ')}: </span>
+      {formats.map((format) => (
+        <span className="delivery-token" aria-hidden="true" title={format.label} key={format.id}>{format.number}</span>
+      ))}
+    </span>
+  );
+}
+
+/** A per-format text: one paragraph when every format shares it, otherwise one tokened row per wording. */
 function PerFormatText({ rows }: Readonly<{ rows: readonly PerFormatRow[] }>) {
   if (rows.length === 1 && rows[0]?.formats.length === 0) return <p>{rows[0].text}</p>;
   return (
     <ul className="delivery-per-format">
       {rows.map((row) => (
-        <li key={row.text}>
-          <span className="delivery-format-tags">{row.formats.map((label) => <i key={label}>{label}</i>)}</span>
-          {row.text}
+        <li key={row.text}><FormatTokens formats={row.formats} /><span>{row.text}</span></li>
+      ))}
+    </ul>
+  );
+}
+
+function BasisBadges({ badges }: Readonly<{ badges: readonly BasisBadge[] }>) {
+  return (
+    <span className="delivery-badges">
+      {badges.map((badge) => (
+        <span className={`delivery-badge delivery-badge-${badge.basis}`} key={badge.basis}>
+          <span aria-hidden="true">{badge.tag}</span>
+          <span className="visually-hidden">{badge.title}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** An activity of the responsibility matrix, with the number of its note when it has one. */
+function Activity({ item }: Readonly<{ item: ResponsibilityActivity }>) {
+  return (
+    <>
+      <span className="delivery-activity">{item.activity}</span>
+      {item.note ? (
+        <sup className="delivery-note-ref">
+          <span aria-hidden="true">{item.note}</span>
+          <span className="visually-hidden">, примітка {item.note}</span>
+        </sup>
+      ) : null}
+    </>
+  );
+}
+
+function DocumentList({ documents }: Readonly<{ documents: readonly RouteDocument[] }>) {
+  return (
+    <ul className="delivery-doc-list">
+      {documents.map((document) => (
+        <li key={`${document.stage.number}-${document.label}`}>
+          <span className="delivery-doc-label">{document.label}</span>
+          <span className="delivery-doc-meta">
+            <a href={`#${document.stage.anchor}`} title={document.stage.title}>етап {document.stage.number}</a>
+            <BasisBadges badges={document.badges} />
+          </span>
         </li>
       ))}
     </ul>
@@ -69,6 +140,9 @@ function PerFormatText({ rows }: Readonly<{ rows: readonly PerFormatRow[] }>) {
 
 export default function DeliveryModelPage() {
   const { statements, changePolicy } = deliveryModel;
+  const tokens = formatTokens();
+  const responsibility = responsibilityComparison();
+  const phases = documentRoute();
   const pageData = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -108,9 +182,7 @@ export default function DeliveryModelPage() {
       <nav className="delivery-contents" aria-label="Зміст сторінки">
         <div className="shell">
           <ol>
-            {CONTENTS.map(([id, label], index) => (
-              <li key={id}><a href={`#${id}`}><span>{String(index + 1).padStart(2, '0')}</span>{label}</a></li>
-            ))}
+            {CONTENTS.map(([id, label]) => <li key={id}><a href={`#${id}`}>{label}</a></li>)}
           </ol>
         </div>
       </nav>
@@ -126,14 +198,16 @@ export default function DeliveryModelPage() {
           <div className="delivery-format-grid">
             {formatDetails().map((format) => (
               <article className="delivery-format" id={format.anchor} key={format.id} aria-labelledby={`${format.anchor}-title`}>
-                <span className="delivery-index">{format.number}</span>
-                <h3 id={`${format.anchor}-title`}>{format.title}</h3>
+                <div className="delivery-format-head">
+                  <span className="delivery-index">{format.number}</span>
+                  <h3 id={`${format.anchor}-title`}>{format.title}</h3>
+                </div>
                 <p className="delivery-format-summary">{format.text}</p>
                 <dl>
                   <div><dt>Координує об’єкт</dt><dd>{format.coordination}</dd></div>
                   <div><dt>Стики</dt><dd>{format.interfaces}</dd></div>
                 </dl>
-                <a className="delivery-more" href={`#vidpovidalnist-${format.anchor}`}>Хто за що відповідає <span aria-hidden="true">↓</span></a>
+                <a className="delivery-more" href="#vidpovidalnist">Хто за що відповідає <span aria-hidden="true">↓</span></a>
               </article>
             ))}
           </div>
@@ -154,7 +228,11 @@ export default function DeliveryModelPage() {
               return (
                 <li key={entry.id}>
                   <b>{entry.label}</b>
-                  <a href={`#${stageAnchor(stage.id)}`}>Старт: {stage.number} {stage.title}</a>
+                  <a href={`#${stageAnchor(stage.id)}`}>
+                    <span aria-hidden="true">→ </span>
+                    <span className="visually-hidden">Старт з етапу </span>
+                    {stage.number} {stage.title}
+                  </a>
                   {entry.startNote && <p>{entry.startNote}</p>}
                 </li>
               );
@@ -172,6 +250,12 @@ export default function DeliveryModelPage() {
             supporting="Кожен етап закінчується конкретним результатом і умовою переходу далі. Деталі — під кожним етапом."
             inverse
           />
+          <p className="delivery-token-legend">
+            <span>Номери форматів у деталях:</span>
+            {tokens.map((token) => (
+              <a href={`#${token.anchor}`} key={token.id}><span className="delivery-token" aria-hidden="true">{token.number}</span> {token.label}</a>
+            ))}
+          </p>
           <ol className="delivery-stages">
             {stageCards().map((stage) => (
               <li className="delivery-stage" id={stage.anchor} key={stage.id}>
@@ -185,22 +269,26 @@ export default function DeliveryModelPage() {
                     </ul>
                   )}
                   <details className="delivery-stage-details">
-                    <summary>Що відбувається на етапі</summary>
-                    <div className="delivery-stage-grid">
-                      <div className="delivery-stage-wide"><h4>Що відбувається</h4><p>{stage.what}</p></div>
-                      <div><h4>Що робить RUBIKON</h4><PerFormatText rows={stage.rubikon} /></div>
-                      <div><h4>Що потрібно від замовника</h4><PerFormatText rows={stage.client} /></div>
-                      <div><h4>Хто може бути залучений</h4><PerFormatText rows={stage.involved} /></div>
-                      <div><h4>Перехід далі, коли…</h4><p>{stage.gate}</p></div>
-                      <div className="delivery-stage-wide">
+                    <summary>Деталі етапу</summary>
+                    <div className="delivery-stage-inner">
+                      <div className="delivery-stage-lead">
+                        <div><h4>Що відбувається</h4><p>{stage.what}</p></div>
+                        <div className="delivery-stage-gate"><h4>Перехід далі, коли…</h4><p>{stage.gate}</p></div>
+                      </div>
+                      <div className="delivery-stage-roles">
+                        <div><h4>RUBIKON</h4><PerFormatText rows={stage.rubikon} /></div>
+                        <div><h4>Замовник</h4><PerFormatText rows={stage.client} /></div>
+                        <div><h4>Учасники</h4><PerFormatText rows={stage.involved} /></div>
+                      </div>
+                      <div className="delivery-stage-docs">
                         <h4>Документи</h4>
-                        <ul className="delivery-docs">
+                        <ul>
                           {stage.documents.map((document) => (
-                            <li key={document.label}>{document.label} <span className="delivery-basis">{document.tags.join(' · ')}</span></li>
+                            <li key={document.label}><span>{document.label}</span><BasisBadges badges={document.badges} /></li>
                           ))}
                         </ul>
                       </div>
-                      <div className="delivery-stage-wide delivery-why"><h4>Чому це важливо</h4><p>{stage.why}</p></div>
+                      <div className="delivery-why"><h4>Чому це важливо</h4><p>{stage.why}</p></div>
                     </div>
                   </details>
                 </div>
@@ -242,10 +330,15 @@ export default function DeliveryModelPage() {
               </article>
             ))}
           </div>
-          <blockquote className="delivery-principle"><p>{statements.principle}</p></blockquote>
           <p className="delivery-boundary">{statements.boundary}</p>
         </div>
       </section>
+
+      <div className="delivery-principle-band">
+        <div className="shell">
+          <blockquote className="delivery-principle"><p>{statements.principle}</p></blockquote>
+        </div>
+      </div>
 
       <section className="page-section delivery-responsibility" id="vidpovidalnist">
         <div className="shell">
@@ -255,24 +348,76 @@ export default function DeliveryModelPage() {
             title="Хто за що відповідає"
             supporting="Та сама робота може належати різним учасникам — залежно від формату участі. Дозвільні питання, нагляд і виконавчу документацію визначає договір."
           />
-          <div className="delivery-responsibility-grid">
-            {responsibilityByFormat().map((format) => (
-              <article className="delivery-responsibility-format" id={format.anchor} key={format.id}>
-                <h3>{format.label}</h3>
-                <p className="delivery-responsibility-lead">{format.coordination} {format.interfaces}</p>
-                {format.groups.map((group) => (
-                  <div className={`delivery-party delivery-party-${group.holder}`} key={group.holder}>
-                    <h4>{group.title}</h4>
-                    <ul>{group.activities.map((activity) => <li key={activity}>{activity}</li>)}</ul>
-                  </div>
-                ))}
-              </article>
-            ))}
+          <div className="delivery-shared">
+            <h3>Однаково в усіх форматах</h3>
+            <div className="delivery-shared-groups">
+              {responsibility.shared.map((group) => (
+                <div className="delivery-shared-group" key={group.title}>
+                  <h4>{group.title}</h4>
+                  <ul>{group.activities.map((item) => <li key={item.activity}><Activity item={item} /></li>)}</ul>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="delivery-notes">
-            <h3>Примітки</h3>
-            <ul>{responsibilityNotes().map((note) => <li key={note.activity}><b>{note.activity}.</b> {note.note}</li>)}</ul>
+          <div className="delivery-compare">
+            <h3>Залежить від формату</h3>
+            <div className="delivery-compare-desktop">
+              <table className="delivery-matrix">
+                <caption className="visually-hidden">Хто відповідає за роботи, що різняться між форматами участі</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Робота</th>
+                    {tokens.map((token) => (
+                      <th scope="col" key={token.id}><span className="delivery-token" aria-hidden="true">{token.number}</span> {token.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {responsibility.compared.map((row) => (
+                    <tr key={row.activity}>
+                      <th scope="row"><Activity item={row} /></th>
+                      {row.cells.map((cell) => (
+                        <td key={cell.format.id}>
+                          <ul className="delivery-holders">
+                            {cell.holders.map((label) => <li className={`delivery-holder-${label.holder}`} key={label.holder}>{label.title}</li>)}
+                          </ul>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="delivery-compare-mobile">
+              {responsibility.byFormat.map((format) => (
+                <details className="delivery-format-panel" id={format.panel} key={format.id}>
+                  <summary>
+                    <span className="delivery-token" aria-hidden="true">{format.number}</span>
+                    <span>{format.label}</span>
+                    <small>{plural(responsibility.compared.length, ['робота', 'роботи', 'робіт'])}</small>
+                  </summary>
+                  <ul className="delivery-panel-rows">
+                    {format.rows.map((row) => (
+                      <li key={row.activity}>
+                        <p className="delivery-panel-activity"><Activity item={row} /></p>
+                        <ul className="delivery-holders">
+                          {row.holders.map((label) => <li className={`delivery-holder-${label.holder}`} key={label.holder}>{label.title}</li>)}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ))}
+            </div>
           </div>
+          <details className="delivery-notes">
+            <summary>Примітки до матриці · {responsibility.notes.length}</summary>
+            <ol>
+              {responsibility.notes.map((note) => (
+                <li key={note.number}><span className="delivery-note-number">{note.number}</span><p><b>{note.activity}.</b> {note.note}</p></li>
+              ))}
+            </ol>
+          </details>
         </div>
       </section>
 
@@ -303,12 +448,32 @@ export default function DeliveryModelPage() {
             title="Які документи можуть виникнути"
             supporting="Не кожен документ потрібен на кожному об’єкті: позначка показує, від чого він залежить."
           />
-          <div className="delivery-document-groups">
-            {documentGroups().map((group) => (
-              <article key={group.basis}>
-                <h3>{group.title}</h3>
-                <ul>{group.documents.map((document) => <li key={`${document.stage}-${document.label}`}>{document.label}<span>{document.stage}</span></li>)}</ul>
+          <dl className="delivery-basis-legend">
+            {basisLegend().map((badge) => (
+              <div key={badge.basis}>
+                <dt><BasisBadges badges={[badge]} /></dt>
+                <dd>{badge.title}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="delivery-docs-desktop">
+            {phases.map((phase) => (
+              <article className="delivery-doc-phase" key={phase.id} aria-labelledby={`${phase.id}-title`}>
+                <h3 id={`${phase.id}-title`}><span>{phase.range}</span> {phase.title}</h3>
+                <DocumentList documents={phase.documents} />
               </article>
+            ))}
+          </div>
+          <div className="delivery-docs-mobile">
+            {phases.map((phase) => (
+              <details className="delivery-doc-phase" key={phase.id}>
+                <summary>
+                  <span className="delivery-doc-range">{phase.range}</span>
+                  <span>{phase.title}</span>
+                  <small>{plural(phase.documents.length, ['документ', 'документи', 'документів'])}</small>
+                </summary>
+                <DocumentList documents={phase.documents} />
+              </details>
             ))}
           </div>
         </div>
@@ -323,14 +488,13 @@ export default function DeliveryModelPage() {
             supporting="Вартість і строки визначаються не лише площею або тоннажем. Цін і усереднених строків не називаємо: їх фіксують кошторис і графік на етапі «Склад робіт і бюджет»."
             inverse
           />
-          <div className="delivery-budget-groups">
+          <div className="delivery-budget-rows">
             {budgetGroups().map((group) => (
-              <article key={group.id}><h3>{group.title}</h3><ul>{group.factors.map((factor) => <li key={factor}>{factor}</li>)}</ul></article>
+              <div className="delivery-budget-row" key={group.id}>
+                <h3>{group.title}</h3>
+                <ul className="delivery-chips">{group.factors.map((factor) => <li key={factor}>{factor}</li>)}</ul>
+              </div>
             ))}
-          </div>
-          <div className="delivery-inputs">
-            <h3>Що потрібно на старті</h3>
-            <ul>{startInputs().map((input) => <li key={input}>{input}</li>)}</ul>
           </div>
         </div>
       </section>
@@ -344,7 +508,12 @@ export default function DeliveryModelPage() {
       </section>
 
       <DirectionFaq title="Питання про модель реалізації" items={deliveryFaq()} collapsible />
-      <InquirySection eyebrow="Почнемо з розмови" title="Обговоримо вашу задачу" text={statements.firstContact} />
+      <InquirySection
+        eyebrow="Почнемо з розмови"
+        title="Обговоримо вашу задачу"
+        text={statements.firstContact}
+        checklist={{ title: 'Що допоможе на першій розмові', items: startInputs() }}
+      />
     </main>
   );
 }
