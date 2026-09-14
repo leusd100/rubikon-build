@@ -329,14 +329,14 @@ export default function DeliveryModelPage() {
           <div className="delivery-thread-body">
             <ol className="delivery-thread-route" aria-hidden="true">
               {thread.route.map((point) => (
-                <li className={point.mark ? `delivery-thread-point-${point.mark}` : undefined} key={point.number}><span>{point.number}</span></li>
+                <li className={point.design ? 'delivery-thread-point-design' : undefined} key={point.number}><span>{point.number}</span></li>
               ))}
             </ol>
             <ol className="delivery-thread-steps">
               {thread.stages.map((stage) => (
                 <li key={stage.anchor}><a href={`#${stage.anchor}`}><span>{stage.number}</span> {stage.title}</a><p>{stage.documents.join(' · ')}</p></li>
               ))}
-              <li><a href={`#${thread.changeStage.anchor}`}><span>{thread.changeStage.number}</span> Під час реалізації</a><p>{thread.change}</p></li>
+              <li><b>Під час реалізації</b><p>{thread.change}</p></li>
             </ol>
           </div>
         </div>

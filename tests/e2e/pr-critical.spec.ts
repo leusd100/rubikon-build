@@ -304,8 +304,9 @@ test('/yak-pratsyuiemo visual language is decoration beside the words, never ins
     ghostsHidden: '.delivery-page .ghost-word::aria-hidden',
     route: '.delivery-thread-route::aria-hidden',
     routePoints: '.delivery-thread-route li',
-    design: '.delivery-thread-route .delivery-thread-point-design',
-    change: '.delivery-thread-route .delivery-thread-point-change',
+    marked: '.delivery-thread-route li[class]',
+    threadLinks: '.delivery-thread-steps a',
+    changeStep: '.delivery-thread-steps > li:last-child > b',
   });
 
   // Six per stage (result, three roles, documents, why) and one beside each of two section eyebrows.
@@ -317,8 +318,10 @@ test('/yak-pratsyuiemo visual language is decoration beside the words, never ins
   expect(text.ghostsHidden).toEqual(['true', 'true', 'true']);
   expect(text.route).toEqual(['true']);
   expect(text.routePoints).toEqual(deliveryModel.stages.map((stage) => stage.number));
-  expect(text.design).toEqual(['03', '06']);
-  expect(text.change).toEqual(['07']);
+  // Only the model's design-thread stages are marked; the change step is not placed on the route.
+  expect(text.marked).toEqual(['03', '06']);
+  expect(text.threadLinks).toEqual(['03 Інженерне опрацювання', '06 Підготовка реалізації']);
+  expect(text.changeStep).toEqual(['Під час реалізації']);
 });
 
 test('/yak-pratsyuiemo stage details open from the keyboard, in reading order', async ({ page }) => {

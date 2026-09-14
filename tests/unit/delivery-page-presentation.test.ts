@@ -156,17 +156,16 @@ describe('delivery page: who does what', () => {
         { number: '06', title: 'Підготовка реалізації', anchor: 'etap-06', documents: ['Робоча документація', 'Проєкт виконання робіт — де він потрібен'] },
       ],
       change: deliveryModel.changePolicy.steps[1],
-      changeStage: { number: '07', anchor: 'etap-07' },
-      route: [
-        { number: '01' }, { number: '02' }, { number: '03', mark: 'design' }, { number: '04' },
-        { number: '05' }, { number: '06', mark: 'design' }, { number: '07', mark: 'change' }, { number: '08' },
-      ],
+      route: deliveryModel.stages.map((stage) => ({ number: stage.number, design: stage.designThread })),
     });
   });
 
-  it('marks «під час реалізації» on the stage where the model files the agreed changes', () => {
-    const stage = deliveryModel.stages.find((item) => item.number === designThread().changeStage.number);
-    expect(stage?.documents.map((document) => document.label)).toContain('Погоджені зміни');
+  it('marks on the mini-route only the stages the model ties to design, and places the change step nowhere', () => {
+    const { route } = designThread();
+
+    expect(route.map((point) => point.number)).toEqual(['01', '02', '03', '04', '05', '06', '07', '08']);
+    expect(route.filter((point) => point.design).map((point) => point.number)).toEqual(['03', '06']);
+    expect(Object.keys(designThread())).toEqual(['statement', 'stages', 'change', 'route']);
   });
 });
 

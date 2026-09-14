@@ -99,19 +99,18 @@
 .delivery-why { padding-left: 16px; border-left: 2px solid var(--accent-on-dark); }
 .delivery-why p { color: white; }
 
-/* Design as a thread: the eight stages as a mini-route with 03, 06 and the change stage marked,
-   then the three points in words. The route is a picture of the list below it, hidden from AT. */
+/* Design as a thread: the eight stages as a mini-route with the model's design-thread stages marked,
+   then the points in words. The route is a picture of the list below it, hidden from AT. */
 .delivery-thread-body { display: grid; gap: 30px; }
 .delivery-thread-route { position: relative; display: flex; justify-content: space-between; margin: 0; padding: 0; list-style: none; }
 .delivery-thread-route::before { content: ''; position: absolute; top: 5px; right: 12px; left: 12px; height: 1px; background: var(--border-strong); }
 .delivery-thread-route li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 24px; color: var(--muted); font: 600 12px/1 var(--font-condensed), sans-serif; }
 .delivery-thread-route li::before { content: ''; box-sizing: border-box; width: 11px; height: 11px; border: 1.5px solid var(--border-strong); background: var(--warm); }
 .delivery-thread-route .delivery-thread-point-design::before { border-color: var(--accent); background: var(--accent); }
-.delivery-thread-route .delivery-thread-point-change::before { border: 2px solid var(--accent); }
-.delivery-thread-route .delivery-thread-point-design, .delivery-thread-route .delivery-thread-point-change { color: var(--ink); }
+.delivery-thread-route .delivery-thread-point-design { color: var(--ink); }
 .delivery-thread-steps { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
 .delivery-thread-steps li { padding: 16px 0; border-bottom: 1px solid var(--line); }
-.delivery-thread-steps a { font: 600 18px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.delivery-thread-steps a, .delivery-thread-steps b { font: 600 18px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .delivery-thread-steps a span { color: var(--accent-dark); }
 .delivery-thread-steps p { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 
