@@ -230,8 +230,7 @@
 
 @media (max-width: 1050px) {
   .delivery-format-grid, .delivery-layers, .delivery-layers-middle { grid-template-columns: minmax(0, 1fr); }
-  .delivery-stage { --rail-node: 37px; }
-  .delivery-stage { grid-template-columns: minmax(0, 1fr); }
+  .delivery-stage { --rail-node: 37px; grid-template-columns: minmax(0, 1fr); }
   .delivery-split { grid-template-columns: minmax(0, 1fr); }
   .delivery-shared { grid-template-columns: minmax(0, 1fr); }
   .delivery-notes ol { columns: 1; }
