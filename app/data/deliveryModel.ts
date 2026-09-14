@@ -10,7 +10,7 @@ import type { DeliveryModel } from '../types/deliveryModel';
  * Changing a statement is a new version: patch for wording, minor for additions, major for ids.
  */
 export const deliveryModel = {
-  version: '1.0.0',
+  version: '1.1.0',
   frozenAt: '2026-09-13',
   positioning: {
     primary: [
@@ -57,7 +57,12 @@ export const deliveryModel = {
     { id: 'task-only', label: 'Лише задача', startStage: 'request' },
     { id: 'site-inputs', label: 'Вихідні дані й майданчик', startStage: 'inputs' },
     { id: 'concept', label: 'Концепція', startStage: 'scope-budget' },
-    { id: 'design-docs', label: 'Проєкт або робоча документація', startStage: 'scope-budget' },
+    {
+      id: 'design-docs',
+      label: 'Проєкт або робоча документація',
+      startStage: 'scope-budget',
+      startNote: 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.',
+    },
   ],
   capabilities: [
     {
