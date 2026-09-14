@@ -1264,3 +1264,15 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
   .entry-axis-note { grid-column: auto; }
   .entry-points-list li { grid-template-columns: 1fr; }
 }
+
+/* Home «Як ми працюємо»: a teaser that sends the visitor to /yak-pratsyuiemo, where the eight
+   stages live. It explains the model in one line instead of repeating the stages. */
+.process-teaser { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px 36px; padding: 30px 32px; border: 1px solid var(--line); background: var(--warm); transition: border-color var(--duration-fast) ease; }
+.process-teaser:hover { border-color: var(--accent); }
+.process-teaser-kicker { color: var(--accent-dark); font: 600 12px/1.4 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.process-teaser strong { font: 600 clamp(19px, 1.7vw, 24px)/1.25 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.process-teaser-cta { padding-bottom: 6px; border-bottom: 1px solid currentColor; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.process-teaser-cta span { color: var(--accent); }
+@media (max-width: 760px) {
+  .process-teaser { grid-template-columns: 1fr; padding: 24px 20px; }
+}

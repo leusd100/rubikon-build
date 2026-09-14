@@ -94,6 +94,7 @@ export default function DirectionsPage() {
               ))}
             </ul>
           </div>
+          <a className="section-link" href={`${siteRoutes.process}#formaty`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
         </div>
       </section>
 

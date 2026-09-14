@@ -20,6 +20,7 @@ const heroInquiryCta: Partial<Record<string, string>> = {
   '/napryamky': 'Описати завдання',
   '/angary': 'Обговорити завдання',
   '/zernoskhovyshcha': 'Обговорити з інженером',
+  '/yak-pratsyuiemo': 'Обговорити задачу',
 };
 
 const publicRoutes: PublicRoute[] = [
@@ -31,6 +32,7 @@ const publicRoutes: PublicRoute[] = [
   { path: '/betonni-roboty', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
   { path: '/pokrivelni-roboty', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
   { path: '/pro-nas', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  { path: '/yak-pratsyuiemo', hasProjectCta: true, hasHeroMedia: false, hasResponsiveImages: false },
   {
     path: '/polityka-konfidentsiinosti',
     hasProjectCta: false,

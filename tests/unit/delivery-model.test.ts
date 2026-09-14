@@ -40,10 +40,11 @@ const STATEMENTS_V1 = {
   experience: 'За RUBIKON BUILD стоять понад 30 років особистої практики Сергія Івановича в будівництві.',
   boundary: 'За що відповідає кожен учасник, фіксуємо в договорі до початку робіт.',
 };
-const STATEMENTS_BY_VERSION: Record<string, Record<keyof typeof deliveryModel.statements, string>> = { '1.0.0': STATEMENTS_V1, '1.1.0': STATEMENTS_V1 };
+const STATEMENTS_BY_VERSION: Record<string, Record<keyof typeof deliveryModel.statements, string>> = { '1.0.0': STATEMENTS_V1, '1.1.0': STATEMENTS_V1, '1.2.0': STATEMENTS_V1 };
 // Entry-state notes, added in 1.1.0 and quoted verbatim like the statements.
 const START_NOTES_BY_VERSION: Record<string, readonly (readonly [EntryStateId, string])[]> = {
   '1.1.0': [['design-docs', 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.']],
+  '1.2.0': [['design-docs', 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.']],
 };
 
 // Frozen responsibility matrix v1.0.0 in the contract's legend: В виконує, К координує, П партнер,
@@ -181,6 +182,16 @@ describe('delivery model: who does which work', () => {
     expect(linked).toEqual(['metalokonstruktsii', 'pokrivelni-roboty', 'betonni-roboty']);
     for (const id of linked) expect(directionIds.has(id), id).toBe(true);
   });
+
+  it('states the own core publicly, in the approved words', () => {
+    const core = deliveryModel.capabilities.filter((capability) => capability.layer === 'core');
+
+    expect(core.map((capability) => ('statement' in capability ? capability.statement : null))).toEqual([
+      'Виготовляємо та монтуємо металоконструкції власною командою.',
+      'Покрівлі промислових і комерційних об’єктів.',
+      'Фундаменти й бетон — залежно від проєкту.',
+    ]);
+  });
 });
 
 describe('delivery model: stages', () => {
@@ -243,7 +254,7 @@ describe('delivery model: responsibility', () => {
 
 describe('delivery model: public wording', () => {
   it('keeps the frozen statements verbatim for its version', () => {
-    expect(deliveryModel.version).toBe('1.1.0');
+    expect(deliveryModel.version).toBe('1.2.0');
     expect(STATEMENTS_BY_VERSION[deliveryModel.version]).toEqual(deliveryModel.statements);
     expect(deliveryModel.contactRoles.constructionLead.cta).toBe('Обговорити з керівником будівельного напряму');
   });

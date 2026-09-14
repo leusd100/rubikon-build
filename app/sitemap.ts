@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: direction.id === 'betonni-roboty' || direction.id === 'pokrivelni-roboty' ? 0.8 : 0.9,
     })),
+    { url: `${siteUrl}${siteRoutes.process}`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${siteUrl}${siteRoutes.about}`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${siteUrl}${siteRoutes.privacy}`, changeFrequency: 'yearly', priority: 0.3 },
   ];

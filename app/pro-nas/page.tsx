@@ -84,6 +84,7 @@ export default function AboutPage() {
             <article className="detail-card"><span>02</span><ShieldCheck className="card-icon" aria-hidden="true" /><h3>Контроль відповідальних рішень</h3><p>Ключові конструктивні вузли та етапи не залишаємо без уваги: вони мають бути зрозумілими до переходу до наступної частини робіт.</p></article>
             <article className="detail-card"><span>03</span><FileSignature className="card-icon" aria-hidden="true" /><h3>Чіткі межі відповідальності</h3><p>До початку робіт погоджуємо, що входить у нашу частину проєкту, а що залишається відповідальністю інших учасників.</p></article>
           </div>
+          <a className="section-link" href={siteRoutes.process}>Як ми працюємо: формати, етапи, відповідальність <span aria-hidden="true">↗</span></a>
         </div>
       </section>
       <InquirySection

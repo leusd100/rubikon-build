@@ -4,7 +4,6 @@ import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } 
 import { HomeHeroVideo } from './components/HomeHeroVideo';
 import ResponsiveImage from './components/ResponsiveImage';
 import InquirySection from './components/InquirySection';
-import { ProjectProcessSteps } from './components/ProcessCards';
 import { company, companyContactLinks } from './data/company';
 import { deliveryModel } from './data/deliveryModel';
 import { siteRoutes } from './data/navigation';
@@ -126,7 +125,12 @@ export default function Home() {
             title="Від узгодження завдання до приймання робіт"
             supporting="Для всього об’єкта формуємо повний маршрут. Для окремого пакета робіт чітко фіксуємо межі відповідальності, вимоги на вході та результат на виході."
           />
-          <ProjectProcessSteps />
+          {/* A teaser, not a second copy of the stages: the model lives on /yak-pratsyuiemo. */}
+          <a className="process-teaser" href={siteRoutes.process}>
+            <span className="process-teaser-kicker">Модель реалізації</span>
+            <strong>Формати участі, вісім етапів, хто за що відповідає, зміни й документи — на одній сторінці.</strong>
+            <span className="process-teaser-cta">Як ми працюємо <span aria-hidden="true">↗</span></span>
+          </a>
         </div>
       </section>
 
