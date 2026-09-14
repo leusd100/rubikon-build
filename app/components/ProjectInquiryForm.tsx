@@ -50,7 +50,7 @@ type ProjectInquiryFormProps = {
   successMessage: string;
 };
 
-export default function ProjectInquiryForm({ defaultDirection = '', cooperationOptions, successMessage }: ProjectInquiryFormProps) {
+export default function ProjectInquiryForm({ defaultDirection = '', cooperationOptions, successMessage }: Readonly<ProjectInquiryFormProps>) {
   const pathname = usePathname();
   // Whatever the page's configurator or planner attached — the form knows neither of them.
   const inquiryAttachment = useInquiryAttachment();
