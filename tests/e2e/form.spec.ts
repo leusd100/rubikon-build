@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { deliveryModel } from '../../app/data/deliveryModel';
 
 // The consent banner is client-only, so seeing either button proves hydration is complete.
 async function acceptOnlyEssentialCookies(page: Page) {
@@ -51,8 +52,7 @@ test.describe('project inquiry form', () => {
 
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
 
-    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо! Запит надіслано');
-    await expect(page.locator('.inquiry-status')).toContainText('зв’яжеться з вами способом, який ви обрали');
+    await expect(page.locator('.inquiry-status')).toHaveText(`Дякуємо! Запит надіслано. ${deliveryModel.statements.firstContact}`);
     expect(submittedPayload).toMatchObject({
       name: 'Іван Петренко',
       phone: '+380671234567',
@@ -62,6 +62,26 @@ test.describe('project inquiry form', () => {
         comment: 'Потрібен виробничий ангар',
       },
     });
+  });
+
+  test('offers the three Delivery Model formats and submits the chosen label', async ({ page }) => {
+    let submittedPayload: { details?: { cooperation?: string } } | undefined;
+    await page.route('**/api/leads', async (route) => {
+      submittedPayload = route.request().postDataJSON() as typeof submittedPayload;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 7, isNew: true }) });
+    });
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+
+    const form = page.locator('form.inquiry-form');
+    await form.getByText('Додати параметри об’єкта', { exact: true }).click();
+    const cooperation = form.getByLabel('Формат співпраці', { exact: true });
+    await expect(cooperation.locator('option')).toHaveText(['Ще не визначено', ...deliveryModel.formats.map((format) => format.label)]);
+    await cooperation.selectOption('Окремий підряд');
+    await form.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+    expect(submittedPayload?.details?.cooperation).toBe('Окремий підряд');
   });
 
   test('shows the short task field immediately and keeps secondary parameters progressive', async ({ page }) => {

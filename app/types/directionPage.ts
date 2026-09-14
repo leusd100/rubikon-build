@@ -9,7 +9,9 @@ import type { RelatedDirection } from '../data/relatedDirections';
 // data/directionPages.ts don't need a structural rewrite for an icon-only addition.
 export type DirectionItem = readonly [string, string, string, LucideIcon?];
 export type DirectionStep = readonly [string, string, string, LucideIcon];
-export type DirectionFaqItem = readonly [string, string];
+/** An FAQ answer the Delivery Model writes: the data keeps the visitor's question, the server fills in the text. */
+export type DeliveryModelFaqAnswer = { readonly deliveryModelAnswer: 'turnkey' };
+export type DirectionFaqItem = readonly [string, string | DeliveryModelFaqAnswer];
 
 type DirectionOverview = {
   eyebrow: string;

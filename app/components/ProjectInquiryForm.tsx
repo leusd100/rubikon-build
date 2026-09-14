@@ -42,7 +42,15 @@ function ContactMethodIcon({ method }: { method: ContactMethod }) {
   return <Image src={messenger.icon} width={18} height={18} alt="" aria-hidden="true" />;
 }
 
-export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultDirection?: string }) {
+type ProjectInquiryFormProps = {
+  defaultDirection?: string;
+  /** Delivery Model format labels for «Формат співпраці»; the stored value is the label. */
+  cooperationOptions: readonly string[];
+  /** The saved-state text, ending in the model's frozen first-contact statement. */
+  successMessage: string;
+};
+
+export default function ProjectInquiryForm({ defaultDirection = '', cooperationOptions, successMessage }: ProjectInquiryFormProps) {
   const pathname = usePathname();
   // Whatever the page's configurator or planner attached — the form knows neither of them.
   const inquiryAttachment = useInquiryAttachment();
@@ -145,7 +153,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
     // Retries before success keep the same key. A confirmed save completes that lifecycle, so the
     // next explicit submit on this mounted page is a genuinely new lead with a fresh key.
     setSubmissionId(() => nextSubmissionIdAfterSuccess());
-    setStatus('Дякуємо! Запит надіслано. Наш спеціаліст найближчим часом зв’яжеться з вами способом, який ви обрали.');
+    setStatus(successMessage);
   }
 
   return (
@@ -268,9 +276,7 @@ export default function ProjectInquiryForm({ defaultDirection = '' }: { defaultD
                   <span>Формат співпраці</span>
                   <select name={enabledFieldName(jsReady, 'cooperation')} defaultValue="">
                     <option value="">Ще не визначено</option>
-                    <option>Об’єкт під ключ</option>
-                    <option>Окремий етап робіт</option>
-                    <option>Підряд або субпідряд</option>
+                    {cooperationOptions.map((label) => <option key={label}>{label}</option>)}
                   </select>
                 </label>
                 <label>
