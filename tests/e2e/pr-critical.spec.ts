@@ -106,16 +106,19 @@ const RETIRED_PHRASES = [
   'найближчим часом',
 ];
 
-const textOf = (html: string) => html.replace(/<[^>]+>/g, '').trim();
-
-function fragment(html: string, pattern: RegExp): string {
-  const match = pattern.exec(html);
-  expect(match, String(pattern)).not.toBeNull();
-  return match?.[1] ?? '';
-}
-
-function texts(html: string, tag: string): string[] {
-  return [...html.matchAll(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'g'))].map((match) => textOf(match[1]));
+/**
+ * The text of the elements each selector matches in a route's server HTML. DOMParser builds the
+ * document without running its scripts, so what this reads is what arrives before hydration.
+ */
+async function serverText(page: Page, path: string, selectors: Record<string, string>) {
+  const response = await page.request.get(path);
+  expect(response.status(), path).toBe(200);
+  return page.evaluate(({ markup, queries }) => {
+    const doc = new DOMParser().parseFromString(markup, 'text/html');
+    return Object.fromEntries(
+      Object.entries(queries).map(([key, selector]) => [key, [...doc.querySelectorAll(selector)].map((element) => element.textContent?.trim() ?? '')]),
+    );
+  }, { markup: await response.text(), queries: selectors });
 }
 
 test('server HTML of every public route speaks the Delivery Model taxonomy', async ({ request }) => {
@@ -130,22 +133,30 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
   }
 });
 
-test('homepage server HTML carries the new H1, three formats, the entry axis and the cooperation options', async ({ request }) => {
-  const html = await (await request.get('/')).text();
-  const services = fragment(html, /<section[^>]*id="services"[^>]*>([\s\S]*?)<\/section>/);
+test('homepage server HTML carries the new H1, three formats, the entry axis and the cooperation options', async ({ page }) => {
+  const text = await serverText(page, '/', {
+    h1: '.hero h1',
+    formats: '#services .format-grid h3',
+    entryPoints: '#services .entry-axis li',
+    cooperation: '.inquiry-details select option',
+  });
 
-  expect(textOf(fragment(html, /<h1[^>]*>([\s\S]*?)<\/h1>/))).toBe('Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта');
-  expect(texts(services, 'h3')).toEqual(FORMAT_LABELS);
-  expect(texts(services, 'li')).toEqual(deliveryModel.entryStates.map((state) => state.label));
-  expect(texts(fragment(html, /Формат співпраці<\/span><select[^>]*>([\s\S]*?)<\/select>/), 'option')).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
+  expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
+  expect(text.formats).toEqual(FORMAT_LABELS);
+  expect(text.entryPoints).toEqual(deliveryModel.entryStates.map((state) => state.label));
+  expect(text.cooperation).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
 });
 
-test('/napryamky server HTML takes its formats and entry points from the model', async ({ request }) => {
-  const html = await (await request.get('/napryamky')).text();
+test('/napryamky server HTML takes its formats and entry points from the model', async ({ page }) => {
+  const text = await serverText(page, '/napryamky', {
+    formats: '.cooperation-split-three h2',
+    entryPoints: '.entry-points-list b',
+    startNotes: '.entry-points-list small',
+  });
 
-  for (const label of FORMAT_LABELS) expect(html).toContain(`<h2>${label}</h2>`);
-  for (const state of deliveryModel.entryStates) expect(html).toContain(state.label);
-  expect(html).toContain(deliveryModel.entryStates[3].startNote);
+  expect(text.formats).toEqual(FORMAT_LABELS);
+  expect(text.entryPoints).toEqual(deliveryModel.entryStates.map((state) => state.label));
+  expect(text.startNotes).toEqual([deliveryModel.entryStates[3].startNote]);
 });
 
 test('homepage shows exactly three format cards', async ({ page }) => {
