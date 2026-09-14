@@ -6,6 +6,7 @@ import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDeta
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
+import { entryPoints, formatCards } from '../lib/deliveryModelPresentation';
 
 export const metadata = createPageMetadata({
   path: '/napryamky',
@@ -65,25 +66,33 @@ export default function DirectionsPage() {
         </div>
       </section>
 
-      {/* Was two separate page-section scenes with near-identical grammar and no media/structure —
-          individually fine, back to back they read as one section accidentally split in half.
-          Merged into one scene: two named modes of cooperation under a single shared frame,
-          divided by one hairline instead of two full section-spaces of near-empty whitespace.
-          Both original messages are kept in full — nothing cut, nothing new claimed. */}
+      {/* One scene, two axes from the Delivery Model: how RUBIKON participates (the three formats)
+          and what the visitor already has (where the work starts). A project or documentation is an
+          entry point, not a fourth format. Kept to a routing aid — the full route is a later page. */}
       <section className="page-section">
         <div className="shell">
-          <p className="eyebrow"><span /> Формати співпраці</p>
-          <div className="cooperation-split">
-            <article className="cooperation-mode">
-              <span>Комплексні об’єкти</span>
-              <h2>Коли один об’єкт поєднує кілька напрямків</h2>
-              <p>Багато промислових та аграрних об’єктів не обмежуються одним видом робіт. Наприклад, ангар може одночасно включати бетонну основу, металевий каркас і покрівлю. У такому випадку важливо узгодити послідовність етапів, стики між ними та межі відповідальності ще до початку робіт.</p>
-            </article>
-            <article className="cooperation-mode">
-              <span>Якщо проєкт уже сформований</span>
-              <h2>Можемо долучитися до окремої частини робіт</h2>
-              <p>Якщо у вас уже є проєкт, документація або визначений обсяг робіт, можемо долучитися як підрядник або субпідрядник на конкретний етап. До початку робіт уточнюємо вихідні дані, технічні вимоги, склад робіт і межі нашої відповідальності.</p>
-            </article>
+          <p className="eyebrow"><span /> Формати участі</p>
+          <div className="cooperation-split cooperation-split-three">
+            {formatCards().map(({ id, number, title, text }) => (
+              <article className="cooperation-mode" key={id}>
+                <span>{number}</span>
+                <h2>{title}</h2>
+                <p>{text}</p>
+              </article>
+            ))}
+          </div>
+          <div className="entry-points">
+            <h2 className="entry-points-title">Що у вас уже є — з того й почнемо</h2>
+            <p className="entry-points-lead">Проєкт чи робоча документація — не окремий формат співпраці, а точка входу: від неї залежить, з якого етапу почнемо.</p>
+            <ul className="entry-points-list">
+              {entryPoints().map(({ id, label, startStageTitle, startNote }) => (
+                <li key={id}>
+                  <b>{label}</b>
+                  <span>Старт: {startStageTitle}</span>
+                  {startNote && <small>{startNote}</small>}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>

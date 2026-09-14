@@ -2,6 +2,7 @@ import { Mail, MessagesSquare, Phone } from 'lucide-react';
 import ProjectInquiryForm from './ProjectInquiryForm';
 import { MessengerLinks } from './SiteChrome';
 import { company, companyContactLinks } from '../data/company';
+import { cooperationOptions, inquirySuccessMessage } from '../lib/deliveryModelPresentation';
 import type { ReactNode } from 'react';
 
 type InquirySectionProps = {
@@ -54,7 +55,12 @@ export default function InquirySection({
             </a>
           </div>
         </div>
-        <ProjectInquiryForm defaultDirection={defaultDirection} />
+        {/* Resolved here, on the server, so the client form gets strings rather than the whole model. */}
+        <ProjectInquiryForm
+          defaultDirection={defaultDirection}
+          cooperationOptions={cooperationOptions()}
+          successMessage={inquirySuccessMessage()}
+        />
       </div>
     </section>
   );

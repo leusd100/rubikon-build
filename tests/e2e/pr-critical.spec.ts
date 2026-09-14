@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { deliveryModel } from '../../app/data/deliveryModel';
 
 function collectFatalBrowserErrors(page: Page) {
   const errors: string[] = [];
@@ -79,3 +80,116 @@ test('shared inquiry submits one mocked lead successfully', async ({ page }) => 
   });
   expect(errors).toEqual([]);
 });
+
+// Delivery Model taxonomy, checked in the server HTML so it holds before hydration too.
+const PUBLIC_PATHS = [
+  '/',
+  '/napryamky',
+  '/angary',
+  '/zernoskhovyshcha',
+  '/metalokonstruktsii',
+  '/betonni-roboty',
+  '/pokrivelni-roboty',
+  '/pro-nas',
+  '/polityka-konfidentsiinosti',
+];
+const FORMAT_LABELS = deliveryModel.formats.map((format) => format.label);
+// Retired from the site in PR 2: the old format names, /napryamky's local taxonomy and the
+// «найближчим часом» follow-up promise. «під ключ» itself may stay as the visitor's words.
+const RETIRED_PHRASES = [
+  'Робота за наявною документацією',
+  'Підряд або субпідряд',
+  'Об’єкт під ключ',
+  'Окремий етап робіт',
+  'Комплексні об’єкти',
+  'Якщо проєкт уже сформований',
+  'найближчим часом',
+];
+
+/**
+ * The text of the elements each selector matches in a route's server HTML. DOMParser builds the
+ * document without running its scripts, so what this reads is what arrives before hydration.
+ */
+async function serverText(page: Page, path: string, selectors: Record<string, string>) {
+  const response = await page.request.get(path);
+  expect(response.status(), path).toBe(200);
+  return page.evaluate(({ markup, queries }) => {
+    const doc = new DOMParser().parseFromString(markup, 'text/html');
+    return Object.fromEntries(
+      Object.entries(queries).map(([key, selector]) => [key, [...doc.querySelectorAll(selector)].map((element) => element.textContent?.trim() ?? '')]),
+    );
+  }, { markup: await response.text(), queries: selectors });
+}
+
+test('server HTML of every public route speaks the Delivery Model taxonomy', async ({ request }) => {
+  for (const path of PUBLIC_PATHS) {
+    const response = await request.get(path);
+    expect(response.status(), path).toBe(200);
+    const html = await response.text();
+
+    expect(html, path).not.toMatch(/генеральн\S*\s+підряд/i);
+    expect(html, path).not.toContain('/yak-pratsyuiemo');
+    for (const phrase of RETIRED_PHRASES) expect(html, `${path}: ${phrase}`).not.toContain(phrase);
+  }
+});
+
+test('homepage server HTML carries the new H1, three formats, the entry axis and the cooperation options', async ({ page }) => {
+  const text = await serverText(page, '/', {
+    h1: '.hero h1',
+    formats: '#services .format-grid h3',
+    entryPoints: '#services .entry-axis li',
+    cooperation: '.inquiry-details select option',
+  });
+
+  expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
+  expect(text.formats).toEqual(FORMAT_LABELS);
+  expect(text.entryPoints).toEqual(deliveryModel.entryStates.map((state) => state.label));
+  expect(text.cooperation).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
+});
+
+test('/napryamky server HTML takes its formats and entry points from the model', async ({ page }) => {
+  const text = await serverText(page, '/napryamky', {
+    formats: '.cooperation-split-three h2',
+    entryPoints: '.entry-points-list b',
+    startNotes: '.entry-points-list small',
+  });
+
+  expect(text.formats).toEqual(FORMAT_LABELS);
+  expect(text.entryPoints).toEqual(deliveryModel.entryStates.map((state) => state.label));
+  expect(text.startNotes).toEqual([deliveryModel.entryStates[3].startNote]);
+});
+
+test('homepage shows exactly three format cards', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'load' });
+  const cards = page.locator('#services .format-grid article');
+
+  await expect(cards).toHaveCount(3);
+  await expect(cards.locator('h3')).toHaveText(FORMAT_LABELS);
+});
+
+for (const width of [360, 375, 390]) {
+  test(`homepage H1 and format cards fit a ${width}px phone without breaking words`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/', { waitUntil: 'load' });
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    // Every H1 word must fit the heading's width on its own, or the global overflow-wrap splits it mid-letter.
+    const heading = await page.locator('.hero h1').evaluate((element) => {
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap';
+      element.appendChild(probe);
+      let widest = 0;
+      for (const word of (element.textContent ?? '').split(/\s+/)) {
+        probe.textContent = word;
+        widest = Math.max(widest, probe.getBoundingClientRect().width);
+      }
+      probe.remove();
+      return { widest, available: element.clientWidth };
+    });
+    expect(heading.widest).toBeLessThanOrEqual(heading.available);
+    const overflowing = await page
+      .locator('#services .format-grid article, #services .entry-axis')
+      .evaluateAll((elements) => elements.filter((element) => element.scrollWidth > element.clientWidth + 1).length);
+    expect(overflowing).toBe(0);
+  });
+}

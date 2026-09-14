@@ -5,6 +5,7 @@ import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
 import { getDirection } from '../lib/directions';
+import { faqAnswerText } from '../lib/deliveryModelPresentation';
 import { relatedDirections, type RelatedDirection } from '../data/relatedDirections';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
 import { company } from '../data/company';
@@ -214,13 +215,15 @@ export function DirectionEditorial({
 
 export function DirectionFaq({
   title,
-  items,
+  items: sourceItems,
   collapsible = false,
 }: {
   title: string;
   items: readonly DirectionFaqItem[];
   collapsible?: boolean;
 }) {
+  // Model-owned answers become text here, on the server, before the list and its FAQPage data use them.
+  const items = sourceItems.map(([question, answer]) => [question, faqAnswerText(answer)] as const);
   const faqData = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',

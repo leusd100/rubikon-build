@@ -91,6 +91,11 @@ for (const viewport of viewports) {
       );
     });
 
+    test('homepage formats', async ({ page }) => {
+      await preparePage(page, '/');
+      await expectStableScreenshot(page.locator('#services > .shell'), `homepage-formats-${viewport.name}.png`);
+    });
+
     test('homepage directions grid', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(

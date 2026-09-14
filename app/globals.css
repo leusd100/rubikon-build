@@ -1233,3 +1233,34 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
   }
   .hero-grid, .subhero-grid, .ghost-word { display: none; }
 }
+
+/* Delivery Model taxonomy. Home «Формат участі»: three format cards in the .cost-grid
+   treatment (two classes so it outranks .cost-grid's own 2- and 1-column breakpoints), plus the
+   «Що у вас уже є» axis as one quiet row under them. /napryamky: the same three formats in the
+   .cooperation-split scene, and the entry points as a list beside their explanation. */
+.cost-grid.format-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.entry-axis { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 12px 28px; padding: 22px 0; border-bottom: 1px solid rgba(21,24,22,.17); }
+.entry-axis-title { margin: 0; color: var(--accent-dark); font: 600 14px/1.4 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.entry-axis ul { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 0; padding: 0; list-style: none; }
+.entry-axis li { padding: 6px 12px; border: 1px solid rgba(21,24,22,.22); font-size: 13px; line-height: 1.4; }
+.entry-axis-note { grid-column: 2; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.cooperation-split.cooperation-split-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.entry-points { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); grid-template-rows: auto 1fr; gap: 14px var(--grid-gap); margin-top: clamp(40px, 4vw, 56px); padding-top: 32px; border-top: 1px solid var(--line); }
+.entry-points-title { grid-column: 1; margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(24px, 2vw, 30px); font-weight: 400; line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; }
+.entry-points-lead { grid-column: 1; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.8; }
+.entry-points-list { grid-column: 2; grid-row: 1 / span 2; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.entry-points-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.entry-points-list b { font-weight: 600; }
+.entry-points-list span { color: var(--accent-dark); font: 600 12px/1.6 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.entry-points-list small { grid-column: 1 / -1; color: var(--muted); font-size: 13px; line-height: 1.6; }
+@media (max-width: 1050px) {
+  .cooperation-split.cooperation-split-three { grid-template-columns: 1fr; }
+  .entry-points { grid-template-columns: 1fr; grid-template-rows: none; }
+  .entry-points-list { grid-column: auto; grid-row: auto; }
+}
+@media (max-width: 760px) {
+  .cost-grid.format-grid { grid-template-columns: 1fr; }
+  .entry-axis { grid-template-columns: 1fr; }
+  .entry-axis-note { grid-column: auto; }
+  .entry-points-list li { grid-template-columns: 1fr; }
+}

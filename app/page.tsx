@@ -1,11 +1,12 @@
 import { Mail } from 'lucide-react';
-import { DirectionImageCards, EngagementFormatCards } from './components/DirectionCards';
+import { DirectionImageCards, EngagementFormatCards, EntryPointsNote } from './components/DirectionCards';
 import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
 import { HomeHeroVideo } from './components/HomeHeroVideo';
 import ResponsiveImage from './components/ResponsiveImage';
 import InquirySection from './components/InquirySection';
 import { ProjectProcessSteps } from './components/ProcessCards';
 import { company, companyContactLinks } from './data/company';
+import { deliveryModel } from './data/deliveryModel';
 import { siteRoutes } from './data/navigation';
 
 export default function Home() {
@@ -19,13 +20,13 @@ export default function Home() {
         <div className="hero-grid" aria-hidden="true" />
         <div className="shell hero-layout">
           <h1>
-            Промислове будівництво — від окремих робіт до об’єкта <em>під ключ</em>
+            Промислове будівництво — від окремих робіт до <em>комплексної реалізації</em> об’єкта
           </h1>
           <div className="hero-copy">
             <p className="hero-lead">
               Будуємо промислові, складські й аграрні об’єкти — від узгодженого технічного
               рішення до виконання будівельних робіт. Працюємо комплексно або виконуємо
-              окремі етапи як підрядник чи субпідрядник.
+              окремі пакети робіт як підрядник чи субпідрядник.
             </p>
             <div className="hero-actions">
               <a className="button button-primary" href="#inquiry">
@@ -63,9 +64,10 @@ export default function Home() {
           <SectionHeader
             eyebrow="Формат участі"
             title="Що можемо взяти на себе"
-            supporting="Можемо виконати комплексний обсяг робіт або долучитися до окремого етапу як підрядник чи субпідрядник. Формат і межі відповідальності погоджуємо до початку робіт."
+            supporting={`Три формати участі — залежно від того, хто координує об’єкт. ${deliveryModel.statements.boundary}`}
           />
           <EngagementFormatCards />
+          <EntryPointsNote />
           <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
         </div>
       </section>
@@ -122,7 +124,7 @@ export default function Home() {
           <SectionHeader
             eyebrow="Як ми працюємо"
             title="Від узгодження завдання до приймання робіт"
-            supporting="Для об’єкта під ключ формуємо повний маршрут. Для окремого етапу чітко фіксуємо межі відповідальності, вимоги на вході та результат на виході."
+            supporting="Для всього об’єкта формуємо повний маршрут. Для окремого пакета робіт чітко фіксуємо межі відповідальності, вимоги на вході та результат на виході."
           />
           <ProjectProcessSteps />
         </div>
