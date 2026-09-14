@@ -12,6 +12,8 @@ type InquirySectionProps = {
   title: ReactNode;
   text?: string;
   defaultDirection?: string;
+  /** A short page-specific list beside the form, e.g. what helps the first conversation. */
+  checklist?: { title: string; items: readonly string[] };
 };
 
 /**
@@ -29,7 +31,8 @@ export default function InquirySection({
   title,
   text = 'Залиште контакт і коротко опишіть завдання. Ми уточнимо вихідні дані та запропонуємо наступний крок.',
   defaultDirection,
-}: InquirySectionProps) {
+  checklist,
+}: Readonly<InquirySectionProps>) {
   return (
     <section className="contact section" id="inquiry">
       <div className="shell contact-grid">
@@ -38,6 +41,12 @@ export default function InquirySection({
             <p className="eyebrow light"><span /> {eyebrow}</p>
             <h2>{title}</h2>
             <p>{text}</p>
+            {checklist && (
+              <div className="contact-checklist">
+                <h3>{checklist.title}</h3>
+                <ul>{checklist.items.map((item) => <li key={item}>{item}</li>)}</ul>
+              </div>
+            )}
           </div>
           <div className="contact-links">
             <a className="pending-contact contact-phone" href={companyContactLinks.phone}>

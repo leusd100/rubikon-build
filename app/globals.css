@@ -1276,3 +1276,17 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
 @media (max-width: 760px) {
   .process-teaser { grid-template-columns: 1fr; padding: 24px 20px; }
 }
+
+/* A page-specific checklist beside the inquiry form (InquirySection `checklist`), e.g. what helps
+   the first conversation on /yak-pratsyuiemo. Short labels in two columns, read as a list. */
+.contact-checklist { max-width: 560px; margin: 0 0 34px; }
+.contact-checklist h3 { margin: 0 0 14px; color: white; font: 600 13px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.contact-checklist ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; margin: 0; padding: 0; list-style: none; }
+.contact-checklist li { position: relative; padding-left: 16px; color: #aeb7b0; font-size: 14px; line-height: 1.5; }
+.contact-checklist li::before { content: '—'; position: absolute; left: 0; color: var(--accent-on-dark); }
+@media (max-width: 1180px) {
+  .contact-checklist { max-width: 720px; margin: 26px 0 0; }
+}
+@media (max-width: 340px) {
+  .contact-checklist ul { grid-template-columns: minmax(0, 1fr); }
+}

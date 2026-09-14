@@ -152,5 +152,15 @@ for (const viewport of viewports) {
       await preparePage(page, '/yak-pratsyuiemo');
       await expectStableScreenshot(page.locator('#etapy > .shell'), `delivery-stages-${viewport.name}.png`);
     });
+
+    test('delivery page responsibility', async ({ page }) => {
+      await preparePage(page, '/yak-pratsyuiemo');
+      await expectStableScreenshot(page.locator('#vidpovidalnist > .shell'), `delivery-responsibility-${viewport.name}.png`);
+    });
+
+    test('delivery page documents', async ({ page }) => {
+      await preparePage(page, '/yak-pratsyuiemo');
+      await expectStableScreenshot(page.locator('#dokumenty > .shell'), `delivery-documents-${viewport.name}.png`);
+    });
   });
 }
