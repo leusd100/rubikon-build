@@ -182,6 +182,11 @@ export type DesignThread = {
   statement: string;
   stages: readonly { number: string; title: string; anchor: string; documents: readonly string[] }[];
   change: string;
+  /**
+   * The eight stages as a mini-route. Only the model's design-thread stages are marked: the change
+   * policy is not tied to a stage in the model, so the page does not place it on the route.
+   */
+  route: readonly { number: string; design: boolean }[];
 };
 
 /**
@@ -201,6 +206,7 @@ export function designThread(): DesignThread {
       })),
     // «Оцінюємо вплив … якщо зачеплено проєкт — через проєктувальника»: the step where a change meets the design.
     change: deliveryModel.changePolicy.steps[1],
+    route: model.stages.map((stage) => ({ number: stage.number, design: stage.designThread })),
   };
 }
 

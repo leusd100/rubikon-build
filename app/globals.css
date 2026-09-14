@@ -1290,3 +1290,9 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
 @media (max-width: 340px) {
   .contact-checklist ul { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* RoleIcon: a thin line drawing beside a role's label, in the label's quieter tone — never a
+   colour of its own, never instead of the words (docs/role-icons.md). */
+/* inline-block: Tailwind's preflight makes every svg a block, which would break the label's line;
+   the negative block margin keeps a 16 px icon from making a short label's line any taller. */
+.role-icon { display: inline-block; flex: none; width: 16px; height: 16px; margin-block: -2px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; stroke-linejoin: miter; vertical-align: -3px; }

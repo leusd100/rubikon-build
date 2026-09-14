@@ -1,5 +1,6 @@
-import { Breadcrumbs, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, GhostWord, SectionHeader } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
+import RoleIcon from '../components/RoleIcon';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { company } from '../data/company';
 import { deliveryModel } from '../data/deliveryModel';
@@ -20,12 +21,14 @@ import {
   stageCards,
   startInputs,
   type BasisBadge,
+  type CapabilityLayer,
   type FormatToken,
   type PerFormatRow,
   type ResponsibilityActivity,
   type RouteDocument,
 } from '../lib/deliveryModelPresentation';
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
+import type { CapabilityLayerId } from '../types/deliveryModel';
 import './delivery.css';
 
 // /yak-pratsyuiemo — the Delivery Model shown to a client: formats, entry points, the eight
@@ -138,11 +141,28 @@ function DocumentList({ documents }: Readonly<{ documents: readonly RouteDocumen
   );
 }
 
+/** One layer of who does the work: its title, the flexible packages' note, and its items, linked to their competency pages. */
+function CapabilityLayerCard({ layer }: Readonly<{ layer: CapabilityLayer }>) {
+  return (
+    <article className={`delivery-layer delivery-layer-${layer.id}`}>
+      <h3>{layer.title}</h3>
+      {layer.note && <p className="delivery-layer-note">{layer.note}</p>}
+      <ul>
+        {layer.items.map((item) => (
+          <li key={item.id}>{item.href ? <a href={item.href}>{item.text}</a> : item.text}</li>
+        ))}
+      </ul>
+    </article>
+  );
+}
+
 export default function DeliveryModelPage() {
   const { statements, changePolicy } = deliveryModel;
   const tokens = formatTokens();
   const responsibility = responsibilityComparison();
   const phases = documentRoute();
+  const thread = designThread();
+  const layers = Object.fromEntries(capabilityLayers().map((layer) => [layer.id, layer])) as Record<CapabilityLayerId, CapabilityLayer>;
   const pageData = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -241,7 +261,8 @@ export default function DeliveryModelPage() {
         </div>
       </section>
 
-      <section className="page-section page-section-dark delivery-stages-section" id="etapy">
+      <section className="page-section page-section-dark delivery-stages-section ghost-section" id="etapy">
+        <GhostWord word="PROCESS" tone="dark" align="start" />
         <div className="shell">
           <SectionHeader
             className="page-heading"
@@ -261,7 +282,7 @@ export default function DeliveryModelPage() {
               <li className="delivery-stage" id={stage.anchor} key={stage.id}>
                 <h3><span className="delivery-stage-number">{stage.number}</span>{' '}{stage.title}</h3>
                 <div className="delivery-stage-body">
-                  <p className="delivery-stage-result"><b>Результат:</b> {stage.result}</p>
+                  <p className="delivery-stage-result"><b><RoleIcon role="result" />Результат:</b> {stage.result}</p>
                   {(stage.designThread || stage.ledByGeneralContractorIn.length > 0) && (
                     <ul className="delivery-tags">
                       {stage.designThread && <li>Нитка проєктування</li>}
@@ -276,19 +297,19 @@ export default function DeliveryModelPage() {
                         <div className="delivery-stage-gate"><h4>Перехід далі, коли…</h4><p>{stage.gate}</p></div>
                       </div>
                       <div className="delivery-stage-roles">
-                        <div><h4>RUBIKON</h4><PerFormatText rows={stage.rubikon} /></div>
-                        <div><h4>Замовник</h4><PerFormatText rows={stage.client} /></div>
-                        <div><h4>Учасники</h4><PerFormatText rows={stage.involved} /></div>
+                        <div><h4><RoleIcon role="rubikon" />RUBIKON</h4><PerFormatText rows={stage.rubikon} /></div>
+                        <div><h4><RoleIcon role="client" />Замовник</h4><PerFormatText rows={stage.client} /></div>
+                        <div><h4><RoleIcon role="partner" />Учасники</h4><PerFormatText rows={stage.involved} /></div>
                       </div>
                       <div className="delivery-stage-docs">
-                        <h4>Документи</h4>
+                        <h4><RoleIcon role="documents" />Документи</h4>
                         <ul>
                           {stage.documents.map((document) => (
                             <li key={document.label}><span>{document.label}</span><BasisBadges badges={document.badges} /></li>
                           ))}
                         </ul>
                       </div>
-                      <div className="delivery-why"><h4>Чому це важливо</h4><p>{stage.why}</p></div>
+                      <div className="delivery-why"><h4><RoleIcon role="why" />Чому це важливо</h4><p>{stage.why}</p></div>
                     </div>
                   </details>
                 </div>
@@ -303,32 +324,34 @@ export default function DeliveryModelPage() {
           <div>
             <p className="eyebrow"><span /> Проєктування</p>
             <h2>Нитка, а не одна точка</h2>
-            <p className="delivery-lead">{designThread().statement}</p>
+            <p className="delivery-lead">{thread.statement}</p>
           </div>
-          <ol className="delivery-thread-steps">
-            {designThread().stages.map((stage) => (
-              <li key={stage.anchor}><a href={`#${stage.anchor}`}><span>{stage.number}</span> {stage.title}</a><p>{stage.documents.join(' · ')}</p></li>
-            ))}
-            <li><b>Під час реалізації</b><p>{designThread().change}</p></li>
-          </ol>
+          <div className="delivery-thread-body">
+            <ol className="delivery-thread-route" aria-hidden="true">
+              {thread.route.map((point) => (
+                <li className={point.design ? 'delivery-thread-point-design' : undefined} key={point.number}><span>{point.number}</span></li>
+              ))}
+            </ol>
+            <ol className="delivery-thread-steps">
+              {thread.stages.map((stage) => (
+                <li key={stage.anchor}><a href={`#${stage.anchor}`}><span>{stage.number}</span> {stage.title}</a><p>{stage.documents.join(' · ')}</p></li>
+              ))}
+              <li><b>Під час реалізації</b><p>{thread.change}</p></li>
+            </ol>
+          </div>
         </div>
       </section>
 
       <section className="page-section page-section-dark delivery-who" id="khto-vykonuie">
         <div className="shell">
           <SectionHeader className="page-heading" eyebrow="Хто виконує" title="Власне ядро, гнучкі пакети й партнери" supporting={statements.team} inverse />
+          {/* Nested layers, read inside out: the core within the flexible packages, both within the partners. */}
           <div className="delivery-layers">
-            {capabilityLayers().map((layer) => (
-              <article className={`delivery-layer delivery-layer-${layer.id}`} key={layer.id}>
-                <h3>{layer.title}</h3>
-                {layer.note && <p className="delivery-layer-note">{layer.note}</p>}
-                <ul>
-                  {layer.items.map((item) => (
-                    <li key={item.id}>{item.href ? <a href={item.href}>{item.text}</a> : item.text}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
+            <div className="delivery-layers-middle">
+              <CapabilityLayerCard layer={layers.core} />
+              <CapabilityLayerCard layer={layers.flexible} />
+            </div>
+            <CapabilityLayerCard layer={layers.partner} />
           </div>
           <p className="delivery-boundary">{statements.boundary}</p>
         </div>
@@ -340,11 +363,13 @@ export default function DeliveryModelPage() {
         </div>
       </div>
 
-      <section className="page-section delivery-responsibility" id="vidpovidalnist">
+      <section className="page-section delivery-responsibility ghost-section" id="vidpovidalnist">
+        <GhostWord word="RESPONSIBILITY" />
         <div className="shell">
           <SectionHeader
             className="page-heading"
             eyebrow="Відповідальність"
+            icon={<RoleIcon role="scope" />}
             title="Хто за що відповідає"
             supporting="Та сама робота може належати різним учасникам — залежно від формату участі. Дозвільні питання, нагляд і виконавчу документацію визначає договір."
           />
@@ -422,8 +447,8 @@ export default function DeliveryModelPage() {
       </section>
 
       <section className="page-section page-section-dark delivery-changes" id="zminy">
-        <div className="shell delivery-split">
-          <div>
+        <div className="shell delivery-changes-layout">
+          <div className="delivery-changes-head">
             <p className="eyebrow light"><span /> Зміни під час проєкту</p>
             <h2>Зміни погоджуємо до виконання</h2>
             <p className="delivery-lead">{changePolicy.principle}</p>
@@ -484,6 +509,7 @@ export default function DeliveryModelPage() {
           <SectionHeader
             className="page-heading"
             eyebrow="Бюджет і строки"
+            icon={<RoleIcon role="schedule" />}
             title="Від чого залежать бюджет і строки"
             supporting="Вартість і строки визначаються не лише площею або тоннажем. Цін і усереднених строків не називаємо: їх фіксують кошторис і графік на етапі «Склад робіт і бюджет»."
             inverse
@@ -499,7 +525,8 @@ export default function DeliveryModelPage() {
         </div>
       </section>
 
-      <section className="page-section delivery-experience" id="dosvid">
+      <section className="page-section delivery-experience ghost-section" id="dosvid">
+        <GhostWord word="EXPERIENCE" />
         <div className="shell delivery-experience-layout">
           <p className="eyebrow"><span /> Досвід</p>
           <p className="delivery-experience-statement">{statements.experience}</p>

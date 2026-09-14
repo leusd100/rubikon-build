@@ -156,7 +156,16 @@ describe('delivery page: who does what', () => {
         { number: '06', title: 'Підготовка реалізації', anchor: 'etap-06', documents: ['Робоча документація', 'Проєкт виконання робіт — де він потрібен'] },
       ],
       change: deliveryModel.changePolicy.steps[1],
+      route: deliveryModel.stages.map((stage) => ({ number: stage.number, design: stage.designThread })),
     });
+  });
+
+  it('marks on the mini-route only the stages the model ties to design, and places the change step nowhere', () => {
+    const { route } = designThread();
+
+    expect(route.map((point) => point.number)).toEqual(['01', '02', '03', '04', '05', '06', '07', '08']);
+    expect(route.filter((point) => point.design).map((point) => point.number)).toEqual(['03', '06']);
+    expect(Object.keys(designThread())).toEqual(['statement', 'stages', 'change', 'route']);
   });
 });
 

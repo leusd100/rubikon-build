@@ -65,17 +65,20 @@ export function SectionHeader({
   supporting,
   inverse = false,
   className = '',
+  icon,
 }: {
   eyebrow: string;
   title: ReactNode;
   supporting: ReactNode;
   inverse?: boolean;
   className?: string;
+  /** A role icon beside the eyebrow's text — decoration only, never instead of the words. */
+  icon?: ReactNode;
 }) {
   return (
     <div className={`section-header${inverse ? ' section-header-inverse' : ''}${className ? ` ${className}` : ''}`}>
       <div className="section-header-copy">
-        <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {eyebrow}</p>
+        <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {icon}{eyebrow}</p>
         <h2>{title}</h2>
       </div>
       <p className="section-header-support">{supporting}</p>
