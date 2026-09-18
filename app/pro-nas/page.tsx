@@ -1,6 +1,6 @@
 import { ClipboardCheck, FileSignature, ShieldCheck } from 'lucide-react';
 import { AboutHeroVideo } from '../components/AboutHeroVideo';
-import { Breadcrumbs, GhostWord, SectionHeader, TeamSection } from '../components/SiteChrome';
+import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import ResponsiveImage from '../components/ResponsiveImage';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
@@ -12,7 +12,7 @@ export const metadata = createPageMetadata({
   title: brandedTitle('Про родинну компанію'),
   description: `${company.name} — родинна будівельна компанія з Дніпра. В основі — понад 30 років досвіду Сергія Івановича, особиста відповідальність і системний підхід.`,
   socialTitle: `Про ${company.name} — досвід двох поколінь`,
-  socialDescription: 'Родинна відповідальність, понад 30 років практики та сучасний підхід до розвитку компанії.',
+  socialDescription: 'Родинна відповідальність, понад 30 років практики Сергія Івановича та сучасний підхід до розвитку компанії.',
   image: '/media/about-industrial-concept.jpg',
   imageAlt: `${company.name} — від інженерної концепції до промислової споруди`,
 });
@@ -36,10 +36,11 @@ export default function AboutPage() {
             </h1>
           </div>
           <div className="subhero-side about-subhero-side">
-            <p>RUBIKON BUILD — родинна компанія з Дніпра. В основі — понад 30 років практичного досвіду, особиста відповідальність і системний підхід.</p>
+            <p>RUBIKON BUILD — родинна компанія з Дніпра. В основі — понад 30 років практичного досвіду Сергія Івановича, особиста відповідальність і системний підхід.</p>
             <a className="button button-primary about-hero-cta" href="#inquiry">
               Обговорити проєкт <span aria-hidden="true">↗</span>
             </a>
+            <HeroCallLink />
           </div>
         </div>
       </section>

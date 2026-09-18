@@ -133,6 +133,9 @@ export function SiteHeader() {
             <Mail aria-hidden="true" />
           </a>
         </div>
+        <a className="mobile-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
+          <Phone aria-hidden="true" />
+        </a>
         <MobileMenu>
           <summary aria-label="Відкрити або закрити меню">
             <span>Меню</span>
@@ -142,12 +145,23 @@ export function SiteHeader() {
             {primaryNavigation.map((item, index) => (
               <a href={item.href} key={item.href}><small>{String(index + 1).padStart(2, '0')}</small> {item.label}</a>
             ))}
+            <a className="mobile-phone" href={companyContactLinks.phone}><Phone aria-hidden="true" /> {company.phone.display}</a>
             <MessengerLinks className="mobile-messengers" />
             <a className="mobile-email" href={companyContactLinks.email}><Mail aria-hidden="true" /> {company.email}</a>
           </nav>
         </MobileMenu>
       </div>
     </header>
+  );
+}
+
+/** The inner pages' second hero action: one tap to call, deliberately quieter than the page's primary «Обговорити…». */
+export function HeroCallLink() {
+  return (
+    <a className="hero-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
+      <Phone aria-hidden="true" />
+      <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
+    </a>
   );
 }
 
@@ -237,7 +251,7 @@ export function EstimateBrief() {
           <p className="eyebrow"><span /> Для першої оцінки</p>
           <h2>Що потрібно для першої оцінки</h2>
           <p>Не обов’язково мати готовий проєкт. Вкажіть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку.</p>
-          <a className="section-link" href={siteRoutes.contact}>Підготувати запит <span aria-hidden="true">↗</span></a>
+          <a className="section-link" href={siteRoutes.contact}>Обговорити задачу <span aria-hidden="true">↗</span></a>
         </div>
         <EstimateBriefCards />
       </div>
@@ -257,7 +271,7 @@ const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
     sergii: {
       role: 'Засновник / керівник будівельного напряму',
       paragraphs: [
-        'Понад 30 років практичного досвіду в будівництві — від організації робіт на майданчику до контролю якості та ключових технічних рішень.',
+        'Практичний досвід у будівництві — від організації робіт на майданчику до контролю якості та ключових технічних рішень.',
       ],
     },
     dmytro: {
@@ -271,7 +285,7 @@ const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
     sergii: {
       role: 'Засновник / керівник будівельного напряму',
       paragraphs: [
-        'Понад 30 років у будівництві — від роботи на майданчику до організації бригад, контролю якості та відповідальних етапів. Сергій Іванович залучається до оцінки ключових технічних рішень і конструктивних вузлів проєкту.',
+        'Від роботи на майданчику до організації бригад, контролю якості та відповідальних етапів. Сергій Іванович залучається до оцінки ключових технічних рішень і конструктивних вузлів проєкту.',
       ],
     },
     dmytro: {

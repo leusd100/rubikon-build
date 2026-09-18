@@ -39,7 +39,7 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     await openPlanner(page);
     const hero = page.locator('.service-subhero');
     await expect(hero.getByRole('link', { name: /Сформувати задачу/ })).toHaveAttribute('href', '#planner');
-    await expect(hero.getByRole('link', { name: /Обговорити з інженером/ })).toHaveAttribute('href', '#inquiry');
+    await expect(hero.getByRole('link', { name: /Обговорити зерносховище/ })).toHaveAttribute('href', '#inquiry');
   });
 
   test('quotes the one responsibility statement in the hero, bands 04–05, the FAQ and the result — and never «не входить»', async ({ page }) => {
@@ -101,8 +101,10 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
   });
 });
 
-// The spec's budget before the planner is used — 7.3 screens at 1440×900, 11.7 at 390×844 — is the
-// height of the page the planner replaced (measured in Phase 4: 7.31 and 11.70 screens).
+// The spec's budget before the planner is used was the height of the page the planner replaced (measured in
+// Phase 4: 7.31 and 11.70 screens at 1440×900 and 390×844). Sprint 1 (first contact) deliberately added the hero's
+// «Зателефонувати» call: it shares the buttons' row on desktop (height unchanged, 7.3) but takes its own row on phones
+// (+0.07 screens), so the phone budget is 11.8 — content may not grow into that margin.
 async function settledHeight(page: Page, path: string) {
   await page.goto(path, { waitUntil: 'load' });
   const essential = page.getByRole('button', { name: 'Лише необхідні', exact: true });
@@ -120,12 +122,12 @@ test.describe('Grain page height budget (before the planner is used)', () => {
     expect(screens, 'screens at 1440×900').toBeLessThanOrEqual(7.3);
   });
 
-  test('phone 390×844: within 11.7 screens, no overflow at 390 or 360', async ({ page, isMobile }) => {
+  test('phone 390×844: within 11.8 screens, no overflow at 390 or 360', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'phone budget');
     await page.setViewportSize({ width: 390, height: 844 });
     const screens = (await settledHeight(page, GRAIN_PAGE)) / 844;
     test.info().annotations.push({ type: 'height', description: `${screens.toFixed(2)} screens` });
-    expect(screens, 'screens at 390×844').toBeLessThanOrEqual(11.7);
+    expect(screens, 'screens at 390×844').toBeLessThanOrEqual(11.8);
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
     await page.setViewportSize({ width: 360, height: 800 });
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);

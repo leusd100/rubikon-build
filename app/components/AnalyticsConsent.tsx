@@ -215,7 +215,12 @@ export default function AnalyticsConsent() {
             які сторінки корисні відвідувачам, і — якщо ви прийшли за рекламним оголошенням —
             оцінити його ефективність. Необхідні функції сайту працюють у будь-якому разі.
           </p>
-          <a href={siteRoutes.privacy}>Докладніше про конфіденційність</a>
+          <div className="cookie-banner-links">
+            <a href={siteRoutes.privacy}>Докладніше про конфіденційність</a>
+            {!customizing && (
+              <button className="cookie-settings-link" type="button" onClick={() => setCustomizing(true)}>Налаштувати</button>
+            )}
+          </div>
         </div>
 
         {customizing && (
@@ -252,7 +257,6 @@ export default function AnalyticsConsent() {
               Прийняти все
             </button>
             <button type="button" onClick={() => applyChoice(DENY_ALL_STATE)}>Лише необхідні</button>
-            <button type="button" onClick={() => setCustomizing(true)}>Налаштувати</button>
           </>
         )}
       </div>
