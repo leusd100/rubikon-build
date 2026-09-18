@@ -351,6 +351,27 @@ test.describe('Turnstile on the inquiry form', () => {
     expect((await turnstileLog(page)).executes).toBe(1);
   });
 
+  test('a retry clears the previous error while the new challenge runs', async ({ page }) => {
+    await page.route('**/api/leads', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 1, isNew: true }) }));
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+    const submit = page.locator('form.inquiry-form .inquiry-submit');
+    const status = page.locator('.inquiry-status');
+
+    await setTurnstileMode(page, 'error');
+    await submit.click();
+    await expect(status).toContainText(VERIFICATION_FAILED);
+
+    await setTurnstileMode(page, 'interactive');
+    await submit.click();
+    await expect(page.locator('.inquiry-turnstile')).toHaveAttribute('data-turnstile-state', 'verifying');
+    await expect(status).toHaveText('');
+    await expect(status).not.toHaveClass(/is-visible/);
+
+    await solveTurnstile(page);
+    await expect(status).toContainText('Дякуємо!');
+  });
+
   test('an interactive challenge shows full-width above the button, then the layout returns to normal', async ({ page }) => {
     test.skip(test.info().project.name !== 'desktop-chromium', 'the two-column submit layout exists on desktop only');
     await page.route('**/api/leads', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 1, isNew: true }) }));

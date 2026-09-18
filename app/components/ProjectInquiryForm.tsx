@@ -121,6 +121,9 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     const attribution = filterAttributionForConsent(readAttribution(), {
       advertisingGranted: hasAdvertisingConsent(),
     });
+    // A new attempt clears the previous outcome, so an old error never sits under a running
+    // challenge or the «Надсилаємо…» button.
+    setStatus('');
     setStatusAction(null);
 
     if (hasAnalyticsConsent()) {
