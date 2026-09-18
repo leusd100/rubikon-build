@@ -111,6 +111,11 @@ describe('verifyTurnstileToken', () => {
 });
 
 describe('Turnstile public configuration', () => {
+  it('ships a real production site key — an empty or test key would reject every production lead', () => {
+    expect(TURNSTILE_SITE_KEY).toMatch(/^0x4[A-Za-z0-9_-]{16,}$/);
+    expect(TURNSTILE_SITE_KEY).not.toBe(TURNSTILE_TEST_SITE_KEY);
+  });
+
   it('uses the official always-pass test key on local hosts and never on a public one', () => {
     expect(TURNSTILE_TEST_SITE_KEY).toBe('1x00000000000000000000AA');
     expect(turnstileSiteKeyFor('localhost')).toBe(TURNSTILE_TEST_SITE_KEY);

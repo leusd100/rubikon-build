@@ -5,10 +5,8 @@
 /**
  * The production widget's public site key (Managed mode). Public by design — the browser needs
  * it to render the widget — so it is committed like the GA measurement ID.
- * Empty until the key is provided: on a non-local host the form then cannot obtain a token and
- * shows its recoverable error with the phone number, and the server rejects every lead.
  */
-export const TURNSTILE_SITE_KEY = '';
+export const TURNSTILE_SITE_KEY = '0x4AAAAAAE6PDJHNjg4Vb418';
 
 /** Cloudflare's official "always passes" test site key (visible widget). Local hosts only. */
 export const TURNSTILE_TEST_SITE_KEY = '1x00000000000000000000AA';
