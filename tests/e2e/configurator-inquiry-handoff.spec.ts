@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { stubTurnstile } from './turnstile.helpers';
 
 type LeadPayload = {
   details?: {
@@ -47,6 +48,11 @@ async function submitInquiry(page: Page) {
   await form.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
   await expect(form.locator('.inquiry-status')).toContainText('Дякуємо! Запит надіслано');
 }
+
+// The form fetches a Turnstile token before every submit; serve a controlled stub, never live Cloudflare.
+test.beforeEach(async ({ page }) => {
+  await stubTurnstile(page);
+});
 
 test.describe('configurator attachment contract', () => {
   test('untouched default remains absent from the form and lead payload', async ({ page }) => {

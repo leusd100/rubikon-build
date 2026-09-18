@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { choose, next, openPlanner, planner, questions, result, reveal, scenarios, tick } from './grain-planner.helpers';
+import { stubTurnstile } from './turnstile.helpers';
 
 type LeadPayload = {
   submissionId?: string;
@@ -26,6 +27,11 @@ async function submitInquiry(page: Page) {
   await form(page).getByRole('button', { name: 'Надіслати запит', exact: true }).click();
   await expect(form(page).locator('.inquiry-status')).toContainText('Дякуємо!');
 }
+
+// The form fetches a Turnstile token before every submit; serve a controlled stub, never live Cloudflare.
+test.beforeEach(async ({ page }) => {
+  await stubTurnstile(page);
+});
 
 test.describe('Grain Planner stabilization regressions', () => {
   test('a readiness edit that first reveals the result also attaches its committed brief', async ({ page }) => {

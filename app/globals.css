@@ -472,6 +472,11 @@ section[id] { scroll-margin-top: 116px; }
 .inquiry-consent > small { grid-column: 2; margin-top: -4px; color: #8f2f20; font-size: 11px; font-weight: 750; line-height: 1.45; }
 .inquiry-consent.is-invalid { padding: 10px; background: rgba(155,53,37,.07); border-left: 3px solid #9b3525; }
 .inquiry-submit-group { min-width: 0; }
+/* Turnstile (interaction-only): zero-height unless Cloudflare asks for an interaction. Its widget
+   needs ≥300px, wider than the desktop submit column, so the block stacks while it is shown. */
+.inquiry-turnstile { min-width: 0; }
+.inquiry-form-submit-layout.has-turnstile-challenge { grid-template-columns: 1fr; }
+.inquiry-form-submit-layout.has-turnstile-challenge .inquiry-turnstile { margin-bottom: 14px; }
 .inquiry-submit { width: 100%; margin-top: 0; border: 0; cursor: pointer; }
 .inquiry-submit svg { width: 17px; height: 17px; }
 .inquiry-submit-note { margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; text-align: center; }

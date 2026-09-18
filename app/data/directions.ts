@@ -130,4 +130,6 @@ export const inquiryDirectionOptions = [
   ...directions.map(({ formLabel }) => formLabel),
   'Комплексне будівництво',
   'Інше',
+  // A real answer, not a skipped field: the visitor has a task but has not picked a direction yet.
+  'Ще не визначено',
 ] as const;

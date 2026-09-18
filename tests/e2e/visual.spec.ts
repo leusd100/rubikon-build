@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { stubTurnstile } from './turnstile.helpers';
 
 const viewports = [
   { name: 'mobile-375', width: 375, height: 812 },
@@ -8,6 +9,8 @@ const viewports = [
 
 async function preparePage(page: Page, path: string) {
   await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+  // Screenshots must not depend on live Cloudflare; the stub renders nothing until a challenge.
+  await stubTurnstile(page);
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
 
   const response = await page.goto(path, { waitUntil: 'load' });

@@ -4,12 +4,14 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${isDevelopment ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com${isDevelopment ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com",
   "media-src 'self'",
   "font-src 'self' data:",
   `connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com${isDevelopment ? ' ws: http://localhost:*' : ''}`,
+  // Cloudflare Turnstile renders its challenge in an iframe from this origin (inquiry form).
+  "frame-src 'self' https://challenges.cloudflare.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
