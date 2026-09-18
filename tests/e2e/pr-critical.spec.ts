@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
+import { stubTurnstile } from './turnstile.helpers';
 
 function collectFatalBrowserErrors(page: Page) {
   const errors: string[] = [];
@@ -33,6 +34,11 @@ for (const path of ['/', '/angary', '/zernoskhovyshcha']) {
     expect(errors).toEqual([]);
   });
 }
+
+// The form fetches a Turnstile token before every submit; serve a controlled stub, never live Cloudflare.
+test.beforeEach(async ({ page }) => {
+  await stubTurnstile(page);
+});
 
 test('homepage critical mobile smoke has no overflow or fatal errors', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { ChevronDown, Phone, Send } from 'lucide-react';
@@ -14,11 +14,19 @@ import { toInquiryAttachmentPayload } from '../lib/inquiry/attachment';
 import { createSubmissionId, nextSubmissionIdAfterSuccess } from '../lib/inquiry/submissionId';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
 import { InquiryAttachmentSummary } from './inquiry/InquiryAttachmentSummary';
+import { useTurnstile } from './inquiry/useTurnstile';
 
 type LeadApiResult = {
   ok?: boolean;
   isNew?: boolean;
+  error?: string;
 };
+
+const SAVE_FAILED_MESSAGE =
+  'Не вдалося зберегти запит через тимчасову технічну проблему. Зателефонуйте нам напряму, або спробуйте ще раз за хвилину.';
+// Deliberately generic: says nothing about why the check failed or how it works.
+const VERIFICATION_FAILED_MESSAGE =
+  'Не вдалося підтвердити надсилання запиту. Спробуйте ще раз або зателефонуйте нам напряму.';
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || '').trim();
@@ -63,17 +71,46 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const [consentAt, setConsentAt] = useState('');
   const [submissionId, setSubmissionId] = useState(() => createSubmissionId());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // The disabled button only takes effect after a re-render; this ref blocks a second submit
+  // event that arrives before it (a fast double click or a double Enter).
+  const submittingRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstile = useTurnstile(turnstileRef);
+  const { prepare: prepareTurnstile } = turnstile;
   // Server markup is deliberately non-submittable. Hydration enables both successful-control
   // names and the submit button; without JS, no personal field can enter a native URL/query.
   const jsReady = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
+  // Turnstile's script loads only once the form is near the viewport or gets focus — pages whose
+  // visitors never reach the form never fetch it. A failure here is retried on submit.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const start = () => void prepareTurnstile().catch(() => undefined);
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        observer.disconnect();
+        start();
+      }
+    }, { rootMargin: '600px 0px' });
+    observer.observe(form);
+    form.addEventListener('focusin', start, { once: true });
+    return () => {
+      observer.disconnect();
+      form.removeEventListener('focusin', start);
+    };
+  }, [prepareTurnstile]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submittingRef.current) return;
     setConsentError(false);
     const formData = new FormData(event.currentTarget);
 
     // Honeypot — a filled hidden field means a bot. Say nothing, do nothing.
     if (value(formData, 'companyWebsite')) return;
+    submittingRef.current = true;
 
     const name = value(formData, 'name');
     const phone = value(formData, 'phone');
@@ -96,7 +133,15 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     setIsSubmitting(true);
     let saved = false;
     let isNewLead = true;
+    let verificationFailed = false;
     try {
+      let turnstileToken: string;
+      try {
+        turnstileToken = await turnstile.getToken();
+      } catch {
+        verificationFailed = true;
+        throw new Error('verification');
+      }
       const response = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -123,22 +168,25 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
           consentAt: consentAt || new Date().toISOString(),
           privacyVersion: company.privacyVersion,
           companyWebsite: value(formData, 'companyWebsite'),
+          turnstileToken,
         }),
       });
       const result = await response.json().catch(() => null) as LeadApiResult | null;
       saved = Boolean(result?.ok);
+      verificationFailed = !saved && (result?.error === 'verification' || result?.error === 'verification_unavailable');
       // A retry that lands on the idempotent-duplicate branch is still a save (saved=true)
       // but must not count as a second conversion for the same underlying lead.
       isNewLead = result?.isNew !== false;
     } catch {
       saved = false;
     }
+    // Every token is single-use: whatever happened, the next submit needs a fresh challenge.
+    turnstile.reset();
+    submittingRef.current = false;
     setIsSubmitting(false);
 
     if (!saved) {
-      setStatus(
-        'Не вдалося зберегти запит через тимчасову технічну проблему. Зателефонуйте нам напряму, або спробуйте ще раз за хвилину.',
-      );
+      setStatus(verificationFailed ? VERIFICATION_FAILED_MESSAGE : SAVE_FAILED_MESSAGE);
       setStatusAction('error');
       return;
     }
@@ -157,7 +205,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   }
 
   return (
-    <form className="inquiry-form" aria-label="Запит на проєкт" method="post" onSubmit={(event) => void handleSubmit(event)}>
+    <form ref={formRef} className="inquiry-form" aria-label="Запит на проєкт" method="post" onSubmit={(event) => void handleSubmit(event)}>
       <div className="inquiry-form-heading">
         <p className="inquiry-form-kicker"><span aria-hidden="true" /> Короткий запит</p>
         <p className="inquiry-required-note">Поля, позначені *, обов’язкові</p>
@@ -294,7 +342,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
           <span>03</span>
           <h3 id="inquiry-submit-heading">Підтвердження</h3>
         </div>
-        <div className="inquiry-form-section-body inquiry-form-submit-layout">
+        <div className={`inquiry-form-section-body inquiry-form-submit-layout${turnstile.challengeVisible ? ' has-turnstile-challenge' : ''}`}>
           <label className={`inquiry-consent${consentError ? ' is-invalid' : ''}`}>
             <input
               name={enabledFieldName(jsReady, 'privacyConsent')}
@@ -317,6 +365,8 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
           </label>
 
           <div className="inquiry-submit-group">
+            {/* Empty and zero-height unless Cloudflare asks for an interaction. */}
+            <div ref={turnstileRef} className="inquiry-turnstile" data-turnstile-state={turnstile.state} />
             <button className="button button-primary inquiry-submit" type="submit" disabled={isSubmitting || !jsReady}>
               {isSubmitting ? 'Надсилаємо…' : 'Надіслати запит'}{' '}
               {!isSubmitting && <Send aria-hidden="true" />}

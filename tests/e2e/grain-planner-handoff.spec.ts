@@ -13,6 +13,7 @@ import {
   reveal,
   scenarios,
 } from './grain-planner.helpers';
+import { stubTurnstile } from './turnstile.helpers';
 
 type LeadPayload = {
   sourcePage?: string;
@@ -60,6 +61,11 @@ async function editSitePressure(page: Page, option: string) {
   await next(page);
   await expect(result(page).locator('.planner-scenario')).toBeVisible();
 }
+
+// The form fetches a Turnstile token before every submit; serve a controlled stub, never live Cloudflare.
+test.beforeEach(async ({ page }) => {
+  await stubTurnstile(page);
+});
 
 test.describe('Grain Planner → inquiry handoff', () => {
   test('nothing is attached before the result; the reveal attaches the brief without a dimensions field', async ({ page }) => {
