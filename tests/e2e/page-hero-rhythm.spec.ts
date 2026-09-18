@@ -39,7 +39,7 @@ for (const path of editorialHeroes) {
 
       if (path === '/napryamky') {
         const chooseDirection = hero.getByRole('link', { name: 'Обрати напрям' });
-        const describeTask = hero.getByRole('link', { name: 'Описати завдання' });
+        const describeTask = hero.getByRole('link', { name: 'Обговорити задачу' });
         const [chooseBox, describeBox] = await Promise.all([
           chooseDirection.boundingBox(),
           describeTask.boundingBox(),

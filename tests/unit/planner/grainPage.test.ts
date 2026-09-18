@@ -58,7 +58,7 @@ describe('grain page copy', () => {
   it('leads the hero into the planner and the conversation', () => {
     expect(config.hero.actions?.items.map(({ label, href }) => [label, href])).toEqual([
       ['Сформувати задачу', '#planner'],
-      ['Обговорити з інженером', '#inquiry'],
+      ['Обговорити зерносховище', '#inquiry'],
     ]);
   });
 

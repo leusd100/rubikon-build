@@ -1,4 +1,4 @@
-import { Breadcrumbs, GhostWord, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import RoleIcon from '../components/RoleIcon';
 import { DirectionFaq } from '../components/DirectionDetail';
@@ -195,6 +195,7 @@ export default function DeliveryModelPage() {
               <a className="button button-primary" href="#inquiry">Обговорити задачу <span aria-hidden="true">↗</span></a>
               <a className="text-link" href="#etapy">Переглянути етапи <span aria-hidden="true">↓</span></a>
             </div>
+            <HeroCallLink />
           </div>
         </div>
       </section>

@@ -63,8 +63,8 @@ export default function GrainPersonalizedResult() {
       <a className="button button-primary" href="#inquiry" onClick={attachBrief}>Передати опис RUBIKON <ArrowDown aria-hidden="true" /></a>
       <p>
         {briefAttached
-          ? 'Опис уже додано до короткої форми нижче: залиште контакт, і інженер RUBIKON зв’яжеться з вами.'
-          : 'Кнопка додасть опис до короткої форми нижче: залиште контакт, і інженер RUBIKON зв’яжеться з вами.'}
+          ? 'Опис уже додано до короткої форми нижче: залиште контакт, і ми зв’яжемося з вами.'
+          : 'Кнопка додасть опис до короткої форми нижче: залиште контакт, і ми зв’яжемося з вами.'}
       </p>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Breadcrumbs, GhostWord, SectionHeader } from './SiteChrome';
+import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader } from './SiteChrome';
 import InquirySection from './InquirySection';
 import ResponsiveImage from './ResponsiveImage';
 import { DirectionHeroImage } from './DirectionHeroImage';
@@ -113,11 +113,15 @@ function DirectionHero({
                 {`${action.label} `}<span aria-hidden="true">{action.arrow}</span>
               </a>
             ))}
+            <HeroCallLink />
           </div>
         ) : (
-          <a className="button button-primary" href="#inquiry">
-            Обговорити проєкт <span aria-hidden="true">↗</span>
-          </a>
+          <div className="hero-action-row">
+            <a className="button button-primary" href="#inquiry">
+              Обговорити проєкт <span aria-hidden="true">↗</span>
+            </a>
+            <HeroCallLink />
+          </div>
         )}
       </div>
     </section>

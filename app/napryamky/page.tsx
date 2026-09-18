@@ -1,4 +1,4 @@
-import { Breadcrumbs, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import InquirySection from '../components/InquirySection';
 import { DirectionRouteList } from '../components/DirectionCards';
 import { DirectionsHeroImageSequence } from '../components/DirectionsHeroImageSequence';
@@ -47,9 +47,10 @@ export default function DirectionsPage() {
                 Обрати напрям <span aria-hidden="true">↓</span>
               </a>
               <a className="text-link" href="#inquiry">
-                Описати завдання <span aria-hidden="true">↗</span>
+                Обговорити задачу <span aria-hidden="true">↗</span>
               </a>
             </div>
+            <HeroCallLink />
           </div>
         </div>
       </section>

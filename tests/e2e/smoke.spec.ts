@@ -17,9 +17,9 @@ const staticDirectionPaths = new Set([
 
 /** Pages whose hero names the inquiry CTA after their own conversation; the rest say «Обговорити проєкт». */
 const heroInquiryCta: Partial<Record<string, string>> = {
-  '/napryamky': 'Описати завдання',
+  '/napryamky': 'Обговорити задачу',
   '/angary': 'Обговорити завдання',
-  '/zernoskhovyshcha': 'Обговорити з інженером',
+  '/zernoskhovyshcha': 'Обговорити зерносховище',
   '/yak-pratsyuiemo': 'Обговорити задачу',
 };
 

@@ -166,6 +166,26 @@ section[id] { scroll-margin-top: 116px; }
 .mobile-menu nav .mobile-messengers .messenger-brand-icon { width: 22px; height: 22px; }
 .mobile-menu nav .mobile-email { border-top: 1px solid rgba(255,255,255,.12); font-size: 14px; font-weight: 600; letter-spacing: .01em; }
 .mobile-menu nav .mobile-email svg { width: 18px; height: 18px; color: var(--accent); stroke-width: 1.7; }
+/* The phone in the menu, as text, just above the messengers; the messengers' own top rule separates them. */
+.mobile-menu nav .mobile-phone { border-bottom: 0; font-size: 16px; font-weight: 700; letter-spacing: .01em; }
+.mobile-menu nav .mobile-phone svg { width: 18px; height: 18px; color: var(--accent); stroke-width: 1.7; }
+/* One-tap call in the phone header: a quiet square beside «Меню», only where the desktop contacts are hidden. */
+.mobile-call { display: none; width: 46px; height: 46px; flex: 0 0 auto; align-items: center; justify-content: center; margin-left: auto; color: white; border: 1px solid rgba(255,255,255,.3); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.mobile-call svg { width: 19px; height: 19px; color: var(--accent); stroke-width: 1.8; }
+.mobile-call:hover, .mobile-call:focus-visible { border-color: var(--accent); background: rgba(255,255,255,.06); }
+/* Inner pages' second hero action: the phone, one tap, deliberately quieter than the primary «Обговорити…». */
+.hero-call { width: fit-content; min-height: 48px; display: grid; grid-template-columns: 18px auto; align-items: center; gap: 12px; margin-top: 24px; padding: 6px 2px 8px; color: white; border-bottom: 1px solid rgba(255,255,255,.3); transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease; }
+.hero-call svg { width: 18px; height: 18px; color: var(--accent); stroke-width: 1.8; }
+.hero-call span { display: grid; gap: 6px; }
+.hero-call small { color: var(--text-on-dark-subtle); font-size: 9px; font-weight: 800; line-height: 1; letter-spacing: .12em; text-transform: uppercase; }
+.hero-call strong { font: 500 19px/1 var(--font-condensed), sans-serif; letter-spacing: .035em; }
+.hero-call:hover, .hero-call:focus-visible { color: #f5a27f; border-color: rgba(193,77,34,.72); }
+/* On direction pages the call shares the buttons' row on wide screens, so the hero keeps its height. */
+.hero-action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; margin-top: 40px; }
+.service-subhero-content .hero-action-row .button { margin-top: 0; }
+.service-subhero-content .hero-action-row .hero-call,
+.service-subhero-content .angary-hero-actions .hero-call,
+.service-subhero-content .grain-hero-actions .hero-call { margin: 0 0 0 20px; align-self: center; }
 
 .hero { position: relative; min-height: 900px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: white; background: #101012; }
 .hero-media { position: absolute; z-index: 0; inset: 0; }
@@ -736,11 +756,16 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-legal-link { padding: 0; border: 0; font: inherit; letter-spacing: inherit; background: none; cursor: pointer; }
 .footer-legal a:hover, .footer-legal-link:hover { color: white; }
 
-.cookie-banner { position: fixed; z-index: 200; right: 24px; bottom: 24px; width: min(620px, calc(100% - 48px)); max-height: calc(100vh - 32px); overflow-y: auto; display: grid; grid-template-columns: 1fr auto; gap: 28px; padding: 28px; color: white; background: #171a18; border: 1px solid rgba(255,255,255,.2); box-shadow: 0 20px 70px rgba(0,0,0,.35); }
-.cookie-banner strong { display: block; margin-bottom: 8px; font: 600 23px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.cookie-banner { position: fixed; z-index: 200; right: 24px; bottom: 24px; width: min(620px, calc(100% - 48px)); max-height: calc(100vh - 32px); overflow-y: auto; display: grid; grid-template-columns: 1fr auto; gap: 24px; padding: 22px 24px; color: white; background: #171a18; border: 1px solid rgba(255,255,255,.2); box-shadow: 0 20px 70px rgba(0,0,0,.35); }
+.cookie-banner strong { display: block; margin-bottom: 6px; font: 600 19px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .cookie-banner p { max-width: 430px; margin: 0; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.65; }
 .cookie-banner a { display: inline-block; margin-top: 10px; color: #d96a35; font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .cookie-banner-body { display: flex; flex-direction: column; gap: 18px; }
+.cookie-banner-links { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; margin-top: 8px; }
+.cookie-banner .cookie-banner-links a { margin-top: 0; }
+.cookie-settings-link { min-height: 24px; padding: 0; color: rgba(255,255,255,.78); border: 0; background: none; font: 700 11px/1 var(--font-manrope), sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.cookie-settings-link:hover { color: white; }
+.cookie-settings-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .cookie-toggles { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.14); }
 .cookie-toggle-group { margin: 0; padding: 0; border: 0; }
 .cookie-toggle-group legend { padding: 0; color: white; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
@@ -881,6 +906,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 @media (max-width: 1000px) {
   .desktop-nav, .header-contacts { display: none; }
   .mobile-menu { display: block; }
+  .mobile-call { display: inline-flex; }
 }
 
 @media (max-width: 760px) {
@@ -904,6 +930,11 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
      duplicate, separately-declared max-width:760px block further down the file — merged in
      place; computed output is unchanged). */
   .mobile-menu summary { min-width: 92px; height: 42px; padding-inline: 13px; }
+  .mobile-call { width: 44px; height: 42px; }
+  .hero-action-row { display: grid; justify-items: start; gap: 14px; margin-top: 30px; }
+  .service-subhero-content .hero-action-row .hero-call,
+  .service-subhero-content .angary-hero-actions .hero-call,
+  .service-subhero-content .grain-hero-actions .hero-call { margin: 2px 0 0; justify-self: start; }
   .hero { min-height: 790px; height: auto; }
   .hero-media video { object-position: 66% center; }
   .hero-grid { background-size: 46px 46px; }
@@ -1042,8 +1073,14 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .footer-messengers .messenger-link { width: 42px; height: 42px; }
   .footer-legal { grid-column: 1 / -1; grid-row: 3; width: 100%; margin: 2px 0 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); }
   .footer-contact-stack > span { grid-column: 1 / -1; grid-row: 4; }
-  .cookie-banner { right: 16px; bottom: 16px; width: calc(100% - 32px); max-height: calc(100vh - 24px); grid-template-columns: 1fr; gap: 20px; padding: 22px; }
-  .cookie-actions { grid-template-columns: 1fr; }
+  /* Compact on phones: title runs into the text, the two equal choices share one row, settings is a text button. */
+  .cookie-banner { right: 10px; bottom: 10px; width: calc(100% - 20px); max-height: calc(100vh - 20px); grid-template-columns: 1fr; gap: 10px; padding: 14px 16px; }
+  .cookie-banner-body > div { font-size: 12px; line-height: 1.45; }
+  .cookie-banner strong { display: inline; margin: 0 .4em 0 0; font-size: 14px; line-height: 1; }
+  .cookie-banner p { display: inline; font-size: 12px; line-height: 1.45; }
+  .cookie-banner-links { margin-top: 4px; }
+  .cookie-actions { grid-template-columns: 1fr 1fr; }
+  .cookie-actions button { min-height: 44px; padding: 0 10px; }
   .cookie-toggle-options { max-width: none; }
   .privacy-hero { padding: 132px 0 62px; }
   .privacy-hero h1 { font-size: clamp(45px, 13vw, 64px); }
