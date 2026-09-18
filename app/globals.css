@@ -559,7 +559,7 @@ section[id] { scroll-margin-top: 116px; }
 .cooperation-mode p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.8; }
 .detail-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(255,255,255,.2); border-left: 1px solid rgba(255,255,255,.2); }
 .detail-card { min-height: 290px; padding: 28px; border-right: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); }
-.detail-card > span { color: var(--accent); font: 500 12px/1 var(--font-condensed), sans-serif; }
+.detail-card > span { color: var(--accent-on-dark); font: 500 12px/1 var(--font-condensed), sans-serif; }
 .detail-card h3 { margin: 24px 0 15px; font: 600 23px/1.08 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .detail-card p { margin: 0; color: var(--text-on-dark-muted); font-size: 13px; line-height: 1.7; }
 /* /pro-nas Values is 3 cards, not the 4 .detail-grid assumes elsewhere — override just this
@@ -698,7 +698,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
 .feature-list p { margin: 12px 0 0; color: var(--muted); font-size: 14px; line-height: 1.75; }
 .detail-steps { display: grid; grid-template-columns: repeat(4, 1fr); margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(255,255,255,.2); border-left: 1px solid rgba(255,255,255,.2); }
 .detail-steps li { min-height: 300px; padding: 28px; border-right: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); }
-.detail-steps span { color: var(--accent); font: 500 12px/1 var(--font-condensed), sans-serif; }
+.detail-steps span { color: var(--accent-on-dark); font: 500 12px/1 var(--font-condensed), sans-serif; }
 .detail-step-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--accent); stroke-width: 1.45; }
 /* Shared icon token for .detail-card / .cost-grid / .use-case-grid — the same treatment as
    .detail-step-icon above (process cards, the visual reference), reused rather than duplicated
