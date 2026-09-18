@@ -10,6 +10,7 @@ import {
   type ParsedLeadAttachment,
 } from '../../lib/inquiry/attachment';
 import { validateGrainPlannerState } from '../../lib/planner/grain';
+import { verifyTurnstileToken } from '../../lib/inquiry/turnstileVerify';
 
 // Bindings expected on the Worker (created via the Cloudflare Dashboard, not wrangler.jsonc
 // in this project — see the Lead Architecture Spec for how each one is provisioned):
@@ -17,11 +18,13 @@ import { validateGrainPlannerState } from '../../lib/planner/grain';
 //   IP_HASH_SALT       secret — mixed into the rate-limit IP hash, never the raw IP
 //   TELEGRAM_BOT_TOKEN secret — notification bot
 //   TELEGRAM_CHAT_ID   secret — where the bot posts new-lead notifications
+//   TURNSTILE_SECRET   secret — Cloudflare Turnstile Siteverify; runtime only, never logged or returned
 type Env = {
   DB: D1Database;
   IP_HASH_SALT: string;
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_CHAT_ID: string;
+  TURNSTILE_SECRET: string;
 };
 
 const workerEnv = env as unknown as Env;
@@ -62,6 +65,7 @@ type LeadPayload = {
   consentAt?: string;
   privacyVersion?: string;
   companyWebsite?: string; // honeypot — must stay empty
+  turnstileToken?: string;
 };
 
 function json(data: unknown, status = 200) {
@@ -150,6 +154,26 @@ export async function POST(request: Request) {
 
   if (fieldErrors.length) {
     return json({ ok: false, error: 'validation', fields: fieldErrors }, 400);
+  }
+
+  // Turnstile, before any D1 read or write: without a verified token nothing below may run — not
+  // even the idempotency lookup, or a direct POST replaying a known submissionId would get a 200.
+  // It also runs before the rate limiter so failed challenges never spend a visitor's slots; the
+  // limiter itself is unchanged for every request that passes. Each token is single-use, so a
+  // retry after any failure needs a fresh one from the widget.
+  if (!workerEnv.TURNSTILE_SECRET) {
+    return json({ ok: false, error: 'server' }, 500);
+  }
+  const verdict = await verifyTurnstileToken({
+    secret: workerEnv.TURNSTILE_SECRET,
+    token: typeof body.turnstileToken === 'string' ? body.turnstileToken.trim() : '',
+    remoteIp: request.headers.get('CF-Connecting-IP'),
+    requestHostname: new URL(request.url).hostname,
+  });
+  if (!verdict.ok) {
+    return verdict.reason === 'unavailable'
+      ? json({ ok: false, error: 'verification_unavailable' }, 503)
+      : json({ ok: false, error: 'verification' }, 403);
   }
 
   // Idempotent retry, checked before the rate limiter: a sequential retry of an
