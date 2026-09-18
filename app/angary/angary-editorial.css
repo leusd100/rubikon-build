@@ -88,7 +88,7 @@
 .angary-process-rail li::before { content: ''; position: relative; z-index: 1; display: block; width: 9px; height: 9px; margin: 34px 0 34px; border: 2px solid #111315; border-radius: 50%; background: #6d716e; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3); }
 .angary-process-rail li.is-current::before { background: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .angary-process-rail li > span { position: absolute; top: 0; left: 0; color: var(--text-on-dark-subtle); font: 600 11px/1 var(--font-condensed), sans-serif; }
-.angary-process-rail li.is-current > span { color: var(--accent); }
+.angary-process-rail li.is-current > span { color: var(--accent-on-dark); }
 .angary-process-rail strong { display: block; max-width: 210px; font: 600 clamp(16px, 1.45vw, 20px)/1.15 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .angary-process-rail p { max-width: 210px; margin: 18px 0 0; color: var(--text-on-dark-subtle); font-size: 12px; line-height: 1.6; }
 
