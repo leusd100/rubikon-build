@@ -226,11 +226,12 @@ test.describe('Turnstile on the inquiry form', () => {
     });
     await page.goto('/', { waitUntil: 'load' });
     await acceptOnlyEssentialCookies(page);
-    await page.waitForTimeout(500);
+    // Hydrated (the banner is client-only) with the form far below the fold: nothing loaded yet.
+    const container = page.locator('.inquiry-turnstile');
+    await expect(container).toHaveAttribute('data-turnstile-state', 'idle');
     expect(scriptRequests).toEqual([]);
 
     await page.locator('form.inquiry-form').scrollIntoViewIfNeeded();
-    const container = page.locator('.inquiry-turnstile');
     await expect(container).toHaveAttribute('data-turnstile-state', 'ready');
     expect(scriptRequests).toEqual(['https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit']);
     expect((await turnstileLog(page)).renders).toEqual([expect.objectContaining({
@@ -410,12 +411,20 @@ test.describe('«Ще не визначено» direction', () => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 1, isNew: true }) });
     });
     await page.goto('/', { waitUntil: 'load' });
-    await fillValidInquiry(page);
-    await page.locator('form.inquiry-form').getByLabel(/Напрям робіт/).selectOption({ index: 0 }, { force: true });
+    await acceptOnlyEssentialCookies(page);
+    const form = page.locator('form.inquiry-form');
+    await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
+    await form.getByLabel(/Телефон/).fill('+380671234567');
+    await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
+    const direction = form.getByLabel(/Напрям робіт/);
+    await expect(direction).toHaveValue('');
 
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-    await page.waitForTimeout(300);
 
+    // Native validation stops the submit and moves focus to the first invalid control.
+    await expect(direction).toBeFocused();
+    expect(await direction.evaluate((select) => select instanceof HTMLSelectElement && select.validity.valueMissing)).toBe(true);
+    expect((await turnstileLog(page)).executes).toBe(0);
     expect(requests).toBe(0);
   });
 });
