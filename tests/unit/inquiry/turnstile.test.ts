@@ -10,6 +10,7 @@ import {
 } from '../../../app/lib/inquiry/turnstile';
 import { SITEVERIFY_URL, verifyTurnstileToken } from '../../../app/lib/inquiry/turnstileVerify';
 
+// The Sprint 2 branch preview: allowed while the PR was tested, no longer accepted in production.
 const PREVIEW_HOSTNAME = 'feat-form-turnstile-rubikon-build.leusd100.workers.dev';
 
 function verify(overrides: Partial<Parameters<typeof verifyTurnstileToken>[0]> = {}) {
@@ -49,11 +50,8 @@ describe('verifyTurnstileToken', () => {
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it('accepts the exact Sprint 2 preview hostname and nothing that merely resembles it', async () => {
-    answers({ success: true, hostname: PREVIEW_HOSTNAME, action: TURNSTILE_ACTION });
-    await expect(verify()).resolves.toEqual({ ok: true });
-
-    for (const hostname of ['leusd100.workers.dev', `x.${PREVIEW_HOSTNAME}`, 'www.rubikonbuild.com', 'rubikonbuild.com.evil.example', '']) {
+  it('rejects every hostname but production — the former preview and lookalikes included', async () => {
+    for (const hostname of [PREVIEW_HOSTNAME, 'leusd100.workers.dev', 'www.rubikonbuild.com', 'rubikonbuild.com.evil.example', '']) {
       answers({ success: true, hostname, action: TURNSTILE_ACTION });
       await expect(verify()).resolves.toEqual({ ok: false, reason: 'rejected' });
     }
@@ -124,8 +122,8 @@ describe('Turnstile public configuration', () => {
     expect(turnstileSiteKeyFor(PREVIEW_HOSTNAME)).toBe(TURNSTILE_SITE_KEY);
   });
 
-  it('allows exactly production and the Sprint 2 preview — no wildcard, no account-wide workers.dev', () => {
-    expect([...TURNSTILE_ALLOWED_HOSTNAMES]).toEqual(['rubikonbuild.com', PREVIEW_HOSTNAME]);
+  it('allows exactly the production hostname — no preview, no wildcard, no workers.dev', () => {
+    expect([...TURNSTILE_ALLOWED_HOSTNAMES]).toEqual(['rubikonbuild.com']);
   });
 });
 

@@ -17,12 +17,9 @@ export const TURNSTILE_ACTION = 'lead_submit';
 /**
  * Hostnames a real-key token may have been solved on — exact matches of Siteverify's `hostname`.
  * www.rubikonbuild.com 308-redirects to the apex before any page renders, so it never hosts the
- * form. The preview entry is this sprint's Workers branch preview; remove it once it is merged.
+ * form. Workers preview hostnames are deliberately absent: production accepts production tokens only.
  */
-export const TURNSTILE_ALLOWED_HOSTNAMES: readonly string[] = [
-  'rubikonbuild.com',
-  'feat-form-turnstile-rubikon-build.leusd100.workers.dev',
-];
+export const TURNSTILE_ALLOWED_HOSTNAMES: readonly string[] = ['rubikonbuild.com'];
 
 export const TURNSTILE_SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
