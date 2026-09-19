@@ -304,7 +304,10 @@ test.describe('public route smoke tests', () => {
         media: getComputedStyle(hero.querySelector('.hero-media') as Element).zIndex,
         shade: getComputedStyle(hero.querySelector('.hero-shade') as Element).zIndex,
       })),
-    ).toEqual({ grid: '1', layout: '2', media: '0', shade: '1' });
+    // .hero-media is deliberately not a stacking context (z-index auto): the pause control inside it (z-index 3)
+    // must rise above .hero-layout. The clips (z-index 1) still paint beneath the shade and grid, which share
+    // z-index 1 but come later in the DOM.
+    ).toEqual({ grid: '1', layout: '2', media: 'auto', shade: '1' });
     await expect.poll(
       () => videos.nth(1).evaluate((video) => video.classList.contains('is-active')),
       { timeout: 10_000 },
