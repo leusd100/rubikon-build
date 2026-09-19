@@ -1,24 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { buildContentSecurityPolicy } from './app/lib/security/csp';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://www.google-analytics.com https://*.google-analytics.com",
-  "media-src 'self'",
-  "font-src 'self' data:",
-  "connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com",
-  // Cloudflare Turnstile renders its challenge in an iframe from this origin (inquiry form).
-  "frame-src 'self' https://challenges.cloudflare.com",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'self'",
-  ...(!isDevelopment ? ['upgrade-insecure-requests'] : []),
-].join('; ');
+const contentSecurityPolicy = buildContentSecurityPolicy({ development: isDevelopment });
 
 const responseHeaders = {
   'Content-Security-Policy': contentSecurityPolicy,
