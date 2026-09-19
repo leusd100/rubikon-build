@@ -280,11 +280,11 @@ test.describe('public route smoke tests', () => {
 
     const videos = page.locator('.hero video.direction-hero-video');
     const expectedSources = [
-      '/media/about/straight-line-14377591.mp4',
-      '/media/about/blueprint.m4v',
-      '/media/about/drilling-29913842.m4v',
-      '/media/about/welding.m4v',
-      '/media/about/structure.m4v',
+      '/media/about/straight-line-14377591-v2.mp4',
+      '/media/about/blueprint-v2.mp4',
+      '/media/about/drilling-29913842-v2.mp4',
+      '/media/about/welding-v2.mp4',
+      '/media/about/structure-v2.mp4',
     ];
 
     await expect.poll(
@@ -507,7 +507,7 @@ test.describe('public route smoke tests', () => {
 
     await expect(videos).toHaveCount(1);
     await expect.poll(() => videos.first().getAttribute('src'), { timeout: 10_000 })
-      .toBe('/media/about/home-tablet-montage.mp4');
+      .toBe('/media/about/home-tablet-montage-v2.mp4');
     await expect.poll(
       () => videos.first().evaluate((element) => ({
         height: (element as HTMLVideoElement).videoHeight,
@@ -523,11 +523,11 @@ test.describe('public route smoke tests', () => {
       () => videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))),
       { timeout: 10_000 },
     ).toEqual([
-      '/media/about/straight-line-14377591.mp4',
-      '/media/about/blueprint.m4v',
-      '/media/about/drilling-29913842.m4v',
-      '/media/about/welding.m4v',
-      '/media/about/structure.m4v',
+      '/media/about/straight-line-14377591-v2.mp4',
+      '/media/about/blueprint-v2.mp4',
+      '/media/about/drilling-29913842-v2.mp4',
+      '/media/about/welding-v2.mp4',
+      '/media/about/structure-v2.mp4',
     ]);
   });
 
