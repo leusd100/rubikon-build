@@ -1,0 +1,70 @@
+{
+ "id": "https://rubikonbuild.com/",
+ "loadingExperience": {
+  "id": "https://rubikonbuild.com/",
+  "initial_url": "https://rubikonbuild.com/"
+ },
+ "lighthouseResult": {
+  "lighthouseVersion": "12.6.1",
+  "fetchTime": "2026-09-19T06:20:44.415Z",
+  "finalDisplayedUrl": "https://rubikonbuild.com/",
+  "configSettings": {
+   "formFactor": "mobile"
+  },
+  "categories": {
+   "performance": {
+    "score": 0.86
+   }
+  },
+  "audits": {
+   "first-contentful-paint": {
+    "id": "first-contentful-paint",
+    "numericValue": 2769.179
+   },
+   "largest-contentful-paint": {
+    "id": "largest-contentful-paint",
+    "numericValue": 3178.179
+   },
+   "total-blocking-time": {
+    "id": "total-blocking-time",
+    "numericValue": 15
+   },
+   "cumulative-layout-shift": {
+    "id": "cumulative-layout-shift",
+    "numericValue": 0
+   },
+   "speed-index": {
+    "id": "speed-index",
+    "numericValue": 4833.352649999418
+   },
+   "server-response-time": {
+    "id": "server-response-time",
+    "numericValue": 95.32099999999998
+   },
+   "total-byte-weight": {
+    "id": "total-byte-weight",
+    "numericValue": 3072906
+   },
+   "largest-contentful-paint-element": {
+    "id": "largest-contentful-paint-element",
+    "details": {
+     "type": "list",
+     "items": [
+      {
+       "type": "table",
+       "items": [
+        {
+         "node": {
+          "type": "node",
+          "snippet": "<h1>",
+          "selector": "main#main-content > section#top > div.shell > h1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   }
+  }
+ }
+}

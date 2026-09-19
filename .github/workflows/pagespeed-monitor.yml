@@ -1,0 +1,84 @@
+name: PageSpeed Monitor
+
+# Production PageSpeed Insights (lab) for https://rubikonbuild.com/: 3 runs × mobile + desktop, per-metric medians,
+# raw PSI JSON as an artifact, a Markdown table in the run summary. Reporting only — never a gate on scores.
+#
+# Triggers are deliberately few (6 PSI calls per run):
+#   - after each deploy of main: waits for Cloudflare's "Workers Builds: rubikon-build" check on that exact commit,
+#     so PSI measures the code that was just merged, not the previous deploy;
+#   - weekly, to see drift that no deploy caused (Cloudflare features, PSI/Lighthouse updates);
+#   - manually, optionally for another https:// URL (e.g. a Workers preview).
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '**/*.md']
+  schedule:
+    - cron: '30 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'https:// URL to measure'
+        required: false
+        default: 'https://rubikonbuild.com/'
+      runs:
+        description: 'Runs per form factor (1–5)'
+        required: false
+        default: '3'
+
+permissions:
+  contents: read
+  checks: read
+
+concurrency:
+  group: pagespeed-monitor
+  # A newer deploy supersedes a measurement still waiting for or measuring the previous one.
+  cancel-in-progress: true
+
+jobs:
+  pagespeed:
+    name: PageSpeed Insights (production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Wait for the Cloudflare deploy of this commit
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in $(seq 1 60); do
+            state=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs" \
+              --jq '[.check_runs[] | select(.name == "Workers Builds: rubikon-build")][0] | "\(.status)/\(.conclusion)"' || true)
+            echo "Workers Builds: ${state:-not reported yet}"
+            case "$state" in
+              completed/success) sleep 60; exit 0 ;;  # let the new version reach the edge before measuring
+              completed/*) echo "Deploy did not succeed; nothing new to measure."; echo "skip=true" >> "$GITHUB_ENV"; exit 0 ;;
+            esac
+            sleep 15
+          done
+          echo "Deploy check not complete after 15 minutes; skipping."
+          echo "skip=true" >> "$GITHUB_ENV"
+
+      - name: Run PageSpeed Insights
+        if: env.skip != 'true'
+        env:
+          PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
+          PSI_URL: ${{ inputs.url || 'https://rubikonbuild.com/' }}
+          PSI_RUNS: ${{ inputs.runs || '3' }}
+        run: node scripts/perf/pagespeed.mjs --url "$PSI_URL" --runs "$PSI_RUNS" --out psi-results
+
+      - name: Upload PSI results
+        if: always() && env.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pagespeed-${{ github.run_number }}-${{ github.sha }}
+          path: psi-results/
+          if-no-files-found: ignore
+          retention-days: 90
