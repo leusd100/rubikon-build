@@ -1,6 +1,8 @@
 'use client';
 
-// Captures UTM parameters and Google Ads click IDs once per browser session, on whichever
+import { hasAdvertisingConsent } from './consent';
+
+// Captures first-touch UTM context, with Google Ads click IDs gated on consent, on whichever
 // page the visitor actually lands on first — then makes them available to the inquiry form
 // no matter which page it's eventually submitted from. sessionStorage (not localStorage) is
 // deliberate: this is attribution for one visit, not a permanent record.
@@ -48,39 +50,50 @@ function captureAttribution(): Attribution {
   };
 }
 
-/** Call once near the root of the app (e.g. in a client component mounted in layout). */
-export function ensureAttributionCaptured() {
+/** Capture first-touch context, but only persist advertising IDs after explicit consent.
+ * Revocation also scrubs records written by previous versions of the site.
+ */
+export function ensureAttributionCaptured(advertisingGranted = hasAdvertisingConsent()) {
   try {
-    if (window.sessionStorage.getItem(storageKey)) return;
-    window.sessionStorage.setItem(storageKey, JSON.stringify(captureAttribution()));
+    const attribution = readAttribution();
+    // A choice on the landing page can still capture its IDs. Never mix another page's
+    // campaign into the original landing context after navigation.
+    if (advertisingGranted && attribution.landingPage === window.location.pathname) {
+      const current = captureAttribution();
+      for (const key of ['gclid', 'gbraid', 'wbraid'] as const) {
+        if (current.clickIds[key]) attribution.clickIds[key] = current.clickIds[key];
+      }
+    }
+    window.sessionStorage.setItem(storageKey, JSON.stringify(
+      filterAttributionForConsent(attribution, { advertisingGranted }),
+    ));
   } catch {
-    // Session storage unavailable (private mode, etc.) — attribution is best-effort.
+    // Storage is optional; consent still gates the submit-time fallback.
   }
 }
 
-/** Call at form-submit time. Falls back to an empty-but-valid shape if nothing was captured. */
 export function readAttribution(): Attribution {
+  let attribution = captureAttribution();
   try {
     const raw = window.sessionStorage.getItem(storageKey);
-    if (raw) return JSON.parse(raw) as Attribution;
+    const stored: unknown = raw ? JSON.parse(raw) : null;
+    if (stored && typeof stored === 'object') {
+      const candidate = stored as Attribution;
+      if (typeof candidate.landingPage === 'string' && typeof candidate.referrer === 'string'
+        && candidate.utm && candidate.clickIds
+        && ['source', 'medium', 'campaign', 'term', 'content'].every(
+          (key) => typeof candidate.utm[key as keyof Attribution['utm']] === 'string',
+        ) && ['gclid', 'gbraid', 'wbraid'].every(
+          (key) => typeof candidate.clickIds[key as keyof Attribution['clickIds']] === 'string',
+        )) attribution = candidate;
+    }
   } catch {
-    // Fall through to the default below.
+    // Malformed or unavailable storage must not prevent an inquiry.
   }
-  return captureAttribution();
+  return filterAttributionForConsent(attribution, { advertisingGranted: hasAdvertisingConsent() });
 }
 
-/**
- * `landingPage`/`referrer`/`utm` are lead-context data: they never leave RUBIKON's own records
- * and are covered by the lead form's own consent checkbox, so they're always kept. `clickIds`
- * (gclid/gbraid/wbraid) exist for exactly one purpose — matching this lead to a click in Google's
- * ad account — so they're the one part of attribution gated on the Advertising consent category,
- * independently of Analytics. Capture itself (above) stays unconditional and ephemeral: the
- * click ID is only ever observable in the URL of the very first pageview, long before a visitor
- * could have made any consent choice, so gating capture instead of transmission would make the
- * field permanently uncapturable rather than merely consent-gated. Pure — takes the already-read
- * Attribution and an explicit boolean rather than reading consent itself, so this stays
- * independently testable from app/lib/consent.ts.
- */
+/** Pure submit-time protection, independent of how attribution was captured. */
 export function filterAttributionForConsent(
   attribution: Attribution,
   { advertisingGranted }: { advertisingGranted: boolean },

@@ -11,6 +11,10 @@ function readStoredConsent(page: Page) {
   }, CONSENT_KEY);
 }
 
+test.beforeEach(async ({ context }) => {
+  await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
+});
+
 test.describe('cookie consent banner', () => {
   test('"Лише необхідні" denies both categories and never loads GA4', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' });
@@ -85,4 +89,35 @@ test.describe('cookie consent banner', () => {
       page.locator('.cookie-toggle-group', { hasText: 'Реклама' }).getByRole('radio', { name: 'Дозволено' }),
     ).toBeChecked();
   });
+});
+
+test('advertising identifiers require consent and revocation reaches an already-open tab', async ({ page, context }) => {
+  await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
+  await page.goto('/?gclid=consent-regression-only');
+  const storedIds = (target: Page) => target.evaluate(() => {
+    const raw = sessionStorage.getItem('rubikon-attribution');
+    return raw ? JSON.parse(raw).clickIds.gclid : null;
+  });
+  await expect.poll(() => storedIds(page)).toBe('');
+  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+  await expect.poll(() => storedIds(page)).toBe('consent-regression-only');
+  const other = await context.newPage();
+  await other.goto('/?gclid=second-tab-regression-only');
+  await expect.poll(() => storedIds(other)).toBe('second-tab-regression-only');
+  await page.getByRole('button', { name: 'Налаштування cookie', exact: true }).click();
+  await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
+  await expect.poll(() => storedIds(other)).toBe('');
+  await expect.poll(() => other.evaluate(() => window.dataLayer
+    .filter((entry) => entry[0] === 'consent' && entry[1] === 'update').at(-1)?.[2],
+  )).toMatchObject({ analytics_storage: 'denied', ad_storage: 'denied' });
+  const contacts = () => other.evaluate(() => window.dataLayer.filter(
+    (entry) => entry[0] === 'event' && entry[1] === 'contact_click',
+  ).length);
+  const before = await contacts();
+  await other.locator('a[href^="tel:"]').first().evaluate((element) => {
+    element.addEventListener('click', (event) => event.preventDefault(), { once: true });
+    (element as HTMLElement).click();
+  });
+  expect(await contacts()).toBe(before);
+  await other.close();
 });
