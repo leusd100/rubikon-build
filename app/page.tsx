@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <main id="main-content">
       <section className="hero" id="top">
-        <div className="hero-media" aria-hidden="true">
+        <div className="hero-media">
           <HomeHeroVideo />
         </div>
         <div className="hero-shade" aria-hidden="true" />

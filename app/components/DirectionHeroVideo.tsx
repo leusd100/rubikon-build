@@ -32,6 +32,7 @@ export function DirectionHeroVideo({
   const [outgoingSource, setOutgoingSource] = useState<number | null>(null);
   const [readySources, setReadySources] = useState<Record<number, boolean>>({});
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
   const [canUseVideo, setCanUseVideo] = useState(false);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const observationRef = useRef<HTMLVideoElement>(null);
@@ -53,22 +54,23 @@ export function DirectionHeroVideo({
   }, [videoMediaQuery]);
 
   useEffect(() => {
-    activeSourceRef.current = 0;
+    let cancelled = false;
+    const videos = videoRefs.current.slice();
 
-    const firstVideo = videoRefs.current[0];
-    videoRefs.current.forEach((video) => {
+    const firstVideo = videos[0];
+    videos.forEach((video) => {
       if (video) video.playbackRate = playbackRate;
     });
-    const shouldPlay = shouldAttachVideo;
+    const shouldPlay = shouldAttachVideo && !userPaused;
     if (!shouldPlay) {
-      videoRefs.current.forEach((video) => video?.pause());
+      videos.forEach((video) => video?.pause());
       return;
     }
 
     const playActiveVideo = () => {
-      const activeVideo = videoRefs.current[activeSourceRef.current] || firstVideo;
+      const activeVideo = videos[activeSourceRef.current] || firstVideo;
       if (document.visibilityState !== 'visible') {
-        videoRefs.current.forEach((video) => video?.pause());
+        videos.forEach((video) => video?.pause());
         return;
       }
       void activeVideo?.play().catch(() => undefined);
@@ -78,7 +80,11 @@ export function DirectionHeroVideo({
 
     if (sources.length < 2) {
       document.addEventListener('visibilitychange', playActiveVideo);
-      return () => document.removeEventListener('visibilitychange', playActiveVideo);
+      return () => {
+        cancelled = true;
+        videos.forEach((video) => video?.pause());
+        document.removeEventListener('visibilitychange', playActiveVideo);
+      };
     }
 
     let pauseTimer: ReturnType<typeof setTimeout> | undefined;
@@ -86,20 +92,24 @@ export function DirectionHeroVideo({
       if (document.visibilityState !== 'visible') return;
       const previousIndex = activeSourceRef.current;
       const nextIndex = (previousIndex + 1) % sources.length;
-      const nextVideo = videoRefs.current[nextIndex];
+      const nextVideo = videos[nextIndex];
 
       if (!nextVideo) return;
       if (nextVideo.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return;
 
       nextVideo.currentTime = 0;
       void nextVideo.play().then(() => {
+        if (cancelled || document.visibilityState !== 'visible') {
+          nextVideo.pause();
+          return;
+        }
         setReadySources((current) => ({ ...current, [nextIndex]: true }));
         setOutgoingSource(previousIndex);
         activeSourceRef.current = nextIndex;
         setActiveSource(nextIndex);
 
         pauseTimer = setTimeout(() => {
-          videoRefs.current[previousIndex]?.pause();
+          videos[previousIndex]?.pause();
           setOutgoingSource((current) => current === previousIndex ? null : current);
         }, fadeDurationMs);
       }).catch(() => undefined);
@@ -108,11 +118,13 @@ export function DirectionHeroVideo({
     document.addEventListener('visibilitychange', playActiveVideo);
 
     return () => {
+      cancelled = true;
+      videos.forEach((video) => video?.pause());
       window.clearInterval(cycleTimer);
       if (pauseTimer) clearTimeout(pauseTimer);
       document.removeEventListener('visibilitychange', playActiveVideo);
     };
-  }, [clipDurationMs, fadeDurationMs, isVisible, playbackRate, shouldAttachVideo, sourceKey, sources.length]);
+  }, [clipDurationMs, fadeDurationMs, isVisible, playbackRate, shouldAttachVideo, sourceKey, sources.length, userPaused]);
 
   if (!sources.length) return null;
 
@@ -138,7 +150,7 @@ export function DirectionHeroVideo({
         <source media="(max-width: 760px)" srcSet={mobilePoster} />
         <img
           aria-hidden="true"
-          className={`direction-hero-poster${hasStartedPlayback ? ' is-hidden' : ''}`}
+          className={`direction-hero-poster${hasStartedPlayback && shouldAttachVideo ? ' is-hidden' : ''}`}
           src={poster}
           alt=""
           loading="eager"
@@ -147,6 +159,19 @@ export function DirectionHeroVideo({
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         />
       </picture>
+      {hasStartedPlayback && canUseVideo && shouldLoadMedia && (
+        <button
+          type="button"
+          className="hero-video-control"
+          aria-pressed={userPaused}
+          onClick={() => {
+            setOutgoingSource(null);
+            setUserPaused((paused) => !paused);
+          }}
+        >
+          Пауза відео
+        </button>
+      )}
       {sources.map((source, index) => (
         <video
           key={source}
@@ -157,11 +182,11 @@ export function DirectionHeroVideo({
           className={[
             className,
             'direction-hero-video',
-            (index === activeSource || index === outgoingSource) && readySources[index] ? 'is-active' : '',
+            (index === activeSource || (!userPaused && shouldAttachVideo && index === outgoingSource)) && readySources[index] ? 'is-active' : '',
           ].filter(Boolean).join(' ')}
           style={{ transitionDuration: `${fadeDurationMs}ms` }}
           src={shouldAttachVideo ? source : undefined}
-          autoPlay={shouldAttachVideo && index === 0}
+          autoPlay={shouldAttachVideo && !userPaused && index === activeSource}
           muted
           playsInline
           preload={shouldAttachVideo && (index === activeSource || index === nextSource) ? 'auto' : 'none'}
@@ -171,7 +196,11 @@ export function DirectionHeroVideo({
             setReadySources((current) => ({ ...current, [index]: true }));
           }}
           onPlaying={() => {
-            if (index === activeSourceRef.current) setHasStartedPlayback(true);
+            if (index === activeSourceRef.current) {
+              setHasStartedPlayback(true);
+              // Re-entry can interrupt a fade and cancel its cleanup timer.
+              setOutgoingSource(null);
+            }
           }}
           aria-hidden="true"
         />
