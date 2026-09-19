@@ -59,7 +59,8 @@ test.describe('GA4 consent gating', () => {
     const google = await recordGoogle(context);
     await page.goto('/', { waitUntil: 'load' });
     await expect(page.getByRole('button', { name: 'Лише необхідні', exact: true })).toBeVisible();
-    await page.waitForTimeout(1500);
+    // Quiet network (no request for 500 ms) — anything consent could have triggered has had its chance.
+    await page.waitForLoadState('networkidle');
 
     await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(0);
     expect(google.requests).toEqual([]);
@@ -70,8 +71,7 @@ test.describe('GA4 consent gating', () => {
     const google = await recordGoogle(context);
     await page.goto('/', { waitUntil: 'load' });
     await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
-    await page.goto('/angary', { waitUntil: 'load' });
-    await page.waitForTimeout(1500);
+    await page.goto('/angary', { waitUntil: 'networkidle' });
 
     await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(0);
     expect(google.requests).toEqual([]);
@@ -101,12 +101,11 @@ test.describe('GA4 endpoints (real gtag.js, collection answered locally)', () =>
       await page.goto('/', { waitUntil: 'load' });
       await choose(page);
       await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(1);
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
       test.skip(!google.gtagLoaded(), 'gtag.js could not be fetched from Google in this environment');
 
       await expect.poll(() => google.requests.filter((request) => request.path === '/g/collect').length, { timeout: 10_000 }).toBeGreaterThan(0);
-      await page.goto('/angary', { waitUntil: 'load' });
-      await page.waitForTimeout(2000);
+      await page.goto('/angary', { waitUntil: 'networkidle' });
 
       const collect = google.requests.filter((request) => request.path === '/g/collect');
       expect(collect.every((request) => CORE_GA_HOST.test(request.host)), JSON.stringify(collect)).toBe(true);
