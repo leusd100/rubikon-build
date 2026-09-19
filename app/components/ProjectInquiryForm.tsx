@@ -10,6 +10,7 @@ import { contactMethodOptions, messengerContacts, type ContactMethod } from '../
 import { siteRoutes } from '../data/navigation';
 import { filterAttributionForConsent, readAttribution } from '../lib/attribution';
 import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
+import { queueInquiryAnalyticsEvent } from '../lib/inquiry/analytics';
 import { toInquiryAttachmentPayload } from '../lib/inquiry/attachment';
 import { createSubmissionId, nextSubmissionIdAfterSuccess } from '../lib/inquiry/submissionId';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
@@ -24,7 +25,7 @@ type LeadApiResult = {
 };
 
 const SAVE_FAILED_MESSAGE =
-  'Не вдалося зберегти запит через тимчасову технічну проблему. Зателефонуйте нам напряму, або спробуйте ще раз за хвилину.';
+  'Не вдалося підтвердити збереження запиту. Повторіть надсилання без змін — це не створить дубль. Якщо зміните дані, надішлемо окремий запит: попередній уже міг бути збережений.';
 // Deliberately generic: says nothing about why the check failed or how it works.
 const VERIFICATION_FAILED_MESSAGE =
   'Не вдалося підтвердити надсилання запиту. Спробуйте ще раз або зателефонуйте нам напряму.';
@@ -75,6 +76,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   // The disabled button only takes effect after a re-render; this ref blocks a second submit
   // event that arrives before it (a fast double click or a double Enter).
   const submittingRef = useRef(false);
+  const lastAttempt = useRef<{ id: string; signature: string } | null>(null);
   const acknowledgedLeadIds = useRef(new Set<number>());
   const formRef = useRef<HTMLFormElement>(null);
   const turnstileRef = useRef<HTMLDivElement>(null);
@@ -128,12 +130,27 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     setStatus('');
     setStatusAction(null);
 
-    if (hasAnalyticsConsent()) {
-      window.gtag?.('event', 'inquiry_contact_attempt', {
-        contact_method: contactMethod.toLowerCase(),
-        project_direction: direction,
-      });
-    }
+    // One business payload belongs to one idempotency key. Changed fields (including
+    // attachments) are a new inquiry, never a silent acknowledgement of an old payload.
+    const businessPayload = {
+      name, phone, contactMethod, direction,
+      details: {
+        location: value(formData, 'location'),
+        dimensions: value(formData, 'dimensions'),
+        cooperation: value(formData, 'cooperation'),
+        startDate: value(formData, 'startDate'),
+        comment: value(formData, 'comment'),
+        ...(attachment ? { configuration: attachment.text, attachment: toInquiryAttachmentPayload(attachment) } : {}),
+      },
+    };
+    const signature = JSON.stringify(businessPayload);
+    const requestId = lastAttempt.current
+      ? lastAttempt.current.signature === signature ? lastAttempt.current.id : createSubmissionId()
+      : submissionId;
+    lastAttempt.current = { id: requestId, signature };
+    queueInquiryAnalyticsEvent('inquiry_contact_attempt', {
+      contact_method: contactMethod.toLowerCase(), project_direction: direction,
+    });
 
     setIsSubmitting(true);
     let saved = false;
@@ -152,20 +169,8 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         signal: AbortSignal.timeout(20_000),
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          submissionId,
-          name,
-          phone,
-          contactMethod,
-          direction,
-          details: {
-            location: value(formData, 'location'),
-            dimensions: value(formData, 'dimensions'),
-            cooperation: value(formData, 'cooperation'),
-            startDate: value(formData, 'startDate'),
-            comment: value(formData, 'comment'),
-            // configuration keeps its pre-attachment key and text; attachment adds kind/version/data.
-            ...(attachment ? { configuration: attachment.text, attachment: toInquiryAttachmentPayload(attachment) } : {}),
-          },
+          submissionId: requestId,
+          ...businessPayload,
           sourcePage: pathname,
           landingPage: attribution.landingPage,
           referrer: attribution.referrer,
@@ -200,16 +205,18 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     // isNew=false alone cannot distinguish a lost response from an already-counted lead.
     const firstAcknowledgement = typeof savedLeadId === 'number' && savedLeadId > 0
       && !acknowledgedLeadIds.current.has(savedLeadId);
-    if (typeof savedLeadId === 'number') acknowledgedLeadIds.current.add(savedLeadId);
-    if (firstAcknowledgement && hasAnalyticsConsent()) {
-      window.gtag?.('event', 'generate_lead', {
-        contact_method: contactMethod.toLowerCase(),
-        project_direction: direction,
+    if (firstAcknowledgement) {
+      const consentGranted = hasAnalyticsConsent();
+      const queued = consentGranted && queueInquiryAnalyticsEvent('generate_lead', {
+        contact_method: contactMethod.toLowerCase(), project_direction: direction,
       });
+      // No retroactive event after denial; eligible events are deduplicated only once queued.
+      if (!consentGranted || queued) acknowledgedLeadIds.current.add(savedLeadId!);
     }
 
     // Retries before success keep the same key. A confirmed save completes that lifecycle, so the
     // next explicit submit on this mounted page is a genuinely new lead with a fresh key.
+    lastAttempt.current = null;
     setSubmissionId(() => nextSubmissionIdAfterSuccess());
     setStatus(successMessage);
   }

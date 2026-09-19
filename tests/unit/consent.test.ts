@@ -183,7 +183,7 @@ describe('browser-storage-backed helpers', () => {
     updateGoogleConsent({ analytics: 'granted', advertising: 'denied' });
 
     const w = window as unknown as { dataLayer: unknown[][] };
-    expect(w.dataLayer).toContainEqual([
+    expect(w.dataLayer.map(entry => Array.from(entry))).toContainEqual([
       'consent',
       'update',
       { analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' },

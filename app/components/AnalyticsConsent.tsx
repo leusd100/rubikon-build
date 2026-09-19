@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { queueGoogleCommand } from '../lib/googleCommand';
 import { siteRoutes } from '../data/navigation';
 import { ensureAttributionCaptured } from '../lib/attribution';
 import {
@@ -23,7 +24,7 @@ const GRANT_ALL_STATE: ConsentState = { analytics: 'granted', advertising: 'gran
 
 function loadAnalytics() {
   window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer.push(args));
+  window.gtag = window.gtag || queueGoogleCommand;
 
   if (!document.querySelector(`script[data-rubikon-analytics="${measurementId}"]`)) {
     const script = document.createElement('script');
