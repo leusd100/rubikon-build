@@ -11,10 +11,10 @@ const directive = (policy: string, name: string) =>
   policy.split(';').map((part) => part.trim()).find((part) => part.split(' ')[0] === name)?.split(' ').slice(1) ?? [];
 
 describe('canonical Content-Security-Policy', () => {
-  it('is exactly the policy production served before consolidation', () => {
+  it('is the pre-consolidation production policy plus exactly the Cloudflare Web Analytics beacon', () => {
     expect(production).toBe(
       "default-src 'self'; "
-      + "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com; "
+      + "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com https://static.cloudflareinsights.com/beacon.min.js/; "
       + "style-src 'self' 'unsafe-inline'; "
       + "img-src 'self' data: blob: https://www.google-analytics.com https://*.google-analytics.com; "
       + "media-src 'self'; font-src 'self' data:; "
@@ -27,6 +27,13 @@ describe('canonical Content-Security-Policy', () => {
   it('keeps Cloudflare Turnstile working: its script and its challenge iframe', () => {
     expect(directive(production, 'script-src')).toContain('https://challenges.cloudflare.com');
     expect(directive(production, 'frame-src')).toContain('https://challenges.cloudflare.com');
+  });
+
+  it('allows the Web Analytics beacon by path prefix, and its RUM endpoint only as same-origin', () => {
+    // Cloudflare serves /beacon.min.js/v…; a source without the trailing "/" would require an exact path match.
+    expect(directive(production, 'script-src')).toContain('https://static.cloudflareinsights.com/beacon.min.js/');
+    expect(directive(production, 'connect-src')).toContain("'self'");
+    expect(production).not.toMatch(/cloudflareinsights\.com(?!\/beacon\.min\.js\/)/);
   });
 
   it('adds no broad sources: no bare scheme, no *, no wildcard beyond the existing Google Analytics one', () => {

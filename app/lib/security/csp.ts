@@ -15,6 +15,10 @@ export const CSP_DIRECTIVES = {
     'https://www.googletagmanager.com',
     // Cloudflare Turnstile on the inquiry form.
     'https://challenges.cloudflare.com',
+    // Cloudflare Web Analytics, injected at the edge (automatic setup). The served URL continues past the file
+    // name (/beacon.min.js/v…), so the source must end in "/" — without it CSP requires an exact path and still
+    // blocks the beacon. Its RUM POST goes to same-origin /cdn-cgi/rum, which connect-src 'self' already allows.
+    'https://static.cloudflareinsights.com/beacon.min.js/',
   ],
   'style-src': ["'self'", "'unsafe-inline'"],
   'img-src': ["'self'", 'data:', 'blob:', 'https://www.google-analytics.com', 'https://*.google-analytics.com'],
