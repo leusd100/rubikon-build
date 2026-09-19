@@ -21,7 +21,7 @@ export default function AboutPage() {
   return (
     <main className="inner-page" id="main-content">
       <section className="subhero about-subhero">
-        <div className="about-hero-media" aria-hidden="true">
+        <div className="about-hero-media">
           <AboutHeroVideo />
         </div>
         <div className="subhero-overlay" aria-hidden="true" />

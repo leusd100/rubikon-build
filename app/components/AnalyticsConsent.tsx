@@ -2,9 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { queueGoogleCommand } from '../lib/googleCommand';
 import { siteRoutes } from '../data/navigation';
 import { ensureAttributionCaptured } from '../lib/attribution';
 import {
+  CONSENT_STORAGE_KEY,
+  LEGACY_ANALYTICS_STORAGE_KEY,
+  hasAnalyticsConsent,
   readConsentState,
   updateGoogleConsent,
   writeConsentState,
@@ -20,7 +24,7 @@ const GRANT_ALL_STATE: ConsentState = { analytics: 'granted', advertising: 'gran
 
 function loadAnalytics() {
   window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer.push(args));
+  window.gtag = window.gtag || queueGoogleCommand;
 
   if (!document.querySelector(`script[data-rubikon-analytics="${measurementId}"]`)) {
     const script = document.createElement('script');
@@ -119,21 +123,13 @@ export default function AnalyticsConsent() {
   const [draft, setDraft] = useState<ConsentState>(DENY_ALL_STATE);
 
   useEffect(() => {
-    // Independent of consent below: this only writes UTM/click-ID params already present in
-    // the URL into sessionStorage, so the inquiry form can attribute a lead later in the same
-    // visit. Nothing is sent anywhere until the visitor submits that form themselves, and the
-    // advertising click IDs specifically are stripped again at submit time unless Advertising
-    // consent was granted by then — see filterAttributionForConsent in lib/attribution.ts.
-    ensureAttributionCaptured();
-  }, []);
-
-  useEffect(() => {
     let saved: ConsentState | null = null;
     try {
       saved = readConsentState();
     } catch {
       saved = null;
     }
+    ensureAttributionCaptured(saved?.advertising === 'granted');
     const frame = window.requestAnimationFrame(() => {
       setState(saved);
       setShowBanner(saved === null);
@@ -158,15 +154,30 @@ export default function AnalyticsConsent() {
       setCustomizing(true);
       setShowBanner(true);
     };
+    const syncConsent = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== CONSENT_STORAGE_KEY
+        && event.key !== LEGACY_ANALYTICS_STORAGE_KEY) return;
+      window.cancelAnimationFrame(frame);
+      const current = readConsentState();
+      setState(current);
+      setDraft(current ?? DENY_ALL_STATE);
+      setShowBanner(current === null);
+      setCustomizing(false);
+      ensureAttributionCaptured(current?.advertising === 'granted');
+      updateGoogleConsent(current ?? DENY_ALL_STATE);
+      if (current?.analytics === 'granted') loadAnalytics();
+    };
+    window.addEventListener('storage', syncConsent);
     window.addEventListener(settingsEvent, showSettings);
     return () => {
       window.cancelAnimationFrame(frame);
+      window.removeEventListener('storage', syncConsent);
       window.removeEventListener(settingsEvent, showSettings);
     };
   }, []);
 
   useEffect(() => {
-    if (state?.analytics !== 'granted') return;
+    if (state?.analytics !== 'granted' || !hasAnalyticsConsent()) return;
 
     // The initial page view is sent by gtag('config'). Track only later
     // client-side route changes so Next.js navigation is not undercounted.
@@ -188,6 +199,7 @@ export default function AnalyticsConsent() {
     if (state?.analytics !== 'granted') return;
 
     const trackContact = (event: MouseEvent) => {
+      if (!hasAnalyticsConsent()) return;
       const target = event.target as Element | null;
       const contact = target?.closest<HTMLElement>('[data-contact-method], a[href^="tel:"]');
       if (!contact) return;
@@ -201,6 +213,7 @@ export default function AnalyticsConsent() {
 
   function applyChoice(next: ConsentState) {
     writeConsentState(next);
+    ensureAttributionCaptured(next.advertising === 'granted');
     setState(next);
     setShowBanner(false);
     setCustomizing(false);

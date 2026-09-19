@@ -46,12 +46,12 @@ pull-request diff.
 | Area | Representative paths | Focused coverage |
 | --- | --- | --- |
 | Planner | `app/components/grain-planner/`, `app/components/planner/`, `app/lib/planner/`, `app/zernoskhovyshcha/` | Grain page, planner, mobile, stabilization, handoff and planner visual suites |
-| Inquiry | `ProjectInquiryForm`, `InquirySection`, `app/components/inquiry/`, `app/lib/inquiry/` | Form, consent and both attachment handoff suites |
+| Inquiry | `ProjectInquiryForm`, `InquirySection`, `app/components/inquiry/`, `app/lib/inquiry/` | Form, consent, GA endpoint checks and both attachment handoff suites |
 | Leads API | `app/api/leads/`, `drizzle/`, `migrations/`, leads route unit test | Full unit gate plus mocked browser lead submission |
-| Configurator | `app/components/configurator/`, `app/lib/configurator/`, configurator preview and tests | Configurator, 3D, build-up, accessibility and handoff suites in two shards |
+| Configurator | `app/components/configurator/`, `app/lib/configurator/`, configurator preview, `/angary` composition and tests | Configurator, 3D, build-up, accessibility and handoff suites in two shards |
 | Brand visual | `public/brand/`, `SiteChrome`, favicon and brand snapshots | Brand visual suite |
-| Shared/global visual | global CSS, root layout/page, top-level shared components, app data and shared media | Complete site-wide, brand, planner and configurator visual suites |
-| CI infrastructure | workflows, local actions, CI scripts, package/lock/config files | All focused areas, ensuring changes to the test system test the system itself |
+| Shared/global visual | any CSS, root layout/page, top-level shared components, app data and shared media | Complete visual suites plus hero playback regression |
+| CI infrastructure | workflows, local actions, CI scripts, package/lock/config files, Worker/Vite/CSP, shared hooks, consent/attribution | All focused areas, ensuring changes to the test system test the system itself |
 
 ## Required context
 
@@ -63,3 +63,6 @@ PR Gate
 ```
 
 Do not require conditional job names: skipped areas intentionally do not create a blocking result.
+
+A selected visual job with no suites fails closed. Classifier regression tests cover global-impact
+paths and standalone CSS so the aggregate gate cannot turn green without the intended checks.

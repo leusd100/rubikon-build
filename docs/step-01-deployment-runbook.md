@@ -1,5 +1,9 @@
 # Step 01 — Lead & Conversion Architecture: Deployment Runbook
 
+> Historical first-release plan. Its submission-ID lifecycle, messenger handoff and smoke-test
+> instructions are superseded. Use [the current reliability/release notes](production-audit-reliability.md)
+> for current behavior. No production action is authorized by this document.
+
 Documentation only — written before deployment, against the code in `app/api/leads/route.ts`,
 `app/components/ProjectInquiryForm.tsx`, `app/components/InquirySection.tsx`,
 `app/lib/attribution.ts`, and `migrations/0001_create_leads.sql` as they exist on 29.08.2026. If any

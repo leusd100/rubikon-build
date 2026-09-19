@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { stubTurnstile } from './turnstile.helpers';
 
 // GA4 is "analytics only": gtag.js loads after Analytics consent and must measure through the core
 // *.google-analytics.com endpoint in every consent state — never Google signals / advertising endpoints.
@@ -11,7 +12,7 @@ const GA_SCRIPT_SELECTOR = 'script[data-rubikon-analytics="G-WYRXJV71WG"]';
 const CORE_GA_HOST = /(^|\.)google-analytics\.com$/;
 const ADVERTISING = /doubleclick\.net|ga-audiences|googlesyndication|googleadservices|\/pagead\//;
 
-type GoogleRequest = { host: string; path: string; type: string };
+type GoogleRequest = { host: string; path: string; type: string; events: string[] };
 
 async function recordGoogle(context: BrowserContext) {
   const requests: GoogleRequest[] = [];
@@ -27,7 +28,9 @@ async function recordGoogle(context: BrowserContext) {
         return route.abort();
       }
     }
-    requests.push({ host: url.hostname, path: url.pathname, type: route.request().resourceType() });
+    requests.push({ host: url.hostname, path: url.pathname, type: route.request().resourceType(),
+      events: [url.searchParams.get('en'), ...(route.request().postData() ?? '').split(/\r?\n/)
+        .map(line => new URLSearchParams(line).get('en'))].filter((event): event is string => event !== null) });
     return route.fulfill({ status: 204, body: '' });
   });
   return { requests, gtagLoaded: () => gtagLoaded };
@@ -37,6 +40,7 @@ async function watchCsp(page: Page) {
   await page.addInitScript(() => {
     (window as unknown as { __cspViolations: string[] }).__cspViolations = [];
     document.addEventListener('securitypolicyviolation', (event) => {
+      if (event.disposition !== 'enforce') return;
       (window as unknown as { __cspViolations: string[] }).__cspViolations.push(`${event.effectiveDirective} ${event.blockedURI}`);
     });
   });
@@ -114,4 +118,24 @@ test.describe('GA4 endpoints (real gtag.js, collection answered locally)', () =>
       expect((await violations()).filter((violation) => /google|doubleclick/.test(violation))).toEqual([]);
     });
   }
+});
+
+
+test('an accepted lead queue command reaches real gtag, with collection intercepted', async ({ page, context }) => {
+  const google = await recordGoogle(context);
+  await stubTurnstile(page);
+  await page.route('**/api/leads', route => route.fulfill({ json: { ok: true, id: 42, isNew: false } }));
+  await page.goto('/', { waitUntil: 'load' });
+  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+  await page.waitForLoadState('networkidle');
+  test.skip(!google.gtagLoaded(), 'gtag.js could not be fetched from Google in this environment');
+  const form = page.locator('form.inquiry-form');
+  await form.getByLabel(/Ваше ім’я/).fill('Тест черги');
+  await form.getByLabel(/Телефон/).fill('+380671234567');
+  await form.getByLabel(/Напрям робіт/).selectOption({ index: 1 });
+  await form.getByLabel(/Погоджуюся на обробку/).check();
+  await form.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  await expect.poll(() => google.requests.flatMap(request => request.events).filter(event => event === 'generate_lead').length,
+    { timeout: 10_000 }).toBe(1);
 });

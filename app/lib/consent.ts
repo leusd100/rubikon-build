@@ -1,5 +1,7 @@
 'use client';
 
+import { queueGoogleCommand } from './googleCommand';
+
 // Single source of truth for the site's cookie-consent state: category shape, localStorage
 // read/write, migration from the single-flag consent this project shipped before the
 // Advertising category existed, and the gtag('consent', 'update', ...) mapping.
@@ -24,7 +26,7 @@ export const LEGACY_ANALYTICS_STORAGE_KEY = 'rubikon-analytics-consent';
 
 declare global {
   interface Window {
-    dataLayer: unknown[][];
+    dataLayer: (unknown[] | IArguments)[];
     gtag?: (...args: unknown[]) => void;
   }
 }
@@ -111,7 +113,7 @@ export function writeConsentState(state: ConsentState) {
 
 export function updateGoogleConsent(state: ConsentState) {
   window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer.push(args));
+  window.gtag = window.gtag || queueGoogleCommand;
   window.gtag('consent', 'update', toGoogleConsentSignals(state));
 }
 

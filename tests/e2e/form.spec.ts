@@ -38,6 +38,7 @@ async function fillValidInquiry(page: Page) {
 
 // The form fetches a Turnstile token before every submit; serve a controlled stub, never live Cloudflare.
 test.beforeEach(async ({ page }) => {
+  await page.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
   await stubTurnstile(page);
 });
 
@@ -116,7 +117,7 @@ test.describe('project inquiry form', () => {
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
 
     const status = page.locator('.inquiry-status');
-    await expect(status).toContainText('Не вдалося зберегти запит');
+    await expect(status).toContainText('Не вдалося підтвердити збереження запиту');
     await expect(status).toHaveClass(/is-error/);
     await expect(status.locator('a[href="tel:+380682614264"]')).toBeVisible();
   });
@@ -210,7 +211,7 @@ test.describe('advertising-gated attribution on submit', () => {
 // ── Turnstile + «Ще не визначено» (Sprint 2) ──────────────────────────────────────────────────────
 
 const VERIFICATION_FAILED = 'Не вдалося підтвердити надсилання запиту';
-const SAVE_FAILED = 'Не вдалося зберегти запит';
+const SAVE_FAILED = 'Не вдалося підтвердити збереження запиту';
 
 function leadEvents(page: Page, name: string) {
   return page.evaluate((eventName) => (window.dataLayer ?? [])
@@ -499,4 +500,123 @@ test.describe('generate_lead with Turnstile', () => {
     expect(await leadEvents(page, 'generate_lead')).toBe(1);
     expect(await leadEvents(page, 'inquiry_contact_attempt')).toBe(7);
   });
+});
+
+
+test('lost acknowledgement retries the same lead and counts its first confirmed success once', async ({ page }) => {
+  const ids: string[] = [];
+  await page.route('**/api/leads', async (route) => {
+    ids.push(route.request().postDataJSON().submissionId);
+    if (ids.length === 1) return route.abort('failed');
+    return route.fulfill({ json: { ok: true, id: 42, isNew: false } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+  await fillInquiryFields(page);
+  const conversions = () => page.evaluate(() => window.dataLayer.filter(
+    (entry) => entry[0] === 'event' && entry[1] === 'generate_lead',
+  ).length);
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+  expect(await conversions()).toBe(0);
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  expect(ids).toHaveLength(2);
+  expect(ids[0]).toBe(ids[1]);
+  expect(await conversions()).toBe(1);
+});
+
+test('a stalled lead request times out, preserving fields and the retry ID', async ({ page }) => {
+  // Accelerate only the production 20s lead deadline; leave Turnstile's own deadline intact.
+  await page.addInitScript(() => {
+    const timeout = AbortSignal.timeout.bind(AbortSignal);
+    AbortSignal.timeout = (ms: number) => timeout(ms === 20_000 ? 200 : ms);
+  });
+  const ids: string[] = [];
+  await page.route('**/api/leads', async (route) => {
+    ids.push(route.request().postDataJSON().submissionId);
+    if (ids.length === 1) return;
+    await route.fulfill({ json: { ok: true, id: 42, isNew: true } });
+  });
+  await page.goto('/');
+  await fillValidInquiry(page);
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+  await expect(page.getByLabel(/Ваше ім’я/)).toHaveValue('Іван Петренко');
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  expect(ids).toHaveLength(2);
+  expect(ids[0]).toBe(ids[1]);
+});
+
+test('editing after a lost acknowledgement sends a distinct payload with a new ID', async ({ page }) => {
+  const saved = new Map<string, Record<string, unknown>>();
+  const ids: string[] = [];
+  await page.route('**/api/leads', async (route) => {
+    const payload = route.request().postDataJSON();
+    ids.push(payload.submissionId);
+    if (!saved.has(payload.submissionId)) saved.set(payload.submissionId, payload);
+    if (ids.length === 1) return route.abort('failed');
+    return route.fulfill({ json: { ok: true, id: saved.size, isNew: true } });
+  });
+  await page.goto('/');
+  await fillValidInquiry(page);
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Якщо зміните дані, надішлемо окремий запит');
+  await page.locator('form.inquiry-form').getByLabel(/Телефон/).fill('+380681234567');
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  expect(ids[0]).not.toBe(ids[1]);
+  expect(saved.get(ids[0])?.phone).toBe('+380671234567');
+  expect(saved.get(ids[1])?.phone).toBe('+380681234567');
+});
+
+test('a changed retry keeps its new ID if that attempt also fails', async ({ page }) => {
+  const ids: string[] = [];
+  await page.route('**/api/leads', async (route) => {
+    ids.push(route.request().postDataJSON().submissionId);
+    if (ids.length < 3) return route.abort('failed');
+    return route.fulfill({ json: { ok: true, id: 42, isNew: true } });
+  });
+  await page.goto('/');
+  await fillValidInquiry(page);
+  const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+  await submit.click();
+  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+  await page.getByLabel('Коротко про завдання', { exact: true }).fill('Інший обсяг робіт');
+  await submit.click();
+  await expect.poll(() => ids.length).toBe(2);
+  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+  await submit.click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  expect(ids[0]).not.toBe(ids[1]);
+  expect(ids[1]).toBe(ids[2]);
+});
+
+test('accepted lead queues its conversion without gtag and repeated acknowledgement stays deduplicated', async ({ page }) => {
+  await page.route('**/api/leads', route => route.fulfill({ json: { ok: true, id: 42, isNew: false } }));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+  await fillInquiryFields(page);
+  await page.evaluate(() => { window.gtag = undefined; });
+  const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+  await submit.click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  await submit.click();
+  await expect(submit).toBeEnabled();
+  await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
+});
+
+test('a broken analytics queue cannot prevent saving or rotate retry behavior incorrectly', async ({ page }) => {
+  await page.route('**/api/leads', route => route.fulfill({ json: { ok: true, id: 42, isNew: false } }));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+  await fillInquiryFields(page);
+  await page.evaluate(() => { Object.freeze(window.dataLayer); });
+  const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+  await submit.click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  await page.evaluate(() => { window.dataLayer = []; });
+  await submit.click();
+  await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
 });
