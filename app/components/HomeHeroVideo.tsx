@@ -3,12 +3,15 @@
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { useViewportVariant, type ViewportVariant } from '../hooks/useViewportVariant';
 
+// v2 (Sprint 3.2): H.264 High 1280×720, CRF 23, trimmed to the 3.2 s the montage can show (it restarts each clip
+// at 0 and leaves it after ~2.8 s of source time). 13.97 → 4.00 MB for the set. New names, not replaced in place:
+// /media is cached for 7 days, and the originals stay until a separate cleanup after deploy.
 const desktopSources = [
-  '/media/about/straight-line-14377591.mp4',
-  '/media/about/blueprint.m4v',
-  '/media/about/drilling-29913842.m4v',
-  '/media/about/welding.m4v',
-  '/media/about/structure.m4v',
+  '/media/about/straight-line-14377591-v2.mp4',
+  '/media/about/blueprint-v2.mp4',
+  '/media/about/drilling-29913842-v2.mp4',
+  '/media/about/welding-v2.mp4',
+  '/media/about/structure-v2.mp4',
 ];
 
 const variantConfig = {
@@ -23,7 +26,7 @@ const variantConfig = {
     mobilePoster: '/media/about/home-phone-poster.webp',
   },
   tablet: {
-    sources: ['/media/about/home-tablet-montage.mp4'],
+    sources: ['/media/about/home-tablet-montage-v2.mp4'],
     poster: '/media/about/home-tablet-poster.webp',
     mobilePoster: '/media/about/home-tablet-poster.webp',
   },
