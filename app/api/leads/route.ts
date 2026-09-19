@@ -71,7 +71,7 @@ type LeadPayload = {
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
   });
 }
 
@@ -119,9 +119,22 @@ async function hashIp(ip: string, salt: string): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  try {
+    return await handleLead(request);
+  } catch {
+    // Infrastructure failures must keep the same JSON contract as validation failures.
+    return json({ ok: false, error: 'server' }, 500);
+  }
+}
+
+async function handleLead(request: Request) {
   let body: LeadPayload;
   try {
-    body = (await request.json()) as LeadPayload;
+    const parsed: unknown = await request.json();
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return json({ ok: false, error: 'validation', fields: ['body'] }, 400);
+    }
+    body = parsed as LeadPayload;
   } catch {
     return json({ ok: false, error: 'validation', fields: ['body'] }, 400);
   }
@@ -263,27 +276,33 @@ export async function POST(request: Request) {
 
     leadId = Number(insert.meta.last_row_id ?? 0);
   } catch (error) {
-    // The early lookup above already handles a sequential retry of an existing submissionId,
-    // so reaching a UNIQUE-constraint failure here means a genuine concurrent race: two
-    // requests for the same brand-new submissionId passed the early lookup at the same time
-    // (neither saw the other's row yet), both reserved a rate-limit slot, and both attempted
-    // this insert — exactly one wins. This is the loser's path, not a duplicate-retry path.
-    if (String(error).includes('UNIQUE constraint failed')) {
-      // The loser produced no new lead — undo its rate-limit reservation so this race never
-      // costs the visitor a slot they didn't actually use. Best effort: if this delete fails
-      // for some reason, the lead lookup below still succeeds and the client still gets the
-      // correct response; the reservation just isn't rolled back.
-      try {
-        await workerEnv.DB.prepare('DELETE FROM lead_submit_log WHERE rowid = ?').bind(rateLogRowId).run();
-      } catch {
-        // Non-fatal — see comment above.
-      }
+    // A failed response from D1 does not prove the insert failed. Reconcile first;
+    // refund only a confirmed absent lead or the losing UNIQUE-constraint request.
+    try {
       const existing = await workerEnv.DB.prepare('SELECT id FROM leads WHERE submission_id = ?')
         .bind(submissionId)
         .first<{ id: number }>();
-      // isNew: false tells the client this was already accepted on a previous attempt — it
-      // must not fire a second generate_lead conversion for the same underlying lead.
-      if (existing) return json({ ok: true, id: existing.id, isNew: false });
+      if (!existing || String(error).includes('UNIQUE constraint failed')) {
+        try {
+          await workerEnv.DB.prepare('DELETE FROM lead_submit_log WHERE rowid = ?').bind(rateLogRowId).run();
+        } catch {
+          // Best effort; a cleanup failure must not hide an accepted lead.
+        }
+      }
+      if (existing) {
+        if (!String(error).includes('UNIQUE constraint failed')) {
+          try {
+            await workerEnv.DB.prepare(
+              'INSERT INTO lead_notify_failures (lead_id, channel, error) VALUES (?, ?, ?)',
+            ).bind(existing.id, 'telegram', 'Insert acknowledgement lost; notification not attempted').run();
+          } catch {
+            // Accepted lead remains successful even if the recovery log is unavailable.
+          }
+        }
+        return json({ ok: true, id: existing.id, isNew: false });
+      }
+    } catch {
+      // Outcome unknown: retain the reservation and let the same-ID retry reconcile.
     }
     return json({ ok: false, error: 'server' }, 500);
   }
@@ -362,6 +381,7 @@ async function notifyTelegram(
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ chat_id: targetEnv.TELEGRAM_CHAT_ID, text }),
+    signal: AbortSignal.timeout(5_000),
   });
 
   if (!response.ok) {

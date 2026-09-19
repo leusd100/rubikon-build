@@ -73,10 +73,12 @@ class FakeD1Statement {
         throw new Error('UNIQUE constraint failed: leads.submission_id');
       }
 
+      if (this.database.insertFailure === 'before') throw new Error('D1 unavailable');
       const id = this.database.nextLeadId;
       this.database.nextLeadId += 1;
       this.database.leads.set(submissionId, id);
       this.database.lastLeadDetails = String(this.bindings[5]);
+      if (this.database.insertFailure === 'after') throw new Error('D1 response lost');
       return { meta: { changes: 1, last_row_id: id } };
     }
 
@@ -102,6 +104,7 @@ class FakeD1Database {
   readonly leads = new Map<string, number>();
   readonly notificationFailures: Array<{ leadId: number; channel: string; error: string }> = [];
   readonly preparedQueries: string[] = [];
+  insertFailure: 'before' | 'after' | null = null;
   rateLimitAtCapacity = false;
   rateReservations = 0;
   lastRateRowId = 0;
@@ -182,6 +185,66 @@ describe('POST /api/leads', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.useRealTimers();
+  });
+
+  it.each([null, [], 42, 'payload'])('rejects non-object root %j with JSON 400', async (payload) => {
+    const response = await POST(leadRequest(payload));
+    expect(response.status).toBe(400);
+    expect(await responseBody(response)).toMatchObject({ error: 'validation', fields: ['body'] });
+    expect(database.preparedQueries).toEqual([]);
+  });
+
+  it('refunds a confirmed failed insert so retries do not exhaust the rate bucket', async () => {
+    database.insertFailure = 'before';
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      expect((await POST(leadRequest(validPayload()))).status).toBe(500);
+      expect(database.rateReservations).toBe(0);
+    }
+    database.insertFailure = null;
+    expect((await POST(leadRequest(validPayload()))).status).toBe(200);
+    expect(database.rateReservations).toBe(1);
+  });
+
+  it('reconciles an insert whose response was lost without refunding a committed lead', async () => {
+    database.insertFailure = 'after';
+    const response = await POST(leadRequest(validPayload()));
+    expect(await responseBody(response)).toMatchObject({ ok: true, isNew: false });
+    expect(database.leads.size).toBe(1);
+    expect(database.rateReservations).toBe(1);
+  });
+
+  it('retains the reservation when reconciliation itself is unavailable', async () => {
+    database.insertFailure = 'before';
+    const prepare = database.prepare.bind(database);
+    let lookups = 0;
+    vi.spyOn(database, 'prepare').mockImplementation((query) => {
+      if (query.startsWith('SELECT id FROM leads') && ++lookups === 2) throw new Error('D1 read failed');
+      return prepare(query);
+    });
+    const response = await POST(leadRequest(validPayload()));
+    expect(response.status).toBe(500);
+    expect(database.rateReservations).toBe(1);
+  });
+
+  it('returns recoverable JSON when the initial database lookup fails', async () => {
+    vi.spyOn(database, 'prepare').mockImplementation(() => { throw new Error('D1 unavailable'); });
+    const response = await POST(leadRequest(validPayload()));
+    expect(response.status).toBe(500);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(await responseBody(response)).toEqual({ ok: false, error: 'server' });
+  });
+
+  it('bounds Telegram delivery and keeps an accepted lead successful after timeout', async () => {
+    const controller = new AbortController();
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockImplementation(() => controller.signal);
+    telegramFetch.mockImplementation(async (_url, init) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new Error('notification timeout')), { once: true });
+      controller.abort();
+    }));
+    const response = await POST(leadRequest(validPayload()));
+    expect(await responseBody(response)).toMatchObject({ ok: true });
+    expect(timeout).toHaveBeenCalledWith(5_000);
+    expect(database.notificationFailures).toHaveLength(1);
   });
 
   it('rejects invalid required fields before touching D1', async () => {

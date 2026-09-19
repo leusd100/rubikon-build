@@ -18,6 +18,7 @@ import { useTurnstile } from './inquiry/useTurnstile';
 
 type LeadApiResult = {
   ok?: boolean;
+  id?: number;
   isNew?: boolean;
   error?: string;
 };
@@ -74,6 +75,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   // The disabled button only takes effect after a re-render; this ref blocks a second submit
   // event that arrives before it (a fast double click or a double Enter).
   const submittingRef = useRef(false);
+  const acknowledgedLeadIds = useRef(new Set<number>());
   const formRef = useRef<HTMLFormElement>(null);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstile = useTurnstile(turnstileRef);
@@ -135,7 +137,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
 
     setIsSubmitting(true);
     let saved = false;
-    let isNewLead = true;
+    let savedLeadId: number | undefined;
     let verificationFailed = false;
     try {
       let turnstileToken: string;
@@ -147,6 +149,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       }
       const response = await fetch('/api/leads', {
         method: 'POST',
+        signal: AbortSignal.timeout(20_000),
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           submissionId,
@@ -175,11 +178,9 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         }),
       });
       const result = await response.json().catch(() => null) as LeadApiResult | null;
-      saved = Boolean(result?.ok);
+      saved = response.ok && result?.ok === true;
+      savedLeadId = result?.id;
       verificationFailed = !saved && (result?.error === 'verification' || result?.error === 'verification_unavailable');
-      // A retry that lands on the idempotent-duplicate branch is still a save (saved=true)
-      // but must not count as a second conversion for the same underlying lead.
-      isNewLead = result?.isNew !== false;
     } catch {
       saved = false;
     }
@@ -194,7 +195,13 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       return;
     }
 
-    if (isNewLead && hasAnalyticsConsent()) {
+    // Count a saved lead once per mounted form, including a duplicate acknowledgement
+    // after a lost response. Server identity also protects against repeated acknowledgements;
+    // isNew=false alone cannot distinguish a lost response from an already-counted lead.
+    const firstAcknowledgement = typeof savedLeadId === 'number' && savedLeadId > 0
+      && !acknowledgedLeadIds.current.has(savedLeadId);
+    if (typeof savedLeadId === 'number') acknowledgedLeadIds.current.add(savedLeadId);
+    if (firstAcknowledgement && hasAnalyticsConsent()) {
       window.gtag?.('event', 'generate_lead', {
         contact_method: contactMethod.toLowerCase(),
         project_direction: direction,

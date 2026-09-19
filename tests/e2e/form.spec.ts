@@ -38,6 +38,7 @@ async function fillValidInquiry(page: Page) {
 
 // The form fetches a Turnstile token before every submit; serve a controlled stub, never live Cloudflare.
 test.beforeEach(async ({ page }) => {
+  await page.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
   await stubTurnstile(page);
 });
 
@@ -499,4 +500,51 @@ test.describe('generate_lead with Turnstile', () => {
     expect(await leadEvents(page, 'generate_lead')).toBe(1);
     expect(await leadEvents(page, 'inquiry_contact_attempt')).toBe(7);
   });
+});
+
+
+test('lost acknowledgement retries the same lead and counts its first confirmed success once', async ({ page }) => {
+  const ids: string[] = [];
+  await page.route('**/api/leads', async (route) => {
+    ids.push(route.request().postDataJSON().submissionId);
+    if (ids.length === 1) return route.abort('failed');
+    return route.fulfill({ json: { ok: true, id: 42, isNew: false } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+  await fillInquiryFields(page);
+  const conversions = () => page.evaluate(() => window.dataLayer.filter(
+    (entry) => entry[0] === 'event' && entry[1] === 'generate_lead',
+  ).length);
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+  expect(await conversions()).toBe(0);
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  expect(ids).toHaveLength(2);
+  expect(ids[0]).toBe(ids[1]);
+  expect(await conversions()).toBe(1);
+});
+
+test('a stalled lead request times out, preserving fields and the retry ID', async ({ page }) => {
+  // Accelerate only the production 20s lead deadline; leave Turnstile's own deadline intact.
+  await page.addInitScript(() => {
+    const timeout = AbortSignal.timeout.bind(AbortSignal);
+    AbortSignal.timeout = (ms: number) => timeout(ms === 20_000 ? 200 : ms);
+  });
+  const ids: string[] = [];
+  await page.route('**/api/leads', async (route) => {
+    ids.push(route.request().postDataJSON().submissionId);
+    if (ids.length === 1) return;
+    await route.fulfill({ json: { ok: true, id: 42, isNew: true } });
+  });
+  await page.goto('/');
+  await fillValidInquiry(page);
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+  await expect(page.getByLabel(/Ваше ім’я/)).toHaveValue('Іван Петренко');
+  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  expect(ids).toHaveLength(2);
+  expect(ids[0]).toBe(ids[1]);
 });
