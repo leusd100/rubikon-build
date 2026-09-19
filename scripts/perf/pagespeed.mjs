@@ -82,7 +82,14 @@ const megabytes = (bytes) => (bytes === null ? '—' : `${(bytes / 1_000_000).to
 const scoreCell = (score) => (score === null ? '—' : String(Math.round(score)));
 const row = (label, m) => `| ${label} | ${scoreCell(m.score)} | ${seconds(m.fcp)} | ${seconds(m.lcp)} | ${millis(m.tbt)} | ${shift(m.cls)} | ${seconds(m.si)} | ${millis(m.ttfb)} | ${megabytes(m.bytes)} |`;
 const HEADER = '| | Performance | FCP | LCP | TBT | CLS | Speed Index | TTFB | Weight |\n|---|---|---|---|---|---|---|---|---|';
-const escapeCell = (text) => String(text).replace(/\|/g, '\\|').replace(/\s+/g, ' ').slice(0, 90);
+// For a value shown inside a `code` span in a table cell: backslashes first (so an input `\|` cannot turn into an
+// unescaped pipe), then pipes; backticks would close the code span, so they become a lookalike quote.
+const escapeCell = (text) => String(text)
+  .replace(/\s+/g, ' ')
+  .slice(0, 90)
+  .replace(/\\/g, '\\\\')
+  .replace(/\|/g, '\\|')
+  .replace(/`/g, 'ˋ');
 
 /**
  * @param {{ url: string, sha?: string | null, startedAt: string,

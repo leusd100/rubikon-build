@@ -83,6 +83,16 @@ describe('summaryMarkdown', () => {
     expect(markdown).toContain('scores never fail this workflow');
   });
 
+  it('keeps the table intact whatever the LCP element snippet contains', () => {
+    const run = { ...extractRun(mobileLh12), lcpElement: '<p data-x="a\\|b`c|d">' };
+    const markdown = summaryMarkdown({ ...report, results: { mobile: { runs: [run], failures: [] } } });
+    const line = markdown.split('\n').find((text) => text.startsWith('| mobile #1 | `'));
+
+    expect(line).toBe('| mobile #1 | `<p data-x="a\\\\\\|bˋc\\|d">` |');
+    // Exactly the two column separators remain unescaped.
+    expect(line?.replace(/\\\\/g, '').replace(/\\\|/g, '').split('|').length).toBe(4);
+  });
+
   it('never contains anything that looks like an API key', () => {
     expect(summaryMarkdown(report)).not.toMatch(/AIza[0-9A-Za-z_-]{20,}|key=/);
   });
