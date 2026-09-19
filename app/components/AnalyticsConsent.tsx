@@ -33,7 +33,17 @@ function loadAnalytics() {
   if (document.documentElement.dataset.rubikonAnalyticsConfigured === measurementId) return;
   document.documentElement.dataset.rubikonAnalyticsConfigured = measurementId;
   window.gtag('js', new Date());
-  window.gtag('config', measurementId, { anonymize_ip: true });
+  // Analytics only: no Google signals (cross-device, demographics, remarketing audiences) and no ad-personalization
+  // signals, whatever the GA4 property has switched on. With them, «Прийняти все» sent page views to
+  // analytics.google.com plus stats.g.doubleclick.net and google.<country>/ads/ga-audiences — endpoints the CSP does
+  // not allow — so those visitors were not measured at all. Without them measurement stays on
+  // www.google-analytics.com in every consent state. The Advertising category still governs ad_storage and the
+  // gclid attribution kept with a lead.
+  window.gtag('config', measurementId, {
+    anonymize_ip: true,
+    allow_google_signals: false,
+    allow_ad_personalization_signals: false,
+  });
 }
 
 function contactType(element: HTMLElement) {

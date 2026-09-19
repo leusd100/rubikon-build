@@ -47,6 +47,13 @@ describe('canonical Content-Security-Policy', () => {
     expect(production).not.toMatch(/\*\.cloudflare/);
   });
 
+  it('allows no Google advertising or Google-signals endpoints — GA4 runs analytics-only', () => {
+    // allow_google_signals / allow_ad_personalization_signals are off in AnalyticsConsent.tsx, so GA4 needs only
+    // *.google-analytics.com. Advertising would need doubleclick, google.<every TLD>, googlesyndication…
+    expect(production).not.toMatch(/doubleclick|googlesyndication|googleadservices|google\.com(?![\w-])|google\.[a-z]{2,3}(\.[a-z]{2})?(?=[\s;])/);
+    expect(production).not.toContain('analytics.google.com');
+  });
+
   it('keeps the protective directives locked down', () => {
     expect(directive(production, 'object-src')).toEqual(["'none'"]);
     expect(directive(production, 'base-uri')).toEqual(["'self'"]);
