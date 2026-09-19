@@ -19,8 +19,8 @@ if (enabled('WIDE_VISUAL')) {
 }
 
 if (tests.size === 0) {
-  console.log('No visual suites selected.');
-  process.exit(0);
+  console.error('Visual job selected without a matching suite. Check the classifier.');
+  process.exit(1);
 }
 
 console.log(`Visual suites:\n${[...tests].map((test) => `- ${test}`).join('\n')}`);

@@ -136,6 +136,7 @@ jobs:
           pnpm exec playwright test --project=desktop-chromium
           tests/e2e/form.spec.ts
           tests/e2e/consent.spec.ts
+          tests/e2e/analytics-consent.spec.ts
           tests/e2e/configurator-inquiry-handoff.spec.ts
           tests/e2e/grain-planner-handoff.spec.ts
 
@@ -204,6 +205,9 @@ jobs:
           name: pr-production-build
           path: dist
       - uses: ./.github/actions/setup-playwright
+      - name: Hero playback regression
+        if: needs.classify.outputs.wide_visual == 'true'
+        run: pnpm exec playwright test --project=desktop-chromium tests/e2e/hero-video.spec.ts
       - name: Run selected visual suites
         env:
           WIDE_VISUAL: ${{ needs.classify.outputs.wide_visual }}

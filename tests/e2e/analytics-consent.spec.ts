@@ -37,6 +37,7 @@ async function watchCsp(page: Page) {
   await page.addInitScript(() => {
     (window as unknown as { __cspViolations: string[] }).__cspViolations = [];
     document.addEventListener('securitypolicyviolation', (event) => {
+      if (event.disposition !== 'enforce') return;
       (window as unknown as { __cspViolations: string[] }).__cspViolations.push(`${event.effectiveDirective} ${event.blockedURI}`);
     });
   });
