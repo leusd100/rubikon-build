@@ -1343,3 +1343,13 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
 /* inline-block: Tailwind's preflight makes every svg a block, which would break the label's line;
    the negative block margin keeps a 16 px icon from making a short label's line any taller. */
 .role-icon { display: inline-block; flex: none; width: 16px; height: 16px; margin-block: -2px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; stroke-linejoin: miter; vertical-align: -3px; }
+
+/* Reserve the video control's own row before hydration, only when motion is allowed.
+   Reduced-motion posters have no pause control and keep their existing composition. */
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  .hero .hero-layout,
+  .about-subhero .subhero-layout { padding-bottom: 76px; }
+}
+@media (max-width: 760px) and (max-height: 760px) and (prefers-reduced-motion: no-preference) {
+  .hero { height: auto; min-height: 100svh; }
+}

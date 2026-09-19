@@ -56,3 +56,32 @@ test('leaving during a crossfade does not preserve an extra visible clip on retu
     (node) => !(node as HTMLVideoElement).paused,
   )).toBe(true);
 });
+
+for (const path of ['/', '/pro-nas']) {
+  for (const [width, height] of [[320, 568], [360, 640], [390, 844], [430, 844], [820, 900]]) {
+    test(`pause has its own touch target at ${path} ${width}×${height}`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.goto(path);
+      await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
+      const pause = page.getByRole('button', { name: 'Пауза відео', exact: true });
+      await expect(pause).toBeVisible();
+      await pause.scrollIntoViewIfNeeded();
+      const overlaps = await pause.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return [...element.closest('section')!.querySelectorAll('a,button')]
+          .filter((other) => other !== element).filter((other) => {
+            const rect = other.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0
+              && Math.min(bounds.right, rect.right) > Math.max(bounds.left, rect.left)
+              && Math.min(bounds.bottom, rect.bottom) > Math.max(bounds.top, rect.top);
+          }).map((other) => other.textContent);
+      });
+      expect(overlaps).toEqual([]);
+      expect((await pause.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      await pause.click();
+      await expect(pause).toHaveAttribute('aria-pressed', 'true');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    });
+  }
+}
