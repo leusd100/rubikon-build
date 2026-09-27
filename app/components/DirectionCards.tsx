@@ -58,6 +58,7 @@ export function DirectionImageCards() {
           />
           <span className="direction-shade" />
           <span className="direction-number">{direction.number}</span>
+          <span className="direction-provenance">Ілюстрація</span>
           <span className="direction-copy">
             <strong>{direction.cardTitle}</strong>
             <small>{direction.cardText}</small>

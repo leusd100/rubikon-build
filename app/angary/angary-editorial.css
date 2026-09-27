@@ -44,6 +44,7 @@
 .angary-render-compare figure { min-width: 0; margin: 0; background: var(--warm); }
 .angary-editorial-image { position: relative; display: block; aspect-ratio: 1.43; overflow: hidden; background: #0e0f11; }
 .angary-editorial-image img { object-fit: cover; }
+.angary-scheme-label { position: absolute; z-index: 2; left: 10px; bottom: 10px; padding: 6px 8px; color: white; background: rgba(13,16,14,.84); border: 1px solid rgba(255,255,255,.5); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .04em; }
 .angary-editorial-image.is-envelope-crop img { object-position: center center; }
 .angary-editorial-image.is-foundation-crop img { object-position: center center; }
 .angary-render-compare figcaption { padding: 22px 20px 24px; }

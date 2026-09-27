@@ -37,7 +37,7 @@ const STATEMENTS_V1 = {
   flexiblePackages: 'Огородження, ворота, промислові підлоги та інші будівельні роботи виконуємо власною командою або залучаємо профільного виконавця — залежно від обсягу та рішення.',
   materials: 'Матеріали закуповує RUBIKON або надає замовник — залежно від договору.',
   firstContact: 'Після заявки зв’яжемося, щоб уточнити задачу, вихідні дані та можливий формат нашої участі.',
-  experience: 'За RUBIKON BUILD стоять понад 30 років особистої практики Сергія Івановича в будівництві.',
+  experience: 'За RUBIKON BUILD стоїть особиста практика Сергія Івановича в будівництві.',
   boundary: 'За що відповідає кожен учасник, фіксуємо в договорі до початку робіт.',
 };
 const STATEMENTS_BY_VERSION: Record<string, Record<keyof typeof deliveryModel.statements, string>> = { '1.0.0': STATEMENTS_V1, '1.1.0': STATEMENTS_V1, '1.2.0': STATEMENTS_V1 };
@@ -101,7 +101,8 @@ const DISALLOWED_PUBLIC_PHRASES = [
   'Технічне рішення і проєктування',
   'Обговорити з інженером',
   'інженер RUBIKON',
-  'В основі — понад 30 років',
+  'понад 30 років',
+  '30+ років',
 ];
 
 // Keys that hold stable ids or id references.

@@ -20,6 +20,7 @@ function EditorialImage({ src, alt, className }: { src: string; alt: string; cla
         alt={alt}
         sizes="(max-width: 760px) calc(50vw - 17px), (max-width: 1023px) calc(25vw - 18px), 25vw"
       />
+      <span className="angary-scheme-label">Схема</span>
     </span>
   );
 }
@@ -106,6 +107,7 @@ export function HangarEditorialArchitecture() {
                 alt="Металевий каркас ангара, поєднаний із технічними кресленнями майбутньої споруди"
                 sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 64px), 38vw"
               />
+              <figcaption className="media-provenance-label">Ілюстрація</figcaption>
             </figure>
           </div>
 
@@ -255,7 +257,7 @@ export function HangarEditorialArchitecture() {
           <div className="angary-people-portraits">
             <figure>
               <span><ResponsiveImage src="/images/founder.webp" alt="Сергій — засновник RUBIKON BUILD" sizes="(max-width: 760px) calc(50vw - 22px), 20vw" /></span>
-              <figcaption><strong>Сергій</strong><p>30+ років практичного досвіду в будівництві.</p></figcaption>
+              <figcaption><strong>Сергій</strong><p>Практичний досвід у будівництві.</p></figcaption>
             </figure>
             <figure>
               <span><ResponsiveImage src="/images/next-generation.webp" alt="Дмитро — розвиток RUBIKON BUILD та робота з клієнтами" sizes="(max-width: 760px) calc(50vw - 22px), 20vw" /></span>
