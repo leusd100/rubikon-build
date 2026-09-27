@@ -94,14 +94,14 @@ export default function Home() {
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
               <span className="visual-index">01 / РІШЕННЯ</span>
-              <span className="image-note">Від креслення — до технічного рішення</span>
+              <span className="image-note">Ілюстрація · Від креслення — до технічного рішення</span>
             </div>
             <div className="promise-copy">
               <p className="eyebrow light"><span /> Наша основа</p>
               <h2>За кожен об’єкт відповідаємо власним ім’ям</h2>
               <p className="promise-lead">
-                RUBIKON BUILD — родинна компанія, у якій поєднуються понад 30 років практичного
-                досвіду Сергія Івановича та сучасний підхід до розвитку бізнесу й роботи з клієнтами.
+                RUBIKON BUILD — родинна компанія, у якій поєднуються практичний досвід
+                Сергія Івановича та сучасний підхід до розвитку бізнесу й роботи з клієнтами.
                 Ми разом приймаємо ключові рішення і особисто відповідаємо за результат.
               </p>
               <p className="story-support">

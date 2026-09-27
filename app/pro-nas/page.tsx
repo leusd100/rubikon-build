@@ -10,9 +10,9 @@ import { company } from '../data/company';
 export const metadata = createPageMetadata({
   path: '/pro-nas',
   title: brandedTitle('Про родинну компанію'),
-  description: `${company.name} — родинна будівельна компанія з Дніпра. В основі — понад 30 років досвіду Сергія Івановича, особиста відповідальність і системний підхід.`,
+  description: `${company.name} — родинна будівельна компанія з Дніпра. В основі — практичний досвід Сергія Івановича, особиста відповідальність і системний підхід.`,
   socialTitle: `Про ${company.name} — досвід двох поколінь`,
-  socialDescription: 'Родинна відповідальність, понад 30 років практики Сергія Івановича та сучасний підхід до розвитку компанії.',
+  socialDescription: 'Родинна відповідальність, практичний досвід Сергія Івановича та сучасний підхід до розвитку компанії.',
   image: '/media/about-industrial-concept.jpg',
   imageAlt: `${company.name} — від інженерної концепції до промислової споруди`,
 });
@@ -36,7 +36,7 @@ export default function AboutPage() {
             </h1>
           </div>
           <div className="subhero-side about-subhero-side">
-            <p>RUBIKON BUILD — родинна компанія з Дніпра. В основі — понад 30 років практичного досвіду Сергія Івановича, особиста відповідальність і системний підхід.</p>
+            <p>RUBIKON BUILD — родинна компанія з Дніпра. В основі — практичний досвід Сергія Івановича, особиста відповідальність і системний підхід.</p>
             <a className="button button-primary about-hero-cta" href="#inquiry">
               Обговорити проєкт <span aria-hidden="true">↗</span>
             </a>

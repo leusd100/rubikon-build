@@ -211,6 +211,9 @@ export function DirectionEditorial({
             alt={editorial.imageAlt}
             sizes="(max-width: 760px) calc(100vw - 32px), 64vw"
           />
+          {editorial.image.startsWith('/media/concepts/') && (
+            <figcaption className="media-provenance-label">Ілюстрація</figcaption>
+          )}
         </figure>
       </div>
     </section>
