@@ -219,27 +219,32 @@ section[id] { scroll-margin-top: 116px; }
 .hero h1 { max-width: 1100px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(56px, 6.2vw, 94px); font-weight: 400; line-height: 1.06; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
 .hero h1 em { color: var(--accent); font-style: normal; }
 .hero-lead { max-width: 650px; margin: 34px 0 0; color: rgba(255,255,255,.7); font-size: 17px; line-height: 1.7; }
-.hero-actions { display: flex; align-items: center; gap: 32px; margin-top: 40px; }
+.hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: 40px; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: 56px; padding-inline: 24px; border: 1px solid transparent; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .button-primary { color: white; background: var(--accent); }
 .button-primary:hover { background: var(--accent-dark); transform: translateY(-2px); }
+/* The quieter button on a dark hero: same size as the primary, outline only. */
+.hero .button-outline { color: white; border-color: rgba(255,255,255,.38); background: transparent; text-align: center; }
+.hero .button-outline:hover { border-color: rgba(255,255,255,.72); background: rgba(255,255,255,.06); }
+/* HOME's primary action is the call, with the number printed on the button: a visitor sees whom
+   they are calling before the tap. Same box as every .button; only the content is two lines.
+   min-width reserves the box: the number is ~4.5 px wider in Plex Condensed than in its fallback,
+   and without it the font swap nudged the two actions beside it (a measured layout shift). */
+.hero-call-primary { min-width: 260px; gap: 14px; padding-inline: 22px 26px; }
+.hero-call-primary svg { width: 20px; height: 20px; flex: 0 0 20px; stroke-width: 1.8; }
+.hero-call-primary > span { display: grid; gap: 5px; text-align: left; }
+.hero-call-primary small { font-size: 12px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
+.hero-call-primary strong { font: 600 20px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
 .button:active, .text-link:active, .section-link:active { transform: translateY(0) scale(.985); }
 .text-link { padding-block: 10px; border-bottom: 1px solid currentColor; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .text-link span { margin-left: 18px; color: var(--accent); }
 .hero-actions .text-link { display: inline-flex; align-items: center; justify-content: space-between; gap: 18px; white-space: nowrap; }
-.hero-actions > a > span { width: 20px; height: 20px; display: inline-grid; place-items: center; flex: 0 0 20px; color: white; font-size: 16px; font-weight: 500; line-height: 1; }
+.hero-actions > a > span[aria-hidden="true"] { width: 20px; height: 20px; display: inline-grid; place-items: center; flex: 0 0 20px; color: white; font-size: 16px; font-weight: 500; line-height: 1; }
 .hero-actions .text-link span { margin-left: 0; }
 .hero-contact-card { position: relative; align-self: end; overflow: visible; padding-top: 16px; border-top: 2px solid var(--accent); background: linear-gradient(90deg, rgba(12,14,13,.52), rgba(12,14,13,.12)); }
 .hero-contact-kicker { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 13px; }
 .hero-contact-kicker p { margin: 0; color: white; font-size: 11px; font-weight: 800; line-height: 1.3; letter-spacing: .12em; text-transform: uppercase; }
 .hero-contact-kicker > span { color: var(--text-on-dark-subtle); font-size: 10px; font-weight: 700; letter-spacing: .09em; text-align: right; text-transform: uppercase; }
-.hero-contact-card > a { display: flex; align-items: center; min-height: 70px; padding: 0 3px; color: white; border-top: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); font-size: 10px; font-weight: 800; letter-spacing: .055em; text-transform: uppercase; transition: color .25s ease, border-color .25s ease, background .25s ease; }
-.hero-contact-action { display: grid; gap: 7px; }
-.hero-contact-action small { color: var(--text-on-dark-subtle); font-size: 9px; line-height: 1.2; letter-spacing: .12em; }
-.hero-contact-action strong { color: white; font: 500 21px/1 var(--font-condensed), sans-serif; letter-spacing: .035em; text-transform: none; transition: color .25s ease; }
-.hero-contact-card > a:hover, .hero-contact-card > a:focus-visible { color: #f5a27f; border-color: rgba(193,77,34,.72); background: linear-gradient(90deg, rgba(193,77,34,.12), transparent); }
-.hero-contact-card > a:hover strong, .hero-contact-card > a:focus-visible strong { color: #f5a27f; }
-.hero-contact-options > span { display: block; margin: 12px 0 8px; color: var(--text-on-dark-subtle); font-size: 9px; font-weight: 700; line-height: 1.3; letter-spacing: .09em; text-transform: uppercase; }
 .hero-messengers { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,.15); border-bottom: 1px solid rgba(255,255,255,.15); }
 .hero-messengers .messenger-link { min-width: 0; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 7px; }
 .hero-messengers .messenger-link + .messenger-link { border-left: 1px solid rgba(255,255,255,.15); }
@@ -749,20 +754,20 @@ footer { color: #a8b0aa; background: #0e100f; }
 footer > .section-divider { position: relative; z-index: 1; }
 footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-grid { min-height: 230px; display: grid; grid-template-columns: auto auto auto auto; justify-content: space-between; align-items: start; gap: clamp(30px, 3.6vw, 72px); padding-block: 52px; font-size: 11px; }
-.footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 11px; padding-top: 3px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
-.footer-group-title { margin-bottom: 3px; color: var(--text-on-dark-subtle); font-size: 9px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
-.footer-nav a, .footer-directions a { white-space: nowrap; transition: color var(--duration-fast) ease; }
+.footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 3px; padding-top: 3px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.footer-group-title { margin-bottom: 7px; color: var(--text-on-dark-subtle); font-size: 9px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
+.footer-nav a, .footer-directions a { display: flex; align-items: center; min-height: 24px; white-space: nowrap; transition: color var(--duration-fast) ease; }
 .footer-nav a:hover, .footer-directions a:hover { color: white; }
 .footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
-.footer-phone, .footer-email { display: inline-flex; align-items: center; gap: 9px; color: white; font-size: 13px; font-weight: 700; letter-spacing: .025em; }
+.footer-phone, .footer-email { display: inline-flex; align-items: center; min-height: 24px; gap: 9px; color: white; font-size: 13px; font-weight: 700; letter-spacing: .025em; }
 .footer-phone svg, .footer-email svg { width: 17px; height: 17px; color: var(--accent); stroke-width: 1.7; }
 .footer-messengers { display: flex; gap: 7px; }
 .footer-messengers .messenger-link { width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.16); }
 .footer-messengers .messenger-brand-icon { width: 19px; height: 19px; }
 .footer-messengers .messenger-link span { display: none; }
 .footer-contact-stack > span { color: var(--text-on-dark-subtle); font-size: 10px; letter-spacing: .05em; }
-.footer-legal { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; color: var(--text-on-dark-subtle); font-size: 9px; letter-spacing: .035em; }
-.footer-legal a, .footer-legal-link { color: inherit; transition: color var(--duration-fast) ease; }
+.footer-legal { display: flex; flex-direction: column; align-items: flex-start; gap: 0; color: var(--text-on-dark-subtle); font-size: 9px; letter-spacing: .035em; }
+.footer-legal a, .footer-legal-link { display: inline-flex; align-items: center; min-height: 24px; color: inherit; transition: color var(--duration-fast) ease; }
 .footer-legal-link { padding: 0; border: 0; font: inherit; letter-spacing: inherit; background: none; cursor: pointer; }
 .footer-legal a:hover, .footer-legal-link:hover { color: white; }
 
@@ -805,10 +810,10 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .hero { min-height: 820px; }
   .hero-layout { grid-template-columns: minmax(0, 1fr) minmax(224px, 250px); gap: 38px; padding-top: 150px; }
   .hero-actions { gap: 16px; }
-  .hero-actions .button { gap: 16px; padding-inline: 18px; }
+  /* Tablet: the two hero buttons share their row, or fill it when they wrap, so they never sit at two different widths. */
+  .hero-actions .button { flex: 1 1 auto; gap: 16px; padding-inline: 18px; }
   .hero-actions .text-link { gap: 8px; }
   .hero-contact-kicker > span { display: none; }
-  .hero-contact-action strong { font-size: 18px; }
   .hero-messengers .messenger-link { gap: 5px; }
   .hero-messengers .messenger-brand-icon { width: 17px; height: 17px; }
   .hero-messengers .messenger-link span { font-size: 9px; }
@@ -953,21 +958,25 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .hero-layout { min-height: 790px; grid-template-columns: 1fr; align-content: end; padding: 128px 0 38px; gap: 0; }
   .hero h1 { font-size: clamp(36px, 10.2vw, 40px); }
   .hero-copy { display: grid; gap: 40px; margin-top: 24px; }
-  .hero-lead { margin-top: 0; font-size: 15px; }
-  .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, .72fr); align-items: stretch; gap: 12px; margin-top: 0; }
+  .hero-lead { margin-top: 0; font-size: 16px; }
+  .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 12px; margin-top: 0; }
   .button { width: 100%; }
-  .hero-actions .text-link { position: relative; width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: center; align-self: stretch; padding: 0 48px; border: 1px solid rgba(255,255,255,.38); text-align: center; }
-  .hero-actions .text-link span { position: absolute; right: 18px; margin-left: 0; }
-  /* Give the primary button the same trailing-edge arrow geometry as its sibling .text-link
-     above — without this it keeps the base in-flow/gap arrow mechanic, which lands at a
-     different horizontal offset than the pinned .text-link arrow right below it. Scoped to
-     .hero-actions .button only; every other .button on the site keeps its normal mechanic. */
-  .hero-actions .button { position: relative; padding: 0 48px; }
-  .hero-actions .button span { position: absolute; right: 18px; margin-left: 0; }
+  .hero-actions .text-link { justify-self: start; }
+  /* Stacked full-width hero buttons: content centred, the ↗ pinned to the same trailing edge on
+     each. Only the arrow span is pinned (not the call button's label). Scoped to .hero-actions
+     .button only; every other .button on the site keeps its normal mechanic. 44 px, not 48:
+     «Написати або залишити запит» (230 px) then fits one line from 360 px up. */
+  .hero-actions .button { position: relative; padding: 0 44px; }
+  .hero-actions .button > span[aria-hidden="true"] { position: absolute; right: 18px; margin-left: 0; }
   .hero-contact-card { width: 100%; margin-top: 38px; padding: 15px 0 0; background: linear-gradient(90deg, rgba(12,14,13,.58), rgba(12,14,13,.12)); }
   .hero-contact-kicker { margin-bottom: 9px; }
-  .hero-contact-card > a { min-height: 60px; }
-  .hero-contact-action strong { font-size: 18px; }
+  .story-support { font-size: 16px; line-height: 1.75; }
+  .estimate-brief .copy-column > p:not(.eyebrow) { font-size: 16px; line-height: 1.75; }
+  .estimate-list p { font-size: 16px; line-height: 1.6; }
+  /* Form helper text that tells the visitor what to type or agree to: 10–11 px was too small to read on a phone. */
+  .inquiry-required-note, .inquiry-submit-note, .inquiry-consent > small { font-size: 13px; }
+  .inquiry-field-hint { font-size: 13px; line-height: 1.45; }
+  .inquiry-consent > span { font-size: 13px !important; }
   .hero-signature { display: none; }
   .about-hero-media > :is(img, video) { filter: saturate(.58) contrast(1.08) brightness(.84); }
   .about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.86), rgba(10,11,12,.58)), linear-gradient(0deg, rgba(10,11,12,.78), transparent 66%); }
@@ -983,7 +992,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .direction-card:last-child { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
   .direction-copy { left: 24px; right: 82px; bottom: 25px; }
   .direction-copy strong, .direction-card:not(.wide) .direction-copy strong { font-size: 32px; }
-  .direction-copy small { margin-top: 12px; font-size: 14px; line-height: 1.5; }
+  .direction-copy small { margin-top: 12px; font-size: 16px; line-height: 1.5; }
   .direction-number { top: 24px; left: 24px; }
   .direction-arrow { right: 20px; bottom: 22px; width: 52px; height: 52px; }
   .promise-visual { min-height: 430px; }
@@ -1000,6 +1009,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .person-info h3 { margin: 18px 0; font-size: clamp(32px, 8.4vw, 38px); line-height: 1.02; }
   .team-about .person-info h3 { font-size: clamp(30px, 8.2vw, 38px); letter-spacing: normal; white-space: normal; }
   .person-info p, .person-info p:first-of-type { font-size: 14px; line-height: 1.65; }
+  .team-home .person-info p, .team-home .person-info p:first-of-type { font-size: 16px; }
   .steps { grid-template-columns: 1fr; }
   .steps li, .steps li:nth-child(n + 4) { grid-column: auto; min-height: 210px; }
   .steps h3 { margin-top: 24px; }
@@ -1074,10 +1084,10 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .related-grid[data-count="3"] { grid-template-columns: 1fr; }
   /* Side by side, but each still a single column of links — same logic as every other
      breakpoint, just placed in two tracks so the footer does not run nine links tall. */
-  .footer-nav, .footer-directions { grid-row: 2; grid-template-columns: 1fr; gap: 14px; margin: 0; padding: 20px 0; }
+  .footer-nav, .footer-directions { grid-row: 2; grid-template-columns: 1fr; gap: 6px; margin: 0; padding: 20px 0; }
   .footer-nav { grid-column: 1; }
   .footer-directions { grid-column: 2; }
-  .footer-group-title { margin-bottom: 4px; }
+  .footer-group-title { margin-bottom: 8px; }
   .footer-contact-stack { grid-column: 1 / -1; grid-row: 3; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-items: start; justify-self: stretch; gap: 10px 18px; margin-top: 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.13); }
   .footer-phone { grid-column: 1; grid-row: 1; min-height: 42px; margin: 0; }
   .footer-email { grid-column: 1 / -1; grid-row: 2; min-height: 42px; margin: 0; }
@@ -1130,8 +1140,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 }
 
 @media (max-width: 520px) {
-  .hero-actions { grid-template-columns: 1fr; }
-  .hero-contact-options { display: none; }
+  .hero-contact-card { display: none; }
 }
 
 @media (max-width: 600px) {
@@ -1189,7 +1198,6 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .hero-actions .button { min-height: 50px; }
   .hero-contact-card { padding-top: 12px; }
   .hero-contact-kicker { margin-bottom: 9px; }
-  .hero-contact-card > a { min-height: 50px; }
   .subhero, .service-subhero { min-height: 620px; height: 100svh; }
   .subhero-layout, .service-subhero-content { padding-top: 132px; padding-bottom: 44px; }
   .breadcrumb { margin-bottom: 30px; }
@@ -1210,7 +1218,6 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .hero-lead { margin-top: 16px; font-size: 14px; line-height: 1.48; }
   .hero-actions { margin-top: 18px; }
   .hero-actions .button { min-height: 46px; }
-  .hero-contact-options > span { display: none; }
   .subhero-layout, .service-subhero-content { padding-top: 112px; padding-bottom: 26px; }
 }
 
@@ -1227,7 +1234,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
     row-gap: 18px;
   }
   .hero h1 { grid-area: title; max-width: none; font-size: clamp(48px, 5.2vw, 78px); line-height: 1.02; }
-  .hero-copy { grid-area: copy; min-width: 0; display: flex; flex-direction: column; align-self: stretch; }
+  /* The gap keeps the lead off the actions when the (now shorter) contact card no longer stretches this row. */
+  .hero-copy { grid-area: copy; min-width: 0; display: flex; flex-direction: column; align-self: stretch; gap: clamp(20px, 3.5vh, 32px); }
   .hero-lead { align-self: start; margin-top: 0; }
   .hero-actions { margin-top: auto; }
   .hero-contact-card { grid-area: contact; margin-top: 0; }
@@ -1309,8 +1317,10 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
 }
 @media (max-width: 760px) {
   .cost-grid.format-grid { grid-template-columns: 1fr; }
+  .cost-grid.format-grid p { font-size: 16px; line-height: 1.65; }
   .entry-axis { grid-template-columns: 1fr; }
-  .entry-axis-note { grid-column: auto; }
+  .entry-axis li { font-size: 16px; }
+  .entry-axis-note { grid-column: auto; font-size: 16px; }
   .entry-points-list li { grid-template-columns: 1fr; }
 }
 

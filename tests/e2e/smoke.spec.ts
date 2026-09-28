@@ -15,8 +15,12 @@ const staticDirectionPaths = new Set([
   '/pokrivelni-roboty',
 ]);
 
-/** Pages whose hero names the inquiry CTA after their own conversation; the rest say «Обговорити проєкт». */
+/**
+ * Pages whose hero names the inquiry CTA after their own conversation; the rest say «Обговорити проєкт».
+ * The homepage leads with the call, so its link to #inquiry is the written path.
+ */
 const heroInquiryCta: Partial<Record<string, string>> = {
+  '/': 'Написати або залишити запит',
   '/napryamky': 'Обговорити задачу',
   '/angary': 'Обговорити завдання',
   '/zernoskhovyshcha': 'Обговорити зерносховище',
@@ -227,13 +231,13 @@ test.describe('public route smoke tests', () => {
     });
   }
 
-  test('homepage project CTA reaches the inquiry form', async ({ page }) => {
+  test('homepage written-contact CTA reaches the inquiry form', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' });
 
     await page
       .locator('main > section')
       .first()
-      .getByRole('link', { name: 'Обговорити проєкт', exact: true })
+      .getByRole('link', { name: 'Написати або залишити запит', exact: true })
       .click();
 
     await expect(page).toHaveURL(/\/#inquiry$/);

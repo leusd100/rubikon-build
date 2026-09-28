@@ -182,7 +182,7 @@ test.describe('smooth scroll (sitewide, desktop-only)', () => {
     await page
       .locator('main > section')
       .first()
-      .getByRole('link', { name: 'Обговорити проєкт', exact: true })
+      .getByRole('link', { name: 'Написати або залишити запит', exact: true })
       .click();
 
     await expect(page).toHaveURL(/\/#inquiry$/);

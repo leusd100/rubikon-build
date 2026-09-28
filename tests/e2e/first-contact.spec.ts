@@ -33,6 +33,44 @@ test.describe('phone', () => {
     });
   }
 
+  // HOME Slice 01 (Stage 1 hypothesis, not a measured preference): on the homepage the call is the
+  // primary action, with the number on it; writing or leaving a request is second, directions third.
+  for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }]) {
+    test(`/: the call is the primary hero action, on the first screen at ${viewport.width} px`, async ({ page }) => {
+      await answerCookies(page, 'denied');
+      await page.setViewportSize(viewport);
+      await page.goto('/', { waitUntil: 'load' });
+      const actions = page.locator('.hero .hero-actions > a');
+      await expect(actions).toHaveCount(3);
+      const [call, write, directions] = [actions.nth(0), actions.nth(1), actions.nth(2)];
+      await expect(call).toHaveClass(/\bbutton-primary\b/);
+      await expect(call).toHaveAttribute('href', TEL);
+      await expect(call).toHaveAccessibleName(`Зателефонувати, ${company.phone.display}`);
+      await expect(call).toContainText(company.phone.display);
+      await expect(write).toHaveAttribute('href', '#inquiry');
+      await expect(write).toContainText('Написати або залишити запит');
+      await expect(directions).toHaveAttribute('href', '/napryamky');
+      // Nobody is routed through the /angary brief before they can talk to the company.
+      await expect(page.locator('.hero a[href^="/angary"]')).toHaveCount(0);
+
+      const callBox = await call.boundingBox();
+      expect(callBox!.height).toBeGreaterThanOrEqual(44);
+      expect(callBox!.y + callBox!.height, 'the whole call button is on the first screen').toBeLessThanOrEqual(viewport.height);
+    });
+  }
+
+  // On a first visit the compact cookie banner also sits at the bottom. From 390×844 the call stays
+  // above it; at 360×800 the banner (27% of the screen) still covers it until answered — a known
+  // limit of this slice, since clearing it would mean shortening the hero copy or the banner.
+  test('/: on a first visit at 390 × 844 the call is clear of the cookie banner', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+    const call = page.locator('.hero .hero-actions > a').first();
+    const banner = page.locator('.cookie-banner');
+    await expect(banner).toBeVisible();
+    const [callBox, bannerBox] = await Promise.all([call.boundingBox(), banner.boundingBox()]);
+    expect(callBox!.y + callBox!.height).toBeLessThanOrEqual(bannerBox!.y);
+  });
+
   for (const path of INNER_PAGES) {
     test(`${path}: «Зателефонувати» sits under the primary hero action`, async ({ page }) => {
       await answerCookies(page, 'denied');
