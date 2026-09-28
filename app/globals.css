@@ -314,6 +314,12 @@ section[id] { scroll-margin-top: 116px; }
 .direction-copy strong { display: block; margin: 0; font: 400 clamp(30px, 3.15vw, 48px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
 .direction-card:not(.wide) .direction-copy strong { font-size: clamp(28px, 2.7vw, 40px); }
 .direction-copy small { display: block; max-width: 620px; margin: 16px 0 0; color: rgba(255,255,255,.76); font-size: 15px; line-height: 1.6; }
+/* The arrow sits beside the description at the bottom of the card, never beside the title, so the title may use the
+   inset that is reserved for the arrow (right 106 vs left 36 = 70 px). Without it «Зерносховища» and «Металоконструкції»
+   were split mid-word in the narrow right-hand cards between 761 and ~910 px. */
+@media (min-width: 761px) and (max-width: 1050px) {
+  .direction-card:not(.wide) .direction-copy strong { margin-right: -70px; }
+}
 .direction-arrow { position: absolute; right: 28px; bottom: 28px; display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid rgba(255,255,255,.68); border-radius: 50%; font-size: 22px; transition: color .25s ease, background .25s ease, border-color .25s ease; }
 .direction-card:hover .direction-arrow, .direction-card:focus-visible .direction-arrow { color: white; background: var(--accent); border-color: var(--accent); }
 .story-checker { display: grid; gap: clamp(96px, 9vw, 144px); }
@@ -975,6 +981,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .direction-card:last-child { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
   .direction-copy { left: 24px; right: 82px; bottom: 25px; }
   .direction-copy strong, .direction-card:not(.wide) .direction-copy strong { font-size: 32px; }
+  /* Same reason as above: «Металоконструкції» (239 px at 32 px) did not fit the 222 px left between the insets at 360 px. */
+  .direction-copy strong { margin-right: -58px; }
   .direction-copy small { margin-top: 12px; font-size: 16px; line-height: 1.5; }
   .direction-number { top: 24px; left: 24px; }
   .direction-arrow { right: 20px; bottom: 22px; width: 52px; height: 52px; }

@@ -279,6 +279,43 @@ test('homepage places its calls where intent rises: hero, after capability, befo
   await expect(page.locator('#services .contact-bridge a[href="#inquiry"]')).toHaveCount(1);
 });
 
+// The five direction cards on the homepage keep every title word whole. The title shares the card's inset with the
+// arrow; in the narrow right-hand cards «Зерносховища» and «Металоконструкції» used to split mid-word around 768 px
+// (and the latter below ~375 px). Measured like the H1: each word on its own must fit the title's own width.
+for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 820, height: 1180 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+  test(`homepage direction-card titles keep their words whole at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/', { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+
+    const cards = await page.locator('#directions .direction-card').evaluateAll((elements) => elements.map((card) => {
+      const title = card.querySelector<HTMLElement>('.direction-copy strong')!;
+      const arrow = card.querySelector<HTMLElement>('.direction-arrow')!;
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap';
+      title.appendChild(probe);
+      let widest = 0;
+      for (const word of (title.textContent ?? '').split(/\s+/).filter(Boolean)) {
+        probe.textContent = word;
+        widest = Math.max(widest, probe.getBoundingClientRect().width);
+      }
+      probe.remove();
+      const t = title.getBoundingClientRect();
+      const a = arrow.getBoundingClientRect();
+      const overlapsArrow = t.right > a.left && t.left < a.right && t.bottom > a.top && t.top < a.bottom;
+      return { title: (title.textContent ?? '').trim(), widest, available: title.clientWidth, overlapsArrow };
+    }));
+
+    expect(cards).toHaveLength(5);
+    // The title may use the space reserved for the arrow only where the arrow is not: it must never sit on it.
+    for (const card of cards) {
+      expect(card.widest, `${card.title}: widest word ${Math.round(card.widest)}px in ${card.available}px`).toBeLessThanOrEqual(card.available);
+      expect(card.overlapsArrow, `${card.title} runs into the arrow`).toBe(false);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+}
+
 // /yak-pratsyuiemo — the Delivery Model page, readable before and without JavaScript.
 const DELIVERY_PAGE = '/yak-pratsyuiemo';
 const FORBIDDEN_CLAIMS = [/генеральн\S*\s+підряд/i, /гаранті/i, /ліценз/i, /сертифікат/i, /штат/i, /\d+\s?(хв|хвилин|год)/i, /грн|₴|\$|€/, /від\s*\d[^.]*м²/i];
