@@ -1194,10 +1194,16 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   /* HOME only (.hero-layout alone also serves /pro-nas, /napryamky, /yak-pratsyuiemo, which have no
      hero-video-control to clear): the flat 34px above sits .hero-contact-card only 34px off the
      hero's own bottom edge, but .hero-video-control ("Пауза відео") needs 60px there (16px bottom +
-     its own 44px height) — on any short viewport this query matches, the two overlapped. Falling
-     back to the same --hero-bottom-space floor (64px) the uncompressed layout already guarantees
-     clears it at every height this query can match, while still compressing from the ≤88px max. */
-  .hero .hero-layout { padding-bottom: var(--hero-bottom-space); }
+     its own 44px height) — on any short viewport this query matches, the two overlapped. 76px (the
+     --hero-bottom-space floor plus a deliberate margin) keeps a real ≥16px gap at every height this
+     query can match, not just clear of it — the 64px floor alone left as little as 4px at the
+     shortest heights, closer to a near-miss than a resting gap. */
+  .hero .hero-layout { padding-bottom: max(76px, var(--hero-bottom-space)); }
+  /* The control is a full-bleed absolute child of .hero (not of .hero-layout's right column), so its
+     own flat "right: 24px" doesn't track the card's right edge the way everything else in .shell
+     does — it drifted past the card's edge into the outer gutter instead of sitting flush under it.
+     var(--container-gutter) is exactly what positions the shell (and so the card) at this width. */
+  .hero .hero-video-control { right: var(--container-gutter); }
   .hero h1 { max-width: 980px; font-size: clamp(52px, 5vw, 68px); line-height: 1.02; }
   .hero-lead { max-width: 620px; margin-top: 20px; font-size: 15px; line-height: 1.55; }
   .hero-actions { margin-top: 24px; }
