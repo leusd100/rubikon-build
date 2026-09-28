@@ -412,7 +412,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-form-heading p { margin: 0; }
 .inquiry-form-kicker { display: flex; align-items: center; gap: 10px; color: var(--ink); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .inquiry-form-kicker span { width: 18px; height: 2px; background: var(--accent); }
-.inquiry-required-note { color: var(--muted); font-size: 11px; }
+.inquiry-required-note { color: var(--muted); font-size: 12px; }
 .inquiry-form-section { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: clamp(22px, 2.3vw, 34px); padding: 26px clamp(24px, 2.5vw, 36px) 28px; border-top: 1px solid rgba(19,22,20,.15); }
 .inquiry-form-section-heading { align-self: start; display: grid; gap: 9px; padding-top: 2px; }
 /* accent (#b6532c) on this form's #f2f0ea background measures 4.32:1 — just under WCAG AA's
@@ -431,7 +431,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-form textarea { resize: vertical; min-height: 108px; padding: 13px 14px; }
 .inquiry-form input:focus, .inquiry-form select:focus, .inquiry-form textarea:focus { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(182,83,44,.12); }
 .inquiry-form input::placeholder, .inquiry-form textarea::placeholder { color: var(--text-placeholder); opacity: 1; }
-.inquiry-field-hint { margin-top: -3px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.inquiry-field-hint { margin-top: -3px; color: var(--muted); font-size: 12px; line-height: 1.4; }
 .inquiry-form :is(input, select, textarea):user-invalid { border-color: #9b3525; box-shadow: 0 0 0 3px rgba(155,53,37,.14); }
 .inquiry-choice { margin: 22px 0 0; padding: 0; border: 0; }
 .inquiry-choice legend { margin-bottom: 10px; }
@@ -476,9 +476,9 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-form-submit-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, .72fr); align-items: start; gap: clamp(20px, 2.3vw, 32px); }
 .inquiry-consent { grid-template-columns: 18px 1fr; align-items: start; gap: 10px !important; margin-top: 0; }
 .inquiry-consent input { width: 18px; min-height: 18px; margin: 1px 0 0; accent-color: var(--accent); }
-.inquiry-consent > span { color: var(--muted) !important; font-size: 10px !important; font-weight: 500 !important; line-height: 1.55; letter-spacing: 0 !important; text-transform: none !important; }
+.inquiry-consent > span { color: var(--muted) !important; font-size: 12px !important; font-weight: 500 !important; line-height: 1.55; letter-spacing: 0 !important; text-transform: none !important; }
 .inquiry-consent a { color: var(--accent-dark); font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
-.inquiry-consent > small { grid-column: 2; margin-top: -4px; color: #8f2f20; font-size: 11px; font-weight: 750; line-height: 1.45; }
+.inquiry-consent > small { grid-column: 2; margin-top: -4px; color: #8f2f20; font-size: 12px; font-weight: 750; line-height: 1.45; }
 .inquiry-consent.is-invalid { padding: 10px; background: rgba(155,53,37,.07); border-left: 3px solid #9b3525; }
 .inquiry-submit-group { min-width: 0; }
 /* Turnstile (interaction-only): zero-height unless Cloudflare asks for an interaction. Its widget
@@ -488,7 +488,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-form-submit-layout.has-turnstile-challenge .inquiry-turnstile { margin-bottom: 14px; }
 .inquiry-submit { width: 100%; margin-top: 0; border: 0; cursor: pointer; }
 .inquiry-submit svg { width: 17px; height: 17px; }
-.inquiry-submit-note { margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; text-align: center; }
+.inquiry-submit-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
 .inquiry-noscript { margin: 10px 0 0; padding: 10px 12px; color: var(--ink); background: rgba(182,83,44,.09); border-left: 3px solid var(--accent); font-size: 11px; line-height: 1.5; }
 .inquiry-noscript a { color: var(--accent-dark); font-weight: 800; }
 .inquiry-status { display: none; margin: 0; padding: 16px clamp(24px, 2.5vw, 36px); color: #edf4ef; background: #26352c; border-left: 3px solid #5e9c72; font-size: 12px; line-height: 1.55; }
