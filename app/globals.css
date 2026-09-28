@@ -752,8 +752,8 @@ footer { color: #a8b0aa; background: #0e100f; }
 footer > .section-divider { position: relative; z-index: 1; }
 footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-grid { min-height: 230px; display: grid; grid-template-columns: auto auto auto auto; justify-content: space-between; align-items: start; gap: clamp(30px, 3.6vw, 72px); padding-block: 52px; font-size: 11px; }
-.footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 3px; padding-top: 3px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
-.footer-group-title { margin-bottom: 7px; color: var(--text-on-dark-subtle); font-size: 9px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
+.footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 3px; padding-top: 3px; color: #c3c9c4; font-size: 11px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.footer-group-title { margin-bottom: 7px; color: var(--text-on-dark-subtle); font-size: 10px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
 .footer-nav a, .footer-directions a { display: flex; align-items: center; min-height: 24px; white-space: nowrap; transition: color var(--duration-fast) ease; }
 .footer-nav a:hover, .footer-directions a:hover { color: white; }
 .footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
@@ -764,7 +764,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-messengers .messenger-brand-icon { width: 19px; height: 19px; }
 .footer-messengers .messenger-link span { display: none; }
 .footer-contact-stack > span { color: var(--text-on-dark-subtle); font-size: 10px; letter-spacing: .05em; }
-.footer-legal { display: flex; flex-direction: column; align-items: flex-start; gap: 0; color: var(--text-on-dark-subtle); font-size: 9px; letter-spacing: .035em; }
+.footer-legal { display: flex; flex-direction: column; align-items: flex-start; gap: 0; color: var(--text-on-dark-subtle); font-size: 11px; letter-spacing: .035em; }
 .footer-legal a, .footer-legal-link { display: inline-flex; align-items: center; min-height: 24px; color: inherit; transition: color var(--duration-fast) ease; }
 .footer-legal-link { padding: 0; border: 0; font: inherit; letter-spacing: inherit; background: none; cursor: pointer; }
 .footer-legal a:hover, .footer-legal-link:hover { color: white; }
