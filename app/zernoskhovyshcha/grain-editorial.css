@@ -45,6 +45,13 @@
 .grain-page .related-directions-section.is-compact .related-card { min-width: 0; min-height: 128px; padding: 26px 28px; border: 0; border-left: 1px solid var(--border-strong); background: transparent; }
 .grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 1px solid var(--border-strong); }
 .grain-page .related-directions-section.is-compact .related-card:hover { background: rgba(255, 255, 255, .34); transform: none; }
+/* 768-900 px: three cards leave ~150 px for the title and «МЕТАЛОКОНСТРУКЦІЇ» (~187 px) broke
+   mid-letter. Stack them as on phones until three fit whole. */
+@media (min-width: 761px) and (max-width: 900px) {
+  .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
+  .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--border-strong); }
+  .grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 0; border-bottom: 0; }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   .grain-page .faq-list summary > span { transition: transform .2s ease; }

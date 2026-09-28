@@ -100,6 +100,7 @@ img { display: block; }
 .shell { width: min(var(--container-max), calc(100% - (var(--container-gutter) * 2))); margin-inline: auto; }
 .section { padding-block: var(--section-space); }
 section[id] { scroll-margin-top: 116px; }
+a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 
 .section-divider { width: min(var(--container-max), calc(100% - (var(--container-gutter) * 2))); height: 1px; margin-inline: auto; }
 .section-divider-accent { background: var(--accent); }
@@ -411,7 +412,7 @@ section[id] { scroll-margin-top: 116px; }
 .inquiry-form-heading p { margin: 0; }
 .inquiry-form-kicker { display: flex; align-items: center; gap: 10px; color: var(--ink); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .inquiry-form-kicker span { width: 18px; height: 2px; background: var(--accent); }
-.inquiry-required-note { color: var(--muted); font-size: 11px; }
+.inquiry-required-note { color: var(--muted); font-size: 12px; }
 .inquiry-form-section { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: clamp(22px, 2.3vw, 34px); padding: 26px clamp(24px, 2.5vw, 36px) 28px; border-top: 1px solid rgba(19,22,20,.15); }
 .inquiry-form-section-heading { align-self: start; display: grid; gap: 9px; padding-top: 2px; }
 /* accent (#b6532c) on this form's #f2f0ea background measures 4.32:1 — just under WCAG AA's
@@ -430,7 +431,7 @@ section[id] { scroll-margin-top: 116px; }
 .inquiry-form textarea { resize: vertical; min-height: 108px; padding: 13px 14px; }
 .inquiry-form input:focus, .inquiry-form select:focus, .inquiry-form textarea:focus { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(182,83,44,.12); }
 .inquiry-form input::placeholder, .inquiry-form textarea::placeholder { color: var(--text-placeholder); opacity: 1; }
-.inquiry-field-hint { margin-top: -3px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.inquiry-field-hint { margin-top: -3px; color: var(--muted); font-size: 12px; line-height: 1.4; }
 .inquiry-form :is(input, select, textarea):user-invalid { border-color: #9b3525; box-shadow: 0 0 0 3px rgba(155,53,37,.14); }
 .inquiry-choice { margin: 22px 0 0; padding: 0; border: 0; }
 .inquiry-choice legend { margin-bottom: 10px; }
@@ -475,9 +476,9 @@ section[id] { scroll-margin-top: 116px; }
 .inquiry-form-submit-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, .72fr); align-items: start; gap: clamp(20px, 2.3vw, 32px); }
 .inquiry-consent { grid-template-columns: 18px 1fr; align-items: start; gap: 10px !important; margin-top: 0; }
 .inquiry-consent input { width: 18px; min-height: 18px; margin: 1px 0 0; accent-color: var(--accent); }
-.inquiry-consent > span { color: var(--muted) !important; font-size: 10px !important; font-weight: 500 !important; line-height: 1.55; letter-spacing: 0 !important; text-transform: none !important; }
+.inquiry-consent > span { color: var(--muted) !important; font-size: 12px !important; font-weight: 500 !important; line-height: 1.55; letter-spacing: 0 !important; text-transform: none !important; }
 .inquiry-consent a { color: var(--accent-dark); font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
-.inquiry-consent > small { grid-column: 2; margin-top: -4px; color: #8f2f20; font-size: 11px; font-weight: 750; line-height: 1.45; }
+.inquiry-consent > small { grid-column: 2; margin-top: -4px; color: #8f2f20; font-size: 12px; font-weight: 750; line-height: 1.45; }
 .inquiry-consent.is-invalid { padding: 10px; background: rgba(155,53,37,.07); border-left: 3px solid #9b3525; }
 .inquiry-submit-group { min-width: 0; }
 /* Turnstile (interaction-only): zero-height unless Cloudflare asks for an interaction. Its widget
@@ -487,7 +488,7 @@ section[id] { scroll-margin-top: 116px; }
 .inquiry-form-submit-layout.has-turnstile-challenge .inquiry-turnstile { margin-bottom: 14px; }
 .inquiry-submit { width: 100%; margin-top: 0; border: 0; cursor: pointer; }
 .inquiry-submit svg { width: 17px; height: 17px; }
-.inquiry-submit-note { margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; text-align: center; }
+.inquiry-submit-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
 .inquiry-noscript { margin: 10px 0 0; padding: 10px 12px; color: var(--ink); background: rgba(182,83,44,.09); border-left: 3px solid var(--accent); font-size: 11px; line-height: 1.5; }
 .inquiry-noscript a { color: var(--accent-dark); font-weight: 800; }
 .inquiry-status { display: none; margin: 0; padding: 16px clamp(24px, 2.5vw, 36px); color: #edf4ef; background: #26352c; border-left: 3px solid #5e9c72; font-size: 12px; line-height: 1.55; }
@@ -528,9 +529,9 @@ section[id] { scroll-margin-top: 116px; }
 .about-subhero h1 { max-width: 860px; }
 .about-subhero .subhero-grid { z-index: 1; opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
 .about-subhero .subhero-overlay { z-index: 1; background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
-.breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 48px; color: rgba(255,255,255,.47); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-.breadcrumb span { display: inline-flex; gap: 8px; }
-.breadcrumb a { transition: color var(--duration-fast) ease; }
+.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 48px; color: rgba(255,255,255,.47); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.breadcrumb span { display: inline-flex; align-items: center; gap: 8px; }
+.breadcrumb a { display: inline-flex; align-items: center; min-height: 24px; margin-block: -4px; transition: color var(--duration-fast) ease; }
 .breadcrumb a:hover { color: white; }
 .breadcrumb b { color: rgba(255,255,255,.72); font-weight: 800; }
 .breadcrumb i { font-style: normal; }
@@ -581,6 +582,12 @@ section[id] { scroll-margin-top: 116px; }
 /* /pro-nas Values is 3 cards, not the 4 .detail-grid assumes elsewhere — override just this
    instance rather than leaving a hole in the fourth column. */
 .values-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Three 238-254 px cards at 768-820 px: at 23 px the longest title word («ВІДПОВІДАЛЬНОСТІ», ~215 px)
+   is wider than the text column and broke mid-letter. Scale the title with the viewport in that
+   band only; the 3-column layout and every other width are untouched. */
+@media (min-width: 761px) and (max-width: 1050px) {
+  .values-grid .detail-card h3 { font-size: clamp(17.5px, 2.3vw, 23px); }
+}
 
 .logo-lab { min-height: 100vh; background: var(--paper); }
 .logo-lab-intro { padding: 180px 0 86px; color: white; background: #101214; }
@@ -668,7 +675,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
    01-04) since these aren't ranked; the icon that DirectionItemCards always renders is hidden
    here on purpose — restrained/typographic rather than repeating Process's icon-per-item look. */
 .cost-list { border-top: 1px solid rgba(21,24,22,.17); }
-.cost-list article { display: grid; grid-template-columns: 34px minmax(160px, .34fr) minmax(0, 1fr); column-gap: 24px; align-items: baseline; padding: 24px 0; border-bottom: 1px solid rgba(21,24,22,.17); }
+.cost-list article { display: grid; grid-template-columns: 34px minmax(180px, .34fr) minmax(0, 1fr); column-gap: 24px; align-items: baseline; padding: 24px 0; border-bottom: 1px solid rgba(21,24,22,.17); }
 .cost-list .card-icon { display: none; }
 .cost-list span { color: var(--text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
 .cost-list h3 { margin: 0; font: 600 19px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
@@ -745,8 +752,8 @@ footer { color: #a8b0aa; background: #0e100f; }
 footer > .section-divider { position: relative; z-index: 1; }
 footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-grid { min-height: 230px; display: grid; grid-template-columns: auto auto auto auto; justify-content: space-between; align-items: start; gap: clamp(30px, 3.6vw, 72px); padding-block: 52px; font-size: 11px; }
-.footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 3px; padding-top: 3px; color: #c3c9c4; font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
-.footer-group-title { margin-bottom: 7px; color: var(--text-on-dark-subtle); font-size: 9px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
+.footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 3px; padding-top: 3px; color: #c3c9c4; font-size: 11px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.footer-group-title { margin-bottom: 7px; color: var(--text-on-dark-subtle); font-size: 10px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
 .footer-nav a, .footer-directions a { display: flex; align-items: center; min-height: 24px; white-space: nowrap; transition: color var(--duration-fast) ease; }
 .footer-nav a:hover, .footer-directions a:hover { color: white; }
 .footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
@@ -757,7 +764,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-messengers .messenger-brand-icon { width: 19px; height: 19px; }
 .footer-messengers .messenger-link span { display: none; }
 .footer-contact-stack > span { color: var(--text-on-dark-subtle); font-size: 10px; letter-spacing: .05em; }
-.footer-legal { display: flex; flex-direction: column; align-items: flex-start; gap: 0; color: var(--text-on-dark-subtle); font-size: 9px; letter-spacing: .035em; }
+.footer-legal { display: flex; flex-direction: column; align-items: flex-start; gap: 0; color: var(--text-on-dark-subtle); font-size: 11px; letter-spacing: .035em; }
 .footer-legal a, .footer-legal-link { display: inline-flex; align-items: center; min-height: 24px; color: inherit; transition: color var(--duration-fast) ease; }
 .footer-legal-link { padding: 0; border: 0; font: inherit; letter-spacing: inherit; background: none; cursor: pointer; }
 .footer-legal a:hover, .footer-legal-link:hover { color: white; }
@@ -932,6 +939,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .contact-copy > p:not(.eyebrow) { margin-top: 22px; }
   .ghost-word { display: none; }
   section[id] { scroll-margin-top: 88px; }
+  a[href], button, summary, input, select, textarea { scroll-margin-top: 88px; }
   .nav-wrap { min-height: 76px; gap: 12px; }
   .brand { width: 210px; }
   /* font-size/letter-spacing here are the a11y-legibility values (previously set by a
@@ -1183,6 +1191,19 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 @media (min-width: 761px) and (max-height: 820px) {
   .hero { min-height: 0; height: 100svh; }
   .hero-layout { min-height: 100%; padding-top: 126px; padding-bottom: 34px; }
+  /* HOME only (.hero-layout alone also serves /pro-nas, /napryamky, /yak-pratsyuiemo, which have no
+     hero-video-control to clear): the flat 34px above sits .hero-contact-card only 34px off the
+     hero's own bottom edge, but .hero-video-control ("Пауза відео") needs 60px there (16px bottom +
+     its own 44px height) — on any short viewport this query matches, the two overlapped. 76px (the
+     --hero-bottom-space floor plus a deliberate margin) keeps a real ≥16px gap at every height this
+     query can match, not just clear of it — the 64px floor alone left as little as 4px at the
+     shortest heights, closer to a near-miss than a resting gap. */
+  .hero .hero-layout { padding-bottom: max(76px, var(--hero-bottom-space)); }
+  /* The control is a full-bleed absolute child of .hero (not of .hero-layout's right column), so its
+     own flat "right: 24px" doesn't track the card's right edge the way everything else in .shell
+     does — it drifted past the card's edge into the outer gutter instead of sitting flush under it.
+     var(--container-gutter) is exactly what positions the shell (and so the card) at this width. */
+  .hero .hero-video-control { right: var(--container-gutter); }
   .hero h1 { max-width: 980px; font-size: clamp(52px, 5vw, 68px); line-height: 1.02; }
   .hero-lead { max-width: 620px; margin-top: 20px; font-size: 15px; line-height: 1.55; }
   .hero-actions { margin-top: 24px; }
@@ -1327,6 +1348,13 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
 }
 @media (max-width: 340px) {
   .contact-checklist ul { grid-template-columns: minmax(0, 1fr); }
+  /* 320 px phones: the page H1 and the /napryamky route titles carry words («МЕТАЛОКОНСТРУКЦІЇ»,
+     «конфіденційності») wider than the 288 px column at their usual size — size them to fit
+     instead of breaking mid-letter or running past the card edge. */
+  .subhero h1, .service-subhero h1 { font-size: 36px; }
+  .privacy-hero h1 { font-size: 36px; }
+  .route-service { grid-template-columns: 30px minmax(0, 1fr) 24px; gap: 8px; }
+  .route-service h3 { font-size: 21px; }
 }
 
 /* RoleIcon: a thin line drawing beside a role's label, in the label's quieter tone — never a

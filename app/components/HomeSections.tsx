@@ -104,7 +104,7 @@ export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null
         <SectionHeader
           eyebrow="Хто що виконує"
           title="Що виконуємо самі, а що координуємо"
-          supporting={`Комплексна реалізація можлива — її склад залежить від проєкту й договору. ${statements.responsibility}`}
+          supporting="Комплексна реалізація можлива — її склад залежить від проєкту й договору."
         />
         <div className="capability-ledger">
           {capabilityColumns.map((column) => (
