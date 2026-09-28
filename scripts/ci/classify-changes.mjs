@@ -24,7 +24,9 @@ export function classifyChanges(files) {
       'tests/e2e/grain-',
       'tests/unit/planner/',
     ]),
-    exact(['app/data/grainPage.ts', 'app/data/grainPlannerPresentation.ts']),
+    // The grain page's height budget (tests/e2e/grain-page.spec.ts) is measured on a page built from the shared
+    // stylesheet and root layout, so a change to either can break it — HOME slice 01 did, and it merged green.
+    exact(['app/data/grainPage.ts', 'app/data/grainPlannerPresentation.ts', 'app/globals.css', 'app/layout.tsx']),
   );
 
   const inquiry = infrastructure || matches(
