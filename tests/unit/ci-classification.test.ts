@@ -10,6 +10,14 @@ describe('CI change classification', () => {
       });
     },
   );
+  it.each(['app/globals.css', 'app/layout.tsx'])(
+    '%s runs the planner suites: the grain page height budget is measured on a page built from it', (file) => {
+      expect(classifyChanges([file])).toMatchObject({ planner: true, wide_visual: true });
+    },
+  );
+  it('leaves the homepage component out of the planner suites', () => {
+    expect(classifyChanges(['app/page.tsx'])).toMatchObject({ planner: false, wide_visual: true });
+  });
   it('never selects an empty visual job for a standalone stylesheet', () => {
     expect(classifyChanges(['app/custom-page.css'])).toMatchObject({ visual: true, wide_visual: true });
   });
