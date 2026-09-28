@@ -3,7 +3,6 @@ import { Mail, Phone } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import MobileMenu from './MobileMenu';
-import { EstimateBriefCards } from './ProcessCards';
 import ResponsiveImage from './ResponsiveImage';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
@@ -237,28 +236,6 @@ export function Breadcrumbs({ items }: { items: Array<{ label: string; href: str
   );
 }
 
-// Deliberately NOT a SectionHeader-above/grid-below composition like Process right before it:
-// two "here's a list" sections back to back went visually flat right before the conversion ask.
-// This is one asymmetric split instead — a quiet statement column (which is where the CTA now
-// lives) beside a single-column, intentionally compact checklist. Weight drops going into
-// Contact rather than staying flat. Reuses .page-two-col/.copy-column verbatim (the same split
-// already used on direction pages) rather than inventing a new grid.
-export function EstimateBrief() {
-  return (
-    <section className="estimate-brief section" id="estimate-brief">
-      <div className="shell page-two-col align-start">
-        <div className="copy-column">
-          <p className="eyebrow"><span /> Для першої оцінки</p>
-          <h2>Що потрібно для першої оцінки</h2>
-          <p>Не обов’язково мати готовий проєкт. Вкажіть базові параметри — ми уточнимо, яких вихідних даних бракує для наступного кроку.</p>
-          <a className="section-link" href={siteRoutes.contact}>Обговорити задачу <span aria-hidden="true">↗</span></a>
-        </div>
-        <EstimateBriefCards />
-      </div>
-    </section>
-  );
-}
-
 type TeamVariant = 'home' | 'about';
 
 type TeamBio = { role: string; paragraphs: readonly string[] };
@@ -302,14 +279,17 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
   const isHome = variant === 'home';
 
   return (
-    <section className={`team section team-${variant}`}>
+    <section className={`team section team-${variant}`} id={isHome ? 'about' : undefined}>
       <div className="shell">
+        {/* HOME: the one place the family / responsibility thesis is stated (it used to be split between «Наша основа»
+            and this block). Experience is told without a number until Serhii himself confirms one; responsibility is
+            bounded by the contract. */}
         <SectionHeader
           className="team-heading"
-          eyebrow="Родина в основі компанії"
+          eyebrow={isHome ? 'Люди й відповідальність' : 'Родина в основі компанії'}
           title={isHome ? 'Два покоління. Одна відповідальність' : 'Досвід двох поколінь — в одній команді'}
           supporting={isHome
-            ? 'Сергій Іванович відповідає за будівельний напрям і технічні рішення. Дмитро — за розвиток компанії та роботу з клієнтами.'
+            ? 'Практичний досвід будівництва й сучасна система роботи з клієнтом — в одній родинній компанії. За свою частину робіт і за домовленості в договорі відповідаємо особисто.'
             : 'Практичний досвід будівництва поєднуємо із системною організацією роботи, зрозумілою комунікацією та сучасними інструментами.'}
         />
         <div className="team-stories">

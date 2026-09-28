@@ -143,11 +143,11 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
   }
 });
 
-test('homepage server HTML carries the new H1, three formats, the entry axis and the cooperation options', async ({ page }) => {
+test('homepage server HTML carries the H1, three formats, the readiness levels and the cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
     formats: '#services .format-grid h3',
-    entryPoints: '#services .entry-axis li',
+    entryPoints: '#first-conversation .entry-axis li',
     cooperation: '.inquiry-details select option',
   });
 
@@ -198,11 +198,86 @@ for (const width of [360, 375, 390]) {
     });
     expect(heading.widest).toBeLessThanOrEqual(heading.available);
     const overflowing = await page
-      .locator('#services .format-grid article, #services .entry-axis')
+      .locator('#services .format-grid article, #services .capability-ledger > div, #first-conversation .entry-axis, #first-conversation .next-list > div')
       .evaluateAll((elements) => elements.filter((element) => element.scrollWidth > element.clientWidth + 1).length);
     expect(overflowing).toBe(0);
   });
 }
+
+// HOME Slice 02 — one argument: task → capability in honest limits → people → first conversation → contact.
+// These pin the architecture (order, one home per message, no claim wider than the evidence), not the wording.
+const HOME_SECTION_ORDER = ['top', 'directions', 'services', 'about', 'first-conversation', 'inquiry'];
+
+test('homepage sections come in the Slice 02 order, each message with one home', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'load' });
+  expect(await page.locator('main#main-content > section').evaluateAll((sections) => sections.map((section) => section.id))).toEqual(HOME_SECTION_ORDER);
+  // The old anchors of the merged blocks still resolve, inside the new one.
+  await expect(page.locator('#first-conversation #estimate-brief')).toHaveCount(1);
+  await expect(page.locator('#first-conversation #how-we-work')).toHaveCount(1);
+  // Merged away: the reputation block, the process teaser and the stand-alone brief.
+  await expect(page.locator('.promise, .process, .process-teaser, section.estimate-brief')).toHaveCount(0);
+});
+
+test('homepage says what the team does itself without claiming everything is in-house or a tenure it cannot prove', async ({ page }) => {
+  const text = await serverText(page, '/', {
+    main: 'main',
+    lead: '.hero-lead',
+    columns: '#services .capability-ledger h3',
+    depends: '#services .capability-depends li',
+  });
+  const main = text.main.join(' ');
+
+  expect(text.columns).toEqual(['Виконує наша команда', 'Залежно від проєкту', 'Профільні виконавці']);
+  // Owner-confirmed limits: metal may be made in-house or by an organised outside producer; specialists are external.
+  expect(text.depends.join(' ')).toMatch(/власне або на організованому зовнішньому виробництві/);
+  expect(text.lead.join(' ')).toMatch(/вузькі спеціальності координуємо з профільними виконавцями/);
+  for (const overclaim of [/усе\s+власними\s+силами/i, /повний\s+цикл/i, /усе\s+самостійно/i, /усі\s+спеціальності/i, /власними\s+силами\s+виконуємо\s+все/i]) {
+    expect(main, String(overclaim)).not.toMatch(overclaim);
+  }
+  // Serhii's tenure is owner-relayed, not first-hand confirmed: no number, no «понад 30», no year.
+  for (const tenure of [/30\+/, /понад\s+30/i, /1995/, /\d+\s+рок/i]) expect(main, String(tenure)).not.toMatch(tenure);
+  // The family thesis is stated once (it used to be split across two blocks and a hero label).
+  expect((main.match(/родинн/gi) ?? []).length).toBe(1);
+});
+
+test('homepage «Що буде після звернення» quotes the Delivery Model and promises no time, price or visit', async ({ page }) => {
+  const text = await serverText(page, '/', { next: '#how-we-work', prepare: '#estimate-brief', services: '#services' });
+  const next = text.next.join(' ');
+  const request = deliveryModel.stages.find((stage) => stage.id === 'request');
+  const budget = deliveryModel.stages.find((stage) => stage.id === 'scope-budget');
+
+  expect(next).toContain(deliveryModel.statements.firstContact);
+  expect(next).toContain(request?.rubikon.default);
+  expect(budget?.what).toContain('Бюджет і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
+  expect(next).toContain('Бюджет і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
+  expect(text.services.join(' ')).toContain(deliveryModel.statements.boundary);
+  for (const promise of [/\d+\s?(хв|хвилин|год|днів|дні|доб)/i, /грн|₴|\$|€/, /безкоштовн/i, /гаранті/i, /протягом/i]) {
+    expect(`${next} ${text.prepare.join(' ')}`, String(promise)).not.toMatch(promise);
+  }
+});
+
+test('homepage keeps illustrations labelled and out of the trust and proof zones; the proof slot is empty', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'load' });
+  const cards = page.locator('#directions .direction-card');
+  await expect(cards).toHaveCount(5);
+  for (const card of await cards.all()) await expect(card.locator('.direction-provenance')).toHaveText('Ілюстрація');
+  await expect(page.locator('#directions .section-header-support')).toContainText('ілюстрації, а не фото виконаних об’єктів');
+
+  // Concept images belong to the direction cards alone: none in the capability, people or contact blocks.
+  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card')).length)).toBe(0);
+  await expect(page.locator('#services img, #first-conversation img')).toHaveCount(0);
+  // Nothing is approved as proof yet, so the slot draws nothing — no empty frame, no placeholder.
+  await expect(page.locator('.home-proof')).toHaveCount(0);
+});
+
+test('homepage places its calls where intent rises: hero, after capability, before the form, in the form', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'load' });
+  const bySection = await page.locator('main#main-content > section').evaluateAll((sections) =>
+    Object.fromEntries(sections.map((section) => [section.id, section.querySelectorAll('a[href^="tel:"]').length])));
+  expect(bySection).toEqual({ top: 1, directions: 0, services: 1, about: 0, 'first-conversation': 1, inquiry: 1 });
+  // The write-a-request path follows each call, never replaces it.
+  await expect(page.locator('#services .contact-bridge a[href="#inquiry"]')).toHaveCount(1);
+});
 
 // /yak-pratsyuiemo — the Delivery Model page, readable before and without JavaScript.
 const DELIVERY_PAGE = '/yak-pratsyuiemo';

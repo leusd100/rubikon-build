@@ -94,6 +94,7 @@ for (const viewport of viewports) {
       );
     });
 
+    // «Хто що виконує»: the capability ledger and, once one exists, the proof slot, above the three formats.
     test('homepage formats', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(page.locator('#services > .shell'), `homepage-formats-${viewport.name}.png`);
@@ -110,6 +111,14 @@ for (const viewport of viewports) {
     test('homepage team', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(page.locator('.team > .shell'), `homepage-team-${viewport.name}.png`);
+    });
+
+    test('homepage first conversation', async ({ page }) => {
+      await preparePage(page, '/');
+      await expectStableScreenshot(
+        page.locator('#first-conversation > .shell'),
+        `homepage-first-conversation-${viewport.name}.png`,
+      );
     });
 
     test('homepage inquiry form', async ({ page }) => {
