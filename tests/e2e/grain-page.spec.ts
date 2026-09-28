@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { GRAIN_RESPONSIBILITY_STATEMENT } from '../../app/data/grainPage';
+import { GRAIN_RESPONSIBILITY_STATEMENT, GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT } from '../../app/data/grainPage';
 import { GRAIN_PAGE, PREVIEW, collectRuntimeErrors, horizontalOverflow, openPlanner, result, reveal, scenarios } from './grain-planner.helpers';
 
 /** The main bands in DOM order, named by what they are. */
@@ -45,7 +45,7 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
   test('quotes the one responsibility statement in the hero, bands 04–05, the FAQ and the result — and never «не входить»', async ({ page }) => {
     await openPlanner(page);
     const holders = ['.service-subhero-lead', '.grain-implementation-band', '.grain-process-band', '.faq-section'];
-    for (const selector of holders) expect(await page.locator(selector).first().textContent()).toContain(GRAIN_RESPONSIBILITY_STATEMENT);
+    for (const selector of holders) expect(await page.locator(selector).first().textContent()).toContain(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
 
     await scenarios.A(page);
     await reveal(page);

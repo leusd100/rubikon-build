@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(company.siteUrl),
   title: `Промислове будівництво у Дніпрі | ${company.name}`,
   description:
-    'Промислове будівництво у Дніпрі та області: комплексна реалізація об’єктів або окремі роботи у форматі підряду й субпідряду.',
+    company.description,
   alternates: {
     canonical: '/',
   },
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: `Промислове будівництво у Дніпрі | ${company.name}`,
-    description: 'Промислові, складські й аграрні об’єкти: комплексна реалізація або окремі роботи у форматі підряду й субпідряду у Дніпрі та області.',
+    description: company.description,
     type: 'website',
     locale: 'uk_UA',
     siteName: company.name,
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: `Промислове будівництво у Дніпрі | ${company.name}`,
-    description: 'Промислові, складські й аграрні об’єкти: комплексна реалізація або окремі роботи у форматі підряду й субпідряду.',
+    description: company.description,
     images: ['/og.jpg?v=rubikon-02'],
   },
 };
@@ -92,8 +92,8 @@ const organizationData = {
   telephone: company.phone.international,
   email: company.email,
   description: company.description,
-  areaServed: company.serviceAreas.map((name, index) => ({
-    '@type': index === 0 ? 'AdministrativeArea' : 'Country',
+  areaServed: company.serviceAreas.map((name) => ({
+    '@type': 'AdministrativeArea',
     name,
   })),
   founder: company.founders.map((name) => ({ '@type': 'Person', name })),

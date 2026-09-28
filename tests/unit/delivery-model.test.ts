@@ -20,62 +20,18 @@ import type {
   DocumentBasis,
   EntryStateId,
   Party,
-  ResponsibilityCell,
   StageId,
 } from '../../app/types/deliveryModel';
 
 const FORMAT_IDS: DeliveryFormatId[] = ['comprehensive', 'work-package', 'subcontract'];
 const STAGE_IDS: StageId[] = ['request', 'inputs', 'engineering', 'scope-budget', 'contract', 'preparation', 'construction', 'handover'];
-const PARTIES: Party[] = ['rubikon', 'rubikon-coordinates', 'partner', 'client', 'general-contractor'];
+const PARTIES: Party[] = ['rubikon-organizes', 'rubikon', 'rubikon-coordinates', 'partner', 'client', 'general-contractor'];
 const BASES: DocumentBasis[] = ['typical', 'contract', 'project', 'law'];
 
-// Frozen public wording, per model version. Rewording a statement means a new version and a new entry.
-const STATEMENTS_V1 = {
-  principle: 'RUBIKON не обіцяє, що одна команда робить абсолютно все. RUBIKON виконує своє ядро та координує інших виконавців у погодженому обсязі.',
-  team: 'Власна будівельна команда та профільні субпідрядники — залежно від обсягу й специфіки проєкту.',
-  design: 'Проєктування виконує профільна проєктна організація. Залежно від формату проєкту її залучає замовник або робота з нею організовується в межах комплексної реалізації. RUBIKON координує будівельні рішення та стики в погодженому обсязі.',
-  flexiblePackages: 'Огородження, ворота, промислові підлоги та інші будівельні роботи виконуємо власною командою або залучаємо профільного виконавця — залежно від обсягу та рішення.',
-  materials: 'Матеріали закуповує RUBIKON або надає замовник — залежно від договору.',
-  firstContact: 'Після заявки зв’яжемося, щоб уточнити задачу, вихідні дані та можливий формат нашої участі.',
-  experience: 'За RUBIKON BUILD стоїть особиста практика Сергія Івановича в будівництві.',
-  boundary: 'За що відповідає кожен учасник, фіксуємо в договорі до початку робіт.',
-};
-const STATEMENTS_BY_VERSION: Record<string, Record<keyof typeof deliveryModel.statements, string>> = { '1.0.0': STATEMENTS_V1, '1.1.0': STATEMENTS_V1, '1.2.0': STATEMENTS_V1 };
-// Entry-state notes, added in 1.1.0 and quoted verbatim like the statements.
+// Persisted format/entry/stage ids remain stable across the P01 service-boundary update.
 const START_NOTES_BY_VERSION: Record<string, readonly (readonly [EntryStateId, string])[]> = {
-  '1.1.0': [['design-docs', 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.']],
-  '1.2.0': [['design-docs', 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.']],
+  '2.0.0': [['design-docs', 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.']],
 };
-
-// Frozen responsibility matrix v1.0.0 in the contract's legend: В виконує, К координує, П партнер,
-// З замовник, Г генпідрядник, Д визначається договором, — поза обсягом. Columns: comprehensive | work-package | subcontract.
-const LEGEND: Record<Party, string> = { rubikon: 'В', 'rubikon-coordinates': 'К', partner: 'П', client: 'З', 'general-contractor': 'Г' };
-const FROZEN_MATRIX: Record<string, string> = {
-  'task-framing': 'В | В | ГВ',
-  'site-inputs': 'З | З | Г',
-  surveys: 'Д | Д | Г',
-  design: 'ПЗК | ПЗ | ПГ',
-  interfaces: 'К | ЗВ | Г',
-  estimate: 'В | В | В',
-  materials: 'ВЗ | ВЗ | ВГ',
-  steel: 'В | В | В',
-  roofing: 'В | В | В',
-  foundations: 'В | В | В',
-  'flexible-packages': 'ВП | ВП | ВП',
-  'engineering-systems': 'ПК | — | —',
-  'process-equipment': 'ПК | — | —',
-  'quality-control': 'В | В | В',
-  permits: 'Д | Д | Д',
-  supervision: 'Д | Д | Д',
-  acceptance: 'З | З | Г',
-  'as-built-documents': 'Д | Д | Д',
-};
-
-function matrixCode(cell: ResponsibilityCell): string {
-  if (cell === 'contract-defined') return 'Д';
-  if (cell === 'out-of-scope') return '—';
-  return cell.map((party) => LEGEND[party]).join('');
-}
 
 // Claims the public site must not make until they are true, each with a claim its pattern must catch.
 const FORBIDDEN_CLAIMS: readonly (readonly [RegExp, string])[] = [
@@ -171,27 +127,24 @@ describe('delivery model: who does which work', () => {
   const layer = (id: CapabilityLayerId) => deliveryModel.capabilities.filter((capability) => capability.layer === id).map((capability) => capability.id);
 
   it('splits the work into the frozen core, flexible packages and partners', () => {
-    expect(layer('core')).toEqual(['steel', 'roofing', 'foundations']);
-    expect(layer('flexible')).toEqual(['envelope', 'gates', 'industrial-floors', 'other-construction']);
-    expect(layer('partner')).toEqual(['design', 'mep', 'ventilation', 'landscaping', 'process-equipment']);
+    expect(layer('core')).toEqual(['steel', 'roofing', 'foundations', 'panels']);
+    expect(layer('flexible')).toEqual(['steel-fabrication', 'earthworks', 'envelope', 'gates', 'industrial-floors', 'other-construction', 'landscaping']);
+    expect(layer('partner')).toEqual(['mep', 'ventilation']);
   });
 
   it('links competencies only to direction pages that exist', () => {
     const directionIds = new Set<string>(directions.map((direction) => direction.id));
     const linked = deliveryModel.capabilities.flatMap((capability) => ('directionId' in capability ? [capability.directionId] : []));
 
-    expect(linked).toEqual(['metalokonstruktsii', 'pokrivelni-roboty', 'betonni-roboty']);
+    expect(linked).toEqual(['metalokonstruktsii', 'pokrivelni-roboty', 'betonni-roboty', 'metalokonstruktsii']);
     for (const id of linked) expect(directionIds.has(id), id).toBe(true);
   });
 
-  it('states the own core publicly, in the approved words', () => {
+  it('keeps fabrication outside the own core and design/equipment outside its offered capabilities', () => {
     const core = deliveryModel.capabilities.filter((capability) => capability.layer === 'core');
-
-    expect(core.map((capability) => ('statement' in capability ? capability.statement : null))).toEqual([
-      'Виготовляємо та монтуємо металоконструкції власною командою.',
-      'Покрівлі промислових і комерційних об’єктів.',
-      'Фундаменти й бетон — залежно від проєкту.',
-    ]);
+    expect(core.map((capability) => capability.label)).toContain('Монтаж металоконструкцій');
+    expect(core.map((capability) => capability.id)).not.toContain('steel-fabrication');
+    expect(deliveryModel.capabilities.map((capability) => capability.id)).not.toEqual(expect.arrayContaining(['design', 'process-equipment']));
   });
 });
 
@@ -240,23 +193,27 @@ describe('delivery model: responsibility', () => {
   it('leaves the legal layer to the contract in every format', () => {
     const legalRows = deliveryModel.responsibility.filter((row) => 'legalLayer' in row);
 
-    expect(legalRows.map((row) => row.id)).toEqual(['permits', 'supervision', 'as-built-documents']);
+    expect(legalRows.map((row) => row.id)).toEqual(['as-built-documents']);
     for (const row of legalRows) expect(Object.values(row.cells), row.id).toEqual(['contract-defined', 'contract-defined', 'contract-defined']);
   });
 
-  it('matches the frozen responsibility matrix v1.0.0', () => {
-    const matrix = Object.fromEntries(
-      deliveryModel.responsibility.map((row) => [row.id, FORMAT_IDS.map((format) => matrixCode(row.cells[format])).join(' | ')]),
-    );
-
-    expect(matrix).toEqual(FROZEN_MATRIX);
+  it('keeps design and permits with the customer and fabrication organised rather than all performed', () => {
+    const rows = new Map(deliveryModel.responsibility.map((row) => [row.id, row]));
+    for (const id of ['design', 'permits', 'external-utilities'] as const) {
+      expect(rows.get(id)?.cells.comprehensive).toEqual(['client']);
+      expect(rows.get(id)?.cells.subcontract).toEqual(['general-contractor']);
+    }
+    expect(rows.get('steel')?.cells.comprehensive).toEqual(['rubikon']);
+    expect(rows.get('steel-fabrication')?.cells.comprehensive).toEqual(['rubikon-organizes']);
+    for (const id of ['surveys', 'supervision', 'process-equipment'] as const) {
+      expect(rows.get(id)?.cells.comprehensive).toEqual(['client', 'partner']);
+    }
   });
 });
 
 describe('delivery model: public wording', () => {
-  it('keeps the frozen statements verbatim for its version', () => {
-    expect(deliveryModel.version).toBe('1.2.0');
-    expect(STATEMENTS_BY_VERSION[deliveryModel.version]).toEqual(deliveryModel.statements);
+  it('versions the updated service taxonomy and preserves the contact role', () => {
+    expect(deliveryModel.version).toBe('2.0.0');
     expect(deliveryModel.contactRoles.constructionLead.cta).toBe('Обговорити з керівником будівельного напряму');
   });
 
@@ -289,7 +246,7 @@ describe('delivery model: public wording', () => {
     const publicActivities = new Set<string>(deliveryModel.responsibility.map((row) => row.activity));
     const internalTopics = deliveryModel.legalLayer.filter((item) => !publicActivities.has(item.topic));
 
-    expect(internalTopics.map((item) => item.id)).toEqual(['general-contract-term', 'warranty', 'contract-documents']);
+    expect(internalTopics.map((item) => item.id)).toEqual(['general-contract-term', 'permits', 'warranty', 'contract-documents']);
     for (const item of internalTopics) expect(texts).not.toContain(item.topic);
   });
 

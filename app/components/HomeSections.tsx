@@ -17,26 +17,26 @@ import { entryPoints } from '../lib/deliveryModelPresentation';
 const { statements } = deliveryModel;
 
 // Who does the work — the model's three layers, in HOME's own words. «Виготовлення» sits under «залежно від
-// проєкту» on purpose: the owner confirmed metal may be made in-house or at an organised outside producer, so
-// nothing here says the whole chain is always done by our own team.
+// проєкту» on purpose: site fabrication where suitable, partner production for large volumes (P01 rev 3).
 const capabilityColumns: readonly { id: string; title: string; items: readonly string[] }[] = [
   {
     id: 'own',
     title: 'Виконує наша команда',
-    items: ['Бетонні роботи та фундаменти', 'Роботи з металоконструкціями', 'Монтаж конструкцій і панелей', 'Покрівлі'],
+    items: ['Бетонні роботи та типові фундаменти', 'Монтаж металоконструкцій', 'Монтаж стінових і покрівельних панелей', 'Покрівлі'],
   },
   {
     id: 'depends',
     title: 'Залежно від проєкту',
     items: [
-      'Виготовлення металоконструкцій — власне або на організованому зовнішньому виробництві',
-      'Огородження, ворота, промислові підлоги та інші будівельні роботи — власною командою або профільним виконавцем',
+      'Виготовлення металоконструкцій — на майданчику, де це доцільно; для великих обсягів — перевірене партнерське виробництво',
+      'Земляні роботи, огородження й ворота — склад і виконавців визначаємо під проєкт',
+      'Промислові підлоги — бетонна основа; спеціалізовані етапи погоджуємо з профільними виконавцями',
     ],
   },
   {
     id: 'partners',
     title: 'Профільні виконавці',
-    items: ['Проєктування', 'Інженерні мережі й комунікації', 'Вентиляція й благоустрій', 'Спеціальні системи й технологічне обладнання'],
+    items: ['Електрика', 'Вода, каналізація, опалення й вентиляція — у погодженому обсязі або на стороні замовника'],
   },
 ];
 
@@ -104,7 +104,7 @@ export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null
         <SectionHeader
           eyebrow="Хто що виконує"
           title="Що виконуємо самі, а що координуємо"
-          supporting={`Комплексна реалізація можлива — її склад залежить від проєкту й договору. ${statements.boundary}`}
+          supporting={`Комплексна реалізація можлива — її склад залежить від проєкту й договору. ${statements.responsibility}`}
         />
         <div className="capability-ledger">
           {capabilityColumns.map((column) => (
@@ -114,6 +114,7 @@ export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null
             </div>
           ))}
         </div>
+        <p className="capability-boundary">На стороні замовника — проєкт, дозволи, зовнішні мережі, вишукування та нагляд із відповідними спеціалістами.</p>
         <HomeProofSlot proof={proof} />
         <p className="capability-subtitle">Формат участі</p>
         <EngagementFormatCards />
@@ -140,8 +141,8 @@ const prepHints: readonly { title: string; text: string; icon: LucideIcon }[] = 
 const nextSteps: readonly { title: string; text: string }[] = [
   { title: 'Що робимо ми', text: 'Ставимо уточнювальні питання й чесно кажемо, чи задача в нашому профілі та в якому форматі ми можемо бути корисними.' },
   { title: 'Що вирішуєте ви', text: 'Який формат участі вам потрібен; погоджуєте концепцію, склад робіт, виключення та припущення.' },
-  { title: 'Технічні рішення', text: 'Проєктування виконує профільна проєктна організація; RUBIKON координує будівельні рішення й стики в погодженому обсязі.' },
-  { title: 'Коли з’являється ціна', text: 'Кошторис — коли зібрано вихідні дані й погоджено концепцію, яку можна порахувати. Бюджет і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.' },
+  { title: 'Технічні рішення', text: 'Проєкт надаєте ви або ваш проєктувальник. Ми узгоджуємо з ним будівельні рішення й стики в погодженому обсязі.' },
+  { title: 'Коли з’являється ціна', text: 'Є достатньо проєктних даних — готуємо попередній кошторис робіт і матеріалів. Даних бракує — уточнюємо, що потрібно. Є бюджет — оцінюємо, чи він реалістичний для вашої задачі.' },
 ];
 
 // One block for «з чим прийти» and «що буде далі»: it replaces the process teaser, the estimate brief and the

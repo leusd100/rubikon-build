@@ -1,7 +1,7 @@
 import type { DeliveryModel } from '../types/deliveryModel';
 
 /**
- * RUBIKON Delivery Model v1, frozen on 13.09.2026 with Dmytro's decisions: the single source of
+ * RUBIKON Delivery Model v2, aligned with P01 rev 3 on 28.09.2026: the single source of
  * truth for formats, who does which work, the eight stages, responsibility, documents and changes.
  * Pages quote these strings rather than rephrase them; docs/delivery-model.md is the readable version.
  *
@@ -10,7 +10,8 @@ import type { DeliveryModel } from '../types/deliveryModel';
  * Changing a statement is a new version: patch for wording, minor for additions, major for ids.
  */
 export const deliveryModel = {
-  version: '1.2.0',
+  version: '2.0.0',
+  // Historical model baseline, not approval or freezing of P01 (Serhii review remains pending).
   frozenAt: '2026-09-13',
   positioning: {
     primary: [
@@ -28,9 +29,9 @@ export const deliveryModel = {
       id: 'comprehensive',
       label: 'Комплексна реалізація',
       anchor: 'kompleksna-realizatsiia',
-      summary: 'RUBIKON координує погоджений обсяг будівництва й прагне бути єдиною точкою відповідальності перед замовником за виконані роботи в межах договору.',
+      summary: 'Якщо беремо погоджений комплекс робіт на себе — відповідаємо за результат.',
       coordination: 'Об’єкт у погодженому обсязі координує RUBIKON.',
-      interfaces: 'Стики між пакетами робіт — на RUBIKON.',
+      interfaces: 'Стики між роботами в погодженому комплексі — на RUBIKON.',
       contractTerm: { label: 'Генеральний підряд', status: 'pending-legal' },
       legacyCooperationLabels: ['Об’єкт під ключ'],
     },
@@ -68,10 +69,10 @@ export const deliveryModel = {
     {
       id: 'steel',
       layer: 'core',
-      label: 'Металоконструкції',
-      statement: 'Виготовляємо та монтуємо металоконструкції власною командою.',
+      label: 'Монтаж металоконструкцій',
+      statement: 'Монтуємо металоконструкції власною командою; ресурси масштабуємо під обсяг і строки проєкту.',
       directionId: 'metalokonstruktsii',
-      internalNote: 'За дуже великого обсягу або з іншої ресурсної причини частину робіт може виконати субпідрядник під координацією RUBIKON. Публічно не деталізуємо.',
+      internalNote: 'Монтаж — OWN_WITH_SCALING; виготовлення виділено в steel-fabrication як HYBRID_PROJECT_DEPENDENT.',
     },
     {
       id: 'roofing',
@@ -85,18 +86,19 @@ export const deliveryModel = {
       id: 'foundations',
       layer: 'core',
       label: 'Фундаменти й бетон',
-      statement: 'Фундаменти й бетон — залежно від проєкту.',
+      statement: 'Типові фундаменти й бетонні роботи для промислових, складських, аграрних і комерційних об’єктів.',
       directionId: 'betonni-roboty',
     },
+    { id: 'panels', layer: 'core', label: 'Монтаж стінових і покрівельних панелей' },
+    { id: 'steel-fabrication', layer: 'flexible', label: 'Виготовлення металоконструкцій', statement: 'Організовуємо виготовлення металоконструкцій під проєкт: частину робіт виконуємо на майданчику, де це технічно доцільно; для великих обсягів залучаємо перевірене партнерське виробництво.', directionId: 'metalokonstruktsii' },
+    { id: 'earthworks', layer: 'flexible', label: 'Земляні роботи — організовуємо під проєкт із потрібною технікою' },
     { id: 'envelope', layer: 'flexible', label: 'Огородження' },
     { id: 'gates', layer: 'flexible', label: 'Ворота' },
-    { id: 'industrial-floors', layer: 'flexible', label: 'Промислові підлоги' },
+    { id: 'industrial-floors', layer: 'flexible', label: 'Промислові підлоги', statement: 'Бетонну основу можемо виконати самі; спеціалізовані етапи погоджуємо з профільними виконавцями під технологію й обсяг.' },
     { id: 'other-construction', layer: 'flexible', label: 'Інші будівельні роботи' },
-    { id: 'design', layer: 'partner', label: 'Проєктування' },
-    { id: 'mep', layer: 'partner', label: 'Інженерні мережі' },
-    { id: 'ventilation', layer: 'partner', label: 'Вентиляція' },
-    { id: 'landscaping', layer: 'partner', label: 'Благоустрій' },
-    { id: 'process-equipment', layer: 'partner', label: 'Спеціальне технологічне обладнання' },
+    { id: 'mep', layer: 'partner', label: 'Електрика; вода й каналізація — профільні виконавці або замовник' },
+    { id: 'ventilation', layer: 'partner', label: 'Опалення й вентиляція — профільні виконавці або замовник' },
+    { id: 'landscaping', layer: 'flexible', label: 'Благоустрій — погоджений виконавець або замовник' },
   ],
   stages: [
     {
@@ -130,7 +132,7 @@ export const deliveryModel = {
         default: 'Надати дані, які вже є: технічне завдання, креслення, фото, обмеження, доступ до майданчика.',
         subcontract: 'Вихідні дані надає генпідрядник.',
       },
-      involved: { default: 'За потреби — вишукування; хто їх організовує, визначає договір.' },
+      involved: { default: 'За потреби замовник залучає спеціалістів із вишукувань; можемо координувати взаємодію.' },
       result: 'Зафіксовані вихідні дані й відкриті питання.',
       gate: 'Даних досить, щоб опрацьовувати рішення.',
       why: 'Помилка у вихідних даних переходить у кожне наступне рішення — від фундаменту до кошторису.',
@@ -145,20 +147,20 @@ export const deliveryModel = {
     {
       id: 'engineering',
       number: '03',
-      title: 'Інженерне опрацювання',
-      what: 'Концепція рішення: конструктивна схема, склад пакетів робіт, стики з технологією. Проєктування виконує профільна проєктна організація — за потреби в кілька стадій.',
+      title: 'Узгодження з проєктом',
+      what: 'Узгодження будівельних робіт із проєктною документацією. Конструктивну схему й розрахунки готує проєктувальник замовника.',
       rubikon: {
         default: 'Працюємо з проєктувальником і координуємо будівельні рішення та стики в погодженому обсязі.',
         'work-package': 'Перевіряємо, чи документація придатна для нашого пакета, і чого в ній бракує.',
         subcontract: 'Працюємо з рішеннями, які надає генпідрядник.',
       },
       client: {
-        default: 'Залучити проєктну організацію або погодити, що робота з нею організовується в межах комплексної реалізації; ухвалити концепцію.',
+        default: 'Надати проєктну документацію або залучити окремого проєктувальника; погодити рішення.',
         'work-package': 'Надати наявну проєктну документацію або, за потреби, залучити профільного проєктувальника; погодити вихідні вимоги до нашого пакета робіт.',
         subcontract: 'Документацію й рішення надає генпідрядник.',
       },
       involved: {
-        default: 'Профільна проєктна організація; постачальник обладнання — технологічні вимоги.',
+        default: 'Проєктувальник замовника; постачальник обладнання — технологічні вимоги.',
         'work-package': 'Проєктувальник замовника.',
         subcontract: 'Проєктувальник генпідрядника.',
       },
@@ -224,9 +226,9 @@ export const deliveryModel = {
       id: 'preparation',
       number: '06',
       title: 'Підготовка реалізації',
-      what: 'Робоче проєктування — за потреби в кілька стадій, закупівлі, формування виконавців і субпідрядників, графік робіт, мобілізація.',
+      what: 'Замовник забезпечує робочу документацію. Готуємо закупівлі, виконавців, графік робіт і вихід на майданчик.',
       rubikon: {
-        default: 'Координуємо робочу документацію, закупівлі та виконавців.',
+        default: 'Звіряємо готовність документації замовника; організовуємо погоджені закупівлі та виконавців.',
         'work-package': 'Готуємо свій пакет: матеріали, виготовлення, бригади.',
         subcontract: 'Готуємо свій пакет у графіку генпідрядника.',
       },
@@ -235,7 +237,7 @@ export const deliveryModel = {
         subcontract: 'Фронт робіт і документацію забезпечує генпідрядник.',
       },
       involved: {
-        default: 'Проєктувальник — робоча документація; постачальники; профільні партнери.',
+        default: 'Проєктувальник замовника — робоча документація; постачальники; профільні партнери.',
         'work-package': 'Проєктувальник замовника; постачальники.',
         subcontract: 'Проєктувальник генпідрядника; постачальники.',
       },
@@ -254,7 +256,7 @@ export const deliveryModel = {
       id: 'construction',
       number: '07',
       title: 'Будівництво',
-      what: 'Виконуємо погоджений обсяг робіт: основні компетенції — власною командою; для окремих пакетів залежно від обсягу й рішення можемо залучати профільних виконавців, а спеціалізовані роботи виконують відповідні партнери.',
+      what: 'Виконуємо погоджений обсяг. Масштабуємо ресурси під обсяг і строки конкретного проєкту; спеціалізовані роботи виконують профільні виконавці.',
       rubikon: {
         default: 'Виконуємо свої пакети й координуємо партнерів і стики.',
         'work-package': 'Виконуємо свій пакет і стики, визначені договором.',
@@ -265,7 +267,7 @@ export const deliveryModel = {
         subcontract: 'Рішення й погодження — через генпідрядника.',
       },
       involved: {
-        default: 'Профільні партнери: інженерні мережі, вентиляція, обладнання, благоустрій — у погодженому обсязі.',
+        default: 'Профільні виконавці погоджених спеціалізованих робіт.',
         'work-package': 'Інші підрядники замовника — через стики.',
         subcontract: 'Інші підрядники генпідрядника.',
       },
@@ -290,7 +292,7 @@ export const deliveryModel = {
         default: 'Прийняти роботи.',
         subcontract: 'Роботи приймає генпідрядник.',
       },
-      involved: { default: 'Партнери — по своїх пакетах; нагляд — як визначено договором.' },
+      involved: { default: 'Профільні виконавці — за погодженими роботами; нагляд — спеціалісти замовника.' },
       result: 'Прийняті роботи й документи для експлуатації.',
       gate: 'Акти підписано.',
       why: 'Документи здачі потрібні не для архіву: з ними ви експлуатуєте й обслуговуєте об’єкт.',
@@ -317,17 +319,17 @@ export const deliveryModel = {
     {
       id: 'surveys',
       activity: 'Вишукування',
-      cells: { comprehensive: 'contract-defined', 'work-package': 'contract-defined', subcontract: ['general-contractor'] },
+      cells: { comprehensive: ['client', 'partner'], 'work-package': ['client', 'partner'], subcontract: ['general-contractor', 'partner'] },
     },
     {
       id: 'design',
       activity: 'Проєктування, усі стадії',
       cells: {
-        comprehensive: ['partner', 'client', 'rubikon-coordinates'],
-        'work-package': ['partner', 'client'],
-        subcontract: ['partner', 'general-contractor'],
+        comprehensive: ['client'],
+        'work-package': ['client'],
+        subcontract: ['general-contractor'],
       },
-      note: 'Проєктувальника залучає замовник або робота з ним організовується в межах комплексної реалізації; RUBIKON координує будівельні рішення та стики.',
+      note: 'Проєкт надає замовник або його окремий проєктувальник. RUBIKON може порадити спеціаліста й узгодити будівельні стики.',
     },
     {
       id: 'interfaces',
@@ -349,8 +351,14 @@ export const deliveryModel = {
     },
     {
       id: 'steel',
-      activity: 'Металоконструкції: виготовлення й монтаж',
+      activity: 'Монтаж металоконструкцій',
       cells: { comprehensive: ['rubikon'], 'work-package': ['rubikon'], subcontract: ['rubikon'] },
+    },
+    {
+      id: 'steel-fabrication',
+      activity: 'Виготовлення металоконструкцій',
+      cells: { comprehensive: ['rubikon-organizes'], 'work-package': ['rubikon-organizes'], subcontract: ['rubikon-organizes'] },
+      note: 'Організовуємо виготовлення металоконструкцій під проєкт: частину робіт виконуємо на майданчику, де це технічно доцільно; для великих обсягів залучаємо перевірене партнерське виробництво.',
     },
     {
       id: 'roofing',
@@ -367,18 +375,25 @@ export const deliveryModel = {
       id: 'flexible-packages',
       activity: 'Огородження, ворота, промислові підлоги, інші будівельні роботи',
       cells: { comprehensive: ['rubikon', 'partner'], 'work-package': ['rubikon', 'partner'], subcontract: ['rubikon', 'partner'] },
-      note: 'Власною командою або профільним виконавцем — залежно від обсягу та рішення.',
+      note: 'Склад і виконавців визначаємо під проєкт. Для промислових підлог бетонну основу можемо виконати самі, спеціалізовані етапи — із профільними виконавцями.',
     },
     {
       id: 'engineering-systems',
-      activity: 'Інженерні мережі, вентиляція, благоустрій',
-      cells: { comprehensive: ['partner', 'rubikon-coordinates'], 'work-package': 'out-of-scope', subcontract: 'out-of-scope' },
+      activity: 'Електрика, вода, каналізація, опалення й вентиляція',
+      cells: { comprehensive: ['partner', 'rubikon-coordinates', 'client'], 'work-package': 'out-of-scope', subcontract: 'out-of-scope' },
+      note: 'Виконує профільний спеціаліст у погодженому комплексі або окремо на стороні замовника.',
+    },
+    {
+      id: 'external-utilities',
+      activity: 'Зовнішні мережі й підключення',
+      cells: { comprehensive: ['client'], 'work-package': ['client'], subcontract: ['general-contractor'] },
+      note: 'Можемо порадити спеціалістів.',
     },
     {
       id: 'process-equipment',
       activity: 'Спеціальне технологічне обладнання',
-      cells: { comprehensive: ['partner', 'rubikon-coordinates'], 'work-package': 'out-of-scope', subcontract: 'out-of-scope' },
-      note: 'У комплексній реалізації RUBIKON координує стики з обладнанням; в окремому підряді стики з ним фіксує договір.',
+      cells: { comprehensive: ['client', 'partner'], 'work-package': ['client', 'partner'], subcontract: ['general-contractor', 'partner'] },
+      note: 'Підбір, постачання й монтаж обладнання — окремо із профільними спеціалістами. RUBIKON узгоджує стики своєї будівельної частини.',
     },
     {
       id: 'quality-control',
@@ -387,15 +402,14 @@ export const deliveryModel = {
     },
     {
       id: 'permits',
-      activity: 'Дозвільна документація',
-      cells: { comprehensive: 'contract-defined', 'work-package': 'contract-defined', subcontract: 'contract-defined' },
-      legalLayer: true,
+      activity: 'Дозволи й введення в експлуатацію',
+      cells: { comprehensive: ['client'], 'work-package': ['client'], subcontract: ['general-contractor'] },
     },
     {
       id: 'supervision',
       activity: 'Технічний і авторський нагляд',
-      cells: { comprehensive: 'contract-defined', 'work-package': 'contract-defined', subcontract: 'contract-defined' },
-      legalLayer: true,
+      cells: { comprehensive: ['client', 'partner'], 'work-package': ['client', 'partner'], subcontract: ['general-contractor', 'partner'] },
+      note: 'Нагляд забезпечують відповідні спеціалісти замовника; RUBIKON може координувати взаємодію.',
     },
     {
       id: 'acceptance',
@@ -452,13 +466,15 @@ export const deliveryModel = {
   ],
   statements: {
     principle: 'RUBIKON не обіцяє, що одна команда робить абсолютно все. RUBIKON виконує своє ядро та координує інших виконавців у погодженому обсязі.',
-    team: 'Власна будівельна команда та профільні субпідрядники — залежно від обсягу й специфіки проєкту.',
-    design: 'Проєктування виконує профільна проєктна організація. Залежно від формату проєкту її залучає замовник або робота з нею організовується в межах комплексної реалізації. RUBIKON координує будівельні рішення та стики в погодженому обсязі.',
-    flexiblePackages: 'Огородження, ворота, промислові підлоги та інші будівельні роботи виконуємо власною командою або залучаємо профільного виконавця — залежно від обсягу та рішення.',
+    team: 'Масштабуємо ресурси під обсяг і строки конкретного проєкту. Спеціалізовані роботи виконують профільні виконавці.',
+    design: 'Проєктування — на стороні замовника: він надає документацію або залучає окремого проєктувальника. Можемо порадити спеціалістів і узгодити з ними будівельні рішення та стики в погодженому обсязі.',
+    flexiblePackages: 'Склад і виконавців цих робіт визначаємо під конкретний проєкт.',
     materials: 'Матеріали закуповує RUBIKON або надає замовник — залежно від договору.',
-    firstContact: 'Після заявки зв’яжемося, щоб уточнити задачу, вихідні дані та можливий формат нашої участі.',
+    firstContact: 'Перше звернення приймає Дмитро: уточнює задачу й вихідні дані, за потреби долучає Сергія до технічної розмови.',
     experience: 'За RUBIKON BUILD стоїть особиста практика Сергія Івановича в будівництві.',
-    boundary: 'За що відповідає кожен учасник, фіксуємо в договорі до початку робіт.',
+    boundary: 'За що відповідає кожен учасник, фіксуємо в договорі до початку робіт. Роботи, які замовник замовляє окремо, залишаються поза нашою відповідальністю.',
+    responsibility: 'Якщо беремо погоджений комплекс робіт на себе — відповідаємо за результат.',
+    customerScope: 'На стороні замовника — проєкт, дозволи й введення в експлуатацію, зовнішні мережі. Вишукування та нагляд забезпечують відповідні спеціалісти замовника; можемо координувати взаємодію.',
   },
   contactRoles: {
     constructionLead: {

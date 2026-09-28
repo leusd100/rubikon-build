@@ -19,6 +19,9 @@ export type StageId =
 export type CapabilityLayerId = 'core' | 'flexible' | 'partner';
 export type CapabilityId =
   | 'steel'
+  | 'steel-fabrication'
+  | 'panels'
+  | 'earthworks'
   | 'roofing'
   | 'foundations'
   | 'envelope'
@@ -31,7 +34,7 @@ export type CapabilityId =
   | 'landscaping'
   | 'process-equipment';
 /** Who does a piece of work in a given format. */
-export type Party = 'rubikon' | 'rubikon-coordinates' | 'partner' | 'client' | 'general-contractor';
+export type Party = 'rubikon' | 'rubikon-organizes' | 'rubikon-coordinates' | 'partner' | 'client' | 'general-contractor';
 /** Why a document appears: usually does, depends on the contract, on the project, or is required by law. */
 export type DocumentBasis = 'typical' | 'contract' | 'project' | 'law';
 
@@ -131,6 +134,8 @@ export type DeliveryModel = {
     firstContact: string;
     experience: string;
     boundary: string;
+    responsibility: string;
+    customerScope: string;
   };
   contactRoles: { constructionLead: { title: string; cta: string } };
   /** Topics kept neutral until the lawyer's review. Internal; never rendered. */

@@ -354,7 +354,8 @@ export default function DeliveryModelPage() {
             </div>
             <CapabilityLayerCard layer={layers.partner} />
           </div>
-          <p className="delivery-boundary">{statements.boundary}</p>
+          <p className="delivery-boundary">{statements.customerScope}</p>
+          <p className="delivery-boundary">{statements.responsibility} {statements.boundary}</p>
         </div>
       </section>
 
@@ -372,7 +373,7 @@ export default function DeliveryModelPage() {
             eyebrow="Відповідальність"
             icon={<RoleIcon role="scope" />}
             title="Хто за що відповідає"
-            supporting="Та сама робота може належати різним учасникам — залежно від формату участі. Дозвільні питання, нагляд і виконавчу документацію визначає договір."
+            supporting={`${statements.responsibility} ${statements.boundary}`}
           />
           <div className="delivery-shared">
             <h3>Однаково в усіх форматах</h3>

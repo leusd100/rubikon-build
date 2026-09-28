@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { directionPages } from '../../../app/data/directionPages';
 import { directions } from '../../../app/data/directions';
-import { GRAIN_RESPONSIBILITY_STATEMENT, grainPage } from '../../../app/data/grainPage';
+import { GRAIN_RESPONSIBILITY_STATEMENT, GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT, grainPage } from '../../../app/data/grainPage';
 import { relatedDirections } from '../../../app/data/relatedDirections';
 
 // Decision 1 of the Grain Planner Implementation Spec v1, as the owner approved it.
@@ -23,17 +23,13 @@ describe('grain page copy', () => {
     expect(GRAIN_RESPONSIBILITY_STATEMENT).toBe(DECISION_1);
   });
 
-  it('quotes that statement in the hero, band 04, band 05 and the FAQ', () => {
-    expect(config.hero.intro.endsWith(GRAIN_RESPONSIBILITY_STATEMENT)).toBe(true);
-    expect(config.editorial.text).toBe(GRAIN_RESPONSIBILITY_STATEMENT);
-    expect(config.process.text).toBe(GRAIN_RESPONSIBILITY_STATEMENT);
-    expect(config.faq?.items.find(([question]) => question === 'Чи займаєтеся ви технологічним обладнанням?')?.[1]).toBe(GRAIN_RESPONSIBILITY_STATEMENT);
-  });
-
-  it('never words the boundary as «обладнання не входить»', () => {
-    const copy = strings(grainPage);
-    expect(copy.length).toBeGreaterThan(30);
-    for (const text of copy) expect(text).not.toMatch(/не\s+вход(ить|ять)/i);
+  it('uses the conservative website boundary without changing the Planner decision', () => {
+    expect(config.hero.intro.endsWith(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT)).toBe(true);
+    expect(config.editorial.text).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    expect(config.process.text).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    expect(config.faq?.items.find(([question]) => question === 'Чи займаєтеся ви технологічним обладнанням?')?.[1]).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    expect(GRAIN_RESPONSIBILITY_STATEMENT).toBe(DECISION_1);
+    expect(strings(config).join(' ')).not.toContain(DECISION_1);
   });
 
   it('asks the FAQ v2 questions and drops the capacity-only estimate', () => {
@@ -51,8 +47,8 @@ describe('grain page copy', () => {
 
   it('names the whole service area, not only the city', () => {
     const regions = config.faq?.items.find(([question]) => question === 'У яких регіонах ви будуєте зерносховища?')?.[1] ?? '';
-    expect(regions).toContain('Дніпропетровська область');
-    expect(regions).toContain('по всій Україні');
+    expect(regions).toContain('Дніпропетровській області');
+    expect(regions).toContain('якщо їх формат і умови дозволяють');
   });
 
   it('leads the hero into the planner and the conversation', () => {

@@ -2,6 +2,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
+import { company } from '../../data/company';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { alternativeCladdingDemo } from '../../lib/configurator/presentationDemo';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
@@ -199,7 +200,7 @@ export function HangarEditorialArchitecture() {
           <header className="angary-section-heading angary-structure-heading">
             <p className="eyebrow"><span /> Попередня схема</p>
             <h2 id="angary-structure-title">Що визначає схему каркаса</h2>
-            <p className="angary-honesty-note">Попередня конструктивна схема уточнюється після розрахунку.</p>
+            <p className="angary-honesty-note">Попередня конструктивна схема уточнюється після розрахунку проєктувальником.</p>
             <button
               type="button"
               className="angary-preview-action"
@@ -225,8 +226,8 @@ export function HangarEditorialArchitecture() {
 
           <figure className="angary-diagram angary-longitudinal-diagram">
             <LongitudinalDiagram />
-            <p className="angary-diagram-key"><span>Крок рам</span><strong>Попередньо 6–8 м · уточнюється після розрахунку</strong></p>
-            <figcaption><span>ПОЗДОВЖНЯ СХЕМА</span><strong>Ритм рам і в’язі</strong><p>У попередній схемі ритм рам формується орієнтовно в діапазоні 6–8 м і уточнюється після розрахунку.</p></figcaption>
+            <p className="angary-diagram-key"><span>Крок рам</span><strong>Попередньо 6–8 м · уточнюється після розрахунку проєктувальником</strong></p>
+            <figcaption><span>ПОЗДОВЖНЯ СХЕМА</span><strong>Ритм рам і в’язі</strong><p>У попередній схемі ритм рам формується орієнтовно в діапазоні 6–8 м і уточнюється після розрахунку проєктувальником.</p></figcaption>
           </figure>
         </div>
       </section>
@@ -240,7 +241,7 @@ export function HangarEditorialArchitecture() {
           <ol className="angary-process-rail">
             <li className="is-current"><span>01</span><strong>Конфігурація</strong><p>{inquiry?.isAttached ? 'Конфігурацію додано до заявки.' : 'Базову конфігурацію можна сформувати вище.'}</p></li>
             <li><span>02</span><strong>Уточнення задачі</strong><p>Звіряємо функцію, майданчик і склад робіт.</p></li>
-            <li><span>03</span><strong>Розрахунок і проєктне рішення</strong><p>Перевіряємо схему та визначаємо технічні параметри.</p></li>
+            <li><span>03</span><strong>Узгодження з проєктом</strong><p>Проєкт і розрахунок забезпечує замовник із проєктувальником. Узгоджуємо будівельні роботи.</p></li>
             <li><span>04</span><strong>Комплектація та виготовлення</strong><p>Готуємо матеріали й конструкції погодженого обсягу.</p></li>
             <li><span>05</span><strong>Монтаж</strong><p>Збираємо об’єкт і координуємо суміжні етапи.</p></li>
           </ol>
@@ -250,8 +251,8 @@ export function HangarEditorialArchitecture() {
       <section className="page-section angary-people" id="responsibility" aria-labelledby="angary-people-title">
         <div className="shell angary-people-layout">
           <div className="angary-people-copy">
-            <h2 id="angary-people-title">За кожен об’єкт відповідаємо власним ім’ям.</h2>
-            <p>Працюємо в Дніпрі та області. Великі промислові й аграрні об’єкти розглядаємо по всій Україні.</p>
+            <h2 id="angary-people-title">За погоджений обсяг відповідаємо особисто.</h2>
+            <p>{company.geography}</p>
             <a href="/pro-nas">Про компанію <span aria-hidden="true">→</span></a>
           </div>
           <div className="angary-people-portraits">
