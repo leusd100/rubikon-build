@@ -1355,6 +1355,13 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
   .privacy-hero h1 { font-size: 36px; }
   .route-service { grid-template-columns: 30px minmax(0, 1fr) 24px; gap: 8px; }
   .route-service h3 { font-size: 21px; }
+  /* HOME's direction cards, same word: at the 32px this tier otherwise sets, «Металоконструкції»
+     (239px) cleared its 240px column by under a pixel on macOS Chromium — Linux's slightly wider
+     rendering of the same CSS pushed it over and split it mid-letter (caught by Main Regression's
+     words-whole.spec.ts, not by pr-critical's own widest-word check, which never runs at 320px).
+     Sized down with real margin (207px of 240px) rather than a razor's edge; all five cards keep
+     one shared size instead of singling this one out. */
+  .direction-copy strong, .direction-card:not(.wide) .direction-copy strong { font-size: 28px; }
 }
 
 /* RoleIcon: a thin line drawing beside a role's label, in the label's quieter tone — never a
