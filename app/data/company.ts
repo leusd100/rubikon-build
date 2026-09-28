@@ -3,8 +3,9 @@ export const company = {
   alternateNames: ['Rubikon Build', 'rubikonbuild', 'Рубікон Білд'],
   siteUrl: 'https://rubikonbuild.com',
   description:
-    'Родинна будівельна компанія: комплексна реалізація промислових споруд та окремі роботи у форматі підряду й субпідряду.',
-  serviceAreas: ['Дніпропетровська область', 'Україна'],
+    'Будівництво для промислового, аграрного й комерційного бізнесу в Дніпропетровській області: комплексна реалізація в погодженому обсязі або окремі роботи.',
+  serviceAreas: ['Дніпропетровська область'],
+  geography: 'Працюємо переважно в Дніпропетровській області. Проєкти в інших регіонах України розглядаємо, якщо їх формат і умови дозволяють якісно організувати виконання.',
   founders: ['Леус Сергій Іванович', 'Леус Дмитро Сергійович'],
   // Single source of truth for "consent under which policy version" — bump this string
   // (and the matching date on the privacy policy page) whenever that page's content changes.

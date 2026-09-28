@@ -30,8 +30,8 @@ export default function Home() {
                 work is split (whole object / one package / subcontract) is said once, in «Хто що виконує». */}
             <p className="hero-lead">
               Будуємо промислові, складські й аграрні об’єкти. Наше ядро — бетонні роботи, фундаменти,
-              металоконструкції та монтаж конструкцій і панелей; вузькі спеціальності координуємо
-              з профільними виконавцями.
+              монтаж металоконструкцій і панелей, покрівлі. Спеціалізовані роботи координуємо
+              з профільними виконавцями в погодженому обсязі.
             </p>
             {/* Stage 1 hypothesis (warm/referral visitors): talking to RUBIKON comes first, so the call is
                 the primary action with the number printed on it; writing or leaving a request is the

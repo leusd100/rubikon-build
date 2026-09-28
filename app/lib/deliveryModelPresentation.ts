@@ -65,8 +65,9 @@ export function turnkeyAnswer(): string {
   const workPackage = formatById('work-package');
   const subcontract = formatById('subcontract');
   return [
-    `Так, у форматі «${comprehensive.label}»: ${comprehensive.summary}`,
+    `Можемо взяти комплексний обсяг у погодженому складі — формат «${comprehensive.label}». ${comprehensive.summary}`,
     `Якщо потрібна лише частина робіт — наприклад, каркас, фундамент чи покрівля, — беремо окремий пакет у форматі «${workPackage.label}» або «${subcontract.label}».`,
+    'Проєкт і дозволи — на стороні замовника; спеціалізовані системи погоджуємо окремо.',
     model.statements.boundary,
   ].join(' ');
 }
@@ -247,6 +248,7 @@ type ResponsibilityRow = DeliveryModel['responsibility'][number];
 const HOLDERS: readonly (readonly [Holder, string])[] = [
   ['rubikon', 'RUBIKON виконує'],
   ['rubikon-coordinates', 'RUBIKON координує'],
+  ['rubikon-organizes', 'RUBIKON організовує'],
   ['partner', 'Профільні партнери'],
   ['client', 'Замовник'],
   ['general-contractor', 'Генпідрядник замовника'],

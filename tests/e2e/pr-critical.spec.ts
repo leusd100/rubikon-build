@@ -228,9 +228,9 @@ test('homepage says what the team does itself without claiming everything is in-
   const main = text.main.join(' ');
 
   expect(text.columns).toEqual(['Виконує наша команда', 'Залежно від проєкту', 'Профільні виконавці']);
-  // Owner-confirmed limits: metal may be made in-house or by an organised outside producer; specialists are external.
-  expect(text.depends.join(' ')).toMatch(/власне або на організованому зовнішньому виробництві/);
-  expect(text.lead.join(' ')).toMatch(/вузькі спеціальності координуємо з профільними виконавцями/);
+  // P01: fabrication on site where suitable, partner production for large volumes.
+  expect(text.depends.join(' ')).toMatch(/на майданчику.*для великих обсягів.*партнерське виробництво/);
+  expect(text.lead.join(' ')).toMatch(/Спеціалізовані роботи координуємо з профільними виконавцями в погодженому обсязі/);
   for (const overclaim of [/усе\s+власними\s+силами/i, /повний\s+цикл/i, /усе\s+самостійно/i, /усі\s+спеціальності/i, /власними\s+силами\s+виконуємо\s+все/i]) {
     expect(main, String(overclaim)).not.toMatch(overclaim);
   }
@@ -249,8 +249,8 @@ test('homepage «Що буде після звернення» quotes the Delive
   expect(next).toContain(deliveryModel.statements.firstContact);
   expect(next).toContain(request?.rubikon.default);
   expect(budget?.what).toContain('Бюджет і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
-  expect(next).toContain('Бюджет і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
-  expect(text.services.join(' ')).toContain(deliveryModel.statements.boundary);
+  expect(next).toMatch(/проєктних даних.*попередній кошторис.*Даних бракує.*Є бюджет.*реалістичний/);
+  expect(text.services.join(' ')).toContain(deliveryModel.statements.responsibility);
   for (const promise of [/\d+\s?(хв|хвилин|год|днів|дні|доб)/i, /грн|₴|\$|€/, /безкоштовн/i, /гаранті/i, /протягом/i]) {
     expect(`${next} ${text.prepare.join(' ')}`, String(promise)).not.toMatch(promise);
   }
@@ -397,7 +397,7 @@ test('/yak-pratsyuiemo keeps every model fact in the server HTML, however the pa
 
   expect(text.stages).toEqual(deliveryModel.stages.map((stage) => `${stage.number} ${stage.title}`));
   expect([...text.shared, ...text.compared].sort()).toEqual([...activities].sort());
-  expect(text.compared).toHaveLength(9);
+  expect(text.compared).toHaveLength(12);
   expect(text.panels).toEqual(deliveryModel.formats.map((format) => `vidpovidalnist-${format.anchor}`));
   expect(text.panelActivities).toEqual([...text.compared, ...text.compared, ...text.compared]);
   expect(text.notes).toHaveLength(notes.length);
@@ -438,7 +438,7 @@ test('/yak-pratsyuiemo visual language is decoration beside the words, never ins
   expect(text.routePoints).toEqual(deliveryModel.stages.map((stage) => stage.number));
   // Only the model's design-thread stages are marked; the change step is not placed on the route.
   expect(text.marked).toEqual(['03', '06']);
-  expect(text.threadLinks).toEqual(['03 Інженерне опрацювання', '06 Підготовка реалізації']);
+  expect(text.threadLinks).toEqual(['03 Узгодження з проєктом', '06 Підготовка реалізації']);
   expect(text.changeStep).toEqual(['Під час реалізації']);
 });
 
@@ -466,9 +466,9 @@ test.describe('/yak-pratsyuiemo without JavaScript', () => {
     await stage.locator('summary').click();
     await expect(stage).toHaveAttribute('open', '');
     await expect(stage.getByText(deliveryModel.stages[3].why)).toBeVisible();
-    await expect(page.locator('#vidpovidalnist .delivery-matrix tbody tr')).toHaveCount(9);
+    await expect(page.locator('#vidpovidalnist .delivery-matrix tbody tr')).toHaveCount(12);
     await notes.locator('summary').click();
-    await expect(notes.locator('li')).toHaveCount(7);
+    await expect(notes.locator('li')).toHaveCount(deliveryModel.responsibility.filter((row) => 'note' in row).length);
     await expect(notes.locator('li').first()).toBeVisible();
     await expect(page.locator('#dokumenty .delivery-docs-desktop .delivery-doc-label')).toHaveCount(19);
     await expect(page.locator('#inquiry .contact-checklist li')).toHaveCount(11);
