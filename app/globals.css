@@ -529,9 +529,9 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .about-subhero h1 { max-width: 860px; }
 .about-subhero .subhero-grid { z-index: 1; opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
 .about-subhero .subhero-overlay { z-index: 1; background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
-.breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 48px; color: rgba(255,255,255,.47); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-.breadcrumb span { display: inline-flex; gap: 8px; }
-.breadcrumb a { transition: color var(--duration-fast) ease; }
+.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 48px; color: rgba(255,255,255,.47); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.breadcrumb span { display: inline-flex; align-items: center; gap: 8px; }
+.breadcrumb a { display: inline-flex; align-items: center; min-height: 24px; margin-block: -4px; transition: color var(--duration-fast) ease; }
 .breadcrumb a:hover { color: white; }
 .breadcrumb b { color: rgba(255,255,255,.72); font-weight: 800; }
 .breadcrumb i { font-style: normal; }
