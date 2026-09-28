@@ -54,10 +54,10 @@ export default function AboutPage() {
             <div className="promise-visual about-planning-visual">
               <ResponsiveImage
                 src="/media/about-quality-control.webp"
-                alt="Зіставлення робочого креслення з відповідальним вузлом сталевого каркаса"
+                alt="Концептуальна ілюстрація: зіставлення робочого креслення з вузлом сталевого каркаса"
                 sizes="(max-width: 1050px) 100vw, 46vw"
               />
-              <span className="visual-index">01 / ДОСВІД</span>
+              <span className="visual-index">Ілюстрація</span>
               <span className="image-note">Від креслення — до перевірки на майданчику</span>
             </div>
             <div className="promise-copy about-story-copy">
