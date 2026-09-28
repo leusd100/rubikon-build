@@ -582,6 +582,12 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 /* /pro-nas Values is 3 cards, not the 4 .detail-grid assumes elsewhere — override just this
    instance rather than leaving a hole in the fourth column. */
 .values-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Three 238-254 px cards at 768-820 px: at 23 px the longest title word («ВІДПОВІДАЛЬНОСТІ», ~215 px)
+   is wider than the text column and broke mid-letter. Scale the title with the viewport in that
+   band only; the 3-column layout and every other width are untouched. */
+@media (min-width: 761px) and (max-width: 1050px) {
+  .values-grid .detail-card h3 { font-size: clamp(17.5px, 2.3vw, 23px); }
+}
 
 .logo-lab { min-height: 100vh; background: var(--paper); }
 .logo-lab-intro { padding: 180px 0 86px; color: white; background: #101214; }
@@ -669,7 +675,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--text-on-
    01-04) since these aren't ranked; the icon that DirectionItemCards always renders is hidden
    here on purpose — restrained/typographic rather than repeating Process's icon-per-item look. */
 .cost-list { border-top: 1px solid rgba(21,24,22,.17); }
-.cost-list article { display: grid; grid-template-columns: 34px minmax(160px, .34fr) minmax(0, 1fr); column-gap: 24px; align-items: baseline; padding: 24px 0; border-bottom: 1px solid rgba(21,24,22,.17); }
+.cost-list article { display: grid; grid-template-columns: 34px minmax(180px, .34fr) minmax(0, 1fr); column-gap: 24px; align-items: baseline; padding: 24px 0; border-bottom: 1px solid rgba(21,24,22,.17); }
 .cost-list .card-icon { display: none; }
 .cost-list span { color: var(--text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
 .cost-list h3 { margin: 0; font: 600 19px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
@@ -1329,6 +1335,13 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
 }
 @media (max-width: 340px) {
   .contact-checklist ul { grid-template-columns: minmax(0, 1fr); }
+  /* 320 px phones: the page H1 and the /napryamky route titles carry words («МЕТАЛОКОНСТРУКЦІЇ»,
+     «конфіденційності») wider than the 288 px column at their usual size — size them to fit
+     instead of breaking mid-letter or running past the card edge. */
+  .subhero h1, .service-subhero h1 { font-size: 36px; }
+  .privacy-hero h1 { font-size: 36px; }
+  .route-service { grid-template-columns: 30px minmax(0, 1fr) 24px; gap: 8px; }
+  .route-service h3 { font-size: 21px; }
 }
 
 /* RoleIcon: a thin line drawing beside a role's label, in the label's quieter tone — never a

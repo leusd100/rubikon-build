@@ -1281,3 +1281,10 @@
   .hangar-configurator-embedded .hc-preview-loading { height: 74vw; min-height: 290px; }
   .hangar-configurator-embedded .hc-preview-demo-status { align-items: flex-start; flex-direction: column; padding-block: 12px; }
 }
+
+/* 320 px: two columns leave ~95 px per description, so «ОГОРОДЖЕННЯ» and «використання» broke
+   mid-word. One column keeps every word whole; the list is the same four short items. */
+@media (max-width: 340px) {
+  .hc-vocabulary { grid-template-columns: minmax(0, 1fr); }
+  .hc-vocabulary li + li { padding-left: 0; border-left: 0; }
+}
