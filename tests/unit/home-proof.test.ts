@@ -45,16 +45,30 @@ describe('HomeProofSlot', () => {
   });
 });
 
+// The rules a filled case must meet, written as a checker so the test can prove it fails on the shortcuts it forbids.
+const problemsWith = (proof: HomeProofCase | null): string[] => {
+  if (proof === null) return []; // the current, honest state: nothing approved, nothing shown
+  const problems: string[] = [];
+  if (proof.publicationApproved !== true) problems.push('not approved for publication');
+  if (/\/concepts\/|stock|generated|\/images\//i.test(proof.photo.src)) problems.push('photo is a concept, stock, generated or portrait image');
+  for (const [name, text] of [['caption', proof.caption], ['attribution', proof.attribution], ['photo alt', proof.photo.alt]] as const) {
+    if (text.trim().length === 0) problems.push(`empty ${name}`);
+  }
+  if (proof.scope.ours.length === 0) problems.push('no confirmed scope');
+  if (!(proof.photo.width > 0 && proof.photo.height > 0)) problems.push('photo has no size');
+  return problems;
+};
+
 describe('homeProofCase (what HOME publishes)', () => {
   it('is either empty or a complete, approved, non-concept record', () => {
-    if (homeProofCase === null) return; // the current, honest state
-    expect(homeProofCase.publicationApproved).toBe(true);
-    expect(homeProofCase.photo.src).not.toMatch(/\/concepts\/|stock|generated|\/images\//i);
-    for (const text of [homeProofCase.caption, homeProofCase.attribution, homeProofCase.photo.alt]) {
-      expect(text.trim().length).toBeGreaterThan(0);
-    }
-    expect(homeProofCase.scope.ours.length).toBeGreaterThan(0);
-    expect(homeProofCase.photo.width).toBeGreaterThan(0);
-    expect(homeProofCase.photo.height).toBeGreaterThan(0);
+    expect(problemsWith(homeProofCase)).toEqual([]);
+  });
+
+  it('the check itself rejects the shortcuts: a concept image, no attribution, no scope', () => {
+    expect(problemsWith(fixture)).toEqual([]);
+    expect(problemsWith({ ...fixture, photo: { ...fixture.photo, src: '/media/concepts/direction-hangars-v2.jpg' } })).toContain('photo is a concept, stock, generated or portrait image');
+    expect(problemsWith({ ...fixture, photo: { ...fixture.photo, src: '/images/founder.webp' } })).toHaveLength(1);
+    expect(problemsWith({ ...fixture, attribution: '  ' })).toContain('empty attribution');
+    expect(problemsWith({ ...fixture, scope: { ours: [] } })).toContain('no confirmed scope');
   });
 });

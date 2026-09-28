@@ -44,7 +44,7 @@ const capabilityColumns: readonly { id: string; title: string; items: readonly s
  * A calm contact line inside a section, at the point where the visitor's intent rises. Not a section and never
  * sticky: the call is the first action, writing a request the second (the Slice 01 hierarchy).
  */
-export function ContactBridge({ children }: { children: ReactNode }) {
+export function ContactBridge({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <div className="contact-bridge">
       <p>{children}</p>
@@ -64,7 +64,7 @@ export function ContactBridge({ children }: { children: ReactNode }) {
  * frame or a «coming soon» note. The figure is also the mount point for the later `REAL PHOTO → ENGINEERING
  * EXPLANATION` interaction — that interaction is not part of this slice.
  */
-export function HomeProofSlot({ proof }: { proof: HomeProofCase | null }) {
+export function HomeProofSlot({ proof }: Readonly<{ proof: HomeProofCase | null }>) {
   if (!proof) return null;
   const { photo, scope } = proof;
   return (
@@ -96,7 +96,7 @@ export function HomeProofSlot({ proof }: { proof: HomeProofCase | null }) {
 
 // «Що виконуємо самі, а що координуємо»: capability first, then — only if one exists — the proof, then the three
 // formats of participation. The formats used to be the whole block; they are now the second half of it.
-export function HomeCapability({ proof }: { proof: HomeProofCase | null }) {
+export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null }>) {
   return (
     <section className="services section ghost-section" id="services">
       <GhostWord word="BUILD" />

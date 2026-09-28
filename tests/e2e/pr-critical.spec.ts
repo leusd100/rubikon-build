@@ -237,7 +237,7 @@ test('homepage says what the team does itself without claiming everything is in-
   // Serhii's tenure is owner-relayed, not first-hand confirmed: no number, no «понад 30», no year.
   for (const tenure of [/30\+/, /понад\s+30/i, /1995/, /\d+\s+рок/i]) expect(main, String(tenure)).not.toMatch(tenure);
   // The family thesis is stated once (it used to be split across two blocks and a hero label).
-  expect((main.match(/родинн/gi) ?? []).length).toBe(1);
+  expect(main.match(/родинн/gi) ?? []).toHaveLength(1);
 });
 
 test('homepage «Що буде після звернення» quotes the Delivery Model and promises no time, price or visit', async ({ page }) => {
