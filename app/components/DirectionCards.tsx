@@ -32,12 +32,13 @@ export function EngagementFormatCards() {
   );
 }
 
-// «Що у вас уже є» — the model's second axis, stated as a principle under the formats: it sets
-// where the work starts, not how RUBIKON participates. Not a picker; the route map comes later.
+// The model's second axis — what the visitor already has. It sets where the work starts, not how RUBIKON
+// participates. It lives in HOME's «Перша розмова» block (not under the formats), where it answers «з чим прийти»;
+// not a picker, and every state is a valid way to start.
 export function EntryPointsNote() {
   return (
     <div className="entry-axis">
-      <p className="entry-axis-title">Що у вас уже є</p>
+      <p className="entry-axis-title">Можна почати з того, що вже є</p>
       <ul>
         {entryPoints().map(({ id, label }) => <li key={id}>{label}</li>)}
       </ul>

@@ -1,13 +1,17 @@
 import { Mail, Phone } from 'lucide-react';
-import { DirectionImageCards, EngagementFormatCards, EntryPointsNote } from './components/DirectionCards';
-import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
+import { DirectionImageCards } from './components/DirectionCards';
+import { HomeCapability, HomeFirstConversation } from './components/HomeSections';
+import { GhostWord, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
 import { HomeHeroVideo } from './components/HomeHeroVideo';
-import ResponsiveImage from './components/ResponsiveImage';
 import InquirySection from './components/InquirySection';
 import { company, companyContactLinks } from './data/company';
-import { deliveryModel } from './data/deliveryModel';
+import { homeProofCase } from './data/homeProof';
 import { siteRoutes } from './data/navigation';
 
+// HOME reads as one argument for a warm, referred visitor:
+//   understands the task (hero, directions) → practical capability, in honest limits (who does what, formats, and — once
+//   one is approved — one real project) → people who take responsibility → what to bring and what happens next → contact.
+// The plan and the evidence limits are in 00_control/home-review-v0.1/HOME_SLICE_02_ARCHITECTURE.md.
 export default function Home() {
   return (
     <main id="main-content">
@@ -22,10 +26,12 @@ export default function Home() {
             Промислове будівництво — від окремих робіт до <em>комплексної реалізації</em> об’єкта
           </h1>
           <div className="hero-copy">
+            {/* Objects, our own core, and where coordination starts — nothing wider than the owner has confirmed. How the
+                work is split (whole object / one package / subcontract) is said once, in «Хто що виконує». */}
             <p className="hero-lead">
-              Будуємо промислові, складські й аграрні об’єкти — від узгодженого технічного
-              рішення до виконання будівельних робіт. Працюємо комплексно або виконуємо
-              окремі пакети робіт як підрядник чи субпідрядник.
+              Будуємо промислові, складські й аграрні об’єкти. Наше ядро — бетонні роботи, фундаменти,
+              металоконструкції та монтаж конструкцій і панелей; вузькі спеціальності координуємо
+              з профільними виконавцями.
             </p>
             {/* Stage 1 hypothesis (warm/referral visitors): talking to RUBIKON comes first, so the call is
                 the primary action with the number printed on it; writing or leaving a request is the
@@ -61,88 +67,32 @@ export default function Home() {
         <div className="hero-signature" aria-hidden="true">RUBIKON / BUILD</div>
       </section>
 
-      <section className="services section ghost-section" id="services">
-        <GhostWord word="BUILD" />
-        <div className="shell">
-          <SectionHeader
-            eyebrow="Формат участі"
-            title="Що можемо взяти на себе"
-            supporting={`Три формати участі — залежно від того, хто координує об’єкт. ${deliveryModel.statements.boundary}`}
-          />
-          <EngagementFormatCards />
-          <EntryPointsNote />
-          <a className="section-link" href={siteRoutes.directions}>Усі напрямки робіт <span aria-hidden="true">↗</span></a>
-        </div>
-      </section>
-
+      {/* Right after the hero: a visitor with a concrete task recognises it here before any abstract model. The
+          cards are concept illustrations, each labelled «Ілюстрація» — the intro says so in words as well. */}
       <section className="directions section ghost-section" id="directions">
         <GhostWord word="STRUCTURE" tone="dark" align="start" />
         <div className="shell">
           <SectionHeader
-            eyebrow="Сфери компетенції"
-            title="Каркаси та споруди для бізнесу й агросектору"
-            supporting="Від окремого металевого вузла до готової промислової споруди — підбираємо формат участі відповідно до завдання, документації та меж відповідальності."
+            eyebrow="Напрямки робіт"
+            title="П’ять напрямів для бізнесу й агросектору"
+            supporting="Оберіть напрям, найближчий до вашої задачі. Зображення на картках — ілюстрації, а не фото виконаних об’єктів."
             inverse
           />
           <DirectionImageCards />
         </div>
       </section>
 
-      <section className="promise section" id="about">
-        <div className="shell story-checker">
-          <article className="story-row">
-            <div className="promise-visual engineering-plan-visual">
-              <ResponsiveImage
-                src="/media/about-industrial-concept.webp"
-                alt="Промисловий сталевий каркас переходить із креслення у конструкцію"
-                sizes="(max-width: 1050px) 100vw, 46vw"
-              />
-              <span className="visual-index">01 / РІШЕННЯ</span>
-              <span className="image-note">Ілюстрація · Від креслення — до технічного рішення</span>
-            </div>
-            <div className="promise-copy">
-              <p className="eyebrow light"><span /> Наша основа</p>
-              <h2>За кожен об’єкт відповідаємо власним ім’ям</h2>
-              <p className="promise-lead">
-                RUBIKON BUILD — родинна компанія, у якій поєднуються практичний досвід
-                Сергія Івановича та сучасний підхід до розвитку бізнесу й роботи з клієнтами.
-                Ми разом приймаємо ключові рішення і особисто відповідаємо за результат.
-              </p>
-              <p className="story-support">
-                Для нас репутація — не рекламна теза. Вона формується на кожному об’єкті:
-                якістю роботи, виконаними домовленостями та ставленням до замовника.
-              </p>
-              <blockquote className="brand-credo"><span>Наш принцип</span>Якість будівництва визначають деталі, яких після завершення вже не видно.</blockquote>
-              <a className="section-link" href={siteRoutes.about}>Більше про компанію <span aria-hidden="true">↗</span></a>
-            </div>
-          </article>
-        </div>
-      </section>
+      <HomeCapability proof={homeProofCase} />
 
       <TeamSection />
 
-      <section className="process section ghost-section" id="how-we-work">
-        <GhostWord word="PROCESS" />
-        <div className="shell">
-          <SectionHeader
-            eyebrow="Як ми працюємо"
-            title="Від узгодження завдання до приймання робіт"
-            supporting="Для всього об’єкта формуємо повний маршрут. Для окремого пакета робіт чітко фіксуємо межі відповідальності, вимоги на вході та результат на виході."
-          />
-          {/* A teaser, not a second copy of the stages: the model lives on /yak-pratsyuiemo. */}
-          <a className="process-teaser" href={siteRoutes.process}>
-            <span className="process-teaser-kicker">Модель реалізації</span>
-            <strong>Формати участі, вісім етапів, хто за що відповідає, зміни й документи — на одній сторінці.</strong>
-            <span className="process-teaser-cta">Як ми працюємо <span aria-hidden="true">↗</span></span>
-          </a>
-        </div>
-      </section>
+      <HomeFirstConversation />
 
-      <EstimateBrief />
-
+      {/* Call first: the section's own contact list already leads with the phone, and the text says so. */}
       <InquirySection
         eyebrow="Почнемо з розмови"
         title={<>Розкажіть коротко<br className="contact-title-break" /> про завдання</>}
+        text="Найшвидше — зателефонувати. Якщо зручніше писати — залиште контакт і коротко опишіть завдання: ми уточнимо вихідні дані та запропонуємо наступний крок."
       />
     </main>
   );
