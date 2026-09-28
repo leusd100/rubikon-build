@@ -1,4 +1,4 @@
-import { Mail } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { DirectionImageCards, EngagementFormatCards, EntryPointsNote } from './components/DirectionCards';
 import { EstimateBrief, GhostWord, MessengerLinks, SectionHeader, TeamSection } from './components/SiteChrome';
 import { HomeHeroVideo } from './components/HomeHeroVideo';
@@ -27,25 +27,29 @@ export default function Home() {
               рішення до виконання будівельних робіт. Працюємо комплексно або виконуємо
               окремі пакети робіт як підрядник чи субпідрядник.
             </p>
+            {/* Stage 1 hypothesis (warm/referral visitors): talking to RUBIKON comes first, so the call is
+                the primary action with the number printed on it; writing or leaving a request is the
+                second step, and browsing the directions the third. */}
             <div className="hero-actions">
-              <a className="button button-primary" href="#inquiry">
-                Обговорити проєкт <span aria-hidden="true">↗</span>
+              <a className="button button-primary hero-call-primary" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
+                <Phone aria-hidden="true" />
+                <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
+              </a>
+              <a className="button button-outline" href="#inquiry">
+                Написати або залишити запит <span aria-hidden="true">↗</span>
               </a>
               <a className="text-link" href={siteRoutes.directions}>
                 Дивитися напрямки <span aria-hidden="true">↗</span>
               </a>
             </div>
           </div>
+          {/* The written channels. The phone moved to the primary action, so the card no longer repeats it. */}
           <div className="hero-contact-card">
             <div className="hero-contact-kicker">
-              <p>Зручний зв’язок</p>
+              <p>Або напишіть</p>
               <span>Відповідаємо особисто</span>
             </div>
-            <a className="hero-contact-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
-              <span className="hero-contact-action"><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
-            </a>
             <div className="hero-contact-options">
-              <span>Або напишіть</span>
               <MessengerLinks className="hero-messengers" showFullLabels />
               <a className="messenger-link hero-email" href={companyContactLinks.email}>
                 <Mail aria-hidden="true" />
