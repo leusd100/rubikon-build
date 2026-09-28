@@ -355,7 +355,6 @@ export default function DeliveryModelPage() {
             <CapabilityLayerCard layer={layers.partner} />
           </div>
           <p className="delivery-boundary">{statements.customerScope}</p>
-          <p className="delivery-boundary">{statements.responsibility} {statements.boundary}</p>
         </div>
       </section>
 
