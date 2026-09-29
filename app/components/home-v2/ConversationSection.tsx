@@ -54,7 +54,12 @@ export function ConversationSection() {
               </a>
             </div>
           </div>
-          <ol className="hv2-journey" aria-label="Що буде після звернення">
+        </div>
+        <ProjectInquiryForm cooperationOptions={cooperationOptions()} successMessage={inquirySuccessMessage()} />
+        {/* Desktop: under the call, beside the form. Phone: after the form, so call → channels → form come first. */}
+        <div className="hv2-journey-wrap">
+          <p className="hv2-journey-title">Що буде після звернення</p>
+          <ol className="hv2-journey">
             {journey.map(({ title, text }, index) => (
               <li key={title}>
                 <span className="hv2-journey-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
@@ -66,7 +71,6 @@ export function ConversationSection() {
             ))}
           </ol>
         </div>
-        <ProjectInquiryForm cooperationOptions={cooperationOptions()} successMessage={inquirySuccessMessage()} />
       </div>
     </section>
   );

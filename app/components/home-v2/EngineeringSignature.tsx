@@ -3,13 +3,15 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { HomeProofCase } from '../../data/homeProof';
 import { siteRoutes } from '../../data/navigation';
 
-// HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES. The three cards are
-// illustrations (labelled as such) of how we explain an object; the one real object below them is evidence and is
-// labelled as a photo. Neither is dressed as the other.
+// HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
 //
-// Nothing here names a product: no «digital twin», explorer, load-path software or building passport. The cards
-// describe what the customer is shown in a conversation. The note under them keeps the P01 boundary: schemes do
-// not replace the design, and the designer owns calculations.
+// Order (iteration 3): the real object comes first, straight under the heading, beside an X-ray illustration of the
+// same view. They are two separate images with two different labels: the photo is evidence («Фото об’єкта»), the
+// X-ray is a generated sketch that repaints part of the photo and invents the frame behind the cladding
+// («Ілюстративна схема конструкції»), so it is never called a drawing and carries no sizes, nodes or calculations.
+// Two explanation cards follow; the old card 01 («Фото → конструкція») is what the X-ray now shows, so it is gone.
+//
+// Nothing here names a product: no «digital twin», explorer, load-path software or building passport.
 
 type Pin = { label: string; x: string; y: string; side?: 'left' };
 
@@ -23,19 +25,6 @@ function Pins({ pins }: Readonly<{ pins: readonly Pin[] }>) {
         </span>
       ))}
     </>
-  );
-}
-
-function CardImage({ base, alt, large = 1040 }: Readonly<{ base: string; alt: string; large?: number }>) {
-  return (
-    <img
-      src={`/media/home-v2/concepts/${base}-${large}w.webp`}
-      srcSet={`/media/home-v2/concepts/${base}-640w.webp 640w, /media/home-v2/concepts/${base}-${large}w.webp ${large}w`}
-      sizes="(max-width: 760px) 100vw, 34vw"
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-    />
   );
 }
 
@@ -59,33 +48,28 @@ function LoadPathScheme() {
         </marker>
       </defs>
       <rect width="480" height="360" fill="url(#hv2-grid)" />
-      {/* distributed load */}
       <polyline className="hv2-scheme-load" points={arrows.map(({ x, y }) => `${x},${y - 44}`).join(' ')} />
       {arrows.map(({ x, y }) => (
         <line key={x} className="hv2-scheme-load" x1={x} y1={y - 44} x2={x} y2={y - 9} markerEnd="url(#hv2-arrow)" />
       ))}
-      {/* ground and footings */}
       <line className="hv2-scheme-ground" x1="36" y1="292" x2="444" y2="292" />
       {[108, 372].map((x) => (
         <polygon key={x} className="hv2-scheme-footing" points={`${x - 16},292 ${x + 16},292 ${x + 16},300 ${x + 24},300 ${x + 24},318 ${x - 24},318 ${x - 24},300 ${x - 16},300`} />
       ))}
-      {/* frame */}
       <polyline className="hv2-scheme-frame" points="108,292 108,172 240,112 372,172 372,292" />
       <polyline className="hv2-scheme-frame-inner" points="116,292 116,178 240,121 364,178 364,292" />
-      {/* load path */}
       <path className="hv2-scheme-flow" d="M240 116 L110 175 L110 286" markerEnd="url(#hv2-arrow-flow)" />
       <path className="hv2-scheme-flow" d="M240 116 L370 175 L370 286" markerEnd="url(#hv2-arrow-flow)" />
-      {/* axes */}
       <line className="hv2-scheme-dim" x1="120" y1="340" x2="360" y2="340" />
       {[108, 372].map((x, i) => (
         <g key={x}>
-          <circle className="hv2-scheme-axis" cx={x} cy="340" r="11" />
-          <text className="hv2-scheme-axis-label" x={x} y="344" textAnchor="middle">{i === 0 ? 'А' : 'Б'}</text>
+          <circle className="hv2-scheme-axis" cx={x} cy="340" r="12" />
+          <text className="hv2-scheme-axis-label" x={x} y="345" textAnchor="middle">{i === 0 ? 'А' : 'Б'}</text>
         </g>
       ))}
-      <text className="hv2-scheme-label" x="240" y="44" textAnchor="middle">Покрівля</text>
-      <text className="hv2-scheme-label" x="384" y="236">Рама</text>
-      <text className="hv2-scheme-label" x="140" y="314">Фундамент</text>
+      <text className="hv2-scheme-label" x="240" y="42" textAnchor="middle">Покрівля</text>
+      <text className="hv2-scheme-label" x="384" y="238">Рама</text>
+      <text className="hv2-scheme-label" x="138" y="316">Фундамент</text>
     </svg>
   );
 }
@@ -93,40 +77,29 @@ function LoadPathScheme() {
 const cards: readonly { number: string; title: ReactNode; text: string; tag: string; visual: ReactNode }[] = [
   {
     number: '01',
-    title: <>Фото <span aria-hidden="true">→</span><span className="hv2-sr">і</span> конструкція</>,
-    text: 'На фото чи кресленні показуємо, з яких основних елементів складається об’єкт і як вони пов’язані між собою.',
+    title: 'Вузол у деталях',
+    text: 'Окремо розбираємо важливі з’єднання, примикання й деталі виконання — те, чого після монтажу вже не видно.',
     tag: 'Ілюстрація',
     visual: (
       <>
-        {/* A photoreal frame above and its drawings below (the /metalokonstruktsii hero collage, cropped): the
-            card's idea in one picture. Pins pair the frame in the photo with the node and bracing drawings. */}
-        <CardImage base="card-photo-drawing" large={1012} alt="Ілюстрація: сталевий каркас на майданчику, під ним креслення каркаса, вузла колони та зв’язків" />
+        <img
+          src="/media/home-v2/concepts/card-node-1040w.webp"
+          srcSet="/media/home-v2/concepts/card-node-640w.webp 640w, /media/home-v2/concepts/card-node-1040w.webp 1040w"
+          sizes="(max-width: 760px) 100vw, 25vw"
+          alt="Ілюстрація: опорний вузол сталевої колони на бетонній основі"
+          loading="lazy"
+          decoding="async"
+        />
         <Pins pins={[
-          { label: 'Рама', x: '64%', y: '25%', side: 'left' },
-          { label: 'Вузол колони', x: '44.6%', y: '82%', side: 'left' },
-          { label: 'Зв’язки', x: '65.6%', y: '82%' },
+          { label: 'Ребро жорсткості', x: '60%', y: '31%', side: 'left' },
+          { label: 'Опорна плита', x: '80%', y: '66%', side: 'left' },
+          { label: 'Анкерне кріплення', x: '53%', y: '82%', side: 'left' },
         ]} />
       </>
     ),
   },
   {
     number: '02',
-    title: 'Вузол у деталях',
-    text: 'Окремо розбираємо важливі з’єднання, примикання й деталі виконання — те, чого після монтажу вже не видно.',
-    tag: 'Ілюстрація',
-    visual: (
-      <>
-        <CardImage base="card-node" alt="Ілюстрація: опорний вузол сталевої колони на бетонній основі" />
-        <Pins pins={[
-          { label: 'Ребро жорсткості', x: '60%', y: '31%', side: 'left' },
-          { label: 'Опорна плита', x: '80%', y: '66%', side: 'left' },
-          { label: 'Анкерне кріплення', x: '53%', y: '76%', side: 'left' },
-        ]} />
-      </>
-    ),
-  },
-  {
-    number: '03',
     title: 'Як працює конструкція',
     text: 'Простою схемою пояснюємо логіку основних елементів: як навантаження з покрівлі передається через каркас на фундамент.',
     tag: 'Схема',
@@ -134,78 +107,88 @@ const cards: readonly { number: string; title: ReactNode; text: string; tag: str
   },
 ];
 
-// Where each confirmed scope line sits in the two crops of the approved frame (percent of the crop). Measured on the
-// original 1800×1200 frame: gable apex (365, 598), side-wall panel (920, 800) / gable panel (640, 820), roof
-// (1150, 665) / (800, 632). Wide crop = x 0–1550, y 440–1060; narrow crop = x 20–1020, y 455–1122. A scope line
-// with no entry here simply has no marker.
-const evidencePins: Record<string, { wide: [string, string]; narrow: [string, string] }> = {
-  Каркас: { wide: ['23.5%', '25.5%'], narrow: ['34.5%', '21.4%'] },
-  'Стінові панелі': { wide: ['59.4%', '58.1%'], narrow: ['62%', '54.7%'] },
-  Покрівля: { wide: ['74.2%', '36.3%'], narrow: ['78%', '26.5%'] },
-};
+// The copper load path baked into the X-ray sketch, measured on its 1774×887 pixels (orange-pixel scan): ridge
+// (1052, 113) → along the rafter → eave (1418, 268) → corner → down the column at x ≈ 1490 → arrowhead at y ≈ 646;
+// the footing glow sits at (1491, 700). The overlay only adds a travelling pulse on top of that path.
+const XRAY_PATH = 'M1052 113 L1418 268 L1450 293 L1482 303 L1490 326 L1490 646';
 
-function EvidenceObject({ proof }: Readonly<{ proof: HomeProofCase }>) {
-  const { photo, scope } = proof;
-  return (
-    <figure className="hv2-evidence">
-      <div className="hv2-evidence-media">
-        <picture>
-          <source media="(max-width: 760px)" type="image/webp" srcSet="/media/home-v2/hangar-narrow-640w.webp 640w, /media/home-v2/hangar-narrow-1000w.webp 1000w" sizes="100vw" />
-          <source type="image/webp" srcSet="/media/home-v2/hangar-wide-960w.webp 960w, /media/home-v2/hangar-wide-1550w.webp 1550w" sizes="(max-width: 1440px) 92vw, 1296px" />
-          <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
-        </picture>
-        {scope.subject.map((item, index) => {
-          const pin = evidencePins[item];
-          if (!pin) return null;
-          const style = { '--x': pin.wide[0], '--y': pin.wide[1], '--mx': pin.narrow[0], '--my': pin.narrow[1] } as CSSProperties;
-          return (
-            <span className="hv2-evidence-pin" style={style} key={item}>
-              <i aria-hidden="true">{index + 1}</i>
-              <span>{item}</span>
-            </span>
-          );
-        })}
-        {/* Display-only shade: the overcast sky is darkened on screen so the frame sits in the dark block. The photo
-            file itself is untouched (crop only). */}
-        <span className="hv2-evidence-shade" aria-hidden="true" />
-        <span className="hv2-tag hv2-tag-photo">Фото об’єкта</span>
-      </div>
-      <figcaption className="hv2-evidence-facts">
-        <div className="hv2-evidence-lead">
-          <p className="hv2-kicker"><span aria-hidden="true" /> Реалізований об’єкт до створення RUBIKON BUILD</p>
-          <h3>Ангар: каркас, стінові панелі, покрівля</h3>
-          <p>{proof.attribution}</p>
-        </div>
-        <dl>
-          <div>
-            <dt>Роботи</dt>
-            <dd>
-              <ol className="hv2-evidence-scope">
-                {scope.subject.map((item, index) => <li key={item}><i aria-hidden="true">{index + 1}</i>{item}</li>)}
-              </ol>
-            </dd>
-          </div>
-          <div>
-            <dt>На фото</dt>
-            <dd>{proof.caption}</dd>
-          </div>
-          {proof.context && (
-            <div>
-              <dt>Контекст</dt>
-              <dd>{proof.context}</dd>
-            </div>
-          )}
-        </dl>
-      </figcaption>
-    </figure>
-  );
-}
-
-// No portraits: the generated ones were removed on purpose (#124) and there are no real ones yet.
 const people = [
   { name: 'Сергій Іванович Леус', role: 'Будівельний напрям, організація виконання' },
   { name: 'Дмитро Сергійович Леус', role: 'Робота з клієнтами, розвиток RUBIKON' },
 ] as const;
+
+function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
+  const { photo, scope } = proof;
+  return (
+    <div className="hv2-proof" id="real-object">
+      <div className="hv2-proof-pair">
+        <figure className="hv2-proof-photo">
+          <div className="hv2-proof-media">
+            <picture>
+              <source type="image/webp" srcSet="/media/home-v2/hangar-gable-960w.webp 960w, /media/home-v2/hangar-gable-1600w.webp 1600w" sizes="(max-width: 900px) 100vw, 42vw" />
+              <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
+            </picture>
+            <span className="hv2-tag hv2-tag-photo">Фото об’єкта</span>
+          </div>
+          <figcaption><b>Реальний об’єкт.</b> Оригінальне фото, лише кадроване.</figcaption>
+        </figure>
+        <figure className="hv2-proof-xray">
+          <div className="hv2-proof-media">
+            <img
+              src="/media/home-v2/concepts/hangar-xray-1774w.webp"
+              srcSet="/media/home-v2/concepts/hangar-xray-1100w.webp 1100w, /media/home-v2/concepts/hangar-xray-1774w.webp 1774w"
+              sizes="(max-width: 900px) 170vw, 58vw"
+              alt="Ілюстративна схема: той самий ракурс, де обшивку частково замінено умовним каркасом і показано шлях навантаження від покрівлі до фундаменту"
+              loading="lazy"
+              decoding="async"
+            />
+            <svg className="hv2-xray-flow" viewBox="0 0 1774 887" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+              <defs>
+                <radialGradient id="hv2-xray-glow-fill">
+                  <stop offset="0" stopColor="#ffb27a" stopOpacity=".95" />
+                  <stop offset=".45" stopColor="#cc8455" stopOpacity=".45" />
+                  <stop offset="1" stopColor="#cc8455" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <path className="hv2-xray-pulse-halo" d={XRAY_PATH} pathLength={1} />
+              <path className="hv2-xray-pulse" d={XRAY_PATH} pathLength={1} />
+              <ellipse className="hv2-xray-glow" cx="1491" cy="700" rx="70" ry="34" fill="url(#hv2-xray-glow-fill)" />
+            </svg>
+            <span className="hv2-proof-arrow" aria-hidden="true">→</span>
+            <span className="hv2-tag hv2-tag-scheme">Ілюстративна схема конструкції</span>
+          </div>
+          <figcaption>
+            <b>Ілюстрація принципу:</b> каркас і шлях навантаження від покрівлі до фундаменту. Це не креслення цього
+            ангара — його прихована конструкція, розміри й вузли тут не показані.
+          </figcaption>
+        </figure>
+      </div>
+
+      <div className="hv2-proof-facts">
+        <div className="hv2-evidence-lead">
+          <p className="hv2-kicker"><span aria-hidden="true" /> Реалізований об’єкт до створення RUBIKON BUILD</p>
+          <h3>Ангар: каркас, стінові панелі, покрівля</h3>
+          <p>{proof.attribution}</p>
+          <ul className="hv2-scope-chips" aria-label="Роботи на цьому об’єкті">
+            {scope.subject.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        </div>
+        {/* Roles sit next to the proof, compactly — no portraits (the generated ones were removed in #124). */}
+        <div className="hv2-people">
+          <p className="hv2-people-title">Хто веде роботу</p>
+          {people.map(({ name, role }) => (
+            <div className="hv2-person" key={name}>
+              <h4>{name}</h4>
+              <p>{role}</p>
+            </div>
+          ))}
+          <p className="hv2-people-note">Родинна компанія — два покоління в одній команді.</p>
+          <a className="hv2-people-link" href={siteRoutes.about}>Про команду <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase | null }>) {
   return (
@@ -220,6 +203,8 @@ export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase 
             які роботи потрібні.
           </p>
         </header>
+
+        {proof && <ProofStage proof={proof} />}
 
         <div className="hv2-cards">
           {cards.map(({ number, title, text, tag, visual }) => (
@@ -238,25 +223,8 @@ export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase 
         </div>
 
         <p className="hv2-boundary">
-          Ілюстрації пояснюють підхід і не замінюють проєкт: розрахунки та проєктні рішення — за проєктувальником.
-          <strong> Нижче — фото реального об’єкта.</strong>
+          Ілюстрації та схеми пояснюють підхід і не замінюють проєкт: розрахунки та проєктні рішення — за проєктувальником.
         </p>
-
-        {proof && <EvidenceObject proof={proof} />}
-
-        <div className="hv2-people">
-          <div className="hv2-people-head">
-            <p className="hv2-people-title">Хто веде роботу</p>
-            <p className="hv2-people-note">Родинна компанія — два покоління в одній команді.</p>
-          </div>
-          {people.map(({ name, role }) => (
-            <div className="hv2-person" key={name}>
-              <h3>{name}</h3>
-              <p>{role}</p>
-            </div>
-          ))}
-          <a className="hv2-people-link" href={siteRoutes.about}>Про команду <span aria-hidden="true">↗</span></a>
-        </div>
       </div>
     </section>
   );

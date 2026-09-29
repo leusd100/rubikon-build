@@ -1,6 +1,7 @@
 /* HOME v2 «Engineering Signature» — PROTOTYPE (branch design/home-v2-engineering-signature, not for merge).
 
-   Four zones: hero → directions → engineering signature (+ the one real object, + people) → conversation + form.
+   Four zones: hero → directions → engineering signature (real object + X-ray first, people, two explanation cards)
+   → conversation + form.
    Every rule is keyed to <main data-home="v2">, so nothing leaks to other pages. It sits on top of the
    Architectural Copper tokens already on main (#122) and does not change them.
 
@@ -38,28 +39,51 @@ main[data-home="v2"] .hv2-hero .hero-lead { max-width: 660px; }
 main[data-home="v2"] .hv2-hero-provenance { display: none; }
 
 @media (max-width: 760px) {
-  /* The still takes the top 4:5 of the hero; the headline starts on its darkened lower edge and the rest sits on
-     solid charcoal — readable at every width, and nothing moves once the image arrives (the box is sized by CSS). */
-  main[data-home="v2"] .hv2-hero { --hv2-still: min(125vw, 620px); min-height: 0; height: auto; }
+  /* The still takes the top of the hero; the headline starts on its darkened lower edge and the rest sits on solid
+     charcoal — readable at every width, and nothing moves once the image arrives (the box is sized by CSS). */
+  main[data-home="v2"] .hv2-hero { --hv2-still: min(125vw, 620px); --hv2-overlap: 190px; min-height: 0; height: auto; }
   main[data-home="v2"] .hv2-hero .hero-media { bottom: auto; height: var(--hv2-still); }
   main[data-home="v2"] .hv2-hero .hero-media img { object-fit: cover; object-position: 50% 24%; filter: saturate(.82) contrast(1.06) brightness(.92); }
   main[data-home="v2"] .hv2-hero .hero-shade {
     background: linear-gradient(180deg,
       rgba(12, 13, 13, .62) 0,
-      rgba(12, 13, 13, .08) 110px,
-      rgba(12, 13, 13, .12) calc(var(--hv2-still) - 300px),
-      rgba(23, 25, 24, .84) calc(var(--hv2-still) - 150px),
+      rgba(12, 13, 13, .08) 100px,
+      rgba(12, 13, 13, .12) calc(var(--hv2-still) - var(--hv2-overlap) - 100px),
+      rgba(23, 25, 24, .84) calc(var(--hv2-still) - var(--hv2-overlap) + 40px),
       var(--color-inverse-bg) calc(var(--hv2-still) - 20px));
   }
   main[data-home="v2"] .hv2-hero .hero-grid { display: none; }
-  main[data-home="v2"] .hv2-hero-layout { min-height: 0; padding: calc(var(--hv2-still) - 190px) 0 40px; }
-  main[data-home="v2"] .hv2-hero h1 { font-size: clamp(34px, 9.4vw, 38px); line-height: 1.05; text-shadow: 0 1px 18px rgba(0, 0, 0, .35); }
-  main[data-home="v2"] .hv2-hero .hero-copy { gap: 24px; margin-top: 18px; }
+  main[data-home="v2"] .hv2-hero-layout { min-height: 0; padding: calc(var(--hv2-still) - var(--hv2-overlap)) 0 40px; }
+  main[data-home="v2"] .hv2-hero h1 { font-size: clamp(32px, 9.4vw, 38px); line-height: 1.05; text-shadow: 0 1px 18px rgba(0, 0, 0, .35); }
+  main[data-home="v2"] .hv2-hero .hero-copy { gap: 22px; margin-top: 16px; }
+  /* The object types return from 761 px; on a phone the lead is the works and the limit only */
+  main[data-home="v2"] .hv2-lead-intro { display: none; }
   main[data-home="v2"] .hv2-hero-provenance {
-    position: absolute; z-index: 3; top: 92px; right: 16px; display: block; padding: 6px 9px;
-    color: var(--hv2-text); background: rgba(18, 20, 19, .72); border: 1px solid rgba(245, 242, 235, .45);
-    font: 700 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em;
+    position: absolute; z-index: 3; top: 90px; right: 16px; display: block; padding: 6px 10px;
+    color: var(--hv2-text); background: rgba(18, 20, 19, .74); border: 1px solid rgba(245, 242, 235, .5);
+    font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .05em;
   }
+}
+/* Short phones (≤ 760 px tall: SE, 360×640, 375×667): a shorter still and a tighter headline, so «Зателефонувати» is
+   on the first screen. Measured targets: 320×568, 360×640, 375×667. */
+@media (max-width: 760px) and (max-height: 760px) {
+  main[data-home="v2"] .hv2-hero { --hv2-still: min(94vw, 360px); --hv2-overlap: 148px; }
+  main[data-home="v2"] .hv2-hero h1 { font-size: clamp(30px, 8.6vw, 34px); line-height: 1.04; }
+  main[data-home="v2"] .hv2-hero .hero-lead { font-size: 15px; line-height: 1.55; }
+  main[data-home="v2"] .hv2-hero .hero-copy { gap: 16px; margin-top: 12px; }
+  main[data-home="v2"] .hv2-hero .hero-actions { gap: 10px; }
+  main[data-home="v2"] .hv2-hero .hero-actions .button { min-height: 52px; }
+}
+
+/* Header at ≤ 340 px (HOME v2 only here; the same overflow exists site-wide): logo 188 + call 44 + «МЕНЮ» 92 + gaps
+   did not fit a 288 px row, so the menu button ran off the right edge. The word stays for screen readers
+   (summary also has an aria-label); visually the button becomes the icon. 172 + 8 + 42 + 8 + 44 = 274 px. */
+@media (max-width: 340px) {
+  :root:has(main[data-home="v2"]) .nav-wrap { gap: 8px; }
+  :root:has(main[data-home="v2"]) .site-header .brand { width: 172px; }
+  :root:has(main[data-home="v2"]) .mobile-call { width: 42px; }
+  :root:has(main[data-home="v2"]) .mobile-menu summary { width: 44px; min-width: 44px; padding: 0; justify-content: center; gap: 0; }
+  :root:has(main[data-home="v2"]) .mobile-menu summary > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
 /* ============================== 2 · DIRECTIONS ============================== */
@@ -95,11 +119,18 @@ main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-col
   main[data-home="v2"] .hv2-directions .direction-copy strong,
   main[data-home="v2"] .hv2-directions .direction-card:not(.wide) .direction-copy strong { margin-right: -48px; font-size: 29px; }
   main[data-home="v2"] .hv2-directions .direction-copy small { font-size: 15px; }
-  main[data-home="v2"] .hv2-directions .section-header-support::after {
-    content: 'Гортайте картки →'; display: block; margin-top: 14px; color: var(--color-text-muted);
-    font: 700 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase;
-  }
+  /* Position: «02 / 05» + five dots that also jump to a card (DirectionsRail) */
+  main[data-home="v2"] .hv2-rail-nav { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  main[data-home="v2"] .hv2-rail-count { margin: 0; color: var(--color-text-muted); font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+  main[data-home="v2"] .hv2-rail-count b { color: var(--color-text); font-weight: 700; }
+  main[data-home="v2"] .hv2-rail-dots { display: flex; }
+  main[data-home="v2"] .hv2-rail-dots button { width: 28px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; }
+  main[data-home="v2"] .hv2-rail-dots button span { width: 8px; height: 8px; border-radius: 4px; background: var(--color-border-control); transition: width var(--duration-fast) ease, background var(--duration-fast) ease; }
+  main[data-home="v2"] .hv2-rail-dots button[aria-current="true"] span { width: 22px; background: var(--color-accent); }
+  main[data-home="v2"] .hv2-rail-hint { margin: 0 0 0 auto; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
 }
+main[data-home="v2"] .hv2-rail-nav { display: none; }
+@media (max-width: 760px) { main[data-home="v2"] .hv2-rail-nav { display: flex; } }
 
 /* ======================= 3 · ENGINEERING SIGNATURE + REAL OBJECT ======================= */
 
@@ -120,7 +151,7 @@ main[data-home="v2"] .hv2-signature-lines {
 
 main[data-home="v2"] .hv2-signature-head {
   display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, .7fr); align-items: end; gap: 24px var(--grid-gap);
-  padding-bottom: 40px; border-bottom: 1px solid var(--hv2-line);
+  padding-bottom: 32px; border-bottom: 1px solid var(--hv2-line);
 }
 main[data-home="v2"] .hv2-signature-head .hv2-kicker { grid-column: 1 / -1; }
 main[data-home="v2"] .hv2-signature-head h2 {
@@ -128,9 +159,9 @@ main[data-home="v2"] .hv2-signature-head h2 {
 }
 main[data-home="v2"] .hv2-signature-support { max-width: 460px; margin: 0; padding-left: 24px; color: var(--hv2-text-2); border-left: 2px solid var(--hv2-copper); font-size: 16px; line-height: 1.7; }
 
-/* --- the three cards --- */
-main[data-home="v2"] .hv2-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 48px; }
-main[data-home="v2"] .hv2-card { display: flex; flex-direction: column; min-width: 0; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); }
+/* --- two explanation cards: image | text side by side on desktop, stacked on a phone --- */
+main[data-home="v2"] .hv2-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+main[data-home="v2"] .hv2-card { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); min-width: 0; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); }
 main[data-home="v2"] .hv2-card-visual { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #111312; }
 main[data-home="v2"] .hv2-card-visual > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.72) contrast(1.05); }
 /* Crop marks in the four corners — the drawing-sheet detail that ties the three cards together */
@@ -150,27 +181,28 @@ main[data-home="v2"] .hv2-card-visual::after {
     linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) left bottom / 14px 1px no-repeat,
     linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) left bottom / 1px 14px no-repeat;
 }
-main[data-home="v2"] .hv2-card-body { display: grid; gap: 12px; padding: 26px 28px 30px; border-top: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-card-body { display: grid; align-content: center; gap: 10px; padding: 24px 26px; border-left: 1px solid var(--hv2-line); }
 main[data-home="v2"] .hv2-card-number { color: var(--hv2-copper-text); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
-main[data-home="v2"] .hv2-card h3 { margin: 0; font: 400 clamp(26px, 2.1vw, 32px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+main[data-home="v2"] .hv2-card h3 { margin: 0; font: 400 clamp(24px, 1.9vw, 30px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
 main[data-home="v2"] .hv2-card h3 [aria-hidden="true"] { color: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-card p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.65; }
 
 /* Provenance tags: an illustration is outlined, the real photo is solid paper — two different marks on purpose */
 main[data-home="v2"] .hv2-tag {
-  position: absolute; z-index: 3; top: 18px; right: 18px; padding: 6px 9px;
-  color: var(--hv2-text); background: rgba(18, 20, 19, .78); border: 1px solid rgba(245, 242, 235, .42);
-  font: 700 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em;
+  position: absolute; z-index: 3; top: 16px; right: 16px; padding: 7px 10px;
+  color: var(--hv2-text); background: rgba(18, 20, 19, .8); border: 1px solid rgba(245, 242, 235, .5);
+  font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .05em;
 }
 main[data-home="v2"] .hv2-tag-photo { display: inline-flex; align-items: center; gap: 7px; color: var(--hv2-ink); background: var(--hv2-text); border-color: var(--hv2-text); }
 main[data-home="v2"] .hv2-tag-photo::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--hv2-copper-fill); }
+main[data-home="v2"] .hv2-tag-scheme { border-color: var(--hv2-copper-text); }
 
 /* Callouts on the illustrations: a copper ring, a short leader and a label */
 main[data-home="v2"] .hv2-pin { position: absolute; z-index: 2; left: var(--x); top: var(--y); display: flex; align-items: center; transform: translate(-7px, -50%); pointer-events: none; }
 main[data-home="v2"] .hv2-pin > i { width: 14px; height: 14px; flex: none; border: 2px solid var(--hv2-copper-text); border-radius: 50%; background: rgba(18, 20, 19, .55); box-shadow: 0 0 0 5px rgba(204, 132, 85, .18); }
 main[data-home="v2"] .hv2-pin > span {
   position: relative; margin-left: 16px; padding: 5px 8px; color: var(--hv2-text); background: rgba(18, 20, 19, .84);
-  border-left: 2px solid var(--hv2-copper-text); font: 700 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap;
+  border-left: 2px solid var(--hv2-copper-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
 }
 main[data-home="v2"] .hv2-pin > span::before { content: ''; position: absolute; top: 50%; left: -16px; width: 14px; height: 1px; background: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-pin-left { flex-direction: row-reverse; transform: translate(calc(-100% + 7px), -50%); }
@@ -190,54 +222,72 @@ main[data-home="v2"] .hv2-scheme-flow { fill: none; stroke: var(--hv2-copper-tex
 main[data-home="v2"] .hv2-scheme-flowhead { fill: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-scheme-dim { stroke: #6f726d; stroke-width: 1; }
 main[data-home="v2"] .hv2-scheme-axis { fill: none; stroke: #8a857c; stroke-width: 1.2; }
-main[data-home="v2"] :is(.hv2-scheme-axis-label, .hv2-scheme-label) { fill: var(--hv2-text-2); font: 700 13px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+main[data-home="v2"] :is(.hv2-scheme-axis-label, .hv2-scheme-label) { fill: var(--hv2-text); font: 700 19px var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-scheme-axis-label { font-size: 15px; fill: var(--hv2-text-2); }
 @keyframes hv2-flow { to { stroke-dashoffset: -38; } }
 @media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-scheme-flow { animation: none; } }
 
-main[data-home="v2"] .hv2-boundary { max-width: 880px; margin: 28px 0 0; color: var(--hv2-text-3); font-size: 14px; line-height: 1.6; }
+main[data-home="v2"] .hv2-boundary { max-width: 880px; margin: 22px 0 0; color: var(--hv2-text-3); font-size: 14px; line-height: 1.6; }
 main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight: 700; }
 
-/* --- the real object: evidence, not decoration --- */
-main[data-home="v2"] .hv2-evidence { margin: 64px 0 0; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-evidence-media { position: relative; aspect-ratio: 1550 / 620; overflow: hidden; background: #0f1110; }
-/* The overcast sky was the brightest area on the page; a shade over the top third (on screen only) lets the frame sit
-   in the charcoal block, and a faint bottom fade hands over to the facts panel. */
-main[data-home="v2"] .hv2-evidence-shade {
-  position: absolute; z-index: 1; inset: 0; pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(18, 20, 19, .62) 0%, rgba(18, 20, 19, .28) 18%, rgba(18, 20, 19, 0) 34%),
-    linear-gradient(0deg, rgba(18, 20, 19, .38) 0%, rgba(18, 20, 19, 0) 22%);
+/* --- the real object + the X-ray: two separate images, two different labels --- */
+main[data-home="v2"] .hv2-proof { margin-top: 36px; }
+/* 5fr | 7fr with the photo at 10:7 and the X-ray at 2:1 gives both media boxes the same height at any width */
+main[data-home="v2"] .hv2-proof-pair { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 14px; align-items: start; }
+main[data-home="v2"] .hv2-proof-pair figure { display: grid; gap: 12px; min-width: 0; margin: 0; }
+main[data-home="v2"] .hv2-proof-media { position: relative; overflow: hidden; background: #0f1110; border: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-proof-photo .hv2-proof-media { aspect-ratio: 10 / 7; }
+main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 1774 / 887; }
+main[data-home="v2"] .hv2-proof-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+main[data-home="v2"] .hv2-proof-photo img { object-position: 86% 55%; }
+main[data-home="v2"] .hv2-proof-xray img { object-position: 100% 50%; }
+main[data-home="v2"] .hv2-proof-pair figcaption { color: var(--hv2-text-3); font-size: 14px; line-height: 1.55; }
+main[data-home="v2"] .hv2-proof-pair figcaption b { color: var(--hv2-text); font-weight: 700; }
+main[data-home="v2"] .hv2-proof-arrow {
+  position: absolute; z-index: 3; left: 14px; top: 50%; width: 38px; height: 38px; display: grid; place-items: center;
+  color: var(--hv2-text); background: var(--hv2-copper-fill); border-radius: 50%; font-size: 17px; transform: translateY(-50%);
+  box-shadow: 0 0 0 4px rgba(18, 20, 19, .55);
 }
-main[data-home="v2"] .hv2-evidence-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-main[data-home="v2"] .hv2-evidence-pin { position: absolute; z-index: 2; left: var(--x); top: var(--y); display: flex; align-items: center; transform: translate(-14px, -50%); }
-main[data-home="v2"] .hv2-evidence-pin > i {
-  width: 28px; height: 28px; display: grid; place-items: center; flex: none; border-radius: 50%;
-  color: var(--hv2-text); background: var(--hv2-copper-fill); font: 700 13px/1 var(--font-condensed), sans-serif; font-style: normal;
-  box-shadow: 0 0 0 3px rgba(245, 242, 235, .92), 0 6px 18px rgba(0, 0, 0, .35);
-}
-main[data-home="v2"] .hv2-evidence-pin > span {
-  margin-left: 10px; padding: 6px 10px; color: var(--hv2-text); background: rgba(18, 20, 19, .86);
-  font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap;
-}
-main[data-home="v2"] .hv2-evidence-facts { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 32px var(--grid-gap); padding: 36px 40px 40px; border-top: 2px solid var(--hv2-copper); }
-main[data-home="v2"] .hv2-evidence-lead h3 { margin: 16px 0 12px; font: 400 clamp(28px, 2.5vw, 38px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
-main[data-home="v2"] .hv2-evidence-lead > p:last-child { max-width: 520px; margin: 0; color: var(--hv2-text-2); font-size: 16px; line-height: 1.6; }
-main[data-home="v2"] .hv2-evidence-facts dl { align-self: end; margin: 0; border-top: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-evidence-facts dl > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-evidence-facts dt { padding-top: 3px; color: var(--hv2-text-3); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-main[data-home="v2"] .hv2-evidence-facts dd { margin: 0; color: var(--hv2-text); font-size: 16px; line-height: 1.5; }
-main[data-home="v2"] .hv2-evidence-scope { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0; padding: 0; list-style: none; }
-main[data-home="v2"] .hv2-evidence-scope li { display: flex; align-items: center; gap: 9px; }
-main[data-home="v2"] .hv2-evidence-scope i { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: var(--hv2-text); background: var(--hv2-copper-fill); font: 700 12px/1 var(--font-condensed), sans-serif; font-style: normal; }
 
-/* --- people: two lines, no portraits --- */
-main[data-home="v2"] .hv2-people { display: grid; grid-template-columns: minmax(150px, .6fr) minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: 24px 40px; margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--hv2-line); }
+/* The travelling pulse on the X-ray's own load path (same idea as card 02's dashes). Static at rest for
+   prefers-reduced-motion: the sketch already carries its copper path, so nothing is lost. */
+main[data-home="v2"] .hv2-xray-flow { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+main[data-home="v2"] :is(.hv2-xray-pulse, .hv2-xray-pulse-halo) {
+  fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: .075 1.3; stroke-dashoffset: .075;
+  animation: hv2-pulse 3.4s cubic-bezier(.42, 0, .58, 1) infinite;
+}
+main[data-home="v2"] .hv2-xray-pulse { stroke: #ffd2ad; stroke-width: 9; }
+main[data-home="v2"] .hv2-xray-pulse-halo { stroke: rgba(255, 150, 80, .42); stroke-width: 30; filter: blur(7px); }
+main[data-home="v2"] .hv2-xray-glow { opacity: 0; animation: hv2-glow 3.4s ease-out infinite; }
+@keyframes hv2-pulse {
+  0% { stroke-dashoffset: .075; opacity: 0; }
+  6% { opacity: 1; }
+  74% { opacity: 1; }
+  80%, 100% { stroke-dashoffset: -1; opacity: 0; }
+}
+@keyframes hv2-glow { 0%, 68% { opacity: 0; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  main[data-home="v2"] :is(.hv2-xray-pulse, .hv2-xray-pulse-halo, .hv2-xray-glow) { animation: none; opacity: 0; }
+}
+
+/* Facts under the pair: what the photo proves, and who stands behind the work */
+main[data-home="v2"] .hv2-proof-facts {
+  display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px var(--grid-gap); margin-top: 24px;
+  padding: 30px 34px; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); border-top: 2px solid var(--hv2-copper);
+}
+main[data-home="v2"] .hv2-evidence-lead h3 { margin: 14px 0 10px; font: 400 clamp(26px, 2.3vw, 36px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { max-width: 560px; margin: 0; color: var(--hv2-text-2); font-size: 16px; line-height: 1.6; }
+main[data-home="v2"] .hv2-scope-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+main[data-home="v2"] .hv2-scope-chips li { padding: 7px 12px; color: var(--hv2-text); border: 1px solid var(--hv2-line-strong); font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+
+/* --- people: compact, beside the proof, no portraits --- */
+main[data-home="v2"] .hv2-people { display: grid; align-content: start; gap: 14px; padding-left: 32px; border-left: 1px solid var(--hv2-line); }
 main[data-home="v2"] .hv2-people-title { margin: 0; color: var(--hv2-text-3); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-main[data-home="v2"] .hv2-people-note { margin: 8px 0 0; color: var(--hv2-text-2); font-size: 14px; line-height: 1.5; }
-main[data-home="v2"] .hv2-person { padding-left: 18px; border-left: 2px solid var(--hv2-copper); }
-main[data-home="v2"] .hv2-person h3 { margin: 0 0 4px; color: var(--hv2-text); font-size: 18px; font-weight: 700; line-height: 1.3; }
+main[data-home="v2"] .hv2-people-note { margin: 0; color: var(--hv2-text-2); font-size: 14px; line-height: 1.5; }
+main[data-home="v2"] .hv2-person { padding-left: 16px; border-left: 2px solid var(--hv2-copper); }
+main[data-home="v2"] .hv2-person h4 { margin: 0 0 3px; color: var(--hv2-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
 main[data-home="v2"] .hv2-person p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.5; }
-main[data-home="v2"] .hv2-people-link { min-height: 44px; display: inline-flex; align-items: center; gap: 12px; color: var(--hv2-text); border-bottom: 1px solid var(--hv2-copper); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+main[data-home="v2"] .hv2-people-link { justify-self: start; min-height: 44px; display: inline-flex; align-items: center; gap: 12px; color: var(--hv2-text); border-bottom: 1px solid var(--hv2-copper); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 
 /* ========================= 4 · CONVERSATION + FORM ========================= */
@@ -260,8 +310,14 @@ main[data-home="v2"] .hv2-conversation-bg::after {
 :root[data-theme="dark"] main[data-home="v2"] .hv2-conversation-bg img { filter: grayscale(.6) sepia(.2) brightness(.55); }
 main[data-home="v2"] .hv2-conversation .hv2-kicker { color: var(--color-accent-strong); }
 main[data-home="v2"] .hv2-conversation .hv2-kicker > span { background: var(--color-accent); }
-main[data-home="v2"] .hv2-conversation-grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(540px, 1.08fr); align-items: start; gap: var(--grid-gap); }
-main[data-home="v2"] .hv2-conversation-intro { min-width: 0; }
+/* Desktop: intro + journey on the left, the form beside them. Phone: intro (call + channels) → form → journey. */
+main[data-home="v2"] .hv2-conversation-grid {
+  display: grid; grid-template-columns: minmax(0, .92fr) minmax(540px, 1.08fr); grid-template-areas: "intro form" "journey form";
+  grid-template-rows: auto 1fr; align-items: start; gap: 0 var(--grid-gap);
+}
+main[data-home="v2"] .hv2-conversation-intro { grid-area: intro; min-width: 0; }
+main[data-home="v2"] .hv2-journey-wrap { grid-area: journey; min-width: 0; margin-top: 40px; }
+main[data-home="v2"] .hv2-journey-title { margin: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 main[data-home="v2"] .hv2-conversation h2 { margin: 22px 0 0; font: 400 clamp(44px, 4.4vw, 66px)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 main[data-home="v2"] .hv2-conversation-lead { max-width: 500px; margin: 22px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 /* The closing contact block: one column of fixed width, so the call and the four channels share both edges. */
@@ -286,7 +342,7 @@ main[data-home="v2"] .hv2-call:is(:hover, :focus-visible) .hv2-call-arrow { tran
 
 main[data-home="v2"] .hv2-channels-label {
   display: flex; align-items: center; gap: 14px; margin: 8px 0 0; color: var(--color-text-muted);
-  font: 700 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .16em; text-transform: uppercase;
+  font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .16em; text-transform: uppercase;
 }
 main[data-home="v2"] .hv2-channels-label::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
 
@@ -314,7 +370,7 @@ main[data-home="v2"] .hv2-conversation-channels .messenger-link:is(:hover, :focu
 main[data-home="v2"] .hv2-conversation-channels .hv2-email svg { width: 20px; height: 20px; flex: none; color: var(--color-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
 main[data-home="v2"] .hv2-conversation-channels .hv2-email:is(:hover, :focus-visible) svg { color: var(--color-accent-strong); }
 
-main[data-home="v2"] .hv2-journey { display: grid; gap: 0; margin: 44px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-control); }
+main[data-home="v2"] .hv2-journey { display: grid; gap: 0; margin: 14px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-control); }
 main[data-home="v2"] .hv2-journey li { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--color-border); }
 main[data-home="v2"] .hv2-journey-number { color: var(--color-accent-strong); font: 600 22px/1.1 var(--font-condensed), sans-serif; letter-spacing: .02em; }
 main[data-home="v2"] .hv2-journey h3 { margin: 0 0 6px; color: var(--color-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
@@ -324,69 +380,81 @@ main[data-home="v2"] .hv2-journey p { margin: 0; color: var(--color-text-seconda
 main[data-home="v2"] .hv2-conversation .inquiry-form { min-width: 0; box-shadow: 0 28px 70px rgba(20, 22, 21, .16); }
 /* globals.css gives .inquiry-form `grid-area: form` at ≤1180 for the shared .contact-grid; this grid has no named
    areas, so that line would open two empty implicit columns. */
-main[data-home="v2"] .hv2-conversation-grid > .inquiry-form { grid-area: auto; }
+main[data-home="v2"] .hv2-conversation-grid > .inquiry-form { grid-area: form; }
+
+/* Form labels were 10–11 px: raised for reading at arm's length (HOME v2 only) */
+main[data-home="v2"] .hv2-conversation :is(.inquiry-form label > span, .inquiry-choice legend) { font-size: 12.5px; letter-spacing: .06em; }
+main[data-home="v2"] .hv2-conversation .inquiry-choice label > span { font-size: 12px; }
+main[data-home="v2"] .hv2-conversation .inquiry-form-section-heading h3 { font-size: 12.5px; }
+main[data-home="v2"] .hv2-conversation :is(.inquiry-form-kicker, .inquiry-required-note) { font-size: 13px; }
+main[data-home="v2"] .hv2-conversation .inquiry-field-hint { font-size: 13px; }
 
 /* ================================ Tablet ================================ */
 
 @media (max-width: 1180px) {
   main[data-home="v2"] .hv2-cards { gap: 14px; }
-  main[data-home="v2"] .hv2-card-body { padding: 22px 22px 26px; }
-  main[data-home="v2"] .hv2-people { grid-template-columns: 1fr 1fr; }
-  main[data-home="v2"] .hv2-people-head { grid-column: 1 / -1; }
-  main[data-home="v2"] .hv2-conversation-grid { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-card-body { padding: 20px 22px; }
+  main[data-home="v2"] .hv2-conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; grid-template-rows: auto; row-gap: 36px; }
+  main[data-home="v2"] .hv2-journey-wrap { margin-top: 0; }
   main[data-home="v2"] .hv2-journey { grid-template-columns: 1fr 1fr; column-gap: 32px; }
 }
 @media (max-width: 1050px) {
   main[data-home="v2"] .hv2-signature-head { grid-template-columns: 1fr; }
-  main[data-home="v2"] .hv2-cards { grid-template-columns: 1fr 1fr; }
-  main[data-home="v2"] .hv2-card:last-child { grid-column: 1 / -1; }
-  main[data-home="v2"] .hv2-card:last-child .hv2-card-visual { aspect-ratio: 16 / 9; }
-  main[data-home="v2"] .hv2-evidence-facts { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-cards { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-proof-facts { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-people { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--hv2-line); }
+}
+/* The pair stacks before the halves get narrow: each image keeps the full width */
+@media (max-width: 900px) {
+  main[data-home="v2"] .hv2-proof-pair { grid-template-columns: 1fr; gap: 22px; }
+  main[data-home="v2"] .hv2-proof-photo .hv2-proof-media { aspect-ratio: 4 / 3; }
+  main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 16 / 10; }
+  /* Stacked: the arrow points down from the photo into the sketch, clear of the tag in the top-right corner */
+  main[data-home="v2"] .hv2-proof-arrow { left: 14px; top: 14px; transform: rotate(90deg); }
 }
 
 /* ================================ Phone ================================ */
 
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-signature-head { gap: 18px; padding-bottom: 28px; }
-  main[data-home="v2"] .hv2-signature-head h2 { font-size: clamp(38px, 10.5vw, 44px); line-height: 1.02; }
+  main[data-home="v2"] .hv2-signature-head { gap: 16px; padding-bottom: 24px; }
+  main[data-home="v2"] .hv2-signature-head h2 { font-size: clamp(36px, 10.5vw, 44px); line-height: 1.02; }
   main[data-home="v2"] .hv2-signature-support { padding-left: 16px; }
-  main[data-home="v2"] .hv2-cards { grid-template-columns: 1fr; gap: 14px; margin-top: 28px; }
-  main[data-home="v2"] .hv2-card:last-child { grid-column: auto; }
-  main[data-home="v2"] .hv2-card-visual,
-  main[data-home="v2"] .hv2-card:last-child .hv2-card-visual { aspect-ratio: 4 / 3; }
-  main[data-home="v2"] .hv2-card-body { gap: 8px; padding: 18px 18px 22px; }
+  main[data-home="v2"] .hv2-proof { margin-top: 26px; }
+  main[data-home="v2"] .hv2-proof-pair { margin-inline: calc(var(--container-gutter) * -1); }
+  main[data-home="v2"] .hv2-proof-media { border-inline: 0; }
+  main[data-home="v2"] .hv2-proof-pair figcaption { padding-inline: var(--container-gutter); font-size: 15px; }
+  /* The X-ray on a phone shows its right part — the frame and the load path — big enough to read */
+  main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 1.1; }
+  main[data-home="v2"] .hv2-proof-facts { margin-inline: calc(var(--container-gutter) * -1); padding: 24px var(--container-gutter) 26px; border-inline: 0; }
+  main[data-home="v2"] .hv2-cards { margin-top: 22px; }
+  main[data-home="v2"] .hv2-card { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-card-body { gap: 8px; padding: 18px 18px 22px; border-left: 0; border-top: 1px solid var(--hv2-line); }
   main[data-home="v2"] .hv2-card h3 { font-size: 26px; }
   main[data-home="v2"] .hv2-card p { font-size: 16px; line-height: 1.55; }
-  main[data-home="v2"] .hv2-tag { top: 12px; right: 12px; }
-  main[data-home="v2"] .hv2-pin > span { font-size: 10.5px; padding: 4px 7px; }
+  main[data-home="v2"] .hv2-tag { top: 12px; right: 12px; font-size: 12px; }
+  main[data-home="v2"] .hv2-pin > span { font-size: 11.5px; padding: 4px 7px; }
 
-  main[data-home="v2"] .hv2-evidence { margin-top: 44px; margin-inline: calc(var(--container-gutter) * -1); border-inline: 0; }
-  main[data-home="v2"] .hv2-evidence-media { aspect-ratio: 1000 / 667; }
-  main[data-home="v2"] .hv2-evidence-pin { left: var(--mx); top: var(--my); transform: translate(-13px, -50%); }
-  main[data-home="v2"] .hv2-evidence-pin > i { width: 26px; height: 26px; }
-  main[data-home="v2"] .hv2-evidence-pin > span { display: none; }
-  main[data-home="v2"] .hv2-tag-photo { top: 12px; right: 12px; }
-  main[data-home="v2"] .hv2-evidence-facts { gap: 24px; padding: 24px var(--container-gutter) 28px; }
-  main[data-home="v2"] .hv2-evidence-facts dl > div { grid-template-columns: 1fr; gap: 8px; }
-
-  main[data-home="v2"] .hv2-people { grid-template-columns: 1fr; gap: 18px; margin-top: 36px; }
-  main[data-home="v2"] .hv2-people-head { grid-column: auto; }
-  main[data-home="v2"] .hv2-people-link { justify-self: start; }
-
-  main[data-home="v2"] .hv2-conversation h2 { font-size: clamp(36px, 10vw, 42px); }
+  main[data-home="v2"] .hv2-conversation h2 { font-size: clamp(34px, 10vw, 42px); }
   main[data-home="v2"] .hv2-conversation-bg img { object-position: 50% 30%; }
   main[data-home="v2"] .hv2-conversation-bg::after { background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg) 80%, transparent) 0%, color-mix(in srgb, var(--color-bg) 92%, transparent) 38%, color-mix(in srgb, var(--color-bg) 97%, transparent) 100%); }
-  main[data-home="v2"] .hv2-conversation-contact { width: 100%; }
-  main[data-home="v2"] .hv2-call .hv2-call-icon { width: 60px; }
-  main[data-home="v2"] .hv2-call .hv2-call-text { padding: 0 16px; }
+  main[data-home="v2"] .hv2-conversation-lead { margin-top: 16px; }
+  main[data-home="v2"] .hv2-conversation-contact { width: 100%; margin-top: 24px; }
+  main[data-home="v2"] .hv2-call .hv2-call-icon { width: 58px; }
+  main[data-home="v2"] .hv2-call .hv2-call-text { padding: 0 14px; }
   main[data-home="v2"] .hv2-call strong { font-size: 22px; }
-  main[data-home="v2"] .hv2-call .hv2-call-arrow { padding-right: 18px; }
+  main[data-home="v2"] .hv2-call .hv2-call-arrow { padding-right: 16px; }
   /* A phone keeps the labels, stacked under the icon: four side-by-side labels do not fit a 358 px row */
   main[data-home="v2"] .hv2-conversation-channels { gap: 6px; }
-  main[data-home="v2"] .hv2-conversation-channels .messenger-link { flex-direction: column; gap: 7px; min-height: 64px; padding: 8px 4px; font-size: 11px; }
-  main[data-home="v2"] .hv2-journey { grid-template-columns: 1fr; margin-top: 32px; }
-  main[data-home="v2"] .hv2-journey li { grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 16px 0; }
-  main[data-home="v2"] .hv2-journey-number { font-size: 19px; }
-  main[data-home="v2"] .hv2-journey p { font-size: 16px; }
-  main[data-home="v2"] .hv2-conversation-grid { gap: 36px; }
+  main[data-home="v2"] .hv2-conversation-channels .messenger-link { flex-direction: column; gap: 7px; min-height: 64px; padding: 8px 4px; font-size: 12px; }
+  main[data-home="v2"] .hv2-conversation-grid { row-gap: 28px; }
+  main[data-home="v2"] .hv2-journey { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-journey li { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 14px 0; }
+  main[data-home="v2"] .hv2-journey-number { font-size: 18px; }
+  main[data-home="v2"] .hv2-journey h3 { font-size: 16px; }
+  main[data-home="v2"] .hv2-journey p { font-size: 15px; }
+}
+@media (max-width: 340px) {
+  main[data-home="v2"] .hv2-call strong { font-size: 20px; }
+  main[data-home="v2"] .hv2-call .hv2-call-icon { width: 52px; }
+  main[data-home="v2"] .hv2-conversation-channels .messenger-link { font-size: 11px; }
 }

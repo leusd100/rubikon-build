@@ -1,7 +1,8 @@
 /**
- * One documented object on HOME. The owner approved this camera frame and confirmed that the
- * frame, panels and roof are Serhii's prior experience, before RUBIKON BUILD. It must never be
- * presented as a RUBIKON BUILD project or attributed to the current team.
+ * One documented object on HOME. The owner confirmed that the frame, panels and roof are Serhii's
+ * prior experience, before RUBIKON BUILD. It must never be presented as a RUBIKON BUILD project or
+ * attributed to the current team. HOME v2 prototype: the frame is the owner-supplied original
+ * DSCF7654 (same hangar, gable end), cropped only and saved without metadata.
  *
  * Never fill it with a concept, stock or generated image, with a frame that has no attribution, or with a
  * scope nobody has confirmed. `publicationApproved` is a literal `true` so a draft cannot type-check;
@@ -29,10 +30,10 @@ export const homeProofCase: HomeProofCase | null = {
   publicationApproved: true,
   provenance: 'serhii-prior',
   photo: {
-    src: '/photos/serhii-prior-hangar.jpeg',
-    alt: 'Збудований ангар із попереднього досвіду Сергія Івановича Леуса: фасад із двома воротами та довгий бічний корпус',
-    width: 1800,
-    height: 1200,
+    src: '/photos/serhii-prior-hangar-gable.jpeg',
+    alt: 'Збудований ангар із попереднього досвіду Сергія Івановича Леуса: торцевий фасад із двома секційними воротами та довгий бічний корпус',
+    width: 2400,
+    height: 1231,
   },
   caption: 'Вид на фасад і бічний корпус ангара',
   attribution: 'Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD.',

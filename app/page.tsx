@@ -1,8 +1,10 @@
 import { DirectionImageCards } from './components/DirectionCards';
+import { DirectionsRail } from './components/home-v2/DirectionsRail';
 import { SectionHeader } from './components/SiteChrome';
 import { ConversationSection } from './components/home-v2/ConversationSection';
 import { EngineeringSignature } from './components/home-v2/EngineeringSignature';
 import { HomeV2Hero } from './components/home-v2/HomeV2Hero';
+import { directions } from './data/directions';
 import { homeProofCase } from './data/homeProof';
 // Architectural Copper v0.1 — HOME-only palette prototype; see the file header for how to discard it.
 import './palette-architectural-copper.css';
@@ -28,7 +30,9 @@ export default function Home() {
             supporting="Оберіть напрям, найближчий до вашої задачі. Зображення на картках — ілюстрації, а не фото виконаних об’єктів."
             inverse
           />
-          <DirectionImageCards />
+          <DirectionsRail count={directions.length}>
+            <DirectionImageCards />
+          </DirectionsRail>
         </div>
       </section>
 

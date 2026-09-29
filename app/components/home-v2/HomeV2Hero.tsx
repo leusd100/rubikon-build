@@ -18,12 +18,13 @@ export function HomeV2Hero() {
           Промислове <span className="hv2-nowrap">будівництво —</span> від окремих робіт до <em>комплексної реалізації</em> об’єкта
         </h1>
         <div className="hero-copy">
-          {/* The team's own core works, as already published. The second sentence is kept verbatim: it is the pinned
-              P01 limit on «комплексної реалізації» in the H1 (pr-critical), so dropping it would widen the claim. */}
+          {/* Iteration 3: shorter, so the call fits a narrow phone's first screen. The team's own core works and the
+              limit on specialised works stay (P01); «в погодженому обсязі» and the object types are dropped on a phone —
+              the object types return from 761 px up. */}
           <p className="hero-lead">
-            Будуємо промислові, складські й аграрні об’єкти: бетон і типові фундаменти, монтаж металоконструкцій,
-            стінових і покрівельних панелей, покрівлі. Спеціалізовані роботи координуємо з профільними виконавцями
-            в погодженому обсязі.
+            <span className="hv2-lead-intro">Будуємо промислові, складські й аграрні об’єкти. </span>
+            Бетон і типові фундаменти, монтаж металоконструкцій і панелей, покрівельні роботи. Спеціалізовані роботи
+            координуємо з профільними виконавцями.
           </p>
           <div className="hero-actions">
             <a className="button button-primary hero-call-primary" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
