@@ -1,12 +1,12 @@
-/* HOME v2 «Engineering Signature» — PROTOTYPE (branch design/home-v2-engineering-signature, not for merge).
+/* HOME v2 «Engineering Signature» — owner-approved 2026-09-29 (built on design/home-v2-engineering-signature).
 
    Four zones: hero → directions → engineering signature (real object + X-ray first, people, two explanation cards)
    → conversation + form.
    Every rule is keyed to <main data-home="v2">, so nothing leaks to other pages. It sits on top of the
    Architectural Copper tokens already on main (#122) and does not change them.
 
-   The signature block and the closing section are ALWAYS dark (a local charcoal/copper treatment); they do not follow
-   the light/dark switch. The form card inside the closing section does follow it (paper in Light, graphite in Dark).
+   The signature block is ALWAYS dark (a local charcoal/copper treatment) and does not follow the light/dark switch;
+   the directions band and the closing section do follow it (paper in Light, graphite in Dark).
 
    Discard cleanly: delete this file, app/components/home-v2/, public/media/home-v2/, and restore app/page.tsx. */
 

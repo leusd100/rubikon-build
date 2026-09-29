@@ -8,9 +8,9 @@ import { directions } from './data/directions';
 import { homeProofCase } from './data/homeProof';
 // Architectural Copper v0.1 — HOME-only palette prototype; see the file header for how to discard it.
 import './palette-architectural-copper.css';
-// HOME v2 «Engineering Signature» — PROTOTYPE on design/home-v2-engineering-signature (not for merge). Every rule
-// is scoped to main[data-home="v2"]; the previous HOME blocks (HomeSections, TeamSection, InquirySection) are left
-// untouched in the codebase so the two versions can be compared and this one discarded cleanly.
+// HOME v2 «Engineering Signature» (owner-approved 2026-09-29, from design/home-v2-engineering-signature). Every rule
+// is scoped to main[data-home="v2"]; the previous HOME blocks (HomeSections, TeamSection) are no longer rendered here
+// and InquirySection still serves the other pages.
 import './home-v2.css';
 
 // HOME v2 reads in four zones: образ → напрямки → інженерне пояснення + реальний доказ → розмова.

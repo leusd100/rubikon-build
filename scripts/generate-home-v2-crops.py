@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HOME v2 prototype — derived WebP crops under public/media/home-v2/ (manual, not part of the build).
+"""HOME v2 — derived WebP crops under public/media/home-v2/ (manual, not part of the build).
 
 Crop and resize only: no retouching, no compositing, no generated pixels. Sources and boxes:
 

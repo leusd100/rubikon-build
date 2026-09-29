@@ -6,7 +6,7 @@ import { useSyncExternalStore } from 'react';
 import { DirectionHeroVideo } from '../DirectionHeroVideo';
 import { useViewportVariant } from '../../hooks/useViewportVariant';
 
-// HOME v2 prototype. Desktop and tablet keep the existing footage; ≤760 px gets one still instead of the 2.6 MB
+// HOME v2. Desktop and tablet keep the existing footage; ≤760 px gets one still instead of the 2.6 MB
 // phone montage. The still is a concept image (the /napryamky steel-frame render, cropped 4:5) — an unclad frame,
 // so it never reads as a finished object, and the hero labels it «Ілюстрація».
 const STATIC_QUERY = '(max-width: 760px)';

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-// HOME v2 prototype. On a phone the five direction cards are a swipe row; this adds a visible position — «02 / 05» and
+// HOME v2. On a phone the five direction cards are a swipe row; this adds a visible position — «02 / 05» and
 // five dots that also jump to a card — so nobody takes the first card for the whole list. From 761 px the cards are
 // the usual mosaic and the indicator is hidden by CSS.
 export function DirectionsRail({ children, count }: Readonly<{ children: ReactNode; count: number }>) {
