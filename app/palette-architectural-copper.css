@@ -231,8 +231,8 @@ main[data-palette="architectural-copper"] .directions .eyebrow.light { color: va
 /* ---------- Content sections (follow the theme) ---------- */
 main[data-palette="architectural-copper"] :is(.capability-ledger, .capability-ledger > div, .cost-grid, .cost-grid article, .contact-bridge,
   .entry-axis, .entry-axis li, .first-conversation .entry-axis, .first-conversation .copy-column > p.first-conversation-call,
-  .first-conversation-next, .next-list, .next-list > div) { border-color: var(--color-border); }
-main[data-palette="architectural-copper"] .capability-ledger .capability-own { background: var(--color-surface-elevated); }
+  .first-conversation-next) { border-color: var(--color-border); }
+@media (hover: hover) { main[data-palette="architectural-copper"] .capability-ledger > div:hover { background: var(--color-surface-elevated); } }
 main[data-palette="architectural-copper"] .section-link span { color: var(--color-accent-strong); }
 
 /* People: same ground as the capability section, separated by one hairline */
@@ -257,7 +257,9 @@ main[data-palette="architectural-copper"] :is(.contact-phone, .contact-email):ho
 main[data-palette="architectural-copper"] .contact .messenger-link { color: var(--color-text-secondary); }
 main[data-palette="architectural-copper"] .contact .messenger-link:is(:hover, :focus-visible) { color: var(--color-text); background: var(--color-surface); }
 
-main[data-palette="architectural-copper"] .inquiry-form { color: var(--color-text); background: var(--color-surface-elevated); border-bottom-color: var(--color-border); }
+/* On paper the card was only a faint tone step, so its rounded corners disappeared (owner review, 29.09).
+   A warm-steel outline under the copper top rule gives the silhouette back in both themes. */
+main[data-palette="architectural-copper"] .inquiry-form { color: var(--color-text); background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-top: 2px solid var(--color-accent); }
 main[data-palette="architectural-copper"] :is(.inquiry-form-section, .inquiry-details) { border-color: var(--color-border); }
 main[data-palette="architectural-copper"] .inquiry-form-section-submit { background: color-mix(in srgb, var(--color-surface-elevated) 55%, var(--color-surface)); }
 main[data-palette="architectural-copper"] :is(.inquiry-form-section-heading h3, .inquiry-form label > span, .inquiry-choice legend) { color: var(--color-text-secondary); }
