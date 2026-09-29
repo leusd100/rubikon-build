@@ -61,10 +61,11 @@ describe('P01 public claim boundaries', () => {
     expect(deliveryModel.statements.design).toMatch(/Проєкт надає замовник або його окремий проєктувальник/);
   });
 
-  it('keeps the first-contact promise client-facing without a response-time promise or unapproved proof', () => {
+  it('keeps the first-contact promise client-facing without a response-time promise or unsupported proof', () => {
     expect(deliveryModel.statements.firstContact).toMatch(/Ми уточнимо задачу.*підкажемо, яких даних бракує/);
     expect(deliveryModel.statements.firstContact).not.toMatch(/Дмитро|Сергій/);
     expect(publicCopy).not.toMatch(/(?:відповімо|передзвонимо|зв[’']яжемося)[^.]*\d+\s*(?:хв|год)/iu);
-    expect(homeProofCase).toBeNull();
+    expect(homeProofCase?.provenance).toBe('serhii-prior');
+    expect(homeProofCase?.attribution).toContain('до створення RUBIKON BUILD');
   });
 });

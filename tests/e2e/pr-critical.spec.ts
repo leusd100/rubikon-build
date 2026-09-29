@@ -143,16 +143,16 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
   }
 });
 
-test('homepage server HTML carries the H1, work overview, first conversation and cooperation options', async ({ page }) => {
+test('homepage server HTML carries the H1, prior-work proof, first conversation and cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
-    overview: '#services .capability-overview h3',
+    proof: '#services .home-proof-caption',
     conversationSteps: '#first-conversation .next-list dt',
     cooperation: '.inquiry-details select option',
   });
 
   expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
-  expect(text.overview).toEqual(['Від фундаменту до покрівлі', 'Розкажіть про свій об’єкт']);
+  expect(text.proof).toEqual(['Вид на фасад і бічний корпус ангара']);
   expect(text.conversationSteps).toEqual(['Уточнюємо задачу', 'Дивимося, що вже є', 'Узгоджуємо склад робіт', 'Готуємо кошторис']);
   expect(text.cooperation).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
 });
@@ -171,7 +171,7 @@ test('/napryamky server HTML takes its formats and entry points from the model',
 
 test('homepage presents experience and an invitation, with detailed formats on the process page', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
-  await expect(page.locator('#services .capability-overview > div')).toHaveCount(2);
+  await expect(page.locator('#services .home-proof')).toHaveCount(1);
   await expect(page.locator('#services .format-grid')).toHaveCount(0);
   await expect(page.locator('#services a[href="/yak-pratsyuiemo#khto-vykonuie"]')).toHaveCount(1);
 });
@@ -197,7 +197,7 @@ for (const width of [360, 375, 390]) {
     });
     expect(heading.widest).toBeLessThanOrEqual(heading.available);
     const overflowing = await page
-      .locator('#services .capability-overview > div, #first-conversation .prep-list li, #first-conversation .next-list > div')
+      .locator('#services .home-proof-body, #first-conversation .prep-list li, #first-conversation .next-list > div')
       .evaluateAll((elements) => elements.filter((element) => element.scrollWidth > element.clientWidth + 1).length);
     expect(overflowing).toBe(0);
   });
@@ -221,14 +221,12 @@ test('homepage invites a project conversation while showing real team experience
   const text = await serverText(page, '/', {
     main: 'main',
     lead: '.hero-lead',
-    columns: '#services .capability-overview h3',
-    overview: '#services .capability-overview',
+    proof: '#services .home-proof',
   });
   const main = text.main.join(' ');
 
-  expect(text.columns).toEqual(['Від фундаменту до покрівлі', 'Розкажіть про свій об’єкт']);
-  expect(text.overview.join(' ')).toMatch(/типові фундаменти.*монтуємо металоконструкції.*покрівлі/);
-  expect(text.overview.join(' ')).toContain('який обсяг можемо взяти на себе');
+  expect(text.proof.join(' ')).toMatch(/попереднього досвіду Сергія.*Каркас.*Стінові панелі.*Покрівля/);
+  expect(text.proof.join(' ')).not.toContain('Виконала наша команда');
   expect(text.lead.join(' ')).toMatch(/Спеціалізовані роботи координуємо з профільними виконавцями в погодженому обсязі/);
   for (const overclaim of [/усе\s+власними\s+силами/i, /повний\s+цикл/i, /усе\s+самостійно/i, /усі\s+спеціальності/i, /власними\s+силами\s+виконуємо\s+все/i]) {
     expect(main, String(overclaim)).not.toMatch(overclaim);
@@ -251,24 +249,25 @@ test('homepage «Перша розмова» explains the four steps without pro
   expect(budget?.what).toContain('Вартість і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
   expect(next).toMatch(/Коли склад робіт визначено й проєктних даних достатньо, готуємо кошторис погодженого обсягу/);
   expect(next).toContain('Якщо даних поки недостатньо');
-  expect(text.services.join(' ')).toContain('після розмови й перегляду матеріалів');
+  expect(text.services.join(' ')).toContain('Для вашого об’єкта обговоримо задачу');
   for (const promise of [/\d+\s?(хв|хвилин|год|днів|дні|доб)/i, /грн|₴|\$|€/, /безкоштовн/i, /гаранті/i, /протягом/i]) {
     expect(`${next} ${text.prepare.join(' ')}`, String(promise)).not.toMatch(promise);
   }
 });
 
-test('homepage keeps illustrations labelled and out of the trust and proof zones; the proof slot is empty', async ({ page }) => {
+test('homepage separates labelled illustrations from the approved camera photo', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   const cards = page.locator('#directions .direction-card');
   await expect(cards).toHaveCount(5);
   for (const card of await cards.all()) await expect(card.locator('.direction-provenance')).toHaveText('Ілюстрація');
   await expect(page.locator('#directions .section-header-support')).toContainText('ілюстрації, а не фото виконаних об’єктів');
 
-  // Concept images belong to the direction cards alone: none in the capability, people or contact blocks.
+  // Concept images belong to the direction cards alone: none in the proof, people or contact blocks.
   expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card')).length)).toBe(0);
-  await expect(page.locator('#services img, #first-conversation img')).toHaveCount(0);
-  // Nothing is approved as proof yet, so the slot draws nothing — no empty frame, no placeholder.
-  await expect(page.locator('.home-proof')).toHaveCount(0);
+  await expect(page.locator('#services img')).toHaveCount(1);
+  await expect(page.locator('#services img')).toHaveAttribute('src', '/photos/serhii-prior-hangar.jpeg');
+  await expect(page.locator('#first-conversation img')).toHaveCount(0);
+  await expect(page.locator('.home-proof')).toContainText('до створення RUBIKON BUILD');
 });
 
 test('homepage places its calls where intent rises: hero, after capability, before the form, in the form', async ({ page }) => {

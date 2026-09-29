@@ -5,7 +5,6 @@ import { CookieSettingsButton } from './AnalyticsConsent';
 import BrandLogo from './BrandLogo';
 import MobileMenu from './MobileMenu';
 import { ThemeMenu, ThemeOptions } from './ThemeControl';
-import ResponsiveImage from './ResponsiveImage';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
 import { directions } from '../data/directions';
@@ -273,7 +272,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
   const isHome = variant === 'home';
 
   return (
-    <section className={`team section team-${variant}`} id={isHome ? 'about' : undefined}>
+    <section className={`team section team-${variant} team-text-only`} id={isHome ? 'about' : undefined}>
       <div className="shell">
         {/* HOME: the one place the family / responsibility thesis is stated (it used to be split between «Наша основа»
             and this block). Experience is told without a number until Serhii himself confirms one; responsibility is
@@ -288,9 +287,6 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
         />
         <div className="team-stories">
           <article className="person-story">
-            <div className="person-photo">
-              <ResponsiveImage src="/images/founder.webp" alt={`${company.founders[0]} — засновник і керівник будівельного напряму ${company.name}`} sizes="(max-width: 1050px) 82vw, 47vw" />
-            </div>
             <div className="person-info">
               <span>{sergii.role}</span>
               <h3>Леус Сергій Іванович</h3>
@@ -302,9 +298,6 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
               <span>{dmytro.role}</span>
               <h3>Леус Дмитро Сергійович</h3>
               {dmytro.paragraphs.map((text) => <p key={text}>{text}</p>)}
-            </div>
-            <div className="person-photo">
-              <ResponsiveImage src="/images/next-generation.webp" alt={`${company.founders[1]} — розвиток компанії та робота з клієнтами ${company.name}`} sizes="(max-width: 1050px) 82vw, 47vw" />
             </div>
           </article>
         </div>

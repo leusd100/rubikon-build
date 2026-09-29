@@ -41,7 +41,7 @@ export function HomeProofSlot({ proof }: Readonly<{ proof: HomeProofCase | null 
   const { photo, scope } = proof;
   return (
     <figure className="home-proof">
-      <div className="home-proof-media" style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
+      <div className="home-proof-media" style={{ aspectRatio: '16 / 10' }}>
         <ResponsiveImage src={photo.src} alt={photo.alt} sizes="(max-width: 1050px) 100vw, 60vw" />
       </div>
       <figcaption className="home-proof-body">
@@ -50,8 +50,8 @@ export function HomeProofSlot({ proof }: Readonly<{ proof: HomeProofCase | null 
         <p className="home-proof-attribution">{proof.attribution}</p>
         <div className="home-proof-scope">
           <div>
-            <h3>Виконала наша команда</h3>
-            <ul>{scope.ours.map((item) => <li key={item}>{item}</li>)}</ul>
+            <h3>{proof.provenance === 'serhii-prior' ? 'Роботи з попереднього досвіду Сергія' : 'Виконала наша команда'}</h3>
+            <ul>{scope.subject.map((item) => <li key={item}>{item}</li>)}</ul>
           </div>
           {scope.others && scope.others.length > 0 && (
             <div>
@@ -74,22 +74,10 @@ export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null
       <GhostWord word="BUILD" />
       <div className="shell">
         <SectionHeader
-          eyebrow="Будівельні роботи"
-          title="Будівельні роботи під вашу задачу"
-          supporting="Кожен об’єкт має свої умови. Розкажіть, що плануєте, — після розмови й перегляду матеріалів визначимо, як RUBIKON може долучитися."
+          eyebrow="Реальний досвід"
+          title="Ангар, над яким працював Сергій"
+          supporting="Каркас, панелі та покрівля цього ангара — частина попереднього досвіду Сергія Леуса. Для вашого об’єкта обговоримо задачу й визначимо, як можемо долучитися."
         />
-        <div className="capability-overview">
-          <div>
-            <p className="capability-kicker">Досвід команди</p>
-            <h3>Від фундаменту до покрівлі</h3>
-            <p>Виконуємо бетонні роботи й типові фундаменти, монтуємо металоконструкції, стінові та покрівельні панелі, робимо покрівлі. Можемо обговорити будівництво об’єкта або окремий етап робіт.</p>
-          </div>
-          <div>
-            <p className="capability-kicker">Перший крок</p>
-            <h3>Розкажіть про свій об’єкт</h3>
-            <p>Не потрібно заздалегідь обирати формат чи розподіляти роботи між виконавцями. Обговоримо вашу задачу, те, що вже підготовлено, і бажаний результат. Тоді скажемо, який обсяг можемо взяти на себе та що потрібно для наступного кроку.</p>
-          </div>
-        </div>
         <HomeProofSlot proof={proof} />
         <a className="section-link" href={`${siteRoutes.process}#khto-vykonuie`}>Як узгоджуємо склад робіт <span aria-hidden="true">↗</span></a>
         <ContactBridge>

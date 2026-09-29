@@ -30,7 +30,7 @@ describe('immutable asset cache policy', () => {
     '/_next/static/chunks/app-a1B2c3D4.js',
     '/_next/static/css/index.BpY8H61J.css',
     '/_next/static/_vinext_fonts/manrope-abcd1234/font-1234abcd.woff2',
-    '/media-responsive/founder-480w.b8e54c4b.webp',
+    '/media-responsive/serhii-prior-hangar-480w.60d83ab6.webp',
   ])('recognises version-safe asset path %s', (pathname) => {
     expect(isImmutableAssetPathname(pathname)).toBe(true);
   });
@@ -40,8 +40,8 @@ describe('immutable asset cache policy', () => {
     '/angary',
     '/media/hero-steel-frame.mp4',
     '/media/hero-steel-frame.webp',
-    '/media-responsive/founder-480w.webp',
-    '/media-responsive/founder-480w.not-a-hash.webp',
+    '/media-responsive/serhii-prior-hangar-480w.webp',
+    '/media-responsive/serhii-prior-hangar-480w.not-a-hash.webp',
   ])('does not classify mutable or document path %s as immutable', (pathname) => {
     expect(isImmutableAssetPathname(pathname)).toBe(false);
   });

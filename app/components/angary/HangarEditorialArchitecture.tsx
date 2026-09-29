@@ -255,15 +255,9 @@ export function HangarEditorialArchitecture() {
             <p>{company.geography}</p>
             <a href="/pro-nas">Про компанію <span aria-hidden="true">→</span></a>
           </div>
-          <div className="angary-people-portraits">
-            <figure>
-              <span><ResponsiveImage src="/images/founder.webp" alt="Сергій — засновник RUBIKON BUILD" sizes="(max-width: 760px) calc(50vw - 22px), 20vw" /></span>
-              <figcaption><strong>Сергій</strong><p>Практичний досвід у будівництві.</p></figcaption>
-            </figure>
-            <figure>
-              <span><ResponsiveImage src="/images/next-generation.webp" alt="Дмитро — розвиток RUBIKON BUILD та робота з клієнтами" sizes="(max-width: 760px) calc(50vw - 22px), 20vw" /></span>
-              <figcaption><strong>Дмитро</strong><p>Розвиток, комунікація з клієнтами та цифрові процеси.</p></figcaption>
-            </figure>
+          <div className="angary-people-roles">
+            <div><strong>Сергій Леус</strong><p>Керує будівельним напрямом і відповідає за виконання робіт.</p></div>
+            <div><strong>Дмитро Леус</strong><p>Працює з клієнтами й допомагає підготувати предметну розмову про проєкт.</p></div>
           </div>
         </div>
       </section>

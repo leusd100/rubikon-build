@@ -25,13 +25,13 @@ for (const width of [375, 768, 1440]) {
       }
       if (route === '/') {
         await expect(page.locator('.hero-actions a').first()).toHaveAttribute('href', /^tel:/);
-        await expect(page.locator('.home-proof')).toHaveCount(0);
-        await expect(page.locator('#services')).toContainText('партнерське виробництво');
-        await expect(page.locator('#services')).toContainText('На стороні замовника');
+        await expect(page.locator('.home-proof')).toHaveCount(1);
+        await expect(page.locator('#services')).toContainText('попереднього досвіду Сергія');
+        await expect(page.locator('#services')).toContainText('Каркас');
       }
       if (route === '/yak-pratsyuiemo') {
         await expect(page.locator('#vidpovidalnist')).toContainText('беремо погоджений комплекс');
-        await expect(page.locator('#proiektuvannia')).toContainText('на стороні замовника');
+        await expect(page.locator('#proiektuvannia')).toContainText('Проєкт надає замовник або його окремий проєктувальник');
       }
     }
   });
