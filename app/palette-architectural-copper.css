@@ -164,8 +164,9 @@ main[data-palette="architectural-copper"] .ghost-word:not(.ghost-word-dark) { --
 .theme-menu-panel { position: absolute; z-index: 60; top: calc(100% + 10px); right: -1px; width: 312px; padding: 16px 16px 14px; color: var(--color-inverse-text); background: var(--color-inverse-bg); border: 1px solid rgba(245, 242, 235, .2); box-shadow: 0 24px 54px rgba(0, 0, 0, .34); }
 .theme-menu-panel[hidden] { display: none; }
 /* Room for the theme cell. 1001–1279: the header's existing compact values (≤1180 tier) plus 36 px icon cells;
-   1001–1099 also takes the logo's existing 210 px size and a 10 px nav gap. Measured: at 1001 the header
-   overhangs its column by the same ~14 px it already does on main; from 1024 up it fits. */
+   1001–1099 tightens further — 34 px cells, 8 px cell padding, 8 px between logo, nav and contacts, 10 px between
+   nav links. The logo keeps its 226 px: the brand test holds it at ≥225 px on desktop. Measured: at 1001 the header
+   overhangs its column by 13 px (main: 14 px); from 1024 up it fits. */
 @media (min-width: 1001px) and (max-width: 1279px) {
   :root:has(main[data-palette="architectural-copper"]) .nav-wrap { gap: 10px; }
   :root:has(main[data-palette="architectural-copper"]) .header-contact { padding-inline: 10px; }
@@ -173,8 +174,10 @@ main[data-palette="architectural-copper"] .ghost-word:not(.ghost-word-dark) { --
   :root:has(main[data-palette="architectural-copper"]) :is(.header-messengers .messenger-link, .header-email, .theme-menu-trigger) { width: 36px; }
 }
 @media (min-width: 1001px) and (max-width: 1099px) {
-  :root:has(main[data-palette="architectural-copper"]) .site-header .brand { width: 210px; }
+  :root:has(main[data-palette="architectural-copper"]) .nav-wrap { gap: 8px; }
   :root:has(main[data-palette="architectural-copper"]) .desktop-nav { gap: 10px; }
+  :root:has(main[data-palette="architectural-copper"]) .header-contact { padding-inline: 8px; }
+  :root:has(main[data-palette="architectural-copper"]) :is(.header-messengers .messenger-link, .header-email, .theme-menu-trigger) { width: 34px; }
 }
 
 .theme-options { min-width: 0; margin: 0; padding: 0; border: 0; }
