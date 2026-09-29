@@ -246,7 +246,7 @@ export function HangarPreviewModes({
           Remains available even when the visitor hides the visual dimension overlay. */}
       <p id={descriptionId} className="hc-visually-hidden">
         {`Тривимірна візуалізація ангара: ${domain.dimensions.widthM} на ${domain.dimensions.lengthM} метрів, `
-          + `висота стін ${domain.dimensions.eaveHeightM} м, двосхила покрівля, висота в коньку приблизно `
+          + `висота стін ${domain.dimensions.eaveHeightM} м, двосхила покрівля, висота в конику приблизно `
           + `${threeScene.building.heights.ridgeM.toFixed(1)} м. Повний опис конфігурації — у полях керування та підсумку.`}
       </p>
     </div>

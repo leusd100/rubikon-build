@@ -89,7 +89,7 @@ export function ThreeDimensionOverlay({
             <dd>{formatMetres(eaveM)} м</dd>
           </div>
           <div>
-            <dt>Висота в коньку</dt>
+            <dt>Висота в конику</dt>
             <dd>{formatMetres(ridgeM)} м</dd>
           </div>
         </dl>

@@ -58,11 +58,12 @@ describe('P01 public claim boundaries', () => {
     expect(deliveryModel.statements.responsibility).toMatch(/беремо погоджений комплекс.*відповідаємо за результат/);
     expect(deliveryModel.formats[0].summary).toBe(deliveryModel.statements.responsibility);
     expect(deliveryModel.statements.boundary).toMatch(/замовник замовляє окремо.*поза нашою відповідальністю/);
-    expect(deliveryModel.statements.design).toMatch(/на стороні замовника.*окремого проєктувальника/);
+    expect(deliveryModel.statements.design).toMatch(/Проєкт надає замовник або його окремий проєктувальник/);
   });
 
-  it('keeps Dmytro as the first contact without a response-time promise or unapproved proof', () => {
-    expect(deliveryModel.statements.firstContact).toMatch(/Дмитро.*за потреби.*Сергія/);
+  it('keeps the first-contact promise client-facing without a response-time promise or unapproved proof', () => {
+    expect(deliveryModel.statements.firstContact).toMatch(/Ми уточнимо задачу.*підкажемо, яких даних бракує/);
+    expect(deliveryModel.statements.firstContact).not.toMatch(/Дмитро|Сергій/);
     expect(publicCopy).not.toMatch(/(?:відповімо|передзвонимо|зв[’']яжемося)[^.]*\d+\s*(?:хв|год)/iu);
     expect(homeProofCase).toBeNull();
   });

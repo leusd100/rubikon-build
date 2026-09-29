@@ -42,10 +42,12 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     await expect(hero.getByRole('link', { name: /Обговорити зерносховище/ })).toHaveAttribute('href', '#inquiry');
   });
 
-  test('quotes the one responsibility statement in the hero, bands 04–05, the FAQ and the result — and never «не входить»', async ({ page }) => {
+  test('states the website boundary in the hero and FAQ, keeps short process copy, and preserves the Planner decision', async ({ page }) => {
     await openPlanner(page);
-    const holders = ['.service-subhero-lead', '.grain-implementation-band', '.grain-process-band', '.faq-section'];
+    const holders = ['.service-subhero-lead', '.faq-section'];
     for (const selector of holders) expect(await page.locator(selector).first().textContent()).toContain(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    await expect(page.locator('.grain-implementation-band')).toContainText('погоджену будівельну частину');
+    await expect(page.locator('.grain-process-band')).toContainText('склад будівельних робіт');
 
     await scenarios.A(page);
     await reveal(page);

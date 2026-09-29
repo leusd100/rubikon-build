@@ -40,7 +40,7 @@ export default function DirectionsPage() {
             </h1>
           </div>
           <div className="subhero-side">
-            <p>Перейдіть до потрібного виду робіт. Якщо об’єкт поєднує кілька напрямків — одразу опишіть завдання, і ми допоможемо визначити склад робіт.</p>
+            <p>Перейдіть до потрібного виду робіт. Якщо для об’єкта потрібні кілька видів робіт, опишіть завдання — допоможемо визначити їхній склад.</p>
             <div className="directions-hero-actions">
               <a className="button button-primary subhero-side-cta" href="#directions-list">
                 Обрати напрям <span aria-hidden="true">↓</span>
@@ -83,12 +83,11 @@ export default function DirectionsPage() {
           </div>
           <div className="entry-points">
             <h2 className="entry-points-title">Що у вас уже є — з того й почнемо</h2>
-            <p className="entry-points-lead">Проєкт чи робоча документація — не окремий формат співпраці, а точка входу: від неї залежить, з якого етапу почнемо.</p>
+            <p className="entry-points-lead">Звертайтеся і з початковою ідеєю, і з готовим проєктом. Переглянемо те, що вже є, та скажемо, які дані потрібні, щоб визначити склад робіт і підготувати кошторис.</p>
             <ul className="entry-points-list">
-              {entryPoints().map(({ id, label, startStageTitle, startNote }) => (
+              {entryPoints().map(({ id, label, startNote }) => (
                 <li key={id}>
                   <b>{label}</b>
-                  <span>Старт: {startStageTitle}</span>
                   {startNote && <small>{startNote}</small>}
                 </li>
               ))}

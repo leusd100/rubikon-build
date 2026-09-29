@@ -20,8 +20,6 @@ import { formatById, stageById, startStage } from './deliveryModel';
 
 const model: DeliveryModel = deliveryModel;
 
-const lowerFirst = (text: string) => text.charAt(0).toLocaleLowerCase('uk') + text.slice(1);
-
 export type FormatCard = { id: DeliveryFormatId; number: string; title: string; text: string };
 
 /** The three formats of participation, numbered in model order. */
@@ -62,13 +60,12 @@ export function inquirySuccessMessage(): string {
  */
 export function turnkeyAnswer(): string {
   const comprehensive = formatById('comprehensive');
-  const workPackage = formatById('work-package');
-  const subcontract = formatById('subcontract');
   return [
-    `Можемо взяти комплексний обсяг у погодженому складі — формат «${comprehensive.label}». ${comprehensive.summary}`,
-    `Якщо потрібна лише частина робіт — наприклад, каркас, фундамент чи покрівля, — беремо окремий пакет у форматі «${workPackage.label}» або «${subcontract.label}».`,
-    'Проєкт і дозволи — на стороні замовника; спеціалізовані системи погоджуємо окремо.',
-    model.statements.boundary,
+    `Можемо взяти на себе погоджений комплекс будівельних робіт і відповідати за його результат — формат «${comprehensive.label}».`,
+    'Проєкт та дозволи замовник забезпечує окремо.',
+    'Якщо потрібні спеціалізовані системи, узгодимо з вами, як будівельні роботи мають врахувати їхні вимоги.',
+    'Склад робіт і відповідальність кожного учасника погоджуємо до початку робіт.',
+    'Роботи, які замовник замовляє окремо, залишаються поза погодженим обсягом RUBIKON.',
   ].join(' ');
 }
 
@@ -370,13 +367,10 @@ export function startInputs(): readonly string[] {
 /** The /yak-pratsyuiemo FAQ: real doubts of a B2B client, answered only in the model's words. */
 export function deliveryFaq(): readonly (readonly [string, string])[] {
   const workPackage = formatById('work-package');
-  const entries = entryPoints();
-  const route = entries.map((entry) => `${lowerFirst(entry.label)} — старт з етапу «${entry.startStageTitle}»`).join('; ');
-  const startNotes = entries.flatMap((entry) => (entry.startNote ? [entry.startNote] : []));
   const { statements } = model;
   const { changePolicy } = deliveryModel;
   return [
-    ['Чи обов’язково мати готовий проєкт?', [`Ні. Не обов’язково починати з нуля — маршрут залежить від того, що вже підготовлено: ${route}.`, ...startNotes].join(' ')],
+    ['Чи обов’язково мати готовий проєкт?', 'Ні. Готовий проєкт для першого звернення не потрібен. Якщо документація вже є, почнемо з її перегляду. Якщо є лише задум або попередні параметри, уточнимо завдання та підкажемо, які дані має підготувати замовник із проєктувальником. Кошторис готуємо, коли склад робіт визначено й проєктних даних достатньо.'],
     ['Чи можна замовити лише один пакет робіт?', `Так, у форматі «${workPackage.label}»: ${workPackage.summary} ${workPackage.interfaces}`],
     ['Хто залучає проєктувальника?', statements.design],
     ['Чи працюєте ви із субпідрядниками?', `Так. ${statements.team} ${statements.principle}`],

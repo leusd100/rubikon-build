@@ -31,8 +31,8 @@ export default function Home() {
             {/* Objects, our own core, and where coordination starts — nothing wider than the owner has confirmed. How the
                 work is split (whole object / one package / subcontract) is said once, in «Хто що виконує». */}
             <p className="hero-lead">
-              Будуємо промислові, складські й аграрні об’єкти. Наше ядро — бетонні роботи, фундаменти,
-              монтаж металоконструкцій і панелей, покрівлі. Спеціалізовані роботи координуємо
+              Будуємо промислові, складські й аграрні об’єкти. Основні роботи нашої команди — бетон і типові фундаменти,
+              монтаж металоконструкцій, стінових і покрівельних панелей та покрівельні роботи. Спеціалізовані роботи координуємо
               з профільними виконавцями в погодженому обсязі.
             </p>
             {/* Stage 1 hypothesis (warm/referral visitors): talking to RUBIKON comes first, so the call is

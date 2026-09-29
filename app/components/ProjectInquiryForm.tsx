@@ -28,7 +28,7 @@ const SAVE_FAILED_MESSAGE =
   'Не вдалося підтвердити збереження запиту. Повторіть надсилання без змін — це не створить дубль. Якщо зміните дані, надішлемо окремий запит: попередній уже міг бути збережений.';
 // Deliberately generic: says nothing about why the check failed or how it works.
 const VERIFICATION_FAILED_MESSAGE =
-  'Не вдалося підтвердити надсилання запиту. Спробуйте ще раз або зателефонуйте нам напряму.';
+  'Не вдалося надіслати запит. Спробуйте ще раз або зателефонуйте нам: +38 068 261 42 64';
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || '').trim();
@@ -338,7 +338,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
               </div>
               <div className="inquiry-fields inquiry-fields-two">
                 <label>
-                  <span>Формат співпраці</span>
+                  <span>Який обсяг робіт вас цікавить?</span>
                   <select name={enabledFieldName(jsReady, 'cooperation')} defaultValue="">
                     <option value="">Ще не визначено</option>
                     {cooperationOptions.map((label) => <option key={label}>{label}</option>)}
@@ -408,8 +408,10 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       </label>
 
       <p className={`inquiry-status${status ? ' is-visible' : ''}${statusAction === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
-        {status}
-        {statusAction === 'error' && (
+        {status === VERIFICATION_FAILED_MESSAGE ? (
+          <>{VERIFICATION_FAILED_MESSAGE.slice(0, -company.phone.display.length)}<a href={companyContactLinks.phone}>{company.phone.display}</a></>
+        ) : status}
+        {statusAction === 'error' && status !== VERIFICATION_FAILED_MESSAGE && (
           <span className="inquiry-status-actions">
             <a href={companyContactLinks.phone}><Phone aria-hidden="true" /> {company.phone.display}</a>
           </span>

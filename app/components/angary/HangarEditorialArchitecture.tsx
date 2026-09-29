@@ -100,7 +100,7 @@ export function HangarEditorialArchitecture() {
             <header className="angary-section-heading">
               <p className="eyebrow"><span /> Рішення, які приймаєте ви</p>
               <h2 id="angary-decisions-title">Від призначення — до зрозумілого технічного завдання</h2>
-              <p>Чотири групи рішень визначають склад майбутнього об’єкта. Тут — не повтор полів, а коротке пояснення наслідків кожного вибору.</p>
+              <p>Чотири групи рішень визначають склад майбутнього об’єкта. Кожен вибір впливає на конструкцію, матеріали та подальше використання споруди.</p>
             </header>
             <figure className="angary-decisions-intro-visual">
               <ResponsiveImage

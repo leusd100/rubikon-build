@@ -25,8 +25,8 @@ describe('grain page copy', () => {
 
   it('uses the conservative website boundary without changing the Planner decision', () => {
     expect(config.hero.intro.endsWith(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT)).toBe(true);
-    expect(config.editorial.text).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
-    expect(config.process.text).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    expect(config.editorial.text).toContain('погоджену будівельну частину');
+    expect(config.process.text).toContain('склад будівельних робіт');
     expect(config.faq?.items.find(([question]) => question === 'Чи займаєтеся ви технологічним обладнанням?')?.[1]).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
     expect(GRAIN_RESPONSIBILITY_STATEMENT).toBe(DECISION_1);
     expect(strings(config).join(' ')).not.toContain(DECISION_1);
