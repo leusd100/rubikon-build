@@ -2,7 +2,9 @@ import Image from 'next/image';
 import { Mail, Phone } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
+import BrandLogo from './BrandLogo';
 import MobileMenu from './MobileMenu';
+import { ThemeMenu, ThemeOptions } from './ThemeControl';
 import ResponsiveImage from './ResponsiveImage';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
@@ -44,18 +46,8 @@ export function MessengerLinks({
   );
 }
 
-function Brand() {
-  return (
-    <Image
-      className="brand"
-      src="/brand/rubikon-build-horizontal-dark.svg?v=rubikon-05"
-      width={1270}
-      height={272}
-      alt={`${company.name} — будівництво та інженерні рішення`}
-      priority
-      unoptimized
-    />
-  );
+function Brand({ idPrefix }: Readonly<{ idPrefix: string }>) {
+  return <BrandLogo idPrefix={idPrefix} />;
 }
 
 export function SectionHeader({
@@ -117,7 +109,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="shell nav-wrap">
         <a className="brand-link" href={siteRoutes.home}>
-          <Brand />
+          <Brand idPrefix="header" />
         </a>
         <nav className="desktop-nav" aria-label="Основна навігація">
           {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
@@ -131,6 +123,7 @@ export function SiteHeader() {
           <a className="messenger-link header-email" href={companyContactLinks.email} aria-label={`Email, ${company.email}`} title={company.email}>
             <Mail aria-hidden="true" />
           </a>
+          <ThemeMenu />
         </div>
         <a className="mobile-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
           <Phone aria-hidden="true" />
@@ -147,6 +140,7 @@ export function SiteHeader() {
             <a className="mobile-phone" href={companyContactLinks.phone}><Phone aria-hidden="true" /> {company.phone.display}</a>
             <MessengerLinks className="mobile-messengers" />
             <a className="mobile-email" href={companyContactLinks.email}><Mail aria-hidden="true" /> {company.email}</a>
+            <ThemeOptions variant="menu" />
           </nav>
         </MobileMenu>
       </div>
@@ -170,7 +164,7 @@ export function SiteFooter() {
       <SectionDivider variant="accent" />
       <div className="shell footer-grid">
         <a className="brand-link" href={siteRoutes.home}>
-          <Brand />
+          <Brand idPrefix="footer" />
         </a>
         {/* Two peer link groups, both labelled, so the footer reads as a small site map rather
             than one titled block sitting next to an untitled one. */}

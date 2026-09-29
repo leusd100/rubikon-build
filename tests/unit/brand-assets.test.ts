@@ -9,12 +9,14 @@ const read = (relativePath: string) => readFileSync(path.join(root, relativePath
 describe('approved RUBIKON BUILD brand assets', () => {
   it('uses one outlined horizontal logo in both shared site-chrome locations', () => {
     const siteChrome = read('app/components/SiteChrome.tsx');
+    // Architectural Copper v0.2 prototype: the lockup lives in BrandLogo (image everywhere, inline on HOME).
+    const brandLogo = read('app/components/BrandLogo.tsx');
 
-    expect(siteChrome).toContain('src="/brand/rubikon-build-horizontal-dark.svg?v=rubikon-05"');
-    expect(siteChrome).toContain('width={1270}');
-    expect(siteChrome).toContain('height={272}');
-    expect(siteChrome).toContain('alt={`${company.name} — будівництво та інженерні рішення`}');
-    expect(siteChrome.match(/<Brand \/>/g)).toHaveLength(2);
+    expect(brandLogo).toContain("'/brand/rubikon-build-horizontal-dark.svg?v=rubikon-05'");
+    expect(brandLogo).toContain('width={1270}');
+    expect(brandLogo).toContain('height={272}');
+    expect(brandLogo).toContain('const ALT = `${company.name} — будівництво та інженерні рішення`;');
+    expect(siteChrome.match(/<Brand idPrefix="(header|footer)" \/>/g)).toHaveLength(2);
   });
 
   it('ships dark/light lockups and a compact R without an explicit circle', () => {
