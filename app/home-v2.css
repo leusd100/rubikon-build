@@ -146,8 +146,11 @@ main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-col
   }
   main[data-home="v2"] .hv2-directions .direction-card:nth-child(n) { border-radius: var(--radius-md); }
   main[data-home="v2"] .hv2-directions .direction-card:hover { transform: none; }
+  /* Fluid, so the longest title word fits the swipe card at every phone width: the title box is
+     0.84 × (100vw − 32 px) − 58 px, and «Металоконструкції» is ≈ 7.66 px per px of font on Linux CI (222 px at 29 px).
+     min(29 px, 10.9vw − 11.6 px) keeps ≈ 4–7 px spare from 341 px up; ≤ 340 px has its own rule below. */
   main[data-home="v2"] .hv2-directions .direction-copy strong,
-  main[data-home="v2"] .hv2-directions .direction-card:not(.wide) .direction-copy strong { margin-right: -48px; font-size: 29px; }
+  main[data-home="v2"] .hv2-directions .direction-card:not(.wide) .direction-copy strong { margin-right: -48px; font-size: min(29px, calc(10.9vw - 11.6px)); }
   main[data-home="v2"] .hv2-directions .direction-copy small { font-size: 15px; }
   /* Position: «02 / 05» + five dots that also jump to a card (DirectionsRail) */
   main[data-home="v2"] .hv2-rail-nav { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
