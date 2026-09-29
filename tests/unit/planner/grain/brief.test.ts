@@ -35,6 +35,9 @@ const ids = (options: string[][]) => options.map(([id]) => id);
  * drying, existing slab, compact site, all five development directions, future handling unknown —
  * is inside this subset, so the maximum it checks is the global one.
  */
+// Tests that walk answerSpace() run 2–5 s under CI coverage instrumentation, past vitest's 5 s default.
+const ANSWER_SPACE_TIMEOUT = 30_000;
+
 function* answerSpace(): Generator<Answers> {
   const crops = [cropOptions.slice(0, 5), ['Ще не визначили'], ['Пшениця']];
   const capacities = ['8 000–10 000', 'unknown', '3000'];
@@ -107,7 +110,7 @@ describe('brief headline', () => {
       .map((answers) => ({ headline: grainBriefHeadline(answers), answers }))
       .filter(({ headline }) => headline !== 'Опис задачі зерносховища' && !headline.includes(' · '));
     expect(oneWord).toEqual([]);
-  });
+  }, ANSWER_SPACE_TIMEOUT);
 });
 
 describe('brief text limit', () => {
@@ -123,7 +126,7 @@ describe('brief text limit', () => {
     }
     expect(states).toBe(32_400);
     expect(longest).toBeLessThan(GRAIN_BRIEF_TEXT_LIMIT);
-  });
+  }, ANSWER_SPACE_TIMEOUT);
 
   it('over the limit, shortens first-call questions before undecided answers and never cuts a line', () => {
     const answers = fixtures.C1;
