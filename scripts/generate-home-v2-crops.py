@@ -11,6 +11,12 @@ Crop and resize only: no retouching, no compositing, no generated pixels. Source
   conversation-bg           media/engineering-planning.jpg                (0, 600, 1800, 1800) decorative
   conversation-bg-portrait  media/engineering-planning.jpg                (0, 300, 1800, 2700) decorative
 
+Iteration 3 (made once by hand, sources live outside the repo, so they are not in JOBS below):
+  photos/serhii-prior-hangar-gable.jpeg + hangar-gable-{960,1600}w  owner-supplied original DSCF7654 (6240×4160),
+      box (0, 700, 6240, 3900) — sky and foreground gravel trimmed, nothing retouched, saved without EXIF
+  concepts/hangar-xray-{1100,1774}w  the owner-approved X-ray sketch rubikon-hangar-xray-concept-v2-clean.png (1774×887),
+      resized only. It is a generated illustration, labelled «Ілюстративна схема конструкції» on the page.
+
 Everything derived from a concept source sits in concepts/, so the existing «no concept image outside the direction
 cards» check (tests/e2e/pr-critical.spec.ts) sees it. The callout positions in EngineeringSignature.tsx are
 percentages of these exact boxes — change a box and they must be re-measured.
