@@ -70,7 +70,7 @@ function LoadPathScheme() {
       ))}
       <text className="hv2-scheme-label" x="240" y="42" textAnchor="middle">Покрівля</text>
       <text className="hv2-scheme-label" x="384" y="238">Рама</text>
-      <text className="hv2-scheme-label" x="138" y="316">Фундамент</text>
+      <text className="hv2-scheme-label" x="240" y="317" textAnchor="middle">Фундамент</text>
     </svg>
   );
 }
