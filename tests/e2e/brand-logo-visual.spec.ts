@@ -29,6 +29,12 @@ async function waitForImage(image: Locator) {
   })).toBe(true);
 }
 
+/** The lockup is an <img> everywhere except HOME, which draws it inline (Architectural Copper): wait for whichever it is. */
+async function waitForLockup(lockup: Locator) {
+  await expect(lockup).toBeVisible();
+  if (await lockup.evaluate((element) => element.tagName === 'IMG')) await waitForImage(lockup);
+}
+
 async function expectBrandScreenshot(locator: Locator, name: string) {
   await expect(locator).toHaveScreenshot(name, {
     animations: 'disabled',
@@ -45,18 +51,21 @@ for (const viewport of headerViewports) {
     await loadBrandPage(page);
 
     const brandLink = page.locator('.site-header .brand-link');
-    const brandImage = brandLink.locator('img.brand');
-    await waitForImage(brandImage);
+    const brandImage = brandLink.locator('.brand');
+    await waitForLockup(brandImage);
 
     const geometry = await brandImage.evaluate((element) => {
-      const image = element as HTMLImageElement;
-      const rect = image.getBoundingClientRect();
+      const rect = element.getBoundingClientRect();
+      // Intrinsic size: the image's own pixels, or the inline lockup's viewBox — the same 1270 × 272 artwork either way.
+      const [naturalWidth, naturalHeight] = element instanceof HTMLImageElement
+        ? [element.naturalWidth, element.naturalHeight]
+        : (element.getAttribute('viewBox') ?? '').split(/\s+/).slice(2).map(Number);
       return {
         left: rect.left,
         right: rect.right,
         width: rect.width,
-        naturalWidth: image.naturalWidth,
-        naturalHeight: image.naturalHeight,
+        naturalWidth,
+        naturalHeight,
         viewportWidth: window.innerWidth,
         pageWidth: document.documentElement.scrollWidth,
       };
@@ -80,7 +89,7 @@ for (const viewport of [headerViewports[0], headerViewports[3]]) {
 
     const brandLink = page.locator('footer .brand-link');
     await brandLink.scrollIntoViewIfNeeded();
-    await waitForImage(brandLink.locator('img.brand'));
+    await waitForLockup(brandLink.locator('.brand'));
     await expectBrandScreenshot(brandLink, `footer-logo-${viewport.name}.png`);
   });
 }
