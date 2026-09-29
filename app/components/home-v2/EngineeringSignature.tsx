@@ -26,11 +26,11 @@ function Pins({ pins }: Readonly<{ pins: readonly Pin[] }>) {
   );
 }
 
-function CardImage({ base, alt }: Readonly<{ base: string; alt: string }>) {
+function CardImage({ base, alt, large = 1040 }: Readonly<{ base: string; alt: string; large?: number }>) {
   return (
     <img
-      src={`/media/home-v2/concepts/${base}-1040w.webp`}
-      srcSet={`/media/home-v2/concepts/${base}-640w.webp 640w, /media/home-v2/concepts/${base}-1040w.webp 1040w`}
+      src={`/media/home-v2/concepts/${base}-${large}w.webp`}
+      srcSet={`/media/home-v2/concepts/${base}-640w.webp 640w, /media/home-v2/concepts/${base}-${large}w.webp ${large}w`}
       sizes="(max-width: 760px) 100vw, 34vw"
       alt={alt}
       loading="lazy"
@@ -98,11 +98,13 @@ const cards: readonly { number: string; title: ReactNode; text: string; tag: str
     tag: 'Ілюстрація',
     visual: (
       <>
-        <CardImage base="card-cutaway" alt="Ілюстрація: ангар із вирізом в обшивці, під яким видно каркас" />
+        {/* A photoreal frame above and its drawings below (the /metalokonstruktsii hero collage, cropped): the
+            card's idea in one picture. Pins pair the frame in the photo with the node and bracing drawings. */}
+        <CardImage base="card-photo-drawing" large={1012} alt="Ілюстрація: сталевий каркас на майданчику, під ним креслення каркаса, вузла колони та зв’язків" />
         <Pins pins={[
-          { label: 'Покрівля', x: '68%', y: '31%', side: 'left' },
-          { label: 'Каркас', x: '46%', y: '57%' },
-          { label: 'Стінові панелі', x: '13%', y: '69%' },
+          { label: 'Рама', x: '64%', y: '25%', side: 'left' },
+          { label: 'Вузол колони', x: '44.6%', y: '82%', side: 'left' },
+          { label: 'Зв’язки', x: '65.6%', y: '82%' },
         ]} />
       </>
     ),
@@ -134,12 +136,12 @@ const cards: readonly { number: string; title: ReactNode; text: string; tag: str
 
 // Where each confirmed scope line sits in the two crops of the approved frame (percent of the crop). Measured on the
 // original 1800×1200 frame: gable apex (365, 598), side-wall panel (920, 800) / gable panel (640, 820), roof
-// (1150, 665) / (800, 632). Wide crop = y 390–1110; narrow crop = x 30–1080, y 420–1120. A scope line with no
-// entry here simply has no marker.
+// (1150, 665) / (800, 632). Wide crop = x 0–1550, y 440–1060; narrow crop = x 20–1020, y 455–1122. A scope line
+// with no entry here simply has no marker.
 const evidencePins: Record<string, { wide: [string, string]; narrow: [string, string] }> = {
-  Каркас: { wide: ['20.3%', '28.9%'], narrow: ['31.9%', '25.4%'] },
-  'Стінові панелі': { wide: ['51.1%', '56.9%'], narrow: ['58.1%', '57.1%'] },
-  Покрівля: { wide: ['63.9%', '38.2%'], narrow: ['73.3%', '30.3%'] },
+  Каркас: { wide: ['23.5%', '25.5%'], narrow: ['34.5%', '21.4%'] },
+  'Стінові панелі': { wide: ['59.4%', '58.1%'], narrow: ['62%', '54.7%'] },
+  Покрівля: { wide: ['74.2%', '36.3%'], narrow: ['78%', '26.5%'] },
 };
 
 function EvidenceObject({ proof }: Readonly<{ proof: HomeProofCase }>) {
@@ -148,8 +150,8 @@ function EvidenceObject({ proof }: Readonly<{ proof: HomeProofCase }>) {
     <figure className="hv2-evidence">
       <div className="hv2-evidence-media">
         <picture>
-          <source media="(max-width: 760px)" type="image/webp" srcSet="/media/home-v2/hangar-narrow-640w.webp 640w, /media/home-v2/hangar-narrow-1050w.webp 1050w" sizes="100vw" />
-          <source type="image/webp" srcSet="/media/home-v2/hangar-wide-960w.webp 960w, /media/home-v2/hangar-wide-1440w.webp 1440w, /media/home-v2/hangar-wide-1800w.webp 1800w" sizes="(max-width: 1440px) 92vw, 1296px" />
+          <source media="(max-width: 760px)" type="image/webp" srcSet="/media/home-v2/hangar-narrow-640w.webp 640w, /media/home-v2/hangar-narrow-1000w.webp 1000w" sizes="100vw" />
+          <source type="image/webp" srcSet="/media/home-v2/hangar-wide-960w.webp 960w, /media/home-v2/hangar-wide-1550w.webp 1550w" sizes="(max-width: 1440px) 92vw, 1296px" />
           <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
         </picture>
         {scope.subject.map((item, index) => {
@@ -163,6 +165,9 @@ function EvidenceObject({ proof }: Readonly<{ proof: HomeProofCase }>) {
             </span>
           );
         })}
+        {/* Display-only shade: the overcast sky is darkened on screen so the frame sits in the dark block. The photo
+            file itself is untouched (crop only). */}
+        <span className="hv2-evidence-shade" aria-hidden="true" />
         <span className="hv2-tag hv2-tag-photo">Фото об’єкта</span>
       </div>
       <figcaption className="hv2-evidence-facts">

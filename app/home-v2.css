@@ -199,7 +199,15 @@ main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight:
 
 /* --- the real object: evidence, not decoration --- */
 main[data-home="v2"] .hv2-evidence { margin: 64px 0 0; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-evidence-media { position: relative; aspect-ratio: 1800 / 720; overflow: hidden; background: #0f1110; }
+main[data-home="v2"] .hv2-evidence-media { position: relative; aspect-ratio: 1550 / 620; overflow: hidden; background: #0f1110; }
+/* The overcast sky was the brightest area on the page; a shade over the top third (on screen only) lets the frame sit
+   in the charcoal block, and a faint bottom fade hands over to the facts panel. */
+main[data-home="v2"] .hv2-evidence-shade {
+  position: absolute; z-index: 1; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(18, 20, 19, .62) 0%, rgba(18, 20, 19, .28) 18%, rgba(18, 20, 19, 0) 34%),
+    linear-gradient(0deg, rgba(18, 20, 19, .38) 0%, rgba(18, 20, 19, 0) 22%);
+}
 main[data-home="v2"] .hv2-evidence-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 main[data-home="v2"] .hv2-evidence-pin { position: absolute; z-index: 2; left: var(--x); top: var(--y); display: flex; align-items: center; transform: translate(-14px, -50%); }
 main[data-home="v2"] .hv2-evidence-pin > i {
@@ -315,7 +323,7 @@ main[data-home="v2"] .hv2-conversation-grid > .inquiry-form { grid-area: auto; }
   main[data-home="v2"] .hv2-pin > span { font-size: 10.5px; padding: 4px 7px; }
 
   main[data-home="v2"] .hv2-evidence { margin-top: 44px; margin-inline: calc(var(--container-gutter) * -1); border-inline: 0; }
-  main[data-home="v2"] .hv2-evidence-media { aspect-ratio: 1050 / 700; }
+  main[data-home="v2"] .hv2-evidence-media { aspect-ratio: 1000 / 667; }
   main[data-home="v2"] .hv2-evidence-pin { left: var(--mx); top: var(--my); transform: translate(-13px, -50%); }
   main[data-home="v2"] .hv2-evidence-pin > i { width: 26px; height: 26px; }
   main[data-home="v2"] .hv2-evidence-pin > span { display: none; }

@@ -4,10 +4,10 @@
 Crop and resize only: no retouching, no compositing, no generated pixels. Sources and boxes:
 
   concepts/hero-mobile      media/directions-sequence-source/angary.png   (720, 0, 1472, 941)  concept render, 4:5
-  concepts/card-cutaway     media/angary/envelope-sandwich-cutaway.jpg    (51, 0, 1449, 1049)  concept render, 4:3
+  concepts/card-photo-drawing media/direction-hero-source/metalokonstruktsii.png (470, 230, 1482, 989) concept photo + drawings, 4:3
   concepts/card-node        media/concepts/about-experience-v2.jpg        (0, 620, 1440, 1700) concept image, 4:3
-  hangar-wide               photos/serhii-prior-hangar.jpeg               (0, 390, 1800, 1110) the approved frame, sky/ground trimmed
-  hangar-narrow             photos/serhii-prior-hangar.jpeg               (30, 420, 1080, 1120)
+  hangar-wide               photos/serhii-prior-hangar.jpeg               (0, 440, 1550, 1060) the approved frame, sky/ground trimmed
+  hangar-narrow             photos/serhii-prior-hangar.jpeg               (20, 455, 1020, 1122)
   conversation-bg           media/engineering-planning.jpg                (0, 600, 1800, 1800) decorative
   conversation-bg-portrait  media/engineering-planning.jpg                (0, 300, 1800, 2700) decorative
 
@@ -26,10 +26,10 @@ OUT = 'public/media/home-v2/'
 
 JOBS = [
     ('concepts/hero-mobile', 'media/directions-sequence-source/angary.png', (720, 0, 1472, 941), [480, 752], 80),
-    ('concepts/card-cutaway', 'media/angary/envelope-sandwich-cutaway.jpg', (51, 0, 1449, 1049), [640, 1040], 80),
+    ('concepts/card-photo-drawing', 'media/direction-hero-source/metalokonstruktsii.png', (470, 230, 1482, 989), [640, 1012], 80),
     ('concepts/card-node', 'media/concepts/about-experience-v2.jpg', (0, 620, 1440, 1700), [640, 1040], 80),
-    ('hangar-wide', 'photos/serhii-prior-hangar.jpeg', (0, 390, 1800, 1110), [960, 1440, 1800], 80),
-    ('hangar-narrow', 'photos/serhii-prior-hangar.jpeg', (30, 420, 1080, 1120), [640, 1050], 80),
+    ('hangar-wide', 'photos/serhii-prior-hangar.jpeg', (0, 440, 1550, 1060), [960, 1550], 80),
+    ('hangar-narrow', 'photos/serhii-prior-hangar.jpeg', (20, 455, 1020, 1122), [640, 1000], 80),
     ('conversation-bg', 'media/engineering-planning.jpg', (0, 600, 1800, 1800), [960, 1600], 72),
     ('conversation-bg-portrait', 'media/engineering-planning.jpg', (0, 300, 1800, 2700), [720], 70),
 ]
