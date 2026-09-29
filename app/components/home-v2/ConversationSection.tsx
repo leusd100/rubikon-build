@@ -38,11 +38,14 @@ export function ConversationSection() {
           <p className="hv2-conversation-lead">
             Можна почати з ідеї або з готового проєкту. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит.
           </p>
+          {/* One aligned block: the call on top at full width, the written channels under it on an equal grid. */}
           <div className="hv2-conversation-contact">
-            <a className="button button-primary hero-call-primary" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
-              <Phone aria-hidden="true" />
-              <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
+            <a className="button button-primary hero-call-primary hv2-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
+              <span className="hv2-call-icon" aria-hidden="true"><Phone /></span>
+              <span className="hv2-call-text"><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
+              <span className="hv2-call-arrow" aria-hidden="true">↗</span>
             </a>
+            <p className="hv2-channels-label">Або напишіть</p>
             <div className="hv2-conversation-channels">
               <MessengerLinks className="hv2-messengers" showFullLabels />
               <a className="messenger-link hv2-email" href={companyContactLinks.email} aria-label={`Email: ${company.email}`}>
