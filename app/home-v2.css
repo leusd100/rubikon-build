@@ -39,35 +39,47 @@ main[data-home="v2"] .hv2-hero .hero-lead { max-width: 660px; }
 main[data-home="v2"] .hv2-hero-provenance { display: none; }
 
 @media (max-width: 760px) {
-  /* The still takes the top of the hero; the headline starts on its darkened lower edge and the rest sits on solid
-     charcoal — readable at every width, and nothing moves once the image arrives (the box is sized by CSS). */
-  main[data-home="v2"] .hv2-hero { --hv2-still: min(125vw, 620px); --hv2-overlap: 190px; min-height: 0; height: auto; }
-  main[data-home="v2"] .hv2-hero .hero-media { bottom: auto; height: var(--hv2-still); }
-  main[data-home="v2"] .hv2-hero .hero-media img { object-fit: cover; object-position: 50% 24%; filter: saturate(.82) contrast(1.06) brightness(.92); }
-  main[data-home="v2"] .hv2-hero .hero-shade {
-    background: linear-gradient(180deg,
-      rgba(12, 13, 13, .62) 0,
-      rgba(12, 13, 13, .08) 100px,
-      rgba(12, 13, 13, .12) calc(var(--hv2-still) - var(--hv2-overlap) - 100px),
-      rgba(23, 25, 24, .84) calc(var(--hv2-still) - var(--hv2-overlap) + 40px),
-      var(--color-inverse-bg) calc(var(--hv2-still) - 20px));
+  /* Phone hero = three rows: a spacer under the fixed header, the still, the text. The still starts BELOW the header
+     (its top is no longer hidden) and takes whatever height is left; the whole hero is sized to the small viewport
+     minus 64 px, so «Зателефонувати» and «Написати» end ≥ 92 px above the bottom of the screen — clear of Safari's
+     floating toolbar — while the top of the next section peeks as a scroll cue. The headline overlaps the still's
+     darkened lower edge by --hv2-overlap. */
+  main[data-home="v2"] .hv2-hero {
+    --hv2-header: 77px; --hv2-overlap: 150px; --hv2-img-min: 250px;
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--hv2-header) minmax(var(--hv2-img-min), 1fr) auto;
+    align-items: stretch; min-height: calc(100svh - 64px); height: auto;
   }
-  main[data-home="v2"] .hv2-hero .hero-grid { display: none; }
-  main[data-home="v2"] .hv2-hero-layout { min-height: 0; padding: calc(var(--hv2-still) - var(--hv2-overlap)) 0 40px; }
+  main[data-home="v2"] .hv2-hero .hero-media { position: relative; inset: auto; grid-area: 2 / 1; min-height: 0; overflow: hidden; }
+  main[data-home="v2"] .hv2-hero .hero-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 32%; filter: saturate(.82) contrast(1.06) brightness(.92); }
+  main[data-home="v2"] .hv2-hero .hero-media::after {
+    content: ''; position: absolute; z-index: 1; inset: 0; pointer-events: none;
+    background: linear-gradient(0deg,
+      var(--color-inverse-bg) 0,
+      var(--color-inverse-bg) 10px,
+      rgba(23, 25, 24, .86) calc(var(--hv2-overlap) + 10px),
+      rgba(12, 13, 13, .12) calc(var(--hv2-overlap) + 140px),
+      rgba(12, 13, 13, .06) 100%);
+  }
+  main[data-home="v2"] .hv2-hero :is(.hero-shade, .hero-grid) { display: none; }
+  main[data-home="v2"] .hv2-hero-layout {
+    grid-area: 3 / 1; position: relative; z-index: 2; min-height: 0;
+    margin-top: calc(var(--hv2-overlap) * -1); padding: 0 0 28px; align-content: end;
+  }
   main[data-home="v2"] .hv2-hero h1 { font-size: clamp(32px, 9.4vw, 38px); line-height: 1.05; text-shadow: 0 1px 18px rgba(0, 0, 0, .35); }
   main[data-home="v2"] .hv2-hero .hero-copy { gap: 22px; margin-top: 16px; }
   /* The object types return from 761 px; on a phone the lead is the works and the limit only */
   main[data-home="v2"] .hv2-lead-intro { display: none; }
   main[data-home="v2"] .hv2-hero-provenance {
-    position: absolute; z-index: 3; top: 90px; right: 16px; display: block; padding: 6px 10px;
+    position: absolute; z-index: 3; top: calc(var(--hv2-header) + 12px); right: 16px; display: block; padding: 6px 10px;
     color: var(--hv2-text); background: rgba(18, 20, 19, .74); border: 1px solid rgba(245, 242, 235, .5);
     font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .05em;
   }
 }
-/* Short phones (≤ 760 px tall: SE, 360×640, 375×667): a shorter still and a tighter headline, so «Зателефонувати» is
-   on the first screen. Measured targets: 320×568, 360×640, 375×667. */
+/* Short viewports (≤ 760 px tall — SE, 360×640, 375×667, and iPhones with Safari's bars shown): tighter type and a
+   smaller minimum still, so the call stays on the first screen. */
 @media (max-width: 760px) and (max-height: 760px) {
-  main[data-home="v2"] .hv2-hero { --hv2-still: min(94vw, 360px); --hv2-overlap: 148px; }
+  main[data-home="v2"] .hv2-hero { --hv2-overlap: 122px; --hv2-img-min: 210px; }
   main[data-home="v2"] .hv2-hero h1 { font-size: clamp(30px, 8.6vw, 34px); line-height: 1.04; }
   main[data-home="v2"] .hv2-hero .hero-lead { font-size: 15px; line-height: 1.55; }
   main[data-home="v2"] .hv2-hero .hero-copy { gap: 16px; margin-top: 12px; }
@@ -75,12 +87,30 @@ main[data-home="v2"] .hv2-hero-provenance { display: none; }
   main[data-home="v2"] .hv2-hero .hero-actions .button { min-height: 52px; }
 }
 
-/* Header at ≤ 340 px (HOME v2 only here; the same overflow exists site-wide): logo 188 + call 44 + «МЕНЮ» 92 + gaps
-   did not fit a 288 px row, so the menu button ran off the right edge. The word stays for screen readers
-   (summary also has an aria-label); visually the button becomes the icon. 172 + 8 + 42 + 8 + 44 = 274 px. */
+/* Very short viewports (≤ 600 px tall — e.g. an SE with Safari's bars: 375×553, 320×460): the call follows the
+   headline directly and the lead moves under the two buttons (same words, nothing hidden). */
+@media (max-width: 760px) and (max-height: 600px) {
+  main[data-home="v2"] .hv2-hero { --hv2-overlap: 100px; --hv2-img-min: 170px; }
+  main[data-home="v2"] .hv2-hero h1 { font-size: clamp(28px, 8.2vw, 31px); }
+  main[data-home="v2"] .hv2-hero .hero-copy { display: flex; flex-direction: column; gap: 14px; }
+  main[data-home="v2"] .hv2-hero .hero-actions { order: 1; }
+  main[data-home="v2"] .hv2-hero .hero-lead { order: 2; font-size: 14.5px; }
+}
+
+/* Header on phones: the logo link is the one flexible item, so the call and «МЕНЮ» never run past the column
+   (at 390 px the row was 12 px wider than its 358 px column; Safari's wider text pushed «МЕНЮ» into the edge). */
+@media (max-width: 760px) {
+  :root:has(main[data-home="v2"]) .site-header .brand-link { flex: 0 1 210px; min-width: 150px; }
+  :root:has(main[data-home="v2"]) .site-header .brand { width: 100%; max-width: 210px; }
+  :root:has(main[data-home="v2"]) :is(.mobile-call, .mobile-menu) { flex: none; }
+}
+@media (max-width: 380px) {
+  :root:has(main[data-home="v2"]) .site-header .brand-link { flex-basis: 188px; }
+}
+/* ≤ 340 px: the menu becomes the icon (the word stays for screen readers; summary also has an aria-label) */
 @media (max-width: 340px) {
   :root:has(main[data-home="v2"]) .nav-wrap { gap: 8px; }
-  :root:has(main[data-home="v2"]) .site-header .brand { width: 172px; }
+  :root:has(main[data-home="v2"]) .site-header .brand-link { flex-basis: 172px; }
   :root:has(main[data-home="v2"]) .mobile-call { width: 42px; }
   :root:has(main[data-home="v2"]) .mobile-menu summary { width: 44px; min-width: 44px; padding: 0; justify-content: center; gap: 0; }
   :root:has(main[data-home="v2"]) .mobile-menu summary > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
