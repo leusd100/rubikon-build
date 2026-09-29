@@ -1,0 +1,159 @@
+/* Architectural Copper v0.1 — HOME-only palette PROTOTYPE (not a site-wide rollout).
+
+   Scope: every rule below is keyed to HOME's <main data-palette="architectural-copper">.
+   Tokens sit on :root:has(...) so the shared header, footer and cookie banner take the palette
+   while HOME is on screen and nowhere else — including after a client-side navigation away,
+   when this stylesheet may still be loaded but the attribute is gone.
+
+   Discard cleanly: delete this file, its import in app/page.tsx and the data-palette attribute
+   on HOME's <main>. Nothing else in the codebase references it. */
+
+:root:has(main[data-palette="architectural-copper"]) {
+  /* Palette v0.1 — semantic tokens */
+  --color-bg: #F3F0E9;             /* Warm Paper */
+  --color-surface: #E7E2D9;        /* Soft Stone */
+  --color-text: #20211F;           /* Deep Graphite */
+  --color-text-muted: #686B67;     /* Mineral Grey — 4.75:1 on paper */
+  --color-border: #C8C2B7;         /* Warm Steel — hairlines only (1.56:1, decorative) */
+  --color-dark: #171918;           /* Charcoal */
+  --color-dark-text: #F5F2EB;      /* Warm White */
+  --color-accent: #B76432;         /* decorative copper: rules, bars, icons, large type */
+  --color-accent-strong: #934923;  /* readable copper: small text, CTA fills (5.73:1 on paper) */
+  --color-accent-hover: #7F3D1D;   /* hover / pressed */
+
+  /* Derived — each exists only because a palette value fails contrast in one context */
+  --color-text-secondary: #474944;      /* body copy between text and muted: 8.0:1 paper, 7.1:1 stone */
+  --color-text-muted-surface: #5E615D;  /* mineral grey is 4.19:1 on Soft Stone; this is 4.87:1 */
+  --color-border-control: #857F76;      /* form control boundary: 3.48:1 paper (warm steel is 1.56) */
+  --color-dark-text-muted: #BDB7AC;     /* secondary copy on charcoal: 8.86:1 */
+  --color-dark-text-subtle: #9E988D;    /* small labels / legal on charcoal: 6.17:1 */
+  --color-accent-on-dark: #CC8455;      /* small copper text + focus on charcoal: 5.89:1 (#B76432 is 4.11) */
+
+  /* Existing tokens re-pointed, so every current var() use on HOME follows the palette */
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --text-placeholder: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --accent-dark: var(--color-accent-strong);
+  --accent-on-dark: var(--color-accent-on-dark);
+  --surface-page: var(--color-bg);
+  --surface-muted: var(--color-bg);
+  --surface-dark: var(--color-dark);
+  --border-default: var(--color-border);
+  --border-control: var(--color-border-control);
+  --text-on-dark: var(--color-dark-text);
+  --text-on-dark-muted: var(--color-dark-text-muted);
+  --text-on-dark-subtle: var(--color-dark-text-subtle);
+  --focus-ring: var(--color-accent-strong);
+  --focus-gap: var(--color-dark-text);
+}
+
+/* Soft Stone contexts: mineral grey drops to 4.19:1 here, so muted text uses the surface-safe tone.
+   (--muted is resolved on :root, so it has to be re-declared alongside --text-muted.) */
+main[data-palette="architectural-copper"] .first-conversation {
+  --text-muted: var(--color-text-muted-surface);
+  --muted: var(--color-text-muted-surface);
+}
+
+/* Charcoal contexts: strong copper is 2.71:1 on charcoal, so focus rings use the on-dark copper.
+   The light inquiry form inside the dark contact section switches back. */
+:root:has(main[data-palette="architectural-copper"]) :is(.site-header, footer, .cookie-banner),
+main[data-palette="architectural-copper"] :is(.hero, .directions, .contact) {
+  --focus-ring: var(--color-accent-on-dark);
+}
+main[data-palette="architectural-copper"] .inquiry-form { --focus-ring: var(--color-accent-strong); }
+
+/* ---------- Header ---------- */
+:root:has(main[data-palette="architectural-copper"]) .site-header { color: var(--color-dark-text); background: rgba(23, 25, 24, .9); }
+:root:has(main[data-palette="architectural-copper"]) .header-phone strong,
+:root:has(main[data-palette="architectural-copper"]) .mobile-call,
+:root:has(main[data-palette="architectural-copper"]) .messenger-link:is(:hover, :focus-visible) { color: var(--color-dark-text); }
+:root:has(main[data-palette="architectural-copper"]) .header-contact:hover { color: var(--color-dark-text); background: var(--color-accent-strong); }
+:root:has(main[data-palette="architectural-copper"]) .header-contact:hover :is(svg, small, strong) { color: var(--color-dark-text); }
+:root:has(main[data-palette="architectural-copper"]) .mobile-menu nav { color: var(--color-dark-text); background: rgba(23, 25, 24, .98); }
+:root:has(main[data-palette="architectural-copper"]) .mobile-menu nav small { color: var(--color-accent-on-dark); }
+
+/* ---------- Hero ---------- */
+main[data-palette="architectural-copper"] .hero { color: var(--color-dark-text); background: var(--color-dark); }
+/* Text over the footage, measured per glyph pixel (background sampled only where the text paints).
+   On main the copper phrase already had 26–39% of its glyph pixels under 3:1 where it crosses the
+   brightest part of the footage, and the 375px lead 23% under 4.5:1. The on-dark copper plus a
+   slightly deeper shade in the text zone bring both to 0%; the footage stays visible. */
+main[data-palette="architectural-copper"] .hero h1 em { color: var(--color-accent-on-dark); }
+main[data-palette="architectural-copper"] .hero-lead { color: rgba(245, 242, 235, .9); }
+main[data-palette="architectural-copper"] .hero-shade {
+  background:
+    linear-gradient(90deg, rgba(9, 10, 12, .95) 0%, rgba(9, 10, 12, .82) 42%, rgba(9, 10, 12, .55) 75%, rgba(9, 10, 12, .55) 100%),
+    linear-gradient(0deg, rgba(9, 10, 12, .78) 0%, rgba(9, 10, 12, .7) 30%, transparent 55%, rgba(9, 10, 12, .3) 100%);
+}
+main[data-palette="architectural-copper"] .hero .button-outline { color: var(--color-dark-text); border-color: rgba(245, 242, 235, .4); }
+main[data-palette="architectural-copper"] .hero-actions > a > span[aria-hidden="true"],
+main[data-palette="architectural-copper"] .hero-contact-kicker p { color: var(--color-dark-text); }
+main[data-palette="architectural-copper"] :is(.hero-messengers .messenger-link span, .hero-email span) { color: rgba(245, 242, 235, .78); }
+main[data-palette="architectural-copper"] .hero-video-control { color: var(--color-dark-text); background: var(--color-dark); border-color: rgba(245, 242, 235, .5); }
+
+/* CTA: warm white on strong copper is 5.84:1 — the decorative copper would be 3.85:1 */
+main[data-palette="architectural-copper"] .button-primary { color: var(--color-dark-text); background: var(--color-accent-strong); }
+main[data-palette="architectural-copper"] .button-primary:hover { background: var(--color-accent-hover); }
+
+/* ---------- Directions ---------- */
+main[data-palette="architectural-copper"] .directions { color: var(--color-dark-text); }
+main[data-palette="architectural-copper"] .direction-card { background: #232523; }
+/* The 01–05 numbers sit at the top of each photo, where the existing shade is almost clear: on main
+   up to 100% of their glyph pixels were under 4.5:1. A short charcoal band at the top fixes that. */
+main[data-palette="architectural-copper"] .direction-shade { background: linear-gradient(180deg, rgba(23, 25, 24, .62) 0, rgba(23, 25, 24, 0) 30%), linear-gradient(180deg, rgba(8, 9, 11, .08), rgba(8, 9, 11, .86)); }
+main[data-palette="architectural-copper"] .direction-card.roof .direction-shade { background: linear-gradient(180deg, rgba(23, 25, 24, .62) 0, rgba(23, 25, 24, 0) 30%), linear-gradient(180deg, rgba(8, 9, 11, .42), rgba(8, 9, 11, .9)); }
+main[data-palette="architectural-copper"] .direction-number { color: var(--color-dark-text); }
+main[data-palette="architectural-copper"] .direction-copy small { color: rgba(245, 242, 235, .8); }
+main[data-palette="architectural-copper"] .direction-provenance { color: var(--color-dark-text); background: rgba(23, 25, 24, .84); }
+main[data-palette="architectural-copper"] .direction-card:is(:hover, :focus-visible) .direction-arrow { color: var(--color-dark-text); background: var(--color-accent-strong); border-color: var(--color-accent-strong); }
+main[data-palette="architectural-copper"] .eyebrow.light { color: var(--color-dark-text-muted); }
+
+/* ---------- Light sections: hairlines move from graphite-alpha to warm steel ---------- */
+main[data-palette="architectural-copper"] :is(.capability-ledger, .capability-ledger > div, .cost-grid, .cost-grid article, .contact-bridge,
+  .entry-axis, .entry-axis li, .first-conversation .entry-axis, .first-conversation .copy-column > p.first-conversation-call,
+  .first-conversation-next, .next-list, .next-list > div) { border-color: var(--color-border); }
+main[data-palette="architectural-copper"] .section-link span { color: var(--color-accent-strong); }
+
+/* People: same paper as the capability section above it, separated by one warm-steel hairline */
+main[data-palette="architectural-copper"] .team-home { border-top: 1px solid var(--color-border); }
+main[data-palette="architectural-copper"] .person-photo { background: #2B2D2A; }
+
+/* First conversation: Soft Stone band, its "what happens next" panel in paper */
+main[data-palette="architectural-copper"] .first-conversation { background: var(--color-surface); }
+main[data-palette="architectural-copper"] .first-conversation-next { background: var(--color-bg); }
+
+/* ---------- Contact + inquiry ---------- */
+main[data-palette="architectural-copper"] .contact { color: var(--color-dark-text); background: var(--color-dark); }
+main[data-palette="architectural-copper"] :is(.contact-copy > p:not(.eyebrow), .contact-checklist li) { color: var(--color-dark-text-muted); }
+main[data-palette="architectural-copper"] :is(.contact-checklist h3, .contact-phone i, .contact-email i) { color: var(--color-dark-text); }
+main[data-palette="architectural-copper"] :is(.contact-phone, .contact-email):hover { color: var(--color-accent-on-dark); }
+main[data-palette="architectural-copper"] :is(.pending-contact b small, .pending-contact i) { color: var(--color-dark-text-subtle); }
+
+main[data-palette="architectural-copper"] .inquiry-form { background: var(--color-bg); border-bottom-color: var(--color-border); }
+main[data-palette="architectural-copper"] :is(.inquiry-form-section, .inquiry-details) { border-color: var(--color-border); }
+main[data-palette="architectural-copper"] :is(.inquiry-form-section-heading h3, .inquiry-form label > span, .inquiry-choice legend) { color: var(--color-text-secondary); }
+/* Control boundaries need 3:1 (WCAG 1.4.11); the current graphite-alpha border is ~1.9:1 */
+main[data-palette="architectural-copper"] :is(.inquiry-form input, .inquiry-form select, .inquiry-form textarea) { border-color: var(--color-border-control); }
+/* Fields show focus by border + halo (no outline). Strong copper is 5.73:1 against paper; the halo is
+   raised from .12 to .24 so the change reads at a glance, not only on close inspection. */
+main[data-palette="architectural-copper"] :is(.inquiry-form input, .inquiry-form select, .inquiry-form textarea):focus { border-color: var(--color-accent-strong); box-shadow: 0 0 0 3px rgba(147, 73, 35, .24); }
+main[data-palette="architectural-copper"] .inquiry-choice label > span { color: var(--color-text-secondary); border-color: var(--color-border-control); }
+main[data-palette="architectural-copper"] .inquiry-choice input:checked + span { color: var(--color-dark-text); border-color: var(--color-dark); background: var(--color-dark); }
+main[data-palette="architectural-copper"] .inquiry-consent input { accent-color: var(--color-accent-strong); }
+
+/* ---------- Footer ---------- */
+:root:has(main[data-palette="architectural-copper"]) footer { color: var(--color-dark-text-muted); background: var(--color-dark); }
+:root:has(main[data-palette="architectural-copper"]) :is(.footer-nav, .footer-directions) { color: var(--color-dark-text-muted); }
+:root:has(main[data-palette="architectural-copper"]) :is(.footer-phone, .footer-email, .footer-nav a:hover, .footer-directions a:hover, .footer-legal a:hover, .footer-legal-link:hover) { color: var(--color-dark-text); }
+
+/* ---------- Cookie banner ---------- */
+:root:has(main[data-palette="architectural-copper"]) .cookie-banner { color: var(--color-dark-text); background: var(--color-dark); }
+:root:has(main[data-palette="architectural-copper"]) .cookie-banner a { color: var(--color-accent-on-dark); }
+:root:has(main[data-palette="architectural-copper"]) .cookie-banner p { color: rgba(245, 242, 235, .74); }
+:root:has(main[data-palette="architectural-copper"]) .cookie-actions button { color: var(--color-dark-text); }
+/* was white on #b6532c (4.3:1, 10px text) — now warm white on strong copper, 5.84:1 */
+:root:has(main[data-palette="architectural-copper"]) .cookie-actions .cookie-accept { border-color: var(--color-accent-strong); background: var(--color-accent-strong); }
+:root:has(main[data-palette="architectural-copper"]) .cookie-actions .cookie-accept:hover { border-color: var(--color-accent-hover); background: var(--color-accent-hover); }
+:root:has(main[data-palette="architectural-copper"]) .cookie-toggle-options input:checked + span { color: var(--color-dark); border-color: var(--color-dark-text); background: var(--color-dark-text); }

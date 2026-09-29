@@ -7,6 +7,8 @@ import InquirySection from './components/InquirySection';
 import { company, companyContactLinks } from './data/company';
 import { homeProofCase } from './data/homeProof';
 import { siteRoutes } from './data/navigation';
+// Architectural Copper v0.1 — HOME-only palette prototype; see the file header for how to discard it.
+import './palette-architectural-copper.css';
 
 // HOME reads as one argument for a warm, referred visitor:
 //   understands the task (hero, directions) → practical capability, in honest limits (who does what, formats, and — once
@@ -14,7 +16,7 @@ import { siteRoutes } from './data/navigation';
 // The plan and the evidence limits are in 00_control/home-review-v0.1/HOME_SLICE_02_ARCHITECTURE.md.
 export default function Home() {
   return (
-    <main id="main-content">
+    <main id="main-content" data-palette="architectural-copper">
       <section className="hero" id="top">
         <div className="hero-media">
           <HomeHeroVideo />
