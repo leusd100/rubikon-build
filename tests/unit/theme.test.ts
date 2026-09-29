@@ -9,7 +9,7 @@ const KEY = 'rubikon-theme';
 type Env = ReturnType<typeof createEnv>;
 
 function createEnv({ stored = null as string | null, osDark = false, storageThrows = false, matchMediaThrows = false } = {}) {
-  const attributes = new Map<string, string>();
+  const dataset: { theme?: string; themePreference?: string } = {};
   const store = new Map<string, string>(stored === null ? [] : [[KEY, stored]]);
   const mediaListeners = new Set<() => void>();
   const windowListeners = new Map<string, Set<(event: unknown) => void>>();
@@ -33,21 +33,18 @@ function createEnv({ stored = null as string | null, osDark = false, storageThro
     },
     removeEventListener: (type: string, listener: (event: unknown) => void) => windowListeners.get(type)?.delete(listener),
   };
-  const documentElement = {
-    getAttribute: (name: string) => attributes.get(name) ?? null,
-    setAttribute: (name: string, value: string) => attributes.set(name, String(value)),
-  };
+  const documentElement = { dataset };
 
   vi.stubGlobal('window', window);
   vi.stubGlobal('localStorage', localStorage);
   vi.stubGlobal('document', { documentElement });
 
   return {
-    attributes,
+    dataset,
     store,
     mediaListeners,
     windowListeners,
-    theme: () => `${attributes.get('data-theme')}/${attributes.get('data-theme-preference')}`,
+    theme: () => `${dataset.theme}/${dataset.themePreference}`,
     setOsDark(dark: boolean) {
       media.matches = dark;
       mediaListeners.forEach((listener) => listener());
@@ -116,11 +113,11 @@ describe('reading the current theme', () => {
     const { readPreference, readEffectiveTheme } = await loadTheme();
     expect(readPreference()).toBe('system');
     expect(readEffectiveTheme()).toBe('light');
-    env.attributes.set('data-theme-preference', 'dark');
-    env.attributes.set('data-theme', 'dark');
+    env.dataset.themePreference = 'dark';
+    env.dataset.theme = 'dark';
     expect(readPreference()).toBe('dark');
     expect(readEffectiveTheme()).toBe('dark');
-    env.attributes.set('data-theme-preference', 'bogus');
+    env.dataset.themePreference = 'bogus';
     expect(readPreference()).toBe('system');
   });
 });

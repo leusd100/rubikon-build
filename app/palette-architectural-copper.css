@@ -123,8 +123,10 @@
 
 /* ============================== Components (theme-independent) ============================== */
 
-/* Soft Stone band: mineral grey fails there in Light, so muted text takes the surface-safe tone */
+/* First conversation: the stone (Light) or mineral (Dark) band. Mineral grey fails on Soft Stone in Light,
+   so muted text takes the surface-safe tone. */
 main[data-palette="architectural-copper"] .first-conversation {
+  background: var(--color-surface);
   --text-muted: var(--color-text-muted-surface);
   --muted: var(--color-text-muted-surface);
 }
@@ -242,8 +244,7 @@ main[data-palette="architectural-copper"] .section-link span { color: var(--colo
 main[data-palette="architectural-copper"] .team-home { border-top: 1px solid var(--color-border); }
 main[data-palette="architectural-copper"] .person-photo { background: #2B2D2A; }
 
-/* First conversation: the stone (Light) or mineral (Dark) band, its panel lifted */
-main[data-palette="architectural-copper"] .first-conversation { background: var(--color-surface); }
+/* First conversation: its panel lifted off the band */
 main[data-palette="architectural-copper"] .first-conversation-next { background: var(--color-surface-elevated); }
 
 /* ---------- Inquiry: paper in Light, charcoal in Dark — never the footer's colour ---------- */

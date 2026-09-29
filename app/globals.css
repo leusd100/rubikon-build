@@ -1385,8 +1385,7 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
    bridge is a line inside a section, never a section of its own; the proof slot draws nothing while it is empty.
    Plan: 00_control/home-review-v0.1/HOME_SLICE_02_ARCHITECTURE.md. */
 .capability-ledger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid rgba(21,24,22,.17); border-left: 1px solid rgba(21,24,22,.17); }
-.capability-ledger > div { padding: 30px 28px 32px; border-right: 1px solid rgba(21,24,22,.17); border-bottom: 1px solid rgba(21,24,22,.17); }
-.capability-ledger > div { transition: background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+.capability-ledger > div { padding: 30px 28px 32px; border-right: 1px solid rgba(21,24,22,.17); border-bottom: 1px solid rgba(21,24,22,.17); transition: background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
 /* Every column lifts on hover. One permanently lifted column read as a hover that had got stuck (owner review,
    29.09): the «our team» emphasis stays in the heading and the column order, not in a frozen state. */
 @media (hover: hover) {
@@ -1445,8 +1444,7 @@ a.route-service:focus-visible { padding-inline: 26px; color: white; background: 
 .next-list > div::before { content: counter(next-step, decimal-leading-zero); grid-column: 1; grid-row: 1 / span 2; width: 36px; height: 36px; display: grid; place-items: center; color: var(--accent-dark); border: 1px solid var(--accent); border-radius: 50%; font: 600 13px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
 .next-list > div:not(:last-child)::after { content: ''; position: absolute; left: 17.5px; top: 44px; bottom: 8px; width: 1px; background: var(--line); }
 .next-list dt, .next-list dd { grid-column: 2; }
-.next-list dt { padding-top: 10px; }
-.next-list dt { margin: 0 0 6px; color: var(--accent-dark); font: 600 14px/1.3 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.next-list dt { margin: 0 0 6px; padding-top: 10px; color: var(--accent-dark); font: 600 14px/1.3 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .next-list dd { margin: 0; color: var(--text-primary); font-size: 15px; line-height: 1.65; }
 .next-note { margin: 28px 0 0; padding: 14px 16px; color: var(--text-secondary); background: color-mix(in srgb, var(--accent) 7%, transparent); border-left: 2px solid var(--accent); font-size: 14px; line-height: 1.65; }
 @media (max-width: 1050px) {

@@ -13,7 +13,7 @@ export const THEME_STORAGE_KEY = 'rubikon-theme';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 /** Inline, blocking, in <head>: runs before <body> is parsed, so the first painted frame already has the right theme. */
-export const THEME_INIT_SCRIPT = `(function(){var d=document.documentElement,p='system',t='light';try{var s=localStorage.getItem('${THEME_STORAGE_KEY}');if(s==='light'||s==='dark')p=s}catch(e){}if(p==='system'){try{if(window.matchMedia('${DARK_QUERY}').matches)t='dark'}catch(e){}}else{t=p}d.setAttribute('data-theme-preference',p);d.setAttribute('data-theme',t)})();`;
+export const THEME_INIT_SCRIPT = `(function(){var d=document.documentElement,p='system',t='light';try{var s=localStorage.getItem('${THEME_STORAGE_KEY}');if(s==='light'||s==='dark')p=s}catch(e){}if(p==='system'){try{if(window.matchMedia('${DARK_QUERY}').matches)t='dark'}catch(e){}}else{t=p}d.dataset.themePreference=p;d.dataset.theme=t})();`;
 
 const listeners = new Set<() => void>();
 let media: MediaQueryList | null = null;
@@ -23,12 +23,12 @@ function isPreference(value: unknown): value is ThemePreference {
 }
 
 export function readPreference(): ThemePreference {
-  const value = document.documentElement.getAttribute('data-theme-preference');
+  const value = document.documentElement.dataset.themePreference;
   return isPreference(value) ? value : 'system';
 }
 
 export function readEffectiveTheme(): EffectiveTheme {
-  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 
 function systemTheme(): EffectiveTheme {
@@ -37,8 +37,8 @@ function systemTheme(): EffectiveTheme {
 
 function apply(preference: ThemePreference) {
   const root = document.documentElement;
-  root.setAttribute('data-theme-preference', preference);
-  root.setAttribute('data-theme', preference === 'system' ? systemTheme() : preference);
+  root.dataset.themePreference = preference;
+  root.dataset.theme = preference === 'system' ? systemTheme() : preference;
   listeners.forEach((listener) => listener());
 }
 
