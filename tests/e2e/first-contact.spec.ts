@@ -34,22 +34,22 @@ test.describe('phone', () => {
   }
 
   // HOME Slice 01 (Stage 1 hypothesis, not a measured preference): on the homepage the call is the
-  // primary action, with the number on it; writing or leaving a request is second, directions third.
+  // primary action, with the number on it; writing or leaving a request is second. HOME v2 dropped the third
+  // «Дивитися напрямки» link — the directions start right under the hero.
   for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }]) {
     test(`/: the call is the primary hero action, on the first screen at ${viewport.width} px`, async ({ page }) => {
       await answerCookies(page, 'denied');
       await page.setViewportSize(viewport);
       await page.goto('/', { waitUntil: 'load' });
       const actions = page.locator('.hero .hero-actions > a');
-      await expect(actions).toHaveCount(3);
-      const [call, write, directions] = [actions.nth(0), actions.nth(1), actions.nth(2)];
+      await expect(actions).toHaveCount(2);
+      const [call, write] = [actions.nth(0), actions.nth(1)];
       await expect(call).toHaveClass(/\bbutton-primary\b/);
       await expect(call).toHaveAttribute('href', TEL);
       await expect(call).toHaveAccessibleName(`Зателефонувати, ${company.phone.display}`);
       await expect(call).toContainText(company.phone.display);
       await expect(write).toHaveAttribute('href', '#inquiry');
       await expect(write).toContainText('Написати або залишити запит');
-      await expect(directions).toHaveAttribute('href', '/napryamky');
       // Nobody is routed through the /angary brief before they can talk to the company.
       await expect(page.locator('.hero a[href^="/angary"]')).toHaveCount(0);
 

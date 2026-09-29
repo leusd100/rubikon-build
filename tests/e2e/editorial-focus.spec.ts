@@ -14,10 +14,12 @@ test('homepage shows named team roles without synthetic portraits at each layout
     await page.setViewportSize(viewport);
     await page.goto('/', { waitUntil: 'load' });
 
-    await expect(page.locator('.team-home .person-story')).toHaveCount(2);
-    await expect(page.locator('.team-home .person-photo, .team-home img')).toHaveCount(0);
-    await expect(page.locator('.team-home')).toContainText('Сергій');
-    await expect(page.locator('.team-home')).toContainText('Дмитро');
+    // HOME v2: the roles sit compactly beside the real-object proof, with no portraits.
+    const people = page.locator('#real-object .hv2-people');
+    await expect(people.locator('.hv2-person')).toHaveCount(2);
+    await expect(people.locator('img')).toHaveCount(0);
+    await expect(people).toContainText('Сергій Іванович Леус');
+    await expect(people).toContainText('Дмитро Сергійович Леус');
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
