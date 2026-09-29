@@ -75,7 +75,7 @@ export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null
       <div className="shell">
         <SectionHeader
           eyebrow="Реальний досвід"
-          title="Ангар, над яким працював Сергій"
+          title="Реальний ангар із досвіду Сергія"
           supporting="Каркас, панелі та покрівля цього ангара — частина попереднього досвіду Сергія Леуса. Для вашого об’єкта обговоримо задачу й визначимо, як можемо долучитися."
         />
         <HomeProofSlot proof={proof} />
