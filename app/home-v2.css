@@ -334,7 +334,10 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 
 /* Paper in Light (graphite in Dark), with the desk-and-drawings photo turned into a faint sheet texture: visible
    on the right behind the form, almost gone behind the text. Decorative only — never evidence. */
-main[data-home="v2"] .hv2-conversation { position: relative; overflow: hidden; isolation: isolate; color: var(--color-text); background: var(--color-bg); }
+main[data-home="v2"] .hv2-conversation {
+  position: relative; overflow: hidden; isolation: isolate; color: var(--color-text); background: var(--color-bg);
+  --hv2-tg: .57; --hv2-wa: .51; --hv2-vb: .77; /* messenger-icon greys, see the channels below */
+}
 main[data-home="v2"] .hv2-conversation-bg { position: absolute; z-index: -1; inset: 0; }
 main[data-home="v2"] .hv2-conversation-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 45%; filter: grayscale(1) sepia(.25) contrast(.92) brightness(1.08); }
 main[data-home="v2"] .hv2-conversation-bg::after {
@@ -390,7 +393,6 @@ main[data-home="v2"] .hv2-channels-label::after { content: ''; flex: 1; height: 
    saturated blue/green/purple no longer compete with the copper call. */
 /* Greyscale luminance differs per brand (Telegram blue ≈148, WhatsApp green ≈166, Viber purple ≈110 of 255), so each
    icon gets its own brightness factor to land on one grey: ≈85 on paper, ≈200 on graphite. */
-main[data-home="v2"] .hv2-conversation { --hv2-tg: .57; --hv2-wa: .51; --hv2-vb: .77; }
 :root[data-theme="dark"] main[data-home="v2"] .hv2-conversation { --hv2-tg: 1.35; --hv2-wa: 1.2; --hv2-vb: 1.82; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme]) main[data-home="v2"] .hv2-conversation { --hv2-tg: 1.35; --hv2-wa: 1.2; --hv2-vb: 1.82; } }
 main[data-home="v2"] .hv2-conversation-channels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }

@@ -22,7 +22,7 @@ export function HomeV2Hero() {
               limit on specialised works stay (P01); «в погодженому обсязі» and the object types are dropped on a phone —
               the object types return from 761 px up. */}
           <p className="hero-lead">
-            <span className="hv2-lead-intro">Будуємо промислові, складські й аграрні об’єкти. </span>
+            <span className="hv2-lead-intro">Будуємо промислові, складські й аграрні об’єкти.</span>{' '}
             Бетон і типові фундаменти, монтаж металоконструкцій і панелей, покрівельні роботи. Спеціалізовані роботи
             координуємо з профільними виконавцями.
           </p>

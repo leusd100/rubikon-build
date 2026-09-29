@@ -13,7 +13,7 @@ export function DirectionsRail({ children, count }: Readonly<{ children: ReactNo
     const grid = rootRef.current?.querySelector<HTMLElement>('.direction-grid');
     if (!grid) return;
     const update = () => {
-      const start = grid.getBoundingClientRect().left + parseFloat(getComputedStyle(grid).paddingLeft || '0');
+      const start = grid.getBoundingClientRect().left + Number.parseFloat(getComputedStyle(grid).paddingLeft || '0');
       let best = 0;
       let bestDistance = Infinity;
       Array.from(grid.children).forEach((card, index) => {
@@ -35,7 +35,7 @@ export function DirectionsRail({ children, count }: Readonly<{ children: ReactNo
     const grid = rootRef.current?.querySelector<HTMLElement>('.direction-grid');
     const card = grid?.children[index] as HTMLElement | undefined;
     if (!grid || !card) return;
-    const start = grid.getBoundingClientRect().left + parseFloat(getComputedStyle(grid).paddingLeft || '0');
+    const start = grid.getBoundingClientRect().left + Number.parseFloat(getComputedStyle(grid).paddingLeft || '0');
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     grid.scrollTo({ left: grid.scrollLeft + card.getBoundingClientRect().left - start, behavior: reduce ? 'auto' : 'smooth' });
   };
