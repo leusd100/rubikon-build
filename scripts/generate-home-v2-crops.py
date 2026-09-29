@@ -12,8 +12,10 @@ Crop and resize only: no retouching, no compositing, no generated pixels. Source
   conversation-bg-portrait  media/engineering-planning.jpg                (0, 300, 1800, 2700) decorative
 
 Iteration 3 (made once by hand, sources live outside the repo, so they are not in JOBS below):
-  photos/serhii-prior-hangar-gable.jpeg + hangar-gable-{960,1600}w  owner-supplied original DSCF7654 (6240×4160),
-      box (0, 700, 6240, 3900) — sky and foreground gravel trimmed, nothing retouched, saved without EXIF
+  photos/serhii-prior-hangar-retouched.jpeg + hangar-retouched-{960,1536}w  owner-supplied CLEANED version of DSCF7654,
+      rubikon-real-hangar-cleaned.png (1536×1024; loose items in front removed, whole frame re-rendered), box
+      (0, 172, 1536, 960) = the same framing as (0, 700, 6240, 3900) on the original; saved without EXIF. The page
+      labels it «Фото з ретушшю переднього плану».
   concepts/hangar-xray-{1100,1774}w  the owner-approved X-ray sketch rubikon-hangar-xray-concept-v2-clean.png (1774×887),
       resized only. It is a generated illustration, labelled «Ілюстративна схема конструкції» on the page.
 

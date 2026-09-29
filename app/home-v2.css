@@ -243,11 +243,13 @@ main[data-home="v2"] .hv2-proof-photo img { object-position: 86% 55%; }
 main[data-home="v2"] .hv2-proof-xray img { object-position: 100% 50%; }
 main[data-home="v2"] .hv2-proof-pair figcaption { color: var(--hv2-text-3); font-size: 14px; line-height: 1.55; }
 main[data-home="v2"] .hv2-proof-pair figcaption b { color: var(--hv2-text); font-weight: 700; }
+/* «→ до принципу»: from the real object to the principle — not a reveal of this hangar's hidden structure */
 main[data-home="v2"] .hv2-proof-arrow {
-  position: absolute; z-index: 3; left: 14px; top: 50%; width: 38px; height: 38px; display: grid; place-items: center;
-  color: var(--hv2-text); background: var(--hv2-copper-fill); border-radius: 50%; font-size: 17px; transform: translateY(-50%);
-  box-shadow: 0 0 0 4px rgba(18, 20, 19, .55);
+  position: absolute; z-index: 3; left: 14px; top: 50%; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px 0 0;
+  color: var(--hv2-text); background: rgba(18, 20, 19, .82); border: 1px solid rgba(245, 242, 235, .35); border-radius: 22px; transform: translateY(-50%);
 }
+main[data-home="v2"] .hv2-proof-arrow i { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 50%; background: var(--hv2-copper-fill); font-size: 16px; font-style: normal; }
+main[data-home="v2"] .hv2-proof-arrow span { font: 700 12.5px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 
 /* The travelling pulse on the X-ray's own load path (same idea as card 02's dashes). Static at rest for
    prefers-reduced-motion: the sketch already carries its copper path, so nothing is lost. */
@@ -410,7 +412,8 @@ main[data-home="v2"] .hv2-conversation .inquiry-field-hint { font-size: 13px; }
   main[data-home="v2"] .hv2-proof-photo .hv2-proof-media { aspect-ratio: 4 / 3; }
   main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 16 / 10; }
   /* Stacked: the arrow points down from the photo into the sketch, clear of the tag in the top-right corner */
-  main[data-home="v2"] .hv2-proof-arrow { left: 14px; top: 14px; transform: rotate(90deg); }
+  main[data-home="v2"] .hv2-proof-arrow { left: 12px; top: 12px; transform: none; }
+  main[data-home="v2"] .hv2-proof-arrow i { transform: rotate(90deg); }
 }
 
 /* ================================ Phone ================================ */
@@ -452,6 +455,11 @@ main[data-home="v2"] .hv2-conversation .inquiry-field-hint { font-size: 13px; }
   main[data-home="v2"] .hv2-journey-number { font-size: 18px; }
   main[data-home="v2"] .hv2-journey h3 { font-size: 16px; }
   main[data-home="v2"] .hv2-journey p { font-size: 15px; }
+}
+/* Narrow phones: «→ до принципу» and the X-ray label no longer fit one row at the top — the label moves to the
+   image's bottom-right corner (dark ground there, so it stays readable). */
+@media (max-width: 560px) {
+  main[data-home="v2"] .hv2-proof-xray .hv2-tag-scheme { top: auto; bottom: 12px; }
 }
 @media (max-width: 340px) {
   main[data-home="v2"] .hv2-call strong { font-size: 20px; }

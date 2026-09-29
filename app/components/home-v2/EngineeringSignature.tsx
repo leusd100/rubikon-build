@@ -5,10 +5,11 @@ import { siteRoutes } from '../../data/navigation';
 
 // HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
 //
-// Order (iteration 3): the real object comes first, straight under the heading, beside an X-ray illustration of the
-// same view. They are two separate images with two different labels: the photo is evidence («Фото об’єкта»), the
-// X-ray is a generated sketch that repaints part of the photo and invents the frame behind the cladding
-// («Ілюстративна схема конструкції»), so it is never called a drawing and carries no sizes, nodes or calculations.
+// Order (iteration 3): the real object comes first, straight under the heading, beside an X-ray illustration of a
+// similar view. They are two separate images with two different labels: the photo is evidence («Фото об’єкта», with
+// its foreground retouch stated), the X-ray is a generated sketch that does not match the photo literally and invents
+// the frame behind the cladding («Ілюстративна схема конструкції») — never called a drawing, no sizes, nodes or
+// calculations. The arrow between them reads «до принципу»: from the object to the principle, not into its insides.
 // Two explanation cards follow; the old card 01 («Фото → конструкція») is what the X-ray now shows, so it is gone.
 //
 // Nothing here names a product: no «digital twin», explorer, load-path software or building passport.
@@ -125,12 +126,12 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
         <figure className="hv2-proof-photo">
           <div className="hv2-proof-media">
             <picture>
-              <source type="image/webp" srcSet="/media/home-v2/hangar-gable-960w.webp 960w, /media/home-v2/hangar-gable-1600w.webp 1600w" sizes="(max-width: 900px) 100vw, 42vw" />
+              <source type="image/webp" srcSet="/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w" sizes="(max-width: 900px) 100vw, 42vw" />
               <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
             </picture>
             <span className="hv2-tag hv2-tag-photo">Фото об’єкта</span>
           </div>
-          <figcaption><b>Реальний об’єкт.</b> Оригінальне фото, лише кадроване.</figcaption>
+          <figcaption><b>Реальний об’єкт.</b> Фото з ретушшю переднього плану.</figcaption>
         </figure>
         <figure className="hv2-proof-xray">
           <div className="hv2-proof-media">
@@ -138,7 +139,7 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
               src="/media/home-v2/concepts/hangar-xray-1774w.webp"
               srcSet="/media/home-v2/concepts/hangar-xray-1100w.webp 1100w, /media/home-v2/concepts/hangar-xray-1774w.webp 1774w"
               sizes="(max-width: 900px) 170vw, 58vw"
-              alt="Ілюстративна схема: той самий ракурс, де обшивку частково замінено умовним каркасом і показано шлях навантаження від покрівлі до фундаменту"
+              alt="Ілюстративна схема: ангар, у якого частину обшивки замінено умовним каркасом, зі шляхом навантаження від покрівлі до фундаменту"
               loading="lazy"
               decoding="async"
             />
@@ -154,7 +155,7 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
               <path className="hv2-xray-pulse" d={XRAY_PATH} pathLength={1} />
               <ellipse className="hv2-xray-glow" cx="1491" cy="700" rx="70" ry="34" fill="url(#hv2-xray-glow-fill)" />
             </svg>
-            <span className="hv2-proof-arrow" aria-hidden="true">→</span>
+            <span className="hv2-proof-arrow" aria-hidden="true"><i>→</i><span>до принципу</span></span>
             <span className="hv2-tag hv2-tag-scheme">Ілюстративна схема конструкції</span>
           </div>
           <figcaption>
