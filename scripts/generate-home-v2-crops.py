@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+"""HOME v2 prototype — derived WebP crops under public/media/home-v2/ (manual, not part of the build).
+
+Crop and resize only: no retouching, no compositing, no generated pixels. Sources and boxes:
+
+  concepts/hero-mobile      media/directions-sequence-source/angary.png   (720, 0, 1472, 941)  concept render, 4:5
+  concepts/card-cutaway     media/angary/envelope-sandwich-cutaway.jpg    (51, 0, 1449, 1049)  concept render, 4:3
+  concepts/card-node        media/concepts/about-experience-v2.jpg        (0, 620, 1440, 1700) concept image, 4:3
+  hangar-wide               photos/serhii-prior-hangar.jpeg               (0, 390, 1800, 1110) the approved frame, sky/ground trimmed
+  hangar-narrow             photos/serhii-prior-hangar.jpeg               (30, 420, 1080, 1120)
+  conversation-bg           media/engineering-planning.jpg                (0, 600, 1800, 1800) decorative
+  conversation-bg-portrait  media/engineering-planning.jpg                (0, 300, 1800, 2700) decorative
+
+Everything derived from a concept source sits in concepts/, so the existing «no concept image outside the direction
+cards» check (tests/e2e/pr-critical.spec.ts) sees it. The callout positions in EngineeringSignature.tsx are
+percentages of these exact boxes — change a box and they must be re-measured.
+
+Usage:  cd <repo root> && python3 scripts/generate-home-v2-crops.py   (requires Pillow)
+"""
+import os
+
+from PIL import Image
+
+SRC = 'public/'
+OUT = 'public/media/home-v2/'
+
+JOBS = [
+    ('concepts/hero-mobile', 'media/directions-sequence-source/angary.png', (720, 0, 1472, 941), [480, 752], 80),
+    ('concepts/card-cutaway', 'media/angary/envelope-sandwich-cutaway.jpg', (51, 0, 1449, 1049), [640, 1040], 80),
+    ('concepts/card-node', 'media/concepts/about-experience-v2.jpg', (0, 620, 1440, 1700), [640, 1040], 80),
+    ('hangar-wide', 'photos/serhii-prior-hangar.jpeg', (0, 390, 1800, 1110), [960, 1440, 1800], 80),
+    ('hangar-narrow', 'photos/serhii-prior-hangar.jpeg', (30, 420, 1080, 1120), [640, 1050], 80),
+    ('conversation-bg', 'media/engineering-planning.jpg', (0, 600, 1800, 1800), [960, 1600], 72),
+    ('conversation-bg-portrait', 'media/engineering-planning.jpg', (0, 300, 1800, 2700), [720], 70),
+]
+
+for name, source, box, widths, quality in JOBS:
+    image = Image.open(SRC + source).convert('RGB').crop(box)
+    os.makedirs(os.path.dirname(OUT + name), exist_ok=True)
+    for width in widths:
+        height = round(image.height * width / image.width)
+        resized = image if width == image.width else image.resize((width, height), Image.LANCZOS)
+        path = f'{OUT}{name}-{width}w.webp'
+        resized.save(path, 'WEBP', quality=quality, method=6)
+        print(path, f'{os.path.getsize(path) // 1024} KB', f'{width}×{height}')
