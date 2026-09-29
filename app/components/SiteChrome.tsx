@@ -5,7 +5,6 @@ import { CookieSettingsButton } from './AnalyticsConsent';
 import BrandLogo from './BrandLogo';
 import MobileMenu from './MobileMenu';
 import { ThemeMenu, ThemeOptions } from './ThemeControl';
-import ResponsiveImage from './ResponsiveImage';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
 import { directions } from '../data/directions';
@@ -242,13 +241,13 @@ const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
     sergii: {
       role: 'Засновник / керівник будівельного напряму',
       paragraphs: [
-        'Практичний досвід у будівництві — від організації робіт на майданчику до контролю якості та ключових технічних рішень.',
+        'Керує будівельним напрямом. Його практичний досвід охоплює організацію робіт на майданчику, бригади, якість виконання та складні конструктивні вузли.',
       ],
     },
     dmytro: {
       role: 'Розвиток компанії / робота з клієнтами',
       paragraphs: [
-        'Відповідає за розвиток RUBIKON BUILD, комунікацію з клієнтами та системну організацію роботи — від першого звернення до узгодження формату співпраці.',
+        'Веде роботу з клієнтами й розвиток компанії. Допомагає розібрати завдання, зібрати наявні матеріали та підготувати предметну розмову про будівельні роботи.',
       ],
     },
   },
@@ -256,13 +255,13 @@ const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
     sergii: {
       role: 'Засновник / керівник будівельного напряму',
       paragraphs: [
-        'Від роботи на майданчику до організації бригад, контролю якості та відповідальних етапів. Сергій Іванович залучається до оцінки ключових технічних рішень і конструктивних вузлів проєкту.',
+        'Керує будівельним напрямом. Його практичний досвід охоплює організацію робіт на майданчику, бригади, якість виконання та складні конструктивні вузли.',
       ],
     },
     dmytro: {
       role: 'Розвиток компанії / робота з клієнтами',
       paragraphs: [
-        'Відповідає за розвиток RUBIKON BUILD і роботу з клієнтами. Допомагає структурувати завдання, зібрати вихідні дані та підготуватися до технічного обговорення, щоб склад робіт і межі відповідальності були зрозумілими обом сторонам.',
+        'Веде роботу з клієнтами й розвиток компанії. Допомагає розібрати завдання, зібрати наявні матеріали та підготувати предметну розмову про будівельні роботи.',
       ],
     },
   },
@@ -273,7 +272,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
   const isHome = variant === 'home';
 
   return (
-    <section className={`team section team-${variant}`} id={isHome ? 'about' : undefined}>
+    <section className={`team section team-${variant} team-text-only`} id={isHome ? 'about' : undefined}>
       <div className="shell">
         {/* HOME: the one place the family / responsibility thesis is stated (it used to be split between «Наша основа»
             and this block). Experience is told without a number until Serhii himself confirms one; responsibility is
@@ -288,9 +287,6 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
         />
         <div className="team-stories">
           <article className="person-story">
-            <div className="person-photo">
-              <ResponsiveImage src="/images/founder.webp" alt={`${company.founders[0]} — засновник і керівник будівельного напряму ${company.name}`} sizes="(max-width: 1050px) 82vw, 47vw" />
-            </div>
             <div className="person-info">
               <span>{sergii.role}</span>
               <h3>Леус Сергій Іванович</h3>
@@ -302,9 +298,6 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
               <span>{dmytro.role}</span>
               <h3>Леус Дмитро Сергійович</h3>
               {dmytro.paragraphs.map((text) => <p key={text}>{text}</p>)}
-            </div>
-            <div className="person-photo">
-              <ResponsiveImage src="/images/next-generation.webp" alt={`${company.founders[1]} — розвиток компанії та робота з клієнтами ${company.name}`} sizes="(max-width: 1050px) 82vw, 47vw" />
             </div>
           </article>
         </div>

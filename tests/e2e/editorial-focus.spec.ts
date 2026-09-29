@@ -1,40 +1,30 @@
 import { expect, test } from '@playwright/test';
 
 const viewports = [
-  { width: 1440, height: 900, portraitRatio: 5 / 4 },
-  { width: 1024, height: 768, portraitRatio: 5 / 4 },
-  { width: 820, height: 1180, portraitRatio: 5 / 4 },
-  { width: 390, height: 844, portraitRatio: 4 / 3 },
+  { width: 1440, height: 900 },
+  { width: 1024, height: 768 },
+  { width: 820, height: 1180 },
+  { width: 390, height: 844 },
 ] as const;
 
-test('homepage team portraits keep a deliberate portrait crop at each layout', async ({ page }) => {
+test('homepage shows named team roles without synthetic portraits at each layout', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
     await page.goto('/', { waitUntil: 'load' });
 
-    const portraits = page.locator('.team-home .person-photo');
-    await expect(portraits).toHaveCount(2);
-
-    for (const portrait of await portraits.all()) {
-      await portrait.scrollIntoViewIfNeeded();
-      const box = await portrait.boundingBox();
-      expect(box).not.toBeNull();
-      expect(box!.height / box!.width).toBeCloseTo(viewport.portraitRatio, 1);
-
-      const image = portrait.locator('img');
-      await expect(image).toBeVisible();
-      await expect(image).toHaveCSS('object-fit', 'cover');
-      await expect.poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth > 0 && node.naturalHeight > 0)).toBe(true);
-    }
+    await expect(page.locator('.team-home .person-story')).toHaveCount(2);
+    await expect(page.locator('.team-home .person-photo, .team-home img')).toHaveCount(0);
+    await expect(page.locator('.team-home')).toContainText('Сергій');
+    await expect(page.locator('.team-home')).toContainText('Дмитро');
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
   }
 });
 
-test('about profiles use the compact team composition on tablet', async ({ page }) => {
+test('about profiles use a compact text composition on tablet', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 
   for (const viewport of [
@@ -45,9 +35,8 @@ test('about profiles use the compact team composition on tablet', async ({ page 
     await page.goto('/pro-nas', { waitUntil: 'load' });
 
     const profiles = page.locator('.team-about .person-story');
-    const photos = page.locator('.team-about .person-photo');
     await expect(profiles).toHaveCount(2);
-    await expect(photos).toHaveCount(2);
+    await expect(page.locator('.team-about .person-photo, .team-about img')).toHaveCount(0);
 
     const [firstProfile, secondProfile] = await Promise.all([
       profiles.first().boundingBox(),
@@ -56,14 +45,6 @@ test('about profiles use the compact team composition on tablet', async ({ page 
     expect(firstProfile).not.toBeNull();
     expect(secondProfile).not.toBeNull();
     expect(Math.abs(secondProfile!.y - firstProfile!.y)).toBeLessThanOrEqual(1);
-
-    for (const photo of await photos.all()) {
-      await photo.scrollIntoViewIfNeeded();
-      const box = await photo.boundingBox();
-      expect(box).not.toBeNull();
-      expect(box!.height / box!.width).toBeCloseTo(5 / 4, 1);
-      await expect(photo.locator('img')).toHaveCSS('object-fit', 'cover');
-    }
 
     for (const name of await page.locator('.team-about .person-info h3').all()) {
       const lineCount = await name.evaluate((element) => {

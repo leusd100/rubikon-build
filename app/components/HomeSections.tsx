@@ -1,44 +1,16 @@
 import { CalendarClock, Factory, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { EngagementFormatCards, EntryPointsNote } from './DirectionCards';
 import ResponsiveImage from './ResponsiveImage';
 import { GhostWord, SectionHeader } from './SiteChrome';
 import { company, companyContactLinks } from '../data/company';
-import { deliveryModel } from '../data/deliveryModel';
 import type { HomeProofCase } from '../data/homeProof';
 import { siteRoutes } from '../data/navigation';
-import { entryPoints } from '../lib/deliveryModelPresentation';
 
 // The HOME blocks that carry the «спроможність → прозорість → перша розмова» argument. Copy that comes from the
 // frozen Delivery Model is read from it (never retyped); the rest is HOME's own wording and adds no fact the
 // model or the owner has not stated. See 00_control/home-review-v0.1/HOME_SLICE_02_ARCHITECTURE.md.
 
-const { statements } = deliveryModel;
-
-// Who does the work — the model's three layers, in HOME's own words. «Виготовлення» sits under «залежно від
-// проєкту» on purpose: site fabrication where suitable, partner production for large volumes (P01 rev 3).
-const capabilityColumns: readonly { id: string; title: string; items: readonly string[] }[] = [
-  {
-    id: 'own',
-    title: 'Виконує наша команда',
-    items: ['Бетонні роботи та типові фундаменти', 'Монтаж металоконструкцій', 'Монтаж стінових і покрівельних панелей', 'Покрівлі'],
-  },
-  {
-    id: 'depends',
-    title: 'Залежно від проєкту',
-    items: [
-      'Виготовлення металоконструкцій — на майданчику, де це доцільно; для великих обсягів — перевірене партнерське виробництво',
-      'Земляні роботи, огородження й ворота — склад і виконавців визначаємо під проєкт',
-      'Промислові підлоги — бетонна основа; спеціалізовані етапи погоджуємо з профільними виконавцями',
-    ],
-  },
-  {
-    id: 'partners',
-    title: 'Профільні виконавці',
-    items: ['Електрика', 'Вода, каналізація, опалення й вентиляція — у погодженому обсязі або на стороні замовника'],
-  },
-];
 
 /**
  * A calm contact line inside a section, at the point where the visitor's intent rises. Not a section and never
@@ -69,7 +41,7 @@ export function HomeProofSlot({ proof }: Readonly<{ proof: HomeProofCase | null 
   const { photo, scope } = proof;
   return (
     <figure className="home-proof">
-      <div className="home-proof-media" style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
+      <div className="home-proof-media" style={{ aspectRatio: '16 / 10' }}>
         <ResponsiveImage src={photo.src} alt={photo.alt} sizes="(max-width: 1050px) 100vw, 60vw" />
       </div>
       <figcaption className="home-proof-body">
@@ -78,8 +50,8 @@ export function HomeProofSlot({ proof }: Readonly<{ proof: HomeProofCase | null 
         <p className="home-proof-attribution">{proof.attribution}</p>
         <div className="home-proof-scope">
           <div>
-            <h3>Виконала наша команда</h3>
-            <ul>{scope.ours.map((item) => <li key={item}>{item}</li>)}</ul>
+            <h3>{proof.provenance === 'serhii-prior' ? 'Роботи з попереднього досвіду Сергія' : 'Виконала наша команда'}</h3>
+            <ul>{scope.subject.map((item) => <li key={item}>{item}</li>)}</ul>
           </div>
           {scope.others && scope.others.length > 0 && (
             <div>
@@ -94,33 +66,22 @@ export function HomeProofSlot({ proof }: Readonly<{ proof: HomeProofCase | null 
   );
 }
 
-// «Що виконуємо самі, а що координуємо»: capability first, then — only if one exists — the proof, then the three
-// formats of participation. The formats used to be the whole block; they are now the second half of it.
+// HOME introduces the team's work and invites the visitor to describe their task. Detailed responsibility and
+// participation formats live on /yak-pratsyuiemo, where there is room to explain their P01 boundaries.
 export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null }>) {
   return (
     <section className="services section ghost-section" id="services">
       <GhostWord word="BUILD" />
       <div className="shell">
         <SectionHeader
-          eyebrow="Хто що виконує"
-          title="Що виконуємо самі, а що координуємо"
-          supporting="Комплексна реалізація можлива — її склад залежить від проєкту й договору."
+          eyebrow="Реальний досвід"
+          title="Реальний ангар із досвіду Сергія"
+          supporting="Каркас, панелі та покрівля цього ангара — частина попереднього досвіду Сергія Леуса. Для вашого об’єкта обговоримо задачу й визначимо, як можемо долучитися."
         />
-        <div className="capability-ledger">
-          {capabilityColumns.map((column) => (
-            <div className={`capability-${column.id}`} key={column.id}>
-              <h3>{column.title}</h3>
-              <ul>{column.items.map((item) => <li key={item}>{item}</li>)}</ul>
-            </div>
-          ))}
-        </div>
-        <p className="capability-boundary">На стороні замовника — проєкт, дозволи, зовнішні мережі, вишукування та нагляд із відповідними спеціалістами.</p>
         <HomeProofSlot proof={proof} />
-        <p className="capability-subtitle">Формат участі</p>
-        <EngagementFormatCards />
-        <a className="section-link" href={`${siteRoutes.process}#khto-vykonuie`}>Хто за що відповідає — докладно <span aria-hidden="true">↗</span></a>
+        <a className="section-link" href={`${siteRoutes.process}#khto-vykonuie`}>Як узгоджуємо склад робіт <span aria-hidden="true">↗</span></a>
         <ContactBridge>
-          Схожа задача? Розкажіть коротко — скажемо, чи вона в нашому профілі й у якому форматі ми можемо бути корисними.
+          Маєте задум або готовий проєкт? Розкажіть про нього — разом визначимо можливий обсяг нашої участі.
         </ContactBridge>
       </div>
     </section>
@@ -129,58 +90,44 @@ export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null
 
 // Facts that help the first conversation. Soft type on purpose — no numbers, no «step» look — so it reads as a
 // prompt, not a form the visitor has to complete.
-const prepHints: readonly { title: string; text: string; icon: LucideIcon }[] = [
-  { title: 'Призначення', text: 'Що планується всередині: виробництво, склад, техніка, зерно чи інше.', icon: Factory },
-  { title: 'Орієнтовні розміри', text: 'Довжина, ширина, висота, прольоти — достатньо попередніх цифр.', icon: Ruler },
-  { title: 'Місце', text: 'Місто або область, стан майданчика та під’їзд для техніки.', icon: MapPin },
-  { title: 'Бажані строки', text: 'Коли плануєте почати й коли об’єкт має бути готовим.', icon: CalendarClock },
+const prepHints: readonly { text: string; icon: LucideIcon }[] = [
+  { text: 'призначення об’єкта й орієнтовні розміри;', icon: Factory },
+  { text: 'місто або область, інформація про майданчик;', icon: MapPin },
+  { text: 'бажаний час початку робіт;', icon: CalendarClock },
+  { text: 'концепція, креслення або робоча документація.', icon: Ruler },
 ];
 
-// What happens next and who decides what. Every line restates the frozen model (firstContact, stage 01, stage 04,
-// the design statement, the design-docs start note); none of it promises a time, a price or a visit.
+// A first conversation, from describing the task to a scope and estimate when project data suffices.
 const nextSteps: readonly { title: string; text: string }[] = [
-  { title: 'Що робимо ми', text: 'Ставимо уточнювальні питання й чесно кажемо, чи задача в нашому профілі та в якому форматі ми можемо бути корисними.' },
-  { title: 'Що вирішуєте ви', text: 'Який формат участі вам потрібен; погоджуєте концепцію, склад робіт, виключення та припущення.' },
-  { title: 'Технічні рішення', text: 'Проєкт надаєте ви або ваш проєктувальник. Ми узгоджуємо з ним будівельні рішення й стики в погодженому обсязі.' },
-  { title: 'Коли з’являється ціна', text: 'Є достатньо проєктних даних — готуємо попередній кошторис робіт і матеріалів. Даних бракує — уточнюємо, що потрібно. Є бюджет — оцінюємо, чи він реалістичний для вашої задачі.' },
+  { title: 'Уточнюємо задачу', text: 'Обговорюємо, для чого потрібен об’єкт, які роботи вас цікавлять і де планується будівництво. Скажемо, чи це наш профіль.' },
+  { title: 'Дивимося, що вже є', text: 'Переглядаємо ваш опис, параметри, креслення чи проєкт. Якщо даних бракує, пояснюємо, що потрібно підготувати. Проєкт надаєте ви або ваш окремий проєктувальник; за потреби можемо порадити спеціаліста.' },
+  { title: 'Узгоджуємо склад робіт', text: 'Визначаємо, яку будівельну частину RUBIKON може взяти на себе та як вона має узгоджуватися з проєктом і роботами інших виконавців.' },
+  { title: 'Готуємо кошторис', text: 'Коли склад робіт визначено й проєктних даних достатньо, готуємо кошторис погодженого обсягу. Якщо даних поки недостатньо, скажемо, чого саме бракує для розрахунку.' },
 ];
 
 // One block for «з чим прийти» and «що буде далі»: it replaces the process teaser, the estimate brief and the
 // «Що у вас уже є» axis. The old ids stay as anchors on the two columns.
 export function HomeFirstConversation() {
-  const docsPoint = entryPoints().find((point) => point.startNote);
-  const lowerFirst = (text: string) => text.charAt(0).toLocaleLowerCase('uk') + text.slice(1);
   return (
     <section className="first-conversation section" id="first-conversation">
       <div className="shell page-two-col align-start">
         <div className="copy-column first-conversation-prepare" id="estimate-brief">
           <p className="eyebrow"><span /> Перша розмова</p>
           <h2>Що підготувати до першої розмови</h2>
-          <p>Нічого не обов’язково. Достатньо розповісти, для чого потрібен об’єкт, — решту уточнимо разом.</p>
-          <EntryPointsNote />
-          <p className="prep-intro">Якщо вже відомо — скажіть, це допоможе розмові. Якщо ні — це нормально:</p>
+          <p><strong>Нічого не обов’язково.</strong> Можете звернутися з ідеєю майбутнього об’єкта або вже з готовим проєктом. Достатньо коротко розповісти, що потрібно побудувати чи які роботи виконати.</p>
+          <p className="prep-intro">Якщо вже маєте матеріали, вони допоможуть розмові:</p>
           <ul className="prep-list">
-            {prepHints.map(({ title, text, icon: Icon }) => (
-              <li key={title}>
+            {prepHints.map(({ text, icon: Icon }) => (
+              <li key={text}>
                 <Icon className="prep-icon" aria-hidden="true" />
-                <div>
-                  <h3>{title}</h3>
-                  <p>{text}</p>
-                </div>
+                <p>{text}</p>
               </li>
             ))}
           </ul>
-          <p className="first-conversation-call">
-            Не знаєте, з чого почати? Зателефонуйте — розберемося разом.{' '}
-            <a className="contact-bridge-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
-              <Phone aria-hidden="true" />
-              <span>{company.phone.display}</span>
-            </a>
-          </p>
+          <p className="first-conversation-call">Не потрібно збирати все це перед зверненням. Уточнимо, що необхідно саме для вашої задачі.</p>
         </div>
         <div className="first-conversation-next" id="how-we-work">
           <h3>Що буде після звернення</h3>
-          <p className="next-lead">{statements.firstContact}</p>
           <dl className="next-list">
             {nextSteps.map(({ title, text }) => (
               <div key={title}>
@@ -189,8 +136,11 @@ export function HomeFirstConversation() {
               </div>
             ))}
           </dl>
-          {docsPoint?.startNote && <p className="next-note">Якщо вже є {lowerFirst(docsPoint.label)}, {lowerFirst(docsPoint.startNote)}</p>}
-          <a className="section-link" href={siteRoutes.process}>Модель роботи: формати, етапи, відповідальність, документи <span aria-hidden="true">↗</span></a>
+          <p className="next-note"><strong>Почнемо з розмови.</strong> Розкажіть коротко про завдання — допоможемо визначити наступний крок.</p>
+          <div className="contact-bridge-actions">
+            <a className="contact-bridge-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}><Phone aria-hidden="true" /> <span>{company.phone.display}</span></a>
+            <a className="section-link" href={siteRoutes.contact}>Або залишити запит <span aria-hidden="true">↗</span></a>
+          </div>
         </div>
       </div>
     </section>

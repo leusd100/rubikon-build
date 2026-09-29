@@ -152,7 +152,7 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
       className="hc-preview-svg"
       viewBox={viewBox}
       role="img"
-      aria-label={`Схематичний ескіз ангара: ${dimensions.widthM} на ${dimensions.lengthM} метрів, висота стін ${dimensions.eaveHeightM} м, двосхила покрівля, висота в коньку приблизно ${formatMetres(ridgeHeightM)} м`}
+      aria-label={`Схематичний ескіз ангара: ${dimensions.widthM} на ${dimensions.lengthM} метрів, висота стін ${dimensions.eaveHeightM} м, двосхила покрівля, висота в конику приблизно ${formatMetres(ridgeHeightM)} м`}
     >
       <defs>
         <pattern id="hc-pattern-insulated" width="10" height="16" patternUnits="userSpaceOnUse">

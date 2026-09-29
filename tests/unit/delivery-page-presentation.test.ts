@@ -61,7 +61,7 @@ describe('delivery page: formats and stages', () => {
     expect(stage('engineering')?.client.find((row) => row.formats.some((format) => format.label === 'Окремий підряд'))?.text).toBe(
       'Надати наявну проєктну документацію або, за потреби, залучити профільного проєктувальника; погодити вихідні вимоги до нашого пакета робіт.',
     );
-    expect(stage('scope-budget')?.what).toBe('Визначаємо склад і межі пакетів робіт, готуємо кошторис. Бюджет і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
+    expect(stage('scope-budget')?.what).toBe('Визначаємо склад погоджених робіт і готуємо кошторис. Вартість і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
     expect(stage('construction')?.what).toMatch(/Масштабуємо ресурси.*спеціалізовані роботи.*профільні виконавці/);
   });
 
@@ -208,7 +208,8 @@ describe('delivery page: documents, budget, inputs, FAQ', () => {
     const { statements, changePolicy } = deliveryModel;
 
     expect(Object.keys(faq)).toHaveLength(6);
-    expect(faq['Чи обов’язково мати готовий проєкт?']).toContain(deliveryModel.entryStates[3].startNote);
+    expect(faq['Чи обов’язково мати готовий проєкт?']).toContain('Готовий проєкт для першого звернення не потрібен');
+    expect(faq['Чи обов’язково мати готовий проєкт?']).toContain('проєктних даних достатньо');
     expect(faq['Чи можна замовити лише один пакет робіт?']).toContain(formatById('work-package').summary);
     expect(faq['Хто залучає проєктувальника?']).toBe(statements.design);
     expect(faq['Чи працюєте ви із субпідрядниками?']).toBe(`Так. ${statements.team} ${statements.principle}`);

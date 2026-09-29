@@ -5,7 +5,6 @@ import { DirectionFaq } from '../components/DirectionDetail';
 import { company } from '../data/company';
 import { deliveryModel } from '../data/deliveryModel';
 import { siteRoutes } from '../data/navigation';
-import { startStage } from '../lib/deliveryModel';
 import {
   basisLegend,
   budgetGroups,
@@ -17,9 +16,7 @@ import {
   formatDetails,
   formatTokens,
   responsibilityComparison,
-  stageAnchor,
   stageCards,
-  startInputs,
   type BasisBadge,
   type CapabilityLayer,
   type FormatToken,
@@ -214,7 +211,7 @@ export default function DeliveryModelPage() {
             className="page-heading"
             eyebrow="Формати участі"
             title="Три моделі відповідальності"
-            supporting="Формат визначає, хто координує об’єкт, хто відповідає за стики між пакетами робіт і де закінчуються межі RUBIKON."
+            supporting="Можемо виконати погоджений комплекс будівельних робіт або окрему частину об’єкта. Перед початком узгоджуємо склад робіт, порядок взаємодії з іншими виконавцями та відповідальність за результат."
           />
           <div className="delivery-format-grid">
             {formatDetails().map((format) => (
@@ -226,7 +223,7 @@ export default function DeliveryModelPage() {
                 <p className="delivery-format-summary">{format.text}</p>
                 <dl>
                   <div><dt>Координує об’єкт</dt><dd>{format.coordination}</dd></div>
-                  <div><dt>Стики</dt><dd>{format.interfaces}</dd></div>
+                  <div><dt>Взаємодія з іншими роботами</dt><dd>{format.interfaces}</dd></div>
                 </dl>
                 <a className="delivery-more" href="#vidpovidalnist">Хто за що відповідає <span aria-hidden="true">↓</span></a>
               </article>
@@ -241,23 +238,15 @@ export default function DeliveryModelPage() {
             className="page-heading"
             eyebrow="Точка входу"
             title="Що у вас уже є"
-            supporting="Не обов’язково починати з нуля — маршрут залежить від того, що вже підготовлено. Це не формат участі, а етап, з якого почнемо."
+            supporting="Готовий проєкт для першого звернення не потрібен. Якщо документація вже є, почнемо з її перегляду. Якщо є лише задум або попередні параметри, уточнимо завдання та підкажемо, які дані має підготувати замовник із проєктувальником."
           />
           <ol className="delivery-entry-list">
-            {entryPoints().map((entry) => {
-              const stage = startStage(entry.id);
-              return (
+            {entryPoints().map((entry) => (
                 <li key={entry.id}>
                   <b>{entry.label}</b>
-                  <a href={`#${stageAnchor(stage.id)}`}>
-                    <span aria-hidden="true">→ </span>
-                    <span className="visually-hidden">Старт з етапу </span>
-                    {stage.number} {stage.title}
-                  </a>
                   {entry.startNote && <p>{entry.startNote}</p>}
                 </li>
-              );
-            })}
+            ))}
           </ol>
         </div>
       </section>
@@ -286,7 +275,7 @@ export default function DeliveryModelPage() {
                   <p className="delivery-stage-result"><b><RoleIcon role="result" />Результат:</b> {stage.result}</p>
                   {(stage.designThread || stage.ledByGeneralContractorIn.length > 0) && (
                     <ul className="delivery-tags">
-                      {stage.designThread && <li>Нитка проєктування</li>}
+                      {stage.designThread && <li>Потрібна проєктна документація</li>}
                       {stage.ledByGeneralContractorIn.map((label) => <li key={label}>{label}: етап веде генпідрядник</li>)}
                     </ul>
                   )}
@@ -324,7 +313,7 @@ export default function DeliveryModelPage() {
         <div className="shell delivery-split">
           <div>
             <p className="eyebrow"><span /> Проєктування</p>
-            <h2>Нитка, а не одна точка</h2>
+            <h2>Як працюємо з проєктом</h2>
             <p className="delivery-lead">{thread.statement}</p>
           </div>
           <div className="delivery-thread-body">
@@ -345,7 +334,7 @@ export default function DeliveryModelPage() {
 
       <section className="page-section page-section-dark delivery-who" id="khto-vykonuie">
         <div className="shell">
-          <SectionHeader className="page-heading" eyebrow="Хто виконує" title="Власне ядро, гнучкі пакети й партнери" supporting={statements.team} inverse />
+          <SectionHeader className="page-heading" eyebrow="Хто виконує" title="Які роботи виконуємо" supporting="Бетон, типові фундаменти, монтаж каркаса, панелей і покрівлі виконує наша команда. Виготовлення металоконструкцій організовуємо переважно на майданчику, а для великих обсягів — через перевірене партнерське виробництво. Для спеціалізованих етапів промислових підлог залучаємо профільних виконавців залежно від проєкту." inverse />
           {/* Nested layers, read inside out: the core within the flexible packages, both within the partners. */}
           <div className="delivery-layers">
             <div className="delivery-layers-middle">
@@ -437,7 +426,7 @@ export default function DeliveryModelPage() {
             </div>
           </div>
           <details className="delivery-notes">
-            <summary>Примітки до матриці · {responsibility.notes.length}</summary>
+            <summary>Уточнення щодо відповідальності · {responsibility.notes.length}</summary>
             <ol>
               {responsibility.notes.map((note) => (
                 <li key={note.number}><span className="delivery-note-number">{note.number}</span><p><b>{note.activity}.</b> {note.note}</p></li>
@@ -458,10 +447,6 @@ export default function DeliveryModelPage() {
             <ol className="delivery-change-steps">
               {changePolicy.steps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, '0')}</span><p>{step}</p></li>)}
             </ol>
-            <div className="delivery-not-promised">
-              <h3>Чого не обіцяємо</h3>
-              <ul>{changePolicy.notPromised.map((item) => <li key={item}>{item}</li>)}</ul>
-            </div>
           </div>
         </div>
       </section>
@@ -512,7 +497,7 @@ export default function DeliveryModelPage() {
             eyebrow="Бюджет і строки"
             icon={<RoleIcon role="schedule" />}
             title="Від чого залежать бюджет і строки"
-            supporting="Вартість і строки визначаються не лише площею або тоннажем. Цін і усереднених строків не називаємо: їх фіксують кошторис і графік на етапі «Склад робіт і бюджет»."
+            supporting="Вартість і строки залежать від проєкту, умов майданчика та погодженого обсягу. Предметно обговорюємо їх після вивчення вихідних даних."
             inverse
           />
           <div className="delivery-budget-rows">
@@ -539,8 +524,7 @@ export default function DeliveryModelPage() {
       <InquirySection
         eyebrow="Почнемо з розмови"
         title="Обговоримо вашу задачу"
-        text={statements.firstContact}
-        checklist={{ title: 'Що допоможе на першій розмові', items: startInputs() }}
+        text="Для початку достатньо коротко описати об’єкт або потрібні роботи та залишити контакт. Якщо вже маєте креслення, орієнтовні розміри чи інформацію про майданчик — згадайте про це. Решту уточнимо в розмові."
       />
     </main>
   );

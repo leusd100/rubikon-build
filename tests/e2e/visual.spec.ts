@@ -94,8 +94,8 @@ for (const viewport of viewports) {
       );
     });
 
-    // «Хто що виконує»: the capability ledger and, once one exists, the proof slot, above the three formats.
-    test('homepage formats', async ({ page }) => {
+    // The work overview and invitation, followed by an approved proof case only when one exists.
+    test('homepage capability', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(page.locator('#services > .shell'), `homepage-formats-${viewport.name}.png`);
     });

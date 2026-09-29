@@ -31,6 +31,7 @@ const BASES: DocumentBasis[] = ['typical', 'contract', 'project', 'law'];
 // Persisted format/entry/stage ids remain stable across the P01 service-boundary update.
 const START_NOTES_BY_VERSION: Record<string, readonly (readonly [EntryStateId, string])[]> = {
   '2.0.0': [['design-docs', 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.']],
+  '2.0.1': [['design-docs', 'Почнемо з перевірки документації: чи її достатньо, щоб скласти кошторис.']],
 };
 
 // Claims the public site must not make until they are true, each with a claim its pattern must catch.
@@ -213,7 +214,7 @@ describe('delivery model: responsibility', () => {
 
 describe('delivery model: public wording', () => {
   it('versions the updated service taxonomy and preserves the contact role', () => {
-    expect(deliveryModel.version).toBe('2.0.0');
+    expect(deliveryModel.version).toBe('2.0.1');
     expect(deliveryModel.contactRoles.constructionLead.cta).toBe('Обговорити з керівником будівельного напряму');
   });
 

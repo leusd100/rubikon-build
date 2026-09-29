@@ -83,7 +83,7 @@ test.describe('project inquiry form', () => {
     const form = page.locator('form.inquiry-form');
     await form.getByText('Додати параметри об’єкта', { exact: true }).click();
     // A <select> inside its <label> takes the chosen option into its accessible name, so match the start.
-    const cooperation = form.getByLabel(/^Формат співпраці/);
+    const cooperation = form.getByLabel(/^Який обсяг робіт вас цікавить\?/);
     await expect(cooperation.locator('option')).toHaveText(['Ще не визначено', ...deliveryModel.formats.map((format) => format.label)]);
     await cooperation.selectOption('Окремий підряд');
     await form.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
@@ -210,7 +210,7 @@ test.describe('advertising-gated attribution on submit', () => {
 
 // ── Turnstile + «Ще не визначено» (Sprint 2) ──────────────────────────────────────────────────────
 
-const VERIFICATION_FAILED = 'Не вдалося підтвердити надсилання запиту';
+const VERIFICATION_FAILED = 'Не вдалося надіслати запит. Спробуйте ще раз або зателефонуйте нам: +38 068 261 42 64';
 const SAVE_FAILED = 'Не вдалося підтвердити збереження запиту';
 
 function leadEvents(page: Page, name: string) {

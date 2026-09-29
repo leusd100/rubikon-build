@@ -52,8 +52,7 @@ ANGARY_CROPS = [
 ]
 ANGARY_MASTER_SIZE = (1200, 840)
 
-# Paths are relative to public/ (not to public/media/) so sources outside media/ — the two
-# team portraits in public/images/ — can use the same pipeline. Output names are still derived
+# Paths are relative to public/ (not to public/media/). Output names are still derived
 # from the basename alone, so every pre-existing variant keeps its exact filename and hash.
 FILES = [
     "media/concepts/direction-hangars-v2.jpg",
@@ -72,8 +71,7 @@ FILES = [
     # Added in the final hardening pass: these three were still going through next/image, whose
     # resizing is a no-op in this deployment, so every viewport got the full-resolution original.
     "media/about-industrial-concept.webp",
-    "images/founder.webp",
-    "images/next-generation.webp",
+    "photos/serhii-prior-hangar.jpeg",
     # `/angary` editorial comparisons: the two foundation detail masters above plus
     # the two already-finalized material cutaways. Their displayed width is ~180–360 CSS px;
     # 480/768/1200 cover DPR 1/2 without tying quality to a byte target.

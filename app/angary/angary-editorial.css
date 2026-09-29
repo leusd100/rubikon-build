@@ -99,13 +99,11 @@
 .angary-people-copy h2 { max-width: 680px; margin: 0; font: 400 clamp(48px, 5.8vw, 84px)/.98 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.045em; text-wrap: balance; }
 .angary-people-copy p { max-width: 550px; margin: 34px 0 0; color: var(--text-secondary); font-size: 15px; line-height: 1.75; }
 .angary-people-copy a { display: inline-flex; gap: 18px; margin-top: 34px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); color: var(--ink); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .05em; text-transform: uppercase; }
-.angary-people-portraits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-.angary-people-portraits figure { min-width: 0; margin: 0; }
-.angary-people-portraits figure > span { position: relative; display: block; aspect-ratio: 1; overflow: hidden; background: #d5d2c9; }
-.angary-people-portraits img { object-fit: cover; object-position: center top; }
-.angary-people-portraits figcaption { padding-top: 18px; }
-.angary-people-portraits strong { font: 600 18px/1 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.angary-people-portraits p { margin: 10px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 1.55; }
+.angary-people-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-self: stretch; border-top: 1px solid var(--border-strong); }
+.angary-people-roles > div { min-width: 0; padding: 28px 22px 30px 0; border-bottom: 1px solid var(--border-strong); }
+.angary-people-roles > div + div { padding-left: 22px; border-left: 1px solid var(--border-strong); }
+.angary-people-roles strong { font: 600 22px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
+.angary-people-roles p { max-width: 30ch; margin: 12px 0 0; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
 
 /* ---------- FAQ + related directions ---------- */
 .angary-page .faq-grid { align-items: start; }
@@ -224,10 +222,9 @@
   .angary-people-layout { grid-template-columns: 1fr; gap: 44px; }
   .angary-people-copy p { margin-top: 24px; font-size: 14px; }
   .angary-people-copy a { margin-top: 26px; }
-  .angary-people-portraits { gap: 10px; }
-  .angary-people-portraits figcaption { padding-top: 13px; }
-  .angary-people-portraits strong { font-size: 15px; }
-  .angary-people-portraits p { font-size: 11px; }
+  .angary-people-roles { grid-template-columns: 1fr; }
+  .angary-people-roles > div,
+  .angary-people-roles > div + div { padding: 22px 0 24px; border-left: 0; }
   .angary-page .faq-heading { position: static; margin-bottom: 36px; }
   .angary-page .faq-list summary { padding: 22px 0; }
   .angary-page .faq-list details > p { margin-right: 28px; font-size: 13px; }

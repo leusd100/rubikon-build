@@ -76,12 +76,12 @@ describe('delivery model presentation: frozen statements', () => {
     expect(inquirySuccessMessage()).toBe(`Дякуємо! Запит надіслано. ${deliveryModel.statements.firstContact}`);
   });
 
-  it('answers «під ключ» in the model’s formats and ends on the boundary statement', () => {
+  it('answers «під ключ» with the agreed scope and keeps separately ordered work outside it', () => {
     const answer = turnkeyAnswer();
 
-    for (const label of LABELS) expect(answer).toContain(`«${label}»`);
-    expect(answer).toContain(deliveryModel.formats[0].summary);
-    expect(answer.endsWith(deliveryModel.statements.boundary)).toBe(true);
+    expect(answer).toContain(`«${LABELS[0]}»`);
+    expect(answer).toContain('Проєкт та дозволи замовник забезпечує окремо');
+    expect(answer).toContain('Роботи, які замовник замовляє окремо, залишаються поза погодженим обсягом RUBIKON.');
     expect(answer).not.toMatch(/під ключ|гаранті|штат|генеральн/i);
   });
 

@@ -260,12 +260,12 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         ))}
         <NumericField
           inputId="hc-dimension-ridge"
-          label="Висота в коньку"
+          label="Висота в конику"
           value={ridgeValue}
           min={ridgeRange.min}
           max={ridgeRange.max}
           step={RIDGE_HEIGHT_STEP_M}
-          hint={`Від ${formatMetres(ridgeRange.min)} до ${formatMetres(ridgeRange.max)} м для цієї ширини — межі рухаються разом із шириною та висотою стін.`}
+          hint={`Для обраної ширини доступний діапазон ${formatMetres(ridgeRange.min)}–${formatMetres(ridgeRange.max)} м. Він змінюється разом із шириною ангара та висотою стін.`}
           clamp={(v) => clampRidgeHeightM(v, state.dimensions.width, state.dimensions.height)}
           onCommit={setRidge}
         />
@@ -371,8 +371,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           </p>
         )}
         <p className="hc-field-note">
-          Сайт не виконує розрахунок фундаменту. Показані варіанти — це схематичне уявлення для
-          попереднього брифу, а не проєктне рішення.
+          Тип фундаменту визначає проєктувальник за даними майданчика й навантаженнями. Тут можна вказати попереднє побажання.
         </p>
       </section>
 
@@ -389,7 +388,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             );
           })}
         </div>
-        <p className="hc-field-note">Це перелік бажаного обсягу заявки, а не твердження про незалежність кожного елемента.</p>
+        <p className="hc-field-note">Позначте, які роботи вас цікавлять. Їхній склад уточнимо після перегляду проєкту.</p>
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-gates-heading">

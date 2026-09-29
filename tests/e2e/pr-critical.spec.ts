@@ -143,17 +143,17 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
   }
 });
 
-test('homepage server HTML carries the H1, three formats, the readiness levels and the cooperation options', async ({ page }) => {
+test('homepage server HTML carries the H1, prior-work proof, first conversation and cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
-    formats: '#services .format-grid h3',
-    entryPoints: '#first-conversation .entry-axis li',
+    proof: '#services .home-proof-caption',
+    conversationSteps: '#first-conversation .next-list dt',
     cooperation: '.inquiry-details select option',
   });
 
   expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
-  expect(text.formats).toEqual(FORMAT_LABELS);
-  expect(text.entryPoints).toEqual(deliveryModel.entryStates.map((state) => state.label));
+  expect(text.proof).toEqual(['Вид на фасад і бічний корпус ангара']);
+  expect(text.conversationSteps).toEqual(['Уточнюємо задачу', 'Дивимося, що вже є', 'Узгоджуємо склад робіт', 'Готуємо кошторис']);
   expect(text.cooperation).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
 });
 
@@ -169,16 +169,15 @@ test('/napryamky server HTML takes its formats and entry points from the model',
   expect(text.startNotes).toEqual([deliveryModel.entryStates[3].startNote]);
 });
 
-test('homepage shows exactly three format cards', async ({ page }) => {
+test('homepage presents experience and an invitation, with detailed formats on the process page', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
-  const cards = page.locator('#services .format-grid article');
-
-  await expect(cards).toHaveCount(3);
-  await expect(cards.locator('h3')).toHaveText(FORMAT_LABELS);
+  await expect(page.locator('#services .home-proof')).toHaveCount(1);
+  await expect(page.locator('#services .format-grid')).toHaveCount(0);
+  await expect(page.locator('#services a[href="/yak-pratsyuiemo#khto-vykonuie"]')).toHaveCount(1);
 });
 
 for (const width of [360, 375, 390]) {
-  test(`homepage H1 and format cards fit a ${width}px phone without breaking words`, async ({ page }) => {
+  test(`homepage H1 and work overview fit a ${width}px phone without breaking words`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/', { waitUntil: 'load' });
 
@@ -198,7 +197,7 @@ for (const width of [360, 375, 390]) {
     });
     expect(heading.widest).toBeLessThanOrEqual(heading.available);
     const overflowing = await page
-      .locator('#services .format-grid article, #services .capability-ledger > div, #first-conversation .entry-axis, #first-conversation .next-list > div')
+      .locator('#services .home-proof-body, #first-conversation .prep-list li, #first-conversation .next-list > div')
       .evaluateAll((elements) => elements.filter((element) => element.scrollWidth > element.clientWidth + 1).length);
     expect(overflowing).toBe(0);
   });
@@ -218,18 +217,16 @@ test('homepage sections come in the Slice 02 order, each message with one home',
   await expect(page.locator('.promise, .process, .process-teaser, section.estimate-brief')).toHaveCount(0);
 });
 
-test('homepage says what the team does itself without claiming everything is in-house or a tenure it cannot prove', async ({ page }) => {
+test('homepage invites a project conversation while showing real team experience without overclaiming', async ({ page }) => {
   const text = await serverText(page, '/', {
     main: 'main',
     lead: '.hero-lead',
-    columns: '#services .capability-ledger h3',
-    depends: '#services .capability-depends li',
+    proof: '#services .home-proof',
   });
   const main = text.main.join(' ');
 
-  expect(text.columns).toEqual(['Виконує наша команда', 'Залежно від проєкту', 'Профільні виконавці']);
-  // P01: fabrication on site where suitable, partner production for large volumes.
-  expect(text.depends.join(' ')).toMatch(/на майданчику.*для великих обсягів.*партнерське виробництво/);
+  expect(text.proof.join(' ')).toMatch(/попереднього досвіду Сергія.*Каркас.*Стінові панелі.*Покрівля/);
+  expect(text.proof.join(' ')).not.toContain('Виконала наша команда');
   expect(text.lead.join(' ')).toMatch(/Спеціалізовані роботи координуємо з профільними виконавцями в погодженому обсязі/);
   for (const overclaim of [/усе\s+власними\s+силами/i, /повний\s+цикл/i, /усе\s+самостійно/i, /усі\s+спеціальності/i, /власними\s+силами\s+виконуємо\s+все/i]) {
     expect(main, String(overclaim)).not.toMatch(overclaim);
@@ -240,34 +237,37 @@ test('homepage says what the team does itself without claiming everything is in-
   expect(main.match(/родинн/gi) ?? []).toHaveLength(1);
 });
 
-test('homepage «Що буде після звернення» quotes the Delivery Model and promises no time, price or visit', async ({ page }) => {
+test('homepage «Перша розмова» explains the four steps without promising an estimate before project data', async ({ page }) => {
   const text = await serverText(page, '/', { next: '#how-we-work', prepare: '#estimate-brief', services: '#services' });
   const next = text.next.join(' ');
-  const request = deliveryModel.stages.find((stage) => stage.id === 'request');
   const budget = deliveryModel.stages.find((stage) => stage.id === 'scope-budget');
 
-  expect(next).toContain(deliveryModel.statements.firstContact);
-  expect(next).toContain(request?.rubikon.default);
-  expect(budget?.what).toContain('Бюджет і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
-  expect(next).toMatch(/проєктних даних.*попередній кошторис.*Даних бракує.*Є бюджет.*реалістичний/);
-  expect(text.services.join(' ')).toContain(deliveryModel.statements.responsibility);
+  expect(next).toContain('Уточнюємо задачу');
+  expect(next).toContain('Дивимося, що вже є');
+  expect(next).toContain('Узгоджуємо склад робіт');
+  expect(next).toContain('Готуємо кошторис');
+  expect(budget?.what).toContain('Вартість і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
+  expect(next).toMatch(/Коли склад робіт визначено й проєктних даних достатньо, готуємо кошторис погодженого обсягу/);
+  expect(next).toContain('Якщо даних поки недостатньо');
+  expect(text.services.join(' ')).toContain('Для вашого об’єкта обговоримо задачу');
   for (const promise of [/\d+\s?(хв|хвилин|год|днів|дні|доб)/i, /грн|₴|\$|€/, /безкоштовн/i, /гаранті/i, /протягом/i]) {
     expect(`${next} ${text.prepare.join(' ')}`, String(promise)).not.toMatch(promise);
   }
 });
 
-test('homepage keeps illustrations labelled and out of the trust and proof zones; the proof slot is empty', async ({ page }) => {
+test('homepage separates labelled illustrations from the approved camera photo', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   const cards = page.locator('#directions .direction-card');
   await expect(cards).toHaveCount(5);
   for (const card of await cards.all()) await expect(card.locator('.direction-provenance')).toHaveText('Ілюстрація');
   await expect(page.locator('#directions .section-header-support')).toContainText('ілюстрації, а не фото виконаних об’єктів');
 
-  // Concept images belong to the direction cards alone: none in the capability, people or contact blocks.
+  // Concept images belong to the direction cards alone: none in the proof, people or contact blocks.
   expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card')).length)).toBe(0);
-  await expect(page.locator('#services img, #first-conversation img')).toHaveCount(0);
-  // Nothing is approved as proof yet, so the slot draws nothing — no empty frame, no placeholder.
-  await expect(page.locator('.home-proof')).toHaveCount(0);
+  await expect(page.locator('#services img')).toHaveCount(1);
+  await expect(page.locator('#services img')).toHaveAttribute('src', '/photos/serhii-prior-hangar.jpeg');
+  await expect(page.locator('#first-conversation img')).toHaveCount(0);
+  await expect(page.locator('.home-proof')).toContainText('до створення RUBIKON BUILD');
 });
 
 test('homepage places its calls where intent rises: hero, after capability, before the form, in the form', async ({ page }) => {
@@ -340,7 +340,7 @@ test('/yak-pratsyuiemo server HTML explains the whole model before hydration', a
   expect(text.stages).toEqual(deliveryModel.stages.map((stage) => `${stage.number} ${stage.title}`));
   expect(text.stageDetails).toHaveLength(8);
   expect(text.layers).toEqual(['Власне ядро', 'Гнучкі пакети', 'Профільні партнери']);
-  for (const statement of Object.values(deliveryModel.statements)) expect(main).toContain(statement);
+  for (const statement of [deliveryModel.statements.design, deliveryModel.statements.responsibility, deliveryModel.statements.boundary]) expect(main).toContain(statement);
   for (const pattern of FORBIDDEN_CLAIMS) expect(main, String(pattern)).not.toMatch(pattern);
 });
 
@@ -360,17 +360,17 @@ test('/yak-pratsyuiemo FAQPage data is the visible FAQ, on a WebPage and never a
   expect(data.map((item) => item['@type'])).not.toContain('HowTo');
 });
 
-test('the navigation, footer and homepage teaser lead to /yak-pratsyuiemo', async ({ page }) => {
+test('navigation and footer lead to /yak-pratsyuiemo while the first conversation leads to contact', async ({ page }) => {
   const home = await serverText(page, '/', {
     header: `header nav a[href="${DELIVERY_PAGE}"]`,
     footer: `footer a[href="${DELIVERY_PAGE}"]`,
-    teaser: `#how-we-work a[href="${DELIVERY_PAGE}"]`,
+    conversationContact: '#how-we-work a[href="#inquiry"]',
     oldAnchor: 'a[href="/#how-we-work"]',
   });
 
   expect(home.header).toHaveLength(2);
   expect(home.footer).toHaveLength(1);
-  expect(home.teaser).toHaveLength(1);
+  expect(home.conversationContact).toHaveLength(1);
   expect(home.oldAnchor).toHaveLength(0);
 });
 
@@ -386,8 +386,7 @@ test('/yak-pratsyuiemo keeps every model fact in the server HTML, however the pa
     phoneDocuments: '#dokumenty .delivery-docs-mobile .delivery-doc-label',
     factors: '#biudzhet .delivery-chips li',
     budget: '#biudzhet',
-    inputs: '#inquiry .contact-checklist li',
-    checklistTitle: '#inquiry .contact-checklist h3',
+    contactIntro: '#inquiry .contact-copy > p:last-of-type',
     contents: '.delivery-contents a',
     legend: '.delivery-token-legend a',
   });
@@ -407,8 +406,7 @@ test('/yak-pratsyuiemo keeps every model fact in the server HTML, however the pa
   expect(new Set(documents).size).toBe(19);
   expect([...text.factors].sort()).toEqual(deliveryModel.budgetFactors.map((factor) => factor.label).sort());
   expect(text.factors).toHaveLength(13);
-  expect(text.inputs).toEqual(deliveryModel.inputs.map((input) => input.label));
-  expect(text.checklistTitle).toEqual(['Що допоможе на першій розмові']);
+  expect(text.contactIntro.join(' ')).toContain('Для початку достатньо коротко описати об’єкт або потрібні роботи');
   expect(text.budget.join(' ')).not.toContain('Що потрібно на старті');
   expect(text.contents.filter((label) => /\d/.test(label))).toEqual([]);
   expect(text.legend).toEqual(FORMAT_LABELS.map((label, index) => `0${index + 1} ${label}`));
@@ -471,7 +469,7 @@ test.describe('/yak-pratsyuiemo without JavaScript', () => {
     await expect(notes.locator('li')).toHaveCount(deliveryModel.responsibility.filter((row) => 'note' in row).length);
     await expect(notes.locator('li').first()).toBeVisible();
     await expect(page.locator('#dokumenty .delivery-docs-desktop .delivery-doc-label')).toHaveCount(19);
-    await expect(page.locator('#inquiry .contact-checklist li')).toHaveCount(11);
+    await expect(page.locator('#inquiry .contact-copy')).toContainText('Для початку достатньо коротко описати об’єкт або потрібні роботи');
   });
 
   test('folds responsibility and documents into one-at-a-time panels on a phone', async ({ page }) => {
