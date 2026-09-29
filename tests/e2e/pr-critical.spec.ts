@@ -143,16 +143,16 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
   }
 });
 
-test('homepage server HTML carries the H1, three formats, first conversation and cooperation options', async ({ page }) => {
+test('homepage server HTML carries the H1, work overview, first conversation and cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
-    formats: '#services .format-grid h3',
+    overview: '#services .capability-overview h3',
     conversationSteps: '#first-conversation .next-list dt',
     cooperation: '.inquiry-details select option',
   });
 
   expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
-  expect(text.formats).toEqual(FORMAT_LABELS);
+  expect(text.overview).toEqual(['Від фундаменту до покрівлі', 'Розкажіть про свій об’єкт']);
   expect(text.conversationSteps).toEqual(['Уточнюємо задачу', 'Дивимося, що вже є', 'Узгоджуємо склад робіт', 'Готуємо кошторис']);
   expect(text.cooperation).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
 });
@@ -169,16 +169,15 @@ test('/napryamky server HTML takes its formats and entry points from the model',
   expect(text.startNotes).toEqual([deliveryModel.entryStates[3].startNote]);
 });
 
-test('homepage shows exactly three format cards', async ({ page }) => {
+test('homepage presents experience and an invitation, with detailed formats on the process page', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
-  const cards = page.locator('#services .format-grid article');
-
-  await expect(cards).toHaveCount(3);
-  await expect(cards.locator('h3')).toHaveText(FORMAT_LABELS);
+  await expect(page.locator('#services .capability-overview > div')).toHaveCount(2);
+  await expect(page.locator('#services .format-grid')).toHaveCount(0);
+  await expect(page.locator('#services a[href="/yak-pratsyuiemo#khto-vykonuie"]')).toHaveCount(1);
 });
 
 for (const width of [360, 375, 390]) {
-  test(`homepage H1 and format cards fit a ${width}px phone without breaking words`, async ({ page }) => {
+  test(`homepage H1 and work overview fit a ${width}px phone without breaking words`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/', { waitUntil: 'load' });
 
@@ -198,7 +197,7 @@ for (const width of [360, 375, 390]) {
     });
     expect(heading.widest).toBeLessThanOrEqual(heading.available);
     const overflowing = await page
-      .locator('#services .format-grid article, #services .capability-ledger > div, #first-conversation .prep-list li, #first-conversation .next-list > div')
+      .locator('#services .capability-overview > div, #first-conversation .prep-list li, #first-conversation .next-list > div')
       .evaluateAll((elements) => elements.filter((element) => element.scrollWidth > element.clientWidth + 1).length);
     expect(overflowing).toBe(0);
   });
@@ -218,18 +217,18 @@ test('homepage sections come in the Slice 02 order, each message with one home',
   await expect(page.locator('.promise, .process, .process-teaser, section.estimate-brief')).toHaveCount(0);
 });
 
-test('homepage says what the team does itself without claiming everything is in-house or a tenure it cannot prove', async ({ page }) => {
+test('homepage invites a project conversation while showing real team experience without overclaiming', async ({ page }) => {
   const text = await serverText(page, '/', {
     main: 'main',
     lead: '.hero-lead',
-    columns: '#services .capability-ledger h3',
-    depends: '#services .capability-depends li',
+    columns: '#services .capability-overview h3',
+    overview: '#services .capability-overview',
   });
   const main = text.main.join(' ');
 
-  expect(text.columns).toEqual(['Виконує наша команда', 'Залежно від проєкту', 'Профільні виконавці']);
-  // P01: fabrication on site where suitable, partner production for large volumes.
-  expect(text.depends.join(' ')).toMatch(/на майданчику.*для великих обсягів.*партнерське виробництво/);
+  expect(text.columns).toEqual(['Від фундаменту до покрівлі', 'Розкажіть про свій об’єкт']);
+  expect(text.overview.join(' ')).toMatch(/типові фундаменти.*монтуємо металоконструкції.*покрівлі/);
+  expect(text.overview.join(' ')).toContain('який обсяг можемо взяти на себе');
   expect(text.lead.join(' ')).toMatch(/Спеціалізовані роботи координуємо з профільними виконавцями в погодженому обсязі/);
   for (const overclaim of [/усе\s+власними\s+силами/i, /повний\s+цикл/i, /усе\s+самостійно/i, /усі\s+спеціальності/i, /власними\s+силами\s+виконуємо\s+все/i]) {
     expect(main, String(overclaim)).not.toMatch(overclaim);
@@ -252,7 +251,7 @@ test('homepage «Перша розмова» explains the four steps without pro
   expect(budget?.what).toContain('Вартість і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
   expect(next).toMatch(/Коли склад робіт визначено й проєктних даних достатньо, готуємо кошторис погодженого обсягу/);
   expect(next).toContain('Якщо даних поки недостатньо');
-  expect(text.services.join(' ')).toContain(deliveryModel.statements.responsibility);
+  expect(text.services.join(' ')).toContain('після розмови й перегляду матеріалів');
   for (const promise of [/\d+\s?(хв|хвилин|год|днів|дні|доб)/i, /грн|₴|\$|€/, /безкоштовн/i, /гаранті/i, /протягом/i]) {
     expect(`${next} ${text.prepare.join(' ')}`, String(promise)).not.toMatch(promise);
   }

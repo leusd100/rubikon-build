@@ -1,7 +1,6 @@
 import { CalendarClock, Factory, MapPin, Phone, Ruler } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { EngagementFormatCards } from './DirectionCards';
 import ResponsiveImage from './ResponsiveImage';
 import { GhostWord, SectionHeader } from './SiteChrome';
 import { company, companyContactLinks } from '../data/company';
@@ -12,30 +11,6 @@ import { siteRoutes } from '../data/navigation';
 // frozen Delivery Model is read from it (never retyped); the rest is HOME's own wording and adds no fact the
 // model or the owner has not stated. See 00_control/home-review-v0.1/HOME_SLICE_02_ARCHITECTURE.md.
 
-
-// Who does the work — the model's three layers, in HOME's own words. «Виготовлення» sits under «залежно від
-// проєкту» on purpose: site fabrication where suitable, partner production for large volumes (P01 rev 3).
-const capabilityColumns: readonly { id: string; title: string; items: readonly string[] }[] = [
-  {
-    id: 'own',
-    title: 'Виконує наша команда',
-    items: ['Бетонні роботи та типові фундаменти', 'Монтаж металоконструкцій', 'Монтаж стінових і покрівельних панелей', 'Покрівлі'],
-  },
-  {
-    id: 'depends',
-    title: 'Залежно від проєкту',
-    items: [
-      'Виготовлення металоконструкцій — на майданчику, де це доцільно; для великих обсягів — перевірене партнерське виробництво',
-      'Земляні роботи, огородження й ворота — склад і виконавців визначаємо під проєкт',
-      'Промислові підлоги — бетонна основа; спеціалізовані етапи погоджуємо з профільними виконавцями',
-    ],
-  },
-  {
-    id: 'partners',
-    title: 'Профільні виконавці',
-    items: ['Електрика', 'Вода, каналізація, опалення й вентиляція — у погодженому обсязі або на стороні замовника'],
-  },
-];
 
 /**
  * A calm contact line inside a section, at the point where the visitor's intent rises. Not a section and never
@@ -91,33 +66,34 @@ export function HomeProofSlot({ proof }: Readonly<{ proof: HomeProofCase | null 
   );
 }
 
-// «Що виконуємо самі, а що координуємо»: capability first, then — only if one exists — the proof, then the three
-// formats of participation. The formats used to be the whole block; they are now the second half of it.
+// HOME introduces the team's work and invites the visitor to describe their task. Detailed responsibility and
+// participation formats live on /yak-pratsyuiemo, where there is room to explain their P01 boundaries.
 export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null }>) {
   return (
     <section className="services section ghost-section" id="services">
       <GhostWord word="BUILD" />
       <div className="shell">
         <SectionHeader
-          eyebrow="Хто що виконує"
-          title="Що виконуємо самі, а що координуємо"
-          supporting="Комплексна реалізація можлива — її склад залежить від проєкту й договору."
+          eyebrow="Будівельні роботи"
+          title="Будівельні роботи під вашу задачу"
+          supporting="Кожен об’єкт має свої умови. Розкажіть, що плануєте, — після розмови й перегляду матеріалів визначимо, як RUBIKON може долучитися."
         />
-        <div className="capability-ledger">
-          {capabilityColumns.map((column) => (
-            <div className={`capability-${column.id}`} key={column.id}>
-              <h3>{column.title}</h3>
-              <ul>{column.items.map((item) => <li key={item}>{item}</li>)}</ul>
-            </div>
-          ))}
+        <div className="capability-overview">
+          <div>
+            <p className="capability-kicker">Досвід команди</p>
+            <h3>Від фундаменту до покрівлі</h3>
+            <p>Виконуємо бетонні роботи й типові фундаменти, монтуємо металоконструкції, стінові та покрівельні панелі, робимо покрівлі. Можемо обговорити будівництво об’єкта або окремий етап робіт.</p>
+          </div>
+          <div>
+            <p className="capability-kicker">Перший крок</p>
+            <h3>Розкажіть про свій об’єкт</h3>
+            <p>Не потрібно заздалегідь обирати формат чи розподіляти роботи між виконавцями. Обговоримо вашу задачу, те, що вже підготовлено, і бажаний результат. Тоді скажемо, який обсяг можемо взяти на себе та що потрібно для наступного кроку.</p>
+          </div>
         </div>
-        <p className="capability-boundary">Проєкт, дозволи, зовнішні підключення, вишукування та нагляд замовник забезпечує окремо з відповідними спеціалістами. Якщо проєктувальника ще немає, можемо порадити спеціаліста.</p>
         <HomeProofSlot proof={proof} />
-        <p className="capability-subtitle">Формат участі</p>
-        <EngagementFormatCards />
-        <a className="section-link" href={`${siteRoutes.process}#khto-vykonuie`}>Хто за що відповідає — докладно <span aria-hidden="true">↗</span></a>
+        <a className="section-link" href={`${siteRoutes.process}#khto-vykonuie`}>Як узгоджуємо склад робіт <span aria-hidden="true">↗</span></a>
         <ContactBridge>
-          Схожа задача? Розкажіть коротко — скажемо, чи вона в нашому профілі й у якому форматі ми можемо бути корисними.
+          Маєте задум або готовий проєкт? Розкажіть про нього — разом визначимо можливий обсяг нашої участі.
         </ContactBridge>
       </div>
     </section>

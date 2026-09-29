@@ -11,8 +11,8 @@ import { siteRoutes } from './data/navigation';
 import './palette-architectural-copper.css';
 
 // HOME reads as one argument for a warm, referred visitor:
-//   understands the task (hero, directions) → practical capability, in honest limits (who does what, formats, and — once
-//   one is approved — one real project) → people who take responsibility → what to bring and what happens next → contact.
+//   understands the task (hero, directions) → team experience and an invitation to discuss the work (plus one real
+//   project once approved) → people who take responsibility → what to bring and what happens next → contact.
 // The plan and the evidence limits are in 00_control/home-review-v0.1/HOME_SLICE_02_ARCHITECTURE.md.
 export default function Home() {
   return (
@@ -28,8 +28,8 @@ export default function Home() {
             Промислове будівництво — від окремих робіт до <em>комплексної реалізації</em> об’єкта
           </h1>
           <div className="hero-copy">
-            {/* Objects, our own core, and where coordination starts — nothing wider than the owner has confirmed. How the
-                work is split (whole object / one package / subcontract) is said once, in «Хто що виконує». */}
+            {/* Objects, our own core, and where coordination starts — nothing wider than the owner has confirmed.
+                Participation formats and responsibility details are explained on «Як працюємо». */}
             <p className="hero-lead">
               Будуємо промислові, складські й аграрні об’єкти. Основні роботи нашої команди — бетон і типові фундаменти,
               монтаж металоконструкцій, стінових і покрівельних панелей та покрівельні роботи. Спеціалізовані роботи координуємо
