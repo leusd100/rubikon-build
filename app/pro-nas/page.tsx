@@ -8,16 +8,14 @@ import ResponsiveImage from '../components/ResponsiveImage';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
-import { deliveryModel } from '../data/deliveryModel';
-import { homeProofCase, homeProofWebpSrcSet } from '../data/homeProof';
 import './about.css';
 
-// /pro-nas — who stands behind the company, in six zones: the two people and what each answers for, the one real
-// object from Serhii's practice (the owner-approved HOME proof, same attribution), how that practice shows before work
-// starts, three principles that each point to the mechanism on /yak-pratsyuiemo, where we work, the conversation.
-// Every sentence is the page's previous copy, the team bios, the Delivery Model or company data. Imagery other than
-// the proof photo is illustrative; by the owner's decision (30.09) it carries no «Ілюстрація» tag here — the
-// conceptual image says so in its alt text, and only the real object is captioned as a photo of an object.
+// /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, how Serhii's
+// practice shows before work starts, three principles that each point to the mechanism on /yak-pratsyuiemo, where we
+// work, the conversation. Every sentence is the page's previous copy, the team bios or company data.
+// Owner's decisions (30.09): no object photo here until RUBIKON BUILD has objects of its own to show — the one real
+// photo, from Serhii's work before the company, stays on HOME with its attribution; and the imagery, all of it
+// illustrative, carries no «Ілюстрація» tag here — the conceptual image says so in its alt text.
 
 export const metadata = createPageMetadata({
   path: '/pro-nas',
@@ -62,8 +60,6 @@ const PRINCIPLES = [
 ] as const;
 
 export default function AboutPage() {
-  const proof = homeProofCase;
-
   return (
     <main className="inner-page about-page" id="main-content">
       <ProcessMotion root=".about-page" />
@@ -75,14 +71,6 @@ export default function AboutPage() {
         </div>
         <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
-        {/* A compass arc set out once over the drawing-table footage, then still (hidden on phones) */}
-        <svg className="about-hero-trace" data-motion viewBox="0 0 1440 900" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
-          <path className="aht-grid" d="M1080 0 V900 M1260 0 V900 M860 300 H1440" pathLength={1} />
-          <path className="aht-leg" d="M1150 318 L1368 236" pathLength={1} />
-          <path className="aht-arc" d="M1368 236 A232 232 0 0 1 1318 478" pathLength={1} />
-          <path className="aht-dim" d="M1150 318 V250 M1368 236 V168 M1150 190 H1368" pathLength={1} />
-          <circle className="aht-node" cx="1150" cy="318" r="5" />
-        </svg>
         <div className="shell subhero-layout">
           <div className="subhero-copy">
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
@@ -107,41 +95,7 @@ export default function AboutPage() {
       {/* 2 · The two people and what each answers for */}
       <TeamSection variant="about" />
 
-      {/* 3 · The one real object from Serhii's practice (owner-approved, before RUBIKON BUILD) */}
-      {proof && (
-        <section className="page-section about-practice" id="praktyka" aria-labelledby="about-practice-title">
-          <div className="shell">
-            <SectionHeader
-              eyebrow="Практика в основі"
-              title="Досвід, який можна побачити"
-              titleId="about-practice-title"
-              supporting={deliveryModel.statements.experience}
-            />
-            <div className="about-practice-grid" data-motion>
-              <figure className="about-practice-photo">
-                <div className="about-practice-media">
-                  <picture>
-                    <source type="image/webp" srcSet={homeProofWebpSrcSet} sizes="(max-width: 1050px) 100vw, 62vw" />
-                    <img src={proof.photo.src} alt={proof.photo.alt} width={proof.photo.width} height={proof.photo.height} loading="lazy" decoding="async" />
-                  </picture>
-                  <span className="about-tag">Фото об’єкта</span>
-                </div>
-                <figcaption><b>Реальний об’єкт.</b> Фото з ретушшю переднього плану.</figcaption>
-              </figure>
-              <div className="about-practice-facts">
-                <p className="about-kicker">Реалізований об’єкт до створення RUBIKON BUILD</p>
-                <h3>Ангар: {proof.scope.subject.join(', ').toLowerCase()}</h3>
-                <p>{proof.attribution}</p>
-                <ul className="about-scope" aria-label="Роботи на цьому об’єкті">
-                  {proof.scope.subject.map((item, index) => <li key={item} style={{ '--i': index } as CSSProperties}>{item}</li>)}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 4 · How that practice shows before work starts */}
+      {/* 3 · How Serhii's practice shows before work starts */}
       <section className="page-section about-story-section" aria-labelledby="about-story-title">
         <div className="shell about-story-layout">
           <div className="promise-visual about-planning-visual">
@@ -170,7 +124,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 5 · Principles, each pointing to how it works on /yak-pratsyuiemo */}
+      {/* 4 · Principles, each pointing to how it works on /yak-pratsyuiemo */}
       <section className="page-section page-section-dark about-principles" aria-labelledby="about-principles-title">
         <div className="shell">
           <SectionHeader
@@ -194,7 +148,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 6 · Where we work */}
+      {/* 5 · Where we work */}
       <section className="page-section about-geo" aria-labelledby="about-geo-title">
         <div className="shell about-geo-layout">
           <MapPin className="about-geo-pin" aria-hidden="true" />

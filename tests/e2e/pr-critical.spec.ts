@@ -303,21 +303,19 @@ test('the conversation intro never slides over the steps, and sticks only where 
   }
 });
 
-// /pro-nas v2: the two people and what each answers for, the one real object (the owner-approved HOME proof, same
-// attribution), principles that point to their mechanism on /yak-pratsyuiemo, and where we work.
-test('/pro-nas shows who answers for what, the real object with its attribution, principles with their mechanisms', async ({ page }) => {
+// /pro-nas v2: the two people and what each answers for, principles that point to their mechanism on
+// /yak-pratsyuiemo, and where we work.
+test('/pro-nas shows who answers for what and principles with their mechanisms', async ({ page }) => {
   await page.goto('/pro-nas', { waitUntil: 'load' });
   await expect(page.locator('.team-about .person-story')).toHaveCount(2);
   await expect(page.locator('.team-about .person-focus')).toHaveCount(2);
   await expect(page.locator('.team-bond')).toHaveText('Два покоління — одна відповідальність');
 
-  const practice = page.locator('#praktyka');
+  // Owner's decision (30.09): no object photo here until RUBIKON BUILD has objects of its own — the one real photo,
+  // from Serhii's work before the company, stays on HOME with its attribution
   expect(homeProofCase).not.toBeNull();
-  await expect(practice).toContainText(homeProofCase!.attribution);
-  await expect(practice).toContainText('Фото з ретушшю переднього плану');
-  await expect(practice.locator('img')).toHaveAttribute('src', homeProofCase!.photo.src);
-  await expect(practice.locator('.about-scope li')).toHaveText([...homeProofCase!.scope.subject]);
-  await expect(practice).toContainText(deliveryModel.statements.experience);
+  await expect(page.locator(`main img[src="${homeProofCase!.photo.src}"]`)).toHaveCount(0);
+  await expect(page.locator('main')).not.toContainText(homeProofCase!.attribution);
 
   const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
   expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
