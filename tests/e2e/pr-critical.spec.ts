@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
+import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { companyContactLinks } from '../../app/data/company';
 import { stubTurnstile } from './turnstile.helpers';
@@ -338,11 +339,10 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }
 
 // /yak-pratsyuiemo — the Delivery Model page, readable before and without JavaScript.
 // One closing conversation block everywhere: the same four step titles, each page's own explanations, and on a
-// direction page the form already names that direction.
+// direction page the form already names that direction. /yak-pratsyuiemo shows its steps in the route instead.
 const CONVERSATION_PAGES: ReadonlyArray<{ path: string; journey: readonly string[] }> = [
   { path: '/', journey: DEFAULT_JOURNEY },
   { path: '/napryamky', journey: DEFAULT_JOURNEY },
-  { path: '/yak-pratsyuiemo', journey: DEFAULT_JOURNEY },
   { path: '/pro-nas', journey: DEFAULT_JOURNEY },
   ...Object.entries(DIRECTION_JOURNEY).map(([id, journey]) => ({ path: `/${id}`, journey })),
 ];
@@ -398,28 +398,71 @@ test('a direction page preselects its own direction in the form', async ({ page 
 const DELIVERY_PAGE = '/yak-pratsyuiemo';
 const FORBIDDEN_CLAIMS = [/генеральн\S*\s+підряд/i, /гаранті/i, /ліценз/i, /сертифікат/i, /штат/i, /\d+\s?(хв|хвилин|год)/i, /грн|₴|\$|€/, /від\s*\d[^.]*м²/i];
 
-test('/yak-pratsyuiemo server HTML explains the whole model before hydration', async ({ page }) => {
+// /yak-pratsyuiemo v2: the client's view of the Delivery Model — five questions, seven zones. The full eight-stage model,
+// the matrix and the document route stay in the repository (tests/unit/delivery-page-presentation.test.ts); the page is
+// a simpler projection of the same truth, held to it here.
+test('/yak-pratsyuiemo answers the five client questions in the model’s words, before hydration', async ({ page }) => {
   const text = await serverText(page, DELIVERY_PAGE, {
     main: 'main',
-    formats: '#formaty .delivery-format h3',
-    formatAnchors: '#formaty .delivery-format::id',
-    entryPoints: '#shcho-vzhe-ye li b',
-    startNotes: '#shcho-vzhe-ye li p',
-    stages: 'ol.delivery-stages > li > h3',
-    stageDetails: 'ol.delivery-stages details > summary',
-    layers: '#khto-vykonuie .delivery-layer h3',
+    h1: 'main h1',
+    starts: '.proc-start-list h3',
+    steps: '.proc-steps h3',
+    results: '.proc-steps .proc-step-result',
+    formats: '.proc-scope-kicker',
+    headlines: '.proc-scope-grid h3',
+    formatTexts: '.proc-scope-grid p',
+    formatTerms: '.proc-scope-terms dd',
+    principle: '.proc-principle',
+    areas: '.proc-area h3',
+    areaItems: '.proc-area ul li .proc-area-work',
+    terms: '.proc-terms-grid h3',
+    inquiry: '#inquiry h2',
   });
   const main = text.main.join(' ');
 
+  expect(text.h1).toEqual(['Від задачі — до зрозумілого плану робіт']);
+  expect(text.starts).toEqual(['Є ідея об’єкта', 'Є креслення або проєкт', 'Потрібен окремий етап робіт']);
+  expect(text.steps).toEqual(processSteps().map((step) => `Крок ${step.number}. ${step.title}`));
+  expect(text.results).toEqual(processSteps().map((step) => `На виході: ${step.result}`));
   expect(text.formats).toEqual(FORMAT_LABELS);
-  expect(text.formatAnchors).toEqual(deliveryModel.formats.map((format) => format.anchor));
-  expect(text.entryPoints).toEqual(deliveryModel.entryStates.map((state) => state.label));
-  expect(text.startNotes).toEqual([deliveryModel.entryStates[3].startNote]);
-  expect(text.stages).toEqual(deliveryModel.stages.map((stage) => `${stage.number} ${stage.title}`));
-  expect(text.stageDetails).toHaveLength(8);
-  expect(text.layers).toEqual(['Власне ядро', 'Гнучкі пакети', 'Профільні партнери']);
-  for (const statement of [deliveryModel.statements.design, deliveryModel.statements.responsibility, deliveryModel.statements.boundary]) expect(main).toContain(statement);
+  const choices = participationChoices();
+  expect(text.headlines).toEqual(choices.map((choice) => choice.headline));
+  for (const format of deliveryModel.formats) expect(text.formatTexts).toEqual(expect.arrayContaining([format.summary]));
+  // Each card names the other party of the contract and who coordinates the object
+  expect(text.formatTerms).toEqual(choices.flatMap((choice) => [`${choice.contractWith} і RUBIKON`, choice.coordinator]));
+  const resp = responsibilityByFormat();
+  expect(text.principle).toEqual(resp.formats.map((format) => format.principle));
+  expect(text.principle).toEqual(deliveryModel.formats.map((format) => format.interfaces));
+  expect(text.areas).toEqual(['RUBIKON', 'ЗамовникЗамовникГенпідрядник', 'Профільні спеціалісти']);
+  expect(text.areaItems).toEqual((['rubikon', 'client', 'specialists'] as const).flatMap((zone) => resp.items.filter((item) => item.zones[zone].length > 0).map((item) => item.text)));
+  expect(text.terms).toEqual(['Рахуємо кошторис', 'Плануємо строки', 'Погоджуємо зміни']);
+  expect(text.inquiry).toEqual(['Є задача — почнемо з неї']);
+  for (const statement of [deliveryModel.statements.design, deliveryModel.statements.boundary, deliveryModel.statements.materials, deliveryModel.changePolicy.principle]) {
+    expect(main).toContain(statement);
+  }
   for (const pattern of FORBIDDEN_CLAIMS) expect(main, String(pattern)).not.toMatch(pattern);
+});
+
+test('/yak-pratsyuiemo speaks to the client, not in the internal model’s vocabulary or layout', async ({ page }) => {
+  const text = await serverText(page, DELIVERY_PAGE, {
+    main: 'main',
+    tables: 'main table',
+    details: 'main > section:not(#inquiry) details',
+    faqDetails: '.faq-list details',
+    contents: 'nav[aria-label="Зміст сторінки"]',
+    ghosts: 'main .ghost-word',
+    journey: '#inquiry .conversation-journey',
+  });
+  const main = text.main.join(' ');
+
+  expect(text.tables).toEqual([]);
+  expect(text.details).toHaveLength(text.faqDetails.length);
+  expect(text.contents).toEqual([]);
+  expect(text.ghosts).toEqual([]);
+  // The steps are shown once, in the route; the closing block does not repeat them.
+  expect(text.journey).toEqual([]);
+  for (const stage of deliveryModel.stages) expect(main).not.toContain(`${stage.number} ${stage.title}`);
+  expect(main).not.toMatch(/вх(ід|оду) пакета|вих(ід|оду) пакета|нитк[аиу]|гнучкі пакети|виключення та припущення|стик(и|ів)|модел[іь] відповідальності/i);
 });
 
 test('/yak-pratsyuiemo FAQPage data is the visible FAQ, on a WebPage and never a HowTo', async ({ page }) => {
@@ -431,7 +474,8 @@ test('/yak-pratsyuiemo FAQPage data is the visible FAQ, on a WebPage and never a
   const data = text.jsonLd.map((json) => JSON.parse(json) as { '@type': string; mainEntity?: { name: string; acceptedAnswer: { text: string } }[] });
   const faq = data.find((item) => item['@type'] === 'FAQPage');
 
-  expect(text.questions).toHaveLength(6);
+  expect(text.questions).toEqual(deliveryFaq().map(([question]) => question));
+  expect(text.questions.length).toBeLessThanOrEqual(4);
   expect(faq?.mainEntity?.map((item) => item.name)).toEqual(text.questions);
   expect(faq?.mainEntity?.map((item) => item.acceptedAnswer.text)).toEqual(text.answers);
   expect(data.map((item) => item['@type'])).toEqual(expect.arrayContaining(['WebPage', 'BreadcrumbList', 'FAQPage']));
@@ -452,135 +496,162 @@ test('navigation and footer lead to /yak-pratsyuiemo while the homepage hero lea
   expect(home.oldAnchor).toHaveLength(0);
 });
 
-test('/yak-pratsyuiemo keeps every model fact in the server HTML, however the page folds it', async ({ page }) => {
-  const text = await serverText(page, DELIVERY_PAGE, {
-    stages: 'ol.delivery-stages > li > h3',
-    shared: '#vidpovidalnist .delivery-shared .delivery-activity',
-    compared: '#vidpovidalnist .delivery-matrix tbody th .delivery-activity',
-    panels: '#vidpovidalnist .delivery-compare-mobile details::id',
-    panelActivities: '#vidpovidalnist .delivery-compare-mobile details .delivery-activity',
-    notes: '#vidpovidalnist .delivery-notes li',
-    documents: '#dokumenty .delivery-docs-desktop .delivery-doc-label',
-    phoneDocuments: '#dokumenty .delivery-docs-mobile .delivery-doc-label',
-    factors: '#biudzhet .delivery-chips li',
-    budget: '#biudzhet',
-    contactIntro: '#inquiry .conversation-lead',
-    contents: '.delivery-contents a',
-    legend: '.delivery-token-legend a',
-  });
-  const activities = deliveryModel.responsibility.map((row) => row.activity);
-  const documents = deliveryModel.stages.flatMap((stage) => stage.documents.map((document) => document.label));
-  const notes = deliveryModel.responsibility.flatMap((row) => ('note' in row ? [row.note] : []));
-
-  expect(text.stages).toEqual(deliveryModel.stages.map((stage) => `${stage.number} ${stage.title}`));
-  expect([...text.shared, ...text.compared].sort()).toEqual([...activities].sort());
-  expect(text.compared).toHaveLength(12);
-  expect(text.panels).toEqual(deliveryModel.formats.map((format) => `vidpovidalnist-${format.anchor}`));
-  expect(text.panelActivities).toEqual([...text.compared, ...text.compared, ...text.compared]);
-  expect(text.notes).toHaveLength(notes.length);
-  notes.forEach((note, index) => expect(text.notes[index]).toContain(note));
-  expect(text.documents).toEqual(documents);
-  expect(text.phoneDocuments).toEqual(documents);
-  expect(new Set(documents).size).toBe(19);
-  expect([...text.factors].sort()).toEqual(deliveryModel.budgetFactors.map((factor) => factor.label).sort());
-  expect(text.factors).toHaveLength(13);
-  expect(text.contactIntro.join(' ')).toContain('Для початку достатньо коротко описати об’єкт або потрібні роботи');
-  expect(text.budget.join(' ')).not.toContain('Що потрібно на старті');
-  expect(text.contents.filter((label) => /\d/.test(label))).toEqual([]);
-  expect(text.legend).toEqual(FORMAT_LABELS.map((label, index) => `0${index + 1} ${label}`));
-});
-
-test('/yak-pratsyuiemo visual language is decoration beside the words, never instead of them', async ({ page }) => {
-  const text = await serverText(page, DELIVERY_PAGE, {
-    icons: '.delivery-page svg.role-icon::aria-hidden',
-    labels: '.delivery-page :has(> svg.role-icon)',
-    ghosts: '.delivery-page .ghost-word',
-    ghostsHidden: '.delivery-page .ghost-word::aria-hidden',
-    route: '.delivery-thread-route::aria-hidden',
-    routePoints: '.delivery-thread-route li',
-    marked: '.delivery-thread-route li[class]',
-    threadLinks: '.delivery-thread-steps a',
-    changeStep: '.delivery-thread-steps > li:last-child > b',
-  });
-
-  // Six per stage (result, three roles, documents, why) and one beside each of two section eyebrows.
-  expect(text.icons).toHaveLength(deliveryModel.stages.length * 6 + 2);
-  expect(new Set(text.icons)).toEqual(new Set(['true']));
-  expect(text.labels).toHaveLength(text.icons.length);
-  expect(text.labels.filter((label) => label.length === 0)).toEqual([]);
-  expect(text.ghosts).toEqual(['PROCESS', 'RESPONSIBILITY', 'EXPERIENCE']);
-  expect(text.ghostsHidden).toEqual(['true', 'true', 'true']);
-  expect(text.route).toEqual(['true']);
-  expect(text.routePoints).toEqual(deliveryModel.stages.map((stage) => stage.number));
-  // Only the model's design-thread stages are marked; the change step is not placed on the route.
-  expect(text.marked).toEqual(['03', '06']);
-  expect(text.threadLinks).toEqual(['03 Узгодження з проєктом', '06 Підготовка реалізації']);
-  expect(text.changeStep).toEqual(['Під час реалізації']);
-});
-
-test('/yak-pratsyuiemo stage details open from the keyboard, in reading order', async ({ page }) => {
-  await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-  const details = page.locator('ol.delivery-stages details').first();
-  const summary = details.locator('summary');
-
-  await summary.focus();
-  await expect(summary).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(details).toHaveAttribute('open', '');
-  await expect(details.getByText(deliveryModel.stages[0].why)).toBeVisible();
-  await expect(details.locator('h4')).toHaveText(['Що відбувається', 'Перехід далі, коли…', 'RUBIKON', 'Замовник', 'Учасники', 'Документи', 'Чому це важливо']);
-});
-
 test.describe('/yak-pratsyuiemo without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
-  test('reads and unfolds every layer natively', async ({ page }) => {
+  test('is complete: route, scope, responsibility map and terms read without scripts; the FAQ opens natively', async ({ page }) => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const stage = page.locator('#etap-04 details');
-    const notes = page.locator('#vidpovidalnist .delivery-notes');
+    await expect(page.locator('.proc-steps li')).toHaveCount(4);
+    await expect(page.locator('.proc-steps .proc-step-result').last()).toBeVisible();
+    await expect(page.locator('.proc-area')).toHaveCount(3);
+    await expect(page.locator('.proc-terms-grid li')).toHaveCount(3);
+    await expect(page.locator('.proc-change-steps li')).toHaveCount(4);
+    await expect(page.locator('.proc-contract-band')).toBeVisible();
+    const first = page.locator('.faq-list details').first();
+    await first.locator('summary').click();
+    await expect(first).toHaveAttribute('open', '');
+    await expect(first.locator('p')).toBeVisible();
+  });
+});
 
-    await stage.locator('summary').click();
-    await expect(stage).toHaveAttribute('open', '');
-    await expect(stage.getByText(deliveryModel.stages[3].why)).toBeVisible();
-    await expect(page.locator('#vidpovidalnist .delivery-matrix tbody tr')).toHaveCount(12);
-    await notes.locator('summary').click();
-    await expect(notes.locator('li')).toHaveCount(deliveryModel.responsibility.filter((row) => 'note' in row).length);
-    await expect(notes.locator('li').first()).toBeVisible();
-    await expect(page.locator('#dokumenty .delivery-docs-desktop .delivery-doc-label')).toHaveCount(19);
-    await expect(page.locator('#inquiry .conversation-intro')).toContainText('Для початку достатньо коротко описати об’єкт або потрібні роботи');
+test.describe('/yak-pratsyuiemo motion', () => {
+  test('reduced motion shows every final state at once', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    await expect(page.locator('.process-page')).not.toHaveAttribute('data-motion-ready', /.*/);
+    await expect(page.locator('.proc-area').first()).toHaveCSS('opacity', '1');
+    await expect(page.locator('.scope-diagram-comprehensive .sd-context').first()).toHaveCSS('opacity', '1');
+    await expect(page.locator('.proc-start-merge')).toHaveCSS('opacity', '1');
+    await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1');
+    await expect(page.locator('.proc-change')).toHaveCSS('opacity', '1');
   });
 
-  test('folds responsibility and documents into one-at-a-time panels on a phone', async ({ page }) => {
+  test('a block taller than the screen still plays: the stacked responsibility map on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const panel = page.locator('#vidpovidalnist-okremyi-pidriad');
-    const phase = page.locator('#dokumenty .delivery-docs-mobile details').first();
+    const figure = page.locator('.proc-resp-figure');
+    await figure.scrollIntoViewIfNeeded();
+    await expect(figure).toHaveAttribute('data-motion-state', 'on');
+    await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1', { timeout: 5000 });
+  });
 
-    await expect(page.locator('#vidpovidalnist .delivery-matrix')).toBeHidden();
-    await panel.locator('summary').click();
-    await expect(panel.locator('.delivery-activity').first()).toBeVisible();
-    await expect(page.locator('#dokumenty .delivery-docs-desktop')).toBeHidden();
-    await phase.locator('summary').click();
-    await expect(phase.locator('.delivery-doc-label')).toHaveCount(10);
-    await expect(phase.locator('.delivery-doc-label').first()).toBeVisible();
+  test('each block plays once when it enters the viewport and never replays', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const route = page.locator('.proc-steps');
+    await expect(route).not.toHaveAttribute('data-motion-state', 'on');
+    await route.scrollIntoViewIfNeeded();
+    await expect(route).toHaveAttribute('data-motion-state', 'on');
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await route.scrollIntoViewIfNeeded();
+    await expect(route).toHaveAttribute('data-motion-state', 'on');
+    // The steps are readable once played: every step's text back at full strength.
+    await expect(route.locator('li').last().locator('h3')).toHaveCSS('opacity', '1', { timeout: 5000 });
+  });
+
+  test('keyboard focus on a scope card brings the agreed scope forward, as hover does', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop emphasis');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const card = page.locator('#obsiah .proc-scope-grid > li').nth(1);
+    await card.locator('.proc-scope-cta').focus();
+    await expect(card.locator('.proc-scope-cta')).toBeFocused();
+    await expect(card.locator('.sd-layer:not(.is-scope)').first()).toHaveCSS('opacity', '0.4');
+    await expect(card.locator('.sd-layer.is-scope')).toHaveCSS('opacity', '1');
+  });
+});
+
+test.describe('/yak-pratsyuiemo interactions', () => {
+  const visibleItems = (page: Page, zone: string) => page.locator(`.proc-area-${zone} ul li:visible .proc-area-work`);
+  const visibleNotes = (page: Page, zone: string) => page.locator(`.proc-area-${zone} ul li:visible .proc-area-note:visible`);
+
+  test('the format switcher moves each work to the zone the model names for that format', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const resp = responsibilityByFormat();
+    for (const format of resp.formats) {
+      await page.getByRole('radio', { name: format.label, exact: true }).check();
+      for (const zone of ['rubikon', 'client', 'specialists'] as const) {
+        await expect(visibleItems(page, zone)).toHaveText(resp.items.filter((item) => item.zones[zone].includes(format.id)).map((item) => item.text));
+      }
+      await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText(format.clientTitle);
+      await expect(page.locator('.proc-principle:visible')).toHaveText(format.principle);
+      // «Координує об’єкт» sits only on the coordinator's card; shared works say how they are split
+      await expect(page.locator('.proc-area-tag:visible')).toHaveCount(1);
+      await expect(page.locator(`.proc-area-${format.coordinator.zone} .proc-area-tag:visible`)).toHaveCount(1);
+      for (const zone of ['rubikon', 'client', 'specialists'] as const) {
+        const notes = resp.items.filter((item) => item.zones[zone].includes(format.id) && item.notes[zone]?.[format.id]).map((item) => item.notes[zone]![format.id]!);
+        await expect(visibleNotes(page, zone)).toHaveText(notes);
+      }
+    }
+  });
+
+  test('the map cards are all light and turn dark only while pointed at', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'hover devices only');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const card = (zone: string) => page.locator(`.proc-area-${zone}`);
+    const light = await card('client').evaluate((element) => getComputedStyle(element).backgroundColor);
+    // RUBIKON's card starts light too
+    await expect(card('rubikon')).toHaveCSS('background-color', light);
+    await card('rubikon').hover();
+    const dark = await card('rubikon').evaluate((element) => getComputedStyle(element).backgroundColor);
+    expect(dark).not.toBe(light);
+    for (const zone of ['client', 'specialists']) {
+      await card(zone).hover();
+      await expect(card(zone)).toHaveCSS('background-color', dark);
+      await expect(card('rubikon')).toHaveCSS('background-color', light);
+    }
+  });
+
+  test('on a phone the switcher stays under the header while the stacked map scrolls by', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    await page.evaluate(() => {
+      const card = document.querySelector('.proc-area-client')!;
+      window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2, behavior: 'instant' });
+    });
+    const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
+    expect(await page.locator('.proc-resp-switch').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
+    await page.getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
+    await expect(page.locator('.proc-area-client .proc-area-tag:visible')).toBeVisible();
+  });
+
+  test.describe('without JavaScript', () => {
+    test.use({ javaScriptEnabled: false });
+    test('the format switcher still works (CSS only)', async ({ page }) => {
+      await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+      await page.getByRole('radio', { name: 'Субпідряд', exact: true }).check();
+      await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText('Генпідрядник');
+      await expect(page.locator('.proc-out-of-scope:visible')).toHaveCount(1);
+    });
+  });
+
+  test('«Обговорити цей формат» takes the visitor to the form with that format chosen', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    await page.locator('#obsiah .proc-scope-grid > li').nth(2).locator('.proc-scope-cta').click();
+    await expect(page).toHaveURL(/#inquiry$/);
+    await expect(page.locator('#inquiry select[name="cooperation"]')).toHaveValue('Субпідряд');
+    await expect(page.locator('#inquiry details.inquiry-details')).toHaveAttribute('open', '');
+    await expect(page.locator('#format-prefill-status')).toHaveText('У формі вибрано обсяг робіт: Субпідряд.');
   });
 });
 
 for (const width of [360, 375, 390, 768]) {
-  test(`/yak-pratsyuiemo fits a ${width}px screen with every layer open`, async ({ page }) => {
+  test(`/yak-pratsyuiemo fits a ${width}px screen with every question open`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    await page.locator('.delivery-page details').evaluateAll((all) => {
+    await page.locator('.process-page details').evaluateAll((all) => {
       for (const element of all) (element as HTMLDetailsElement).open = true;
     });
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-    // Each section's content, not the section itself: a ghost word is decoration that deliberately
-    // runs past the edge and is clipped there, and the document-width check above already proves
-    // nothing makes the page scroll sideways.
     const overflowing = await page
-      .locator('.delivery-page > section[id]:not(#inquiry) > .shell, .delivery-page > nav')
-      .evaluateAll((sections) => sections.filter((section) => section.scrollWidth > section.clientWidth + 1).map((section) => section.id || section.className));
+      .locator('.process-page > section > .shell')
+      .evaluateAll((sections) => sections.filter((section) => section.scrollWidth > section.clientWidth + 1).map((section) => section.parentElement?.className));
     expect(overflowing).toEqual([]);
   });
 }

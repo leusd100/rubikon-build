@@ -1,165 +1,86 @@
-import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader } from '../components/SiteChrome';
+import { DraftingCompass } from 'lucide-react';
+import { Breadcrumbs, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
-import RoleIcon from '../components/RoleIcon';
 import { DirectionFaq } from '../components/DirectionDetail';
+import { FormatPrefillLink } from '../components/process/FormatPrefillLink';
+import { ProcessMotion } from '../components/process/ProcessMotion';
+import { ScopeDiagram } from '../components/process/ScopeDiagram';
+import { StartGlyph } from '../components/process/StartGlyph';
 import { company } from '../data/company';
 import { deliveryModel } from '../data/deliveryModel';
+import { processHeroImage } from '../data/processHeroImage';
 import { siteRoutes } from '../data/navigation';
 import {
-  basisLegend,
-  budgetGroups,
-  capabilityLayers,
+  changeSteps,
+  costFactors,
   deliveryFaq,
-  designThread,
-  documentRoute,
-  entryPoints,
-  formatDetails,
-  formatTokens,
-  responsibilityComparison,
-  stageCards,
-  type BasisBadge,
-  type CapabilityLayer,
-  type FormatToken,
-  type PerFormatRow,
-  type ResponsibilityActivity,
-  type RouteDocument,
+  participationChoices,
+  processSteps,
+  responsibilityByFormat,
+  responsibilityMap,
 } from '../lib/deliveryModelPresentation';
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
-import type { CapabilityLayerId } from '../types/deliveryModel';
+import type { CSSProperties } from 'react';
 import './delivery.css';
 
-// /yak-pratsyuiemo — the Delivery Model shown to a client: formats, entry points, the eight
-// stages, who does the work, responsibility, changes, documents and what drives budget and time.
-// Server-rendered and complete without JavaScript: every business fact comes from deliveryModel
-// through lib/deliveryModelPresentation; this file only composes. It reads in layers — headings,
-// numbers and results to scan, a sentence to understand, native <details> for the rest — and
-// folding never removes a fact from the HTML. The interactive route map is a later step, built on
-// top of this markup.
+// /yak-pratsyuiemo v2 — what happens with the client's task, in seven zones: where to start, the four steps, how much
+// RUBIKON can take on, who answers for what, what drives cost and time, a short FAQ and the conversation. Every business
+// fact still comes from deliveryModel through lib/deliveryModelPresentation (processSteps, participationChoices,
+// responsibilityMap); the full eight-stage model, matrix and document route stay in the repository and its tests.
+// Imagery here is illustrative (labelled «Ілюстрація») and never shown as a RUBIKON project.
 
 const PAGE_TITLE = 'Як працює RUBIKON BUILD';
-const DESCRIPTION = 'Три формати участі, вісім етапів від запиту до здачі, хто за що відповідає, як погоджуємо зміни й від чого залежать бюджет і строки.';
+const DESCRIPTION = 'З чим можна звернутися, що буде після звернення, який обсяг бере на себе RUBIKON, хто за що відповідає і коли можна говорити про кошторис і строки.';
 
 export const metadata = createPageMetadata({
   path: siteRoutes.process,
-  title: brandedTitle('Як ми працюємо: формати, етапи, відповідальність'),
+  title: brandedTitle('Як ми працюємо: від задачі до плану робіт'),
   description: DESCRIPTION,
   socialTitle: PAGE_TITLE,
   image: '/media/about-industrial-concept.jpg',
-  imageAlt: `${company.name} — модель реалізації від запиту до здачі`,
+  imageAlt: `${company.name} — від задачі до плану робіт`,
 });
 
-// Plain labels: the only numbers on this page are the formats' and the stages', which are real sequences.
-const CONTENTS = [
-  ['formaty', 'Формати участі'],
-  ['shcho-vzhe-ye', 'Що у вас уже є'],
-  ['etapy', 'Вісім етапів'],
-  ['proiektuvannia', 'Проєктування'],
-  ['khto-vykonuie', 'Хто виконує'],
-  ['vidpovidalnist', 'Відповідальність'],
-  ['zminy', 'Зміни'],
-  ['dokumenty', 'Документи'],
-  ['biudzhet', 'Бюджет і строки'],
+const STARTS = [
+  {
+    kind: 'idea',
+    title: 'Є ідея об’єкта',
+    text: 'Опишіть, що плануєте побудувати. Підкажемо, які дані варто підготувати для наступного кроку.',
+  },
+  {
+    kind: 'drawing',
+    title: 'Є креслення або проєкт',
+    text: 'Переглянемо креслення, визначимо можливий обсяг наших робіт і скажемо, чи вистачає даних для кошторису.',
+  },
+  {
+    kind: 'scope',
+    title: 'Потрібен окремий етап робіт',
+    text: 'Наприклад, фундамент, металевий каркас або покрівля. Обговоримо саме цей етап і його межі.',
+  },
 ] as const;
 
-/** Ukrainian plural for a count: 1 документ, 2–4 документи, 5+ документів. */
-function plural(count: number, [one, few, many]: readonly [string, string, string]): string {
-  const tail = count % 10;
-  const tens = count % 100;
-  if (tail === 1 && tens !== 11) return `${count} ${one}`;
-  if (tail >= 2 && tail <= 4 && (tens < 12 || tens > 14)) return `${count} ${few}`;
-  return `${count} ${many}`;
-}
+const ZONES = [
+  { id: 'rubikon', title: 'RUBIKON', lead: 'Роботи, зазначені в нашому договорі, та їхній результат.' },
+  { id: 'client', title: 'Замовник', lead: 'Що забезпечує замовник.' },
+  { id: 'specialists', title: 'Профільні спеціалісти', lead: 'Окремі спеціалізовані роботи. Хто їх залучає й координує, фіксуємо в договорі.' },
+] as const;
 
-/** Format tokens 01 / 02 / 03: the numbers are seen, the full names are what a screen reader reads. */
-function FormatTokens({ formats }: Readonly<{ formats: readonly FormatToken[] }>) {
-  return (
-    <span className="delivery-tokens">
-      <span className="visually-hidden">{formats.map((format) => format.label).join(', ')}: </span>
-      {formats.map((format) => (
-        <span className="delivery-token" aria-hidden="true" title={format.label} key={format.id}>{format.number}</span>
-      ))}
-    </span>
-  );
-}
+/** The change loop's way back (step 2 of changePolicy: the impact on works, cost and time). */
+const CHANGE_BACK = 'Вплив на кошторис і строки — до виконання';
 
-/** A per-format text: one paragraph when every format shares it, otherwise one tokened row per wording. */
-function PerFormatText({ rows }: Readonly<{ rows: readonly PerFormatRow[] }>) {
-  if (rows.length === 1 && rows[0]?.formats.length === 0) return <p>{rows[0].text}</p>;
-  return (
-    <ul className="delivery-per-format">
-      {rows.map((row) => (
-        <li key={row.text}><FormatTokens formats={row.formats} /><span>{row.text}</span></li>
-      ))}
-    </ul>
-  );
-}
-
-function BasisBadges({ badges }: Readonly<{ badges: readonly BasisBadge[] }>) {
-  return (
-    <span className="delivery-badges">
-      {badges.map((badge) => (
-        <span className={`delivery-badge delivery-badge-${badge.basis}`} key={badge.basis}>
-          <span aria-hidden="true">{badge.tag}</span>
-          <span className="visually-hidden">{badge.title}</span>
-        </span>
-      ))}
-    </span>
-  );
-}
-
-/** An activity of the responsibility matrix, with the number of its note when it has one. */
-function Activity({ item }: Readonly<{ item: ResponsibilityActivity }>) {
-  return (
-    <>
-      <span className="delivery-activity">{item.activity}</span>
-      {item.note ? (
-        <sup className="delivery-note-ref">
-          <span aria-hidden="true">{item.note}</span>
-          <span className="visually-hidden">, примітка {item.note}</span>
-        </sup>
-      ) : null}
-    </>
-  );
-}
-
-function DocumentList({ documents }: Readonly<{ documents: readonly RouteDocument[] }>) {
-  return (
-    <ul className="delivery-doc-list">
-      {documents.map((document) => (
-        <li key={`${document.stage.number}-${document.label}`}>
-          <span className="delivery-doc-label">{document.label}</span>
-          <span className="delivery-doc-meta">
-            <a href={`#${document.stage.anchor}`} title={document.stage.title}>етап {document.stage.number}</a>
-            <BasisBadges badges={document.badges} />
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/** One layer of who does the work: its title, the flexible packages' note, and its items, linked to their competency pages. */
-function CapabilityLayerCard({ layer }: Readonly<{ layer: CapabilityLayer }>) {
-  return (
-    <article className={`delivery-layer delivery-layer-${layer.id}`}>
-      <h3>{layer.title}</h3>
-      {layer.note && <p className="delivery-layer-note">{layer.note}</p>}
-      <ul>
-        {layer.items.map((item) => (
-          <li key={item.id}>{item.href ? <a href={item.href}>{item.text}</a> : item.text}</li>
-        ))}
-      </ul>
-    </article>
-  );
-}
+/** After the factors: the order in which they turn into numbers, a schedule and — if needed — an agreed change. */
+const TERMS = [
+  { title: 'Рахуємо кошторис', text: 'Підготуємо кошторис, коли погодимо перелік робіт і матимемо дані для розрахунку.' },
+  { title: 'Плануємо строки', text: 'На графік впливають обсяг робіт, готовність проєкту й майданчика, постачання матеріалів і роботи інших підрядників.' },
+  { title: 'Погоджуємо зміни', text: deliveryModel.changePolicy.principle },
+] as const;
 
 export default function DeliveryModelPage() {
-  const { statements, changePolicy } = deliveryModel;
-  const tokens = formatTokens();
-  const responsibility = responsibilityComparison();
-  const phases = documentRoute();
-  const thread = designThread();
-  const layers = Object.fromEntries(capabilityLayers().map((layer) => [layer.id, layer])) as Record<CapabilityLayerId, CapabilityLayer>;
+  const { statements } = deliveryModel;
+  const steps = processSteps();
+  const choices = participationChoices();
+  const map = responsibilityMap();
+  const resp = responsibilityByFormat();
   const pageData = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -173,357 +94,304 @@ export default function DeliveryModelPage() {
   };
 
   return (
-    <main className="inner-page delivery-page" id="main-content">
+    <main className="inner-page process-page" id="main-content">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageData) }} />
-      <section className="subhero delivery-subhero">
-        <div className="subhero-grid" aria-hidden="true" />
-        <div className="shell subhero-layout">
-          <div className="subhero-copy">
-            <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Як працюємо', href: siteRoutes.process }]} />
-            <p className="eyebrow light"><span /> Модель реалізації</p>
-            <h1>
-              <span className="subhero-title-line">Як працює</span>
-              <span className="subhero-title-line"><em>RUBIKON BUILD</em></span>
-            </h1>
-          </div>
-          <div className="subhero-side">
-            <p>Від першого звернення до виконання й здачі — з чіткими форматами участі, межами відповідальності та зрозумілим маршрутом.</p>
-            <div className="delivery-hero-actions">
-              <a className="button button-primary" href="#inquiry">Обговорити задачу <span aria-hidden="true">↗</span></a>
-              <a className="text-link" href="#etapy">Переглянути етапи <span aria-hidden="true">↓</span></a>
-            </div>
+      <ProcessMotion />
+
+      {/* 1 · Hero */}
+      <section className="proc-hero">
+        <div className="proc-hero-media" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element -- pre-generated WebP variants up to 1536w (as the direction heroes), eager: this is the LCP image */}
+          <img
+            src={processHeroImage.fallbackSrc}
+            srcSet={processHeroImage.srcSet}
+            sizes="100vw"
+            alt=""
+            width={processHeroImage.width}
+            height={processHeroImage.height}
+            fetchPriority="high"
+            decoding="async"
+          />
+        </div>
+        <div className="proc-hero-shade" aria-hidden="true" />
+        {/* Drawing lines over the illustration: set out once on load, then still */}
+        <svg className="proc-hero-trace" data-motion viewBox="0 0 1440 900" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+          <path className="ht-grid" d="M900 0 V900 M1080 0 V900 M1260 0 V900 M720 300 H1440 M720 600 H1440" pathLength={1} />
+          <path className="ht-trace" d="M760 820 L1180 250 L1440 120" pathLength={1} />
+          <path className="ht-trace ht-trace-2" d="M1030 900 L1310 470" pathLength={1} />
+          <path className="ht-dim" d="M1180 250 L1180 170 M1440 120 L1440 40 M1180 190 H1440" pathLength={1} />
+          <circle className="ht-node" cx="1180" cy="250" r="5" />
+        </svg>
+        <div className="shell proc-hero-layout">
+          <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Як працюємо', href: siteRoutes.process }]} />
+          <p className="eyebrow light"><span /> Як працюємо</p>
+          <h1>Від задачі — до <em>зрозумілого плану робіт</em></h1>
+          <p className="proc-hero-lead">
+            Розкажіть про задум, покажіть готовий проєкт або назвіть роботи, які потрібно виконати. Ми уточнимо задачу,
+            погодимо свій обсяг і скажемо, які дані потрібні для кошторису.
+          </p>
+          <div className="proc-hero-actions">
+            <a className="button button-primary" href="#inquiry">Обговорити задачу <span aria-hidden="true">↗</span></a>
             <HeroCallLink />
           </div>
         </div>
+        <span className="proc-provenance">Ілюстрація</span>
       </section>
 
-      <nav className="delivery-contents" aria-label="Зміст сторінки">
-        <div className="shell">
-          <ol>
-            {CONTENTS.map(([id, label]) => <li key={id}><a href={`#${id}`}>{label}</a></li>)}
-          </ol>
-        </div>
-      </nav>
-
-      <section className="page-section delivery-formats" id="formaty">
-        <div className="shell">
-          <SectionHeader
-            className="page-heading"
-            eyebrow="Формати участі"
-            title="Три моделі відповідальності"
-            supporting="Можемо виконати погоджений комплекс будівельних робіт або окрему частину об’єкта. Перед початком узгоджуємо склад робіт, порядок взаємодії з іншими виконавцями та відповідальність за результат."
-          />
-          <div className="delivery-format-grid">
-            {formatDetails().map((format) => (
-              <article className="delivery-format" id={format.anchor} key={format.id} aria-labelledby={`${format.anchor}-title`}>
-                <div className="delivery-format-head">
-                  <span className="delivery-index">{format.number}</span>
-                  <h3 id={`${format.anchor}-title`}>{format.title}</h3>
-                </div>
-                <p className="delivery-format-summary">{format.text}</p>
-                <dl>
-                  <div><dt>Координує об’єкт</dt><dd>{format.coordination}</dd></div>
-                  <div><dt>Взаємодія з іншими роботами</dt><dd>{format.interfaces}</dd></div>
-                </dl>
-                <a className="delivery-more" href="#vidpovidalnist">Хто за що відповідає <span aria-hidden="true">↓</span></a>
-              </article>
-            ))}
+      {/* 2 · Where to start */}
+      <section className="page-section proc-start" aria-labelledby="proc-start-title">
+        <div className="shell proc-start-layout">
+          <div className="proc-start-head">
+            <p className="eyebrow"><span /> Перше звернення</p>
+            <h2 id="proc-start-title">З чого можна почати</h2>
+            <p>Для першої розмови достатньо того, що ви знаєте про об’єкт зараз.</p>
+          </div>
+          <div className="proc-start-flow" data-motion>
+            <ul className="proc-start-list">
+              {STARTS.map(({ kind, title, text }, index) => (
+                <li key={title} style={{ '--i': index } as CSSProperties}>
+                  <StartGlyph kind={kind} />
+                  <div>
+                    <h3>{title}</h3>
+                    <p>{text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {/* Three starting states, one route: the rows join into the four steps below */}
+            <a className="proc-start-merge" href="#etapy">
+              <span>Далі — один зрозумілий процес</span> <span aria-hidden="true">↓</span>
+            </a>
           </div>
         </div>
       </section>
 
-      <section className="page-section delivery-entry" id="shcho-vzhe-ye">
+      {/* 3 · Signature process */}
+      <section className="page-section proc-route" id="etapy" aria-labelledby="proc-route-title">
+        <div className="proc-route-lines" aria-hidden="true" />
         <div className="shell">
           <SectionHeader
-            className="page-heading"
-            eyebrow="Точка входу"
-            title="Що у вас уже є"
-            supporting="Готовий проєкт для першого звернення не потрібен. Якщо документація вже є, почнемо з її перегляду. Якщо є лише задум або попередні параметри, уточнимо завдання та підкажемо, які дані має підготувати замовник із проєктувальником."
-          />
-          <ol className="delivery-entry-list">
-            {entryPoints().map((entry) => (
-                <li key={entry.id}>
-                  <b>{entry.label}</b>
-                  {entry.startNote && <p>{entry.startNote}</p>}
-                </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="page-section page-section-dark delivery-stages-section ghost-section" id="etapy">
-        <GhostWord word="PROCESS" tone="dark" align="start" />
-        <div className="shell">
-          <SectionHeader
-            className="page-heading"
-            eyebrow="Вісім етапів"
-            title="Маршрут від запиту до здачі"
-            supporting="Кожен етап закінчується конкретним результатом і умовою переходу далі. Деталі — під кожним етапом."
             inverse
+            eyebrow="Що буде після звернення"
+            title="Від задачі до будівництва"
+            titleId="proc-route-title"
+            supporting="Після кожного кроку зрозуміло, що вже вирішено і що потрібно для наступного."
           />
-          <p className="delivery-token-legend">
-            <span>Номери форматів у деталях:</span>
-            {tokens.map((token) => (
-              <a href={`#${token.anchor}`} key={token.id}><span className="delivery-token" aria-hidden="true">{token.number}</span> {token.label}</a>
-            ))}
-          </p>
-          <ol className="delivery-stages">
-            {stageCards().map((stage) => (
-              <li className="delivery-stage" id={stage.anchor} key={stage.id}>
-                <h3><span className="delivery-stage-number">{stage.number}</span>{' '}{stage.title}</h3>
-                <div className="delivery-stage-body">
-                  <p className="delivery-stage-result"><b><RoleIcon role="result" />Результат:</b> {stage.result}</p>
-                  {(stage.designThread || stage.ledByGeneralContractorIn.length > 0) && (
-                    <ul className="delivery-tags">
-                      {stage.designThread && <li>Потрібна проєктна документація</li>}
-                      {stage.ledByGeneralContractorIn.map((label) => <li key={label}>{label}: етап веде генпідрядник</li>)}
-                    </ul>
-                  )}
-                  <details className="delivery-stage-details">
-                    <summary>Деталі етапу</summary>
-                    <div className="delivery-stage-inner">
-                      <div className="delivery-stage-lead">
-                        <div><h4>Що відбувається</h4><p>{stage.what}</p></div>
-                        <div className="delivery-stage-gate"><h4>Перехід далі, коли…</h4><p>{stage.gate}</p></div>
-                      </div>
-                      <div className="delivery-stage-roles">
-                        <div><h4><RoleIcon role="rubikon" />RUBIKON</h4><PerFormatText rows={stage.rubikon} /></div>
-                        <div><h4><RoleIcon role="client" />Замовник</h4><PerFormatText rows={stage.client} /></div>
-                        <div><h4><RoleIcon role="partner" />Учасники</h4><PerFormatText rows={stage.involved} /></div>
-                      </div>
-                      <div className="delivery-stage-docs">
-                        <h4><RoleIcon role="documents" />Документи</h4>
-                        <ul>
-                          {stage.documents.map((document) => (
-                            <li key={document.label}><span>{document.label}</span><BasisBadges badges={document.badges} /></li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="delivery-why"><h4><RoleIcon role="why" />Чому це важливо</h4><p>{stage.why}</p></div>
-                    </div>
-                  </details>
-                </div>
+          <ol className="proc-steps" data-motion>
+            {steps.map((step, index) => (
+              <li key={step.number} style={{ '--i': index } as CSSProperties}>
+                <span className="proc-step-node" aria-hidden="true">{step.number}</span>
+                <h3><span className="visually-hidden">Крок {step.number}. </span>{step.title}</h3>
+                <p>{step.text}</p>
+                <p className="proc-step-result"><b>На виході:</b> {step.result}</p>
               </li>
             ))}
           </ol>
-        </div>
-      </section>
-
-      <section className="page-section delivery-thread" id="proiektuvannia">
-        <div className="shell delivery-split">
-          <div>
-            <p className="eyebrow"><span /> Проєктування</p>
-            <h2>Як працюємо з проєктом</h2>
-            <p className="delivery-lead">{thread.statement}</p>
-          </div>
-          <div className="delivery-thread-body">
-            <ol className="delivery-thread-route" aria-hidden="true">
-              {thread.route.map((point) => (
-                <li className={point.design ? 'delivery-thread-point-design' : undefined} key={point.number}><span>{point.number}</span></li>
-              ))}
-            </ol>
-            <ol className="delivery-thread-steps">
-              {thread.stages.map((stage) => (
-                <li key={stage.anchor}><a href={`#${stage.anchor}`}><span>{stage.number}</span> {stage.title}</a><p>{stage.documents.join(' · ')}</p></li>
-              ))}
-              <li><b>Під час реалізації</b><p>{thread.change}</p></li>
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section page-section-dark delivery-who" id="khto-vykonuie">
-        <div className="shell">
-          <SectionHeader className="page-heading" eyebrow="Хто виконує" title="Які роботи виконуємо" supporting="Бетон, типові фундаменти, монтаж каркаса, панелей і покрівлі виконує наша команда. Виготовлення металоконструкцій організовуємо переважно на майданчику, а для великих обсягів — через перевірене партнерське виробництво. Для спеціалізованих етапів промислових підлог залучаємо профільних виконавців залежно від проєкту." inverse />
-          {/* Nested layers, read inside out: the core within the flexible packages, both within the partners. */}
-          <div className="delivery-layers">
-            <div className="delivery-layers-middle">
-              <CapabilityLayerCard layer={layers.core} />
-              <CapabilityLayerCard layer={layers.flexible} />
+          {/* Belongs to step 02 (checking the project): aligned under it on the horizontal route, named on the vertical one */}
+          <aside className="proc-design-note" aria-labelledby="proc-design-note-title">
+            <DraftingCompass aria-hidden="true" />
+            <div>
+              <p className="proc-design-note-title" id="proc-design-note-title"><span>До кроку 02</span> Хто готує проєкт</p>
+              <p>{statements.design}</p>
             </div>
-            <CapabilityLayerCard layer={layers.partner} />
-          </div>
-          <p className="delivery-boundary">{statements.customerScope}</p>
+          </aside>
         </div>
       </section>
 
-      <div className="delivery-principle-band">
-        <div className="shell">
-          <blockquote className="delivery-principle"><p>{statements.principle}</p></blockquote>
-        </div>
-      </div>
-
-      <section className="page-section delivery-responsibility ghost-section" id="vidpovidalnist">
-        <GhostWord word="RESPONSIBILITY" />
+      {/* 4 · How much RUBIKON can take on */}
+      <section className="page-section proc-scope" id="obsiah" aria-labelledby="proc-scope-title">
         <div className="shell">
           <SectionHeader
-            className="page-heading"
-            eyebrow="Відповідальність"
-            icon={<RoleIcon role="scope" />}
-            title="Хто за що відповідає"
-            supporting={`${statements.responsibility} ${statements.boundary}`}
+            eyebrow="Наш обсяг"
+            title="Який обсяг робіт можемо взяти на себе"
+            titleId="proc-scope-title"
+            supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
-          <div className="delivery-shared">
-            <h3>Однаково в усіх форматах</h3>
-            <div className="delivery-shared-groups">
-              {responsibility.shared.map((group) => (
-                <div className="delivery-shared-group" key={group.title}>
-                  <h4>{group.title}</h4>
-                  <ul>{group.activities.map((item) => <li key={item.activity}><Activity item={item} /></li>)}</ul>
+          <ul className="proc-scope-grid">
+            {choices.map((choice) => (
+              <li key={choice.id} data-motion>
+                <ScopeDiagram format={choice.id} />
+                <div className="proc-scope-title">
+                  <p className="proc-scope-kicker">{choice.title}</p>
+                  <h3 id={`proc-scope-${choice.id}`}>{choice.headline}</h3>
                 </div>
+                {/* What actually tells the formats apart: the other party of the contract and who coordinates the object */}
+                <dl className="proc-scope-terms">
+                  <div>
+                    <dt>Договір</dt>
+                    <dd className="proc-contract">
+                      <span className="proc-party">{choice.contractWith}</span>
+                      <span className="proc-contract-link" aria-hidden="true" />
+                      <span className="visually-hidden"> і </span>
+                      <span className="proc-party is-rubikon">RUBIKON</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Координує об’єкт</dt>
+                    <dd className={choice.rubikonCoordinates ? 'is-rubikon' : undefined}>{choice.coordinator}</dd>
+                  </div>
+                </dl>
+                <p>{choice.text}</p>
+                <FormatPrefillLink label={choice.title} />
+              </li>
+            ))}
+          </ul>
+          <p id="format-prefill-status" className="visually-hidden" aria-live="polite" />
+          <ul className="proc-scope-legend" aria-label="Позначення на схемах">
+            <li className="is-scope"><i aria-hidden="true" /> Обсяг RUBIKON</li>
+            <li><i aria-hidden="true" /> Роботи інших учасників</li>
+            <li className="is-context"><i aria-hidden="true" /> Хто координує об’єкт</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* 5 · Signature responsibility map */}
+      <section className="page-section proc-responsibility" id="vidpovidalnist" aria-labelledby="proc-responsibility-title">
+        <div className="shell">
+          <SectionHeader
+            eyebrow="Хто за що відповідає"
+            title="Відповідальність без дрібного шрифту"
+            titleId="proc-responsibility-title"
+            supporting="Оберіть формат участі — схема покаже, що виконує RUBIKON, що забезпечує інша сторона договору і хто веде спеціалізовані роботи."
+          />
+          {/* Format switcher: plain radios; CSS (:has) shows the chosen format, so it works without JavaScript */}
+          <fieldset className="proc-resp-switch">
+            <legend>Формат участі</legend>
+            <div>
+              {resp.formats.map((format) => (
+                <label key={format.id}>
+                  <input type="radio" name="resp-format" value={format.id} defaultChecked={format.id === 'comprehensive'} />
+                  <span>{format.label}</span>
+                </label>
               ))}
             </div>
-          </div>
-          <div className="delivery-compare">
-            <h3>Залежить від формату</h3>
-            <div className="delivery-compare-desktop">
-              <table className="delivery-matrix">
-                <caption className="visually-hidden">Хто відповідає за роботи, що різняться між форматами участі</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Робота</th>
-                    {tokens.map((token) => (
-                      <th scope="col" key={token.id}><span className="delivery-token" aria-hidden="true">{token.number}</span> {token.label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {responsibility.compared.map((row) => (
-                    <tr key={row.activity}>
-                      <th scope="row"><Activity item={row} /></th>
-                      {row.cells.map((cell) => (
-                        <td key={cell.format.id}>
-                          <ul className="delivery-holders">
-                            {cell.holders.map((label) => <li className={`delivery-holder-${label.holder}`} key={label.holder}>{label.title}</li>)}
-                          </ul>
-                        </td>
-                      ))}
-                    </tr>
+          </fieldset>
+          <div className="proc-resp-figure" data-motion>
+            {resp.formats.map((format) => <p className="proc-principle" data-format={format.id} key={format.id}>{format.principle}</p>)}
+            <ul className="proc-map">
+              {ZONES.map((zone, index) => (
+                <li className={`proc-area proc-area-${zone.id}`} key={zone.id} style={{ '--i': index } as CSSProperties}>
+                  <h3>
+                    {zone.id === 'client'
+                      ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>{format.clientTitle}</span>)
+                      : zone.title}
+                  </h3>
+                  {/* Who coordinates the object in the chosen format: the tag sits on that party's card */}
+                  {resp.formats.filter((format) => format.coordinator.zone === zone.id).map((format) => (
+                    <p className="proc-area-tag" data-format={format.id} key={format.id}>
+                      Координує об’єкт{format.coordinator.note && ` · ${format.coordinator.note}`}
+                    </p>
                   ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="delivery-compare-mobile">
-              {responsibility.byFormat.map((format) => (
-                <details className="delivery-format-panel" id={format.panel} key={format.id}>
-                  <summary>
-                    <span className="delivery-token" aria-hidden="true">{format.number}</span>
-                    <span>{format.label}</span>
-                    <small>{plural(responsibility.compared.length, ['робота', 'роботи', 'робіт'])}</small>
-                  </summary>
-                  <ul className="delivery-panel-rows">
-                    {format.rows.map((row) => (
-                      <li key={row.activity}>
-                        <p className="delivery-panel-activity"><Activity item={row} /></p>
-                        <ul className="delivery-holders">
-                          {row.holders.map((label) => <li className={`delivery-holder-${label.holder}`} key={label.holder}>{label.title}</li>)}
-                        </ul>
-                      </li>
-                    ))}
+                  <p className="proc-area-lead">
+                    {zone.id === 'client'
+                      ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>Що забезпечує {format.clientTitle.toLowerCase()}.</span>)
+                      : zone.lead}
+                  </p>
+                  <ul>
+                    {resp.items.filter((item) => item.zones[zone.id].length > 0).map((item) => {
+                      // A work RUBIKON coordinates or organises (rather than does) gets the open marker in RUBIKON's card
+                      const soft = zone.id === 'rubikon'
+                        ? (Object.entries(item.rubikonRole) as [string, string][]).filter(([, role]) => role !== 'executes').map(([format]) => format)
+                        : [];
+                      return (
+                        <li key={item.text} data-formats={item.zones[zone.id].join(' ')} data-soft={soft.length ? soft.join(' ') : undefined}>
+                          <span className="proc-area-work">{item.text}</span>
+                          {Object.entries(item.notes[zone.id] ?? {}).map(([format, note]) => (
+                            <span className="proc-area-note" data-format={format} key={format}>{note}</span>
+                          ))}
+                        </li>
+                      );
+                    })}
                   </ul>
-                </details>
+                </li>
               ))}
+            </ul>
+            {/* The base of the map: everything above is fixed in the contract before work starts */}
+            <div className="proc-contract-base">
+              <span className="proc-contract-drops" aria-hidden="true"><i /><i /><i /></span>
+              <div className="proc-contract-band">
+                <h3 className="proc-contract-tab">Договір</h3>
+                <p>{map.boundary}</p>
+                {resp.formats.filter((format) => format.outOfScope.length > 0).map((format) => (
+                  <p className="proc-out-of-scope" data-format={format.id} key={format.id}>
+                    <b>Поза обсягом RUBIKON у цьому форматі:</b> {format.outOfScope.join('; ').toLowerCase()}.
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
-          <details className="delivery-notes">
-            <summary>Уточнення щодо відповідальності · {responsibility.notes.length}</summary>
-            <ol>
-              {responsibility.notes.map((note) => (
-                <li key={note.number}><span className="delivery-note-number">{note.number}</span><p><b>{note.activity}.</b> {note.note}</p></li>
+        </div>
+      </section>
+
+      {/* 6 · Cost, time, changes */}
+      <section className="page-section proc-terms" id="koshtorys" aria-labelledby="proc-terms-title">
+        <div className="proc-terms-bg" aria-hidden="true"><div className="proc-terms-image" data-parallax="28" /></div>
+        <div className="shell">
+          <SectionHeader
+            eyebrow="Кошторис і строки"
+            title="Від чого залежать кошторис і строки"
+            titleId="proc-terms-title"
+            supporting="Нижче — що враховуємо в розрахунку, як із цього виходять кошторис і графік і що буде, якщо щось зміниться."
+          />
+          <div className="proc-factors">
+            <p className="proc-factors-title">Що враховуємо в розрахунку</p>
+            <ul>
+              {costFactors().map((factor) => (
+                <li key={factor.title}>
+                  <b>{factor.title}</b>
+                  {factor.detail && <span>{factor.detail}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="proc-factors-title proc-terms-flow-title">Як із цього виходять кошторис і графік</p>
+          <div className="proc-terms-flow" data-motion>
+            <ol className="proc-terms-grid">
+              {TERMS.map((term, index) => (
+                <li key={term.title} style={{ '--i': index } as CSSProperties}>
+                  <span className="proc-terms-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                  <h3>{term.title}</h3>
+                  <p>{term.text}</p>
+                </li>
               ))}
             </ol>
-          </details>
+            {/* A change goes back to the estimate and the schedule before anything is built: 03 → the procedure, and from
+                its second step (assessing the impact) back up into 01 and 02 */}
+            <div className="proc-change-links" aria-hidden="true">
+              <i className="proc-link-03" />
+              <i className="proc-link-stem" />
+              <i className="proc-link-fork" />
+              <i className="proc-link-up proc-link-up-1" />
+              <i className="proc-link-up proc-link-up-2" />
+              <span className="proc-link-label">{CHANGE_BACK}</span>
+            </div>
+            <div className="proc-change">
+              <h3 className="proc-change-tab">Якщо щось змінюється</h3>
+              <ol className="proc-change-steps">
+                {changeSteps().map((step, index) => (
+                  <li key={step.title} style={{ '--i': index } as CSSProperties}>
+                    <span className="proc-change-node" aria-hidden="true">{index + 1}</span>
+                    <b>{step.title}</b>
+                    <span className="proc-change-detail">{step.detail}</span>
+                    {index === 1 && <span className="proc-change-back" aria-hidden="true">↺ {CHANGE_BACK}</span>}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+          <p className="proc-documents">
+            На першій розмові скажемо, які документи вже можна використати і що потрібно підготувати додатково.
+          </p>
         </div>
       </section>
 
-      <section className="page-section page-section-dark delivery-changes" id="zminy">
-        <div className="shell delivery-changes-layout">
-          <div className="delivery-changes-head">
-            <p className="eyebrow light"><span /> Зміни під час проєкту</p>
-            <h2>Зміни погоджуємо до виконання</h2>
-            <p className="delivery-lead">{changePolicy.principle}</p>
-          </div>
-          <div>
-            <ol className="delivery-change-steps">
-              {changePolicy.steps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, '0')}</span><p>{step}</p></li>)}
-            </ol>
-          </div>
-        </div>
-      </section>
+      <DirectionFaq title="Що ще часто запитують" items={deliveryFaq()} collapsible />
 
-      <section className="page-section delivery-documents" id="dokumenty">
-        <div className="shell">
-          <SectionHeader
-            className="page-heading"
-            eyebrow="Документи"
-            title="Які документи можуть виникнути"
-            supporting="Не кожен документ потрібен на кожному об’єкті: позначка показує, від чого він залежить."
-          />
-          <dl className="delivery-basis-legend">
-            {basisLegend().map((badge) => (
-              <div key={badge.basis}>
-                <dt><BasisBadges badges={[badge]} /></dt>
-                <dd>{badge.title}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="delivery-docs-desktop">
-            {phases.map((phase) => (
-              <article className="delivery-doc-phase" key={phase.id} aria-labelledby={`${phase.id}-title`}>
-                <h3 id={`${phase.id}-title`}><span>{phase.range}</span> {phase.title}</h3>
-                <DocumentList documents={phase.documents} />
-              </article>
-            ))}
-          </div>
-          <div className="delivery-docs-mobile">
-            {phases.map((phase) => (
-              <details className="delivery-doc-phase" key={phase.id}>
-                <summary>
-                  <span className="delivery-doc-range">{phase.range}</span>
-                  <span>{phase.title}</span>
-                  <small>{plural(phase.documents.length, ['документ', 'документи', 'документів'])}</small>
-                </summary>
-                <DocumentList documents={phase.documents} />
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section page-section-dark delivery-budget" id="biudzhet">
-        <div className="shell">
-          <SectionHeader
-            className="page-heading"
-            eyebrow="Бюджет і строки"
-            icon={<RoleIcon role="schedule" />}
-            title="Від чого залежать бюджет і строки"
-            supporting="Вартість і строки залежать від проєкту, умов майданчика та погодженого обсягу. Предметно обговорюємо їх після вивчення вихідних даних."
-            inverse
-          />
-          <div className="delivery-budget-rows">
-            {budgetGroups().map((group) => (
-              <div className="delivery-budget-row" key={group.id}>
-                <h3>{group.title}</h3>
-                <ul className="delivery-chips">{group.factors.map((factor) => <li key={factor}>{factor}</li>)}</ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section delivery-experience ghost-section" id="dosvid">
-        <GhostWord word="EXPERIENCE" />
-        <div className="shell delivery-experience-layout">
-          <p className="eyebrow"><span /> Досвід</p>
-          <p className="delivery-experience-statement">{statements.experience}</p>
-          <a className="section-link" href={siteRoutes.about}>Більше про компанію <span aria-hidden="true">↗</span></a>
-        </div>
-      </section>
-
-      <DirectionFaq title="Питання про модель реалізації" items={deliveryFaq()} collapsible />
+      {/* 7 · Conversation — the four steps are shown above, so the block does not repeat them */}
       <ConversationSection
-        title="Обговоримо вашу задачу"
-        lead="Для початку достатньо коротко описати об’єкт або потрібні роботи та залишити контакт. Якщо вже маєте креслення, орієнтовні розміри чи інформацію про майданчик — згадайте про це. Решту уточнимо в розмові."
+        title="Є задача — почнемо з неї"
+        lead="Коротко опишіть задачу. Ми уточнимо, що вже готово, і підкажемо найближчий крок — розмову, перегляд проєкту чи огляд майданчика."
+        showJourney={false}
       />
     </main>
   );

@@ -5,7 +5,13 @@ import {
   basisLegend,
   budgetGroups,
   capabilityLayers,
+  changeSteps,
+  costFactors,
   deliveryFaq,
+  participationChoices,
+  processSteps,
+  responsibilityByFormat,
+  responsibilityMap,
   designThread,
   documentRoute,
   formatDetails,
@@ -15,7 +21,7 @@ import {
   stageCards,
   startInputs,
 } from '../../app/lib/deliveryModelPresentation';
-import type { CapabilityLayerId, ResponsibilityCell, StageId } from '../../app/types/deliveryModel';
+import type { CapabilityLayerId, ResponsibilityCell, ResponsibilityRow, StageId } from '../../app/types/deliveryModel';
 
 // /yak-pratsyuiemo's presentation layer: every shape it renders is the model, regrouped.
 
@@ -203,18 +209,176 @@ describe('delivery page: documents, budget, inputs, FAQ', () => {
     expect(startInputs()).toHaveLength(11);
   });
 
-  it('answers the FAQ only in the model’s words', () => {
+  it('answers the FAQ in short, direct answers held to the model: four questions the page does not already answer', () => {
     const faq = Object.fromEntries(deliveryFaq());
-    const { statements, changePolicy } = deliveryModel;
+    const { statements } = deliveryModel;
+    const handover = deliveryModel.stages.find((item) => item.id === 'handover')!;
 
-    expect(Object.keys(faq)).toHaveLength(6);
-    expect(faq['Чи обов’язково мати готовий проєкт?']).toContain('Готовий проєкт для першого звернення не потрібен');
-    expect(faq['Чи обов’язково мати готовий проєкт?']).toContain('проєктних даних достатньо');
-    expect(faq['Чи можна замовити лише один пакет робіт?']).toContain(formatById('work-package').summary);
-    expect(faq['Хто залучає проєктувальника?']).toBe(statements.design);
-    expect(faq['Чи працюєте ви із субпідрядниками?']).toBe(`Так. ${statements.team} ${statements.principle}`);
+    expect(Object.keys(faq)).toEqual(['Хто закуповує матеріали?', 'Чи залучаєте інших виконавців?', 'Чи оглядаєте майданчик перед розрахунком?', 'Як відбувається приймання і які документи я отримаю?']);
     expect(faq['Хто закуповує матеріали?']).toBe(statements.materials);
-    expect(faq['Як погоджуються зміни?']).toBe(`${changePolicy.principle} ${changePolicy.steps[2]}`);
+    // Specialised works go to specialists (statements.team); who engages them is fixed in the contract (statements.boundary)
+    expect(statements.team).toContain('Спеціалізовані роботи виконують профільні виконавці');
+    expect(faq['Чи залучаєте інших виконавців?']).toContain('Спеціалізовані роботи виконують профільні виконавці');
+    expect(faq['Чи залучаєте інших виконавців?']).toContain('фіксуємо в договорі до початку робіт');
+    expect(deliveryModel.stages[1].rubikon.default).toContain('перелік потрібних даних під ваш тип об’єкта');
+    expect(faq['Чи оглядаєте майданчик перед розрахунком?']).toContain('перелік потрібних даних під ваш тип об’єкта');
+    // Exactly the model's handover documents, and the contract decides the set
+    for (const document of handover.documents) expect(faq['Як відбувається приймання і які документи я отримаю?']).toContain(document.label.toLowerCase());
+    expect(faq['Як відбувається приймання і які документи я отримаю?']).toContain('склад визначає договір');
     for (const answer of Object.values(faq)) for (const pattern of FORBIDDEN_CLAIMS) expect(answer, String(pattern)).not.toMatch(pattern);
+  });
+
+});
+
+describe('delivery page v2: the public projection', () => {
+  it('tells the eight stages as four steps, in order, each stage once, each ending with a result for the client', () => {
+    const steps = processSteps();
+    expect(steps.map((step) => step.number)).toEqual(['01', '02', '03', '04']);
+    expect(steps.flatMap((step) => step.stages)).toEqual(deliveryModel.stages.map((stage) => stage.id));
+    for (const step of steps) expect(step.result.length).toBeGreaterThan(20);
+    // Step 04 names only documents the handover stage lists, and leaves the set to the contract
+    const handover = deliveryModel.stages.find((stage) => stage.id === 'handover')!;
+    expect(handover.documents.map((document) => document.label)).toEqual(expect.arrayContaining(['Акти виконаних робіт', 'Виконавча документація']));
+    expect(steps[3].result).toContain('у складі, погодженому договором');
+    for (const step of steps) for (const pattern of FORBIDDEN_CLAIMS) {
+      expect(step.text, String(pattern)).not.toMatch(pattern);
+      expect(step.result, String(pattern)).not.toMatch(pattern);
+    }
+  });
+
+  it('offers the three formats under their model names, with the contract party and coordinator the model states', () => {
+    const choices = participationChoices();
+    expect(choices.map(({ id, title, text, coordination }) => ({ id, title, text, coordination }))).toEqual(deliveryModel.formats.map((format) => ({
+      id: format.id, title: format.label, text: format.summary, coordination: format.coordination,
+    })));
+    const contract = deliveryModel.stages.find((stage) => stage.id === 'contract')!;
+    for (const choice of choices) {
+      // The coordinator is the model's coordination sentence, shortened: every part of it is in that sentence
+      for (const part of choice.coordinator.split(' — ')) expect(choice.coordination.toLowerCase(), choice.id).toContain(part.toLowerCase());
+      expect(choice.rubikonCoordinates).toBe(choice.coordination.includes('координує RUBIKON'));
+    }
+    expect(formatById('work-package').summary).toContain('договором із замовником');
+    expect(formatById('subcontract').summary).toContain('договір — з генпідрядником');
+    expect(contract.client.subcontract).toBe('Сторона договору — генпідрядник.');
+    expect(choices.map((choice) => choice.contractWith)).toEqual(['Замовник', 'Замовник', 'Генпідрядник']);
+  });
+
+  it('maps who answers for what only onto responsibility rows that say so', () => {
+    const map = responsibilityMap();
+    const rows = new Map<string, (typeof deliveryModel.responsibility)[number]>(deliveryModel.responsibility.map((row) => [row.id, row]));
+    const holdersIn = (id: string) => {
+      const row = rows.get(id);
+      expect(row, id).toBeDefined();
+      return Object.values(row!.cells).flatMap((cell) => (typeof cell === 'string' ? [cell] : [...cell]));
+    };
+    expect(map.principle).toBe(deliveryModel.statements.responsibility);
+    expect(map.boundary).toBe(deliveryModel.statements.boundary);
+    expect(map.areas.map((area) => area.id)).toEqual(['rubikon', 'client', 'specialists']);
+    for (const area of map.areas) {
+      for (const item of area.items) {
+        for (const id of item.rows) {
+          const holders = holdersIn(id);
+          if (area.id === 'rubikon') expect(holders.some((holder) => holder.startsWith('rubikon')), `${item.text} / ${id}`).toBe(true);
+          if (area.id === 'client') expect(holders, `${item.text} / ${id}`).toContain('client');
+          // The client's own designer is the one specialist the model files under the client.
+          if (area.id === 'specialists') expect(holders.includes('partner') || id === 'design', `${item.text} / ${id}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('shows seven cost factors that cover every model budget factor exactly once', () => {
+    const factors = costFactors();
+    expect(factors).toHaveLength(7);
+    expect(factors.flatMap((factor) => factor.ids).sort()).toEqual(deliveryModel.budgetFactors.map((factor) => factor.id).sort());
+  });
+
+  it('places each work of the switcher only in the zones the matrix names, per format', () => {
+    const { formats, items } = responsibilityByFormat();
+    const zoneOf = (holder: string) => (holder.startsWith('rubikon') ? 'rubikon' : holder === 'partner' ? 'specialists' : ['client', 'general-contractor'].includes(holder) ? 'client' : null);
+    for (const item of items) {
+      for (const format of formats) {
+        const expected = new Set(item.rows.flatMap((id) => {
+          const cell = deliveryModel.responsibility.find((row) => row.id === id)!.cells[format.id];
+          return (typeof cell === 'string' ? [cell] : [...cell]).map(zoneOf).filter(Boolean);
+        }));
+        for (const zone of ['rubikon', 'client', 'specialists'] as const) {
+          expect(item.zones[zone].includes(format.id), `${item.text} / ${format.id} / ${zone}`).toBe(expected.has(zone));
+        }
+      }
+    }
+    expect(formats.map((format) => format.clientTitle)).toEqual(['Замовник', 'Замовник', 'Генпідрядник']);
+    expect(formats[0].outOfScope).toEqual([]);
+    expect(formats[1].outOfScope).toEqual(['Електрика, вода, каналізація, опалення й вентиляція']);
+  });
+
+  it('says how a shared work is split wherever it sits in more than one card, and only there', () => {
+    const { formats, items } = responsibilityByFormat();
+    const zones = ['rubikon', 'client', 'specialists'] as const;
+    for (const item of items) {
+      for (const format of formats) {
+        const present = zones.filter((zone) => item.zones[zone].includes(format.id));
+        for (const zone of zones) {
+          const note = item.notes[zone]?.[format.id];
+          // No note on a card the work is not on
+          if (!present.includes(zone)) expect(note, `${item.text} / ${format.id} / ${zone}`).toBeUndefined();
+          // A work on two or three cards explains itself on each of them
+          if (present.length > 1 && present.includes(zone)) expect(note, `${item.text} / ${format.id} / ${zone}`).toBeTruthy();
+        }
+      }
+    }
+  });
+
+  it('marks what RUBIKON coordinates or organises from the matrix roles, and keeps every note to its source', () => {
+    const { items } = responsibilityByFormat();
+    const { statements } = deliveryModel;
+    const row = (id: string): ResponsibilityRow => deliveryModel.responsibility.find((item) => item.id === id)!;
+    const item = (text: string) => items.find((entry) => entry.text === text)!;
+    for (const entry of items) {
+      for (const [format, role] of Object.entries(entry.rubikonRole)) {
+        const holders = entry.rows.flatMap((id) => {
+          const cell = row(id).cells[format as keyof typeof entry.rubikonRole];
+          return typeof cell === 'string' ? [cell] : [...cell];
+        });
+        if (role === 'coordinates') expect(holders, entry.text).toContain('rubikon-coordinates');
+        if (role === 'organizes') expect(holders, entry.text).toContain('rubikon-organizes');
+        if (role !== 'executes') expect(entry.notes.rubikon?.[format as 'comprehensive'], entry.text).toMatch(/^(координуємо|організовуємо)/);
+      }
+    }
+    expect(item('Виготовлення металоконструкцій').notes.rubikon).toEqual({ comprehensive: 'організовуємо', 'work-package': 'організовуємо', subcontract: 'організовуємо' });
+    // Each curated note says what the model's row note, stage text or statement says
+    expect(row('materials').note).toContain('залежно від договору');
+    expect(item('Матеріали').notes.client?.comprehensive).toContain('залежно від договору');
+    expect(row('flexible-packages').note).toContain('Склад і виконавців визначаємо під проєкт');
+    expect(item('Огородження, ворота, промислові підлоги').notes.specialists?.comprehensive).toBe('склад і виконавців визначаємо під проєкт');
+    expect(row('engineering-systems').note).toContain('у погодженому комплексі');
+    expect(row('engineering-systems').note).toContain('окремо на стороні замовника');
+    expect(item('Електрика, вода, каналізація, опалення й вентиляція').notes.client?.comprehensive).toBe('або окремо на стороні замовника');
+    expect(row('process-equipment').note).toContain('Підбір, постачання й монтаж обладнання — окремо із профільними спеціалістами');
+    expect(row('supervision').note).toContain('спеціалісти замовника');
+    expect(statements.customerScope).toContain('Вишукування та нагляд забезпечують відповідні спеціалісти замовника');
+    expect(row('interfaces').note).toContain('замовник координує об’єкт загалом, а RUBIKON узгоджує свою частину робіт');
+    const request = deliveryModel.stages.find((stage) => stage.id === 'request')!;
+    expect(request.rubikon.subcontract).toContain('уточнюємо межі нашого пакета');
+    expect(request.client.subcontract).toContain('Генпідрядник описує пакет робіт');
+  });
+
+  it('puts «Координує об’єкт» on the card of whoever the model says coordinates the object', () => {
+    const { formats } = responsibilityByFormat();
+    expect(formats.map((format) => [format.id, format.coordinator.zone])).toEqual([['comprehensive', 'rubikon'], ['work-package', 'client'], ['subcontract', 'client']]);
+    expect(formatById('comprehensive').coordination).toContain(formats[0].coordinator.note);
+    expect(formatById('work-package').coordination).toContain('замовник або його генпідрядник');
+    expect(formatById('subcontract').coordination).toBe('Об’єкт координує генпідрядник.');
+  });
+
+  it('tells the change procedure as the model’s four steps, in order', () => {
+    const steps = changeSteps();
+    const words = (text: string) => text.toLowerCase().replace(/[.,;:—]/g, ' ').split(/\s+/).filter((word) => word.length > 3);
+    expect(steps).toHaveLength(deliveryModel.changePolicy.steps.length);
+    steps.forEach((step, index) => {
+      const source = deliveryModel.changePolicy.steps[index].toLowerCase();
+      expect(source.startsWith(step.title.split(' ')[0].toLowerCase()), step.title).toBe(true);
+      for (const word of words(step.detail)) expect(source, `${step.title}: ${word}`).toContain(word);
+    });
   });
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate uncropped responsive WebP variants for direction-page hero artwork.
+"""Generate uncropped responsive WebP variants for full-bleed hero artwork (direction pages, /yak-pratsyuiemo).
 
-The source PNGs in public/media/direction-hero-source/ are the approved artwork.
+The source images in public/media/*-source/ are the approved artwork.
 This script only changes encoding and dimensions: it never crops, composites, or
 otherwise edits the supplied images. Output filenames are content-hashed so they
 can use the immutable media-responsive cache policy.
@@ -10,6 +10,7 @@ can use the immutable media-responsive cache policy.
 import hashlib
 import io
 import os
+import sys
 
 from PIL import Image
 
@@ -32,14 +33,21 @@ IMAGE_SETS = [
         "betonni-roboty.png",
         "pokrivelni-roboty.png",
     ]),
+    ("public/media/process-hero-source", "process-hero", [
+        "yak-pratsyuiemo.webp",
+    ]),
 ]
 
 
 def main() -> None:
+    # `--only <prefix>` regenerates one set, so adding artwork never re-encodes the others
+    only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
     os.makedirs(OUT_DIR, exist_ok=True)
     results = []
 
     for source_dir, output_prefix, files in IMAGE_SETS:
+        if only and output_prefix != only:
+            continue
         for filename in files:
             source_path = os.path.join(source_dir, filename)
             base = filename.rsplit(".", 1)[0]

@@ -148,39 +148,20 @@ for (const viewport of viewports) {
       );
     });
 
-    test('delivery page formats', async ({ page }) => {
-      await preparePage(page, '/yak-pratsyuiemo');
-      await expectStableScreenshot(page.locator('#formaty > .shell'), `delivery-formats-${viewport.name}.png`);
-    });
-
-    test('delivery page stages', async ({ page }) => {
-      await preparePage(page, '/yak-pratsyuiemo');
-      await expectStableScreenshot(page.locator('#etapy > .shell'), `delivery-stages-${viewport.name}.png`);
-    });
-
-    test('delivery page responsibility', async ({ page }) => {
-      await preparePage(page, '/yak-pratsyuiemo');
-      await expectStableScreenshot(page.locator('#vidpovidalnist > .shell'), `delivery-responsibility-${viewport.name}.png`);
-    });
-
-    test('delivery page documents', async ({ page }) => {
-      await preparePage(page, '/yak-pratsyuiemo');
-      await expectStableScreenshot(page.locator('#dokumenty > .shell'), `delivery-documents-${viewport.name}.png`);
-    });
-
-    test('delivery page who does the work', async ({ page }) => {
-      await preparePage(page, '/yak-pratsyuiemo');
-      await expectStableScreenshot(page.locator('#khto-vykonuie > .shell'), `delivery-who-${viewport.name}.png`);
-    });
-
-    test('delivery page design thread', async ({ page }) => {
-      await preparePage(page, '/yak-pratsyuiemo');
-      await expectStableScreenshot(page.locator('#proiektuvannia > .shell'), `delivery-thread-${viewport.name}.png`);
-    });
-
-    test('delivery page changes', async ({ page }) => {
-      await preparePage(page, '/yak-pratsyuiemo');
-      await expectStableScreenshot(page.locator('#zminy > .shell'), `delivery-changes-${viewport.name}.png`);
-    });
+    // /yak-pratsyuiemo v2: the four zones that carry the page's meaning.
+    for (const [name, selector] of [
+      ['process-route', '#etapy > .shell'],
+      ['process-scope', '#obsiah > .shell'],
+      ['process-responsibility', '#vidpovidalnist > .shell'],
+      ['process-terms', '#koshtorys > .shell'],
+    ] as const) {
+      test(`process page — ${name}`, async ({ page }) => {
+        await preparePage(page, '/yak-pratsyuiemo');
+        // preparePage's last click leaves the pointer mid-page; the scope and map cards react to hover, so park it
+        // at the page's edge (outside the shell) before the screenshot
+        await page.mouse.move(0, 0);
+        await expectStableScreenshot(page.locator(selector), `${name}-${viewport.name}.png`);
+      });
+    }
   });
 }

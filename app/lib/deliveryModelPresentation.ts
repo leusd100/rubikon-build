@@ -364,17 +364,336 @@ export function startInputs(): readonly string[] {
   return model.inputs.map((input) => input.label);
 }
 
-/** The /yak-pratsyuiemo FAQ: real doubts of a B2B client, answered only in the model's words. */
+/** The /yak-pratsyuiemo FAQ: only what a first-time client still asks after reading the page. A direct answer first,
+ *  one clarification after; every fact is the model's (team, boundary, the inputs stage, the handover documents). */
 export function deliveryFaq(): readonly (readonly [string, string])[] {
-  const workPackage = formatById('work-package');
   const { statements } = model;
-  const { changePolicy } = deliveryModel;
+  const handover = stageById('handover');
+  const documents = handover.documents.map((document) => document.label.toLowerCase());
   return [
-    ['Чи обов’язково мати готовий проєкт?', 'Ні. Готовий проєкт для першого звернення не потрібен. Якщо документація вже є, почнемо з її перегляду. Якщо є лише задум або попередні параметри, уточнимо завдання та підкажемо, які дані має підготувати замовник із проєктувальником. Кошторис готуємо, коли склад робіт визначено й проєктних даних достатньо.'],
-    ['Чи можна замовити лише один пакет робіт?', `Так, у форматі «${workPackage.label}»: ${workPackage.summary} ${workPackage.interfaces}`],
-    ['Хто залучає проєктувальника?', statements.design],
-    ['Чи працюєте ви із субпідрядниками?', `Так. ${statements.team} ${statements.principle}`],
     ['Хто закуповує матеріали?', statements.materials],
-    ['Як погоджуються зміни?', `${changePolicy.principle} ${changePolicy.steps[2]}`],
+    ['Чи залучаєте інших виконавців?', 'Так. Спеціалізовані роботи виконують профільні виконавці. Хто їх залучає й координує і за який результат відповідає RUBIKON, фіксуємо в договорі до початку робіт.'],
+    ['Чи оглядаєте майданчик перед розрахунком?', 'Так, якщо умови майданчика впливають на розрахунок. Спершу даємо перелік потрібних даних під ваш тип об’єкта, далі погоджуємо огляд і фіксуємо умови.'],
+    [
+      'Як відбувається приймання і які документи я отримаю?',
+      `Перевіряємо свої роботи, усуваємо зауваження й передаємо їх на приймання — замовнику, а в субпідряді генпідряднику. Зазвичай це ${documents[0]}, ${documents[1]} та ${documents[2]}; точний склад визначає договір.`,
+    ],
   ];
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The public /yak-pratsyuiemo projection (v2): the same truth as above, told as what happens with the client's task.
+// Four steps instead of eight stages, the three formats as client choices, and one map of who answers for what. Each
+// item names the model stages or responsibility rows it stands for, so tests can hold it to the model.
+
+export type ProcessStep = { number: string; title: string; text: string; result: string; stages: readonly StageId[] };
+
+/** Four client-facing steps covering the eight model stages in order. Each result is the client's side of the last
+ *  covered stages' results — what is settled and what the next step needs — and never promises beyond them. */
+export function processSteps(): readonly ProcessStep[] {
+  const steps: readonly Omit<ProcessStep, 'number'>[] = [
+    {
+      title: 'Уточнюємо задачу',
+      text: 'Розбираємо, що потрібно побудувати або виконати, де розташований об’єкт, що вже підготовлено і які є обмеження.',
+      result: 'Коротко зафіксована задача й список даних, які потрібно додати.',
+      stages: ['request'],
+    },
+    {
+      title: 'Перевіряємо проєкт і дані про об’єкт',
+      text: 'Переглядаємо креслення або параметри об’єкта, за потреби — умови майданчика, й узгоджуємо рішення для робіт, які беремо на себе.',
+      result: 'Зрозуміло, на чому можна будувати пропозицію і що ще треба уточнити.',
+      stages: ['inputs', 'engineering'],
+    },
+    {
+      title: 'Узгоджуємо обсяг і кошторис',
+      text: 'Визначаємо, які роботи бере на себе RUBIKON, і рахуємо їх, коли проєктних даних достатньо.',
+      result: 'Пропозиція з переліком наших робіт, умовами старту й кошторисом. Після погодження — договір.',
+      stages: ['scope-budget', 'contract'],
+    },
+    {
+      title: 'Виконуємо та передаємо роботи',
+      text: 'Готуємо матеріали й виконавців, виконуємо погоджені роботи у взаємодії з іншими учасниками й передаємо результат.',
+      result: 'Прийняті роботи, акти й виконавча документація — у складі, погодженому договором.',
+      stages: ['preparation', 'construction', 'handover'],
+    },
+  ];
+  return steps.map((step, index) => ({ ...step, number: String(index + 1).padStart(2, '0') }));
+}
+
+export type ParticipationChoice = {
+  id: DeliveryFormatId;
+  /** The model name — the same in the form, on /napryamky and in the responsibility switcher. */
+  title: string;
+  /** The same format said as the client's situation. */
+  headline: string;
+  text: string;
+  coordination: string;
+  /** Who signs with RUBIKON, and who coordinates the object — the two things that tell the formats apart. */
+  contractWith: 'Замовник' | 'Генпідрядник';
+  coordinator: string;
+  rubikonCoordinates: boolean;
+};
+
+const CHOICE_TERMS: Record<DeliveryFormatId, Pick<ParticipationChoice, 'headline' | 'contractWith' | 'coordinator' | 'rubikonCoordinates'>> = {
+  comprehensive: { headline: 'Комплекс робіт під координацією RUBIKON', contractWith: 'Замовник', coordinator: 'RUBIKON — у погодженому обсязі', rubikonCoordinates: true },
+  'work-package': { headline: 'Окремі роботи за договором із замовником', contractWith: 'Замовник', coordinator: 'Замовник або його генпідрядник', rubikonCoordinates: false },
+  subcontract: { headline: 'Роботи за договором із генпідрядником', contractWith: 'Генпідрядник', coordinator: 'Генпідрядник', rubikonCoordinates: false },
+};
+
+/** After «Координує об’єкт» on the map: the qualifier the model's coordination sentence carries for that format. */
+const COORDINATOR_NOTE: Record<DeliveryFormatId, string> = {
+  comprehensive: 'у погодженому обсязі',
+  'work-package': 'сам або через свого генпідрядника',
+  subcontract: '',
+};
+
+/** The three formats as a client's choice, largest scope first; names, texts and coordination are the model's. */
+export function participationChoices(): readonly ParticipationChoice[] {
+  return model.formats.map((format) => ({
+    id: format.id,
+    title: format.label,
+    text: format.summary,
+    coordination: format.coordination,
+    ...CHOICE_TERMS[format.id],
+  }));
+}
+
+type MapItem = { text: string; rows: readonly string[] };
+export type ResponsibilityArea = { id: 'rubikon' | 'client' | 'specialists'; title: string; lead: string; items: readonly MapItem[] };
+
+/** Who answers for what, as three areas instead of a matrix. Rows are ids of `deliveryModel.responsibility`. */
+export function responsibilityMap(): { principle: string; areas: readonly ResponsibilityArea[]; boundary: string; materials: string } {
+  const { statements } = model;
+  const core = model.capabilities.filter((capability) => capability.layer === 'core').map((capability) => capability.label.toLowerCase());
+  return {
+    principle: statements.responsibility,
+    areas: [
+      {
+        id: 'rubikon',
+        title: 'RUBIKON',
+        lead: 'Погоджений будівельний обсяг і його результат.',
+        items: [
+          { text: `Власні роботи: ${core.join(', ')}`, rows: ['steel', 'roofing', 'foundations'] },
+          { text: 'Організація виконання й узгодження робіт у погодженому обсязі', rows: ['interfaces', 'steel-fabrication'] },
+          { text: 'Кошторис на погоджений обсяг', rows: ['estimate'] },
+          { text: 'Контроль якості своїх робіт', rows: ['quality-control'] },
+        ],
+      },
+      {
+        id: 'client',
+        title: 'Замовник',
+        lead: 'Те, що залишається на боці замовника.',
+        items: [
+          { text: 'Проєкт — самостійно або через окремого проєктувальника', rows: ['design'] },
+          { text: 'Вихідні дані й доступ до майданчика', rows: ['site-inputs'] },
+          { text: 'Дозволи й введення в експлуатацію', rows: ['permits'] },
+          { text: 'Зовнішні мережі й підключення', rows: ['external-utilities'] },
+          { text: 'Приймання робіт', rows: ['acceptance'] },
+        ],
+      },
+      {
+        id: 'specialists',
+        title: 'Профільні спеціалісти',
+        lead: 'Вузькі дисципліни, які виконують фахівці свого профілю.',
+        items: [
+          { text: 'Проєктування — проєктувальник замовника', rows: ['design'] },
+          { text: 'Електрика, вода, каналізація, опалення й вентиляція', rows: ['engineering-systems'] },
+          { text: 'Спеціальне технологічне обладнання', rows: ['process-equipment'] },
+          { text: 'Вишукування, технічний і авторський нагляд', rows: ['surveys', 'supervision'] },
+        ],
+      },
+    ],
+    boundary: statements.boundary,
+    materials: statements.materials,
+  };
+}
+
+export type CostFactor = { title: string; detail?: string; ids: readonly string[] };
+
+/** What drives cost and time, as seven scannable factors covering all thirteen model factors once. */
+export function costFactors(): readonly CostFactor[] {
+  const groups: readonly { title: string; ids: readonly string[] }[] = [
+    { title: 'Габарити', ids: ['dimensions'] },
+    { title: 'Конструктив і навантаження', ids: ['structure', 'loads'] },
+    { title: 'Фундамент', ids: ['foundation'] },
+    { title: 'Утеплення', ids: ['insulation'] },
+    { title: 'Технологія й обладнання', ids: ['technology', 'special-equipment'] },
+    { title: 'Умови майданчика', ids: ['logistics', 'operating-facility', 'site-access', 'installation-constraints'] },
+    { title: 'Залежності від інших робіт і строки', ids: ['timeline', 'contractor-dependencies'] },
+  ];
+  const label = (id: string) => {
+    const factor = model.budgetFactors.find((item) => item.id === id);
+    if (!factor) throw new Error(`Unknown budget factor: ${id}`);
+    return factor.label;
+  };
+  return groups.map((group) => ({
+    title: group.title,
+    ids: group.ids,
+    detail: group.ids.length > 2 ? group.ids.map(label).join(', ').toLowerCase() : undefined,
+  }));
+}
+
+export type ChangeStep = { title: string; detail: string };
+
+/** The model's change procedure (changePolicy.steps) as four short steps: a verb-first title and the rest of the step. */
+export function changeSteps(): readonly ChangeStep[] {
+  const steps: readonly ChangeStep[] = [
+    { title: 'Фіксуємо зміну', detail: 'Хто ініціював, що змінюється і чому.' },
+    { title: 'Оцінюємо вплив', detail: 'На роботи, вартість, строки, взаємодію з іншими виконавцями й проєктні документи. Якщо зачеплено проєкт — залучаємо проєктувальника.' },
+    { title: 'Погоджуємо письмово', detail: 'До виконання — у формі, яку визначає договір.' },
+    { title: 'Виконуємо', detail: 'І відображаємо зміну в документах приймання.' },
+  ];
+  if (steps.length !== model.changePolicy.steps.length) throw new Error('changeSteps is out of step with changePolicy.steps');
+  return steps;
+}
+
+// ----- Responsibility by format (the map's format switcher) -----------------------------------------------------------
+
+export type ResponsibilityZone = 'rubikon' | 'client' | 'specialists';
+/** RUBIKON's part in a work, from the matrix: does it (rubikon), coordinates it or organises it. */
+export type RubikonRole = 'executes' | 'coordinates' | 'organizes';
+type ZoneNotes = Partial<Record<ResponsibilityZone, Partial<Record<DeliveryFormatId, string>>>>;
+export type SwitchItem = {
+  text: string;
+  rows: readonly string[];
+  zones: Record<ResponsibilityZone, readonly DeliveryFormatId[]>;
+  rubikonRole: Partial<Record<DeliveryFormatId, RubikonRole>>;
+  /** How the parties share a work that sits in more than one zone, per zone and format — in the model's words. */
+  notes: ZoneNotes;
+};
+export type SwitchFormat = {
+  id: DeliveryFormatId;
+  label: string;
+  clientTitle: string;
+  principle: string;
+  outOfScope: readonly string[];
+  /** The card that carries «Координує об’єкт» in this format, and the qualifier after it. */
+  coordinator: { zone: 'rubikon' | 'client'; note: string };
+};
+
+/** A holder of a responsibility cell → the map zone it belongs to. The general contractor stands in the client's place. */
+function zoneOf(holder: string): ResponsibilityZone | null {
+  if (holder.startsWith('rubikon')) return 'rubikon';
+  if (holder === 'client' || holder === 'general-contractor') return 'client';
+  if (holder === 'partner') return 'specialists';
+  return null;
+}
+
+/** RUBIKON's part in a work, from the holders of its cells: does it, else coordinates it, else organises it. */
+function rubikonRoleOf(holders: readonly string[]): RubikonRole | undefined {
+  if (holders.includes('rubikon')) return 'executes';
+  if (holders.includes('rubikon-coordinates')) return 'coordinates';
+  if (holders.includes('rubikon-organizes')) return 'organizes';
+  return undefined;
+}
+
+const ROLE_NOTE: Record<Exclude<RubikonRole, 'executes'>, string> = { coordinates: 'координуємо', organizes: 'організовуємо' };
+
+/** Where RUBIKON coordinates or organises rather than does the work, its card says so — unless a fuller note is curated. */
+function withRoleNotes(notes: ZoneNotes, roles: Partial<Record<DeliveryFormatId, RubikonRole>>): ZoneNotes {
+  const rubikon = { ...notes.rubikon };
+  for (const [format, role] of Object.entries(roles) as [DeliveryFormatId, RubikonRole][]) {
+    if (role !== 'executes' && !rubikon[format]) rubikon[format] = ROLE_NOTE[role];
+  }
+  return Object.keys(rubikon).length ? { ...notes, rubikon } : notes;
+}
+
+/**
+ * The responsibility map per format: the same list of works, each placed in the zones the model's matrix names for that
+ * format. Rows the format leaves out of our scope are listed apart; the legal-layer row stays out of the public map.
+ */
+export function responsibilityByFormat(): { formats: readonly SwitchFormat[]; items: readonly SwitchItem[] } {
+  // Notes come from the rows' own notes, the stage texts and the customer-scope statement (tests hold each to its source).
+  const every = (note: string) => Object.fromEntries(model.formats.map((format) => [format.id, note])) as Record<DeliveryFormatId, string>;
+  const curated: readonly { text: string; rows: readonly string[]; notes?: ZoneNotes }[] = [
+    {
+      text: 'Структурування задачі й перелік вихідних даних',
+      rows: ['task-framing'],
+      notes: { rubikon: { subcontract: 'уточнюємо межі нашого пакета' }, client: { subcontract: 'описує пакет робіт і графік' } },
+    },
+    { text: 'Вихідні дані й доступ до майданчика', rows: ['site-inputs'] },
+    { text: 'Проєкт і проєктування', rows: ['design'] },
+    {
+      text: 'Узгодження будівельних рішень з іншими роботами',
+      rows: ['interfaces'],
+      notes: { rubikon: { 'work-package': 'узгоджуємо свою частину робіт' }, client: { 'work-package': 'координує об’єкт загалом' } },
+    },
+    { text: 'Кошторис', rows: ['estimate'] },
+    {
+      text: 'Матеріали',
+      rows: ['materials'],
+      notes: {
+        rubikon: { ...every('або надає замовник — залежно від договору'), subcontract: 'або надає генпідрядник — залежно від договору' },
+        client: every('або закуповує RUBIKON — залежно від договору'),
+      },
+    },
+    { text: 'Монтаж металоконструкцій, покрівлі, фундаменти й бетон', rows: ['steel', 'roofing', 'foundations'] },
+    { text: 'Виготовлення металоконструкцій', rows: ['steel-fabrication'] },
+    {
+      text: 'Огородження, ворота, промислові підлоги',
+      rows: ['flexible-packages'],
+      notes: { rubikon: every('склад і виконавців визначаємо під проєкт'), specialists: every('склад і виконавців визначаємо під проєкт') },
+    },
+    {
+      text: 'Електрика, вода, каналізація, опалення й вентиляція',
+      rows: ['engineering-systems'],
+      notes: {
+        rubikon: { comprehensive: 'координуємо в погодженому комплексі' },
+        client: { comprehensive: 'або окремо на стороні замовника' },
+        specialists: { comprehensive: 'виконують' },
+      },
+    },
+    { text: 'Зовнішні мережі й підключення', rows: ['external-utilities'] },
+    {
+      text: 'Спеціальне технологічне обладнання',
+      rows: ['process-equipment'],
+      notes: { client: every('окремо, із профільними спеціалістами'), specialists: every('підбір, постачання й монтаж') },
+    },
+    { text: 'Контроль якості своїх робіт', rows: ['quality-control'] },
+    { text: 'Дозволи й введення в експлуатацію', rows: ['permits'] },
+    {
+      text: 'Вишукування, технічний і авторський нагляд',
+      rows: ['surveys', 'supervision'],
+      notes: {
+        client: every('через своїх спеціалістів'),
+        specialists: { ...every('спеціалісти замовника'), subcontract: 'спеціалісти генпідрядника' },
+      },
+    },
+    { text: 'Приймання робіт', rows: ['acceptance'] },
+  ];
+  const rowById = (id: string) => {
+    const row = model.responsibility.find((item) => item.id === id);
+    if (!row) throw new Error(`Unknown responsibility row: ${id}`);
+    return row;
+  };
+  const formatIds = model.formats.map((format) => format.id);
+  const holdersOf = (rows: readonly string[], format: DeliveryFormatId) => rows.flatMap((id) => {
+    const cell = rowById(id).cells[format];
+    return typeof cell === 'string' ? [cell] : [...cell];
+  });
+  const items = curated.map(({ text, rows, notes = {} }) => {
+    const zones: Record<ResponsibilityZone, DeliveryFormatId[]> = { rubikon: [], client: [], specialists: [] };
+    const rubikonRole: Partial<Record<DeliveryFormatId, RubikonRole>> = {};
+    for (const format of formatIds) {
+      const holders = holdersOf(rows, format);
+      for (const zone of new Set(holders.map(zoneOf))) if (zone) zones[zone].push(format);
+      const role = rubikonRoleOf(holders);
+      if (role) rubikonRole[format] = role;
+    }
+    return { text, rows, zones, rubikonRole, notes: withRoleNotes(notes, rubikonRole) };
+  });
+  // How the parties work together in each format (the promise of result is already said on the scope cards above).
+  const principles = Object.fromEntries(model.formats.map((format) => [format.id, format.interfaces])) as Record<DeliveryFormatId, string>;
+  const formats = model.formats.map((format) => ({
+    id: format.id,
+    label: format.label,
+    clientTitle: format.id === 'subcontract' ? 'Генпідрядник' : 'Замовник',
+    principle: principles[format.id],
+    outOfScope: curated.filter(({ rows }) => rows.every((id) => rowById(id).cells[format.id] === 'out-of-scope')).map(({ text }) => text),
+    coordinator: {
+      zone: CHOICE_TERMS[format.id].rubikonCoordinates ? 'rubikon' as const : 'client' as const,
+      note: COORDINATOR_NOTE[format.id],
+    },
+  }));
+  return { formats, items };
 }
