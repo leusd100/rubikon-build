@@ -9,6 +9,7 @@
 
 - [ ] Not applicable — no UI change in this PR
 - [ ] Screenshots attached
+- [ ] `design/*` exploration — visual regression is deferred; add the `visual-freeze` label once the owner approves the look (see docs/ci-tier-model.md)
 
 ## Checked on
 

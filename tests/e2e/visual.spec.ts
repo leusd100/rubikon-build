@@ -46,7 +46,14 @@ async function preparePage(page: Page, path: string) {
 async function expectStableScreenshot(
   locator: Locator,
   name: string,
-  { includeSiteChrome = false }: { includeSiteChrome?: boolean } = {},
+  {
+    includeSiteChrome = false,
+    legacyPointer = false,
+  }: {
+    includeSiteChrome?: boolean;
+    /** Baseline recorded before the parking rule, with the pointer resting on a card; drop at its next visual freeze. */
+    legacyPointer?: boolean;
+  } = {},
 ) {
   if (!includeSiteChrome) {
     await locator.page().addStyleTag({
@@ -72,6 +79,9 @@ async function expectStableScreenshot(
     });
   }
 
+  // A screenshot records the default state. preparePage's last click leaves the pointer mid-page, where cards and links
+  // react to hover, so park it at the page's edge (outside every shell); a hover or focus shot requests that state itself.
+  if (!legacyPointer) await locator.page().mouse.move(0, 0);
   await expect(locator).toHaveScreenshot(name, {
     animations: 'disabled',
     caret: 'hide',
@@ -99,6 +109,7 @@ for (const viewport of viewports) {
       await expectStableScreenshot(
         page.locator('.directions > .shell'),
         `homepage-directions-${viewport.name}.png`,
+        { legacyPointer: true },
       );
     });
 
@@ -127,6 +138,7 @@ for (const viewport of viewports) {
       await expectStableScreenshot(
         page.locator('main > section.page-section > .shell').first(),
         `directions-hub-${viewport.name}.png`,
+        { legacyPointer: true },
       );
     });
 
@@ -157,9 +169,6 @@ for (const viewport of viewports) {
     ] as const) {
       test(`process page — ${name}`, async ({ page }) => {
         await preparePage(page, '/yak-pratsyuiemo');
-        // preparePage's last click leaves the pointer mid-page; the scope and map cards react to hover, so park it
-        // at the page's edge (outside the shell) before the screenshot
-        await page.mouse.move(0, 0);
         await expectStableScreenshot(page.locator(selector), `${name}-${viewport.name}.png`);
       });
     }
