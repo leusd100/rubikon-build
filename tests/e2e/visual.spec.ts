@@ -157,6 +157,9 @@ for (const viewport of viewports) {
     ] as const) {
       test(`process page — ${name}`, async ({ page }) => {
         await preparePage(page, '/yak-pratsyuiemo');
+        // preparePage's last click leaves the pointer mid-page; the scope and map cards react to hover, so park it
+        // at the page's edge (outside the shell) before the screenshot
+        await page.mouse.move(0, 0);
         await expectStableScreenshot(page.locator(selector), `${name}-${viewport.name}.png`);
       });
     }
