@@ -89,10 +89,10 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 }
 .nav-wrap { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: clamp(22px, 2.2vw, 40px); }
 .brand-link { display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 44px; }
-.brand { display: block; width: 256px; height: auto; aspect-ratio: 1270 / 272; }
 /* Logo colours (BrandLogo.tsx). Light steel is the shipped lockup's own set, for the charcoal header and footer;
    graphite steel is its counterpart for a paper surface. The copper accent is the same role in both. */
 .brand {
+  display: block; width: 256px; height: auto; aspect-ratio: 1270 / 272;
   --logo-mark-0: #FBFCFC; --logo-mark-1: #D5DBDE; --logo-mark-2: #F4F6F6; --logo-mark-3: #C3CBCF; --logo-mark-4: #EDF0F1;
   --logo-word-0: #F8F9F9; --logo-word-1: #E1E5E7; --logo-word-2: #F4F5F5;
   --logo-rule: #A6A7A5;
@@ -224,7 +224,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .eyebrow span { width: 24px; height: 2px; background: var(--color-accent); }
 .eyebrow.light { color: var(--color-dark-text-secondary); }
 .hero .eyebrow { color: rgba(255,255,255,.66); }
-.hero h1, .promise-copy h2, .contact h2 {
+.hero h1, .promise-copy h2 {
   margin: 0;
   font-family: var(--font-condensed), sans-serif;
   font-weight: 550;
@@ -294,7 +294,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .ghost-word-end { right: max(-28px, calc((100vw - var(--container-max)) / 2 - 90px)); }
 .ghost-word-start { left: max(-28px, calc((100vw - var(--container-max)) / 2 - 90px)); }
 .ghost-word-dark { --ghost-fill: rgba(255,255,255,.018); --ghost-stroke: rgba(255,255,255,.15); }
-.promise-copy h2, .contact h2 { font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--title-section); font-weight: 400; line-height: 1.04; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
+.promise-copy h2 { max-width: 920px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(48px, 4.2vw, 64px); font-weight: 400; line-height: 1.04; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
 .section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(330px, .65fr); align-items: center; gap: var(--grid-gap); margin-bottom: 52px; padding-bottom: 38px; border-bottom: 1px solid var(--color-border); }
 .section-header-copy { max-width: 980px; }
 .section-header-copy .eyebrow { margin-bottom: 30px; }
@@ -349,7 +349,6 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .visual-index { position: absolute; z-index: 3; top: 22px; right: 22px; padding: 9px 11px; color: white; background: rgba(13,16,14,.64); border: 1px solid rgba(255,255,255,.24); backdrop-filter: blur(8px); font: 700 9px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
 .image-note { position: absolute; z-index: 2; right: 18px; bottom: 18px; width: min(245px, calc(100% - 36px)); padding: 18px 20px; color: white; background: rgba(15,18,16,.84); border-top: 3px solid var(--color-accent); backdrop-filter: blur(10px); font-size: 11px; font-weight: 800; line-height: 1.45; letter-spacing: .04em; text-transform: uppercase; }
 .promise-copy .eyebrow.light { color: var(--color-text-muted); }
-.promise-copy h2 { max-width: 920px; font-size: clamp(48px, 4.2vw, 64px); }
 .promise-lead { max-width: var(--content-copy); margin: 32px 0 42px; color: var(--color-text-muted); font-size: 16px; line-height: 1.8; }
 .story-support { max-width: var(--content-copy); margin: -18px 0 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.8; }
 
@@ -412,32 +411,6 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .steps h3 { margin: 26px 0 14px; font: 600 22px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
 .steps p { margin: 0; color: var(--color-text-muted); font-size: 12px; }
 
-.contact { color: var(--color-text); background: var(--color-bg); }
-.contact-grid { display: grid; grid-template-columns: minmax(0, .78fr) minmax(560px, 1.22fr); align-items: start; gap: var(--grid-gap); }
-.contact-grid > * { min-width: 0; }
-.contact h2 { max-width: 680px; font-size: clamp(44px, 4.4vw, 64px); line-height: 1.04; }
-.contact-intro { position: sticky; top: 142px; }
-.contact-copy { min-width: 0; }
-.contact-copy > p:not(.eyebrow) { max-width: 520px; margin: 24px 0 34px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
-.contact-links { border-top: 1px solid var(--color-border); }
-.pending-contact { display: flex; justify-content: space-between; gap: 20px; padding: 17px 0; border-bottom: 1px solid var(--color-border); font: 600 18px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.pending-contact b { display: inline-flex; align-items: center; gap: 13px; font: inherit; }
-.pending-contact b span { display: grid; gap: 4px; }
-.pending-contact b small { color: var(--color-text-muted); font: 500 8px/1.35 var(--font-manrope), sans-serif; letter-spacing: .08em; }
-.pending-contact b svg { width: 20px; height: 20px; color: var(--color-accent); stroke-width: 1.6; }
-.pending-contact i { color: var(--color-text-muted); font: 500 10px/1.5 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
-.contact-phone, .contact-email { align-items: center; transition: color var(--duration-fast) ease; }
-.contact-phone i, .contact-email i { color: var(--color-text); font-size: 14px; font-style: normal; letter-spacing: .02em; text-transform: none; }
-.contact-email i { min-width: 0; overflow-wrap: anywhere; text-align: right; }
-.contact-phone:hover, .contact-email:hover, :is(.contact-phone, .contact-email):hover i { color: var(--color-accent-strong); }
-.contact-messenger-row { align-items: center; }
-.contact-messengers { display: flex; gap: 8px; }
-.contact-messengers .messenger-link { width: var(--control-min-height); height: var(--control-min-height); border: 1px solid var(--color-border); }
-.contact-messengers .messenger-brand-icon { width: 23px; height: 23px; }
-.contact-messengers .messenger-link span { display: none; }
-.contact .eyebrow.light { color: var(--color-text-muted); }
-.contact .messenger-link { color: var(--color-text-secondary); }
-.contact .messenger-link:is(:hover, :focus-visible) { color: var(--color-text); background: var(--color-surface); }
 
 .inquiry-form { overflow: hidden; color: var(--color-text); background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-top: 2px solid var(--color-accent); border-radius: 0 var(--radius-lg) 0 var(--radius-lg); box-shadow: none; }
 .inquiry-form-heading { min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px clamp(24px, 2.5vw, 36px); }
@@ -445,12 +418,9 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-form-kicker { display: flex; align-items: center; gap: 10px; color: var(--color-text); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .inquiry-form-kicker span { width: 18px; height: 2px; background: var(--color-accent); }
 .inquiry-required-note { color: var(--color-text-muted); font-size: 12px; }
-.inquiry-form-section { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: clamp(22px, 2.3vw, 34px); padding: 26px clamp(24px, 2.5vw, 36px) 28px; border-top: 1px solid var(--color-border); }
-.inquiry-form-section-heading { align-self: start; display: grid; gap: 9px; padding-top: 2px; }
-/* Small copper text on the form card: the readable copper role (5.06:1 or better on every surface), never the
-   decorative --color-accent. */
-.inquiry-form-section-heading > span { color: var(--color-accent-strong); font: 500 13px/1 var(--font-condensed), sans-serif; }
-.inquiry-form-section-heading h3 { margin: 0; color: var(--color-text-secondary); font: 700 11px/1.15 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.inquiry-form-section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 26px clamp(24px, 2.5vw, 36px) 28px; border-top: 1px solid var(--color-border); }
+/* One column: a small title over the fields, no step numbers (the steps after sending are numbered beside it). */
+.inquiry-form-section-title { margin: 0; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .inquiry-form-section-body { min-width: 0; }
 .inquiry-fields { display: grid; align-items: start; gap: 16px; }
 .inquiry-fields-two { grid-template-columns: 1fr 1fr; }
@@ -559,7 +529,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .about-subhero h1 { max-width: 860px; }
 .about-subhero .subhero-grid { z-index: 1; opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
 .about-subhero .subhero-overlay { z-index: 1; background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
-.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 48px; color: rgba(255,255,255,.47); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 48px; color: var(--color-dark-text-muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .breadcrumb span { display: inline-flex; align-items: center; gap: 8px; }
 .breadcrumb a { display: inline-flex; align-items: center; min-height: 24px; margin-block: -4px; transition: color var(--duration-fast) ease; }
 .breadcrumb a:hover { color: var(--color-dark-text); }
@@ -826,7 +796,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 
 .privacy-hero { padding: 180px 0 80px; color: var(--color-dark-text); background: var(--color-dark); }
 .privacy-hero h1 { max-width: 980px; margin: 28px 0 24px; font: 400 clamp(56px, 8vw, 106px)/.92 var(--font-display), sans-serif; letter-spacing: -.045em; }
-.privacy-hero > .shell > p:last-child { margin: 0; color: rgba(255,255,255,.58); font-size: 13px; }
+.privacy-hero > .shell > p:last-child { margin: 0; color: var(--color-dark-text-secondary); font-size: 13px; }
 .not-found-hero .not-found-lead { max-width: 560px; margin: 0; color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.6; }
 .not-found-hero .text-link { color: var(--color-dark-text); }
 .privacy-content { max-width: 980px; }
@@ -869,8 +839,6 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .steps { grid-template-columns: repeat(6, 1fr); }
   .steps li { grid-column: span 2; }
   .steps li:nth-child(n + 4) { grid-column: span 3; }
-  .contact-grid { grid-template-columns: minmax(0, 1fr); gap: var(--grid-gap); }
-  .contact-intro { position: static; }
   .subhero-layout { grid-template-columns: 1fr .55fr; gap: 56px; }
   .page-cta-grid { grid-template-columns: 1fr .65fr; gap: var(--grid-gap); }
   .detail-grid, .detail-steps { grid-template-columns: repeat(2, 1fr); }
@@ -900,24 +868,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
    identical declarations — a single query, split into two adjacent, non-overlapping ranges for
    no functional reason. Co-located here rather than re-adding a third small header-only block. */
 @media (max-width: 1180px) {
-  .contact-grid {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "intro" "form" "links";
-    gap: clamp(26px, 3.5vw, 40px);
-  }
-  .contact-intro {
-    display: contents;
-  }
-  .contact-copy { grid-area: intro; }
   .inquiry-form { grid-area: form; }
-  .contact-links { grid-area: links; }
-  .contact-copy h2 { max-width: none; }
-  .contact-title-break { display: none; }
-  .contact-copy > p:not(.eyebrow) { max-width: 720px; margin-bottom: 0; }
-  .contact-links { align-self: stretch; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .contact-links .contact-phone { padding-right: clamp(22px, 3vw, 36px); }
-  .contact-links .contact-messenger-row { padding-left: clamp(22px, 3vw, 36px); border-left: 1px solid var(--color-border); }
-  .contact-links .contact-email { grid-column: 1 / -1; }
   .nav-wrap { gap: 10px; }
   .brand { width: 226px; }
   .desktop-nav { gap: clamp(11px, 1.25vw, 14px); font-size: clamp(14px, 1.45vw, 15px); }
@@ -966,8 +917,6 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   }
   .shell { width: min(100% - 32px, 620px); }
   .section { padding-block: var(--section-space); }
-  .contact-grid { gap: 24px; }
-  .contact-copy > p:not(.eyebrow) { margin-top: 22px; }
   .ghost-word { display: none; }
   section[id] { scroll-margin-top: 88px; }
   a[href], button, summary, input, select, textarea { scroll-margin-top: 88px; }
@@ -1043,12 +992,9 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .steps { grid-template-columns: 1fr; }
   .steps li, .steps li:nth-child(n + 4) { grid-column: auto; min-height: 210px; }
   .steps h3 { margin-top: 24px; }
-  .contact h2 { max-width: 620px; font-size: var(--title-section); line-height: 1.03; }
   .inquiry-form { padding: 0; border-radius: 0 var(--radius-md) 0 var(--radius-md); }
   .inquiry-form-heading { min-height: 0; align-items: center; gap: 14px; padding: 17px 20px; }
-  .inquiry-form-section { grid-template-columns: 1fr; gap: 18px; padding: 22px 20px 24px; }
-  .inquiry-form-section-heading { display: flex; align-items: baseline; gap: 12px; padding-top: 0; }
-  .inquiry-form-section-heading h3 { font-size: 12px; }
+  .inquiry-form-section { gap: 14px; padding: 22px 20px 24px; }
   .inquiry-fields-two { grid-template-columns: 1fr; }
   .inquiry-config-brief { padding: 16px; }
   .inquiry-config-brief-heading { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -1058,9 +1004,6 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .inquiry-choice > div { grid-template-columns: 1fr 1fr; }
   .inquiry-form-submit-layout { grid-template-columns: 1fr; gap: 22px; }
   .inquiry-status { padding-inline: 20px; }
-  .contact-links { display: block; }
-  .pending-contact { padding-block: 13px; }
-  .contact-links .contact-phone, .contact-links .contact-messenger-row { padding-inline: 0; border-left: 0; }
   .subhero, .service-subhero { min-height: 660px; height: auto; }
   .subhero-grid { background-size: 46px 46px; }
   .directions-hero-sequence-image { object-position: var(--directions-hero-image-position-mobile, center 60%); }
@@ -1157,7 +1100,6 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
     .hero-lead,
     .promise-lead,
     .story-support,
-    .contact-copy > p:not(.eyebrow),
     .service-subhero-content > p:last-child,
     .subhero-side > p,
     .copy-column > p:not(.eyebrow),
@@ -1187,23 +1129,12 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .footer-contact-stack { gap: 10px 12px; }
   .footer-phone, .footer-email { font-size: 12px; }
   .footer-messengers .messenger-link { width: 38px; height: 38px; }
-  /* One row, as on every wider phone: the label, then the three 44 px buttons packed a little
-     closer. Below ~354 px there is no room for both, so the buttons wrap under the label. */
-  .contact-messenger-row { flex-wrap: wrap; gap: 12px; }
-  .contact-messengers { gap: 6px; }
 }
 
-/* Compact contact mode for low-height laptop viewports. */
+/* Compact inquiry form for low-height laptop viewports. */
 @media (min-width: 1181px) and (max-height: 900px) {
-  .contact.section { padding-block: 48px; }
-  .contact-grid { gap: clamp(42px, 4.5vw, 68px); }
-  .contact h2 { max-width: 600px; font-size: clamp(48px, 4.7vw, 64px); }
-  .contact-intro { top: 118px; }
-  .contact-copy > p:not(.eyebrow) { margin: 20px 0 26px; font-size: 14px; line-height: 1.6; }
-  .pending-contact { padding-block: 13px; }
   .inquiry-form-heading { min-height: 0; padding: 14px 24px; }
-  .inquiry-form-section { grid-template-columns: 86px minmax(0, 1fr); gap: 18px; padding: 17px 24px 18px; }
-  .inquiry-form-section-heading { gap: 6px; }
+  .inquiry-form-section { gap: 12px; padding: 17px 24px 18px; }
   .inquiry-fields { gap: 12px; }
   .inquiry-form label, .inquiry-select { gap: 6px; }
   .inquiry-form input, .inquiry-form select { min-height: 44px; }
@@ -1322,10 +1253,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 }
 
 /* Accessibility refinements shared by every page. */
-.breadcrumb { color: var(--color-dark-text-muted); }
 .breadcrumb a:hover, .breadcrumb a:focus-visible { color: var(--color-dark-text); }
 a.route-service:focus-visible { padding-inline: 26px; color: var(--color-dark-text); background: var(--color-dark); --color-accent-strong: var(--color-accent-on-dark); }
-.privacy-hero > .shell > p:last-child { color: var(--color-dark-text-secondary); }
 
 @media (forced-colors: active) {
   :where(a, button, input, select, textarea, summary):focus-visible {
@@ -1367,18 +1296,7 @@ a.route-service:focus-visible { padding-inline: 26px; color: var(--color-dark-te
   .entry-points-list li { grid-template-columns: 1fr; }
 }
 
-/* A page-specific checklist beside the inquiry form (InquirySection `checklist`), e.g. what helps
-   the first conversation on /yak-pratsyuiemo. Short labels in two columns, read as a list. */
-.contact-checklist { max-width: 560px; margin: 0 0 34px; }
-.contact-checklist h3 { margin: 0 0 14px; color: var(--color-text); font: 600 13px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-.contact-checklist ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; margin: 0; padding: 0; list-style: none; }
-.contact-checklist li { position: relative; padding-left: 16px; color: var(--color-text-secondary); font-size: 14px; line-height: 1.5; }
-.contact-checklist li::before { content: '—'; position: absolute; left: 0; color: var(--color-accent); }
-@media (max-width: 1180px) {
-  .contact-checklist { max-width: 720px; margin: 26px 0 0; }
-}
 @media (max-width: 340px) {
-  .contact-checklist ul { grid-template-columns: minmax(0, 1fr); }
   /* 320 px phones: the page H1 and the /napryamky route titles carry words («МЕТАЛОКОНСТРУКЦІЇ»,
      «конфіденційності») wider than the 288 px column at their usual size — size them to fit
      instead of breaking mid-letter or running past the card edge. */

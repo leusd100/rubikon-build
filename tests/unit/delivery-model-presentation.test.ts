@@ -19,7 +19,7 @@ const LABELS = ['Комплексна реалізація', 'Окремий п�
 const MODEL_CONSUMERS = [
   'app/page.tsx',
   'app/components/DirectionCards.tsx',
-  'app/components/InquirySection.tsx',
+  'app/components/ConversationSection.tsx',
   'app/components/ProjectInquiryForm.tsx',
   'app/napryamky/page.tsx',
   'app/yak-pratsyuiemo/page.tsx',

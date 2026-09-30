@@ -117,7 +117,7 @@ for (const viewport of viewports) {
     test('homepage inquiry form', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(
-        page.locator('#inquiry .hv2-conversation-grid'),
+        page.locator('#inquiry .conversation-grid'),
         `homepage-inquiry-${viewport.name}.png`,
       );
     });

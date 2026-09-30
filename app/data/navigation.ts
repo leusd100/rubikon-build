@@ -4,7 +4,7 @@ export const siteRoutes = {
   process: '/yak-pratsyuiemo',
   about: '/pro-nas',
   // Page-relative on purpose (no leading "/"): every page now has its own #inquiry section
-  // (homepage's own contact form, or a per-page InquirySection) — this lets the same nav
+  // (the shared ConversationSection) — this lets the same nav
   // link jump to whichever page's local form the visitor is already on, instead of always
   // bouncing back to the homepage and losing their direction context.
   contact: '#inquiry',

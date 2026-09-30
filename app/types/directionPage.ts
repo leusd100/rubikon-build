@@ -83,6 +83,9 @@ export type DirectionPageConfig = {
   };
   cta: {
     eyebrow: string;
+    /** The closing block's heading: short, two lines at most on a desktop. */
     title: string;
+    /** The page's own question under it. */
+    lead: string;
   };
 };

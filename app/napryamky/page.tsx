@@ -1,5 +1,5 @@
 import { Breadcrumbs, HeroCallLink, SectionHeader } from '../components/SiteChrome';
-import InquirySection from '../components/InquirySection';
+import { ConversationSection } from '../components/ConversationSection';
 import { DirectionRouteList } from '../components/DirectionCards';
 import { DirectionsHeroImageSequence } from '../components/DirectionsHeroImageSequence';
 import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
@@ -98,7 +98,10 @@ export default function DirectionsPage() {
       </section>
 
       <DirectionFaq title="Коротко про головне" items={faqItems} />
-      <InquirySection eyebrow="Почнемо з розмови" title="Не впевнені, який напрямок підходить? Опишіть завдання — розберемося разом." />
+      <ConversationSection
+        title="Опишіть завдання — підкажемо напрям"
+        lead="Не впевнені, який напрямок підходить? Розберемося разом. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит."
+      />
     </main>
   );
 }

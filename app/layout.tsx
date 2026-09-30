@@ -4,6 +4,7 @@ import { Jost, Manrope } from 'next/font/google';
 import './fonts/ibm-plex-sans-condensed.css';
 import './theme.css';
 import './globals.css';
+import './conversation.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
 import { SmoothScroll } from './components/SmoothScroll';

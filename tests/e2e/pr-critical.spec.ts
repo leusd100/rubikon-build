@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
+import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
+import { companyContactLinks } from '../../app/data/company';
 import { stubTurnstile } from './turnstile.helpers';
 
 function collectFatalBrowserErrors(page: Page) {
@@ -148,7 +150,7 @@ test('homepage server HTML carries the H1, the real-object proof, the conversati
     h1: '.hero h1',
     proofCaption: '#real-object .hv2-proof-photo figcaption',
     proofScope: '#real-object .hv2-scope-chips li',
-    conversationSteps: '#inquiry .hv2-journey h3',
+    conversationSteps: '#inquiry .conversation-journey h3',
     cooperation: '.inquiry-details select option',
   });
 
@@ -199,7 +201,7 @@ for (const width of [360, 375, 390]) {
     });
     expect(heading.widest).toBeLessThanOrEqual(heading.available);
     const overflowing = await page
-      .locator('#real-object .hv2-proof-facts, #real-object figcaption, #inquiry .hv2-journey li')
+      .locator('#real-object .hv2-proof-facts, #real-object figcaption, #inquiry .conversation-journey li')
       .evaluateAll((elements) => elements.filter((element) => element.scrollWidth > element.clientWidth + 1).length);
     expect(overflowing).toBe(0);
   });
@@ -246,7 +248,7 @@ test('homepage invites a project conversation while showing real team experience
 });
 
 test('homepage conversation explains the four steps without promising an estimate before project data', async ({ page }) => {
-  const text = await serverText(page, '/', { next: '#inquiry .hv2-journey', conversation: '#inquiry .hv2-conversation-intro' });
+  const text = await serverText(page, '/', { next: '#inquiry .conversation-journey', conversation: '#inquiry .conversation-intro' });
   const next = text.next.join(' ');
   const budget = deliveryModel.stages.find((stage) => stage.id === 'scope-budget');
 
@@ -335,6 +337,64 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }
 }
 
 // /yak-pratsyuiemo — the Delivery Model page, readable before and without JavaScript.
+// One closing conversation block everywhere: the same four step titles, each page's own explanations, and on a
+// direction page the form already names that direction.
+const CONVERSATION_PAGES: ReadonlyArray<{ path: string; journey: readonly string[] }> = [
+  { path: '/', journey: DEFAULT_JOURNEY },
+  { path: '/napryamky', journey: DEFAULT_JOURNEY },
+  { path: '/yak-pratsyuiemo', journey: DEFAULT_JOURNEY },
+  { path: '/pro-nas', journey: DEFAULT_JOURNEY },
+  ...Object.entries(DIRECTION_JOURNEY).map(([id, journey]) => ({ path: `/${id}`, journey })),
+];
+
+test('every page closes with the same conversation block, in its own words', async ({ page }) => {
+  for (const { path, journey } of CONVERSATION_PAGES) {
+    const text = await serverText(page, path, {
+      sections: '#inquiry.conversation',
+      call: '#inquiry .conversation-call::href',
+      channels: '#inquiry .conversation-channels .messenger-link',
+      form: '#inquiry .inquiry-form',
+      titles: '#inquiry .conversation-journey h3',
+      steps: '#inquiry .conversation-journey p',
+      legacy: '.contact, .contact-links, .pending-contact',
+    });
+    expect(text.sections, path).toHaveLength(1);
+    expect(text.call, path).toEqual([companyContactLinks.phone]);
+    expect(text.channels, path).toHaveLength(4);
+    expect(text.form, path).toHaveLength(1);
+    expect(text.titles, path).toEqual([...JOURNEY_TITLES]);
+    expect(text.steps, path).toEqual([...journey]);
+    expect(text.legacy, path).toEqual([]);
+  }
+});
+
+test('the form carries no step numbers; a phone folds the step texts behind one button', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/angary', { waitUntil: 'load' });
+  const form = page.locator('#inquiry .inquiry-form');
+  await expect(form.locator('.inquiry-form-section-title')).toHaveText(['Контакт', 'Завдання']);
+  await expect(form.getByText('Підтвердження', { exact: true })).toHaveCount(0);
+
+  const steps = page.locator('#inquiry .conversation-journey');
+  const toggle = page.locator('#inquiry .conversation-journey-toggle');
+  await expect(steps.locator('h3')).toHaveCount(4);
+  await expect(steps.locator('p').first()).toBeHidden();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(steps.locator('p').first()).toBeVisible();
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(toggle).toBeHidden();
+  await toggle.evaluate((element) => (element as HTMLButtonElement).click());
+  await expect(steps.locator('p')).toHaveCount(4);
+  for (const text of await steps.locator('p').all()) await expect(text).toBeVisible();
+});
+
+test('a direction page preselects its own direction in the form', async ({ page }) => {
+  await page.goto('/metalokonstruktsii', { waitUntil: 'load' });
+  await expect(page.locator('#inquiry select').first()).toHaveValue('Металоконструкції');
+});
+
 const DELIVERY_PAGE = '/yak-pratsyuiemo';
 const FORBIDDEN_CLAIMS = [/генеральн\S*\s+підряд/i, /гаранті/i, /ліценз/i, /сертифікат/i, /штат/i, /\d+\s?(хв|хвилин|год)/i, /грн|₴|\$|€/, /від\s*\d[^.]*м²/i];
 
@@ -404,7 +464,7 @@ test('/yak-pratsyuiemo keeps every model fact in the server HTML, however the pa
     phoneDocuments: '#dokumenty .delivery-docs-mobile .delivery-doc-label',
     factors: '#biudzhet .delivery-chips li',
     budget: '#biudzhet',
-    contactIntro: '#inquiry .contact-copy > p:last-of-type',
+    contactIntro: '#inquiry .conversation-lead',
     contents: '.delivery-contents a',
     legend: '.delivery-token-legend a',
   });
@@ -487,7 +547,7 @@ test.describe('/yak-pratsyuiemo without JavaScript', () => {
     await expect(notes.locator('li')).toHaveCount(deliveryModel.responsibility.filter((row) => 'note' in row).length);
     await expect(notes.locator('li').first()).toBeVisible();
     await expect(page.locator('#dokumenty .delivery-docs-desktop .delivery-doc-label')).toHaveCount(19);
-    await expect(page.locator('#inquiry .contact-copy')).toContainText('Для початку достатньо коротко описати об’єкт або потрібні роботи');
+    await expect(page.locator('#inquiry .conversation-intro')).toContainText('Для початку достатньо коротко описати об’єкт або потрібні роботи');
   });
 
   test('folds responsibility and documents into one-at-a-time panels on a phone', async ({ page }) => {
