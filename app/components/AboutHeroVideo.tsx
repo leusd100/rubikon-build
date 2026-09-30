@@ -49,7 +49,6 @@ export function AboutHeroVideo() {
       loopSingleSource
       playbackRate={isDesktop ? 0.85 : 1}
       videoMediaQuery={hasResolvedViewport ? 'all' : '(min-width: 99999px)'}
-      control="round"
     />
   );
 }

@@ -13,11 +13,6 @@ type DirectionHeroVideoProps = {
   loopSingleSource?: boolean;
   playbackRate?: number;
   videoMediaQuery?: string;
-  /**
-   * 'text' (default): one pressed toggle named «Пауза відео». 'round': a pause / play icon in a circle beside the word
-   * for the next action («Пауза» / «Відтворити»); the name changes with it, so it carries no aria-pressed.
-   */
-  control?: 'text' | 'round';
 };
 
 const DEFAULT_FADE_DURATION_MS = 1100;
@@ -32,7 +27,6 @@ export function DirectionHeroVideo({
   loopSingleSource = true,
   playbackRate = 1,
   videoMediaQuery = '(min-width: 761px)',
-  control = 'text',
 }: DirectionHeroVideoProps) {
   const [activeSource, setActiveSource] = useState(0);
   const [outgoingSource, setOutgoingSource] = useState<number | null>(null);
@@ -169,16 +163,14 @@ export function DirectionHeroVideo({
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         />
       </picture>
-      {hasStartedPlayback && canUseVideo && shouldLoadMedia && (control === 'round' ? (
-        <button type="button" className="hero-video-control hero-video-control-round" data-paused={userPaused || undefined} onClick={togglePause}>
+      {/* The word names the next action and the name changes with it («Пауза відео» / «Відтворити відео»), so the
+          button carries no aria-pressed; the icon beside it says the same */}
+      {hasStartedPlayback && canUseVideo && shouldLoadMedia && (
+        <button type="button" className="hero-video-control" data-paused={userPaused || undefined} onClick={togglePause}>
           <span className="hero-video-control-label">{userPaused ? 'Відтворити' : 'Пауза'}<span className="sr-only"> відео</span></span>
           <span className="hero-video-control-icon" aria-hidden="true" />
         </button>
-      ) : (
-        <button type="button" className="hero-video-control" aria-pressed={userPaused} onClick={togglePause}>
-          Пауза відео
-        </button>
-      ))}
+      )}
       {sources.map((source, index) => (
         <video
           key={source}

@@ -4,6 +4,7 @@ import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { company, companyContactLinks } from '../../app/data/company';
 import { homeProofCase } from '../../app/data/homeProof';
+import { directions } from '../../app/data/directions';
 import { stubTurnstile } from './turnstile.helpers';
 
 function collectFatalBrowserErrors(page: Page) {
@@ -303,9 +304,9 @@ test('the conversation intro never slides over the steps, and sticks only where 
   }
 });
 
-// /pro-nas v2: the two people and what each answers for, principles that point to their mechanism on
-// /yak-pratsyuiemo, and where we work.
-test('/pro-nas shows who answers for what and principles with their mechanisms', async ({ page }) => {
+// /pro-nas v2: the two people and what each answers for, what we build and where, principles that point to their
+// mechanism on /yak-pratsyuiemo.
+test('/pro-nas shows who answers for what, what we build and where, principles with their mechanisms', async ({ page }) => {
   await page.goto('/pro-nas', { waitUntil: 'load' });
   await expect(page.locator('.team-about .person-story')).toHaveCount(2);
   await expect(page.locator('.team-about .person-focus')).toHaveCount(2);
@@ -319,7 +320,13 @@ test('/pro-nas shows who answers for what and principles with their mechanisms',
 
   const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
   expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
-  await expect(page.locator('.about-geo-text')).toHaveText(company.geography);
+  // Five direction rows, each one link named by its title and leading to the direction's page, then the region
+  const rows = page.locator('.about-build-list li');
+  await expect(rows).toHaveCount(directions.length);
+  await expect(page.locator('.about-build-list h3')).toHaveText(directions.map((direction) => direction.cardTitle));
+  expect(await page.locator('.about-build-list a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(directions.map((direction) => direction.href));
+  await expect(page.locator('.about-build-list img')).toHaveCount(0);
+  await expect(page.locator('.about-build-geo')).toContainText(company.geography);
   // Owner's decision (30.09): no «Ілюстрація» tags on this page; the conceptual image says so in its alt text
   await expect(page.locator('main')).not.toContainText('Ілюстрація');
   await expect(page.locator('.about-story-section img')).toHaveAttribute('alt', /^Концептуальна ілюстрація/);

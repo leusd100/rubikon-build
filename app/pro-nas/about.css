@@ -1,6 +1,7 @@
 /* /pro-nas — who stands behind the company. Zones: hero (dark, illustrative video) → the two people (paper, two cards
-   tied by one copper line) → how practice shows before work (stone, illustration + three settled things) → principles
-   (the charcoal band, each with its mechanism) → where we work (paper strip) → the site-wide conversation block.
+   tied by one copper line) → what we build and where (stone, five direction rows + the region) → how practice shows
+   before work (paper, illustration + three settled things) → principles (the charcoal band, each with its mechanism)
+   → the site-wide conversation block.
    Theme roles only (app/theme.css): Light and Dark need no rules of their own. Motion (ProcessMotion, root
    .about-page) plays once; without it — or with reduced motion — every block shows its final state. */
 
@@ -45,24 +46,6 @@
     linear-gradient(90deg, rgba(10, 11, 12, .92) 0%, rgba(10, 11, 12, .8) 42%, rgba(10, 11, 12, .36) 100%),
     linear-gradient(0deg, rgba(10, 11, 12, .82) 0%, transparent 52%, rgba(10, 11, 12, .42) 100%);
 }
-/* The footage's own control, bottom right (DirectionHeroVideo control="round"): the word for the next action beside a
-   pause / play icon in a circle. The icon is the circle's only content, so it sits on the centre; the play triangle is
-   nudged 1.5 px right, onto its optical centre. The whole pill is the target, and the focus ring follows it. */
-.about-subhero .hero-video-control-round {
-  right: 24px; bottom: 24px; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 0 0 14px;
-  color: var(--color-dark-text); background: none; border: 0; border-radius: 22px;
-  font: 700 11.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase;
-}
-.hero-video-control-label { color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); transition: color var(--duration-fast) ease; }
-.hero-video-control-icon {
-  display: grid; place-items: center; flex: none; width: 44px; height: 44px; background: rgba(13, 16, 14, .62);
-  border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
-}
-.hero-video-control-icon::before { content: ''; width: 12px; height: 16px; background: linear-gradient(90deg, currentColor 0 4px, transparent 4px 8px, currentColor 8px 12px); }
-.hero-video-control-round[data-paused] .hero-video-control-icon { border-color: var(--color-accent-on-dark); }
-.hero-video-control-round[data-paused] .hero-video-control-icon::before { width: 0; height: 0; background: none; border-block: 8px solid transparent; border-left: 13px solid currentColor; translate: 1.5px 0; }
-.hero-video-control-round:hover .hero-video-control-label { color: var(--color-dark-text); }
-.hero-video-control-round:hover .hero-video-control-icon { background: rgba(13, 16, 14, .82); border-color: var(--color-accent-on-dark); }
 
 /* ---------------------------------------------------------------- 2 · The two people */
 .team-about .team-stories { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--grid-gap); padding-bottom: 76px; border-top: 0; }
@@ -94,9 +77,68 @@
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond::after { transform: scaleX(0); }
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond span { opacity: 0; }
 
-/* ---------------------------------------------------------------- 3 · Practice before work starts */
-/* Stone between the paper of the people and the charcoal of the principles */
-.about-story-section { background: var(--color-surface); }
+/* ---------------------------------------------------------------- 3 · What we build and where */
+/* Each direction is one row, and the whole row is its link (the title's ::after covers it). Pointed at (devices that
+   hover) or focused, a row takes the charcoal ground: it sweeps in from the left, and each part turns light as the
+   ground reaches it — the number, the title, the words, then the arrow, whose circle turns copper; on the way out the
+   right side goes back first. The region closes the list. */
+.about-build { --sweep: 420ms; background: var(--color-surface); }
+.about-build-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
+.about-build-list li {
+  position: relative; isolation: isolate; display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1.2fr) 44px;
+  grid-template-areas: 'num title text arrow'; align-items: center; gap: 12px clamp(20px, 3vw, 48px);
+  min-height: 108px; padding: 24px clamp(16px, 2vw, 28px); border-bottom: 1px solid var(--color-border);
+}
+.about-build-list li::before { content: ''; position: absolute; z-index: -1; inset: 0; background: var(--color-dark); transform: scaleX(0); transform-origin: left; }
+.about-build-number { grid-area: num; color: var(--color-accent-strong); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
+.about-build-list h3 { grid-area: title; margin: 0; color: var(--color-text); font: 600 clamp(22px, 2.2vw, 32px)/1.08 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: uppercase; }
+.about-build-list h3 a { color: inherit; text-decoration: none; }
+.about-build-list h3 a::after { content: ''; position: absolute; inset: 0; }
+.about-build-list p { grid-area: text; margin: 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
+.about-build-arrow {
+  grid-area: arrow; justify-self: end; display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-strong);
+  border: 1px solid var(--color-border-strong); border-radius: 50%;
+}
+.about-build-arrow span { font-size: 17px; line-height: 1; }
+/* Keyboard: the whole row carries the ring, not the title alone */
+.about-build-list h3 a:focus-visible { outline: none; box-shadow: none; }
+.about-build-list li:has(a:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+@media (hover: hover) {
+  .about-build-list li:hover::before { transform: scaleX(1); }
+  .about-build-list li:hover .about-build-number { color: var(--color-accent-on-dark); }
+  .about-build-list li:hover h3 { color: var(--color-dark-text); }
+  .about-build-list li:hover p { color: var(--color-dark-text-secondary); }
+  .about-build-list li:hover .about-build-arrow { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+  .about-build-list li:hover .about-build-arrow span { transform: translate(2px, -2px); }
+}
+.about-build-list li:has(a:focus-visible)::before { transform: scaleX(1); }
+.about-build-list li:has(a:focus-visible) .about-build-number { color: var(--color-accent-on-dark); }
+.about-build-list li:has(a:focus-visible) h3 { color: var(--color-dark-text); }
+.about-build-list li:has(a:focus-visible) p { color: var(--color-dark-text-secondary); }
+.about-build-list li:has(a:focus-visible) .about-build-arrow { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+@media (prefers-reduced-motion: no-preference) {
+  .about-build-list li::before { transition: transform var(--sweep) var(--m-ease); }
+  /* Out: the right side goes back first (the base delays). In: left to right, behind the ground (the hover delays). */
+  .about-build-number { transition: color 200ms ease 220ms; }
+  .about-build-list h3 { transition: color 200ms ease 170ms; }
+  .about-build-list p { transition: color 200ms ease 90ms; }
+  .about-build-arrow { transition: color 200ms ease, border-color 200ms ease; }
+  .about-build-arrow span { transition: transform var(--duration-fast) var(--m-ease); }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-number { transition-delay: 40ms; }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) h3 { transition-delay: 90ms; }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) p { transition-delay: 170ms; }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow { transition-delay: 260ms; }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow span { transition-delay: 260ms; }
+}
+.about-build-geo { display: flex; align-items: flex-start; gap: 14px; max-width: 900px; margin-top: 34px; }
+.about-build-geo svg { flex: none; width: 26px; height: 26px; margin-top: 1px; color: var(--color-accent-strong); stroke-width: 1.5; }
+.about-build-geo p { margin: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.7; }
+.about-build-geo b { color: var(--color-text); font-weight: 700; }
+.about-page[data-motion-ready="on"] .about-build-list li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
+.about-page[data-motion-ready] .about-build-list:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(12px); }
+
+/* ---------------------------------------------------------------- 4 · Practice before work starts */
+.about-story-section { background: var(--color-bg); }
 .about-story-layout { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); align-items: center; gap: var(--grid-gap); }
 .about-story-section .promise-visual { min-height: 560px; }
 .about-story-copy .eyebrow { margin-bottom: 22px; }
@@ -111,7 +153,7 @@
 .about-page[data-motion-ready="on"] .about-before li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 160ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 160ms); }
 .about-page[data-motion-ready] .about-before:not([data-motion-state="on"]) li { opacity: 0; transform: translateX(-10px); }
 
-/* ---------------------------------------------------------------- 4 · Principles (charcoal band) */
+/* ---------------------------------------------------------------- 5 · Principles (charcoal band) */
 .about-principles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2vw, 28px); margin: 0; padding: 0; list-style: none; }
 .about-principles-grid li { display: grid; grid-template-rows: auto auto auto 1fr auto; min-width: 0; padding: 28px 28px 26px; border: 1px solid var(--color-dark-line); border-top: 2px solid var(--color-accent-on-dark); }
 .about-principle-index { color: var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
@@ -127,21 +169,14 @@
 .about-page[data-motion-ready="on"] .about-principles-grid li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 150ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 150ms); }
 .about-page[data-motion-ready] .about-principles-grid:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(14px); }
 
-/* ---------------------------------------------------------------- 5 · Where we work */
-.about-geo { padding-block: clamp(48px, 6vw, 80px); background: var(--color-bg); border-bottom: 1px solid var(--color-border); }
-.about-geo-layout { display: grid; grid-template-columns: 52px minmax(0, .95fr) minmax(0, 1.05fr); align-items: center; gap: clamp(20px, 3vw, 48px); }
-.about-geo-pin { width: 40px; height: 40px; color: var(--color-accent-strong); stroke-width: 1.4; }
-.about-geo .eyebrow { margin-bottom: 14px; }
-.about-geo h2 { margin: 0; font: 400 clamp(30px, 3vw, 44px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; text-wrap: balance; }
-.about-geo-text { max-width: 560px; margin: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.7; }
-
 /* ---------------------------------------------------------------- Tablet */
 @media (max-width: 1050px) {
   .about-story-layout { grid-template-columns: minmax(0, 1fr); }
   .about-story-section .promise-visual { min-height: 420px; }
   .about-principles-grid { grid-template-columns: minmax(0, 1fr); }
-  .about-geo-layout { grid-template-columns: 44px minmax(0, 1fr); }
-  .about-geo-text { grid-column: 2; }
+  .about-build-list li { grid-template-columns: 52px minmax(0, 1fr) 44px; grid-template-areas: 'num title arrow' 'num text arrow'; align-items: start; min-height: 0; padding-block: 22px; }
+  .about-build-number { padding-top: 8px; }
+  .about-build-arrow { align-self: center; }
 }
 
 /* ---------------------------------------------------------------- Phone */
@@ -152,7 +187,6 @@
   .about-page .about-subhero-side > p { font-size: 16px; }
   .about-hero-actions { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 28px; }
   .about-hero-actions .about-hero-cta { width: 100%; }
-  .about-subhero .hero-video-control-round { right: 16px; bottom: 16px; }
   /* Phone: the breadcrumbs sit right under the header, over the top of the footage */
   .about-page .about-subhero .subhero-overlay {
     background:
@@ -162,7 +196,10 @@
   }
   .about-story-section .promise-visual { min-height: 320px; }
   .about-principles-grid li { padding: 24px 20px 22px; }
-  .about-geo-layout { grid-template-columns: minmax(0, 1fr); }
-  .about-geo-text { grid-column: auto; }
-  .about-geo-pin { width: 32px; height: 32px; }
+  /* Number and arrow on one line, the title the full width under them, then the words */
+  .about-build-list li { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: 'num arrow' 'title title' 'text text'; align-items: center; gap: 10px 12px; padding: 20px 12px; }
+  .about-build-number { padding-top: 0; }
+  .about-build-list h3 { font-size: clamp(22px, 6.4vw, 26px); }
+  .about-build-list p { font-size: 15px; }
+  .about-build-geo p { font-size: 15.5px; }
 }

@@ -1,14 +1,11 @@
 import { expect, test, type Locator } from '@playwright/test';
 
-// HOME's control is one pressed toggle named «Пауза відео»; the round /pro-nas control names the next action instead
-// («Пауза відео» ↔ «Відтворити відео»), so it carries no aria-pressed.
-async function expectPaused(control: Locator, route: string, paused: boolean) {
-  if (route === '/pro-nas') {
-    await expect(control).toHaveAccessibleName(paused ? 'Відтворити відео' : 'Пауза відео');
-    await expect(control).not.toHaveAttribute('aria-pressed');
-  } else {
-    await expect(control).toHaveAttribute('aria-pressed', String(paused));
-  }
+// The hero control names the next action («Пауза відео» ↔ «Відтворити відео»), so it carries no aria-pressed; the
+// icon in its circle and the visible word change with it.
+async function expectPaused(control: Locator, paused: boolean) {
+  await expect(control).toHaveAccessibleName(paused ? 'Відтворити відео' : 'Пауза відео');
+  await expect(control).not.toHaveAttribute('aria-pressed');
+  await expect(control.locator('.hero-video-control-label')).toHaveText(paused ? 'Відтворити відео' : 'Пауза відео');
 }
 
 for (const route of ['/', '/pro-nas']) {
@@ -35,11 +32,11 @@ for (const route of ['/', '/pro-nas']) {
     }))).toBe(true);
     await expect.poll(() => video.evaluateAll((videos) => videos.findIndex((node) => !(node as HTMLVideoElement).paused))).toBe(visibleIndex);
     await pause.click();
-    await expectPaused(pause, route, true);
+    await expectPaused(pause, true);
     await expect.poll(() => video.evaluateAll((videos) => videos.every((node) => (node as HTMLVideoElement).paused))).toBe(true);
     expect((await pause.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await pause.press('Space');
-    await expectPaused(pause, route, false);
+    await expectPaused(pause, false);
     await expect.poll(() => video.evaluateAll((videos) => videos.some((node) => !(node as HTMLVideoElement).paused))).toBe(true);
   });
 }
@@ -93,7 +90,7 @@ for (const path of ['/', '/pro-nas']) {
       expect(overlaps).toEqual([]);
       expect((await pause.boundingBox())!.height).toBeGreaterThanOrEqual(44);
       await pause.click();
-      await expectPaused(pause, path, true);
+      await expectPaused(pause, true);
       expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
     });
   }

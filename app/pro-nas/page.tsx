@@ -8,11 +8,14 @@ import ResponsiveImage from '../components/ResponsiveImage';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
+import { directions } from '../data/directions';
 import './about.css';
 
-// /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, how Serhii's
-// practice shows before work starts, three principles that each point to the mechanism on /yak-pratsyuiemo, where we
-// work, the conversation. Every sentence is the page's previous copy, the team bios or company data.
+// /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we build
+// and where (the five directions, each leading to its page, and the region), how Serhii's practice shows before work
+// starts, three principles that each point to the mechanism on /yak-pratsyuiemo, the conversation. Every sentence is
+// the page's previous copy, the team bios, the directions' own card copy, the HOME and /napryamky headings, or
+// company data.
 // Owner's decisions (30.09): no object photo here until RUBIKON BUILD has objects of its own to show — the one real
 // photo, from Serhii's work before the company, stays on HOME with its attribution; and the imagery, all of it
 // illustrative, carries no «Ілюстрація» tag here — the conceptual image says so in its alt text.
@@ -95,7 +98,35 @@ export default function AboutPage() {
       {/* 2 · The two people and what each answers for */}
       <TeamSection variant="about" />
 
-      {/* 3 · How Serhii's practice shows before work starts */}
+      {/* 3 · What we build and where: each direction is one row that leads to its page and takes the charcoal ground
+          when pointed at or focused; the region closes the list. Headings from HOME and /napryamky, rows from the
+          directions' own card copy — no images, so nothing here can read as a finished object. */}
+      <section className="page-section about-build" aria-labelledby="about-build-title">
+        <div className="shell">
+          <SectionHeader
+            eyebrow="Напрямки робіт"
+            title="П’ять напрямів для бізнесу й агросектору"
+            titleId="about-build-title"
+            supporting="Кожен пункт веде до конкретних можливостей, процесу й чинників вартості. Для комплексного об’єкта можна почати з будь-якого близького напрямку."
+          />
+          <ol className="about-build-list" data-motion>
+            {directions.map((direction, index) => (
+              <li key={direction.id} style={{ '--i': index } as CSSProperties}>
+                <span className="about-build-number" aria-hidden="true">{direction.number}</span>
+                <h3><a href={direction.href}>{direction.cardTitle}</a></h3>
+                <p>{direction.cardText}</p>
+                <span className="about-build-arrow" aria-hidden="true"><span>↗</span></span>
+              </li>
+            ))}
+          </ol>
+          <div className="about-build-geo">
+            <MapPin aria-hidden="true" />
+            <p><b>Дніпро і Дніпропетровська область.</b> {company.geography}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 4 · How Serhii's practice shows before work starts */}
       <section className="page-section about-story-section" aria-labelledby="about-story-title">
         <div className="shell about-story-layout">
           <div className="promise-visual about-planning-visual">
@@ -124,7 +155,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 4 · Principles, each pointing to how it works on /yak-pratsyuiemo */}
+      {/* 5 · Principles, each pointing to how it works on /yak-pratsyuiemo */}
       <section className="page-section page-section-dark about-principles" aria-labelledby="about-principles-title">
         <div className="shell">
           <SectionHeader
@@ -145,18 +176,6 @@ export default function AboutPage() {
               </li>
             ))}
           </ol>
-        </div>
-      </section>
-
-      {/* 5 · Where we work */}
-      <section className="page-section about-geo" aria-labelledby="about-geo-title">
-        <div className="shell about-geo-layout">
-          <MapPin className="about-geo-pin" aria-hidden="true" />
-          <div>
-            <p className="eyebrow"><span /> Де працюємо</p>
-            <h2 id="about-geo-title">Дніпро і Дніпропетровська область</h2>
-          </div>
-          <p className="about-geo-text">{company.geography}</p>
         </div>
       </section>
 
