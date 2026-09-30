@@ -322,7 +322,9 @@ test('/pro-nas shows who answers for what, the real object with its attribution,
   const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
   expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
   await expect(page.locator('.about-geo-text')).toHaveText(company.geography);
-  await expect(page.locator('.about-provenance')).toHaveText('Ілюстрація');
+  // Owner's decision (30.09): no «Ілюстрація» tags on this page; the conceptual image says so in its alt text
+  await expect(page.locator('main')).not.toContainText('Ілюстрація');
+  await expect(page.locator('.about-story-section img')).toHaveAttribute('alt', /^Концептуальна ілюстрація/);
   await expect(page.locator('.ghost-word')).toHaveCount(0);
 
   // Every principle lands on a zone that exists

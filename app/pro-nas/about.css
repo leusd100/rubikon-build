@@ -12,16 +12,31 @@
 .about-page [id] { scroll-margin-top: 96px; }
 
 /* ---------------------------------------------------------------- 1 · Hero */
+/* The /yak-pratsyuiemo composition: crumbs, eyebrow and title, then the lead and one row of actions under them; the
+   footage keeps the right side. From 761 px the section grows with its content rather than clipping it on short
+   screens (phones already size it by content). */
 .about-subhero { isolation: isolate; }
-/* Deeper at the bottom and on the right, where the side text sits over the lit paper and hands: every hero text
-   stays at 4.5:1 or more against the brightest 5 % of the footage behind it */
+.about-page .about-subhero .subhero-layout { display: block; }
+.about-page .about-subhero-side { width: auto; margin-top: 30px; padding-top: 0; border-top: 0; }
+.about-page .about-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: 17px; line-height: 1.7; }
+.about-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: 38px; }
+.about-hero-actions .about-hero-cta, .about-hero-actions .hero-call { margin: 0; }
+@media (min-width: 761px) {
+  .about-page .about-subhero { height: auto; min-height: max(100svh, 700px); }
+}
+/* Dark under the words on the left, the footage open on the right: every hero text stays at 4.5:1 or more against
+   the brightest 5 % of each clip behind it */
 .about-page .about-subhero .subhero-overlay {
   background:
-    linear-gradient(90deg, rgba(10, 11, 12, .9), rgba(10, 11, 12, .66) 44%, rgba(10, 11, 12, .5) 70%, rgba(10, 11, 12, .56)),
-    linear-gradient(0deg, rgba(10, 11, 12, .86) 0%, rgba(10, 11, 12, .58) 34%, transparent 66%);
+    linear-gradient(90deg, rgba(10, 11, 12, .92) 0%, rgba(10, 11, 12, .8) 42%, rgba(10, 11, 12, .36) 100%),
+    linear-gradient(0deg, rgba(10, 11, 12, .82) 0%, transparent 52%, rgba(10, 11, 12, .42) 100%);
 }
-/* A compass arc and its construction lines, set out once (ProcessMotion), then still */
-.about-hero-trace { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* A compass arc and its construction lines, set out once (ProcessMotion), then still. The lines fade out before the
+   bottom corner, so none runs behind the video control's word. */
+.about-hero-trace {
+  position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none;
+  mask-image: linear-gradient(180deg, #000 58%, transparent 80%);
+}
 .about-hero-trace path { fill: none; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; }
 .aht-grid { stroke: rgba(245, 242, 235, .07); stroke-width: 1; }
 .aht-leg, .aht-arc { stroke: var(--color-accent-on-dark); stroke-width: 1.2; opacity: .6; }
@@ -34,20 +49,24 @@
 .about-page[data-motion-ready="on"] .about-hero-trace .aht-node { transition: opacity var(--m-reveal) ease 200ms; }
 .about-page[data-motion-ready] .about-hero-trace:not([data-motion-state="on"]) path { stroke-dashoffset: 1; }
 .about-page[data-motion-ready] .about-hero-trace:not([data-motion-state="on"]) .aht-node { opacity: 0; }
-/* The media's own controls sit together in its bottom-right corner: provenance, then a round pause / play */
-.about-page .about-subhero .hero-video-control {
-  right: 24px; bottom: 24px; display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0;
-  color: var(--color-dark-text); background: rgba(13, 16, 14, .62); border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%;
-  font-size: 0; /* the words stay the accessible name */ transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+/* The footage's own control, bottom right (DirectionHeroVideo control="round"): the word for the next action beside a
+   pause / play icon in a circle. The icon is the circle's only content, so it sits on the centre; the play triangle is
+   nudged 1.5 px right, onto its optical centre. The whole pill is the target, and the focus ring follows it. */
+.about-subhero .hero-video-control-round {
+  right: 24px; bottom: 24px; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 0 0 14px;
+  color: var(--color-dark-text); background: none; border: 0; border-radius: 22px;
+  font: 700 11.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase;
 }
-.about-page .about-subhero .hero-video-control::before { content: ''; width: 12px; height: 14px; background: linear-gradient(90deg, currentColor 0 4px, transparent 4px 8px, currentColor 8px 12px); }
-.about-page .about-subhero .hero-video-control[aria-pressed="true"]::before { width: 0; height: 0; margin-left: 4px; background: none; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 12px solid currentColor; }
-.about-page .about-subhero .hero-video-control:hover { background: rgba(13, 16, 14, .82); border-color: var(--color-accent-on-dark); }
-.about-provenance {
-  position: absolute; z-index: 3; right: 80px; bottom: 34px; padding: 5px 8px; pointer-events: none; color: color-mix(in srgb, var(--color-dark-text) 86%, transparent);
-  background: rgba(13, 16, 14, .72); border: 1px solid rgba(255, 255, 255, .18); font: 600 11px/1.2 var(--font-condensed), sans-serif;
-  letter-spacing: .08em; text-transform: uppercase;
+.hero-video-control-label { color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); transition: color var(--duration-fast) ease; }
+.hero-video-control-icon {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; background: rgba(13, 16, 14, .62);
+  border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
 }
+.hero-video-control-icon::before { content: ''; width: 12px; height: 16px; background: linear-gradient(90deg, currentColor 0 4px, transparent 4px 8px, currentColor 8px 12px); }
+.hero-video-control-round[data-paused] .hero-video-control-icon { border-color: var(--color-accent-on-dark); }
+.hero-video-control-round[data-paused] .hero-video-control-icon::before { width: 0; height: 0; background: none; border-block: 8px solid transparent; border-left: 13px solid currentColor; translate: 1.5px 0; }
+.hero-video-control-round:hover .hero-video-control-label { color: var(--color-dark-text); }
+.hero-video-control-round:hover .hero-video-control-icon { background: rgba(13, 16, 14, .82); border-color: var(--color-accent-on-dark); }
 
 /* ---------------------------------------------------------------- 2 · The two people */
 .team-about .team-stories { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--grid-gap); padding-bottom: 76px; border-top: 0; }
@@ -159,8 +178,11 @@
 @media (max-width: 760px) {
   .team-about .team-stories { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 64px; }
   .team-about .person-info h3 { white-space: normal; }
-  .about-provenance { right: 72px; bottom: 26px; }
-  .about-page .about-subhero .hero-video-control { right: 16px; bottom: 16px; }
+  .about-page .about-subhero-side { margin-top: 22px; }
+  .about-page .about-subhero-side > p { font-size: 16px; }
+  .about-hero-actions { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 28px; }
+  .about-hero-actions .about-hero-cta { width: 100%; }
+  .about-subhero .hero-video-control-round { right: 16px; bottom: 16px; }
   .about-hero-trace { display: none; }
   /* Phone: the breadcrumbs sit right under the header, over the top of the footage */
   .about-page .about-subhero .subhero-overlay {

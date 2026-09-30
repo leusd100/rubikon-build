@@ -15,8 +15,9 @@ import './about.css';
 // /pro-nas — who stands behind the company, in six zones: the two people and what each answers for, the one real
 // object from Serhii's practice (the owner-approved HOME proof, same attribution), how that practice shows before work
 // starts, three principles that each point to the mechanism on /yak-pratsyuiemo, where we work, the conversation.
-// Every sentence is the page's previous copy, the team bios, the Delivery Model or company data; imagery other than
-// the proof photo is illustrative and labelled «Ілюстрація».
+// Every sentence is the page's previous copy, the team bios, the Delivery Model or company data. Imagery other than
+// the proof photo is illustrative; by the owner's decision (30.09) it carries no «Ілюстрація» tag here — the
+// conceptual image says so in its alt text, and only the real object is captioned as a photo of an object.
 
 export const metadata = createPageMetadata({
   path: '/pro-nas',
@@ -67,7 +68,7 @@ export default function AboutPage() {
     <main className="inner-page about-page" id="main-content">
       <ProcessMotion root=".about-page" />
 
-      {/* 1 · Hero — the names behind the reputation */}
+      {/* 1 · Hero — the names behind the reputation; words and actions under the title, as on /yak-pratsyuiemo */}
       <section className="subhero about-subhero">
         <div className="about-hero-media">
           <AboutHeroVideo />
@@ -93,13 +94,14 @@ export default function AboutPage() {
           </div>
           <div className="subhero-side about-subhero-side">
             <p>RUBIKON BUILD — родинна компанія з Дніпра. В основі — практичний досвід Сергія Івановича, особиста відповідальність і системний підхід.</p>
-            <a className="button button-primary about-hero-cta" href="#inquiry">
-              Обговорити проєкт <span aria-hidden="true">↗</span>
-            </a>
-            <HeroCallLink />
+            <div className="about-hero-actions">
+              <a className="button button-primary about-hero-cta" href="#inquiry">
+                Обговорити проєкт <span aria-hidden="true">↗</span>
+              </a>
+              <HeroCallLink />
+            </div>
           </div>
         </div>
-        <span className="about-provenance">Ілюстрація</span>
       </section>
 
       {/* 2 · The two people and what each answers for */}
@@ -148,7 +150,6 @@ export default function AboutPage() {
               alt="Концептуальна ілюстрація: зіставлення робочого креслення з вузлом сталевого каркаса"
               sizes="(max-width: 1050px) 100vw, 40vw"
             />
-            <span className="visual-index">Ілюстрація</span>
             <span className="image-note">Від креслення — до перевірки на майданчику</span>
           </div>
           <div className="about-story-copy">

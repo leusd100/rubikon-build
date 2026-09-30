@@ -1,4 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
+
+// HOME's control is one pressed toggle named «Пауза відео»; the round /pro-nas control names the next action instead
+// («Пауза відео» ↔ «Відтворити відео»), so it carries no aria-pressed.
+async function expectPaused(control: Locator, route: string, paused: boolean) {
+  if (route === '/pro-nas') {
+    await expect(control).toHaveAccessibleName(paused ? 'Відтворити відео' : 'Пауза відео');
+    await expect(control).not.toHaveAttribute('aria-pressed');
+  } else {
+    await expect(control).toHaveAttribute('aria-pressed', String(paused));
+  }
+}
 
 for (const route of ['/', '/pro-nas']) {
   test(`hero ${route} resumes the visible clip and supports keyboard pause`, async ({ page }) => {
@@ -7,8 +18,8 @@ for (const route of ['/', '/pro-nas']) {
     await page.goto(route);
     await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
     const video = page.locator('video.direction-hero-video');
-    const pause = page.getByRole('button', { name: 'Пауза відео', exact: true });
-    await expect(pause).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Пауза відео', exact: true })).toBeVisible();
+    const pause = page.locator('.hero-video-control');
     // Wait for an actual transition away from clip zero, then leave while that clip is active.
     await expect.poll(() => video.evaluateAll((videos) => {
       const visible = videos.filter((node) => node.classList.contains('is-active'));
@@ -24,11 +35,11 @@ for (const route of ['/', '/pro-nas']) {
     }))).toBe(true);
     await expect.poll(() => video.evaluateAll((videos) => videos.findIndex((node) => !(node as HTMLVideoElement).paused))).toBe(visibleIndex);
     await pause.click();
-    await expect(pause).toHaveAttribute('aria-pressed', 'true');
+    await expectPaused(pause, route, true);
     await expect.poll(() => video.evaluateAll((videos) => videos.every((node) => (node as HTMLVideoElement).paused))).toBe(true);
     expect((await pause.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await pause.press('Space');
-    await expect(pause).toHaveAttribute('aria-pressed', 'false');
+    await expectPaused(pause, route, false);
     await expect.poll(() => video.evaluateAll((videos) => videos.some((node) => !(node as HTMLVideoElement).paused))).toBe(true);
   });
 }
@@ -66,8 +77,8 @@ for (const path of ['/', '/pro-nas']) {
       await page.emulateMedia({ reducedMotion: 'no-preference' });
       await page.goto(path);
       await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
-      const pause = page.getByRole('button', { name: 'Пауза відео', exact: true });
-      await expect(pause).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Пауза відео', exact: true })).toBeVisible();
+      const pause = page.locator('.hero-video-control');
       await pause.scrollIntoViewIfNeeded();
       const overlaps = await pause.evaluate((element) => {
         const bounds = element.getBoundingClientRect();
@@ -82,7 +93,7 @@ for (const path of ['/', '/pro-nas']) {
       expect(overlaps).toEqual([]);
       expect((await pause.boundingBox())!.height).toBeGreaterThanOrEqual(44);
       await pause.click();
-      await expect(pause).toHaveAttribute('aria-pressed', 'true');
+      await expectPaused(pause, path, true);
       expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
     });
   }
