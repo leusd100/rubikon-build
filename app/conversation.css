@@ -118,13 +118,12 @@
   .conversation.section { padding-block: 48px; }
   .conversation-grid { row-gap: 24px; }
   .conversation h2 { margin-top: 16px; font-size: clamp(44px, 3.6vw, 52px); }
-  .conversation-lead { margin-top: 16px; }
+  .conversation-lead { margin-top: 16px; font-size: 15px; line-height: 1.6; }
   .conversation-contact { margin-top: 24px; }
   .conversation-journey { margin-top: 12px; }
   .conversation-journey li { gap: 6px; padding: 12px 18px 14px; }
   .conversation-journey h3 { margin-bottom: 4px; font-size: 15px; }
   .conversation-journey p { font-size: 13.5px; line-height: 1.45; }
-  .conversation-lead { font-size: 15px; line-height: 1.6; }
 }
 @media (max-width: 1180px) {
   .conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; row-gap: 40px; }
