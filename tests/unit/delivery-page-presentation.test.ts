@@ -9,6 +9,7 @@ import {
   deliveryFaq,
   participationChoices,
   processSteps,
+  responsibilityByFormat,
   responsibilityMap,
   designThread,
   documentRoute,
@@ -265,5 +266,24 @@ describe('delivery page v2: the public projection', () => {
     const factors = costFactors();
     expect(factors).toHaveLength(7);
     expect(factors.flatMap((factor) => factor.ids).sort()).toEqual(deliveryModel.budgetFactors.map((factor) => factor.id).sort());
+  });
+
+  it('places each work of the switcher only in the zones the matrix names, per format', () => {
+    const { formats, items } = responsibilityByFormat();
+    const zoneOf = (holder: string) => (holder.startsWith('rubikon') ? 'rubikon' : holder === 'partner' ? 'specialists' : ['client', 'general-contractor'].includes(holder) ? 'client' : null);
+    for (const item of items) {
+      for (const format of formats) {
+        const expected = new Set(item.rows.flatMap((id) => {
+          const cell = deliveryModel.responsibility.find((row) => row.id === id)!.cells[format.id];
+          return (typeof cell === 'string' ? [cell] : [...cell]).map(zoneOf).filter(Boolean);
+        }));
+        for (const zone of ['rubikon', 'client', 'specialists'] as const) {
+          expect(item.zones[zone].includes(format.id), `${item.text} / ${format.id} / ${zone}`).toBe(expected.has(zone));
+        }
+      }
+    }
+    expect(formats.map((format) => format.clientTitle)).toEqual(['Замовник', 'Замовник', 'Генпідрядник']);
+    expect(formats[0].outOfScope).toEqual([]);
+    expect(formats[1].outOfScope).toEqual(['Електрика, вода, каналізація, опалення й вентиляція']);
   });
 });

@@ -2,6 +2,7 @@ import { DraftingCompass } from 'lucide-react';
 import { Breadcrumbs, HeroCallLink } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
+import { FormatPrefillLink } from '../components/process/FormatPrefillLink';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { ScopeDiagram } from '../components/process/ScopeDiagram';
 import { StartGlyph } from '../components/process/StartGlyph';
@@ -13,6 +14,7 @@ import {
   deliveryFaq,
   participationChoices,
   processSteps,
+  responsibilityByFormat,
   responsibilityMap,
 } from '../lib/deliveryModelPresentation';
 import { webpSrcSet } from '../lib/responsiveImages';
@@ -58,6 +60,12 @@ const STARTS = [
   },
 ] as const;
 
+const ZONES = [
+  { id: 'rubikon', title: 'RUBIKON', lead: 'Погоджений будівельний обсяг і його результат.' },
+  { id: 'client', title: 'Замовник', lead: 'Те, що залишається на іншій стороні договору.' },
+  { id: 'specialists', title: 'Профільні спеціалісти', lead: 'Вузькі дисципліни, які виконують фахівці свого профілю.' },
+] as const;
+
 const TERMS = [
   { title: 'Кошторис', text: 'Предметний розрахунок готуємо, коли визначено склад робіт і вихідних даних достатньо.' },
   { title: 'Строки', text: 'Залежать від обсягу, проєкту, умов майданчика, матеріалів та організації виконання.' },
@@ -69,6 +77,7 @@ export default function DeliveryModelPage() {
   const steps = processSteps();
   const choices = participationChoices();
   const map = responsibilityMap();
+  const resp = responsibilityByFormat();
   const pageData = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -181,15 +190,16 @@ export default function DeliveryModelPage() {
           </div>
           <ul className="proc-scope-grid">
             {choices.map((choice) => (
-              // Focusable so the keyboard gets the same emphasis as hover; the text carries the meaning.
-              <li key={choice.id} data-motion tabIndex={0} aria-labelledby={`proc-scope-${choice.id}`}>
+              <li key={choice.id} data-motion>
                 <ScopeDiagram format={choice.id} />
                 <h3 id={`proc-scope-${choice.id}`}>{choice.title}</h3>
                 <p>{choice.text}</p>
                 <p className="proc-scope-coordination">{choice.coordination}</p>
+                <FormatPrefillLink label={choice.title} />
               </li>
             ))}
           </ul>
+          <p id="format-prefill-status" className="visually-hidden" aria-live="polite" />
           <ul className="proc-scope-legend" aria-label="Позначення на схемах">
             <li className="is-scope"><i aria-hidden="true" /> Обсяг RUBIKON</li>
             <li><i aria-hidden="true" /> Роботи інших учасників</li>
@@ -205,18 +215,43 @@ export default function DeliveryModelPage() {
             <p className="eyebrow"><span /> Хто за що відповідає</p>
             <h2 id="proc-responsibility-title">Відповідальність без дрібного шрифту</h2>
           </div>
+          {/* Format switcher: plain radios; CSS (:has) shows the chosen format, so it works without JavaScript */}
+          <fieldset className="proc-resp-switch">
+            <legend>Формат участі</legend>
+            <div>
+              {resp.formats.map((format) => (
+                <label key={format.id}>
+                  <input type="radio" name="resp-format" value={format.id} defaultChecked={format.id === 'comprehensive'} />
+                  <span>{format.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <div className="proc-resp-figure" data-motion>
-          <p className="proc-principle">{map.principle}</p>
-          <ul className="proc-map">
-            {map.areas.map((area, index) => (
-              <li className={`proc-area proc-area-${area.id}`} key={area.id} style={{ '--i': index } as CSSProperties}>
-                <h3>{area.title}</h3>
-                <p className="proc-area-lead">{area.lead}</p>
-                <ul>{area.items.map((item) => <li key={item.text}>{item.text}</li>)}</ul>
-              </li>
-            ))}
-          </ul>
+            {resp.formats.map((format) => <p className="proc-principle" data-format={format.id} key={format.id}>{format.principle}</p>)}
+            <ul className="proc-map">
+              {ZONES.map((zone, index) => (
+                <li className={`proc-area proc-area-${zone.id}`} key={zone.id} style={{ '--i': index } as CSSProperties}>
+                  <h3>
+                    {zone.id === 'client'
+                      ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>{format.clientTitle}</span>)
+                      : zone.title}
+                  </h3>
+                  <p className="proc-area-lead">{zone.lead}</p>
+                  <ul>
+                    {resp.items.filter((item) => item.zones[zone.id].length > 0).map((item) => (
+                      <li key={item.text} data-formats={item.zones[zone.id].join(' ')}>{item.text}</li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
           </div>
+          {resp.formats.filter((format) => format.outOfScope.length > 0).map((format) => (
+            <p className="proc-out-of-scope" data-format={format.id} key={format.id}>
+              <b>Поза обсягом RUBIKON у цьому форматі:</b> {format.outOfScope.join('; ').toLowerCase()}.
+            </p>
+          ))}
           <p className="proc-map-note">{map.boundary} {map.materials}</p>
         </div>
       </section>

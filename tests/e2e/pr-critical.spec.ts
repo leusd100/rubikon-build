@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
-import { deliveryFaq, processSteps, responsibilityMap } from '../../app/lib/deliveryModelPresentation';
+import { deliveryFaq, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { companyContactLinks } from '../../app/data/company';
 import { stubTurnstile } from './turnstile.helpers';
@@ -424,9 +424,11 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
   expect(text.results).toEqual(processSteps().map((step) => `На виході: ${step.result}`));
   expect(text.formats).toEqual(FORMAT_LABELS);
   for (const format of deliveryModel.formats) expect(text.formatTexts).toEqual(expect.arrayContaining([format.summary, format.coordination]));
-  expect(text.principle).toEqual([deliveryModel.statements.responsibility]);
-  expect(text.areas).toEqual(['RUBIKON', 'Замовник', 'Профільні спеціалісти']);
-  expect(text.areaItems).toEqual(responsibilityMap().areas.flatMap((area) => area.items.map((item) => item.text)));
+  const resp = responsibilityByFormat();
+  expect(text.principle).toEqual(resp.formats.map((format) => format.principle));
+  expect(text.principle[0]).toBe(deliveryModel.statements.responsibility);
+  expect(text.areas).toEqual(['RUBIKON', 'ЗамовникЗамовникГенпідрядник', 'Профільні спеціалісти']);
+  expect(text.areaItems).toEqual((['rubikon', 'client', 'specialists'] as const).flatMap((zone) => resp.items.filter((item) => item.zones[zone].length > 0).map((item) => item.text)));
   expect(text.terms).toEqual(['Кошторис', 'Строки', 'Зміни']);
   expect(text.inquiry).toEqual(['Є задача — почнемо з неї']);
   for (const statement of [deliveryModel.statements.design, deliveryModel.statements.boundary, deliveryModel.statements.materials, deliveryModel.changePolicy.principle]) {
@@ -533,10 +535,48 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     const card = page.locator('#obsiah .proc-scope-grid > li').nth(1);
-    await card.focus();
-    await expect(card).toBeFocused();
+    await card.locator('.proc-scope-cta').focus();
+    await expect(card.locator('.proc-scope-cta')).toBeFocused();
     await expect(card.locator('.sd-layer:not(.is-scope)').first()).toHaveCSS('opacity', '0.4');
     await expect(card.locator('.sd-layer.is-scope')).toHaveCSS('opacity', '1');
+  });
+});
+
+test.describe('/yak-pratsyuiemo interactions', () => {
+  const visibleItems = (page: Page, zone: string) => page.locator(`.proc-area-${zone} ul li:visible`);
+
+  test('the format switcher moves each work to the zone the model names for that format', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const resp = responsibilityByFormat();
+    for (const format of resp.formats) {
+      await page.getByRole('radio', { name: format.label, exact: true }).check();
+      for (const zone of ['rubikon', 'client', 'specialists'] as const) {
+        await expect(visibleItems(page, zone)).toHaveText(resp.items.filter((item) => item.zones[zone].includes(format.id)).map((item) => item.text));
+      }
+      await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText(format.clientTitle);
+      await expect(page.locator('.proc-principle:visible')).toHaveText(format.principle);
+    }
+  });
+
+  test.describe('without JavaScript', () => {
+    test.use({ javaScriptEnabled: false });
+    test('the format switcher still works (CSS only)', async ({ page }) => {
+      await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+      await page.getByRole('radio', { name: 'Субпідряд', exact: true }).check();
+      await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText('Генпідрядник');
+      await expect(page.locator('.proc-out-of-scope:visible')).toHaveCount(1);
+    });
+  });
+
+  test('«Обговорити цей формат» takes the visitor to the form with that format chosen', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    await page.locator('#obsiah .proc-scope-grid > li').nth(2).locator('.proc-scope-cta').click();
+    await expect(page).toHaveURL(/#inquiry$/);
+    await expect(page.locator('#inquiry select[name="cooperation"]')).toHaveValue('Субпідряд');
+    await expect(page.locator('#inquiry details.inquiry-details')).toHaveAttribute('open', '');
+    await expect(page.locator('#format-prefill-status')).toHaveText('У формі вибрано обсяг робіт: Субпідряд.');
   });
 });
 

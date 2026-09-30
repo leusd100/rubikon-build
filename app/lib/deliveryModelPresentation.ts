@@ -502,3 +502,74 @@ export function costFactors(): readonly CostFactor[] {
     detail: group.ids.length > 2 ? group.ids.map(label).join(', ').toLowerCase() : undefined,
   }));
 }
+
+// ----- Responsibility by format (the map's format switcher) -----------------------------------------------------------
+
+export type ResponsibilityZone = 'rubikon' | 'client' | 'specialists';
+export type SwitchItem = { text: string; rows: readonly string[]; zones: Record<ResponsibilityZone, readonly DeliveryFormatId[]> };
+export type SwitchFormat = { id: DeliveryFormatId; label: string; clientTitle: string; principle: string; outOfScope: readonly string[] };
+
+/** A holder of a responsibility cell → the map zone it belongs to. The general contractor stands in the client's place. */
+function zoneOf(holder: string): ResponsibilityZone | null {
+  if (holder.startsWith('rubikon')) return 'rubikon';
+  if (holder === 'client' || holder === 'general-contractor') return 'client';
+  if (holder === 'partner') return 'specialists';
+  return null;
+}
+
+/**
+ * The responsibility map per format: the same list of works, each placed in the zones the model's matrix names for that
+ * format. Rows the format leaves out of our scope are listed apart; the legal-layer row stays out of the public map.
+ */
+export function responsibilityByFormat(): { formats: readonly SwitchFormat[]; items: readonly SwitchItem[] } {
+  const curated: readonly { text: string; rows: readonly string[] }[] = [
+    { text: 'Структурування задачі й перелік вихідних даних', rows: ['task-framing'] },
+    { text: 'Вихідні дані й доступ до майданчика', rows: ['site-inputs'] },
+    { text: 'Проєкт і проєктування', rows: ['design'] },
+    { text: 'Узгодження будівельних рішень з іншими роботами', rows: ['interfaces'] },
+    { text: 'Кошторис', rows: ['estimate'] },
+    { text: 'Матеріали', rows: ['materials'] },
+    { text: 'Монтаж металоконструкцій, покрівлі, фундаменти й бетон', rows: ['steel', 'roofing', 'foundations'] },
+    { text: 'Виготовлення металоконструкцій', rows: ['steel-fabrication'] },
+    { text: 'Огородження, ворота, промислові підлоги', rows: ['flexible-packages'] },
+    { text: 'Електрика, вода, каналізація, опалення й вентиляція', rows: ['engineering-systems'] },
+    { text: 'Зовнішні мережі й підключення', rows: ['external-utilities'] },
+    { text: 'Спеціальне технологічне обладнання', rows: ['process-equipment'] },
+    { text: 'Контроль якості своїх робіт', rows: ['quality-control'] },
+    { text: 'Дозволи й введення в експлуатацію', rows: ['permits'] },
+    { text: 'Вишукування, технічний і авторський нагляд', rows: ['surveys', 'supervision'] },
+    { text: 'Приймання робіт', rows: ['acceptance'] },
+  ];
+  const rowById = (id: string) => {
+    const row = model.responsibility.find((item) => item.id === id);
+    if (!row) throw new Error(`Unknown responsibility row: ${id}`);
+    return row;
+  };
+  const formatIds = model.formats.map((format) => format.id);
+  const items = curated.map(({ text, rows }) => {
+    const zones: Record<ResponsibilityZone, DeliveryFormatId[]> = { rubikon: [], client: [], specialists: [] };
+    for (const format of formatIds) {
+      for (const id of rows) {
+        const cell = rowById(id).cells[format];
+        for (const holder of typeof cell === 'string' ? [cell] : cell) {
+          const zone = zoneOf(holder);
+          if (zone && !zones[zone].includes(format)) zones[zone].push(format);
+        }
+      }
+    }
+    return { text, rows, zones };
+  });
+  const principles: Record<DeliveryFormatId, string> = {
+    comprehensive: model.statements.responsibility,
+    'work-package': formatById('work-package').interfaces,
+    subcontract: formatById('subcontract').interfaces,
+  };
+  const formats = model.formats.map((format) => ({
+    id: format.id,
+    label: format.label,
+    clientTitle: format.id === 'subcontract' ? 'Генпідрядник' : 'Замовник',
+    principle: principles[format.id],
+    outOfScope: curated.filter(({ rows }) => rows.every((id) => rowById(id).cells[format.id] === 'out-of-scope')).map(({ text }) => text),
+  }));
+  return { formats, items };
+}

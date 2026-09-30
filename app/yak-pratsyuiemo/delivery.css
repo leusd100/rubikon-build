@@ -144,8 +144,8 @@
 .proc-scope { background: var(--color-bg); }
 .proc-scope-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(28px, 3vw, 48px); margin: 0; padding: 0; list-style: none; }
 /* Drawing, title, text and coordination share rows across the three cards */
-.proc-scope-grid { grid-template-rows: repeat(4, auto); }
-.proc-scope-grid > li { display: grid; grid-row: span 4; grid-template-rows: subgrid; align-content: start; min-width: 0; }
+.proc-scope-grid { grid-template-rows: repeat(5, auto); }
+.proc-scope-grid > li { display: grid; grid-row: span 5; grid-template-rows: subgrid; align-content: start; min-width: 0; }
 .proc-scope-legend { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 36px 0 0; padding: 0; list-style: none; color: var(--color-text-muted); font-size: 14px; }
 .proc-scope-legend li { display: flex; align-items: center; gap: 10px; }
 .proc-scope-legend i { width: 22px; height: 12px; border: 1.5px solid var(--color-border-control); background: color-mix(in srgb, var(--color-text) 3%, transparent); }
@@ -174,14 +174,19 @@
 /* The card: hover or keyboard focus brings the agreed scope forward and quiets the rest of the object */
 /* The emphasis ground is a spread shadow, so it frames the card without widening its column */
 .proc-scope-grid > li { --card-ground: transparent; --card-edge: transparent; box-shadow: 0 0 0 18px var(--card-ground), 0 0 0 19px var(--card-edge); transition: box-shadow var(--duration-fast) ease, transform var(--duration-fast) var(--m-ease); }
-.proc-scope-grid > li:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 22px; }
+.proc-scope-cta { justify-self: start; align-self: end; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 18px; color: var(--color-text); border-bottom: 1px solid var(--color-accent); font: 700 12px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.proc-scope-cta span { color: var(--color-accent-strong); transition: transform var(--duration-fast) var(--m-ease); }
+.proc-scope-cta:hover span, .proc-scope-cta:focus-visible span { transform: translate(3px, -3px); }
+/* The form field it fills: a short copper halo so the visitor sees what was chosen */
+.process-page #inquiry select.is-prefilled { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .sd-layer:not(.is-scope), .sd-context { transition: opacity var(--duration-fast) ease; }
 @media (hover: hover) {
   .proc-scope-grid > li:hover { --card-ground: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent); --card-edge: var(--color-border); transform: translateY(-2px); }
   .proc-scope-grid > li:hover .sd-layer:not(.is-scope) { opacity: .4; }
 }
-.proc-scope-grid > li:focus-visible { --card-ground: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent); --card-edge: var(--color-border); }
-.proc-scope-grid > li:focus-visible .sd-layer:not(.is-scope) { opacity: .4; }
+/* Keyboard: focusing the card's link gives the card the same emphasis as hover */
+.proc-scope-grid > li:focus-within { --card-ground: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent); --card-edge: var(--color-border); }
+.proc-scope-grid > li:focus-within .sd-layer:not(.is-scope) { opacity: .4; }
 /* Entering the viewport: the structure is drawn, the agreed scope fills in build order, the context comes last */
 .process-page[data-motion-ready="on"] .scope-diagram :is(path, polygon) { transition: stroke-dashoffset 600ms var(--m-ease), fill-opacity 260ms ease, opacity var(--duration-fast) ease; }
 .process-page[data-motion-ready] .sd-layer polygon { fill-opacity: 1; }
@@ -218,6 +223,32 @@
 .proc-area-rubikon ul { border-top-color: var(--color-dark-line); }
 .proc-area-rubikon ul li { color: var(--color-dark-text-secondary); }
 .proc-area-rubikon ul li::before { background: var(--color-accent-on-dark); }
+/* Format switcher: three radios as one segmented control, centred under the heading */
+.proc-resp-switch { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; }
+.proc-resp-switch legend { float: left; width: 100%; margin-bottom: 12px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+.proc-resp-switch > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); }
+.proc-resp-switch label { position: relative; cursor: pointer; }
+.proc-resp-switch label + label { border-left: 1px solid var(--color-border-control); }
+.proc-resp-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.proc-resp-switch span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.proc-resp-switch label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.proc-resp-switch input:checked + span { color: var(--color-bg); background: var(--color-text); }
+.proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -6px; }
+/* Show only the chosen format's principle, client title, works and out-of-scope line */
+.proc-responsibility:has(input[value="comprehensive"]:checked) [data-format]:not([data-format="comprehensive"]),
+.proc-responsibility:has(input[value="work-package"]:checked) [data-format]:not([data-format="work-package"]),
+.proc-responsibility:has(input[value="subcontract"]:checked) [data-format]:not([data-format="subcontract"]),
+.proc-responsibility:has(input[value="comprehensive"]:checked) [data-formats]:not([data-formats~="comprehensive"]),
+.proc-responsibility:has(input[value="work-package"]:checked) [data-formats]:not([data-formats~="work-package"]),
+.proc-responsibility:has(input[value="subcontract"]:checked) [data-formats]:not([data-formats~="subcontract"]) { display: none; }
+.proc-out-of-scope { max-width: 820px; margin: 28px auto 0; padding: 12px 16px; color: var(--color-text-secondary); border-left: 2px solid var(--color-border-strong); font-size: 14.5px; line-height: 1.6; }
+.proc-out-of-scope b { color: var(--color-text); }
+/* A work arriving in a zone after a switch settles in (display: none → shown restarts the animation) */
+@media (prefers-reduced-motion: no-preference) {
+  .proc-area ul li, .proc-principle, .proc-area h3 span { animation: resp-in 320ms var(--m-ease); }
+}
+@keyframes resp-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
 /* One agreed structure → clear areas: the principle, a stem, the branches, then the three areas in turn */
 .process-page[data-motion-ready="on"] .proc-principle { transition: opacity var(--m-reveal) ease, transform var(--m-reveal) var(--m-ease); }
 .process-page[data-motion-ready="on"] .proc-map::after { transition: transform 320ms var(--m-ease) 420ms; }
@@ -295,7 +326,7 @@
   .proc-scope-grid > li { grid-row: auto; grid-template-rows: none; }
   .proc-scope-grid li { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); column-gap: 32px; align-items: start; }
   .proc-scope-grid li > :not(svg) { grid-column: 2; }
-  .proc-scope-grid li > svg { grid-row: 1 / span 3; }
+  .proc-scope-grid li > svg { grid-row: 1 / span 4; }
   .proc-scope-grid h3 { margin-top: 0; }
   /* The map stacks; the rail becomes one line down the left edge */
   .proc-map { grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 40px; padding: 0 0 0 28px; }
@@ -306,6 +337,9 @@
   .process-page[data-motion-ready] .proc-resp-figure:not([data-motion-state="on"]) .proc-area::before { transform: scaleX(0); }
   .proc-area::after { top: 26.5px; left: -25.5px; }
   .proc-principle { margin: 0; padding-left: 28px; text-align: left; }
+  .proc-resp-switch { align-items: stretch; }
+  .proc-resp-switch legend { text-align: left; }
+  .proc-out-of-scope { margin: 24px 0 0 28px; }
   .proc-map-note { margin: 28px 0 0; padding-left: 28px; text-align: left; }
   .proc-terms-grid { grid-template-columns: minmax(0, 1fr); }
   .proc-factors ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -327,10 +361,11 @@
   .proc-section-head > p:last-child, .proc-start-head > p:last-child { font-size: 16px; }
   .proc-start-list li { grid-template-columns: 44px minmax(0, 1fr); padding: 22px 0; }
   .proc-scope-grid li { display: block; }
-  .proc-scope-grid > li:focus-visible { outline-offset: 12px; }
   .scope-diagram { max-width: 300px; }
   .proc-area { padding: 22px 20px 24px; }
   .proc-principle { font-size: clamp(24px, 6.8vw, 28px); }
+  .proc-resp-switch > div { display: grid; grid-auto-flow: row; }
+  .proc-resp-switch label + label { border-left: 0; border-top: 1px solid var(--color-border-control); }
   .proc-terms-image { background-position: center top; background-size: 180% auto; }
   .proc-hero-trace { display: none; }
   .proc-terms-grid li { padding: 22px 20px 24px; }
