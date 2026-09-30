@@ -5,6 +5,7 @@ import {
   basisLegend,
   budgetGroups,
   capabilityLayers,
+  costFactors,
   deliveryFaq,
   participationChoices,
   processSteps,
@@ -258,5 +259,11 @@ describe('delivery page v2: the public projection', () => {
         }
       }
     }
+  });
+
+  it('shows seven cost factors that cover every model budget factor exactly once', () => {
+    const factors = costFactors();
+    expect(factors).toHaveLength(7);
+    expect(factors.flatMap((factor) => factor.ids).sort()).toEqual(deliveryModel.budgetFactors.map((factor) => factor.id).sort());
   });
 });

@@ -1,13 +1,15 @@
-import { DraftingCompass, Hammer, Lightbulb } from 'lucide-react';
+import { DraftingCompass } from 'lucide-react';
 import { Breadcrumbs, HeroCallLink } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
+import { ProcessMotion } from '../components/process/ProcessMotion';
 import { ScopeDiagram } from '../components/process/ScopeDiagram';
+import { StartGlyph } from '../components/process/StartGlyph';
 import { company } from '../data/company';
 import { deliveryModel } from '../data/deliveryModel';
 import { siteRoutes } from '../data/navigation';
 import {
-  budgetGroups,
+  costFactors,
   deliveryFaq,
   participationChoices,
   processSteps,
@@ -15,6 +17,7 @@ import {
 } from '../lib/deliveryModelPresentation';
 import { webpSrcSet } from '../lib/responsiveImages';
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
+import type { CSSProperties } from 'react';
 import './delivery.css';
 
 // /yak-pratsyuiemo v2 — what happens with the client's task, in seven zones: where to start, the four steps, how much
@@ -39,17 +42,17 @@ const HERO_IMAGE = '/media/concepts/about-shared-approach-v2.jpg';
 
 const STARTS = [
   {
-    icon: Lightbulb,
+    kind: 'idea',
     title: 'Є тільки задум',
     text: 'Коротко опишіть, що потрібно побудувати або які роботи виконати. Допоможемо зрозуміти, яких вихідних даних бракує.',
   },
   {
-    icon: DraftingCompass,
+    kind: 'drawing',
     title: 'Є креслення або проєкт',
     text: 'Переглянемо документацію й визначимо, чи її достатньо, щоб сформувати обсяг робіт і кошторис.',
   },
   {
-    icon: Hammer,
+    kind: 'scope',
     title: 'Є конкретний обсяг робіт',
     text: 'Наприклад, фундамент, монтаж каркаса чи покрівля — почнемо предметну розмову саме з цього етапу.',
   },
@@ -81,6 +84,7 @@ export default function DeliveryModelPage() {
   return (
     <main className="inner-page process-page" id="main-content">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageData) }} />
+      <ProcessMotion />
 
       {/* 1 · Hero */}
       <section className="proc-hero">
@@ -89,6 +93,14 @@ export default function DeliveryModelPage() {
           <img src={HERO_IMAGE} srcSet={webpSrcSet(HERO_IMAGE)} sizes="100vw" alt="" width={1440} height={1800} fetchPriority="high" decoding="async" />
         </div>
         <div className="proc-hero-shade" aria-hidden="true" />
+        {/* Drawing lines over the illustration: set out once on load, then still */}
+        <svg className="proc-hero-trace" data-motion viewBox="0 0 1440 900" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+          <path className="ht-grid" d="M900 0 V900 M1080 0 V900 M1260 0 V900 M720 300 H1440 M720 600 H1440" pathLength={1} />
+          <path className="ht-trace" d="M760 820 L1180 250 L1440 120" pathLength={1} />
+          <path className="ht-trace ht-trace-2" d="M1030 900 L1310 470" pathLength={1} />
+          <path className="ht-dim" d="M1180 250 L1180 170 M1440 120 L1440 40 M1180 190 H1440" pathLength={1} />
+          <circle className="ht-node" cx="1180" cy="250" r="5" />
+        </svg>
         <div className="shell proc-hero-layout">
           <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Як працюємо', href: siteRoutes.process }]} />
           <p className="eyebrow light"><span /> Як працюємо</p>
@@ -113,17 +125,23 @@ export default function DeliveryModelPage() {
             <h2 id="proc-start-title">З чого можна почати</h2>
             <p>Готовий проєкт для першого звернення не потрібен. Почнемо з того, що у вас уже є.</p>
           </div>
-          <ul className="proc-start-list">
-            {STARTS.map(({ icon: Icon, title, text }) => (
-              <li key={title}>
-                <Icon aria-hidden="true" />
-                <div>
-                  <h3>{title}</h3>
-                  <p>{text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="proc-start-flow" data-motion>
+            <ul className="proc-start-list">
+              {STARTS.map(({ kind, title, text }, index) => (
+                <li key={title} style={{ '--i': index } as CSSProperties}>
+                  <StartGlyph kind={kind} />
+                  <div>
+                    <h3>{title}</h3>
+                    <p>{text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {/* Three starting states, one route: the rows join into the four steps below */}
+            <a className="proc-start-merge" href="#etapy">
+              <span>Далі — один зрозумілий процес</span> <span aria-hidden="true">↓</span>
+            </a>
+          </div>
         </div>
       </section>
 
@@ -136,9 +154,9 @@ export default function DeliveryModelPage() {
             <h2 id="proc-route-title">Від задачі до будівництва</h2>
             <p>Чотири кроки. Кожен закінчується конкретним результатом, з яким можна йти далі.</p>
           </div>
-          <ol className="proc-steps">
-            {steps.map((step) => (
-              <li key={step.number}>
+          <ol className="proc-steps" data-motion>
+            {steps.map((step, index) => (
+              <li key={step.number} style={{ '--i': index } as CSSProperties}>
                 <span className="proc-step-node" aria-hidden="true">{step.number}</span>
                 <h3><span className="visually-hidden">Крок {step.number}. </span>{step.title}</h3>
                 <p>{step.text}</p>
@@ -163,9 +181,10 @@ export default function DeliveryModelPage() {
           </div>
           <ul className="proc-scope-grid">
             {choices.map((choice) => (
-              <li key={choice.id}>
+              // Focusable so the keyboard gets the same emphasis as hover; the text carries the meaning.
+              <li key={choice.id} data-motion tabIndex={0} aria-labelledby={`proc-scope-${choice.id}`}>
                 <ScopeDiagram format={choice.id} />
-                <h3>{choice.title}</h3>
+                <h3 id={`proc-scope-${choice.id}`}>{choice.title}</h3>
                 <p>{choice.text}</p>
                 <p className="proc-scope-coordination">{choice.coordination}</p>
               </li>
@@ -181,23 +200,25 @@ export default function DeliveryModelPage() {
             <p className="eyebrow"><span /> Хто за що відповідає</p>
             <h2 id="proc-responsibility-title">Відповідальність без дрібного шрифту</h2>
           </div>
+          <div className="proc-resp-figure" data-motion>
           <p className="proc-principle">{map.principle}</p>
           <ul className="proc-map">
-            {map.areas.map((area) => (
-              <li className={`proc-area proc-area-${area.id}`} key={area.id}>
+            {map.areas.map((area, index) => (
+              <li className={`proc-area proc-area-${area.id}`} key={area.id} style={{ '--i': index } as CSSProperties}>
                 <h3>{area.title}</h3>
                 <p className="proc-area-lead">{area.lead}</p>
                 <ul>{area.items.map((item) => <li key={item.text}>{item.text}</li>)}</ul>
               </li>
             ))}
           </ul>
+          </div>
           <p className="proc-map-note">{map.boundary} {map.materials}</p>
         </div>
       </section>
 
       {/* 6 · Cost, time, changes */}
       <section className="page-section proc-terms" id="koshtorys" aria-labelledby="proc-terms-title">
-        <div className="proc-terms-bg" aria-hidden="true" />
+        <div className="proc-terms-bg" aria-hidden="true"><div className="proc-terms-image" data-parallax="28" /></div>
         <div className="shell">
           <div className="proc-section-head">
             <p className="eyebrow"><span /> Кошторис і строки</p>
@@ -213,14 +234,14 @@ export default function DeliveryModelPage() {
           </ul>
           <div className="proc-factors">
             <p className="proc-factors-title">Найчастіше впливають</p>
-            <dl>
-              {budgetGroups().map((group) => (
-                <div key={group.id}>
-                  <dt>{group.title}</dt>
-                  <dd>{group.factors.join(', ').toLowerCase()}</dd>
-                </div>
+            <ul>
+              {costFactors().map((factor) => (
+                <li key={factor.title}>
+                  <b>{factor.title}</b>
+                  {factor.detail && <span>{factor.detail}</span>}
+                </li>
               ))}
-            </dl>
+            </ul>
           </div>
           <p className="proc-documents">
             Які документи знадобляться, залежить від об’єкта й формату робіт. На старті визначимо, що вже є і чого бракує.

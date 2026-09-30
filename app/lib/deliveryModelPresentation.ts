@@ -477,3 +477,28 @@ export function responsibilityMap(): { principle: string; areas: readonly Respon
     materials: statements.materials,
   };
 }
+
+export type CostFactor = { title: string; detail?: string; ids: readonly string[] };
+
+/** What drives cost and time, as seven scannable factors covering all thirteen model factors once. */
+export function costFactors(): readonly CostFactor[] {
+  const groups: readonly { title: string; ids: readonly string[] }[] = [
+    { title: 'Габарити', ids: ['dimensions'] },
+    { title: 'Конструктив і навантаження', ids: ['structure', 'loads'] },
+    { title: 'Фундамент', ids: ['foundation'] },
+    { title: 'Утеплення', ids: ['insulation'] },
+    { title: 'Технологія й обладнання', ids: ['technology', 'special-equipment'] },
+    { title: 'Умови майданчика', ids: ['logistics', 'operating-facility', 'site-access', 'installation-constraints'] },
+    { title: 'Строки й залежності між підрядниками', ids: ['timeline', 'contractor-dependencies'] },
+  ];
+  const label = (id: string) => {
+    const factor = model.budgetFactors.find((item) => item.id === id);
+    if (!factor) throw new Error(`Unknown budget factor: ${id}`);
+    return factor.label;
+  };
+  return groups.map((group) => ({
+    title: group.title,
+    ids: group.ids,
+    detail: group.ids.length > 2 ? group.ids.map(label).join(', ').toLowerCase() : undefined,
+  }));
+}

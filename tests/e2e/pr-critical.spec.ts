@@ -504,6 +504,42 @@ test.describe('/yak-pratsyuiemo without JavaScript', () => {
   });
 });
 
+test.describe('/yak-pratsyuiemo motion', () => {
+  test('reduced motion shows every final state at once', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    await expect(page.locator('.process-page')).not.toHaveAttribute('data-motion-ready', /.*/);
+    await expect(page.locator('.proc-area').first()).toHaveCSS('opacity', '1');
+    await expect(page.locator('.scope-diagram-comprehensive .sd-context').first()).toHaveCSS('opacity', '1');
+    await expect(page.locator('.proc-start-merge')).toHaveCSS('opacity', '1');
+  });
+
+  test('each block plays once when it enters the viewport and never replays', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const route = page.locator('.proc-steps');
+    await expect(route).not.toHaveAttribute('data-motion-state', 'on');
+    await route.scrollIntoViewIfNeeded();
+    await expect(route).toHaveAttribute('data-motion-state', 'on');
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await route.scrollIntoViewIfNeeded();
+    await expect(route).toHaveAttribute('data-motion-state', 'on');
+    // The steps are readable once played: every step's text back at full strength.
+    await expect(route.locator('li').last().locator('h3')).toHaveCSS('opacity', '1', { timeout: 5000 });
+  });
+
+  test('keyboard focus on a scope card brings the agreed scope forward, as hover does', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop emphasis');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const card = page.locator('#obsiah .proc-scope-grid > li').nth(1);
+    await card.focus();
+    await expect(card).toBeFocused();
+    await expect(card.locator('.sd-layer:not(.is-scope)').first()).toHaveCSS('opacity', '0.4');
+    await expect(card.locator('.sd-layer.is-scope')).toHaveCSS('opacity', '1');
+  });
+});
+
 for (const width of [360, 375, 390, 768]) {
   test(`/yak-pratsyuiemo fits a ${width}px screen with every question open`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
