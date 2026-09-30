@@ -38,6 +38,7 @@ export function formatTelegramAlert(opportunity: NormalizedOpportunity, score: S
 
 function topFactor(breakdown: ScoreBreakdown): string {
   const entries = Object.entries(breakdown) as Array<[keyof ScoreBreakdown, number]>;
-  const [key, value] = entries.reduce((best, current) => (current[1] > best[1] ? current : best));
+  // The first factor seeds the comparison (ScoreBreakdown always carries all five); ties keep the earlier factor.
+  const [key, value] = entries.slice(1).reduce((best, current) => (current[1] > best[1] ? current : best), entries[0]);
   return `${BREAKDOWN_LABELS[key]} (${value})`;
 }
