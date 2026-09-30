@@ -267,6 +267,41 @@ test('homepage conversation explains the four steps without promising an estimat
   }
 });
 
+// The intro sticks only where it has its column to itself (/yak-pratsyuiemo): a sticky grid item moves within the whole
+// grid, so with the four steps under it the intro slid over them on every other page.
+test('the conversation intro never slides over the steps, and sticks only where it has its column to itself', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the sticky intro is a desktop layout');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  for (const [path, sticks] of [['/', false], ['/angary', false], ['/yak-pratsyuiemo', true]] as const) {
+    await page.goto(path, { waitUntil: 'load' });
+    const scroll = await page.evaluate(async () => {
+      const section = document.querySelector<HTMLElement>('#inquiry')!;
+      const intro = section.querySelector<HTMLElement>('.conversation-intro')!;
+      const journey = section.querySelector<HTMLElement>('.conversation-journey-wrap');
+      const top = section.getBoundingClientRect().top + window.scrollY;
+      const offset = () => intro.getBoundingClientRect().top - section.getBoundingClientRect().top;
+      const start = offset();
+      let moved = 0;
+      let overlap = 0;
+      for (let y = top - window.innerHeight; y <= top + section.offsetHeight; y += 40) {
+        window.scrollTo({ top: y, behavior: 'instant' });
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        moved = Math.max(moved, offset() - start);
+        if (journey) {
+          const i = intro.getBoundingClientRect();
+          const j = journey.getBoundingClientRect();
+          overlap = Math.max(overlap, Math.min(i.bottom, j.bottom) - Math.max(i.top, j.top));
+        }
+      }
+      return { position: getComputedStyle(intro).position, moved, overlap };
+    });
+    expect(scroll.position, path).toBe(sticks ? 'sticky' : 'static');
+    expect(scroll.overlap, path).toBeLessThanOrEqual(0);
+    if (sticks) expect(scroll.moved, path).toBeGreaterThan(100);
+    else expect(scroll.moved, path).toBe(0);
+  }
+});
+
 test('homepage separates labelled illustrations from the one real photo', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   const cards = page.locator('#directions .direction-card');

@@ -34,9 +34,10 @@
   grid-template-rows: auto 1fr; align-items: start; gap: 36px var(--grid-gap);
 }
 .conversation-intro { grid-area: intro; min-width: 0; }
-/* Desktop: the heading, call and channels stay in view while the form scrolls past (as the previous inquiry block did).
-   It only moves where the intro is shorter than its row — beside the form on /yak-pratsyuiemo. */
-@media (min-width: 1181px) { .conversation-intro { position: sticky; top: 124px; } }
+/* Desktop, only where the intro has its column to itself (/yak-pratsyuiemo, no journey): the heading, call and channels
+   stay in view while the form scrolls past. A sticky grid item moves within the whole grid, not its row, so with the
+   journey under it the intro would slide over the steps — there the two stacked blocks already match the form's height. */
+@media (min-width: 1181px) { .conversation-no-journey .conversation-intro { position: sticky; top: 124px; } }
 .conversation-journey-wrap { grid-area: journey; min-width: 0; max-width: 520px; } /* the call's column: shared edges */
 .conversation-journey-title {
   display: flex; align-items: center; gap: 14px; margin: 0; color: var(--color-text-muted);
