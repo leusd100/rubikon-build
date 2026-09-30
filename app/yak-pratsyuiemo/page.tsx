@@ -8,6 +8,7 @@ import { ScopeDiagram } from '../components/process/ScopeDiagram';
 import { StartGlyph } from '../components/process/StartGlyph';
 import { company } from '../data/company';
 import { deliveryModel } from '../data/deliveryModel';
+import { processHeroImage } from '../data/processHeroImage';
 import { siteRoutes } from '../data/navigation';
 import {
   changeSteps,
@@ -18,7 +19,6 @@ import {
   responsibilityByFormat,
   responsibilityMap,
 } from '../lib/deliveryModelPresentation';
-import { webpSrcSet } from '../lib/responsiveImages';
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
 import type { CSSProperties } from 'react';
 import './delivery.css';
@@ -40,8 +40,6 @@ export const metadata = createPageMetadata({
   image: '/media/about-industrial-concept.jpg',
   imageAlt: `${company.name} — від задачі до плану робіт`,
 });
-
-const HERO_IMAGE = '/media/concepts/about-shared-approach-v2.jpg';
 
 const STARTS = [
   {
@@ -103,8 +101,17 @@ export default function DeliveryModelPage() {
       {/* 1 · Hero */}
       <section className="proc-hero">
         <div className="proc-hero-media" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element -- pre-generated WebP variants (as ResponsiveImage), but eager: this is the LCP image */}
-          <img src={HERO_IMAGE} srcSet={webpSrcSet(HERO_IMAGE)} sizes="100vw" alt="" width={1440} height={1800} fetchPriority="high" decoding="async" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- pre-generated WebP variants up to 1536w (as the direction heroes), eager: this is the LCP image */}
+          <img
+            src={processHeroImage.fallbackSrc}
+            srcSet={processHeroImage.srcSet}
+            sizes="100vw"
+            alt=""
+            width={processHeroImage.width}
+            height={processHeroImage.height}
+            fetchPriority="high"
+            decoding="async"
+          />
         </div>
         <div className="proc-hero-shade" aria-hidden="true" />
         {/* Drawing lines over the illustration: set out once on load, then still */}

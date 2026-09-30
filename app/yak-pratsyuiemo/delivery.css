@@ -481,6 +481,9 @@
   .proc-hero-actions { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 28px; }
   .proc-hero-actions .button { width: 100%; }
   .proc-hero-media img { object-position: 78% 30%; }
+  /* The text runs the full width on a phone, over the lit side of the artwork: a deeper shade keeps every hero text at
+     4.5:1 or more against the brightest 5 % of the image behind it (measured at 360, 390 and 430 px) */
+  .proc-hero-shade { background: linear-gradient(90deg, rgba(9, 10, 12, .92) 0%, rgba(9, 10, 12, .8) 55%, rgba(9, 10, 12, .62) 100%), linear-gradient(0deg, rgba(9, 10, 12, .85) 0%, transparent 55%, rgba(9, 10, 12, .45) 100%); }
   .proc-provenance { right: 16px; bottom: 14px; }
   .proc-start-head h2 { font-size: var(--title-section); line-height: 1.02; }
   .proc-start-head > p:last-child { font-size: 16px; }
