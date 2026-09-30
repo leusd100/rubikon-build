@@ -368,6 +368,28 @@ test('every page closes with the same conversation block, in its own words', asy
   }
 });
 
+test('the form carries no step numbers; a phone folds the step texts behind one button', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/angary', { waitUntil: 'load' });
+  const form = page.locator('#inquiry .inquiry-form');
+  await expect(form.locator('.inquiry-form-section-title')).toHaveText(['Контакт', 'Завдання']);
+  await expect(form.getByText('Підтвердження', { exact: true })).toHaveCount(0);
+
+  const steps = page.locator('#inquiry .conversation-journey');
+  const toggle = page.locator('#inquiry .conversation-journey-toggle');
+  await expect(steps.locator('h3')).toHaveCount(4);
+  await expect(steps.locator('p').first()).toBeHidden();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(steps.locator('p').first()).toBeVisible();
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(toggle).toBeHidden();
+  await toggle.evaluate((element) => (element as HTMLButtonElement).click());
+  await expect(steps.locator('p')).toHaveCount(4);
+  for (const text of await steps.locator('p').all()) await expect(text).toBeVisible();
+});
+
 test('a direction page preselects its own direction in the form', async ({ page }) => {
   await page.goto('/metalokonstruktsii', { waitUntil: 'load' });
   await expect(page.locator('#inquiry select').first()).toHaveValue('Металоконструкції');

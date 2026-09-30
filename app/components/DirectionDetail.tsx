@@ -365,6 +365,7 @@ export function DirectionPage({
       <ConversationSection
         kicker={config.cta.eyebrow}
         title={config.cta.title}
+        lead={config.cta.lead}
         defaultDirection={direction.formLabel}
         journey={DIRECTION_JOURNEY[config.id]}
       />

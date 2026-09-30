@@ -2,7 +2,8 @@ import { Mail, Phone } from 'lucide-react';
 import ProjectInquiryForm from './ProjectInquiryForm';
 import { MessengerLinks } from './SiteChrome';
 import { company, companyContactLinks } from '../data/company';
-import { DEFAULT_JOURNEY, JOURNEY_TITLES, type JourneyTexts } from '../data/conversation';
+import { ConversationJourney } from './ConversationJourney';
+import { DEFAULT_JOURNEY, type JourneyTexts } from '../data/conversation';
 import { cooperationOptions, inquirySuccessMessage } from '../lib/deliveryModelPresentation';
 
 const DEFAULT_LEAD = 'Можна почати з ідеї або з готового проєкту. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит.';
@@ -20,7 +21,7 @@ type ConversationSectionProps = {
 /**
  * The one closing conversation block on the site (#inquiry): HOME, every direction page, /napryamky, /yak-pratsyuiemo
  * and /pro-nas. Call first, the written channels once, the form beside them and «Що буде після звернення» under the
- * call. Pages change only the words. The background is a decorative desk-and-drawings photo — never evidence of our
+ * call — a strip under both columns on a desktop. Pages change only the words. The background is a decorative desk-and-drawings photo — never evidence of our
  * work. Styles: app/conversation.css.
  */
 export function ConversationSection({
@@ -73,21 +74,7 @@ export function ConversationSection({
           cooperationOptions={cooperationOptions()}
           successMessage={inquirySuccessMessage()}
         />
-        {/* Desktop: under the call, beside the form. Phone: after the form, so call → channels → form come first. */}
-        <div className="conversation-journey-wrap">
-          <p className="conversation-journey-title">Що буде після звернення</p>
-          <ol className="conversation-journey">
-            {JOURNEY_TITLES.map((stepTitle, index) => (
-              <li key={stepTitle}>
-                <span className="conversation-journey-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <div>
-                  <h3>{stepTitle}</h3>
-                  <p>{journey[index]}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
+        <ConversationJourney journey={journey} />
       </div>
     </section>
   );

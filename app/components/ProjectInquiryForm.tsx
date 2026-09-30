@@ -229,10 +229,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       </div>
 
       <section className="inquiry-form-section" aria-labelledby="inquiry-contact-heading">
-        <div className="inquiry-form-section-heading">
-          <span>01</span>
-          <h3 id="inquiry-contact-heading">Контакт</h3>
-        </div>
+        <h3 className="inquiry-form-section-title" id="inquiry-contact-heading">Контакт</h3>
         <div className="inquiry-form-section-body">
           <div className="inquiry-fields inquiry-fields-two">
             <label>
@@ -283,10 +280,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       </section>
 
       <section className="inquiry-form-section" aria-labelledby="inquiry-project-heading">
-        <div className="inquiry-form-section-heading">
-          <span>02</span>
-          <h3 id="inquiry-project-heading">Завдання</h3>
-        </div>
+        <h3 className="inquiry-form-section-title" id="inquiry-project-heading">Завдання</h3>
         <div className="inquiry-form-section-body">
           {attachment && inquiryAttachment && (
             <InquiryAttachmentSummary attachment={attachment} onDetach={inquiryAttachment.detach} />
@@ -354,11 +348,8 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         </div>
       </section>
 
-      <section className="inquiry-form-section inquiry-form-section-submit" aria-labelledby="inquiry-submit-heading">
-        <div className="inquiry-form-section-heading">
-          <span>03</span>
-          <h3 id="inquiry-submit-heading">Підтвердження</h3>
-        </div>
+      {/* Consent and the button close the form without a step of their own. */}
+      <section className="inquiry-form-section inquiry-form-section-submit" aria-label="Згода і відправка">
         <div className={`inquiry-form-section-body inquiry-form-submit-layout${turnstile.challengeVisible ? ' has-turnstile-challenge' : ''}`}>
           <label className={`inquiry-consent${consentError ? ' is-invalid' : ''}`}>
             <input

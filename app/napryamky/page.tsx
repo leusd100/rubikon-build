@@ -98,7 +98,10 @@ export default function DirectionsPage() {
       </section>
 
       <DirectionFaq title="Коротко про головне" items={faqItems} />
-      <ConversationSection title="Не впевнені, який напрямок підходить? Опишіть завдання — розберемося разом." />
+      <ConversationSection
+        title="Опишіть завдання — підкажемо напрям"
+        lead="Не впевнені, який напрямок підходить? Розберемося разом. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит."
+      />
     </main>
   );
 }

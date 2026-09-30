@@ -26,18 +26,23 @@
 :root[data-theme="dark"] .conversation-bg img { filter: grayscale(.6) sepia(.2) brightness(.55); }
 .conversation-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .conversation-kicker > span { width: 26px; height: 2px; flex: none; background: var(--color-accent); }
-/* Desktop: intro + journey on the left, the form beside them. Phone: intro (call + channels) → form → journey. */
+/* Desktop: the steps sit under the call as a 2 × 2 title block, so the left column ends with the form. Tablet: the
+   same block under the form. Phone: intro (call + channels) → form → steps. */
 .conversation-grid {
   display: grid; grid-template-columns: minmax(0, .92fr) minmax(540px, 1.08fr); grid-template-areas: "intro form" "journey form";
-  grid-template-rows: auto 1fr; align-items: start; gap: 0 var(--grid-gap);
+  grid-template-rows: auto 1fr; align-items: start; gap: 36px var(--grid-gap);
 }
 .conversation-intro { grid-area: intro; min-width: 0; }
-.conversation-journey-wrap { grid-area: journey; min-width: 0; margin-top: 40px; }
-.conversation-journey-title { margin: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.conversation-journey-wrap { grid-area: journey; min-width: 0; max-width: 520px; } /* the call's column: shared edges */
+.conversation-journey-title {
+  display: flex; align-items: center; gap: 14px; margin: 0; color: var(--color-text-muted);
+  font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase;
+}
+.conversation-journey-title::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
 .conversation h2 { margin: 22px 0 0; font: 400 clamp(44px, 4.4vw, 66px)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 .conversation-lead { max-width: 500px; margin: 22px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 /* The closing contact block: one column of fixed width, so the call and the four channels share both edges. */
-.conversation-contact { display: grid; gap: 12px; width: min(100%, 468px); margin-top: 32px; }
+.conversation-contact { display: grid; gap: 12px; width: min(100%, 520px); margin-top: 32px; }
 /* The call: a segmented button — icon cell | label + number | arrow. Colours stay the theme's action role. */
 .conversation-call { width: 100%; min-width: 0; min-height: 68px; justify-content: flex-start; gap: 0; padding: 0; }
 .conversation-call > span { display: flex; align-items: center; }
@@ -83,11 +88,19 @@
 .conversation-channels .messenger-link:is(:hover, :focus-visible) .messenger-brand-icon { filter: none; transform: none; }
 .conversation-channels .conversation-email svg { width: 20px; height: 20px; flex: none; color: var(--color-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
 .conversation-channels .conversation-email:is(:hover, :focus-visible) svg { color: var(--color-accent-strong); }
-.conversation-journey { display: grid; gap: 0; margin: 14px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-control); }
-.conversation-journey li { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--color-border); }
-.conversation-journey-number { color: var(--color-accent-strong); font: 600 22px/1.1 var(--font-condensed), sans-serif; letter-spacing: .02em; }
-.conversation-journey h3 { margin: 0 0 6px; color: var(--color-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
-.conversation-journey p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
+/* The four steps as the title block of a drawing sheet: one outlined strip, hairline cells, the number in the corner. */
+.conversation-journey {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 16px 0 0; padding: 0; list-style: none;
+  background: color-mix(in srgb, var(--color-surface-elevated) 60%, transparent); border: 1px solid var(--color-border-strong);
+}
+.conversation-journey li { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 16px 20px 18px; }
+.conversation-journey li:nth-child(even) { border-left: 1px solid var(--color-border); }
+.conversation-journey li:nth-child(n + 3) { border-top: 1px solid var(--color-border); }
+.conversation-journey-number { color: var(--color-accent-strong); font: 600 14px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; }
+.conversation-journey h3 { margin: 0 0 6px; color: var(--color-text); font-size: 16px; font-weight: 700; line-height: 1.3; }
+.conversation-journey p { margin: 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.5; }
+/* Phone only, and only with JavaScript: the texts fold behind one button (ConversationJourney.tsx). */
+.conversation-journey-toggle { display: none; }
 /* The form card: lifted off the sheet, outlined, copper top rule (follows the light/dark tokens) */
 .conversation .inquiry-form { min-width: 0; box-shadow: 0 28px 70px rgba(20, 22, 21, .16); }
 /* The form sits in this grid's named «form» area at every width. */
@@ -95,18 +108,12 @@
 /* Form labels were 10–11 px: raised for reading at arm's length */
 .conversation :is(.inquiry-form label > span, .inquiry-choice legend) { font-size: 12.5px; letter-spacing: .06em; }
 .conversation .inquiry-choice label > span { font-size: 12px; }
-.conversation .inquiry-form-section-heading h3 { font-size: 12.5px; }
+.conversation .inquiry-form-section-title { font-size: 12.5px; }
 .conversation :is(.inquiry-form-kicker, .inquiry-required-note) { font-size: 13px; }
 .conversation .inquiry-field-hint { font-size: 13px; }
-/* The larger section labels need a wider label column: «Підтвердження» is 111 px at 12.5 px, and globals.css narrows
-   the column to 86 px on short laptop screens (≥ 1181 px wide, ≤ 900 px tall), so the word ran into the checkbox. */
-@media (min-width: 761px) {
-  .conversation .inquiry-form-section { grid-template-columns: 122px minmax(0, 1fr); }
-}
 @media (max-width: 1180px) {
-  .conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; grid-template-rows: auto; row-gap: 36px; }
-  .conversation-journey-wrap { margin-top: 0; }
-  .conversation-journey { grid-template-columns: 1fr 1fr; column-gap: 32px; }
+  .conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; row-gap: 40px; }
+  .conversation-journey-wrap { max-width: none; }
 }
 @media (max-width: 760px) {
   /* A phone keeps the channel labels, stacked under the icon: four side-by-side labels do not fit a 358 px row */
@@ -122,11 +129,17 @@
   .conversation-channels { gap: 6px; }
   .conversation-channels .messenger-link { flex-direction: column; gap: 7px; min-height: 64px; padding: 8px 4px; font-size: 12px; }
   .conversation-grid { row-gap: 28px; }
-  .conversation-journey { grid-template-columns: 1fr; }
-  .conversation-journey li { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 14px 0; }
-  .conversation-journey-number { font-size: 18px; }
-  .conversation-journey h3 { font-size: 16px; }
-  .conversation-journey p { font-size: 15px; }
+  .conversation-journey { grid-template-columns: 1fr; margin-top: 12px; background: none; border: 0; }
+  .conversation-journey li, .conversation-journey li + li { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--color-border); }
+  .conversation-journey-number { padding-top: 3px; }
+  .conversation-journey h3 { margin: 0; font-size: 16px; }
+  .conversation-journey p { margin-top: 6px; font-size: 15px; }
+  :root[data-theme] .conversation-journey-wrap:not([data-expanded]) .conversation-journey p { display: none; }
+  :root[data-theme] .conversation-journey-toggle {
+    display: inline-flex; align-items: center; min-height: 44px; margin-top: 4px; padding: 0; color: var(--color-accent-strong);
+    background: none; border: 0; border-bottom: 1px solid currentColor; font: 700 12px/1 var(--font-manrope), sans-serif;
+    letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+  }
 }
 @media (max-width: 340px) {
   .conversation-call strong { font-size: 20px; }
