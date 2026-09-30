@@ -234,7 +234,12 @@ export function Breadcrumbs({ items }: { items: Array<{ label: string; href: str
 
 type TeamVariant = 'home' | 'about';
 
-type TeamBio = { role: string; paragraphs: readonly string[] };
+type TeamBio = {
+  role: string;
+  paragraphs: readonly string[];
+  /** /pro-nas: what the person answers for — the bio's own nouns, never a new claim. */
+  focus?: readonly string[];
+};
 
 // Two genuinely different bio sets, not one CSS toggle over one bio — Home gets a quick-trust
 // summary, `/pro-nas` gets real depth (responsibility split, how the two founders hand off to
@@ -260,15 +265,29 @@ const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
       paragraphs: [
         'Керує будівельним напрямом. Його практичний досвід охоплює організацію робіт на майданчику, бригади, якість виконання та складні конструктивні вузли.',
       ],
+      focus: ['Організація робіт на майданчику', 'Бригади', 'Якість виконання', 'Складні конструктивні вузли'],
     },
     dmytro: {
       role: 'Розвиток компанії / робота з клієнтами',
       paragraphs: [
         'Веде роботу з клієнтами й розвиток компанії. Допомагає розібрати завдання, зібрати наявні матеріали та підготувати предметну розмову про будівельні роботи.',
       ],
+      focus: ['Робота з клієнтами', 'Розбір завдання й наявних матеріалів', 'Предметна розмова про роботи', 'Розвиток компанії'],
     },
   },
 };
+
+function PersonFocus({ items }: Readonly<{ items?: readonly string[] }>) {
+  if (!items?.length) return null;
+  return (
+    <>
+      <p className="person-focus-label">Відповідає за</p>
+      <ul className="person-focus">
+        {items.map((item) => <li key={item}>{item}</li>)}
+      </ul>
+    </>
+  );
+}
 
 export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
   const { sergii, dmytro } = teamContent[variant];
@@ -288,12 +307,13 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
             ? 'Практичний досвід будівництва й сучасна система роботи з клієнтом — в одній родинній компанії. За свою частину робіт і за домовленості в договорі відповідаємо особисто.'
             : 'Практичний досвід будівництва поєднуємо із системною організацією роботи, зрозумілою комунікацією та сучасними інструментами.'}
         />
-        <div className="team-stories">
+        <div className="team-stories" data-motion={isHome ? undefined : ''}>
           <article className="person-story">
             <div className="person-info">
               <span>{sergii.role}</span>
               <h3>Леус Сергій Іванович</h3>
               {sergii.paragraphs.map((text) => <p key={text}>{text}</p>)}
+              <PersonFocus items={sergii.focus} />
             </div>
           </article>
           <article className="person-story person-story-reverse">
@@ -301,8 +321,11 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
               <span>{dmytro.role}</span>
               <h3>Леус Дмитро Сергійович</h3>
               {dmytro.paragraphs.map((text) => <p key={text}>{text}</p>)}
+              <PersonFocus items={dmytro.focus} />
             </div>
           </article>
+          {/* /pro-nas: the family thesis ties the two cards together — one copper line across both */}
+          {!isHome && <p className="team-bond"><span>Два покоління — одна відповідальність</span></p>}
         </div>
         {isHome && (
           <a className="section-link team-home-link" href={siteRoutes.about}>

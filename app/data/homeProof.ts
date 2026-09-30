@@ -41,3 +41,6 @@ export const homeProofCase: HomeProofCase | null = {
   attribution: 'Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD.',
   scope: { subject: ['Каркас', 'Стінові панелі', 'Покрівля'] },
 };
+
+/** WebP variants of the proof photo (the same frame), for HOME and /pro-nas. */
+export const homeProofWebpSrcSet = '/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w';

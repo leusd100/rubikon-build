@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- pre-generated WebP crops, same reason as ResponsiveImage. */
 import type { CSSProperties, ReactNode } from 'react';
-import type { HomeProofCase } from '../../data/homeProof';
+import { homeProofWebpSrcSet, type HomeProofCase } from '../../data/homeProof';
 import { siteRoutes } from '../../data/navigation';
 
 // HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
@@ -126,7 +126,7 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
         <figure className="hv2-proof-photo">
           <div className="hv2-proof-media">
             <picture>
-              <source type="image/webp" srcSet="/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w" sizes="(max-width: 900px) 100vw, 42vw" />
+              <source type="image/webp" srcSet={homeProofWebpSrcSet} sizes="(max-width: 900px) 100vw, 42vw" />
               <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
             </picture>
             <span className="hv2-tag hv2-tag-photo">Фото об’єкта</span>

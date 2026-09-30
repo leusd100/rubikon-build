@@ -2,7 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
 import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
-import { companyContactLinks } from '../../app/data/company';
+import { company, companyContactLinks } from '../../app/data/company';
+import { homeProofCase } from '../../app/data/homeProof';
 import { stubTurnstile } from './turnstile.helpers';
 
 function collectFatalBrowserErrors(page: Page) {
@@ -300,6 +301,33 @@ test('the conversation intro never slides over the steps, and sticks only where 
     if (sticks) expect(scroll.moved, path).toBeGreaterThan(100);
     else expect(scroll.moved, path).toBe(0);
   }
+});
+
+// /pro-nas v2: the two people and what each answers for, the one real object (the owner-approved HOME proof, same
+// attribution), principles that point to their mechanism on /yak-pratsyuiemo, and where we work.
+test('/pro-nas shows who answers for what, the real object with its attribution, principles with their mechanisms', async ({ page }) => {
+  await page.goto('/pro-nas', { waitUntil: 'load' });
+  await expect(page.locator('.team-about .person-story')).toHaveCount(2);
+  await expect(page.locator('.team-about .person-focus')).toHaveCount(2);
+  await expect(page.locator('.team-bond')).toHaveText('Два покоління — одна відповідальність');
+
+  const practice = page.locator('#praktyka');
+  expect(homeProofCase).not.toBeNull();
+  await expect(practice).toContainText(homeProofCase!.attribution);
+  await expect(practice).toContainText('Фото з ретушшю переднього плану');
+  await expect(practice.locator('img')).toHaveAttribute('src', homeProofCase!.photo.src);
+  await expect(practice.locator('.about-scope li')).toHaveText([...homeProofCase!.scope.subject]);
+  await expect(practice).toContainText(deliveryModel.statements.experience);
+
+  const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
+  expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
+  await expect(page.locator('.about-geo-text')).toHaveText(company.geography);
+  await expect(page.locator('.about-provenance')).toHaveText('Ілюстрація');
+  await expect(page.locator('.ghost-word')).toHaveCount(0);
+
+  // Every principle lands on a zone that exists
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  for (const anchor of anchors) await expect(page.locator(anchor)).toHaveCount(1);
 });
 
 test('homepage separates labelled illustrations from the one real photo', async ({ page }) => {

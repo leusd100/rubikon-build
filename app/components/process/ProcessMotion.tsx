@@ -2,15 +2,16 @@
 
 import { useEffect } from 'react';
 
-// /yak-pratsyuiemo — the page's one motion controller. The markup is complete and final without it: this only adds
-// `data-motion-ready` to the page (which lets delivery.css hold [data-motion] blocks in their "before" state) and flips
-// each block to `data-motion-state="on"` once, when it meaningfully enters the viewport. Nothing replays; every observer
-// disconnects when its work is done. With prefers-reduced-motion nothing is armed, so the final state shows at once.
-// Also drives the one parallax layer ([data-parallax]) while — and only while — it is on screen.
+// The page's one motion controller (/yak-pratsyuiemo, /pro-nas; `root` names the page element). The markup is
+// complete and final without it: this only adds `data-motion-ready` to the page (which lets the page's CSS hold
+// [data-motion] blocks in their "before" state) and flips each block to `data-motion-state="on"` once, when it
+// meaningfully enters the viewport. Nothing replays; every observer disconnects when its work is done. With
+// prefers-reduced-motion nothing is armed, so the final state shows at once.
+// Also drives the parallax layers ([data-parallax]) while — and only while — they are on screen.
 
-export function ProcessMotion() {
+export function ProcessMotion({ root = '.process-page' }: Readonly<{ root?: string }>) {
   useEffect(() => {
-    const page = document.querySelector<HTMLElement>('.process-page');
+    const page = document.querySelector<HTMLElement>(root);
     if (!page || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     // Two phases: "before" states without transitions, then transitions on (see delivery.css).
@@ -61,7 +62,7 @@ export function ProcessMotion() {
       cancelAnimationFrame(arm);
       delete page.dataset.motionReady;
     };
-  }, []);
+  }, [root]);
 
   return null;
 }
