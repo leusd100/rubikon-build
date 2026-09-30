@@ -114,13 +114,13 @@
 }
 /* One route: a hairline through the four nodes, copper fading towards the last one */
 .proc-steps { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); gap: 0 clamp(20px, 2.4vw, 40px); margin: 0; padding: 0; list-style: none; }
-.proc-steps::before, .proc-steps::after { content: ''; position: absolute; top: 22px; left: 22px; right: 0; height: 1px; }
+.proc-steps::before, .proc-steps::after { content: ''; position: absolute; z-index: 0; top: 22px; left: 22px; right: 0; height: 1px; }
 .proc-steps::before { background: var(--color-dark-line); }
 .proc-steps::after { background: var(--color-accent); transform-origin: left; }
 /* Each step spans the four shared rows, so titles, texts and «На виході» line up across the route */
 .proc-steps li { position: relative; display: grid; grid-row: span 4; grid-template-rows: subgrid; align-content: start; min-width: 0; }
 .proc-step-node {
-  position: relative; display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 26px; color: var(--color-accent-strong);
+  position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 26px; color: var(--color-accent-strong);
   background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em;
 }
 .proc-steps li:first-child .proc-step-node { color: var(--color-dark); background: var(--color-accent-strong); border-color: var(--color-accent-strong); }
@@ -142,21 +142,29 @@
 
 /* ---------------------------------------------------------------- 4 · How much we take on */
 .proc-scope { background: var(--color-bg); }
-.proc-scope-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(28px, 3vw, 48px); margin: 0; padding: 0; list-style: none; }
-.proc-scope-grid li { min-width: 0; }
+.proc-scope-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(28px, 3vw, 48px); margin: 0; padding: 0; list-style: none; }
+/* Drawing, title, text and coordination share rows across the three cards */
+.proc-scope-grid { grid-template-rows: repeat(4, auto); }
+.proc-scope-grid > li { display: grid; grid-row: span 4; grid-template-rows: subgrid; align-content: start; min-width: 0; }
+.proc-scope-legend { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 36px 0 0; padding: 0; list-style: none; color: var(--color-text-muted); font-size: 14px; }
+.proc-scope-legend li { display: flex; align-items: center; gap: 10px; }
+.proc-scope-legend i { width: 22px; height: 12px; border: 1.5px solid var(--color-border-control); background: color-mix(in srgb, var(--color-text) 3%, transparent); }
+.proc-scope-legend .is-scope i { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.proc-scope-legend .is-context i { border-style: dashed; border-color: var(--color-border-strong); background: none; }
 .proc-scope-grid h3 { margin: 22px 0 10px; font: 600 clamp(22px, 2vw, 26px)/1.15 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: uppercase; }
 .proc-scope-grid p { margin: 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.65; }
 .proc-scope-grid .proc-scope-coordination { margin-top: 14px; padding-left: 14px; color: var(--color-text-muted); border-left: 2px solid var(--color-accent); font-size: 14px; line-height: 1.55; }
 .scope-diagram { display: block; width: 100%; height: auto; max-width: 380px; overflow: visible; }
-.scope-diagram :is(path, polygon, rect.sd-boundary) { stroke-dasharray: 1; stroke-dashoffset: 0; vector-effect: non-scaling-stroke; }
+.scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; vector-effect: non-scaling-stroke; }
+.sd-boundary { vector-effect: non-scaling-stroke; }
 .sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: 1; stroke-linejoin: round; }
 .sd-layer polygon { fill: color-mix(in srgb, var(--color-text) 3%, transparent); }
 .sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.6; }
 .sd-layer.is-scope polygon { fill: color-mix(in srgb, var(--color-accent) 18%, transparent); }
 .sd-boundary { fill: none; stroke-width: 1; }
 .sd-boundary-scope { stroke: var(--color-accent); stroke-width: 1.4; }
-.sd-boundary-object { stroke: var(--color-border-strong); stroke-dasharray: 5 4 !important; }
-.sd-boundary-outer { stroke: var(--color-text-muted); stroke-width: 1.2; stroke-dasharray: 8 5 !important; }
+.sd-boundary-object { stroke: var(--color-border-strong); stroke-dasharray: 5 4; }
+.sd-boundary-outer { stroke: var(--color-text-muted); stroke-width: 1.2; stroke-dasharray: 8 5; }
 .sd-tab { fill: var(--color-text); }
 .sd-tab-label { fill: var(--color-bg); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .sd-label { fill: var(--color-text-muted); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
@@ -283,6 +291,8 @@
   .proc-steps h3 { padding-top: 9px; }
   .proc-steps p { max-width: 620px; }
   .proc-scope-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .proc-scope-grid { grid-template-rows: none; }
+  .proc-scope-grid > li { grid-row: auto; grid-template-rows: none; }
   .proc-scope-grid li { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); column-gap: 32px; align-items: start; }
   .proc-scope-grid li > :not(svg) { grid-column: 2; }
   .proc-scope-grid li > svg { grid-row: 1 / span 3; }

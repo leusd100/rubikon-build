@@ -190,6 +190,11 @@ export default function DeliveryModelPage() {
               </li>
             ))}
           </ul>
+          <ul className="proc-scope-legend" aria-label="Позначення на схемах">
+            <li className="is-scope"><i aria-hidden="true" /> Обсяг RUBIKON</li>
+            <li><i aria-hidden="true" /> Роботи інших учасників</li>
+            <li className="is-context"><i aria-hidden="true" /> Хто координує об’єкт</li>
+          </ul>
         </div>
       </section>
 
