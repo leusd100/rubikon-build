@@ -1,9 +1,12 @@
 name: PR Fast Gate
 
+# Visual mode (docs/ci-tier-model.md → Design iteration and visual freeze): a design/* pull request defers the
+# screenshot suites until the owner approves the look and it gets the visual-freeze label; everything functional
+# blocks in every mode. labeled/unlabeled re-run the gate so adding or removing the label takes effect at once.
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 permissions:
   contents: read
@@ -27,17 +30,22 @@ jobs:
       visual: ${{ steps.changes.outputs.visual }}
       wide_visual: ${{ steps.changes.outputs.wide_visual }}
       brand_visual: ${{ steps.changes.outputs.brand_visual }}
+      hero_playback: ${{ steps.changes.outputs.hero_playback }}
+      visual_mode: ${{ steps.changes.outputs.visual_mode }}
+      visual_deferred: ${{ steps.changes.outputs.visual_deferred }}
     steps:
       - name: Check out repository with PR history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - name: Apply auditable path rules
+      - name: Apply auditable path rules and the visual mode
         id: changes
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: node scripts/ci/classify-changes.mjs "$BASE_SHA" "$HEAD_SHA"
 
   fast:
@@ -190,6 +198,28 @@ jobs:
           tests/e2e/configurator-inquiry-handoff.spec.ts
           tests/e2e/configurator-palette-accessibility.spec.ts
 
+  # Hero playback is behaviour (play, pause, reduced motion, touch target), not pixels: selected by the paths in
+  # every visual mode, so a design/* prototype still proves it.
+  hero:
+    name: Hero playback regression
+    if: needs.classify.outputs.hero_playback == 'true'
+    needs: [classify, fast]
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: pr-production-build
+          path: dist
+      - uses: ./.github/actions/setup-playwright
+      - name: Run hero playback suite
+        run: pnpm exec playwright test --project=desktop-chromium tests/e2e/hero-video.spec.ts
+
+  # Screenshot suites: off for a design/* prototype (visual=false from the classifier), blocking at visual-freeze and
+  # on every other branch. Baselines are contracts for approved UI — see docs/ci-tier-model.md before refreshing one.
   visual:
     name: Changed-area visual regression
     if: needs.classify.outputs.visual == 'true'
@@ -205,9 +235,6 @@ jobs:
           name: pr-production-build
           path: dist
       - uses: ./.github/actions/setup-playwright
-      - name: Hero playback regression
-        if: needs.classify.outputs.wide_visual == 'true'
-        run: pnpm exec playwright test --project=desktop-chromium tests/e2e/hero-video.spec.ts
       - name: Run selected visual suites
         env:
           WIDE_VISUAL: ${{ needs.classify.outputs.wide_visual }}
@@ -227,7 +254,7 @@ jobs:
   pr-gate:
     name: PR Gate
     if: always()
-    needs: [classify, fast, planner, inquiry, leads, configurator, visual]
+    needs: [classify, fast, planner, inquiry, leads, configurator, hero, visual]
     runs-on: ubuntu-latest
     steps:
       - name: Require Fast Gate and every selected regression suite
@@ -238,10 +265,14 @@ jobs:
           INQUIRY: ${{ needs.inquiry.result }}
           LEADS: ${{ needs.leads.result }}
           CONFIGURATOR: ${{ needs.configurator.result }}
+          HERO: ${{ needs.hero.result }}
           VISUAL: ${{ needs.visual.result }}
+          VISUAL_MODE: ${{ needs.classify.outputs.visual_mode }}
+          VISUAL_DEFERRED: ${{ needs.classify.outputs.visual_deferred }}
         run: |
+          echo "Visual mode: $VISUAL_MODE (visual regression deferred: $VISUAL_DEFERRED)" >> "$GITHUB_STEP_SUMMARY"
           test "$CLASSIFY" = success
           test "$FAST" = success
-          for result in "$PLANNER" "$INQUIRY" "$LEADS" "$CONFIGURATOR" "$VISUAL"; do
+          for result in "$PLANNER" "$INQUIRY" "$LEADS" "$CONFIGURATOR" "$HERO" "$VISUAL"; do
             test "$result" = success || test "$result" = skipped
           done
