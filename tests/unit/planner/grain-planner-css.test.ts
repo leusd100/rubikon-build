@@ -64,7 +64,7 @@ describe('grain-planner.css', () => {
   });
 
   it('uses the AA-safe dark accent for small editorial step numbers', () => {
-    expect(editorialCss).toMatch(/\.direction-editorial-points span\s*\{[^}]*color:\s*var\(--accent-dark\)/);
-    expect(editorialCss).not.toMatch(/\.direction-editorial-points span\s*\{[^}]*color:\s*var\(--accent\);/);
+    expect(editorialCss).toMatch(/\.direction-editorial-points span\s*\{[^}]*color:\s*var\(--color-accent-strong\)/);
+    expect(editorialCss).not.toMatch(/\.direction-editorial-points span\s*\{[^}]*color:\s*var\(--color-accent\);/);
   });
 });

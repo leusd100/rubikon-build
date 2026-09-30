@@ -1,12 +1,8 @@
 'use client';
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
-import { usePathname } from 'next/navigation';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { readEffectiveTheme, readPreference, setThemePreference, subscribeTheme, type ThemePreference } from '../lib/theme';
-
-// Architectural Copper v0.2 prototype: the theme choice exists on HOME only, the one page with a dark palette.
-const PROTOTYPE_PATH = '/';
 
 const OPTIONS: ReadonlyArray<{ value: ThemePreference; label: string }> = [
   { value: 'system', label: 'Як у системі' },
@@ -31,9 +27,6 @@ export function ThemeOptions({ variant }: Readonly<{ variant: 'panel' | 'menu' }
   const preference = usePreference();
   const effective = useEffective();
   const name = useId();
-  const pathname = usePathname();
-  if (pathname !== PROTOTYPE_PATH) return null;
-
   return (
     <fieldset className={`theme-options theme-options-${variant}`}>
       <legend>Тема оформлення</legend>
@@ -65,7 +58,6 @@ export function ThemeMenu() {
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
-  const onHome = usePathname() === PROTOTYPE_PATH;
 
   useEffect(() => {
     if (!open) return;
@@ -89,8 +81,6 @@ export function ThemeMenu() {
       document.removeEventListener('focusin', onFocus);
     };
   }, [open]);
-
-  if (!onHome) return null;
 
   return (
     <div className="theme-menu" ref={rootRef}>

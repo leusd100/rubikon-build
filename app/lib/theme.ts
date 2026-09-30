@@ -1,9 +1,9 @@
-// Architectural Copper v0.2 — theme preference (system / light / dark) for the HOME prototype.
+// RUBIKON colour system v1 — theme preference (system / light / dark), site-wide.
 //
 // Two attributes on <html>, both set before the first paint by THEME_INIT_SCRIPT in app/layout.tsx:
 //   data-theme-preference = system | light | dark   (what the visitor chose; system unless stored)
 //   data-theme            = light | dark            (what is shown; system resolves through prefers-color-scheme)
-// Only HOME's palette stylesheet reads them, so on every other page they are inert.
+// app/theme.css reads data-theme; the theme control reads data-theme-preference for its first-frame state.
 // An explicit Light or Dark is stored; choosing System removes the key, so the OS decides again.
 
 export type ThemePreference = 'system' | 'light' | 'dark';

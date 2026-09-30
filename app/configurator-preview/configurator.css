@@ -4,12 +4,12 @@
 
 .hangar-configurator {
   padding: 132px 0 96px;
-  background: var(--surface-page);
+  background: var(--color-bg);
 }
 
 .hangar-configurator-embedded {
   padding-block: clamp(88px, 9vw, 132px);
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .hc-hero {
@@ -45,7 +45,7 @@
   gap: 0;
   margin: 22px 0 0;
   padding: 22px 0 0;
-  border-top: 1px solid var(--border-default);
+  border-top: 1px solid var(--color-border);
   list-style: none;
 }
 
@@ -59,18 +59,18 @@
 
 .hc-vocabulary li + li {
   padding-left: 18px;
-  border-left: 1px solid var(--border-default);
+  border-left: 1px solid var(--color-border);
 }
 
 .hc-vocabulary span {
-  color: var(--accent-dark);
+  color: var(--color-accent-strong);
   font: 700 11px/1 var(--font-condensed), sans-serif;
   letter-spacing: .08em;
 }
 
 .hc-vocabulary strong {
   display: block;
-  color: var(--text-primary);
+  color: var(--color-text);
   font: 600 15px/1.2 var(--font-condensed), sans-serif;
   letter-spacing: .035em;
   text-transform: uppercase;
@@ -78,7 +78,7 @@
 
 .hc-vocabulary p {
   margin: 8px 0 0;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -88,7 +88,7 @@
   align-items: center;
   gap: 10px;
   margin: 0 0 10px;
-  color: var(--accent-dark);
+  color: var(--color-accent-strong);
   font: 700 11px/1 var(--font-condensed), sans-serif;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -97,21 +97,21 @@
 .hc-eyebrow span {
   width: 20px;
   height: 2px;
-  background: var(--accent-dark);
+  background: var(--color-accent-strong);
 }
 
 .hc-hero :is(h1, h2) {
   margin: 0 0 14px;
   font: 400 clamp(34px, 4.4vw, 54px)/1.05 var(--font-display), var(--font-manrope), sans-serif;
   letter-spacing: -.03em;
-  color: var(--text-primary);
+  color: var(--color-text);
   text-wrap: balance;
 }
 
 .hc-lede {
   margin: 0 0 20px;
   max-width: 60ch;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -134,9 +134,9 @@
    wrapper. */
 
 .hc-controls {
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: white;
+  background: var(--color-surface-elevated);
   overflow: hidden; /* keeps divider rules and the rounded corners clean at the panel's edges */
 }
 
@@ -145,12 +145,12 @@
 }
 
 .hc-control-group + .hc-control-group {
-  border-top: 1px solid var(--border-default);
+  border-top: 1px solid var(--color-border);
 }
 
 .hc-control-group h2 {
   margin: 0 0 18px;
-  color: var(--text-primary);
+  color: var(--color-text);
   font: 600 12px/1 var(--font-condensed), sans-serif;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -171,7 +171,7 @@
    every radiogroup head unstyled, so "Стіни" and "Покрівля" rendered larger and darker than
    "Ширина" or "Довжина" for no reason anyone chose. */
 .hc-field-head :is(label, span) {
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font: 600 12px/1 var(--font-manrope), sans-serif;
 }
 
@@ -182,7 +182,7 @@
    orange, more singular signal instead of one among several. */
 .hc-field-value {
   font: 700 13px/1 var(--font-condensed), sans-serif;
-  color: var(--text-primary);
+  color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -195,16 +195,16 @@
 
 .hc-field-controls input[type='range'] {
   width: 100%;
-  accent-color: var(--accent);
+  accent-color: var(--color-accent);
 }
 
 .hc-field-controls input[type='text'] {
   min-height: var(--control-min-height);
   padding: 0 10px;
-  border: 1px solid var(--border-control);
+  border: 1px solid var(--color-border-control);
   border-radius: 4px;
-  background: var(--surface-page);
-  color: var(--text-primary);
+  background: var(--color-bg);
+  color: var(--color-text);
   font: 600 13px/1 var(--font-manrope), sans-serif;
   /* Right-aligned so the typed value sits under the readout above it, which the field head
      right-aligns — the two numbers share a column and previously sat on different axes. Tabular
@@ -214,7 +214,7 @@
 }
 
 .hc-field-controls input[type='text']:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
 
@@ -228,13 +228,13 @@
 
 .hc-field-hint {
   margin: 6px 0 0;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font: 500 11px/1.45 var(--font-manrope), sans-serif;
 }
 
 .hc-field-note {
   margin: 14px 0 0;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font-size: 11.5px;
   line-height: 1.5;
 }
@@ -244,9 +244,9 @@
    this panel already uses for "pay attention", never an alarming red. */
 .hc-field-note-warning {
   padding: 8px 10px;
-  border-left: 3px solid var(--accent-dark);
-  background: var(--surface-muted);
-  color: var(--text-primary);
+  border-left: 3px solid var(--color-accent-strong);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
   font-weight: 600;
 }
 
@@ -276,19 +276,19 @@
   align-items: center;
   justify-content: center;
   padding: 8px 6px;
-  border: 1px solid var(--border-control);
+  border: 1px solid var(--color-border-control);
   border-radius: 4px;
-  color: var(--text-secondary);
-  background: var(--surface-page);
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
   font: 600 12px/1.25 var(--font-manrope), sans-serif;
   text-align: center;
   transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium), background var(--duration-fast) var(--ease-premium);
 }
 
 .hc-option-card input:checked + span {
-  color: white;
-  border-color: var(--accent-dark);
-  background: var(--accent);
+  color: var(--color-on-action);
+  border-color: var(--color-action);
+  background: var(--color-action);
 }
 
 .hc-option-card input:focus-visible + span {
@@ -305,9 +305,9 @@
 }
 
 .hc-option-card input:disabled + span {
-  color: var(--text-muted);
-  background: var(--surface-muted);
-  border-color: var(--border-default);
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
   opacity: 0.6;
 }
 
@@ -319,9 +319,9 @@
    as a reset. The accent stays, as an outline rather than a fill: still legibly the selection,
    still legibly not available right now. */
 .hc-option-card input:checked:disabled + span {
-  color: var(--accent-dark);
-  background: var(--surface-page);
-  border-color: var(--accent-dark);
+  color: var(--color-accent-strong);
+  background: var(--color-bg);
+  border-color: var(--color-accent-strong);
   opacity: 0.75;
 }
 
@@ -343,7 +343,7 @@
 .hc-checkbox-row input {
   width: 18px;
   height: 18px;
-  accent-color: var(--accent);
+  accent-color: var(--color-accent);
 }
 
 .hc-checkbox-row input:focus-visible {
@@ -352,7 +352,7 @@
 }
 
 .hc-checkbox-row span {
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font: 500 13px/1.3 var(--font-manrope), sans-serif;
 }
 
@@ -374,9 +374,9 @@
   gap: 12px 24px;
   min-height: 44px;
   padding: 10px 14px;
-  color: white;
-  background: var(--surface-dark);
-  border-left: 2px solid var(--accent);
+  color: var(--color-dark-text);
+  background: var(--color-dark);
+  border-left: 2px solid var(--color-accent);
   scroll-margin-top: 90px;
 }
 
@@ -390,7 +390,7 @@
   padding: 0 4px;
   border: 0;
   border-bottom: 1px solid rgba(255, 255, 255, .58);
-  color: white;
+  color: var(--color-dark-text);
   background: transparent;
   font: 700 10px/1 var(--font-condensed), sans-serif;
   letter-spacing: .05em;
@@ -398,15 +398,15 @@
   cursor: pointer;
 }
 
-.hc-preview-demo-status button:hover { border-color: var(--accent); color: var(--accent); }
-.hc-preview-demo-status button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.hc-preview-demo-status button:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.hc-preview-demo-status button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
 
 .hc-preview-surface {
   min-width: 0;
   padding: 24px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--surface-dark);
+  background: var(--color-dark);
   box-shadow: var(--shadow-card);
 }
 
@@ -437,7 +437,7 @@
   align-items: flex-start;
   gap: 10px;
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font-size: 15px;
   line-height: 1.5;
 }
@@ -448,7 +448,7 @@
   width: 18px;
   height: 2px;
   margin-top: 9px;
-  background: var(--accent);
+  background: var(--color-accent);
 }
 
 .hc-preview-toolbar-actions {
@@ -467,29 +467,29 @@
 .hc-secondary-action {
   min-height: 32px;
   padding: 0 14px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: white;
-  color: var(--text-secondary);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
   font: 600 12px/1 var(--font-manrope), sans-serif;
   letter-spacing: .01em;
   cursor: pointer;
   transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium);
 }
 
-.hc-secondary-action:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.hc-secondary-action:hover { color: var(--color-text); border-color: var(--color-text-secondary); }
 
 .hc-secondary-action:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
 .hc-mode-switch {
   display: inline-flex;
   padding: 3px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: white;
+  background: var(--color-surface-elevated);
 }
 
 .hc-mode-switch button {
@@ -498,24 +498,24 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font: 600 12px/1 var(--font-manrope), sans-serif;
   letter-spacing: .01em;
   cursor: pointer;
   transition: background var(--duration-fast) var(--ease-premium), color var(--duration-fast) var(--ease-premium);
 }
 
-.hc-mode-switch button:hover:not(:disabled):not(.is-active) { color: var(--text-primary); }
+.hc-mode-switch button:hover:not(:disabled):not(.is-active) { color: var(--color-text); }
 
 .hc-mode-switch button.is-active {
-  background: var(--surface-dark);
-  color: var(--text-on-dark);
+  background: var(--color-dark);
+  color: var(--color-dark-text-secondary);
 }
 
 .hc-mode-switch button:disabled { opacity: .45; cursor: not-allowed; }
 
 .hc-mode-switch button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -538,7 +538,7 @@
   align-items: center;
   justify-content: center;
   gap: 14px;
-  color: var(--text-on-dark-subtle);
+  color: var(--color-dark-text-muted);
   font: 500 12px/1 var(--font-manrope), sans-serif;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -547,7 +547,7 @@
 .hc-preview-loading-bar {
   width: 96px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--text-on-dark-subtle), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-dark-text-muted), transparent);
   background-size: 200% 100%;
   animation: hc-preview-loading-sweep 1.1s var(--ease-premium) infinite;
 }
@@ -586,7 +586,7 @@
 .hc-three-overlay > div { display: contents; }
 
 .hc-three-overlay dt {
-  color: var(--text-on-dark-subtle);
+  color: var(--color-dark-text-muted);
   font: 500 9px/1 var(--font-manrope), sans-serif;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -594,7 +594,7 @@
 }
 
 .hc-three-overlay dd {
-  color: var(--text-on-dark);
+  color: var(--color-dark-text-secondary);
   font: 600 16px/1 var(--font-condensed), sans-serif;
   letter-spacing: .01em;
   margin: 0;
@@ -611,17 +611,17 @@
   border-radius: 999px;
   background: rgba(20, 20, 22, .72);
   backdrop-filter: blur(6px);
-  color: var(--text-on-dark-subtle);
+  color: var(--color-dark-text-muted);
   font: 600 10px/1 var(--font-manrope), sans-serif;
   letter-spacing: .04em;
   cursor: pointer;
   transition: color var(--duration-fast) var(--ease-premium);
 }
 
-.hc-three-overlay-toggle:hover { color: var(--text-on-dark); }
+.hc-three-overlay-toggle:hover { color: var(--color-dark-text-secondary); }
 
 .hc-three-overlay-toggle:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -642,7 +642,7 @@
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  background: var(--surface-dark);
+  background: var(--color-dark);
   padding: 16px;
 }
 
@@ -676,7 +676,7 @@
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 999px;
   background: rgba(255, 255, 255, .06);
-  color: var(--text-on-dark);
+  color: var(--color-dark-text-secondary);
   font: 600 12px/1 var(--font-manrope), sans-serif;
   letter-spacing: .01em;
   cursor: pointer;
@@ -685,7 +685,7 @@
 .hc-fullscreen-close:hover { background: rgba(255, 255, 255, .12); }
 
 .hc-fullscreen-close:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -699,9 +699,9 @@
   gap: 16px;
   margin-top: 16px;
   padding: 14px 18px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: white;
+  background: var(--color-surface-elevated);
 }
 
 .hc-material-presets {
@@ -719,7 +719,7 @@
 
 .hc-material-swatch-group legend {
   padding: 0 0 6px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font: 600 10px/1 var(--font-manrope), sans-serif;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -736,24 +736,24 @@
   gap: 6px;
   min-height: 30px;
   padding: 4px 10px 4px 6px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font: 500 11px/1 var(--font-manrope), sans-serif;
   cursor: pointer;
   transition: border-color var(--duration-fast) var(--ease-premium), color var(--duration-fast) var(--ease-premium);
 }
 
-.hc-material-swatch-row button:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+.hc-material-swatch-row button:hover { border-color: var(--color-text-secondary); color: var(--color-text); }
 
 .hc-material-swatch-row button.is-selected {
-  border-color: var(--accent);
-  color: var(--text-primary);
+  border-color: var(--color-accent);
+  color: var(--color-text);
 }
 
 .hc-material-swatch-row button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -761,7 +761,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, .12);
+  border: 1px solid color-mix(in srgb, var(--color-text) 16%, transparent);
   flex-shrink: 0;
 }
 
@@ -769,13 +769,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font: 500 12px/1 var(--font-manrope), sans-serif;
   cursor: pointer;
   white-space: nowrap;
 }
 
-.hc-scale-figure-toggle input { accent-color: var(--accent); width: 15px; height: 15px; }
+.hc-scale-figure-toggle input { accent-color: var(--color-accent); width: 15px; height: 15px; }
 
 @media (max-width: 759px) {
   .hc-preview-secondary-panel { flex-direction: column; align-items: flex-start; }
@@ -822,7 +822,7 @@
 .hc-layer polygon,
 .hc-foundation,
 .hc-footing {
-  stroke: var(--text-on-dark-subtle);
+  stroke: var(--color-dark-text-muted);
   stroke-width: .85;
   stroke-opacity: .75;
   stroke-linejoin: round;
@@ -831,7 +831,7 @@
 }
 
 .hc-layer.is-active polygon {
-  stroke: var(--accent);
+  stroke: var(--color-accent);
   stroke-width: 2.25;
 }
 
@@ -874,7 +874,7 @@
    frame 1.5 > gable outline 1.25 > bay seams .85. Without this the pentagon's fold into the roof
    planes vanished — same fill, same seam weight, so the eave line simply disappeared. */
 .hc-gable polygon {
-  stroke: var(--text-on-dark-muted);
+  stroke: var(--color-dark-text-secondary);
   stroke-width: 1.25;
   stroke-opacity: .9;
 }
@@ -904,7 +904,7 @@
 .hc-gate { fill: #0e1110; }
 .hc-gate-outline polygon {
   fill: none;
-  stroke: var(--text-on-dark-muted);
+  stroke: var(--color-dark-text-secondary);
   stroke-width: 1;
 }
 
@@ -916,7 +916,7 @@
    on top of their already-faster/smaller timing budget in buildUpSequence.ts. */
 .hc-columns line,
 .hc-rafters line {
-  stroke: var(--text-on-dark-muted);
+  stroke: var(--color-dark-text-secondary);
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
@@ -925,12 +925,12 @@
    the brighter foreground ink, because it is the silhouette's defining edge rather than one more
    repeated member. */
 .hc-ridge line {
-  stroke: var(--text-on-dark);
+  stroke: var(--color-dark-text-secondary);
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .hc-purlins line {
-  stroke: var(--text-on-dark-subtle);
+  stroke: var(--color-dark-text-muted);
   stroke-width: .5;
   stroke-opacity: .7;
   vector-effect: non-scaling-stroke;
@@ -991,7 +991,7 @@
    tint is --accent-on-dark, NOT --accent — see that token for why the brand orange itself would
    have made these lines less legible than the grey they replace, not more. */
 .hc-dimension line {
-  stroke: var(--accent-on-dark);
+  stroke: var(--color-accent-on-dark);
   stroke-width: 1;
   stroke-opacity: 1;
   vector-effect: non-scaling-stroke;
@@ -1001,10 +1001,10 @@
    quieter than the three user-set dimensions and its label carries a "~" in the markup, so it can
    never be mistaken for another control's readout. */
 .hc-dimension.is-derived line { stroke-opacity: .6; stroke-dasharray: 3 3; }
-.hc-dimension.is-derived text { fill: var(--accent-on-dark); opacity: .8; font-size: 12px; }
+.hc-dimension.is-derived text { fill: var(--color-accent-on-dark); opacity: .8; font-size: 12px; }
 
 .hc-dimension text {
-  fill: var(--accent-on-dark);
+  fill: var(--color-accent-on-dark);
   /* Mirrored by LABEL_FONT_PX in isometricProjection.ts, which estimates each label's extent to
      keep it inside the viewBox — change one and change the other. */
   font: 600 14px var(--font-condensed), sans-serif;
@@ -1014,7 +1014,7 @@
      terrain) without a new box competing for attention. paint-order draws the stroke first so the
      fill sits cleanly on top. */
   paint-order: stroke;
-  stroke: var(--surface-dark);
+  stroke: var(--color-dark);
   stroke-width: 4px;
   stroke-linejoin: round;
 }
@@ -1023,9 +1023,9 @@
 
 .hc-summary {
   padding: 20px 22px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: white;
+  background: var(--color-surface-elevated);
 }
 
 .hc-summary summary {
@@ -1047,7 +1047,7 @@
 }
 
 .hc-summary-title {
-  color: var(--text-primary);
+  color: var(--color-text);
   font: 600 13px/1 var(--font-condensed), sans-serif;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -1061,8 +1061,8 @@
 .hc-summary-toggle {
   width: 10px;
   height: 10px;
-  border-right: 2px solid var(--text-muted);
-  border-bottom: 2px solid var(--text-muted);
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
   transform: rotate(45deg);
   transition: transform var(--duration-fast) var(--ease-premium);
 }
@@ -1080,12 +1080,12 @@
   display: flex;
   flex-direction: column;
   padding-left: clamp(28px, 3vw, 44px);
-  border-left: 1px solid var(--border-default);
+  border-left: 1px solid var(--color-border);
 }
 
 .hc-summary-kind {
   margin: 0 0 4px;
-  color: var(--accent-dark);
+  color: var(--color-accent-strong);
   font: 700 11px/1 var(--font-condensed), sans-serif;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -1093,7 +1093,7 @@
 
 .hc-summary-dimensions {
   margin: 0 0 6px;
-  color: var(--text-primary);
+  color: var(--color-text);
   font: 400 26px/1.1 var(--font-display), var(--font-manrope), sans-serif;
   font-variant-numeric: tabular-nums;
 }
@@ -1111,7 +1111,7 @@
 
 .hc-summary-area {
   margin: 0 0 16px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font: 600 14px/1.3 var(--font-manrope), sans-serif;
 }
 
@@ -1120,7 +1120,7 @@
   gap: 10px;
   margin: 0 0 14px;
   padding-top: 14px;
-  border-top: 1px solid var(--border-default);
+  border-top: 1px solid var(--color-border);
 }
 
 .hc-summary-facts > div {
@@ -1130,7 +1130,7 @@
 }
 
 .hc-summary-facts dt {
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font: 600 11px/1.3 var(--font-condensed), sans-serif;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -1139,14 +1139,14 @@
 .hc-summary-facts dd {
   margin: 0;
   max-width: 60%;
-  color: var(--text-primary);
+  color: var(--color-text);
   font: 500 13px/1.35 var(--font-manrope), sans-serif;
   text-align: right;
 }
 
 .hc-summary-formula {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font: 500 11px/1 var(--font-manrope), sans-serif;
   font-variant-numeric: tabular-nums;
 }
@@ -1154,14 +1154,14 @@
 .hc-summary-structure {
   margin: 14px 0 0;
   max-width: 32ch;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font: 500 15px/1.6 var(--font-manrope), sans-serif;
 }
 
 .hc-summary-scheme-label {
   margin: 0;
   max-width: 22ch;
-  color: var(--text-primary);
+  color: var(--color-text);
   font: 600 clamp(20px, 1.7vw, 22px)/1.15 var(--font-condensed), sans-serif;
   letter-spacing: -.01em;
   text-transform: uppercase;
@@ -1179,8 +1179,8 @@
 .hc-summary-disclaimer {
   margin: auto 0 0;
   padding-top: 22px;
-  color: var(--text-secondary);
-  border-top: 1px solid var(--border-default);
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-border);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -1192,7 +1192,7 @@
   gap: 14px 18px;
   margin-top: 18px;
   padding-top: 18px;
-  border-top: 1px solid var(--border-default);
+  border-top: 1px solid var(--color-border);
 }
 
 .hc-summary-flagship .hc-summary-handoff { grid-column: 1 / -1; }
@@ -1202,7 +1202,7 @@
 .hc-summary-handoff p {
   margin: 0;
   max-width: 34ch;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font-size: 11px;
   line-height: 1.45;
 }
@@ -1245,7 +1245,7 @@
   .hc-summary-preliminary {
     margin-top: 24px;
     padding: 24px 0 0;
-    border-top: 1px solid var(--border-default);
+    border-top: 1px solid var(--color-border);
     border-left: 0;
   }
   .hc-summary-disclaimer { margin-top: 22px; }
@@ -1271,7 +1271,7 @@
   .hangar-configurator-embedded .hc-summary-preliminary {
     margin-top: 24px;
     padding: 24px 0 0;
-    border-top: 1px solid var(--border-default);
+    border-top: 1px solid var(--color-border);
     border-left: 0;
   }
   .hangar-configurator-embedded .hc-summary-disclaimer { margin-top: 22px; }
