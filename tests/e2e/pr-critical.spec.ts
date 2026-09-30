@@ -414,7 +414,7 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
     formatTerms: '.proc-scope-terms dd',
     principle: '.proc-principle',
     areas: '.proc-area h3',
-    areaItems: '.proc-area ul li',
+    areaItems: '.proc-area ul li .proc-area-work',
     terms: '.proc-terms-grid h3',
     inquiry: '#inquiry h2',
   });
@@ -505,6 +505,8 @@ test.describe('/yak-pratsyuiemo without JavaScript', () => {
     await expect(page.locator('.proc-steps .proc-step-result').last()).toBeVisible();
     await expect(page.locator('.proc-area')).toHaveCount(3);
     await expect(page.locator('.proc-terms-grid li')).toHaveCount(3);
+    await expect(page.locator('.proc-change-steps li')).toHaveCount(4);
+    await expect(page.locator('.proc-contract-band')).toBeVisible();
     const first = page.locator('.faq-list details').first();
     await first.locator('summary').click();
     await expect(first).toHaveAttribute('open', '');
@@ -520,6 +522,18 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await expect(page.locator('.proc-area').first()).toHaveCSS('opacity', '1');
     await expect(page.locator('.scope-diagram-comprehensive .sd-context').first()).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-start-merge')).toHaveCSS('opacity', '1');
+    await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1');
+    await expect(page.locator('.proc-change')).toHaveCSS('opacity', '1');
+  });
+
+  test('a block taller than the screen still plays: the stacked responsibility map on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const figure = page.locator('.proc-resp-figure');
+    await figure.scrollIntoViewIfNeeded();
+    await expect(figure).toHaveAttribute('data-motion-state', 'on');
+    await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1', { timeout: 5000 });
   });
 
   test('each block plays once when it enters the viewport and never replays', async ({ page }) => {
@@ -549,7 +563,8 @@ test.describe('/yak-pratsyuiemo motion', () => {
 });
 
 test.describe('/yak-pratsyuiemo interactions', () => {
-  const visibleItems = (page: Page, zone: string) => page.locator(`.proc-area-${zone} ul li:visible`);
+  const visibleItems = (page: Page, zone: string) => page.locator(`.proc-area-${zone} ul li:visible .proc-area-work`);
+  const visibleNotes = (page: Page, zone: string) => page.locator(`.proc-area-${zone} ul li:visible .proc-area-note:visible`);
 
   test('the format switcher moves each work to the zone the model names for that format', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -562,7 +577,28 @@ test.describe('/yak-pratsyuiemo interactions', () => {
       }
       await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText(format.clientTitle);
       await expect(page.locator('.proc-principle:visible')).toHaveText(format.principle);
+      // «Координує об’єкт» sits only on the coordinator's card; shared works say how they are split
+      await expect(page.locator('.proc-area-tag:visible')).toHaveCount(1);
+      await expect(page.locator(`.proc-area-${format.coordinator.zone} .proc-area-tag:visible`)).toHaveCount(1);
+      for (const zone of ['rubikon', 'client', 'specialists'] as const) {
+        const notes = resp.items.filter((item) => item.zones[zone].includes(format.id) && item.notes[zone]?.[format.id]).map((item) => item.notes[zone]![format.id]!);
+        await expect(visibleNotes(page, zone)).toHaveText(notes);
+      }
     }
+  });
+
+  test('on a phone the switcher stays under the header while the stacked map scrolls by', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    await page.evaluate(() => {
+      const card = document.querySelector('.proc-area-client')!;
+      window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2, behavior: 'instant' });
+    });
+    const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
+    expect(await page.locator('.proc-resp-switch').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
+    await page.getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
+    await expect(page.locator('.proc-area-client .proc-area-tag:visible')).toBeVisible();
   });
 
   test.describe('without JavaScript', () => {

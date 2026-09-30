@@ -17,14 +17,17 @@ export function ProcessMotion() {
     page.dataset.motionReady = 'arming';
     let arm = requestAnimationFrame(() => { arm = requestAnimationFrame(() => { page.dataset.motionReady = 'on'; }); });
     const blocks = [...page.querySelectorAll<HTMLElement>('[data-motion]')];
+    // "Meaningfully in view": 30 % of the block, or — for a block taller than about three screens, which can never show
+    // 30 % at once (the stacked responsibility map on a phone) — a third of the viewport's height.
     const reveal = new IntersectionObserver((entries) => {
       for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
+        const inView = entry.intersectionRatio >= 0.3 || entry.intersectionRect.height >= window.innerHeight / 3;
+        if (!entry.isIntersecting || !inView) continue;
         (entry.target as HTMLElement).dataset.motionState = 'on';
         reveal.unobserve(entry.target);
         if (blocks.every((block) => block.dataset.motionState === 'on')) reveal.disconnect();
       }
-    }, { threshold: 0.3, rootMargin: '0px 0px -8% 0px' });
+    }, { threshold: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3], rootMargin: '0px 0px -8% 0px' });
     blocks.forEach((block) => reveal.observe(block));
 
     // Parallax: a slow, small drift of the background layer; the foreground never moves.
