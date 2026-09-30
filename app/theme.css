@@ -1,0 +1,158 @@
+/* RUBIKON — Architectural Copper colour system v1: one set of semantic roles, two viewing modes.
+
+   Theme selection: <html data-theme="light|dark"> is resolved before the first paint by the head script in
+   app/layout.tsx (app/lib/theme.ts). Light is the :root default; Dark redefines the same roles. Components read
+   the roles (--color-*) and never branch on the theme themselves.
+
+   Without JavaScript [data-theme] is absent, so the prefers-color-scheme block below applies the Dark roles and
+   System still works. That block repeats the Dark one verbatim — tests/unit/theme-tokens.test.ts keeps the two
+   identical.
+
+   The charcoal band (--color-dark*): header, heroes, footer, cookie banner and the other dark sections stay dark
+   in both modes — they frame the photography. In Dark the band goes one step deeper than the page, so it still
+   reads as a frame.
+
+   Ratios in the comments are WCAG 2.x contrast, the LOWEST across bg / surface / surface-alt / surface-elevated /
+   field of the same mode. */
+
+/* ---------- Light (default) ---------- */
+:root {
+  color-scheme: light;
+
+  /* Content surfaces: Warm Paper → Soft Stone, with cards lifted above both */
+  --color-bg: #F3F0E9;                /* Warm Paper — the page */
+  --color-surface: #E7E2D9;           /* Soft Stone — alternate band */
+  --color-surface-alt: #EDE9E1;       /* between the two — FAQ, cost and related bands */
+  --color-surface-elevated: #FAF8F3;  /* cards, panels, the inquiry form */
+  --color-field: #FBFAF6;             /* form fields */
+
+  /* Text ladder */
+  --color-text: #20211F;              /* Deep Graphite — ≥12.5:1 */
+  --color-text-secondary: #474944;    /* ≥7.06:1 */
+  --color-text-muted: #5E615D;        /* Mineral Grey — ≥4.87:1 (Soft Stone is the lowest) */
+
+  --color-border: #C8C2B7;            /* Warm Steel — hairlines, decorative only */
+  --color-border-strong: #A39C90;     /* dividers that must read, hover outlines */
+  --color-border-control: #857F76;    /* field and control boundaries — ≥3.07:1 (WCAG 1.4.11) */
+
+  /* Copper, by role — one family, several contrast-derived values */
+  --color-accent: #B76432;            /* decorative: rules, bars, icons, large type — ≥3.33:1, never small text */
+  --color-accent-strong: #934923;     /* copper text and links — ≥5.06:1 */
+  --color-accent-hover: #7F3D1D;
+  --color-action: #A0522A;            /* primary action fill — warm-paper label 5.03:1 */
+  --color-action-hover: #7F3D1D;      /* 7.26:1 */
+  --color-on-action: #F5F2EB;
+  --color-focus: #934923;
+
+  /* Status */
+  --color-success: #2F6B41;           /* ≥4.93:1 */
+  --color-warning: #80590F;           /* ≥4.85:1 */
+  --color-error: #8F2F20;             /* ≥6.27:1 */
+  --color-success-surface: #DCE7DC;
+  --color-error-surface: #F1DCD5;
+  --color-status-text: #20211F;
+
+  /* The charcoal band — present in both modes */
+  --color-dark: #171918;
+  --color-dark-surface: #262926;        /* cards and panels on the band */
+  --color-dark-text: #F5F2EB;           /* 15.8:1 */
+  --color-dark-text-secondary: #BDB7AC; /* 8.86:1 on the band, 7.38 on its cards */
+  --color-dark-text-muted: #9E988D;     /* 6.17:1 on the band, 5.13 on its cards */
+  --color-dark-line: rgba(245, 242, 235, .16);
+  --color-accent-on-dark: #CC8455;      /* copper text + focus on the band: 5.89:1, 4.90 on its cards */
+  --color-accent-on-dark-hover: #DDA27A;
+
+  /* Logo (BrandLogo.tsx): the accent shapes. The steel lettering switches with the surface, see .brand */
+  --color-logo-accent: #B76432;
+
+  --color-ghost-fill: rgba(21, 24, 22, .018);
+  --color-ghost-stroke: rgba(21, 24, 22, .13);
+  --color-shadow: rgba(14, 17, 15, .14);
+
+  /* Focus: a copper ring with a gap in the surface colour (globals.css :focus-visible) */
+  --focus-ring: var(--color-focus);
+  --focus-gap: var(--color-bg);
+}
+
+/* ---------- Dark: explicit choice, or System resolved by the head script ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #171918;
+  --color-surface: #202321;
+  --color-surface-alt: #1C1E1C;
+  --color-surface-elevated: #292C29;
+  --color-field: #1D1F1D;
+  --color-text: #F5F2EB;
+  --color-text-secondary: #BDB7AC;
+  --color-text-muted: #9E988D;
+  --color-border: #4A4D49;
+  --color-border-strong: #6A6C66;
+  --color-border-control: #8A857C;
+  --color-accent: #B76432;
+  --color-accent-strong: #CC8455;
+  --color-accent-hover: #DDA27A;
+  --color-action: #CC8455;
+  --color-action-hover: #D6956A;
+  --color-on-action: #171918;
+  --color-focus: #CC8455;
+  --color-success: #8CC49B;
+  --color-warning: #D9B45F;
+  --color-error: #E7907A;
+  --color-success-surface: #1F2D24;
+  --color-error-surface: #35211C;
+  --color-status-text: #F5F2EB;
+  --color-dark: #121413;
+  --color-dark-surface: #1E201F;
+  --color-ghost-fill: rgba(245, 242, 235, .016);
+  --color-ghost-stroke: rgba(245, 242, 235, .09);
+  --color-shadow: rgba(0, 0, 0, .42);
+}
+
+/* ---------- Dark: System without JavaScript ([data-theme] absent). Keep identical to the block above. ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-bg: #171918;
+    --color-surface: #202321;
+    --color-surface-alt: #1C1E1C;
+    --color-surface-elevated: #292C29;
+    --color-field: #1D1F1D;
+    --color-text: #F5F2EB;
+    --color-text-secondary: #BDB7AC;
+    --color-text-muted: #9E988D;
+    --color-border: #4A4D49;
+    --color-border-strong: #6A6C66;
+    --color-border-control: #8A857C;
+    --color-accent: #B76432;
+    --color-accent-strong: #CC8455;
+    --color-accent-hover: #DDA27A;
+    --color-action: #CC8455;
+    --color-action-hover: #D6956A;
+    --color-on-action: #171918;
+    --color-focus: #CC8455;
+    --color-success: #8CC49B;
+    --color-warning: #D9B45F;
+    --color-error: #E7907A;
+    --color-success-surface: #1F2D24;
+    --color-error-surface: #35211C;
+    --color-status-text: #F5F2EB;
+    --color-dark: #121413;
+    --color-dark-surface: #1E201F;
+    --color-ghost-fill: rgba(245, 242, 235, .016);
+    --color-ghost-stroke: rgba(245, 242, 235, .09);
+    --color-shadow: rgba(0, 0, 0, .42);
+  }
+}
+
+/* ---------- Inside the charcoal band ----------
+   The copper text, hover and focus roles switch to their on-dark values, so a shared component (a section link,
+   an arrow, a focus ring) reads correctly on the band in either mode without a per-band rule. */
+:is(.site-header, footer, .cookie-banner, .hero, .subhero, .service-subhero, .privacy-hero, .page-section-dark, .page-cta,
+  .directions:not(.hv2-directions), .angary-process, .planner-change, .planner-brief-aside, .planner-development-head,
+  .planner-tablist) {
+  --color-accent-strong: var(--color-accent-on-dark);
+  --color-accent-hover: var(--color-accent-on-dark-hover);
+  --color-focus: var(--color-accent-on-dark);
+  --focus-ring: var(--color-accent-on-dark);
+  --focus-gap: var(--color-dark);
+}

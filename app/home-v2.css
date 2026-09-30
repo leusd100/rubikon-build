@@ -55,8 +55,8 @@ main[data-home="v2"] .hv2-hero-provenance { display: none; }
   main[data-home="v2"] .hv2-hero .hero-media::after {
     content: ''; position: absolute; z-index: 1; inset: 0; pointer-events: none;
     background: linear-gradient(0deg,
-      var(--color-inverse-bg) 0,
-      var(--color-inverse-bg) 10px,
+      var(--color-dark) 0,
+      var(--color-dark) 10px,
       rgba(23, 25, 24, .86) calc(var(--hv2-overlap) + 10px),
       rgba(12, 13, 13, .12) calc(var(--hv2-overlap) + 140px),
       rgba(12, 13, 13, .06) 100%);
@@ -97,25 +97,6 @@ main[data-home="v2"] .hv2-hero-provenance { display: none; }
   main[data-home="v2"] .hv2-hero .hero-lead { order: 2; font-size: 14.5px; }
 }
 
-/* Header on phones: the logo link is the one flexible item, so the call and «МЕНЮ» never run past the column
-   (at 390 px the row was 12 px wider than its 358 px column; Safari's wider text pushed «МЕНЮ» into the edge). */
-@media (max-width: 760px) {
-  :root:has(main[data-home="v2"]) .site-header .brand-link { flex: 0 1 210px; min-width: 150px; }
-  :root:has(main[data-home="v2"]) .site-header .brand { width: 100%; max-width: 210px; }
-  :root:has(main[data-home="v2"]) :is(.mobile-call, .mobile-menu) { flex: none; }
-}
-@media (max-width: 380px) {
-  :root:has(main[data-home="v2"]) .site-header .brand-link { flex-basis: 188px; }
-}
-/* ≤ 340 px: the menu becomes the icon (the word stays for screen readers; summary also has an aria-label) */
-@media (max-width: 340px) {
-  :root:has(main[data-home="v2"]) .nav-wrap { gap: 8px; }
-  :root:has(main[data-home="v2"]) .site-header .brand-link { flex-basis: 172px; }
-  :root:has(main[data-home="v2"]) .mobile-call { width: 42px; }
-  :root:has(main[data-home="v2"]) .mobile-menu summary { width: 44px; min-width: 44px; padding: 0; justify-content: center; gap: 0; }
-  :root:has(main[data-home="v2"]) .mobile-menu summary > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
-
 /* ============================== 2 · DIRECTIONS ============================== */
 
 /* The mosaic and its images are untouched; the band moves from charcoal to the page tokens (paper in Light) so the
@@ -126,7 +107,7 @@ main[data-home="v2"] .hv2-directions .section-header-inverse { border-bottom-col
 main[data-home="v2"] .hv2-directions .section-header-inverse .section-header-support { color: var(--color-text-secondary); }
 main[data-home="v2"] .hv2-directions .eyebrow.light { color: var(--color-text-muted); }
 /* The cards stay dark images with light type, exactly as on main */
-main[data-home="v2"] .hv2-directions .direction-card { color: var(--color-inverse-text); }
+main[data-home="v2"] .hv2-directions .direction-card { color: var(--color-dark-text); }
 main[data-home="v2"] .hv2-directions .direction-card:is(:hover, :focus-visible) { box-shadow: 0 24px 48px rgba(20, 22, 21, .22); }
 main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-color: var(--color-focus); }
 

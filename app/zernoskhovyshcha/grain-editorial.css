@@ -8,18 +8,18 @@
 .grain-page .service-subhero-content { padding-top: 132px; padding-bottom: 56px; }
 .grain-page .grain-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 .grain-page .service-subhero-content .grain-hero-actions .button { margin-top: 0; }
-.grain-page .grain-hero-secondary { color: white; border-color: rgba(255, 255, 255, .58); background: rgba(12, 13, 15, .18); }
-.grain-page .grain-hero-secondary:hover { border-color: white; background: rgba(255, 255, 255, .09); transform: translateY(-2px); }
+.grain-page .grain-hero-secondary { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .58); background: rgba(12, 13, 15, .18); }
+.grain-page .grain-hero-secondary:hover { border-color: var(--color-dark-text); background: rgba(255, 255, 255, .09); transform: translateY(-2px); }
 
 /* ---------- 04 Як RUBIKON реалізує ---------- */
 .grain-page .grain-implementation-band { padding-block: var(--section-space-compact); }
 .grain-page .grain-implementation-band .direction-editorial-copy h2 { font-size: clamp(34px, 3.2vw, 48px); }
 .grain-page .grain-implementation-band .direction-editorial-copy > p:not(.eyebrow) { margin-top: 18px; }
-.grain-page .direction-editorial-points { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin: 20px 0 0; padding: 18px 0 0; list-style: none; border-top: 1px solid var(--border-strong); }
+.grain-page .direction-editorial-points { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin: 20px 0 0; padding: 18px 0 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
 .grain-page .direction-editorial-points li { min-width: 0; }
-.grain-page .direction-editorial-points span { color: var(--accent-dark); font: 500 12px/1 var(--font-condensed), sans-serif; }
+.grain-page .direction-editorial-points span { color: var(--color-accent-strong); font: 500 12px/1 var(--font-condensed), sans-serif; }
 .grain-page .direction-editorial-points h3 { margin: 6px 0 5px; font: 600 16px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.grain-page .direction-editorial-points p { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+.grain-page .direction-editorial-points p { margin: 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.55; }
 
 /* ---------- 05 Після брифу ---------- */
 .grain-page .grain-process-band { padding-block: var(--section-space-compact); }
@@ -31,25 +31,25 @@
 .grain-page .faq-section { padding-block: var(--section-space-compact); }
 .grain-page .faq-grid { align-items: start; }
 .grain-page .faq-heading { position: sticky; top: 140px; }
-.grain-page .faq-list details { border-top: 1px solid var(--border-strong); }
-.grain-page .faq-list details:last-child { border-bottom: 1px solid var(--border-strong); }
+.grain-page .faq-list details { border-top: 1px solid var(--color-border-strong); }
+.grain-page .faq-list details:last-child { border-bottom: 1px solid var(--color-border-strong); }
 .grain-page .faq-list summary { display: grid; grid-template-columns: minmax(0, 1fr) 24px; gap: 24px; align-items: center; min-height: 44px; padding: 18px 0; cursor: pointer; list-style: none; }
 .grain-page .faq-list summary::-webkit-details-marker { display: none; }
 .grain-page .faq-list summary h3 { font-size: clamp(18px, 1.7vw, 23px); }
-.grain-page .faq-list summary > span { color: var(--accent-dark); font: 400 24px/1 var(--font-condensed), sans-serif; text-align: center; }
+.grain-page .faq-list summary > span { color: var(--color-accent-strong); font: 400 24px/1 var(--font-condensed), sans-serif; text-align: center; }
 .grain-page .faq-list details[open] summary > span { transform: rotate(45deg); }
-.grain-page .faq-list details > p { max-width: 660px; margin: -4px 42px 22px 0; color: var(--text-secondary); font-size: 14px; line-height: 1.7; }
-.grain-page .related-directions-section.is-compact { padding-block: var(--section-space-compact); background: #efeee8; }
+.grain-page .faq-list details > p { max-width: 660px; margin: -4px 42px 22px 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.7; }
+.grain-page .related-directions-section.is-compact { padding-block: var(--section-space-compact); background: var(--color-surface-alt); }
 .grain-page .related-directions-section.is-compact .related-directions-title { margin-bottom: 18px; }
-.grain-page .related-directions-section.is-compact .related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--border-strong); }
-.grain-page .related-directions-section.is-compact .related-card { min-width: 0; min-height: 128px; padding: 26px 28px; border: 0; border-left: 1px solid var(--border-strong); background: transparent; }
-.grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 1px solid var(--border-strong); }
-.grain-page .related-directions-section.is-compact .related-card:hover { background: rgba(255, 255, 255, .34); transform: none; }
+.grain-page .related-directions-section.is-compact .related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--color-border-strong); }
+.grain-page .related-directions-section.is-compact .related-card { min-width: 0; min-height: 128px; padding: 26px 28px; border: 0; border-left: 1px solid var(--color-border-strong); background: transparent; }
+.grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 1px solid var(--color-border-strong); }
+.grain-page .related-directions-section.is-compact .related-card:hover { background: color-mix(in srgb, var(--color-surface-elevated) 50%, transparent); transform: none; }
 /* 768-900 px: three cards leave ~150 px for the title and «МЕТАЛОКОНСТРУКЦІЇ» (~187 px) broke
    mid-letter. Stack them as on phones until three fit whole. */
 @media (min-width: 761px) and (max-width: 900px) {
   .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
-  .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--border-strong); }
+  .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--color-border-strong); }
   .grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 0; border-bottom: 0; }
 }
 
@@ -88,6 +88,6 @@
   .grain-page .faq-list summary { padding: 14px 0; }
   .grain-page .faq-list details > p { margin-right: 28px; font-size: 13px; }
   .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
-  .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--border-strong); }
+  .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--color-border-strong); }
   .grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 0; border-bottom: 0; }
 }

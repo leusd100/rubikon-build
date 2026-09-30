@@ -9,13 +9,15 @@ const read = (relativePath: string) => readFileSync(path.join(root, relativePath
 describe('approved RUBIKON BUILD brand assets', () => {
   it('uses one outlined horizontal logo in both shared site-chrome locations', () => {
     const siteChrome = read('app/components/SiteChrome.tsx');
-    // Architectural Copper v0.2 prototype: the lockup lives in BrandLogo (image everywhere, inline on HOME).
+    // The lockup is drawn inline (BrandLogo) so its colours follow the theme: same 1270 × 272 artwork as the shipped file.
     const brandLogo = read('app/components/BrandLogo.tsx');
 
-    expect(brandLogo).toContain("'/brand/rubikon-build-horizontal-dark.svg?v=rubikon-05'");
-    expect(brandLogo).toContain('width={1270}');
-    expect(brandLogo).toContain('height={272}');
+    expect(brandLogo).toContain('viewBox="72 88 1270 272"');
+    expect(brandLogo).toContain('width="1270" height="272"');
     expect(brandLogo).toContain('const ALT = `${company.name} — будівництво та інженерні рішення`;');
+    // No fixed brand orange: the accent shapes read the theme's logo role.
+    expect(brandLogo).not.toMatch(/#FF7415/i);
+    expect(brandLogo).toContain("fill: 'var(--color-logo-accent)'");
     expect(siteChrome.match(/<Brand idPrefix="(header|footer)" \/>/g)).toHaveLength(2);
   });
 

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Jost, Manrope } from 'next/font/google';
 // Self-hosted rather than next/font/google: Google's copy of Plex Sans Condensed has no Cyrillic.
 import './fonts/ibm-plex-sans-condensed.css';
+import './theme.css';
 import './globals.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
@@ -67,7 +68,8 @@ export const metadata: Metadata = {
 export const dynamic = 'force-static';
 
 export const viewport: Viewport = {
-  themeColor: '#141416',
+  // The header is the charcoal band in both themes, so one browser-chrome colour matches it in both.
+  themeColor: '#171918',
   colorScheme: 'light dark',
 };
 
@@ -118,8 +120,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="uk" suppressHydrationWarning>
       <head>
-        {/* Architectural Copper v0.2 prototype: resolves system/light/dark onto <html> before the first paint.
-            Only HOME's palette stylesheet reads the result; everywhere else the two attributes are inert. */}
+        {/* Resolves system/light/dark onto <html> before the first paint, so the first frame already has the right
+            theme (app/lib/theme.ts, app/theme.css). */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script
           dangerouslySetInnerHTML={{
