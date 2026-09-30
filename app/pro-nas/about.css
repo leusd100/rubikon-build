@@ -13,9 +13,38 @@
 
 /* ---------------------------------------------------------------- 1 · Hero */
 .about-subhero { isolation: isolate; }
-/* Top-right under the fixed header (as HOME's tags): the video's pause button owns the bottom-right corner */
+/* Deeper at the bottom and on the right, where the side text sits over the lit paper and hands: every hero text
+   stays at 4.5:1 or more against the brightest 5 % of the footage behind it */
+.about-page .about-subhero .subhero-overlay {
+  background:
+    linear-gradient(90deg, rgba(10, 11, 12, .9), rgba(10, 11, 12, .66) 44%, rgba(10, 11, 12, .5) 70%, rgba(10, 11, 12, .56)),
+    linear-gradient(0deg, rgba(10, 11, 12, .86) 0%, rgba(10, 11, 12, .58) 34%, transparent 66%);
+}
+/* A compass arc and its construction lines, set out once (ProcessMotion), then still */
+.about-hero-trace { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.about-hero-trace path { fill: none; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.aht-grid { stroke: rgba(245, 242, 235, .07); stroke-width: 1; }
+.aht-leg, .aht-arc { stroke: var(--color-accent-on-dark); stroke-width: 1.2; opacity: .6; }
+.aht-dim { stroke: rgba(245, 242, 235, .26); stroke-width: 1; }
+.aht-node { fill: var(--color-accent-on-dark); opacity: .85; }
+.about-page[data-motion-ready="on"] .about-hero-trace path { transition: stroke-dashoffset 1400ms var(--m-ease); }
+.about-page[data-motion-ready="on"] .about-hero-trace .aht-leg { transition-delay: 250ms; }
+.about-page[data-motion-ready="on"] .about-hero-trace .aht-arc { transition: stroke-dashoffset 1100ms var(--m-ease) 700ms; }
+.about-page[data-motion-ready="on"] .about-hero-trace .aht-dim { transition-delay: 1300ms; }
+.about-page[data-motion-ready="on"] .about-hero-trace .aht-node { transition: opacity var(--m-reveal) ease 200ms; }
+.about-page[data-motion-ready] .about-hero-trace:not([data-motion-state="on"]) path { stroke-dashoffset: 1; }
+.about-page[data-motion-ready] .about-hero-trace:not([data-motion-state="on"]) .aht-node { opacity: 0; }
+/* The media's own controls sit together in its bottom-right corner: provenance, then a round pause / play */
+.about-page .about-subhero .hero-video-control {
+  right: 24px; bottom: 24px; display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0;
+  color: var(--color-dark-text); background: rgba(13, 16, 14, .62); border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%;
+  font-size: 0; /* the words stay the accessible name */ transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+}
+.about-page .about-subhero .hero-video-control::before { content: ''; width: 12px; height: 14px; background: linear-gradient(90deg, currentColor 0 4px, transparent 4px 8px, currentColor 8px 12px); }
+.about-page .about-subhero .hero-video-control[aria-pressed="true"]::before { width: 0; height: 0; margin-left: 4px; background: none; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 12px solid currentColor; }
+.about-page .about-subhero .hero-video-control:hover { background: rgba(13, 16, 14, .82); border-color: var(--color-accent-on-dark); }
 .about-provenance {
-  position: absolute; z-index: 3; top: 115px; right: 24px; padding: 5px 8px; pointer-events: none; color: color-mix(in srgb, var(--color-dark-text) 86%, transparent);
+  position: absolute; z-index: 3; right: 80px; bottom: 34px; padding: 5px 8px; pointer-events: none; color: color-mix(in srgb, var(--color-dark-text) 86%, transparent);
   background: rgba(13, 16, 14, .72); border: 1px solid rgba(255, 255, 255, .18); font: 600 11px/1.2 var(--font-condensed), sans-serif;
   letter-spacing: .08em; text-transform: uppercase;
 }
@@ -130,7 +159,16 @@
 @media (max-width: 760px) {
   .team-about .team-stories { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 64px; }
   .team-about .person-info h3 { white-space: normal; }
-  .about-provenance { top: 91px; right: 16px; }
+  .about-provenance { right: 72px; bottom: 26px; }
+  .about-page .about-subhero .hero-video-control { right: 16px; bottom: 16px; }
+  .about-hero-trace { display: none; }
+  /* Phone: the breadcrumbs sit right under the header, over the top of the footage */
+  .about-page .about-subhero .subhero-overlay {
+    background:
+      linear-gradient(180deg, rgba(10, 11, 12, .62) 0%, transparent 34%),
+      linear-gradient(90deg, rgba(10, 11, 12, .9), rgba(10, 11, 12, .72) 60%, rgba(10, 11, 12, .6)),
+      linear-gradient(0deg, rgba(10, 11, 12, .86) 0%, rgba(10, 11, 12, .5) 40%, transparent 70%);
+  }
   .about-story-section .promise-visual { min-height: 320px; }
   .about-principles-grid li { padding: 24px 20px 22px; }
   .about-geo-layout { grid-template-columns: minmax(0, 1fr); }

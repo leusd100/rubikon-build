@@ -74,6 +74,14 @@ export default function AboutPage() {
         </div>
         <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
+        {/* A compass arc set out once over the drawing-table footage, then still (hidden on phones) */}
+        <svg className="about-hero-trace" data-motion viewBox="0 0 1440 900" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+          <path className="aht-grid" d="M1080 0 V900 M1260 0 V900 M860 300 H1440" pathLength={1} />
+          <path className="aht-leg" d="M1150 318 L1368 236" pathLength={1} />
+          <path className="aht-arc" d="M1368 236 A232 232 0 0 1 1318 478" pathLength={1} />
+          <path className="aht-dim" d="M1150 318 V250 M1368 236 V168 M1150 190 H1368" pathLength={1} />
+          <circle className="aht-node" cx="1150" cy="318" r="5" />
+        </svg>
         <div className="shell subhero-layout">
           <div className="subhero-copy">
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
