@@ -1,3 +1,5 @@
+const geographyBeyond = 'Проєкти в інших регіонах України розглядаємо, якщо їх формат і умови дозволяють якісно організувати виконання.';
+
 export const company = {
   name: 'RUBIKON BUILD',
   alternateNames: ['Rubikon Build', 'rubikonbuild', 'Рубікон Білд'],
@@ -5,7 +7,9 @@ export const company = {
   description:
     'Будівництво для промислового, аграрного й комерційного бізнесу в Дніпропетровській області: комплексна реалізація в погодженому обсязі або окремі роботи.',
   serviceAreas: ['Дніпропетровська область'],
-  geography: 'Працюємо переважно в Дніпропетровській області. Проєкти в інших регіонах України розглядаємо, якщо їх формат і умови дозволяють якісно організувати виконання.',
+  geography: `Працюємо переважно в Дніпропетровській області. ${geographyBeyond}`,
+  /** The second half of `geography`, for a page that names the main region on its own line (/pro-nas). */
+  geographyBeyond,
   founders: ['Леус Сергій Іванович', 'Леус Дмитро Сергійович'],
   // Single source of truth for "consent under which policy version" — bump this string
   // (and the matching date on the privacy policy page) whenever that page's content changes.

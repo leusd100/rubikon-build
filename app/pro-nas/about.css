@@ -130,10 +130,21 @@
   .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow { transition-delay: 260ms; }
   .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow span { transition-delay: 260ms; }
 }
-.about-build-geo { display: flex; align-items: flex-start; gap: 14px; max-width: 900px; margin-top: 34px; }
-.about-build-geo svg { flex: none; width: 26px; height: 26px; margin-top: 1px; color: var(--color-accent-strong); stroke-width: 1.5; }
-.about-build-geo p { margin: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.7; }
-.about-build-geo b { color: var(--color-text); font-weight: 700; }
+/* The region closes the directions the way the family thesis closes the people: one copper line with the words on
+   it (drawn out from the words, once), the rest of the sentence under it */
+.about-build-region { margin-top: clamp(44px, 5vw, 68px); }
+.about-bond { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0; }
+.about-bond::before, .about-bond::after { content: ''; flex: 1; height: 1px; background: var(--color-accent); }
+.about-bond::before { transform-origin: right; }
+.about-bond::after { transform-origin: left; }
+.about-bond span { max-width: 72%; color: var(--color-accent-strong); font: 700 13px/1.35 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; text-wrap: balance; }
+.about-build-region-note { max-width: 620px; margin: 14px auto 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.65; text-align: center; }
+.about-page[data-motion-ready="on"] .about-bond::before,
+.about-page[data-motion-ready="on"] .about-bond::after { transition: transform 700ms var(--m-ease) 160ms; }
+.about-page[data-motion-ready="on"] .about-build-region :is(.about-bond span, .about-build-region-note) { transition: opacity var(--m-reveal) ease 560ms; }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) .about-bond::before { transform: scaleX(0); }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) .about-bond::after { transform: scaleX(0); }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) :is(.about-bond span, .about-build-region-note) { opacity: 0; }
 .about-page[data-motion-ready="on"] .about-build-list li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
 .about-page[data-motion-ready] .about-build-list:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(12px); }
 
@@ -145,13 +156,56 @@
 .about-story-copy h2 { max-width: 760px; margin: 0; font: 400 clamp(40px, 4vw, 60px)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 .about-story-lead { margin: 26px 0 16px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 .about-before { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
-.about-before li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; padding: 18px 0; border-bottom: 1px solid var(--color-border); }
+.about-before li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; padding: 18px 12px; border-bottom: 1px solid var(--color-border); }
 .about-before-index { grid-row: span 2; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
 .about-before b { color: var(--color-text); font: 600 18px/1.25 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
 .about-before-text { color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
 .about-story-support { max-width: 640px; margin: 22px 0 0; color: var(--color-text-muted); font-size: 14.5px; line-height: 1.7; }
 .about-page[data-motion-ready="on"] .about-before li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 160ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 160ms); }
-.about-page[data-motion-ready] .about-before:not([data-motion-state="on"]) li { opacity: 0; transform: translateX(-10px); }
+.about-page[data-motion-ready] .about-story-layout:not([data-motion-state="on"]) .about-before li { opacity: 0; transform: translateX(-10px); }
+
+/* The illustration answers the list. Its marks are drawn in image pixels and cropped with the image (slice = cover),
+   so the image stays put under them (no hover zoom here) and the note moves to the top-left, clear of them.
+   01 brackets the drawing under the hands, 02 numbers the order the frame goes up (base plate, column, beam),
+   03 rings the bolted beam-to-column joint. Arriving, each mark draws in turn while its item lights up; then all
+   three stay. Pointing at an item brings its mark forward. Without motion every mark is simply there. */
+.about-story-section .promise-visual:hover img { transform: none; }
+.about-story-section .image-note { top: 18px; right: auto; bottom: auto; left: 18px; }
+.aqc-overlay { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+.aqc-line {
+  fill: none; stroke: var(--color-accent-on-dark); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; filter: drop-shadow(0 0 2px rgba(10, 11, 12, .7));
+}
+.aqc-badge, .aqc-step { transform-box: fill-box; transform-origin: center; }
+.aqc-badge circle { fill: var(--color-accent); stroke: rgba(255, 255, 255, .92); stroke-width: 3; }
+.aqc-step circle { fill: rgba(13, 16, 14, .84); stroke: var(--color-accent-on-dark); stroke-width: 4; }
+.aqc-badge text, .aqc-step text { fill: #fff; font: 700 30px var(--font-condensed), sans-serif; letter-spacing: .04em; text-anchor: middle; }
+.aqc-step text { font-size: 28px; }
+.aqc-mark { transition: opacity var(--duration-fast) ease; }
+.aqc-mark-1 { --aqc-at: 700ms; }
+.aqc-mark-2 { --aqc-at: 2000ms; }
+.aqc-mark-3 { --aqc-at: 3300ms; }
+.about-page[data-motion-ready="on"] .aqc-line { transition: stroke-dashoffset 900ms var(--m-ease) var(--aqc-at); }
+.about-page[data-motion-ready="on"] :is(.aqc-badge, .aqc-step) { transition: opacity 360ms ease calc(var(--aqc-at) + 520ms), transform 360ms var(--m-ease) calc(var(--aqc-at) + 520ms); }
+/* 02: the steps light up along the route as it draws — 1, 2, 3 — then its number */
+.about-page[data-motion-ready="on"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { transition-delay: calc(var(--aqc-at) + 200ms); }
+.about-page[data-motion-ready="on"] .aqc-mark-2 > g:nth-of-type(2) .aqc-step { transition-delay: calc(var(--aqc-at) + 480ms); }
+.about-page[data-motion-ready="on"] .aqc-mark-2 > g:nth-of-type(3) .aqc-step { transition-delay: calc(var(--aqc-at) + 760ms); }
+.about-page[data-motion-ready="on"] .aqc-mark-2 > g:nth-of-type(4) .aqc-badge { transition-delay: calc(var(--aqc-at) + 900ms); }
+.about-page[data-motion-ready] .about-story-layout:not([data-motion-state="on"]) .aqc-line { stroke-dashoffset: 1; }
+.about-page[data-motion-ready] .about-story-layout:not([data-motion-state="on"]) :is(.aqc-badge, .aqc-step) { opacity: 0; transform: scale(.6); }
+/* Each item lights up while its mark draws (backwards fill: afterwards the item is itself again, hover included) */
+@keyframes aqc-item {
+  0%, 100% { background-color: transparent; box-shadow: inset 0 0 0 transparent; }
+  14%, 82% { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+}
+.about-page[data-motion-ready="on"] .about-story-layout[data-motion-state="on"] .about-before li { animation: aqc-item 1300ms ease calc(700ms + var(--i, 0) * 1300ms) backwards; }
+@media (hover: hover) {
+  .about-before li:hover { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+  .about-story-layout:has(.about-before li:nth-child(1):hover) .aqc-mark:not(.aqc-mark-1),
+  .about-story-layout:has(.about-before li:nth-child(2):hover) .aqc-mark:not(.aqc-mark-2),
+  .about-story-layout:has(.about-before li:nth-child(3):hover) .aqc-mark:not(.aqc-mark-3) { opacity: .16; }
+}
 
 /* ---------------------------------------------------------------- 5 · Principles (charcoal band) */
 .about-principles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2vw, 28px); margin: 0; padding: 0; list-style: none; }
@@ -172,7 +226,8 @@
 /* ---------------------------------------------------------------- Tablet */
 @media (max-width: 1050px) {
   .about-story-layout { grid-template-columns: minmax(0, 1fr); }
-  .about-story-section .promise-visual { min-height: 420px; }
+  /* Full width: close to the image's own 4 : 5, so every mark stays in the frame */
+  .about-story-section .promise-visual { min-height: 0; aspect-ratio: 4 / 5; max-height: 640px; }
   .about-principles-grid { grid-template-columns: minmax(0, 1fr); }
   .about-build-list li { grid-template-columns: 52px minmax(0, 1fr) 44px; grid-template-areas: 'num title arrow' 'num text arrow'; align-items: start; min-height: 0; padding-block: 22px; }
   .about-build-number { padding-top: 8px; }
@@ -194,12 +249,14 @@
       linear-gradient(90deg, rgba(10, 11, 12, .9), rgba(10, 11, 12, .72) 60%, rgba(10, 11, 12, .6)),
       linear-gradient(0deg, rgba(10, 11, 12, .86) 0%, rgba(10, 11, 12, .5) 40%, transparent 70%);
   }
-  .about-story-section .promise-visual { min-height: 320px; }
+  /* The marks' numbers keep a readable size on a narrow image */
+  .aqc-badge { transform: scale(1.6); }
+  .aqc-step { transform: scale(1.45); }
   .about-principles-grid li { padding: 24px 20px 22px; }
   /* Number and arrow on one line, the title the full width under them, then the words */
   .about-build-list li { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: 'num arrow' 'title title' 'text text'; align-items: center; gap: 10px 12px; padding: 20px 12px; }
   .about-build-number { padding-top: 0; }
   .about-build-list h3 { font-size: clamp(22px, 6.4vw, 26px); }
   .about-build-list p { font-size: 15px; }
-  .about-build-geo p { font-size: 15.5px; }
+  .about-build-region-note { font-size: 14.5px; }
 }

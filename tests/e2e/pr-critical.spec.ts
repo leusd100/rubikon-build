@@ -326,7 +326,12 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   await expect(page.locator('.about-build-list h3')).toHaveText(directions.map((direction) => direction.cardTitle));
   expect(await page.locator('.about-build-list a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(directions.map((direction) => direction.href));
   await expect(page.locator('.about-build-list img')).toHaveCount(0);
-  await expect(page.locator('.about-build-geo')).toContainText(company.geography);
+  // The region closes the block on a copper line, the rest of the sentence under it
+  const region = page.locator('.about-build-region');
+  await expect(region.locator('.about-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);
+  await expect(region).toContainText(company.geographyBeyond);
+  // The family thesis is said once — by the copper line under the people — not in the heading as well
+  await expect(page.locator('main').getByText(/Два покоління/)).toHaveCount(1);
   // Owner's decision (30.09): no «Ілюстрація» tags on this page; the conceptual image says so in its alt text
   await expect(page.locator('main')).not.toContainText('Ілюстрація');
   await expect(page.locator('.about-story-section img')).toHaveAttribute('alt', /^Концептуальна ілюстрація/);

@@ -66,7 +66,7 @@ for (const path of editorialHeroes) {
       if (path === '/pro-nas') {
         // One row of actions from 761 px; on a phone the call sits under the full-width button
         const [ctaBox, callBox] = await Promise.all([
-          hero.getByRole('link', { name: 'Обговорити проєкт' }).boundingBox(),
+          hero.getByRole('link', { name: 'Обговорити задачу' }).boundingBox(),
           hero.locator('.hero-call').boundingBox(),
         ]);
         if (viewport.width > 760) {
@@ -99,7 +99,7 @@ test('/pro-nas keeps its hero actions clear of the window edges', async ({ page 
     await page.goto('/pro-nas', { waitUntil: 'load' });
     const hero = page.locator('.about-subhero');
     const [ctaBox, callBox, crumbsBox, headerBox] = await Promise.all([
-      hero.getByRole('link', { name: 'Обговорити проєкт' }).boundingBox(),
+      hero.getByRole('link', { name: 'Обговорити задачу' }).boundingBox(),
       hero.locator('.hero-call').boundingBox(),
       hero.locator('.breadcrumb').boundingBox(),
       page.locator('.site-header').boundingBox(),

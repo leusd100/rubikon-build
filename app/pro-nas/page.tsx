@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileSignature, MapPin, ShieldCheck } from 'lucide-react';
+import { ClipboardCheck, FileSignature, ShieldCheck } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
@@ -13,9 +13,9 @@ import './about.css';
 
 // /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we build
 // and where (the five directions, each leading to its page, and the region), how Serhii's practice shows before work
-// starts, three principles that each point to the mechanism on /yak-pratsyuiemo, the conversation. Every sentence is
-// the page's previous copy, the team bios, the directions' own card copy, the HOME and /napryamky headings, or
-// company data.
+// starts, three principles that each point to the mechanism on /yak-pratsyuiemo, the conversation. The copy is the
+// owner's pass of 30.09 over the page's own lines (no claim beyond the team bios, the Delivery Model's formats, the
+// directions' card copy and company data).
 // Owner's decisions (30.09): no object photo here until RUBIKON BUILD has objects of its own to show — the one real
 // photo, from Serhii's work before the company, stays on HOME with its attribution; and the imagery, all of it
 // illustrative, carries no «Ілюстрація» tag here — the conceptual image says so in its alt text.
@@ -23,7 +23,7 @@ import './about.css';
 export const metadata = createPageMetadata({
   path: '/pro-nas',
   title: brandedTitle('Про родинну компанію'),
-  description: `${company.name} — родинна будівельна компанія з Дніпра. В основі — практичний досвід Сергія Івановича, особиста відповідальність і системний підхід.`,
+  description: `${company.name} — родинна будівельна компанія з Дніпра. Практичний досвід Сергія Івановича поєднуємо із системною організацією роботи та зрозумілою комунікацією з клієнтом.`,
   socialTitle: `Про ${company.name} — досвід двох поколінь`,
   socialDescription: 'Родинна відповідальність, практичний досвід Сергія Івановича та сучасний підхід до розвитку компанії.',
   image: '/media/about-industrial-concept.jpg',
@@ -32,9 +32,9 @@ export const metadata = createPageMetadata({
 
 /** «Практика допомагає бачити ризики»: the three things settled before going on site (the section's own lead). */
 const BEFORE_SITE = [
-  { title: 'Вихідні дані', text: 'Що вже є, чого бракує і які умови майданчика впливають на рішення.' },
-  { title: 'Послідовність етапів', text: 'Хто і коли виконує свою частину, щоб роботи не заважали одна одній.' },
-  { title: 'Відповідальні вузли', text: 'Ключові конструктивні вузли мають бути зрозумілими до переходу до наступної частини робіт.' },
+  { title: 'Вихідні дані', text: 'Що вже є, чого бракує і які умови майданчика потрібно врахувати.' },
+  { title: 'Послідовність робіт', text: 'Що має відбутися раніше, а що — пізніше, щоб суміжні роботи не конфліктували.' },
+  { title: 'Ключові вузли', text: 'Які конструктивні рішення потрібно зрозуміти до переходу до наступного етапу.' },
 ] as const;
 
 /** Each principle ends where the page shows how it works in practice. */
@@ -48,10 +48,10 @@ const PRINCIPLES = [
   },
   {
     Icon: ShieldCheck,
-    title: 'Контроль відповідальних рішень',
+    title: 'Контроль ключових рішень',
     text: 'Ключові конструктивні вузли та етапи не залишаємо без уваги: вони мають бути зрозумілими до переходу до наступної частини робіт.',
     href: `${siteRoutes.process}#etapy`,
-    link: 'Що буде після звернення',
+    link: 'Етапи роботи',
   },
   {
     Icon: FileSignature,
@@ -79,15 +79,15 @@ export default function AboutPage() {
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
             <h1>
-              <span className="subhero-title-line">Репутація, за якою</span>
-              <span className="subhero-title-line">стоять <em>наші імена</em></span>
+              <span className="subhero-title-line">Будуємо й відповідаємо</span>
+              <span className="subhero-title-line"><em>своїми іменами</em></span>
             </h1>
           </div>
           <div className="subhero-side about-subhero-side">
-            <p>RUBIKON BUILD — родинна компанія з Дніпра. В основі — практичний досвід Сергія Івановича, особиста відповідальність і системний підхід.</p>
+            <p>RUBIKON BUILD — родинна будівельна компанія з Дніпра. Практичний досвід Сергія Івановича поєднуємо із системною організацією роботи та зрозумілою комунікацією з клієнтом.</p>
             <div className="about-hero-actions">
               <a className="button button-primary about-hero-cta" href="#inquiry">
-                Обговорити проєкт <span aria-hidden="true">↗</span>
+                Обговорити задачу <span aria-hidden="true">↗</span>
               </a>
               <HeroCallLink />
             </div>
@@ -99,15 +99,15 @@ export default function AboutPage() {
       <TeamSection variant="about" />
 
       {/* 3 · What we build and where: each direction is one row that leads to its page and takes the charcoal ground
-          when pointed at or focused; the region closes the list. Headings from HOME and /napryamky, rows from the
-          directions' own card copy — no images, so nothing here can read as a finished object. */}
+          when pointed at or focused; the region closes the block on a copper line. Rows from the directions' own card
+          copy — no images, so nothing here can read as a finished object. */}
       <section className="page-section about-build" aria-labelledby="about-build-title">
         <div className="shell">
           <SectionHeader
             eyebrow="Напрямки робіт"
-            title="П’ять напрямів для бізнесу й агросектору"
+            title="Що робимо для бізнесу й агросектору"
             titleId="about-build-title"
-            supporting="Кожен пункт веде до конкретних можливостей, процесу й чинників вартості. Для комплексного об’єкта можна почати з будь-якого близького напрямку."
+            supporting="Беремо окремі роботи або погоджений комплекс робіт. Оберіть напрям, найближчий до вашої задачі."
           />
           <ol className="about-build-list" data-motion>
             {directions.map((direction, index) => (
@@ -119,29 +119,51 @@ export default function AboutPage() {
               </li>
             ))}
           </ol>
-          <div className="about-build-geo">
-            <MapPin aria-hidden="true" />
-            <p><b>Дніпро і Дніпропетровська область.</b> {company.geography}</p>
+          {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people */}
+          <div className="about-build-region" data-motion>
+            <p className="about-bond"><span>Основний регіон — {company.serviceAreas[0]}</span></p>
+            <p className="about-build-region-note">{company.geographyBeyond}</p>
           </div>
         </div>
       </section>
 
       {/* 4 · How Serhii's practice shows before work starts */}
       <section className="page-section about-story-section" aria-labelledby="about-story-title">
-        <div className="shell about-story-layout">
+        <div className="shell about-story-layout" data-motion>
           <div className="promise-visual about-planning-visual">
             <ResponsiveImage
               src="/media/about-quality-control.webp"
               alt="Концептуальна ілюстрація: зіставлення робочого креслення з вузлом сталевого каркаса"
               sizes="(max-width: 1050px) 100vw, 40vw"
             />
+            {/* Each of the three things, shown on the illustration itself (drawn in image pixels, cropped exactly as the
+                image): 01 the drawing under the hands, 02 the order the frame goes up — base plate, column, then the
+                beam on the left — and 03 the bolted beam-to-column joint on the right. Played once in order when the block arrives, then all three stay;
+                pointing at an item brings its mark forward. Decoration only: the list carries the words. */}
+            <svg className="aqc-overlay" viewBox="0 0 1440 1800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <g className="aqc-mark aqc-mark-1">
+                <path className="aqc-line" pathLength={1} d="M470 1100 V1010 H570 M930 1010 H1030 V1100 M1030 1340 V1430 H930 M570 1430 H470 V1340" />
+                <g transform="translate(470 1010)"><g className="aqc-badge"><circle r="40" /><text dy="11">01</text></g></g>
+              </g>
+              <g className="aqc-mark aqc-mark-2">
+                <path className="aqc-line" pathLength={1} d="M1000 930 C940 800 800 700 790 520 C740 470 650 480 560 520" />
+                <g transform="translate(1000 930)"><g className="aqc-step"><circle r="30" /><text dy="10">1</text></g></g>
+                <g transform="translate(790 520)"><g className="aqc-step"><circle r="30" /><text dy="10">2</text></g></g>
+                <g transform="translate(560 520)"><g className="aqc-step"><circle r="30" /><text dy="10">3</text></g></g>
+                <g transform="translate(1180 930)"><g className="aqc-badge"><circle r="40" /><text dy="11">02</text></g></g>
+              </g>
+              <g className="aqc-mark aqc-mark-3">
+                <circle className="aqc-line" pathLength={1} cx="1118" cy="505" r="165" />
+                <g transform="translate(1235 388)"><g className="aqc-badge"><circle r="40" /><text dy="11">03</text></g></g>
+              </g>
+            </svg>
             <span className="image-note">Від креслення — до перевірки на майданчику</span>
           </div>
           <div className="about-story-copy">
-            <p className="eyebrow"><span /> Досвід у роботі</p>
-            <h2 id="about-story-title">Практика допомагає бачити ризики до початку робіт</h2>
-            <p className="about-story-lead">До виходу на майданчик уточнюємо три речі:</p>
-            <ol className="about-before" data-motion>
+            <p className="eyebrow"><span /> Практика в основі</p>
+            <h2 id="about-story-title">Досвід працює ще до початку робіт</h2>
+            <p className="about-story-lead">До старту звертаємо увагу на три речі, які найбільше впливають на подальше виконання.</p>
+            <ol className="about-before">
               {BEFORE_SITE.map((item, index) => (
                 <li key={item.title} style={{ '--i': index } as CSSProperties}>
                   <span className="about-before-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
@@ -160,8 +182,8 @@ export default function AboutPage() {
         <div className="shell">
           <SectionHeader
             inverse
-            eyebrow="Наші принципи"
-            title="Спокійна впевненість замість гучних обіцянок"
+            eyebrow="Наш підхід"
+            title="Принципи, які видно в роботі"
             titleId="about-principles-title"
             supporting="Строки, бюджет і технічні рішення залежать від конкретного об’єкта. Тому спочатку вивчаємо завдання, а потім фіксуємо реалістичні домовленості."
           />
@@ -181,7 +203,7 @@ export default function AboutPage() {
 
       <ConversationSection
         title="Розкажіть, що потрібно побудувати"
-        lead="Почнемо з короткої розмови про завдання, майданчик і бажані строки. Підкажемо, які вихідні дані потрібні для наступного кроку."
+        lead="Почнемо з короткої розмови про задачу, майданчик і бажані строки. Уточнимо, які вихідні дані потрібні для наступного кроку."
       />
     </main>
   );
