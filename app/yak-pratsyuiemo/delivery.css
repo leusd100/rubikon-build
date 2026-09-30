@@ -146,10 +146,14 @@
 
 /* ---------------------------------------------------------------- 4 · How much we take on */
 .proc-scope { background: var(--color-bg); }
-.proc-scope-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(28px, 3vw, 48px); margin: 0; padding: 0; list-style: none; }
-/* Drawing, title, text and coordination share rows across the three cards */
-.proc-scope-grid { grid-template-rows: repeat(5, auto); }
-.proc-scope-grid > li { display: grid; grid-row: span 5; grid-template-rows: subgrid; align-content: start; min-width: 0; }
+/* Drawing, title, terms, text and link share rows across the three cards */
+.proc-scope-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); gap: 0 clamp(28px, 3vw, 48px); margin: 0; padding: 0; list-style: none; }
+/* The emphasis ground (hover / focus, below) is a spread shadow, so it frames the card without widening its column */
+.proc-scope-grid > li {
+  --card-ground: transparent; --card-edge: transparent;
+  display: grid; grid-row: span 5; grid-template-rows: subgrid; align-content: start; min-width: 0;
+  box-shadow: 0 0 0 18px var(--card-ground), 0 0 0 19px var(--card-edge); transition: box-shadow var(--duration-fast) ease, transform var(--duration-fast) var(--m-ease);
+}
 .proc-scope-legend { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 36px 0 0; padding: 0; list-style: none; color: var(--color-text-muted); font-size: 14px; }
 .proc-scope-legend li { display: flex; align-items: center; gap: 10px; }
 .proc-scope-legend i { width: 22px; height: 12px; border: 1.5px solid var(--color-border-control); background: color-mix(in srgb, var(--color-text) 3%, transparent); }
@@ -171,12 +175,11 @@
 .proc-contract-link { flex: 1 1 auto; min-width: 16px; max-width: 72px; height: 1px; background: var(--color-accent); transform-origin: left; }
 .scope-diagram { display: block; width: 100%; height: auto; max-width: 380px; overflow: visible; }
 .scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; vector-effect: non-scaling-stroke; }
-.sd-boundary { vector-effect: non-scaling-stroke; }
 .sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: 1; stroke-linejoin: round; }
 .sd-layer polygon { fill: color-mix(in srgb, var(--color-text) 3%, transparent); }
 .sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.6; }
 .sd-layer.is-scope polygon { fill: color-mix(in srgb, var(--color-accent) 18%, transparent); }
-.sd-boundary { fill: none; stroke-width: 1; }
+.sd-boundary { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .sd-boundary-scope { stroke: var(--color-accent); stroke-width: 1.4; }
 .sd-boundary-object { stroke: var(--color-border-strong); stroke-dasharray: 5 4; }
 .sd-boundary-outer { stroke: var(--color-text-muted); stroke-width: 1.2; stroke-dasharray: 8 5; }
@@ -186,15 +189,14 @@
 .sd-label-scope { fill: var(--color-accent-strong); }
 .sd-leader { fill: none; stroke: var(--color-accent-strong); stroke-width: 1; }
 .sd-dot { fill: var(--color-accent); }
-/* The card: hover or keyboard focus brings the agreed scope forward and quiets the rest of the object */
-/* The emphasis ground is a spread shadow, so it frames the card without widening its column */
-.proc-scope-grid > li { --card-ground: transparent; --card-edge: transparent; box-shadow: 0 0 0 18px var(--card-ground), 0 0 0 19px var(--card-edge); transition: box-shadow var(--duration-fast) ease, transform var(--duration-fast) var(--m-ease); }
+/* «Обговорити цей формат» */
 .proc-scope-cta { justify-self: start; align-self: end; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 18px; color: var(--color-text); border-bottom: 1px solid var(--color-accent); font: 700 12px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .proc-scope-cta span { color: var(--color-accent-strong); transition: transform var(--duration-fast) var(--m-ease); }
 .proc-scope-cta:hover span, .proc-scope-cta:focus-visible span { transform: translate(3px, -3px); }
 /* The form field it fills: a short copper halo so the visitor sees what was chosen */
 .process-page #inquiry select.is-prefilled { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .sd-layer:not(.is-scope), .sd-context { transition: opacity var(--duration-fast) ease; }
+/* The card: hover or keyboard focus brings the agreed scope forward and quiets the rest of the object */
 @media (hover: hover) {
   .proc-scope-grid > li:hover { --card-ground: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent); --card-edge: var(--color-border); transform: translateY(-2px); }
   .proc-scope-grid > li:hover .sd-layer:not(.is-scope) { opacity: .4; }
@@ -228,7 +230,7 @@
 .proc-resp-figure { --map-gap: clamp(16px, 2vw, 28px); }
 .proc-map { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--map-gap); margin: 64px 0 0; padding: 48px 0 0; list-style: none; }
 /* The rail ends exactly over the outer cards' centres (a third of the width less the gaps) */
-.proc-map::before { content: ''; position: absolute; top: 0; left: calc((100% - 2 * var(--map-gap)) / 6); right: calc((100% - 2 * var(--map-gap)) / 6); height: 1px; background: var(--color-accent); }
+.proc-map::before { content: ''; position: absolute; top: 0; left: calc((100% - 2 * var(--map-gap)) / 6); right: calc((100% - 2 * var(--map-gap)) / 6); height: 1px; background: var(--color-accent); transform-origin: center; }
 .proc-map::after { content: ''; position: absolute; top: -40px; left: 50%; width: 1px; height: 40px; background: var(--color-accent); }
 .proc-area { position: relative; min-width: 0; padding: 28px 28px 30px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
 .proc-area::before { content: ''; position: absolute; top: -48px; left: 50%; width: 1px; height: 48px; background: var(--color-accent); }
@@ -312,7 +314,6 @@
 .process-page[data-motion-ready="on"] .proc-area::after { transition: opacity 200ms ease calc(1250ms + var(--i, 0) * 110ms); }
 .process-page[data-motion-ready="on"] .proc-area { transition: opacity var(--m-reveal) ease calc(1150ms + var(--i, 0) * 140ms), transform var(--m-reveal) var(--m-ease) calc(1150ms + var(--i, 0) * 140ms), background-color var(--duration-fast) ease, border-color var(--duration-fast) ease, color var(--duration-fast) ease; }
 .proc-map::after, .proc-area::before { transform-origin: top; }
-.proc-map::before { transform-origin: center; }
 .process-page[data-motion-ready] .proc-resp-figure:not([data-motion-state="on"]) .proc-principle { opacity: 0; transform: translateY(10px); }
 .process-page[data-motion-ready] .proc-resp-figure:not([data-motion-state="on"]) .proc-map::after { transform: scaleY(0); }
 .process-page[data-motion-ready] .proc-resp-figure:not([data-motion-state="on"]) .proc-area::before { transform: scaleY(0); }
@@ -437,8 +438,7 @@
   /* Vertical route: the note sits under the steps, indented to the text column, and says which step it belongs to */
   .proc-design-note { margin: 40px 0 0 72px; }
   .proc-design-note::before { left: -51px; height: 40px; }
-  .proc-scope-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
-  .proc-scope-grid { grid-template-rows: none; }
+  .proc-scope-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 40px; }
   .proc-scope-grid > li { grid-row: auto; grid-template-rows: none; }
   .proc-scope-grid li { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); column-gap: 32px; align-items: start; }
   .proc-scope-grid li > :not(svg) { grid-column: 2; }

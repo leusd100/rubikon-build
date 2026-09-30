@@ -60,7 +60,8 @@ export function ScopeDiagram({ format }: Readonly<{ format: DeliveryFormatId }>)
   // Scope layers light up in build order: foundation → frame → envelope → roof.
   const cls = (layer: Layer) => {
     const index = scope.indexOf(layer);
-    return `sd-layer sd-${layer}${index >= 0 ? ` is-scope sd-step-${index}` : ''}`;
+    const scoped = index >= 0 ? ` is-scope sd-step-${index}` : '';
+    return `sd-layer sd-${layer}${scoped}`;
   };
 
   return (

@@ -579,6 +579,25 @@ function zoneOf(holder: string): ResponsibilityZone | null {
   return null;
 }
 
+/** RUBIKON's part in a work, from the holders of its cells: does it, else coordinates it, else organises it. */
+function rubikonRoleOf(holders: readonly string[]): RubikonRole | undefined {
+  if (holders.includes('rubikon')) return 'executes';
+  if (holders.includes('rubikon-coordinates')) return 'coordinates';
+  if (holders.includes('rubikon-organizes')) return 'organizes';
+  return undefined;
+}
+
+const ROLE_NOTE: Record<Exclude<RubikonRole, 'executes'>, string> = { coordinates: 'координуємо', organizes: 'організовуємо' };
+
+/** Where RUBIKON coordinates or organises rather than does the work, its card says so — unless a fuller note is curated. */
+function withRoleNotes(notes: ZoneNotes, roles: Partial<Record<DeliveryFormatId, RubikonRole>>): ZoneNotes {
+  const rubikon = { ...notes.rubikon };
+  for (const [format, role] of Object.entries(roles) as [DeliveryFormatId, RubikonRole][]) {
+    if (role !== 'executes' && !rubikon[format]) rubikon[format] = ROLE_NOTE[role];
+  }
+  return Object.keys(rubikon).length ? { ...notes, rubikon } : notes;
+}
+
 /**
  * The responsibility map per format: the same list of works, each placed in the zones the model's matrix names for that
  * format. Rows the format leaves out of our scope are listed apart; the legal-layer row stays out of the public map.
@@ -642,35 +661,26 @@ export function responsibilityByFormat(): { formats: readonly SwitchFormat[]; it
     },
     { text: 'Приймання робіт', rows: ['acceptance'] },
   ];
-  const ROLE_NOTE: Record<Exclude<RubikonRole, 'executes'>, string> = { coordinates: 'координуємо', organizes: 'організовуємо' };
   const rowById = (id: string) => {
     const row = model.responsibility.find((item) => item.id === id);
     if (!row) throw new Error(`Unknown responsibility row: ${id}`);
     return row;
   };
   const formatIds = model.formats.map((format) => format.id);
+  const holdersOf = (rows: readonly string[], format: DeliveryFormatId) => rows.flatMap((id) => {
+    const cell = rowById(id).cells[format];
+    return typeof cell === 'string' ? [cell] : [...cell];
+  });
   const items = curated.map(({ text, rows, notes = {} }) => {
     const zones: Record<ResponsibilityZone, DeliveryFormatId[]> = { rubikon: [], client: [], specialists: [] };
     const rubikonRole: Partial<Record<DeliveryFormatId, RubikonRole>> = {};
     for (const format of formatIds) {
-      const holders = rows.flatMap((id) => {
-        const cell = rowById(id).cells[format];
-        return typeof cell === 'string' ? [cell] : [...cell];
-      });
-      for (const holder of holders) {
-        const zone = zoneOf(holder);
-        if (zone && !zones[zone].includes(format)) zones[zone].push(format);
-      }
-      if (holders.includes('rubikon')) rubikonRole[format] = 'executes';
-      else if (holders.includes('rubikon-coordinates')) rubikonRole[format] = 'coordinates';
-      else if (holders.includes('rubikon-organizes')) rubikonRole[format] = 'organizes';
+      const holders = holdersOf(rows, format);
+      for (const zone of new Set(holders.map(zoneOf))) if (zone) zones[zone].push(format);
+      const role = rubikonRoleOf(holders);
+      if (role) rubikonRole[format] = role;
     }
-    // Where RUBIKON coordinates or organises rather than does the work, say so (unless a fuller note is curated)
-    const rubikonNotes = { ...notes.rubikon };
-    for (const [format, role] of Object.entries(rubikonRole) as [DeliveryFormatId, RubikonRole][]) {
-      if (role !== 'executes' && !rubikonNotes[format]) rubikonNotes[format] = ROLE_NOTE[role];
-    }
-    return { text, rows, zones, rubikonRole, notes: { ...notes, ...(Object.keys(rubikonNotes).length ? { rubikon: rubikonNotes } : {}) } };
+    return { text, rows, zones, rubikonRole, notes: withRoleNotes(notes, rubikonRole) };
   });
   // How the parties work together in each format (the promise of result is already said on the scope cards above).
   const principles = Object.fromEntries(model.formats.map((format) => [format.id, format.interfaces])) as Record<DeliveryFormatId, string>;
