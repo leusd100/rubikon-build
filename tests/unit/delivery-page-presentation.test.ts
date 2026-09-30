@@ -6,6 +6,9 @@ import {
   budgetGroups,
   capabilityLayers,
   deliveryFaq,
+  participationChoices,
+  processSteps,
+  responsibilityMap,
   designThread,
   documentRoute,
   formatDetails,
@@ -203,18 +206,57 @@ describe('delivery page: documents, budget, inputs, FAQ', () => {
     expect(startInputs()).toHaveLength(11);
   });
 
-  it('answers the FAQ only in the model’s words', () => {
+  it('answers the FAQ only in the model’s words, four questions the page does not already answer', () => {
     const faq = Object.fromEntries(deliveryFaq());
-    const { statements, changePolicy } = deliveryModel;
+    const { statements } = deliveryModel;
 
-    expect(Object.keys(faq)).toHaveLength(6);
-    expect(faq['Чи обов’язково мати готовий проєкт?']).toContain('Готовий проєкт для першого звернення не потрібен');
-    expect(faq['Чи обов’язково мати готовий проєкт?']).toContain('проєктних даних достатньо');
-    expect(faq['Чи можна замовити лише один пакет робіт?']).toContain(formatById('work-package').summary);
-    expect(faq['Хто залучає проєктувальника?']).toBe(statements.design);
-    expect(faq['Чи працюєте ви із субпідрядниками?']).toBe(`Так. ${statements.team} ${statements.principle}`);
+    expect(Object.keys(faq)).toEqual(['Хто закуповує матеріали?', 'Чи працюєте ви із субпідрядниками?', 'Чи оглядаєте майданчик перед розрахунком?', 'Що ви передаєте після завершення робіт?']);
     expect(faq['Хто закуповує матеріали?']).toBe(statements.materials);
-    expect(faq['Як погоджуються зміни?']).toBe(`${changePolicy.principle} ${changePolicy.steps[2]}`);
+    expect(faq['Чи працюєте ви із субпідрядниками?']).toBe(`Так. ${statements.team} ${statements.principle}`);
+    expect(faq['Чи оглядаєте майданчик перед розрахунком?']).toContain(deliveryModel.stages[1].rubikon.default);
+    expect(faq['Що ви передаєте після завершення робіт?']).toContain(deliveryModel.stages[7].result);
     for (const answer of Object.values(faq)) for (const pattern of FORBIDDEN_CLAIMS) expect(answer, String(pattern)).not.toMatch(pattern);
+  });
+
+});
+
+describe('delivery page v2: the public projection', () => {
+  it('tells the eight stages as four steps, in order, each stage once, each ending with a model result', () => {
+    const steps = processSteps();
+    expect(steps.map((step) => step.number)).toEqual(['01', '02', '03', '04']);
+    expect(steps.flatMap((step) => step.stages)).toEqual(deliveryModel.stages.map((stage) => stage.id));
+    const results = deliveryModel.stages.map((stage) => stage.result);
+    for (const step of steps) expect(results).toContain(step.result);
+    for (const step of steps) for (const pattern of FORBIDDEN_CLAIMS) expect(step.text, String(pattern)).not.toMatch(pattern);
+  });
+
+  it('offers the three formats under their model names, texts and coordination', () => {
+    expect(participationChoices()).toEqual(deliveryModel.formats.map((format) => ({
+      id: format.id, title: format.label, text: format.summary, coordination: format.coordination,
+    })));
+  });
+
+  it('maps who answers for what only onto responsibility rows that say so', () => {
+    const map = responsibilityMap();
+    const rows = new Map<string, (typeof deliveryModel.responsibility)[number]>(deliveryModel.responsibility.map((row) => [row.id, row]));
+    const holdersIn = (id: string) => {
+      const row = rows.get(id);
+      expect(row, id).toBeDefined();
+      return Object.values(row!.cells).flatMap((cell) => (typeof cell === 'string' ? [cell] : [...cell]));
+    };
+    expect(map.principle).toBe(deliveryModel.statements.responsibility);
+    expect(map.boundary).toBe(deliveryModel.statements.boundary);
+    expect(map.areas.map((area) => area.id)).toEqual(['rubikon', 'client', 'specialists']);
+    for (const area of map.areas) {
+      for (const item of area.items) {
+        for (const id of item.rows) {
+          const holders = holdersIn(id);
+          if (area.id === 'rubikon') expect(holders.some((holder) => holder.startsWith('rubikon')), `${item.text} / ${id}`).toBe(true);
+          if (area.id === 'client') expect(holders, `${item.text} / ${id}`).toContain('client');
+          // The client's own designer is the one specialist the model files under the client.
+          if (area.id === 'specialists') expect(holders.includes('partner') || id === 'design', `${item.text} / ${id}`).toBe(true);
+        }
+      }
+    }
   });
 });

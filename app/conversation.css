@@ -111,6 +111,10 @@
 .conversation .inquiry-form-section-title { font-size: 12.5px; }
 .conversation :is(.inquiry-form-kicker, .inquiry-required-note) { font-size: 13px; }
 .conversation .inquiry-field-hint { font-size: 13px; }
+/* A page that already shows its steps (/yak-pratsyuiemo) closes with intro + form only. */
+.conversation-no-journey .conversation-grid { grid-template-areas: "intro form"; grid-template-rows: auto; }
+@media (max-width: 1180px) { .conversation-no-journey .conversation-grid { grid-template-areas: "intro" "form"; } }
+
 /* Laptop screens (≥ 1181 px wide, ≤ 900 px tall): the compact mode the previous inquiry block had — tighter padding and
    rhythm, a smaller heading. /zernoskhovyshcha's height budget (tests/e2e/grain-page.spec.ts, 7.3 screens at 1440×900)
    is measured here. */

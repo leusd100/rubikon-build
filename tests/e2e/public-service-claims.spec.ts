@@ -31,7 +31,7 @@ for (const width of [375, 768, 1440]) {
       }
       if (route === '/yak-pratsyuiemo') {
         await expect(page.locator('#vidpovidalnist')).toContainText('беремо погоджений комплекс');
-        await expect(page.locator('#proiektuvannia')).toContainText('Проєкт надає замовник або його окремий проєктувальник');
+        await expect(page.locator('#etapy')).toContainText('Проєкт надає замовник або його окремий проєктувальник');
       }
     }
   });

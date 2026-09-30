@@ -16,6 +16,8 @@ type ConversationSectionProps = {
   defaultDirection?: string;
   /** The four step explanations; the step titles are fixed (app/data/conversation.ts). */
   journey?: JourneyTexts;
+  /** False where the page already shows its steps (/yak-pratsyuiemo), so the block does not repeat them. */
+  showJourney?: boolean;
 };
 
 /**
@@ -30,9 +32,10 @@ export function ConversationSection({
   lead = DEFAULT_LEAD,
   defaultDirection,
   journey = DEFAULT_JOURNEY,
+  showJourney = true,
 }: Readonly<ConversationSectionProps>) {
   return (
-    <section className="conversation section" id="inquiry" aria-labelledby="conversation-title">
+    <section className={`conversation section${showJourney ? '' : ' conversation-no-journey'}`} id="inquiry" aria-labelledby="conversation-title">
       <div className="conversation-bg" aria-hidden="true">
         <picture>
           <source media="(max-width: 760px)" srcSet="/media/home-v2/conversation-bg-portrait-720w.webp" />
@@ -74,7 +77,7 @@ export function ConversationSection({
           cooperationOptions={cooperationOptions()}
           successMessage={inquirySuccessMessage()}
         />
-        <ConversationJourney journey={journey} />
+        {showJourney && <ConversationJourney journey={journey} />}
       </div>
     </section>
   );

@@ -364,17 +364,116 @@ export function startInputs(): readonly string[] {
   return model.inputs.map((input) => input.label);
 }
 
-/** The /yak-pratsyuiemo FAQ: real doubts of a B2B client, answered only in the model's words. */
+/** The /yak-pratsyuiemo FAQ: only what a first-time client still asks after reading the page, answered in the model's words. */
 export function deliveryFaq(): readonly (readonly [string, string])[] {
-  const workPackage = formatById('work-package');
   const { statements } = model;
-  const { changePolicy } = deliveryModel;
+  const inputs = stageById('inputs');
+  const handover = stageById('handover');
   return [
-    ['Чи обов’язково мати готовий проєкт?', 'Ні. Готовий проєкт для першого звернення не потрібен. Якщо документація вже є, почнемо з її перегляду. Якщо є лише задум або попередні параметри, уточнимо завдання та підкажемо, які дані має підготувати замовник із проєктувальником. Кошторис готуємо, коли склад робіт визначено й проєктних даних достатньо.'],
-    ['Чи можна замовити лише один пакет робіт?', `Так, у форматі «${workPackage.label}»: ${workPackage.summary} ${workPackage.interfaces}`],
-    ['Хто залучає проєктувальника?', statements.design],
-    ['Чи працюєте ви із субпідрядниками?', `Так. ${statements.team} ${statements.principle}`],
     ['Хто закуповує матеріали?', statements.materials],
-    ['Як погоджуються зміни?', `${changePolicy.principle} ${changePolicy.steps[2]}`],
+    ['Чи працюєте ви із субпідрядниками?', `Так. ${statements.team} ${statements.principle}`],
+    ['Чи оглядаєте майданчик перед розрахунком?', `За потреби — так. ${inputs.rubikon.default}`],
+    ['Що ви передаєте після завершення робіт?', `${handover.what} ${handover.result}`],
   ];
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The public /yak-pratsyuiemo projection (v2): the same truth as above, told as what happens with the client's task.
+// Four steps instead of eight stages, the three formats as client choices, and one map of who answers for what. Each
+// item names the model stages or responsibility rows it stands for, so tests can hold it to the model.
+
+export type ProcessStep = { number: string; title: string; text: string; result: string; stages: readonly StageId[] };
+
+/** Four client-facing steps covering the eight model stages in order; each ends with the model's own result. */
+export function processSteps(): readonly ProcessStep[] {
+  const steps: readonly Omit<ProcessStep, 'number' | 'result'>[] = [
+    {
+      title: 'Уточнюємо задачу',
+      text: 'Розбираємо, що потрібно побудувати або виконати, де об’єкт і які матеріали вже є.',
+      stages: ['request'],
+    },
+    {
+      title: 'Працюємо з вихідними даними',
+      text: 'Переглядаємо наявний проєкт або параметри й визначаємо, яких даних ще бракує.',
+      stages: ['inputs', 'engineering'],
+    },
+    {
+      title: 'Узгоджуємо обсяг і кошторис',
+      text: 'Визначаємо, що саме бере на себе RUBIKON. Коли проєктних даних достатньо — готуємо кошторис погодженого обсягу й фіксуємо його в договорі.',
+      stages: ['scope-budget', 'contract'],
+    },
+    {
+      title: 'Організовуємо виконання',
+      text: 'Плануємо роботи, ресурси й взаємодію з іншими учасниками та ведемо погоджений обсяг до приймання.',
+      stages: ['preparation', 'construction', 'handover'],
+    },
+  ];
+  const resultStage: readonly StageId[] = ['request', 'inputs', 'scope-budget', 'handover'];
+  return steps.map((step, index) => ({
+    ...step,
+    number: String(index + 1).padStart(2, '0'),
+    result: stageById(resultStage[index] as StageId).result,
+  }));
+}
+
+export type ParticipationChoice = { id: DeliveryFormatId; title: string; text: string; coordination: string };
+
+/** The three formats as a client's choice, largest scope first; names and texts are the model's. */
+export function participationChoices(): readonly ParticipationChoice[] {
+  return model.formats.map((format) => ({
+    id: format.id,
+    title: format.label,
+    text: format.summary,
+    coordination: format.coordination,
+  }));
+}
+
+type MapItem = { text: string; rows: readonly string[] };
+export type ResponsibilityArea = { id: 'rubikon' | 'client' | 'specialists'; title: string; lead: string; items: readonly MapItem[] };
+
+/** Who answers for what, as three areas instead of a matrix. Rows are ids of `deliveryModel.responsibility`. */
+export function responsibilityMap(): { principle: string; areas: readonly ResponsibilityArea[]; boundary: string; materials: string } {
+  const { statements } = model;
+  const core = model.capabilities.filter((capability) => capability.layer === 'core').map((capability) => capability.label.toLowerCase());
+  return {
+    principle: statements.responsibility,
+    areas: [
+      {
+        id: 'rubikon',
+        title: 'RUBIKON',
+        lead: 'Погоджений будівельний обсяг і його результат.',
+        items: [
+          { text: `Власні роботи: ${core.join(', ')}`, rows: ['steel', 'roofing', 'foundations'] },
+          { text: 'Організація виконання й узгодження робіт у погодженому обсязі', rows: ['interfaces', 'steel-fabrication'] },
+          { text: 'Кошторис на погоджений обсяг', rows: ['estimate'] },
+          { text: 'Контроль якості своїх робіт', rows: ['quality-control'] },
+        ],
+      },
+      {
+        id: 'client',
+        title: 'Замовник',
+        lead: 'Те, що залишається на боці замовника.',
+        items: [
+          { text: 'Проєкт — самостійно або через окремого проєктувальника', rows: ['design'] },
+          { text: 'Вихідні дані й доступ до майданчика', rows: ['site-inputs'] },
+          { text: 'Дозволи й введення в експлуатацію', rows: ['permits'] },
+          { text: 'Зовнішні мережі й підключення', rows: ['external-utilities'] },
+          { text: 'Приймання робіт', rows: ['acceptance'] },
+        ],
+      },
+      {
+        id: 'specialists',
+        title: 'Профільні спеціалісти',
+        lead: 'Вузькі дисципліни, які виконують фахівці свого профілю.',
+        items: [
+          { text: 'Проєктування — проєктувальник замовника', rows: ['design'] },
+          { text: 'Електрика, вода, каналізація, опалення й вентиляція', rows: ['engineering-systems'] },
+          { text: 'Спеціальне технологічне обладнання', rows: ['process-equipment'] },
+          { text: 'Вишукування, технічний і авторський нагляд', rows: ['surveys', 'supervision'] },
+        ],
+      },
+    ],
+    boundary: statements.boundary,
+    materials: statements.materials,
+  };
 }
