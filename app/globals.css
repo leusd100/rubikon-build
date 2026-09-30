@@ -294,7 +294,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .ghost-word-end { right: max(-28px, calc((100vw - var(--container-max)) / 2 - 90px)); }
 .ghost-word-start { left: max(-28px, calc((100vw - var(--container-max)) / 2 - 90px)); }
 .ghost-word-dark { --ghost-fill: rgba(255,255,255,.018); --ghost-stroke: rgba(255,255,255,.15); }
-.promise-copy h2 { font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--title-section); font-weight: 400; line-height: 1.04; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
+.promise-copy h2 { max-width: 920px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(48px, 4.2vw, 64px); font-weight: 400; line-height: 1.04; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
 .section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(330px, .65fr); align-items: center; gap: var(--grid-gap); margin-bottom: 52px; padding-bottom: 38px; border-bottom: 1px solid var(--color-border); }
 .section-header-copy { max-width: 980px; }
 .section-header-copy .eyebrow { margin-bottom: 30px; }
@@ -349,7 +349,6 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .visual-index { position: absolute; z-index: 3; top: 22px; right: 22px; padding: 9px 11px; color: white; background: rgba(13,16,14,.64); border: 1px solid rgba(255,255,255,.24); backdrop-filter: blur(8px); font: 700 9px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
 .image-note { position: absolute; z-index: 2; right: 18px; bottom: 18px; width: min(245px, calc(100% - 36px)); padding: 18px 20px; color: white; background: rgba(15,18,16,.84); border-top: 3px solid var(--color-accent); backdrop-filter: blur(10px); font-size: 11px; font-weight: 800; line-height: 1.45; letter-spacing: .04em; text-transform: uppercase; }
 .promise-copy .eyebrow.light { color: var(--color-text-muted); }
-.promise-copy h2 { max-width: 920px; font-size: clamp(48px, 4.2vw, 64px); }
 .promise-lead { max-width: var(--content-copy); margin: 32px 0 42px; color: var(--color-text-muted); font-size: 16px; line-height: 1.8; }
 .story-support { max-width: var(--content-copy); margin: -18px 0 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.8; }
 
