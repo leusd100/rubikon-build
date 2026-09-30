@@ -330,6 +330,9 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   const region = page.locator('.about-build-region');
   await expect(region.locator('.about-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);
   await expect(region).toContainText(company.geographyBeyond);
+  // The oblast's outline with Dnipro marked; its OpenStreetMap-derived data is credited (ODbL)
+  await expect(region.getByRole('img', { name: `Мапа: ${company.serviceAreas[0]}, позначено місто Дніпро` })).toBeVisible();
+  await expect(region.locator('figcaption')).toContainText('© учасники OpenStreetMap');
   // The family thesis is said once — by the copper line under the people — not in the heading as well
   await expect(page.locator('main').getByText(/Два покоління/)).toHaveCount(1);
   // Owner's decision (30.09): no «Ілюстрація» tags on this page; the conceptual image says so in its alt text

@@ -9,6 +9,7 @@ import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
 import { directions } from '../data/directions';
+import { regionMap } from '../data/regionMap';
 import './about.css';
 
 // /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we build
@@ -119,10 +120,29 @@ export default function AboutPage() {
               </li>
             ))}
           </ol>
-          {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people */}
+          {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people; under the
+              line, the oblast's real outline (geoBoundaries / OpenStreetMap, credited) draws itself once and Dnipro,
+              where the company is based, is marked on it */}
           <div className="about-build-region" data-motion>
             <p className="about-bond"><span>Основний регіон — {company.serviceAreas[0]}</span></p>
-            <p className="about-build-region-note">{company.geographyBeyond}</p>
+            <div className="about-region">
+              <div className="about-region-copy">
+                <p className="about-region-base">Базуємося в Дніпрі.</p>
+                <p className="about-build-region-note">{company.geographyBeyond}</p>
+              </div>
+              <figure className="about-region-map">
+                <svg viewBox={regionMap.viewBox} role="img" aria-label={`Мапа: ${company.serviceAreas[0]}, позначено місто Дніпро`}>
+                  <path className="arm-outline" d={regionMap.outline} pathLength={1} />
+                  <g transform={`translate(${regionMap.dnipro.x} ${regionMap.dnipro.y})`}>
+                    <circle className="arm-pulse" r="22" />
+                    <circle className="arm-ring" r="15" />
+                    <circle className="arm-dot" r="7" />
+                  </g>
+                  <text className="arm-label" x={regionMap.dnipro.x + 30} y={regionMap.dnipro.y + 9}>Дніпро</text>
+                </svg>
+                <figcaption>{regionMap.attribution}</figcaption>
+              </figure>
+            </div>
           </div>
         </div>
       </section>
