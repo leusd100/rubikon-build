@@ -1,0 +1,516 @@
+/* HOME v2 «Engineering Signature» — owner-approved 2026-09-29 (built on design/home-v2-engineering-signature).
+
+   Four zones: hero → directions → engineering signature (real object + X-ray first, people, two explanation cards)
+   → conversation + form.
+   Every rule is keyed to <main data-home="v2">, so nothing leaks to other pages. It sits on top of the
+   Architectural Copper tokens already on main (#122) and does not change them.
+
+   The signature block is ALWAYS dark (a local charcoal/copper treatment) and does not follow the light/dark switch;
+   the directions band and the closing section do follow it (paper in Light, graphite in Dark).
+
+   Discard cleanly: delete this file, app/components/home-v2/, public/media/home-v2/, and restore app/page.tsx. */
+
+main[data-home="v2"] {
+  --hv2-ink: #121413;
+  --hv2-graphite: #171a18;
+  --hv2-graphite-2: #1d201e;
+  --hv2-graphite-3: #242825;
+  --hv2-line: rgba(245, 242, 235, .12);
+  --hv2-line-strong: rgba(245, 242, 235, .24);
+  --hv2-text: #f5f2eb;
+  --hv2-text-2: #bdb7ac;   /* ≥ 8:1 on the graphite surfaces */
+  --hv2-text-3: #9e988d;   /* ≥ 5.9:1 */
+  --hv2-copper: #b76432;   /* decorative: rules, dots, bars */
+  --hv2-copper-text: #cc8455; /* copper text on charcoal: 5.9:1 */
+  --hv2-copper-fill: #a0522a; /* copper fill under warm-white text: 5.03:1 */
+}
+
+main[data-home="v2"] .hv2-nowrap { white-space: nowrap; }
+main[data-home="v2"] .hv2-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+main[data-home="v2"] .hv2-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--hv2-copper-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-kicker > span { width: 26px; height: 2px; flex: none; background: var(--hv2-copper); }
+
+/* ================================ 1 · HERO ================================ */
+
+main[data-home="v2"] .hv2-hero-layout { grid-template-columns: minmax(0, 1fr); }
+main[data-home="v2"] .hv2-hero h1 { max-width: 1280px; }
+main[data-home="v2"] .hv2-hero .hero-lead { max-width: 660px; }
+main[data-home="v2"] .hv2-hero-provenance { display: none; }
+
+@media (max-width: 760px) {
+  /* Phone hero = three rows: a spacer under the fixed header, the still, the text. The still starts BELOW the header
+     (its top is no longer hidden) and takes whatever height is left; the whole hero is sized to the small viewport
+     minus 120 px. That keeps «Зателефонувати» above the first-visit cookie banner (199–216 px tall) from 390×745 up —
+     the Slice 01 guarantee — and both buttons well clear of Safari's floating toolbar, while the top of the next
+     section peeks as a scroll cue. The headline overlaps the still's darkened lower edge by --hv2-overlap. */
+  main[data-home="v2"] .hv2-hero {
+    --hv2-header: 77px; --hv2-overlap: 150px; --hv2-img-min: 250px;
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--hv2-header) minmax(var(--hv2-img-min), 1fr) auto;
+    align-items: stretch; min-height: calc(100svh - 120px); height: auto;
+  }
+  main[data-home="v2"] .hv2-hero .hero-media { position: relative; inset: auto; grid-area: 2 / 1; min-height: 0; overflow: hidden; }
+  main[data-home="v2"] .hv2-hero .hero-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 32%; filter: saturate(.82) contrast(1.06) brightness(.92); }
+  main[data-home="v2"] .hv2-hero .hero-media::after {
+    content: ''; position: absolute; z-index: 1; inset: 0; pointer-events: none;
+    background: linear-gradient(0deg,
+      var(--color-inverse-bg) 0,
+      var(--color-inverse-bg) 10px,
+      rgba(23, 25, 24, .86) calc(var(--hv2-overlap) + 10px),
+      rgba(12, 13, 13, .12) calc(var(--hv2-overlap) + 140px),
+      rgba(12, 13, 13, .06) 100%);
+  }
+  main[data-home="v2"] .hv2-hero :is(.hero-shade, .hero-grid) { display: none; }
+  main[data-home="v2"] .hv2-hero-layout {
+    grid-area: 3 / 1; position: relative; z-index: 2; min-height: 0;
+    margin-top: calc(var(--hv2-overlap) * -1); padding: 0 0 28px; align-content: end;
+  }
+  main[data-home="v2"] .hv2-hero h1 { font-size: clamp(32px, 9.4vw, 38px); line-height: 1.05; text-shadow: 0 1px 18px rgba(0, 0, 0, .35); }
+  main[data-home="v2"] .hv2-hero .hero-copy { gap: 22px; margin-top: 16px; }
+  /* The object types return from 761 px; on a phone the lead is the works and the limit only */
+  main[data-home="v2"] .hv2-lead-intro { display: none; }
+  main[data-home="v2"] .hv2-hero-provenance {
+    position: absolute; z-index: 3; top: calc(var(--hv2-header) + 12px); right: 16px; display: block; padding: 6px 10px;
+    color: var(--hv2-text); background: rgba(18, 20, 19, .74); border: 1px solid rgba(245, 242, 235, .5);
+    font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .05em;
+  }
+}
+/* Short viewports (≤ 760 px tall — SE, 360×640, 375×667, and iPhones with Safari's bars shown): tighter type and a
+   smaller minimum still, so the call stays on the first screen. */
+@media (max-width: 760px) and (max-height: 760px) {
+  main[data-home="v2"] .hv2-hero { --hv2-overlap: 122px; --hv2-img-min: 210px; }
+  main[data-home="v2"] .hv2-hero h1 { font-size: clamp(30px, 8.6vw, 34px); line-height: 1.04; }
+  main[data-home="v2"] .hv2-hero .hero-lead { font-size: 15px; line-height: 1.55; }
+  main[data-home="v2"] .hv2-hero .hero-copy { gap: 16px; margin-top: 12px; }
+  main[data-home="v2"] .hv2-hero .hero-actions { gap: 10px; }
+  main[data-home="v2"] .hv2-hero .hero-actions .button { min-height: 52px; }
+}
+
+/* Very short viewports (≤ 600 px tall — e.g. an SE with Safari's bars: 375×553, 320×460): the call follows the
+   headline directly and the lead moves under the two buttons (same words, nothing hidden). */
+@media (max-width: 760px) and (max-height: 600px) {
+  main[data-home="v2"] .hv2-hero { --hv2-overlap: 100px; --hv2-img-min: 170px; }
+  main[data-home="v2"] .hv2-hero h1 { font-size: clamp(28px, 8.2vw, 31px); }
+  main[data-home="v2"] .hv2-hero .hero-copy { display: flex; flex-direction: column; gap: 14px; }
+  main[data-home="v2"] .hv2-hero .hero-actions { order: 1; }
+  main[data-home="v2"] .hv2-hero .hero-lead { order: 2; font-size: 14.5px; }
+}
+
+/* Header on phones: the logo link is the one flexible item, so the call and «МЕНЮ» never run past the column
+   (at 390 px the row was 12 px wider than its 358 px column; Safari's wider text pushed «МЕНЮ» into the edge). */
+@media (max-width: 760px) {
+  :root:has(main[data-home="v2"]) .site-header .brand-link { flex: 0 1 210px; min-width: 150px; }
+  :root:has(main[data-home="v2"]) .site-header .brand { width: 100%; max-width: 210px; }
+  :root:has(main[data-home="v2"]) :is(.mobile-call, .mobile-menu) { flex: none; }
+}
+@media (max-width: 380px) {
+  :root:has(main[data-home="v2"]) .site-header .brand-link { flex-basis: 188px; }
+}
+/* ≤ 340 px: the menu becomes the icon (the word stays for screen readers; summary also has an aria-label) */
+@media (max-width: 340px) {
+  :root:has(main[data-home="v2"]) .nav-wrap { gap: 8px; }
+  :root:has(main[data-home="v2"]) .site-header .brand-link { flex-basis: 172px; }
+  :root:has(main[data-home="v2"]) .mobile-call { width: 42px; }
+  :root:has(main[data-home="v2"]) .mobile-menu summary { width: 44px; min-width: 44px; padding: 0; justify-content: center; gap: 0; }
+  :root:has(main[data-home="v2"]) .mobile-menu summary > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+/* ============================== 2 · DIRECTIONS ============================== */
+
+/* The mosaic and its images are untouched; the band moves from charcoal to the page tokens (paper in Light) so the
+   engineering block below is the page's ONE dark signature moment instead of the third dark band in a row. The
+   «STRUCTURE» ghost word is gone (markup). */
+main[data-home="v2"] .hv2-directions { color: var(--color-text); background: var(--color-bg); --focus-ring: var(--color-focus); }
+main[data-home="v2"] .hv2-directions .section-header-inverse { border-bottom-color: var(--color-border); }
+main[data-home="v2"] .hv2-directions .section-header-inverse .section-header-support { color: var(--color-text-secondary); }
+main[data-home="v2"] .hv2-directions .eyebrow.light { color: var(--color-text-muted); }
+/* The cards stay dark images with light type, exactly as on main */
+main[data-home="v2"] .hv2-directions .direction-card { color: var(--color-inverse-text); }
+main[data-home="v2"] .hv2-directions .direction-card:is(:hover, :focus-visible) { box-shadow: 0 24px 48px rgba(20, 22, 21, .22); }
+main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-color: var(--color-focus); }
+
+@media (max-width: 760px) {
+  /* A swipe row instead of five full-width cards: the images stay large (4:5, 84% of the width, the next card
+     peeks), and the section drops from ~2 540 px to ~1 000 px at 390. */
+  main[data-home="v2"] .hv2-directions .section-header { margin-bottom: 28px; padding-bottom: 24px; }
+  main[data-home="v2"] .hv2-directions .direction-grid {
+    display: flex; gap: 12px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
+    margin-inline: calc(50% - 50vw); padding: 4px calc(50vw - 50%) 8px; scroll-padding-inline: calc(50vw - 50%);
+    scrollbar-width: none;
+  }
+  main[data-home="v2"] .hv2-directions .direction-grid::-webkit-scrollbar { display: none; }
+  main[data-home="v2"] .hv2-directions .direction-card,
+  main[data-home="v2"] .hv2-directions .direction-card.wide {
+    flex: 0 0 84%; min-height: 0; aspect-ratio: 4 / 5; scroll-snap-align: start; border-radius: var(--radius-md);
+  }
+  main[data-home="v2"] .hv2-directions .direction-card:nth-child(n) { border-radius: var(--radius-md); }
+  main[data-home="v2"] .hv2-directions .direction-card:hover { transform: none; }
+  /* Fluid, so the longest title word fits the swipe card at every phone width: the title box is
+     0.84 × (100vw − 32 px) − 58 px, and «Металоконструкції» is ≈ 7.66 px per px of font on Linux CI (222 px at 29 px).
+     min(29 px, 10.9vw − 11.6 px) keeps ≈ 4–7 px spare from 341 px up; ≤ 340 px has its own rule below. */
+  main[data-home="v2"] .hv2-directions .direction-copy strong,
+  main[data-home="v2"] .hv2-directions .direction-card:not(.wide) .direction-copy strong { margin-right: -48px; font-size: min(29px, calc(10.9vw - 11.6px)); }
+  main[data-home="v2"] .hv2-directions .direction-copy small { font-size: 15px; }
+  /* Position: «02 / 05» + five dots that also jump to a card (DirectionsRail) */
+  main[data-home="v2"] .hv2-rail-nav { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  main[data-home="v2"] .hv2-rail-count { margin: 0; color: var(--color-text-muted); font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+  main[data-home="v2"] .hv2-rail-count b { color: var(--color-text); font-weight: 700; }
+  main[data-home="v2"] .hv2-rail-dots { display: flex; }
+  main[data-home="v2"] .hv2-rail-dots button { width: 28px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; }
+  main[data-home="v2"] .hv2-rail-dots button span { width: 8px; height: 8px; border-radius: 4px; background: var(--color-border-control); transition: width var(--duration-fast) ease, background var(--duration-fast) ease; }
+  main[data-home="v2"] .hv2-rail-dots button[aria-current="true"] span { width: 22px; background: var(--color-accent); }
+  main[data-home="v2"] .hv2-rail-hint { margin: 0 0 0 auto; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+}
+main[data-home="v2"] .hv2-rail-nav { display: none; }
+@media (max-width: 760px) { main[data-home="v2"] .hv2-rail-nav { display: flex; } }
+/* 320 px: the title box in an 84% swipe card was 184 px and «Металоконструкції» (≈ 187 px at 25 px, 217 px at 29 px)
+   split mid-word (words-whole). A slightly wider card and 24 px leave it ≈ 16 px to spare. */
+@media (max-width: 340px) {
+  main[data-home="v2"] .hv2-directions .direction-card,
+  main[data-home="v2"] .hv2-directions .direction-card.wide { flex-basis: 88%; }
+  main[data-home="v2"] .hv2-directions .direction-copy strong,
+  main[data-home="v2"] .hv2-directions .direction-card:not(.wide) .direction-copy strong { font-size: 24px; }
+}
+
+/* ======================= 3 · ENGINEERING SIGNATURE + REAL OBJECT ======================= */
+
+main[data-home="v2"] .hv2-signature {
+  position: relative; overflow: hidden; isolation: isolate; color: var(--hv2-text);
+  background:
+    radial-gradient(90% 60% at 88% 0%, rgba(183, 100, 50, .12), transparent 60%),
+    linear-gradient(180deg, var(--hv2-ink) 0%, var(--hv2-graphite) 38%, var(--hv2-ink) 100%);
+  --focus-ring: var(--hv2-copper-text);
+}
+/* A faint drawing grid under the whole block, fading out towards the bottom */
+main[data-home="v2"] .hv2-signature-lines {
+  position: absolute; z-index: -1; inset: 0; pointer-events: none; opacity: .5;
+  background-image: linear-gradient(rgba(245, 242, 235, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(245, 242, 235, .05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, black 0, rgba(0, 0, 0, .5) 40%, transparent 75%);
+}
+
+main[data-home="v2"] .hv2-signature-head {
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, .7fr); align-items: end; gap: 24px var(--grid-gap);
+  padding-bottom: 32px; border-bottom: 1px solid var(--hv2-line);
+}
+main[data-home="v2"] .hv2-signature-head .hv2-kicker { grid-column: 1 / -1; }
+main[data-home="v2"] .hv2-signature-head h2 {
+  margin: 0; font: 400 clamp(48px, 5.2vw, 80px)/.98 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance;
+}
+main[data-home="v2"] .hv2-signature-support { max-width: 460px; margin: 0; padding-left: 24px; color: var(--hv2-text-2); border-left: 2px solid var(--hv2-copper); font-size: 16px; line-height: 1.7; }
+
+/* --- two explanation cards: image | text side by side on desktop, stacked on a phone --- */
+main[data-home="v2"] .hv2-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+main[data-home="v2"] .hv2-card { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); min-width: 0; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-card-visual { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #111312; }
+main[data-home="v2"] .hv2-card-visual > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.72) contrast(1.05); }
+/* Crop marks in the four corners — the drawing-sheet detail that ties the three cards together */
+main[data-home="v2"] .hv2-card-visual::before,
+main[data-home="v2"] .hv2-card-visual::after {
+  content: ''; position: absolute; z-index: 2; inset: 12px; pointer-events: none;
+  background:
+    linear-gradient(var(--hv2-copper), var(--hv2-copper)) left top / 14px 1px no-repeat,
+    linear-gradient(var(--hv2-copper), var(--hv2-copper)) left top / 1px 14px no-repeat,
+    linear-gradient(var(--hv2-copper), var(--hv2-copper)) right bottom / 14px 1px no-repeat,
+    linear-gradient(var(--hv2-copper), var(--hv2-copper)) right bottom / 1px 14px no-repeat;
+}
+main[data-home="v2"] .hv2-card-visual::after {
+  background:
+    linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) right top / 14px 1px no-repeat,
+    linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) right top / 1px 14px no-repeat,
+    linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) left bottom / 14px 1px no-repeat,
+    linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) left bottom / 1px 14px no-repeat;
+}
+main[data-home="v2"] .hv2-card-body { display: grid; align-content: center; gap: 10px; padding: 24px 26px; border-left: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-card-number { color: var(--hv2-copper-text); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
+main[data-home="v2"] .hv2-card h3 { margin: 0; font: 400 clamp(24px, 1.9vw, 30px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+main[data-home="v2"] .hv2-card h3 [aria-hidden="true"] { color: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-card p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.65; }
+
+/* Provenance tags: an illustration is outlined, the real photo is solid paper — two different marks on purpose */
+main[data-home="v2"] .hv2-tag {
+  position: absolute; z-index: 3; top: 16px; right: 16px; padding: 7px 10px;
+  color: var(--hv2-text); background: rgba(18, 20, 19, .8); border: 1px solid rgba(245, 242, 235, .5);
+  font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .05em;
+}
+main[data-home="v2"] .hv2-tag-photo { display: inline-flex; align-items: center; gap: 7px; color: var(--hv2-ink); background: var(--hv2-text); border-color: var(--hv2-text); }
+main[data-home="v2"] .hv2-tag-photo::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--hv2-copper-fill); }
+main[data-home="v2"] .hv2-tag-scheme { border-color: var(--hv2-copper-text); }
+
+/* Callouts on the illustrations: a copper ring, a short leader and a label */
+main[data-home="v2"] .hv2-pin { position: absolute; z-index: 2; left: var(--x); top: var(--y); display: flex; align-items: center; transform: translate(-7px, -50%); pointer-events: none; }
+main[data-home="v2"] .hv2-pin > i { width: 14px; height: 14px; flex: none; border: 2px solid var(--hv2-copper-text); border-radius: 50%; background: rgba(18, 20, 19, .55); box-shadow: 0 0 0 5px rgba(204, 132, 85, .18); }
+main[data-home="v2"] .hv2-pin > span {
+  position: relative; margin-left: 16px; padding: 5px 8px; color: var(--hv2-text); background: rgba(18, 20, 19, .84);
+  border-left: 2px solid var(--hv2-copper-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+}
+main[data-home="v2"] .hv2-pin > span::before { content: ''; position: absolute; top: 50%; left: -16px; width: 14px; height: 1px; background: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-pin-left { flex-direction: row-reverse; transform: translate(calc(-100% + 7px), -50%); }
+main[data-home="v2"] .hv2-pin-left > span { margin: 0 16px 0 0; border-left: 0; border-right: 2px solid var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-pin-left > span::before { left: auto; right: -16px; }
+
+/* Card 03 — the drawing */
+main[data-home="v2"] .hv2-scheme { position: absolute; inset: 0; width: 100%; height: 100%; background: radial-gradient(80% 70% at 50% 45%, #1c1f1d, #131514); }
+main[data-home="v2"] .hv2-scheme-grid { fill: none; stroke: rgba(245, 242, 235, .055); stroke-width: 1; }
+main[data-home="v2"] .hv2-scheme-load { fill: none; stroke: var(--hv2-text-3); stroke-width: 1.4; }
+main[data-home="v2"] .hv2-scheme-arrowhead { fill: var(--hv2-text-3); }
+main[data-home="v2"] .hv2-scheme-ground { stroke: #6f726d; stroke-width: 1.4; }
+main[data-home="v2"] .hv2-scheme-footing { fill: rgba(245, 242, 235, .06); stroke: #8a857c; stroke-width: 1.3; }
+main[data-home="v2"] .hv2-scheme-frame { fill: none; stroke: #ddd7cb; stroke-width: 2.4; stroke-linejoin: round; }
+main[data-home="v2"] .hv2-scheme-frame-inner { fill: none; stroke: rgba(221, 215, 203, .38); stroke-width: 1; stroke-linejoin: round; }
+main[data-home="v2"] .hv2-scheme-flow { fill: none; stroke: var(--hv2-copper-text); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 9; animation: hv2-flow 1.6s linear infinite; }
+main[data-home="v2"] .hv2-scheme-flowhead { fill: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-scheme-dim { stroke: #6f726d; stroke-width: 1; }
+main[data-home="v2"] .hv2-scheme-axis { fill: none; stroke: #8a857c; stroke-width: 1.2; }
+main[data-home="v2"] :is(.hv2-scheme-axis-label, .hv2-scheme-label) { fill: var(--hv2-text); font: 700 19px var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-scheme-axis-label { font-size: 15px; fill: var(--hv2-text-2); }
+@keyframes hv2-flow { to { stroke-dashoffset: -38; } }
+@media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-scheme-flow { animation: none; } }
+
+main[data-home="v2"] .hv2-boundary { max-width: 880px; margin: 22px 0 0; color: var(--hv2-text-3); font-size: 14px; line-height: 1.6; }
+main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight: 700; }
+
+/* --- the real object + the X-ray: two separate images, two different labels --- */
+main[data-home="v2"] .hv2-proof { margin-top: 36px; }
+/* 5fr | 7fr with the photo at 10:7 and the X-ray at 2:1 gives both media boxes the same height at any width */
+main[data-home="v2"] .hv2-proof-pair { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 14px; align-items: start; }
+main[data-home="v2"] .hv2-proof-pair figure { display: grid; gap: 12px; min-width: 0; margin: 0; }
+main[data-home="v2"] .hv2-proof-media { position: relative; overflow: hidden; background: #0f1110; border: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-proof-photo .hv2-proof-media { aspect-ratio: 10 / 7; }
+main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 1774 / 887; }
+main[data-home="v2"] .hv2-proof-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+main[data-home="v2"] .hv2-proof-photo img { object-position: 86% 55%; }
+main[data-home="v2"] .hv2-proof-xray img { object-position: 100% 50%; }
+main[data-home="v2"] .hv2-proof-pair figcaption { color: var(--hv2-text-3); font-size: 14px; line-height: 1.55; }
+main[data-home="v2"] .hv2-proof-pair figcaption b { color: var(--hv2-text); font-weight: 700; }
+/* «→ до принципу»: from the real object to the principle — not a reveal of this hangar's hidden structure */
+main[data-home="v2"] .hv2-proof-arrow {
+  position: absolute; z-index: 3; left: 14px; top: 50%; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px 0 0;
+  color: var(--hv2-text); background: rgba(18, 20, 19, .82); border: 1px solid rgba(245, 242, 235, .35); border-radius: 22px; transform: translateY(-50%);
+}
+main[data-home="v2"] .hv2-proof-arrow i { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 50%; background: var(--hv2-copper-fill); font-size: 16px; font-style: normal; }
+main[data-home="v2"] .hv2-proof-arrow span { font: 700 12.5px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+
+/* The travelling pulse on the X-ray's own load path (same idea as card 02's dashes). Static at rest for
+   prefers-reduced-motion: the sketch already carries its copper path, so nothing is lost. */
+main[data-home="v2"] .hv2-xray-flow { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+main[data-home="v2"] :is(.hv2-xray-pulse, .hv2-xray-pulse-halo) {
+  fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: .075 1.3; stroke-dashoffset: .075;
+  animation: hv2-pulse 3.4s cubic-bezier(.42, 0, .58, 1) infinite;
+}
+main[data-home="v2"] .hv2-xray-pulse { stroke: #ffd2ad; stroke-width: 9; }
+main[data-home="v2"] .hv2-xray-pulse-halo { stroke: rgba(255, 150, 80, .42); stroke-width: 30; filter: blur(7px); }
+main[data-home="v2"] .hv2-xray-glow { opacity: 0; animation: hv2-glow 3.4s ease-out infinite; }
+@keyframes hv2-pulse {
+  0% { stroke-dashoffset: .075; opacity: 0; }
+  6% { opacity: 1; }
+  74% { opacity: 1; }
+  80%, 100% { stroke-dashoffset: -1; opacity: 0; }
+}
+@keyframes hv2-glow { 0%, 68% { opacity: 0; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  main[data-home="v2"] :is(.hv2-xray-pulse, .hv2-xray-pulse-halo, .hv2-xray-glow) { animation: none; opacity: 0; }
+}
+
+/* Facts under the pair: what the photo proves, and who stands behind the work */
+main[data-home="v2"] .hv2-proof-facts {
+  display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px var(--grid-gap); margin-top: 24px;
+  padding: 30px 34px; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); border-top: 2px solid var(--hv2-copper);
+}
+main[data-home="v2"] .hv2-evidence-lead h3 { margin: 14px 0 10px; font: 400 clamp(26px, 2.3vw, 36px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { max-width: 560px; margin: 0; color: var(--hv2-text-2); font-size: 16px; line-height: 1.6; }
+main[data-home="v2"] .hv2-scope-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+main[data-home="v2"] .hv2-scope-chips li { padding: 7px 12px; color: var(--hv2-text); border: 1px solid var(--hv2-line-strong); font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+
+/* --- people: compact, beside the proof, no portraits --- */
+main[data-home="v2"] .hv2-people { display: grid; align-content: start; gap: 14px; padding-left: 32px; border-left: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-people-title { margin: 0; color: var(--hv2-text-3); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-people-note { margin: 0; color: var(--hv2-text-2); font-size: 14px; line-height: 1.5; }
+main[data-home="v2"] .hv2-person { padding-left: 16px; border-left: 2px solid var(--hv2-copper); }
+main[data-home="v2"] .hv2-person h4 { margin: 0 0 3px; color: var(--hv2-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
+main[data-home="v2"] .hv2-person p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.5; }
+main[data-home="v2"] .hv2-people-link { justify-self: start; min-height: 44px; display: inline-flex; align-items: center; gap: 12px; color: var(--hv2-text); border-bottom: 1px solid var(--hv2-copper); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
+
+/* ========================= 4 · CONVERSATION + FORM ========================= */
+
+/* Paper in Light (graphite in Dark), with the desk-and-drawings photo turned into a faint sheet texture: visible
+   on the right behind the form, almost gone behind the text. Decorative only — never evidence. */
+main[data-home="v2"] .hv2-conversation {
+  position: relative; overflow: hidden; isolation: isolate; color: var(--color-text); background: var(--color-bg);
+  --hv2-tg: .57; --hv2-wa: .51; --hv2-vb: .77; /* messenger-icon greys, see the channels below */
+}
+main[data-home="v2"] .hv2-conversation-bg { position: absolute; z-index: -1; inset: 0; }
+main[data-home="v2"] .hv2-conversation-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 45%; filter: grayscale(1) sepia(.25) contrast(.92) brightness(1.08); }
+main[data-home="v2"] .hv2-conversation-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--color-bg) 97%, transparent) 0%,
+      color-mix(in srgb, var(--color-bg) 93%, transparent) 36%,
+      color-mix(in srgb, var(--color-bg) 72%, transparent) 64%,
+      color-mix(in srgb, var(--color-bg) 80%, transparent) 100%),
+    linear-gradient(0deg, color-mix(in srgb, var(--color-bg) 70%, transparent) 0%, transparent 40%);
+}
+:root[data-theme="dark"] main[data-home="v2"] .hv2-conversation-bg img { filter: grayscale(.6) sepia(.2) brightness(.55); }
+main[data-home="v2"] .hv2-conversation .hv2-kicker { color: var(--color-accent-strong); }
+main[data-home="v2"] .hv2-conversation .hv2-kicker > span { background: var(--color-accent); }
+/* Desktop: intro + journey on the left, the form beside them. Phone: intro (call + channels) → form → journey. */
+main[data-home="v2"] .hv2-conversation-grid {
+  display: grid; grid-template-columns: minmax(0, .92fr) minmax(540px, 1.08fr); grid-template-areas: "intro form" "journey form";
+  grid-template-rows: auto 1fr; align-items: start; gap: 0 var(--grid-gap);
+}
+main[data-home="v2"] .hv2-conversation-intro { grid-area: intro; min-width: 0; }
+main[data-home="v2"] .hv2-journey-wrap { grid-area: journey; min-width: 0; margin-top: 40px; }
+main[data-home="v2"] .hv2-journey-title { margin: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-conversation h2 { margin: 22px 0 0; font: 400 clamp(44px, 4.4vw, 66px)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
+main[data-home="v2"] .hv2-conversation-lead { max-width: 500px; margin: 22px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
+/* The closing contact block: one column of fixed width, so the call and the four channels share both edges. */
+main[data-home="v2"] .hv2-conversation-contact { display: grid; gap: 12px; width: min(100%, 468px); margin-top: 32px; }
+
+/* The call: a segmented button — icon cell | label + number | arrow. Colours stay the theme's action role. */
+main[data-home="v2"] .hv2-call { width: 100%; min-width: 0; min-height: 68px; justify-content: flex-start; gap: 0; padding: 0; }
+main[data-home="v2"] .hv2-call > span { display: flex; align-items: center; }
+main[data-home="v2"] .hv2-call .hv2-call-icon {
+  align-self: stretch; width: 66px; flex: none; justify-content: center;
+  background: color-mix(in srgb, var(--color-on-action) 9%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--color-on-action) 26%, transparent);
+  transition: background var(--duration-fast) ease;
+}
+main[data-home="v2"] .hv2-call .hv2-call-icon svg { width: 22px; height: 22px; flex: none; stroke-width: 1.7; }
+main[data-home="v2"] .hv2-call .hv2-call-text { flex: 1 1 auto; display: grid; gap: 7px; padding: 0 20px; text-align: left; }
+main[data-home="v2"] .hv2-call small { font-size: 11.5px; letter-spacing: .14em; }
+main[data-home="v2"] .hv2-call strong { font-size: 24px; letter-spacing: .025em; }
+main[data-home="v2"] .hv2-call .hv2-call-arrow { flex: none; padding: 0 24px 0 8px; font-size: 18px; font-weight: 500; transition: transform var(--duration-fast) ease; }
+main[data-home="v2"] .hv2-call:is(:hover, :focus-visible) .hv2-call-icon { background: color-mix(in srgb, var(--color-on-action) 15%, transparent); }
+main[data-home="v2"] .hv2-call:is(:hover, :focus-visible) .hv2-call-arrow { transform: translate(3px, -3px); }
+
+main[data-home="v2"] .hv2-channels-label {
+  display: flex; align-items: center; gap: 14px; margin: 8px 0 0; color: var(--color-text-muted);
+  font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .16em; text-transform: uppercase;
+}
+main[data-home="v2"] .hv2-channels-label::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
+
+/* Four equal channels. Icons are one warm grey until hover/focus, when each takes its own brand colour back — the
+   saturated blue/green/purple no longer compete with the copper call. */
+/* Greyscale luminance differs per brand (Telegram blue ≈148, WhatsApp green ≈166, Viber purple ≈110 of 255), so each
+   icon gets its own brightness factor to land on one grey: ≈85 on paper, ≈200 on graphite. */
+:root[data-theme="dark"] main[data-home="v2"] .hv2-conversation { --hv2-tg: 1.35; --hv2-wa: 1.2; --hv2-vb: 1.82; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) main[data-home="v2"] .hv2-conversation { --hv2-tg: 1.35; --hv2-wa: 1.2; --hv2-vb: 1.82; } }
+main[data-home="v2"] .hv2-conversation-channels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+main[data-home="v2"] .hv2-messengers { display: contents; }
+main[data-home="v2"] .hv2-conversation-channels .messenger-link {
+  min-width: 0; min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 8px;
+  color: var(--color-text); background: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent);
+  border: 1px solid var(--color-border); font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: .01em;
+  transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+main[data-home="v2"] .hv2-conversation-channels .messenger-link:is(:hover, :focus-visible) { color: var(--color-text); border-color: var(--color-accent-strong); background: var(--color-surface-elevated); transform: translateY(-2px); }
+main[data-home="v2"] .hv2-conversation-channels .messenger-brand-icon { width: 20px; height: 20px; flex: none; }
+main[data-home="v2"] .hv2-conversation-channels .messenger-telegram .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--hv2-tg)); }
+main[data-home="v2"] .hv2-conversation-channels .messenger-whatsapp .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--hv2-wa)); }
+main[data-home="v2"] .hv2-conversation-channels .messenger-viber .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--hv2-vb)); }
+main[data-home="v2"] .hv2-conversation-channels .messenger-link:is(:hover, :focus-visible) .messenger-brand-icon { filter: none; transform: none; }
+main[data-home="v2"] .hv2-conversation-channels .hv2-email svg { width: 20px; height: 20px; flex: none; color: var(--color-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
+main[data-home="v2"] .hv2-conversation-channels .hv2-email:is(:hover, :focus-visible) svg { color: var(--color-accent-strong); }
+
+main[data-home="v2"] .hv2-journey { display: grid; gap: 0; margin: 14px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-control); }
+main[data-home="v2"] .hv2-journey li { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--color-border); }
+main[data-home="v2"] .hv2-journey-number { color: var(--color-accent-strong); font: 600 22px/1.1 var(--font-condensed), sans-serif; letter-spacing: .02em; }
+main[data-home="v2"] .hv2-journey h3 { margin: 0 0 6px; color: var(--color-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
+main[data-home="v2"] .hv2-journey p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
+
+/* The form card: lifted off the sheet, outlined, copper top rule (follows the light/dark tokens) */
+main[data-home="v2"] .hv2-conversation .inquiry-form { min-width: 0; box-shadow: 0 28px 70px rgba(20, 22, 21, .16); }
+/* globals.css gives .inquiry-form `grid-area: form` at ≤1180 for the shared .contact-grid; this grid has no named
+   areas, so that line would open two empty implicit columns. */
+main[data-home="v2"] .hv2-conversation-grid > .inquiry-form { grid-area: form; }
+
+/* Form labels were 10–11 px: raised for reading at arm's length (HOME v2 only) */
+main[data-home="v2"] .hv2-conversation :is(.inquiry-form label > span, .inquiry-choice legend) { font-size: 12.5px; letter-spacing: .06em; }
+main[data-home="v2"] .hv2-conversation .inquiry-choice label > span { font-size: 12px; }
+main[data-home="v2"] .hv2-conversation .inquiry-form-section-heading h3 { font-size: 12.5px; }
+main[data-home="v2"] .hv2-conversation :is(.inquiry-form-kicker, .inquiry-required-note) { font-size: 13px; }
+main[data-home="v2"] .hv2-conversation .inquiry-field-hint { font-size: 13px; }
+/* The larger section labels need a wider label column: «Підтвердження» is 111 px at 12.5 px, and globals.css narrows
+   the column to 86 px on short laptop screens (≥ 1181 px wide, ≤ 900 px tall), so the word ran into the checkbox. */
+@media (min-width: 761px) {
+  main[data-home="v2"] .hv2-conversation .inquiry-form-section { grid-template-columns: 122px minmax(0, 1fr); }
+}
+
+/* ================================ Tablet ================================ */
+
+@media (max-width: 1180px) {
+  main[data-home="v2"] .hv2-cards { gap: 14px; }
+  main[data-home="v2"] .hv2-card-body { padding: 20px 22px; }
+  main[data-home="v2"] .hv2-conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; grid-template-rows: auto; row-gap: 36px; }
+  main[data-home="v2"] .hv2-journey-wrap { margin-top: 0; }
+  main[data-home="v2"] .hv2-journey { grid-template-columns: 1fr 1fr; column-gap: 32px; }
+}
+@media (max-width: 1050px) {
+  main[data-home="v2"] .hv2-signature-head { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-cards { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-proof-facts { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-people { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--hv2-line); }
+}
+/* The pair stacks before the halves get narrow: each image keeps the full width */
+@media (max-width: 900px) {
+  main[data-home="v2"] .hv2-proof-pair { grid-template-columns: 1fr; gap: 22px; }
+  main[data-home="v2"] .hv2-proof-photo .hv2-proof-media { aspect-ratio: 4 / 3; }
+  main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 16 / 10; }
+  /* Stacked: the arrow points down from the photo into the sketch, clear of the tag in the top-right corner */
+  main[data-home="v2"] .hv2-proof-arrow { left: 12px; top: 12px; transform: none; }
+  main[data-home="v2"] .hv2-proof-arrow i { transform: rotate(90deg); }
+}
+
+/* ================================ Phone ================================ */
+
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-signature-head { gap: 16px; padding-bottom: 24px; }
+  main[data-home="v2"] .hv2-signature-head h2 { font-size: clamp(36px, 10.5vw, 44px); line-height: 1.02; }
+  main[data-home="v2"] .hv2-signature-support { padding-left: 16px; }
+  main[data-home="v2"] .hv2-proof { margin-top: 26px; }
+  main[data-home="v2"] .hv2-proof-pair { margin-inline: calc(var(--container-gutter) * -1); }
+  main[data-home="v2"] .hv2-proof-media { border-inline: 0; }
+  main[data-home="v2"] .hv2-proof-pair figcaption { padding-inline: var(--container-gutter); font-size: 15px; }
+  /* The X-ray on a phone shows its right part — the frame and the load path — big enough to read */
+  main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 1.1; }
+  main[data-home="v2"] .hv2-proof-facts { margin-inline: calc(var(--container-gutter) * -1); padding: 24px var(--container-gutter) 26px; border-inline: 0; }
+  main[data-home="v2"] .hv2-cards { margin-top: 22px; }
+  main[data-home="v2"] .hv2-card { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-card-body { gap: 8px; padding: 18px 18px 22px; border-left: 0; border-top: 1px solid var(--hv2-line); }
+  main[data-home="v2"] .hv2-card h3 { font-size: 26px; }
+  main[data-home="v2"] .hv2-card p { font-size: 16px; line-height: 1.55; }
+  main[data-home="v2"] .hv2-tag { top: 12px; right: 12px; font-size: 12px; }
+  main[data-home="v2"] .hv2-pin > span { font-size: 11.5px; padding: 4px 7px; }
+
+  main[data-home="v2"] .hv2-conversation h2 { font-size: clamp(34px, 10vw, 42px); }
+  main[data-home="v2"] .hv2-conversation-bg img { object-position: 50% 30%; }
+  main[data-home="v2"] .hv2-conversation-bg::after { background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg) 80%, transparent) 0%, color-mix(in srgb, var(--color-bg) 92%, transparent) 38%, color-mix(in srgb, var(--color-bg) 97%, transparent) 100%); }
+  main[data-home="v2"] .hv2-conversation-lead { margin-top: 16px; }
+  main[data-home="v2"] .hv2-conversation-contact { width: 100%; margin-top: 24px; }
+  main[data-home="v2"] .hv2-call .hv2-call-icon { width: 58px; }
+  main[data-home="v2"] .hv2-call .hv2-call-text { padding: 0 14px; }
+  main[data-home="v2"] .hv2-call strong { font-size: 22px; }
+  main[data-home="v2"] .hv2-call .hv2-call-arrow { padding-right: 16px; }
+  /* A phone keeps the labels, stacked under the icon: four side-by-side labels do not fit a 358 px row */
+  main[data-home="v2"] .hv2-conversation-channels { gap: 6px; }
+  main[data-home="v2"] .hv2-conversation-channels .messenger-link { flex-direction: column; gap: 7px; min-height: 64px; padding: 8px 4px; font-size: 12px; }
+  main[data-home="v2"] .hv2-conversation-grid { row-gap: 28px; }
+  main[data-home="v2"] .hv2-journey { grid-template-columns: 1fr; }
+  main[data-home="v2"] .hv2-journey li { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 14px 0; }
+  main[data-home="v2"] .hv2-journey-number { font-size: 18px; }
+  main[data-home="v2"] .hv2-journey h3 { font-size: 16px; }
+  main[data-home="v2"] .hv2-journey p { font-size: 15px; }
+}
+/* Narrow phones: «→ до принципу» and the X-ray label no longer fit one row at the top — the label moves to the
+   image's bottom-right corner (dark ground there, so it stays readable). */
+@media (max-width: 560px) {
+  main[data-home="v2"] .hv2-proof-xray .hv2-tag-scheme { top: auto; bottom: 12px; }
+}
+@media (max-width: 340px) {
+  main[data-home="v2"] .hv2-call strong { font-size: 20px; }
+  main[data-home="v2"] .hv2-call .hv2-call-icon { width: 52px; }
+  main[data-home="v2"] .hv2-conversation-channels .messenger-link { font-size: 11px; }
+}

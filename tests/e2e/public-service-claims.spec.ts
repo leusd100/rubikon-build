@@ -25,9 +25,9 @@ for (const width of [375, 768, 1440]) {
       }
       if (route === '/') {
         await expect(page.locator('.hero-actions a').first()).toHaveAttribute('href', /^tel:/);
-        await expect(page.locator('.home-proof')).toHaveCount(1);
-        await expect(page.locator('#services')).toContainText('попереднього досвіду Сергія');
-        await expect(page.locator('#services')).toContainText('Каркас');
+        await expect(page.locator('#real-object')).toHaveCount(1);
+        await expect(page.locator('#real-object')).toContainText('Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD');
+        await expect(page.locator('#real-object')).toContainText('Каркас');
       }
       if (route === '/yak-pratsyuiemo') {
         await expect(page.locator('#vidpovidalnist')).toContainText('беремо погоджений комплекс');

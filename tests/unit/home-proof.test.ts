@@ -82,7 +82,8 @@ describe('homeProofCase (what HOME publishes)', () => {
 
   it('publishes the owner-approved camera photo with only the confirmed prior scope', () => {
     expect(homeProofCase?.provenance).toBe('serhii-prior');
-    expect(homeProofCase?.photo.src).toBe('/photos/serhii-prior-hangar.jpeg');
+    // HOME v2: the owner supplied a cleaned (foreground-retouched) DSCF7654 for this frame.
+    expect(homeProofCase?.photo.src).toBe('/photos/serhii-prior-hangar-retouched.jpeg');
     expect(homeProofCase?.scope.subject).toEqual(['Каркас', 'Стінові панелі', 'Покрівля']);
     expect(homeProofCase?.context).toBeUndefined();
   });

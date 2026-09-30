@@ -24,7 +24,16 @@ test.describe('the corporate email', () => {
     test(`${path}: the footer and the inquiry area link it with mailto`, async ({ page }) => {
       await page.goto(path, { waitUntil: 'load' });
       await expectMailtoLink(page, 'footer');
-      await expectMailtoLink(page, '#inquiry .contact-links');
+      if (path === '/') {
+        // HOME v2: the closing block's email channel is a labelled button («Email»), named with the address.
+        const link = page.locator('#inquiry .hv2-conversation-channels').getByRole('link', { name: EMAIL });
+        await expect(link).toHaveCount(1);
+        await expect(link).toHaveAttribute('href', MAILTO);
+        await link.scrollIntoViewIfNeeded();
+        await expect(link).toBeVisible();
+      } else {
+        await expectMailtoLink(page, '#inquiry .contact-links');
+      }
       expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
     });
   }
@@ -60,12 +69,16 @@ test.describe('the corporate email', () => {
     }
   });
 
-  test('the homepage contact card offers it under the messengers', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'below 520 px the card keeps only the phone');
+  test('the homepage conversation offers it after the messengers', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' });
-    const link = page.locator('.hero-contact-card').getByRole('link', { name: EMAIL });
-    await expect(link).toHaveAttribute('href', MAILTO);
-    await expect(link).toBeVisible();
+    // Telegram, WhatsApp, Viber (a button that copies the number), then the email.
+    const channels = page.locator('#inquiry .hv2-conversation-channels .messenger-link');
+    await expect(channels).toHaveCount(4);
+    const last = channels.last();
+    await expect(last).toHaveAttribute('href', MAILTO);
+    await expect(last).toHaveAccessibleName(`Email: ${EMAIL}`);
+    await last.scrollIntoViewIfNeeded();
+    await expect(last).toBeVisible();
   });
 
   test('the mobile menu lists it after the messengers', async ({ page, isMobile }) => {

@@ -65,33 +65,27 @@ for (const path of editorialHeroes) {
   });
 }
 
-test('homepage hero keeps its title, actions, and written-contact card separated', async ({ page }) => {
+test('homepage hero keeps its title above the copy, with the written channels only in the closing block', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 
   for (const viewport of [
-    { width: 1440, height: 900, card: 'beside' },
-    { width: 768, height: 1024, card: 'beside' },
-    { width: 390, height: 844, card: 'hidden' },
+    { width: 1440, height: 900 },
+    { width: 768, height: 1024 },
+    { width: 390, height: 844 },
   ] as const) {
     await page.setViewportSize(viewport);
     await page.goto('/', { waitUntil: 'load' });
 
     const titleBox = await page.locator('.hero h1').boundingBox();
     const copyBox = await page.locator('.hero-copy').boundingBox();
-    const contact = page.locator('.hero-contact-card');
-
     expect(titleBox).not.toBeNull();
     expect(copyBox).not.toBeNull();
     expect(titleBox!.y + titleBox!.height).toBeLessThan(copyBox!.y);
 
-    if (viewport.card === 'hidden') {
-      // Phones: the call leads, and «Написати або залишити запит» carries the written channels.
-      await expect(contact).toBeHidden();
-    } else {
-      const contactBox = await contact.boundingBox();
-      expect(contactBox).not.toBeNull();
-      expect(copyBox!.x + copyBox!.width).toBeLessThan(contactBox!.x);
-    }
+    // HOME v2: no written-contact card in the hero — messengers and email live once, in #inquiry.
+    await expect(page.locator('.hero-contact-card')).toHaveCount(0);
+    await expect(page.locator('.hero .messenger-link')).toHaveCount(0);
+    await expect(page.locator('#inquiry .hv2-conversation-channels .messenger-link')).toHaveCount(4);
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
   }

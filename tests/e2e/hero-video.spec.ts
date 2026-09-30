@@ -57,8 +57,10 @@ test('leaving during a crossfade does not preserve an extra visible clip on retu
   )).toBe(true);
 });
 
+// HOME v2 plays no video at ≤ 760 px (a still instead), so its phone sizes have no pause button to test.
+const PAUSE_SIZES = [[320, 568], [360, 640], [390, 844], [430, 844], [820, 900]] as const;
 for (const path of ['/', '/pro-nas']) {
-  for (const [width, height] of [[320, 568], [360, 640], [390, 844], [430, 844], [820, 900]]) {
+  for (const [width, height] of PAUSE_SIZES.filter(([w]) => path !== '/' || w > 760)) {
     test(`pause has its own touch target at ${path} ${width}×${height}`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -85,3 +87,14 @@ for (const path of ['/', '/pro-nas']) {
     });
   }
 }
+
+test('the homepage phone hero has no video and no pause button', async ({ page }) => {
+  for (const [width, height] of [[320, 568], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/');
+    await expect(page.locator('.hero video')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Пауза відео', exact: true })).toHaveCount(0);
+    await expect(page.locator('.hero img.hv2-hero-still')).toBeVisible();
+  }
+});

@@ -94,12 +94,6 @@ for (const viewport of viewports) {
       );
     });
 
-    // The work overview and invitation, followed by an approved proof case only when one exists.
-    test('homepage capability', async ({ page }) => {
-      await preparePage(page, '/');
-      await expectStableScreenshot(page.locator('#services > .shell'), `homepage-formats-${viewport.name}.png`);
-    });
-
     test('homepage directions grid', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(
@@ -108,23 +102,22 @@ for (const viewport of viewports) {
       );
     });
 
-    test('homepage team', async ({ page }) => {
+    // HOME v2: the real object (photo + labelled X-ray illustration), its facts and the two roles.
+    test('homepage real object', async ({ page }) => {
       await preparePage(page, '/');
-      await expectStableScreenshot(page.locator('.team > .shell'), `homepage-team-${viewport.name}.png`);
+      await expectStableScreenshot(page.locator('#real-object'), `homepage-real-object-${viewport.name}.png`);
     });
 
-    test('homepage first conversation', async ({ page }) => {
+    // HOME v2: the two explanation cards (node detail, load-path scheme) and the design boundary note.
+    test('homepage engineering cards', async ({ page }) => {
       await preparePage(page, '/');
-      await expectStableScreenshot(
-        page.locator('#first-conversation > .shell'),
-        `homepage-first-conversation-${viewport.name}.png`,
-      );
+      await expectStableScreenshot(page.locator('#engineering .hv2-cards'), `homepage-engineering-cards-${viewport.name}.png`);
     });
 
     test('homepage inquiry form', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(
-        page.locator('#inquiry .contact-grid'),
+        page.locator('#inquiry .hv2-conversation-grid'),
         `homepage-inquiry-${viewport.name}.png`,
       );
     });

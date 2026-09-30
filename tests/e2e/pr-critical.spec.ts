@@ -143,16 +143,18 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
   }
 });
 
-test('homepage server HTML carries the H1, prior-work proof, first conversation and cooperation options', async ({ page }) => {
+test('homepage server HTML carries the H1, the real-object proof, the conversation steps and cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
-    proof: '#services .home-proof-caption',
-    conversationSteps: '#first-conversation .next-list dt',
+    proofCaption: '#real-object .hv2-proof-photo figcaption',
+    proofScope: '#real-object .hv2-scope-chips li',
+    conversationSteps: '#inquiry .hv2-journey h3',
     cooperation: '.inquiry-details select option',
   });
 
   expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
-  expect(text.proof).toEqual(['Вид на фасад і бічний корпус ангара']);
+  expect(text.proofCaption).toEqual(['Реальний об’єкт. Фото з ретушшю переднього плану.']);
+  expect(text.proofScope).toEqual(['Каркас', 'Стінові панелі', 'Покрівля']);
   expect(text.conversationSteps).toEqual(['Уточнюємо задачу', 'Дивимося, що вже є', 'Узгоджуємо склад робіт', 'Готуємо кошторис']);
   expect(text.cooperation).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
 });
@@ -169,11 +171,11 @@ test('/napryamky server HTML takes its formats and entry points from the model',
   expect(text.startNotes).toEqual([deliveryModel.entryStates[3].startNote]);
 });
 
-test('homepage presents experience and an invitation, with detailed formats on the process page', async ({ page }) => {
+test('homepage presents the real object and leaves the participation formats to the process page', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
-  await expect(page.locator('#services .home-proof')).toHaveCount(1);
-  await expect(page.locator('#services .format-grid')).toHaveCount(0);
-  await expect(page.locator('#services a[href="/yak-pratsyuiemo#khto-vykonuie"]')).toHaveCount(1);
+  await expect(page.locator('#engineering #real-object')).toHaveCount(1);
+  await expect(page.locator('main .format-grid')).toHaveCount(0);
+  await expect(page.locator('header nav a[href="/yak-pratsyuiemo"]').first()).toBeAttached();
 });
 
 for (const width of [360, 375, 390]) {
@@ -197,48 +199,54 @@ for (const width of [360, 375, 390]) {
     });
     expect(heading.widest).toBeLessThanOrEqual(heading.available);
     const overflowing = await page
-      .locator('#services .home-proof-body, #first-conversation .prep-list li, #first-conversation .next-list > div')
+      .locator('#real-object .hv2-proof-facts, #real-object figcaption, #inquiry .hv2-journey li')
       .evaluateAll((elements) => elements.filter((element) => element.scrollWidth > element.clientWidth + 1).length);
     expect(overflowing).toBe(0);
   });
 }
 
-// HOME Slice 02 — one argument: task → capability in honest limits → people → first conversation → contact.
+// HOME v2 (owner-approved 2026-09-29) — four zones: image → directions → engineering idea + real proof → conversation.
 // These pin the architecture (order, one home per message, no claim wider than the evidence), not the wording.
-const HOME_SECTION_ORDER = ['top', 'directions', 'services', 'about', 'first-conversation', 'inquiry'];
+const HOME_SECTION_ORDER = ['top', 'directions', 'engineering', 'inquiry'];
 
-test('homepage sections come in the Slice 02 order, each message with one home', async ({ page }) => {
+test('homepage sections come in the v2 order, each message with one home', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   expect(await page.locator('main#main-content > section').evaluateAll((sections) => sections.map((section) => section.id))).toEqual(HOME_SECTION_ORDER);
-  // The old anchors of the merged blocks still resolve, inside the new one.
-  await expect(page.locator('#first-conversation #estimate-brief')).toHaveCount(1);
-  await expect(page.locator('#first-conversation #how-we-work')).toHaveCount(1);
-  // Merged away: the reputation block, the process teaser and the stand-alone brief.
-  await expect(page.locator('.promise, .process, .process-teaser, section.estimate-brief')).toHaveCount(0);
+  // The real object opens the engineering block, before the explanation cards.
+  expect(await page.locator('#engineering').evaluate((section) => {
+    const proof = section.querySelector('#real-object');
+    const cards = section.querySelector('.hv2-cards');
+    return Boolean(proof && cards && proof.compareDocumentPosition(cards) & Node.DOCUMENT_POSITION_FOLLOWING);
+  })).toBe(true);
+  // Retired blocks stay retired: the Slice 02 capability, people and first-conversation sections, the old teasers.
+  await expect(page.locator('#services, #about, #first-conversation, .promise, .process, .process-teaser, section.estimate-brief, .hero-contact-card')).toHaveCount(0);
 });
 
 test('homepage invites a project conversation while showing real team experience without overclaiming', async ({ page }) => {
   const text = await serverText(page, '/', {
     main: 'main',
     lead: '.hero-lead',
-    proof: '#services .home-proof',
+    proof: '#real-object',
   });
   const main = text.main.join(' ');
 
-  expect(text.proof.join(' ')).toMatch(/попереднього досвіду Сергія.*Каркас.*Стінові панелі.*Покрівля/);
+  expect(text.proof.join(' ')).toMatch(/Реалізований об’єкт до створення RUBIKON BUILD.*Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD.*Каркас.*Стінові панелі.*Покрівля/);
   expect(text.proof.join(' ')).not.toContain('Виконала наша команда');
-  expect(text.lead.join(' ')).toMatch(/Спеціалізовані роботи координуємо з профільними виконавцями в погодженому обсязі/);
+  // The P01 limit on «комплексної реалізації» stays in the hero.
+  expect(text.lead.join(' ')).toMatch(/Спеціалізовані роботи\s+координуємо з профільними виконавцями/);
   for (const overclaim of [/усе\s+власними\s+силами/i, /повний\s+цикл/i, /усе\s+самостійно/i, /усі\s+спеціальності/i, /власними\s+силами\s+виконуємо\s+все/i]) {
     expect(main, String(overclaim)).not.toMatch(overclaim);
   }
   // Serhii's tenure is owner-relayed, not first-hand confirmed: no number, no «понад 30», no year.
   for (const tenure of [/30\+/, /понад\s+30/i, /1995/, /\d+\s+рок/i]) expect(main, String(tenure)).not.toMatch(tenure);
-  // The family thesis is stated once (it used to be split across two blocks and a hero label).
+  // The family thesis is stated once.
   expect(main.match(/родинн/gi) ?? []).toHaveLength(1);
+  // No product names for the engineering visuals: they are explanations, not software.
+  expect(main).not.toMatch(/digital\s*twin|двійник|explorer|load\s*path|x-?ray|рентген|паспорт/i);
 });
 
-test('homepage «Перша розмова» explains the four steps without promising an estimate before project data', async ({ page }) => {
-  const text = await serverText(page, '/', { next: '#how-we-work', prepare: '#estimate-brief', services: '#services' });
+test('homepage conversation explains the four steps without promising an estimate before project data', async ({ page }) => {
+  const text = await serverText(page, '/', { next: '#inquiry .hv2-journey', conversation: '#inquiry .hv2-conversation-intro' });
   const next = text.next.join(' ');
   const budget = deliveryModel.stages.find((stage) => stage.id === 'scope-budget');
 
@@ -247,36 +255,46 @@ test('homepage «Перша розмова» explains the four steps without pro
   expect(next).toContain('Узгоджуємо склад робіт');
   expect(next).toContain('Готуємо кошторис');
   expect(budget?.what).toContain('Вартість і строки залежать від параметрів об’єкта, умов майданчика та організації виконання.');
-  expect(next).toMatch(/Коли склад робіт визначено й проєктних даних достатньо, готуємо кошторис погодженого обсягу/);
-  expect(next).toContain('Якщо даних поки недостатньо');
-  expect(text.services.join(' ')).toContain('Для вашого об’єкта обговоримо задачу');
+  expect(next).toMatch(/Коли склад робіт визначено й проєктних даних достатньо — кошторис погодженого обсягу/);
+  expect(next).toContain('Якщо даних бракує');
+  // P01: RUBIKON does not design — the project comes from the customer or their designer.
+  expect(next).toContain('проєкт надаєте ви або ваш проєктувальник');
   for (const promise of [/\d+\s?(хв|хвилин|год|днів|дні|доб)/i, /грн|₴|\$|€/, /безкоштовн/i, /гаранті/i, /протягом/i]) {
-    expect(`${next} ${text.prepare.join(' ')}`, String(promise)).not.toMatch(promise);
+    expect(`${next} ${text.conversation.join(' ')}`, String(promise)).not.toMatch(promise);
   }
 });
 
-test('homepage separates labelled illustrations from the approved camera photo', async ({ page }) => {
+test('homepage separates labelled illustrations from the one real photo', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   const cards = page.locator('#directions .direction-card');
   await expect(cards).toHaveCount(5);
   for (const card of await cards.all()) await expect(card.locator('.direction-provenance')).toHaveText('Ілюстрація');
   await expect(page.locator('#directions .section-header-support')).toContainText('ілюстрації, а не фото виконаних об’єктів');
 
-  // Concept images belong to the direction cards alone: none in the proof, people or contact blocks.
-  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card')).length)).toBe(0);
-  await expect(page.locator('#services img')).toHaveCount(1);
-  await expect(page.locator('#services img')).toHaveAttribute('src', '/photos/serhii-prior-hangar.jpeg');
-  await expect(page.locator('#first-conversation img')).toHaveCount(0);
-  await expect(page.locator('.home-proof')).toContainText('до створення RUBIKON BUILD');
+  // The one real photo proves: labelled as a photo, its retouch stated, the time before RUBIKON BUILD named.
+  const photo = page.locator('#real-object .hv2-proof-photo');
+  await expect(photo.locator('img')).toHaveAttribute('src', '/photos/serhii-prior-hangar-retouched.jpeg');
+  await expect(photo.locator('.hv2-tag-photo')).toHaveText('Фото об’єкта');
+  await expect(photo.locator('figcaption')).toContainText('Фото з ретушшю переднього плану');
+  await expect(page.locator('#real-object')).toContainText('до створення RUBIKON BUILD');
+
+  // Illustrations explain: the X-ray says what it is and what it is not; every explanation card carries its label.
+  const xray = page.locator('#real-object .hv2-proof-xray');
+  await expect(xray.locator('.hv2-tag-scheme')).toHaveText('Ілюстративна схема конструкції');
+  await expect(xray.locator('figcaption')).toContainText('Це не креслення цього ангара');
+  for (const tag of await page.locator('#engineering .hv2-card .hv2-tag').allTextContents()) expect(['Ілюстрація', 'Схема']).toContain(tag);
+  // Concept images live only inside a labelled illustration, never in the conversation block.
+  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card, .hv2-card-visual, .hv2-proof-xray, .hv2-hero')).length)).toBe(0);
+  await expect(page.locator('#inquiry img[src*="/concepts/"]')).toHaveCount(0);
 });
 
-test('homepage places its calls where intent rises: hero, after capability, before the form, in the form', async ({ page }) => {
+test('homepage places its calls once: in the hero and in the closing conversation', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   const bySection = await page.locator('main#main-content > section').evaluateAll((sections) =>
     Object.fromEntries(sections.map((section) => [section.id, section.querySelectorAll('a[href^="tel:"]').length])));
-  expect(bySection).toEqual({ top: 1, directions: 0, services: 1, about: 0, 'first-conversation': 1, inquiry: 1 });
-  // The write-a-request path follows each call, never replaces it.
-  await expect(page.locator('#services .contact-bridge a[href="#inquiry"]')).toHaveCount(1);
+  expect(bySection).toEqual({ top: 1, directions: 0, engineering: 0, inquiry: 1 });
+  // The write-a-request path follows the hero call, never replaces it.
+  await expect(page.locator('#top a[href="#inquiry"]')).toHaveCount(1);
 });
 
 // The five direction cards on the homepage keep every title word whole. The title shares the card's inset with the
@@ -360,17 +378,17 @@ test('/yak-pratsyuiemo FAQPage data is the visible FAQ, on a WebPage and never a
   expect(data.map((item) => item['@type'])).not.toContain('HowTo');
 });
 
-test('navigation and footer lead to /yak-pratsyuiemo while the first conversation leads to contact', async ({ page }) => {
+test('navigation and footer lead to /yak-pratsyuiemo while the homepage hero leads to contact', async ({ page }) => {
   const home = await serverText(page, '/', {
     header: `header nav a[href="${DELIVERY_PAGE}"]`,
     footer: `footer a[href="${DELIVERY_PAGE}"]`,
-    conversationContact: '#how-we-work a[href="#inquiry"]',
+    heroContact: '#top a[href="#inquiry"]',
     oldAnchor: 'a[href="/#how-we-work"]',
   });
 
   expect(home.header).toHaveLength(2);
   expect(home.footer).toHaveLength(1);
-  expect(home.conversationContact).toHaveLength(1);
+  expect(home.heroContact).toHaveLength(1);
   expect(home.oldAnchor).toHaveLength(0);
 });
 

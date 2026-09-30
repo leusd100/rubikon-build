@@ -183,8 +183,9 @@ test.describe('public route smoke tests', () => {
           heroPosterShouldMatch = true;
         } else if ((page.viewportSize()?.width ?? 0) <= 760) {
           if (route.path === '/') {
-            expectedHeroPosterMessage = 'Home should use its dedicated phone poster';
-            expectedHeroPosterSubstring = '/media/about/home-phone-poster.webp';
+            // HOME v2: one light concept still instead of the phone montage.
+            expectedHeroPosterMessage = 'Home should use its static phone still';
+            expectedHeroPosterSubstring = '/media/home-v2/concepts/hero-mobile-';
           } else if (route.path === '/pro-nas') {
             expectedHeroPosterMessage = 'About should use its dedicated phone poster';
             expectedHeroPosterSubstring = '/media/about/about-phone-poster.webp';
@@ -249,7 +250,8 @@ test.describe('public route smoke tests', () => {
 
     const hero = page.locator('.hero');
     const videos = hero.locator('video.direction-hero-video');
-    const expectedVideoCount = (page.viewportSize()?.width ?? 0) <= 600 ? 1 : 5;
+    // HOME v2: phones (≤ 760 px) get a still and no video element at all.
+    const expectedVideoCount = (page.viewportSize()?.width ?? 0) <= 760 ? 0 : 5;
 
     await expect(videos).toHaveCount(expectedVideoCount);
     expect(await videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))))
@@ -269,7 +271,8 @@ test.describe('public route smoke tests', () => {
 
     const hero = page.locator('.hero');
     const videos = hero.locator('video.direction-hero-video');
-    const expectedVideoCount = (page.viewportSize()?.width ?? 0) <= 600 ? 1 : 5;
+    // HOME v2: phones (≤ 760 px) get a still and no video element at all.
+    const expectedVideoCount = (page.viewportSize()?.width ?? 0) <= 760 ? 0 : 5;
 
     await expect(videos).toHaveCount(expectedVideoCount);
     expect(await videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))))
@@ -484,24 +487,20 @@ test.describe('public route smoke tests', () => {
     ]);
   });
 
-  test('homepage hero uses its dedicated phone montage', async ({ page }) => {
-    test.skip((page.viewportSize()?.width ?? 0) > 600, 'Dedicated phone montage test.');
+  test('homepage hero uses one light still on phones, never the video', async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) > 600, 'Phone hero test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/', { waitUntil: 'load' });
 
-    const video = page.locator('.hero video.direction-hero-video');
-
-    await expect(video).toHaveCount(1);
-    await expect.poll(() => video.getAttribute('src'), { timeout: 10_000 })
-      .toBe('/media/about/home-phone-montage.mp4');
-    await expect.poll(
-      () => video.evaluate((element) => ({
-        height: (element as HTMLVideoElement).videoHeight,
-        width: (element as HTMLVideoElement).videoWidth,
-      })),
-      { timeout: 10_000 },
-    ).toEqual({ height: 1280, width: 720 });
-    expect(await video.evaluate((element) => (element as HTMLVideoElement).loop)).toBe(true);
+    const hero = page.locator('.hero');
+    await expect(hero.locator('video')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Пауза відео' })).toHaveCount(0);
+    const still = hero.locator('img.hv2-hero-still');
+    await expect(still).toBeVisible();
+    await expect.poll(() => still.evaluate((element) => (element as HTMLImageElement).currentSrc), { timeout: 10_000 })
+      .toContain('/media/home-v2/concepts/hero-mobile-');
+    // It is a concept image, so it says so.
+    await expect(hero.locator('.hv2-hero-provenance')).toHaveText('Ілюстрація');
   });
 
   test('homepage hero switches between portrait tablet and landscape media', async ({ page }, testInfo) => {
