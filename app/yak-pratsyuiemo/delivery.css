@@ -240,23 +240,15 @@
 .proc-area ul { display: grid; gap: 10px; margin: 0; padding: 16px 0 0; list-style: none; border-top: 1px solid var(--color-border); }
 .proc-area ul li { position: relative; padding-left: 18px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.5; }
 .proc-area ul li::before { content: ''; position: absolute; top: .72em; left: 0; width: 8px; height: 1px; background: var(--color-text-muted); }
-/* RUBIKON's area is the one in the charcoal band: the part we answer for */
-.proc-area-rubikon { color: var(--color-dark-text); background: var(--color-dark); border-color: var(--color-dark); }
-.proc-area-rubikon .proc-area-lead { color: var(--color-dark-text-muted); }
-.proc-area-rubikon ul { border-top-color: var(--color-dark-line); }
-.proc-area-rubikon ul li { color: var(--color-dark-text-secondary); }
-.proc-area-rubikon ul li::before { background: var(--color-accent-on-dark); }
 /* «Координує об’єкт»: on the card of whoever coordinates the object in the chosen format */
 .proc-area-tag { display: inline-flex; align-items: center; gap: 8px; margin: 12px 0 0; padding: 6px 10px; color: var(--color-accent-strong); border: 1px solid var(--color-accent); font: 700 11.5px/1.3 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
 .proc-area-tag::before { content: ''; flex: none; width: 6px; height: 6px; background: currentColor; transform: rotate(45deg); }
-.proc-area-rubikon .proc-area-tag { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
 /* A work that sits in more than one card says, under it, how the parties share it */
 .proc-area-work { display: block; }
 .proc-area-note { display: block; margin-top: 3px; color: var(--color-text-muted); font-size: 13.5px; line-height: 1.45; }
-.proc-area-rubikon .proc-area-note { color: var(--color-dark-text-muted); }
-/* Pointing at a card gives it RUBIKON's dark ground, so each party's list reads the same way (devices that hover) */
+/* All three cards are light; the one pointed at takes the charcoal ground (devices that hover) */
 @media (hover: hover) {
-  .proc-area:hover { color: var(--color-dark-text); background: var(--color-dark); border-color: var(--color-dark); }
+  .proc-area:hover { --soft-ring: var(--color-accent-on-dark); color: var(--color-dark-text); background: var(--color-dark); border-color: var(--color-dark); }
   .proc-area:hover :is(.proc-area-lead, .proc-area-note) { color: var(--color-dark-text-muted); }
   .proc-area:hover ul { border-top-color: var(--color-dark-line); }
   .proc-area:hover ul li { color: var(--color-dark-text-secondary); }
@@ -271,7 +263,7 @@
 /* Works RUBIKON coordinates or organises rather than does: an open marker instead of the dash */
 .proc-responsibility:has(input[value="comprehensive"]:checked) .proc-area li[data-soft~="comprehensive"]::before,
 .proc-responsibility:has(input[value="work-package"]:checked) .proc-area li[data-soft~="work-package"]::before,
-.proc-responsibility:has(input[value="subcontract"]:checked) .proc-area li[data-soft~="subcontract"]::before { top: .45em; width: 7px; height: 7px; background: none; border: 1px solid var(--color-accent-on-dark); border-radius: 50%; }
+.proc-responsibility:has(input[value="subcontract"]:checked) .proc-area li[data-soft~="subcontract"]::before { top: .45em; width: 7px; height: 7px; background: none; border: 1px solid var(--soft-ring, var(--color-accent)); border-radius: 50%; }
 /* Format switcher: three radios as one segmented control, centred under the heading */
 .proc-resp-switch { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; }
 .proc-resp-switch legend { float: left; width: 100%; margin-bottom: 12px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }

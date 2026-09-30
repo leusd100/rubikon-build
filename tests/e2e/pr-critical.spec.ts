@@ -587,16 +587,21 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     }
   });
 
-  test('pointing at a party card gives it RUBIKON’s dark ground', async ({ page, isMobile }) => {
+  test('the map cards are all light and turn dark only while pointed at', async ({ page, isMobile }) => {
     test.skip(isMobile, 'hover devices only');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const dark = await page.locator('.proc-area-rubikon').evaluate((element) => getComputedStyle(element).backgroundColor);
+    const card = (zone: string) => page.locator(`.proc-area-${zone}`);
+    const light = await card('client').evaluate((element) => getComputedStyle(element).backgroundColor);
+    // RUBIKON's card starts light too
+    await expect(card('rubikon')).toHaveCSS('background-color', light);
+    await card('rubikon').hover();
+    const dark = await card('rubikon').evaluate((element) => getComputedStyle(element).backgroundColor);
+    expect(dark).not.toBe(light);
     for (const zone of ['client', 'specialists']) {
-      const card = page.locator(`.proc-area-${zone}`);
-      await expect(card).not.toHaveCSS('background-color', dark);
-      await card.hover();
-      await expect(card).toHaveCSS('background-color', dark);
+      await card(zone).hover();
+      await expect(card(zone)).toHaveCSS('background-color', dark);
+      await expect(card('rubikon')).toHaveCSS('background-color', light);
     }
   });
 
