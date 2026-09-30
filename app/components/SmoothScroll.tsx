@@ -75,6 +75,9 @@ export function SmoothScroll() {
             // Let Lenis own its single rAF loop instead of hand-rolling one here.
             autoRaf: true,
           });
+        }).catch(() => {
+          // The chunk failed to load: native scrolling stays, and the next viewport or motion change may try again.
+          loading = false;
         });
       } else if (!shouldRun && lenis) {
         lenis.destroy();
