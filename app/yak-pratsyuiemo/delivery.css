@@ -252,6 +252,20 @@
 .proc-area-work { display: block; }
 .proc-area-note { display: block; margin-top: 3px; color: var(--color-text-muted); font-size: 13.5px; line-height: 1.45; }
 .proc-area-rubikon .proc-area-note { color: var(--color-dark-text-muted); }
+/* Pointing at a card gives it RUBIKON's dark ground, so each party's list reads the same way (devices that hover) */
+@media (hover: hover) {
+  .proc-area:hover { color: var(--color-dark-text); background: var(--color-dark); border-color: var(--color-dark); }
+  .proc-area:hover :is(.proc-area-lead, .proc-area-note) { color: var(--color-dark-text-muted); }
+  .proc-area:hover ul { border-top-color: var(--color-dark-line); }
+  .proc-area:hover ul li { color: var(--color-dark-text-secondary); }
+  .proc-area:hover ul li::before { background: var(--color-accent-on-dark); }
+  .proc-area:hover .proc-area-tag { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .proc-area { transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease, color var(--duration-fast) ease; }
+  .proc-area :is(.proc-area-lead, .proc-area-note, ul, ul li, .proc-area-tag) { transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease; }
+  .proc-area ul li::before { transition: background-color var(--duration-fast) ease; }
+}
 /* Works RUBIKON coordinates or organises rather than does: an open marker instead of the dash */
 .proc-responsibility:has(input[value="comprehensive"]:checked) .proc-area li[data-soft~="comprehensive"]::before,
 .proc-responsibility:has(input[value="work-package"]:checked) .proc-area li[data-soft~="work-package"]::before,
@@ -296,7 +310,7 @@
 .process-page[data-motion-ready="on"] .proc-map::before { transition: transform 420ms var(--m-ease) 700ms; }
 .process-page[data-motion-ready="on"] .proc-area::before { transition: transform 280ms var(--m-ease) calc(1050ms + var(--i, 0) * 110ms); }
 .process-page[data-motion-ready="on"] .proc-area::after { transition: opacity 200ms ease calc(1250ms + var(--i, 0) * 110ms); }
-.process-page[data-motion-ready="on"] .proc-area { transition: opacity var(--m-reveal) ease calc(1150ms + var(--i, 0) * 140ms), transform var(--m-reveal) var(--m-ease) calc(1150ms + var(--i, 0) * 140ms); }
+.process-page[data-motion-ready="on"] .proc-area { transition: opacity var(--m-reveal) ease calc(1150ms + var(--i, 0) * 140ms), transform var(--m-reveal) var(--m-ease) calc(1150ms + var(--i, 0) * 140ms), background-color var(--duration-fast) ease, border-color var(--duration-fast) ease, color var(--duration-fast) ease; }
 .proc-map::after, .proc-area::before { transform-origin: top; }
 .proc-map::before { transform-origin: center; }
 .process-page[data-motion-ready] .proc-resp-figure:not([data-motion-state="on"]) .proc-principle { opacity: 0; transform: translateY(10px); }
