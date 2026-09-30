@@ -208,34 +208,58 @@ describe('delivery page: documents, budget, inputs, FAQ', () => {
     expect(startInputs()).toHaveLength(11);
   });
 
-  it('answers the FAQ only in the model’s words, four questions the page does not already answer', () => {
+  it('answers the FAQ in short, direct answers held to the model: four questions the page does not already answer', () => {
     const faq = Object.fromEntries(deliveryFaq());
     const { statements } = deliveryModel;
+    const handover = deliveryModel.stages.find((item) => item.id === 'handover')!;
 
-    expect(Object.keys(faq)).toEqual(['Хто закуповує матеріали?', 'Чи працюєте ви із субпідрядниками?', 'Чи оглядаєте майданчик перед розрахунком?', 'Що ви передаєте після завершення робіт?']);
+    expect(Object.keys(faq)).toEqual(['Хто закуповує матеріали?', 'Чи залучаєте інших виконавців?', 'Чи оглядаєте майданчик перед розрахунком?', 'Як відбувається приймання і які документи я отримаю?']);
     expect(faq['Хто закуповує матеріали?']).toBe(statements.materials);
-    expect(faq['Чи працюєте ви із субпідрядниками?']).toBe(`Так. ${statements.team} ${statements.principle}`);
-    expect(faq['Чи оглядаєте майданчик перед розрахунком?']).toContain(deliveryModel.stages[1].rubikon.default);
-    expect(faq['Що ви передаєте після завершення робіт?']).toContain(deliveryModel.stages[7].result);
+    // Specialised works go to specialists (statements.team); who engages them is fixed in the contract (statements.boundary)
+    expect(statements.team).toContain('Спеціалізовані роботи виконують профільні виконавці');
+    expect(faq['Чи залучаєте інших виконавців?']).toContain('Спеціалізовані роботи виконують профільні виконавці');
+    expect(faq['Чи залучаєте інших виконавців?']).toContain('фіксуємо в договорі до початку робіт');
+    expect(deliveryModel.stages[1].rubikon.default).toContain('перелік потрібних даних під ваш тип об’єкта');
+    expect(faq['Чи оглядаєте майданчик перед розрахунком?']).toContain('перелік потрібних даних під ваш тип об’єкта');
+    // Exactly the model's handover documents, and the contract decides the set
+    for (const document of handover.documents) expect(faq['Як відбувається приймання і які документи я отримаю?']).toContain(document.label.toLowerCase());
+    expect(faq['Як відбувається приймання і які документи я отримаю?']).toContain('склад визначає договір');
     for (const answer of Object.values(faq)) for (const pattern of FORBIDDEN_CLAIMS) expect(answer, String(pattern)).not.toMatch(pattern);
   });
 
 });
 
 describe('delivery page v2: the public projection', () => {
-  it('tells the eight stages as four steps, in order, each stage once, each ending with a model result', () => {
+  it('tells the eight stages as four steps, in order, each stage once, each ending with a result for the client', () => {
     const steps = processSteps();
     expect(steps.map((step) => step.number)).toEqual(['01', '02', '03', '04']);
     expect(steps.flatMap((step) => step.stages)).toEqual(deliveryModel.stages.map((stage) => stage.id));
-    const results = deliveryModel.stages.map((stage) => stage.result);
-    for (const step of steps) expect(results).toContain(step.result);
-    for (const step of steps) for (const pattern of FORBIDDEN_CLAIMS) expect(step.text, String(pattern)).not.toMatch(pattern);
+    for (const step of steps) expect(step.result.length).toBeGreaterThan(20);
+    // Step 04 names only documents the handover stage lists, and leaves the set to the contract
+    const handover = deliveryModel.stages.find((stage) => stage.id === 'handover')!;
+    expect(handover.documents.map((document) => document.label)).toEqual(expect.arrayContaining(['Акти виконаних робіт', 'Виконавча документація']));
+    expect(steps[3].result).toContain('у складі, погодженому договором');
+    for (const step of steps) for (const pattern of FORBIDDEN_CLAIMS) {
+      expect(step.text, String(pattern)).not.toMatch(pattern);
+      expect(step.result, String(pattern)).not.toMatch(pattern);
+    }
   });
 
-  it('offers the three formats under their model names, texts and coordination', () => {
-    expect(participationChoices()).toEqual(deliveryModel.formats.map((format) => ({
+  it('offers the three formats under their model names, with the contract party and coordinator the model states', () => {
+    const choices = participationChoices();
+    expect(choices.map(({ id, title, text, coordination }) => ({ id, title, text, coordination }))).toEqual(deliveryModel.formats.map((format) => ({
       id: format.id, title: format.label, text: format.summary, coordination: format.coordination,
     })));
+    const contract = deliveryModel.stages.find((stage) => stage.id === 'contract')!;
+    for (const choice of choices) {
+      // The coordinator is the model's coordination sentence, shortened: every part of it is in that sentence
+      for (const part of choice.coordinator.split(' — ')) expect(choice.coordination.toLowerCase(), choice.id).toContain(part.toLowerCase());
+      expect(choice.rubikonCoordinates).toBe(choice.coordination.includes('координує RUBIKON'));
+    }
+    expect(formatById('work-package').summary).toContain('договором із замовником');
+    expect(formatById('subcontract').summary).toContain('договір — з генпідрядником');
+    expect(contract.client.subcontract).toBe('Сторона договору — генпідрядник.');
+    expect(choices.map((choice) => choice.contractWith)).toEqual(['Замовник', 'Замовник', 'Генпідрядник']);
   });
 
   it('maps who answers for what only onto responsibility rows that say so', () => {

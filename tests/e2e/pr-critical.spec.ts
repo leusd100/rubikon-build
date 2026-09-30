@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
-import { deliveryFaq, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
+import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { companyContactLinks } from '../../app/data/company';
 import { stubTurnstile } from './turnstile.helpers';
@@ -408,8 +408,10 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
     starts: '.proc-start-list h3',
     steps: '.proc-steps h3',
     results: '.proc-steps .proc-step-result',
-    formats: '.proc-scope-grid h3',
+    formats: '.proc-scope-kicker',
+    headlines: '.proc-scope-grid h3',
     formatTexts: '.proc-scope-grid p',
+    formatTerms: '.proc-scope-terms dd',
     principle: '.proc-principle',
     areas: '.proc-area h3',
     areaItems: '.proc-area ul li',
@@ -419,17 +421,21 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
   const main = text.main.join(' ');
 
   expect(text.h1).toEqual(['Від задачі — до зрозумілого плану робіт']);
-  expect(text.starts).toEqual(['Є тільки задум', 'Є креслення або проєкт', 'Є конкретний обсяг робіт']);
+  expect(text.starts).toEqual(['Є ідея об’єкта', 'Є креслення або проєкт', 'Потрібен окремий етап робіт']);
   expect(text.steps).toEqual(processSteps().map((step) => `Крок ${step.number}. ${step.title}`));
   expect(text.results).toEqual(processSteps().map((step) => `На виході: ${step.result}`));
   expect(text.formats).toEqual(FORMAT_LABELS);
-  for (const format of deliveryModel.formats) expect(text.formatTexts).toEqual(expect.arrayContaining([format.summary, format.coordination]));
+  const choices = participationChoices();
+  expect(text.headlines).toEqual(choices.map((choice) => choice.headline));
+  for (const format of deliveryModel.formats) expect(text.formatTexts).toEqual(expect.arrayContaining([format.summary]));
+  // Each card names the other party of the contract and who coordinates the object
+  expect(text.formatTerms).toEqual(choices.flatMap((choice) => [`${choice.contractWith} і RUBIKON`, choice.coordinator]));
   const resp = responsibilityByFormat();
   expect(text.principle).toEqual(resp.formats.map((format) => format.principle));
-  expect(text.principle[0]).toBe(deliveryModel.statements.responsibility);
+  expect(text.principle).toEqual(deliveryModel.formats.map((format) => format.interfaces));
   expect(text.areas).toEqual(['RUBIKON', 'ЗамовникЗамовникГенпідрядник', 'Профільні спеціалісти']);
   expect(text.areaItems).toEqual((['rubikon', 'client', 'specialists'] as const).flatMap((zone) => resp.items.filter((item) => item.zones[zone].length > 0).map((item) => item.text)));
-  expect(text.terms).toEqual(['Кошторис', 'Строки', 'Зміни']);
+  expect(text.terms).toEqual(['Рахуємо кошторис', 'Плануємо строки', 'Погоджуємо зміни']);
   expect(text.inquiry).toEqual(['Є задача — почнемо з неї']);
   for (const statement of [deliveryModel.statements.design, deliveryModel.statements.boundary, deliveryModel.statements.materials, deliveryModel.changePolicy.principle]) {
     expect(main).toContain(statement);

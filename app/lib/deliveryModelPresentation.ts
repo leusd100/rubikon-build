@@ -364,16 +364,20 @@ export function startInputs(): readonly string[] {
   return model.inputs.map((input) => input.label);
 }
 
-/** The /yak-pratsyuiemo FAQ: only what a first-time client still asks after reading the page, answered in the model's words. */
+/** The /yak-pratsyuiemo FAQ: only what a first-time client still asks after reading the page. A direct answer first,
+ *  one clarification after; every fact is the model's (team, boundary, the inputs stage, the handover documents). */
 export function deliveryFaq(): readonly (readonly [string, string])[] {
   const { statements } = model;
-  const inputs = stageById('inputs');
   const handover = stageById('handover');
+  const documents = handover.documents.map((document) => document.label.toLowerCase());
   return [
     ['Хто закуповує матеріали?', statements.materials],
-    ['Чи працюєте ви із субпідрядниками?', `Так. ${statements.team} ${statements.principle}`],
-    ['Чи оглядаєте майданчик перед розрахунком?', `За потреби — так. ${inputs.rubikon.default}`],
-    ['Що ви передаєте після завершення робіт?', `${handover.what} ${handover.result}`],
+    ['Чи залучаєте інших виконавців?', 'Так. Спеціалізовані роботи виконують профільні виконавці. Хто їх залучає й координує і за який результат відповідає RUBIKON, фіксуємо в договорі до початку робіт.'],
+    ['Чи оглядаєте майданчик перед розрахунком?', 'Так, якщо умови майданчика впливають на розрахунок. Спершу даємо перелік потрібних даних під ваш тип об’єкта, далі погоджуємо огляд і фіксуємо умови.'],
+    [
+      'Як відбувається приймання і які документи я отримаю?',
+      `Перевіряємо свої роботи, усуваємо зауваження й передаємо їх на приймання — замовнику, а в субпідряді генпідряднику. Зазвичай це ${documents[0]}, ${documents[1]} та ${documents[2]}; точний склад визначає договір.`,
+    ],
   ];
 }
 
@@ -384,47 +388,66 @@ export function deliveryFaq(): readonly (readonly [string, string])[] {
 
 export type ProcessStep = { number: string; title: string; text: string; result: string; stages: readonly StageId[] };
 
-/** Four client-facing steps covering the eight model stages in order; each ends with the model's own result. */
+/** Four client-facing steps covering the eight model stages in order. Each result is the client's side of the last
+ *  covered stages' results — what is settled and what the next step needs — and never promises beyond them. */
 export function processSteps(): readonly ProcessStep[] {
-  const steps: readonly Omit<ProcessStep, 'number' | 'result'>[] = [
+  const steps: readonly Omit<ProcessStep, 'number'>[] = [
     {
       title: 'Уточнюємо задачу',
-      text: 'Розбираємо, що потрібно побудувати або виконати, де об’єкт і які матеріали вже є.',
+      text: 'Розбираємо, що потрібно побудувати або виконати, де розташований об’єкт, що вже підготовлено і які є обмеження.',
+      result: 'Коротко зафіксована задача й список даних, які потрібно додати.',
       stages: ['request'],
     },
     {
-      title: 'Працюємо з вихідними даними',
-      text: 'Переглядаємо наявний проєкт або параметри й визначаємо, яких даних ще бракує.',
+      title: 'Перевіряємо проєкт і дані про об’єкт',
+      text: 'Переглядаємо креслення або параметри об’єкта, за потреби — умови майданчика, й узгоджуємо рішення для робіт, які беремо на себе.',
+      result: 'Зрозуміло, на чому можна будувати пропозицію і що ще треба уточнити.',
       stages: ['inputs', 'engineering'],
     },
     {
       title: 'Узгоджуємо обсяг і кошторис',
-      text: 'Визначаємо, що саме бере на себе RUBIKON. Коли проєктних даних достатньо — готуємо кошторис погодженого обсягу й фіксуємо його в договорі.',
+      text: 'Визначаємо, які роботи бере на себе RUBIKON, і рахуємо їх, коли проєктних даних достатньо.',
+      result: 'Пропозиція з переліком наших робіт, умовами старту й кошторисом. Після погодження — договір.',
       stages: ['scope-budget', 'contract'],
     },
     {
-      title: 'Організовуємо виконання',
-      text: 'Плануємо роботи, ресурси й взаємодію з іншими учасниками та ведемо погоджений обсяг до приймання.',
+      title: 'Виконуємо та передаємо роботи',
+      text: 'Готуємо матеріали й виконавців, виконуємо погоджені роботи у взаємодії з іншими учасниками й передаємо результат.',
+      result: 'Прийняті роботи, акти й виконавча документація — у складі, погодженому договором.',
       stages: ['preparation', 'construction', 'handover'],
     },
   ];
-  const resultStage: readonly StageId[] = ['request', 'inputs', 'scope-budget', 'handover'];
-  return steps.map((step, index) => ({
-    ...step,
-    number: String(index + 1).padStart(2, '0'),
-    result: stageById(resultStage[index] as StageId).result,
-  }));
+  return steps.map((step, index) => ({ ...step, number: String(index + 1).padStart(2, '0') }));
 }
 
-export type ParticipationChoice = { id: DeliveryFormatId; title: string; text: string; coordination: string };
+export type ParticipationChoice = {
+  id: DeliveryFormatId;
+  /** The model name — the same in the form, on /napryamky and in the responsibility switcher. */
+  title: string;
+  /** The same format said as the client's situation. */
+  headline: string;
+  text: string;
+  coordination: string;
+  /** Who signs with RUBIKON, and who coordinates the object — the two things that tell the formats apart. */
+  contractWith: 'Замовник' | 'Генпідрядник';
+  coordinator: string;
+  rubikonCoordinates: boolean;
+};
 
-/** The three formats as a client's choice, largest scope first; names and texts are the model's. */
+const CHOICE_TERMS: Record<DeliveryFormatId, Pick<ParticipationChoice, 'headline' | 'contractWith' | 'coordinator' | 'rubikonCoordinates'>> = {
+  comprehensive: { headline: 'Комплекс робіт під координацією RUBIKON', contractWith: 'Замовник', coordinator: 'RUBIKON — у погодженому обсязі', rubikonCoordinates: true },
+  'work-package': { headline: 'Окремі роботи за договором із замовником', contractWith: 'Замовник', coordinator: 'Замовник або його генпідрядник', rubikonCoordinates: false },
+  subcontract: { headline: 'Роботи за договором із генпідрядником', contractWith: 'Генпідрядник', coordinator: 'Генпідрядник', rubikonCoordinates: false },
+};
+
+/** The three formats as a client's choice, largest scope first; names, texts and coordination are the model's. */
 export function participationChoices(): readonly ParticipationChoice[] {
   return model.formats.map((format) => ({
     id: format.id,
     title: format.label,
     text: format.summary,
     coordination: format.coordination,
+    ...CHOICE_TERMS[format.id],
   }));
 }
 
@@ -489,7 +512,7 @@ export function costFactors(): readonly CostFactor[] {
     { title: 'Утеплення', ids: ['insulation'] },
     { title: 'Технологія й обладнання', ids: ['technology', 'special-equipment'] },
     { title: 'Умови майданчика', ids: ['logistics', 'operating-facility', 'site-access', 'installation-constraints'] },
-    { title: 'Строки й залежності між підрядниками', ids: ['timeline', 'contractor-dependencies'] },
+    { title: 'Залежності від інших робіт і строки', ids: ['timeline', 'contractor-dependencies'] },
   ];
   const label = (id: string) => {
     const factor = model.budgetFactors.find((item) => item.id === id);
@@ -559,11 +582,8 @@ export function responsibilityByFormat(): { formats: readonly SwitchFormat[]; it
     }
     return { text, rows, zones };
   });
-  const principles: Record<DeliveryFormatId, string> = {
-    comprehensive: model.statements.responsibility,
-    'work-package': formatById('work-package').interfaces,
-    subcontract: formatById('subcontract').interfaces,
-  };
+  // How the parties work together in each format (the promise of result is already said on the scope cards above).
+  const principles = Object.fromEntries(model.formats.map((format) => [format.id, format.interfaces])) as Record<DeliveryFormatId, string>;
   const formats = model.formats.map((format) => ({
     id: format.id,
     label: format.label,

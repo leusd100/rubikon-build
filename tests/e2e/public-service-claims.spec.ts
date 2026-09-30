@@ -30,7 +30,8 @@ for (const width of [375, 768, 1440]) {
         await expect(page.locator('#real-object')).toContainText('Каркас');
       }
       if (route === '/yak-pratsyuiemo') {
-        await expect(page.locator('#vidpovidalnist')).toContainText('беремо погоджений комплекс');
+        // The result promise is said once, on the comprehensive scope card; the responsibility map does not repeat it
+        await expect(page.locator('#obsiah')).toContainText('беремо погоджений комплекс');
         await expect(page.locator('#etapy')).toContainText('Проєкт надає замовник або його окремий проєктувальник');
       }
     }

@@ -75,7 +75,7 @@ export function ScopeDiagram({ format }: Readonly<{ format: DeliveryFormatId }>)
       {format === 'comprehensive' && (
         <g className="sd-context">
           <rect className="sd-boundary sd-boundary-scope" x="20" y="42" width="248" height="182" rx="3" pathLength={1} />
-          <text className="sd-label sd-label-scope" x="28" y="34">Обсяг RUBIKON · координує RUBIKON</text>
+          <text className="sd-label sd-label-scope" x="28" y="34">Обсяг RUBIKON</text>
         </g>
       )}
       {format !== 'comprehensive' && (

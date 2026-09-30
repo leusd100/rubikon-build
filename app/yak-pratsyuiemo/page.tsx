@@ -45,31 +45,32 @@ const HERO_IMAGE = '/media/concepts/about-shared-approach-v2.jpg';
 const STARTS = [
   {
     kind: 'idea',
-    title: 'Є тільки задум',
-    text: 'Коротко опишіть, що потрібно побудувати або які роботи виконати. Допоможемо зрозуміти, яких вихідних даних бракує.',
+    title: 'Є ідея об’єкта',
+    text: 'Опишіть, що плануєте побудувати. Підкажемо, які дані варто підготувати для наступного кроку.',
   },
   {
     kind: 'drawing',
     title: 'Є креслення або проєкт',
-    text: 'Переглянемо документацію й визначимо, чи її достатньо, щоб сформувати обсяг робіт і кошторис.',
+    text: 'Переглянемо креслення, визначимо можливий обсяг наших робіт і скажемо, чи вистачає даних для кошторису.',
   },
   {
     kind: 'scope',
-    title: 'Є конкретний обсяг робіт',
-    text: 'Наприклад, фундамент, монтаж каркаса чи покрівля — почнемо предметну розмову саме з цього етапу.',
+    title: 'Потрібен окремий етап робіт',
+    text: 'Наприклад, фундамент, металевий каркас або покрівля. Обговоримо саме цей етап і його межі.',
   },
 ] as const;
 
 const ZONES = [
-  { id: 'rubikon', title: 'RUBIKON', lead: 'Погоджений будівельний обсяг і його результат.' },
-  { id: 'client', title: 'Замовник', lead: 'Те, що залишається на іншій стороні договору.' },
-  { id: 'specialists', title: 'Профільні спеціалісти', lead: 'Вузькі дисципліни, які виконують фахівці свого профілю.' },
+  { id: 'rubikon', title: 'RUBIKON', lead: 'Роботи, зазначені в нашому договорі, та їхній результат.' },
+  { id: 'client', title: 'Замовник', lead: 'Що забезпечує замовник.' },
+  { id: 'specialists', title: 'Профільні спеціалісти', lead: 'Окремі спеціалізовані роботи. Хто їх залучає й координує, фіксуємо в договорі.' },
 ] as const;
 
+/** After the factors: the order in which they turn into numbers, a schedule and — if needed — an agreed change. */
 const TERMS = [
-  { title: 'Кошторис', text: 'Предметний розрахунок готуємо, коли визначено склад робіт і вихідних даних достатньо.' },
-  { title: 'Строки', text: 'Залежать від обсягу, проєкту, умов майданчика, матеріалів та організації виконання.' },
-  { title: 'Зміни', text: deliveryModel.changePolicy.principle },
+  { title: 'Рахуємо кошторис', text: 'Підготуємо кошторис, коли погодимо перелік робіт і матимемо дані для розрахунку.' },
+  { title: 'Плануємо строки', text: 'На графік впливають обсяг робіт, готовність проєкту й майданчика, постачання матеріалів і роботи інших підрядників.' },
+  { title: 'Погоджуємо зміни', text: deliveryModel.changePolicy.principle },
 ] as const;
 
 export default function DeliveryModelPage() {
@@ -115,8 +116,8 @@ export default function DeliveryModelPage() {
           <p className="eyebrow light"><span /> Як працюємо</p>
           <h1>Від задачі — до <em>зрозумілого плану робіт</em></h1>
           <p className="proc-hero-lead">
-            Можна прийти з ідеєю, готовим проєктом або конкретним переліком робіт. Розберемо задачу, визначимо наш обсяг і,
-            коли даних достатньо, підготуємо кошторис.
+            Розкажіть про задум, покажіть готовий проєкт або назвіть роботи, які потрібно виконати. Ми уточнимо задачу,
+            погодимо свій обсяг і скажемо, які дані потрібні для кошторису.
           </p>
           <div className="proc-hero-actions">
             <a className="button button-primary" href="#inquiry">Обговорити задачу <span aria-hidden="true">↗</span></a>
@@ -132,7 +133,7 @@ export default function DeliveryModelPage() {
           <div className="proc-start-head">
             <p className="eyebrow"><span /> Перше звернення</p>
             <h2 id="proc-start-title">З чого можна почати</h2>
-            <p>Готовий проєкт для першого звернення не потрібен. Почнемо з того, що у вас уже є.</p>
+            <p>Для першої розмови достатньо того, що ви знаєте про об’єкт зараз.</p>
           </div>
           <div className="proc-start-flow" data-motion>
             <ul className="proc-start-list">
@@ -161,7 +162,7 @@ export default function DeliveryModelPage() {
           <div className="proc-section-head proc-section-head-inverse">
             <p className="eyebrow light"><span /> Що буде після звернення</p>
             <h2 id="proc-route-title">Від задачі до будівництва</h2>
-            <p>Чотири кроки. Кожен закінчується конкретним результатом, з яким можна йти далі.</p>
+            <p>Після кожного кроку зрозуміло, що вже вирішено і що потрібно для наступного.</p>
           </div>
           <ol className="proc-steps" data-motion>
             {steps.map((step, index) => (
@@ -173,9 +174,13 @@ export default function DeliveryModelPage() {
               </li>
             ))}
           </ol>
-          <aside className="proc-design-note" aria-label="Проєкт">
+          {/* Belongs to step 02 (checking the project): aligned under it on the horizontal route, named on the vertical one */}
+          <aside className="proc-design-note" aria-labelledby="proc-design-note-title">
             <DraftingCompass aria-hidden="true" />
-            <p><b>Проєкт.</b> {statements.design}</p>
+            <div>
+              <p className="proc-design-note-title" id="proc-design-note-title"><span>До кроку 02</span> Хто готує проєкт</p>
+              <p>{statements.design}</p>
+            </div>
           </aside>
         </div>
       </section>
@@ -185,16 +190,34 @@ export default function DeliveryModelPage() {
         <div className="shell">
           <div className="proc-section-head">
             <p className="eyebrow"><span /> Наш обсяг</p>
-            <h2 id="proc-scope-title">Від окремого етапу до комплексного обсягу</h2>
-            <p>Перед початком погоджуємо склад робіт, взаємодію з іншими виконавцями та відповідальність за результат.</p>
+            <h2 id="proc-scope-title">Який обсяг робіт можемо взяти на себе</h2>
+            <p>До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо.</p>
           </div>
           <ul className="proc-scope-grid">
             {choices.map((choice) => (
               <li key={choice.id} data-motion>
                 <ScopeDiagram format={choice.id} />
-                <h3 id={`proc-scope-${choice.id}`}>{choice.title}</h3>
+                <div className="proc-scope-title">
+                  <p className="proc-scope-kicker">{choice.title}</p>
+                  <h3 id={`proc-scope-${choice.id}`}>{choice.headline}</h3>
+                </div>
+                {/* What actually tells the formats apart: the other party of the contract and who coordinates the object */}
+                <dl className="proc-scope-terms">
+                  <div>
+                    <dt>Договір</dt>
+                    <dd className="proc-contract">
+                      <span className="proc-party">{choice.contractWith}</span>
+                      <span className="proc-contract-link" aria-hidden="true" />
+                      <span className="visually-hidden"> і </span>
+                      <span className="proc-party is-rubikon">RUBIKON</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Координує об’єкт</dt>
+                    <dd className={choice.rubikonCoordinates ? 'is-rubikon' : undefined}>{choice.coordinator}</dd>
+                  </div>
+                </dl>
                 <p>{choice.text}</p>
-                <p className="proc-scope-coordination">{choice.coordination}</p>
                 <FormatPrefillLink label={choice.title} />
               </li>
             ))}
@@ -214,6 +237,7 @@ export default function DeliveryModelPage() {
           <div className="proc-section-head">
             <p className="eyebrow"><span /> Хто за що відповідає</p>
             <h2 id="proc-responsibility-title">Відповідальність без дрібного шрифту</h2>
+            <p>Оберіть формат участі — схема покаже, що виконує RUBIKON, що забезпечує інша сторона договору і хто веде спеціалізовані роботи.</p>
           </div>
           {/* Format switcher: plain radios; CSS (:has) shows the chosen format, so it works without JavaScript */}
           <fieldset className="proc-resp-switch">
@@ -237,7 +261,11 @@ export default function DeliveryModelPage() {
                       ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>{format.clientTitle}</span>)
                       : zone.title}
                   </h3>
-                  <p className="proc-area-lead">{zone.lead}</p>
+                  <p className="proc-area-lead">
+                    {zone.id === 'client'
+                      ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>Що забезпечує {format.clientTitle.toLowerCase()}.</span>)
+                      : zone.lead}
+                  </p>
                   <ul>
                     {resp.items.filter((item) => item.zones[zone.id].length > 0).map((item) => (
                       <li key={item.text} data-formats={item.zones[zone.id].join(' ')}>{item.text}</li>
@@ -252,7 +280,7 @@ export default function DeliveryModelPage() {
               <b>Поза обсягом RUBIKON у цьому форматі:</b> {format.outOfScope.join('; ').toLowerCase()}.
             </p>
           ))}
-          <p className="proc-map-note">{map.boundary} {map.materials}</p>
+          <p className="proc-map-note">{map.boundary}</p>
         </div>
       </section>
 
@@ -262,18 +290,10 @@ export default function DeliveryModelPage() {
         <div className="shell">
           <div className="proc-section-head">
             <p className="eyebrow"><span /> Кошторис і строки</p>
-            <h2 id="proc-terms-title">Що визначає вартість і хід робіт</h2>
+            <h2 id="proc-terms-title">Від чого залежать кошторис і строки</h2>
           </div>
-          <ul className="proc-terms-grid">
-            {TERMS.map((term) => (
-              <li key={term.title}>
-                <h3>{term.title}</h3>
-                <p>{term.text}</p>
-              </li>
-            ))}
-          </ul>
           <div className="proc-factors">
-            <p className="proc-factors-title">Найчастіше впливають</p>
+            <p className="proc-factors-title">Що враховуємо в розрахунку</p>
             <ul>
               {costFactors().map((factor) => (
                 <li key={factor.title}>
@@ -283,8 +303,18 @@ export default function DeliveryModelPage() {
               ))}
             </ul>
           </div>
+          <p className="proc-factors-title proc-terms-flow-title">Як із цього виходять кошторис і графік</p>
+          <ol className="proc-terms-grid" data-motion>
+            {TERMS.map((term, index) => (
+              <li key={term.title} style={{ '--i': index } as CSSProperties}>
+                <span className="proc-terms-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                <h3>{term.title}</h3>
+                <p>{term.text}</p>
+              </li>
+            ))}
+          </ol>
           <p className="proc-documents">
-            Які документи знадобляться, залежить від об’єкта й формату робіт. На старті визначимо, що вже є і чого бракує.
+            На першій розмові скажемо, які документи вже можна використати і що потрібно підготувати додатково.
           </p>
         </div>
       </section>
@@ -294,7 +324,7 @@ export default function DeliveryModelPage() {
       {/* 7 · Conversation — the four steps are shown above, so the block does not repeat them */}
       <ConversationSection
         title="Є задача — почнемо з неї"
-        lead="Не потрібно спочатку обирати формат співпраці чи збирати повний пакет документів. Розкажіть, що потрібно зробити, — визначимо наступний крок."
+        lead="Коротко опишіть задачу. Ми уточнимо, що вже готово, і підкажемо найближчий крок — розмову, перегляд проєкту чи огляд майданчика."
         showJourney={false}
       />
     </main>
