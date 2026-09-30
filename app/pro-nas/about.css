@@ -140,27 +140,46 @@
 .about-bond span { max-width: 72%; color: var(--color-accent-strong); font: 700 13px/1.35 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; text-wrap: balance; }
 .about-build-region-note { max-width: 460px; margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.65; }
 /* Under the line: where we are based, beside the oblast's outline with Dnipro on it */
-.about-region { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: center; gap: clamp(24px, 4vw, 64px); margin-top: clamp(28px, 3vw, 44px); }
-.about-region-base { margin: 0 0 12px; color: var(--color-text); font: 400 clamp(26px, 2.4vw, 36px)/1.1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+.about-region { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; gap: clamp(24px, 4vw, 64px); margin-top: clamp(28px, 3vw, 44px); }
+.about-region-base { margin: 0 0 18px; color: var(--color-text); font: 400 clamp(34px, 3.6vw, 54px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
+.about-region-copy .about-build-region-note { max-width: 520px; font-size: 17px; line-height: 1.7; }
 .about-region-map { margin: 0; }
-.about-region-map svg { display: block; width: 100%; max-height: 380px; overflow: visible; }
-.arm-outline {
-  fill: color-mix(in srgb, var(--color-accent) 8%, transparent); stroke: var(--color-accent); stroke-width: 2; stroke-linejoin: round;
-  vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0;
-}
+.about-region-map svg { display: block; width: 100%; max-height: 400px; overflow: visible; }
+/* The plate (RegionMap): a warm core at Dnipro fading to the edges, even rings stepping out from the city (cut by the
+   boundary), the outline, the city mark with a short leader to its name. The light only lives on fine-pointer
+   devices with motion. */
+.arm-shape { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.arm-area { fill: url(#arm-fill); stroke: none; }
+.arm-fill-core { stop-color: var(--color-accent); stop-opacity: .2; }
+.arm-fill-edge { stop-color: var(--color-accent); stop-opacity: .05; }
+.arm-ring-line { fill: none; stroke: var(--color-accent); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: calc(.46 - var(--k, 0) * .034); stroke-dasharray: 1; stroke-dashoffset: 0; }
+.arm-rings-lit .arm-ring-line { stroke: var(--color-accent-strong); stroke-width: 1.6; opacity: 1; }
+.arm-rings-lit { opacity: 0; transition: opacity 320ms ease; }
+.arm-light { transform: translate(var(--mx), var(--my)); transform-box: view-box; }
+.arm-glow { opacity: 0; transition: opacity 320ms ease; pointer-events: none; }
+.arm-spot-core { stop-color: var(--color-accent); stop-opacity: .26; }
+.arm-spot-edge { stop-color: var(--color-accent); stop-opacity: 0; }
+.arm[data-light="on"] :is(.arm-rings-lit, .arm-glow) { opacity: 1; }
+.arm-outline { fill: none; stroke: var(--color-accent); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 0; }
 .arm-dot { fill: var(--color-accent); }
-.arm-ring, .arm-pulse { fill: none; stroke: var(--color-accent); vector-effect: non-scaling-stroke; }
+.arm-ring, .arm-pulse, .arm-leader { fill: none; stroke: var(--color-accent); vector-effect: non-scaling-stroke; }
 .arm-ring { stroke-width: 1.5; }
+.arm-leader { stroke-width: 1; }
 .arm-pulse { stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
 .arm-label { fill: var(--color-text); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .04em; }
 .about-region-map figcaption { margin-top: 10px; color: var(--color-text-muted); font-size: 12px; line-height: 1.4; text-align: right; }
-/* Arriving: the line, then the outline draws, fills, and the city is marked with two soft pulses */
-.about-page[data-motion-ready="on"] .arm-outline { transition: stroke-dashoffset 1600ms var(--m-ease) 500ms, fill-opacity 600ms ease 1800ms; }
-.about-page[data-motion-ready="on"] :is(.arm-dot, .arm-ring, .arm-label) { transition: opacity 400ms ease 1900ms; }
+/* Arriving: the line; the outline draws and warms; the city is marked; then the rings step out from it, inner to
+   outer, and the city pulses twice */
+.about-build-region { --arm-draw: cubic-bezier(.55, 0, .25, 1); /* an even pen: no rush at the start, no crawl at the end */ }
+.about-page[data-motion-ready="on"] .arm-outline { transition: stroke-dashoffset 1700ms var(--arm-draw) 400ms; }
+.about-page[data-motion-ready="on"] .arm-area { transition: fill-opacity 700ms ease 1700ms; }
+.about-page[data-motion-ready="on"] :is(.arm-dot, .arm-ring, .arm-leader, .arm-label) { transition: opacity 400ms ease 1900ms; }
+.about-page[data-motion-ready="on"] .arm-ring-line { transition: stroke-dashoffset 1100ms var(--arm-draw) calc(2100ms + var(--k, 0) * 110ms); }
 @keyframes arm-pulse { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
-.about-page[data-motion-ready="on"] .about-build-region[data-motion-state="on"] .arm-pulse { animation: arm-pulse 1400ms ease-out 2100ms 2 backwards; }
-.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) .arm-outline { stroke-dashoffset: 1; fill-opacity: 0; }
-.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) :is(.arm-dot, .arm-ring, .arm-label) { opacity: 0; }
+.about-page[data-motion-ready="on"] .about-build-region[data-motion-state="on"] .arm-pulse { animation: arm-pulse 1400ms ease-out 2100ms 2; }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) :is(.arm-outline, .arm-ring-line) { stroke-dashoffset: 1; }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) .arm-area { fill-opacity: 0; }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) :is(.arm-dot, .arm-ring, .arm-leader, .arm-label) { opacity: 0; }
 .about-page[data-motion-ready="on"] .about-bond::before,
 .about-page[data-motion-ready="on"] .about-bond::after { transition: transform 700ms var(--m-ease) 160ms; }
 .about-page[data-motion-ready="on"] .about-build-region :is(.about-bond span, .about-region-copy) { transition: opacity var(--m-reveal) ease 560ms; }
@@ -282,6 +301,7 @@
   .about-build-list p { font-size: 15px; }
   .about-build-region-note { font-size: 14.5px; }
   .about-region { grid-template-columns: minmax(0, 1fr); }
+  .about-region-copy .about-build-region-note { font-size: 16px; }
   .arm-label { font-size: 34px; }
   .about-region-map figcaption { text-align: left; }
 }

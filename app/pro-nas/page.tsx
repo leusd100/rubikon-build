@@ -4,6 +4,7 @@ import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
+import { RegionMap } from '../components/about/RegionMap';
 import ResponsiveImage from '../components/ResponsiveImage';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
@@ -121,8 +122,8 @@ export default function AboutPage() {
             ))}
           </ol>
           {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people; under the
-              line, the oblast's real outline (geoBoundaries / OpenStreetMap, credited) draws itself once and Dnipro,
-              where the company is based, is marked on it */}
+              line, the oblast's real outline (geoBoundaries / OpenStreetMap, credited) draws itself once, Dnipro — where
+              the company is based — is marked on it, and contour lines ripple out from the city (RegionMap) */}
           <div className="about-build-region" data-motion>
             <p className="about-bond"><span>Основний регіон — {company.serviceAreas[0]}</span></p>
             <div className="about-region">
@@ -131,15 +132,7 @@ export default function AboutPage() {
                 <p className="about-build-region-note">{company.geographyBeyond}</p>
               </div>
               <figure className="about-region-map">
-                <svg viewBox={regionMap.viewBox} role="img" aria-label={`Мапа: ${company.serviceAreas[0]}, позначено місто Дніпро`}>
-                  <path className="arm-outline" d={regionMap.outline} pathLength={1} />
-                  <g transform={`translate(${regionMap.dnipro.x} ${regionMap.dnipro.y})`}>
-                    <circle className="arm-pulse" r="22" />
-                    <circle className="arm-ring" r="15" />
-                    <circle className="arm-dot" r="7" />
-                  </g>
-                  <text className="arm-label" x={regionMap.dnipro.x + 30} y={regionMap.dnipro.y + 9}>Дніпро</text>
-                </svg>
+                <RegionMap label={`Мапа: ${company.serviceAreas[0]}, позначено місто Дніпро`} />
                 <figcaption>{regionMap.attribution}</figcaption>
               </figure>
             </div>
