@@ -89,10 +89,10 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 }
 .nav-wrap { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: clamp(22px, 2.2vw, 40px); }
 .brand-link { display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 44px; }
-.brand { display: block; width: 256px; height: auto; aspect-ratio: 1270 / 272; }
 /* Logo colours (BrandLogo.tsx). Light steel is the shipped lockup's own set, for the charcoal header and footer;
    graphite steel is its counterpart for a paper surface. The copper accent is the same role in both. */
 .brand {
+  display: block; width: 256px; height: auto; aspect-ratio: 1270 / 272;
   --logo-mark-0: #FBFCFC; --logo-mark-1: #D5DBDE; --logo-mark-2: #F4F6F6; --logo-mark-3: #C3CBCF; --logo-mark-4: #EDF0F1;
   --logo-word-0: #F8F9F9; --logo-word-1: #E1E5E7; --logo-word-2: #F4F5F5;
   --logo-rule: #A6A7A5;
@@ -533,7 +533,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .about-subhero h1 { max-width: 860px; }
 .about-subhero .subhero-grid { z-index: 1; opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
 .about-subhero .subhero-overlay { z-index: 1; background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
-.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 48px; color: rgba(255,255,255,.47); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 48px; color: var(--color-dark-text-muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .breadcrumb span { display: inline-flex; align-items: center; gap: 8px; }
 .breadcrumb a { display: inline-flex; align-items: center; min-height: 24px; margin-block: -4px; transition: color var(--duration-fast) ease; }
 .breadcrumb a:hover { color: var(--color-dark-text); }
@@ -800,7 +800,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 
 .privacy-hero { padding: 180px 0 80px; color: var(--color-dark-text); background: var(--color-dark); }
 .privacy-hero h1 { max-width: 980px; margin: 28px 0 24px; font: 400 clamp(56px, 8vw, 106px)/.92 var(--font-display), sans-serif; letter-spacing: -.045em; }
-.privacy-hero > .shell > p:last-child { margin: 0; color: rgba(255,255,255,.58); font-size: 13px; }
+.privacy-hero > .shell > p:last-child { margin: 0; color: var(--color-dark-text-secondary); font-size: 13px; }
 .not-found-hero .not-found-lead { max-width: 560px; margin: 0; color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.6; }
 .not-found-hero .text-link { color: var(--color-dark-text); }
 .privacy-content { max-width: 980px; }
@@ -1260,10 +1260,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 }
 
 /* Accessibility refinements shared by every page. */
-.breadcrumb { color: var(--color-dark-text-muted); }
 .breadcrumb a:hover, .breadcrumb a:focus-visible { color: var(--color-dark-text); }
 a.route-service:focus-visible { padding-inline: 26px; color: var(--color-dark-text); background: var(--color-dark); --color-accent-strong: var(--color-accent-on-dark); }
-.privacy-hero > .shell > p:last-child { color: var(--color-dark-text-secondary); }
 
 @media (forced-colors: active) {
   :where(a, button, input, select, textarea, summary):focus-visible {
