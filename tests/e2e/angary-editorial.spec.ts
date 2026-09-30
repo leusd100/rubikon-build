@@ -109,7 +109,9 @@ for (const viewport of viewports) {
     await expect(page.locator('#structure .angary-diagram')).toHaveCount(3);
     await expect(page.locator('#structure')).toContainText('6–8 м і уточнюється після розрахунку');
     await expect(page.locator('#process li')).toHaveCount(5);
-    await expect(page.locator('#responsibility figure')).toHaveCount(2);
+    // The two people as named roles in text: the generated portraits were withdrawn (#124) and must not come back
+    await expect(page.locator('#responsibility .angary-people-roles > div')).toHaveCount(2);
+    await expect(page.locator('#responsibility figure, #responsibility img')).toHaveCount(0);
     await expect(page.locator('.faq-list details')).toHaveCount(6);
     await expect(page.locator('.faq-list details[open]')).toHaveCount(0);
     await expect(page.locator('.related-directions-section .related-card')).toHaveCount(3);
