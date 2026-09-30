@@ -85,7 +85,7 @@ test('homepage hero keeps its title above the copy, with the written channels on
     // HOME v2: no written-contact card in the hero — messengers and email live once, in #inquiry.
     await expect(page.locator('.hero-contact-card')).toHaveCount(0);
     await expect(page.locator('.hero .messenger-link')).toHaveCount(0);
-    await expect(page.locator('#inquiry .hv2-conversation-channels .messenger-link')).toHaveCount(4);
+    await expect(page.locator('#inquiry .conversation-channels .messenger-link')).toHaveCount(4);
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
   }

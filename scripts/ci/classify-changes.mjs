@@ -32,7 +32,9 @@ export function classifyChanges(files) {
   const inquiry = infrastructure || matches(
     prefix(['app/components/inquiry/', 'app/lib/inquiry/']),
     exact([
-      'app/components/InquirySection.tsx',
+      'app/components/ConversationSection.tsx',
+      'app/data/conversation.ts',
+      'app/conversation.css',
       'app/components/ProjectInquiryForm.tsx',
       'tests/e2e/form.spec.ts',
       'tests/e2e/consent.spec.ts',

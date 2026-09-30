@@ -1,7 +1,7 @@
 import { ClipboardCheck, FileSignature, ShieldCheck } from 'lucide-react';
 import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
-import InquirySection from '../components/InquirySection';
+import { ConversationSection } from '../components/ConversationSection';
 import ResponsiveImage from '../components/ResponsiveImage';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
@@ -88,10 +88,9 @@ export default function AboutPage() {
           <a className="section-link" href={siteRoutes.process}>Як ми працюємо: формати, етапи, відповідальність <span aria-hidden="true">↗</span></a>
         </div>
       </section>
-      <InquirySection
-        eyebrow="Почнемо з розмови"
+      <ConversationSection
         title="Розкажіть, що потрібно побудувати"
-        text="Почнемо з короткої розмови про завдання, майданчик і бажані строки. Підкажемо, які вихідні дані потрібні для наступного кроку."
+        lead="Почнемо з короткої розмови про завдання, майданчик і бажані строки. Підкажемо, які вихідні дані потрібні для наступного кроку."
       />
     </main>
   );

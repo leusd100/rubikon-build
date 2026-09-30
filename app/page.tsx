@@ -1,14 +1,14 @@
 import { DirectionImageCards } from './components/DirectionCards';
 import { DirectionsRail } from './components/home-v2/DirectionsRail';
 import { SectionHeader } from './components/SiteChrome';
-import { ConversationSection } from './components/home-v2/ConversationSection';
+import { ConversationSection } from './components/ConversationSection';
 import { EngineeringSignature } from './components/home-v2/EngineeringSignature';
 import { HomeV2Hero } from './components/home-v2/HomeV2Hero';
 import { directions } from './data/directions';
 import { homeProofCase } from './data/homeProof';
 // HOME v2 «Engineering Signature» (owner-approved 2026-09-29, from design/home-v2-engineering-signature). Every rule
-// is scoped to main[data-home="v2"]; the previous HOME blocks (HomeSections, TeamSection) are no longer rendered here
-// and InquirySection still serves the other pages.
+// is scoped to main[data-home="v2"]; the previous HOME blocks (HomeSections, TeamSection) are no longer rendered here.
+// The closing conversation block is the site-wide ConversationSection.
 import './home-v2.css';
 
 // HOME v2 reads in four zones: образ → напрямки → інженерне пояснення + реальний доказ → розмова.
@@ -36,7 +36,7 @@ export default function Home() {
 
       <EngineeringSignature proof={homeProofCase} />
 
-      <ConversationSection />
+      <ConversationSection title="Розкажіть коротко про завдання" />
     </main>
   );
 }

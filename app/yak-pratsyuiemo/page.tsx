@@ -1,5 +1,5 @@
 import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader } from '../components/SiteChrome';
-import InquirySection from '../components/InquirySection';
+import { ConversationSection } from '../components/ConversationSection';
 import RoleIcon from '../components/RoleIcon';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { company } from '../data/company';
@@ -521,10 +521,9 @@ export default function DeliveryModelPage() {
       </section>
 
       <DirectionFaq title="Питання про модель реалізації" items={deliveryFaq()} collapsible />
-      <InquirySection
-        eyebrow="Почнемо з розмови"
+      <ConversationSection
         title="Обговоримо вашу задачу"
-        text="Для початку достатньо коротко описати об’єкт або потрібні роботи та залишити контакт. Якщо вже маєте креслення, орієнтовні розміри чи інформацію про майданчик — згадайте про це. Решту уточнимо в розмові."
+        lead="Для початку достатньо коротко описати об’єкт або потрібні роботи та залишити контакт. Якщо вже маєте креслення, орієнтовні розміри чи інформацію про майданчик — згадайте про це. Решту уточнимо в розмові."
       />
     </main>
   );

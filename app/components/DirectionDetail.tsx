@@ -1,5 +1,5 @@
 import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader } from './SiteChrome';
-import InquirySection from './InquirySection';
+import { ConversationSection } from './ConversationSection';
 import ResponsiveImage from './ResponsiveImage';
 import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteUrl } from '../lib/seo';
@@ -9,6 +9,7 @@ import { faqAnswerText } from '../lib/deliveryModelPresentation';
 import { relatedDirections, type RelatedDirection } from '../data/relatedDirections';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
 import { company } from '../data/company';
+import { DIRECTION_JOURNEY } from '../data/conversation';
 import { siteRoutes } from '../data/navigation';
 import type { ReactNode } from 'react';
 
@@ -361,7 +362,12 @@ export function DirectionPage({
       )}
       {config.faq && <DirectionFaq {...config.faq} />}
       <RelatedDirections id={config.id} compact={config.related?.compact} items={config.related?.items} />
-      <InquirySection eyebrow={config.cta.eyebrow} title={config.cta.title} defaultDirection={direction.formLabel} />
+      <ConversationSection
+        kicker={config.cta.eyebrow}
+        title={config.cta.title}
+        defaultDirection={direction.formLabel}
+        journey={DIRECTION_JOURNEY[config.id]}
+      />
     </main>
   );
 }

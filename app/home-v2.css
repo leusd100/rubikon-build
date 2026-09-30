@@ -1,12 +1,12 @@
 /* HOME v2 «Engineering Signature» — owner-approved 2026-09-29 (built on design/home-v2-engineering-signature).
 
-   Four zones: hero → directions → engineering signature (real object + X-ray first, people, two explanation cards)
-   → conversation + form.
+   Three zones here: hero → directions → engineering signature (real object + X-ray first, people, two explanation
+   cards). The closing conversation block is the site-wide one (app/conversation.css).
    Every rule is keyed to <main data-home="v2">, so nothing leaks to other pages. It sits on top of the
    Architectural Copper tokens already on main (#122) and does not change them.
 
    The signature block is ALWAYS dark (a local charcoal/copper treatment) and does not follow the light/dark switch;
-   the directions band and the closing section do follow it (paper in Light, graphite in Dark).
+   the directions band follows it (paper in Light, graphite in Dark).
 
    Discard cleanly: delete this file, app/components/home-v2/, public/media/home-v2/, and restore app/page.tsx. */
 
@@ -314,120 +314,11 @@ main[data-home="v2"] .hv2-person p { margin: 0; color: var(--hv2-text-2); font-s
 main[data-home="v2"] .hv2-people-link { justify-self: start; min-height: 44px; display: inline-flex; align-items: center; gap: 12px; color: var(--hv2-text); border-bottom: 1px solid var(--hv2-copper); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 
-/* ========================= 4 · CONVERSATION + FORM ========================= */
-
-/* Paper in Light (graphite in Dark), with the desk-and-drawings photo turned into a faint sheet texture: visible
-   on the right behind the form, almost gone behind the text. Decorative only — never evidence. */
-main[data-home="v2"] .hv2-conversation {
-  position: relative; overflow: hidden; isolation: isolate; color: var(--color-text); background: var(--color-bg);
-  --hv2-tg: .57; --hv2-wa: .51; --hv2-vb: .77; /* messenger-icon greys, see the channels below */
-}
-main[data-home="v2"] .hv2-conversation-bg { position: absolute; z-index: -1; inset: 0; }
-main[data-home="v2"] .hv2-conversation-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 45%; filter: grayscale(1) sepia(.25) contrast(.92) brightness(1.08); }
-main[data-home="v2"] .hv2-conversation-bg::after {
-  content: ''; position: absolute; inset: 0;
-  background:
-    linear-gradient(90deg,
-      color-mix(in srgb, var(--color-bg) 97%, transparent) 0%,
-      color-mix(in srgb, var(--color-bg) 93%, transparent) 36%,
-      color-mix(in srgb, var(--color-bg) 72%, transparent) 64%,
-      color-mix(in srgb, var(--color-bg) 80%, transparent) 100%),
-    linear-gradient(0deg, color-mix(in srgb, var(--color-bg) 70%, transparent) 0%, transparent 40%);
-}
-:root[data-theme="dark"] main[data-home="v2"] .hv2-conversation-bg img { filter: grayscale(.6) sepia(.2) brightness(.55); }
-main[data-home="v2"] .hv2-conversation .hv2-kicker { color: var(--color-accent-strong); }
-main[data-home="v2"] .hv2-conversation .hv2-kicker > span { background: var(--color-accent); }
-/* Desktop: intro + journey on the left, the form beside them. Phone: intro (call + channels) → form → journey. */
-main[data-home="v2"] .hv2-conversation-grid {
-  display: grid; grid-template-columns: minmax(0, .92fr) minmax(540px, 1.08fr); grid-template-areas: "intro form" "journey form";
-  grid-template-rows: auto 1fr; align-items: start; gap: 0 var(--grid-gap);
-}
-main[data-home="v2"] .hv2-conversation-intro { grid-area: intro; min-width: 0; }
-main[data-home="v2"] .hv2-journey-wrap { grid-area: journey; min-width: 0; margin-top: 40px; }
-main[data-home="v2"] .hv2-journey-title { margin: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-main[data-home="v2"] .hv2-conversation h2 { margin: 22px 0 0; font: 400 clamp(44px, 4.4vw, 66px)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
-main[data-home="v2"] .hv2-conversation-lead { max-width: 500px; margin: 22px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
-/* The closing contact block: one column of fixed width, so the call and the four channels share both edges. */
-main[data-home="v2"] .hv2-conversation-contact { display: grid; gap: 12px; width: min(100%, 468px); margin-top: 32px; }
-
-/* The call: a segmented button — icon cell | label + number | arrow. Colours stay the theme's action role. */
-main[data-home="v2"] .hv2-call { width: 100%; min-width: 0; min-height: 68px; justify-content: flex-start; gap: 0; padding: 0; }
-main[data-home="v2"] .hv2-call > span { display: flex; align-items: center; }
-main[data-home="v2"] .hv2-call .hv2-call-icon {
-  align-self: stretch; width: 66px; flex: none; justify-content: center;
-  background: color-mix(in srgb, var(--color-on-action) 9%, transparent);
-  border-right: 1px solid color-mix(in srgb, var(--color-on-action) 26%, transparent);
-  transition: background var(--duration-fast) ease;
-}
-main[data-home="v2"] .hv2-call .hv2-call-icon svg { width: 22px; height: 22px; flex: none; stroke-width: 1.7; }
-main[data-home="v2"] .hv2-call .hv2-call-text { flex: 1 1 auto; display: grid; gap: 7px; padding: 0 20px; text-align: left; }
-main[data-home="v2"] .hv2-call small { font-size: 11.5px; letter-spacing: .14em; }
-main[data-home="v2"] .hv2-call strong { font-size: 24px; letter-spacing: .025em; }
-main[data-home="v2"] .hv2-call .hv2-call-arrow { flex: none; padding: 0 24px 0 8px; font-size: 18px; font-weight: 500; transition: transform var(--duration-fast) ease; }
-main[data-home="v2"] .hv2-call:is(:hover, :focus-visible) .hv2-call-icon { background: color-mix(in srgb, var(--color-on-action) 15%, transparent); }
-main[data-home="v2"] .hv2-call:is(:hover, :focus-visible) .hv2-call-arrow { transform: translate(3px, -3px); }
-
-main[data-home="v2"] .hv2-channels-label {
-  display: flex; align-items: center; gap: 14px; margin: 8px 0 0; color: var(--color-text-muted);
-  font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .16em; text-transform: uppercase;
-}
-main[data-home="v2"] .hv2-channels-label::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
-
-/* Four equal channels. Icons are one warm grey until hover/focus, when each takes its own brand colour back — the
-   saturated blue/green/purple no longer compete with the copper call. */
-/* Greyscale luminance differs per brand (Telegram blue ≈148, WhatsApp green ≈166, Viber purple ≈110 of 255), so each
-   icon gets its own brightness factor to land on one grey: ≈85 on paper, ≈200 on graphite. */
-:root[data-theme="dark"] main[data-home="v2"] .hv2-conversation { --hv2-tg: 1.35; --hv2-wa: 1.2; --hv2-vb: 1.82; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme]) main[data-home="v2"] .hv2-conversation { --hv2-tg: 1.35; --hv2-wa: 1.2; --hv2-vb: 1.82; } }
-main[data-home="v2"] .hv2-conversation-channels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-main[data-home="v2"] .hv2-messengers { display: contents; }
-main[data-home="v2"] .hv2-conversation-channels .messenger-link {
-  min-width: 0; min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 8px;
-  color: var(--color-text); background: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent);
-  border: 1px solid var(--color-border); font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: .01em;
-  transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
-}
-main[data-home="v2"] .hv2-conversation-channels .messenger-link:is(:hover, :focus-visible) { color: var(--color-text); border-color: var(--color-accent-strong); background: var(--color-surface-elevated); transform: translateY(-2px); }
-main[data-home="v2"] .hv2-conversation-channels .messenger-brand-icon { width: 20px; height: 20px; flex: none; }
-main[data-home="v2"] .hv2-conversation-channels .messenger-telegram .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--hv2-tg)); }
-main[data-home="v2"] .hv2-conversation-channels .messenger-whatsapp .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--hv2-wa)); }
-main[data-home="v2"] .hv2-conversation-channels .messenger-viber .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--hv2-vb)); }
-main[data-home="v2"] .hv2-conversation-channels .messenger-link:is(:hover, :focus-visible) .messenger-brand-icon { filter: none; transform: none; }
-main[data-home="v2"] .hv2-conversation-channels .hv2-email svg { width: 20px; height: 20px; flex: none; color: var(--color-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
-main[data-home="v2"] .hv2-conversation-channels .hv2-email:is(:hover, :focus-visible) svg { color: var(--color-accent-strong); }
-
-main[data-home="v2"] .hv2-journey { display: grid; gap: 0; margin: 14px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-control); }
-main[data-home="v2"] .hv2-journey li { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--color-border); }
-main[data-home="v2"] .hv2-journey-number { color: var(--color-accent-strong); font: 600 22px/1.1 var(--font-condensed), sans-serif; letter-spacing: .02em; }
-main[data-home="v2"] .hv2-journey h3 { margin: 0 0 6px; color: var(--color-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
-main[data-home="v2"] .hv2-journey p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
-
-/* The form card: lifted off the sheet, outlined, copper top rule (follows the light/dark tokens) */
-main[data-home="v2"] .hv2-conversation .inquiry-form { min-width: 0; box-shadow: 0 28px 70px rgba(20, 22, 21, .16); }
-/* globals.css gives .inquiry-form `grid-area: form` at ≤1180 for the shared .contact-grid; this grid has no named
-   areas, so that line would open two empty implicit columns. */
-main[data-home="v2"] .hv2-conversation-grid > .inquiry-form { grid-area: form; }
-
-/* Form labels were 10–11 px: raised for reading at arm's length (HOME v2 only) */
-main[data-home="v2"] .hv2-conversation :is(.inquiry-form label > span, .inquiry-choice legend) { font-size: 12.5px; letter-spacing: .06em; }
-main[data-home="v2"] .hv2-conversation .inquiry-choice label > span { font-size: 12px; }
-main[data-home="v2"] .hv2-conversation .inquiry-form-section-heading h3 { font-size: 12.5px; }
-main[data-home="v2"] .hv2-conversation :is(.inquiry-form-kicker, .inquiry-required-note) { font-size: 13px; }
-main[data-home="v2"] .hv2-conversation .inquiry-field-hint { font-size: 13px; }
-/* The larger section labels need a wider label column: «Підтвердження» is 111 px at 12.5 px, and globals.css narrows
-   the column to 86 px on short laptop screens (≥ 1181 px wide, ≤ 900 px tall), so the word ran into the checkbox. */
-@media (min-width: 761px) {
-  main[data-home="v2"] .hv2-conversation .inquiry-form-section { grid-template-columns: 122px minmax(0, 1fr); }
-}
-
 /* ================================ Tablet ================================ */
 
 @media (max-width: 1180px) {
   main[data-home="v2"] .hv2-cards { gap: 14px; }
   main[data-home="v2"] .hv2-card-body { padding: 20px 22px; }
-  main[data-home="v2"] .hv2-conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; grid-template-rows: auto; row-gap: 36px; }
-  main[data-home="v2"] .hv2-journey-wrap { margin-top: 0; }
-  main[data-home="v2"] .hv2-journey { grid-template-columns: 1fr 1fr; column-gap: 32px; }
 }
 @media (max-width: 1050px) {
   main[data-home="v2"] .hv2-signature-head { grid-template-columns: 1fr; }
@@ -465,33 +356,9 @@ main[data-home="v2"] .hv2-conversation .inquiry-field-hint { font-size: 13px; }
   main[data-home="v2"] .hv2-card p { font-size: 16px; line-height: 1.55; }
   main[data-home="v2"] .hv2-tag { top: 12px; right: 12px; font-size: 12px; }
   main[data-home="v2"] .hv2-pin > span { font-size: 11.5px; padding: 4px 7px; }
-
-  main[data-home="v2"] .hv2-conversation h2 { font-size: clamp(34px, 10vw, 42px); }
-  main[data-home="v2"] .hv2-conversation-bg img { object-position: 50% 30%; }
-  main[data-home="v2"] .hv2-conversation-bg::after { background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg) 80%, transparent) 0%, color-mix(in srgb, var(--color-bg) 92%, transparent) 38%, color-mix(in srgb, var(--color-bg) 97%, transparent) 100%); }
-  main[data-home="v2"] .hv2-conversation-lead { margin-top: 16px; }
-  main[data-home="v2"] .hv2-conversation-contact { width: 100%; margin-top: 24px; }
-  main[data-home="v2"] .hv2-call .hv2-call-icon { width: 58px; }
-  main[data-home="v2"] .hv2-call .hv2-call-text { padding: 0 14px; }
-  main[data-home="v2"] .hv2-call strong { font-size: 22px; }
-  main[data-home="v2"] .hv2-call .hv2-call-arrow { padding-right: 16px; }
-  /* A phone keeps the labels, stacked under the icon: four side-by-side labels do not fit a 358 px row */
-  main[data-home="v2"] .hv2-conversation-channels { gap: 6px; }
-  main[data-home="v2"] .hv2-conversation-channels .messenger-link { flex-direction: column; gap: 7px; min-height: 64px; padding: 8px 4px; font-size: 12px; }
-  main[data-home="v2"] .hv2-conversation-grid { row-gap: 28px; }
-  main[data-home="v2"] .hv2-journey { grid-template-columns: 1fr; }
-  main[data-home="v2"] .hv2-journey li { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 14px 0; }
-  main[data-home="v2"] .hv2-journey-number { font-size: 18px; }
-  main[data-home="v2"] .hv2-journey h3 { font-size: 16px; }
-  main[data-home="v2"] .hv2-journey p { font-size: 15px; }
 }
 /* Narrow phones: «→ до принципу» and the X-ray label no longer fit one row at the top — the label moves to the
    image's bottom-right corner (dark ground there, so it stays readable). */
 @media (max-width: 560px) {
   main[data-home="v2"] .hv2-proof-xray .hv2-tag-scheme { top: auto; bottom: 12px; }
-}
-@media (max-width: 340px) {
-  main[data-home="v2"] .hv2-call strong { font-size: 20px; }
-  main[data-home="v2"] .hv2-call .hv2-call-icon { width: 52px; }
-  main[data-home="v2"] .hv2-conversation-channels .messenger-link { font-size: 11px; }
 }
