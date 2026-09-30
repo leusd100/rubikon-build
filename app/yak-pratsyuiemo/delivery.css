@@ -16,7 +16,7 @@
 
 /* ---------------------------------------------------------------- 1 · Hero */
 .proc-hero {
-  position: relative; display: flex; align-items: flex-end; min-height: min(86svh, 820px); overflow: hidden; isolation: isolate;
+  position: relative; display: flex; align-items: flex-end; min-height: max(100svh, 720px); overflow: hidden; isolation: isolate;
   color: var(--color-dark-text); background: var(--color-dark);
 }
 .proc-hero-media { position: absolute; z-index: -2; inset: 0; }
@@ -57,9 +57,10 @@
   mask-image: linear-gradient(180deg, black 0, rgba(0, 0, 0, .6) 50%, transparent 100%);
 }
 /* One route: a hairline through the four nodes, copper fading towards the last one */
-.proc-steps { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 clamp(20px, 2.4vw, 40px); margin: 0; padding: 0; list-style: none; }
+.proc-steps { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); gap: 0 clamp(20px, 2.4vw, 40px); margin: 0; padding: 0; list-style: none; }
 .proc-steps::before { content: ''; position: absolute; top: 22px; left: 22px; right: 0; height: 1px; background: linear-gradient(90deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 30%, transparent)); }
-.proc-steps li { position: relative; min-width: 0; }
+/* Each step spans the four shared rows, so titles, texts and «На виході» line up across the route */
+.proc-steps li { position: relative; display: grid; grid-row: span 4; grid-template-rows: subgrid; align-content: start; min-width: 0; }
 .proc-step-node {
   position: relative; display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 26px; color: var(--color-accent-strong);
   background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em;
@@ -154,9 +155,9 @@
 @media (max-width: 1050px) {
   .proc-start-layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   /* The route turns vertical: the hairline runs down through the nodes */
-  .proc-steps { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .proc-steps { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 0; }
   .proc-steps::before { top: 22px; bottom: 22px; left: 21.5px; right: auto; width: 1px; height: auto; background: linear-gradient(180deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 30%, transparent)); }
-  .proc-steps li { padding: 0 0 36px 72px; }
+  .proc-steps li { display: block; grid-row: auto; padding: 0 0 36px 72px; }
   .proc-steps li:last-child { padding-bottom: 0; }
   .proc-step-node { position: absolute; top: 0; left: 0; margin: 0; }
   .proc-steps h3 { padding-top: 9px; }
@@ -180,7 +181,8 @@
 /* ---------------------------------------------------------------- Phone */
 @media (max-width: 760px) {
   .process-page { --section-space: 72px; }
-  .proc-hero { min-height: 0; }
+  /* The call stays above the first-visit cookie banner, as on HOME */
+  .proc-hero { min-height: calc(100svh - 120px); }
   .proc-hero-layout { padding-top: 124px; padding-bottom: 72px; }
   .proc-hero h1 { font-size: clamp(38px, 10.6vw, 46px); }
   .proc-hero-lead { margin-top: 22px; font-size: 16px; }
