@@ -3,12 +3,12 @@
 // Concept artwork — a bolted node in front of a frame still drawn as lines — labelled «Ілюстрація» on the page, never
 // shown as a RUBIKON project.
 export const processHeroImage = {
-  fallbackSrc: '/media-responsive/process-hero-yak-pratsyuiemo-1536w.a21ff750.webp',
+  fallbackSrc: '/media-responsive/process-hero-yak-pratsyuiemo-1536w.dfdb745b.webp',
   srcSet: [
-    '/media-responsive/process-hero-yak-pratsyuiemo-480w.9e33875b.webp 480w',
-    '/media-responsive/process-hero-yak-pratsyuiemo-768w.dce442e8.webp 768w',
-    '/media-responsive/process-hero-yak-pratsyuiemo-1200w.659ef181.webp 1200w',
-    '/media-responsive/process-hero-yak-pratsyuiemo-1536w.a21ff750.webp 1536w',
+    '/media-responsive/process-hero-yak-pratsyuiemo-480w.fbf5d345.webp 480w',
+    '/media-responsive/process-hero-yak-pratsyuiemo-768w.21cacaa9.webp 768w',
+    '/media-responsive/process-hero-yak-pratsyuiemo-1200w.1def5e03.webp 1200w',
+    '/media-responsive/process-hero-yak-pratsyuiemo-1536w.dfdb745b.webp 1536w',
   ].join(', '),
   width: 1672,
   height: 941,

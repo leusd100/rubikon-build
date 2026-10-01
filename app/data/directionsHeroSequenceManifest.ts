@@ -15,32 +15,32 @@ const responsiveSrcSet = (name: string, variants: { w480: string; w768: string; 
 
 export const directionsHeroSequenceAssets: readonly DirectionsHeroSequenceAsset[] = [
   {
-    fallbackSrc: '/media-responsive/directions-sequence-angary-1536w.4dd73b27.webp',
-    srcSet: responsiveSrcSet('angary', { w480: '6f62fdd8', w768: 'f07212a8', w1200: 'bf92dcbc', w1536: '4dd73b27' }),
+    fallbackSrc: '/media-responsive/directions-sequence-angary-1536w.ec149673.webp',
+    srcSet: responsiveSrcSet('angary', { w480: '6d4f7f9b', w768: 'c246316c', w1200: '16a5481c', w1536: 'ec149673' }),
     focalPosition: '55% center',
     mobileFocalPosition: '58% center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-zernoskhovyshcha-1536w.751d0123.webp',
-    srcSet: responsiveSrcSet('zernoskhovyshcha', { w480: '03a1718d', w768: '3c75f1a3', w1200: 'f931cad1', w1536: '751d0123' }),
+    fallbackSrc: '/media-responsive/directions-sequence-zernoskhovyshcha-1536w.f2e9e6ee.webp',
+    srcSet: responsiveSrcSet('zernoskhovyshcha', { w480: 'b0e41daa', w768: '6c117447', w1200: '3d667f36', w1536: 'f2e9e6ee' }),
     focalPosition: '57% center',
     mobileFocalPosition: '60% center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-metalokonstruktsii-1536w.9ddbe89c.webp',
-    srcSet: responsiveSrcSet('metalokonstruktsii', { w480: 'd3b96058', w768: 'ce7e1e20', w1200: '5666a11e', w1536: '9ddbe89c' }),
+    fallbackSrc: '/media-responsive/directions-sequence-metalokonstruktsii-1536w.f68a46a9.webp',
+    srcSet: responsiveSrcSet('metalokonstruktsii', { w480: 'dae71d68', w768: 'a531b57e', w1200: '6871257a', w1536: 'f68a46a9' }),
     focalPosition: '55% center',
     mobileFocalPosition: '57% center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-betonni-roboty-1536w.900a2db6.webp',
-    srcSet: responsiveSrcSet('betonni-roboty', { w480: '95e7c04d', w768: 'd8d9056e', w1200: '0fb7b01f', w1536: '900a2db6' }),
+    fallbackSrc: '/media-responsive/directions-sequence-betonni-roboty-1536w.4aea6812.webp',
+    srcSet: responsiveSrcSet('betonni-roboty', { w480: 'dda69ddd', w768: '376a40f4', w1200: '73b67512', w1536: '4aea6812' }),
     focalPosition: '53% center',
     mobileFocalPosition: '55% center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-pokrivelni-roboty-1536w.d77cd44b.webp',
-    srcSet: responsiveSrcSet('pokrivelni-roboty', { w480: 'e5e75dc5', w768: '7a6b55a2', w1200: '105b1e2d', w1536: 'd77cd44b' }),
+    fallbackSrc: '/media-responsive/directions-sequence-pokrivelni-roboty-1536w.527623f0.webp',
+    srcSet: responsiveSrcSet('pokrivelni-roboty', { w480: 'a8d86378', w768: 'b79e923a', w1200: '40a54a55', w1536: '527623f0' }),
     focalPosition: '55% center',
     mobileFocalPosition: '58% center',
   },
