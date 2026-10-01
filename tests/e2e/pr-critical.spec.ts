@@ -6,6 +6,7 @@ import { company, companyContactLinks } from '../../app/data/company';
 import { homeProofCase } from '../../app/data/homeProof';
 import { directions, undecidedDirection } from '../../app/data/directions';
 import { stubTurnstile } from './turnstile.helpers';
+import { GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT } from '../../app/data/grainPage';
 
 function collectFatalBrowserErrors(page: Page) {
   const errors: string[] = [];
@@ -374,6 +375,36 @@ test('/pro-nas practice steps without motion: overview, no tour control, items s
   await expect(story.locator('.ps-control')).toHaveCount(0);
   await story.getByRole('button', { name: /^Послідовність робіт/ }).click();
   await expect(story.locator('.ps-caption-text')).toHaveText('Порядок монтажу: плита → колона → балка');
+});
+
+// Direction heroes on a phone: a shorter lead (built from the intro's own sentences) keeps the hero's call on the first
+// screen of a 390 × 844 window — the full intro pushed it to 755–888 px. Wider screens keep the full intro; the grain
+// boundary the shorter lead moved out of the way still stands in the hero, right under its actions.
+const PHONE_HERO_PAGES = ['/metalokonstruktsii', '/betonni-roboty', '/pokrivelni-roboty', '/angary', '/zernoskhovyshcha'] as const;
+
+test('direction heroes keep the call on a phone\'s first screen and the full lead on wider screens', async ({ page, isMobile }) => {
+  if (isMobile) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const path of PHONE_HERO_PAGES) {
+      await page.goto(path, { waitUntil: 'load' });
+      const call = page.locator('.service-subhero a[href^="tel:"]').first();
+      const box = await call.boundingBox();
+      expect(box, path).not.toBeNull();
+      expect(box!.y + box!.height, path).toBeLessThanOrEqual(720);
+      await expect(page.locator('.service-subhero-lead .lead-full'), path).toBeHidden();
+      await expect(page.locator('.service-subhero-lead .lead-phone'), path).toBeVisible();
+    }
+    await page.goto('/zernoskhovyshcha', { waitUntil: 'load' });
+    await expect(page.locator('.service-subhero-note')).toHaveText(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    await expect(page.locator('.service-subhero-note')).toBeVisible();
+  } else {
+    for (const path of PHONE_HERO_PAGES) {
+      await page.goto(path, { waitUntil: 'load' });
+      await expect(page.locator('.service-subhero-lead .lead-full'), path).toBeVisible();
+      await expect(page.locator('.service-subhero-lead .lead-phone'), path).toBeHidden();
+    }
+    await expect(page.locator('.service-subhero-note')).toBeHidden();
+  }
 });
 
 // /napryamky: the five directions as a catalogue — every row stays the link to its page, and from 1051 px the preview

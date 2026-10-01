@@ -62,6 +62,8 @@ type DirectionHeroProps = {
   title: string;
   accent: string;
   intro: string;
+  introPhone?: string;
+  notePhone?: string;
   heroImage: DirectionHeroImageAsset;
   actions?: NonNullable<DirectionPageConfig['hero']['actions']>;
 };
@@ -73,6 +75,8 @@ function DirectionHero({
   title,
   accent,
   intro,
+  introPhone,
+  notePhone,
   heroImage,
   actions,
 }: DirectionHeroProps) {
@@ -107,7 +111,11 @@ function DirectionHero({
         <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }, { label: breadcrumbLabel, href: path }]} />
         <p className="eyebrow light"><span /> Напрямок {number}</p>
         <h1>{title}<br /><em>{accent}</em></h1>
-        <p className="service-subhero-lead">{intro}</p>
+        {/* A phone gets the shorter lead (introPhone) so the call stays on the first screen; both are in the markup and
+            CSS shows one, so the words never depend on JavaScript */}
+        <p className="service-subhero-lead">
+          {introPhone ? <><span className="lead-full">{intro}</span><span className="lead-phone">{introPhone}</span></> : intro}
+        </p>
         {actions ? (
           <div className={actions.className}>
             {actions.items.map((action) => (
@@ -120,11 +128,12 @@ function DirectionHero({
         ) : (
           <div className="hero-action-row">
             <a className="button button-primary" href="#inquiry">
-              Обговорити проєкт <span aria-hidden="true">↗</span>
+              Обговорити задачу <span aria-hidden="true">↗</span>
             </a>
             <HeroCallLink />
           </div>
         )}
+        {notePhone && <p className="service-subhero-note">{notePhone}</p>}
       </div>
     </section>
   );
@@ -328,6 +337,8 @@ export function DirectionPage({
         title={config.hero.title}
         accent={config.hero.accent}
         intro={config.hero.intro}
+        introPhone={config.hero.introPhone}
+        notePhone={config.hero.notePhone}
         heroImage={direction.heroImage}
         actions={config.hero.actions}
       />

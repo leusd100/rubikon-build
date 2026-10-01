@@ -33,6 +33,9 @@ const grainDirection: DirectionPageConfig = {
     title: 'Зерносховища',
     accent: 'під вашу задачу зберігання',
     intro: `Скільки зерна, які партії, чи потрібна підготовка і що дозволяє майданчик — з цього починається рішення. ${GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT}`,
+    // A phone: the opening question as the lead, the boundary right under the actions — still in the hero, after the call
+    introPhone: 'Скільки зерна, які партії, чи потрібна підготовка і що дозволяє майданчик — з цього починається рішення.',
+    notePhone: GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT,
     actions: {
       className: 'grain-hero-actions',
       sectionClassName: 'grain-service-subhero',
@@ -44,7 +47,7 @@ const grainDirection: DirectionPageConfig = {
   },
   editorial: {
     eyebrow: 'Як RUBIKON реалізує',
-    title: 'Одна точка координації',
+    title: 'Будівельна частина',
     text: 'Виконуємо погоджену будівельну частину й враховуємо вимоги до обладнання за наданою документацією.',
     points: [
       ['01', 'Основа й фундаменти', 'Бетонні основи під силоси чи підлогове сховище, опорні конструкції та майданчики.'],
@@ -87,7 +90,7 @@ export const grainPage = {
   planner: {
     eyebrow: 'Починаємо з вашої задачі',
     title: 'Який зерновий об’єкт вам насправді потрібен?',
-    supporting: 'Відповіді формують інженерний контекст — без передчасного вибору будівлі.',
+    supporting: 'Відповіді готують предметну розмову — без передчасного вибору будівлі.',
   },
   /** Band 06: real objects only. While this is empty the band is not rendered — no placeholders. */
   cases: [] as readonly GrainCase[],

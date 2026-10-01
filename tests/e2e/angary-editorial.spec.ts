@@ -21,7 +21,7 @@ for (const viewport of viewports) {
     await expect(hero.getByRole('heading', { level: 1 })).toContainText('Ангари та склади');
     await expect(hero.getByRole('heading', { level: 1 })).toContainText('за вашою конфігурацією');
     await expect(hero.getByRole('link', { name: /Зібрати конфігурацію/ })).toHaveAttribute('href', '#configurator');
-    await expect(hero.getByRole('link', { name: /Обговорити завдання/ })).toHaveAttribute('href', '#inquiry');
+    await expect(hero.getByRole('link', { name: /Обговорити задачу/ })).toHaveAttribute('href', '#inquiry');
     await expect(hero.locator('.hc-controls, .hc-preview-surface')).toHaveCount(0);
 
     const sequence = await page.locator([
