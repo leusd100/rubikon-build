@@ -4,13 +4,13 @@ import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
-import { RegionMap } from '../components/about/RegionMap';
+import { RegionBlock } from '../components/about/RegionBlock';
 import { PracticeSteps, type PracticeStep } from '../components/about/PracticeSteps';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
 import { directions } from '../data/directions';
-import { regionMap } from '../data/regionMap';
+import '../components/about/region.css';
 import './about.css';
 
 // /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we build
@@ -142,19 +142,7 @@ export default function AboutPage() {
           {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people; under the
               line, the oblast's real outline (geoBoundaries / OpenStreetMap, credited) draws itself once, Dnipro — where
               the company is based — is marked on it, and contour lines ripple out from the city (RegionMap) */}
-          <div className="about-build-region" data-motion>
-            <p className="about-bond"><span>Основний регіон — {company.serviceAreas[0]}</span></p>
-            <div className="about-region">
-              <div className="about-region-copy">
-                <p className="about-region-base">Базуємося в Дніпрі</p>
-                <p className="about-build-region-note">{company.geographyBeyond}</p>
-              </div>
-              <figure className="about-region-map">
-                <RegionMap label={`Мапа: ${company.serviceAreas[0]}, позначено місто Дніпро`} />
-                <figcaption>{regionMap.attribution}</figcaption>
-              </figure>
-            </div>
-          </div>
+          <RegionBlock className="about-build-region" />
         </div>
       </section>
 

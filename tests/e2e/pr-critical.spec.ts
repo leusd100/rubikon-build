@@ -166,7 +166,7 @@ test('homepage server HTML carries the H1, the real-object proof, the conversati
 
 test('/napryamky server HTML takes its formats and entry points from the model', async ({ page }) => {
   const text = await serverText(page, '/napryamky', {
-    formats: '.cooperation-split-three h2',
+    formats: '.dfmt-option .dfmt-title',
     entryPoints: '.entry-points-list b',
     startNotes: '.entry-points-list small',
   });
@@ -328,7 +328,7 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   await expect(page.locator('.about-build-list img')).toHaveCount(0);
   // The region closes the block on a copper line, the rest of the sentence under it
   const region = page.locator('.about-build-region');
-  await expect(region.locator('.about-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);
+  await expect(region.locator('.region-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);
   await expect(region).toContainText(company.geographyBeyond);
   // The oblast's outline with Dnipro marked; its OpenStreetMap-derived data is credited (ODbL)
   await expect(region.getByRole('img', { name: `Мапа: ${company.serviceAreas[0]}, позначено місто Дніпро` })).toBeVisible();

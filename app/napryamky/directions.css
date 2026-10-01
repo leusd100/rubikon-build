@@ -79,6 +79,111 @@
   .dcat-list a.route-service { transition: color .25s ease, background .25s ease, padding .25s ease, box-shadow .25s ease; }
 }
 
+/* ---------------------------------------------------------------- 3 · Formats on one drawing */
+/* Three format buttons beside one large drawing of the same hangar (ScopeDiagram, /yak-pratsyuiemo). The format in
+   focus redraws the drawing: lines first, then RUBIKON's layers turn copper in build order, then the context settles.
+   The drawing's base styles are /yak's (delivery.css), repeated here inside .dfmt so this page carries its own. */
+.dfmt { background: var(--color-surface); }
+.dfmt-grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: center; gap: clamp(28px, 4vw, 64px); }
+.dfmt-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
+.dfmt-list li { border-bottom: 1px solid var(--color-border); }
+.dfmt-option {
+  display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 8px 16px; width: 100%; padding: 22px 16px 24px; color: inherit; text-align: left;
+  background: none; border: 0; font: inherit; cursor: pointer; transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.dfmt-num { grid-row: span 2; padding-top: 6px; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
+.dfmt-title { color: var(--color-text); font: 400 clamp(26px, 2.3vw, 36px)/1.05 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; transition: color var(--duration-fast) ease; }
+.dfmt-text { max-width: 520px; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
+.dfmt-option[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 9%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+.dfmt-option[aria-pressed="true"] .dfmt-title { color: var(--color-accent-strong); }
+@media (hover: hover) { .dfmt-option:hover { background-color: color-mix(in srgb, var(--color-accent) 5%, transparent); } }
+.dfmt-figure { margin: 0; padding: clamp(18px, 2.4vw, 32px); background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
+.dfmt-caption { margin-top: 14px; color: var(--color-text-muted); font: 700 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.dfmt-caption b { margin-right: 6px; color: var(--color-accent-strong); }
+.dfmt .section-link { margin-top: clamp(28px, 3vw, 40px); }
+.dfmt .scope-diagram { display: block; width: 100%; height: auto; max-width: 100%; overflow: visible; }
+.dfmt .scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; vector-effect: non-scaling-stroke; }
+.dfmt .sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: 1; stroke-linejoin: round; }
+.dfmt .sd-layer polygon { fill: color-mix(in srgb, var(--color-text) 3%, transparent); }
+.dfmt .sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.6; }
+.dfmt .sd-layer.is-scope polygon { fill: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.dfmt .sd-boundary { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.dfmt .sd-boundary-scope { stroke: var(--color-accent); stroke-width: 1.4; }
+.dfmt .sd-boundary-object { stroke: var(--color-border-strong); stroke-dasharray: 5 4; }
+.dfmt .sd-boundary-outer { stroke: var(--color-text-muted); stroke-width: 1.2; stroke-dasharray: 8 5; }
+.dfmt .sd-tab { fill: var(--color-text); }
+.dfmt .sd-tab-label { fill: var(--color-bg); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.dfmt .sd-label { fill: var(--color-text-muted); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
+.dfmt .sd-label-scope { fill: var(--color-accent-strong); }
+.dfmt .sd-leader { fill: none; stroke: var(--color-accent-strong); stroke-width: 1; }
+.dfmt .sd-dot { fill: var(--color-accent); }
+@keyframes dfmt-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes dfmt-fill { from { fill-opacity: 0; } to { fill-opacity: 1; } }
+@keyframes dfmt-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  /* Plays when the block arrives, and again for every format pointed at (the drawing is keyed by format) */
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-layer :is(path, polygon) { animation: dfmt-draw 700ms cubic-bezier(.55, 0, .25, 1) both; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-layer polygon { animation: dfmt-draw 700ms cubic-bezier(.55, 0, .25, 1) both, dfmt-fill 320ms ease 520ms both; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-1 polygon { animation-delay: 0ms, 640ms; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-1 path { animation-delay: 120ms; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-2 polygon { animation-delay: 0ms, 760ms; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-3 polygon { animation-delay: 0ms, 880ms; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-context { animation: dfmt-fade 360ms ease 900ms both; }
+}
+
+/* ---------------------------------------------------------------- 4 · Where the work starts (charcoal band) */
+/* Four «what you have» buttons over the eight-stage track: the start stage takes the copper ring, the copper run goes
+   from it to the last stage, the stages before it step back; under it, the start stage's own description. */
+.dstart { --stage: calc(100% / (var(--last, 7) + 1)); display: grid; gap: clamp(30px, 3.4vw, 46px); }
+/* The list keeps the shared .entry-points-list class (the server-HTML test reads it), so its layout is reset here */
+.dstart .dstart-entries { display: grid; grid-column: auto; grid-row: auto; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; border-top: 0; }
+.dstart .dstart-entries li { display: block; padding: 0; border-bottom: 0; }
+.dstart .dstart-entries small { color: var(--color-dark-text-secondary); }
+.dstart-entry {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; height: 100%; padding: 18px 18px 20px; color: var(--color-dark-text);
+  text-align: left; background: transparent; border: 1px solid var(--color-dark-line); font: inherit; cursor: pointer;
+  transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.dstart-entry b { font: 600 18px/1.2 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.dstart-entry small { color: var(--color-dark-text-secondary); font-size: 13.5px; line-height: 1.5; }
+.dstart-entry[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent-on-dark) 12%, transparent); border-color: var(--color-accent-on-dark); box-shadow: inset 0 3px 0 var(--color-accent-on-dark); }
+@media (hover: hover) { .dstart-entry:hover { border-color: color-mix(in srgb, var(--color-accent-on-dark) 70%, transparent); } }
+.dstart-track { position: relative; }
+.dstart-rail, .dstart-run { position: absolute; top: 10px; height: 2px; }
+.dstart-rail { left: 10px; width: calc(var(--last, 7) * var(--stage)); background: var(--color-dark-line); }
+.dstart-run { left: calc(var(--start, 0) * var(--stage) + 10px); width: calc((var(--last, 7) - var(--start, 0)) * var(--stage)); background: var(--color-accent-on-dark); }
+.dstart-stages { position: relative; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; margin: 0; padding: 0; list-style: none; }
+.dstart-stages li { display: grid; justify-items: start; align-content: start; gap: 10px; padding-right: 12px; }
+.dstart-node { position: relative; z-index: 1; display: block; width: 22px; height: 22px; background: var(--color-dark); border: 2px solid var(--color-accent-on-dark); border-radius: 50%; }
+.dstart-num { color: var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
+.dstart-name { color: var(--color-dark-text-secondary); font: 600 15px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.dstart-stages li[data-state="before"] .dstart-node { border-color: var(--color-dark-line); }
+.dstart-stages li[data-state="before"] :is(.dstart-num, .dstart-name) { color: var(--color-dark-text-muted); }
+.dstart-stages li[data-state="start"] .dstart-node { background: var(--color-accent-on-dark); box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent-on-dark) 22%, transparent); }
+.dstart-stages li[data-state="start"] .dstart-name { color: var(--color-dark-text); }
+.dstart-detail { display: grid; grid-template-columns: minmax(0, .42fr) minmax(0, .58fr); align-items: start; gap: 6px clamp(24px, 4vw, 64px); padding-top: clamp(24px, 3vw, 36px); border-top: 1px solid var(--color-dark-line); }
+.dstart-kicker { grid-column: 1; margin: 0; color: var(--color-dark-text-muted); font: 700 11.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.dstart-stage { grid-column: 1; margin: 0; color: var(--color-dark-text); font: 400 clamp(28px, 2.6vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
+.dstart-stage b { margin-right: 10px; color: var(--color-accent-on-dark); font-weight: 400; }
+.dstart-what { grid-column: 2; grid-row: 1 / span 2; margin: 0; color: var(--color-dark-text-secondary); font-size: 16px; line-height: 1.7; }
+@keyframes dstart-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .dstart-run { transition: left 650ms cubic-bezier(.55, 0, .25, 1), width 650ms cubic-bezier(.55, 0, .25, 1), top 650ms cubic-bezier(.55, 0, .25, 1), height 650ms cubic-bezier(.55, 0, .25, 1); }
+  .dstart-node { transition: background-color 300ms ease, border-color 300ms ease, box-shadow 300ms ease; }
+  .dstart-detail { animation: dstart-in 420ms ease both; }
+  /* Arriving: the rail and the run draw from the first stage, the nodes light up along them */
+  :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) :is(.dstart-rail, .dstart-run) { transform: scaleX(0); }
+  :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) .dstart-stages li { opacity: 0; }
+  :where([data-motion-ready="on"]) .dstart :is(.dstart-rail, .dstart-run) {
+    transform-origin: left;
+    transition: transform 1100ms cubic-bezier(.55, 0, .25, 1), left 650ms cubic-bezier(.55, 0, .25, 1), width 650ms cubic-bezier(.55, 0, .25, 1), top 650ms cubic-bezier(.55, 0, .25, 1), height 650ms cubic-bezier(.55, 0, .25, 1);
+  }
+  :where([data-motion-ready="on"]) .dstart .dstart-stages li { transition: opacity 360ms ease calc(var(--i, 0) * 110ms); }
+}
+
+/* ---------------------------------------------------------------- 5 · Where we work */
+.dregion { background: var(--color-surface); }
+
 /* ---------------------------------------------------------------- Tablet and phone */
 @media (max-width: 1050px) {
   /* One column: no preview — every row carries its own illustration and kinds */
@@ -90,10 +195,26 @@
   .dcat-list .dcat-thumb { position: relative; display: block; overflow: hidden; grid-column: 1 / -1; aspect-ratio: 16 / 8; margin-bottom: 20px; background: var(--color-dark); }
   .dcat-list .dcat-kinds-row { display: flex; margin-top: 14px; }
   .dcat-list .dcat-kinds-row li { padding: 6px 9px; font-size: 12.5px; }
+  .dfmt-grid { grid-template-columns: minmax(0, 1fr); }
+  .dfmt-figure { order: -1; }
+  .dstart .dstart-entries { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dstart-detail { grid-template-columns: minmax(0, 1fr); }
+  .dstart-what { grid-column: 1; grid-row: auto; margin-top: 8px; }
 }
 @media (max-width: 760px) {
   .directions-page .directions-subhero-side { margin-top: 22px; }
   .directions-page .directions-subhero-side > p { font-size: 16px; }
   .directions-page .directions-subhero .subhero-layout { padding-bottom: 92px; }
   .dhs-indicator { display: none; }
+  .dfmt-option { padding: 18px 12px 20px; }
+  .dstart .dstart-entries { grid-template-columns: minmax(0, 1fr); }
+  /* The track turns vertical: one stage per row, the rail and the run down the left */
+  .dstart { --row: 48px; }
+  .dstart-stages { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); }
+  .dstart-stages li { grid-template-columns: 22px 30px minmax(0, 1fr); align-items: center; gap: 12px; height: var(--row); padding: 0; }
+  .dstart-rail, .dstart-run { left: 10px; width: 2px; }
+  .dstart-rail { top: calc(var(--row) / 2); height: calc(var(--last, 7) * var(--row)); }
+  .dstart-run { top: calc(var(--row) / 2 + var(--start, 0) * var(--row)); height: calc((var(--last, 7) - var(--start, 0)) * var(--row)); }
+  :where([data-motion-ready="on"]) .dstart :is(.dstart-rail, .dstart-run) { transform-origin: top; }
+  :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) :is(.dstart-rail, .dstart-run) { transform: scaleY(0); }
 }

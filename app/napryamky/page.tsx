@@ -2,20 +2,26 @@ import { Breadcrumbs, HeroCallLink, SectionHeader } from '../components/SiteChro
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionsCatalog, type CatalogItem } from '../components/directions/DirectionsCatalog';
 import { DirectionsHeroImageSequence } from '../components/DirectionsHeroImageSequence';
-import { DirectionFaq, type DirectionFaqItem } from '../components/DirectionDetail';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
-import { entryPoints, formatCards } from '../lib/deliveryModelPresentation';
+import { formatCards } from '../lib/deliveryModelPresentation';
+import { deliveryModel } from '../data/deliveryModel';
+import { FormatsScope } from '../components/directions/FormatsScope';
+import { StartTrack } from '../components/directions/StartTrack';
+import { RegionBlock } from '../components/about/RegionBlock';
+import { ProcessMotion } from '../components/process/ProcessMotion';
 import { directions } from '../data/directions';
 import { directionPages } from '../data/directionPages';
 import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceManifest';
+import '../components/about/region.css';
 import './directions.css';
 
 // /napryamky — the hub: choose a direction or describe a mixed task. Hero in the /yak-pratsyuiemo composition, its
 // slides naming the direction they show; the five directions as a catalogue (rows + a preview of the one in focus);
-// formats and starting points from the Delivery Model; the short FAQ; the conversation. Every word is the page's
-// previous copy or the directions' own data.
+// the formats on one hangar drawing that redraws per format; where the work starts, on the eight-stage track; where we
+// work, on the region's real map; the conversation. The old two-question FAQ is answered by the last two blocks.
+// Every word is the page's previous copy, /yak-pratsyuiemo's, the directions' own data or the Delivery Model.
 
 /** Each direction's row and preview: its card copy, its page's accent and overview, the hero slide that shows it. */
 const catalog: CatalogItem[] = directions.map((direction) => {
@@ -45,13 +51,9 @@ export const metadata = createPageMetadata({
 });
 
 export default function DirectionsPage() {
-  const faqItems: DirectionFaqItem[] = [
-    ['Де ви працюєте?', company.geography],
-    ['З чого починається робота?', 'Із короткого опису завдання, вивчення вихідних даних та, за потреби, виїзду на майданчик.'],
-  ];
-
   return (
     <main className="inner-page directions-page" id="main-content">
+      <ProcessMotion root=".directions-page" />
       <section className="subhero subhero-media directions-subhero">
         <DirectionsHeroImageSequence />
         <div className="subhero-overlay" />
@@ -92,38 +94,41 @@ export default function DirectionsPage() {
         </div>
       </section>
 
-      {/* One scene, two axes from the Delivery Model: how RUBIKON participates (the three formats)
-          and what the visitor already has (where the work starts). A project or documentation is an
-          entry point, not a fourth format. Kept to a routing aid — the full route is a later page. */}
-      <section className="page-section">
+      {/* 3 · Formats: one drawing of the same hangar, redrawn for the format pointed at, focused or pressed */}
+      <section className="page-section dfmt" aria-labelledby="dfmt-title">
         <div className="shell">
-          <p className="eyebrow"><span /> Формати участі</p>
-          <div className="cooperation-split cooperation-split-three">
-            {formatCards().map(({ id, number, title, text }) => (
-              <article className="cooperation-mode" key={id}>
-                <span>{number}</span>
-                <h2>{title}</h2>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
-          <div className="entry-points">
-            <h2 className="entry-points-title">Що у вас уже є — з того й почнемо</h2>
-            <p className="entry-points-lead">Звертайтеся і з початковою ідеєю, і з готовим проєктом. Переглянемо те, що вже є, та скажемо, які дані потрібні, щоб визначити склад робіт і підготувати кошторис.</p>
-            <ul className="entry-points-list">
-              {entryPoints().map(({ id, label, startNote }) => (
-                <li key={id}>
-                  <b>{label}</b>
-                  {startNote && <small>{startNote}</small>}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <SectionHeader
+            eyebrow="Формати участі"
+            title="Який обсяг робіт можемо взяти на себе"
+            titleId="dfmt-title"
+            supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
+          />
+          <FormatsScope formats={formatCards()} />
           <a className="section-link" href={`${siteRoutes.process}#formaty`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
-      <DirectionFaq title="Коротко про головне" items={faqItems} />
+      {/* 4 · Where the work starts: what you already have → the stage we start from, on the eight-stage track */}
+      <section className="page-section page-section-dark dstart-section" aria-labelledby="dstart-title">
+        <div className="shell">
+          <SectionHeader
+            inverse
+            eyebrow="Перше звернення"
+            title="Що у вас уже є — з того й почнемо"
+            titleId="dstart-title"
+            supporting="Звертайтеся і з початковою ідеєю, і з готовим проєктом. Переглянемо те, що вже є, та скажемо, які дані потрібні, щоб визначити склад робіт і підготувати кошторис."
+          />
+          <StartTrack entries={deliveryModel.entryStates} stages={deliveryModel.stages.map(({ id, number, title, what }) => ({ id, number, title, what }))} />
+        </div>
+      </section>
+
+      {/* 5 · Where we work: the region on its real map (shared with /pro-nas) */}
+      <section className="page-section dregion" aria-label="Де працюємо">
+        <div className="shell">
+          <RegionBlock />
+        </div>
+      </section>
+
       <ConversationSection
         title="Опишіть завдання — підкажемо напрям"
         lead="Не впевнені, який напрямок підходить? Розберемося разом. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит."
