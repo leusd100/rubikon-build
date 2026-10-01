@@ -2,6 +2,7 @@ import { Breadcrumbs, GhostWord, HeroCallButton, HeroCallLink, SectionHeader } f
 import { ConversationSection } from './ConversationSection';
 import ResponsiveImage from './ResponsiveImage';
 import { DrawingSheet, type SheetCell } from './DrawingSheet';
+import { DirectionNode } from './directions/DirectionNode';
 import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
@@ -211,6 +212,23 @@ export function DirectionEditorial({
   className?: string;
 }) {
   const layout = mediaFirstEditorialDirections.has(directionId) ? 'media-first' : 'copy-first';
+
+  // «Вузол напряму»: the same block as a three-step tour of one node, where the page gives one
+  if (editorial.node) {
+    return (
+      <DirectionNode
+        eyebrow={editorial.eyebrow}
+        title={editorial.title}
+        titleId={`${directionId}-node-title`}
+        text={editorial.text}
+        image={editorial.image}
+        imageAlt={editorial.imageAlt}
+        node={editorial.node}
+        layout={layout}
+        className={className}
+      />
+    );
+  }
 
   return (
     <section className={classNames('page-section direction-editorial-section', className)}>
