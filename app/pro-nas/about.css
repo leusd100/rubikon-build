@@ -197,7 +197,7 @@
 .about-story-copy h2 { max-width: 760px; margin: 0; font: 400 clamp(40px, 4vw, 60px)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 .about-story-lead { margin: 26px 0 16px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 .about-before { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
-.about-before li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; padding: 18px 12px; border-bottom: 1px solid var(--color-border); }
+.about-before li { border-bottom: 1px solid var(--color-border); }
 .about-before-index { grid-row: span 2; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
 .about-before b { color: var(--color-text); font: 600 18px/1.25 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
 .about-before-text { color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
@@ -205,13 +205,13 @@
 .about-page[data-motion-ready="on"] .about-before li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 160ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 160ms); }
 .about-page[data-motion-ready] .about-story-layout:not([data-motion-state="on"]) .about-before li { opacity: 0; transform: translateX(-10px); }
 
-/* The illustration answers the list. Its marks are drawn in image pixels and cropped with the image (slice = cover),
-   so the image stays put under them (no hover zoom here) and the note moves to the top-left, clear of them.
-   01 brackets the drawing under the hands, 02 numbers the order the frame goes up (base plate, column, beam),
-   03 rings the bolted beam-to-column joint. Arriving, each mark draws in turn while its item lights up; then all
-   three stay. Pointing at an item brings its mark forward. Without motion every mark is simply there. */
+/* The illustration answers the list one step at a time (PracticeSteps). The stage holds the image and its marks, so
+   one transform pushes the camera in on both; the marks are drawn in image pixels (slice = cover). 01 brackets the
+   drawing under the hands, 02 numbers the order the frame goes up (base plate, column, beam), 03 rings the bolted
+   joint. Overview (no step): all three marks with their numbers. A step: only its mark, drawn once the camera has
+   arrived, its number in the caption instead. Without motion the camera jumps and nothing draws. */
 .about-story-section .promise-visual:hover img { transform: none; }
-.about-story-section .image-note { top: 18px; right: auto; bottom: auto; left: 18px; }
+.ps-stage { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
 .aqc-overlay { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
 .aqc-line {
   fill: none; stroke: var(--color-accent-on-dark); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
@@ -222,30 +222,56 @@
 .aqc-step circle { fill: rgba(13, 16, 14, .84); stroke: var(--color-accent-on-dark); stroke-width: 4; }
 .aqc-badge text, .aqc-step text { fill: #fff; font: 700 30px var(--font-condensed), sans-serif; letter-spacing: .04em; text-anchor: middle; }
 .aqc-step text { font-size: 28px; }
-.aqc-mark { transition: opacity var(--duration-fast) ease; }
-.aqc-mark-1 { --aqc-at: 700ms; }
-.aqc-mark-2 { --aqc-at: 2000ms; }
-.aqc-mark-3 { --aqc-at: 3300ms; }
-.about-page[data-motion-ready="on"] .aqc-line { transition: stroke-dashoffset 900ms var(--m-ease) var(--aqc-at); }
-.about-page[data-motion-ready="on"] :is(.aqc-badge, .aqc-step) { transition: opacity 360ms ease calc(var(--aqc-at) + 520ms), transform 360ms var(--m-ease) calc(var(--aqc-at) + 520ms); }
-/* 02: the steps light up along the route as it draws — 1, 2, 3 — then its number */
-.about-page[data-motion-ready="on"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { transition-delay: calc(var(--aqc-at) + 200ms); }
-.about-page[data-motion-ready="on"] .aqc-mark-2 > g:nth-of-type(2) .aqc-step { transition-delay: calc(var(--aqc-at) + 480ms); }
-.about-page[data-motion-ready="on"] .aqc-mark-2 > g:nth-of-type(3) .aqc-step { transition-delay: calc(var(--aqc-at) + 760ms); }
-.about-page[data-motion-ready="on"] .aqc-mark-2 > g:nth-of-type(4) .aqc-badge { transition-delay: calc(var(--aqc-at) + 900ms); }
-.about-page[data-motion-ready] .about-story-layout:not([data-motion-state="on"]) .aqc-line { stroke-dashoffset: 1; }
-.about-page[data-motion-ready] .about-story-layout:not([data-motion-state="on"]) :is(.aqc-badge, .aqc-step) { opacity: 0; transform: scale(.6); }
-/* Each item lights up while its mark draws (backwards fill: afterwards the item is itself again, hover included) */
-@keyframes aqc-item {
-  0%, 100% { background-color: transparent; box-shadow: inset 0 0 0 transparent; }
-  14%, 82% { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+.aqc-mark, .aqc-badge { transition: opacity 400ms ease; }
+.ps[data-step] .aqc-mark { opacity: 0; }
+.ps[data-step="1"] .aqc-mark-1, .ps[data-step="2"] .aqc-mark-2, .ps[data-step="3"] .aqc-mark-3 { opacity: 1; }
+.ps[data-step] .aqc-badge { opacity: 0; }
+/* The caption bar names what the camera shows; the round control pauses or replays the tour */
+.ps-caption {
+  position: absolute; z-index: 3; right: 16px; bottom: 16px; left: 16px; display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; min-height: 60px; padding: 8px 8px 8px 18px; color: #fff; background: rgba(15, 18, 16, .86); border-top: 3px solid var(--color-accent);
+  backdrop-filter: blur(10px);
 }
-.about-page[data-motion-ready="on"] .about-story-layout[data-motion-state="on"] .about-before li { animation: aqc-item 1300ms ease calc(700ms + var(--i, 0) * 1300ms) backwards; }
+.ps-caption-text { font-size: 11.5px; font-weight: 800; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; }
+.ps-control {
+  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 10px; color: #fff; background: none;
+  border: 0; border-radius: 22px; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+}
+.ps-control-label { color: rgba(255, 255, 255, .86); }
+.ps-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%; }
+.ps-control-icon::before { content: ''; width: 10px; height: 13px; background: linear-gradient(90deg, currentColor 0 3.5px, transparent 3.5px 6.5px, currentColor 6.5px 10px); }
+.ps-control[data-paused] .ps-control-icon { border-color: var(--color-accent-on-dark); }
+.ps-control[data-paused] .ps-control-icon::before { width: 0; height: 0; background: none; border-block: 6.5px solid transparent; border-left: 11px solid currentColor; translate: 1.5px 0; }
+.ps-control:hover .ps-control-label { color: #fff; }
+.ps-control:hover .ps-control-icon { border-color: var(--color-accent-on-dark); }
+.ps-control:focus-visible { outline: 2px solid #fff; outline-offset: 3px; box-shadow: none; }
+/* Three bars, like stories: done, filling, to come */
+.ps-progress { position: absolute; z-index: 3; top: 16px; right: 16px; left: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ps-progress span { position: relative; height: 3px; overflow: hidden; background: rgba(255, 255, 255, .38); }
+.ps-progress span.is-done { background: var(--color-accent-on-dark); }
+.ps-fill { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; }
+@keyframes ps-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.ps[data-touring] .ps-fill { animation: ps-fill 4500ms linear both; }
+/* The items are the steps' buttons; the shown one takes the copper bar */
+.about-before-step {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; width: 100%; padding: 18px 12px; color: inherit; text-align: left;
+  background: none; border: 0; font: inherit; cursor: pointer; transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.about-before-step[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+.about-before-step[aria-pressed="true"] b { color: var(--color-accent-strong); }
 @media (hover: hover) {
-  .about-before li:hover { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
-  .about-story-layout:has(.about-before li:nth-child(1):hover) .aqc-mark:not(.aqc-mark-1),
-  .about-story-layout:has(.about-before li:nth-child(2):hover) .aqc-mark:not(.aqc-mark-2),
-  .about-story-layout:has(.about-before li:nth-child(3):hover) .aqc-mark:not(.aqc-mark-3) { opacity: .16; }
+  .about-before-step:hover { background-color: color-mix(in srgb, var(--color-accent) 6%, transparent); }
+}
+@keyframes ps-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes ps-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: no-preference) {
+  .ps-stage { transition: transform 1100ms cubic-bezier(.65, 0, .25, 1); }
+  .ps[data-step="1"] .aqc-mark-1 .aqc-line,
+  .ps[data-step="2"] .aqc-mark-2 .aqc-line,
+  .ps[data-step="3"] .aqc-mark-3 .aqc-line { animation: ps-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { animation: ps-pop 320ms ease 750ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(2) .aqc-step { animation: ps-pop 320ms ease 1050ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(3) .aqc-step { animation: ps-pop 320ms ease 1350ms backwards; }
 }
 
 /* ---------------------------------------------------------------- 5 · Principles (charcoal band) */

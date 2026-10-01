@@ -5,7 +5,7 @@ import { Breadcrumbs, HeroCallLink, SectionHeader, TeamSection } from '../compon
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { RegionMap } from '../components/about/RegionMap';
-import ResponsiveImage from '../components/ResponsiveImage';
+import { PracticeSteps, type PracticeStep } from '../components/about/PracticeSteps';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
@@ -33,11 +33,29 @@ export const metadata = createPageMetadata({
 });
 
 /** «Практика допомагає бачити ризики»: the three things settled before going on site (the section's own lead). */
-const BEFORE_SITE = [
-  { title: 'Вихідні дані', text: 'Що вже є, чого бракує і які умови майданчика потрібно врахувати.' },
-  { title: 'Послідовність робіт', text: 'Що має відбутися раніше, а що — пізніше, щоб суміжні роботи не конфліктували.' },
-  { title: 'Ключові вузли', text: 'Які конструктивні рішення потрібно зрозуміти до переходу до наступного етапу.' },
-] as const;
+const BEFORE_SITE: readonly PracticeStep[] = [
+  {
+    title: 'Вихідні дані',
+    text: 'Що вже є, чого бракує і які умови майданчика потрібно врахувати.',
+    caption: '01 · Креслення й вихідні дані',
+    focus: [740, 1210],
+    zoom: 2,
+  },
+  {
+    title: 'Послідовність робіт',
+    text: 'Що має відбутися раніше, а що — пізніше, щоб суміжні роботи не конфліктували.',
+    caption: '02 · Порядок монтажу: плита → колона → балка',
+    focus: [800, 720],
+    zoom: 1.75,
+  },
+  {
+    title: 'Ключові вузли',
+    text: 'Які конструктивні рішення потрібно зрозуміти до переходу до наступного етапу.',
+    caption: '03 · Болтовий вузол балки й колони',
+    focus: [1118, 505],
+    zoom: 2.3,
+  },
+];
 
 /** Each principle ends where the page shows how it works in practice. */
 const PRINCIPLES = [
@@ -140,54 +158,17 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 4 · How Serhii's practice shows before work starts */}
+      {/* 4 · How Serhii's practice shows before work starts: the illustration answers the list one step at a time */}
       <section className="page-section about-story-section" aria-labelledby="about-story-title">
-        <div className="shell about-story-layout" data-motion>
-          <div className="promise-visual about-planning-visual">
-            <ResponsiveImage
-              src="/media/about-quality-control.webp"
-              alt="Концептуальна ілюстрація: зіставлення робочого креслення з вузлом сталевого каркаса"
-              sizes="(max-width: 1050px) 100vw, 40vw"
-            />
-            {/* Each of the three things, shown on the illustration itself (drawn in image pixels, cropped exactly as the
-                image): 01 the drawing under the hands, 02 the order the frame goes up — base plate, column, then the
-                beam on the left — and 03 the bolted beam-to-column joint on the right. Played once in order when the block arrives, then all three stay;
-                pointing at an item brings its mark forward. Decoration only: the list carries the words. */}
-            <svg className="aqc-overlay" viewBox="0 0 1440 1800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-              <g className="aqc-mark aqc-mark-1">
-                <path className="aqc-line" pathLength={1} d="M470 1100 V1010 H570 M930 1010 H1030 V1100 M1030 1340 V1430 H930 M570 1430 H470 V1340" />
-                <g transform="translate(470 1010)"><g className="aqc-badge"><circle r="40" /><text dy="11">01</text></g></g>
-              </g>
-              <g className="aqc-mark aqc-mark-2">
-                <path className="aqc-line" pathLength={1} d="M1000 930 C940 800 800 700 790 520 C740 470 650 480 560 520" />
-                <g transform="translate(1000 930)"><g className="aqc-step"><circle r="30" /><text dy="10">1</text></g></g>
-                <g transform="translate(790 520)"><g className="aqc-step"><circle r="30" /><text dy="10">2</text></g></g>
-                <g transform="translate(560 520)"><g className="aqc-step"><circle r="30" /><text dy="10">3</text></g></g>
-                <g transform="translate(1180 930)"><g className="aqc-badge"><circle r="40" /><text dy="11">02</text></g></g>
-              </g>
-              <g className="aqc-mark aqc-mark-3">
-                <circle className="aqc-line" pathLength={1} cx="1118" cy="505" r="165" />
-                <g transform="translate(1235 388)"><g className="aqc-badge"><circle r="40" /><text dy="11">03</text></g></g>
-              </g>
-            </svg>
-            <span className="image-note">Від креслення — до перевірки на майданчику</span>
-          </div>
-          <div className="about-story-copy">
-            <p className="eyebrow"><span /> Практика в основі</p>
-            <h2 id="about-story-title">Досвід працює ще до початку робіт</h2>
-            <p className="about-story-lead">До старту звертаємо увагу на три речі, які найбільше впливають на подальше виконання.</p>
-            <ol className="about-before">
-              {BEFORE_SITE.map((item, index) => (
-                <li key={item.title} style={{ '--i': index } as CSSProperties}>
-                  <span className="about-before-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                  <b>{item.title}</b>
-                  <span className="about-before-text">{item.text}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="about-story-support">Так рішення враховують реальні умови виконання, а склад робіт і межі відповідальності залишаються зрозумілими для всіх учасників.</p>
-          </div>
-        </div>
+        <PracticeSteps
+          eyebrow="Практика в основі"
+          title="Досвід працює ще до початку робіт"
+          titleId="about-story-title"
+          lead="До старту звертаємо увагу на три речі, які найбільше впливають на подальше виконання."
+          steps={BEFORE_SITE}
+          support="Так рішення враховують реальні умови виконання, а склад робіт і межі відповідальності залишаються зрозумілими для всіх учасників."
+          overviewCaption="Від креслення — до перевірки на майданчику"
+        />
       </section>
 
       {/* 5 · Principles, each pointing to how it works on /yak-pratsyuiemo */}
