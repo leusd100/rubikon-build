@@ -155,7 +155,7 @@ test.describe('Grain page without JavaScript', () => {
     await expect(page.locator('#planner h2')).toContainText('Який зерновий об’єкт вам насправді потрібен?');
     await expect(page.locator('#planner').getByRole('heading', { name: 'Що потрібно зберігати?' })).toBeAttached();
     await expect(page.locator('#result article.planner-approach')).toHaveCount(3);
-    await expect(page.locator('.grain-implementation-band h2')).toHaveText('Беремо будівельну частину');
+    await expect(page.locator('.grain-implementation-band h2')).toHaveText('Будівельна частина');
     await expect(page.locator('.grain-process-band h2')).toHaveText('Від опису до реалізації');
     await expect(page.locator('.faq-section summary')).toHaveCount(6);
     await expect(page.locator('.related-directions-section .related-card')).toHaveCount(3);
