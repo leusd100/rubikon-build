@@ -28,7 +28,8 @@ for (const path of editorialHeroes) {
       expect(copyBox).not.toBeNull();
       expect(sideBox).not.toBeNull();
 
-      if (viewport.stacked) {
+      // /pro-nas takes the /yak-pratsyuiemo composition: the lead and actions sit under the title at every width
+      if (viewport.stacked || path === '/pro-nas') {
         expect(copyBox!.y + copyBox!.height).toBeLessThan(sideBox!.y);
       } else {
         expect(copyBox!.x + copyBox!.width).toBeLessThan(sideBox!.x);
@@ -61,9 +62,53 @@ for (const path of editorialHeroes) {
         await chooseDirection.click();
         await expect(page.locator('#directions-list')).toBeInViewport();
       }
+
+      if (path === '/pro-nas') {
+        // One row of actions from 761 px; on a phone the call sits under the full-width button
+        const [ctaBox, callBox] = await Promise.all([
+          hero.getByRole('link', { name: 'Обговорити задачу' }).boundingBox(),
+          hero.locator('.hero-call').boundingBox(),
+        ]);
+        if (viewport.width > 760) {
+          expect(Math.abs((ctaBox!.y + ctaBox!.height / 2) - (callBox!.y + callBox!.height / 2))).toBeLessThanOrEqual(6);
+          expect(ctaBox!.x + ctaBox!.width).toBeLessThan(callBox!.x);
+          expect(heroBox!.height).toBeGreaterThanOrEqual(viewport.height);
+        } else {
+          expect(ctaBox!.y + ctaBox!.height).toBeLessThanOrEqual(callBox!.y);
+        }
+      }
     }
   });
 }
+
+// The /pro-nas actions sat on the bottom edge of a short laptop window: from 761 px they keep at least 56 px above it,
+// and the crumbs stay clear of the fixed header, from a 1250 × 613 window to a large screen.
+test('/pro-nas keeps its hero actions clear of the window edges', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const viewport of [
+    { width: 1250, height: 613 },
+    { width: 1366, height: 657 },
+    { width: 1280, height: 720 },
+    { width: 1440, height: 820 },
+    { width: 1440, height: 900 },
+    { width: 1920, height: 1080 },
+    { width: 820, height: 1180 },
+  ]) {
+    const size = `${viewport.width}×${viewport.height}`;
+    await page.setViewportSize(viewport);
+    await page.goto('/pro-nas', { waitUntil: 'load' });
+    const hero = page.locator('.about-subhero');
+    const [ctaBox, callBox, crumbsBox, headerBox] = await Promise.all([
+      hero.getByRole('link', { name: 'Обговорити задачу' }).boundingBox(),
+      hero.locator('.hero-call').boundingBox(),
+      hero.locator('.breadcrumb').boundingBox(),
+      page.locator('.site-header').boundingBox(),
+    ]);
+    const actionsBottom = Math.max(ctaBox!.y + ctaBox!.height, callBox!.y + callBox!.height);
+    expect(viewport.height - actionsBottom, size).toBeGreaterThanOrEqual(56);
+    expect(crumbsBox!.y, size).toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height + 8);
+  }
+});
 
 test('homepage hero keeps its title above the copy, with the written channels only in the closing block', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });

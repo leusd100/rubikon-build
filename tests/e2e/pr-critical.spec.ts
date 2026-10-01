@@ -2,7 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
 import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
-import { companyContactLinks } from '../../app/data/company';
+import { company, companyContactLinks } from '../../app/data/company';
+import { homeProofCase } from '../../app/data/homeProof';
+import { directions } from '../../app/data/directions';
 import { stubTurnstile } from './turnstile.helpers';
 
 function collectFatalBrowserErrors(page: Page) {
@@ -300,6 +302,77 @@ test('the conversation intro never slides over the steps, and sticks only where 
     if (sticks) expect(scroll.moved, path).toBeGreaterThan(100);
     else expect(scroll.moved, path).toBe(0);
   }
+});
+
+// /pro-nas v2: the two people and what each answers for, what we build and where, principles that point to their
+// mechanism on /yak-pratsyuiemo.
+test('/pro-nas shows who answers for what, what we build and where, principles with their mechanisms', async ({ page }) => {
+  await page.goto('/pro-nas', { waitUntil: 'load' });
+  await expect(page.locator('.team-about .person-story')).toHaveCount(2);
+  await expect(page.locator('.team-about .person-focus')).toHaveCount(2);
+  await expect(page.locator('.team-bond')).toHaveText('Два покоління — одна відповідальність');
+
+  // Owner's decision (30.09): no object photo here until RUBIKON BUILD has objects of its own — the one real photo,
+  // from Serhii's work before the company, stays on HOME with its attribution
+  expect(homeProofCase).not.toBeNull();
+  await expect(page.locator(`main img[src="${homeProofCase!.photo.src}"]`)).toHaveCount(0);
+  await expect(page.locator('main')).not.toContainText(homeProofCase!.attribution);
+
+  const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
+  expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
+  // Five direction rows, each one link named by its title and leading to the direction's page, then the region
+  const rows = page.locator('.about-build-list li');
+  await expect(rows).toHaveCount(directions.length);
+  await expect(page.locator('.about-build-list h3')).toHaveText(directions.map((direction) => direction.cardTitle));
+  expect(await page.locator('.about-build-list a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(directions.map((direction) => direction.href));
+  await expect(page.locator('.about-build-list img')).toHaveCount(0);
+  // The region closes the block on a copper line, the rest of the sentence under it
+  const region = page.locator('.about-build-region');
+  await expect(region.locator('.about-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);
+  await expect(region).toContainText(company.geographyBeyond);
+  // The oblast's outline with Dnipro marked; its OpenStreetMap-derived data is credited (ODbL)
+  await expect(region.getByRole('img', { name: `Мапа: ${company.serviceAreas[0]}, позначено місто Дніпро` })).toBeVisible();
+  await expect(region.locator('figcaption')).toContainText('© учасники OpenStreetMap');
+  // The family thesis is said once — by the copper line under the people — not in the heading as well
+  await expect(page.locator('main').getByText(/Два покоління/)).toHaveCount(1);
+  // Owner's decision (30.09): no «Ілюстрація» tags on this page; the conceptual image says so in its alt text
+  await expect(page.locator('main')).not.toContainText('Ілюстрація');
+  await expect(page.locator('.about-story-section img')).toHaveAttribute('alt', /^Концептуальна ілюстрація/);
+  await expect(page.locator('.ghost-word')).toHaveCount(0);
+
+  // Every principle lands on a zone that exists
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  for (const anchor of anchors) await expect(page.locator(anchor)).toHaveCount(1);
+});
+
+// /pro-nas practice: the illustration answers the list one step at a time — the tour plays by itself once in view and
+// can be paused; every item is a button that shows its step. Reduced motion: no tour and no control.
+test('/pro-nas practice steps play once in view, pause, and answer each item', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/pro-nas', { waitUntil: 'load' });
+  const story = page.locator('.about-story-section');
+  const caption = story.locator('.ps-caption-text');
+  await expect(caption).toHaveText('Від креслення — до перевірки на майданчику');
+  await story.locator('.about-planning-visual').scrollIntoViewIfNeeded();
+  await expect(caption).toHaveText('01 · Креслення й вихідні дані');
+  await story.getByRole('button', { name: 'Пауза показу кроків', exact: true }).click();
+  await expect(story.getByRole('button', { name: 'Відтворити показ кроків', exact: true })).toBeVisible();
+  const joint = story.getByRole('button', { name: /^Ключові вузли/ });
+  await joint.click();
+  await expect(caption).toHaveText('03 · Болтовий вузол балки й колони');
+  await expect(joint).toHaveAttribute('aria-pressed', 'true');
+  await expect(story.locator('.about-before-step[aria-pressed="true"]')).toHaveCount(1);
+});
+
+test('/pro-nas practice steps without motion: overview, no tour control, items still switch', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/pro-nas', { waitUntil: 'load' });
+  const story = page.locator('.about-story-section');
+  await story.locator('.about-planning-visual').scrollIntoViewIfNeeded();
+  await expect(story.locator('.ps-caption-text')).toHaveText('Від креслення — до перевірки на майданчику');
+  await expect(story.locator('.ps-control')).toHaveCount(0);
+  await story.getByRole('button', { name: /^Послідовність робіт/ }).click();
+  await expect(story.locator('.ps-caption-text')).toHaveText('02 · Порядок монтажу: плита → колона → балка');
 });
 
 test('homepage separates labelled illustrations from the one real photo', async ({ page }) => {

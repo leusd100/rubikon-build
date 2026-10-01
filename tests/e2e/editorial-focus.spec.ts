@@ -59,7 +59,7 @@ test('about profiles use a compact text composition on tablet', async ({ page })
   }
 });
 
-test('about editorial word and image stay inside their composition', async ({ page }) => {
+test('about practice illustration stays inside its composition', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 
   for (const viewport of viewports) {
@@ -71,17 +71,12 @@ test('about editorial word and image stay inside their composition', async ({ pa
     await expect(image).toHaveAttribute('src', '/media/about-quality-control.webp');
     await expect(image).toBeVisible();
 
-    const ghostWord = story.locator('.ghost-word');
-    if (viewport.width <= 760) {
-      await expect(ghostWord).toBeHidden();
-    } else {
-      const [storyBox, wordBox] = await Promise.all([story.boundingBox(), ghostWord.boundingBox()]);
-      expect(storyBox).not.toBeNull();
-      expect(wordBox).not.toBeNull();
-      expect(wordBox!.x).toBeGreaterThanOrEqual(0);
-      expect(wordBox!.x + wordBox!.width).toBeLessThanOrEqual(viewport.width + 1);
-      expect(wordBox!.y).toBeGreaterThanOrEqual(storyBox!.y);
-    }
+    // The decorative background words are retired on /pro-nas (as on /yak-pratsyuiemo)
+    await expect(page.locator('.ghost-word')).toHaveCount(0);
+    const [storyBox, imageBox] = await Promise.all([story.boundingBox(), image.boundingBox()]);
+    expect(imageBox!.x).toBeGreaterThanOrEqual(0);
+    expect(imageBox!.x + imageBox!.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(imageBox!.y).toBeGreaterThanOrEqual(storyBox!.y);
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);

@@ -129,6 +129,10 @@ export function DirectionHeroVideo({
   if (!sources.length) return null;
 
   const nextSource = sources.length > 1 ? (activeSource + 1) % sources.length : activeSource;
+  const togglePause = () => {
+    setOutgoingSource(null);
+    setUserPaused((paused) => !paused);
+  };
 
   return (
     <>
@@ -159,17 +163,12 @@ export function DirectionHeroVideo({
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         />
       </picture>
+      {/* The word names the next action and the name changes with it («Пауза відео» / «Відтворити відео»), so the
+          button carries no aria-pressed; the icon beside it says the same */}
       {hasStartedPlayback && canUseVideo && shouldLoadMedia && (
-        <button
-          type="button"
-          className="hero-video-control"
-          aria-pressed={userPaused}
-          onClick={() => {
-            setOutgoingSource(null);
-            setUserPaused((paused) => !paused);
-          }}
-        >
-          Пауза відео
+        <button type="button" className="hero-video-control" data-paused={userPaused || undefined} onClick={togglePause}>
+          <span className="hero-video-control-label">{userPaused ? 'Відтворити' : 'Пауза'}<span className="sr-only"> відео</span></span>
+          <span className="hero-video-control-icon" aria-hidden="true" />
         </button>
       )}
       {sources.map((source, index) => (

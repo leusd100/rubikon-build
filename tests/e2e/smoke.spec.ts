@@ -25,6 +25,7 @@ const heroInquiryCta: Partial<Record<string, string>> = {
   '/angary': 'Обговорити завдання',
   '/zernoskhovyshcha': 'Обговорити зерносховище',
   '/yak-pratsyuiemo': 'Обговорити задачу',
+  '/pro-nas': 'Обговорити задачу',
 };
 
 const publicRoutes: PublicRoute[] = [

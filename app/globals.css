@@ -202,7 +202,9 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .service-subhero-content .angary-hero-actions .hero-call,
 .service-subhero-content .grain-hero-actions .hero-call { margin: 0 0 0 20px; align-self: center; }
 
-.hero { position: relative; min-height: 900px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
+/* Never taller than the window: a flat 900 px floor pushed the actions onto (or under) the bottom edge of 821–899 px
+   high windows — the compact block below only takes over from 820 px down. */
+.hero { position: relative; min-height: min(900px, 100svh); height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
 .hero-media { position: absolute; inset: 0; }
 /* brightness(.85), not .82: tested .82/.85/.87 side by side at 390/820/1440 plus a filtered-
    pixel luminance sample behind the H1/lead/actions/contact-card regions. .82 was never actually
@@ -513,9 +515,28 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .hero-media .direction-hero-poster { object-position: 60% center; filter: saturate(.66) contrast(1.1) brightness(.82); }
 .direction-hero-video { z-index: 1; opacity: 0; transition: opacity 1.1s cubic-bezier(.4, 0, .2, 1); }
 .direction-hero-video.is-active { opacity: 1; }
-.hero-video-control { position: absolute; right: 24px; bottom: 16px; z-index: 3; min-height: var(--control-min-height, 44px); padding: 10px 16px; border: 1px solid rgba(255,255,255,.5); background: var(--color-dark); color: var(--color-dark-text); font: inherit; font-size: 13px; cursor: pointer; }
-.hero-video-control[aria-pressed="true"] { border-color: var(--color-accent-on-dark); }
+/* The hero footage's pause / play (DirectionHeroVideo), bottom right: the word for the next action beside its icon in
+   a circle. The icon is the circle's only content, so it sits on the centre; the play triangle is nudged 1.5 px right,
+   onto its optical centre. The whole pill is the target, and the focus ring follows it. */
+.hero-video-control {
+  position: absolute; right: 24px; bottom: 24px; z-index: 3; display: inline-flex; align-items: center; gap: 12px;
+  min-height: var(--control-min-height, 44px); padding: 0 0 0 14px; color: var(--color-dark-text); background: none; border: 0; border-radius: 22px;
+  font: 700 11.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+}
+.hero-video-control-label { color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); transition: color var(--duration-fast) ease; }
+.hero-video-control-icon {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; background: rgba(13, 16, 14, .62);
+  border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+}
+.hero-video-control-icon::before { content: ''; width: 12px; height: 16px; background: linear-gradient(90deg, currentColor 0 4px, transparent 4px 8px, currentColor 8px 12px); }
+.hero-video-control[data-paused] .hero-video-control-icon { border-color: var(--color-accent-on-dark); }
+.hero-video-control[data-paused] .hero-video-control-icon::before { width: 0; height: 0; background: none; border-block: 8px solid transparent; border-left: 13px solid currentColor; translate: 1.5px 0; }
+.hero-video-control:hover .hero-video-control-label { color: var(--color-dark-text); }
+.hero-video-control:hover .hero-video-control-icon { background: rgba(13, 16, 14, .82); border-color: var(--color-accent-on-dark); }
 .hero-video-control:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+@media (max-width: 760px) {
+  .hero-video-control { right: 16px; bottom: 16px; }
+}
 .subhero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,11,12,.94), rgba(10,11,12,.73) 50%, rgba(10,11,12,.4)), linear-gradient(0deg, rgba(10,11,12,.72), transparent 62%); }
 .subhero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .55fr); align-items: end; gap: clamp(56px, 7vw, 104px); padding-top: 190px; padding-bottom: var(--hero-bottom-space); }
 .subhero-copy { min-width: 0; }
@@ -1154,12 +1175,11 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .hero { min-height: 0; height: 100svh; }
   .hero-layout { min-height: 100%; padding-top: 126px; padding-bottom: 34px; }
   /* HOME only (.hero-layout alone also serves /pro-nas, /napryamky, /yak-pratsyuiemo, which have no
-     hero-video-control to clear): the flat 34px above sits .hero-contact-card only 34px off the
-     hero's own bottom edge, but .hero-video-control ("Пауза відео") needs 60px there (16px bottom +
-     its own 44px height) — on any short viewport this query matches, the two overlapped. 76px (the
-     --hero-bottom-space floor plus a deliberate margin) keeps a real ≥16px gap at every height this
-     query can match, not just clear of it — the 64px floor alone left as little as 4px at the
-     shortest heights, closer to a near-miss than a resting gap. */
+     hero-video-control to clear): the flat 34px above sat HOME v1's .hero-contact-card only 34px off
+     the hero's own bottom edge, where .hero-video-control needed 60px. The control now takes 68px
+     (24px offset + its own 44px circle) at the right, while v2's actions sit on the left, clear of
+     it; 76px (the --hero-bottom-space floor plus a margin) still keeps the words above the control's
+     top at every height this query can match. */
   .hero .hero-layout { padding-bottom: max(76px, var(--hero-bottom-space)); }
   /* The control is a full-bleed absolute child of .hero (not of .hero-layout's right column), so its
      own flat "right: 24px" doesn't track the card's right edge the way everything else in .shell

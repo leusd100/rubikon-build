@@ -1,0 +1,333 @@
+/* /pro-nas — who stands behind the company. Zones: hero (dark, illustrative video) → the two people (paper, two cards
+   tied by one copper line) → what we build and where (stone, five direction rows + the region) → how practice shows
+   before work (paper, illustration + three settled things) → principles (the charcoal band, each with its mechanism)
+   → the site-wide conversation block.
+   Theme roles only (app/theme.css): Light and Dark need no rules of their own. Motion (ProcessMotion, root
+   .about-page) plays once; without it — or with reduced motion — every block shows its final state. */
+
+.about-page {
+  --m-reveal: var(--duration-medium);
+  --m-ease: var(--ease-premium);
+}
+.about-page [id] { scroll-margin-top: 96px; }
+
+/* ---------------------------------------------------------------- 1 · Hero */
+/* The /yak-pratsyuiemo composition: crumbs, eyebrow and title, then the lead and one row of actions under them; the
+   footage keeps the right side. */
+.about-subhero { isolation: isolate; }
+.about-page .about-subhero .subhero-layout { display: block; }
+.about-page .about-subhero-side { width: auto; margin-top: 30px; padding-top: 0; border-top: 0; }
+.about-page .about-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: 17px; line-height: 1.7; }
+.about-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: 38px; }
+.about-hero-actions .about-hero-cta, .about-hero-actions .hero-call { margin: 0; }
+/* The actions stay well clear of the window's bottom edge at every height (they sat on it in a short laptop window).
+   From 761 px the section is at least the window but never forced taller, its bottom space grows with the window's
+   height, and short windows tighten the top, the title and the gaps so the whole block still fits. Phones size the
+   section by its content. */
+@media (min-width: 761px) {
+  .about-page .about-subhero { height: auto; min-height: 100svh; }
+  .about-page .about-subhero .subhero-layout { padding-bottom: clamp(56px, 11vh, 120px); }
+}
+@media (min-width: 761px) and (max-height: 820px) {
+  .about-page .about-subhero .subhero-layout { padding-top: 124px; }
+}
+@media (min-width: 761px) and (max-height: 720px) {
+  .about-page .about-subhero h1 { font-size: clamp(52px, 5vw, 72px); }
+  .about-page .about-subhero-side { margin-top: 22px; }
+  .about-hero-actions { margin-top: 28px; }
+}
+@media (min-width: 761px) and (max-height: 700px) {
+  .about-page .about-subhero .subhero-layout { padding-top: 112px; }
+}
+/* Dark under the words on the left, the footage open on the right: every hero text stays at 4.5:1 or more against
+   the brightest 5 % of each clip behind it */
+.about-page .about-subhero .subhero-overlay {
+  background:
+    linear-gradient(90deg, rgba(10, 11, 12, .92) 0%, rgba(10, 11, 12, .8) 42%, rgba(10, 11, 12, .36) 100%),
+    linear-gradient(0deg, rgba(10, 11, 12, .82) 0%, transparent 52%, rgba(10, 11, 12, .42) 100%);
+}
+
+/* ---------------------------------------------------------------- 2 · The two people */
+.team-about .team-stories { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--grid-gap); padding-bottom: 76px; border-top: 0; }
+.team-about .person-story,
+.team-about .person-story-reverse,
+.team-about .person-story + .person-story {
+  display: block; min-width: 0; padding: clamp(28px, 3vw, 40px); background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border); border-top: 2px solid var(--color-accent);
+}
+.team-about .person-info { display: block; min-height: 0; padding: 0; }
+.team-about .person-info h3 { margin: 16px 0 18px; font-size: clamp(24px, 2.35vw, 38px); white-space: nowrap; }
+/* More specific than globals' `.person-info p:first-of-type`, which would otherwise restyle the label */
+.team-about .person-info .person-focus-label { margin: 26px 0 12px; color: var(--color-text-muted); font: 700 11.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.person-focus { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.person-focus li { padding: 7px 11px; color: var(--color-text); border: 1px solid var(--color-border-strong); font: 600 13.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .03em; }
+/* The family thesis: one copper line under both cards, the words on it */
+.team-bond { position: absolute; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0; }
+.team-bond::before, .team-bond::after { content: ''; flex: 1; height: 1px; background: var(--color-accent); }
+.team-bond::before { transform-origin: right; }
+.team-bond::after { transform-origin: left; }
+.team-bond span { color: var(--color-accent-strong); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+.about-page[data-motion-ready="on"] .team-about .person-story { transition: opacity var(--m-reveal) ease, transform var(--m-reveal) var(--m-ease); }
+.about-page[data-motion-ready="on"] .team-about .person-story + .person-story { transition-delay: 160ms; }
+.about-page[data-motion-ready="on"] .team-bond::before,
+.about-page[data-motion-ready="on"] .team-bond::after { transition: transform 700ms var(--m-ease) 420ms; }
+.about-page[data-motion-ready="on"] .team-bond span { transition: opacity var(--m-reveal) ease 900ms; }
+.about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .person-story { opacity: 0; transform: translateY(14px); }
+.about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond::before { transform: scaleX(0); }
+.about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond::after { transform: scaleX(0); }
+.about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond span { opacity: 0; }
+
+/* ---------------------------------------------------------------- 3 · What we build and where */
+/* Each direction is one row, and the whole row is its link (the title's ::after covers it). Pointed at (devices that
+   hover) or focused, a row takes the charcoal ground: it sweeps in from the left, and each part turns light as the
+   ground reaches it — the number, the title, the words, then the arrow, whose circle turns copper; on the way out the
+   right side goes back first. The region closes the list. */
+.about-build { --sweep: 420ms; background: var(--color-surface); }
+.about-build-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
+.about-build-list li {
+  position: relative; isolation: isolate; display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1.2fr) 44px;
+  grid-template-areas: 'num title text arrow'; align-items: center; gap: 12px clamp(20px, 3vw, 48px);
+  min-height: 108px; padding: 24px clamp(16px, 2vw, 28px); border-bottom: 1px solid var(--color-border);
+}
+.about-build-list li::before { content: ''; position: absolute; z-index: -1; inset: 0; background: var(--color-dark); transform: scaleX(0); transform-origin: left; }
+.about-build-number { grid-area: num; color: var(--color-accent-strong); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
+.about-build-list h3 { grid-area: title; margin: 0; color: var(--color-text); font: 600 clamp(22px, 2.2vw, 32px)/1.08 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: uppercase; }
+.about-build-list h3 a { color: inherit; text-decoration: none; }
+.about-build-list h3 a::after { content: ''; position: absolute; inset: 0; }
+.about-build-list p { grid-area: text; margin: 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
+.about-build-arrow {
+  grid-area: arrow; justify-self: end; display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-strong);
+  border: 1px solid var(--color-border-strong); border-radius: 50%;
+}
+.about-build-arrow span { font-size: 17px; line-height: 1; }
+/* Keyboard: the whole row carries the ring, not the title alone */
+.about-build-list h3 a:focus-visible { outline: none; box-shadow: none; }
+.about-build-list li:has(a:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+@media (hover: hover) {
+  .about-build-list li:hover::before { transform: scaleX(1); }
+  .about-build-list li:hover .about-build-number { color: var(--color-accent-on-dark); }
+  .about-build-list li:hover h3 { color: var(--color-dark-text); }
+  .about-build-list li:hover p { color: var(--color-dark-text-secondary); }
+  .about-build-list li:hover .about-build-arrow { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+  .about-build-list li:hover .about-build-arrow span { transform: translate(2px, -2px); }
+}
+.about-build-list li:has(a:focus-visible)::before { transform: scaleX(1); }
+.about-build-list li:has(a:focus-visible) .about-build-number { color: var(--color-accent-on-dark); }
+.about-build-list li:has(a:focus-visible) h3 { color: var(--color-dark-text); }
+.about-build-list li:has(a:focus-visible) p { color: var(--color-dark-text-secondary); }
+.about-build-list li:has(a:focus-visible) .about-build-arrow { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+@media (prefers-reduced-motion: no-preference) {
+  .about-build-list li::before { transition: transform var(--sweep) var(--m-ease); }
+  /* Out: the right side goes back first (the base delays). In: left to right, behind the ground (the hover delays). */
+  .about-build-number { transition: color 200ms ease 220ms; }
+  .about-build-list h3 { transition: color 200ms ease 170ms; }
+  .about-build-list p { transition: color 200ms ease 90ms; }
+  .about-build-arrow { transition: color 200ms ease, border-color 200ms ease; }
+  .about-build-arrow span { transition: transform var(--duration-fast) var(--m-ease); }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-number { transition-delay: 40ms; }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) h3 { transition-delay: 90ms; }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) p { transition-delay: 170ms; }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow { transition-delay: 260ms; }
+  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow span { transition-delay: 260ms; }
+}
+/* The region closes the directions the way the family thesis closes the people: one copper line with the words on
+   it (drawn out from the words, once), the rest of the sentence under it */
+.about-build-region { margin-top: clamp(44px, 5vw, 68px); }
+.about-bond { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0; }
+.about-bond::before, .about-bond::after { content: ''; flex: 1; height: 1px; background: var(--color-accent); }
+.about-bond::before { transform-origin: right; }
+.about-bond::after { transform-origin: left; }
+.about-bond span { max-width: 72%; color: var(--color-accent-strong); font: 700 13px/1.35 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; text-wrap: balance; }
+.about-build-region-note { max-width: 460px; margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.65; }
+/* Under the line: where we are based, beside the oblast's outline with Dnipro on it */
+.about-region { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; gap: clamp(24px, 4vw, 64px); margin-top: clamp(28px, 3vw, 44px); }
+.about-region-base { margin: 0 0 18px; color: var(--color-text); font: 400 clamp(34px, 3.6vw, 54px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
+.about-region-copy .about-build-region-note { max-width: 520px; font-size: 17px; line-height: 1.7; }
+.about-region-map { margin: 0; }
+.about-region-map svg { display: block; width: 100%; max-height: 400px; overflow: visible; }
+/* The plate (RegionMap): a warm core at Dnipro fading to the edges, even rings stepping out from the city (cut by the
+   boundary), the outline, the city mark with a short leader to its name. The light only lives on fine-pointer
+   devices with motion. */
+.arm-shape { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.arm-area { fill: url(#arm-fill); stroke: none; }
+.arm-fill-core { stop-color: var(--color-accent); stop-opacity: .2; }
+.arm-fill-edge { stop-color: var(--color-accent); stop-opacity: .05; }
+.arm-ring-line { fill: none; stroke: var(--color-accent); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: calc(.46 - var(--k, 0) * .034); stroke-dasharray: 1; stroke-dashoffset: 0; }
+.arm-rings-lit .arm-ring-line { stroke: var(--color-accent-strong); stroke-width: 1.6; opacity: 1; }
+.arm-rings-lit { opacity: 0; transition: opacity 320ms ease; }
+.arm-light { transform: translate(var(--mx), var(--my)); transform-box: view-box; }
+.arm-glow { opacity: 0; transition: opacity 320ms ease; pointer-events: none; }
+.arm-spot-core { stop-color: var(--color-accent); stop-opacity: .26; }
+.arm-spot-edge { stop-color: var(--color-accent); stop-opacity: 0; }
+.arm[data-light="on"] :is(.arm-rings-lit, .arm-glow) { opacity: 1; }
+.arm-outline { fill: none; stroke: var(--color-accent); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.arm-dot { fill: var(--color-accent); }
+.arm-ring, .arm-pulse, .arm-leader { fill: none; stroke: var(--color-accent); vector-effect: non-scaling-stroke; }
+.arm-ring { stroke-width: 1.5; }
+.arm-leader { stroke-width: 1; }
+.arm-pulse { stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.arm-label { fill: var(--color-text); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .04em; }
+.about-region-map figcaption { margin-top: 10px; color: var(--color-text-muted); font-size: 12px; line-height: 1.4; text-align: right; }
+/* Arriving: the line; the outline draws and warms; the city is marked; then the rings step out from it, inner to
+   outer, and the city pulses twice */
+.about-build-region { --arm-draw: cubic-bezier(.55, 0, .25, 1); /* an even pen: no rush at the start, no crawl at the end */ }
+.about-page[data-motion-ready="on"] .arm-outline { transition: stroke-dashoffset 1700ms var(--arm-draw) 400ms; }
+.about-page[data-motion-ready="on"] .arm-area { transition: fill-opacity 700ms ease 1700ms; }
+.about-page[data-motion-ready="on"] :is(.arm-dot, .arm-ring, .arm-leader, .arm-label) { transition: opacity 400ms ease 1900ms; }
+.about-page[data-motion-ready="on"] .arm-ring-line { transition: stroke-dashoffset 1100ms var(--arm-draw) calc(2100ms + var(--k, 0) * 110ms); }
+@keyframes arm-pulse { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
+.about-page[data-motion-ready="on"] .about-build-region[data-motion-state="on"] .arm-pulse { animation: arm-pulse 1400ms ease-out 2100ms 2; }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) :is(.arm-outline, .arm-ring-line) { stroke-dashoffset: 1; }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) .arm-area { fill-opacity: 0; }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) :is(.arm-dot, .arm-ring, .arm-leader, .arm-label) { opacity: 0; }
+.about-page[data-motion-ready="on"] .about-bond::before,
+.about-page[data-motion-ready="on"] .about-bond::after { transition: transform 700ms var(--m-ease) 160ms; }
+.about-page[data-motion-ready="on"] .about-build-region :is(.about-bond span, .about-region-copy) { transition: opacity var(--m-reveal) ease 560ms; }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) .about-bond::before { transform: scaleX(0); }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) .about-bond::after { transform: scaleX(0); }
+.about-page[data-motion-ready] .about-build-region:not([data-motion-state="on"]) :is(.about-bond span, .about-region-copy) { opacity: 0; }
+.about-page[data-motion-ready="on"] .about-build-list li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
+.about-page[data-motion-ready] .about-build-list:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(12px); }
+
+/* ---------------------------------------------------------------- 4 · Practice before work starts */
+.about-story-section { background: var(--color-bg); }
+.about-story-layout { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); align-items: center; gap: var(--grid-gap); }
+.about-story-section .promise-visual { min-height: 560px; }
+.about-story-copy .eyebrow { margin-bottom: 22px; }
+.about-story-copy h2 { max-width: 760px; margin: 0; font: 400 clamp(40px, 4vw, 60px)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
+.about-story-lead { margin: 26px 0 16px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
+.about-before { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
+.about-before li { border-bottom: 1px solid var(--color-border); }
+.about-before-index { grid-row: span 2; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
+.about-before b { color: var(--color-text); font: 600 18px/1.25 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.about-before-text { color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
+.about-story-support { max-width: 640px; margin: 22px 0 0; color: var(--color-text-muted); font-size: 14.5px; line-height: 1.7; }
+.about-page[data-motion-ready="on"] .about-before li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 160ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 160ms); }
+.about-page[data-motion-ready] .about-story-layout:not([data-motion-state="on"]) .about-before li { opacity: 0; transform: translateX(-10px); }
+
+/* The illustration answers the list one step at a time (PracticeSteps). The stage holds the image and its marks, so
+   one transform pushes the camera in on both; the marks are drawn in image pixels (slice = cover). 01 brackets the
+   drawing under the hands, 02 numbers the order the frame goes up (base plate, column, beam), 03 rings the bolted
+   joint. Overview (no step): all three marks with their numbers. A step: only its mark, drawn once the camera has
+   arrived, its number in the caption instead. Without motion the camera jumps and nothing draws. */
+.about-story-section .promise-visual:hover img { transform: none; }
+.ps-stage { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
+.aqc-overlay { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+.aqc-line {
+  fill: none; stroke: var(--color-accent-on-dark); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; filter: drop-shadow(0 0 2px rgba(10, 11, 12, .7));
+}
+.aqc-badge, .aqc-step { transform-box: fill-box; transform-origin: center; }
+.aqc-badge circle { fill: var(--color-accent); stroke: rgba(255, 255, 255, .92); stroke-width: 3; }
+.aqc-step circle { fill: rgba(13, 16, 14, .84); stroke: var(--color-accent-on-dark); stroke-width: 4; }
+.aqc-badge text, .aqc-step text { fill: #fff; font: 700 30px var(--font-condensed), sans-serif; letter-spacing: .04em; text-anchor: middle; }
+.aqc-step text { font-size: 28px; }
+.aqc-mark, .aqc-badge { transition: opacity 400ms ease; }
+.ps[data-step] .aqc-mark { opacity: 0; }
+.ps[data-step="1"] .aqc-mark-1, .ps[data-step="2"] .aqc-mark-2, .ps[data-step="3"] .aqc-mark-3 { opacity: 1; }
+.ps[data-step] .aqc-badge { opacity: 0; }
+/* The caption bar names what the camera shows; the round control pauses or replays the tour */
+.ps-caption {
+  position: absolute; z-index: 3; right: 16px; bottom: 16px; left: 16px; display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; min-height: 60px; padding: 8px 8px 8px 18px; color: #fff; background: rgba(15, 18, 16, .86); border-top: 3px solid var(--color-accent);
+  backdrop-filter: blur(10px);
+}
+.ps-caption-text { font-size: 11.5px; font-weight: 800; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; }
+.ps-control {
+  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 10px; color: #fff; background: none;
+  border: 0; border-radius: 22px; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+}
+.ps-control-label { color: rgba(255, 255, 255, .86); }
+.ps-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%; }
+.ps-control-icon::before { content: ''; width: 10px; height: 13px; background: linear-gradient(90deg, currentColor 0 3.5px, transparent 3.5px 6.5px, currentColor 6.5px 10px); }
+.ps-control[data-paused] .ps-control-icon { border-color: var(--color-accent-on-dark); }
+.ps-control[data-paused] .ps-control-icon::before { width: 0; height: 0; background: none; border-block: 6.5px solid transparent; border-left: 11px solid currentColor; translate: 1.5px 0; }
+.ps-control:hover .ps-control-label { color: #fff; }
+.ps-control:hover .ps-control-icon { border-color: var(--color-accent-on-dark); }
+.ps-control:focus-visible { outline: 2px solid #fff; outline-offset: 3px; box-shadow: none; }
+/* Three bars, like stories: done, filling, to come */
+.ps-progress { position: absolute; z-index: 3; top: 16px; right: 16px; left: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ps-progress span { position: relative; height: 3px; overflow: hidden; background: rgba(255, 255, 255, .38); }
+.ps-progress span.is-done { background: var(--color-accent-on-dark); }
+.ps-fill { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; }
+@keyframes ps-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.ps[data-touring] .ps-fill { animation: ps-fill 4500ms linear both; }
+/* The items are the steps' buttons; the shown one takes the copper bar */
+.about-before-step {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; width: 100%; padding: 18px 12px; color: inherit; text-align: left;
+  background: none; border: 0; font: inherit; cursor: pointer; transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.about-before-step[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+.about-before-step[aria-pressed="true"] b { color: var(--color-accent-strong); }
+@media (hover: hover) {
+  .about-before-step:hover { background-color: color-mix(in srgb, var(--color-accent) 6%, transparent); }
+}
+@keyframes ps-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes ps-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: no-preference) {
+  .ps-stage { transition: transform 1100ms cubic-bezier(.65, 0, .25, 1); }
+  .ps[data-step="1"] .aqc-mark-1 .aqc-line,
+  .ps[data-step="2"] .aqc-mark-2 .aqc-line,
+  .ps[data-step="3"] .aqc-mark-3 .aqc-line { animation: ps-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { animation: ps-pop 320ms ease 750ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(2) .aqc-step { animation: ps-pop 320ms ease 1050ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(3) .aqc-step { animation: ps-pop 320ms ease 1350ms backwards; }
+}
+
+/* ---------------------------------------------------------------- 5 · Principles (charcoal band) */
+.about-principles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2vw, 28px); margin: 0; padding: 0; list-style: none; }
+.about-principles-grid li { display: grid; grid-template-rows: auto auto auto 1fr auto; min-width: 0; padding: 28px 28px 26px; border: 1px solid var(--color-dark-line); border-top: 2px solid var(--color-accent-on-dark); }
+.about-principle-index { color: var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
+.about-principle-icon { width: 26px; height: 26px; margin-top: 22px; color: var(--color-accent-on-dark); stroke-width: 1.5; }
+.about-principles-grid h3 { margin: 18px 0 12px; color: var(--color-dark-text); font: 600 22px/1.12 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: uppercase; }
+.about-principles-grid p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.65; }
+.about-principle-link {
+  justify-self: start; display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 18px; color: var(--color-dark-text);
+  border-bottom: 1px solid var(--color-accent-on-dark); font: 700 12px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase;
+}
+.about-principle-link span { color: var(--color-accent-on-dark); transition: transform var(--duration-fast) var(--m-ease); }
+.about-principle-link:hover span, .about-principle-link:focus-visible span { transform: translate(3px, -3px); }
+.about-page[data-motion-ready="on"] .about-principles-grid li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 150ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 150ms); }
+.about-page[data-motion-ready] .about-principles-grid:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(14px); }
+
+/* ---------------------------------------------------------------- Tablet */
+@media (max-width: 1050px) {
+  .about-story-layout { grid-template-columns: minmax(0, 1fr); }
+  /* Full width: close to the image's own 4 : 5, so every mark stays in the frame */
+  .about-story-section .promise-visual { min-height: 0; aspect-ratio: 4 / 5; max-height: 640px; }
+  .about-principles-grid { grid-template-columns: minmax(0, 1fr); }
+  .about-build-list li { grid-template-columns: 52px minmax(0, 1fr) 44px; grid-template-areas: 'num title arrow' 'num text arrow'; align-items: start; min-height: 0; padding-block: 22px; }
+  .about-build-number { padding-top: 8px; }
+  .about-build-arrow { align-self: center; }
+}
+
+/* ---------------------------------------------------------------- Phone */
+@media (max-width: 760px) {
+  .team-about .team-stories { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 64px; }
+  .team-about .person-info h3 { white-space: normal; }
+  .about-page .about-subhero-side { margin-top: 22px; }
+  .about-page .about-subhero-side > p { font-size: 16px; }
+  .about-hero-actions { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 28px; }
+  .about-hero-actions .about-hero-cta { width: 100%; }
+  /* Phone: the breadcrumbs sit right under the header, over the top of the footage */
+  .about-page .about-subhero .subhero-overlay {
+    background:
+      linear-gradient(180deg, rgba(10, 11, 12, .62) 0%, transparent 34%),
+      linear-gradient(90deg, rgba(10, 11, 12, .9), rgba(10, 11, 12, .72) 60%, rgba(10, 11, 12, .6)),
+      linear-gradient(0deg, rgba(10, 11, 12, .86) 0%, rgba(10, 11, 12, .5) 40%, transparent 70%);
+  }
+  /* The marks' numbers keep a readable size on a narrow image */
+  .aqc-badge { transform: scale(1.6); }
+  .aqc-step { transform: scale(1.45); }
+  .about-principles-grid li { padding: 24px 20px 22px; }
+  /* Number and arrow on one line, the title the full width under them, then the words */
+  .about-build-list li { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: 'num arrow' 'title title' 'text text'; align-items: center; gap: 10px 12px; padding: 20px 12px; }
+  .about-build-number { padding-top: 0; }
+  .about-build-list h3 { font-size: clamp(22px, 6.4vw, 26px); }
+  .about-build-list p { font-size: 15px; }
+  .about-build-region-note { font-size: 14.5px; }
+  .about-region { grid-template-columns: minmax(0, 1fr); }
+  .about-region-copy .about-build-region-note { font-size: 16px; }
+  .arm-label { font-size: 34px; }
+  .about-region-map figcaption { text-align: left; }
+}
