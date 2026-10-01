@@ -554,6 +554,19 @@ test.describe('public route smoke tests', () => {
     }
   });
 
+  // A page without its own Open Graph block inherits the home page's (layout.tsx): a shared link then previews as the
+  // home page while the canonical names the page itself.
+  test('every public page is shared under its own canonical URL', async ({ page }) => {
+    for (const route of publicRoutes) {
+      await page.goto(route.path, { waitUntil: 'load' });
+      const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
+      const ogUrl = await page.locator('meta[property="og:url"]').getAttribute('content');
+
+      expect(canonical, `${route.path} canonical`).toBeTruthy();
+      expect(new URL(ogUrl ?? '', page.url()).href, `${route.path} og:url`).toBe(new URL(canonical ?? '', page.url()).href);
+    }
+  });
+
   // A renamed section id leaves every link to it landing at the top of the page with no error anywhere
   // (/napryamky kept /yak-pratsyuiemo#formaty after /yak v2 renamed the section to #obsiah), and the header's
   // page-relative «Контакти» (#inquiry) needs a target on every page, the 404 included.
