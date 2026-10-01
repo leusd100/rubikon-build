@@ -375,6 +375,37 @@ test('/pro-nas practice steps without motion: overview, no tour control, items s
   await expect(story.locator('.ps-caption-text')).toHaveText('02 · Порядок монтажу: плита → колона → балка');
 });
 
+// /napryamky: the five directions as a catalogue — every row stays the link to its page, and from 1051 px the preview
+// follows the row pointed at or focused (its own title, accent and kinds); the hero slides say which direction they
+// show and can be paused.
+test('/napryamky catalogue preview follows the row in focus; hero slides name their direction and pause', async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/napryamky', { waitUntil: 'load' });
+  const rows = page.locator('#directions-list .route-service');
+  await expect(rows).toHaveCount(directions.length);
+  expect(await rows.evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(directions.map((direction) => direction.href));
+
+  const hero = page.locator('.directions-subhero');
+  await expect(hero.locator('.dhs-caption')).toContainText(directions[0].title);
+  const pause = hero.getByRole('button', { name: 'Пауза показу напрямів', exact: true });
+  await pause.click();
+  await expect(hero.getByRole('button', { name: 'Відтворити показ напрямів', exact: true })).toBeVisible();
+  const paused = await hero.locator('.dhs-caption').textContent();
+  await page.waitForTimeout(3600);
+  await expect(hero.locator('.dhs-caption')).toHaveText(paused!);
+
+  if (testInfo.project.name === 'desktop-chromium') {
+    const preview = page.locator('.dcat-preview');
+    await expect(preview.locator('.dcat-title')).toHaveText(directions[0].serviceTitle);
+    await page.locator('#metalokonstruktsii').hover();
+    await expect(preview.locator('.dcat-title')).toHaveText('Металоконструкції');
+    await expect(preview.locator('.dcat-accent')).toHaveText('від деталі до монтажу');
+    await page.locator('#betonni-roboty').focus();
+    await expect(preview.locator('.dcat-title')).toHaveText('Бетонні роботи');
+    await expect(preview.locator('.dcat-kinds li')).toHaveText(['Фундаменти', 'Основи під обладнання', 'Промислові підлоги', 'Монолітні ділянки']);
+  }
+});
+
 test('homepage separates labelled illustrations from the one real photo', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   const cards = page.locator('#directions .direction-card');

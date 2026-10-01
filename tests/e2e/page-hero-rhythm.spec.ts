@@ -28,8 +28,8 @@ for (const path of editorialHeroes) {
       expect(copyBox).not.toBeNull();
       expect(sideBox).not.toBeNull();
 
-      // /pro-nas takes the /yak-pratsyuiemo composition: the lead and actions sit under the title at every width
-      if (viewport.stacked || path === '/pro-nas') {
+      // /pro-nas and /napryamky take the /yak-pratsyuiemo composition: the lead and actions sit under the title
+      if (viewport.stacked || path === '/pro-nas' || path === '/napryamky') {
         expect(copyBox!.y + copyBox!.height).toBeLessThan(sideBox!.y);
       } else {
         expect(copyBox!.x + copyBox!.width).toBeLessThan(sideBox!.x);
@@ -82,8 +82,8 @@ for (const path of editorialHeroes) {
 }
 
 // The /pro-nas actions sat on the bottom edge of a short laptop window: from 761 px they keep at least 56 px above it,
-// and the crumbs stay clear of the fixed header, from a 1250 × 613 window to a large screen.
-test('/pro-nas keeps its hero actions clear of the window edges', async ({ page }) => {
+// and the crumbs stay clear of the fixed header, from a 1250 × 613 window to a large screen. /napryamky shares the rule.
+for (const [path, primary] of [['/pro-nas', 'Обговорити задачу'], ['/napryamky', 'Обрати напрям']] as const) test(`${path} keeps its hero actions clear of the window edges`, async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   for (const viewport of [
     { width: 1250, height: 613 },
@@ -96,10 +96,10 @@ test('/pro-nas keeps its hero actions clear of the window edges', async ({ page 
   ]) {
     const size = `${viewport.width}×${viewport.height}`;
     await page.setViewportSize(viewport);
-    await page.goto('/pro-nas', { waitUntil: 'load' });
-    const hero = page.locator('.about-subhero');
+    await page.goto(path, { waitUntil: 'load' });
+    const hero = page.locator('.subhero');
     const [ctaBox, callBox, crumbsBox, headerBox] = await Promise.all([
-      hero.getByRole('link', { name: 'Обговорити задачу' }).boundingBox(),
+      hero.getByRole('link', { name: primary }).first().boundingBox(),
       hero.locator('.hero-call').boundingBox(),
       hero.locator('.breadcrumb').boundingBox(),
       page.locator('.site-header').boundingBox(),

@@ -1,0 +1,99 @@
+/* /napryamky — the hub. Zones: hero (dark, the direction slides, in the /yak-pratsyuiemo composition) → the five
+   directions as a catalogue (paper: rows + a sticky preview of the one in focus) → formats and starting points →
+   short FAQ → the site-wide conversation block. Theme roles only (app/theme.css). */
+
+/* ---------------------------------------------------------------- 1 · Hero */
+/* Crumbs, eyebrow and title, then the lead and one row of actions under them; the slides keep the right side. The
+   title keeps its three lines: as two, «комплексне завдання» reached the bright sky of the slides (2.8 : 1). */
+.directions-page .directions-subhero .subhero-layout { display: block; }
+.directions-page .directions-subhero-side { width: auto; margin-top: 30px; padding-top: 0; border-top: 0; }
+.directions-page .directions-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: 17px; line-height: 1.7; }
+.directions-page .directions-hero-actions { gap: 18px 36px; margin-top: 38px; }
+.directions-page .directions-hero-actions :is(.subhero-side-cta, .text-link, .hero-call) { margin: 0; }
+/* Dark under the words on the left, the slide open on the right, a little shade at the top for the slide caption */
+.directions-page .directions-subhero .subhero-overlay {
+  background:
+    linear-gradient(90deg, rgba(10, 11, 12, .92) 0%, rgba(10, 11, 12, .8) 42%, rgba(10, 11, 12, .34) 100%),
+    linear-gradient(0deg, rgba(10, 11, 12, .82) 0%, transparent 50%, rgba(10, 11, 12, .5) 100%);
+}
+/* Clear of the window's edges at every height, as on /pro-nas: at least the window, never forced taller */
+@media (min-width: 761px) {
+  .directions-page .directions-subhero { height: auto; min-height: 100svh; }
+  .directions-page .directions-subhero .subhero-layout { padding-bottom: clamp(56px, 11vh, 120px); }
+}
+@media (min-width: 761px) and (max-height: 820px) {
+  .directions-page .directions-subhero .subhero-layout { padding-top: 124px; }
+}
+@media (min-width: 761px) and (max-height: 720px) {
+  .directions-page .directions-subhero h1 { font-size: clamp(46px, 4.6vw, 64px); }
+  .directions-page .directions-subhero-side { margin-top: 22px; }
+  .directions-page .directions-hero-actions { margin-top: 26px; }
+}
+@media (min-width: 761px) and (max-height: 700px) {
+  .directions-page .directions-subhero .subhero-layout { padding-top: 112px; }
+}
+/* Which direction the slide shows, top right: five bars (the current one filling for the slide's 3 s) and its name */
+.dhs-indicator { position: absolute; z-index: 3; top: 128px; right: var(--container-gutter); display: flex; flex-direction: column; align-items: flex-end; width: min(300px, 30vw); pointer-events: none; }
+.dhs-bars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.dhs-bars i { position: relative; height: 2px; overflow: hidden; background: rgba(255, 255, 255, .32); }
+.dhs-bars i.is-done { background: var(--color-accent-on-dark); }
+.dhs-bars b { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; }
+@keyframes dhs-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dhs-bars b { animation: dhs-fill 3000ms linear both; }
+.dhs-indicator[data-paused] .dhs-bars b { animation-play-state: paused; }
+/* A quiet glass chip under the name: it sits over the brightest part of every slide, the sky */
+.dhs-caption { margin-top: 10px; padding: 5px 9px; color: rgba(255, 255, 255, .92); background: rgba(13, 16, 14, .58); backdrop-filter: blur(6px); font: 700 11.5px/1.3 var(--font-condensed), sans-serif; letter-spacing: .12em; text-align: right; text-transform: uppercase; }
+.dhs-caption b { color: var(--color-accent-on-dark); font-weight: 700; }
+
+/* ---------------------------------------------------------------- 2 · The directions catalogue */
+/* Rows on the left (each the link to its page, darkening when pointed at, the one in focus marked in copper); from
+   1051 px a sticky preview on the right: the illustration, the direction's own accent line, the kinds of work. */
+.dcat { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); align-items: start; gap: clamp(28px, 4vw, 64px); }
+.dcat-list a.route-service { position: relative; min-height: 148px; }
+.dcat-list a.route-service[data-active] { box-shadow: inset 3px 0 0 var(--color-accent); }
+/* On the row's dark state (pointer or keyboard) the kinds turn light with it */
+.dcat-list a.route-service:is(:hover, :focus-visible) .dcat-kinds li { color: var(--color-dark-text-secondary); border-color: var(--color-dark-line); }
+.dcat-list :is(.dcat-thumb, .dcat-kinds-row) { display: none; }
+.dcat-preview { position: sticky; top: 112px; }
+.dcat-media { position: relative; overflow: hidden; aspect-ratio: 5 / 4; background: var(--color-dark); border: 1px solid var(--color-border); }
+.dcat-frame { position: absolute; inset: 0; opacity: 0; transform: scale(1.05); }
+.dcat-frame[data-active] { opacity: 1; transform: none; }
+.dcat-frame img, .dcat-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.6) contrast(1.06); }
+.dcat-media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(10, 11, 12, .62) 0%, transparent 38%); pointer-events: none; }
+.dcat-tag {
+  position: absolute; z-index: 1; top: 14px; left: 14px; padding: 6px 9px; color: var(--color-dark-text); background: rgba(13, 16, 14, .76);
+  border: 1px solid rgba(255, 255, 255, .22); font: 700 11px/1.2 var(--font-condensed), sans-serif; font-style: normal; letter-spacing: .1em; text-transform: uppercase;
+}
+.dcat-count { position: absolute; z-index: 1; right: 18px; bottom: 14px; color: rgba(255, 255, 255, .86); font: 600 14px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; }
+.dcat-count b { margin-right: 4px; color: var(--color-accent-on-dark); font-size: 40px; font-weight: 600; letter-spacing: 0; }
+.dcat-copy { padding-top: 24px; }
+.dcat-title { margin: 0; font: 400 clamp(28px, 2.5vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; text-wrap: balance; }
+.dcat-accent { margin: 4px 0 0; color: var(--color-accent-strong); font: 400 clamp(22px, 1.9vw, 30px)/1.12 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+.dcat-kinds-label { margin: 22px 0 10px; color: var(--color-text-muted); font: 700 11.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.dcat-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.dcat-kinds li { padding: 7px 11px; color: var(--color-text); border: 1px solid var(--color-border-strong); font: 600 13.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .03em; }
+@keyframes dcat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .dcat-frame { transition: opacity 520ms ease, transform 1200ms cubic-bezier(.2, .7, .1, 1); }
+  .dcat-copy { animation: dcat-in 420ms ease both; }
+  .dcat-list a.route-service { transition: color .25s ease, background .25s ease, padding .25s ease, box-shadow .25s ease; }
+}
+
+/* ---------------------------------------------------------------- Tablet and phone */
+@media (max-width: 1050px) {
+  /* One column: no preview — every row carries its own illustration and kinds */
+  .dcat { grid-template-columns: minmax(0, 1fr); }
+  .dcat-preview { display: none; }
+  .dcat-list a.route-service { align-items: start; padding-block: 26px 28px; }
+  .dcat-list a.route-service[data-active] { box-shadow: none; }
+  .dcat-list a.route-service > span:not(.dcat-thumb), .dcat-list a.route-service > b { margin-top: 6px; }
+  .dcat-list .dcat-thumb { position: relative; display: block; overflow: hidden; grid-column: 1 / -1; aspect-ratio: 16 / 8; margin-bottom: 20px; background: var(--color-dark); }
+  .dcat-list .dcat-kinds-row { display: flex; margin-top: 14px; }
+  .dcat-list .dcat-kinds-row li { padding: 6px 9px; font-size: 12.5px; }
+}
+@media (max-width: 760px) {
+  .directions-page .directions-subhero-side { margin-top: 22px; }
+  .directions-page .directions-subhero-side > p { font-size: 16px; }
+  .directions-page .directions-subhero .subhero-layout { padding-bottom: 92px; }
+  .dhs-indicator { display: none; }
+}

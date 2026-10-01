@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceManifest';
+import { directions } from '../data/directions';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
 
 const CLIP_DURATION_MS = 3000;
 const FADE_DURATION_MS = 2000;
+const pad = (value: number) => String(value).padStart(2, '0');
+
+/** The direction a slide shows, by the asset's own file name (the sequence follows the directions' order). */
+function directionTitle(src: string) {
+  return directions.find((direction) => src.includes(`directions-sequence-${direction.id}-`))?.title ?? '';
+}
 
 export function DirectionsHeroImageSequence() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -21,9 +28,13 @@ export function DirectionsHeroImageSequence() {
   const { shouldLoadMedia } = useDeferredMedia(firstImageRef, {
     observeKey: 'directions-static-hero-sequence',
   });
+  // The slides change on their own, so they can be paused (the same round control as the hero videos); the active
+  // bar restarts with every slide and every resume
+  const [paused, setPaused] = useState(false);
+  const [resumes, setResumes] = useState(0);
 
   useEffect(() => {
-    if (!shouldLoadMedia) return;
+    if (!shouldLoadMedia || paused) return;
 
     const timer = window.setInterval(() => {
       setActiveIndex((current) => {
@@ -34,9 +45,10 @@ export function DirectionsHeroImageSequence() {
     }, CLIP_DURATION_MS);
 
     return () => window.clearInterval(timer);
-  }, [shouldLoadMedia]);
+  }, [shouldLoadMedia, paused]);
 
   const visibleIndex = shouldLoadMedia ? activeIndex : 0;
+  const count = directionsHeroSequenceAssets.length;
 
   return (
     <>
@@ -68,6 +80,35 @@ export function DirectionsHeroImageSequence() {
           </picture>
         );
       })}
+      {shouldLoadMedia && (
+        <>
+          {/* Which direction the slide shows — the sequence otherwise cycles without saying what it is */}
+          <div className="dhs-indicator" data-paused={paused || undefined} aria-hidden="true">
+            <span className="dhs-bars">
+              {directionsHeroSequenceAssets.map((asset, index) => (
+                <i key={asset.fallbackSrc} className={index < visibleIndex ? 'is-done' : undefined}>
+                  {index === visibleIndex && <b key={`${visibleIndex}-${resumes}`} />}
+                </i>
+              ))}
+            </span>
+            <span className="dhs-caption">
+              <b>{pad(visibleIndex + 1)}</b> / {pad(count)} · {directionTitle(directionsHeroSequenceAssets[visibleIndex].fallbackSrc)}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="hero-video-control"
+            data-paused={paused || undefined}
+            onClick={() => {
+              setPaused((value) => !value);
+              setResumes((value) => value + 1);
+            }}
+          >
+            <span className="hero-video-control-label">{paused ? 'Відтворити' : 'Пауза'}<span className="sr-only">{paused ? ' показ напрямів' : ' показу напрямів'}</span></span>
+            <span className="hero-video-control-icon" aria-hidden="true" />
+          </button>
+        </>
+      )}
     </>
   );
 }
