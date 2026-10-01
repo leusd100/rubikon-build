@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type SyntheticEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { ChevronDown, Phone, Send } from 'lucide-react';
@@ -46,12 +46,12 @@ type ValidatedField = HTMLInputElement | HTMLSelectElement;
  */
 function ukrainianValidity(messages: { missing: string; format?: string }) {
   return {
-    onInvalid: (event: FormEvent<ValidatedField>) => {
+    onInvalid: (event: SyntheticEvent<ValidatedField>) => {
       const field = event.currentTarget;
       if (field.validity.customError) return;
       field.setCustomValidity(field.validity.valueMissing ? messages.missing : messages.format ?? messages.missing);
     },
-    onInput: (event: FormEvent<ValidatedField>) => event.currentTarget.setCustomValidity(''),
+    onInput: (event: SyntheticEvent<ValidatedField>) => event.currentTarget.setCustomValidity(''),
   };
 }
 
