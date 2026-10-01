@@ -4,7 +4,7 @@ import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { company, companyContactLinks } from '../../app/data/company';
 import { homeProofCase } from '../../app/data/homeProof';
-import { directions } from '../../app/data/directions';
+import { directions, undecidedDirection } from '../../app/data/directions';
 import { stubTurnstile } from './turnstile.helpers';
 
 function collectFatalBrowserErrors(page: Page) {
@@ -478,10 +478,10 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }
 
 // /yak-pratsyuiemo — the Delivery Model page, readable before and without JavaScript.
 // One closing conversation block everywhere: the same four step titles, each page's own explanations, and on a
-// direction page the form already names that direction. /yak-pratsyuiemo shows its steps in the route instead.
+// direction page the form already names that direction. /yak-pratsyuiemo shows its steps in the route instead, and
+// /napryamky in its start track (see the next test).
 const CONVERSATION_PAGES: ReadonlyArray<{ path: string; journey: readonly string[] }> = [
   { path: '/', journey: DEFAULT_JOURNEY },
-  { path: '/napryamky', journey: DEFAULT_JOURNEY },
   { path: '/pro-nas', journey: DEFAULT_JOURNEY },
   ...Object.entries(DIRECTION_JOURNEY).map(([id, journey]) => ({ path: `/${id}`, journey })),
 ];
@@ -505,6 +505,19 @@ test('every page closes with the same conversation block, in its own words', asy
     expect(text.steps, path).toEqual([...journey]);
     expect(text.legacy, path).toEqual([]);
   }
+});
+
+// /napryamky invites people who have not picked a direction: its form starts on «Ще не визначено» (a real, accepted
+// answer), and the four after-contact steps give way to the start track above, which already says where we begin.
+test('/napryamky form starts on «Ще не визначено» and the start track replaces the four steps', async ({ page }) => {
+  const text = await serverText(page, '/napryamky', {
+    journey: '#inquiry .conversation-journey',
+    track: '.dstart-track',
+  });
+  expect(text.journey).toEqual([]);
+  expect(text.track).toHaveLength(1);
+  await page.goto('/napryamky', { waitUntil: 'load' });
+  await expect(page.locator('#inquiry form.inquiry-form').getByLabel(/Напрям робіт/)).toHaveValue(undecidedDirection);
 });
 
 test('the form carries no step numbers; a phone folds the step texts behind one button', async ({ page }) => {

@@ -79,6 +79,13 @@ FILES = [
     "media/angary/envelope-sandwich-cutaway.jpg",
     "media/angary/foundation-slab-detail.jpg",
     "media/angary/foundation-isolated-detail.jpg",
+    # /napryamky catalogue: one illustration per direction, different from the hero slides. Shown up to ~575 CSS px
+    # wide in the desktop preview and ~100 px in the narrow-screen rows.
+    "media/directions-catalog/catalog-angary.webp",
+    "media/directions-catalog/catalog-zernoskhovyshcha.webp",
+    "media/directions-catalog/catalog-metalokonstruktsii.webp",
+    "media/directions-catalog/catalog-betonni-roboty.webp",
+    "media/directions-catalog/catalog-pokrivelni-roboty.webp",
 ]
 
 

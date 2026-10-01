@@ -91,6 +91,31 @@ export const responsiveWebpVariants: Record<string, { w480: string; w768: string
     w768: '/media-responsive/direction-steel-v2-768w.cb5b838a.webp',
     w1200: '/media-responsive/direction-steel-v2-1200w.60a364c4.webp',
   },
+  '/media/directions-catalog/catalog-angary.webp': {
+    w480: '/media-responsive/catalog-angary-480w.0fcaad1b.webp',
+    w768: '/media-responsive/catalog-angary-768w.06776c3a.webp',
+    w1200: '/media-responsive/catalog-angary-1200w.fa700bbd.webp',
+  },
+  '/media/directions-catalog/catalog-betonni-roboty.webp': {
+    w480: '/media-responsive/catalog-betonni-roboty-480w.388291bc.webp',
+    w768: '/media-responsive/catalog-betonni-roboty-768w.1cc990a2.webp',
+    w1200: '/media-responsive/catalog-betonni-roboty-1200w.5ba2f09f.webp',
+  },
+  '/media/directions-catalog/catalog-metalokonstruktsii.webp': {
+    w480: '/media-responsive/catalog-metalokonstruktsii-480w.6c036021.webp',
+    w768: '/media-responsive/catalog-metalokonstruktsii-768w.ce147cd5.webp',
+    w1200: '/media-responsive/catalog-metalokonstruktsii-1200w.3e445a38.webp',
+  },
+  '/media/directions-catalog/catalog-pokrivelni-roboty.webp': {
+    w480: '/media-responsive/catalog-pokrivelni-roboty-480w.c781230a.webp',
+    w768: '/media-responsive/catalog-pokrivelni-roboty-768w.9fc35227.webp',
+    w1200: '/media-responsive/catalog-pokrivelni-roboty-1200w.8afaff0b.webp',
+  },
+  '/media/directions-catalog/catalog-zernoskhovyshcha.webp': {
+    w480: '/media-responsive/catalog-zernoskhovyshcha-480w.902deed7.webp',
+    w768: '/media-responsive/catalog-zernoskhovyshcha-768w.78648c74.webp',
+    w1200: '/media-responsive/catalog-zernoskhovyshcha-1200w.cf87a6bf.webp',
+  },
   '/photos/serhii-prior-hangar.jpeg': {
     w480: '/media-responsive/serhii-prior-hangar-480w.60d83ab6.webp',
     w768: '/media-responsive/serhii-prior-hangar-768w.7a28754c.webp',

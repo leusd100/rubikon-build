@@ -1,10 +1,11 @@
 /* /napryamky — the hub. Zones: hero (dark, the direction slides, in the /yak-pratsyuiemo composition) → the five
-   directions as a catalogue (paper: rows + a sticky preview of the one in focus) → formats and starting points →
-   short FAQ → the site-wide conversation block. Theme roles only (app/theme.css). */
+   directions as a catalogue (paper: rows + a sticky preview of the one in focus) → formats → where the work starts →
+   the region → the site-wide conversation block. Theme roles only (app/theme.css). */
 
 /* ---------------------------------------------------------------- 1 · Hero */
 /* Crumbs, eyebrow and title, then the lead and one row of actions under them; the slides keep the right side. The
-   title keeps its three lines: as two, «комплексне завдання» reached the bright sky of the slides (2.8 : 1). */
+   title is two short lines («Від фундаменту / до покрівлі»), so its copper word stays over the dark left of the
+   overlay; the old long second line reached the slides' bright sky (2.8 : 1). */
 .directions-page .directions-subhero .subhero-layout { display: block; }
 .directions-page .directions-subhero-side { width: auto; margin-top: 30px; padding-top: 0; border-top: 0; }
 .directions-page .directions-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: 17px; line-height: 1.7; }
@@ -186,13 +187,20 @@
 
 /* ---------------------------------------------------------------- Tablet and phone */
 @media (max-width: 1050px) {
-  /* One column: no preview — every row carries its own illustration and kinds */
+  /* One column, no preview: every row carries a small illustration beside its name — the list stays a list, not five
+     full-width pictures (that was ~3 phone screens) */
   .dcat { grid-template-columns: minmax(0, 1fr); }
   .dcat-preview { display: none; }
-  .dcat-list a.route-service { align-items: start; padding-block: 26px 28px; }
+  .dcat-list a.route-service {
+    grid-template-columns: 184px minmax(0, 1fr) 24px; grid-template-areas: "thumb num arrow" "thumb body arrow"; grid-template-rows: auto 1fr;
+    align-items: start; gap: 8px 24px; min-height: 0; padding-block: 24px;
+  }
   .dcat-list a.route-service[data-active] { box-shadow: none; }
-  .dcat-list a.route-service > span:not(.dcat-thumb), .dcat-list a.route-service > b { margin-top: 6px; }
-  .dcat-list .dcat-thumb { position: relative; display: block; overflow: hidden; grid-column: 1 / -1; aspect-ratio: 16 / 8; margin-bottom: 20px; background: var(--color-dark); }
+  .dcat-list a.route-service > span:not(.dcat-thumb) { grid-area: num; }
+  .dcat-list a.route-service > div { grid-area: body; }
+  .dcat-list a.route-service > div p { margin-top: 10px; }
+  .dcat-list a.route-service > b { grid-area: arrow; margin-top: 2px; }
+  .dcat-list .dcat-thumb { position: relative; display: block; overflow: hidden; grid-area: thumb; aspect-ratio: 4 / 3; background: var(--color-dark); }
   .dcat-list .dcat-kinds-row { display: flex; margin-top: 14px; }
   .dcat-list .dcat-kinds-row li { padding: 6px 9px; font-size: 12.5px; }
   .dfmt-grid { grid-template-columns: minmax(0, 1fr); }
@@ -206,6 +214,16 @@
   .directions-page .directions-subhero-side > p { font-size: 16px; }
   .directions-page .directions-subhero .subhero-layout { padding-bottom: 92px; }
   .dhs-indicator { display: none; }
+  /* Phone rows: number and name across the row (a one-word name such as «Металоконструкції» needs it), then the
+     picture beside the line; the kinds stay on the direction's page (the link's name never carried them). The
+     pointer/keyboard state pads by 12 px, not 26, so the name still fits at 320 px. */
+  .dcat-list a.route-service { grid-template-columns: 92px minmax(0, 1fr) 20px; grid-template-areas: "num num arrow" "title title arrow" "thumb text text"; grid-template-rows: auto auto auto; gap: 6px 16px; padding-block: 20px; }
+  .dcat-list a.route-service:is(:hover, :focus-visible) { padding-inline: 12px; }
+  .dcat-list a.route-service > div { display: contents; }
+  .dcat-list a.route-service h3 { grid-area: title; }
+  .dcat-list a.route-service > div p { grid-area: text; align-self: start; margin-top: 6px; }
+  .dcat-list .dcat-thumb { margin-top: 12px; }
+  .dcat-list .dcat-kinds-row { display: none; }
   .dfmt-option { padding: 18px 12px 20px; }
   .dstart .dstart-entries { grid-template-columns: minmax(0, 1fr); }
   /* The track turns vertical: one stage per row, the rail and the run down the left */

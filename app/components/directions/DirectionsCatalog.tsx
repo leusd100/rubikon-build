@@ -5,8 +5,9 @@ import { useState, type CSSProperties } from 'react';
 // /napryamky — the five directions as a catalogue. Each row stays the link to its page (the route list's markup, so the
 // shared tests keep holding); from 1051 px a sticky preview beside the rows shows the direction pointed at or focused:
 // its illustration, its own accent line and the kinds of work its page lists, with the way in. On narrower screens the
-// preview is gone and every row carries its own illustration and kinds instead. Copy comes from the directions' own
-// data; the images are the hero sequence's concept renders, so they carry «Ілюстрація», as on HOME.
+// preview is gone and every row carries a small illustration beside its name instead (and its kinds, from 761 px).
+// Copy comes from the directions' own data. The images are generated concept illustrations made for this list (not the
+// hero's slides): the preview carries «Ілюстрація», and the section's intro says so in words for the small row images.
 
 export type CatalogItem = {
   id: string;
@@ -17,14 +18,14 @@ export type CatalogItem = {
   accent: string;
   kindsLabel: string;
   kinds: readonly string[];
-  image: { src: string; srcSet: string; focal: string };
+  image: { src: string; srcSet: string; focal: string; width: number; height: number };
 };
 
 function Illustration({ item, sizes }: Readonly<{ item: CatalogItem; sizes: string }>) {
   return (
     <picture>
       <source type="image/webp" srcSet={item.image.srcSet} sizes={sizes} />
-      <img src={item.image.src} alt="" width={1672} height={941} loading="lazy" decoding="async" style={{ objectPosition: item.image.focal } as CSSProperties} />
+      <img src={item.image.src} alt="" width={item.image.width} height={item.image.height} loading="lazy" decoding="async" style={{ objectPosition: item.image.focal } as CSSProperties} />
     </picture>
   );
 }
@@ -46,10 +47,9 @@ export function DirectionsCatalog({ items }: Readonly<{ items: readonly CatalogI
             onMouseEnter={() => setActive(index)}
             onFocus={() => setActive(index)}
           >
-            {/* Narrow screens only: the row's own illustration across the whole card */}
+            {/* Narrow screens only: the row's own illustration beside its name */}
             <span className="dcat-thumb" aria-hidden="true">
-              <Illustration item={item} sizes="(max-width: 1050px) 100vw, 1px" />
-              <i className="dcat-tag">Ілюстрація</i>
+              <Illustration item={item} sizes="(max-width: 760px) 92px, (max-width: 1050px) 184px, 1px" />
             </span>
             <span>{item.number}</span>
             <div>
