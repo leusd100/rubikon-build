@@ -172,25 +172,20 @@
 .ps[data-step] .aqc-mark { opacity: 0; }
 .ps[data-step="1"] .aqc-mark-1, .ps[data-step="2"] .aqc-mark-2, .ps[data-step="3"] .aqc-mark-3 { opacity: 1; }
 .ps[data-step] .aqc-badge { opacity: 0; }
-/* The caption bar names what the camera shows; the round control pauses or replays the tour */
-.ps-caption {
-  position: absolute; z-index: 3; right: 16px; bottom: 16px; left: 16px; display: flex; align-items: center; justify-content: space-between;
-  gap: 14px; min-height: 60px; padding: 8px 8px 8px 18px; color: #fff; background: rgba(15, 18, 16, .86); border-top: 3px solid var(--color-accent);
-  backdrop-filter: blur(10px);
-}
-.ps-caption-text { font-size: 11.5px; font-weight: 800; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; }
+/* The image lies on the «Креслення» sheet (DrawingSheet): its title block names the step and what the camera shows,
+   and ends with the round control that pauses or replays the tour */
+.ps-sheet .promise-visual { flex: none; border: 0; border-radius: 0; box-shadow: none; }
 .ps-control {
-  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 10px; color: #fff; background: none;
+  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 4px; color: var(--color-text); background: none;
   border: 0; border-radius: 22px; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
 }
-.ps-control-label { color: rgba(255, 255, 255, .86); }
-.ps-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%; }
+.ps-control-label { color: var(--color-text-secondary); }
+.ps-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--color-border-strong); border-radius: 50%; }
 .ps-control-icon::before { content: ''; width: 10px; height: 13px; background: linear-gradient(90deg, currentColor 0 3.5px, transparent 3.5px 6.5px, currentColor 6.5px 10px); }
-.ps-control[data-paused] .ps-control-icon { border-color: var(--color-accent-on-dark); }
+.ps-control[data-paused] .ps-control-icon { border-color: var(--color-accent); }
 .ps-control[data-paused] .ps-control-icon::before { width: 0; height: 0; background: none; border-block: 6.5px solid transparent; border-left: 11px solid currentColor; translate: 1.5px 0; }
-.ps-control:hover .ps-control-label { color: #fff; }
-.ps-control:hover .ps-control-icon { border-color: var(--color-accent-on-dark); }
-.ps-control:focus-visible { outline: 2px solid #fff; outline-offset: 3px; box-shadow: none; }
+.ps-control:hover .ps-control-label { color: var(--color-text); }
+.ps-control:hover .ps-control-icon { border-color: var(--color-accent); }
 /* Three bars, like stories: done, filling, to come */
 .ps-progress { position: absolute; z-index: 3; top: 16px; right: 16px; left: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .ps-progress span { position: relative; height: 3px; overflow: hidden; background: rgba(255, 255, 255, .38); }

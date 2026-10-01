@@ -151,7 +151,8 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
 test('homepage server HTML carries the H1, the real-object proof, the conversation steps and cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
-    proofCaption: '#real-object .hv2-proof-photo figcaption',
+    // The photo's caption is the sentence cell of its «Креслення» title block
+    proofCaption: '#real-object .hv2-proof-photo .sheet-cell-note > b',
     proofScope: '#real-object .hv2-scope-chips li',
     conversationSteps: '#inquiry .conversation-journey h3',
     cooperation: '.inquiry-details select option',
@@ -354,12 +355,12 @@ test('/pro-nas practice steps play once in view, pause, and answer each item', a
   const caption = story.locator('.ps-caption-text');
   await expect(caption).toHaveText('Від креслення — до перевірки на майданчику');
   await story.locator('.about-planning-visual').scrollIntoViewIfNeeded();
-  await expect(caption).toHaveText('01 · Креслення й вихідні дані');
+  await expect(caption).toHaveText('Креслення й вихідні дані');
   await story.getByRole('button', { name: 'Пауза показу кроків', exact: true }).click();
   await expect(story.getByRole('button', { name: 'Відтворити показ кроків', exact: true })).toBeVisible();
   const joint = story.getByRole('button', { name: /^Ключові вузли/ });
   await joint.click();
-  await expect(caption).toHaveText('03 · Болтовий вузол балки й колони');
+  await expect(caption).toHaveText('Болтовий вузол балки й колони');
   await expect(joint).toHaveAttribute('aria-pressed', 'true');
   await expect(story.locator('.about-before-step[aria-pressed="true"]')).toHaveCount(1);
 });
@@ -372,7 +373,7 @@ test('/pro-nas practice steps without motion: overview, no tour control, items s
   await expect(story.locator('.ps-caption-text')).toHaveText('Від креслення — до перевірки на майданчику');
   await expect(story.locator('.ps-control')).toHaveCount(0);
   await story.getByRole('button', { name: /^Послідовність робіт/ }).click();
-  await expect(story.locator('.ps-caption-text')).toHaveText('02 · Порядок монтажу: плита → колона → балка');
+  await expect(story.locator('.ps-caption-text')).toHaveText('Порядок монтажу: плита → колона → балка');
 });
 
 // /napryamky: the five directions as a catalogue — every row stays the link to its page, and from 1051 px the preview

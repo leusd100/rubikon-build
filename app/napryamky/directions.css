@@ -56,17 +56,12 @@
 .dcat-list a.route-service:is(:hover, :focus-visible) .dcat-kinds li { color: var(--color-dark-text-secondary); border-color: var(--color-dark-line); }
 .dcat-list :is(.dcat-thumb, .dcat-kinds-row) { display: none; }
 .dcat-preview { position: sticky; top: 112px; }
-.dcat-media { position: relative; overflow: hidden; aspect-ratio: 5 / 4; background: var(--color-dark); border: 1px solid var(--color-border); }
-.dcat-frame { position: absolute; inset: 0; opacity: 0; transform: scale(1.05); }
-.dcat-frame[data-active] { opacity: 1; transform: none; }
+/* The preview is the «Креслення» sheet (app/components/drawing-sheet.css). Its five pictures share the picture area: a
+   new one is plotted in over the last under the copper line, and the last stays until the new one is complete. */
+.dcat-sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
+.dcat-frame { position: absolute; inset: 0; opacity: 0; }
+.dcat-frame[data-active] { z-index: 1; opacity: 1; }
 .dcat-frame img, .dcat-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.6) contrast(1.06); }
-.dcat-media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(10, 11, 12, .62) 0%, transparent 38%); pointer-events: none; }
-.dcat-tag {
-  position: absolute; z-index: 1; top: 14px; left: 14px; padding: 6px 9px; color: var(--color-dark-text); background: rgba(13, 16, 14, .76);
-  border: 1px solid rgba(255, 255, 255, .22); font: 700 11px/1.2 var(--font-condensed), sans-serif; font-style: normal; letter-spacing: .1em; text-transform: uppercase;
-}
-.dcat-count { position: absolute; z-index: 1; right: 18px; bottom: 14px; color: rgba(255, 255, 255, .86); font: 600 14px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; }
-.dcat-count b { margin-right: 4px; color: var(--color-accent-on-dark); font-size: 40px; font-weight: 600; letter-spacing: 0; }
 .dcat-copy { padding-top: 24px; }
 .dcat-title { margin: 0; font: 400 clamp(28px, 2.5vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; text-wrap: balance; }
 .dcat-accent { margin: 4px 0 0; color: var(--color-accent-strong); font: 400 clamp(22px, 1.9vw, 30px)/1.12 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
@@ -74,109 +69,13 @@
 .dcat-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .dcat-kinds li { padding: 7px 11px; color: var(--color-text); border: 1px solid var(--color-border-strong); font: 600 13.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .03em; }
 @keyframes dcat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes dcat-plot { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
 @media (prefers-reduced-motion: no-preference) {
-  .dcat-frame { transition: opacity 520ms ease, transform 1200ms cubic-bezier(.2, .7, .1, 1); }
+  .dcat-frame { transition: opacity 0s linear 780ms; }
+  .dcat-frame[data-active] { transition: none; animation: dcat-plot 780ms cubic-bezier(.55, 0, .25, 1) both; }
   .dcat-copy { animation: dcat-in 420ms ease both; }
   .dcat-list a.route-service { transition: color .25s ease, background .25s ease, padding .25s ease, box-shadow .25s ease; }
 }
-
-/* ---------------------------------------------------------------- 2b · TEMPORARY frame lab (DirectionsCatalog.tsx)
-   `?frame=b|d|e` — three photo-frame treatments to choose one for the whole site. Remove the unchosen ones, the
-   switcher and the markup only they need (data-pos, stamp, deco, frame numbers) once the choice is made. */
-.dcat-deco, .dcat-stamp, .dcat-deco i, .dcat-frame-num { display: none; }
-.dcat-deco { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.dcat-deco i { position: absolute; }
-.dcat-media .dcat-tag, .dcat-media .dcat-count { z-index: 3; }
-
-/* B and E · the sheet: paper margin, ruler ticks along two edges, a title block; the image area clips its own picture */
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-media { background: var(--color-surface-elevated); border-color: var(--color-border-strong); }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-frame { inset: 28px 16px 78px 28px; overflow: hidden; transform: none; }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-frame[data-active] { z-index: 1; }
-.dcat:is([data-frame="b"], [data-frame="e"]) :is(.dcat-tag, .dcat-count) { display: none; }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-media::after { display: none; }
-.dcat:is([data-frame="b"], [data-frame="e"]) :is(.dcat-deco, .dcat-ruler) { display: block; }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-ruler-x {
-  top: 10px; right: 16px; left: 28px; height: 12px; transform-origin: left;
-  background: repeating-linear-gradient(90deg, var(--color-border-strong) 0 1px, transparent 1px 10px) left bottom / 100% 5px no-repeat,
-    repeating-linear-gradient(90deg, var(--color-accent) 0 1px, transparent 1px 50px) left bottom / 100% 12px no-repeat;
-}
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-ruler-y {
-  top: 28px; bottom: 78px; left: 10px; width: 12px; transform-origin: top;
-  background: repeating-linear-gradient(180deg, var(--color-border-strong) 0 1px, transparent 1px 10px) right top / 5px 100% no-repeat,
-    repeating-linear-gradient(180deg, var(--color-accent) 0 1px, transparent 1px 50px) right top / 12px 100% no-repeat;
-}
-/* The plotter line: rides down the image as it is drawn in, then goes out */
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-scan { top: 28px; right: 16px; left: 28px; height: 2px; opacity: 0; background: var(--color-accent); box-shadow: 0 0 14px 1px var(--color-accent); }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp {
-  position: absolute; z-index: 3; right: 16px; bottom: 16px; left: 28px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; height: 48px;
-  border: 1px solid var(--color-border-strong); background: var(--color-surface-elevated);
-}
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > span { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 0 14px; border-left: 1px solid var(--color-border-strong); }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > .dcat-stamp-num { flex-direction: row; align-items: baseline; gap: 5px; border-left: 0; color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp small { color: var(--color-text-muted); font: 700 9.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp b { overflow: hidden; color: var(--color-text); font: 700 13px/1.1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp-num b { color: var(--color-accent-strong); font-size: 20px; letter-spacing: 0; }
-.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-list .dcat-thumb { padding: 4px; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); }
-
-/* D · the stack: the next two directions wait behind, their numbers on index tabs; pointing at a row deals it forward */
-.dcat[data-frame="d"] .dcat-media { overflow: visible; margin: 30px 30px 0 0; background: transparent; border: 0; }
-.dcat[data-frame="d"] .dcat-frame { opacity: 0; transform: translate(30px, -30px); background: var(--color-dark); border: 1px solid rgba(255, 255, 255, .2); }
-.dcat[data-frame="d"] .dcat-frame[data-pos="0"] { z-index: 2; opacity: 1; transform: none; }
-.dcat[data-frame="d"] .dcat-frame[data-pos="1"] { z-index: 1; opacity: 1; transform: translate(15px, -15px); }
-.dcat[data-frame="d"] .dcat-frame[data-pos="2"] { z-index: 0; opacity: 1; transform: translate(30px, -30px); }
-.dcat[data-frame="d"] .dcat-frame[data-pos="4"] { z-index: 3; opacity: 0; transform: translate(-24px, 24px); }
-.dcat[data-frame="d"] .dcat-frame img { position: relative; }
-.dcat[data-frame="d"] .dcat-frame:not([data-pos="0"]) img { filter: saturate(.3) brightness(.42); }
-.dcat[data-frame="d"] .dcat-frame-num {
-  position: absolute; z-index: 1; top: 0; right: 12px; display: block; padding: 2px 7px 2px; color: var(--color-text); background: var(--color-surface-elevated);
-  font: 700 10px/11px var(--font-condensed), sans-serif; letter-spacing: .08em;
-}
-.dcat[data-frame="d"] .dcat-frame[data-pos="0"] .dcat-frame-num { opacity: 0; }
-.dcat[data-frame="d"] .dcat-media::after { z-index: 2; }
-
-/* E · b's sheet on a stack of two plain sheets (the media's own offset shadows); the sheets carry the next numbers */
-.dcat[data-frame="e"] .dcat-media {
-  overflow: visible; margin: 30px 30px 0 0;
-  box-shadow: 15px -15px 0 -1px var(--color-surface-elevated), 15px -15px 0 0 var(--color-border-strong),
-    30px -30px 0 -1px var(--color-surface-alt), 30px -30px 0 0 var(--color-border-strong);
-}
-.dcat[data-frame="e"] .dcat-tab {
-  display: block; height: 15px; padding: 2px 7px 0; color: var(--color-text-secondary); font: 700 10px/11px var(--font-condensed), sans-serif; letter-spacing: .08em;
-}
-.dcat[data-frame="e"] .dcat-tab-1 { top: -15px; right: -3px; }
-.dcat[data-frame="e"] .dcat-tab-2 { top: -30px; right: -18px; }
-.dcat[data-frame="e"] .dcat-list .dcat-thumb { box-shadow: 5px -5px 0 -1px var(--color-surface-elevated), 5px -5px 0 0 var(--color-border-strong), 10px -10px 0 -1px var(--color-surface-alt), 10px -10px 0 0 var(--color-border-strong); }
-.dcat[data-frame="d"] .dcat-list .dcat-thumb { overflow: visible; box-shadow: 5px -5px 0 0 var(--color-border-strong), 10px -10px 0 0 var(--color-border); }
-.dcat[data-frame="d"] .dcat-list .dcat-thumb img { position: relative; }
-
-@keyframes dcat-grow-x { from { transform: scaleX(0); } }
-@keyframes dcat-grow-y { from { transform: scaleY(0); } }
-@keyframes dcat-plot { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
-@keyframes dcat-scan { 0% { top: 28px; opacity: 1; } 90% { opacity: 1; } 100% { top: calc(100% - 80px); opacity: 0; } }
-@keyframes dcat-settle { 0% { translate: -6px 6px; } 100% { translate: 0 0; } }
-@media (prefers-reduced-motion: no-preference) {
-  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-frame { transition: opacity 0s linear 780ms; }
-  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-frame[data-active] { transition: none; animation: dcat-plot 780ms cubic-bezier(.55, 0, .25, 1) both; }
-  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-scan { animation: dcat-scan 780ms cubic-bezier(.55, 0, .25, 1) both; }
-  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > * { animation: dcat-in 420ms ease both; }
-  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > :nth-child(2) { animation-delay: 70ms; }
-  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > :nth-child(3) { animation-delay: 140ms; }
-  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-ruler-x { animation: dcat-grow-x 700ms cubic-bezier(.55, 0, .25, 1) both; }
-  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-ruler-y { animation: dcat-grow-y 700ms cubic-bezier(.55, 0, .25, 1) 80ms both; }
-  .dcat[data-frame="e"] .dcat-tab { animation: dcat-in 360ms ease 120ms both; }
-  .dcat[data-frame="d"] .dcat-frame { transition: opacity 520ms ease, transform 700ms cubic-bezier(.2, .7, .1, 1); }
-  .dcat[data-frame="d"] .dcat-frame img { transition: filter 600ms ease; }
-}
-
-/* In the flow above the rows (a fixed bar sat under the cookie banner on a first visit) */
-.frame-lab {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; grid-column: 1 / -1; order: -1; padding: 8px; color: var(--color-dark-text);
-  background: var(--color-dark); border: 1px solid var(--color-dark-line);
-  font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase;
-}
-.frame-lab > span { padding: 0 6px; color: var(--color-dark-text-muted); }
-.frame-lab button { min-height: 36px; padding: 0 10px; color: inherit; background: transparent; border: 1px solid var(--color-dark-line); font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
-.frame-lab button[aria-pressed="true"] { color: var(--color-on-action); background: var(--color-action); border-color: var(--color-action); }
 
 /* ---------------------------------------------------------------- 3 · Formats on one drawing */
 /* Three format buttons beside one large drawing of the same hangar (ScopeDiagram, /yak-pratsyuiemo). The format in
@@ -298,7 +197,10 @@
   .dcat-list a.route-service > div { grid-area: body; }
   .dcat-list a.route-service > div p { margin-top: 10px; }
   .dcat-list a.route-service > b { grid-area: arrow; margin-top: 2px; }
-  .dcat-list .dcat-thumb { position: relative; display: block; overflow: hidden; grid-area: thumb; aspect-ratio: 4 / 3; background: var(--color-dark); }
+  .dcat-list .dcat-thumb {
+    position: relative; display: block; overflow: hidden; grid-area: thumb; aspect-ratio: 4 / 3; padding: 4px;
+    background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); /* the «Креслення» sheet's small echo */
+  }
   .dcat-list .dcat-kinds-row { display: flex; margin-top: 14px; }
   .dcat-list .dcat-kinds-row li { padding: 6px 9px; font-size: 12.5px; }
   .dfmt-grid { grid-template-columns: minmax(0, 1fr); }

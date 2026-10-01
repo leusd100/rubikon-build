@@ -1,6 +1,7 @@
 import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader } from './SiteChrome';
 import { ConversationSection } from './ConversationSection';
 import ResponsiveImage from './ResponsiveImage';
+import { DrawingSheet, type SheetCell } from './DrawingSheet';
 import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
@@ -180,6 +181,13 @@ function DirectionCostSection({
   );
 }
 
+/** The theme and, for a concept image, «Ілюстрація» — the page itself already is the direction */
+function editorialCells(editorial: DirectionPageConfig['editorial']): SheetCell[] {
+  const cells: SheetCell[] = [{ tone: 'main', label: 'Тема', value: editorial.eyebrow }];
+  if (editorial.image.startsWith('/media/concepts/')) cells.push({ label: 'Зображення', value: 'Ілюстрація' });
+  return cells;
+}
+
 export function DirectionEditorial({
   directionId,
   editorial,
@@ -206,16 +214,15 @@ export function DirectionEditorial({
             </ol>
           )}
         </div>
-        <figure className="direction-editorial-media">
+        {/* The site's «Креслення» sheet: its title block names the theme and says «Ілюстрація» for the concept images
+            (the label once sat on the picture) */}
+        <DrawingSheet className="direction-editorial-media" cells={editorialCells(editorial)}>
           <ResponsiveImage
             src={editorial.image}
             alt={editorial.imageAlt}
             sizes="(max-width: 760px) calc(100vw - 32px), 64vw"
           />
-          {editorial.image.startsWith('/media/concepts/') && (
-            <figcaption className="media-provenance-label">Ілюстрація</figcaption>
-          )}
-        </figure>
+        </DrawingSheet>
       </div>
     </section>
   );

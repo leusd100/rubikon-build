@@ -1,0 +1,125 @@
+/* «Креслення» — the site's frame for a standalone image (DrawingSheet.tsx): paper margin, ruler ticks along the top and
+   left edges, the picture, and a title block under it. Theme roles only, so it follows Light/Dark and dark bands. The
+   picture area has no size of its own: each place gives the sheet (or .sheet-image) its height or aspect ratio. */
+
+.sheet {
+  --sheet-pad: 16px;
+  --sheet-gutter: 28px;
+  --sheet-paper: var(--color-surface-elevated);
+  --sheet-ink: var(--color-border-strong);
+  --sheet-mark: var(--color-accent);
+  --sheet-plot: cubic-bezier(.55, 0, .25, 1); /* an even pen, as the region map's outline */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  container: sheet / inline-size; /* the title block wraps by the sheet's own width, not the window's */
+  padding: var(--sheet-gutter) var(--sheet-pad) var(--sheet-pad) var(--sheet-gutter);
+  background: var(--sheet-paper);
+  border: 1px solid var(--sheet-ink);
+}
+.sheet-body { position: relative; display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.sheet-image { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--color-dark); }
+.sheet-image > picture, .sheet-image > img { display: block; }
+.sheet-image > img, .sheet-image > picture > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* Ruler ticks: fine every 10 px, copper every 50 px — a sheet's edge, not a scale (no figures, no claimed sizes) */
+.sheet-ruler { position: absolute; pointer-events: none; }
+.sheet-ruler-x {
+  top: calc(10px - var(--sheet-gutter)); right: 0; left: 0; height: 12px; transform-origin: left;
+  background: repeating-linear-gradient(90deg, var(--sheet-ink) 0 1px, transparent 1px 10px) left bottom / 100% 5px no-repeat,
+    repeating-linear-gradient(90deg, var(--sheet-mark) 0 1px, transparent 1px 50px) left bottom / 100% 12px no-repeat;
+}
+.sheet-ruler-y {
+  top: 0; bottom: 0; left: calc(10px - var(--sheet-gutter)); width: 12px; transform-origin: top;
+  background: repeating-linear-gradient(180deg, var(--sheet-ink) 0 1px, transparent 1px 10px) right top / 5px 100% no-repeat,
+    repeating-linear-gradient(180deg, var(--sheet-mark) 0 1px, transparent 1px 50px) right top / 12px 100% no-repeat;
+}
+
+/* The plotter line: rides down the picture as it is drawn in, then goes out */
+.sheet-scan {
+  position: absolute; z-index: 4; top: 0; right: 0; left: 0; height: 2px; opacity: 0; pointer-events: none;
+  background: var(--sheet-mark); box-shadow: 0 0 14px 1px var(--sheet-mark);
+}
+
+/* The title block */
+.sheet-stamp { display: flex; min-height: 48px; margin: 12px 0 0; background: var(--sheet-paper); border: 1px solid var(--sheet-ink); }
+.sheet-cell { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 7px 14px; border-left: 1px solid var(--sheet-ink); }
+.sheet-cell:first-child { border-left: 0; }
+.sheet-cell:is(.sheet-cell-main, .sheet-cell-note) { flex: 1; }
+.sheet-cell small { color: var(--color-text-muted); font: 700 9.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.sheet-cell b { overflow: hidden; color: var(--color-text); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.sheet-cell-main b { white-space: normal; text-wrap: balance; }
+.sheet-cell-note b { color: var(--color-text-secondary); font: 400 13.5px/1.5 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; white-space: normal; }
+.sheet-cell-note b b { color: var(--color-text); font-weight: 700; }
+.sheet-cell-number { flex-direction: row; align-items: baseline; gap: 5px; color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; }
+.sheet-cell-number b { color: var(--color-accent-strong); font-size: 20px; letter-spacing: 0; }
+.sheet-cell-number b span { color: var(--color-text-muted); font-size: 12px; font-weight: 600; }
+.sheet-action { display: flex; flex: none; align-items: center; padding: 4px 6px 4px 10px; border-left: 1px solid var(--sheet-ink); }
+
+/* A narrow sheet with three parts or more: the main cell takes its own row on top, so a long theme or sentence never
+   squeezes into a column (and never breaks a word); the other parts share the row under it. Two parts stay one row. */
+@container sheet (max-width: 480px) {
+  .sheet-stamp:has(> :nth-child(3)) { flex-wrap: wrap; }
+  .sheet-stamp:has(> :nth-child(3)) .sheet-cell { flex: 1 1 auto; }
+  .sheet-stamp:has(> :nth-child(3)) .sheet-cell:is(.sheet-cell-main, .sheet-cell-note) { order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
+  .sheet-stamp:has(> :nth-child(3)) .sheet-action { margin-left: auto; }
+}
+
+/* Arriving: the picture is plotted in, the rulers draw, the title block fills (only once armed — see the component) */
+.sheet[data-sheet-state="armed"] .sheet-image { clip-path: inset(0 0 100% 0); }
+.sheet[data-sheet-state="armed"] .sheet-ruler-x { transform: scaleX(0); }
+.sheet[data-sheet-state="armed"] .sheet-ruler-y { transform: scaleY(0); }
+.sheet[data-sheet-state="armed"] :is(.sheet-cell, .sheet-action) { opacity: 0; transform: translateY(6px); }
+@keyframes sheet-scan { 0% { top: 0; opacity: 1; } 90% { opacity: 1; } 100% { top: calc(100% - 2px); opacity: 0; } }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: no-preference) {
+  /* clip-path needs an explicit end: inset() → none does not interpolate */
+  .sheet[data-sheet-state="on"] .sheet-image { clip-path: inset(0); transition: clip-path 900ms var(--sheet-plot) 120ms; }
+  .sheet[data-sheet-state="on"] .sheet-scan { animation: sheet-scan 900ms var(--sheet-plot) 120ms both; }
+  .sheet[data-sheet-state="on"] :is(.sheet-ruler-x, .sheet-ruler-y) { transition: transform 700ms var(--sheet-plot); }
+  .sheet[data-sheet-state="on"] :is(.sheet-cell, .sheet-action) { transition: opacity 360ms ease, transform 360ms ease; transition-delay: calc(700ms + var(--sheet-i, 0) * 80ms); }
+  .sheet[data-sheet-state="on"] .sheet-cell:nth-child(2) { --sheet-i: 1; }
+  .sheet[data-sheet-state="on"] :is(.sheet-cell:nth-child(3), .sheet-action) { --sheet-i: 2; }
+  /* Replayed with every new picture (replayKey) */
+  .sheet-scan[data-replay] { animation: sheet-scan 780ms var(--sheet-plot) both; }
+  .sheet-stamp[data-replay] :is(.sheet-cell, .sheet-action) { animation: sheet-in 420ms ease both; }
+  .sheet-stamp[data-replay] .sheet-cell:nth-child(2) { animation-delay: 70ms; }
+  .sheet-stamp[data-replay] .sheet-cell:nth-child(3) { animation-delay: 140ms; }
+}
+
+@media (max-width: 760px) {
+  .sheet { --sheet-pad: 10px; --sheet-gutter: 22px; }
+  .sheet-ruler-x { top: calc(8px - var(--sheet-gutter)); height: 10px; }
+  .sheet-ruler-y { left: calc(8px - var(--sheet-gutter)); width: 10px; }
+  .sheet-stamp { min-height: 44px; margin-top: 10px; }
+  .sheet-cell { padding: 6px 10px; }
+  .sheet-cell b { font-size: 12px; }
+  .sheet-cell-number b { font-size: 17px; }
+}
+
+/* ---------------------------------------------------------------- Places
+   Each figure keeps its place and height in its own grid; its old rounded card, offset plate and chip label give way
+   to the sheet. Selectors are as specific as the rules they replace. */
+
+/* Direction pages — the editorial picture (DirectionDetail.tsx; /zernoskhovyshcha's band included) */
+.direction-editorial-grid[data-layout] .direction-editorial-media.sheet { overflow: visible; background: var(--sheet-paper); border: 1px solid var(--sheet-ink); border-radius: 0; box-shadow: none; }
+.direction-editorial-media.sheet::after { content: none; }
+
+/* /angary — the picture beside «Від призначення — до зрозумілого технічного завдання» */
+.angary-decisions-intro .angary-decisions-intro-visual.sheet { overflow: visible; background: var(--sheet-paper); border: 1px solid var(--sheet-ink); border-radius: 0; box-shadow: none; }
+.angary-decisions-intro-visual.sheet::before, .angary-decisions-intro-visual.sheet::after { content: none; }
+
+@media (min-width: 761px) and (max-width: 1023px) {
+  .angary-decisions-intro .angary-decisions-intro-visual.sheet { aspect-ratio: auto; }
+  .angary-decisions-intro-visual.sheet .sheet-image { flex: none; aspect-ratio: 16 / 9; }
+}
+@media (max-width: 760px) {
+  /* On a phone the picture keeps its own proportion and the sheet grows around it */
+  .direction-editorial-grid[data-layout] .direction-editorial-media.sheet { aspect-ratio: auto; }
+  .direction-editorial-media.sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
+  .grain-implementation-band .direction-editorial-media.sheet .sheet-image { aspect-ratio: 16 / 9; }
+  .angary-decisions-intro .angary-decisions-intro-visual.sheet { aspect-ratio: auto; }
+  .angary-decisions-intro-visual.sheet .sheet-image { flex: none; aspect-ratio: 4 / 3; }
+}

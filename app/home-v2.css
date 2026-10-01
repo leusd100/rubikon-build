@@ -263,8 +263,19 @@ main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 1774 / 887
 main[data-home="v2"] .hv2-proof-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 main[data-home="v2"] .hv2-proof-photo img { object-position: 86% 55%; }
 main[data-home="v2"] .hv2-proof-xray img { object-position: 100% 50%; }
-main[data-home="v2"] .hv2-proof-pair figcaption { color: var(--hv2-text-3); font-size: 14px; line-height: 1.55; }
-main[data-home="v2"] .hv2-proof-pair figcaption b { color: var(--hv2-text); font-weight: 700; }
+/* Both images lie on the site's «Креслення» sheets (DrawingSheet, app/components/drawing-sheet.css): dark sheets in
+   this dark band in either theme, the stamp in the band's own text roles. Each sheet spans the pair's two rows
+   (subgrid), so the two pictures share one row height and the two title blocks another, whatever their captions. */
+main[data-home="v2"] .hv2-proof-pair .sheet {
+  --sheet-paper: var(--hv2-graphite-2); --sheet-ink: var(--hv2-line-strong); --sheet-mark: var(--hv2-copper);
+  --color-text: var(--hv2-text); --color-text-secondary: var(--hv2-text-2); --color-text-muted: var(--hv2-text-3); --color-accent-strong: var(--hv2-copper-text);
+  grid-row: span 2; grid-template-rows: subgrid; gap: 0;
+  container: none; /* a size container cannot be a subgrid; the title block wraps by the media query below instead */
+}
+/* The picture starts from its own proportion and grows to the shared row height */
+main[data-home="v2"] .hv2-proof-pair .sheet-image { flex: 1 0 auto; }
+main[data-home="v2"] .hv2-proof-pair .hv2-proof-media { border-color: var(--hv2-line); }
+main[data-home="v2"] .hv2-proof-pair .sheet .hv2-tag-photo { display: inline-flex; align-items: center; gap: 7px; padding: 0; color: inherit; background: none; border: 0; }
 /* «→ до принципу»: from the real object to the principle — not a reveal of this hangar's hidden structure */
 main[data-home="v2"] .hv2-proof-arrow {
   position: absolute; z-index: 3; left: 14px; top: 50%; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px 0 0;
@@ -326,6 +337,13 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
   main[data-home="v2"] .hv2-proof-facts { grid-template-columns: 1fr; }
   main[data-home="v2"] .hv2-people { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--hv2-line); }
 }
+/* Halves narrower than ~600 px: each title block puts its sentence on a row of its own (as drawing-sheet.css does by
+   container width elsewhere) */
+@media (max-width: 1260px) {
+  main[data-home="v2"] .hv2-proof-pair .sheet-stamp { flex-wrap: wrap; }
+  main[data-home="v2"] .hv2-proof-pair .sheet-cell { flex: 1 1 auto; }
+  main[data-home="v2"] .hv2-proof-pair .sheet-cell-note { order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
+}
 /* The pair stacks before the halves get narrow: each image keeps the full width */
 @media (max-width: 900px) {
   main[data-home="v2"] .hv2-proof-pair { grid-template-columns: 1fr; gap: 22px; }
@@ -343,9 +361,8 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
   main[data-home="v2"] .hv2-signature-head h2 { font-size: clamp(36px, 10.5vw, 44px); line-height: 1.02; }
   main[data-home="v2"] .hv2-signature-support { padding-left: 16px; }
   main[data-home="v2"] .hv2-proof { margin-top: 26px; }
-  main[data-home="v2"] .hv2-proof-pair { margin-inline: calc(var(--container-gutter) * -1); }
-  main[data-home="v2"] .hv2-proof-media { border-inline: 0; }
-  main[data-home="v2"] .hv2-proof-pair figcaption { padding-inline: var(--container-gutter); font-size: 15px; }
+  /* The sheets keep the page's gutter (they used to run edge to edge as bare pictures) */
+  main[data-home="v2"] .hv2-proof-pair .sheet-cell-note b { font-size: 14.5px; }
   /* The X-ray on a phone shows its right part — the frame and the load path — big enough to read */
   main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 1.1; }
   main[data-home="v2"] .hv2-proof-facts { margin-inline: calc(var(--container-gutter) * -1); padding: 24px var(--container-gutter) 26px; border-inline: 0; }
