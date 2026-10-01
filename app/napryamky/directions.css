@@ -81,105 +81,89 @@
 }
 
 /* ---------------------------------------------------------------- 2b · TEMPORARY frame lab (DirectionsCatalog.tsx)
-   `?frame=a|b|c|d` — four photo-frame treatments to choose one for the whole site. Remove the unchosen ones, the
-   switcher and the data-pos/stamp/deco markup they need once the choice is made. */
-.dcat-deco, .dcat-stamp, .dcat-deco i { display: none; }
+   `?frame=b|d|e` — three photo-frame treatments to choose one for the whole site. Remove the unchosen ones, the
+   switcher and the markup only they need (data-pos, stamp, deco, frame numbers) once the choice is made. */
+.dcat-deco, .dcat-stamp, .dcat-deco i, .dcat-frame-num { display: none; }
 .dcat-deco { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .dcat-deco i { position: absolute; }
 .dcat-media .dcat-tag, .dcat-media .dcat-count { z-index: 3; }
-.dcat-list .dcat-thumb::after { content: none; position: absolute; pointer-events: none; }
 
-/* A · Видошукач: copper corner marks inside the photo, the name on a glass caption bar with a copper top line */
-.dcat[data-frame="a"] .dcat-deco { display: block; }
-.dcat[data-frame="a"] .dcat-corner { display: block; width: 30px; height: 30px; border: 0 solid var(--color-accent-on-dark); }
-.dcat[data-frame="a"] .dcat-corner-tl { --dx: -8px; --dy: -8px; top: 18px; left: 18px; border-width: 2px 0 0 2px; }
-.dcat[data-frame="a"] .dcat-corner-tr { --dx: 8px; --dy: -8px; top: 18px; right: 18px; border-width: 2px 2px 0 0; }
-.dcat[data-frame="a"] .dcat-corner-bl { --dx: -8px; --dy: 8px; bottom: 90px; left: 18px; border-width: 0 0 2px 2px; }
-.dcat[data-frame="a"] .dcat-corner-br { --dx: 8px; --dy: 8px; bottom: 90px; right: 18px; border-width: 0 2px 2px 0; }
-.dcat[data-frame="a"] .dcat-media::after, .dcat[data-frame="a"] .dcat-count, .dcat[data-frame="a"] .dcat-stamp-kind, .dcat[data-frame="a"] .dcat-stamp small { display: none; }
-.dcat[data-frame="a"] .dcat-tag { top: 32px; left: 32px; }
-.dcat[data-frame="a"] .dcat-stamp {
-  position: absolute; z-index: 3; right: 16px; bottom: 16px; left: 16px; display: flex; align-items: center; gap: 16px; min-height: 58px;
-  padding: 8px 18px; color: #fff; background: rgba(15, 18, 16, .86); border-top: 3px solid var(--color-accent); backdrop-filter: blur(10px);
-}
-.dcat[data-frame="a"] .dcat-stamp-num { color: rgba(255, 255, 255, .78); font: 600 13px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; }
-.dcat[data-frame="a"] .dcat-stamp-num b { margin-right: 4px; color: var(--color-accent-on-dark); font-size: 24px; }
-.dcat[data-frame="a"] .dcat-stamp-title b { font: 800 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-.dcat[data-frame="a"] .dcat-list .dcat-thumb::after {
-  --c: var(--color-accent-on-dark);
-  content: ''; inset: 6px;
-  background:
-    linear-gradient(var(--c) 0 0) left top / 12px 2px, linear-gradient(var(--c) 0 0) left top / 2px 12px,
-    linear-gradient(var(--c) 0 0) right top / 12px 2px, linear-gradient(var(--c) 0 0) right top / 2px 12px,
-    linear-gradient(var(--c) 0 0) left bottom / 12px 2px, linear-gradient(var(--c) 0 0) left bottom / 2px 12px,
-    linear-gradient(var(--c) 0 0) right bottom / 12px 2px, linear-gradient(var(--c) 0 0) right bottom / 2px 12px;
-  background-repeat: no-repeat;
-}
-
-/* B · Креслення: the photo laid on a sheet — paper margin, ruler ticks along two edges, a title block under it */
-.dcat[data-frame="b"] .dcat-media { background: var(--color-surface-elevated); border-color: var(--color-border-strong); }
-.dcat[data-frame="b"] .dcat-frame { inset: 28px 16px 78px 28px; }
-.dcat[data-frame="b"] .dcat-media::after, .dcat[data-frame="b"] .dcat-tag, .dcat[data-frame="b"] .dcat-count { display: none; }
-.dcat[data-frame="b"] .dcat-deco, .dcat[data-frame="b"] .dcat-ruler { display: block; }
-.dcat[data-frame="b"] .dcat-ruler-x {
+/* B and E · the sheet: paper margin, ruler ticks along two edges, a title block; the image area clips its own picture */
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-media { background: var(--color-surface-elevated); border-color: var(--color-border-strong); }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-frame { inset: 28px 16px 78px 28px; overflow: hidden; transform: none; }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-frame[data-active] { z-index: 1; }
+.dcat:is([data-frame="b"], [data-frame="e"]) :is(.dcat-tag, .dcat-count) { display: none; }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-media::after { display: none; }
+.dcat:is([data-frame="b"], [data-frame="e"]) :is(.dcat-deco, .dcat-ruler) { display: block; }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-ruler-x {
   top: 10px; right: 16px; left: 28px; height: 12px; transform-origin: left;
   background: repeating-linear-gradient(90deg, var(--color-border-strong) 0 1px, transparent 1px 10px) left bottom / 100% 5px no-repeat,
     repeating-linear-gradient(90deg, var(--color-accent) 0 1px, transparent 1px 50px) left bottom / 100% 12px no-repeat;
 }
-.dcat[data-frame="b"] .dcat-ruler-y {
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-ruler-y {
   top: 28px; bottom: 78px; left: 10px; width: 12px; transform-origin: top;
   background: repeating-linear-gradient(180deg, var(--color-border-strong) 0 1px, transparent 1px 10px) right top / 5px 100% no-repeat,
     repeating-linear-gradient(180deg, var(--color-accent) 0 1px, transparent 1px 50px) right top / 12px 100% no-repeat;
 }
-.dcat[data-frame="b"] .dcat-stamp {
+/* The plotter line: rides down the image as it is drawn in, then goes out */
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-scan { top: 28px; right: 16px; left: 28px; height: 2px; opacity: 0; background: var(--color-accent); box-shadow: 0 0 14px 1px var(--color-accent); }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp {
   position: absolute; z-index: 3; right: 16px; bottom: 16px; left: 28px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; height: 48px;
   border: 1px solid var(--color-border-strong); background: var(--color-surface-elevated);
 }
-.dcat[data-frame="b"] .dcat-stamp > span { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 0 14px; border-left: 1px solid var(--color-border-strong); }
-.dcat[data-frame="b"] .dcat-stamp > .dcat-stamp-num { flex-direction: row; align-items: baseline; gap: 5px; border-left: 0; color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; }
-.dcat[data-frame="b"] .dcat-stamp small { color: var(--color-text-muted); font: 700 9.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.dcat[data-frame="b"] .dcat-stamp b { overflow: hidden; color: var(--color-text); font: 700 13px/1.1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-.dcat[data-frame="b"] .dcat-stamp-num b { color: var(--color-accent-strong); font-size: 20px; letter-spacing: 0; }
-.dcat[data-frame="b"] .dcat-list .dcat-thumb { padding: 4px; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > span { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 0 14px; border-left: 1px solid var(--color-border-strong); }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > .dcat-stamp-num { flex-direction: row; align-items: baseline; gap: 5px; border-left: 0; color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp small { color: var(--color-text-muted); font: 700 9.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp b { overflow: hidden; color: var(--color-text); font: 700 13px/1.1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp-num b { color: var(--color-accent-strong); font-size: 20px; letter-spacing: 0; }
+.dcat:is([data-frame="b"], [data-frame="e"]) .dcat-list .dcat-thumb { padding: 4px; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); }
 
-/* C · Мідний кант: the HOME cards' rounded corner; a copper edge runs along the bottom, up the side, round the corner */
-.dcat[data-frame="c"] .dcat-media { border: 0; border-radius: 0 40px 0 0; }
-.dcat[data-frame="c"] .dcat-deco, .dcat[data-frame="c"] .dcat-edge { display: block; }
-.dcat[data-frame="c"] .dcat-edge { background: var(--color-accent); }
-.dcat[data-frame="c"] .dcat-edge-b { right: 0; bottom: 0; left: 0; height: 4px; transform-origin: left; }
-.dcat[data-frame="c"] .dcat-edge-r { top: 40px; right: 0; bottom: 0; width: 4px; transform-origin: bottom; }
-.dcat[data-frame="c"] .dcat-corner-tr { display: block; top: 0; right: 0; width: 40px; height: 40px; border: solid var(--color-accent); border-width: 4px 4px 0 0; border-top-right-radius: 40px; }
-.dcat[data-frame="c"] .dcat-count { right: auto; bottom: 22px; left: 22px; }
-.dcat[data-frame="c"] .dcat-count b { font-size: 56px; }
-.dcat[data-frame="c"] .dcat-list .dcat-thumb { border-radius: 0 16px 0 0; }
-.dcat[data-frame="c"] .dcat-list .dcat-thumb::after { content: ''; right: 0; bottom: 0; left: 0; height: 3px; background: var(--color-accent); }
-
-/* D · Стос: the next two directions wait behind the one in focus; pointing at another row deals it to the front */
+/* D · the stack: the next two directions wait behind, their numbers on index tabs; pointing at a row deals it forward */
 .dcat[data-frame="d"] .dcat-media { overflow: visible; margin: 30px 30px 0 0; background: transparent; border: 0; }
-.dcat[data-frame="d"] .dcat-frame { overflow: hidden; opacity: 0; transform: translate(30px, -30px); background: var(--color-dark); border: 1px solid rgba(255, 255, 255, .2); }
+.dcat[data-frame="d"] .dcat-frame { opacity: 0; transform: translate(30px, -30px); background: var(--color-dark); border: 1px solid rgba(255, 255, 255, .2); }
 .dcat[data-frame="d"] .dcat-frame[data-pos="0"] { z-index: 2; opacity: 1; transform: none; }
 .dcat[data-frame="d"] .dcat-frame[data-pos="1"] { z-index: 1; opacity: 1; transform: translate(15px, -15px); }
 .dcat[data-frame="d"] .dcat-frame[data-pos="2"] { z-index: 0; opacity: 1; transform: translate(30px, -30px); }
 .dcat[data-frame="d"] .dcat-frame[data-pos="4"] { z-index: 3; opacity: 0; transform: translate(-24px, 24px); }
+.dcat[data-frame="d"] .dcat-frame img { position: relative; }
 .dcat[data-frame="d"] .dcat-frame:not([data-pos="0"]) img { filter: saturate(.3) brightness(.42); }
+.dcat[data-frame="d"] .dcat-frame-num {
+  position: absolute; z-index: 1; top: 0; right: 12px; display: block; padding: 2px 7px 2px; color: var(--color-text); background: var(--color-surface-elevated);
+  font: 700 10px/11px var(--font-condensed), sans-serif; letter-spacing: .08em;
+}
+.dcat[data-frame="d"] .dcat-frame[data-pos="0"] .dcat-frame-num { opacity: 0; }
 .dcat[data-frame="d"] .dcat-media::after { z-index: 2; }
+
+/* E · b's sheet on a stack of two plain sheets (the media's own offset shadows); the sheets carry the next numbers */
+.dcat[data-frame="e"] .dcat-media {
+  overflow: visible; margin: 30px 30px 0 0;
+  box-shadow: 15px -15px 0 -1px var(--color-surface-elevated), 15px -15px 0 0 var(--color-border-strong),
+    30px -30px 0 -1px var(--color-surface-alt), 30px -30px 0 0 var(--color-border-strong);
+}
+.dcat[data-frame="e"] .dcat-tab {
+  display: block; height: 15px; padding: 2px 7px 0; color: var(--color-text-secondary); font: 700 10px/11px var(--font-condensed), sans-serif; letter-spacing: .08em;
+}
+.dcat[data-frame="e"] .dcat-tab-1 { top: -15px; right: -3px; }
+.dcat[data-frame="e"] .dcat-tab-2 { top: -30px; right: -18px; }
+.dcat[data-frame="e"] .dcat-list .dcat-thumb { box-shadow: 5px -5px 0 -1px var(--color-surface-elevated), 5px -5px 0 0 var(--color-border-strong), 10px -10px 0 -1px var(--color-surface-alt), 10px -10px 0 0 var(--color-border-strong); }
 .dcat[data-frame="d"] .dcat-list .dcat-thumb { overflow: visible; box-shadow: 5px -5px 0 0 var(--color-border-strong), 10px -10px 0 0 var(--color-border); }
 .dcat[data-frame="d"] .dcat-list .dcat-thumb img { position: relative; }
 
-@keyframes dcat-corner-in { from { opacity: 0; translate: var(--dx, 0) var(--dy, 0); } }
 @keyframes dcat-grow-x { from { transform: scaleX(0); } }
 @keyframes dcat-grow-y { from { transform: scaleY(0); } }
-@keyframes dcat-fade { from { opacity: 0; } }
+@keyframes dcat-plot { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+@keyframes dcat-scan { 0% { top: 28px; opacity: 1; } 90% { opacity: 1; } 100% { top: calc(100% - 80px); opacity: 0; } }
+@keyframes dcat-settle { 0% { translate: -6px 6px; } 100% { translate: 0 0; } }
 @media (prefers-reduced-motion: no-preference) {
-  .dcat[data-frame="a"] .dcat-corner { animation: dcat-corner-in 520ms cubic-bezier(.2, .7, .1, 1) both; }
-  .dcat[data-frame="a"] .dcat-stamp > *, .dcat[data-frame="b"] .dcat-stamp > * { animation: dcat-in 420ms ease both; }
-  .dcat[data-frame="b"] .dcat-stamp > :nth-child(2) { animation-delay: 70ms; }
-  .dcat[data-frame="b"] .dcat-stamp > :nth-child(3) { animation-delay: 140ms; }
-  .dcat[data-frame="b"] .dcat-ruler-x { animation: dcat-grow-x 700ms cubic-bezier(.55, 0, .25, 1) both; }
-  .dcat[data-frame="b"] .dcat-ruler-y { animation: dcat-grow-y 700ms cubic-bezier(.55, 0, .25, 1) 80ms both; }
-  .dcat[data-frame="c"] .dcat-edge-b { animation: dcat-grow-x 560ms cubic-bezier(.55, 0, .25, 1) both; }
-  .dcat[data-frame="c"] .dcat-edge-r { animation: dcat-grow-y 420ms cubic-bezier(.55, 0, .25, 1) 520ms both; }
-  .dcat[data-frame="c"] .dcat-corner-tr { animation: dcat-fade 260ms ease 900ms both; }
+  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-frame { transition: opacity 0s linear 780ms; }
+  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-frame[data-active] { transition: none; animation: dcat-plot 780ms cubic-bezier(.55, 0, .25, 1) both; }
+  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-scan { animation: dcat-scan 780ms cubic-bezier(.55, 0, .25, 1) both; }
+  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > * { animation: dcat-in 420ms ease both; }
+  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > :nth-child(2) { animation-delay: 70ms; }
+  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-stamp > :nth-child(3) { animation-delay: 140ms; }
+  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-ruler-x { animation: dcat-grow-x 700ms cubic-bezier(.55, 0, .25, 1) both; }
+  .dcat:is([data-frame="b"], [data-frame="e"]) .dcat-ruler-y { animation: dcat-grow-y 700ms cubic-bezier(.55, 0, .25, 1) 80ms both; }
+  .dcat[data-frame="e"] .dcat-tab { animation: dcat-in 360ms ease 120ms both; }
   .dcat[data-frame="d"] .dcat-frame { transition: opacity 520ms ease, transform 700ms cubic-bezier(.2, .7, .1, 1); }
   .dcat[data-frame="d"] .dcat-frame img { transition: filter 600ms ease; }
 }

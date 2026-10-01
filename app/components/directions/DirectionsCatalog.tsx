@@ -9,14 +9,15 @@ import { useState, useSyncExternalStore, type CSSProperties } from 'react';
 // Copy comes from the directions' own data. The images are generated concept illustrations made for this list (not the
 // hero's slides): the preview carries «Ілюстрація», and the section's intro says so in words for the small row images.
 
-// TEMPORARY — frame lab (design/napryamky-v2 only, remove once a frame is chosen): `?frame=a|b|c|d` puts one of four
+// TEMPORARY — frame lab (design/napryamky-v2 only, remove once a frame is chosen): `?frame=b|d|e` puts one of three
 // photo-frame treatments on the preview (and its narrow-screen echo on the row pictures) and shows a small switcher.
-// a «Видошукач» — copper corner marks and a caption bar (the /pro-nas practice and HOME scheme language);
-// b «Креслення» — a drawing sheet: paper margin, ruler ticks, a title block; c «Мідний кант» — the HOME cards' rounded
-// corner with a copper edge drawn along the bottom and up the side; d «Стос» — the next directions stacked behind.
-const FRAMES = ['base', 'a', 'b', 'c', 'd'] as const;
+// b «Креслення» — a drawing sheet: paper margin, ruler ticks, a title block; each new image is plotted in under a copper
+// line. d «Стос» — the next directions stacked behind, their numbers on index tabs; pointing at a row deals it to the
+// front. e «Креслення в стосі» — b's sheet lying on a stack of plain sheets that carry the next numbers.
+// (a «Видошукач» and c «Мідний кант» were tried in b6ab5e9 and set aside.)
+const FRAMES = ['base', 'b', 'd', 'e'] as const;
 type Frame = (typeof FRAMES)[number];
-const FRAME_NAMES: Record<Frame, string> = { base: 'Зараз', a: 'A · Видошукач', b: 'B · Креслення', c: 'C · Мідний кант', d: 'D · Стос' };
+const FRAME_NAMES: Record<Frame, string> = { base: 'Зараз', b: 'B · Креслення', d: 'D · Стос', e: 'E · Креслення в стосі' };
 const noSubscribe = () => () => {};
 const frameFromUrl = () => {
   const value = new URLSearchParams(window.location.search).get('frame');
@@ -97,18 +98,16 @@ export function DirectionsCatalog({ items }: Readonly<{ items: readonly CatalogI
               key={item.id}
             >
               <Illustration item={item} sizes="(max-width: 1050px) 1px, 40vw" />
+              <b className="dcat-frame-num">{item.number}</b>
             </span>
           ))}
           {/* Frame-lab decorations, keyed by the direction so their small entrance replays on every change */}
           <span className="dcat-deco" key={`deco-${current.id}`}>
-            <i className="dcat-corner dcat-corner-tl" />
-            <i className="dcat-corner dcat-corner-tr" />
-            <i className="dcat-corner dcat-corner-bl" />
-            <i className="dcat-corner dcat-corner-br" />
-            <i className="dcat-edge dcat-edge-b" />
-            <i className="dcat-edge dcat-edge-r" />
             <i className="dcat-ruler dcat-ruler-x" />
             <i className="dcat-ruler dcat-ruler-y" />
+            <i className="dcat-scan" />
+            <i className="dcat-tab dcat-tab-1">{items[(active + 1) % items.length].number}</i>
+            <i className="dcat-tab dcat-tab-2">{items[(active + 2) % items.length].number}</i>
           </span>
           <i className="dcat-tag">Ілюстрація</i>
           <span className="dcat-count"><b>{current.number}</b> / {count}</span>
