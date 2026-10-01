@@ -116,7 +116,7 @@ export default function DirectionsPage() {
             supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
           <FormatsScope formats={formatCards()} />
-          <a className="section-link" href={`${siteRoutes.process}#formaty`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
+          <a className="section-link" href={`${siteRoutes.process}#obsiah`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
         </div>
       </section>
 

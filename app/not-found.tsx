@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ConversationSection } from './components/ConversationSection';
 import { siteRoutes } from './data/navigation';
 import { brandedTitle } from './lib/seo';
 
@@ -24,6 +25,8 @@ export default function NotFound() {
           </div>
         </div>
       </section>
+      {/* The header's «Контакти» is page-relative (#inquiry, app/data/navigation.ts), so this page needs the block too */}
+      <ConversationSection title="Розкажіть коротко про завдання" />
     </main>
   );
 }

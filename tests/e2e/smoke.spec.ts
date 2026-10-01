@@ -553,4 +553,33 @@ test.describe('public route smoke tests', () => {
       await expect(page.locator(`main a[href="${path}"]`).first()).toBeVisible();
     }
   });
+
+  // A renamed section id leaves every link to it landing at the top of the page with no error anywhere
+  // (/napryamky kept /yak-pratsyuiemo#formaty after /yak v2 renamed the section to #obsiah), and the header's
+  // page-relative «Контакти» (#inquiry) needs a target on every page, the 404 included.
+  test('every in-site link with a fragment lands on an element that exists', async ({ page }) => {
+    const targets = new Map<string, Set<string>>();
+
+    for (const path of [...publicRoutes.map((route) => route.path), '/tse-ne-isnuie']) {
+      await page.goto(path, { waitUntil: 'load' });
+      const origin = new URL(page.url()).origin;
+      const hrefs = await page.locator('a[href*="#"]').evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href));
+
+      for (const href of hrefs) {
+        const url = new URL(href);
+        if (url.origin !== origin || url.hash.length < 2) continue;
+        const ids = targets.get(url.pathname) ?? new Set<string>();
+        ids.add(decodeURIComponent(url.hash.slice(1)));
+        targets.set(url.pathname, ids);
+      }
+    }
+
+    expect(targets.size).toBeGreaterThan(1);
+    for (const [path, ids] of targets) {
+      await page.goto(path, { waitUntil: 'load' });
+      for (const id of ids) {
+        await expect(page.locator(`[id="${id}"]`), `${path}#${id}`).toHaveCount(1);
+      }
+    }
+  });
 });
