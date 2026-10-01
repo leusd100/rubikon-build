@@ -184,10 +184,10 @@
   .dcat[data-frame="d"] .dcat-frame img { transition: filter 600ms ease; }
 }
 
+/* In the flow above the rows (a fixed bar sat under the cookie banner on a first visit) */
 .frame-lab {
-  position: fixed; z-index: 60; bottom: 16px; left: 50%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px;
-  width: max-content; max-width: calc(100vw - 24px); padding: 8px; color: var(--color-dark-text); background: rgba(15, 18, 16, .94);
-  border: 1px solid var(--color-dark-line); box-shadow: 0 14px 34px rgba(0, 0, 0, .32); translate: -50% 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; grid-column: 1 / -1; order: -1; padding: 8px; color: var(--color-dark-text);
+  background: var(--color-dark); border: 1px solid var(--color-dark-line);
   font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase;
 }
 .frame-lab > span { padding: 0 6px; color: var(--color-dark-text-muted); }
