@@ -2,6 +2,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { HomeProofCase } from '../../data/homeProof';
 import { siteRoutes } from '../../data/navigation';
+import { DrawingSheet } from '../DrawingSheet';
 
 // HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
 //
@@ -122,47 +123,56 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
   const { photo, scope } = proof;
   return (
     <div className="hv2-proof" id="real-object">
+      {/* Two images, two labels — both on the site's «Креслення» sheet, so the title block says what each one is: the
+          real object's photo and the principle's illustration (the labels once sat on the pictures as chips) */}
       <div className="hv2-proof-pair">
-        <figure className="hv2-proof-photo">
-          <div className="hv2-proof-media">
-            <picture>
-              <source type="image/webp" srcSet="/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w" sizes="(max-width: 900px) 100vw, 42vw" />
-              <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
-            </picture>
-            <span className="hv2-tag hv2-tag-photo">Фото об’єкта</span>
-          </div>
-          <figcaption><b>Реальний об’єкт.</b> Фото з ретушшю переднього плану.</figcaption>
-        </figure>
-        <figure className="hv2-proof-xray">
-          <div className="hv2-proof-media">
-            <img
-              src="/media/home-v2/concepts/hangar-xray-1774w.webp"
-              srcSet="/media/home-v2/concepts/hangar-xray-1100w.webp 1100w, /media/home-v2/concepts/hangar-xray-1774w.webp 1774w"
-              sizes="(max-width: 900px) 170vw, 58vw"
-              alt="Ілюстративна схема: ангар, у якого частину обшивки замінено умовним каркасом, зі шляхом навантаження від покрівлі до фундаменту"
-              loading="lazy"
-              decoding="async"
-            />
-            <svg className="hv2-xray-flow" viewBox="0 0 1774 887" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
-              <defs>
-                <radialGradient id="hv2-xray-glow-fill">
-                  <stop offset="0" stopColor="#ffb27a" stopOpacity=".95" />
-                  <stop offset=".45" stopColor="#cc8455" stopOpacity=".45" />
-                  <stop offset="1" stopColor="#cc8455" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-              <path className="hv2-xray-pulse-halo" d={XRAY_PATH} pathLength={1} />
-              <path className="hv2-xray-pulse" d={XRAY_PATH} pathLength={1} />
-              <ellipse className="hv2-xray-glow" cx="1491" cy="700" rx="70" ry="34" fill="url(#hv2-xray-glow-fill)" />
-            </svg>
-            <span className="hv2-proof-arrow" aria-hidden="true"><i>→</i><span>до принципу</span></span>
-            <span className="hv2-tag hv2-tag-scheme">Ілюстративна схема конструкції</span>
-          </div>
-          <figcaption>
-            <b>Ілюстрація принципу:</b> каркас і шлях навантаження від покрівлі до фундаменту. Це не креслення цього
-            ангара — його прихована конструкція, розміри й вузли тут не показані.
-          </figcaption>
-        </figure>
+        <DrawingSheet
+          className="hv2-proof-photo"
+          imageClassName="hv2-proof-media"
+          cells={[
+            { tone: 'note', label: 'Об’єкт', value: <><b>Реальний об’єкт.</b> Фото з ретушшю переднього плану.</> },
+            { label: 'Зображення', value: <span className="hv2-tag-photo">Фото об’єкта</span> },
+          ]}
+        >
+          <picture>
+            <source type="image/webp" srcSet="/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w" sizes="(max-width: 900px) 100vw, 42vw" />
+            <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
+          </picture>
+        </DrawingSheet>
+        <DrawingSheet
+          className="hv2-proof-xray"
+          imageClassName="hv2-proof-media"
+          cells={[
+            {
+              tone: 'note',
+              label: 'Принцип',
+              value: <><b>Ілюстрація принципу:</b> каркас і шлях навантаження від покрівлі до фундаменту. Це не креслення цього ангара — його прихована конструкція, розміри й вузли тут не показані.</>,
+            },
+            { label: 'Зображення', value: <span className="hv2-tag-scheme">Ілюстративна схема конструкції</span> },
+          ]}
+        >
+          <img
+            src="/media/home-v2/concepts/hangar-xray-1774w.webp"
+            srcSet="/media/home-v2/concepts/hangar-xray-1100w.webp 1100w, /media/home-v2/concepts/hangar-xray-1774w.webp 1774w"
+            sizes="(max-width: 900px) 170vw, 58vw"
+            alt="Ілюстративна схема: ангар, у якого частину обшивки замінено умовним каркасом, зі шляхом навантаження від покрівлі до фундаменту"
+            loading="lazy"
+            decoding="async"
+          />
+          <svg className="hv2-xray-flow" viewBox="0 0 1774 887" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+            <defs>
+              <radialGradient id="hv2-xray-glow-fill">
+                <stop offset="0" stopColor="#ffb27a" stopOpacity=".95" />
+                <stop offset=".45" stopColor="#cc8455" stopOpacity=".45" />
+                <stop offset="1" stopColor="#cc8455" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <path className="hv2-xray-pulse-halo" d={XRAY_PATH} pathLength={1} />
+            <path className="hv2-xray-pulse" d={XRAY_PATH} pathLength={1} />
+            <ellipse className="hv2-xray-glow" cx="1491" cy="700" rx="70" ry="34" fill="url(#hv2-xray-glow-fill)" />
+          </svg>
+          <span className="hv2-proof-arrow" aria-hidden="true"><i>→</i><span>до принципу</span></span>
+        </DrawingSheet>
       </div>
 
       <div className="hv2-proof-facts">

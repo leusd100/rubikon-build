@@ -36,7 +36,7 @@ export const directions: readonly Direction[] = [
     title: 'Ангари та склади',
     formLabel: 'Ангари та склади',
     serviceTitle: 'Ангари та склади',
-    routeText: 'Якщо потрібна швидкомонтована споруда під виробництво, логістику, техніку або зберігання.',
+    routeText: 'Швидкомонтовані споруди під виробництво, логістику, техніку чи зберігання.',
     cardTitle: 'Ангари та склади',
     cardText: 'Каркас, огородження та ворота — під виробництво, логістику, техніку або зберігання.',
     image: '/media/concepts/direction-hangars-v2.jpg',
@@ -55,7 +55,7 @@ export const directions: readonly Direction[] = [
     title: 'Зерносховища',
     formLabel: 'Зерносховища',
     serviceTitle: 'Зерносховища',
-    routeText: 'Якщо будівельну частину потрібно узгодити з вимогами обладнання для зберігання та переміщення зерна.',
+    routeText: 'Коли будівельна частина має збігтися з вимогами обладнання для зберігання й переміщення зерна.',
     cardTitle: 'Зерносховища',
     cardText: 'Основа, металевий каркас і огороджувальний контур з урахуванням вимог технологічного обладнання.',
     image: '/media/concepts/direction-grain-v2.jpg',
@@ -74,7 +74,7 @@ export const directions: readonly Direction[] = [
     title: 'Металоконструкції',
     formLabel: 'Металоконструкції',
     serviceTitle: 'Металоконструкції',
-    routeText: 'Якщо потрібне виготовлення або монтаж каркаса, ферм чи окремих металевих вузлів за погодженою документацією.',
+    routeText: 'Виготовлення або монтаж каркасів, ферм і окремих вузлів — за погодженою документацією.',
     cardTitle: 'Металоконструкції',
     cardText: 'Організовуємо виготовлення й монтуємо каркаси, ферми та вузли за документацією замовника.',
     image: '/media/concepts/direction-steel-v2.jpg',
@@ -93,7 +93,7 @@ export const directions: readonly Direction[] = [
     title: 'Бетонні роботи',
     formLabel: 'Бетонні роботи',
     serviceTitle: 'Бетонні роботи',
-    routeText: 'Якщо потрібен фундамент, основа під обладнання, бетонна площадка або промислова підлога.',
+    routeText: 'Фундаменти, основи під обладнання, бетонні площадки й промислові підлоги.',
     cardTitle: 'Бетонні роботи',
     cardText: 'Типові фундаменти й бетонні основи за проєктом; спеціалізовані етапи підлог погоджуємо окремо.',
     image: '/media/concepts/direction-concrete-v2.jpg',
@@ -112,7 +112,7 @@ export const directions: readonly Direction[] = [
     title: 'Покрівельні роботи',
     formLabel: 'Покрівельні роботи',
     serviceTitle: 'Покрівельні роботи',
-    routeText: 'Якщо потрібен монтаж нової покрівлі, заміна існуючої або ремонт проблемних ділянок і примикань.',
+    routeText: 'Монтаж нової покрівлі, заміна старої або ремонт проблемних ділянок і примикань.',
     cardTitle: 'Покрівельні роботи',
     cardText: 'Монтаж і ремонт промислових, складських і комерційних покрівель — з увагою до вузлів і герметичності.',
     image: '/media/concepts/direction-roofing-v2.jpg',
@@ -126,10 +126,13 @@ export const directions: readonly Direction[] = [
   },
 ] as const;
 
+// A real answer, not a skipped field: the visitor has a task but has not picked a direction yet. /napryamky's form
+// starts on it, because that page invites people who do not know their direction.
+export const undecidedDirection = 'Ще не визначено';
+
 export const inquiryDirectionOptions = [
   ...directions.map(({ formLabel }) => formLabel),
   'Комплексне будівництво',
   'Інше',
-  // A real answer, not a skipped field: the visitor has a task but has not picked a direction yet.
-  'Ще не визначено',
+  undecidedDirection,
 ] as const;

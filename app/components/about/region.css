@@ -1,0 +1,68 @@
+/* RegionBlock + RegionMap: the main region on a real map, shared by /pro-nas and /napryamky (each page imports this
+   file). One copper line with the region on it (drawn out from the words, once), «Базуємося в Дніпрі» with the
+   other-regions sentence beside the oblast's outline: drawn with an even pen, warming from Dnipro to the edges, the
+   city marked, then even rings stepping out from it, cut by the boundary — no distances, so no service radius is
+   promised. On fine-pointer devices with motion a soft copper light follows the cursor and brings the nearest rings up.
+   Motion runs once inside a ProcessMotion root; without it every part stands complete. */
+
+.region-block {
+  --region-draw: cubic-bezier(.55, 0, .25, 1); /* an even pen: no rush at the start, no crawl at the end */
+  --region-ease: var(--m-ease, cubic-bezier(.2, .7, .1, 1));
+  --region-reveal: var(--m-reveal, .36s);
+}
+.region-bond { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0; }
+.region-bond::before, .region-bond::after { content: ''; flex: 1; height: 1px; background: var(--color-accent); }
+.region-bond::before { transform-origin: right; }
+.region-bond::after { transform-origin: left; }
+.region-bond span { max-width: 72%; color: var(--color-accent-strong); font: 700 13px/1.35 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; text-wrap: balance; }
+.region-layout { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; gap: clamp(24px, 4vw, 64px); margin-top: clamp(28px, 3vw, 44px); }
+.region-base { margin: 0 0 18px; color: var(--color-text); font: 400 clamp(34px, 3.6vw, 54px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
+.region-note { max-width: 520px; margin: 0; color: var(--color-text-secondary); font-size: 17px; line-height: 1.7; }
+.region-figure { margin: 0; }
+.region-figure svg { display: block; width: 100%; max-height: 400px; overflow: visible; }
+.region-figure figcaption { margin-top: 10px; color: var(--color-text-muted); font-size: 12px; line-height: 1.4; text-align: right; }
+
+/* The plate (RegionMap) */
+.arm-shape { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.arm-area { fill: url(#arm-fill); stroke: none; }
+.arm-fill-core { stop-color: var(--color-accent); stop-opacity: .2; }
+.arm-fill-edge { stop-color: var(--color-accent); stop-opacity: .05; }
+.arm-ring-line { fill: none; stroke: var(--color-accent); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: calc(.46 - var(--k, 0) * .034); stroke-dasharray: 1; stroke-dashoffset: 0; }
+.arm-rings-lit .arm-ring-line { stroke: var(--color-accent-strong); stroke-width: 1.6; opacity: 1; }
+.arm-rings-lit { opacity: 0; transition: opacity 320ms ease; }
+.arm-light { transform: translate(var(--mx), var(--my)); transform-box: view-box; }
+.arm-glow { opacity: 0; transition: opacity 320ms ease; pointer-events: none; }
+.arm-spot-core { stop-color: var(--color-accent); stop-opacity: .26; }
+.arm-spot-edge { stop-color: var(--color-accent); stop-opacity: 0; }
+.arm[data-light="on"] :is(.arm-rings-lit, .arm-glow) { opacity: 1; }
+.arm-outline { fill: none; stroke: var(--color-accent); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.arm-dot { fill: var(--color-accent); }
+.arm-ring, .arm-pulse, .arm-leader { fill: none; stroke: var(--color-accent); vector-effect: non-scaling-stroke; }
+.arm-ring { stroke-width: 1.5; }
+.arm-leader { stroke-width: 1; }
+.arm-pulse { stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.arm-label { fill: var(--color-text); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .04em; }
+
+/* Arriving: the line; the outline draws and warms; the city is marked; the rings step out; the city pulses twice */
+:where([data-motion-ready="on"]) .region-bond::before,
+:where([data-motion-ready="on"]) .region-bond::after { transition: transform 700ms var(--region-ease) 160ms; }
+:where([data-motion-ready="on"]) .region-block :is(.region-bond span, .region-copy) { transition: opacity var(--region-reveal) ease 560ms; }
+:where([data-motion-ready="on"]) .arm-outline { transition: stroke-dashoffset 1700ms var(--region-draw) 400ms; }
+:where([data-motion-ready="on"]) .arm-area { transition: fill-opacity 700ms ease 1700ms; }
+:where([data-motion-ready="on"]) :is(.arm-dot, .arm-ring, .arm-leader, .arm-label) { transition: opacity 400ms ease 1900ms; }
+:where([data-motion-ready="on"]) .arm-ring-line { transition: stroke-dashoffset 1100ms var(--region-draw) calc(2100ms + var(--k, 0) * 110ms); }
+@keyframes arm-pulse { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
+:where([data-motion-ready="on"]) .region-block[data-motion-state="on"] .arm-pulse { animation: arm-pulse 1400ms ease-out 2100ms 2; }
+:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .region-bond::before,
+:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .region-bond::after { transform: scaleX(0); }
+:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) :is(.region-bond span, .region-copy) { opacity: 0; }
+:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) :is(.arm-outline, .arm-ring-line) { stroke-dashoffset: 1; }
+:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .arm-area { fill-opacity: 0; }
+:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) :is(.arm-dot, .arm-ring, .arm-leader, .arm-label) { opacity: 0; }
+
+@media (max-width: 760px) {
+  .region-layout { grid-template-columns: minmax(0, 1fr); }
+  .region-note { font-size: 16px; }
+  .arm-label { font-size: 34px; }
+  .region-figure figcaption { text-align: left; }
+}

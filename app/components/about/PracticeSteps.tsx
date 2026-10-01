@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
+import { DrawingSheet } from '../DrawingSheet';
 
 // /pro-nas «Досвід працює ще до початку робіт»: the illustration answers the list one step at a time. The camera
 // pushes in on that step's place in the image — the drawing under the hands, the order the frame goes up (base
@@ -9,6 +10,9 @@ import ResponsiveImage from '../ResponsiveImage';
 // three steps play once by themselves and return to the overview; the round control pauses or replays them, and
 // every item is a button that shows its step. Reduced motion: no tour and no camera move — a pressed item switches
 // at once. Without JavaScript: the overview with all three marks, as before.
+//
+// The image sits on the site's «Креслення» sheet (DrawingSheet): its title block carries the step, the caption and
+// the control (no «Ілюстрація» here — the owner's choice for /pro-nas).
 //
 // The marks are drawn in image pixels and the image is cropped by cover; the stage wraps both, so one transform
 // moves them together and keeps them aligned at any size.
@@ -83,7 +87,9 @@ export function PracticeSteps({
     return () => query.removeEventListener('change', update);
   }, []);
 
-  // The tour starts once, when the image is at least half in view; leaving the view pauses it
+  // The tour starts once, when the image is at least half in view; leaving the view entirely pauses it. Not sooner:
+  // the control sits in the title block under the image, so reaching for it on a phone can scroll most of the image
+  // away — pausing there flipped the button, and the tap meant to pause resumed the tour.
   useEffect(() => {
     const visual = visualRef.current;
     if (!visual || !motion) return;
@@ -93,10 +99,10 @@ export function PracticeSteps({
         setStep(1);
         setRun((value) => value + 1);
         setTouring(true);
-      } else if (entry.intersectionRatio < 0.2) {
+      } else if (!entry.isIntersecting) {
         setTouring(false);
       }
-    }, { threshold: [0, 0.2, 0.5] });
+    }, { threshold: [0, 0.5] });
     observer.observe(visual);
     return () => observer.disconnect();
   }, [motion]);
@@ -135,7 +141,23 @@ export function PracticeSteps({
 
   return (
     <div className="shell about-story-layout ps" data-motion data-step={step || undefined} data-touring={touring || undefined}>
-      <div className="promise-visual about-planning-visual" ref={visualRef}>
+      <DrawingSheet
+        className="ps-sheet"
+        imageClassName="promise-visual about-planning-visual"
+        imageRef={visualRef}
+        cells={[
+          step
+            ? { tone: 'number', label: 'Крок', value: <>{pad(step)}<span> / {pad(steps.length)}</span></> }
+            : { label: 'Показ', value: 'Огляд' },
+          { tone: 'main', label: 'Що показано', value: <span className="ps-caption-text">{active ? active.caption : overviewCaption}</span> },
+        ]}
+        action={motion && (
+          <button type="button" className="ps-control" data-paused={touring ? undefined : true} onClick={toggle}>
+            <span className="ps-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ' показу кроків' : ' показ кроків'}</span></span>
+            <span className="ps-control-icon" aria-hidden="true" />
+          </button>
+        )}
+      >
         <div className="ps-stage" style={{ transform: stageTransform(size, active) }}>
           <ResponsiveImage
             src="/media/about-quality-control.webp"
@@ -169,16 +191,7 @@ export function PracticeSteps({
             ))}
           </div>
         )}
-        <div className="ps-caption">
-          <span className="ps-caption-text">{active ? active.caption : overviewCaption}</span>
-          {motion && (
-            <button type="button" className="ps-control" data-paused={touring ? undefined : true} onClick={toggle}>
-              <span className="ps-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ' показу кроків' : ' показ кроків'}</span></span>
-              <span className="ps-control-icon" aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      </div>
+      </DrawingSheet>
       <div className="about-story-copy">
         <p className="eyebrow"><span /> {eyebrow}</p>
         <h2 id={titleId}>{title}</h2>

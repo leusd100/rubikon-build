@@ -1,0 +1,238 @@
+/* /napryamky — the hub. Zones: hero (dark, the direction slides, in the /yak-pratsyuiemo composition) → the five
+   directions as a catalogue (paper: rows + a sticky preview of the one in focus) → formats → where the work starts →
+   the region → the site-wide conversation block. Theme roles only (app/theme.css). */
+
+/* ---------------------------------------------------------------- 1 · Hero */
+/* Crumbs, eyebrow and title, then the lead and one row of actions under them; the slides keep the right side. The
+   title is two short lines («Від фундаменту / до покрівлі»), so its copper word stays over the dark left of the
+   overlay; the old long second line reached the slides' bright sky (2.8 : 1). */
+.directions-page .directions-subhero .subhero-layout { display: block; }
+.directions-page .directions-subhero-side { width: auto; margin-top: 30px; padding-top: 0; border-top: 0; }
+.directions-page .directions-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: 17px; line-height: 1.7; }
+.directions-page .directions-hero-actions { gap: 18px 36px; margin-top: 38px; }
+.directions-page .directions-hero-actions :is(.subhero-side-cta, .text-link, .hero-call) { margin: 0; }
+/* Dark under the words on the left, the slide open on the right, a little shade at the top for the slide caption */
+.directions-page .directions-subhero .subhero-overlay {
+  background:
+    linear-gradient(90deg, rgba(10, 11, 12, .92) 0%, rgba(10, 11, 12, .8) 42%, rgba(10, 11, 12, .34) 100%),
+    linear-gradient(0deg, rgba(10, 11, 12, .82) 0%, transparent 50%, rgba(10, 11, 12, .5) 100%);
+}
+/* Clear of the window's edges at every height, as on /pro-nas: at least the window, never forced taller */
+@media (min-width: 761px) {
+  .directions-page .directions-subhero { height: auto; min-height: 100svh; }
+  .directions-page .directions-subhero .subhero-layout { padding-bottom: clamp(56px, 11vh, 120px); }
+}
+@media (min-width: 761px) and (max-height: 820px) {
+  .directions-page .directions-subhero .subhero-layout { padding-top: 124px; }
+}
+@media (min-width: 761px) and (max-height: 720px) {
+  .directions-page .directions-subhero h1 { font-size: clamp(46px, 4.6vw, 64px); }
+  .directions-page .directions-subhero-side { margin-top: 22px; }
+  .directions-page .directions-hero-actions { margin-top: 26px; }
+}
+@media (min-width: 761px) and (max-height: 700px) {
+  .directions-page .directions-subhero .subhero-layout { padding-top: 112px; }
+}
+/* Which direction the slide shows, top right: five bars (the current one filling for the slide's 3 s) and its name */
+.dhs-indicator { position: absolute; z-index: 3; top: 128px; right: var(--container-gutter); display: flex; flex-direction: column; align-items: flex-end; width: min(300px, 30vw); pointer-events: none; }
+.dhs-bars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.dhs-bars i { position: relative; height: 2px; overflow: hidden; background: rgba(255, 255, 255, .32); }
+.dhs-bars i.is-done { background: var(--color-accent-on-dark); }
+.dhs-bars b { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; }
+@keyframes dhs-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dhs-bars b { animation: dhs-fill 3000ms linear both; }
+.dhs-indicator[data-paused] .dhs-bars b { animation-play-state: paused; }
+/* A quiet glass chip under the name: it sits over the brightest part of every slide, the sky */
+.dhs-caption { margin-top: 10px; padding: 5px 9px; color: rgba(255, 255, 255, .92); background: rgba(13, 16, 14, .58); backdrop-filter: blur(6px); font: 700 11.5px/1.3 var(--font-condensed), sans-serif; letter-spacing: .12em; text-align: right; text-transform: uppercase; }
+.dhs-caption b { color: var(--color-accent-on-dark); font-weight: 700; }
+
+/* ---------------------------------------------------------------- 2 · The directions catalogue */
+/* Rows on the left (each the link to its page, darkening when pointed at, the one in focus marked in copper); from
+   1051 px a sticky preview on the right: the illustration, the direction's own accent line, the kinds of work. */
+.dcat { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); align-items: start; gap: clamp(28px, 4vw, 64px); }
+.dcat-list a.route-service { position: relative; min-height: 148px; }
+.dcat-list a.route-service[data-active] { box-shadow: inset 3px 0 0 var(--color-accent); }
+/* On the row's dark state (pointer or keyboard) the kinds turn light with it */
+.dcat-list a.route-service:is(:hover, :focus-visible) .dcat-kinds li { color: var(--color-dark-text-secondary); border-color: var(--color-dark-line); }
+.dcat-list :is(.dcat-thumb, .dcat-kinds-row) { display: none; }
+.dcat-preview { position: sticky; top: 112px; }
+/* The preview is the «Креслення» sheet (app/components/drawing-sheet.css). Its five pictures share the picture area: a
+   new one is plotted in over the last under the copper line, and the last stays until the new one is complete. */
+.dcat-sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
+.dcat-frame { position: absolute; inset: 0; opacity: 0; }
+.dcat-frame[data-active] { z-index: 1; opacity: 1; }
+.dcat-frame img, .dcat-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.6) contrast(1.06); }
+.dcat-copy { padding-top: 24px; }
+.dcat-title { margin: 0; font: 400 clamp(28px, 2.5vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; text-wrap: balance; }
+.dcat-accent { margin: 4px 0 0; color: var(--color-accent-strong); font: 400 clamp(22px, 1.9vw, 30px)/1.12 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+.dcat-kinds-label { margin: 22px 0 10px; color: var(--color-text-muted); font: 700 11.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.dcat-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.dcat-kinds li { padding: 7px 11px; color: var(--color-text); border: 1px solid var(--color-border-strong); font: 600 13.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .03em; }
+@keyframes dcat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes dcat-plot { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+@media (prefers-reduced-motion: no-preference) {
+  .dcat-frame { transition: opacity 0s linear 780ms; }
+  .dcat-frame[data-active] { transition: none; animation: dcat-plot 780ms cubic-bezier(.55, 0, .25, 1) both; }
+  .dcat-copy { animation: dcat-in 420ms ease both; }
+  .dcat-list a.route-service { transition: color .25s ease, background .25s ease, padding .25s ease, box-shadow .25s ease; }
+}
+
+/* ---------------------------------------------------------------- 3 · Formats on one drawing */
+/* Three format buttons beside one large drawing of the same hangar (ScopeDiagram, /yak-pratsyuiemo). The format in
+   focus redraws the drawing: lines first, then RUBIKON's layers turn copper in build order, then the context settles.
+   The drawing's base styles are /yak's (delivery.css), repeated here inside .dfmt so this page carries its own. */
+.dfmt { background: var(--color-surface); }
+.dfmt-grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: center; gap: clamp(28px, 4vw, 64px); }
+.dfmt-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
+.dfmt-list li { border-bottom: 1px solid var(--color-border); }
+.dfmt-option {
+  display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 8px 16px; width: 100%; padding: 22px 16px 24px; color: inherit; text-align: left;
+  background: none; border: 0; font: inherit; cursor: pointer; transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.dfmt-num { grid-row: span 2; padding-top: 6px; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
+.dfmt-title { color: var(--color-text); font: 400 clamp(26px, 2.3vw, 36px)/1.05 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; transition: color var(--duration-fast) ease; }
+.dfmt-text { max-width: 520px; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
+.dfmt-option[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 9%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+.dfmt-option[aria-pressed="true"] .dfmt-title { color: var(--color-accent-strong); }
+@media (hover: hover) { .dfmt-option:hover { background-color: color-mix(in srgb, var(--color-accent) 5%, transparent); } }
+.dfmt-figure { margin: 0; padding: clamp(18px, 2.4vw, 32px); background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
+.dfmt-caption { margin-top: 14px; color: var(--color-text-muted); font: 700 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.dfmt-caption b { margin-right: 6px; color: var(--color-accent-strong); }
+.dfmt .section-link { margin-top: clamp(28px, 3vw, 40px); }
+.dfmt .scope-diagram { display: block; width: 100%; height: auto; max-width: 100%; overflow: visible; }
+.dfmt .scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; vector-effect: non-scaling-stroke; }
+.dfmt .sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: 1; stroke-linejoin: round; }
+.dfmt .sd-layer polygon { fill: color-mix(in srgb, var(--color-text) 3%, transparent); }
+.dfmt .sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.6; }
+.dfmt .sd-layer.is-scope polygon { fill: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.dfmt .sd-boundary { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.dfmt .sd-boundary-scope { stroke: var(--color-accent); stroke-width: 1.4; }
+.dfmt .sd-boundary-object { stroke: var(--color-border-strong); stroke-dasharray: 5 4; }
+.dfmt .sd-boundary-outer { stroke: var(--color-text-muted); stroke-width: 1.2; stroke-dasharray: 8 5; }
+.dfmt .sd-tab { fill: var(--color-text); }
+.dfmt .sd-tab-label { fill: var(--color-bg); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.dfmt .sd-label { fill: var(--color-text-muted); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
+.dfmt .sd-label-scope { fill: var(--color-accent-strong); }
+.dfmt .sd-leader { fill: none; stroke: var(--color-accent-strong); stroke-width: 1; }
+.dfmt .sd-dot { fill: var(--color-accent); }
+@keyframes dfmt-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes dfmt-fill { from { fill-opacity: 0; } to { fill-opacity: 1; } }
+@keyframes dfmt-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  /* Plays when the block arrives, and again for every format pointed at (the drawing is keyed by format) */
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-layer :is(path, polygon) { animation: dfmt-draw 700ms cubic-bezier(.55, 0, .25, 1) both; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-layer polygon { animation: dfmt-draw 700ms cubic-bezier(.55, 0, .25, 1) both, dfmt-fill 320ms ease 520ms both; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-1 polygon { animation-delay: 0ms, 640ms; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-1 path { animation-delay: 120ms; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-2 polygon { animation-delay: 0ms, 760ms; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-3 polygon { animation-delay: 0ms, 880ms; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-context { animation: dfmt-fade 360ms ease 900ms both; }
+}
+
+/* ---------------------------------------------------------------- 4 · Where the work starts (charcoal band) */
+/* Four «what you have» buttons over the eight-stage track: the start stage takes the copper ring, the copper run goes
+   from it to the last stage, the stages before it step back; under it, the start stage's own description. */
+.dstart { --stage: calc(100% / (var(--last, 7) + 1)); display: grid; gap: clamp(30px, 3.4vw, 46px); }
+/* The list keeps the shared .entry-points-list class (the server-HTML test reads it), so its layout is reset here */
+.dstart .dstart-entries { display: grid; grid-column: auto; grid-row: auto; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; border-top: 0; }
+.dstart .dstart-entries li { display: block; padding: 0; border-bottom: 0; }
+.dstart .dstart-entries small { color: var(--color-dark-text-secondary); }
+.dstart-entry {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; height: 100%; padding: 18px 18px 20px; color: var(--color-dark-text);
+  text-align: left; background: transparent; border: 1px solid var(--color-dark-line); font: inherit; cursor: pointer;
+  transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.dstart-entry b { font: 600 18px/1.2 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.dstart-entry small { color: var(--color-dark-text-secondary); font-size: 13.5px; line-height: 1.5; }
+.dstart-entry[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent-on-dark) 12%, transparent); border-color: var(--color-accent-on-dark); box-shadow: inset 0 3px 0 var(--color-accent-on-dark); }
+@media (hover: hover) { .dstart-entry:hover { border-color: color-mix(in srgb, var(--color-accent-on-dark) 70%, transparent); } }
+.dstart-track { position: relative; }
+.dstart-rail, .dstart-run { position: absolute; top: 10px; height: 2px; }
+.dstart-rail { left: 10px; width: calc(var(--last, 7) * var(--stage)); background: var(--color-dark-line); }
+.dstart-run { left: calc(var(--start, 0) * var(--stage) + 10px); width: calc((var(--last, 7) - var(--start, 0)) * var(--stage)); background: var(--color-accent-on-dark); }
+.dstart-stages { position: relative; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; margin: 0; padding: 0; list-style: none; }
+.dstart-stages li { display: grid; justify-items: start; align-content: start; gap: 10px; padding-right: 12px; }
+.dstart-node { position: relative; z-index: 1; display: block; width: 22px; height: 22px; background: var(--color-dark); border: 2px solid var(--color-accent-on-dark); border-radius: 50%; }
+.dstart-num { color: var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
+.dstart-name { color: var(--color-dark-text-secondary); font: 600 15px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.dstart-stages li[data-state="before"] .dstart-node { border-color: var(--color-dark-line); }
+.dstart-stages li[data-state="before"] :is(.dstart-num, .dstart-name) { color: var(--color-dark-text-muted); }
+.dstart-stages li[data-state="start"] .dstart-node { background: var(--color-accent-on-dark); box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent-on-dark) 22%, transparent); }
+.dstart-stages li[data-state="start"] .dstart-name { color: var(--color-dark-text); }
+.dstart-detail { display: grid; grid-template-columns: minmax(0, .42fr) minmax(0, .58fr); align-items: start; gap: 6px clamp(24px, 4vw, 64px); padding-top: clamp(24px, 3vw, 36px); border-top: 1px solid var(--color-dark-line); }
+.dstart-kicker { grid-column: 1; margin: 0; color: var(--color-dark-text-muted); font: 700 11.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.dstart-stage { grid-column: 1; margin: 0; color: var(--color-dark-text); font: 400 clamp(28px, 2.6vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
+.dstart-stage b { margin-right: 10px; color: var(--color-accent-on-dark); font-weight: 400; }
+.dstart-what { grid-column: 2; grid-row: 1 / span 2; margin: 0; color: var(--color-dark-text-secondary); font-size: 16px; line-height: 1.7; }
+@keyframes dstart-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .dstart-run { transition: left 650ms cubic-bezier(.55, 0, .25, 1), width 650ms cubic-bezier(.55, 0, .25, 1), top 650ms cubic-bezier(.55, 0, .25, 1), height 650ms cubic-bezier(.55, 0, .25, 1); }
+  .dstart-node { transition: background-color 300ms ease, border-color 300ms ease, box-shadow 300ms ease; }
+  .dstart-detail { animation: dstart-in 420ms ease both; }
+  /* Arriving: the rail and the run draw from the first stage, the nodes light up along them */
+  :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) :is(.dstart-rail, .dstart-run) { transform: scaleX(0); }
+  :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) .dstart-stages li { opacity: 0; }
+  :where([data-motion-ready="on"]) .dstart :is(.dstart-rail, .dstart-run) {
+    transform-origin: left;
+    transition: transform 1100ms cubic-bezier(.55, 0, .25, 1), left 650ms cubic-bezier(.55, 0, .25, 1), width 650ms cubic-bezier(.55, 0, .25, 1), top 650ms cubic-bezier(.55, 0, .25, 1), height 650ms cubic-bezier(.55, 0, .25, 1);
+  }
+  :where([data-motion-ready="on"]) .dstart .dstart-stages li { transition: opacity 360ms ease calc(var(--i, 0) * 110ms); }
+}
+
+/* ---------------------------------------------------------------- 5 · Where we work */
+.dregion { background: var(--color-surface); }
+
+/* ---------------------------------------------------------------- Tablet and phone */
+@media (max-width: 1050px) {
+  /* One column, no preview: every row carries a small illustration beside its name — the list stays a list, not five
+     full-width pictures (that was ~3 phone screens) */
+  .dcat { grid-template-columns: minmax(0, 1fr); }
+  .dcat-preview { display: none; }
+  .dcat-list a.route-service {
+    grid-template-columns: 184px minmax(0, 1fr) 24px; grid-template-areas: "thumb num arrow" "thumb body arrow"; grid-template-rows: auto 1fr;
+    align-items: start; gap: 8px 24px; min-height: 0; padding-block: 24px;
+  }
+  .dcat-list a.route-service[data-active] { box-shadow: none; }
+  .dcat-list a.route-service > span:not(.dcat-thumb) { grid-area: num; }
+  .dcat-list a.route-service > div { grid-area: body; }
+  .dcat-list a.route-service > div p { margin-top: 10px; }
+  .dcat-list a.route-service > b { grid-area: arrow; margin-top: 2px; }
+  .dcat-list .dcat-thumb {
+    position: relative; display: block; overflow: hidden; grid-area: thumb; aspect-ratio: 4 / 3; padding: 4px;
+    background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); /* the «Креслення» sheet's small echo */
+  }
+  .dcat-list .dcat-kinds-row { display: flex; margin-top: 14px; }
+  .dcat-list .dcat-kinds-row li { padding: 6px 9px; font-size: 12.5px; }
+  .dfmt-grid { grid-template-columns: minmax(0, 1fr); }
+  .dfmt-figure { order: -1; }
+  .dstart .dstart-entries { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dstart-detail { grid-template-columns: minmax(0, 1fr); }
+  .dstart-what { grid-column: 1; grid-row: auto; margin-top: 8px; }
+}
+@media (max-width: 760px) {
+  .directions-page .directions-subhero-side { margin-top: 22px; }
+  .directions-page .directions-subhero-side > p { font-size: 16px; }
+  .directions-page .directions-subhero .subhero-layout { padding-bottom: 92px; }
+  .dhs-indicator { display: none; }
+  /* Phone rows: number and name across the row (a one-word name such as «Металоконструкції» needs it), then the
+     picture beside the line; the kinds stay on the direction's page (the link's name never carried them). The
+     pointer/keyboard state pads by 12 px, not 26, so the name still fits at 320 px. */
+  .dcat-list a.route-service { grid-template-columns: 92px minmax(0, 1fr) 20px; grid-template-areas: "num num arrow" "title title arrow" "thumb text text"; grid-template-rows: auto auto auto; gap: 6px 16px; padding-block: 20px; }
+  .dcat-list a.route-service:is(:hover, :focus-visible) { padding-inline: 12px; }
+  .dcat-list a.route-service > div { display: contents; }
+  .dcat-list a.route-service h3 { grid-area: title; }
+  .dcat-list a.route-service > div p { grid-area: text; align-self: start; margin-top: 6px; }
+  .dcat-list .dcat-thumb { margin-top: 12px; }
+  .dcat-list .dcat-kinds-row { display: none; }
+  .dfmt-option { padding: 18px 12px 20px; }
+  .dstart .dstart-entries { grid-template-columns: minmax(0, 1fr); }
+  /* The track turns vertical: one stage per row, the rail and the run down the left */
+  .dstart { --row: 48px; }
+  .dstart-stages { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); }
+  .dstart-stages li { grid-template-columns: 22px 30px minmax(0, 1fr); align-items: center; gap: 12px; height: var(--row); padding: 0; }
+  .dstart-rail, .dstart-run { left: 10px; width: 2px; }
+  .dstart-rail { top: calc(var(--row) / 2); height: calc(var(--last, 7) * var(--row)); }
+  .dstart-run { top: calc(var(--row) / 2 + var(--start, 0) * var(--row)); height: calc((var(--last, 7) - var(--start, 0)) * var(--row)); }
+  :where([data-motion-ready="on"]) .dstart :is(.dstart-rail, .dstart-run) { transform-origin: top; }
+  :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) :is(.dstart-rail, .dstart-run) { transform: scaleY(0); }
+}

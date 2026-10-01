@@ -2,6 +2,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
+import { DrawingSheet } from '../DrawingSheet';
 import { company } from '../../data/company';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { alternativeCladdingDemo } from '../../lib/configurator/presentationDemo';
@@ -102,14 +103,21 @@ export function HangarEditorialArchitecture() {
               <h2 id="angary-decisions-title">Від призначення — до зрозумілого технічного завдання</h2>
               <p>Чотири групи рішень визначають склад майбутнього об’єкта. Кожен вибір впливає на конструкцію, матеріали та подальше використання споруди.</p>
             </header>
-            <figure className="angary-decisions-intro-visual">
+            {/* The site's «Креслення» sheet: the title block says what the picture is (it once sat on it as a chip) */}
+            <DrawingSheet
+              className="angary-decisions-intro-visual"
+              cells={[
+                { label: 'Напрям', value: 'Ангари та склади' },
+                { tone: 'main', label: 'Тема', value: 'Рішення, які приймаєте ви' },
+                { label: 'Зображення', value: 'Ілюстрація' },
+              ]}
+            >
               <ResponsiveImage
                 src="/media/concepts/direction-hangars-v2.jpg"
                 alt="Металевий каркас ангара, поєднаний із технічними кресленнями майбутньої споруди"
                 sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 64px), 38vw"
               />
-              <figcaption className="media-provenance-label">Ілюстрація</figcaption>
-            </figure>
+            </DrawingSheet>
           </div>
 
           <div className="angary-decision-list">

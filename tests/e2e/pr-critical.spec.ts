@@ -4,7 +4,7 @@ import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { company, companyContactLinks } from '../../app/data/company';
 import { homeProofCase } from '../../app/data/homeProof';
-import { directions } from '../../app/data/directions';
+import { directions, undecidedDirection } from '../../app/data/directions';
 import { stubTurnstile } from './turnstile.helpers';
 
 function collectFatalBrowserErrors(page: Page) {
@@ -151,7 +151,8 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
 test('homepage server HTML carries the H1, the real-object proof, the conversation steps and cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
-    proofCaption: '#real-object .hv2-proof-photo figcaption',
+    // The photo's caption is the sentence cell of its «Креслення» title block
+    proofCaption: '#real-object .hv2-proof-photo .sheet-cell-note > b',
     proofScope: '#real-object .hv2-scope-chips li',
     conversationSteps: '#inquiry .conversation-journey h3',
     cooperation: '.inquiry-details select option',
@@ -166,7 +167,7 @@ test('homepage server HTML carries the H1, the real-object proof, the conversati
 
 test('/napryamky server HTML takes its formats and entry points from the model', async ({ page }) => {
   const text = await serverText(page, '/napryamky', {
-    formats: '.cooperation-split-three h2',
+    formats: '.dfmt-option .dfmt-title',
     entryPoints: '.entry-points-list b',
     startNotes: '.entry-points-list small',
   });
@@ -328,7 +329,7 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   await expect(page.locator('.about-build-list img')).toHaveCount(0);
   // The region closes the block on a copper line, the rest of the sentence under it
   const region = page.locator('.about-build-region');
-  await expect(region.locator('.about-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);
+  await expect(region.locator('.region-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);
   await expect(region).toContainText(company.geographyBeyond);
   // The oblast's outline with Dnipro marked; its OpenStreetMap-derived data is credited (ODbL)
   await expect(region.getByRole('img', { name: `Мапа: ${company.serviceAreas[0]}, позначено місто Дніпро` })).toBeVisible();
@@ -354,12 +355,12 @@ test('/pro-nas practice steps play once in view, pause, and answer each item', a
   const caption = story.locator('.ps-caption-text');
   await expect(caption).toHaveText('Від креслення — до перевірки на майданчику');
   await story.locator('.about-planning-visual').scrollIntoViewIfNeeded();
-  await expect(caption).toHaveText('01 · Креслення й вихідні дані');
+  await expect(caption).toHaveText('Креслення й вихідні дані');
   await story.getByRole('button', { name: 'Пауза показу кроків', exact: true }).click();
   await expect(story.getByRole('button', { name: 'Відтворити показ кроків', exact: true })).toBeVisible();
   const joint = story.getByRole('button', { name: /^Ключові вузли/ });
   await joint.click();
-  await expect(caption).toHaveText('03 · Болтовий вузол балки й колони');
+  await expect(caption).toHaveText('Болтовий вузол балки й колони');
   await expect(joint).toHaveAttribute('aria-pressed', 'true');
   await expect(story.locator('.about-before-step[aria-pressed="true"]')).toHaveCount(1);
 });
@@ -372,7 +373,38 @@ test('/pro-nas practice steps without motion: overview, no tour control, items s
   await expect(story.locator('.ps-caption-text')).toHaveText('Від креслення — до перевірки на майданчику');
   await expect(story.locator('.ps-control')).toHaveCount(0);
   await story.getByRole('button', { name: /^Послідовність робіт/ }).click();
-  await expect(story.locator('.ps-caption-text')).toHaveText('02 · Порядок монтажу: плита → колона → балка');
+  await expect(story.locator('.ps-caption-text')).toHaveText('Порядок монтажу: плита → колона → балка');
+});
+
+// /napryamky: the five directions as a catalogue — every row stays the link to its page, and from 1051 px the preview
+// follows the row pointed at or focused (its own title, accent and kinds); the hero slides say which direction they
+// show and can be paused.
+test('/napryamky catalogue preview follows the row in focus; hero slides name their direction and pause', async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/napryamky', { waitUntil: 'load' });
+  const rows = page.locator('#directions-list .route-service');
+  await expect(rows).toHaveCount(directions.length);
+  expect(await rows.evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(directions.map((direction) => direction.href));
+
+  const hero = page.locator('.directions-subhero');
+  await expect(hero.locator('.dhs-caption')).toContainText(directions[0].title);
+  const pause = hero.getByRole('button', { name: 'Пауза показу напрямів', exact: true });
+  await pause.click();
+  await expect(hero.getByRole('button', { name: 'Відтворити показ напрямів', exact: true })).toBeVisible();
+  const paused = await hero.locator('.dhs-caption').textContent();
+  await page.waitForTimeout(3600);
+  await expect(hero.locator('.dhs-caption')).toHaveText(paused!);
+
+  if (testInfo.project.name === 'desktop-chromium') {
+    const preview = page.locator('.dcat-preview');
+    await expect(preview.locator('.dcat-title')).toHaveText(directions[0].serviceTitle);
+    await page.locator('#metalokonstruktsii').hover();
+    await expect(preview.locator('.dcat-title')).toHaveText('Металоконструкції');
+    await expect(preview.locator('.dcat-accent')).toHaveText('від деталі до монтажу');
+    await page.locator('#betonni-roboty').focus();
+    await expect(preview.locator('.dcat-title')).toHaveText('Бетонні роботи');
+    await expect(preview.locator('.dcat-kinds li')).toHaveText(['Фундаменти', 'Основи під обладнання', 'Промислові підлоги', 'Монолітні ділянки']);
+  }
 });
 
 test('homepage separates labelled illustrations from the one real photo', async ({ page }) => {
@@ -447,10 +479,10 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }
 
 // /yak-pratsyuiemo — the Delivery Model page, readable before and without JavaScript.
 // One closing conversation block everywhere: the same four step titles, each page's own explanations, and on a
-// direction page the form already names that direction. /yak-pratsyuiemo shows its steps in the route instead.
+// direction page the form already names that direction. /yak-pratsyuiemo shows its steps in the route instead, and
+// /napryamky in its start track (see the next test).
 const CONVERSATION_PAGES: ReadonlyArray<{ path: string; journey: readonly string[] }> = [
   { path: '/', journey: DEFAULT_JOURNEY },
-  { path: '/napryamky', journey: DEFAULT_JOURNEY },
   { path: '/pro-nas', journey: DEFAULT_JOURNEY },
   ...Object.entries(DIRECTION_JOURNEY).map(([id, journey]) => ({ path: `/${id}`, journey })),
 ];
@@ -474,6 +506,19 @@ test('every page closes with the same conversation block, in its own words', asy
     expect(text.steps, path).toEqual([...journey]);
     expect(text.legacy, path).toEqual([]);
   }
+});
+
+// /napryamky invites people who have not picked a direction: its form starts on «Ще не визначено» (a real, accepted
+// answer), and the four after-contact steps give way to the start track above, which already says where we begin.
+test('/napryamky form starts on «Ще не визначено» and the start track replaces the four steps', async ({ page }) => {
+  const text = await serverText(page, '/napryamky', {
+    journey: '#inquiry .conversation-journey',
+    track: '.dstart-track',
+  });
+  expect(text.journey).toEqual([]);
+  expect(text.track).toHaveLength(1);
+  await page.goto('/napryamky', { waitUntil: 'load' });
+  await expect(page.locator('#inquiry form.inquiry-form').getByLabel(/Напрям робіт/)).toHaveValue(undecidedDirection);
 });
 
 test('the form carries no step numbers; a phone folds the step texts behind one button', async ({ page }) => {
