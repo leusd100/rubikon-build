@@ -161,7 +161,7 @@ test.describe('public route smoke tests', () => {
 
         const heroPoster = hero.locator('img.direction-hero-poster, img.direction-hero-image, img.directions-hero-sequence-image').first();
 
-        // HomeHeroVideo/AboutHeroVideo default to the desktop variant on first render (an
+        // HomeV2HeroMedia/AboutHeroVideo default to the desktop variant on first render (an
         // SSR-safe placeholder — the real viewport isn't known server-side) and correct
         // themselves once their viewport-detection effect resolves. That correction is
         // real but currently slow — around 500-900ms observed locally, well past a single

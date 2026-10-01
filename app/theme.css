@@ -147,7 +147,7 @@
 /* ---------- Inside the charcoal band ----------
    The copper text, hover and focus roles switch to their on-dark values, so a shared component (a section link,
    an arrow, a focus ring) reads correctly on the band in either mode without a per-band rule. */
-:is(.site-header, footer, .cookie-banner, .hero, .subhero, .service-subhero, .privacy-hero, .page-section-dark, .page-cta,
+:is(.site-header, footer, .cookie-banner, .hero, .subhero, .service-subhero, .privacy-hero, .page-section-dark,
   .proc-hero, .proc-route,
   .directions:not(.hv2-directions), .angary-process, .planner-change, .planner-brief-aside, .planner-development-head,
   .planner-tablist) {

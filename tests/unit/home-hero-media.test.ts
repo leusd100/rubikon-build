@@ -10,7 +10,7 @@ const responsiveHeroVideos = [
   ['About tablet', '../../public/media/about/about-tablet-montage.mp4'],
 ] as const;
 
-// HomeHeroVideo on desktop: each clip restarts at 0, is shown for clipDurationMs (2500) and keeps playing through the
+// HomeV2HeroMedia on desktop: each clip restarts at 0, is shown for clipDurationMs (2500) and keeps playing through the
 // 800 ms cross-fade, at playbackRate 0.85 — so (2.5 + 0.8) × 0.85 ≈ 2.81 s of source time is ever on screen.
 const DESKTOP_SHOWN_SOURCE_SECONDS = (2.5 + 0.8) * 0.85;
 const MAX_DESKTOP_CLIP_BYTES = 1_750_000;
