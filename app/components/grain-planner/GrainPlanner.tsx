@@ -142,7 +142,7 @@ export function GrainPlanner() {
                   : `${formatUnknownCount(unknownCount)} поки ${blockingVerb(unknownCount)} пряме порівняння передчасним — але наступні дії вже зрозумілі.`}
                 items={[
                   { label: 'Розуміння задачі', value: readiness.understanding, ready: readiness.understanding === 'Готове' },
-                  { label: 'Готовність маршруту', value: readiness.decision, ready: readiness.decision === 'Можна порівнювати' },
+                  { label: 'Порівняння концепцій', value: readiness.decision, ready: readiness.decision === 'Можна порівнювати' },
                   { label: 'Попередній опис', value: readiness.brief, ready: readiness.brief === 'Готове' },
                 ]}
                 ready={comparison}

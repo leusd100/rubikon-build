@@ -146,7 +146,7 @@ export default function GrainPersonalizedResult() {
           onEdit: row.themeIndex === undefined ? undefined : () => editTheme(row.themeIndex as number, true),
         }))}
         asideTitle="Карта рішення"
-        aside={[...decisionRows, { label: 'Підтверджено фактів', value: String(facts.length) }]}
+        aside={decisionRows}
         action={presentation.handoff.position === 'after-brief' ? handoff : undefined}
       />
     ),

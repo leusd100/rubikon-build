@@ -37,7 +37,14 @@ export type DirectionPageConfig = {
     accent: string;
     intro: string;
     /**
-     * Replaces the single «Обговорити проєкт ↗» link — for a page whose hero leads into its own
+     * The lead on a phone (≤760 px), built from the intro's own sentences: the full intro there pushed the hero's call
+     * below the first screen. The full intro stays on wider screens and in the page's structured data.
+     */
+    introPhone?: string;
+    /** A phone-only line under the hero's actions — for a boundary the shorter lead moved out of the way. */
+    notePhone?: string;
+    /**
+     * Replaces the single «Обговорити задачу ↗» link — for a page whose hero leads into its own
      * tool first. `sectionClassName` marks the hero variant the page's stylesheet targets.
      */
     actions?: {

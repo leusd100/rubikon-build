@@ -36,6 +36,30 @@ function value(formData: FormData, key: string) {
 
 const subscribeToHydration = () => () => undefined;
 
+type ValidatedField = HTMLInputElement | HTMLSelectElement;
+
+/**
+ * Ukrainian words for the browser's own validation bubble. The browser keeps its behaviour — it stops the submit and
+ * focuses the first field to fix — but its default message follows the visitor's system language (an audit browser
+ * said «Заполните это поле»). The message is set when a field is found invalid and cleared on the next edit, so the
+ * browser checks the field afresh.
+ */
+function ukrainianValidity(messages: { missing: string; format?: string }) {
+  return {
+    onInvalid: (event: FormEvent<ValidatedField>) => {
+      const field = event.currentTarget;
+      if (field.validity.customError) return;
+      field.setCustomValidity(field.validity.valueMissing ? messages.missing : messages.format ?? messages.missing);
+    },
+    onInput: (event: FormEvent<ValidatedField>) => event.currentTarget.setCustomValidity(''),
+  };
+}
+
+const NAME_VALIDITY = ukrainianValidity({ missing: 'Вкажіть, як до вас звертатися.', format: 'Ім’я — щонайменше 2 літери.' });
+const PHONE_VALIDITY = ukrainianValidity({ missing: 'Вкажіть номер телефону.', format: 'Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.' });
+const DIRECTION_VALIDITY = ukrainianValidity({ missing: 'Оберіть напрям робіт або «Ще не визначено».' });
+const CONSENT_MESSAGE = 'Підтвердьте згоду на обробку персональних даних.';
+
 function enabledFieldName(jsReady: boolean, name: string): string | undefined {
   return jsReady ? name : undefined;
 }
@@ -222,7 +246,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   }
 
   return (
-    <form ref={formRef} className="inquiry-form" aria-label="Запит на проєкт" method="post" onSubmit={(event) => void handleSubmit(event)}>
+    <form ref={formRef} className="inquiry-form" aria-label="Короткий запит" method="post" onSubmit={(event) => void handleSubmit(event)}>
       <div className="inquiry-form-heading">
         <p className="inquiry-form-kicker"><span aria-hidden="true" /> Короткий запит</p>
         <p className="inquiry-required-note">Поля, позначені *, обов’язкові</p>
@@ -234,7 +258,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
           <div className="inquiry-fields inquiry-fields-two">
             <label>
               <span>Ваше ім’я *</span>
-              <input name={enabledFieldName(jsReady, 'name')} type="text" minLength={2} maxLength={80} autoComplete="name" required />
+              <input name={enabledFieldName(jsReady, 'name')} type="text" minLength={2} maxLength={80} autoComplete="name" required {...NAME_VALIDITY} />
             </label>
             <label>
               <span>Телефон *</span>
@@ -249,6 +273,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                 aria-describedby="phone-hint"
                 autoComplete="tel"
                 required
+                {...PHONE_VALIDITY}
               />
               <small id="phone-hint" className="inquiry-field-hint">Після +380 введіть 9 цифр</small>
             </label>
@@ -288,7 +313,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
 
           <label className="inquiry-select">
             <span>Напрям робіт *</span>
-            <select name={enabledFieldName(jsReady, 'direction')} defaultValue={defaultDirection} required>
+            <select name={enabledFieldName(jsReady, 'direction')} defaultValue={defaultDirection} required onInvalid={DIRECTION_VALIDITY.onInvalid} onChange={DIRECTION_VALIDITY.onInput}>
               <option value="" disabled>Оберіть напрям</option>
               {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
             </select>
@@ -359,8 +384,12 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
               required
               aria-invalid={consentError}
               aria-describedby={consentError ? 'privacy-consent-error' : undefined}
-              onInvalid={() => setConsentError(true)}
+              onInvalid={(event) => {
+                event.currentTarget.setCustomValidity(CONSENT_MESSAGE);
+                setConsentError(true);
+              }}
               onChange={(event) => {
+                event.currentTarget.setCustomValidity('');
                 setConsentError(false);
                 if (event.target.checked) setConsentAt(new Date().toISOString());
               }}
@@ -369,7 +398,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
               Погоджуюся на обробку персональних даних для опрацювання мого запиту відповідно до{' '}
               <a href={siteRoutes.privacy}>Політики конфіденційності</a>.
             </span>
-            {consentError && <small id="privacy-consent-error">Підтвердьте згоду на обробку персональних даних.</small>}
+            {consentError && <small id="privacy-consent-error">{CONSENT_MESSAGE}</small>}
           </label>
 
           <div className="inquiry-submit-group">

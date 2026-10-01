@@ -407,6 +407,36 @@ test.describe('Turnstile on the inquiry form', () => {
   });
 });
 
+// The browser's validation bubble speaks Ukrainian whatever the visitor's system language (an audit browser showed
+// «Заполните это поле»): each field sets its own message when found invalid and drops it on the next edit.
+test.describe('validation messages', () => {
+  test('are Ukrainian for every required field, and clear once the field is fixed', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    const form = page.locator('form.inquiry-form');
+    await expect(form).toHaveAttribute('aria-label', 'Короткий запит');
+    const message = (label: RegExp) => form.getByLabel(label).evaluate((field) => (field as HTMLInputElement).validationMessage);
+
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(form.getByLabel(/Ваше ім’я/)).toBeFocused();
+    expect(await message(/Ваше ім’я/)).toBe('Вкажіть, як до вас звертатися.');
+    expect(await message(/Телефон/)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    expect(await message(/Напрям робіт/)).toBe('Оберіть напрям робіт або «Ще не визначено».');
+    expect(await message(/Погоджуюся на обробку персональних даних/)).toBe('Підтвердьте згоду на обробку персональних даних.');
+
+    // One letter is still too short: the next submit names that, in Ukrainian too
+    await form.getByLabel(/Ваше ім’я/).fill('І');
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    expect(await message(/Ваше ім’я/)).toBe('Ім’я — щонайменше 2 літери.');
+
+    await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
+    await form.getByLabel(/Телефон/).fill('+380671234567');
+    await form.getByLabel(/Напрям робіт/).selectOption('Ще не визначено');
+    await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
+    for (const label of [/Ваше ім’я/, /Телефон/, /Напрям робіт/, /Погоджуюся на обробку персональних даних/]) expect(await message(label)).toBe('');
+  });
+});
+
 test.describe('«Ще не визначено» direction', () => {
   test('is offered after the other directions and submitted as a normal value', async ({ page }) => {
     let submittedPayload: { direction?: string } | undefined;
