@@ -305,8 +305,9 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
           title={isHome ? 'Два покоління. Одна відповідальність' : 'Хто стоїть за RUBIKON'}
           supporting={isHome
             ? 'Практичний досвід будівництва й сучасна система роботи з клієнтом — в одній родинній компанії. За свою частину робіт і за домовленості в договорі відповідаємо особисто.'
-            // /pro-nas: the family thesis is said once, by the copper line under the cards
-            : 'Двоє людей — дві зони відповідальності: будівельна частина й робота з клієнтами.'}
+            // /pro-nas: who they are, plainly (the owner's wording, 01.10); the family thesis itself is said once, by
+            // the copper line under the cards
+            : 'Батько й син — дві зони відповідальності: будівельна частина й робота з клієнтами.'}
         />
         <div className="team-stories" data-motion={isHome ? undefined : ''}>
           <article className="person-story">

@@ -128,7 +128,7 @@ export default function AboutPage() {
             <p className="about-bond"><span>Основний регіон — {company.serviceAreas[0]}</span></p>
             <div className="about-region">
               <div className="about-region-copy">
-                <p className="about-region-base">Базуємося в Дніпрі.</p>
+                <p className="about-region-base">Базуємося в Дніпрі</p>
                 <p className="about-build-region-note">{company.geographyBeyond}</p>
               </div>
               <figure className="about-region-map">
