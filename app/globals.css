@@ -287,11 +287,14 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .ghost-word-end { right: max(-28px, calc((100vw - var(--container-max)) / 2 - 90px)); }
 .ghost-word-start { left: max(-28px, calc((100vw - var(--container-max)) / 2 - 90px)); }
 .ghost-word-dark { --ghost-fill: rgba(255,255,255,.018); --ghost-stroke: rgba(255,255,255,.15); }
-.section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(330px, .65fr); align-items: center; gap: var(--grid-gap); margin-bottom: 52px; padding-bottom: 38px; border-bottom: 1px solid var(--color-border); }
-.section-header-copy { max-width: 980px; }
+/* Title, then its note under it on the left — as the hero's lead (owner, 02.10: the note sat at the far right edge with
+   a wide empty gap between the two; a multi-line title's box cannot shrink to its longest line, so a side-by-side note
+   always kept that gap). */
+.section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: clamp(20px, 2.2vw, 28px); margin-bottom: 52px; padding-bottom: 38px; border-bottom: 1px solid var(--color-border); }
+.section-header-copy { min-width: 0; max-width: 980px; }
 .section-header-copy .eyebrow { margin-bottom: 30px; }
-.section-header h2 { max-width: 920px; margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(50px, 5.15vw, 76px); font-weight: 400; line-height: .99; letter-spacing: -.035em; }
-.section-header-support { align-self: center; max-width: 470px; margin: 42px 0 0; padding: 2px 0 2px 26px; color: var(--color-text-muted); border-left: 2px solid var(--color-accent); font-size: 16px; line-height: 1.75; }
+.section-header h2 { max-width: 15em; margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(50px, 5.15vw, 76px); font-weight: 400; line-height: .99; letter-spacing: -.035em; }
+.section-header-support { max-width: 640px; margin: 0; padding: 2px 0 2px 26px; color: var(--color-text-muted); border-left: 2px solid var(--color-accent); font-size: 16px; line-height: 1.75; }
 .section-header-inverse { border-bottom-color: rgba(255,255,255,.18); }
 .section-header-inverse .section-header-support { color: var(--color-dark-text-secondary); }
 
@@ -742,7 +745,6 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   /* Tablet: the two hero buttons share their row, or fill it when they wrap, so they never sit at two different widths. */
   .hero-actions .button { flex: 1 1 auto; gap: 16px; padding-inline: 18px; }
   .hero-actions .text-link { gap: 8px; }
-  .section-header { grid-template-columns: minmax(0, 1fr) minmax(280px, .7fr); }
   .promise-visual { min-height: 560px; }
   .person-story, .person-story-reverse { grid-template-columns: 1fr; }
   .person-story:not(.person-story-reverse) .person-photo { justify-self: start; }

@@ -18,7 +18,7 @@ type Point = readonly [number, number, number];
  * 45° every portal frame is a clear outline: two posts, two rafters.
  */
 const OX = 126;
-const OY = 210;
+const OY = 214;
 function p([x, d, z]: Point): string {
   return `${(OX + x - d * 0.4).toFixed(1)},${(OY - z - d * 0.4).toFixed(1)}`;
 }
@@ -28,8 +28,8 @@ const line = (from: Point, to: Point) => `M${p(from)}L${p(to)}`;
 const W = 104; // span
 const EAVE = 58;
 const RIDGE = 84;
-const DEPTH = 168;
-const FRAMES = [0, 42, 84, 126, 168];
+const DEPTH = 150;
+const FRAMES = [0, 37.5, 75, 112.5, 150];
 
 const FOUNDATION = [
   poly([[0, 0, 0], [W, 0, 0], [W, DEPTH, 0], [0, DEPTH, 0]]),
@@ -70,7 +70,7 @@ const SHAPES: Record<Layer, { kind: 'polygon' | 'path'; items: readonly string[]
 const ORDER: readonly Layer[] = ['foundation', 'envelope', 'frame', 'roof'];
 
 /** Where the callout points: the near post of the middle frame (on the visible left wall). */
-const [FX, FY] = p([0, 84, 30]).split(',').map(Number) as [number, number];
+const [FX, FY] = p([0, 75, 30]).split(',').map(Number) as [number, number];
 
 export function ScopeDiagram({ format }: Readonly<{ format: DeliveryFormatId }>) {
   const scope = SCOPE[format];
@@ -85,21 +85,22 @@ export function ScopeDiagram({ format }: Readonly<{ format: DeliveryFormatId }>)
     <svg className={`scope-diagram scope-diagram-${format}`} viewBox="0 0 300 236" aria-hidden="true" focusable="false">
       {format === 'subcontract' && (
         <g className="sd-context">
-          <rect className="sd-boundary sd-boundary-outer" x="6" y="14" width="288" height="218" rx="4" pathLength={1} />
+          <rect className="sd-boundary sd-boundary-outer" x="6" y="14" width="288" height="220" rx="4" pathLength={1} />
           <rect className="sd-tab" x="6" y="3" width="172" height="21" rx="2" />
           <text className="sd-tab-label" x="14" y="18">Проєкт генпідрядника</text>
         </g>
       )}
       {format === 'comprehensive' && (
         <g className="sd-context">
-          <rect className="sd-boundary sd-boundary-scope" x="20" y="42" width="248" height="182" rx="3" pathLength={1} />
-          <text className="sd-label sd-label-scope" x="28" y="34">Обсяг RUBIKON</text>
+          <rect className="sd-boundary sd-boundary-scope" x="20" y="52" width="248" height="174" rx="3" pathLength={1} />
+          <text className="sd-label sd-label-scope" x="28" y="45">Обсяг RUBIKON</text>
         </g>
       )}
       {format !== 'comprehensive' && (
         <g className="sd-context">
-          <rect className="sd-boundary sd-boundary-object" x="20" y="42" width="248" height="182" rx="3" pathLength={1} />
-          <text className="sd-label" x="28" y="36">{format === 'subcontract' ? 'Об’єкт у складі проєкту' : 'Об’єкт замовника'}</text>
+          <rect className="sd-boundary sd-boundary-object" x="20" y="52" width="248" height="174" rx="3" pathLength={1} />
+          {/* 10 px under the subcontract tab (owner, 02.10: the two labels touched) */}
+          <text className="sd-label" x="28" y="45">{format === 'subcontract' ? 'Об’єкт у складі проєкту' : 'Об’єкт замовника'}</text>
         </g>
       )}
 

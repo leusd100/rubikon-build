@@ -59,8 +59,8 @@
 
 @media (min-width: 761px) {
   .grain-page .service-subhero-content .service-subhero-lead { max-width: 820px; }
-  /* The supporting line here is the full responsibility statement: give it the wider column. */
-  .grain-page .grain-process-band .section-header { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+  /* The supporting line here is the full responsibility statement: a wider measure under the title. */
+  .grain-page .grain-process-band .section-header-support { max-width: 820px; }
   .grain-page .grain-implementation-band .direction-editorial-grid[data-layout="media-first"] .direction-editorial-media { min-height: 440px; }
 }
 
