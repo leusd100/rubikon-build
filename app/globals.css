@@ -290,7 +290,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 /* Title, then its note under it on the left — as the hero's lead (owner, 02.10: the note sat at the far right edge with
    a wide empty gap between the two; a multi-line title's box cannot shrink to its longest line, so a side-by-side note
    always kept that gap). */
-.section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: clamp(20px, 2.2vw, 28px); margin-bottom: 52px; padding-bottom: 38px; border-bottom: 1px solid var(--color-border); }
+.section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: clamp(16px, 1.5vw, 22px); margin-bottom: 52px; padding-bottom: 32px; border-bottom: 1px solid var(--color-border); }
 .section-header-copy { min-width: 0; max-width: 980px; }
 .section-header-copy .eyebrow { margin-bottom: 30px; }
 .section-header h2 { max-width: 15em; margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(50px, 5.15vw, 76px); font-weight: 400; line-height: .99; letter-spacing: -.035em; }
