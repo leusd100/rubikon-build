@@ -226,15 +226,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .eyebrow span { width: 24px; height: 2px; background: var(--color-accent); }
 .eyebrow.light { color: var(--color-dark-text-secondary); }
 .hero .eyebrow { color: rgba(255,255,255,.66); }
-.hero h1 {
-  margin: 0;
-  font-family: var(--font-condensed), sans-serif;
-  font-weight: 550;
-  letter-spacing: -.025em;
-  text-transform: uppercase;
-  line-height: .98;
-}
-.hero h1 { max-width: 1100px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(56px, 6.2vw, 94px); font-weight: 400; line-height: 1.06; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
+.hero h1 { margin: 0; max-width: 1100px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(56px, 6.2vw, 94px); font-weight: 400; line-height: 1.06; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
 .hero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .hero-lead { max-width: 650px; margin: 34px 0 0; color: color-mix(in srgb, var(--color-dark-text) 90%, transparent); font-size: 17px; line-height: 1.7; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: 40px; }
