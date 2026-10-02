@@ -16,29 +16,12 @@
    footage keeps the right side. */
 .about-subhero { isolation: isolate; }
 .about-page .about-subhero .subhero-layout { display: block; }
-.about-page .about-subhero-side { width: auto; margin-top: 30px; padding-top: 0; border-top: 0; }
-.about-page .about-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: 17px; line-height: 1.7; }
-.about-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: 38px; }
+.about-page .about-subhero-side { width: auto; margin-top: var(--hero-gap-lead); padding-top: 0; border-top: 0; }
+.about-page .about-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
+.about-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: var(--hero-gap-actions); }
 .about-hero-actions .about-hero-cta, .about-hero-actions .hero-call { margin: 0; }
-/* The actions stay well clear of the window's bottom edge at every height (they sat on it in a short laptop window).
-   From 761 px the section is at least the window but never forced taller, its bottom space grows with the window's
-   height, and short windows tighten the top, the title and the gaps so the whole block still fits. Phones size the
-   section by its content. */
-@media (min-width: 761px) {
-  .about-page .about-subhero { height: auto; min-height: 100svh; }
-  .about-page .about-subhero .subhero-layout { padding-bottom: clamp(56px, 11vh, 120px); }
-}
-@media (min-width: 761px) and (max-height: 820px) {
-  .about-page .about-subhero .subhero-layout { padding-top: 124px; }
-}
-@media (min-width: 761px) and (max-height: 720px) {
-  .about-page .about-subhero h1 { font-size: clamp(52px, 5vw, 72px); }
-  .about-page .about-subhero-side { margin-top: 22px; }
-  .about-hero-actions { margin-top: 28px; }
-}
-@media (min-width: 761px) and (max-height: 700px) {
-  .about-page .about-subhero .subhero-layout { padding-top: 112px; }
-}
+/* The actions stay well clear of the window's bottom edge at every height: the hero standard (globals.css --hero-*)
+   sizes the title and the gaps by the window's height too. */
 /* Dark under the words on the left, the footage open on the right: every hero text stays at 4.5:1 or more against
    the brightest 5 % of each clip behind it */
 .about-page .about-subhero .subhero-overlay {
@@ -247,7 +230,6 @@
   .team-about .team-stories { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 64px; }
   .team-about .person-info h3 { white-space: normal; }
   .about-page .about-subhero-side { margin-top: 22px; }
-  .about-page .about-subhero-side > p { font-size: 16px; }
   .about-hero-actions { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 28px; }
   .about-hero-actions .about-hero-cta { width: 100%; }
   /* Phone: the breadcrumbs sit right under the header, over the top of the footage */

@@ -35,7 +35,6 @@ export function HomeV2Hero() {
               Написати або залишити запит <span aria-hidden="true">↓</span>
             </a>
           </div>
-          <p className="hv2-hero-geo">{company.geographyShort}</p>
         </div>
       </div>
       {/* Only the ≤760 still is a concept image; the desktop footage is process footage, not an object. */}

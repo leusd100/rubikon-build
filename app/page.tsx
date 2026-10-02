@@ -6,6 +6,7 @@ import { EngineeringSignature } from './components/home-v2/EngineeringSignature'
 import { HomeV2Hero } from './components/home-v2/HomeV2Hero';
 import { directions, undecidedDirection } from './data/directions';
 import { homeProofCase } from './data/homeProof';
+import { company } from './data/company';
 // HOME v2 «Engineering Signature» (owner-approved 2026-09-29, from design/home-v2-engineering-signature). Every rule
 // is scoped to main[data-home="v2"]; the previous HOME blocks (HomeSections, TeamSection) are no longer rendered here.
 // The closing conversation block is the site-wide ConversationSection.
@@ -31,6 +32,8 @@ export default function Home() {
           <DirectionsRail count={directions.length}>
             <DirectionImageCards />
           </DirectionsRail>
+          {/* Where we work, said once after the directions (owner, 02.10: it sat oddly in the hero) */}
+          <p className="bond-line hv2-geo-bond"><span>{company.geographyShort}</span></p>
         </div>
       </section>
 

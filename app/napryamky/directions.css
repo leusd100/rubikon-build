@@ -7,9 +7,9 @@
    title is two short lines («Від фундаменту / до покрівлі»), so its copper word stays over the dark left of the
    overlay; the old long second line reached the slides' bright sky (2.8 : 1). */
 .directions-page .directions-subhero .subhero-layout { display: block; }
-.directions-page .directions-subhero-side { width: auto; margin-top: 30px; padding-top: 0; border-top: 0; }
-.directions-page .directions-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: 17px; line-height: 1.7; }
-.directions-page .directions-hero-actions { gap: 18px 36px; margin-top: 38px; }
+.directions-page .directions-subhero-side { width: auto; margin-top: var(--hero-gap-lead); padding-top: 0; border-top: 0; }
+.directions-page .directions-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
+.directions-page .directions-hero-actions { gap: 18px 36px; margin-top: var(--hero-gap-actions); }
 .directions-page .directions-hero-actions :is(.subhero-side-cta, .text-link, .hero-call) { margin: 0; }
 /* Dark under the words on the left, the slide open on the right, a little shade at the top for the slide caption */
 .directions-page .directions-subhero .subhero-overlay {
@@ -17,22 +17,7 @@
     linear-gradient(90deg, rgba(10, 11, 12, .92) 0%, rgba(10, 11, 12, .8) 42%, rgba(10, 11, 12, .34) 100%),
     linear-gradient(0deg, rgba(10, 11, 12, .82) 0%, transparent 50%, rgba(10, 11, 12, .5) 100%);
 }
-/* Clear of the window's edges at every height, as on /pro-nas: at least the window, never forced taller */
-@media (min-width: 761px) {
-  .directions-page .directions-subhero { height: auto; min-height: 100svh; }
-  .directions-page .directions-subhero .subhero-layout { padding-bottom: clamp(56px, 11vh, 120px); }
-}
-@media (min-width: 761px) and (max-height: 820px) {
-  .directions-page .directions-subhero .subhero-layout { padding-top: 124px; }
-}
-@media (min-width: 761px) and (max-height: 720px) {
-  .directions-page .directions-subhero h1 { font-size: clamp(46px, 4.6vw, 64px); }
-  .directions-page .directions-subhero-side { margin-top: 22px; }
-  .directions-page .directions-hero-actions { margin-top: 26px; }
-}
-@media (min-width: 761px) and (max-height: 700px) {
-  .directions-page .directions-subhero .subhero-layout { padding-top: 112px; }
-}
+/* Clear of the window's edges at every height: the hero standard (globals.css --hero-*) sizes by the window's height */
 /* Which direction the slide shows, top right: five bars (the current one filling for the slide's 6 s) and its name */
 .dhs-indicator { position: absolute; z-index: 3; top: 128px; right: var(--container-gutter); display: flex; flex-direction: column; align-items: flex-end; width: min(300px, 30vw); pointer-events: none; }
 .dhs-bars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
@@ -100,10 +85,11 @@
 .dfmt-caption b { margin-right: 6px; color: var(--color-accent-strong); }
 .dfmt .section-link { margin-top: clamp(28px, 3vw, 40px); }
 .dfmt .scope-diagram { display: block; width: 100%; height: auto; max-width: 100%; overflow: visible; }
-.dfmt .scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; vector-effect: non-scaling-stroke; }
-.dfmt .sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: 1; stroke-linejoin: round; }
+.dfmt .scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; } /* see delivery.css: no non-scaling-stroke with the 1-unit dash */
+/* The figure is drawn about 1.7× its viewBox here, and the strokes now scale with it: thinner in drawing units */
+.dfmt .sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: .8; stroke-linejoin: round; }
 .dfmt .sd-layer polygon { fill: color-mix(in srgb, var(--color-text) 3%, transparent); }
-.dfmt .sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.6; }
+.dfmt .sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.2; }
 .dfmt .sd-layer.is-scope polygon { fill: color-mix(in srgb, var(--color-accent) 18%, transparent); }
 .dfmt .sd-boundary { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .dfmt .sd-boundary-scope { stroke: var(--color-accent); stroke-width: 1.4; }
@@ -211,7 +197,6 @@
 }
 @media (max-width: 760px) {
   .directions-page .directions-subhero-side { margin-top: 22px; }
-  .directions-page .directions-subhero-side > p { font-size: 16px; }
   .directions-page .directions-subhero .subhero-layout { padding-bottom: 92px; }
   .dhs-indicator { display: none; }
   /* Phone rows: number and name across the row (a one-word name such as «Металоконструкції» needs it), then the

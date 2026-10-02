@@ -28,7 +28,7 @@
 
 /* ---------------------------------------------------------------- 1 · Hero */
 .proc-hero {
-  position: relative; display: flex; align-items: flex-end; min-height: max(100svh, 720px); overflow: hidden; isolation: isolate;
+  position: relative; display: flex; align-items: flex-end; min-height: 100svh; overflow: hidden; isolation: isolate;
   color: var(--color-dark-text); background: var(--color-dark);
 }
 .proc-hero-media { position: absolute; z-index: -2; inset: 0; }
@@ -39,9 +39,10 @@
     linear-gradient(90deg, rgba(9, 10, 12, .95) 0%, rgba(9, 10, 12, .8) 42%, rgba(9, 10, 12, .2) 100%),
     linear-gradient(0deg, rgba(9, 10, 12, .8) 0%, transparent 48%, rgba(9, 10, 12, .4) 100%);
 }
-.proc-hero-layout { position: relative; z-index: 1; padding-top: 168px; padding-bottom: clamp(64px, 8vh, 96px); }
+/* The hero standard (globals.css --hero-*): this block is the owner's model for every page's first block */
+.proc-hero-layout { position: relative; z-index: 1; padding-top: var(--hero-pad-top); padding-bottom: var(--hero-pad-bottom); }
 .proc-hero-trace { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.proc-hero-trace path { fill: none; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.proc-hero-trace path { fill: none; stroke-dasharray: 1; stroke-dashoffset: 0; }
 .ht-grid { stroke: rgba(245, 242, 235, .07); stroke-width: 1; }
 .ht-trace { stroke: var(--color-accent-on-dark); stroke-width: 1.2; opacity: .55; }
 .ht-trace-2 { opacity: .3; }
@@ -53,10 +54,10 @@
 .process-page[data-motion-ready="on"] .proc-hero-trace .ht-node { transition: opacity var(--m-reveal) ease 1300ms; }
 .process-page[data-motion-ready] .proc-hero-trace:not([data-motion-state="on"]) path { stroke-dashoffset: 1; }
 .process-page[data-motion-ready] .proc-hero-trace:not([data-motion-state="on"]) .ht-node { opacity: 0; }
-.proc-hero h1 { max-width: 900px; margin: 0; font: 400 clamp(46px, 5.8vw, 86px)/1.03 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
+.proc-hero h1 { max-width: 900px; margin: 0; font: 400 var(--hero-title)/1.03 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
 .proc-hero h1 em { color: var(--color-accent-strong); font-style: normal; }
-.proc-hero-lead { max-width: 640px; margin: 30px 0 0; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: 17px; line-height: 1.7; }
-.proc-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: 38px; }
+.proc-hero-lead { max-width: 640px; margin: var(--hero-gap-lead) 0 0; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
+.proc-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: var(--hero-gap-actions); }
 .proc-hero-actions .hero-call { margin: 0; }
 .proc-provenance {
   position: absolute; right: 24px; bottom: 20px; padding: 5px 8px; color: color-mix(in srgb, var(--color-dark-text) 86%, transparent);
@@ -173,7 +174,9 @@
 .proc-party.is-rubikon { color: var(--color-dark-text); background: var(--color-dark); border-color: var(--color-dark); }
 .proc-contract-link { flex: 1 1 auto; min-width: 16px; max-width: 72px; height: 1px; background: var(--color-accent); transform-origin: left; }
 .scope-diagram { display: block; width: 100%; height: auto; max-width: 380px; overflow: visible; }
-.scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; vector-effect: non-scaling-stroke; }
+/* No vector-effect: non-scaling-stroke here — with pathLength="1" and a 1-unit dash (the draw-in), Chrome measures the
+   dash on screen, so a drawing shown larger than its viewBox lost the ends of its lines (the scope frames' posts) */
+.scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: 1; stroke-linejoin: round; }
 .sd-layer polygon { fill: color-mix(in srgb, var(--color-text) 3%, transparent); }
 .sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.6; }
@@ -478,15 +481,15 @@
   /* The call stays above the first-visit cookie banner, as on HOME */
   .proc-hero { min-height: calc(100svh - 120px); }
   .proc-hero-layout { padding-top: 124px; padding-bottom: 72px; }
-  .proc-hero h1 { font-size: clamp(38px, 10.6vw, 46px); }
-  .proc-hero-lead { margin-top: 22px; font-size: 16px; }
+  .proc-hero-lead { margin-top: 22px; }
   .proc-hero-actions { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 28px; }
   .proc-hero-actions .button { width: 100%; }
   .proc-hero-media img { object-position: 78% 30%; }
   /* The text runs the full width on a phone, over the lit side of the artwork: a deeper shade keeps every hero text at
      4.5:1 or more against the brightest 5 % of the image behind it (measured at 360, 390 and 430 px) */
   .proc-hero-shade { background: linear-gradient(90deg, rgba(9, 10, 12, .92) 0%, rgba(9, 10, 12, .8) 55%, rgba(9, 10, 12, .62) 100%), linear-gradient(0deg, rgba(9, 10, 12, .85) 0%, transparent 55%, rgba(9, 10, 12, .45) 100%); }
-  .proc-provenance { right: 16px; bottom: 14px; }
+  /* Where every phone hero keeps its stamp: top right, under the header (hero standard) */
+  .proc-provenance { top: 88px; right: 16px; bottom: auto; }
   .proc-start-head h2 { font-size: var(--title-section); line-height: 1.02; }
   .proc-start-head > p:last-child { font-size: 16px; }
   .proc-start-list li { grid-template-columns: 44px minmax(0, 1fr); padding: 22px 0; }

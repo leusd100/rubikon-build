@@ -239,7 +239,8 @@ main[data-home="v2"] .hv2-scheme-ground { stroke: #6f726d; stroke-width: 1.4; }
 main[data-home="v2"] .hv2-scheme-footing { fill: rgba(245, 242, 235, .06); stroke: #8a857c; stroke-width: 1.3; }
 main[data-home="v2"] .hv2-scheme-frame { fill: none; stroke: #ddd7cb; stroke-width: 2.4; stroke-linejoin: round; }
 main[data-home="v2"] .hv2-scheme-frame-inner { fill: none; stroke: rgba(221, 215, 203, .38); stroke-width: 1; stroke-linejoin: round; }
-main[data-home="v2"] .hv2-scheme-flow { fill: none; stroke: var(--hv2-copper-text); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 9; }
+main[data-home="v2"] .hv2-scheme-flow { fill: none; stroke: var(--hv2-copper-text); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 9; animation: hv2-flow 1.6s linear infinite; }
+@keyframes hv2-flow { to { stroke-dashoffset: -38; } }
 main[data-home="v2"] .hv2-scheme-flowhead { fill: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-scheme-dim { stroke: #6f726d; stroke-width: 1; }
 main[data-home="v2"] .hv2-scheme-axis { fill: none; stroke: #8a857c; stroke-width: 1.2; }
@@ -287,11 +288,11 @@ main[data-home="v2"] .hv2-proof-arrow span { font: 700 12.5px/1 var(--font-conde
 main[data-home="v2"] .hv2-xray-flow { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 main[data-home="v2"] :is(.hv2-xray-pulse, .hv2-xray-pulse-halo) {
   fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: .075 1.3; stroke-dashoffset: .075;
-  animation: hv2-pulse 3.4s cubic-bezier(.42, 0, .58, 1) 2;
+  animation: hv2-pulse 3.4s cubic-bezier(.42, 0, .58, 1) infinite;
 }
 main[data-home="v2"] .hv2-xray-pulse { stroke: #ffd2ad; stroke-width: 9; }
 main[data-home="v2"] .hv2-xray-pulse-halo { stroke: rgba(255, 150, 80, .42); stroke-width: 30; filter: blur(7px); }
-main[data-home="v2"] .hv2-xray-glow { opacity: 0; animation: hv2-glow 3.4s ease-out 2; }
+main[data-home="v2"] .hv2-xray-glow { opacity: 0; animation: hv2-glow 3.4s ease-out infinite; }
 @keyframes hv2-pulse {
   0% { stroke-dashoffset: .075; opacity: 0; }
   6% { opacity: 1; }
@@ -379,8 +380,8 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 }
 
 /* UX pass 2026-10: the geography line stays last, also where a very short phone moves the lead under the buttons. */
-main[data-home="v2"] .hv2-hero .hv2-hero-geo { order: 3; }
+main[data-home="v2"] .hv2-geo-bond { margin-top: clamp(40px, 5vw, 64px); }
 
-/* UX pass 2026-10: the X-ray's load path pulses twice when its sheet comes into view, then rests (DrawingSheet sets
-   data-sheet-state). The card scheme's dashed arrows stay still — the arrows already say which way the load goes. */
-main[data-home="v2"] .sheet:not([data-sheet-state="on"]) :is(.hv2-xray-pulse, .hv2-xray-pulse-halo, .hv2-xray-glow) { animation-play-state: paused; }
+/* The load path flows and the X-ray pulses from the moment their sheet comes into view (DrawingSheet sets
+   data-sheet-state); before that they wait. (Owner, 02.10: the scheme is meant to move — the two-cycle stop is undone.) */
+main[data-home="v2"] .sheet:not([data-sheet-state="on"]) :is(.hv2-scheme-flow, .hv2-xray-pulse, .hv2-xray-pulse-halo, .hv2-xray-glow) { animation-play-state: paused; }

@@ -27,6 +27,18 @@
   --text-lg: 18px;
   --title-section: clamp(46px, 4.5vw, 72px);
   --title-page: clamp(58px, 6vw, 92px);
+  /* Hero standard (UX pass 2026-10; the owner's model is /yak-pratsyuiemo): one title, lead and rhythm for every page's
+     first block. The sizes follow the window's height as well as its width, so the whole block — crumbs to actions —
+     fits a short laptop window (1280×720, 1600×760) instead of running past its bottom edge. HOME's longer statement
+     takes --hero-title-home. */
+  --hero-title: clamp(44px, min(5.8vw, 10.2svh), 86px);
+  --hero-title-home: clamp(44px, min(5.2vw, 9.4svh), 78px);
+  --hero-lead: 17px;
+  --hero-pad-top: calc(101px + clamp(18px, 7svh, 72px));
+  --hero-pad-bottom: clamp(40px, 9svh, 110px);
+  --hero-gap-crumb: clamp(16px, 3.6svh, 40px);
+  --hero-gap-lead: clamp(16px, 3.2svh, 30px);
+  --hero-gap-actions: clamp(20px, 4.2svh, 38px);
 
   /* Motion */
   --ease-premium: cubic-bezier(.2, .7, .1, 1);
@@ -391,7 +403,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-form label, .inquiry-select { display: grid; align-content: start; gap: 8px; }
 .inquiry-form label > span, .inquiry-choice legend { color: var(--color-text-secondary); font-size: 12.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .inquiry-form input, .inquiry-form select, .inquiry-form textarea { width: 100%; min-width: 0; border: 1px solid var(--color-border-control); border-radius: 0; outline: none; color: var(--color-text); background: var(--color-field); font: 500 14px/1.4 var(--font-manrope), sans-serif; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
-.inquiry-form input, .inquiry-form select { min-height: 50px; padding: 0 14px; }
+.inquiry-form input, .inquiry-form select { min-height: 54px; padding: 0 14px; }
 .inquiry-form textarea { resize: vertical; min-height: 108px; padding: 13px 14px; }
 .inquiry-form input:focus, .inquiry-form select:focus, .inquiry-form textarea:focus { border-color: var(--color-focus); background: var(--color-field); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 26%, transparent); }
 .inquiry-form input::placeholder, .inquiry-form textarea::placeholder { color: var(--color-text-muted); opacity: 1; }
@@ -466,7 +478,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .form-trap { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
 
 .inner-page { background: var(--color-bg); }
-.subhero { position: relative; min-height: 700px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
+.subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
 .subhero-grid { position: absolute; inset: 0; opacity: .16; background-image: linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px); background-size: 96px 96px; mask-image: linear-gradient(90deg, black, transparent 82%); pointer-events: none; }
 .subhero-media > img,
 .subhero-media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.45) contrast(1.08); }
@@ -500,11 +512,11 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
   .hero-video-control { right: 16px; bottom: 16px; }
 }
 .subhero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,11,12,.94), rgba(10,11,12,.73) 50%, rgba(10,11,12,.4)), linear-gradient(0deg, rgba(10,11,12,.72), transparent 62%); }
-.subhero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .55fr); align-items: end; gap: clamp(56px, 7vw, 104px); padding-top: 190px; padding-bottom: var(--hero-bottom-space); }
+.subhero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .55fr); align-items: end; gap: clamp(56px, 7vw, 104px); padding-top: var(--hero-pad-top); padding-bottom: var(--hero-pad-bottom); }
 .subhero-copy { min-width: 0; }
 .subhero-title-line { display: block; }
 .subhero-title-line + .subhero-title-line { margin-top: .08em; }
-.directions-subhero h1 { max-width: 980px; font-size: clamp(54px, 5.45vw, 82px); }
+.directions-subhero h1 { max-width: 980px; }
 .directions-subhero .subhero-title-line:last-child { max-width: 920px; }
 .about-hero-media { position: absolute; inset: 0; background: radial-gradient(circle at 72% 42%, rgba(182,83,44,.16), transparent 30%), linear-gradient(120deg, #1c201e, #111413 72%); }
 .about-hero-media > :is(img, video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; filter: saturate(.62) contrast(1.08) brightness(.9); }
@@ -512,27 +524,27 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .about-subhero h1 { max-width: 860px; }
 .about-subhero .subhero-grid { z-index: 1; opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
 .about-subhero .subhero-overlay { z-index: 1; background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
-.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 48px; color: var(--color-dark-text-muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 var(--hero-gap-crumb); color: var(--color-dark-text-muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .breadcrumb span { display: inline-flex; align-items: center; gap: 8px; }
 .breadcrumb a { display: inline-flex; align-items: center; min-height: 24px; margin-block: -4px; transition: color var(--duration-fast) ease; }
 .breadcrumb a:hover { color: var(--color-dark-text); }
 .breadcrumb b { color: rgba(255,255,255,.72); font-weight: 800; }
 .breadcrumb i { font-style: normal; }
-.subhero h1, .service-subhero h1 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--title-page); font-weight: 400; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance; }
+.subhero h1, .service-subhero h1 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--hero-title); font-weight: 400; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance; }
 .subhero h1 em, .service-subhero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .subhero-side { padding-top: 24px; border-top: 2px solid var(--color-accent); }
 .subhero-side > p { margin: 0; color: rgba(255,255,255,.7); font-size: 16px; line-height: 1.75; }
 
-.service-subhero { position: relative; min-height: 700px; height: 100svh; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
+.service-subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
 .service-subhero-media { position: absolute; inset: 0; }
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
 .direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%) !important; }
 .service-subhero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,9,10,.95), rgba(8,9,10,.72) 52%, rgba(8,9,10,.18)), linear-gradient(0deg, rgba(8,9,10,.72), transparent 64%); }
-.service-subhero-content { position: relative; z-index: 2; padding-top: 190px; padding-bottom: 84px; }
+.service-subhero-content { position: relative; z-index: 2; padding-top: var(--hero-pad-top); padding-bottom: var(--hero-pad-bottom); }
 .service-subhero-content h1 { max-width: 1040px; }
-.service-subhero-content .service-subhero-lead { max-width: 650px; margin: 34px 0 0; color: rgba(255,255,255,.7); font-size: 17px; line-height: 1.75; }
-.service-subhero-content .button { margin-top: 40px; }
+.service-subhero-content .service-subhero-lead { max-width: 650px; margin: var(--hero-gap-lead) 0 0; color: rgba(255,255,255,.7); font-size: var(--hero-lead); line-height: 1.75; }
+.service-subhero-content .button { margin-top: var(--hero-gap-actions); }
 /* The phone lead and the phone-only note (DirectionDetail: introPhone / notePhone) — wider screens keep the full lead */
 .service-subhero-lead .lead-phone, .service-subhero-note { display: none; }
 .about-hero-cta, .subhero-side-cta { margin-top: 28px; }
@@ -813,6 +825,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
     --radius-lg: 28px;
     --title-section: clamp(40px, 11vw, 46px);
     --title-page: clamp(42px, 12vw, 56px);
+    --hero-title: clamp(38px, 10.6vw, 46px);
+    --hero-lead: 16px;
   }
   .shell { width: min(100% - 32px, 620px); }
   .section { padding-block: var(--section-space); }
@@ -905,11 +919,11 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .directions-hero-actions .text-link { position: relative; justify-content: center; padding: 0 48px; border: 1px solid rgba(255,255,255,.38); }
   .directions-hero-actions .text-link span { position: absolute; right: 18px; }
   .breadcrumb { margin-bottom: 34px; }
-  .subhero h1, .service-subhero h1 { font-size: var(--title-page); }
+  .subhero h1, .service-subhero h1 { font-size: var(--hero-title); }
   .subhero-side > p { font-size: 15px; }
   .service-subhero-content { padding-top: 126px; padding-bottom: 58px; } /* the crumbs sit 49 px under the 77 px header, as on /angary */
   .direction-hero-image { object-position: var(--direction-hero-image-position-mobile, center 60%) !important; }
-  .service-subhero-content > p:last-child { margin-top: 26px; font-size: 15px; }
+  .service-subhero-content > p:last-child { margin-top: 26px; font-size: var(--hero-lead); }
   /* A phone: the shorter lead keeps the hero's call on the first screen; a boundary it moved goes under the actions */
   .service-subhero-lead:has(.lead-phone) .lead-full { display: none; }
   .service-subhero-lead .lead-phone { display: inline; }
@@ -1022,7 +1036,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .inquiry-form-section { gap: 12px; padding: 17px 24px 18px; }
   .inquiry-fields { gap: 12px; }
   .inquiry-form label, .inquiry-select { gap: 6px; }
-  .inquiry-form input, .inquiry-form select { min-height: 44px; }
+  /* Owner, 02.10: «Напрям робіт» asked for more height — fields stay 50 px here, not 44 */
+  .inquiry-form input, .inquiry-form select { min-height: 50px; }
   .inquiry-choice { margin: 14px 0 0; }
   .inquiry-choice label > span { min-height: 42px; padding-block: 6px; }
   .inquiry-details { margin-top: 14px; }
@@ -1050,13 +1065,10 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
      does — it drifted past the card's edge into the outer gutter instead of sitting flush under it.
      var(--container-gutter) is exactly what positions the shell (and so the card) at this width. */
   .hero .hero-video-control { right: var(--container-gutter); }
-  .hero h1 { max-width: 980px; font-size: clamp(52px, 5vw, 68px); line-height: 1.02; }
-  .hero-lead { max-width: 620px; margin-top: 20px; font-size: 15px; line-height: 1.55; }
+  .hero h1 { max-width: 980px; line-height: 1.02; }
+  .hero-lead { max-width: 620px; margin-top: 20px; }
   .hero-actions { margin-top: 24px; }
   .hero-actions .button { min-height: 50px; }
-  .subhero, .service-subhero { min-height: 620px; height: 100svh; }
-  .subhero-layout, .service-subhero-content { padding-top: 132px; padding-bottom: 44px; }
-  .breadcrumb { margin-bottom: 30px; }
 }
 
 @media (min-width: 761px) and (max-height: 700px) {
@@ -1071,10 +1083,9 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
      unconditional rule and the width-specific rule, so its own row-gap/font-size declarations
      are the ones actually deciding the cascade there; left untouched rather than merged, since
      doing so would change which rule wins for viewports in the 961–1050px×≤700px overlap. */
-  .hero-lead { margin-top: 16px; font-size: 14px; line-height: 1.48; }
+  .hero-lead { margin-top: 16px; }
   .hero-actions { margin-top: 18px; }
   .hero-actions .button { min-height: 46px; }
-  .subhero-layout, .service-subhero-content { padding-top: 112px; padding-bottom: 26px; }
 }
 
 /* Keep the homepage statement full-width at every non-mobile size. */
@@ -1087,11 +1098,11 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
     grid-template-rows: auto auto;
     align-content: end;
     column-gap: clamp(30px, 4vw, 48px);
-    row-gap: 18px;
+    row-gap: var(--hero-gap-lead);
   }
-  .hero h1 { grid-area: title; max-width: none; font-size: clamp(48px, 5.2vw, 78px); line-height: 1.02; }
+  .hero h1 { grid-area: title; max-width: none; font-size: var(--hero-title-home); line-height: 1.02; }
   /* The gap keeps the lead off the actions when the (now shorter) contact card no longer stretches this row. */
-  .hero-copy { grid-area: copy; min-width: 0; display: flex; flex-direction: column; align-self: stretch; gap: clamp(20px, 3.5vh, 32px); }
+  .hero-copy { grid-area: copy; min-width: 0; display: flex; flex-direction: column; align-self: stretch; gap: var(--hero-gap-actions); }
   .hero-lead { align-self: start; margin-top: 0; }
   .hero-actions { margin-top: auto; }
 }
@@ -1114,10 +1125,6 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .hero-layout { row-gap: 32px; }
 }
 
-@media (min-width: 761px) and (max-height: 700px) {
-  .hero-layout { row-gap: 14px; }
-  .hero h1 { font-size: clamp(48px, 4.5vw, 60px); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -1322,8 +1329,13 @@ a.route-service:focus-visible { padding-inline: 26px; color: var(--color-dark-te
   :is(.directions-hero-actions, .about-hero-actions, .proc-hero-actions) .button { width: 100%; }
 }
 
-/* ── UX pass 2026-10 · Where we work, said once on HOME and in the footer (company.geographyShort) ───────────────── */
-.hv2-hero-geo { margin: 0; color: var(--color-dark-text-secondary); font-size: 14px; font-weight: 600; letter-spacing: .01em; }
+/* ── UX pass 2026-10 · Where we work: HOME (a bond line after the directions) and the footer ─────────────────────── */
+/* The bond line: a short statement between two copper rules, as /pro-nas closes the people («Два покоління — одна
+   відповідальність») and the region. Owner, 02.10: a motif to reuse across the site, with judgement. */
+.bond-line { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0; }
+.bond-line::before, .bond-line::after { content: ''; flex: 1; min-width: 24px; height: 1px; background: var(--color-accent); }
+.bond-line > span { max-width: 78%; color: var(--color-accent-strong); font: 700 13px/1.35 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+.page-section-dark .bond-line > span { color: var(--color-accent-on-dark); }
 .footer-geo { margin: 0 0 6px; color: var(--color-dark-text-secondary); font-size: 13px; line-height: 1.45; max-width: 260px; }
 
 /* Header phone: 16 px where the header has room; the compact desktop tiers step it down so the row still fits. */
