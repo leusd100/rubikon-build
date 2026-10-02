@@ -7,11 +7,12 @@ import { DirectionHeroVideo } from '../DirectionHeroVideo';
 import { useViewportVariant } from '../../hooks/useViewportVariant';
 
 // HOME v2. Desktop and tablet keep the existing footage; ≤760 px gets one still instead of the 2.6 MB
-// phone montage. The still is a concept image (the /napryamky steel-frame render, cropped 4:5) — an unclad frame,
-// so it never reads as a finished object, and the hero labels it «Ілюстрація».
+// phone montage. The still is a concept image (the /napryamky steel-frame render) — an unclad frame, so it never reads
+// as a finished object, and the hero labels it «Ілюстрація». It is cropped to the rows the phone band can show
+// (752×678, see scripts/generate-home-v2-crops.py), so object-position 50% 32% frames it exactly as the 4:5 crop did.
 const STATIC_QUERY = '(max-width: 760px)';
-export const HERO_STATIC_SRC = '/media/home-v2/concepts/hero-mobile-752w.webp';
-const HERO_STATIC_SRCSET = '/media/home-v2/concepts/hero-mobile-480w.webp 480w, /media/home-v2/concepts/hero-mobile-752w.webp 752w';
+export const HERO_STATIC_SRC = '/media/home-v2/concepts/hero-mobile-band-752w.webp';
+const HERO_STATIC_SRCSET = '/media/home-v2/concepts/hero-mobile-band-480w.webp 480w, /media/home-v2/concepts/hero-mobile-band-752w.webp 752w';
 
 const desktopSources = [
   '/media/about/straight-line-14377591-v2.mp4',
