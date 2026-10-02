@@ -43,22 +43,16 @@
 .arm-pulse { stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
 .arm-label { fill: var(--color-text); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .04em; }
 
-/* Arriving: the line; the outline draws and warms; the city is marked; the rings step out; the city pulses twice */
+/* Arriving (UX pass 2026-10): what the block says — the region, the city, the words — is there from the first frame.
+   Only the decorative line extends and the distance rings step out from the city, then the city pulses twice. */
 :where([data-motion-ready="on"]) .region-bond::before,
 :where([data-motion-ready="on"]) .region-bond::after { transition: transform 700ms var(--region-ease) 160ms; }
-:where([data-motion-ready="on"]) .region-block :is(.region-bond span, .region-copy) { transition: opacity var(--region-reveal) ease 560ms; }
-:where([data-motion-ready="on"]) .arm-outline { transition: stroke-dashoffset 1700ms var(--region-draw) 400ms; }
-:where([data-motion-ready="on"]) .arm-area { transition: fill-opacity 700ms ease 1700ms; }
-:where([data-motion-ready="on"]) :is(.arm-dot, .arm-ring, .arm-leader, .arm-label) { transition: opacity 400ms ease 1900ms; }
-:where([data-motion-ready="on"]) .arm-ring-line { transition: stroke-dashoffset 1100ms var(--region-draw) calc(2100ms + var(--k, 0) * 110ms); }
+:where([data-motion-ready="on"]) .arm-ring-line { transition: stroke-dashoffset 1100ms var(--region-draw) calc(200ms + var(--k, 0) * 110ms); }
 @keyframes arm-pulse { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
-:where([data-motion-ready="on"]) .region-block[data-motion-state="on"] .arm-pulse { animation: arm-pulse 1400ms ease-out 2100ms 2; }
+:where([data-motion-ready="on"]) .region-block[data-motion-state="on"] .arm-pulse { animation: arm-pulse 1400ms ease-out 400ms 2; }
 :where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .region-bond::before,
 :where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .region-bond::after { transform: scaleX(0); }
-:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) :is(.region-bond span, .region-copy) { opacity: 0; }
-:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) :is(.arm-outline, .arm-ring-line) { stroke-dashoffset: 1; }
-:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .arm-area { fill-opacity: 0; }
-:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) :is(.arm-dot, .arm-ring, .arm-leader, .arm-label) { opacity: 0; }
+:where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .arm-ring-line { stroke-dashoffset: 1; }
 
 @media (max-width: 760px) {
   .region-layout { grid-template-columns: minmax(0, 1fr); }

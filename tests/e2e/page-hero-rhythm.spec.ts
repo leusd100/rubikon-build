@@ -40,23 +40,28 @@ for (const path of editorialHeroes) {
 
       if (path === '/napryamky') {
         const chooseDirection = hero.getByRole('link', { name: 'Обрати напрям' });
-        const describeTask = hero.getByRole('link', { name: 'Обговорити задачу' });
-        const [chooseBox, describeBox] = await Promise.all([
-          chooseDirection.boundingBox(),
-          describeTask.boundingBox(),
-        ]);
-
         await expect(chooseDirection).toHaveAttribute('href', '#directions-list');
-        await expect(describeTask).toHaveAttribute('href', '#inquiry');
         await expect(page.locator('#directions-list .route-service')).toHaveCount(5);
-        expect(chooseBox).not.toBeNull();
-        expect(describeBox).not.toBeNull();
-        expect(
-          chooseBox!.x < describeBox!.x + describeBox!.width
-          && chooseBox!.x + chooseBox!.width > describeBox!.x
-          && chooseBox!.y < describeBox!.y + describeBox!.height
-          && chooseBox!.y + chooseBox!.height > describeBox!.y,
-        ).toBe(false);
+        if (viewport.width > 760) {
+          const describeTask = hero.getByRole('link', { name: 'Обговорити задачу' });
+          const [chooseBox, describeBox] = await Promise.all([
+            chooseDirection.boundingBox(),
+            describeTask.boundingBox(),
+          ]);
+          await expect(describeTask).toHaveAttribute('href', '#inquiry');
+          expect(chooseBox).not.toBeNull();
+          expect(describeBox).not.toBeNull();
+          expect(
+            chooseBox!.x < describeBox!.x + describeBox!.width
+            && chooseBox!.x + chooseBox!.width > describeBox!.x
+            && chooseBox!.y < describeBox!.y + describeBox!.height
+            && chooseBox!.y + chooseBox!.height > describeBox!.y,
+          ).toBe(false);
+        } else {
+          // A phone: the call leads, «Обрати напрям» follows; the conversation link stays off the first screen.
+          const [callBox, chooseBox] = await Promise.all([hero.locator('.hero-call-phone').boundingBox(), chooseDirection.boundingBox()]);
+          expect(callBox!.y + callBox!.height).toBeLessThanOrEqual(chooseBox!.y);
+        }
 
         if (viewport.width > 760) expect(heroBox!.height).toBeGreaterThanOrEqual(viewport.height);
         await chooseDirection.click();
@@ -64,17 +69,17 @@ for (const path of editorialHeroes) {
       }
 
       if (path === '/pro-nas') {
-        // One row of actions from 761 px; on a phone the call sits under the full-width button
+        // One row of actions from 761 px; on a phone the call leads as a full-width button above «Обговорити задачу»
         const [ctaBox, callBox] = await Promise.all([
           hero.getByRole('link', { name: 'Обговорити задачу' }).boundingBox(),
-          hero.locator('.hero-call').boundingBox(),
+          hero.locator(viewport.width > 760 ? '.hero-call' : '.hero-call-phone').boundingBox(),
         ]);
         if (viewport.width > 760) {
           expect(Math.abs((ctaBox!.y + ctaBox!.height / 2) - (callBox!.y + callBox!.height / 2))).toBeLessThanOrEqual(6);
           expect(ctaBox!.x + ctaBox!.width).toBeLessThan(callBox!.x);
           expect(heroBox!.height).toBeGreaterThanOrEqual(viewport.height);
         } else {
-          expect(ctaBox!.y + ctaBox!.height).toBeLessThanOrEqual(callBox!.y);
+          expect(callBox!.y + callBox!.height).toBeLessThanOrEqual(ctaBox!.y);
         }
       }
     }

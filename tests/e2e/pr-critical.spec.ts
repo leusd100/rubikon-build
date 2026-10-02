@@ -76,6 +76,9 @@ test('shared inquiry submits one mocked lead successfully', async ({ page }) => 
   await page.goto('/', { waitUntil: 'load' });
   await acceptEssentialCookies(page);
 
+  // Phones and tablets fold the form behind «Залишити запит» (ConversationFormToggle); a desktop shows it at once.
+  const toggle = page.locator('#inquiry .conversation-form-toggle');
+  if (await toggle.isVisible()) await toggle.click();
   const form = page.locator('form.inquiry-form');
   await form.getByLabel(/Ваше ім’я/).fill('CI Test');
   await form.getByLabel(/Телефон/).fill('+380671234567');
@@ -775,13 +778,19 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     test.skip(isMobile, 'hover devices only');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    // The first-visit cookie banner must not sit under the pointer
+    await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
     const card = (zone: string) => page.locator(`.proc-area-${zone}`);
     const light = await card('client').evaluate((element) => getComputedStyle(element).backgroundColor);
     // RUBIKON's card starts light too
     await expect(card('rubikon')).toHaveCSS('background-color', light);
-    await card('rubikon').hover();
-    const dark = await card('rubikon').evaluate((element) => getComputedStyle(element).backgroundColor);
-    expect(dark).not.toBe(light);
+    // Smooth scrolling may still be settling when the pointer arrives: point again until the card answers
+    let dark = light;
+    await expect(async () => {
+      await card('rubikon').hover();
+      dark = await card('rubikon').evaluate((element) => getComputedStyle(element).backgroundColor);
+      expect(dark).not.toBe(light);
+    }).toPass({ timeout: 5000 });
     for (const zone of ['client', 'specialists']) {
       await card(zone).hover();
       await expect(card(zone)).toHaveCSS('background-color', dark);

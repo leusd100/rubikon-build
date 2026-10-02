@@ -5,7 +5,7 @@ import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceMani
 import { directions } from '../data/directions';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
 
-const CLIP_DURATION_MS = 3000;
+const CLIP_DURATION_MS = 6000; // UX pass 2026-10: 3 s per slide was too fast to read the indicator and the picture
 const FADE_DURATION_MS = 2000;
 const pad = (value: number) => String(value).padStart(2, '0');
 

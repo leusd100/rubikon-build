@@ -64,7 +64,7 @@
 
 .hc-vocabulary span {
   color: var(--color-accent-strong);
-  font: 700 11px/1 var(--font-condensed), sans-serif;
+  font: 700 12px/1 var(--font-condensed), sans-serif;
   letter-spacing: .08em;
 }
 
@@ -79,7 +79,7 @@
 .hc-vocabulary p {
   margin: 8px 0 0;
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.5;
 }
 
@@ -89,7 +89,7 @@
   gap: 10px;
   margin: 0 0 10px;
   color: var(--color-accent-strong);
-  font: 700 11px/1 var(--font-condensed), sans-serif;
+  font: 700 12px/1 var(--font-condensed), sans-serif;
   letter-spacing: .14em;
   text-transform: uppercase;
 }
@@ -172,7 +172,7 @@
    "Ширина" or "Довжина" for no reason anyone chose. */
 .hc-field-head :is(label, span) {
   color: var(--color-text-secondary);
-  font: 600 12px/1 var(--font-manrope), sans-serif;
+  font: 600 14px/1 var(--font-manrope), sans-serif;
 }
 
 /* Final QA pass (2026-09-03): color moved from --accent-dark to a neutral dark — with 3 dimension
@@ -181,7 +181,7 @@
    also makes the genuinely *interactive* selected states (envelope/gates) read as the only
    orange, more singular signal instead of one among several. */
 .hc-field-value {
-  font: 700 13px/1 var(--font-condensed), sans-serif;
+  font: 700 14px/1 var(--font-condensed), sans-serif;
   color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
@@ -205,7 +205,7 @@
   border-radius: 4px;
   background: var(--color-bg);
   color: var(--color-text);
-  font: 600 13px/1 var(--font-manrope), sans-serif;
+  font: 600 15px/1 var(--font-manrope), sans-serif;
   /* Right-aligned so the typed value sits under the readout above it, which the field head
      right-aligns — the two numbers share a column and previously sat on different axes. Tabular
      figures keep the digits from shifting as the value changes. */
@@ -229,13 +229,13 @@
 .hc-field-hint {
   margin: 6px 0 0;
   color: var(--color-text-muted);
-  font: 500 11px/1.45 var(--font-manrope), sans-serif;
+  font: 500 13px/1.45 var(--font-manrope), sans-serif;
 }
 
 .hc-field-note {
   margin: 14px 0 0;
   color: var(--color-text-muted);
-  font-size: 11.5px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -280,7 +280,7 @@
   border-radius: 4px;
   color: var(--color-text-secondary);
   background: var(--color-bg);
-  font: 600 12px/1.25 var(--font-manrope), sans-serif;
+  font: 600 13.5px/1.25 var(--font-manrope), sans-serif;
   text-align: center;
   transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium), background var(--duration-fast) var(--ease-premium);
 }
@@ -353,7 +353,7 @@
 
 .hc-checkbox-row span {
   color: var(--color-text-secondary);
-  font: 500 13px/1.3 var(--font-manrope), sans-serif;
+  font: 500 15px/1.3 var(--font-manrope), sans-serif;
 }
 
 /* ---------- Preview pane ---------- */
@@ -392,7 +392,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, .58);
   color: var(--color-dark-text);
   background: transparent;
-  font: 700 10px/1 var(--font-condensed), sans-serif;
+  font: 700 12px/1 var(--font-condensed), sans-serif;
   letter-spacing: .05em;
   text-transform: uppercase;
   cursor: pointer;
@@ -587,7 +587,7 @@
 
 .hc-three-overlay dt {
   color: var(--color-dark-text-muted);
-  font: 500 9px/1 var(--font-manrope), sans-serif;
+  font: 500 11px/1 var(--font-manrope), sans-serif;
   letter-spacing: .06em;
   text-transform: uppercase;
   margin: 0 0 4px;
@@ -612,7 +612,7 @@
   background: rgba(20, 20, 22, .72);
   backdrop-filter: blur(6px);
   color: var(--color-dark-text-muted);
-  font: 600 10px/1 var(--font-manrope), sans-serif;
+  font: 600 12px/1 var(--font-manrope), sans-serif;
   letter-spacing: .04em;
   cursor: pointer;
   transition: color var(--duration-fast) var(--ease-premium);
@@ -720,7 +720,7 @@
 .hc-material-swatch-group legend {
   padding: 0 0 6px;
   color: var(--color-text-secondary);
-  font: 600 10px/1 var(--font-manrope), sans-serif;
+  font: 600 12px/1 var(--font-manrope), sans-serif;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -740,7 +740,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--color-text-secondary);
-  font: 500 11px/1 var(--font-manrope), sans-serif;
+  font: 500 13px/1 var(--font-manrope), sans-serif;
   cursor: pointer;
   transition: border-color var(--duration-fast) var(--ease-premium), color var(--duration-fast) var(--ease-premium);
 }
@@ -1086,7 +1086,7 @@
 .hc-summary-kind {
   margin: 0 0 4px;
   color: var(--color-accent-strong);
-  font: 700 11px/1 var(--font-condensed), sans-serif;
+  font: 700 12px/1 var(--font-condensed), sans-serif;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -1131,7 +1131,7 @@
 
 .hc-summary-facts dt {
   color: var(--color-text-muted);
-  font: 600 11px/1.3 var(--font-condensed), sans-serif;
+  font: 600 12px/1.3 var(--font-condensed), sans-serif;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
@@ -1140,14 +1140,14 @@
   margin: 0;
   max-width: 60%;
   color: var(--color-text);
-  font: 500 13px/1.35 var(--font-manrope), sans-serif;
+  font: 500 15px/1.35 var(--font-manrope), sans-serif;
   text-align: right;
 }
 
 .hc-summary-formula {
   margin: 0;
   color: var(--color-text-muted);
-  font: 500 11px/1 var(--font-manrope), sans-serif;
+  font: 500 12px/1 var(--font-manrope), sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1195,7 +1195,7 @@
   margin: 0;
   max-width: 34ch;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.45;
 }
 
@@ -1280,3 +1280,7 @@
   .hc-vocabulary { grid-template-columns: minmax(0, 1fr); }
   .hc-vocabulary li + li { padding-left: 0; border-left: 0; }
 }
+
+/* UX pass 2026-10: the summary values went 13 → 15 px; in the narrow two-column summary of a 1001–1180 px window
+   «огороджувальний» would no longer fit its column, so that band keeps 14 px. */
+@media (max-width: 1180px) { .hc-summary-facts dd { font-size: 14px; } }

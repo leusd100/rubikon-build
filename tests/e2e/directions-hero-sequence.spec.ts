@@ -41,9 +41,10 @@ test('directions static hero sequence crossfades in the approved order without v
     null,
   ]);
 
+  // One slide lasts 6 s (UX pass 2026-10), so the second one is active within ~9 s.
   await expect.poll(
     () => frames.evaluateAll((images) => images.map((image) => image.classList.contains('is-active'))),
-    { timeout: 6_000 },
+    { timeout: 9_000 },
   ).toEqual([false, true, false, false, false]);
 
   // By the time slide 1 becomes active, slide 2 should already be unlocked one step ahead of
@@ -70,10 +71,12 @@ test('directions static hero sequence remains on the first image for reduced mot
     });
   });
 
+  await page.clock.install();
   await page.goto('/napryamky', { waitUntil: 'load' });
   const frames = page.locator('.directions-subhero img.directions-hero-sequence-image');
 
-  await page.waitForTimeout(4_500);
+  // Longer than one 6 s slide on the page's own clock: a sequence that moved would have moved by now
+  await page.clock.runFor(7_500);
   expect(await frames.evaluateAll((images) => images.map((image) => image.classList.contains('is-active'))))
     .toEqual([true, false, false, false, false]);
   expect(await frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))))

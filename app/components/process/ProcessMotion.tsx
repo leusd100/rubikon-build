@@ -6,8 +6,8 @@ import { useEffect } from 'react';
 // complete and final without it: this only adds `data-motion-ready` to the page (which lets the page's CSS hold
 // [data-motion] blocks in their "before" state) and flips each block to `data-motion-state="on"` once, when it
 // meaningfully enters the viewport. Nothing replays; every observer disconnects when its work is done. With
-// prefers-reduced-motion nothing is armed, so the final state shows at once.
-// Also drives the parallax layers ([data-parallax]) while — and only while — they are on screen.
+// prefers-reduced-motion nothing is armed, so the final state shows at once. (The background parallax was removed in
+// the 2026-10 UX pass: a drifting backdrop explained nothing.)
 
 export function ProcessMotion({ root = '.process-page' }: Readonly<{ root?: string }>) {
   useEffect(() => {
@@ -31,34 +31,8 @@ export function ProcessMotion({ root = '.process-page' }: Readonly<{ root?: stri
     }, { threshold: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3], rootMargin: '0px 0px -8% 0px' });
     blocks.forEach((block) => reveal.observe(block));
 
-    // Parallax: a slow, small drift of the background layer; the foreground never moves.
-    const layers = [...page.querySelectorAll<HTMLElement>('[data-parallax]')];
-    const visible = new Set<HTMLElement>();
-    let frame = 0;
-    const paint = () => {
-      frame = 0;
-      for (const layer of visible) {
-        const box = layer.parentElement!.getBoundingClientRect();
-        const progress = (box.top + box.height / 2 - window.innerHeight / 2) / window.innerHeight; // about −1…1
-        layer.style.transform = `translate3d(0, ${(progress * -Number(layer.dataset.parallax)).toFixed(1)}px, 0)`;
-      }
-    };
-    const onScroll = () => { if (!frame) frame = requestAnimationFrame(paint); };
-    const watch = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) visible.add(entry.target as HTMLElement);
-        else visible.delete(entry.target as HTMLElement);
-      }
-      if (visible.size) { window.addEventListener('scroll', onScroll, { passive: true }); onScroll(); }
-      else window.removeEventListener('scroll', onScroll);
-    });
-    layers.forEach((layer) => watch.observe(layer));
-
     return () => {
       reveal.disconnect();
-      watch.disconnect();
-      window.removeEventListener('scroll', onScroll);
-      if (frame) cancelAnimationFrame(frame);
       cancelAnimationFrame(arm);
       delete page.dataset.motionReady;
     };

@@ -1,5 +1,5 @@
 import { DraftingCompass } from 'lucide-react';
-import { Breadcrumbs, HeroCallLink, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatPrefillLink } from '../components/process/FormatPrefillLink';
@@ -131,7 +131,8 @@ export default function DeliveryModelPage() {
             погодимо свій обсяг і скажемо, які дані потрібні для кошторису.
           </p>
           <div className="proc-hero-actions">
-            <a className="button button-primary" href="#inquiry">Обговорити задачу <span aria-hidden="true">↗</span></a>
+            <HeroCallButton />
+            <a className="button button-primary" href="#inquiry">Обговорити задачу <span aria-hidden="true">↓</span></a>
             <HeroCallLink />
           </div>
         </div>
@@ -325,7 +326,7 @@ export default function DeliveryModelPage() {
 
       {/* 6 · Cost, time, changes */}
       <section className="page-section proc-terms" id="koshtorys" aria-labelledby="proc-terms-title">
-        <div className="proc-terms-bg" aria-hidden="true"><div className="proc-terms-image" data-parallax="28" /></div>
+        <div className="proc-terms-bg" aria-hidden="true"><div className="proc-terms-image" /></div>
         <div className="shell">
           <SectionHeader
             eyebrow="Кошторис і строки"

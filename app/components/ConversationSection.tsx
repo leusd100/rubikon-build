@@ -3,6 +3,7 @@ import ProjectInquiryForm from './ProjectInquiryForm';
 import { MessengerLinks } from './SiteChrome';
 import { company, companyContactLinks } from '../data/company';
 import { ConversationJourney } from './ConversationJourney';
+import { ConversationFormToggle } from './ConversationFormToggle';
 import { DEFAULT_JOURNEY, type JourneyTexts } from '../data/conversation';
 import { cooperationOptions, inquirySuccessMessage } from '../lib/deliveryModelPresentation';
 
@@ -72,11 +73,13 @@ export function ConversationSection({
           </div>
         </div>
         {/* Resolved here, on the server, so the client form gets strings rather than the whole model. */}
-        <ProjectInquiryForm
-          defaultDirection={defaultDirection}
-          cooperationOptions={cooperationOptions()}
-          successMessage={inquirySuccessMessage()}
-        />
+        <ConversationFormToggle>
+          <ProjectInquiryForm
+            defaultDirection={defaultDirection}
+            cooperationOptions={cooperationOptions()}
+            successMessage={inquirySuccessMessage()}
+          />
+        </ConversationFormToggle>
         {showJourney && <ConversationJourney journey={journey} />}
       </div>
     </section>

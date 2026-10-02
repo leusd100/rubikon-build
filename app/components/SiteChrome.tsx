@@ -117,9 +117,10 @@ export function SiteHeader() {
           {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
         <div className="header-contacts" aria-label="Контакти компанії">
+          {/* The number itself is the label: one readable line (16 px), the icon says what it is. */}
           <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Телефон, ${company.phone.display}`}>
             <Phone aria-hidden="true" />
-            <span><small>Телефон</small><strong>{company.phone.display}</strong></span>
+            <span><strong>{company.phone.display}</strong></span>
           </a>
           <MessengerLinks className="header-messengers" />
           <a className="messenger-link header-email" href={companyContactLinks.email} aria-label={`Email, ${company.email}`} title={company.email}>
@@ -160,6 +161,21 @@ export function HeroCallLink() {
   );
 }
 
+/**
+ * Phone only (≤ 760 px): the call leads every inner hero as the same copper button HOME has, with the number on it.
+ * It is rendered first in each hero's action row, so the reading order matches what a phone shows; wider screens hide
+ * it and keep the page's own primary action with the quiet HeroCallLink beside it (globals.css, «Phone: the call
+ * leads»).
+ */
+export function HeroCallButton() {
+  return (
+    <a className="button button-primary hero-call-primary hero-call-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
+      <Phone aria-hidden="true" />
+      <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
+    </a>
+  );
+}
+
 export function SiteFooter() {
   return (
     <footer>
@@ -184,6 +200,7 @@ export function SiteFooter() {
           ))}
         </nav>
         <div className="footer-contact-stack">
+          <p className="footer-geo">{company.geographyShort}</p>
           <a className="footer-phone" href={companyContactLinks.phone}>
             <Phone aria-hidden="true" />
             <span>{company.phone.display}</span>

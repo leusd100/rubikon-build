@@ -21,7 +21,14 @@ for (const viewport of viewports) {
     await expect(hero.getByRole('heading', { level: 1 })).toContainText('Ангари та склади');
     await expect(hero.getByRole('heading', { level: 1 })).toContainText('за вашою конфігурацією');
     await expect(hero.getByRole('link', { name: /Зібрати конфігурацію/ })).toHaveAttribute('href', '#configurator');
-    await expect(hero.getByRole('link', { name: /Обговорити задачу/ })).toHaveAttribute('href', '#inquiry');
+    // ≤ 760 px the call leads and the configurator follows; the conversation link stays off the phone's first screen
+    // (UX pass 2026-10). Wider screens keep the configurator + «Обговорити задачу» pair.
+    if (viewport.width <= 760) {
+      await expect(hero.locator('a.hero-call-phone')).toBeVisible();
+      await expect(hero.locator('a.angary-hero-secondary')).toBeHidden();
+    } else {
+      await expect(hero.getByRole('link', { name: /Обговорити задачу/ })).toHaveAttribute('href', '#inquiry');
+    }
     await expect(hero.locator('.hc-controls, .hc-preview-surface')).toHaveCount(0);
 
     const sequence = await page.locator([
@@ -91,17 +98,19 @@ for (const viewport of viewports) {
     }
 
     if (viewport.heroReveal) {
+      // The hero standard (owner, 02.10): the window's height, as every direction page — no longer a shorter «reveal»;
+      // its actions stay clear of the window's bottom edge
       const metrics = await page.evaluate(() => {
         const heroElement = document.querySelector<HTMLElement>('.angary-service-subhero')!;
-        const heading = document.querySelector<HTMLElement>('#hangar-configurator-title')!;
+        const actions = [...heroElement.querySelectorAll<HTMLElement>('a.button, a.hero-call')].filter((element) => element.offsetParent);
         return {
           heroHeight: heroElement.getBoundingClientRect().height,
-          headingTop: heading.getBoundingClientRect().top,
+          actionsBottom: Math.max(...actions.map((element) => element.getBoundingClientRect().bottom)),
           heroOverflow: heroElement.scrollHeight - heroElement.clientHeight,
         };
       });
-      expect(metrics.heroHeight).toBeLessThan(viewport.height);
-      expect(metrics.headingTop).toBeLessThan(viewport.height);
+      expect(metrics.heroHeight).toBeGreaterThanOrEqual(viewport.height - 1);
+      expect(metrics.actionsBottom).toBeLessThanOrEqual(viewport.height - 40);
       expect(metrics.heroOverflow).toBeLessThanOrEqual(1);
     }
 

@@ -1,4 +1,4 @@
-import { Breadcrumbs, HeroCallLink, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionsCatalog, type CatalogItem } from '../components/directions/DirectionsCatalog';
 import { DirectionsHeroImageSequence } from '../components/DirectionsHeroImageSequence';
@@ -82,16 +82,18 @@ export default function DirectionsPage() {
           <div className="subhero-side directions-subhero-side">
             <p>Ангари й склади, зерносховища, металоконструкції, бетонні й покрівельні роботи — окремим етапом або погодженим комплексом. Не знаєте, з чого почати? Опишіть завдання — допоможемо визначити склад робіт.</p>
             <div className="directions-hero-actions">
+              <HeroCallButton />
               <a className="button button-primary subhero-side-cta" href="#directions-list">
                 Обрати напрям <span aria-hidden="true">↓</span>
               </a>
               <a className="text-link" href="#inquiry">
-                Обговорити задачу <span aria-hidden="true">↗</span>
+                Обговорити задачу <span aria-hidden="true">↓</span>
               </a>
               <HeroCallLink />
             </div>
           </div>
         </div>
+        <span className="hero-provenance">Ілюстрація</span>
       </section>
 
       <section className="page-section directions-index" id="directions-list">

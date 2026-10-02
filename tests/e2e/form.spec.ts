@@ -411,7 +411,8 @@ test.describe('Turnstile on the inquiry form', () => {
 // «Заполните это поле»): each field sets its own message when found invalid and drops it on the next edit.
 test.describe('validation messages', () => {
   test('are Ukrainian for every required field, and clear once the field is fixed', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'load' });
+    // /pro-nas: its form starts with no direction chosen. HOME preselects «Ще не визначено» since the UX pass 2026-10.
+    await page.goto('/pro-nas', { waitUntil: 'load' });
     await acceptOnlyEssentialCookies(page);
     const form = page.locator('form.inquiry-form');
     await expect(form).toHaveAttribute('aria-label', 'Короткий запит');
@@ -462,7 +463,8 @@ test.describe('«Ще не визначено» direction', () => {
       requests += 1;
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 1, isNew: true }) });
     });
-    await page.goto('/', { waitUntil: 'load' });
+    // A page whose form starts with no direction chosen (HOME preselects «Ще не визначено»)
+    await page.goto('/pro-nas', { waitUntil: 'load' });
     await acceptOnlyEssentialCookies(page);
     const form = page.locator('form.inquiry-form');
     await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
