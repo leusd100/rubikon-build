@@ -481,7 +481,7 @@
     scroll-snap-type: x mandatory; scroll-padding-inline: var(--container-gutter);
     margin-inline: calc(-1 * var(--container-gutter)); padding: 0 var(--container-gutter) 12px;
   }
-  .grain-planner-root :is(.planner-approach-grid, .planner-clarification-grid) > * { scroll-snap-align: start; }
+  .grain-planner-root .planner-approach-grid > *, .grain-planner-root .planner-clarification-grid > * { scroll-snap-align: start; }
   .grain-planner-root .planner-approach-grid .planner-approach-visual { height: 120px; margin-block: 8px 10px; }
   /* The scenario: the headline and «Редагувати» share the first row, the answers follow */
   .grain-planner-root .planner-scenario { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head edit" "facts facts"; gap: 12px 16px; padding: 16px; }

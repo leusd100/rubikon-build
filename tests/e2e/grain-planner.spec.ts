@@ -20,7 +20,7 @@ import {
 // Runs on desktop-chromium and mobile-chromium. Layout-specific checks guard on the project.
 
 test.describe('Grain Planner — scenarios', () => {
-  test('A (known task, simple): two floor approaches with WHY from the client’s answer', async ({ page }, testInfo) => {
+  test('A (known task, simple): two floor approaches with WHY from the client’s answer', async ({ page }) => {
     const errors = collectRuntimeErrors(page);
     await openPlanner(page);
     await expect(result(page).getByRole('heading', { name: /Три підходи до зерносховища/ })).toBeVisible();
