@@ -454,20 +454,8 @@
 }
 
 /* ---------------------------------------------------------------- FAQ (collapsible, as on the flagship pages) */
-.process-page .faq-list details { border-top: 1px solid var(--color-border-strong); }
-.process-page .faq-list details:last-child { border-bottom: 1px solid var(--color-border-strong); }
-.process-page .faq-list summary { display: grid; grid-template-columns: minmax(0, 1fr) 24px; gap: 24px; align-items: center; min-height: 44px; padding: 22px 0; cursor: pointer; list-style: none; }
-.process-page .faq-list summary::-webkit-details-marker { display: none; }
-.process-page .faq-list summary h3 { font-size: clamp(18px, 1.7vw, 23px); }
 /* A drawn plus (two bars) in a 16 px box: turned 45° when open it still fits its 24 px column. Not a text «+» — a 24 px
    glyph in a 16 px line overflows its box vertically, and turned 45° that overflow widened the shell by 5 px on phones. */
-.process-page .faq-list summary > span { position: relative; width: 16px; height: 16px; justify-self: center; color: var(--color-accent-strong); font-size: 0; }
-.process-page .faq-list summary > span::before,
-.process-page .faq-list summary > span::after { content: ''; position: absolute; top: calc(50% - .75px); left: 1px; right: 1px; height: 1.5px; background: currentColor; }
-.process-page .faq-list summary > span::after { transform: rotate(90deg); }
-.process-page .faq-list details[open] summary > span { transform: rotate(45deg); }
-.process-page .faq-list details > p { max-width: 660px; margin: -4px 42px 24px 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.7; }
-@media (prefers-reduced-motion: no-preference) { .process-page .faq-list summary > span { transition: transform .2s ease; } }
 
 /* ---------------------------------------------------------------- Tablet */
 @media (max-width: 1050px) {

@@ -78,3 +78,30 @@
   .dn-step { padding: 13px 8px; }
   .dn-step b { font-size: 15px; }
 }
+
+/* The node as a drawing (NodeDrawing.tsx, UX pass 2026-10): graphite on the sheet, the shown step's parts in copper. No
+   will-change on its stage, so the browser draws it again at the pushed-in scale and the lines stay sharp. */
+.dn-stage.is-drawing { will-change: auto; }
+.node-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.node-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.node-drawing .nd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 3; }
+.node-drawing .nd-web { fill: color-mix(in srgb, var(--color-text) 3%, transparent); stroke: none; }
+.node-drawing .nd-line { stroke: var(--color-text-muted); stroke-width: 2.4; }
+.node-drawing .nd-axis { stroke: var(--color-text-muted); stroke-width: 1.6; stroke-dasharray: 26 7 4 7; opacity: .7; }
+.node-drawing .nd-dim { stroke: var(--color-text-muted); stroke-width: 2; }
+.node-drawing :is(.nd-hidden, .nd-dashed) { stroke: var(--color-text-muted); stroke-width: 2; stroke-dasharray: 14 10; }
+.node-drawing .nd-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .7; }
+.node-drawing .nd-hatch-fill { fill: color-mix(in srgb, var(--color-text) 8%, transparent); stroke: var(--color-text-muted); stroke-width: 1.6; }
+.node-drawing .nd-text { fill: var(--color-text-muted); font: italic 500 40px var(--font-manrope), sans-serif; }
+.node-drawing .nd-title { fill: var(--color-text-secondary); font: 700 34px var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.node-drawing .nd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke .3s ease, opacity .3s ease; }
+.node-drawing .nd-part circle { fill: color-mix(in srgb, var(--color-text) 10%, transparent); }
+.node-drawing .nd-weld path { fill: color-mix(in srgb, var(--color-text) 30%, transparent); }
+.node-drawing .nd-weld .nd-leader { fill: none; stroke-width: 2.4; }
+.node-drawing .nd-loops { stroke-width: 2.2; }
+.node-drawing .nd-copper { stroke: var(--color-accent); }
+/* A shown step lights its parts and the rest of the drawing steps back */
+.dn[data-step] .node-drawing .nd-part { opacity: .38; }
+.dn[data-step="1"] .node-drawing [data-part="1"], .dn[data-step="2"] .node-drawing [data-part="2"], .dn[data-step="3"] .node-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }
+.dn[data-step="1"] .node-drawing [data-part="1"] circle, .dn[data-step="2"] .node-drawing [data-part="2"] circle, .dn[data-step="3"] .node-drawing [data-part="3"] circle,
+.dn[data-step="3"] .node-drawing .nd-weld path:not(.nd-leader) { fill: color-mix(in srgb, var(--color-accent) 28%, transparent); }

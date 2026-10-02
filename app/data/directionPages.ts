@@ -186,8 +186,10 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
       text: 'Геометрія деталей, отвори, болтові та зварні з’єднання мають відповідати проєктному рішенню й монтажній послідовності. Саме у вузлах точність виготовлення стає надійністю всієї конструкції.',
       image: '/media/concepts/detail-steel-v2.jpg',
       imageAlt: 'Концептуальна ілюстрація болтового вузла металоконструкції, поєднаного з технічним кресленням',
-      // «Вузол напряму»: the page's own three — geometry and holes, bolted joint, welds (picture pixels, 1800 × 1200)
+      // «Вузол напряму»: the page's own three — geometry and holes, bolted joint, welds — on a drawing of the joint
+      // (NodeDrawing 'steel-joint', 1800 × 1200 units; owner, 02.10: the stock picture lost its quality when zoomed)
       node: {
+        drawing: 'steel-joint',
         width: 1800,
         height: 1200,
         overviewCaption: 'Болтовий вузол балки й колони',
@@ -196,22 +198,22 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
             title: 'Геометрія й отвори',
             text: 'Розміри деталей і розташування отворів мають збігатися з кресленням — інакше вузол не збереться на майданчику.',
             caption: 'Отвори й розміри на кресленні вузла',
-            focus: [600, 460], zoom: 2,
-            mark: { d: 'M485 460 a115 115 0 1 0 230 0 a115 115 0 1 0 -230 0', badge: [700, 362] },
+            focus: [1440, 600], zoom: 1.7,
+            mark: { d: 'M1270 300 H1340 M1520 300 H1590 V370 M1590 830 V900 H1520 M1340 900 H1270 V830 M1270 370 V300', badge: [1270, 300] },
           },
           {
             title: 'Болтове з’єднання',
             text: 'Пластини, болти й порядок збирання — за проєктним рішенням і монтажною послідовністю.',
             caption: 'Болтове з’єднання балки з колоною',
-            focus: [1100, 595], zoom: 1.7,
-            mark: { d: 'M1010 420 V330 H1080 M1120 330 H1190 V420 M1190 770 V860 H1120 M1080 860 H1010 V770', badge: [1010, 330] },
+            focus: [430, 600], zoom: 1.9,
+            mark: { d: 'M346 316 H396 M454 316 H504 V366 M504 834 V884 H454 M396 884 H346 V834 M346 366 V316', badge: [346, 316] },
           },
           {
             title: 'Зварні шви',
             text: 'Зварні з’єднання виконуються за проєктом: саме у вузлах точність виготовлення стає надійністю каркаса.',
             caption: 'Зварний шов у примиканні балки',
-            focus: [1238, 530], zoom: 2.2,
-            mark: { d: 'M1222 300 H1256 V740 H1222 Z', badge: [1306, 300] },
+            focus: [480, 400], zoom: 2.4,
+            mark: { d: 'M400 396 a72 72 0 1 0 144 0 a72 72 0 1 0 -144 0', badge: [552, 330] },
           },
         ],
       },
@@ -271,8 +273,10 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
       text: 'Після подачі бетону виправлення стають складними й дорогими. Тому до початку робіт звіряємо армування, анкери, захисні шари, опалубку та висотні відмітки.',
       image: '/media/concepts/detail-concrete-v2.jpg',
       imageAlt: 'Концептуальна ілюстрація армованого фундаменту з анкерними болтами та технічним розрізом',
-      // «Вузол напряму»: the page's own checks before pouring — reinforcement, anchors, formwork (1800 × 1200)
+      // «Вузол напряму»: the page's own checks before pouring — reinforcement, anchors, formwork — on a section of the
+      // footing (NodeDrawing 'footing', 1800 × 1200 units)
       node: {
+        drawing: 'footing',
         width: 1800,
         height: 1200,
         overviewCaption: 'Фундамент під колону до бетонування',
@@ -281,22 +285,22 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
             title: 'Армування й захисний шар',
             text: 'Каркас і сітки — за проєктом, із захисним шаром бетону до арматури.',
             caption: 'Арматурний каркас колони й сітка',
-            focus: [1160, 400], zoom: 1.6,
-            mark: { d: 'M990 200 V120 H1080 M1240 120 H1330 V200 M1330 660 V740 H1240 M1080 740 H990 V660', badge: [990, 120] },
+            focus: [900, 700], zoom: 1.5,
+            mark: { d: 'M450 640 H520 M1280 640 H1350 V700 M1350 830 V890 H1280 M520 890 H450 V830 M450 700 V640', badge: [1350, 640] },
           },
           {
             title: 'Анкери й закладні',
             text: 'Положення анкерів звіряємо до бетонування: після нього колона має стати точно на них.',
             caption: 'Анкерна група під колону',
-            focus: [1165, 690], zoom: 2,
-            mark: { d: 'M930 680 a235 110 0 1 0 470 0 a235 110 0 1 0 -470 0', badge: [1400, 590] },
+            focus: [900, 280], zoom: 2.2,
+            mark: { d: 'M770 250 a130 120 0 1 0 260 0 a130 120 0 1 0 -260 0', badge: [1040, 170] },
           },
           {
             title: 'Опалубка й відмітки',
             text: 'Опалубка тримає геометрію, висотні відмітки — рівень, на який сяде каркас.',
             caption: 'Опалубка фундаменту',
-            focus: [1560, 880], zoom: 1.8,
-            mark: { d: 'M1455 880 V805 H1535 M1685 805 H1765 V880 M1765 915 V990 H1685 M1535 990 H1455 V915', badge: [1455, 805] },
+            focus: [420, 770], zoom: 2,
+            mark: { d: 'M276 600 H420 V950 H276 Z', badge: [276, 600] },
           },
         ],
       },
@@ -369,8 +373,10 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
       text: 'Площина покриття працює як система лише разом із примиканнями, кониками, карнизами та водовідведенням. Кожен такий вузол погоджуємо з урахуванням основи й режиму експлуатації споруди.',
       image: '/media/concepts/detail-roofing-v2.jpg',
       imageAlt: 'Концептуальна ілюстрація промислового покрівельного вузла з утепленням, водовідведенням і технічним кресленням',
-      // «Вузол напряму»: the page's own node — the base, the eave and its junction, the drainage (1800 × 1200)
+      // «Вузол напряму»: the page's own node — the base, the eave and its junction, the drainage — on a section of the
+      // eave (NodeDrawing 'eave', 1800 × 1200 units)
       node: {
+        drawing: 'eave',
         width: 1800,
         height: 1200,
         overviewCaption: 'Карнизний вузол промислової покрівлі',
@@ -379,22 +385,22 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
             title: 'Основа й шари',
             text: 'Вузол погоджуємо з урахуванням основи й шарів під покриттям.',
             caption: 'Основа й шари під покриттям',
-            focus: [1320, 575], zoom: 1.7,
-            mark: { d: 'M1030 565 V505 H1110 M1560 505 H1640 V565 M1640 595 V655 H1560 M1110 655 H1030 V595', badge: [1030, 505] },
+            focus: [950, 700], zoom: 1.8,
+            mark: { d: 'M800 700 a150 150 0 1 0 300 0 a150 150 0 1 0 -300 0', badge: [1090, 590] },
           },
           {
             title: 'Карниз і примикання',
             text: 'Саме на краях площини — карнизах і примиканнях — вирішується герметичність покрівлі.',
             caption: 'Карнизний вузол і примикання',
-            focus: [790, 410], zoom: 1.8,
-            mark: { d: 'M640 410 a160 160 0 1 0 320 0 a160 160 0 1 0 -320 0', badge: [940, 282] },
+            focus: [1500, 470], zoom: 2.1,
+            mark: { d: 'M1390 470 a125 125 0 1 0 250 0 a125 125 0 1 0 -250 0', badge: [1390, 360] },
           },
           {
             title: 'Водовідведення',
             text: 'Ринва й водостік завершують систему: вода має піти з покрівлі, а не під неї.',
             caption: 'Ринва й водостік',
-            focus: [650, 690], zoom: 1.6,
-            mark: { d: 'M440 520 V440 H520 M780 440 H860 V520 M860 855 V935 H780 M520 935 H440 V855', badge: [440, 440] },
+            focus: [200, 960], zoom: 2,
+            mark: { d: 'M120 790 H300 V1170 H120 Z', badge: [300, 790] },
           },
         ],
       },

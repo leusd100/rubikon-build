@@ -292,6 +292,14 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
    always kept that gap). */
 .section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: clamp(16px, 1.5vw, 22px); margin-bottom: 52px; padding-bottom: 32px; border-bottom: 1px solid var(--color-border); }
 .section-header-copy { min-width: 0; max-width: 980px; }
+/* A header with a decorative drawing (SectionHeader aside): title and note on the left, the drawing on the right, standing
+   on the header's bottom rule; wide screens only */
+.section-header-aside { display: none; }
+@media (min-width: 1051px) {
+  .section-header.has-aside { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--grid-gap); }
+  .section-header.has-aside > :not(.section-header-aside) { grid-column: 1; }
+  .section-header.has-aside .section-header-aside { display: block; grid-column: 2; grid-row: 1 / span 2; align-self: end; margin-bottom: -2px; }
+}
 .section-header-copy .eyebrow { margin-bottom: 30px; }
 .section-header h2 { max-width: 15em; margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(50px, 5.15vw, 76px); font-weight: 400; line-height: .99; letter-spacing: -.035em; }
 .section-header-support { max-width: 640px; margin: 0; padding: 2px 0 2px 26px; color: var(--color-text-muted); border-left: 2px solid var(--color-accent); font-size: 16px; line-height: 1.75; }
@@ -653,7 +661,9 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 /* The rail runs from each node to the next and stops at the last one */
 .detail-steps li:not(:last-child)::before { content: ''; position: absolute; top: 22px; left: 22px; right: calc(-1 * var(--steps-gap)); height: 1px; background: var(--color-accent); }
 .detail-steps span { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 24px; color: var(--color-accent-on-dark); background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; }
-.detail-steps li:first-child span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+/* Start and finish filled, the steps between them open rings (owner, 02.10: one filled start and an open last node read
+   as unfinished) */
+.detail-steps li:is(:first-child, :last-child) span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
 /* Shared icon token for .cost-grid / .use-case-grid (bordered-card families). */
 .card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); stroke-width: 1.45; }
 .detail-steps h3 { margin: 0 0 12px; font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }

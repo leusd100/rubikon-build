@@ -57,24 +57,28 @@ export function SectionHeader({
   className = '',
   icon,
   titleId,
+  aside,
 }: {
   eyebrow: string;
   title: ReactNode;
   supporting: ReactNode;
   inverse?: boolean;
   className?: string;
+  /** A small decorative drawing in the empty right of the header (wide screens only; UX pass 2026-10) */
+  aside?: ReactNode;
   /** A role icon beside the eyebrow's text — decoration only, never instead of the words. */
   icon?: ReactNode;
   /** For a section that names itself by its heading (aria-labelledby). */
   titleId?: string;
 }) {
   return (
-    <div className={`section-header${inverse ? ' section-header-inverse' : ''}${className ? ` ${className}` : ''}`}>
+    <div className={`section-header${inverse ? ' section-header-inverse' : ''}${aside ? ' has-aside' : ''}${className ? ` ${className}` : ''}`}>
       <div className="section-header-copy">
         <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {icon}{eyebrow}</p>
         <h2 id={titleId}>{title}</h2>
       </div>
       <p className="section-header-support">{supporting}</p>
+      {aside && <div className="section-header-aside" aria-hidden="true">{aside}</div>}
     </div>
   );
 }

@@ -27,14 +27,6 @@
 .grain-page .faq-section { padding-block: var(--section-space-compact); }
 .grain-page .faq-grid { align-items: start; }
 .grain-page .faq-heading { position: sticky; top: 140px; }
-.grain-page .faq-list details { border-top: 1px solid var(--color-border-strong); }
-.grain-page .faq-list details:last-child { border-bottom: 1px solid var(--color-border-strong); }
-.grain-page .faq-list summary { display: grid; grid-template-columns: minmax(0, 1fr) 24px; gap: 24px; align-items: center; min-height: 44px; padding: 18px 0; cursor: pointer; list-style: none; }
-.grain-page .faq-list summary::-webkit-details-marker { display: none; }
-.grain-page .faq-list summary h3 { font-size: clamp(18px, 1.7vw, 23px); }
-.grain-page .faq-list summary > span { color: var(--color-accent-strong); font: 400 24px/1 var(--font-condensed), sans-serif; text-align: center; }
-.grain-page .faq-list details[open] summary > span { transform: rotate(45deg); }
-.grain-page .faq-list details > p { max-width: 660px; margin: -4px 42px 22px 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.7; }
 .grain-page .related-directions-section.is-compact { padding-block: var(--section-space-compact); background: var(--color-surface-alt); }
 .grain-page .related-directions-section.is-compact .related-directions-title { margin-bottom: 18px; }
 .grain-page .related-directions-section.is-compact .related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--color-border-strong); }
@@ -47,10 +39,6 @@
   .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
   .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--color-border-strong); }
   .grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 0; border-bottom: 0; }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .grain-page .faq-list summary > span { transition: transform .2s ease; }
 }
 
 @media (min-width: 761px) {
@@ -75,8 +63,6 @@
   .grain-page .grain-implementation-band .direction-editorial-media { aspect-ratio: 16 / 9; }
   .grain-page .grain-process-band .section-header { margin-bottom: 28px; padding-bottom: 22px; }
   .grain-page .faq-heading { margin-bottom: 22px; }
-  .grain-page .faq-list summary { padding: 14px 0; }
-  .grain-page .faq-list details > p { margin-right: 28px; font-size: 16px; }
   .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
   .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--color-border-strong); }
   .grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 0; border-bottom: 0; }

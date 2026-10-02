@@ -124,7 +124,9 @@ export type DirectionNodeStep = {
 };
 
 export type DirectionNode = {
-  /** The picture's own pixel size — the marks are drawn in it */
+  /** A technical drawing instead of the picture (NodeDrawing): vector, so the push-in stays sharp */
+  drawing?: 'steel-joint' | 'footing' | 'eave';
+  /** The picture's (or the drawing's) own size — the marks are drawn in it */
   width: number;
   height: number;
   /** What the overview (no step) shows, in the title block */

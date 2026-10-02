@@ -14,11 +14,12 @@ import { getDirection } from '../lib/directions';
 import { faqAnswerText } from '../lib/deliveryModelPresentation';
 import { relatedDirections, type RelatedDirection } from '../data/relatedDirections';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
-import { company } from '../data/company';
+import { company, companyContactLinks } from '../data/company';
 import { DIRECTION_JOURNEY } from '../data/conversation';
 import { siteRoutes } from '../data/navigation';
 import type { CSSProperties, ReactNode } from 'react';
 import './directions/direction-template.css';
+import './faq.css';
 
 const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
   'zernoskhovyshcha',
@@ -298,11 +299,28 @@ export function DirectionFaq({
     <section className="page-section faq-section">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }} />
       <div className="shell faq-grid">
-        <div className="faq-heading"><p className="eyebrow"><span /> Питання</p><h2>{title}</h2></div>
-        <div className="faq-list">
-          {items.map(([question, answer]) => collapsible ? (
-            <details key={question}>
-              <summary><h3>{question}</h3><span aria-hidden="true">+</span></summary>
+        <div className="faq-heading">
+          <p className="eyebrow"><span /> Питання</p>
+          <h2>{title}</h2>
+          {/* The column under the title was empty: the next step for a question the list does not answer */}
+          {collapsible && (
+            <div className="faq-ask">
+              <p>Не знайшли свого питання? Зателефонуйте або залиште запит — розберемо вашу задачу.</p>
+              <div>
+                <a className="faq-ask-call" href={companyContactLinks.phone}>{company.phone.display}</a>
+                <a className="faq-ask-write" href="#inquiry" data-open-inquiry="">Залишити запит <span aria-hidden="true">↓</span></a>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="faq-list" data-motion={collapsible ? '' : undefined}>
+          {items.map(([question, answer], index) => collapsible ? (
+            <details key={question} style={{ '--i': index } as CSSProperties}>
+              <summary>
+                <span className="faq-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                <h3>{question}</h3>
+                <span className="faq-toggle" aria-hidden="true" />
+              </summary>
               <p>{answer}</p>
             </details>
           ) : (

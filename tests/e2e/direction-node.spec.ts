@@ -3,7 +3,9 @@ import { directionPages } from '../../app/data/directionPages';
 
 // «Вузол напряму»: on metal, concrete and roofing the editorial picture is a three-step tour of one node. It plays
 // once in view and can be paused; every step in the list is a button that shows its step; the title block names what
-// the camera shows and says «Ілюстрація». Reduced motion: no tour and no control, the steps still switch.
+// the camera shows and what the picture is — «Схема» for a node drawn as a technical drawing (NodeDrawing, UX pass 2026-10:
+// vector, so the push-in stays sharp), «Ілюстрація» for a picture. Reduced motion: no tour and no control, the steps
+// still switch.
 const NODE_PAGES = [
   ['/metalokonstruktsii', directionPages.metalokonstruktsii.editorial.node!],
   ['/betonni-roboty', directionPages['betonni-roboty'].editorial.node!],
@@ -17,7 +19,8 @@ test('the node tour plays once in view, pauses, and answers each step', async ({
     const section = page.locator('.dn-section');
     const caption = section.locator('.dn-caption');
     await expect(caption, path).toHaveText(node.overviewCaption);
-    await expect(section.locator('.sheet-stamp'), path).toContainText('Ілюстрація');
+    await expect(section.locator('.sheet-stamp'), path).toContainText(node.drawing ? 'Схема' : 'Ілюстрація');
+    if (node.drawing) await expect(section.locator('svg.node-drawing'), path).toHaveAttribute('aria-label', `Схема: ${node.overviewCaption}`);
     await section.locator('.dn-sheet').scrollIntoViewIfNeeded();
     await expect(caption, path).toHaveText(node.steps[0].caption);
     await section.getByRole('button', { name: 'Пауза показу вузла', exact: true }).click();

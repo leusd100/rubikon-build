@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
+import { NodeDrawing } from './NodeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
 import type { DirectionNode as DirectionNodeConfig, DirectionNodeStep } from '../../types/directionPage';
 import './direction-node.css';
@@ -160,7 +161,7 @@ export function DirectionNode({
               ? { tone: 'number', label: 'Крок', value: <>{pad(step)}<span> / {pad(steps.length)}</span></> }
               : { label: 'Показ', value: 'Огляд' },
             { tone: 'main', label: 'Що показано', value: <span className="dn-caption">{active ? active.caption : node.overviewCaption}</span> },
-            { label: 'Зображення', value: 'Ілюстрація' },
+            { label: 'Зображення', value: node.drawing ? 'Схема' : 'Ілюстрація' },
           ]}
           action={motion && (
             <button type="button" className="dn-control" data-paused={touring ? undefined : true} onClick={toggle}>
@@ -169,8 +170,10 @@ export function DirectionNode({
             </button>
           )}
         >
-          <div className="dn-stage" style={{ transform: stageTransform(size, node, active) }}>
-            <ResponsiveImage src={image} alt={imageAlt} sizes="(max-width: 760px) calc(100vw - 32px), 50vw" />
+          <div className={`dn-stage${node.drawing ? ' is-drawing' : ''}`} style={{ transform: stageTransform(size, node, active) }}>
+            {node.drawing
+              ? <NodeDrawing kind={node.drawing} label={`Схема: ${node.overviewCaption}`} />
+              : <ResponsiveImage src={image} alt={imageAlt} sizes="(max-width: 760px) calc(100vw - 32px), 50vw" />}
             <svg className="dn-overlay" viewBox={`0 0 ${node.width} ${node.height}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
               {steps.map((item, index) => (
                 <g key={item.title} className={`dn-mark dn-mark-${index + 1}`}>

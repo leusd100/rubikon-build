@@ -1,0 +1,49 @@
+/* The collapsible FAQ (DirectionFaq) — one look on /yak-pratsyuiemo, the direction pages, /angary and the grain page
+   (UX pass 2026-10: the direction pages' list fell apart into the browser's own ▶, the question and a bare «+»). Numbered
+   questions, a round toggle that turns into × and fills copper, the answer on a copper rule; the list rises row by row
+   when the page's motion controller sees it, and an answer slides open where the browser can animate it. */
+.faq-list details { border-top: 1px solid var(--color-border-strong); }
+.faq-list details:last-child { border-bottom: 1px solid var(--color-border-strong); }
+.faq-list summary { display: grid; grid-template-columns: 34px minmax(0, 1fr) 36px; gap: 18px; align-items: center; min-height: 44px; padding: 22px 0; cursor: pointer; list-style: none; }
+.faq-list summary::-webkit-details-marker { display: none; }
+.faq-list summary::marker { content: ''; }
+.faq-list summary:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
+.faq-number { color: var(--color-accent-strong); font: 600 13px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; }
+.faq-list summary h3 { margin: 0; font: 600 clamp(18px, 1.7vw, 23px)/1.25 var(--font-condensed), sans-serif; text-transform: none; transition: color var(--duration-fast) ease; }
+.faq-toggle { position: relative; width: 34px; height: 34px; border: 1px solid var(--color-border-strong); border-radius: 50%; transition: background-color .2s ease, border-color .2s ease; }
+/* The cross turns into × inside the ring (turning the ring itself widened its box past a 360 px screen's edge) */
+.faq-toggle::before, .faq-toggle::after { content: ''; position: absolute; top: 50%; left: 50%; width: 12px; height: 1.5px; margin: -.75px 0 0 -6px; background: var(--color-accent-strong); transition: background-color .2s ease, transform .25s var(--ease-premium); }
+.faq-toggle::after { transform: rotate(90deg); }
+.faq-list details[open] .faq-toggle { background: var(--color-accent); border-color: var(--color-accent); }
+.faq-list details[open] .faq-toggle::before { transform: rotate(45deg); }
+.faq-list details[open] .faq-toggle::after { transform: rotate(135deg); }
+.faq-list details[open] .faq-toggle::before, .faq-list details[open] .faq-toggle::after { background: var(--color-bg); }
+@media (hover: hover) {
+  .faq-list summary:hover h3 { color: var(--color-accent-strong); }
+  .faq-list summary:hover .faq-toggle { border-color: var(--color-accent); }
+}
+.faq-list details > p { max-width: 680px; margin: 0 52px 24px; padding-left: 18px; color: var(--color-text-secondary); border-left: 2px solid var(--color-accent); font-size: 16px; line-height: 1.7; }
+@media (prefers-reduced-motion: no-preference) {
+  :root { interpolate-size: allow-keywords; }
+  .faq-list details::details-content { block-size: 0; overflow-y: clip; transition: block-size .32s var(--ease-premium), content-visibility .32s allow-discrete; }
+  .faq-list details[open]::details-content { block-size: auto; }
+}
+/* The rows rise one by one (the page's ProcessMotion arms [data-motion]) */
+:where([data-motion-ready="on"]) .faq-list[data-motion] details { transition: opacity 420ms ease calc(var(--i, 0) * 90ms), transform 420ms var(--ease-premium) calc(var(--i, 0) * 90ms); }
+:where([data-motion-ready]) .faq-list[data-motion]:not([data-motion-state="on"]) details { opacity: 0; transform: translateY(12px); }
+
+/* Under the title: the next step for a question the list does not answer */
+.faq-ask { max-width: 380px; margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--color-border-strong); }
+.faq-ask p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
+.faq-ask div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-top: 16px; }
+.faq-ask a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font: 700 15px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
+.faq-ask-call { color: var(--color-text); border-bottom: 1px solid var(--color-accent); }
+.faq-ask-write { color: var(--color-accent-strong); text-transform: uppercase; font-size: 13px; letter-spacing: .08em; }
+.faq-ask a:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+
+@media (max-width: 760px) {
+  .faq-list summary { grid-template-columns: 26px minmax(0, 1fr) 32px; gap: 12px; padding: 18px 0; }
+  .faq-toggle { width: 32px; height: 32px; }
+  .faq-list details > p { margin: 0 0 20px 38px; padding-left: 14px; }
+  .faq-ask { max-width: none; margin-top: 24px; }
+}
