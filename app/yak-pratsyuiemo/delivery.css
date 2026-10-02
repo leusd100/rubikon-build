@@ -268,17 +268,34 @@
 .proc-responsibility:has(input[value="comprehensive"]:checked) .proc-area li[data-soft~="comprehensive"]::before,
 .proc-responsibility:has(input[value="work-package"]:checked) .proc-area li[data-soft~="work-package"]::before,
 .proc-responsibility:has(input[value="subcontract"]:checked) .proc-area li[data-soft~="subcontract"]::before { top: .45em; width: 7px; height: 7px; background: none; border: 1px solid var(--soft-ring, var(--color-accent)); border-radius: 50%; }
-/* Format switcher: three radios as one segmented control, centred under the heading */
-.proc-resp-switch { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; }
-.proc-resp-switch legend { float: left; width: 100%; margin-bottom: 12px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
-.proc-resp-switch > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); }
-.proc-resp-switch label { position: relative; cursor: pointer; }
-.proc-resp-switch label + label { border-left: 1px solid var(--color-border-control); }
-.proc-resp-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.proc-resp-switch span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
-.proc-resp-switch label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
-.proc-resp-switch input:checked + span { color: var(--color-bg); background: var(--color-text); }
-.proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -6px; }
+/* Format switchers: three radios as one segmented control, centred under the heading. The map's (resp) and, on a
+   phone, the one over «Наш обсяг» (scope) are one choice — FormatSwitchSync.tsx keeps them in step. */
+:is(.proc-resp-switch, .proc-scope-switch) { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; }
+:is(.proc-resp-switch, .proc-scope-switch) legend { float: left; width: 100%; margin-bottom: 12px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+:is(.proc-resp-switch, .proc-scope-switch) > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); }
+:is(.proc-resp-switch, .proc-scope-switch) label { position: relative; cursor: pointer; }
+:is(.proc-resp-switch, .proc-scope-switch) label + label { border-left: 1px solid var(--color-border-control); }
+:is(.proc-resp-switch, .proc-scope-switch) input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+:is(.proc-resp-switch, .proc-scope-switch) span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
+:is(.proc-resp-switch, .proc-scope-switch) label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+:is(.proc-resp-switch, .proc-scope-switch) input:checked + span { color: var(--color-bg); background: var(--color-text); }
+:is(.proc-resp-switch, .proc-scope-switch) input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -6px; }
+.proc-scope-switch { display: none; }
+/* The map runs taller than a screen at every width: the map's switcher stays under the fixed header (101 px) while it
+   scrolls by. The section's supporting text already asks to choose a format, so its legend is for assistive technology
+   only. On a wide screen only the control floats (the strip beside it lets the pointer through to the cards). */
+.proc-resp-switch { position: sticky; z-index: 5; top: 113px; container-type: scroll-state; pointer-events: none; }
+.proc-resp-switch > div { pointer-events: auto; }
+.proc-resp-switch legend { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@container scroll-state(stuck: top) {
+  .proc-resp-switch > div { box-shadow: 0 10px 28px rgba(20, 18, 15, .16); }
+}
+/* A work that has just moved into a zone after a switch (FormatSwitchSync.tsx sets data-fresh for 2.4 s) */
+.proc-area ul li[data-fresh] { --fresh: color-mix(in srgb, var(--color-accent) 14%, transparent); background: var(--fresh); box-shadow: 0 0 0 6px var(--fresh); }
+@media (prefers-reduced-motion: no-preference) {
+  .proc-area ul li[data-fresh] { animation: resp-in 320ms var(--m-ease), resp-fresh 2400ms ease-out forwards; }
+}
+@keyframes resp-fresh { 0%, 50% { background-color: var(--fresh); box-shadow: 0 0 0 6px var(--fresh); } 100% { background-color: transparent; box-shadow: 0 0 0 6px transparent; } }
 /* Show only the chosen format's principle, client title, works and out-of-scope line */
 .proc-responsibility:has(input[value="comprehensive"]:checked) [data-format]:not([data-format="comprehensive"]),
 .proc-responsibility:has(input[value="work-package"]:checked) [data-format]:not([data-format="work-package"]),
@@ -444,10 +461,11 @@
   .process-page[data-motion-ready] .proc-resp-figure:not([data-motion-state="on"]) .proc-area::before { transform: scaleX(0); }
   .proc-area::after { top: 26.5px; left: -25.5px; }
   .proc-principle { margin: 0; padding-left: 28px; text-align: left; }
-  /* The stacked map runs taller than a screen: the switcher stays under the fixed header (101 px) while it scrolls by.
-     The section's supporting text already asks to choose a format, so the legend is kept for assistive technology only. */
-  .proc-resp-switch { position: sticky; z-index: 5; top: 101px; align-items: stretch; margin-bottom: 32px; padding: 10px 0; background: var(--color-surface); box-shadow: 0 1px 0 var(--color-border); }
-  .proc-resp-switch legend { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  /* The stacked map: the switcher becomes a full-width band right under the header */
+  .proc-resp-switch { top: 101px; align-items: stretch; margin-bottom: 32px; padding: 10px 0; background: var(--color-surface); box-shadow: 0 1px 0 var(--color-border); pointer-events: auto; }
+  @container scroll-state(stuck: top) {
+    .proc-resp-switch > div { box-shadow: none; }
+  }
   /* The contract band hangs off the left rail, like the cards */
   .proc-contract-base { position: relative; margin: 18px 0 0 28px; }
   .proc-contract-drops { display: none; }
@@ -501,8 +519,13 @@
   .proc-principle { font-size: clamp(24px, 6.8vw, 28px); }
   /* Compact under the 77 px header: one row of three */
   .proc-resp-switch { top: 77px; margin-bottom: 24px; padding: 8px 0; }
-  .proc-resp-switch > div { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
-  .proc-resp-switch span { min-height: 48px; padding: 6px; font-size: 12px; letter-spacing: .04em; }
+  :is(.proc-resp-switch, .proc-scope-switch) > div { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  :is(.proc-resp-switch, .proc-scope-switch) span { min-height: 48px; padding: 6px; font-size: 12px; letter-spacing: .04em; }
+  /* «Наш обсяг»: one format at a time instead of three cards in a row (about three screens) */
+  .proc-scope-switch { display: flex; align-items: stretch; margin-bottom: 28px; }
+  .proc-scope:has(input[value="comprehensive"]:checked) .proc-scope-grid > li:not([data-scope="comprehensive"]),
+  .proc-scope:has(input[value="work-package"]:checked) .proc-scope-grid > li:not([data-scope="work-package"]),
+  .proc-scope:has(input[value="subcontract"]:checked) .proc-scope-grid > li:not([data-scope="subcontract"]) { display: none; }
   .proc-area-tag { font-size: 12px; letter-spacing: .08em; }
   .proc-terms-image { background-position: center top; background-size: 180% auto; }
   .proc-hero-trace { display: none; }

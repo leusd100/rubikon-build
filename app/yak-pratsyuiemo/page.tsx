@@ -3,6 +3,7 @@ import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../com
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatPrefillLink } from '../components/process/FormatPrefillLink';
+import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { ScopeDiagram } from '../components/process/ScopeDiagram';
 import { StartGlyph } from '../components/process/StartGlyph';
@@ -97,6 +98,7 @@ export default function DeliveryModelPage() {
     <main className="inner-page process-page" id="main-content">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageData) }} />
       <ProcessMotion />
+      <FormatSwitchSync />
 
       {/* 1 · Hero */}
       <section className="proc-hero">
@@ -208,9 +210,21 @@ export default function DeliveryModelPage() {
             titleId="proc-scope-title"
             supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
+          {/* A phone shows one format at a time (delivery.css); this switcher and the map's below are one choice */}
+          <fieldset className="proc-scope-switch">
+            <legend>Формат участі</legend>
+            <div>
+              {choices.map((choice) => (
+                <label key={choice.id}>
+                  <input type="radio" name="scope-format" value={choice.id} defaultChecked={choice.id === 'comprehensive'} />
+                  <span>{choice.title}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <ul className="proc-scope-grid">
             {choices.map((choice) => (
-              <li key={choice.id} data-motion>
+              <li key={choice.id} data-motion data-scope={choice.id}>
                 <ScopeDiagram format={choice.id} />
                 <div className="proc-scope-title">
                   <p className="proc-scope-kicker">{choice.title}</p>
