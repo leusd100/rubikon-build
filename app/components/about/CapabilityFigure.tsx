@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { CapabilityLedgerColumn } from '../../lib/deliveryModelPresentation';
 
 // /pro-nas «Що робимо самі, а що організовуємо» (UX pass 2026-10, owner: «зробимо цікавіше і живіше» — in the language of
-// /yak's cost-factor drawing). One object on its site, each work of the Delivery Model drawn where it happens: what our
-// own team does in copper, what we organise for the project in graphite, specialist works dashed. Pointing at a work
-// (or tapping it) lights its part; pointing at a group lights the group; the first view walks the three groups once.
+// /yak's cost-factor drawing). One object on its site, the main works of the Delivery Model drawn where they happen, all
+// in quiet graphite until one lights: our own team's in copper, what we organise in a strong line, specialist works
+// dashed. Pointing at a work (or tapping it) lights its part; pointing at a group lights the group; the first view walks
+// the three groups once. (A first version drew every work at once in its colour and read as overloaded — owner, 02.10.)
 // The drawing is decorative (aria-hidden): the list beside it says everything, in the model's words.
 
 type Point = readonly [number, number, number];
@@ -37,14 +38,7 @@ const PARTS: Record<string, string> = {
   'steel-fabrication': [0, 7, 14].map((z) => `${line([W + 34, -10, z], [W + 34, 46, z])}${line([W + 62, -10, z], [W + 62, 46, z])}${line([W + 34, -10, z], [W + 62, -10, z])}`).join(''),
   // a trench cut in front, its sloped sides hatched
   earthworks: `${line([-62, -36, 0], [-44, -36, -22], [-6, -36, -22], [12, -36, 0])}${[-56, -48, -40].map((x) => line([x, -36, -6 - (x + 56)], [x + 5, -36, -2 - (x + 56)])).join('')}${[0, 6].map((x) => line([x, -36, -16 + x * 2], [x + 5, -36, -12 + x * 2])).join('')}`,
-  // the site's fence along its side
-  envelope: [-60, -30, 0, 30, 60, 90, 120, 150, 180, 210, 240].map((d) => line([-104, d, 0], [-104, d, 18])).join('') + line([-104, -60, 15], [-104, 240, 15]) + line([-104, -60, 5], [-104, 240, 5]),
-  landscaping: [[-60, 120], [-72, 200]].map(([x, d]) => {
-    const [cx, cy] = p([x, d, 32]).split(',').map(Number);
-    return `${line([x, d, 0], [x, d, 20])}M${cx - 12},${cy}a12 12 0 1 0 24 0a12 12 0 1 0 -24 0`;
-  }).join('') + line([-36, 60, 0], [-36, 230, 0]) + line([-48, 60, 0], [-48, 230, 0]),
   mep: `${line([W + 120, 150, -10], [W, 150, -10])}${line([W + 120, 120, -16], [W, 120, -16])}${line([W + 120, 150, -10], [W + 120, 150, 70])}`,
-  ventilation: [60, 140].map((d) => `${poly([W / 2 - 8, d, RIDGE], [W / 2 + 8, d, RIDGE], [W / 2 + 8, d, RIDGE + 14], [W / 2 - 8, d, RIDGE + 14])}${line([W / 2, d, RIDGE + 14], [W / 2, d, RIDGE + 22])}`).join(''),
 };
 
 const TOUR_STEP_MS = 1700;
@@ -82,15 +76,12 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
   return (
     <div className="about-cap" ref={rootRef} data-tier={activeTier} data-cap={activeCap}>
       <figure className="about-cap-figure" aria-hidden="true">
-        <svg viewBox="28 104 452 252" focusable="false">
-          <path className="cap-ground" d={`M${p([-120, 0, 0])}L${p([300, 0, 0])}`} />
+        <svg viewBox="70 96 380 238" focusable="false">
+          <path className="cap-ground" d={`M${p([-120, 0, 0])}L${p([260, 0, 0])}`} />
           {Object.entries(PARTS).map(([cap, d]) => (
             <path key={cap} className="cap-part" data-cap={cap} data-tier={tierOf(cap)} d={d} />
           ))}
         </svg>
-        <figcaption className="about-cap-legend">
-          {columns.map((column) => <span key={column.id} data-tier={column.id}><i />{column.title}</span>)}
-        </figcaption>
       </figure>
       <div className="about-ledger" data-motion>
         {columns.map((column, index) => (

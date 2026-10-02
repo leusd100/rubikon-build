@@ -28,7 +28,7 @@ export type PracticeStep = {
 };
 
 const IMAGE = { width: 1440, height: 1800 };
-const STEP_MS = 4500;
+const STEP_MS = 5200; // room for each step to build what it names (UX pass 2026-10)
 
 function stageTransform(size: { width: number; height: number } | null, step: PracticeStep | undefined) {
   if (!size || !step) return undefined;
@@ -167,14 +167,14 @@ export function PracticeSteps({
               <g transform="translate(240 1040)"><g className="aqc-badge"><circle r="40" /><text dy="11">01</text></g></g>
             </g>
             <g className="aqc-mark aqc-mark-2">
-              <path className="aqc-line" pathLength={1} d="M1040 884 C1130 820 1130 760 1040 700 C950 640 760 610 640 530" />
+              <path className="aqc-line" pathLength={1} d="M1040 884V530H640" />
               <g transform="translate(1040 884)"><g className="aqc-step"><circle r="30" /><text dy="10">1</text></g></g>
               <g transform="translate(1040 700)"><g className="aqc-step"><circle r="30" /><text dy="10">2</text></g></g>
               <g transform="translate(640 530)"><g className="aqc-step"><circle r="30" /><text dy="10">3</text></g></g>
               <g transform="translate(1200 884)"><g className="aqc-badge"><circle r="40" /><text dy="11">02</text></g></g>
             </g>
             <g className="aqc-mark aqc-mark-3">
-              <circle className="aqc-line" pathLength={1} cx="990" cy="530" r="125" />
+              <circle className="aqc-line" pathLength={1} cx="1016" cy="530" r="120" />
               <g transform="translate(1090 425)"><g className="aqc-badge"><circle r="40" /><text dy="11">03</text></g></g>
             </g>
           </svg>

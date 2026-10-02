@@ -17,7 +17,7 @@ import './direction-node.css';
 // The mechanics are /pro-nas practice's (PracticeSteps), with the marks given as data: the picture is cropped by cover
 // and the stage wraps it and its marks, so one transform moves both and keeps them aligned at any size.
 
-const STEP_MS = 4500;
+const STEP_MS = 5200; // room for each step to build what it names (UX pass 2026-10)
 const pad = (value: number) => String(value).padStart(2, '0');
 
 function stageTransform(size: { width: number; height: number } | null, picture: { width: number; height: number }, step: DirectionNodeStep | undefined) {

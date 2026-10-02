@@ -67,8 +67,8 @@ test('about practice illustration stays inside its composition', async ({ page }
     await page.goto('/pro-nas', { waitUntil: 'load' });
 
     const story = page.locator('.about-story-section');
-    const image = story.locator('.promise-visual img');
-    await expect(image).toHaveAttribute('src', '/media/about-quality-control.webp');
+    // A technical drawing since the UX pass 2026-10 (zooming the picture lost its quality)
+    const image = story.locator('.promise-visual svg.practice-drawing');
     await expect(image).toBeVisible();
 
     // The decorative background words are retired on /pro-nas (as on /yak-pratsyuiemo)

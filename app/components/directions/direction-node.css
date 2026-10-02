@@ -105,3 +105,22 @@
 .dn[data-step="1"] .node-drawing [data-part="1"], .dn[data-step="2"] .node-drawing [data-part="2"], .dn[data-step="3"] .node-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }
 .dn[data-step="1"] .node-drawing [data-part="1"] circle, .dn[data-step="2"] .node-drawing [data-part="2"] circle, .dn[data-step="3"] .node-drawing [data-part="3"] circle,
 .dn[data-step="3"] .node-drawing .nd-weld path:not(.nd-leader) { fill: color-mix(in srgb, var(--color-accent) 28%, transparent); }
+/* Each step builds what it names once the camera has arrived; on the roofing drainage step the water runs down the sheet
+   into the gutter. Reduced motion: the parts simply light, the water stands still. */
+/* Water as drops along its path: shown on the step that follows it (2: the wall and the flashing; 3: sheet, gutter, pipe) */
+.node-drawing .nd-rain { fill: none; stroke: var(--color-accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 1 23; opacity: 0; transition: opacity .3s ease; }
+.dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { opacity: .9; }
+@media (prefers-reduced-motion: no-preference) {
+  .dn[data-step="1"] .node-drawing [data-part="1"] :is(path, circle):not(.nd-dashed),
+  .dn[data-step="2"] .node-drawing [data-part="2"] :is(path, circle):not(.nd-dashed),
+  .dn[data-step="3"] .node-drawing [data-part="3"] :is(path, circle):not(.nd-leader, .nd-dashed) { stroke-dasharray: 1; animation: nd-draw 900ms var(--ease-premium) 700ms both; }
+  /* the roof's build-up is laid bottom-up: deck, barrier, insulation, sheet */
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq] { animation-duration: 650ms; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="1"] { animation-delay: 600ms; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="2"] { animation-delay: 1050ms; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="3"] { animation-delay: 1500ms; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="4"] { animation-delay: 1950ms; }
+  .dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { animation: nd-flow 480ms linear 1200ms infinite; }
+}
+@keyframes nd-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes nd-flow { to { stroke-dashoffset: -24; } }
