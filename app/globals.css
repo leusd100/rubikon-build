@@ -35,7 +35,7 @@
   --hero-title-home: clamp(44px, min(5.2vw, 9.4svh), 78px);
   --hero-lead: 17px;
   --hero-pad-top: calc(101px + clamp(18px, 7svh, 72px));
-  --hero-pad-bottom: clamp(40px, 9svh, 110px);
+  --hero-pad-bottom: clamp(56px, 9svh, 110px);
   --hero-gap-crumb: clamp(16px, 3.6svh, 40px);
   --hero-gap-lead: clamp(16px, 3.2svh, 30px);
   --hero-gap-actions: clamp(20px, 4.2svh, 38px);
