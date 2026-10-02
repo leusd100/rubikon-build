@@ -10,6 +10,8 @@ export const company = {
   geography: `Працюємо переважно в Дніпропетровській області. ${geographyBeyond}`,
   /** The second half of `geography`, for a page that names the main region on its own line (/pro-nas). */
   geographyBeyond,
+  /** One line under the HOME hero actions and in the footer: where we are, said once, the same promise as `geography`. */
+  geographyShort: 'Дніпро та область · інші регіони за погодженням',
   founders: ['Леус Сергій Іванович', 'Леус Дмитро Сергійович'],
   // Single source of truth for "consent under which policy version" — bump this string
   // (and the matching date on the privacy policy page) whenever that page's content changes.

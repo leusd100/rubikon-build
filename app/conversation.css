@@ -59,7 +59,7 @@
 }
 .conversation-call .conversation-call-icon svg { width: 22px; height: 22px; flex: none; stroke-width: 1.7; }
 .conversation-call .conversation-call-text { flex: 1 1 auto; display: grid; gap: 7px; padding: 0 20px; text-align: left; }
-.conversation-call small { font-size: 11.5px; letter-spacing: .14em; }
+.conversation-call small { font-size: 12px; letter-spacing: .14em; }
 .conversation-call strong { font-size: 24px; letter-spacing: .025em; }
 .conversation-call .conversation-call-arrow { flex: none; padding: 0 24px 0 8px; font-size: 18px; font-weight: 500; transition: transform var(--duration-fast) ease; }
 .conversation-call:is(:hover, :focus-visible) .conversation-call-icon { background: color-mix(in srgb, var(--color-on-action) 15%, transparent); }
@@ -103,13 +103,15 @@
 .conversation-journey li:nth-child(n + 3) { border-top: 1px solid var(--color-border); }
 .conversation-journey-number { color: var(--color-accent-strong); font: 600 14px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; }
 .conversation-journey h3 { margin: 0 0 6px; color: var(--color-text); font-size: 16px; font-weight: 700; line-height: 1.3; }
-.conversation-journey p { margin: 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.5; }
+.conversation-journey p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.5; }
 /* Phone only, and only with JavaScript: the texts fold behind one button (ConversationJourney.tsx). */
 .conversation-journey-toggle { display: none; }
 /* The form card: lifted off the sheet, outlined, copper top rule (follows the light/dark tokens) */
 .conversation .inquiry-form { min-width: 0; box-shadow: 0 28px 70px rgba(20, 22, 21, .16); }
-/* The form sits in this grid's named «form» area at every width. */
-.conversation-grid > .inquiry-form { grid-area: form; }
+/* The form sits in this grid's named «form» area at every width (inside ConversationFormToggle's wrapper). */
+.conversation-grid > .conversation-form-wrap { grid-area: form; min-width: 0; }
+.conversation-form-wrap .inquiry-form { grid-area: auto; }
+.conversation-form-toggle { display: none; }
 /* Form labels were 10–11 px: raised for reading at arm's length */
 .conversation :is(.inquiry-form label > span, .inquiry-choice legend) { font-size: 12.5px; letter-spacing: .06em; }
 .conversation .inquiry-choice label > span { font-size: 12px; }
@@ -132,7 +134,7 @@
   .conversation-journey { margin-top: 12px; }
   .conversation-journey li { gap: 6px; padding: 12px 18px 14px; }
   .conversation-journey h3 { margin-bottom: 4px; font-size: 15px; }
-  .conversation-journey p { font-size: 13.5px; line-height: 1.45; }
+  .conversation-journey p { font-size: 14.5px; line-height: 1.45; }
 }
 @media (max-width: 1180px) {
   .conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; row-gap: 40px; }
@@ -167,5 +169,22 @@
 @media (max-width: 340px) {
   .conversation-call strong { font-size: 20px; }
   .conversation-call .conversation-call-icon { width: 52px; }
-  .conversation-channels .messenger-link { font-size: 11px; }
+  .conversation-channels .messenger-link { font-size: 12px; }
 }
+
+/* Phone and tablet, one column (≤ 1180 px), with JavaScript: the form folds behind «Залишити запит» until asked for
+   (ConversationFormToggle.tsx). The call and the four channels above stay as they are. */
+@media (max-width: 1180px) {
+  :root[data-theme] .conversation-form-wrap:not([data-open]) .conversation-form-region { display: none; }
+  :root[data-theme] .conversation-form-toggle {
+    width: min(100%, 520px); min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 0 20px; color: var(--color-text); background: color-mix(in srgb, var(--color-surface-elevated) 80%, transparent);
+    border: 1px solid var(--color-border-strong); cursor: pointer;
+    font: 800 13px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase;
+    transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+  }
+  :root[data-theme] .conversation-form-toggle:is(:hover, :focus-visible) { border-color: var(--color-accent-strong); background: var(--color-surface-elevated); }
+  :root[data-theme] .conversation-form-toggle span { color: var(--color-accent-strong); font-size: 16px; }
+  .conversation-grid { row-gap: 28px; }
+}
+@media (max-width: 760px) { :root[data-theme] .conversation-form-toggle { width: 100%; } }

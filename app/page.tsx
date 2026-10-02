@@ -4,7 +4,7 @@ import { SectionHeader } from './components/SiteChrome';
 import { ConversationSection } from './components/ConversationSection';
 import { EngineeringSignature } from './components/home-v2/EngineeringSignature';
 import { HomeV2Hero } from './components/home-v2/HomeV2Hero';
-import { directions } from './data/directions';
+import { directions, undecidedDirection } from './data/directions';
 import { homeProofCase } from './data/homeProof';
 // HOME v2 «Engineering Signature» (owner-approved 2026-09-29, from design/home-v2-engineering-signature). Every rule
 // is scoped to main[data-home="v2"]; the previous HOME blocks (HomeSections, TeamSection) are no longer rendered here.
@@ -36,7 +36,7 @@ export default function Home() {
 
       <EngineeringSignature proof={homeProofCase} />
 
-      <ConversationSection title="Розкажіть коротко про завдання" />
+      <ConversationSection title="Розкажіть коротко про завдання" defaultDirection={undecidedDirection} />
     </main>
   );
 }

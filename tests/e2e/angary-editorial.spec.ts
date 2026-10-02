@@ -21,7 +21,14 @@ for (const viewport of viewports) {
     await expect(hero.getByRole('heading', { level: 1 })).toContainText('Ангари та склади');
     await expect(hero.getByRole('heading', { level: 1 })).toContainText('за вашою конфігурацією');
     await expect(hero.getByRole('link', { name: /Зібрати конфігурацію/ })).toHaveAttribute('href', '#configurator');
-    await expect(hero.getByRole('link', { name: /Обговорити задачу/ })).toHaveAttribute('href', '#inquiry');
+    // ≤ 760 px the call leads and the configurator follows; the conversation link stays off the phone's first screen
+    // (UX pass 2026-10). Wider screens keep the configurator + «Обговорити задачу» pair.
+    if (viewport.width <= 760) {
+      await expect(hero.locator('a.hero-call-phone')).toBeVisible();
+      await expect(hero.locator('a.angary-hero-secondary')).toBeHidden();
+    } else {
+      await expect(hero.getByRole('link', { name: /Обговорити задачу/ })).toHaveAttribute('href', '#inquiry');
+    }
     await expect(hero.locator('.hc-controls, .hc-preview-surface')).toHaveCount(0);
 
     const sequence = await page.locator([

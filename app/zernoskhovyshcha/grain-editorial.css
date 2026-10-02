@@ -18,8 +18,8 @@
 .grain-page .direction-editorial-points { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin: 20px 0 0; padding: 18px 0 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
 .grain-page .direction-editorial-points li { min-width: 0; }
 .grain-page .direction-editorial-points span { color: var(--color-accent-strong); font: 500 12px/1 var(--font-condensed), sans-serif; }
-.grain-page .direction-editorial-points h3 { margin: 6px 0 5px; font: 600 16px/1.2 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.grain-page .direction-editorial-points p { margin: 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.55; }
+.grain-page .direction-editorial-points h3 { margin: 6px 0 5px; font: 600 16px/1.2 var(--font-condensed), sans-serif; text-transform: none; }
+.grain-page .direction-editorial-points p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
 
 /* ---------- 05 Після брифу ---------- */
 .grain-page .grain-process-band { padding-block: var(--section-space-compact); }
@@ -74,7 +74,8 @@
 
 @media (max-width: 760px) {
   .grain-page .service-subhero.grain-service-subhero { min-height: 0; }
-  .grain-page .service-subhero-content { padding-top: 104px; padding-bottom: 44px; }
+  /* 126 px like every direction hero, so the crumbs sit under the «Ілюстрація» stamp (UX pass 2026-10) */
+  .grain-page .service-subhero-content { padding-top: 126px; padding-bottom: 44px; }
   .grain-page .grain-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 24px; }
   /* Four short points: two columns keep them scannable without four full-width rows. */
   .grain-page .direction-editorial-points { gap: 14px 16px; margin-top: 18px; padding-top: 16px; }
@@ -86,7 +87,7 @@
   .grain-page .grain-process-band .detail-steps h3 { margin: 10px 0 6px; }
   .grain-page .faq-heading { margin-bottom: 22px; }
   .grain-page .faq-list summary { padding: 14px 0; }
-  .grain-page .faq-list details > p { margin-right: 28px; font-size: 13px; }
+  .grain-page .faq-list details > p { margin-right: 28px; font-size: 16px; }
   .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
   .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--color-border-strong); }
   .grain-page .related-directions-section.is-compact .related-card:last-child { border-right: 0; border-bottom: 0; }

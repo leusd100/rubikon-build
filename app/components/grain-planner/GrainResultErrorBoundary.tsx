@@ -24,7 +24,7 @@ export class GrainResultErrorBoundary extends Component<Props, State> {
           <p>Ваші відповіді та опис для заявки збережені. Спробуйте завантажити результат ще раз або перейдіть до короткої форми нижче.</p>
           <div className="grain-result-error-actions">
             <button type="button" className="button button-primary" onClick={this.props.onRetry}>Спробувати ще раз</button>
-            <a className="button planner-button-outline" href="#inquiry">Перейти до заявки</a>
+            <a className="button planner-button-outline" href="#inquiry" data-open-inquiry="">Перейти до заявки</a>
           </div>
         </div>
       </section>

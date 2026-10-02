@@ -31,10 +31,11 @@ export function HomeV2Hero() {
               <Phone aria-hidden="true" />
               <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
             </a>
-            <a className="button button-outline" href="#inquiry">
-              Написати або залишити запит <span aria-hidden="true">↗</span>
+            <a className="button button-outline" href="#inquiry" data-open-inquiry="">
+              Написати або залишити запит <span aria-hidden="true">↓</span>
             </a>
           </div>
+          <p className="hv2-hero-geo">{company.geographyShort}</p>
         </div>
       </div>
       {/* Only the ≤760 still is a concept image; the desktop footage is process footage, not an object. */}

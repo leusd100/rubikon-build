@@ -76,6 +76,9 @@ test('shared inquiry submits one mocked lead successfully', async ({ page }) => 
   await page.goto('/', { waitUntil: 'load' });
   await acceptEssentialCookies(page);
 
+  // Phones and tablets fold the form behind «Залишити запит» (ConversationFormToggle); a desktop shows it at once.
+  const toggle = page.locator('#inquiry .conversation-form-toggle');
+  if (await toggle.isVisible()) await toggle.click();
   const form = page.locator('form.inquiry-form');
   await form.getByLabel(/Ваше ім’я/).fill('CI Test');
   await form.getByLabel(/Телефон/).fill('+380671234567');

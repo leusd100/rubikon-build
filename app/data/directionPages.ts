@@ -48,7 +48,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
         sectionClassName: 'angary-service-subhero',
         items: [
           { label: 'Зібрати конфігурацію', href: '#configurator', className: 'button button-primary', arrow: '↓' },
-          { label: 'Обговорити задачу', href: '#inquiry', className: 'button angary-hero-secondary', arrow: '↗' },
+          { label: 'Обговорити задачу', href: '#inquiry', className: 'button angary-hero-secondary', arrow: '↓' },
         ],
       },
     },

@@ -41,7 +41,7 @@ const grainDirection: DirectionPageConfig = {
       sectionClassName: 'grain-service-subhero',
       items: [
         { label: 'Сформувати задачу', href: '#planner', className: 'button button-primary', arrow: '↓' },
-        { label: 'Обговорити зерносховище', href: '#inquiry', className: 'button grain-hero-secondary', arrow: '↗' },
+        { label: 'Обговорити зерносховище', href: '#inquiry', className: 'button grain-hero-secondary', arrow: '↓' },
       ],
     },
   },

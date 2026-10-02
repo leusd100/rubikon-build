@@ -1,4 +1,4 @@
-import { Breadcrumbs, GhostWord, HeroCallLink, SectionHeader } from './SiteChrome';
+import { Breadcrumbs, GhostWord, HeroCallButton, HeroCallLink, SectionHeader } from './SiteChrome';
 import { ConversationSection } from './ConversationSection';
 import ResponsiveImage from './ResponsiveImage';
 import { DrawingSheet, type SheetCell } from './DrawingSheet';
@@ -118,6 +118,7 @@ function DirectionHero({
         </p>
         {actions ? (
           <div className={actions.className}>
+            <HeroCallButton />
             {actions.items.map((action) => (
               <a key={action.href} className={action.className} href={action.href}>
                 {`${action.label} `}<span aria-hidden="true">{action.arrow}</span>
@@ -127,14 +128,17 @@ function DirectionHero({
           </div>
         ) : (
           <div className="hero-action-row">
+            <HeroCallButton />
             <a className="button button-primary" href="#inquiry">
-              Обговорити задачу <span aria-hidden="true">↗</span>
+              Обговорити задачу <span aria-hidden="true">↓</span>
             </a>
             <HeroCallLink />
           </div>
         )}
         {notePhone && <p className="service-subhero-note">{notePhone}</p>}
       </div>
+      {/* Every direction hero is a concept image: said in the same quiet stamp as /yak-pratsyuiemo and the HOME phone hero */}
+      <span className="hero-provenance">Ілюстрація</span>
     </section>
   );
 }
