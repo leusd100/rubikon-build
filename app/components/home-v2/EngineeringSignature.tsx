@@ -84,10 +84,12 @@ const cards: readonly { number: string; title: ReactNode; text: string; tag: str
     tag: 'Ілюстрація',
     visual: (
       <>
+        {/* sizes = the card's picture box (home-v2.css): full card width on a phone, the card's left half while the
+            cards stack (761–1050 px), a quarter of the row beside each other */}
         <img
           src="/media/home-v2/concepts/card-node-1040w.webp"
           srcSet="/media/home-v2/concepts/card-node-640w.webp 640w, /media/home-v2/concepts/card-node-1040w.webp 1040w"
-          sizes="(max-width: 760px) 100vw, 25vw"
+          sizes="(max-width: 760px) calc(100vw - 34px), (max-width: 1050px) 47vw, 24vw"
           alt="Ілюстрація: опорний вузол сталевої колони на бетонній основі"
           loading="lazy"
           decoding="async"
@@ -151,10 +153,12 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
             { label: 'Зображення', value: <span className="hv2-tag-scheme">Ілюстративна схема конструкції</span> },
           ]}
         >
+          {/* sizes = the width the 2:1 sketch is drawn at, not its box: object-fit: cover crops it to 1.1 on a phone
+              (box = 100vw − 68 px, drawn 2 / 1.1 times as wide) and to 16:10 at 761–900 px; above that it fits */}
           <img
             src="/media/home-v2/concepts/hangar-xray-1774w.webp"
             srcSet="/media/home-v2/concepts/hangar-xray-1100w.webp 1100w, /media/home-v2/concepts/hangar-xray-1774w.webp 1774w"
-            sizes="(max-width: 900px) 170vw, 58vw"
+            sizes="(max-width: 760px) calc((100vw - 68px) * 1.82), (max-width: 900px) 109vw, 50vw"
             alt="Ілюстративна схема: ангар, у якого частину обшивки замінено умовним каркасом, зі шляхом навантаження від покрівлі до фундаменту"
             loading="lazy"
             decoding="async"
