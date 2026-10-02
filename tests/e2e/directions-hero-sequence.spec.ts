@@ -71,10 +71,12 @@ test('directions static hero sequence remains on the first image for reduced mot
     });
   });
 
+  await page.clock.install();
   await page.goto('/napryamky', { waitUntil: 'load' });
   const frames = page.locator('.directions-subhero img.directions-hero-sequence-image');
 
-  await page.waitForTimeout(7_500); // longer than one 6 s slide: a sequence that moved would have moved by now
+  // Longer than one 6 s slide on the page's own clock: a sequence that moved would have moved by now
+  await page.clock.runFor(7_500);
   expect(await frames.evaluateAll((images) => images.map((image) => image.classList.contains('is-active'))))
     .toEqual([true, false, false, false, false]);
   expect(await frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))))

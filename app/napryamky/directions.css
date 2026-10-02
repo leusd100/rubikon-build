@@ -23,9 +23,8 @@
 .dhs-bars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
 .dhs-bars i { position: relative; height: 2px; overflow: hidden; background: rgba(255, 255, 255, .32); }
 .dhs-bars i.is-done { background: var(--color-accent-on-dark); }
-.dhs-bars b { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; }
+.dhs-bars b { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; animation: dhs-fill 6000ms linear both; }
 @keyframes dhs-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-.dhs-bars b { animation: dhs-fill 6000ms linear both; }
 .dhs-indicator[data-paused] .dhs-bars b { animation-play-state: paused; }
 /* A quiet glass chip under the name: it sits over the brightest part of every slide, the sky */
 .dhs-caption { margin-top: 10px; padding: 5px 9px; color: rgba(255, 255, 255, .92); background: rgba(13, 16, 14, .58); backdrop-filter: blur(6px); font: 700 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .12em; text-align: right; text-transform: uppercase; }
