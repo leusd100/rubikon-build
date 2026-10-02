@@ -27,6 +27,10 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
     return () => document.removeEventListener('click', openFromLink, true);
   }, []);
 
+  // Once a brief has opened the form it stays open: detaching it («Не додавати», «Почати спочатку») must not fold the
+  // form under the visitor's hands. (State adjusted while rendering, React's pattern for following a changed value.)
+  if (attached && !opened) setOpened(true);
+
   const shown = opened || attached;
 
   useEffect(() => {

@@ -59,6 +59,9 @@ test.describe('configurator attachment contract', () => {
     const submitted = await mockLeadSubmission(page);
     await openHangarPage(page);
 
+    // Nothing attached: on a phone the form is still folded behind «Залишити запит» (ConversationFormToggle)
+    const toggle = page.locator('#inquiry .conversation-form-toggle');
+    if (await toggle.isVisible()) await toggle.click();
     const form = page.locator('form.inquiry-form');
     await expect(form.locator('.inquiry-config-brief')).toHaveCount(0);
     await form.getByText('Додати параметри об’єкта', { exact: true }).click();

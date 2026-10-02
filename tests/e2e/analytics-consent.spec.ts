@@ -129,6 +129,9 @@ test('an accepted lead queue command reaches real gtag, with collection intercep
   await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
   await page.waitForLoadState('networkidle');
   test.skip(!google.gtagLoaded(), 'gtag.js could not be fetched from Google in this environment');
+  // Phones fold the closing form behind «Залишити запит» (ConversationFormToggle)
+  const toggle = page.locator('#inquiry .conversation-form-toggle');
+  if (await toggle.isVisible()) await toggle.click();
   const form = page.locator('form.inquiry-form');
   await form.getByLabel(/Ваше ім’я/).fill('Тест черги');
   await form.getByLabel(/Телефон/).fill('+380671234567');
