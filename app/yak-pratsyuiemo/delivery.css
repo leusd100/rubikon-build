@@ -364,7 +364,8 @@
 .proc-change-links { position: relative; z-index: 2; height: 72px; }
 .proc-change-links i { position: absolute; display: block; background: var(--color-accent); }
 .proc-link-03 { top: 0; left: calc(100% - (100% - 2 * var(--flow-gap)) / 6); width: 1px; height: 60px; transform-origin: top; }
-.proc-link-stem { top: 28px; left: calc(44px + (100% - 58px - 3 * var(--flow-gap)) / 4 + var(--flow-gap)); width: 1px; height: 75px; transform-origin: bottom; }
+/* to step 2's node, centred over its column (UX sweep 2026-10: the loop's nodes centred like every other rail) */
+.proc-link-stem { top: 28px; left: calc(29px + 1.5 * (100% - 58px - 3 * var(--flow-gap)) / 4 + var(--flow-gap)); width: 1px; height: 75px; transform-origin: bottom; }
 .proc-link-fork { top: 28px; left: calc((100% - 2 * var(--flow-gap)) / 6); width: calc(50% - (100% - 2 * var(--flow-gap)) / 6); height: 1px; }
 .proc-link-up { top: 8px; width: 1px; height: 20px; transform-origin: bottom; }
 .proc-link-up::before { content: ''; position: absolute; top: -8px; left: -4px; border-right: 4.5px solid transparent; border-bottom: 8px solid var(--color-accent); border-left: 4.5px solid transparent; }
@@ -374,8 +375,8 @@
 .proc-change { position: relative; z-index: 1; padding: 30px 28px 26px; background: color-mix(in srgb, var(--color-surface-elevated) 92%, transparent); border: 1px solid var(--color-border-strong); }
 .proc-change-tab { position: absolute; top: -13px; left: calc(100% - (100% - 2 * var(--flow-gap)) / 6); margin: 0; padding: 6px 12px; color: var(--color-bg); background: var(--color-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; transform: translateX(-50%); }
 .proc-change-steps { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 var(--flow-gap); margin: 0; padding: 0; list-style: none; }
-.proc-change-steps::before { content: ''; position: absolute; z-index: 0; top: 15px; left: 15px; right: 0; height: 1px; background: var(--color-border-strong); }
-.proc-change-steps li { position: relative; display: grid; align-content: start; gap: 6px; min-width: 0; }
+.proc-change-steps::before { content: ''; position: absolute; z-index: 0; top: 15px; left: calc((100% - 3 * var(--flow-gap)) / 8); right: calc((100% - 3 * var(--flow-gap)) / 8); height: 1px; background: var(--color-border-strong); }
+.proc-change-steps li { position: relative; display: grid; align-content: start; justify-items: center; gap: 6px; min-width: 0; text-align: center; }
 .proc-change-node { position: relative; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; margin-bottom: 8px; color: var(--color-accent-strong); background: var(--color-surface-elevated); border: 1px solid var(--color-accent); border-radius: 50%; font: 700 13px/1 var(--font-condensed), sans-serif; }
 .proc-change-steps b { color: var(--color-text); font: 600 16px/1.25 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: none; }
 .proc-change-detail { color: var(--color-text-secondary); font-size: 14px; line-height: 1.55; }
@@ -472,7 +473,8 @@
   .proc-steps::before, .proc-steps::after { top: 22px; bottom: 22px; left: 21.5px; right: auto; width: 1px; height: auto; }
   .proc-steps::after { transform-origin: top; }
   .process-page[data-motion-ready] .proc-steps:not([data-motion-state="on"])::after { transform: scaleY(0); }
-  .proc-steps li { display: block; grid-row: auto; padding: 0 0 36px 72px; text-align: left; }
+  /* justify-items: normal — block layout now honours the desktop's centring too, and a one-line title shrank to the middle */
+  .proc-steps li { display: block; grid-row: auto; justify-items: normal; padding: 0 0 36px 72px; text-align: left; }
   .proc-steps li:last-child { padding-bottom: 0; }
   .proc-step-node { position: absolute; top: 0; left: 0; margin: 0; }
   .proc-steps h3 { padding-top: 9px; }
@@ -520,8 +522,8 @@
   .proc-change::before { content: '↓'; position: absolute; bottom: calc(100% + 1px); left: 28px; display: grid; place-items: center; height: 44px; color: var(--color-accent-strong); font: 400 20px/1 var(--font-condensed), sans-serif; }
   .proc-change-tab { left: 56px; transform: none; }
   .proc-change-steps { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .proc-change-steps::before { top: 15px; bottom: 15px; right: auto; width: 1px; height: auto; }
-  .proc-change-steps li { padding-left: 46px; }
+  .proc-change-steps::before { top: 15px; bottom: 15px; left: 15px; right: auto; width: 1px; height: auto; }
+  .proc-change-steps li { justify-items: start; padding-left: 46px; text-align: left; }
   .proc-change-node { position: absolute; top: 0; left: 0; margin: 0; }
   .proc-change-steps b { padding-top: 5px; }
   .proc-change-back { display: block; margin-top: 2px; color: var(--color-accent-strong); font: 700 12px/1.4 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }

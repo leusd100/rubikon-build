@@ -34,8 +34,11 @@
 /* Rows on the left (each the link to its page, darkening when pointed at, the one in focus marked in copper); from
    1051 px a sticky preview on the right: the illustration, the direction's own accent line, the kinds of work. */
 .dcat { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); align-items: start; gap: clamp(28px, 4vw, 64px); }
+/* The section header's rule already closes the intro — the list's own top rule made a double line (UX sweep 2026-10) */
+.dcat-list.route-service-list { border-top: 0; }
 .dcat-list a.route-service { position: relative; min-height: 148px; }
-.dcat-list a.route-service[data-active] { box-shadow: inset 3px 0 0 var(--color-accent); }
+/* the active row's copper edge takes room of its own — drawn over the row's edge, it sat on the number (UX sweep 2026-10) */
+.dcat-list a.route-service[data-active]:not(:hover, :focus-visible) { padding-left: 18px; box-shadow: inset 3px 0 0 var(--color-accent); }
 /* On the row's dark state (pointer or keyboard) the kinds turn light with it */
 .dcat-list a.route-service:is(:hover, :focus-visible) .dcat-kinds li { color: var(--color-dark-text-secondary); border-color: var(--color-dark-line); }
 .dcat-list :is(.dcat-thumb, .dcat-kinds-row) { display: none; }
@@ -179,7 +182,7 @@
     grid-template-columns: 184px minmax(0, 1fr) 24px; grid-template-areas: "thumb num arrow" "thumb body arrow"; grid-template-rows: auto 1fr;
     align-items: start; gap: 8px 24px; min-height: 0; padding-block: 24px;
   }
-  .dcat-list a.route-service[data-active] { box-shadow: none; }
+  .dcat-list a.route-service[data-active]:not(:hover, :focus-visible) { padding-left: 0; box-shadow: none; }
   .dcat-list a.route-service > span:not(.dcat-thumb) { grid-area: num; }
   .dcat-list a.route-service > div { grid-area: body; }
   .dcat-list a.route-service > div p { margin-top: 10px; }

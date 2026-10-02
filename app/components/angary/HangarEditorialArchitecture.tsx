@@ -115,7 +115,7 @@ export function HangarEditorialArchitecture() {
           </div>
           <div className="angary-people-roles">
             <div><strong>Сергій Іванович Леус</strong><p>Керує будівельним напрямом і відповідає за виконання робіт.</p></div>
-            <div><strong>Дмитро Леус</strong><p>Працює з клієнтами й допомагає підготувати предметну розмову про проєкт.</p></div>
+            <div><strong>Дмитро Сергійович Леус</strong><p>Працює з клієнтами й допомагає підготувати предметну розмову про проєкт.</p></div>
           </div>
         </div>
       </section>

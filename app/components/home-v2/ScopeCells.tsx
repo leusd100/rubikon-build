@@ -27,6 +27,7 @@ const SCOPE_PARTS: Record<string, string> = {
 
 export function ScopeCells({ items }: Readonly<{ items: readonly string[] }>) {
   const listRef = useRef<HTMLUListElement>(null);
+  const drawnParts = items.filter((item) => SCOPE_PARTS[item]).length;
 
   useEffect(() => {
     const list = listRef.current;
@@ -38,8 +39,16 @@ export function ScopeCells({ items }: Readonly<{ items: readonly string[] }>) {
       observer.disconnect();
     }, { threshold: 0.6 });
     observer.observe(list);
-    return () => observer.disconnect();
-  }, []);
+    // Once every cell has drawn, the list rests: from then a pointed cell draws its part again (home-v2.css)
+    let drawn = 0;
+    const settle = (event: AnimationEvent) => {
+      if (event.animationName !== 'hv2-scope-draw') return;
+      drawn += 1;
+      if (drawn === drawnParts) list.dataset.draw = 'done';
+    };
+    list.addEventListener('animationend', settle);
+    return () => { observer.disconnect(); list.removeEventListener('animationend', settle); };
+  }, [drawnParts]);
 
   return (
     <ul className="hv2-scope-chips" aria-label="Роботи на цьому об’єкті" ref={listRef}>

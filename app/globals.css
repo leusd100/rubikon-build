@@ -115,8 +115,9 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
   --logo-rule: #857F76;
 }
 .desktop-nav { display: flex; align-items: center; gap: clamp(24px, 2.15vw, 40px); font-size: 16px; font-weight: 720; letter-spacing: .012em; }
-.desktop-nav a { position: relative; white-space: nowrap; }
-.desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: -7px; height: 2px; background: var(--color-accent); transition: right .25s ease; }
+/* 44 px tall targets (UX sweep 2026-10: the links were 23–24 px boxes); the underline stays where it was under the text */
+.desktop-nav a { position: relative; display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
+.desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: 3px; height: 2px; background: var(--color-accent); transition: right .25s ease; }
 .desktop-nav a:hover::after, .desktop-nav a:focus-visible::after { right: 0; }
 .header-contacts { display: flex; align-items: stretch; border: 1px solid rgba(255,255,255,.26); background: rgba(255,255,255,.045); }
 .header-contact { min-width: 132px; display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 10px; padding: 11px 14px; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }

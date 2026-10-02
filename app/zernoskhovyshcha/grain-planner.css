@@ -156,7 +156,8 @@
 .grain-planner-root .planner-progress li { min-width: 0; color: var(--color-text-muted); }
 .grain-planner-root .planner-progress li span { display: block; height: 18px; color: var(--color-accent-strong); font-size: 12px; }
 .grain-planner-root .planner-progress li span svg { width: 14px; height: 14px; }
-.grain-planner-root .planner-progress li b { display: block; overflow: hidden; padding-top: 8px; border-top: 1px solid var(--planner-line); font-size: 12px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+/* the step's name wraps instead of ending in «…» (at 1280 «Робота об’єк…», UX sweep 2026-10) */
+.grain-planner-root .planner-progress li b { display: block; padding-top: 8px; border-top: 1px solid var(--planner-line); font-size: 12px; font-weight: 700; text-wrap: balance; }
 .grain-planner-root .planner-progress li.is-current { color: var(--color-text); }
 .grain-planner-root .planner-progress li.is-current b { border-top-color: var(--color-accent); }
 
@@ -241,6 +242,7 @@
 
 .grain-planner-root .planner-approach-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 26px; }
 .grain-planner-root .planner-approach-grid.is-count-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grain-planner-root .planner-approach-grid:focus-visible, .grain-planner-root .planner-clarification-grid:focus-visible { outline: 2px solid var(--color-focus, var(--color-accent)); outline-offset: 4px; }
 .grain-planner-root .planner-approach { display: flex; flex-direction: column; padding: 20px 22px 22px; border: 1px solid var(--planner-line-strong); border-top: 3px solid var(--color-text); background: var(--planner-surface); }
 .grain-planner-root .planner-approach-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--color-text-muted); font: var(--planner-label); letter-spacing: .08em; text-transform: uppercase; }
 .grain-planner-root .planner-approach-top b { color: var(--color-text-secondary); font-weight: 700; text-align: right; }

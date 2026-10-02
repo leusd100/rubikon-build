@@ -189,7 +189,7 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
         </div>
         {/* Roles sit next to the proof, compactly — no portraits (the generated ones were removed in #124). */}
         <div className="hv2-people">
-          <p className="hv2-people-title">Хто веде роботу</p>
+          <p className="hv2-kicker"><span aria-hidden="true" /> Хто веде роботу</p>
           {people.map(({ name, role }) => (
             <div className="hv2-person" key={name}>
               <h4>{name}</h4>

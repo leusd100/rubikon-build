@@ -42,7 +42,8 @@ export function GrainCandidateComparison({ answers, onExplore }: { answers: Answ
         open={driverOpen}
         onToggle={(driver) => setDriverOpen(driverOpen === driver ? null : driver)}
       />
-      <div className={`planner-approach-grid is-count-${candidates.length}`}>
+      {/* On a phone the row scrolls sideways, so it takes keyboard focus (axe: scrollable-region-focusable) */}
+      <div className={`planner-approach-grid is-count-${candidates.length}`} role="region" aria-label="Підходи для вашої задачі" tabIndex={0}>
         {candidates.map((candidate) => (
           <ApproachCard
             key={candidate.key}

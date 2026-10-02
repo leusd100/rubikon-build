@@ -195,7 +195,13 @@
 
 .hc-field-controls input[type='range'] {
   width: 100%;
+  /* A taller box around the same thin track: the 16 px default was a small target to grab (UX sweep 2026-10) */
+  height: 32px;
+  margin: 0;
   accent-color: var(--color-text);
+}
+@media (pointer: coarse) {
+  .hc-field-controls input[type='range'] { height: 44px; }
 }
 
 .hc-field-controls input[type='text'] {

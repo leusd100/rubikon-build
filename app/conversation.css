@@ -85,6 +85,8 @@
   border: 1px solid var(--color-border); font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: .01em;
   transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
 }
+/* The label takes the button's own 13 px (12 on phones), not the 10 px caps of the header's icon links (UX sweep 2026-10) */
+.conversation-channels .messenger-link span { font-size: inherit; font-weight: inherit; letter-spacing: inherit; }
 .conversation-channels .messenger-link:is(:hover, :focus-visible) { color: var(--color-text); border-color: var(--color-accent-strong); background: var(--color-surface-elevated); transform: translateY(-2px); }
 .conversation-channels .messenger-brand-icon { width: 20px; height: 20px; flex: none; }
 .conversation-channels .messenger-telegram .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--conv-tg)); }

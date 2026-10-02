@@ -24,7 +24,7 @@ export function ClarificationMap({
   return (
     <div className="planner-clarification">
       {heading}
-      <ol className="planner-clarification-grid">
+      <ol className="planner-clarification-grid" aria-label="Що уточнити" tabIndex={0}>
         {cards.map((card, index) => (
           <li key={card.title}>
             <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
