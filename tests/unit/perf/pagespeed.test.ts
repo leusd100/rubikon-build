@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractRun, median, medianRun, summaryMarkdown } from '../../../scripts/perf/pagespeed.mjs';
+import { collectRuns, extractRun, median, medianRun, summaryMarkdown } from '../../../scripts/perf/pagespeed.mjs';
 import desktopLh12 from './fixtures/psi-desktop-lh12.json';
 import mobileLh12 from './fixtures/psi-mobile-lh12.json';
 import mobileLh13 from './fixtures/psi-mobile-lh13.json';
@@ -95,5 +95,78 @@ describe('summaryMarkdown', () => {
 
   it('never contains anything that looks like an API key', () => {
     expect(summaryMarkdown(report)).not.toMatch(/AIza[0-9A-Za-z_-]{20,}|key=/);
+  });
+
+  it('says how many independent analyses each median rests on and lists the cached ones it left out', () => {
+    const markdown = summaryMarkdown({
+      ...report,
+      requestedRuns: 3,
+      results: { ...report.results, desktop: { ...report.results.desktop, repeats: ['run 3: still the analysis of 2026-10-02T07:47:26.860Z after 3 retries'] } },
+    });
+
+    expect(markdown).toContain('median of independent analyses per form factor: mobile 3, desktop 1 of 3 requested');
+    expect(markdown).toContain('**Cached analyses not counted**');
+    expect(markdown).toContain('- desktop: run 3: still the analysis of 2026-10-02T07:47:26.860Z after 3 retries');
+  });
+});
+
+describe('collectRuns', () => {
+  const analysis = (fetchTime: string) => ({
+    lighthouseResult: { fetchTime, lighthouseVersion: '13.5.0', categories: { performance: { score: 0.87 } }, audits: {} },
+  });
+  // Answers the calls in order; the last item keeps answering once the list runs out.
+  const answers = (...items: Array<object | Error>) => {
+    let index = 0;
+    return async () => {
+      const item = items[Math.min(index, items.length - 1)];
+      index += 1;
+      if (item instanceof Error) throw item;
+      return item;
+    };
+  };
+  const recordWaits = () => {
+    const waits: number[] = [];
+    return { waits, wait: async (ms: number) => { waits.push(ms); } };
+  };
+
+  it('counts every distinct analysis without waiting', async () => {
+    const { waits, wait } = recordWaits();
+    const result = await collectRuns({ runs: 3, call: answers(analysis('A'), analysis('B'), analysis('C')), wait, label: 'mobile' });
+
+    expect(result.runs.map((run) => run.fetchTime)).toEqual(['A', 'B', 'C']);
+    expect(result.bodies).toHaveLength(3);
+    expect(result.repeats).toEqual([]);
+    expect(waits).toEqual([]);
+  });
+
+  it('waits and asks again when PSI returns an analysis it already served', async () => {
+    // Production on 2026-10-02: the calls after the first came back with the first call's analysis.
+    const { waits, wait } = recordWaits();
+    const result = await collectRuns({
+      runs: 3,
+      call: answers(analysis('A'), analysis('A'), analysis('B'), analysis('A'), analysis('C')),
+      wait,
+      label: 'mobile',
+    });
+
+    expect(result.runs.map((run) => run.fetchTime)).toEqual(['A', 'B', 'C']);
+    expect(waits).toEqual([30_000, 30_000]);
+  });
+
+  it('reports a run that only ever gets a repeat instead of counting the same analysis twice', async () => {
+    const { waits, wait } = recordWaits();
+    const result = await collectRuns({ runs: 2, call: answers(analysis('A')), wait, label: 'desktop' });
+
+    expect(result.runs).toHaveLength(1);
+    expect(result.repeats).toEqual(['run 2: still the analysis of A after 3 retries']);
+    expect(waits).toEqual([30_000, 30_000, 30_000]);
+  });
+
+  it('records a failed call and goes on with the next run', async () => {
+    const { wait } = recordWaits();
+    const result = await collectRuns({ runs: 2, call: answers(new Error('HTTP 500 INTERNAL'), analysis('A')), wait, label: 'mobile' });
+
+    expect(result.failures).toEqual(['run 1: HTTP 500 INTERNAL']);
+    expect(result.runs.map((run) => run.fetchTime)).toEqual(['A']);
   });
 });

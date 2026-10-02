@@ -1,4 +1,5 @@
-// PageSpeed Insights monitor — N runs per form factor against a live URL, medians, raw JSON, Markdown summary.
+// PageSpeed Insights monitor — N independent analyses per form factor against a live URL, medians, raw JSON, Markdown
+// summary.
 //
 //   PAGESPEED_API_KEY=… node scripts/perf/pagespeed.mjs --url https://rubikonbuild.com/ --runs 3 --out psi-results
 //
@@ -92,18 +93,21 @@ const escapeCell = (text) => String(text)
   .replace(/`/g, 'ˋ');
 
 /**
- * @param {{ url: string, sha?: string | null, startedAt: string,
- *   results: Record<string, { runs: PsiRun[], failures: string[] }> }} report
+ * @param {{ url: string, sha?: string | null, startedAt: string, requestedRuns?: number,
+ *   results: Record<string, { runs: PsiRun[], failures: string[], repeats?: string[] }> }} report
  */
-export function summaryMarkdown({ url, sha, startedAt, results }) {
+export function summaryMarkdown({ url, sha, startedAt, requestedRuns, results }) {
   const allRuns = Object.values(results).flatMap((result) => result.runs);
   const versions = [...new Set(allRuns.map((run) => run.lighthouseVersion).filter(Boolean))].join(', ') || '—';
-  const runsPer = Math.max(0, ...Object.values(results).map((result) => result.runs.length));
+  // How many independent analyses each median really rests on — PSI can hand back a cached one (see collectRuns).
+  const counts = FORM_FACTORS.filter((formFactor) => results[formFactor])
+    .map((formFactor) => `${formFactor} ${results[formFactor].runs.length}`).join(', ');
+  const requested = requestedRuns ? ` of ${requestedRuns} requested` : '';
   const field = allRuns.some((run) => run.fieldData) ? 'available — see the PSI UI' : 'not available (not enough CrUX traffic)';
   const lines = [
     `### PageSpeed Insights — ${url}`,
     '',
-    `Commit \`${sha ? sha.slice(0, 7) : 'n/a'}\` · ${startedAt} · Lighthouse ${versions} · median of ${runsPer} run(s) per form factor · lab data`,
+    `Commit \`${sha ? sha.slice(0, 7) : 'n/a'}\` · ${startedAt} · Lighthouse ${versions} · median of independent analyses per form factor: ${counts}${requested} · lab data`,
     `Field data (CrUX): ${field}`,
     '',
     HEADER,
@@ -123,6 +127,8 @@ export function summaryMarkdown({ url, sha, startedAt, results }) {
   }
   const failures = FORM_FACTORS.flatMap((formFactor) => (results[formFactor]?.failures ?? []).map((failure) => `- ${formFactor}: ${failure}`));
   if (failures.length) lines.push('', '**Failed calls**', ...failures);
+  const repeats = FORM_FACTORS.flatMap((formFactor) => (results[formFactor]?.repeats ?? []).map((repeat) => `- ${formFactor}: ${repeat}`));
+  if (repeats.length) lines.push('', '**Cached analyses not counted** (PSI returned an analysis it had already served)', ...repeats);
   lines.push('', '</details>', '', '_Reporting only — scores never fail this workflow. Lab scores vary by a few points between runs; compare medians._', '');
   return lines.join('\n');
 }
@@ -154,6 +160,52 @@ async function withRetries(task, attempts = 3) {
   throw lastError;
 }
 
+const REPEAT_RETRIES = 3;
+const REPEAT_WAIT_MS = 30_000;
+
+/**
+ * Collects up to `runs` independent analyses for one form factor. PSI answers a repeated request for the same URL with
+ * an analysis it already served: on 2026-10-02 three mobile calls in a row returned one analysis (one fetchTime), and
+ * desktop #3 returned desktop #1. So a result counts only when its Lighthouse fetchTime is new; a repeat waits and asks
+ * again (REPEAT_RETRIES times), and a run that only ever gets repeats is reported, not counted.
+ * @param {{ runs: number, call: () => Promise<object>, wait?: (ms: number) => Promise<void>,
+ *   log?: (line: string) => void, label: string }} options
+ * @returns {Promise<{ runs: PsiRun[], bodies: object[], failures: string[], repeats: string[] }>}
+ */
+export async function collectRuns({ runs, call, wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), log = () => {}, label }) {
+  /** @type {{ runs: PsiRun[], bodies: object[], failures: string[], repeats: string[] }} */
+  const result = { runs: [], bodies: [], failures: [], repeats: [] };
+  const seen = new Set();
+  for (let run = 1; run <= runs; run += 1) {
+    for (let attempt = 0; attempt <= REPEAT_RETRIES; attempt += 1) {
+      if (attempt > 0) await wait(REPEAT_WAIT_MS);
+      let body;
+      try {
+        body = await call();
+      } catch (error) {
+        result.failures.push(`run ${run}: ${error instanceof Error ? error.message : String(error)}`);
+        log(`${label} #${run}: failed`);
+        break;
+      }
+      const analysis = extractRun(body);
+      if (!analysis.fetchTime || !seen.has(analysis.fetchTime)) {
+        if (analysis.fetchTime) seen.add(analysis.fetchTime);
+        result.runs.push(analysis);
+        result.bodies.push(body);
+        log(`${label} #${run}: performance ${analysis.score}`);
+        break;
+      }
+      if (attempt < REPEAT_RETRIES) {
+        log(`${label} #${run}: cached analysis of ${analysis.fetchTime}, asking again in ${REPEAT_WAIT_MS / 1000} s`);
+      } else {
+        result.repeats.push(`run ${run}: still the analysis of ${analysis.fetchTime} after ${REPEAT_RETRIES} retries`);
+        log(`${label} #${run}: cached analysis of ${analysis.fetchTime}, not counted`);
+      }
+    }
+  }
+  return result;
+}
+
 function parseArgs(argv) {
   const args = { url: 'https://rubikonbuild.com/', runs: 3, out: 'psi-results' };
   for (let index = 0; index < argv.length; index += 2) {
@@ -182,22 +234,18 @@ async function main() {
   const startedAt = new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
   const results = {};
   for (const strategy of FORM_FACTORS) {
-    results[strategy] = { runs: [], failures: [] };
     // Sequential on purpose: parallel PSI calls against the same URL compete for the same origin.
-    for (let run = 1; run <= runs; run += 1) {
-      try {
-        const body = await withRetries(() => callPsi({ url, strategy, apiKey }));
-        writeFileSync(join(out, `psi-${strategy}-${run}.json`), JSON.stringify(body));
-        results[strategy].runs.push(extractRun(body));
-        console.log(`${strategy} #${run}: performance ${results[strategy].runs.at(-1).score}`);
-      } catch (error) {
-        results[strategy].failures.push(`run ${run}: ${error instanceof Error ? error.message : String(error)}`);
-        console.log(`${strategy} #${run}: failed`);
-      }
-    }
+    const { bodies, ...collected } = await collectRuns({
+      runs,
+      call: () => withRetries(() => callPsi({ url, strategy, apiKey })),
+      log: (line) => console.log(line),
+      label: strategy,
+    });
+    bodies.forEach((body, index) => writeFileSync(join(out, `psi-${strategy}-${index + 1}.json`), JSON.stringify(body)));
+    results[strategy] = collected;
   }
 
-  const report = { url, sha: process.env.GITHUB_SHA ?? null, startedAt, results };
+  const report = { url, sha: process.env.GITHUB_SHA ?? null, startedAt, requestedRuns: runs, results };
   const markdown = summaryMarkdown(report);
   writeFileSync(join(out, 'summary.md'), markdown);
   writeFileSync(join(out, 'summary.json'), JSON.stringify({
