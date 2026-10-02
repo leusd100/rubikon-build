@@ -330,7 +330,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
           <article className="person-story">
             <div className="person-info">
               <span>{sergii.role}</span>
-              <h3>Леус Сергій Іванович</h3>
+              <h3>Сергій Іванович Леус</h3>
               {sergii.paragraphs.map((text) => <p key={text}>{text}</p>)}
               <PersonFocus items={sergii.focus} />
             </div>
@@ -338,7 +338,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
           <article className="person-story person-story-reverse">
             <div className="person-info">
               <span>{dmytro.role}</span>
-              <h3>Леус Дмитро Сергійович</h3>
+              <h3>Дмитро Сергійович Леус</h3>
               {dmytro.paragraphs.map((text) => <p key={text}>{text}</p>)}
               <PersonFocus items={dmytro.focus} />
             </div>

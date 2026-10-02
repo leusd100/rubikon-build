@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
-import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
+import { capabilityLedger, deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { company, companyContactLinks } from '../../app/data/company';
 import { homeProofCase } from '../../app/data/homeProof';
@@ -325,12 +325,17 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
 
   const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
   expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
-  // Five direction rows, each one link named by its title and leading to the direction's page, then the region
-  const rows = page.locator('.about-build-list li');
-  await expect(rows).toHaveCount(directions.length);
-  await expect(page.locator('.about-build-list h3')).toHaveText(directions.map((direction) => direction.cardTitle));
-  expect(await page.locator('.about-build-list a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(directions.map((direction) => direction.href));
-  await expect(page.locator('.about-build-list img')).toHaveCount(0);
+  // What we do ourselves and what we organise (UX pass 2026-10, in place of the five-direction list that repeated
+  // /napryamky): the Delivery Model's three capability layers in its own words; a work with its own page links to it,
+  // and the directions are one link away. Then the region.
+  const ledger = capabilityLedger();
+  await expect(page.locator('.about-ledger-col h3')).toHaveText(ledger.map((column, index) => `${String(index + 1).padStart(2, '0')}${column.title}`));
+  await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => (item.href ? `${item.label} ↗` : item.label))));
+  expect(await page.locator('.about-ledger a').evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
+    .toEqual(ledger.flatMap((column) => column.items.flatMap((item) => (item.href ? [item.href] : []))));
+  await expect(page.locator('.about-build-all')).toHaveAttribute('href', '/napryamky');
+  await expect(page.locator('.about-ledger img')).toHaveCount(0);
+  for (const pattern of FORBIDDEN_CLAIMS) expect(await page.locator('.about-ledger').innerText(), String(pattern)).not.toMatch(pattern);
   // The region closes the block on a copper line, the rest of the sentence under it
   const region = page.locator('.about-build-region');
   await expect(region.locator('.region-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);

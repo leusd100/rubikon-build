@@ -5,6 +5,7 @@ import {
   basisLegend,
   budgetGroups,
   capabilityLayers,
+  capabilityLedger,
   changeSteps,
   costFactors,
   deliveryFaq,
@@ -380,5 +381,24 @@ describe('delivery page v2: the public projection', () => {
       expect(source.startsWith(step.title.split(' ')[0].toLowerCase()), step.title).toBe(true);
       for (const word of words(step.detail)) expect(source, `${step.title}: ${word}`).toContain(word);
     });
+  });
+});
+
+describe('/pro-nas capability ledger', () => {
+  it('is the three capability layers in the model\'s words, under client-facing titles', () => {
+    const ledger = capabilityLedger();
+    expect(ledger.map((column) => column.id)).toEqual(capabilityLayers().map((layer) => layer.id));
+    for (const column of ledger) {
+      const capabilities: readonly { label: string; statement?: string; directionId?: string }[] = deliveryModel.capabilities
+        .filter((capability) => capability.layer === column.id);
+      expect(column.items.map((item) => item.label)).toEqual(capabilities.map((capability) => capability.label));
+      expect(column.items.map((item) => item.statement)).toEqual(capabilities.map((capability) => capability.statement));
+      expect(column.items.map((item) => item.href)).toEqual(capabilities.map((capability) => (capability.directionId ? `/${capability.directionId}` : undefined)));
+    }
+    expect(ledger.find((column) => column.id === 'flexible')?.note).toBe(deliveryModel.statements.flexiblePackages);
+    // The layer names stay internal
+    expect(ledger.map((column) => column.title).join(' ')).not.toMatch(/ядро|пакет/i);
+    const text = ledger.flatMap((column) => [column.title, column.note ?? '', ...column.items.flatMap((item) => [item.label, item.statement ?? ''])]).join(' ');
+    for (const pattern of FORBIDDEN_CLAIMS) expect(text, String(pattern)).not.toMatch(pattern);
   });
 });

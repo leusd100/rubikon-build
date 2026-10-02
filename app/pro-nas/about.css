@@ -60,63 +60,36 @@
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond::after { transform: scaleX(0); }
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond span { opacity: 0; }
 
-/* ---------------------------------------------------------------- 3 · What we build and where */
-/* Each direction is one row, and the whole row is its link (the title's ::after covers it). Pointed at (devices that
-   hover) or focused, a row takes the charcoal ground: it sweeps in from the left, and each part turns light as the
-   ground reaches it — the number, the title, the words, then the arrow, whose circle turns copper; on the way out the
-   right side goes back first. The region closes the list. */
-.about-build { --sweep: 420ms; background: var(--color-surface); }
-.about-build-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
-.about-build-list li {
-  position: relative; isolation: isolate; display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1.2fr) 44px;
-  grid-template-areas: 'num title text arrow'; align-items: center; gap: 12px clamp(20px, 3vw, 48px);
-  min-height: 108px; padding: 24px clamp(16px, 2vw, 28px); border-bottom: 1px solid var(--color-border);
+/* ---------------------------------------------------------------- 3 · What we do, what we organise, and where */
+.about-build { background: var(--color-surface); }
+/* «Що робимо самі, а що організовуємо» (CapabilityLedger.tsx, UX pass 2026-10): three ruled columns, marked as on the
+   /yak scope drawings — own team on a copper rule, organised work on graphite, specialists on a dashed line */
+.about-ledger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 44px); }
+.about-ledger-col { min-width: 0; padding-top: 22px; border-top: 1px solid var(--color-text); }
+.about-ledger-col.is-core { border-top: 3px solid var(--color-accent); padding-top: 20px; }
+.about-ledger-col.is-partner { border-top: 1px dashed var(--color-border-strong); }
+.about-ledger-col h3 { display: flex; align-items: baseline; gap: 12px; margin: 0; color: var(--color-text); font: 600 clamp(22px, 2vw, 28px)/1.12 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; }
+.about-ledger-col h3 span { color: var(--color-accent-strong); font-size: 13px; letter-spacing: .14em; }
+.about-ledger-note { margin: 12px 0 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.55; }
+.about-ledger-col ul { display: grid; gap: 0; margin: 18px 0 0; padding: 0; list-style: none; }
+.about-ledger-col li { padding: 14px 0; border-top: 1px solid var(--color-border); }
+.about-ledger-col li b { display: block; color: var(--color-text); font: 600 17px/1.35 var(--font-manrope), sans-serif; }
+.about-ledger-col li b a { color: inherit; text-decoration: none; }
+.about-ledger-col li b a span { color: var(--color-accent-strong); }
+.about-ledger-col li b a:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+.about-ledger-col li > span { display: block; margin-top: 4px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
+.about-build-all { display: inline-flex; margin-top: 28px; }
+/* The phone still (AboutHeroVideo): the footage's grey grade would put its sunset out — a lighter one, framed on the light */
+.about-hero-media > img.about-hero-still { filter: saturate(.85) contrast(1.04) brightness(.95); object-position: 62% 40%; }
+@media (max-width: 760px) {
+  .about-ledger-col li { padding: 11px 0; }
+  .about-ledger-col li b { font-size: 16px; }
+  .about-ledger-col li > span { font-size: 14px; line-height: 1.5; }
 }
-.about-build-list li::before { content: ''; position: absolute; z-index: -1; inset: 0; background: var(--color-dark); transform: scaleX(0); transform-origin: left; }
-.about-build-number { grid-area: num; color: var(--color-accent-strong); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
-.about-build-list h3 { grid-area: title; margin: 0; color: var(--color-text); font: 600 clamp(22px, 2.2vw, 32px)/1.08 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; }
-.about-build-list h3 a { color: inherit; text-decoration: none; }
-.about-build-list h3 a::after { content: ''; position: absolute; inset: 0; }
-.about-build-list p { grid-area: text; margin: 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
-.about-build-arrow {
-  grid-area: arrow; justify-self: end; display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-strong);
-  border: 1px solid var(--color-border-strong); border-radius: 50%;
-}
-.about-build-arrow span { font-size: 17px; line-height: 1; }
-/* Keyboard: the whole row carries the ring, not the title alone */
-.about-build-list h3 a:focus-visible { outline: none; box-shadow: none; }
-.about-build-list li:has(a:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
-@media (hover: hover) {
-  .about-build-list li:hover::before { transform: scaleX(1); }
-  .about-build-list li:hover .about-build-number { color: var(--color-accent-on-dark); }
-  .about-build-list li:hover h3 { color: var(--color-dark-text); }
-  .about-build-list li:hover p { color: var(--color-dark-text-secondary); }
-  .about-build-list li:hover .about-build-arrow { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
-  .about-build-list li:hover .about-build-arrow span { transform: translate(2px, -2px); }
-}
-.about-build-list li:has(a:focus-visible)::before { transform: scaleX(1); }
-.about-build-list li:has(a:focus-visible) .about-build-number { color: var(--color-accent-on-dark); }
-.about-build-list li:has(a:focus-visible) h3 { color: var(--color-dark-text); }
-.about-build-list li:has(a:focus-visible) p { color: var(--color-dark-text-secondary); }
-.about-build-list li:has(a:focus-visible) .about-build-arrow { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
-@media (prefers-reduced-motion: no-preference) {
-  .about-build-list li::before { transition: transform var(--sweep) var(--m-ease); }
-  /* Out: the right side goes back first (the base delays). In: left to right, behind the ground (the hover delays). */
-  .about-build-number { transition: color 200ms ease 220ms; }
-  .about-build-list h3 { transition: color 200ms ease 170ms; }
-  .about-build-list p { transition: color 200ms ease 90ms; }
-  .about-build-arrow { transition: color 200ms ease, border-color 200ms ease; }
-  .about-build-arrow span { transition: transform var(--duration-fast) var(--m-ease); }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-number { transition-delay: 40ms; }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) h3 { transition-delay: 90ms; }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) p { transition-delay: 170ms; }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow { transition-delay: 260ms; }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow span { transition-delay: 260ms; }
-}
-/* The region (RegionBlock) closes the directions; its own styles live in app/components/about/region.css */
+.about-page[data-motion-ready="on"] .about-ledger-col { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
+.about-page[data-motion-ready] .about-ledger:not([data-motion-state="on"]) .about-ledger-col { opacity: 0; transform: translateY(12px); }
+/* The region (RegionBlock) closes the block; its own styles live in app/components/about/region.css */
 .about-build-region { margin-top: clamp(44px, 5vw, 68px); }
-.about-page[data-motion-ready="on"] .about-build-list li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
-.about-page[data-motion-ready] .about-build-list:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(12px); }
 
 /* ---------------------------------------------------------------- 4 · Practice before work starts */
 .about-story-section { background: var(--color-bg); }
@@ -220,9 +193,7 @@
   /* Full width: close to the image's own 4 : 5, so every mark stays in the frame */
   .about-story-section .promise-visual { min-height: 0; aspect-ratio: 4 / 5; max-height: 640px; }
   .about-principles-grid { grid-template-columns: minmax(0, 1fr); }
-  .about-build-list li { grid-template-columns: 52px minmax(0, 1fr) 44px; grid-template-areas: 'num title arrow' 'num text arrow'; align-items: start; min-height: 0; padding-block: 22px; }
-  .about-build-number { padding-top: 8px; }
-  .about-build-arrow { align-self: center; }
+  .about-ledger { grid-template-columns: minmax(0, 1fr); gap: 32px; }
 }
 
 /* ---------------------------------------------------------------- Phone */
@@ -243,9 +214,4 @@
   .aqc-badge { transform: scale(1.6); }
   .aqc-step { transform: scale(1.45); }
   .about-principles-grid li { padding: 24px 20px 22px; }
-  /* Number and arrow on one line, the title the full width under them, then the words */
-  .about-build-list li { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: 'num arrow' 'title title' 'text text'; align-items: center; gap: 10px 12px; padding: 20px 12px; }
-  .about-build-number { padding-top: 0; }
-  .about-build-list h3 { font-size: clamp(22px, 6.4vw, 26px); }
-  .about-build-list p { font-size: 15px; }
 }

@@ -4,17 +4,17 @@ import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
+import { CapabilityLedger } from '../components/about/CapabilityLedger';
 import { RegionBlock } from '../components/about/RegionBlock';
 import { PracticeSteps, type PracticeStep } from '../components/about/PracticeSteps';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
-import { directions } from '../data/directions';
 import '../components/about/region.css';
 import './about.css';
 
-// /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we build
-// and where (the five directions, each leading to its page, and the region), how Serhii's practice shows before work
+// /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we do
+// ourselves and what we organise, and where (the Delivery Model's capability layers and the region), how Serhii's practice shows before work
 // starts, three principles that each point to the mechanism on /yak-pratsyuiemo, the conversation. The copy is the
 // owner's pass of 30.09 over the page's own lines (no claim beyond the team bios, the Delivery Model's formats, the
 // directions' card copy and company data).
@@ -119,27 +119,20 @@ export default function AboutPage() {
       {/* 2 · The two people and what each answers for */}
       <TeamSection variant="about" />
 
-      {/* 3 · What we build and where: each direction is one row that leads to its page and takes the charcoal ground
-          when pointed at or focused; the region closes the block on a copper line. Rows from the directions' own card
-          copy — no images, so nothing here can read as a finished object. */}
+      {/* 3 · What we do ourselves and what we organise, then where: the Delivery Model's capability layers (the five
+          directions are on /napryamky, one link away); the region closes the block on a copper line */}
       <section className="page-section about-build" aria-labelledby="about-build-title">
         <div className="shell">
           <SectionHeader
-            eyebrow="Напрямки робіт"
-            title="Що робимо для бізнесу й агросектору"
+            eyebrow="Що робимо"
+            title="Що робимо самі, а що організовуємо"
             titleId="about-build-title"
-            supporting="Беремо окремі роботи або погоджений комплекс робіт. Оберіть напрям, найближчий до вашої задачі."
+            supporting="Беремо окремі роботи або погоджений комплекс робіт. Хто виконує кожну частину, фіксуємо в договорі до початку робіт."
           />
-          <ol className="about-build-list" data-motion>
-            {directions.map((direction, index) => (
-              <li key={direction.id} style={{ '--i': index } as CSSProperties}>
-                <span className="about-build-number" aria-hidden="true">{direction.number}</span>
-                <h3><a href={direction.href}>{direction.cardTitle}</a></h3>
-                <p>{direction.cardText}</p>
-                <span className="about-build-arrow" aria-hidden="true"><span>↗</span></span>
-              </li>
-            ))}
-          </ol>
+          <CapabilityLedger />
+          <a className="section-link about-build-all" href={siteRoutes.directions}>
+            Усі напрямки робіт <span aria-hidden="true">↗</span>
+          </a>
           {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people; under the
               line, the oblast's real outline (geoBoundaries / OpenStreetMap, credited) draws itself once, Dnipro — where
               the company is based — is marked on it, and contour lines ripple out from the city (RegionMap) */}

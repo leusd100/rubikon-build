@@ -237,6 +237,37 @@ export function capabilityLayers(): readonly CapabilityLayer[] {
   }));
 }
 
+/** /pro-nas «Що робимо самі, а що організовуємо»: the three capability layers under the client's words (the layer names
+ *  stay internal). Each work keeps its label and, where the model has one, its public statement and competency page. */
+const LEDGER_TITLES: Record<CapabilityLayerId, string> = {
+  core: 'Виконуємо власною командою',
+  flexible: 'Організовуємо під проєкт',
+  partner: 'Профільні виконавці або замовник',
+};
+
+export type CapabilityLedgerColumn = {
+  id: CapabilityLayerId;
+  title: string;
+  note?: string;
+  items: readonly { id: string; label: string; statement?: string; href?: string }[];
+};
+
+export function capabilityLedger(): readonly CapabilityLedgerColumn[] {
+  return (Object.keys(LEDGER_TITLES) as CapabilityLayerId[]).map((layer) => ({
+    id: layer,
+    title: LEDGER_TITLES[layer],
+    ...(layer === 'flexible' ? { note: model.statements.flexiblePackages } : {}),
+    items: model.capabilities
+      .filter((capability) => capability.layer === layer)
+      .map((capability) => ({
+        id: capability.id,
+        label: capability.label,
+        ...(capability.statement ? { statement: capability.statement } : {}),
+        ...(capability.directionId ? { href: `/${capability.directionId}` } : {}),
+      })),
+  }));
+}
+
 type Holder = Party | 'contract-defined' | 'out-of-scope';
 type ResponsibilityRow = DeliveryModel['responsibility'][number];
 
