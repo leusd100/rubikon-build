@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { PracticeDrawing } from './PracticeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
-import { useHoverStep } from '../useHoverStep';
+import { stageTransform, useDrawingTour } from '../useDrawingTour';
 
 // /pro-nas «Досвід працює ще до початку робіт»: the illustration answers the list one step at a time. The camera
 // pushes in on that step's place in the image — the drawing under the hands, the order the frame goes up (base
@@ -29,22 +29,6 @@ export type PracticeStep = {
 };
 
 const IMAGE = { width: 1440, height: 1800 };
-const STEP_MS = 5200; // room for each step to build what it names (UX pass 2026-10)
-
-function stageTransform(size: { width: number; height: number } | null, step: PracticeStep | undefined) {
-  if (!size || !step) return undefined;
-  const { width, height } = size;
-  const cover = Math.max(width / IMAGE.width, height / IMAGE.height);
-  const fx = step.focus[0] * cover - (IMAGE.width * cover - width) / 2;
-  const fy = step.focus[1] * cover - (IMAGE.height * cover - height) / 2;
-  // Keep the pushed-in frame covered: the centre never comes closer to an edge than half the zoomed window
-  const halfW = width / (2 * step.zoom);
-  const halfH = height / (2 * step.zoom);
-  const cx = Math.min(Math.max(fx, halfW), width - halfW);
-  const cy = Math.min(Math.max(fy, halfH), height - halfH);
-  return `translate(${width / 2}px, ${height / 2}px) scale(${step.zoom}) translate(${-cx}px, ${-cy}px)`;
-}
-
 const pad = (value: number) => String(value).padStart(2, '0');
 
 export function PracticeSteps({
@@ -64,80 +48,7 @@ export function PracticeSteps({
   support: string;
   overviewCaption: string;
 }>) {
-  const visualRef = useRef<HTMLDivElement>(null);
-  const started = useRef(false);
-  const [step, setStep] = useState(0);
-  const [touring, setTouring] = useState(false);
-  const [run, setRun] = useState(0);
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  const [motion, setMotion] = useState(false);
-
-  useEffect(() => {
-    const visual = visualRef.current;
-    if (!visual) return;
-    const observer = new ResizeObserver(([entry]) => setSize({ width: entry.contentRect.width, height: entry.contentRect.height }));
-    observer.observe(visual);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setMotion(!query.matches);
-    update();
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
-
-  // The tour starts once, when the image is at least half in view; leaving the view entirely pauses it. Not sooner:
-  // the control sits in the title block under the image, so reaching for it on a phone can scroll most of the image
-  // away — pausing there flipped the button, and the tap meant to pause resumed the tour.
-  useEffect(() => {
-    const visual = visualRef.current;
-    if (!visual || !motion) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.intersectionRatio >= 0.5 && !started.current) {
-        started.current = true;
-        setStep(1);
-        setRun((value) => value + 1);
-        setTouring(true);
-      } else if (!entry.isIntersecting) {
-        setTouring(false);
-      }
-    }, { threshold: [0, 0.5] });
-    observer.observe(visual);
-    return () => observer.disconnect();
-  }, [motion]);
-
-  useEffect(() => {
-    if (!touring) return;
-    const timer = window.setTimeout(() => {
-      if (step < steps.length) {
-        setStep(step + 1);
-        setRun((value) => value + 1);
-      } else {
-        setTouring(false);
-        setStep(0);
-      }
-    }, STEP_MS);
-    return () => window.clearTimeout(timer);
-  }, [touring, step, run, steps.length]);
-
-  const choose = (value: number) => {
-    started.current = true;
-    setTouring(false);
-    setStep(value);
-  };
-  const hover = useHoverStep(step, choose);
-  const toggle = () => {
-    started.current = true;
-    if (touring) {
-      setTouring(false);
-      return;
-    }
-    setStep(step === 0 ? 1 : step);
-    setRun((value) => value + 1);
-    setTouring(true);
-  };
+  const { visualRef, step, touring, run, size, motion, choose, toggle, hover } = useDrawingTour(steps.length);
 
   const active = step ? steps[step - 1] : undefined;
 
@@ -161,7 +72,7 @@ export function PracticeSteps({
         )}
       >
         {/* A vector drawing, so every push-in stays sharp (UX pass 2026-10: zooming the picture lost its quality) */}
-        <div className="ps-stage is-drawing" style={{ transform: stageTransform(size, active) }}>
+        <div className="ps-stage is-drawing" style={{ transform: stageTransform(size, IMAGE, active) }}>
           <PracticeDrawing />
           <svg className="aqc-overlay" viewBox="0 0 1440 1800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
             <g className="aqc-mark aqc-mark-1">

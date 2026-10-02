@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
 import { NodeDrawing } from './NodeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
-import { useHoverStep } from '../useHoverStep';
-import type { DirectionNode as DirectionNodeConfig, DirectionNodeStep } from '../../types/directionPage';
+import { stageTransform, useDrawingTour } from '../useDrawingTour';
+import type { DirectionNode as DirectionNodeConfig } from '../../types/directionPage';
 import './direction-node.css';
 
 // «Вузол напряму» — a direction page's editorial picture as a tour of one node, in three steps (metal: the drawing,
@@ -16,25 +16,10 @@ import './direction-node.css';
 // (useHoverStep). Reduced motion: no tour and no camera move — a
 // pressed item switches at once. Without JavaScript: the overview with all three marks.
 //
-// The mechanics are /pro-nas practice's (PracticeSteps), with the marks given as data: the picture is cropped by cover
+// The mechanics are /pro-nas practice's (useDrawingTour, shared with PracticeSteps), with the marks given as data: the picture is cropped by cover
 // and the stage wraps it and its marks, so one transform moves both and keeps them aligned at any size.
 
-const STEP_MS = 5200; // room for each step to build what it names (UX pass 2026-10)
 const pad = (value: number) => String(value).padStart(2, '0');
-
-function stageTransform(size: { width: number; height: number } | null, picture: { width: number; height: number }, step: DirectionNodeStep | undefined) {
-  if (!size || !step) return undefined;
-  const { width, height } = size;
-  const cover = Math.max(width / picture.width, height / picture.height);
-  const fx = step.focus[0] * cover - (picture.width * cover - width) / 2;
-  const fy = step.focus[1] * cover - (picture.height * cover - height) / 2;
-  // Keep the pushed-in frame covered: the centre never comes closer to an edge than half the zoomed window
-  const halfW = width / (2 * step.zoom);
-  const halfH = height / (2 * step.zoom);
-  const cx = Math.min(Math.max(fx, halfW), width - halfW);
-  const cy = Math.min(Math.max(fy, halfH), height - halfH);
-  return `translate(${width / 2}px, ${height / 2}px) scale(${step.zoom}) translate(${-cx}px, ${-cy}px)`;
-}
 
 export function DirectionNode({
   eyebrow,
@@ -57,80 +42,8 @@ export function DirectionNode({
   layout: 'media-first' | 'copy-first';
   className?: string;
 }>) {
-  const visualRef = useRef<HTMLDivElement>(null);
-  const started = useRef(false);
-  const [step, setStep] = useState(0);
-  const [touring, setTouring] = useState(false);
-  const [run, setRun] = useState(0);
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  const [motion, setMotion] = useState(false);
   const { steps } = node;
-
-  useEffect(() => {
-    const visual = visualRef.current;
-    if (!visual) return;
-    const observer = new ResizeObserver(([entry]) => setSize({ width: entry.contentRect.width, height: entry.contentRect.height }));
-    observer.observe(visual);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setMotion(!query.matches);
-    update();
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
-
-  // The tour starts once, when the picture is at least half in view; leaving the view entirely pauses it (the control
-  // sits under the picture, so reaching for it must not pause it first — see PracticeSteps)
-  useEffect(() => {
-    const visual = visualRef.current;
-    if (!visual || !motion) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.intersectionRatio >= 0.5 && !started.current) {
-        started.current = true;
-        setStep(1);
-        setRun((value) => value + 1);
-        setTouring(true);
-      } else if (!entry.isIntersecting) {
-        setTouring(false);
-      }
-    }, { threshold: [0, 0.5] });
-    observer.observe(visual);
-    return () => observer.disconnect();
-  }, [motion]);
-
-  useEffect(() => {
-    if (!touring) return;
-    const timer = window.setTimeout(() => {
-      if (step < steps.length) {
-        setStep(step + 1);
-        setRun((value) => value + 1);
-      } else {
-        setTouring(false);
-        setStep(0);
-      }
-    }, STEP_MS);
-    return () => window.clearTimeout(timer);
-  }, [touring, step, run, steps.length]);
-
-  const choose = (value: number) => {
-    started.current = true;
-    setTouring(false);
-    setStep(value);
-  };
-  const hover = useHoverStep(step, choose);
-  const toggle = () => {
-    started.current = true;
-    if (touring) {
-      setTouring(false);
-      return;
-    }
-    setStep(step === 0 ? 1 : step);
-    setRun((value) => value + 1);
-    setTouring(true);
-  };
+  const { visualRef, step, touring, run, size, motion, choose, toggle, hover } = useDrawingTour(steps.length);
 
   const active = step ? steps[step - 1] : undefined;
 
