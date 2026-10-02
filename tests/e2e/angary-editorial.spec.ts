@@ -114,6 +114,7 @@ for (const viewport of viewports) {
       expect(metrics.heroOverflow).toBeLessThanOrEqual(1);
     }
 
+    await expect(page.locator('#decisions [data-decision]')).toHaveCount(4);
     await expect(page.locator('#structure .angary-diagram')).toHaveCount(3);
     await expect(page.locator('#structure')).toContainText('6–8 м і уточнюється після розрахунку');
     await expect(page.locator('#process li')).toHaveCount(5);
