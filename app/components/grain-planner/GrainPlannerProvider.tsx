@@ -22,6 +22,10 @@ type GrainPlannerContextValue = {
   latestFact: string | null;
   changeOpen: boolean;
   setChangeOpen: (open: boolean) => void;
+  /** «Детально» under the result. Kept here, not in the result, so an edit from the brief (which unmounts the result)
+   *  comes back to it open. */
+  detailsOpen: boolean;
+  setDetailsOpen: (open: boolean) => void;
   /** Whether the brief is attached to the inquiry form right now. */
   briefAttached: boolean;
   answer: <K extends keyof Answers>(key: K, value: Answers[K]) => void;
@@ -69,6 +73,7 @@ export function GrainPlannerProvider({ children }: { children: ReactNode }) {
   const [session, dispatch] = useReducer(reduceGrainSession, INITIAL_GRAIN_SESSION);
   const [latestFact, setLatestFact] = useState<string | null>(null);
   const [changeOpen, setChangeOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const state = session.flow;
   const briefAttached = session.attachment.status === 'attached';
 
@@ -88,6 +93,8 @@ export function GrainPlannerProvider({ children }: { children: ReactNode }) {
     latestFact,
     changeOpen,
     setChangeOpen,
+    detailsOpen,
+    setDetailsOpen,
     briefAttached,
     answer: (key, value) => {
       // Same rule as the prototype's effect, computed in the event instead: the newest added fact,
@@ -120,10 +127,11 @@ export function GrainPlannerProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'reset' });
       setLatestFact(null);
       setChangeOpen(false);
+      setDetailsOpen(false);
       scrollAfterRender(() => document.getElementById('planner'));
     },
     attachBrief: () => dispatch({ type: 'attach-brief' }),
-  }), [state, latestFact, changeOpen, briefAttached]);
+  }), [state, latestFact, changeOpen, detailsOpen, briefAttached]);
 
   return <GrainPlannerContext.Provider value={value}>{children}</GrainPlannerContext.Provider>;
 }

@@ -63,6 +63,13 @@ export async function reveal(page: Page) {
   await scrollSettled(page);
 }
 
+/** The result shows the scenario, the approaches and the handoff; the rest is under «Детально» (UX pass 2026-10). */
+export async function openResultDetails(page: Page) {
+  const toggle = result(page).locator('.planner-more-toggle');
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  await expect(result(page).locator('#grain-result-more')).toBeVisible();
+}
+
 /**
  * Clicks an in-page link the way a person does: already on screen, with the page at rest. On
  * desktop Lenis computes an anchor's target from its own scroll position, which catches up with

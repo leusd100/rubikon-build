@@ -460,3 +460,33 @@
   .grain-handoff-cta:not([hidden]) { position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 58px; padding: 15px 24px calc(15px + env(safe-area-inset-bottom)); color: var(--color-on-action); background: var(--color-accent-strong); border-top: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 -10px 36px rgba(0, 0, 0, .24); font: 800 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
   .grain-handoff-cta:focus-visible { outline: 3px solid var(--color-on-action); outline-offset: -6px; }
 }
+
+/* UX pass 2026-10: the result fits about one screen — scenario, approaches, handoff — and the rest folds under one
+   «Детально» toggle (GrainPersonalizedResult.tsx) */
+.grain-planner-root .planner-result-block[data-block="outcome"] { margin-top: 28px; }
+.grain-planner-root .planner-more-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; width: 100%; min-height: 56px; margin-top: 28px; padding: 14px 0; border: 0; border-block: 1px solid var(--color-border-strong); color: var(--color-text); background: transparent; font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-align: left; text-transform: uppercase; cursor: pointer; }
+.grain-planner-root .planner-more-toggle span { color: var(--color-text-muted); font: 500 14px/1.4 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+.grain-planner-root .planner-more-toggle svg { flex: none; width: 18px; height: 18px; margin-left: auto; transition: transform var(--duration-fast) ease; }
+.grain-planner-root .planner-more-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.grain-planner-root .planner-more-toggle:hover { color: var(--color-accent-strong); }
+.grain-planner-root .planner-more-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.grain-planner-root .planner-more { padding-top: clamp(32px, 4vw, 56px); }
+.grain-planner-root .planner-more[hidden] { display: none; }
+@media (max-width: 760px) {
+  /* About one screen on a phone too: the approaches (and the clarification cards) in a row that scrolls sideways, the
+     next card peeking in — instead of two or three cards stacked (1.8–2.8 screens) */
+  .grain-planner-root .planner-approach-grid, .grain-planner-root .planner-approach-grid.is-count-2,
+  .grain-planner-root .planner-clarification-grid {
+    grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 84%; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: var(--container-gutter);
+    margin-inline: calc(-1 * var(--container-gutter)); padding: 0 var(--container-gutter) 12px;
+  }
+  .grain-planner-root :is(.planner-approach-grid, .planner-clarification-grid) > * { scroll-snap-align: start; }
+  .grain-planner-root .planner-approach-grid .planner-approach-visual { height: 120px; margin-block: 8px 10px; }
+  /* The scenario: the headline and «Редагувати» share the first row, the answers follow */
+  .grain-planner-root .planner-scenario { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head edit" "facts facts"; gap: 12px 16px; padding: 16px; }
+  .grain-planner-root .planner-scenario > div { grid-area: head; }
+  .grain-planner-root .planner-scenario ul { grid-area: facts; gap: 5px; }
+  .grain-planner-root .planner-scenario li { padding: 4px 8px; font-size: 13.5px; }
+  .grain-planner-root .planner-scenario .planner-button-outline { grid-area: edit; align-self: start; justify-self: end; }
+}
