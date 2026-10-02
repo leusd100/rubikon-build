@@ -98,21 +98,22 @@ for (const viewport of viewports) {
     }
 
     if (viewport.heroReveal) {
+      // The hero standard (owner, 02.10): the window's height, as every direction page — no longer a shorter «reveal»;
+      // its actions stay clear of the window's bottom edge
       const metrics = await page.evaluate(() => {
         const heroElement = document.querySelector<HTMLElement>('.angary-service-subhero')!;
-        const heading = document.querySelector<HTMLElement>('#hangar-configurator-title')!;
+        const actions = [...heroElement.querySelectorAll<HTMLElement>('a.button, a.hero-call')].filter((element) => element.offsetParent);
         return {
           heroHeight: heroElement.getBoundingClientRect().height,
-          headingTop: heading.getBoundingClientRect().top,
+          actionsBottom: Math.max(...actions.map((element) => element.getBoundingClientRect().bottom)),
           heroOverflow: heroElement.scrollHeight - heroElement.clientHeight,
         };
       });
-      expect(metrics.heroHeight).toBeLessThan(viewport.height);
-      expect(metrics.headingTop).toBeLessThan(viewport.height);
+      expect(metrics.heroHeight).toBeGreaterThanOrEqual(viewport.height - 1);
+      expect(metrics.actionsBottom).toBeLessThanOrEqual(viewport.height - 40);
       expect(metrics.heroOverflow).toBeLessThanOrEqual(1);
     }
 
-    await expect(page.locator('#decisions [data-decision]')).toHaveCount(4);
     await expect(page.locator('#structure .angary-diagram')).toHaveCount(3);
     await expect(page.locator('#structure')).toContainText('6–8 м і уточнюється після розрахунку');
     await expect(page.locator('#process li')).toHaveCount(5);

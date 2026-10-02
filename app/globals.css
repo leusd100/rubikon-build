@@ -539,7 +539,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .subhero-side > p { margin: 0; color: rgba(255,255,255,.7); font-size: 16px; line-height: 1.75; }
 
 .service-subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
-.service-subhero-media { position: absolute; inset: 0; }
+.service-subhero-media { position: absolute; inset: 101px 0 0; } /* under the fixed header, not behind it: the picture's top stays in view */
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
 .direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%) !important; }
@@ -911,6 +911,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .inquiry-form-submit-layout { grid-template-columns: 1fr; gap: 22px; }
   .inquiry-status { padding-inline: 20px; }
   .subhero, .service-subhero { min-height: 660px; height: auto; }
+  .service-subhero-media { top: 77px; } /* under the phone header */
   .subhero-grid { background-size: 46px 46px; }
   .directions-hero-sequence-image { object-position: var(--directions-hero-image-position-mobile, center 60%); }
   .subhero-layout { grid-template-columns: 1fr; gap: 42px; padding-top: 148px; padding-bottom: 56px; }

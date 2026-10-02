@@ -118,6 +118,8 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
 // UX pass 2026-10 raised body copy to 15–16 px site-wide (process steps, cost rows, FAQ answers, planner labels): the
 // desktop page grows ~110 px (7.23 → 7.36 screens), so the desktop budget is 7.4. The same pass folds the closing form
 // on a phone behind «Залишити запит», so the phone page is ~1.1 screens shorter and stays well inside 11.85.
+// Owner, 02.10: the grain hero is now the window's height like every direction hero (it was 78 % of it, a «reveal» of
+// the planner): +198 px at 1440×900 (7.37 → 7.59 screens), so the desktop budget is 7.65 — content may not grow into it.
 async function settledHeight(page: Page, path: string) {
   await page.goto(path, { waitUntil: 'load' });
   const essential = page.getByRole('button', { name: 'Лише необхідні', exact: true });
@@ -127,12 +129,12 @@ async function settledHeight(page: Page, path: string) {
 }
 
 test.describe('Grain page height budget (before the planner is used)', () => {
-  test('desktop 1440×900: within 7.4 screens', async ({ page, isMobile }) => {
+  test('desktop 1440×900: within 7.65 screens', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop budget');
     await page.setViewportSize({ width: 1440, height: 900 });
     const screens = (await settledHeight(page, GRAIN_PAGE)) / 900;
     test.info().annotations.push({ type: 'height', description: `${screens.toFixed(2)} screens` });
-    expect(screens, 'screens at 1440×900').toBeLessThanOrEqual(7.4);
+    expect(screens, 'screens at 1440×900').toBeLessThanOrEqual(7.65);
   });
 
   test('phone 390×844: within 11.85 screens, no overflow at 390 or 360', async ({ page, isMobile }) => {
