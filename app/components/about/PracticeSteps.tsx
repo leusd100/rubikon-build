@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { PracticeDrawing } from './PracticeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
+import { useHoverStep } from '../useHoverStep';
 
 // /pro-nas «Досвід працює ще до початку робіт»: the illustration answers the list one step at a time. The camera
 // pushes in on that step's place in the image — the drawing under the hands, the order the frame goes up (base
 // plate → column → beam), the bolted joint — only its mark shows, and the caption names it. Arriving in view, the
 // three steps play once by themselves and return to the overview; the round control pauses or replays them, and
-// every item is a button that shows its step. Reduced motion: no tour and no camera move — a pressed item switches
+// every item is a button that shows its step — pressed, or pointed at with a mouse (useHoverStep). Reduced motion: no tour and no camera move — a pressed item switches
 // at once. Without JavaScript: the overview with all three marks, as before.
 //
 // The image sits on the site's «Креслення» sheet (DrawingSheet): its title block carries the step, the caption and
@@ -126,6 +127,7 @@ export function PracticeSteps({
     setTouring(false);
     setStep(value);
   };
+  const hover = useHoverStep(step, choose);
   const toggle = () => {
     started.current = true;
     if (touring) {
@@ -196,7 +198,7 @@ export function PracticeSteps({
         <ol className="about-before">
           {steps.map((item, index) => (
             <li key={item.title} style={{ '--i': index } as CSSProperties}>
-              <button type="button" className="about-before-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)}>
+              <button type="button" className="about-before-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)} {...hover(index + 1)}>
                 <span className="about-before-index" aria-hidden="true">{pad(index + 1)}</span>
                 <b>{item.title}</b>
                 <span className="about-before-text">{item.text}</span>

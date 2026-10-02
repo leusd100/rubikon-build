@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
 import { NodeDrawing } from './NodeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
+import { useHoverStep } from '../useHoverStep';
 import type { DirectionNode as DirectionNodeConfig, DirectionNodeStep } from '../../types/directionPage';
 import './direction-node.css';
 
@@ -11,7 +12,8 @@ import './direction-node.css';
 // the bolted joint, the weld; concrete: reinforcement, anchors, formwork; roofing: the base, the eave, the drainage).
 // Every step brackets its place on the picture and the camera pushes in on it; the title block names what it shows.
 // Arriving half in view, the three steps play once and return to the overview; the round control pauses or replays
-// them, and every item in the list is a button that shows its step. Reduced motion: no tour and no camera move — a
+// them, and every item in the list is a button that shows its step — pressed, or pointed at with a mouse
+// (useHoverStep). Reduced motion: no tour and no camera move — a
 // pressed item switches at once. Without JavaScript: the overview with all three marks.
 //
 // The mechanics are /pro-nas practice's (PracticeSteps), with the marks given as data: the picture is cropped by cover
@@ -118,6 +120,7 @@ export function DirectionNode({
     setTouring(false);
     setStep(value);
   };
+  const hover = useHoverStep(step, choose);
   const toggle = () => {
     started.current = true;
     if (touring) {
@@ -144,7 +147,7 @@ export function DirectionNode({
         <ol className="dn-steps">
           {steps.map((item, index) => (
             <li key={item.title} style={{ '--i': index } as CSSProperties}>
-              <button type="button" className="dn-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)}>
+              <button type="button" className="dn-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)} {...hover(index + 1)}>
                 <span className="dn-step-index" aria-hidden="true">{pad(index + 1)}</span>
                 <b>{item.title}</b>
                 <span className="dn-step-text">{item.text}</span>

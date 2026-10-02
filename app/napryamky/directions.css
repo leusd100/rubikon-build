@@ -133,13 +133,15 @@
 @media (hover: hover) { .dstart-entry:hover { border-color: color-mix(in srgb, var(--color-accent-on-dark) 70%, transparent); } }
 .dstart-track { position: relative; }
 .dstart-rail, .dstart-run { position: absolute; top: 10px; height: 2px; }
-.dstart-rail { left: 10px; width: calc(var(--last, 7) * var(--stage)); background: var(--color-dark-line); }
-.dstart-run { left: calc(var(--start, 0) * var(--stage) + 10px); width: calc((var(--last, 7) - var(--start, 0)) * var(--stage)); background: var(--color-accent-on-dark); }
+/* Each node sits centred over its stage's text (owner, round 7 — as on the other rails): the rail runs from the first
+   column's centre to the last one's */
+.dstart-rail { left: calc(var(--stage) / 2); width: calc(var(--last, 7) * var(--stage)); background: var(--color-dark-line); }
+.dstart-run { left: calc((var(--start, 0) + .5) * var(--stage)); width: calc((var(--last, 7) - var(--start, 0)) * var(--stage)); background: var(--color-accent-on-dark); }
 .dstart-stages { position: relative; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; margin: 0; padding: 0; list-style: none; }
-.dstart-stages li { display: grid; justify-items: start; align-content: start; gap: 10px; padding-right: 12px; }
+.dstart-stages li { display: grid; justify-items: center; align-content: start; gap: 10px; padding: 0 6px; text-align: center; }
 .dstart-node { position: relative; z-index: 1; display: block; width: 22px; height: 22px; background: var(--color-dark); border: 2px solid var(--color-accent-on-dark); border-radius: 50%; }
 .dstart-num { color: var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
-.dstart-name { color: var(--color-dark-text-secondary); font: 600 15px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: none; }
+.dstart-name { color: var(--color-dark-text-secondary); font: 600 15px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: none; text-wrap: balance; }
 .dstart-stages li[data-state="before"] .dstart-node { border-color: var(--color-dark-line); }
 .dstart-stages li[data-state="before"] :is(.dstart-num, .dstart-name) { color: var(--color-dark-text-muted); }
 .dstart-stages li[data-state="start"] .dstart-node { background: var(--color-accent-on-dark); box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent-on-dark) 22%, transparent); }
@@ -213,7 +215,7 @@
   /* The track turns vertical: one stage per row, the rail and the run down the left */
   .dstart { --row: 48px; }
   .dstart-stages { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); }
-  .dstart-stages li { grid-template-columns: 22px 30px minmax(0, 1fr); align-items: center; gap: 12px; height: var(--row); padding: 0; }
+  .dstart-stages li { grid-template-columns: 22px 30px minmax(0, 1fr); align-items: center; justify-items: start; gap: 12px; height: var(--row); padding: 0; text-align: left; }
   .dstart-rail, .dstart-run { left: 10px; width: 2px; }
   .dstart-rail { top: calc(var(--row) / 2); height: calc(var(--last, 7) * var(--row)); }
   .dstart-run { top: calc(var(--row) / 2 + var(--start, 0) * var(--row)); height: calc((var(--last, 7) - var(--start, 0)) * var(--row)); }
