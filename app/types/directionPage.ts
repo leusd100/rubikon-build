@@ -62,6 +62,14 @@ export type DirectionPageConfig = {
   related?: { compact?: boolean; items?: readonly RelatedDirection[] };
   /** Optional for a page whose own editorial architecture replaces the overview band. */
   overview?: DirectionOverview;
+  /** Roofing: the three situations people call with, each with its first step (UX pass 2026-10). Words only from the
+   *  page's own overview, process and FAQ. */
+  entry?: {
+    eyebrow: string;
+    title: string;
+    text: string;
+    items: readonly { situation: string; text: string; start: string }[];
+  };
   editorial: {
     eyebrow: string;
     title: string;

@@ -22,9 +22,6 @@
 
 /* ---------- 05 Після брифу ---------- */
 .grain-page .grain-process-band { padding-block: var(--section-space-compact); }
-.grain-page .grain-process-band .detail-steps li { min-height: 0; padding: 20px 22px 22px; }
-.grain-page .grain-process-band .detail-step-icon { margin-top: 18px; }
-.grain-page .grain-process-band .detail-steps h3 { margin: 16px 0 8px; font-size: 19px; }
 
 /* ---------- 07–08 FAQ and related directions, as on /angary ---------- */
 .grain-page .faq-section { padding-block: var(--section-space-compact); }
@@ -77,10 +74,6 @@
   .grain-page .direction-editorial-points { gap: 14px 16px; margin-top: 18px; padding-top: 16px; }
   .grain-page .grain-implementation-band .direction-editorial-media { aspect-ratio: 16 / 9; }
   .grain-page .grain-process-band .section-header { margin-bottom: 28px; padding-bottom: 22px; }
-  /* The step icons are decorative (aria-hidden); on a phone their 76 px each go to the content. */
-  .grain-page .grain-process-band .detail-step-icon { display: none; }
-  .grain-page .grain-process-band .detail-steps li { min-height: 0; padding: 18px 20px 20px; }
-  .grain-page .grain-process-band .detail-steps h3 { margin: 10px 0 6px; }
   .grain-page .faq-heading { margin-bottom: 22px; }
   .grain-page .faq-list summary { padding: 14px 0; }
   .grain-page .faq-list details > p { margin-right: 28px; font-size: 16px; }

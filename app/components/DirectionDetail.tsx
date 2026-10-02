@@ -1,4 +1,6 @@
-import { Breadcrumbs, GhostWord, HeroCallButton, HeroCallLink, SectionHeader } from './SiteChrome';
+import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from './SiteChrome';
+import { DirectionSectionDrawing, hasSectionDrawing } from './directions/DirectionSectionDrawing';
+import { DirectionEntry } from './directions/DirectionEntry';
 import { ConversationSection } from './ConversationSection';
 import ResponsiveImage from './ResponsiveImage';
 import { DrawingSheet, type SheetCell } from './DrawingSheet';
@@ -14,14 +16,7 @@ import { company } from '../data/company';
 import { DIRECTION_JOURNEY } from '../data/conversation';
 import { siteRoutes } from '../data/navigation';
 import type { ReactNode } from 'react';
-
-const directionGhostWords: Record<DirectionPageConfig['id'], string> = {
-  angary: 'HANGAR',
-  zernoskhovyshcha: 'GRAIN',
-  metalokonstruktsii: 'STEEL',
-  'betonni-roboty': 'CONCRETE',
-  'pokrivelni-roboty': 'ROOF',
-};
+import './directions/direction-template.css';
 
 const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
   'zernoskhovyshcha',
@@ -162,8 +157,9 @@ export function DirectionProcess({
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow={eyebrow} title={title} supporting={text} inverse />
         <ol className="detail-steps">
-          {steps.map(([stepNumber, stepTitle, stepText, Icon]) => (
-            <li key={stepNumber}><span>{stepNumber}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{stepTitle}</h3><p>{stepText}</p></li>
+          {/* A sequence on one rail (globals.css .detail-steps); the steps' icons are no longer drawn */}
+          {steps.map(([stepNumber, stepTitle, stepText]) => (
+            <li key={stepNumber}><span>{stepNumber}</span><h3>{stepTitle}</h3><p>{stepText}</p></li>
           ))}
         </ol>
       </div>
@@ -369,9 +365,9 @@ export function DirectionPage({
 
       {editorialArchitecture ?? (
         <>
+          {config.entry && <DirectionEntry entry={config.entry} />}
           {config.overview && (
-          <section className="page-section ghost-section">
-            <GhostWord word={directionGhostWords[config.id]} />
+          <section className="page-section direction-overview-section">
             {config.overview.layout === 'use-cases' ? (
               <>
                 <SectionHeader
@@ -388,6 +384,8 @@ export function DirectionPage({
                   <p className="eyebrow"><span /> {config.overview.eyebrow}</p>
                   <h2>{config.overview.title}</h2>
                   {config.overview.text && <p className="lead-copy">{config.overview.text}</p>}
+                  {/* The direction's drawing fragment fills the column under the heading (it replaced the ghost word) */}
+                  {hasSectionDrawing(config.id) && <DirectionSectionDrawing id={config.id} number={direction.number} />}
                 </div>
                 <DirectionItemCards className="feature-list" items={config.overview.items} />
               </div>

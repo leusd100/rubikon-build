@@ -646,15 +646,17 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 .feature-list span { grid-row: 1 / span 2; color: var(--color-accent-strong); font: 500 12px/1.5 var(--font-condensed), sans-serif; }
 .feature-list h3 { margin: 0; font: 600 25px/1.08 var(--font-condensed), sans-serif; text-transform: none; }
 .feature-list p { margin: 12px 0 0; color: var(--color-text-muted); font-size: 16px; line-height: 1.75; }
-.detail-steps { display: grid; grid-template-columns: repeat(4, 1fr); margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(255,255,255,.2); border-left: 1px solid rgba(255,255,255,.2); }
-.detail-steps li { min-height: 300px; padding: 28px; border-right: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); }
-.detail-steps span { color: var(--color-accent-on-dark); font: 500 12px/1 var(--font-condensed), sans-serif; }
-.detail-step-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); stroke-width: 1.45; }
-/* Shared icon token for .cost-grid / .use-case-grid — the same treatment as
-   .detail-step-icon above (process cards, the visual reference), reused rather than duplicated
-   with different values so all bordered-card families read as one system. */
+/* Process as a sequence (UX pass 2026-10): numbered nodes on one copper rail, as on /yak-pratsyuiemo — no boxes and
+   no icons. Vertical from 1050 px down. */
+.detail-steps { --steps-gap: clamp(24px, 3vw, 44px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 var(--steps-gap); margin: 0; padding: 0; list-style: none; }
+.detail-steps li { position: relative; min-width: 0; }
+/* The rail runs from each node to the next and stops at the last one */
+.detail-steps li:not(:last-child)::before { content: ''; position: absolute; top: 22px; left: 22px; right: calc(-1 * var(--steps-gap)); height: 1px; background: var(--color-accent); }
+.detail-steps span { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 24px; color: var(--color-accent-on-dark); background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; }
+.detail-steps li:first-child span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+/* Shared icon token for .cost-grid / .use-case-grid (bordered-card families). */
 .card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); stroke-width: 1.45; }
-.detail-steps h3 { margin: 24px 0 15px; font: 600 22px/1.08 var(--font-condensed), sans-serif; text-transform: none; }
+.detail-steps h3 { margin: 0 0 12px; font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }
 .detail-steps p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.7; }
 .use-case-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--color-border); border-left: 1px solid var(--color-border); }
 .use-case-grid article { min-height: 310px; padding: 30px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
@@ -762,7 +764,12 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .steps li { grid-column: span 2; }
   .steps li:nth-child(n + 4) { grid-column: span 3; }
   .subhero-layout { grid-template-columns: 1fr .55fr; gap: 56px; }
-  .detail-steps { grid-template-columns: repeat(2, 1fr); }
+  .detail-steps { grid-template-columns: 1fr; gap: 0; max-width: 720px; }
+  .detail-steps li:not(:last-child)::before { top: 22px; bottom: 0; left: 22px; right: auto; width: 1px; height: auto; }
+  .detail-steps li { padding: 0 0 30px 68px; }
+  .detail-steps li:last-child { padding-bottom: 0; }
+  .detail-steps span { position: absolute; top: 0; left: 0; margin: 0; }
+  .detail-steps h3 { padding-top: 10px; }
   .cost-grid { grid-template-columns: repeat(2, 1fr); }
   .page-two-col { gap: var(--grid-gap); }
   .direction-editorial-grid { grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr); gap: var(--grid-gap); }
@@ -936,7 +943,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { font-size: var(--title-section); }
   .copy-column .lead-copy { font-size: 16px; }
   .page-heading { margin-bottom: 42px; }
-  .detail-steps, .use-case-grid { grid-template-columns: 1fr; }
+  .use-case-grid { grid-template-columns: 1fr; }
   .direction-editorial-grid { grid-template-columns: 1fr; gap: 36px; }
   .direction-editorial-grid[data-layout="media-first"] { grid-template-columns: 1fr; }
   .direction-editorial-grid[data-layout="media-first"] .direction-editorial-copy { grid-column: 1; grid-row: 1; }
@@ -946,9 +953,9 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .direction-editorial-copy > p:not(.eyebrow) { margin-top: 22px; font-size: 16px; }
   .direction-editorial-media { min-height: 0; aspect-ratio: 3 / 2; border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 10px 10px 0 var(--copper-offset); }
   .cost-grid { grid-template-columns: 1fr; }
-  .detail-steps li, .use-case-grid article { min-height: 245px; }
+  .use-case-grid article { min-height: 245px; }
   .cost-grid article { min-height: 230px; }
-  .detail-steps h3, .use-case-grid h3, .cost-grid h3 { margin-top: 64px; }
+  .use-case-grid h3, .cost-grid h3 { margin-top: 64px; }
   .cost-list article { grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 12px; padding: 18px 0; }
   .cost-list h3 { grid-column: 2; }
   .cost-list p { grid-column: 1 / -1; margin-top: 8px; }
