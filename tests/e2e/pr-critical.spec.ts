@@ -347,7 +347,9 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   await expect(page.locator('main').getByText(/Два покоління/)).toHaveCount(1);
   // Owner's decision (30.09): no «Ілюстрація» tags on this page; the conceptual image says so in its alt text
   await expect(page.locator('main')).not.toContainText('Ілюстрація');
-  await expect(page.locator('.about-story-section img')).toHaveAttribute('alt', /^Концептуальна ілюстрація/);
+  // The practice tour is a technical drawing (UX pass 2026-10: zooming the picture lost its quality); it names itself
+  await expect(page.locator('.about-story-section svg.practice-drawing')).toHaveAttribute('aria-label', /^Схема: /);
+  await expect(page.locator('.about-story-section img')).toHaveCount(0);
   await expect(page.locator('.ghost-word')).toHaveCount(0);
 
   // Every principle lands on a zone that exists

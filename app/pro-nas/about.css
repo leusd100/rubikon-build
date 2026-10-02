@@ -79,6 +79,37 @@
 .about-ledger-col li b a:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
 .about-ledger-col li > span { display: block; margin-top: 4px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
 .about-build-all { display: inline-flex; margin-top: 28px; }
+
+/* «Що робимо самі, а що організовуємо» on a drawing (CapabilityFigure.tsx, UX pass 2026-10): the object on its site,
+   each work drawn where it happens — our own team copper, organised works graphite, specialist works dashed. The drawing
+   stays beside the list while it scrolls; a pointed work or group lights, the rest steps back. */
+.about-cap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 64px); align-items: start; }
+.about-cap-figure { position: sticky; top: 128px; margin: 0; padding: clamp(14px, 1.6vw, 22px); background: color-mix(in srgb, var(--color-surface-elevated) 92%, transparent); border: 1px solid var(--color-border); }
+.about-cap-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+.about-cap .about-ledger { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+.cap-ground { fill: none; stroke: var(--color-border-strong); stroke-width: 1.2; }
+.cap-part { fill: none; stroke-width: 1.3; stroke-linejoin: round; stroke-linecap: round; transition: opacity .25s ease, stroke-width .25s ease; }
+.cap-part[data-tier="core"] { stroke: var(--color-accent); stroke-width: 1.6; }
+.cap-part[data-tier="flexible"] { stroke: var(--color-text-secondary); }
+.cap-part[data-tier="partner"] { stroke: var(--color-text-muted); stroke-dasharray: 6 5; }
+.cap-part[data-cap="foundations"] { fill: color-mix(in srgb, var(--color-accent) 7%, transparent); }
+.cap-part[data-cap="roofing"], .cap-part[data-cap="panels"] { fill: color-mix(in srgb, var(--color-accent) 4%, transparent); }
+.about-cap-legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font: 600 13px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; }
+.about-cap-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.about-cap-legend i { width: 22px; height: 0; border-top: 2px solid var(--color-accent); }
+.about-cap-legend [data-tier="flexible"] i { border-color: var(--color-text-secondary); }
+.about-cap-legend [data-tier="partner"] i { border-top-style: dashed; border-color: var(--color-text-muted); }
+.about-cap .about-ledger-col { transition: background-color .25s ease; }
+.about-cap li[data-cap] { cursor: default; transition: background-color .2s ease; }
+/* A pointed group or work */
+.about-cap[data-tier="core"] .cap-part:not([data-tier="core"]), .about-cap[data-tier="flexible"] .cap-part:not([data-tier="flexible"]), .about-cap[data-tier="partner"] .cap-part:not([data-tier="partner"]), .about-cap[data-cap] .cap-part { opacity: .16; }
+.about-cap[data-tier="core"] .cap-part[data-tier="core"], .about-cap[data-tier="flexible"] .cap-part[data-tier="flexible"], .about-cap[data-tier="partner"] .cap-part[data-tier="partner"], .about-cap[data-cap="foundations"] .cap-part[data-cap="foundations"], .about-cap[data-cap="steel"] .cap-part[data-cap="steel"], .about-cap[data-cap="roofing"] .cap-part[data-cap="roofing"], .about-cap[data-cap="panels"] .cap-part[data-cap="panels"], .about-cap[data-cap="gates"] .cap-part[data-cap="gates"], .about-cap[data-cap="industrial-floors"] .cap-part[data-cap="industrial-floors"], .about-cap[data-cap="steel-fabrication"] .cap-part[data-cap="steel-fabrication"], .about-cap[data-cap="earthworks"] .cap-part[data-cap="earthworks"], .about-cap[data-cap="envelope"] .cap-part[data-cap="envelope"], .about-cap[data-cap="landscaping"] .cap-part[data-cap="landscaping"], .about-cap[data-cap="mep"] .cap-part[data-cap="mep"], .about-cap[data-cap="ventilation"] .cap-part[data-cap="ventilation"], .about-cap[data-cap="other-construction"] .cap-part[data-cap="other-construction"] { opacity: 1; stroke-width: 2.6; }
+.about-cap[data-tier="core"] .about-ledger-col.is-core, .about-cap[data-tier="flexible"] .about-ledger-col.is-flexible, .about-cap[data-tier="partner"] .about-ledger-col.is-partner { background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
+.about-cap[data-cap="foundations"] li[data-cap="foundations"], .about-cap[data-cap="steel"] li[data-cap="steel"], .about-cap[data-cap="roofing"] li[data-cap="roofing"], .about-cap[data-cap="panels"] li[data-cap="panels"], .about-cap[data-cap="gates"] li[data-cap="gates"], .about-cap[data-cap="industrial-floors"] li[data-cap="industrial-floors"], .about-cap[data-cap="steel-fabrication"] li[data-cap="steel-fabrication"], .about-cap[data-cap="earthworks"] li[data-cap="earthworks"], .about-cap[data-cap="envelope"] li[data-cap="envelope"], .about-cap[data-cap="landscaping"] li[data-cap="landscaping"], .about-cap[data-cap="mep"] li[data-cap="mep"], .about-cap[data-cap="ventilation"] li[data-cap="ventilation"], .about-cap[data-cap="other-construction"] li[data-cap="other-construction"] { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+@media (max-width: 1050px) {
+  .about-cap { grid-template-columns: minmax(0, 1fr); }
+  .about-cap-figure { position: static; }
+}
 /* The phone still (AboutHeroVideo): the footage's grey grade would put its sunset out — a lighter one, framed on the light */
 .about-hero-media > img.about-hero-still { filter: saturate(.85) contrast(1.04) brightness(.95); object-position: 62% 40%; }
 @media (max-width: 760px) {
@@ -215,3 +246,22 @@
   .aqc-step { transform: scale(1.45); }
   .about-principles-grid li { padding: 24px 20px 22px; }
 }
+
+/* The practice tour on a drawing (PracticeDrawing.tsx, UX pass 2026-10): graphite on the sheet, the shown step's parts in
+   copper; no will-change on its stage, so the browser draws it again at the pushed-in scale and the lines stay sharp */
+.ps-stage.is-drawing { will-change: auto; }
+.ps-sheet .promise-visual:has(.practice-drawing)::after { content: none; }
+.practice-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.practice-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.practice-drawing .pd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 3; }
+.practice-drawing .pd-web { fill: color-mix(in srgb, var(--color-text) 3%, transparent); stroke: none; }
+.practice-drawing .pd-line { stroke: var(--color-text-muted); stroke-width: 2.4; }
+.practice-drawing .pd-axis { stroke: var(--color-text-muted); stroke-width: 1.6; stroke-dasharray: 26 7 4 7; opacity: .7; }
+.practice-drawing .pd-dim { stroke: var(--color-text-muted); stroke-width: 2; }
+.practice-drawing .pd-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .7; }
+.practice-drawing .pd-text { fill: var(--color-text-muted); font: italic 500 40px var(--font-manrope), sans-serif; }
+.practice-drawing .pd-paper { fill: color-mix(in srgb, var(--color-text) 4%, transparent); stroke: var(--color-border-strong); stroke-width: 2; }
+.practice-drawing .pd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke .3s ease, opacity .3s ease; }
+.practice-drawing .pd-part circle { fill: color-mix(in srgb, var(--color-text) 12%, transparent); }
+.ps[data-step] .practice-drawing .pd-part { opacity: .38; }
+.ps[data-step="1"] .practice-drawing [data-part="1"], .ps[data-step="2"] .practice-drawing [data-part="2"], .ps[data-step="3"] .practice-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }

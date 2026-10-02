@@ -44,14 +44,15 @@
 .angary-process { overflow: hidden; background: var(--color-dark); color: var(--color-dark-text); }
 .angary-process .angary-section-heading { margin-bottom: 64px; }
 .angary-process-rail { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
-.angary-process-rail::before { content: ''; position: absolute; top: 38px; left: 0; right: 0; height: 1px; background: rgba(255, 255, 255, .2); }
-.angary-process-rail li { position: relative; min-height: 250px; padding: 0 28px 0 0; }
-.angary-process-rail li::before { content: ''; position: relative; z-index: 1; display: block; width: 9px; height: 9px; margin: 34px 0 34px; border: 2px solid var(--color-dark); border-radius: 50%; background: #6d716e; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3); }
+/* Each dot stands over the middle of its step (owner, 02.10); the rail runs from the first dot to the last */
+.angary-process-rail::before { content: ''; position: absolute; top: 38px; left: 10%; right: 10%; height: 1px; background: rgba(255, 255, 255, .2); }
+.angary-process-rail li { position: relative; min-height: 250px; padding: 0 14px; text-align: center; }
+.angary-process-rail li::before { content: ''; position: relative; z-index: 1; display: block; width: 9px; height: 9px; margin: 34px auto 34px; border: 2px solid var(--color-dark); border-radius: 50%; background: #6d716e; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3); }
 .angary-process-rail li.is-current::before { background: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
-.angary-process-rail li > span { position: absolute; top: 0; left: 0; color: var(--color-dark-text-muted); font: 600 11px/1 var(--font-condensed), sans-serif; }
+.angary-process-rail li > span { position: absolute; top: 0; left: 50%; transform: translateX(-50%); color: var(--color-dark-text-muted); font: 600 11px/1 var(--font-condensed), sans-serif; }
 .angary-process-rail li.is-current > span { color: var(--color-accent-on-dark); }
-.angary-process-rail strong { display: block; max-width: 210px; font: 600 clamp(16px, 1.45vw, 20px)/1.15 var(--font-condensed), sans-serif; text-transform: none; }
-.angary-process-rail p { max-width: 210px; margin: 18px 0 0; color: var(--color-dark-text-muted); font-size: 12px; line-height: 1.6; }
+.angary-process-rail strong { display: block; max-width: 210px; margin-inline: auto; font: 600 clamp(16px, 1.45vw, 20px)/1.15 var(--font-condensed), sans-serif; text-transform: none; }
+.angary-process-rail p { max-width: 210px; margin: 18px auto 0; color: var(--color-dark-text-muted); font-size: 12px; line-height: 1.6; }
 
 /* ---------- Human responsibility ---------- */
 .angary-people { background: var(--color-surface); }
@@ -101,10 +102,10 @@
   .angary-longitudinal-diagram { max-width: var(--content-copy); }
   .angary-process-rail { grid-template-columns: 1fr; max-width: var(--content-copy); }
   .angary-process-rail::before { top: 0; bottom: 0; left: 6px; right: auto; width: 1px; height: auto; }
-  .angary-process-rail li { min-height: 0; padding: 0 0 38px 40px; }
+  .angary-process-rail li { min-height: 0; padding: 0 0 38px 40px; text-align: left; }
   .angary-process-rail li::before { position: absolute; top: 0; left: 2px; margin: 0; }
-  .angary-process-rail li > span { position: static; display: block; margin-bottom: 10px; }
-  .angary-process-rail :is(strong, p) { max-width: 560px; }
+  .angary-process-rail li > span { position: static; display: block; margin-bottom: 10px; transform: none; }
+  .angary-process-rail :is(strong, p) { max-width: 560px; margin-inline: 0; }
   .angary-people-layout { grid-template-columns: 1fr; max-width: var(--content-copy); }
   .angary-page .faq-heading { position: static; }
 }
@@ -129,9 +130,9 @@
   .angary-process .angary-section-heading { margin-bottom: 50px; }
   .angary-process-rail { grid-template-columns: 1fr; }
   .angary-process-rail::before { top: 0; bottom: 0; left: 5px; right: auto; width: 1px; height: auto; }
-  .angary-process-rail li { min-height: 0; padding: 0 0 38px 36px; }
+  .angary-process-rail li { min-height: 0; padding: 0 0 38px 36px; text-align: left; }
   .angary-process-rail li::before { position: absolute; top: 0; left: 1px; margin: 0; }
-  .angary-process-rail li > span { position: static; display: block; margin-bottom: 10px; }
+  .angary-process-rail li > span { position: static; display: block; margin-bottom: 10px; transform: none; }
   .angary-process-rail strong { max-width: 320px; font-size: 18px; }
   .angary-process-rail p { max-width: 320px; font-size: 13px; }
   .angary-people-layout { grid-template-columns: 1fr; gap: 44px; }

@@ -4,10 +4,11 @@ import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
-import { CapabilityLedger } from '../components/about/CapabilityLedger';
+import { CapabilityFigure } from '../components/about/CapabilityFigure';
 import { RegionBlock } from '../components/about/RegionBlock';
 import { PracticeSteps, type PracticeStep } from '../components/about/PracticeSteps';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
+import { capabilityLedger } from '../lib/deliveryModelPresentation';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
 import '../components/about/region.css';
@@ -38,22 +39,22 @@ const BEFORE_SITE: readonly PracticeStep[] = [
     title: 'Вихідні дані',
     text: 'Що вже є, чого бракує і які умови майданчика потрібно врахувати.',
     caption: 'Креслення й вихідні дані',
-    focus: [740, 1210],
-    zoom: 2,
+    focus: [720, 1330],
+    zoom: 1.7,
   },
   {
     title: 'Послідовність робіт',
     text: 'Що має відбутися раніше, а що — пізніше, щоб суміжні роботи не конфліктували.',
     caption: 'Порядок монтажу: плита → колона → балка',
-    focus: [800, 720],
-    zoom: 1.75,
+    focus: [760, 680],
+    zoom: 1.4,
   },
   {
     title: 'Ключові вузли',
     text: 'Які конструктивні рішення потрібно зрозуміти до переходу до наступного етапу.',
     caption: 'Болтовий вузол балки й колони',
-    focus: [1118, 505],
-    zoom: 2.3,
+    focus: [990, 530],
+    zoom: 2.4,
   },
 ];
 
@@ -129,7 +130,7 @@ export default function AboutPage() {
             titleId="about-build-title"
             supporting="Беремо окремі роботи або погоджений комплекс робіт. Хто виконує кожну частину, фіксуємо в договорі до початку робіт."
           />
-          <CapabilityLedger />
+          <CapabilityFigure columns={capabilityLedger()} />
           <a className="section-link about-build-all" href={siteRoutes.directions}>
             Усі напрямки робіт <span aria-hidden="true">↗</span>
           </a>

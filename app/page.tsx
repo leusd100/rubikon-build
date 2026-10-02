@@ -1,6 +1,5 @@
 import { DirectionImageCards } from './components/DirectionCards';
 import { DirectionsRail } from './components/home-v2/DirectionsRail';
-import { DirectionsStrip } from './components/home-v2/DirectionsStrip';
 import { SectionHeader } from './components/SiteChrome';
 import { ConversationSection } from './components/ConversationSection';
 import { EngineeringSignature } from './components/home-v2/EngineeringSignature';
@@ -29,7 +28,6 @@ export default function Home() {
             title="П’ять напрямів для бізнесу й агросектору"
             supporting="Оберіть напрям, найближчий до вашої задачі. Зображення на картках — ілюстрації, а не фото виконаних об’єктів."
             inverse
-            aside={<DirectionsStrip />}
           />
           <DirectionsRail count={directions.length}>
             <DirectionImageCards />

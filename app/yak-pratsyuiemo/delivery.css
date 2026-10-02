@@ -112,17 +112,18 @@
   mask-image: linear-gradient(180deg, black 0, rgba(0, 0, 0, .6) 50%, transparent 100%);
 }
 /* One route: a hairline through the four nodes, copper fading towards the last one */
-.proc-steps { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); gap: 0 var(--route-gap); margin: 0; padding: 0; list-style: none; }
-.proc-steps::before, .proc-steps::after { content: ''; position: absolute; z-index: 0; top: 22px; left: 22px; right: 0; height: 1px; }
+/* Each node stands over the middle of its step (owner, 02.10): the route runs from the first node's centre to the last's */
+.proc-steps { --route-col: calc((100% - 3 * var(--route-gap)) / 4); position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); gap: 0 var(--route-gap); margin: 0; padding: 0; list-style: none; }
+.proc-steps::before, .proc-steps::after { content: ''; position: absolute; z-index: 0; top: 22px; left: calc(var(--route-col) / 2); right: calc(var(--route-col) / 2); height: 1px; }
 .proc-steps::before { background: var(--color-dark-line); }
 .proc-steps::after { background: var(--color-accent); transform-origin: left; }
 /* Each step spans the four shared rows, so titles, texts and «На виході» line up across the route */
-.proc-steps li { position: relative; display: grid; grid-row: span 4; grid-template-rows: subgrid; align-content: start; min-width: 0; }
+.proc-steps li { position: relative; display: grid; grid-row: span 4; grid-template-rows: subgrid; align-content: start; justify-items: center; min-width: 0; text-align: center; }
 .proc-step-node {
   position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 26px; color: var(--color-accent-strong);
   background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em;
 }
-.proc-steps li:first-child .proc-step-node { color: var(--color-dark); background: var(--color-accent-strong); border-color: var(--color-accent-strong); }
+.proc-steps li:is(:first-child, :last-child) .proc-step-node { color: var(--color-dark); background: var(--color-accent-strong); border-color: var(--color-accent-strong); }
 /* The task moving along the route: copper runs 01 → 04 and each node switches on as it arrives. The step texts are
    readable from the first frame (UX pass 2026-10: nothing to read waits for an animation). */
 .process-page[data-motion-ready="on"] .proc-steps::after { transition: transform 800ms cubic-bezier(.45, 0, .25, 1) 100ms; }
@@ -138,7 +139,8 @@
   position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 16px; max-width: 860px;
   margin: 56px 0 0 calc((100% + var(--route-gap)) / 4); padding: 20px 24px; border: 1px solid var(--color-dark-line); border-left: 2px solid var(--color-accent);
 }
-.proc-design-note::before { content: ''; position: absolute; bottom: 100%; left: 21px; height: 56px; border-left: 1px dashed var(--color-accent); opacity: .7; }
+/* The drop leaves step 02's node, which stands over the middle of its column (the note starts at the column's left) */
+.proc-design-note::before { content: ''; position: absolute; bottom: 100%; left: calc((min(var(--container-max), 100vw - 2 * var(--container-gutter)) - 3 * var(--route-gap)) / 8 - 2px); height: 56px; border-left: 1px dashed var(--color-accent); opacity: .7; }
 .proc-design-note svg { width: 24px; height: 24px; color: var(--color-accent-strong); stroke-width: 1.5; }
 .proc-design-note p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.65; }
 .proc-design-note .proc-design-note-title { margin-bottom: 6px; color: var(--color-dark-text); font: 600 17px/1.25 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: none; }
@@ -470,7 +472,7 @@
   .proc-steps::before, .proc-steps::after { top: 22px; bottom: 22px; left: 21.5px; right: auto; width: 1px; height: auto; }
   .proc-steps::after { transform-origin: top; }
   .process-page[data-motion-ready] .proc-steps:not([data-motion-state="on"])::after { transform: scaleY(0); }
-  .proc-steps li { display: block; grid-row: auto; padding: 0 0 36px 72px; }
+  .proc-steps li { display: block; grid-row: auto; padding: 0 0 36px 72px; text-align: left; }
   .proc-steps li:last-child { padding-bottom: 0; }
   .proc-step-node { position: absolute; top: 0; left: 0; margin: 0; }
   .proc-steps h3 { padding-top: 9px; }

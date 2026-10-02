@@ -657,17 +657,18 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 /* Process as a sequence (UX pass 2026-10): numbered nodes on one copper rail, as on /yak-pratsyuiemo — no boxes and
    no icons. Vertical from 1050 px down. */
 .detail-steps { --steps-gap: clamp(24px, 3vw, 44px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 var(--steps-gap); margin: 0; padding: 0; list-style: none; }
-.detail-steps li { position: relative; min-width: 0; }
-/* The rail runs from each node to the next and stops at the last one */
-.detail-steps li:not(:last-child)::before { content: ''; position: absolute; top: 22px; left: 22px; right: calc(-1 * var(--steps-gap)); height: 1px; background: var(--color-accent); }
-.detail-steps span { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 24px; color: var(--color-accent-on-dark); background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; }
+/* Each node stands over the middle of its own text (owner, 02.10); the rail runs from node centre to node centre and stops
+   at the last one */
+.detail-steps li { position: relative; min-width: 0; text-align: center; }
+.detail-steps li:not(:last-child)::before { content: ''; position: absolute; top: 22px; left: 50%; width: calc(100% + var(--steps-gap)); height: 1px; background: var(--color-accent); }
+.detail-steps span { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 24px; color: var(--color-accent-on-dark); background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; }
 /* Start and finish filled, the steps between them open rings (owner, 02.10: one filled start and an open last node read
    as unfinished) */
 .detail-steps li:is(:first-child, :last-child) span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
 /* Shared icon token for .cost-grid / .use-case-grid (bordered-card families). */
 .card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); stroke-width: 1.45; }
 .detail-steps h3 { margin: 0 0 12px; font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }
-.detail-steps p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.7; }
+.detail-steps p { max-width: 300px; margin: 0 auto; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.7; }
 .use-case-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--color-border); border-left: 1px solid var(--color-border); }
 .use-case-grid article { min-height: 310px; padding: 30px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
 .use-case-grid span { color: var(--color-accent-strong); font: 500 12px/1 var(--font-condensed), sans-serif; }
@@ -776,10 +777,11 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .subhero-layout { grid-template-columns: 1fr .55fr; gap: 56px; }
   .detail-steps { grid-template-columns: 1fr; gap: 0; max-width: 720px; }
   .detail-steps li:not(:last-child)::before { top: 22px; bottom: 0; left: 22px; right: auto; width: 1px; height: auto; }
-  .detail-steps li { padding: 0 0 30px 68px; }
+  .detail-steps li { padding: 0 0 30px 68px; text-align: left; }
   .detail-steps li:last-child { padding-bottom: 0; }
   .detail-steps span { position: absolute; top: 0; left: 0; margin: 0; }
   .detail-steps h3 { padding-top: 10px; }
+  .detail-steps p { max-width: none; margin: 0; }
   .cost-grid { grid-template-columns: repeat(2, 1fr); }
   .page-two-col { gap: var(--grid-gap); }
   .direction-editorial-grid { grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr); gap: var(--grid-gap); }

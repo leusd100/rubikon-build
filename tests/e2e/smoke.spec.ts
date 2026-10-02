@@ -36,7 +36,8 @@ const publicRoutes: PublicRoute[] = [
   { path: '/metalokonstruktsii', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
   { path: '/betonni-roboty', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
   { path: '/pokrivelni-roboty', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
-  { path: '/pro-nas', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: true },
+  // /pro-nas: its one responsive picture (the practice tour) is a vector drawing now (UX pass 2026-10)
+  { path: '/pro-nas', hasProjectCta: true, hasHeroMedia: true, hasResponsiveImages: false },
   { path: '/yak-pratsyuiemo', hasProjectCta: true, hasHeroMedia: false, hasResponsiveImages: false },
   {
     path: '/polityka-konfidentsiinosti',

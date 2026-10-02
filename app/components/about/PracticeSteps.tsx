@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import ResponsiveImage from '../ResponsiveImage';
+import { PracticeDrawing } from './PracticeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
 
 // /pro-nas «Досвід працює ще до початку робіт»: the illustration answers the list one step at a time. The camera
@@ -158,27 +158,24 @@ export function PracticeSteps({
           </button>
         )}
       >
-        <div className="ps-stage" style={{ transform: stageTransform(size, active) }}>
-          <ResponsiveImage
-            src="/media/about-quality-control.webp"
-            alt="Концептуальна ілюстрація: зіставлення робочого креслення з вузлом сталевого каркаса"
-            sizes="(max-width: 1050px) 100vw, 40vw"
-          />
+        {/* A vector drawing, so every push-in stays sharp (UX pass 2026-10: zooming the picture lost its quality) */}
+        <div className="ps-stage is-drawing" style={{ transform: stageTransform(size, active) }}>
+          <PracticeDrawing />
           <svg className="aqc-overlay" viewBox="0 0 1440 1800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
             <g className="aqc-mark aqc-mark-1">
-              <path className="aqc-line" pathLength={1} d="M470 1100 V1010 H570 M930 1010 H1030 V1100 M1030 1340 V1430 H930 M570 1430 H470 V1340" />
-              <g transform="translate(470 1010)"><g className="aqc-badge"><circle r="40" /><text dy="11">01</text></g></g>
+              <path className="aqc-line" pathLength={1} d="M240 1040 H330 M1110 1040 H1200 V1130 M1200 1530 V1620 H1110 M330 1620 H240 V1530 M240 1130 V1040" />
+              <g transform="translate(240 1040)"><g className="aqc-badge"><circle r="40" /><text dy="11">01</text></g></g>
             </g>
             <g className="aqc-mark aqc-mark-2">
-              <path className="aqc-line" pathLength={1} d="M1000 930 C940 800 800 700 790 520 C740 470 650 480 560 520" />
-              <g transform="translate(1000 930)"><g className="aqc-step"><circle r="30" /><text dy="10">1</text></g></g>
-              <g transform="translate(790 520)"><g className="aqc-step"><circle r="30" /><text dy="10">2</text></g></g>
-              <g transform="translate(560 520)"><g className="aqc-step"><circle r="30" /><text dy="10">3</text></g></g>
-              <g transform="translate(1180 930)"><g className="aqc-badge"><circle r="40" /><text dy="11">02</text></g></g>
+              <path className="aqc-line" pathLength={1} d="M1040 884 C1130 820 1130 760 1040 700 C950 640 760 610 640 530" />
+              <g transform="translate(1040 884)"><g className="aqc-step"><circle r="30" /><text dy="10">1</text></g></g>
+              <g transform="translate(1040 700)"><g className="aqc-step"><circle r="30" /><text dy="10">2</text></g></g>
+              <g transform="translate(640 530)"><g className="aqc-step"><circle r="30" /><text dy="10">3</text></g></g>
+              <g transform="translate(1200 884)"><g className="aqc-badge"><circle r="40" /><text dy="11">02</text></g></g>
             </g>
             <g className="aqc-mark aqc-mark-3">
-              <circle className="aqc-line" pathLength={1} cx="1118" cy="505" r="165" />
-              <g transform="translate(1235 388)"><g className="aqc-badge"><circle r="40" /><text dy="11">03</text></g></g>
+              <circle className="aqc-line" pathLength={1} cx="990" cy="530" r="125" />
+              <g transform="translate(1090 425)"><g className="aqc-badge"><circle r="40" /><text dy="11">03</text></g></g>
             </g>
           </svg>
         </div>
