@@ -3,7 +3,7 @@
 
 Crop and resize only: no retouching, no compositing, no generated pixels. Sources and boxes:
 
-  concepts/hero-mobile      media/directions-sequence-source/angary.png   (720, 0, 1472, 941)  concept render, 4:5
+  concepts/hero-mobile-band media/directions-sequence-source/angary.png   (720, 84, 1472, 762) concept render, phone band
   concepts/card-photo-drawing media/direction-hero-source/metalokonstruktsii.png (470, 230, 1482, 989) concept photo + drawings, 4:3
   concepts/card-node        media/concepts/about-experience-v2.jpg        (0, 620, 1440, 1700) concept image, 4:3
   hangar-wide               photos/serhii-prior-hangar.jpeg               (0, 440, 1550, 1060) the approved frame, sky/ground trimmed
@@ -23,6 +23,13 @@ Everything derived from a concept source sits in concepts/, so the existing «no
 cards» check (tests/e2e/pr-critical.spec.ts) sees it. The callout positions in EngineeringSignature.tsx are
 percentages of these exact boxes — change a box and they must be re-measured.
 
+The phone hero still (≤760 px) used to be the full-height 4:5 crop (720, 0, 1472, 941). The page draws it with
+object-fit: cover and object-position 50% 32% into a band whose height follows the viewport, so only a window of rows
+is ever seen: measured in Chrome from 360×780 to 430×932 (and 375×667), every phone sees rows 85–761 of those 941 at
+most. With a 32% position the windows nest, and a crop of height H whose top is 0.32 × (941 − H) shows exactly the same
+window on every band up to H — so the band crop (84 … 762) changes no visible pixel on those phones and the CSS stays.
+Bands squarer than 752:678 (a Fold cover screen, an iPad mini in portrait) are covered by zooming ~8 % instead.
+
 Usage:  cd <repo root> && python3 scripts/generate-home-v2-crops.py   (requires Pillow)
 """
 import os
@@ -33,7 +40,7 @@ SRC = 'public/'
 OUT = 'public/media/home-v2/'
 
 JOBS = [
-    ('concepts/hero-mobile', 'media/directions-sequence-source/angary.png', (720, 0, 1472, 941), [480, 752], 80),
+    ('concepts/hero-mobile-band', 'media/directions-sequence-source/angary.png', (720, 84, 1472, 762), [480, 752], 80),
     ('concepts/card-photo-drawing', 'media/direction-hero-source/metalokonstruktsii.png', (470, 230, 1482, 989), [640, 1012], 80),
     ('concepts/card-node', 'media/concepts/about-experience-v2.jpg', (0, 620, 1440, 1700), [640, 1040], 80),
     ('hangar-wide', 'photos/serhii-prior-hangar.jpeg', (0, 440, 1550, 1060), [960, 1550], 80),
