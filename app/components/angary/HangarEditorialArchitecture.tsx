@@ -1,45 +1,11 @@
 'use client';
 
-import { useMemo, type ReactNode } from 'react';
-import ResponsiveImage from '../ResponsiveImage';
-import { DrawingSheet } from '../DrawingSheet';
 import { company } from '../../data/company';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
-import { alternativeCladdingDemo } from '../../lib/configurator/presentationDemo';
-import { deriveDomainModel } from '../../lib/configurator/domainModel';
-import { deriveSummary } from '../../lib/configurator/deriveSummary';
-import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
+import { revealLivePreview } from '../configurator/ConfiguratorWhy';
 
-function CurrentChoice({ children }: { children: ReactNode }) {
-  return <span className="angary-current-choice">Зараз: {children}</span>;
-}
-
-function EditorialImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  return (
-    <span className={`angary-editorial-image${className ? ` ${className}` : ''}`}>
-      <ResponsiveImage
-        src={src}
-        alt={alt}
-        sizes="(max-width: 760px) calc(50vw - 17px), (max-width: 1023px) calc(25vw - 18px), 25vw"
-      />
-      <span className="angary-scheme-label">Схема</span>
-    </span>
-  );
-}
-
-function revealLivePreview() {
-  window.requestAnimationFrame(() => {
-    const preview = document.querySelector<HTMLElement>('.hc-preview-demo-status')
-      ?? document.getElementById('hangar-live-preview');
-    if (!preview) return;
-    const rect = preview.getBoundingClientRect();
-    const isMobile = window.matchMedia('(max-width: 760px)').matches;
-    const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
-    if (!isMobile && isVisible) return;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    preview.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
-  });
-}
+// The editorial architecture after the configurator. «Рішення, які приймаєте ви» moved into the configurator as
+// «Чому це важливо» under each group (ConfiguratorWhy.tsx, UX pass 2026-10).
 
 function TransverseDiagram({ type }: { type: 'portal' | 'truss' }) {
   const truss = type === 'truss';
@@ -80,13 +46,6 @@ function LongitudinalDiagram() {
 
 export function HangarEditorialArchitecture() {
   const inquiry = useHangarInquiryContext();
-  const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
-  const current = useMemo(() => deriveSummary(deriveDomainModel(state)), [state]);
-  const claddingDemo = alternativeCladdingDemo(state);
-  const claddingDemoLabel = claddingDemo === 'sandwich-panel'
-    ? 'Порівняти із сендвіч-панеллю'
-    : 'Порівняти з профнастилом';
-
   function togglePresentationDemo(kind: 'frame' | 'profiled-sheet' | 'sandwich-panel') {
     const isActive = inquiry?.presentationDemo?.kind === kind;
     inquiry?.togglePresentationDemo(kind);
@@ -95,120 +54,11 @@ export function HangarEditorialArchitecture() {
 
   return (
     <>
-      <section className="page-section angary-decisions" id="decisions" aria-labelledby="angary-decisions-title">
-        <div className="shell">
-          <div className="angary-decisions-intro">
-            <header className="angary-section-heading">
-              <p className="eyebrow"><span /> Рішення, які приймаєте ви</p>
-              <h2 id="angary-decisions-title">Від призначення — до зрозумілого технічного завдання</h2>
-              <p>Чотири групи рішень визначають склад майбутнього об’єкта. Кожен вибір впливає на конструкцію, матеріали та подальше використання споруди.</p>
-            </header>
-            {/* The site's «Креслення» sheet: the title block says what the picture is (it once sat on it as a chip) */}
-            <DrawingSheet
-              className="angary-decisions-intro-visual"
-              cells={[
-                { label: 'Напрям', value: 'Ангари та склади' },
-                { tone: 'main', label: 'Тема', value: 'Рішення, які приймаєте ви' },
-                { label: 'Зображення', value: 'Ілюстрація' },
-              ]}
-            >
-              <ResponsiveImage
-                src="/media/concepts/direction-hangars-v2.jpg"
-                alt="Металевий каркас ангара, поєднаний із технічними кресленнями майбутньої споруди"
-                sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 64px), 38vw"
-              />
-            </DrawingSheet>
-          </div>
-
-          <div className="angary-decision-list">
-            <article className="angary-decision-row" data-decision="contour">
-              <div className="angary-decision-copy">
-                <span className="angary-decision-number">01 / КОНТУР</span>
-                <CurrentChoice>{current.envelopeLabel}</CurrentChoice>
-                <h3>Режим роботи всередині</h3>
-                <p>Температурний режим задає вимоги до огороджувального контуру. Його обирають від реального сценарію використання, а не від назви споруди.</p>
-              </div>
-              <div className="angary-consequence-compare" aria-label="Порівняння холодного та утепленого контуру">
-                <div>
-                  <strong>Холодний контур</strong>
-                  <ul><li>Зберігання техніки й матеріалів</li><li>Без постійного опалення</li><li>Простіша комплектація оболонки</li></ul>
-                </div>
-                <div>
-                  <strong>Утеплений контур</strong>
-                  <ul><li>Робочі або виробничі процеси</li><li>Контрольований режим усередині</li><li>Увага до вузлів і герметичності</li></ul>
-                </div>
-              </div>
-            </article>
-
-            <article className="angary-decision-row is-media-first" data-decision="enclosure">
-              <div className="angary-decision-copy">
-                <span className="angary-decision-number">02 / ОГОРОДЖЕННЯ</span>
-                <CurrentChoice>{current.claddingSystemLabel}</CurrentChoice>
-                <h3>Матеріал стін і покрівлі</h3>
-                <p>Профнастил формує легкий неутеплений контур. Сендвіч-панель поєднує дві металеві обшивки з утеплювачем між ними. Стіни та покрівля можуть уточнюватися окремо.</p>
-                <button
-                  type="button"
-                  className="angary-preview-action"
-                  aria-pressed={inquiry?.presentationDemo?.kind === claddingDemo}
-                  onClick={() => togglePresentationDemo(claddingDemo)}
-                >
-                  {claddingDemoLabel} <span aria-hidden="true">→</span>
-                </button>
-              </div>
-              <div className="angary-render-compare">
-                <figure>
-                  <EditorialImage className="is-envelope-crop" src="/media/angary/envelope-profiled-cutaway.jpg" alt="Розріз холодного контуру ангара з тонким профільованим листом і відкритим каркасом без утеплення" />
-                  <figcaption><strong>Профнастил</strong><span>Тонкий профільований лист · без утеплення</span></figcaption>
-                </figure>
-                <figure>
-                  <EditorialImage className="is-envelope-crop" src="/media/angary/envelope-sandwich-cutaway.jpg" alt="Розріз утепленого контуру ангара із сендвіч-панеллю та видимим шаром утеплювача" />
-                  <figcaption><strong>Сендвіч-панель</strong><span>Дві обшивки · утеплювач усередині</span></figcaption>
-                </figure>
-              </div>
-            </article>
-
-            <article className="angary-decision-row" data-decision="foundation">
-              <div className="angary-decision-copy">
-                <span className="angary-decision-number">03 / ОСНОВА</span>
-                <CurrentChoice>{current.foundationTypeLabel}</CurrentChoice>
-                <h3>Основа залежить від майданчика</h3>
-                <p>Тип фундаменту не можна визначити лише за виглядом ангара. Остаточне рішення приймають після вихідних даних майданчика та розрахунку.</p>
-              </div>
-              <div className="angary-render-compare">
-                <figure>
-                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-slab-detail.jpg" alt="Фрагмент ангара: колони каркаса спираються на монолітну плиту, виділену теракотовим кольором" />
-                  <figcaption><strong>Монолітна плита</strong><span>Суцільна основа споруди</span></figcaption>
-                </figure>
-                <figure>
-                  <EditorialImage className="is-foundation-crop" src="/media/angary/foundation-isolated-detail.jpg" alt="Фрагмент ангара: кожна колона каркаса спирається на окремий фундамент, виділений теракотовим кольором" />
-                  <figcaption><strong>Окремі фундаменти</strong><span>Опори під колони каркаса</span></figcaption>
-                </figure>
-              </div>
-            </article>
-
-            <article className="angary-decision-row angary-openings-row" data-decision="openings">
-              <div className="angary-decision-copy">
-                <span className="angary-decision-number">04 / ОТВОРИ</span>
-                <CurrentChoice>{current.openingsLabel}</CurrentChoice>
-                <h3>Рух людей і техніки</h3>
-                <p>Ворота та двері прив’язуються до логістики всередині й зовні. Положення та реальні розміри уточнюємо разом із плануванням.</p>
-              </div>
-              <div className="angary-opening-options" aria-label="Три типи отворів">
-                <div><strong>Ворота</strong><span>Для щоденного потоку техніки</span></div>
-                <div><strong>Великі ворота</strong><span>Для габаритної техніки й обладнання</span></div>
-                <div><strong>Двері</strong><span>Окремий рух персоналу</span></div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
       <section className="page-section angary-structure" id="structure" aria-labelledby="angary-structure-title">
         <div className="shell">
           <header className="angary-section-heading angary-structure-heading">
             <p className="eyebrow"><span /> Попередня схема</p>
             <h2 id="angary-structure-title">Що визначає схему каркаса</h2>
-            <p className="angary-honesty-note">Попередня конструктивна схема уточнюється після розрахунку проєктувальником.</p>
             <button
               type="button"
               className="angary-preview-action"

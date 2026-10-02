@@ -139,26 +139,55 @@ test.describe('angary presentation-only previews', () => {
   });
 });
 
-test('editorial current choices reuse canonical scope-aware summary semantics', async ({ page }, testInfo) => {
+test('the summary carries the scope-aware choices; «Чому це важливо» explains a group in place', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
   await openHangarPage(page);
 
   await page.getByRole('radiogroup', { name: 'Стіни' }).getByText('Сендвіч-панель', { exact: true }).click();
-  await expect(page.locator('[data-decision="contour"] .angary-current-choice')).toContainText(
-    'Індивідуальна конфігурація',
-  );
-  await expect(page.locator('[data-decision="enclosure"] .angary-current-choice')).toContainText(
-    'Стіни: Сендвіч-панель, покрівля: Профнастил',
-  );
   await expect(page.locator('.hc-summary-flagship .hc-summary-facts')).toContainText(
     'КонтурІндивідуальна конфігурація',
   );
 
   await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
-  await expect(page.locator('[data-decision="openings"] .angary-current-choice')).toContainText(
-    'Поза обсягом заявки',
-  );
   await expect(page.locator('.hc-summary-flagship .hc-summary-facts')).not.toContainText('Ворота');
+
+  // The explanation that used to be its own section, folded under the group it explains
+  const why = page.locator('.hc-why[data-why="foundation"]');
+  await expect(why.locator('img')).toHaveCount(2);
+  await expect(why.locator('img').first()).toBeHidden();
+  await why.locator('summary').click();
+  await expect(why).toHaveAttribute('open', '');
+  await expect(why.locator('img').first()).toBeVisible();
+  await expect(why).toContainText('Тип фундаменту не можна визначити лише за виглядом ангара.');
+});
+
+test('a chosen option is graphite; copper is left for actions', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
+  await openHangarPage(page);
+  const chosen = page.locator('.hc-option-card input:checked + span').first();
+  const text = await page.locator('body').evaluate((element) => getComputedStyle(element).color);
+  await expect(chosen).toHaveCSS('background-color', text);
+  const action = page.locator('.hc-summary-action');
+  expect(await action.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(text);
+});
+
+test('on a phone the model stays under the header while the parameters are set, and lets go at the summary', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit mobile viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const stage = page.locator('#configurator .hc-preview-surface');
+  const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
+
+  await page.locator('#hc-foundation-heading').scrollIntoViewIfNeeded();
+  await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+  expect(await stage.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
+  const stageHeight = await stage.evaluate((element) => element.getBoundingClientRect().height);
+  expect(stageHeight).toBeLessThan(844 * 0.36);
+
+  await page.locator('.hc-summary-disclaimer').scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, 200));
+  await expect(page.locator('#configurator .hc-layout')).not.toHaveAttribute('data-configuring', '');
 });
 
 test('mobile inquiry CTA follows attachment, form and overlay conditions', async ({ page }, testInfo) => {
