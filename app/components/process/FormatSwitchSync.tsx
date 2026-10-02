@@ -13,14 +13,14 @@ export function FormatSwitchSync() {
     const figure = document.querySelector<HTMLElement>('.proc-resp-figure');
     let shown = document.querySelector<HTMLInputElement>('input[name="resp-format"]:checked')?.value;
     let timer = 0;
-    const clear = () => figure?.querySelectorAll('[data-fresh]').forEach((element) => element.removeAttribute('data-fresh'));
+    const clear = () => figure?.querySelectorAll<HTMLElement>('[data-fresh]').forEach((element) => { delete element.dataset.fresh; });
 
     const mark = (from: string, to: string) => {
       window.clearTimeout(timer);
       clear();
       for (const item of figure?.querySelectorAll<HTMLElement>('li[data-formats]') ?? []) {
-        const formats = (item.dataset.formats ?? '').split(' ');
-        if (formats.includes(to) && !formats.includes(from)) item.dataset.fresh = '';
+        const formats = new Set((item.dataset.formats ?? '').split(' '));
+        if (formats.has(to) && !formats.has(from)) item.dataset.fresh = '';
       }
       timer = window.setTimeout(clear, FRESH_MS);
     };

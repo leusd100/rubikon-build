@@ -72,7 +72,7 @@ export function SectionHeader({
   titleId?: string;
 }) {
   return (
-    <div className={`section-header${inverse ? ' section-header-inverse' : ''}${aside ? ' has-aside' : ''}${className ? ` ${className}` : ''}`}>
+    <div className={['section-header', inverse && 'section-header-inverse', aside && 'has-aside', className].filter(Boolean).join(' ')}>
       <div className="section-header-copy">
         <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {icon}{eyebrow}</p>
         <h2 id={titleId}>{title}</h2>

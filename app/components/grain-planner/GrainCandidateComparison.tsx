@@ -21,7 +21,7 @@ import { GrainCandidateVisual } from './GrainCandidateVisual';
 import { GrainConceptDetail } from './GrainConceptDetail';
 
 /** The comparison route, first screen: the heading, what drives the choice and one card per approach. */
-export function GrainCandidateComparison({ answers, onExplore }: { answers: Answers; onExplore: (key: CandidateKey) => void }) {
+export function GrainCandidateComparison({ answers, onExplore }: Readonly<{ answers: Answers; onExplore: (key: CandidateKey) => void }>) {
   const presentation = grainPlannerPresentation.result;
   const candidates = buildCandidates(answers);
   const drivers = buildDrivers(answers);
@@ -42,8 +42,8 @@ export function GrainCandidateComparison({ answers, onExplore }: { answers: Answ
         open={driverOpen}
         onToggle={(driver) => setDriverOpen(driverOpen === driver ? null : driver)}
       />
-      {/* On a phone the row scrolls sideways, so it takes keyboard focus (axe: scrollable-region-focusable) */}
-      <div className={`planner-approach-grid is-count-${candidates.length}`} role="region" aria-label="Підходи для вашої задачі" tabIndex={0}>
+      {/* Sideways on a phone; its «Дослідити концепцію» buttons take keyboard focus, so the row needs none of its own */}
+      <div className={`planner-approach-grid is-count-${candidates.length}`}>
         {candidates.map((candidate) => (
           <ApproachCard
             key={candidate.key}
@@ -71,12 +71,12 @@ export type ConceptSelection = {
 };
 
 /** Under «Детально»: the side-by-side table and each approach in depth. */
-export function GrainConceptExplorer({ answers, narrow, selection, explorerRef }: {
+export function GrainConceptExplorer({ answers, narrow, selection, explorerRef }: Readonly<{
   answers: Answers;
   narrow: boolean;
   selection: ConceptSelection;
   explorerRef: RefObject<HTMLDivElement | null>;
-}) {
+}>) {
   const presentation = grainPlannerPresentation.result;
   const candidates = buildCandidates(answers);
   const [compareOpen, setCompareOpen] = useState(false);

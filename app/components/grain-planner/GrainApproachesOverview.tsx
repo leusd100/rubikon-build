@@ -20,7 +20,7 @@ export function GrainApproachesOverview() {
         lead="Силосна система, каркасне та арочне підлогові сховища. Пройдіть консультацію вище — і планувальник покаже, які з них доречні саме для вашої задачі та чому."
       />
       {/* On a phone the row scrolls sideways, so it takes keyboard focus (axe: scrollable-region-focusable) */}
-      <div className="planner-approach-grid is-count-3" role="region" aria-label="Три підходи до зерносховища" tabIndex={0}>
+      <section className="planner-approach-grid is-count-3" aria-label="Три підходи до зерносховища" tabIndex={0}>
         {ORDER.map((key) => (
           <ApproachCard
             key={key}
@@ -30,7 +30,7 @@ export function GrainApproachesOverview() {
             visual={<GrainCandidateVisual type={key} />}
           />
         ))}
-      </div>
+      </section>
       <a className="planner-overview-link" href="#planner">Сформувати задачу <span aria-hidden="true">↑</span></a>
     </div>
   );

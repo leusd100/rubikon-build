@@ -161,7 +161,8 @@ export function CostFactorsFigure({ factors }: Readonly<{ factors: readonly Cost
               style={{ '--i': index } as CSSProperties}
               onMouseEnter={() => point(factor.key)}
               onMouseLeave={() => point(null)}
-              onClick={() => point(pointed === factor.key ? null : factor.key)}
+              // A tap lights the factor's part (the mouse already does on hover); the drawing is decorative
+              onPointerUp={(event) => { if (event.pointerType !== 'mouse') point(pointed === factor.key ? null : factor.key); }}
             >
               <span className="cf-number" aria-hidden="true">{index + 1}</span>
               <b>{factor.title}</b>

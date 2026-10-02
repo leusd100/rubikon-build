@@ -135,7 +135,7 @@ export function DirectionNode({
   const active = step ? steps[step - 1] : undefined;
 
   return (
-    <section className={`page-section direction-editorial-section dn-section${className ? ` ${className}` : ''}`} aria-labelledby={titleId}>
+    <section className={['page-section direction-editorial-section dn-section', className].filter(Boolean).join(' ')} aria-labelledby={titleId}>
       <div className="shell direction-editorial-grid dn" data-layout={layout} data-step={step || undefined} data-touring={touring || undefined}>
         {/* Three grid areas — copy, steps, picture: on a desktop the steps sit under the copy beside the picture; on a
             phone they come after the picture, so a pressed step changes what is right above it */}

@@ -126,7 +126,11 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
                   data-cap={item.id}
                   onMouseEnter={() => point({ cap: item.id })}
                   onMouseLeave={() => point({ tier: column.id })}
-                  onClick={() => point(activeCap === item.id ? null : { cap: item.id })}
+                  // A tap lights the work's part (the mouse already does on hover); the drawing is decorative, so the
+                  // keyboard gets the same through focus on a linked work, not a click handler on the row
+                  onPointerUp={(event) => { if (event.pointerType !== 'mouse') point(activeCap === item.id ? null : { cap: item.id }); }}
+                  onFocus={() => point({ cap: item.id })}
+                  onBlur={() => point(null)}
                 >
                   <b>{item.href ? <a href={item.href}>{item.label} <span aria-hidden="true">↗</span></a> : item.label}</b>
                   {item.statement && <span>{item.statement}</span>}
