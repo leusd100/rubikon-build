@@ -17,7 +17,10 @@ from PIL import Image
 
 OUT_DIR = "public/media-responsive"
 WIDTHS = [480, 768, 1200, 1536]
-QUALITY = 90
+# 85, not 90: measured 2026-10-01 on all ten sources × four widths, q85 is 23 % smaller than q90 (7.15 → 5.48 MB) at
+# SSIM 0.975–0.985 against the lossless resize (q90: 0.983–0.990); 1:1 crops show no visible difference, while q80
+# already smooths the fine grain in dark areas. The heroes are also shown desaturated under a dark overlay.
+QUALITY = 85
 IMAGE_SETS = [
     ("public/media/direction-hero-source", "direction-hero", [
         "angary.png",

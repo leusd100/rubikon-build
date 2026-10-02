@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { Mail, Phone } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
@@ -36,7 +35,8 @@ export function MessengerLinks({
           target={href.startsWith('https://') ? '_blank' : undefined}
           rel={href.startsWith('https://') ? 'noreferrer' : undefined}
         >
-          <Image className="messenger-brand-icon" src={icon} width={24} height={24} alt="" aria-hidden="true" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- a 24 px SVG: next/image would only add its client chunk (~15 KB gzip) to every page */}
+          <img className="messenger-brand-icon" src={icon} width={24} height={24} alt="" aria-hidden="true" loading="lazy" decoding="async" />
           <span>{showFullLabels ? messengerContacts[kind].name : shortName}</span>
         </a>
       ))}

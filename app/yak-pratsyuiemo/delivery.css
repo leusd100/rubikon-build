@@ -12,7 +12,7 @@
    reveal   — content fades up a few pixels;
    activate — a node or area switches on in sequence (--i);
    emphasize — hover/focus brings the agreed scope forward.
-   Only transform, opacity, fill-opacity and stroke-dashoffset animate. */
+   Only transform, opacity, fill-opacity and stroke-dashoffset animate — and clip-path on the small contract chip. */
 .process-page {
   --m-draw: 900ms;
   --m-reveal: var(--duration-medium);
@@ -216,9 +216,11 @@
 .process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .sd-layer polygon { fill-opacity: 0; }
 .process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .sd-context { opacity: 0; }
 .process-page[data-motion-ready="on"] .proc-contract-link { transition: transform 420ms var(--m-ease) 1100ms; }
-.process-page[data-motion-ready="on"] .proc-contract .is-rubikon { transition: opacity 240ms ease 1450ms; }
+/* The RUBIKON chip is wiped in along the line, not faded: a faded chip is light text on a light ground until its card
+   is scrolled to, and an audit that runs before scrolling (Lighthouse, axe) reads that as failed contrast. */
+.process-page[data-motion-ready="on"] .proc-contract .is-rubikon { clip-path: inset(0); transition: clip-path 280ms var(--m-ease) 1450ms; }
 .process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .proc-contract-link { transform: scaleX(0); }
-.process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .proc-contract .is-rubikon { opacity: .25; }
+.process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .proc-contract .is-rubikon { clip-path: inset(0 100% 0 0); }
 
 /* ---------------------------------------------------------------- 5 · Who answers for what (signature) */
 .proc-responsibility { background: var(--color-surface); }

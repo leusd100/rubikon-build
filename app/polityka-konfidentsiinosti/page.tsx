@@ -1,12 +1,16 @@
 import { Breadcrumbs } from '../components/SiteChrome';
 import { company, companyContactLinks } from '../data/company';
 import { siteRoutes } from '../data/navigation';
-import { brandedTitle, createBasicPageMetadata } from '../lib/seo';
+import { brandedTitle, createPageMetadata } from '../lib/seo';
 
-export const metadata = createBasicPageMetadata({
-  path: '/polityka-konfidentsiinosti',
+// Its own Open Graph block: without one the page inherited the home page's og:title, og:description and og:url, so a
+// shared link previewed as the home page while the canonical said otherwise. The image stays the site's default card.
+export const metadata = createPageMetadata({
+  path: siteRoutes.privacy,
   title: brandedTitle('Політика конфіденційності'),
   description: `Інформація про обробку даних і використання Google Analytics на сайті ${company.name}.`,
+  image: '/og.jpg?v=rubikon-02',
+  imageAlt: `${company.name} — промислове будівництво у Дніпрі`,
 });
 
 export default function PrivacyPolicyPage() {

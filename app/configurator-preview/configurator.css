@@ -1168,14 +1168,6 @@
   text-wrap: balance;
 }
 
-.hc-summary-structure-line {
-  display: block;
-}
-
-.hc-summary-structure-line + .hc-summary-structure-line {
-  margin-top: 4px;
-}
-
 .hc-summary-disclaimer {
   margin: auto 0 0;
   padding-top: 22px;

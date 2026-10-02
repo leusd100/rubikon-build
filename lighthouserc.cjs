@@ -28,7 +28,9 @@ const profile = profiles[profileName];
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: `pnpm start --hostname 127.0.0.1 --port ${port}`,
+      // `vinext start` behind a compressing proxy: Cloudflare serves JS and CSS with brotli, `vinext start` does not,
+      // and the byte and LCP budgets below are only meaningful against what visitors receive (scripts/perf/lhci-server.mjs).
+      startServerCommand: `node scripts/perf/lhci-server.mjs --port ${port}`,
       startServerReadyPattern: 'Production server running',
       startServerReadyTimeout: 120_000,
       url: [profile.url],

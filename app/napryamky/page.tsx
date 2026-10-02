@@ -58,7 +58,7 @@ export const metadata = createPageMetadata({
   description: 'Ангари, зерносховища, металоконструкції, бетонні й покрівельні роботи у Дніпрі. Оберіть напрям або опишіть завдання, якщо об’єкт поєднує кілька видів робіт.',
   socialTitle: `Оберіть напрям будівництва — ${company.name}`,
   socialDescription: 'П’ять напрямів промислового будівництва у Дніпрі. Один об’єкт може поєднувати кілька — підкажемо, які саме.',
-  image: '/media-responsive/directions-sequence-angary-1200w.bf92dcbc.webp',
+  image: '/media-responsive/directions-sequence-angary-1200w.16a5481c.webp',
   imageAlt: `Промислові напрями будівництва ${company.name} — металевий каркас на будівельному майданчику`,
 });
 
@@ -116,7 +116,7 @@ export default function DirectionsPage() {
             supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
           <FormatsScope formats={formatCards()} />
-          <a className="section-link" href={`${siteRoutes.process}#formaty`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
+          <a className="section-link" href={`${siteRoutes.process}#obsiah`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
         </div>
       </section>
 

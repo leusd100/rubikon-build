@@ -161,7 +161,7 @@ test.describe('public route smoke tests', () => {
 
         const heroPoster = hero.locator('img.direction-hero-poster, img.direction-hero-image, img.directions-hero-sequence-image').first();
 
-        // HomeHeroVideo/AboutHeroVideo default to the desktop variant on first render (an
+        // HomeV2HeroMedia/AboutHeroVideo default to the desktop variant on first render (an
         // SSR-safe placeholder — the real viewport isn't known server-side) and correct
         // themselves once their viewport-detection effect resolves. That correction is
         // real but currently slow — around 500-900ms observed locally, well past a single
@@ -551,6 +551,48 @@ test.describe('public route smoke tests', () => {
 
     for (const path of directionPaths) {
       await expect(page.locator(`main a[href="${path}"]`).first()).toBeVisible();
+    }
+  });
+
+  // A page without its own Open Graph block inherits the home page's (layout.tsx): a shared link then previews as the
+  // home page while the canonical names the page itself.
+  test('every public page is shared under its own canonical URL', async ({ page }) => {
+    for (const route of publicRoutes) {
+      await page.goto(route.path, { waitUntil: 'load' });
+      const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
+      const ogUrl = await page.locator('meta[property="og:url"]').getAttribute('content');
+
+      expect(canonical, `${route.path} canonical`).toBeTruthy();
+      expect(new URL(ogUrl ?? '', page.url()).href, `${route.path} og:url`).toBe(new URL(canonical ?? '', page.url()).href);
+    }
+  });
+
+  // A renamed section id leaves every link to it landing at the top of the page with no error anywhere
+  // (/napryamky kept /yak-pratsyuiemo#formaty after /yak v2 renamed the section to #obsiah), and the header's
+  // page-relative «Контакти» (#inquiry) needs a target on every page, the 404 included.
+  test('every in-site link with a fragment lands on an element that exists', async ({ page }) => {
+    const targets = new Map<string, Set<string>>();
+
+    for (const path of [...publicRoutes.map((route) => route.path), '/tse-ne-isnuie']) {
+      await page.goto(path, { waitUntil: 'load' });
+      const origin = new URL(page.url()).origin;
+      const hrefs = await page.locator('a[href*="#"]').evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href));
+
+      for (const href of hrefs) {
+        const url = new URL(href);
+        if (url.origin !== origin || url.hash.length < 2) continue;
+        const ids = targets.get(url.pathname) ?? new Set<string>();
+        ids.add(decodeURIComponent(url.hash.slice(1)));
+        targets.set(url.pathname, ids);
+      }
+    }
+
+    expect(targets.size).toBeGreaterThan(1);
+    for (const [path, ids] of targets) {
+      await page.goto(path, { waitUntil: 'load' });
+      for (const id of ids) {
+        await expect(page.locator(`[id="${id}"]`), `${path}#${id}`).toHaveCount(1);
+      }
     }
   });
 });

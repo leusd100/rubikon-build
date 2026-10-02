@@ -39,7 +39,7 @@ the 960/1000 case above, kept deliberately separate).
 
 **Not the layout system:** `app/hooks/useViewportVariant.ts` (`phone` ≤600 / `tablet` 601–1100px
 *and* portrait / else `desktop`) exists only to pick which hero video file loads
-(`HomeHeroVideo`, `AboutHeroVideo`) — an orientation-aware media decision, not a CSS breakpoint.
+(`HomeV2HeroMedia`, `AboutHeroVideo`) — an orientation-aware media decision, not a CSS breakpoint.
 Don't extend it to gate layout, and don't expect it to match the width tiers above.
 
 ## 2. Hero grammar

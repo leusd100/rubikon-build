@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type SyntheticEvent } from 'react';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import { ChevronDown, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
 import { company, companyContactLinks } from '../data/company';
@@ -73,7 +72,8 @@ function ContactMethodIcon({ method }: { method: ContactMethod }) {
       ? messengerContacts.whatsapp
       : messengerContacts.viber;
 
-  return <Image src={messenger.icon} width={18} height={18} alt="" aria-hidden="true" />;
+  // eslint-disable-next-line @next/next/no-img-element -- an 18 px SVG; see MessengerLinks in SiteChrome.tsx
+  return <img src={messenger.icon} width={18} height={18} alt="" aria-hidden="true" loading="lazy" decoding="async" />;
 }
 
 type ProjectInquiryFormProps = {

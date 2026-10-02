@@ -15,41 +15,41 @@ const responsiveSrcSet = (name: string, variants: { w480: string; w768: string; 
 
 export const directionHeroImageAssets = {
   angary: {
-    fallbackSrc: '/media-responsive/direction-hero-angary-1536w.47bfb541.webp',
+    fallbackSrc: '/media-responsive/direction-hero-angary-1536w.57aba1e2.webp',
     srcSet: responsiveSrcSet('angary', {
-      w480: '23e99ee3', w768: '854c045c', w1200: '89dd3d36', w1536: '47bfb541',
+      w480: '7bb0c38f', w768: 'aa4c3e1e', w1200: 'af5582fd', w1536: '57aba1e2',
     }),
     focalPosition: '56% center',
     mobileFocalPosition: '58% center',
   },
   zernoskhovyshcha: {
-    fallbackSrc: '/media-responsive/direction-hero-zernoskhovyshcha-1536w.e57d09e3.webp',
+    fallbackSrc: '/media-responsive/direction-hero-zernoskhovyshcha-1536w.b0718f9a.webp',
     srcSet: responsiveSrcSet('zernoskhovyshcha', {
-      w480: '26cfa6cf', w768: '97b41ea1', w1200: 'b5a90c65', w1536: 'e57d09e3',
+      w480: '0be99307', w768: 'e3fdf670', w1200: 'ede647fb', w1536: 'b0718f9a',
     }),
     focalPosition: '57% center',
     mobileFocalPosition: '62% center',
   },
   metalokonstruktsii: {
-    fallbackSrc: '/media-responsive/direction-hero-metalokonstruktsii-1536w.75034445.webp',
+    fallbackSrc: '/media-responsive/direction-hero-metalokonstruktsii-1536w.092948f6.webp',
     srcSet: responsiveSrcSet('metalokonstruktsii', {
-      w480: '44943be4', w768: '0b06a47d', w1200: '2086add2', w1536: '75034445',
+      w480: '989d697b', w768: '07e7e67b', w1200: '5867185c', w1536: '092948f6',
     }),
     focalPosition: '55% center',
     mobileFocalPosition: '58% center',
   },
   'betonni-roboty': {
-    fallbackSrc: '/media-responsive/direction-hero-betonni-roboty-1536w.bc7db972.webp',
+    fallbackSrc: '/media-responsive/direction-hero-betonni-roboty-1536w.e75f8937.webp',
     srcSet: responsiveSrcSet('betonni-roboty', {
-      w480: '5928b7fa', w768: 'fb8a66db', w1200: '7a5c01d2', w1536: 'bc7db972',
+      w480: '48f602f0', w768: 'eeda364e', w1200: 'b64d57cf', w1536: 'e75f8937',
     }),
     focalPosition: '53% center',
     mobileFocalPosition: '55% center',
   },
   'pokrivelni-roboty': {
-    fallbackSrc: '/media-responsive/direction-hero-pokrivelni-roboty-1536w.edda7a33.webp',
+    fallbackSrc: '/media-responsive/direction-hero-pokrivelni-roboty-1536w.b4fc3fbd.webp',
     srcSet: responsiveSrcSet('pokrivelni-roboty', {
-      w480: '5bac4303', w768: '68f6457b', w1200: 'c7247b87', w1536: 'edda7a33',
+      w480: '75079011', w768: 'c0aec093', w1200: '8e01c17b', w1536: 'b4fc3fbd',
     }),
     focalPosition: '55% center',
     mobileFocalPosition: '57% center',
