@@ -43,7 +43,7 @@ Best Practices and SEO 100 everywhere; TBT 0–10 ms; CLS 0–0.001.
 | Nightly Lighthouse red every night: `vinext start` serves JS/CSS uncompressed | fixed (`scripts/perf/lhci-server.mjs`) |
 | `/yak` chip at opacity .25 before reveal → axe colour-contrast ×3, PSI A11y 97 | fixed (clip-path wipe) |
 | PSI monitor reports success but never measures (no API key) | owner: add the secret |
-| Media never answer `Range` with 206 (full 200, no `Accept-Ranges`) — iOS Safari video risk | owner: test on iPhone |
+| Media never answer `Range` with 206 (full 200, no `Accept-Ranges`) | iOS Simulator (iOS 27, 2026-10-02): the hero videos play anyway; one check on a physical iPhone with an older iOS remains |
 | `/pro-nas` phones download two posters (SSR desktop-variant 768w + phone poster) | backlog |
 
 ## Fixes on the branch
@@ -110,9 +110,11 @@ Lighthouse CI keeps its current assertions until a week of nightly runs through 
 
 ## Backlog
 
-- **P1** iOS playback without Range: open `/pro-nas` on an iPhone and HOME on an iPad (portrait); if the video does not
-  play, enable Workers Caching (`cache.enabled`, which slices ranges from the cached full response) or route
-  `/media/*.mp4` through the Worker with caching.
+- **P3** iOS playback without Range — tested in the iOS Simulator (iOS 27, Mobile Safari, 2026-10-02): `/pro-nas` on
+  iPhone 17 plays (the round «Пауза» control, which renders only after `playing`, is shown; 26 % of the hero's pixels
+  change in 2 s) and HOME on iPad (A16) portrait plays the tablet montage (29 %). The simulator has only iOS 27 and the
+  Mac's media stack, so check once on a physical iPhone with an older iOS; only if it fails, enable Workers Caching
+  (`cache.enabled`, which slices ranges from the cached full response).
 - **P2** `PAGESPEED_API_KEY` secret (or make the monitor report "skipped", not "success").
 - **P2** `/pro-nas` video weight: phone montage 3.46 MB is the largest mobile payload on the site and becomes the LCP
   element in 4 of 6 local Lighthouse runs (LCP 21 s, simulated full download); desktop five clips 7.66 MB.
