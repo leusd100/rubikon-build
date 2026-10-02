@@ -1,6 +1,8 @@
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from './SiteChrome';
 import { DirectionSectionDrawing, hasSectionDrawing } from './directions/DirectionSectionDrawing';
 import { DirectionEntry } from './directions/DirectionEntry';
+import { COST_GLYPHS, CostGlyph } from './directions/CostGlyph';
+import { ProcessMotion } from './process/ProcessMotion';
 import { ConversationSection } from './ConversationSection';
 import ResponsiveImage from './ResponsiveImage';
 import { DrawingSheet, type SheetCell } from './DrawingSheet';
@@ -15,7 +17,7 @@ import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest
 import { company } from '../data/company';
 import { DIRECTION_JOURNEY } from '../data/conversation';
 import { siteRoutes } from '../data/navigation';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import './directions/direction-template.css';
 
 const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
@@ -33,14 +35,17 @@ function classNames(...names: (string | undefined)[]) {
 function DirectionItemCards({
   className,
   items,
+  motion = false,
 }: {
   className: string;
   items: readonly DirectionItem[];
+  /** Rises in one by one when the page's motion controller sees it (direction-template.css) */
+  motion?: boolean;
 }) {
   return (
-    <div className={className}>
-      {items.map(([number, title, text, Icon]) => (
-        <article key={number}>
+    <div className={className} data-motion={motion ? '' : undefined}>
+      {items.map(([number, title, text, Icon], index) => (
+        <article key={number} style={{ '--i': index } as CSSProperties}>
           <span>{number}</span>
           {Icon && <Icon className="card-icon" aria-hidden="true" />}
           <h3>{title}</h3>
@@ -156,10 +161,10 @@ export function DirectionProcess({
     <section className={classNames('page-section page-section-dark', className)}>
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow={eyebrow} title={title} supporting={text} inverse />
-        <ol className="detail-steps">
-          {/* A sequence on one rail (globals.css .detail-steps); the steps' icons are no longer drawn */}
-          {steps.map(([stepNumber, stepTitle, stepText]) => (
-            <li key={stepNumber}><span>{stepNumber}</span><h3>{stepTitle}</h3><p>{stepText}</p></li>
+        <ol className="detail-steps" data-motion>
+          {/* A sequence on one rail (globals.css .detail-steps); in view, the rail draws from node to node */}
+          {steps.map(([stepNumber, stepTitle, stepText], index) => (
+            <li key={stepNumber} style={{ '--i': index } as CSSProperties}><span>{stepNumber}</span><h3>{stepTitle}</h3><p>{stepText}</p></li>
           ))}
         </ol>
       </div>
@@ -171,11 +176,14 @@ function DirectionCostSection({
   title,
   text,
   items,
+  directionId,
 }: {
   title: string;
   text: string;
   items: readonly DirectionItem[];
+  directionId: DirectionPageConfig['id'];
 }) {
+  const glyphs = COST_GLYPHS[directionId];
   // Process (right above this section) is a sequence — ordered steps, a bordered card grid says
   // that correctly. Cost factors aren't ordered — they're simultaneous considerations, so this
   // deliberately does NOT reuse .cost-grid's box-grid logic (that class stays exactly as-is for
@@ -185,7 +193,17 @@ function DirectionCostSection({
     <section className="page-section cost-section">
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow="Формування кошторису" title={title} supporting={text} />
-        <DirectionItemCards className="cost-list" items={items} />
+        {/* Each factor with its line glyph, drawn in as the list comes into view */}
+        <div className={classNames('cost-list', glyphs && 'has-glyphs')} data-motion>
+          {items.map(([number, itemTitle, itemText], index) => (
+            <article key={number} style={{ '--i': index } as CSSProperties}>
+              <span>{number}</span>
+              {glyphs?.[index] && <CostGlyph kind={glyphs[index]} />}
+              <h3>{itemTitle}</h3>
+              <p>{itemText}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -347,7 +365,9 @@ export function DirectionPage({
   const direction = getDirection(config.id);
 
   return (
-    <main className={classNames('inner-page', config.pageClassName)} id="main-content">
+    <main className={classNames('inner-page direction-page', config.pageClassName)} id="main-content">
+      {/* Arms the page's [data-motion] blocks once each is in view; with reduced motion everything shows at once */}
+      <ProcessMotion root=".direction-page" />
       <DirectionHero
         path={direction.href}
         number={direction.number}
@@ -387,7 +407,7 @@ export function DirectionPage({
                   {/* The direction's drawing fragment fills the column under the heading (it replaced the ghost word) */}
                   {hasSectionDrawing(config.id) && <DirectionSectionDrawing id={config.id} number={direction.number} />}
                 </div>
-                <DirectionItemCards className="feature-list" items={config.overview.items} />
+                <DirectionItemCards className="feature-list" items={config.overview.items} motion />
               </div>
             )}
           </section>
@@ -395,7 +415,7 @@ export function DirectionPage({
 
           <DirectionEditorial directionId={config.id} editorial={config.editorial} />
           <DirectionProcess {...config.process} />
-          {config.cost && <DirectionCostSection {...config.cost} />}
+          {config.cost && <DirectionCostSection {...config.cost} directionId={config.id} />}
         </>
       )}
       {config.faq && <DirectionFaq {...config.faq} />}

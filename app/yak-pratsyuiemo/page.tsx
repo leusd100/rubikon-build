@@ -1,4 +1,5 @@
 import { DraftingCompass } from 'lucide-react';
+import { CostFactorsFigure } from '../components/process/CostFactorsFigure';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
@@ -348,17 +349,8 @@ export default function DeliveryModelPage() {
             titleId="proc-terms-title"
             supporting="Нижче — що враховуємо в розрахунку, як із цього виходять кошторис і графік і що буде, якщо щось зміниться."
           />
-          <div className="proc-factors">
-            <p className="proc-factors-title">Що враховуємо в розрахунку</p>
-            <ul>
-              {costFactors().map((factor) => (
-                <li key={factor.title}>
-                  <b>{factor.title}</b>
-                  {factor.detail && <span>{factor.detail}</span>}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* The seven factors beside one drawing of a hangar on its site, each numbered where it acts */}
+          <CostFactorsFigure factors={costFactors().map((factor) => ({ key: factor.ids[0], title: factor.title, detail: factor.detail }))} />
           <p className="proc-factors-title proc-terms-flow-title">Як із цього виходять кошторис і графік</p>
           <div className="proc-terms-flow" data-motion>
             <ol className="proc-terms-grid">

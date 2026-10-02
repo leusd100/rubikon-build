@@ -21,20 +21,20 @@ function Steel() {
   return (
     <>
       {/* I-beam section */}
-      <path className="dsd-cut" d="M70 44 H190 V58 H137 V182 H190 V196 H70 V182 H123 V58 H70 Z" />
+      <path pathLength={1} className="dsd-cut" d="M70 44 H190 V58 H137 V182 H190 V196 H70 V182 H123 V58 H70 Z" />
       <path className="dsd-axis" d="M130 24 V216 M50 120 H210" />
       {/* dimension lines: h and b, letters only */}
-      <path className="dsd-dim" d="M40 44 V196 M34 44 H46 M34 196 H46 M70 222 H190 M70 216 V228 M190 216 V228" />
+      <path pathLength={1} className="dsd-dim" d="M40 44 V196 M34 44 H46 M34 196 H46 M70 222 H190 M70 216 V228 M190 216 V228" />
       <text className="dsd-dim-text" x="28" y="124">h</text>
       <text className="dsd-dim-text" x="126" y="238">b</text>
       {/* the joint: an end plate with four bolts */}
-      <path className="dsd-line" d="M246 54 H316 V186 H246 Z" />
+      <path pathLength={1} className="dsd-line" d="M246 54 H316 V186 H246 Z" />
       <path className="dsd-axis" d="M281 40 V200 M232 90 H330 M232 150 H330" />
       <g className="dsd-accent">
-        <circle cx="263" cy="90" r="7" />
-        <circle cx="299" cy="90" r="7" />
-        <circle cx="263" cy="150" r="7" />
-        <circle cx="299" cy="150" r="7" />
+        <circle pathLength={1} cx="263" cy="90" r="7" />
+        <circle pathLength={1} cx="299" cy="90" r="7" />
+        <circle pathLength={1} cx="263" cy="150" r="7" />
+        <circle pathLength={1} cx="299" cy="150" r="7" />
       </g>
     </>
   );
@@ -45,18 +45,18 @@ function Concrete() {
   return (
     <>
       {/* ground */}
-      <path className="dsd-line" d="M20 104 H130 M230 104 H340" />
-      <path className="dsd-hatch" d="M28 104 l-8 10 M48 104 l-8 10 M68 104 l-8 10 M88 104 l-8 10 M108 104 l-8 10 M244 104 l-8 10 M264 104 l-8 10 M284 104 l-8 10 M304 104 l-8 10 M324 104 l-8 10" />
+      <path pathLength={1} className="dsd-line" d="M20 104 H130 M230 104 H340" />
+      <path pathLength={1} className="dsd-hatch" d="M28 104 l-8 10 M48 104 l-8 10 M68 104 l-8 10 M88 104 l-8 10 M108 104 l-8 10 M244 104 l-8 10 M264 104 l-8 10 M284 104 l-8 10 M304 104 l-8 10 M324 104 l-8 10" />
       {/* pedestal and footing */}
-      <path className="dsd-cut" d="M150 62 H210 V150 H300 V204 H60 V150 H150 Z" />
+      <path pathLength={1} className="dsd-cut" d="M150 62 H210 V150 H300 V204 H60 V150 H150 Z" />
       {/* reinforcement: bottom bars, pedestal verticals */}
       <g className="dsd-bars">{bars.map((x) => <circle key={x} cx={x} cy="192" r="2.6" />)}</g>
-      <path className="dsd-line" d="M160 70 V190 H166 M200 70 V190 H194" />
+      <path pathLength={1} className="dsd-line" d="M160 70 V190 H166 M200 70 V190 H194" />
       {/* the copper detail: anchors above the pedestal and the cover under the bars */}
       <g className="dsd-accent">
-        <path d="M168 62 V30 M192 62 V30" />
-        <path d="M162 40 H174 M186 40 H198" />
-        <path d="M322 192 V204 M316 192 H328 M316 204 H328" />
+        <path pathLength={1} d="M168 62 V30 M192 62 V30" />
+        <path pathLength={1} d="M162 40 H174 M186 40 H198" />
+        <path pathLength={1} d="M322 192 V204 M316 192 H328 M316 204 H328" />
       </g>
       <text className="dsd-dim-text dsd-accent-text" x="334" y="202">a</text>
       <path className="dsd-axis" d="M180 20 V222" />
@@ -72,23 +72,23 @@ function Roofing() {
   return (
     <>
       <g transform="translate(40 160) rotate(-17)">
-        <path className="dsd-line" d={`M0 0 ${ribs}`} />
-        <path className="dsd-line" d="M0 4 H272 M0 24 H272" />
-        <path className="dsd-insulation" d={`M0 14 ${insulation}`} />
-        <path className="dsd-cut" d="M0 24 H272 V29 H0 Z" />
-        <path className="dsd-cut" d="M44 29 h14 v20 h-14 Z M140 29 h14 v20 h-14 Z M236 29 h14 v20 h-14 Z" />
+        <path pathLength={1} className="dsd-line" d={`M0 0 ${ribs}`} />
+        <path pathLength={1} className="dsd-line" d="M0 4 H272 M0 24 H272" />
+        <path pathLength={1} className="dsd-insulation" d={`M0 14 ${insulation}`} />
+        <path pathLength={1} className="dsd-cut" d="M0 24 H272 V29 H0 Z" />
+        <path pathLength={1} className="dsd-cut" d="M44 29 h14 v20 h-14 Z M140 29 h14 v20 h-14 Z M236 29 h14 v20 h-14 Z" />
         {/* slope: the arrow points the way water runs */}
-        <path className="dsd-dim" d="M176 72 H96 M96 72 l9 -4 M96 72 l9 4" />
+        <path pathLength={1} className="dsd-dim" d="M176 72 H96 M96 72 l9 -4 M96 72 l9 4" />
         <text className="dsd-dim-text" x="132" y="90">i</text>
       </g>
       {/* the wall it meets, in section */}
-      <path className="dsd-cut" d="M300 30 H330 V214 H300 Z" />
-      <path className="dsd-hatch" d={masonry.map((y) => `M300 ${y} L330 ${y - 22}`).join(' ')} />
+      <path pathLength={1} className="dsd-cut" d="M300 30 H330 V214 H300 Z" />
+      <path pathLength={1} className="dsd-hatch" d={masonry.map((y) => `M300 ${y} L330 ${y - 22}`).join(' ')} />
       {/* copper: the flashing over the junction (into the wall, down its face, out over the sheet) and the gutter */}
       <g className="dsd-accent">
-        <path d="M308 34 L300 40 V66 L262 77.6 V82" />
-        <path d="M16 166 a14 14 0 0 0 28 0" />
-        <path d="M30 180 V218" />
+        <path pathLength={1} d="M308 34 L300 40 V66 L262 77.6 V82" />
+        <path pathLength={1} d="M16 166 a14 14 0 0 0 28 0" />
+        <path pathLength={1} d="M30 180 V218" />
       </g>
     </>
   );
@@ -97,7 +97,7 @@ function Roofing() {
 export function DirectionSectionDrawing({ id, number }: Readonly<{ id: DrawingId; number: string }>) {
   const sheet = SHEETS[id];
   return (
-    <figure className="dsd" aria-hidden="true">
+    <figure className="dsd" aria-hidden="true" data-motion>
       <svg viewBox="0 0 360 248" focusable="false">
         {id === 'metalokonstruktsii' && <Steel />}
         {id === 'betonni-roboty' && <Concrete />}

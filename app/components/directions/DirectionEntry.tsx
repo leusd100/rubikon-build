@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { DirectionPageConfig } from '../../types/directionPage';
 import { SectionHeader } from '../SiteChrome';
 import { PrefillInquiryLink } from './PrefillInquiryLink';
@@ -9,9 +10,9 @@ export function DirectionEntry({ entry }: Readonly<{ entry: NonNullable<Directio
     <section className="page-section direction-entry" aria-labelledby="direction-entry-title">
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow={entry.eyebrow} title={entry.title} supporting={entry.text} titleId="direction-entry-title" />
-        <ol className="direction-entry-list">
-          {entry.items.map((item) => (
-            <li key={item.situation}>
+        <ol className="direction-entry-list" data-motion>
+          {entry.items.map((item, index) => (
+            <li key={item.situation} style={{ '--i': index } as CSSProperties}>
               <h3>{item.situation}</h3>
               <p>{item.text}</p>
               <p className="direction-entry-start"><b>Почнемо з</b> {item.start}</p>
