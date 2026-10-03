@@ -39,7 +39,9 @@ export function HangarEditorialArchitecture({ content }: Readonly<{ content: Ang
     }
     : undefined;
   const attached = Boolean(inquiry?.isAttached);
-  const briefState = attached ? 'attached' : inquiry?.attachment.status === 'detached' ? 'detached' : 'idle';
+  let briefState = 'idle';
+  if (attached) briefState = 'attached';
+  else if (inquiry?.attachment.status === 'detached') briefState = 'detached';
 
   return (
     <>

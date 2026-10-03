@@ -77,14 +77,13 @@
   .angary-process-rail { grid-template-columns: 1fr; max-width: var(--content-copy); }
   /* vertical: a segment from each node down to the next one, so the rail ends at the last node */
   .angary-process-rail::before { content: none; }
-  .angary-process-rail li:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 22px; width: 1px; background: var(--color-accent); }
+  .angary-process-rail li:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 22px; width: 1px; background: var(--color-accent); transform-origin: top; transition: transform 500ms var(--ease-premium) calc(250ms + var(--i, 0) * 170ms); }
   .angary-process-rail li { padding: 0 0 30px 68px; text-align: left; }
   .angary-process-rail li:last-child { padding-bottom: 0; }
   .angary-process-rail li > span { position: absolute; top: 0; left: 0; margin: 0; }
   .angary-process-rail h3 { padding-top: 10px; }
   .angary-process-rail :is(h3, p) { max-width: 560px; margin-inline: 0; }
   :where([data-motion-ready]) .angary-process-rail:not([data-motion-state="on"]) li:not(:last-child)::before { transform: scaleY(0); }
-  .angary-process-rail li:not(:last-child)::before { transform-origin: top; transition: transform 500ms var(--ease-premium) calc(250ms + var(--i, 0) * 170ms); }
   .angary-cost-foot { grid-template-columns: 1fr; }
   .angary-stamp { grid-template-columns: 1fr; }
   .angary-stamp dl { grid-template-columns: 1fr 1fr; }
@@ -106,13 +105,12 @@
   .angary-process .angary-section-heading { margin-bottom: 50px; }
   .angary-process-rail { grid-template-columns: 1fr; }
   .angary-process-rail::before { content: none; }
-  .angary-process-rail li:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 22px; width: 1px; background: var(--color-accent); }
+  .angary-process-rail li:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 22px; width: 1px; background: var(--color-accent); transform-origin: top; transition: transform 500ms var(--ease-premium) calc(250ms + var(--i, 0) * 170ms); }
   .angary-process-rail li { padding: 0 0 28px 60px; text-align: left; }
   .angary-process-rail li:last-child { padding-bottom: 0; }
   .angary-process-rail li > span { position: absolute; top: 0; left: 0; margin: 0; }
   .angary-process-rail h3 { max-width: none; margin-inline: 0; padding-top: 10px; font-size: 18px; }
   :where([data-motion-ready]) .angary-process-rail:not([data-motion-state="on"]) li:not(:last-child)::before { transform: scaleY(0); }
-  .angary-process-rail li:not(:last-child)::before { transform-origin: top; transition: transform 500ms var(--ease-premium) calc(250ms + var(--i, 0) * 170ms); }
   .angary-cost-foot { grid-template-columns: 1fr; margin-top: 28px; }
   .angary-cost-actions .button { width: 100%; justify-content: space-between; }
   .angary-stamp { grid-template-columns: 1fr; }

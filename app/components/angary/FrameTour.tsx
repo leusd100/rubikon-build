@@ -97,8 +97,13 @@ function frameGeometry(domain: HangarDomainModel) {
   }).join('');
   const padHatch = columnXs.map((x) => [0, 1, 2].map((index) => line([x - 13 + index * 10, 0, -16], [x - 5 + index * 10, 0, -2])).join('')).join('');
   const foundationType = domain.foundation.type;
-  const base = foundationType === 'slab' ? `${slabFront}${slabTop}` : foundationType === 'isolated' ? pads : frontPads;
-  const baseHatch = foundationType === 'slab' ? slabHatch : foundationType === 'isolated' ? padHatch : '';
+  // slab: the slab under the whole frame; isolated: a pad under every column; not decided yet: the front pads, dashed
+  const BASE = {
+    slab: { base: `${slabFront}${slabTop}`, hatch: slabHatch },
+    isolated: { base: pads, hatch: padHatch },
+    engineeringDecision: { base: frontPads, hatch: '' },
+  } as const;
+  const { base, hatch: baseHatch } = BASE[foundationType];
 
   // Dimensions: span L under the front, wall height H at the right, frame spacing a along the left base
   const [l1, l2] = [xy([0, 0, -40]), xy([W, 0, -40])];
@@ -116,7 +121,7 @@ function frameGeometry(domain: HangarDomainModel) {
   }).join('');
   const flowSide = (side: 0 | 1) => {
     const x = side ? W - m / 2 : m / 2;
-    return line([W / 2, 0, R - 4], [x, 0, (side ? E : E) - 4], [x, 0, -14]);
+    return line([W / 2, 0, R - 4], [x, 0, E - 4], [x, 0, -14]);
   };
   const flow = [flowSide(0), flowSide(1), centre ? line([W / 2, 0, E - 2], [W / 2, 0, -14]) : ''];
 

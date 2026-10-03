@@ -30,7 +30,7 @@
     "title lede";
   gap: 16px var(--grid-gap);
   max-width: var(--container-max);
-  margin-bottom: 54px;
+  margin-bottom: 40px;
 }
 
 .hangar-configurator-embedded .hc-eyebrow { grid-area: eyebrow; }
@@ -1218,10 +1218,6 @@
   .hangar-configurator-embedded .hc-preview-demo-status { align-items: flex-start; flex-direction: column; padding-block: 12px; }
 }
 
-/* 320 px: two columns leave ~95 px per description, so «ОГОРОДЖЕННЯ» and «використання» broke
-   mid-word. One column keeps every word whole; the list is the same four short items. */
-@media (max-width: 340px) {
-}
 
 /* UX pass 2026-10: the summary values went 13 → 15 px; in the narrow two-column summary of a 1001–1180 px window
    «огороджувальний» would no longer fit its column, so that band keeps 14 px. */
@@ -1289,7 +1285,6 @@
    The pane (toolbar + drawing + a 505 px summary) was 1195 px tall against 783 px of free screen at 1440×900, so
    «Обговорити цю конфігурацію» never showed while configuring and the gates were set with 38% of the drawing in view. */
 /* no vocabulary row any more (it repeated the groups under other names) */
-.hangar-configurator-embedded .hc-hero { margin-bottom: 40px; }
 @media (min-width: 1024px) { .hangar-configurator-embedded .hc-hero { grid-template-areas: "eyebrow eyebrow" "title lede"; } }
 @media (max-width: 1023px) { .hangar-configurator-embedded .hc-hero { grid-template-areas: "eyebrow" "title" "lede"; } }
 .hangar-configurator-embedded .hc-preview-svg { height: clamp(320px, min(46vw, 100vh - 250px), 560px); }

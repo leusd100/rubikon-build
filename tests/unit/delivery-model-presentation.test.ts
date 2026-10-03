@@ -95,6 +95,9 @@ describe('delivery model presentation: frozen statements', () => {
     expect(turnkey?.[1]).toEqual({ deliveryModelAnswer: 'turnkey' });
     expect(faqAnswerText({ deliveryModelAnswer: 'turnkey' })).toBe(turnkeyAnswer());
     expect(faqAnswerText('Звичайна відповідь.')).toBe('Звичайна відповідь.');
+    // /angary «Хто готує проєкт ангара?» and «Хто закуповує матеріали?» answer with the frozen statements, verbatim
+    expect(faqAnswerText({ deliveryModelAnswer: 'design' })).toBe(deliveryModel.statements.design);
+    expect(faqAnswerText({ deliveryModelAnswer: 'materials' })).toBe(deliveryModel.statements.materials);
   });
 });
 

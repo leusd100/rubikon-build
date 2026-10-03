@@ -16,7 +16,7 @@ export function InquiryAttachmentSummary({ attachment, onDetach }: { attachment:
   return (
     <aside className="inquiry-config-brief" id="inquiry-brief" tabIndex={-1} aria-labelledby="inquiry-config-brief-title">
       {/* Filled once by revealAttachedBrief on an explicit action, never on the auto-attach of every edit */}
-      <p className="sr-only" id="inquiry-brief-status" role="status" />
+      <output className="sr-only" id="inquiry-brief-status" />
       <div className="inquiry-config-brief-heading">
         <div>
           <small id="inquiry-config-brief-title">{attachment.title}</small>

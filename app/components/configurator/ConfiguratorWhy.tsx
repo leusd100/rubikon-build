@@ -38,7 +38,6 @@ function WhyImage({ src, alt, title, text }: Readonly<{ src: string; alt: string
 
 export function ConfiguratorWhy({ topic }: Readonly<{ topic: WhyTopic }>) {
   return (
-    <>
       <details className="hc-why" data-why={topic}>
         <summary>Чому це важливо</summary>
         <div className="hc-why-body">
@@ -87,6 +86,5 @@ export function ConfiguratorWhy({ topic }: Readonly<{ topic: WhyTopic }>) {
           )}
         </div>
       </details>
-    </>
   );
 }
