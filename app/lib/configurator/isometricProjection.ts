@@ -97,6 +97,8 @@ export type DimensionGuide = {
   text: string;
   valueM: number;
   derived: boolean;
+  /** The label's type size in drawing units: the stylesheet's size times the drawing's label scale */
+  fontPx: number;
 };
 
 /** Font sizes the stylesheet gives dimension labels, mirrored here only to estimate extents. */
@@ -105,10 +107,13 @@ const DERIVED_LABEL_FONT_PX = 12;
 /** Condensed 600-weight averages well under 0.6em per glyph; 0.62 leaves deliberate headroom. */
 const LABEL_CHAR_WIDTH_EM = 0.62;
 
-/** How far a turned label is nudged outboard of its own chain line before it is drawn. */
-const TURNED_LABEL_NUDGE_PX = Math.round(LABEL_FONT_PX * 0.35);
-/** How far a turned label reaches outboard of its chain in total: the nudge plus one leading. */
-const TURNED_LABEL_REACH_PX = TURNED_LABEL_NUDGE_PX + LABEL_FONT_PX;
+/** How far a turned label's middle sits outboard of its own chain line, in ems. Its glyphs reach about 0.45 em to one
+ *  side of the middle and 0.3 em to the other, so at 0.65 em they clear the line with a small gap, the way a drafted
+ *  figure stands off its dimension line. At 0.35 em (until 03.10) the line ran through the word gap: «8_м». */
+const TURNED_LABEL_NUDGE_EM = 0.65;
+/** How far an edge label stands off its line, and how far it drops to sit centred on it, at the base type size */
+const EDGE_LABEL_OFFSET_PX = 16;
+const EDGE_LABEL_DROP_PX = 5;
 /** Breathing room between the eave chain's turned label and the ridge chain's line. */
 const HEIGHT_CHAIN_CLEARANCE_PX = 8;
 /** Breathing room left between the foundation's projected edge and the eave chain's line. */
@@ -145,7 +150,7 @@ function labelText(valueM: number): string {
  * Estimated rather than measured on purpose: this module is pure and has no DOM to measure with.
  */
 function labelExtent(guide: Omit<DimensionGuide, 'ticks' | 'line'>): Point[] {
-  const fontPx = guide.derived ? DERIVED_LABEL_FONT_PX : LABEL_FONT_PX;
+  const { fontPx } = guide;
   const run = guide.text.length * fontPx * LABEL_CHAR_WIDTH_EM;
   if (guide.rotated) {
     // Turned a quarter: the run is now vertical and only the leading costs width. That swap IS the
@@ -194,8 +199,13 @@ function findPrimitives<K extends ScenePrimitive['kind']>(
 /**
  * Pure: a TechnicalSceneModel in, an isometric scene of plain {x,y} points out. No React, no
  * DOM — `HangarPreview` is the only thing that turns this into actual SVG markup.
+ *
+ * `labelScale` sets the dimension labels' type size against the drawing (1 = the stylesheet's 14/12 units). A drawing
+ * shown small — a phone, a 1024 px window — draws its labels larger in its own units so they still read at a legible
+ * size on screen (`labelScaleToFit`); everything the labels push aside (their stand-off, the ridge chain, the bounds)
+ * follows the same scale, so they keep clear of each other and of the frame at any size.
  */
-export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScene {
+export function projectIsometricScene(scene: TechnicalSceneModel, labelScale = 1): IsometricScene {
   const { widthM, lengthM, eaveHeightM, ridgeHeightM } = scene.dimensions;
 
   const terrainPrimitive = findPrimitives(scene, 'terrain-plane')[0];
@@ -316,20 +326,20 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   );
   const clearedHeightOffset = Math.max(heightOffset, foundationExcessPx + FOUNDATION_CLEARANCE_PX);
 
-  const eaveGuide = heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, clearedHeightOffset, false);
+  const eaveGuide = heightGuide({ x: widthM, y: 0, z: 0 }, centroid, eaveHeightM, clearedHeightOffset, false, labelScale);
   // Turned labels sit ALONG their chain, so the ridge clears the eave label's outward REACH — the
   // nudge plus one leading — rather than the full run of "8,5 м", which is why this offset shrank
   // instead of growing. Derived from the same constants the label is drawn from, so the two cannot
   // drift apart the way a tuned number would.
-  const ridgeOffset = clearedHeightOffset + TURNED_LABEL_REACH_PX + HEIGHT_CHAIN_CLEARANCE_PX;
+  const ridgeOffset = clearedHeightOffset + turnedLabelNudge(eaveGuide.fontPx) + eaveGuide.fontPx + HEIGHT_CHAIN_CLEARANCE_PX;
 
   const dims = {
-    width: edgeGuide({ x: 0, y: 0, z: 0 }, { x: widthM, y: 0, z: 0 }, centroid, edgeOffset, widthM),
-    length: edgeGuide({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: lengthM }, centroid, edgeOffset, lengthM),
+    width: edgeGuide({ x: 0, y: 0, z: 0 }, { x: widthM, y: 0, z: 0 }, centroid, edgeOffset, widthM, labelScale),
+    length: edgeGuide({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: lengthM }, centroid, edgeOffset, lengthM, labelScale),
     // Both height chains hang off the same corner — the one the width edge ends at, which the
     // camera basis puts on the outside of the drawing.
     eave: eaveGuide,
-    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, ridgeOffset, true),
+    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, ridgeOffset, true, labelScale),
   };
 
   const allPoints = [
@@ -440,6 +450,11 @@ function anchorFor(nx: number): DimensionGuide['anchor'] {
   return 'middle';
 }
 
+/** How far a turned label of this size stands off its chain (`TURNED_LABEL_NUDGE_EM`) */
+function turnedLabelNudge(fontPx: number): number {
+  return Math.round(fontPx * TURNED_LABEL_NUDGE_EM);
+}
+
 /** A guide along one edge of the footprint — used for both width and length. */
 function edgeGuide(
   from: Vec3,
@@ -447,17 +462,20 @@ function edgeGuide(
   centroid: Point,
   distancePx: number,
   valueM: number,
+  labelScale: number,
 ): DimensionGuide {
   const { A, B, nx, ny } = offsetAway(project(from), project(to), centroid, distancePx);
   const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+  const standOff = EDGE_LABEL_OFFSET_PX * labelScale;
   return {
     line: [A, B],
     ticks: ticksFor(A, B),
-    label: { x: mid.x + nx * 16, y: mid.y + ny * 16 + 5 },
+    label: { x: mid.x + nx * standOff, y: mid.y + ny * standOff + EDGE_LABEL_DROP_PX * labelScale },
     anchor: anchorFor(nx),
     text: labelText(valueM),
     valueM,
     derived: false,
+    fontPx: LABEL_FONT_PX * labelScale,
   };
 }
 
@@ -471,12 +489,14 @@ function heightGuide(
   valueM: number,
   offsetPx: number,
   derived: boolean,
+  labelScale: number,
 ): DimensionGuide {
   const base = project({ x: anchor.x, y: 0, z: anchor.z });
   const top = project({ x: anchor.x, y: valueM, z: anchor.z });
   const direction = base.x <= centroid.x ? -1 : 1;
   const A = { x: top.x + offsetPx * direction, y: top.y };
   const B = { x: base.x + offsetPx * direction, y: base.y };
+  const fontPx = (derived ? DERIVED_LABEL_FONT_PX : LABEL_FONT_PX) * labelScale;
   return {
     line: [A, B],
     ticks: [
@@ -489,7 +509,7 @@ function heightGuide(
     // at 62% of the frame's height with the space above and below unused. Turned, the same label
     // spends that free height instead and costs only its leading.
     label: {
-      x: A.x + TURNED_LABEL_NUDGE_PX * direction,
+      x: A.x + turnedLabelNudge(fontPx) * direction,
       y: (A.y + B.y) / 2,
     },
     anchor: 'middle',
@@ -497,7 +517,55 @@ function heightGuide(
     text: labelText(valueM),
     valueM,
     derived,
+    fontPx,
   };
+}
+
+/** Floor and ceiling for the proportional viewBox padding below — same clamped-proportional shape
+ *  already used nearby for `edgeOffset`/`heightOffset` above ("Offsets scale with the building so
+ *  guides clear it at every size instead of at one"), applied here to the outer frame margin for
+ *  the same reason: a flat pixel value means a tiny 10×10m hangar gets a huge RELATIVE margin
+ *  (looks lost in empty space) while a 60×120m one gets a tiny one (reads as cramped). Tightened
+ *  from the original 32/90/0.05 to bring the technical view's own fill fraction closer to the 3D
+ *  view's (FitOrthographicCamera's FIT_MARGIN). Lived in HangarPreview.tsx until 03.10, when the
+ *  label fit below needed to frame the drawing exactly as it is drawn. */
+const VIEWBOX_PADDING_MIN = 12;
+const VIEWBOX_PADDING_MAX = 32;
+const VIEWBOX_PADDING_RATIO = 0.02;
+
+export type ViewBox = { x: number; y: number; width: number; height: number };
+
+/** The drawing's viewBox: its bounds and a margin proportional to them */
+export function viewBoxOf({ minX, minY, maxX, maxY }: IsometricScene['bounds']): ViewBox {
+  const padding = Math.max(
+    VIEWBOX_PADDING_MIN,
+    Math.min(Math.max(maxX - minX, maxY - minY) * VIEWBOX_PADDING_RATIO, VIEWBOX_PADDING_MAX),
+  );
+  return { x: minX - padding, y: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 };
+}
+
+/** The smallest a dimension label may read on screen, in CSS px — the ridge's, the smaller of the two sizes, so the
+ *  three set sizes read at 14 px or more (03.10: on a 390 px phone they were 6.9 px and the ridge 5.9 px) */
+export const MIN_LABEL_SCREEN_PX = 12;
+
+/**
+ * The label scale (`projectIsometricScene`) that keeps every dimension label at least MIN_LABEL_SCREEN_PX on screen
+ * once the drawing is fitted into `box` — the svg's content box in CSS px, the viewBox fitted whole (`xMidYMid meet`).
+ * 1 wherever the drawing is shown large enough already, so a wide screen draws exactly what it always did. Larger
+ * labels push the frame out and the drawing shrinks a little to fit, so the scale is found in a few passes; it is
+ * rounded up to hundredths so a re-measure of the same box lands on the same value.
+ */
+export function labelScaleToFit(scene: TechnicalSceneModel, box: { width: number; height: number }): number {
+  if (!(box.width > 0 && box.height > 0)) return 1;
+  let scale = 1;
+  for (let pass = 0; pass < 4; pass += 1) {
+    const view = viewBoxOf(projectIsometricScene(scene, scale).bounds);
+    const screenPerUnit = Math.min(box.width / view.width, box.height / view.height);
+    const next = Math.max(1, Math.ceil((MIN_LABEL_SCREEN_PX / (DERIVED_LABEL_FONT_PX * screenPerUnit)) * 100) / 100);
+    if (next === scale) break;
+    scale = next;
+  }
+  return scale;
 }
 
 function boundsOf(points: Point[]) {

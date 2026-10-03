@@ -903,7 +903,9 @@ export function ThreeHangarView({
       // that HangarPreviewModes provides instead.
       orthographic
       frameloop="demand"
-      shadows={shadows}
+      // 'percentage' (PCFShadowMap), not `true`: R3F's default asks for PCFSoftShadowMap, which three 0.185 deprecates
+      // and quietly replaces with PCF anyway — with a console warning on every switch to 3D (03.10). Same shadows.
+      shadows={shadows ? 'percentage' : false}
       dpr={[1, maxDpr]}
       gl={{ antialias: true, preserveDrawingBuffer: true }}
       // The canvas is decorative: the controls and summary remain the canonical description of the

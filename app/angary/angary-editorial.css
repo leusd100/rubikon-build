@@ -101,7 +101,6 @@
 @media (min-width: 761px) and (max-width: 1023px) {
   .angary-page { --section-space: 72px; --section-space-compact: 56px; --grid-gap: 36px; }
   .angary-page .hangar-configurator-embedded { padding-block: 56px 88px; }
-  .angary-page .hangar-configurator-embedded :is(.hc-hero, .hc-layout) { width: 100%; max-width: var(--content-copy); }
   .angary-section-heading { max-width: var(--content-copy); }
   .angary-process-rail { grid-template-columns: 1fr; max-width: var(--content-copy); }
   /* vertical: a segment from each node down to the next one, so the rail ends at the last node */

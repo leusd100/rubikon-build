@@ -103,6 +103,8 @@ test.describe('configurator attachment contract', () => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'covered once; attachment state is viewport-independent');
     await openHangarPage(page);
     await page.getByRole('button', { name: '3D', exact: true }).click();
+    // in the desktop's sticky pane the colours open from their chip on the picture (03.10)
+    await page.getByRole('button', { name: 'Кольори й масштаб', exact: true }).click();
     await page.getByRole('radio', { name: 'Світло-сіра', exact: true }).first().click();
     await page.getByRole('checkbox', { name: 'Показати людину для масштабу' }).check();
     await expect(attachmentCard(page)).toHaveCount(0);
