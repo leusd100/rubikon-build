@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { BUILD_STAGE_ORDER, firstViewStageStartsMs } from '../../lib/configurator/buildUpSequence';
+import { BUILD_STAGE_ORDER, firstViewStageStartsMs, totalSequenceDurationMs } from '../../lib/configurator/buildUpSequence';
 
 // /angary's first view (owner, 03.10): the drawing builds itself — foundation, frame, walls, roof, gates, ≈2.5 s
 // (buildUpSequence.ts) — the first time its sheet is at least half in view, once per page load. It arms only after
@@ -9,9 +9,11 @@ import { BUILD_STAGE_ORDER, firstViewStageStartsMs } from '../../lib/configurato
 // is already there when the page wakes up and reduced motion all get the complete drawing. Armed, the layers are put
 // away at once (`data-build="armed"` on the picture turns their fade off, configurator-sheet.css), so even a fast
 // scroller never watches them go. A visitor who reaches for a control, a configuration that is no longer the default or
-// a presentation demo gets the whole drawing at once. Returns how many stages are requested — all of them unless the
-// first view is armed or playing — for HangarPreview to hold the rest back through its usual layer lifecycle; the 3D
-// view never needs it: switching to it is reaching for a control.
+// a presentation demo gets the whole drawing at once — `data-build="complete"` turns the fades off while the layers
+// still on their way settle, or the frame, which staggers columns → rafters → purlins, arrived last, after the walls and
+// the roof (03.10). Returns how many stages are requested — all of them unless the first view is armed or playing — for
+// HangarPreview to hold the rest back through its usual layer lifecycle; the 3D view never needs it: switching to it is
+// reaching for a control.
 
 const ALL_STAGES = BUILD_STAGE_ORDER.length;
 /** The sheet plots its picture in for ~1 s as it arrives (DrawingSheet, from 35 % in view): the foundation, at the
@@ -46,6 +48,7 @@ export function useFirstViewBuildUp(drawingRef: RefObject<HTMLElement | null>, e
 
     const section = drawing.closest('.hangar-configurator') ?? drawing;
     const timers: number[] = [];
+    let settled = 0;
     const reach = (event: Event) => {
       if (event.target instanceof Element && event.target.closest(CONTROL)) finish();
     };
@@ -68,11 +71,14 @@ export function useFirstViewBuildUp(drawingRef: RefObject<HTMLElement | null>, e
       for (const type of REACH_EVENTS) section.removeEventListener(type, reach, true);
       finishRef.current = () => undefined;
     };
-    function finish() {
+    const finish = () => {
       shownThisLoad = true;
       stop();
+      // At once: no fades until the longest stage — the frame's own sequence — would have settled
+      drawing.dataset.build = 'complete';
+      settled = window.setTimeout(() => delete drawing.dataset.build, totalSequenceDurationMs());
       setReleased(ALL_STAGES);
-    }
+    };
 
     finishRef.current = finish;
     drawing.dataset.build = 'armed';
@@ -81,6 +87,8 @@ export function useFirstViewBuildUp(drawingRef: RefObject<HTMLElement | null>, e
     for (const type of REACH_EVENTS) section.addEventListener(type, reach, true);
     return () => {
       stop();
+      window.clearTimeout(settled);
+      delete drawing.dataset.build;
       // A remount (React's development double run) arms again from the complete drawing
       setReleased(ALL_STAGES);
     };

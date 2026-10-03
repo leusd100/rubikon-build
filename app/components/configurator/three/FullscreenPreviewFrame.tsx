@@ -39,6 +39,7 @@ import { createPortal } from 'react-dom';
 export function FullscreenPreviewFrame({
   active,
   onExit,
+  className,
   labelledBy,
   describedBy,
   status,
@@ -47,6 +48,8 @@ export function FullscreenPreviewFrame({
 }: {
   active: boolean;
   onExit: () => void;
+  /** Dresses the open overlay for the page that owns it (/angary: the drawing sheet's square chrome) */
+  className?: string;
   /** Accessible label for the fullscreen dialog. */
   labelledBy?: string;
   /** ID of the model description inside the portaled content. */
@@ -171,7 +174,7 @@ export function FullscreenPreviewFrame({
         // reintroduce the exact remount bug this file exists to avoid, one level deeper.
         <div
           ref={dialogRef}
-          className={active ? 'hc-fullscreen-overlay' : undefined}
+          className={active ? `hc-fullscreen-overlay${className ? ` ${className}` : ''}` : undefined}
           role={active ? 'dialog' : undefined}
           aria-modal={active ? 'true' : undefined}
           aria-label={active ? (labelledBy ?? 'Розгорнутий перегляд 3D-моделі') : undefined}

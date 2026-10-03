@@ -23,6 +23,8 @@ const PHONE_HEADER_PX = 77;
  * controls, it is the whole sheet again. The state follows where the sheet is, not which way the visitor scrolled, so a
  * jump (the hero's «Зібрати конфігурацію», the top of the page, a reload further down) lands in the right one. (03.10:
  * the controls' observer it replaces counted the whole sheet in its margin, and the stage shrank in front of the eyes.)
+ * Held, the layout also carries the mini drawing's height (`--hc-mini-h`), so a control that takes keyboard focus is
+ * scrolled clear of it rather than under it (configurator-sheet.css; 03.10: Shift+Tab hid 7 of 13 stops behind it).
  */
 function useMiniPreview(enabled: boolean) {
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -31,9 +33,15 @@ function useMiniPreview(enabled: boolean) {
     const sheet = layout?.querySelector<HTMLElement>('.hc-preview-surface');
     if (!enabled || !layout || !sheet) return undefined;
     const phone = window.matchMedia('(max-width: 760px)');
+    // The mini drawing's height follows its title block (the readout, a 3D view): measured whenever it changes
+    const miniHeight = new ResizeObserver(() => {
+      if ('configuring' in layout.dataset) layout.style.setProperty('--hc-mini-h', `${sheet.offsetHeight}px`);
+    });
     const release = () => {
       delete layout.dataset.configuring;
       sheet.style.removeProperty('--hc-mini-give');
+      layout.style.removeProperty('--hc-mini-h');
+      miniHeight.disconnect();
     };
     const hold = () => {
       // Measured with the sheet's transitions off (configurator-sheet.css): under reduced motion they still run for
@@ -44,6 +52,8 @@ function useMiniPreview(enabled: boolean) {
       const mini = sheet.getBoundingClientRect().height;
       delete sheet.dataset.measuring;
       sheet.style.setProperty('--hc-mini-give', `${whole - mini}px`);
+      layout.style.setProperty('--hc-mini-h', `${mini}px`);
+      miniHeight.observe(sheet);
     };
     const update = () => {
       const held = 'configuring' in layout.dataset;

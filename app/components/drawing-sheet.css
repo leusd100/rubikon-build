@@ -59,6 +59,8 @@
 .sheet-cell-number b { color: var(--color-accent-strong); font-size: 20px; letter-spacing: 0; }
 .sheet-cell-number b span { color: var(--color-text-muted); font-size: 12px; font-weight: 600; }
 .sheet-action { display: flex; flex: none; align-items: center; padding: 4px 6px 4px 10px; border-left: 1px solid var(--sheet-ink); }
+/* A unit in a value set in capitals stays lower case: «24 × 60 × 8 м», not «8 М» (03.10) */
+.sheet-unit { text-transform: none; }
 
 /* A narrow sheet with three parts or more: the main cell takes its own row on top, so a long theme or sentence never
    squeezes into a column (and never breaks a word); the other parts share the row under it. Two parts stay one row. */

@@ -7,8 +7,10 @@
 
 .hangar-configurator-embedded .hc-preview-sheet {
   /* the picture: the drawing had a 560 px stage in a card with a 24 px ring; the field is the stage and the ring. The
-     whole sheet — rulers, a title block of up to two lines — stays inside the screen under the sticky pane's 117 px */
-  --hc-sheet-h: clamp(360px, min(46vw + 40px, 100vh - 300px), 580px);
+     whole sheet — rulers, a title block of up to two lines — stays inside the screen under the sticky pane's 117 px,
+     and the field keeps the landscape proportion it has at 1440 (70cqw, the sheet's own width): tied to the window
+     alone, it stood near-square at 1024–1200 px with the wide hangar letterboxed in the middle (03.10) */
+  --hc-sheet-h: clamp(320px, min(46vw + 40px, 100vh - 300px, 70cqw), 580px);
   --hc-sheet-inset: 24px;
 }
 .hangar-configurator-embedded .hc-preview-surface.hc-preview-sheet {
@@ -25,8 +27,9 @@
 .hangar-configurator-embedded .hc-preview-sheet .sheet-image:has(.hc-preview-canvas) { background: #0e0f11; }
 
 /* The first view, armed (useFirstViewBuildUp): the layers go at once, out of sight, instead of fading out over the
-   frame's 1.4 s — the lifecycle's inline durations stay, only what they transition is turned off */
-.hc-preview-image[data-build="armed"] .hc-buildlayer { transition-property: none; }
+   frame's 1.4 s — the lifecycle's inline durations stay, only what they transition is turned off. Completed early by a
+   visitor who reaches for a control, they come at once the same way: all of the drawing, the frame with the walls. */
+.hc-preview-image:is([data-build="armed"], [data-build="complete"]) .hc-buildlayer { transition-property: none; }
 
 /* «Вид»: a square two-cell switch at the end of the title block, where the pill sat above the card */
 .hangar-configurator-embedded .hc-preview-sheet .sheet-action { padding: 4px 4px 4px 14px; }
@@ -35,7 +38,7 @@
 .hangar-configurator-embedded .hc-sheet-view .hc-mode-switch { display: inline-flex; padding: 0; background: transparent; border: 1px solid var(--sheet-ink); border-radius: 0; }
 .hangar-configurator-embedded .hc-sheet-view .hc-mode-switch button {
   position: relative; /* holds the visually hidden «вид» */
-  min-height: 40px;
+  min-width: 44px; min-height: 44px; /* the page's choice targets (03.10: «3D» was 37 × 40) */
   padding: 0 14px;
   border-radius: 0;
   color: var(--color-text-secondary);
@@ -49,9 +52,11 @@
 .hangar-configurator-embedded .hc-sheet-view .hc-mode-switch button.is-active { color: var(--color-bg); background: var(--color-text); }
 .hangar-configurator-embedded .hc-sheet-view .hc-mode-switch button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 
-/* «Розгорнути» sits on the 3D picture itself, a square chip like «Сховати розміри» */
-.hc-sheet-expand {
-  position: absolute; top: 12px; right: 12px; z-index: 2;
+/* The 3D picture's own actions sit on it, top right: «Розгорнути» and, in the sticky pane, the colours (HangarPreviewModes)
+   — square chips, with «Сховати розміри» at the top left. Each keeps a 32 px chip and a 44 px target. */
+.hc-sheet-tools { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; gap: 8px; }
+.hc-sheet-expand, .hc-sheet-chip {
+  position: relative;
   min-height: 32px; padding: 0 12px;
   color: var(--color-dark-text-secondary);
   background: rgba(20, 20, 22, .72);
@@ -63,27 +68,77 @@
   text-transform: uppercase;
   cursor: pointer;
 }
-.hc-sheet-expand:hover { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .4); }
-.hc-sheet-expand:focus-visible { outline: 2px solid var(--color-accent-on-dark); outline-offset: 2px; }
+/* 32 px chips with a 1 px border: the target reaches 7 px past the padding box each way, 44 px in all */
+.hc-sheet-expand::after, .hc-sheet-chip::after { position: absolute; inset: -7px 0; content: ''; }
+.hc-sheet-expand:hover, .hc-sheet-chip:hover, .hc-sheet-chip[aria-expanded="true"] { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .4); }
+.hc-sheet-expand:focus-visible, .hc-sheet-chip:focus-visible { outline: 2px solid var(--color-accent-on-dark); outline-offset: 2px; }
+/* the colours, opened from their chip: a note laid on the picture under the chips, on the sheet's paper */
+.hangar-configurator-embedded .hc-preview-sheet .hc-sheet-options {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 3;
+  flex-direction: column; align-items: flex-start; gap: 14px;
+  width: max-content; max-width: calc(100cqw - 24px); margin: 0; padding: 14px 16px 8px;
+  border: 1px solid var(--sheet-ink);
+}
+.hangar-configurator-embedded .hc-preview-sheet .hc-sheet-options[hidden] { display: none; }
+/* «Сховати розміри» joins them at the top: at the bottom it covered «10,6 м» on a 460 px picture (1024 px, 03.10) */
+.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle {
+  top: 12px; right: auto; bottom: auto; left: 12px;
+  min-height: 32px;
+  color: var(--color-dark-text-secondary);
+  border-color: rgba(255, 255, 255, .18);
+  font: 700 11px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle::after { position: absolute; inset: -7px 0; content: ''; }
+/* A phone's picture reads the 3D sizes in two columns of two: in one row of four they ran past the picture at 320–390 px
+   and cut «Висота в конику» off (03.10) */
+@container sheet (max-width: 360px) {
+  .hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay { grid-template-rows: repeat(4, auto); gap: 0 18px; }
+  .hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay > div:nth-child(odd) > dd { margin-bottom: 10px; }
+}
 
-/* the rest of the configurator's chrome is square too */
+/* the rest of the configurator's chrome is square too — the colour swatches and the expanded 3D view included, which
+   sits outside the section and carries the sheet's class instead (HangarPreviewModes, 03.10: pills and 12 px corners) */
 .hangar-configurator-embedded .hc-controls,
 .hangar-configurator-embedded .hc-preview-secondary-panel,
 .hangar-configurator-embedded .hc-three-overlay,
-.hangar-configurator-embedded .hc-three-overlay-toggle { border-radius: 0; }
+.hangar-configurator-embedded .hc-three-overlay-toggle,
+.hangar-configurator-embedded .hc-material-swatch-row button,
+.hangar-configurator-embedded .hc-material-swatch-dot,
+.hc-fullscreen-sheet :is(.hc-fullscreen-close, .hc-three-overlay, .hc-three-overlay-toggle) { border-radius: 0; }
+/* choice targets of 44 px (03.10: swatches 30–36 px, the scale figure's row 15 px, «Закрити» 36 px) */
+.hangar-configurator-embedded .hc-material-swatch-row button { min-height: 44px; padding-inline: 10px 12px; }
+.hangar-configurator-embedded .hc-scale-figure-toggle { min-height: 44px; }
+.hc-fullscreen-sheet .hc-fullscreen-close { min-height: 44px; }
 
-/* A narrow sheet puts «Що показано» on its own row (drawing-sheet.css); the object and the switch share the next one,
-   «Вид» goes without its word, and a long object wraps after «·» — the sizes are one piece (sheetLabels.ts) — rather
-   than pushing the switch onto a row of its own */
+/* A narrow sheet puts «Що показано» on its own row — from 640 px here, not drawing-sheet.css's 480: beside the object
+   and the switch on a 1024–1200 px window it was squeezed into a 128 px column of four lines (03.10) */
+@container sheet (max-width: 640px) {
+  .hangar-configurator-embedded .hc-preview-sheet .sheet-stamp { flex-wrap: wrap; }
+  .hangar-configurator-embedded .hc-preview-sheet .sheet-stamp > .sheet-cell.sheet-cell-main { order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
+  .hangar-configurator-embedded .hc-preview-sheet .sheet-stamp > .sheet-cell:not(.sheet-cell-main, .hc-sheet-readout) { flex: 1 1 0; }
+}
+/* Narrower, the object and the switch still share the next row: «Вид» goes without its word, and a long object wraps
+   after «·» — the sizes are one piece (sheetLabels.ts) — rather than pushing the switch onto a row of its own */
 @container sheet (max-width: 480px) {
   .hc-sheet-view > small { display: none; }
   .hangar-configurator-embedded .hc-sheet-view .hc-mode-switch button { padding: 0 10px; }
   .hangar-configurator-embedded .hc-preview-sheet .sheet-stamp > .sheet-cell:not(.sheet-cell-main, .hc-sheet-readout) { flex: 1 1 0; }
   .hangar-configurator-embedded .hc-preview-sheet .sheet-cell:not(.sheet-cell-main, .hc-sheet-readout) b { white-space: normal; }
 }
-/* ≤ 320 px phones: the sizes no longer fit beside the switch, so the object takes a row of its own too */
+/* ≤ 320 px phones: the sizes no longer fit beside the switch, so the object takes a row of its own too — and so does
+   «Вид», named again, its two cells sharing the row: alone at the right end it left an empty cell beside it (03.10) */
 @container sheet (max-width: 260px) {
   .hangar-configurator-embedded .hc-preview-sheet .sheet-stamp > .sheet-cell:not(.sheet-cell-main, .hc-sheet-readout) { flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
+  .hangar-configurator-embedded .hc-layout:not([data-configuring]) .hc-preview-sheet .sheet-stamp > .sheet-action { flex: 1 1 100%; margin-left: 0; padding: 4px 4px 4px 10px; border-left: 0; }
+  .hangar-configurator-embedded .hc-layout:not([data-configuring]) .hc-sheet-view { flex: 1; }
+  .hangar-configurator-embedded .hc-layout:not([data-configuring]) .hc-sheet-view > small { display: inline; }
+  .hangar-configurator-embedded .hc-layout:not([data-configuring]) .hc-sheet-view .hc-mode-switch { flex: 1; }
+  .hangar-configurator-embedded .hc-layout:not([data-configuring]) .hc-sheet-view .hc-mode-switch button { flex: 1; }
+  /* the mini readout: «30 × 120 × 12,5 м» holds one line beside the switch */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-surface.hc-preview-sheet .sheet-stamp > .sheet-cell.hc-sheet-readout { padding-inline: 6px; }
+  .hangar-configurator-embedded .hc-preview-sheet .sheet-stamp .hc-sheet-readout b { font-size: 12px; }
 }
 
 /* While useMiniPreview measures the mini sheet: under reduced motion every property eases over .01 ms (globals.css), so
@@ -96,14 +151,17 @@
 @media (max-width: 760px) {
   .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: max(58vw + 20px, 220px); --hc-sheet-inset: 10px; }
   .hangar-configurator-embedded .hc-preview-sheet .sheet-action { padding-left: 10px; }
-  .hc-sheet-expand { top: 8px; right: 8px; min-height: 28px; padding: 0 10px; }
+  .hc-sheet-tools { top: 8px; right: 8px; }
+  .hc-sheet-expand, .hc-sheet-chip { min-height: 28px; padding: 0 10px; }
+  .hc-sheet-expand::after, .hc-sheet-chip::after { inset: -9px 0; }
 
   /* The mini drawing, held under the header while the parameters are set (useMiniPreview, HangarConfigurator.tsx):
-     a 140 px picture with no dimension labels — unreadable at that size — and a title block of one readout of the same
-     sizes beside the view switch, which stays in reach (and in the accessibility tree) while configuring. The height
-     the sheet gives up is its bottom margin, so nothing under it moves. */
+     a picture of up to 140 px with no dimension labels — unreadable at that size — and a title block of one readout of
+     the same sizes beside the view switch, which stays in reach (and in the accessibility tree) while configuring. The
+     height the sheet gives up is its bottom margin, so nothing under it moves. The picture follows the screen's height
+     (03.10: at a fixed 140/120 px the mini took 35–40 % of a 640/568 px phone; now under a third of any) */
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-surface.hc-preview-sheet {
-    --hc-sheet-h: 140px;
+    --hc-sheet-h: clamp(88px, 17svh, 140px);
     --hc-sheet-inset: 6px;
     margin-bottom: var(--hc-mini-give, 0px);
     box-shadow: none;
@@ -113,17 +171,19 @@
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet .sheet-stamp { min-height: 0; margin-top: 8px; }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet .sheet-stamp > .sheet-cell:not(.hc-sheet-readout) { display: none; }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet .sheet-stamp > .sheet-cell.hc-sheet-readout { display: flex; flex: 1 1 0; padding: 6px 8px; border: 0; }
-  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-sheet-view .hc-mode-switch button { min-height: 32px; padding: 0 8px; }
-  /* where the readout runs to three lines beside the switch, the picture gives up 20 px so the mini stays under a third */
-  @media (max-width: 360px) {
-    .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-surface.hc-preview-sheet { --hc-sheet-h: 120px; }
-  }
+  /* the switch keeps a 32 px face in the mini and a 44 px target */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-sheet-view .hc-mode-switch button { min-width: 0; min-height: 32px; padding: 0 8px; }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-sheet-view .hc-mode-switch button::after { position: absolute; inset: -6px 0; content: ''; }
   .hangar-configurator-embedded .hc-preview-sheet .hc-sheet-readout b {
     color: var(--color-text);
     font: 600 13px/1.25 var(--font-condensed), sans-serif;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0;
     text-transform: none;
-    white-space: normal;
+  }
+  /* A control that takes keyboard focus lands under the mini drawing, not behind it: the site header (77 px), the mini
+     drawing (--hc-mini-h, useMiniPreview) and a little air (WCAG 2.4.11; 03.10) */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-controls :is(a[href], button, summary, input, select, textarea) {
+    scroll-margin-top: calc(var(--hc-mini-h, 0px) + 85px);
   }
 }

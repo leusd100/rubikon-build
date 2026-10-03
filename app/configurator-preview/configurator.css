@@ -640,6 +640,7 @@
 /* ---------- Phase 3C: material colour presets ---------- */
 
 .hc-preview-secondary-panel {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -653,6 +654,7 @@
 }
 
 .hc-material-presets {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
@@ -673,8 +675,10 @@
   text-transform: uppercase;
 }
 
+/* Wraps on a narrow screen: unwrapped, the three swatches widened the page to 348 px at 320 (03.10) */
 .hc-material-swatch-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
@@ -1163,7 +1167,7 @@
      configuration happened before the building was ever on screen — a form with a picture at the
      end rather than a live configurator. Visual order only; the DOM keeps controls first, so
      reading order and the existing order assertion are unchanged. */
-  .hc-layout { grid-template-columns: 1fr; }
+  .hc-layout { grid-template-columns: minmax(0, 1fr); } /* 1fr let a wide child widen the page (03.10) */
   /* `display: contents` promotes the pane's two children to grid items so the preview and the
      summary can be ordered independently: see the building (1), configure it (2), review it (3).
      Previously the summary sat between them, putting 438px of read-only review between the model
@@ -1293,6 +1297,11 @@
 .hangar-configurator-embedded .hc-mode-switch button { min-height: 40px; }
 .hangar-configurator-embedded .hc-mode-switch button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .hc-stamp-row { max-width: var(--container-max); margin: 28px auto 0; padding-inline: var(--container-gutter); }
+/* The band keeps the page's shell edges (globals.css .shell; 03.10): a 1440 px box with the gutter inside it put the
+   heading, the drawing and the title block 72 px in from every other section on a 1920 px screen, and at 761–1023 px
+   they sat in a centred 720 px column 50 px in from the title block under them */
+.hangar-configurator-embedded :is(.hc-hero, .hc-layout, .hc-stamp-row) { width: min(var(--container-max), calc(100% - var(--container-gutter) * 2)); max-width: none; padding-inline: 0; }
+@media (max-width: 760px) { .hangar-configurator-embedded :is(.hc-hero, .hc-layout, .hc-stamp-row) { width: min(100% - 32px, 620px); } }
 .hc-stamp-row .hc-summary-flagship { padding: 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); border-radius: 0; box-shadow: none; }
 .hc-stamp-row .hc-summary-grid { grid-template-columns: minmax(230px, .9fr) minmax(0, 2.4fr) minmax(250px, .9fr); column-gap: 0; align-items: stretch; }
 .hc-stamp-row .hc-summary-selected { padding: 18px 22px; }
