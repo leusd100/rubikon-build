@@ -3,6 +3,9 @@ import { CONTROL_GROUP_TITLES, describeControlGroups } from '../../../app/lib/co
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
+/** «_» marks a no-break space (U+00A0) */
+const nb = (text: string) => text.replaceAll('_', '\u00A0');
+
 function valuesFor(overrides: Partial<ConfiguratorState>) {
   return describeControlGroups(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides }));
 }
@@ -11,12 +14,13 @@ describe('phone accordion header values (03.10)', () => {
   it('says what is set in each group of the default configuration', () => {
     expect(valuesFor({})).toEqual({
       object: 'Ще не вказано',
-      dimensions: '24 × 60 × 8 м',
+      dimensions: nb('24_×_60_×_8_м'),
       envelope: 'Холодний · профнастил',
       cladding: 'Профнастил',
       foundation: 'Визначити після розрахунку',
       scope: '4 з 4 робіт',
-      openings: '1 ворота · без дверей',
+      // «одні ворота», not «1 ворота» (04.10)
+      openings: 'одні ворота · без дверей',
     });
   });
 
@@ -32,11 +36,11 @@ describe('phone accordion header values (03.10)', () => {
       objectProfile: { purpose: 'storage', project: 'unknown', region: 'Київська область', lifting: 'unknown' },
     });
     expect(values.object).toBe('Склад · Київська обл.');
-    expect(values.dimensions).toBe('30 × 72 × 9 м');
+    expect(values.dimensions).toBe(nb('30_×_72_×_9_м'));
     expect(values.envelope).toBe('Утеплений · стіни: сендвіч-панель');
     expect(values.cladding).toBe('Стіни: Сендвіч-панель');
     expect(values.scope).toBe('2 з 4 робіт');
-    expect(values.openings).toBe('2 ворота · 1 двері');
+    expect(values.openings).toBe('двоє воріт · одні двері');
   });
 
   it('says an opening or an envelope is outside the request when its walls and roof are', () => {

@@ -128,6 +128,20 @@ export function resolveRidgeHeightM(state: Pick<ConfiguratorState, 'dimensions' 
   return state.ridgeEdited ? clampRidgeHeightM(state.ridgeHeightM, width, height) : defaultRidgeHeightM(width, height);
 }
 
+/**
+ * The ridge the visitor sets (04.10): their value, kept as typed — or the span rule again when the value is the span
+ * rule's own for these sizes. An edited ridge could never go back to following the width before.
+ */
+export function withRidge(state: ConfiguratorState, ridgeHeightM: number): ConfiguratorState {
+  const { width, height } = state.dimensions;
+  return { ...state, ridgeHeightM, ridgeEdited: ridgeHeightM !== defaultRidgeHeightM(width, height) };
+}
+
+/** «Підбирати ухил за шириною»: the ridge follows the span rule again */
+export function withSpanRuleRidge(state: ConfiguratorState): ConfiguratorState {
+  return { ...state, ridgeHeightM: defaultRidgeHeightM(state.dimensions.width, state.dimensions.height), ridgeEdited: false };
+}
+
 export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   const { width, length, height } = state.dimensions;
   const gateSelection = clampGateSelection(state.gates, state.gateType, width, height);

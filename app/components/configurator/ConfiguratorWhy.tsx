@@ -1,5 +1,7 @@
 'use client';
 
+import { formatSize } from '../../lib/configurator/deriveSummary';
+import { GATE_DIMENSIONS_M } from '../../lib/configurator/parametricModel';
 import ResponsiveImage from '../ResponsiveImage';
 
 // «Чому це важливо» under a configurator group (UX pass 2026-10). The four explanations used to be their own section
@@ -8,6 +10,15 @@ import ResponsiveImage from '../ResponsiveImage';
 // сендвіч-панеллю» is gone (2026-10): the technical view draws no cladding, so the comparison changed 0 pixels.
 
 export type WhyTopic = 'object' | 'contour' | 'cladding' | 'foundation' | 'openings';
+
+/** Read after «Чому це важливо» by a screen reader, so the four (five) summaries are not one name repeated (04.10) */
+const TOPIC_NAMES: Record<WhyTopic, string> = {
+  object: 'об’єкт',
+  contour: 'контур будівлі',
+  cladding: 'огороджувальні конструкції',
+  foundation: 'фундамент',
+  openings: 'прорізи',
+};
 
 /** Brings the live preview into view after a demo starts (on a wide screen only when it is off screen). */
 export function revealLivePreview() {
@@ -24,6 +35,8 @@ export function revealLivePreview() {
   });
 }
 
+const gateSize = (type: keyof typeof GATE_DIMENSIONS_M) => formatSize(GATE_DIMENSIONS_M[type].widthM, GATE_DIMENSIONS_M[type].heightM);
+
 function WhyImage({ src, alt, title, text }: Readonly<{ src: string; alt: string; title: string; text: string }>) {
   return (
     <figure>
@@ -39,7 +52,7 @@ function WhyImage({ src, alt, title, text }: Readonly<{ src: string; alt: string
 export function ConfiguratorWhy({ topic }: Readonly<{ topic: WhyTopic }>) {
   return (
       <details className="hc-why" data-why={topic}>
-        <summary>Чому це важливо</summary>
+        <summary>Чому це важливо<span className="hc-visually-hidden"> — {TOPIC_NAMES[topic]}</span></summary>
         <div className="hc-why-body">
           {/* «Об’єкт» (03.10): a draft for Сергій Іванович — no numbers, only what each answer changes in the work */}
           {topic === 'object' && (
@@ -89,9 +102,11 @@ export function ConfiguratorWhy({ topic }: Readonly<{ topic: WhyTopic }>) {
           {topic === 'openings' && (
             <>
               <p>Ворота та двері прив’язуються до логістики всередині й зовні. Положення та реальні розміри уточнюємо разом із плануванням.</p>
+              {/* The control's own names (04.10): «Великі ворота» appeared nowhere else, and «для щоденного потоку техніки»
+                  described the standard gate while the other one is named «Для заїзду техніки». Sizes from GATE_DIMENSIONS_M */}
               <dl className="hc-why-list">
-                <div><dt>Ворота</dt><dd>Для щоденного потоку техніки</dd></div>
-                <div><dt>Великі ворота</dt><dd>Для габаритної техніки й обладнання</dd></div>
+                <div><dt>Стандартні ворота</dt><dd>{gateSize('standard')} — для щоденного проїзду</dd></div>
+                <div><dt>Ворота для заїзду техніки</dt><dd>{gateSize('double')} — для габаритної техніки й обладнання</dd></div>
                 <div><dt>Двері</dt><dd>Окремий рух персоналу</dd></div>
               </dl>
             </>

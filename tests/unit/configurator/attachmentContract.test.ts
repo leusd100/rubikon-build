@@ -69,9 +69,16 @@ describe('hangar lead attachment contract', () => {
     }
   });
 
-  it('leaves ridgeEdited out: the ridge value itself says whether the configuration changed (03.10)', () => {
-    expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, { ...DEFAULT_CONFIGURATOR_STATE, ridgeEdited: true })).toBe(true);
+  it('compares the ridge as the visitor answered it: the span rule, or a value of their own (04.10)', () => {
+    // an unedited ridge's stored value is not part of the configuration: the sizes no longer rewrite it
+    expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, { ...DEFAULT_CONFIGURATOR_STATE, ridgeHeightM: 13 })).toBe(true);
     expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, { ...DEFAULT_CONFIGURATOR_STATE, ridgeHeightM: 12, ridgeEdited: true })).toBe(false);
+    // an edited 10,6 m does not follow the width as the span rule's does: another answer, though it draws the same today
+    // (typing the span rule's own value is the span rule again — withRidge, domainModel.test.ts)
+    expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, { ...DEFAULT_CONFIGURATOR_STATE, ridgeEdited: true })).toBe(false);
+    // two ridges held to the same end of a low wall's range come back differently once the wall is raised
+    const low = { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, height: 4 } };
+    expect(sameBusinessConfiguration({ ...low, ridgeHeightM: 11.5, ridgeEdited: true }, { ...low, ridgeHeightM: 12, ridgeEdited: true })).toBe(false);
   });
 
   it('draws the same hangar when only the «Об’єкт» answers differ, and a different one when the building does', () => {

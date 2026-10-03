@@ -111,6 +111,8 @@ test.describe('configurator attachment contract', () => {
   const businessEdits: Array<{
     name: string;
     edit: (page: Page) => Promise<void>;
+    /** the card's title: the «Об’єкт» answers alone leave the drawn hangar the example (04.10) */
+    title?: string;
   }> = [
     { name: 'width', edit: (page) => setDimension(page, 'width', '30') },
     { name: 'length', edit: (page) => setDimension(page, 'length', '50') },
@@ -151,6 +153,7 @@ test.describe('configurator attachment contract', () => {
         await openControlGroup(page, 'object');
         await page.locator('label:has(input[name="hc-purpose"][value="storage"])').click();
       },
+      title: 'До заявки додано відповіді про об’єкт',
     },
     {
       name: 'region',
@@ -158,14 +161,15 @@ test.describe('configurator attachment contract', () => {
         await openControlGroup(page, 'object');
         await page.getByLabel('Область будівництва', { exact: true }).selectOption('Київська область');
       },
+      title: 'До заявки додано відповіді про об’єкт',
     },
   ];
 
-  for (const { name, edit } of businessEdits) {
+  for (const { name, edit, title = 'До заявки додано вашу конфігурацію' } of businessEdits) {
     test(`${name} business edit attaches automatically`, async ({ page }) => {
       await openHangarPage(page);
       await edit(page);
-      await expect(attachmentCard(page)).toContainText('До заявки додано вашу конфігурацію');
+      await expect(attachmentCard(page)).toContainText(title);
     });
   }
 
@@ -256,15 +260,16 @@ test.describe('configurator attachment contract', () => {
     const brief = attachmentCard(page);
     await expect(brief).toContainText('30 × 50 × 8 м · Холодний');
     await expect(page.locator('form.inquiry-form').getByLabel('Орієнтовні розміри', { exact: true })).toHaveCount(0);
-    await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue('30 × 50 × 8 м');
+    // the sizes hold together with no-break spaces (04.10)
+    await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue('30\u00A0×\u00A050\u00A0×\u00A08\u00A0м');
     await submitInquiry(page);
 
     expect(submitted()).toMatchObject({
       direction: 'Ангари та склади',
       sourcePage: '/angary',
-      details: { dimensions: '30 × 50 × 8 м' },
+      details: { dimensions: '30\u00A0×\u00A050\u00A0×\u00A08\u00A0м' },
     });
-    expect(submitted()?.details?.configuration).toContain('Площа забудови: ≈ 1 500 м²');
+    expect(submitted()?.details?.configuration?.replaceAll('\u00A0', ' ')).toContain('Площа забудови: ≈ 1 500 м²');
   });
 
   test('visible rows and submitted payload have exact parity and keep derived data separate', async ({ page }) => {
@@ -279,7 +284,8 @@ test.describe('configurator attachment contract', () => {
     const brief = attachmentCard(page);
     await brief.getByText('Переглянути параметри', { exact: true }).click();
     await expect(brief.getByRole('heading', { name: 'Вибрана конфігурація' })).toBeVisible();
-    await expect(brief.getByRole('heading', { name: 'Системні попередні дані' })).toBeVisible();
+    // «Системні» was the code's word, shown to the visitor (04.10)
+    await expect(brief.getByRole('heading', { name: 'Попередні дані', exact: true })).toBeVisible();
 
     const visibleRows = await brief.locator('dl > div').evaluateAll((rows) => rows.map((row) => {
       const label = row.querySelector('dt')?.textContent?.trim() ?? '';
@@ -291,13 +297,13 @@ test.describe('configurator attachment contract', () => {
     const configuration = submitted()?.details?.configuration ?? '';
     const payloadRows = configuration.split('\n').filter((line) => !line.endsWith(':'));
     expect(payloadRows).toEqual(visibleRows);
-    expect(configuration).toContain('Системні попередні дані:\nПлоща забудови:');
+    expect(configuration).toContain('Попередні дані:\nПлоща забудови:');
     expect(configuration).toContain('Попередня конструктивна схема:');
     expect(configuration).not.toMatch(/Світло-сіра|Графіт|Нейтральна/);
     // «Об’єкт» (03.10): the answered question leads the rows, the unanswered ones are absent; the ridge says its slope
     expect(payloadRows[0]).toBe('Підйомне обладнання: Немає');
     expect(configuration).not.toMatch(/Призначення:|Проєкт:|Область:/);
-    expect(configuration).toMatch(/Висота в конику: \d+(,\d)? м · ухил ≈ \d+°/);
+    expect(configuration).toMatch(/Висота в конику: \d+(,\d)?\u00A0м · ухил\u00A0≈\u00A0\d+°/);
   });
 
   test('walls outside scope omit gates and door from both summary and payload', async ({ page }) => {

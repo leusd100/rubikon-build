@@ -7,6 +7,7 @@ import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { company, companyContactLinks } from '../../data/company';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
+import { costFactorNotes } from '../../lib/configurator/costNotes';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
@@ -42,14 +43,7 @@ export function HangarEditorialArchitecture({
   const summary = deriveSummary(deriveDomainModel(state));
   // What the visitor's own configuration already says about a factor — only once they have set something
   const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
-  const notes = own
-    ? {
-      dimensions: `У вашій конфігурації: ${summary.dimensionsLabel}, коник ${summary.ridgeHeightLabel}`,
-      structure: `У попередній схемі: ${summary.structuralVisualizationLabel.toLowerCase()}`,
-      insulation: `Ви вказали: ${summary.envelopeLabel.toLowerCase()}, ${summary.claddingSystemLabel.toLowerCase()}`,
-      technology: summary.gatesLabel ? `Ворота: ${summary.gatesLabel}` : undefined,
-    }
-    : undefined;
+  const notes = own ? costFactorNotes(deriveDomainModel(state)) : undefined;
   const attached = Boolean(inquiry?.isAttached);
   let briefState = 'idle';
   if (attached) briefState = 'attached';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveDomainModel, resolveRidgeHeightM } from '../../../app/lib/configurator/domainModel';
+import { deriveDomainModel, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../../app/lib/configurator/domainModel';
 import {
   clampRidgeHeightM,
   defaultRidgeHeightM,
@@ -151,5 +151,34 @@ describe('the ridge follows the span rule until the visitor edits it (03.10)', (
   it('copies the «Об’єкт» answers as given', () => {
     const objectProfile = { purpose: 'agricultural', project: 'ready', region: 'Полтавська область', lifting: 'none' } as const;
     expect(deriveDomainModel(withState({ objectProfile })).objectProfile).toEqual(objectProfile);
+  });
+});
+
+describe('the visitor’s choices are held, not cleared, while the sizes leave no room for them (04.10)', () => {
+  it('typing the span rule’s own value is the span rule again; anything else is the visitor’s', () => {
+    const edited = withRidge(DEFAULT_CONFIGURATOR_STATE, 11.5);
+    expect(edited).toMatchObject({ ridgeHeightM: 11.5, ridgeEdited: true });
+    expect(withRidge(edited, 10.6)).toMatchObject({ ridgeHeightM: 10.6, ridgeEdited: false });
+    // the span rule's value for the current sizes, not the default's: 11 m at 30 × 8
+    expect(withRidge(withState({ dimensions: { width: 30, length: 60, height: 8 } }), 11).ridgeEdited).toBe(false);
+    expect(withSpanRuleRidge(withState({ dimensions: { width: 30, length: 60, height: 8 }, ridgeHeightM: 13, ridgeEdited: true })))
+      .toMatchObject({ ridgeHeightM: 11, ridgeEdited: false });
+  });
+
+  it('an edited ridge a lower wall holds to its range comes back as typed when the wall is raised', () => {
+    const edited = withRidge(DEFAULT_CONFIGURATOR_STATE, 11.5);
+    const lowered = { ...edited, dimensions: { ...edited.dimensions, height: 4 } };
+    expect(resolveRidgeHeightM(lowered)).toBe(8.3);
+    expect(resolveRidgeHeightM({ ...lowered, dimensions: { ...lowered.dimensions, height: 8 } })).toBe(11.5);
+  });
+
+  it('gates and a door that do not fit are placed as what fits, and come back with the width', () => {
+    const chosen = withState({ gates: 2, gateType: 'double', doors: 1 });
+    expect(deriveDomainModel({ ...chosen, dimensions: { width: 12, length: 60, height: 8 } })).toMatchObject({ gates: 1, gateType: 'double', doors: 1 });
+    expect(deriveDomainModel({ ...chosen, dimensions: { width: 14, length: 60, height: 8 } })).toMatchObject({ gates: 2, doors: 0 });
+    expect(deriveDomainModel(chosen)).toMatchObject({ gates: 2, gateType: 'double', doors: 1 });
+    // a «5» on the way to «5,5»: the type falls back while it does not fit, and is the visitor’s again at 5,5
+    expect(deriveDomainModel({ ...withState({ gates: 1, gateType: 'double' }), dimensions: { width: 24, length: 60, height: 5 } }).gateType).toBe('standard');
+    expect(deriveDomainModel({ ...withState({ gates: 1, gateType: 'double' }), dimensions: { width: 24, length: 60, height: 5.5 } }).gateType).toBe('double');
   });
 });

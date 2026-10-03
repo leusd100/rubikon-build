@@ -133,13 +133,15 @@ export type ConfiguratorState = {
    * which is exactly why it is NOT part of `dimensions`: DIMENSION_BOUNDS is a static table, and
    * this one moves. Roof pitch is derived from it, never stored.
    *
-   * Until the visitor edits it (`ridgeEdited`), it is the span rule's ridge for the current width and eave height
+   * Until the visitor edits it (`ridgeEdited`), the ridge is the span rule's for the current width and eave height
    * (resolveRidgeHeightM in domainModel.ts): only clamping it let the slope drift with the width alone — 5.9° at
-   * 50 m, 19.3° at 12 m — and the lead received a «Висота в конику» nobody had chosen (03.10).
+   * 50 m, 19.3° at 12 m — and the lead received a «Висота в конику» nobody had chosen (03.10). Once edited, this is
+   * the visitor's value as typed: the sizes no longer rewrite it (04.10), resolveRidgeHeightM holds it in the range,
+   * and it comes back when the range lets it.
    */
   ridgeHeightM: number;
-  /** The visitor has set the ridge themselves; from then on it is clamped, no longer re-derived. Not part of the
-   *  business equality (sameBusinessConfiguration): it is set only together with a changed ridge. */
+  /** The visitor has set the ridge themselves; from then on it is clamped, no longer re-derived. Set back to false when
+   *  they set the span rule's own value (withRidge, 04.10) or ask for it back. */
   ridgeEdited: boolean;
   envelope: EnvelopeChoice;
   /** Cladding system, independent of the thermal `envelope` choice above — see `CladdingSystem`. */
@@ -148,6 +150,8 @@ export type ConfiguratorState = {
   foundationType: FoundationType;
   /** Which scope items are included in this request — a scope list, not a structural claim. */
   scope: ScopeItem[];
+  /** The openings as the visitor chose them, kept while the sizes leave no room for them (04.10): deriveDomainModel
+   *  places what fits, and the choice returns with the room. */
   gates: GatesCount;
   gateType: GateType;
   doors: DoorCount;
