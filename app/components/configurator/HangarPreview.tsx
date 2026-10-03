@@ -11,7 +11,14 @@ import {
   type ProjectedSegment,
 } from '../../lib/configurator/isometricProjection';
 import { buildTechnicalScene } from '../../lib/configurator/technicalSceneModel';
-import { LAYER_DURATION_MS, layerStartOffsetMs, staggerDelayMs } from '../../lib/configurator/buildUpSequence';
+import {
+  BUILD_STAGE_ORDER,
+  LAYER_DURATION_MS,
+  isStageReleased,
+  layerStartOffsetMs,
+  staggerDelayMs,
+  type BuildStage,
+} from '../../lib/configurator/buildUpSequence';
 import { useLayerHighlight } from './useLayerHighlight';
 import { useLayerLifecycle, type LayerTransitionStyle } from './useLayerLifecycle';
 
@@ -102,8 +109,17 @@ function EnvelopeSurface({
   );
 }
 
-export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
+export function HangarPreview({
+  domain,
+  released = BUILD_STAGE_ORDER.length,
+}: {
+  domain: HangarDomainModel;
+  /** Build stages requested so far by /angary's first view (useFirstViewBuildUp): a stage still held back stays hidden
+   *  whatever the scope says, then arrives through its usual lifecycle. All of them by default. */
+  released?: number;
+}) {
   const { dimensions, envelope, scope, gates } = domain;
+  const shown = (stage: BuildStage) => isStageReleased(stage, released);
   // State → Domain → ParametricBuildingModel (the single source of geometric truth) →
   // TechnicalSceneModel → this projection. A future 3D renderer branches at the parametric
   // model, NOT here — which is what stops the two views drawing different buildings.
@@ -115,19 +131,19 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
   const lengthActive = useLayerHighlight(dimensions.lengthM);
   const heightActive = useLayerHighlight(dimensions.eaveHeightM);
 
-  const foundation = useLayerLifecycle(scope.foundation, LAYER_DURATION_MS.foundation, layerStartOffsetMs('foundation'));
-  const columns = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.columns, layerStartOffsetMs('columns'));
-  const rafters = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.rafters, layerStartOffsetMs('rafters'));
-  const purlins = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.purlins, layerStartOffsetMs('purlins'));
-  const walls = useLayerLifecycle(scope.walls, LAYER_DURATION_MS.walls, layerStartOffsetMs('walls'));
-  const roof = useLayerLifecycle(scope.roof, LAYER_DURATION_MS.roof, layerStartOffsetMs('roof'));
+  const foundation = useLayerLifecycle(scope.foundation && shown('foundation'), LAYER_DURATION_MS.foundation, layerStartOffsetMs('foundation'));
+  const columns = useLayerLifecycle(scope.frame && shown('frame'), LAYER_DURATION_MS.columns, layerStartOffsetMs('columns'));
+  const rafters = useLayerLifecycle(scope.frame && shown('frame'), LAYER_DURATION_MS.rafters, layerStartOffsetMs('rafters'));
+  const purlins = useLayerLifecycle(scope.frame && shown('frame'), LAYER_DURATION_MS.purlins, layerStartOffsetMs('purlins'));
+  const walls = useLayerLifecycle(scope.walls && shown('walls'), LAYER_DURATION_MS.walls, layerStartOffsetMs('walls'));
+  const roof = useLayerLifecycle(scope.roof && shown('roof'), LAYER_DURATION_MS.roof, layerStartOffsetMs('roof'));
   // A gate is an opening CUT INTO a wall — it cannot read as an opening with no wall to cut into,
   // so it materializes only when both are true. (Real bug, not a hypothetical: this used to be
   // `gates > 0` alone, letting a gate rectangle stay on screen after switching walls out of scope
   // — caught live by a user testing the running preview, on both this view and the 3D one, which
   // mirrored the same `gates > 0` condition in threeSceneModel.ts's `visible.gates`. Fixed in both
   // places with the same rule; see that file's matching comment.)
-  const gateLayer = useLayerLifecycle(scope.walls && gates > 0, LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
+  const gateLayer = useLayerLifecycle(scope.walls && gates > 0 && shown('gates'), LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
 
   const facadeActive = widthActive || heightActive;
   const sideActive = lengthActive || heightActive;

@@ -131,6 +131,47 @@ export function totalSequenceDurationMs(): number {
   return layerStartOffsetMs(lastInGroup) + MAX_STAGGER_SPAN_MS[lastInGroup] + LAYER_DURATION_MS[lastInGroup];
 }
 
+/** /angary's first view (owner, 03.10): the drawing builds itself once, in the order a hangar is built. A stage is what
+ * one scope control requests — the frame's three layers come as one stage, staged among themselves exactly as when
+ * «Металокаркас» is ticked (`layerStartOffsetMs`). */
+export type BuildStage = 'foundation' | 'frame' | 'walls' | 'roof' | 'gates';
+
+export const BUILD_STAGE_ORDER: readonly BuildStage[] = ['foundation', 'frame', 'walls', 'roof', 'gates'] as const;
+
+/** How long a stage takes to settle once requested: its own duration plus its capped stagger; for the frame, the whole
+ * columns → rafters → purlins sequence. */
+export function stageSpanMs(stage: BuildStage): number {
+  if (stage === 'frame') return totalSequenceDurationMs();
+  return MAX_STAGGER_SPAN_MS[stage] + LAYER_DURATION_MS[stage];
+}
+
+/** Each stage is requested when the one before it is this far built, so the five read as one motion, not five
+ * separate fades — and the whole first view takes about 2.5 s (owner, 03.10) */
+const FIRST_VIEW_HANDOVER = 0.9;
+
+/** When each stage of the first view is requested, ms from its start, in `BUILD_STAGE_ORDER` */
+export function firstViewStageStartsMs(): number[] {
+  const starts: number[] = [];
+  let at = 0;
+  for (const stage of BUILD_STAGE_ORDER) {
+    starts.push(at);
+    at += Math.round(stageSpanMs(stage) * FIRST_VIEW_HANDOVER);
+  }
+  return starts;
+}
+
+/** Until the last stage has settled */
+export function firstViewDurationMs(): number {
+  const starts = firstViewStageStartsMs();
+  const last = BUILD_STAGE_ORDER.length - 1;
+  return starts[last] + stageSpanMs(BUILD_STAGE_ORDER[last]);
+}
+
+/** Whether a stage is requested yet, `released` stages into the first view (all of them when it is not playing) */
+export function isStageReleased(stage: BuildStage, released: number): boolean {
+  return BUILD_STAGE_ORDER.indexOf(stage) < released;
+}
+
 /** Maps a scene primitive to the build layer it belongs to, for callers that group primitives by
  * kind but need the shared timing/ordering table above. Returns null for primitives that sit
  * outside the staged build sequence (terrain, dimension guides). */

@@ -1,10 +1,13 @@
 'use client';
 
 import { Suspense, lazy, useCallback, useId, useMemo, useRef, useState } from 'react';
+import { DrawingSheet, type SheetCell } from '../DrawingSheet';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
 import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
 import { HangarPreview } from './HangarPreview';
+import { miniReadout } from './sheetLabels';
+import { useFirstViewBuildUp } from './useFirstViewBuildUp';
 import { ThreeDimensionOverlay } from './three/ThreeDimensionOverlay';
 import { ThreeErrorBoundary } from './three/ThreeErrorBoundary';
 import { FullscreenPreviewFrame } from './three/FullscreenPreviewFrame';
@@ -46,23 +49,29 @@ function ModeSwitch({
   mode,
   onSelect,
   threeAvailable,
+  onSheet = false,
 }: {
   mode: Mode;
   onSelect: (mode: Mode) => void;
   threeAvailable: boolean;
+  /** In a drawing sheet's title block (/angary): a square two-cell switch under «Вид», so the first cell says
+   *  «Технічний» and keeps «вид» for its name only */
+  onSheet?: boolean;
 }) {
+  // A span in the title block (a figcaption's phrasing content), a div in the toolbar
+  const Group = onSheet ? 'span' : 'div';
   return (
     // A group of two toggle buttons rather than tabs: tabs imply different content, and these are
     // two renderings of the same object. `aria-pressed` gives assistive tech the state without a
     // custom roving-tabindex implementation to get wrong.
-    <div className="hc-mode-switch" role="group" aria-label="Вид візуалізації">
+    <Group className="hc-mode-switch" role="group" aria-label="Вид візуалізації">
       <button
         type="button"
         aria-pressed={mode === 'technical'}
         className={mode === 'technical' ? 'is-active' : undefined}
         onClick={() => onSelect('technical')}
       >
-        Технічний вид
+        {onSheet ? <>Технічний<span className="hc-visually-hidden"> вид</span></> : 'Технічний вид'}
       </button>
       <button
         type="button"
@@ -74,7 +83,7 @@ function ModeSwitch({
       >
         3D
       </button>
-    </div>
+    </Group>
   );
 }
 
@@ -103,16 +112,28 @@ function DemoStatusStrip({
   );
 }
 
+/** /angary's preview on a «Креслення» drawing sheet (03.10) — see HangarPreviewModes */
+export type PreviewSheet = {
+  /** «Об’єкт» in the title block: «Приклад · 24 × 60 × 8 м» or «Ваш ангар · …» (sheetObjectLabel) */
+  object: string;
+  /** The business configuration is still the default and no demonstration is on: the first view may build itself */
+  untouched: boolean;
+};
+
 export function HangarPreviewModes({
   domain,
   presentationDemo,
   presentationAnnouncement,
   onEndPresentationDemo,
+  sheet,
 }: {
   domain: HangarDomainModel;
   presentationDemo?: HangarPresentationDemo | null;
   presentationAnnouncement?: string;
   onEndPresentationDemo?: () => void;
+  /** /angary lays the preview on a drawing sheet: rulers, a title block with what is shown, the object and the view
+   *  switch, a dark image field in both themes (configurator-sheet.css). /configurator-preview keeps its card. */
+  sheet?: PreviewSheet;
 }) {
   const [mode, setMode] = useState<Mode>('technical');
   const descriptionId = useId();
@@ -129,6 +150,11 @@ export function HangarPreviewModes({
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
   const modeSwitchAnchorRef = useRef<HTMLDivElement>(null);
+  const sheetViewRef = useRef<HTMLSpanElement>(null);
+  const drawingRef = useRef<HTMLDivElement>(null);
+  const released = useFirstViewBuildUp(drawingRef, Boolean(sheet), sheet?.untouched ?? false);
+  // The phone's mini drawing reads its sizes in the title block, not off the drawing (configurator-sheet.css)
+  const readout = useMemo(() => miniReadout(domain), [domain]);
 
   // Built here, from the same DomainModel the technical view consumes, so both representations
   // are guaranteed to describe the same configuration. Memoised so a mode switch alone never
@@ -153,7 +179,8 @@ export function HangarPreviewModes({
   const handleEndPresentationDemo = useCallback(() => {
     onEndPresentationDemo?.();
     if (!isFullscreen) {
-      requestAnimationFrame(() => modeSwitchAnchorRef.current?.querySelector<HTMLButtonElement>('button')?.focus());
+      const anchor = sheetViewRef.current ?? modeSwitchAnchorRef.current;
+      requestAnimationFrame(() => anchor?.querySelector<HTMLButtonElement>('button')?.focus());
     }
   }, [isFullscreen, onEndPresentationDemo]);
 
@@ -252,6 +279,39 @@ export function HangarPreviewModes({
     </div>
   ) : null;
 
+  const view = showThree ? (
+    <FullscreenPreviewFrame
+      active={isFullscreen}
+      onExit={exitFullscreen}
+      labelledBy="Розгорнутий перегляд 3D-моделі ангара"
+      describedBy={descriptionId}
+      announcement={presentationAnnouncement}
+      status={presentationDemo
+        ? <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
+        : null}
+    >
+      {threeCanvas}
+    </FullscreenPreviewFrame>
+  ) : (
+    <HangarPreview domain={domain} released={released} />
+  );
+
+  // Fullscreen and secondary 3D actions — brief §10's own suggested hierarchy: mode switch stays
+  // primary, everything else stays a small, clearly secondary action beside it. Only meaningful in
+  // 3D, so only shown there — no dead controls in Technical mode.
+  const expand = (
+    <button type="button" className={sheet ? 'hc-sheet-expand' : 'hc-secondary-action'} onClick={() => setIsFullscreen(true)}>
+      Розгорнути
+    </button>
+  );
+
+  const sheetCells: SheetCell[] = sheet ? [
+    { tone: 'main', label: 'Що показано', value: 'Загальний вид · попередня схема' },
+    { label: 'Об’єкт', value: sheet.object },
+    // shown only by the phone's mini drawing, in place of the other cells
+    { value: readout, className: 'hc-sheet-readout' },
+  ] : [];
+
   return (
     <>
       {!isFullscreen && (
@@ -262,42 +322,37 @@ export function HangarPreviewModes({
       {presentationDemo && !isFullscreen && (
         <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
       )}
-      <div className="hc-preview-toolbar">
-        <div className="hc-preview-toolbar-actions">
-          {/* Secondary actions — brief §10's own suggested hierarchy: mode switch stays primary,
-              everything else stays a small, clearly secondary action beside it. Only meaningful in
-              3D, so only shown there — no dead controls in Technical mode. */}
-          {showThree && (
-            <div className="hc-preview-secondary-actions">
-              <button type="button" className="hc-secondary-action" onClick={() => setIsFullscreen(true)}>
-                Розгорнути
-              </button>
-            </div>
+      {sheet ? (
+        // The sheet is the surface: the phone's mini drawing holds the whole sheet under the header (HangarConfigurator)
+        <DrawingSheet
+          className="hc-preview-surface hc-preview-sheet"
+          imageClassName="hc-preview-image"
+          imageRef={drawingRef}
+          cells={sheetCells}
+          action={(
+            <span className="hc-sheet-view" ref={sheetViewRef}>
+              <small aria-hidden="true">Вид</small>
+              <ModeSwitch mode={effectiveMode} onSelect={setMode} threeAvailable={threeAvailable} onSheet />
+            </span>
           )}
-          <div ref={modeSwitchAnchorRef}>
-            <ModeSwitch mode={effectiveMode} onSelect={setMode} threeAvailable={threeAvailable} />
+        >
+          {view}
+          {/* On the 3D picture itself, out of the title block: it is the picture's own action */}
+          {showThree && expand}
+        </DrawingSheet>
+      ) : (
+        <>
+          <div className="hc-preview-toolbar">
+            <div className="hc-preview-toolbar-actions">
+              {showThree && <div className="hc-preview-secondary-actions">{expand}</div>}
+              <div ref={modeSwitchAnchorRef}>
+                <ModeSwitch mode={effectiveMode} onSelect={setMode} threeAvailable={threeAvailable} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="hc-preview-surface">
-        {showThree ? (
-          <FullscreenPreviewFrame
-            active={isFullscreen}
-            onExit={exitFullscreen}
-            labelledBy="Розгорнутий перегляд 3D-моделі ангара"
-            describedBy={descriptionId}
-            announcement={presentationAnnouncement}
-            status={presentationDemo
-              ? <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
-              : null}
-          >
-            {threeCanvas}
-          </FullscreenPreviewFrame>
-        ) : (
-          <HangarPreview domain={domain} />
-        )}
-      </div>
+          <div className="hc-preview-surface">{view}</div>
+        </>
+      )}
 
       {/* Material presets + scale figure toggle — secondary, below the preview rather than
           crowding the toolbar (brief §10: "not a cockpit"). Only relevant in 3D (colour and a 3D
