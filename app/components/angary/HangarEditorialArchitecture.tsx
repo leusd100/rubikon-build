@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Phone } from 'lucide-react';
 import { CostFactorsFigure, type CostFactorItem } from '../process/CostFactorsFigure';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
+import { useInquiryAttachment } from '../inquiry/InquiryAttachmentProvider';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { company, companyContactLinks } from '../../data/company';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
@@ -39,12 +40,15 @@ export function HangarEditorialArchitecture({
   realObject?: ReactNode;
 }>) {
   const inquiry = useHangarInquiryContext();
+  const inquiryAttachment = useInquiryAttachment();
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
   const summary = deriveSummary(deriveDomainModel(state));
   // What the visitor's own configuration already says about a factor — only once they have set something
   const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
   const notes = own ? costFactorNotes(deriveDomainModel(state)) : undefined;
   const attached = Boolean(inquiry?.isAttached);
+  // Sent with a saved lead and unchanged since (04.10): 01 says so and no longer asks to send it
+  const sent = attached && Boolean(inquiryAttachment?.sent);
   let briefState = 'idle';
   if (attached) briefState = 'attached';
   else if (inquiry?.attachment.status === 'detached') briefState = 'detached';
@@ -93,16 +97,17 @@ export function HangarEditorialArchitecture({
               <h3>Ваш бриф</h3>
               <p>
                 {attached
-                  ? <>Додано до заявки: <b>{summary.dimensionsLabel} · {summary.envelopeLabel}</b></>
+                  ? <>{sent ? 'Надіслано з вашим запитом' : 'Додано до заявки'}: <b>{summary.dimensionsLabel} · {summary.envelopeLabel}</b></>
                   : 'Базову конфігурацію можна сформувати вище.'}
               </p>
               {/* Owner, 03.10: the brief's node acts on its own state — up to the configurator while nothing is attached,
                   down to the attached brief in the form once something is */}
-              {attached ? (
+              {attached && !sent && (
                 <a className="angary-route-brief-action" href="#inquiry" onClick={revealAttachedBrief}>
                   Надіслати бриф <span aria-hidden="true">↓</span>
                 </a>
-              ) : (
+              )}
+              {!attached && (
                 <a className="angary-route-brief-action" href="#configurator">
                   Сформувати бриф <span aria-hidden="true">↑</span>
                 </a>

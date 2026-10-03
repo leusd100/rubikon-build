@@ -86,7 +86,8 @@ test.describe('Grain Planner → inquiry handoff', () => {
     await expect(form(page).locator('.inquiry-form-section-brief')).toBeVisible();
     await expect(card.locator('.inquiry-config-brief-direction')).toHaveText('Напрям робіт Зерносховища');
     await expect(form(page).locator('select[name="direction"]')).toHaveCount(0);
-    await form(page).getByText('Додати параметри об’єкта', { exact: true }).click();
+    // with a brief attached its parameters are in the request already: the rest are details (sweep 03.10)
+    await form(page).getByText('Додати деталі до заявки', { exact: true }).click();
     await expect(form(page).getByLabel('Місто або область')).toBeVisible();
     await expect(form(page).locator('input[name="dimensions"]')).toHaveCount(0);
     expect(errors).toEqual([]);

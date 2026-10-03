@@ -47,11 +47,11 @@ test('«Об’єкт» answers alone add the answers; the example’s sizes sta
   const brief = attachmentCard(page);
   await expect(brief).toContainText('До заявки додано відповіді про об’єкт');
   await brief.getByText('Переглянути параметри', { exact: true }).click();
-  await expect(brief.getByRole('heading')).toHaveText(['Про об’єкт', 'Базові параметри (за замовчуванням)', 'Попередні дані']);
+  await expect(brief.locator('.inquiry-config-brief-sections').getByRole('heading')).toHaveText(['Про об’єкт', 'Базові параметри (за замовчуванням)', 'Попередні дані']);
   // the form keeps its own «Орієнтовні розміри»: the lead's «Габарити» is not the example's 24 × 60 × 8 м
   const form = page.locator('form.inquiry-form');
   await expect(form.locator('input[type="hidden"][name="dimensions"]')).toHaveCount(0);
-  await form.getByText('Додати параметри об’єкта', { exact: true }).click();
+  await form.getByText('Додати деталі до заявки', { exact: true }).click();
   await expect(form.getByLabel('Орієнтовні розміри', { exact: true })).toBeVisible();
 
   await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
