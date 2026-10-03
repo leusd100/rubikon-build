@@ -6,7 +6,7 @@ import { CostFactorsFigure, type CostFactorItem } from '../process/CostFactorsFi
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { company, companyContactLinks } from '../../data/company';
-import { sameBusinessConfiguration } from '../../lib/configurator/attachmentContract';
+import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
@@ -41,7 +41,7 @@ export function HangarEditorialArchitecture({
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
   const summary = deriveSummary(deriveDomainModel(state));
   // What the visitor's own configuration already says about a factor — only once they have set something
-  const own = !sameBusinessConfiguration(state, DEFAULT_CONFIGURATOR_STATE);
+  const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
   const notes = own
     ? {
       dimensions: `У вашій конфігурації: ${summary.dimensionsLabel}, коник ${summary.ridgeHeightLabel}`,

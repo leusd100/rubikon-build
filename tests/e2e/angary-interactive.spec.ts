@@ -410,6 +410,29 @@ test('on a phone the groups fold: «Об’єкт» open first, one group at a t
   expect(await controls.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(844 * 1.5);
 });
 
+test('on a phone «Змінити габарити ↑» under the frame drawing opens «Розміри» and lands on it', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const dimensions = page.locator('#configurator .hc-group-toggle[aria-controls="hc-dimensions-panel"]');
+  await expect(dimensions).toHaveAttribute('aria-expanded', 'false');
+
+  const resize = page.locator('#structure a[data-open-group="dimensions"]');
+  await resize.scrollIntoViewIfNeeded();
+  await resize.click();
+  await expect(dimensions).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#hc-dimensions-panel')).toBeVisible();
+  await expect(dimensions).toBeFocused();
+  // its header just under the mini drawing, not under it and not a screen away
+  await expect.poll(async () => {
+    const stageBottom = await page.locator('#configurator .hc-preview-surface').evaluate((element) => element.getBoundingClientRect().bottom);
+    const headerTop = await dimensions.evaluate((element) => element.getBoundingClientRect().top);
+    return headerTop - stageBottom;
+  }).toBeGreaterThanOrEqual(-1);
+  expect(await dimensions.evaluate((element) => element.getBoundingClientRect().top)).toBeLessThan(844 / 2);
+});
+
 test('on a wide screen every group stays open under a plain heading, «Об’єкт» first', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'a wide-screen contract');
   await openHangarPage(page);

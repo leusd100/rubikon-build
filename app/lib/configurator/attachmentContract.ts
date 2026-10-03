@@ -38,6 +38,14 @@ export function transitionHangarAttachment(
 }
 
 /**
+ * The same hangar as drawn: every business field but the object profile (purpose, project, region, lifting equipment),
+ * which changes no drawing — answering «Для чого ангар?» must not relabel the example's drawings «Ваш ангар» (03.10).
+ */
+export function sameDrawnHangar(a: ConfiguratorState, b: ConfiguratorState): boolean {
+  return sameBusinessConfiguration({ ...a, objectProfile: b.objectProfile }, b);
+}
+
+/**
  * Exact business-state equality. Presentation state is intentionally absent from this type. `ridgeEdited` is left out
  * on purpose: the controls set it only together with a changed ridge, so the ridge value already answers the question,
  * and an edited ridge set back to the default is the default configuration again.

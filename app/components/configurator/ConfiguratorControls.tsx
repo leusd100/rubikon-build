@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { CONTROL_GROUP_TITLES, describeControlGroups, type ControlGroupId } from '../../lib/configurator/controlGroups';
 import { formatRoofSlope } from '../../lib/configurator/deriveSummary';
 import { deriveDomainModel, resolveRidgeHeightM } from '../../lib/configurator/domainModel';
@@ -209,6 +209,18 @@ function keepHeaderInView(header: HTMLElement) {
   if (top < covered) window.scrollBy({ top: top - covered - 8, behavior: 'instant' });
 }
 
+/** Brings a header just under the site header and the mini drawing, from above or below — twice, because arriving at the
+ *  controls switches the drawing to its compact size a frame later */
+function landOnHeader(header: HTMLElement) {
+  const land = () => {
+    const stage = header.closest('.hc-layout')?.querySelector<HTMLElement>('.hc-preview-surface');
+    const covered = (document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0) + (stage?.offsetHeight ?? 0);
+    window.scrollBy({ top: header.getBoundingClientRect().top - covered - 8, behavior: 'instant' });
+  };
+  land();
+  window.requestAnimationFrame(() => window.requestAnimationFrame(land));
+}
+
 // The ids the groups have always had: page sections and tests point at them
 const GROUP_HEADING_IDS: Record<ControlGroupId, string> = {
   object: 'hc-object-heading',
@@ -284,6 +296,28 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
   const ridgeHint = state.ridgeEdited
     ? `Коник ${formatMetres(ridgeValue)} м · ${formatRoofSlope(domain.roof.pitchDeg, true)} — ваше значення. ${ridgeRangeText}`
     : `Коник ${formatMetres(ridgeValue)} м · ${formatRoofSlope(domain.roof.pitchDeg, true)}. Поки ви не задали коник самі, ухил підбирається за шириною ангара. ${ridgeRangeText}`;
+
+  // A link elsewhere on the page that names a group (the frame drawing's «Змінити габарити ↑», data-open-group) opens it
+  // on a phone and lands on its header — it used to arrive at the configurator with «Розміри» folded (03.10). Without the
+  // accordion the link's own anchor scrolls as usual.
+  useEffect(() => {
+    if (!accordion) return undefined;
+    const openFromLink = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[data-open-group]');
+      const id = link?.dataset.openGroup as ControlGroupId | undefined;
+      if (!id || !(id in GROUP_HEADING_IDS)) return;
+      event.preventDefault();
+      setOpenGroup(id);
+      window.requestAnimationFrame(() => {
+        const header = document.querySelector<HTMLElement>(`.hangar-configurator-embedded [data-group="${id}"] .hc-group-toggle`);
+        if (!header) return;
+        landOnHeader(header);
+        header.focus({ preventScroll: true });
+      });
+    };
+    document.addEventListener('click', openFromLink);
+    return () => document.removeEventListener('click', openFromLink);
+  }, [accordion]);
 
   function toggleGroup(id: ControlGroupId, header: HTMLElement) {
     const opening = openGroup !== id;

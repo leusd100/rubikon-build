@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   INITIAL_HANGAR_ATTACHMENT,
   sameBusinessConfiguration,
+  sameDrawnHangar,
   transitionHangarAttachment,
 } from '../../../app/lib/configurator/attachmentContract';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../../app/lib/configurator/types';
@@ -71,5 +72,14 @@ describe('hangar lead attachment contract', () => {
   it('leaves ridgeEdited out: the ridge value itself says whether the configuration changed (03.10)', () => {
     expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, { ...DEFAULT_CONFIGURATOR_STATE, ridgeEdited: true })).toBe(true);
     expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, { ...DEFAULT_CONFIGURATOR_STATE, ridgeHeightM: 12, ridgeEdited: true })).toBe(false);
+  });
+
+  it('draws the same hangar when only the «Об’єкт» answers differ, and a different one when the building does', () => {
+    const answered = { ...DEFAULT_CONFIGURATOR_STATE, objectProfile: { ...DEFAULT_CONFIGURATOR_STATE.objectProfile, purpose: 'storage' as const } };
+    const wider = { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 30 } };
+
+    expect(sameBusinessConfiguration(answered, DEFAULT_CONFIGURATOR_STATE)).toBe(false);
+    expect(sameDrawnHangar(answered, DEFAULT_CONFIGURATOR_STATE)).toBe(true);
+    expect(sameDrawnHangar(wider, DEFAULT_CONFIGURATOR_STATE)).toBe(false);
   });
 });

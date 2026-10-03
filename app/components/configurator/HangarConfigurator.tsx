@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { sameBusinessConfiguration } from '../../lib/configurator/attachmentContract';
+import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { ConfiguratorControls } from './ConfiguratorControls';
@@ -83,7 +83,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
   const previewState = sharedInquiry?.presentationDemo?.configuration ?? state;
   const previewDomain = useMemo(() => deriveDomainModel(previewState), [previewState]);
   // /angary's drawing sheet names the object as the frame drawing does: the example until the visitor makes it theirs
-  const own = !sameBusinessConfiguration(state, DEFAULT_CONFIGURATOR_STATE);
+  const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
   const presentationDemo = sharedInquiry?.presentationDemo;
 
   return (

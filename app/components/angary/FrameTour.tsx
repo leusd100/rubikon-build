@@ -4,10 +4,10 @@ import { useMemo, type CSSProperties } from 'react';
 import { DrawingSheet } from '../DrawingSheet';
 import { stageTransform, useDrawingTour } from '../useDrawingTour';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
-import { sameBusinessConfiguration } from '../../lib/configurator/attachmentContract';
+import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { deriveDomainModel, type HangarDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
-import { deriveBayLayout, ridgeHeightM } from '../../lib/configurator/parametricModel';
+import { deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM } from '../../lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { TourControl, TourProgress, TourSteps, tourStepCell } from '../directions/TourParts';
 import './frame-tour.css';
@@ -147,9 +147,11 @@ function frameGeometry(domain: HangarDomainModel) {
   // clear span, at most three; with a centre row its column stands in the middle and a post halves each span (03.10)
   const postCount = clamp(Math.round(W / 7) - 1, 1, 3);
   const postXs = centre ? [W / 4, (3 * W) / 4] : Array.from({ length: postCount }, (_, index) => (W * (index + 1)) / (postCount + 1));
-  // Purlins on a truss bear on its top-chord nodes (the odd eighths of the span, where the web meets it — between nodes
-  // the chord would carry them in bending, 03.10); on a portal rafter they sit evenly
-  const purlinXs = truss ? [1, 3, 5, 7].map((index) => (index * W) / 8) : [1 / 3, 2 / 3].flatMap((t) => [(t * W) / 2, W - (t * W) / 2]);
+  // The configurator's own frame, so the two drawings show one hangar (03.10): purlins where its model puts them — on a
+  // truss's top-chord nodes (between nodes the chord would carry them in bending), evenly on a portal rafter — the eave
+  // and ridge lines being the longitudinals below; the truss's panels as the model divides them
+  const purlinXs = roofPurlinPositionsM(W, domain.structural.roofStructure).filter((purlin) => purlin.kind === 'purlin').map((purlin) => purlin.xM);
+  const panelXs = trussPanelNodesM(W).panelXsM;
   const frames = Array.from({ length: bays + 1 }, (_, index) => index * s);
 
   // Fit the frame with its footings, dimensions and the wind arrows into the sheet: room on top for the snow arrows,
@@ -202,7 +204,11 @@ function frameGeometry(domain: HangarDomainModel) {
     ? [
       line([0, d, E], [W / 2, d, R], [W, d, E]),
       line([0, d, E], [W, d, E]),
-      `M${Array.from({ length: 9 }, (_, index) => p([(index * W) / 8, d, index % 2 === 0 ? E : roofZ((index * W) / 8)])).join('L')}`,
+      // the web: odd panel points on the top chord, even ones on the bottom chord (the centre among them, where a centre
+      // column lands); from the first panel point to the last — the heel's would lie on the chords — and a vertical under
+      // the ridge, which makes the ridge a node
+      `M${panelXs.slice(1, -1).map((x, index) => p([x, d, index % 2 === 0 ? roofZ(x) : E])).join('L')}`,
+      line([W / 2, d, E], [W / 2, d, R]),
     ].join('')
     : [
       line([0, d, E], [W / 2, d, R], [W, d, E]),
@@ -444,7 +450,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
   const domain = useMemo(() => deriveDomainModel(state), [state]);
   const g = useMemo(() => frameGeometry(domain), [domain]);
   const summary = deriveSummary(domain);
-  const own = !sameBusinessConfiguration(state, DEFAULT_CONFIGURATOR_STATE);
+  const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
   const where = own ? 'у вашій конфігурації' : 'у прикладі';
 
   const steps: TourStep[] = [
@@ -527,7 +533,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
               <>
                 <small>Об’єкт</small>
                 <span className="ft-object-value">{object}</span>
-                <a className="ft-resize" href="#configurator">Змінити габарити <span aria-hidden="true">↑</span></a>
+                <a className="ft-resize" href="#configurator" data-open-group="dimensions">Змінити габарити <span aria-hidden="true">↑</span></a>
               </>
             ),
             className: 'ft-object',
