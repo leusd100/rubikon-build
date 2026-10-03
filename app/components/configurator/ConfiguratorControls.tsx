@@ -351,6 +351,8 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
       const id = link?.dataset.openGroup as ControlGroupId | undefined;
       if (!id || !(id in GROUP_HEADING_IDS)) return;
       event.preventDefault();
+      // the address follows the visitor back up: it kept «#inquiry» from an earlier reveal (04.10)
+      if (link?.hash) window.history.replaceState(null, '', link.hash);
       setOpenGroup(id);
       window.requestAnimationFrame(() => {
         const header = document.querySelector<HTMLElement>(`.hangar-configurator-embedded [data-group="${id}"] .hc-group-toggle`);

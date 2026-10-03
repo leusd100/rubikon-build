@@ -24,7 +24,7 @@ describe('deriveSummary', () => {
     expect(summary.dimensionsLabel).toBe(nb('24_×_60_×_8_м'));
     expect(summary.areaSqm).toBe(1440);
     expect(summary.areaLabel).toBe(nb('≈_1\u00A0440_м²'));
-    expect(summary.headlineLabel).toBe(nb('24_×_60_×_8_м · Холодний'));
+    expect(summary.headlineLabel).toBe(nb('24_×_60_×_8_м_· Холодний'));
     expect(summary.structuralVisualizationDescription).toBe(
       nb('Для ширини 24_м у попередній візуалізації показано ферму з центральним рядом опор.'),
     );

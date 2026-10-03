@@ -236,7 +236,8 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     dimensionsLabel,
     // Without walls and roof there is no envelope to name, and «24 × 60 × 8 м · Поза обсягом заявки» read as if the
     // whole hangar were out of the request (04.10)
-    headlineLabel: domain.scope.walls || domain.scope.roof ? `${dimensionsLabel} · ${envelopeLabel}` : dimensionsLabel,
+    // the «·» keeps to the sizes: it started a line at 1440 px (04.10)
+    headlineLabel: domain.scope.walls || domain.scope.roof ? `${dimensionsLabel}\u00A0· ${envelopeLabel}` : dimensionsLabel,
     ridgeHeightLabel: `${ridge}${NBSP}м · ${roofSlopeLabel}`,
     roofSlopeLabel,
     objectProfile: objectProfileLabels(domain.objectProfile),

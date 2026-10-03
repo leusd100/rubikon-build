@@ -49,6 +49,9 @@ export function HangarEditorialArchitecture({
   const attached = Boolean(inquiry?.isAttached);
   // Sent with a saved lead and unchanged since (04.10): 01 says so and no longer asks to send it
   const sent = attached && Boolean(inquiryAttachment?.sent);
+  // The brief's own headline, as the form's card shows it: without the contour when walls and roof are out of scope,
+  // the object answers when only they were given (04.10)
+  const briefHeadline = inquiryAttachment?.attachment?.headline ?? summary.headlineLabel;
   let briefState = 'idle';
   if (attached) briefState = 'attached';
   else if (inquiry?.attachment.status === 'detached') briefState = 'detached';
@@ -97,8 +100,7 @@ export function HangarEditorialArchitecture({
               <h3>Ваш бриф</h3>
               <p>
                 {attached
-                  // the «·» keeps to the sizes: it started a line at 1440 px (04.10)
-                  ? <>{sent ? 'Надіслано з вашим запитом' : 'Додано до заявки'}: <b>{summary.dimensionsLabel}{'\u00A0'}· {summary.envelopeLabel}</b></>
+                  ? <>{sent ? 'Надіслано з вашим запитом' : 'Додано до заявки'}: <b>{briefHeadline}</b></>
                   : 'Базову конфігурацію можна сформувати вище.'}
               </p>
               {/* Owner, 03.10: the brief's node acts on its own state — up to the configurator while nothing is attached,
