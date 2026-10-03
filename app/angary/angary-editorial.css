@@ -101,7 +101,8 @@
   .angary-page .hangar-configurator-embedded { padding-block: 48px 82px; }
   .angary-page :is(.angary-section-heading h2, .faq-grid h2) { font-size: clamp(30px, 9vw, 36px); }
   .angary-section-heading { margin-bottom: 38px; }
-  .angary-section-heading > p:not(.eyebrow) { margin-top: 22px; font-size: 14px; }
+  /* 16 px on phones, as every lead on the site (HOME's mobile standard); at 14 px the cost lead was the smallest */
+  .angary-section-heading > p:not(.eyebrow) { margin-top: 22px; font-size: 16px; line-height: 1.6; }
   .angary-process .angary-section-heading { margin-bottom: 50px; }
   .angary-process-rail { grid-template-columns: 1fr; }
   .angary-process-rail::before { content: none; }

@@ -101,7 +101,9 @@ function frameGeometry(domain: HangarDomainModel) {
   const farEnd = continues ? '' : line([0, DEP, 0], [W, DEP, 0]);
 
   // Purlins on the roof, wall purlins on the near side wall and the end wall; bracing in the first bay
-  const purlinXs = [1 / 3, 2 / 3].flatMap((t) => [(t * W) / 2, W - (t * W) / 2]);
+  // Purlins on a truss bear on its top-chord nodes (the odd eighths of the span, where the web meets it — between nodes
+  // the chord would carry them in bending, 03.10); on a portal rafter they sit evenly
+  const purlinXs = truss ? [1, 3, 5, 7].map((index) => (index * W) / 8) : [1 / 3, 2 / 3].flatMap((t) => [(t * W) / 2, W - (t * W) / 2]);
   const purlins = purlinXs.map((x) => line([x, 0, roofZ(x)], [x, end, roofZ(x)])).join('');
   const girts = [E / 3, (2 * E) / 3].map((z) => `${line([W, 0, z], [W, end, z])}${line([0, 0, z], [W, 0, z])}`).join('');
   const wallBracing = `${line([W, 0, 0], [W, s, E])}${line([W, s, 0], [W, 0, E])}`;
@@ -139,20 +141,23 @@ function frameGeometry(domain: HangarDomainModel) {
   // ── snow, followed through one frame (the second): the strip of roof it carries — half a bay either side — then
   //    its purlins, the frame, its columns, footings and the ground ──
   const [s0, s1] = [s / 2, (3 * s) / 2];
+  // one path per arrow, so each can fall on its own beat
   const snowArrows = [0.72, 1.28].flatMap((t) => [0.17, 0.38, 0.62, 0.83].map((f) => {
     const [ax, ay] = xy([W * f, t * s, roofZ(W * f)]);
     return `M${n(ax)},${n(ay - 26)}V${n(ay - 4)}M${n(ax - 3.5)},${n(ay - 10)}L${n(ax)},${n(ay - 4)}L${n(ax + 3.5)},${n(ay - 10)}`;
-  })).join('');
+  }));
   const plane = (...points: P3[]) => `M${points.map(p).join('L')}Z`;
   const snowStrip = `${plane([0, s0, E], [W / 2, s0, R], [W / 2, s1, R], [0, s1, E])}${plane([W / 2, s0, R], [W, s0, E], [W, s1, E], [W / 2, s1, R])}`;
   const stripEdges = `${line([0, s0, E], [W / 2, s0, R], [W, s0, E])}${line([0, s1, E], [W / 2, s1, R], [W, s1, E])}`;
   const stripPurlins = purlinXs.map((x) => line([x, s0, roofZ(x)], [x, s1, roofZ(x)])).join('');
   const snowFootings = columnXs.map((x) => box(x, s)).join('');
-  // drops running down that frame, from the ridge to the footings
-  const snowFlow = [
-    line([W / 2, s, R], [0, s, E], [0, s, -1]),
-    line([W / 2, s, R], [W, s, E], [W, s, -1]),
-    ...(centre ? [line([W / 2, s, E], [W / 2, s, -1])] : []),
+  // The drops, one run per link, each starting when its link lights (--n): along the purlins to the frame, down the
+  // frame to the eaves, down the columns, into the footings — the load front moves with the legend
+  const snowFlow: { d: string; link: number }[] = [
+    ...purlinXs.flatMap((x) => [line([x, s0, roofZ(x)], [x, s, roofZ(x)]), line([x, s1, roofZ(x)], [x, s, roofZ(x)])]).map((d) => ({ d, link: 1 })),
+    { d: `${line([W / 2, s, R], [0, s, E])}${line([W / 2, s, R], [W, s, E])}`, link: 2 },
+    { d: columnXs.map((x) => line([x, s, E], [x, s, 0])).join(''), link: 3 },
+    { d: columnXs.map((x) => line([x, s, 0], [x, s, -1])).join(''), link: 4 },
   ];
 
   // ── wind on the near end wall, along the building: end wall → roof bracing → wall bracing → footings ──
@@ -165,10 +170,15 @@ function frameGeometry(domain: HangarDomainModel) {
   const windArrows = [0.25, 0.55, 0.85].flatMap((h) => [0.2, 0.5, 0.8].map((f) => {
     const z = Math.min(E * h, roofZ(W * f) - 0.6);
     return `${line([W * f, -WIND, z], [W * f, -0.5, z])}${head([W * f, -0.5, z])}`;
-  })).join('');
+  }));
   const endWall = plane([0, 0, 0], [W, 0, 0], [W, 0, E], [W / 2, 0, R], [0, 0, E]);
   const braceFootings = `${box(W, 0)}${box(W, s)}`;
-  const windFlow = [line([W / 2, 0, R], [W, s, E], [W, 0, 0], [W, 0, -1]), line([W / 2, s, R], [W, 0, E], [W, s, 0], [W, s, -1])];
+  // …and the wind's: across the roof bracing to the eave, down the wall bracing, into the footings
+  const windFlow = [
+    { d: `${line([W / 2, 0, R], [W, s, E])}${line([W / 2, s, R], [W, 0, E])}`, link: 1 },
+    { d: `${line([W, s, E], [W, 0, 0])}${line([W, 0, E], [W, s, 0])}`, link: 2 },
+    { d: `${line([W, 0, 0], [W, 0, -1])}${line([W, s, 0], [W, s, -1])}`, link: 3 },
+  ];
 
   // Names on the members for steps 2 and 3: a short leader from the member to its label
   const tag = (point: P3, dx: number, dy: number) => {
@@ -178,10 +188,11 @@ function frameGeometry(domain: HangarDomainModel) {
   const tags = {
     frame: [
       { label: truss ? 'ферма' : 'ригель рами', ...tag([W * 0.3, 0, roofZ(W * 0.3)], -24, -30) },
-      { label: 'колона', ...tag([W, 0, E * 0.3], 30, 12) },
+      // to the left of the right column, inside the frame: to its right the camera's edge cut it on phones (03.10)
+      { label: 'колона', ...tag([W, 0, E * 0.3], -30, 12) },
     ],
     bays: [
-      { label: 'прогони', ...tag([W - W / 6, s * 1.5, roofZ(W - W / 6)], 22, -26) },
+      { label: 'прогони', ...tag([Math.max(...purlinXs), s * 1.5, roofZ(Math.max(...purlinXs))], 22, -26) },
       { label: 'стінові прогони', ...tag([W * 0.92, 0, E / 3], -14, 28) },
       { label: 'в’язі', ...tag([W, s * 0.62, E * 0.62], 34, -10) },
     ],
@@ -213,6 +224,14 @@ type TourStep = { title: string; text: string; caption: string; focus: readonly 
 const snowChain = (truss: boolean) => ['Покрівля', 'Прогони', truss ? 'Ферма' : 'Ригель рами', 'Колони', 'Фундаменти', 'Ґрунт'];
 const WIND_CHAIN = ['Торцева стіна', 'В’язі покрівлі', 'В’язі стін', 'Фундаменти'];
 const at = (index: number) => ({ '--n': index }) as CSSProperties;
+/** An arrow's own beat in the falling snow and the wind's gusts */
+const beat = (index: number) => ({ '--k': index }) as CSSProperties;
+/** Under the sheet on a phone, before a step is shown: it promises a show only while one is still to come */
+function overviewText(pending: boolean, motion: boolean) {
+  if (pending) return 'Креслення показує каркас крок за кроком: оберіть крок нижче або дочекайтеся показу.';
+  if (motion) return 'Креслення показує каркас крок за кроком: оберіть крок нижче або натисніть «Відтворити».';
+  return 'Креслення показує каркас крок за кроком: оберіть крок нижче.';
+}
 
 export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
   const inquiry = useHangarInquiryContext();
@@ -225,7 +244,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
   const steps: TourStep[] = [
     {
       title: 'Проліт L',
-      text: `Відстань між крайніми колонами — ${fmt(g.W)} м у вашій конфігурації. H — висота стіни.`,
+      text: `Відстань між крайніми колонами — ${fmt(g.W)} м ${own ? 'у вашій конфігурації' : 'у прикладі'}. H — висота стіни.`,
       caption: 'Проліт між крайніми колонами',
       focus: g.focus.span,
       zoom: 1.3,
@@ -239,8 +258,8 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
     },
     {
       title: 'Прогони й в’язі',
-      text: `Прогони лежать на ${g.truss ? 'фермах' : 'рамах'} й несуть покрівлю, стінові прогони — обшивку стін. В’язі зв’язують рами між собою, щоб каркас тримав форму вздовж будівлі. Крок рам a уточнює розрахунок.`,
-      caption: 'Прогони й в’язі в першому прольоті',
+      text: `Прогони лежать на ${g.truss ? 'вузлах ферм' : 'рамах'} і несуть покрівлю, стінові прогони — обшивку стін. В’язі в крайньому кроці зв’язують рами між собою, щоб каркас тримав форму вздовж будівлі. Крок рам a уточнює розрахунок.`,
+      caption: 'Прогони й в’язі в крайньому кроці рам',
       focus: g.focus.bays,
       zoom: 1.5,
     },
@@ -260,7 +279,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
       zoom: 1.15,
     },
   ];
-  const { visualRef, step, touring, run, size, motion, choose, toggle, hover } = useDrawingTour(steps.length, { loops: 3 });
+  const { visualRef, step, touring, run, size, motion, pending, choose, toggle, hover } = useDrawingTour(steps.length, { loops: 3 });
   const active = step ? steps[step - 1] : undefined;
   const object = `${own ? 'Ваш ангар' : 'Приклад'} · ${fmt(g.W)} × ${fmt(g.lengthM)} × ${fmt(g.E)} м`;
   let chain: readonly string[] | null = null;
@@ -335,26 +354,26 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
               </g>
             ))}
 
-            {/* snow: the links light in turn (--n), as the legend does; the drops run down the front frame */}
+            {/* snow: the links light in turn (--n), as the legend does, and the drops run on each link as it lights */}
             <g className="ft-load" data-load="snow" aria-hidden="true">
               <path className="ft-link ft-plane" style={at(0)} d={g.snowStrip} />
               <path className="ft-link ft-edge" style={at(0)} d={g.stripEdges} />
-              <path className="ft-arrows" d={g.snowArrows} />
+              {g.snowArrows.map((d, index) => <path key={d} className="ft-arrows" style={beat((index * 3) % 8)} d={d} />)}
               <path className="ft-link" style={at(1)} d={g.stripPurlins} />
               <path className="ft-link" style={at(2)} d={g.snowFrame} />
               <path className="ft-link" style={at(3)} d={g.snowColumns} />
               <path className="ft-link ft-link-footing" style={at(4)} d={g.snowFootings} />
               <path className="ft-link" style={at(5)} d={g.snowGround} />
-              {g.snowFlow.map((d) => <path key={d} className="ft-flow" d={d} />)}
+              {g.snowFlow.map(({ d, link }) => <path key={d} className="ft-flow" style={at(link)} d={d} />)}
             </g>
             <g className="ft-load" data-load="wind" aria-hidden="true">
               <path className="ft-link ft-plane" style={at(0)} d={g.endWall} />
-              <path className="ft-arrows ft-arrows-wind" d={g.windArrows} />
+              {g.windArrows.map((d, index) => <path key={d} className="ft-arrows ft-arrows-wind" style={beat((Math.floor(index / 3) + 2 * (index % 3)) % 3)} d={d} />)}
               <path className="ft-link" style={at(1)} d={g.roofBracing} />
               <path className="ft-link" style={at(2)} d={g.wallBracing} />
               <path className="ft-link ft-link-footing" style={at(3)} d={g.braceFootings} />
               <path className="ft-link" style={at(3)} d={g.windGround} />
-              {g.windFlow.map((d) => <path key={d} className="ft-flow" d={d} />)}
+              {g.windFlow.map(({ d, link }) => <path key={d} className="ft-flow" style={at(link)} d={d} />)}
             </g>
           </svg>
         </div>
@@ -365,6 +384,13 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
         )}
         <TourProgress count={steps.length} step={step} run={run} className="ft-progress" />
       </DrawingSheet>
+      {/* Phone: the shown step's text under the drawing, in one slot as tall as the longest — the list above it keeps
+          only the titles, so the page no longer jumps on every step (it did by up to 65 px, three rounds over). The
+          buttons keep their full text for screen readers; this copy is for the eye only. */}
+      <div className="ft-step-caption" aria-hidden="true">
+        <p data-on={step === 0 || undefined}>{overviewText(pending, motion)}</p>
+        {steps.map((item, index) => <p key={item.title} data-on={step === index + 1 || undefined}>{item.text}</p>)}
+      </div>
     </div>
   );
 }

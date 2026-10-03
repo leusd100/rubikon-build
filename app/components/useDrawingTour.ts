@@ -12,7 +12,10 @@ import { useHoverStep } from './useHoverStep';
 // visitor chooses, or a pause, hands the tour over to them: it no longer resumes by itself. Reduced motion: no tour,
 // and a chosen step switches at once.
 
-const STEP_MS = 5200; // room for each step to build what it names (UX pass 2026-10)
+const STEP_MS = 5200; // room for each step to build what it names (UX pass 2026-10); the progress bars fill as long
+/** The first start holds the plotted overview this long: the sheet plots in for ~1 s, and the camera must not start
+ *  over it in a browser whose observer ignores the picture's clip-path (Chrome happened to wait for it, 03.10) */
+const OVERVIEW_BEAT_MS = 1200;
 
 export type StageSize = { width: number; height: number };
 export type TourFocus = { focus: readonly [number, number]; zoom: number };
@@ -38,11 +41,16 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
   const auto = useRef(true);
   const cycles = useRef(0);
   const shown = useRef(0);
+  const playing = useRef(false);
+  /** The overview's pending beat before the first step — cancelled by any choice of the visitor's */
+  const beat = useRef(0);
   const [step, setStep] = useState(0);
   const [touring, setTouring] = useState(false);
   const [run, setRun] = useState(0);
   const [size, setSize] = useState<StageSize | null>(null);
   const [motion, setMotion] = useState(false);
+  /** An automatic run is still to come (none after the last round, a choice or a pause) — for wording that promises one */
+  const [pending, setPending] = useState(true);
 
   useEffect(() => {
     const visual = visualRef.current;
@@ -54,7 +62,11 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setMotion(!query.matches);
+    // reduced motion switched on mid-tour stops it (the control that pauses it goes away with motion)
+    const update = () => {
+      setMotion(!query.matches);
+      if (query.matches) setTouring(false);
+    };
     update();
     query.addEventListener('change', update);
     return () => query.removeEventListener('change', update);
@@ -62,23 +74,42 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
 
   useEffect(() => {
     shown.current = step;
-  }, [step]);
+    playing.current = touring;
+  }, [step, touring]);
 
   useEffect(() => {
     const visual = visualRef.current;
     if (!visual || !motion) return;
+    const start = () => {
+      beat.current = 0;
+      if (!auto.current || shown.current !== 0) return;
+      setStep(1);
+      setRun((value) => value + 1);
+      setTouring(true);
+    };
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.intersectionRatio >= 0.5 && auto.current && cycles.current < loops) {
-        // from the first step, or again from the one it stopped on (its progress bar restarts with `run`)
-        if (shown.current === 0) setStep(1);
+        // from the first step after the overview's beat, or again from the one it stopped on (its bar restarts) —
+        // only when it was stopped: crossing half-way while it plays must not restart the step
+        if (shown.current === 0) {
+          if (!beat.current) beat.current = window.setTimeout(start, OVERVIEW_BEAT_MS);
+          return;
+        }
+        if (playing.current) return;
         setRun((value) => value + 1);
         setTouring(true);
       } else if (!entry.isIntersecting) {
+        window.clearTimeout(beat.current);
+        beat.current = 0;
         setTouring(false);
       }
     }, { threshold: [0, 0.5] });
     observer.observe(visual);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(beat.current);
+      beat.current = 0;
+    };
   }, [motion, loops]);
 
   useEffect(() => {
@@ -95,6 +126,7 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
         setRun((value) => value + 1);
       } else {
         setTouring(false);
+        setPending(false);
         setStep(0);
       }
     }, STEP_MS);
@@ -103,15 +135,21 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
 
   /** Shows a step and stops the tour (a pressed item, or one pointed at — useHoverStep) */
   const choose = (value: number) => {
+    window.clearTimeout(beat.current);
+    beat.current = 0;
     auto.current = false;
+    setPending(false);
     setTouring(false);
     setStep(value);
   };
   const hover = useHoverStep(step, choose);
   /** The round control: pauses the tour, or plays it once more from the shown step (from the first, on the overview) */
   const toggle = () => {
+    window.clearTimeout(beat.current);
+    beat.current = 0;
     if (touring) {
       auto.current = false;
+      setPending(false);
       setTouring(false);
       return;
     }
@@ -122,5 +160,5 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
     setTouring(true);
   };
 
-  return { visualRef, step, touring, run, size, motion, choose, toggle, hover };
+  return { visualRef, step, touring, run, size, motion, pending: motion && pending, choose, toggle, hover };
 }

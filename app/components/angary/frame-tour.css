@@ -77,6 +77,9 @@
 @keyframes ft-flow { to { stroke-dashoffset: -12.5; } }
 @keyframes ft-drop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
 @keyframes ft-gust { from { opacity: 0; transform: translate(-12px, 7px); } to { opacity: 1; transform: none; } }
+/* after the first fall the snow keeps falling, the wind keeps coming in gusts — each arrow on its own beat (--k) */
+@keyframes ft-snowfall { 0% { opacity: 0; transform: translateY(-8px); } 15% { opacity: 1; } 55%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes ft-gusting { 0% { opacity: 0; transform: translate(-10px, 6px); } 15% { opacity: 1; } 45%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
 @keyframes ft-light { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ft-link-on {
   from { color: var(--color-text-muted); }
@@ -91,25 +94,46 @@
   .ft[data-step="3"] [data-part~="3"] .ft-brace { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
   .ft[data-step="2"] [data-part="2"] path[pathLength] { animation-duration: 1400ms; }
   .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { transition-delay: 1100ms; }
-  /* a link every 520 ms, the legend in step with the drawing; the drops start once the load has reached the ground */
-  .ft[data-step="4"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 300ms both; }
-  .ft[data-step="5"] .ft-arrows { animation: ft-gust 500ms var(--ease-premium) 300ms both; }
+  /* a link every 520 ms, the legend in step with the drawing; each link's drops appear and run as it lights, so the
+     load front travels down the frame with the words */
+  .ft[data-step="4"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 300ms both, ft-snowfall 1600ms ease-in-out calc(900ms + var(--k, 0) * 200ms) infinite; }
+  .ft[data-step="5"] .ft-arrows { animation: ft-gust 500ms var(--ease-premium) 300ms both, ft-gusting 1100ms ease-out calc(900ms + var(--k, 0) * 370ms) infinite; }
   .ft[data-step="4"] [data-load="snow"] .ft-link, .ft[data-step="5"] [data-load="wind"] .ft-link {
     animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both;
   }
   .ft[data-step] .ft-chain li { animation: ft-link-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
   .ft[data-step] .ft-chain li::before { animation: ft-dot-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
-  .ft[data-step="4"] .ft-flow, .ft[data-step="5"] .ft-flow { animation: ft-flow 560ms linear 1000ms infinite; }
+  .ft[data-step="4"] [data-load="snow"] .ft-flow, .ft[data-step="5"] [data-load="wind"] .ft-flow {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-flow 560ms linear calc(700ms + var(--n) * 520ms) infinite;
+  }
 }
 
+/* The shown step's text under the drawing — a phone's only (see FrameTour) */
+.ft-step-caption { display: none; }
+
 @media (max-width: 760px) {
-  /* On a phone the list is the tour's index: only the step on show reads in full, the others keep their titles */
-  .ft .dn-step:not([aria-pressed="true"]) .dn-step-text { display: none; }
+  /* On a phone the list is the tour's index of titles; the shown step's text reads under the drawing, in one slot as
+     tall as the longest text, so nothing below moves when the step changes. The buttons keep their text for a screen
+     reader. */
+  .ft.dn.direction-editorial-grid[data-layout] { grid-template-areas: "copy" "media" "caption" "steps"; }
+  .ft-step-caption { grid-area: caption; display: grid; margin-top: 14px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
+  .ft-step-caption p { grid-area: 1 / 1; margin: 0; visibility: hidden; }
+  .ft-step-caption p[data-on] { visibility: visible; }
+  .ft .dn-step-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .ft .dn-steps { margin-top: 14px; }
   .ft .dn-step { padding-block: 11px; }
-  .ft { --ft-k: 1.55; --ft-t: 1.3; }
+  .ft { --ft-k: 1.55; --ft-t: 1.5; }
   /* the legend as one row over the drawing, the links joined by arrows */
-  .ft-chain { top: 22px; right: 8px; left: 8px; display: flex; flex-wrap: wrap; gap: 1px 0; padding: 0; background: none; font-size: 10.5px; }
+  .ft-chain { top: 22px; right: 8px; left: 8px; display: flex; flex-wrap: wrap; gap: 1px 0; padding: 0; background: none; font-size: 12px; }
   .ft-chain li { gap: 0; }
   .ft-chain li::before { display: none; }
   .ft-chain li:not(:last-child)::after { position: static; width: auto; height: auto; margin-inline: 4px; background: none; opacity: .6; content: '→'; }
+}
+
+/* A narrow sheet: the title block in two rows — what is shown, then the object and an icon-only control; the step
+   count is the progress bars' over the picture (it wrapped into three rows with an empty cell) */
+@container sheet (max-width: 480px) {
+  .ft-sheet .sheet-stamp > .sheet-cell:first-child { display: none; }
+  .ft-sheet .sheet-stamp > .sheet-cell:nth-child(3) { border-left: 0; }
+  .ft-sheet .dn-control-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }

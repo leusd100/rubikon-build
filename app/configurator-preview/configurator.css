@@ -1339,6 +1339,10 @@
   .hc-stamp-row .hc-summary-handoff { border-left: 0; padding: 16px; }
   .hc-stamp-row .hc-summary-selected { padding: 16px; }
   .hc-sketch { max-width: 210px; margin-top: 12px; }
+  .hc-sketch text { font-size: 12px; }
+  /* «Обговорити» right under what was chosen, the facts after it — the button sat 447 px into the stamp (03.10) */
+  .hc-stamp-row .hc-summary-handoff { order: 1; border-top: 1px solid var(--color-border); }
+  .hc-stamp-row .hc-summary-facts { order: 2; }
   .hc-stamp-row .hc-summary-disclaimer { padding: 12px 16px; }
   /* the mini drawing held under the header while configuring takes less of the phone (it was 39% of the screen) */
   .hangar-configurator-embedded .hc-layout[data-configuring] :is(.hc-preview-svg, .hc-preview-canvas, .hc-preview-loading) { height: 46vw; min-height: 170px; }

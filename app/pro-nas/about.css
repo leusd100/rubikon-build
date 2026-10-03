@@ -182,7 +182,8 @@
 .ps-progress span.is-done { background: var(--color-accent-on-dark); }
 .ps-fill { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; }
 @keyframes ps-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-.ps[data-touring] .ps-fill { animation: ps-fill 4500ms linear both; }
+/* as long as the step (STEP_MS in useDrawingTour), as the direction nodes' bars */
+.ps[data-touring] .ps-fill { animation: ps-fill 5200ms linear both; }
 /* The items are the steps' buttons; the shown one takes the copper bar */
 .about-before-step {
   display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; width: 100%; padding: 18px 12px; color: inherit; text-align: left;
