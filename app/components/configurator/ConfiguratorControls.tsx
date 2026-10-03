@@ -318,7 +318,7 @@ const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
   height: 'Висота стін',
 };
 
-export function ConfiguratorControls({ state, onChange, foundationChoice = true }: Props) {
+export function ConfiguratorControls({ state, onChange, foundationChoice = true }: Readonly<Props>) {
   const { controlsRef, accordion } = usePhoneAccordion();
   // The first group open on a phone; one at a time after that, and every group may be folded
   const [openGroup, setOpenGroup] = useState<ControlGroupId | null>('object');

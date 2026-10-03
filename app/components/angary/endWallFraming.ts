@@ -54,7 +54,7 @@ function subtract([from, to]: readonly [number, number], taken: readonly (readon
 function nearestFree(x: number, free: readonly (readonly [number, number])[]) {
   const candidates = free.map(([a, b]) => Math.min(Math.max(x, a), b));
   if (!candidates.length) return undefined;
-  return candidates.reduce((best, value) => (Math.abs(value - x) < Math.abs(best - x) - EPS ? value : best));
+  return candidates.reduce((best, value) => (Math.abs(value - x) < Math.abs(best - x) - EPS ? value : best), candidates[0]);
 }
 
 export function endWallFraming({ widthM: W, eaveM: E, centre, openings }: Readonly<{

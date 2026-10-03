@@ -126,12 +126,12 @@ function EnvelopeSurface({
 export function HangarPreview({
   domain,
   released = BUILD_STAGE_ORDER.length,
-}: {
+}: Readonly<{
   domain: HangarDomainModel;
   /** Build stages requested so far by /angary's first view (useFirstViewBuildUp): a stage still held back stays hidden
    *  whatever the scope says, then arrives through its usual lifecycle. All of them by default. */
   released?: number;
-}) {
+}>) {
   const { dimensions, envelope, scope, gates } = domain;
   const shown = (stage: BuildStage) => isStageReleased(stage, released);
   // State → Domain → ParametricBuildingModel (the single source of geometric truth) →

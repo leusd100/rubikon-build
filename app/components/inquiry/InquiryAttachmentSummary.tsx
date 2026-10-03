@@ -16,7 +16,7 @@ export function InquiryAttachmentSummary({
   onDetach,
   direction,
   sent = false,
-}: { attachment: InquiryAttachment; onDetach: () => void; direction?: string; sent?: boolean }) {
+}: Readonly<{ attachment: InquiryAttachment; onDetach: () => void; direction?: string; sent?: boolean }>) {
   const [expanded, setExpanded] = useState(false);
   const labels = INQUIRY_ATTACHMENT_LABELS[attachment.kind];
   const statusRef = useRef<HTMLOutputElement>(null);

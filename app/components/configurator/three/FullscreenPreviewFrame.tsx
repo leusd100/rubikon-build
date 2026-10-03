@@ -161,6 +161,7 @@ export function FullscreenPreviewFrame({
 
   if (!portalHost) return <>{children}</>; // SSR fallback — see the guarded useState above
 
+  const overlayClassName = ['hc-fullscreen-overlay', className].filter(Boolean).join(' ');
   return (
     <>
       {/* Layout-transparent (`display: contents`): purely a parking spot for `portalHost` while
@@ -174,7 +175,7 @@ export function FullscreenPreviewFrame({
         // reintroduce the exact remount bug this file exists to avoid, one level deeper.
         <div
           ref={dialogRef}
-          className={active ? `hc-fullscreen-overlay${className ? ` ${className}` : ''}` : undefined}
+          className={active ? overlayClassName : undefined}
           role={active ? 'dialog' : undefined}
           aria-modal={active ? 'true' : undefined}
           aria-label={active ? (labelledBy ?? 'Розгорнутий перегляд 3D-моделі') : undefined}

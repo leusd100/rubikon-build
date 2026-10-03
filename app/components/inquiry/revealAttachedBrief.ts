@@ -30,6 +30,6 @@ export function revealAttachedBrief(event?: Pick<Event, 'preventDefault'>) {
     brief.focus({ preventScroll: true });
     const status = document.getElementById('inquiry-brief-status');
     const headline = brief.querySelector('strong')?.textContent ?? '';
-    if (status) status.textContent = `${brief.hasAttribute('data-sent') ? 'Надіслано з вашим запитом' : 'Додано до заявки'}: ${headline}`;
+    if (status) status.textContent = `${brief.dataset.sent === undefined ? 'Додано до заявки' : 'Надіслано з вашим запитом'}: ${headline}`;
   }));
 }

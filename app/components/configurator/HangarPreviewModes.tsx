@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, lazy, useCallback, useId, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { DrawingSheet, type SheetCell } from '../DrawingSheet';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
@@ -60,7 +60,7 @@ function useDockedPane(): boolean {
 }
 
 /** The title block sets its values in capitals; the metre stays a lower-case «м» (drawing-sheet.css .sheet-unit) */
-function SheetValue({ text }: { text: string }) {
+function SheetValue({ text }: Readonly<{ text: string }>) {
   if (!text.endsWith('\u00A0м')) return text;
   return <>{text.slice(0, -1)}<span className="sheet-unit">м</span></>;
 }
@@ -205,11 +205,9 @@ export function HangarPreviewModes({
     setMode(next);
     if (next !== 'three') setOptionsOpen(false);
   }, []);
-  const closeOptionsOnEscape = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Escape' || !optionsOpen) return;
-    setOptionsOpen(false);
-    optionsChipRef.current?.focus();
-  }, [optionsOpen]);
+  // Escape folds the colours back to their chip: listened for on the tools' own node, not through a key handler on a
+  // div (no element of its own to take the key)
+  const sheetToolsRef = useRef<HTMLDivElement>(null);
   const handleEndPresentationDemo = useCallback(() => {
     onEndPresentationDemo?.();
     if (!isFullscreen) {
@@ -342,6 +340,17 @@ export function HangarPreviewModes({
   // the sheet pushed the pane past the bottom of the screen (03.10: 921 px at 1440×900, the whole panel below the fold at
   // 1024×768) — there they open from a chip on the picture, beside «Розгорнути»
   const optionsOnPicture = Boolean(sheet) && docked;
+  useEffect(() => {
+    const tools = sheetToolsRef.current;
+    if (!tools || !optionsOpen || !optionsOnPicture) return undefined;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOptionsOpen(false);
+      optionsChipRef.current?.focus();
+    };
+    tools.addEventListener('keydown', closeOnEscape);
+    return () => tools.removeEventListener('keydown', closeOnEscape);
+  }, [optionsOpen, optionsOnPicture]);
   const threeOptions = (
     <>
       <MaterialPresetPicker
@@ -398,7 +407,7 @@ export function HangarPreviewModes({
           {/* On the 3D picture itself, out of the title block: they are the picture's own actions */}
           {showThree && (
             // the colours follow their chip in the tab order, before «Розгорнути»; Escape folds them back to it
-            <div className="hc-sheet-tools" onKeyDown={optionsOnPicture ? closeOptionsOnEscape : undefined}>
+            <div className="hc-sheet-tools" ref={sheetToolsRef}>
               {optionsOnPicture && (
                 <>
                   <button

@@ -9,7 +9,7 @@ type FakeElement = {
   scrollIntoView: ReturnType<typeof vi.fn>;
   focus: ReturnType<typeof vi.fn>;
   querySelector: () => { textContent: string } | null;
-  hasAttribute: (name: string) => boolean;
+  dataset: Record<string, string>;
   textContent: string;
 };
 
@@ -18,7 +18,8 @@ function fakeElement(headline = '', attributes: string[] = []): FakeElement {
     scrollIntoView: vi.fn(),
     focus: vi.fn(),
     querySelector: () => (headline ? { textContent: headline } : null),
-    hasAttribute: (name) => attributes.includes(name),
+    // data-* attributes as the DOM exposes them: data-sent → dataset.sent
+    dataset: Object.fromEntries(attributes.filter((name) => name.startsWith('data-')).map((name) => [name.slice(5), ''])),
     textContent: '',
   };
 }
