@@ -187,7 +187,8 @@ export function FullscreenPreviewFrame({
             hidden={!active}
             onClick={onExit}
           >
-            Закрити ✕
+            {/* the cross is drawn, not read: the button's name is «Закрити» (04.10) */}
+            Закрити <span aria-hidden="true">✕</span>
           </button>
           <p
             className="hc-visually-hidden hc-presentation-announcement"

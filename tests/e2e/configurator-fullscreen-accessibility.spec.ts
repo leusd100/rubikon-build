@@ -13,7 +13,7 @@ test('expanded view contains keyboard focus and releases the page on Escape', as
   await expand.focus();
   await page.keyboard.press('Enter');
   const dialog = page.getByRole('dialog');
-  const close = dialog.getByRole('button', { name: 'Закрити ✕', exact: true });
+  const close = dialog.getByRole('button', { name: 'Закрити', exact: true });
   const dimensions = dialog.getByRole('button', { name: 'Сховати розміри', exact: true });
 
   const lastControl = page.viewportSize()!.width <= 480 ? close : dimensions;
