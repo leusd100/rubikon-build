@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { HomeProofCase } from '../../data/homeProof';
 import { siteRoutes } from '../../data/navigation';
 import { DrawingSheet } from '../DrawingSheet';
+import { ScopeCells } from './ScopeCells';
 
 // HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
 //
@@ -184,13 +185,11 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
           <p className="hv2-kicker"><span aria-hidden="true" /> Реалізований об’єкт до створення RUBIKON BUILD</p>
           <h3>Ангар: каркас, стінові панелі, покрівля</h3>
           <p>{proof.attribution}</p>
-          <ul className="hv2-scope-chips" aria-label="Роботи на цьому об’єкті">
-            {scope.subject.map((item) => <li key={item}>{item}</li>)}
-          </ul>
+          <ScopeCells items={scope.subject} />
         </div>
         {/* Roles sit next to the proof, compactly — no portraits (the generated ones were removed in #124). */}
         <div className="hv2-people">
-          <p className="hv2-people-title">Хто веде роботу</p>
+          <p className="hv2-kicker"><span aria-hidden="true" /> Хто веде роботу</p>
           {people.map(({ name, role }) => (
             <div className="hv2-person" key={name}>
               <h4>{name}</h4>

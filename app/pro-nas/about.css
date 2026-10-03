@@ -60,63 +60,67 @@
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond::after { transform: scaleX(0); }
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond span { opacity: 0; }
 
-/* ---------------------------------------------------------------- 3 · What we build and where */
-/* Each direction is one row, and the whole row is its link (the title's ::after covers it). Pointed at (devices that
-   hover) or focused, a row takes the charcoal ground: it sweeps in from the left, and each part turns light as the
-   ground reaches it — the number, the title, the words, then the arrow, whose circle turns copper; on the way out the
-   right side goes back first. The region closes the list. */
-.about-build { --sweep: 420ms; background: var(--color-surface); }
-.about-build-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
-.about-build-list li {
-  position: relative; isolation: isolate; display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1.2fr) 44px;
-  grid-template-areas: 'num title text arrow'; align-items: center; gap: 12px clamp(20px, 3vw, 48px);
-  min-height: 108px; padding: 24px clamp(16px, 2vw, 28px); border-bottom: 1px solid var(--color-border);
-}
-.about-build-list li::before { content: ''; position: absolute; z-index: -1; inset: 0; background: var(--color-dark); transform: scaleX(0); transform-origin: left; }
-.about-build-number { grid-area: num; color: var(--color-accent-strong); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
-.about-build-list h3 { grid-area: title; margin: 0; color: var(--color-text); font: 600 clamp(22px, 2.2vw, 32px)/1.08 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; }
-.about-build-list h3 a { color: inherit; text-decoration: none; }
-.about-build-list h3 a::after { content: ''; position: absolute; inset: 0; }
-.about-build-list p { grid-area: text; margin: 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
-.about-build-arrow {
-  grid-area: arrow; justify-self: end; display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-strong);
-  border: 1px solid var(--color-border-strong); border-radius: 50%;
-}
-.about-build-arrow span { font-size: 17px; line-height: 1; }
-/* Keyboard: the whole row carries the ring, not the title alone */
-.about-build-list h3 a:focus-visible { outline: none; box-shadow: none; }
-.about-build-list li:has(a:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
-@media (hover: hover) {
-  .about-build-list li:hover::before { transform: scaleX(1); }
-  .about-build-list li:hover .about-build-number { color: var(--color-accent-on-dark); }
-  .about-build-list li:hover h3 { color: var(--color-dark-text); }
-  .about-build-list li:hover p { color: var(--color-dark-text-secondary); }
-  .about-build-list li:hover .about-build-arrow { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
-  .about-build-list li:hover .about-build-arrow span { transform: translate(2px, -2px); }
-}
-.about-build-list li:has(a:focus-visible)::before { transform: scaleX(1); }
-.about-build-list li:has(a:focus-visible) .about-build-number { color: var(--color-accent-on-dark); }
-.about-build-list li:has(a:focus-visible) h3 { color: var(--color-dark-text); }
-.about-build-list li:has(a:focus-visible) p { color: var(--color-dark-text-secondary); }
-.about-build-list li:has(a:focus-visible) .about-build-arrow { color: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+/* ---------------------------------------------------------------- 3 · What we do, what we organise, and where */
+.about-build { background: var(--color-surface); }
+/* «Що робимо самі, а що організовуємо» (CapabilityLedger.tsx, UX pass 2026-10): three ruled columns, marked as on the
+   /yak scope drawings — own team on a copper rule, organised work on graphite, specialists on a dashed line */
+.about-ledger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 44px); }
+.about-ledger-col { min-width: 0; padding-top: 22px; border-top: 1px solid var(--color-text); }
+.about-ledger-col.is-core { border-top: 3px solid var(--color-accent); padding-top: 20px; }
+.about-ledger-col.is-partner { border-top: 1px dashed var(--color-border-strong); }
+.about-ledger-col h3 { display: flex; align-items: baseline; gap: 12px; margin: 0; color: var(--color-text); font: 600 clamp(22px, 2vw, 28px)/1.12 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; }
+.about-ledger-col h3 span { color: var(--color-accent-strong); font-size: 13px; letter-spacing: .14em; }
+.about-ledger-note { margin: 12px 0 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.55; }
+.about-ledger-col ul { display: grid; gap: 0; margin: 18px 0 0; padding: 0; list-style: none; }
+.about-ledger-col li { padding: 14px 0; border-top: 1px solid var(--color-border); }
+.about-ledger-col li b { display: block; color: var(--color-text); font: 600 17px/1.35 var(--font-manrope), sans-serif; }
+.about-ledger-col li b a { color: inherit; text-decoration: none; }
+.about-ledger-col li b a span { color: var(--color-accent-strong); }
+.about-ledger-col li b a:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+.about-ledger-col li > span { display: block; margin-top: 4px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
+.about-build-all { display: inline-flex; margin-top: 28px; }
+
+/* «Що робимо самі, а що організовуємо» on a drawing (CapabilityFigure.tsx, UX pass 2026-10): the object on its site in quiet
+   graphite; a pointed work or group — or the first view's walk through the three — lights in its group's line: own team
+   copper, organised works a strong line, specialist works dashed. The drawing stays beside the list while it scrolls. */
+.about-cap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 64px); align-items: start; }
+.about-cap-figure { position: sticky; top: 128px; margin: 0; padding: clamp(14px, 1.6vw, 22px); background: color-mix(in srgb, var(--color-surface-elevated) 92%, transparent); border: 1px solid var(--color-border); }
+.about-cap-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+.about-cap .about-ledger { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+.cap-ground { fill: none; stroke: var(--color-border-strong); stroke-width: 1.1; }
+.cap-part { fill: none; stroke: var(--color-border-control); stroke-width: 1.1; stroke-linejoin: round; stroke-linecap: round; transition: stroke .3s ease, stroke-width .3s ease, opacity .3s ease; }
+/* Lit, each part in its group's line */
+.cap-part[data-tier="core"] { --cap-lit: var(--color-accent); --cap-lit-width: 2.2; }
+.cap-part[data-tier="flexible"] { --cap-lit: var(--color-text); --cap-lit-width: 2; }
+.cap-part[data-tier="partner"] { --cap-lit: var(--color-text-secondary); --cap-lit-width: 1.8; stroke-dasharray: 6 5; }
+.cap-part[data-cap="steel"] { stroke: var(--color-text-muted); }
+.about-cap[data-tier] .cap-part, .about-cap[data-cap] .cap-part { opacity: .35; }
+.about-cap[data-tier="core"] .cap-part[data-tier="core"], .about-cap[data-tier="flexible"] .cap-part[data-tier="flexible"], .about-cap[data-tier="partner"] .cap-part[data-tier="partner"], .about-cap[data-cap="foundations"] .cap-part[data-cap="foundations"], .about-cap[data-cap="steel"] .cap-part[data-cap="steel"], .about-cap[data-cap="roofing"] .cap-part[data-cap="roofing"], .about-cap[data-cap="panels"] .cap-part[data-cap="panels"], .about-cap[data-cap="gates"] .cap-part[data-cap="gates"], .about-cap[data-cap="steel-fabrication"] .cap-part[data-cap="steel-fabrication"], .about-cap[data-cap="earthworks"] .cap-part[data-cap="earthworks"], .about-cap[data-cap="mep"] .cap-part[data-cap="mep"] { opacity: 1; stroke: var(--cap-lit); stroke-width: var(--cap-lit-width); }
+/* The pit digs itself each time it lights: its outline, then the soil round it, the depth and the heap */
+.cap-part[data-cap="earthworks"] { stroke-dasharray: 1; stroke-dashoffset: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .about-build-list li::before { transition: transform var(--sweep) var(--m-ease); }
-  /* Out: the right side goes back first (the base delays). In: left to right, behind the ground (the hover delays). */
-  .about-build-number { transition: color 200ms ease 220ms; }
-  .about-build-list h3 { transition: color 200ms ease 170ms; }
-  .about-build-list p { transition: color 200ms ease 90ms; }
-  .about-build-arrow { transition: color 200ms ease, border-color 200ms ease; }
-  .about-build-arrow span { transition: transform var(--duration-fast) var(--m-ease); }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-number { transition-delay: 40ms; }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) h3 { transition-delay: 90ms; }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) p { transition-delay: 170ms; }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow { transition-delay: 260ms; }
-  .about-build-list li:is(:hover, :has(a:focus-visible)) .about-build-arrow span { transition-delay: 260ms; }
+  .about-cap:is([data-tier="flexible"], [data-cap="earthworks"]) .cap-part[data-cap="earthworks"] { animation: cap-dig 1200ms var(--ease-premium) both; }
 }
-/* The region (RegionBlock) closes the directions; its own styles live in app/components/about/region.css */
+@keyframes cap-dig { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.about-cap[data-tier="core"] .about-ledger-col.is-core, .about-cap[data-tier="flexible"] .about-ledger-col.is-flexible, .about-cap[data-tier="partner"] .about-ledger-col.is-partner { background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
+.about-cap[data-row="foundations"] li[data-cap="foundations"], .about-cap[data-row="steel"] li[data-cap="steel"], .about-cap[data-row="roofing"] li[data-cap="roofing"], .about-cap[data-row="panels"] li[data-cap="panels"], .about-cap[data-row="gates"] li[data-cap="gates"], .about-cap[data-row="industrial-floors"] li[data-cap="industrial-floors"], .about-cap[data-row="steel-fabrication"] li[data-cap="steel-fabrication"], .about-cap[data-row="earthworks"] li[data-cap="earthworks"], .about-cap[data-row="envelope"] li[data-cap="envelope"], .about-cap[data-row="other-construction"] li[data-cap="other-construction"], .about-cap[data-row="mep"] li[data-cap="mep"], .about-cap[data-row="ventilation"] li[data-cap="ventilation"], .about-cap[data-row="landscaping"] li[data-cap="landscaping"] { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.about-cap .about-ledger-col { transition: background-color .25s ease; }
+.about-cap li[data-cap] { cursor: default; transition: background-color .2s ease; }
+@media (max-width: 1050px) {
+  .about-cap { grid-template-columns: minmax(0, 1fr); }
+  .about-cap-figure { position: static; }
+}
+/* The phone still (AboutHeroVideo): the footage's grey grade would put its sunset out — a lighter one, framed on the light */
+.about-hero-media > img.about-hero-still { filter: saturate(.85) contrast(1.04) brightness(.95); object-position: 62% 40%; }
+@media (max-width: 760px) {
+  .about-ledger-col li { padding: 11px 0; }
+  .about-ledger-col li b { font-size: 16px; }
+  .about-ledger-col li > span { font-size: 14px; line-height: 1.5; }
+}
+.about-page[data-motion-ready="on"] .about-ledger-col { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
+.about-page[data-motion-ready] .about-ledger:not([data-motion-state="on"]) .about-ledger-col { opacity: 0; transform: translateY(12px); }
+/* The region (RegionBlock) closes the block; its own styles live in app/components/about/region.css */
 .about-build-region { margin-top: clamp(44px, 5vw, 68px); }
-.about-page[data-motion-ready="on"] .about-build-list li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
-.about-page[data-motion-ready] .about-build-list:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(12px); }
 
 /* ---------------------------------------------------------------- 4 · Practice before work starts */
 .about-story-section { background: var(--color-bg); }
@@ -142,10 +146,13 @@
 .about-story-section .promise-visual:hover img { transform: none; }
 .ps-stage { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
 .aqc-overlay { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+/* Widths in the drawing's own units (no non-scaling-stroke: with pathLength, Chrome measures the dash on screen and cuts
+   the line's end); the camera's zoom scales them, so the joint's ring, seen at 3.4×, is drawn finer */
 .aqc-line {
-  fill: none; stroke: var(--color-accent-on-dark); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-  vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; filter: drop-shadow(0 0 2px rgba(10, 11, 12, .7));
+  fill: none; stroke: var(--color-accent-on-dark); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 0; filter: drop-shadow(0 0 2px rgba(10, 11, 12, .7));
 }
+.aqc-mark-3 .aqc-line { stroke-width: 2.6; }
 .aqc-badge, .aqc-step { transform-box: fill-box; transform-origin: center; }
 .aqc-badge circle { fill: var(--color-accent); stroke: rgba(255, 255, 255, .92); stroke-width: 3; }
 .aqc-step circle { fill: rgba(13, 16, 14, .84); stroke: var(--color-accent-on-dark); stroke-width: 4; }
@@ -193,9 +200,11 @@
   .ps[data-step="1"] .aqc-mark-1 .aqc-line,
   .ps[data-step="2"] .aqc-mark-2 .aqc-line,
   .ps[data-step="3"] .aqc-mark-3 .aqc-line { animation: ps-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
-  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { animation: ps-pop 320ms ease 750ms backwards; }
-  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(2) .aqc-step { animation: ps-pop 320ms ease 1050ms backwards; }
-  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(3) .aqc-step { animation: ps-pop 320ms ease 1350ms backwards; }
+  /* the route runs with the frame: each number lands as its part draws */
+  .ps[data-step="2"] .aqc-mark-2 .aqc-line { animation-duration: 1300ms; animation-delay: 700ms; animation-timing-function: linear; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { animation: ps-pop 320ms ease 700ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(2) .aqc-step { animation: ps-pop 320ms ease 1350ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(3) .aqc-step { animation: ps-pop 320ms ease 2000ms backwards; }
 }
 
 /* ---------------------------------------------------------------- 5 · Principles (charcoal band) */
@@ -220,9 +229,7 @@
   /* Full width: close to the image's own 4 : 5, so every mark stays in the frame */
   .about-story-section .promise-visual { min-height: 0; aspect-ratio: 4 / 5; max-height: 640px; }
   .about-principles-grid { grid-template-columns: minmax(0, 1fr); }
-  .about-build-list li { grid-template-columns: 52px minmax(0, 1fr) 44px; grid-template-areas: 'num title arrow' 'num text arrow'; align-items: start; min-height: 0; padding-block: 22px; }
-  .about-build-number { padding-top: 8px; }
-  .about-build-arrow { align-self: center; }
+  .about-ledger { grid-template-columns: minmax(0, 1fr); gap: 32px; }
 }
 
 /* ---------------------------------------------------------------- Phone */
@@ -243,9 +250,42 @@
   .aqc-badge { transform: scale(1.6); }
   .aqc-step { transform: scale(1.45); }
   .about-principles-grid li { padding: 24px 20px 22px; }
-  /* Number and arrow on one line, the title the full width under them, then the words */
-  .about-build-list li { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: 'num arrow' 'title title' 'text text'; align-items: center; gap: 10px 12px; padding: 20px 12px; }
-  .about-build-number { padding-top: 0; }
-  .about-build-list h3 { font-size: clamp(22px, 6.4vw, 26px); }
-  .about-build-list p { font-size: 15px; }
 }
+
+/* The practice tour on a drawing (PracticeDrawing.tsx, UX pass 2026-10): graphite on the sheet, the shown step's parts in
+   copper; no will-change on its stage, so the browser draws it again at the pushed-in scale and the lines stay sharp */
+.ps-stage.is-drawing { will-change: auto; }
+.ps-sheet .promise-visual:has(.practice-drawing)::after { content: none; }
+.practice-drawing {
+  position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+  /* The sheet's picture is always dark (drawing-sheet.css), so the drawing keeps the dark ground's inks in both themes —
+     with the light theme's graphite, the frame vanished into the sheet (UX pass 2026-10) */
+  --color-text: #F5F2EB; --color-text-secondary: #BDB7AC; --color-text-muted: #9E988D; --color-border-strong: #6A6C66;
+}
+.practice-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.practice-drawing .pd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 3; }
+.practice-drawing .pd-web { fill: color-mix(in srgb, var(--color-text) 3%, transparent); stroke: none; }
+.practice-drawing .pd-line { stroke: var(--color-text-muted); stroke-width: 2.4; }
+.practice-drawing .pd-axis { stroke: var(--color-text-muted); stroke-width: 1.6; stroke-dasharray: 26 7 4 7; opacity: .7; }
+.practice-drawing .pd-dim { stroke: var(--color-text-muted); stroke-width: 2; }
+.practice-drawing .pd-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .7; }
+.practice-drawing .pd-text { fill: var(--color-text-muted); font: italic 500 40px var(--font-manrope), sans-serif; }
+.practice-drawing .pd-paper { fill: color-mix(in srgb, var(--color-text) 4%, transparent); stroke: var(--color-border-strong); stroke-width: 2; }
+.practice-drawing .pd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke .3s ease, opacity .3s ease; }
+.practice-drawing .pd-part circle { fill: color-mix(in srgb, var(--color-text) 12%, transparent); }
+.ps[data-step] .practice-drawing .pd-part { opacity: .38; }
+.ps[data-step="1"] .practice-drawing [data-part="1"], .ps[data-step="2"] .practice-drawing [data-part="2"], .ps[data-step="3"] .practice-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }
+/* Each step builds what it names once the camera has arrived: the working drawing draws itself; the frame goes up in its
+   order — base plates, columns, the beam; the joint's plate draws and its bolts set one by one. Reduced motion: still. */
+@media (prefers-reduced-motion: no-preference) {
+  .ps[data-step="1"] .practice-drawing [data-part="1"] path { stroke-dasharray: 1; animation: pd-draw 1100ms var(--ease-premium) 650ms both; }
+  .ps[data-step="1"] .practice-drawing [data-part="1"] circle { transform-box: fill-box; transform-origin: center; animation: pd-pop 380ms var(--ease-premium) both; animation-delay: calc(1300ms + var(--i, 0) * 120ms); }
+  .ps[data-step="2"] .practice-drawing [data-seq] { stroke-dasharray: 1; animation: pd-draw 700ms var(--ease-premium) both; }
+  .ps[data-step="2"] .practice-drawing [data-seq="1"] { animation-delay: 700ms; }
+  .ps[data-step="2"] .practice-drawing [data-seq="2"] { animation-delay: 1350ms; }
+  .ps[data-step="2"] .practice-drawing [data-seq="3"] { animation-delay: 2000ms; }
+  .ps[data-step="3"] .practice-drawing [data-part="3"] path { stroke-dasharray: 1; animation: pd-draw 700ms var(--ease-premium) 800ms both; }
+  .ps[data-step="3"] .practice-drawing [data-part="3"] path[data-bolt] { animation-duration: 420ms; animation-delay: calc(1400ms + var(--i, 0) * 180ms); }
+}
+@keyframes pd-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes pd-pop { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: none; } }

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { choose, next, openPlanner, planner, questions, result, reveal, scenarios, tick } from './grain-planner.helpers';
+import { choose, next, openPlanner, openResultDetails, planner, questions, result, reveal, scenarios, tick } from './grain-planner.helpers';
 import { stubTurnstile } from './turnstile.helpers';
 
 type LeadPayload = {
@@ -96,10 +96,12 @@ test.describe('Grain Planner stabilization regressions', () => {
     await openPlanner(page);
     await scenarios.A(page);
     await reveal(page);
+    await openResultDetails(page);
     const shortcut = page.locator('a.grain-handoff-cta');
+    // The shortcut follows once the result's own handoff has scrolled by
     await page.evaluate(() => {
-      const brief = document.querySelector('[data-planner-brief]');
-      if (brief) window.scrollTo(0, window.scrollY + brief.getBoundingClientRect().bottom + 200);
+      const handoff = document.querySelector('.grain-result-band .planner-handoff');
+      if (handoff) window.scrollTo(0, window.scrollY + handoff.getBoundingClientRect().bottom + 200);
     });
     await expect(shortcut).toBeVisible();
 

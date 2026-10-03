@@ -305,23 +305,44 @@ main[data-home="v2"] .hv2-xray-glow { opacity: 0; animation: hv2-glow 3.4s ease-
 }
 
 /* Facts under the pair: what the photo proves, and who stands behind the work */
+/* One title block (owner, 02.10: «підрівняти і приукрасити»): the scope cells fill the left column, so its content ends
+   where the divider begins; the people column is narrower, under the same kicker, its note and link down at the cells'
+   foot */
 main[data-home="v2"] .hv2-proof-facts {
-  display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px var(--grid-gap); margin-top: 24px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 400px); gap: 28px clamp(32px, 4vw, 64px); margin-top: 24px;
   padding: 30px 34px; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); border-top: 2px solid var(--hv2-copper);
 }
 main[data-home="v2"] .hv2-evidence-lead h3 { margin: 14px 0 10px; font: 400 clamp(26px, 2.3vw, 36px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
 main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { max-width: 560px; margin: 0; color: var(--hv2-text-2); font-size: 16px; line-height: 1.6; }
-main[data-home="v2"] .hv2-scope-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
-main[data-home="v2"] .hv2-scope-chips li { padding: 7px 12px; color: var(--hv2-text); border: 1px solid var(--hv2-line-strong); font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+/* The scope as the building it made (UX pass 2026-10): three cells, the same hangar in each, the named part in copper */
+main[data-home="v2"] .hv2-scope-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin: 26px 0 0; padding: 0; list-style: none; border: 1px solid var(--hv2-line-strong); }
+main[data-home="v2"] .hv2-scope-chips li { display: grid; gap: 14px; padding: 18px 20px 16px; color: var(--hv2-text); transition: background-color .25s ease; font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-scope-chips li + li { border-left: 1px solid var(--hv2-line-strong); }
+main[data-home="v2"] .hv2-scope-glyph { display: block; width: 100%; max-width: 150px; height: auto; overflow: visible; }
+main[data-home="v2"] .hv2-scope-glyph path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+main[data-home="v2"] .hv2-scope-outline { stroke: var(--hv2-line-strong); stroke-width: .8; transition: stroke .25s ease; }
+main[data-home="v2"] .hv2-scope-part { stroke: var(--hv2-copper); stroke-width: 1.15; stroke-dasharray: 1; stroke-dashoffset: 0; }
+main[data-home="v2"] .hv2-scope-chips[data-draw="armed"] .hv2-scope-part { stroke-dashoffset: 1; }
+main[data-home="v2"] .hv2-scope-chips[data-draw="on"] .hv2-scope-part { animation: hv2-scope-draw 1100ms var(--ease-premium) both; animation-delay: calc(150ms + var(--i, 0) * 280ms); }
+/* Pointed at, once the first drawing is done, a cell draws its part again */
+@media (hover: hover) {
+  main[data-home="v2"] .hv2-scope-chips li:hover { background: color-mix(in srgb, var(--hv2-copper) 7%, transparent); }
+  main[data-home="v2"] .hv2-scope-chips li:hover .hv2-scope-outline { stroke: var(--hv2-text-3); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-scope-chips:not([data-draw="armed"], [data-draw="on"]) li:hover .hv2-scope-part { animation: hv2-scope-redraw 900ms var(--ease-premium) both; }
+}
+@keyframes hv2-scope-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes hv2-scope-redraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
 /* --- people: compact, beside the proof, no portraits --- */
-main[data-home="v2"] .hv2-people { display: grid; align-content: start; gap: 14px; padding-left: 32px; border-left: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-people-title { margin: 0; color: var(--hv2-text-3); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-main[data-home="v2"] .hv2-people-note { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.5; }
+main[data-home="v2"] .hv2-people { display: flex; flex-direction: column; gap: 16px; padding-left: clamp(28px, 3vw, 44px); border-left: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-people .hv2-kicker { margin-bottom: 8px; }
+main[data-home="v2"] .hv2-people-note { margin: auto 0 0; padding-top: 16px; color: var(--hv2-text-2); font-size: 15px; line-height: 1.5; }
 main[data-home="v2"] .hv2-person { padding-left: 16px; border-left: 2px solid var(--hv2-copper); }
 main[data-home="v2"] .hv2-person h4 { margin: 0 0 3px; color: var(--hv2-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
 main[data-home="v2"] .hv2-person p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.5; }
-main[data-home="v2"] .hv2-people-link { justify-self: start; min-height: 44px; display: inline-flex; align-items: center; gap: 12px; color: var(--hv2-text); border-bottom: 1px solid var(--hv2-copper); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+main[data-home="v2"] .hv2-people-link { align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; gap: 12px; color: var(--hv2-text); border-bottom: 1px solid var(--hv2-copper); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 
 /* ================================ Tablet ================================ */
@@ -377,6 +398,7 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
    image's bottom-right corner (dark ground there, so it stays readable). */
 @media (max-width: 560px) {
   main[data-home="v2"] .hv2-proof-xray .hv2-tag-scheme { top: auto; bottom: 12px; }
+  main[data-home="v2"] .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
 }
 
 /* UX pass 2026-10: the geography line stays last, also where a very short phone moves the lead under the buttons. */
@@ -385,3 +407,4 @@ main[data-home="v2"] .hv2-geo-bond { margin-top: clamp(40px, 5vw, 64px); }
 /* The load path flows and the X-ray pulses from the moment their sheet comes into view (DrawingSheet sets
    data-sheet-state); before that they wait. (Owner, 02.10: the scheme is meant to move — the two-cycle stop is undone.) */
 main[data-home="v2"] .sheet:not([data-sheet-state="on"]) :is(.hv2-scheme-flow, .hv2-xray-pulse, .hv2-xray-pulse-halo, .hv2-xray-glow) { animation-play-state: paused; }
+

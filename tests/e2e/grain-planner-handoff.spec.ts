@@ -6,6 +6,7 @@ import {
   horizontalOverflow,
   next,
   openPlanner,
+  openResultDetails,
   planner,
   plannerSettled,
   questions,
@@ -56,6 +57,7 @@ async function detach(page: Page) {
 
 /** Edits «Майданчик» from the brief and finishes the edit; the result comes back by itself. */
 async function editSitePressure(page: Page, option: string) {
+  await openResultDetails(page);
   await result(page).getByRole('button', { name: 'Змінити: Майданчик' }).click();
   await choose(page, questions.pressure, option);
   await next(page);
@@ -179,6 +181,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
     await openPlanner(page);
     await scenarios.B(page);
     await reveal(page);
+    await openResultDetails(page);
 
     const tabs = result(page).getByRole('tab');
     await tabs.nth(1).click();
@@ -197,8 +200,8 @@ test.describe('Grain Planner → inquiry handoff', () => {
     await scenarios.A(page);
     await reveal(page);
     await page.evaluate(() => {
-      const brief = document.querySelector('[data-planner-brief]');
-      if (brief) window.scrollTo(0, window.scrollY + brief.getBoundingClientRect().bottom + 200);
+      const handoff = document.querySelector('.grain-result-band .planner-handoff');
+      if (handoff) window.scrollTo(0, window.scrollY + handoff.getBoundingClientRect().bottom + 200);
     });
     await expect(page.locator('a.grain-handoff-cta')).toBeHidden();
   });
@@ -207,7 +210,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
 test.describe('Grain Planner → inquiry handoff on a phone', () => {
   test.skip(({ isMobile }) => !isMobile, 'phone layout and shortcut');
 
-  test('the attached brief fits 390 px, and the shortcut follows the brief until the form is on screen', async ({ page }) => {
+  test('the attached brief fits 390 px, and the shortcut follows the handoff until the form is on screen', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await interceptLeads(page);
     await openPlanner(page);
@@ -217,8 +220,8 @@ test.describe('Grain Planner → inquiry handoff on a phone', () => {
     const shortcut = page.locator('a.grain-handoff-cta');
     await expect(shortcut).toBeHidden();
     await page.evaluate(() => {
-      const brief = document.querySelector('[data-planner-brief]');
-      if (brief) window.scrollTo(0, window.scrollY + brief.getBoundingClientRect().bottom + 200);
+      const handoff = document.querySelector('.grain-result-band .planner-handoff');
+      if (handoff) window.scrollTo(0, window.scrollY + handoff.getBoundingClientRect().bottom + 200);
     });
     await expect(shortcut).toBeVisible();
     await expect(shortcut).toHaveCSS('position', 'fixed');

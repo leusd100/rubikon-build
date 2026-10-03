@@ -40,6 +40,7 @@ import {
   type GateType,
   type GatesCount,
 } from '../../lib/configurator/types';
+import { ConfiguratorWhy } from './ConfiguratorWhy';
 
 type Props = {
   state: ConfiguratorState;
@@ -269,7 +270,6 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           clamp={(v) => clampRidgeHeightM(v, state.dimensions.width, state.dimensions.height)}
           onCommit={setRidge}
         />
-        <p className="hc-field-note">Орієнтовні межі для зручності — не будівельні нормативи.</p>
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-envelope-heading">
@@ -293,6 +293,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             Контур описує стіни та покрівлю — увімкніть їх в «Обсязі заявки», щоб обрати.
           </p>
         )}
+        <ConfiguratorWhy topic="contour" state={state} />
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-cladding-heading">
@@ -341,6 +342,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             <p className="hc-field-note">Покрівля не входить в обсяг заявки.</p>
           )}
         </div>
+        <ConfiguratorWhy topic="cladding" state={state} />
       </section>
 
       {/* Phase 3F.1: the read-only "Попередня конструктивна схема" info block that used to live
@@ -371,8 +373,9 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           </p>
         )}
         <p className="hc-field-note">
-          Тип фундаменту визначає проєктувальник за даними майданчика й навантаженнями. Тут можна вказати попереднє побажання.
+          Тут можна вказати попереднє побажання: тип фундаменту визначає проєктувальник за даними майданчика й навантаженнями.
         </p>
+        <ConfiguratorWhy topic="foundation" state={state} />
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-scope-heading">
@@ -457,7 +460,6 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           <p className="hc-field-note">
             Стандартні ворота — {GATE_DIMENSIONS_M.standard.widthM}×{GATE_DIMENSIONS_M.standard.heightM} м,
             для заїзду техніки — {GATE_DIMENSIONS_M.double.widthM}×{GATE_DIMENSIONS_M.double.heightM} м.
-            Це конфігураційні розміри RUBIKON BUILD, а не будівельний стандарт.
           </p>
         )}
         <div className="hc-field hc-door-field">
@@ -499,6 +501,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             кількість воріт, або збільште ширину чи висоту стін.
           </p>
         )}
+        <ConfiguratorWhy topic="openings" state={state} />
       </section>
     </div>
   );

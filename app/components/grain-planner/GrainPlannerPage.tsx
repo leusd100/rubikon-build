@@ -34,7 +34,8 @@ export function GrainPlannerPage() {
           editorialArchitecture={<GrainEditorialArchitecture config={config} />}
         />
         {grainPlannerPresentation.handoff.mobileCta && (
-          <AttachedBriefCta gate="[data-planner-brief]" className="grain-handoff-cta" />
+          // The shortcut follows once the result's own «Передати опис RUBIKON» has scrolled by
+          <AttachedBriefCta gate=".grain-result-band .planner-handoff" className="grain-handoff-cta" />
         )}
       </GrainPlannerProvider>
     </InquiryAttachmentProvider>

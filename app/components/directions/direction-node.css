@@ -1,0 +1,126 @@
+/* «Вузол напряму» (DirectionNode): a direction's editorial picture as a three-step tour of one node, on the
+   «Креслення» sheet. The stage holds the picture and its marks, so one transform pushes the camera in on both; the
+   marks are drawn in picture pixels (slice = cover). Overview (no step): all three marks with their numbers. A step:
+   only its mark, drawn once the camera has arrived. Without motion the camera jumps and nothing draws. The pictures
+   are light concept drawings, so the marks are copper with a white-ringed number. */
+
+.dn-sheet .dn-visual { background: var(--color-surface-alt); }
+.dn-stage { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
+.dn-overlay { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+.dn-line {
+  fill: none; stroke: var(--color-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, .85));
+}
+.dn-badge { transform-box: fill-box; transform-origin: center; }
+.dn-badge circle { fill: var(--color-accent); stroke: #fff; stroke-width: 4; }
+.dn-badge text { fill: #fff; font: 700 32px var(--font-condensed), sans-serif; letter-spacing: .04em; text-anchor: middle; }
+.dn-mark, .dn-badge { transition: opacity 400ms ease; }
+.dn[data-step] .dn-mark { opacity: 0; }
+.dn[data-step="1"] .dn-mark-1, .dn[data-step="2"] .dn-mark-2, .dn[data-step="3"] .dn-mark-3 { opacity: 1; }
+.dn[data-step] .dn-badge { opacity: 0; }
+
+/* Three bars, like stories — dark on the light drawings */
+.dn-progress { position: absolute; z-index: 3; top: 14px; right: 14px; left: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.dn-progress span { position: relative; height: 3px; overflow: hidden; background: rgba(23, 25, 24, .22); }
+.dn-progress span.is-done { background: var(--color-accent); }
+.dn-fill { position: absolute; inset: 0; background: var(--color-accent); transform-origin: left; }
+@keyframes dn-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dn[data-touring] .dn-fill { animation: dn-fill 4500ms linear both; }
+
+/* The round control in the title block: pauses or replays the tour */
+.dn-control {
+  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 4px; color: var(--color-text); background: none;
+  border: 0; border-radius: 22px; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+}
+.dn-control-label { color: var(--color-text-secondary); }
+.dn-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--color-border-strong); border-radius: 50%; }
+.dn-control-icon::before { content: ''; width: 10px; height: 13px; background: linear-gradient(90deg, currentColor 0 3.5px, transparent 3.5px 6.5px, currentColor 6.5px 10px); }
+.dn-control[data-paused] .dn-control-icon { border-color: var(--color-accent); }
+.dn-control[data-paused] .dn-control-icon::before { width: 0; height: 0; background: none; border-block: 6.5px solid transparent; border-left: 11px solid currentColor; translate: 1.5px 0; }
+.dn-control:hover .dn-control-label { color: var(--color-text); }
+.dn-control:hover .dn-control-icon { border-color: var(--color-accent); }
+
+/* Grid areas: copy over steps beside the picture (desktop, either layout); copy → picture → steps on a phone */
+.dn.direction-editorial-grid { grid-template-rows: auto auto; grid-template-areas: "copy media" "steps media"; row-gap: 0; }
+.dn.direction-editorial-grid[data-layout="media-first"] { grid-template-areas: "media copy" "media steps"; }
+.dn.direction-editorial-grid[data-layout] .direction-editorial-copy { grid-area: copy; align-self: end; }
+.dn.direction-editorial-grid[data-layout] .dn-steps { grid-area: steps; align-self: start; }
+.dn.direction-editorial-grid[data-layout] .dn-sheet { grid-area: media; }
+
+/* The steps under the text: each is the button that shows its step; the shown one takes the copper bar */
+.dn-steps { max-width: 520px; margin: 26px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
+.dn-steps li { border-bottom: 1px solid var(--color-border); }
+.dn-step {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 3px 12px; width: 100%; padding: 14px 12px; color: inherit; text-align: left;
+  background: none; border: 0; font: inherit; cursor: pointer; transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.dn-step-index { grid-row: span 2; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
+.dn-step b { color: var(--color-text); font: 600 16px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.dn-step-text { color: var(--color-text-secondary); font-size: 14px; line-height: 1.55; }
+.dn-step[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+.dn-step[aria-pressed="true"] b { color: var(--color-accent-strong); }
+@media (hover: hover) {
+  .dn-step:hover { background-color: color-mix(in srgb, var(--color-accent) 6%, transparent); }
+}
+
+@keyframes dn-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .dn-stage { transition: transform 1100ms cubic-bezier(.65, 0, .25, 1); }
+  .dn[data-step="1"] .dn-mark-1 .dn-line,
+  .dn[data-step="2"] .dn-mark-2 .dn-line,
+  .dn[data-step="3"] .dn-mark-3 .dn-line { animation: dn-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
+}
+
+@media (max-width: 760px) {
+  .dn.direction-editorial-grid[data-layout] { grid-template-rows: none; grid-template-areas: "copy" "media" "steps"; }
+  .dn.direction-editorial-grid[data-layout] .dn-sheet { margin-top: 28px; }
+  .dn-steps { max-width: none; margin-top: 20px; }
+  .dn-step { padding: 13px 8px; }
+  .dn-step b { font-size: 15px; }
+}
+
+/* The node as a drawing (NodeDrawing.tsx, UX pass 2026-10): graphite on the sheet, the shown step's parts in copper. No
+   will-change on its stage, so the browser draws it again at the pushed-in scale and the lines stay sharp. */
+.dn-stage.is-drawing { will-change: auto; }
+.node-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.node-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.node-drawing .nd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 3; }
+.node-drawing .nd-web { fill: color-mix(in srgb, var(--color-text) 3%, transparent); stroke: none; }
+.node-drawing .nd-line { stroke: var(--color-text-muted); stroke-width: 2.4; }
+.node-drawing .nd-axis { stroke: var(--color-text-muted); stroke-width: 1.6; stroke-dasharray: 26 7 4 7; opacity: .7; }
+.node-drawing .nd-dim { stroke: var(--color-text-muted); stroke-width: 2; }
+.node-drawing :is(.nd-hidden, .nd-dashed) { stroke: var(--color-text-muted); stroke-width: 2; stroke-dasharray: 14 10; }
+.node-drawing .nd-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .7; }
+.node-drawing .nd-hatch-fill { fill: color-mix(in srgb, var(--color-text) 8%, transparent); stroke: var(--color-text-muted); stroke-width: 1.6; }
+.node-drawing .nd-text { fill: var(--color-text-muted); font: italic 500 40px var(--font-manrope), sans-serif; }
+.node-drawing .nd-title { fill: var(--color-text-secondary); font: 700 34px var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.node-drawing .nd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke .3s ease, opacity .3s ease; }
+.node-drawing .nd-part circle { fill: color-mix(in srgb, var(--color-text) 10%, transparent); }
+.node-drawing .nd-weld path { fill: color-mix(in srgb, var(--color-text) 30%, transparent); }
+.node-drawing .nd-weld .nd-leader { fill: none; stroke-width: 2.4; }
+.node-drawing .nd-loops { stroke-width: 2.2; }
+.node-drawing .nd-copper { stroke: var(--color-accent); }
+/* A shown step lights its parts and the rest of the drawing steps back */
+.dn[data-step] .node-drawing .nd-part { opacity: .38; }
+.dn[data-step="1"] .node-drawing [data-part="1"], .dn[data-step="2"] .node-drawing [data-part="2"], .dn[data-step="3"] .node-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }
+.dn[data-step="1"] .node-drawing [data-part="1"] circle, .dn[data-step="2"] .node-drawing [data-part="2"] circle, .dn[data-step="3"] .node-drawing [data-part="3"] circle,
+.dn[data-step="3"] .node-drawing .nd-weld path:not(.nd-leader) { fill: color-mix(in srgb, var(--color-accent) 28%, transparent); }
+/* Each step builds what it names once the camera has arrived; on the roofing drainage step the water runs down the sheet
+   into the gutter. Reduced motion: the parts simply light, the water stands still. */
+/* Water as drops along its path: shown on the step that follows it (2: the wall and the flashing; 3: sheet, gutter, pipe) */
+.node-drawing .nd-rain { fill: none; stroke: var(--color-accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 1 23; opacity: 0; transition: opacity .3s ease; }
+.dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { opacity: .9; }
+@media (prefers-reduced-motion: no-preference) {
+  .dn[data-step="1"] .node-drawing [data-part="1"] :is(path, circle):not(.nd-dashed),
+  .dn[data-step="2"] .node-drawing [data-part="2"] :is(path, circle):not(.nd-dashed),
+  .dn[data-step="3"] .node-drawing [data-part="3"] :is(path, circle):not(.nd-leader, .nd-dashed) { stroke-dasharray: 1; animation: nd-draw 900ms var(--ease-premium) 700ms both; }
+  /* the roof's build-up is laid bottom-up: deck, barrier, insulation, sheet */
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq] { animation-duration: 650ms; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="1"] { animation-delay: 600ms; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="2"] { animation-delay: 1050ms; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="3"] { animation-delay: 1500ms; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="4"] { animation-delay: 1950ms; }
+  .dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { animation: nd-flow 480ms linear 1200ms infinite; }
+}
+@keyframes nd-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes nd-flow { to { stroke-dashoffset: -24; } }

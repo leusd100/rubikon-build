@@ -57,24 +57,28 @@ export function SectionHeader({
   className = '',
   icon,
   titleId,
+  aside,
 }: {
   eyebrow: string;
   title: ReactNode;
   supporting: ReactNode;
   inverse?: boolean;
   className?: string;
+  /** A small decorative drawing in the empty right of the header (wide screens only; UX pass 2026-10) */
+  aside?: ReactNode;
   /** A role icon beside the eyebrow's text — decoration only, never instead of the words. */
   icon?: ReactNode;
   /** For a section that names itself by its heading (aria-labelledby). */
   titleId?: string;
 }) {
   return (
-    <div className={`section-header${inverse ? ' section-header-inverse' : ''}${className ? ` ${className}` : ''}`}>
+    <div className={['section-header', inverse && 'section-header-inverse', aside && 'has-aside', className].filter(Boolean).join(' ')}>
       <div className="section-header-copy">
         <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {icon}{eyebrow}</p>
         <h2 id={titleId}>{title}</h2>
       </div>
       <p className="section-header-support">{supporting}</p>
+      {aside && <div className="section-header-aside" aria-hidden="true">{aside}</div>}
     </div>
   );
 }
@@ -330,7 +334,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
           <article className="person-story">
             <div className="person-info">
               <span>{sergii.role}</span>
-              <h3>Леус Сергій Іванович</h3>
+              <h3>Сергій Іванович Леус</h3>
               {sergii.paragraphs.map((text) => <p key={text}>{text}</p>)}
               <PersonFocus items={sergii.focus} />
             </div>
@@ -338,7 +342,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
           <article className="person-story person-story-reverse">
             <div className="person-info">
               <span>{dmytro.role}</span>
-              <h3>Леус Дмитро Сергійович</h3>
+              <h3>Дмитро Сергійович Леус</h3>
               {dmytro.paragraphs.map((text) => <p key={text}>{text}</p>)}
               <PersonFocus items={dmytro.focus} />
             </div>

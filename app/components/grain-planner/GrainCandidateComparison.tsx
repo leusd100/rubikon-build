@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState, type RefObject } from 'react';
 import { grainPlannerPresentation } from '../../data/grainPlannerPresentation';
 import {
   buildCandidates,
@@ -17,33 +17,15 @@ import { ComparisonTable } from '../planner/ComparisonTable';
 import { DriverPills } from '../planner/DriverPills';
 import { PlannerTabs } from '../planner/PlannerTabs';
 import { ResultHeading } from '../planner/ResultHeading';
-import { scrollAfterRender } from '../planner/plannerScroll';
 import { GrainCandidateVisual } from './GrainCandidateVisual';
 import { GrainConceptDetail } from './GrainConceptDetail';
 
-/** The comparison route: drivers, approach cards, side-by-side table and each approach in depth. */
-export function GrainCandidateComparison({ answers, narrow }: { answers: Answers; narrow: boolean }) {
+/** The comparison route, first screen: the heading, what drives the choice and one card per approach. */
+export function GrainCandidateComparison({ answers, onExplore }: Readonly<{ answers: Answers; onExplore: (key: CandidateKey) => void }>) {
   const presentation = grainPlannerPresentation.result;
   const candidates = buildCandidates(answers);
   const drivers = buildDrivers(answers);
   const [driverOpen, setDriverOpen] = useState<string | null>(null);
-  const [compareOpen, setCompareOpen] = useState(false);
-  const [selected, setSelected] = useState<CandidateKey | null>(null);
-  // Phones: each approach is its own disclosure, and several can be open at once for comparison.
-  const [expanded, setExpanded] = useState<CandidateKey[]>([]);
-  const explorerRef = useRef<HTMLDivElement>(null);
-  // After an edit the set can change; fall back to the first approach still shown.
-  const active = candidates.some((item) => item.key === selected) ? (selected as CandidateKey) : candidates[0].key;
-  const collapsed = (block: 'conceptDetail' | 'comparison') => narrow && presentation.collapsedOnMobile.includes(block);
-
-  const table = (
-    <ComparisonTable
-      caption="Порівняння підходів для вашого сценарію"
-      cornerLabel="Для вашого сценарію"
-      columns={candidates.map((item) => item.title)}
-      rows={comparisonRows(answers).map((row) => ({ label: row, cells: candidates.map((item) => comparisonCell(item.key, row)) }))}
-    />
-  );
 
   return (
     <div className="planner-outcome">
@@ -60,6 +42,7 @@ export function GrainCandidateComparison({ answers, narrow }: { answers: Answers
         open={driverOpen}
         onToggle={(driver) => setDriverOpen(driverOpen === driver ? null : driver)}
       />
+      {/* Sideways on a phone; its «Дослідити концепцію» buttons take keyboard focus, so the row needs none of its own */}
       <div className={`planner-approach-grid is-count-${candidates.length}`}>
         {candidates.map((candidate) => (
           <ApproachCard
@@ -71,15 +54,48 @@ export function GrainCandidateComparison({ answers, narrow }: { answers: Answers
             visual={<GrainCandidateVisual type={candidate.key} />}
             reason={presentation.whyPlacement === 'card' ? candidate.reasons[0] : undefined}
             actionLabel="Дослідити концепцію"
-            onAction={() => {
-              setSelected(candidate.key);
-              setExpanded((current) => (current.includes(candidate.key) ? current : [...current, candidate.key]));
-              scrollAfterRender(() => explorerRef.current?.querySelector(`[data-concept="${candidate.key}"]`) ?? explorerRef.current);
-            }}
+            onAction={() => onExplore(candidate.key)}
           />
         ))}
       </div>
+    </div>
+  );
+}
 
+/** Which approach is open in depth: the tab on a wide screen, the open disclosures on a phone. */
+export type ConceptSelection = {
+  selected: CandidateKey | null;
+  setSelected: (key: CandidateKey) => void;
+  expanded: CandidateKey[];
+  setExpanded: (update: (current: CandidateKey[]) => CandidateKey[]) => void;
+};
+
+/** Under «Детально»: the side-by-side table and each approach in depth. */
+export function GrainConceptExplorer({ answers, narrow, selection, explorerRef }: Readonly<{
+  answers: Answers;
+  narrow: boolean;
+  selection: ConceptSelection;
+  explorerRef: RefObject<HTMLDivElement | null>;
+}>) {
+  const presentation = grainPlannerPresentation.result;
+  const candidates = buildCandidates(answers);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const { selected, setSelected, expanded, setExpanded } = selection;
+  // After an edit the set can change; fall back to the first approach still shown.
+  const active = candidates.some((item) => item.key === selected) ? (selected as CandidateKey) : candidates[0].key;
+  const collapsed = (block: 'conceptDetail' | 'comparison') => narrow && presentation.collapsedOnMobile.includes(block);
+
+  const table = (
+    <ComparisonTable
+      caption="Порівняння підходів для вашого сценарію"
+      cornerLabel="Для вашого сценарію"
+      columns={candidates.map((item) => item.title)}
+      rows={comparisonRows(answers).map((row) => ({ label: row, cells: candidates.map((item) => comparisonCell(item.key, row)) }))}
+    />
+  );
+
+  return (
+    <div className="planner-concepts">
       {collapsed('comparison') ? (
         <details className="planner-disclosure">
           <summary>Порівняти поруч</summary>

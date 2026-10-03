@@ -14,12 +14,15 @@ test.describe('hangar configurator POC', () => {
     await expect(robotsMeta).toHaveAttribute('content', /noindex/);
   });
 
-  test('shows the schematic-not-engineering disclaimer', async ({ page }) => {
+  test('shows the schematic-not-engineering disclaimer once, in the summary', async ({ page }) => {
     await openConfigurator(page);
-    const disclaimer = page.locator('.hc-preview-toolbar .hc-preview-disclaimer');
-    await expect(disclaimer).toContainText('не є проєктною або конструкторською документацією');
+    // UX pass 2026-10: one disclaimer instead of five (over the model, under the sizes, the gates, the summary, the
+    // frame schemes)
+    const disclaimer = page.locator('.hc-summary-disclaimer');
+    await expect(disclaimer).toContainText('попередня схематична візуалізація, а не проєктна документація');
+    await expect(disclaimer).toContainText('Межі розмірів і розміри воріт орієнтовні');
     await expect(disclaimer).toBeVisible();
-    await expect(page.locator('.hc-hero .hc-preview-disclaimer')).toHaveCount(0);
+    await expect(page.locator('.hc-preview-disclaimer')).toHaveCount(0);
     const fontSize = await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
     expect(fontSize).toBeGreaterThanOrEqual(14);
   });

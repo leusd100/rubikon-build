@@ -34,7 +34,6 @@ for (const viewport of viewports) {
     const sequence = await page.locator([
       '.service-subhero',
       '#configurator',
-      '#decisions',
       '#structure',
       '#process',
       '#responsibility',
@@ -47,7 +46,7 @@ for (const viewport of viewports) {
       top: section.getBoundingClientRect().top + window.scrollY,
     })));
 
-    expect(sequence).toHaveLength(9);
+    expect(sequence).toHaveLength(8);
     expect(sequence.map(({ top }) => top)).toEqual([...sequence.map(({ top }) => top)].sort((a, b) => a - b));
 
     const configurator = page.locator('#configurator');
@@ -83,20 +82,6 @@ for (const viewport of viewports) {
     );
     expect(summaryColumns).toBe(viewport.width <= 760 ? 1 : 2);
 
-    if (viewport.width === 820) {
-      const decisionColumns = await page.locator('.angary-decision-row').first().evaluate(
-        (element) => getComputedStyle(element).gridTemplateColumns.split(' ').map(Number.parseFloat),
-      );
-      expect(Math.abs(decisionColumns[0] - decisionColumns[1])).toBeLessThanOrEqual(1);
-    }
-
-    if (viewport.width <= 760) {
-      const currentChoiceSize = await page.locator('.angary-current-choice').first().evaluate(
-        (element) => Number.parseFloat(getComputedStyle(element).fontSize),
-      );
-      expect(currentChoiceSize).toBeGreaterThanOrEqual(13);
-    }
-
     if (viewport.heroReveal) {
       // The hero standard (owner, 02.10): the window's height, as every direction page — no longer a shorter «reveal»;
       // its actions stay clear of the window's bottom edge
@@ -114,7 +99,10 @@ for (const viewport of viewports) {
       expect(metrics.heroOverflow).toBeLessThanOrEqual(1);
     }
 
-    await expect(page.locator('#decisions [data-decision]')).toHaveCount(4);
+    // «Рішення, які приймаєте ви» lives in the configurator now: one folded «Чому це важливо» per decision
+    await expect(page.locator('#decisions')).toHaveCount(0);
+    await expect(configurator.locator('.hc-why')).toHaveCount(4);
+    await expect(configurator.locator('.hc-why[open]')).toHaveCount(0);
     await expect(page.locator('#structure .angary-diagram')).toHaveCount(3);
     await expect(page.locator('#structure')).toContainText('6–8 м і уточнюється після розрахунку');
     await expect(page.locator('#process li')).toHaveCount(5);
@@ -183,8 +171,10 @@ for (const dpr of [1, 2]) {
     test('selects generated WebP candidates', async ({ page }, testInfo) => {
       test.skip(testInfo.project.name === 'mobile-chromium', 'the DPR matrix runs once');
       await page.goto('/angary', { waitUntil: 'load' });
-      for (const selector of ['[data-decision="enclosure"]', '[data-decision="foundation"]']) {
+      // The pictures live in «Чому це важливо» under the cladding and foundation groups (180 px wide on a desktop)
+      for (const selector of ['.hc-why[data-why="cladding"]', '.hc-why[data-why="foundation"]']) {
         const section = page.locator(selector);
+        await section.locator('summary').click();
         await section.scrollIntoViewIfNeeded();
         await section.locator('img').evaluateAll((images) => Promise.all(
           (images as HTMLImageElement[]).map((image) => image.decode()),
@@ -192,15 +182,15 @@ for (const dpr of [1, 2]) {
       }
 
       const selected = await page.locator([
-        '[data-decision="enclosure"] img',
-        '[data-decision="foundation"] img',
+        '.hc-why[data-why="cladding"] img',
+        '.hc-why[data-why="foundation"] img',
       ].join(', ')).evaluateAll((images) => (
         images as HTMLImageElement[]
       ).map((image) => image.currentSrc));
       expect(selected).toHaveLength(4);
       for (const source of selected) {
         expect(source).toContain('/media-responsive/');
-        expect(source).toContain(dpr === 1 ? '-480w.' : '-768w.');
+        expect(source).toContain('-480w.');
       }
     });
   });

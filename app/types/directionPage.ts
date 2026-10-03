@@ -62,6 +62,14 @@ export type DirectionPageConfig = {
   related?: { compact?: boolean; items?: readonly RelatedDirection[] };
   /** Optional for a page whose own editorial architecture replaces the overview band. */
   overview?: DirectionOverview;
+  /** Roofing: the three situations people call with, each with its first step (UX pass 2026-10). Words only from the
+   *  page's own overview, process and FAQ. */
+  entry?: {
+    eyebrow: string;
+    title: string;
+    text: string;
+    items: readonly { situation: string; text: string; start: string }[];
+  };
   editorial: {
     eyebrow: string;
     title: string;
@@ -70,6 +78,11 @@ export type DirectionPageConfig = {
     points?: readonly DirectionItem[];
     image: string;
     imageAlt: string;
+    /**
+     * «Вузол напряму»: the editorial picture as a three-step tour of one node — each step brackets its place on the
+     * picture and the camera pushes in on it (DirectionNode). Steps only name what the page's own text already lists.
+     */
+    node?: DirectionNode;
   };
   process: {
     eyebrow?: string;
@@ -95,4 +108,28 @@ export type DirectionPageConfig = {
     /** The page's own question under it. */
     lead: string;
   };
+};
+
+/** One step of a direction's node tour: what it is, what the camera shows, and where on the picture. */
+export type DirectionNodeStep = {
+  title: string;
+  text: string;
+  /** Names what the camera shows, in the title block */
+  caption: string;
+  /** Picture pixels the camera centres on, and how far it pushes in */
+  focus: readonly [number, number];
+  zoom: number;
+  /** The step's mark: an SVG path in picture pixels (drawn with pathLength 1) and where its number sits */
+  mark: { d: string; badge: readonly [number, number] };
+};
+
+export type DirectionNode = {
+  /** A technical drawing instead of the picture (NodeDrawing): vector, so the push-in stays sharp */
+  drawing?: 'steel-joint' | 'footing' | 'eave';
+  /** The picture's (or the drawing's) own size — the marks are drawn in it */
+  width: number;
+  height: number;
+  /** What the overview (no step) shows, in the title block */
+  overviewCaption: string;
+  steps: readonly [DirectionNodeStep, DirectionNodeStep, DirectionNodeStep];
 };

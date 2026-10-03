@@ -7,6 +7,7 @@ import {
   collectRuntimeErrors,
   next,
   openPlanner,
+  openResultDetails,
   planner,
   questions,
   result,
@@ -19,7 +20,7 @@ import {
 // Runs on desktop-chromium and mobile-chromium. Layout-specific checks guard on the project.
 
 test.describe('Grain Planner — scenarios', () => {
-  test('A (known task, simple): two floor approaches with WHY from the client’s answer', async ({ page }, testInfo) => {
+  test('A (known task, simple): two floor approaches with WHY from the client’s answer', async ({ page }) => {
     const errors = collectRuntimeErrors(page);
     await openPlanner(page);
     await expect(result(page).getByRole('heading', { name: /Три підходи до зерносховища/ })).toBeVisible();
@@ -29,8 +30,10 @@ test.describe('Grain Planner — scenarios', () => {
     await expect(result(page).getByRole('heading', { name: 'Для вашої задачі є кілька підходів, які варто розглянути.' })).toBeVisible();
     expect(await approachTitles(page)).toEqual(['Каркасне підлогове', 'Безкаркасне арочне']);
 
-    if (testInfo.project.name === 'mobile-chromium') await result(page).locator('details > summary', { hasText: 'Каркасне підлогове' }).click();
-    const why = result(page).locator('.planner-why').first();
+    // «Дослідити концепцію» opens «Детально» on that approach (a tab on a wide screen, a disclosure on a phone)
+    await result(page).locator('.planner-approach', { hasText: 'Каркасне підлогове' }).locator(':scope > button').click();
+    await expect(result(page).locator('.planner-more-toggle')).toHaveAttribute('aria-expanded', 'true');
+    const why = result(page).locator('.planner-why:visible').first();
     await expect(why.getByRole('heading', { name: 'Чому ми її показуємо' })).toBeVisible();
     await expect(why).toContainText('Ви вказали, що партії можуть зберігатися разом, — тому єдиний гнучкий внутрішній об’єм стає доречним.');
     expect(errors).toEqual([]);
@@ -43,6 +46,7 @@ test.describe('Grain Planner — scenarios', () => {
     await reveal(page);
     expect(await approachTitles(page)).toEqual(['Силосна система', 'Каркасне підлогове', 'Безкаркасне арочне']);
     await expect(result(page).locator('.planner-drivers li')).toHaveCount(6);
+    await openResultDetails(page);
     await expect(result(page).getByRole('heading', { name: /Компактний майданчик сьогодні/ })).toBeVisible();
     expect(errors).toEqual([]);
   });
@@ -66,6 +70,7 @@ test.describe('Grain Planner — scenarios', () => {
     await scenarios.C2(page);
     await reveal(page);
     expect(await approachTitles(page)).toEqual(['Силосна система', 'Каркасне підлогове', 'Безкаркасне арочне']);
+    await openResultDetails(page);
     if (await result(page).locator('details.planner-disclosure', { hasText: 'Що ви ще не визначили' }).count()) {
       await result(page).locator('details > summary', { hasText: 'Що ви ще не визначили' }).click();
     }
@@ -216,6 +221,7 @@ test.describe('Grain Planner — accessibility', () => {
     await openPlanner(page);
     await scenarios.B(page);
     await reveal(page);
+    await openResultDetails(page);
     const tabs = result(page).getByRole('tab');
     await expect(tabs).toHaveCount(3);
     await tabs.nth(0).focus();
@@ -278,6 +284,14 @@ test.describe('Grain Planner — desktop layout', () => {
     await scenarios.A(page);
     await reveal(page);
     const order = await result(page).locator('.planner-result-block').evaluateAll((blocks) => blocks.map((block) => block.getAttribute('data-block')));
-    expect(order).toEqual(['scenario', 'outcome', 'boundary', 'brief']);
+    expect(order).toEqual(['scenario', 'outcome', 'concepts', 'boundary', 'brief']);
+    // About one screen: the scenario, the approaches and the handoff; the rest is folded under «Детально»
+    const folded = await result(page).locator('#grain-result-more .planner-result-block').evaluateAll((blocks) => blocks.map((block) => block.getAttribute('data-block')));
+    expect(folded).toEqual(['concepts', 'boundary', 'brief']);
+    await expect(result(page).locator('#grain-result-more')).toBeHidden();
+    await expect(result(page).locator('[data-block="outcome"] .planner-handoff')).toBeVisible();
+    const fromHeadingToToggle = await page.evaluate(() => document.querySelector('.planner-more-toggle')!.getBoundingClientRect().bottom
+      - document.querySelector('#grain-result-title')!.getBoundingClientRect().top);
+    expect(fromHeadingToToggle).toBeLessThanOrEqual(940);
   });
 });

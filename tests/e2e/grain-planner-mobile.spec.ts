@@ -3,6 +3,7 @@ import {
   collectRuntimeErrors,
   horizontalOverflow,
   openPlanner,
+  openResultDetails,
   planner,
   questions,
   result,
@@ -16,6 +17,7 @@ import {
 test.skip(({ isMobile }) => !isMobile, 'Phone layout — mobile-chromium project only.');
 
 async function expandAll(page: Page) {
+  await openResultDetails(page);
   const summaries = result(page).locator('details:not([open]) > summary');
   while (await summaries.count()) await summaries.first().click();
 }
@@ -89,7 +91,11 @@ test.describe('390 px — phone flow', () => {
     await scenarios.A(page);
     await reveal(page);
     const order = await result(page).locator('.planner-result-block').evaluateAll((blocks) => blocks.map((block) => block.getAttribute('data-block')));
-    expect(order).toEqual(['scenario', 'outcome', 'brief', 'boundary']);
+    expect(order).toEqual(['scenario', 'outcome', 'concepts', 'brief', 'boundary']);
+    // The approaches sit in one sideways row, so the result's first part stays about one screen
+    const grid = result(page).locator('.planner-approach-grid');
+    await expect(grid).toHaveCSS('overflow-x', 'auto');
+    expect(await grid.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
     await expect(planner(page).locator('.planner-readiness')).toBeVisible();
   });
 });

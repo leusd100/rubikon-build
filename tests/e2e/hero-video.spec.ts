@@ -68,7 +68,8 @@ test('leaving during a crossfade does not preserve an extra visible clip on retu
 // HOME v2 plays no video at ≤ 760 px (a still instead), so its phone sizes have no pause button to test.
 const PAUSE_SIZES = [[320, 568], [360, 640], [390, 844], [430, 844], [820, 900]] as const;
 for (const path of ['/', '/pro-nas']) {
-  for (const [width, height] of PAUSE_SIZES.filter(([w]) => path !== '/' || w > 760)) {
+  // Phones get a still and no video: HOME up to 760 px, /pro-nas up to 600 px (UX pass 2026-10)
+  for (const [width, height] of PAUSE_SIZES.filter(([w]) => w > (path === '/' ? 760 : 600))) {
     test(`pause has its own touch target at ${path} ${width}×${height}`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ reducedMotion: 'no-preference' });

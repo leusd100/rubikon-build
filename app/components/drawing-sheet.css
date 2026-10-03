@@ -107,19 +107,9 @@
 .direction-editorial-grid[data-layout] .direction-editorial-media.sheet { overflow: visible; background: var(--sheet-paper); border: 1px solid var(--sheet-ink); border-radius: 0; box-shadow: none; }
 .direction-editorial-media.sheet::after { content: none; }
 
-/* /angary — the picture beside «Від призначення — до зрозумілого технічного завдання» */
-.angary-decisions-intro .angary-decisions-intro-visual.sheet { overflow: visible; background: var(--sheet-paper); border: 1px solid var(--sheet-ink); border-radius: 0; box-shadow: none; }
-.angary-decisions-intro-visual.sheet::before, .angary-decisions-intro-visual.sheet::after { content: none; }
-
-@media (min-width: 761px) and (max-width: 1023px) {
-  .angary-decisions-intro .angary-decisions-intro-visual.sheet { aspect-ratio: auto; }
-  .angary-decisions-intro-visual.sheet .sheet-image { flex: none; aspect-ratio: 16 / 9; }
-}
 @media (max-width: 760px) {
   /* On a phone the picture keeps its own proportion and the sheet grows around it */
   .direction-editorial-grid[data-layout] .direction-editorial-media.sheet { aspect-ratio: auto; }
   .direction-editorial-media.sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
   .grain-implementation-band .direction-editorial-media.sheet .sheet-image { aspect-ratio: 16 / 9; }
-  .angary-decisions-intro .angary-decisions-intro-visual.sheet { aspect-ratio: auto; }
-  .angary-decisions-intro-visual.sheet .sheet-image { flex: none; aspect-ratio: 4 / 3; }
 }

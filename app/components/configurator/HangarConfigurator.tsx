@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { ConfiguratorControls } from './ConfiguratorControls';
@@ -8,8 +8,47 @@ import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 import { HangarPreviewModes } from './HangarPreviewModes';
 
+/** The site header's height on a phone (globals.css): the mini preview is held right under it. */
+const PHONE_HEADER_PX = 77;
+
+/**
+ * On a phone (/angary only) the model stays in view while the visitor sets the parameters: while the controls are on
+ * screen under it, the layout carries `data-configuring` and the preview stage sticks under the header
+ * (configurator.css). Past the controls it lets go, so the summary reads without the model over it.
+ */
+function useMiniPreview(enabled: boolean) {
+  const layoutRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const layout = layoutRef.current;
+    const controls = layout?.querySelector('.hc-controls');
+    if (!enabled || !layout || !controls) return undefined;
+    const phone = window.matchMedia('(max-width: 760px)');
+    let observer: IntersectionObserver | undefined;
+    const arm = () => {
+      observer?.disconnect();
+      delete layout.dataset.configuring;
+      if (!phone.matches) return;
+      const stage = layout.querySelector<HTMLElement>('.hc-preview-surface')?.offsetHeight ?? 0;
+      observer = new IntersectionObserver(([entry]) => {
+        if (entry?.isIntersecting) layout.dataset.configuring = '';
+        else delete layout.dataset.configuring;
+      }, { rootMargin: `-${PHONE_HEADER_PX + stage}px 0px 0px 0px` });
+      observer.observe(controls);
+    };
+    arm();
+    phone.addEventListener('change', arm);
+    return () => {
+      observer?.disconnect();
+      phone.removeEventListener('change', arm);
+      delete layout.dataset.configuring;
+    };
+  }, [enabled]);
+  return layoutRef;
+}
+
 export function HangarConfigurator({ embedded = false }: { embedded?: boolean }) {
   const sharedInquiry = useHangarInquiryContext();
+  const layoutRef = useMiniPreview(embedded);
   const [localState, setLocalState] = useState<ConfiguratorState>(DEFAULT_CONFIGURATOR_STATE);
   const state = sharedInquiry?.state ?? localState;
   const updateBusinessConfiguration = sharedInquiry?.updateBusinessConfiguration ?? setLocalState;
@@ -51,7 +90,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         )}
       </header>
 
-      <div className="hc-layout">
+      <div className="hc-layout" ref={layoutRef}>
         <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} />
         <div className="hc-preview-pane" id="hangar-live-preview">
           <HangarPreviewModes

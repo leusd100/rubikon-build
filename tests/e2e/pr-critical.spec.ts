@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
-import { deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
+import { capabilityLedger, deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
 import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { company, companyContactLinks } from '../../app/data/company';
 import { homeProofCase } from '../../app/data/homeProof';
@@ -325,12 +325,17 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
 
   const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
   expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
-  // Five direction rows, each one link named by its title and leading to the direction's page, then the region
-  const rows = page.locator('.about-build-list li');
-  await expect(rows).toHaveCount(directions.length);
-  await expect(page.locator('.about-build-list h3')).toHaveText(directions.map((direction) => direction.cardTitle));
-  expect(await page.locator('.about-build-list a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(directions.map((direction) => direction.href));
-  await expect(page.locator('.about-build-list img')).toHaveCount(0);
+  // What we do ourselves and what we organise (UX pass 2026-10, in place of the five-direction list that repeated
+  // /napryamky): the Delivery Model's three capability layers in its own words; a work with its own page links to it,
+  // and the directions are one link away. Then the region.
+  const ledger = capabilityLedger();
+  await expect(page.locator('.about-ledger-col h3')).toHaveText(ledger.map((column, index) => `${String(index + 1).padStart(2, '0')}${column.title}`));
+  await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => (item.href ? `${item.label} ↗` : item.label))));
+  expect(await page.locator('.about-ledger a').evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
+    .toEqual(ledger.flatMap((column) => column.items.flatMap((item) => (item.href ? [item.href] : []))));
+  await expect(page.locator('.about-build-all')).toHaveAttribute('href', '/napryamky');
+  await expect(page.locator('.about-ledger img')).toHaveCount(0);
+  for (const pattern of FORBIDDEN_CLAIMS) expect(await page.locator('.about-ledger').innerText(), String(pattern)).not.toMatch(pattern);
   // The region closes the block on a copper line, the rest of the sentence under it
   const region = page.locator('.about-build-region');
   await expect(region.locator('.region-bond')).toHaveText(`Основний регіон — ${company.serviceAreas[0]}`);
@@ -342,7 +347,9 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   await expect(page.locator('main').getByText(/Два покоління/)).toHaveCount(1);
   // Owner's decision (30.09): no «Ілюстрація» tags on this page; the conceptual image says so in its alt text
   await expect(page.locator('main')).not.toContainText('Ілюстрація');
-  await expect(page.locator('.about-story-section img')).toHaveAttribute('alt', /^Концептуальна ілюстрація/);
+  // The practice tour is a technical drawing (UX pass 2026-10: zooming the picture lost its quality); it names itself
+  await expect(page.locator('.about-story-section svg.practice-drawing')).toHaveAttribute('aria-label', /^Схема: /);
+  await expect(page.locator('.about-story-section img')).toHaveCount(0);
   await expect(page.locator('.ghost-word')).toHaveCount(0);
 
   // Every principle lands on a zone that exists
@@ -758,7 +765,7 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     const resp = responsibilityByFormat();
     for (const format of resp.formats) {
-      await page.getByRole('radio', { name: format.label, exact: true }).check();
+      await page.locator('.proc-resp-switch').getByRole('radio', { name: format.label, exact: true }).check();
       for (const zone of ['rubikon', 'client', 'specialists'] as const) {
         await expect(visibleItems(page, zone)).toHaveText(resp.items.filter((item) => item.zones[zone].includes(format.id)).map((item) => item.text));
       }
@@ -808,15 +815,68 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     });
     const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
     expect(await page.locator('.proc-resp-switch').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
-    await page.getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
+    await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
     await expect(page.locator('.proc-area-client .proc-area-tag:visible')).toBeVisible();
+  });
+
+  test('on a wide screen the switcher floats under the header while the map scrolls by', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop layout');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    // The map's top 400 px above the viewport: well inside it
+    await page.evaluate(() => {
+      const figure = document.querySelector('.proc-resp-figure')!;
+      window.scrollTo({ top: figure.getBoundingClientRect().top + window.scrollY + 400, behavior: 'instant' });
+    });
+    const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
+    const control = page.locator('.proc-resp-switch > div');
+    expect(await control.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header + 12);
+    // Only the control takes the pointer: the strip beside it does not cover the cards
+    await expect(page.locator('.proc-resp-switch')).toHaveCSS('pointer-events', 'none');
+    await expect(control).toHaveCSS('pointer-events', 'auto');
+  });
+
+  test('a phone shows one scope format at a time, and that choice is the map\'s too', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const cards = page.locator('#obsiah .proc-scope-grid > li');
+    await expect(cards.filter({ visible: true })).toHaveCount(1);
+    await expect(cards.filter({ visible: true })).toHaveAttribute('data-scope', 'comprehensive');
+    await page.locator('.proc-scope-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check();
+    await expect(cards.filter({ visible: true })).toHaveAttribute('data-scope', 'subcontract');
+    await expect(page.locator('.proc-resp-switch input[value="subcontract"]')).toBeChecked();
+    await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText('Генпідрядник');
+    // and back from the map
+    await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
+    await expect(page.locator('.proc-scope-switch input[value="work-package"]')).toBeChecked();
+  });
+
+  test('the scope cards stay side by side on a wide screen, with no second switcher', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop layout');
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    await expect(page.locator('.proc-scope-switch')).toBeHidden();
+    await expect(page.locator('#obsiah .proc-scope-grid > li').filter({ visible: true })).toHaveCount(3);
+  });
+
+  test('after a switch the works that moved into a zone are marked for a moment', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    const resp = responsibilityByFormat();
+    const moved = (['rubikon', 'client', 'specialists'] as const).flatMap((zone) => resp.items
+      .filter((item) => item.zones[zone].includes('subcontract') && !item.zones[zone].includes('comprehensive'))
+      .map((item) => item.text));
+    expect(moved.length).toBeGreaterThan(0);
+    await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check();
+    await expect(page.locator('.proc-area li[data-fresh] .proc-area-work')).toHaveText(moved);
+    await expect(page.locator('.proc-area li[data-fresh]')).toHaveCount(0, { timeout: 5000 });
   });
 
   test.describe('without JavaScript', () => {
     test.use({ javaScriptEnabled: false });
     test('the format switcher still works (CSS only)', async ({ page }) => {
       await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-      await page.getByRole('radio', { name: 'Субпідряд', exact: true }).check();
+      await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check();
       await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText('Генпідрядник');
       await expect(page.locator('.proc-out-of-scope:visible')).toHaveCount(1);
     });
@@ -825,6 +885,9 @@ test.describe('/yak-pratsyuiemo interactions', () => {
   test('«Обговорити цей формат» takes the visitor to the form with that format chosen', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    // A phone shows one format at a time: choose the third first
+    const scopeSwitch = page.locator('.proc-scope-switch');
+    if (await scopeSwitch.isVisible()) await scopeSwitch.getByRole('radio', { name: 'Субпідряд', exact: true }).check();
     await page.locator('#obsiah .proc-scope-grid > li').nth(2).locator('.proc-scope-cta').click();
     await expect(page).toHaveURL(/#inquiry$/);
     await expect(page.locator('#inquiry select[name="cooperation"]')).toHaveValue('Субпідряд');

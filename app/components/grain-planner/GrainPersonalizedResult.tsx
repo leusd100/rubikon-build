@@ -1,7 +1,7 @@
 'use client';
 
-import { ArrowDown } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ArrowDown, ChevronDown } from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
 import { GRAIN_RESPONSIBILITY_STATEMENT } from '../../data/grainPage';
 import { grainPlannerPresentation, type GrainResultBlock } from '../../data/grainPlannerPresentation';
 import {
@@ -18,6 +18,7 @@ import {
   routeDecision,
   scenarioClientQuestions,
   themes,
+  type CandidateKey,
 } from '../../lib/planner/grain';
 import { BriefTable } from '../planner/BriefTable';
 import { ChangeBanner } from '../planner/ChangeBanner';
@@ -26,18 +27,21 @@ import { DecisionBoundary } from '../planner/DecisionBoundary';
 import { ResponsibilityNote } from '../planner/ResponsibilityNote';
 import { ResultHeading } from '../planner/ResultHeading';
 import { ScenarioStrip } from '../planner/ScenarioStrip';
+import { scrollAfterRender } from '../planner/plannerScroll';
 import { usePlannerMediaQuery } from '../planner/usePlannerMediaQuery';
-import { GrainCandidateComparison } from './GrainCandidateComparison';
+import { GrainCandidateComparison, GrainConceptExplorer } from './GrainCandidateComparison';
 import { GrainDevelopmentExplorer } from './GrainDevelopmentExplorer';
 import { useGrainPlanner } from './GrainPlannerProvider';
 
 /**
  * The personalised result (#result after reveal): its blocks in the order grainPlannerPresentation
- * gives for this width — DOM order, so reading order matches the screen. Loaded on demand by
- * GrainResultBand: nobody needs it before the first answer, so the first page load does not carry it.
+ * gives for this width — DOM order, so reading order matches the screen. The `primary` blocks show at
+ * once (about one screen: the scenario, the approaches, the handoff); the rest are under «Детально»,
+ * which a card's «Дослідити концепцію» also opens. Loaded on demand by GrainResultBand: nobody needs
+ * it before the first answer, so the first page load does not carry it.
  */
 export default function GrainPersonalizedResult() {
-  const { state, editTheme, changeOpen, setChangeOpen, briefAttached, attachBrief } = useGrainPlanner();
+  const { state, editTheme, changeOpen, setChangeOpen, detailsOpen: moreOpen, setDetailsOpen: setMoreOpen, briefAttached, attachBrief } = useGrainPlanner();
   const mobile = usePlannerMediaQuery('(max-width: 1050px)');
   const narrow = usePlannerMediaQuery('(max-width: 760px)');
   const presentation = grainPlannerPresentation;
@@ -55,6 +59,16 @@ export default function GrainPersonalizedResult() {
   const decisionRows = brief.sections.find((section) => section.id === 'decision')?.rows ?? [];
   const clarifyTheme = firstClarificationTheme(answers);
   const collapsed = (block: 'boundary') => narrow && presentation.result.collapsedOnMobile.includes(block);
+  const [selected, setSelected] = useState<CandidateKey | null>(null);
+  // Phones: each approach is its own disclosure, and several can be open at once for comparison.
+  const [expanded, setExpanded] = useState<CandidateKey[]>([]);
+  const explorerRef = useRef<HTMLDivElement>(null);
+  const explore = (key: CandidateKey) => {
+    setMoreOpen(true);
+    setSelected(key);
+    setExpanded((current) => (current.includes(key) ? current : [...current, key]));
+    scrollAfterRender(() => explorerRef.current?.querySelector(`[data-concept="${key}"]`) ?? explorerRef.current);
+  };
 
   // The handoff attaches the brief before it scrolls — also after «Не додавати» — so the form the
   // visitor lands on always carries the description the button promised.
@@ -106,7 +120,7 @@ export default function GrainPersonalizedResult() {
     outcome: (
       <>
         {comparison ? (
-          <GrainCandidateComparison answers={answers} narrow={narrow} />
+          <GrainCandidateComparison answers={answers} onExplore={explore} />
         ) : (
           <ClarificationMap
             heading={(
@@ -127,6 +141,14 @@ export default function GrainPersonalizedResult() {
         )}
         {presentation.handoff.position === 'after-outcome' && handoff}
       </>
+    ),
+    concepts: comparison && (
+      <GrainConceptExplorer
+        answers={answers}
+        narrow={narrow}
+        selection={{ selected, setSelected, expanded, setExpanded }}
+        explorerRef={explorerRef}
+      />
     ),
     development: comparison && hasExpansionTension(answers) && <GrainDevelopmentExplorer />,
     boundary: collapsed('boundary') ? (
@@ -153,11 +175,29 @@ export default function GrainPersonalizedResult() {
   };
 
   const order = mobile ? presentation.result.mobile : presentation.result.desktop;
+  const block = (key: GrainResultBlock) => (blocks[key] ? <div className="planner-result-block" data-block={key} key={key}>{blocks[key]}</div> : null);
+  const primary = order.filter((key) => presentation.result.primary.includes(key));
+  const more = order.filter((key) => !presentation.result.primary.includes(key));
 
   return (
     <section id="result" className="page-section grain-planner-root grain-result-band" aria-labelledby="grain-result-title">
       <div className="shell">
-        {order.map((key) => (blocks[key] ? <div className="planner-result-block" data-block={key} key={key}>{blocks[key]}</div> : null))}
+        {primary.map(block)}
+        <button
+          type="button"
+          className="planner-more-toggle"
+          aria-expanded={moreOpen}
+          aria-controls="grain-result-more"
+          onClick={() => setMoreOpen(!moreOpen)}
+        >
+          {moreOpen ? 'Згорнути деталі' : 'Детально'}
+          <span>{comparison ? 'концепції, межі відповідальності, попередній опис' : 'межі відповідальності, попередній опис'}</span>
+          <ChevronDown aria-hidden="true" />
+        </button>
+        {/* Rendered while folded too: the brief, the edits and the tabs keep their state */}
+        <div className="planner-more" id="grain-result-more" hidden={!moreOpen}>
+          {more.map(block)}
+        </div>
       </div>
     </section>
   );

@@ -12,50 +12,14 @@
 .angary-section-heading > p:not(.eyebrow) { max-width: 650px; margin: 28px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.75; }
 .angary-section-heading.is-inverse h2 { color: var(--color-dark-text); }
 
-/* ---------- Decisions ---------- */
-.angary-decisions { background: var(--color-bg); }
-.angary-decisions-intro { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(340px, .88fr); gap: clamp(48px, 7vw, 108px); align-items: stretch; margin-bottom: clamp(48px, 5vw, 72px); }
-.angary-decisions-intro .angary-section-heading { align-self: center; margin-bottom: 0; }
-.angary-decisions-intro-visual { position: relative; min-height: 460px; margin: 0; overflow: hidden; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 18px 18px 0 color-mix(in srgb, var(--color-accent) 12%, transparent); }
-.angary-decisions-intro-visual::before { content: ''; position: absolute; z-index: 1; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
-.angary-decisions-intro-visual::after { content: ''; position: absolute; z-index: 2; right: 0; bottom: 0; width: 72px; height: 2px; background: var(--color-accent); }
-.angary-decisions-intro-visual img { object-fit: cover; object-position: center 54%; filter: saturate(.72) contrast(1.04); transition: transform .8s var(--ease-premium), filter .45s ease; }
-.angary-decisions-intro-visual:hover img { transform: scale(1.025); filter: saturate(.86) contrast(1.03); }
-.angary-decision-list { border-top: 1px solid var(--color-border-strong); }
-.angary-decision-row { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(0, 1.18fr); gap: clamp(48px, 7vw, 108px); align-items: center; padding-block: clamp(64px, 6vw, 82px); border-bottom: 1px solid var(--color-border-strong); }
-.angary-decision-row.is-media-first > :last-child { order: -1; }
-.angary-decision-copy { position: relative; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
-.angary-decision-number { display: block; margin-bottom: 36px; color: var(--color-accent-strong); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; }
-.angary-current-choice { position: absolute; top: 0; right: 0; max-width: 54%; color: var(--color-text-muted); font: 600 13px/1.35 var(--font-condensed), sans-serif; letter-spacing: .04em; text-align: right; text-transform: uppercase; }
-.angary-decision-copy h3 { max-width: 520px; margin: 0; font: 600 clamp(30px, 3.2vw, 46px)/1.02 var(--font-condensed), sans-serif; letter-spacing: -.02em; text-transform: none; text-wrap: balance; }
-.angary-decision-copy > p { max-width: 520px; margin: 24px 0 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.75; }
+/* ---------- Preview actions (the frame demo over the structure schemes) ---------- */
 .angary-preview-action { align-self: flex-start; display: inline-flex; align-items: center; gap: 16px; min-height: 44px; margin-top: 28px; padding: 0 0 6px; border: 0; border-bottom: 1px solid currentColor; color: var(--color-text); background: transparent; font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; cursor: pointer; transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium); }
 .angary-preview-action:hover, .angary-preview-action[aria-pressed="true"] { color: var(--color-accent-strong); }
 .angary-preview-action:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 5px; }
-.angary-consequence-compare, .angary-render-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--color-border-strong); border-block: 1px solid var(--color-border-strong); }
-.angary-consequence-compare > div { min-height: 280px; padding: clamp(30px, 4vw, 54px); background: var(--color-bg); }
-.angary-consequence-compare strong, .angary-render-compare figcaption strong { display: block; font: 600 clamp(18px, 1.6vw, 23px)/1.15 var(--font-condensed), sans-serif; text-transform: none; }
-.angary-consequence-compare ul { margin: 34px 0 0; padding: 0; list-style: none; }
-.angary-consequence-compare li { padding: 14px 0; border-top: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: 13px; line-height: 1.45; }
-.angary-render-compare figure { min-width: 0; margin: 0; background: var(--color-bg); }
-.angary-editorial-image { position: relative; display: block; aspect-ratio: 1.43; overflow: hidden; background: #0e0f11; }
-.angary-editorial-image img { object-fit: cover; }
-.angary-scheme-label { position: absolute; z-index: 2; left: 10px; bottom: 10px; padding: 6px 8px; color: white; background: rgba(13,16,14,.84); border: 1px solid rgba(255,255,255,.5); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .04em; }
-.angary-editorial-image.is-envelope-crop img { object-position: center center; }
-.angary-editorial-image.is-foundation-crop img { object-position: center center; }
-.angary-render-compare figcaption { padding: 22px 20px 24px; }
-.angary-render-compare figcaption span { display: block; margin-top: 8px; color: var(--color-text-muted); font-size: 12px; line-height: 1.45; }
-.angary-openings-row { grid-template-columns: minmax(280px, .7fr) minmax(0, 1.3fr); }
-.angary-opening-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--color-border-strong); }
-.angary-opening-options > div { min-height: 180px; padding: 30px 28px; border-left: 1px solid var(--color-border-strong); }
-.angary-opening-options > div:last-child { border-right: 1px solid var(--color-border-strong); }
-.angary-opening-options strong { display: block; font: 600 clamp(17px, 1.45vw, 21px)/1.15 var(--font-condensed), sans-serif; text-transform: none; }
-.angary-opening-options span { display: block; margin-top: 56px; color: var(--color-text-secondary); font-size: 13px; line-height: 1.55; }
 
 /* ---------- Preliminary structure ---------- */
 .angary-structure { background: var(--color-surface-alt); }
 .angary-structure-heading { margin-bottom: 54px; }
-.angary-structure-heading .angary-honesty-note { max-width: none; padding: 17px 0; border-block: 1px solid var(--color-border-strong); color: var(--color-text); font: 600 14px/1.4 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
 .angary-structure-heading .angary-preview-action { margin-top: 22px; }
 .angary-transverse-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); }
 .angary-diagram { margin: 0; border-top: 1px solid var(--color-border-strong); }
@@ -78,16 +42,16 @@
 
 /* ---------- Process rail ---------- */
 .angary-process { overflow: hidden; background: var(--color-dark); color: var(--color-dark-text); }
-.angary-process .angary-section-heading { margin-bottom: 64px; }
+.angary-process .angary-section-heading { margin-bottom: 56px; }
+/* The site's step rail, as on /yak and the direction pages (UX sweep 2026-10: tiny dots and 12 px notes read as
+   unfinished): a numbered node centred over each step, start and finish filled, the rail from the first node to the last */
 .angary-process-rail { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
-.angary-process-rail::before { content: ''; position: absolute; top: 38px; left: 0; right: 0; height: 1px; background: rgba(255, 255, 255, .2); }
-.angary-process-rail li { position: relative; min-height: 250px; padding: 0 28px 0 0; }
-.angary-process-rail li::before { content: ''; position: relative; z-index: 1; display: block; width: 9px; height: 9px; margin: 34px 0 34px; border: 2px solid var(--color-dark); border-radius: 50%; background: #6d716e; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3); }
-.angary-process-rail li.is-current::before { background: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
-.angary-process-rail li > span { position: absolute; top: 0; left: 0; color: var(--color-dark-text-muted); font: 600 11px/1 var(--font-condensed), sans-serif; }
-.angary-process-rail li.is-current > span { color: var(--color-accent-on-dark); }
-.angary-process-rail strong { display: block; max-width: 210px; font: 600 clamp(16px, 1.45vw, 20px)/1.15 var(--font-condensed), sans-serif; text-transform: none; }
-.angary-process-rail p { max-width: 210px; margin: 18px 0 0; color: var(--color-dark-text-muted); font-size: 12px; line-height: 1.6; }
+.angary-process-rail::before { content: ''; position: absolute; top: 22px; left: 10%; right: 10%; height: 1px; background: var(--color-accent); }
+.angary-process-rail li { position: relative; min-width: 0; padding: 0 14px; text-align: center; }
+.angary-process-rail li > span { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 24px; color: var(--color-accent-on-dark); background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; }
+.angary-process-rail li:is(:first-child, :last-child) > span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
+.angary-process-rail strong { display: block; max-width: 220px; margin-inline: auto; font: 600 clamp(18px, 1.5vw, 21px)/1.15 var(--font-condensed), sans-serif; text-transform: none; }
+.angary-process-rail p { max-width: 240px; margin: 12px auto 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.65; }
 
 /* ---------- Human responsibility ---------- */
 .angary-people { background: var(--color-surface); }
@@ -95,7 +59,9 @@
 .angary-people-copy h2 { max-width: 680px; margin: 0; font: 400 clamp(48px, 5.8vw, 84px)/.98 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.045em; text-wrap: balance; }
 .angary-people-copy p { max-width: 550px; margin: 34px 0 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.75; }
 .angary-people-copy a { display: inline-flex; gap: 18px; margin-top: 34px; padding-bottom: 8px; border-bottom: 1px solid var(--color-text); color: var(--color-text); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .05em; text-transform: uppercase; }
-.angary-people-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-self: stretch; border-top: 1px solid var(--color-border-strong); }
+/* The roles sit at the foot of the heading, level with its link — stretched to the heading's height they were two tall,
+   mostly empty cells (UX sweep 2026-10) */
+.angary-people-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-self: end; border-top: 1px solid var(--color-border-strong); }
 .angary-people-roles > div { min-width: 0; padding: 28px 22px 30px 0; border-bottom: 1px solid var(--color-border-strong); }
 .angary-people-roles > div + div { padding-left: 22px; border-left: 1px solid var(--color-border-strong); }
 .angary-people-roles strong { font: 600 22px/1.1 var(--font-condensed), sans-serif; text-transform: none; }
@@ -104,14 +70,6 @@
 /* ---------- FAQ + related directions ---------- */
 .angary-page .faq-grid { align-items: start; }
 .angary-page .faq-heading { position: sticky; top: 140px; }
-.angary-page .faq-list details { border-top: 1px solid var(--color-border-strong); }
-.angary-page .faq-list details:last-child { border-bottom: 1px solid var(--color-border-strong); }
-.angary-page .faq-list summary { display: grid; grid-template-columns: minmax(0, 1fr) 24px; gap: 24px; align-items: center; padding: 26px 0; cursor: pointer; list-style: none; }
-.angary-page .faq-list summary::-webkit-details-marker { display: none; }
-.angary-page .faq-list summary h3 { font-size: clamp(18px, 1.7vw, 23px); }
-.angary-page .faq-list summary > span { color: var(--color-accent-strong); font: 400 24px/1 var(--font-condensed), sans-serif; text-align: center; transition: transform .2s ease; }
-.angary-page .faq-list details[open] summary > span { transform: rotate(45deg); }
-.angary-page .faq-list details > p { max-width: 660px; margin: -4px 42px 26px 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.7; }
 .angary-page .related-directions-section.is-compact { padding-block: var(--section-space-compact); background: var(--color-surface-alt); }
 .angary-page .related-directions-section.is-compact .related-directions-title { margin-bottom: 18px; }
 .angary-page .related-directions-section.is-compact .related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--color-border-strong); }
@@ -141,29 +99,26 @@
   .angary-page .hangar-configurator-embedded { padding-block: 56px 88px; }
   .angary-page .hangar-configurator-embedded :is(.hc-hero, .hc-layout) { width: 100%; max-width: var(--content-copy); }
   .angary-section-heading { max-width: var(--content-copy); }
-  .angary-decisions-intro { grid-template-columns: 1fr; gap: 40px; }
-  .angary-decisions-intro-visual { min-height: 0; aspect-ratio: 16 / 9; box-shadow: 10px 10px 0 color-mix(in srgb, var(--color-accent) 12%, transparent); }
-  .angary-decision-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); }
-  .angary-decision-copy h3 { font-size: clamp(27px, 3.8vw, 36px); }
-  .angary-consequence-compare > div { min-height: 300px; padding: 26px 22px; }
-  .angary-opening-options { grid-template-columns: 1fr; }
-  .angary-opening-options > div { min-height: 0; padding: 22px; border: 0; border-top: 1px solid var(--color-border-strong); }
-  .angary-opening-options > div:last-child { border-bottom: 1px solid var(--color-border-strong); border-right: 0; }
-  .angary-opening-options span { margin-top: 12px; }
   .angary-transverse-grid { grid-template-columns: 1fr; max-width: var(--content-copy); }
   .angary-longitudinal-diagram { max-width: var(--content-copy); }
   .angary-process-rail { grid-template-columns: 1fr; max-width: var(--content-copy); }
-  .angary-process-rail::before { top: 0; bottom: 0; left: 6px; right: auto; width: 1px; height: auto; }
-  .angary-process-rail li { min-height: 0; padding: 0 0 38px 40px; }
-  .angary-process-rail li::before { position: absolute; top: 0; left: 2px; margin: 0; }
-  .angary-process-rail li > span { position: static; display: block; margin-bottom: 10px; }
-  .angary-process-rail :is(strong, p) { max-width: 560px; }
+  /* vertical: a segment from each node down to the next one, so the rail ends at the last node */
+  .angary-process-rail::before { content: none; }
+  .angary-process-rail li:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 22px; width: 1px; background: var(--color-accent); }
+  .angary-process-rail li { padding: 0 0 30px 68px; text-align: left; }
+  .angary-process-rail li:last-child { padding-bottom: 0; }
+  .angary-process-rail li > span { position: absolute; top: 0; left: 0; margin: 0; }
+  .angary-process-rail strong { padding-top: 10px; }
+  .angary-process-rail :is(strong, p) { max-width: 560px; margin-inline: 0; }
   .angary-people-layout { grid-template-columns: 1fr; max-width: var(--content-copy); }
   .angary-page .faq-heading { position: static; }
 }
 
 
 @media (max-width: 760px) {
+  /* The drawings' labels keep a readable size on a phone: the 1040-wide frame rhythm shrank 11 px to ~4 px (UX sweep) */
+  .angary-diagram svg text { font-size: 16px; }
+  .angary-longitudinal-diagram svg text { font-size: 30px; }
   .angary-page { --section-space: 72px; --section-space-compact: 52px; }
   .angary-page .service-subhero.angary-service-subhero { min-height: 0; }
   .angary-page .service-subhero-content { padding-top: 126px; padding-bottom: 50px; }
@@ -172,27 +127,7 @@
   .angary-page :is(.angary-section-heading h2, .angary-people-copy h2, .faq-grid h2) { font-size: clamp(30px, 9vw, 36px); }
   .angary-section-heading { margin-bottom: 38px; }
   .angary-section-heading > p:not(.eyebrow) { margin-top: 22px; font-size: 14px; }
-  .angary-decisions-intro { grid-template-columns: 1fr; gap: 32px; }
-  .angary-decisions-intro-visual { min-height: 0; aspect-ratio: 4 / 3; }
-  .angary-decision-row { grid-template-columns: 1fr; gap: 28px; padding-block: 42px; }
-  .angary-decision-row.is-media-first > :last-child { order: initial; }
-  .angary-decision-number { margin-bottom: 28px; }
-  .angary-current-choice { max-width: 62%; font-size: 13px; }
-  .angary-decision-copy h3 { font-size: clamp(27px, 8vw, 34px); }
-  .angary-decision-copy > p { margin-top: 18px; font-size: 14px; }
   .angary-preview-action { margin-top: 22px; }
-  .angary-consequence-compare > div { min-height: 0; padding: 26px 18px; }
-  .angary-consequence-compare strong { font-size: 16px; }
-  .angary-consequence-compare ul { margin-top: 24px; }
-  .angary-consequence-compare li { font-size: 13px; }
-  .angary-render-compare figcaption { padding: 16px 12px 18px; }
-  .angary-render-compare figcaption strong { font-size: 15px; }
-  .angary-render-compare figcaption span { font-size: 13px; }
-  .angary-opening-options { grid-template-columns: 1fr; }
-  .angary-opening-options > div { min-height: 0; padding: 21px 0; border: 0; border-top: 1px solid var(--color-border-strong); }
-  .angary-opening-options > div:last-child { border-bottom: 1px solid var(--color-border-strong); border-right: 0; }
-  .angary-opening-options span { margin-top: 9px; }
-  .angary-structure-heading .angary-honesty-note { font-size: 13px; }
   .angary-transverse-grid { grid-template-columns: 1fr; gap: 44px; }
   .angary-longitudinal-diagram { margin-top: 44px; }
   .angary-diagram-key { grid-template-columns: 1fr; gap: 6px; }
@@ -201,12 +136,13 @@
   .angary-diagram figcaption p { font-size: 13px; }
   .angary-process .angary-section-heading { margin-bottom: 50px; }
   .angary-process-rail { grid-template-columns: 1fr; }
-  .angary-process-rail::before { top: 0; bottom: 0; left: 5px; right: auto; width: 1px; height: auto; }
-  .angary-process-rail li { min-height: 0; padding: 0 0 38px 36px; }
-  .angary-process-rail li::before { position: absolute; top: 0; left: 1px; margin: 0; }
-  .angary-process-rail li > span { position: static; display: block; margin-bottom: 10px; }
-  .angary-process-rail strong { max-width: 320px; font-size: 18px; }
-  .angary-process-rail p { max-width: 320px; font-size: 13px; }
+  .angary-process-rail::before { content: none; }
+  .angary-process-rail li:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 22px; width: 1px; background: var(--color-accent); }
+  .angary-process-rail li { padding: 0 0 28px 60px; text-align: left; }
+  .angary-process-rail li:last-child { padding-bottom: 0; }
+  .angary-process-rail li > span { position: absolute; top: 0; left: 0; margin: 0; }
+  .angary-process-rail strong { max-width: none; margin-inline: 0; padding-top: 10px; font-size: 18px; }
+  .angary-process-rail p { max-width: none; margin-inline: 0; font-size: 15px; }
   .angary-people-layout { grid-template-columns: 1fr; gap: 44px; }
   .angary-people-copy p { margin-top: 24px; font-size: 14px; }
   .angary-people-copy a { margin-top: 26px; }
@@ -214,8 +150,6 @@
   .angary-people-roles > div,
   .angary-people-roles > div + div { padding: 22px 0 24px; border-left: 0; }
   .angary-page .faq-heading { position: static; margin-bottom: 36px; }
-  .angary-page .faq-list summary { padding: 22px 0; }
-  .angary-page .faq-list details > p { margin-right: 28px; font-size: 13px; }
   .angary-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
   .angary-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 24px 0; border-left: 0; border-bottom: 1px solid var(--color-border-strong); }
   .angary-page .related-directions-section.is-compact .related-card:last-child { border-right: 0; border-bottom: 0; }

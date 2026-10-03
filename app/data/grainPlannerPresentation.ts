@@ -4,7 +4,7 @@
  * require a change in app/lib/planner/**. The domain decides what is true; this decides how it is
  * laid out.
  */
-export type GrainResultBlock = 'change' | 'scenario' | 'outcome' | 'development' | 'boundary' | 'brief';
+export type GrainResultBlock = 'change' | 'scenario' | 'outcome' | 'concepts' | 'development' | 'boundary' | 'brief';
 export type GrainCollapsibleBlock = 'boundary' | 'conceptDetail' | 'comparison';
 
 export type GrainPlannerPresentation = {
@@ -19,6 +19,8 @@ export type GrainPlannerPresentation = {
     /** Order of the personalised result, top to bottom. DOM order follows it, not just pixels. */
     desktop: GrainResultBlock[];
     mobile: GrainResultBlock[];
+    /** Shown at once — about one screen; every other block folds under «Детально». */
+    primary: GrainResultBlock[];
     /** Collapsed behind a disclosure on narrow screens. */
     collapsedOnMobile: GrainCollapsibleBlock[];
     /** WHY inside the concept detail, or its first reason on each card as well. */
@@ -37,11 +39,14 @@ export const grainPlannerPresentation: GrainPlannerPresentation = {
   entry: 'cover-with-first-question',
   liveUnderstanding: { desktop: 'panel', mobile: 'strip+summary' },
   result: {
-    desktop: ['change', 'scenario', 'outcome', 'development', 'boundary', 'brief'],
-    mobile: ['change', 'scenario', 'outcome', 'brief', 'boundary', 'development'],
+    desktop: ['change', 'scenario', 'outcome', 'concepts', 'development', 'boundary', 'brief'],
+    mobile: ['change', 'scenario', 'outcome', 'concepts', 'brief', 'boundary', 'development'],
+    // UX pass 2026-10: the result fits about one screen — the scenario, the approaches and the handoff; the concepts in
+    // depth, development, the boundary and the brief are under «Детально» (it was 3.7–6.5 screens)
+    primary: ['change', 'scenario', 'outcome'],
     collapsedOnMobile: ['boundary', 'conceptDetail', 'comparison'],
     whyPlacement: 'detail',
   },
   clarificationDensity: 'full',
-  handoff: { position: 'after-brief', mobileCta: true },
+  handoff: { position: 'after-outcome', mobileCta: true },
 };

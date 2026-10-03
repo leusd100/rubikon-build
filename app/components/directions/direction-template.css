@@ -1,0 +1,111 @@
+/* The direction-page template (metal, concrete, roofing — and the shared pieces /angary and /zernoskhovyshcha use):
+   UX pass 2026-10. Colours from the theme roles (app/theme.css). */
+
+/* «Що виконуємо»: the lead sits apart from its heading (it touched it, 0 px), and the column below holds the drawing */
+.direction-overview-section .sticky-heading .lead-copy { max-width: 520px; margin: 26px 0 0; color: var(--color-text-secondary); font-size: 17px; line-height: 1.7; }
+@media (max-height: 820px) { .direction-overview-section .sticky-heading { position: static; } }
+
+/* «Переріз»: the direction's drawing fragment (DirectionSectionDrawing.tsx). Thin graphite, one copper detail. */
+.dsd { width: min(100%, 380px); margin: 44px 0 0; }
+.dsd svg { display: block; width: 100%; height: auto; overflow: visible; }
+.dsd-cut { fill: color-mix(in srgb, var(--color-text) 5%, transparent); stroke: var(--color-text-secondary); stroke-width: 1.4; stroke-linejoin: round; }
+.dsd-line { fill: none; stroke: var(--color-text-muted); stroke-width: 1.1; stroke-linejoin: round; }
+.dsd-axis { fill: none; stroke: var(--color-text-muted); stroke-width: .8; stroke-dasharray: 12 3 2 3; opacity: .75; }
+.dsd-dim { fill: none; stroke: var(--color-text-muted); stroke-width: .9; }
+.dsd-hatch { fill: none; stroke: var(--color-text-muted); stroke-width: .8; opacity: .65; }
+.dsd-insulation { fill: none; stroke: var(--color-text-muted); stroke-width: 1; }
+.dsd-bars circle { fill: var(--color-text-secondary); }
+.dsd-dim-text { fill: var(--color-text-muted); font: italic 500 14px var(--font-manrope), sans-serif; }
+.dsd-accent { fill: none; stroke: var(--color-accent); stroke-width: 2.2; stroke-linecap: round; }
+.dsd-accent circle { fill: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+.dsd-accent-text { fill: var(--color-accent-strong); }
+.dsd figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--color-border-strong); color: var(--color-text-muted); font: 600 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.dsd figcaption b { color: var(--color-text); font-size: 14px; letter-spacing: .04em; }
+@media (max-width: 1050px) { .dsd { display: none; } }
+
+/* «Пов’язані напрямки»: one ruled row across the width, not two small boxes in a half-empty row */
+.related-directions-section .related-directions-title { margin: 14px 0 28px; font: 400 clamp(30px, 2.6vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+.related-directions-section .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0; border-block: 1px solid var(--color-border-strong); }
+.related-directions-section .related-card { min-width: 0; padding: 26px 28px 28px; background: transparent; border: 0; border-left: 1px solid var(--color-border-strong); }
+.related-directions-section .related-card:first-child { border-left: 0; padding-left: 0; }
+.related-directions-section .related-card h3 { font-size: 21px; }
+.related-directions-section .related-card:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--color-surface-elevated) 55%, transparent); }
+.related-directions-section .related-card:is(:hover, :focus-visible) h3 { color: var(--color-accent-strong); }
+@media (max-width: 760px) {
+  .related-directions-section .related-grid { grid-template-columns: 1fr; }
+  .related-directions-section .related-card, .related-directions-section .related-card:first-child { padding: 20px 0; border-left: 0; border-top: 1px solid var(--color-border-strong); }
+  .related-directions-section .related-card:first-child { border-top: 0; }
+}
+
+/* «З чим звертаються» (DirectionEntry.tsx, roofing): three situations as columns on one ruled band, each ending in a
+   link that opens the form with the situation written in. */
+.direction-entry { background: var(--color-bg); }
+.direction-entry-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--color-border-strong); }
+.direction-entry-list li { display: flex; flex-direction: column; gap: 14px; min-width: 0; padding: 0 32px 32px; border-left: 1px solid var(--color-border-strong); }
+.direction-entry-list li:first-child { padding-left: 0; border-left: 0; }
+.direction-entry-list h3 { margin: 0; font: 400 clamp(26px, 2.2vw, 32px)/1.1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+.direction-entry-list p { margin: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
+.direction-entry-list .direction-entry-start { padding-top: 12px; border-top: 1px dashed var(--color-border-strong); color: var(--color-text); font-size: 15px; }
+.direction-entry-start b { display: block; margin-bottom: 4px; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.direction-entry-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 14px; min-height: 44px; margin-top: auto; padding-bottom: 6px; border-bottom: 1px solid currentColor; font: 800 12px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.direction-entry-link:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+@media (max-width: 900px) {
+  .direction-entry-list { grid-template-columns: 1fr; }
+  .direction-entry-list li, .direction-entry-list li:first-child { padding: 24px 0; border-left: 0; border-top: 1px solid var(--color-border-strong); }
+  .direction-entry-list li:first-child { padding-top: 0; border-top: 0; }
+}
+
+/* ── Motion on the direction pages (UX pass 2026-10, owner: «більше анімацій … з головою») ─────────────────────────
+   ProcessMotion (DirectionDetail) arms each [data-motion] block once, when it is meaningfully in view; nothing replays.
+   Without JavaScript or with reduced motion the final state shows at once (nothing below applies unarmed). */
+.direction-page { --m-ease: var(--ease-premium); --m-reveal: 420ms; --m-draw: 1100ms; }
+
+/* «Переріз»: the cut and its lines draw, then the hatching and the dimensions, the copper detail last */
+.dsd :is(.dsd-cut, .dsd-line, .dsd-dim, .dsd-hatch, .dsd-insulation, .dsd-accent path, .dsd-accent circle) { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.direction-page[data-motion-ready="on"] .dsd :is(.dsd-cut, .dsd-line) { transition: stroke-dashoffset var(--m-draw) var(--m-ease); }
+.direction-page[data-motion-ready="on"] .dsd :is(.dsd-hatch, .dsd-insulation, .dsd-dim) { transition: stroke-dashoffset 700ms var(--m-ease) 650ms; }
+.direction-page[data-motion-ready="on"] .dsd .dsd-accent :is(path, circle) { transition: stroke-dashoffset 800ms var(--m-ease) 1200ms; }
+.direction-page[data-motion-ready="on"] .dsd :is(.dsd-axis, .dsd-dim-text, .dsd-bars, figcaption) { transition: opacity 500ms ease 900ms; }
+.direction-page[data-motion-ready] .dsd:not([data-motion-state="on"]) :is(.dsd-cut, .dsd-line, .dsd-dim, .dsd-hatch, .dsd-insulation, .dsd-accent path, .dsd-accent circle) { stroke-dashoffset: 1; }
+.direction-page[data-motion-ready] .dsd:not([data-motion-state="on"]) :is(.dsd-axis, .dsd-dim-text, .dsd-bars, figcaption) { opacity: 0; }
+
+/* «Що виконуємо» and the roofing situations: one by one */
+.direction-page[data-motion-ready="on"] :is(.feature-list > article, .direction-entry-list > li) { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 120ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 120ms); }
+.direction-page[data-motion-ready] :is(.feature-list, .direction-entry-list):not([data-motion-state="on"]) > :is(article, li) { opacity: 0; transform: translateY(14px); }
+
+/* The steps: each node lights in turn, the rail runs on to the next one, the words follow their node */
+.detail-steps li:not(:last-child)::before { transform-origin: left center; }
+.direction-page[data-motion-ready="on"] .detail-steps li::before { transition: transform 460ms var(--m-ease) calc(260ms + var(--i, 0) * 320ms); }
+.direction-page[data-motion-ready="on"] .detail-steps span { transition: opacity 260ms ease calc(var(--i, 0) * 320ms), transform 380ms var(--m-ease) calc(var(--i, 0) * 320ms); }
+.direction-page[data-motion-ready="on"] .detail-steps :is(h3, p) { transition: opacity var(--m-reveal) ease calc(140ms + var(--i, 0) * 320ms), transform var(--m-reveal) var(--m-ease) calc(140ms + var(--i, 0) * 320ms); }
+.direction-page[data-motion-ready] .detail-steps:not([data-motion-state="on"]) li::before { transform: scaleX(0); }
+.direction-page[data-motion-ready] .detail-steps:not([data-motion-state="on"]) span { opacity: 0; transform: scale(.55); }
+.direction-page[data-motion-ready] .detail-steps:not([data-motion-state="on"]) :is(h3, p) { opacity: 0; transform: translateY(10px); }
+@media (max-width: 1050px) {
+  .detail-steps li:not(:last-child)::before { transform-origin: center top; }
+  .direction-page[data-motion-ready] .detail-steps:not([data-motion-state="on"]) li::before { transform: scaleY(0); }
+}
+
+/* The cost factors: a glyph per factor (CostGlyph.tsx); a copper rule runs over each row in turn and fades into the
+   hairline, the glyph draws, the copper detail last */
+.cost-list.has-glyphs article { grid-template-columns: 34px 60px minmax(180px, .34fr) minmax(0, 1fr); align-items: center; }
+.cost-list article { position: relative; }
+.cost-glyph { display: block; width: 52px; height: 52px; overflow: visible; }
+.cost-glyph path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.cost-glyph-line { stroke: var(--color-text-secondary); stroke-width: 1.6; }
+.cost-glyph-detail { stroke: var(--color-accent); stroke-width: 2.4; }
+.cost-list article h3 { transition: color var(--duration-fast) ease; }
+@media (hover: hover) { .cost-list article:hover h3 { color: var(--color-accent-strong); } }
+.cost-list article::before { content: ''; position: absolute; top: -1px; left: 0; right: 0; height: 1px; background: var(--color-accent); opacity: 0; transform-origin: left center; pointer-events: none; }
+.direction-page[data-motion-ready] .cost-list[data-motion-state="on"] article::before { animation: cost-rule 1500ms var(--m-ease) calc(var(--i, 0) * 220ms) both; }
+@keyframes cost-rule { 0% { opacity: 1; transform: scaleX(0); } 55% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
+.direction-page[data-motion-ready="on"] .cost-glyph-line { transition: stroke-dashoffset 900ms var(--m-ease) calc(120ms + var(--i, 0) * 220ms); }
+.direction-page[data-motion-ready="on"] .cost-glyph-detail { transition: stroke-dashoffset 700ms var(--m-ease) calc(620ms + var(--i, 0) * 220ms); }
+.direction-page[data-motion-ready] .cost-list:not([data-motion-state="on"]) .cost-glyph path { stroke-dashoffset: 1; }
+.direction-page[data-motion-ready="on"] .cost-list article :is(h3, p) { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 220ms), color var(--duration-fast) ease; }
+.direction-page[data-motion-ready] .cost-list:not([data-motion-state="on"]) article :is(h3, p) { opacity: 0; }
+@media (max-width: 760px) {
+  .cost-list.has-glyphs article { grid-template-columns: 26px 40px minmax(0, 1fr); }
+  .cost-list.has-glyphs h3 { grid-column: 3; }
+  .cost-glyph { width: 36px; height: 36px; }
+}

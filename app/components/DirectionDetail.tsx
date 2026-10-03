@@ -1,7 +1,12 @@
-import { Breadcrumbs, GhostWord, HeroCallButton, HeroCallLink, SectionHeader } from './SiteChrome';
+import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from './SiteChrome';
+import { DirectionSectionDrawing, hasSectionDrawing } from './directions/DirectionSectionDrawing';
+import { DirectionEntry } from './directions/DirectionEntry';
+import { COST_GLYPHS, CostGlyph } from './directions/CostGlyph';
+import { ProcessMotion } from './process/ProcessMotion';
 import { ConversationSection } from './ConversationSection';
 import ResponsiveImage from './ResponsiveImage';
 import { DrawingSheet, type SheetCell } from './DrawingSheet';
+import { DirectionNode } from './directions/DirectionNode';
 import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
@@ -9,18 +14,12 @@ import { getDirection } from '../lib/directions';
 import { faqAnswerText } from '../lib/deliveryModelPresentation';
 import { relatedDirections, type RelatedDirection } from '../data/relatedDirections';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
-import { company } from '../data/company';
+import { company, companyContactLinks } from '../data/company';
 import { DIRECTION_JOURNEY } from '../data/conversation';
 import { siteRoutes } from '../data/navigation';
-import type { ReactNode } from 'react';
-
-const directionGhostWords: Record<DirectionPageConfig['id'], string> = {
-  angary: 'HANGAR',
-  zernoskhovyshcha: 'GRAIN',
-  metalokonstruktsii: 'STEEL',
-  'betonni-roboty': 'CONCRETE',
-  'pokrivelni-roboty': 'ROOF',
-};
+import type { CSSProperties, ReactNode } from 'react';
+import './directions/direction-template.css';
+import './faq.css';
 
 const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
   'zernoskhovyshcha',
@@ -37,14 +36,17 @@ function classNames(...names: (string | undefined)[]) {
 function DirectionItemCards({
   className,
   items,
+  motion = false,
 }: {
   className: string;
   items: readonly DirectionItem[];
+  /** Rises in one by one when the page's motion controller sees it (direction-template.css) */
+  motion?: boolean;
 }) {
   return (
-    <div className={className}>
-      {items.map(([number, title, text, Icon]) => (
-        <article key={number}>
+    <div className={className} data-motion={motion ? '' : undefined}>
+      {items.map(([number, title, text, Icon], index) => (
+        <article key={number} style={{ '--i': index } as CSSProperties}>
           <span>{number}</span>
           {Icon && <Icon className="card-icon" aria-hidden="true" />}
           <h3>{title}</h3>
@@ -160,9 +162,10 @@ export function DirectionProcess({
     <section className={classNames('page-section page-section-dark', className)}>
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow={eyebrow} title={title} supporting={text} inverse />
-        <ol className="detail-steps">
-          {steps.map(([stepNumber, stepTitle, stepText, Icon]) => (
-            <li key={stepNumber}><span>{stepNumber}</span><Icon className="detail-step-icon" aria-hidden="true" /><h3>{stepTitle}</h3><p>{stepText}</p></li>
+        <ol className="detail-steps" data-motion>
+          {/* A sequence on one rail (globals.css .detail-steps); in view, the rail draws from node to node */}
+          {steps.map(([stepNumber, stepTitle, stepText], index) => (
+            <li key={stepNumber} style={{ '--i': index } as CSSProperties}><span>{stepNumber}</span><h3>{stepTitle}</h3><p>{stepText}</p></li>
           ))}
         </ol>
       </div>
@@ -174,11 +177,14 @@ function DirectionCostSection({
   title,
   text,
   items,
+  directionId,
 }: {
   title: string;
   text: string;
   items: readonly DirectionItem[];
+  directionId: DirectionPageConfig['id'];
 }) {
+  const glyphs = COST_GLYPHS[directionId];
   // Process (right above this section) is a sequence — ordered steps, a bordered card grid says
   // that correctly. Cost factors aren't ordered — they're simultaneous considerations, so this
   // deliberately does NOT reuse .cost-grid's box-grid logic (that class stays exactly as-is for
@@ -188,7 +194,17 @@ function DirectionCostSection({
     <section className="page-section cost-section">
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow="Формування кошторису" title={title} supporting={text} />
-        <DirectionItemCards className="cost-list" items={items} />
+        {/* Each factor with its line glyph, drawn in as the list comes into view */}
+        <div className={classNames('cost-list', glyphs && 'has-glyphs')} data-motion>
+          {items.map(([number, itemTitle, itemText], index) => (
+            <article key={number} style={{ '--i': index } as CSSProperties}>
+              <span>{number}</span>
+              {glyphs?.[index] && <CostGlyph kind={glyphs[index]} />}
+              <h3>{itemTitle}</h3>
+              <p>{itemText}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -211,6 +227,23 @@ export function DirectionEditorial({
   className?: string;
 }) {
   const layout = mediaFirstEditorialDirections.has(directionId) ? 'media-first' : 'copy-first';
+
+  // «Вузол напряму»: the same block as a three-step tour of one node, where the page gives one
+  if (editorial.node) {
+    return (
+      <DirectionNode
+        eyebrow={editorial.eyebrow}
+        title={editorial.title}
+        titleId={`${directionId}-node-title`}
+        text={editorial.text}
+        image={editorial.image}
+        imageAlt={editorial.imageAlt}
+        node={editorial.node}
+        layout={layout}
+        className={className}
+      />
+    );
+  }
 
   return (
     <section className={classNames('page-section direction-editorial-section', className)}>
@@ -266,11 +299,28 @@ export function DirectionFaq({
     <section className="page-section faq-section">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }} />
       <div className="shell faq-grid">
-        <div className="faq-heading"><p className="eyebrow"><span /> Питання</p><h2>{title}</h2></div>
-        <div className="faq-list">
-          {items.map(([question, answer]) => collapsible ? (
-            <details key={question}>
-              <summary><h3>{question}</h3><span aria-hidden="true">+</span></summary>
+        <div className="faq-heading">
+          <p className="eyebrow"><span /> Питання</p>
+          <h2>{title}</h2>
+          {/* The column under the title was empty: the next step for a question the list does not answer */}
+          {collapsible && (
+            <div className="faq-ask">
+              <p>Не знайшли свого питання? Зателефонуйте або залиште запит — розберемо вашу задачу.</p>
+              <div>
+                <a className="faq-ask-call" href={companyContactLinks.phone}>{company.phone.display}</a>
+                <a className="faq-ask-write" href="#inquiry" data-open-inquiry="">Залишити запит <span aria-hidden="true">↓</span></a>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="faq-list" data-motion={collapsible ? '' : undefined}>
+          {items.map(([question, answer], index) => collapsible ? (
+            <details key={question} style={{ '--i': index } as CSSProperties}>
+              <summary>
+                <span className="faq-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                <h3>{question}</h3>
+                <span className="faq-toggle" aria-hidden="true" />
+              </summary>
               <p>{answer}</p>
             </details>
           ) : (
@@ -333,7 +383,9 @@ export function DirectionPage({
   const direction = getDirection(config.id);
 
   return (
-    <main className={classNames('inner-page', config.pageClassName)} id="main-content">
+    <main className={classNames('inner-page direction-page', config.pageClassName)} id="main-content">
+      {/* Arms the page's [data-motion] blocks once each is in view; with reduced motion everything shows at once */}
+      <ProcessMotion root=".direction-page" />
       <DirectionHero
         path={direction.href}
         number={direction.number}
@@ -351,9 +403,9 @@ export function DirectionPage({
 
       {editorialArchitecture ?? (
         <>
+          {config.entry && <DirectionEntry entry={config.entry} />}
           {config.overview && (
-          <section className="page-section ghost-section">
-            <GhostWord word={directionGhostWords[config.id]} />
+          <section className="page-section direction-overview-section">
             {config.overview.layout === 'use-cases' ? (
               <>
                 <SectionHeader
@@ -370,8 +422,10 @@ export function DirectionPage({
                   <p className="eyebrow"><span /> {config.overview.eyebrow}</p>
                   <h2>{config.overview.title}</h2>
                   {config.overview.text && <p className="lead-copy">{config.overview.text}</p>}
+                  {/* The direction's drawing fragment fills the column under the heading (it replaced the ghost word) */}
+                  {hasSectionDrawing(config.id) && <DirectionSectionDrawing id={config.id} number={direction.number} />}
                 </div>
-                <DirectionItemCards className="feature-list" items={config.overview.items} />
+                <DirectionItemCards className="feature-list" items={config.overview.items} motion />
               </div>
             )}
           </section>
@@ -379,7 +433,7 @@ export function DirectionPage({
 
           <DirectionEditorial directionId={config.id} editorial={config.editorial} />
           <DirectionProcess {...config.process} />
-          {config.cost && <DirectionCostSection {...config.cost} />}
+          {config.cost && <DirectionCostSection {...config.cost} directionId={config.id} />}
         </>
       )}
       {config.faq && <DirectionFaq {...config.faq} />}

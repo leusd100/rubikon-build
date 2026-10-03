@@ -263,9 +263,6 @@ export function HangarPreviewModes({
         <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
       )}
       <div className="hc-preview-toolbar">
-        <p className="hc-preview-disclaimer" role="note">
-          Візуалізація є схематичною і не є проєктною або конструкторською документацією.
-        </p>
         <div className="hc-preview-toolbar-actions">
           {/* Secondary actions — brief §10's own suggested hierarchy: mode switch stays primary,
               everything else stays a small, clearly secondary action beside it. Only meaningful in

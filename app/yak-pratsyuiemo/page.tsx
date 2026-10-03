@@ -1,8 +1,10 @@
 import { DraftingCompass } from 'lucide-react';
+import { CostFactorsFigure } from '../components/process/CostFactorsFigure';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatPrefillLink } from '../components/process/FormatPrefillLink';
+import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { ScopeDiagram } from '../components/process/ScopeDiagram';
 import { StartGlyph } from '../components/process/StartGlyph';
@@ -97,6 +99,7 @@ export default function DeliveryModelPage() {
     <main className="inner-page process-page" id="main-content">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageData) }} />
       <ProcessMotion />
+      <FormatSwitchSync />
 
       {/* 1 · Hero */}
       <section className="proc-hero">
@@ -208,9 +211,21 @@ export default function DeliveryModelPage() {
             titleId="proc-scope-title"
             supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
+          {/* A phone shows one format at a time (delivery.css); this switcher and the map's below are one choice */}
+          <fieldset className="proc-scope-switch">
+            <legend>Формат участі</legend>
+            <div>
+              {choices.map((choice) => (
+                <label key={choice.id}>
+                  <input type="radio" name="scope-format" value={choice.id} defaultChecked={choice.id === 'comprehensive'} />
+                  <span>{choice.title}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <ul className="proc-scope-grid">
             {choices.map((choice) => (
-              <li key={choice.id} data-motion>
+              <li key={choice.id} data-motion data-scope={choice.id}>
                 <ScopeDiagram format={choice.id} />
                 <div className="proc-scope-title">
                   <p className="proc-scope-kicker">{choice.title}</p>
@@ -334,17 +349,8 @@ export default function DeliveryModelPage() {
             titleId="proc-terms-title"
             supporting="Нижче — що враховуємо в розрахунку, як із цього виходять кошторис і графік і що буде, якщо щось зміниться."
           />
-          <div className="proc-factors">
-            <p className="proc-factors-title">Що враховуємо в розрахунку</p>
-            <ul>
-              {costFactors().map((factor) => (
-                <li key={factor.title}>
-                  <b>{factor.title}</b>
-                  {factor.detail && <span>{factor.detail}</span>}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* The seven factors beside one drawing of a hangar on its site, each numbered where it acts */}
+          <CostFactorsFigure factors={costFactors().map((factor) => ({ key: factor.ids[0], title: factor.title, detail: factor.detail }))} />
           <p className="proc-factors-title proc-terms-flow-title">Як із цього виходять кошторис і графік</p>
           <div className="proc-terms-flow" data-motion>
             <ol className="proc-terms-grid">

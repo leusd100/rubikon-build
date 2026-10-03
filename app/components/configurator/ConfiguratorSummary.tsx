@@ -3,6 +3,18 @@
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 
+/** The configurator's one disclaimer (UX pass 2026-10: it replaced five — over the model, under the sizes, the gates,
+ *  in the summary and over the frame schemes). */
+function SummaryDisclaimer() {
+  return (
+    <p className="hc-summary-disclaimer">
+      Це попередня схематична візуалізація, а не проєктна документація. Межі розмірів і розміри воріт орієнтовні,
+      не будівельні норми. Конструктивну схему й фундамент визначає проєктувальник після розрахунку навантажень
+      і умов майданчика.
+    </p>
+  );
+}
+
 export function ConfiguratorSummary({
   domain,
   showInquiryAction = false,
@@ -61,6 +73,7 @@ export function ConfiguratorSummary({
             )}
           </dl>
           <p className="hc-summary-formula">Площа = ширина × довжина</p>
+          <SummaryDisclaimer />
         </div>
       </details>
     );
@@ -116,10 +129,7 @@ export function ConfiguratorSummary({
           <h3 className="hc-summary-title">Попередня схема</h3>
           <p className="hc-summary-scheme-label">{summary.structuralVisualizationLabel}</p>
           <p className="hc-summary-structure">{summary.structuralVisualizationDescription}</p>
-          <p className="hc-summary-disclaimer">
-            Це попередня візуалізація, а не готове інженерне рішення. Конструктивну схему уточнюємо
-            після розрахунку навантажень і умов майданчика.
-          </p>
+          <SummaryDisclaimer />
         </div>
 
         <div className="hc-summary-handoff">
