@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { miniReadout, sheetObjectLabel } from '../../../app/components/configurator/sheetLabels';
+import { miniReadout, previewDescription, sheetObjectLabel } from '../../../app/components/configurator/sheetLabels';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
@@ -29,24 +29,47 @@ describe('the configurator sheet’s title block (/angary, 03.10)', () => {
 });
 
 describe('the phone’s mini readout', () => {
-  it('reads the sizes, the ridge and the gates of the default', () => {
-    expect(read(miniReadout(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE)))).toBe('24 × 60 × 8 м · коник 10,6 м · 1 ворота');
+  it('reads the sizes of the drawing, one line beside the view switch', () => {
+    expect(read(miniReadout(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE)))).toBe('24 × 60 × 8 м');
   });
 
-  it('follows the gate count', () => {
-    expect(read(miniReadout(domainWith({ gates: 2 })))).toMatch(/ · 2 ворота$/);
-    expect(read(miniReadout(domainWith({ gates: 0 })))).toMatch(/ · без воріт$/);
+  it('leaves the ridge and the gates to their own groups, so it never runs to a second line', () => {
+    const readout = read(miniReadout(domainWith({ gates: 2 })));
+    expect(readout).not.toMatch(/коник|ворот/);
   });
 
-  it('leaves the gates out with the walls, as the summary does', () => {
-    const readout = read(miniReadout(domainWith({ scope: ['foundation', 'frame', 'roof'] })));
-    expect(readout).toBe('24 × 60 × 8 м · коник 10,6 м');
+  it('is one unbreakable piece, decimals with a comma', () => {
+    const readout = miniReadout(domainWith({ dimensions: { width: 30, length: 120, height: 12.5 } }));
+    expect(readout.split(' ')).toHaveLength(1);
+    expect(read(readout)).toBe('30 × 120 × 12,5 м');
+  });
+});
+
+describe('what a screen reader hears for the picture', () => {
+  it('reads the drawing’s figures with a decimal comma, as the sheet shows them', () => {
+    const domain = domainWith({ dimensions: { width: 24, length: 60, height: 7.5 } });
+    expect(previewDescription('technical', domain.dimensions, 10.06)).toBe(
+      'Схематичний ескіз ангара: 24 на 60 метрів, висота стін 7,5 м, двосхила покрівля, висота в конику приблизно 10,1 м',
+    );
   });
 
-  it('wraps only between its parts, after «·»', () => {
-    const lines = miniReadout(domainWith({ dimensions: { width: 30, length: 120, height: 12.5 } })).split(' ');
-    expect(lines).toHaveLength(3);
-    expect(lines.slice(0, -1).every((line) => line.endsWith('\u00A0·'))).toBe(true);
-    expect(read(lines[0])).toBe('30 × 120 × 12,5 м ·');
+  it('describes the 3D view with the same figures and says where the rest is', () => {
+    const domain = deriveDomainModel(DEFAULT_CONFIGURATOR_STATE);
+    const description = previewDescription('three', domain.dimensions, 10.56);
+    expect(description).toMatch(/^Тривимірна візуалізація ангара: 24 на 60 метрів, висота стін 8 м, .* приблизно 10,6 м\. /);
+    expect(description).toContain('Повний опис конфігурації — у полях керування та підсумку.');
+    expect(description).not.toMatch(/\d\.\d/);
+  });
+
+  it('agrees the metres with the length', () => {
+    const lengthOf = (length: number) => previewDescription('technical', domainWith({ dimensions: { width: 20, length, height: 6 } }).dimensions, 8)
+      .match(/на (\d+ \S+),/)?.[1];
+    expect(lengthOf(21)).toBe('21 метр');
+    expect(lengthOf(42)).toBe('42 метри');
+    expect(lengthOf(12)).toBe('12 метрів');
+    expect(lengthOf(111)).toBe('111 метрів');
+    expect(lengthOf(60)).toBe('60 метрів');
+    const half = { ...deriveDomainModel(DEFAULT_CONFIGURATOR_STATE).dimensions, lengthM: 60.5 };
+    expect(previewDescription('technical', half, 10)).toContain('24 на 60,5 метра,');
   });
 });
