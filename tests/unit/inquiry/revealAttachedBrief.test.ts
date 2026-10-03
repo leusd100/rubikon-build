@@ -3,19 +3,31 @@ import { revealAttachedBrief } from '../../../app/components/inquiry/revealAttac
 
 // After «Обговорити цю конфігурацію» / «До заявки» the visitor lands on the brief they attached: on a phone or tablet the
 // link's own jump is taken over (the URL still says #inquiry), the brief is scrolled into view; everywhere it takes focus
-// and its status line says it is attached — once, on this explicit action.
+// and its status line says it is attached — once, on this explicit action. A brief already sent says that instead.
 
-type FakeElement = { scrollIntoView: ReturnType<typeof vi.fn>; focus: ReturnType<typeof vi.fn>; querySelector: () => { textContent: string } | null; textContent: string };
+type FakeElement = {
+  scrollIntoView: ReturnType<typeof vi.fn>;
+  focus: ReturnType<typeof vi.fn>;
+  querySelector: () => { textContent: string } | null;
+  hasAttribute: (name: string) => boolean;
+  textContent: string;
+};
 
-function fakeElement(headline = ''): FakeElement {
-  return { scrollIntoView: vi.fn(), focus: vi.fn(), querySelector: () => (headline ? { textContent: headline } : null), textContent: '' };
+function fakeElement(headline = '', attributes: string[] = []): FakeElement {
+  return {
+    scrollIntoView: vi.fn(),
+    focus: vi.fn(),
+    querySelector: () => (headline ? { textContent: headline } : null),
+    hasAttribute: (name) => attributes.includes(name),
+    textContent: '',
+  };
 }
 
-function stubPage({ narrow, reduced = false, brief = true }: { narrow: boolean; reduced?: boolean; brief?: boolean }) {
+function stubPage({ narrow, reduced = false, brief = true, sent = false }: { narrow: boolean; reduced?: boolean; brief?: boolean; sent?: boolean }) {
   const elements: Record<string, FakeElement> = {
     inquiry: fakeElement(),
     'inquiry-brief-status': fakeElement(),
-    ...(brief ? { 'inquiry-brief': fakeElement('24 × 60 × 8 м · Холодний') } : {}),
+    ...(brief ? { 'inquiry-brief': fakeElement('24 × 60 × 8 м · Холодний', sent ? ['data-sent'] : []) } : {}),
   };
   const replaceState = vi.fn();
   vi.stubGlobal('window', {
@@ -53,6 +65,22 @@ describe('revealAttachedBrief', () => {
     expect(replaceState).not.toHaveBeenCalled();
     expect(elements['inquiry-brief'].scrollIntoView).not.toHaveBeenCalled();
     expect(elements['inquiry-brief'].focus).toHaveBeenCalledWith({ preventScroll: true });
+  });
+
+  it('says a brief already sent with a saved lead was sent, not added (04.10)', () => {
+    const { elements } = stubPage({ narrow: true, sent: true });
+    revealAttachedBrief(clickEvent());
+    expect(elements['inquiry-brief'].focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(elements['inquiry-brief-status'].textContent).toBe('Надіслано з вашим запитом: 24 × 60 × 8 м · Холодний');
+  });
+
+  it('takes a DOM click as well as a React one (the form toggle\'s document listener)', () => {
+    const { elements, replaceState } = stubPage({ narrow: true });
+    const event = new Event('click', { cancelable: true });
+    revealAttachedBrief(event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(replaceState).toHaveBeenCalledWith(null, '', '#inquiry');
+    expect(elements['inquiry-brief-status'].textContent).toBe('Додано до заявки: 24 × 60 × 8 м · Холодний');
   });
 
   it('jumps without smooth scrolling under reduced motion', () => {

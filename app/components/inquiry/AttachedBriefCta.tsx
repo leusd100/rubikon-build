@@ -96,11 +96,12 @@ function watchGate(
  * The phone shortcut to the form while something is attached. It shows only once `gate` — the
  * source's own summary — has scrolled past, never once #inquiry is on screen or passed, while a field has
  * focus, or under the cookie banner, the mobile menu or a modal. Which widths show it is the
- * `className`'s CSS (≤ 760 on /angary).
+ * `className`'s CSS (≤ 760 on /angary). A brief already sent with a saved lead needs no shortcut (04.10): it kept
+ * inviting a second, identical lead after «Дякуємо!» (sweep 03.10).
  */
 export function AttachedBriefCta({ gate, className, label = 'До заявки' }: { gate: string; className: string; label?: string }) {
   const inquiry = useInquiryAttachment();
-  const attached = Boolean(inquiry?.attachment);
+  const attached = Boolean(inquiry?.attachment) && !inquiry?.sent;
   const [inquiryVisible, setInquiryVisible] = useState(false);
   const [summaryPassed, setSummaryPassed] = useState(false);
   const [uiBlocked, setUiBlocked] = useState(true);

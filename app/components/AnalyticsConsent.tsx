@@ -121,6 +121,7 @@ export default function AnalyticsConsent() {
   const [showBanner, setShowBanner] = useState(false);
   const [customizing, setCustomizing] = useState(false);
   const [draft, setDraft] = useState<ConsentState>(DENY_ALL_STATE);
+  const bannerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let saved: ConsentState | null = null;
@@ -176,6 +177,27 @@ export default function AnalyticsConsent() {
     };
   }, []);
 
+  // The banner covers the page's bottom edge but is not modal: a keyboard visitor tabbing through the page landed on
+  // fields and links hidden under it (WCAG 2.4.11, sweep 03.10). Its height plus the gap below it becomes the page's
+  // bottom scroll padding and the footer's extra room while it is open (globals.css). It grows with «Налаштувати».
+  useEffect(() => {
+    const banner = bannerRef.current;
+    if (!showBanner || !banner) return undefined;
+    const root = document.documentElement;
+    const measure = () => {
+      root.style.setProperty('--cookie-banner-clearance', `${Math.ceil(window.innerHeight - banner.getBoundingClientRect().top)}px`);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(banner);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measure);
+      root.style.removeProperty('--cookie-banner-clearance');
+    };
+  }, [showBanner]);
+
   useEffect(() => {
     if (state?.analytics !== 'granted' || !hasAnalyticsConsent()) return;
 
@@ -225,6 +247,7 @@ export default function AnalyticsConsent() {
 
   return (
     <aside
+      ref={bannerRef}
       className="cookie-banner"
       role="region"
       aria-live="polite"
