@@ -30,13 +30,15 @@ export function HangarRealObject({ proof }: Readonly<{ proof: HomeProofCase }>) 
             { label: 'Зображення', value: 'Фото об’єкта' },
           ]}
         >
-          {/* HOME's WebP crops of the record's photo. sizes = the sheet's picture: the page width less the sheet's margins
-              while the row stacks (≤ 1023 px), about half the window beside the facts */}
+          {/* HOME's WebP crops of the record's photo. sizes = the width the photo is drawn at: on a phone the sheet crops it
+              to 4 : 3 (angary-editorial.css), so the 1536 × 788 frame is drawn 1.46 × the sheet's picture wide — the page
+              less 66 px of margins — and a 3× phone takes the 1536w as HOME does (04.10: it took the 960w); the page width
+              less the sheet's margins while the row stacks (≤ 1023 px); about half the window beside the facts */}
           <picture>
             <source
               type="image/webp"
               srcSet="/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w"
-              sizes="(max-width: 1023px) calc(100vw - 76px), 50vw"
+              sizes="(max-width: 760px) calc((100vw - 66px) * 1.46), (max-width: 1023px) calc(100vw - 76px), 50vw"
             />
             <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" />
           </picture>

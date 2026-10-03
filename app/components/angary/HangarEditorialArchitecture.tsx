@@ -93,7 +93,8 @@ export function HangarEditorialArchitecture({
               <h3>Ваш бриф</h3>
               <p>
                 {attached
-                  ? <>Додано до заявки: <b>{summary.dimensionsLabel} · {summary.envelopeLabel}</b></>
+                  // the «·» keeps to the sizes: it started a line at 1440 px (04.10)
+                  ? <>Додано до заявки: <b>{summary.dimensionsLabel}{'\u00A0'}· {summary.envelopeLabel}</b></>
                   : 'Базову конфігурацію можна сформувати вище.'}
               </p>
               {/* Owner, 03.10: the brief's node acts on its own state — up to the configurator while nothing is attached,
@@ -122,7 +123,8 @@ export function HangarEditorialArchitecture({
 
           {/* Who answers for it — the route's title block («штамп»), in place of a separate section. Owner, 03.10: it hands
               over to them — the form under the Delivery Model's own words for the construction lead, or a call */}
-          <div className="angary-stamp" id="responsibility" aria-labelledby="angary-stamp-title">
+          {/* a group, so its title names it — a plain div cannot take a name (04.10) */}
+          <div className="angary-stamp" id="responsibility" role="group" aria-labelledby="angary-stamp-title">
             <p className="angary-stamp-title" id="angary-stamp-title">За погоджений обсяг відповідаємо особисто</p>
             <dl>
               {content.people.map((person) => (

@@ -39,7 +39,12 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   // The section follows the configurator (03.10): while it shows the example it points back up to the sizes, and the
   // title block always has the way up
   await expect(frame.locator('.direction-editorial-copy')).toContainText('Задайте свої габарити вище — схема перебудується. Креслення будується');
-  await expect(frame.locator('.sheet-stamp').getByRole('link', { name: /Змінити габарити/ })).toHaveAttribute('href', '#configurator');
+  await expect(frame.locator('.sheet-stamp').getByRole('link', { name: /Змінити габарити/ })).toHaveAttribute('href', '#hc-dimensions-heading');
+  // the title block's capitals keep the metre a lower-case «м» (04.10)
+  await expect(frame.locator('.ft-object-value .sheet-unit')).toHaveText('м');
+  await expect(frame.locator('.ft-object-value .sheet-unit')).toHaveCSS('text-transform', 'none');
+  // the example's gate is drawn on the end wall, as the configurator places it
+  await expect(frame.locator('path.ft-opening')).toHaveCount(1);
   // 24 m has the centre row: the width between the outer axes is not «the span»; the axes are lettered А, Б, В across it
   // and numbered for the drawn frames along it
   await expect(steps.nth(0)).toContainText('Ширина L');
@@ -53,8 +58,9 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await expect(page.locator('.hc-stamp-row .hc-summary-dimensions')).toHaveClass(/is-changed/);
   await expect(steps.nth(1)).toContainText('Для ширини 16 м у попередній візуалізації показано портальну раму');
   await expect(frame.locator('.direction-editorial-copy')).not.toContainText('Задайте свої габарити');
-  await expect(steps.nth(0)).toContainText('Проліт L — відстань між осями крайніх колон А і В: 16 м у вашій конфігурації. Усередині колон немає. H — висота стіни.');
-  await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'В']);
+  // a clear span's two axes are lettered in sequence, А and Б (04.10: А and В skipped Б)
+  await expect(steps.nth(0)).toContainText('Проліт L — відстань між осями крайніх колон А і Б: 16 м у вашій конфігурації. Усередині колон немає. H — висота стіни.');
+  await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б']);
   // a short building is drawn whole: as many numbered axes as frames, none at a break
   await setLength(page, '18');
   await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3', '4']);
@@ -105,7 +111,9 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await expect(attachmentCard(page)).toContainText('16 × 60 × 8 м');
 });
 
-test('without motion the wind step stands complete: no leaning bay, no note', async ({ page }, testInfo) => {
+// Owner decision, 04.10: reduced motion makes the wind step static and complete — the leaning bay is drawn, and its note
+// shows in a row of its own under the chain, so the step shows what its text says. Nothing animates.
+test('without motion the wind step stands complete: the leaning bay and its note drawn, nothing moving', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openHangarPage(page);
@@ -114,9 +122,114 @@ test('without motion the wind step stands complete: no leaning bay, no note', as
   await expect(frame.locator('.ft-chain[data-load="wind"]')).toBeVisible();
   for (const selector of ['[data-load="wind"] .ft-ghost', '.ft-note']) {
     await expect(frame.locator(selector)).toHaveCSS('animation-name', 'none');
-    await expect(frame.locator(selector)).toHaveCSS('opacity', '0');
+    await expect(frame.locator(selector)).toHaveCSS('opacity', '1');
   }
   await expect(frame.locator('[data-load="wind"] .ft-link[data-brace]').first()).toHaveCSS('opacity', '1');
+  // the note under the chain, not over it
+  const chain = await frame.locator('.ft-chain[data-load="wind"]').boundingBox();
+  const note = await frame.locator('.ft-note').boundingBox();
+  expect(note!.y).toBeGreaterThanOrEqual(chain!.y + chain!.height - 1);
+  expect(await frame.evaluate((root) => root.getAnimations({ subtree: true }).filter((animation) => animation.playState === 'running').length)).toBe(0);
+});
+
+// Owner decision, 04.10: «Пауза» stops every motion of the tour — the falling snow, the gusts and the running drops
+// included — and none of it runs while the tour is out of view; a step the visitor chooses settles once built
+test('«Пауза» stops all the frame tour\'s motion, and nothing loops out of view or on a chosen step', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await openHangarPage(page);
+  const tour = page.locator('#structure .ft');
+  const looping = () => page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === 'running'
+    && animation.effect?.getTiming().iterations === Infinity
+    && (animation.effect as KeyframeEffect).target?.closest('#structure')).length);
+  const sheet = page.locator('#structure .ft-sheet');
+  await sheet.evaluate((element) => window.scrollBy(0, element.getBoundingClientRect().top - 120));
+  await expect(tour).toHaveAttribute('data-step', '4', { timeout: 30_000 });
+  await expect(tour).toHaveAttribute('data-touring', 'true');
+  await expect.poll(looping, { timeout: 5_000 }).toBeGreaterThan(0);
+  await page.locator('#structure .dn-control').click();
+  await expect(tour).not.toHaveAttribute('data-touring');
+  await expect(tour).toHaveAttribute('data-step', '4');
+  await expect.poll(looping).toBe(0);
+  // played again, then scrolled out of view: the tour pauses and its loops stop with it
+  await page.locator('#structure .dn-control').click();
+  await expect(tour).toHaveAttribute('data-touring', 'true');
+  await expect.poll(looping, { timeout: 5_000 }).toBeGreaterThan(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(tour).not.toHaveAttribute('data-touring');
+  await expect.poll(looping).toBe(0);
+  // a chosen load step builds its chain, then stands complete
+  await sheet.evaluate((element) => window.scrollBy(0, element.getBoundingClientRect().top - 120));
+  await page.locator('#structure .dn-step').nth(4).click();
+  await expect(page.locator('#structure .ft-chain[data-load="wind"]')).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(await looping()).toBe(0);
+});
+
+// The title block keeps its geometry through the tour (04.10): at 1100 px «Що показано» broke a letter a line and the
+// sheet changed height on every step; at 1440 the cells jumped ~40 px as the tour started; at 320–360 the caption grew
+// a line on some steps
+for (const width of [1440, 1280, 1100, 768, 360, 320]) {
+  test(`the frame's title block keeps its size and place from step to step at ${width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/angary', { waitUntil: 'load' });
+    const sheet = page.locator('#structure .ft-sheet');
+    await sheet.scrollIntoViewIfNeeded();
+    const measure = () => sheet.evaluate((element) => {
+      const stamp = element.querySelector('.sheet-stamp')!;
+      return {
+        height: Math.round(element.getBoundingClientRect().height),
+        cells: [...stamp.children].map((cell) => `${Math.round(cell.getBoundingClientRect().left)}:${Math.round(cell.getBoundingClientRect().width)}`).join(' '),
+        main: stamp.querySelector('.sheet-cell-main')!.getBoundingClientRect().width,
+      };
+    });
+    const overview = await measure();
+    // never a letter a line: the caption keeps a readable column
+    expect(overview.main).toBeGreaterThanOrEqual(150);
+    for (const index of [0, 1, 2, 3, 4]) {
+      await page.locator('#structure .dn-step').nth(index).click();
+      await expect(page.locator('#structure .ft')).toHaveAttribute('data-step', String(index + 1));
+      expect(await measure(), `step ${index + 1}`).toEqual(overview);
+    }
+    // and only the shown caption is visible (and read)
+    await expect(sheet.locator('.ft-captions > span:visible')).toHaveCount(1);
+    await expect(sheet.locator('.dn-caption')).toHaveText('Шлях навантаження від вітру');
+  });
+}
+
+test('on a tablet the frame tour stacks: the sheet takes the full width, the steps follow it', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport runs once');
+  for (const width of [768, 1000]) {
+    await page.setViewportSize({ width, height: 1024 });
+    await page.goto('/angary', { waitUntil: 'load' });
+    const camera = await page.locator('#structure .ft-window').boundingBox();
+    const steps = await page.locator('#structure .dn-steps').boundingBox();
+    const copy = await page.locator('#structure .direction-editorial-copy').boundingBox();
+    // 04.10: beside the copy the camera was 268 × 164 px at 768
+    expect(camera!.width, `${width}`).toBeGreaterThan(width - 160);
+    expect(steps!.y).toBeGreaterThan(camera!.y + camera!.height);
+    expect(camera!.y).toBeGreaterThan(copy!.y + copy!.height);
+  }
+});
+
+test('on a wide screen «Змінити габарити ↑» lands on «Розміри» with the width field focused', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the phone has its own test (the accordion opens the group)');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 820, height: 1180 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/angary', { waitUntil: 'load' });
+    const resize = page.locator('#structure a[data-open-group="dimensions"]');
+    await resize.scrollIntoViewIfNeeded();
+    await resize.click();
+    await expect(page.locator('#hc-dimension-width')).toBeFocused();
+    // the heading just under the site header, the fields on the screen (04.10: it stopped at the configurator's top)
+    await expect.poll(() => page.locator('#hc-dimensions-heading').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(116);
+    const field = await page.locator('#hc-dimension-width').boundingBox();
+    expect(field!.y + field!.height).toBeLessThan(viewport.height);
+  }
 });
 
 // Every name, axis bubble and dimension letter a step shows sits whole inside that step's camera window, clear of the
