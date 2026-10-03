@@ -14,7 +14,8 @@ const PHONE_HEADER_PX = 77;
 /**
  * On a phone (/angary only) the model stays in view while the visitor sets the parameters: while the controls are on
  * screen under it, the layout carries `data-configuring` and the preview stage sticks under the header
- * (configurator.css). Past the controls it lets go, so the summary reads without the model over it.
+ * (configurator.css). Back above the controls it lets go and the model grows in view; past them it stays small out of
+ * sight — the stage cannot stick beyond the layout, so the summary reads without the model over it.
  */
 function useMiniPreview(enabled: boolean) {
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -30,16 +31,33 @@ function useMiniPreview(enabled: boolean) {
       if (!phone.matches) return;
       const stage = layout.querySelector<HTMLElement>('.hc-preview-surface')?.offsetHeight ?? 0;
       observer = new IntersectionObserver(([entry]) => {
-        if (entry?.isIntersecting) layout.dataset.configuring = '';
-        else delete layout.dataset.configuring;
+        if (!entry) return;
+        if (entry.isIntersecting) layout.dataset.configuring = '';
+        // Let go only when the controls leave at the bottom (back up above them), where the model grows in view. Leaving
+        // at the top it stays small: grown back above the screen, it pushed the summary 141 px down under the finger and
+        // hid the sticky «До заявки» again (03.10). The stage cannot stick past the layout, so the summary stays clear.
+        else if (entry.boundingClientRect.top > 0) delete layout.dataset.configuring;
       }, { rootMargin: `-${PHONE_HEADER_PX + stage}px 0px 0px 0px` });
       observer.observe(controls);
     };
+    // A jump from below the controls back above them (the hero's «Зібрати конфігурацію», the top of the page) crosses
+    // no edge the observer sees: let go there too
+    let frame = 0;
+    const releaseAbove = () => {
+      if (frame || !('configuring' in layout.dataset)) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        if (controls.getBoundingClientRect().top > window.innerHeight) delete layout.dataset.configuring;
+      });
+    };
     arm();
     phone.addEventListener('change', arm);
+    window.addEventListener('scroll', releaseAbove, { passive: true });
     return () => {
       observer?.disconnect();
       phone.removeEventListener('change', arm);
+      window.removeEventListener('scroll', releaseAbove);
+      window.cancelAnimationFrame(frame);
       delete layout.dataset.configuring;
     };
   }, [enabled]);
@@ -83,7 +101,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
       </header>
 
       <div className="hc-layout" ref={layoutRef}>
-        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} />
+        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} foundationChoice={!embedded} />
         <div className="hc-preview-pane" id="hangar-live-preview">
           <HangarPreviewModes
             domain={previewDomain}

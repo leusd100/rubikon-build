@@ -12,7 +12,9 @@
 .cf-envelope { fill: color-mix(in srgb, var(--color-text) 3%, transparent); stroke-width: .9; }
 .cf-frame { stroke: var(--color-text-secondary); stroke-width: 1.5; }
 .cf-dim { stroke-width: 1; }
-.cf-part rect { fill: color-mix(in srgb, var(--color-text) 10%, transparent); stroke: none; }
+/* the schedule (factor 7): outlined bars of three overlapping works over a time axis */
+.cf-part rect { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: inherit; stroke-width: 1; }
+.cf-axis { stroke-width: 1; }
 .cf-network, .cf-road-centre { stroke-dasharray: 6 5; }
 .cf-badge circle { fill: var(--color-bg); stroke: var(--color-accent); stroke-width: 1.4 !important; transition: fill var(--duration-fast) ease; }
 .cf-badge text { fill: var(--color-accent-strong); stroke: none; font: 700 13px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill var(--duration-fast) ease; }
@@ -52,6 +54,9 @@
 .proc-factors[data-active="foundation"] li[data-factor="foundation"] .cf-number, .proc-factors[data-active="insulation"] li[data-factor="insulation"] .cf-number,
 .proc-factors[data-active="technology"] li[data-factor="technology"] .cf-number, .proc-factors[data-active="logistics"] li[data-factor="logistics"] .cf-number,
 .proc-factors[data-active="timeline"] li[data-factor="timeline"] .cf-number { color: var(--color-bg); background: var(--color-accent); }
+
+/* /angary: the drawing on the «Креслення» sheet, its title block naming the factor on show */
+.cf-sheet-image.sheet-image { padding: clamp(10px, 1.4vw, 18px); background: var(--color-surface-alt); }
 
 @media (max-width: 1050px) {
   .cf-layout { grid-template-columns: minmax(0, 1fr); }

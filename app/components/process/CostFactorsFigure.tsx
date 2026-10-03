@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { DrawingSheet } from '../DrawingSheet';
 import './cost-factors.css';
 
 // /yak-pratsyuiemo «Що враховуємо в розрахунку» (UX pass 2026-10, owner: «цей блок можна поцікавіше обіграти»): the seven
@@ -11,7 +12,8 @@ import './cost-factors.css';
 //
 // On /angary (2026-10) the same drawing is the page's cost block: no tour of its own (one automatic tour per page — the
 // frame drawing has it), a heading of the section's own, and `notes` — what the visitor's configuration already says
-// about a factor («у вашому брифі: …»), read-only.
+// about a factor («у вашому брифі: …»), read-only — and `sheet`: the drawing on the «Креслення» sheet, as the page's
+// other drawings are, its title block naming the factor on show.
 
 export type CostFactorItem = { key: string; title: string; detail?: string };
 
@@ -83,6 +85,9 @@ const schedule = { x: 20, y: 334 };
 const timeline = [
   `M${n1[0]},${n1[1]}L${n2[0]},${n2[1]}`,
 ].join('');
+// …and the schedule they meet in: three overlapping works over a time axis with its ticks
+const scheduleAxis = `M${schedule.x},${schedule.y + 20}h126${Array.from({ length: 7 }, (_, index) => `M${schedule.x + index * 21},${schedule.y + 20}v-4`).join('')}`;
+const pad2 = (value: number) => String(value).padStart(2, '0');
 
 /** Where each number sits on the drawing — on its part, clear of the other lines */
 const [fx, fy] = xy([0, 60, -7]);
@@ -103,6 +108,7 @@ export function CostFactorsFigure({
   title = 'Що враховуємо в розрахунку',
   tour: tourEnabled = true,
   notes,
+  sheet = false,
 }: Readonly<{
   factors: readonly CostFactorItem[];
   /** null when the section's own heading says it */
@@ -110,6 +116,8 @@ export function CostFactorsFigure({
   tour?: boolean;
   /** Per factor key: a short read-only note, shown under the factor */
   notes?: Readonly<Record<string, string | undefined>>;
+  /** Lay the drawing on the «Креслення» sheet with a title block (/angary) */
+  sheet?: boolean;
 }>) {
   const [pointed, setPointed] = useState<string | null>(null);
   const [tour, setTour] = useState<string | null>(null);
@@ -141,35 +149,54 @@ export function CostFactorsFigure({
     setPointed(key);
   };
 
+  const activeIndex = factors.findIndex((factor) => factor.key === active);
+  const drawing = (
+    <svg viewBox="8 62 492 300" focusable="false" aria-hidden="true">
+      <g className="cf-part" data-part="logistics"><path d={site} /><path className="cf-road-centre" d={road.join('')} /></g>
+      <path className="cf-part cf-slab" data-part="foundation" d={slab} />
+      <path className="cf-part cf-envelope" data-part="insulation" d={envelope} />
+      <path className="cf-part cf-equipment" data-part="technology" d={equipment} />
+      <path className="cf-part cf-frame" data-part="structure" d={`${frames}${purlins}${loads}`} />
+      <path className="cf-part cf-dim" data-part="dimensions" d={dimensions} />
+      <g className="cf-part" data-part="timeline">
+        <path className="cf-network" d={timeline} />
+        <path className="cf-axis" d={scheduleAxis} />
+        <rect x={schedule.x} y={schedule.y - 14} width="78" height="7" rx="1" />
+        <rect x={schedule.x + 40} y={schedule.y - 3} width="64" height="7" rx="1" />
+        <rect x={schedule.x + 70} y={schedule.y + 8} width="50" height="7" rx="1" />
+      </g>
+      {factors.map((factor, index) => {
+        const [x, y] = BADGES[factor.key] ?? [0, 0];
+        return (
+          <g className="cf-badge" data-part={factor.key} key={factor.key} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}>
+            <circle r="11" />
+            <text y="4.5">{index + 1}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+
   return (
     <div className="proc-factors" ref={rootRef} data-active={active ?? undefined}>
       {title && <p className="proc-factors-title">{title}</p>}
       <div className="cf-layout">
-        <figure className="cf-figure" aria-hidden="true">
-          <svg viewBox="8 62 492 300" focusable="false">
-            <g className="cf-part" data-part="logistics"><path d={site} /><path className="cf-road-centre" d={road.join('')} /></g>
-            <path className="cf-part cf-slab" data-part="foundation" d={slab} />
-            <path className="cf-part cf-envelope" data-part="insulation" d={envelope} />
-            <path className="cf-part cf-equipment" data-part="technology" d={equipment} />
-            <path className="cf-part cf-frame" data-part="structure" d={`${frames}${purlins}${loads}`} />
-            <path className="cf-part cf-dim" data-part="dimensions" d={dimensions} />
-            <g className="cf-part" data-part="timeline">
-              <path className="cf-network" d={timeline} />
-              <rect x={schedule.x} y={schedule.y - 14} width="78" height="7" rx="1" />
-              <rect x={schedule.x + 40} y={schedule.y - 3} width="64" height="7" rx="1" />
-              <rect x={schedule.x + 70} y={schedule.y + 8} width="50" height="7" rx="1" />
-            </g>
-            {factors.map((factor, index) => {
-              const [x, y] = BADGES[factor.key] ?? [0, 0];
-              return (
-                <g className="cf-badge" data-part={factor.key} key={factor.key} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}>
-                  <circle r="11" />
-                  <text y="4.5">{index + 1}</text>
-                </g>
-              );
-            })}
-          </svg>
-        </figure>
+        {sheet ? (
+          <DrawingSheet
+            className="cf-sheet"
+            imageClassName="cf-sheet-image"
+            cells={[
+              activeIndex >= 0
+                ? { tone: 'number', label: 'Фактор', value: <>{pad2(activeIndex + 1)}<span> / {pad2(factors.length)}</span></> }
+                : { label: 'Факторів', value: String(factors.length) },
+              { tone: 'main', label: 'Що показано', value: activeIndex >= 0 ? factors[activeIndex].title : 'Що впливає на вартість' },
+            ]}
+          >
+            {drawing}
+          </DrawingSheet>
+        ) : (
+          <figure className="cf-figure" aria-hidden="true">{drawing}</figure>
+        )}
         <ul>
           {factors.map((factor, index) => (
             <li

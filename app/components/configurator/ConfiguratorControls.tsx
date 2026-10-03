@@ -45,6 +45,9 @@ import { ConfiguratorWhy } from './ConfiguratorWhy';
 type Props = {
   state: ConfiguratorState;
   onChange: (next: ConfiguratorState) => void;
+  /** The foundation type is offered on the research screen only. On /angary the visitor does not choose it: the
+   *  designer decides it from the site and the loads (owner, 03.10), so the brief stays «Визначити після розрахунку». */
+  foundationChoice?: boolean;
 };
 
 /**
@@ -159,7 +162,7 @@ const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
   height: 'Висота стін',
 };
 
-export function ConfiguratorControls({ state, onChange }: Props) {
+export function ConfiguratorControls({ state, onChange, foundationChoice = true }: Props) {
   // The ridge's legal range depends on the CURRENT width and eave height, so it is recomputed on
   // every render rather than read from a static table, and the stored value is re-clamped with it:
   // widening the building can make a previously-legal ridge too shallow.
@@ -351,6 +354,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           information (live product review). The derived value itself (deriveStructuralVisualization)
           is unchanged and still surfaces exactly once, in ConfiguratorSummary.tsx. */}
 
+      {foundationChoice && (
       <section className="hc-control-group" aria-labelledby="hc-foundation-heading">
         <h3 id="hc-foundation-heading">Основа / фундамент</h3>
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-foundation-heading">
@@ -377,6 +381,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         </p>
         <ConfiguratorWhy topic="foundation" />
       </section>
+      )}
 
       <section className="hc-control-group" aria-labelledby="hc-scope-heading">
         <h3 id="hc-scope-heading">Обсяг заявки</h3>

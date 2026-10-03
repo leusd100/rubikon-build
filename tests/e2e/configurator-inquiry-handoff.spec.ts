@@ -116,10 +116,7 @@ test.describe('configurator attachment contract', () => {
       name: 'envelope/material',
       edit: async (page) => page.locator('label:has(input[name="hc-envelope"])').filter({ hasText: 'Утеплений' }).click(),
     },
-    {
-      name: 'foundation',
-      edit: async (page) => page.locator('label:has(input[name="hc-foundation-type"])').filter({ hasText: 'Монолітна плита' }).click(),
-    },
+    // no 'foundation' case: /angary does not offer the foundation type (the designer decides it, owner 03.10)
     {
       name: 'gate',
       edit: async (page) => page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^2$/ }).click(),

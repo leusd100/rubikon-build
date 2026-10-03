@@ -1,56 +1,115 @@
-/* «Каркас вашого ангара» (FrameTour.tsx): the visitor's frame on the «Креслення» sheet, in graphite at rest. A step
-   lights its parts in copper and dims the rest; step 4 adds the load and its path, step 5 the base. The sheet keeps the
-   drawing's own proportion, so the camera never crops it. */
+/* «Каркас вашого ангара» (FrameTour.tsx): the visitor's frame as an isometric wireframe on the «Креслення» sheet, in
+   graphite at rest. A step lights its parts in copper and names them; steps 4 and 5 send a load through the structure,
+   link by link, with the legend over the drawing lighting in step. The sheet keeps the drawing's own proportion, so
+   the camera never crops it. */
 
-/* the sheet is as tall as its drawing, not the row (the steps beside it are taller) */
+/* the sheet is as tall as its drawing, not the row (the steps beside it are taller). --ft-k thickens the lines and
+   enlarges the letters where the sheet is drawn small (a phone) */
+.ft { --ft-k: 1; }
 .ft.direction-editorial-grid .ft-sheet { align-self: center; }
 .ft-sheet .ft-visual { flex: none; aspect-ratio: 720 / 440; height: auto; background: var(--color-surface-alt); }
 .ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
 .ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke .3s ease, opacity .3s ease; }
-.ft-ground { stroke: var(--color-border-strong); stroke-width: 1.2; }
-.ft-soil { stroke: var(--color-border-strong); stroke-width: .9; opacity: .7; }
-.ft-back { stroke: var(--color-text-muted); stroke-width: 1.1; }
-.ft-member { stroke: var(--color-text); stroke-width: 1.8; }
-.ft-brace { stroke: var(--color-text-muted); stroke-width: 1.1; }
-.ft-dim { stroke: var(--color-text-muted); stroke-width: 1.1; }
-.ft-base { stroke: var(--color-text-secondary); stroke-width: 1.4; }
-.ft-base.is-open { stroke-dasharray: 6 5; }
-.ft-hatch { stroke: var(--color-text-muted); stroke-width: .9; }
-.ft-letter { fill: var(--color-text-secondary); font: italic 600 19px var(--font-manrope), sans-serif; text-anchor: middle; transition: fill .3s ease; }
-.ft-part { transition: opacity .3s ease; }
-.ft-load { opacity: 0; transition: opacity .3s ease; }
-.ft-arrows { stroke: var(--color-accent); stroke-width: 2; }
-/* the load as drops, moving down the frame (as the water on the roofing node) — dashed, so no pathLength here */
-.ft-flow { stroke: var(--color-accent); stroke-width: 4.5; stroke-dasharray: .5 11; }
+.ft-slab { stroke: var(--color-border-strong); stroke-width: calc(1.1px * var(--ft-k)); }
+/* the footings are the designer's: drawn dashed, as «умовно» */
+.ft-footing { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); stroke-dasharray: 4 3; }
+.ft-back { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
+.ft-thin { stroke: var(--color-text-secondary); stroke-width: calc(1.1px * var(--ft-k)); }
+.ft-brace { stroke: var(--color-text-secondary); stroke-width: calc(1.2px * var(--ft-k)); }
+.ft-member { stroke: var(--color-text); stroke-width: calc(2.2px * var(--ft-k)); }
+.ft-dim { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
+.ft-letter { fill: var(--color-text-secondary); font: italic 600 calc(19px * var(--ft-k)) var(--font-manrope), sans-serif; text-anchor: middle; transition: fill .3s ease; }
+.ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }
 .ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+/* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
+.ft .dn-progress span:not(.is-done) { background: color-mix(in srgb, var(--color-text) 20%, transparent); }
 .ft-object { font-variant-numeric: tabular-nums; }
+
+/* Names on the members (steps 2 and 3), haloed in the sheet's colour so they read over the wireframe */
+.ft-tags { opacity: 0; }
+.ft-leader { stroke: var(--color-accent); stroke-width: calc(1px * var(--ft-k)); }
+.ft-tag {
+  fill: var(--color-accent-strong); font: 600 calc(15px * var(--ft-t, 1)) var(--font-manrope), sans-serif;
+  paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(5px * var(--ft-k)); stroke-linejoin: round;
+}
 
 /* A step: its parts copper, the rest back */
 .ft[data-step] .ft-part { opacity: .28; }
-.ft[data-step="1"] [data-part="1"], .ft[data-step="2"] [data-part="2"], .ft[data-step="3"] [data-part="3"], .ft[data-step="5"] [data-part="5"] { opacity: 1; }
-.ft[data-step="1"] [data-part="1"] path, .ft[data-step="2"] [data-part="2"] path, .ft[data-step="3"] [data-part="3"] :is(.ft-brace, .ft-dim),
-.ft[data-step="5"] [data-part="5"] path { stroke: var(--color-accent); }
-.ft[data-step="1"] [data-part="1"] .ft-member, .ft[data-step="2"] [data-part="2"] .ft-member { stroke-width: 2.4; }
-.ft[data-step="3"] [data-part="3"] .ft-brace { stroke-width: 2; }
-.ft[data-step="1"] [data-part="1"] .ft-letter, .ft[data-step="3"] [data-part="3"] .ft-letter { fill: var(--color-accent-strong); }
-/* the load: the whole frame stays readable, in graphite, under it */
-.ft[data-step="4"] .ft-part { opacity: .6; }
-.ft[data-step="4"] .ft-load { opacity: 1; }
+.ft[data-step] .ft-back { opacity: .5; }
+.ft[data-step="1"] [data-part~="1"], .ft[data-step="2"] [data-part~="2"], .ft[data-step="3"] [data-part~="3"] { opacity: 1; }
+.ft[data-step="1"] [data-part~="1"] path, .ft[data-step="2"] [data-part~="2"] path, .ft[data-step="3"] [data-part~="3"] :is(.ft-thin, .ft-brace, .ft-dim) { stroke: var(--color-accent); }
+.ft[data-step="1"] [data-part~="1"] .ft-member, .ft[data-step="2"] [data-part~="2"] .ft-member { stroke-width: calc(2.8px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-brace { stroke-width: calc(2.2px * var(--ft-k)); }
+.ft[data-step="1"] [data-part~="1"] .ft-letter, .ft[data-step="3"] [data-part~="3"] .ft-letter { fill: var(--color-accent-strong); }
+.ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { opacity: 1; }
+
+/* The loads: the frame stays in graphite under them; the lit links glow */
+.ft-load { opacity: 0; }
+.ft[data-step="4"] [data-load="snow"], .ft[data-step="5"] [data-load="wind"] { opacity: 1; }
+.ft[data-step="4"] .ft-part, .ft[data-step="5"] .ft-part { opacity: .55; }
+.ft-link { stroke: var(--color-accent); stroke-width: calc(2.6px * var(--ft-k)); filter: url(#ft-glow); }
+.ft-drawing .ft-plane { fill: var(--color-accent); fill-opacity: .14; stroke: none; filter: none; }
+.ft-link-footing { stroke-width: calc(1.8px * var(--ft-k)); stroke-dasharray: 4 3; }
+/* the edges of the strip one frame carries */
+.ft-drawing .ft-edge { stroke-width: calc(1.2px * var(--ft-k)); stroke-dasharray: 5 4; filter: none; }
+.ft-arrows { stroke: var(--color-accent); stroke-width: calc(2px * var(--ft-k)); }
+/* the load as drops, moving through the frame (as the water on the roofing node) — dashed, so no pathLength here */
+.ft-flow { stroke: var(--color-accent-strong); stroke-width: calc(4.5px * var(--ft-k)); stroke-dasharray: .5 12; }
+
+/* The legend: the chain the load takes, top-left, where the isometric leaves the sheet free */
+.ft-chain {
+  position: absolute; z-index: 3; top: 30px; left: 14px; display: grid; gap: 2px; margin: 0; padding: 8px 12px 8px 10px;
+  list-style: none; background: color-mix(in srgb, var(--color-surface-alt) 88%, transparent);
+  font: 600 12px/1.25 var(--font-manrope), sans-serif; color: var(--color-text-muted);
+}
+.ft-chain li { position: relative; display: flex; gap: 8px; align-items: center; }
+.ft-chain li::before {
+  width: 7px; height: 7px; flex: none; border: 1.5px solid currentColor; border-radius: 50%; content: '';
+}
+/* the step between two links: a short line under the dot */
+.ft-chain li:not(:last-child)::after {
+  position: absolute; top: calc(50% + 5px); left: 3px; width: 1.5px; height: 8px; background: currentColor; opacity: .5; content: '';
+}
+.ft-chain li { color: var(--color-accent-strong); }
+.ft-chain li::before { background: var(--color-accent); border-color: var(--color-accent); }
 
 @keyframes ft-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes ft-flow { to { stroke-dashoffset: -11.5; } }
+@keyframes ft-flow { to { stroke-dashoffset: -12.5; } }
 @keyframes ft-drop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes ft-gust { from { opacity: 0; transform: translate(-12px, 7px); } to { opacity: 1; transform: none; } }
+@keyframes ft-light { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ft-link-on {
+  from { color: var(--color-text-muted); }
+  to { color: var(--color-accent-strong); }
+}
+@keyframes ft-dot-on {
+  from { background: transparent; border-color: var(--color-text-muted); }
+  to { background: var(--color-accent); border-color: var(--color-accent); }
+}
 @media (prefers-reduced-motion: no-preference) {
-  .ft[data-step="1"] [data-part="1"] path[pathLength], .ft[data-step="2"] [data-part="2"] path[pathLength],
-  .ft[data-step="3"] [data-part="3"] .ft-brace { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
+  .ft[data-step="1"] [data-part~="1"] path[pathLength], .ft[data-step="2"] [data-part="2"] path[pathLength],
+  .ft[data-step="3"] [data-part~="3"] .ft-brace { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
   .ft[data-step="2"] [data-part="2"] path[pathLength] { animation-duration: 1400ms; }
-  .ft[data-step="4"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 700ms both; }
-  .ft[data-step="4"] .ft-flow { animation: ft-flow 520ms linear 1200ms infinite; }
-  .ft[data-step="5"] [data-part="5"] { animation: ft-drop 600ms var(--ease-premium) 800ms both; }
+  .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { transition-delay: 1100ms; }
+  /* a link every 520 ms, the legend in step with the drawing; the drops start once the load has reached the ground */
+  .ft[data-step="4"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 300ms both; }
+  .ft[data-step="5"] .ft-arrows { animation: ft-gust 500ms var(--ease-premium) 300ms both; }
+  .ft[data-step="4"] [data-load="snow"] .ft-link, .ft[data-step="5"] [data-load="wind"] .ft-link {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both;
+  }
+  .ft[data-step] .ft-chain li { animation: ft-link-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
+  .ft[data-step] .ft-chain li::before { animation: ft-dot-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
+  .ft[data-step="4"] .ft-flow, .ft[data-step="5"] .ft-flow { animation: ft-flow 560ms linear 1000ms infinite; }
 }
 
 @media (max-width: 760px) {
   /* On a phone the list is the tour's index: only the step on show reads in full, the others keep their titles */
   .ft .dn-step:not([aria-pressed="true"]) .dn-step-text { display: none; }
   .ft .dn-step { padding-block: 11px; }
+  .ft { --ft-k: 1.55; --ft-t: 1.3; }
+  /* the legend as one row over the drawing, the links joined by arrows */
+  .ft-chain { top: 22px; right: 8px; left: 8px; display: flex; flex-wrap: wrap; gap: 1px 0; padding: 0; background: none; font-size: 10.5px; }
+  .ft-chain li { gap: 0; }
+  .ft-chain li::before { display: none; }
+  .ft-chain li:not(:last-child)::after { position: static; width: auto; height: auto; margin-inline: 4px; background: none; opacity: .6; content: '→'; }
 }

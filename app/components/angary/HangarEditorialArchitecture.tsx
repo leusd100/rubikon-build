@@ -33,7 +33,6 @@ export function HangarEditorialArchitecture({ content }: Readonly<{ content: Ang
     ? {
       dimensions: `У вашій конфігурації: ${summary.dimensionsLabel}, коник ${summary.ridgeHeightLabel}`,
       structure: `У попередній схемі: ${summary.structuralVisualizationLabel.toLowerCase()}`,
-      foundation: `Ви вказали: ${summary.foundationTypeLabel.toLowerCase()}`,
       insulation: `Ви вказали: ${summary.envelopeLabel.toLowerCase()}, ${summary.claddingSystemLabel.toLowerCase()}`,
       technology: summary.gatesLabel ? `Ворота: ${summary.gatesLabel}` : undefined,
     }
@@ -52,7 +51,7 @@ export function HangarEditorialArchitecture({ content }: Readonly<{ content: Ang
             <h2 id="angary-cost-title">{content.cost.title}</h2>
             <p>{content.cost.text}</p>
           </header>
-          <CostFactorsFigure factors={content.cost.factors} title={null} tour={false} notes={notes} />
+          <CostFactorsFigure factors={content.cost.factors} title={null} tour={false} notes={notes} sheet />
           <div className="angary-cost-foot">
             <p>{content.cost.customerScope}</p>
             <div className="angary-cost-actions">

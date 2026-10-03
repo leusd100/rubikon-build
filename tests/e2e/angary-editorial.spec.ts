@@ -60,6 +60,8 @@ for (const viewport of viewports) {
     await expect(configurator.locator('.hc-stamp-row .hc-summary-flagship')).toBeVisible();
     await expect(configurator.getByRole('heading', { name: 'Ви обрали' })).toBeVisible();
     await expect(configurator.locator('.hc-summary-area')).toContainText('коник 10,6 м');
+    // the stamp's thumbnail: the configured hangar's section and plan
+    await expect(configurator.locator('.hc-stamp-row svg.hc-sketch')).toBeVisible();
     const disclaimer = configurator.locator('.hc-summary-disclaimer');
     await expect(disclaimer).toBeVisible();
     expect(await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)))
@@ -88,10 +90,11 @@ for (const viewport of viewports) {
 
     // «Рішення, які приймаєте ви» lives in the configurator now: one folded «Чому це важливо» per decision
     await expect(page.locator('#decisions')).toHaveCount(0);
-    await expect(configurator.locator('.hc-why')).toHaveCount(4);
+    await expect(configurator.locator('.hc-why')).toHaveCount(3);
     await expect(configurator.locator('.hc-why[open]')).toHaveCount(0);
-    // The cost block: the seven factors of the model on the /yak drawing, no prices
+    // The cost block: the seven factors of the model on the /yak drawing, laid on the «Креслення» sheet, no prices
     await expect(page.locator('#vartist .proc-factors li')).toHaveCount(7);
+    await expect(page.locator('#vartist .cf-sheet .sheet-stamp')).toContainText('Що впливає на вартість');
     await expect(page.locator('#vartist')).not.toContainText('грн');
     await expect(page.locator('#structure svg.ft-drawing')).toBeVisible();
     await expect(page.locator('#process li')).toHaveCount(5);
@@ -163,8 +166,8 @@ for (const dpr of [1, 2]) {
     test('selects generated WebP candidates', async ({ page }, testInfo) => {
       test.skip(testInfo.project.name === 'mobile-chromium', 'the DPR matrix runs once');
       await page.goto('/angary', { waitUntil: 'load' });
-      // The pictures live in «Чому це важливо» under the cladding and foundation groups (180 px wide on a desktop)
-      for (const selector of ['.hc-why[data-why="cladding"]', '.hc-why[data-why="foundation"]']) {
+      // The pictures live in «Чому це важливо» under the cladding group (180 px wide on a desktop); /angary offers no foundation choice
+      for (const selector of ['.hc-why[data-why="cladding"]']) {
         const section = page.locator(selector);
         await section.locator('summary').click();
         await section.scrollIntoViewIfNeeded();
@@ -173,13 +176,10 @@ for (const dpr of [1, 2]) {
         ));
       }
 
-      const selected = await page.locator([
-        '.hc-why[data-why="cladding"] img',
-        '.hc-why[data-why="foundation"] img',
-      ].join(', ')).evaluateAll((images) => (
+      const selected = await page.locator('.hc-why[data-why="cladding"] img').evaluateAll((images) => (
         images as HTMLImageElement[]
       ).map((image) => image.currentSrc));
-      expect(selected).toHaveLength(4);
+      expect(selected).toHaveLength(2);
       for (const source of selected) {
         expect(source).toContain('/media-responsive/');
         expect(source).toContain('-480w.');
