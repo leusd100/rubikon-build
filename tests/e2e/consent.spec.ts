@@ -91,6 +91,56 @@ test.describe('cookie consent banner', () => {
   });
 });
 
+// The banner is fixed over the page's bottom edge but not modal (sweep 03.10): it comes first in the tab order after the
+// skip link, and no stop of the page's own tab order ends up under it (WCAG 2.4.11), the footer's last links included.
+for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+  test(`the open cookie banner is the second tab stop and covers no focused control at ${viewport.width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'explicit viewports');
+    await page.setViewportSize(viewport);
+    // reduced motion: the site scrolls without smoothing, so every focus lands before it is measured
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/angary', { waitUntil: 'load' });
+    const banner = page.locator('.cookie-banner');
+    await expect(banner).toBeVisible({ timeout: 10_000 });
+
+    await page.keyboard.press('Tab');
+    await expect(page.locator('.skip-link')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(banner.getByRole('link', { name: 'Докладніше про конфіденційність' })).toBeFocused();
+
+    const covered: string[] = [];
+    let stops = 0;
+    for (let stop = 0; stop < 200; stop += 1) {
+      await page.keyboard.press('Tab');
+      const focus = await page.evaluate(() => {
+        const element = document.activeElement as HTMLElement | null;
+        const cookie = document.querySelector('.cookie-banner');
+        if (!element || element === document.body || !cookie) return null;
+        if (element.classList.contains('skip-link')) return { wrapped: true, name: '', share: 0 };
+        if (cookie.contains(element)) return { wrapped: false, name: '', share: 0 };
+        const rect = element.getBoundingClientRect();
+        let hits = 0;
+        let total = 0;
+        for (let ix = 0; ix < 4; ix += 1) for (let iy = 0; iy < 3; iy += 1) {
+          const x = rect.left + (rect.width * (ix + 0.5)) / 4;
+          const y = rect.top + (rect.height * (iy + 0.5)) / 3;
+          if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) continue;
+          total += 1;
+          if (cookie.contains(document.elementFromPoint(x, y))) hits += 1;
+        }
+        const name = (element.getAttribute('aria-label') || element.textContent || element.tagName).trim().slice(0, 40);
+        return { wrapped: false, name, share: total ? hits / total : 0 };
+      });
+      if (!focus) break;
+      if (focus.wrapped) break;
+      stops += 1;
+      if (focus.share > 0) covered.push(`${focus.name} ${Math.round(focus.share * 100)}%`);
+    }
+    expect(stops).toBeGreaterThan(40);
+    expect(covered).toEqual([]);
+  });
+}
+
 test('advertising identifiers require consent and revocation reaches an already-open tab', async ({ page, context }) => {
   await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
   await page.goto('/?gclid=consent-regression-only');

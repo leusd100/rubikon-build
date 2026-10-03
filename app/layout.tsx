@@ -150,10 +150,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteData) }}
         />
         <a className="skip-link" href="#main-content">Перейти до основного вмісту</a>
+        {/* The cookie banner is fixed at the bottom, but first in the tab order after the skip link: at the end of the
+            page a keyboard visitor met it after 70–100 stops, every one of them walked behind it (sweep 03.10) */}
+        <AnalyticsConsent />
         <SiteHeader />
         {children}
         <SiteFooter />
-        <AnalyticsConsent />
         <SmoothScroll />
       </body>
     </html>
