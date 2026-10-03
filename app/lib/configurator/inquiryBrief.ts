@@ -24,7 +24,16 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     // The door was collected by the configurator, shown in "Ваш об'єкт", and then never reached
     // the request at all — a customer input silently dropped between the screen and the lead.
     doorsLabel: summary.doorsLabel,
+    // «Об’єкт» (03.10): null until answered
+    purposeLabel: summary.objectProfile.purpose,
+    projectLabel: summary.objectProfile.project,
+    regionLabel: summary.objectProfile.region,
+    liftingLabel: summary.objectProfile.lifting,
   };
+}
+
+function answeredRow(label: string, value: string | null): HangarInquiryBriefRow | null {
+  return value === null ? null : { label, value };
 }
 
 /**
@@ -33,8 +42,13 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
  */
 export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): HangarInquiryBriefSections {
   const selected: Array<HangarInquiryBriefRow | null> = [
+    // «Об’єкт» first, as in the controls: what and where before the sizes. Only what was answered (03.10)
+    answeredRow('Призначення', brief.purposeLabel),
+    answeredRow('Проєкт', brief.projectLabel),
+    answeredRow('Область', brief.regionLabel),
+    answeredRow('Підйомне обладнання', brief.liftingLabel),
     { label: 'Габарити', value: brief.dimensionsLabel },
-    // The ridge the visitor set used to stop here, like the door once did (2026-10)
+    // The ridge the visitor set used to stop here, like the door once did (2026-10); with its slope since 03.10
     { label: 'Висота в конику', value: brief.ridgeHeightLabel },
     { label: 'Контур', value: brief.envelopeLabel },
     { label: 'Огородження', value: brief.claddingSystemLabel },

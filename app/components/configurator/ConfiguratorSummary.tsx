@@ -34,9 +34,10 @@ function useChangeMark<T extends HTMLElement>(value: string) {
   return ref;
 }
 
-function Fact({ label, value, wide = false }: Readonly<{ label: string; value: string; wide?: boolean }>) {
+function Fact({ label, value, wide = false, purpose = false }: Readonly<{ label: string; value: string; wide?: boolean; purpose?: boolean }>) {
   const ref = useChangeMark<HTMLDivElement>(value);
-  return <div ref={ref} className={wide ? 'is-wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>;
+  const className = [wide && 'is-wide', purpose && 'hc-fact-purpose'].filter(Boolean).join(' ') || undefined;
+  return <div ref={ref} className={className}><dt>{label}</dt><dd>{value}</dd></div>;
 }
 
 /** The stamp's thumbnail: the configured hangar's section and plan, to proportion, with the frames' rhythm in the plan.
@@ -162,6 +163,9 @@ export function ConfiguratorSummary({
               request, so it has no row. The controls keep the choice, disabled, and it comes back with the walls. */}
           {summary.gatesLabel !== null && <Fact label="Ворота" value={summary.gatesLabel} />}
           {summary.doorsLabel !== null && <Fact label="Двері" value={summary.doorsLabel} />}
+          {/* «Об’єкт» (03.10): only once a purpose is chosen, last, so an unanswered question does not grow the stamp on a
+              phone (styles: configurator-controls.css) */}
+          {summary.objectProfile.purpose !== null && <Fact label="Призначення" value={summary.objectProfile.purpose} purpose />}
         </dl>
         <div className="hc-summary-handoff">
           <a

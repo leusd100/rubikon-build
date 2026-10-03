@@ -7,7 +7,7 @@ import ResponsiveImage from '../ResponsiveImage';
 // explanation sits under the control it explains, folded; the words and pictures are the same. «Порівняти із
 // сендвіч-панеллю» is gone (2026-10): the technical view draws no cladding, so the comparison changed 0 pixels.
 
-export type WhyTopic = 'contour' | 'cladding' | 'foundation' | 'openings';
+export type WhyTopic = 'object' | 'contour' | 'cladding' | 'foundation' | 'openings';
 
 /** Brings the live preview into view after a demo starts (on a wide screen only when it is off screen). */
 export function revealLivePreview() {
@@ -41,6 +41,18 @@ export function ConfiguratorWhy({ topic }: Readonly<{ topic: WhyTopic }>) {
       <details className="hc-why" data-why={topic}>
         <summary>Чому це важливо</summary>
         <div className="hc-why-body">
+          {/* «Об’єкт» (03.10): a draft for Сергій Іванович — no numbers, only what each answer changes in the work */}
+          {topic === 'object' && (
+            <>
+              <p>Ці відповіді не обов’язкові, але з ними розмова починається з вашого об’єкта, а не з ангара загалом.</p>
+              <dl className="hc-why-list">
+                <div><dt>Призначення</dt><dd>Від нього залежать ворота, висота всередині й температурний режим</dd></div>
+                <div><dt>Проєкт</dt><dd>Готовий проєкт уже відповідає на більшість цих питань — тоді звіряємо параметри з ним</dd></div>
+                <div><dt>Область</dt><dd>Снігове й вітрове навантаження залежать від того, де стоїть ангар, а з ними — каркас і покрівля</dd></div>
+                <div><dt>Підйомне обладнання</dt><dd>Кран-балка чи тельфер додає навантаження на каркас: від цього залежать колони й фундаменти, тому обладнання закладають у розрахунок із самого початку</dd></div>
+              </dl>
+            </>
+          )}
           {topic === 'contour' && (
             <>
               <p>Температурний режим задає вимоги до огороджувального контуру. Його обирають від реального сценарію використання, а не від назви споруди.</p>

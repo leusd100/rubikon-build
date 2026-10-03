@@ -49,4 +49,27 @@ describe('hangar lead attachment contract', () => {
       dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 30 },
     })).toBe(false);
   });
+
+  it('counts every «Об’єкт» answer as a business edit, and the unanswered defaults as untouched (03.10)', () => {
+    expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, {
+      ...DEFAULT_CONFIGURATOR_STATE,
+      objectProfile: { ...DEFAULT_CONFIGURATOR_STATE.objectProfile },
+    })).toBe(true);
+    for (const answer of [
+      { purpose: 'storage' },
+      { project: 'ready' },
+      { region: 'м. Київ' },
+      { lifting: 'none' },
+    ] as const) {
+      expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, {
+        ...DEFAULT_CONFIGURATOR_STATE,
+        objectProfile: { ...DEFAULT_CONFIGURATOR_STATE.objectProfile, ...answer },
+      }), JSON.stringify(answer)).toBe(false);
+    }
+  });
+
+  it('leaves ridgeEdited out: the ridge value itself says whether the configuration changed (03.10)', () => {
+    expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, { ...DEFAULT_CONFIGURATOR_STATE, ridgeEdited: true })).toBe(true);
+    expect(sameBusinessConfiguration(DEFAULT_CONFIGURATOR_STATE, { ...DEFAULT_CONFIGURATOR_STATE, ridgeHeightM: 12, ridgeEdited: true })).toBe(false);
+  });
 });

@@ -3,6 +3,8 @@
 // docs/configurator-poc.md for the boundary). The shape below is exactly what the brief asked
 // for: dimensions / envelope / scope / openings, nothing more.
 
+import { DEFAULT_OBJECT_PROFILE, type ObjectProfile } from './objectProfile';
+
 export type Dimensions = {
   /** metres */
   width: number;
@@ -130,8 +132,15 @@ export type ConfiguratorState = {
    * depends on the current width and eave height (see parametricModel.ts's ridgeHeightRangeM),
    * which is exactly why it is NOT part of `dimensions`: DIMENSION_BOUNDS is a static table, and
    * this one moves. Roof pitch is derived from it, never stored.
+   *
+   * Until the visitor edits it (`ridgeEdited`), it is the span rule's ridge for the current width and eave height
+   * (resolveRidgeHeightM in domainModel.ts): only clamping it let the slope drift with the width alone — 5.9° at
+   * 50 m, 19.3° at 12 m — and the lead received a «Висота в конику» nobody had chosen (03.10).
    */
   ridgeHeightM: number;
+  /** The visitor has set the ridge themselves; from then on it is clamped, no longer re-derived. Not part of the
+   *  business equality (sameBusinessConfiguration): it is set only together with a changed ridge. */
+  ridgeEdited: boolean;
   envelope: EnvelopeChoice;
   /** Cladding system, independent of the thermal `envelope` choice above — see `CladdingSystem`. */
   wallSystem: CladdingSystem;
@@ -142,6 +151,8 @@ export type ConfiguratorState = {
   gates: GatesCount;
   gateType: GateType;
   doors: DoorCount;
+  /** «Об’єкт»: purpose, project, region, lifting equipment — see objectProfile.ts. */
+  objectProfile: ObjectProfile;
 };
 
 export type DimensionBounds = { min: number; max: number; step: number };
@@ -225,6 +236,7 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   // The span rule's own answer for 24 m × 8 m (12.04° → 10.56 m), snapped to the 0.1 m
   // adjustment step. Kept as a literal so this module stays free of geometry imports.
   ridgeHeightM: 10.6,
+  ridgeEdited: false,
   // Phase 3E, brief §18: kept consistent with the wallSystem/roofSystem default right below —
   // 'insulated' here with 'profiled-sheet' materials was exactly the "Контур" no longer matches
   // the actual system" state this phase's own preset-drift logic exists to detect and label
@@ -248,6 +260,8 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   // A personnel door is a real, common part of a hangar facade, but it is the customer's call —
   // defaulted off so a fresh configurator claims nothing that was not chosen.
   doors: 0,
+  // Every «Об’єкт» answer starts unanswered — «Ще не знаю», no purpose — so the defaults stay «untouched»
+  objectProfile: DEFAULT_OBJECT_PROFILE,
 };
 
 export function clampDimension(key: keyof Dimensions, value: number): number {

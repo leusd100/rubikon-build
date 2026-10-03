@@ -1,4 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
+import { objectProfileLabels, type ObjectProfileLabels } from './objectProfile';
 import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M, ridgeHeightM } from './parametricModel';
 import {
   CLADDING_SYSTEM_LABELS,
@@ -16,9 +17,14 @@ export type ConfiguratorSummary = {
   /** width × length, m² — the one derived number the brief signs off on for the POC. */
   areaSqm: number;
   dimensionsLabel: string;
-  /** «Висота в конику», as the visitor set it (decimal comma). The dimensions label stays width × length × wall height:
-   *  it is a fixed field of the lead. (It was dropped from the summary and the lead until 2026-10.) */
+  /** «Висота в конику» with the slope it makes — «10,6 м · ухил ≈ 12°» (decimal comma; 03.10: a ridge alone does not
+   *  say how steep the roof is). The dimensions label stays width × length × wall height: it is a fixed field of the
+   *  lead. (The ridge was dropped from the summary and the lead until 2026-10.) */
   ridgeHeightLabel: string;
+  /** «ухил ≈ 12°» — the roof slope in whole degrees, derived from the ridge, never chosen. */
+  roofSlopeLabel: string;
+  /** «Об’єкт» answers as the lead reads them; null = not answered (no row, no stamp cell). */
+  objectProfile: ObjectProfileLabels;
   envelopeLabel: string;
   /**
    * Phase 3D: cladding system, shown as one combined label when walls and roof agree (the common
@@ -54,11 +60,22 @@ export type ConfiguratorSummary = {
   openingsLabel: string;
 };
 
-const OUT_OF_SCOPE_LABEL = 'Поза обсягом заявки';
+export const OUT_OF_SCOPE_LABEL = 'Поза обсягом заявки';
 
 function formatMeters(value: number): string {
   // Whole metres print without a decimal (24, not 24.0); half-metre steps keep one.
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+/**
+ * «ухил ≈ 12°», or «ухил ≈ 12° (22 %)» where there is room for the percent (the ridge hint). Whole degrees and whole
+ * percent: the slope follows from a ridge set to 0.1 m, so a decimal would be false precision. A description of the
+ * drawn roof, not a minimum slope for any roofing — those wait for Сергій Іванович (03.10).
+ */
+export function formatRoofSlope(pitchDeg: number, withPercent = false): string {
+  const degrees = `ухил ≈ ${Math.round(pitchDeg)}°`;
+  if (!withPercent) return degrees;
+  return `${degrees} (${Math.round(Math.tan((pitchDeg * Math.PI) / 180) * 100)} %)`;
 }
 
 /**
@@ -169,11 +186,15 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
   const orderedScope = SCOPE_ORDER.filter((item) => domain.scope[item]);
   const gatesLabel = formatGatesLabel(domain.gates, domain.gateType, domain.scope.walls);
   const doorsLabel = formatDoorsLabel(domain.doors, domain.scope.walls);
+  const ridge = ridgeHeightM(widthM, eaveHeightM, domain.roof.pitchDeg).toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+  const roofSlopeLabel = formatRoofSlope(domain.roof.pitchDeg);
 
   return {
     areaSqm: domain.areaSqm,
     dimensionsLabel: `${formatMeters(widthM)} × ${formatMeters(lengthM)} × ${formatMeters(eaveHeightM)} м`,
-    ridgeHeightLabel: `${ridgeHeightM(widthM, eaveHeightM, domain.roof.pitchDeg).toLocaleString('uk-UA', { maximumFractionDigits: 1 })} м`,
+    ridgeHeightLabel: `${ridge} м · ${roofSlopeLabel}`,
+    roofSlopeLabel,
+    objectProfile: objectProfileLabels(domain.objectProfile),
     envelopeLabel: formatEnvelopeLabel(domain.envelope),
     claddingSystemLabel: formatCladdingSystemLabel(domain.envelope, domain.scope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],

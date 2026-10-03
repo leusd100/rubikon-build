@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openControlGroup } from './configurator.helpers';
 import { stubTurnstile } from './turnstile.helpers';
 
 type LeadPayload = {
@@ -18,6 +19,7 @@ async function openHangarPage(page: Page) {
 }
 
 async function setDimension(page: Page, dimension: 'width' | 'length' | 'height', value: string) {
+  await openControlGroup(page, 'dimensions');
   const input = page.locator(`#hc-dimension-${dimension}`);
   await input.fill(value);
   await input.blur();
@@ -73,6 +75,7 @@ test.describe('configurator attachment contract', () => {
 
   test('focusing and leaving an unchanged business field is still untouched', async ({ page }) => {
     await openHangarPage(page);
+    await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-width').focus();
     await page.locator('#hc-dimension-width').blur();
     await expect(attachmentCard(page)).toHaveCount(0);
@@ -114,20 +117,47 @@ test.describe('configurator attachment contract', () => {
     { name: 'eave height', edit: (page) => setDimension(page, 'height', '9') },
     {
       name: 'envelope/material',
-      edit: async (page) => page.locator('label:has(input[name="hc-envelope"])').filter({ hasText: 'Утеплений' }).click(),
+      edit: async (page) => {
+        await openControlGroup(page, 'envelope');
+        await page.locator('label:has(input[name="hc-envelope"])').filter({ hasText: 'Утеплений' }).click();
+      },
     },
     // no 'foundation' case: /angary does not offer the foundation type (the designer decides it, owner 03.10)
     {
       name: 'gate',
-      edit: async (page) => page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^2$/ }).click(),
+      edit: async (page) => {
+        await openControlGroup(page, 'openings');
+        await page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^2$/ }).click();
+      },
     },
     {
       name: 'personnel door',
-      edit: async (page) => page.locator('label:has(input[name="hc-doors"][value="1"])').click(),
+      edit: async (page) => {
+        await openControlGroup(page, 'openings');
+        await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
+      },
     },
     {
       name: 'application scope',
-      edit: async (page) => page.getByRole('checkbox', { name: 'Покрівля', exact: true }).uncheck(),
+      edit: async (page) => {
+        await openControlGroup(page, 'scope');
+        await page.getByRole('checkbox', { name: 'Покрівля', exact: true }).uncheck();
+      },
+    },
+    // «Об’єкт» (03.10): business configuration like the sizes
+    {
+      name: 'purpose',
+      edit: async (page) => {
+        await openControlGroup(page, 'object');
+        await page.locator('label:has(input[name="hc-purpose"][value="storage"])').click();
+      },
+    },
+    {
+      name: 'region',
+      edit: async (page) => {
+        await openControlGroup(page, 'object');
+        await page.getByLabel('Область будівництва', { exact: true }).selectOption('Київська область');
+      },
     },
   ];
 
@@ -145,7 +175,8 @@ test.describe('configurator attachment contract', () => {
     await setDimension(page, 'width', '24');
 
     const brief = attachmentCard(page);
-    // back on the default values: attached, and said to be the default (hangar-configurator@1.1.0)
+    // back on the default values: attached, and said to be the default (hangar-configurator@1.1.0); the ridge followed
+    // the width there and back, so it is the default's too (03.10)
     await expect(brief).toContainText('До заявки додано базову конфігурацію');
     await expect(brief).toContainText('24 × 60 × 8 м · Холодний');
   });
@@ -240,7 +271,10 @@ test.describe('configurator attachment contract', () => {
     const submitted = await mockLeadSubmission(page);
     await openHangarPage(page);
     await setDimension(page, 'width', '30');
+    await openControlGroup(page, 'openings');
     await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
+    await openControlGroup(page, 'object');
+    await page.locator('label:has(input[name="hc-lifting"][value="none"])').click();
 
     const brief = attachmentCard(page);
     await brief.getByText('Переглянути параметри', { exact: true }).click();
@@ -260,12 +294,18 @@ test.describe('configurator attachment contract', () => {
     expect(configuration).toContain('Системні попередні дані:\nПлоща забудови:');
     expect(configuration).toContain('Попередня конструктивна схема:');
     expect(configuration).not.toMatch(/Світло-сіра|Графіт|Нейтральна/);
+    // «Об’єкт» (03.10): the answered question leads the rows, the unanswered ones are absent; the ridge says its slope
+    expect(payloadRows[0]).toBe('Підйомне обладнання: Немає');
+    expect(configuration).not.toMatch(/Призначення:|Проєкт:|Область:/);
+    expect(configuration).toMatch(/Висота в конику: \d+(,\d)? м · ухил ≈ \d+°/);
   });
 
   test('walls outside scope omit gates and door from both summary and payload', async ({ page }) => {
     const submitted = await mockLeadSubmission(page);
     await openHangarPage(page);
+    await openControlGroup(page, 'openings');
     await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
+    await openControlGroup(page, 'scope');
     await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
 
     const brief = attachmentCard(page);

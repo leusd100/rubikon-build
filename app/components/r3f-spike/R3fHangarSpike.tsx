@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { buildParametricModel } from '../../lib/configurator/parametricModel';
+import { DEFAULT_OBJECT_PROFILE } from '../../lib/configurator/objectProfile';
 import { DIMENSION_BOUNDS, clampDimension, type ConfiguratorState } from '../../lib/configurator/types';
 import { HangarSpikeScene } from './HangarSpikeScene';
 
@@ -14,6 +15,7 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   dimensions: { width: 24, length: 60, height: 8 },
   // Re-clamped per dimension change below; this is just the span rule's default for 24 x 8.
   ridgeHeightM: 10.6,
+  ridgeEdited: false,
   envelope: 'cold',
   // Fixed, same as envelope/gates above — this spike never visualises cladding system or
   // foundation type either.
@@ -24,6 +26,7 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   gates: 0,
   doors: 0,
   gateType: 'standard',
+  objectProfile: DEFAULT_OBJECT_PROFILE,
 };
 
 function DimensionSlider({

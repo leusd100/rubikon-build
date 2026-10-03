@@ -10,11 +10,12 @@ import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app
 
 // details.configuration for the default configuration attached through «Обговорити цю конфігурацію». As the form sent it
 // on main (f28dc47), with two changes of 2026-10 (hangar-configurator@1.1.0): the ridge height row, which the lead used to
-// drop, and an untouched default is said to be one rather than sent as «Вибрана конфігурація».
+// drop, and an untouched default is said to be one rather than sent as «Вибрана конфігурація»; and one of 03.10
+// (1.2.0): the ridge row says its slope. The unanswered «Об’єкт» group adds no row.
 const DEFAULT_CONFIGURATION_BEFORE_PHASE_3 = [
   'Базова конфігурація (параметри за замовчуванням):',
   'Габарити: 24 × 60 × 8 м',
-  'Висота в конику: 10,6 м',
+  'Висота в конику: 10,6 м · ухил ≈ 12°',
   'Контур: Холодний',
   'Огородження: Профнастил',
   'Основа: Визначити після розрахунку',
@@ -31,6 +32,10 @@ const variants: Record<string, ConfiguratorState> = {
   wider: { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 30 } },
   longer: { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 30, length: 50 } },
   'narrower scope': { ...DEFAULT_CONFIGURATOR_STATE, scope: DEFAULT_CONFIGURATOR_STATE.scope.slice(1) },
+  'answered object': {
+    ...DEFAULT_CONFIGURATOR_STATE,
+    objectProfile: { purpose: 'storage', project: 'none', region: 'Київська область', lifting: 'unknown' },
+  },
 };
 
 /** What ProjectInquiryForm computed itself before Phase 3. */
@@ -72,4 +77,25 @@ describe('createHangarAttachment', () => {
       expect(attachment.text.split('\n').filter((line) => !line.endsWith(':'))).toEqual(rows);
     });
   }
+});
+
+describe('createHangarAttachment — «Об’єкт» (03.10)', () => {
+  it('is version 1.2.0', () => {
+    expect(HANGAR_CONFIGURATOR_VERSION).toBe('hangar-configurator@1.2.0');
+  });
+
+  it('an answered «Об’єкт» question is the visitor’s configuration, not the default one', () => {
+    const attachment = createHangarAttachment({
+      ...DEFAULT_CONFIGURATOR_STATE,
+      objectProfile: { ...DEFAULT_CONFIGURATOR_STATE.objectProfile, region: 'Київська область' },
+    });
+    expect(attachment.title).toBe('До заявки додано вашу конфігурацію');
+    expect(attachment.text.split('\n').slice(0, 3)).toEqual(['Вибрана конфігурація:', 'Область: Київська область', 'Габарити: 24 × 60 × 8 м']);
+  });
+
+  it('a ridge edited and set back to the span rule’s value is the default configuration again', () => {
+    const attachment = createHangarAttachment({ ...DEFAULT_CONFIGURATOR_STATE, ridgeEdited: true });
+    expect(attachment.title).toBe('До заявки додано базову конфігурацію');
+    expect(attachment.text).toBe(DEFAULT_CONFIGURATION_BEFORE_PHASE_3);
+  });
 });

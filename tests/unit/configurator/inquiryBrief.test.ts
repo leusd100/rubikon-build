@@ -81,16 +81,61 @@ describe('inquiry brief — Phase 3F.2', () => {
 });
 
 describe('the ridge height (2026-10)', () => {
-  it('reaches the lead: the visitor’s «Висота в конику» is a row right after the dimensions', async () => {
+  it('reaches the lead: the visitor’s «Висота в конику» is a row right after the dimensions, with its slope (03.10)', async () => {
     const { deriveDomainModel } = await import('../../../app/lib/configurator/domainModel');
     const { DEFAULT_CONFIGURATOR_STATE } = await import('../../../app/lib/configurator/types');
     const { createHangarInquiryBrief, createHangarInquiryBriefSections, formatHangarInquiryBrief } = await import('../../../app/lib/configurator/inquiryBrief');
-    const state = { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { width: 30, length: 72, height: 9 }, ridgeHeightM: 13 };
+    const state = { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { width: 30, length: 72, height: 9 }, ridgeHeightM: 13, ridgeEdited: true };
     const brief = createHangarInquiryBrief(deriveDomainModel(state));
     const rows = createHangarInquiryBriefSections(brief).selected.map((row) => row.label);
     expect(rows.slice(0, 2)).toEqual(['Габарити', 'Висота в конику']);
-    expect(formatHangarInquiryBrief(brief)).toContain('Висота в конику: 13 м');
+    // 4 m of rise over a 15 m half-span: atan(4 / 15) = 14.9°
+    expect(formatHangarInquiryBrief(brief)).toContain('Висота в конику: 13 м · ухил ≈ 15°');
     // the dimensions field of the lead stays width × length × wall height
     expect(brief.dimensionsLabel).toBe('30 × 72 × 9 м');
+  });
+
+  it('sends the span rule’s ridge, not a stored one nobody chose, until the visitor edits it (03.10)', () => {
+    // A stale stored ridge (13 m) is not the visitor's: unedited, the ridge is the span rule's for 30 × 9 m
+    const text = formatHangarInquiryBrief(createHangarInquiryBrief(deriveDomainModel({
+      ...DEFAULT_CONFIGURATOR_STATE,
+      dimensions: { width: 30, length: 72, height: 9 },
+      ridgeHeightM: 13,
+    })));
+    // pitch(30 m) = 11.2° → 9 + 15 · tan 11.2° = 11.97 → 12 m; atan(3 / 15) = 11.3°
+    expect(text).toContain('Висота в конику: 12 м · ухил ≈ 11°');
+  });
+});
+
+describe('«Об’єкт» rows (03.10)', () => {
+  it('sends nothing from the group while it is unanswered', () => {
+    const text = formatHangarInquiryBrief(createHangarInquiryBrief(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE)));
+    for (const label of ['Призначення', 'Проєкт', 'Область', 'Підйомне обладнання']) expect(text).not.toContain(`${label}:`);
+  });
+
+  it('leads the selected rows with the answered questions, in the order they are asked', () => {
+    const brief = createHangarInquiryBrief(deriveDomainModel({
+      ...DEFAULT_CONFIGURATOR_STATE,
+      objectProfile: { purpose: 'machinery', project: 'inProgress', region: 'Дніпропетровська область', lifting: 'craneOrHoist' },
+    }));
+    expect(createHangarInquiryBriefSections(brief).selected.slice(0, 5)).toEqual([
+      { label: 'Призначення', value: 'Техніка' },
+      { label: 'Проєкт', value: 'Готується' },
+      { label: 'Область', value: 'Дніпропетровська область' },
+      { label: 'Підйомне обладнання', value: 'Кран-балка або тельфер' },
+      { label: 'Габарити', value: '24 × 60 × 8 м' },
+    ]);
+  });
+
+  it('keeps an answered «Немає» and drops each «Ще не знаю» on its own', () => {
+    const rows = createHangarInquiryBriefSections(createHangarInquiryBrief(deriveDomainModel({
+      ...DEFAULT_CONFIGURATOR_STATE,
+      objectProfile: { purpose: null, project: 'ready', region: 'unknown', lifting: 'none' },
+    }))).selected;
+    expect(rows.slice(0, 3)).toEqual([
+      { label: 'Проєкт', value: 'Є' },
+      { label: 'Підйомне обладнання', value: 'Немає' },
+      { label: 'Габарити', value: '24 × 60 × 8 м' },
+    ]);
   });
 });

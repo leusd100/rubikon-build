@@ -95,9 +95,11 @@ for (const viewport of viewports) {
       expect(metrics.heroOverflow).toBeLessThanOrEqual(1);
     }
 
-    // «Рішення, які приймаєте ви» lives in the configurator now: one folded «Чому це важливо» per decision
+    // «Рішення, які приймаєте ви» lives in the configurator now: one folded «Чому це важливо» per decision, and one for
+    // «Об’єкт» (03.10)
     await expect(page.locator('#decisions')).toHaveCount(0);
-    await expect(configurator.locator('.hc-why')).toHaveCount(3);
+    await expect(configurator.locator('.hc-why')).toHaveCount(4);
+    await expect(configurator.locator('.hc-why').first()).toHaveAttribute('data-why', 'object');
     await expect(configurator.locator('.hc-why[open]')).toHaveCount(0);
     // The cost block: the seven factors of the model on the /yak drawing, laid on the «Креслення» sheet, no prices
     await expect(page.locator('#vartist .proc-factors li')).toHaveCount(7);

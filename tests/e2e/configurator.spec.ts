@@ -268,6 +268,15 @@ test.describe('hangar configurator POC — mobile', () => {
     expect(order).toBe(true);
   });
 
+  // The phone accordion is /angary's (03.10): this screen has no mini drawing to scroll under, so its groups stay open
+  test('keeps every control group open, «Об’єкт» first', async ({ page }) => {
+    await openConfigurator(page);
+    await expect(page.locator('.hc-group-toggle')).toHaveCount(0);
+    await expect(page.locator('.hc-control-group h3').first()).toHaveText('Об’єкт');
+    await expect(page.locator('#hc-dimension-width')).toBeVisible();
+    await expect(page.locator('#hc-object-region')).toBeVisible();
+  });
+
   test('summary is collapsible', async ({ page }) => {
     await openConfigurator(page);
     const summary = page.locator('.hc-summary');
