@@ -92,6 +92,9 @@ describe('buildThreeScene', () => {
         ...model.internalColumns.flatMap((c) => [c.column.a, c.column.b, ...(c.ridgeProp ? [c.ridgeProp.a, c.ridgeProp.b] : [])]),
         ...model.trusses.flatMap((t) => [t.bottomChord.a, t.bottomChord.b, ...t.webs.flatMap((w) => [w.a, w.b])]),
         ...model.bracing.flatMap((b) => [b.diagonalA.a, b.diagonalA.b, b.diagonalB.a, b.diagonalB.b]),
+        // 03.10: the roof's own secondary steel.
+        ...model.roofPurlins.flatMap((p) => [p.member.a, p.member.b]),
+        ...model.roofBracing.flatMap((b) => [b.diagonalA.a, b.diagonalA.b, b.diagonalB.a, b.diagonalB.b]),
       ].map((p) => `${p.x},${p.y},${p.z}`),
     );
 
@@ -207,6 +210,9 @@ describe('buildThreeScene', () => {
     // Phase 3E: bracing is always present (not scheme/roofStructure-gated — brief §13's own "not
     // a user control"), so it is part of the total at every width.
     const braces = three.struts.filter((s) => s.role === 'brace');
+    // 03.10: the roof purlins (eave struts, purlins, ridge purlin) — and the roof bracing, among
+    // `braces` above.
+    const purlins = three.struts.filter((s) => s.role === 'purlin');
     // Phase 3E.1: internal-column/truss-chord/truss-web are no longer empty at the domain default
     // either — width 24 now derives centerSupport + truss (see deriveStructuralVisualization), so
     // this completeness check must account for every StrutRole that exists, not just the four
@@ -219,11 +225,13 @@ describe('buildThreeScene', () => {
     expect(rafters.length).toBeGreaterThan(0);
     expect(girts.length).toBeGreaterThan(0);
     expect(braces.length).toBeGreaterThan(0);
+    expect(purlins).toHaveLength(three.building.roofPurlins.length);
+    expect(braces).toHaveLength((three.building.bracing.length + three.building.roofBracing.length) * 2);
     expect(internalColumns.length).toBeGreaterThan(0);
     expect(trussChords.length).toBeGreaterThan(0);
     expect(trussWebs.length).toBeGreaterThan(0);
     expect(
-      columns.length + rafters.length + girts.length + braces.length
+      columns.length + rafters.length + girts.length + purlins.length + braces.length
         + internalColumns.length + trussChords.length + trussWebs.length,
     ).toBe(three.struts.length);
     expect(columns.every((s) => s.material === 'frame-primary')).toBe(true);
@@ -233,6 +241,8 @@ describe('buildThreeScene', () => {
     expect(trussWebs.every((s) => s.material === 'frame-primary')).toBe(true);
     expect(girts.every((s) => s.material === 'frame-secondary')).toBe(true);
     expect(braces.every((s) => s.material === 'frame-secondary')).toBe(true);
+    // the roof's secondary steel at the girts' own section — "GIRT-like", not a heavier member
+    expect(purlins.every((s) => s.material === 'frame-secondary' && s.sectionM === girts[0].sectionM)).toBe(true);
   });
 
   it('is deterministic and JSON-serialisable', () => {

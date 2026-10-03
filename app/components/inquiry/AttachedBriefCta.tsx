@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { useInquiryAttachment } from './InquiryAttachmentProvider';
+import { revealAttachedBrief } from './revealAttachedBrief';
+
+/** Only typing hides the shortcut. A tapped option card or a dragged slider keeps focus on its radio or range input
+ *  (Android does not blur on scroll), and used to hide «До заявки» for the rest of the page (UX review 2026-10). */
+const TEXT_ENTRY = 'input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="button"]):not([type="submit"]), textarea, select, [contenteditable="true"]';
 
 function focusBlocksStickyCta() {
   const active = document.activeElement;
-  return active instanceof HTMLElement && Boolean(active.closest('input, textarea, select, [contenteditable="true"]'));
+  return active instanceof HTMLElement && Boolean(active.closest(TEXT_ENTRY));
 }
 
 function overlayBlocksStickyCta() {
@@ -28,7 +33,9 @@ function watchGate(
     visibilityFrame = 0;
     const summaryIsPassed = summary.getBoundingClientRect().bottom <= 0;
     const inquiryRect = inquirySection.getBoundingClientRect();
-    const inquiryIsVisible = inquiryRect.top < window.innerHeight && inquiryRect.bottom > 0;
+    // On screen or already above it: /angary closes with its related directions after the form (03.10), and there a
+    // «До заявки ↓» would point the wrong way
+    const inquiryIsVisible = inquiryRect.top < window.innerHeight;
     setSummaryPassed((current) => current === summaryIsPassed ? current : summaryIsPassed);
     setInquiryVisible((current) => current === inquiryIsVisible ? current : inquiryIsVisible);
   };
@@ -87,13 +94,14 @@ function watchGate(
 
 /**
  * The phone shortcut to the form while something is attached. It shows only once `gate` — the
- * source's own summary — has scrolled past, never while #inquiry is on screen, while a field has
+ * source's own summary — has scrolled past, never once #inquiry is on screen or passed, while a field has
  * focus, or under the cookie banner, the mobile menu or a modal. Which widths show it is the
- * `className`'s CSS (≤ 760 on /angary).
+ * `className`'s CSS (≤ 760 on /angary). A brief already sent with a saved lead needs no shortcut (04.10): it kept
+ * inviting a second, identical lead after «Дякуємо!» (sweep 03.10).
  */
 export function AttachedBriefCta({ gate, className, label = 'До заявки' }: { gate: string; className: string; label?: string }) {
   const inquiry = useInquiryAttachment();
-  const attached = Boolean(inquiry?.attachment);
+  const attached = Boolean(inquiry?.attachment) && !inquiry?.sent;
   const [inquiryVisible, setInquiryVisible] = useState(false);
   const [summaryPassed, setSummaryPassed] = useState(false);
   const [uiBlocked, setUiBlocked] = useState(true);
@@ -139,6 +147,7 @@ export function AttachedBriefCta({ gate, className, label = 'До заявки' 
     <a
       className={className}
       href="#inquiry"
+      onClick={revealAttachedBrief}
       hidden={!summaryPassed || inquiryVisible || uiBlocked}
     >
       {`${label} `}<span aria-hidden="true">↓</span>

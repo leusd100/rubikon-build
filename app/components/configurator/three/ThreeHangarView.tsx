@@ -888,8 +888,9 @@ export function ThreeHangarView({
   const columnStruts = scene.struts.filter((s) => s.role === 'column' || s.role === 'internal-column');
   const rafterStruts = scene.struts.filter((s) => s.role === 'rafter' || s.role === 'truss-chord' || s.role === 'truss-web');
   // Phase 3E: wall bracing mounts on the SAME `girts` layer/phase — both are the same "secondary
-  // steel, always present, not a user control" kind of thing (brief §11).
-  const girtStruts = scene.struts.filter((s) => s.role === 'girt' || s.role === 'brace');
+  // steel, always present, not a user control" kind of thing (brief §11). So do the roof purlins
+  // and the roof bracing (03.10, role `purlin` / `brace`).
+  const girtStruts = scene.struts.filter((s) => s.role === 'girt' || s.role === 'purlin' || s.role === 'brace');
   // Phase 3F: matched against BOTH cladding-system variants — see MaterialKey's own doc comment
   // in threeSceneModel.ts for why `wall`/`roof` split into `-profiled`/`-sandwich`.
   const wallPanels = scene.panels.filter((p) => p.material === 'wall-profiled' || p.material === 'wall-sandwich');
@@ -902,7 +903,9 @@ export function ThreeHangarView({
       // that HangarPreviewModes provides instead.
       orthographic
       frameloop="demand"
-      shadows={shadows}
+      // 'percentage' (PCFShadowMap), not `true`: R3F's default asks for PCFSoftShadowMap, which three 0.185 deprecates
+      // and quietly replaces with PCF anyway — with a console warning on every switch to 3D (03.10). Same shadows.
+      shadows={shadows ? 'percentage' : false}
       dpr={[1, maxDpr]}
       gl={{ antialias: true, preserveDrawingBuffer: true }}
       // The canvas is decorative: the controls and summary remain the canonical description of the

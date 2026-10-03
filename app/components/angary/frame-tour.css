@@ -1,0 +1,236 @@
+/* «Каркас вашого ангара» (FrameTour.tsx): the visitor's frame as an isometric wireframe on the «Креслення» sheet, in
+   graphite at rest. A step lights its parts in copper and names them; steps 4 and 5 send a load through the structure,
+   link by link, with the legend above the drawing lighting in step. The camera's window keeps the drawing's own
+   proportion, so at rest it never crops it. */
+
+/* the sheet is as tall as its drawing, not the row (the steps beside it are taller) nor the editorial pictures' 520 px
+   (at tablet widths that left a band of empty paper under it). --ft-k thickens the lines and enlarges the letters
+   where the sheet is drawn small (a narrow sheet, below) */
+.ft { --ft-k: 1; }
+.ft.direction-editorial-grid .ft-sheet { align-self: center; min-height: 0; }
+/* The picture: a band on top — the progress bars, then the legend — and under it the camera's window in the drawing's
+   own proportion, never the editorial pictures' 3 : 2 (03.10: laid over the drawing, the legend covered the roof of a
+   wide hangar and, on a phone, of any; the 3 : 2 cropped the drawing's sides on a phone) */
+.ft .ft-sheet.sheet .ft-visual { display: flex; flex: none; flex-direction: column; height: auto; padding-top: 25px; aspect-ratio: auto; background: var(--color-surface-alt); }
+.ft-window { position: relative; flex: none; overflow: hidden; aspect-ratio: 720 / 440; }
+.ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+.ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke .3s ease, opacity .3s ease; }
+.ft-slab { stroke: var(--color-border-strong); stroke-width: calc(1.1px * var(--ft-k)); }
+/* the footings are the designer's: drawn dashed, as «умовно» */
+.ft-footing { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); stroke-dasharray: 4 3; }
+.ft-back { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
+/* the end wall's gates and door, outlined as the configurator places them (04.10) */
+.ft-opening { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); }
+.ft-thin { stroke: var(--color-text-secondary); stroke-width: calc(1.1px * var(--ft-k)); }
+.ft-post { stroke: var(--color-text-secondary); stroke-width: calc(1.4px * var(--ft-k)); }
+.ft-brace { stroke: var(--color-text-secondary); stroke-width: calc(1.2px * var(--ft-k)); }
+/* the far wall's bracing in the back line's ink */
+.ft-brace-far { stroke: var(--color-text-muted); }
+.ft-member { stroke: var(--color-text); stroke-width: calc(2.2px * var(--ft-k)); }
+.ft-dim { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
+/* coordinate axes: dash-dot, a bubble at the end past the dimension lines; letters and figures only */
+.ft-axis { stroke: var(--color-text-muted); stroke-width: calc(.9px * var(--ft-k)); stroke-dasharray: 14 4 1 4; }
+.ft-bubble { transform: scale(var(--ft-k)); transform-box: fill-box; transform-origin: center; transition: opacity .3s ease; }
+.ft-bubble circle { fill: var(--color-surface-alt); stroke: var(--color-text-muted); stroke-width: 1px; transition: stroke .3s ease; }
+/* 14 px in the 22 px circle (12.5 before): the letters and figures as large as the circle takes, so a phone's read
+   at ~10 px (04.10) */
+.ft-bubble text { fill: var(--color-text-secondary); font: 700 14px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill .3s ease; }
+.ft-letter { fill: var(--color-text-secondary); font: italic 600 calc(19px * var(--ft-k)) var(--font-manrope), sans-serif; text-anchor: middle; transition: fill .3s ease, opacity .3s ease; }
+.ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }
+.ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+/* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
+.ft .dn-progress span:not(.is-done) { background: color-mix(in srgb, var(--color-text) 20%, transparent); }
+
+/* The title block keeps its geometry through the tour (04.10): the step's cell as wide for «Огляд» as for «Крок 05 / 05»,
+   the control as wide for «Пауза» as for «Відтворити», and «Що показано» holding every caption in one place, so it is
+   as tall as the longest — the cells jumped ~40 px sideways as the tour started and stopped, and the sheet changed
+   height from step to step. «Що показано» never narrows below a readable column (at 1100 px it fell to 34 px and broke
+   a letter a line): «Об’єкт» gives way first, breaking after its «·». */
+.ft-sheet .sheet-stamp > .sheet-cell:first-child { flex: none; min-width: 111px; }
+.ft-sheet .sheet-stamp > .sheet-cell-main { flex: 1 1 0; min-width: 150px; }
+.ft-sheet .dn-control-label { min-width: 7.5em; text-align: end; }
+.ft-captions { display: grid; }
+.ft-captions > span { grid-area: 1 / 1; }
+.ft-captions > span:not([data-on]) { visibility: hidden; }
+
+/* The title block's «Об’єкт» with the way back up to the sizes: under the value, so the cell stays one value wide and
+   leaves «Що показано» its room; on a narrow sheet in the caption row, where the cell has the width (below) */
+.ft-sheet .ft-object { flex: 0 1 auto; min-width: min-content; }
+.ft-sheet .ft-object b { display: grid; grid-template-areas: "label" "value" "link"; justify-items: start; gap: 4px; overflow: visible; white-space: normal; }
+.ft-object small { grid-area: label; }
+.ft-object-value { grid-area: value; max-width: 100%; font-variant-numeric: tabular-nums; }
+/* a 25 px row that does not grow the cell — its padding reaches over the cell's own margins — and a 45 px target */
+.ft-resize {
+  position: relative; grid-area: link; margin-block: -7px; padding-block: 7px; color: var(--color-accent-strong); font: 700 11px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .04em; white-space: nowrap; text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: 3px;
+}
+.ft-resize::after { position: absolute; inset: -10px -4px; content: ''; }
+.ft-resize:hover { color: var(--color-text); }
+
+/* Names on the members (steps 2 and 3), haloed in the sheet's colour so they read over the wireframe */
+.ft-tags { opacity: 0; }
+.ft-leader { stroke: var(--color-accent); stroke-width: calc(1px * var(--ft-k)); }
+.ft-tag {
+  fill: var(--color-accent-strong); font: 600 calc(15px * var(--ft-t, 1)) var(--font-manrope), sans-serif;
+  paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(5px * var(--ft-k)); stroke-linejoin: round;
+}
+
+/* A step: its parts copper, the rest back */
+.ft[data-step] .ft-part { opacity: .28; }
+.ft[data-step] :is(.ft-back, .ft-opening) { opacity: .5; }
+/* …and the bubbles and letters of the parts stepped back go: a step's camera cut them at its window's edge into a half
+   «H» or a half bubble (04.10). The wind's step, pushed in on the end wall, keeps no axes or dimension lines either. */
+.ft:is([data-step="1"], [data-step="2"], [data-step="3"], [data-step="5"]) .ft-part :is(.ft-bubble, .ft-letter) { opacity: 0; }
+.ft[data-step="1"] [data-part~="1"] :is(.ft-bubble, .ft-letter), .ft[data-step="3"] [data-part~="3"] :is(.ft-bubble, .ft-letter) { opacity: 1; }
+.ft[data-step="5"] .ft-part :is(.ft-axis, .ft-dim) { opacity: 0; }
+.ft[data-step="1"] [data-part~="1"], .ft[data-step="2"] [data-part~="2"], .ft[data-step="3"] [data-part~="3"] { opacity: 1; }
+.ft[data-step="1"] [data-part~="1"] path, .ft[data-step="2"] [data-part~="2"] path,
+.ft[data-step="3"] [data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace, .ft-dim, .ft-axis) { stroke: var(--color-accent); }
+.ft[data-step="1"] [data-part~="1"] .ft-member, .ft[data-step="2"] [data-part~="2"] .ft-member { stroke-width: calc(2.8px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-brace { stroke-width: calc(2.2px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-brace-far { stroke-width: calc(1.5px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-post { stroke-width: calc(2px * var(--ft-k)); }
+.ft[data-step="1"] [data-part~="1"] .ft-letter, .ft[data-step="3"] [data-part~="3"] .ft-letter { fill: var(--color-accent-strong); }
+.ft[data-step="1"] [data-part~="1"] .ft-bubble circle, .ft[data-step="3"] [data-part~="3"] .ft-bubble circle { stroke: var(--color-accent); }
+.ft[data-step="1"] [data-part~="1"] .ft-bubble text, .ft[data-step="3"] [data-part~="3"] .ft-bubble text { fill: var(--color-accent-strong); }
+.ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { opacity: 1; }
+
+/* The loads: the frame stays in graphite under them; the lit links glow */
+.ft-load { opacity: 0; }
+.ft[data-step="4"] [data-load="snow"], .ft[data-step="5"] [data-load="wind"] { opacity: 1; }
+.ft[data-step="4"] .ft-part, .ft[data-step="5"] .ft-part { opacity: .55; }
+.ft-link { stroke: var(--color-accent); stroke-width: calc(2.6px * var(--ft-k)); filter: url(#ft-glow); }
+.ft-drawing .ft-plane { fill: var(--color-accent); fill-opacity: .14; stroke: none; filter: none; }
+.ft-link-footing { stroke-width: calc(1.8px * var(--ft-k)); stroke-dasharray: 4 3; }
+/* the edges of the strip one frame carries */
+.ft-drawing .ft-edge { stroke-width: calc(1.2px * var(--ft-k)); stroke-dasharray: 5 4; filter: none; }
+.ft-arrows { stroke: var(--color-accent); stroke-width: calc(2px * var(--ft-k)); }
+/* the load as drops, moving through the frame (as the water on the roofing node) — dashed, so no pathLength here */
+.ft-flow { stroke: var(--color-accent-strong); stroke-width: calc(4.5px * var(--ft-k)); stroke-dasharray: .5 12; }
+/* the first bay as it would lean without the bracing: a dashed graphite ghost, shown only while it plays */
+.ft-drawing .ft-ghost { stroke: var(--color-text); stroke-width: calc(1.6px * var(--ft-k)); stroke-dasharray: 7 5; opacity: 0; }
+
+/* The legend: the chain the load takes, its links joined by arrows, in one slot as tall as the taller chain or the note
+   (all three always laid out, only the shown one visible), so the sheet keeps its height from step to step */
+.ft-legend { display: grid; padding: 0 14px 6px; }
+.ft-legend > * { grid-area: 1 / 1; }
+.ft-chain {
+  display: flex; flex-wrap: wrap; align-content: start; gap: 2px 0; margin: 0; padding: 0; list-style: none; visibility: hidden;
+  font: 600 12.5px/1.25 var(--font-manrope), sans-serif; color: var(--color-accent-strong);
+}
+.ft[data-step="4"] .ft-chain[data-load="snow"], .ft[data-step="5"] .ft-chain[data-load="wind"] { visibility: visible; }
+.ft-chain li:not(:last-child)::after { margin-inline: 6px; color: var(--color-text-muted); content: '→'; }
+/* …and in its place, while the first bay leans, the note on the deformation */
+.ft-note { margin: 0; color: var(--color-text-secondary); font: italic 500 12.5px/1.25 var(--font-manrope), sans-serif; opacity: 0; pointer-events: none; }
+/* Reduced motion (04.10): the wind's step stands complete — the leaning bay drawn over the braced frame, and its note
+   in a row of its own under the chain, so the step shows what its text says */
+@media (prefers-reduced-motion: reduce) {
+  .ft-legend > .ft-note { grid-area: 2 / 1; margin-top: 4px; }
+  .ft[data-step="5"] :is(.ft-ghost, .ft-note) { opacity: 1; }
+}
+
+@keyframes ft-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes ft-flow { to { stroke-dashoffset: -12.5; } }
+@keyframes ft-drop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes ft-gust { from { opacity: 0; transform: translate(-12px, 7px); } to { opacity: 1; transform: none; } }
+/* after the first fall the snow keeps falling, the wind keeps coming in gusts — each arrow on its own beat (--k) */
+@keyframes ft-snowfall { 0% { opacity: 0; transform: translateY(-8px); } 15% { opacity: 1; } 55%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes ft-gusting { 0% { opacity: 0; transform: translate(-10px, 6px); } 15% { opacity: 1; } 45%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes ft-light { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ft-link-on {
+  from { color: var(--color-text-muted); }
+  to { color: var(--color-accent-strong); }
+}
+/* the leaning bay: in over ~400 ms, held, back out; meanwhile the bracing steps back to 30 % and the legend gives way to
+   the note, then both return */
+@keyframes ft-ghost { 0%, 100% { opacity: 0; } 15%, 85% { opacity: 1; } }
+@keyframes ft-swap { 0%, 100% { opacity: 1; } 15%, 85% { opacity: 0; } }
+@keyframes ft-unbraced { 0%, 100% { opacity: 1; } 15%, 85% { opacity: .3; } }
+@media (prefers-reduced-motion: no-preference) {
+  .ft[data-step="1"] [data-part~="1"] path[pathLength], .ft[data-step="2"] [data-part="2"] path[pathLength],
+  .ft[data-step="3"] [data-part~="3"] :is(.ft-brace, .ft-post) { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
+  .ft[data-step="2"] [data-part="2"] path[pathLength] { animation-duration: 1400ms; }
+  .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { transition-delay: 1100ms; }
+  /* a link every 520 ms, the legend in step with the drawing; each link's drops appear and run as it lights, so the
+     load front travels down the frame with the words. The snow keeps falling, the wind gusting and the drops running
+     only while the tour plays (04.10): «Пауза» stops every motion, a tour that has left the view stops with it, and a
+     step the visitor chooses settles complete once built. Each load's arrows move on its own step only (the other's,
+     hidden, fell and gusted with them). */
+  .ft[data-step="4"] [data-load="snow"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 300ms both; }
+  .ft[data-step="5"] [data-load="wind"] .ft-arrows { animation: ft-gust 500ms var(--ease-premium) 300ms both; }
+  .ft[data-touring][data-step="4"] [data-load="snow"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 300ms both, ft-snowfall 1600ms ease-in-out calc(900ms + var(--k, 0) * 200ms) infinite; }
+  .ft[data-touring][data-step="5"] [data-load="wind"] .ft-arrows { animation: ft-gust 500ms var(--ease-premium) 300ms both, ft-gusting 1100ms ease-out calc(900ms + var(--k, 0) * 370ms) infinite; }
+  .ft[data-step="4"] [data-load="snow"] .ft-link, .ft[data-step="5"] [data-load="wind"] .ft-link {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both;
+  }
+  /* each chain starts with its own step (both stay laid out, so a selector on any step would run it unseen) */
+  .ft[data-step="4"] .ft-chain[data-load="snow"] li, .ft[data-step="5"] .ft-chain[data-load="wind"] li { animation: ft-link-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
+  .ft[data-step="4"] [data-load="snow"] .ft-flow, .ft[data-step="5"] [data-load="wind"] .ft-flow {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both;
+  }
+  .ft[data-touring][data-step="4"] [data-load="snow"] .ft-flow, .ft[data-touring][data-step="5"] [data-load="wind"] .ft-flow {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-flow 560ms linear calc(700ms + var(--n) * 520ms) infinite;
+  }
+  /* The wind's last link lights at 3.3 s; at 3.7 s the bracing steps back and the first bay leans (with the note), at
+     ~5.9 s the bracing lights again and the bay stands up — the step holds 7.6 s (FrameTour's STEP_DURATIONS) */
+  .ft[data-step="5"] [data-load="wind"] .ft-link[data-brace], .ft[data-step="5"] [data-load="wind"] .ft-flow[data-brace] {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-unbraced 2600ms ease 3700ms;
+  }
+  .ft[data-touring][data-step="5"] [data-load="wind"] .ft-flow[data-brace] {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-flow 560ms linear calc(700ms + var(--n) * 520ms) infinite, ft-unbraced 2600ms ease 3700ms;
+  }
+  .ft[data-step="5"] :is(.ft-ghost, .ft-note) { animation: ft-ghost 2600ms ease 3700ms both; }
+  .ft[data-step="5"] .ft-chain[data-load="wind"] { animation: ft-swap 2600ms ease 3700ms; }
+}
+
+/* The shown step's text under the drawing — a phone's only (see FrameTour) */
+.ft-step-caption { display: none; }
+
+@media (max-width: 760px) {
+  /* On a phone the list is the tour's index of titles; the shown step's text reads under the drawing, in one slot as
+     tall as the longest text, so nothing below moves when the step changes. The buttons keep their text for a screen
+     reader. */
+  .ft.dn.direction-editorial-grid[data-layout] { grid-template-areas: "copy" "media" "caption" "steps"; }
+  .ft-step-caption { grid-area: caption; display: grid; margin-top: 14px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
+  .ft-step-caption p { grid-area: 1 / 1; margin: 0; visibility: hidden; }
+  .ft-step-caption p[data-on] { visibility: visible; }
+  .ft .dn-step-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .ft .dn-steps { margin-top: 14px; }
+  .ft .dn-step { padding-block: 11px; }
+  /* a narrower band, the legend in smaller type and closer to the sheet's edge */
+  .ft .ft-sheet.sheet .ft-visual { padding-top: 22px; }
+  .ft-legend { padding-inline: 8px; }
+  .ft-chain, .ft-note { font-size: 12px; }
+  .ft-chain li:not(:last-child)::after { margin-inline: 4px; }
+}
+
+/* A tablet (761–1023 px) stacks the tour as a phone does — the copy, the sheet across the full width, then the steps,
+   with their texts: beside the copy the sheet was 314 px wide at 768 and every name in it unreadable (04.10) */
+@media (min-width: 761px) and (max-width: 1023px) {
+  .ft.dn.direction-editorial-grid[data-layout] { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "copy" "media" "steps"; }
+  .ft.dn.direction-editorial-grid[data-layout] .ft-sheet { margin-top: 32px; }
+  .ft .dn-steps { max-width: none; }
+}
+
+/* The control's word gives way to its icon where it would squeeze «Що показано» (it keeps its name for a screen reader) */
+@container sheet (max-width: 599px) {
+  .ft-sheet .dn-control-label { position: absolute; width: 1px; min-width: 0; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+/* A narrow sheet: the title block in two rows — what is shown, then the object and an icon-only control; the step
+   count is the progress bars' over the picture (it wrapped into three rows with an empty cell). The drawing is small
+   here (a phone): its lines thicker, its names and letters larger, by the sheet's own width — a tablet's sheet beside
+   the copy kept the desktop's sizes (04.10). */
+@container sheet (max-width: 480px) {
+  .ft-visual { --ft-k: 1.55; --ft-t: 1.5; }
+  .ft-sheet .sheet-stamp > .sheet-cell-main { min-width: 0; }
+  .ft-sheet .ft-object b { grid-template-areas: "label link" "value value"; grid-template-columns: auto auto; justify-content: space-between; column-gap: 12px; }
+  .ft-sheet .sheet-stamp > .sheet-cell:first-child { display: none; }
+  .ft-sheet .sheet-stamp > .sheet-cell:nth-child(3) { border-left: 0; }
+}
+/* …and on the narrowest (320 px), the way up under the object again, so the object and the control still share a row:
+   side by side the label and the link pushed the control into a third row of its own (04.10) */
+@container sheet (max-width: 300px) {
+  .ft-sheet.sheet .sheet-stamp > .ft-object { flex: 1 1 0; }
+  .ft-sheet .ft-object b { grid-template-areas: "label" "value" "link"; grid-template-columns: none; }
+}

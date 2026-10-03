@@ -51,7 +51,7 @@ test.describe('hangar configurator visual states', () => {
 
   test('full envelope, undecided insulation, two gates', async ({ page }) => {
     await openConfigurator(page);
-    await page.locator('.hc-option-card', { hasText: 'Ще не визначився' }).click();
+    await page.locator('.hc-option-card', { hasText: 'Ще не визначено' }).click();
     await page.locator('.hc-option-card', { hasText: '2' }).click();
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-undecided-two-gates.png');
   });

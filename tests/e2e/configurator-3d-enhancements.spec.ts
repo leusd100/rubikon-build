@@ -133,7 +133,7 @@ test.describe('configurator 3D enhancements (Phase 3C)', () => {
       await expect(page.getByRole('dialog')).toBeVisible();
       expect(await page.evaluate(() => document.body.style.overflow)).toBe('hidden');
 
-      await page.getByRole('button', { name: 'Закрити ✕' }).click();
+      await page.getByRole('button', { name: 'Закрити', exact: true }).click();
       await expect(page.getByRole('dialog')).toBeHidden();
       expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
     });
@@ -145,7 +145,7 @@ test.describe('configurator 3D enhancements (Phase 3C)', () => {
       const trigger = page.getByRole('button', { name: 'Розгорнути', exact: true });
       await trigger.click();
       await expect(page.getByRole('dialog')).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Закрити ✕' })).toBeFocused();
+      await expect(page.getByRole('button', { name: 'Закрити', exact: true })).toBeFocused();
 
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toBeHidden();

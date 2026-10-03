@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MIN_LABEL_SCREEN_PX,
+  labelScaleToFit,
   pointsAttr,
   project,
   projectIsometricScene,
+  viewBoxOf,
   type Point,
 } from '../../../app/lib/configurator/isometricProjection';
 import { buildTechnicalScene } from '../../../app/lib/configurator/technicalSceneModel';
@@ -15,8 +18,12 @@ import {
   type StructuralScheme,
 } from '../../../app/lib/configurator/types';
 
-function projectFor(overrides: Partial<ConfiguratorState> = {}) {
-  return projectIsometricScene(buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides })));
+function technicalFor(overrides: Partial<ConfiguratorState> = {}) {
+  return buildTechnicalScene(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides }));
+}
+
+function projectFor(overrides: Partial<ConfiguratorState> = {}, labelScale = 1) {
+  return projectIsometricScene(technicalFor(overrides), labelScale);
 }
 
 /** Phase 3E.1: structural scheme/roof structure are derived from width now, not stored state —
@@ -253,7 +260,8 @@ describe('bounds', () => {
       { width: 12, length: 110, height: 5 },
       { width: 50, length: 30, height: 6 },
     ]) {
-      const scene = projectFor({ dimensions: dims });
+      for (const labelScale of [1, 2.5]) {
+      const scene = projectFor({ dimensions: dims }, labelScale);
       const shell = [
         ...scene.wallSegments.map((s) => s.points),
         ...scene.gableEnds.map((s) => s.points),
@@ -273,9 +281,10 @@ describe('bounds', () => {
           const overlaps = shell.some((poly) => inPolygon(point, poly));
           expect(
             overlaps,
-            `${name} guide crosses the building at ${dims.width}×${dims.length}×${dims.height}`,
+            `${name} guide crosses the building at ${dims.width}×${dims.length}×${dims.height}, labels ×${labelScale}`,
           ).toBe(false);
         }
+      }
       }
     }
   });
@@ -321,8 +330,8 @@ describe('dimension label framing', () => {
   // because three assertions below depend on it, and a rotated label's horizontal extent is its
   // leading rather than its run — get that backwards and every one of them silently checks the
   // wrong box.
-  function labelSpanX(guide: { text: string; derived: boolean; rotated?: boolean; anchor: string; label: { x: number } }) {
-    const fontPx = guide.derived ? 12 : 14;
+  function labelSpanX(guide: { text: string; fontPx: number; rotated?: boolean; anchor: string; label: { x: number } }) {
+    const { fontPx } = guide;
     const run = guide.text.length * fontPx * 0.62;
     if (guide.rotated) return { x0: guide.label.x - fontPx, x1: guide.label.x + fontPx * 0.35 };
     const left = guide.anchor === 'end' ? guide.label.x - run : guide.anchor === 'middle' ? guide.label.x - run / 2 : guide.label.x;
@@ -346,13 +355,15 @@ describe('dimension label framing', () => {
       { width: 24, length: 60, height: 8 },
       { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
     ]) {
-      const scene = projectFor({ dimensions: dims });
-      const { minX, maxX } = scene.bounds;
+      for (const labelScale of [1, 2.5]) {
+        const scene = projectFor({ dimensions: dims }, labelScale);
+        const { minX, maxX } = scene.bounds;
 
-      for (const guide of Object.values(scene.dimensions)) {
-        const { x0, x1 } = labelSpanX(guide);
-        expect(x0).toBeGreaterThanOrEqual(minX);
-        expect(x1).toBeLessThanOrEqual(maxX);
+        for (const guide of Object.values(scene.dimensions)) {
+          const { x0, x1 } = labelSpanX(guide);
+          expect(x0).toBeGreaterThanOrEqual(minX);
+          expect(x1).toBeLessThanOrEqual(maxX);
+        }
       }
     }
   });
@@ -372,16 +383,29 @@ describe('dimension label framing', () => {
       { width: 16, length: 24, height: 6 },
       { width: 30, length: 90, height: 12.5 },
     ]) {
-      const { eave, ridge } = projectFor({ dimensions: dims }).dimensions;
-      const direction = chainDirection(eave);
-      const span = labelSpanX(eave);
-      // The eave label's far edge, on the side both chains run toward.
-      const eaveFarEdge = direction < 0 ? span.x0 : span.x1;
-      const ridgeLineX = ridge.line[0].x;
-      const label = `${dims.width}x${dims.length}x${dims.height}`;
+      for (const labelScale of [1, 2.5]) {
+        const { eave, ridge } = projectFor({ dimensions: dims }, labelScale).dimensions;
+        const direction = chainDirection(eave);
+        const span = labelSpanX(eave);
+        // The eave label's far edge, on the side both chains run toward.
+        const eaveFarEdge = direction < 0 ? span.x0 : span.x1;
+        const ridgeLineX = ridge.line[0].x;
+        const label = `${dims.width}x${dims.length}x${dims.height} ×${labelScale}`;
 
-      if (direction < 0) expect(ridgeLineX, label).toBeLessThan(eaveFarEdge);
-      else expect(ridgeLineX, label).toBeGreaterThan(eaveFarEdge);
+        if (direction < 0) expect(ridgeLineX, label).toBeLessThan(eaveFarEdge);
+        else expect(ridgeLineX, label).toBeGreaterThan(eaveFarEdge);
+      }
+    }
+  });
+
+  // Regression (03.10): a turned label sat 0.35 em off its chain, less than the half-height of its own glyphs, so the
+  // line ran through the word gap and read «8_м», «15_м». A drafted figure stands off its line: the glyphs reach about
+  // 0.45 em to one side of the label's middle, so the middle sits at least 0.6 em out.
+  it('stands each turned label off its own chain line, at any label size', () => {
+    for (const labelScale of [1, 1.5, 2.5]) {
+      for (const guide of [projectFor({}, labelScale).dimensions.eave, projectFor({}, labelScale).dimensions.ridge]) {
+        expect(Math.abs(guide.label.x - guide.line[0].x), `${guide.text} ×${labelScale}`).toBeGreaterThanOrEqual(guide.fontPx * 0.6);
+      }
     }
   });
 
@@ -437,6 +461,72 @@ describe('dimension label framing', () => {
   });
 });
 
+describe('labels at a legible size (03.10)', () => {
+  it('draws the labels at the stylesheet’s 14 and 12 units by default', () => {
+    const { width, length, eave, ridge } = projectFor().dimensions;
+    expect([width.fontPx, length.fontPx, eave.fontPx]).toEqual([14, 14, 14]);
+    expect(ridge.fontPx).toBe(12);
+  });
+
+  it('scales the labels, and the room they take, together', () => {
+    const base = projectFor();
+    const large = projectFor({}, 2);
+    expect(large.dimensions.width.fontPx).toBe(28);
+    expect(large.dimensions.ridge.fontPx).toBe(24);
+    // the building itself does not move; only the frame around it grows
+    expect(large.foundation.points).toEqual(base.foundation.points);
+    expect(large.bounds.minX).toBeLessThan(base.bounds.minX);
+    expect(large.bounds.maxY).toBeGreaterThan(base.bounds.maxY);
+  });
+
+  /** The smallest label's size on screen once the drawing is fitted into `box` */
+  function smallestOnScreen(overrides: Partial<ConfiguratorState>, box: { width: number; height: number }) {
+    const technical = technicalFor(overrides);
+    const scale = labelScaleToFit(technical, box);
+    const view = viewBoxOf(projectIsometricScene(technical, scale).bounds);
+    const screenPerUnit = Math.min(box.width / view.width, box.height / view.height);
+    return { scale, px: projectIsometricScene(technical, scale).dimensions.ridge.fontPx * screenPerUnit };
+  }
+
+  it('leaves a drawing shown large as it was', () => {
+    // 1440×900: the field's content box
+    expect(labelScaleToFit(technicalFor(), { width: 772, height: 532 })).toBe(1);
+  });
+
+  it('keeps every label at 12 px or more on a phone, whatever the hangar', () => {
+    for (const dims of [
+      { width: 24, length: 60, height: 8 },
+      { width: DIMENSION_BOUNDS.width.min, length: DIMENSION_BOUNDS.length.min, height: DIMENSION_BOUNDS.height.max },
+      { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
+    ]) {
+      // 390×844 and 320×640: the field's content box
+      for (const box of [{ width: 296, height: 226 }, { width: 226, height: 200 }]) {
+        const { px } = smallestOnScreen({ dimensions: dims }, box);
+        expect(px, `${dims.width}x${dims.length}x${dims.height} in ${box.width}`).toBeGreaterThanOrEqual(MIN_LABEL_SCREEN_PX - 0.1);
+      }
+    }
+  });
+
+  it('draws the labels larger, in the drawing’s units, the smaller the drawing is shown', () => {
+    const technical = technicalFor();
+    // the default on a 390 px phone read 5.9 px for the ridge before
+    expect(smallestOnScreen({}, { width: 296, height: 226 }).scale).toBeGreaterThan(2);
+    const wide = labelScaleToFit(technical, { width: 412, height: 275 });
+    const narrow = labelScaleToFit(technical, { width: 226, height: 200 });
+    expect(narrow).toBeGreaterThan(wide);
+  });
+
+  it('has nothing to fit before the drawing is measured', () => {
+    expect(labelScaleToFit(technicalFor(), { width: 0, height: 0 })).toBe(1);
+  });
+
+  it('frames the bounds with a margin proportional to them, within its floor and ceiling', () => {
+    expect(viewBoxOf({ minX: 0, minY: 0, maxX: 100, maxY: 50 })).toEqual({ x: -12, y: -12, width: 124, height: 74 });
+    expect(viewBoxOf({ minX: 0, minY: 0, maxX: 1000, maxY: 400 })).toEqual({ x: -20, y: -20, width: 1040, height: 440 });
+    expect(viewBoxOf({ minX: 0, minY: 0, maxX: 3000, maxY: 400 }).x).toBe(-32);
+  });
+});
+
 describe('Phase 3E structural line projections', () => {
   it('projects exactly as many internal-column lines as the technical scene has primitives (1:1, no drops/dupes)', () => {
     const domain = deriveDomainModel(DEFAULT_CONFIGURATOR_STATE);
@@ -468,5 +558,36 @@ describe('Phase 3E structural line projections', () => {
     const trussProjected = projectForStructural({ scheme: 'clearSpan', roofStructure: 'truss' });
     expect(trussProjected.frame.trussChords.every((l) => l.visible)).toBe(true);
     expect(trussProjected.frame.trussWebs.every((l) => l.visible)).toBe(true);
+  });
+});
+
+describe('roof secondary steel projections (03.10)', () => {
+  it('projects the girts, roof purlins and both bracings 1:1 with their primitives, each a finite 2-point line', () => {
+    const scene = buildTechnicalScene(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE));
+    const projected = projectIsometricScene(scene);
+    const count = (kind: string) => scene.primitives.filter((p) => p.kind === kind).length;
+    expect(projected.frame.girts).toHaveLength(count('wall-girt'));
+    expect(projected.frame.roofPurlins).toHaveLength(count('roof-purlin'));
+    expect(projected.frame.bracing).toHaveLength(count('wall-brace'));
+    expect(projected.frame.roofBracing).toHaveLength(count('roof-brace'));
+    expect(projected.frame.roofPurlins.length).toBeGreaterThan(0);
+    expect(projected.frame.roofBracing.length).toBeGreaterThan(0);
+    for (const line of [...projected.frame.roofPurlins, ...projected.frame.roofBracing]) {
+      expect(line.points).toHaveLength(2);
+      expect(line.points.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y))).toBe(true);
+    }
+  });
+
+  it('roof members sit inside the framing bounds the building already sets', () => {
+    const projected = projectIsometricScene(buildTechnicalScene(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE)));
+    const { minX, minY, maxX, maxY } = projected.bounds;
+    for (const line of [...projected.frame.roofPurlins, ...projected.frame.roofBracing]) {
+      for (const p of line.points) {
+        expect(p.x).toBeGreaterThanOrEqual(minX);
+        expect(p.x).toBeLessThanOrEqual(maxX);
+        expect(p.y).toBeGreaterThanOrEqual(minY);
+        expect(p.y).toBeLessThanOrEqual(maxY);
+      }
+    }
   });
 });

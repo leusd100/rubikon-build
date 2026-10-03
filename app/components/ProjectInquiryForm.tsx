@@ -12,6 +12,7 @@ import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
 import { queueInquiryAnalyticsEvent } from '../lib/inquiry/analytics';
 import { toInquiryAttachmentPayload } from '../lib/inquiry/attachment';
 import { createSubmissionId, nextSubmissionIdAfterSuccess } from '../lib/inquiry/submissionId';
+import { dimensionsFieldView } from './inquiry/formAttachment';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
 import { InquiryAttachmentSummary } from './inquiry/InquiryAttachmentSummary';
 import { useTurnstile } from './inquiry/useTurnstile';
@@ -89,7 +90,18 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   // Whatever the page's configurator or planner attached — the form knows neither of them.
   const inquiryAttachment = useInquiryAttachment();
   const attachment = inquiryAttachment?.attachment ?? null;
-  const dimensionsField = attachment?.dimensionsField ?? { mode: 'manual' as const };
+  // A brief that went out with a saved lead stays on the form, says so, and is not sent again until it changes (04.10)
+  const briefSent = Boolean(inquiryAttachment?.sent);
+  const leadAttachment = briefSent ? null : attachment;
+  // A brief from the page's own tool already says what the work is: the page's preset direction becomes a line in the
+  // brief card and is submitted unchanged (owner, 03.10). «Не додавати» brings the select back — with the visitor's own
+  // choice in it: the select used to come back on the preset, what they had chosen lost (sweep 03.10).
+  const fixedDirection = attachment && defaultDirection ? defaultDirection : undefined;
+  const [chosenDirection, setChosenDirection] = useState(defaultDirection);
+  // What the visitor typed in «Орієнтовні розміри» outlives a brief with sizes of its own (formAttachment.ts)
+  const [typedDimensions, setTypedDimensions] = useState('');
+  const [dimensionsTypedOnce, setDimensionsTypedOnce] = useState(false);
+  const dimensions = dimensionsFieldView(attachment?.dimensionsField ?? null, typedDimensions, dimensionsTypedOnce, briefSent);
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
   const [statusAction, setStatusAction] = useState<'error' | null>(null);
@@ -164,7 +176,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         cooperation: value(formData, 'cooperation'),
         startDate: value(formData, 'startDate'),
         comment: value(formData, 'comment'),
-        ...(attachment ? { configuration: attachment.text, attachment: toInquiryAttachmentPayload(attachment) } : {}),
+        ...(leadAttachment ? { configuration: leadAttachment.text, attachment: toInquiryAttachmentPayload(leadAttachment) } : {}),
       },
     };
     const signature = JSON.stringify(businessPayload);
@@ -243,6 +255,9 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     lastAttempt.current = null;
     setSubmissionId(() => nextSubmissionIdAfterSuccess());
     setStatus(successMessage);
+    // The brief this lead carried counts as sent: route node 01 and the phone «До заявки» stop asking to send it, and a
+    // later submit — a new lead, as above — goes without it unless the configuration changes (04.10)
+    if (leadAttachment) inquiryAttachment?.markSent(leadAttachment);
   }
 
   return (
@@ -251,6 +266,15 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         <p className="inquiry-form-kicker"><span aria-hidden="true" /> Короткий запит</p>
         <p className="inquiry-required-note">Поля, позначені *, обов’язкові</p>
       </div>
+
+      {/* Owner, 03.10: an attached brief opens the form, above «Контакт» — after «Обговорити цю конфігурацію» a phone shows
+          the brief, the name and the phone on one screen. Without a brief the form starts with «Контакт» as before. */}
+      {attachment && inquiryAttachment && (
+        <div className="inquiry-form-section inquiry-form-section-brief">
+          <InquiryAttachmentSummary attachment={attachment} onDetach={inquiryAttachment.detach} direction={fixedDirection} sent={briefSent} />
+          {fixedDirection && <input name={enabledFieldName(jsReady, 'direction')} type="hidden" value={fixedDirection} />}
+        </div>
+      )}
 
       <section className="inquiry-form-section" aria-labelledby="inquiry-contact-heading">
         <h3 className="inquiry-form-section-title" id="inquiry-contact-heading">Контакт</h3>
@@ -305,19 +329,26 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       </section>
 
       <section className="inquiry-form-section" aria-labelledby="inquiry-project-heading">
-        <h3 className="inquiry-form-section-title" id="inquiry-project-heading">Завдання</h3>
+        <h3 className="inquiry-form-section-title" id="inquiry-project-heading" tabIndex={-1}>Завдання</h3>
         <div className="inquiry-form-section-body">
-          {attachment && inquiryAttachment && (
-            <InquiryAttachmentSummary attachment={attachment} onDetach={inquiryAttachment.detach} />
+          {!fixedDirection && (
+            <label className="inquiry-select">
+              <span>Напрям робіт *</span>
+              <select
+                name={enabledFieldName(jsReady, 'direction')}
+                value={chosenDirection}
+                required
+                onInvalid={DIRECTION_VALIDITY.onInvalid}
+                onChange={(event) => {
+                  DIRECTION_VALIDITY.onInput(event);
+                  setChosenDirection(event.currentTarget.value);
+                }}
+              >
+                <option value="" disabled>Оберіть напрям</option>
+                {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
+              </select>
+            </label>
           )}
-
-          <label className="inquiry-select">
-            <span>Напрям робіт *</span>
-            <select name={enabledFieldName(jsReady, 'direction')} defaultValue={defaultDirection} required onInvalid={DIRECTION_VALIDITY.onInvalid} onChange={DIRECTION_VALIDITY.onInput}>
-              <option value="" disabled>Оберіть напрям</option>
-              {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
-            </select>
-          </label>
 
           <div className="inquiry-task-summary">
             <label htmlFor="inquiry-comment"><span>Коротко про завдання</span></label>
@@ -336,22 +367,37 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
 
           <details className="inquiry-details">
             <summary>
-              <span>Додати параметри об’єкта</span>
+              {/* With a brief attached its parameters are already in the request: these are details to add (sweep 03.10) */}
+              <span>{attachment ? 'Додати деталі до заявки' : 'Додати параметри об’єкта'}</span>
               <ChevronDown aria-hidden="true" />
             </summary>
             <div className="inquiry-details-body">
               <div className="inquiry-fields inquiry-fields-two">
-                <label className={dimensionsField.mode === 'manual' ? undefined : 'inquiry-field-full'}>
+                <label className={dimensions.input ? undefined : 'inquiry-field-full'}>
                   <span>Місто або область</span>
                   <input name={enabledFieldName(jsReady, 'location')} type="text" maxLength={100} autoComplete="address-level1" />
                 </label>
-                {dimensionsField.mode === 'fixed' && (
-                  <input name={enabledFieldName(jsReady, 'dimensions')} type="hidden" value={dimensionsField.value} />
+                {dimensions.fixedValue !== null && (
+                  <input name={enabledFieldName(jsReady, 'dimensions')} type="hidden" value={dimensions.fixedValue} />
                 )}
-                {dimensionsField.mode === 'manual' && (
+                {dimensions.input && (
                   <label>
-                    <span>Орієнтовні розміри</span>
-                    <input key="manual" name={enabledFieldName(jsReady, 'dimensions')} type="text" maxLength={100} placeholder="Наприклад: 20 × 40 × 6 м" />
+                    <span id="inquiry-dimensions-label">Орієнтовні розміри</span>
+                    {/* Named by its caption alone: the brief's sizes under it are its description, not part of its name */}
+                    <input
+                      aria-labelledby="inquiry-dimensions-label"
+                      name={dimensions.inputNamed ? enabledFieldName(jsReady, 'dimensions') : undefined}
+                      type="text"
+                      maxLength={100}
+                      placeholder="Наприклад: 20 × 40 × 6 м"
+                      value={typedDimensions}
+                      aria-describedby={dimensions.note ? 'inquiry-dimensions-hint' : undefined}
+                      onChange={(event) => {
+                        setTypedDimensions(event.currentTarget.value);
+                        setDimensionsTypedOnce(true);
+                      }}
+                    />
+                    {dimensions.note && <small id="inquiry-dimensions-hint" className="inquiry-field-hint">{dimensions.note}</small>}
                   </label>
                 )}
               </div>

@@ -90,7 +90,7 @@ describe('buildTechnicalScene', () => {
     const on = sceneFor({ scope: ['frame'] });
     const off = sceneFor({ scope: [] });
 
-    for (const kind of ['frame-column', 'frame-rafter', 'frame-purlin'] as const) {
+    for (const kind of ['frame-column', 'frame-rafter', 'wall-girt', 'roof-purlin', 'roof-brace'] as const) {
       expect(kinds(off, kind).length).toBe(kinds(on, kind).length);
       expect(kinds(off, kind).length).toBeGreaterThan(0);
       expect(kinds(off, kind).every((p) => p.visible === false)).toBe(true);
@@ -234,5 +234,32 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
     const frameOff = sceneFor({ scope: ['foundation', 'walls', 'roof'] });
     expect(kinds(frameOff, 'wall-brace').every((p) => !p.visible)).toBe(true);
     expect(kinds(frameOff, 'wall-brace')).toHaveLength(building.bracing.length * 2); // still present, just invisible
+  });
+
+  it('roof-purlin primitives: one per line of the model, carrying its role, gated on scope.frame (03.10)', () => {
+    const scene = sceneFor();
+    const { roofPurlins } = scene.building;
+    const lines = kinds(scene, 'roof-purlin');
+    expect(lines).toHaveLength(roofPurlins.length);
+    expect(lines.map((p) => p.role)).toEqual(roofPurlins.map((p) => p.kind));
+    lines.forEach((p, i) => expect([p.a, p.b]).toEqual([roofPurlins[i].member.a, roofPurlins[i].member.b]));
+    expect(lines.every((p) => p.visible)).toBe(true);
+    expect(kinds(sceneFor({ scope: ['roof'] }), 'roof-purlin').every((p) => !p.visible)).toBe(true);
+  });
+
+  it('roof-brace primitives: two per cross of the model, gated on scope.frame (03.10)', () => {
+    const scene = sceneFor();
+    const lines = kinds(scene, 'roof-brace');
+    expect(lines).toHaveLength(scene.building.roofBracing.length * 2);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.every((p) => p.visible)).toBe(true);
+    expect(kinds(sceneFor({ scope: ['roof'] }), 'roof-brace').every((p) => !p.visible)).toBe(true);
+  });
+
+  it('the side-wall girts are wall-girt, not purlins: both walls, below the eave (03.10 rename)', () => {
+    const scene = sceneFor();
+    const girts = kinds(scene, 'wall-girt');
+    expect(girts).toHaveLength(scene.building.girts.length);
+    expect(girts.every((g) => (g.a.x === 0 || g.a.x === scene.building.footprint.widthM) && g.a.y < scene.building.heights.eaveM)).toBe(true);
   });
 });

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
+import { revealAttachedBrief } from './inquiry/revealAttachedBrief';
 
 /**
  * The conversation block on a phone or tablet (≤ 1180 px, one column): the call and the written channels come first,
@@ -21,11 +22,15 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
 
   useEffect(() => {
     const openFromLink = (event: MouseEvent) => {
-      if (event.target instanceof Element && event.target.closest('[data-open-inquiry]')) setOpened(true);
+      if (!(event.target instanceof Element) || !event.target.closest('[data-open-inquiry]')) return;
+      setOpened(true);
+      // With a brief attached every way to the form lands on it, as «Обговорити цю конфігурацію» does: /angary's cost and
+      // title-block CTAs and the FAQ link left a phone at the form's heading with the brief below (sweep 03.10)
+      if (attached) revealAttachedBrief(event);
     };
     document.addEventListener('click', openFromLink, true);
     return () => document.removeEventListener('click', openFromLink, true);
-  }, []);
+  }, [attached]);
 
   // Once a brief has opened the form it stays open: detaching it («Не додавати», «Почати спочатку») must not fold the
   // form under the visitor's hands. (State adjusted while rendering, React's pattern for following a changed value.)

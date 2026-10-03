@@ -37,9 +37,11 @@
     repeating-linear-gradient(180deg, var(--sheet-mark) 0 1px, transparent 1px 50px) right top / 12px 100% no-repeat;
 }
 
-/* The plotter line: rides down the picture as it is drawn in, then goes out */
-.sheet-scan {
-  position: absolute; z-index: 4; top: 0; right: 0; left: 0; height: 2px; opacity: 0; pointer-events: none;
+/* The plotter line: rides down the picture as it is drawn in, then goes out — on a transform of a box as tall as the
+   picture (its own 100 %): moving it by `top` made 25 small layout shifts per reveal (03.10) */
+.sheet-scan { position: absolute; z-index: 4; inset: 0 0 auto; height: 100%; opacity: 0; pointer-events: none; }
+.sheet-scan::before {
+  position: absolute; top: 0; right: 0; left: 0; height: 2px; content: '';
   background: var(--sheet-mark); box-shadow: 0 0 14px 1px var(--sheet-mark);
 }
 
@@ -57,6 +59,8 @@
 .sheet-cell-number b { color: var(--color-accent-strong); font-size: 20px; letter-spacing: 0; }
 .sheet-cell-number b span { color: var(--color-text-muted); font-size: 12px; font-weight: 600; }
 .sheet-action { display: flex; flex: none; align-items: center; padding: 4px 6px 4px 10px; border-left: 1px solid var(--sheet-ink); }
+/* A unit in a value set in capitals stays lower case: «24 × 60 × 8 м», not «8 М» (03.10) */
+.sheet-unit { text-transform: none; }
 
 /* A narrow sheet with three parts or more: the main cell takes its own row on top, so a long theme or sentence never
    squeezes into a column (and never breaks a word); the other parts share the row under it. Two parts stay one row. */
@@ -72,7 +76,7 @@
 .sheet[data-sheet-state="armed"] .sheet-ruler-x { transform: scaleX(0); }
 .sheet[data-sheet-state="armed"] .sheet-ruler-y { transform: scaleY(0); }
 .sheet[data-sheet-state="armed"] :is(.sheet-cell, .sheet-action) { opacity: 0; transform: translateY(6px); }
-@keyframes sheet-scan { 0% { top: 0; opacity: 1; } 90% { opacity: 1; } 100% { top: calc(100% - 2px); opacity: 0; } }
+@keyframes sheet-scan { 0% { transform: translateY(0); opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(calc(100% - 2px)); opacity: 0; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(6px); } }
 @media (prefers-reduced-motion: no-preference) {
   /* clip-path needs an explicit end: inset() → none does not interpolate */

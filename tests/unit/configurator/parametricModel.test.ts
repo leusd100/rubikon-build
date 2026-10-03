@@ -23,6 +23,8 @@ import {
   ridgeHeightM,
   ridgeHeightRangeM,
   roofPitchDegForWidth,
+  roofPurlinPositionsM,
+  trussPanelNodesM,
   type ParametricBuildingModel,
   type Vec3,
 } from '../../../app/lib/configurator/parametricModel';
@@ -495,7 +497,8 @@ describe('roof overhang', () => {
   it('is zero-safe: the outer tip never drops to or below the slab line across the supported range', () => {
     // Steepest allowed pitch (roof pitch is user-adjustable up to ROOF_PITCH_MAX_DEG) combined
     // with the shortest allowed eave is the worst case for the overhang tip dropping toward y = 0.
-    const m = modelFor({ width: W.min, height: H.min }, { ridgeHeightM: clampRidgeHeightM(999, W.min, H.min) });
+    // ridgeEdited: an unedited ridge follows the span rule (resolveRidgeHeightM), so the steepest one is a visitor's
+    const m = modelFor({ width: W.min, height: H.min }, { ridgeHeightM: clampRidgeHeightM(999, W.min, H.min), ridgeEdited: true });
     // Confirms this really is close to the worst case — not exactly ROOF_PITCH_MAX_DEG, because
     // clampRidgeHeightM snaps to RIDGE_HEIGHT_STEP_M first, but well within a step of it.
     expect(m.roof.pitchDeg).toBeGreaterThan(ROOF_PITCH_MAX_DEG - 1);
@@ -830,10 +833,48 @@ describe('truss webs (Phase 3E, brief §7-10)', () => {
   it('panel count is bounded across the full supported width range — no degenerate/unbounded web', () => {
     for (const width of [W.min, 24, W.max]) {
       const m = modelFor({ width });
-      const webCount = m.trusses[0].webs.length;
-      expect(webCount).toBeGreaterThanOrEqual(6); // 2 * TRUSS_PANELS_MIN_PER_HALF
-      expect(webCount).toBeLessThanOrEqual(16); // 2 * TRUSS_PANELS_MAX_PER_HALF
-      expect(webCount % 2).toBe(0); // always mirrored halves
+      const { panelsPerHalf } = trussPanelNodesM(width);
+      // 03.10: the diagonals of every panel but the two at the heels, plus the vertical under the ridge.
+      expect(m.trusses[0].webs).toHaveLength(2 * panelsPerHalf - 1);
+      expect(panelsPerHalf).toBeGreaterThanOrEqual(4); // TRUSS_PANELS_MIN_PER_HALF
+      expect(panelsPerHalf).toBeLessThanOrEqual(8); // TRUSS_PANELS_MAX_PER_HALF
+    }
+  });
+
+  it('no web member lies on the top chord: the heel panels carry no diagonal (03.10)', () => {
+    for (const width of [18, 24, 36, W.max]) {
+      const m = modelFor({ width });
+      for (const w of m.trusses[0].webs) {
+        for (const p of [w.a, w.b]) {
+          expect(p.x, `${width} m`).toBeGreaterThan(0);
+          expect(p.x, `${width} m`).toBeLessThan(width);
+        }
+      }
+    }
+  });
+
+  it('has exactly one vertical, under the ridge, from the bottom chord to the ridge point (03.10)', () => {
+    for (const width of [18, 24, 26, 36, W.max]) {
+      const m = modelFor({ width });
+      const verticals = m.trusses[0].webs.filter((w) => w.a.x === w.b.x);
+      expect(verticals, `${width} m`).toHaveLength(1);
+      expect(verticals[0].a).toEqual({ x: width / 2, y: m.heights.eaveM, z: 0 });
+      expect(verticals[0].b.x).toBeCloseTo(width / 2, 6);
+      expect(verticals[0].b.y).toBeCloseTo(m.heights.ridgeM, 6);
+    }
+  });
+
+  it('every web member starts and ends on a node of trussPanelNodesM — the tour draws the same truss', () => {
+    for (const width of [18, 19, 24, 25, 26, 36, W.max]) {
+      const m = modelFor({ width });
+      const nodes = trussPanelNodesM(width);
+      for (const w of m.trusses[0].webs) {
+        for (const p of [w.a, w.b]) {
+          const onBottom = p.y === m.heights.eaveM && nodes.bottomChordNodeXsM.includes(p.x);
+          const onTop = nodes.topChordNodeXsM.includes(p.x) && p.y > m.heights.eaveM;
+          expect(onBottom || onTop, `${width} m: (${p.x}, ${p.y})`).toBe(true);
+        }
+      }
     }
   });
 
@@ -957,6 +998,196 @@ describe('girts (Phase 3E, brief §12 audit)', () => {
     const perWall = m.girts.filter((g) => g.a.x === 0).length;
     expect(perWall).toBe(2);
     expect(m.girts).toHaveLength(4);
+  });
+});
+
+describe('truss panel nodes (03.10) — one truss for the configurator and the frame tour', () => {
+  const widths = Array.from({ length: (W.max - W.min) * 2 + 1 }, (_, i) => W.min + i / 2);
+
+  it('always has an even, bounded panel count per half', () => {
+    for (const width of widths) {
+      const { panelsPerHalf } = trussPanelNodesM(width);
+      expect(panelsPerHalf % 2, `${width} m`).toBe(0);
+      expect(panelsPerHalf).toBeGreaterThanOrEqual(4);
+      expect(panelsPerHalf).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it('picks the even count nearest a 1.8 m panel — pinned at the widths the owner looks at', () => {
+    expect(trussPanelNodesM(18).panelsPerHalf).toBe(6);
+    expect(trussPanelNodesM(24).panelsPerHalf).toBe(6);
+    expect(trussPanelNodesM(24).panelWidthM).toBe(2);
+    expect(trussPanelNodesM(26).panelsPerHalf).toBe(8);
+    expect(trussPanelNodesM(36).panelsPerHalf).toBe(8);
+    expect(trussPanelNodesM(50).panelWidthM).toBe(3.125);
+  });
+
+  it('spaces the panel points evenly from heel to heel', () => {
+    for (const width of [18, 24, 37, 50]) {
+      const { panelXsM, panelsPerHalf, panelWidthM } = trussPanelNodesM(width);
+      expect(panelXsM).toHaveLength(2 * panelsPerHalf + 1);
+      expect(panelXsM[0]).toBe(0);
+      expect(panelXsM.at(-1)).toBe(width);
+      panelXsM.slice(1).forEach((x, i) => expect(x - panelXsM[i]).toBeCloseTo(panelWidthM, 5));
+    }
+  });
+
+  it('puts a bottom-chord node on the centreline and a top-chord node on the ridge', () => {
+    for (const width of widths) {
+      const nodes = trussPanelNodesM(width);
+      const centre = nodes.panelXsM[nodes.panelsPerHalf];
+      expect(centre).toBeCloseTo(width / 2, 6);
+      expect(nodes.bottomChordNodeXsM).toContain(centre);
+      expect(nodes.topChordNodeXsM).toContain(centre);
+    }
+  });
+
+  it('top-chord nodes: both heels, the odd panel points and the ridge; bottom: the even panel points', () => {
+    const { panelXsM, topChordNodeXsM, bottomChordNodeXsM } = trussPanelNodesM(24); // 12 panels of 2 m
+    expect(panelXsM).toEqual([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]);
+    expect(topChordNodeXsM).toEqual([0, 2, 6, 10, 12, 14, 18, 22, 24]);
+    expect(bottomChordNodeXsM).toEqual([0, 4, 8, 12, 16, 20, 24]);
+  });
+
+  it('under a centre support the column lands on that bottom-chord node, where the middle diagonals meet', () => {
+    for (const width of [24, 25, 26, 27, 30, 36, W.max]) {
+      const m = modelFor({ width }); // >= 24 m derives truss + centre support
+      const nodes = trussPanelNodesM(width);
+      expect(m.internalColumns.length, `${width} m`).toBeGreaterThan(0);
+      for (const col of m.internalColumns) {
+        expect(nodes.bottomChordNodeXsM).toContain(col.column.b.x);
+        expect(col.column.b.y).toBe(m.heights.eaveM);
+        const truss = m.trusses.find((t) => t.stationM === col.stationM)!;
+        const meeting = truss.webs.filter((w) => [w.a, w.b].some((p) => p.x === col.column.b.x && p.y === m.heights.eaveM));
+        // the two middle diagonals and the vertical under the ridge
+        expect(meeting, `${width} m`).toHaveLength(3);
+      }
+    }
+  });
+});
+
+describe('roof purlins (03.10)', () => {
+  it('truss: one line on every top-chord node — eave struts at the heels, the ridge purlin over the vertical', () => {
+    for (const width of [18, 24, 36, W.max]) {
+      const positions = roofPurlinPositionsM(width, 'truss');
+      expect(positions.map((p) => p.xM)).toEqual(trussPanelNodesM(width).topChordNodeXsM);
+      expect(positions[0].kind).toBe('eave-strut');
+      expect(positions.at(-1)!.kind).toBe('eave-strut');
+      const ridges = positions.filter((p) => p.kind === 'ridge');
+      expect(ridges).toHaveLength(1);
+      expect(ridges[0].xM).toBeCloseTo(width / 2, 6);
+    }
+  });
+
+  it('portal: evenly along the rafters, thirds of each slope across the portal widths, about 3 m apart past that', () => {
+    for (const width of [W.min, 12, 14, 17]) {
+      const xs = roofPurlinPositionsM(width, 'portalRafter').map((p) => p.xM);
+      expect(xs, `${width} m`).toHaveLength(7); // 3 spaces a slope
+      xs.slice(1).forEach((x, i) => expect(x - xs[i]).toBeCloseTo(width / 6, 5));
+    }
+    const wide = roofPurlinPositionsM(24, 'portalRafter').map((p) => p.xM);
+    expect(wide).toEqual([0, 3, 6, 9, 12, 15, 18, 21, 24]);
+  });
+
+  it('is ascending and symmetric about the ridge, in both roof structures', () => {
+    for (const roofStructure of ['truss', 'portalRafter'] as const) {
+      for (const width of [W.min, 19, 24, 33, W.max]) {
+        const positions = roofPurlinPositionsM(width, roofStructure);
+        const xs = positions.map((p) => p.xM);
+        expect([...xs].sort((a, b) => a - b)).toEqual(xs);
+        xs.forEach((x, i) => expect(x + xs[xs.length - 1 - i]).toBeCloseTo(width, 5));
+        positions.forEach((p, i) => expect(p.kind).toBe(positions[positions.length - 1 - i].kind));
+      }
+    }
+  });
+
+  it('the model runs each line the whole length, on the roof line, at the positions above', () => {
+    for (const [width, roofStructure] of [[24, 'truss'], [12, 'portalRafter']] as const) {
+      const m = modelForStructural({ scheme: 'clearSpan', roofStructure }, { width, length: 60 });
+      expect(m.roofPurlins.map((p) => p.xM)).toEqual(roofPurlinPositionsM(width, roofStructure).map((p) => p.xM));
+      for (const purlin of m.roofPurlins) {
+        const { a, b } = purlin.member;
+        expect(a.z).toBe(0);
+        expect(b.z).toBe(60);
+        expect(a.x).toBe(purlin.xM);
+        expect(b.x).toBe(purlin.xM);
+        expect(a.y).toBe(b.y);
+        const rise = m.heights.ridgeM - m.heights.eaveM;
+        expect(a.y).toBeCloseTo(m.heights.eaveM + rise * (1 - Math.abs(purlin.xM - width / 2) / (width / 2)), 5);
+      }
+      const eaves = m.roofPurlins.filter((p) => p.kind === 'eave-strut');
+      expect(eaves.map((p) => p.member.a.y)).toEqual([m.heights.eaveM, m.heights.eaveM]);
+      expect(m.roofPurlins.find((p) => p.kind === 'ridge')!.member.a.y).toBeCloseTo(m.heights.ridgeM, 6);
+    }
+  });
+
+  it('in truss mode every purlin sits on a top-chord node of every truss', () => {
+    const m = modelFor({ width: 36, length: 60 });
+    for (const truss of m.trusses) {
+      const nodes = new Set([
+        ...truss.webs.flatMap((w) => [w.a, w.b]),
+        { x: 0, y: m.heights.eaveM, z: truss.stationM },
+        { x: 36, y: m.heights.eaveM, z: truss.stationM },
+      ].map((p) => `${p.x}:${p.y}`));
+      for (const purlin of m.roofPurlins) expect(nodes.has(`${purlin.member.a.x}:${purlin.member.a.y}`), `x ${purlin.xM}`).toBe(true);
+    }
+  });
+});
+
+describe('roof bracing (03.10)', () => {
+  it('stands in the same bays as the wall bracing, on both slopes', () => {
+    for (const length of [L.min, 36, 60, L.max]) {
+      const m = modelFor({ length });
+      const wallBays = [...new Set(m.bracing.map((b) => b.bayIndex))].sort((a, b) => a - b);
+      for (const slope of ['left', 'right'] as const) {
+        const roofBays = [...new Set(m.roofBracing.filter((b) => b.slope === slope).map((b) => b.bayIndex))].sort((a, b) => a - b);
+        expect(roofBays, `${length} m ${slope}`).toEqual(wallBays);
+      }
+    }
+  });
+
+  it('crosses every panel between neighbouring purlin lines, from the eave strut to the ridge purlin', () => {
+    for (const width of [W.min, 24, W.max]) {
+      const m = modelFor({ width, length: 60 });
+      const xs = m.roofPurlins.map((p) => p.xM);
+      const ridgeIndex = m.roofPurlins.findIndex((p) => p.kind === 'ridge');
+      const panelsPerSlope = ridgeIndex;
+      for (const slope of ['left', 'right'] as const) {
+        const bay0 = m.roofBracing.filter((b) => b.slope === slope && b.bayIndex === 0);
+        expect(bay0.map((b) => b.panelIndex)).toEqual(Array.from({ length: panelsPerSlope }, (_, i) => i));
+        const lines = slope === 'left' ? xs.slice(0, ridgeIndex + 1) : xs.slice(ridgeIndex).reverse();
+        for (const brace of bay0) {
+          const [from, to] = [lines[brace.panelIndex], lines[brace.panelIndex + 1]];
+          expect(brace.diagonalA.a.x).toBe(from);
+          expect(brace.diagonalA.b.x).toBe(to);
+          expect(brace.diagonalB.a.x).toBe(from);
+          expect(brace.diagonalB.b.x).toBe(to);
+          // a real cross: each diagonal spans the bay, in opposite directions
+          expect(brace.diagonalA.a.z).toBe(0);
+          expect(brace.diagonalA.b.z).toBe(m.bays.stationsM[1]);
+          expect(brace.diagonalB.a.z).toBe(m.bays.stationsM[1]);
+          expect(brace.diagonalB.b.z).toBe(0);
+        }
+      }
+    }
+  });
+
+  it('lies in the roof plane: every end is on a purlin line', () => {
+    const m = modelFor({ width: 36, length: 84 });
+    const onLine = new Set(m.roofPurlins.map((p) => `${p.member.a.x}:${p.member.a.y}`));
+    for (const brace of m.roofBracing) {
+      for (const p of [brace.diagonalA.a, brace.diagonalA.b, brace.diagonalB.a, brace.diagonalB.b]) {
+        expect(onLine.has(`${p.x}:${p.y}`)).toBe(true);
+        expect(m.bays.stationsM).toContain(p.z);
+      }
+    }
+  });
+
+  it('is deterministic', () => {
+    const a = modelFor({ width: 33, length: 51 });
+    const b = modelFor({ width: 33, length: 51 });
+    expect(JSON.stringify(a.roofBracing)).toBe(JSON.stringify(b.roofBracing));
+    expect(JSON.stringify(a.roofPurlins)).toBe(JSON.stringify(b.roofPurlins));
   });
 });
 

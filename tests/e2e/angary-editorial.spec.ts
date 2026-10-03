@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { company } from '../../app/data/company';
+import { deliveryModel } from '../../app/data/deliveryModel';
+import { homeProofCase } from '../../app/data/homeProof';
 
 const viewports = [
   { name: 'desktop', width: 1440, height: 900, heroReveal: true },
@@ -18,8 +21,9 @@ for (const viewport of viewports) {
     await page.goto('/angary', { waitUntil: 'load' });
 
     const hero = page.locator('.angary-service-subhero');
-    await expect(hero.getByRole('heading', { level: 1 })).toContainText('Ангари та склади');
-    await expect(hero.getByRole('heading', { level: 1 })).toContainText('за вашою конфігурацією');
+    // The first screen says what RUBIKON does and for whom (UX review 2026-10)
+    await expect(hero.getByRole('heading', { level: 1 })).toContainText('Будуємо ангари та склади');
+    await expect(hero.getByRole('heading', { level: 1 })).toContainText('під вашу задачу');
     await expect(hero.getByRole('link', { name: /Зібрати конфігурацію/ })).toHaveAttribute('href', '#configurator');
     // ≤ 760 px the call leads and the configurator follows; the conversation link stays off the phone's first screen
     // (UX pass 2026-10). Wider screens keep the configurator + «Обговорити задачу» pair.
@@ -31,56 +35,49 @@ for (const viewport of viewports) {
     }
     await expect(hero.locator('.hc-controls, .hc-preview-surface')).toHaveCount(0);
 
+    // Owner, 03.10: brief → the visitor's frame → a real hangar → cost → route with its title block → FAQ → the form,
+    // and the separate stages after it
     const sequence = await page.locator([
       '.service-subhero',
       '#configurator',
       '#structure',
+      '#real-object',
+      '#vartist',
       '#process',
-      '#responsibility',
       '.faq-section',
-      '.related-directions-section',
       '#inquiry',
+      '.related-directions-section',
     ].join(', ')).evaluateAll((sections) => sections.map((section) => ({
-      className: section.className,
-      id: section.id,
+      key: section.id || [...section.classList].find((name) => ['service-subhero', 'faq-section', 'related-directions-section'].includes(name)),
       top: section.getBoundingClientRect().top + window.scrollY,
     })));
 
-    expect(sequence).toHaveLength(8);
+    expect(sequence.map(({ key }) => key)).toEqual([
+      'service-subhero', 'configurator', 'structure', 'real-object', 'vartist', 'process', 'faq-section', 'inquiry',
+      'related-directions-section',
+    ]);
     expect(sequence.map(({ top }) => top)).toEqual([...sequence.map(({ top }) => top)].sort((a, b) => a - b));
 
     const configurator = page.locator('#configurator');
     await expect(configurator).toContainText('Сформуйте базову конфігурацію ангара');
-    const vocabulary = configurator.locator('.hc-vocabulary li');
-    await expect(vocabulary).toHaveCount(4);
-    for (const [index, text] of [
-      '01Габаритиширина, довжина, висота стін.',
-      '02Контурхолодний або утеплений залежно від використання.',
-      '03Огородженняпрофнастил або сендвіч-панель.',
-      '04Основарішення уточнюється з урахуванням майданчика.',
-    ].entries()) {
-      await expect(vocabulary.nth(index)).toHaveText(text);
-    }
-
-    const vocabularyColumns = await configurator.locator('.hc-vocabulary').evaluate(
-      (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
-    );
-    expect(vocabularyColumns).toBe(viewport.width >= 1024 ? 4 : 2);
-
-    await expect(configurator.getByRole('heading', { name: 'Ви обрали' })).toBeVisible();
-    await expect(configurator.getByRole('heading', { name: 'Попередня схема' })).toBeVisible();
-    await expect(configurator.locator('.hc-summary-structure')).toContainText(
-      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
-    );
+    // No vocabulary cells (they repeated the groups under other names); the summary is the drawing's title block under
+    // the layout — not inside the sticky pane — and the preliminary scheme is told by the frame drawing below
+    await expect(configurator.locator('.hc-vocabulary')).toHaveCount(0);
+    await expect(configurator.locator('.hc-preview-pane .hc-summary')).toHaveCount(0);
+    await expect(configurator.locator('.hc-stamp-row .hc-summary-flagship')).toBeVisible();
+    // the untouched example is called one, as the sheet above it says «Приклад» (04.10); «Ви обрали» once it is the visitor's
+    await expect(configurator.getByRole('heading', { name: 'Приклад конфігурації' })).toBeVisible();
+    await expect(configurator.locator('.hc-summary-area')).toContainText('коник 10,6 м');
+    // the stamp's thumbnail: the configured hangar's section and plan
+    await expect(configurator.locator('.hc-stamp-row svg.hc-sketch')).toBeVisible();
     const disclaimer = configurator.locator('.hc-summary-disclaimer');
     await expect(disclaimer).toBeVisible();
     expect(await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)))
-      .toBeGreaterThanOrEqual(14);
-
-    const summaryColumns = await configurator.locator('.hc-summary-grid').evaluate(
-      (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
+      .toBeGreaterThanOrEqual(13);
+    await expect(page.locator('#structure .ft-step, #structure .dn-step')).toHaveCount(5);
+    await expect(page.locator('#structure .dn-step').nth(1)).toContainText(
+      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
     );
-    expect(summaryColumns).toBe(viewport.width <= 760 ? 1 : 2);
 
     if (viewport.heroReveal) {
       // The hero standard (owner, 02.10): the window's height, as every direction page — no longer a shorter «reveal»;
@@ -99,21 +96,91 @@ for (const viewport of viewports) {
       expect(metrics.heroOverflow).toBeLessThanOrEqual(1);
     }
 
-    // «Рішення, які приймаєте ви» lives in the configurator now: one folded «Чому це важливо» per decision
+    // «Рішення, які приймаєте ви» lives in the configurator now: one folded «Чому це важливо» per decision, and one for
+    // «Об’єкт» (03.10)
     await expect(page.locator('#decisions')).toHaveCount(0);
     await expect(configurator.locator('.hc-why')).toHaveCount(4);
+    await expect(configurator.locator('.hc-why').first()).toHaveAttribute('data-why', 'object');
     await expect(configurator.locator('.hc-why[open]')).toHaveCount(0);
-    await expect(page.locator('#structure .angary-diagram')).toHaveCount(3);
-    await expect(page.locator('#structure')).toContainText('6–8 м і уточнюється після розрахунку');
+    // The cost block: the seven factors of the model on the /yak drawing, laid on the «Креслення» sheet, no prices
+    await expect(page.locator('#vartist .proc-factors li')).toHaveCount(7);
+    await expect(page.locator('#vartist .cf-sheet .sheet-stamp')).toContainText('Що впливає на вартість');
+    await expect(page.locator('#vartist')).not.toContainText('грн');
+    await expect(page.locator('#structure svg.ft-drawing')).toBeVisible();
     await expect(page.locator('#process li')).toHaveCount(5);
-    // The two people as named roles in text: the generated portraits were withdrawn (#124) and must not come back
-    await expect(page.locator('#responsibility .angary-people-roles > div')).toHaveCount(2);
+    await expect(page.locator('#process li').nth(3)).toContainText('Узгоджуємо обсяг і кошторис');
+    // The two people as named roles in the route's title block: the generated portraits were withdrawn (#124)
+    await expect(page.locator('#responsibility dl > div:not(.is-wide)')).toHaveCount(2);
     await expect(page.locator('#responsibility figure, #responsibility img')).toHaveCount(0);
+    // …and it hands over to them (owner, 03.10): the form under the Delivery Model's words, a call, the company quietly
+    const stamp = page.locator('#responsibility');
+    const leadCta = stamp.getByRole('link', { name: deliveryModel.contactRoles.constructionLead.cta });
+    await expect(leadCta).toHaveAttribute('href', '#inquiry');
+    await expect(leadCta).toHaveAttribute('data-open-inquiry');
+    await expect(leadCta).toHaveClass(/\bbutton-primary\b/);
+    await expect(stamp.getByRole('link', { name: `Зателефонувати, ${company.phone.display}` })).toHaveAttribute('href', `tel:${company.phone.international}`);
+    await expect(stamp.getByRole('link', { name: /Про компанію/ })).toHaveAttribute('href', '/pro-nas');
     await expect(page.locator('.faq-list details')).toHaveCount(6);
     await expect(page.locator('.faq-list details[open]')).toHaveCount(0);
-    await expect(page.locator('.related-directions-section .related-card')).toHaveCount(3);
+    // The related directions close the page as its separate stages (owner, 03.10): the same three cards, retitled
+    const related = page.locator('.related-directions-section');
+    await expect(related.locator('.eyebrow')).toHaveText('Окремим етапом');
+    await expect(related.getByRole('heading', { level: 2 })).toHaveText('Потрібен лише один етап?');
+    await expect(related).toContainText('Фундамент, металокаркас чи покрівлю можна замовити окремо.');
+    expect(await related.locator('.related-card').evaluateAll((cards) => cards.map((card) => card.getAttribute('href'))))
+      .toEqual(['/betonni-roboty', '/metalokonstruktsii', '/pokrivelni-roboty']);
+    await expect(page.locator('#inquiry .conversation-journey')).toHaveCount(0);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
+  });
+}
+
+// Owner, 03.10: after the frame tour, the one real hangar the site may show — HOME's record, in its own words only
+test('/angary shows HOME\'s real hangar after the frame, with its attribution and scope and nothing more', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the record is viewport-independent; the sizes run below');
+  expect(homeProofCase).not.toBeNull();
+  const proof = homeProofCase!;
+  await page.goto('/angary', { waitUntil: 'load' });
+  const real = page.locator('#real-object');
+
+  await expect(real.locator('.eyebrow')).toHaveText('Реалізований об’єкт до створення RUBIKON BUILD');
+  await expect(real.getByRole('heading', { level: 2 })).toHaveText('Ангар: каркас, стінові панелі, покрівля');
+  await expect(real).toContainText(proof.attribution);
+  await expect(real.locator('.hv2-scope-chips li')).toHaveText([...proof.scope.subject]);
+  const stamp = real.locator('.sheet-stamp');
+  await expect(stamp).toContainText('Фото об’єкта');
+  await expect(stamp).toContainText(`Реальний об’єкт. ${proof.caption}. Фото з ретушшю переднього плану.`);
+  const image = real.locator('img');
+  await expect(image).toHaveAttribute('alt', proof.photo.alt);
+  await expect(image).toHaveAttribute('src', proof.photo.src);
+  await expect(image).toHaveAttribute('loading', 'lazy');
+  await expect(real.locator('source[type="image/webp"]')).toHaveAttribute('srcset', /hangar-retouched-960w\.webp 960w/);
+  // No size, place, year, client or number of any kind: the record gives none
+  expect(await real.evaluate((element) => element.textContent ?? '')).not.toMatch(/\d/);
+
+  await image.scrollIntoViewIfNeeded();
+  await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).currentSrc)).toContain('hangar-retouched-960w.webp');
+});
+
+for (const viewport of [{ width: 1440, height: 900 }, { width: 820, height: 1180 }, { width: 390, height: 844 }]) {
+  test(`the real hangar's row stays whole at ${viewport.width}px, in both themes`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize(viewport);
+    for (const theme of ['light', 'dark']) {
+      await page.addInitScript((value) => window.localStorage.setItem('rubikon-theme', value), theme);
+      await page.goto('/angary', { waitUntil: 'load' });
+      const real = page.locator('#real-object');
+      await real.scrollIntoViewIfNeeded();
+      const box = await real.locator('.angary-real-media').boundingBox();
+      expect(box!.width).toBeGreaterThan(viewport.width <= 390 ? 280 : 400);
+      const facts = await real.locator('.angary-real-facts').boundingBox();
+      // stacked under the photo up to 1023 px, beside it above
+      if (viewport.width <= 1023) expect(facts!.y).toBeGreaterThan(box!.y + box!.height);
+      else expect(facts!.x).toBeGreaterThan(box!.x + box!.width);
+      const sizes = await real.locator(':is(.sheet-cell b, .hv2-scope-chips li, p)').evaluateAll((elements) => elements.map((element) => Number.parseFloat(getComputedStyle(element).fontSize)));
+      expect(Math.min(...sizes)).toBeGreaterThanOrEqual(11);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+    }
   });
 }
 
@@ -123,8 +190,8 @@ test('/angary keeps content readable with enlarged text', async ({ page }, testI
   await page.goto('/angary', { waitUntil: 'load' });
   await page.addStyleTag({ content: 'html { font-size: 125% !important; }' });
 
-  await expect(page.locator('.hc-vocabulary')).toBeVisible();
   await expect(page.locator('.hc-summary-disclaimer')).toBeVisible();
+  await expect(page.locator('#structure svg.ft-drawing')).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
@@ -136,31 +203,59 @@ test('/angary process stage follows the authoritative attachment state', async (
   await expect(essentialCookies).toBeVisible({ timeout: 10_000 });
   await essentialCookies.click();
 
+  const rail = page.locator('#process ol');
   const firstStage = page.locator('#process li').first();
   await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
+  await expect(rail).toHaveAttribute('data-brief', 'idle');
+  // Owner, 03.10: 01 acts on its state — up to the configurator while nothing is attached
+  await expect(firstStage.getByRole('link')).toHaveText('Сформувати бриф ↑');
+  await expect(firstStage.getByRole('link')).toHaveAttribute('href', '#configurator');
 
   await page.getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
-  await expect(firstStage).toContainText('Конфігурацію додано до заявки.');
+  await expect(firstStage).toContainText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  await expect(rail).toHaveAttribute('data-brief', 'attached');
+  // …and down to the attached brief in the form once something is: it lands on the brief, which says so once
+  const send = firstStage.getByRole('link');
+  await expect(send).toHaveText('Надіслати бриф ↓');
+  await expect(send).toHaveAttribute('href', '#inquiry');
+  await page.locator('#inquiry-brief-status').evaluate((status) => { status.textContent = ''; });
+  await send.click();
+  await expect(page.locator('#inquiry-brief')).toBeFocused();
+  await expect(page.locator('#inquiry-brief-status')).toHaveText('Додано до заявки: 24 × 60 × 8 м · Холодний');
 
   await page.getByRole('button', { name: 'Не додавати' }).click();
   await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
+  await expect(rail).toHaveAttribute('data-brief', 'detached');
+  await expect(firstStage.getByRole('link')).toHaveAttribute('href', '#configurator');
+});
+
+test('on a phone the title block\'s «Обговорити з керівником…» opens the folded form', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/angary', { waitUntil: 'load' });
+  await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
+  const form = page.locator('#inquiry form.inquiry-form');
+  await expect(form).toBeHidden();
+  const cta = page.locator('#responsibility').getByRole('link', { name: deliveryModel.contactRoles.constructionLead.cta });
+  const box = await cta.boundingBox();
+  expect(box!.height).toBeGreaterThanOrEqual(44);
+  await cta.click();
+  await expect(form).toBeVisible();
+  await expect(page).toHaveURL(/#inquiry$/);
 });
 
 for (const width of [320, 390, 760, 761, 820, 1000]) {
-  test(`structural HTML captions remain readable at ${width}px`, async ({ page }, testInfo) => {
+  test(`the frame drawing's steps and title block stay readable at ${width}px`, async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
     await page.setViewportSize({ width, height: width <= 390 ? 844 : 1024 });
     await page.goto('/angary', { waitUntil: 'load' });
 
-    const captions = page.locator('#structure :is(.angary-diagram-key, figcaption > span, figcaption > p)');
-    await expect(captions).toHaveCount(9);
-    const sizes = await captions.evaluateAll((elements) => elements.map(
-      (element) => Number.parseFloat(getComputedStyle(element).fontSize),
-    ));
-    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(13);
-    await expect(page.locator('.angary-longitudinal-diagram .angary-diagram-key')).toContainText(
-      'Попередньо 6–8 м · уточнюється після розрахунку',
-    );
+    const texts = page.locator('#structure :is(.dn-step-text, .sheet-stamp dd, .sheet-stamp strong, .sheet-stamp b)');
+    const sizes = await texts.evaluateAll((elements) => elements.map((element) => Number.parseFloat(getComputedStyle(element).fontSize)));
+    expect(sizes.length).toBeGreaterThan(0);
+    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(11);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
   });
 }
 
@@ -171,8 +266,8 @@ for (const dpr of [1, 2]) {
     test('selects generated WebP candidates', async ({ page }, testInfo) => {
       test.skip(testInfo.project.name === 'mobile-chromium', 'the DPR matrix runs once');
       await page.goto('/angary', { waitUntil: 'load' });
-      // The pictures live in «Чому це важливо» under the cladding and foundation groups (180 px wide on a desktop)
-      for (const selector of ['.hc-why[data-why="cladding"]', '.hc-why[data-why="foundation"]']) {
+      // The pictures live in «Чому це важливо» under the cladding group (180 px wide on a desktop); /angary offers no foundation choice
+      for (const selector of ['.hc-why[data-why="cladding"]']) {
         const section = page.locator(selector);
         await section.locator('summary').click();
         await section.scrollIntoViewIfNeeded();
@@ -181,13 +276,10 @@ for (const dpr of [1, 2]) {
         ));
       }
 
-      const selected = await page.locator([
-        '.hc-why[data-why="cladding"] img',
-        '.hc-why[data-why="foundation"] img',
-      ].join(', ')).evaluateAll((images) => (
+      const selected = await page.locator('.hc-why[data-why="cladding"] img').evaluateAll((images) => (
         images as HTMLImageElement[]
       ).map((image) => image.currentSrc));
-      expect(selected).toHaveLength(4);
+      expect(selected).toHaveLength(2);
       for (const source of selected) {
         expect(source).toContain('/media-responsive/');
         expect(source).toContain('-480w.');
@@ -195,3 +287,85 @@ for (const dpr of [1, 2]) {
     });
   });
 }
+
+// 04.10: the blocks after the frame keep their shape between the breakpoints
+for (const width of [768, 820, 1024]) {
+  test(`/angary «Потрібен лише один етап?» keeps its three cards on one ruled row at ${width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize({ width, height: 1024 });
+    await page.goto('/angary', { waitUntil: 'load' });
+    const tops = await page.locator('.related-directions-section .related-card').evaluateAll((cards) => cards.map((card) => Math.round(card.getBoundingClientRect().top)));
+    expect(new Set(tops).size).toBe(1);
+  });
+}
+
+for (const width of [1920, 1440, 1280, 1024]) {
+  test(`/angary title block of the route: the two names share a line at ${width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/angary', { waitUntil: 'load' });
+    const stamp = page.locator('#responsibility');
+    // a group named by its title (a plain div cannot take a name)
+    await expect(page.getByRole('group', { name: 'За погоджений обсяг відповідаємо особисто' })).toHaveCount(1);
+    const tops = await stamp.locator('dl > div:not(.is-wide) dd').evaluateAll((names) => names.map((name) => Math.round(name.getBoundingClientRect().top)));
+    expect(tops).toHaveLength(2);
+    expect(Math.abs(tops[0] - tops[1])).toBeLessThanOrEqual(1);
+    // the cost foot's text keeps a readable column beside or over its actions (279 px at 1024 before)
+    const foot = await page.locator('.angary-cost-foot p').boundingBox();
+    expect(foot!.width).toBeGreaterThan(420);
+  });
+}
+
+for (const viewport of [{ width: 1440, height: 900, header: 116 }, { width: 390, height: 844, header: 88 }]) {
+  test(`/angary#responsibility lands under the site header at ${viewport.width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/angary', { waitUntil: 'load' });
+    await page.locator('#responsibility').evaluate((element) => element.scrollIntoView());
+    expect(await page.locator('#responsibility').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(viewport.header);
+  });
+}
+
+test.describe('the real hangar on a 3× phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
+
+  test('takes the 1536w photo for its 4 : 3 crop, as HOME does', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the DPR case runs once');
+    await page.goto('/angary', { waitUntil: 'load' });
+    const image = page.locator('#real-object img');
+    await image.scrollIntoViewIfNeeded();
+    // 04.10: sizes said 314 px for a photo drawn ~474 px wide in the crop, and a 3× phone took the 960w
+    await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).currentSrc)).toContain('hangar-retouched-1536w.webp');
+  });
+});
+
+test('on a phone the focused FAQ question scrolls clear of «До заявки»', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/angary', { waitUntil: 'load' });
+  await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
+  // a size changed attaches the brief, which shows the shortcut once the summary has scrolled past
+  await page.locator('#configurator .hc-group-toggle[aria-controls="hc-dimensions-panel"]').click();
+  await page.locator('#hc-dimension-width').fill('30');
+  await page.locator('#hc-dimension-width').blur();
+  const cta = page.locator('.angary-mobile-inquiry-cta');
+  const questions = page.locator('.faq-list summary');
+  // reached with the keyboard, as a visitor would: Tab from the question before
+  for (let index = 1; index < 4; index += 1) {
+    await questions.nth(index - 1).focus();
+    await page.keyboard.press('Tab');
+    await expect(questions.nth(index)).toBeFocused();
+    const covered = await page.evaluate(() => {
+      const focused = document.activeElement!.getBoundingClientRect();
+      const bar = document.querySelector<HTMLElement>('.angary-mobile-inquiry-cta');
+      if (!bar || bar.hidden) return 0;
+      const rect = bar.getBoundingClientRect();
+      return Math.max(0, Math.min(focused.bottom, rect.bottom) - Math.max(focused.top, rect.top));
+    });
+    // 04.10: the fourth question sat 85 % under the bar
+    expect(covered, `question ${index + 1}`).toBe(0);
+  }
+  await expect(cta).toHaveCount(1);
+});

@@ -1,12 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { CONTROL_GROUP_TITLES, describeControlGroups, type ControlGroupId } from '../../lib/configurator/controlGroups';
+import { NBSP, formatRoofSlope, formatSize } from '../../lib/configurator/deriveSummary';
+import { deriveDomainModel, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../lib/configurator/domainModel';
+import {
+  BUILD_REGIONS,
+  LIFTING_EQUIPMENT_LABELS,
+  LIFTING_EQUIPMENT_ORDER,
+  PROJECT_STATUS_LABELS,
+  PROJECT_STATUS_ORDER,
+  PURPOSE_LABELS,
+  PURPOSE_ORDER,
+  UNKNOWN_REGION_LABEL,
+  isBuildRegion,
+  type ObjectProfile,
+} from '../../lib/configurator/objectProfile';
 import {
   DOOR_DIMENSIONS_M,
   GATE_DIMENSIONS_M,
   RIDGE_HEIGHT_STEP_M,
-  clampDoorSelection,
-  clampGateSelection,
   clampRidgeHeightM,
   doorFits,
   gateHeightFits,
@@ -41,10 +54,14 @@ import {
   type GatesCount,
 } from '../../lib/configurator/types';
 import { ConfiguratorWhy } from './ConfiguratorWhy';
+import './configurator-controls.css';
 
 type Props = {
   state: ConfiguratorState;
   onChange: (next: ConfiguratorState) => void;
+  /** The foundation type is offered on the research screen only. On /angary the visitor does not choose it: the
+   *  designer decides it from the site and the loads (owner, 03.10), so the brief stays «Визначити після розрахунку». */
+  foundationChoice?: boolean;
 };
 
 /**
@@ -64,6 +81,14 @@ function parseMetres(raw: string): number | null {
   if (normalised === '' || normalised === '-' || normalised === '.') return null;
   const parsed = Number(normalised);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** What the field says after a typed value had to be changed on blur — it used to be clamped in silence (04.10) */
+function clampNote(parsed: number | null, min: number, max: number, kept: number): string | null {
+  if (parsed === null) return `Потрібне число в метрах — залишено ${formatMetres(kept)}${NBSP}м.`;
+  if (parsed > max) return `Найбільше можливе значення — ${formatMetres(max)}${NBSP}м.`;
+  if (parsed < min) return `Найменше можливе значення — ${formatMetres(min)}${NBSP}м.`;
+  return null;
 }
 
 /**
@@ -86,6 +111,7 @@ function NumericField({
   max,
   step,
   hint,
+  children,
   clamp,
   onCommit,
 }: {
@@ -95,14 +121,19 @@ function NumericField({
   min: number;
   max: number;
   step: number;
+  /** Shown under the field; without one, the range is written for screen readers only */
   hint?: string;
+  /** Under the field: the ridge's way back to the span rule */
+  children?: ReactNode;
   clamp: (value: number) => number;
   onCommit: (value: number) => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
   function handleTyped(raw: string) {
     setDraft(raw);
+    setNote(null);
     const parsed = parseMetres(raw);
     // Commit live only once the entry is already within range, so the preview keeps up with
     // typing without the field ever being rewritten underneath the caret.
@@ -113,44 +144,172 @@ function NumericField({
     const parsed = parseMetres(draft ?? '');
     // An abandoned or nonsensical entry falls back to the last good value rather than to the
     // minimum — clearing the field and clicking away should not silently reset the object.
+    if (draft !== null) setNote(clampNote(parsed, min, max, value));
     onCommit(parsed === null ? value : clamp(parsed));
     setDraft(null);
   }
 
+  const range = `Від ${formatMetres(min)} до ${formatMetres(max)}${NBSP}м${step < 1 ? `, крок ${formatMetres(step)}${NBSP}м` : ''}.`;
   return (
     <div className="hc-field">
       <div className="hc-field-head">
         <label htmlFor={inputId}>{label}</label>
-        <span className="hc-field-value">{formatMetres(value)} м</span>
+        <span className="hc-field-value">{formatMetres(value)}{NBSP}м</span>
       </div>
       <div className="hc-field-controls">
+        {/* Named by the label alone, with its value in metres: it was «Ширина, слайдер» and a bare «10.600000381469727» */}
         <input
           type="range"
-          aria-label={`${label}, слайдер`}
+          aria-label={label}
+          aria-valuetext={`${formatMetres(value)} м`}
           min={min}
           max={max}
           step={step}
           value={value}
-          onChange={(event) => onCommit(clamp(Number(event.target.value)))}
+          onChange={(event) => {
+            setNote(null);
+            onCommit(clamp(Number(event.target.value)));
+          }}
         />
         <input
           id={inputId}
           type="text"
           inputMode="decimal"
           autoComplete="off"
-          aria-describedby={hint ? `${inputId}-hint` : undefined}
+          aria-describedby={`${inputId}-hint ${inputId}-note`}
           value={draft ?? formatMetres(value)}
           onChange={(event) => handleTyped(event.target.value)}
           onBlur={handleBlur}
         />
       </div>
-      {hint && (
+      {hint ? (
         <p className="hc-field-hint" id={`${inputId}-hint`}>
           {hint}
         </p>
+      ) : (
+        <span className="hc-visually-hidden" id={`${inputId}-hint`}>{range}</span>
       )}
+      {/* Rendered empty, so the live region exists before it has something to say */}
+      <p className="hc-field-hint hc-field-note-live" id={`${inputId}-note`} role="status">{note}</p>
+      {children}
     </div>
   );
+}
+
+/* ── Phone accordion (/angary, 03.10) ──────────────────────────────────────────────────────────────────────────────
+   On a phone the groups were 2 screens of controls under the mini drawing. At ≤ 760 px on /angary they fold: one group
+   open at a time, each header saying what is set in it. Rendered on the server and without JavaScript as before —
+   plain headings, every group open — and the research screen (/configurator-preview) keeps its open groups: it has no
+   mini drawing to scroll under, and like every other /angary-only phone rule this is keyed on the embedded layout. */
+
+const PHONE_QUERY = '(max-width: 760px)';
+
+function subscribePhone(onChange: () => void) {
+  const media = window.matchMedia(PHONE_QUERY);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+
+const isPhone = () => window.matchMedia(PHONE_QUERY).matches;
+const notOnServer = () => false;
+
+function usePhoneAccordion() {
+  const phone = useSyncExternalStore(subscribePhone, isPhone, notOnServer);
+  const [embedded, setEmbedded] = useState(false);
+  const controlsRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) setEmbedded(node.closest('.hangar-configurator-embedded') !== null);
+  }, []);
+  return { controlsRef, accordion: phone && embedded };
+}
+
+/** Opening a group folds the one above it, so its header can jump up under the mini drawing held below the site header
+ *  (useMiniPreview in HangarConfigurator.tsx) or above the screen: bring it back just under the drawing. The drawing is
+ *  counted even when it is not stuck yet: the observer sticks it a moment after this jump, and a header placed under
+ *  the site header alone was then covered by it. */
+function keepHeaderInView(header: HTMLElement) {
+  const stage = header.closest('.hc-layout')?.querySelector<HTMLElement>('.hc-preview-surface');
+  const covered = (document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0) + (stage?.offsetHeight ?? 0);
+  const top = header.getBoundingClientRect().top;
+  if (top < covered) window.scrollBy({ top: top - covered - 8, behavior: 'instant' });
+}
+
+/** Brings a header just under the site header and the mini drawing, from above or below — twice, because arriving at the
+ *  controls switches the drawing to its compact size a frame later */
+function landOnHeader(header: HTMLElement) {
+  const land = () => {
+    const stage = header.closest('.hc-layout')?.querySelector<HTMLElement>('.hc-preview-surface');
+    const covered = (document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0) + (stage?.offsetHeight ?? 0);
+    window.scrollBy({ top: header.getBoundingClientRect().top - covered - 8, behavior: 'instant' });
+  };
+  land();
+  window.requestAnimationFrame(() => window.requestAnimationFrame(land));
+}
+
+// The ids the groups have always had: page sections and tests point at them
+const GROUP_HEADING_IDS: Record<ControlGroupId, string> = {
+  object: 'hc-object-heading',
+  dimensions: 'hc-dimensions-heading',
+  envelope: 'hc-envelope-heading',
+  cladding: 'hc-cladding-heading',
+  foundation: 'hc-foundation-heading',
+  scope: 'hc-scope-heading',
+  openings: 'hc-gates-heading',
+};
+
+function ControlGroup({
+  id,
+  accordion,
+  open,
+  value,
+  onToggle,
+  children,
+}: Readonly<{
+  id: ControlGroupId;
+  accordion: boolean;
+  open: boolean;
+  value: string;
+  onToggle: (id: ControlGroupId, header: HTMLElement) => void;
+  children: ReactNode;
+}>) {
+  const headingId = GROUP_HEADING_IDS[id];
+  const panelId = `hc-${id}-panel`;
+  return (
+    <section className="hc-control-group" aria-labelledby={headingId} data-group={id}>
+      {accordion ? (
+        <h3 className="hc-group-heading">
+          {/* The button's name is the title and the value: a folded group is announced with what is set in it */}
+          <button
+            type="button"
+            className="hc-group-toggle"
+            aria-expanded={open}
+            aria-controls={panelId}
+            onClick={(event) => onToggle(id, event.currentTarget)}
+          >
+            <span className="hc-group-title" id={headingId}>{CONTROL_GROUP_TITLES[id]}</span>
+            <span className="hc-group-value">{value}</span>
+          </button>
+        </h3>
+      ) : (
+        <h3 id={headingId}>{CONTROL_GROUP_TITLES[id]}</h3>
+      )}
+      <div className="hc-group-panel" id={panelId} hidden={accordion && !open}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+/** Says why the openings shown are not the ones chosen. It used to warn «оберіть менший тип» while the sizes had
+ *  already dropped the visitor's gates for good; now they are held and come back (04.10). */
+function heldOpeningsNote(gatesHeld: boolean, doorHeld: boolean): string | null {
+  if (gatesHeld && doorHeld) {
+    return 'Обрані ворота й двері не поміщаються за поточних розмірів будівлі, тому в конфігурації лише те, що поміщається. Ваш вибір повернеться, щойно розміри це дозволять.';
+  }
+  if (gatesHeld) {
+    return 'Обрані ворота не поміщаються за поточних розмірів будівлі, тому в конфігурації лише ті, що поміщаються. Ваш вибір повернеться, щойно розміри це дозволять.';
+  }
+  if (doorHeld) return 'Для дверей немає місця за цієї ширини й цих воріт, тому в конфігурації їх немає. Вони повернуться, щойно місце знайдеться.';
+  return null;
 }
 
 const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
@@ -159,32 +318,81 @@ const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
   height: 'Висота стін',
 };
 
-export function ConfiguratorControls({ state, onChange }: Props) {
-  // The ridge's legal range depends on the CURRENT width and eave height, so it is recomputed on
-  // every render rather than read from a static table, and the stored value is re-clamped with it:
-  // widening the building can make a previously-legal ridge too shallow.
+export function ConfiguratorControls({ state, onChange, foundationChoice = true }: Readonly<Props>) {
+  const { controlsRef, accordion } = usePhoneAccordion();
+  // The first group open on a phone; one at a time after that, and every group may be folded
+  const [openGroup, setOpenGroup] = useState<ControlGroupId | null>('object');
+  // The same resolved model the summary reads, so a folded header and the ridge hint never disagree with the stamp
+  const domain = useMemo(() => deriveDomainModel(state), [state]);
+  const groupValues = describeControlGroups(domain);
+  // The ridge's legal range depends on the CURRENT width and eave height, so it is recomputed on every render rather
+  // than read from a static table. The value shown is the resolved one: the span rule's until the visitor edits it.
   const ridgeRange = ridgeHeightRangeM(state.dimensions.width, state.dimensions.height);
-  const ridgeValue = clampRidgeHeightM(state.ridgeHeightM, state.dimensions.width, state.dimensions.height);
+  const ridgeValue = resolveRidgeHeightM(state);
+  const ridgeRangeText = `Діапазон для цієї ширини й висоти стін: ${formatMetres(ridgeRange.min)}–${formatMetres(ridgeRange.max)}${NBSP}м.`;
+  const ridgeNow = `Коник ${formatMetres(ridgeValue)}${NBSP}м · ${formatRoofSlope(domain.roof.pitchDeg, true)}`;
+  // The visitor's ridge is kept as typed and held in the range here (04.10), so a ridge the sizes moved is said to be the
+  // range's end, not «ваше значення» — the hint used to call a clamped 8,3 м the visitor's after they typed 11,5 м
+  let ridgeHint = `${ridgeNow}. Поки ви не задали коник самі, ухил підбирається за шириною ангара. ${ridgeRangeText}`;
+  if (state.ridgeEdited) {
+    const typed = `Ваші ${formatMetres(state.ridgeHeightM)}${NBSP}м повернуться, щойно розміри це дозволять.`;
+    if (ridgeValue === state.ridgeHeightM) ridgeHint = `${ridgeNow} — ваше значення. ${ridgeRangeText}`;
+    else if (ridgeValue > state.ridgeHeightM) ridgeHint = `${ridgeNow} — найнижчий для цієї ширини й висоти стін. ${typed}`;
+    else ridgeHint = `${ridgeNow} — найвищий для цієї ширини й висоти стін. ${typed}`;
+  }
 
+  // A link elsewhere on the page that names a group (the frame drawing's «Змінити габарити ↑», data-open-group) opens it
+  // on a phone and lands on its header — it used to arrive at the configurator with «Розміри» folded (03.10). Without the
+  // accordion the link's own anchor scrolls as usual.
+  useEffect(() => {
+    if (!accordion) return undefined;
+    const openFromLink = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[data-open-group]');
+      const id = link?.dataset.openGroup as ControlGroupId | undefined;
+      if (!id || !(id in GROUP_HEADING_IDS)) return;
+      event.preventDefault();
+      // the address follows the visitor back up: it kept «#inquiry» from an earlier reveal (04.10)
+      if (link?.hash) window.history.replaceState(null, '', link.hash);
+      setOpenGroup(id);
+      window.requestAnimationFrame(() => {
+        const header = document.querySelector<HTMLElement>(`.hangar-configurator-embedded [data-group="${id}"] .hc-group-toggle`);
+        if (!header) return;
+        landOnHeader(header);
+        header.focus({ preventScroll: true });
+      });
+    };
+    document.addEventListener('click', openFromLink);
+    return () => document.removeEventListener('click', openFromLink);
+  }, [accordion]);
+
+  function toggleGroup(id: ControlGroupId, header: HTMLElement) {
+    const opening = openGroup !== id;
+    setOpenGroup(opening ? id : null);
+    // React commits a click's update before the next frame: measure once the group above has folded
+    if (opening) window.requestAnimationFrame(() => keepHeaderInView(header));
+  }
+
+  function groupProps(id: ControlGroupId) {
+    return { id, accordion, open: openGroup === id, value: groupValues[id], onToggle: toggleGroup };
+  }
+
+  // The sizes change only the sizes (04.10). The gates, the door and an edited ridge stay as the visitor chose them and are
+  // held to what fits by deriveDomainModel, which the drawing, the stamp, the lead and these controls all read: dragging
+  // the width to 12 and back to 24 used to cost the second gate and the door for good, and a typed «5,5» lost the
+  // «Для заїзду техніки» gate to the «5» on the way. The same rule as the scope's — a choice is held, never cleared.
   function setDimension(key: keyof Dimensions, value: number) {
-    const dimensions = { ...state.dimensions, [key]: value };
-    onChange({
-      ...state,
-      dimensions,
-      // Keep the ridge legal for the new footprint in the same update, so the two can never be
-      // committed out of step with each other.
-      ridgeHeightM: clampRidgeHeightM(state.ridgeHeightM, dimensions.width, dimensions.height),
-      // Phase 3F.1: same reasoning — a fixed-size gate selection legal at the OLD footprint may
-      // not be at the new one (see clampGateSelection's own doc comment in parametricModel.ts).
-      // The control panel below also disables an option before it can be picked in the first
-      // place; this is the reactive fallback for a selection the customer already made.
-      ...clampGateSelection(state.gates, state.gateType, dimensions.width, dimensions.height),
-      ...clampDoorSelection(state.doors, state.gates, state.gateType, dimensions.width),
-    });
+    onChange({ ...state, dimensions: { ...state.dimensions, [key]: value } });
   }
 
   function setRidge(ridgeHeightM: number) {
-    onChange({ ...state, ridgeHeightM });
+    // Only a changed value is the visitor's own ridge: focusing the field and leaving it (a blur commits the value it
+    // shows) must not stop the ridge following the width.
+    if (ridgeHeightM === ridgeValue) return;
+    onChange(withRidge(state, ridgeHeightM));
+  }
+
+  function setObjectProfile(answer: Partial<ObjectProfile>) {
+    onChange({ ...state, objectProfile: { ...state.objectProfile, ...answer } });
   }
 
   function setEnvelope(envelope: EnvelopeChoice) {
@@ -212,14 +420,14 @@ export function ConfiguratorControls({ state, onChange }: Props) {
     onChange({ ...state, foundationType });
   }
 
-  // Changing the gates changes where a door may legally go, so the door is re-clamped with them
-  // — the same reason `setDimension` re-clamps both.
+  // Each opening control sets only its own choice (04.10). A door the new gates leave no room for is held, not dropped,
+  // like a gate the sizes leave no room for: deriveDomainModel places what fits, and the rest returns with the room.
   function setGates(gates: GatesCount) {
-    onChange({ ...state, gates, ...clampDoorSelection(state.doors, gates, state.gateType, state.dimensions.width) });
+    onChange({ ...state, gates });
   }
 
   function setGateType(gateType: GateType) {
-    onChange({ ...state, gateType, ...clampDoorSelection(state.doors, state.gates, gateType, state.dimensions.width) });
+    onChange({ ...state, gateType });
   }
 
   function setDoors(doors: DoorCount) {
@@ -230,22 +438,122 @@ export function ConfiguratorControls({ state, onChange }: Props) {
     onChange({ ...state, scope: toggleScopeItem(state.scope, item) });
   }
 
+  // The openings as placed — held to what fits at these sizes (deriveDomainModel). The controls show these; the
+  // visitor's own choice stays in the state and returns once it fits (04.10).
+  const shown = { gates: domain.gates, gateType: domain.gateType, doors: domain.doors };
+  const gatesHeld = state.gates !== shown.gates || state.gateType !== shown.gateType;
+  const doorHeld = state.doors !== shown.doors;
   const wallsInScope = state.scope.includes('walls');
+  const heldNote = wallsInScope ? heldOpeningsNote(gatesHeld, doorHeld) : null;
   const roofInScope = state.scope.includes('roof');
   const foundationInScope = state.scope.includes('foundation');
   // "Контур" sets the wall AND roof systems together, so it stays available while either surface
   // is being asked for.
   const hasEnvelopeScope = wallsInScope || roofInScope;
+  const { objectProfile } = state;
 
   return (
-    <div className="hc-controls">
+    <div className="hc-controls" ref={controlsRef} data-accordion={accordion ? '' : undefined}>
+      {/* «Об’єкт» first (owner, 03.10): what the hangar is for and where it stands come before its sizes. Every
+          question is optional and starts unanswered, so a visitor who skips it sends nothing from it. */}
+      <ControlGroup {...groupProps('object')}>
+        <p className="hc-field-note hc-object-note">Необов’язково — можна пропустити й уточнити під час розмови.</p>
+        <div className="hc-field">
+          <div className="hc-field-head">
+            <span id="hc-purpose-label">Для чого ангар?</span>
+          </div>
+          <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-purpose-label" aria-describedby="hc-purpose-hint">
+            {PURPOSE_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-purpose"
+                  value={option}
+                  checked={objectProfile.purpose === option}
+                  onChange={() => setObjectProfile({ purpose: option })}
+                  // The purpose has no «Ще не знаю» chip (the owner's list): the chosen chip clicked again is taken back
+                  onClick={() => {
+                    if (objectProfile.purpose === option) setObjectProfile({ purpose: null });
+                  }}
+                  // …and from the keyboard (04.10): Space on a checked radio sends no click, so it could not be taken back
+                  onKeyDown={(event) => {
+                    if (objectProfile.purpose !== option || ![' ', 'Delete', 'Backspace'].includes(event.key)) return;
+                    event.preventDefault();
+                    setObjectProfile({ purpose: null });
+                  }}
+                />
+                <span>{PURPOSE_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+          <span className="hc-visually-hidden" id="hc-purpose-hint">Щоб зняти вибір, натисніть обраний варіант ще раз.</span>
+        </div>
+        <div className="hc-field">
+          <div className="hc-field-head">
+            <span id="hc-project-label">Проєкт є?</span>
+          </div>
+          <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-project-label">
+            {PROJECT_STATUS_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-project"
+                  value={option}
+                  checked={objectProfile.project === option}
+                  onChange={() => setObjectProfile({ project: option })}
+                />
+                <span>{PROJECT_STATUS_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="hc-field">
+          <div className="hc-field-head">
+            <label htmlFor="hc-object-region">Область будівництва</label>
+          </div>
+          <select
+            id="hc-object-region"
+            className="hc-select"
+            value={objectProfile.region}
+            onChange={(event) => {
+              const region = event.target.value;
+              if (isBuildRegion(region)) setObjectProfile({ region });
+            }}
+          >
+            <option value="unknown">{UNKNOWN_REGION_LABEL}</option>
+            {BUILD_REGIONS.map((region) => (
+              <option key={region} value={region}>{region}</option>
+            ))}
+          </select>
+        </div>
+        <div className="hc-field">
+          <div className="hc-field-head">
+            <span id="hc-lifting-label">Підйомне обладнання</span>
+          </div>
+          <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-lifting-label">
+            {LIFTING_EQUIPMENT_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-lifting"
+                  value={option}
+                  checked={objectProfile.lifting === option}
+                  onChange={() => setObjectProfile({ lifting: option })}
+                />
+                <span>{LIFTING_EQUIPMENT_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <ConfiguratorWhy topic="object" />
+      </ControlGroup>
+
       {/* "Обсяг заявки" is the master fact for everything below it. A cladding system, a colour
           or an opening for a surface the customer is not asking for is not something they can
           order, and offering it is how the summary ended up contradicting its own Обсяг line. The
           controls are DISABLED, never cleared: dropping walls to look at the frame and putting
           them back must not cost the visitor their gate choice. */}
-      <section className="hc-control-group" aria-labelledby="hc-dimensions-heading">
-        <h2 id="hc-dimensions-heading">Розміри</h2>
+      <ControlGroup {...groupProps('dimensions')}>
         {(['width', 'length', 'height'] as const).map((key) => (
           <NumericField
             key={key}
@@ -266,14 +574,18 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           min={ridgeRange.min}
           max={ridgeRange.max}
           step={RIDGE_HEIGHT_STEP_M}
-          hint={`Для обраної ширини доступний діапазон ${formatMetres(ridgeRange.min)}–${formatMetres(ridgeRange.max)} м. Він змінюється разом із шириною ангара та висотою стін.`}
+          hint={ridgeHint}
           clamp={(v) => clampRidgeHeightM(v, state.dimensions.width, state.dimensions.height)}
           onCommit={setRidge}
-        />
-      </section>
+        >
+          {/* The way back to the span rule, which an edited ridge never had (04.10) */}
+          {state.ridgeEdited && (
+            <button type="button" className="hc-field-reset" onClick={() => onChange(withSpanRuleRidge(state))}>Підбирати ухил за шириною</button>
+          )}
+        </NumericField>
+      </ControlGroup>
 
-      <section className="hc-control-group" aria-labelledby="hc-envelope-heading">
-        <h2 id="hc-envelope-heading">Контур будівлі</h2>
+      <ControlGroup {...groupProps('envelope')}>
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-envelope-heading">
           {(Object.keys(ENVELOPE_LABELS) as EnvelopeChoice[]).map((option) => (
             <label key={option} className="hc-option-card" aria-disabled={!hasEnvelopeScope}>
@@ -293,11 +605,10 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             Контур описує стіни та покрівлю — увімкніть їх в «Обсязі заявки», щоб обрати.
           </p>
         )}
-        <ConfiguratorWhy topic="contour" state={state} />
-      </section>
+        <ConfiguratorWhy topic="contour" />
+      </ControlGroup>
 
-      <section className="hc-control-group" aria-labelledby="hc-cladding-heading">
-        <h2 id="hc-cladding-heading">Огороджувальні конструкції</h2>
+      <ControlGroup {...groupProps('cladding')}>
         <div className="hc-field">
           <div className="hc-field-head">
             <span id="hc-wall-system-label">Стіни</span>
@@ -342,8 +653,8 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             <p className="hc-field-note">Покрівля не входить в обсяг заявки.</p>
           )}
         </div>
-        <ConfiguratorWhy topic="cladding" state={state} />
-      </section>
+        <ConfiguratorWhy topic="cladding" />
+      </ControlGroup>
 
       {/* Phase 3F.1: the read-only "Попередня конструктивна схема" info block that used to live
           here was removed — it duplicated the exact same fact already shown in the summary panel
@@ -351,8 +662,8 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           information (live product review). The derived value itself (deriveStructuralVisualization)
           is unchanged and still surfaces exactly once, in ConfiguratorSummary.tsx. */}
 
-      <section className="hc-control-group" aria-labelledby="hc-foundation-heading">
-        <h2 id="hc-foundation-heading">Основа / фундамент</h2>
+      {foundationChoice && (
+      <ControlGroup {...groupProps('foundation')}>
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-foundation-heading">
           {FOUNDATION_TYPE_ORDER.map((option) => (
             <label key={option} className="hc-option-card" aria-disabled={!foundationInScope}>
@@ -375,11 +686,11 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         <p className="hc-field-note">
           Тут можна вказати попереднє побажання: тип фундаменту визначає проєктувальник за даними майданчика й навантаженнями.
         </p>
-        <ConfiguratorWhy topic="foundation" state={state} />
-      </section>
+        <ConfiguratorWhy topic="foundation" />
+      </ControlGroup>
+      )}
 
-      <section className="hc-control-group" aria-labelledby="hc-scope-heading">
-        <h2 id="hc-scope-heading">Обсяг заявки</h2>
+      <ControlGroup {...groupProps('scope')}>
         <div className="hc-option-list">
           {SCOPE_ORDER.map((item) => {
             const checked = hasScopeItem(state.scope, item);
@@ -392,13 +703,12 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           })}
         </div>
         <p className="hc-field-note">Позначте, які роботи вас цікавлять. Їхній склад уточнимо після перегляду проєкту.</p>
-      </section>
+      </ControlGroup>
 
-      <section className="hc-control-group" aria-labelledby="hc-gates-heading">
-        <h2 id="hc-gates-heading">Прорізи</h2>
+      <ControlGroup {...groupProps('openings')}>
         {!wallsInScope && (
           <p className="hc-field-note hc-field-note-warning">
-            Ворота і двері — це прорізи у стінах. Увімкніть «Стіни / огороджувальний контур» в
+            Ворота й двері — це прорізи в стінах. Увімкніть «Стіни / огороджувальний контур» в
             «Обсязі заявки», щоб їх обрати. Поточний вибір збережеться.
           </p>
         )}
@@ -411,14 +721,14 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             // gate type actually fits that many times at the current width/eave height — real,
             // fixed-size gates (GATE_DIMENSIONS_M), not scaled to fit. 0 is always available.
             const disabled = option > 0 && (!wallsInScope
-              || !gateHeightFits(state.gateType, state.dimensions.height)
-              || option > maxGateCountThatFits(state.gateType, state.dimensions.width));
+              || !gateHeightFits(shown.gateType, state.dimensions.height)
+              || option > maxGateCountThatFits(shown.gateType, state.dimensions.width));
             return (
               <label key={option} className="hc-option-card" aria-disabled={disabled}>
                 <input
                   type="radio"
                   name="hc-gates"
-                  checked={state.gates === option}
+                  checked={shown.gates === option}
                   disabled={disabled}
                   onChange={() => setGates(option)}
                 />
@@ -429,7 +739,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         </div>
         {/* Only meaningful once there is a gate to size, so it is hidden at zero rather than
             shown disabled — a control that cannot do anything is noise. */}
-        {state.gates > 0 && (
+        {shown.gates > 0 && (
           <div
             className="hc-option-cards hc-gate-types"
             role="radiogroup"
@@ -440,13 +750,13 @@ export function ConfiguratorControls({ state, onChange }: Props) {
               // count already selected — switching type never silently rescales anything.
               const disabled = !wallsInScope
                 || !gateHeightFits(option, state.dimensions.height)
-                || state.gates > maxGateCountThatFits(option, state.dimensions.width);
+                || shown.gates > maxGateCountThatFits(option, state.dimensions.width);
               return (
                 <label key={option} className="hc-option-card" aria-disabled={disabled}>
                   <input
                     type="radio"
                     name="hc-gate-type"
-                    checked={state.gateType === option}
+                    checked={shown.gateType === option}
                     disabled={disabled}
                     onChange={() => setGateType(option)}
                   />
@@ -456,28 +766,30 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             })}
           </div>
         )}
-        {state.gates > 0 && (
+        {shown.gates > 0 && (
           <p className="hc-field-note">
-            Стандартні ворота — {GATE_DIMENSIONS_M.standard.widthM}×{GATE_DIMENSIONS_M.standard.heightM} м,
-            для заїзду техніки — {GATE_DIMENSIONS_M.double.widthM}×{GATE_DIMENSIONS_M.double.heightM} м.
+            {/* a dash never opens a line */}
+            Стандартні ворота{NBSP}— {formatSize(GATE_DIMENSIONS_M.standard.widthM, GATE_DIMENSIONS_M.standard.heightM)},
+            для заїзду техніки{NBSP}— {formatSize(GATE_DIMENSIONS_M.double.widthM, GATE_DIMENSIONS_M.double.heightM)}.
           </p>
         )}
         <div className="hc-field hc-door-field">
           <div className="hc-field-head">
             <span id="hc-doors-label">Двері</span>
           </div>
-          <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-doors-label">
+          {/* Chips at their own width, like «Об’єкт»: «Без дверей» broke into two lines in a 68 px tile (04.10) */}
+          <div className="hc-option-cards hc-chips hc-door-options" role="radiogroup" aria-labelledby="hc-doors-label">
             {DOOR_OPTIONS.map((option) => {
               // Disabled rather than hidden, and only ever for a real reason: at this width the
               // door has no position clear of the corners, the gates and the centre-support line.
-              const disabled = option > 0 && (!wallsInScope || !doorFits(state.gates, state.gateType, state.dimensions.width));
+              const disabled = option > 0 && (!wallsInScope || !doorFits(shown.gates, shown.gateType, state.dimensions.width));
               return (
                 <label className="hc-option-card" key={option}>
                   <input
                     type="radio"
                     name="hc-doors"
                     value={option}
-                    checked={state.doors === option}
+                    checked={shown.doors === option}
                     disabled={disabled}
                     aria-disabled={disabled}
                     onChange={() => setDoors(option)}
@@ -487,22 +799,19 @@ export function ConfiguratorControls({ state, onChange }: Props) {
               );
             })}
           </div>
+          {/* Without gates the door goes to the quarter points of the gable end (doorCandidateXs): it said «поруч із
+              воротами» there too (04.10) */}
           <p className="hc-field-note">
-            Службові двері — {DOOR_DIMENSIONS_M.widthM.toString().replace('.', ',')}×
-            {DOOR_DIMENSIONS_M.heightM.toString().replace('.', ',')} м. Розташування визначається
-            автоматично: поруч із воротами, поза їх прорізом і без перетину з колонами.
+            Службові двері{NBSP}— {formatSize(DOOR_DIMENSIONS_M.widthM, DOOR_DIMENSIONS_M.heightM)}. Розташування визначається
+            автоматично: {shown.gates > 0
+              ? 'поруч із воротами, поза їхнім прорізом і без перетину з колонами.'
+              : 'у торцевій стіні, без перетину з колонами.'}
           </p>
         </div>
 
-        {state.gates > 0 && (!gateHeightFits(state.gateType, state.dimensions.height)
-          || state.gates > maxGateCountThatFits(state.gateType, state.dimensions.width)) && (
-          <p className="hc-field-note hc-field-note-warning">
-            Обрані ворота не поміщаються за поточних розмірів будівлі — оберіть менший тип або
-            кількість воріт, або збільште ширину чи висоту стін.
-          </p>
-        )}
-        <ConfiguratorWhy topic="openings" state={state} />
-      </section>
+        {heldNote && <p className="hc-field-note hc-field-note-warning">{heldNote}</p>}
+        <ConfiguratorWhy topic="openings" />
+      </ControlGroup>
     </div>
   );
 }

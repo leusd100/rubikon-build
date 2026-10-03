@@ -51,6 +51,8 @@ export function ThreeDimensionOverlay({
   // The band the camera must stay clear of is whichever element currently sits on the bottom edge:
   // the readout when it is shown, the toggle on its own when it is not. Both are positioned the
   // same distance from the edge, so the inset is that offset plus the element's own height.
+  // On /angary's sheet the toggle sits at the top of the picture (configurator-sheet.css, 03.10): on
+  // its own there it covers nothing at the bottom, and the building gets the whole height back.
   const measure = useCallback(() => {
     const el = bandRef.current;
     if (!el || !onBottomInsetChange) return;
@@ -59,7 +61,8 @@ export function ThreeDimensionOverlay({
     const rect = el.getBoundingClientRect();
     const parentRect = parent?.getBoundingClientRect();
     const fromBottom = parentRect ? parentRect.bottom - rect.top : rect.height;
-    onBottomInsetChange(Math.max(0, Math.min(fromBottom, parentHeight)));
+    const onTop = parentRect !== undefined && rect.top - parentRect.top < parentHeight / 2;
+    onBottomInsetChange(onTop ? 0 : Math.max(0, Math.min(fromBottom, parentHeight)));
   }, [onBottomInsetChange]);
 
   useEffect(() => {
@@ -78,19 +81,19 @@ export function ThreeDimensionOverlay({
         <dl className="hc-three-overlay" aria-hidden="true" ref={bandRef as React.RefObject<HTMLDListElement>}>
           <div>
             <dt>Ширина</dt>
-            <dd>{formatMetres(widthM)} м</dd>
+            <dd>{`${formatMetres(widthM)}\u00A0м`}</dd>
           </div>
           <div>
             <dt>Довжина</dt>
-            <dd>{formatMetres(lengthM)} м</dd>
+            <dd>{`${formatMetres(lengthM)}\u00A0м`}</dd>
           </div>
           <div>
             <dt>Висота стін</dt>
-            <dd>{formatMetres(eaveM)} м</dd>
+            <dd>{`${formatMetres(eaveM)}\u00A0м`}</dd>
           </div>
           <div>
             <dt>Висота в конику</dt>
-            <dd>{formatMetres(ridgeM)} м</dd>
+            <dd>{`${formatMetres(ridgeM)}\u00A0м`}</dd>
           </div>
         </dl>
       )}

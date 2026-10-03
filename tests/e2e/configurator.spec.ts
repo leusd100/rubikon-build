@@ -191,13 +191,13 @@ test.describe('hangar configurator POC', () => {
     await openConfigurator(page);
 
     // Phase 3F.1: the summary now carries the gate's own real, fixed size alongside count/type
-    // (brief §D — "1 × стандартні, 4×4 м"), not just a bare count.
+    // (brief §D), not just a bare count — counted «одні / двоє» since 04.10.
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(1);
-    await expect(page.locator('.hc-summary-facts')).toContainText('1 × стандартні, 4×4 м');
+    await expect(page.locator('.hc-summary-facts')).toContainText('Одні стандартні, 4 × 4 м');
 
     await page.locator('.hc-option-card', { hasText: '2' }).click();
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(2);
-    await expect(page.locator('.hc-summary-facts')).toContainText('2 × стандартні, 4×4 м');
+    await expect(page.locator('.hc-summary-facts')).toContainText('Двоє стандартних, 4 × 4 м');
 
     await page.locator('.hc-option-card', { hasText: '0' }).click();
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(0);
@@ -266,6 +266,15 @@ test.describe('hangar configurator POC — mobile', () => {
       return controls.compareDocumentPosition(preview) === Node.DOCUMENT_POSITION_FOLLOWING;
     });
     expect(order).toBe(true);
+  });
+
+  // The phone accordion is /angary's (03.10): this screen has no mini drawing to scroll under, so its groups stay open
+  test('keeps every control group open, «Об’єкт» first', async ({ page }) => {
+    await openConfigurator(page);
+    await expect(page.locator('.hc-group-toggle')).toHaveCount(0);
+    await expect(page.locator('.hc-control-group h3').first()).toHaveText('Об’єкт');
+    await expect(page.locator('#hc-dimension-width')).toBeVisible();
+    await expect(page.locator('#hc-object-region')).toBeVisible();
   });
 
   test('summary is collapsible', async ({ page }) => {

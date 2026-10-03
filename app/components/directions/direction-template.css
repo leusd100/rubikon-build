@@ -25,10 +25,24 @@
 
 /* «Пов’язані напрямки»: one ruled row across the width, not two small boxes in a half-empty row */
 .related-directions-section .related-directions-title { margin: 14px 0 28px; font: 400 clamp(30px, 2.6vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+/* A band with its own heading says what the cards are for in one line (/angary «Окремим етапом», 03.10); closing the
+   page after #inquiry it takes the compact rhythm */
+.related-directions-section .related-directions-text { max-width: 62ch; margin: -12px 0 28px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.6; }
+.related-directions-section.is-closing { padding-block: var(--section-space-compact); }
 .related-directions-section .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0; border-block: 1px solid var(--color-border-strong); }
 .related-directions-section .related-card { min-width: 0; padding: 26px 28px 28px; background: transparent; border: 0; border-left: 1px solid var(--color-border-strong); }
 .related-directions-section .related-card:first-child { border-left: 0; padding-left: 0; }
 .related-directions-section .related-card h3 { font-size: 21px; }
+/* Three cards stay one ruled row down to the phone's list: auto-fit wrapped the third under the first two at 761–850 px,
+   with its left rule and indent and no rule between the rows (04.10) */
+@media (min-width: 761px) {
+  .related-directions-section .related-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 761px) and (max-width: 1023px) {
+  .related-directions-section .related-grid[data-count="3"] .related-card { padding-inline: 20px; }
+  .related-directions-section .related-grid[data-count="3"] .related-card:first-child { padding-left: 0; }
+  .related-directions-section .related-grid[data-count="3"] .related-card h3 { font-size: 19px; }
+}
 .related-directions-section .related-card:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--color-surface-elevated) 55%, transparent); }
 .related-directions-section .related-card:is(:hover, :focus-visible) h3 { color: var(--color-accent-strong); }
 @media (max-width: 760px) {

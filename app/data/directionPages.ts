@@ -36,13 +36,24 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   angary: {
     id: 'angary',
     pageClassName: 'angary-page',
-    related: { compact: true },
+    // UX review 2026-10: the related row as on every other direction page (it was a closed three-card box here), and no
+    // «Що буде після звернення» in the form — the route on this page already tells it
+    hideJourney: true,
+    // Owner, 03.10: the related directions close the page after the form, as the separate stages of this same work
+    related: {
+      placement: 'after-inquiry',
+      eyebrow: 'Окремим етапом',
+      title: 'Потрібен лише один етап?',
+      text: 'Фундамент, металокаркас чи покрівлю можна замовити окремо.',
+    },
     hero: {
       breadcrumbLabel: 'Ангари',
-      title: 'Ангари та склади',
-      accent: 'за вашою конфігурацією',
-      intro: 'Прольоти, висота та схема каркаса залежать від того, що відбуватиметься всередині — виробництво, зберігання, логістика чи розміщення техніки. Будуємо ангари та склади під конкретне функціональне завдання — комплексно або як окремий етап робіт.',
-      introPhone: 'Будуємо ангари та склади під конкретне функціональне завдання — комплексно або як окремий етап робіт.',
+      // The first screen says what RUBIKON does and for whom (UX review 2026-10: it sold «конфігурацію»; «будуєм» was on
+      // the page once). The separate stages are the ledger's own-team works.
+      title: 'Будуємо ангари та склади',
+      accent: 'під вашу задачу',
+      intro: 'Склади, ангари для техніки, виробничі й аграрні споруди — комплексно або окремим етапом: фундамент, металокаркас, покрівля. Проліт, висоту й схему каркаса визначає те, що відбуватиметься всередині.',
+      introPhone: 'Склади, ангари для техніки, виробничі й аграрні споруди — комплексно або окремим етапом: фундамент, металокаркас, покрівля.',
       actions: {
         className: 'angary-hero-actions',
         sectionClassName: 'angary-service-subhero',
@@ -98,12 +109,14 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
         // The visitor's words stay in the question; the answer is written from the Delivery Model on the
         // server (lib/deliveryModelPresentation), so this file — which ships to the grain planner's client
         // bundle — never imports the model.
+        // UX review 2026-10: «Як обговорюється вартість?» and «Чи є конфігурація готовим проєктним рішенням?» repeated the
+        // cost block and the configurator's own note; a buyer's real questions — who designs, who buys — took their place.
         ['Чи будуєте ангари під ключ?', { deliveryModelAnswer: 'turnkey' }],
         ['Чи можна замовити лише металокаркас?', 'Так. Склад робіт узгоджуємо окремо: це може бути лише виготовлення каркаса, його монтаж або комплексний обсяг з основою та огородженням.'],
+        ['Хто готує проєкт ангара?', { deliveryModelAnswer: 'design' }],
+        ['Хто закуповує матеріали?', { deliveryModelAnswer: 'materials' }],
         ['Що потрібно для попередньої оцінки?', 'Призначення споруди, орієнтовні довжина, ширина й висота, місце будівництва та бажані строки.'],
-        ['Як обговорюється вартість?', 'Після уточнення функції, габаритів, майданчика й складу робіт формуємо попередню оцінку. Остаточний кошторис спирається на погоджене технічне рішення.'],
         ['У яких регіонах ви будуєте?', company.geography],
-        ['Чи є конфігурація готовим проєктним рішенням?', 'Ні. Конфігуратор формує перший технічний бриф і попередню візуалізацію. Конструктивну схему та параметри визначає проєктувальник замовника після розрахунку.'],
       ],
     },
     cta: { eyebrow: 'Обговорити ангар', title: 'Розкажіть про майбутній ангар', lead: 'Є ідея чи вже готовий проєкт — опишіть споруду, і сформуємо наступний крок. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит.' },

@@ -279,7 +279,8 @@ test('homepage conversation explains the four steps without promising an estimat
 test('the conversation intro never slides over the steps, and sticks only where it has its column to itself', async ({ page, isMobile }) => {
   test.skip(isMobile, 'the sticky intro is a desktop layout');
   await page.setViewportSize({ width: 1440, height: 900 });
-  for (const [path, sticks] of [['/', false], ['/angary', false], ['/yak-pratsyuiemo', true]] as const) {
+  // /angary has no journey under the call (UX review 2026-10), so its intro has the column to itself, as on /yak
+  for (const [path, sticks] of [['/', false], ['/angary', true], ['/yak-pratsyuiemo', true]] as const) {
     await page.goto(path, { waitUntil: 'load' });
     const scroll = await page.evaluate(async () => {
       const section = document.querySelector<HTMLElement>('#inquiry')!;
@@ -525,7 +526,7 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }
 const CONVERSATION_PAGES: ReadonlyArray<{ path: string; journey: readonly string[] }> = [
   { path: '/', journey: DEFAULT_JOURNEY },
   { path: '/pro-nas', journey: DEFAULT_JOURNEY },
-  ...Object.entries(DIRECTION_JOURNEY).map(([id, journey]) => ({ path: `/${id}`, journey })),
+  ...Object.entries(DIRECTION_JOURNEY).map(([id, journey]) => ({ path: `/${id}`, journey: journey ?? [] })),
 ];
 
 test('every page closes with the same conversation block, in its own words', async ({ page }) => {
@@ -547,6 +548,11 @@ test('every page closes with the same conversation block, in its own words', asy
     expect(text.steps, path).toEqual([...journey]);
     expect(text.legacy, path).toEqual([]);
   }
+  // /angary closes with the same block, without «Що буде після звернення»: the route on the page tells it
+  const angary = await serverText(page, '/angary', { sections: '#inquiry.conversation', form: '#inquiry .inquiry-form', titles: '#inquiry .conversation-journey h3' });
+  expect(angary.sections).toHaveLength(1);
+  expect(angary.form).toHaveLength(1);
+  expect(angary.titles).toEqual([]);
 });
 
 // /napryamky invites people who have not picked a direction: its form starts on «Ще не визначено» (a real, accepted
@@ -564,7 +570,8 @@ test('/napryamky form starts on «Ще не визначено» and the start t
 
 test('the form carries no step numbers; a phone folds the step texts behind one button', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/angary', { waitUntil: 'load' });
+  // /angary tells the route itself and leaves the journey out of its form (UX review 2026-10)
+  await page.goto('/metalokonstruktsii', { waitUntil: 'load' });
   const form = page.locator('#inquiry .inquiry-form');
   await expect(form.locator('.inquiry-form-section-title')).toHaveText(['Контакт', 'Завдання']);
   await expect(form.getByText('Підтвердження', { exact: true })).toHaveCount(0);

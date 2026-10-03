@@ -1,0 +1,128 @@
+/* The configurator's controls: «Об’єкт» and the phone accordion (03.10). Imported by ConfiguratorControls.tsx only. The
+   shared look of fields, cards and notes stays in configurator-preview/configurator.css. */
+
+/* ── «Об’єкт» ─────────────────────────────────────────────────────────────────────────────────────────────────────── */
+.hc-object-note { margin: 0 0 16px; }
+
+/* The group's answers are chips that wrap at their own width, not a three-column grid of cards: in a third of a phone
+   «Кран-балка або тельфер» ran to three lines, and five purposes or four project answers left a card alone on a row */
+.hc-option-cards.hc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.hc-chips .hc-option-card span { padding-inline: 14px; }
+
+/* «Область будівництва»: the field's own look, square like the inquiry form's select; the arrow is the browser's, so it
+   follows the theme's color-scheme */
+.hc-select {
+  width: 100%;
+  min-height: var(--control-min-height);
+  padding: 0 10px;
+  border: 1px solid var(--color-border-control);
+  border-radius: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: 600 15px/1.2 var(--font-manrope), sans-serif;
+}
+.hc-select:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+
+/* The stamp's «Призначення» cell, shown only once chosen: a row of its own at the end, so the cells above keep their
+   pairs on every width */
+.hc-stamp-row .hc-summary-facts > .hc-fact-purpose { grid-column: 1 / -1; }
+@media (max-width: 1180px) {
+  .hc-stamp-row .hc-summary-facts > div.hc-fact-purpose { border-left: 0; }
+}
+
+/* ── Phone accordion (/angary ≤ 760 px) ───────────────────────────────────────────────────────────────────────────────
+   Set by ConfiguratorControls only on a phone, so the desktop and the no-JavaScript page never see these rules: there
+   the groups keep their headings and stay open. The header is the whole row — a 64 px target — with the group's value
+   on a second, smaller line. */
+.hc-controls[data-accordion] .hc-control-group { padding: 0; }
+.hc-controls[data-accordion] .hc-group-heading { margin: 0; }
+.hc-controls[data-accordion] .hc-group-panel { padding: 2px 20px 24px; }
+
+.hc-group-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+.hc-group-title { font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.hc-group-value {
+  grid-column: 1;
+  margin-top: 6px;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font: 500 14px/1.3 var(--font-manrope), sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.hc-group-toggle::after {
+  content: '+';
+  /* drawn, not read: generated content is part of the button's name («Розміри 24 × 60 × 8 м +»); «/ ''» is its empty
+     alternative text, and a browser without the syntax keeps the line above (04.10) */
+  content: '+' / '';
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--color-text-muted);
+  font: 400 22px/1 var(--font-manrope), sans-serif;
+}
+.hc-group-toggle[aria-expanded='true']::after { content: '\2212'; content: '\2212' / ''; color: var(--color-text); }
+.hc-group-toggle[aria-expanded='true'] .hc-group-value { color: var(--color-text-muted); }
+.hc-group-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
+
+/* «Чому це важливо»: its sign is drawn in configurator.css; four summaries were each named «Чому це важливо +» (04.10) */
+.hc-controls .hc-why summary::after { content: '+' / ''; }
+.hc-controls .hc-why[open] summary::after { content: '\2212' / ''; }
+
+/* ── Before hydration (/angary ≤ 760 px) ─────────────────────────────────────────────────────────────────────────────
+   The server markup has every group open — 2419 px of controls that hydration then folds to about 1000. A link to
+   #vartist, #process or #inquiry aimed at the long layout and landed 1316 px past its heading, and a reload further down
+   jumped (04.10). With JavaScript on ([data-theme] is set by the head script before paint, the same flag the inquiry
+   form's folding uses) the server markup is folded the way the accordion will be — «Об’єкт» open, each heading the
+   toggle's height — so hydration moves nothing. Without JavaScript [data-theme] is absent and every group stays open. */
+@media (max-width: 760px) {
+  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group { padding: 0; }
+  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group > h3 {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+    margin: 0;
+    padding: 12px 20px;
+  }
+  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-group-panel { padding: 2px 20px 24px; }
+  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group:not([data-group='object']) .hc-group-panel { display: none; }
+}
+
+/* «Двері»: chips at their own width, as tall as the gate tiles above and at least as wide */
+.hc-door-options .hc-option-card { min-width: 68px; }
+
+/* A typed size the field had to change says so here; empty, it takes no room */
+.hc-field-note-live:empty { margin: 0; }
+
+/* «Підбирати ухил за шириною»: a text action under the ridge's hint, a full-height target */
+.hc-field-reset {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: 700 12px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.hc-field-reset:hover { color: var(--color-accent-strong); }
+.hc-field-reset:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }

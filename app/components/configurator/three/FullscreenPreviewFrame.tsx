@@ -39,6 +39,7 @@ import { createPortal } from 'react-dom';
 export function FullscreenPreviewFrame({
   active,
   onExit,
+  className,
   labelledBy,
   describedBy,
   status,
@@ -47,6 +48,8 @@ export function FullscreenPreviewFrame({
 }: {
   active: boolean;
   onExit: () => void;
+  /** Dresses the open overlay for the page that owns it (/angary: the drawing sheet's square chrome) */
+  className?: string;
   /** Accessible label for the fullscreen dialog. */
   labelledBy?: string;
   /** ID of the model description inside the portaled content. */
@@ -158,6 +161,7 @@ export function FullscreenPreviewFrame({
 
   if (!portalHost) return <>{children}</>; // SSR fallback — see the guarded useState above
 
+  const overlayClassName = ['hc-fullscreen-overlay', className].filter(Boolean).join(' ');
   return (
     <>
       {/* Layout-transparent (`display: contents`): purely a parking spot for `portalHost` while
@@ -171,7 +175,7 @@ export function FullscreenPreviewFrame({
         // reintroduce the exact remount bug this file exists to avoid, one level deeper.
         <div
           ref={dialogRef}
-          className={active ? 'hc-fullscreen-overlay' : undefined}
+          className={active ? overlayClassName : undefined}
           role={active ? 'dialog' : undefined}
           aria-modal={active ? 'true' : undefined}
           aria-label={active ? (labelledBy ?? 'Розгорнутий перегляд 3D-моделі') : undefined}
@@ -184,7 +188,8 @@ export function FullscreenPreviewFrame({
             hidden={!active}
             onClick={onExit}
           >
-            Закрити ✕
+            {/* the cross is drawn, not read: the button's name is «Закрити» (04.10) */}
+            Закрити <span aria-hidden="true">✕</span>
           </button>
           <p
             className="hc-visually-hidden hc-presentation-announcement"

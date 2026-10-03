@@ -49,9 +49,12 @@ export function cooperationOptions(): readonly string[] {
   return model.formats.map((format) => format.label);
 }
 
-/** The inquiry form's saved state: a confirmation, then the frozen first-contact statement verbatim. */
+/** The inquiry form's saved state: a confirmation, then what the frozen first-contact statement says happens next —
+ *  verbatim, without its opening request («Розкажіть, що потрібно побудувати…»), which after sending asked the
+ *  visitor to tell it all again (UX review 2026-10). */
 export function inquirySuccessMessage(): string {
-  return `Дякуємо! Запит надіслано. ${model.statements.firstContact}`;
+  const next = model.statements.firstContact.replace(/^[^.!?]*[.!?]\s*/, '');
+  return `Дякуємо! Запит надіслано. ${next}`;
 }
 
 /**
@@ -71,6 +74,9 @@ export function turnkeyAnswer(): string {
 
 const modelFaqAnswers: Record<DeliveryModelFaqAnswer['deliveryModelAnswer'], () => string> = {
   turnkey: turnkeyAnswer,
+  // A hangar buyer's first questions (UX review 2026-10): who designs, who buys the materials
+  design: () => model.statements.design,
+  materials: () => model.statements.materials,
 };
 
 /** An FAQ answer as text: plain answers pass through, model-owned ones are written from the model. */

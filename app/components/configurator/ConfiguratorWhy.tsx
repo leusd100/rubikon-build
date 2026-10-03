@@ -1,15 +1,24 @@
 'use client';
 
+import { formatSize } from '../../lib/configurator/deriveSummary';
+import { GATE_DIMENSIONS_M } from '../../lib/configurator/parametricModel';
 import ResponsiveImage from '../ResponsiveImage';
-import { useHangarInquiryContext } from './HangarInquiryContext';
-import { alternativeCladdingDemo } from '../../lib/configurator/presentationDemo';
-import type { ConfiguratorState } from '../../lib/configurator/types';
 
 // «Чому це важливо» under a configurator group (UX pass 2026-10). The four explanations used to be their own section
 // after the configurator, «Рішення, які приймаєте ви» (2.9 phone screens), repeating each choice as «Зараз: …». Now the
-// explanation sits under the control it explains, folded; the words and pictures are the same.
+// explanation sits under the control it explains, folded; the words and pictures are the same. «Порівняти із
+// сендвіч-панеллю» is gone (2026-10): the technical view draws no cladding, so the comparison changed 0 pixels.
 
-export type WhyTopic = 'contour' | 'cladding' | 'foundation' | 'openings';
+export type WhyTopic = 'object' | 'contour' | 'cladding' | 'foundation' | 'openings';
+
+/** Read after «Чому це важливо» by a screen reader, so the four (five) summaries are not one name repeated (04.10) */
+const TOPIC_NAMES: Record<WhyTopic, string> = {
+  object: 'об’єкт',
+  contour: 'контур будівлі',
+  cladding: 'огороджувальні конструкції',
+  foundation: 'фундамент',
+  openings: 'прорізи',
+};
 
 /** Brings the live preview into view after a demo starts (on a wide screen only when it is off screen). */
 export function revealLivePreview() {
@@ -26,6 +35,8 @@ export function revealLivePreview() {
   });
 }
 
+const gateSize = (type: keyof typeof GATE_DIMENSIONS_M) => formatSize(GATE_DIMENSIONS_M[type].widthM, GATE_DIMENSIONS_M[type].heightM);
+
 function WhyImage({ src, alt, title, text }: Readonly<{ src: string; alt: string; title: string; text: string }>) {
   return (
     <figure>
@@ -38,34 +49,23 @@ function WhyImage({ src, alt, title, text }: Readonly<{ src: string; alt: string
   );
 }
 
-function CladdingDemoButton({ state }: Readonly<{ state: ConfiguratorState }>) {
-  const inquiry = useHangarInquiryContext();
-  if (!inquiry) return null;
-  const kind = alternativeCladdingDemo(state);
-  const active = inquiry.presentationDemo?.kind === kind;
+export function ConfiguratorWhy({ topic }: Readonly<{ topic: WhyTopic }>) {
   return (
-    <button
-      type="button"
-      className="hc-why-action"
-      aria-pressed={active}
-      onClick={() => {
-        inquiry.togglePresentationDemo(kind);
-        if (!active) revealLivePreview();
-      }}
-    >
-      {kind === 'sandwich-panel' ? 'Порівняти із сендвіч-панеллю' : 'Порівняти з профнастилом'} <span aria-hidden="true">→</span>
-    </button>
-  );
-}
-
-export function ConfiguratorWhy({ topic, state }: Readonly<{ topic: WhyTopic; state: ConfiguratorState }>) {
-  return (
-    <>
-      {/* The comparison is an action, so it stays in view rather than folded with the explanation */}
-      {topic === 'cladding' && <CladdingDemoButton state={state} />}
       <details className="hc-why" data-why={topic}>
-        <summary>Чому це важливо</summary>
+        <summary>Чому це важливо<span className="hc-visually-hidden"> — {TOPIC_NAMES[topic]}</span></summary>
         <div className="hc-why-body">
+          {/* «Об’єкт» (03.10): a draft for Сергій Іванович — no numbers, only what each answer changes in the work */}
+          {topic === 'object' && (
+            <>
+              <p>Ці відповіді не обов’язкові, але з ними розмова починається з вашого об’єкта, а не з ангара загалом.</p>
+              <dl className="hc-why-list">
+                <div><dt>Призначення</dt><dd>Від нього залежать ворота, висота всередині й температурний режим</dd></div>
+                <div><dt>Проєкт</dt><dd>Готовий проєкт уже відповідає на більшість цих питань — тоді звіряємо параметри з ним</dd></div>
+                <div><dt>Область</dt><dd>Снігове й вітрове навантаження залежать від того, де стоїть ангар, а з ними — каркас і покрівля</dd></div>
+                <div><dt>Підйомне обладнання</dt><dd>Кран-балка чи тельфер додає навантаження на каркас: від цього залежать колони й фундаменти, тому обладнання закладають у розрахунок із самого початку</dd></div>
+              </dl>
+            </>
+          )}
           {topic === 'contour' && (
             <>
               <p>Температурний режим задає вимоги до огороджувального контуру. Його обирають від реального сценарію використання, а не від назви споруди.</p>
@@ -102,15 +102,16 @@ export function ConfiguratorWhy({ topic, state }: Readonly<{ topic: WhyTopic; st
           {topic === 'openings' && (
             <>
               <p>Ворота та двері прив’язуються до логістики всередині й зовні. Положення та реальні розміри уточнюємо разом із плануванням.</p>
+              {/* The control's own names (04.10): «Великі ворота» appeared nowhere else, and «для щоденного потоку техніки»
+                  described the standard gate while the other one is named «Для заїзду техніки». Sizes from GATE_DIMENSIONS_M */}
               <dl className="hc-why-list">
-                <div><dt>Ворота</dt><dd>Для щоденного потоку техніки</dd></div>
-                <div><dt>Великі ворота</dt><dd>Для габаритної техніки й обладнання</dd></div>
+                <div><dt>Стандартні ворота</dt><dd>{gateSize('standard')} — для щоденного проїзду</dd></div>
+                <div><dt>Ворота для заїзду техніки</dt><dd>{gateSize('double')} — для габаритної техніки й обладнання</dd></div>
                 <div><dt>Двері</dt><dd>Окремий рух персоналу</dd></div>
               </dl>
             </>
           )}
         </div>
       </details>
-    </>
   );
 }

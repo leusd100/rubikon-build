@@ -1,36 +1,57 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import {
+  labelScaleToFit,
   pointsAttr,
   projectIsometricScene,
+  viewBoxOf,
   type DimensionGuide,
   type FrameLine,
   type Point,
   type ProjectedSegment,
 } from '../../lib/configurator/isometricProjection';
 import { buildTechnicalScene } from '../../lib/configurator/technicalSceneModel';
-import { LAYER_DURATION_MS, layerStartOffsetMs, staggerDelayMs } from '../../lib/configurator/buildUpSequence';
+import {
+  BUILD_STAGE_ORDER,
+  LAYER_DURATION_MS,
+  isStageReleased,
+  layerStartOffsetMs,
+  staggerDelayMs,
+  type BuildStage,
+} from '../../lib/configurator/buildUpSequence';
+import { previewDescription } from './sheetLabels';
 import { useLayerHighlight } from './useLayerHighlight';
 import { useLayerLifecycle, type LayerTransitionStyle } from './useLayerLifecycle';
 
-/** Floor and ceiling for the proportional viewBox padding below — same clamped-proportional shape
- *  already used nearby for `edgeOffset`/`heightOffset` in isometricProjection.ts ("Offsets scale
- *  with the building so guides clear it at every size instead of at one"), applied here to the
- *  outer frame margin for the same reason: a flat pixel value means a tiny 10×10m hangar gets a
- *  huge RELATIVE margin (looks lost in empty space) while a 60×120m one gets a tiny one (reads as
- *  cramped). Tightened from the original 32/90/0.05 to bring the technical view's own fill
- *  fraction closer to the 3D view's (FitOrthographicCamera's FIT_MARGIN) — this layer alone was a
- *  smaller contributor than the annotation-clearance margin upstream (see the comment above
- *  `edgeOffset` in isometricProjection.ts, tightened alongside this), but every bit of unforced
- *  outer margin counts toward the same comparison. */
-const VIEWBOX_PADDING_MIN = 12;
-const VIEWBOX_PADDING_MAX = 32;
-const VIEWBOX_PADDING_RATIO = 0.02;
+type Box = { width: number; height: number };
 
-function formatMetres(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+/**
+ * The drawing's content box while its dimension labels are on show, for `labelScaleToFit` — null until it is measured
+ * (the server markup draws the labels at their base size) and in the phone's mini drawing, which hides the labels
+ * (configurator-sheet.css) and so needs no room made for them. A new box only when it really changed: drawing the
+ * labels larger changes the viewBox, never the box, so a measure cannot feed itself.
+ */
+function useLabelBox(svgRef: RefObject<SVGSVGElement | null>): Box | null {
+  const [box, setBox] = useState<Box | null>(null);
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      const label = svg.querySelector('.hc-dimension');
+      const shown = label !== null && getComputedStyle(label).display !== 'none';
+      const { width, height } = entry.contentRect;
+      setBox((current) => {
+        if (!shown) return null;
+        if (current && Math.abs(current.width - width) < 0.5 && Math.abs(current.height - height) < 0.5) return current;
+        return { width, height };
+      });
+    });
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, [svgRef]);
+  return box;
 }
 
 function DimensionGuideGroup({ guide }: { guide: DimensionGuide }) {
@@ -102,43 +123,52 @@ function EnvelopeSurface({
   );
 }
 
-export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
+export function HangarPreview({
+  domain,
+  released = BUILD_STAGE_ORDER.length,
+}: Readonly<{
+  domain: HangarDomainModel;
+  /** Build stages requested so far by /angary's first view (useFirstViewBuildUp): a stage still held back stays hidden
+   *  whatever the scope says, then arrives through its usual lifecycle. All of them by default. */
+  released?: number;
+}>) {
   const { dimensions, envelope, scope, gates } = domain;
+  const shown = (stage: BuildStage) => isStageReleased(stage, released);
   // State → Domain → ParametricBuildingModel (the single source of geometric truth) →
   // TechnicalSceneModel → this projection. A future 3D renderer branches at the parametric
   // model, NOT here — which is what stops the two views drawing different buildings.
-  const technical = buildTechnicalScene(domain);
-  const scene = projectIsometricScene(technical);
+  const technical = useMemo(() => buildTechnicalScene(domain), [domain]);
+  // The labels keep a legible size on screen however small the drawing is shown (03.10: 6.9 px on a 390 px phone)
+  const svgRef = useRef<SVGSVGElement>(null);
+  const labelBox = useLabelBox(svgRef);
+  const labelScale = useMemo(() => (labelBox ? labelScaleToFit(technical, labelBox) : 1), [technical, labelBox]);
+  const scene = projectIsometricScene(technical, labelScale);
   const { ridgeHeightM } = technical.dimensions;
 
   const widthActive = useLayerHighlight(dimensions.widthM);
   const lengthActive = useLayerHighlight(dimensions.lengthM);
   const heightActive = useLayerHighlight(dimensions.eaveHeightM);
 
-  const foundation = useLayerLifecycle(scope.foundation, LAYER_DURATION_MS.foundation, layerStartOffsetMs('foundation'));
-  const columns = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.columns, layerStartOffsetMs('columns'));
-  const rafters = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.rafters, layerStartOffsetMs('rafters'));
-  const purlins = useLayerLifecycle(scope.frame, LAYER_DURATION_MS.purlins, layerStartOffsetMs('purlins'));
-  const walls = useLayerLifecycle(scope.walls, LAYER_DURATION_MS.walls, layerStartOffsetMs('walls'));
-  const roof = useLayerLifecycle(scope.roof, LAYER_DURATION_MS.roof, layerStartOffsetMs('roof'));
+  const foundation = useLayerLifecycle(scope.foundation && shown('foundation'), LAYER_DURATION_MS.foundation, layerStartOffsetMs('foundation'));
+  const columns = useLayerLifecycle(scope.frame && shown('frame'), LAYER_DURATION_MS.columns, layerStartOffsetMs('columns'));
+  const rafters = useLayerLifecycle(scope.frame && shown('frame'), LAYER_DURATION_MS.rafters, layerStartOffsetMs('rafters'));
+  const purlins = useLayerLifecycle(scope.frame && shown('frame'), LAYER_DURATION_MS.purlins, layerStartOffsetMs('purlins'));
+  const walls = useLayerLifecycle(scope.walls && shown('walls'), LAYER_DURATION_MS.walls, layerStartOffsetMs('walls'));
+  const roof = useLayerLifecycle(scope.roof && shown('roof'), LAYER_DURATION_MS.roof, layerStartOffsetMs('roof'));
   // A gate is an opening CUT INTO a wall — it cannot read as an opening with no wall to cut into,
   // so it materializes only when both are true. (Real bug, not a hypothetical: this used to be
   // `gates > 0` alone, letting a gate rectangle stay on screen after switching walls out of scope
   // — caught live by a user testing the running preview, on both this view and the 3D one, which
   // mirrored the same `gates > 0` condition in threeSceneModel.ts's `visible.gates`. Fixed in both
   // places with the same rule; see that file's matching comment.)
-  const gateLayer = useLayerLifecycle(scope.walls && gates > 0, LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
+  const gateLayer = useLayerLifecycle(scope.walls && gates > 0 && shown('gates'), LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
 
   const facadeActive = widthActive || heightActive;
   const sideActive = lengthActive || heightActive;
   const topActive = widthActive || lengthActive;
 
-  const { minX, minY, maxX, maxY } = scene.bounds;
-  const viewboxPadding = Math.max(
-    VIEWBOX_PADDING_MIN,
-    Math.min(Math.max(maxX - minX, maxY - minY) * VIEWBOX_PADDING_RATIO, VIEWBOX_PADDING_MAX),
-  );
-  const viewBox = `${minX - viewboxPadding} ${minY - viewboxPadding} ${maxX - minX + viewboxPadding * 2} ${maxY - minY + viewboxPadding * 2}`;
+  const frame = viewBoxOf(scene.bounds);
+  const viewBox = `${frame.x} ${frame.y} ${frame.width} ${frame.height}`;
 
   // Painter's order for this fixed axonometric: the camera sees the FRONT gable (z=0) and the
   // RIGHT wall (x=widthM), so the rear gable and left wall are drawn first and end up occluded.
@@ -149,10 +179,13 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
 
   return (
     <svg
+      ref={svgRef}
       className="hc-preview-svg"
       viewBox={viewBox}
       role="img"
-      aria-label={`Схематичний ескіз ангара: ${dimensions.widthM} на ${dimensions.lengthM} метрів, висота стін ${dimensions.eaveHeightM} м, двосхила покрівля, висота в конику приблизно ${formatMetres(ridgeHeightM)} м`}
+      aria-label={previewDescription('technical', dimensions, ridgeHeightM)}
+      // the labels' type size follows the scale they were placed with (configurator.css .hc-dimension text)
+      style={{ '--hc-label-scale': labelScale } as CSSProperties}
     >
       <defs>
         <pattern id="hc-pattern-insulated" width="10" height="16" patternUnits="userSpaceOnUse">
@@ -354,12 +387,22 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
       </g>
 
       <g className="hc-layer hc-purlins">
-        {scene.frame.purlins.map((line, index) => (
+        {scene.frame.girts.map((line, index) => (
           <FrameLineEl
             key={index}
             line={line}
             className={`hc-buildlayer hc-phase-${purlins.phase}`}
-            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.purlins.length))}
+            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.girts.length))}
+          />
+        ))}
+        {/* 03.10 — the roof purlins, in the girts' own thin ink and the same layer/phase: the roof's
+            secondary steel arrives with the walls'. */}
+        {scene.frame.roofPurlins.map((line, index) => (
+          <FrameLineEl
+            key={`roof-purlin-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${purlins.phase} hc-roof-purlin`}
+            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.roofPurlins.length))}
           />
         ))}
         {/* Phase 3E, brief §13/§15 — a few restrained X marks, same `purlins` layer/phase as
@@ -370,6 +413,15 @@ export function HangarPreview({ domain }: { domain: HangarDomainModel }) {
             line={line}
             className={`hc-buildlayer hc-phase-${purlins.phase} hc-brace`}
             style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.bracing.length))}
+          />
+        ))}
+        {/* 03.10 — the roof's crosses, in the wall bracing's bays and ink. */}
+        {scene.frame.roofBracing.map((line, index) => (
+          <FrameLineEl
+            key={`roof-brace-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${purlins.phase} hc-brace hc-roof-brace`}
+            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.roofBracing.length))}
           />
         ))}
       </g>

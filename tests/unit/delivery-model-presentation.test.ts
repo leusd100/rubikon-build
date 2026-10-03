@@ -72,8 +72,12 @@ describe('delivery model presentation: entry points', () => {
 });
 
 describe('delivery model presentation: frozen statements', () => {
-  it('ends the inquiry saved state with the first-contact statement, verbatim', () => {
-    expect(inquirySuccessMessage()).toBe(`Дякуємо! Запит надіслано. ${deliveryModel.statements.firstContact}`);
+  it('ends the inquiry saved state with what the first-contact statement says happens next, verbatim', () => {
+    const message = inquirySuccessMessage();
+    const [request, ...next] = deliveryModel.statements.firstContact.split(/(?<=[.!?])\s+/);
+    expect(message).toBe(`Дякуємо! Запит надіслано. ${next.join(' ')}`);
+    // After sending, the form no longer asks the visitor to tell it what they have just sent
+    expect(message).not.toContain(request);
   });
 
   it('answers «під ключ» with the agreed scope and keeps separately ordered work outside it', () => {
@@ -91,6 +95,9 @@ describe('delivery model presentation: frozen statements', () => {
     expect(turnkey?.[1]).toEqual({ deliveryModelAnswer: 'turnkey' });
     expect(faqAnswerText({ deliveryModelAnswer: 'turnkey' })).toBe(turnkeyAnswer());
     expect(faqAnswerText('Звичайна відповідь.')).toBe('Звичайна відповідь.');
+    // /angary «Хто готує проєкт ангара?» and «Хто закуповує матеріали?» answer with the frozen statements, verbatim
+    expect(faqAnswerText({ deliveryModelAnswer: 'design' })).toBe(deliveryModel.statements.design);
+    expect(faqAnswerText({ deliveryModelAnswer: 'materials' })).toBe(deliveryModel.statements.materials);
   });
 });
 

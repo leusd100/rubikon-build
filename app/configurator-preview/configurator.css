@@ -27,61 +27,21 @@
   grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
   grid-template-areas:
     "eyebrow eyebrow"
-    "title lede"
-    "vocabulary vocabulary";
+    "title lede";
   gap: 16px var(--grid-gap);
   max-width: var(--container-max);
-  margin-bottom: 54px;
+  margin-bottom: 40px;
 }
 
 .hangar-configurator-embedded .hc-eyebrow { grid-area: eyebrow; }
 .hangar-configurator-embedded .hc-hero :is(h1, h2) { grid-area: title; margin: 0; max-width: 14ch; }
 .hangar-configurator-embedded .hc-lede { grid-area: lede; margin: 0; }
 
-.hc-vocabulary {
-  grid-area: vocabulary;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
-  margin: 22px 0 0;
-  padding: 22px 0 0;
-  border-top: 1px solid var(--color-border);
-  list-style: none;
-}
 
-.hc-vocabulary li {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-}
 
-.hc-vocabulary li + li {
-  padding-left: 18px;
-  border-left: 1px solid var(--color-border);
-}
 
-.hc-vocabulary span {
-  color: var(--color-accent-strong);
-  font: 700 12px/1 var(--font-condensed), sans-serif;
-  letter-spacing: .08em;
-}
 
-.hc-vocabulary strong {
-  display: block;
-  color: var(--color-text);
-  font: 600 15px/1.2 var(--font-condensed), sans-serif;
-  letter-spacing: .035em;
-  text-transform: uppercase;
-}
 
-.hc-vocabulary p {
-  margin: 8px 0 0;
-  color: var(--color-text-secondary);
-  font-size: 15px;
-  line-height: 1.5;
-}
 
 .hc-eyebrow {
   display: flex;
@@ -148,7 +108,8 @@
   border-top: 1px solid var(--color-border);
 }
 
-.hc-control-group h2 {
+/* Group titles are h3 (2026-10): the page's h2s are its sections; the configurator's groups sit under its own h2 */
+.hc-control-group h3 {
   margin: 0 0 18px;
   color: var(--color-text);
   font: 600 12px/1 var(--font-condensed), sans-serif;
@@ -679,6 +640,7 @@
 /* ---------- Phase 3C: material colour presets ---------- */
 
 .hc-preview-secondary-panel {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -692,6 +654,7 @@
 }
 
 .hc-material-presets {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
@@ -712,8 +675,10 @@
   text-transform: uppercase;
 }
 
+/* Wraps on a narrow screen: unwrapped, the three swatches widened the page to 348 px at 320 (03.10) */
 .hc-material-swatch-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
@@ -988,13 +953,15 @@
    quieter than the three user-set dimensions and its label carries a "~" in the markup, so it can
    never be mistaken for another control's readout. */
 .hc-dimension.is-derived line { stroke-opacity: .6; stroke-dasharray: 3 3; }
-.hc-dimension.is-derived text { fill: var(--color-accent-on-dark); opacity: .8; font-size: 12px; }
+.hc-dimension.is-derived text { fill: var(--color-accent-on-dark); opacity: .8; font-size: calc(12px * var(--hc-label-scale, 1)); }
 
 .hc-dimension text {
   fill: var(--color-accent-on-dark);
   /* Mirrored by LABEL_FONT_PX in isometricProjection.ts, which estimates each label's extent to
-     keep it inside the viewBox — change one and change the other. */
-  font: 600 14px var(--font-condensed), sans-serif;
+     keep it inside the viewBox — change one and change the other. Both sizes are in drawing units,
+     times the scale the labels were placed with (HangarPreview.tsx, labelScaleToFit), so a drawing
+     shown small still reads its sizes at 12 px or more (03.10). */
+  font: 600 calc(14px * var(--hc-label-scale, 1)) var(--font-condensed), sans-serif;
   letter-spacing: .01em;
   /* A soft same-color-as-viewport halo behind each label (not a hard-edged background chip) —
      keeps the number legible over whatever geometry happens to sit behind it (roof, wall,
@@ -1002,7 +969,7 @@
      fill sits cleanly on top. */
   paint-order: stroke;
   stroke: var(--color-dark);
-  stroke-width: 4px;
+  stroke-width: calc(4px * var(--hc-label-scale, 1));
   stroke-linejoin: round;
 }
 
@@ -1191,18 +1158,16 @@
 @media (max-width: 1023px) {
   .hangar-configurator-embedded .hc-hero {
     grid-template-columns: 1fr;
-    grid-template-areas: "eyebrow" "title" "lede" "vocabulary";
+    grid-template-areas: "eyebrow" "title" "lede";
   }
 
-  .hc-vocabulary { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 18px; }
-  .hc-vocabulary li:nth-child(odd) { padding-left: 0; border-left: 0; }
 
   /* Stacked below 1024px, and the preview goes FIRST. Measured on a 390px viewport before this
      changed: the preview sat at y=2255 with 1,948px of controls above it, so the whole
      configuration happened before the building was ever on screen — a form with a picture at the
      end rather than a live configurator. Visual order only; the DOM keeps controls first, so
      reading order and the existing order assertion are unchanged. */
-  .hc-layout { grid-template-columns: 1fr; }
+  .hc-layout { grid-template-columns: minmax(0, 1fr); } /* 1fr let a wide child widen the page (03.10) */
   /* `display: contents` promotes the pane's two children to grid items so the preview and the
      summary can be ordered independently: see the building (1), configure it (2), review it (3).
      Previously the summary sat between them, putting 438px of read-only review between the model
@@ -1259,12 +1224,6 @@
   .hangar-configurator-embedded .hc-preview-demo-status { align-items: flex-start; flex-direction: column; padding-block: 12px; }
 }
 
-/* 320 px: two columns leave ~95 px per description, so «ОГОРОДЖЕННЯ» and «використання» broke
-   mid-word. One column keeps every word whole; the list is the same four short items. */
-@media (max-width: 340px) {
-  .hc-vocabulary { grid-template-columns: minmax(0, 1fr); }
-  .hc-vocabulary li + li { padding-left: 0; border-left: 0; }
-}
 
 /* UX pass 2026-10: the summary values went 13 → 15 px; in the narrow two-column summary of a 1001–1180 px window
    «огороджувальний» would no longer fit its column, so that band keeps 14 px. */
@@ -1313,3 +1272,87 @@
 /* /angary: the site header is fixed (101 px above 760 px), so the sticky preview pane holds below it, not at 24 px —
    there its view switch and «Розгорнути» slid under the header while the controls scrolled by. */
 .hangar-configurator-embedded .hc-preview-pane { top: 117px; }
+
+/* ── UX review 2026-10 ─────────────────────────────────────────────────────────────────────────────────────────
+   Two-option groups (walls, roof, gate type) fill their row in two halves instead of leaving a third column empty,
+   so «Профнастил» / «Сендвіч-панель» no longer run past their cards at 320–360 px. */
+.hangar-configurator .hc-option-cards:not(.hc-option-cards-compact):has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 360px) {
+  .hangar-configurator .hc-option-card span { padding-inline: 4px; font-size: 13px; }
+}
+/* ≤ 350 px three cards cannot hold «Визначити після розрахунку» or «Холодний» whole: the three-option groups stack */
+@media (max-width: 350px) {
+  .hangar-configurator .hc-option-cards:not(.hc-option-cards-compact):has(> :nth-child(3)) { grid-template-columns: minmax(0, 1fr); }
+}
+/* «Двері» sat flush under the gate note: the field rhythm (.hc-field + .hc-field) skips a field after a <p> */
+.hangar-configurator .hc-door-field { margin-top: 18px; }
+
+/* ── UX review 2026-10 · /angary: only the drawing is sticky; the summary is its title block, under the layout ──────
+   The pane (toolbar + drawing + a 505 px summary) was 1195 px tall against 783 px of free screen at 1440×900, so
+   «Обговорити цю конфігурацію» never showed while configuring and the gates were set with 38% of the drawing in view. */
+/* no vocabulary row any more (it repeated the groups under other names) */
+@media (min-width: 1024px) { .hangar-configurator-embedded .hc-hero { grid-template-areas: "eyebrow eyebrow" "title lede"; } }
+@media (max-width: 1023px) { .hangar-configurator-embedded .hc-hero { grid-template-areas: "eyebrow" "title" "lede"; } }
+.hangar-configurator-embedded .hc-preview-svg { height: clamp(320px, min(46vw, 100vh - 250px), 560px); }
+.hangar-configurator-embedded .hc-mode-switch button { min-height: 40px; }
+.hangar-configurator-embedded .hc-mode-switch button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+.hc-stamp-row { max-width: var(--container-max); margin: 28px auto 0; padding-inline: var(--container-gutter); }
+/* The band keeps the page's shell edges (globals.css .shell; 03.10): a 1440 px box with the gutter inside it put the
+   heading, the drawing and the title block 72 px in from every other section on a 1920 px screen, and at 761–1023 px
+   they sat in a centred 720 px column 50 px in from the title block under them */
+.hangar-configurator-embedded :is(.hc-hero, .hc-layout, .hc-stamp-row) { width: min(var(--container-max), calc(100% - var(--container-gutter) * 2)); max-width: none; padding-inline: 0; }
+@media (max-width: 760px) { .hangar-configurator-embedded :is(.hc-hero, .hc-layout, .hc-stamp-row) { width: min(100% - 32px, 620px); } }
+.hc-stamp-row .hc-summary-flagship { padding: 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); border-radius: 0; box-shadow: none; }
+.hc-stamp-row .hc-summary-grid { grid-template-columns: minmax(230px, .9fr) minmax(0, 2.4fr) minmax(250px, .9fr); column-gap: 0; align-items: stretch; }
+.hc-stamp-row .hc-summary-selected { padding: 18px 22px; }
+.hc-stamp-row .hc-summary-title { margin: 0 0 10px; color: var(--color-text-muted); font-size: 11px; }
+.hc-stamp-row .hc-summary-dimensions { margin: 0; font-size: clamp(26px, 2.4vw, 34px); }
+.hc-stamp-row .hc-summary-area { margin: 8px 0 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+.hc-stamp-row .hc-summary-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0 0 -1px; padding: 0; border-top: 0; }
+.hc-stamp-row .hc-summary-facts > div { display: grid; align-content: start; gap: 4px; min-width: 0; padding: 14px 16px; border-left: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+.hc-stamp-row .hc-summary-facts > .is-wide { grid-column: span 2; }
+.hc-stamp-row .hc-summary-facts dt { font-size: 11px; letter-spacing: .08em; }
+.hc-stamp-row .hc-summary-facts dd { max-width: none; font-size: 14px; text-align: left; }
+.hc-stamp-row .hc-summary-handoff { grid-column: auto; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 10px; margin: 0; padding: 18px 22px; border-top: 0; border-left: 1px solid var(--color-border); }
+.hc-stamp-row .hc-summary-action { width: 100%; justify-content: space-between; }
+.hc-stamp-row .hc-summary-disclaimer { margin: 0; padding: 12px 22px; border-top: 1px solid var(--color-border); font-size: 13px; line-height: 1.55; }
+/* The stamp's thumbnail: section and plan of the configured hangar, to proportion */
+.hc-sketch { display: block; width: 100%; max-width: 240px; height: auto; margin-top: 14px; overflow: visible; }
+.hc-sketch path, .hc-sketch rect { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.hc-sketch-ground { stroke: var(--color-border-strong); stroke-width: 1; }
+.hc-sketch-frame { stroke: var(--color-accent); stroke-width: 1.6; }
+.hc-sketch-plan { stroke: var(--color-text-secondary); stroke-width: 1.3; }
+.hc-sketch-bays { stroke: var(--color-text-muted); stroke-width: .9; }
+.hc-sketch text { fill: var(--color-text-muted); font: 700 9px var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+/* a value just changed in the controls */
+@keyframes hc-changed {
+  from { background-color: color-mix(in srgb, var(--color-accent) 16%, transparent); box-shadow: inset 0 -2px var(--color-accent); }
+  to { background-color: transparent; box-shadow: inset 0 -2px transparent; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hc-stamp-row .is-changed { animation: hc-changed 1200ms ease-out; }
+  .hc-stamp-row .hc-sketch :is(path, rect) { transition: d .35s var(--ease-premium), x .35s var(--ease-premium), y .35s var(--ease-premium), width .35s var(--ease-premium), height .35s var(--ease-premium); }
+}
+@media (max-width: 1180px) {
+  .hc-stamp-row .hc-summary-grid { grid-template-columns: minmax(0, 1fr) minmax(250px, .7fr); }
+  .hc-stamp-row .hc-summary-facts { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--color-border); }
+  /* the first cell of each row: Контур, then Обсяг (Схема and Обсяг are two columns wide) */
+  .hc-stamp-row .hc-summary-facts > :is(:nth-child(1), :nth-child(4)) { border-left: 0; }
+}
+@media (max-width: 760px) {
+  .hc-stamp-row { margin-top: 20px; padding-inline: 20px; }
+  .hc-stamp-row .hc-summary-grid { grid-template-columns: minmax(0, 1fr); }
+  .hc-stamp-row .hc-summary-facts { order: 2; grid-row: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hc-stamp-row .hc-summary-facts > div { padding: 12px 14px; }
+  /* two columns: Контур | Огородження, Схема, Обсяг, Ворота | Двері */
+  .hc-stamp-row .hc-summary-facts > div:nth-child(odd) { border-left: 0; }
+  .hc-stamp-row .hc-summary-facts > .is-wide { grid-column: 1 / -1; border-left: 0; }
+  /* «Обговорити» right under what was chosen, the facts after it — the button sat 447 px into the stamp (03.10) */
+  .hc-stamp-row .hc-summary-handoff { order: 1; padding: 16px; border-top: 1px solid var(--color-border); border-left: 0; }
+  .hc-stamp-row .hc-summary-selected { padding: 16px; }
+  .hc-sketch { max-width: 210px; margin-top: 12px; }
+  .hc-sketch text { font-size: 12px; }
+  .hc-stamp-row .hc-summary-disclaimer { padding: 12px 16px; }
+  /* the mini drawing held under the header while configuring takes less of the phone (it was 39% of the screen) */
+  .hangar-configurator-embedded .hc-layout[data-configuring] :is(.hc-preview-svg, .hc-preview-canvas, .hc-preview-loading) { height: 46vw; min-height: 170px; }
+}

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openControlGroup } from './configurator.helpers';
 import { stubTurnstile } from './turnstile.helpers';
 
 type LeadPayload = {
@@ -18,6 +19,7 @@ async function openHangarPage(page: Page) {
 }
 
 async function setDimension(page: Page, dimension: 'width' | 'length' | 'height', value: string) {
+  await openControlGroup(page, 'dimensions');
   const input = page.locator(`#hc-dimension-${dimension}`);
   await input.fill(value);
   await input.blur();
@@ -73,6 +75,7 @@ test.describe('configurator attachment contract', () => {
 
   test('focusing and leaving an unchanged business field is still untouched', async ({ page }) => {
     await openHangarPage(page);
+    await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-width').focus();
     await page.locator('#hc-dimension-width').blur();
     await expect(attachmentCard(page)).toHaveCount(0);
@@ -100,6 +103,8 @@ test.describe('configurator attachment contract', () => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'covered once; attachment state is viewport-independent');
     await openHangarPage(page);
     await page.getByRole('button', { name: '3D', exact: true }).click();
+    // in the desktop's sticky pane the colours open from their chip on the picture (03.10)
+    await page.getByRole('button', { name: 'Кольори й масштаб', exact: true }).click();
     await page.getByRole('radio', { name: 'Світло-сіра', exact: true }).first().click();
     await page.getByRole('checkbox', { name: 'Показати людину для масштабу' }).check();
     await expect(attachmentCard(page)).toHaveCount(0);
@@ -108,37 +113,65 @@ test.describe('configurator attachment contract', () => {
   const businessEdits: Array<{
     name: string;
     edit: (page: Page) => Promise<void>;
+    /** the card's title: the «Об’єкт» answers alone leave the drawn hangar the example (04.10) */
+    title?: string;
   }> = [
     { name: 'width', edit: (page) => setDimension(page, 'width', '30') },
     { name: 'length', edit: (page) => setDimension(page, 'length', '50') },
     { name: 'eave height', edit: (page) => setDimension(page, 'height', '9') },
     {
       name: 'envelope/material',
-      edit: async (page) => page.locator('label:has(input[name="hc-envelope"])').filter({ hasText: 'Утеплений' }).click(),
+      edit: async (page) => {
+        await openControlGroup(page, 'envelope');
+        await page.locator('label:has(input[name="hc-envelope"])').filter({ hasText: 'Утеплений' }).click();
+      },
     },
-    {
-      name: 'foundation',
-      edit: async (page) => page.locator('label:has(input[name="hc-foundation-type"])').filter({ hasText: 'Монолітна плита' }).click(),
-    },
+    // no 'foundation' case: /angary does not offer the foundation type (the designer decides it, owner 03.10)
     {
       name: 'gate',
-      edit: async (page) => page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^2$/ }).click(),
+      edit: async (page) => {
+        await openControlGroup(page, 'openings');
+        await page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^2$/ }).click();
+      },
     },
     {
       name: 'personnel door',
-      edit: async (page) => page.locator('label:has(input[name="hc-doors"][value="1"])').click(),
+      edit: async (page) => {
+        await openControlGroup(page, 'openings');
+        await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
+      },
     },
     {
       name: 'application scope',
-      edit: async (page) => page.getByRole('checkbox', { name: 'Покрівля', exact: true }).uncheck(),
+      edit: async (page) => {
+        await openControlGroup(page, 'scope');
+        await page.getByRole('checkbox', { name: 'Покрівля', exact: true }).uncheck();
+      },
+    },
+    // «Об’єкт» (03.10): business configuration like the sizes
+    {
+      name: 'purpose',
+      edit: async (page) => {
+        await openControlGroup(page, 'object');
+        await page.locator('label:has(input[name="hc-purpose"][value="storage"])').click();
+      },
+      title: 'До заявки додано відповіді про об’єкт',
+    },
+    {
+      name: 'region',
+      edit: async (page) => {
+        await openControlGroup(page, 'object');
+        await page.getByLabel('Область будівництва', { exact: true }).selectOption('Київська область');
+      },
+      title: 'До заявки додано відповіді про об’єкт',
     },
   ];
 
-  for (const { name, edit } of businessEdits) {
+  for (const { name, edit, title = 'До заявки додано вашу конфігурацію' } of businessEdits) {
     test(`${name} business edit attaches automatically`, async ({ page }) => {
       await openHangarPage(page);
       await edit(page);
-      await expect(attachmentCard(page)).toContainText('До заявки додано вашу конфігурацію');
+      await expect(attachmentCard(page)).toContainText(title);
     });
   }
 
@@ -148,7 +181,9 @@ test.describe('configurator attachment contract', () => {
     await setDimension(page, 'width', '24');
 
     const brief = attachmentCard(page);
-    await expect(brief).toContainText('До заявки додано вашу конфігурацію');
+    // back on the default values: attached, and said to be the default (hangar-configurator@1.1.0); the ridge followed
+    // the width there and back, so it is the default's too (03.10)
+    await expect(brief).toContainText('До заявки додано базову конфігурацію');
     await expect(brief).toContainText('24 × 60 × 8 м · Холодний');
   });
 
@@ -158,6 +193,38 @@ test.describe('configurator attachment contract', () => {
 
     await expect(page).toHaveURL(/#inquiry$/);
     await expect(attachmentCard(page)).toContainText('24 × 60 × 8 м · Холодний');
+  });
+
+  // Owner, 03.10: an attached brief opens the form, above «Контакт», and carries the page's direction read-only
+  test('the attached brief is the form\'s first block and holds the preset direction until it is detached', async ({ page }) => {
+    const submitted = await mockLeadSubmission(page);
+    await openHangarPage(page);
+    await setDimension(page, 'width', '30');
+
+    const form = page.locator('form.inquiry-form');
+    const brief = attachmentCard(page);
+    await expect(brief).toBeVisible();
+    const order = await form.evaluate((element) => [...element.children].map((child) => (
+      child.classList.contains('inquiry-form-section-brief') ? 'brief' : child.querySelector('h3')?.textContent ?? child.className
+    )));
+    expect(order.slice(0, 4)).toEqual(['inquiry-form-heading', 'brief', 'Контакт', 'Завдання']);
+    await expect(brief.locator('.inquiry-config-brief-direction')).toHaveText('Напрям робіт Ангари та склади');
+    await expect(form.locator('select[name="direction"]')).toHaveCount(0);
+    await expect(form.locator('input[type="hidden"][name="direction"]')).toHaveValue('Ангари та склади');
+    // the read-only line is not one of the brief's rows: those stay exactly the lead's configuration text
+    await brief.getByText('Переглянути параметри', { exact: true }).click();
+    await expect(brief.locator('dl > div dt').filter({ hasText: 'Напрям робіт' })).toHaveCount(0);
+
+    await brief.getByRole('button', { name: 'Не додавати', exact: true }).click();
+    await expect(form.locator('.inquiry-form-section-brief')).toHaveCount(0);
+    await expect(form.locator('.inquiry-form-section-title')).toHaveText(['Контакт', 'Завдання']);
+    await expect(form.getByLabel(/Напрям робіт/)).toHaveValue('Ангари та склади');
+    await expect(form.locator('input[type="hidden"][name="direction"]')).toHaveCount(0);
+
+    await setDimension(page, 'length', '50');
+    await expect(brief).toBeVisible();
+    await submitInquiry(page);
+    expect(submitted()?.direction).toBe('Ангари та склади');
   });
 
   test('explicit detach removes the current configuration from the lead', async ({ page }) => {
@@ -195,27 +262,32 @@ test.describe('configurator attachment contract', () => {
     const brief = attachmentCard(page);
     await expect(brief).toContainText('30 × 50 × 8 м · Холодний');
     await expect(page.locator('form.inquiry-form').getByLabel('Орієнтовні розміри', { exact: true })).toHaveCount(0);
-    await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue('30 × 50 × 8 м');
+    // the sizes hold together with no-break spaces (04.10)
+    await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue('30\u00A0×\u00A050\u00A0×\u00A08\u00A0м');
     await submitInquiry(page);
 
     expect(submitted()).toMatchObject({
       direction: 'Ангари та склади',
       sourcePage: '/angary',
-      details: { dimensions: '30 × 50 × 8 м' },
+      details: { dimensions: '30\u00A0×\u00A050\u00A0×\u00A08\u00A0м' },
     });
-    expect(submitted()?.details?.configuration).toContain('Площа забудови: ≈ 1 500 м²');
+    expect(submitted()?.details?.configuration?.replaceAll('\u00A0', ' ')).toContain('Площа забудови: ≈ 1 500 м²');
   });
 
   test('visible rows and submitted payload have exact parity and keep derived data separate', async ({ page }) => {
     const submitted = await mockLeadSubmission(page);
     await openHangarPage(page);
     await setDimension(page, 'width', '30');
+    await openControlGroup(page, 'openings');
     await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
+    await openControlGroup(page, 'object');
+    await page.locator('label:has(input[name="hc-lifting"][value="none"])').click();
 
     const brief = attachmentCard(page);
     await brief.getByText('Переглянути параметри', { exact: true }).click();
     await expect(brief.getByRole('heading', { name: 'Вибрана конфігурація' })).toBeVisible();
-    await expect(brief.getByRole('heading', { name: 'Системні попередні дані' })).toBeVisible();
+    // «Системні» was the code's word, shown to the visitor (04.10)
+    await expect(brief.getByRole('heading', { name: 'Попередні дані', exact: true })).toBeVisible();
 
     const visibleRows = await brief.locator('dl > div').evaluateAll((rows) => rows.map((row) => {
       const label = row.querySelector('dt')?.textContent?.trim() ?? '';
@@ -227,15 +299,21 @@ test.describe('configurator attachment contract', () => {
     const configuration = submitted()?.details?.configuration ?? '';
     const payloadRows = configuration.split('\n').filter((line) => !line.endsWith(':'));
     expect(payloadRows).toEqual(visibleRows);
-    expect(configuration).toContain('Системні попередні дані:\nПлоща забудови:');
+    expect(configuration).toContain('Попередні дані:\nПлоща забудови:');
     expect(configuration).toContain('Попередня конструктивна схема:');
     expect(configuration).not.toMatch(/Світло-сіра|Графіт|Нейтральна/);
+    // «Об’єкт» (03.10): the answered question leads the rows, the unanswered ones are absent; the ridge says its slope
+    expect(payloadRows[0]).toBe('Підйомне обладнання: Немає');
+    expect(configuration).not.toMatch(/Призначення:|Проєкт:|Область:/);
+    expect(configuration).toMatch(/Висота в конику: \d+(,\d)?\u00A0м · ухил\u00A0≈\u00A0\d+°/);
   });
 
   test('walls outside scope omit gates and door from both summary and payload', async ({ page }) => {
     const submitted = await mockLeadSubmission(page);
     await openHangarPage(page);
+    await openControlGroup(page, 'openings');
     await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
+    await openControlGroup(page, 'scope');
     await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
 
     const brief = attachmentCard(page);
@@ -247,6 +325,30 @@ test.describe('configurator attachment contract', () => {
     expect(submitted()?.details?.configuration).not.toContain('Ворота:');
     expect(submitted()?.details?.configuration).not.toContain('Двері:');
   });
+});
+
+test('on a phone «Обговорити цю конфігурацію» lands on one screen with the brief, the name and the phone', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openHangarPage(page);
+  await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
+
+  const brief = attachmentCard(page);
+  await expect(brief).toBeFocused();
+  await expect(page.locator('#inquiry-brief-status')).toHaveText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  // let the smooth scroll finish before measuring
+  await expect.poll(async () => page.evaluate(() => {
+    const top = document.getElementById('inquiry-brief')?.getBoundingClientRect().top ?? 0;
+    return Math.round(top);
+  }), { timeout: 5_000 }).toBeLessThan(160);
+  const header = await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom);
+  const form = page.locator('form.inquiry-form');
+  for (const target of [brief, form.getByLabel(/Ваше ім’я/), form.getByLabel(/Телефон/)]) {
+    const box = await target.boundingBox();
+    expect(box!.y).toBeGreaterThanOrEqual(header - 1);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(844);
+  }
+  await expect(brief).toContainText('Напрям робіт');
 });
 
 for (const viewport of [

@@ -59,7 +59,8 @@ test.describe('project inquiry form', () => {
 
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
 
-    await expect(page.locator('.inquiry-status')).toHaveText(`Дякуємо! Запит надіслано. ${deliveryModel.statements.firstContact}`);
+    // what happens next, without the opening request to tell it all again (UX review 2026-10)
+    await expect(page.locator('.inquiry-status')).toHaveText(`Дякуємо! Запит надіслано. ${deliveryModel.statements.firstContact.replace(/^[^.!?]*[.!?]\s*/, '')}`);
     expect(submittedPayload).toMatchObject({
       name: 'Іван Петренко',
       phone: '+380671234567',
@@ -652,3 +653,47 @@ test('a broken analytics queue cannot prevent saving or rotate retry behavior in
   await submit.click();
   await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
 });
+
+// Owner, 03.10: the form card is a drawing sheet on every page with #inquiry — square corners, no floating shadow, a
+// strong outline and the copper top rule — and still parts from the desk photo behind it, in both themes and on a phone.
+const INQUIRY_PAGES = ['/', '/napryamky', '/angary', '/zernoskhovyshcha', '/metalokonstruktsii', '/betonni-roboty', '/pokrivelni-roboty', '/pro-nas', '/yak-pratsyuiemo'];
+for (const path of INQUIRY_PAGES) {
+  test(`${path}: the form card is a sheet — square, flat, outlined, copper on top`, async ({ page }) => {
+    for (const [width, theme] of [[1440, 'light'], [390, 'dark']] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.addInitScript((value) => window.localStorage.setItem('rubikon-theme', value), theme);
+      await page.goto(path, { waitUntil: 'load' });
+      const card = page.locator('#inquiry form.inquiry-form');
+      const style = await card.evaluate((element) => {
+        // the theme's own colours, resolved the same way as the card's
+        const resolve = (token: string) => {
+          const probe = document.createElement('i');
+          probe.style.color = `var(${token})`;
+          element.appendChild(probe);
+          const color = getComputedStyle(probe).color;
+          probe.remove();
+          return color;
+        };
+        const css = getComputedStyle(element);
+        const paper = getComputedStyle(element).backgroundColor;
+        const behind = getComputedStyle(element.closest('.conversation')!).backgroundColor;
+        return {
+          radii: [css.borderTopLeftRadius, css.borderTopRightRadius, css.borderBottomRightRadius, css.borderBottomLeftRadius],
+          shadow: css.boxShadow,
+          top: [css.borderTopWidth, css.borderTopColor],
+          side: [css.borderRightWidth, css.borderRightColor],
+          accent: resolve('--color-accent'),
+          strong: resolve('--color-border-strong'),
+          paper,
+          behind,
+        };
+      });
+      expect(style.radii, `${path} ${theme}`).toEqual(['0px', '0px', '0px', '0px']);
+      expect(style.shadow, `${path} ${theme}`).toBe('none');
+      expect(style.top, `${path} ${theme}`).toEqual(['2px', style.accent]);
+      expect(style.side, `${path} ${theme}`).toEqual(['1px', style.strong]);
+      // its own paper, not the band's colour
+      expect(style.paper, `${path} ${theme}`).not.toBe(style.behind);
+    }
+  });
+}
