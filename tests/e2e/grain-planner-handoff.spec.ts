@@ -18,6 +18,7 @@ import { stubTurnstile } from './turnstile.helpers';
 
 type LeadPayload = {
   sourcePage?: string;
+  direction?: string;
   details?: {
     dimensions?: string;
     configuration?: string;
@@ -81,6 +82,10 @@ test.describe('Grain Planner → inquiry handoff', () => {
     const card = attachmentCard(page);
     await expect(card).toContainText('До заявки додано ваш опис задачі');
     await expect(card.locator('strong')).toContainText('окремі партії · очищення + сушіння');
+    // The brief opens the form and carries the page's direction read-only (owner, 03.10)
+    await expect(form(page).locator('.inquiry-form-section-brief')).toBeVisible();
+    await expect(card.locator('.inquiry-config-brief-direction')).toHaveText('Напрям робіт Зерносховища');
+    await expect(form(page).locator('select[name="direction"]')).toHaveCount(0);
     await form(page).getByText('Додати параметри об’єкта', { exact: true }).click();
     await expect(form(page).getByLabel('Місто або область')).toBeVisible();
     await expect(form(page).locator('input[name="dimensions"]')).toHaveCount(0);
@@ -118,6 +123,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
     expect(lead?.details?.attachment?.data?.answers).toMatchObject({ capacity: '12 000', separation: 'required', processing: 'both' });
     expect(lead?.details?.dimensions).toBe('');
     expect(lead?.sourcePage).toBe('/zernoskhovyshcha');
+    expect(lead?.direction).toBe('Зерносховища');
   });
 
   test('«Не додавати» takes the brief out of the lead', async ({ page }) => {
@@ -126,10 +132,13 @@ test.describe('Grain Planner → inquiry handoff', () => {
     await scenarios.A(page);
     await reveal(page);
     await detach(page);
+    // without the brief the direction is the form's own field again, still preset
+    await expect(form(page).getByLabel(/Напрям робіт/)).toHaveValue('Зерносховища');
 
     await submitInquiry(page);
     expect(lastLead()?.details).not.toHaveProperty('configuration');
     expect(lastLead()?.details).not.toHaveProperty('attachment');
+    expect(lastLead()?.direction).toBe('Зерносховища');
   });
 
   test('an edit that changes an answer re-attaches the brief; an edit that changes nothing does not', async ({ page }) => {
