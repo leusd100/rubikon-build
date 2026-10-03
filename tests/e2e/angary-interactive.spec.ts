@@ -17,44 +17,179 @@ function attachmentCard(page: Page) {
   return page.locator('form.inquiry-form .inquiry-config-brief');
 }
 
+async function setLength(page: Page, value: string) {
+  const input = page.locator('#hc-dimension-length');
+  await input.fill(value);
+  await input.blur();
+}
+
 // The two presentation-only demos («Подивитись каркас», «Порівняти із сендвіч-панеллю») are gone (UX review 2026-10): the
 // frame is now told by «Каркас вашого ангара», and the comparison changed 0 pixels of the technical view.
 test('the frame drawing follows the configuration and walks a snow and a wind load through it', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
   await openHangarPage(page);
   const frame = page.locator('#structure');
+  const tour = frame.locator('.ft');
+  const steps = frame.locator('.dn-step');
   await expect(frame.locator('.sheet-stamp')).toContainText('Приклад · 24 × 60 × 8 м');
   await expect(page.getByRole('button', { name: /Подивитись каркас|Порівняти із сендвіч-панеллю/ })).toHaveCount(0);
+  // The section follows the configurator (03.10): while it shows the example it points back up to the sizes, and the
+  // title block always has the way up
+  await expect(frame.locator('.direction-editorial-copy')).toContainText('Задайте свої габарити вище — схема перебудується. Креслення будується');
+  await expect(frame.locator('.sheet-stamp').getByRole('link', { name: /Змінити габарити/ })).toHaveAttribute('href', '#configurator');
+  // 24 m has the centre row: the width between the outer axes is not «the span»; the axes are lettered А, Б, В across it
+  // and numbered for the drawn frames along it
+  await expect(steps.nth(0)).toContainText('Ширина L');
+  await expect(steps.nth(0)).toContainText('L — 24 м між осями крайніх колон А і В у прикладі. Центральний ряд Б ділить її на два прольоти. H — висота стіни.');
+  await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б', 'В']);
+  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3', '4']);
 
   await setWidth(page, '16');
   await expect(frame.locator('.sheet-stamp')).toContainText('Ваш ангар · 16 × 60 × 8 м');
   // the configurator's stamp marks the value that changed
   await expect(page.locator('.hc-stamp-row .hc-summary-dimensions')).toHaveClass(/is-changed/);
-  await expect(frame.locator('.dn-step').nth(1)).toContainText('Для ширини 16 м у попередній візуалізації показано портальну раму');
+  await expect(steps.nth(1)).toContainText('Для ширини 16 м у попередній візуалізації показано портальну раму');
+  await expect(frame.locator('.direction-editorial-copy')).not.toContainText('Задайте свої габарити');
+  await expect(steps.nth(0)).toContainText('Проліт L — відстань між осями крайніх колон А і В: 16 м у вашій конфігурації. Усередині колон немає. H — висота стіни.');
+  await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'В']);
+  // a short building is drawn whole: as many numbered axes as frames, none at a break
+  await setLength(page, '18');
+  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3', '4']);
+  await setLength(page, '12');
+  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3']);
+  await setLength(page, '60');
 
-  const steps = frame.locator('.dn-step');
+  // each step holds as long as it builds, and its progress bar fills as long
+  const durations = ['4200ms', '4800ms', '5200ms', '6400ms', '7600ms'];
   for (const index of [0, 1, 2, 3, 4]) {
     await steps.nth(index).click();
     await expect(steps.nth(index)).toHaveAttribute('aria-pressed', 'true');
-    await expect(frame.locator('.ft')).toHaveAttribute('data-step', String(index + 1));
+    await expect(tour).toHaveAttribute('data-step', String(index + 1));
+    expect(await tour.evaluate((element) => (element as HTMLElement).style.getPropertyValue('--dn-step-ms'))).toBe(durations[index]);
   }
+  // step 3 names the end wall's posts with the other members
+  await steps.nth(2).click();
+  await expect(frame.locator('[data-tags="3"] .ft-tag')).toHaveCount(4);
+  await expect(frame.locator('[data-tags="3"] .ft-tag').filter({ hasText: 'фахверку' })).toHaveCount(1);
   // steps 4 and 5 follow a load through the frame, with the chain it takes over the drawing; the other steps do not
-  const snow = frame.locator('[data-load="snow"]');
-  const wind = frame.locator('[data-load="wind"]');
+  const snow = frame.locator('g[data-load="snow"]');
+  const wind = frame.locator('g[data-load="wind"]');
+  const snowChain = frame.locator('.ft-chain[data-load="snow"]');
+  const windChain = frame.locator('.ft-chain[data-load="wind"]');
   await steps.nth(3).click();
   await expect(snow).toHaveCSS('opacity', '1');
   await expect(wind).toHaveCSS('opacity', '0');
-  await expect(frame.locator('.ft-chain li')).toHaveText(['Покрівля', 'Прогони', 'Ригель рами', 'Колони', 'Фундаменти', 'Ґрунт']);
+  await expect(snowChain).toBeVisible();
+  await expect(windChain).toBeHidden();
+  await expect(snowChain.locator('li')).toHaveText(['Покрівля', 'Прогони', 'Ригель рами', 'Колони', 'Фундаменти', 'Ґрунт']);
   await steps.nth(4).click();
   await expect(wind).toHaveCSS('opacity', '1');
-  await expect(frame.locator('.ft-chain li')).toHaveText(['Торцева стіна', 'В’язі покрівлі', 'В’язі стін', 'Фундаменти']);
+  await expect(windChain).toBeVisible();
+  await expect(snowChain).toBeHidden();
+  await expect(windChain.locator('li')).toHaveText(['Торцева стіна', 'Стійки фахверку', 'В’язі покрівлі', 'В’язі стін', 'Фундаменти']);
+  // …then, once the chain has lit, the first bay leans as it would without the bracing, with the note that says so
+  await expect(steps.nth(4)).toContainText('Без в’язей рами схилилися б уздовж будівлі, як доміно, — в’язі тримають їх рівно.');
+  await expect(frame.locator('.ft-note')).toHaveText('Деформацію показано умовно, у збільшеному масштабі');
+  await expect(wind.locator('.ft-ghost')).toHaveCSS('animation-name', 'ft-ghost');
+  await expect(frame.locator('.ft-note')).toHaveCSS('animation-name', 'ft-ghost');
+  await expect(wind.locator('.ft-link[data-brace]').first()).toHaveCSS('animation-name', 'ft-light, ft-unbraced');
   await steps.nth(0).click();
   await expect(snow).toHaveCSS('opacity', '0');
   await expect(wind).toHaveCSS('opacity', '0');
-  await expect(frame.locator('.ft-chain')).toHaveCount(0);
+  await expect(snowChain).toBeHidden();
+  await expect(windChain).toBeHidden();
   // it attaches nothing: the brief is attached by the width edit, not by the drawing
   await expect(attachmentCard(page)).toContainText('16 × 60 × 8 м');
 });
+
+test('without motion the wind step stands complete: no leaning bay, no note', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const frame = page.locator('#structure');
+  await frame.locator('.dn-step').nth(4).click();
+  await expect(frame.locator('.ft-chain[data-load="wind"]')).toBeVisible();
+  for (const selector of ['[data-load="wind"] .ft-ghost', '.ft-note']) {
+    await expect(frame.locator(selector)).toHaveCSS('animation-name', 'none');
+    await expect(frame.locator(selector)).toHaveCSS('opacity', '0');
+  }
+  await expect(frame.locator('[data-load="wind"] .ft-link[data-brace]').first()).toHaveCSS('opacity', '1');
+});
+
+// Every name, axis bubble and dimension letter a step shows sits whole inside that step's camera window, clear of the
+// others and of the footings — at a phone's sizes too (03.10). The legend sits in its own band above the window.
+for (const [width, length] of [['24', '60'], ['12', '18'], ['50', '120']] as const) {
+  test(`the frame's labels stay inside each step's camera at ${width} × ${length} m`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openHangarPage(page);
+    await setWidth(page, width);
+    await setLength(page, length);
+    const frame = page.locator('#structure');
+    for (const step of [1, 2, 3]) {
+      await frame.locator('.dn-step').nth(step - 1).click();
+      await frame.locator('.ft-sheet').scrollIntoViewIfNeeded();
+      await expect(frame.locator('.ft')).toHaveAttribute('data-step', String(step));
+      // the names fade in over 0.3 s
+      if (step > 1) await expect(frame.locator(`[data-tags="${step}"]`)).toHaveCSS('opacity', '1');
+      const problems = await frame.evaluate((root, shown) => {
+        const camera = root.querySelector('.ft-window')!.getBoundingClientRect();
+        const context = document.createElement('canvas').getContext('2d')!;
+        // a text's inked box (its em box is a third taller than the letters); a bubble's circle's
+        const box = (element: Element) => {
+          if (element.tagName !== 'text') return element.querySelector('circle')!.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+          const matrix = (element as SVGTextElement).getScreenCTM()!;
+          const rows = element.querySelectorAll('tspan').length ? [...element.querySelectorAll('tspan')] : [element];
+          const rects = rows.map((row) => {
+            const text = row as SVGTextContentElement;
+            const first = text.getStartPositionOfChar(0);
+            const last = text.getEndPositionOfChar(text.getNumberOfChars() - 1);
+            const metrics = context.measureText(row.textContent ?? '');
+            const top = first.y - metrics.actualBoundingBoxAscent;
+            const bottom = first.y + metrics.actualBoundingBoxDescent;
+            return new DOMRect(
+              Math.min(first.x, last.x) * matrix.a + matrix.e, top * matrix.d + matrix.f,
+              Math.abs(last.x - first.x) * matrix.a, (bottom - top) * matrix.d,
+            );
+          });
+          const left = Math.min(...rects.map((rect) => rect.left));
+          const top = Math.min(...rects.map((rect) => rect.top));
+          return new DOMRect(left, top, Math.max(...rects.map((rect) => rect.right)) - left, Math.max(...rects.map((rect) => rect.bottom)) - top);
+        };
+        const selectors: Record<number, string> = {
+          1: '[data-part~="1"] :is(.ft-bubble, .ft-letter)',
+          2: '[data-tags="2"] .ft-tag',
+          3: ':is([data-tags="3"] .ft-tag, [data-part~="3"] .ft-bubble, [data-part~="3"] .ft-letter)',
+        };
+        const labels = [...root.querySelectorAll(selectors[shown])];
+        const others = [...root.querySelectorAll('.ft-bubble, .ft-letter')];
+        const name = (element: Element) => element.textContent;
+        const found: string[] = [];
+        const footings = [...root.querySelectorAll<SVGPathElement>('.ft-footing')].map((path) => path.getBoundingClientRect());
+        for (const label of labels) {
+          const rect = box(label);
+          if (rect.left < camera.left - 1 || rect.top < camera.top - 1 || rect.right > camera.right + 1 || rect.bottom > camera.bottom + 1) found.push(`${name(label)} leaves the camera`);
+          for (const other of [...labels, ...others]) {
+            if (other === label || other.contains(label) || label.contains(other)) continue;
+            const against = box(other);
+            if (label.classList.contains('ft-bubble') && other.classList.contains('ft-bubble')) {
+              // two circles: apart by more than their radii, with a little air
+              const apart = Math.hypot(rect.x + rect.width / 2 - against.x - against.width / 2, rect.y + rect.height / 2 - against.y - against.height / 2);
+              if (apart < (rect.width + against.width) / 2 + 2) found.push(`${name(label)} × ${name(other)}`);
+              continue;
+            }
+            if (rect.left + 1 < against.right && against.left + 1 < rect.right && rect.top + 1 < against.bottom && against.top + 1 < rect.bottom) found.push(`${name(label)} × ${name(other)}`);
+          }
+          // a footing's own box is generous (a dashed cube): a name may not reach into it
+          if (label.classList.contains('ft-tag') && footings.some((footing) => rect.left + 1 < footing.right && footing.left + 1 < rect.right && rect.top + 1 < footing.bottom && footing.top + 1 < rect.bottom)) found.push(`${name(label)} × a footing`);
+        }
+        return [...new Set(found)];
+      }, step);
+      expect(problems, `step ${step}`).toEqual([]);
+    }
+  });
+}
 
 test('the summary carries the scope-aware choices; «Чому це важливо» explains a group in place', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');

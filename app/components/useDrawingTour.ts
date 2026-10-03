@@ -7,10 +7,11 @@ import { useHoverStep } from './useHoverStep';
 // (FrameTour). It measures the picture for the camera, follows the reduced-motion preference, plays when the picture is
 // at least half in view and pauses when it leaves the view entirely — not sooner: the control sits under the picture,
 // so reaching for it on a phone can scroll most of the picture away, and pausing there flipped the button so the tap
-// meant to pause resumed the tour. Back in view it resumes where it stopped. Each step is held for STEP_MS; the tour
-// goes round `loops` times (the frame's loads, 03.10: «по колу рази 3–4»), then returns to the overview. A step the
-// visitor chooses, or a pause, hands the tour over to them: it no longer resumes by itself. Reduced motion: no tour,
-// and a chosen step switches at once.
+// meant to pause resumed the tour. Back in view it resumes where it stopped. Each step is held for STEP_MS, or for its
+// own time in `durations` (the frame's steps, 03.10: each as long as what it builds; `stepMs` is the shown one's, for
+// its progress bar); the tour goes round `loops` times (the frame's loads, 03.10: «по колу рази 3–4»), then returns
+// to the overview. A step the visitor chooses, or a pause, hands the tour over to them: it no longer resumes by
+// itself. Reduced motion: no tour, and a chosen step switches at once.
 
 const STEP_MS = 5200; // room for each step to build what it names (UX pass 2026-10); the progress bars fill as long
 /** The first start holds the plotted overview this long: the sheet plots in for ~1 s, and the camera must not start
@@ -35,7 +36,10 @@ export function stageTransform(size: StageSize | null, picture: StageSize, step:
   return `translate(${width / 2}px, ${height / 2}px) scale(${step.zoom}) translate(${-cx}px, ${-cy}px)`;
 }
 
-export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: number } = {}) {
+export function useDrawingTour(
+  stepCount: number,
+  { loops = 1, durations }: { loops?: number; durations?: readonly number[] } = {},
+) {
   const visualRef = useRef<HTMLDivElement>(null);
   /** The tour plays by itself until the visitor takes it over */
   const auto = useRef(true);
@@ -51,6 +55,8 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
   const [motion, setMotion] = useState(false);
   /** An automatic run is still to come (none after the last round, a choice or a pause) — for wording that promises one */
   const [pending, setPending] = useState(true);
+  /** How long the shown step holds — a number, so a new `durations` array on every render does not restart the step */
+  const hold = durations?.[step - 1] ?? STEP_MS;
 
   useEffect(() => {
     const visual = visualRef.current;
@@ -129,9 +135,9 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
         setPending(false);
         setStep(0);
       }
-    }, STEP_MS);
+    }, hold);
     return () => window.clearTimeout(timer);
-  }, [touring, step, run, stepCount, loops]);
+  }, [touring, step, run, stepCount, loops, hold]);
 
   /** Shows a step and stops the tour (a pressed item, or one pointed at — useHoverStep) */
   const choose = (value: number) => {
@@ -160,5 +166,5 @@ export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: numbe
     setTouring(true);
   };
 
-  return { visualRef, step, touring, run, size, motion, pending: motion && pending, choose, toggle, hover };
+  return { visualRef, step, touring, run, size, motion, pending: motion && pending, stepMs: hold, choose, toggle, hover };
 }

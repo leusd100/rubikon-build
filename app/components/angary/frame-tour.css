@@ -1,13 +1,18 @@
 /* «Каркас вашого ангара» (FrameTour.tsx): the visitor's frame as an isometric wireframe on the «Креслення» sheet, in
    graphite at rest. A step lights its parts in copper and names them; steps 4 and 5 send a load through the structure,
-   link by link, with the legend over the drawing lighting in step. The sheet keeps the drawing's own proportion, so
-   the camera never crops it. */
+   link by link, with the legend above the drawing lighting in step. The camera's window keeps the drawing's own
+   proportion, so at rest it never crops it. */
 
-/* the sheet is as tall as its drawing, not the row (the steps beside it are taller). --ft-k thickens the lines and
-   enlarges the letters where the sheet is drawn small (a phone) */
+/* the sheet is as tall as its drawing, not the row (the steps beside it are taller) nor the editorial pictures' 520 px
+   (at tablet widths that left a band of empty paper under it). --ft-k thickens the lines and enlarges the letters
+   where the sheet is drawn small (a phone) */
 .ft { --ft-k: 1; }
-.ft.direction-editorial-grid .ft-sheet { align-self: center; }
-.ft-sheet .ft-visual { flex: none; aspect-ratio: 720 / 440; height: auto; background: var(--color-surface-alt); }
+.ft.direction-editorial-grid .ft-sheet { align-self: center; min-height: 0; }
+/* The picture: a band on top — the progress bars, then the legend — and under it the camera's window in the drawing's
+   own proportion, never the editorial pictures' 3 : 2 (03.10: laid over the drawing, the legend covered the roof of a
+   wide hangar and, on a phone, of any; the 3 : 2 cropped the drawing's sides on a phone) */
+.ft .ft-sheet.sheet .ft-visual { display: flex; flex: none; flex-direction: column; height: auto; padding-top: 25px; aspect-ratio: auto; background: var(--color-surface-alt); }
+.ft-window { position: relative; flex: none; overflow: hidden; aspect-ratio: 720 / 440; }
 .ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
 .ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke .3s ease, opacity .3s ease; }
 .ft-slab { stroke: var(--color-border-strong); stroke-width: calc(1.1px * var(--ft-k)); }
@@ -15,15 +20,34 @@
 .ft-footing { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); stroke-dasharray: 4 3; }
 .ft-back { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
 .ft-thin { stroke: var(--color-text-secondary); stroke-width: calc(1.1px * var(--ft-k)); }
+.ft-post { stroke: var(--color-text-secondary); stroke-width: calc(1.4px * var(--ft-k)); }
 .ft-brace { stroke: var(--color-text-secondary); stroke-width: calc(1.2px * var(--ft-k)); }
+/* the far wall's bracing in the back line's ink */
+.ft-brace-far { stroke: var(--color-text-muted); }
 .ft-member { stroke: var(--color-text); stroke-width: calc(2.2px * var(--ft-k)); }
 .ft-dim { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
+/* coordinate axes: dash-dot, a bubble at the end past the dimension lines; letters and figures only */
+.ft-axis { stroke: var(--color-text-muted); stroke-width: calc(.9px * var(--ft-k)); stroke-dasharray: 14 4 1 4; }
+.ft-bubble { transform: scale(var(--ft-k)); transform-box: fill-box; transform-origin: center; }
+.ft-bubble circle { fill: var(--color-surface-alt); stroke: var(--color-text-muted); stroke-width: 1px; transition: stroke .3s ease; }
+.ft-bubble text { fill: var(--color-text-secondary); font: 700 12.5px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill .3s ease; }
 .ft-letter { fill: var(--color-text-secondary); font: italic 600 calc(19px * var(--ft-k)) var(--font-manrope), sans-serif; text-anchor: middle; transition: fill .3s ease; }
 .ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }
 .ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
 .ft .dn-progress span:not(.is-done) { background: color-mix(in srgb, var(--color-text) 20%, transparent); }
-.ft-object { font-variant-numeric: tabular-nums; }
+
+/* The title block's «Об’єкт» with the way back up to the sizes: under the value, so the cell stays one value wide and
+   leaves «Що показано» its room; on a narrow sheet in the caption row, where the cell has the width (below) */
+.ft-sheet .ft-object b { display: grid; grid-template-areas: "label" "value" "link"; justify-items: start; gap: 4px; overflow: visible; }
+.ft-object small { grid-area: label; }
+.ft-object-value { grid-area: value; max-width: 100%; overflow: hidden; font-variant-numeric: tabular-nums; text-overflow: ellipsis; }
+/* a 25 px target without growing the row: the padding reaches over the cell's own margins */
+.ft-resize {
+  grid-area: link; margin-block: -7px; padding-block: 7px; color: var(--color-accent-strong); font: 700 11px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .04em; text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: 3px;
+}
+.ft-resize:hover { color: var(--color-text); }
 
 /* Names on the members (steps 2 and 3), haloed in the sheet's colour so they read over the wireframe */
 .ft-tags { opacity: 0; }
@@ -37,10 +61,15 @@
 .ft[data-step] .ft-part { opacity: .28; }
 .ft[data-step] .ft-back { opacity: .5; }
 .ft[data-step="1"] [data-part~="1"], .ft[data-step="2"] [data-part~="2"], .ft[data-step="3"] [data-part~="3"] { opacity: 1; }
-.ft[data-step="1"] [data-part~="1"] path, .ft[data-step="2"] [data-part~="2"] path, .ft[data-step="3"] [data-part~="3"] :is(.ft-thin, .ft-brace, .ft-dim) { stroke: var(--color-accent); }
+.ft[data-step="1"] [data-part~="1"] path, .ft[data-step="2"] [data-part~="2"] path,
+.ft[data-step="3"] [data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace, .ft-dim, .ft-axis) { stroke: var(--color-accent); }
 .ft[data-step="1"] [data-part~="1"] .ft-member, .ft[data-step="2"] [data-part~="2"] .ft-member { stroke-width: calc(2.8px * var(--ft-k)); }
 .ft[data-step="3"] [data-part~="3"] .ft-brace { stroke-width: calc(2.2px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-brace-far { stroke-width: calc(1.5px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-post { stroke-width: calc(2px * var(--ft-k)); }
 .ft[data-step="1"] [data-part~="1"] .ft-letter, .ft[data-step="3"] [data-part~="3"] .ft-letter { fill: var(--color-accent-strong); }
+.ft[data-step="1"] [data-part~="1"] .ft-bubble circle, .ft[data-step="3"] [data-part~="3"] .ft-bubble circle { stroke: var(--color-accent); }
+.ft[data-step="1"] [data-part~="1"] .ft-bubble text, .ft[data-step="3"] [data-part~="3"] .ft-bubble text { fill: var(--color-accent-strong); }
 .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { opacity: 1; }
 
 /* The loads: the frame stays in graphite under them; the lit links glow */
@@ -55,23 +84,21 @@
 .ft-arrows { stroke: var(--color-accent); stroke-width: calc(2px * var(--ft-k)); }
 /* the load as drops, moving through the frame (as the water on the roofing node) — dashed, so no pathLength here */
 .ft-flow { stroke: var(--color-accent-strong); stroke-width: calc(4.5px * var(--ft-k)); stroke-dasharray: .5 12; }
+/* the first bay as it would lean without the bracing: a dashed graphite ghost, shown only while it plays */
+.ft-drawing .ft-ghost { stroke: var(--color-text); stroke-width: calc(1.6px * var(--ft-k)); stroke-dasharray: 7 5; opacity: 0; }
 
-/* The legend: the chain the load takes, top-left, where the isometric leaves the sheet free */
+/* The legend: the chain the load takes, its links joined by arrows, in one slot as tall as the taller chain or the note
+   (all three always laid out, only the shown one visible), so the sheet keeps its height from step to step */
+.ft-legend { display: grid; padding: 0 14px 6px; }
+.ft-legend > * { grid-area: 1 / 1; }
 .ft-chain {
-  position: absolute; z-index: 3; top: 30px; left: 14px; display: grid; gap: 2px; margin: 0; padding: 8px 12px 8px 10px;
-  list-style: none; background: color-mix(in srgb, var(--color-surface-alt) 88%, transparent);
-  font: 600 12px/1.25 var(--font-manrope), sans-serif; color: var(--color-text-muted);
+  display: flex; flex-wrap: wrap; align-content: start; gap: 2px 0; margin: 0; padding: 0; list-style: none; visibility: hidden;
+  font: 600 12.5px/1.25 var(--font-manrope), sans-serif; color: var(--color-accent-strong);
 }
-.ft-chain li { position: relative; display: flex; gap: 8px; align-items: center; }
-.ft-chain li::before {
-  width: 7px; height: 7px; flex: none; border: 1.5px solid currentColor; border-radius: 50%; content: '';
-}
-/* the step between two links: a short line under the dot */
-.ft-chain li:not(:last-child)::after {
-  position: absolute; top: calc(50% + 5px); left: 3px; width: 1.5px; height: 8px; background: currentColor; opacity: .5; content: '';
-}
-.ft-chain li { color: var(--color-accent-strong); }
-.ft-chain li::before { background: var(--color-accent); border-color: var(--color-accent); }
+.ft[data-step="4"] .ft-chain[data-load="snow"], .ft[data-step="5"] .ft-chain[data-load="wind"] { visibility: visible; }
+.ft-chain li:not(:last-child)::after { margin-inline: 6px; color: var(--color-text-muted); content: '→'; }
+/* …and in its place, while the first bay leans, the note on the deformation */
+.ft-note { margin: 0; color: var(--color-text-secondary); font: italic 500 12.5px/1.25 var(--font-manrope), sans-serif; opacity: 0; pointer-events: none; }
 
 @keyframes ft-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes ft-flow { to { stroke-dashoffset: -12.5; } }
@@ -85,13 +112,14 @@
   from { color: var(--color-text-muted); }
   to { color: var(--color-accent-strong); }
 }
-@keyframes ft-dot-on {
-  from { background: transparent; border-color: var(--color-text-muted); }
-  to { background: var(--color-accent); border-color: var(--color-accent); }
-}
+/* the leaning bay: in over ~400 ms, held, back out; meanwhile the bracing steps back to 30 % and the legend gives way to
+   the note, then both return */
+@keyframes ft-ghost { 0%, 100% { opacity: 0; } 15%, 85% { opacity: 1; } }
+@keyframes ft-swap { 0%, 100% { opacity: 1; } 15%, 85% { opacity: 0; } }
+@keyframes ft-unbraced { 0%, 100% { opacity: 1; } 15%, 85% { opacity: .3; } }
 @media (prefers-reduced-motion: no-preference) {
   .ft[data-step="1"] [data-part~="1"] path[pathLength], .ft[data-step="2"] [data-part="2"] path[pathLength],
-  .ft[data-step="3"] [data-part~="3"] .ft-brace { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
+  .ft[data-step="3"] [data-part~="3"] :is(.ft-brace, .ft-post) { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
   .ft[data-step="2"] [data-part="2"] path[pathLength] { animation-duration: 1400ms; }
   .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { transition-delay: 1100ms; }
   /* a link every 520 ms, the legend in step with the drawing; each link's drops appear and run as it lights, so the
@@ -101,11 +129,21 @@
   .ft[data-step="4"] [data-load="snow"] .ft-link, .ft[data-step="5"] [data-load="wind"] .ft-link {
     animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both;
   }
-  .ft[data-step] .ft-chain li { animation: ft-link-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
-  .ft[data-step] .ft-chain li::before { animation: ft-dot-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
+  /* each chain starts with its own step (both stay laid out, so a selector on any step would run it unseen) */
+  .ft[data-step="4"] .ft-chain[data-load="snow"] li, .ft[data-step="5"] .ft-chain[data-load="wind"] li { animation: ft-link-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
   .ft[data-step="4"] [data-load="snow"] .ft-flow, .ft[data-step="5"] [data-load="wind"] .ft-flow {
     animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-flow 560ms linear calc(700ms + var(--n) * 520ms) infinite;
   }
+  /* The wind's last link lights at 3.3 s; at 3.7 s the bracing steps back and the first bay leans (with the note), at
+     ~5.9 s the bracing lights again and the bay stands up — the step holds 7.6 s (FrameTour's STEP_DURATIONS) */
+  .ft[data-step="5"] [data-load="wind"] .ft-link[data-brace] {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-unbraced 2600ms ease 3700ms;
+  }
+  .ft[data-step="5"] [data-load="wind"] .ft-flow[data-brace] {
+    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-flow 560ms linear calc(700ms + var(--n) * 520ms) infinite, ft-unbraced 2600ms ease 3700ms;
+  }
+  .ft[data-step="5"] :is(.ft-ghost, .ft-note) { animation: ft-ghost 2600ms ease 3700ms both; }
+  .ft[data-step="5"] .ft-chain[data-load="wind"] { animation: ft-swap 2600ms ease 3700ms; }
 }
 
 /* The shown step's text under the drawing — a phone's only (see FrameTour) */
@@ -123,16 +161,17 @@
   .ft .dn-steps { margin-top: 14px; }
   .ft .dn-step { padding-block: 11px; }
   .ft { --ft-k: 1.55; --ft-t: 1.5; }
-  /* the legend as one row over the drawing, the links joined by arrows */
-  .ft-chain { top: 22px; right: 8px; left: 8px; display: flex; flex-wrap: wrap; gap: 1px 0; padding: 0; background: none; font-size: 12px; }
-  .ft-chain li { gap: 0; }
-  .ft-chain li::before { display: none; }
-  .ft-chain li:not(:last-child)::after { position: static; width: auto; height: auto; margin-inline: 4px; background: none; opacity: .6; content: '→'; }
+  /* a narrower band, the legend in smaller type and closer to the sheet's edge */
+  .ft .ft-sheet.sheet .ft-visual { padding-top: 22px; }
+  .ft-legend { padding-inline: 8px; }
+  .ft-chain, .ft-note { font-size: 12px; }
+  .ft-chain li:not(:last-child)::after { margin-inline: 4px; }
 }
 
 /* A narrow sheet: the title block in two rows — what is shown, then the object and an icon-only control; the step
    count is the progress bars' over the picture (it wrapped into three rows with an empty cell) */
 @container sheet (max-width: 480px) {
+  .ft-sheet .ft-object b { grid-template-areas: "label link" "value value"; grid-template-columns: auto auto; justify-content: space-between; column-gap: 12px; }
   .ft-sheet .sheet-stamp > .sheet-cell:first-child { display: none; }
   .ft-sheet .sheet-stamp > .sheet-cell:nth-child(3) { border-left: 0; }
   .ft-sheet .dn-control-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

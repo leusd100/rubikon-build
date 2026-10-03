@@ -25,8 +25,9 @@
 .dn-progress span.is-done { background: var(--color-accent); }
 .dn-fill { position: absolute; inset: 0; background: var(--color-accent); transform-origin: left; }
 @keyframes dn-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-/* as long as the step (STEP_MS in useDrawingTour): at 4500 ms every bar sat full for 0.7 s before anything happened */
-.dn[data-touring] .dn-fill { animation: dn-fill 5200ms linear both; }
+/* as long as the step (STEP_MS in useDrawingTour): at 4500 ms every bar sat full for 0.7 s before anything happened. A
+   tour whose steps hold for their own times sets --dn-step-ms to the shown one's (the /angary frame, 03.10) */
+.dn[data-touring] .dn-fill { animation: dn-fill var(--dn-step-ms, 5200ms) linear both; }
 
 /* The round control in the title block: pauses or replays the tour */
 .dn-control {
