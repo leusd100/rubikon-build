@@ -1,0 +1,56 @@
+/* «Каркас вашого ангара» (FrameTour.tsx): the visitor's frame on the «Креслення» sheet, in graphite at rest. A step
+   lights its parts in copper and dims the rest; step 4 adds the load and its path, step 5 the base. The sheet keeps the
+   drawing's own proportion, so the camera never crops it. */
+
+/* the sheet is as tall as its drawing, not the row (the steps beside it are taller) */
+.ft.direction-editorial-grid .ft-sheet { align-self: center; }
+.ft-sheet .ft-visual { flex: none; aspect-ratio: 720 / 440; height: auto; background: var(--color-surface-alt); }
+.ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+.ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke .3s ease, opacity .3s ease; }
+.ft-ground { stroke: var(--color-border-strong); stroke-width: 1.2; }
+.ft-soil { stroke: var(--color-border-strong); stroke-width: .9; opacity: .7; }
+.ft-back { stroke: var(--color-text-muted); stroke-width: 1.1; }
+.ft-member { stroke: var(--color-text); stroke-width: 1.8; }
+.ft-brace { stroke: var(--color-text-muted); stroke-width: 1.1; }
+.ft-dim { stroke: var(--color-text-muted); stroke-width: 1.1; }
+.ft-base { stroke: var(--color-text-secondary); stroke-width: 1.4; }
+.ft-base.is-open { stroke-dasharray: 6 5; }
+.ft-hatch { stroke: var(--color-text-muted); stroke-width: .9; }
+.ft-letter { fill: var(--color-text-secondary); font: italic 600 19px var(--font-manrope), sans-serif; text-anchor: middle; transition: fill .3s ease; }
+.ft-part { transition: opacity .3s ease; }
+.ft-load { opacity: 0; transition: opacity .3s ease; }
+.ft-arrows { stroke: var(--color-accent); stroke-width: 2; }
+/* the load as drops, moving down the frame (as the water on the roofing node) — dashed, so no pathLength here */
+.ft-flow { stroke: var(--color-accent); stroke-width: 4.5; stroke-dasharray: .5 11; }
+.ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.ft-object { font-variant-numeric: tabular-nums; }
+
+/* A step: its parts copper, the rest back */
+.ft[data-step] .ft-part { opacity: .28; }
+.ft[data-step="1"] [data-part="1"], .ft[data-step="2"] [data-part="2"], .ft[data-step="3"] [data-part="3"], .ft[data-step="5"] [data-part="5"] { opacity: 1; }
+.ft[data-step="1"] [data-part="1"] path, .ft[data-step="2"] [data-part="2"] path, .ft[data-step="3"] [data-part="3"] :is(.ft-brace, .ft-dim),
+.ft[data-step="5"] [data-part="5"] path { stroke: var(--color-accent); }
+.ft[data-step="1"] [data-part="1"] .ft-member, .ft[data-step="2"] [data-part="2"] .ft-member { stroke-width: 2.4; }
+.ft[data-step="3"] [data-part="3"] .ft-brace { stroke-width: 2; }
+.ft[data-step="1"] [data-part="1"] .ft-letter, .ft[data-step="3"] [data-part="3"] .ft-letter { fill: var(--color-accent-strong); }
+/* the load: the whole frame stays readable, in graphite, under it */
+.ft[data-step="4"] .ft-part { opacity: .6; }
+.ft[data-step="4"] .ft-load { opacity: 1; }
+
+@keyframes ft-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes ft-flow { to { stroke-dashoffset: -11.5; } }
+@keyframes ft-drop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .ft[data-step="1"] [data-part="1"] path[pathLength], .ft[data-step="2"] [data-part="2"] path[pathLength],
+  .ft[data-step="3"] [data-part="3"] .ft-brace { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
+  .ft[data-step="2"] [data-part="2"] path[pathLength] { animation-duration: 1400ms; }
+  .ft[data-step="4"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 700ms both; }
+  .ft[data-step="4"] .ft-flow { animation: ft-flow 520ms linear 1200ms infinite; }
+  .ft[data-step="5"] [data-part="5"] { animation: ft-drop 600ms var(--ease-premium) 800ms both; }
+}
+
+@media (max-width: 760px) {
+  /* On a phone the list is the tour's index: only the step on show reads in full, the others keep their titles */
+  .ft .dn-step:not([aria-pressed="true"]) .dn-step-text { display: none; }
+  .ft .dn-step { padding-block: 11px; }
+}

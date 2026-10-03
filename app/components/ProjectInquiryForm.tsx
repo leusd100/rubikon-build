@@ -305,7 +305,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       </section>
 
       <section className="inquiry-form-section" aria-labelledby="inquiry-project-heading">
-        <h3 className="inquiry-form-section-title" id="inquiry-project-heading">Завдання</h3>
+        <h3 className="inquiry-form-section-title" id="inquiry-project-heading" tabIndex={-1}>Завдання</h3>
         <div className="inquiry-form-section-body">
           {attachment && inquiryAttachment && (
             <InquiryAttachmentSummary attachment={attachment} onDetach={inquiryAttachment.detach} />

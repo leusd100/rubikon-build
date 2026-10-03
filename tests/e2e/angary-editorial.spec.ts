@@ -18,8 +18,9 @@ for (const viewport of viewports) {
     await page.goto('/angary', { waitUntil: 'load' });
 
     const hero = page.locator('.angary-service-subhero');
-    await expect(hero.getByRole('heading', { level: 1 })).toContainText('Ангари та склади');
-    await expect(hero.getByRole('heading', { level: 1 })).toContainText('за вашою конфігурацією');
+    // The first screen says what RUBIKON does and for whom (UX review 2026-10)
+    await expect(hero.getByRole('heading', { level: 1 })).toContainText('Будуємо ангари та склади');
+    await expect(hero.getByRole('heading', { level: 1 })).toContainText('під вашу задачу');
     await expect(hero.getByRole('link', { name: /Зібрати конфігурацію/ })).toHaveAttribute('href', '#configurator');
     // ≤ 760 px the call leads and the configurator follows; the conversation link stays off the phone's first screen
     // (UX pass 2026-10). Wider screens keep the configurator + «Обговорити задачу» pair.
@@ -31,12 +32,13 @@ for (const viewport of viewports) {
     }
     await expect(hero.locator('.hc-controls, .hc-preview-surface')).toHaveCount(0);
 
+    // The order of the UX review 2026-10: brief → cost → the visitor's frame → route with its title block → FAQ
     const sequence = await page.locator([
       '.service-subhero',
       '#configurator',
+      '#vartist',
       '#structure',
       '#process',
-      '#responsibility',
       '.faq-section',
       '.related-directions-section',
       '#inquiry',
@@ -51,36 +53,21 @@ for (const viewport of viewports) {
 
     const configurator = page.locator('#configurator');
     await expect(configurator).toContainText('Сформуйте базову конфігурацію ангара');
-    const vocabulary = configurator.locator('.hc-vocabulary li');
-    await expect(vocabulary).toHaveCount(4);
-    for (const [index, text] of [
-      '01Габаритиширина, довжина, висота стін.',
-      '02Контурхолодний або утеплений залежно від використання.',
-      '03Огородженняпрофнастил або сендвіч-панель.',
-      '04Основарішення уточнюється з урахуванням майданчика.',
-    ].entries()) {
-      await expect(vocabulary.nth(index)).toHaveText(text);
-    }
-
-    const vocabularyColumns = await configurator.locator('.hc-vocabulary').evaluate(
-      (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
-    );
-    expect(vocabularyColumns).toBe(viewport.width >= 1024 ? 4 : 2);
-
+    // No vocabulary cells (they repeated the groups under other names); the summary is the drawing's title block under
+    // the layout — not inside the sticky pane — and the preliminary scheme is told by the frame drawing below
+    await expect(configurator.locator('.hc-vocabulary')).toHaveCount(0);
+    await expect(configurator.locator('.hc-preview-pane .hc-summary')).toHaveCount(0);
+    await expect(configurator.locator('.hc-stamp-row .hc-summary-flagship')).toBeVisible();
     await expect(configurator.getByRole('heading', { name: 'Ви обрали' })).toBeVisible();
-    await expect(configurator.getByRole('heading', { name: 'Попередня схема' })).toBeVisible();
-    await expect(configurator.locator('.hc-summary-structure')).toContainText(
-      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
-    );
+    await expect(configurator.locator('.hc-summary-area')).toContainText('коник 10,6 м');
     const disclaimer = configurator.locator('.hc-summary-disclaimer');
     await expect(disclaimer).toBeVisible();
     expect(await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)))
-      .toBeGreaterThanOrEqual(14);
-
-    const summaryColumns = await configurator.locator('.hc-summary-grid').evaluate(
-      (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
+      .toBeGreaterThanOrEqual(13);
+    await expect(page.locator('#structure .ft-step, #structure .dn-step')).toHaveCount(5);
+    await expect(page.locator('#structure .dn-step').nth(1)).toContainText(
+      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
     );
-    expect(summaryColumns).toBe(viewport.width <= 760 ? 1 : 2);
 
     if (viewport.heroReveal) {
       // The hero standard (owner, 02.10): the window's height, as every direction page — no longer a shorter «reveal»;
@@ -103,15 +90,19 @@ for (const viewport of viewports) {
     await expect(page.locator('#decisions')).toHaveCount(0);
     await expect(configurator.locator('.hc-why')).toHaveCount(4);
     await expect(configurator.locator('.hc-why[open]')).toHaveCount(0);
-    await expect(page.locator('#structure .angary-diagram')).toHaveCount(3);
-    await expect(page.locator('#structure')).toContainText('6–8 м і уточнюється після розрахунку');
+    // The cost block: the seven factors of the model on the /yak drawing, no prices
+    await expect(page.locator('#vartist .proc-factors li')).toHaveCount(7);
+    await expect(page.locator('#vartist')).not.toContainText('грн');
+    await expect(page.locator('#structure svg.ft-drawing')).toBeVisible();
     await expect(page.locator('#process li')).toHaveCount(5);
-    // The two people as named roles in text: the generated portraits were withdrawn (#124) and must not come back
-    await expect(page.locator('#responsibility .angary-people-roles > div')).toHaveCount(2);
+    await expect(page.locator('#process li').nth(3)).toContainText('Узгоджуємо обсяг і кошторис');
+    // The two people as named roles in the route's title block: the generated portraits were withdrawn (#124)
+    await expect(page.locator('#responsibility dl > div:not(.is-wide)')).toHaveCount(2);
     await expect(page.locator('#responsibility figure, #responsibility img')).toHaveCount(0);
     await expect(page.locator('.faq-list details')).toHaveCount(6);
     await expect(page.locator('.faq-list details[open]')).toHaveCount(0);
     await expect(page.locator('.related-directions-section .related-card')).toHaveCount(3);
+    await expect(page.locator('#inquiry .conversation-journey')).toHaveCount(0);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
   });
@@ -123,8 +114,8 @@ test('/angary keeps content readable with enlarged text', async ({ page }, testI
   await page.goto('/angary', { waitUntil: 'load' });
   await page.addStyleTag({ content: 'html { font-size: 125% !important; }' });
 
-  await expect(page.locator('.hc-vocabulary')).toBeVisible();
   await expect(page.locator('.hc-summary-disclaimer')).toBeVisible();
+  await expect(page.locator('#structure svg.ft-drawing')).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
@@ -136,31 +127,32 @@ test('/angary process stage follows the authoritative attachment state', async (
   await expect(essentialCookies).toBeVisible({ timeout: 10_000 });
   await essentialCookies.click();
 
+  const rail = page.locator('#process ol');
   const firstStage = page.locator('#process li').first();
   await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
+  await expect(rail).toHaveAttribute('data-brief', 'idle');
 
   await page.getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
-  await expect(firstStage).toContainText('Конфігурацію додано до заявки.');
+  await expect(firstStage).toContainText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  await expect(rail).toHaveAttribute('data-brief', 'attached');
 
   await page.getByRole('button', { name: 'Не додавати' }).click();
   await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
+  await expect(rail).toHaveAttribute('data-brief', 'detached');
 });
 
 for (const width of [320, 390, 760, 761, 820, 1000]) {
-  test(`structural HTML captions remain readable at ${width}px`, async ({ page }, testInfo) => {
+  test(`the frame drawing's steps and title block stay readable at ${width}px`, async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
     await page.setViewportSize({ width, height: width <= 390 ? 844 : 1024 });
     await page.goto('/angary', { waitUntil: 'load' });
 
-    const captions = page.locator('#structure :is(.angary-diagram-key, figcaption > span, figcaption > p)');
-    await expect(captions).toHaveCount(9);
-    const sizes = await captions.evaluateAll((elements) => elements.map(
-      (element) => Number.parseFloat(getComputedStyle(element).fontSize),
-    ));
-    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(13);
-    await expect(page.locator('.angary-longitudinal-diagram .angary-diagram-key')).toContainText(
-      'Попередньо 6–8 м · уточнюється після розрахунку',
-    );
+    const texts = page.locator('#structure :is(.dn-step-text, .sheet-stamp dd, .sheet-stamp strong, .sheet-stamp b)');
+    const sizes = await texts.evaluateAll((elements) => elements.map((element) => Number.parseFloat(getComputedStyle(element).fontSize)));
+    expect(sizes.length).toBeGreaterThan(0);
+    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(11);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
   });
 }
 

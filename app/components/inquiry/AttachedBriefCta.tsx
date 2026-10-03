@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { useInquiryAttachment } from './InquiryAttachmentProvider';
+import { revealAttachedBrief } from './revealAttachedBrief';
+
+/** Only typing hides the shortcut. A tapped option card or a dragged slider keeps focus on its radio or range input
+ *  (Android does not blur on scroll), and used to hide «До заявки» for the rest of the page (UX review 2026-10). */
+const TEXT_ENTRY = 'input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="button"]):not([type="submit"]), textarea, select, [contenteditable="true"]';
 
 function focusBlocksStickyCta() {
   const active = document.activeElement;
-  return active instanceof HTMLElement && Boolean(active.closest('input, textarea, select, [contenteditable="true"]'));
+  return active instanceof HTMLElement && Boolean(active.closest(TEXT_ENTRY));
 }
 
 function overlayBlocksStickyCta() {
@@ -139,6 +144,7 @@ export function AttachedBriefCta({ gate, className, label = 'До заявки' 
     <a
       className={className}
       href="#inquiry"
+      onClick={revealAttachedBrief}
       hidden={!summaryPassed || inquiryVisible || uiBlocked}
     >
       {`${label} `}<span aria-hidden="true">↓</span>

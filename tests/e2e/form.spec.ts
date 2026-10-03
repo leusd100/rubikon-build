@@ -59,7 +59,8 @@ test.describe('project inquiry form', () => {
 
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
 
-    await expect(page.locator('.inquiry-status')).toHaveText(`Дякуємо! Запит надіслано. ${deliveryModel.statements.firstContact}`);
+    // what happens next, without the opening request to tell it all again (UX review 2026-10)
+    await expect(page.locator('.inquiry-status')).toHaveText(`Дякуємо! Запит надіслано. ${deliveryModel.statements.firstContact.replace(/^[^.!?]*[.!?]\s*/, '')}`);
     expect(submittedPayload).toMatchObject({
       name: 'Іван Петренко',
       phone: '+380671234567',

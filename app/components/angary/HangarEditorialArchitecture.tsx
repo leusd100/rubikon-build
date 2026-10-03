@@ -1,121 +1,114 @@
 'use client';
 
-import { company } from '../../data/company';
+import type { CSSProperties } from 'react';
+import { CostFactorsFigure, type CostFactorItem } from '../process/CostFactorsFigure';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
-import { revealLivePreview } from '../configurator/ConfiguratorWhy';
+import { sameBusinessConfiguration } from '../../lib/configurator/attachmentContract';
+import { deriveDomainModel } from '../../lib/configurator/domainModel';
+import { deriveSummary } from '../../lib/configurator/deriveSummary';
+import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
+import { FrameTour } from './FrameTour';
 
-// The editorial architecture after the configurator. «Рішення, які приймаєте ви» moved into the configurator as
-// «Чому це важливо» under each group (ConfiguratorWhy.tsx, UX pass 2026-10).
+// /angary below the configurator (UX review 2026-10, report «/angary по блоках»): what drives the cost of this hangar,
+// its frame from roof to footing, and the route from the brief to handed-over works with who answers for it. The
+// three static frame schemes, the separate people section and the five-step route that skipped the estimate are gone.
+//
+// Every statement comes from the page (server) as plain strings: the Delivery Model's own words, never copied here.
 
-function TransverseDiagram({ type }: { type: 'portal' | 'truss' }) {
-  const truss = type === 'truss';
-  return (
-    <svg viewBox="0 0 520 250" role="img" aria-label={truss ? 'Схема поперечної металевої ферми з центральним рядом опор' : 'Схема поперечної портальної рами без внутрішніх опор'}>
-      <path className="diagram-ground" d="M45 218H475" />
-      {truss ? (
-        <>
-          <path className="diagram-main" d="M86 218V105M86 105L260 45L434 105M86 105H434M434 105V218M260 105V218" />
-          <path className="diagram-secondary" d="M86 105L108 97.4L130 105L152 82.2L174 105L196 67.1L218 105L238 52.6L260 105L282 52.6L302 105L324 67.1L346 105L368 82.2L390 105L412 97.4L434 105" />
-        </>
-      ) : (
-        <>
-          <path className="diagram-main" d="M86 218V105L260 45L434 105V218" />
-          <path className="diagram-secondary" d="M86 105L260 45L434 105" />
-        </>
-      )}
-      <path className="diagram-accent" d="M86 230H434M86 223V237M434 223V237" />
-      <text x="260" y="246" textAnchor="middle">ПРОЛІТ</text>
-    </svg>
-  );
-}
+export type AngaryEditorialContent = {
+  cost: { title: string; text: string; factors: readonly CostFactorItem[]; customerScope: string };
+  route: { steps: readonly { title: string; result: string }[]; boundary: string };
+  people: readonly { name: string; role: string }[];
+};
 
-function LongitudinalDiagram() {
-  return (
-    <svg viewBox="0 0 1040 300" role="img" aria-label="Поздовжній фрагмент з ритмом рам і принципом в'язей">
-      <path className="diagram-ground" d="M55 244H985" />
-      {[115, 300, 485, 670, 855].map((x) => (
-        <path className="diagram-main" d={`M${x} 244V80L${x + 55} 56V220`} key={x} />
-      ))}
-      <path className="diagram-main" d="M115 80L855 80M170 56L910 56M170 220L910 220" />
-      <path className="diagram-accent" d="M115 80L300 244M300 80L115 244M670 80L855 244M855 80L670 244" />
-      <path className="diagram-secondary" d="M115 268H300M115 261V275M300 261V275" />
-      <text x="207" y="291" textAnchor="middle">КРОК РАМ УТОЧНЮЄТЬСЯ РОЗРАХУНКОМ</text>
-    </svg>
-  );
-}
+const pad = (value: number) => String(value).padStart(2, '0');
 
-export function HangarEditorialArchitecture() {
+export function HangarEditorialArchitecture({ content }: Readonly<{ content: AngaryEditorialContent }>) {
   const inquiry = useHangarInquiryContext();
-  function togglePresentationDemo(kind: 'frame' | 'profiled-sheet' | 'sandwich-panel') {
-    const isActive = inquiry?.presentationDemo?.kind === kind;
-    inquiry?.togglePresentationDemo(kind);
-    if (!isActive) revealLivePreview();
-  }
+  const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
+  const summary = deriveSummary(deriveDomainModel(state));
+  // What the visitor's own configuration already says about a factor — only once they have set something
+  const own = !sameBusinessConfiguration(state, DEFAULT_CONFIGURATOR_STATE);
+  const notes = own
+    ? {
+      dimensions: `У вашій конфігурації: ${summary.dimensionsLabel}, коник ${summary.ridgeHeightLabel}`,
+      structure: `У попередній схемі: ${summary.structuralVisualizationLabel.toLowerCase()}`,
+      foundation: `Ви вказали: ${summary.foundationTypeLabel.toLowerCase()}`,
+      insulation: `Ви вказали: ${summary.envelopeLabel.toLowerCase()}, ${summary.claddingSystemLabel.toLowerCase()}`,
+      technology: summary.gatesLabel ? `Ворота: ${summary.gatesLabel}` : undefined,
+    }
+    : undefined;
+  const attached = Boolean(inquiry?.isAttached);
+  const briefState = attached ? 'attached' : inquiry?.attachment.status === 'detached' ? 'detached' : 'idle';
 
   return (
     <>
-      <section className="page-section angary-structure" id="structure" aria-labelledby="angary-structure-title">
+      <section className="page-section angary-cost" id="vartist" aria-labelledby="angary-cost-title">
         <div className="shell">
-          <header className="angary-section-heading angary-structure-heading">
-            <p className="eyebrow"><span /> Попередня схема</p>
-            <h2 id="angary-structure-title">Що визначає схему каркаса</h2>
-            <button
-              type="button"
-              className="angary-preview-action"
-              aria-pressed={inquiry?.presentationDemo?.kind === 'frame'}
-              onClick={() => togglePresentationDemo('frame')}
-            >
-              Подивитись каркас <span aria-hidden="true">→</span>
-            </button>
+          <header className="angary-section-heading">
+            <p className="eyebrow"><span /> Вартість</p>
+            <h2 id="angary-cost-title">{content.cost.title}</h2>
+            <p>{content.cost.text}</p>
           </header>
-
-          <div className="angary-transverse-grid">
-            <figure className="angary-diagram">
-              <TransverseDiagram type="portal" />
-              <p className="angary-diagram-key"><span>Проліт</span><strong>Між крайніми опорами</strong></p>
-              <figcaption><span>ПОПЕРЕЧНА СХЕМА 01</span><strong>Портальна рама</strong><p>Вільний простір без внутрішніх опор — якщо це підтвердить розрахунок.</p></figcaption>
-            </figure>
-            <figure className="angary-diagram">
-              <TransverseDiagram type="truss" />
-              <p className="angary-diagram-key"><span>Проліт</span><strong>Між крайніми опорами</strong></p>
-              <figcaption><span>ПОПЕРЕЧНА СХЕМА 02</span><strong>Ферма та ряд опор</strong><p>Інший шлях передавання навантажень для ширших або особливих об’єктів.</p></figcaption>
-            </figure>
+          <CostFactorsFigure factors={content.cost.factors} title={null} tour={false} notes={notes} />
+          <div className="angary-cost-foot">
+            <p>{content.cost.customerScope}</p>
+            <div className="angary-cost-actions">
+              <a className="button button-primary" href="#inquiry" data-open-inquiry>
+                Обговорити вартість вашого ангара <span aria-hidden="true">↓</span>
+              </a>
+              <a className="angary-text-link" href="/yak-pratsyuiemo#koshtorys">
+                Як формуємо кошторис і графік <span aria-hidden="true">→</span>
+              </a>
+            </div>
           </div>
-
-          <figure className="angary-diagram angary-longitudinal-diagram">
-            <LongitudinalDiagram />
-            <p className="angary-diagram-key"><span>Крок рам</span><strong>Попередньо 6–8 м · уточнюється після розрахунку проєктувальником</strong></p>
-            <figcaption><span>ПОЗДОВЖНЯ СХЕМА</span><strong>Ритм рам і в’язі</strong><p>У попередній схемі ритм рам формується орієнтовно в діапазоні 6–8 м і уточнюється після розрахунку проєктувальником.</p></figcaption>
-          </figure>
         </div>
+      </section>
+
+      <section className="page-section direction-editorial-section dn-section angary-structure" id="structure" aria-labelledby="angary-structure-title">
+        <FrameTour titleId="angary-structure-title" />
       </section>
 
       <section className="page-section angary-process" id="process" aria-labelledby="angary-process-title">
         <div className="shell">
           <header className="angary-section-heading is-inverse">
-            <p className="eyebrow light"><span /> Від конфігурації до об’єкта</p>
+            <p className="eyebrow light"><span /> Від брифу до об’єкта</p>
             <h2 id="angary-process-title">Зрозумілий шлях від першого брифу</h2>
           </header>
-          <ol className="angary-process-rail">
-            <li className="is-current"><span>01</span><strong>Конфігурація</strong><p>{inquiry?.isAttached ? 'Конфігурацію додано до заявки.' : 'Базову конфігурацію можна сформувати вище.'}</p></li>
-            <li><span>02</span><strong>Уточнення задачі</strong><p>Звіряємо функцію, майданчик і склад робіт.</p></li>
-            <li><span>03</span><strong>Узгодження з проєктом</strong><p>Проєкт і розрахунок забезпечує замовник із проєктувальником. Узгоджуємо будівельні роботи.</p></li>
-            <li><span>04</span><strong>Комплектація та виготовлення</strong><p>Готуємо матеріали й конструкції погодженого обсягу.</p></li>
-            <li><span>05</span><strong>Монтаж</strong><p>Збираємо об’єкт і координуємо суміжні етапи.</p></li>
+          {/* 01 is the visitor's own brief: open while nothing is attached, filled once it is; then the route as
+              /yak-pratsyuiemo «Етапи» tells it, word for word — with the estimate, the contract and the handover */}
+          <ol className="angary-process-rail" data-motion data-brief={briefState}>
+            <li className="angary-route-brief" style={{ '--i': 0 } as CSSProperties}>
+              <span>01</span>
+              <h3>Ваш бриф</h3>
+              <p>
+                {attached
+                  ? <>Додано до заявки: <b>{summary.dimensionsLabel} · {summary.envelopeLabel}</b></>
+                  : 'Базову конфігурацію можна сформувати вище.'}
+              </p>
+            </li>
+            {content.route.steps.map((step, index) => (
+              <li key={step.title} style={{ '--i': index + 1 } as CSSProperties}>
+                <span>{pad(index + 2)}</span>
+                <h3>{step.title}</h3>
+                <p>{step.result}</p>
+              </li>
+            ))}
           </ol>
-        </div>
-      </section>
+          <a className="angary-route-more" href="/yak-pratsyuiemo#etapy">
+            Усі етапи, документи й відповідальність <span aria-hidden="true">→</span>
+          </a>
 
-      <section className="page-section angary-people" id="responsibility" aria-labelledby="angary-people-title">
-        <div className="shell angary-people-layout">
-          <div className="angary-people-copy">
-            <h2 id="angary-people-title">За погоджений обсяг відповідаємо особисто.</h2>
-            <p>{company.geography}</p>
-            <a href="/pro-nas">Про компанію <span aria-hidden="true">→</span></a>
-          </div>
-          <div className="angary-people-roles">
-            <div><strong>Сергій Іванович Леус</strong><p>Керує будівельним напрямом і відповідає за виконання робіт.</p></div>
-            <div><strong>Дмитро Сергійович Леус</strong><p>Працює з клієнтами й допомагає підготувати предметну розмову про проєкт.</p></div>
+          {/* Who answers for it — the route's title block («штамп»), in place of a separate section */}
+          <div className="angary-stamp" id="responsibility" aria-labelledby="angary-stamp-title">
+            <p className="angary-stamp-title" id="angary-stamp-title">За погоджений обсяг відповідаємо особисто</p>
+            <dl>
+              {content.people.map((person) => (
+                <div key={person.name}><dt>{person.role}</dt><dd>{person.name}</dd></div>
+              ))}
+              <div className="is-wide"><dt>Межі обсягу</dt><dd>{content.route.boundary}</dd></div>
+            </dl>
+            <a className="angary-stamp-link" href="/pro-nas">Про компанію <span aria-hidden="true">→</span></a>
           </div>
         </div>
       </section>

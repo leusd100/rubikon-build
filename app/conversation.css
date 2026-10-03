@@ -157,7 +157,8 @@
   .conversation-channels .messenger-link { flex-direction: column; gap: 7px; min-height: 64px; padding: 8px 4px; font-size: 12px; }
   .conversation-grid { row-gap: 28px; }
   .conversation-journey { grid-template-columns: 1fr; margin-top: 12px; background: none; border: 0; }
-  .conversation-journey li, .conversation-journey li + li { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--color-border); }
+  /* :nth-child(n) outranks the desktop's :nth-child(even) / (n + 3) borders, which boxed rows 02 and 04 (UX review 2026-10) */
+  .conversation-journey li:nth-child(n) { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--color-border); }
   .conversation-journey-number { padding-top: 3px; }
   .conversation-journey h3 { margin: 0; font-size: 16px; }
   .conversation-journey p { margin-top: 6px; font-size: 15px; }

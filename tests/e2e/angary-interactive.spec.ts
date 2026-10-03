@@ -17,126 +17,32 @@ function attachmentCard(page: Page) {
   return page.locator('form.inquiry-form .inquiry-config-brief');
 }
 
-test.describe('angary presentation-only previews', () => {
-  test('original demo trigger is a keyboard-operable two-state toggle', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await openHangarPage(page);
+// The two presentation-only demos («Подивитись каркас», «Порівняти із сендвіч-панеллю») are gone (UX review 2026-10): the
+// frame is now told by «Каркас вашого ангара», and the comparison changed 0 pixels of the technical view.
+test('the frame drawing follows the configuration and walks through its five steps', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
+  await openHangarPage(page);
+  const frame = page.locator('#structure');
+  await expect(frame.locator('.sheet-stamp')).toContainText('Приклад · 24 × 60 × 8 м');
+  await expect(page.getByRole('button', { name: /Подивитись каркас|Порівняти із сендвіч-панеллю/ })).toHaveCount(0);
 
-    const trigger = page.getByRole('button', { name: /Подивитись каркас/ });
-    await trigger.focus();
-    await page.keyboard.press('Enter');
-    await expect(trigger).toHaveAttribute('aria-pressed', 'true');
-    const returnAction = page.getByRole('button', { name: 'Повернути мій варіант', exact: true });
-    await expect(returnAction).toBeVisible();
-    expect((await returnAction.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await setWidth(page, '16');
+  await expect(frame.locator('.sheet-stamp')).toContainText('Ваш ангар · 16 × 60 × 8 м');
+  await expect(frame.locator('.dn-step').nth(1)).toContainText('Для ширини 16 м у попередній візуалізації показано портальну раму');
 
-    await trigger.focus();
-    await page.keyboard.press('Enter');
-    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
-    await expect(returnAction).toHaveCount(0);
-  });
-
-  test('cladding comparison changes only the preview and has an explicit return', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await openHangarPage(page);
-
-    const summary = page.locator('.hc-summary-flagship');
-    const trigger = page.getByRole('button', { name: /Порівняти із сендвіч-панеллю/ });
-    await expect(summary.locator('.hc-summary-facts')).toContainText('ОгородженняПрофнастил');
-    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
-    await trigger.click();
-    await expect(trigger).toHaveAttribute('aria-pressed', 'true');
-
-    const status = page.locator('.hc-preview-demo-status');
-    await expect(status).toContainText('Показ огородження · сендвіч-панель · ваш вибір не змінено');
-    await expect(status).not.toHaveAttribute('role', 'status');
-    await expect(page.locator('.hc-visually-hidden[role="status"]')).toContainText(
-      'Показ огородження · сендвіч-панель. Ваш вибір не змінено.',
-    );
-    await expect(page.locator('.hc-preview-svg .hc-envelope-insulated').first()).toBeAttached();
-    await expect(summary.locator('.hc-summary-facts')).toContainText('ОгородженняПрофнастил');
-    await expect(attachmentCard(page)).toHaveCount(0);
-
-    await page.locator('#hc-dimension-width').focus();
-    await page.locator('#hc-dimension-width').blur();
-    await expect(status).toHaveCount(1);
-
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await expect(status).toHaveCount(1);
-
-    await trigger.click();
-    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
-    await expect(status).toHaveCount(0);
-
-    await trigger.click();
-    await status.getByRole('button', { name: 'Повернути мій варіант', exact: true }).click();
-    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
-    await expect(page.getByRole('button', { name: 'Технічний вид', exact: true })).toBeFocused();
-    await expect(summary.locator('.hc-summary-facts')).toContainText('ОгородженняПрофнастил');
-  });
-
-  test('demo remains active across presentation controls and is operable inside fullscreen', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await openHangarPage(page);
-
-    const summaryBefore = await page.locator('.hc-summary-flagship').innerText();
-    await page.getByRole('button', { name: /Порівняти із сендвіч-панеллю/ }).click();
-    await page.getByRole('button', { name: '3D', exact: true }).click();
-    await expect(page.locator('canvas')).toHaveCount(1);
-    await page.getByRole('radio', { name: 'Графіт' }).first().click();
-    await page.getByRole('checkbox', { name: 'Показати людину для масштабу' }).check();
-    await page.getByRole('button', { name: 'Розгорнути', exact: true }).click();
-
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toContainText('Показ огородження · сендвіч-панель · ваш вибір не змінено');
-    await expect(dialog.getByRole('button', { name: 'Повернути мій варіант', exact: true })).toBeVisible();
-    const activeAnnouncement = dialog.locator('.hc-presentation-announcement[role="status"]');
-    await expect(activeAnnouncement).toHaveCount(1);
-    await expect(page.locator('.hc-presentation-announcement[role="status"]')).toHaveCount(1);
-    expect(await activeAnnouncement.evaluate((element) => Boolean(element.closest('[inert]')))).toBe(false);
-    await expect(page.locator('canvas')).toHaveCount(1);
-
-    await dialog.getByRole('button', { name: 'Повернути мій варіант', exact: true }).click();
-    await expect(dialog).toBeVisible();
-    await expect(dialog.locator('.hc-preview-demo-status')).toHaveCount(0);
-    await expect(dialog.getByRole('button', { name: /Закрити/ })).toBeFocused();
-    await expect(activeAnnouncement).toContainText('Повернуто ваш варіант.');
-    await expect(page.locator('canvas')).toHaveCount(1);
-    expect(await page.locator('.hc-summary-flagship').innerText()).toBe(summaryBefore);
-    await dialog.getByRole('button', { name: /Закрити/ }).click();
-  });
-
-  test('demo after detach stays detached', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await openHangarPage(page);
-    await setWidth(page, '30');
-    await attachmentCard(page).getByRole('button', { name: 'Не додавати', exact: true }).click();
-
-    await page.getByRole('button', { name: /Подивитись каркас/ }).click();
-    await expect(page.locator('.hc-preview-demo-status')).toContainText('Показ каркаса');
-    await expect(attachmentCard(page)).toHaveCount(0);
-
-    await setWidth(page, '36');
-    await expect(page.locator('.hc-preview-demo-status')).toHaveCount(0);
-    await expect(attachmentCard(page)).toContainText('36 × 60 × 8 м · Холодний');
-  });
-
-  test('a meaningful business edit exits demo through the normal attachment flow', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await openHangarPage(page);
-
-    await page.getByRole('button', { name: /Подивитись каркас/ }).click();
-    await expect(page.locator('.hc-preview-demo-status')).toBeVisible();
-    await setWidth(page, '30');
-
-    await expect(page.locator('.hc-preview-demo-status')).toHaveCount(0);
-    await expect(attachmentCard(page)).toContainText('30 × 60 × 8 м · Холодний');
-  });
+  const steps = frame.locator('.dn-step');
+  for (const index of [0, 1, 2, 3, 4]) {
+    await steps.nth(index).click();
+    await expect(steps.nth(index)).toHaveAttribute('aria-pressed', 'true');
+    await expect(frame.locator('.ft')).toHaveAttribute('data-step', String(index + 1));
+  }
+  // step 4 shows the load and its path, the other steps do not
+  await steps.nth(3).click();
+  await expect(frame.locator('.ft-load')).toHaveCSS('opacity', '1');
+  await steps.nth(0).click();
+  await expect(frame.locator('.ft-load')).toHaveCSS('opacity', '0');
+  // it attaches nothing: the brief is attached by the width edit, not by the drawing
+  await expect(attachmentCard(page)).toContainText('16 × 60 × 8 м');
 });
 
 test('the summary carries the scope-aware choices; «Чому це важливо» explains a group in place', async ({ page }, testInfo) => {
@@ -183,7 +89,7 @@ test('on a phone the model stays under the header while the parameters are set, 
   await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
   expect(await stage.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
   const stageHeight = await stage.evaluate((element) => element.getBoundingClientRect().height);
-  expect(stageHeight).toBeLessThan(844 * 0.36);
+  expect(stageHeight).toBeLessThan(844 * 0.3);
 
   await page.locator('.hc-summary-disclaimer').scrollIntoViewIfNeeded();
   await page.evaluate(() => window.scrollBy(0, 200));
@@ -236,13 +142,6 @@ test('mobile inquiry CTA follows attachment, form and overlay conditions', async
   await mobileMenu.locator('summary').click();
   await expect(stickyCta).toBeHidden();
   await mobileMenu.locator('summary').click();
-  await expect(stickyCta).toBeVisible();
-
-  await page.getByRole('button', { name: /Подивитись каркас/ }).click();
-  await page.evaluate(() => {
-    const element = document.querySelector('.hc-summary-flagship');
-    if (element) window.scrollTo(0, window.scrollY + element.getBoundingClientRect().bottom + 1);
-  });
   await expect(stickyCta).toBeVisible();
 
   await page.getByRole('button', { name: '3D', exact: true }).evaluate((button: HTMLButtonElement) => button.click());

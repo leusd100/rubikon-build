@@ -1,13 +1,11 @@
 'use client';
 
 import ResponsiveImage from '../ResponsiveImage';
-import { useHangarInquiryContext } from './HangarInquiryContext';
-import { alternativeCladdingDemo } from '../../lib/configurator/presentationDemo';
-import type { ConfiguratorState } from '../../lib/configurator/types';
 
 // «Чому це важливо» under a configurator group (UX pass 2026-10). The four explanations used to be their own section
 // after the configurator, «Рішення, які приймаєте ви» (2.9 phone screens), repeating each choice as «Зараз: …». Now the
-// explanation sits under the control it explains, folded; the words and pictures are the same.
+// explanation sits under the control it explains, folded; the words and pictures are the same. «Порівняти із
+// сендвіч-панеллю» is gone (2026-10): the technical view draws no cladding, so the comparison changed 0 pixels.
 
 export type WhyTopic = 'contour' | 'cladding' | 'foundation' | 'openings';
 
@@ -38,31 +36,9 @@ function WhyImage({ src, alt, title, text }: Readonly<{ src: string; alt: string
   );
 }
 
-function CladdingDemoButton({ state }: Readonly<{ state: ConfiguratorState }>) {
-  const inquiry = useHangarInquiryContext();
-  if (!inquiry) return null;
-  const kind = alternativeCladdingDemo(state);
-  const active = inquiry.presentationDemo?.kind === kind;
-  return (
-    <button
-      type="button"
-      className="hc-why-action"
-      aria-pressed={active}
-      onClick={() => {
-        inquiry.togglePresentationDemo(kind);
-        if (!active) revealLivePreview();
-      }}
-    >
-      {kind === 'sandwich-panel' ? 'Порівняти із сендвіч-панеллю' : 'Порівняти з профнастилом'} <span aria-hidden="true">→</span>
-    </button>
-  );
-}
-
-export function ConfiguratorWhy({ topic, state }: Readonly<{ topic: WhyTopic; state: ConfiguratorState }>) {
+export function ConfiguratorWhy({ topic }: Readonly<{ topic: WhyTopic }>) {
   return (
     <>
-      {/* The comparison is an action, so it stays in view rather than folded with the explanation */}
-      {topic === 'cladding' && <CladdingDemoButton state={state} />}
       <details className="hc-why" data-why={topic}>
         <summary>Чому це важливо</summary>
         <div className="hc-why-body">

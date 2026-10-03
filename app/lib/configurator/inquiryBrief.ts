@@ -13,6 +13,7 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
 
   return {
     dimensionsLabel: summary.dimensionsLabel,
+    ridgeHeightLabel: summary.ridgeHeightLabel,
     areaSqm: summary.areaSqm,
     envelopeLabel: summary.envelopeLabel,
     claddingSystemLabel: summary.claddingSystemLabel,
@@ -33,6 +34,8 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
 export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): HangarInquiryBriefSections {
   const selected: Array<HangarInquiryBriefRow | null> = [
     { label: 'Габарити', value: brief.dimensionsLabel },
+    // The ridge the visitor set used to stop here, like the door once did (2026-10)
+    { label: 'Висота в конику', value: brief.ridgeHeightLabel },
     { label: 'Контур', value: brief.envelopeLabel },
     { label: 'Огородження', value: brief.claddingSystemLabel },
     { label: 'Основа', value: brief.foundationTypeLabel },
@@ -56,11 +59,12 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
   };
 }
 
-export function formatHangarInquiryBrief(brief: HangarInquiryBrief): string {
+export function formatHangarInquiryBrief(brief: HangarInquiryBrief, untouched = false): string {
   const sections = createHangarInquiryBriefSections(brief);
 
   return [
-    'Вибрана конфігурація:',
+    // Values that are the defaults (never changed, or changed back) — the manager reading the lead has to know (2026-10)
+    untouched ? 'Базова конфігурація (параметри за замовчуванням):' : 'Вибрана конфігурація:',
     ...sections.selected.map((row) => `${row.label}: ${row.value}`),
     'Системні попередні дані:',
     ...sections.preliminary.map((row) => `${row.label}: ${row.value}`),

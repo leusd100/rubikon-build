@@ -14,7 +14,9 @@ export function InquiryAttachmentSummary({ attachment, onDetach }: { attachment:
   const labels = INQUIRY_ATTACHMENT_LABELS[attachment.kind];
 
   return (
-    <aside className="inquiry-config-brief" aria-labelledby="inquiry-config-brief-title">
+    <aside className="inquiry-config-brief" id="inquiry-brief" tabIndex={-1} aria-labelledby="inquiry-config-brief-title">
+      {/* Filled once by revealAttachedBrief on an explicit action, never on the auto-attach of every edit */}
+      <p className="sr-only" id="inquiry-brief-status" role="status" />
       <div className="inquiry-config-brief-heading">
         <div>
           <small id="inquiry-config-brief-title">{attachment.title}</small>
@@ -35,6 +37,8 @@ export function InquiryAttachmentSummary({ attachment, onDetach }: { attachment:
             type="button"
             onClick={() => {
               setExpanded(false);
+              // The button unmounts with the brief: focus goes to the form's «Завдання», not to the page body
+              document.getElementById('inquiry-project-heading')?.focus({ preventScroll: true });
               onDetach();
             }}
           >

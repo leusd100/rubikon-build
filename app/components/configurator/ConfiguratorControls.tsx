@@ -245,7 +245,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           controls are DISABLED, never cleared: dropping walls to look at the frame and putting
           them back must not cost the visitor their gate choice. */}
       <section className="hc-control-group" aria-labelledby="hc-dimensions-heading">
-        <h2 id="hc-dimensions-heading">Розміри</h2>
+        <h3 id="hc-dimensions-heading">Розміри</h3>
         {(['width', 'length', 'height'] as const).map((key) => (
           <NumericField
             key={key}
@@ -273,7 +273,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-envelope-heading">
-        <h2 id="hc-envelope-heading">Контур будівлі</h2>
+        <h3 id="hc-envelope-heading">Контур будівлі</h3>
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-envelope-heading">
           {(Object.keys(ENVELOPE_LABELS) as EnvelopeChoice[]).map((option) => (
             <label key={option} className="hc-option-card" aria-disabled={!hasEnvelopeScope}>
@@ -293,11 +293,11 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             Контур описує стіни та покрівлю — увімкніть їх в «Обсязі заявки», щоб обрати.
           </p>
         )}
-        <ConfiguratorWhy topic="contour" state={state} />
+        <ConfiguratorWhy topic="contour" />
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-cladding-heading">
-        <h2 id="hc-cladding-heading">Огороджувальні конструкції</h2>
+        <h3 id="hc-cladding-heading">Огороджувальні конструкції</h3>
         <div className="hc-field">
           <div className="hc-field-head">
             <span id="hc-wall-system-label">Стіни</span>
@@ -342,7 +342,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             <p className="hc-field-note">Покрівля не входить в обсяг заявки.</p>
           )}
         </div>
-        <ConfiguratorWhy topic="cladding" state={state} />
+        <ConfiguratorWhy topic="cladding" />
       </section>
 
       {/* Phase 3F.1: the read-only "Попередня конструктивна схема" info block that used to live
@@ -352,7 +352,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
           is unchanged and still surfaces exactly once, in ConfiguratorSummary.tsx. */}
 
       <section className="hc-control-group" aria-labelledby="hc-foundation-heading">
-        <h2 id="hc-foundation-heading">Основа / фундамент</h2>
+        <h3 id="hc-foundation-heading">Основа / фундамент</h3>
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-foundation-heading">
           {FOUNDATION_TYPE_ORDER.map((option) => (
             <label key={option} className="hc-option-card" aria-disabled={!foundationInScope}>
@@ -375,11 +375,11 @@ export function ConfiguratorControls({ state, onChange }: Props) {
         <p className="hc-field-note">
           Тут можна вказати попереднє побажання: тип фундаменту визначає проєктувальник за даними майданчика й навантаженнями.
         </p>
-        <ConfiguratorWhy topic="foundation" state={state} />
+        <ConfiguratorWhy topic="foundation" />
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-scope-heading">
-        <h2 id="hc-scope-heading">Обсяг заявки</h2>
+        <h3 id="hc-scope-heading">Обсяг заявки</h3>
         <div className="hc-option-list">
           {SCOPE_ORDER.map((item) => {
             const checked = hasScopeItem(state.scope, item);
@@ -395,7 +395,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
       </section>
 
       <section className="hc-control-group" aria-labelledby="hc-gates-heading">
-        <h2 id="hc-gates-heading">Прорізи</h2>
+        <h3 id="hc-gates-heading">Прорізи</h3>
         {!wallsInScope && (
           <p className="hc-field-note hc-field-note-warning">
             Ворота і двері — це прорізи у стінах. Увімкніть «Стіни / огороджувальний контур» в
@@ -501,7 +501,7 @@ export function ConfiguratorControls({ state, onChange }: Props) {
             кількість воріт, або збільште ширину чи висоту стін.
           </p>
         )}
-        <ConfiguratorWhy topic="openings" state={state} />
+        <ConfiguratorWhy topic="openings" />
       </section>
     </div>
   );

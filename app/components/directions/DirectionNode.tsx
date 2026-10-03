@@ -1,12 +1,11 @@
 'use client';
 
-import type { CSSProperties } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
 import { NodeDrawing } from './NodeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
 import { stageTransform, useDrawingTour } from '../useDrawingTour';
 import type { DirectionNode as DirectionNodeConfig } from '../../types/directionPage';
-import './direction-node.css';
+import { TourControl, TourProgress, TourSteps, tourStepCell } from './TourParts';
 
 // «Вузол напряму» — a direction page's editorial picture as a tour of one node, in three steps (metal: the drawing,
 // the bolted joint, the weld; concrete: reinforcement, anchors, formwork; roofing: the base, the eave, the drainage).
@@ -57,34 +56,17 @@ export function DirectionNode({
           <h2 id={titleId}>{title}</h2>
           <p>{text}</p>
         </div>
-        <ol className="dn-steps">
-          {steps.map((item, index) => (
-            <li key={item.title} style={{ '--i': index } as CSSProperties}>
-              <button type="button" className="dn-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)} {...hover(index + 1)}>
-                <span className="dn-step-index" aria-hidden="true">{pad(index + 1)}</span>
-                <b>{item.title}</b>
-                <span className="dn-step-text">{item.text}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
+        <TourSteps steps={steps} step={step} choose={choose} hover={hover} />
         <DrawingSheet
           className="direction-editorial-media dn-sheet"
           imageClassName="dn-visual"
           imageRef={visualRef}
           cells={[
-            step
-              ? { tone: 'number', label: 'Крок', value: <>{pad(step)}<span> / {pad(steps.length)}</span></> }
-              : { label: 'Показ', value: 'Огляд' },
+            tourStepCell(step, steps.length),
             { tone: 'main', label: 'Що показано', value: <span className="dn-caption">{active ? active.caption : node.overviewCaption}</span> },
             { label: 'Зображення', value: node.drawing ? 'Схема' : 'Ілюстрація' },
           ]}
-          action={motion && (
-            <button type="button" className="dn-control" data-paused={touring ? undefined : true} onClick={toggle}>
-              <span className="dn-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ' показу вузла' : ' показ вузла'}</span></span>
-              <span className="dn-control-icon" aria-hidden="true" />
-            </button>
-          )}
+          action={motion && <TourControl touring={touring} toggle={toggle} what="вузла" />}
         >
           <div className={`dn-stage${node.drawing ? ' is-drawing' : ''}`} style={{ transform: stageTransform(size, node, active) }}>
             {node.drawing
@@ -101,15 +83,7 @@ export function DirectionNode({
               ))}
             </svg>
           </div>
-          {step > 0 && (
-            <div className="dn-progress" aria-hidden="true">
-              {steps.map((item, index) => (
-                <span key={item.title} className={index + 1 < step ? 'is-done' : undefined}>
-                  {index + 1 === step && <i key={`${step}-${run}`} className="dn-fill" />}
-                </span>
-              ))}
-            </div>
-          )}
+          <TourProgress count={steps.length} step={step} run={run} />
         </DrawingSheet>
       </div>
     </section>

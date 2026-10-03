@@ -2,6 +2,7 @@
 
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
+import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 
 /** The configurator's one disclaimer (UX pass 2026-10: it replaced five — over the model, under the sizes, the gates,
  *  in the summary and over the frame schemes). */
@@ -79,66 +80,45 @@ export function ConfiguratorSummary({
     );
   }
 
+  // The flagship summary is the drawing's title block (UX review 2026-10): one row under the sticky drawing instead of
+  // a 505 px panel inside it that kept «Обговорити» off screen while configuring; the preliminary scheme it repeated
+  // is now told by «Каркас вашого ангара» below.
   return (
     <section className="hc-summary hc-summary-flagship" aria-label="Підсумок конфігурації">
       <div className="hc-summary-grid">
         <div className="hc-summary-selected">
           <h3 className="hc-summary-title">Ви обрали</h3>
-          <p className="hc-summary-kind">Ангар</p>
           <p className="hc-summary-dimensions">
             {dimensionsWithoutUnit}<span className="hc-summary-dimensions-unit"> м</span>
           </p>
-          <p className="hc-summary-area">≈ {summary.areaSqm.toLocaleString('uk-UA')} м² площі забудови</p>
-          <dl className="hc-summary-facts">
-            <div>
-              <dt>Контур</dt>
-              <dd>{summary.envelopeLabel}</dd>
-            </div>
-            <div>
-              <dt>Огородження</dt>
-              <dd>{summary.claddingSystemLabel}</dd>
-            </div>
-            <div>
-              <dt>Основа</dt>
-              <dd>{summary.foundationTypeLabel}</dd>
-            </div>
-            <div>
-              <dt>Обсяг</dt>
-              <dd>{summary.scopeSummaryLabel}</dd>
-            </div>
-            {/* Dropped entirely, not shown as "поза обсягом": an opening in a wall nobody ordered is
-                not part of this request, so it has no row. The choice itself is not lost — the
-                controls keep it, disabled, and it comes back with the walls. */}
-            {summary.gatesLabel !== null && (
-              <div>
-                <dt>Ворота</dt>
-                <dd>{summary.gatesLabel}</dd>
-              </div>
-            )}
-            {summary.doorsLabel !== null && (
-              <div>
-                <dt>Двері</dt>
-                <dd>{summary.doorsLabel}</dd>
-              </div>
-            )}
-          </dl>
-          <p className="hc-summary-formula">Площа = ширина × довжина</p>
+          <p className="hc-summary-area">коник {summary.ridgeHeightLabel} · ≈ {summary.areaSqm.toLocaleString('uk-UA')} м² площі забудови</p>
         </div>
-
-        <div className="hc-summary-preliminary">
-          <h3 className="hc-summary-title">Попередня схема</h3>
-          <p className="hc-summary-scheme-label">{summary.structuralVisualizationLabel}</p>
-          <p className="hc-summary-structure">{summary.structuralVisualizationDescription}</p>
-          <SummaryDisclaimer />
-        </div>
-
+        <dl className="hc-summary-facts">
+          <div><dt>Контур</dt><dd>{summary.envelopeLabel}</dd></div>
+          <div><dt>Огородження</dt><dd>{summary.claddingSystemLabel}</dd></div>
+          <div><dt>Основа</dt><dd>{summary.foundationTypeLabel}</dd></div>
+          <div><dt>Схема</dt><dd>{summary.structuralVisualizationLabel}</dd></div>
+          <div className="is-wide"><dt>Обсяг</dt><dd>{summary.scopeSummaryLabel}</dd></div>
+          {/* Dropped entirely, not shown as "поза обсягом": an opening in a wall nobody ordered is not part of this
+              request, so it has no row. The controls keep the choice, disabled, and it comes back with the walls. */}
+          {summary.gatesLabel !== null && <div><dt>Ворота</dt><dd>{summary.gatesLabel}</dd></div>}
+          {summary.doorsLabel !== null && <div><dt>Двері</dt><dd>{summary.doorsLabel}</dd></div>}
+        </dl>
         <div className="hc-summary-handoff">
-          <a className="button button-primary hc-summary-action" href="#inquiry" onClick={onInquiryAction}>
-            Обговорити цю конфігурацію <span aria-hidden="true">↗</span>
+          <a
+            className="button button-primary hc-summary-action"
+            href="#inquiry"
+            onClick={(event) => {
+              onInquiryAction?.();
+              revealAttachedBrief(event);
+            }}
+          >
+            Обговорити цю конфігурацію <span aria-hidden="true">↓</span>
           </a>
           <p>Параметри автоматично додамо до заявки.</p>
         </div>
       </div>
+      <SummaryDisclaimer />
     </section>
   );
 }

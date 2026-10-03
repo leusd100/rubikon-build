@@ -148,7 +148,8 @@ test.describe('configurator attachment contract', () => {
     await setDimension(page, 'width', '24');
 
     const brief = attachmentCard(page);
-    await expect(brief).toContainText('До заявки додано вашу конфігурацію');
+    // back on the default values: attached, and said to be the default (hangar-configurator@1.1.0)
+    await expect(brief).toContainText('До заявки додано базову конфігурацію');
     await expect(brief).toContainText('24 × 60 × 8 м · Холодний');
   });
 

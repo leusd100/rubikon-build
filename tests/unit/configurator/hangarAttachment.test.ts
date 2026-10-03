@@ -8,11 +8,13 @@ import {
 } from '../../../app/lib/configurator/inquiryBrief';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
-// details.configuration as the /angary form sent it on main (f28dc47), before the shared contract:
-// the default configuration attached through «Обговорити цю конфігурацію».
+// details.configuration for the default configuration attached through «Обговорити цю конфігурацію». As the form sent it
+// on main (f28dc47), with two changes of 2026-10 (hangar-configurator@1.1.0): the ridge height row, which the lead used to
+// drop, and an untouched default is said to be one rather than sent as «Вибрана конфігурація».
 const DEFAULT_CONFIGURATION_BEFORE_PHASE_3 = [
-  'Вибрана конфігурація:',
+  'Базова конфігурація (параметри за замовчуванням):',
   'Габарити: 24 × 60 × 8 м',
+  'Висота в конику: 10,6 м',
   'Контур: Холодний',
   'Огородження: Профнастил',
   'Основа: Визначити після розрахунку',
@@ -47,17 +49,18 @@ describe('createHangarAttachment', () => {
       const before = formBeforePhase3(state);
       const attachment = createHangarAttachment(state);
 
-      expect(attachment.text).toBe(before.text);
+      const untouched = name === 'default';
+      expect(attachment.text).toBe(untouched ? formatHangarInquiryBrief(before.brief, true) : before.text);
       expect(attachment.headline).toBe(`${before.brief.dimensionsLabel} · ${before.brief.envelopeLabel}`);
       expect(attachment.sections).toEqual([
-        { id: 'selected', heading: 'Вибрана конфігурація', rows: before.sections.selected },
+        { id: 'selected', heading: untouched ? 'Базові параметри (за замовчуванням)' : 'Вибрана конфігурація', rows: before.sections.selected },
         { id: 'preliminary', heading: 'Системні попередні дані', rows: before.sections.preliminary },
       ]);
       expect(attachment.dimensionsField).toEqual({ mode: 'fixed', value: before.brief.dimensionsLabel });
       expect(attachment).toMatchObject({
         kind: 'hangar-configuration',
         version: HANGAR_CONFIGURATOR_VERSION,
-        title: 'До заявки додано вашу конфігурацію',
+        title: untouched ? 'До заявки додано базову конфігурацію' : 'До заявки додано вашу конфігурацію',
         editHref: '#configurator',
       });
       expect(attachment).not.toHaveProperty('data');

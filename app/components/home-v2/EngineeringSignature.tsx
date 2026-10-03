@@ -2,6 +2,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { HomeProofCase } from '../../data/homeProof';
 import { siteRoutes } from '../../data/navigation';
+import { leadership } from '../../data/people';
 import { DrawingSheet } from '../DrawingSheet';
 import { ScopeCells } from './ScopeCells';
 
@@ -117,10 +118,7 @@ const cards: readonly { number: string; title: ReactNode; text: string; tag: str
 // the footing glow sits at (1491, 700). The overlay only adds a travelling pulse on top of that path.
 const XRAY_PATH = 'M1052 113 L1418 268 L1450 293 L1482 303 L1490 326 L1490 646';
 
-const people = [
-  { name: 'Сергій Іванович Леус', role: 'Будівельний напрям, організація виконання' },
-  { name: 'Дмитро Сергійович Леус', role: 'Робота з клієнтами, розвиток RUBIKON' },
-] as const;
+const people = leadership;
 
 function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
   const { photo, scope } = proof;

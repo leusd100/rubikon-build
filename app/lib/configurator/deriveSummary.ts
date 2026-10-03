@@ -1,5 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
-import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M } from './parametricModel';
+import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M, ridgeHeightM } from './parametricModel';
 import {
   CLADDING_SYSTEM_LABELS,
   ENVELOPE_LABELS,
@@ -16,6 +16,9 @@ export type ConfiguratorSummary = {
   /** width × length, m² — the one derived number the brief signs off on for the POC. */
   areaSqm: number;
   dimensionsLabel: string;
+  /** «Висота в конику», as the visitor set it (decimal comma). The dimensions label stays width × length × wall height:
+   *  it is a fixed field of the lead. (It was dropped from the summary and the lead until 2026-10.) */
+  ridgeHeightLabel: string;
   envelopeLabel: string;
   /**
    * Phase 3D: cladding system, shown as one combined label when walls and roof agree (the common
@@ -170,6 +173,7 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
   return {
     areaSqm: domain.areaSqm,
     dimensionsLabel: `${formatMeters(widthM)} × ${formatMeters(lengthM)} × ${formatMeters(eaveHeightM)} м`,
+    ridgeHeightLabel: `${ridgeHeightM(widthM, eaveHeightM, domain.roof.pitchDeg).toLocaleString('uk-UA', { maximumFractionDigits: 1 })} м`,
     envelopeLabel: formatEnvelopeLabel(domain.envelope),
     claddingSystemLabel: formatCladdingSystemLabel(domain.envelope, domain.scope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],

@@ -444,6 +444,7 @@ export function DirectionPage({
         lead={config.cta.lead}
         defaultDirection={direction.formLabel}
         journey={DIRECTION_JOURNEY[config.id]}
+        showJourney={!config.hideJourney}
       />
     </main>
   );

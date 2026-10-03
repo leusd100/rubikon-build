@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import './cost-factors.css';
 
 // /yak-pratsyuiemo «Що враховуємо в розрахунку» (UX pass 2026-10, owner: «цей блок можна поцікавіше обіграти»): the seven
 // factors beside one drawing of a hangar on its site, each numbered where it acts — the sizes, the frame under its loads,
 // the foundation, the insulated envelope, the equipment inside, the site (access, crane), and the other works it depends
 // on. Pointing at a factor (or tapping it) lights its part in copper; the first time the block comes into view the
 // drawing walks through all seven once. The drawing is decorative (aria-hidden): the list says everything in words.
+//
+// On /angary (2026-10) the same drawing is the page's cost block: no tour of its own (one automatic tour per page — the
+// frame drawing has it), a heading of the section's own, and `notes` — what the visitor's configuration already says
+// about a factor («у вашому брифі: …»), read-only.
 
 export type CostFactorItem = { key: string; title: string; detail?: string };
 
@@ -93,7 +98,19 @@ const BADGES: Record<string, readonly [number, number]> = {
 
 const TOUR_STEP_MS = 1500;
 
-export function CostFactorsFigure({ factors }: Readonly<{ factors: readonly CostFactorItem[] }>) {
+export function CostFactorsFigure({
+  factors,
+  title = 'Що враховуємо в розрахунку',
+  tour: tourEnabled = true,
+  notes,
+}: Readonly<{
+  factors: readonly CostFactorItem[];
+  /** null when the section's own heading says it */
+  title?: string | null;
+  tour?: boolean;
+  /** Per factor key: a short read-only note, shown under the factor */
+  notes?: Readonly<Record<string, string | undefined>>;
+}>) {
   const [pointed, setPointed] = useState<string | null>(null);
   const [tour, setTour] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -101,7 +118,7 @@ export function CostFactorsFigure({ factors }: Readonly<{ factors: readonly Cost
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    if (!root || !tourEnabled || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     let timer = 0;
     let index = -1;
     const step = () => {
@@ -117,7 +134,7 @@ export function CostFactorsFigure({ factors }: Readonly<{ factors: readonly Cost
     }, { threshold: [0, 0.5] });
     observer.observe(root);
     return () => { observer.disconnect(); window.clearTimeout(timer); };
-  }, [factors]);
+  }, [factors, tourEnabled]);
 
   const point = (key: string | null) => {
     setTour(null);
@@ -126,7 +143,7 @@ export function CostFactorsFigure({ factors }: Readonly<{ factors: readonly Cost
 
   return (
     <div className="proc-factors" ref={rootRef} data-active={active ?? undefined}>
-      <p className="proc-factors-title">Що враховуємо в розрахунку</p>
+      {title && <p className="proc-factors-title">{title}</p>}
       <div className="cf-layout">
         <figure className="cf-figure" aria-hidden="true">
           <svg viewBox="8 62 492 300" focusable="false">
@@ -167,6 +184,7 @@ export function CostFactorsFigure({ factors }: Readonly<{ factors: readonly Cost
               <span className="cf-number" aria-hidden="true">{index + 1}</span>
               <b>{factor.title}</b>
               {factor.detail && <span className="cf-detail">{factor.detail}</span>}
+              {notes?.[factor.key] && <span className="cf-note">{notes[factor.key]}</span>}
             </li>
           ))}
         </ul>

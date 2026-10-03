@@ -395,56 +395,7 @@
 .process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) .proc-link-fork { transform: scaleX(0); }
 .process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) .proc-link-label { opacity: 0; }
 .proc-terms-grid p { margin: 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.65; }
-.proc-factors { margin-top: 0; }
-.proc-factors-title { margin: 0 0 14px; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-/* «Що враховуємо в розрахунку» (CostFactorsFigure.tsx): the drawing on a sheet, the numbered list beside it. One factor
-   at a time lights in copper — the one pointed at, or the tour's — and the rest of the drawing steps back. */
-.cf-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(24px, 3vw, 44px); align-items: center; }
-.cf-figure { margin: 0; padding: clamp(14px, 1.6vw, 22px); background: color-mix(in srgb, var(--color-surface-elevated) 92%, transparent); border: 1px solid var(--color-border); }
-.cf-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
-.cf-part { fill: none; stroke: var(--color-border-control); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; transition: stroke var(--duration-fast) ease, opacity var(--duration-fast) ease; }
-.cf-slab { fill: color-mix(in srgb, var(--color-text) 4%, transparent); }
-.cf-envelope { fill: color-mix(in srgb, var(--color-text) 3%, transparent); stroke-width: .9; }
-.cf-frame { stroke: var(--color-text-secondary); stroke-width: 1.5; }
-.cf-dim { stroke-width: 1; }
-.cf-part rect { fill: color-mix(in srgb, var(--color-text) 10%, transparent); stroke: none; }
-.cf-network, .cf-road-centre { stroke-dasharray: 6 5; }
-.cf-badge circle { fill: var(--color-bg); stroke: var(--color-accent); stroke-width: 1.4 !important; transition: fill var(--duration-fast) ease; }
-.cf-badge text { fill: var(--color-accent-strong); stroke: none; font: 700 13px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill var(--duration-fast) ease; }
-.proc-factors ul { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border); }
-.proc-factors li { display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 14px; align-items: baseline; padding: 11px 10px 12px 0; border-bottom: 1px solid var(--color-border); cursor: default; transition: background-color var(--duration-fast) ease; }
-.cf-number { display: grid; place-items: center; width: 24px; height: 24px; color: var(--color-accent-strong); border: 1px solid var(--color-accent); border-radius: 50%; font: 700 12px/1 var(--font-condensed), sans-serif; transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease; }
-.proc-factors b { color: var(--color-text); font: 600 16px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: none; }
-.proc-factors .cf-detail { grid-column: 2; margin-top: 4px; color: var(--color-text-muted); font-size: 15px; line-height: 1.45; }
-/* The lit factor: its part copper and thicker, the others back; its number filled; its row marked */
-.proc-factors[data-active] .cf-part:not([data-part]), .proc-factors[data-active] .cf-part { opacity: .28; }
-.proc-factors[data-active="dimensions"] [data-part="dimensions"], .proc-factors[data-active="structure"] [data-part="structure"],
-.proc-factors[data-active="foundation"] [data-part="foundation"], .proc-factors[data-active="insulation"] [data-part="insulation"],
-.proc-factors[data-active="technology"] [data-part="technology"], .proc-factors[data-active="logistics"] [data-part="logistics"],
-.proc-factors[data-active="timeline"] [data-part="timeline"] { opacity: 1; stroke: var(--color-accent); stroke-width: 2; }
-.proc-factors[data-active="timeline"] [data-part="timeline"] rect { fill: color-mix(in srgb, var(--color-accent) 55%, transparent); }
-.proc-factors[data-active="dimensions"] .cf-badge[data-part="dimensions"], .proc-factors[data-active="structure"] .cf-badge[data-part="structure"],
-.proc-factors[data-active="foundation"] .cf-badge[data-part="foundation"], .proc-factors[data-active="insulation"] .cf-badge[data-part="insulation"],
-.proc-factors[data-active="technology"] .cf-badge[data-part="technology"], .proc-factors[data-active="logistics"] .cf-badge[data-part="logistics"],
-.proc-factors[data-active="timeline"] .cf-badge[data-part="timeline"] { opacity: 1; }
-.proc-factors[data-active] .cf-badge { opacity: .45; transition: opacity var(--duration-fast) ease; }
-.proc-factors[data-active] .cf-badge[data-part] circle { fill: var(--color-bg); }
-.proc-factors[data-active="dimensions"] .cf-badge[data-part="dimensions"] circle, .proc-factors[data-active="structure"] .cf-badge[data-part="structure"] circle,
-.proc-factors[data-active="foundation"] .cf-badge[data-part="foundation"] circle, .proc-factors[data-active="insulation"] .cf-badge[data-part="insulation"] circle,
-.proc-factors[data-active="technology"] .cf-badge[data-part="technology"] circle, .proc-factors[data-active="logistics"] .cf-badge[data-part="logistics"] circle,
-.proc-factors[data-active="timeline"] .cf-badge[data-part="timeline"] circle { fill: var(--color-accent); }
-.proc-factors[data-active="dimensions"] .cf-badge[data-part="dimensions"] text, .proc-factors[data-active="structure"] .cf-badge[data-part="structure"] text,
-.proc-factors[data-active="foundation"] .cf-badge[data-part="foundation"] text, .proc-factors[data-active="insulation"] .cf-badge[data-part="insulation"] text,
-.proc-factors[data-active="technology"] .cf-badge[data-part="technology"] text, .proc-factors[data-active="logistics"] .cf-badge[data-part="logistics"] text,
-.proc-factors[data-active="timeline"] .cf-badge[data-part="timeline"] text { fill: var(--color-bg); }
-.proc-factors[data-active="dimensions"] li[data-factor="dimensions"], .proc-factors[data-active="structure"] li[data-factor="structure"],
-.proc-factors[data-active="foundation"] li[data-factor="foundation"], .proc-factors[data-active="insulation"] li[data-factor="insulation"],
-.proc-factors[data-active="technology"] li[data-factor="technology"], .proc-factors[data-active="logistics"] li[data-factor="logistics"],
-.proc-factors[data-active="timeline"] li[data-factor="timeline"] { background: color-mix(in srgb, var(--color-accent) 9%, transparent); }
-.proc-factors[data-active="dimensions"] li[data-factor="dimensions"] .cf-number, .proc-factors[data-active="structure"] li[data-factor="structure"] .cf-number,
-.proc-factors[data-active="foundation"] li[data-factor="foundation"] .cf-number, .proc-factors[data-active="insulation"] li[data-factor="insulation"] .cf-number,
-.proc-factors[data-active="technology"] li[data-factor="technology"] .cf-number, .proc-factors[data-active="logistics"] li[data-factor="logistics"] .cf-number,
-.proc-factors[data-active="timeline"] li[data-factor="timeline"] .cf-number { color: var(--color-bg); background: var(--color-accent); }
+/* .proc-factors / .cf-* moved to app/components/process/cost-factors.css (imported by CostFactorsFigure) */
 .proc-documents { max-width: 760px; margin: 32px 0 0; color: var(--color-text-muted); font-size: 14.5px; line-height: 1.65; }
 
 /* ---------------------------------------------------------------- Dark: neighbouring sections sit close in tone, so a
@@ -528,7 +479,6 @@
   .proc-change-steps b { padding-top: 5px; }
   .proc-change-back { display: block; margin-top: 2px; color: var(--color-accent-strong); font: 700 12px/1.4 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
   .proc-terms-grid li + li::before { content: '↓'; top: auto; right: auto; bottom: calc(100% + 1px); left: 28px; width: auto; height: var(--flow-gap); display: grid; place-items: center; transform: none; }
-  .cf-layout { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ---------------------------------------------------------------- Phone */

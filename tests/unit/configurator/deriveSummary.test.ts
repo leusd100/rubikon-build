@@ -39,7 +39,7 @@ describe('deriveSummary', () => {
   it.each([
     ['cold', 'Холодний', 'profiled-sheet'],
     ['insulated', 'Утеплений', 'sandwich-panel'],
-    ['undecided', 'Ще не визначився', 'profiled-sheet'],
+    ['undecided', 'Ще не визначено', 'profiled-sheet'],
   ] as const)('labels envelope "%s" as "%s" when the actual wall/roof system matches its own preset', (envelope, label, system) => {
     // Phase 3E, brief §18: the simple label only holds while the materials still match what this
     // envelope choice implies — set them explicitly here (rather than relying on
@@ -91,9 +91,9 @@ describe('envelope preset drift (Phase 3E, brief §18)', () => {
     expect(summary.envelopeLabel).toBe('Індивідуальна конфігурація');
   });
 
-  it('"Ще не визначився" never drifts — it never implied a system to begin with', () => {
+  it('"Ще не визначено" never drifts — it never implied a system to begin with', () => {
     const summary = summaryFor({ envelope: 'undecided', wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' });
-    expect(summary.envelopeLabel).toBe('Ще не визначився');
+    expect(summary.envelopeLabel).toBe('Ще не визначено');
   });
 
   it('dimensions and every other summary fact stay unaffected by a mismatched envelope/system pair', () => {

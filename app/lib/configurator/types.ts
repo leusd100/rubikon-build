@@ -166,7 +166,7 @@ export const DIMENSION_BOUNDS: Record<keyof Dimensions, DimensionBounds> = {
 export const ENVELOPE_LABELS: Record<EnvelopeChoice, string> = {
   cold: 'Холодний',
   insulated: 'Утеплений',
-  undecided: 'Ще не визначився',
+  undecided: 'Ще не визначено',
 };
 
 export const CLADDING_SYSTEM_LABELS: Record<CladdingSystem, string> = {
@@ -210,7 +210,7 @@ export const SCOPE_ORDER: ScopeItem[] = ['foundation', 'frame', 'walls', 'roof']
 
 export const GATES_OPTIONS: GatesCount[] = [0, 1, 2];
 export const DOOR_OPTIONS: DoorCount[] = [0, 1];
-export const DOOR_LABELS: Record<DoorCount, string> = { 0: 'Немає', 1: '1' };
+export const DOOR_LABELS: Record<DoorCount, string> = { 0: 'Без дверей', 1: '1' };
 
 export const GATE_TYPE_LABELS: Record<GateType, string> = {
   standard: 'Стандартні',

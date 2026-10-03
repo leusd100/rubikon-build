@@ -10,7 +10,8 @@ import type { RelatedDirection } from '../data/relatedDirections';
 export type DirectionItem = readonly [string, string, string, LucideIcon?];
 export type DirectionStep = readonly [string, string, string, LucideIcon];
 /** An FAQ answer the Delivery Model writes: the data keeps the visitor's question, the server fills in the text. */
-export type DeliveryModelFaqAnswer = { readonly deliveryModelAnswer: 'turnkey' };
+/** turnkey: written from the formats; design / materials: the frozen statements of the same name, verbatim */
+export type DeliveryModelFaqAnswer = { readonly deliveryModelAnswer: 'turnkey' | 'design' | 'materials' };
 export type DirectionFaqItem = readonly [string, string | DeliveryModelFaqAnswer];
 
 type DirectionOverview = {
@@ -60,6 +61,8 @@ export type DirectionPageConfig = {
    * composition that is not live yet, so the live page's list stays as it is.
    */
   related?: { compact?: boolean; items?: readonly RelatedDirection[] };
+  /** Leaves «Що буде після звернення» out of the page's #inquiry (the page tells the route itself) */
+  hideJourney?: boolean;
   /** Optional for a page whose own editorial architecture replaces the overview band. */
   overview?: DirectionOverview;
   /** Roofing: the three situations people call with, each with its first step (UX pass 2026-10). Words only from the

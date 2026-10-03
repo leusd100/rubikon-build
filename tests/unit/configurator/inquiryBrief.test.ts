@@ -79,3 +79,18 @@ describe('inquiry brief — Phase 3F.2', () => {
     expect(text).toContain('Огородження: Покрівля:');
   });
 });
+
+describe('the ridge height (2026-10)', () => {
+  it('reaches the lead: the visitor’s «Висота в конику» is a row right after the dimensions', async () => {
+    const { deriveDomainModel } = await import('../../../app/lib/configurator/domainModel');
+    const { DEFAULT_CONFIGURATOR_STATE } = await import('../../../app/lib/configurator/types');
+    const { createHangarInquiryBrief, createHangarInquiryBriefSections, formatHangarInquiryBrief } = await import('../../../app/lib/configurator/inquiryBrief');
+    const state = { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { width: 30, length: 72, height: 9 }, ridgeHeightM: 13 };
+    const brief = createHangarInquiryBrief(deriveDomainModel(state));
+    const rows = createHangarInquiryBriefSections(brief).selected.map((row) => row.label);
+    expect(rows.slice(0, 2)).toEqual(['Габарити', 'Висота в конику']);
+    expect(formatHangarInquiryBrief(brief)).toContain('Висота в конику: 13 м');
+    // the dimensions field of the lead stays width × length × wall height
+    expect(brief.dimensionsLabel).toBe('30 × 72 × 9 м');
+  });
+});

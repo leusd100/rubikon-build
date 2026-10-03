@@ -77,17 +77,9 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         )}
         <p className="hc-lede">
           {embedded
-            ? 'Задайте габарити, контур і бажаний обсяг робіт. Візуалізація допоможе сформувати предметний запит, а технічне рішення ми уточнимо разом.'
+            ? 'Задайте габарити, контур і обсяг робіт — креслення оновиться одразу. Технічне рішення уточнимо разом.'
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
-        {embedded && (
-          <ol className="hc-vocabulary" aria-label="Чотири складові конфігурації">
-            <li><span>01</span><div><strong>Габарити</strong><p>ширина, довжина, висота стін.</p></div></li>
-            <li><span>02</span><div><strong>Контур</strong><p>холодний або утеплений залежно від використання.</p></div></li>
-            <li><span>03</span><div><strong>Огородження</strong><p>профнастил або сендвіч-панель.</p></div></li>
-            <li><span>04</span><div><strong>Основа</strong><p>рішення уточнюється з урахуванням майданчика.</p></div></li>
-          </ol>
-        )}
       </header>
 
       <div className="hc-layout" ref={layoutRef}>
@@ -99,13 +91,15 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
             presentationAnnouncement={sharedInquiry?.presentationAnnouncement}
             onEndPresentationDemo={sharedInquiry?.endPresentationDemo}
           />
-          <ConfiguratorSummary
-            domain={businessDomain}
-            showInquiryAction={embedded}
-            onInquiryAction={sharedInquiry?.attachConfiguration}
-          />
+          {!embedded && <ConfiguratorSummary domain={businessDomain} />}
         </div>
       </div>
+      {/* On the page the summary is the drawing's title block, under the layout: only the drawing stays sticky */}
+      {embedded && (
+        <div className="hc-stamp-row">
+          <ConfiguratorSummary domain={businessDomain} showInquiryAction onInquiryAction={sharedInquiry?.attachConfiguration} />
+        </div>
+      )}
     </section>
   );
 }

@@ -433,13 +433,19 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-choice input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 1px var(--focus-gap); }
 .inquiry-select { margin-top: 0; }
 .inquiry-task-summary { display: grid; align-content: start; gap: 8px; margin-top: 18px; }
+/* Focused by script after «Обговорити цю конфігурацію» (revealAttachedBrief): not interactive, so no ring; lands under the header */
+.inquiry-config-brief { scroll-margin-top: 117px; }
+.inquiry-config-brief:focus, .inquiry-form-section-title:focus { outline: none; }
+@media (max-width: 760px) { .inquiry-config-brief { scroll-margin-top: 93px; } }
 .inquiry-config-brief { margin: 0 0 20px; padding: 18px 20px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); background: color-mix(in srgb, var(--color-field) 60%, transparent); }
 .inquiry-config-brief-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px 24px; }
 .inquiry-config-brief-heading > div:first-child { min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px 12px; }
 .inquiry-config-brief-heading small { color: var(--color-accent-strong); font-size: 12px; font-weight: 800; line-height: 1.35; letter-spacing: .1em; text-transform: uppercase; }
 .inquiry-config-brief-heading strong { color: var(--color-text); font: 600 15px/1.25 var(--font-condensed), sans-serif; font-variant-numeric: tabular-nums; }
-.inquiry-config-brief-actions { flex: none; display: flex; align-items: center; gap: 14px; }
+.inquiry-config-brief-actions { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; }
 .inquiry-config-brief-heading button { flex: none; padding: 0; border: 0; color: var(--color-accent-strong); background: transparent; cursor: pointer; font: 800 12px/1.3 var(--font-manrope), sans-serif; letter-spacing: .04em; text-decoration: underline; text-underline-offset: 4px; text-transform: uppercase; }
+/* 44 px targets: the underline stays on the text (UX review 2026-10: these were 16 px tall) */
+.inquiry-config-brief-heading button, .inquiry-config-edit { min-height: 44px; display: inline-flex; align-items: center; }
 .inquiry-config-brief-heading button:focus-visible, .inquiry-config-edit:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .inquiry-config-brief-heading .inquiry-config-brief-toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text); }
 .inquiry-config-brief-toggle svg { width: 15px; height: 15px; color: var(--color-accent); transition: transform .25s ease; }
@@ -924,7 +930,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
   .inquiry-fields-two { grid-template-columns: 1fr; }
   .inquiry-config-brief { padding: 16px; }
   .inquiry-config-brief-heading { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .inquiry-config-brief-actions { width: 100%; justify-content: space-between; gap: 12px; }
+  .inquiry-config-brief-actions { width: 100%; gap: 0 20px; }
   .inquiry-config-brief-sections { grid-template-columns: 1fr; gap: 18px; }
   .inquiry-config-edit { grid-column: 1; }
   .inquiry-choice > div { grid-template-columns: 1fr 1fr; }
