@@ -7,17 +7,21 @@ import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { deriveDomainModel, type HangarDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
-import { deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM } from '../../lib/configurator/parametricModel';
+import {
+  buildParametricModel, deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM,
+} from '../../lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { TourControl, TourProgress, TourSteps, tourStepCell } from '../directions/TourParts';
+import { endWallFraming } from './endWallFraming';
 import './frame-tour.css';
 
 // /angary «Каркас вашого ангара — від покрівлі до основи» (UX review 2026-10; redrawn 03.10 — owner: «не завжди
 // зрозуміло конструктив», with a load-path reference he liked). The visitor's own frame — span, wall and ridge
 // heights, truss or portal frame, the centre row of supports — as a wireframe of its first bays in the drawing-office
 // dimetric (the span at 7°, true size; the length at 41°, half size — so the gable keeps its shape): columns,
-// trusses or rafters, purlins on the roof, wall purlins on the side and end walls, the end wall’s posts, bracing in the first
-// bay, the coordinate axes with their bubbles, and the footings drawn dashed, because their type is the designer's.
+// trusses or rafters, purlins on the roof, wall purlins on the side and end walls, the end wall’s posts around its gates
+// and door (endWallFraming.ts, 04.10), bracing in the braced bays it shows, the coordinate axes with their bubbles, and
+// the footings drawn dashed, because their type is the designer's.
 //
 // Five steps, the camera pushing in as on the direction nodes: the span, the frame, purlins and bracing — then two
 // loads followed through the structure link by link, each link lighting in copper with its name in the legend above
@@ -50,7 +54,16 @@ const LETTER = 19 * 1.55;
 const BUBBLE = 11 * 1.55;
 /** A name's width: Manrope 600 runs at most ~0.62 em a letter in these words (measured, 03.10) */
 const tagWidth = (label: string) => label.length * TAG * 0.62;
+/** The axes across the span, lettered in sequence (ДСТУ Б А.2.4-4 skips none of these) */
+const AXIS_LETTERS = ['А', 'Б', 'В'] as const;
 const fmt = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+/** A size with its unit, never split from it (04.10) */
+const metres = (value: number) => `${fmt(value)}\u00A0м`;
+/** A dash or a «·» keeps to the word before it, so no line of a step's text or caption starts with one (04.10) */
+const keepMarks = (text: string) => text.replaceAll(' — ', '\u00A0— ').replaceAll(' · ', '\u00A0· ');
+const OVERVIEW_CAPTION = 'Каркас, прогони й в’язі';
+/** The paint around a name, half of it on either side of the letters, at a phone's line weight (--ft-k) */
+const HALO = (5 * 1.55) / 2;
 const n = (value: number) => value.toFixed(1);
 const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), high);
 
@@ -111,9 +124,11 @@ function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt
     const anchor = dx < 0 ? 'end' as const : 'start' as const;
     const [tx, ty] = [x + dx + (dx < 0 ? -4 : 4), y + dy + 5];
     const width = Math.max(...rows.map(tagWidth));
+    // under a name in two lines, its halo too: without it the second line sat on the name below on a phone (a two-line
+    // «стійки фахверку» on «стінові прогони» at 24 × 60 × 4, 04.10)
     const box: Box = [
       anchor === 'end' ? tx - width - 3 : tx - 3, ty - TAG * 0.78 - 2,
-      anchor === 'end' ? tx + 3 : tx + width + 3, ty + TAG * (0.24 + 1.1 * (rows.length - 1)) + 2,
+      anchor === 'end' ? tx + 3 : tx + width + 3, ty + TAG * (0.24 + 1.1 * (rows.length - 1)) + 2 + (rows.length > 1 ? HALO : 0),
     ];
     const leader: Segment = [[x, y], [x + dx, y + dy]];
     return { label, lines: rows, d: `M${n(x)},${n(y)}l${dx},${dy}`, x: tx, y: ty, anchor, box, leader };
@@ -143,10 +158,13 @@ function frameGeometry(domain: HangarDomainModel) {
   const centre = domain.structural.scheme === 'centerSupport';
   const roofZ = (x: number) => E + (R - E) * (1 - Math.abs(x - W / 2) / (W / 2));
   const columnXs = centre ? [0, W / 2, W] : [0, W];
-  // The end wall's posts (стійки фахверку) carry its wall purlins between the corner columns: one about every 7 m of a
-  // clear span, at most three; with a centre row its column stands in the middle and a post halves each span (03.10)
-  const postCount = clamp(Math.round(W / 7) - 1, 1, 3);
-  const postXs = centre ? [W / 4, (3 * W) / 4] : Array.from({ length: postCount }, (_, index) => (W * (index + 1)) / (postCount + 1));
+  // The configurator's own model: its gates and door on this end wall, and the bays it braces
+  const model = buildParametricModel(domain);
+  const openings = model.openings.map(({ kind, rect }) => ({ kind, xM: rect.xM, widthM: rect.widthM, heightM: rect.heightM }));
+  // The end wall's posts (стійки фахверку) carry its wall purlins between the corner columns, about every 7 m (with a
+  // centre row a post halves each span, 03.10) — and frame its gates, never standing in one (04.10, endWallFraming.ts)
+  const framing = endWallFraming({ widthM: W, eaveM: E, centre, openings });
+  const { postXs } = framing;
   // The configurator's own frame, so the two drawings show one hangar (03.10): purlins where its model puts them — on a
   // truss's top-chord nodes (between nodes the chord would carry them in bending), evenly on a portal rafter — the eave
   // and ridge lines being the longitudinals below; the truss's panels as the model divides them
@@ -223,23 +241,30 @@ function frameGeometry(domain: HangarDomainModel) {
   // the far end wall, when all the building's bays are drawn
   const farEnd = continues ? '' : line([0, DEP, 0], [W, DEP, 0]);
 
-  // Purlins on the roof; wall purlins on the near side wall and on the end wall, between its posts
+  // Purlins on the roof; wall purlins on the near side wall and on the end wall, between its posts and stopping at its
+  // openings; the openings themselves outlined, as the configurator draws them (04.10)
   const purlins = purlinXs.map((x) => line([x, 0, roofZ(x)], [x, end, roofZ(x)])).join('');
-  const endVerticals = [...new Set([0, ...postXs, ...(centre ? [W / 2] : []), W])].sort((a, b) => a - b);
-  const girts = [E / 3, (2 * E) / 3].map((z) => [
-    line([W, 0, z], [W, end, z]),
-    ...endVerticals.slice(1).map((x, index) => line([endVerticals[index], 0, z], [x, 0, z])),
-  ].join('')).join('');
+  const girts = [
+    ...[E / 3, (2 * E) / 3].map((z) => line([W, 0, z], [W, end, z])),
+    ...framing.girts.map(({ z, from, to }) => line([from, 0, z], [to, 0, z])),
+  ].join('');
+  const openingOutlines = openings.map(({ xM, widthM, heightM }) => line([xM, 0, 0], [xM, 0, heightM], [xM + widthM, 0, heightM], [xM + widthM, 0, 0])).join('');
   const posts = postXs.map((x) => line([x, 0, 0], [x, 0, roofZ(x)])).join('');
-  // Bracing in the first bay: a cross in each long wall (the far one in the back line's ink) and, on both roof slopes, a
-  // horizontal wind truss — a cross in every panel between the purlins, from the eave to the ridge (03.10)
-  const wallCross = (x: number) => `${line([x, 0, 0], [x, s, E])}${line([x, s, 0], [x, 0, E])}`;
+  // Bracing in the braced bays the drawing shows — the model's first, last and (from six bays) middle one, so a short
+  // building drawn whole is braced as the configurator braces it (04.10): a cross in each long wall (the far one in the
+  // back line's ink) and, on both roof slopes, a horizontal wind truss — a cross in every panel between the purlins, from
+  // the eave to the ridge (03.10). The loads follow the first bay's.
+  const wallCross = (x: number, d = 0) => `${line([x, d, 0], [x, d + s, E])}${line([x, d + s, 0], [x, d, E])}`;
   const wallBracing = wallCross(W);
   const farBracing = wallCross(0);
   const panelEdges = [[0, ...purlinXs.filter((x) => x < W / 2), W / 2], [W / 2, ...purlinXs.filter((x) => x > W / 2), W]];
   // each panel from the ridge side towards its eave, so the wind's drops run out to both long walls
   const panels = panelEdges.flatMap((xs, slope) => xs.slice(1).map((x, index): Pt => (slope === 0 ? [x, xs[index]] : [xs[index], x])));
-  const roofBracing = panels.map(([a, b]) => `${line([a, 0, roofZ(a)], [b, s, roofZ(b)])}${line([a, s, roofZ(a)], [b, 0, roofZ(b)])}`).join('');
+  const roofCrosses = (d: number) => panels.map(([a, b]) => `${line([a, d, roofZ(a)], [b, d + s, roofZ(b)])}${line([a, d + s, roofZ(a)], [b, d, roofZ(b)])}`).join('');
+  const roofBracing = roofCrosses(0);
+  const laterBays = [...new Set(model.bracing.map((brace) => brace.bayIndex))].filter((bay) => bay > 0 && bay < bays).map((bay) => bay * s);
+  const laterBracing = laterBays.map((d) => `${wallCross(W, d)}${roofCrosses(d)}`).join('');
+  const laterFarBracing = laterBays.map((d) => wallCross(0, d)).join('');
 
   // Footings: a dashed box under every column and post (the type is the designer's), its visible edges only
   const footingAt = (x: number, d: number, b = 0.75) => {
@@ -253,9 +278,17 @@ function frameGeometry(domain: HangarDomainModel) {
       box: union(([[x - b, d - b, 0], [x + b, d + b, 0], [x - b, d - b, -h], [x + b, d + b, -h], [x + b, d - b, -h], [x - b, d + b, -h]] as P3[]).map((point) => around(xy(point), 1))),
     };
   };
+  // The posts' footings: one under two posts that stand closer than their footings are wide (the jambs of two gates
+  // side by side, 04.10), as wide as both
+  const postFootings = postXs.reduce<{ from: number; to: number }[]>((groups, x) => {
+    const last = groups.at(-1);
+    if (last && x - last.to < 1.1) last.to = x;
+    else groups.push({ from: x, to: x });
+    return groups;
+  }, []).map(({ from, to }) => ({ x: (from + to) / 2, b: 0.5 + (to - from) / 2 }));
   const footings = [
     ...frames.flatMap((d) => columnXs.map((x) => footingAt(x, d))),
-    ...postXs.map((x) => footingAt(x, 0, 0.5)),
+    ...postFootings.map(({ x, b }) => footingAt(x, 0, b)),
   ];
   const footingPath = (x: number, d: number, b = 0.75) => footingAt(x, d, b).d;
   const groundUnder = (points: readonly P3[]) => points.map((point) => {
@@ -274,14 +307,12 @@ function frameGeometry(domain: HangarDomainModel) {
   const heightDim = `M${n(hx)},${n(hy)}V${n(hty)}M${n(hx - 5)},${n(hy)}h10M${n(hx - 5)},${n(hty)}h10${line([-0.9, 0, E], [-2.6, 0, E])}`;
   const bayDim = `${line([W + DIM_A, 0, 0], [W + DIM_A, s, 0])}${tick([W + DIM_A, 0, 0], false)}${tick([W + DIM_A, s, 0], false)}`;
 
-  // Coordinate axes, dash-dot, with their bubbles past the dimension lines (03.10): across the span А, Б (the centre
-  // row), В — down through the front columns to under L; along the building 1, 2, 3(, 4) — out through the side
-  // wall's columns past a. Only the drawn frames are numbered: the axis at the break is left open.
+  // Coordinate axes, dash-dot, with their bubbles past the dimension lines (03.10): across the span in letters, one after
+  // another as a drawing letters them (04.10) — А, Б on a clear span, А, Б, В with the centre row (Б) — down through
+  // the front columns to under L; along the building 1, 2, 3(, 4) — out through the side wall's columns past a. Only
+  // the drawn frames are numbered: the axis at the break is left open.
   const down = (point: P3, by: number) => { const [x, y] = xy(point); return [x, y + by] as const; };
-  const spanBubbles = columnXs.map((x, index) => ({
-    label: (centre ? ['А', 'Б', 'В'] : ['А', 'В'])[index],
-    at: down([x, 0, DIM_Z], 8 + BUBBLE),
-  }));
+  const spanBubbles = columnXs.map((x, index) => ({ label: AXIS_LETTERS[index], at: down([x, 0, DIM_Z], 8 + BUBBLE) }));
   const spanAxes = columnXs.map((x, index) => `M${p([x, 0, roofZ(x) + 0.7])}L${spanBubbles[index].at.map(n).join(',')}`).join('');
   const bayBubbles = frames.map((d, index) => {
     const [x, y] = xy([W + DIM_A, d, 0]);
@@ -320,7 +351,8 @@ function frameGeometry(domain: HangarDomainModel) {
   // frame to the eaves, down the columns, into the footings — the load front moves with the legend
   const snowFlow: { d: string; link: number }[] = [
     ...purlinXs.flatMap((x) => [line([x, s0, roofZ(x)], [x, s, roofZ(x)]), line([x, s1, roofZ(x)], [x, s, roofZ(x)])]).map((d) => ({ d, link: 1 })),
-    { d: `${line([W / 2, s, R], [0, s, E])}${line([W / 2, s, R], [W, s, E])}`, link: 2 },
+    // with a centre row, down the vertical under the ridge too, to the node column Б stands under (04.10)
+    { d: `${line([W / 2, s, R], [0, s, E])}${line([W / 2, s, R], [W, s, E])}${centre ? line([W / 2, s, R], [W / 2, s, E]) : ''}`, link: 2 },
     { d: columnXs.map((x) => line([x, s, E], [x, s, 0])).join(''), link: 3 },
     { d: columnXs.map((x) => line([x, s, 0], [x, s, -1])).join(''), link: 4 },
   ];
@@ -333,17 +365,30 @@ function frameGeometry(domain: HangarDomainModel) {
     const [bx, by] = [tx - 8 * DIR[0], ty - 8 * DIR[1]];
     return `M${n(bx - 4 * DIR[1])},${n(by + 4 * DIR[0])}L${n(tx)},${n(ty)}L${n(bx + 4 * DIR[1])},${n(by - 4 * DIR[0])}`;
   };
-  const windArrows = [0.25, 0.55, 0.85].flatMap((h) => [0.2, 0.5, 0.8].map((f) => {
+  // Three rows of arrows up the wall — fewer on a low wall drawn small, where three piled their heads onto each other's
+  // shafts (50 × 10 × 4, 04.10): rows at least ~2.5 heads apart across the arrows
+  const rowsApart = (step: number) => E * step * k * Math.cos((41.42 * Math.PI) / 180);
+  let windRows = [0.5];
+  if (rowsApart(0.3) >= 20) windRows = [0.25, 0.55, 0.85];
+  else if (rowsApart(0.45) >= 20) windRows = [0.3, 0.75];
+  const windArrows = windRows.flatMap((h) => [0.2, 0.5, 0.8].map((f) => {
     const z = Math.min(E * h, roofZ(W * f) - 0.6);
     return `${line([W * f, -WIND, z], [W * f, -0.5, z])}${head([W * f, -0.5, z])}`;
   }));
   const endWall = plane([0, 0, 0], [W, 0, 0], [W, 0, E], [W / 2, 0, R], [0, 0, E]);
-  const braceBases: P3[] = [[0, 0, 0], [0, s, 0], [W, 0, 0], [W, s, 0], ...postXs.map((x) => [x, 0, 0] as P3)];
-  const braceFootings = [...[0, W].flatMap((x) => [footingPath(x, 0), footingPath(x, s)]), ...postXs.map((x) => footingPath(x, 0, 0.5))].join('');
+  // The end wall's verticals that take its wind: the posts and, with a centre row, column Б (04.10 — its wall purlins
+  // bear on it too); Б's top is a node of the truss's bottom chord, so its drops run up to the eave line
+  const windPosts = [...postXs.map((x) => ({ x, top: roofZ(x) })), ...(centre ? [{ x: W / 2, top: E }] : [])];
+  const braceBases: P3[] = [[0, 0, 0], [0, s, 0], [W, 0, 0], [W, s, 0], ...windPosts.map(({ x }) => [x, 0, 0] as P3)];
+  const braceFootings = [
+    ...[0, W].flatMap((x) => [footingPath(x, 0), footingPath(x, s)]),
+    ...postFootings.map(({ x, b }) => footingPath(x, 0, b)),
+    ...(centre ? [footingPath(W / 2, 0)] : []),
+  ].join('');
   // …and the wind's drops: each post from its middle up to the roof and down to its footing; along the roof bracing out
   // from the ridge to both eaves; down both walls' bracing; into the footings
   const windFlow = [
-    { d: postXs.map((x) => `${line([x, 0, E / 2], [x, 0, roofZ(x)])}${line([x, 0, E / 2], [x, 0, 0])}`).join(''), link: 1 },
+    { d: windPosts.map(({ x, top }) => `${line([x, 0, E / 2], [x, 0, top])}${line([x, 0, E / 2], [x, 0, 0])}`).join(''), link: 1 },
     { d: roofBracing, link: 2 },
     { d: [0, W].map((x) => `${line([x, s, E], [x, 0, 0])}${line([x, 0, E], [x, s, 0])}`).join(''), link: 3 },
     { d: braceBases.map(([x, d]) => line([x, d, 0], [x, d, -1])).join(''), link: 4 },
@@ -387,14 +432,15 @@ function frameGeometry(domain: HangarDomainModel) {
   const baysBase = camera(baysFocus, 1.5, baysEssentials);
   const topPurlin = Math.max(...purlinXs);
   const sideWall = [1.6, 2.2, 2.8].filter((t) => t * s < end);
-  // the end wall between its verticals: where a name can sit on a wall purlin without crossing a post's footing
-  const bandXs = endVerticals.slice(1).map((x, index) => (x + endVerticals[index]) / 2).reverse();
+  // the end wall's wall purlins, from the right, the lower first, each at its middle: where a name can sit on one
+  // without crossing a post's footing; the short pieces beside a gate last
+  const bands = [...framing.girts].sort((a, b) => Number(a.to - a.from < 2) - Number(b.to - b.from < 2) || b.from - a.from || a.z - b.z);
   const baysTags = [
     placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, taken, lines),
     placeTag('прогони', [1.5, 1.2, 1.9].map((t) => ({ from: xy([topPurlin, s * t, roofZ(topPurlin)]), leaders: [[22, -26], [28, -12], [12, -36]] as Pt[] })), baysBase.view, taken, lines),
     // on a wall purlin of the end wall, the name above or below it; else out from the side wall's
     placeTag('стінові прогони', [
-      ...bandXs.flatMap((x) => [E / 3, (2 * E) / 3].map((z) => ({ from: xy([x, 0, z]), leaders: [[-14, -20], [14, -20], [-14, 22], [14, 22]] as Pt[] }))),
+      ...bands.map(({ z, from, to }) => ({ from: xy([(from + to) / 2, 0, z]), leaders: [[-14, -20], [14, -20], [-14, 22], [14, 22]] as Pt[] })),
       ...sideWall.flatMap((t) => [(2 * E) / 3, E / 3].map((z) => ({ from: xy([W, s * t, z]), leaders: [[26, -16], [30, 10], [26, 16]] as Pt[] }))),
     ], baysBase.view, taken, lines),
     // on a post, into the end wall beside it, or above the roof from its top
@@ -413,8 +459,9 @@ function frameGeometry(domain: HangarDomainModel) {
 
   return {
     W, lengthM, E, truss, centre,
-    slab, footings: footings.map((footing) => footing.d), backFrames, longitudinals, farEnd, purlins, girts, posts,
-    wallBracing, farBracing, roofBracing,
+    slab, footings: footings.map((footing) => footing.d), backFrames, longitudinals, farEnd, purlins, girts, posts, openingOutlines,
+    wallBracing, farBracing, roofBracing, laterBracing, laterFarBracing,
+    windPosts: windPosts.map(({ x, top }) => line([x, 0, 0], [x, 0, top])).join(''),
     frontColumns: columnsAt(0, [0, W]), frontRoof: `${roofAt(0)}${centre ? columnsAt(0, [W / 2]) : ''}`, spanDim, heightDim, bayDim,
     spanAxes, bayAxes, spanBubbles, bayBubbles, letters,
     snowArrows, snowStrip, stripEdges, stripPurlins, snowFrame: roofAt(s), snowColumns: columnsAt(s), snowFootings,
@@ -444,6 +491,14 @@ function overviewText(pending: boolean, motion: boolean) {
   return 'Креслення показує каркас крок за кроком: оберіть крок нижче.';
 }
 
+/** «Змінити габарити ↑» wider than a phone: its anchor scrolls to «Розміри», and then the width field takes the focus, so
+ *  the next key changes a size — after the jump, which would take it away again. On a phone the configurator's
+ *  accordion has the click (ConfiguratorControls). */
+function focusWidth() {
+  if (document.querySelector('#configurator .hc-group-toggle')) return;
+  window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('#hc-dimension-width')?.focus({ preventScroll: true }));
+}
+
 export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
   const inquiry = useHangarInquiryContext();
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
@@ -458,31 +513,31 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
     g.centre
       ? {
         title: 'Ширина L',
-        text: `L — ${fmt(g.W)} м між осями крайніх колон А і В ${where}. Центральний ряд Б ділить її на два прольоти. H — висота стіни.`,
+        text: keepMarks(`L — ${metres(g.W)} між осями крайніх колон А і В ${where}. Центральний ряд Б ділить її на два прольоти. H — висота стіни.`),
         caption: 'Ширина між крайніми колонами',
         ...g.cameras.span,
       }
       : {
         title: 'Проліт L',
-        text: `Проліт L — відстань між осями крайніх колон А і В: ${fmt(g.W)} м ${where}. Усередині колон немає. H — висота стіни.`,
+        text: keepMarks(`Проліт L — відстань між осями крайніх колон А і Б: ${metres(g.W)} ${where}. Усередині колон немає. H — висота стіни.`),
         caption: 'Проліт між крайніми колонами',
         ...g.cameras.span,
       },
     {
       title: g.truss ? 'Ферма' : 'Рама',
-      text: summary.structuralVisualizationDescription,
-      caption: summary.structuralVisualizationLabel,
+      text: keepMarks(summary.structuralVisualizationDescription),
+      caption: keepMarks(summary.structuralVisualizationLabel),
       ...g.cameras.frame,
     },
     {
       title: 'Прогони й в’язі',
-      text: `Прогони лежать на ${g.truss ? 'вузлах ферм' : 'рамах'} і несуть покрівлю, стінові прогони — обшивку стін; у торцевій стіні їх тримають стійки фахверку. В’язі в крайньому кроці зв’язують рами між собою, щоб каркас тримав форму вздовж будівлі. Крок рам a уточнює розрахунок.`,
+      text: keepMarks(`Прогони лежать на ${g.truss ? 'вузлах ферм' : 'рамах'} і несуть покрівлю, стінові прогони — обшивку стін; у торцевій стіні їх тримають стійки фахверку. В’язі в крайньому кроці зв’язують рами між собою, щоб каркас тримав форму вздовж будівлі. Крок рам a уточнює розрахунок.`),
       caption: 'Прогони й в’язі в крайньому кроці рам',
       ...g.cameras.bays,
     },
     {
       title: 'Сніг на покрівлі',
-      text: `Сніг тисне на покрівлю. Кожна ${g.truss ? 'ферма' : 'рама'} збирає його зі своєї смуги — по половині кроку з обох боків: прогони передають навантаження на ${g.truss ? 'ферму' : 'раму'}, вона — на колони, колони — на фундаменти, а ті — у ґрунт.`,
+      text: keepMarks(`Сніг тисне на покрівлю. Кожна ${g.truss ? 'ферма' : 'рама'} збирає його зі своєї смуги — по половині кроку з обох боків: прогони передають навантаження на ${g.truss ? 'ферму' : 'раму'}, вона — на колони, колони — на фундаменти, а ті — у ґрунт.`),
       caption: 'Шлях навантаження від снігу',
       // the whole frame: no push-in
       focus: [VIEW.width / 2, VIEW.height / 2],
@@ -490,14 +545,19 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
     },
     {
       title: 'Вітер у торець',
-      text: 'Вітер тисне на торцеву стіну вздовж будівлі. Стійки фахверку передають зусилля на фундаменти й на в’язі покрівлі, а ті — через в’язі обох поздовжніх стін на фундаменти. Без в’язей рами схилилися б уздовж будівлі, як доміно, — в’язі тримають їх рівно.',
+      text: keepMarks('Вітер тисне на торцеву стіну вздовж будівлі. Стійки фахверку передають зусилля на фундаменти й на в’язі покрівлі, а ті — через в’язі обох поздовжніх стін на фундаменти. Без в’язей рами схилилися б уздовж будівлі, як доміно, — в’язі тримають їх рівно.'),
       caption: 'Шлях навантаження від вітру',
       ...g.cameras.wind,
     },
   ];
   const { visualRef, step, touring, run, size, motion, pending, stepMs, choose, toggle, hover } = useDrawingTour(steps.length, { loops: 3, durations: STEP_DURATIONS });
   const active = step ? steps[step - 1] : undefined;
-  const object = `${own ? 'Ваш ангар' : 'Приклад'} · ${fmt(g.W)} × ${fmt(g.lengthM)} × ${fmt(g.E)} м`;
+  // «Приклад · 24 × 60 × 8 м»: the sizes held together and to their unit, which stays a lower-case «м» in the title
+  // block's capitals (04.10, drawing-sheet.css .sheet-unit); a line may break only after the «·»
+  const object = `${own ? 'Ваш ангар' : 'Приклад'}\u00A0· ${[g.W, g.lengthM, g.E].map(fmt).join('\u00A0×\u00A0')}\u00A0`;
+  /** The title block's «Що показано»: every caption laid out in one cell, only the shown one visible — the cell is as
+   *  tall as the longest at any width, so the sheet no longer changes height from step to step (04.10) */
+  const captions = [OVERVIEW_CAPTION, ...steps.map((item) => item.caption)];
 
   return (
     <div
@@ -513,10 +573,10 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
         <h2 id={titleId}>Каркас вашого ангара — від покрівлі до основи</h2>
         <p>
           {/* the section follows the configurator (03.10): until the visitor sets a size, the drawing is the example */}
-          {!own && 'Задайте свої габарити вище — схема перебудується. '}
-          Креслення будується з вашої конфігурації — проліт, висоти, схема каркаса — і показує, як сніг і вітер проходять
-          крізь каркас до основи. Це попередня схема без масштабу; фундаменти показано умовно — конструктив визначає
-          проєктувальник.
+          {!own && keepMarks('Задайте свої габарити вище — схема перебудується. ')}
+          {keepMarks('Креслення будується з вашої конфігурації — проліт, висоти, схема каркаса — і показує, як сніг і вітер '
+            + 'проходять крізь каркас до основи. Це попередня схема без масштабу; фундаменти показано умовно — конструктив '
+            + 'визначає проєктувальник.')}
         </p>
       </div>
       <TourSteps steps={steps} step={step} choose={choose} hover={hover} />
@@ -525,15 +585,30 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
         imageClassName="dn-visual ft-visual"
         cells={[
           tourStepCell(step, steps.length),
-          { tone: 'main', label: 'Що показано', value: <span className="dn-caption">{active ? active.caption : 'Каркас, прогони й в’язі'}</span> },
+          {
+            tone: 'main',
+            label: 'Що показано',
+            value: (
+              <span className="ft-captions">
+                {captions.map((caption, index) => (
+                  <span key={`${index}-${caption}`} className={index === step ? 'dn-caption' : undefined} data-on={index === step || undefined}>{caption}</span>
+                ))}
+              </span>
+            ),
+          },
           {
             // the way back up to the sizes (03.10): under the value, so the cell stays one value wide; on a narrow
             // sheet, in the caption row (frame-tour.css)
             value: (
               <>
                 <small>Об’єкт</small>
-                <span className="ft-object-value">{object}</span>
-                <a className="ft-resize" href="#configurator" data-open-group="dimensions">Змінити габарити <span aria-hidden="true">↑</span></a>
+                <span className="ft-object-value">{object}<span className="sheet-unit">м</span></span>
+                {/* to «Розміри» itself: on a phone the configurator opens the group (data-open-group); wider, the anchor
+                    lands on its heading and the width field takes the focus (04.10 — it stopped at the configurator's
+                    top, with the sizes a screen below) */}
+                <a className="ft-resize" href="#hc-dimensions-heading" data-open-group="dimensions" onClick={focusWidth}>
+                  Змінити габарити <span aria-hidden="true">↑</span>
+                </a>
               </>
             ),
             className: 'ft-object',
@@ -555,7 +630,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
         {/* the camera's window: the picture's own proportion (on a phone the legend's band sits above it) */}
         <div className="ft-window" ref={visualRef}>
           <div className="dn-stage is-drawing" style={{ transform: stageTransform(size, VIEW, active) }}>
-            <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${fmt(g.W)} м; шлях навантаження від снігу й вітру`}>
+            <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру`}>
               <defs>
                 <filter id="ft-glow" x="-10%" y="-10%" width="120%" height="120%">
                   <feGaussianBlur stdDeviation="2.2" result="blur" />
@@ -570,6 +645,8 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
               </g>
               {/* the structure, back to front */}
               <path className="ft-back" d={`${g.backFrames}${g.longitudinals}${g.farEnd}`} />
+              {/* the gates and the door on the near end wall, as the configurator places them (04.10) */}
+              {g.openingOutlines && <path className="ft-opening" d={g.openingOutlines} />}
               <g className="ft-part" data-part="3">
                 <path className="ft-axis" d={g.bayAxes} />
                 <path className="ft-thin" d={`${g.purlins}${g.girts}`} />
@@ -577,9 +654,11 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
                 <path className="ft-brace ft-brace-far" pathLength={1} d={g.farBracing} />
                 <path className="ft-brace" pathLength={1} d={g.wallBracing} />
                 <path className="ft-brace" pathLength={1} d={g.roofBracing} />
+                {g.laterBracing && <path className="ft-brace ft-brace-far" pathLength={1} d={g.laterFarBracing} />}
+                {g.laterBracing && <path className="ft-brace" pathLength={1} d={g.laterBracing} />}
                 <path className="ft-dim" d={g.bayDim} />
                 {g.bayBubbles.map(({ label, at: [x, y] }) => (
-                  <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 4.6)}>{label}</text></g>
+                  <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 5)}>{label}</text></g>
                 ))}
                 <text className="ft-letter" x={n(g.letters.a[0])} y={n(g.letters.a[1])}>a</text>
               </g>
@@ -593,7 +672,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
                 <path className="ft-dim" d={g.heightDim} />
                 <text className="ft-letter" x={n(g.letters.H[0])} y={n(g.letters.H[1])}>H</text>
                 {g.spanBubbles.map(({ label, at: [x, y] }) => (
-                  <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 4.6)}>{label}</text></g>
+                  <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 5)}>{label}</text></g>
                 ))}
               </g>
               <g className="ft-part" data-part="2">
@@ -632,7 +711,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
               <g className="ft-load" data-load="wind" aria-hidden="true">
                 <path className="ft-link ft-plane" style={at(0)} d={g.endWall} />
                 {g.windArrows.map((d, index) => <path key={d} className="ft-arrows ft-arrows-wind" style={beat((Math.floor(index / 3) + 2 * (index % 3)) % 3)} d={d} />)}
-                <path className="ft-link" style={at(1)} d={g.posts} />
+                <path className="ft-link" style={at(1)} d={g.windPosts} />
                 <path className="ft-link" style={at(2)} data-brace="" d={g.roofBracing} />
                 <path className="ft-link" style={at(3)} data-brace="" d={`${g.wallBracing}${g.farBracing}`} />
                 <path className="ft-link ft-link-footing" style={at(4)} d={g.braceFootings} />

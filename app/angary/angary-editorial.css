@@ -5,6 +5,8 @@
 .angary-page .angary-hero-secondary { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .58); background: rgba(12, 13, 15, .18); }
 .angary-page .angary-hero-secondary:hover { border-color: var(--color-dark-text); background: rgba(255, 255, 255, .09); transform: translateY(-2px); }
 .angary-page .hangar-configurator-embedded { padding-block: 40px clamp(88px, 8vw, 116px); background: var(--color-bg); border-top: 2px solid var(--color-accent); }
+/* «Змінити габарити ↑» under the frame drawing lands on «Розміри» under the site header (04.10, FrameTour) */
+.angary-page #hc-dimensions-heading { scroll-margin-top: 116px; }
 
 /* ---------- Shared flagship editorial heading ---------- */
 .angary-section-heading { max-width: 890px; margin-bottom: clamp(48px, 5vw, 72px); }
