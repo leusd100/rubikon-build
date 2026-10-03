@@ -4,8 +4,10 @@ import { createHangarInquiryBrief, createHangarInquiryBriefSections, formatHanga
 import { sameBusinessConfiguration } from './attachmentContract';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from './types';
 
-// 1.1.0 (2026-10): the ridge height row; a configuration on the default values is labelled as such
-export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.1.0';
+// 1.1.0 (2026-10): the ridge height row; a configuration on the default values is labelled as such.
+// 1.2.0 (03.10): the «Об’єкт» rows (Призначення, Проєкт, Область, Підйомне обладнання) when answered; the ridge row
+// carries its slope («10,6 м · ухил ≈ 12°»), and an unedited ridge follows the span rule.
+export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.2.0';
 
 /**
  * The hangar configuration as a shared inquiry attachment. Everything the form showed and sent

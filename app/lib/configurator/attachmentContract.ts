@@ -1,4 +1,5 @@
 import { transitionAttachment } from '../inquiry/attachment';
+import { sameObjectProfile } from './objectProfile';
 import type { ConfiguratorState } from './types';
 
 export type HangarAttachmentState =
@@ -36,7 +37,11 @@ export function transitionHangarAttachment(
   return transitionAttachment(current, event) as HangarAttachmentState;
 }
 
-/** Exact business-state equality. Presentation state is intentionally absent from this type. */
+/**
+ * Exact business-state equality. Presentation state is intentionally absent from this type. `ridgeEdited` is left out
+ * on purpose: the controls set it only together with a changed ridge, so the ridge value already answers the question,
+ * and an edited ridge set back to the default is the default configuration again.
+ */
 export function sameBusinessConfiguration(a: ConfiguratorState, b: ConfiguratorState): boolean {
   return a.dimensions.width === b.dimensions.width
     && a.dimensions.length === b.dimensions.length
@@ -49,6 +54,7 @@ export function sameBusinessConfiguration(a: ConfiguratorState, b: ConfiguratorS
     && a.gates === b.gates
     && a.gateType === b.gateType
     && a.doors === b.doors
+    && sameObjectProfile(a.objectProfile, b.objectProfile)
     && a.scope.length === b.scope.length
     && a.scope.every((item) => b.scope.includes(item));
 }

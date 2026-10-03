@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
-import { deriveSummary } from '../../../app/lib/configurator/deriveSummary';
+import { deriveSummary, formatRoofSlope } from '../../../app/lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
 function summaryFor(overrides: Partial<ConfiguratorState>) {
@@ -153,5 +153,41 @@ describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 
     expect(summaryFor({ scope: ['foundation', 'frame'] }).claddingSystemLabel).toBe('Поза обсягом заявки');
     // Both in scope and agreeing: still the single combined label, unchanged.
     expect(summaryFor({}).claddingSystemLabel).not.toContain(':');
+  });
+});
+
+describe('the ridge with its slope (03.10)', () => {
+  it('says the slope next to the ridge, in whole degrees', () => {
+    const summary = summaryFor({});
+    expect(summary.ridgeHeightLabel).toBe('10,6 м · ухил ≈ 12°');
+    expect(summary.roofSlopeLabel).toBe('ухил ≈ 12°');
+  });
+
+  it('keeps the slope on the span rule when only the width changes', () => {
+    expect(summaryFor({ dimensions: { width: 12, length: 60, height: 8 } }).ridgeHeightLabel).toBe('9,5 м · ухил ≈ 14°');
+    expect(summaryFor({ dimensions: { width: 50, length: 60, height: 8 } }).ridgeHeightLabel).toBe('11,7 м · ухил ≈ 8°');
+  });
+
+  it('shows the visitor’s ridge once edited', () => {
+    expect(summaryFor({ ridgeHeightM: 12, ridgeEdited: true }).ridgeHeightLabel).toBe('12 м · ухил ≈ 18°');
+  });
+
+  it('adds the percent only when asked (the ridge hint has room for it)', () => {
+    expect(formatRoofSlope(12.2249)).toBe('ухил ≈ 12°');
+    // tan 12.2249° = 0.2167
+    expect(formatRoofSlope(12.2249, true)).toBe('ухил ≈ 12° (22 %)');
+    expect(formatRoofSlope(5, true)).toBe('ухил ≈ 5° (9 %)');
+  });
+});
+
+describe('«Об’єкт» labels (03.10)', () => {
+  it('are null while unanswered, so nothing shows them', () => {
+    expect(summaryFor({}).objectProfile).toEqual({ purpose: null, project: null, region: null, lifting: null });
+  });
+
+  it('carry the answers as the lead reads them', () => {
+    expect(summaryFor({
+      objectProfile: { purpose: 'production', project: 'ready', region: 'м. Київ', lifting: 'craneOrHoist' },
+    }).objectProfile).toEqual({ purpose: 'Виробництво', project: 'Є', region: 'м. Київ', lifting: 'Кран-балка або тельфер' });
   });
 });

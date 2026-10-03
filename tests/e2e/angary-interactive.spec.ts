@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openControlGroup } from './configurator.helpers';
 
 async function openHangarPage(page: Page, dismissCookies = true) {
   await page.goto('/angary', { waitUntil: 'load' });
@@ -8,6 +9,7 @@ async function openHangarPage(page: Page, dismissCookies = true) {
 }
 
 async function setWidth(page: Page, value: string) {
+  await openControlGroup(page, 'dimensions');
   const input = page.locator('#hc-dimension-width');
   await input.fill(value);
   await input.blur();
@@ -18,6 +20,7 @@ function attachmentCard(page: Page) {
 }
 
 async function setLength(page: Page, value: string) {
+  await openControlGroup(page, 'dimensions');
   const input = page.locator('#hc-dimension-length');
   await input.fill(value);
   await input.blur();
@@ -351,4 +354,139 @@ test('sticky inquiry CTA honours the /angary 760/761 breakpoint', async ({ page 
   await expect(stickyCta).toBeVisible();
   await page.setViewportSize({ width: 761, height: 1024 });
   await expect(stickyCta).toBeHidden();
+});
+
+// ── «Об’єкт» and the phone accordion (03.10) ────────────────────────────────────────────────────────────────────────
+
+test('on a phone the groups fold: «Об’єкт» open first, one group at a time, each header saying its value', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const controls = page.locator('#configurator .hc-controls');
+  await expect(controls).toHaveAttribute('data-accordion', '');
+  const toggles = controls.locator('.hc-group-toggle');
+  // no foundation group on /angary (owner, 03.10)
+  await expect(toggles).toHaveText([
+    'Об’єктЩе не вказано',
+    'Розміри24 × 60 × 8 м',
+    'Контур будівліХолодний · профнастил',
+    'Огороджувальні конструкціїПрофнастил',
+    'Обсяг заявки4 з 4 робіт',
+    'Прорізи1 ворота · без дверей',
+  ]);
+  for (const [index, group] of ['object', 'dimensions', 'envelope', 'cladding', 'scope', 'openings'].entries()) {
+    const toggle = toggles.nth(index);
+    await expect(toggle).toHaveAttribute('aria-controls', `hc-${group}-panel`);
+    await expect(toggle).toHaveAttribute('aria-expanded', index === 0 ? 'true' : 'false');
+    await expect(page.locator(`#hc-${group}-panel`)).toBeVisible({ visible: index === 0 });
+  }
+  // a group is still named by its title alone, not by the value under it
+  await expect(page.locator('section[data-group="dimensions"]')).toHaveAttribute('aria-labelledby', 'hc-dimensions-heading');
+  await expect(page.locator('#hc-dimensions-heading')).toHaveText('Розміри');
+
+  // one at a time: opening «Розміри» folds «Об’єкт», and the opened header is not left under the mini drawing
+  await toggles.nth(1).click();
+  await expect(toggles.nth(1)).toHaveAttribute('aria-expanded', 'true');
+  await expect(toggles.nth(0)).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#hc-object-panel')).toBeHidden();
+  await expect.poll(async () => {
+    const stageBottom = await page.locator('#configurator .hc-preview-surface').evaluate((element) => element.getBoundingClientRect().bottom);
+    const headerTop = await toggles.nth(1).evaluate((element) => element.getBoundingClientRect().top);
+    return headerTop - stageBottom;
+  }).toBeGreaterThanOrEqual(-1);
+  await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+
+  await setWidth(page, '30');
+  await expect(toggles.nth(1)).toContainText('30 × 60 × 8 м');
+  await openControlGroup(page, 'object');
+  await page.locator('label:has(input[name="hc-purpose"][value="storage"])').click();
+  await page.getByLabel('Область будівництва', { exact: true }).selectOption('Київська область');
+  await expect(toggles.nth(0)).toContainText('Склад · Київська обл.');
+  // the open header closes its own group: every group may be folded
+  await toggles.nth(0).click();
+  await expect(controls.locator('.hc-group-toggle[aria-expanded="true"]')).toHaveCount(0);
+  // folded, the configurator's controls take well under a screen and a half (they were 2 screens, 1734 px, before)
+  expect(await controls.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(844 * 1.5);
+});
+
+test('on a wide screen every group stays open under a plain heading, «Об’єкт» first', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'a wide-screen contract');
+  await openHangarPage(page);
+  const controls = page.locator('#configurator .hc-controls');
+  await expect(controls.locator('.hc-group-toggle')).toHaveCount(0);
+  await expect(controls).not.toHaveAttribute('data-accordion', '');
+  await expect(controls.locator('.hc-control-group h3')).toHaveText(['Об’єкт', 'Розміри', 'Контур будівлі', 'Огороджувальні конструкції', 'Обсяг заявки', 'Прорізи']);
+  for (const group of ['object', 'dimensions', 'envelope', 'cladding', 'scope', 'openings']) await expect(page.locator(`#hc-${group}-panel`)).toBeVisible();
+  // the 761 px boundary is still a wide screen
+  await page.setViewportSize({ width: 761, height: 1024 });
+  await expect(controls.locator('.hc-group-toggle')).toHaveCount(0);
+  await page.setViewportSize({ width: 760, height: 1024 });
+  await expect(controls.locator('.hc-group-toggle')).toHaveCount(6);
+});
+
+test('«Об’єкт»: optional answers that reach the stamp and the brief only once given', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
+  await openHangarPage(page);
+  const facts = page.locator('.hc-summary-flagship .hc-summary-facts');
+  await expect(facts).not.toContainText('Призначення');
+  await expect(attachmentCard(page)).toHaveCount(0);
+
+  const technika = page.locator('label:has(input[name="hc-purpose"][value="machinery"])');
+  await technika.click();
+  await expect(facts).toContainText('ПризначенняТехніка');
+  await expect(attachmentCard(page)).toContainText('До заявки додано вашу конфігурацію');
+  // the chosen purpose clicked again is taken back: the stamp loses the cell
+  await technika.click();
+  await expect(page.locator('input[name="hc-purpose"]:checked')).toHaveCount(0);
+  await expect(facts).not.toContainText('Призначення');
+
+  await page.locator('label:has(input[name="hc-project"][value="inProgress"])').click();
+  await page.locator('label:has(input[name="hc-lifting"][value="craneOrHoist"])').click();
+  const brief = attachmentCard(page);
+  await brief.getByText('Переглянути параметри', { exact: true }).click();
+  await expect(brief.locator('dl > div').first()).toHaveText('ПроєктГотується');
+  await expect(brief).toContainText('Підйомне обладнанняКран-балка або тельфер');
+  await expect(brief).not.toContainText('Область');
+
+  const why = page.locator('.hc-why[data-why="object"]');
+  await why.locator('summary').click();
+  await expect(why).toContainText('Снігове й вітрове навантаження залежать від того, де стоїть ангар');
+});
+
+test('an unedited ridge keeps the span rule’s slope as the width changes; an edited one is kept', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
+  await openHangarPage(page);
+  const ridge = page.locator('#hc-dimension-ridge');
+  const area = page.locator('.hc-stamp-row .hc-summary-area');
+  await expect(area).toContainText('коник 10,6 м · ухил ≈ 12°');
+  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('Коник 10,6 м · ухил ≈ 12° (22 %)');
+
+  // it used to stay 10.6 m: 19.3° at 12 m and 5.9° at 50 m
+  await setWidth(page, '12');
+  await expect(ridge).toHaveValue('9,5');
+  await expect(area).toContainText('коник 9,5 м · ухил ≈ 14°');
+  await setWidth(page, '50');
+  await expect(ridge).toHaveValue('11,7');
+  await expect(area).toContainText('коник 11,7 м · ухил ≈ 8°');
+
+  await ridge.fill('13');
+  await ridge.blur();
+  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('ваше значення');
+  await setWidth(page, '40');
+  await expect(ridge).toHaveValue('13');
+  const brief = attachmentCard(page);
+  await brief.getByText('Переглянути параметри', { exact: true }).click();
+  await expect(brief).toContainText('Висота в конику13 м · ухил ≈ 14°');
+});
+
+test.describe('without JavaScript', () => {
+  test.use({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
+
+  test('every configurator group is open under its heading', async ({ page }) => {
+    await page.goto('/angary', { waitUntil: 'load' });
+    const controls = page.locator('#configurator .hc-controls');
+    await expect(controls.locator('.hc-group-toggle')).toHaveCount(0);
+    for (const group of ['object', 'dimensions', 'envelope', 'cladding', 'scope', 'openings']) await expect(page.locator(`#hc-${group}-panel`)).toBeVisible();
+  });
 });

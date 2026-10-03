@@ -495,7 +495,8 @@ describe('roof overhang', () => {
   it('is zero-safe: the outer tip never drops to or below the slab line across the supported range', () => {
     // Steepest allowed pitch (roof pitch is user-adjustable up to ROOF_PITCH_MAX_DEG) combined
     // with the shortest allowed eave is the worst case for the overhang tip dropping toward y = 0.
-    const m = modelFor({ width: W.min, height: H.min }, { ridgeHeightM: clampRidgeHeightM(999, W.min, H.min) });
+    // ridgeEdited: an unedited ridge follows the span rule (resolveRidgeHeightM), so the steepest one is a visitor's
+    const m = modelFor({ width: W.min, height: H.min }, { ridgeHeightM: clampRidgeHeightM(999, W.min, H.min), ridgeEdited: true });
     // Confirms this really is close to the worst case — not exactly ROOF_PITCH_MAX_DEG, because
     // clampRidgeHeightM snaps to RIDGE_HEIGHT_STEP_M first, but well within a step of it.
     expect(m.roof.pitchDeg).toBeGreaterThan(ROOF_PITCH_MAX_DEG - 1);

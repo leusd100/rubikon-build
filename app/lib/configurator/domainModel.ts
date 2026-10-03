@@ -1,4 +1,12 @@
-import { clampDoorSelection, clampGateSelection, clampRidgeHeightM, deriveStructuralVisualization, pitchDegForRidge } from './parametricModel';
+import {
+  clampDoorSelection,
+  clampGateSelection,
+  clampRidgeHeightM,
+  defaultRidgeHeightM,
+  deriveStructuralVisualization,
+  pitchDegForRidge,
+} from './parametricModel';
+import type { ObjectProfile } from './objectProfile';
 import type {
   CladdingSystem,
   ConfiguratorState,
@@ -104,7 +112,21 @@ export type HangarDomainModel = {
    *  engineered specification. */
   gateType: GateType;
   areaSqm: number;
+  /** «Об’єкт» answers, copied as given: business facts for the lead, nothing the geometry reads. */
+  objectProfile: ObjectProfile;
 };
+
+/**
+ * The ridge the configuration stands for. Until the visitor edits it, the span rule's ridge for the current width and
+ * eave height (defaultRidgeHeightM, snapped to the 0.1 m step), so changing only the width keeps a credible slope
+ * instead of drifting to 5.9° at 50 m or 19.3° at 12 m (03.10). Once edited, the visitor's value, held inside the
+ * range for the current footprint. The controls show and store this same value, so the field, the drawing, the
+ * summary and the lead never disagree.
+ */
+export function resolveRidgeHeightM(state: Pick<ConfiguratorState, 'dimensions' | 'ridgeHeightM' | 'ridgeEdited'>): number {
+  const { width, height } = state.dimensions;
+  return state.ridgeEdited ? clampRidgeHeightM(state.ridgeHeightM, width, height) : defaultRidgeHeightM(width, height);
+}
 
 export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   const { width, length, height } = state.dimensions;
@@ -113,10 +135,10 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   return {
     objectType: 'hangar',
     dimensions: { widthM: width, lengthM: length, eaveHeightM: height },
-    // Re-clamped on every derivation: the legal ridge range moves when width or eave height
-    // change, so a ridge that was legal at 24 m may not be at 60 m. Clamping here rather than in
-    // the control means the model is always self-consistent regardless of how state was produced.
-    roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, clampRidgeHeightM(state.ridgeHeightM, width, height)) },
+    // Resolved on every derivation: the legal ridge range moves when width or eave height change, so a ridge that was
+    // legal at 24 m may not be at 50 m, and an unedited ridge follows the span rule. Resolving here rather than in the
+    // control means the model is always self-consistent regardless of how state was produced.
+    roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, resolveRidgeHeightM(state)) },
     envelope: { walls: state.envelope, roof: state.envelope, wallSystem: state.wallSystem, roofSystem: state.roofSystem },
     foundation: { type: state.foundationType },
     // Width-derived, not read from state — see `structural`'s own doc comment above.
@@ -132,5 +154,6 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     // dropped for not fitting, the door's legal positions change with it.
     ...clampDoorSelection(state.doors, gateSelection.gates, gateSelection.gateType, width),
     areaSqm: Math.round(width * length),
+    objectProfile: { ...state.objectProfile },
   };
 }
