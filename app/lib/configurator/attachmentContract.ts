@@ -46,15 +46,21 @@ export function sameDrawnHangar(a: ConfiguratorState, b: ConfiguratorState): boo
 }
 
 /**
- * Exact business-state equality. Presentation state is intentionally absent from this type. `ridgeEdited` is left out
- * on purpose: the controls set it only together with a changed ridge, so the ridge value already answers the question,
- * and an edited ridge set back to the default is the default configuration again.
+ * The ridge as the visitor answered it: «follow the span rule», or a value of their own. An unedited ridge's stored
+ * value means nothing — the sizes no longer rewrite it (04.10) — and an edited one is the visitor's even while the sizes
+ * hold it to their range: it comes back with them. Setting the span rule's own value is the span rule again
+ * (withRidge), so an edited ridge set back to the default is the default configuration.
  */
+function sameRidgeAnswer(a: ConfiguratorState, b: ConfiguratorState): boolean {
+  return a.ridgeEdited === b.ridgeEdited && (!a.ridgeEdited || a.ridgeHeightM === b.ridgeHeightM);
+}
+
+/** Exact business-state equality. Presentation state is intentionally absent from this type. */
 export function sameBusinessConfiguration(a: ConfiguratorState, b: ConfiguratorState): boolean {
   return a.dimensions.width === b.dimensions.width
     && a.dimensions.length === b.dimensions.length
     && a.dimensions.height === b.dimensions.height
-    && a.ridgeHeightM === b.ridgeHeightM
+    && sameRidgeAnswer(a, b)
     && a.envelope === b.envelope
     && a.wallSystem === b.wallSystem
     && a.roofSystem === b.roofSystem

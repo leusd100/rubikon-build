@@ -191,13 +191,13 @@ test.describe('hangar configurator POC', () => {
     await openConfigurator(page);
 
     // Phase 3F.1: the summary now carries the gate's own real, fixed size alongside count/type
-    // (brief §D — "1 × стандартні, 4×4 м"), not just a bare count.
+    // (brief §D), not just a bare count — counted «одні / двоє» since 04.10.
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(1);
-    await expect(page.locator('.hc-summary-facts')).toContainText('1 × стандартні, 4×4 м');
+    await expect(page.locator('.hc-summary-facts')).toContainText('Одні стандартні, 4 × 4 м');
 
     await page.locator('.hc-option-card', { hasText: '2' }).click();
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(2);
-    await expect(page.locator('.hc-summary-facts')).toContainText('2 × стандартні, 4×4 м');
+    await expect(page.locator('.hc-summary-facts')).toContainText('Двоє стандартних, 4 × 4 м');
 
     await page.locator('.hc-option-card', { hasText: '0' }).click();
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(0);

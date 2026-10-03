@@ -373,7 +373,7 @@ test('on a phone the groups fold: «Об’єкт» open first, one group at a t
     'Контур будівліХолодний · профнастил',
     'Огороджувальні конструкціїПрофнастил',
     'Обсяг заявки4 з 4 робіт',
-    'Прорізи1 ворота · без дверей',
+    'Прорізиодні ворота · без дверей',
   ]);
   for (const [index, group] of ['object', 'dimensions', 'envelope', 'cladding', 'scope', 'openings'].entries()) {
     const toggle = toggles.nth(index);
@@ -458,7 +458,8 @@ test('«Об’єкт»: optional answers that reach the stamp and the brief onl
   const technika = page.locator('label:has(input[name="hc-purpose"][value="machinery"])');
   await technika.click();
   await expect(facts).toContainText('ПризначенняТехніка');
-  await expect(attachmentCard(page)).toContainText('До заявки додано вашу конфігурацію');
+  // the drawn hangar is still the example: the answers are added, its sizes are not the visitor's (04.10)
+  await expect(attachmentCard(page)).toContainText('До заявки додано відповіді про об’єкт');
   // the chosen purpose clicked again is taken back: the stamp loses the cell
   await technika.click();
   await expect(page.locator('input[name="hc-purpose"]:checked')).toHaveCount(0);
