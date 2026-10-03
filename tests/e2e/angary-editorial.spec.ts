@@ -65,7 +65,8 @@ for (const viewport of viewports) {
     await expect(configurator.locator('.hc-vocabulary')).toHaveCount(0);
     await expect(configurator.locator('.hc-preview-pane .hc-summary')).toHaveCount(0);
     await expect(configurator.locator('.hc-stamp-row .hc-summary-flagship')).toBeVisible();
-    await expect(configurator.getByRole('heading', { name: 'Ви обрали' })).toBeVisible();
+    // the untouched example is called one, as the sheet above it says «Приклад» (04.10); «Ви обрали» once it is the visitor's
+    await expect(configurator.getByRole('heading', { name: 'Приклад конфігурації' })).toBeVisible();
     await expect(configurator.locator('.hc-summary-area')).toContainText('коник 10,6 м');
     // the stamp's thumbnail: the configured hangar's section and plan
     await expect(configurator.locator('.hc-stamp-row svg.hc-sketch')).toBeVisible();
