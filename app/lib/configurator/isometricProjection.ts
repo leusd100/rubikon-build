@@ -58,7 +58,10 @@ export type FrameLine = { points: [Point, Point]; visible: boolean };
 export type FrameLines = {
   columns: FrameLine[];
   rafters: FrameLine[];
-  purlins: FrameLine[];
+  /** The side-wall girts — `purlins` until 03.10, when the roof got purlins of its own. */
+  girts: FrameLine[];
+  /** 03.10 — the roof purlins: both eave struts, the purlins between and the ridge purlin. */
+  roofPurlins: FrameLine[];
   ridge: FrameLine | null;
   /** Phase 3E — the centre support line: empty unless structuralScheme is centerSupport (mirrors
    *  `internal-column`'s own doc comment in technicalSceneModel.ts). Kept as its own field rather
@@ -76,6 +79,8 @@ export type FrameLines = {
   /** Phase 3E, brief §13 — a few restrained X marks. Not scope/scheme-conditional the way the
    *  other groups above are: always populated wherever ParametricBuildingModel selected a bay. */
   bracing: FrameLine[];
+  /** 03.10 — the roof bracing's crosses, in the same bays as `bracing`. */
+  roofBracing: FrameLine[];
 };
 
 export type DimensionGuide = {
@@ -227,7 +232,8 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
 
   const columns = findPrimitives(scene, 'frame-column').map(asLine);
   const rafters = findPrimitives(scene, 'frame-rafter').map(asLine);
-  const purlins = findPrimitives(scene, 'frame-purlin').map(asLine);
+  const girts = findPrimitives(scene, 'wall-girt').map(asLine);
+  const roofPurlins = findPrimitives(scene, 'roof-purlin').map(asLine);
   const ridgePrimitive = findPrimitives(scene, 'ridge-line')[0];
   const ridge = ridgePrimitive ? asLine(ridgePrimitive) : null;
   const internalColumns = findPrimitives(scene, 'internal-column').map(asLine);
@@ -235,6 +241,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
   const trussChords = findPrimitives(scene, 'truss-chord').map(asLine);
   const trussWebs = findPrimitives(scene, 'truss-web').map(asLine);
   const bracing = findPrimitives(scene, 'wall-brace').map(asLine);
+  const roofBracing = findPrimitives(scene, 'roof-brace').map(asLine);
 
   const wallSegments: ProjectedSegment[] = findPrimitives(scene, 'wall-segment').map((s) => ({
     points: projectAll(s.corners),
@@ -374,7 +381,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel): IsometricScen
     terrain,
     foundation,
     footings,
-    frame: { columns, rafters, purlins, ridge, internalColumns, internalColumnProps, trussChords, trussWebs, bracing },
+    frame: { columns, rafters, girts, roofPurlins, ridge, internalColumns, internalColumnProps, trussChords, trussWebs, bracing, roofBracing },
     wallSegments,
     gableEnds,
     roofSegments,

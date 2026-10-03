@@ -1,4 +1,4 @@
-import { buildParametricModel, type ParametricBuildingModel, type Vec3 } from './parametricModel';
+import { buildParametricModel, type ParametricBuildingModel, type RoofPurlinKind, type Vec3 } from './parametricModel';
 import type { HangarDomainModel } from './domainModel';
 import type { EnvelopeChoice } from './types';
 
@@ -42,7 +42,12 @@ export type ScenePrimitive =
   // a box in 3D) — deliberately not modelled as geometry: this is object form, not a member schedule.
   | { kind: 'frame-column'; visible: boolean; face: 'left' | 'right'; index: number; a: Vec3; b: Vec3 }
   | { kind: 'frame-rafter'; visible: boolean; slope: 'left' | 'right'; index: number; a: Vec3; b: Vec3 }
-  | { kind: 'frame-purlin'; visible: boolean; index: number; a: Vec3; b: Vec3 }
+  // The side-wall girts. Named `frame-purlin` until 03.10, when the roof got purlins of its own and
+  // the old name would have said these were them.
+  | { kind: 'wall-girt'; visible: boolean; index: number; a: Vec3; b: Vec3 }
+  // 03.10 — the roof purlins: both eave struts, the purlins between and the ridge purlin (see
+  // RoofPurlin in parametricModel.ts). Secondary steel, gated on scope.frame like the girts.
+  | { kind: 'roof-purlin'; visible: boolean; index: number; role: RoofPurlinKind; a: Vec3; b: Vec3 }
   // Phase 3E — the centre support line (empty when structuralScheme !== 'centerSupport', same
   // "genuinely absent, not hidden" rule InternalColumn's own doc comment in parametricModel.ts
   // states). `internal-column-prop` only exists per column when ParametricBuildingModel actually
@@ -58,6 +63,9 @@ export type ScenePrimitive =
   // Phase 3E, brief §13/§15 — a few restrained X marks, never omitted (see BraceMember's own doc
   // comment — always at least the first/last bay, at any supported length).
   | { kind: 'wall-brace'; visible: boolean; face: 'left' | 'right'; bayIndex: number; a: Vec3; b: Vec3 }
+  // 03.10 — the roof bracing: one primitive per diagonal, in the wall bracing's own bays (see
+  // RoofBraceMember in parametricModel.ts).
+  | { kind: 'roof-brace'; visible: boolean; slope: 'left' | 'right'; bayIndex: number; a: Vec3; b: Vec3 }
   // One primitive per structural bay so the envelope materialises section-by-section.
   | {
       kind: 'wall-segment';
@@ -198,7 +206,12 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
   }
 
   building.girts.forEach((girt, index) => {
-    primitives.push({ kind: 'frame-purlin', visible: frameVisible, index, a: girt.a, b: girt.b });
+    primitives.push({ kind: 'wall-girt', visible: frameVisible, index, a: girt.a, b: girt.b });
+  });
+  // 03.10 — the roof purlins, the same secondary steel as the girts and in the same build-up
+  // moment (buildUpSequence.ts's `purlins` layer, which until now held only wall members).
+  building.roofPurlins.forEach((purlin, index) => {
+    primitives.push({ kind: 'roof-purlin', visible: frameVisible, index, role: purlin.kind, a: purlin.member.a, b: purlin.member.b });
   });
 
   // Phase 3E — wall bracing, same `frameVisible` gating as girts (both secondary steel, both
@@ -206,6 +219,11 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
   building.bracing.forEach((brace) => {
     primitives.push({ kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, a: brace.diagonalA.a, b: brace.diagonalA.b });
     primitives.push({ kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, a: brace.diagonalB.a, b: brace.diagonalB.b });
+  });
+  // 03.10 — and the roof's, gated the same way.
+  building.roofBracing.forEach((brace) => {
+    primitives.push({ kind: 'roof-brace', visible: frameVisible, slope: brace.slope, bayIndex: brace.bayIndex, a: brace.diagonalA.a, b: brace.diagonalA.b });
+    primitives.push({ kind: 'roof-brace', visible: frameVisible, slope: brace.slope, bayIndex: brace.bayIndex, a: brace.diagonalB.a, b: brace.diagonalB.b });
   });
 
   for (const segment of building.envelope.wallSegments) {

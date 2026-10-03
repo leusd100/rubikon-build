@@ -110,8 +110,8 @@ export type InternalColumn = {
    * point, where the two rafters already meet — a real, legible detail (a king-post-style prop),
    * not a fabricated one, and the only way this column actually SUPPORTS anything in portal mode
    * (there is no bottom chord there to land on). `null` in truss mode, where the column's own top
-   * already lands exactly on the truss's flat bottom chord (see `buildTrussWebs`) — nothing more
-   * is needed.
+   * lands on the truss's bottom-chord node at the centreline — the node the two middle diagonals
+   * and the vertical under the ridge meet at (see `trussPanelNodesM`) — so nothing more is needed.
    */
   ridgeProp: Member | null;
 };
@@ -135,7 +135,8 @@ export type TrussWebs = {
    *  why a flat bottom chord (not one shaped to the roof) was the chosen schematic language. */
   bottomChord: Member;
   /** Alternating diagonals between the (implicit, from `PortalFrame`) top chord and this bottom
-   *  chord — a simplified Warren pattern; see `buildTrussWebs`'s own doc comment. */
+   *  chord — a simplified Warren pattern — then, last, the vertical under the ridge; see
+   *  `buildTrussWebs`'s own doc comment. */
   webs: Member[];
 };
 
@@ -149,6 +150,34 @@ export type TrussWebs = {
 export type BraceMember = {
   face: 'left' | 'right';
   bayIndex: number;
+  diagonalA: Member;
+  diagonalB: Member;
+};
+
+/** What a line of roof purlin is: the eave strut along a column line, a purlin between, or the
+ *  ridge purlin. The positions themselves are `roofPurlinPositionsM`'s. */
+export type RoofPurlinKind = 'eave-strut' | 'purlin' | 'ridge';
+
+/**
+ * One line of roof purlin, the whole length of the building, on the roof's centre-line plane — see
+ * `buildRoofPurlins`. Secondary steel like the girts: a fact of the frame, not a user control.
+ */
+export type RoofPurlin = {
+  kind: RoofPurlinKind;
+  /** Across the span — the same number `roofPurlinPositionsM` returns for this line. */
+  xM: number;
+  member: Member;
+};
+
+/**
+ * One cross of the roof bracing (03.10): the two diagonals of one panel of a braced bay, between
+ * two neighbouring purlin lines of one slope. Panels are counted from the eave strut up to the
+ * ridge purlin — see `buildRoofBracing`.
+ */
+export type RoofBraceMember = {
+  slope: RoofSlope;
+  bayIndex: number;
+  panelIndex: number;
   diagonalA: Member;
   diagonalB: Member;
 };
@@ -236,10 +265,16 @@ export type ParametricBuildingModel = {
   };
   /** Secondary horizontal members on the side walls (girts) — visual weight only. */
   girts: Member[];
+  /** Roof purlins (03.10): both eave struts, the purlins between and the ridge purlin — on the
+   *  truss's top-chord nodes, or evenly along portal rafters. See `buildRoofPurlins`. */
+  roofPurlins: RoofPurlin[];
   /** Phase 3E, brief §13 — see `BraceMember`'s own doc comment. Never empty by omission at a
    *  small building size the way `internalColumns` legitimately can be — every supported length
    *  has at least the first/last bay braced. */
   bracing: BraceMember[];
+  /** Roof bracing (03.10): crosses between the purlin lines of both slopes, in the same bays the
+   *  walls are braced in — see `buildRoofBracing`. */
+  roofBracing: RoofBraceMember[];
   openings: OpeningGeometry[];
   /**
    * ALWAYS present, never null — even when `scope.foundation` is false.
@@ -376,11 +411,19 @@ const GIRT_LEVELS = [1 / 3, 2 / 3] as const;
 // honesty" requirement — none of this may be presented as a structural determination.
 
 /** Believable real-world truss panel width, used only to pick a panel COUNT that looks right at
- *  a given span — see `buildTrussWebs`. Clamped so neither a narrow nor a very wide supported
- *  span can produce a degenerate (too sparse or too dense) web pattern. */
+ *  a given span — see `trussPanelNodesM`. Clamped so neither a narrow nor a very wide supported
+ *  span can produce a degenerate (too sparse or too dense) web pattern. Both bounds are even,
+ *  because the count per half always is (03.10 — see `trussPanelNodesM` for why). */
 const TRUSS_PANEL_TARGET_WIDTH_M = 1.8;
-const TRUSS_PANELS_MIN_PER_HALF = 3;
+const TRUSS_PANELS_MIN_PER_HALF = 4;
 const TRUSS_PANELS_MAX_PER_HALF = 8;
+
+/** Portal rafters have no nodes to seat purlins on, so they are spaced evenly (03.10): at least
+ *  three spaces a slope — the frame tour's thirds — and about this far apart past that. Three
+ *  metres is about where a truss at the 18 m threshold puts its own (every second panel point),
+ *  so the roof keeps one rhythm across the switch. A visual rhythm, not a purlin design. */
+const PORTAL_PURLIN_TARGET_SPACING_M = 3;
+const PORTAL_PURLIN_SPACES_MIN_PER_SLOPE = 3;
 
 /** Half-width safety margin around a gate opening's own rect that an internal column's centreline
  *  must clear — generous relative to any column's own real section, so "does this conflict"
@@ -720,15 +763,12 @@ function buildGirts(widthM: number, lengthM: number, eaveM: number): Member[] {
  * plus the middle bay once there are enough of them for a third braced zone to read as "a middle
  * zone" rather than "the same end again" — six bays is the point `deriveBayLayout` itself starts
  * meaning a genuinely long building (its own target spacing is 6 m, so six bays is a ~36 m run).
- * Both side walls get the same bay indices, for the plan-symmetry a real building would have.
+ * Both side walls get the same bay indices, for the plan-symmetry a real building would have, and
+ * the roof is braced in the same bays (03.10, `buildRoofBracing`) — see `bracedBayIndices`.
  */
 function buildBracing(wallSegments: WallSegment[]): BraceMember[] {
   const segmentCount = wallSegments[0]?.segmentCount ?? 0;
-  if (segmentCount === 0) return [];
-
-  const bracedIndices = new Set<number>([0, segmentCount - 1]);
-  const LONG_BUILDING_BAY_THRESHOLD = 6;
-  if (segmentCount >= LONG_BUILDING_BAY_THRESHOLD) bracedIndices.add(Math.floor(segmentCount / 2));
+  const bracedIndices = new Set(bracedBayIndices(segmentCount));
 
   return wallSegments
     .filter((s) => bracedIndices.has(s.index))
@@ -740,6 +780,19 @@ function buildBracing(wallSegments: WallSegment[]): BraceMember[] {
       diagonalA: { a: s.corners[0], b: s.corners[2] },
       diagonalB: { a: s.corners[1], b: s.corners[3] },
     }));
+}
+
+/**
+ * The bays the bracing stands in, ascending: the first and the last, and the middle one from six
+ * bays on — `buildBracing`'s own doc comment says why. One rule for the walls and the roof (03.10):
+ * a roof cross hands its load to the wall cross in the same bay, so the two are never apart.
+ */
+function bracedBayIndices(bayCount: number): number[] {
+  if (bayCount <= 0) return [];
+  const LONG_BUILDING_BAY_THRESHOLD = 6;
+  const indices = new Set<number>([0, bayCount - 1]);
+  if (bayCount >= LONG_BUILDING_BAY_THRESHOLD) indices.add(Math.floor(bayCount / 2));
+  return [...indices].sort((a, b) => a - b);
 }
 
 /**
@@ -1120,6 +1173,144 @@ function buildInternalColumns(
   return columns;
 }
 
+/** The roof's centre-line height at a point across the span — the two lines the rafters, and so a
+ *  truss's top chord, trace. One formula for the web, the purlins and the roof bracing. */
+function roofLineYM(xM: number, widthM: number, eaveM: number, ridgeM: number): number {
+  const halfSpanM = widthM / 2;
+  return eaveM + (ridgeM - eaveM) * (1 - Math.abs(xM - halfSpanM) / halfSpanM);
+}
+
+/** Where a truss has its nodes across the span — `trussPanelNodesM`'s answer. */
+export type TrussPanelNodes = {
+  panelsPerHalf: number;
+  panelWidthM: number;
+  /** Every panel point, 0 … widthM, ascending: 2 · panelsPerHalf + 1 of them. */
+  panelXsM: number[];
+  /** Where the top chord has a node: both heels, every odd panel point (a diagonal meets the chord
+   *  there) and the ridge (the vertical under it). The purlins' seats — see `roofPurlinPositionsM`. */
+  topChordNodeXsM: number[];
+  /** Where the bottom chord has a node: every even panel point — both heels and the centreline. */
+  bottomChordNodeXsM: number[];
+};
+
+/**
+ * The truss's panel points across the span (03.10) — the ONE answer to "where are this truss's
+ * nodes", read by `buildTrussWebs`, by `roofPurlinPositionsM` and, exported, by the /angary frame
+ * tour, so the configurator and the tour draw one frame. Width alone decides it: the centre row
+ * changes nothing in the truss, only whether a column stands under its centre node.
+ *
+ * `panelsPerHalf` is the EVEN count nearest a `TRUSS_PANEL_TARGET_WIDTH_M` panel, clamped 4…8. Even,
+ * so that the centreline is a BOTTOM-chord node, where the two middle diagonals meet: the centre
+ * column in truss mode lands on a node, not mid-panel. It used to be `round(half / 1.8)`, which is
+ * odd across much of the range — at 24–26 m, the first centre-support widths, the column met the
+ * bottom chord between nodes while `buildTrussWebs`'s doc comment said it met one. With an even
+ * count the ridge is not a diagonal's node any more, so the web gets a vertical under it (see
+ * `buildTrussWebs`) and the ridge purlin sits on a node as well.
+ */
+export function trussPanelNodesM(widthM: number): TrussPanelNodes {
+  const halfSpanM = widthM / 2;
+  const panelsPerHalf = Math.min(
+    TRUSS_PANELS_MAX_PER_HALF,
+    Math.max(TRUSS_PANELS_MIN_PER_HALF, 2 * Math.round(halfSpanM / (2 * TRUSS_PANEL_TARGET_WIDTH_M))),
+  );
+  const panelCount = panelsPerHalf * 2;
+  const panelXsM = Array.from({ length: panelCount + 1 }, (_, i) => round((i * widthM) / panelCount));
+  const isTopNode = (i: number) => i % 2 === 1 || i === 0 || i === panelsPerHalf || i === panelCount;
+  return {
+    panelsPerHalf,
+    panelWidthM: round(widthM / panelCount),
+    panelXsM,
+    topChordNodeXsM: panelXsM.filter((_, i) => isTopNode(i)),
+    bottomChordNodeXsM: panelXsM.filter((_, i) => i % 2 === 0),
+  };
+}
+
+/** One line of roof purlin across the span: where it is and what it is. */
+export type RoofPurlinPosition = { xM: number; kind: RoofPurlinKind };
+
+/** Evenly along portal rafters — see `PORTAL_PURLIN_TARGET_SPACING_M`. Eave to eave, ascending. */
+function portalPurlinXsM(widthM: number): number[] {
+  const spacesPerSlope = Math.max(
+    PORTAL_PURLIN_SPACES_MIN_PER_SLOPE,
+    Math.round(widthM / 2 / PORTAL_PURLIN_TARGET_SPACING_M),
+  );
+  const spaces = spacesPerSlope * 2;
+  return Array.from({ length: spaces + 1 }, (_, i) => round((i * widthM) / spaces));
+}
+
+/**
+ * Where the roof's purlin lines sit across the span (03.10), eave to eave, ascending — the one
+ * answer `buildRoofPurlins`, `buildRoofBracing` and the /angary frame tour all read.
+ *
+ * The two ends are the eave struts, on the column lines; the middle one is the ridge purlin. On a
+ * truss every line sits on a top-chord node (`trussPanelNodesM`): the heels, every odd panel point —
+ * where a diagonal meets the chord, so the chord never carries a purlin in bending between its nodes
+ * (the frame tour's own rule, 03.10) — and the ridge, over the vertical. A portal rafter has no
+ * nodes, so there they are spaced evenly (`portalPurlinXsM`).
+ */
+export function roofPurlinPositionsM(widthM: number, roofStructure: RoofStructure): RoofPurlinPosition[] {
+  const xs = roofStructure === 'truss' ? trussPanelNodesM(widthM).topChordNodeXsM : portalPurlinXsM(widthM);
+  const last = xs.length - 1;
+  const kindAt = (i: number): RoofPurlinKind => {
+    if (i === 0 || i === last) return 'eave-strut';
+    return i === last / 2 ? 'ridge' : 'purlin';
+  };
+  return xs.map((xM, i) => ({ xM, kind: kindAt(i) }));
+}
+
+/**
+ * The roof purlins (03.10). Before them the configurator had none at all — the thin lines along the
+ * building in the technical view were the side-wall girts. One member per line, the whole length,
+ * on the roof's centre-line plane like the rafters: positions from `roofPurlinPositionsM`, heights
+ * from the same roof line the truss's top chord follows.
+ */
+function buildRoofPurlins(
+  widthM: number,
+  lengthM: number,
+  eaveM: number,
+  ridgeM: number,
+  roofStructure: RoofStructure,
+): RoofPurlin[] {
+  return roofPurlinPositionsM(widthM, roofStructure).map(({ xM, kind }) => {
+    const yM = roofLineYM(xM, widthM, eaveM, ridgeM);
+    return { kind, xM, member: { a: v3(xM, yM, 0), b: v3(xM, yM, lengthM) } };
+  });
+}
+
+/**
+ * The roof bracing (03.10): in every bay the walls are braced in (`bracedBayIndices`), on both
+ * slopes, a cross in each panel between two neighbouring purlin lines, from the eave strut up to the
+ * ridge purlin — the purlins are its struts. It is how the frame tour draws its first bay, and why it
+ * shares the walls' bays: the roof crosses carry the wind on the end wall out to both eaves, and the
+ * wall crosses under them take it down to the footings.
+ */
+function buildRoofBracing(roofPurlins: RoofPurlin[], stationsM: number[]): RoofBraceMember[] {
+  const ridgeIndex = roofPurlins.findIndex((p) => p.kind === 'ridge');
+  if (ridgeIndex < 0) return [];
+  // Each slope's lines from its own eave strut up to the ridge purlin.
+  const slopes: [RoofSlope, RoofPurlin[]][] = [
+    ['left', roofPurlins.slice(0, ridgeIndex + 1)],
+    ['right', roofPurlins.slice(ridgeIndex).reverse()],
+  ];
+  const bays = bracedBayIndices(stationsM.length - 1);
+
+  return slopes.flatMap(([slope, lines]) => bays.flatMap((bayIndex) => {
+    const z0 = stationsM[bayIndex];
+    const z1 = stationsM[bayIndex + 1];
+    return lines.slice(1).map((line, panelIndex) => {
+      const from = lines[panelIndex].member.a;
+      const to = line.member.a;
+      return {
+        slope,
+        bayIndex,
+        panelIndex,
+        diagonalA: { a: v3(from.x, from.y, z0), b: v3(to.x, to.y, z1) },
+        diagonalB: { a: v3(from.x, from.y, z1), b: v3(to.x, to.y, z0) },
+      };
+    });
+  }));
+}
+
 /**
  * Phase 3E — the steel truss's own web (brief §7-10): a flat bottom chord and a repeating,
  * alternating-diagonal ("Warren") pattern between it and the frame's own rafter lines — those
@@ -1132,47 +1323,39 @@ function buildInternalColumns(
  *     slope. A flat bottom chord is the immediately-recognisable "this is a truss, not a pair of
  *     rafters" cue from every angle (a shaped one would still read as "two rafters" from a
  *     distance), and is also what most real long-span gable trusses of this kind actually use.
- *   - panel count is derived from span alone (`TRUSS_PANEL_TARGET_WIDTH_M`, clamped both ends —
- *     see that constant's own doc comment), never from any load or member-capacity calculation.
- *   - panel count is always EVEN: two mirrored halves meeting at X = widthM / 2, specifically so a
- *     panel POINT — not a panel's midpoint — always lands exactly on the centreline. That is the
- *     exact point `buildInternalColumns`'s own centre column meets in truss mode, so the two stay
- *     geometrically consistent by construction, not by a separate alignment check.
- *   - the web is a plain alternating (Warren) zigzag, no verticals. A specific NAMED engineered
- *     pattern (Fink/Pratt/Howe…) would claim a precision this tool does not have; Warren is the
- *     simplest pattern that still reads unambiguously as "chords + diagonal webs" from every
- *     camera angle this configurator uses, with no near-zero-length member risk directly under
- *     the ridge the way a verticals-included pattern would have there.
+ *   - the panel points are `trussPanelNodesM`'s: derived from span alone, never from any load or
+ *     member-capacity calculation.
+ *   - panels per half are always EVEN (03.10), so the centreline is a bottom-chord node, where the
+ *     two middle diagonals meet — the exact point `buildInternalColumns`'s centre column meets in
+ *     truss mode, so the two stay consistent by construction, not by a separate alignment check.
+ *     (This comment said so before it was true: the count used to come out odd at 24–26 m, and the
+ *     column met the bottom chord mid-panel.)
+ *   - the web is a plain alternating (Warren) zigzag plus ONE vertical, under the ridge. With an even
+ *     count per half no diagonal meets the top chord at the ridge, where the chord changes slope; the
+ *     vertical makes it a node, takes the ridge purlin down to the centre node and, under a centre
+ *     support, on to the column. It is the longest member in the web. No other verticals: a specific
+ *     NAMED engineered pattern (Fink/Pratt/Howe…) would claim a precision this tool does not have,
+ *     and verticals towards the heels would shrink to near-zero length.
+ *   - the two end panels carry no diagonal: the chords meet at the heel, so that "diagonal" would
+ *     lie on the top chord itself — a second copy of the rafter, not a web member.
  */
 function buildTrussWebs(widthM: number, eaveM: number, ridgeM: number, stationsM: number[]): TrussWebs[] {
-  const halfSpanM = widthM / 2;
-  const panelsPerHalf = Math.min(
-    TRUSS_PANELS_MAX_PER_HALF,
-    Math.max(TRUSS_PANELS_MIN_PER_HALF, Math.round(halfSpanM / TRUSS_PANEL_TARGET_WIDTH_M)),
-  );
-  const panelCount = panelsPerHalf * 2;
-  const panelWidthM = widthM / panelCount;
-
-  // Top-chord Y at a given X — the SAME two lines PortalFrame's own rafters already trace.
-  const topChordY = (x: number): number => {
-    if (x <= halfSpanM) return eaveM + (ridgeM - eaveM) * (x / halfSpanM);
-    return ridgeM - (ridgeM - eaveM) * ((x - halfSpanM) / halfSpanM);
-  };
+  const { panelXsM, panelsPerHalf } = trussPanelNodesM(widthM);
+  const panelCount = panelXsM.length - 1;
+  const top = (xM: number, z: number) => v3(xM, roofLineYM(xM, widthM, eaveM, ridgeM), z);
+  const bottom = (xM: number, z: number) => v3(xM, eaveM, z);
+  const ridgeXM = panelXsM[panelsPerHalf];
 
   return stationsM.map((z, index) => {
     const webs: Member[] = [];
-    for (let i = 0; i < panelCount; i += 1) {
-      const x0 = i * panelWidthM;
-      const x1 = (i + 1) * panelWidthM;
-      const bottom0 = v3(x0, eaveM, z);
-      const bottom1 = v3(x1, eaveM, z);
-      const top0 = v3(x0, topChordY(x0), z);
-      const top1 = v3(x1, topChordY(x1), z);
-      // Alternating zigzag, symmetric about the centreline by construction (panelCount is always
-      // even — see this function's own doc comment): even panels rise bottom-to-next-top, odd
-      // panels fall top-to-next-bottom.
-      webs.push(i % 2 === 0 ? { a: bottom0, b: top1 } : { a: top0, b: bottom1 });
+    for (let i = 1; i < panelCount - 1; i += 1) {
+      const x0 = panelXsM[i];
+      const x1 = panelXsM[i + 1];
+      // Alternating zigzag, symmetric about the centreline by construction (an even count per
+      // half): even panels rise bottom-to-next-top, odd panels fall top-to-next-bottom.
+      webs.push(i % 2 === 0 ? { a: bottom(x0, z), b: top(x1, z) } : { a: top(x0, z), b: bottom(x1, z) });
     }
+    webs.push({ a: bottom(ridgeXM, z), b: top(ridgeXM, z) });
     return {
       stationM: z,
       index,
@@ -1278,6 +1461,9 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
     widthM, eaveHeightM, ridgeM, stationsM, openings, domain.structural.scheme, domain.structural.roofStructure,
   );
   const wallSegments = buildWallSegments(widthM, lengthM, eaveHeightM, stationsM);
+  // The purlins follow the roof structure in force, as the centre row follows the scheme: a truss
+  // seats them on its nodes, a portal rafter spaces them evenly — see `roofPurlinPositionsM`.
+  const roofPurlins = buildRoofPurlins(widthM, lengthM, eaveHeightM, ridgeM, domain.structural.roofStructure);
 
   return {
     footprint: { widthM, lengthM },
@@ -1301,7 +1487,9 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
       roofEnvelope: domain.envelope.roof,
     },
     girts: buildGirts(widthM, lengthM, eaveHeightM),
+    roofPurlins,
     bracing: buildBracing(wallSegments),
+    roofBracing: buildRoofBracing(roofPurlins, stationsM),
     openings,
     slab: buildSlab(widthM, lengthM, domain.foundation.type),
     // External + internal column footings merged into one array — see FootingGeometry's own doc
