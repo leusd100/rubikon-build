@@ -192,10 +192,14 @@ export function buildLayerForPrimitive(primitive: ScenePrimitive): BuildLayer | 
     case 'truss-chord':
     case 'truss-web':
       return 'rafters';
-    case 'frame-purlin':
+    case 'wall-girt':
+    // 03.10: the roof purlins and the roof bracing join the girts' layer — the layer was named for
+    // purlins long before the configurator drew any.
+    case 'roof-purlin':
     // Phase 3E: wall bracing shares the girts' own layer — both secondary steel, both always
     // present, neither a user control.
     case 'wall-brace':
+    case 'roof-brace':
       return 'purlins';
     case 'wall-segment':
     case 'gable-end':

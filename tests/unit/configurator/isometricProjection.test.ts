@@ -470,3 +470,34 @@ describe('Phase 3E structural line projections', () => {
     expect(trussProjected.frame.trussWebs.every((l) => l.visible)).toBe(true);
   });
 });
+
+describe('roof secondary steel projections (03.10)', () => {
+  it('projects the girts, roof purlins and both bracings 1:1 with their primitives, each a finite 2-point line', () => {
+    const scene = buildTechnicalScene(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE));
+    const projected = projectIsometricScene(scene);
+    const count = (kind: string) => scene.primitives.filter((p) => p.kind === kind).length;
+    expect(projected.frame.girts).toHaveLength(count('wall-girt'));
+    expect(projected.frame.roofPurlins).toHaveLength(count('roof-purlin'));
+    expect(projected.frame.bracing).toHaveLength(count('wall-brace'));
+    expect(projected.frame.roofBracing).toHaveLength(count('roof-brace'));
+    expect(projected.frame.roofPurlins.length).toBeGreaterThan(0);
+    expect(projected.frame.roofBracing.length).toBeGreaterThan(0);
+    for (const line of [...projected.frame.roofPurlins, ...projected.frame.roofBracing]) {
+      expect(line.points).toHaveLength(2);
+      expect(line.points.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y))).toBe(true);
+    }
+  });
+
+  it('roof members sit inside the framing bounds the building already sets', () => {
+    const projected = projectIsometricScene(buildTechnicalScene(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE)));
+    const { minX, minY, maxX, maxY } = projected.bounds;
+    for (const line of [...projected.frame.roofPurlins, ...projected.frame.roofBracing]) {
+      for (const p of line.points) {
+        expect(p.x).toBeGreaterThanOrEqual(minX);
+        expect(p.x).toBeLessThanOrEqual(maxX);
+        expect(p.y).toBeGreaterThanOrEqual(minY);
+        expect(p.y).toBeLessThanOrEqual(maxY);
+      }
+    }
+  });
+});

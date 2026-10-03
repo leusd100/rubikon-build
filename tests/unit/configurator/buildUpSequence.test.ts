@@ -75,6 +75,15 @@ describe('buildUpSequence timing', () => {
     }
   });
 
+  it('puts the roof purlins and the roof bracing in the purlins layer, with the girts (03.10)', () => {
+    const scene = buildTechnicalScene(deriveDomainModel(stateWith({})));
+    for (const kind of ['wall-girt', 'roof-purlin', 'wall-brace', 'roof-brace'] as const) {
+      const primitives = scene.primitives.filter((p) => p.kind === kind);
+      expect(primitives.length, kind).toBeGreaterThan(0);
+      expect(primitives.every((p) => buildLayerForPrimitive(p) === 'purlins'), kind).toBe(true);
+    }
+  });
+
   it('never restarts a layer with a negative or NaN offset', () => {
     for (const layer of BUILD_LAYER_ORDER) {
       const offset = layerStartOffsetMs(layer);

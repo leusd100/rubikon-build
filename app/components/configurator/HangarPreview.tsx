@@ -370,12 +370,22 @@ export function HangarPreview({
       </g>
 
       <g className="hc-layer hc-purlins">
-        {scene.frame.purlins.map((line, index) => (
+        {scene.frame.girts.map((line, index) => (
           <FrameLineEl
             key={index}
             line={line}
             className={`hc-buildlayer hc-phase-${purlins.phase}`}
-            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.purlins.length))}
+            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.girts.length))}
+          />
+        ))}
+        {/* 03.10 — the roof purlins, in the girts' own thin ink and the same layer/phase: the roof's
+            secondary steel arrives with the walls'. */}
+        {scene.frame.roofPurlins.map((line, index) => (
+          <FrameLineEl
+            key={`roof-purlin-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${purlins.phase} hc-roof-purlin`}
+            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.roofPurlins.length))}
           />
         ))}
         {/* Phase 3E, brief §13/§15 — a few restrained X marks, same `purlins` layer/phase as
@@ -386,6 +396,15 @@ export function HangarPreview({
             line={line}
             className={`hc-buildlayer hc-phase-${purlins.phase} hc-brace`}
             style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.bracing.length))}
+          />
+        ))}
+        {/* 03.10 — the roof's crosses, in the wall bracing's bays and ink. */}
+        {scene.frame.roofBracing.map((line, index) => (
+          <FrameLineEl
+            key={`roof-brace-${index}`}
+            line={line}
+            className={`hc-buildlayer hc-phase-${purlins.phase} hc-brace hc-roof-brace`}
+            style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.roofBracing.length))}
           />
         ))}
       </g>
