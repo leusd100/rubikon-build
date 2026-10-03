@@ -55,8 +55,9 @@ const dimensions = [
   `M${s1[0]},${s1[1]}H${s2[0]}M${s1[0]},${s1[1] - 6}v12M${s2[0]},${s2[1] - 6}v12`,
   `M${h1[0]},${h1[1]}V${h2[1]}M${h1[0] - 6},${h1[1]}h12M${h2[0] - 6},${h2[1]}h12`,
 ].join('');
-// The site: ground, the access road to the front (with its centre line), a tower crane beside the building
-const [g1, g2] = [xy([-60, 0, 0]), xy([W + 120, 0, 0])];
+// The site: ground beside the building (never through it — 03.10), the access road to the front (with its centre line),
+// a tower crane standing on its own base beside the building
+const [g1, g2] = [xy([W + 8, 0, 0]), xy([W + 120, 0, 0])];
 const MAST = W + 74;
 const [m0, mTop] = [xy([MAST, 80, 0]), xy([MAST, 80, 168])];
 const mastLattice = Array.from({ length: 8 }, (_, index) => {
@@ -67,6 +68,8 @@ const mastLattice = Array.from({ length: 8 }, (_, index) => {
 const jibY = mTop[1];
 const site = [
   `M${g1[0]},${g1[1] + 2}H${g2[0]}`,
+  // the crane's ground and base, clear of the height dimension beside it
+  `M${m0[0] - 16},${m0[1] + 2}h46M${m0[0] - 8},${m0[1] + 2}v-5h16v5`,
   `M${xy([W + 26, 0, 0]).join(',')}L${xy([W + 26, -70, 0]).join(',')}M${xy([W + 66, 0, 0]).join(',')}L${xy([W + 66, -70, 0]).join(',')}`,
   // the tower: two chords and a lattice
   `M${m0[0] - 4},${m0[1]}V${jibY}M${m0[0] + 4},${m0[1]}V${jibY}${mastLattice}`,
@@ -79,8 +82,9 @@ const site = [
 const road = [
   `M${xy([W + 46, 0, 0]).join(',')}L${xy([W + 46, -70, 0]).join(',')}`,
 ];
-// Other works it depends on: a network run in from outside (dashed), and three overlapping bars of a schedule
-const [n1, n2] = [xy([W + 120, 150, -4]), xy([W, 150, -4])];
+// Other works it depends on: a network run in from outside (dashed) — from the left, so it crosses neither the crane
+// nor the dimensions — and three overlapping bars of a schedule
+const [n1, n2] = [xy([-70, 150, -4]), xy([0, 150, -4])];
 const schedule = { x: 20, y: 334 };
 const timeline = [
   `M${n1[0]},${n1[1]}L${n2[0]},${n2[1]}`,

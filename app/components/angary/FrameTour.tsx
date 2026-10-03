@@ -32,6 +32,8 @@ const VIEW = { width: 720, height: 440 };
 const BAYS = 3;
 /** How far in front of the end wall the wind arrows start, m */
 const WIND = 5.5;
+/** The span's dimension line: below the footings (1.1 m deep in the drawing), m */
+const DIM_Z = -2.6;
 const fmt = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
 const n = (value: number) => value.toFixed(1);
 
@@ -57,7 +59,8 @@ function frameGeometry(domain: HangarDomainModel) {
 
   // Fit the frame with its footings, dimensions and the wind arrows into the sheet: room on top for the snow arrows
   const extremes: P3[] = [
-    [-0.9, -0.75, -1.1], [-3.6, 0, E / 2], [0, -2.9, -1.4], [W, -2.9, -1.4], [W * 0.2, -WIND, E * 0.25], [W * 0.8, -WIND, E * 0.25],
+    [-0.9, -0.75, -1.1], [-3.6, 0, E / 2], [0, 0, DIM_Z - 0.5], [W, 0, DIM_Z - 0.5], [W / 2, 0, DIM_Z - 1.8],
+    [W * 0.2, -WIND, E * 0.25], [W * 0.8, -WIND, E * 0.25],
     [W + 0.75, -0.75, -1.1], [W + 4.6, s / 2, 0], [W + 1.4, end, 0], [W + 0.75, DEP + 0.75, -1.1], [0, end, E + 0.8],
     [W / 2, end, R + 0.8], [W, end, E + 0.8], [W / 2, 0, R],
   ];
@@ -119,17 +122,19 @@ function frameGeometry(domain: HangarDomainModel) {
     const [cx, cy] = xy(point);
     return [9, 16].map((r) => `M${n(cx - r)},${n(cy + r * 0.3)}q${r},${n(r * 0.5)} ${r * 2},0`).join('');
   }).join('');
-  const slab = line([-1.4, -1.4, 0], [W + 1.4, -1.4, 0], [W + 1.4, end, 0]);
+  // The ground line along the footings' outer top edges — out at 1.4 m it ran through the side footings (03.10)
+  const slab = line([-0.75, -0.75, 0], [W + 0.75, -0.75, 0], [W + 0.75, end, 0]);
 
-  // Dimensions: the span L in front, the wall height H at the near-left column, the frame spacing a along the side
-  const tick = (point: P3) => { const [x, y] = xy(point); return `M${n(x - 4)},${n(y - 2.3)}l8,4.6`; };
-  const spanDim = `${line([0, -2.4, 0], [W, -2.4, 0])}${tick([0, -2.4, 0])}${tick([W, -2.4, 0])}${line([0, -0.9, 0], [0, -2.9, 0])}${line([W, -0.9, 0], [W, -2.9, 0])}`;
+  // Dimensions: the span L under the front frame, below its footings (as on a section — in front of them it crossed the
+  // foundations, 03.10), the wall height H at the near-left column, the frame spacing a along the side. Ticks at 45°.
+  const tick = (point: P3, rising: boolean) => { const [x, y] = xy(point); return rising ? `M${n(x - 4)},${n(y + 4)}l8,-8` : `M${n(x - 4)},${n(y - 4)}l8,8`; };
+  const spanDim = `${line([0, 0, DIM_Z], [W, 0, DIM_Z])}${tick([0, 0, DIM_Z], true)}${tick([W, 0, DIM_Z], true)}${line([0, 0, -1.4], [0, 0, DIM_Z - 0.4])}${line([W, 0, -1.4], [W, 0, DIM_Z - 0.4])}`;
   const heightDim = (() => {
     const [bx, by] = xy([-2.2, 0, 0]);
     const [, ty] = xy([-2.2, 0, E]);
     return `M${n(bx)},${n(by)}V${n(ty)}M${n(bx - 5)},${n(by)}h10M${n(bx - 5)},${n(ty)}h10${line([-0.9, 0, E], [-2.6, 0, E])}`;
   })();
-  const bayDim = `${line([W + 2.3, 0, 0], [W + 2.3, s, 0])}${tick([W + 2.3, 0, 0])}${tick([W + 2.3, s, 0])}${line([W + 0.9, 0, 0], [W + 2.8, 0, 0])}${line([W + 0.9, s, 0], [W + 2.8, s, 0])}`;
+  const bayDim = `${line([W + 2.3, 0, 0], [W + 2.3, s, 0])}${tick([W + 2.3, 0, 0], false)}${tick([W + 2.3, s, 0], false)}${line([W + 1.1, 0, 0], [W + 2.8, 0, 0])}${line([W + 1.1, s, 0], [W + 2.8, s, 0])}`;
 
   // ── snow, followed through one frame (the second): the strip of roof it carries — half a bay either side — then
   //    its purlins, the frame, its columns, footings and the ground ──
@@ -198,7 +203,7 @@ function frameGeometry(domain: HangarDomainModel) {
     snowGround: groundUnder(columnXs.map((x) => [x, s, -1.1] as P3)), snowFlow,
     windArrows, endWall, braceFootings, windGround: groundUnder([[W, 0, -1.1], [W, s, -1.1]]), windFlow,
     tags, focus,
-    letters: { L: letter([centre ? W / 4 : W / 2, -2.4, 0], 24), H: letter([-3.3, 0, E / 2], 6), a: letter([W + 3.9, s / 2, 0], 16) },
+    letters: { L: letter([centre ? W / 4 : W / 2, 0, DIM_Z], 21), H: letter([-3.3, 0, E / 2], 6), a: letter([W + 3.9, s / 2, 0], 16) },
   };
 }
 
@@ -255,7 +260,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
       zoom: 1.15,
     },
   ];
-  const { visualRef, step, touring, run, size, motion, choose, toggle, hover } = useDrawingTour(steps.length);
+  const { visualRef, step, touring, run, size, motion, choose, toggle, hover } = useDrawingTour(steps.length, { loops: 3 });
   const active = step ? steps[step - 1] : undefined;
   const object = `${own ? 'Ваш ангар' : 'Приклад'} · ${fmt(g.W)} × ${fmt(g.lengthM)} × ${fmt(g.E)} м`;
   let chain: readonly string[] | null = null;

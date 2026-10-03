@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useHoverStep } from './useHoverStep';
 
-// The step tour shared by /pro-nas practice (PracticeSteps) and a direction page's node (DirectionNode). It measures
-// the picture for the camera, follows the reduced-motion preference, starts once when the picture is at least half in
-// view and pauses when it leaves the view entirely — not sooner: the control sits under the picture, so reaching for it
-// on a phone can scroll most of the picture away, and pausing there flipped the button so the tap meant to pause
-// resumed the tour. Each step is held for STEP_MS; after the last the tour returns to the overview. Reduced motion: no
-// tour, and a chosen step switches at once.
+// The step tour shared by /pro-nas practice (PracticeSteps), a direction page's node (DirectionNode) and /angary's frame
+// (FrameTour). It measures the picture for the camera, follows the reduced-motion preference, plays when the picture is
+// at least half in view and pauses when it leaves the view entirely — not sooner: the control sits under the picture,
+// so reaching for it on a phone can scroll most of the picture away, and pausing there flipped the button so the tap
+// meant to pause resumed the tour. Back in view it resumes where it stopped. Each step is held for STEP_MS; the tour
+// goes round `loops` times (the frame's loads, 03.10: «по колу рази 3–4»), then returns to the overview. A step the
+// visitor chooses, or a pause, hands the tour over to them: it no longer resumes by itself. Reduced motion: no tour,
+// and a chosen step switches at once.
 
 const STEP_MS = 5200; // room for each step to build what it names (UX pass 2026-10)
 
@@ -30,9 +32,12 @@ export function stageTransform(size: StageSize | null, picture: StageSize, step:
   return `translate(${width / 2}px, ${height / 2}px) scale(${step.zoom}) translate(${-cx}px, ${-cy}px)`;
 }
 
-export function useDrawingTour(stepCount: number) {
+export function useDrawingTour(stepCount: number, { loops = 1 }: { loops?: number } = {}) {
   const visualRef = useRef<HTMLDivElement>(null);
-  const started = useRef(false);
+  /** The tour plays by itself until the visitor takes it over */
+  const auto = useRef(true);
+  const cycles = useRef(0);
+  const shown = useRef(0);
   const [step, setStep] = useState(0);
   const [touring, setTouring] = useState(false);
   const [run, setRun] = useState(0);
@@ -56,12 +61,16 @@ export function useDrawingTour(stepCount: number) {
   }, []);
 
   useEffect(() => {
+    shown.current = step;
+  }, [step]);
+
+  useEffect(() => {
     const visual = visualRef.current;
     if (!visual || !motion) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.intersectionRatio >= 0.5 && !started.current) {
-        started.current = true;
-        setStep(1);
+      if (entry.intersectionRatio >= 0.5 && auto.current && cycles.current < loops) {
+        // from the first step, or again from the one it stopped on (its progress bar restarts with `run`)
+        if (shown.current === 0) setStep(1);
         setRun((value) => value + 1);
         setTouring(true);
       } else if (!entry.isIntersecting) {
@@ -70,7 +79,7 @@ export function useDrawingTour(stepCount: number) {
     }, { threshold: [0, 0.5] });
     observer.observe(visual);
     return () => observer.disconnect();
-  }, [motion]);
+  }, [motion, loops]);
 
   useEffect(() => {
     if (!touring) return;
@@ -78,28 +87,36 @@ export function useDrawingTour(stepCount: number) {
       if (step < stepCount) {
         setStep(step + 1);
         setRun((value) => value + 1);
+        return;
+      }
+      cycles.current += 1;
+      if (cycles.current < loops) {
+        setStep(1);
+        setRun((value) => value + 1);
       } else {
         setTouring(false);
         setStep(0);
       }
     }, STEP_MS);
     return () => window.clearTimeout(timer);
-  }, [touring, step, run, stepCount]);
+  }, [touring, step, run, stepCount, loops]);
 
   /** Shows a step and stops the tour (a pressed item, or one pointed at — useHoverStep) */
   const choose = (value: number) => {
-    started.current = true;
+    auto.current = false;
     setTouring(false);
     setStep(value);
   };
   const hover = useHoverStep(step, choose);
-  /** The round control: pauses the tour, or plays it from the shown step (from the first, on the overview) */
+  /** The round control: pauses the tour, or plays it once more from the shown step (from the first, on the overview) */
   const toggle = () => {
-    started.current = true;
     if (touring) {
+      auto.current = false;
       setTouring(false);
       return;
     }
+    auto.current = true;
+    cycles.current = loops - 1;
     setStep(step === 0 ? 1 : step);
     setRun((value) => value + 1);
     setTouring(true);
