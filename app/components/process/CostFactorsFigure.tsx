@@ -139,12 +139,13 @@ const timeline = [
 const scheduleAxis = `M${schedule.x},${schedule.y + 20}h126${Array.from({ length: 7 }, (_, index) => `M${schedule.x + index * 21},${schedule.y + 20}v-4`).join('')}`;
 const pad2 = (value: number) => String(value).padStart(2, '0');
 
-/** Where each number sits on the drawing — on its part, clear of the other lines */
+/** Where each number sits on the drawing — on its part, clear of the other lines. The foundation's stands a little up
+ *  and out from the slab's corner: at a phone's radius (15) it touched the schedule's 7 (04.10). */
 const [fx, fy] = xy([0, 60, -7]);
 const BADGES: Record<string, readonly [number, number]> = {
   dimensions: [(s1[0] + s2[0]) / 2, s1[1] + 18],
   structure: xy([W / 2, 160, RIDGE + 44]),
-  foundation: [fx - 16, fy + 24],
+  foundation: [fx - 22, fy + 18],
   insulation: xy([0, 120, EAVE / 2]),
   technology: xy([W - 12, 95, 20]),
   logistics: xy([TRUCK.x + OUTRIGGER.u[0], TRUCK.d - OUTRIGGER.reach, 0]),
@@ -200,11 +201,12 @@ export function CostFactorsFigure({
   };
 
   const activeIndex = factors.findIndex((factor) => factor.key === active);
+  // 306 tall: room under the sizes' badge 1 for a phone's larger badge, which the edge cut flat (04.10)
   const drawing = (
-    <svg viewBox="8 62 492 300" focusable="false" aria-hidden="true">
+    <svg viewBox="8 62 492 306" focusable="false" aria-hidden="true">
       <defs>
-        <mask id="cf-behind-crane" maskUnits="userSpaceOnUse" x="8" y="62" width="492" height="300">
-          <rect x="8" y="62" width="492" height="300" fill="#fff" />
+        <mask id="cf-behind-crane" maskUnits="userSpaceOnUse" x="8" y="62" width="492" height="306">
+          <rect x="8" y="62" width="492" height="306" fill="#fff" />
           <path d={craneOutline} fill="#000" />
         </mask>
       </defs>

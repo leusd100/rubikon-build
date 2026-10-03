@@ -73,10 +73,14 @@
 :where([data-motion-ready="on"]) .angary-process-rail li > span { transition-delay: calc(150ms + var(--i, 0) * 170ms); }
 
 /* ---------- The route's title block: who answers for the agreed scope (it replaced the separate people section) ---------- */
-.angary-stamp { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: clamp(44px, 5vw, 64px); border: 1px solid var(--color-dark-line); }
+/* #responsibility is an anchor of its own: it lands under the site header, as the sections do (04.10) */
+.angary-stamp { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: clamp(44px, 5vw, 64px); border: 1px solid var(--color-dark-line); scroll-margin-top: 116px; }
 .angary-stamp-title { grid-column: 1 / -1; margin: 0; padding: 12px 18px; color: var(--color-accent-on-dark); border-bottom: 1px solid var(--color-dark-line); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .angary-stamp dl { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, .8fr) minmax(0, 1.6fr); margin: 0; }
 .angary-stamp dl > div { min-width: 0; padding: 14px 18px 16px; }
+/* the roles in one row and the names in the next, across the cells: a role that wraps to two lines no longer drops its
+   name 14 px below the other (1280–1440 px, 04.10) */
+.angary-stamp dl > div { display: grid; grid-row: span 2; grid-template-rows: subgrid; }
 .angary-stamp dl > div + div { border-left: 1px solid var(--color-dark-line); }
 .angary-stamp dt { margin-bottom: 6px; color: var(--color-dark-text-muted); font: 700 11px/1.3 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
 .angary-stamp dd { margin: 0; color: var(--color-dark-text); font: 600 17px/1.3 var(--font-condensed), sans-serif; }
@@ -100,6 +104,11 @@
 .angary-mobile-inquiry-cta { display: none; }
 .angary-mobile-inquiry-cta[hidden] { display: none; }
 
+/* The cost foot's text over its actions until there is room beside them: at 1024 px it was squeezed into 279 px (04.10) */
+@media (max-width: 1180px) {
+  .angary-cost-foot { grid-template-columns: 1fr; }
+}
+
 @media (min-width: 761px) and (max-width: 1023px) {
   .angary-page { --section-space: 72px; --section-space-compact: 56px; --grid-gap: 36px; }
   .angary-page .hangar-configurator-embedded { padding-block: 56px 88px; }
@@ -114,7 +123,6 @@
   .angary-process-rail h3 { padding-top: 10px; }
   .angary-process-rail :is(h3, p) { max-width: 560px; margin-inline: 0; }
   :where([data-motion-ready]) .angary-process-rail:not([data-motion-state="on"]) li:not(:last-child)::before { transform: scaleY(0); }
-  .angary-cost-foot { grid-template-columns: 1fr; }
   .angary-stamp dl { grid-template-columns: 1fr 1fr; }
   .angary-stamp dl > .is-wide { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--color-dark-line); }
   .angary-real-grid { grid-template-columns: 1fr; max-width: var(--content-copy); }
@@ -141,7 +149,7 @@
   .angary-process-rail li > span { position: absolute; top: 0; left: 0; margin: 0; }
   .angary-process-rail h3 { max-width: none; margin-inline: 0; padding-top: 10px; font-size: 18px; }
   :where([data-motion-ready]) .angary-process-rail:not([data-motion-state="on"]) li:not(:last-child)::before { transform: scaleY(0); }
-  .angary-cost-foot { grid-template-columns: 1fr; margin-top: 28px; }
+  .angary-cost-foot { margin-top: 28px; }
   .angary-cost-actions .button { width: 100%; justify-content: space-between; }
   .angary-stamp dl { grid-template-columns: 1fr; }
   .angary-stamp dl > div + div { border-left: 0; border-top: 1px solid var(--color-dark-line); }
@@ -163,6 +171,10 @@
   .angary-real .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
   .angary-process-rail p { max-width: none; margin-inline: 0; font-size: 15px; }
   .angary-page .faq-heading { position: static; margin-bottom: 36px; }
+  .angary-stamp { scroll-margin-top: 88px; }
+  /* While «До заявки» is fixed over the bottom of the screen, what takes the focus scrolls clear of it (04.10: a focused
+     FAQ question sat 85 % under it) */
+  html:has(.angary-mobile-inquiry-cta:not([hidden])) { scroll-padding-bottom: 70px; }
   .angary-mobile-inquiry-cta:not([hidden]) { position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 58px; padding: 15px 24px calc(15px + env(safe-area-inset-bottom)); color: var(--color-on-action); background: var(--color-accent-strong); border-top: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 -10px 36px rgba(0, 0, 0, .24); font: 800 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
   .angary-mobile-inquiry-cta:focus-visible { outline: 3px solid var(--color-on-action); outline-offset: -6px; }
 }

@@ -287,3 +287,85 @@ for (const dpr of [1, 2]) {
     });
   });
 }
+
+// 04.10: the blocks after the frame keep their shape between the breakpoints
+for (const width of [768, 820, 1024]) {
+  test(`/angary «Потрібен лише один етап?» keeps its three cards on one ruled row at ${width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize({ width, height: 1024 });
+    await page.goto('/angary', { waitUntil: 'load' });
+    const tops = await page.locator('.related-directions-section .related-card').evaluateAll((cards) => cards.map((card) => Math.round(card.getBoundingClientRect().top)));
+    expect(new Set(tops).size).toBe(1);
+  });
+}
+
+for (const width of [1920, 1440, 1280, 1024]) {
+  test(`/angary title block of the route: the two names share a line at ${width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/angary', { waitUntil: 'load' });
+    const stamp = page.locator('#responsibility');
+    // a group named by its title (a plain div cannot take a name)
+    await expect(page.getByRole('group', { name: 'За погоджений обсяг відповідаємо особисто' })).toHaveCount(1);
+    const tops = await stamp.locator('dl > div:not(.is-wide) dd').evaluateAll((names) => names.map((name) => Math.round(name.getBoundingClientRect().top)));
+    expect(tops).toHaveLength(2);
+    expect(Math.abs(tops[0] - tops[1])).toBeLessThanOrEqual(1);
+    // the cost foot's text keeps a readable column beside or over its actions (279 px at 1024 before)
+    const foot = await page.locator('.angary-cost-foot p').boundingBox();
+    expect(foot!.width).toBeGreaterThan(420);
+  });
+}
+
+for (const viewport of [{ width: 1440, height: 900, header: 116 }, { width: 390, height: 844, header: 88 }]) {
+  test(`/angary#responsibility lands under the site header at ${viewport.width}px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/angary', { waitUntil: 'load' });
+    await page.locator('#responsibility').evaluate((element) => element.scrollIntoView());
+    expect(await page.locator('#responsibility').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(viewport.header);
+  });
+}
+
+test.describe('the real hangar on a 3× phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
+
+  test('takes the 1536w photo for its 4 : 3 crop, as HOME does', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the DPR case runs once');
+    await page.goto('/angary', { waitUntil: 'load' });
+    const image = page.locator('#real-object img');
+    await image.scrollIntoViewIfNeeded();
+    // 04.10: sizes said 314 px for a photo drawn ~474 px wide in the crop, and a 3× phone took the 960w
+    await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).currentSrc)).toContain('hangar-retouched-1536w.webp');
+  });
+});
+
+test('on a phone the focused FAQ question scrolls clear of «До заявки»', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/angary', { waitUntil: 'load' });
+  await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
+  // a size changed attaches the brief, which shows the shortcut once the summary has scrolled past
+  await page.locator('#configurator .hc-group-toggle[aria-controls="hc-dimensions-panel"]').click();
+  await page.locator('#hc-dimension-width').fill('30');
+  await page.locator('#hc-dimension-width').blur();
+  const cta = page.locator('.angary-mobile-inquiry-cta');
+  const questions = page.locator('.faq-list summary');
+  // reached with the keyboard, as a visitor would: Tab from the question before
+  for (let index = 1; index < 4; index += 1) {
+    await questions.nth(index - 1).focus();
+    await page.keyboard.press('Tab');
+    await expect(questions.nth(index)).toBeFocused();
+    const covered = await page.evaluate(() => {
+      const focused = document.activeElement!.getBoundingClientRect();
+      const bar = document.querySelector<HTMLElement>('.angary-mobile-inquiry-cta');
+      if (!bar || bar.hidden) return 0;
+      const rect = bar.getBoundingClientRect();
+      return Math.max(0, Math.min(focused.bottom, rect.bottom) - Math.max(focused.top, rect.top));
+    });
+    // 04.10: the fourth question sat 85 % under the bar
+    expect(covered, `question ${index + 1}`).toBe(0);
+  }
+  await expect(cta).toHaveCount(1);
+});

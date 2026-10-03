@@ -132,4 +132,32 @@ for (const route of ROUTES) {
         .not.toContain('1');
     }
   });
+
+  // Every badge whole inside the drawing and clear of the others — at a phone's larger radius too (04.10: the sizes' 1 was
+  // cut flat by the drawing's bottom edge, and the foundation's 3 touched the schedule's 7)
+  test(`${route} cost drawing: every badge is whole and apart`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(route, { waitUntil: 'load' });
+    const svg = page.locator('.proc-factors svg').first();
+    await svg.scrollIntoViewIfNeeded();
+    const problems = await svg.evaluate((drawing) => {
+      const view = (drawing as SVGSVGElement).viewBox.baseVal;
+      const badges = [...drawing.querySelectorAll<SVGGElement>('.cf-badge')].map((badge) => {
+        const { e, f } = badge.transform.baseVal.consolidate()!.matrix;
+        const circle = badge.querySelector('circle')!;
+        const style = getComputedStyle(circle);
+        return { key: badge.dataset.part!, x: e, y: f, r: Number.parseFloat(style.r) + Number.parseFloat(style.strokeWidth) / 2 };
+      });
+      const found: string[] = [];
+      for (const badge of badges) {
+        if (badge.x - badge.r < view.x || badge.y - badge.r < view.y || badge.x + badge.r > view.x + view.width || badge.y + badge.r > view.y + view.height) found.push(`${badge.key} leaves the drawing`);
+        for (const other of badges) {
+          if (other.key <= badge.key) continue;
+          if (Math.hypot(badge.x - other.x, badge.y - other.y) < badge.r + other.r + 2) found.push(`${badge.key} × ${other.key}`);
+        }
+      }
+      return found;
+    });
+    expect(problems).toEqual([]);
+  });
 }
