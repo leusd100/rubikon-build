@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   BUILD_LAYER_ORDER,
+  BUILD_STAGE_ORDER,
   buildLayerForPrimitive,
+  firstViewDurationMs,
+  firstViewStageStartsMs,
+  isStageReleased,
   layerStartOffsetMs,
+  stageSpanMs,
   staggerDelayMs,
   totalSequenceDurationMs,
 } from '../../../app/lib/configurator/buildUpSequence';
@@ -76,5 +81,42 @@ describe('buildUpSequence timing', () => {
       expect(Number.isFinite(offset)).toBe(true);
       expect(offset).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe('the first view (/angary, 03.10)', () => {
+  it('requests the stages in the order a hangar is built, starting at once', () => {
+    expect(BUILD_STAGE_ORDER).toEqual(['foundation', 'frame', 'walls', 'roof', 'gates']);
+    const starts = firstViewStageStartsMs();
+    expect(starts).toHaveLength(BUILD_STAGE_ORDER.length);
+    expect(starts[0]).toBe(0);
+  });
+
+  it('hands each stage over while the one before it is still settling — one motion, not five fades', () => {
+    const starts = firstViewStageStartsMs();
+    for (let index = 1; index < starts.length; index += 1) {
+      const previous = BUILD_STAGE_ORDER[index - 1];
+      expect(starts[index]).toBeGreaterThan(starts[index - 1]);
+      expect(starts[index]).toBeLessThan(starts[index - 1] + stageSpanMs(previous));
+    }
+  });
+
+  it('takes about two and a half seconds, whatever the hangar', () => {
+    expect(firstViewDurationMs()).toBeGreaterThanOrEqual(2000);
+    expect(firstViewDurationMs()).toBeLessThanOrEqual(3000);
+  });
+
+  it('counts the whole columns → rafters → purlins sequence as the frame stage', () => {
+    expect(stageSpanMs('frame')).toBe(totalSequenceDurationMs());
+    for (const stage of ['foundation', 'walls', 'roof', 'gates'] as const) {
+      expect(stageSpanMs(stage)).toBeGreaterThan(0);
+      expect(stageSpanMs(stage)).toBeLessThan(stageSpanMs('frame'));
+    }
+  });
+
+  it('holds back exactly the stages not yet requested', () => {
+    expect(BUILD_STAGE_ORDER.map((stage) => isStageReleased(stage, 0))).toEqual([false, false, false, false, false]);
+    expect(BUILD_STAGE_ORDER.map((stage) => isStageReleased(stage, 2))).toEqual([true, true, false, false, false]);
+    expect(BUILD_STAGE_ORDER.every((stage) => isStageReleased(stage, BUILD_STAGE_ORDER.length))).toBe(true);
   });
 });
