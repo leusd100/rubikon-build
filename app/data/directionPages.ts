@@ -39,6 +39,13 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     // UX review 2026-10: the related row as on every other direction page (it was a closed three-card box here), and no
     // «Що буде після звернення» in the form — the route on this page already tells it
     hideJourney: true,
+    // Owner, 03.10: the related directions close the page after the form, as the separate stages of this same work
+    related: {
+      placement: 'after-inquiry',
+      eyebrow: 'Окремим етапом',
+      title: 'Потрібен лише один етап?',
+      text: 'Фундамент, металокаркас чи покрівлю можна замовити окремо.',
+    },
     hero: {
       breadcrumbLabel: 'Ангари',
       // The first screen says what RUBIKON does and for whom (UX review 2026-10: it sold «конфігурацію»; «будуєм» was on

@@ -33,7 +33,9 @@ function watchGate(
     visibilityFrame = 0;
     const summaryIsPassed = summary.getBoundingClientRect().bottom <= 0;
     const inquiryRect = inquirySection.getBoundingClientRect();
-    const inquiryIsVisible = inquiryRect.top < window.innerHeight && inquiryRect.bottom > 0;
+    // On screen or already above it: /angary closes with its related directions after the form (03.10), and there a
+    // «До заявки ↓» would point the wrong way
+    const inquiryIsVisible = inquiryRect.top < window.innerHeight;
     setSummaryPassed((current) => current === summaryIsPassed ? current : summaryIsPassed);
     setInquiryVisible((current) => current === inquiryIsVisible ? current : inquiryIsVisible);
   };
@@ -92,7 +94,7 @@ function watchGate(
 
 /**
  * The phone shortcut to the form while something is attached. It shows only once `gate` — the
- * source's own summary — has scrolled past, never while #inquiry is on screen, while a field has
+ * source's own summary — has scrolled past, never once #inquiry is on screen or passed, while a field has
  * focus, or under the cookie banner, the mobile menu or a modal. Which widths show it is the
  * `className`'s CSS (≤ 760 on /angary).
  */

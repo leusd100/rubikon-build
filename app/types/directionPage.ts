@@ -60,7 +60,19 @@ export type DirectionPageConfig = {
    * Related directions as the compact band; `items` replaces relatedDirections[id] for a page
    * composition that is not live yet, so the live page's list stays as it is.
    */
-  related?: { compact?: boolean; items?: readonly RelatedDirection[] };
+  related?: {
+    compact?: boolean;
+    items?: readonly RelatedDirection[];
+    /**
+     * 'after-inquiry': the related directions close the page after #inquiry instead of leading into it — for a page
+     * whose related works are its own separate stages (/angary, owner 03.10). Other pages keep them before the form.
+     */
+    placement?: 'after-inquiry';
+    /** The band's own heading in place of «Суміжні роботи» / «Пов’язані напрямки», with a supporting line */
+    eyebrow?: string;
+    title?: string;
+    text?: string;
+  };
   /** Leaves «Що буде після звернення» out of the page's #inquiry (the page tells the route itself) */
   hideJourney?: boolean;
   /** Optional for a page whose own editorial architecture replaces the overview band. */

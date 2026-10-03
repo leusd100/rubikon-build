@@ -179,6 +179,13 @@ test('mobile inquiry CTA follows attachment, form and overlay conditions', async
 
   await page.locator('#inquiry').scrollIntoViewIfNeeded();
   await expect(stickyCta).toBeHidden();
+  // Past the form — /angary closes with the separate stages after it (03.10) — a «↓» would point the wrong way
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  expect(await page.locator('#inquiry').evaluate((element) => element.getBoundingClientRect().bottom)).toBeLessThan(0);
+  // the CTA measures on the next frame: let it, so a stale «hidden» cannot pass for the answer
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await expect(stickyCta).toBeHidden();
+  await page.locator('#inquiry').scrollIntoViewIfNeeded();
   await attachmentCard(page).getByRole('button', { name: 'Не додавати', exact: true }).click();
   await page.locator('#configurator').scrollIntoViewIfNeeded();
   await expect(stickyCta).toHaveCount(0);
