@@ -90,6 +90,9 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const inquiryAttachment = useInquiryAttachment();
   const attachment = inquiryAttachment?.attachment ?? null;
   const dimensionsField = attachment?.dimensionsField ?? { mode: 'manual' as const };
+  // A brief from the page's own tool already says what the work is: the page's preset direction becomes a line in the
+  // brief card and is submitted unchanged (owner, 03.10). «Не додавати» brings the select back.
+  const fixedDirection = attachment && defaultDirection ? defaultDirection : undefined;
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
   const [statusAction, setStatusAction] = useState<'error' | null>(null);
@@ -252,6 +255,15 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         <p className="inquiry-required-note">Поля, позначені *, обов’язкові</p>
       </div>
 
+      {/* Owner, 03.10: an attached brief opens the form, above «Контакт» — after «Обговорити цю конфігурацію» a phone shows
+          the brief, the name and the phone on one screen. Without a brief the form starts with «Контакт» as before. */}
+      {attachment && inquiryAttachment && (
+        <div className="inquiry-form-section inquiry-form-section-brief">
+          <InquiryAttachmentSummary attachment={attachment} onDetach={inquiryAttachment.detach} direction={fixedDirection} />
+          {fixedDirection && <input name={enabledFieldName(jsReady, 'direction')} type="hidden" value={fixedDirection} />}
+        </div>
+      )}
+
       <section className="inquiry-form-section" aria-labelledby="inquiry-contact-heading">
         <h3 className="inquiry-form-section-title" id="inquiry-contact-heading">Контакт</h3>
         <div className="inquiry-form-section-body">
@@ -307,17 +319,15 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       <section className="inquiry-form-section" aria-labelledby="inquiry-project-heading">
         <h3 className="inquiry-form-section-title" id="inquiry-project-heading" tabIndex={-1}>Завдання</h3>
         <div className="inquiry-form-section-body">
-          {attachment && inquiryAttachment && (
-            <InquiryAttachmentSummary attachment={attachment} onDetach={inquiryAttachment.detach} />
+          {!fixedDirection && (
+            <label className="inquiry-select">
+              <span>Напрям робіт *</span>
+              <select name={enabledFieldName(jsReady, 'direction')} defaultValue={defaultDirection} required onInvalid={DIRECTION_VALIDITY.onInvalid} onChange={DIRECTION_VALIDITY.onInput}>
+                <option value="" disabled>Оберіть напрям</option>
+                {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
+              </select>
+            </label>
           )}
-
-          <label className="inquiry-select">
-            <span>Напрям робіт *</span>
-            <select name={enabledFieldName(jsReady, 'direction')} defaultValue={defaultDirection} required onInvalid={DIRECTION_VALIDITY.onInvalid} onChange={DIRECTION_VALIDITY.onInput}>
-              <option value="" disabled>Оберіть напрям</option>
-              {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
-            </select>
-          </label>
 
           <div className="inquiry-task-summary">
             <label htmlFor="inquiry-comment"><span>Коротко про завдання</span></label>

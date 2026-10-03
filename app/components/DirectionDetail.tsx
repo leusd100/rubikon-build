@@ -336,20 +336,30 @@ function RelatedDirections({
   id,
   compact = false,
   items,
+  eyebrow = 'Суміжні роботи',
+  title = 'Пов’язані напрямки',
+  text,
+  closing = false,
 }: {
   id: DirectionPageConfig['id'];
   compact?: boolean;
   items?: readonly RelatedDirection[];
+  eyebrow?: string;
+  title?: string;
+  text?: string;
+  /** The band closes the page, after #inquiry (DirectionPageConfig.related.placement) */
+  closing?: boolean;
 }) {
   const related = items ?? relatedDirections[id];
 
   if (!related.length) return null;
 
   return (
-    <section className={`page-section related-directions-section${compact ? ' is-compact' : ''}`}>
+    <section className={classNames('page-section related-directions-section', compact ? 'is-compact' : undefined, closing ? 'is-closing' : undefined)}>
       <div className="shell">
-        <p className="eyebrow"><span /> Суміжні роботи</p>
-        <h2 className="related-directions-title">Пов’язані напрямки</h2>
+        <p className="eyebrow"><span /> {eyebrow}</p>
+        <h2 className="related-directions-title">{title}</h2>
+        {text && <p className="related-directions-text">{text}</p>}
         {/* data-count drives the exactly-3-item grid variant in globals.css (.related-grid[data-count="3"])
             — angary is currently the only direction with 3 related entries; every other count keeps the
             default flex layout untouched. */}
@@ -381,6 +391,19 @@ export function DirectionPage({
   editorialArchitecture?: ReactNode;
 }) {
   const direction = getDirection(config.id);
+  // /angary (owner, 03.10): the related directions — its own stages, one at a time — come after the form, not before it
+  const relatedClosesPage = config.related?.placement === 'after-inquiry';
+  const related = (
+    <RelatedDirections
+      id={config.id}
+      compact={config.related?.compact}
+      items={config.related?.items}
+      eyebrow={config.related?.eyebrow}
+      title={config.related?.title}
+      text={config.related?.text}
+      closing={relatedClosesPage}
+    />
+  );
 
   return (
     <main className={classNames('inner-page direction-page', config.pageClassName)} id="main-content">
@@ -437,7 +460,7 @@ export function DirectionPage({
         </>
       )}
       {config.faq && <DirectionFaq {...config.faq} />}
-      <RelatedDirections id={config.id} compact={config.related?.compact} items={config.related?.items} />
+      {!relatedClosesPage && related}
       <ConversationSection
         kicker={config.cta.eyebrow}
         title={config.cta.title}
@@ -446,6 +469,7 @@ export function DirectionPage({
         journey={DIRECTION_JOURNEY[config.id]}
         showJourney={!config.hideJourney}
       />
+      {relatedClosesPage && related}
     </main>
   );
 }

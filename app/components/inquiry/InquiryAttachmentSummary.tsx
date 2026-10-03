@@ -8,8 +8,13 @@ import { INQUIRY_ATTACHMENT_LABELS, type InquiryAttachment } from '../../lib/inq
  * The attached brief inside the inquiry form: what it is, its headline, a look at every row the
  * lead's text carries, and «Не додавати». Kind-agnostic — the hangar configuration renders the
  * inquiry-config-brief* markup it always had; only the words come from the attachment.
+ * `direction`: the page's preset «Напрям робіт», read-only here while the brief is attached (the form submits it).
  */
-export function InquiryAttachmentSummary({ attachment, onDetach }: { attachment: InquiryAttachment; onDetach: () => void }) {
+export function InquiryAttachmentSummary({
+  attachment,
+  onDetach,
+  direction,
+}: { attachment: InquiryAttachment; onDetach: () => void; direction?: string }) {
   const [expanded, setExpanded] = useState(false);
   const labels = INQUIRY_ATTACHMENT_LABELS[attachment.kind];
 
@@ -21,6 +26,8 @@ export function InquiryAttachmentSummary({ attachment, onDetach }: { attachment:
         <div>
           <small id="inquiry-config-brief-title">{attachment.title}</small>
           <strong>{attachment.headline}</strong>
+          {/* Not a dl: the brief's rows (dl > div) are exactly the lead's text, and the direction is a field of its own */}
+          {direction && <p className="inquiry-config-brief-direction"><span>Напрям робіт</span> <b>{direction}</b></p>}
         </div>
         <div className="inquiry-config-brief-actions">
           <button

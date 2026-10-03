@@ -1,12 +1,14 @@
 import { DirectionPage } from '../components/DirectionDetail';
 import { HangarEditorialArchitecture } from '../components/angary/HangarEditorialArchitecture';
 import { HangarMobileInquiryCta } from '../components/angary/HangarMobileInquiryCta';
+import { HangarRealObject } from '../components/angary/HangarRealObject';
 import { HangarConfigurator } from '../components/configurator/HangarConfigurator';
 import { HangarInquiryProvider } from '../components/configurator/HangarInquiryContext';
 import { InquiryAttachmentProvider } from '../components/inquiry/InquiryAttachmentProvider';
 import { createDirectionMetadata, getDirectionPage } from '../lib/directions';
 import { costFactors, processSteps } from '../lib/deliveryModelPresentation';
 import { deliveryModel } from '../data/deliveryModel';
+import { homeProofCase } from '../data/homeProof';
 import { leadership } from '../data/people';
 import '../configurator-preview/configurator.css';
 import './angary-editorial.css';
@@ -26,6 +28,7 @@ export default function HangarsPage() {
     route: {
       steps: processSteps().map(({ title, result }) => ({ title, result })),
       boundary: deliveryModel.statements.boundary,
+      leadCta: deliveryModel.contactRoles.constructionLead.cta,
     },
     people: leadership,
   };
@@ -36,7 +39,13 @@ export default function HangarsPage() {
         <DirectionPage
           config={config}
           signatureExperience={<HangarConfigurator embedded />}
-          editorialArchitecture={<HangarEditorialArchitecture content={editorial} />}
+          editorialArchitecture={(
+            <HangarEditorialArchitecture
+              content={editorial}
+              // HOME's one approved real hangar (owner, 03.10), after the frame tour; nothing while there is no record
+              realObject={homeProofCase && <HangarRealObject proof={homeProofCase} />}
+            />
+          )}
         />
         <HangarMobileInquiryCta />
       </HangarInquiryProvider>

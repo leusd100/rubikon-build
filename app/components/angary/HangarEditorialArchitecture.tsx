@@ -1,29 +1,42 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { Phone } from 'lucide-react';
 import { CostFactorsFigure, type CostFactorItem } from '../process/CostFactorsFigure';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
+import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
+import { company, companyContactLinks } from '../../data/company';
 import { sameBusinessConfiguration } from '../../lib/configurator/attachmentContract';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { FrameTour } from './FrameTour';
 
-// /angary below the configurator (UX review 2026-10, report «/angary по блоках»): what drives the cost of this hangar,
-// its frame from roof to footing, and the route from the brief to handed-over works with who answers for it. The
-// three static frame schemes, the separate people section and the five-step route that skipped the estimate are gone.
+// /angary below the configurator (UX review 2026-10, report «/angary по блоках»): the visitor's frame from roof to
+// footing, a real hangar built that way, what drives the cost, and the route from the brief to handed-over works with
+// who answers for it. The three static frame schemes, the separate people section and the five-step route that skipped
+// the estimate are gone. Owner, 03.10: the frame comes first, straight after the configuration it draws, and the real
+// hangar follows it; the cost after both.
 //
 // Every statement comes from the page (server) as plain strings: the Delivery Model's own words, never copied here.
 
 export type AngaryEditorialContent = {
   cost: { title: string; text: string; factors: readonly CostFactorItem[]; customerScope: string };
-  route: { steps: readonly { title: string; result: string }[]; boundary: string };
+  /** leadCta: the Delivery Model's contactRoles.constructionLead.cta, the title block's way to the form */
+  route: { steps: readonly { title: string; result: string }[]; boundary: string; leadCta: string };
   people: readonly { name: string; role: string }[];
 };
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
-export function HangarEditorialArchitecture({ content }: Readonly<{ content: AngaryEditorialContent }>) {
+export function HangarEditorialArchitecture({
+  content,
+  realObject,
+}: Readonly<{
+  content: AngaryEditorialContent;
+  /** The real hangar row (HangarRealObject), rendered on the server; absent while there is no approved record */
+  realObject?: ReactNode;
+}>) {
   const inquiry = useHangarInquiryContext();
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
   const summary = deriveSummary(deriveDomainModel(state));
@@ -44,6 +57,12 @@ export function HangarEditorialArchitecture({ content }: Readonly<{ content: Ang
 
   return (
     <>
+      <section className="page-section direction-editorial-section dn-section angary-structure" id="structure" aria-labelledby="angary-structure-title">
+        <FrameTour titleId="angary-structure-title" />
+      </section>
+
+      {realObject}
+
       <section className="page-section angary-cost" id="vartist" aria-labelledby="angary-cost-title">
         <div className="shell">
           <header className="angary-section-heading">
@@ -66,10 +85,6 @@ export function HangarEditorialArchitecture({ content }: Readonly<{ content: Ang
         </div>
       </section>
 
-      <section className="page-section direction-editorial-section dn-section angary-structure" id="structure" aria-labelledby="angary-structure-title">
-        <FrameTour titleId="angary-structure-title" />
-      </section>
-
       <section className="page-section angary-process" id="process" aria-labelledby="angary-process-title">
         <div className="shell">
           <header className="angary-section-heading is-inverse">
@@ -87,6 +102,17 @@ export function HangarEditorialArchitecture({ content }: Readonly<{ content: Ang
                   ? <>Додано до заявки: <b>{summary.dimensionsLabel} · {summary.envelopeLabel}</b></>
                   : 'Базову конфігурацію можна сформувати вище.'}
               </p>
+              {/* Owner, 03.10: the brief's node acts on its own state — up to the configurator while nothing is attached,
+                  down to the attached brief in the form once something is */}
+              {attached ? (
+                <a className="angary-route-brief-action" href="#inquiry" onClick={revealAttachedBrief}>
+                  Надіслати бриф <span aria-hidden="true">↓</span>
+                </a>
+              ) : (
+                <a className="angary-route-brief-action" href="#configurator">
+                  Сформувати бриф <span aria-hidden="true">↑</span>
+                </a>
+              )}
             </li>
             {content.route.steps.map((step, index) => (
               <li key={step.title} style={{ '--i': index + 1 } as CSSProperties}>
@@ -100,7 +126,8 @@ export function HangarEditorialArchitecture({ content }: Readonly<{ content: Ang
             Усі етапи, документи й відповідальність <span aria-hidden="true">→</span>
           </a>
 
-          {/* Who answers for it — the route's title block («штамп»), in place of a separate section */}
+          {/* Who answers for it — the route's title block («штамп»), in place of a separate section. Owner, 03.10: it hands
+              over to them — the form under the Delivery Model's own words for the construction lead, or a call */}
           <div className="angary-stamp" id="responsibility" aria-labelledby="angary-stamp-title">
             <p className="angary-stamp-title" id="angary-stamp-title">За погоджений обсяг відповідаємо особисто</p>
             <dl>
@@ -109,7 +136,15 @@ export function HangarEditorialArchitecture({ content }: Readonly<{ content: Ang
               ))}
               <div className="is-wide"><dt>Межі обсягу</dt><dd>{content.route.boundary}</dd></div>
             </dl>
-            <a className="angary-stamp-link" href="/pro-nas">Про компанію <span aria-hidden="true">→</span></a>
+            <div className="angary-stamp-actions">
+              <a className="button button-primary angary-stamp-cta" href="#inquiry" data-open-inquiry>
+                {content.route.leadCta} <span aria-hidden="true">↓</span>
+              </a>
+              <a className="angary-stamp-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
+                <Phone aria-hidden="true" /> {company.phone.display}
+              </a>
+              <a className="angary-stamp-link" href="/pro-nas">Про компанію <span aria-hidden="true">→</span></a>
+            </div>
           </div>
         </div>
       </section>

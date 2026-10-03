@@ -158,6 +158,38 @@ test.describe('configurator attachment contract', () => {
     await expect(attachmentCard(page)).toContainText('24 × 60 × 8 м · Холодний');
   });
 
+  // Owner, 03.10: an attached brief opens the form, above «Контакт», and carries the page's direction read-only
+  test('the attached brief is the form\'s first block and holds the preset direction until it is detached', async ({ page }) => {
+    const submitted = await mockLeadSubmission(page);
+    await openHangarPage(page);
+    await setDimension(page, 'width', '30');
+
+    const form = page.locator('form.inquiry-form');
+    const brief = attachmentCard(page);
+    await expect(brief).toBeVisible();
+    const order = await form.evaluate((element) => [...element.children].map((child) => (
+      child.classList.contains('inquiry-form-section-brief') ? 'brief' : child.querySelector('h3')?.textContent ?? child.className
+    )));
+    expect(order.slice(0, 4)).toEqual(['inquiry-form-heading', 'brief', 'Контакт', 'Завдання']);
+    await expect(brief.locator('.inquiry-config-brief-direction')).toHaveText('Напрям робіт Ангари та склади');
+    await expect(form.locator('select[name="direction"]')).toHaveCount(0);
+    await expect(form.locator('input[type="hidden"][name="direction"]')).toHaveValue('Ангари та склади');
+    // the read-only line is not one of the brief's rows: those stay exactly the lead's configuration text
+    await brief.getByText('Переглянути параметри', { exact: true }).click();
+    await expect(brief.locator('dl > div dt').filter({ hasText: 'Напрям робіт' })).toHaveCount(0);
+
+    await brief.getByRole('button', { name: 'Не додавати', exact: true }).click();
+    await expect(form.locator('.inquiry-form-section-brief')).toHaveCount(0);
+    await expect(form.locator('.inquiry-form-section-title')).toHaveText(['Контакт', 'Завдання']);
+    await expect(form.getByLabel(/Напрям робіт/)).toHaveValue('Ангари та склади');
+    await expect(form.locator('input[type="hidden"][name="direction"]')).toHaveCount(0);
+
+    await setDimension(page, 'length', '50');
+    await expect(brief).toBeVisible();
+    await submitInquiry(page);
+    expect(submitted()?.direction).toBe('Ангари та склади');
+  });
+
   test('explicit detach removes the current configuration from the lead', async ({ page }) => {
     const submitted = await mockLeadSubmission(page);
     await openHangarPage(page);
@@ -245,6 +277,30 @@ test.describe('configurator attachment contract', () => {
     expect(submitted()?.details?.configuration).not.toContain('Ворота:');
     expect(submitted()?.details?.configuration).not.toContain('Двері:');
   });
+});
+
+test('on a phone «Обговорити цю конфігурацію» lands on one screen with the brief, the name and the phone', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openHangarPage(page);
+  await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
+
+  const brief = attachmentCard(page);
+  await expect(brief).toBeFocused();
+  await expect(page.locator('#inquiry-brief-status')).toHaveText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  // let the smooth scroll finish before measuring
+  await expect.poll(async () => page.evaluate(() => {
+    const top = document.getElementById('inquiry-brief')?.getBoundingClientRect().top ?? 0;
+    return Math.round(top);
+  }), { timeout: 5_000 }).toBeLessThan(160);
+  const header = await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom);
+  const form = page.locator('form.inquiry-form');
+  for (const target of [brief, form.getByLabel(/Ваше ім’я/), form.getByLabel(/Телефон/)]) {
+    const box = await target.boundingBox();
+    expect(box!.y).toBeGreaterThanOrEqual(header - 1);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(844);
+  }
+  await expect(brief).toContainText('Напрям робіт');
 });
 
 for (const viewport of [

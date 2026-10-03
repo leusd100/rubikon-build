@@ -108,8 +108,9 @@
 .conversation-journey p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.5; }
 /* Phone only, and only with JavaScript: the texts fold behind one button (ConversationJourney.tsx). */
 .conversation-journey-toggle { display: none; }
-/* The form card: lifted off the sheet, outlined, copper top rule (follows the light/dark tokens) */
-.conversation .inquiry-form { min-width: 0; box-shadow: 0 28px 70px rgba(20, 22, 21, .16); }
+/* The form card: a sheet on the desk, outlined, copper top rule (follows the light/dark tokens) — no longer lifted off it
+   by a shadow (owner, 03.10; globals.css .inquiry-form) */
+.conversation .inquiry-form { min-width: 0; }
 /* The form sits in this grid's named «form» area at every width (inside ConversationFormToggle's wrapper). */
 .conversation-grid > .conversation-form-wrap { grid-area: form; min-width: 0; }
 .conversation-form-wrap .inquiry-form { grid-area: auto; }
