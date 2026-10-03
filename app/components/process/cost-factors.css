@@ -15,7 +15,7 @@
 /* the schedule (factor 7): outlined bars of three overlapping works over a time axis */
 .cf-part rect { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: inherit; stroke-width: 1; }
 .cf-axis { stroke-width: 1; }
-.cf-network, .cf-road-centre { stroke-dasharray: 6 5; }
+.cf-network, .cf-road-centre, .cf-pad { stroke-dasharray: 6 5; }
 .cf-badge circle { fill: var(--color-bg); stroke: var(--color-accent); stroke-width: 1.4 !important; transition: fill var(--duration-fast) ease; }
 .cf-badge text { fill: var(--color-accent-strong); stroke: none; font: 700 13px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill var(--duration-fast) ease; }
 .proc-factors ul { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border); }
