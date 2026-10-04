@@ -405,6 +405,11 @@ main[data-home="v2"] .hv2-proof-ground path { stroke: var(--hv2-load); stroke-wi
    lit links on their casing, drops running the two legs, the ground's answer at each footing */
 main[data-home="v2"] .hv2-proof-wind :is(.hv2-proof-gusts, .hv2-proof-lift, .hv2-proof-reactions) path { stroke: var(--hv2-wind); stroke-width: calc(var(--u) * 1.2); }
 main[data-home="v2"] .hv2-proof-wind .hv2-proof-gusts path { stroke-width: calc(var(--u) * 1.5); }
+main[data-home="v2"] .hv2-proof-gusts[data-size="narrow"] { display: none; }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-proof-gusts[data-size="narrow"] { display: inline; }
+  main[data-home="v2"] .hv2-proof-gusts[data-size="wide"] { display: none; }
+}
 main[data-home="v2"] :is(#hv2-proof-head-wind, #hv2-proof-foot-wind) path { fill: var(--hv2-wind); }
 main[data-home="v2"] .hv2-proof-frame .hv2-proof-wind .hv2-proof-flow { stroke: var(--hv2-wind); }
 

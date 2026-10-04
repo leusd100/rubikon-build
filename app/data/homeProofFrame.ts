@@ -54,14 +54,17 @@ const COMB_LINE: readonly Pt[] = [COMB_ARROWS[0][0], [ROOF_TOP[1][0], round1(ROO
  *  up, as wind grows with height — and lifts the low roof on both slopes. A scheme of where it goes, no figures */
 const GABLE_VP: Pt = [3817.9, 493];
 const RIGHT_FACE: readonly [Pt, Pt] = [[1478.6, 551.7], [1471.1, 332.5]];
-const WIND_GUSTS = [0.12, 0.31, 0.5, 0.69, 0.88].map((share): readonly [Pt, Pt] => {
+const gusts = (base: number, growth: number) => [0.12, 0.31, 0.5, 0.69, 0.88].map((share): readonly [Pt, Pt] => {
   const [[x0, y0], [x1, y1]] = RIGHT_FACE;
   const at: Pt = [x0 + (x1 - x0) * share, y0 + (y1 - y0) * share];
   const run = Math.hypot(GABLE_VP[0] - at[0], GABLE_VP[1] - at[1]);
   const along = (length: number): Pt => [round1(at[0] + ((GABLE_VP[0] - at[0]) * length) / run), round1(at[1] + ((GABLE_VP[1] - at[1]) * length) / run)];
-  // tails within the phone's close-up (its last column is 1504): 16–26 px, longer higher up
-  return [along(4 + 16 + 10 * share), along(4)];
+  return [along(4 + base + growth * share), along(4)];
 });
+/** A wide frame has the photo's last columns for them: 30–52 px, longer higher up */
+const WIND_GUSTS_WIDE = gusts(26, 22);
+/** A phone's close-up ends at the photo's column 1504: 16–26 px there (home-v2.css shows one set or the other) */
+const WIND_GUSTS = gusts(16, 10);
 const WIND_LIFT = [430, 580, 730, 870, 1090, 1200, 1310, 1410].map((x): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 30)]]);
 
 /** truss: chords and end posts; web: diagonals and verticals; wall: bearing lines and lintels; column: the central row */
@@ -107,6 +110,7 @@ export type HomeProofFrame = {
    *  the ground's answer at each footing, against the wind */
   wind: {
     gusts: readonly (readonly [Pt, Pt])[];
+    gustsWide: readonly (readonly [Pt, Pt])[];
     lift: readonly (readonly [Pt, Pt])[];
     links: readonly { link: 2 | 3 | 4 | 5; points: readonly Pt[] }[];
     legs: readonly (readonly Pt[])[];
@@ -280,6 +284,7 @@ export const homeProofFrame: HomeProofFrame = {
   },
   wind: {
     gusts: WIND_GUSTS,
+    gustsWide: WIND_GUSTS_WIDE,
     lift: WIND_LIFT,
     links: [
       { link: 2, points: [[1461.6, 331.8], [1469.3, 561.3]] },

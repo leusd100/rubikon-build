@@ -167,11 +167,14 @@ export const ProofFrame = memo(function ProofFrame({ loadRun, windRun, shown, wi
       </g>
       {/* The wind's way — replayed on every press of «Вітер»: the gusts and the lift, then link by link to the ground */}
       <g className="hv2-proof-wind" key={`wind-${windRun}`}>
-        <g className="hv2-proof-gusts" style={{ '--n': 0 } as CSSProperties}>
-          {wind.gusts.map(([from, to], index) => (
-            <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
-          ))}
-        </g>
+        {/* the long gusts where the frame has room for them, the short ones in a phone's close-up (home-v2.css) */}
+        {([['wide', wind.gustsWide], ['narrow', wind.gusts]] as const).map(([size, set]) => (
+          <g key={size} className="hv2-proof-gusts" data-size={size} style={{ '--n': 0 } as CSSProperties}>
+            {set.map(([from, to], index) => (
+              <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
+            ))}
+          </g>
+        ))}
         <g className="hv2-proof-lift" style={{ '--n': 1 } as CSSProperties}>
           {wind.lift.map(([from, to], index) => (
             <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
