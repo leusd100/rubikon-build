@@ -5,6 +5,9 @@
  *
  * The lines come from the photo study of this hangar (eight photos of it; the owner's report of 04.10), registered
  * onto this exact frame and written here in its own pixels: x to the right, y down, origin at the top-left corner.
+ * The files are the owner's 4416 px retouch of the same frame (04.10), laid onto this frame by one similarity fit
+ * (scale and a 1 px shift, no rotation: rms 0.68 px; the retouch matches the RAW master within 0.38 px) and resized —
+ * up to 3840 px wide, so a retina screen draws it sharp; nothing in the picture changed.
  * They are tied to the file byte for byte: replace or
  * re-crop the photo (or its WebP copies) and tests/unit/home-proof-contour.test.ts fails the build until the lines are
  * registered again.
@@ -38,13 +41,16 @@ export type HomeProofContour = {
 export const homeProofContour: HomeProofContour = {
   photo: {
     src: '/photos/serhii-prior-hangar-retouched.jpeg',
-    sha256: '365a578211db897d886f6aeeb7de22546843be59db517c6c57ed794b1cce4567',
+    sha256: '7a0407ab691ef2458e128905938f7ab9f95ffc1edd9ead3ed4c828ab5b96c86a',
     width: 1536,
     height: 788,
   },
   variants: [
-    { src: '/media/home-v2/hangar-retouched-960w.webp', sha256: '7cc3998599409754ff2c0fbdc1540d570d47f9966be59c01bac4aa7cbff9a704', width: 960 },
-    { src: '/media/home-v2/hangar-retouched-1536w.webp', sha256: 'f2c6fa09ecb04befceffc16fb61aee5fc1c158bc01fad1fccc5723f4b9590e6f', width: 1536 },
+    { src: '/media/home-v2/hangar-retouched-960w.webp', sha256: '3e2b84c34a81745521dce490f34ba693c7f612ac9d4b9bc309364dd8194a4ff9', width: 960 },
+    { src: '/media/home-v2/hangar-retouched-1536w.webp', sha256: '74bca5ee6600543311346d09af0cb702be5be3554a7908ef0bad26e1b2330b21', width: 1536 },
+    { src: '/media/home-v2/hangar-retouched-2304w.webp', sha256: 'e9b1a6b2fb53b12fb827f769c6f727765fc68d22735d61c97989e3953c1d6d8a', width: 2304 },
+    { src: '/media/home-v2/hangar-retouched-3072w.webp', sha256: 'cd68ee061cbea98e943217a3473c95de6351738acf036303c3f5d21f80fae43d', width: 3072 },
+    { src: '/media/home-v2/hangar-retouched-3840w.webp', sha256: '2a2754b09b3d432346c4a4be60e924cc7b762da957c685114a74ba9824091c2b', width: 3840 },
   ],
   lines: [
     // The outline, drawn round from the apex: the right rake, the right corner, the base with the left corner, the left

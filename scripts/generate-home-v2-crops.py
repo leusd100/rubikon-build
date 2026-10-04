@@ -16,6 +16,10 @@ Iteration 3 (made once by hand, sources live outside the repo, so they are not i
       rubikon-real-hangar-cleaned.png (1536×1024; loose items in front removed, whole frame re-rendered), box
       (0, 172, 1536, 960) = the same framing as (0, 700, 6240, 3900) on the original; saved without EXIF. The page
       labels it «Фото з ретушшю переднього плану».
+  04.10: the owner re-exported the same retouch at 4416×2260 (DSCF7654_retouched_native_4416.jpg, outside the repo). It
+      replaced these files and added hangar-retouched-{2304,3072,3840}w: one similarity warp onto the 1536×788 frame the
+      contour lines are registered on (scale 0.347884, shift under 1 px, rms 0.68 px), then LANCZOS resizes; WebP q80,
+      the JPEG q86. app/data/homeProofContour.ts pins every file's sha256.
   The X-ray sketch made here once (concepts/hangar-xray-{1100,1774}w) left HOME on 04.10 with its files: the owner's
       variant A «Калька» draws only the lines measured from the photos over the photo itself.
 

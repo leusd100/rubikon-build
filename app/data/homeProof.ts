@@ -1,7 +1,8 @@
 /**
  * One documented object on HOME. The owner confirmed that the frame, panels and roof are Serhii's
  * prior experience, before RUBIKON BUILD. It must never be presented as a RUBIKON BUILD project or
- * attributed to the current team. HOME v2: the frame is the owner-supplied cleaned version of
+ * attributed to the current team. 04.10: the owner re-exported the same retouch at 4416 px; the site's files are made
+ * from it on the contour's frame (app/data/homeProofContour.ts). HOME v2: the frame is the owner-supplied cleaned version of
  * DSCF7654 (same hangar, gable end): loose items in front were retouched out, so the page says «Фото з ретушшю
  * переднього плану». Compared with the original on 2026-09-29: façade, roof, gates, side body unchanged; the plinth
  * behind the removed boards is filled in; the whole frame was re-rendered at 1536 px. Cropped, no metadata.

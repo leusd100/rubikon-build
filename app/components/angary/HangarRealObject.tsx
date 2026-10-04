@@ -37,7 +37,7 @@ export function HangarRealObject({ proof }: Readonly<{ proof: HomeProofCase }>) 
           <picture>
             <source
               type="image/webp"
-              srcSet="/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w"
+              srcSet="/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w, /media/home-v2/hangar-retouched-2304w.webp 2304w"
               sizes="(max-width: 760px) calc((100vw - 66px) * 1.46), (max-width: 1023px) calc(100vw - 76px), 50vw"
             />
             <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" />
