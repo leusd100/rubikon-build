@@ -1,7 +1,9 @@
 /**
  * «Контур за фото» — the lines HOME draws over its one real photo (EngineeringSignature → ProofContour). Owner's
  * decision (04.10): publish what was measured from the photos of this hangar — the gable's outline, both gates and the
- * gable's cladding-strip boundaries — on the photo's own «калька», with nothing invented behind the cladding.
+ * gable's cladding-strip boundaries — on the photo's own «калька». They stay the MEASURED layer: the scheme of a frame
+ * the page draws inside this outline (04.10, app/data/homeProofFrame.ts) is illustrative, in its own colour and
+ * labelled as a scheme, and the figures read off these lines live in app/data/homeProofMeasures.ts.
  *
  * The lines come from the photo study of this hangar (eight photos of it; the owner's report of 04.10), registered
  * onto this exact frame and written here in its own pixels: x to the right, y down, origin at the top-left corner.

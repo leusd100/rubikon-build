@@ -10,10 +10,13 @@ import { ScopeCells } from './ScopeCells';
 //
 // Order: the real object comes first, straight under the heading — since 04.10 (owner's decision, variant A «Калька»)
 // ONE «Креслення» sheet: the photo («Фото об’єкта», its foreground retouch stated) and, right of a seam the visitor
-// moves, the same frame as a tracing with the lines measured from eight photos of this hangar («Контур за фото»,
-// ProofContour). It replaces the generated X-ray sketch that stood beside the photo: what the page draws over the real
-// object is now only what the photos show — no frame behind the cladding, no sizes, nodes or calculations. Two
-// explanation cards follow, each labelled as what it is («Ілюстрація», «Схема»).
+// moves, the same frame as a tracing (ProofContour). Over the tracing, chosen in the title block: the lines and
+// scale-free figures measured from eight photos of this hangar («Контур»), or — the default since 04.10 (owner: more
+// on the right side, a test of what the frame could be) — a SCHEME of a frame of the type the owner names for this
+// object, drawn inside its measured silhouette and labelled as a scheme without sizes («Каркас», «Навантаження»). It is
+// never this building's structure and never goes over the photo itself; the generated X-ray sketch that once stood
+// beside the photo is gone from the page (only /?xray=sketch shows it, for the owner's comparison). Two explanation
+// cards follow, each labelled as what it is («Ілюстрація», «Схема»).
 //
 // Nothing here names a product: no «digital twin», explorer, load-path software or building passport.
 

@@ -248,16 +248,25 @@ main[data-home="v2"] .hv2-scheme-axis-label { font-size: 15px; fill: var(--hv2-t
 main[data-home="v2"] .hv2-boundary { max-width: 880px; margin: 22px 0 0; color: var(--hv2-text-3); font-size: 15px; line-height: 1.6; }
 main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight: 700; }
 
-/* --- the real object and its contour: ONE «Креслення» sheet, variant A «Калька» (owner, 04.10) ---
-   Left of the seam the photo; right of it the same frame as a tracing — grey, dark, on a fine grid — with the copper
-   lines measured from the photos (ProofContour, app/data/homeProofContour.ts). The frame keeps the photo's own
-   proportion at every width, so the images (object-fit: cover) and the lines («xMidYMid slice») coincide and nothing is
-   cropped away, not even on a phone. A dark sheet in this dark band in either theme, its title block in the band's text
-   roles; the «Креслення» square language — no pills, no shadows, no glow. */
+/* --- the real object: ONE «Креслення» sheet — the photo, and right of a seam its tracing with a layer over it
+   (owner, 04.10) ---
+   Left of the seam the photo; right of it the same frame as a tracing — grey, dark, on a fine grid — and over the
+   tracing one of three layers (ProofContour, ProofFrame): «Контур» the copper lines and figures measured from the
+   photos, «Каркас» a SCHEME of a frame of this object's type in the paper colour, «Навантаження» the snow's way through
+   it in copper. Copper is what was measured or what moves; the scheme is never copper. The photo, its tracing and every
+   layer share one canvas in the photo's own proportion, so a line sits on its gate or corner at every width; on a
+   laptop the stage crops the canvas's sky and gravel (below), never its sides. A dark sheet in this dark band in either
+   theme, its title block in the band's text roles; the «Креслення» square language — no pills, no shadows. */
+
+/* The seam's position, registered so the first view's glide can animate it (ProofContour) */
+@property --split { syntax: '<percentage>'; inherits: true; initial-value: 62%; }
+
 main[data-home="v2"] .hv2-proof { margin-top: 36px; }
 main[data-home="v2"] .hv2-contour {
   --sheet-paper: var(--hv2-graphite-2); --sheet-ink: var(--hv2-line-strong); --sheet-mark: var(--hv2-copper);
   --color-text: var(--hv2-text); --color-text-secondary: var(--hv2-text-2); --color-text-muted: var(--hv2-text-3); --color-accent-strong: var(--hv2-copper-text);
+  /* The scheme's ink: the sheet's paper white, never the measured copper */
+  --hv2-scheme: #ede8de;
   /* One CSS pixel of the drawn frame in the photo's own pixels, stepped by width at the end of this block: the line
      widths are set in the drawing's units (no non-scaling-stroke — with pathLength Chrome measures the dash on screen
      and cuts the line's end, app/pro-nas/about.css) */
@@ -269,9 +278,9 @@ main[data-home="v2"] .hv2-contour-stage {
   position: absolute; inset: 0; overflow: hidden; cursor: ew-resize; touch-action: pan-y pinch-zoom;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
-main[data-home="v2"] .hv2-contour-stage img {
-  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%;
-  pointer-events: none; -webkit-user-drag: none;
+main[data-home="v2"] .hv2-contour-canvas { position: absolute; top: 0; left: 0; width: 100%; aspect-ratio: 1536 / 788; }
+main[data-home="v2"] :is(.hv2-contour-canvas > picture, .hv2-contour-trace) img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none;
 }
 /* The tracing, right of the seam. Its grid keeps the sheet's ruler rhythm (a line every 10 px, a stronger one every
    50 px, from the same corner) — a sheet's grid, not a scale */
@@ -285,69 +294,250 @@ main[data-home="v2"] .hv2-contour-trace::after {
     linear-gradient(90deg, rgba(245, 242, 235, .04) 1px, transparent 1px) 0 0 / 10px 10px,
     linear-gradient(rgba(245, 242, 235, .04) 1px, transparent 1px) 0 0 / 10px 10px;
 }
-/* The lines show over the tracing only — over the photo too once «Лінії на фото» is pressed */
-main[data-home="v2"] .hv2-contour-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; clip-path: inset(0 0 0 var(--split)); }
+/* Every layer lies over the tracing only; the measured lines over the photo too once «Контур на фото» is pressed */
+main[data-home="v2"] .hv2-contour-canvas > :is(svg, .hv2-proof-labels, .hv2-contour-sketch) {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; clip-path: inset(0 0 0 var(--split));
+}
 main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo] .hv2-contour-lines { clip-path: inset(0); }
+
+/* The measured lines (app/data/homeProofContour.ts): solid — measured, dashed — approximate */
 main[data-home="v2"] .hv2-contour-lines path {
   --w: 1.25; fill: none; stroke-width: calc(var(--u) * var(--w) * var(--k, 1)); stroke-linecap: round; stroke-linejoin: round;
   stroke-dasharray: 1; stroke-dashoffset: 0;
 }
 main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { --w: 2; }
 main[data-home="v2"] .hv2-contour-lines path[data-kind="gate"] { --w: 1.75; }
-/* Dashed: approximate */
 main[data-home="v2"] .hv2-contour-lines path[data-approximate] { stroke-linecap: butt; stroke-dasharray: calc(var(--u) * 6) calc(var(--u) * 5); }
 main[data-home="v2"] .hv2-contour-ink path { stroke: var(--hv2-copper-text); }
 /* A thin dark casing under each line: it disappears on the tracing and keeps the copper legible on the light cladding */
 main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); stroke-width: calc(var(--u) * (var(--w) * var(--k, 1) + 2)); }
 
+/* The scheme (app/data/homeProofFrame.ts): the gable's truss and its walls strong, the bays behind it fainter (--depth),
+   the walls the trusses bear on hatched as masonry, the footings dashed — under the ground, «умовно» */
+main[data-home="v2"] .hv2-proof-frame path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+main[data-home="v2"] .hv2-proof-scheme [data-group] {
+  --o: .92; --w: 1; stroke: var(--hv2-scheme); stroke-opacity: calc(var(--o) * var(--depth, 1)); stroke-width: calc(var(--u) * var(--w));
+  stroke-dasharray: 1; stroke-dashoffset: 0;
+}
+main[data-home="v2"] .hv2-proof-scheme [data-depth="1"] { --depth: .37; }
+main[data-home="v2"] .hv2-proof-scheme [data-depth="2"] { --depth: .18; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="truss"] { --w: 1.75; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="web"] { --w: 1.05; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="support"] { --w: 1.5; --o: .8; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="wall"] { --w: 1.2; --o: .72; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="purlin"] { --w: 1; --o: .6; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="bracing"] { --w: 1; --o: .9; }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-hatch { fill: url(#hv2-proof-hatch); stroke: none; }
+main[data-home="v2"] .hv2-proof-hatch[data-depth="1"] { opacity: .55; }
+main[data-home="v2"] #hv2-proof-hatch path { stroke: rgba(237, 232, 222, .3); stroke-width: 1.2; }
+main[data-home="v2"] .hv2-proof-nodes rect { fill: var(--hv2-scheme); fill-opacity: .85; }
+main[data-home="v2"] .hv2-proof-footing { stroke: var(--hv2-scheme); stroke-opacity: .55; stroke-width: var(--u); stroke-dasharray: calc(var(--u) * 4) calc(var(--u) * 3); }
+main[data-home="v2"] .hv2-proof-footing[data-depth="1"] { stroke-opacity: .3; }
+
+/* The snow's way (the «Навантаження» layer): the arrows, the strip of roof the gable's truss carries, the blocks the
+   purlins bear on, the truss, then the walls and the middle support, the footings and the ground — lit in copper, link
+   by link, with drops running down the three legs (FrameTour's language, app/components/angary/frame-tour.css) */
+main[data-home="v2"] .hv2-proof-snow path { stroke: var(--hv2-copper-text); stroke-width: calc(var(--u) * 1.6); }
+main[data-home="v2"] :is(#hv2-proof-head, #hv2-proof-foot) path { fill: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-roof { fill: var(--hv2-copper); fill-opacity: .18; }
+main[data-home="v2"] .hv2-proof-bearing rect { fill: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-proof-lit-truss path { stroke: var(--hv2-copper-text); stroke-opacity: .7; stroke-width: calc(var(--u) * 1.3); }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-link { stroke: var(--hv2-copper-text); stroke-width: calc(var(--u) * 2.6); filter: drop-shadow(0 0 calc(var(--u) * 2.5) rgba(204, 132, 85, .65)); }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-flow {
+  stroke: #f0b48a; stroke-width: calc(var(--u) * 4.5); stroke-dasharray: calc(var(--u) * .5) calc(var(--u) * 13); stroke-dashoffset: 0;
+}
+main[data-home="v2"] .hv2-proof-ground path { stroke: var(--hv2-copper-text); stroke-width: calc(var(--u) * 1.2); stroke-dasharray: calc(var(--u) * 2) calc(var(--u) * 3); }
+
+/* The measured figures' marks, on the contour's own lines, and the names on the scheme */
+main[data-home="v2"] .hv2-proof-marks path { fill: none; stroke: var(--hv2-copper-text); stroke-width: calc(var(--u) * 1.15); stroke-linecap: round; }
+main[data-home="v2"] .hv2-proof-marks .hv2-proof-mark-level { stroke-dasharray: calc(var(--u) * 3) calc(var(--u) * 3); }
+main[data-home="v2"] .hv2-proof-marks .hv2-proof-mark-axis { stroke-width: var(--u); stroke-dasharray: calc(var(--u) * 14) calc(var(--u) * 4) calc(var(--u) * 2) calc(var(--u) * 4); }
+main[data-home="v2"] .hv2-proof-marks .hv2-proof-leader { stroke-opacity: .85; stroke-width: var(--u); }
+main[data-home="v2"] .hv2-proof-tag-leaders path { stroke: var(--hv2-scheme); stroke-opacity: .55; stroke-width: var(--u); }
+main[data-home="v2"] .hv2-proof-tag-leaders circle { fill: var(--hv2-scheme); fill-opacity: .9; }
+main[data-home="v2"] .hv2-proof-labels :is(.hv2-proof-measure, .hv2-proof-tag) {
+  position: absolute; left: var(--x); top: var(--y); transform: translate(0, -50%); white-space: nowrap; pointer-events: none;
+  font: 600 13px/1.15 var(--font-manrope), sans-serif; letter-spacing: 0;
+  text-shadow: 0 0 3px var(--hv2-ink), 0 0 3px var(--hv2-ink), 0 0 6px var(--hv2-ink);
+}
+main[data-home="v2"] .hv2-proof-labels [data-align="start"] { transform: translate(5px, -50%); }
+main[data-home="v2"] .hv2-proof-labels [data-align="end"] { transform: translate(calc(-100% - 5px), -50%); text-align: right; }
+main[data-home="v2"] .hv2-proof-labels [data-align="middle"] { transform: translate(-50%, -50%); text-align: center; }
+/* «Контур» leaves the gable free of the scheme: a figure may sit nearer its mark there */
+main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-measure { left: var(--cx); top: var(--cy); }
+main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-measure[data-align-contour="middle"] { transform: translate(-50%, -50%); text-align: center; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-leader[data-for="frame"],
+main[data-home="v2"] .hv2-contour-stage:not([data-layer="contour"]) .hv2-proof-leader[data-for="contour"] { display: none; }
+main[data-home="v2"] .hv2-proof-measure { color: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-proof-measure small { display: block; margin-top: 2px; color: var(--hv2-text-2); font: 500 12px/1.15 var(--font-manrope), sans-serif; }
+main[data-home="v2"] .hv2-proof-tag { color: var(--hv2-scheme); }
+
+/* Which layer shows: the stage's data-layer. Hidden parts are hidden for real (visibility), after a 240 ms fade */
+main[data-home="v2"] :is(.hv2-proof-scheme, .hv2-proof-load, .hv2-contour-lines, .hv2-proof-marks > g, .hv2-proof-measure, .hv2-proof-tag, .hv2-contour-sketch) {
+  transition: opacity 240ms ease, visibility 240ms;
+}
+main[data-home="v2"] :is(.hv2-proof-load, .hv2-proof-marks > g, .hv2-proof-measure, .hv2-proof-tag) { opacity: 0; visibility: hidden; }
+main[data-home="v2"] .hv2-contour-stage:is([data-layer="contour"], [data-layer="sketch"]) .hv2-proof-scheme { opacity: 0; visibility: hidden; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-scheme { opacity: .5; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load { opacity: 1; visibility: visible; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-contour-lines { opacity: .62; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-lines { opacity: .35; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-lines { opacity: 0; visibility: hidden; }
+main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo] .hv2-contour-lines { opacity: 1; visibility: visible; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] :is(.hv2-proof-marks > g:not(.hv2-proof-tag-leaders), .hv2-proof-measure),
+main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] :is(.hv2-proof-marks > [data-on-frame], .hv2-proof-measure[data-on-frame], .hv2-proof-tag-leaders, .hv2-proof-tag) {
+  opacity: 1; visibility: visible;
+}
+/* The scheme's own layer keeps the figures' titles only */
+main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure small { display: none; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-marks [data-mark] { opacity: .8; }
+
+/* The test mode (/?xray=sketch): the generated sketch, by one scale and shift through its ridge and right base corner
+   (ProofFrame's SKETCH); the canvas round it in the tracing's dark */
+main[data-home="v2"] .hv2-contour-sketch { background: #161817; }
+main[data-home="v2"] .hv2-contour-stage:not([data-layer="sketch"]) .hv2-contour-sketch { opacity: 0; visibility: hidden; }
+main[data-home="v2"] .hv2-contour-sketch img { position: absolute; top: 9.49%; left: 19.01%; width: 81.07%; height: auto; max-width: none; }
+
+/* On the stage, outside the canvas (never cropped): the stamp that says what the right side is, the load's chain, the
+   seam's names, the seam and its handle */
+main[data-home="v2"] .hv2-contour-corner {
+  position: absolute; z-index: 3; top: 10px; right: 10px; display: grid; justify-items: end; gap: 10px; max-width: calc(100% - 20px); pointer-events: none;
+}
+main[data-home="v2"] .hv2-contour-stamp {
+  display: grid; justify-items: end; gap: 4px; max-width: 196px;
+  padding: 6px 9px 6px; color: var(--hv2-text-2); background: rgba(18, 20, 19, .86); border: 1px solid rgba(245, 242, 235, .26); pointer-events: none;
+  font: 500 12px/1.2 var(--font-manrope), sans-serif; text-align: right;
+}
+main[data-home="v2"] .hv2-contour-stamp small { color: var(--hv2-text); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-stamp { color: #f5f2eb; background: rgba(160, 82, 42, .94); border-color: var(--hv2-copper-fill); }
+main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-stamp small { color: #f5f2eb; }
+main[data-home="v2"] .hv2-contour-stage[data-photo-only] .hv2-contour-stamp { visibility: hidden; }
+main[data-home="v2"] .hv2-contour-chain {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px 0;
+  max-width: 330px; color: var(--hv2-text-3); visibility: hidden;
+  font: 600 12.5px/1.3 var(--font-manrope), sans-serif; text-shadow: 0 0 3px var(--hv2-ink), 0 0 6px var(--hv2-ink);
+}
+main[data-home="v2"] .hv2-contour-chain > span:not(:last-child)::after { margin-inline: 5px; color: var(--hv2-text-3); content: '→'; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-chain { visibility: visible; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-chain > span { color: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-contour-seamtags { position: absolute; z-index: 3; top: 10px; left: var(--split); pointer-events: none; }
+main[data-home="v2"] .hv2-contour-seamtags > span {
+  position: absolute; top: 0; padding: 5px 8px 4px; color: var(--hv2-text); background: rgba(18, 20, 19, .86); border: 1px solid rgba(245, 242, 235, .3);
+  font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+}
+main[data-home="v2"] .hv2-contour-seamtags > span:first-child { right: 3px; }
+main[data-home="v2"] .hv2-contour-seamtags > span:last-child { left: 3px; color: var(--hv2-copper-text); border-color: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-contour-stage[data-narrow-left] .hv2-contour-seamtags > span:first-child,
+main[data-home="v2"] .hv2-contour-stage[data-narrow-right] .hv2-contour-seamtags > span:last-child { display: none; }
+
 /* The seam and its handle; the range input lies over the frame, invisible, and draws its focus on the handle */
-main[data-home="v2"] .hv2-contour-seam { position: absolute; top: 0; bottom: 0; left: var(--split); width: 2px; margin-left: -1px; background: var(--hv2-copper-text); pointer-events: none; }
+main[data-home="v2"] .hv2-contour-seam { position: absolute; z-index: 2; top: 0; bottom: 0; left: var(--split); width: 2px; margin-left: -1px; background: var(--hv2-copper-text); pointer-events: none; }
 /* The handle is the finger's one grip (44 px); a vertical swipe on it still scrolls the page — the browser cancels the
    drag. Its disc is drawn under the glyph, so a phone can draw it smaller than the area it answers to */
 main[data-home="v2"] .hv2-contour-handle {
-  position: absolute; top: 50%; left: clamp(22px, var(--split), calc(100% - 22px)); isolation: isolate; display: grid; place-items: center;
+  position: absolute; z-index: 4; top: 50%; left: clamp(22px, var(--split), calc(100% - 22px)); isolation: isolate; display: grid; place-items: center;
   width: 44px; height: 44px; margin: -22px 0 0 -22px; color: var(--hv2-text); border-radius: 50%; cursor: grab; touch-action: pan-y pinch-zoom;
   padding-bottom: 3px; font: 700 24px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; white-space: nowrap; /* the guillemets sit low */
 }
 main[data-home="v2"] .hv2-contour-handle::before {
   content: ''; position: absolute; inset: 0; z-index: -1; background: var(--hv2-ink); border: 2px solid var(--hv2-copper-text); border-radius: 50%;
 }
+/* The first view's two rings (ProofContour sets data-pulse once, after the glide) */
+main[data-home="v2"] .hv2-contour-handle::after {
+  content: ''; position: absolute; inset: 0; border: 2px solid var(--hv2-copper-text); border-radius: 50%; opacity: 0; pointer-events: none;
+}
 main[data-home="v2"] .hv2-contour-stage[data-dragging] .hv2-contour-handle { cursor: grabbing; }
+/* A mouse over the handle: a heavier disc and a brighter seam say «drag me» */
+@media (hover: hover) and (pointer: fine) {
+  main[data-home="v2"] .hv2-contour-handle:hover::before { border-width: 3px; }
+  main[data-home="v2"] .hv2-contour-stage:is(:has(.hv2-contour-handle:hover), [data-dragging]) .hv2-contour-seam { width: 3px; margin-left: -1.5px; background: #e0a47a; }
+}
 main[data-home="v2"] .hv2-contour-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 /* The keyboard's ring only: focus a click or a finger put on the range draws nothing until a key is pressed */
 main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
-/* A phone's frame is short and its middle band is the gates: the handle drops into the gravel under the gable's base,
-   its disc smaller than its grip, so it covers no gate and no corner at the resting split */
-@media (max-width: 760px) {
-  main[data-home="v2"] .hv2-contour-handle { top: auto; bottom: 0; margin-top: 0; padding: 5px 0 0; font-size: 20px; }
-  main[data-home="v2"] .hv2-contour-handle::before { inset: auto 6px 2px; height: 32px; }
-}
+
 @media (prefers-reduced-motion: no-preference) {
-  /* «Фото» / «Контур», the keys and «Лінії на фото» glide; a drag follows the pointer as it is */
-  main[data-home="v2"] .hv2-contour-stage:not([data-dragging]) :is(.hv2-contour-trace, .hv2-contour-lines) { transition: clip-path 420ms var(--sheet-plot); }
-  main[data-home="v2"] .hv2-contour-stage:not([data-dragging]) :is(.hv2-contour-seam, .hv2-contour-handle) { transition: left 420ms var(--sheet-plot); }
+  /* «Фото» / «Схема», the keys, the layers and «Контур на фото» glide; a drag follows the pointer as it is, and the first
+     view's glide drives --split itself */
+  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) :is(.hv2-contour-trace, .hv2-contour-canvas > svg, .hv2-proof-labels, .hv2-contour-sketch) {
+    transition: clip-path 420ms var(--sheet-plot), opacity 240ms ease, visibility 240ms;
+  }
+  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) :is(.hv2-contour-seam, .hv2-contour-handle, .hv2-contour-seamtags) { transition: left 420ms var(--sheet-plot); }
+  main[data-home="v2"] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation: hv2-contour-pulse 850ms ease-out 2; }
 }
+@keyframes hv2-contour-pulse { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
 
 /* Arriving: once the sheet has plotted its picture in (DrawingSheet: 120 + 900 ms), the lines draw — the solid ones
-   along their length, the dashed ones fade in — once. The sheet arms only after hydration and with motion allowed, so
-   without JavaScript or with reduced motion the contour stands complete at its resting split. */
+   along their length, the dashed ones fade in — the figures appear, and the scheme builds: the walls, the gable's truss
+   from the ridge outward, the bays behind it, the names (ProofFrame sets each part's --d). Once. The sheet arms only
+   after hydration and with motion allowed, so without JavaScript or with reduced motion all of it stands complete. */
 main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-contour-lines path { stroke-dashoffset: 1; }
 main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-contour-lines path[data-approximate] { stroke-dashoffset: 0; opacity: 0; }
+main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-proof-scheme [data-group] { stroke-dashoffset: 1; }
+main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] :is(.hv2-proof-hatch, .hv2-proof-nodes, .hv2-proof-footing, .hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
 @keyframes hv2-contour-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
   main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path { animation: hv2-contour-draw 1000ms var(--sheet-plot) calc(1080ms + var(--i, 0) * 110ms) backwards; }
   main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path[data-kind="outline"] { animation-duration: 1500ms; }
   main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path[data-approximate] { animation-name: hv2-contour-fade; animation-duration: 600ms; animation-timing-function: ease; }
-}
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] :is(.hv2-proof-marks, .hv2-proof-labels) { animation: hv2-contour-fade 500ms ease 2000ms backwards; }
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-proof-hatch { animation: hv2-contour-fade 700ms ease 2600ms backwards; }
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-proof-scheme [data-group] { animation: hv2-contour-draw 600ms var(--sheet-plot) var(--d, 3200ms) backwards; }
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-proof-footing { animation: hv2-contour-fade 500ms ease 2900ms backwards; }
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-proof-nodes { animation: hv2-contour-fade 400ms ease 4200ms backwards; }
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] :is(.hv2-proof-tag, .hv2-proof-tag-leaders) { animation: hv2-contour-fade 400ms ease 4400ms backwards; }
 
-/* The title block: «Ліворуч» | the note | «Праворуч» with its legend | the controls */
-main[data-home="v2"] .hv2-contour-right b { color: var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-contour-legend { display: grid; gap: 6px; margin-top: 9px; color: var(--hv2-text-2); font: 500 13px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
-main[data-home="v2"] .hv2-contour-legend > span { display: flex; align-items: center; gap: 8px; }
-main[data-home="v2"] .hv2-contour-legend svg { width: 28px; height: 4px; flex: none; overflow: visible; }
+  /* The load: a link every 450 ms, the chain over the frame in step; the drops run down the legs three times, then rest
+     on the lit path. Replayed on every press of «Навантаження» (ProofFrame keys the group) */
+  main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load > :is(g, path) { animation: hv2-contour-fade 420ms ease calc(200ms + var(--n, 0) * 450ms) backwards; }
+  main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-snow path { animation: hv2-contour-snow 600ms var(--sheet-plot) calc(200ms + var(--k, 0) * 70ms) backwards; }
+  main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load .hv2-proof-flow {
+    animation: hv2-contour-fade 420ms ease 1550ms backwards, hv2-contour-flow 1600ms linear 1550ms 3;
+  }
+  main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-chain > span { animation: hv2-contour-link 420ms ease calc(200ms + var(--n, 0) * 450ms) backwards; }
+}
+@keyframes hv2-contour-snow { from { opacity: 0; transform: translateY(-14px); } }
+@keyframes hv2-contour-flow { to { stroke-dashoffset: calc(var(--u) * -27); } }
+@keyframes hv2-contour-link { from { color: var(--hv2-text-3); } }
+
+/* The title block: «Ліворуч» | the note | «Праворуч» with the layers and the legend | the controls; a phone adds the
+   measured figures as chips under the note */
+main[data-home="v2"] .hv2-contour .hv2-contour-right b,
+main[data-home="v2"] .hv2-contour .hv2-contour-facts b { display: grid; gap: 7px; overflow: visible; white-space: normal; text-transform: none; letter-spacing: 0; }
+main[data-home="v2"] .hv2-contour-layers { display: inline-flex; justify-self: start; border: 1px solid var(--hv2-line-strong); }
+main[data-home="v2"] .hv2-contour-layers button {
+  min-height: 36px; padding: 0 12px; color: var(--hv2-text-2); background: none; border: 0; border-left: 1px solid var(--hv2-line-strong); border-radius: 0; cursor: pointer;
+  font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
+}
+main[data-home="v2"] .hv2-contour-layers button:first-child { border-left: 0; }
+main[data-home="v2"] .hv2-contour-layers button[aria-pressed="true"] { color: var(--hv2-text); background: var(--hv2-copper-fill); }
+main[data-home="v2"] .hv2-contour-layers button:disabled { cursor: default; opacity: .55; }
+@media (hover: hover) { main[data-home="v2"] .hv2-contour-layers button[aria-pressed="false"]:enabled:hover { color: var(--hv2-text); background: rgba(204, 132, 85, .14); } }
+@media (pointer: coarse) { main[data-home="v2"] .hv2-contour-layers button { min-height: 44px; } }
+main[data-home="v2"] .hv2-contour-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; min-height: 1.2em; color: var(--hv2-text-2); font: 500 12.5px/1.2 var(--font-manrope), sans-serif; }
+main[data-home="v2"] .hv2-contour-legend > span { display: flex; align-items: center; gap: 6px; }
+main[data-home="v2"] .hv2-contour-legend svg { width: 22px; height: 4px; flex: none; overflow: visible; }
 main[data-home="v2"] .hv2-contour-legend path { fill: none; stroke: var(--hv2-copper-text); stroke-width: 2; }
 main[data-home="v2"] .hv2-contour-legend [data-approximate] path { stroke-dasharray: 5 3; }
+main[data-home="v2"] .hv2-contour-legend [data-key="scheme"] path { stroke: var(--hv2-scheme); }
+main[data-home="v2"] .hv2-contour-legend [data-key="load"] path { stroke: #f0b48a; stroke-width: 3; stroke-linecap: round; stroke-dasharray: .5 5; }
+main[data-home="v2"] .hv2-contour-legend:is([data-layer="contour"], [data-layer="sketch"]) [data-key="scheme"],
+main[data-home="v2"] .hv2-contour-legend:not([data-layer="load"]) [data-key="load"],
+main[data-home="v2"] .hv2-contour-legend:is([data-layer="load"], [data-layer="sketch"]) [data-key="approximate"],
+main[data-home="v2"] .hv2-contour-legend[data-layer="sketch"] [data-key="measured"] { display: none; }
+/* The phone's figures (or, with the load, its chain), in one slot as tall as the taller, so nothing jumps */
+main[data-home="v2"] .hv2-contour .hv2-contour-facts { display: none; }
+main[data-home="v2"] .hv2-contour-facts-slot { display: grid; }
+main[data-home="v2"] .hv2-contour-facts-slot > * { grid-area: 1 / 1; visibility: hidden; }
+main[data-home="v2"] .hv2-contour-facts-slot > [data-on] { visibility: visible; }
+main[data-home="v2"] .hv2-contour-chips { display: flex; flex-wrap: wrap; align-content: start; gap: 6px; }
+main[data-home="v2"] .hv2-contour-chips > span {
+  padding: 5px 8px 4px; color: var(--hv2-copper-text); border: 1px solid rgba(204, 132, 85, .55);
+  font: 700 11.5px/1.1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase;
+}
+main[data-home="v2"] .hv2-contour-chain-text { color: var(--hv2-copper-text); font: 600 13px/1.4 var(--font-manrope), sans-serif; }
+
 main[data-home="v2"] .hv2-contour .sheet-action { padding: 6px 8px 6px 10px; }
 main[data-home="v2"] .hv2-contour-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 main[data-home="v2"] .hv2-contour-sides { display: flex; gap: 6px; }
@@ -364,11 +554,11 @@ main[data-home="v2"] .hv2-contour-toggle i { width: 16px; height: 2px; flex: non
 main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: var(--hv2-text); }
 /* High contrast: a pressed button in the system's highlight, and the seam and the toggle's line kept as drawn marks */
 @media (forced-colors: active) {
-  main[data-home="v2"] .hv2-contour-controls button[aria-pressed="true"] { forced-color-adjust: none; color: HighlightText; background: Highlight; border-color: Highlight; }
+  main[data-home="v2"] :is(.hv2-contour-controls, .hv2-contour-layers) button[aria-pressed="true"] { forced-color-adjust: none; color: HighlightText; background: Highlight; border-color: Highlight; }
   main[data-home="v2"] :is(.hv2-contour-seam, .hv2-contour-toggle i) { forced-color-adjust: none; background: CanvasText; }
   main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: HighlightText; }
 }
-/* «Фото» / «Контур» are for fingers; a mouse or a pen drags anywhere in the frame */
+/* «Фото» / «Схема» are for fingers; a mouse or a pen drags anywhere in the frame */
 @media (min-width: 761px) and (hover: hover) and (pointer: fine) {
   main[data-home="v2"] .hv2-contour-sides { display: none; }
 }
@@ -379,7 +569,7 @@ main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: va
   main[data-home="v2"] .hv2-contour .sheet-cell { flex: 1 1 auto; }
   main[data-home="v2"] .hv2-contour .sheet-cell-note { order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
 }
-/* A phone: the controls take the last row and fill it, «Фото» / «Контур» then the toggle; where the three do not fit
+/* A phone: the controls take the last row and fill it, «Фото» / «Схема» then the toggle; where the three do not fit
    on one row (a phone narrower than about 390 px) each pair gets a full row of its own, not a ragged half */
 @container sheet (max-width: 560px) {
   main[data-home="v2"] .hv2-contour .sheet-action { flex-basis: 100%; padding: 6px 8px; border-top: 1px solid var(--sheet-ink); border-left: 0; }
@@ -387,6 +577,41 @@ main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: va
   main[data-home="v2"] .hv2-contour-controls > * { flex: 1 0 auto; }
   main[data-home="v2"] .hv2-contour-sides button { flex: 1 0 auto; }
   main[data-home="v2"] .hv2-contour-controls button { justify-content: center; }
+  main[data-home="v2"] .hv2-contour .hv2-contour-right { flex-basis: 100%; border-left: 0; }
+  main[data-home="v2"] .hv2-contour-layers { display: flex; justify-self: stretch; }
+  main[data-home="v2"] .hv2-contour-layers button { flex: 1 1 auto; min-height: 44px; padding: 0 6px; letter-spacing: .06em; }
+}
+/* The narrowest phone (320 px): the three layers still on one row, a little tighter */
+@container sheet (max-width: 300px) {
+  main[data-home="v2"] .hv2-contour-layers button { padding: 0 4px; font-size: 11.5px; letter-spacing: .03em; }
+}
+
+/* A laptop (owner, 04.10: «в мене на ноуті всеодно не буде влазити весь блок»): the whole sheet fits under the header
+   (101 px, and 16 px of air). It keeps its width — a narrower sheet would leave empty bands and shrink the drawing —
+   and the stage crops the canvas instead: 36.7 % of what it loses off the sky, the rest off the gravel, never past
+   the photo's rows 84–644 (the gable's base and the footings stay). 100cqw is the sheet's content width, the image's. */
+@media (min-width: 761px) {
+  main[data-home="v2"] .hv2-contour { max-height: calc(100svh - 117px - 12px); }
+  main[data-home="v2"] .hv2-contour .sheet-body { flex: 0 1 auto; }
+  main[data-home="v2"] .hv2-contour .sheet-stamp { flex: none; }
+  main[data-home="v2"] .hv2-contour .sheet-image { flex: 0 1 auto; aspect-ratio: auto; height: calc(100cqw * 788 / 1536); min-height: calc(100cqw * 560 / 1536); }
+  main[data-home="v2"] .hv2-contour-canvas { top: calc((100% - 100cqw * 788 / 1536) * .367); }
+  /* …and the note a size down, so the title block keeps to four lines on a 1280 px laptop */
+  main[data-home="v2"] .hv2-contour .sheet-cell-note b { font-size: 14px; line-height: 1.45; }
+}
+
+/* A phone: no names inside the frame — the figures are chips under the note — and the stamp a word */
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-contour .hv2-contour-facts { display: flex; order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
+  main[data-home="v2"] :is(.hv2-proof-marks, .hv2-proof-labels, .hv2-contour-seamtags, .hv2-contour-chain) { display: none; }
+  main[data-home="v2"] .hv2-contour-corner { top: 6px; right: 6px; }
+  main[data-home="v2"] .hv2-contour-stamp { padding: 4px 6px 3px; }
+  main[data-home="v2"] .hv2-contour-stamp small { font-size: 10px; }
+  main[data-home="v2"] :is(.hv2-contour-stamp-text, .hv2-contour-stamp-more) { display: none; }
+  /* A phone's frame is short and its middle band is the gates: the handle drops into the gravel under the gable's
+     base, its disc smaller than its grip, so it covers no gate and no corner at the resting split */
+  main[data-home="v2"] .hv2-contour-handle { top: auto; bottom: 0; margin-top: 0; padding: 5px 0 0; font-size: 20px; }
+  main[data-home="v2"] .hv2-contour-handle::before, main[data-home="v2"] .hv2-contour-handle::after { inset: auto 6px 2px; height: 32px; }
 }
 /* --u by width: the frame is the shell less the sheet's margins, so a CSS pixel of it is 1536 / (0.925 × vw − 46) photo
    pixels above 760 px and 1536 / (vw − 66) on a phone; each step keeps the lines within a fifth of their set width */
