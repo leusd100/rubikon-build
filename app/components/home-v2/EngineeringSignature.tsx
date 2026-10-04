@@ -3,17 +3,20 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { HomeProofCase } from '../../data/homeProof';
 import { siteRoutes } from '../../data/navigation';
 import { leadership } from '../../data/people';
-import { DrawingSheet } from '../DrawingSheet';
+import { ProofContour } from './ProofContour';
 import { ScopeCells } from './ScopeCells';
 
 // HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
 //
-// Order (iteration 3): the real object comes first, straight under the heading, beside an X-ray illustration of a
-// similar view. They are two separate images with two different labels: the photo is evidence («Фото об’єкта», with
-// its foreground retouch stated), the X-ray is a generated sketch that does not match the photo literally and invents
-// the frame behind the cladding («Ілюстративна схема конструкції») — never called a drawing, no sizes, nodes or
-// calculations. The arrow between them reads «до принципу»: from the object to the principle, not into its insides.
-// Two explanation cards follow; the old card 01 («Фото → конструкція») is what the X-ray now shows, so it is gone.
+// Order: the real object comes first, straight under the heading — since 04.10 (owner's decision, variant A «Калька»)
+// ONE «Креслення» sheet: the photo («Фото об’єкта», its foreground retouch stated) and, right of a seam the visitor
+// moves, the same frame as a tracing (ProofContour). Over the tracing, chosen in the title block: the lines and
+// scale-free figures measured from eight photos of this hangar («Контур»), or — the default since 04.10 (owner: more
+// on the right side, a test of what the frame could be) — a SCHEME of a frame of the type the owner names for this
+// object, drawn inside its measured silhouette and labelled as a scheme without sizes («Каркас», «Сніг», «Вітер»). It is
+// never this building's structure and never goes over the photo itself; the generated X-ray sketch that once stood
+// beside the photo is gone from the page (only /?xray=sketch shows it, for the owner's comparison). Two explanation
+// cards follow, each labelled as what it is («Ілюстрація», «Схема»).
 //
 // Nothing here names a product: no «digital twin», explorer, load-path software or building passport.
 
@@ -113,70 +116,13 @@ const cards: readonly { number: string; title: ReactNode; text: string; tag: str
   },
 ];
 
-// The copper load path baked into the X-ray sketch, measured on its 1774×887 pixels (orange-pixel scan): ridge
-// (1052, 113) → along the rafter → eave (1418, 268) → corner → down the column at x ≈ 1490 → arrowhead at y ≈ 646;
-// the footing glow sits at (1491, 700). The overlay only adds a travelling pulse on top of that path.
-const XRAY_PATH = 'M1052 113 L1418 268 L1450 293 L1482 303 L1490 326 L1490 646';
-
 const people = leadership;
 
 function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
   const { photo, scope } = proof;
   return (
     <div className="hv2-proof" id="real-object">
-      {/* Two images, two labels — both on the site's «Креслення» sheet, so the title block says what each one is: the
-          real object's photo and the principle's illustration (the labels once sat on the pictures as chips) */}
-      <div className="hv2-proof-pair">
-        <DrawingSheet
-          className="hv2-proof-photo"
-          imageClassName="hv2-proof-media"
-          cells={[
-            { tone: 'note', label: 'Об’єкт', value: <><b>Реальний об’єкт.</b> Фото з ретушшю переднього плану.</> },
-            { label: 'Зображення', value: <span className="hv2-tag-photo">Фото об’єкта</span> },
-          ]}
-        >
-          <picture>
-            <source type="image/webp" srcSet="/media/home-v2/hangar-retouched-960w.webp 960w, /media/home-v2/hangar-retouched-1536w.webp 1536w" sizes="(max-width: 900px) 100vw, 42vw" />
-            <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
-          </picture>
-        </DrawingSheet>
-        <DrawingSheet
-          className="hv2-proof-xray"
-          imageClassName="hv2-proof-media"
-          cells={[
-            {
-              tone: 'note',
-              label: 'Принцип',
-              value: <><b>Ілюстрація принципу:</b> каркас і шлях навантаження від покрівлі до фундаменту. Це не креслення цього ангара — його прихована конструкція, розміри й вузли тут не показані.</>,
-            },
-            { label: 'Зображення', value: <span className="hv2-tag-scheme">Ілюстративна схема конструкції</span> },
-          ]}
-        >
-          {/* sizes = the width the 2:1 sketch is drawn at, not its box: object-fit: cover crops it to 1.1 on a phone
-              (box = 100vw − 68 px, drawn 2 / 1.1 times as wide) and to 16:10 at 761–900 px; above that it fits */}
-          <img
-            src="/media/home-v2/concepts/hangar-xray-1774w.webp"
-            srcSet="/media/home-v2/concepts/hangar-xray-1100w.webp 1100w, /media/home-v2/concepts/hangar-xray-1774w.webp 1774w"
-            sizes="(max-width: 760px) calc((100vw - 68px) * 1.82), (max-width: 900px) 109vw, 50vw"
-            alt="Ілюстративна схема: ангар, у якого частину обшивки замінено умовним каркасом, зі шляхом навантаження від покрівлі до фундаменту"
-            loading="lazy"
-            decoding="async"
-          />
-          <svg className="hv2-xray-flow" viewBox="0 0 1774 887" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
-            <defs>
-              <radialGradient id="hv2-xray-glow-fill">
-                <stop offset="0" stopColor="#ffb27a" stopOpacity=".95" />
-                <stop offset=".45" stopColor="#cc8455" stopOpacity=".45" />
-                <stop offset="1" stopColor="#cc8455" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-            <path className="hv2-xray-pulse-halo" d={XRAY_PATH} pathLength={1} />
-            <path className="hv2-xray-pulse" d={XRAY_PATH} pathLength={1} />
-            <ellipse className="hv2-xray-glow" cx="1491" cy="700" rx="70" ry="34" fill="url(#hv2-xray-glow-fill)" />
-          </svg>
-          <span className="hv2-proof-arrow" aria-hidden="true"><i>→</i><span>до принципу</span></span>
-        </DrawingSheet>
-      </div>
+      <ProofContour photo={photo} />
 
       <div className="hv2-proof-facts">
         <div className="hv2-evidence-lead">
