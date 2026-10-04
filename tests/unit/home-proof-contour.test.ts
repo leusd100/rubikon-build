@@ -46,12 +46,30 @@ describe('homeProofContour', () => {
     }
   });
 
-  it('draws the gable outline and both gates; only the left rake of the outline is approximate', () => {
+  it('draws the gable outline and both gates, the gates solid', () => {
     const byKind = (kind: string) => lines.filter((line) => line.kind === kind);
     expect(byKind('outline').length).toBeGreaterThanOrEqual(1);
     expect(byKind('gate')).toHaveLength(2);
     expect(byKind('gate').every((gate) => !gate.approximate)).toBe(true);
-    expect(byKind('outline').filter((line) => line.approximate).map((line) => line.id)).toEqual(['gable-rake-left']);
     expect(byKind('cladding').length).toBeGreaterThan(0);
+  });
+
+  // The legend's «суцільна — виміряно» is a public claim. The approximate set (review of 04.10): the left rake, which
+  // lies off its edge; the right corner, whose edge the study finds outside it, on the trim; the two fascia ends, never
+  // checked, riding with those two; the three left strip boundaries. A changed flag fails here, and the SVG's
+  // accessible name — the one place a screen reader learns where the dashes are — has to change with it.
+  it('dashes exactly the lines the study could not place on their edge, and names them in the accessible label', () => {
+    expect(lines.filter((line) => line.approximate).map((line) => line.id)).toEqual(['gable-corner-right', 'gable-rake-left', 'strip-a', 'strip-b', 'strip-c']);
+    const { label } = homeProofContour;
+    expect(label).not.toMatch(/\d/);
+    for (const words of ['Контур за фото', 'виміряно', 'наближено', 'лівий скат', 'правий кут', 'три ліві межі смуг облицювання']) {
+      expect(label).toContain(words);
+    }
+    // The outline's solid parts join its dashed ones end to end: one closed outline, round from the apex
+    const outline = lines.filter((line) => line.kind === 'outline');
+    for (let index = 1; index < outline.length; index += 1) {
+      expect(outline[index].points[0], outline[index].id).toEqual(outline[index - 1].points.at(-1));
+    }
+    expect(outline.at(-1)?.points.at(-1)).toEqual(outline[0].points[0]);
   });
 });

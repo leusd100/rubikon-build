@@ -7,7 +7,7 @@ import { homeProofContour } from '../../app/data/homeProofContour';
 // «Лінії на фото» lays the lines over the photo too. Without motion or JavaScript the sheet stands complete.
 
 const DEFAULT_SPLIT = 64;
-const SLIDER = 'Порівняти фото і контур за фото';
+const SLIDER = 'Порівняти фото й контур за фото';
 const FORBIDDEN = /digital\s*twin|двійник|3\s*d\s*модел|точн|обмір|x-?ray|рентген/i;
 
 async function open(page: Page) {
@@ -28,7 +28,22 @@ async function open(page: Page) {
     if (!figure || !image || figure.dataset.sheetState === 'armed') return false;
     return image.getAnimations().every((animation) => animation.playState === 'finished');
   });
-  return { sheet, stage: sheet.locator('.hv2-contour-stage'), slider: sheet.getByRole('slider', { name: SLIDER }) };
+  const slider = sheet.getByRole('slider', { name: SLIDER });
+  // The controls come alive with hydration
+  await expect(slider).toBeEnabled();
+  return { sheet, stage: sheet.locator('.hv2-contour-stage'), slider };
+}
+
+/** The keyboard's focus ring, drawn on the handle's disc */
+const ringOf = (stage: Locator) => stage.locator('.hv2-contour-handle').evaluate((element) => getComputedStyle(element, '::before').outlineStyle);
+
+async function touchDrag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }, steps = 10) {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [from] });
+  for (let step = 1; step <= steps; step += 1) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from.x + ((to.x - from.x) * step) / steps, y: from.y + ((to.y - from.y) * step) / steps }] });
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 }
 
 /** A screenshot of the region once two in a row agree (the photo may still be painting after it has loaded) */
@@ -78,9 +93,14 @@ test('the sheet names both sides, states the retouch and the legend, and carries
   }
   await expect(stage.locator('svg.hv2-contour-lines')).toHaveAttribute('viewBox', `0 0 ${homeProofContour.photo.width} ${homeProofContour.photo.height}`);
   await expect(stage.locator('svg.hv2-contour-lines')).toHaveAttribute('preserveAspectRatio', 'xMidYMid slice');
+  // Under role="img" the lines' own titles reach no one: the accessible name says which ones are approximate
+  await expect(stage.getByRole('img', { name: homeProofContour.label })).toBeVisible();
 
-  // No figures anywhere in the sheet, not even in the lines' titles, and none of the words that claim more than a photo
+  // No figures anywhere in the sheet, not even in the lines' titles or in what the slider says, and none of the words
+  // that claim more than a photo
   expect(await sheet.evaluate((element) => element.textContent)).not.toMatch(/\d/);
+  expect(homeProofContour.label).not.toMatch(/\d/);
+  await expect(stage.getByRole('slider', { name: SLIDER })).toHaveAttribute('aria-valuetext', 'Фото ліворуч, контур праворуч: більше фото');
   expect(await sheet.innerText()).not.toMatch(FORBIDDEN);
   expect(await page.locator('#real-object').evaluate((element) => element.textContent)).not.toMatch(FORBIDDEN);
 });
@@ -132,16 +152,19 @@ test('the keys move the seam: arrows by one, PageUp / PageDown by ten, Home and 
   await expectSplit(slider, stage, 53);
   await page.keyboard.press('Home');
   await expectSplit(slider, stage, 0);
+  await expect(slider).toHaveAttribute('aria-valuetext', 'Лише контур за фото');
   await page.keyboard.press('End');
   await expectSplit(slider, stage, 100);
+  await expect(slider).toHaveAttribute('aria-valuetext', 'Лише фото');
   // The focus shows on the handle, the input itself being invisible
-  expect(await stage.locator('.hv2-contour-handle').evaluate((element) => getComputedStyle(element).outlineStyle)).toBe('solid');
+  expect(await ringOf(stage)).toBe('solid');
 });
 
-test('a mouse drags anywhere in the frame; a finger scrolls the page there and drags only the handle', async ({ page }, testInfo) => {
+test('a mouse drags anywhere in the frame; a finger scrolls and zooms the page there and drags only the handle', async ({ page }, testInfo) => {
   const { stage, slider } = await open(page);
-  expect(await stage.evaluate((element) => getComputedStyle(element).touchAction)).toBe('pan-y');
-  expect(await stage.locator('.hv2-contour-handle').evaluate((element) => getComputedStyle(element).touchAction)).toBe('none');
+  // Pinch-zoom stays the page's everywhere in the frame, the handle too: the photo is what a visitor zooms into
+  expect(await stage.evaluate((element) => getComputedStyle(element).touchAction)).toBe('pan-y pinch-zoom');
+  expect(await stage.locator('.hv2-contour-handle').evaluate((element) => getComputedStyle(element).touchAction)).toBe('pan-y pinch-zoom');
   const frame = (await stage.boundingBox())!;
   const y = frame.y + frame.height * 0.25;
 
@@ -152,6 +175,12 @@ test('a mouse drags anywhere in the frame; a finger scrolls the page there and d
     await page.mouse.up();
     await expect.poll(() => seamAt(stage)).toBeCloseTo(80, 0);
     await expect(slider).toHaveValue('80');
+    // The mouse put the focus on the range, but the keyboard's ring waits for a key
+    await expect(slider).toBeFocused();
+    expect(await ringOf(stage)).toBe('none');
+    await page.keyboard.press('ArrowRight');
+    await expect(slider).toHaveValue('81');
+    expect(await ringOf(stage)).toBe('solid');
     return;
   }
 
@@ -161,13 +190,70 @@ test('a mouse drags anywhere in the frame; a finger scrolls the page there and d
   // The handle follows the finger, from where it was grabbed
   const handle = (await stage.locator('.hv2-contour-handle').boundingBox())!;
   const from = { x: handle.x + handle.width / 2 + 6, y: handle.y + handle.height / 2 };
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [from] });
-  for (let step = 1; step <= 8; step += 1) {
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from.x - (frame.width * 0.34 * step) / 8, y: from.y }] });
-  }
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await touchDrag(page, from, { x: from.x - frame.width * 0.34, y: from.y });
   await expect.poll(() => seamAt(stage)).toBeCloseTo(30, 0);
+  expect(await ringOf(stage)).toBe('none');
+
+  // A vertical swipe that starts on the handle scrolls the page and leaves the seam alone
+  const grip = (await stage.locator('.hv2-contour-handle').boundingBox())!;
+  const before = { scroll: await page.evaluate(() => window.scrollY), split: await slider.inputValue() };
+  const start = { x: grip.x + grip.width / 2, y: grip.y + grip.height / 2 };
+  await touchDrag(page, start, { x: start.x, y: start.y - 140 });
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(before.scroll + 40);
+  await expect(slider).toHaveValue(before.split);
+});
+
+test('grabbed at either end of the frame, the handle stays under the finger', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'desktop-chromium', '«Фото», «Контур» and the finger are the phone\'s');
+  // Without the glide, so the handle is measured where it rests
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { sheet, stage, slider } = await open(page);
+  const handle = stage.locator('.hv2-contour-handle');
+  for (const [side, edge, move] of [['Контур', 0, 120], ['Фото', 100, -120]] as const) {
+    await sheet.getByRole('button', { name: side, exact: true }).click();
+    await expectSplit(slider, stage, edge);
+    // The buttons sit under the frame: bring the frame back clear of the sticky header
+    await stage.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+    const frame = (await stage.boundingBox())!;
+    // At the edge the handle is held clear of the frame, off the seam: the finger takes it where it is drawn
+    const grip = (await handle.boundingBox())!;
+    const from = { x: grip.x + grip.width / 2, y: grip.y + grip.height / 2 };
+    const to = { x: from.x + move, y: from.y };
+    await touchDrag(page, from, to);
+    const centre = async () => { const box = (await handle.boundingBox())!; return box.x + box.width / 2; };
+    await expect.poll(async () => Math.abs((await centre()) - to.x), { message: side }).toBeLessThanOrEqual(2);
+    await expect.poll(() => seamAt(stage)).toBeCloseTo(((to.x - frame.x) / frame.width) * 100, 0);
+  }
+});
+
+test('on a phone the handle rests under the gable, clear of both gates and the base line', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'desktop-chromium', 'a phone\'s frame');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const width of [412, 390, 360, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    const { stage, slider } = await open(page);
+    await expectSplit(slider, stage, DEFAULT_SPLIT);
+    // The gates' corners and jambs next to the seam, and where the base line crosses it, in the photo's own pixels
+    const [gateLeft, gateRight] = homeProofContour.lines.filter((line) => line.kind === 'gate');
+    const base = homeProofContour.lines.find((line) => line.id === 'gable-base')!.points;
+    const seamX = (DEFAULT_SPLIT / 100) * homeProofContour.photo.width;
+    const baseY = base[0][1] + ((base[1][1] - base[0][1]) * (seamX - base[0][0])) / (base[1][0] - base[0][0]);
+    const marks = [...gateLeft.points.slice(1), ...gateRight.points.slice(0, 2), [seamX, baseY] as const];
+    const covered = await stage.evaluate((element, points) => {
+      const svg = element.querySelector<SVGSVGElement>('svg.hv2-contour-lines')!;
+      const ctm = svg.getScreenCTM()!;
+      const handle = element.querySelector('.hv2-contour-handle')!;
+      const disc = handle.getBoundingClientRect();
+      const style = getComputedStyle(handle, '::before');
+      // The disc as drawn: the handle's box less the pseudo-element's insets
+      const left = disc.left + parseFloat(style.left), right = disc.right - parseFloat(style.right);
+      const bottom = disc.bottom - parseFloat(style.bottom), top = bottom - parseFloat(style.height);
+      const cx = (left + right) / 2, cy = (top + bottom) / 2, radius = (right - left) / 2;
+      // A line's own width counts: its casing is about three CSS pixels across
+      return points.filter(([x, y]) => Math.hypot(ctm.a * x + ctm.e - cx, ctm.d * y + ctm.f - cy) < radius + 2);
+    }, marks);
+    expect(covered, `${width}`).toEqual([]);
+  }
 });
 
 test('on a phone «Фото» and «Контур» show one side whole, and bring the seam back when pressed again', async ({ page }, testInfo) => {
@@ -235,7 +321,7 @@ test('with reduced motion the sheet stands static and complete at its resting sp
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
-  test('the sheet is complete at its resting split: photo, tracing, every line', async ({ page }) => {
+  test('the sheet is complete at its resting split: photo, tracing, every line; the controls say they cannot move it', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' });
     const stage = page.locator('#real-object .hv2-contour-stage');
     await stage.scrollIntoViewIfNeeded();
@@ -245,6 +331,9 @@ test.describe('without JavaScript', () => {
     await expect(stage.locator('picture img')).toHaveCount(2);
     await expect(stage.locator('picture img').first()).toBeVisible();
     expect(await stage.locator('.hv2-contour-trace').evaluate((element) => getComputedStyle(element).clipPath)).toContain(`${DEFAULT_SPLIT}%`);
+    // Nothing offers a move the static sheet cannot make: the slider and the buttons are disabled, out of the tab order
+    await expect(stage.getByRole('slider', { name: SLIDER })).toBeDisabled();
+    for (const button of await page.locator('#real-object .hv2-contour-controls button').all()) await expect(button).toBeDisabled();
   });
 });
 

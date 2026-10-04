@@ -265,7 +265,8 @@ main[data-home="v2"] .hv2-contour {
 }
 main[data-home="v2"] .hv2-contour .sheet-image { flex: none; aspect-ratio: 1536 / 788; background: #0f1110; }
 main[data-home="v2"] .hv2-contour-stage {
-  position: absolute; inset: 0; overflow: hidden; cursor: ew-resize; touch-action: pan-y; /* a finger scrolls the page */
+  /* A finger scrolls the page and pinch-zooms the photo; only a sideways drag on the handle is the seam's */
+  position: absolute; inset: 0; overflow: hidden; cursor: ew-resize; touch-action: pan-y pinch-zoom;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
 main[data-home="v2"] .hv2-contour-stage img {
@@ -301,15 +302,26 @@ main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); st
 
 /* The seam and its handle; the range input lies over the frame, invisible, and draws its focus on the handle */
 main[data-home="v2"] .hv2-contour-seam { position: absolute; top: 0; bottom: 0; left: var(--split); width: 2px; margin-left: -1px; background: var(--hv2-copper-text); pointer-events: none; }
+/* The handle is the finger's one grip (44 px); a vertical swipe on it still scrolls the page — the browser cancels the
+   drag. Its disc is drawn under the glyph, so a phone can draw it smaller than the area it answers to */
 main[data-home="v2"] .hv2-contour-handle {
-  position: absolute; top: 50%; left: clamp(22px, var(--split), calc(100% - 22px)); display: grid; place-items: center;
-  width: 44px; height: 44px; margin: -22px 0 0 -22px; color: var(--hv2-text); background: var(--hv2-ink);
-  border: 2px solid var(--hv2-copper-text); border-radius: 50%; cursor: grab; touch-action: none; /* the finger's one grip */
+  position: absolute; top: 50%; left: clamp(22px, var(--split), calc(100% - 22px)); isolation: isolate; display: grid; place-items: center;
+  width: 44px; height: 44px; margin: -22px 0 0 -22px; color: var(--hv2-text); border-radius: 50%; cursor: grab; touch-action: pan-y pinch-zoom;
   padding-bottom: 3px; font: 700 24px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; white-space: nowrap; /* the guillemets sit low */
+}
+main[data-home="v2"] .hv2-contour-handle::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; background: var(--hv2-ink); border: 2px solid var(--hv2-copper-text); border-radius: 50%;
 }
 main[data-home="v2"] .hv2-contour-stage[data-dragging] .hv2-contour-handle { cursor: grabbing; }
 main[data-home="v2"] .hv2-contour-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
-main[data-home="v2"] .hv2-contour-range:focus-visible ~ .hv2-contour-handle { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+/* The keyboard's ring only: focus a click or a finger put on the range draws nothing until a key is pressed */
+main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+/* A phone's frame is short and its middle band is the gates: the handle drops into the gravel under the gable's base,
+   its disc smaller than its grip, so it covers no gate and no corner at the resting split */
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-contour-handle { top: auto; bottom: 0; margin-top: 0; padding: 5px 0 0; font-size: 20px; }
+  main[data-home="v2"] .hv2-contour-handle::before { inset: auto 6px 2px; height: 32px; }
+}
 @media (prefers-reduced-motion: no-preference) {
   /* «Фото» / «Контур», the keys and «Лінії на фото» glide; a drag follows the pointer as it is */
   main[data-home="v2"] .hv2-contour-stage:not([data-dragging]) :is(.hv2-contour-trace, .hv2-contour-lines) { transition: clip-path 420ms var(--sheet-plot); }
@@ -345,9 +357,17 @@ main[data-home="v2"] .hv2-contour-controls button {
   font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
 }
 main[data-home="v2"] .hv2-contour-controls button[aria-pressed="true"] { background: var(--hv2-copper-fill); border-color: var(--hv2-copper-fill); }
-@media (hover: hover) { main[data-home="v2"] .hv2-contour-controls button[aria-pressed="false"]:hover { border-color: var(--hv2-copper-text); } }
+@media (hover: hover) { main[data-home="v2"] .hv2-contour-controls button[aria-pressed="false"]:enabled:hover { border-color: var(--hv2-copper-text); } }
+/* Until the page is hydrated (and without JavaScript) the controls cannot move anything: they say so */
+main[data-home="v2"] .hv2-contour-controls button:disabled { cursor: default; opacity: .45; }
 main[data-home="v2"] .hv2-contour-toggle i { width: 16px; height: 2px; flex: none; background: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: var(--hv2-text); }
+/* High contrast: a pressed button in the system's highlight, and the seam and the toggle's line kept as drawn marks */
+@media (forced-colors: active) {
+  main[data-home="v2"] .hv2-contour-controls button[aria-pressed="true"] { forced-color-adjust: none; color: HighlightText; background: Highlight; border-color: Highlight; }
+  main[data-home="v2"] :is(.hv2-contour-seam, .hv2-contour-toggle i) { forced-color-adjust: none; background: CanvasText; }
+  main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: HighlightText; }
+}
 /* «Фото» / «Контур» are for fingers; a mouse or a pen drags anywhere in the frame */
 @media (min-width: 761px) and (hover: hover) and (pointer: fine) {
   main[data-home="v2"] .hv2-contour-sides { display: none; }
@@ -359,10 +379,14 @@ main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: va
   main[data-home="v2"] .hv2-contour .sheet-cell { flex: 1 1 auto; }
   main[data-home="v2"] .hv2-contour .sheet-cell-note { order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
 }
-/* A phone: the controls take the last row, «Фото» / «Контур» on the left, the toggle on the right */
+/* A phone: the controls take the last row and fill it, «Фото» / «Контур» then the toggle; where the three do not fit
+   on one row (a phone narrower than about 390 px) each pair gets a full row of its own, not a ragged half */
 @container sheet (max-width: 560px) {
   main[data-home="v2"] .hv2-contour .sheet-action { flex-basis: 100%; padding: 6px 8px; border-top: 1px solid var(--sheet-ink); border-left: 0; }
-  main[data-home="v2"] .hv2-contour-controls { width: 100%; justify-content: space-between; }
+  main[data-home="v2"] .hv2-contour-controls { width: 100%; }
+  main[data-home="v2"] .hv2-contour-controls > * { flex: 1 0 auto; }
+  main[data-home="v2"] .hv2-contour-sides button { flex: 1 0 auto; }
+  main[data-home="v2"] .hv2-contour-controls button { justify-content: center; }
 }
 /* --u by width: the frame is the shell less the sheet's margins, so a CSS pixel of it is 1536 / (0.925 × vw − 46) photo
    pixels above 760 px and 1536 / (vw − 66) on a phone; each step keeps the lines within a fifth of their set width */

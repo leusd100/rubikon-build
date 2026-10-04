@@ -9,8 +9,8 @@
  * re-crop the photo (or its WebP copies) and tests/unit/home-proof-contour.test.ts fails the build until the lines are
  * registered again.
  *
- * `approximate`: in the study the line lies further from its edge in the photo than the study's pass mark — drawn
- * dashed and called «наближено»; every other line is solid, «виміряно». Nothing here is a size: no scale, no
+ * `approximate`: in the study the line lies further from its edge in the photo than the study's pass mark, or it was
+ * never checked against an edge — drawn dashed and called «наближено»; every other line is solid, «виміряно». Nothing here is a size: no scale, no
  * proportions, no internal register ids — only where each line sits on this frame.
  */
 export type ContourLineKind = 'outline' | 'gate' | 'cladding';
@@ -30,6 +30,9 @@ export type HomeProofContour = {
   /** The WebP copies the page draws (same frame, resized only), hashed for the same reason */
   variants: readonly { src: string; sha256: string; width: number }[];
   lines: readonly ContourLine[];
+  /** The lines' accessible name: what is drawn and which lines are approximate. Under role="img" the per-line titles
+   *  reach no one, so this is the only place a screen reader learns where the dashes are */
+  label: string;
 };
 
 export const homeProofContour: HomeProofContour = {
@@ -44,19 +47,37 @@ export const homeProofContour: HomeProofContour = {
     { src: '/media/home-v2/hangar-retouched-1536w.webp', sha256: 'f2c6fa09ecb04befceffc16fb61aee5fc1c158bc01fad1fccc5723f4b9590e6f', width: 1536 },
   ],
   lines: [
-    // The outline is split at the left rake, the one part of it that sits off its edge: from the apex down the right
-    // rake, round the right corner, along the base, up the left corner to the left fascia end — then the rake back up.
+    // The outline, drawn round from the apex: the right rake, the right corner, the base with the left corner, the left
+    // rake back up. It is split where a part sits off its edge or was never checked against one. The right corner: the
+    // study finds the photo's edge outside it, on the trim, past the pass mark — so approximate (review of 04.10; the
+    // first cut had taken the cladding-corner figures for the outline's corners). The two short fascia ends have no edge
+    // check at all, so each rides with its dashed neighbour. The left corner, checked on this photo with the study's own
+    // colour-step scan, sits on its edge.
     {
-      id: 'gable-outline',
+      id: 'gable-rake-right',
       kind: 'outline',
-      points: [[1004.9, 128.6], [1483.7, 295.2], [1484.2, 309.1], [1470.4, 310.6], [1478.6, 551.7], [263.3, 582.2], [277.7, 217.9], [280.5, 214.3], [281.4, 193.3]],
+      points: [[1004.9, 128.6], [1483.7, 295.2]],
       approximate: false,
-      title: 'Обрис фронтона: правий скат, кути й низ обшивки',
+      title: 'Правий скат фронтона',
+    },
+    {
+      id: 'gable-corner-right',
+      kind: 'outline',
+      points: [[1483.7, 295.2], [1484.2, 309.1], [1470.4, 310.6], [1478.6, 551.7]],
+      approximate: true,
+      title: 'Правий кут фронтона, наближено',
+    },
+    {
+      id: 'gable-base',
+      kind: 'outline',
+      points: [[1478.6, 551.7], [263.3, 582.2], [277.7, 217.9]],
+      approximate: false,
+      title: 'Низ облицювання фронтона й лівий кут',
     },
     {
       id: 'gable-rake-left',
       kind: 'outline',
-      points: [[281.4, 193.3], [1004.9, 128.6]],
+      points: [[277.7, 217.9], [280.5, 214.3], [281.4, 193.3], [1004.9, 128.6]],
       approximate: true,
       title: 'Лівий скат фронтона, наближено',
     },
@@ -83,4 +104,8 @@ export const homeProofContour: HomeProofContour = {
     { id: 'strip-d', kind: 'cladding', points: [[1156.8, 336.9], [1154.8, 203.4]], approximate: false, title: 'Межа смуг облицювання' },
     { id: 'strip-e', kind: 'cladding', points: [[1266.3, 557.0], [1259.5, 238.9]], approximate: false, title: 'Межа смуг облицювання' },
   ],
+  // Names the approximate set in words; tests/unit/home-proof-contour.test.ts pins that set, so a changed flag fails
+  // until this sentence is changed with it
+  label:
+    'Контур за фото: обрис фронтона, ворота й межі смуг облицювання. Суцільні лінії виміряно, пунктирні наближено — це лівий скат і правий кут фронтона та три ліві межі смуг облицювання.',
 };
