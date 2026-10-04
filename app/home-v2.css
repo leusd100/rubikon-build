@@ -1,7 +1,7 @@
 /* HOME v2 «Engineering Signature» — owner-approved 2026-09-29 (built on design/home-v2-engineering-signature).
 
-   Three zones here: hero → directions → engineering signature (real object + X-ray first, people, two explanation
-   cards). The closing conversation block is the site-wide one (app/conversation.css).
+   Three zones here: hero → directions → engineering signature (the real object and its contour first, people, two
+   explanation cards). The closing conversation block is the site-wide one (app/conversation.css).
    Every rule is keyed to <main data-home="v2">, so nothing leaks to other pages. It sits on top of the
    Architectural Copper tokens already on main (#122) and does not change them.
 
@@ -208,15 +208,12 @@ main[data-home="v2"] .hv2-card h3 { margin: 0; font: 400 clamp(24px, 1.9vw, 30px
 main[data-home="v2"] .hv2-card h3 [aria-hidden="true"] { color: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-card p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.65; }
 
-/* Provenance tags: an illustration is outlined, the real photo is solid paper — two different marks on purpose */
+/* Provenance tags on the explanation cards: «Ілюстрація», «Схема» (the real photo says so in its sheet's title block) */
 main[data-home="v2"] .hv2-tag {
   position: absolute; z-index: 3; top: 16px; right: 16px; padding: 7px 10px;
   color: var(--hv2-text); background: rgba(18, 20, 19, .8); border: 1px solid rgba(245, 242, 235, .5);
   font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .05em;
 }
-main[data-home="v2"] .hv2-tag-photo { display: inline-flex; align-items: center; gap: 7px; color: var(--hv2-ink); background: var(--hv2-text); border-color: var(--hv2-text); }
-main[data-home="v2"] .hv2-tag-photo::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--hv2-copper-fill); }
-main[data-home="v2"] .hv2-tag-scheme { border-color: var(--hv2-copper-text); }
 
 /* Callouts on the illustrations: a copper ring, a short leader and a label */
 main[data-home="v2"] .hv2-pin { position: absolute; z-index: 2; left: var(--x); top: var(--y); display: flex; align-items: center; transform: translate(-7px, -50%); pointer-events: none; }
@@ -251,60 +248,133 @@ main[data-home="v2"] .hv2-scheme-axis-label { font-size: 15px; fill: var(--hv2-t
 main[data-home="v2"] .hv2-boundary { max-width: 880px; margin: 22px 0 0; color: var(--hv2-text-3); font-size: 15px; line-height: 1.6; }
 main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight: 700; }
 
-/* --- the real object + the X-ray: two separate images, two different labels --- */
+/* --- the real object and its contour: ONE «Креслення» sheet, variant A «Калька» (owner, 04.10) ---
+   Left of the seam the photo; right of it the same frame as a tracing — grey, dark, on a fine grid — with the copper
+   lines measured from the photos (ProofContour, app/data/homeProofContour.ts). The frame keeps the photo's own
+   proportion at every width, so the images (object-fit: cover) and the lines («xMidYMid slice») coincide and nothing is
+   cropped away, not even on a phone. A dark sheet in this dark band in either theme, its title block in the band's text
+   roles; the «Креслення» square language — no pills, no shadows, no glow. */
 main[data-home="v2"] .hv2-proof { margin-top: 36px; }
-/* 5fr | 7fr with the photo at 10:7 and the X-ray at 2:1 gives both media boxes the same height at any width */
-main[data-home="v2"] .hv2-proof-pair { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 14px; align-items: start; }
-main[data-home="v2"] .hv2-proof-pair figure { display: grid; gap: 12px; min-width: 0; margin: 0; }
-main[data-home="v2"] .hv2-proof-media { position: relative; overflow: hidden; background: #0f1110; border: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-proof-photo .hv2-proof-media { aspect-ratio: 10 / 7; }
-main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 1774 / 887; }
-main[data-home="v2"] .hv2-proof-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-main[data-home="v2"] .hv2-proof-photo img { object-position: 86% 55%; }
-main[data-home="v2"] .hv2-proof-xray img { object-position: 100% 50%; }
-/* Both images lie on the site's «Креслення» sheets (DrawingSheet, app/components/drawing-sheet.css): dark sheets in
-   this dark band in either theme, the stamp in the band's own text roles. Each sheet spans the pair's two rows
-   (subgrid), so the two pictures share one row height and the two title blocks another, whatever their captions. */
-main[data-home="v2"] .hv2-proof-pair .sheet {
+main[data-home="v2"] .hv2-contour {
   --sheet-paper: var(--hv2-graphite-2); --sheet-ink: var(--hv2-line-strong); --sheet-mark: var(--hv2-copper);
   --color-text: var(--hv2-text); --color-text-secondary: var(--hv2-text-2); --color-text-muted: var(--hv2-text-3); --color-accent-strong: var(--hv2-copper-text);
-  grid-row: span 2; grid-template-rows: subgrid; gap: 0;
-  container: none; /* a size container cannot be a subgrid; the title block wraps by the media query below instead */
+  /* One CSS pixel of the drawn frame in the photo's own pixels, stepped by width at the end of this block: the line
+     widths are set in the drawing's units (no non-scaling-stroke — with pathLength Chrome measures the dash on screen
+     and cuts the line's end, app/pro-nas/about.css) */
+  --u: 1.25px;
 }
-/* The picture starts from its own proportion and grows to the shared row height */
-main[data-home="v2"] .hv2-proof-pair .sheet-image { flex: 1 0 auto; }
-main[data-home="v2"] .hv2-proof-pair .hv2-proof-media { border-color: var(--hv2-line); }
-main[data-home="v2"] .hv2-proof-pair .sheet .hv2-tag-photo { display: inline-flex; align-items: center; gap: 7px; padding: 0; color: inherit; background: none; border: 0; }
-/* «→ до принципу»: from the real object to the principle — not a reveal of this hangar's hidden structure */
-main[data-home="v2"] .hv2-proof-arrow {
-  position: absolute; z-index: 3; left: 14px; top: 50%; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px 0 0;
-  color: var(--hv2-text); background: rgba(18, 20, 19, .82); border: 1px solid rgba(245, 242, 235, .35); border-radius: 22px; transform: translateY(-50%);
+main[data-home="v2"] .hv2-contour .sheet-image { flex: none; aspect-ratio: 1536 / 788; background: #0f1110; }
+main[data-home="v2"] .hv2-contour-stage {
+  position: absolute; inset: 0; overflow: hidden; cursor: ew-resize; touch-action: pan-y; /* a finger scrolls the page */
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
-main[data-home="v2"] .hv2-proof-arrow i { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 50%; background: var(--hv2-copper-fill); font-size: 16px; font-style: normal; }
-main[data-home="v2"] .hv2-proof-arrow span { font: 700 12.5px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+main[data-home="v2"] .hv2-contour-stage img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%;
+  pointer-events: none; -webkit-user-drag: none;
+}
+/* The tracing, right of the seam. Its grid keeps the sheet's ruler rhythm (a line every 10 px, a stronger one every
+   50 px, from the same corner) — a sheet's grid, not a scale */
+main[data-home="v2"] .hv2-contour-trace { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--split)); }
+main[data-home="v2"] .hv2-contour-trace img { filter: grayscale(1) brightness(.36) contrast(1.12); }
+main[data-home="v2"] .hv2-contour-trace::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(245, 242, 235, .1) 1px, transparent 1px) 0 0 / 50px 50px,
+    linear-gradient(rgba(245, 242, 235, .1) 1px, transparent 1px) 0 0 / 50px 50px,
+    linear-gradient(90deg, rgba(245, 242, 235, .04) 1px, transparent 1px) 0 0 / 10px 10px,
+    linear-gradient(rgba(245, 242, 235, .04) 1px, transparent 1px) 0 0 / 10px 10px;
+}
+/* The lines show over the tracing only — over the photo too once «Лінії на фото» is pressed */
+main[data-home="v2"] .hv2-contour-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; clip-path: inset(0 0 0 var(--split)); }
+main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo] .hv2-contour-lines { clip-path: inset(0); }
+main[data-home="v2"] .hv2-contour-lines path {
+  --w: 1.25; fill: none; stroke-width: calc(var(--u) * var(--w) * var(--k, 1)); stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 0;
+}
+main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { --w: 2; }
+main[data-home="v2"] .hv2-contour-lines path[data-kind="gate"] { --w: 1.75; }
+/* Dashed: approximate */
+main[data-home="v2"] .hv2-contour-lines path[data-approximate] { stroke-linecap: butt; stroke-dasharray: calc(var(--u) * 6) calc(var(--u) * 5); }
+main[data-home="v2"] .hv2-contour-ink path { stroke: var(--hv2-copper-text); }
+/* A thin dark casing under each line: it disappears on the tracing and keeps the copper legible on the light cladding */
+main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); stroke-width: calc(var(--u) * (var(--w) * var(--k, 1) + 2)); }
 
-/* The travelling pulse on the X-ray's own load path (same idea as card 02's dashes). Static at rest for
-   prefers-reduced-motion: the sketch already carries its copper path, so nothing is lost. */
-main[data-home="v2"] .hv2-xray-flow { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-main[data-home="v2"] :is(.hv2-xray-pulse, .hv2-xray-pulse-halo) {
-  fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: .075 1.3; stroke-dashoffset: .075;
-  animation: hv2-pulse 3.4s cubic-bezier(.42, 0, .58, 1) infinite;
+/* The seam and its handle; the range input lies over the frame, invisible, and draws its focus on the handle */
+main[data-home="v2"] .hv2-contour-seam { position: absolute; top: 0; bottom: 0; left: var(--split); width: 2px; margin-left: -1px; background: var(--hv2-copper-text); pointer-events: none; }
+main[data-home="v2"] .hv2-contour-handle {
+  position: absolute; top: 50%; left: clamp(22px, var(--split), calc(100% - 22px)); display: grid; place-items: center;
+  width: 44px; height: 44px; margin: -22px 0 0 -22px; color: var(--hv2-text); background: var(--hv2-ink);
+  border: 2px solid var(--hv2-copper-text); border-radius: 50%; cursor: grab; touch-action: none; /* the finger's one grip */
+  padding-bottom: 3px; font: 700 24px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; white-space: nowrap; /* the guillemets sit low */
 }
-main[data-home="v2"] .hv2-xray-pulse { stroke: #ffd2ad; stroke-width: 9; }
-main[data-home="v2"] .hv2-xray-pulse-halo { stroke: rgba(255, 150, 80, .42); stroke-width: 30; filter: blur(7px); }
-main[data-home="v2"] .hv2-xray-glow { opacity: 0; animation: hv2-glow 3.4s ease-out infinite; }
-@keyframes hv2-pulse {
-  0% { stroke-dashoffset: .075; opacity: 0; }
-  6% { opacity: 1; }
-  74% { opacity: 1; }
-  80%, 100% { stroke-dashoffset: -1; opacity: 0; }
-}
-@keyframes hv2-glow { 0%, 68% { opacity: 0; } 80% { opacity: 1; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) {
-  main[data-home="v2"] :is(.hv2-xray-pulse, .hv2-xray-pulse-halo, .hv2-xray-glow) { animation: none; opacity: 0; }
+main[data-home="v2"] .hv2-contour-stage[data-dragging] .hv2-contour-handle { cursor: grabbing; }
+main[data-home="v2"] .hv2-contour-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+main[data-home="v2"] .hv2-contour-range:focus-visible ~ .hv2-contour-handle { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  /* «Фото» / «Контур», the keys and «Лінії на фото» glide; a drag follows the pointer as it is */
+  main[data-home="v2"] .hv2-contour-stage:not([data-dragging]) :is(.hv2-contour-trace, .hv2-contour-lines) { transition: clip-path 420ms var(--sheet-plot); }
+  main[data-home="v2"] .hv2-contour-stage:not([data-dragging]) :is(.hv2-contour-seam, .hv2-contour-handle) { transition: left 420ms var(--sheet-plot); }
 }
 
-/* Facts under the pair: what the photo proves, and who stands behind the work */
+/* Arriving: once the sheet has plotted its picture in (DrawingSheet: 120 + 900 ms), the lines draw — the solid ones
+   along their length, the dashed ones fade in — once. The sheet arms only after hydration and with motion allowed, so
+   without JavaScript or with reduced motion the contour stands complete at its resting split. */
+main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-contour-lines path { stroke-dashoffset: 1; }
+main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-contour-lines path[data-approximate] { stroke-dashoffset: 0; opacity: 0; }
+@keyframes hv2-contour-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path { animation: hv2-contour-draw 1000ms var(--sheet-plot) calc(1080ms + var(--i, 0) * 110ms) backwards; }
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path[data-kind="outline"] { animation-duration: 1500ms; }
+  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path[data-approximate] { animation-name: hv2-contour-fade; animation-duration: 600ms; animation-timing-function: ease; }
+}
+
+/* The title block: «Ліворуч» | the note | «Праворуч» with its legend | the controls */
+main[data-home="v2"] .hv2-contour-right b { color: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-contour-legend { display: grid; gap: 6px; margin-top: 9px; color: var(--hv2-text-2); font: 500 13px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+main[data-home="v2"] .hv2-contour-legend > span { display: flex; align-items: center; gap: 8px; }
+main[data-home="v2"] .hv2-contour-legend svg { width: 28px; height: 4px; flex: none; overflow: visible; }
+main[data-home="v2"] .hv2-contour-legend path { fill: none; stroke: var(--hv2-copper-text); stroke-width: 2; }
+main[data-home="v2"] .hv2-contour-legend [data-approximate] path { stroke-dasharray: 5 3; }
+main[data-home="v2"] .hv2-contour .sheet-action { padding: 6px 8px 6px 10px; }
+main[data-home="v2"] .hv2-contour-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+main[data-home="v2"] .hv2-contour-sides { display: flex; gap: 6px; }
+main[data-home="v2"] .hv2-contour-controls button {
+  display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 12px; color: var(--hv2-text);
+  background: none; border: 1px solid var(--hv2-line-strong); border-radius: 0; cursor: pointer;
+  font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+}
+main[data-home="v2"] .hv2-contour-controls button[aria-pressed="true"] { background: var(--hv2-copper-fill); border-color: var(--hv2-copper-fill); }
+@media (hover: hover) { main[data-home="v2"] .hv2-contour-controls button[aria-pressed="false"]:hover { border-color: var(--hv2-copper-text); } }
+main[data-home="v2"] .hv2-contour-toggle i { width: 16px; height: 2px; flex: none; background: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: var(--hv2-text); }
+/* «Фото» / «Контур» are for fingers; a mouse or a pen drags anywhere in the frame */
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) {
+  main[data-home="v2"] .hv2-contour-sides { display: none; }
+}
+/* A narrower sheet gives the note a row of its own, over the two sides and the controls (as drawing-sheet.css does
+   below 480 px) */
+@container sheet (max-width: 1100px) {
+  main[data-home="v2"] .hv2-contour .sheet-stamp { flex-wrap: wrap; }
+  main[data-home="v2"] .hv2-contour .sheet-cell { flex: 1 1 auto; }
+  main[data-home="v2"] .hv2-contour .sheet-cell-note { order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
+}
+/* A phone: the controls take the last row, «Фото» / «Контур» on the left, the toggle on the right */
+@container sheet (max-width: 560px) {
+  main[data-home="v2"] .hv2-contour .sheet-action { flex-basis: 100%; padding: 6px 8px; border-top: 1px solid var(--sheet-ink); border-left: 0; }
+  main[data-home="v2"] .hv2-contour-controls { width: 100%; justify-content: space-between; }
+}
+/* --u by width: the frame is the shell less the sheet's margins, so a CSS pixel of it is 1536 / (0.925 × vw − 46) photo
+   pixels above 760 px and 1536 / (vw − 66) on a phone; each step keeps the lines within a fifth of their set width */
+@media (max-width: 1199px) { main[data-home="v2"] .hv2-contour { --u: 1.6px; } }
+@media (max-width: 959px) { main[data-home="v2"] .hv2-contour { --u: 2.1px; } }
+/* A phone's frame is a quarter of a desktop one: the same line weight would read heavy there (--k) */
+@media (max-width: 760px) { main[data-home="v2"] .hv2-contour { --u: 2.6px; --k: .8; } }
+@media (max-width: 599px) { main[data-home="v2"] .hv2-contour { --u: 3.4px; } }
+@media (max-width: 479px) { main[data-home="v2"] .hv2-contour { --u: 4.3px; } }
+@media (max-width: 389px) { main[data-home="v2"] .hv2-contour { --u: 5.3px; } }
+
+/* Facts under the sheet: what the photo proves, and who stands behind the work */
 /* One title block (owner, 02.10: «підрівняти і приукрасити»): the scope cells fill the left column, so its content ends
    where the divider begins; the people column is narrower, under the same kicker, its note and link down at the cells'
    foot */
@@ -357,22 +427,6 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
   main[data-home="v2"] .hv2-proof-facts { grid-template-columns: 1fr; }
   main[data-home="v2"] .hv2-people { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--hv2-line); }
 }
-/* Halves narrower than ~600 px: each title block puts its sentence on a row of its own (as drawing-sheet.css does by
-   container width elsewhere) */
-@media (max-width: 1260px) {
-  main[data-home="v2"] .hv2-proof-pair .sheet-stamp { flex-wrap: wrap; }
-  main[data-home="v2"] .hv2-proof-pair .sheet-cell { flex: 1 1 auto; }
-  main[data-home="v2"] .hv2-proof-pair .sheet-cell-note { order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
-}
-/* The pair stacks before the halves get narrow: each image keeps the full width */
-@media (max-width: 900px) {
-  main[data-home="v2"] .hv2-proof-pair { grid-template-columns: 1fr; gap: 22px; }
-  main[data-home="v2"] .hv2-proof-photo .hv2-proof-media { aspect-ratio: 4 / 3; }
-  main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 16 / 10; }
-  /* Stacked: the arrow points down from the photo into the sketch, clear of the tag in the top-right corner */
-  main[data-home="v2"] .hv2-proof-arrow { left: 12px; top: 12px; transform: none; }
-  main[data-home="v2"] .hv2-proof-arrow i { transform: rotate(90deg); }
-}
 
 /* ================================ Phone ================================ */
 
@@ -381,10 +435,8 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
   main[data-home="v2"] .hv2-signature-head h2 { font-size: clamp(36px, 10.5vw, 44px); line-height: 1.02; }
   main[data-home="v2"] .hv2-signature-support { padding-left: 16px; }
   main[data-home="v2"] .hv2-proof { margin-top: 26px; }
-  /* The sheets keep the page's gutter (they used to run edge to edge as bare pictures) */
-  main[data-home="v2"] .hv2-proof-pair .sheet-cell-note b { font-size: 14.5px; }
-  /* The X-ray on a phone shows its right part — the frame and the load path — big enough to read */
-  main[data-home="v2"] .hv2-proof-xray .hv2-proof-media { aspect-ratio: 1.1; }
+  /* The sheet keeps the page's gutter (the photo used to run edge to edge as a bare picture) */
+  main[data-home="v2"] .hv2-contour .sheet-cell-note b { font-size: 14.5px; }
   main[data-home="v2"] .hv2-proof-facts { margin-inline: calc(var(--container-gutter) * -1); padding: 24px var(--container-gutter) 26px; border-inline: 0; }
   main[data-home="v2"] .hv2-cards { margin-top: 22px; }
   main[data-home="v2"] .hv2-card { grid-template-columns: 1fr; }
@@ -394,17 +446,11 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
   main[data-home="v2"] .hv2-tag { top: 12px; right: 12px; font-size: 12px; }
   main[data-home="v2"] .hv2-pin > span { font-size: 12px; padding: 4px 7px; }
 }
-/* Narrow phones: «→ до принципу» and the X-ray label no longer fit one row at the top — the label moves to the
-   image's bottom-right corner (dark ground there, so it stays readable). */
 @media (max-width: 560px) {
-  main[data-home="v2"] .hv2-proof-xray .hv2-tag-scheme { top: auto; bottom: 12px; }
   main[data-home="v2"] .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
 }
 
 /* UX pass 2026-10: the geography line stays last, also where a very short phone moves the lead under the buttons. */
 main[data-home="v2"] .hv2-geo-bond { margin-top: clamp(40px, 5vw, 64px); }
 
-/* The load path flows and the X-ray pulses from the moment their sheet comes into view (DrawingSheet sets
-   data-sheet-state); before that they wait. (Owner, 02.10: the scheme is meant to move — the two-cycle stop is undone.) */
-main[data-home="v2"] .sheet:not([data-sheet-state="on"]) :is(.hv2-scheme-flow, .hv2-xray-pulse, .hv2-xray-pulse-halo, .hv2-xray-glow) { animation-play-state: paused; }
 

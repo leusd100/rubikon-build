@@ -155,15 +155,17 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
 test('homepage server HTML carries the H1, the real-object proof, the conversation steps and cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
-    // The photo's caption is the sentence cell of its «Креслення» title block
-    proofCaption: '#real-object .hv2-proof-photo .sheet-cell-note > b',
+    // The photo's caption is the sentence cell of its «Креслення» title block (one sheet: the photo and its contour, 04.10)
+    proofCaption: '#real-object .hv2-contour .sheet-cell-note > b',
     proofScope: '#real-object .hv2-scope-chips li',
     conversationSteps: '#inquiry .conversation-journey h3',
     cooperation: '.inquiry-details select option',
   });
 
   expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
-  expect(text.proofCaption).toEqual(['Реальний об’єкт. Фото з ретушшю переднього плану.']);
+  expect(text.proofCaption).toEqual([
+    'Реальний об’єкт і його контур. Фото з ретушшю переднього плану; праворуч від лінії — фронтон, ворота й межі облицювання, накреслені за вісьмома фото цього ангара (суцільна — виміряно, пунктир — наближено), а розміри, масштаб і каркас із фото не прочитати.',
+  ]);
   expect(text.proofScope).toEqual(['Каркас', 'Стінові панелі', 'Покрівля']);
   expect(text.conversationSteps).toEqual(['Уточнюємо задачу', 'Дивимося, що вже є', 'Узгоджуємо склад робіт', 'Готуємо кошторис']);
   expect(text.cooperation).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
@@ -457,19 +459,21 @@ test('homepage separates labelled illustrations from the one real photo', async 
   await expect(page.locator('#directions .section-header-support')).toContainText('ілюстрації, а не фото виконаних об’єктів');
 
   // The one real photo proves: labelled as a photo, its retouch stated, the time before RUBIKON BUILD named.
-  const photo = page.locator('#real-object .hv2-proof-photo');
-  await expect(photo.locator('img')).toHaveAttribute('src', '/photos/serhii-prior-hangar-retouched.jpeg');
-  await expect(photo.locator('.hv2-tag-photo')).toHaveText('Фото об’єкта');
-  await expect(photo.locator('figcaption')).toContainText('Фото з ретушшю переднього плану');
+  const sheet = page.locator('#real-object .hv2-contour');
+  await expect(sheet.locator('.hv2-contour-stage > picture img')).toHaveAttribute('src', '/photos/serhii-prior-hangar-retouched.jpeg');
+  await expect(sheet.locator('figcaption')).toContainText('Фото об’єкта');
+  await expect(sheet.locator('figcaption')).toContainText('Фото з ретушшю переднього плану');
   await expect(page.locator('#real-object')).toContainText('до створення RUBIKON BUILD');
 
-  // Illustrations explain: the X-ray says what it is and what it is not; every explanation card carries its label.
-  const xray = page.locator('#real-object .hv2-proof-xray');
-  await expect(xray.locator('.hv2-tag-scheme')).toHaveText('Ілюстративна схема конструкції');
-  await expect(xray.locator('figcaption')).toContainText('Це не креслення цього ангара');
+  // Owner's decision (04.10): over the real object only what was measured from its photos — «Контур за фото», with
+  // what a photo cannot give said in words; the generated X-ray sketch left the page. Every explanation card carries
+  // its label.
+  await expect(sheet.locator('figcaption')).toContainText('Контур за фото');
+  await expect(sheet.locator('figcaption')).toContainText('розміри, масштаб і каркас із фото не прочитати');
+  await expect(page.locator('#real-object img[src*="/concepts/"], #real-object source[srcset*="/concepts/"]')).toHaveCount(0);
   for (const tag of await page.locator('#engineering .hv2-card .hv2-tag').allTextContents()) expect(['Ілюстрація', 'Схема']).toContain(tag);
   // Concept images live only inside a labelled illustration, never in the conversation block.
-  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card, .hv2-card-visual, .hv2-proof-xray, .hv2-hero')).length)).toBe(0);
+  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card, .hv2-card-visual, .hv2-hero')).length)).toBe(0);
   await expect(page.locator('#inquiry img[src*="/concepts/"]')).toHaveCount(0);
 });
 

@@ -16,8 +16,8 @@ Iteration 3 (made once by hand, sources live outside the repo, so they are not i
       rubikon-real-hangar-cleaned.png (1536×1024; loose items in front removed, whole frame re-rendered), box
       (0, 172, 1536, 960) = the same framing as (0, 700, 6240, 3900) on the original; saved without EXIF. The page
       labels it «Фото з ретушшю переднього плану».
-  concepts/hangar-xray-{1100,1774}w  the owner-approved X-ray sketch rubikon-hangar-xray-concept-v2-clean.png (1774×887),
-      resized only. It is a generated illustration, labelled «Ілюстративна схема конструкції» on the page.
+  The X-ray sketch made here once (concepts/hangar-xray-{1100,1774}w) left HOME on 04.10 with its files: the owner's
+      variant A «Калька» draws only the lines measured from the photos over the photo itself.
 
 Everything derived from a concept source sits in concepts/, so the existing «no concept image outside the direction
 cards» check (tests/e2e/pr-critical.spec.ts) sees it. The callout positions in EngineeringSignature.tsx are

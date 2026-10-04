@@ -9,7 +9,7 @@ const profiles = {
     url: `${baseUrl}/`,
     // Reported, not enforced, on HOME. Lighthouse 12 scores uses-responsive-images pass/fail: one image wasting more
     // than 12 KiB fails it, and it counts what object-fit: cover crops away as waste. HOME v2 crops on purpose (the
-    // phone hero still into a band that follows the viewport height, the X-ray to 1.1, the object photo to 4:3), so the
+    // phone hero still into a band that follows the viewport height, the explanation cards to 4:3), so the
     // audit fails on the design, not on a wrong srcset. Byte weight and LCP stay gated below.
     responsiveImages: 'warn',
   },

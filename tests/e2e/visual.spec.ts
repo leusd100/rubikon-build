@@ -113,7 +113,7 @@ for (const viewport of viewports) {
       );
     });
 
-    // HOME v2: the real object (photo + labelled X-ray illustration), its facts and the two roles.
+    // HOME v2: the real object (one sheet: the photo and its contour, 04.10), its facts and the two roles.
     test('homepage real object', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(page.locator('#real-object'), `homepage-real-object-${viewport.name}.png`);
