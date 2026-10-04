@@ -192,9 +192,15 @@ test('the sheet names both sides, states the retouch and what the scheme is, and
   await expect(lines).toHaveCount(homeProofContour.lines.length);
   expect(await lines.evaluateAll((paths) => paths.map((path) => path.getAttribute('data-line')))).toEqual(homeProofContour.lines.map((line) => line.id));
   await expect(stage.locator('.hv2-contour-ink path[data-approximate]')).toHaveCount(homeProofContour.lines.filter((line) => line.approximate).length);
+  // …solid on the scheme's layers (owner, 04.10: one outline there), dashed in «Контур», where the legend reads them
+  for (const path of await stage.locator('.hv2-contour-ink path[data-approximate]').all()) {
+    expect(await path.evaluate((element) => getComputedStyle(element).strokeDasharray)).toBe('none');
+  }
+  await layers.getByRole('button', { name: 'Контур' }).click();
   for (const path of await stage.locator('.hv2-contour-ink path[data-approximate]').all()) {
     expect(await path.evaluate((element) => getComputedStyle(element).strokeDasharray)).toMatch(/^[\d.]+px,? [\d.]+px$/);
   }
+  await layers.getByRole('button', { name: 'Каркас' }).click();
   for (const svg of ['svg.hv2-contour-lines', 'svg.hv2-proof-frame', 'svg.hv2-proof-marks']) {
     await expect(stage.locator(svg)).toHaveAttribute('viewBox', `0 0 ${homeProofContour.photo.width} ${homeProofContour.photo.height}`);
   }
@@ -225,23 +231,23 @@ test('the sheet names both sides, states the retouch and what the scheme is, and
   }
 });
 
-test('the scheme is its own layer: paper-white, never dashed as «approximate», never copper, and always under its stamp', async ({ page }) => {
+test('the scheme is its own layer: its gable plane paper-white, what stands behind it copper, never dashed, and always under its stamp', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { stage, slider } = await open(page);
   const scheme = stage.locator('svg.hv2-proof-frame[data-layer="scheme"]');
   await expect(scheme).toBeVisible();
-  // Every member of the scheme is in it, none of them carries the measured lines' «approximate» mark, and none is drawn
-  // in the measured copper: the legend's «суцільна — виміряно» cannot be read onto it
+  // Every member of the scheme is in it and none carries the measured lines' «approximate» mark. The gable's own plane is
+  // paper-white; what stands behind it is copper, solid (owner, 04.10), and only behind it
   await expect(scheme.locator('[data-group]')).toHaveCount(homeProofFrame.members.filter((member) => member.group !== 'footing').length);
   await expect(scheme.locator('[data-approximate]')).toHaveCount(0);
   await expect(stage.locator('.hv2-contour-lines [data-group]')).toHaveCount(0);
-  const strokes = new Set(await scheme.locator('.hv2-proof-scheme [data-group]').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)));
+  const strokes = new Set(await scheme.locator('.hv2-proof-scheme [data-group]:not([data-hidden])').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)));
   expect([...strokes]).toEqual([PAPER]);
   expect(await stage.locator('.hv2-contour-ink path').first().evaluate((path) => getComputedStyle(path).stroke)).toBe(COPPER);
-  // What stands behind the gable's plane is a hidden line, dashed — not a tie or a post on the gable wall
   const hidden = scheme.locator('.hv2-proof-scheme [data-hidden]');
   await expect(hidden).toHaveCount(homeProofFrame.members.filter((member) => member.hidden).length);
-  for (const dash of new Set(await hidden.evaluateAll((paths) => paths.map((path) => getComputedStyle(path).strokeDasharray)))) expect(dash).toMatch(/^[\d.]+px,? [\d.]+px$/);
+  expect(new Set(await hidden.evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)))).toEqual(new Set([COPPER]));
+  expect(new Set(await scheme.locator('.hv2-proof-scheme [data-group]').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).strokeDasharray)))).not.toContainEqual(expect.stringMatching(/px,? [\d.]+px$/));
   expect(await hidden.evaluateAll((paths) => paths.every((path) => Number(path.getAttribute('data-depth')) > 0))).toBe(true);
   // Its names are words on the scheme, its legend says «схема» in the scheme's own colour
   for (const tag of homeProofFrame.tags) await expect(stage.locator(`.hv2-proof-tag[data-tag="${tag.id}"]`)).toHaveText(tag.text);
@@ -360,8 +366,9 @@ test('the title block switches the right side: the contour with its figures, the
   await expect(stage.locator('.hv2-proof-scheme')).toBeVisible();
   await expect(stage.locator('.hv2-proof-load')).toBeHidden();
   if (desktop) {
-    for (const id of ['slope', 'gates']) await expect(figure(id)).toBeVisible();
-    await expect(figure('proportion')).toBeHidden();
+    await expect(figure('slope')).toBeVisible();
+    // the gates' «=» marks read as stray strokes across the scheme (owner, 04.10): «Контур» only
+    for (const id of ['gates', 'proportion']) await expect(figure(id)).toBeHidden();
     await expect(figure('slope').locator('small')).toBeHidden();
     // the slope's uncertainty is part of its title, also where the line under it is hidden
     await expect(figure('slope')).toContainText('± 0,6°', { useInnerText: true });
@@ -403,7 +410,7 @@ test('the title block switches the right side: the contour with its figures, the
   await expect(stage.locator('.hv2-proof-flow')).toHaveCount(homeProofFrame.load.legs.length);
   await expect(stage.locator('.hv2-proof-snow path')).toHaveCount(homeProofFrame.load.arrows.length);
   await expect(figure('slope')).toBeHidden();
-  const chain = 'Сніг → покрівля → прогони → ферма → стіни → фундаменти → ґрунт';
+  const chain = 'Сніг → покрівля → прогони → ферма → стіни й колони → фундаменти → ґрунт';
   if (desktop) {
     await expect(stage.locator('.hv2-contour-chain')).toBeVisible();
     await expect(stage.locator('.hv2-contour-chain > span')).toHaveText(chain.split(' → '));
@@ -694,7 +701,7 @@ test('with reduced motion the sheet stands static and complete at its resting sp
     const style = getComputedStyle(element);
     return !/^0(px)?$/.test(style.strokeDashoffset) || style.opacity !== '1';
   }).length)).toBe(0);
-  for (const part of ['.hv2-proof-hatch', '.hv2-proof-nodes', '.hv2-proof-labels', '.hv2-proof-marks']) {
+  for (const part of ['.hv2-proof-cut', '.hv2-proof-nodes', '.hv2-proof-labels', '.hv2-proof-marks']) {
     expect(await stage.locator(part).first().evaluate((element) => getComputedStyle(element).opacity), part).toBe('1');
   }
   // The seam and the layers do not glide (the site's reduced-motion rule leaves a hundredth of a millisecond at most)

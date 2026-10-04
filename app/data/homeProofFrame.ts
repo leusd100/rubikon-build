@@ -9,9 +9,14 @@
  * only): light trapezoidal trusses with a vertical at every panel point and one diagonal per panel falling to the
  * middle, purlins on the top-chord nodes, the trusses bearing on load-bearing walls wall to wall, bracing in the first
  * bay. What is OUR ADAPTATION, not the reference's: the slope — fitted to the rakes measured here (≈ 10,5°; the
- * reference is a low-slope truss), the panel count, the bays and the depth they recede to, and the strip footings —
- * schematic, «умовно» on the page. (Review, 04.10: the first version's middle support under the ridge was an adaptation
- * too, presented as the type; it is out until Сергій Іванович confirms the type.)
+ * reference is a low-slope truss), the panel count, the bays and the depth they recede to, and the footings —
+ * schematic, «умовно» on the page.
+ *
+ * What the owner remembers of THIS building (Dmytro, 04.10 — «на цьому етапі важливіше показати вау, а ніж точність»):
+ * the perimeter walls were aerated concrete blocks, and a central row of columns stood under the ridge. So the walls are
+ * drawn as blockwork on their faces and, where the scheme's plane cuts the long walls at both corners, in section — their
+ * thickness hatched; the columns stand under the ridge of each truss, the gable's one in the pier between the gates, each
+ * on its own pad. Thicknesses, the column's width and every footing are drawn for reading, not taken from anywhere.
  *
  * How it was drawn (the frame-layer geometry pass, 04.10, outside the repo): the gable plane is the drawn contour itself
  * — its rakes and apex mapped back through the gable plane of the photo study's frozen camera, so the front truss sits
@@ -21,21 +26,21 @@
  * photo's row 644, which the laptop crop always keeps (home-v2.css).
  *
  * Photo pixels of the 1536 × 788 frame, x right, y down. `depth` 0 is the gable's own plane, 1 and 2 the bays behind it
- * (drawn fainter, and `hidden` — dashed, as a drawing shows what stands behind the plane in front). tests/unit/
- * home-proof-frame.test.ts keeps every point inside the drawn silhouette (footings: in a band under the base), the top
- * chord under the rakes, the names in words, and this file tied to the photo's sha256.
+ * (`hidden`: behind the plane in front — owner, 04.10: solid, in copper, thinner and fainter with depth, not dashed).
+ * tests/unit/home-proof-frame.test.ts keeps every point inside the drawn silhouette (footings: in a band under the base),
+ * the top chord under the rakes, the names in words, and this file tied to the photo's sha256.
  */
 import { homeProofContour } from './homeProofContour';
 
 type Pt = readonly [number, number];
 
-/** truss: chords and end posts; web: diagonals and verticals; wall: bearing lines and lintels */
-export type FrameGroup = 'truss' | 'web' | 'wall' | 'purlin' | 'bracing' | 'footing';
+/** truss: chords and end posts; web: diagonals and verticals; wall: bearing lines and lintels; column: the central row */
+export type FrameGroup = 'truss' | 'web' | 'wall' | 'column' | 'purlin' | 'bracing' | 'footing';
 
 export type FrameMember = {
   group: FrameGroup;
   depth: 0 | 1 | 2;
-  /** Behind the gable's plane: drawn as a hidden line (dashed), not as a member on the gable wall */
+  /** Behind the gable's plane: drawn in copper, fainter with depth — never as a member on the gable wall */
   hidden?: true;
   points: readonly Pt[];
   closed?: boolean;
@@ -50,13 +55,14 @@ export type HomeProofFrame = {
   status: 'illustrative';
   /** The drawn gable and the long wall: the frame stays inside them (clip and test) */
   silhouette: readonly (readonly Pt[])[];
-  /** Hatched as bearing walls: the gable wall less its gates, and the near long wall */
-  walls: { gable: readonly Pt[]; holes: readonly (readonly Pt[])[]; long: readonly Pt[] };
+  /** The blockwork's faces — the gable wall less its gates, and the near long wall, each corner-ordered base near, base
+   *  far, top far, top near — and `cuts`: the long walls in section where the scheme's plane cuts them, hatched */
+  walls: { gable: readonly Pt[]; holes: readonly (readonly Pt[])[]; long: readonly Pt[]; cuts: readonly (readonly Pt[])[] };
   members: readonly FrameMember[];
   /** Where the purlins bear on the front truss: its top-chord nodes */
   nodes: readonly Pt[];
-  /** The way the snow goes: arrows, the strip of roof one truss carries, the lit links (3 the truss, 4 the walls, 5 the
-   *  footings), the two legs the drops run along, the ground under them */
+  /** The way the snow goes: arrows, the strip of roof one truss carries, the lit links (3 the truss, 4 the walls and the
+   *  column, 5 the footings), the three legs the drops run along, the ground under them */
   load: {
     arrows: readonly (readonly [Pt, Pt])[];
     roof: readonly Pt[];
@@ -81,6 +87,12 @@ export const homeProofFrame: HomeProofFrame = {
     gable: [[263.3, 582.2], [1478.6, 551.7], [1471.1, 332.5], [276.4, 250.8]],
     holes: [[[731.4, 570.4], [926.1, 565.5], [925.9, 322.4], [734.3, 311.1]], [[1055.7, 562.3], [1217.4, 558.2], [1213.4, 340.2], [1053.8, 330.9]]],
     long: [[263.3, 582.2], [41.7, 523.6], [45.6, 448.3], [276.4, 250.8]],
+    // Inward from the drawn corners along the gable's base and its wall top (both run to the gable plane's vanishing
+    // point): thicker at the near corner, thinner at the far one, as the perspective has it
+    cuts: [
+      [[263.3, 582.2], [293.3, 581.4], [306.3, 252.8], [276.4, 250.8]],
+      [[1478.6, 551.7], [1471.1, 332.5], [1451.1, 331.1], [1458.6, 552.2]],
+    ],
   },
   members: [
     { group: 'truss', depth: 0, points: [[299.2, 218.5], [1005, 149.8], [1460.7, 305.1]] },
@@ -131,6 +143,12 @@ export const homeProofFrame: HomeProofFrame = {
     { group: 'wall', depth: 1, hidden: true, points: [[1471.1, 332.5], [1259.5, 357.1]] },
     { group: 'wall', depth: 0, points: [[717.8, 310.1], [940.3, 323.2], [940.3, 306.5], [718, 292.2]], closed: true },
     { group: 'wall', depth: 0, points: [[1040.5, 330.1], [1225.1, 340.9], [1224.8, 325.9], [1040.4, 314]], closed: true },
+    // The central row: the gable's column in the pier between the gates, from the truss's ridge post to the floor, and
+    // the two behind it under their trusses' ridges, on the lines to the long wall's vanishing point
+    { group: 'column', depth: 0, points: [[999.4, 300.2], [1012.4, 301], [1013.8, 563.3], [1000.8, 563.7]], closed: true },
+    { group: 'column', depth: 0, points: [[996.3, 563.8], [1018.3, 563.2]] },
+    { group: 'column', depth: 1, hidden: true, points: [[913.3, 319.1], [914.6, 558.4]] },
+    { group: 'column', depth: 2, hidden: true, points: [[836.7, 334.5], [837.9, 554.1]] },
     { group: 'purlin', depth: 0, points: [[299.6, 208.4], [264.2, 241.2]] },
     { group: 'purlin', depth: 1, hidden: true, points: [[264.2, 241.2], [235.8, 267.5]] },
     { group: 'purlin', depth: 2, hidden: true, points: [[235.8, 267.5], [212.6, 289]] },
@@ -186,9 +204,13 @@ export const homeProofFrame: HomeProofFrame = {
     { group: 'bracing', depth: 1, hidden: true, points: [[1005.9, 300.6], [913.3, 181.7]] },
     { group: 'bracing', depth: 1, hidden: true, points: [[913.3, 319.2], [1005, 149.8]] },
     { group: 'bracing', depth: 2, hidden: true, points: [[1005.9, 300.6], [770.6, 347.8]] },
-    { group: 'footing', depth: 0, points: [[240.1, 605.9], [1488.7, 566.5], [1489.4, 586.3], [238.9, 636.4]], closed: true },
-    { group: 'footing', depth: 1, points: [[238.9, 636.4], [106.5, 570.6]] },
-    { group: 'footing', depth: 1, points: [[240.1, 605.9], [107.2, 555.7]] },
+    // In section, under the cut walls and the gable's column: a wall or a neck down to a wider pad
+    { group: 'footing', depth: 0, points: [[263.4, 583.2], [293.3, 582.4], [293.5, 599], [305, 598.7], [305.5, 627.7], [251.5, 629.1], [251, 600.3], [263.7, 600]], closed: true },
+    { group: 'footing', depth: 0, points: [[1458.6, 553.2], [1478.6, 552.7], [1478.8, 567.5], [1486.5, 567.3], [1487, 589.5], [1449.5, 590.4], [1449.2, 568.2], [1458.8, 568]], closed: true },
+    { group: 'footing', depth: 0, points: [[999.5, 564.7], [1015.5, 564.3], [1015.6, 577.6], [1031, 577.2], [1031.4, 603.6], [984.4, 604.8], [984, 578.8], [999.6, 578.4]], closed: true },
+    // The long wall's strip, back to the vanishing point
+    { group: 'footing', depth: 1, points: [[251.5, 629.1], [106, 564.1]] },
+    { group: 'footing', depth: 1, points: [[251, 600.3], [106, 550.6]] },
   ],
   nodes: [[299.2, 218.5], [406.9, 208], [508.1, 198.2], [603.2, 188.9], [692.8, 180.2], [777.4, 172], [857.4, 164.2], [933.2, 156.8], [1005, 149.8], [1071, 172.3], [1134, 193.8], [1194.3, 214.3], [1252.1, 234], [1307.4, 252.9], [1360.6, 271], [1411.6, 288.4], [1460.7, 305.1]],
   load: {
@@ -199,21 +221,25 @@ export const homeProofFrame: HomeProofFrame = {
       { link: 3, points: [[1005, 149.8], [1460.7, 305.1]] },
       { link: 4, points: [[299.2, 218.5], [297.9, 252.2], [284.8, 595.7]] },
       { link: 4, points: [[1460.7, 305.1], [1461.6, 331.8], [1469.3, 561.3]] },
+      { link: 4, points: [[1005.9, 300.6], [1007.3, 563.5]] },
       { link: 5, points: [[284.8, 595.7], [283.4, 634.6]] },
-      { link: 5, points: [[1469.3, 561.3], [1470.1, 587]] },
+      { link: 5, points: [[1469.3, 561.3], [1470.3, 595]] },
+      { link: 5, points: [[1007.3, 563.5], [1007.7, 609]] },
     ],
     legs: [
       [[1005, 149.8], [299.2, 218.5], [297.9, 252.2], [284.8, 595.7], [283.4, 634.6]],
-      [[1005, 149.8], [1460.7, 305.1], [1461.6, 331.8], [1469.3, 561.3], [1470.1, 587]],
+      [[1005, 149.8], [1460.7, 305.1], [1461.6, 331.8], [1469.3, 561.3], [1470.3, 595]],
+      [[1005, 149.8], [1005.9, 300.6], [1007.3, 563.5], [1007.7, 609]],
     ],
-    ground: [[[171.8, 599], [391.1, 592.6]], [[1419.9, 562.7], [1516.7, 559.9]]],
+    ground: [[[171.8, 599], [391.1, 592.6]], [[1419.9, 562.7], [1516.7, 559.9]], [[955, 570], [1060, 567.3]]],
   },
   tags: [
     { id: 'truss', text: 'Ферма', anchor: [1252.9, 275.7], at: [1300, 395], align: 'start' },
     { id: 'bracing', text: 'Прогони й в’язі', anchor: [1060.9, 206.4], at: [1045, 262], align: 'start' },
-    { id: 'wall', text: 'Несуча стіна', anchor: [1437.7, 417.8], at: [1430, 472], align: 'end' },
-    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1422, 578.8], at: [1392, 612], align: 'end' },
+    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 480], at: [1042, 532], align: 'start' },
+    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 410], at: [1430, 452], align: 'end' },
+    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1392, 616], align: 'end' },
   ],
   label:
-    'Схема каркаса такого типу, як на цьому об’єкті, вписана в силует із фото: ферми, прогони, в’язі й несучі стіни, фундаменти — умовно. Навантаження з покрівлі йде через прогони й ферми на стіни, а з них — на фундаменти. Не креслення цього ангара: розмірів і перерізів тут немає.',
+    'Схема каркаса такого типу, як на цьому об’єкті, вписана в силует із фото: ферми, прогони, в’язі, стіни з газобетонних блоків по контуру й центральний ряд колон, фундаменти — умовно. Навантаження з покрівлі йде через прогони й ферми на стіни й колони, а з них — на фундаменти. Не креслення цього ангара: розмірів і перерізів тут немає.',
 };

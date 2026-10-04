@@ -5,8 +5,9 @@ import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures'
 
 // The layers ProofContour lays right of its seam, all in the photo's own pixels on one canvas:
 //   ProofFrame — the SCHEME of a frame of this object's type inside its silhouette (app/data/homeProofFrame.ts):
-//     illustrative, in the sheet's paper colour, never copper (copper is what was measured), clipped to the drawn
-//     outline, what stands behind the gable's plane dashed as hidden lines; and the snow's way through it, link by link
+//     illustrative, the gable's own plane in the sheet's paper colour, clipped to the drawn outline; what stands behind
+//     that plane solid in copper, fainter with depth (owner, 04.10: «як ми робили» on /angary — no dashes); the walls as
+//     aerated-concrete blockwork in perspective, cut in section at both corners; and the snow's way through it, link by link
 //     (the «Навантаження» layer): the members it passes lit in that paper colour, the load itself in its own lighter,
 //     dotted tint — the legend's «навантаження», never the measured copper (review, 04.10);
 //   ProofMarks and ProofLabels — the measured figures' marks on the contour's own lines and their words
@@ -35,6 +36,7 @@ function delayOf(member: FrameMember, index: number) {
   switch (member.group) {
     case 'wall': return 2600 + index * 40;
     case 'footing': return 2900;
+    case 'column': return member.depth === 0 ? 3050 : 3900 + member.depth * 150;
     case 'truss': return member.depth === 0 ? 3200 : 3900 + member.depth * 150;
     case 'web': return 3350 + fromRidge * 900;
     case 'purlin': return 3900 + member.depth * 180 + fromRidge * 300;
@@ -43,8 +45,38 @@ function delayOf(member: FrameMember, index: number) {
   }
 }
 
-/** `shown`: false while another layer is on the right (the scheme fades out, and its name must not be read) */
-export function ProofFrame({ loadRun, shown }: Readonly<{ loadRun: number; shown: boolean }>) {
+/** Where (u along the base from the near corner, v up from the base) lands on a wall face: the square-to-quad homography
+ *  of its four corners — base near, base far, top far, top near — so courses and joints recede as the photo does */
+function faceOf([[x0, y0], [x1, y1], [x2, y2], [x3, y3]]: readonly Pt[]) {
+  const [dx1, dx2, dx3] = [x1 - x2, x3 - x2, x0 - x1 + x2 - x3];
+  const [dy1, dy2, dy3] = [y1 - y2, y3 - y2, y0 - y1 + y2 - y3];
+  const det = dx1 * dy2 - dx2 * dy1;
+  const g = (dx3 * dy2 - dx2 * dy3) / det;
+  const h = (dx1 * dy3 - dx3 * dy1) / det;
+  const [a, b, c] = [x1 - x0 + g * x1, x3 - x0 + h * x3, x0];
+  const [e, f, k] = [y1 - y0 + g * y1, y3 - y0 + h * y3, y0];
+  return (u: number, v: number): Pt => {
+    const w = g * u + h * v + 1;
+    return [(a * u + b * v + c) / w, (e * u + f * v + k) / w];
+  };
+}
+const at1 = (value: number) => Math.round(value * 10) / 10;
+/** Aerated-concrete blockwork on a face: its courses, and the joints of every course, offset by half a block */
+function blockwork(face: readonly Pt[], courses: number, blocks: number) {
+  const on = faceOf(face);
+  const segment = (from: Pt, to: Pt) => `M${at1(from[0])} ${at1(from[1])}L${at1(to[0])} ${at1(to[1])}`;
+  let path = '';
+  for (let row = 1; row < courses; row += 1) path += segment(on(0, row / courses), on(1, row / courses));
+  for (let row = 0; row < courses; row += 1) {
+    for (let joint = row % 2 ? 0.5 : 1; joint < blocks; joint += 1) path += segment(on(joint / blocks, row / courses), on(joint / blocks, (row + 1) / courses));
+  }
+  return path;
+}
+
+/** `shown`: false while another layer is on the right (the scheme fades out, and its name must not be read).
+ *  `ready`: after hydration — the blockwork's thousand short strokes are drawn on the client only, to keep the page's HTML
+ *  light; without them the scheme is whole */
+export function ProofFrame({ loadRun, shown, ready }: Readonly<{ loadRun: number; shown: boolean; ready: boolean }>) {
   const { silhouette, walls, members, nodes, load, label } = homeProofFrame;
   const inside = members.filter((member) => member.group !== 'footing');
   const footings = members.filter((member) => member.group === 'footing');
@@ -54,9 +86,14 @@ export function ProofFrame({ loadRun, shown }: Readonly<{ loadRun: number; shown
         <clipPath id="hv2-proof-silhouette">
           {silhouette.map((outline, index) => <path key={index} d={d(outline, true)} />)}
         </clipPath>
-        {/* Masonry, as a section hatch: the walls the trusses bear on */}
-        <pattern id="hv2-proof-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <path d="M0 0V9" />
+        {/* The gable's face less its gates: the blockwork stops at the openings */}
+        <clipPath id="hv2-proof-face">
+          <path d={d(walls.gable, true) + walls.holes.map((hole) => d(hole, true)).join('')} clipRule="evenodd" />
+        </clipPath>
+        {/* A section's hatch: what the scheme's plane cuts — the long walls, the footings */}
+        <pattern id="hv2-proof-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="6" height="6" />
+          <path d="M0 0V6" />
         </pattern>
         <marker id="hv2-proof-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" />
@@ -68,8 +105,13 @@ export function ProofFrame({ loadRun, shown }: Readonly<{ loadRun: number; shown
       </defs>
       <g className="hv2-proof-scheme">
         <g clipPath="url(#hv2-proof-silhouette)">
-          <path className="hv2-proof-hatch" d={d(walls.gable, true) + walls.holes.map((hole) => d(hole, true)).join('')} fillRule="evenodd" />
-          <path className="hv2-proof-hatch" data-depth="1" d={d(walls.long, true)} />
+          {ready && (
+            <>
+              <path className="hv2-proof-blocks" d={blockwork(walls.gable, 24, 44)} clipPath="url(#hv2-proof-face)" />
+              <path className="hv2-proof-blocks" data-depth="1" d={blockwork(walls.long, 24, 22)} />
+            </>
+          )}
+          {walls.cuts.map((cut, index) => <path key={index} className="hv2-proof-cut" d={d(cut, true)} />)}
           {inside.map((member, index) => (
             <path
               key={index}
@@ -87,9 +129,9 @@ export function ProofFrame({ loadRun, shown }: Readonly<{ loadRun: number; shown
             {nodes.map(([x, y]) => <rect key={x} x={x - 3.2} y={y - 6} width="6.4" height="5.2" />)}
           </g>
         </g>
-        {/* Under the ground: dashed, «умовно» */}
+        {/* Under the ground, «умовно»: in section under the cut walls and the column, the long wall's strip going back */}
         {footings.map((member, index) => (
-          <path key={index} className="hv2-proof-footing" d={d(member.points, member.closed)} data-depth={member.depth} />
+          <path key={index} className="hv2-proof-footing" d={d(member.points, member.closed)} data-depth={member.depth} data-cut={member.closed ? '' : undefined} />
         ))}
       </g>
       {/* The snow's way, link by link — replayed on every press of «Навантаження» (a new key restarts it) */}
@@ -135,7 +177,7 @@ export function ProofMarks() {
         <path className="hv2-proof-leader" data-for="frame" d={d([slope.anchor, at('slope')])} />
         <path className="hv2-proof-leader" data-for="contour" d={d([slope.arc[0], [slope.arc[0][0] - 3, slope.arc[0][1] + 18]])} />
       </g>
-      <g data-mark="gates" data-on-frame="">
+      <g data-mark="gates">
         {gates.map((tick, index) => <path key={index} d={d(tick)} />)}
       </g>
       <g data-mark="proportion">

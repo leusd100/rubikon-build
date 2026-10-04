@@ -96,7 +96,7 @@ describe('homeProofFrame — the scheme', () => {
     expect(Math.max(...all.map(([, y]) => y))).toBeLessThan(LAST_ROW - 4);
   });
 
-  it('draws what stands behind the gable’s plane as hidden lines, and no support the type does not have', () => {
+  it('marks what stands behind the gable’s plane (drawn in copper, fainter with depth), and no support the type does not have', () => {
     expect(members.filter((member) => member.hidden).length).toBeGreaterThan(30);
     for (const member of members) {
       if (member.depth === 0 || member.group === 'footing') expect(member.hidden, member.group).toBeUndefined();
@@ -133,9 +133,10 @@ describe('homeProofFrame — the scheme', () => {
       expect(text, text).not.toMatch(/\d|Ф\s?\d|ВВ\d|КМ|АС\b|АР\b/);
       // no place (a settlement's or a street's abbreviation, a district) and no firm
       expect(text, text).not.toMatch(/(?:^|\s)[см]\.\s|вул\.|обл\.|район|склад|ТОВ|ФОП/i);
-      expect(text, text).not.toMatch(/колон/i);
     }
-    expect(tags.map((tag) => tag.text)).toEqual(['Ферма', 'Прогони й в’язі', 'Несуча стіна', 'Фундаменти — умовно']);
+    // the central row of columns and the aerated-concrete walls are the owner's memory of this building (04.10)
+    expect(tags.map((tag) => tag.text)).toEqual(['Ферма', 'Прогони й в’язі', 'Центральний ряд колон', 'Стіни — газобетон', 'Фундаменти — умовно']);
+    expect(label).toContain('центральний ряд колон');
     expect(label).toContain('такого типу, як на цьому об’єкті');
     expect(label).toContain('фундаменти — умовно');
     expect(label).toContain('Не креслення цього ангара');
@@ -144,8 +145,8 @@ describe('homeProofFrame — the scheme', () => {
     for (const tag of tags) expect(inSilhouette(tag.anchor) || baseY(tag.anchor[0]) < tag.anchor[1], tag.id).toBe(true);
   });
 
-  it('runs the load from the ridge down both walls to below the ground', () => {
-    expect(load.legs).toHaveLength(2);
+  it('runs the load from the ridge down both walls and the central column to below the ground', () => {
+    expect(load.legs).toHaveLength(3);
     for (const leg of load.legs) {
       expect(Math.hypot(leg[0][0] - load.legs[0][0][0], leg[0][1] - load.legs[0][0][1])).toBeLessThan(0.5);
       const end = leg.at(-1)!;

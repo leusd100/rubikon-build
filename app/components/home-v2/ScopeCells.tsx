@@ -6,7 +6,8 @@ import { useEffect, useRef, type CSSProperties } from 'react';
  *  draws the same hangar in a quiet outline and, in copper, the part its work names — where in the building that work
  *  is, not the order it was done in. Oblique view as on the site's other drawings: depth runs up-left at 45°.
  *  The copper part draws itself, cell by cell, once the cells come into view — armed only after hydration and with
- *  motion allowed, so the server markup is the finished drawing (home-v2.css). */
+ *  motion allowed, so the server markup is the finished drawing (home-v2.css). Pointed at later, the part stays drawn and
+ *  a light runs along it (owner, 04.10: redrawing it from nothing on hover read as a flicker). */
 type ScopePoint = readonly [number, number, number];
 const SW = 60;
 const SD = 56;
@@ -25,6 +26,9 @@ const SCOPE_PARTS: Record<string, string> = {
     + [7, 14, 21, 28, 35, 42, 49].map((d) => `${sl([0, d, SE], [SW / 2, d, SR])}${sl([SW / 2, d, SR], [SW, d, SE])}`).join(''),
 };
 
+/** A part's lines one by one: a dash pattern starts over on every line, so the light runs along each of them */
+const linesOf = (path: string) => path.split('M').filter(Boolean).map((line) => `M${line}`);
+
 export function ScopeCells({ items }: Readonly<{ items: readonly string[] }>) {
   const listRef = useRef<HTMLUListElement>(null);
   const drawnParts = items.filter((item) => SCOPE_PARTS[item]).length;
@@ -39,7 +43,7 @@ export function ScopeCells({ items }: Readonly<{ items: readonly string[] }>) {
       observer.disconnect();
     }, { threshold: 0.6 });
     observer.observe(list);
-    // Once every cell has drawn, the list rests: from then a pointed cell draws its part again (home-v2.css)
+    // Once every cell has drawn, the list rests: from then a light runs along a pointed cell's part (home-v2.css)
     let drawn = 0;
     const settle = (event: AnimationEvent) => {
       if (event.animationName !== 'hv2-scope-draw') return;
@@ -58,6 +62,9 @@ export function ScopeCells({ items }: Readonly<{ items: readonly string[] }>) {
             <svg className="hv2-scope-glyph" viewBox="0 0 92 72" aria-hidden="true" focusable="false">
               <path className="hv2-scope-outline" d={SCOPE_OUTLINE} />
               <path className="hv2-scope-part" d={SCOPE_PARTS[item]} pathLength={1} />
+              <g className="hv2-scope-glint">
+                {linesOf(SCOPE_PARTS[item]).map((line) => <path key={line} d={line} pathLength={1} />)}
+              </g>
             </svg>
           )}
           {item}

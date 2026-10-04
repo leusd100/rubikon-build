@@ -16,8 +16,10 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 //     photo study assumes it, nobody measured it);
 //   «Каркас» (the default) — a SCHEME of a frame of the type the owner names for this object, drawn inside that
 //     silhouette in the photo's own perspective (app/data/homeProofFrame.ts): illustrative, labelled so on the sheet
-//     («Схема · без розмірів») and in the note; never this building's structure, which nobody can see under its
-//     cladding and whose drawings were not kept;
+//     («Схема · без розмірів») and in the note; with the walls and the central row of columns the owner remembers, but
+//     never this building's drawn structure — nobody can see it under the cladding and its drawings were not kept. Here
+//     the outline is one solid copper line and the cladding's strip lines are off (owner, 04.10): the measured /
+//     approximate split is «Контур»'s;
 //   «Навантаження» — the same scheme with the snow's way through it, link by link, roof to ground.
 // The scheme never goes over the photo: it lives right of the seam only, and so do the words that belong to it — the
 // stamp that says what it is and the load's chain, clipped at the seam. «Контур на фото» lays the measured lines (and
@@ -62,17 +64,27 @@ const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; 
   load: { button: 'Навантаження', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
   sketch: { button: 'Ескіз', seam: 'Ескіз · тест', nominative: 'ескіз', genitive: 'ескізу' },
 };
-const CHAIN = ['Сніг', 'покрівля', 'прогони', 'ферма', 'стіни', 'фундаменти', 'ґрунт'];
+const CHAIN = ['Сніг', 'покрівля', 'прогони', 'ферма', 'стіни й колони', 'фундаменти', 'ґрунт'];
 // The legend's keys per layer. Every layer's set is laid out in one cell, the others hidden, so the title block keeps one
 // height whichever is on (review, 04.10: on a 360 px phone the load's set took a second line and pushed the controls)
-type LegendKey = 'measured' | 'approximate' | 'scheme' | 'load';
+// On the scheme's layers the outline is one solid line and what stands behind the gable is copper (owner, 04.10): the
+// measured / approximate split is the «Контур» layer's
+type LegendKey = 'measured' | 'approximate' | 'outline' | 'scheme' | 'depth' | 'load';
 const LEGEND: Record<Layer, readonly LegendKey[]> = {
   contour: ['measured', 'approximate'],
-  frame: ['measured', 'approximate', 'scheme'],
-  load: ['measured', 'scheme', 'load'],
+  frame: ['outline', 'scheme', 'depth'],
+  load: ['outline', 'scheme', 'load'],
   sketch: [],
 };
-const LEGEND_WORDS: Record<LegendKey, string> = { measured: 'виміряно', approximate: 'наближено', scheme: 'схема', load: 'навантаження' };
+const LEGEND_WORDS: Record<LegendKey, string> = {
+  measured: 'виміряно',
+  approximate: 'наближено',
+  // One word: every set shares one cell, and a second line on a laptop pushed the title block over the picture
+  outline: 'контур',
+  scheme: 'схема',
+  depth: 'у глибині',
+  load: 'навантаження',
+};
 
 const { photo: contourPhoto, variants, lines, label } = homeProofContour;
 const SRC_SET = variants.map(({ src, width }) => `${src} ${width}w`).join(', ');
@@ -444,7 +456,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               />
             </div>
           )}
-          <ProofFrame loadRun={loadRun} shown={layer === 'frame' || layer === 'load'} />
+          <ProofFrame loadRun={loadRun} shown={layer === 'frame' || layer === 'load'} ready={ready} />
           <svg
             className="hv2-contour-lines"
             viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}

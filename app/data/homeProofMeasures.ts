@@ -92,7 +92,8 @@ export const homeProofMeasures: readonly Measure[] = [
     // tablet
     atContour: [1065, 405],
     alignContour: 'start',
-    onFrame: true,
+    // Not on the scheme (owner, 04.10): its «=» marks read as stray strokes across the gates there
+    onFrame: false,
   },
   {
     id: 'proportion',
