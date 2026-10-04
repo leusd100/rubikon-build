@@ -49,6 +49,20 @@ const COMB_XS = Array.from({ length: 13 }, (_, index) => 330 + index * ((1432 - 
 const COMB_ARROWS = COMB_XS.map((x): readonly [Pt, Pt] => [[round1(x), round1(roofTopY(x) - COMB_RISE)], [round1(x), round1(roofTopY(x) - COMB_GAP)]]);
 const COMB_LINE: readonly Pt[] = [COMB_ARROWS[0][0], [ROOF_TOP[1][0], round1(ROOF_TOP[1][1] - COMB_RISE)], COMB_ARROWS.at(-1)![0]];
 
+/** The wind across the building (owner review, 04.10: «навантаження від вітру», in its own colour): it presses on the
+ *  right long wall — arrows along the gable's horizontals (they run to the gable plane's vanishing point), longer higher
+ *  up, as wind grows with height — and lifts the low roof on both slopes. A scheme of where it goes, no figures */
+const GABLE_VP: Pt = [3817.9, 493];
+const RIGHT_FACE: readonly [Pt, Pt] = [[1478.6, 551.7], [1471.1, 332.5]];
+const WIND_GUSTS = [0.12, 0.31, 0.5, 0.69, 0.88].map((share): readonly [Pt, Pt] => {
+  const [[x0, y0], [x1, y1]] = RIGHT_FACE;
+  const at: Pt = [x0 + (x1 - x0) * share, y0 + (y1 - y0) * share];
+  const run = Math.hypot(GABLE_VP[0] - at[0], GABLE_VP[1] - at[1]);
+  const along = (length: number): Pt => [round1(at[0] + ((GABLE_VP[0] - at[0]) * length) / run), round1(at[1] + ((GABLE_VP[1] - at[1]) * length) / run)];
+  return [along(4 + 26 + 22 * share), along(4)];
+});
+const WIND_LIFT = [430, 580, 730, 870, 1090, 1200, 1310, 1410].map((x): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 30)]]);
+
 /** truss: chords and end posts; web: diagonals and verticals; wall: bearing lines and lintels; column: the central row */
 export type FrameGroup = 'truss' | 'web' | 'wall' | 'column' | 'purlin' | 'bracing' | 'footing';
 
@@ -86,6 +100,16 @@ export type HomeProofFrame = {
     links: readonly { link: 3 | 4 | 5; points: readonly Pt[] }[];
     legs: readonly (readonly Pt[])[];
     ground: readonly (readonly [Pt, Pt])[];
+  };
+  /** The wind's way (the «Вітер» layer): the gusts on the windward wall, the lift off the roof, the lit links (2 the wall,
+   *  3 the truss carrying it across, 4 the other wall and the column, 5 the footings), the two legs its drops run, and
+   *  the ground's answer at each footing, against the wind */
+  wind: {
+    gusts: readonly (readonly [Pt, Pt])[];
+    lift: readonly (readonly [Pt, Pt])[];
+    links: readonly { link: 2 | 3 | 4 | 5; points: readonly Pt[] }[];
+    legs: readonly (readonly Pt[])[];
+    reactions: readonly (readonly [Pt, Pt])[];
   };
   /** The names on the scheme, in words (desktop only): a dot on the member, a leader, the word at `at` */
   tags: readonly FrameTag[];
@@ -166,57 +190,57 @@ export const homeProofFrame: HomeProofFrame = {
     { group: 'column', depth: 0, points: [[996.3, 563.8], [1018.3, 563.2]] },
     { group: 'column', depth: 1, hidden: true, points: [[913.3, 319.1], [914.6, 558.4]] },
     { group: 'column', depth: 2, hidden: true, points: [[836.7, 334.5], [837.9, 554.1]] },
-    { group: 'purlin', depth: 0, points: [[299.6, 208.4], [264.2, 241.2]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[264.2, 241.2], [235.8, 267.5]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[235.8, 267.5], [212.6, 289]] },
-    { group: 'purlin', depth: 0, points: [[407.2, 198.3], [361.4, 231.2]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[361.4, 231.2], [324.3, 257.8]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[324.3, 257.8], [293.8, 279.6]] },
-    { group: 'purlin', depth: 0, points: [[508.3, 188.7], [453.2, 221.7]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[453.2, 221.7], [408.4, 248.5]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[408.4, 248.5], [371.4, 270.7]] },
-    { group: 'purlin', depth: 0, points: [[603.4, 179.8], [540.1, 212.8]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[540.1, 212.8], [488.5, 239.8]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[488.5, 239.8], [445.5, 262.2]] },
-    { group: 'purlin', depth: 0, points: [[693, 171.3], [622.5, 204.3]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[622.5, 204.3], [564.7, 231.4]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[564.7, 231.4], [516.4, 254]] },
-    { group: 'purlin', depth: 0, points: [[777.5, 163.3], [700.7, 196.3]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[700.7, 196.3], [637.4, 223.4]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[637.4, 223.4], [584.3, 246.2]] },
-    { group: 'purlin', depth: 0, points: [[857.5, 155.8], [775.1, 188.6]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[775.1, 188.6], [706.9, 215.8]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[706.9, 215.8], [649.4, 238.8]] },
-    { group: 'purlin', depth: 0, points: [[933.2, 148.6], [845.9, 181.3]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[845.9, 181.3], [773.2, 208.6]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[773.2, 208.6], [711.8, 231.6]] },
-    { group: 'purlin', depth: 0, points: [[1005, 141.9], [913.3, 174.4]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[913.3, 174.4], [836.7, 201.6]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[836.7, 201.6], [771.7, 224.7]] },
-    { group: 'purlin', depth: 0, points: [[1070.9, 164.5], [975.4, 194.4]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[975.4, 194.4], [895.2, 219.5]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[895.2, 219.5], [827, 240.8]] },
-    { group: 'purlin', depth: 0, points: [[1133.9, 186.1], [1034.9, 213.6]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[1034.9, 213.6], [951.5, 236.7]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[951.5, 236.7], [880.3, 256.4]] },
-    { group: 'purlin', depth: 0, points: [[1194.2, 206.8], [1092.1, 232]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[1092.1, 232], [1005.8, 253.3]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[1005.8, 253.3], [931.9, 271.5]] },
-    { group: 'purlin', depth: 0, points: [[1251.9, 226.7], [1147, 249.7]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[1147, 249.7], [1058.1, 269.2]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[1058.1, 269.2], [981.8, 286]] },
-    { group: 'purlin', depth: 0, points: [[1307.3, 245.7], [1199.9, 266.7]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[1199.9, 266.7], [1108.6, 284.7]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[1108.6, 284.7], [1030, 300.1]] },
-    { group: 'purlin', depth: 0, points: [[1360.4, 263.9], [1250.8, 283.2]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[1250.8, 283.2], [1157.4, 299.6]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[1157.4, 299.6], [1076.7, 313.7]] },
-    { group: 'purlin', depth: 0, points: [[1411.4, 281.5], [1299.9, 299]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[1299.9, 299], [1204.5, 313.9]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[1204.5, 313.9], [1121.9, 326.9]] },
-    { group: 'purlin', depth: 0, points: [[1460.4, 298.3], [1347.2, 314.2]] },
-    { group: 'purlin', depth: 1, hidden: true, points: [[1347.2, 314.2], [1250, 327.9]] },
-    { group: 'purlin', depth: 2, hidden: true, points: [[1250, 327.9], [1165.7, 339.7]] },
+    { group: 'purlin', depth: 0, points: [[299.2, 218.5], [263.8, 250.2]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[263.8, 250.2], [235.5, 275.6]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[235.5, 275.6], [212.3, 296.3]] },
+    { group: 'purlin', depth: 0, points: [[406.9, 208.0], [361.1, 239.8]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[361.1, 239.8], [324.0, 265.6]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[324.0, 265.6], [293.6, 286.8]] },
+    { group: 'purlin', depth: 0, points: [[508.1, 198.2], [453.0, 230.2]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[453.0, 230.2], [408.3, 256.2]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[408.3, 256.2], [371.2, 277.7]] },
+    { group: 'purlin', depth: 0, points: [[603.2, 188.9], [539.9, 221.0]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[539.9, 221.0], [488.3, 247.2]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[488.3, 247.2], [445.4, 269.0]] },
+    { group: 'purlin', depth: 0, points: [[692.8, 180.2], [622.3, 212.4]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[622.3, 212.4], [564.5, 238.7]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[564.5, 238.7], [516.3, 260.8]] },
+    { group: 'purlin', depth: 0, points: [[777.4, 172.0], [700.6, 204.1]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[700.6, 204.1], [637.3, 230.6]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[637.3, 230.6], [584.2, 252.8]] },
+    { group: 'purlin', depth: 0, points: [[857.4, 164.2], [775.0, 196.3]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[775.0, 196.3], [706.8, 222.8]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[706.8, 222.8], [649.3, 245.2]] },
+    { group: 'purlin', depth: 0, points: [[933.2, 156.8], [845.9, 188.8]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[845.9, 188.8], [773.2, 215.4]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[773.2, 215.4], [711.8, 237.8]] },
+    { group: 'purlin', depth: 0, points: [[1005.0, 149.8], [913.3, 181.6]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[913.3, 181.6], [836.7, 208.2]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[836.7, 208.2], [771.7, 230.8]] },
+    { group: 'purlin', depth: 0, points: [[1071.0, 172.3], [975.5, 201.5]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[975.5, 201.5], [895.3, 226.0]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[895.3, 226.0], [827.1, 246.9]] },
+    { group: 'purlin', depth: 0, points: [[1134.0, 193.8], [1035.0, 220.6]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[1035.0, 220.6], [951.6, 243.1]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[951.6, 243.1], [880.4, 262.4]] },
+    { group: 'purlin', depth: 0, points: [[1194.3, 214.3], [1092.2, 238.8]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[1092.2, 238.8], [1005.9, 259.6]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[1005.9, 259.6], [932.0, 277.3]] },
+    { group: 'purlin', depth: 0, points: [[1252.1, 234.0], [1147.2, 256.4]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[1147.2, 256.4], [1058.3, 275.5]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[1058.3, 275.5], [982.0, 291.8]] },
+    { group: 'purlin', depth: 0, points: [[1307.4, 252.9], [1200.0, 273.4]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[1200.0, 273.4], [1108.7, 290.8]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[1108.7, 290.8], [1030.1, 305.8]] },
+    { group: 'purlin', depth: 0, points: [[1360.6, 271.0], [1251.0, 289.7]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[1251.0, 289.7], [1157.6, 305.6]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[1157.6, 305.6], [1076.9, 319.3]] },
+    { group: 'purlin', depth: 0, points: [[1411.6, 288.4], [1300.1, 305.4]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[1300.1, 305.4], [1204.7, 319.9]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[1204.7, 319.9], [1122.1, 332.5]] },
+    { group: 'purlin', depth: 0, points: [[1460.7, 305.1], [1347.5, 320.5]] },
+    { group: 'purlin', depth: 1, hidden: true, points: [[1347.5, 320.5], [1250.3, 333.7]] },
+    { group: 'purlin', depth: 2, hidden: true, points: [[1250.3, 333.7], [1165.9, 345.1]] },
     { group: 'bracing', depth: 1, hidden: true, points: [[297.9, 252.2], [451.2, 291.5], [691.5, 279.1], [774.1, 310.8], [1005.9, 300.6], [1035.7, 326.5], [1253.8, 317.6], [1252, 339.4], [1461.6, 331.8]] },
     { group: 'bracing', depth: 1, hidden: true, points: [[1005.9, 300.6], [913.3, 181.7]] },
     { group: 'bracing', depth: 1, hidden: true, points: [[913.3, 319.2], [1005, 149.8]] },
@@ -251,12 +275,33 @@ export const homeProofFrame: HomeProofFrame = {
     ],
     ground: [[[171.8, 599], [391.1, 592.6]], [[1419.9, 562.7], [1516.7, 559.9]], [[955, 570], [1060, 567.3]]],
   },
+  wind: {
+    gusts: WIND_GUSTS,
+    lift: WIND_LIFT,
+    links: [
+      { link: 2, points: [[1461.6, 331.8], [1469.3, 561.3]] },
+      { link: 3, points: [[1461.6, 331.8], [297.9, 252.2]] },
+      { link: 4, points: [[297.9, 252.2], [284.8, 595.7]] },
+      { link: 4, points: [[1005.9, 300.6], [1007.3, 563.5]] },
+      { link: 5, points: [[284.8, 595.7], [283.4, 634.6]] },
+      { link: 5, points: [[1007.3, 563.5], [1007.7, 609]] },
+      { link: 5, points: [[1469.3, 561.3], [1470.3, 595]] },
+    ],
+    legs: [
+      [[1466.1, 446.6], [1461.6, 331.8], [1005.9, 300.6], [1007.3, 563.5], [1007.7, 609]],
+      [[1466.1, 446.6], [1461.6, 331.8], [297.9, 252.2], [284.8, 595.7], [283.4, 634.6]],
+    ],
+    reactions: [[[238, 628], [262, 627.4]], [[958, 600], [981, 599.4]], [[1424, 586], [1446, 585.4]]],
+  },
   tags: [
-    { id: 'truss', text: 'Ферма', anchor: [1252.9, 275.7], at: [1300, 395], align: 'start' },
-    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1060.9, 206.4], at: [1045, 262], align: 'start' },
-    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 480], at: [1042, 532], align: 'start' },
+    // In the frame's free room (owner review, 04.10: «текст залазить на елемент»): the truss's and the purlins' names in
+    // the sky over the right rake, the column's and the footings' on the ground under the base, the walls' on a face that
+    // holds only blockwork — each on a backing that masks what runs under it, as a drawing's text does
+    { id: 'truss', text: 'Ферма', anchor: [1360.6, 271], at: [1352, 214], align: 'start' },
+    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1252.1, 234], at: [1247, 112], align: 'end' },
+    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 540], at: [1045, 602], align: 'start' },
     { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 410], at: [1430, 452], align: 'end' },
-    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1392, 616], align: 'end' },
+    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 632], align: 'end' },
   ],
   label:
     'Схема каркаса такого типу, як на цьому об’єкті, вписана в силует із фото: ферми, прогони, в’язі, стіни з газобетонних блоків по контуру й центральний ряд колон, фундаменти — умовно. Навантаження з покрівлі йде через прогони й ферми на стіни й колони, а з них — на фундаменти. Не креслення цього ангара: розмірів і перерізів тут немає.',

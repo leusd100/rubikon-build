@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import type { HomeProofCase } from '../../data/homeProof';
 import { homeProofContour, type ContourLine } from '../../data/homeProofContour';
+import { homeProofFrame } from '../../data/homeProofFrame';
 import { DrawingSheet } from '../DrawingSheet';
 import { ProofFrame, ProofMarks, ProofLabels, SKETCH } from './ProofFrame';
 import { homeProofMeasures } from '../../data/homeProofMeasures';
@@ -27,8 +28,10 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 //
 // The seam is a real range input (keys, screen readers). Mouse and pen drag anywhere in the frame; a finger drags only
 // the handle, so the page still scrolls and zooms under a thumb, and on a phone «Фото» / «Схема» show one side whole.
-// Dragged near a measured line — a gate's jamb, a corner of the gable — the seam holds to it as a CAD cursor snaps, the
-// line lights up and its name stands at the seam's foot (owner review, 04.10); keys and screen readers step as before.
+// A mouse over the frame moves the seam with it, no press needed (owner, 04.10); a press and a drag still work, and a
+// finger takes the handle. Passing a measured line — a gate's jamb, a corner of the gable — the seam lights it up over
+// the photo and names it at its top, as a CAD cursor reports what it is on, but never holds there (owner, 04.10: a
+// magnet at the gates «не дуже»); keys and screen readers step as before.
 // Arriving with motion (owner review, 04.10 — «шов-плотер»), the sheet plots in as a whole photo, then the seam sweeps
 // from the right edge across the gable and back to rest, and what it has passed is the drawing, whole; the figures and
 // names come in when it rests, and two rings from the handle say it moves. A mouse or pen pressed in the sheet, a finger
@@ -42,7 +45,7 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 // Test only (owner, 04.10): /?xray=sketch puts the old generated sketch on the right instead, to compare it with the
 // drawn scheme. Read on the client after hydration — the server HTML is the default page's — and never linked.
 
-type Layer = 'contour' | 'frame' | 'load' | 'sketch';
+type Layer = 'contour' | 'frame' | 'load' | 'wind' | 'sketch';
 
 /** The seam's resting place: right of the left gate and left of the ridge, so each side keeps a gate */
 export const DEFAULT_SPLIT = 62;
@@ -56,9 +59,15 @@ const SWEEP_MS = 3000;
 const SWEEP_MS_PHONE = 2200;
 /** The page must have stopped scrolling this long before the sweep: the eye is on the way, not on the seam */
 const SWEEP_QUIET = 250;
-/** Snapping, in per cent of the frame: caught within GRAB of a measured line, let go beyond RELEASE */
+/** Passing a measured line, in per cent of the frame: lit within GRAB of it, until the seam is past RELEASE */
 const SNAP_GRAB = 0.8;
 const SNAP_RELEASE = 1.4;
+/** A phone's close-up of the gable (home-v2.css, ≤ 760 px): the canvas 1.22 × the frame's width, shifted left by 19.46 %
+ *  of it — the photo's columns 245–1505, the gable whole — so a line at a per cent of the canvas stands at
+ *  (per cent × ZOOM − LEFT) of the frame; the sweep turns just past the gable's left corner there */
+const PHONE_ZOOM = 1.22;
+const PHONE_LEFT = 19.46;
+const SWEEP_TURN_PHONE = 4;
 /** The held line's name: its distance from the seam, px */
 const SNAP_GAP = 10;
 /** …and its padding and border, px (home-v2.css) */
@@ -75,19 +84,26 @@ type Room = { width: number; left: number; right: number; stamp: number };
 const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; genitive: string }> = {
   contour: { button: 'Контур', seam: 'Контур', nominative: 'контур за фото', genitive: 'контуру' },
   frame: { button: 'Каркас', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
-  load: { button: 'Навантаження', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
+  // Two loads, each its own layer and its own colour (owner review, 04.10: «розумно кольорів, наприклад вітер»)
+  load: { button: 'Сніг', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
+  wind: { button: 'Вітер', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
   sketch: { button: 'Ескіз', seam: 'Ескіз · тест', nominative: 'ескіз', genitive: 'ескізу' },
 };
-const CHAIN = ['Сніг', 'покрівля', 'прогони', 'ферма', 'стіни й колони', 'фундаменти', 'ґрунт'];
+/** Each load's way, link by link, in its own words */
+const CHAINS: Partial<Record<Layer, readonly string[]>> = {
+  load: ['Сніг', 'покрівля', 'прогони', 'ферма', 'стіни й колони', 'фундаменти', 'ґрунт'],
+  wind: ['Вітер', 'стіна', 'ферма', 'стіна й колона', 'фундаменти', 'ґрунт'],
+};
 // The legend's keys per layer. Every layer's set is laid out in one cell, the others hidden, so the title block keeps one
 // height whichever is on (review, 04.10: on a 360 px phone the load's set took a second line and pushed the controls)
 // On the scheme's layers the outline is one solid line and what stands behind the gable is copper (owner, 04.10): the
 // measured / approximate split is the «Контур» layer's
-type LegendKey = 'measured' | 'approximate' | 'outline' | 'scheme' | 'depth' | 'load';
+type LegendKey = 'measured' | 'approximate' | 'outline' | 'scheme' | 'depth' | 'load' | 'wind';
 const LEGEND: Record<Layer, readonly LegendKey[]> = {
   contour: ['measured', 'approximate'],
   frame: ['outline', 'scheme', 'depth'],
   load: ['outline', 'scheme', 'load'],
+  wind: ['outline', 'scheme', 'wind'],
   sketch: [],
 };
 const LEGEND_WORDS: Record<LegendKey, string> = {
@@ -97,13 +113,14 @@ const LEGEND_WORDS: Record<LegendKey, string> = {
   outline: 'контур',
   scheme: 'схема',
   depth: 'у глибині',
-  load: 'навантаження',
+  load: 'сніг',
+  wind: 'вітер',
 };
 
 const { photo: contourPhoto, variants, lines, label } = homeProofContour;
 const SRC_SET = variants.map(({ src, width }) => `${src} ${width}w`).join(', ');
 // The frame's width: the shell less the sheet's margins (34 px on a phone, 46 px above), at most 1440 − 46
-const SIZES = '(max-width: 760px) calc(100vw - 66px), (max-width: 1556px) calc(92.5vw - 46px), 1394px';
+const SIZES = '(max-width: 760px) calc((100vw - 66px) * 1.22), (max-width: 1556px) calc(92.5vw - 46px), 1394px';
 
 const pathOf = ({ points }: ContourLine) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}`;
 
@@ -123,6 +140,38 @@ const SNAPS: readonly Snap[] = [
   { line: 'gate-right', at: snapAt('gate-right', 2), name: 'Праві ворота, одвірок', status: 'виміряно' },
   { line: 'gable-corner-right', at: snapAt('gable-corner-right', 2), name: 'Правий кут фронтона', status: 'наближено' },
 ];
+const phoneNow = () => window.matchMedia('(max-width: 760px)').matches;
+/** Where a measured line stands in the frame, per cent: on a phone the canvas is zoomed in on the gable */
+const stageAt = (snap: Snap, phone: boolean) => (phone ? snap.at * PHONE_ZOOM - PHONE_LEFT : snap.at);
+
+// The quiet tracing (owner review, 04.10 — «тиха калька»): right of the seam the photo stays only inside the building —
+// its drawn silhouette, widened a little for the gutters and the fascia — and the sky and the gravel become the sheet's
+// flat paper with its grid, the building free of the grid. One mask, a data URI of the silhouette, used both ways
+const SILHOUETTE = homeProofFrame.silhouette.map((outline) => `M${outline.map(([x, y]) => `${x} ${y}`).join('L')}Z`).join('');
+const BUILDING_MASK = `url("data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${contourPhoto.width} ${contourPhoto.height}' preserveAspectRatio='none'>`
+  + `<path d='${SILHOUETTE}' fill='#000' stroke='#000' stroke-width='14' stroke-linejoin='round'/></svg>`,
+)}")`;
+// …and the ground under it, as a drawing marks it: a line a little under the cladding's bottom, along the long wall and
+// the gable to the frame's edges, short strokes hatched under it
+const GROUND_DROP = 10;
+const GROUND: readonly (readonly [number, number])[] = (() => {
+  const [far, corner] = [homeProofFrame.silhouette[1][3], homeProofFrame.silhouette[0][5]];
+  const near = homeProofFrame.silhouette[0][4];
+  const at = (a: readonly [number, number], b: readonly [number, number], x: number) => a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
+  return [[0, at(far, corner, 0) + GROUND_DROP], [corner[0], corner[1] + GROUND_DROP], [contourPhoto.width, at(corner, near, contourPhoto.width) + GROUND_DROP]];
+})();
+const GROUND_HATCH = (() => {
+  let path = '';
+  for (let index = 0; index < GROUND.length - 1; index += 1) {
+    const [[x0, y0], [x1, y1]] = [GROUND[index], GROUND[index + 1]];
+    for (let x = Math.ceil(x0 / 18) * 18; x < x1; x += 18) {
+      const y = y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+      path += `M${x} ${Math.round(y * 10) / 10}l-8 9`;
+    }
+  }
+  return path;
+})();
 const clamp = (value: number) => Math.min(100, Math.max(0, value));
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
@@ -180,6 +229,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [split, setSplit] = useState(DEFAULT_SPLIT);
   const [chosen, setChosen] = useState<Layer | null>(null);
   const [loadRun, setLoadRun] = useState(0);
+  const [windRun, setWindRun] = useState(0);
   const [linesOnPhoto, setLinesOnPhoto] = useState(false);
   const [dragging, setDragging] = useState(false);
   // The measured line the dragged seam holds, and the last one's words (they fade out after it is let go)
@@ -198,7 +248,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const touched = useRef(false);
   const [room, setRoom] = useState<Room | null>(null);
 
-  const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['contour', 'frame', 'load'];
+  const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['contour', 'frame', 'load', 'wind'];
   const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[sketchMode ? 0 : 1];
   const rightSide = LAYERS[layer];
 
@@ -234,11 +284,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       // In one task: the hold at the edge gives way to the sweep's first frame, at the same edge
       stage.dataset.gliding = '';
       stage.dataset.sweep = 'run';
-      const phone = window.matchMedia('(max-width: 760px)').matches;
+      const phone = phoneNow();
       sweep = stage.animate(
         [
           { '--split': '100%', easing: 'cubic-bezier(.35, 0, .3, 1)' },
-          { '--split': `${SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
+          { '--split': `${phone ? SWEEP_TURN_PHONE : SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
           { '--split': `${DEFAULT_SPLIT}%` },
         ],
         { duration: phone ? SWEEP_MS_PHONE : SWEEP_MS },
@@ -316,6 +366,22 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
 
   const { stampShort, stampNone, narrowLeft, narrowRight } = fitOf(room, split);
 
+  // On a laptop the picture takes the height the window has left (home-v2.css): the sheet's other parts — the rulers, the
+  // title block, however many lines its note wraps to — are measured here, so the title block is never pushed under the
+  // picture (owner, 04.10: on a short window the picture covered the note)
+  useEffect(() => {
+    const image = stageRef.current?.parentElement;
+    const sheet = image?.closest<HTMLElement>('figure');
+    if (!image || !sheet) return;
+    const measure = () => sheet.style.setProperty('--hv2-sheet-rest', `${Math.ceil(sheet.offsetHeight - image.offsetHeight)}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(sheet);
+    const caption = sheet.querySelector('figcaption');
+    if (caption) observer.observe(caption);
+    return () => observer.disconnect();
+  }, []);
+
   // The held line's name stands at the top of the seam, where the seam's own names were (they give way while it is held):
   // on the photo's side if it fits there, else on the scheme's side short of the stamp, else wrapped on the roomier side
   // — never off the frame (review, 04.10: on a phone it ran off and lost «виміряно»)
@@ -358,23 +424,21 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const splitAt = (clientX: number, offset = 0, touch = false) => {
     const box = stageRef.current?.getBoundingClientRect();
     if (!box || box.width === 0) return;
-    let value = clamp(((clientX - offset - box.left) / box.width) * 100);
-    // Held by a measured line until the pointer pulls past RELEASE; caught by one within GRAB
-    const held = snapRef.current;
-    if (held && Math.abs(value - held.at) < SNAP_RELEASE) {
-      value = held.at;
-    } else {
-      const near = SNAPS.find((candidate) => Math.abs(value - candidate.at) < SNAP_GRAB) ?? null;
-      if (near !== held) {
-        snapRef.current = near;
-        setSnap(near);
-        if (near) {
-          setSnapWords(near);
-          // A touch on Android feels it; nowhere else does anything happen
-          if (touch) navigator.vibrate?.(6);
-        }
+    const value = clamp(((clientX - offset - box.left) / box.width) * 100);
+    // The measured line the seam is passing: lit from within GRAB until past RELEASE, so it does not flicker at the edge
+    const phone = phoneNow();
+    const lit = snapRef.current;
+    const near = lit && Math.abs(value - stageAt(lit, phone)) < SNAP_RELEASE
+      ? lit
+      : SNAPS.find((candidate) => Math.abs(value - stageAt(candidate, phone)) < SNAP_GRAB) ?? null;
+    if (near !== lit) {
+      snapRef.current = near;
+      setSnap(near);
+      if (near) {
+        setSnapWords(near);
+        // A touch on Android feels it; nowhere else does anything happen
+        if (touch) navigator.vibrate?.(6);
       }
-      if (near) value = near.at;
     }
     // Tenths of a per cent: a whole per cent is a 13 px jump on a wide screen
     setSplit(Math.round(value * 10) / 10);
@@ -397,12 +461,29 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       splitAt(event.clientX, 0, event.pointerType === 'touch');
     }
     event.currentTarget.setPointerCapture(event.pointerId);
+    delete event.currentTarget.dataset.following;
     setDragging(true);
     setPointerFocus(true);
     rangeRef.current?.focus({ preventScroll: true });
   };
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (drag.current?.pointer === event.pointerId) splitAt(event.clientX, drag.current.offset, event.pointerType === 'touch');
+    if (drag.current?.pointer === event.pointerId) {
+      splitAt(event.clientX, drag.current.offset, event.pointerType === 'touch');
+      return;
+    }
+    // A mouse over the frame, no press: the seam follows it, eased (data-following, home-v2.css) — once the first view's
+    // sweep is over, and only for a move of the mouse itself, not the one a browser makes up after a scroll
+    const stage = event.currentTarget;
+    if (event.pointerType !== 'mouse' || !ready || drag.current || stage.dataset.sweep !== undefined) return;
+    if ((event.movementX === 0 && event.movementY === 0) || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    stage.dataset.following = '';
+    splitAt(event.clientX);
+  };
+  const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
+    if (drag.current) return;
+    delete event.currentTarget.dataset.following;
+    snapRef.current = null;
+    setSnap(null);
   };
   const endDrag = () => {
     drag.current = null;
@@ -427,8 +508,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // and on a phone its way down the frame wants the wider right side
   const choose = (next: Layer) => {
     setChosen(next);
-    if (next === 'load') {
-      setLoadRun((run) => run + 1);
+    if (next === 'load' || next === 'wind') {
+      (next === 'load' ? setLoadRun : setWindRun)((run) => run + 1);
       const phone = window.matchMedia('(max-width: 760px)').matches;
       if (phone && split > 40) setSplit(40);
       else if (split >= 85) setSplit(DEFAULT_SPLIT);
@@ -438,7 +519,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
 
   const measured = homeProofMeasures.filter((measure) => measure.chip);
-  const sliderLabel = `Порівняти фото й ${{ contour: 'контур за фото', frame: 'схему', load: 'схему', sketch: 'ескіз' }[layer]}`;
+  const sliderLabel = `Порівняти фото й ${{ contour: 'контур за фото', frame: 'схему', load: 'схему', wind: 'схему', sketch: 'ескіз' }[layer]}`;
+  const chain = CHAINS[layer];
 
   return (
     <DrawingSheet
@@ -468,10 +550,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           className: 'hv2-contour-facts',
           value: (
             <span className="hv2-contour-facts-slot" aria-hidden="true">
-              <span className="hv2-contour-chips" data-on={layer === 'load' ? undefined : ''}>
+              <span className="hv2-contour-chips" data-on={chain ? undefined : ''}>
                 {measured.map((measure) => <span key={measure.id} data-measure={measure.id}>{measure.chip}</span>)}
               </span>
-              <span className="hv2-contour-chain-text" data-on={layer === 'load' ? '' : undefined}>{CHAIN.join(' → ')}</span>
+              {/* both loads' ways laid in the one slot, so it keeps one height (the longer is the snow's) */}
+              {(['load', 'wind'] as const).map((name) => (
+                <span key={name} className="hv2-contour-chain-text" data-load={name} data-on={layer === name ? '' : undefined}>{CHAINS[name]!.join(' → ')}</span>
+              ))}
             </span>
           ),
         },
@@ -533,6 +618,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-snap-wrap={snapPlace.wrap ? '' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
+        onPointerLeave={onPointerLeave}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onLostPointerCapture={endDrag}
@@ -545,7 +631,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable={false} />
           </picture>
           {/* The tracing: the same frame (the same file, so no second download), grey and dark, on a fine grid */}
-          <div className="hv2-contour-trace" aria-hidden="true">
+          <div className="hv2-contour-trace" aria-hidden="true" style={{ '--hv2-building': BUILDING_MASK } as CSSProperties}>
+            <svg className="hv2-contour-ground" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}>
+              <path d={`M${GROUND.map(([x, y]) => `${x} ${Math.round(y * 10) / 10}`).join('L')}`} />
+              <path className="hv2-contour-ground-hatch" d={GROUND_HATCH} />
+            </svg>
             <picture>
               <source type="image/webp" srcSet={SRC_SET} sizes={SIZES} />
               <img src={photo.src} alt="" width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable={false} />
@@ -565,7 +655,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               />
             </div>
           )}
-          <ProofFrame loadRun={loadRun} shown={layer === 'frame' || layer === 'load'} ready={ready} />
+          <ProofFrame loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} ready={ready} />
           <svg
             className="hv2-contour-lines"
             viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}
@@ -600,8 +690,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               {layer === 'contour' ? 'без масштабу' : layer === 'sketch' ? 'згенероване зображення' : 'каркас такого типу, як на цьому об’єкті'}
             </span>
           </span>
-          <span className="hv2-contour-chain" key={`chain-${loadRun}`}>
-            {CHAIN.map((link, index) => <span key={link} style={{ '--n': index } as CSSProperties}>{link}</span>)}
+          <span className="hv2-contour-chain" key={`chain-${layer}-${loadRun}-${windRun}`} data-load={layer === 'wind' ? 'wind' : undefined}>
+            {(chain ?? CHAINS.load!).map((link, index) => <span key={link} style={{ '--n': index } as CSSProperties}>{link}</span>)}
           </span>
         </span>
         {/* What the figures say, for a screen reader: the labels on the frame are drawn for the eye only */}

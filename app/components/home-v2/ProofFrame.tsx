@@ -64,8 +64,8 @@ function blockwork(face: readonly Pt[], courses: number, blocks: number) {
 /** `shown`: false while another layer is on the right (the scheme fades out, and its name must not be read).
  *  `ready`: after hydration — the blockwork's thousand short strokes are drawn on the client only, to keep the page's HTML
  *  light; without them the scheme is whole */
-export function ProofFrame({ loadRun, shown, ready }: Readonly<{ loadRun: number; shown: boolean; ready: boolean }>) {
-  const { silhouette, walls, members, nodes, load, label } = homeProofFrame;
+export function ProofFrame({ loadRun, windRun, shown, ready }: Readonly<{ loadRun: number; windRun: number; shown: boolean; ready: boolean }>) {
+  const { silhouette, walls, members, nodes, load, wind, label } = homeProofFrame;
   const inside = members.filter((member) => member.group !== 'footing');
   const footings = members.filter((member) => member.group === 'footing');
   return (
@@ -90,6 +90,13 @@ export function ProofFrame({ loadRun, shown, ready }: Readonly<{ loadRun: number
         </marker>
         {/* The legs' heads: their lines are three times as heavy as the snow's */}
         <marker id="hv2-proof-foot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="2.2" markerHeight="2.2" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" />
+        </marker>
+        {/* …and the wind's, in its own colour */}
+        <marker id="hv2-proof-head-wind" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" />
+        </marker>
+        <marker id="hv2-proof-foot-wind" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="2.2" markerHeight="2.2" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" />
         </marker>
       </defs>
@@ -155,6 +162,31 @@ export function ProofFrame({ loadRun, shown, ready }: Readonly<{ loadRun: number
         ))}
         <g className="hv2-proof-ground" style={{ '--n': 6 } as CSSProperties}>
           {load.ground.map((tick, index) => <path key={index} d={d(tick)} />)}
+        </g>
+      </g>
+      {/* The wind's way — replayed on every press of «Вітер»: the gusts and the lift, then link by link to the ground */}
+      <g className="hv2-proof-wind" key={`wind-${windRun}`}>
+        <g className="hv2-proof-gusts" style={{ '--n': 0 } as CSSProperties}>
+          {wind.gusts.map(([from, to], index) => (
+            <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
+          ))}
+        </g>
+        <g className="hv2-proof-lift" style={{ '--n': 1 } as CSSProperties}>
+          {wind.lift.map(([from, to], index) => (
+            <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
+          ))}
+        </g>
+        {wind.links.map(({ link, points }, index) => (
+          <g key={index} className="hv2-proof-link" data-link={link} style={{ '--n': link } as CSSProperties}>
+            <path className="hv2-proof-link-casing" d={d(points)} />
+            <path d={d(points)} />
+          </g>
+        ))}
+        {wind.legs.map((leg, index) => (
+          <path key={index} className="hv2-proof-flow" d={d(leg)} markerEnd="url(#hv2-proof-foot-wind)" style={{ '--n': 3 } as CSSProperties} />
+        ))}
+        <g className="hv2-proof-reactions" style={{ '--n': 6 } as CSSProperties}>
+          {wind.reactions.map(([from, to], index) => <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" />)}
         </g>
       </g>
     </svg>
