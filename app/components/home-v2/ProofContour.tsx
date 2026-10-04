@@ -59,6 +59,10 @@ const SWEEP_QUIET = 250;
 /** Snapping, in per cent of the frame: caught within GRAB of a measured line, let go beyond RELEASE */
 const SNAP_GRAB = 0.8;
 const SNAP_RELEASE = 1.4;
+/** The held line's name: its distance from the seam, px */
+const SNAP_GAP = 10;
+/** …and its padding and border, px (home-v2.css) */
+const SNAP_FRAME = 20;
 // What fits right of the seam (review, 04.10). The stamp and the load's chain lie on the right side only, clipped at the
 // seam (home-v2.css): the stamp keeps its full words while that side is wider than it, its first word below that, and
 // the seam's names give way before they reach the stamp or the frame's edge. Measured on the page (the frame's width,
@@ -126,11 +130,13 @@ const sketchRequested = () => new URLSearchParams(window.location.search).get('x
 
 // See STAMP_OFFSET: whether the stamp keeps its full words, and which seam name gives way
 function fitOf(room: Room | null, split: number) {
-  if (!room) return { stampShort: false, narrowLeft: split < 12, narrowRight: split > 72 };
+  if (!room) return { stampShort: false, stampNone: false, narrowLeft: split < 12, narrowRight: split > 72 };
   const right = (room.width * (100 - split)) / 100;
   const stampShort = right < room.stamp + STAMP_OFFSET + AIR;
   return {
     stampShort,
+    // Narrower than even its first word: no stamp at all, not a fragment of one (review, 04.10: «ХЕМА» at the corner)
+    stampNone: right < SHORT_STAMP + STAMP_OFFSET + AIR,
     narrowLeft: (room.width * split) / 100 < room.left + 3 + AIR,
     narrowRight: right < room.right + 3 + AIR + (stampShort ? SHORT_STAMP : room.stamp) + STAMP_OFFSET,
   };
@@ -159,7 +165,7 @@ function Lines({ casing, snapped }: Readonly<{ casing?: boolean; snapped?: strin
           data-line={line.id}
           data-kind={line.kind}
           data-approximate={line.approximate ? '' : undefined}
-          data-snapped={!casing && snapped === line.id ? '' : undefined}
+          data-snapped={snapped === line.id ? '' : undefined}
         >
           {!casing && <title>{line.title}</title>}
         </path>
@@ -180,6 +186,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [snap, setSnap] = useState<Snap | null>(null);
   const snapRef = useRef<Snap | null>(null);
   const [snapWords, setSnapWords] = useState<Snap | null>(null);
+  const [snapPlace, setSnapPlace] = useState<{ side: 'left' | 'right'; wrap: boolean; max: number }>({ side: 'left', wrap: false, max: 0 });
+  const snapLabelRef = useRef<HTMLSpanElement>(null);
   const ready = useSyncExternalStore(subscribeToNothing, () => true, () => false);
   const sketchMode = useSyncExternalStore(subscribeToNothing, sketchRequested, () => false);
   // Focus the pointer put on the range: the keyboard's ring stays off until a key is pressed
@@ -306,6 +314,47 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     };
   }, [layer]);
 
+  const { stampShort, stampNone, narrowLeft, narrowRight } = fitOf(room, split);
+
+  // The held line's name stands at the top of the seam, where the seam's own names were (they give way while it is held):
+  // on the photo's side if it fits there, else on the scheme's side short of the stamp, else wrapped on the roomier side
+  // — never off the frame (review, 04.10: on a phone it ran off and lost «виміряно»)
+  useEffect(() => {
+    const stage = stageRef.current;
+    const label = snapLabelRef.current;
+    if (!snap || !stage || !label || !room) return;
+    // Its width in one line, read off a hidden copy: the label itself may still be wrapped from the line held before
+    const width = (label.querySelector<HTMLElement>('.hv2-contour-snap-measure')?.offsetWidth ?? label.scrollWidth) + SNAP_FRAME;
+    const seam = (room.width * split) / 100;
+    const stamp = stampNone ? 0 : (stampShort ? SHORT_STAMP : room.stamp) + STAMP_OFFSET;
+    const left = seam - SNAP_GAP - AIR;
+    const right = room.width - seam - SNAP_GAP - AIR - stamp;
+    const next = width <= left ? { side: 'left' as const, wrap: false, max: 0 }
+      : width <= right ? { side: 'right' as const, wrap: false, max: 0 }
+        : { side: left >= right ? 'left' as const : 'right' as const, wrap: true, max: Math.max(left, right) };
+    setSnapPlace((previous) => (previous.side === next.side && previous.wrap === next.wrap && previous.max === next.max ? previous : next));
+  }, [snap, split, room, stampNone, stampShort]);
+
+  // A figure or a name the seam cuts through is hidden whole, never shown in part (review, 04.10: «≈ 3,2 висоти» cut to
+  // «2 висоти» changes what the figure says). Measured on the page whenever the seam, the layer or the frame changes
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !room) return;
+    const seam = stage.getBoundingClientRect().left + (room.width * split) / 100;
+    for (const label of stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')) {
+      const cut = label.getBoundingClientRect().left < seam + 1;
+      if (cut === ('cut' in label.dataset)) continue;
+      if (cut) label.dataset.cut = '';
+      else delete label.dataset.cut;
+      const tag = label.dataset.tag;
+      const leader = tag ? stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${tag}"]`) : null;
+      if (leader) {
+        if (cut) leader.dataset.cut = '';
+        else delete leader.dataset.cut;
+      }
+    }
+  }, [split, layer, room]);
+
   const splitAt = (clientX: number, offset = 0, touch = false) => {
     const box = stageRef.current?.getBoundingClientRect();
     if (!box || box.width === 0) return;
@@ -389,7 +438,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
 
   const measured = homeProofMeasures.filter((measure) => measure.chip);
-  const { stampShort, narrowLeft, narrowRight } = fitOf(room, split);
   const sliderLabel = `Порівняти фото й ${{ contour: 'контур за фото', frame: 'схему', load: 'схему', sketch: 'ескіз' }[layer]}`;
 
   return (
@@ -478,11 +526,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         // The seam's names give way where their side is too narrow, the right one before the stamp; the stamp shortens
         data-narrow-left={narrowLeft ? '' : undefined}
         data-narrow-right={narrowRight ? '' : undefined}
-        data-stamp={stampShort ? 'short' : undefined}
+        data-stamp={stampNone ? 'none' : stampShort ? 'short' : undefined}
         data-photo-only={split >= 100 ? '' : undefined}
         data-snapped={snap ? '' : undefined}
-        // The snapped line's name stands on the wider side of the seam
-        data-snap-side={snapWords && snapWords.at > 55 ? 'left' : undefined}
+        data-snap-side={snapPlace.side}
+        data-snap-wrap={snapPlace.wrap ? '' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -525,9 +573,17 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             aria-label={label}
           >
             {/* A thin dark casing under each copper line keeps it legible where it crosses the photo's light cladding */}
-            <Lines casing />
+            <Lines casing snapped={snap?.line} />
             <Lines snapped={snap?.line} />
           </svg>
+          {/* The held line once more, over the photo too: a jamb or a corner the seam holds lies right on it, where the
+              lines' own layer is cut off — so it lights up landing on the photo's edge (review, 04.10) */}
+          {snap && (
+            <svg className="hv2-contour-held" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`} aria-hidden="true">
+              <path className="hv2-contour-held-casing" d={pathOf(lines.find((line) => line.id === snap.line)!)} />
+              <path d={pathOf(lines.find((line) => line.id === snap.line)!)} />
+            </svg>
+          )}
           <ProofMarks />
           <ProofLabels />
         </div>
@@ -548,14 +604,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             {CHAIN.map((link, index) => <span key={link} style={{ '--n': index } as CSSProperties}>{link}</span>)}
           </span>
         </span>
-        <span className="hv2-contour-snap" aria-hidden="true">
-          {snapWords?.name}
-          <small>{snapWords?.status}</small>
-        </span>
-        <span className="hv2-contour-seamtags" aria-hidden="true">
-          <span>‹ Фото</span>
-          <span>{rightSide.seam} ›</span>
-        </span>
         {/* What the figures say, for a screen reader: the labels on the frame are drawn for the eye only */}
         <ul className="sr-only" aria-label="Виміряно за фото, без масштабу">
           {homeProofMeasures.map((measure) => <li key={measure.id} data-measure={measure.id}>{measure.spoken}</li>)}
@@ -575,8 +623,24 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           onKeyDown={onKeyDown}
           onBlur={() => setPointerFocus(false)}
         />
-        <span className="hv2-contour-seam" aria-hidden="true" />
-        <span className="hv2-contour-handle" aria-hidden="true">‹ ›</span>
+        {/* The seam, its handle, its names and the held line's name ride one full-width rail moved by a transform: moved
+            by left, they shifted the page's layout on every frame of the sweep (review, 04.10: CLS) */}
+        <span className="hv2-contour-rail" aria-hidden="true">
+          <span className="hv2-contour-seamtags">
+            <span>‹ Фото</span>
+            <span>{rightSide.seam} ›</span>
+          </span>
+          <span className="hv2-contour-snap" ref={snapLabelRef} aria-hidden="true" style={snapPlace.wrap ? ({ '--snap-max': `${Math.round(snapPlace.max)}px` } as CSSProperties) : undefined}>
+            {snapWords?.name}
+            <small>{snapWords?.status}</small>
+            <span className="hv2-contour-snap-measure">
+              {snapWords?.name}
+              <small>{snapWords?.status}</small>
+            </span>
+          </span>
+          <span className="hv2-contour-seam" />
+          <span className="hv2-contour-handle">‹ ›</span>
+        </span>
       </div>
     </DrawingSheet>
   );

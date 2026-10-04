@@ -316,7 +316,17 @@ main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { --w: var(--l
 main[data-home="v2"] .hv2-contour-lines path[data-kind="gate"] { --w: 1.6; }
 main[data-home="v2"] .hv2-contour-lines path[data-approximate] { stroke-dasharray: calc(var(--u) * 6) calc(var(--u) * 5); }
 /* The line the dragged seam holds (ProofContour's snap): heavier and lighter while it is held, its name by the seam */
-main[data-home="v2"] .hv2-contour-ink path[data-snapped] { --k: 1.8; stroke: #f0b48a; }
+main[data-home="v2"] .hv2-contour-lines path[data-snapped] { --k: 1.8; }
+main[data-home="v2"] .hv2-contour-ink path[data-snapped] { stroke: #e39a68; }
+/* The outline is drawn in parts (measured / approximate): square ends close its corners where butt ends notched them */
+main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { stroke-linecap: square; }
+/* The held line over the photo too, unclipped (ProofContour) */
+main[data-home="v2"] .hv2-contour-canvas > svg.hv2-contour-held { clip-path: none; }
+main[data-home="v2"] .hv2-contour-held path { fill: none; stroke: #e39a68; stroke-width: calc(var(--u) * 2 * var(--k, 1)); stroke-linecap: square; stroke-linejoin: miter; }
+main[data-home="v2"] .hv2-contour-held .hv2-contour-held-casing { stroke: rgba(13, 15, 14, .7); stroke-width: calc(var(--u) * (2 * var(--k, 1) + 2.4)); }
+@media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-contour-held { animation: hv2-contour-fade 160ms ease; } }
+/* A figure or a name the seam cuts through: hidden whole (ProofContour sets data-cut) */
+main[data-home="v2"] .hv2-contour-stage :is(.hv2-proof-labels > [data-cut], .hv2-proof-tag-leaders > [data-cut]) { visibility: hidden !important; }
 main[data-home="v2"] .hv2-contour-ink path { stroke: var(--hv2-copper-text); }
 /* A thin dark casing under each line: it disappears on the tracing and keeps the copper legible on the light cladding */
 main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); stroke-width: calc(var(--u) * (var(--w) * var(--k, 1) + 2)); }
@@ -414,7 +424,7 @@ main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load { opa
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-contour-lines { opacity: .75; }
 /* On the scheme's layers the outline is one solid line and the cladding's strip lines are off: they are the colour bands
    of the cladding, not structure, and only crowd the frame (owner, 04.10) */
-main[data-home="v2"] .hv2-contour-stage:is([data-layer="frame"], [data-layer="load"]) .hv2-contour-lines path[data-approximate] { stroke-linecap: round; stroke-dasharray: none; }
+main[data-home="v2"] .hv2-contour-stage:is([data-layer="frame"], [data-layer="load"]) .hv2-contour-lines path[data-approximate] { stroke-dasharray: none; }
 main[data-home="v2"] .hv2-contour-stage:is([data-layer="frame"], [data-layer="load"]) .hv2-contour-lines path[data-kind="cladding"] { visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-lines { opacity: .35; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-lines { opacity: 0; visibility: hidden; }
@@ -455,7 +465,7 @@ main[data-home="v2"] .hv2-contour-stage[data-stamp="short"] :is(.hv2-contour-sta
 @media (min-width: 761px) and (max-width: 1199px) { main[data-home="v2"] .hv2-contour-stamp-text { display: none; } }
 main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-stamp { color: #f5f2eb; background: rgba(160, 82, 42, .94); border-color: var(--hv2-copper-fill); }
 main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-stamp small { color: #f5f2eb; }
-main[data-home="v2"] .hv2-contour-stage[data-photo-only] .hv2-contour-stamp { visibility: hidden; }
+main[data-home="v2"] .hv2-contour-stage:is([data-photo-only], [data-stamp="none"]) .hv2-contour-stamp { visibility: hidden; }
 /* The chain over the gravel, bottom right, on the stamp's backing: at the top it lay on the lit roof (review, 04.10).
    It wraps to the room right of the seam */
 main[data-home="v2"] .hv2-contour-chain {
@@ -466,7 +476,10 @@ main[data-home="v2"] .hv2-contour-chain {
 main[data-home="v2"] .hv2-contour-chain > span:not(:last-child)::after { margin-inline: 5px; color: var(--hv2-text-3); content: '→'; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-chain { visibility: visible; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-chain > span { color: var(--hv2-load); }
-main[data-home="v2"] .hv2-contour-seamtags { position: absolute; z-index: 3; top: 10px; left: var(--split); pointer-events: none; }
+/* The rail: as wide as the stage and moved by --split as a transform (a translate's per cent is of its own width, the
+   stage's), carrying the seam, its handle, the seam's names and the held line's name — no layout shift as it moves */
+main[data-home="v2"] .hv2-contour-rail { position: absolute; z-index: 4; inset: 0; pointer-events: none; transform: translateX(var(--split)); }
+main[data-home="v2"] .hv2-contour-seamtags { position: absolute; z-index: 3; top: 10px; left: 0; }
 main[data-home="v2"] .hv2-contour-seamtags > span {
   position: absolute; top: 0; padding: 5px 8px 4px; color: var(--hv2-text); background: rgba(18, 20, 19, .86); border: 1px solid rgba(245, 242, 235, .3);
   font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
@@ -474,24 +487,33 @@ main[data-home="v2"] .hv2-contour-seamtags > span {
 main[data-home="v2"] .hv2-contour-seamtags > span:first-child { right: 3px; }
 main[data-home="v2"] .hv2-contour-seamtags > span:last-child { left: 3px; color: var(--hv2-copper-text); border-color: var(--hv2-copper-text); }
 /* Given way, a name keeps its width (ProofContour measures it) */
-/* The name of the measured line the dragged seam holds (ProofContour's snap), at the seam's foot, on the wider side */
+/* The name of the measured line the dragged seam holds (ProofContour's snap): at the top of the seam, in place of the
+   seam's names, on the side ProofContour picks by measured room (data-snap-side), wrapped to it where neither fits */
 main[data-home="v2"] .hv2-contour-snap {
-  position: absolute; z-index: 3; bottom: 12px; left: var(--split); padding: 5px 9px; color: var(--hv2-text); white-space: nowrap; pointer-events: none;
+  position: absolute; z-index: 3; top: 10px; left: 0; padding: 5px 9px; color: var(--hv2-text); white-space: nowrap;
   background: rgba(19, 21, 20, .92); border: 1px solid var(--hv2-copper-text); font: 600 12.5px/1.2 var(--font-manrope), sans-serif;
   opacity: 0; transform: translateX(10px); transition: opacity 200ms ease;
 }
 main[data-home="v2"] .hv2-contour-snap small { margin-left: 6px; color: var(--hv2-copper-text); font-size: 11.5px; }
 main[data-home="v2"] .hv2-contour-stage[data-snap-side="left"] .hv2-contour-snap { transform: translateX(calc(-100% - 10px)); }
+main[data-home="v2"] .hv2-contour-stage[data-snap-wrap] .hv2-contour-snap { max-width: var(--snap-max); white-space: normal; }
+main[data-home="v2"] .hv2-contour-stage[data-snap-wrap] .hv2-contour-snap > small { display: block; margin: 2px 0 0; }
+main[data-home="v2"] .hv2-contour-snap-measure { position: absolute; top: 0; left: 0; visibility: hidden; white-space: nowrap; }
 main[data-home="v2"] .hv2-contour-stage[data-snapped] .hv2-contour-snap { opacity: 1; }
+main[data-home="v2"] .hv2-contour-stage[data-snapped] .hv2-contour-seamtags { visibility: hidden; }
+/* «Навантаження» keeps the top of the frame for the load: its comb runs under the seam's names there (review, 04.10) */
+main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-seamtags { visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage[data-narrow-left] .hv2-contour-seamtags > span:first-child,
 main[data-home="v2"] .hv2-contour-stage[data-narrow-right] .hv2-contour-seamtags > span:last-child { visibility: hidden; }
 
 /* The seam and its handle; the range input lies over the frame, invisible, and draws its focus on the handle */
-main[data-home="v2"] .hv2-contour-seam { position: absolute; z-index: 2; top: 0; bottom: 0; left: var(--split); width: 2px; margin-left: -1px; background: var(--hv2-copper-text); pointer-events: none; }
+main[data-home="v2"] .hv2-contour-seam { position: absolute; z-index: 2; top: 0; bottom: 0; left: 0; width: 2px; margin-left: -1px; background: var(--hv2-copper-text); }
 /* The handle is the finger's one grip (44 px); a vertical swipe on it still scrolls the page — the browser cancels the
    drag. Its disc is drawn under the glyph, so a phone can draw it smaller than the area it answers to */
 main[data-home="v2"] .hv2-contour-handle {
-  position: absolute; z-index: 4; top: 50%; left: clamp(22px, var(--split), calc(100% - 22px)); isolation: isolate; display: grid; place-items: center;
+  /* held clear of the frame's edges: the rail stands at the seam, so the clamp is relative to it */
+  position: absolute; z-index: 4; top: 50%; left: clamp(calc(22px - var(--split)), 0px, calc(100% - 22px - var(--split))); isolation: isolate; display: grid; place-items: center;
+  pointer-events: auto;
   width: 44px; height: 44px; margin: -22px 0 0 -22px; color: var(--hv2-text); border-radius: 50%; cursor: grab; touch-action: pan-y pinch-zoom;
   padding-bottom: 3px; font: 700 24px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; white-space: nowrap; /* the guillemets sit low */
 }
@@ -510,7 +532,7 @@ main[data-home="v2"] .hv2-contour-stage[data-dragging] .hv2-contour-handle { cur
 }
 main[data-home="v2"] .hv2-contour-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 /* The keyboard's ring only: focus a click or a finger put on the range draws nothing until a key is pressed */
-main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-rail .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* «Фото» / «Схема», the keys, the layers and «Контур на фото» glide; a drag follows the pointer as it is, and the first
@@ -518,7 +540,8 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
   main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) :is(.hv2-contour-trace, .hv2-contour-canvas > svg, .hv2-proof-labels, .hv2-contour-sketch, .hv2-contour-corner) {
     transition: clip-path 420ms var(--sheet-plot), opacity 240ms ease, visibility 240ms;
   }
-  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) :is(.hv2-contour-seam, .hv2-contour-handle, .hv2-contour-seamtags) { transition: left 420ms var(--sheet-plot); }
+  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) .hv2-contour-rail { transition: transform 420ms var(--sheet-plot); }
+  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) .hv2-contour-handle { transition: left 420ms var(--sheet-plot); }
   main[data-home="v2"] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation: hv2-contour-pulse 850ms ease-out 2; }
 }
 @keyframes hv2-contour-pulse { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }

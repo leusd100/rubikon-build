@@ -8,13 +8,43 @@ import { homeProofMeasures } from '../../app/data/homeProofMeasures';
 // default: a SCHEME of a frame of this object's type in its silhouette, labelled so) and «Навантаження» (the snow's way
 // through that scheme). The seam is a real range input (keys, screen readers); a mouse drags anywhere in the frame, a
 // finger only the handle, and on a phone «Фото» / «Схема» show one side whole. «Контур на фото» lays the measured lines
-// — and only those — over the photo too. Arriving with motion, the scheme builds and the seam glides once; without
-// motion or JavaScript the sheet stands complete. On a laptop the whole sheet fits under the header.
-// The review of 04.10 added: the glide still plays when the visitor arrives by the wheel or a swipe; the right side's
+// — and only those — over the photo too. Arriving with motion, the sheet plots in as a whole photo and the seam sweeps
+// once from the right edge across the gable and back to rest («шов-плотер»); without motion or JavaScript the sheet
+// stands complete. On a laptop the whole sheet fits under the header.
+// The review of 04.10 added: the sweep still plays when the visitor arrives by the wheel or a swipe; the right side's
 // words (the stamp, the load's chain) lie on it only; no name on the frame covers another or runs off it; the load is
-// never drawn in the measured copper.
+// never drawn in the measured copper. The owner's review of 04.10 added: a dragged seam snaps to the measured verticals
+// and names them; the load is a drawing's comb of arrows and lines on a casing, weight rather than a glow.
 
 const DEFAULT_SPLIT = 62;
+// The first view's sweep (ProofContour): SWEEP_AT after the sheet arrives, once the page has been quiet SWEEP_QUIET, from
+// the right edge to SWEEP_TURN and back to rest over SWEEP_MS (SWEEP_MS_PHONE on a phone)
+const SWEEP_AT = 1050;
+const SWEEP_QUIET = 250;
+const SWEEP_TURN = 15;
+const SWEEP_MS = 3000;
+const SWEEP_MS_PHONE = 2200;
+// Snapping, in per cent of the frame: a dragged seam is caught within GRAB of a measured line and let go beyond RELEASE
+const SNAP_GRAB = 0.8;
+const SNAP_RELEASE = 1.4;
+const lineOf = (id: string) => homeProofContour.lines.find((line) => line.id === id)!;
+/** A measured vertical's mean x, in per cent of the frame: where the seam snaps */
+const meanX = (id: string, from: number, to?: number) => {
+  const part = lineOf(id).points.slice(from, to);
+  return (part.reduce((sum, [x]) => sum + x, 0) / part.length / homeProofContour.photo.width) * 100;
+};
+// What the seam snaps to: the gates' jambs and the gable's corners — never the ridge, which nobody measured. Its words say
+// «наближено» exactly where the line is approximate
+const SNAPS = [
+  { line: 'gable-base', at: meanX('gable-base', 1), name: 'Лівий кут фронтона' },
+  { line: 'gate-left', at: meanX('gate-left', 0, 2), name: 'Ліві ворота, одвірок' },
+  { line: 'gate-left', at: meanX('gate-left', 2), name: 'Ліві ворота, одвірок' },
+  { line: 'gate-right', at: meanX('gate-right', 0, 2), name: 'Праві ворота, одвірок' },
+  { line: 'gate-right', at: meanX('gate-right', 2), name: 'Праві ворота, одвірок' },
+  { line: 'gable-corner-right', at: meanX('gable-corner-right', 2), name: 'Правий кут фронтона' },
+].map((snap) => ({ ...snap, status: lineOf(snap.line).approximate ? 'наближено' : 'виміряно' }));
+/** The seam's place in tenths of a per cent, as the stage's --split carries it */
+const tenths = (value: number) => `${Math.round(value * 10) / 10}%`;
 const SLIDER = /^Порівняти фото й (?:схему|контур за фото|ескіз)$/;
 // Words that claim more than a photo and a scheme can give. «Не креслення цього ангара» — the scheme saying what it is
 // not — stays allowed by the look-behind.
@@ -35,11 +65,12 @@ async function open(page: Page, path = '/') {
   const sheet = page.locator('#real-object .hv2-contour');
   await sheet.scrollIntoViewIfNeeded();
   await page.waitForFunction(() => [...document.querySelectorAll('.hv2-contour img')].every((image) => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0));
-  // With motion the picture is still being plotted in for a second, clipped, and a clipped frame takes no pointer
+  // With motion the picture is still being plotted in for a second, clipped, and a clipped frame takes no pointer; then
+  // the seam sweeps for three more. The tests here start from the sheet at rest (the arrival has tests of its own)
   await page.waitForFunction(() => {
     const figure = document.querySelector<HTMLElement>('.hv2-contour');
     const image = figure?.querySelector('.sheet-image');
-    if (!figure || !image || figure.dataset.sheetState === 'armed') return false;
+    if (!figure || !image || figure.dataset.sheetState === 'armed' || figure.querySelector('.hv2-contour-stage[data-sweep]')) return false;
     return image.getAnimations().every((animation) => animation.playState === 'finished');
   });
   const slider = sheet.getByRole('slider', { name: SLIDER });
@@ -109,8 +140,9 @@ async function seamAt(stage: Locator) {
 }
 
 /** The words on the stage that cover one another or run off the frame: the figures, the scheme's names, the stamp, the
- *  chain, the seam's names. What lies right of the seam is clipped there, so only its visible part counts — but `atRest`
- *  (the seam where it rests) a figure or a name cut by the seam counts too, and so does the handle */
+ *  chain, the seam's names and, while a dragged seam holds a line, that line's name. What lies right of the seam is
+ *  clipped there, so only its visible part counts — but `atRest` (the seam where it rests) a figure or a name cut by the
+ *  seam counts too, and so does the handle */
 async function clashes(stage: Locator, atRest = false) {
   return stage.evaluate((element, rest) => {
     const frame = element.getBoundingClientRect();
@@ -141,6 +173,8 @@ async function clashes(stage: Locator, atRest = false) {
     const [left, right] = element.querySelectorAll('.hv2-contour-seamtags > span');
     add(left, '‹ Фото', false);
     add(right, 'seam name right', false);
+    // faded out (opacity 0) while no line is held
+    add(element.querySelector('.hv2-contour-snap'), 'snapped line’s name', false);
     if (rest) add(element.querySelector('.hv2-contour-handle'), 'handle', false);
     const found: string[] = [];
     for (const [index, a] of boxes.entries()) {
@@ -168,6 +202,87 @@ async function splitTo(page: Page, slider: Locator, value: number) {
   for (let step = 0; step < Math.floor(value / 10); step += 1) await page.keyboard.press('PageUp');
   for (let step = 0; step < value % 10; step += 1) await page.keyboard.press('ArrowRight');
   await expect(slider).toHaveValue(String(value));
+}
+
+/** The page as a visitor reaches it with motion: the consent answered, the sheet below the fold, hydrated and armed */
+async function arrive(page: Page) {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
+    } catch { /* storage unavailable */ }
+  });
+  await page.goto('/', { waitUntil: 'load' });
+  const sheet = page.locator('#real-object .hv2-contour');
+  const range = sheet.locator('.hv2-contour-range');
+  await expect(range).toBeEnabled();
+  return { sheet, stage: sheet.locator('.hv2-contour-stage'), range };
+}
+
+/** One frame of the first view as the page drew it: the stage's data-sweep, data-gliding and data-pulse; its --split and
+ *  where the seam is drawn, how far the tracing and the scheme are uncovered (per cent); the range's value; the figures'
+ *  and the names' opacity; whether the picture is still plotting in; the handle's rings; whatever else animates on the
+ *  stage */
+type Frame = {
+  t: number; sweep: string | null; gliding: boolean; pulse: boolean; split: number; seam: number; trace: number; scheme: number;
+  range: string; words: number[]; plotting: boolean; rings: string; others: string[];
+};
+/** The frames, and when the sheet arrived, the sweep started and the seam stopped waiting or sweeping, and the page
+ *  scrolled */
+type Arrival = { frames: Frame[]; on: number | null; run: number | null; ended: number | null; scrolls: number[]; done: boolean };
+
+/** Records every frame of the first view in the page itself — a test's polls are too far apart for a three-second
+ *  sweep — until 2.5 s after the seam stops waiting or sweeping (the rings have rung by then) */
+async function recordArrival(page: Page) {
+  await page.evaluate(() => {
+    const stage = document.querySelector<HTMLElement>('#real-object .hv2-contour-stage')!;
+    const sheet = stage.closest('figure')!;
+    const image = sheet.querySelector('.sheet-image')!;
+    const handle = stage.querySelector('.hv2-contour-handle')!;
+    const arrival = { frames: [] as unknown[], on: null as number | null, run: null as number | null, ended: null as number | null, scrolls: [] as number[], done: false };
+    Object.assign(window, { arrival });
+    new MutationObserver(() => {
+      const now = performance.now();
+      if (arrival.on === null && sheet.dataset.sheetState === 'on') arrival.on = now;
+      if (arrival.run === null && stage.dataset.sweep === 'run') arrival.run = now;
+      if (arrival.ended === null && arrival.on !== null && stage.dataset.sweep === undefined) arrival.ended = now;
+    }).observe(sheet, { attributes: true, subtree: true, attributeFilter: ['data-sheet-state', 'data-sweep'] });
+    addEventListener('scroll', () => arrival.scrolls.push(performance.now()), { passive: true });
+    const inset = (selector: string) => parseFloat(getComputedStyle(stage.querySelector(selector)!).clipPath.split(' ').at(-1) ?? '');
+    const opacity = (selector: string) => Number(getComputedStyle(stage.querySelector(selector)!).opacity);
+    const tick = () => {
+      const frame = stage.getBoundingClientRect();
+      const seam = stage.querySelector('.hv2-contour-seam')!.getBoundingClientRect();
+      const rings = getComputedStyle(handle, '::after');
+      arrival.frames.push({
+        t: performance.now(),
+        sweep: stage.dataset.sweep ?? null,
+        gliding: stage.dataset.gliding !== undefined,
+        pulse: stage.dataset.pulse !== undefined,
+        split: parseFloat(getComputedStyle(stage).getPropertyValue('--split')),
+        seam: ((seam.left + seam.width / 2 - frame.left) / frame.width) * 100,
+        trace: inset('.hv2-contour-trace'),
+        scheme: inset('svg.hv2-proof-frame'),
+        range: stage.querySelector<HTMLInputElement>('.hv2-contour-range')!.value,
+        words: [opacity('.hv2-proof-labels'), opacity('svg.hv2-proof-marks')],
+        plotting: image.getAnimations().some((animation) => animation.playState === 'running'),
+        rings: `${rings.animationName} ${rings.animationIterationCount}`,
+        others: document.getAnimations().filter((animation) => {
+          const target = (animation.effect as KeyframeEffect | null)?.target;
+          return target && target !== stage && stage.contains(target);
+        }).map((animation) => (animation as CSSAnimation).animationName ?? (animation as CSSTransition).transitionProperty ?? 'script'),
+      });
+      if ((arrival.ended !== null && performance.now() - arrival.ended > 2500) || arrival.frames.length > 3000) arrival.done = true;
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+async function arrivalOf(page: Page) {
+  await page.waitForFunction(() => (window as unknown as { arrival: Arrival }).arrival.done, undefined, { timeout: 20_000 });
+  return page.evaluate(() => (window as unknown as { arrival: Arrival }).arrival);
 }
 
 test('the sheet names both sides, states the retouch and what the scheme is, and carries every measured line', async ({ page }) => {
@@ -249,21 +364,48 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   expect(new Set(await hidden.evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)))).toEqual(new Set([COPPER]));
   expect(new Set(await scheme.locator('.hv2-proof-scheme [data-group]').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).strokeDasharray)))).not.toContainEqual(expect.stringMatching(/px,? [\d.]+px$/));
   expect(await hidden.evaluateAll((paths) => paths.every((path) => Number(path.getAttribute('data-depth')) > 0))).toBe(true);
+  // Line weights on a drawing's scale (owner, 04.10): the measured outline heaviest; the gable's chords, its columns and
+  // what the section cuts one step down; its webs another; the blockwork finest. Square ends and sharp joins, as a
+  // plotter draws them (the outline's approximate pieces are the «Контур» layer's to tell apart)
+  const weight = (selector: string) => stage.locator(selector).first().evaluate((element) => parseFloat(getComputedStyle(element).strokeWidth));
+  const outline = await weight('.hv2-contour-ink path[data-kind="outline"]:not([data-approximate])');
+  const chord = await weight('.hv2-proof-scheme [data-group="truss"][data-depth="0"]');
+  const web = await weight('.hv2-proof-scheme [data-group="web"][data-depth="0"]');
+  expect(outline).toBeGreaterThan(chord);
+  for (const selector of ['.hv2-proof-scheme [data-group="column"][data-depth="0"]', '.hv2-proof-cut']) expect(await weight(selector), selector).toBe(chord);
+  expect(chord).toBeGreaterThan(web);
+  expect(web).toBeGreaterThan(await weight('.hv2-proof-blocks'));
+  const ends = await stage.locator('.hv2-proof-scheme [data-group], .hv2-contour-ink path:not([data-approximate], [data-kind="outline"])').evaluateAll((paths) => paths.map((path) => `${getComputedStyle(path).strokeLinecap} ${getComputedStyle(path).strokeLinejoin}`));
+  expect(new Set(ends)).toEqual(new Set(['butt miter']));
+  // …but the outline, drawn in parts, closes its corners with square ends (butt ends notched them)
+  const outlineEnds = await stage.locator('.hv2-contour-ink path[data-kind="outline"]').evaluateAll((paths) => paths.map((path) => `${getComputedStyle(path).strokeLinecap} ${getComputedStyle(path).strokeLinejoin}`));
+  expect(new Set(outlineEnds)).toEqual(new Set(['square miter']));
+  // The truss's panel points are open nodes: a ring in the scheme's paper, the sheet's dark inside it
+  const nodes = stage.locator('.hv2-proof-nodes circle');
+  await expect(nodes).toHaveCount(homeProofFrame.nodes.length);
+  expect(new Set(await nodes.evaluateAll((circles) => circles.map((circle) => `${getComputedStyle(circle).stroke} ${getComputedStyle(circle).fill === getComputedStyle(circle).stroke}`)))).toEqual(new Set([`${PAPER} false`]));
   // Its names are words on the scheme, its legend says «схема» in the scheme's own colour
   for (const tag of homeProofFrame.tags) await expect(stage.locator(`.hv2-proof-tag[data-tag="${tag.id}"]`)).toHaveText(tag.text);
   await expect(page.locator('#real-object .hv2-contour-legend [data-on] [data-key="scheme"]')).toBeVisible();
 
   // The stamp belongs to the right side and lies on it only, clipped at the seam: in full while that side has room for
-  // it, its first word where it has not, never over the photo and never under «‹ Фото»
+  // it, its first word where it has not, none at all where not even that fits (never a fragment — review, 04.10: «ХЕМА»),
+  // never over the photo and never under «‹ Фото»
   const frame = (await stage.boundingBox())!;
   const phone = page.viewportSize()!.width <= 760;
   const stamp = stage.locator('.hv2-contour-stamp');
   for (const value of [0, 30, DEFAULT_SPLIT, 80, 90, 95, 99]) {
     await splitTo(page, slider, value);
-    await expect(stamp, `${value}`).toBeVisible();
-    const box = (await stamp.boundingBox())!;
     const seam = frame.x + (frame.width * value) / 100;
     const room = frame.x + frame.width - seam;
+    // the first word with its offset and air (ProofContour: SHORT_STAMP 96 + STAMP_OFFSET 10 + AIR 8)
+    if (room < 114) {
+      await expect(stage, `${value}`).toHaveAttribute('data-stamp', 'none');
+      await expect(stamp, `${value}`).toBeHidden();
+      continue;
+    }
+    await expect(stamp, `${value}`).toBeVisible();
+    const box = (await stamp.boundingBox())!;
     expect(box.x + box.width, `${value}`).toBeLessThanOrEqual(frame.x + frame.width);
     expect(box.y, `${value}`).toBeGreaterThanOrEqual(frame.y);
     await expect(stage.locator('.hv2-contour-corner'), `${value}`).toHaveCSS('clip-path', `inset(0px 0px 0px ${value}%)`);
@@ -283,14 +425,25 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   // Only the photo: no scheme, no stamp
   await splitTo(page, slider, 100);
   await expect(stamp).toBeHidden();
+
+  // The section's hatch at a step the frame's width can draw: coarser as the window narrows, so on a phone it stays
+  // lines, not grey
+  const step = { 'hv2-proof-hatch': 6, 'hv2-proof-hatch-m': 9, 'hv2-proof-hatch-l': 13 };
+  for (const [id, width] of Object.entries(step)) await expect(page.locator(`#real-object pattern#${id}`)).toHaveAttribute('width', String(width));
+  for (const [width, id] of [[1440, 'hv2-proof-hatch'], [960, 'hv2-proof-hatch'], [959, 'hv2-proof-hatch-m'], [600, 'hv2-proof-hatch-m'], [599, 'hv2-proof-hatch-l'], [320, 'hv2-proof-hatch-l']] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const part of ['.hv2-proof-cut', '.hv2-proof-footing[data-cut]']) {
+      await expect(stage.locator(part).first(), `${width} ${part}`).toHaveCSS('fill', `url("#${id}")`);
+    }
+  }
 });
 
-test('the load is drawn in its own tint: the members it passes lit in the scheme’s paper, nothing in the measured copper', async ({ page }) => {
+test('the load is drawn in its own tint, as a drawing writes it, and lights the members it passes in the scheme’s paper on a casing — weight, no glow, nothing in the measured copper', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { stage, layers } = await open(page);
   await layers.getByRole('button', { name: 'Навантаження' }).click();
   await expect(stage.locator('.hv2-proof-load')).toBeVisible();
-  const strokes = await stage.locator('.hv2-proof-load path, .hv2-proof-load rect').evaluateAll((parts) => parts.map((part) => {
+  const strokes = await stage.locator('.hv2-proof-load :is(path, rect, circle)').evaluateAll((parts) => parts.map((part) => {
     const style = getComputedStyle(part);
     return { kind: part.getAttribute('class') ?? part.parentElement?.getAttribute('class') ?? '', stroke: style.stroke, fill: style.fill, dash: style.strokeDasharray };
   }));
@@ -300,13 +453,45 @@ test('the load is drawn in its own tint: the members it passes lit in the scheme
     expect(part.stroke === COPPER && part.dash === 'none', `${part.kind}: ${part.stroke} ${part.dash}`).toBe(false);
     expect(part.fill, part.kind).not.toBe(COPPER);
   }
-  // The lit truss and links are the scheme's own paper; the drops are the legend's dotted «навантаження»
-  for (const selector of ['.hv2-proof-lit-truss path', '.hv2-proof-link']) {
-    expect(new Set(await stage.locator(selector).evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)))).toEqual(new Set([PAPER]));
-  }
   const load = await page.locator('#real-object .hv2-contour-legend [data-on] [data-key="load"] path').evaluate((path) => getComputedStyle(path).stroke);
-  expect(new Set(await stage.locator('.hv2-proof-flow').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)))).toEqual(new Set([load]));
   expect(load).not.toBe(COPPER);
+  const strokesOf = async (selector: string) => new Set(await stage.locator(selector).evaluateAll((parts) => parts.map((part) => getComputedStyle(part).stroke)));
+
+  // The snow spread over the roof: one line and an even comb of arrows down from it, in the load's tint, the arrows
+  // headed and the line not
+  await expect(stage.locator('.hv2-proof-snow path')).toHaveCount(homeProofFrame.load.arrows.length + 1);
+  await expect(stage.locator('.hv2-proof-snow .hv2-proof-comb')).toHaveCount(1);
+  expect(await strokesOf('.hv2-proof-snow path')).toEqual(new Set([load]));
+  expect(await stage.locator('.hv2-proof-snow path:not(.hv2-proof-comb)').evaluateAll((paths) => paths.map((path) => path.getAttribute('marker-end')))).toEqual(homeProofFrame.load.arrows.map(() => 'url(#hv2-proof-head)'));
+  await expect(stage.locator('.hv2-proof-comb')).not.toHaveAttribute('marker-end', /.*/);
+  // The strip one truss carries with the edge the snow settles on, and the nodes the purlins bear on, in the same tint
+  await expect(stage.locator('g.hv2-proof-roof > path')).toHaveCount(2);
+  expect(await strokesOf('.hv2-proof-roof-edge')).toEqual(new Set([load]));
+  const bearings = stage.locator('.hv2-proof-bearing circle');
+  await expect(bearings).toHaveCount(homeProofFrame.nodes.length);
+  expect(new Set(await bearings.evaluateAll((circles) => circles.map((circle) => getComputedStyle(circle).fill)))).toEqual(new Set([load]));
+
+  // The lit truss is the scheme's own paper; each lit link a light paper line drawn over a dark, wider casing, with no
+  // filter anywhere in it (owner, 04.10: «вага, а не неон» — the drop-shadow glow is gone)
+  expect(await strokesOf('.hv2-proof-lit-truss path')).toEqual(new Set([PAPER]));
+  const links = stage.locator('.hv2-proof-link');
+  await expect(links).toHaveCount(homeProofFrame.load.links.length);
+  for (const link of await links.all()) {
+    const parts = await link.evaluate((group) => {
+      const casing = group.querySelector('.hv2-proof-link-casing')!;
+      const light = group.querySelector('path:not(.hv2-proof-link-casing)')!;
+      const [casingStyle, lightStyle] = [getComputedStyle(casing), getComputedStyle(light)];
+      return {
+        tag: group.tagName, paths: group.querySelectorAll('path').length, casingFirst: group.firstElementChild === casing, light: lightStyle.stroke,
+        casingDark: Math.max(...(casingStyle.stroke.match(/\d+/g) ?? ['255']).slice(0, 3).map(Number)) < 60,
+        wider: parseFloat(casingStyle.strokeWidth) > parseFloat(lightStyle.strokeWidth),
+        filters: [group, casing, light].map((element) => getComputedStyle(element).filter),
+      };
+    });
+    expect(parts).toEqual({ tag: 'g', paths: 2, casingFirst: true, light: PAPER, casingDark: true, wider: true, filters: ['none', 'none', 'none'] });
+  }
+  // The drops are the legend's dotted «навантаження»
+  expect(await strokesOf('.hv2-proof-flow')).toEqual(new Set([load]));
 });
 
 test('the seam rests between the gates, and nothing of the right side lies over the photo — the contour only when asked', async ({ page }) => {
@@ -408,7 +593,8 @@ test('the title block switches the right side: the contour with its figures, the
   await expect(stage.locator('.hv2-proof-load')).toBeVisible();
   expect(Number(await stage.locator('.hv2-proof-scheme').evaluate((element) => getComputedStyle(element).opacity))).toBeLessThan(0.6);
   await expect(stage.locator('.hv2-proof-flow')).toHaveCount(homeProofFrame.load.legs.length);
-  await expect(stage.locator('.hv2-proof-snow path')).toHaveCount(homeProofFrame.load.arrows.length);
+  // the snow as a drawing writes a spread load: its comb's line and the arrows down from it
+  await expect(stage.locator('.hv2-proof-snow path')).toHaveCount(homeProofFrame.load.arrows.length + 1);
   await expect(figure('slope')).toBeHidden();
   const chain = 'Сніг → покрівля → прогони → ферма → стіни й колони → фундаменти → ґрунт';
   if (desktop) {
@@ -504,9 +690,153 @@ test('a mouse drags anywhere in the frame; a finger scrolls and zooms the page t
   await expect(slider).toHaveValue(before.split);
 });
 
+test('dragged near a measured line the seam holds to it, lights it and names it at its top; pulled past, it lets go; the keys never snap', async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const touch = testInfo.project.name !== 'desktop-chromium';
+  // The phone's tick, recorded: one per line caught, and from a finger only
+  await page.addInitScript(() => {
+    const ticks: unknown[] = [];
+    Object.assign(window, { ticks });
+    Object.defineProperty(Navigator.prototype, 'vibrate', { configurable: true, value: (pattern: unknown) => ticks.push(pattern) > 0 });
+  });
+  const { stage, slider } = await open(page);
+  const ticks = () => page.evaluate(() => (window as unknown as { ticks: unknown[] }).ticks);
+  // The left gate's right jamb, the measured line next to the resting seam
+  const jamb = SNAPS[2];
+  expect(Math.abs(DEFAULT_SPLIT - jamb.at)).toBeGreaterThan(SNAP_RELEASE);
+  const held = () => stage.evaluate((element) => ({
+    split: getComputedStyle(element).getPropertyValue('--split'),
+    snapped: element.dataset.snapped ?? null,
+    lines: [...element.querySelectorAll<SVGPathElement>('.hv2-contour-lines path[data-snapped]')].map((path) => `${path.parentElement!.getAttribute('class')} ${path.dataset.line}`),
+  }));
+  // the held line and its casing grow together, and it is drawn once more over the photo (.hv2-contour-held)
+  const holding = { split: tenths(jamb.at), snapped: '', lines: [`hv2-contour-casing ${jamb.line}`, `hv2-contour-ink ${jamb.line}`] };
+  const name = stage.locator('.hv2-contour-snap');
+  const ink = stage.locator(`.hv2-contour-ink path[data-line="${jamb.line}"]`);
+  const look = () => ink.evaluate((path) => ({ stroke: getComputedStyle(path).stroke, width: parseFloat(getComputedStyle(path).strokeWidth) }));
+  const plain = await look();
+  expect(plain.stroke).toBe(COPPER);
+
+  // The handle taken where it is drawn: a mouse could take the frame anywhere, a finger takes only the handle
+  const frame = (await stage.boundingBox())!;
+  const grip = (await stage.locator('.hv2-contour-handle').boundingBox())!;
+  const y = grip.y + grip.height / 2;
+  let x = grip.x + grip.width / 2;
+  const cdp = touch ? await page.context().newCDPSession(page) : null;
+  const finger = (type: 'touchStart' | 'touchMove' | 'touchEnd', at: number) => cdp!.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: at, y }] });
+  const dragTo = async (value: number) => {
+    const to = frame.x + (frame.width * value) / 100;
+    for (let step = 1; step <= 6; step += 1) {
+      const at = x + ((to - x) * step) / 6;
+      if (touch) await finger('touchMove', at);
+      else await page.mouse.move(at, y);
+    }
+    x = to;
+  };
+  if (touch) await finger('touchStart', x);
+  else {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+  }
+
+  // Within GRAB of the jamb the seam stands on it, at its mean x, the range at the nearest whole per cent
+  await dragTo(jamb.at + SNAP_GRAB * 0.6);
+  await expect.poll(held).toEqual(holding);
+  await expect.poll(() => seamAt(stage)).toBeCloseTo(jamb.at, 1);
+  await expect(slider).toHaveValue(String(Math.round(jamb.at)));
+  // …the line lights up, heavier and out of the measured copper; its name and status stand at the top of the seam in
+  // place of the seam's names, on the side with room — here the photo's — for the eye only; and a finger feels it once
+  const lit = await look();
+  expect(lit.stroke).not.toBe(COPPER);
+  expect(lit.width).toBeGreaterThan(plain.width);
+  await expect(stage).toHaveAttribute('data-snap-side', 'left');
+  await expect(name).toHaveCSS('opacity', '1');
+  // (its hidden one-line copy, which it is measured by, is not read)
+  await expect(name).toHaveText(new RegExp(`^${jamb.name}\\s*${jamb.status}$`), { useInnerText: true });
+  await expect(name.locator(':scope > small')).toHaveText('виміряно');
+  await expect(stage.locator('.hv2-contour-seamtags')).toBeHidden();
+  await expect(stage.locator('svg.hv2-contour-held path')).toHaveCount(2);
+  await expect(name).toHaveAttribute('aria-hidden', 'true');
+  const box = (await name.boundingBox())!;
+  expect(box.x + box.width).toBeLessThan(frame.x + (frame.width * jamb.at) / 100);
+  expect(await ticks()).toEqual(touch ? [6] : []);
+
+  // Pulled within RELEASE it holds, and does not tick again
+  await dragTo(jamb.at + SNAP_RELEASE * 0.85);
+  await expect.poll(held).toEqual(holding);
+  expect(await ticks()).toEqual(touch ? [6] : []);
+  // Past RELEASE it lets go: the seam follows the pointer again, nothing is lit, the name fades
+  await dragTo(jamb.at + SNAP_RELEASE + 0.6);
+  await expect.poll(async () => { const { snapped, lines } = await held(); return { snapped, lines }; }).toEqual({ snapped: null, lines: [] });
+  await expect.poll(() => seamAt(stage)).toBeCloseTo(jamb.at + SNAP_RELEASE + 0.6, 0);
+  expect((await look()).stroke).toBe(COPPER);
+  await expect(name).toHaveCSS('opacity', '0');
+  // Back within GRAB from the other side it catches again, with one more tick
+  await dragTo(jamb.at - SNAP_GRAB * 0.6);
+  await expect.poll(held).toEqual(holding);
+  expect(await ticks()).toEqual(touch ? [6, 6] : []);
+  // The ridge, which nobody measured, holds nothing
+  const ridge = (lineOf('gable-rake-right').points[0][0] / homeProofContour.photo.width) * 100;
+  await dragTo(ridge);
+  await expect.poll(async () => { const { snapped, lines } = await held(); return { snapped, lines }; }).toEqual({ snapped: null, lines: [] });
+  await expect.poll(() => seamAt(stage)).toBeCloseTo(ridge, 0);
+  // Let go on the jamb, the seam stays on it and the hold ends
+  await dragTo(jamb.at + SNAP_GRAB * 0.6);
+  await expect.poll(held).toEqual(holding);
+  if (touch) await finger('touchEnd', x);
+  else await page.mouse.up();
+  await expect.poll(held).toEqual({ split: tenths(jamb.at), snapped: null, lines: [] });
+  await expect(name).toHaveCSS('opacity', '0');
+  expect(await ticks()).toEqual(touch ? [6, 6, 6] : []);
+
+  // The keys step by whole per cent and never snap: 61 and 60 both lie within GRAB of the jamb
+  await expect(slider).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(held).toEqual({ split: '61%', snapped: null, lines: [] });
+  await page.keyboard.press('ArrowLeft');
+  await expect.poll(held).toEqual({ split: '60%', snapped: null, lines: [] });
+  expect(Math.abs(60 - jamb.at)).toBeLessThan(SNAP_GRAB);
+  expect(Math.abs(61 - jamb.at)).toBeLessThan(SNAP_GRAB);
+});
+
+test('the held line’s name stays whole inside the frame and over no other word, at every measured line it can hold', async ({ page }, testInfo) => {
+  test.setTimeout(180_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const desktop = testInfo.project.name === 'desktop-chromium';
+  // From tablet to wide screen in every layer; on phones in the default one (no other words in a phone's frame but the
+  // stamp). Every miss is collected, so one run names them all
+  const windows = desktop ? [[1440, 900], [1280, 720], [1024, 768], [768, 1024]] : [[412, 839], [390, 800], [360, 800], [320, 800]];
+  const found: string[] = [];
+  for (const [width, height] of windows) {
+    await page.setViewportSize({ width, height });
+    const { stage, layers } = await open(page);
+    const name = stage.locator('.hv2-contour-snap');
+    for (const layer of desktop ? ['Каркас', 'Контур', 'Навантаження'] : ['Каркас']) {
+      await layers.getByRole('button', { name: layer }).click();
+      for (const snap of SNAPS) {
+        await stage.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+        const frame = (await stage.boundingBox())!;
+        const y = frame.y + frame.height * 0.3;
+        // a mouse takes the frame anywhere, so each line is reached from the middle (no line within GRAB there)
+        await page.mouse.move(frame.x + frame.width / 2, y);
+        await page.mouse.down();
+        await page.mouse.move(frame.x + (frame.width * (snap.at + SNAP_GRAB * 0.4)) / 100, y, { steps: 5 });
+        await expect.poll(() => stage.evaluate((element) => getComputedStyle(element).getPropertyValue('--split'))).toBe(tenths(snap.at));
+        await expect(name).toHaveCSS('opacity', '1');
+        // its words say «наближено» exactly where the line is approximate
+        await expect(name).toHaveText(new RegExp(`^${snap.name}\\s*${snap.status}$`), { useInnerText: true });
+        found.push(...(await clashes(stage)).map((clash) => `${width}×${height} ${layer} ${snap.name} (${snap.at.toFixed(1)} %): ${clash}`));
+        await page.mouse.up();
+        await expect(name).toHaveCSS('opacity', '0');
+      }
+    }
+  }
+  expect(found).toEqual([]);
+});
+
 test('grabbed at either end of the frame, the handle stays under the finger', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'desktop-chromium', '«Фото», «Схема» and the finger are the phone\'s');
-  // Without the glide, so the handle is measured where it rests
+  // Without the sweep, so the handle is measured where it rests
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { sheet, stage, slider } = await open(page);
   const handle = stage.locator('.hv2-contour-handle');
@@ -599,52 +929,80 @@ test('on a phone the title block keeps its height whichever layer is on', async 
   }
 });
 
-test('arriving with motion, the lines draw, the scheme builds, and the seam glides once left and back', async ({ page }) => {
+test('arriving with motion, the photo plots in whole, then the seam sweeps once from the edge across the gable and back to rest, the drawing whole behind it', async ({ page }, testInfo) => {
   test.setTimeout(45_000);
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
-  await page.goto('/', { waitUntil: 'load' });
-  const sheet = page.locator('#real-object .hv2-contour');
-  const stage = sheet.locator('.hv2-contour-stage');
-  const solid = sheet.locator('.hv2-contour-ink path:not([data-approximate])').first();
-  const dashed = sheet.locator('.hv2-contour-ink path[data-approximate]').first();
-  const truss = sheet.locator('.hv2-proof-scheme [data-group="truss"]').first();
-  // Armed below the fold: the lines and the scheme wait, hidden
+  const phone = testInfo.project.name !== 'desktop-chromium';
+  const { sheet, stage, range } = await arrive(page);
+  // Armed below the fold: the seam waits at the right edge — the photo whole — while the range keeps its resting value
   await expect(sheet).toHaveAttribute('data-sheet-state', 'armed');
-  expect(await solid.evaluate((element) => getComputedStyle(element).strokeDashoffset)).toMatch(/^1(px)?$/);
-  expect(await dashed.evaluate((element) => getComputedStyle(element).opacity)).toBe('0');
-  expect(await truss.evaluate((element) => getComputedStyle(element).strokeDashoffset)).toMatch(/^1(px)?$/);
+  await expect(stage).toHaveAttribute('data-sweep', 'wait');
+  expect(await stage.evaluate((element) => getComputedStyle(element).getPropertyValue('--split'))).toBe('100%');
+  await expect(range).toHaveValue(String(DEFAULT_SPLIT));
+  // (the tracing goes there once on hydration, unseen: the armed sheet's picture is clipped away)
+  await expect.poll(() => stage.locator('.hv2-contour-trace').evaluate((element) => getComputedStyle(element).clipPath)).toBe('inset(0px 0px 0px 100%)');
+  await recordArrival(page);
   await page.evaluate(() => Promise.all([...document.querySelectorAll<HTMLImageElement>('.hv2-contour img')].map((image) => { image.loading = 'eager'; return image.decode().catch(() => undefined); })));
   await sheet.scrollIntoViewIfNeeded();
-  await expect(sheet).toHaveAttribute('data-sheet-state', 'on');
-  // The glide: the seam goes left past the middle and comes back, while the range itself never moves
-  let leftmost = 100;
-  const range = sheet.locator('.hv2-contour-range');
-  await expect.poll(async () => {
-    leftmost = Math.min(leftmost, await seamAt(stage));
-    expect(await range.inputValue()).toBe(String(DEFAULT_SPLIT));
-    return leftmost;
-  }, { timeout: 12_000, intervals: [100] }).toBeLessThan(45);
-  await expect.poll(() => seamAt(stage), { timeout: 5_000 }).toBeCloseTo(DEFAULT_SPLIT, 0);
-  await expect.poll(() => sheet.locator('.hv2-contour-lines path, .hv2-proof-scheme [data-group]').evaluateAll((paths) => paths.flatMap((path) => path.getAnimations()).filter((animation) => animation.playState !== 'finished').length), { timeout: 10_000 }).toBe(0);
-  expect(await solid.evaluate((element) => getComputedStyle(element).strokeDashoffset)).toMatch(/^0(px)?$/);
-  expect(await dashed.evaluate((element) => getComputedStyle(element).opacity)).toBe('1');
-  expect(await truss.evaluate((element) => getComputedStyle(element).strokeDashoffset)).toMatch(/^0(px)?$/);
+  const { frames, on, run, ended } = await arrivalOf(page);
+  expect([on, run, ended].every((at) => at !== null), 'the sheet arrived, the seam swept and stopped').toBe(true);
+  const plotting = frames.filter((frame) => frame.t >= on! && frame.t < run!);
+  const sweep = frames.filter((frame) => frame.t >= run! && frame.t < ended!);
+  const after = frames.filter((frame) => frame.t >= ended!);
+
+  // While the picture plots in, the photo stands whole: the seam at the right edge, nothing of the right side uncovered,
+  // nothing drawing in
+  expect(plotting.length).toBeGreaterThan(10);
+  for (const frame of plotting) {
+    expect(frame, `${frame.t}`).toMatchObject({ sweep: 'wait', gliding: false, split: 100, trace: 100, scheme: 100, others: [] });
+    expect(frame.seam, `${frame.t}`).toBeCloseTo(100, 1);
+  }
+  // The sweep starts SWEEP_AT after the sheet arrived, the picture plotted in by then (a few ms: two observers read the
+  // clock a moment apart), and runs its time once — a shorter one on a phone
+  expect(run! - on!).toBeGreaterThanOrEqual(SWEEP_AT - 5);
+  const duration = phone ? SWEEP_MS_PHONE : SWEEP_MS;
+  expect(ended! - run!).toBeGreaterThanOrEqual(duration - 20);
+  expect(ended! - run!).toBeLessThan(duration + 400);
+  expect(sweep.length).toBeGreaterThan(20);
+  for (const frame of sweep) expect(frame, `${frame.t}`).toMatchObject({ sweep: 'run', gliding: true, plotting: false });
+
+  // From the edge across the gable — past its left corner, to the turn — and back to rest: one way out, one way back
+  const splits = sweep.map((frame) => frame.split);
+  const turn = splits.indexOf(Math.min(...splits));
+  expect(splits[0]).toBeGreaterThan(99);
+  expect(splits[turn]).toBeCloseTo(SWEEP_TURN, 0);
+  expect(splits[turn]).toBeLessThan(SNAPS[0].at);
+  expect(splits.slice(0, turn + 1)).toEqual(splits.slice(0, turn + 1).toSorted((a, b) => b - a));
+  expect(splits.slice(turn)).toEqual(splits.slice(turn).toSorted((a, b) => a - b));
+  // The seam is drawn where --split is, and the tracing and the scheme are uncovered exactly to it: what it has passed is
+  // the drawing, whole — no line draws in, nothing else moves on the stage
+  for (const frame of sweep) {
+    expect(frame.seam, `${frame.t}`).toBeCloseTo(frame.split, 1);
+    expect(frame.trace, `${frame.t}`).toBeCloseTo(frame.split, 2);
+    expect(frame.scheme, `${frame.t}`).toBeCloseTo(frame.split, 2);
+    expect(frame.others, `${frame.t}`).toEqual([]);
+  }
+  // The range and what it says never move; the figures and the names wait until the seam rests
+  for (const frame of [...plotting, ...sweep]) expect([frame.range, ...frame.words], `${frame.t}`).toEqual([String(DEFAULT_SPLIT), 0, 0]);
+
+  // At rest, in one frame: the sweep's marks gone, the seam at its split, and two rings from the handle — once
+  expect(after[0]).toMatchObject({ sweep: null, gliding: false, pulse: true, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT), rings: 'hv2-contour-pulse 2' });
+  for (const frame of after) expect(frame, `${frame.t}`).toMatchObject({ sweep: null, gliding: false, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT) });
+  expect(frames.filter((frame) => frame.t < ended!).some((frame) => frame.pulse)).toBe(false);
+  const rung = after.findIndex((frame) => !frame.pulse);
+  expect(rung).toBeGreaterThan(0);
+  expect(after.slice(rung).some((frame) => frame.pulse)).toBe(false);
+  // …and the figures and the names come in
+  for (const part of ['.hv2-proof-labels', 'svg.hv2-proof-marks']) {
+    await expect.poll(() => stage.locator(part).evaluate((element) => getComputedStyle(element).opacity), part).toBe('1');
+  }
+  if (!phone) await expect(stage.locator('.hv2-proof-measure[data-measure="slope"]')).toBeVisible();
+  await expectSplit(range, stage, DEFAULT_SPLIT);
 });
 
-test('arriving the usual way — the wheel, or a finger swiping over the sheet — the seam still glides once', async ({ page }, testInfo) => {
+test('arriving the usual way — the wheel, or a finger swiping over the sheet — the seam still sweeps once, when the page is quiet', async ({ page }, testInfo) => {
   test.setTimeout(45_000);
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
-  await page.addInitScript(() => {
-    try {
-      localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
-    } catch { /* storage unavailable */ }
-  });
-  await page.goto('/', { waitUntil: 'load' });
-  const sheet = page.locator('#real-object .hv2-contour');
-  const stage = sheet.locator('.hv2-contour-stage');
-  await expect(sheet.locator('.hv2-contour-range')).toBeEnabled();
+  const { sheet, stage, range } = await arrive(page);
+  await recordArrival(page);
   const viewport = page.viewportSize()!;
   const top = () => sheet.evaluate((element) => element.getBoundingClientRect().top);
   if (testInfo.project.name === 'desktop-chromium') {
@@ -664,30 +1022,65 @@ test('arriving the usual way — the wheel, or a finger swiping over the sheet �
       await page.waitForTimeout(80);
     }
   }
-  await expect(sheet).toHaveAttribute('data-sheet-state', 'on');
-  await expect(stage).toHaveAttribute('data-gliding', '', { timeout: 12_000 });
-  await expect(stage).toHaveAttribute('data-pulse', '', { timeout: 5_000 });
-  await expect(sheet.locator('.hv2-contour-range')).toHaveValue(String(DEFAULT_SPLIT));
+  const { frames, on, run, ended, scrolls } = await arrivalOf(page);
+  expect([on, run, ended].every((at) => at !== null), 'the sheet arrived, the seam swept and stopped').toBe(true);
+  // It waits for the page to have been quiet SWEEP_QUIET: the eye is on the way, not on the seam (a few ms: the page's
+  // listener and the record's read the clock a moment apart)
+  expect(run! - on!).toBeGreaterThanOrEqual(SWEEP_AT - 5);
+  expect(scrolls.length).toBeGreaterThan(0);
+  expect(run! - Math.max(...scrolls.filter((at) => at < run!))).toBeGreaterThanOrEqual(SWEEP_QUIET - 5);
+  // …then runs its whole course, to the turn and back — the wheel and the swipe never stopped it — and rings
+  expect(ended! - run!).toBeGreaterThanOrEqual((testInfo.project.name === 'desktop-chromium' ? SWEEP_MS : SWEEP_MS_PHONE) - 20);
+  expect(Math.min(...frames.filter((frame) => frame.t >= run! && frame.t < ended!).map((frame) => frame.split))).toBeCloseTo(SWEEP_TURN, 0);
+  expect(frames.find((frame) => frame.t >= ended!)).toMatchObject({ sweep: null, gliding: false, pulse: true, split: DEFAULT_SPLIT });
+  expect(new Set(frames.map((frame) => frame.range))).toEqual(new Set([String(DEFAULT_SPLIT)]));
+  await expectSplit(range, stage, DEFAULT_SPLIT);
 });
 
-test('any input in the sheet before the glide stops it', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
-  await page.goto('/', { waitUntil: 'load' });
-  const sheet = page.locator('#real-object .hv2-contour');
-  const stage = sheet.locator('.hv2-contour-stage');
+test('a key in the sheet before the sweep stops it: the seam goes from the edge to the visitor’s split, no sweep, no rings', async ({ page }) => {
+  test.setTimeout(45_000);
+  const { sheet, stage, range } = await arrive(page);
+  await recordArrival(page);
   await sheet.scrollIntoViewIfNeeded();
   await expect(sheet).toHaveAttribute('data-sheet-state', 'on');
-  await sheet.locator('.hv2-contour-range').focus();
+  await range.focus();
   await page.keyboard.press('ArrowRight');
-  let leftmost = 100;
-  for (let tick = 0; tick < 40; tick += 1) {
-    leftmost = Math.min(leftmost, await seamAt(stage));
-    await page.waitForTimeout(150);
+  const { frames, on, run, ended } = await arrivalOf(page);
+  // Stopped while it waited at the edge — and it never starts afterwards (the record runs past when it would have)
+  expect(run).toBeNull();
+  expect(ended! - on!).toBeLessThan(SWEEP_AT);
+  expect(frames.filter((frame) => frame.sweep === 'run' || frame.gliding || frame.pulse)).toEqual([]);
+  expect(frames.at(-1)!.t - on!).toBeGreaterThan(SWEEP_AT + SWEEP_QUIET);
+  // The key's own step: the seam rests at 63, never left of where the state put it
+  await expect(stage).not.toHaveAttribute('data-sweep', /.*/);
+  await expectSplit(range, stage, DEFAULT_SPLIT + 1);
+  expect(Math.min(...frames.filter((frame) => frame.t >= ended!).map((frame) => frame.split))).toBeGreaterThanOrEqual(DEFAULT_SPLIT);
+  await expect(stage).not.toHaveAttribute('data-pulse', /.*/);
+});
+
+test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the sweep where it is: back to rest, no rings', async ({ page }, testInfo) => {
+  test.setTimeout(45_000);
+  const phone = testInfo.project.name !== 'desktop-chromium';
+  const { sheet, stage, range } = await arrive(page);
+  await recordArrival(page);
+  await sheet.scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelector<HTMLElement>('#real-object .hv2-contour-stage')!.dataset.sweep === 'run');
+  if (phone) {
+    // A finger on a button (here the layer already on: it changes nothing else)
+    await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button', { name: 'Каркас' }).tap();
+  } else {
+    // A mouse on the title block, clear of every control: the press moves nothing itself
+    const cell = (await sheet.locator('figcaption .sheet-cell').first().boundingBox())!;
+    await page.mouse.click(cell.x + cell.width / 2, cell.y + cell.height / 2);
   }
-  // the key's own step glides 62 → 63; the first view's glide would have reached 42
-  expect(leftmost).toBeGreaterThan(DEFAULT_SPLIT - 0.5);
-  await expect(stage).not.toHaveAttribute('data-gliding', /.*/);
+  const { frames, run, ended } = await arrivalOf(page);
+  // Cut short; at once the seam's place is the state's again, the range never moved, and no rings: they are the
+  // finished sweep's last word
+  expect(run).not.toBeNull();
+  expect(ended! - run!).toBeLessThan((phone ? SWEEP_MS_PHONE : SWEEP_MS) - 300);
+  for (const frame of frames.filter((at) => at.t >= ended!)) expect(frame, `${frame.t}`).toMatchObject({ sweep: null, gliding: false, pulse: false, split: DEFAULT_SPLIT });
+  expect(new Set(frames.map((frame) => frame.range))).toEqual(new Set([String(DEFAULT_SPLIT)]));
+  await expectSplit(range, stage, DEFAULT_SPLIT);
 });
 
 test('with reduced motion the sheet stands static and complete at its resting split', async ({ page }) => {
@@ -704,14 +1097,15 @@ test('with reduced motion the sheet stands static and complete at its resting sp
   for (const part of ['.hv2-proof-cut', '.hv2-proof-nodes', '.hv2-proof-labels', '.hv2-proof-marks']) {
     expect(await stage.locator(part).first().evaluate((element) => getComputedStyle(element).opacity), part).toBe('1');
   }
-  // The seam and the layers do not glide (the site's reduced-motion rule leaves a hundredth of a millisecond at most)
+  // The seam and the layers do not slide (the site's reduced-motion rule leaves a hundredth of a millisecond at most)
   for (const part of ['svg.hv2-contour-lines', 'svg.hv2-proof-frame', '.hv2-contour-trace', '.hv2-contour-seam', '.hv2-contour-handle']) {
     expect(await stage.locator(part).evaluate((element) => Math.max(...getComputedStyle(element).transitionDuration.split(',').map(parseFloat))), part).toBeLessThanOrEqual(0.0001);
   }
-  // No glide and no rings, ever
+  // No sweep — the seam never waits at the edge — and no rings, ever
   await page.waitForTimeout(6_000);
-  await expect(stage).not.toHaveAttribute('data-gliding', /.*/);
-  await expect(stage).not.toHaveAttribute('data-pulse', /.*/);
+  for (const mark of ['data-sweep', 'data-gliding', 'data-pulse']) await expect(stage).not.toHaveAttribute(mark, /.*/);
+  expect(await stage.evaluate((element) => getComputedStyle(element).getPropertyValue('--split'))).toBe(`${DEFAULT_SPLIT}%`);
+  expect(await stage.locator('.hv2-contour-trace').evaluate((element) => getComputedStyle(element).clipPath)).toBe(`inset(0px 0px 0px ${DEFAULT_SPLIT}%)`);
 });
 
 test.describe('without JavaScript', () => {
@@ -729,6 +1123,10 @@ test.describe('without JavaScript', () => {
     await expect(stage.locator('.hv2-proof-scheme')).toBeVisible();
     await expect(stage.locator('.hv2-contour-stamp')).toContainText('каркас такого типу, як на цьому об’єкті');
     expect(await stage.locator('.hv2-contour-trace').evaluate((element) => getComputedStyle(element).clipPath)).toContain(`${DEFAULT_SPLIT}%`);
+    // No sweep waits on a script that never runs: the seam at rest, the figures and the names in
+    await expect(stage).not.toHaveAttribute('data-sweep', /.*/);
+    expect(await stage.evaluate((element) => getComputedStyle(element).getPropertyValue('--split'))).toBe(`${DEFAULT_SPLIT}%`);
+    for (const part of ['.hv2-proof-labels', 'svg.hv2-proof-marks']) expect(await stage.locator(part).evaluate((element) => getComputedStyle(element).opacity), part).toBe('1');
     if ((page.viewportSize()?.width ?? 0) > 760) await expect(stage.locator('.hv2-proof-measure[data-measure="slope"]')).toBeVisible();
     // Nothing offers a move the static sheet cannot make: the slider and the buttons are disabled, out of the tab order
     await expect(stage.getByRole('slider', { name: SLIDER })).toBeDisabled();
@@ -772,6 +1170,13 @@ test('on a laptop the whole sheet fits under the header, and the crop keeps the 
       return { lowest: ctm.d * lowest + ctm.f, bottom: element.getBoundingClientRect().bottom };
     });
     expect(foot.lowest, `${width}×${height}`).toBeLessThanOrEqual(foot.bottom - 2);
+    // …and the load's comb at the top: its line and its arrows' tails start inside the frame
+    const head = await stage.evaluate((element) => {
+      const svg = element.querySelector<SVGSVGElement>('svg.hv2-proof-frame')!;
+      const ctm = svg.getScreenCTM()!;
+      return { highest: ctm.d * svg.querySelector<SVGGraphicsElement>('.hv2-proof-snow')!.getBBox().y + ctm.f, top: element.getBoundingClientRect().top };
+    });
+    expect(head.highest, `${width}×${height}`).toBeGreaterThanOrEqual(head.top);
   }
 });
 

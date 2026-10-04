@@ -21,7 +21,9 @@ const REGISTER = {
   gates: { records: ['PG012', 'PG013', 'PG014', 'PG015', 'PG016', 'PG017', 'PG018', 'PG019'] },
   proportion: { records: ['PG003'], ridge: 0.3154, u: 0.0029 },
 } as const;
-/** The laptop crop always keeps the photo's rows 84–644 (home-v2.css): the scheme and the load end above 644 */
+/** The laptop crop always keeps the photo's rows 84–644 (home-v2.css): the scheme and the load end above 644, and the
+ *  snow's comb starts below 84 */
+const FIRST_ROW = 84;
 const LAST_ROW = 644;
 
 const line = (id: string) => homeProofContour.lines.find((entry) => entry.id === id)!.points;
@@ -62,6 +64,12 @@ function distanceToPolygon([x, y]: Pt, polygon: readonly Pt[]) {
 }
 const inSilhouette = (point: Pt) =>
   homeProofFrame.silhouette.some((outline) => insidePolygon(point, outline) || distanceToPolygon(point, outline) <= 1.5);
+/** An open line's y at x (image y grows down) */
+const polylineY = (line: readonly Pt[], x: number) => {
+  const index = Math.max(1, line.findIndex(([at]) => at >= x));
+  const [a, b] = [line[index - 1], line[index]];
+  return a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
+};
 
 describe('homeProofFrame — the scheme', () => {
   const { members, nodes, walls, tags, label, load } = homeProofFrame;
@@ -158,6 +166,36 @@ describe('homeProofFrame — the scheme', () => {
       expect(from[1]).toBeLessThan(rakeY(from[0]));
       expect(to[1]).toBeLessThan(rakeY(to[0]));
     }
+  });
+
+  it('spreads the snow as a drawing writes a load: an even comb of equal arrows over the strip one truss carries, their tails on one line', () => {
+    const { arrows, comb, roof } = load;
+    // The strip's top edge (left eave, ridge, right eave) is the edge the load layer draws the snow settling on
+    const edge = roof.slice(0, 3);
+    expect(arrows).toHaveLength(13);
+    // even: one step between arrows, one length, each straight down (the points are rounded to tenths of a pixel)
+    const xs = arrows.map(([from]) => from[0]);
+    const steps = xs.slice(1).map((x, index) => x - xs[index]);
+    const [length, gap] = [arrows[0][1][1] - arrows[0][0][1], polylineY(edge, xs[0]) - arrows[0][1][1]];
+    for (const step of steps) expect(Math.abs(step - steps[0])).toBeLessThanOrEqual(0.11);
+    for (const [from, to] of arrows) {
+      expect(to[0], String(from)).toBe(from[0]);
+      expect(to[1] - from[1], String(from)).toBeCloseTo(length, 1);
+      // each head stands the same small way over the strip, inside its eaves
+      expect(polylineY(edge, to[0]) - to[1], String(from)).toBeCloseTo(gap, 0);
+    }
+    expect(length).toBeGreaterThan(0);
+    expect(gap).toBeGreaterThan(0);
+    expect(xs[0]).toBeGreaterThan(edge[0][0]);
+    expect(xs.at(-1)!).toBeLessThan(edge[2][0]);
+    // one line from the first tail to the last, bent over the ridge, through every tail between
+    expect(comb[0]).toEqual(arrows[0][0]);
+    expect(comb.at(-1)).toEqual(arrows.at(-1)![0]);
+    expect(comb).toHaveLength(3);
+    expect(comb[1][0]).toBe(edge[1][0]);
+    for (const [from] of arrows) expect(Math.abs(polylineY(comb, from[0]) - from[1]), String(from)).toBeLessThan(0.1);
+    // …all of it below the rows a laptop crops off the sky
+    for (const [, y] of [...comb, ...arrows.flat()]) expect(y).toBeGreaterThan(FIRST_ROW);
   });
 });
 
