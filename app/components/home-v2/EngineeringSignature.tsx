@@ -13,7 +13,7 @@ import { ScopeCells } from './ScopeCells';
 // moves, the same frame as a tracing (ProofContour). Over the tracing, chosen in the title block: the lines and
 // scale-free figures measured from eight photos of this hangar («Контур»), or — the default since 04.10 (owner: more
 // on the right side, a test of what the frame could be) — a SCHEME of a frame of the type the owner names for this
-// object, drawn inside its measured silhouette and labelled as a scheme without sizes («Каркас», «Навантаження»). It is
+// object, drawn inside its measured silhouette and labelled as a scheme without sizes («Каркас», «Сніг», «Вітер»). It is
 // never this building's structure and never goes over the photo itself; the generated X-ray sketch that once stood
 // beside the photo is gone from the page (only /?xray=sketch shows it, for the owner's comparison). Two explanation
 // cards follow, each labelled as what it is («Ілюстрація», «Схема»).

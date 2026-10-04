@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
+import { memo, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import type { HomeProofCase } from '../../data/homeProof';
 import { homeProofContour, type ContourLine } from '../../data/homeProofContour';
 import { homeProofFrame } from '../../data/homeProofFrame';
@@ -21,7 +21,8 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 //     never this building's drawn structure — nobody can see it under the cladding and its drawings were not kept. Here
 //     the outline is one solid copper line and the cladding's strip lines are off (owner, 04.10): the measured /
 //     approximate split is «Контур»'s;
-//   «Навантаження» — the same scheme with the snow's way through it, link by link, roof to ground.
+//   «Сніг» — the same scheme with the snow's way through it, link by link, roof to ground; «Вітер» — the wind's, across
+//     the building, in its own cool tint (owner review, 04.10).
 // The scheme never goes over the photo: it lives right of the seam only, and so do the words that belong to it — the
 // stamp that says what it is and the load's chain, clipped at the seam. «Контур на фото» lays the measured lines (and
 // only those) over the photo as well, as proof that they land on it.
@@ -67,7 +68,7 @@ const SNAP_RELEASE = 1.4;
  *  (per cent × ZOOM − LEFT) of the frame; the sweep turns just past the gable's left corner there */
 const PHONE_ZOOM = 1.22;
 const PHONE_LEFT = 19.46;
-const SWEEP_TURN_PHONE = 4;
+const SWEEP_TURN_PHONE = 1;
 /** The held line's name: its distance from the seam, px */
 const SNAP_GAP = 10;
 /** …and its padding and border, px (home-v2.css) */
@@ -89,10 +90,11 @@ const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; 
   wind: { button: 'Вітер', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
   sketch: { button: 'Ескіз', seam: 'Ескіз · тест', nominative: 'ескіз', genitive: 'ескізу' },
 };
-/** Each load's way, link by link, in its own words */
-const CHAINS: Partial<Record<Layer, readonly string[]>> = {
-  load: ['Сніг', 'покрівля', 'прогони', 'ферма', 'стіни й колони', 'фундаменти', 'ґрунт'],
-  wind: ['Вітер', 'стіна', 'ферма', 'стіна й колона', 'фундаменти', 'ґрунт'],
+/** Each load's way, link by link, in its own words, each word lit with its part of the drawing (n: ProofFrame's --n) —
+ *  in the legend under the layers, not on the frame: on a laptop's crop the frame has no free room for it (review, 04.10) */
+const CHAINS: Partial<Record<Layer, readonly (readonly [string, number])[]>> = {
+  load: [['Сніг', 0], ['покрівля', 1], ['прогони', 2], ['ферма', 3], ['стіни й колони', 4], ['фундаменти', 5], ['ґрунт', 6]],
+  wind: [['Вітер', 0], ['стіна', 2], ['ферма', 3], ['стіна й колона', 4], ['фундаменти', 5], ['ґрунт', 6]],
 };
 // The legend's keys per layer. Every layer's set is laid out in one cell, the others hidden, so the title block keeps one
 // height whichever is on (review, 04.10: on a 360 px phone the load's set took a second line and pushed the controls)
@@ -204,7 +206,9 @@ function valueText(value: number, layer: Layer) {
   return `Фото ліворуч, ${right.nominative} праворуч: ${share}`;
 }
 
-function Lines({ casing, snapped }: Readonly<{ casing?: boolean; snapped?: string }>) {
+// Memoised, as are ProofFrame's layers: a mouse leading the seam re-renders the stage on every frame, and none of these
+// changes with it (review, 04.10)
+const Lines = memo(function Lines({ casing, snapped }: Readonly<{ casing?: boolean; snapped?: string }>) {
   return (
     <g className={casing ? 'hv2-contour-casing' : 'hv2-contour-ink'}>
       {lines.map((line) => (
@@ -221,7 +225,7 @@ function Lines({ casing, snapped }: Readonly<{ casing?: boolean; snapped?: strin
       ))}
     </g>
   );
-}
+});
 
 const legendLine = <svg viewBox="0 0 28 4" aria-hidden="true" focusable="false"><path d="M2 2H26" /></svg>;
 
@@ -245,6 +249,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const stageRef = useRef<HTMLDivElement>(null);
   const rangeRef = useRef<HTMLInputElement>(null);
   const drag = useRef<{ pointer: number; offset: number } | null>(null);
+  const hoverX = useRef(0);
+  const hoverFrame = useRef(0);
   const touched = useRef(false);
   const [room, setRoom] = useState<Room | null>(null);
 
@@ -406,9 +412,22 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage || !room) return;
-    const seam = stage.getBoundingClientRect().left + (room.width * split) / 100;
+    const box = stage.getBoundingClientRect();
+    const seam = box.left + (room.width * split) / 100;
+    // …and one under the seam's names or the stamp (review, 04.10): their boxes where they will stand once the seam has
+    // glided there (measured now, a gliding name would be read mid-way)
+    const shown = (element: Element | null) => element && getComputedStyle(element).visibility === 'visible';
+    const [leftTag, rightTag] = stage.querySelectorAll<HTMLElement>('.hv2-contour-seamtags > span');
+    const top = box.top + 10;
+    const covers: { left: number; right: number; top: number; bottom: number }[] = [];
+    if (shown(leftTag)) covers.push({ left: seam - 3 - leftTag.offsetWidth, right: seam - 3, top, bottom: top + leftTag.offsetHeight });
+    if (shown(rightTag)) covers.push({ left: seam + 3, right: seam + 3 + rightTag.offsetWidth, top, bottom: top + rightTag.offsetHeight });
+    const stamp = stage.querySelector<HTMLElement>('.hv2-contour-stamp');
+    if (stamp && shown(stamp)) covers.push(stamp.getBoundingClientRect());
     for (const label of stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')) {
-      const cut = label.getBoundingClientRect().left < seam + 1;
+      const rect = label.getBoundingClientRect();
+      const cut = rect.left < seam + 1
+        || covers.some((cover) => rect.left < cover.right && rect.right > cover.left && rect.top < cover.bottom && rect.bottom > cover.top);
       if (cut === ('cut' in label.dataset)) continue;
       if (cut) label.dataset.cut = '';
       else delete label.dataset.cut;
@@ -419,7 +438,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         else delete leader.dataset.cut;
       }
     }
-  }, [split, layer, room]);
+  }, [split, layer, room, snap]);
 
   const splitAt = (clientX: number, offset = 0, touch = false) => {
     const box = stageRef.current?.getBoundingClientRect();
@@ -477,10 +496,18 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (event.pointerType !== 'mouse' || !ready || drag.current || stage.dataset.sweep !== undefined) return;
     if ((event.movementX === 0 && event.movementY === 0) || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     stage.dataset.following = '';
-    splitAt(event.clientX);
+    // At most once a frame: a mouse reports more often than the screen draws
+    hoverX.current = event.clientX;
+    if (hoverFrame.current) return;
+    hoverFrame.current = requestAnimationFrame(() => {
+      hoverFrame.current = 0;
+      if (!drag.current && stage.dataset.following !== undefined) splitAt(hoverX.current);
+    });
   };
   const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
     if (drag.current) return;
+    cancelAnimationFrame(hoverFrame.current);
+    hoverFrame.current = 0;
     delete event.currentTarget.dataset.following;
     snapRef.current = null;
     setSnap(null);
@@ -493,8 +520,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
 
   // Arrows step by one through the native range; the larger steps are the same in every browser
+  // A move that is not the pointer's — a key, a button, a layer — leaves no line lit behind it (review, 04.10)
+  const clearLit = () => {
+    snapRef.current = null;
+    setSnap(null);
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     setPointerFocus(false);
+    clearLit();
     const to = { PageUp: Math.round(split) + PAGE_STEP, PageDown: Math.round(split) - PAGE_STEP, Home: 0, End: 100 }[event.key];
     if (to === undefined) return;
     event.preventDefault();
@@ -502,11 +536,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
 
   // «Фото» / «Схема» show one side whole; pressed again, they bring the seam back to rest
-  const showOnly = (side: 100 | 0) => setSplit(split === side ? DEFAULT_SPLIT : side);
+  const showOnly = (side: 100 | 0) => {
+    clearLit();
+    setSplit(split === side ? DEFAULT_SPLIT : side);
+  };
 
   // A layer chosen with the seam far right brings the right side back into view; the load is replayed on every press,
   // and on a phone its way down the frame wants the wider right side
   const choose = (next: Layer) => {
+    clearLit();
     setChosen(next);
     if (next === 'load' || next === 'wind') {
       (next === 'load' ? setLoadRun : setWindRun)((run) => run + 1);
@@ -520,7 +558,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
 
   const measured = homeProofMeasures.filter((measure) => measure.chip);
   const sliderLabel = `Порівняти фото й ${{ contour: 'контур за фото', frame: 'схему', load: 'схему', wind: 'схему', sketch: 'ескіз' }[layer]}`;
-  const chain = CHAINS[layer];
 
   return (
     <DrawingSheet
@@ -546,17 +583,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           ),
         },
         {
-          // A phone's figures: the measured facts as chips (the frame has no room for labels there), or the load's way
+          // A phone's figures: the measured facts as chips (the frame has no room for labels there); a load's way is the
+          // legend's
           className: 'hv2-contour-facts',
           value: (
             <span className="hv2-contour-facts-slot" aria-hidden="true">
-              <span className="hv2-contour-chips" data-on={chain ? undefined : ''}>
+              <span className="hv2-contour-chips" data-on="">
                 {measured.map((measure) => <span key={measure.id} data-measure={measure.id}>{measure.chip}</span>)}
               </span>
-              {/* both loads' ways laid in the one slot, so it keeps one height (the longer is the snow's) */}
-              {(['load', 'wind'] as const).map((name) => (
-                <span key={name} className="hv2-contour-chain-text" data-load={name} data-on={layer === name ? '' : undefined}>{CHAINS[name]!.join(' → ')}</span>
-              ))}
             </span>
           ),
         },
@@ -575,9 +609,18 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               <span className="hv2-contour-legend">
                 {layers.map((name) => (
                   <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={name === layer ? '' : undefined}>
-                    {LEGEND[name].map((key) => (
-                      <span key={key} data-key={key} data-approximate={key === 'approximate' ? '' : undefined}>{legendLine}{LEGEND_WORDS[key]}</span>
-                    ))}
+                    {CHAINS[name] ? (
+                      // A load's legend is its way: its tint's key, then each link lit as the drawing reaches it (replayed
+                      // with it on every press)
+                      <span className="hv2-contour-legend-chain" data-load={name} key={name === 'load' ? loadRun : windRun}>
+                        <span data-key={name}>{legendLine}</span>
+                        {CHAINS[name]!.map(([word, n]) => <span key={word} style={{ '--n': n } as CSSProperties}>{word}</span>)}
+                      </span>
+                    ) : (
+                      LEGEND[name].map((key) => (
+                        <span key={key} data-key={key} data-approximate={key === 'approximate' ? '' : undefined}>{legendLine}{LEGEND_WORDS[key]}</span>
+                      ))
+                    )}
                   </span>
                 ))}
               </span>
@@ -655,7 +698,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               />
             </div>
           )}
-          <ProofFrame loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} ready={ready} />
+          <ProofFrame loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} wind={layer === 'wind'} ready={ready} />
           <svg
             className="hv2-contour-lines"
             viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}
@@ -671,7 +714,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           {snap && (
             <svg className="hv2-contour-held" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`} aria-hidden="true">
               <path className="hv2-contour-held-casing" d={pathOf(lines.find((line) => line.id === snap.line)!)} />
-              <path d={pathOf(lines.find((line) => line.id === snap.line)!)} />
+              {/* dashed where the line is approximate, as everywhere else */}
+              <path d={pathOf(lines.find((line) => line.id === snap.line)!)} data-approximate={lines.find((line) => line.id === snap.line)!.approximate ? '' : undefined} />
             </svg>
           )}
           <ProofMarks />
@@ -690,9 +734,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               {layer === 'contour' ? 'без масштабу' : layer === 'sketch' ? 'згенероване зображення' : 'каркас такого типу, як на цьому об’єкті'}
             </span>
           </span>
-          <span className="hv2-contour-chain" key={`chain-${layer}-${loadRun}-${windRun}`} data-load={layer === 'wind' ? 'wind' : undefined}>
-            {(chain ?? CHAINS.load!).map((link, index) => <span key={link} style={{ '--n': index } as CSSProperties}>{link}</span>)}
-          </span>
         </span>
         {/* What the figures say, for a screen reader: the labels on the frame are drawn for the eye only */}
         <ul className="sr-only" aria-label="Виміряно за фото, без масштабу">
@@ -709,7 +750,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           aria-label={sliderLabel}
           aria-valuetext={valueText(Math.round(split), layer)}
           disabled={!ready}
-          onChange={(event) => setSplit(Number(event.target.value))}
+          onChange={(event) => {
+            clearLit();
+            setSplit(Number(event.target.value));
+          }}
           onKeyDown={onKeyDown}
           onBlur={() => setPointerFocus(false)}
         />

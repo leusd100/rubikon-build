@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { memo, type CSSProperties } from 'react';
 import { homeProofContour } from '../../data/homeProofContour';
 import { homeProofFrame } from '../../data/homeProofFrame';
 import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures';
@@ -8,7 +8,7 @@ import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures'
 //     illustrative, the gable's own plane in the sheet's paper colour, clipped to the drawn outline; what stands behind
 //     that plane solid in copper, fainter with depth (owner, 04.10: «як ми робили» on /angary — no dashes); the walls as
 //     aerated-concrete blockwork in perspective, cut in section at both corners; and the snow's way through it, link by link
-//     (the «Навантаження» layer): the members it passes lit in that paper colour, the load itself in its own lighter,
+//     (the «Сніг» layer; the «Вітер» layer the same in its own cool tint): the members it passes lit in that paper colour, the load itself in its own lighter,
 //     dotted tint — the legend's «навантаження», never the measured copper (review, 04.10);
 //   ProofMarks and ProofLabels — the measured figures' marks on the contour's own lines and their words
 //     (app/data/homeProofMeasures.ts), and the scheme's names on its members.
@@ -64,12 +64,13 @@ function blockwork(face: readonly Pt[], courses: number, blocks: number) {
 /** `shown`: false while another layer is on the right (the scheme fades out, and its name must not be read).
  *  `ready`: after hydration — the blockwork's thousand short strokes are drawn on the client only, to keep the page's HTML
  *  light; without them the scheme is whole */
-export function ProofFrame({ loadRun, windRun, shown, ready }: Readonly<{ loadRun: number; windRun: number; shown: boolean; ready: boolean }>) {
-  const { silhouette, walls, members, nodes, load, wind, label } = homeProofFrame;
+/** `wind`: the «Вітер» layer is on — the scheme's name says the wind's way too */
+export const ProofFrame = memo(function ProofFrame({ loadRun, windRun, shown, wind: windOn, ready }: Readonly<{ loadRun: number; windRun: number; shown: boolean; wind: boolean; ready: boolean }>) {
+  const { silhouette, walls, members, nodes, load, wind, label, windLabel } = homeProofFrame;
   const inside = members.filter((member) => member.group !== 'footing');
   const footings = members.filter((member) => member.group === 'footing');
   return (
-    <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} aria-hidden={shown ? undefined : true}>
+    <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={windOn ? `${label} ${windLabel}` : label} aria-hidden={shown ? undefined : true}>
       <defs>
         <clipPath id="hv2-proof-silhouette">
           {silhouette.map((outline, index) => <path key={index} d={d(outline, true)} />)}
@@ -128,7 +129,7 @@ export function ProofFrame({ loadRun, windRun, shown, ready }: Readonly<{ loadRu
           <path key={index} className="hv2-proof-footing" d={d(member.points, member.closed)} data-depth={member.depth} data-cut={member.closed ? '' : undefined} />
         ))}
       </g>
-      {/* The snow's way, link by link — replayed on every press of «Навантаження» (a new key restarts it) */}
+      {/* The snow's way, link by link — replayed on every press of «Сніг» (a new key restarts it) */}
       <g className="hv2-proof-load" key={loadRun}>
         {/* A load spread over the roof, as a drawing writes it: one line, an even comb of arrows down from it */}
         <g className="hv2-proof-snow" style={{ '--n': 0 } as CSSProperties}>
@@ -191,9 +192,9 @@ export function ProofFrame({ loadRun, windRun, shown, ready }: Readonly<{ loadRu
       </g>
     </svg>
   );
-}
+});
 
-export function ProofMarks() {
+export const ProofMarks = memo(function ProofMarks() {
   const { slope, gates, width, widthTicks, height, heightTicks } = homeProofMarks;
   const { tags } = homeProofFrame;
   const at = (id: string) => homeProofMeasures.find((measure) => measure.id === id)!.at;
@@ -224,12 +225,12 @@ export function ProofMarks() {
       </g>
     </svg>
   );
-}
+});
 
 const place = ([x, y]: Pt, [cx, cy]: Pt = [x, y]): CSSProperties =>
   ({ '--x': `${(x / W) * 100}%`, '--y': `${(y / H) * 100}%`, '--cx': `${(cx / W) * 100}%`, '--cy': `${(cy / H) * 100}%` }) as CSSProperties;
 
-export function ProofLabels() {
+export const ProofLabels = memo(function ProofLabels() {
   return (
     <div className="hv2-proof-labels" aria-hidden="true">
       {homeProofMeasures.map((measure) => (
@@ -251,4 +252,4 @@ export function ProofLabels() {
       ))}
     </div>
   );
-}
+});

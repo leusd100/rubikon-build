@@ -74,9 +74,10 @@ export const homeProofMeasures: readonly Measure[] = [
     detail: 'для кута масштаб не потрібен',
     spoken: `Схил даху приблизно ${comma(PITCH)} градуса, похибка ${comma(PITCH_U)} градуса; для кута масштаб не потрібен`,
     chip: `Схил ${approx(PITCH)}° ${plusMinus(PITCH_U)}°`,
-    at: [1240, 150],
+    // In the sky over the right rake, clear of the copper outline and the purlins it would otherwise mask (review, 04.10)
+    at: [1300, 138],
     align: 'end',
-    atContour: [1330, 330],
+    atContour: [1318, 330],
     alignContour: 'middle',
     onFrame: true,
   },
@@ -90,8 +91,10 @@ export const homeProofMeasures: readonly Measure[] = [
     align: 'middle',
     // With the line under it, from the gate's left jamb, over the jamb's «=» marks: centred, it met the handle on a
     // tablet
-    atContour: [1065, 405],
-    alignContour: 'start',
+    // Inside the right gate's opening, under its head's «=» marks and clear of its jambs (review, 04.10: the backing
+    // covered the right jamb)
+    atContour: [1135, 486],
+    alignContour: 'middle',
     // Not on the scheme (owner, 04.10): its «=» marks read as stray strokes across the gates there
     onFrame: false,
   },

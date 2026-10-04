@@ -1,6 +1,6 @@
 /**
  * «Схема каркаса» — the frame HOME draws INSIDE the measured silhouette of its one real photo (ProofContour, layers
- * «Каркас» and «Навантаження»). ILLUSTRATIVE, NOT MEASURED (04.10): a scheme drawn in this photo's perspective. Nothing
+ * «Каркас», «Сніг» and «Вітер»). ILLUSTRATIVE, NOT MEASURED (04.10): a scheme drawn in this photo's perspective. Nothing
  * here is this building's structure (unknown: its drawings were not kept, and the photo study suspects brick walls
  * under the new cladding) and nothing comes from any drawing's sizes, marks or levels. The page says so on the sheet
  * («Схема · без розмірів», «каркас такого типу, як на цьому об’єкті») and in the scheme's accessible name.
@@ -59,7 +59,8 @@ const WIND_GUSTS = [0.12, 0.31, 0.5, 0.69, 0.88].map((share): readonly [Pt, Pt] 
   const at: Pt = [x0 + (x1 - x0) * share, y0 + (y1 - y0) * share];
   const run = Math.hypot(GABLE_VP[0] - at[0], GABLE_VP[1] - at[1]);
   const along = (length: number): Pt => [round1(at[0] + ((GABLE_VP[0] - at[0]) * length) / run), round1(at[1] + ((GABLE_VP[1] - at[1]) * length) / run)];
-  return [along(4 + 26 + 22 * share), along(4)];
+  // tails within the phone's close-up (its last column is 1504): 16–26 px, longer higher up
+  return [along(4 + 16 + 10 * share), along(4)];
 });
 const WIND_LIFT = [430, 580, 730, 870, 1090, 1200, 1310, 1410].map((x): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 30)]]);
 
@@ -115,6 +116,8 @@ export type HomeProofFrame = {
   tags: readonly FrameTag[];
   /** The scheme's accessible name: what it is and what it is not */
   label: string;
+  /** …and, with «Вітер» on, the wind's way, in words */
+  windLabel: string;
 };
 
 export const homeProofFrame: HomeProofFrame = {
@@ -291,18 +294,22 @@ export const homeProofFrame: HomeProofFrame = {
       [[1466.1, 446.6], [1461.6, 331.8], [1005.9, 300.6], [1007.3, 563.5], [1007.7, 609]],
       [[1466.1, 446.6], [1461.6, 331.8], [297.9, 252.2], [284.8, 595.7], [283.4, 634.6]],
     ],
-    reactions: [[[238, 628], [262, 627.4]], [[958, 600], [981, 599.4]], [[1424, 586], [1446, 585.4]]],
+    // inside each footing's section, pushing against the wind
+    reactions: [[[256, 622], [281, 621.4]], [[989, 598], [1012, 597.4]], [[1452, 584], [1474, 583.4]]],
   },
   tags: [
     // In the frame's free room (owner review, 04.10: «текст залазить на елемент»): the truss's and the purlins' names in
     // the sky over the right rake, the column's and the footings' on the ground under the base, the walls' on a face that
     // holds only blockwork — each on a backing that masks what runs under it, as a drawing's text does
     { id: 'truss', text: 'Ферма', anchor: [1360.6, 271], at: [1352, 214], align: 'start' },
-    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1252.1, 234], at: [1247, 112], align: 'end' },
-    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 540], at: [1045, 602], align: 'start' },
+    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1071, 172.3], at: [1080, 104], align: 'start' },
+    // the right gate's opening holds no member: the column's name stands in it
+    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 500], align: 'start' },
     { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 410], at: [1430, 452], align: 'end' },
-    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 632], align: 'end' },
+    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end' },
   ],
   label:
     'Схема каркаса такого типу, як на цьому об’єкті, вписана в силует із фото: ферми, прогони, в’язі, стіни з газобетонних блоків по контуру й центральний ряд колон, фундаменти — умовно. Навантаження з покрівлі йде через прогони й ферми на стіни й колони, а з них — на фундаменти. Не креслення цього ангара: розмірів і перерізів тут немає.',
+  windLabel:
+    'Вітер тисне на бічну стіну й підіймає покрівлю; ферма передає його на другу стіну й колону, а з них — на фундаменти й ґрунт.',
 };
