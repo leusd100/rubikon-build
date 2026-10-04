@@ -10,6 +10,9 @@ import { homeProofMeasures } from '../../app/data/homeProofMeasures';
 // finger only the handle, and on a phone «Фото» / «Схема» show one side whole. «Контур на фото» lays the measured lines
 // — and only those — over the photo too. Arriving with motion, the scheme builds and the seam glides once; without
 // motion or JavaScript the sheet stands complete. On a laptop the whole sheet fits under the header.
+// The review of 04.10 added: the glide still plays when the visitor arrives by the wheel or a swipe; the right side's
+// words (the stamp, the load's chain) lie on it only; no name on the frame covers another or runs off it; the load is
+// never drawn in the measured copper.
 
 const DEFAULT_SPLIT = 62;
 const SLIDER = /^Порівняти фото й (?:схему|контур за фото|ескіз)$/;
@@ -19,6 +22,7 @@ const FORBIDDEN = /digital\s*twin|двійник|3\s*d\b|тривимір|мод
 // No length, area, mass or level anywhere on the sheet: the photos give no scale
 const UNITS = /\d\s*(?:мм|см|м|км|м²|кг|т)(?![а-яіїєґʼ’])|метр|відмітк|[+−]\d|\d\.\d/iu;
 const COPPER = 'rgb(204, 132, 85)';
+const PAPER = 'rgb(237, 232, 222)';
 
 async function open(page: Page, path = '/') {
   await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
@@ -68,6 +72,33 @@ async function steadyShot(page: Page, clip: { x: number; y: number; width: numbe
   return previous;
 }
 
+/** How many pixels of two shots of one region differ by more than `threshold` in a channel. Re-compositing the stage (a
+ *  layer shown or hidden) re-rasters the photo on a phone's fractional pixel ratio with ±1 noise across it and, rarely,
+ *  a speck or two more; a line of the scheme or the contour on it is hundreds of pixels (review, 04.10: the exact
+ *  comparison failed 1 run in 8 already before) */
+const SPECKS = 20;
+async function differing(page: Page, a: Buffer, b: Buffer, threshold = 40) {
+  // Decoded on a blank page of its own: the site's CSP keeps data: URLs out of fetch
+  const scratch = await page.context().newPage();
+  const count = await scratch.evaluate(async ([first, second, limit]) => {
+    const pixels = async (data: string) => {
+      const image = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
+      const canvas = new OffscreenCanvas(image.width, image.height);
+      const context = canvas.getContext('2d')!;
+      context.drawImage(image, 0, 0);
+      return context.getImageData(0, 0, image.width, image.height).data;
+    };
+    const [x, y] = await Promise.all([pixels(first as string), pixels(second as string)]);
+    let count = 0;
+    for (let index = 0; index < x.length; index += 4) {
+      if (Math.max(Math.abs(x[index] - y[index]), Math.abs(x[index + 1] - y[index + 1]), Math.abs(x[index + 2] - y[index + 2])) > (limit as number)) count += 1;
+    }
+    return count;
+  }, [a.toString('base64'), b.toString('base64'), threshold] as const);
+  await scratch.close();
+  return count;
+}
+
 /** Where the seam stands, in per cent of the frame */
 async function seamAt(stage: Locator) {
   return stage.evaluate((element) => {
@@ -75,6 +106,54 @@ async function seamAt(stage: Locator) {
     const seam = element.querySelector('.hv2-contour-seam')!.getBoundingClientRect();
     return ((seam.left + seam.width / 2 - frame.left) / frame.width) * 100;
   });
+}
+
+/** The words on the stage that cover one another or run off the frame: the figures, the scheme's names, the stamp, the
+ *  chain, the seam's names. What lies right of the seam is clipped there, so only its visible part counts — but `atRest`
+ *  (the seam where it rests) a figure or a name cut by the seam counts too, and so does the handle */
+async function clashes(stage: Locator, atRest = false) {
+  return stage.evaluate((element, rest) => {
+    const frame = element.getBoundingClientRect();
+    const split = parseFloat(getComputedStyle(element).getPropertyValue('--split'));
+    const seam = frame.left + (frame.width * split) / 100;
+    const shown = (node: Element) => {
+      for (let at: Element | null = node; at && at !== element; at = at.parentElement) {
+        const style = getComputedStyle(at);
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.05) return false;
+      }
+      return true;
+    };
+    const boxes: { name: string; left: number; right: number; top: number; bottom: number; cut: number; seamCut: number }[] = [];
+    const add = (node: Element | null, name: string, rightSide: boolean) => {
+      if (!node || !shown(node)) return;
+      const box = node.getBoundingClientRect();
+      const left = Math.max(rightSide ? seam : frame.left, box.left, frame.left);
+      const right = Math.min(box.right, frame.right);
+      if (right - left < 2) return;
+      const cut = Math.max(frame.left - box.left, box.right - frame.right, frame.top - box.top, box.bottom - frame.bottom);
+      const seamCut = rightSide && /^(?:figure|name) /.test(name) ? seam - box.left : 0;
+      boxes.push({ name, left, right, top: Math.max(box.top, frame.top), bottom: Math.min(box.bottom, frame.bottom), cut, seamCut });
+    };
+    for (const node of element.querySelectorAll<HTMLElement>('.hv2-proof-measure')) add(node, `figure ${node.dataset.measure}`, true);
+    for (const node of element.querySelectorAll<HTMLElement>('.hv2-proof-tag')) add(node, `name ${node.dataset.tag}`, true);
+    add(element.querySelector('.hv2-contour-stamp'), 'stamp', true);
+    add(element.querySelector('.hv2-contour-chain'), 'chain', true);
+    const [left, right] = element.querySelectorAll('.hv2-contour-seamtags > span');
+    add(left, '‹ Фото', false);
+    add(right, 'seam name right', false);
+    if (rest) add(element.querySelector('.hv2-contour-handle'), 'handle', false);
+    const found: string[] = [];
+    for (const [index, a] of boxes.entries()) {
+      if (a.cut > 1 && !a.name.startsWith('‹') && a.name !== 'seam name right') found.push(`${a.name} runs off the frame by ${Math.round(a.cut)} px`);
+      if (rest && a.seamCut > 1) found.push(`${a.name} cut by the resting seam by ${Math.round(a.seamCut)} px`);
+      for (const b of boxes.slice(index + 1)) {
+        const x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (x > 1 && y > 1) found.push(`${a.name} × ${b.name}`);
+      }
+    }
+    return found;
+  }, atRest);
 }
 
 async function expectSplit(slider: Locator, stage: Locator, value: number) {
@@ -135,7 +214,7 @@ test('the sheet names both sides, states the retouch and what the scheme is, and
   });
   expect(outsideMeasures).not.toMatch(/\d/);
   for (const figure of await sheet.locator('[data-measure]').allTextContents()) {
-    for (const match of figure.matchAll(/\d+(?:,\d+)?/g)) expect(figure.slice(0, match.index), figure).toMatch(/(?:[≈±<] |приблизно |похибка |менше )$/);
+    for (const match of figure.matchAll(/\d+(?:,\d+)?/g)) expect(figure.slice(0, match.index), figure).toMatch(/(?:[≈±] |приблизно |похибка )$/);
   }
   expect(text).not.toMatch(UNITS);
   expect(homeProofContour.label).not.toMatch(/\d/);
@@ -157,25 +236,71 @@ test('the scheme is its own layer: paper-white, never dashed as «approximate»,
   await expect(scheme.locator('[data-approximate]')).toHaveCount(0);
   await expect(stage.locator('.hv2-contour-lines [data-group]')).toHaveCount(0);
   const strokes = new Set(await scheme.locator('.hv2-proof-scheme [data-group]').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)));
-  expect([...strokes]).toEqual(['rgb(237, 232, 222)']);
+  expect([...strokes]).toEqual([PAPER]);
   expect(await stage.locator('.hv2-contour-ink path').first().evaluate((path) => getComputedStyle(path).stroke)).toBe(COPPER);
+  // What stands behind the gable's plane is a hidden line, dashed — not a tie or a post on the gable wall
+  const hidden = scheme.locator('.hv2-proof-scheme [data-hidden]');
+  await expect(hidden).toHaveCount(homeProofFrame.members.filter((member) => member.hidden).length);
+  for (const dash of new Set(await hidden.evaluateAll((paths) => paths.map((path) => getComputedStyle(path).strokeDasharray)))) expect(dash).toMatch(/^[\d.]+px,? [\d.]+px$/);
+  expect(await hidden.evaluateAll((paths) => paths.every((path) => Number(path.getAttribute('data-depth')) > 0))).toBe(true);
   // Its names are words on the scheme, its legend says «схема» in the scheme's own colour
   for (const tag of homeProofFrame.tags) await expect(stage.locator(`.hv2-proof-tag[data-tag="${tag.id}"]`)).toHaveText(tag.text);
-  await expect(page.locator('#real-object .hv2-contour-legend [data-key="scheme"]')).toBeVisible();
+  await expect(page.locator('#real-object .hv2-contour-legend [data-on] [data-key="scheme"]')).toBeVisible();
 
-  // Wherever the seam stands, if a pixel of the scheme shows, its stamp shows whole inside the frame
+  // The stamp belongs to the right side and lies on it only, clipped at the seam: in full while that side has room for
+  // it, its first word where it has not, never over the photo and never under «‹ Фото»
   const frame = (await stage.boundingBox())!;
-  for (const value of [0, 30, DEFAULT_SPLIT, 90, 99]) {
+  const phone = page.viewportSize()!.width <= 760;
+  const stamp = stage.locator('.hv2-contour-stamp');
+  for (const value of [0, 30, DEFAULT_SPLIT, 80, 90, 95, 99]) {
     await splitTo(page, slider, value);
-    const box = (await stage.locator('.hv2-contour-stamp').boundingBox())!;
-    await expect(stage.locator('.hv2-contour-stamp'), `${value}`).toBeVisible();
-    expect(box.x, `${value}`).toBeGreaterThanOrEqual(frame.x);
+    await expect(stamp, `${value}`).toBeVisible();
+    const box = (await stamp.boundingBox())!;
+    const seam = frame.x + (frame.width * value) / 100;
+    const room = frame.x + frame.width - seam;
     expect(box.x + box.width, `${value}`).toBeLessThanOrEqual(frame.x + frame.width);
     expect(box.y, `${value}`).toBeGreaterThanOrEqual(frame.y);
+    await expect(stage.locator('.hv2-contour-corner'), `${value}`).toHaveCSS('clip-path', `inset(0px 0px 0px ${value}%)`);
+    if (phone) {
+      // a phone's stamp is its first word
+      await expect(stamp, `${value}`).toHaveText(/^схема$/i, { useInnerText: true });
+    } else if (room >= 230) {
+      await expect(stage, `${value}`).not.toHaveAttribute('data-stamp', /.*/);
+      await expect(stamp, `${value}`).toContainText('каркас такого типу, як на цьому об’єкті', { useInnerText: true });
+      expect(box.x, `${value}`).toBeGreaterThanOrEqual(seam);
+    } else {
+      await expect(stage, `${value}`).toHaveAttribute('data-stamp', 'short');
+      await expect(stamp, `${value}`).toHaveText(/^схема$/i, { useInnerText: true });
+    }
+    await expect.poll(() => clashes(stage), { message: `${value}`, timeout: 2_000 }).toEqual([]);
   }
   // Only the photo: no scheme, no stamp
   await splitTo(page, slider, 100);
-  await expect(stage.locator('.hv2-contour-stamp')).toBeHidden();
+  await expect(stamp).toBeHidden();
+});
+
+test('the load is drawn in its own tint: the members it passes lit in the scheme’s paper, nothing in the measured copper', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { stage, layers } = await open(page);
+  await layers.getByRole('button', { name: 'Навантаження' }).click();
+  await expect(stage.locator('.hv2-proof-load')).toBeVisible();
+  const strokes = await stage.locator('.hv2-proof-load path, .hv2-proof-load rect').evaluateAll((parts) => parts.map((part) => {
+    const style = getComputedStyle(part);
+    return { kind: part.getAttribute('class') ?? part.parentElement?.getAttribute('class') ?? '', stroke: style.stroke, fill: style.fill, dash: style.strokeDasharray };
+  }));
+  expect(strokes.length).toBeGreaterThan(10);
+  // The legend's «виміряно» is a solid copper line: no part of the load may be one
+  for (const part of strokes) {
+    expect(part.stroke === COPPER && part.dash === 'none', `${part.kind}: ${part.stroke} ${part.dash}`).toBe(false);
+    expect(part.fill, part.kind).not.toBe(COPPER);
+  }
+  // The lit truss and links are the scheme's own paper; the drops are the legend's dotted «навантаження»
+  for (const selector of ['.hv2-proof-lit-truss path', '.hv2-proof-link']) {
+    expect(new Set(await stage.locator(selector).evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)))).toEqual(new Set([PAPER]));
+  }
+  const load = await page.locator('#real-object .hv2-contour-legend [data-on] [data-key="load"] path').evaluate((path) => getComputedStyle(path).stroke);
+  expect(new Set(await stage.locator('.hv2-proof-flow').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)))).toEqual(new Set([load]));
+  expect(load).not.toBe(COPPER);
 });
 
 test('the seam rests between the gates, and nothing of the right side lies over the photo — the contour only when asked', async ({ page }) => {
@@ -198,7 +323,7 @@ test('the seam rests between the gates, and nothing of the right side lies over 
   const withLayers = await steadyShot(page, photoSide);
   await hide(true);
   const withoutLayers = await steadyShot(page, photoSide);
-  expect(withLayers.equals(withoutLayers)).toBe(true);
+  expect(await differing(page, withLayers, withoutLayers)).toBeLessThan(SPECKS);
   await hide(false);
 
   // …and differ once «Контур на фото» lays the measured lines over the photo (so the comparison can see a line) —
@@ -210,9 +335,9 @@ test('the seam rests between the gates, and nothing of the right side lies over 
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(() => lines.evaluate((element) => getComputedStyle(element).clipPath)).toMatch(/^inset\(0px\)$|^none$/);
   const linesOnPhoto = await steadyShot(page, photoSide);
-  expect(linesOnPhoto.equals(withoutLayers)).toBe(false);
+  expect(await differing(page, linesOnPhoto, withoutLayers)).toBeGreaterThan(200);
   await stage.locator('svg.hv2-proof-frame').evaluate((element) => { (element as SVGElement).style.visibility = 'hidden'; });
-  expect((await steadyShot(page, photoSide)).equals(linesOnPhoto)).toBe(true);
+  expect(await differing(page, await steadyShot(page, photoSide), linesOnPhoto)).toBeLessThan(SPECKS);
   await stage.locator('svg.hv2-proof-frame').evaluate((element) => { (element as SVGElement).style.visibility = ''; });
   expect(await stage.locator('svg.hv2-proof-frame').evaluate((element) => getComputedStyle(element).clipPath)).toContain(`${DEFAULT_SPLIT}%`);
   await toggle.click();
@@ -235,22 +360,27 @@ test('the title block switches the right side: the contour with its figures, the
   await expect(stage.locator('.hv2-proof-scheme')).toBeVisible();
   await expect(stage.locator('.hv2-proof-load')).toBeHidden();
   if (desktop) {
-    for (const id of ['slope', 'ridge', 'gates']) await expect(figure(id)).toBeVisible();
+    for (const id of ['slope', 'gates']) await expect(figure(id)).toBeVisible();
     await expect(figure('proportion')).toBeHidden();
     await expect(figure('slope').locator('small')).toBeHidden();
+    // the slope's uncertainty is part of its title, also where the line under it is hidden
+    await expect(figure('slope')).toContainText('± 0,6°', { useInnerText: true });
     await expect(stage.locator('.hv2-proof-tag')).toHaveCount(homeProofFrame.tags.length);
     for (const tag of await stage.locator('.hv2-proof-tag').all()) await expect(tag).toBeVisible();
     await expect(stage.locator('.hv2-contour-seamtags > span').nth(1)).toHaveText('Схема ›');
   } else {
     // A phone: no words inside the frame — the figures are chips under the note
     await expect(stage.locator('.hv2-proof-labels')).toBeHidden();
-    await expect(sheet.locator('.hv2-contour-chips > span')).toHaveText(['Схил ≈ 10,5°', 'Гребінь посередині', 'Ворота однакові']);
+    await expect(sheet.locator('.hv2-contour-chips > span')).toHaveText(['Схил ≈ 10,5° ± 0,6°', 'Ворота однакові']);
   }
 
-  // «Контур»: no scheme; every figure with the line under it
+  await expect(stage.getByRole('img', { name: homeProofFrame.label })).toBeVisible();
+
+  // «Контур»: no scheme — and no name of it for a screen reader; every figure with the line under it
   await layers.getByRole('button', { name: 'Контур' }).click();
   await pressed('Контур');
   await expect(stage.locator('.hv2-proof-scheme')).toBeHidden();
+  await expect(stage.getByRole('img', { name: homeProofFrame.label })).toHaveCount(0);
   await expect(stage.locator('.hv2-contour-stamp')).toHaveText(/Виміряно за фото\s*без масштабу/);
   await expect(slider).toHaveAccessibleName('Порівняти фото й контур за фото');
   await expect(slider).toHaveAttribute('aria-valuetext', 'Фото ліворуч, контур за фото праворуч: більше фото');
@@ -270,13 +400,16 @@ test('the title block switches the right side: the contour with its figures, the
   await pressed('Навантаження');
   await expect(stage.locator('.hv2-proof-load')).toBeVisible();
   expect(Number(await stage.locator('.hv2-proof-scheme').evaluate((element) => getComputedStyle(element).opacity))).toBeLessThan(0.6);
-  await expect(stage.locator('.hv2-proof-flow')).toHaveCount(3);
+  await expect(stage.locator('.hv2-proof-flow')).toHaveCount(homeProofFrame.load.legs.length);
   await expect(stage.locator('.hv2-proof-snow path')).toHaveCount(homeProofFrame.load.arrows.length);
   await expect(figure('slope')).toBeHidden();
-  const chain = 'Сніг → покрівля → прогони → ферма → стіни й середня опора → фундаменти → ґрунт';
+  const chain = 'Сніг → покрівля → прогони → ферма → стіни → фундаменти → ґрунт';
   if (desktop) {
     await expect(stage.locator('.hv2-contour-chain')).toBeVisible();
     await expect(stage.locator('.hv2-contour-chain > span')).toHaveText(chain.split(' → '));
+    // over the gravel, under the frame's foot, not on the lit roof
+    const [chainBox, frameBox] = [(await stage.locator('.hv2-contour-chain').boundingBox())!, (await stage.boundingBox())!];
+    expect(chainBox.y).toBeGreaterThan(frameBox.y + frameBox.height * 0.6);
   } else {
     await expect(sheet.locator('.hv2-contour-chain-text')).toHaveText(chain);
     // its way down the frame wants the wider right side
@@ -444,6 +577,21 @@ test('on a phone «Фото» and «Схема» show one side whole, and bring 
   }
 });
 
+test('on a phone the title block keeps its height whichever layer is on', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'desktop-chromium', 'a phone\'s title block');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const width of [412, 390, 360, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    const { sheet, layers } = await open(page);
+    const heights = new Set<number>();
+    for (const layer of ['Каркас', 'Навантаження', 'Контур', 'Каркас']) {
+      await layers.getByRole('button', { name: layer }).click();
+      heights.add(Math.round((await sheet.locator('figcaption').boundingBox())!.height));
+    }
+    expect([...heights], `${width}`).toHaveLength(1);
+  }
+});
+
 test('arriving with motion, the lines draw, the scheme builds, and the seam glides once left and back', async ({ page }) => {
   test.setTimeout(45_000);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -475,6 +623,44 @@ test('arriving with motion, the lines draw, the scheme builds, and the seam glid
   expect(await solid.evaluate((element) => getComputedStyle(element).strokeDashoffset)).toMatch(/^0(px)?$/);
   expect(await dashed.evaluate((element) => getComputedStyle(element).opacity)).toBe('1');
   expect(await truss.evaluate((element) => getComputedStyle(element).strokeDashoffset)).toMatch(/^0(px)?$/);
+});
+
+test('arriving the usual way — the wheel, or a finger swiping over the sheet — the seam still glides once', async ({ page }, testInfo) => {
+  test.setTimeout(45_000);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
+    } catch { /* storage unavailable */ }
+  });
+  await page.goto('/', { waitUntil: 'load' });
+  const sheet = page.locator('#real-object .hv2-contour');
+  const stage = sheet.locator('.hv2-contour-stage');
+  await expect(sheet.locator('.hv2-contour-range')).toBeEnabled();
+  const viewport = page.viewportSize()!;
+  const top = () => sheet.evaluate((element) => element.getBoundingClientRect().top);
+  if (testInfo.project.name === 'desktop-chromium') {
+    // The pointer rests mid-window, so the wheel turns over the sheet once it scrolls under it
+    await page.mouse.move(viewport.width / 2, viewport.height / 2);
+    await sheet.evaluate((element) => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - window.innerHeight, behavior: 'instant' }));
+    while ((await top()) > 130) {
+      await page.mouse.wheel(0, 100);
+      await page.waitForTimeout(40);
+    }
+  } else {
+    // The sheet enters from below; the finger starts on it and swipes it up
+    await sheet.evaluate((element) => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - window.innerHeight + 200, behavior: 'instant' }));
+    for (let swipe = 0; swipe < 6 && (await top()) > 90; swipe += 1) {
+      const from = { x: viewport.width / 2, y: Math.min(viewport.height - 20, (await top()) + 120) };
+      await touchDrag(page, from, { x: from.x, y: from.y - 160 });
+      await page.waitForTimeout(80);
+    }
+  }
+  await expect(sheet).toHaveAttribute('data-sheet-state', 'on');
+  await expect(stage).toHaveAttribute('data-gliding', '', { timeout: 12_000 });
+  await expect(stage).toHaveAttribute('data-pulse', '', { timeout: 5_000 });
+  await expect(sheet.locator('.hv2-contour-range')).toHaveValue(String(DEFAULT_SPLIT));
 });
 
 test('any input in the sheet before the glide stops it', async ({ page }) => {
@@ -568,6 +754,43 @@ test('on a laptop the whole sheet fits under the header, and the crop keeps the 
     expect(Math.abs(rows.width), `${width}×${height}`).toBeLessThanOrEqual(1);
     expect(rows.top, `${width}×${height}`).toBeLessThanOrEqual(100);
     expect(rows.bottom, `${width}×${height}`).toBeGreaterThanOrEqual(640);
+    // …and the scheme's foot with it: the footings and the load's arrowheads end inside the frame
+    const foot = await stage.evaluate((element) => {
+      const svg = element.querySelector<SVGSVGElement>('svg.hv2-proof-frame')!;
+      const lowest = Math.max(...[...svg.querySelectorAll<SVGGraphicsElement>('.hv2-proof-footing, .hv2-proof-flow')].map((part) => {
+        const box = part.getBBox();
+        return box.y + box.height;
+      }));
+      const ctm = svg.getScreenCTM()!;
+      return { lowest: ctm.d * lowest + ctm.f, bottom: element.getBoundingClientRect().bottom };
+    });
+    expect(foot.lowest, `${width}×${height}`).toBeLessThanOrEqual(foot.bottom - 2);
+  }
+});
+
+test('from tablet to wide screen, no word on the frame covers another or runs off it', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'desktop windows');
+  test.setTimeout(120_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  // At rest in every layer from 761 px up; the seam dragged right over the figures on short laptops (where the seam's
+  // name used to land on them) and to the far right (where «‹ Фото» met the stamp)
+  const plan: [number, number, number[]][] = [
+    [761, 900, [DEFAULT_SPLIT]], [768, 1024, [DEFAULT_SPLIT]], [1024, 768, [DEFAULT_SPLIT, 70]], [1180, 820, [DEFAULT_SPLIT]],
+    [1280, 720, [DEFAULT_SPLIT, 64, 68, 72]], [1366, 768, [64, 68, 72]], [1440, 780, [64, 68, 72, 85, 88, 92, 95, 99]],
+    [1440, 900, [DEFAULT_SPLIT]], [1920, 1080, [DEFAULT_SPLIT]],
+  ];
+  for (const [width, height, splits] of plan) {
+    await page.setViewportSize({ width, height });
+    const { sheet, stage, slider, layers } = await open(page);
+    await sheet.evaluate((element) => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - 117, behavior: 'instant' }));
+    for (const layer of ['Каркас', 'Контур', 'Навантаження']) {
+      await layers.getByRole('button', { name: layer }).click();
+      for (const value of splits) {
+        await splitTo(page, slider, value);
+        // polled: the handle reaches the new split on the next frame
+        await expect.poll(() => clashes(stage, value === DEFAULT_SPLIT), { message: `${width}×${height} ${layer} ${value}`, timeout: 2_000 }).toEqual([]);
+      }
+    }
   }
 });
 
@@ -619,10 +842,22 @@ test('the sketch shows only in its test mode, read on the client, never on the d
   await expect(sketch.slider).toHaveAccessibleName('Порівняти фото й ескіз');
   await expect(sketch.stage.locator('.hv2-contour-stamp')).toHaveText(/Тест\s*згенероване зображення/);
   await expect(sketch.sheet.locator('.sheet-cell-note')).toContainText('Тестовий режим для порівняння.');
-  // The scheme is one press away, for the comparison
+  // The scheme's name is not read while the sketch is on
+  await expect(sketch.stage.getByRole('img', { name: homeProofFrame.label })).toHaveCount(0);
+  // «Контур на фото» lays the measured lines over the photo only: the sketch has its own composition
+  const toggle = sketch.sheet.getByRole('button', { name: 'Контур на фото', exact: true });
+  await toggle.click();
+  await expect(sketch.stage.locator('svg.hv2-contour-lines')).toBeVisible();
+  await expect.poll(() => sketch.stage.locator('svg.hv2-contour-lines').evaluate((element) => getComputedStyle(element).clipPath)).toMatch(/^inset\(0px (?:38%|calc\(38%\)) 0px 0px\)$/);
+  await toggle.click();
+  // The scheme is one press away, for the comparison — with its own note, not the sketch's
   await sketch.layers.getByRole('button', { name: 'Каркас' }).click();
   await expect(sketch.stage.locator('.hv2-proof-scheme')).toBeVisible();
   await expect(sketch.stage.locator('.hv2-contour-sketch')).toBeHidden();
+  const note = sketch.sheet.locator('.sheet-cell-note');
+  await expect(note).not.toContainText('згенероване');
+  await expect(note).toContainText('Креслень саме цього ангара в нас немає, тож каркас показано схемою');
+  await expect(sketch.stage.getByRole('img', { name: homeProofFrame.label })).toBeVisible();
   // No visible word names the old idea
   expect(await sketch.sheet.innerText()).not.toMatch(/x-?ray|рентген/i);
 });

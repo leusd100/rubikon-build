@@ -6,7 +6,9 @@ import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures'
 // The layers ProofContour lays right of its seam, all in the photo's own pixels on one canvas:
 //   ProofFrame — the SCHEME of a frame of this object's type inside its silhouette (app/data/homeProofFrame.ts):
 //     illustrative, in the sheet's paper colour, never copper (copper is what was measured), clipped to the drawn
-//     outline; and the snow's way through it, link by link, in copper (the «Навантаження» layer);
+//     outline, what stands behind the gable's plane dashed as hidden lines; and the snow's way through it, link by link
+//     (the «Навантаження» layer): the members it passes lit in that paper colour, the load itself in its own lighter,
+//     dotted tint — the legend's «навантаження», never the measured copper (review, 04.10);
 //   ProofMarks and ProofLabels — the measured figures' marks on the contour's own lines and their words
 //     (app/data/homeProofMeasures.ts), and the scheme's names on its members.
 // Which of them shows is the stage's data-layer (home-v2.css). The order they draw in on the first view is set here, as
@@ -32,7 +34,6 @@ function delayOf(member: FrameMember, index: number) {
   const fromRidge = Math.abs((x0 + x1) / 2 - apexX) / W;
   switch (member.group) {
     case 'wall': return 2600 + index * 40;
-    case 'support': return 2750;
     case 'footing': return 2900;
     case 'truss': return member.depth === 0 ? 3200 : 3900 + member.depth * 150;
     case 'web': return 3350 + fromRidge * 900;
@@ -42,12 +43,13 @@ function delayOf(member: FrameMember, index: number) {
   }
 }
 
-export function ProofFrame({ loadRun }: Readonly<{ loadRun: number }>) {
+/** `shown`: false while another layer is on the right (the scheme fades out, and its name must not be read) */
+export function ProofFrame({ loadRun, shown }: Readonly<{ loadRun: number; shown: boolean }>) {
   const { silhouette, walls, members, nodes, load, label } = homeProofFrame;
   const inside = members.filter((member) => member.group !== 'footing');
   const footings = members.filter((member) => member.group === 'footing');
   return (
-    <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+    <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} aria-hidden={shown ? undefined : true}>
       <defs>
         <clipPath id="hv2-proof-silhouette">
           {silhouette.map((outline, index) => <path key={index} d={d(outline, true)} />)}
@@ -72,9 +74,11 @@ export function ProofFrame({ loadRun }: Readonly<{ loadRun: number }>) {
             <path
               key={index}
               d={d(member.points, member.closed)}
-              pathLength={1}
+              // A member in the gable's plane draws in along its length; a hidden one (dashed) only fades in
+              pathLength={member.hidden ? undefined : 1}
               data-group={member.group}
               data-depth={member.depth}
+              data-hidden={member.hidden ? '' : undefined}
               style={{ '--d': `${Math.round(delayOf(member, index))}ms` } as CSSProperties}
             />
           ))}
@@ -119,7 +123,7 @@ export function ProofFrame({ loadRun }: Readonly<{ loadRun: number }>) {
 }
 
 export function ProofMarks() {
-  const { slope, axis, symmetry, gates, width, widthTicks, height, heightTicks } = homeProofMarks;
+  const { slope, gates, width, widthTicks, height, heightTicks } = homeProofMarks;
   const { tags } = homeProofFrame;
   const at = (id: string) => homeProofMeasures.find((measure) => measure.id === id)!.at;
   return (
@@ -130,10 +134,6 @@ export function ProofMarks() {
         {/* to the label over the roof in «Каркас», a short one down to it in «Контур» */}
         <path className="hv2-proof-leader" data-for="frame" d={d([slope.anchor, at('slope')])} />
         <path className="hv2-proof-leader" data-for="contour" d={d([slope.arc[0], [slope.arc[0][0] - 3, slope.arc[0][1] + 18]])} />
-      </g>
-      <g data-mark="ridge" data-on-frame="">
-        <path className="hv2-proof-mark-axis" d={d(axis)} />
-        {symmetry.map((bar, index) => <path key={index} d={d(bar)} />)}
       </g>
       <g data-mark="gates" data-on-frame="">
         {gates.map((tick, index) => <path key={index} d={d(tick)} />)}

@@ -10,22 +10,26 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 // HOME's proof (owner, 04.10): ONE «Креслення» sheet with the real photo, and right of a seam the visitor moves the same
 // frame as a tracing — grey, dark, on a fine grid — with one of three layers over it, chosen in the title block:
 //   «Контур» — the copper lines measured from eight photos of this hangar (solid — measured, dashed — approximate;
-//     app/data/homeProofContour.ts) and four scale-free figures measured from them: the roof's slope, the ridge in the
-//     middle, the two equal gates, the gable's width to its height (app/data/homeProofMeasures.ts). With «≈», «±» or «<»
-//     always, and never a size: the photos give no scale;
+//     app/data/homeProofContour.ts) and three scale-free figures measured from them: the roof's slope with its
+//     uncertainty, the two equal gates, the gable's width to its height (app/data/homeProofMeasures.ts). With «≈» and
+//     «±» always, and never a size: the photos give no scale. (Review, 04.10: «the ridge in the middle» is gone — the
+//     photo study assumes it, nobody measured it);
 //   «Каркас» (the default) — a SCHEME of a frame of the type the owner names for this object, drawn inside that
 //     silhouette in the photo's own perspective (app/data/homeProofFrame.ts): illustrative, labelled so on the sheet
 //     («Схема · без розмірів») and in the note; never this building's structure, which nobody can see under its
 //     cladding and whose drawings were not kept;
 //   «Навантаження» — the same scheme with the snow's way through it, link by link, roof to ground.
-// The scheme never goes over the photo: it lives right of the seam only. «Контур на фото» lays the measured lines (and
+// The scheme never goes over the photo: it lives right of the seam only, and so do the words that belong to it — the
+// stamp that says what it is and the load's chain, clipped at the seam. «Контур на фото» lays the measured lines (and
 // only those) over the photo as well, as proof that they land on it.
 //
 // The seam is a real range input (keys, screen readers). Mouse and pen drag anywhere in the frame; a finger drags only
 // the handle, so the page still scrolls and zooms under a thumb, and on a phone «Фото» / «Схема» show one side whole.
 // Arriving with motion, the sheet plots in, the lines draw, the scheme builds, and once the seam glides left and back
-// (a hint that it moves) — any pointer, key or wheel in the sheet stops that. With reduced motion or without JavaScript
-// the sheet stands complete at its resting split, the controls disabled until the page is hydrated.
+// (a hint that it moves) — a mouse or pen pressed in the sheet, a finger on the handle or a button, or a key there stops
+// that; scrolling the page over the sheet does not (review, 04.10: a wheel or a swipe is how a visitor arrives). With
+// reduced motion or without JavaScript the sheet stands complete at its resting split, the controls disabled until the
+// page is hydrated.
 //
 // On a laptop the sheet fits under the header: the stage keeps the sheet's width and crops the photo's sky and gravel
 // (home-v2.css); the photo, its tracing and every layer share one canvas in the photo's own pixels, so nothing slides.
@@ -35,12 +39,22 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 
 type Layer = 'contour' | 'frame' | 'load' | 'sketch';
 
-/** The seam's resting place: right of the left gate and left of the middle support, so each side keeps a gate */
+/** The seam's resting place: right of the left gate and left of the ridge, so each side keeps a gate */
 export const DEFAULT_SPLIT = 62;
 const PAGE_STEP = 10;
 /** The first view's glide: from the resting split to here and back */
 const GLIDE_TO = 42;
 const GLIDE_AT = 4800;
+/** The page must have stopped scrolling this long before the glide: the eye is on the way, not on the seam */
+const GLIDE_QUIET = 350;
+// What fits right of the seam (review, 04.10). The stamp and the load's chain lie on the right side only, clipped at the
+// seam (home-v2.css): the stamp keeps its full words while that side is wider than it, its first word below that, and
+// the seam's names give way before they reach the stamp or the frame's edge. Measured on the page (the frame's width,
+// the names' and the stamp's); in the server markup and without JavaScript, by per cent.
+const STAMP_OFFSET = 10;
+const SHORT_STAMP = 96;
+const AIR = 8;
+type Room = { width: number; left: number; right: number; stamp: number };
 
 const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; genitive: string }> = {
   contour: { button: 'Контур', seam: 'Контур', nominative: 'контур за фото', genitive: 'контуру' },
@@ -48,7 +62,17 @@ const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; 
   load: { button: 'Навантаження', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
   sketch: { button: 'Ескіз', seam: 'Ескіз · тест', nominative: 'ескіз', genitive: 'ескізу' },
 };
-const CHAIN = ['Сніг', 'покрівля', 'прогони', 'ферма', 'стіни й середня опора', 'фундаменти', 'ґрунт'];
+const CHAIN = ['Сніг', 'покрівля', 'прогони', 'ферма', 'стіни', 'фундаменти', 'ґрунт'];
+// The legend's keys per layer. Every layer's set is laid out in one cell, the others hidden, so the title block keeps one
+// height whichever is on (review, 04.10: on a 360 px phone the load's set took a second line and pushed the controls)
+type LegendKey = 'measured' | 'approximate' | 'scheme' | 'load';
+const LEGEND: Record<Layer, readonly LegendKey[]> = {
+  contour: ['measured', 'approximate'],
+  frame: ['measured', 'approximate', 'scheme'],
+  load: ['measured', 'scheme', 'load'],
+  sketch: [],
+};
+const LEGEND_WORDS: Record<LegendKey, string> = { measured: 'виміряно', approximate: 'наближено', scheme: 'схема', load: 'навантаження' };
 
 const { photo: contourPhoto, variants, lines, label } = homeProofContour;
 const SRC_SET = variants.map(({ src, width }) => `${src} ${width}w`).join(', ');
@@ -60,6 +84,18 @@ const clamp = (value: number) => Math.min(100, Math.max(0, value));
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
 const sketchRequested = () => new URLSearchParams(window.location.search).get('xray') === 'sketch';
+
+// See STAMP_OFFSET: whether the stamp keeps its full words, and which seam name gives way
+function fitOf(room: Room | null, split: number) {
+  if (!room) return { stampShort: false, narrowLeft: split < 12, narrowRight: split > 72 };
+  const right = (room.width * (100 - split)) / 100;
+  const stampShort = right < room.stamp + STAMP_OFFSET + AIR;
+  return {
+    stampShort,
+    narrowLeft: (room.width * split) / 100 < room.left + 3 + AIR,
+    narrowRight: right < room.right + 3 + AIR + (stampShort ? SHORT_STAMP : room.stamp) + STAMP_OFFSET,
+  };
+}
 
 // What the slider says instead of a per cent: which side is which, and roughly how much of each shows
 function valueText(value: number, layer: Layer) {
@@ -111,21 +147,25 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const rangeRef = useRef<HTMLInputElement>(null);
   const drag = useRef<{ pointer: number; offset: number } | null>(null);
   const touched = useRef(false);
+  const [room, setRoom] = useState<Room | null>(null);
 
   const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['contour', 'frame', 'load'];
   const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[sketchMode ? 0 : 1];
   const rightSide = LAYERS[layer];
 
   // The first view: once the sheet has arrived and the scheme has built, the seam glides left and back — on the stage's
-  // --split only (a registered custom property, home-v2.css), so the range's value and what it says never move. Any
-  // pointer, key or wheel in the sheet first, a scroll away or reduced motion: no glide.
+  // --split only (a registered custom property, home-v2.css), so the range's value and what it says never move. It
+  // waits until the stage is in view and the page has stopped scrolling. Only the visitor's own move in the sheet
+  // first, or reduced motion: no glide.
   useEffect(() => {
     const stage = stageRef.current;
     const sheet = stage?.closest('figure');
     if (!stage || !sheet || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let glide: Animation | undefined;
     let timer: number | undefined;
+    let due = false;
     let visible = false;
+    let scrolled = 0;
     const stop = () => {
       touched.current = true;
       window.clearTimeout(timer);
@@ -133,7 +173,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       delete stage.dataset.gliding;
     };
     const run = () => {
-      if (touched.current || !visible) return;
+      if (touched.current || !due || !visible || glide) return;
+      const quiet = performance.now() - scrolled;
+      if (quiet < GLIDE_QUIET) {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(run, GLIDE_QUIET - quiet);
+        return;
+      }
       stage.dataset.gliding = '';
       const from = `${DEFAULT_SPLIT}%`;
       const to = `${GLIDE_TO}%`;
@@ -148,23 +194,67 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         timer = window.setTimeout(() => delete stage.dataset.pulse, 1700);
       };
     };
-    const seen = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { threshold: 0.35 });
+    const seen = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      run();
+    }, { threshold: 0.35 });
     seen.observe(stage);
     const arrived = new MutationObserver(() => {
       if (sheet.getAttribute('data-sheet-state') !== 'on') return;
       arrived.disconnect();
-      timer = window.setTimeout(run, GLIDE_AT);
+      timer = window.setTimeout(() => {
+        due = true;
+        run();
+      }, GLIDE_AT);
     });
     arrived.observe(sheet, { attributes: true, attributeFilter: ['data-sheet-state'] });
-    for (const type of ['pointerdown', 'keydown', 'wheel'] as const) sheet.addEventListener(type, stop, { passive: true });
+    const onScroll = () => { scrolled = performance.now(); };
+    // A mouse or a pen pressed anywhere in the sheet is the visitor's own move; a finger only on what it can move (the
+    // handle, a button): elsewhere it scrolls the page. Keys reach the sheet only on its range and buttons
+    const onPointer = (event: globalThis.PointerEvent) => {
+      if (event.pointerType === 'touch' && !(event.target as Element).closest('.hv2-contour-handle, button')) return;
+      stop();
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    sheet.addEventListener('pointerdown', onPointer, { passive: true });
+    sheet.addEventListener('keydown', stop);
     return () => {
       seen.disconnect();
       arrived.disconnect();
       window.clearTimeout(timer);
       glide?.cancel();
-      for (const type of ['pointerdown', 'keydown', 'wheel'] as const) sheet.removeEventListener(type, stop);
+      window.removeEventListener('scroll', onScroll);
+      sheet.removeEventListener('pointerdown', onPointer);
+      sheet.removeEventListener('keydown', stop);
     };
   }, []);
+
+  // The room right and left of the seam (see STAMP_OFFSET): the frame's width, the seam names' and the full stamp's,
+  // again when the frame resizes, the layer changes their words or the fonts arrive. A short stamp keeps the full
+  // stamp's width last measured
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    let live = true;
+    const measure = () => {
+      if (!live) return;
+      const [left = 0, right = 0] = [...stage.querySelectorAll<HTMLElement>('.hv2-contour-seamtags > span')].map((tag) => tag.offsetWidth);
+      const stamp = stage.querySelector<HTMLElement>('.hv2-contour-stamp');
+      const full = stamp && stage.dataset.stamp !== 'short' ? stamp.offsetWidth : 0;
+      setRoom((previous) => {
+        const next = { width: stage.clientWidth, left, right, stamp: full || previous?.stamp || 196 };
+        return previous && Object.entries(next).every(([key, value]) => previous[key as keyof Room] === value) ? previous : next;
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    void document.fonts?.ready.then(measure);
+    return () => {
+      live = false;
+      observer.disconnect();
+    };
+  }, [layer]);
 
   const splitAt = (clientX: number, offset = 0) => {
     const box = stageRef.current?.getBoundingClientRect();
@@ -229,6 +319,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
 
   const measured = homeProofMeasures.filter((measure) => measure.chip);
+  const { stampShort, narrowLeft, narrowRight } = fitOf(room, split);
   const sliderLabel = `Порівняти фото й ${{ contour: 'контур за фото', frame: 'схему', load: 'схему', sketch: 'ескіз' }[layer]}`;
 
   return (
@@ -240,7 +331,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         {
           tone: 'note',
           label: 'Об’єкт',
-          value: sketchMode ? (
+          // The sketch's own note only while the sketch is on the right: the drawn scheme keeps its own in test mode too
+          value: layer === 'sketch' ? (
             <>
               <b>Тестовий режим для порівняння.</b> Праворуч — згенероване зображення, не фото й не креслення; його
               композиція не збігається з фото.
@@ -277,11 +369,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   </button>
                 ))}
               </span>
-              <span className="hv2-contour-legend" data-layer={layer}>
-                <span data-key="measured">{legendLine}виміряно</span>
-                <span data-key="approximate" data-approximate="">{legendLine}наближено</span>
-                <span data-key="scheme">{legendLine}схема</span>
-                <span data-key="load">{legendLine}навантаження</span>
+              <span className="hv2-contour-legend">
+                {layers.map((name) => (
+                  <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={name === layer ? '' : undefined}>
+                    {LEGEND[name].map((key) => (
+                      <span key={key} data-key={key} data-approximate={key === 'approximate' ? '' : undefined}>{legendLine}{LEGEND_WORDS[key]}</span>
+                    ))}
+                  </span>
+                ))}
               </span>
             </>
           ),
@@ -310,9 +405,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-dragging={dragging ? '' : undefined}
         data-lines-on-photo={linesOnPhoto ? '' : undefined}
         data-pointer-focus={pointerFocus ? '' : undefined}
-        // The seam's names give way where their side is too narrow, or the right one under the stamp
-        data-narrow-left={split < 12 ? '' : undefined}
-        data-narrow-right={split > 72 ? '' : undefined}
+        // The seam's names give way where their side is too narrow, the right one before the stamp; the stamp shortens
+        data-narrow-left={narrowLeft ? '' : undefined}
+        data-narrow-right={narrowRight ? '' : undefined}
+        data-stamp={stampShort ? 'short' : undefined}
         data-photo-only={split >= 100 ? '' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -348,7 +444,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               />
             </div>
           )}
-          <ProofFrame loadRun={loadRun} />
+          <ProofFrame loadRun={loadRun} shown={layer === 'frame' || layer === 'load'} />
           <svg
             className="hv2-contour-lines"
             viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}
@@ -362,7 +458,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           <ProofMarks />
           <ProofLabels />
         </div>
-        {/* The top right corner, outside the canvas (never cropped): what the right side is, and the load's chain */}
+        {/* The right side's own words, outside the canvas (never cropped) and on that side only (clipped at the seam):
+            what it is, top right; the load's chain, bottom right */}
         <span className="hv2-contour-corner" aria-hidden="true">
           <span className="hv2-contour-stamp">
             <small>

@@ -1,16 +1,25 @@
 /**
  * «Виміряно за фото · без масштабу» — the figures HOME writes on its one real photo (ProofContour). MEASURED (04.10):
- * each one comes from the frozen photo study of this hangar (eight photos; the register's record ids are kept in
- * `source`, never rendered) and is scale-free — an angle, a ratio, a share of the gable's width. No length, area or
- * level: the photos give no scale, and the page says so.
+ * each one comes from the frozen photo study of this hangar (eight photos, its geometry register) and is scale-free — an
+ * angle, a ratio, an equality. No length, area or level: the photos give no scale, and the page says so.
+ *
+ * Which register records: the slope — PG006 (the roof's pitch by the frozen shell, 10.52 ± 0.6°); the gates — PG012–
+ * PG019 (both openings' jambs, widths and heights, equal and mirrored about the gable's middle within their
+ * uncertainties); the proportion — PG003 (the ridge over the cladding's bottom, 0.3154 ± 0.0029 of the gable's width).
+ * The ids stay here and in tests/unit/home-proof-frame.test.ts, never in the shipped data.
+ *
+ * Not a figure (review, 04.10): «the ridge in the middle». PG011 is the test bound of the two eaves' height difference,
+ * not a ridge offset; the frozen shell builds the ridge at the middle (x = 0.5) and never measures it, and in this
+ * frame the left rake sits ≈ 12.7 px off the shell's line, cause unproven. Nor «both rakes» on the slope: the shell
+ * forces them equal; the slope is one profile figure.
  *
  * The words are made from the values by the formatters below, so a figure on the page can only be the register's own,
- * with its «≈», «±» or «<»: 10.52 ± 0.6 is «≈ 10,5°» and «± 0,6°» (decimal comma, a no-break space after the sign).
- * tests/unit/home-proof-frame.test.ts pins the values, the sources and the grammar.
+ * with its «≈» and «±»: 10.52 ± 0.6 is «≈ 10,5° ± 0,6°» (decimal comma, a no-break space after the sign).
+ * tests/unit/home-proof-frame.test.ts pins the values and the grammar.
  *
  * The geometry (photo pixels of the 1536 × 788 frame, x right, y down) is drawn on the contour's own lines: the slope's
- * arc between the drawn right rake (solid, measured) and a level line through its foot, the axis through the drawn
- * apex, «=» marks on the head and the outer jamb of both gates, and the gable's width with the ridge's height.
+ * arc between the drawn right rake (solid, measured) and a level line through its foot, «=» marks on the head and the
+ * outer jamb of both gates, and the gable's width with the ridge's height.
  */
 
 type Pt = readonly [number, number];
@@ -20,15 +29,11 @@ const NBSP = ' ';
 export const approx = (value: number, digits = 1) => `≈${NBSP}${value.toFixed(digits).replace('.', ',')}`;
 /** «± 0,6» */
 export const plusMinus = (value: number, digits = 1) => `±${NBSP}${value.toFixed(digits).replace('.', ',')}`;
-/** «< 1 %»: a bound, rounded up to a whole per cent */
-export const below = (share: number) => `<${NBSP}${Math.ceil(share * 100)}${NBSP}%`;
 
-export type MeasureId = 'slope' | 'ridge' | 'gates' | 'proportion';
+export type MeasureId = 'slope' | 'gates' | 'proportion';
 
 export type Measure = {
   id: MeasureId;
-  /** The register records the figure rests on — for the tests and the next audit, never rendered */
-  source: readonly string[];
   /** The register's value and its practical uncertainty, as recorded */
   value?: number;
   u?: number;
@@ -49,11 +54,10 @@ export type Measure = {
   onFrame: boolean;
 };
 
-// PG006: the roof's pitch, the rake silhouette's slope, both rakes forced equal in the frozen shell
+// PG006: the roof's pitch by the frozen shell, atan(rise / 0.5) — one profile figure
 const PITCH = 10.52;
 const PITCH_U = 0.6;
-// PG011: the gable is symmetric within this share of its width (the test's bound)
-const SYMMETRY = 0.006;
+const comma = (value: number) => value.toFixed(1).replace('.', ',');
 // PG003: the ridge's height over the cladding's bottom, the gable's width = 1
 const RIDGE = 0.3154;
 const RIDGE_U = 0.0029;
@@ -63,51 +67,41 @@ const WIDTH_PER_HEIGHT_U = (RIDGE_U / RIDGE) * WIDTH_PER_HEIGHT;
 export const homeProofMeasures: readonly Measure[] = [
   {
     id: 'slope',
-    source: ['PG006'],
     value: PITCH,
     u: PITCH_U,
-    title: `Схил даху ${approx(PITCH)}°`,
-    detail: `обидва скати · ${plusMinus(PITCH_U)}°`,
-    spoken: `Схил даху приблизно ${PITCH.toFixed(1).replace('.', ',')} градуса, похибка ${PITCH_U.toFixed(1).replace('.', ',')} градуса, обидва скати однакові`,
-    chip: `Схил ${approx(PITCH)}°`,
+    // The uncertainty is part of the figure, on every layer and on a phone (review, 04.10)
+    title: `Схил даху ${approx(PITCH)}° ${plusMinus(PITCH_U)}°`,
+    detail: 'для кута масштаб не потрібен',
+    spoken: `Схил даху приблизно ${comma(PITCH)} градуса, похибка ${comma(PITCH_U)} градуса; для кута масштаб не потрібен`,
+    chip: `Схил ${approx(PITCH)}° ${plusMinus(PITCH_U)}°`,
     at: [1240, 150],
     align: 'end',
-    atContour: [1372, 320],
+    atContour: [1330, 330],
     alignContour: 'middle',
     onFrame: true,
   },
   {
-    id: 'ridge',
-    source: ['PG011'],
-    value: SYMMETRY,
-    title: 'Гребінь посередині',
-    detail: `зсув ${below(SYMMETRY)} ширини`,
-    spoken: `Гребінь посередині фронтона: зсув менше ${Math.ceil(SYMMETRY * 100)} відсотка ширини`,
-    chip: 'Гребінь посередині',
-    at: [1050, 108],
-    align: 'start',
-    onFrame: true,
-  },
-  {
     id: 'gates',
-    source: ['PG012', 'PG013', 'PG014', 'PG015', 'PG016', 'PG017', 'PG018', 'PG019'],
     title: 'Ворота однакові',
     detail: 'ширина й висота, дзеркально',
     spoken: 'Двоє воріт однакові за шириною й висотою і стоять дзеркально від середини фронтона, у межах похибки',
     chip: 'Ворота однакові',
     at: [1135, 422],
     align: 'middle',
+    // With the line under it, from the gate's left jamb, over the jamb's «=» marks: centred, it met the handle on a
+    // tablet
+    atContour: [1065, 405],
+    alignContour: 'start',
     onFrame: true,
   },
   {
     id: 'proportion',
-    source: ['PG003'],
     value: WIDTH_PER_HEIGHT,
     u: WIDTH_PER_HEIGHT_U,
     title: `Ширина торця ${approx(WIDTH_PER_HEIGHT)} висоти`,
     detail: 'висота — від низу облицювання до гребеня',
-    spoken: `Ширина торця — приблизно ${WIDTH_PER_HEIGHT.toFixed(1).replace('.', ',')} його висоти до гребеня`,
-    at: [1250, 584],
+    spoken: `Ширина торця — приблизно ${comma(WIDTH_PER_HEIGHT)} його висоти до гребеня`,
+    at: [1180, 586],
     align: 'middle',
     onFrame: false,
   },
@@ -120,8 +114,6 @@ export const homeProofMarks = {
     level: [[1483.7, 295.2], [1349.5, 283.8]] as readonly Pt[],
     anchor: [1377.7, 271.1] as Pt,
   },
-  axis: [[1007.6, 605.6], [1004.5, 62.6]] as readonly Pt[],
-  symmetry: [[[984.3, 80.7], [1024.7, 86.6]], [[984.3, 70.1], [1024.6, 76.1]]] as readonly (readonly Pt[])[],
   gates: [
     [[825.4, 333.8], [830.7, 299.4]], [[835.7, 334.3], [840.9, 300.1]], [[908.9, 455.6], [942.9, 447.6]], [[908.9, 438.5], [942.9, 430.7]],
     [[1129.9, 351], [1133.7, 320]], [[1138.3, 351.4], [1142, 320.6]], [[1201.8, 459.8], [1229.2, 452.6]], [[1201.5, 444.4], [1228.9, 437.3]],
