@@ -259,7 +259,7 @@ main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight:
    laptop the stage crops the canvas's sky and gravel (below), never its sides. A dark sheet in this dark band in either
    theme, its title block in the band's text roles; the «Креслення» square language — no pills, no shadows. */
 
-/* The seam's position, registered so the first view's glide can animate it (ProofContour) */
+/* The seam's position, registered so the first view's sweep can animate it (ProofContour) */
 @property --split { syntax: '<percentage>'; inherits: true; initial-value: 62%; }
 
 main[data-home="v2"] .hv2-proof { margin-top: 36px; }
@@ -274,6 +274,9 @@ main[data-home="v2"] .hv2-contour {
      widths are set in the drawing's units (no non-scaling-stroke — with pathLength Chrome measures the dash on screen
      and cuts the line's end, app/pro-nas/about.css) */
   --u: 1.25px;
+  /* Line weights on a drawing's scale, in --u (owner review, 04.10: «дорожче»): the measured outline heaviest; chords,
+     columns and what a section cuts; webs, purlins, bracing and what stands behind; the blockwork finest */
+  --lw-1: 2.2; --lw-2: 1.5; --lw-3: .8; --lw-4: .45;
 }
 main[data-home="v2"] .hv2-contour .sheet-image { flex: none; aspect-ratio: 1536 / 788; background: #0f1110; }
 main[data-home="v2"] .hv2-contour-stage {
@@ -307,12 +310,13 @@ main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"][data-lines-on-photo
 
 /* The measured lines (app/data/homeProofContour.ts): solid — measured, dashed — approximate */
 main[data-home="v2"] .hv2-contour-lines path {
-  --w: 1.25; fill: none; stroke-width: calc(var(--u) * var(--w) * var(--k, 1)); stroke-linecap: round; stroke-linejoin: round;
-  stroke-dasharray: 1; stroke-dashoffset: 0;
+  --w: 1.1; fill: none; stroke-width: calc(var(--u) * var(--w) * var(--k, 1)); stroke-linecap: butt; stroke-linejoin: miter;
 }
-main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { --w: 2; }
-main[data-home="v2"] .hv2-contour-lines path[data-kind="gate"] { --w: 1.75; }
-main[data-home="v2"] .hv2-contour-lines path[data-approximate] { stroke-linecap: butt; stroke-dasharray: calc(var(--u) * 6) calc(var(--u) * 5); }
+main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { --w: var(--lw-1); }
+main[data-home="v2"] .hv2-contour-lines path[data-kind="gate"] { --w: 1.6; }
+main[data-home="v2"] .hv2-contour-lines path[data-approximate] { stroke-dasharray: calc(var(--u) * 6) calc(var(--u) * 5); }
+/* The line the dragged seam holds (ProofContour's snap): heavier and lighter while it is held, its name by the seam */
+main[data-home="v2"] .hv2-contour-ink path[data-snapped] { --k: 1.8; stroke: #f0b48a; }
 main[data-home="v2"] .hv2-contour-ink path { stroke: var(--hv2-copper-text); }
 /* A thin dark casing under each line: it disappears on the tracing and keeps the copper legible on the light cladding */
 main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); stroke-width: calc(var(--u) * (var(--w) * var(--k, 1) + 2)); }
@@ -321,48 +325,53 @@ main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); st
    behind the gable's plane solid in copper, fainter with depth (owner, 04.10: no dashes, «помаранчевим, як ми робили»);
    the walls' faces as faint aerated-concrete blockwork, the long walls cut in section at both corners and hatched with
    the footings under them — «умовно» */
-main[data-home="v2"] .hv2-proof-frame path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+main[data-home="v2"] .hv2-proof-frame path { fill: none; stroke-linecap: butt; stroke-linejoin: miter; }
 main[data-home="v2"] .hv2-proof-scheme [data-group] {
-  --o: .92; --w: 1; stroke: var(--hv2-scheme); stroke-opacity: calc(var(--o) * var(--depth, 1)); stroke-width: calc(var(--u) * var(--w));
-  stroke-dasharray: 1; stroke-dashoffset: 0;
+  --o: .92; --w: var(--lw-3); stroke: var(--hv2-scheme); stroke-opacity: calc(var(--o) * var(--depth, 1)); stroke-width: calc(var(--u) * var(--w));
 }
 main[data-home="v2"] .hv2-proof-scheme [data-depth="1"] { --depth: .37; }
 main[data-home="v2"] .hv2-proof-scheme [data-depth="2"] { --depth: .18; }
-main[data-home="v2"] .hv2-proof-scheme [data-group="truss"] { --w: 1.75; }
-main[data-home="v2"] .hv2-proof-scheme [data-group="web"] { --w: 1.05; }
-main[data-home="v2"] .hv2-proof-scheme [data-group="wall"] { --w: 1.2; --o: .72; }
-main[data-home="v2"] .hv2-proof-scheme [data-group="purlin"] { --w: 1; --o: .6; }
-main[data-home="v2"] .hv2-proof-scheme [data-group="bracing"] { --w: 1; --o: .9; }
-main[data-home="v2"] .hv2-proof-scheme [data-group="column"] { --w: 1.5; }
+main[data-home="v2"] .hv2-proof-scheme :is([data-group="truss"], [data-group="column"]) { --w: var(--lw-2); }
+main[data-home="v2"] .hv2-proof-scheme [data-group="web"] { --w: var(--lw-3); --o: .9; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="wall"] { --w: 1.1; --o: .72; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="purlin"] { --o: .6; }
+main[data-home="v2"] .hv2-proof-scheme [data-group="bracing"] { --o: .9; }
 main[data-home="v2"] .hv2-proof-frame [data-group="column"][data-depth="0"] { fill: rgba(237, 232, 222, .14); }
-main[data-home="v2"] .hv2-proof-scheme [data-hidden] { --o: 1; stroke: var(--hv2-copper-text); stroke-dasharray: none; }
+main[data-home="v2"] .hv2-proof-scheme [data-hidden] { --o: 1; --w: .7; stroke: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-depth="1"] { --depth: .78; }
 main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-depth="2"] { --depth: .5; }
-main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-group="purlin"] { --w: .9; }
-main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-group="truss"] { --w: 1.3; }
-main[data-home="v2"] .hv2-proof-frame .hv2-proof-blocks { stroke: var(--hv2-scheme); stroke-opacity: .17; stroke-width: calc(var(--u) * .5); stroke-linecap: butt; }
+main[data-home="v2"] .hv2-proof-scheme [data-hidden]:is([data-group="truss"], [data-group="column"]) { --w: 1.1; }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-blocks { stroke: var(--hv2-scheme); stroke-opacity: .17; stroke-width: calc(var(--u) * var(--lw-4)); }
 main[data-home="v2"] .hv2-proof-frame .hv2-proof-blocks[data-depth="1"] { stroke-opacity: .12; }
+/* What a section cuts: outlined heavier than anything it holds, hatched at a step the frame's width can draw */
 main[data-home="v2"] .hv2-proof-frame :is(.hv2-proof-cut, .hv2-proof-footing[data-cut]) {
-  fill: url(#hv2-proof-hatch); stroke: var(--hv2-scheme); stroke-opacity: .85; stroke-width: calc(var(--u) * 1.2);
+  fill: url(#hv2-proof-hatch); stroke: var(--hv2-scheme); stroke-opacity: .85; stroke-width: calc(var(--u) * var(--lw-2));
 }
-main[data-home="v2"] #hv2-proof-hatch rect { fill: #111312; fill-opacity: .6; }
-main[data-home="v2"] #hv2-proof-hatch path { stroke: rgba(237, 232, 222, .5); stroke-width: 1; }
-main[data-home="v2"] .hv2-proof-nodes rect { fill: var(--hv2-scheme); fill-opacity: .85; }
-main[data-home="v2"] .hv2-proof-footing { stroke: var(--hv2-scheme); stroke-opacity: .6; stroke-width: var(--u); }
+@media (max-width: 959px) { main[data-home="v2"] .hv2-proof-frame :is(.hv2-proof-cut, .hv2-proof-footing[data-cut]) { fill: url(#hv2-proof-hatch-m); } }
+@media (max-width: 599px) { main[data-home="v2"] .hv2-proof-frame :is(.hv2-proof-cut, .hv2-proof-footing[data-cut]) { fill: url(#hv2-proof-hatch-l); } }
+main[data-home="v2"] .hv2-proof-hatch rect { fill: #111312; fill-opacity: .6; }
+main[data-home="v2"] .hv2-proof-hatch path { stroke: rgba(237, 232, 222, .5); stroke-width: calc(var(--u) * var(--lw-4) * 1.4); }
+/* The truss's panel points: open circles, as a drawing marks a node */
+main[data-home="v2"] .hv2-proof-nodes circle { fill: #141615; stroke: var(--hv2-scheme); stroke-width: calc(var(--u) * .9); }
+main[data-home="v2"] .hv2-proof-footing { stroke: var(--hv2-scheme); stroke-opacity: .6; stroke-width: calc(var(--u) * var(--lw-3)); }
 main[data-home="v2"] .hv2-proof-footing[data-depth="1"] { stroke: var(--hv2-copper-text); stroke-opacity: .6; }
 main[data-home="v2"] .hv2-proof-frame .hv2-proof-footing[data-cut] { stroke-opacity: .6; }
 
-/* The snow's way (the «Навантаження» layer): the arrows, the strip of roof the gable's truss carries, the blocks the
-   purlins bear on, the truss, then the walls, the footings and the ground, link by link, with drops running down the two
-   legs (FrameTour's language, app/components/angary/frame-tour.css). The members it passes light up in the scheme's own
-   paper, full strength and with a warm glow; the load itself — the snow, the drops, the ground — is the legend's dotted
+/* The snow's way (the «Навантаження» layer): a load spread over the roof — one line and an even comb of arrows — the
+   strip of roof the gable's truss carries, where it settles, the nodes the purlins bear on, the truss, then the walls and
+   the column, the footings and the ground, link by link, with drops running down the three legs (FrameTour's language,
+   app/components/angary/frame-tour.css). The members it passes light up in the scheme's own paper on a dark casing —
+   weight, not a glow (owner review, 04.10); the load itself — the snow, the drops, the ground — is the legend's
    «навантаження» tint. Nothing here is the measured copper */
-main[data-home="v2"] .hv2-proof-snow path { stroke: var(--hv2-load); stroke-width: calc(var(--u) * 1.6); }
+main[data-home="v2"] .hv2-proof-snow path { stroke: var(--hv2-load); stroke-width: calc(var(--u) * 1.1); }
+main[data-home="v2"] .hv2-proof-snow .hv2-proof-comb { stroke-width: calc(var(--u) * 1.3); }
 main[data-home="v2"] :is(#hv2-proof-head, #hv2-proof-foot) path { fill: var(--hv2-load); }
-main[data-home="v2"] .hv2-proof-frame .hv2-proof-roof { fill: var(--hv2-load); fill-opacity: .15; }
-main[data-home="v2"] .hv2-proof-bearing rect { fill: var(--hv2-load); }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-roof path { fill: var(--hv2-load); fill-opacity: .2; }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-roof .hv2-proof-roof-edge { fill: none; stroke: var(--hv2-load); stroke-width: calc(var(--u) * 2.6); }
+main[data-home="v2"] .hv2-proof-bearing circle { fill: var(--hv2-load); }
 main[data-home="v2"] .hv2-proof-lit-truss path { stroke: var(--hv2-scheme); stroke-width: calc(var(--u) * 1.3); }
-main[data-home="v2"] .hv2-proof-frame .hv2-proof-link { stroke: var(--hv2-scheme); stroke-width: calc(var(--u) * 2.6); filter: drop-shadow(0 0 calc(var(--u) * 2.5) rgba(240, 180, 138, .6)); }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-link path { stroke: var(--hv2-scheme); stroke-width: calc(var(--u) * 2); }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-link .hv2-proof-link-casing { stroke: #0d0f0e; stroke-opacity: .85; stroke-width: calc(var(--u) * 4.6); }
 main[data-home="v2"] .hv2-proof-frame .hv2-proof-flow {
   stroke: var(--hv2-load); stroke-width: calc(var(--u) * 4.5); stroke-dasharray: calc(var(--u) * .5) calc(var(--u) * 13); stroke-dashoffset: 0;
 }
@@ -465,6 +474,15 @@ main[data-home="v2"] .hv2-contour-seamtags > span {
 main[data-home="v2"] .hv2-contour-seamtags > span:first-child { right: 3px; }
 main[data-home="v2"] .hv2-contour-seamtags > span:last-child { left: 3px; color: var(--hv2-copper-text); border-color: var(--hv2-copper-text); }
 /* Given way, a name keeps its width (ProofContour measures it) */
+/* The name of the measured line the dragged seam holds (ProofContour's snap), at the seam's foot, on the wider side */
+main[data-home="v2"] .hv2-contour-snap {
+  position: absolute; z-index: 3; bottom: 12px; left: var(--split); padding: 5px 9px; color: var(--hv2-text); white-space: nowrap; pointer-events: none;
+  background: rgba(19, 21, 20, .92); border: 1px solid var(--hv2-copper-text); font: 600 12.5px/1.2 var(--font-manrope), sans-serif;
+  opacity: 0; transform: translateX(10px); transition: opacity 200ms ease;
+}
+main[data-home="v2"] .hv2-contour-snap small { margin-left: 6px; color: var(--hv2-copper-text); font-size: 11.5px; }
+main[data-home="v2"] .hv2-contour-stage[data-snap-side="left"] .hv2-contour-snap { transform: translateX(calc(-100% - 10px)); }
+main[data-home="v2"] .hv2-contour-stage[data-snapped] .hv2-contour-snap { opacity: 1; }
 main[data-home="v2"] .hv2-contour-stage[data-narrow-left] .hv2-contour-seamtags > span:first-child,
 main[data-home="v2"] .hv2-contour-stage[data-narrow-right] .hv2-contour-seamtags > span:last-child { visibility: hidden; }
 
@@ -505,39 +523,30 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
 }
 @keyframes hv2-contour-pulse { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
 
-/* Arriving: once the sheet has plotted its picture in (DrawingSheet: 120 + 900 ms), the lines draw — the solid ones
-   along their length, the dashed ones fade in — the figures appear, and the scheme builds: the walls, the gable's truss
-   from the ridge outward, the bays behind it, the names (ProofFrame sets each part's --d). Once. The sheet arms only
-   after hydration and with motion allowed, so without JavaScript or with reduced motion all of it stands complete. */
-main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-contour-lines path { stroke-dashoffset: 1; }
-main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-contour-lines path[data-approximate] { stroke-dashoffset: 0; opacity: 0; }
-main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-proof-scheme [data-group]:not([data-hidden]) { stroke-dashoffset: 1; }
-main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] .hv2-proof-scheme [data-hidden] { opacity: 0; }
-main[data-home="v2"] .hv2-contour[data-sheet-state="armed"] :is(.hv2-proof-cut, .hv2-proof-blocks, .hv2-proof-nodes, .hv2-proof-footing, .hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
-@keyframes hv2-contour-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* Arriving (owner review, 04.10 — «шов-плотер»): the sheet plots its picture in, a whole photo (DrawingSheet: 120 +
+   900 ms, the seam held at the right edge by data-sweep="wait"); then the seam sweeps from the right edge across the
+   gable and back to rest, and everything it has passed is the drawing — the tracing, the measured lines, the scheme,
+   whole (ProofContour drives --split). The figures and the names come in when it rests. Once. Without JavaScript or with
+   reduced motion the sheet stands complete at rest. */
+main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] { --split: 100% !important; }
+main[data-home="v2"] .hv2-contour-stage[data-sweep] :is(.hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
 @keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path { animation: hv2-contour-draw 1000ms var(--sheet-plot) calc(1080ms + var(--i, 0) * 110ms) backwards; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path[data-kind="outline"] { animation-duration: 1500ms; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-contour-lines path[data-approximate] { animation-name: hv2-contour-fade; animation-duration: 600ms; animation-timing-function: ease; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] :is(.hv2-proof-marks, .hv2-proof-labels) { animation: hv2-contour-fade 500ms ease 2000ms backwards; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] :is(.hv2-proof-cut, .hv2-proof-blocks) { animation: hv2-contour-fade 700ms ease 2600ms backwards; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-proof-scheme [data-group] { animation: hv2-contour-draw 600ms var(--sheet-plot) var(--d, 3200ms) backwards; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-proof-scheme [data-hidden] { animation-name: hv2-contour-fade; animation-duration: 500ms; animation-timing-function: ease; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-proof-footing { animation: hv2-contour-fade 500ms ease 2900ms backwards; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] .hv2-proof-nodes { animation: hv2-contour-fade 400ms ease 4200ms backwards; }
-  main[data-home="v2"] .hv2-contour[data-sheet-state="on"] :is(.hv2-proof-tag, .hv2-proof-tag-leaders) { animation: hv2-contour-fade 400ms ease 4400ms backwards; }
+  /* The seam as the plotter's head while it sweeps: a soft copper light along it */
+  main[data-home="v2"] .hv2-contour-stage[data-sweep="run"] .hv2-contour-seam { box-shadow: 0 0 16px 3px rgba(224, 164, 122, .5); }
 
   /* The load: a link every 450 ms, the chain over the frame in step; the drops run down the legs three times, then rest
      on the lit path. Replayed on every press of «Навантаження» (ProofFrame keys the group) */
   main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load > :is(g, path) { animation: hv2-contour-fade 420ms ease calc(200ms + var(--n, 0) * 450ms) backwards; }
   main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-snow path { animation: hv2-contour-snow 600ms var(--sheet-plot) calc(200ms + var(--k, 0) * 70ms) backwards; }
+  main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-roof-edge { animation: hv2-proof-settle 700ms var(--sheet-plot) 650ms backwards; }
   main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load .hv2-proof-flow {
     animation: hv2-contour-fade 420ms ease 1550ms backwards, hv2-contour-flow 1600ms linear 1550ms 3;
   }
   main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-contour-chain > span { animation: hv2-contour-link 420ms ease calc(200ms + var(--n, 0) * 450ms) backwards; }
 }
 @keyframes hv2-contour-snow { from { opacity: 0; transform: translateY(-14px); } }
+@keyframes hv2-proof-settle { from { stroke-width: 0; } }
 @keyframes hv2-contour-flow { to { stroke-dashoffset: calc(var(--u) * -27); } }
 @keyframes hv2-contour-link { from { color: var(--hv2-text-3); } }
 

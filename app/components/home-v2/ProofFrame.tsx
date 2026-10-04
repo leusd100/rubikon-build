@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { homeProofContour } from '../../data/homeProofContour';
-import { homeProofFrame, type FrameMember } from '../../data/homeProofFrame';
+import { homeProofFrame } from '../../data/homeProofFrame';
 import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures';
 
 // The layers ProofContour lays right of its seam, all in the photo's own pixels on one canvas:
@@ -12,13 +12,17 @@ import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures'
 //     dotted tint — the legend's «навантаження», never the measured copper (review, 04.10);
 //   ProofMarks and ProofLabels — the measured figures' marks on the contour's own lines and their words
 //     (app/data/homeProofMeasures.ts), and the scheme's names on its members.
-// Which of them shows is the stage's data-layer (home-v2.css). The order they draw in on the first view is set here, as
-// a delay per part: the walls, the gable's truss from the ridge outward, then the bays behind it and the names.
+// Which of them shows is the stage's data-layer (home-v2.css). On the first view nothing draws in on its own: the seam
+// sweeps across the gable and uncovers the drawing whole, as a plotter would (ProofContour). Line weights follow a
+// drawing's scale (home-v2.css, --lw-*): the measured outline heaviest, then chords and columns, then webs, purlins and
+// what stands behind, the blockwork and hatching finest.
 
 const { width: W, height: H } = homeProofContour.photo;
 type Pt = readonly [number, number];
 const d = (points: readonly Pt[], closed = false) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}${closed ? 'Z' : ''}`;
-const [apexX] = homeProofMarks.height[1];
+/** The section hatch's step in photo pixels per frame width (home-v2.css picks one by the --u steps): a narrower frame
+ *  draws it coarser, so on a phone it stays lines, not grey */
+const HATCHES = [['hv2-proof-hatch', 6], ['hv2-proof-hatch-m', 9], ['hv2-proof-hatch-l', 13]] as const;
 
 /** The old generated sketch, for the test mode only (/?xray=sketch). It has its own composition: laid on the photo by
  *  one scale and shift through its ridge and right base corner, it still misses the gates and the left half */
@@ -28,22 +32,6 @@ export const SKETCH = {
   width: 1774,
   height: 887,
 };
-
-/** When a member draws on the first view, ms after the sheet starts arriving */
-function delayOf(member: FrameMember, index: number) {
-  const [[x0], [x1]] = [member.points[0], member.points.at(-1)!];
-  const fromRidge = Math.abs((x0 + x1) / 2 - apexX) / W;
-  switch (member.group) {
-    case 'wall': return 2600 + index * 40;
-    case 'footing': return 2900;
-    case 'column': return member.depth === 0 ? 3050 : 3900 + member.depth * 150;
-    case 'truss': return member.depth === 0 ? 3200 : 3900 + member.depth * 150;
-    case 'web': return 3350 + fromRidge * 900;
-    case 'purlin': return 3900 + member.depth * 180 + fromRidge * 300;
-    case 'bracing': return 4200;
-    default: return 3200;
-  }
-}
 
 /** Where (u along the base from the near corner, v up from the base) lands on a wall face: the square-to-quad homography
  *  of its four corners — base near, base far, top far, top near — so courses and joints recede as the photo does */
@@ -91,10 +79,12 @@ export function ProofFrame({ loadRun, shown, ready }: Readonly<{ loadRun: number
           <path d={d(walls.gable, true) + walls.holes.map((hole) => d(hole, true)).join('')} clipRule="evenodd" />
         </clipPath>
         {/* A section's hatch: what the scheme's plane cuts — the long walls, the footings */}
-        <pattern id="hv2-proof-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <rect width="6" height="6" />
-          <path d="M0 0V6" />
-        </pattern>
+        {HATCHES.map(([id, step]) => (
+          <pattern key={id} id={id} className="hv2-proof-hatch" width={step} height={step} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width={step} height={step} />
+            <path d={`M0 0V${step}`} />
+          </pattern>
+        ))}
         <marker id="hv2-proof-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" />
         </marker>
@@ -116,17 +106,14 @@ export function ProofFrame({ loadRun, shown, ready }: Readonly<{ loadRun: number
             <path
               key={index}
               d={d(member.points, member.closed)}
-              // A member in the gable's plane draws in along its length; a hidden one (dashed) only fades in
-              pathLength={member.hidden ? undefined : 1}
               data-group={member.group}
               data-depth={member.depth}
               data-hidden={member.hidden ? '' : undefined}
-              style={{ '--d': `${Math.round(delayOf(member, index))}ms` } as CSSProperties}
             />
           ))}
-          {/* Where the purlins bear: a block on every top-chord node of the gable's truss */}
+          {/* Where the purlins bear: an open node on every top-chord panel point of the gable's truss */}
           <g className="hv2-proof-nodes">
-            {nodes.map(([x, y]) => <rect key={x} x={x - 3.2} y={y - 6} width="6.4" height="5.2" />)}
+            {nodes.map(([x, y]) => <circle key={x} cx={x} cy={y} r="3.4" />)}
           </g>
         </g>
         {/* Under the ground, «умовно»: in section under the cut walls and the column, the long wall's strip going back */}
@@ -136,22 +123,32 @@ export function ProofFrame({ loadRun, shown, ready }: Readonly<{ loadRun: number
       </g>
       {/* The snow's way, link by link — replayed on every press of «Навантаження» (a new key restarts it) */}
       <g className="hv2-proof-load" key={loadRun}>
+        {/* A load spread over the roof, as a drawing writes it: one line, an even comb of arrows down from it */}
         <g className="hv2-proof-snow" style={{ '--n': 0 } as CSSProperties}>
+          <path className="hv2-proof-comb" d={d(load.comb)} />
           {load.arrows.map(([from, to], index) => (
             <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head)" style={{ '--k': index } as CSSProperties} />
           ))}
         </g>
-        <path className="hv2-proof-roof" d={d(load.roof, true)} style={{ '--n': 1 } as CSSProperties} />
+        {/* The strip one truss carries: the snow settles on it */}
+        <g className="hv2-proof-roof" style={{ '--n': 1 } as CSSProperties}>
+          <path d={d(load.roof, true)} />
+          <path className="hv2-proof-roof-edge" d={d(load.roof.slice(0, 3))} />
+        </g>
         <g className="hv2-proof-bearing" style={{ '--n': 2 } as CSSProperties}>
-          {nodes.map(([x, y]) => <rect key={x} x={x - 3.2} y={y - 6} width="6.4" height="5.2" />)}
+          {nodes.map(([x, y]) => <circle key={x} cx={x} cy={y} r="3.4" />)}
         </g>
         <g className="hv2-proof-lit-truss" style={{ '--n': 3 } as CSSProperties}>
           {members.filter((member) => member.depth === 0 && (member.group === 'truss' || member.group === 'web')).map((member, index) => (
             <path key={index} d={d(member.points)} />
           ))}
         </g>
+        {/* Each lit link: a clean light line on a dark casing, as the measured lines are kept legible — no glow */}
         {load.links.map(({ link, points }, index) => (
-          <path key={index} className="hv2-proof-link" d={d(points)} data-link={link} style={{ '--n': link } as CSSProperties} />
+          <g key={index} className="hv2-proof-link" data-link={link} style={{ '--n': link } as CSSProperties}>
+            <path className="hv2-proof-link-casing" d={d(points)} />
+            <path d={d(points)} />
+          </g>
         ))}
         {load.legs.map((leg, index) => (
           <path key={index} className="hv2-proof-flow" d={d(leg)} markerEnd="url(#hv2-proof-foot)" style={{ '--n': 3 } as CSSProperties} />

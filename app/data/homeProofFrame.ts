@@ -34,6 +34,21 @@ import { homeProofContour } from './homeProofContour';
 
 type Pt = readonly [number, number];
 
+/** The snow's comb: arrows at an even step over the strip one truss carries (its top edge: left eave, ridge, right
+ *  eave), each standing a little over the roof, their tails on one line that follows the roof. The tails stay below the
+ *  photo's row 84, which the laptop crop keeps (home-v2.css) */
+const ROOF_TOP: readonly Pt[] = [[300.2, 191.6], [1004.9, 128.6], [1460.1, 287]];
+const COMB_RISE = 42;
+const COMB_GAP = 7;
+const roofTopY = (x: number) => {
+  const [a, b] = x <= ROOF_TOP[1][0] ? [ROOF_TOP[0], ROOF_TOP[1]] : [ROOF_TOP[1], ROOF_TOP[2]];
+  return a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
+};
+const round1 = (value: number) => Math.round(value * 10) / 10;
+const COMB_XS = Array.from({ length: 13 }, (_, index) => 330 + index * ((1432 - 330) / 12));
+const COMB_ARROWS = COMB_XS.map((x): readonly [Pt, Pt] => [[round1(x), round1(roofTopY(x) - COMB_RISE)], [round1(x), round1(roofTopY(x) - COMB_GAP)]]);
+const COMB_LINE: readonly Pt[] = [COMB_ARROWS[0][0], [ROOF_TOP[1][0], round1(ROOF_TOP[1][1] - COMB_RISE)], COMB_ARROWS.at(-1)![0]];
+
 /** truss: chords and end posts; web: diagonals and verticals; wall: bearing lines and lintels; column: the central row */
 export type FrameGroup = 'truss' | 'web' | 'wall' | 'column' | 'purlin' | 'bracing' | 'footing';
 
@@ -61,10 +76,12 @@ export type HomeProofFrame = {
   members: readonly FrameMember[];
   /** Where the purlins bear on the front truss: its top-chord nodes */
   nodes: readonly Pt[];
-  /** The way the snow goes: arrows, the strip of roof one truss carries, the lit links (3 the truss, 4 the walls and the
-   *  column, 5 the footings), the three legs the drops run along, the ground under them */
+  /** The way the snow goes: a comb of even arrows under one line, as a drawing writes a load spread over the roof (owner
+   *  review, 04.10: «вага, а не неон»), the strip of roof one truss carries, the lit links (3 the truss, 4 the walls and
+   *  the column, 5 the footings), the three legs the drops run along, the ground under them */
   load: {
     arrows: readonly (readonly [Pt, Pt])[];
+    comb: readonly Pt[];
     roof: readonly Pt[];
     links: readonly { link: 3 | 4 | 5; points: readonly Pt[] }[];
     legs: readonly (readonly Pt[])[];
@@ -214,8 +231,9 @@ export const homeProofFrame: HomeProofFrame = {
   ],
   nodes: [[299.2, 218.5], [406.9, 208], [508.1, 198.2], [603.2, 188.9], [692.8, 180.2], [777.4, 172], [857.4, 164.2], [933.2, 156.8], [1005, 149.8], [1071, 172.3], [1134, 193.8], [1194.3, 214.3], [1252.1, 234], [1307.4, 252.9], [1360.6, 271], [1411.6, 288.4], [1460.7, 305.1]],
   load: {
-    arrows: [[[440.8, 56.3], [438, 150.3]], [[633.6, 46.3], [632, 134.7]], [[805, 37.4], [804.4, 120.8]], [[1116.9, 80.2], [1117.9, 155.1]], [[1241.4, 127.4], [1242.8, 199.2]], [[1355.3, 170.6], [1357.2, 239.5]]],
-    roof: [[300.2, 191.6], [1004.9, 128.6], [1460.1, 287], [1401.2, 295.7], [957, 146.2], [281.5, 209.9]],
+    arrows: COMB_ARROWS,
+    comb: COMB_LINE,
+    roof: [...ROOF_TOP, [1401.2, 295.7], [957, 146.2], [281.5, 209.9]],
     links: [
       { link: 3, points: [[1005, 149.8], [299.2, 218.5]] },
       { link: 3, points: [[1005, 149.8], [1460.7, 305.1]] },

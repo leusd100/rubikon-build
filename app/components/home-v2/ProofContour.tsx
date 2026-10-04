@@ -27,11 +27,14 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 //
 // The seam is a real range input (keys, screen readers). Mouse and pen drag anywhere in the frame; a finger drags only
 // the handle, so the page still scrolls and zooms under a thumb, and on a phone «Фото» / «Схема» show one side whole.
-// Arriving with motion, the sheet plots in, the lines draw, the scheme builds, and once the seam glides left and back
-// (a hint that it moves) — a mouse or pen pressed in the sheet, a finger on the handle or a button, or a key there stops
-// that; scrolling the page over the sheet does not (review, 04.10: a wheel or a swipe is how a visitor arrives). With
-// reduced motion or without JavaScript the sheet stands complete at its resting split, the controls disabled until the
-// page is hydrated.
+// Dragged near a measured line — a gate's jamb, a corner of the gable — the seam holds to it as a CAD cursor snaps, the
+// line lights up and its name stands at the seam's foot (owner review, 04.10); keys and screen readers step as before.
+// Arriving with motion (owner review, 04.10 — «шов-плотер»), the sheet plots in as a whole photo, then the seam sweeps
+// from the right edge across the gable and back to rest, and what it has passed is the drawing, whole; the figures and
+// names come in when it rests, and two rings from the handle say it moves. A mouse or pen pressed in the sheet, a finger
+// on the handle or a button, or a key there stops that; scrolling the page over the sheet does not (review, 04.10: a
+// wheel or a swipe is how a visitor arrives). With reduced motion or without JavaScript the sheet stands complete at its
+// resting split, the controls disabled until the page is hydrated.
 //
 // On a laptop the sheet fits under the header: the stage keeps the sheet's width and crops the photo's sky and gravel
 // (home-v2.css); the photo, its tracing and every layer share one canvas in the photo's own pixels, so nothing slides.
@@ -44,11 +47,18 @@ type Layer = 'contour' | 'frame' | 'load' | 'sketch';
 /** The seam's resting place: right of the left gate and left of the ridge, so each side keeps a gate */
 export const DEFAULT_SPLIT = 62;
 const PAGE_STEP = 10;
-/** The first view's glide: from the resting split to here and back */
-const GLIDE_TO = 42;
-const GLIDE_AT = 4800;
-/** The page must have stopped scrolling this long before the glide: the eye is on the way, not on the seam */
-const GLIDE_QUIET = 350;
+/** The first view's sweep: once the photo has plotted in (DrawingSheet: 120 + 900 ms), from the right edge to just past
+ *  the gable's left corner, then back to rest — the turn at 62 % of its time, each leg eased on its own (one easing over
+ *  both would reverse at full speed) */
+const SWEEP_AT = 1050;
+const SWEEP_TURN = 15;
+const SWEEP_MS = 3000;
+const SWEEP_MS_PHONE = 2200;
+/** The page must have stopped scrolling this long before the sweep: the eye is on the way, not on the seam */
+const SWEEP_QUIET = 250;
+/** Snapping, in per cent of the frame: caught within GRAB of a measured line, let go beyond RELEASE */
+const SNAP_GRAB = 0.8;
+const SNAP_RELEASE = 1.4;
 // What fits right of the seam (review, 04.10). The stamp and the load's chain lie on the right side only, clipped at the
 // seam (home-v2.css): the stamp keeps its full words while that side is wider than it, its first word below that, and
 // the seam's names give way before they reach the stamp or the frame's edge. Measured on the page (the frame's width,
@@ -92,6 +102,23 @@ const SRC_SET = variants.map(({ src, width }) => `${src} ${width}w`).join(', ');
 const SIZES = '(max-width: 760px) calc(100vw - 66px), (max-width: 1556px) calc(92.5vw - 46px), 1394px';
 
 const pathOf = ({ points }: ContourLine) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}`;
+
+// What the seam snaps to: the measured verticals — both gates' jambs and the gable's corners, each at its mean x — with
+// the words for the seam's foot. Not the ridge: nobody measured where it stands (homeProofMeasures.ts)
+type Snap = { line: string; at: number; name: string; status: string };
+const pointsOf = (id: string) => lines.find((line) => line.id === id)!.points;
+const snapAt = (id: string, from: number, to?: number) => {
+  const part = pointsOf(id).slice(from, to);
+  return (part.reduce((sum, [x]) => sum + x, 0) / part.length / contourPhoto.width) * 100;
+};
+const SNAPS: readonly Snap[] = [
+  { line: 'gable-base', at: snapAt('gable-base', 1), name: 'Лівий кут фронтона', status: 'виміряно' },
+  { line: 'gate-left', at: snapAt('gate-left', 0, 2), name: 'Ліві ворота, одвірок', status: 'виміряно' },
+  { line: 'gate-left', at: snapAt('gate-left', 2), name: 'Ліві ворота, одвірок', status: 'виміряно' },
+  { line: 'gate-right', at: snapAt('gate-right', 0, 2), name: 'Праві ворота, одвірок', status: 'виміряно' },
+  { line: 'gate-right', at: snapAt('gate-right', 2), name: 'Праві ворота, одвірок', status: 'виміряно' },
+  { line: 'gable-corner-right', at: snapAt('gable-corner-right', 2), name: 'Правий кут фронтона', status: 'наближено' },
+];
 const clamp = (value: number) => Math.min(100, Math.max(0, value));
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
@@ -122,19 +149,17 @@ function valueText(value: number, layer: Layer) {
   return `Фото ліворуч, ${right.nominative} праворуч: ${share}`;
 }
 
-function Lines({ casing }: Readonly<{ casing?: boolean }>) {
+function Lines({ casing, snapped }: Readonly<{ casing?: boolean; snapped?: string }>) {
   return (
     <g className={casing ? 'hv2-contour-casing' : 'hv2-contour-ink'}>
-      {lines.map((line, index) => (
+      {lines.map((line) => (
         <path
           key={line.id}
           d={pathOf(line)}
-          // Solid lines draw in by their dash offset, measured in path lengths; the dashed ones only fade in
-          pathLength={line.approximate ? undefined : 1}
           data-line={line.id}
           data-kind={line.kind}
           data-approximate={line.approximate ? '' : undefined}
-          style={{ '--i': index } as CSSProperties}
+          data-snapped={!casing && snapped === line.id ? '' : undefined}
         >
           {!casing && <title>{line.title}</title>}
         </path>
@@ -151,6 +176,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [loadRun, setLoadRun] = useState(0);
   const [linesOnPhoto, setLinesOnPhoto] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // The measured line the dragged seam holds, and the last one's words (they fade out after it is let go)
+  const [snap, setSnap] = useState<Snap | null>(null);
+  const snapRef = useRef<Snap | null>(null);
+  const [snapWords, setSnapWords] = useState<Snap | null>(null);
   const ready = useSyncExternalStore(subscribeToNothing, () => true, () => false);
   const sketchMode = useSyncExternalStore(subscribeToNothing, sketchRequested, () => false);
   // Focus the pointer put on the range: the keyboard's ring stays off until a key is pressed
@@ -165,42 +194,50 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[sketchMode ? 0 : 1];
   const rightSide = LAYERS[layer];
 
-  // The first view: once the sheet has arrived and the scheme has built, the seam glides left and back — on the stage's
-  // --split only (a registered custom property, home-v2.css), so the range's value and what it says never move. It
-  // waits until the stage is in view and the page has stopped scrolling. Only the visitor's own move in the sheet
-  // first, or reduced motion: no glide.
+  // The first view (see SWEEP_AT): the seam waits at the right edge — the photo whole — while the sheet plots in, then
+  // sweeps on the stage's --split only (a registered custom property, home-v2.css), so the range's value and what it
+  // says never move. It waits until the stage is in view and the page has stopped scrolling. The visitor's own move in
+  // the sheet first, or reduced motion: no sweep, the seam at rest.
   useEffect(() => {
     const stage = stageRef.current;
     const sheet = stage?.closest('figure');
     if (!stage || !sheet || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let glide: Animation | undefined;
+    let sweep: Animation | undefined;
     let timer: number | undefined;
     let due = false;
     let visible = false;
     let scrolled = 0;
+    stage.dataset.sweep = 'wait';
     const stop = () => {
       touched.current = true;
       window.clearTimeout(timer);
-      glide?.cancel();
+      sweep?.cancel();
       delete stage.dataset.gliding;
+      delete stage.dataset.sweep;
     };
     const run = () => {
-      if (touched.current || !due || !visible || glide) return;
+      if (touched.current || !due || !visible || sweep) return;
       const quiet = performance.now() - scrolled;
-      if (quiet < GLIDE_QUIET) {
+      if (quiet < SWEEP_QUIET) {
         window.clearTimeout(timer);
-        timer = window.setTimeout(run, GLIDE_QUIET - quiet);
+        timer = window.setTimeout(run, SWEEP_QUIET - quiet);
         return;
       }
+      // In one task: the hold at the edge gives way to the sweep's first frame, at the same edge
       stage.dataset.gliding = '';
-      const from = `${DEFAULT_SPLIT}%`;
-      const to = `${GLIDE_TO}%`;
-      glide = stage.animate(
-        [{ '--split': from }, { '--split': to, offset: 0.44 }, { '--split': to, offset: 0.67 }, { '--split': from }],
-        { duration: 1800, easing: 'cubic-bezier(.45, 0, .25, 1)' },
+      stage.dataset.sweep = 'run';
+      const phone = window.matchMedia('(max-width: 760px)').matches;
+      sweep = stage.animate(
+        [
+          { '--split': '100%', easing: 'cubic-bezier(.35, 0, .3, 1)' },
+          { '--split': `${SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
+          { '--split': `${DEFAULT_SPLIT}%` },
+        ],
+        { duration: phone ? SWEEP_MS_PHONE : SWEEP_MS },
       );
-      glide.onfinish = () => {
+      sweep.onfinish = () => {
         delete stage.dataset.gliding;
+        delete stage.dataset.sweep;
         // Two rings from the handle, once: this is the thing to drag
         stage.dataset.pulse = '';
         timer = window.setTimeout(() => delete stage.dataset.pulse, 1700);
@@ -217,7 +254,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       timer = window.setTimeout(() => {
         due = true;
         run();
-      }, GLIDE_AT);
+      }, SWEEP_AT);
     });
     arrived.observe(sheet, { attributes: true, attributeFilter: ['data-sheet-state'] });
     const onScroll = () => { scrolled = performance.now(); };
@@ -234,7 +271,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       seen.disconnect();
       arrived.disconnect();
       window.clearTimeout(timer);
-      glide?.cancel();
+      sweep?.cancel();
+      delete stage.dataset.sweep;
       window.removeEventListener('scroll', onScroll);
       sheet.removeEventListener('pointerdown', onPointer);
       sheet.removeEventListener('keydown', stop);
@@ -268,11 +306,29 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     };
   }, [layer]);
 
-  const splitAt = (clientX: number, offset = 0) => {
+  const splitAt = (clientX: number, offset = 0, touch = false) => {
     const box = stageRef.current?.getBoundingClientRect();
     if (!box || box.width === 0) return;
+    let value = clamp(((clientX - offset - box.left) / box.width) * 100);
+    // Held by a measured line until the pointer pulls past RELEASE; caught by one within GRAB
+    const held = snapRef.current;
+    if (held && Math.abs(value - held.at) < SNAP_RELEASE) {
+      value = held.at;
+    } else {
+      const near = SNAPS.find((candidate) => Math.abs(value - candidate.at) < SNAP_GRAB) ?? null;
+      if (near !== held) {
+        snapRef.current = near;
+        setSnap(near);
+        if (near) {
+          setSnapWords(near);
+          // A touch on Android feels it; nowhere else does anything happen
+          if (touch) navigator.vibrate?.(6);
+        }
+      }
+      if (near) value = near.at;
+    }
     // Tenths of a per cent: a whole per cent is a 13 px jump on a wide screen
-    setSplit(Math.round(clamp(((clientX - offset - box.left) / box.width) * 100) * 10) / 10);
+    setSplit(Math.round(value * 10) / 10);
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -289,7 +345,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     } else {
       // A click elsewhere moves the seam there
       drag.current = { pointer: event.pointerId, offset: 0 };
-      splitAt(event.clientX);
+      splitAt(event.clientX, 0, event.pointerType === 'touch');
     }
     event.currentTarget.setPointerCapture(event.pointerId);
     setDragging(true);
@@ -297,10 +353,12 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     rangeRef.current?.focus({ preventScroll: true });
   };
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (drag.current?.pointer === event.pointerId) splitAt(event.clientX, drag.current.offset);
+    if (drag.current?.pointer === event.pointerId) splitAt(event.clientX, drag.current.offset, event.pointerType === 'touch');
   };
   const endDrag = () => {
     drag.current = null;
+    snapRef.current = null;
+    setSnap(null);
     setDragging(false);
   };
 
@@ -422,6 +480,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-narrow-right={narrowRight ? '' : undefined}
         data-stamp={stampShort ? 'short' : undefined}
         data-photo-only={split >= 100 ? '' : undefined}
+        data-snapped={snap ? '' : undefined}
+        // The snapped line's name stands on the wider side of the seam
+        data-snap-side={snapWords && snapWords.at > 55 ? 'left' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -465,7 +526,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           >
             {/* A thin dark casing under each copper line keeps it legible where it crosses the photo's light cladding */}
             <Lines casing />
-            <Lines />
+            <Lines snapped={snap?.line} />
           </svg>
           <ProofMarks />
           <ProofLabels />
@@ -486,6 +547,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           <span className="hv2-contour-chain" key={`chain-${loadRun}`}>
             {CHAIN.map((link, index) => <span key={link} style={{ '--n': index } as CSSProperties}>{link}</span>)}
           </span>
+        </span>
+        <span className="hv2-contour-snap" aria-hidden="true">
+          {snapWords?.name}
+          <small>{snapWords?.status}</small>
         </span>
         <span className="hv2-contour-seamtags" aria-hidden="true">
           <span>‹ Фото</span>
