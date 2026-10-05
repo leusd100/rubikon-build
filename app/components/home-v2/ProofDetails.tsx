@@ -1,4 +1,4 @@
-import type { CSSProperties, JSX, ReactNode } from 'react';
+import { useLayoutEffect, useRef, type CSSProperties, type JSX, type ReactNode } from 'react';
 import './proof-details.css';
 
 // HOME proof, «Каркас»: five typical nodes of a building of this TYPE — light trusses of thin-walled cold-formed steel
@@ -151,9 +151,45 @@ const screwSide = (head: Pt, into: Pt, length = 8.5) => {
 };
 
 /** A part of the node as it is put together: the n-th to come in, from (dx, dy) off its place — in its own frame */
-function Part({ n, dx = 0, dy = 0, children }: Readonly<{ n: number; dx?: number; dy?: number; children: ReactNode }>) {
-  return <g className="hv2-detail-part" style={{ '--n': n, '--dx': `${dx}px`, '--dy': `${dy}px` } as CSSProperties}>{children}</g>;
+/** A part of the node as it is put together: the n-th to come in, from (dx, dy) off its place. «Розібрати» draws it
+ *  apart to (ex, ey) — an exploded view's spacing along the way it is fitted — with its step and name at `label` (in its
+ *  own, unmoved frame: they move away with it) */
+type Label = readonly [number, number, ('start' | 'middle' | 'end')?];
+function Part({ n, dx = 0, dy = 0, ex = 0, ey = 0, name, label, children }: Readonly<{ n: number; dx?: number; dy?: number; ex?: number; ey?: number; name?: string; label?: Label; children: ReactNode }>) {
+  return (
+    <g className="hv2-detail-part" style={{ '--n': n, '--dx': `${dx}px`, '--dy': `${dy}px`, '--ex': `${ex}px`, '--ey': `${ey}px` } as CSSProperties}>
+      <g className="hv2-detail-part-shift">
+        {children}
+        {name && label && <PartName n={n} name={name} label={label} />}
+      </g>
+    </g>
+  );
 }
+
+/** A part's step and name in the drawing taken apart: a copper disc with the step, the name beside it — laid out once
+ *  its words are measured */
+function PartName({ n, name, label: [x, y, anchor = 'start'] }: Readonly<{ n: number; name: string; label: Label }>) {
+  const ref = useRef<SVGGElement>(null);
+  useLayoutEffect(() => {
+    const own = ref.current;
+    if (!own) return;
+    const [disc, step, word] = [own.children[0], own.children[1], own.children[2]];
+    const width = 13 + 4 + (word as SVGTextElement).getComputedTextLength();
+    const start = anchor === 'middle' ? x - width / 2 : anchor === 'end' ? x - width : x;
+    disc.setAttribute('cx', (start + 6.5).toFixed(1));
+    disc.setAttribute('cy', (y - 3.6).toFixed(1));
+    step.setAttribute('x', (start + 6.5).toFixed(1));
+    word.setAttribute('x', (start + 17).toFixed(1));
+  }, [x, y, anchor]);
+  return (
+    <g ref={ref} className="hv2-detail-part-name">
+      <circle r="6.5" />
+      <text className="hv2-detail-part-step" textAnchor="middle" y={y}>{n + 1}</text>
+      <text className="hv2-detail-part-word" y={y}>{name}</text>
+    </g>
+  );
+}
+
 
 /** The load's way through the node, over the drawing: each way runs along the members' axes, its last point is where its
  *  arrowhead's tip stands */
@@ -215,9 +251,14 @@ function Callouts({ items }: Readonly<{ items: readonly Callout[] }>) {
 function Sheet({ parts, flow, names, children }: Readonly<{ parts: number; flow: readonly (readonly Pt[])[]; names: readonly Callout[]; children: ReactNode }>) {
   return (
     <svg className="hv2-detail-drawing" viewBox="0 0 360 240" aria-hidden="true" focusable="false" style={{ '--parts': parts } as CSSProperties}>
-      <g className="hv2-detail-assembly">{children}</g>
-      <Flow ways={flow} />
-      <Callouts items={names} />
+      {/* taken apart, the whole drawing steps back a little to make room */}
+      <g className="hv2-detail-zoom">
+        <g className="hv2-detail-assembly">{children}</g>
+        <Flow ways={flow} />
+        <g className="hv2-detail-names-wrap">
+          <Callouts items={names} />
+        </g>
+      </g>
     </svg>
   );
 }
@@ -352,39 +393,39 @@ function BearingDrawing() {
         </mask>
       </defs>
       {/* The wall in section, its block courses faint across it, broken off below — up from below */}
-      <Part n={0} dy={30}>
+      <Part n={0} dy={30} ey={20} name="Газобетонна стіна" label={[182, 214]}>
         <rect x={w0} y={b1} width={w1 - w0} height={A.wallBreak - b1} fill="url(#hv2-detail-bearing-masonry)" />
         <path className="hv2-detail-course" d={A.courses.map((y) => line([w0, y], [w1, y])).join('')} />
         <path className="hv2-detail-thin" d={line([w0, b1], [w0, A.wallBreak]) + line([w1, b1], [w1, A.wallBreak])} />
         <path className="hv2-detail-thin" d={breakLine([(w0 + w1) / 2, A.wallBreak], [0, 1], (w1 - w0) / 2 + 6)} />
       </Part>
       {/* The monolithic reinforced belt: concrete, its bars, its edge in copper, the anchors cast in it — down onto the wall */}
-      <Part n={1} dy={-18}>
+      <Part n={1} dy={-18} ey={4} name="Армопояс з анкерами" label={[176, 175]}>
         <rect x={w0} y={b0} width={w1 - w0} height={b1 - b0} fill="url(#hv2-detail-bearing-concrete)" mask="url(#hv2-detail-bearing-clear)" />
         {bars.map(([cx, cy]) => <circle key={`${cx}-${cy}`} className="hv2-detail-thin" cx={cx} cy={cy} r="2" />)}
         <path className="hv2-detail-key" d={rect(w0, b0, w1, b1)} />
         <path className="hv2-detail-key" d={anchors} />
       </Part>
       {/* The support plate with its upstand, down onto the anchors */}
-      <Part n={2} dy={-30}>
+      <Part n={2} dy={-30} ey={-14} name="Опорна пластина" label={[170, 146]}>
         <path className="hv2-detail-plate" d={rect(p0, pTop, p1, pBottom)} />
         <path className="hv2-detail-plate" d={rect(u0, uTop, u1, pTop)} />
       </Part>
       {/* The heel gusset, then the truss's end let down onto it: post, chords, the diagonal */}
-      <Part n={3} dy={-44}>
+      <Part n={3} dy={-44} ey={-60} name="Фасонка" label={[122, 60, 'end']}>
         <path className="hv2-detail-plate" d={gusset} />
       </Part>
-      <Part n={4} dy={-64}>
+      <Part n={4} dy={-64} ey={-60} name="Кінець ферми" label={[300, 164, 'middle']}>
         <Profile shape={post} />
         <Profile shape={bottom} />
         <Profile shape={top} />
         <Profile shape={diagonal} />
       </Part>
       {/* The anchors' nuts, then the screws and bolts */}
-      <Part n={5} dy={-14}>
+      <Part n={5} dy={-14} ey={-44} name="Гайки" label={[168, 146]}>
         <path className="hv2-detail-key" d={nuts} />
       </Part>
-      <Part n={6}>
+      <Part n={6} ey={-60}>
         <Screws at={screws} />
         <Bolts at={bolts} />
       </Part>
@@ -465,25 +506,25 @@ function PurlinDrawing() {
       ]}
     >
       {/* The gusset behind the node, there first */}
-      <Part n={1}>
+      <Part n={1} name="Фасонка" label={[212, 172]}>
         <path className="hv2-detail-plate" d={gusset} />
       </Part>
       {/* The top chord, broken off both ways — along its own line */}
-      <Part n={0} dx={-28} dy={-5}>
+      <Part n={0} dx={-28} dy={-5} ey={-26} name="Верхній пояс" label={[300, 98, 'middle']}>
         <Profile shape={chord} />
       </Part>
       {/* The vertical, up from below, and the diagonal, up along its own line */}
-      <Part n={2} dy={46}>
+      <Part n={2} dy={46} ey={30} name="Стійка" label={[198, 215]}>
         <Profile shape={post} />
       </Part>
-      <Part n={3} dx={-30} dy={34}>
+      <Part n={3} dx={-30} dy={34} ex={-22} ey={22} name="Розкіс" label={[44, 226, 'end']}>
         <Profile shape={diagonal} />
       </Part>
       {/* The cleat slid along the chord from downhill; the purlin let down onto the chord against it */}
-      <Part n={4} dx={26} dy={5}>
+      <Part n={4} dx={26} dy={5} ey={-46} name="Кріплення прогону" label={[207, 82]}>
         <path className="hv2-detail-cut hv2-detail-key" d={cleat} />
       </Part>
-      <Part n={5} dy={-46}>
+      <Part n={5} dy={-46} ey={-72} name="Прогін" label={[211, 70]}>
         <path className="hv2-detail-cut hv2-detail-strong" d={zed} />
       </Part>
       {/* Screws and bolts, last */}
@@ -570,33 +611,33 @@ function BaseDrawing() {
       <path className="hv2-detail-thin" d={line([16, C.ground], [n0, C.ground]) + line([n1, C.ground], [344, C.ground])} />
       <path className="hv2-detail-hatch" d={ticks} />
       {/* The pad footing and its neck, in section, by convention, the anchors' shanks cast in it — up from below */}
-      <Part n={0} dy={36}>
+      <Part n={0} dy={36} ey={18} name="Фундамент — умовно" label={[232, 188]}>
         <path d={footing} fill="url(#hv2-detail-base-concrete)" mask="url(#hv2-detail-base-clear)" />
         <path className="hv2-detail-thin" d={footing} />
         <path className="hv2-detail-key hv2-detail-hidden" d={shanks} />
       </Part>
       {/* The grout under the plate */}
-      <Part n={1} dy={-14}>
+      <Part n={1} dy={-14} name="Підливка" label={[200, 124.5]}>
         <path d={`${line([p0 - 4, C.grout], [p0, pBottom], [p1, pBottom], [p1 + 4, C.grout])}Z`} fill="url(#hv2-detail-base-grout)" />
         <path className="hv2-detail-thin" d={line([p0 - 4, C.grout], [p0, pBottom]) + line([p1, pBottom], [p1 + 4, C.grout])} />
       </Part>
       {/* The plate down onto the anchors */}
-      <Part n={2} dy={-34}>
+      <Part n={2} dy={-34} ey={-10} name="Опорна плита" label={[196, 109]}>
         <path className="hv2-detail-plate" d={rect(p0, pTop, p1, pBottom)} />
       </Part>
       {/* The column, let down onto the plate: its flanges' faces, broken off above */}
-      <Part n={3} dy={-96}>
+      <Part n={3} dy={-96} ey={-84} name="Колона" label={[172, 82]}>
         <path className="hv2-detail-member" d={rect(l, C.top, r, pTop)} />
         <path className="hv2-detail-strong" d={line([l, C.top], [l, pTop]) + line([r, C.top], [r, pTop])} />
         <path className="hv2-detail-thin" d={line([l + C.flange, C.top], [l + C.flange, pTop]) + line([r - C.flange, C.top], [r - C.flange, pTop])} />
         <path className="hv2-detail-thin" d={breakLine([C.axis, C.top], [0, 1], C.half + 6)} />
       </Part>
       {/* The ribs, in from both sides */}
-      <Part n={4} dy={-20}>
+      <Part n={4} dy={-20} ey={-46} name="Ребра жорсткості" label={[181, 102]}>
         <path className="hv2-detail-plate" d={ribs} />
       </Part>
       {/* The nuts and washers, down onto the anchors last */}
-      <Part n={5} dy={-30}>
+      <Part n={5} dy={-30} ey={-30} name="Гайки й шайби" label={[194, 110]}>
         <path className="hv2-detail-key" d={nuts} />
       </Part>
     </Sheet>
@@ -679,22 +720,22 @@ function RidgeDrawing() {
         name('Болти й саморізи', [124, 192], 'end', [P[0] - 3.6, P[1] + 66], [P[0] - 3.6, P[1] + 42]),
       ]}
     >
-      <Part n={1}>
+      <Part n={1} name="Фасонка" label={[240, 166]}>
         <path className="hv2-detail-plate" d={gusset} />
       </Part>
       {/* The post, up from below */}
-      <Part n={0} dy={40}>
+      <Part n={0} dy={40} ey={34} name="Стійка" label={[200, 222]}>
         <Profile shape={post} />
       </Part>
       {/* The chords, each down its own slope to the apex */}
-      <Part n={2} dx={-30} dy={6}>
+      <Part n={2} dx={-30} dy={6} ex={-28} ey={6} name="Лівий пояс" label={[40, 142, 'middle']}>
         <Profile shape={chordL} />
       </Part>
-      <Part n={3} dx={30} dy={6}>
+      <Part n={3} dx={30} dy={6} ex={28} ey={6} name="Правий пояс" label={[320, 142, 'middle']}>
         <Profile shape={chordR} />
       </Part>
       {/* The purlins and the roof sheet over them, from above */}
-      <Part n={4} dy={-30}>
+      <Part n={4} dy={-30} ey={-34} name="Прогони й покрівля" label={[180, 22, 'middle']}>
         {roof.map(({ zed, sheet, ends }) => (
           <g key={zed}>
             <path className="hv2-detail-cut hv2-detail-strong" d={zed} />
@@ -780,19 +821,19 @@ function ChordDrawing() {
         name('Саморізи й болти', [228, 204], 'start', [N[0] + 48, N[1] + 4.2], [N[0] + 28, N[1] + 4.2]),
       ]}
     >
-      <Part n={1}>
+      <Part n={1} name="Фасонка" label={[240, 100]}>
         <path className="hv2-detail-plate" d={gusset} />
       </Part>
       {/* The chord, there first, along its own line */}
-      <Part n={0} dx={-30}>
+      <Part n={0} dx={-30} ey={30} name="Нижній пояс" label={[300, 184, 'middle']}>
         <Profile shape={chord} />
       </Part>
       {/* The vertical, down from above; the diagonals, each down its own line */}
-      <Part n={2} dy={-44}>
+      <Part n={2} dy={-44} ey={-34} name="Стійка" label={[200, 92]}>
         <Profile shape={post} />
       </Part>
       {diagonals.map(({ up, shape }, index) => (
-        <Part key={up.join()} n={3 + index} dx={up[0] * 34} dy={up[1] * 34}>
+        <Part key={up.join()} n={3 + index} dx={up[0] * 34} dy={up[1] * 34} ex={up[0] * 31} ey={up[1] * 31} name="Розкіс" label={up[0] < 0 ? [64, 30, 'end'] : [296, 30]}>
           <Profile shape={shape} />
         </Part>
       ))}

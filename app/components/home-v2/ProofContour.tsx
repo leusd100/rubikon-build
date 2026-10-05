@@ -162,6 +162,11 @@ const stillNow = () => window.matchMedia('(prefers-reduced-motion: reduce)').mat
  *  Closing, it shrinks back into the ring */
 const NODE_GROW = { duration: 480, easing: 'cubic-bezier(.2, .75, .25, 1)' } as const;
 const NODE_SHRINK = { duration: 300, easing: 'cubic-bezier(.45, 0, .7, .4)', fill: 'forwards' } as const;
+/** A node's ring and the seam (owner, 05.10: on «А» the seam stood across it, the handle over it): the seam stops this
+ *  far past the handle's half width from the ring, on the scheme's side of it or — «На фото» — past it */
+const NODE_CLEAR = 12;
+/** A swipe across a phone's sheet: this far, and mostly sideways */
+const SWIPE_MIN = 48;
 /** The transform that puts a panel onto a ring: its centre on the ring's, as wide as the ring */
 function ontoRing(ring: Element, panel: HTMLElement) {
   const [a, b] = [ring.getBoundingClientRect(), panel.getBoundingClientRect()];
@@ -527,10 +532,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // A detail opened takes the focus to its close; Esc, or the close, gives it back to its letter
   const detailPinRefs = useRef<Partial<Record<DetailId, HTMLButtonElement | null>>>({});
   const detailRef = useRef<HTMLDivElement>(null);
-  // «Зібрати ще раз»: a new key puts the node's drawing together again
-  const [nodeRun, setNodeRun] = useState(0);
   // «Куди йде навантаження»: the load's way through the node, kept on from node to node once asked for
   const [flowOn, setFlowOn] = useState(false);
+  // «Розібрати»: the node's parts drawn apart, named (back together on another node); «На фото»: the seam past the ring,
+  // so the node is ringed on the photo (kept from node to node)
+  const [exploded, setExploded] = useState(false);
+  const [nodeOnPhoto, setNodeOnPhoto] = useState(false);
+  // Moving to the next or the previous node: the drawing slides in from that side instead of the panel growing again
+  const nodeSwitch = useRef<-1 | 0 | 1>(0);
+  const swipe = useRef<{ x: number; y: number } | null>(null);
   // Where the seam was before a node took it onto its ring, and where it put it (restored on closing, unless moved)
   const nodeSeam = useRef<{ from: number; at: number } | null>(null);
   // The leader from the open panel to its ring on the scheme, as a drawing's detail is called out
@@ -542,7 +552,16 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   useLayoutEffect(() => {
     const panel = detailRef.current;
     const ring = detail && ringOf(detail);
+    const step = nodeSwitch.current;
+    nodeSwitch.current = 0;
     if (!panel || !ring || stillNow()) return;
+    if (step) {
+      panel.querySelector('.hv2-detail-drawing')?.animate(
+        [{ transform: `translateX(${step * 36}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
+        { duration: 320, easing: 'cubic-bezier(.2, .75, .25, 1)' },
+      );
+      return;
+    }
     detailMotion.current?.cancel();
     const from = ontoRing(ring, panel);
     if (!from) return;
@@ -577,18 +596,55 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     observer.observe(stage);
     return () => observer.disconnect();
   }, [detail, detailSheet]);
-  // A node opened: the seam glides onto its ring, so the ring is half photo, half scheme — where it is on the building
-  // and how it is made (owner, 05.10: «позначка вузла на фото»); pressed again, it closes
-  const showNode = (id: DetailId) => {
-    if (detail === id) return closeDetail();
-    const phone = phoneNow();
-    const spot = homeProofDetailSpots.find((entry) => entry.id === id)!;
-    const onPhoto = (spot.ring[0] / contourPhoto.width) * 100;
-    const at = clamp(phone ? onPhoto * PHONE_ZOOM - PHONE_LEFT : onPhoto);
+  // Where the seam stands for a node: clear of its ring by the handle's half width and NODE_CLEAR — before it, the ring
+  // whole on the scheme, or past it («На фото»), the ring whole on the photo and ringed there. Where the frame's edge
+  // holds the handle back onto the ring (the right gable corner, on the photo), the handle steps down or up off it
+  const placeSeam = (id: DetailId, onPhoto: boolean) => {
+    const stage = stageRef.current;
+    const ring = ringOf(id);
+    const handle = handleRef.current;
+    if (!stage || !ring) return;
+    const box = stage.getBoundingClientRect();
+    const r = ring.getBoundingClientRect();
+    const half = (handle?.offsetWidth || 44) / 2;
+    const x = onPhoto ? r.right + half + NODE_CLEAR : r.left - half - NODE_CLEAR;
+    const at = clamp(((x - box.left) / box.width) * 100);
     nodeSeam.current = { from: nodeSeam.current?.from ?? live.current, at };
     setSplit(at);
-    setDetailSheet(phone);
+    if (!handle) return;
+    const handleX = Math.min(Math.max((at / 100) * box.width, half), box.width - half);
+    const [cx, cy, radius] = [r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top, r.width / 2];
+    const middle = box.height / 2;
+    if (Math.hypot(handleX - cx, middle - cy) >= radius + half + NODE_CLEAR) return handle.style.removeProperty('--handle-y');
+    const below = cy + radius + half + NODE_CLEAR;
+    handle.style.setProperty('--handle-y', `${Math.round(below + half <= box.height ? below : cy - radius - half - NODE_CLEAR)}px`);
+  };
+  // A node opened (owner, 05.10: «позначка вузла на фото»); pressed again, it closes. `step`: reached by ‹ › or a swipe
+  const showNode = (id: DetailId, step: -1 | 0 | 1 = 0) => {
+    if (detail === id && !step) return closeDetail();
+    if (!detail && !step) nodeSeam.current = null;
+    nodeSwitch.current = detail ? step : 0;
+    setExploded(false);
+    placeSeam(id, nodeOnPhoto);
+    setDetailSheet(phoneNow());
     setDetail(id);
+  };
+  // The next node or the previous one, round the five
+  const stepNode = (by: -1 | 1) => {
+    if (!detail) return;
+    const at = PROOF_DETAILS.findIndex((entry) => entry.id === detail);
+    showNode(PROOF_DETAILS[(at + by + PROOF_DETAILS.length) % PROOF_DETAILS.length].id, by);
+  };
+  // A finger swiped across the sheet: on to the next node, or back
+  const onSheetDown = (event: PointerEvent<HTMLDivElement>) => {
+    swipe.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
+  };
+  const onSheetUp = (event: PointerEvent<HTMLDivElement>) => {
+    const from = swipe.current;
+    swipe.current = null;
+    if (!from) return;
+    const [dx, dy] = [event.clientX - from.x, event.clientY - from.y];
+    if (Math.abs(dx) >= SWIPE_MIN && Math.abs(dx) > Math.abs(dy) * 1.5) stepNode(dx < 0 ? 1 : -1);
   };
   // Closing: back into its ring, then gone; the seam back where it was; the focus to its letter
   const closeDetail = () => {
@@ -596,6 +652,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const done = () => {
       const seam = nodeSeam.current;
       nodeSeam.current = null;
+      handleRef.current?.style.removeProperty('--handle-y');
+      setExploded(false);
       if (seam && Math.abs(live.current - seam.at) < 0.5) setSplit(seam.from);
       setDetail(null);
       if (was) detailPinRefs.current[was]?.focus({ preventScroll: true });
@@ -1184,25 +1242,49 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         {detail && (() => {
           const item = PROOF_DETAILS.find((entry) => entry.id === detail)!;
           const body = (
-            <div ref={detailRef} className="hv2-detail" data-sheet={detailSheet ? '' : undefined} data-flow={flowOn ? '' : undefined} role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
+            <div
+              ref={detailRef}
+              className="hv2-detail"
+              data-sheet={detailSheet ? '' : undefined}
+              data-flow={flowOn && !exploded ? '' : undefined}
+              data-exploded={exploded ? '' : undefined}
+              onPointerDown={onSheetDown}
+              onPointerUp={onSheetUp}
+              onPointerCancel={() => { swipe.current = null; }}
+              role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
               <div className="hv2-detail-head">
                 <span className="hv2-detail-letter" aria-hidden="true">{item.letter}</span>
                 <b id="hv2-detail-title">Вузол {item.letter} · {item.title}</b>
+                <span className="hv2-detail-steps">
+                  <button type="button" className="hv2-detail-step" aria-label="Попередній вузол" onClick={() => stepNode(-1)}>‹</button>
+                  <button type="button" className="hv2-detail-step" aria-label="Наступний вузол" onClick={() => stepNode(1)}>›</button>
+                </span>
                 <button ref={detailCloseRef} type="button" className="hv2-detail-close" aria-label="Закрити вузол" onClick={closeDetail}>
                   <span aria-hidden="true">×</span>
                 </button>
               </div>
-              <item.Drawing key={nodeRun} />
+              <item.Drawing key={item.id} />
               {/* the load's way through it, in words, under the drawing while it is shown */}
-              {flowOn && <p className="hv2-detail-flow-words">{item.flow}</p>}
+              {flowOn && !exploded && <p className="hv2-detail-flow-words">{item.flow}</p>}
               <div className="hv2-detail-foot">
                 <p className="hv2-detail-note">Вузол такого типу · схема без розмірів</p>
                 <span className="hv2-detail-actions">
                   <button type="button" className="hv2-detail-again" aria-pressed={flowOn} onClick={() => setFlowOn((on) => !on)}>
-                    <span aria-hidden="true">↓</span> Куди йде навантаження
+                    <span aria-hidden="true">↓</span> Навантаження
                   </button>
-                  <button type="button" className="hv2-detail-again" onClick={() => setNodeRun((run) => run + 1)}>
-                    <span aria-hidden="true">↻</span> Зібрати ще раз
+                  <button type="button" className="hv2-detail-again" aria-pressed={exploded} onClick={() => setExploded((on) => !on)}>
+                    <span aria-hidden="true">⇲</span> {exploded ? 'Зібрати' : 'Розібрати'}
+                  </button>
+                  <button
+                    type="button"
+                    className="hv2-detail-again"
+                    aria-pressed={nodeOnPhoto}
+                    onClick={() => {
+                      placeSeam(item.id, !nodeOnPhoto);
+                      setNodeOnPhoto((on) => !on);
+                    }}
+                  >
+                    <span aria-hidden="true">◎</span> На фото
                   </button>
                 </span>
               </div>

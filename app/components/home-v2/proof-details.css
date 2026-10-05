@@ -62,3 +62,25 @@ main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-assembly { opacity: .55;
 @keyframes hv2-detail-part { from { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 0px)); } 35% { opacity: 1; } }
 @keyframes hv2-detail-names { from { opacity: 0; } }
 @keyframes hv2-detail-flow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
+
+/* «Розібрати» (ProofContour, data-exploded): each part drawn back half way along where it came from — the top ones first —
+   the drawing stepping back to make room, the names on the drawing giving way to each part's step and name; «Зібрати»
+   puts it back from the bottom up */
+main[data-home="v2"] .hv2-detail .hv2-detail-zoom { transform-box: view-box; transform-origin: 50% 50%; transition: transform 600ms cubic-bezier(.3, .7, .2, 1); }
+main[data-home="v2"] .hv2-detail[data-exploded] .hv2-detail-zoom { transform: scale(.8); }
+main[data-home="v2"] .hv2-detail .hv2-detail-part-shift {
+  transition: transform 650ms cubic-bezier(.3, .7, .2, 1); transition-delay: calc(var(--n, 0) * 80ms);
+}
+main[data-home="v2"] .hv2-detail[data-exploded] .hv2-detail-part-shift {
+  transform: translate(var(--ex, 0px), var(--ey, 0px)); transition-delay: calc((var(--parts, 6) - 1 - var(--n, 0)) * 80ms);
+}
+main[data-home="v2"] .hv2-detail .hv2-detail-part-name { opacity: 0; transition: opacity 180ms ease; pointer-events: none; }
+main[data-home="v2"] .hv2-detail[data-exploded] .hv2-detail-part-name { opacity: 1; transition: opacity 300ms ease 520ms; }
+main[data-home="v2"] .hv2-detail .hv2-detail-part-name circle { fill: var(--hv2-copper-fill, #a0522a); stroke: #f0b48a; stroke-width: .8; }
+main[data-home="v2"] .hv2-detail .hv2-detail-part-step { font: 700 8.5px/1 var(--font-condensed), sans-serif; fill: #f5f2eb; }
+main[data-home="v2"] .hv2-detail .hv2-detail-part-word {
+  font: 600 10.5px/1 var(--font-manrope), sans-serif; fill: var(--hv2-scheme, #ede8de); letter-spacing: 0;
+  paint-order: stroke; stroke: var(--hv2-detail-sheet, #161817); stroke-width: 3px; stroke-linejoin: round;
+}
+main[data-home="v2"] .hv2-detail .hv2-detail-names-wrap { transition: opacity 220ms ease; }
+main[data-home="v2"] .hv2-detail[data-exploded] .hv2-detail-names-wrap { opacity: 0; }
