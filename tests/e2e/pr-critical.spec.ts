@@ -466,11 +466,12 @@ test('homepage separates labelled illustrations from the one real photo', async 
   await expect(sheet.locator('figcaption')).toContainText('Фото з ретушшю переднього плану');
   await expect(page.locator('#real-object')).toContainText('до створення RUBIKON BUILD');
 
-  // Owner's decisions (04.10): right of the seam, what was measured from the photos — the contour and scale-free
-  // figures — and a SCHEME of a frame of this object's type, said to be one, with no sizes; never the frame over the
-  // photo itself, never the generated X-ray sketch on the default page. Every explanation card carries its label.
+  // Owner's decisions (04.10, 05.10): right of the seam, the outline and the slope taken from the photos, no scale, and a
+  // SCHEME of a frame of this object's type, said to be one — its stamp on the drawing says it has no sizes; never the
+  // frame over the photo itself, never the generated X-ray sketch on the default page. Every explanation card carries its
+  // label.
   await expect(sheet.locator('figcaption')).toContainText('за вісьмома фото цього ангара, без масштабу');
-  await expect(sheet.locator('figcaption')).toContainText('каркас показано схемою — такого типу, як на цьому об’єкті, без розмірів');
+  await expect(sheet.locator('figcaption')).toContainText('Каркас показано схемою такого типу, як на цьому об’єкті');
   await expect(sheet.locator('.hv2-contour-stamp')).toContainText('Схема · без розмірів');
   await expect(page.locator('#real-object img[src*="/concepts/"], #real-object source[srcset*="/concepts/"]')).toHaveCount(0);
   for (const tag of await page.locator('#engineering .hv2-card .hv2-tag').allTextContents()) expect(['Ілюстрація', 'Схема']).toContain(tag);
