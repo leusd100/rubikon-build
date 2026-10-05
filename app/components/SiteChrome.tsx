@@ -310,7 +310,7 @@ function PersonFocus({ items }: Readonly<{ items?: readonly string[] }>) {
   );
 }
 
-export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
+export function TeamSection({ variant = 'home', headerAside }: { variant?: TeamVariant; headerAside?: ReactNode }) {
   const { sergii, dmytro } = teamContent[variant];
   const isHome = variant === 'home';
 
@@ -329,6 +329,7 @@ export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
             // /pro-nas: who they are, plainly (the owner's wording, 01.10); the family thesis itself is said once, by
             // the copper line under the cards
             : 'Батько й син — дві зони відповідальності: будівельна частина й робота з клієнтами.'}
+          aside={headerAside}
         />
         <div className="team-stories" data-motion={isHome ? undefined : ''}>
           <article className="person-story">

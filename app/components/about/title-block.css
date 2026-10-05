@@ -1,0 +1,33 @@
+/* /pro-nas · the people header's title block (TitleBlock.tsx): two rows (zone → name) signing into the company cell;
+   the copper rule between them is the join, the same thought as the copper bond line under the cards. Theme roles
+   only, so Light and Dark need no rules of their own.
+
+   It is taken OUT of the header's flow and stands on the header's bottom rule, in the corner: the header keeps exactly
+   the height it has without the block (globals.css would otherwise give the aside a grid column of its own from
+   1051 px). Shown from 1240 px, where it stands clear of the lead by 60 px or more; below that the header is as it
+   always was. grid-area: auto matters: an absolutely positioned grid child is otherwise placed against its grid area
+   (the rows above the header's padding), 32 px short of the rule. */
+.team-about .team-heading.has-aside { grid-template-columns: minmax(0, 1fr); }
+.team-about .team-heading.has-aside .section-header-aside { display: none; }
+@media (min-width: 1240px) {
+  .team-about .team-heading.has-aside .section-header-aside { position: absolute; right: 0; bottom: -1px; display: block; grid-area: auto; margin: 0; }
+}
+
+/* Line weights of the «Переріз» drawings: the outline in the cut's weight, inner rules thin, one copper line */
+.ttb { display: grid; grid-template-columns: auto auto; border: 1.4px solid var(--color-text-secondary); pointer-events: none; user-select: none; }
+.ttb-rows { display: grid; grid-template-columns: auto auto; margin: 0; }
+.ttb-row { display: contents; }
+.ttb-row > * { display: flex; align-items: center; min-height: 37px; margin: 0; padding: 0 16px 0 14px; white-space: nowrap; }
+.ttb-row + .ttb-row > * { border-top: 1px solid var(--color-border-strong); }
+.ttb-row dt { color: var(--color-text-muted); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.ttb-row dd { color: var(--color-text); border-left: 1px solid var(--color-border-strong); font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .01em; }
+.ttb-org { display: flex; flex-direction: column; justify-content: center; gap: 9px; margin: 0; padding: 0 18px 0 16px; border-left: 2.2px solid var(--color-accent); white-space: nowrap; }
+.ttb-org small { color: var(--color-text-muted); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.ttb-org b { color: var(--color-text); font: 700 15px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
+
+/* Arrives once with the header (ProcessMotion, root .about-page): the block fades up, the words a moment later.
+   Reduced motion, no motion or no script: the complete block. */
+.about-page[data-motion-ready="on"] .ttb { transition: opacity 500ms ease, transform 500ms var(--m-ease); }
+.about-page[data-motion-ready="on"] .ttb :is(dt, dd, small, b) { transition: opacity 400ms ease 300ms; }
+.about-page[data-motion-ready] .ttb:not([data-motion-state="on"]) { opacity: 0; transform: translateY(6px); }
+.about-page[data-motion-ready] .ttb:not([data-motion-state="on"]) :is(dt, dd, small, b) { opacity: 0; }

@@ -5,6 +5,7 @@ import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader, TeamSection }
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { CapabilityFigure } from '../components/about/CapabilityFigure';
+import { TitleBlock } from '../components/about/TitleBlock';
 import { RegionBlock } from '../components/about/RegionBlock';
 import { PracticeSteps, type PracticeStep } from '../components/about/PracticeSteps';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
@@ -13,6 +14,7 @@ import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
 import '../components/about/region.css';
 import '../components/about/capability.css';
+import '../components/about/title-block.css';
 import './about.css';
 
 // /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we do
@@ -119,7 +121,7 @@ export default function AboutPage() {
       </section>
 
       {/* 2 · The two people and what each answers for */}
-      <TeamSection variant="about" />
+      <TeamSection variant="about" headerAside={<TitleBlock />} />
 
       {/* 3 · What we do ourselves and what we organise, then where: the Delivery Model's capability layers (the five
           directions are on /napryamky, one link away); the region closes the block on a copper line */}
