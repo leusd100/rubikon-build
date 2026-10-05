@@ -1,19 +1,23 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
+import type { DirectionId } from '../../data/directions';
 import { DrawingSheet } from '../DrawingSheet';
+import { CatalogDrawing } from './CatalogDrawing';
 
 // /napryamky — the five directions as a catalogue. Each row stays the link to its page (the route list's markup, so the
 // shared tests keep holding); from 1051 px a sticky preview beside the rows shows the direction pointed at or focused:
 // its illustration, its own accent line and the kinds of work its page lists, with the way in. On narrower screens the
-// preview is gone and every row carries a small illustration beside its name instead (and its kinds, from 761 px).
-// Copy comes from the directions' own data. The images are generated concept illustrations made for this list (not the
-// hero's slides). The preview is the site's «Креслення» sheet (DrawingSheet): its title block names the direction and
-// says «Ілюстрація», and each new picture is plotted in over the last; the section's intro says it in words for the
-// small row images.
+// preview is gone and every row carries a small drawing sheet instead: a line scheme of what the direction physically
+// is (CatalogDrawing) over a one-line title block, «Аркуш NN · Схема» (and the row's kinds, from 761 px). A 92 px
+// photo thumbnail stood there before; nothing in it could be read, and a phone downloaded five files for it — the
+// rows now hold no image at all.
+// Copy comes from the directions' own data. The preview's images are generated concept illustrations made for this
+// list (not the hero's slides). The preview is the site's «Креслення» sheet (DrawingSheet): its title block names the
+// direction and says «Ілюстрація», and each new picture is plotted in over the last.
 
 export type CatalogItem = {
-  id: string;
+  id: DirectionId;
   number: string;
   href: string;
   title: string;
@@ -51,9 +55,13 @@ export function DirectionsCatalog({ items }: Readonly<{ items: readonly CatalogI
             onMouseEnter={() => setActive(index)}
             onFocus={() => setActive(index)}
           >
-            {/* Narrow screens only: the row's own illustration beside its name */}
+            {/* Below 1051 px only: the row's own sheet — a static scheme and its title block, no image */}
             <span className="dcat-thumb" aria-hidden="true">
-              <Illustration item={item} sizes="(max-width: 760px) 92px, (max-width: 1050px) 184px, 1px" />
+              <CatalogDrawing id={item.id} />
+              <span className="dcat-strip">
+                <span>Аркуш {item.number}</span>
+                <span>Схема</span>
+              </span>
             </span>
             <span>{item.number}</span>
             <div>

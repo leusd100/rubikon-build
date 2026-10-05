@@ -32,7 +32,8 @@
 
 /* ---------------------------------------------------------------- 2 · The directions catalogue */
 /* Rows on the left (each the link to its page, darkening when pointed at, the one in focus marked in copper); from
-   1051 px a sticky preview on the right: the illustration, the direction's own accent line, the kinds of work. */
+   1051 px a sticky preview on the right: the illustration, the direction's own accent line, the kinds of work. Below
+   1051 px the preview is gone and each row carries a small drawing sheet with a line scheme instead. */
 .dcat { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); align-items: start; gap: clamp(28px, 4vw, 64px); }
 /* The section header's rule already closes the intro — the list's own top rule made a double line (UX sweep 2026-10) */
 .dcat-list.route-service-list { border-top: 0; }
@@ -48,13 +49,42 @@
 .dcat-sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
 .dcat-frame { position: absolute; inset: 0; opacity: 0; }
 .dcat-frame[data-active] { z-index: 1; opacity: 1; }
-.dcat-frame img, .dcat-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.6) contrast(1.06); }
+.dcat-frame img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.6) contrast(1.06); }
 .dcat-copy { padding-top: 24px; }
 .dcat-title { margin: 0; font: 400 clamp(28px, 2.5vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; text-wrap: balance; }
 .dcat-accent { margin: 4px 0 0; color: var(--color-accent-strong); font: 400 clamp(22px, 1.9vw, 30px)/1.12 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
 .dcat-kinds-label { margin: 22px 0 10px; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .dcat-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .dcat-kinds li { padding: 7px 11px; color: var(--color-text); border: 1px solid var(--color-border-strong); font: 600 13.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .03em; }
+/* Row sheets, below 1051 px (above it the thumb is display: none): a line scheme (CatalogDrawing.tsx) over a one-line
+   title block. Static — the server markup is the whole drawing. The scheme's body is drawn at half its reference size
+   (<g transform="scale(.5)">), so the widths here are in reference units: 2.4 is about 1 px on a 164 px sheet. Every
+   rule states its paint in full on purpose: after a client-side navigation from a direction page that page's global
+   .dsd-* rules may still be loaded. Line types as on the site's other drawings: dash-dot = an axis; long dash and two
+   dots = someone else's equipment (the silo); thin solid = everything else; copper = the one accent per sheet. */
+.cdw { display: block; width: 100%; height: auto; padding: 9px 9px 5px; }
+.cdw .dsd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 2.4; stroke-linejoin: round; }
+/* seen in elevation, not cut: the same line without the cut fill */
+.cdw .cdw-seen { fill: none; stroke: var(--color-text-secondary); stroke-width: 2.4; stroke-linejoin: round; }
+.cdw .dsd-line { fill: none; stroke: var(--color-text-muted); stroke-width: 2; stroke-linejoin: round; }
+.cdw .cdw-equip { fill: none; stroke: var(--color-text-muted); stroke-width: 1.6; stroke-dasharray: 15 4 2.5 4 2.5 4; }
+.cdw .dsd-axis { fill: none; stroke: var(--color-text-muted); stroke-width: 1.3; stroke-dasharray: 18 5 3 5; opacity: .75; }
+.cdw .dsd-dim { fill: none; stroke: var(--color-text-muted); stroke-width: 1.5; }
+.cdw .dsd-hatch { fill: none; stroke: var(--color-text-muted); stroke-width: 1.4; opacity: .65; }
+.cdw .dsd-insulation { fill: none; stroke: var(--color-text-muted); stroke-width: 1.6; }
+.cdw .dsd-bars circle { fill: var(--color-text-secondary); r: 3.2px; }
+.cdw .dsd-accent { fill: none; stroke: var(--color-accent); stroke-width: 3.6; stroke-linecap: round; }
+.cdw .dsd-accent circle { fill: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+.cdw .dsd-accent .dsd-dashed { stroke-dasharray: 9 8; stroke-linecap: butt; stroke-width: 3; }
+/* the reused bodies' own letters are 14 reference units (under 6 px here): the sheet sets its own, outside the scale */
+.cdw .dsd-dim-text { display: none; }
+.cdw-letter { fill: var(--color-text-muted); font: italic 500 11px var(--font-manrope), sans-serif; text-anchor: middle; }
+/* The sheet keeps its own paper when its row turns dark (pointer or keyboard), and that state swaps the copper text
+   token for the on-dark one. The list holds the paper's copper, resolved above the row, for the one copper letter. */
+.dcat-list { --dcat-sheet-copper: var(--color-accent-strong); }
+.cdw-letter-accent { fill: var(--dcat-sheet-copper); }
+.dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 10.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.dcat-strip span:first-child { color: var(--color-text); }
 @keyframes dcat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes dcat-plot { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
 @media (prefers-reduced-motion: no-preference) {
@@ -174,7 +204,7 @@
 
 /* ---------------------------------------------------------------- Tablet and phone */
 @media (max-width: 1050px) {
-  /* One column, no preview: every row carries a small illustration beside its name — the list stays a list, not five
+  /* One column, no preview: every row carries a small drawing sheet with its scheme — the list stays a list, not five
      full-width pictures (that was ~3 phone screens) */
   .dcat { grid-template-columns: minmax(0, 1fr); }
   .dcat-preview { display: none; }
@@ -187,10 +217,8 @@
   .dcat-list a.route-service > div { grid-area: body; }
   .dcat-list a.route-service > div p { margin-top: 10px; }
   .dcat-list a.route-service > b { grid-area: arrow; margin-top: 2px; }
-  .dcat-list .dcat-thumb {
-    position: relative; display: block; overflow: hidden; grid-area: thumb; aspect-ratio: 4 / 3; padding: 4px;
-    background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); /* the «Креслення» sheet's small echo */
-  }
+  /* the «Креслення» sheet's small echo: the scheme, then its title block; its own paper in both row states */
+  .dcat-list .dcat-thumb { display: flex; flex-direction: column; grid-area: thumb; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); }
   .dcat-list .dcat-kinds-row { display: flex; margin-top: 14px; }
   .dcat-list .dcat-kinds-row li { padding: 6px 9px; font-size: 12.5px; }
   .dfmt-grid { grid-template-columns: minmax(0, 1fr); }
@@ -204,14 +232,20 @@
   .directions-page .directions-subhero .subhero-layout { padding-bottom: 92px; }
   .dhs-indicator { display: none; }
   /* Phone rows: number and name across the row (a one-word name such as «Металоконструкції» needs it), then the
-     picture beside the line; the kinds stay on the direction's page (the link's name never carried them). The
-     pointer/keyboard state pads by 12 px, not 26, so the name still fits at 320 px. */
-  .dcat-list a.route-service { grid-template-columns: 92px minmax(0, 1fr) 20px; grid-template-areas: "num num arrow" "title title arrow" "thumb text text"; grid-template-rows: auto auto auto; gap: 6px 16px; padding-block: 20px; }
+     line on the left and the sheet on the right, under the ↗; the kinds stay on the direction's page (the link's name
+     never carried them). The sheet spans the last two columns, so it is exactly --dcat-fig wide: 46 % of the list
+     (100vw − 32 px), as a vw formula and not a percentage, so the sheet keeps its size when the row takes its
+     pointer/keyboard padding (12 px, not 26, so the name still fits at 320 px). */
+  .dcat-list a.route-service {
+    --dcat-fig: clamp(132px, calc(46vw - 15px), 172px);
+    grid-template-columns: minmax(0, 1fr) calc(var(--dcat-fig) - 34px) 20px; grid-template-areas: "num num arrow" "title title arrow" "text thumb thumb"; grid-template-rows: auto auto auto;
+    gap: 6px 14px; padding-block: 20px;
+  }
   .dcat-list a.route-service:is(:hover, :focus-visible) { padding-inline: 12px; }
   .dcat-list a.route-service > div { display: contents; }
   .dcat-list a.route-service h3 { grid-area: title; }
   .dcat-list a.route-service > div p { grid-area: text; align-self: start; margin-top: 6px; }
-  .dcat-list .dcat-thumb { margin-top: 12px; }
+  .dcat-list .dcat-thumb { margin-top: 10px; }
   .dcat-list .dcat-kinds-row { display: none; }
   .dfmt-option { padding: 18px 12px 20px; }
   .dstart .dstart-entries { grid-template-columns: minmax(0, 1fr); }
@@ -224,4 +258,17 @@
   .dstart-run { top: calc(var(--row) / 2 + var(--start, 0) * var(--row)); height: calc((var(--last, 7) - var(--start, 0)) * var(--row)); }
   :where([data-motion-ready="on"]) .dstart :is(.dstart-rail, .dstart-run) { transform-origin: top; }
   :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) :is(.dstart-rail, .dstart-run) { transform: scaleY(0); }
+}
+/* 560–760 px (a phone on its side, a small tablet): the name fits beside the sheet, so the sheet rises to the row's
+   top and the row loses the empty band under a two-line text */
+@media (min-width: 560px) and (max-width: 760px) {
+  .dcat-list a.route-service { grid-template-columns: minmax(0, 1fr) 172px 20px; grid-template-areas: "num thumb arrow" "title thumb arrow" "text thumb arrow"; grid-template-rows: auto auto 1fr; }
+  .dcat-list .dcat-thumb { margin-top: 0; }
+}
+/* Up to 350 px: a narrower sheet, so the line beside it keeps «Швидкомонтовані» (129 px at 15 px) whole even in the
+   row's padded pointer/keyboard state (the text column is 134 px there at 320). On a 116 px sheet the dimension
+   letters would be about 6 px: they go, with their lines. */
+@media (max-width: 350px) {
+  .dcat-list a.route-service { --dcat-fig: 116px; }
+  .cdw :is(.cdw-letter, .dsd-dim) { display: none; }
 }

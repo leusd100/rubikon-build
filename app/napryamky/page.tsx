@@ -25,8 +25,9 @@ import './directions.css';
 // track and the map. Every word is the page's previous copy, /yak-pratsyuiemo's, the directions' own data or the
 // Delivery Model.
 
-/** The catalogue's own illustrations — generated concept images, one per direction, never the hero's slides. Focal
- *  points keep the subject in the square-ish crops of the narrow-screen rows. */
+/** The catalogue's own illustrations — generated concept images, one per direction, never the hero's slides. They are
+ *  shown only in the desktop preview sheet (below 1051 px the rows carry line schemes instead); the focal points keep
+ *  the subject in its 3:2 crop. */
 const CATALOG_FOCAL: Record<DirectionId, string> = {
   angary: '50% 50%',
   zernoskhovyshcha: '46% 50%',

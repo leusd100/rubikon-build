@@ -4,6 +4,11 @@ import type { DirectionPageConfig } from '../../types/directionPage';
 // CONCRETE / ROOF) used to fill. Thin graphite lines with the one detail that matters in copper — the bolted plate of a
 // steel joint, the cover and anchors of a footing, the flashing and gutter of a roof edge. Decorative and schematic:
 // no sizes, no scale, nothing that could pass for a real project drawing (letters only on the dimension lines).
+//
+// The three bodies (Steel, Concrete, Roofing) are exported: the /napryamky catalogue draws the same geometry small in
+// its phone and tablet rows (CatalogDrawing.tsx). That makes this file part of a client bundle too (DirectionsCatalog
+// is a client component), so it must stay free of CSS imports (a stylesheet shared by two entry points becomes an
+// empty chunk that 404s under vinext) and of element ids (five sheets share one page).
 
 type DrawingId = Extract<DirectionPageConfig['id'], 'metalokonstruktsii' | 'betonni-roboty' | 'pokrivelni-roboty'>;
 
@@ -17,7 +22,7 @@ export function hasSectionDrawing(id: DirectionPageConfig['id']): id is DrawingI
   return id in SHEETS;
 }
 
-function Steel() {
+export function Steel() {
   return (
     <>
       {/* I-beam section */}
@@ -40,7 +45,7 @@ function Steel() {
   );
 }
 
-function Concrete() {
+export function Concrete() {
   const bars = Array.from({ length: 12 }, (_, index) => 66 + index * 21);
   return (
     <>
@@ -64,7 +69,7 @@ function Concrete() {
   );
 }
 
-function Roofing() {
+export function Roofing() {
   // The build-up is drawn flat along the slope and turned to it (17°): sheet, insulation, deck, purlins.
   const ribs = 'h14 l4 -8 h12 l4 8 '.repeat(8);
   const insulation = 'q4 -10 8 0 t8 0 '.repeat(17);
