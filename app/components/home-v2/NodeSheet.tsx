@@ -28,7 +28,8 @@ type Point = readonly [number, number];
 type Part = 'rib' | 'plate' | 'anchor' | 'base';
 
 const round = (value: number) => +value.toFixed(1);
-const open = (points: readonly Point[]) => `M${points.map(([x, y]) => `${round(x)} ${round(y)}`).join('L')}`;
+const pair = ([x, y]: Point) => `${round(x)} ${round(y)}`;
+const open = (points: readonly Point[]) => `M${points.map(pair).join('L')}`;
 const closed = (points: readonly Point[]) => `${open(points)}Z`;
 
 // ---------- the key: a generic portal frame and the load's way through it ----------

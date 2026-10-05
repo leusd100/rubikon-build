@@ -23,10 +23,12 @@ test('the scheme draws only works that the ledger lists, and stays out of the ac
 });
 
 test('the scheme runs no tour of its own: nothing is lit until the visitor points', async ({ page }) => {
+  // The page's clock is ours: ten seconds of its timers and frames are run through, instead of waiting for them
+  await page.clock.install();
   await page.goto('/pro-nas', { waitUntil: 'load' });
   const block = page.locator('.about-cap');
   await block.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(2500);
+  await page.clock.runFor(10_000);
   expect(await block.getAttribute('data-tier')).toBeNull();
   expect(await block.getAttribute('data-cap')).toBeNull();
   await expect(page.locator(`${FIGURE} [data-on]`)).toHaveCount(0);

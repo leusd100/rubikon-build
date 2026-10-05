@@ -53,7 +53,7 @@ const LEADERS = {
   5: leader(133.9, RIDGE, BOTTOM), // the ridge; the leader leaves between two footings
 } as const;
 
-function Position({ n }: { n: keyof typeof LEADERS }) {
+function Position({ n }: Readonly<{ n: keyof typeof LEADERS }>) {
   const { x, y, d, numberX, numberY } = LEADERS[n];
   return (
     <>
