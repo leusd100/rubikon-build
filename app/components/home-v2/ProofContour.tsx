@@ -13,29 +13,26 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 
 // HOME's proof (owner, 04.10): ONE «Креслення» sheet with the real photo, and right of a seam the visitor moves the same
 // frame as a tracing — grey, dark, on a fine grid — with one of three layers over it, chosen in the title block:
-//   «Контур» — the copper lines measured from eight photos of this hangar (solid — measured, dashed — approximate;
-//     app/data/homeProofContour.ts) and three scale-free figures measured from them: the roof's slope with its
-//     uncertainty, the two equal gates, the gable's width to its height (app/data/homeProofMeasures.ts). With «≈» and
-//     «±» always, and never a size: the photos give no scale. (Review, 04.10: «the ridge in the middle» is gone — the
-//     photo study assumes it, nobody measured it);
-//   «Каркас» (the default) — a SCHEME of a frame of the type the owner names for this object, drawn inside that
-//     silhouette in the photo's own perspective (app/data/homeProofFrame.ts): illustrative, labelled so on the sheet
-//     («Схема · без розмірів») and in the note; with the walls and the central row of columns the owner remembers, but
-//     never this building's drawn structure — nobody can see it under the cladding and its drawings were not kept. Here
-//     the outline is one solid copper line and the cladding's strip lines are off (owner, 04.10): the measured /
-//     approximate split is «Контур»'s;
+//   «Каркас» (the default) — a SCHEME of a frame of the type the owner names for this object, drawn inside the
+//     silhouette measured from eight photos of this hangar, in the photo's own perspective (app/data/homeProofFrame.ts,
+//     app/data/homeProofContour.ts): illustrative, labelled so on the sheet («Схема · без розмірів») and in the note;
+//     with the walls and the central row of columns the owner remembers, but never this building's drawn structure —
+//     nobody can see it under the cladding and its drawings were not kept. The outline is one solid copper line, with
+//     the one measured figure the scheme keeps, the roof's slope with its «≈» and «±» (app/data/homeProofMeasures.ts);
 //   «Сніг» — the same scheme with the snow's way through it, link by link, roof to ground; «Вітер» — the wind's, across
 //     the building, in its own cool tint (owner review, 04.10).
+// («Контур», the measured lines with their measured / approximate split and three figures, is gone — owner, 05.10:
+// «клієнту точно цього не треба знати».)
 // The scheme never goes over the photo: it lives right of the seam only, and so do the words that belong to it — the
 // stamp that says what it is and the load's chain, clipped at the seam. «Контур на фото» lays the measured lines (and
 // only those) over the photo as well, as proof that they land on it.
 //
 // The seam is a real range input (keys, screen readers). Mouse and pen drag anywhere in the frame; a finger drags only
 // the handle, so the page still scrolls and zooms under a thumb, and on a phone «Фото» / «Схема» show one side whole.
-// A mouse over the frame moves the seam with it, no press needed (owner, 04.10); a press and a drag still work, and a
-// finger takes the handle. Passing a measured line — a gate's jamb, a corner of the gable — the seam lights it up over
-// the photo and names it at its top, as a CAD cursor reports what it is on, but never holds there (owner, 04.10: a
-// magnet at the gates «не дуже»); keys and screen readers step as before.
+// The seam moves only while a button is held or a finger is on the handle (owner, 05.10: a mouse leading it on its own
+// is gone). Passing a line of the outline — a gate's jamb, a corner of the gable — the seam lights it up over the photo
+// and names it at its top, but never holds there (owner, 04.10: a magnet at the gates «не дуже»); keys and screen
+// readers step as before.
 // Arriving with motion (owner review, 04.10 — «шов-плотер»), the sheet plots in as a whole photo, then the seam sweeps
 // from the right edge across the gable and back to rest, and what it has passed is the drawing, whole; the figures and
 // names come in when it rests, and two rings from the handle say it moves. A mouse or pen pressed in the sheet, a finger
@@ -49,7 +46,9 @@ import { homeProofMeasures } from '../../data/homeProofMeasures';
 // Test only (owner, 04.10): /?xray=sketch puts the old generated sketch on the right instead, to compare it with the
 // drawn scheme. Read on the client after hydration — the server HTML is the default page's — and never linked.
 
-type Layer = 'contour' | 'frame' | 'load' | 'wind' | 'sketch';
+// «Контур» is gone (owner, 05.10: «клієнту точно цього не треба знати» — the measured / approximate split): the copper
+// outline stays on the scheme's layers, one solid line
+type Layer = 'frame' | 'load' | 'wind' | 'sketch';
 
 /** The seam's resting place: right of the left gate and left of the ridge, so each side keeps a gate */
 export const DEFAULT_SPLIT = 62;
@@ -75,8 +74,6 @@ const SWEEP_TURN_PHONE = 1;
 /** While the seam moves under a pointer, the rest of the sheet (the range's value, the names that give way, the stamp)
  *  catches up at most this often, ms: the seam itself moves every frame (review, 05.10: dragging it stuttered) */
 const COMMIT_EVERY = 100;
-/** A mouse leading the seam: the share of the way it closes each frame — eased, so it feels held, not dragged */
-const FOLLOW_EASE = 0.32;
 /** A scope's cell lighting its part (ScopeCells): the seam glides here, so the whole gable shows, and back on letting go */
 const FOCUS_SPLIT = 15;
 const FOCUS_SPLIT_PHONE = 1;
@@ -94,7 +91,6 @@ const AIR = 8;
 type Room = { width: number; height: number; left: number; right: number; stamp: number };
 
 const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; genitive: string }> = {
-  contour: { button: 'Контур', seam: 'Контур', nominative: 'контур за фото', genitive: 'контуру' },
   frame: { button: 'Каркас', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
   // Two loads, each its own layer and its own colour (owner review, 04.10: «розумно кольорів, наприклад вітер»)
   load: { button: 'Сніг', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
@@ -111,17 +107,14 @@ const CHAINS: Partial<Record<Layer, readonly (readonly [string, number])[]>> = {
 // height whichever is on (review, 04.10: on a 360 px phone the load's set took a second line and pushed the controls)
 // On the scheme's layers the outline is one solid line and what stands behind the gable is copper (owner, 04.10): the
 // measured / approximate split is the «Контур» layer's
-type LegendKey = 'measured' | 'approximate' | 'outline' | 'scheme' | 'depth' | 'load' | 'wind';
+type LegendKey = 'outline' | 'scheme' | 'depth' | 'load' | 'wind';
 const LEGEND: Record<Layer, readonly LegendKey[]> = {
-  contour: ['measured', 'approximate'],
   frame: ['outline', 'scheme', 'depth'],
   load: ['outline', 'scheme', 'load'],
   wind: ['outline', 'scheme', 'wind'],
   sketch: [],
 };
 const LEGEND_WORDS: Record<LegendKey, string> = {
-  measured: 'виміряно',
-  approximate: 'наближено',
   // One word: every set shares one cell, and a second line on a laptop pushed the title block over the picture
   outline: 'контур',
   scheme: 'схема',
@@ -139,19 +132,19 @@ const pathOf = ({ points }: ContourLine) => `M${points.map(([x, y]) => `${x} ${y
 
 // What the seam snaps to: the measured verticals — both gates' jambs and the gable's corners, each at its mean x — with
 // the words for the seam's foot. Not the ridge: nobody measured where it stands (homeProofMeasures.ts)
-type Snap = { line: string; at: number; name: string; status: string };
+type Snap = { line: string; at: number; name: string };
 const pointsOf = (id: string) => lines.find((line) => line.id === id)!.points;
 const snapAt = (id: string, from: number, to?: number) => {
   const part = pointsOf(id).slice(from, to);
   return (part.reduce((sum, [x]) => sum + x, 0) / part.length / contourPhoto.width) * 100;
 };
 const SNAPS: readonly Snap[] = [
-  { line: 'gable-base', at: snapAt('gable-base', 1), name: 'Лівий кут фронтона', status: 'виміряно' },
-  { line: 'gate-left', at: snapAt('gate-left', 0, 2), name: 'Ліві ворота, одвірок', status: 'виміряно' },
-  { line: 'gate-left', at: snapAt('gate-left', 2), name: 'Ліві ворота, одвірок', status: 'виміряно' },
-  { line: 'gate-right', at: snapAt('gate-right', 0, 2), name: 'Праві ворота, одвірок', status: 'виміряно' },
-  { line: 'gate-right', at: snapAt('gate-right', 2), name: 'Праві ворота, одвірок', status: 'виміряно' },
-  { line: 'gable-corner-right', at: snapAt('gable-corner-right', 2), name: 'Правий кут фронтона', status: 'наближено' },
+  { line: 'gable-base', at: snapAt('gable-base', 1), name: 'Лівий кут фронтона' },
+  { line: 'gate-left', at: snapAt('gate-left', 0, 2), name: 'Ліві ворота, одвірок' },
+  { line: 'gate-left', at: snapAt('gate-left', 2), name: 'Ліві ворота, одвірок' },
+  { line: 'gate-right', at: snapAt('gate-right', 0, 2), name: 'Праві ворота, одвірок' },
+  { line: 'gate-right', at: snapAt('gate-right', 2), name: 'Праві ворота, одвірок' },
+  { line: 'gable-corner-right', at: snapAt('gable-corner-right', 2), name: 'Правий кут фронтона' },
 ];
 const phoneNow = () => window.matchMedia('(max-width: 760px)').matches;
 /** Where a measured line stands in the frame, per cent: on a phone the canvas is zoomed in on the gable */
@@ -265,10 +258,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const innerRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLSpanElement>(null);
   const handleRef = useRef<HTMLSpanElement>(null);
-  // Where the seam is drawn now, and where a mouse leading it is heading; a commit to React waiting to go
+  // Where the seam is drawn now; a commit to React waiting to go
   const live = useRef(DEFAULT_SPLIT);
-  const target = useRef(DEFAULT_SPLIT);
-  const followFrame = useRef(0);
   const commitTimer = useRef<number | undefined>(undefined);
   const drag = useRef<{ pointer: number; offset: number } | null>(null);
   const touched = useRef(false);
@@ -290,8 +281,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const paneCanvasRef = useRef<HTMLDivElement>(null);
   const detailCloseRef = useRef<HTMLButtonElement>(null);
 
-  const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['contour', 'frame', 'load', 'wind'];
-  const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[sketchMode ? 0 : 1];
+  const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['frame', 'load', 'wind'];
+  const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[0];
   const rightSide = LAYERS[layer];
   // for the listeners set up once
   const layerRef = useRef(layer);
@@ -309,7 +300,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
   // …and the rest of the sheet told every COMMIT_EVERY ms while the pointer moves it — a throttle, not a debounce: a
   // steady move must not hold it back (review, 05.10: the range and the cut figures waited for the pointer to pause) —
-  // and at once when it stops. It is told where the seam is heading: a mouse's ease lands there
+  // and at once when it stops
   const commit = (value: number, now = false) => {
     if (now) {
       window.clearTimeout(commitTimer.current);
@@ -320,21 +311,17 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (commitTimer.current !== undefined) return;
     commitTimer.current = window.setTimeout(() => {
       commitTimer.current = undefined;
-      setSplit(target.current);
+      setSplit(live.current);
     }, COMMIT_EVERY);
   };
   // A move that is not the pointer's — a key, a button, a layer, the range — reaches the seam through the state, and the
   // seam glides there (the four's transition on --split)
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage || stage.dataset.dragging !== undefined || stage.dataset.following !== undefined) return;
+    if (!stage || stage.dataset.dragging !== undefined) return;
     if (Math.abs(split - live.current) > 0.001 || !paneRef.current?.style.getPropertyValue('--split')) paint(split);
-    target.current = split;
   }, [split]);
-  useEffect(() => () => {
-    window.clearTimeout(commitTimer.current);
-    cancelAnimationFrame(followFrame.current);
-  }, []);
+  useEffect(() => () => window.clearTimeout(commitTimer.current), []);
 
   // The first view (see SWEEP_AT): the seam waits at the right edge — the photo whole — while the sheet plots in, then
   // sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
@@ -465,15 +452,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       if (part) {
         if (!focusFrom.current) focusFrom.current = { split: live.current, chosen: chosenRef.current };
         setFocusPart(part);
-        cancelAnimationFrame(followFrame.current);
-        followFrame.current = 0;
-        target.current = live.current;
-        delete stage.dataset.following;
         snapRef.current = null;
         setSnap(null);
         setPoint(null);
         setDetail(null);
-        if (layerRef.current === 'contour') setChosen('frame');
         if (live.current > to) setSplit(to);
         if (sticky) {
           const box = stage.getBoundingClientRect();
@@ -489,7 +471,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         setFocusPart(null);
         if (!from) return;
         if (Math.abs(live.current - to) < 0.5) setSplit(from.split);
-        if (chosenRef.current === 'frame' && from.chosen !== 'frame') setChosen(from.chosen);
       }, sticky ? 0 : 160);
     };
     window.addEventListener(SCOPE_FOCUS_EVENT, onScope);
@@ -580,7 +561,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       const rect = label.getBoundingClientRect();
       const cut = rect.left < seam + 1 || covers.some((cover) => meets(rect, cover));
       // shown on this layer: the scheme's names and the figures marked for it on «Каркас», every figure on «Контур»
-      const here = layer === 'frame' ? label.dataset.tag !== undefined || label.dataset.onFrame !== undefined : layer === 'contour' && label.dataset.tag === undefined;
+      const here = layer === 'frame' && (label.dataset.tag !== undefined || label.dataset.onFrame !== undefined);
       if (!cut && here && rightTagWould && rightBox && meets(rect, rightBox)) yieldTag = true;
       if (cut === ('cut' in label.dataset)) continue;
       if (cut) label.dataset.cut = '';
@@ -620,16 +601,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     }
     // Tenths of a per cent: a whole per cent is a 13 px jump on a wide screen
     const tenths = Math.round(value * 10) / 10;
-    target.current = tenths;
-    if (stageRef.current?.dataset.following === undefined) paint(tenths);
+    paint(tenths);
     commit(tenths);
-  };
-  // A mouse leading the seam: each frame it closes FOLLOW_EASE of the way left, until it is there
-  const follow = () => {
-    followFrame.current = 0;
-    const gap = target.current - live.current;
-    paint(Math.abs(gap) < 0.05 ? target.current : live.current + gap * FOLLOW_EASE);
-    if (live.current !== target.current) followFrame.current = requestAnimationFrame(follow);
   };
 
   // Where a pointer is in the photo's own pixels, if it is on the right side of the seam
@@ -691,9 +664,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     }
     event.currentTarget.setPointerCapture(event.pointerId);
     // set here, not only by the render: the press's own move must not glide
-    cancelAnimationFrame(followFrame.current);
-    followFrame.current = 0;
-    delete event.currentTarget.dataset.following;
     event.currentTarget.dataset.dragging = '';
     setDragging(true);
     setPointerFocus(true);
@@ -705,38 +675,16 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       splitAt(event.clientX, drag.current.offset, event.pointerType === 'touch');
       return;
     }
-    // A mouse over the frame, no press: the seam follows it, eased (data-following, home-v2.css) — once the first view's
-    // sweep is over, and only for a move of the mouse itself, not the one a browser makes up after a scroll
-    const stage = event.currentTarget;
-    if (event.pointerType !== 'mouse' || !ready || drag.current || stage.dataset.sweep !== undefined) return;
-    if ((event.movementX === 0 && event.movementY === 0) || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    // Over a detail's letter, the detail open, or — on «Сніг» — the roof, the mouse is busy there: the seam stays
+    // A mouse over the frame, no press, moves no seam (owner, 05.10: only while the button is held). On «Сніг» it puts
+    // a weight on the roof it is over
+    if (event.pointerType !== 'mouse' || !ready || drag.current || event.currentTarget.dataset.sweep !== undefined) return;
     const roof = roofAt(event.clientX, event.clientY);
-    const busy = roof !== null || (event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail') !== null;
     if (roof) pointAt(roof[0]);
     else if (point || pointFrame.current) dropPoint();
-    if (busy) {
-      cancelAnimationFrame(followFrame.current);
-      followFrame.current = 0;
-      target.current = live.current;
-      delete stage.dataset.following;
-      return;
-    }
-    stage.dataset.following = '';
-    splitAt(event.clientX);
-    if (!followFrame.current) followFrame.current = requestAnimationFrame(follow);
   };
   const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
     if (drag.current) return;
     if (event.pointerType === 'mouse') dropPoint();
-    // the seam stays where the mouse left it
-    cancelAnimationFrame(followFrame.current);
-    followFrame.current = 0;
-    target.current = live.current;
-    delete event.currentTarget.dataset.following;
-    commit(live.current, true);
-    snapRef.current = null;
-    setSnap(null);
   };
   const endDrag = () => {
     if (!drag.current) return;
@@ -749,13 +697,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
 
   // Arrows step by one through the native range; the larger steps are the same in every browser
-  // A move that is not the pointer's — a key, a button, a layer — takes the seam from a mouse resting over the frame
-  // (review, 05.10: the keys moved the range but not the seam) and leaves no line lit behind it (review, 04.10)
+  // A move that is not the pointer's — a key, a button, a layer — leaves no line lit behind it (review, 04.10)
   const clearLit = () => {
-    cancelAnimationFrame(followFrame.current);
-    followFrame.current = 0;
-    target.current = live.current;
-    if (stageRef.current) delete stageRef.current.dataset.following;
     snapRef.current = null;
     setSnap(null);
   };
@@ -792,8 +735,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     }
   };
 
-  const measured = homeProofMeasures.filter((measure) => measure.chip);
-  const sliderLabel = `Порівняти фото й ${{ contour: 'контур за фото', frame: 'схему', load: 'схему', wind: 'схему', sketch: 'ескіз' }[layer]}`;
+  // The figures the scheme shows: the slope (the others were «Контур»'s)
+  const measured = homeProofMeasures.filter((measure) => measure.onFrame && measure.chip);
+  const sliderLabel = `Порівняти фото й ${{ frame: 'схему', load: 'схему', wind: 'схему', sketch: 'ескіз' }[layer]}`;
 
   return (
     <DrawingSheet
@@ -812,7 +756,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             </>
           ) : (
             <>
-              <b>Реальний об’єкт: фото, виміри, схема.</b> Фото з ретушшю переднього плану; контур, схил і пропорції —
+              <b>Реальний об’єкт: фото, виміри, схема.</b> Фото з ретушшю переднього плану; контур і схил —
               за вісьмома фото цього ангара, без масштабу. Креслень саме цього ангара в нас немає, тож каркас показано
               схемою — такого типу, як на цьому об’єкті, без розмірів.
             </>
@@ -854,7 +798,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                       </span>
                     ) : (
                       LEGEND[name].map((key) => (
-                        <span key={key} data-key={key} data-approximate={key === 'approximate' ? '' : undefined}>{legendLine}{LEGEND_WORDS[key]}</span>
+                        <span key={key} data-key={key}>{legendLine}{LEGEND_WORDS[key]}</span>
                       ))
                     )}
                   </span>
@@ -869,7 +813,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           <span className="hv2-contour-sides">
             <button type="button" aria-pressed={split === 100} disabled={!ready} onClick={() => showOnly(100)}>Фото</button>
             <button type="button" aria-pressed={split === 0} disabled={!ready} onClick={() => showOnly(0)}>
-              {layer === 'contour' ? 'Контур' : layer === 'sketch' ? 'Ескіз' : 'Схема'}
+              {layer === 'sketch' ? 'Ескіз' : 'Схема'}
             </button>
           </span>
           <button type="button" className="hv2-contour-toggle" aria-pressed={linesOnPhoto} disabled={!ready} onClick={() => setLinesOnPhoto((on) => !on)}>
@@ -998,12 +942,12 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             <span className="hv2-contour-corner" aria-hidden="true">
               <span className="hv2-contour-stamp">
                 <small>
-                  {layer === 'contour' ? 'Виміряно' : layer === 'sketch' ? 'Тест' : 'Схема'}
+                  {layer === 'sketch' ? 'Тест' : 'Схема'}
                   {/* a phone keeps the first word only */}
-                  <span className="hv2-contour-stamp-more">{layer === 'contour' ? ' за фото' : layer === 'sketch' ? '' : ' · без розмірів'}</span>
+                  <span className="hv2-contour-stamp-more">{layer === 'sketch' ? '' : ' · без розмірів'}</span>
                 </small>
                 <span className="hv2-contour-stamp-text">
-                  {layer === 'contour' ? 'без масштабу' : layer === 'sketch' ? 'згенероване зображення' : 'каркас такого типу, як на цьому об’єкті'}
+                  {layer === 'sketch' ? 'згенероване зображення' : 'каркас такого типу, як на цьому об’єкті'}
                 </span>
               </span>
             </span>
@@ -1015,8 +959,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           <div className="hv2-contour-canvas" data-over="">
             <svg className="hv2-contour-held" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`} aria-hidden="true">
               <path className="hv2-contour-held-casing" d={pathOf(lines.find((line) => line.id === snap.line)!)} />
-              {/* dashed where the line is approximate, as everywhere else */}
-              <path d={pathOf(lines.find((line) => line.id === snap.line)!)} data-approximate={lines.find((line) => line.id === snap.line)!.approximate ? '' : undefined} />
+              <path d={pathOf(lines.find((line) => line.id === snap.line)!)} />
             </svg>
           </div>
         )}
@@ -1041,8 +984,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           return main ? createPortal(<><div className="hv2-detail-backdrop" aria-hidden="true" onClick={closeDetail} />{body}</>, main) : body;
         })()}
         {/* What the figures say, for a screen reader: the labels on the frame are drawn for the eye only */}
-        <ul className="sr-only" aria-label="Виміряно за фото, без масштабу">
-          {homeProofMeasures.map((measure) => <li key={measure.id} data-measure={measure.id}>{measure.spoken}</li>)}
+        <ul className="sr-only" aria-label="За фото цього ангара, без масштабу">
+          {homeProofMeasures.filter((measure) => measure.onFrame).map((measure) => <li key={measure.id} data-measure={measure.id}>{measure.spoken}</li>)}
         </ul>
         <input
           ref={rangeRef}
@@ -1076,11 +1019,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           </span>
           <span className="hv2-contour-snap" ref={snapLabelRef} aria-hidden="true" style={snapPlace.wrap ? ({ '--snap-max': `${Math.round(snapPlace.max)}px` } as CSSProperties) : undefined}>
             {snapWords?.name}
-            <small>{snapWords?.status}</small>
-            <span className="hv2-contour-snap-measure">
-              {snapWords?.name}
-              <small>{snapWords?.status}</small>
-            </span>
+            <span className="hv2-contour-snap-measure">{snapWords?.name}</span>
           </span>
           <span className="hv2-contour-seam" />
           <span className="hv2-contour-handle" ref={handleRef}>‹ ›</span>

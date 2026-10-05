@@ -328,22 +328,21 @@ main[data-home="v2"] .hv2-contour-canvas > :is(svg, .hv2-proof-labels, .hv2-cont
    sketch's own ground covers it on the right, so there they lie over the photo only) */
 main[data-home="v2"] .hv2-contour-lines[data-on-photo] { visibility: hidden; }
 
-/* The measured lines (app/data/homeProofContour.ts): solid — measured, dashed — approximate */
+/* The outline measured from the photos (app/data/homeProofContour.ts): one solid copper line (owner, 05.10: no measured /
+   approximate split shown) */
 main[data-home="v2"] .hv2-contour-lines path {
   --w: 1.1; fill: none; stroke-width: calc(var(--u) * var(--w) * var(--k, 1)); stroke-linecap: butt; stroke-linejoin: miter;
 }
 main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { --w: var(--lw-1); }
 main[data-home="v2"] .hv2-contour-lines path[data-kind="gate"] { --w: 1.6; }
-main[data-home="v2"] .hv2-contour-lines path[data-approximate] { stroke-dasharray: calc(var(--u) * 6) calc(var(--u) * 5); }
 /* The line the dragged seam holds (ProofContour's snap): heavier and lighter while it is held, its name by the seam */
 main[data-home="v2"] .hv2-contour-lines path[data-snapped] { --k: 1.8; }
 main[data-home="v2"] .hv2-contour-ink path[data-snapped] { stroke: #e39a68; }
-/* The outline is drawn in parts (measured / approximate): square ends close its corners where butt ends notched them */
+/* The outline is drawn in parts: square ends close its corners where butt ends notched them */
 main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { stroke-linecap: square; }
 /* The held line over the photo too, unclipped (ProofContour) */
 main[data-home="v2"] .hv2-contour-held path { fill: none; stroke: #e39a68; stroke-width: calc(var(--u) * 2 * var(--k, 1)); stroke-linecap: square; stroke-linejoin: miter; }
 main[data-home="v2"] .hv2-contour-held .hv2-contour-held-casing { stroke: rgba(13, 15, 14, .7); stroke-width: calc(var(--u) * (2 * var(--k, 1) + 2.4)); }
-main[data-home="v2"] .hv2-contour-held path[data-approximate] { stroke-linecap: butt; stroke-dasharray: calc(var(--u) * 6) calc(var(--u) * 5); }
 @media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-contour-held { animation: hv2-contour-fade 160ms ease; } }
 /* A figure or a name the seam cuts through: hidden whole (ProofContour sets data-cut) */
 main[data-home="v2"] .hv2-contour-stage :is(.hv2-proof-labels > [data-cut], .hv2-proof-tag-leaders > [data-cut], .hv2-proof-marks > [data-cut]) { visibility: hidden !important; }
@@ -438,12 +437,7 @@ main[data-home="v2"] .hv2-proof-labels [data-align="middle"] { transform: transl
    04.10). They stay in the note under the frame and in what a screen reader hears */
 @media (max-width: 1023px) { main[data-home="v2"] .hv2-contour-stage .hv2-proof-measure small { display: none; } }
 
-/* «Контур» leaves the gable free of the scheme: a figure may sit nearer its mark there */
-main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-measure { left: var(--cx); top: var(--cy); }
-main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-measure[data-align-contour="middle"] { transform: translate(-50%, -50%); text-align: center; }
-main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-measure[data-align-contour="start"] { transform: translate(5px, -50%); text-align: left; }
-main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-leader[data-for="frame"],
-main[data-home="v2"] .hv2-contour-stage:not([data-layer="contour"]) .hv2-proof-leader[data-for="contour"] { display: none; }
+main[data-home="v2"] .hv2-proof-leader[data-for="contour"] { display: none; }
 main[data-home="v2"] .hv2-proof-measure { color: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-proof-measure small { display: block; margin-top: 2px; color: var(--hv2-text-2); font: 500 12px/1.15 var(--font-manrope), sans-serif; }
 main[data-home="v2"] .hv2-proof-tag { color: var(--hv2-scheme); }
@@ -453,20 +447,18 @@ main[data-home="v2"] :is(.hv2-proof-scheme, .hv2-proof-load, .hv2-proof-wind, .h
   transition: opacity 240ms ease, visibility 240ms;
 }
 main[data-home="v2"] :is(.hv2-proof-load, .hv2-proof-wind, .hv2-proof-marks > g, .hv2-proof-measure, .hv2-proof-tag) { opacity: 0; visibility: hidden; }
-main[data-home="v2"] .hv2-contour-stage:is([data-layer="contour"], [data-layer="sketch"]) .hv2-proof-scheme { opacity: 0; visibility: hidden; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-proof-scheme { opacity: 0; visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage:is([data-layer="load"], [data-layer="wind"]) .hv2-proof-scheme { opacity: .5; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load,
 main[data-home="v2"] .hv2-contour-stage[data-layer="wind"] .hv2-proof-wind { opacity: 1; visibility: visible; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-contour-lines { opacity: .75; }
 /* On the scheme's layers the outline is one solid line and the cladding's strip lines are off: they are the colour bands
    of the cladding, not structure, and only crowd the frame (owner, 04.10) */
-main[data-home="v2"] .hv2-contour-stage:is([data-layer="frame"], [data-layer="load"], [data-layer="wind"]) .hv2-contour-lines path[data-approximate] { stroke-dasharray: none; }
 main[data-home="v2"] .hv2-contour-stage:is([data-layer="frame"], [data-layer="load"], [data-layer="wind"]) .hv2-contour-lines path[data-kind="cladding"] { visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage:is([data-layer="load"], [data-layer="wind"]) .hv2-contour-lines { opacity: .35; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-lines { opacity: 0; visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo]:not([data-layer="sketch"]) .hv2-contour-lines,
 main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo] .hv2-contour-lines[data-on-photo] { opacity: 1; visibility: visible; }
-main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] :is(.hv2-proof-marks > g:not(.hv2-proof-tag-leaders), .hv2-proof-measure),
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] :is(.hv2-proof-marks > [data-on-frame], .hv2-proof-measure[data-on-frame], .hv2-proof-tag-leaders, .hv2-proof-tag) {
   opacity: 1; visibility: visible;
 }
@@ -582,7 +574,7 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
 @media (prefers-reduced-motion: no-preference) {
   /* «Фото» / «Схема», the keys and the layers glide the seam: the four's --split. A drag follows the pointer as it is, a
      mouse leading it is eased by ProofContour itself, and the first view's sweep drives --split on its own */
-  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding], [data-following]) :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) {
+  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) {
     transition: --split 420ms var(--sheet-plot);
   }
   main[data-home="v2"] :is(.hv2-contour-canvas > svg, .hv2-proof-labels, .hv2-contour-sketch) { transition: opacity 240ms ease, visibility 240ms; }
@@ -648,7 +640,6 @@ main[data-home="v2"] .hv2-contour-legend-set[data-on] { visibility: visible; }
 main[data-home="v2"] .hv2-contour-legend-set > span { display: flex; align-items: center; gap: 6px; }
 main[data-home="v2"] .hv2-contour-legend svg { width: 22px; height: 4px; flex: none; overflow: visible; }
 main[data-home="v2"] .hv2-contour-legend path { fill: none; stroke: var(--hv2-copper-text); stroke-width: 2; }
-main[data-home="v2"] .hv2-contour-legend [data-approximate] path { stroke-dasharray: 5 3; }
 main[data-home="v2"] .hv2-contour-legend [data-key="scheme"] path { stroke: var(--hv2-scheme); }
 main[data-home="v2"] .hv2-contour-legend [data-key="depth"] path { stroke-width: 1.4; stroke-opacity: .8; }
 main[data-home="v2"] .hv2-contour-legend [data-key="load"] path { stroke: var(--hv2-load); stroke-width: 3; stroke-linecap: round; stroke-dasharray: .5 5; }
