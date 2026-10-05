@@ -205,6 +205,18 @@
 .proc-responsibility:has(input[value="comprehensive"]:checked) .proc-area li[data-soft~="comprehensive"]::before,
 .proc-responsibility:has(input[value="work-package"]:checked) .proc-area li[data-soft~="work-package"]::before,
 .proc-responsibility:has(input[value="subcontract"]:checked) .proc-area li[data-soft~="subcontract"]::before { top: .45em; width: 7px; height: 7px; background: none; border: 1px solid var(--soft-ring, var(--color-accent)); border-radius: 50%; }
+/* The format switcher of the responsibility map: three radios as one segmented control, centred under the heading.
+   (The scope block above it has its own format buttons — FormatsScope — and the two hold one choice.) */
+.proc-resp-switch { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; }
+.proc-resp-switch legend { float: left; width: 100%; margin-bottom: 12px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+.proc-resp-switch > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); }
+.proc-resp-switch label { position: relative; cursor: pointer; }
+.proc-resp-switch label + label { border-left: 1px solid var(--color-border-control); }
+.proc-resp-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.proc-resp-switch span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.proc-resp-switch label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.proc-resp-switch input:checked + span { color: var(--color-bg); background: var(--color-text); }
+.proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -6px; }
 /* The map runs taller than a screen at every width: the map's switcher stays under the fixed header (101 px) while it
    scrolls by. The section's supporting text already asks to choose a format, so its legend is for assistive technology
    only. On a wide screen only the control floats (the strip beside it lets the pointer through to the cards). */
@@ -352,7 +364,7 @@
   /* Vertical route: the note sits under the steps, indented to the text column, and says which step it belongs to */
   .proc-design-note { margin: 40px 0 0 72px; }
   .proc-design-note::before { left: -51px; height: 40px; }
-                /* The map stacks; the rail becomes one line down the left edge */
+  /* The map stacks; the rail becomes one line down the left edge */
   .proc-map { grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 40px; padding: 0 0 0 28px; }
   .proc-map::before { top: 0; bottom: 0; left: 6px; right: auto; width: 1px; height: auto; transform-origin: top; }
   .process-page[data-motion-ready] .proc-resp-figure:not([data-motion-state="on"]) .proc-map::before { transform: scaleY(0); }
@@ -410,13 +422,15 @@
   .proc-start-head h2 { font-size: var(--title-section); line-height: 1.02; }
   .proc-start-head > p:last-child { font-size: 16px; }
   .proc-start-list li { grid-template-columns: 44px minmax(0, 1fr); padding: 22px 0; }
-      .proc-design-note { margin-left: 0; padding: 18px 18px 18px 16px; }
+  .proc-design-note { margin-left: 0; padding: 18px 18px 18px 16px; }
   .proc-design-note::before { left: 21px; }
   .proc-area { padding: 22px 20px 24px; }
   .proc-principle { font-size: clamp(24px, 6.8vw, 28px); }
   /* Compact under the 77 px header: one row of three */
   .proc-resp-switch { top: 77px; margin-bottom: 24px; padding: 8px 0; }
-          .proc-area-tag { font-size: 12px; letter-spacing: .08em; }
+  .proc-resp-switch > div { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .proc-resp-switch span { min-height: 48px; padding: 6px; font-size: 12px; letter-spacing: .04em; }
+  .proc-area-tag { font-size: 12px; letter-spacing: .08em; }
   .proc-terms-image { background-position: center top; background-size: 180% auto; }
   .proc-hero-trace { display: none; }
   .proc-terms-grid li { padding: 22px 20px 24px; }
