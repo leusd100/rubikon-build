@@ -10,15 +10,19 @@ import './directions-key.css';
 //   and slopes).
 // Pointing at a card, or reaching it with the keyboard, lights its part (directions-key.css, CSS only).
 //
-// What it is not: a drawing of any real object. No sizes and no scale — «L» and «B» are letters, the strip says
-// «Схема». End-wall framing is left out on purpose; the gate is an opening between its two jambs, no leaf drawn.
+// What it is not: a drawing of any real object. No sizes and no scale — «L» and «B» are letters, the corner says
+// «Схема · План». End-wall framing is left out on purpose; the gate is an opening between its two jambs, no leaf drawn.
 //
 // The drawing's grammar (one dictionary for every sheet of this pass): short dash — hidden below (the footings under
 // the floor); dash-dot — an axis; long dash with two dots — overhead (the ridge) or someone else's equipment (the
 // silo's shell: only its base is ours); thin solid — everything else; copper — the position numbers. The wall line
 // runs just off the columns' outer flanges and the footings project past it, as they do on a site.
 //
-// Static, a server component. SectionHeader renders it inside its aria-hidden aside: the cards say everything in words.
+// The plan has no frame and no rule of its own (owner, 05.10: the strip's line under it was one line too many): it
+// stands in the header's free space at the header's full height, and its name is two quiet words in its own corner.
+//
+// A server component. It draws in once on first view (HOME's one ProcessMotion, see directions-key.css).
+// SectionHeader renders it inside its aria-hidden aside: the cards say everything in words.
 
 const FRAMES = [52, 90, 128, 166] as const; // frame axes; their step is the dimension «B», about half the span
 const ROWS = [54, 126] as const; // the column rows: axis Б (top) and axis А; between them the span «L»
@@ -66,7 +70,7 @@ function Position({ n }: Readonly<{ n: keyof typeof LEADERS }>) {
 
 export function DirectionsKey() {
   return (
-    <figure className="dkey">
+    <figure className="dkey" data-motion>
       <svg viewBox="0 0 312 172" preserveAspectRatio="xMaxYMax meet" focusable="false">
         <path className="dkey-axis" d={axes} />
         <g className="dkey-bubbles">
@@ -81,7 +85,7 @@ export function DirectionsKey() {
 
         <g className="dkey-part" data-n="1">
           <rect className="dkey-fill" x={WALL.x1} y={WALL.y1} width={WALL.x2 - WALL.x1} height={WALL.y2 - WALL.y1} />
-          <path className="dkey-wall" d={`M${WALL.x1} ${GATE[0]}V${WALL.y1}H${WALL.x2}V${WALL.y2}H${WALL.x1}V${GATE[1]}M${WALL.x1 - 5} ${GATE[0]}h10M${WALL.x1 - 5} ${GATE[1]}h10`} />
+          <path className="dkey-wall" pathLength={1} d={`M${WALL.x1} ${GATE[0]}V${WALL.y1}H${WALL.x2}V${WALL.y2}H${WALL.x1}V${GATE[1]}M${WALL.x1 - 5} ${GATE[0]}h10M${WALL.x1 - 5} ${GATE[1]}h10`} />
           <Position n={1} />
         </g>
         <g className="dkey-part" data-n="4">
@@ -100,12 +104,13 @@ export function DirectionsKey() {
           <Position n={3} />
         </g>
         <g className="dkey-part" data-n="2">
-          <circle className="dkey-base" cx={SILO.cx} cy={SILO.cy} r={SILO.base} />
+          <circle className="dkey-base" pathLength={1} cx={SILO.cx} cy={SILO.cy} r={SILO.base} />
           <circle className="dkey-equip" cx={SILO.cx} cy={SILO.cy} r={SILO.shell} />
           <Position n={2} />
         </g>
+        {/* The drawing's name, in the free corner under the silo */}
+        <text className="dkey-cap" x="312" y="169">Схема · <tspan>План</tspan></text>
       </svg>
-      <figcaption className="dkey-strip"><span>Схема</span><b>План</b><span>Напрями 01–05</span></figcaption>
     </figure>
   );
 }

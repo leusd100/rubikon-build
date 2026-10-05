@@ -5,7 +5,9 @@ import { directions } from '../../app/data/directions';
 // the sake of adding). A schematic plan whose five position numbers are the cards' own 01–05. These pin what it
 // promised: it costs the header nothing (same height with and without it), it shows only where it is large enough to
 // read, every card lights its own part — walked from the data, because the link is by route — and it stays out of the
-// accessibility tree, the cards saying everything in words.
+// accessibility tree, the cards saying everything in words. Since 05.10 it has no title strip and no rule (the owner
+// saw the strip's line run through the drawing where a browser sized the drawing by its width): the plan stands free,
+// named in its own corner, and must stay inside its box.
 
 const HEADER = '#directions .section-header';
 const FIGURE = `${HEADER} .dkey`;
@@ -16,15 +18,19 @@ for (const width of [1200, 1440]) {
   test(`at ${width}px the key plan stands in the header and costs it no height`, async ({ page, isMobile }) => {
     test.skip(isMobile, 'a wide-screen figure');
     await page.setViewportSize({ width, height: 900 });
+    // Geometry is measured at rest, not in the middle of the draw-in
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/', { waitUntil: 'load' });
     const figure = page.locator(FIGURE);
     await expect(figure).toBeVisible();
     await expect(page.locator(`${HEADER} .section-header-aside`)).toHaveAttribute('aria-hidden', 'true');
-    await expect(figure.locator('.dkey-strip')).toHaveText(/Схема\s*План\s*Напрями 01–05/);
+    // No strip and no rule: the name is two words in the drawing's corner
+    await expect(figure.locator('figcaption, .dkey-strip')).toHaveCount(0);
+    await expect(figure.locator('.dkey-cap')).toHaveText('Схема · План');
     // The numbers on the drawing are the cards' numbers, each once
     expect((await figure.locator('.dkey-num').allTextContents()).sort()).toEqual(directions.map(({ number }) => number).sort());
     // A scheme: letters and position numbers, never a size
-    for (const label of await figure.locator('svg text').allTextContents()) expect(label, label).toMatch(/^(0[1-5]|[АБLBi])$/);
+    for (const label of await figure.locator('svg text:not(.dkey-cap)').allTextContents()) expect(label, label).toMatch(/^(0[1-5]|[АБLBi])$/);
 
     const geometry = await page.locator(HEADER).evaluate((header) => {
       const aside = header.querySelector<HTMLElement>('.section-header-aside')!;
@@ -36,7 +42,12 @@ for (const width of [1200, 1440]) {
       };
       const column = drawing.querySelector('.dkey-col')!.getBoundingClientRect();
       const scale = Math.min(drawing.getBoundingClientRect().width / drawing.viewBox.baseVal.width, drawing.getBoundingClientRect().height / drawing.viewBox.baseVal.height);
+      // Everything drawn, as the browser laid it out (the drawing is overflow: visible, so its own box proves nothing)
+      const drawn = [...drawing.querySelectorAll<SVGGraphicsElement>('path, circle, rect, text')].map((shape) => shape.getBoundingClientRect());
       const measured = {
+        drawnTop: Math.min(...drawn.map((box) => box.top)) - aside.getBoundingClientRect().top,
+        drawnBottom: aside.getBoundingClientRect().bottom - Math.max(...drawn.map((box) => box.bottom)),
+        drawnLeft: Math.min(...drawn.map((box) => box.left)) - aside.getBoundingClientRect().left,
         withFigure: header.getBoundingClientRect().height,
         left: aside.getBoundingClientRect().left,
         right: aside.getBoundingClientRect().right,
@@ -51,6 +62,10 @@ for (const width of [1200, 1440]) {
       return { ...measured, without };
     });
     expect(geometry.withFigure).toBeCloseTo(geometry.without, 1);
+    // The plan is inside its box on every side: nothing runs into the header's rule or the title
+    expect(geometry.drawnTop).toBeGreaterThanOrEqual(-1);
+    expect(geometry.drawnBottom).toBeGreaterThanOrEqual(-1);
+    expect(geometry.drawnLeft).toBeGreaterThanOrEqual(-1);
     expect(Math.abs(geometry.right - geometry.headerRight)).toBeLessThanOrEqual(1);
     // Clear of the title and the note
     expect(geometry.left - geometry.words).toBeGreaterThanOrEqual(40);
@@ -89,6 +104,22 @@ test('every card lights its own part of the plan, by keyboard as well as by poin
   // The pointer does the same
   await page.locator('#directions a.direction-card').first().hover();
   await expect.poll(async () => (await strokes())['1']).toBe(accent);
+});
+
+test('the plan draws in once when it comes into view, and stands complete without motion', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a wide-screen figure');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/', { waitUntil: 'load' });
+  const figure = page.locator(FIGURE);
+  await figure.scrollIntoViewIfNeeded();
+  await expect(figure).toHaveAttribute('data-motion-state', 'on');
+  // …and ends as a complete drawing: nothing left hidden
+  await expect.poll(() => figure.locator('.dkey-num').first().evaluate((number) => getComputedStyle(number).opacity), { timeout: 4000 }).toBe('1');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload({ waitUntil: 'load' });
+  await expect(page.locator('main[data-home="v2"]')).not.toHaveAttribute('data-motion-ready', /.+/);
+  expect(await page.locator(`${FIGURE} .dkey-num`).first().evaluate((number) => getComputedStyle(number).opacity)).toBe('1');
 });
 
 for (const width of [1199, 768, 390]) {

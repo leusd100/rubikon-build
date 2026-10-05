@@ -7,7 +7,8 @@
    header keeps its one column and the aside is laid OVER it, spanning both rows at the right edge, with the figure
    absolutely positioned inside — so the aside has no height of its own and the header is exactly as tall as its title
    and note. Its width repeats the mosaic's right column (1.15fr / .85fr, 18 px), so the drawing stands over the cards
-   it is the key to. Shown from 1200 px, where the plan is large enough to read; below that the header is as it was. */
+   it is the key to. Shown from 1200 px, where the plan is large enough to read; below that the header is as it was.
+   No frame, no rule and no title strip: the plan stands free and is named in its own corner. */
 main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
 main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside { display: none; }
 @media (min-width: 1200px) {
@@ -23,17 +24,13 @@ main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-a
 main[data-home="v2"] .hv2-directions .dkey {
   /* The position numbers' colour, in one place: copper at rest (set it to var(--color-text-secondary) to compare) */
   --dkey-number: var(--color-accent-strong);
-  position: absolute; inset: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; margin: 0; user-select: none;
+  position: absolute; inset: 0; margin: 0; user-select: none;
 }
-main[data-home="v2"] .hv2-directions .dkey svg { display: block; width: 100%; height: 100%; min-height: 0; overflow: visible; }
-
-/* The title strip — the direction pages' figcaption (.dsd): «Схема», the view, the subject */
-main[data-home="v2"] .hv2-directions .dkey-strip {
-  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 14px; margin-top: 12px; padding-top: 10px;
-  color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong);
-  font: 600 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase;
-}
-main[data-home="v2"] .hv2-directions .dkey-strip b { color: var(--color-text); font-size: 14px; letter-spacing: .04em; }
+/* The drawing fills the figure by position, not by a percentage height: a percentage is left unresolved by some
+   browsers here, the drawing then takes its height from its width and runs out of the header. */
+main[data-home="v2"] .hv2-directions .dkey svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+main[data-home="v2"] .hv2-directions .dkey-cap { fill: var(--color-text-muted); font: 600 8.6px var(--font-condensed), sans-serif; letter-spacing: .1em; text-anchor: end; text-transform: uppercase; }
+main[data-home="v2"] .hv2-directions .dkey-cap tspan { fill: var(--color-text); }
 
 /* Line types. Each numbered part reads its colour from --k1…--k5 and its weight from --k1x…--k5x, unset at rest. */
 main[data-home="v2"] .hv2-directions .dkey-axis { fill: none; stroke: var(--color-text-muted); stroke-width: .8; stroke-dasharray: 12 3 2 3; opacity: .6; }
@@ -72,3 +69,17 @@ main[data-home="v2"] .hv2-directions .dkey-line { fill: none; stroke: var(--k5, 
 @media (prefers-reduced-motion: reduce) {
   main[data-home="v2"] .hv2-directions .dkey-part :is(path, circle, rect) { transition: none; }
 }
+
+/* ---- the draw-in, once, on first view (HOME's one ProcessMotion puts data-motion-ready on <main> and flips the
+   figure's data-motion-state). Without it — no JavaScript, reduced motion, print — the complete plan stands. The two
+   solid outlines draw by their dash offset (pathLength = 1, butt caps); everything dashed or small only fades:
+   axes first, then the outlines, the frame and its footings, the roof, and the numbers last. ---- */
+main[data-home="v2"][data-motion-ready] .hv2-directions .dkey:not([data-motion-state="on"]) :is(.dkey-wall, .dkey-base) { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; }
+main[data-home="v2"][data-motion-ready] .hv2-directions .dkey:not([data-motion-state="on"]) :is(.dkey-axis, .dkey-bubbles, .dkey-dim, .dkey-dim-text, .dkey-fill, .dkey-col, .dkey-hidden, .dkey-over, .dkey-line, .dkey-equip, .dkey-leader, .dkey-dot, .dkey-num, .dkey-cap) { opacity: 0; }
+main[data-home="v2"] .hv2-directions .dkey[data-motion-state="on"] :is(.dkey-axis, .dkey-bubbles) { animation: dkey-fade 400ms ease backwards; }
+main[data-home="v2"] .hv2-directions .dkey[data-motion-state="on"] :is(.dkey-wall, .dkey-base) { animation: dkey-draw 800ms var(--ease-premium) 200ms backwards; }
+main[data-home="v2"] .hv2-directions .dkey[data-motion-state="on"] :is(.dkey-fill, .dkey-col, .dkey-hidden) { animation: dkey-fade 400ms ease 700ms backwards; }
+main[data-home="v2"] .hv2-directions .dkey[data-motion-state="on"] :is(.dkey-over, .dkey-line, .dkey-equip, .dkey-dim, .dkey-dim-text) { animation: dkey-fade 400ms ease 950ms backwards; }
+main[data-home="v2"] .hv2-directions .dkey[data-motion-state="on"] :is(.dkey-leader, .dkey-dot, .dkey-num, .dkey-cap) { animation: dkey-fade 400ms ease 1200ms backwards; }
+@keyframes dkey-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; } to { stroke-dasharray: 1; stroke-dashoffset: 0; stroke-linecap: butt; } }
+@keyframes dkey-fade { from { opacity: 0; } }
