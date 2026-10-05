@@ -102,6 +102,9 @@
 .node-drawing .nd-weld .nd-leader { fill: none; stroke-width: 2.4; }
 .node-drawing .nd-loops { stroke-width: 2.2; }
 .node-drawing .nd-copper { stroke: var(--color-accent); }
+/* A word on the drawing that says what a sign is (the weld's flag); it lights with its step */
+.node-drawing .nd-note { fill: var(--color-text-secondary); stroke: none; font: 600 22px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.dn[data-step="3"] .node-drawing [data-part="3"] .nd-note { fill: var(--color-accent-strong); }
 /* A shown step lights its parts and the rest of the drawing steps back */
 .dn[data-step] .node-drawing .nd-part { opacity: .38; }
 .dn[data-step="1"] .node-drawing [data-part="1"], .dn[data-step="2"] .node-drawing [data-part="2"], .dn[data-step="3"] .node-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }
@@ -109,8 +112,9 @@
 .dn[data-step="3"] .node-drawing .nd-weld path:not(.nd-leader) { fill: color-mix(in srgb, var(--color-accent) 28%, transparent); }
 /* Each step builds what it names once the camera has arrived; on the roofing drainage step the water runs down the sheet
    into the gutter. Reduced motion: the parts simply light, the water stands still. */
-/* Water as drops along its path: shown on the step that follows it (2: the wall and the flashing; 3: sheet, gutter, pipe) */
-.node-drawing .nd-rain { fill: none; stroke: var(--color-accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 1 23; opacity: 0; transition: opacity .3s ease; }
+/* Water as drops along its path: shown on the step that follows it (2: the wall and the flashing; 3: sheet, gutter, pipe).
+   Blue (owner, 06.10): beside the copper gutter and pipe the copper drops read as one more part, not as water. */
+.node-drawing .nd-rain { fill: none; stroke: var(--color-water); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 1 23; opacity: 0; transition: opacity .3s ease; }
 .dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { opacity: .9; }
 @media (prefers-reduced-motion: no-preference) {
   .dn[data-step="1"] .node-drawing [data-part="1"] :is(path, circle):not(.nd-dashed),
