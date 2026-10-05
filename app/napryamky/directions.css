@@ -1,5 +1,5 @@
 /* /napryamky — the hub. Zones: hero (dark, the direction slides, in the /yak-pratsyuiemo composition) → the five
-   directions as a catalogue (paper: rows + a sticky preview of the one in focus) → formats → where the work starts →
+   directions as a catalogue (paper: a key plan, then five rows with their scheme sheets) → formats → where the work starts →
    the region → the site-wide conversation block. Theme roles only (app/theme.css). */
 
 /* ---------------------------------------------------------------- 1 · Hero */
@@ -159,7 +159,6 @@
   .dcat-list a.route-service > div p { grid-area: text; align-self: start; margin-top: 6px; }
   .dcat-list .dcat-thumb { margin-top: 10px; }
   .dcat-list .dcat-kinds-row { display: none; }
-  .dfmt-option { padding: 18px 12px 20px; }
   .dstart .dstart-entries { grid-template-columns: minmax(0, 1fr); }
   /* The track turns vertical: one stage per row, the rail and the run down the left */
   .dstart { --row: 48px; }

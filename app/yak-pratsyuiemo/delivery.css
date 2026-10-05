@@ -206,10 +206,13 @@
 .proc-responsibility:has(input[value="work-package"]:checked) .proc-area li[data-soft~="work-package"]::before,
 .proc-responsibility:has(input[value="subcontract"]:checked) .proc-area li[data-soft~="subcontract"]::before { top: .45em; width: 7px; height: 7px; background: none; border: 1px solid var(--soft-ring, var(--color-accent)); border-radius: 50%; }
 /* The format switcher of the responsibility map: three radios as one segmented control, centred under the heading.
-   (The scope block above it has its own format buttons — FormatsScope — and the two hold one choice.) */
-.proc-resp-switch { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; }
-.proc-resp-switch legend { float: left; width: 100%; margin-bottom: 12px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
-.proc-resp-switch > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); }
+   (The scope block above it has its own format buttons — FormatsScope — and the two hold one choice.)
+   The map runs taller than a screen at every width: the switcher stays under the fixed header (101 px) while it
+   scrolls by. The section's supporting text already asks to choose a format, so its legend is for assistive technology
+   only. On a wide screen only the control floats (the strip beside it lets the pointer through to the cards). */
+.proc-resp-switch { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; position: sticky; z-index: 5; top: 113px; container-type: scroll-state; pointer-events: none; }
+.proc-resp-switch legend { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.proc-resp-switch > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); pointer-events: auto; }
 .proc-resp-switch label { position: relative; cursor: pointer; }
 .proc-resp-switch label + label { border-left: 1px solid var(--color-border-control); }
 .proc-resp-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
@@ -217,12 +220,6 @@
 .proc-resp-switch label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
 .proc-resp-switch input:checked + span { color: var(--color-bg); background: var(--color-text); }
 .proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -6px; }
-/* The map runs taller than a screen at every width: the map's switcher stays under the fixed header (101 px) while it
-   scrolls by. The section's supporting text already asks to choose a format, so its legend is for assistive technology
-   only. On a wide screen only the control floats (the strip beside it lets the pointer through to the cards). */
-.proc-resp-switch { position: sticky; z-index: 5; top: 113px; container-type: scroll-state; pointer-events: none; }
-.proc-resp-switch > div { pointer-events: auto; }
-.proc-resp-switch legend { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @container scroll-state(stuck: top) {
   .proc-resp-switch > div { box-shadow: 0 10px 28px rgba(20, 18, 15, .16); }
 }

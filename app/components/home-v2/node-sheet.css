@@ -145,7 +145,8 @@ main[data-home="v2"] .hv2-process-link { margin-top: 10px; }
   main[data-home="v2"] .sig-notes { grid-template-rows: none; grid-template-columns: repeat(2, minmax(0, 1fr)); border-left: 0; border-top: 1px solid var(--hv2-line); }
   main[data-home="v2"] .sig-note + .sig-note { border-top: 0; border-left: 1px solid var(--hv2-line); }
   main[data-home="v2"] .sig-name text { font-size: 14.5px; }
-  main[data-home="v2"] .sig-mark { font-size: 15px; }
+  /* «svg» gives the rule the weight of the :is() list above, which counts as its heaviest member */
+  main[data-home="v2"] svg .sig-mark { font-size: 15px; }
 }
 @media (max-width: 900px) { main[data-home="v2"] :is(.sig-name text, .sig-mark) { font-size: 17px; } }
 @media (max-width: 760px) {

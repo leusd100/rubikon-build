@@ -36,27 +36,25 @@ main[data-home="v2"] .hv2-directions .dsh-strip i { font-style: normal; }
 /* Under 124 px a sheet's strip keeps the number and «Схема» */
 @media (max-width: 1359px) { main[data-home="v2"] .hv2-directions .dsh-strip i { display: none; } }
 
-/* Lit: the sheet of the pointed or focused card. By href, so the order of the cards may change; the spec walks all
-   five from the data. Each sheet reads its own --kN (frame) and --kNy (lift), unset at rest. */
-main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="1"] { border-color: var(--k1, var(--color-border-strong)); transform: translateY(var(--k1y, 0)); box-shadow: 0 var(--k1s, 0) calc(var(--k1s, 0) * 2.5) rgba(20, 22, 21, .16); }
-main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="2"] { border-color: var(--k2, var(--color-border-strong)); transform: translateY(var(--k2y, 0)); box-shadow: 0 var(--k2s, 0) calc(var(--k2s, 0) * 2.5) rgba(20, 22, 21, .16); }
-main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="3"] { border-color: var(--k3, var(--color-border-strong)); transform: translateY(var(--k3y, 0)); box-shadow: 0 var(--k3s, 0) calc(var(--k3s, 0) * 2.5) rgba(20, 22, 21, .16); }
-main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="4"] { border-color: var(--k4, var(--color-border-strong)); transform: translateY(var(--k4y, 0)); box-shadow: 0 var(--k4s, 0) calc(var(--k4s, 0) * 2.5) rgba(20, 22, 21, .16); }
-main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="5"] { border-color: var(--k5, var(--color-border-strong)); transform: translateY(var(--k5y, 0)); box-shadow: 0 var(--k5s, 0) calc(var(--k5s, 0) * 2.5) rgba(20, 22, 21, .16); }
-/* …and the sheet under the pointer itself */
+/* Lit: the sheet of the pointed or focused card — and the sheet under the pointer itself. A sheet and its card are
+   matched by their href, so neither the order of the cards nor of the sheets matters; the spec walks all five from
+   the data. A lifted sheet keeps the room it left under itself (::after), or a pointer resting on its bottom edge
+   would lose it and find it again in a loop. */
+main[data-home="v2"] .hv2-directions .dsh-sheet { position: relative; }
+main[data-home="v2"] .hv2-directions .dsh-sheet::after { content: ''; position: absolute; inset: 0 0 -6px; }
 main[data-home="v2"] .hv2-directions .dsh-sheet:hover { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(20, 22, 21, .16); }
 @supports selector(:has(*)) {
-  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) { --k1: var(--color-accent); --k1y: -5px; --k1s: 8px; }
-  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) { --k2: var(--color-accent); --k2y: -5px; --k2s: 8px; }
-  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) { --k3: var(--color-accent); --k3y: -5px; --k3s: 8px; }
-  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) { --k4: var(--color-accent); --k4y: -5px; --k4s: 8px; }
-  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) { --k5: var(--color-accent); --k5y: -5px; --k5s: 8px; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) .dsh-sheet[href="/angary"] { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(20, 22, 21, .16); }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) .dsh-sheet[href="/zernoskhovyshcha"] { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(20, 22, 21, .16); }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"] { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(20, 22, 21, .16); }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"] { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(20, 22, 21, .16); }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/pokrivelni-roboty"] { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(20, 22, 21, .16); }
   /* The other way round: the pointed sheet marks its card */
-  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="1"]:hover) .direction-card[href="/angary"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
-  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="2"]:hover) .direction-card[href="/zernoskhovyshcha"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
-  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="3"]:hover) .direction-card[href="/metalokonstruktsii"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
-  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="4"]:hover) .direction-card[href="/betonni-roboty"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
-  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="5"]:hover) .direction-card[href="/pokrivelni-roboty"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[href="/angary"]:hover) .direction-card[href="/angary"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[href="/zernoskhovyshcha"]:hover) .direction-card[href="/zernoskhovyshcha"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[href="/metalokonstruktsii"]:hover) .direction-card[href="/metalokonstruktsii"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[href="/betonni-roboty"]:hover) .direction-card[href="/betonni-roboty"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[href="/pokrivelni-roboty"]:hover) .direction-card[href="/pokrivelni-roboty"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
 }
 
 /* ---- the row comes in once, on first view (HOME's one ProcessMotion). Without it — no JavaScript, reduced motion,

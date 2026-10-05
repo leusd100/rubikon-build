@@ -5,10 +5,9 @@ import type { DirectionPageConfig } from '../../types/directionPage';
 // steel joint, the cover and anchors of a footing, the flashing and gutter of a roof edge. Decorative and schematic:
 // no sizes, no scale, nothing that could pass for a real project drawing (letters only on the dimension lines).
 //
-// The three bodies (Steel, Concrete, Roofing) are exported: the /napryamky catalogue draws the same geometry small in
-// its phone and tablet rows (CatalogDrawing.tsx). That makes this file part of a client bundle too (DirectionsCatalog
-// is a client component), so it must stay free of CSS imports (a stylesheet shared by two entry points becomes an
-// empty chunk that 404s under vinext) and of element ids (five sheets share one page).
+// The three bodies (Steel, Concrete, Roofing) are exported: the /napryamky catalogue's rows and HOME's header sheets
+// draw the same geometry small (CatalogDrawing.tsx). So this file imports no CSS of its own and carries no element
+// ids (five sheets share one page).
 
 type DrawingId = Extract<DirectionPageConfig['id'], 'metalokonstruktsii' | 'betonni-roboty' | 'pokrivelni-roboty'>;
 

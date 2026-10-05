@@ -61,7 +61,7 @@
 @media (prefers-reduced-motion: no-preference) {
   /* RUBIKON's own frame runs round the object while the block is on screen (data-live: FormatsScope) */
   .dfmt-figure[data-live] .fs[data-format="comprehensive"] .fs-inner { animation: dfmt-march 1.4s linear infinite; }
-  /* The sheet arrives once (ProcessMotion, root .directions-page) */
+  /* The sheet arrives once (the page's ProcessMotion) */
   [data-motion-ready] .dfmt-grid:not([data-motion-state="on"]) .dfmt-figure { opacity: 0; }
   .dfmt-grid[data-motion-state="on"] .dfmt-figure { animation: dfmt-rise 520ms cubic-bezier(.2, .7, .1, 1) backwards; }
 }
@@ -77,4 +77,7 @@
 @media (max-width: 1050px) {
   .dfmt-grid { grid-template-columns: minmax(0, 1fr); }
   .dfmt-figure { order: -1; }
+}
+@media (max-width: 760px) {
+  .dfmt-option { padding: 18px 12px 20px; }
 }

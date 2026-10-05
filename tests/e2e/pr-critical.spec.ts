@@ -753,12 +753,16 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await expect(route.locator('li').last().locator('h3')).toHaveCSS('opacity', '1', { timeout: 5000 });
   });
 
-  test('keyboard focus on a format selects it: the drawing shows that format’s scope', async ({ page, isMobile }) => {
+  test('pressing a format from the keyboard selects it: the drawing shows that format’s scope', async ({ page, isMobile }) => {
     test.skip(isMobile, 'keyboard');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     const option = page.locator('#obsiah .dfmt-option').nth(1);
+    // Focus alone chooses nothing here: this block and the map below hold one choice, and tabbing past must not rewrite it
     await option.focus();
+    await expect(option).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('.proc-resp-switch input[value="comprehensive"]')).toBeChecked();
+    await page.keyboard.press('Enter');
     await expect(option).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'work-package');
     // one package is RUBIKON's, the rest are the other participants'

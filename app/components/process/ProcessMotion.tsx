@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 // The page's one motion controller (/yak-pratsyuiemo, /pro-nas; `root` names the page element). The markup is
 // complete and final without it: this only adds `data-motion-ready` to the page (which lets the page's CSS hold
 // [data-motion] blocks in their "before" state) and flips each block to `data-motion-state="on"` once, when it
-// meaningfully enters the viewport. Nothing replays; every observer disconnects when its work is done. A block that
+// meaningfully enters the viewport. Nothing replays; the reveal observer lets go of a block once it has shown. A block that
 // keeps moving after its reveal (HOME's node sheet: the load) carries [data-motion-live] and is "on" only while it is
 // on screen. With prefers-reduced-motion nothing is armed, so the final state shows at once and nothing moves. (The background parallax was removed in
 // the 2026-10 UX pass: a drifting backdrop explained nothing.)

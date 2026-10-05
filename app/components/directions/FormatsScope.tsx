@@ -24,13 +24,14 @@ import type { DeliveryFormatId } from '../../types/deliveryModel';
 //
 // On /yak-pratsyuiemo the block stands in place of the three scope cards (owner, 05.10: «перегружений, втрачається
 // фокус уваги»). There `mirror` names the responsibility map's radio group: a format chosen here checks it there and
-// one chosen there is shown here, so the page keeps one choice of format (the walk is not a choice and is not
-// mirrored); and `prefill` adds «Обговорити цей формат», which carries the shown format into the form.
+// one chosen there is shown here, so the page keeps one choice of format; and `prefill` adds «Обговорити цей
+// формат», which carries the shown format into the form. With a mirror only a press chooses: pointing at a button or
+// tabbing past it would otherwise rewrite the map below on the way to it. The walk is not a choice and is not mirrored.
 
 export type FormatTerms = { contractWith: string; coordinator: string; rubikonCoordinates: boolean };
 
 type Layer = 'foundation' | 'frame' | 'envelope' | 'roof';
-/** The building's parts, in build order: what a package may be, and its path in the 460 × 300 sheet */
+/** The building's parts, in build order: what a package may be, and its path in the 460 × 284 sheet */
 const LAYERS: readonly (readonly [Layer, string])[] = [
   ['foundation', 'M136 222h16v14h10v12h-36v-12h10zM308 222h16v14h10v12h-36v-12h10z'], // a pedestal on a pad under each column
   ['frame', 'M144 222V130L230 92L316 130V222'], // two columns, two rafters
@@ -53,7 +54,7 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
   const [active, setActive] = useState<DeliveryFormatId>(formats[0].id);
   const [turn, setTurn] = useState(0);
   const [inView, setInView] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const figureRef = useRef<HTMLElement>(null);
   const touched = useRef(false);
   const current = formats.find((format) => format.id === active) ?? formats[0];
   const whole = active === 'comprehensive';
@@ -73,9 +74,17 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
     }
   };
 
-  // …and the other way: a format picked in the mirrored group is the one shown here
+  // …and the other way: a format picked in the mirrored group is the one shown here — from the start, too: a browser
+  // may restore the radio's last state on a reload
   useEffect(() => {
     if (!mirror) return undefined;
+    // (in the next frame: the restored state is read after the browser has put it back)
+    const restore = requestAnimationFrame(() => {
+      const restored = document.querySelector<HTMLInputElement>(`input[name="${mirror}"]:checked`)?.value;
+      if (!restored || restored === formats[0].id || !formats.some((format) => format.id === restored)) return;
+      touched.current = true;
+      select(restored as DeliveryFormatId);
+    });
     const follow = (event: Event) => {
       const input = event.target;
       if (!(input instanceof HTMLInputElement) || input.name !== mirror || !input.checked) return;
@@ -84,12 +93,13 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
       select(input.value as DeliveryFormatId);
     };
     document.addEventListener('change', follow);
-    return () => document.removeEventListener('change', follow);
+    return () => { cancelAnimationFrame(restore); document.removeEventListener('change', follow); };
   }, [mirror, formats]);
 
-  // On screen or not; and, the first time half of it is, one walk through the formats
+  // On screen or not; and, the first time half of the drawing is, one walk through the formats. The drawing, not the
+  // whole block: stacked on a phone the block is taller than two screens and half of it is never in view.
   useEffect(() => {
-    const root = rootRef.current;
+    const root = figureRef.current;
     if (!root) return undefined;
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let timers: number[] = [];
@@ -116,7 +126,7 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
   const term = terms[active];
 
   return (
-    <div className="dfmt-grid" data-motion ref={rootRef}>
+    <div className="dfmt-grid" data-motion>
       <ol className="dfmt-list">
         {formats.map((format) => (
           <li key={format.id}>
@@ -125,8 +135,8 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
               className="dfmt-option"
               aria-pressed={format.id === active}
               onClick={() => choose(format.id)}
-              onFocus={() => choose(format.id)}
-              onMouseEnter={() => choose(format.id)}
+              onFocus={mirror ? undefined : () => choose(format.id)}
+              onMouseEnter={mirror ? undefined : () => choose(format.id)}
             >
               <span className="dfmt-num">{format.number}</span>
               <b className="dfmt-title">{format.title}</b>
@@ -138,7 +148,7 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
           </li>
         ))}
       </ol>
-      <figure className="dfmt-figure" data-live={inView || undefined}>
+      <figure className="dfmt-figure" data-live={inView || undefined} ref={figureRef}>
         <svg className="fs" viewBox="0 0 460 284" data-format={active} aria-hidden="true" focusable="false">
           {/* whose object it is: the outer frame only for a general contractor's project */}
           <rect className="fs-frame fs-outer" x="34" y="30" width="392" height="246" />

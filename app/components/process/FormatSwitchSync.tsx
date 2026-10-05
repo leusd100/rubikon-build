@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 // mirrors the map's radio group by itself) and the map's switcher (resp-format) show the same format, and after a switch
 // on the map the works that have just moved into a zone are marked for a moment (data-fresh, delivery.css). The map's
 // switcher works without this (CSS :has); this only adds the marks.
-const GROUPS = ['resp-format'];
+const GROUP = 'resp-format';
 const FRESH_MS = 2400;
 
 export function FormatSwitchSync() {
@@ -28,12 +28,8 @@ export function FormatSwitchSync() {
 
     const onChange = (event: Event) => {
       const input = event.target;
-      if (!(input instanceof HTMLInputElement) || !GROUPS.includes(input.name)) return;
-      for (const group of GROUPS.filter((name) => name !== input.name)) {
-        const twin = document.querySelector<HTMLInputElement>(`input[name="${group}"][value="${input.value}"]`);
-        if (twin) twin.checked = true;
-      }
-      if (input.name === 'resp-format' && shown && shown !== input.value) mark(shown, input.value);
+      if (!(input instanceof HTMLInputElement) || input.name !== GROUP) return;
+      if (shown && shown !== input.value) mark(shown, input.value);
       shown = input.value;
     };
 

@@ -728,7 +728,7 @@ export function responsibilityByFormat(): { formats: readonly SwitchFormat[]; it
     }
     return { text, rows, zones, rubikonRole, notes: withRoleNotes(notes, rubikonRole) };
   });
-  // How the parties work together in each format (the promise of result is already said on the scope cards above).
+  // How the parties work together in each format (the promise of result is already said in the scope block above).
   const principles = Object.fromEntries(model.formats.map((format) => [format.id, format.interfaces])) as Record<DeliveryFormatId, string>;
   const formats = model.formats.map((format) => ({
     id: format.id,

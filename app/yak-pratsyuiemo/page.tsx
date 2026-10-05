@@ -218,7 +218,7 @@ export default function DeliveryModelPage() {
               overloaded). Its buttons and the map's switcher below are one choice of format. */}
           <FormatsScope formats={formatCards()} terms={formatTerms} mirror="resp-format" prefill />
           <p id="format-prefill-status" className="visually-hidden" aria-live="polite" />
-          <ul className="proc-scope-legend" aria-label="Позначення на схемах">
+          <ul className="proc-scope-legend" aria-label="Позначення на схемі">
             <li className="is-scope"><i aria-hidden="true" /> Обсяг RUBIKON</li>
             <li><i aria-hidden="true" /> Роботи інших учасників</li>
             <li className="is-context"><i aria-hidden="true" /> Хто координує об’єкт</li>

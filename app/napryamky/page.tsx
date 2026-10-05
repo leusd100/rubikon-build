@@ -21,8 +21,8 @@ import '../components/directions/formats-scope.css';
 import './directions.css';
 
 // /napryamky — the hub: choose a direction or describe a mixed task. Hero in the /yak-pratsyuiemo composition, its
-// slides naming the direction they show; the five directions as a catalogue (rows + a preview of the one in focus);
-// the formats on one hangar drawing that redraws per format; where the work starts, on the eight-stage track; where we
+// slides naming the direction they show; the five directions as a catalogue (a key plan over five rows, each with its scheme sheet);
+// the formats on one section drawing that redraws per format; where the work starts, on the eight-stage track; where we
 // work, on the region's real map; the conversation, its form starting on «Ще не визначено» and without the four
 // after-contact steps (the track above already says where we start). The old two-question FAQ is answered by the
 // track and the map. Every word is the page's previous copy, /yak-pratsyuiemo's, the directions' own data or the

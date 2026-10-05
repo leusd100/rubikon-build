@@ -113,7 +113,7 @@
 /* Each step builds what it names once the camera has arrived; on the roofing drainage step the water runs down the sheet
    into the gutter. Reduced motion: the parts simply light, the water stands still. */
 /* Water as drops along its path: shown on the step that follows it (2: the wall and the flashing; 3: sheet, gutter, pipe).
-   Blue (owner, 06.10): beside the copper gutter and pipe the copper drops read as one more part, not as water. */
+   Blue (owner, 05.10): beside the copper gutter and pipe the copper drops read as one more part, not as water. */
 .node-drawing .nd-rain { fill: none; stroke: var(--color-water); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 1 23; opacity: 0; transition: opacity .3s ease; }
 .dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { opacity: .9; }
 @media (prefers-reduced-motion: no-preference) {

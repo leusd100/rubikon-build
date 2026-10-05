@@ -1,5 +1,5 @@
-/* The sheet's field — background decor for the pages (owner, 05.10: «декоративні елементи на фоні різних сторінок»;
-   06.10: «класна ідея» — on every content page now, with two more marks).
+/* The sheet's field — background decor for the pages (owner, 05.10: «декоративні елементи на фоні різних сторінок»,
+   then «класна ідея» — on every content page now, with two more marks).
 
    The site has had backdrops before — a ghost word behind a section, a photo drifting behind the text — and both went:
    they explained nothing and got in the reading's way. So this decor is what a drawing sheet has of its own, in its
@@ -27,11 +27,16 @@
   main[data-field] > section:not(.subhero, .proc-hero, .hero, .service-subhero, .hangar-configurator)::before {
     content: ''; position: absolute; top: 0; bottom: 0; left: var(--field-x); width: 1px; opacity: .28; pointer-events: none;
     background: repeating-linear-gradient(to bottom, currentColor 0 14px, transparent 14px 18px, currentColor 18px 20px, transparent 20px 24px);
+    /* the axis stops at the bubble (46–72 px): cut out of the line itself, because a block's ground may be a gradient
+       the bubble cannot inherit as a fill */
+    mask-image: linear-gradient(to bottom, #000 0 46px, transparent 46px 72px, #000 72px);
   }
-  /* the block's number, in a bubble on the axis — on the block's own ground, so the axis stops at it */
+  /* the block's number, in a bubble on the axis */
   main[data-field] > section:not(.subhero, .proc-hero, .hero, .service-subhero, .hangar-configurator)::after {
-    content: counter(field); position: absolute; top: 46px; left: calc(var(--field-x) - 13px); display: grid; place-items: center; width: 26px; height: 26px;
-    color: color-mix(in srgb, currentColor 62%, transparent); background-color: inherit; border: 1px solid color-mix(in srgb, currentColor 40%, transparent); border-radius: 50%;
+    /* generated text is read aloud by some screen readers: the second declaration gives it an empty alternative
+       (browsers that do not know the syntax keep the first) */
+    content: counter(field); content: counter(field) / ''; position: absolute; top: 46px; left: calc(var(--field-x) - 13px); display: grid; place-items: center; width: 26px; height: 26px;
+    color: color-mix(in srgb, currentColor 62%, transparent); border: 1px solid color-mix(in srgb, currentColor 40%, transparent); border-radius: 50%;
     font: 600 11px/1 var(--font-condensed), sans-serif; pointer-events: none;
   }
   /* the registration cross, in the right margin */
@@ -41,7 +46,7 @@
   }
   /* the sheet's inscription: upright, read from the bottom, left of the axis under the first block's bubble */
   main[data-field] > :is(.subhero, .proc-hero, .hero, .service-subhero) + section:not(.hangar-configurator) > .shell::before {
-    content: var(--field-name, 'RUBIKON BUILD'); position: absolute; top: 92px; left: calc(var(--field-x) - 19px); writing-mode: vertical-rl; transform: rotate(180deg);
+    content: var(--field-name, 'RUBIKON BUILD'); content: var(--field-name, 'RUBIKON BUILD') / ''; position: absolute; top: 92px; left: calc(var(--field-x) - 19px); writing-mode: vertical-rl; transform: rotate(180deg);
     color: color-mix(in srgb, currentColor 50%, transparent); font: 600 9.5px/1 var(--font-condensed), sans-serif; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; pointer-events: none;
   }
   /* the ruler along a charcoal band's top edge: a tick every 12 px, a longer one every 60 */

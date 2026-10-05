@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-// /yak-pratsyuiemo — the responsibility map's format switcher is one segmented control. On 06.10 a stylesheet cleanup
+// /yak-pratsyuiemo — the responsibility map's format switcher is one segmented control. On 05.10 a stylesheet cleanup
 // took its rules away with the retired scope cards' (they shared a `:is(…)` selector list): the owner found three bare
 // radio buttons. These pin the control's look by what makes it a control, not by its colours.
 

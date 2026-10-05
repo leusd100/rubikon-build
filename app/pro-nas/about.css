@@ -81,10 +81,6 @@
 .about-build-all { display: inline-flex; margin-top: 28px; }
 /* The phone still (AboutHeroVideo): the footage's grey grade would put its sunset out — a lighter one, framed on the light */
 .about-hero-media > img.about-hero-still { filter: saturate(.85) contrast(1.04) brightness(.95); object-position: 62% 40%; }
-@media (max-width: 760px) {
-  .about-ledger-col li { padding: 11px 0; }
-  .about-ledger-col li b { font-size: 16px; }
-}
 .about-page[data-motion-ready="on"] .about-ledger-col { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
 .about-page[data-motion-ready] .about-ledger:not([data-motion-state="on"]) .about-ledger-col { opacity: 0; transform: translateY(12px); }
 /* The region (RegionBlock) closes the block; its own styles live in app/components/about/region.css */

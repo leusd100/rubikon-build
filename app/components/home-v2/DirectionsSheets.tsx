@@ -23,7 +23,7 @@ export function DirectionsSheets() {
   return (
     <div className="dsh" data-motion>
       {directions.map((direction, index) => (
-        <a className="dsh-sheet" data-n={index + 1} href={direction.href} tabIndex={-1} key={direction.id} style={{ '--i': index } as CSSProperties}>
+        <a className="dsh-sheet" href={direction.href} tabIndex={-1} key={direction.id} style={{ '--i': index } as CSSProperties}>
           <span className="dsh-draw"><CatalogDrawing id={direction.id} /></span>
           <span className="dsh-block">
             <b className="dsh-name">{direction.cardTitle}</b>

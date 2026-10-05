@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-// The sheet's field — the pages' margin decor (owner, 05–06.10): a dash-dot axis down the left margin with a numbered
+// The sheet's field — the pages' margin decor (owner, 05.10): a dash-dot axis down the left margin with a numbered
 // bubble where each block starts, a registration cross in the right margin, the sheet's inscription beside the first
 // block and a ruler's ticks on a charcoal band's top edge. These pin the layer's rules: it is drawn in the margins
 // only — never over the shell, where the content is — the hero is not a block of the sheet, the blocks are numbered in
@@ -35,7 +35,8 @@ for (const path of PAGES) {
     expect(marks.length).toBeGreaterThanOrEqual(3);
     for (const [index, mark] of marks.entries()) {
       expect(mark.axis, `block ${index + 1} has its axis`).toBe(true);
-      expect(mark.bubble).toBe('counter(field)');
+      // the block's number, with an empty text alternative: decor is not read aloud
+      expect(mark.bubble).toMatch(/^counter\(field\)( \/ "")?$/);
       // in the margin, with air between the mark and the content
       expect(mark.axisClear, `block ${index + 1}: axis clear of the content`).toBeGreaterThanOrEqual(12);
       expect(mark.bubbleClear, `block ${index + 1}: bubble clear of the content`).toBeGreaterThanOrEqual(6);
@@ -43,7 +44,7 @@ for (const path of PAGES) {
     }
     // the hero is not a block of the sheet
     const hero = page.locator('main[data-field] > section').first();
-    expect(await hero.evaluate((section) => getComputedStyle(section, '::after').content)).not.toBe('counter(field)');
+    expect(await hero.evaluate((section) => getComputedStyle(section, '::after').content)).not.toContain('counter(field)');
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   });
 }

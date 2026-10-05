@@ -21,7 +21,7 @@ function SteelJoint() {
       {/* the beam, broken off on the right */}
       <path className="nd-web" d="M460 410H1100V790H460Z" />
       <path className="nd-cut" d="M460 380H1100V410H460ZM460 790H1100V820H460Z" />
-      {/* the break line: thin, past both flanges, with one zigzag on the beam's axis (owner, 06.10: the two zigzags over
+      {/* the break line: thin, past both flanges, with one zigzag on the beam's axis (owner, 05.10: the two zigzags over
           the flanges read as a tangle) */}
       <path className="nd-line" d="M1100 344V566l-24 22 48 24-24 22V856" />
       {/* the end plate */}
@@ -43,7 +43,7 @@ function SteelJoint() {
       {/* the beam's depth */}
       <path className="nd-dim" d="M1150 380V820M1138 380h24M1138 820h24" />
       <text className="nd-text" x="1172" y="612">h</text>
-      {/* the end plate seen from the beam's end, its holes and their spacing. (Until 06.10 this was «Вид А» with an
+      {/* the end plate seen from the beam's end, its holes and their spacing. (Until 05.10 this was «Вид А» with an
           arrow «А» over the joint; the arrow stopped short of the plate and read as a pointer to the weld's circle.) */}
       <text className="nd-title" x="1430" y="282" textAnchor="middle">Вид з торця</text>
       <path className="nd-cut" d="M1300 330H1560V870H1300Z" />
@@ -87,7 +87,7 @@ function Footing() {
         <path pathLength={1} d="M834 236h36v14h-36zM930 236h36v14h-36zM826 256h52M922 256h52" />
         <path className="nd-dashed" d="M780 268H1020V300H780" />
       </g>
-      {/* step 3 — the formwork (owner, 06.10: «показати поцікавіше» — it was one line and a brace): the sheathing on the
+      {/* step 3 — the formwork (owner, 05.10: «показати поцікавіше» — it was one line and a brace): the sheathing on the
           concrete's face, two walers behind it, a strut from the upper waler down to a foot board held by a stake; the
           same, smaller, round the pedestal, standing on the pad; and the level marks */}
       <g className="nd-part" data-part="3">

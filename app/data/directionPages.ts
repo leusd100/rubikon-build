@@ -300,7 +300,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
             text: 'Каркас і сітки — за проєктом, із захисним шаром бетону до арматури.',
             caption: 'Арматурний каркас колони й сітка',
             focus: [900, 700], zoom: 1.5,
-            // a circle across the cage (owner, 06.10: corner brackets ran beside the bars and merged with them)
+            // a circle across the cage (owner, 05.10: corner brackets ran beside the bars and merged with them)
             mark: { d: 'M640 690 a260 260 0 1 0 520 0 a260 260 0 1 0 -520 0', badge: [1084, 506] },
           },
           {

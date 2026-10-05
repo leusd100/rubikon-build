@@ -72,7 +72,7 @@
   .dkey-host .dkey-part :is(path, circle, rect) { transition: none; }
 }
 
-/* ---- the draw-in, once, on first view (HOME's one ProcessMotion puts data-motion-ready on <main> and flips the
+/* ---- the draw-in, once, on first view (the page's ProcessMotion puts data-motion-ready on <main> and flips the
    figure's data-motion-state). Without it — no JavaScript, reduced motion, print — the complete plan stands. The two
    solid outlines draw by their dash offset (pathLength = 1, butt caps); everything dashed or small only fades:
    axes first, then the outlines, the frame and its footings, the roof, and the numbers last. ---- */
