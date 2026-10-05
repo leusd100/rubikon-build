@@ -612,10 +612,9 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
     starts: '.proc-start-list h3',
     steps: '.proc-steps h3',
     results: '.proc-steps .proc-step-result',
-    formats: '.proc-scope-kicker',
-    headlines: '.proc-scope-grid h3',
-    formatTexts: '.proc-scope-grid p',
-    formatTerms: '.proc-scope-terms dd',
+    formats: '#obsiah .dfmt-option .dfmt-title',
+    formatTexts: '#obsiah .dfmt-option .dfmt-text',
+    formatTerms: '#obsiah .dfmt-option .dfmt-sr',
     principle: '.proc-principle',
     areas: '.proc-area h3',
     areaItems: '.proc-area ul li .proc-area-work',
@@ -630,10 +629,10 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
   expect(text.results).toEqual(processSteps().map((step) => `На виході: ${step.result}`));
   expect(text.formats).toEqual(FORMAT_LABELS);
   const choices = participationChoices();
-  expect(text.headlines).toEqual(choices.map((choice) => choice.headline));
   for (const format of deliveryModel.formats) expect(text.formatTexts).toEqual(expect.arrayContaining([format.summary]));
-  // Each card names the other party of the contract and who coordinates the object
-  expect(text.formatTerms).toEqual(choices.flatMap((choice) => [`${choice.contractWith} і RUBIKON`, choice.coordinator]));
+  // Since 05.10 the three scope cards are one drawing with three format buttons; every button still names the other
+  // party of the contract and who coordinates the object (hidden text: the drawing shows them for one format at a time)
+  expect(text.formatTerms).toEqual(choices.map((choice) => `Договір: ${choice.contractWith} і RUBIKON. Координує об’єкт: ${choice.coordinator}.`));
   const resp = responsibilityByFormat();
   expect(text.principle).toEqual(resp.formats.map((format) => format.principle));
   expect(text.principle).toEqual(deliveryModel.formats.map((format) => format.interfaces));
@@ -724,7 +723,7 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     await expect(page.locator('.process-page')).not.toHaveAttribute('data-motion-ready', /.*/);
     await expect(page.locator('.proc-area').first()).toHaveCSS('opacity', '1');
-    await expect(page.locator('.scope-diagram-comprehensive .sd-context').first()).toHaveCSS('opacity', '1');
+    await expect(page.locator('#obsiah .dfmt-figure')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-start-merge')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-change')).toHaveCSS('opacity', '1');
@@ -754,16 +753,18 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await expect(route.locator('li').last().locator('h3')).toHaveCSS('opacity', '1', { timeout: 5000 });
   });
 
-  test('keyboard focus on a scope card brings the agreed scope forward, as hover does', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'desktop emphasis');
+  test('keyboard focus on a format selects it: the drawing shows that format’s scope', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'keyboard');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const card = page.locator('#obsiah .proc-scope-grid > li').nth(1);
-    await card.locator('.proc-scope-cta').focus();
-    await expect(card.locator('.proc-scope-cta')).toBeFocused();
-    await expect(card.locator('.sd-layer:not(.is-scope)').first()).toHaveCSS('opacity', '0.4');
-    await expect(card.locator('.sd-layer.is-scope')).toHaveCSS('opacity', '1');
+    const option = page.locator('#obsiah .dfmt-option').nth(1);
+    await option.focus();
+    await expect(option).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'work-package');
+    // one package is RUBIKON's, the rest are the other participants'
+    await expect(page.locator('#obsiah svg.fs .fs-layer[data-scope]')).toHaveCount(1);
   });
+
 });
 
 test.describe('/yak-pratsyuiemo interactions', () => {
@@ -846,27 +847,30 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     await expect(control).toHaveCSS('pointer-events', 'auto');
   });
 
-  test('a phone shows one scope format at a time, and that choice is the map\'s too', async ({ page }) => {
+  test('the scope drawing and the responsibility map hold one choice of format', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const cards = page.locator('#obsiah .proc-scope-grid > li');
-    await expect(cards.filter({ visible: true })).toHaveCount(1);
-    await expect(cards.filter({ visible: true })).toHaveAttribute('data-scope', 'comprehensive');
-    await page.locator('.proc-scope-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check();
-    await expect(cards.filter({ visible: true })).toHaveAttribute('data-scope', 'subcontract');
+    const drawing = page.locator('#obsiah svg.fs');
+    const options = page.locator('#obsiah .dfmt-option');
+    await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
+    await options.filter({ hasText: 'Субпідряд' }).click();
+    await expect(drawing).toHaveAttribute('data-format', 'subcontract');
     await expect(page.locator('.proc-resp-switch input[value="subcontract"]')).toBeChecked();
     await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText('Генпідрядник');
     // and back from the map
     await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
-    await expect(page.locator('.proc-scope-switch input[value="work-package"]')).toBeChecked();
+    await expect(options.nth(1)).toHaveAttribute('aria-pressed', 'true');
+    await expect(drawing).toHaveAttribute('data-format', 'work-package');
   });
 
-  test('the scope cards stay side by side on a wide screen, with no second switcher', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'desktop layout');
+  test('the scope block is one drawing with three format buttons, and no second switcher', async ({ page }) => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    await expect(page.locator('.proc-scope-switch')).toBeHidden();
-    await expect(page.locator('#obsiah .proc-scope-grid > li').filter({ visible: true })).toHaveCount(3);
+    // Until 05.10 three cards stood here, each with its own drawing (owner: overloaded, the focus was lost)
+    await expect(page.locator('.proc-scope-switch, .proc-scope-grid')).toHaveCount(0);
+    await expect(page.locator('#obsiah .dfmt-option')).toHaveCount(3);
+    await expect(page.locator('#obsiah svg.fs')).toHaveCount(1);
+    await expect(page.locator('#obsiah .proc-scope-legend li')).toHaveCount(3);
   });
 
   test('after a switch the works that moved into a zone are marked for a moment', async ({ page }) => {
@@ -895,10 +899,9 @@ test.describe('/yak-pratsyuiemo interactions', () => {
   test('«Обговорити цей формат» takes the visitor to the form with that format chosen', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    // A phone shows one format at a time: choose the third first
-    const scopeSwitch = page.locator('.proc-scope-switch');
-    if (await scopeSwitch.isVisible()) await scopeSwitch.getByRole('radio', { name: 'Субпідряд', exact: true }).check();
-    await page.locator('#obsiah .proc-scope-grid > li').nth(2).locator('.proc-scope-cta').click();
+    // The link carries the format the drawing shows: choose the third first
+    await page.locator('#obsiah .dfmt-option').nth(2).click();
+    await page.locator('#obsiah .proc-scope-cta').click();
     await expect(page).toHaveURL(/#inquiry$/);
     await expect(page.locator('#inquiry select[name="cooperation"]')).toHaveValue('Субпідряд');
     await expect(page.locator('#inquiry details.inquiry-details')).toHaveAttribute('open', '');

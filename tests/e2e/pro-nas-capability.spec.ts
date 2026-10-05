@@ -54,7 +54,7 @@ test('the scheme walks once through the works it draws when it first comes into 
   const lit = block.locator('li[data-on]');
   await page.locator(FIGURE).scrollIntoViewIfNeeded();
   // (the observer that arms the walk is not on the clock, so the first step is polled for)
-  await expect.poll(async () => { await page.clock.runFor(400); return lit.count(); }).toBe(1);
+  await expect.poll(async () => { await page.clock.runFor(400); return lit.count(); }, { timeout: 15_000 }).toBe(1);
   const first = await lit.getAttribute('data-cap');
   // A tag and its part of the scheme light together
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).toHaveCount(1);

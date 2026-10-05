@@ -16,6 +16,7 @@ import { ProcessMotion } from '../components/process/ProcessMotion';
 import { directions, undecidedDirection } from '../data/directions';
 import { directionPages } from '../data/directionPages';
 import '../components/about/region.css';
+import '../components/directions/formats-scope.css';
 import './directions.css';
 
 // /napryamky — the hub: choose a direction or describe a mixed task. Hero in the /yak-pratsyuiemo composition, its

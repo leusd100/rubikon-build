@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { FormatPrefillLink } from '../process/FormatPrefillLink';
 import type { FormatCard } from '../../lib/deliveryModelPresentation';
 import type { DeliveryFormatId } from '../../types/deliveryModel';
 
@@ -20,6 +21,11 @@ import type { DeliveryFormatId } from '../../types/deliveryModel';
 // time the block comes into view it walks through the three formats once and returns to the first; any pointing ends
 // the walk. Nothing moves with reduced motion or out of sight. The drawing is decorative (aria-hidden): the buttons
 // and the two facts carry every word.
+//
+// On /yak-pratsyuiemo the block stands in place of the three scope cards (owner, 05.10: «перегружений, втрачається
+// фокус уваги»). There `mirror` names the responsibility map's radio group: a format chosen here checks it there and
+// one chosen there is shown here, so the page keeps one choice of format (the walk is not a choice and is not
+// mirrored); and `prefill` adds «Обговорити цей формат», which carries the shown format into the form.
 
 export type FormatTerms = { contractWith: string; coordinator: string; rubikonCoordinates: boolean };
 
@@ -36,7 +42,14 @@ const PACKAGES: readonly (readonly [Layer, string])[] = [['foundation', 'Фун�
 const STEP_MS = 1150;
 const TOUR_MS = 3600;
 
-export function FormatsScope({ formats, terms }: Readonly<{ formats: readonly FormatCard[]; terms: Readonly<Record<DeliveryFormatId, FormatTerms>> }>) {
+export function FormatsScope({ formats, terms, mirror, prefill = false }: Readonly<{
+  formats: readonly FormatCard[];
+  terms: Readonly<Record<DeliveryFormatId, FormatTerms>>;
+  /** The name of another radio group on the page that holds the same choice (/yak-pratsyuiemo: resp-format) */
+  mirror?: string;
+  /** Add the link that carries the shown format into the inquiry form */
+  prefill?: boolean;
+}>) {
   const [active, setActive] = useState<DeliveryFormatId>(formats[0].id);
   const [turn, setTurn] = useState(0);
   const [inView, setInView] = useState(false);
@@ -52,7 +65,27 @@ export function FormatsScope({ formats, terms }: Readonly<{ formats: readonly Fo
   const choose = (id: DeliveryFormatId) => {
     touched.current = true;
     if (id !== active) select(id);
+    if (!mirror) return;
+    const twin = document.querySelector<HTMLInputElement>(`input[name="${mirror}"][value="${id}"]`);
+    if (twin && !twin.checked) {
+      twin.checked = true;
+      twin.dispatchEvent(new Event('change', { bubbles: true }));
+    }
   };
+
+  // …and the other way: a format picked in the mirrored group is the one shown here
+  useEffect(() => {
+    if (!mirror) return undefined;
+    const follow = (event: Event) => {
+      const input = event.target;
+      if (!(input instanceof HTMLInputElement) || input.name !== mirror || !input.checked) return;
+      if (!formats.some((format) => format.id === input.value)) return;
+      touched.current = true;
+      select(input.value as DeliveryFormatId);
+    };
+    document.addEventListener('change', follow);
+    return () => document.removeEventListener('change', follow);
+  }, [mirror, formats]);
 
   // On screen or not; and, the first time half of it is, one walk through the formats
   useEffect(() => {
@@ -98,6 +131,9 @@ export function FormatsScope({ formats, terms }: Readonly<{ formats: readonly Fo
               <span className="dfmt-num">{format.number}</span>
               <b className="dfmt-title">{format.title}</b>
               <span className="dfmt-text">{format.text}</span>
+              {/* The two facts of every format, for a screen reader and before hydration: under the drawing they are
+                  shown for one format at a time, and that copy is out of the accessibility tree */}
+              <span className="dfmt-sr"> Договір: {terms[format.id].contractWith} і RUBIKON. Координує об’єкт: {terms[format.id].coordinator}.</span>
             </button>
           </li>
         ))}
@@ -123,8 +159,8 @@ export function FormatsScope({ formats, terms }: Readonly<{ formats: readonly Fo
           <b>Переріз</b>
           <span><i>{current.number}</i> {current.title}</span>
         </figcaption>
-        {/* The words under the drawing repeat what the pressed button and the drawing say; they change with the format,
-            so they are kept out of the accessibility tree's way: the buttons carry the state (aria-pressed) */}
+        {/* The words under the drawing repeat what the pressed button says (each button carries its format's two facts
+            as hidden text); they change with the format, so this copy is kept out of the accessibility tree */}
         <div className="dfmt-facts" aria-hidden="true">
           <ul className="dfmt-packages">
             {PACKAGES.map(([layer, name]) => <li key={layer} data-scope={scoped(layer) ? '' : undefined}>{name}</li>)}
@@ -141,6 +177,7 @@ export function FormatsScope({ formats, terms }: Readonly<{ formats: readonly Fo
             </div>
           </dl>
         </div>
+        {prefill && <FormatPrefillLink label={current.title} />}
       </figure>
     </div>
   );

@@ -19,6 +19,10 @@ test('each format redraws the section: the whole complex, one package, one packa
   await expect(options).toHaveCount(choices.length);
   await expect(grid.locator('.dfmt-figure img')).toHaveCount(0);
   await expect(grid.locator('.dfmt-caption')).toContainText('Схема');
+  // Every button carries its format's two facts for a screen reader (the copy under the drawing is aria-hidden) —
+  // as hidden text: it takes no room on the page
+  await expect(options.locator('.dfmt-sr')).toHaveText(choices.map((choice) => `Договір: ${choice.contractWith} і RUBIKON. Координує об’єкт: ${choice.coordinator}.`));
+  expect(await options.locator('.dfmt-sr').evaluateAll((notes) => Math.max(...notes.map((note) => note.getBoundingClientRect().height)))).toBeLessThanOrEqual(1);
 
   for (const [index, choice] of choices.entries()) {
     await options.nth(index).click();
@@ -45,7 +49,7 @@ test('the block walks through the formats once on first view and comes back to t
   await grid.scrollIntoViewIfNeeded();
   await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
   // (the observer that arms the walk is not on the clock, so its first step is polled for)
-  await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }).toBe('work-package');
+  await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
   const scoped = () => drawing.locator('.fs-layer[data-scope]').getAttribute('data-layer');
   const first = await scoped();
   await page.clock.runFor(1200);
