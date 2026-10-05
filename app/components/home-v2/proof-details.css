@@ -1,16 +1,31 @@
-/* The three nodes under HOME's proof (ProofDetails.tsx), drawn on the panel's dark graphite sheet: the members in the
-   sheet's paper colour, the connection in copper, hatches faint, the names in Manrope. Butt caps and miter joins, as a
-   drawing's lines are; no glow, no shadow, no gradient. */
+/* The nodes under HOME's proof (ProofDetails.tsx), drawn on the panel's dark graphite sheet: the members in the sheet's
+   paper colour, the connection in copper, hatches faint, the names in Manrope. Butt caps and miter joins, as a drawing's
+   lines are; no glow, no shadow, no gradient. */
 main[data-home="v2"] .hv2-detail .hv2-detail-drawing { display: block; width: 100%; height: auto; }
-main[data-home="v2"] .hv2-detail :is(.hv2-detail-strong, .hv2-detail-thin, .hv2-detail-key, .hv2-detail-hatch, .hv2-detail-course, .hv2-detail-leader) {
+main[data-home="v2"] .hv2-detail :is(.hv2-detail-strong, .hv2-detail-thin, .hv2-detail-key, .hv2-detail-hatch, .hv2-detail-course, .hv2-detail-callout-line, .hv2-detail-lip) {
   fill: none; stroke-linecap: butt; stroke-linejoin: miter;
 }
-/* The main members */
+/* The main members' edges */
 main[data-home="v2"] .hv2-detail .hv2-detail-strong { stroke: var(--hv2-scheme, #ede8de); stroke-width: 1.8; }
+/* A member is filled with the panel's own sheet, so the gusset behind it is hidden where it passes */
+main[data-home="v2"] .hv2-detail .hv2-detail-member { fill: var(--hv2-detail-sheet, #161817); stroke: none; }
+/* A C-profile's lips, a little in from each edge */
+main[data-home="v2"] .hv2-detail .hv2-detail-lip { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .45; stroke-width: .8; }
 /* Secondary parts, outlines, break lines */
 main[data-home="v2"] .hv2-detail .hv2-detail-thin { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .7; stroke-width: 1; }
-/* The connection itself: plate, bolts, cleat, the belt's edge */
+/* The connection itself: the belt's edge, the anchors, the nuts */
 main[data-home="v2"] .hv2-detail .hv2-detail-key { stroke: var(--hv2-copper-text, #d39a6f); stroke-width: 1.6; }
+/* A plate seen on its face — a gusset, the support plate's upstand, a rib — copper, faintly tinted */
+main[data-home="v2"] .hv2-detail .hv2-detail-plate {
+  fill: var(--hv2-copper-text, #d39a6f); fill-opacity: .1; stroke: var(--hv2-copper-text, #d39a6f); stroke-width: 1.3; stroke-linejoin: miter;
+}
+/* What a section cuts through thin: a purlin's profile, a cleat */
+main[data-home="v2"] .hv2-detail .hv2-detail-cut { stroke-width: 2.2; }
+/* Screws seen side-on through what they join */
+main[data-home="v2"] .hv2-detail .hv2-detail-fix { stroke-width: 1.1; }
+/* Screws face-on as dots, bolts as a diamond with its centre */
+main[data-home="v2"] .hv2-detail .hv2-detail-screw { fill: var(--hv2-copper-text, #d39a6f); }
+main[data-home="v2"] .hv2-detail .hv2-detail-bolt { fill: var(--hv2-detail-sheet, #161817); stroke: var(--hv2-copper-text, #d39a6f); stroke-width: 1.1; stroke-linejoin: miter; }
 /* What the concrete hides: the anchors' shanks */
 main[data-home="v2"] .hv2-detail .hv2-detail-hidden { stroke-dasharray: 4 2.5; }
 /* Section hatches: masonry lines, the concrete's aggregate and grains, the ground's ticks */
@@ -19,15 +34,31 @@ main[data-home="v2"] .hv2-detail .hv2-detail-grain { fill: var(--hv2-scheme, #ed
 /* The wall's block courses, fainter than its hatch */
 main[data-home="v2"] .hv2-detail .hv2-detail-course { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .3; stroke-width: 1; }
 /* The names: a thin leader from a dot on the part */
-main[data-home="v2"] .hv2-detail .hv2-detail-leader { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .5; stroke-width: .8; }
+main[data-home="v2"] .hv2-detail .hv2-detail-callout-line { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .5; stroke-width: .8; }
 main[data-home="v2"] .hv2-detail .hv2-detail-dot { fill: var(--hv2-scheme, #ede8de); }
 main[data-home="v2"] .hv2-detail .hv2-detail-label { font: 600 11px/1 var(--font-manrope), sans-serif; fill: var(--hv2-scheme, #ede8de); letter-spacing: 0; }
 
+/* The load's way through the node (ProofDetails' Flow): hidden until the panel asks for it ([data-flow]); then it runs
+   along the members' axes in the load's colour, an arrowhead at each end, and the drawing under it steps back as one —
+   the parts' group, not each part, so their entry animation (which owns their opacity) is left alone */
+main[data-home="v2"] .hv2-detail .hv2-detail-flow { opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 0s 240ms; }
+main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-flow { opacity: 1; visibility: visible; transition: opacity 240ms ease, visibility 0s; }
+main[data-home="v2"] .hv2-detail .hv2-detail-flow-way {
+  fill: none; stroke: var(--hv2-load, #f0b48a); stroke-width: 2.4; stroke-linecap: butt; stroke-linejoin: round; stroke-dasharray: 6 4;
+}
+main[data-home="v2"] .hv2-detail .hv2-detail-flow-head { fill: var(--hv2-load, #f0b48a); stroke: none; }
+main[data-home="v2"] .hv2-detail .hv2-detail-assembly { transition: opacity 240ms ease; }
+main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-assembly { opacity: .55; }
+
 /* Put together before the eye (ProofDetails' Part): each part in from its (dx, dy), one after another once the panel has
-   grown out of its ring, the names last; «Зібрати ще раз» replays it */
+   grown out of its ring, the names last; «Зібрати ще раз» replays it. However many parts, the whole stays near the same
+   length: the step between them shortens past six */
 @media (prefers-reduced-motion: no-preference) {
-  main[data-home="v2"] .hv2-detail .hv2-detail-part { animation: hv2-detail-part 620ms cubic-bezier(.2, .8, .25, 1) both; animation-delay: calc(360ms + var(--n, 0) * 260ms); }
-  main[data-home="v2"] .hv2-detail .hv2-detail-callouts { animation: hv2-detail-names 360ms ease both; animation-delay: calc(360ms + var(--parts, 4) * 260ms + 260ms); }
+  main[data-home="v2"] .hv2-detail .hv2-detail-drawing { --step: min(260ms, 1560ms / var(--parts, 6)); }
+  main[data-home="v2"] .hv2-detail .hv2-detail-part { animation: hv2-detail-part 620ms cubic-bezier(.2, .8, .25, 1) both; animation-delay: calc(360ms + var(--n, 0) * var(--step)); }
+  main[data-home="v2"] .hv2-detail .hv2-detail-callouts { animation: hv2-detail-names 360ms ease both; animation-delay: calc(360ms + var(--parts, 4) * var(--step) + 260ms); }
+  main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-flow-way { animation: hv2-detail-flow 900ms linear infinite; }
 }
 @keyframes hv2-detail-part { from { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 0px)); } 35% { opacity: 1; } }
 @keyframes hv2-detail-names { from { opacity: 0; } }
+@keyframes hv2-detail-flow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }

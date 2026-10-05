@@ -529,6 +529,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const detailRef = useRef<HTMLDivElement>(null);
   // «Зібрати ще раз»: a new key puts the node's drawing together again
   const [nodeRun, setNodeRun] = useState(0);
+  // «Куди йде навантаження»: the load's way through the node, kept on from node to node once asked for
+  const [flowOn, setFlowOn] = useState(false);
+  // Where the seam was before a node took it onto its ring, and where it put it (restored on closing, unless moved)
+  const nodeSeam = useRef<{ from: number; at: number } | null>(null);
+  // The leader from the open panel to its ring on the scheme, as a drawing's detail is called out
+  const leaderRef = useRef<SVGPathElement>(null);
+  const leaderDotRef = useRef<SVGCircleElement>(null);
   const detailMotion = useRef<Animation | null>(null);
   const ringOf = (id: DetailId) => stageRef.current?.querySelector(`.hv2-proof-detail-rings [data-detail="${id}"]`) ?? null;
   // Opening (and switching to another node): out of its ring, before the first paint so it never flashes in place
@@ -544,10 +551,52 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       NODE_GROW,
     );
   }, [detail, detailSheet]);
-  // Closing: back into its ring, then gone; the focus to its letter
+  // The leader: from the panel's right edge at its title, a short level run, then straight to the ring's edge — measured
+  // on the panel's own layout (not its growing transform) and again when the frame resizes; none on a phone's sheet
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const panel = detailRef.current;
+    if (!detail || detailSheet || !stage || !panel) return;
+    const measure = () => {
+      const ring = ringOf(detail);
+      const path = leaderRef.current;
+      if (!ring || !path) return;
+      const box = stage.getBoundingClientRect();
+      const r = ring.getBoundingClientRect();
+      const [px, py] = [panel.offsetLeft + panel.offsetWidth, panel.offsetTop + 22];
+      const [cx, cy, radius] = [r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top, r.width / 2];
+      const ex = px + 16;
+      const length = Math.hypot(ex - cx, py - cy) || 1;
+      const [tx, ty] = [cx + ((ex - cx) / length) * radius, cy + ((py - cy) / length) * radius];
+      path.setAttribute('d', `M${px.toFixed(1)} ${py.toFixed(1)}H${ex.toFixed(1)}L${tx.toFixed(1)} ${ty.toFixed(1)}`);
+      leaderDotRef.current?.setAttribute('cx', tx.toFixed(1));
+      leaderDotRef.current?.setAttribute('cy', ty.toFixed(1));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, [detail, detailSheet]);
+  // A node opened: the seam glides onto its ring, so the ring is half photo, half scheme — where it is on the building
+  // and how it is made (owner, 05.10: «позначка вузла на фото»); pressed again, it closes
+  const showNode = (id: DetailId) => {
+    if (detail === id) return closeDetail();
+    const phone = phoneNow();
+    const spot = homeProofDetailSpots.find((entry) => entry.id === id)!;
+    const onPhoto = (spot.ring[0] / contourPhoto.width) * 100;
+    const at = clamp(phone ? onPhoto * PHONE_ZOOM - PHONE_LEFT : onPhoto);
+    nodeSeam.current = { from: nodeSeam.current?.from ?? live.current, at };
+    setSplit(at);
+    setDetailSheet(phone);
+    setDetail(id);
+  };
+  // Closing: back into its ring, then gone; the seam back where it was; the focus to its letter
   const closeDetail = () => {
     const was = detail;
     const done = () => {
+      const seam = nodeSeam.current;
+      nodeSeam.current = null;
+      if (seam && Math.abs(live.current - seam.at) < 0.5) setSplit(seam.from);
       setDetail(null);
       if (was) detailPinRefs.current[was]?.focus({ preventScroll: true });
     };
@@ -845,12 +894,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     clearLit();
     dropPoint();
     setChosen('frame');
-    if (live.current > DEFAULT_SPLIT) setSplit(DEFAULT_SPLIT);
-    const phone = phoneNow();
-    if (!phone && stageRef.current) bringIntoView(stageRef.current);
-    if (detail === id) return closeDetail();
-    setDetailSheet(phone);
-    setDetail(id);
+    if (!phoneNow() && stageRef.current) bringIntoView(stageRef.current);
+    showNode(id);
   };
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
   const engaged = loadRun + windRun + buildRun > 0;
@@ -1004,6 +1049,16 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             sky and gravel, on a phone it is a close-up of the gable (home-v2.css). «Контур на фото» draws the measured
             lines over it too */}
         <div className="hv2-contour-canvas">
+          {/* The open node's ring on the photo too: the seam stands on it, the photo's half of it here */}
+          {detail && (() => {
+            const spot = homeProofDetailSpots.find((entry) => entry.id === detail)!;
+            return (
+              <svg className="hv2-detail-onphoto" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`} aria-hidden="true">
+                <circle className="hv2-detail-onphoto-casing" cx={spot.ring[0]} cy={spot.ring[1]} r={spot.radius} />
+                <circle cx={spot.ring[0]} cy={spot.ring[1]} r={spot.radius} />
+              </svg>
+            );
+          })()}
           <picture>
             <source type="image/webp" srcSet={SRC_SET} sizes={SIZES} />
             <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable={false} />
@@ -1076,9 +1131,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                       aria-expanded={detail === id}
                       disabled={!ready}
                       onClick={() => {
-                        if (detail === id) return closeDetail();
-                        setDetailSheet(phoneNow());
-                        setDetail(id);
+                        showNode(id);
                       }}
                     >
                       {item.letter}
@@ -1120,11 +1173,18 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             </svg>
           </div>
         )}
-        {/* The node opened (ProofDetails): over the photo's side, so its ring on the scheme stays in view */}
+        {/* The node opened (ProofDetails): over the photo's side, so its ring on the scheme stays in view, called out to
+            it by a leader */}
+        {detail && !detailSheet && (
+          <svg className="hv2-detail-leader" key={detail} aria-hidden="true">
+            <path ref={leaderRef} pathLength={1} />
+            <circle ref={leaderDotRef} r="3" />
+          </svg>
+        )}
         {detail && (() => {
           const item = PROOF_DETAILS.find((entry) => entry.id === detail)!;
           const body = (
-            <div ref={detailRef} className="hv2-detail" data-sheet={detailSheet ? '' : undefined} role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
+            <div ref={detailRef} className="hv2-detail" data-sheet={detailSheet ? '' : undefined} data-flow={flowOn ? '' : undefined} role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
               <div className="hv2-detail-head">
                 <span className="hv2-detail-letter" aria-hidden="true">{item.letter}</span>
                 <b id="hv2-detail-title">Вузол {item.letter} · {item.title}</b>
@@ -1133,11 +1193,18 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                 </button>
               </div>
               <item.Drawing key={nodeRun} />
+              {/* the load's way through it, in words, under the drawing while it is shown */}
+              {flowOn && <p className="hv2-detail-flow-words">{item.flow}</p>}
               <div className="hv2-detail-foot">
                 <p className="hv2-detail-note">Вузол такого типу · схема без розмірів</p>
-                <button type="button" className="hv2-detail-again" onClick={() => setNodeRun((run) => run + 1)}>
-                  <span aria-hidden="true">↻</span> Зібрати ще раз
-                </button>
+                <span className="hv2-detail-actions">
+                  <button type="button" className="hv2-detail-again" aria-pressed={flowOn} onClick={() => setFlowOn((on) => !on)}>
+                    <span aria-hidden="true">↓</span> Куди йде навантаження
+                  </button>
+                  <button type="button" className="hv2-detail-again" onClick={() => setNodeRun((run) => run + 1)}>
+                    <span aria-hidden="true">↻</span> Зібрати ще раз
+                  </button>
+                </span>
               </div>
               <p className="sr-only" id="hv2-detail-spoken">{item.spoken}</p>
             </div>

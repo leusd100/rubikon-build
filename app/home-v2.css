@@ -285,7 +285,8 @@ main[data-home="v2"] .hv2-contour {
 main[data-home="v2"] .hv2-contour .sheet-image { flex: none; aspect-ratio: 1536 / 788; background: #0f1110; }
 main[data-home="v2"] .hv2-contour-stage {
   /* A finger scrolls the page and pinch-zooms the photo; only a sideways drag on the handle is the seam's */
-  position: absolute; inset: 0; overflow: hidden; cursor: ew-resize; touch-action: pan-y pinch-zoom;
+  /* clip, not hidden: a hidden box still scrolls to a focused control in it — the node's panel slid 32 px up out of it */
+  position: absolute; inset: 0; overflow: hidden; overflow: clip; cursor: ew-resize; touch-action: pan-y pinch-zoom;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
 main[data-home="v2"] .hv2-contour-canvas { position: absolute; top: 0; left: 0; width: 100%; aspect-ratio: 1536 / 788; }
@@ -1079,6 +1080,23 @@ main[data-home="v2"] .hv2-detail-again {
 }
 main[data-home="v2"] .hv2-detail-again span { font-size: 14px; letter-spacing: 0; }
 main[data-home="v2"] .hv2-detail-again:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-detail-again[aria-pressed="true"] { color: #141615; background: var(--hv2-load, #f0b48a); border-color: var(--hv2-load, #f0b48a); }
+main[data-home="v2"] .hv2-detail-actions { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+main[data-home="v2"] .hv2-detail-flow-words { margin: 0; color: var(--hv2-load, #f0b48a); font: 600 12px/1.35 var(--font-manrope), sans-serif; }
+/* The open node's ring on the photo's side, the seam standing on it (ProofContour's showNode): a light ring on a dark
+   casing, so it holds on the cladding */
+main[data-home="v2"] .hv2-detail-onphoto { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
+main[data-home="v2"] .hv2-detail-onphoto circle { fill: none; stroke: #f0b48a; stroke-width: calc(var(--u) * 2.2); }
+main[data-home="v2"] .hv2-detail-onphoto .hv2-detail-onphoto-casing { stroke: rgba(20, 22, 21, .75); stroke-width: calc(var(--u) * 4.6); }
+/* The leader from the panel to its ring, drawn once the panel has grown */
+main[data-home="v2"] .hv2-detail-leader { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+main[data-home="v2"] .hv2-detail-leader path { fill: none; stroke: #f0b48a; stroke-width: 1.4; stroke-dasharray: 1; stroke-dashoffset: 0; }
+main[data-home="v2"] .hv2-detail-leader circle { fill: #f0b48a; }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-detail-leader path { stroke-dashoffset: 1; animation: hv2-leader-draw 420ms 420ms cubic-bezier(.3, .6, .3, 1) forwards; }
+  main[data-home="v2"] .hv2-detail-leader circle { opacity: 0; animation: hv2-contour-fade 200ms 820ms ease forwards; }
+}
+@keyframes hv2-leader-draw { to { stroke-dashoffset: 0; } }
 main[data-home="v2"] .hv2-detail-again:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-detail-again { min-height: 40px; } }
 @media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-detail-again { display: none; } }
