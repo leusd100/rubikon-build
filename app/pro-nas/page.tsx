@@ -14,6 +14,7 @@ import { company } from '../data/company';
 import '../components/about/region.css';
 import '../components/about/capability.css';
 import './about.css';
+import '../components/sheet-field.css';
 
 // /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we do
 // ourselves and what we organise, and where (the Delivery Model's capability layers and the region), how Serhii's practice shows before work
@@ -86,7 +87,7 @@ const PRINCIPLES = [
 
 export default function AboutPage() {
   return (
-    <main className="inner-page about-page" id="main-content">
+    <main className="inner-page about-page" id="main-content" data-field="">
       <ProcessMotion root=".about-page" />
 
       {/* 1 · Hero — the names behind the reputation; words and actions under the title, as on /yak-pratsyuiemo */}

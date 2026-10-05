@@ -17,6 +17,7 @@ import { directions, undecidedDirection } from '../data/directions';
 import { directionPages } from '../data/directionPages';
 import '../components/about/region.css';
 import '../components/directions/formats-scope.css';
+import '../components/sheet-field.css';
 import './directions.css';
 
 // /napryamky — the hub: choose a direction or describe a mixed task. Hero in the /yak-pratsyuiemo composition, its
@@ -52,7 +53,7 @@ export const metadata = createPageMetadata({
 
 export default function DirectionsPage() {
   return (
-    <main className="inner-page directions-page" id="main-content">
+    <main className="inner-page directions-page" id="main-content" data-field="">
       <ProcessMotion root=".directions-page" />
       <section className="subhero subhero-media directions-subhero">
         <DirectionsHeroImageSequence />
