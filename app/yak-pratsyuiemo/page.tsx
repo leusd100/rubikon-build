@@ -99,7 +99,7 @@ export default function DeliveryModelPage() {
   };
 
   return (
-    <main className="inner-page process-page" id="main-content">
+    <main className="inner-page process-page" id="main-content" data-field="" style={{ '--field-name': '"RUBIKON BUILD · Як працюємо"' } as CSSProperties}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageData) }} />
       <ProcessMotion />
       <FormatSwitchSync />

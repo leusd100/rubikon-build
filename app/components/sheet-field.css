@@ -1,38 +1,53 @@
-/* The sheet's field — background decor for a page (owner, 05.10: «декоративні елементи на фоні різних сторінок»).
+/* The sheet's field — background decor for the pages (owner, 05.10: «декоративні елементи на фоні різних сторінок»;
+   06.10: «класна ідея» — on every content page now, with two more marks).
 
    The site has had backdrops before — a ghost word behind a section, a photo drifting behind the text — and both went:
    they explained nothing and got in the reading's way. So this decor is what a drawing sheet has of its own, in its
-   margins and never under the content: one dash-dot axis down the page's left margin, a numbered bubble on it where
-   each block starts, and a registration cross in the right margin at the same height. The page reads as one long
-   sheet, block after block.
+   margins and never under the content:
+     · one dash-dot axis down the page's left margin, and a numbered bubble on it where each block starts;
+     · a registration cross in the right margin at the same height;
+     · the sheet's inscription, set upright in the left margin of the first block, as on a drawing's binding edge
+       (the page's name: --field-name on <main>);
+     · a ruler's ticks along the top edge of a charcoal band, as on the «Креслення» sheet's frame.
+   The page reads as one long sheet, block after block.
 
-   Switched on per page: <main data-field> (and this file imported by that page — /napryamky and /pro-nas to begin
-   with). The hero is not a block of the sheet. Pure CSS: no image, no script, nothing to load.
-   Rules of the layer: only in the page's margins; one motif; still; from 1200 px, where the margin is 45 px or more
-   (a phone has no margin to draw in). The marks take the block's own text colour, well under the text's contrast,
-   so they follow Light, Dark and the charcoal bands without rules of their own. */
+   Imported once, by the root layout; a page switches it on with <main data-field>. The hero is not a block of the
+   sheet, and neither is the configurator's full-width stage. Pure CSS: no image, no script, nothing to load.
+   Rules of the layer: only in the page's margins and a block's top edge; still; from 1200 px, where the margin is
+   45 px or more (a phone has no margin to draw in). The marks take the block's own text colour, well under the
+   text's contrast, so they follow Light, Dark and the charcoal bands without rules of their own. */
 @media (min-width: 1200px) {
   main[data-field] { counter-reset: field; }
-  main[data-field] > section:not(.subhero, .proc-hero) {
+  main[data-field] > section:not(.subhero, .proc-hero, .hero, .service-subhero, .hangar-configurator) {
     /* the middle of the left margin (the margin is what the shell leaves of the block's width) */
     --field-x: calc((100% - min(var(--container-max), 100% - 2 * var(--container-gutter))) / 4);
     position: relative; counter-increment: field;
   }
   /* the axis */
-  main[data-field] > section:not(.subhero, .proc-hero)::before {
+  main[data-field] > section:not(.subhero, .proc-hero, .hero, .service-subhero, .hangar-configurator)::before {
     content: ''; position: absolute; top: 0; bottom: 0; left: var(--field-x); width: 1px; opacity: .28; pointer-events: none;
     background: repeating-linear-gradient(to bottom, currentColor 0 14px, transparent 14px 18px, currentColor 18px 20px, transparent 20px 24px);
   }
   /* the block's number, in a bubble on the axis — on the block's own ground, so the axis stops at it */
-  main[data-field] > section:not(.subhero, .proc-hero)::after {
+  main[data-field] > section:not(.subhero, .proc-hero, .hero, .service-subhero, .hangar-configurator)::after {
     content: counter(field); position: absolute; top: 46px; left: calc(var(--field-x) - 13px); display: grid; place-items: center; width: 26px; height: 26px;
     color: color-mix(in srgb, currentColor 62%, transparent); background-color: inherit; border: 1px solid color-mix(in srgb, currentColor 40%, transparent); border-radius: 50%;
     font: 600 11px/1 var(--font-condensed), sans-serif; pointer-events: none;
   }
   /* the registration cross, in the right margin */
-  main[data-field] > section:not(.subhero, .proc-hero) > .shell::after {
+  main[data-field] > section:not(.subhero, .proc-hero, .hero, .service-subhero, .hangar-configurator) > .shell::after {
     content: ''; position: absolute; top: 52px; right: calc(var(--field-x) - 7px); width: 14px; height: 14px; opacity: .34; pointer-events: none;
     background: linear-gradient(currentColor, currentColor) center / 14px 1px no-repeat, linear-gradient(currentColor, currentColor) center / 1px 14px no-repeat;
   }
+  /* the sheet's inscription: upright, read from the bottom, left of the axis under the first block's bubble */
+  main[data-field] > :is(.subhero, .proc-hero, .hero, .service-subhero) + section:not(.hangar-configurator) > .shell::before {
+    content: var(--field-name, 'RUBIKON BUILD'); position: absolute; top: 92px; left: calc(var(--field-x) - 19px); writing-mode: vertical-rl; transform: rotate(180deg);
+    color: color-mix(in srgb, currentColor 50%, transparent); font: 600 9.5px/1 var(--font-condensed), sans-serif; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; pointer-events: none;
+  }
+  /* the ruler along a charcoal band's top edge: a tick every 12 px, a longer one every 60 */
+  main[data-field] > section.page-section-dark:not(:first-of-type) > .shell::before {
+    content: ''; position: absolute; top: 0; right: calc(var(--field-x) * 2); width: min(46%, 620px); height: 12px; opacity: .3; pointer-events: none; transform: none;
+    background: repeating-linear-gradient(to right, currentColor 0 1px, transparent 1px 60px) right top / 100% 12px no-repeat, repeating-linear-gradient(to right, currentColor 0 1px, transparent 1px 12px) right top / 100% 6px no-repeat;
+  }
 }
-@media print { main[data-field] > section::before, main[data-field] > section::after, main[data-field] > section > .shell::after { display: none; } }
+@media print { main[data-field] > section::before, main[data-field] > section::after, main[data-field] > section > .shell::before, main[data-field] > section > .shell::after { display: none; } }

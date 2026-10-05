@@ -406,7 +406,8 @@ export function DirectionPage({
   );
 
   return (
-    <main className={classNames('inner-page direction-page', config.pageClassName)} id="main-content">
+    // data-field: the sheet's margin decor (components/sheet-field.css), with the direction's name as its inscription
+    <main className={classNames('inner-page direction-page', config.pageClassName)} id="main-content" data-field="" style={{ '--field-name': `"RUBIKON BUILD · ${config.hero.breadcrumbLabel}"` } as CSSProperties}>
       {/* Arms the page's [data-motion] blocks once each is in view; with reduced motion everything shows at once */}
       <ProcessMotion root=".direction-page" />
       <DirectionHero

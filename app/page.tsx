@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { DirectionImageCards } from './components/DirectionCards';
 import { DirectionsSheets } from './components/home-v2/DirectionsSheets';
 import { DirectionsRail } from './components/home-v2/DirectionsRail';
@@ -18,7 +19,7 @@ import './home-v2.css';
 // Illustrations explain, the one real photo proves; the two are labelled differently and never compete.
 export default function Home() {
   return (
-    <main id="main-content" data-home="v2">
+    <main id="main-content" data-home="v2" data-field="" style={{ '--field-name': '"RUBIKON BUILD · Промислове будівництво"' } as CSSProperties}>
       {/* HOME's one motion controller: it reveals each [data-motion] block once, as it comes into view (today the
           drawing sheet of the engineering block). New blocks key their before-states to main[data-motion-ready]
           instead of mounting a controller of their own. */}
