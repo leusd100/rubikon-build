@@ -4,6 +4,7 @@ import { SectionHeader } from './components/SiteChrome';
 import { ConversationSection } from './components/ConversationSection';
 import { EngineeringSignature } from './components/home-v2/EngineeringSignature';
 import { HomeV2Hero } from './components/home-v2/HomeV2Hero';
+import { ProcessMotion } from './components/process/ProcessMotion';
 import { directions, undecidedDirection } from './data/directions';
 import { homeProofCase } from './data/homeProof';
 import { company } from './data/company';
@@ -17,6 +18,10 @@ import './home-v2.css';
 export default function Home() {
   return (
     <main id="main-content" data-home="v2">
+      {/* HOME's one motion controller: it reveals each [data-motion] block once, as it comes into view (today the
+          drawing sheet of the engineering block). New blocks key their before-states to main[data-motion-ready]
+          instead of mounting a controller of their own. */}
+      <ProcessMotion root='main[data-home="v2"]' />
       <HomeV2Hero />
 
       {/* The direction images are concept illustrations of the service directions, not project evidence — each card
