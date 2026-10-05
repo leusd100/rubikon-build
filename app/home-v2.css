@@ -259,8 +259,10 @@ main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight:
    laptop the stage crops the canvas's sky and gravel (below), never its sides. A dark sheet in this dark band in either
    theme, its title block in the band's text roles; the «Креслення» square language — no pills, no shadows. */
 
-/* The seam's position, registered so the first view's sweep can animate it (ProofContour) */
-@property --split { syntax: '<percentage>'; inherits: true; initial-value: 62%; }
+/* The seam's position, registered so the first view's sweep can animate it and the seam can glide (ProofContour). Not
+   inherited: only the four that carry it set it — the right side's window and its content, the rail, the handle — so
+   moving the seam restyles four elements, not the drawing's thousand (review, 05.10) */
+@property --split { syntax: '<percentage>'; inherits: false; initial-value: 62%; }
 
 main[data-home="v2"] .hv2-proof { margin-top: 36px; }
 main[data-home="v2"] .hv2-contour {
@@ -292,7 +294,7 @@ main[data-home="v2"] :is(.hv2-contour-canvas > picture, .hv2-contour-trace) img 
 }
 /* The tracing, right of the seam. Its grid keeps the sheet's ruler rhythm (a line every 10 px, a stronger one every
    50 px, from the same corner) — a sheet's grid, not a scale */
-main[data-home="v2"] .hv2-contour-trace { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--split)); background: #161817; }
+main[data-home="v2"] .hv2-contour-trace { position: absolute; inset: 0; background: #161817; }
 /* The quiet tracing (owner review, 04.10): the photo only inside the building's silhouette (ProofContour's mask), grey,
    dark and soft; round it the sheet's flat paper with its grid — the building free of the grid — and the ground's line */
 main[data-home="v2"] .hv2-contour-trace picture {
@@ -314,13 +316,17 @@ main[data-home="v2"] .hv2-contour-trace::after {
     linear-gradient(90deg, rgba(245, 242, 235, .04) 1px, transparent 1px) 0 0 / 10px 10px,
     linear-gradient(rgba(245, 242, 235, .04) 1px, transparent 1px) 0 0 / 10px 10px;
 }
-/* Every layer lies over the tracing only; the measured lines over the photo too once «Контур на фото» is pressed */
+/* The right side is a window (ProofContour): as wide as the stage, moved to the seam, its content moved back by as much,
+   so what it shows stands still. Both are transforms on their own layers — the compositor moves them, nothing repaints */
+main[data-home="v2"] .hv2-contour-pane { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; transform: translateX(var(--split)); will-change: transform; }
+main[data-home="v2"] .hv2-contour-pane-inner { position: absolute; inset: 0; transform: translateX(calc(var(--split) * -1)); will-change: transform; }
+main[data-home="v2"] .hv2-contour-canvas[data-over] { z-index: 2; pointer-events: none; }
 main[data-home="v2"] .hv2-contour-canvas > :is(svg, .hv2-proof-labels, .hv2-contour-sketch) {
-  position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; clip-path: inset(0 0 0 var(--split));
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none;
 }
-main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo] .hv2-contour-lines { clip-path: inset(0); }
-/* …but in the test mode only over the photo: the sketch has its own composition, the outline would only miss it */
-main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"][data-lines-on-photo] .hv2-contour-lines { clip-path: inset(0 calc(100% - var(--split)) 0 0); }
+/* The measured lines over the photo once «Контур на фото» is pressed: their copy under the window (in the test mode the
+   sketch's own ground covers it on the right, so there they lie over the photo only) */
+main[data-home="v2"] .hv2-contour-lines[data-on-photo] { visibility: hidden; }
 
 /* The measured lines (app/data/homeProofContour.ts): solid — measured, dashed — approximate */
 main[data-home="v2"] .hv2-contour-lines path {
@@ -335,13 +341,12 @@ main[data-home="v2"] .hv2-contour-ink path[data-snapped] { stroke: #e39a68; }
 /* The outline is drawn in parts (measured / approximate): square ends close its corners where butt ends notched them */
 main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { stroke-linecap: square; }
 /* The held line over the photo too, unclipped (ProofContour) */
-main[data-home="v2"] .hv2-contour-canvas > svg.hv2-contour-held { clip-path: none; }
 main[data-home="v2"] .hv2-contour-held path { fill: none; stroke: #e39a68; stroke-width: calc(var(--u) * 2 * var(--k, 1)); stroke-linecap: square; stroke-linejoin: miter; }
 main[data-home="v2"] .hv2-contour-held .hv2-contour-held-casing { stroke: rgba(13, 15, 14, .7); stroke-width: calc(var(--u) * (2 * var(--k, 1) + 2.4)); }
 main[data-home="v2"] .hv2-contour-held path[data-approximate] { stroke-linecap: butt; stroke-dasharray: calc(var(--u) * 6) calc(var(--u) * 5); }
 @media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-contour-held { animation: hv2-contour-fade 160ms ease; } }
 /* A figure or a name the seam cuts through: hidden whole (ProofContour sets data-cut) */
-main[data-home="v2"] .hv2-contour-stage :is(.hv2-proof-labels > [data-cut], .hv2-proof-tag-leaders > [data-cut]) { visibility: hidden !important; }
+main[data-home="v2"] .hv2-contour-stage :is(.hv2-proof-labels > [data-cut], .hv2-proof-tag-leaders > [data-cut], .hv2-proof-marks > [data-cut]) { visibility: hidden !important; }
 main[data-home="v2"] .hv2-contour-ink path { stroke: var(--hv2-copper-text); }
 /* A thin dark casing under each line: it disappears on the tracing and keeps the copper legible on the light cladding */
 main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); stroke-width: calc(var(--u) * (var(--w) * var(--k, 1) + 2)); }
@@ -432,11 +437,7 @@ main[data-home="v2"] .hv2-proof-labels [data-align="middle"] { transform: transl
 /* A narrower frame has no room for the figures' second lines: three of them crossed each other at 768 px (review,
    04.10). They stay in the note under the frame and in what a screen reader hears */
 @media (max-width: 1023px) { main[data-home="v2"] .hv2-contour-stage .hv2-proof-measure small { display: none; } }
-/* A narrower frame has no free sky for the purlins' name beside the slope's figure (review, 04.10): it goes, with its
-   leader */
-@media (max-width: 1199px) {
-  main[data-home="v2"] :is(.hv2-proof-tag[data-tag="bracing"], .hv2-proof-tag-leaders [data-tag="bracing"]) { display: none; }
-}
+
 /* «Контур» leaves the gable free of the scheme: a figure may sit nearer its mark there */
 main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-measure { left: var(--cx); top: var(--cy); }
 main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] .hv2-proof-measure[data-align-contour="middle"] { transform: translate(-50%, -50%); text-align: center; }
@@ -463,7 +464,8 @@ main[data-home="v2"] .hv2-contour-stage:is([data-layer="frame"], [data-layer="lo
 main[data-home="v2"] .hv2-contour-stage:is([data-layer="frame"], [data-layer="load"], [data-layer="wind"]) .hv2-contour-lines path[data-kind="cladding"] { visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage:is([data-layer="load"], [data-layer="wind"]) .hv2-contour-lines { opacity: .35; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-lines { opacity: 0; visibility: hidden; }
-main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo] .hv2-contour-lines { opacity: 1; visibility: visible; }
+main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo]:not([data-layer="sketch"]) .hv2-contour-lines,
+main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo] .hv2-contour-lines[data-on-photo] { opacity: 1; visibility: visible; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="contour"] :is(.hv2-proof-marks > g:not(.hv2-proof-tag-leaders), .hv2-proof-measure),
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] :is(.hv2-proof-marks > [data-on-frame], .hv2-proof-measure[data-on-frame], .hv2-proof-tag-leaders, .hv2-proof-tag) {
   opacity: 1; visibility: visible;
@@ -472,9 +474,9 @@ main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] :is(.hv2-proof-marks
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure small { display: none; }
 /* …and on a tablet's narrower frame the slope's in two lines, its words over its figure: in one it reached past the
    resting seam */
-@media (max-width: 1199px) {
-  main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { width: max-content; max-width: 8.2em; white-space: normal; }
-}
+main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { width: max-content; max-width: 8.2em; white-space: normal; }
+/* …a little further left on a narrow tablet, short of the stamp (review, 05.10: at 900 px they met by 13 px) */
+@media (min-width: 761px) and (max-width: 959px) { main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { margin-left: -20px; } }
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-marks [data-mark] { opacity: .8; }
 
 /* The test mode (/?xray=sketch): the generated sketch, by one scale and shift through its ridge and right base corner
@@ -487,7 +489,7 @@ main[data-home="v2"] .hv2-contour-sketch img { position: absolute; top: 9.49%; l
    seam's names, the seam and its handle. The stamp and the chain belong to the right side and lie on it only — clipped at
    the seam with it (review, 04.10: they slid over the photo and under «‹ Фото»); where that side is narrower than the
    stamp, the stamp keeps its first word (ProofContour measures, data-stamp) */
-main[data-home="v2"] .hv2-contour-corner { position: absolute; z-index: 3; inset: 0; pointer-events: none; clip-path: inset(0 0 0 var(--split)); }
+main[data-home="v2"] .hv2-contour-corner { position: absolute; z-index: 3; inset: 0; pointer-events: none; }
 main[data-home="v2"] .hv2-contour-stamp {
   position: absolute; top: 10px; right: 10px; display: grid; justify-items: end; gap: 4px; max-width: 196px;
   padding: 6px 9px 6px; color: var(--hv2-text-2); background: rgba(18, 20, 19, .86); border: 1px solid rgba(245, 242, 235, .26);
@@ -562,19 +564,12 @@ main[data-home="v2"] .hv2-contour-range { position: absolute; inset: 0; width: 1
 main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-rail .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* «Фото» / «Схема», the keys, the layers and «Контур на фото» glide; a drag follows the pointer as it is, and the first
-     view's glide drives --split itself */
-  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) :is(.hv2-contour-trace, .hv2-contour-canvas > svg, .hv2-proof-labels, .hv2-contour-sketch, .hv2-contour-corner) {
-    transition: clip-path 420ms var(--sheet-plot), opacity 240ms ease, visibility 240ms;
+  /* «Фото» / «Схема», the keys and the layers glide the seam: the four's --split. A drag follows the pointer as it is, a
+     mouse leading it is eased by ProofContour itself, and the first view's sweep drives --split on its own */
+  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding], [data-following]) :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) {
+    transition: --split 420ms var(--sheet-plot);
   }
-  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) .hv2-contour-rail { transition: transform 420ms var(--sheet-plot); }
-  /* A mouse leading the seam (ProofContour's hover): the seam eases after it, short, so it feels held, not dragged */
-  main[data-home="v2"] .hv2-contour-stage[data-following]:not([data-dragging], [data-gliding]) :is(.hv2-contour-trace, .hv2-contour-canvas > svg, .hv2-proof-labels, .hv2-contour-sketch, .hv2-contour-corner) {
-    transition: clip-path 180ms cubic-bezier(.2, .7, .3, 1), opacity 240ms ease, visibility 240ms;
-  }
-  main[data-home="v2"] .hv2-contour-stage[data-following]:not([data-dragging], [data-gliding]) .hv2-contour-rail { transition: transform 180ms cubic-bezier(.2, .7, .3, 1); }
-  main[data-home="v2"] .hv2-contour-stage[data-following]:not([data-dragging], [data-gliding]) .hv2-contour-handle { transition: left 180ms cubic-bezier(.2, .7, .3, 1); }
-  main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) .hv2-contour-handle { transition: left 420ms var(--sheet-plot); }
+  main[data-home="v2"] :is(.hv2-contour-canvas > svg, .hv2-proof-labels, .hv2-contour-sketch) { transition: opacity 240ms ease, visibility 240ms; }
   main[data-home="v2"] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation: hv2-contour-pulse 850ms ease-out 2; }
 }
 @keyframes hv2-contour-pulse { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
@@ -584,7 +579,7 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
    gable and back to rest, and everything it has passed is the drawing — the tracing, the measured lines, the scheme,
    whole (ProofContour drives --split). The figures and the names come in when it rests. Once. Without JavaScript or with
    reduced motion the sheet stands complete at rest. */
-main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] { --split: 100% !important; }
+main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: 100% !important; }
 main[data-home="v2"] .hv2-contour-stage[data-sweep] :is(.hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
 @keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
@@ -653,9 +648,11 @@ main[data-home="v2"] .hv2-contour-chips > span {
   font: 700 11.5px/1.1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase;
 }
 /* A load's legend is its way, word by word in its tint (ProofContour's CHAINS) */
-main[data-home="v2"] .hv2-contour-legend-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; font-weight: 600; }
-main[data-home="v2"] .hv2-contour-legend-chain > span[data-key] { margin-right: 6px; }
-main[data-home="v2"] .hv2-contour-legend-chain > span:not([data-key], :last-child)::after { margin-inline: 5px; color: var(--hv2-text-3); content: '→'; }
+/* compact, so it keeps to the title block's height on a laptop (review, 05.10: in four lines it pushed the sheet past the
+   window): a size down, no key — its tint is the key */
+main[data-home="v2"] .hv2-contour-legend-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 1px 0; font-size: 11.5px; font-weight: 600; line-height: 1.25; }
+main[data-home="v2"] .hv2-contour-legend-chain > span[data-key] { display: none; }
+main[data-home="v2"] .hv2-contour-legend-chain > span:not([data-key], :last-child)::after { margin-inline: 4px; color: var(--hv2-text-3); content: '→'; }
 main[data-home="v2"] .hv2-contour-legend-chain[data-load="load"] > span { color: var(--hv2-load); }
 main[data-home="v2"] .hv2-contour-legend-chain[data-load="wind"] > span { color: var(--hv2-wind); }
 
@@ -744,6 +741,11 @@ main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: va
   main[data-home="v2"] .hv2-contour-handle { top: auto; bottom: 0; margin-top: 0; padding: 5px 0 0; font-size: 20px; }
   main[data-home="v2"] .hv2-contour-handle::before, main[data-home="v2"] .hv2-contour-handle::after { inset: auto 6px 2px; height: 32px; }
 }
+/* The narrowest phones: a smaller disc, clear of the gable's base and the gates' feet (review, 05.10) */
+@media (max-width: 389px) {
+  main[data-home="v2"] .hv2-contour-handle::before, main[data-home="v2"] .hv2-contour-handle::after { inset: auto 9px 2px; height: 26px; }
+  main[data-home="v2"] .hv2-contour-handle { font-size: 17px; padding-top: 9px; }
+}
 /* --u by width: the frame is the shell less the sheet's margins, so a CSS pixel of it is 1536 / (0.925 × vw − 46) photo
    pixels above 760 px and 1536 / (vw − 66) on a phone; each step keeps the lines within a fifth of their set width */
 @media (max-width: 1199px) { main[data-home="v2"] .hv2-contour { --u: 1.6px; } }
@@ -754,18 +756,13 @@ main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: va
 @media (max-width: 479px) { main[data-home="v2"] .hv2-contour { --u: 3.52px; } }
 @media (max-width: 389px) { main[data-home="v2"] .hv2-contour { --u: 4.34px; } }
 /* A phone's close-up of the gable (owner review, 04.10 — idea 4): the gable is the photo's whole subject, so the canvas
-   is zoomed in on it — 1.22 × the frame's width, the photo's columns 245–1505 and its rows 59–705 in view, the gable and
-   its footings whole — and the --u steps above are divided by that zoom. A layer's clip is a per cent of the canvas, the
-   seam a per cent of the frame: the inset is (seam + 19.46 %) / 1.22 (ProofContour's PHONE_ZOOM / PHONE_LEFT) */
+   is zoomed in on it — 1.22 × the frame's width, the photo's columns 245–1504 and its rows 92–738 in view, the gable and
+   its footings whole — and the --u steps above are divided by that zoom. Every canvas (the photo's, the window's, the
+   held line's) is placed alike, so the right side's window lines up (ProofContour's PHONE_ZOOM / PHONE_LEFT) */
 @media (max-width: 760px) {
-  /* rows 90–736: the base and the gates' feet sit above the handle at the frame's foot (review, 04.10: at 320–360 px the
+  /* rows 92–738: the base and the gates' feet sit above the handle at the frame's foot (review, 04.10: at 320–360 px the
      handle's disc covered them) */
-  main[data-home="v2"] .hv2-contour-canvas { left: -19.46%; top: calc(-90 / 1536 * 122cqw); width: 122%; }
-  main[data-home="v2"] .hv2-contour-trace,
-  main[data-home="v2"] .hv2-contour-canvas > :is(svg, .hv2-proof-labels, .hv2-contour-sketch) { clip-path: inset(0 0 0 calc((var(--split) + 19.46%) / 1.22)); }
-  main[data-home="v2"] .hv2-contour-stage[data-lines-on-photo] .hv2-contour-lines { clip-path: inset(0); }
-  main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"][data-lines-on-photo] .hv2-contour-lines { clip-path: inset(0 calc(100% - (var(--split) + 19.46%) / 1.22) 0 0); }
-  main[data-home="v2"] .hv2-contour-canvas > svg.hv2-contour-held { clip-path: none; }
+  main[data-home="v2"] .hv2-contour-canvas { left: -19.46%; top: calc(-92 / 1536 * 122cqw); width: 122%; }
 }
 
 /* Facts under the sheet: what the photo proves, and who stands behind the work */

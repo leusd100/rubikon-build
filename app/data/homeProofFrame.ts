@@ -38,7 +38,7 @@ type Pt = readonly [number, number];
  *  eave), each standing a little over the roof, their tails on one line that follows the roof. The tails stay below the
  *  photo's row 84, which the laptop crop keeps (home-v2.css) */
 const ROOF_TOP: readonly Pt[] = [[300.2, 191.6], [1004.9, 128.6], [1460.1, 287]];
-const COMB_RISE = 42;
+const COMB_RISE = 36;
 const COMB_GAP = 7;
 const roofTopY = (x: number) => {
   const [a, b] = x <= ROOF_TOP[1][0] ? [ROOF_TOP[0], ROOF_TOP[1]] : [ROOF_TOP[1], ROOF_TOP[2]];
@@ -307,10 +307,12 @@ export const homeProofFrame: HomeProofFrame = {
     // the sky over the right rake, the column's and the footings' on the ground under the base, the walls' on a face that
     // holds only blockwork — each on a backing that masks what runs under it, as a drawing's text does
     { id: 'truss', text: 'Ферма', anchor: [1360.6, 271], at: [1352, 214], align: 'start' },
-    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1071, 172.3], at: [1080, 104], align: 'start' },
-    // the right gate's opening holds no member: the column's name stands in it
-    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 500], align: 'start' },
-    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 410], at: [1430, 452], align: 'end' },
+    // on the right wall's face, which holds only blockwork: from the first bay's bracing (review, 05.10: in the sky it
+    // met the slope's figure on a laptop)
+    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1350, 335.8], at: [1430, 398], align: 'end' },
+    // the right gate's opening holds no member: the column's name stands in it, under the walls' (apart on a tablet too)
+    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 528], align: 'start' },
+    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 470], align: 'end' },
     { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end' },
   ],
   label:

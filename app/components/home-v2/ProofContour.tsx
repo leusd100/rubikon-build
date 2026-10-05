@@ -64,11 +64,16 @@ const SWEEP_QUIET = 250;
 const SNAP_GRAB = 0.8;
 const SNAP_RELEASE = 1.4;
 /** A phone's close-up of the gable (home-v2.css, ≤ 760 px): the canvas 1.22 × the frame's width, shifted left by 19.46 %
- *  of it — the photo's columns 245–1505, the gable whole — so a line at a per cent of the canvas stands at
+ *  of it — the photo's columns 245–1504, the gable whole — so a line at a per cent of the canvas stands at
  *  (per cent × ZOOM − LEFT) of the frame; the sweep turns just past the gable's left corner there */
 const PHONE_ZOOM = 1.22;
 const PHONE_LEFT = 19.46;
 const SWEEP_TURN_PHONE = 1;
+/** While the seam moves under a pointer, the rest of the sheet (the range's value, the names that give way, the stamp)
+ *  catches up at most this often, ms: the seam itself moves every frame (review, 05.10: dragging it stuttered) */
+const COMMIT_EVERY = 100;
+/** A mouse leading the seam: the share of the way it closes each frame — eased, so it feels held, not dragged */
+const FOLLOW_EASE = 0.32;
 /** The held line's name: its distance from the seam, px */
 const SNAP_GAP = 10;
 /** …and its padding and border, px (home-v2.css) */
@@ -80,7 +85,7 @@ const SNAP_FRAME = 20;
 const STAMP_OFFSET = 10;
 const SHORT_STAMP = 96;
 const AIR = 8;
-type Room = { width: number; left: number; right: number; stamp: number };
+type Room = { width: number; height: number; left: number; right: number; stamp: number };
 
 const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; genitive: string }> = {
   contour: { button: 'Контур', seam: 'Контур', nominative: 'контур за фото', genitive: 'контуру' },
@@ -248,25 +253,68 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [pointerFocus, setPointerFocus] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const rangeRef = useRef<HTMLInputElement>(null);
+  // The four that carry the seam's place (home-v2.css: --split is theirs only, not inherited): the right side's window
+  // and its counter-moved content, the rail with the seam and its names, the handle
+  const paneRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLSpanElement>(null);
+  const handleRef = useRef<HTMLSpanElement>(null);
+  // Where the seam is drawn now, and where a mouse leading it is heading; a commit to React waiting to go
+  const live = useRef(DEFAULT_SPLIT);
+  const target = useRef(DEFAULT_SPLIT);
+  const followFrame = useRef(0);
+  const commitTimer = useRef<number | undefined>(undefined);
   const drag = useRef<{ pointer: number; offset: number } | null>(null);
-  const hoverX = useRef(0);
-  const hoverFrame = useRef(0);
   const touched = useRef(false);
   const [room, setRoom] = useState<Room | null>(null);
+  // The seam's right-hand name gives way to a figure or a name of the drawing it would cover (review, 05.10)
+  const [tagYield, setTagYield] = useState(false);
 
   const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['contour', 'frame', 'load', 'wind'];
   const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[sketchMode ? 0 : 1];
   const rightSide = LAYERS[layer];
 
+  // The seam's place on the page: written straight onto the four elements that carry it, never through a render — a
+  // drag or a mouse moves it every frame, and nothing else on the sheet need restyle for it
+  const paint = (value: number) => {
+    live.current = value;
+    for (const element of [paneRef.current, innerRef.current, railRef.current, handleRef.current]) element?.style.setProperty('--split', `${value}%`);
+  };
+  // …and the rest of the sheet told, at most every COMMIT_EVERY ms while the pointer moves it, at once when it stops
+  const commit = (value: number, now = false) => {
+    window.clearTimeout(commitTimer.current);
+    commitTimer.current = undefined;
+    if (now) {
+      setSplit(value);
+      return;
+    }
+    commitTimer.current = window.setTimeout(() => {
+      commitTimer.current = undefined;
+      setSplit(live.current);
+    }, COMMIT_EVERY);
+  };
+  // A move that is not the pointer's — a key, a button, a layer, the range — reaches the seam through the state, and the
+  // seam glides there (the four's transition on --split)
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || stage.dataset.dragging !== undefined || stage.dataset.following !== undefined) return;
+    if (Math.abs(split - live.current) > 0.001 || !paneRef.current?.style.getPropertyValue('--split')) paint(split);
+    target.current = split;
+  }, [split]);
+  useEffect(() => () => {
+    window.clearTimeout(commitTimer.current);
+    cancelAnimationFrame(followFrame.current);
+  }, []);
+
   // The first view (see SWEEP_AT): the seam waits at the right edge — the photo whole — while the sheet plots in, then
-  // sweeps on the stage's --split only (a registered custom property, home-v2.css), so the range's value and what it
-  // says never move. It waits until the stage is in view and the page has stopped scrolling. The visitor's own move in
-  // the sheet first, or reduced motion: no sweep, the seam at rest.
+  // sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
+  // never move. It waits until the stage is in view and the page has stopped scrolling. The visitor's own move in the
+  // sheet first, or reduced motion: no sweep, the seam at rest.
   useEffect(() => {
     const stage = stageRef.current;
     const sheet = stage?.closest('figure');
     if (!stage || !sheet || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let sweep: Animation | undefined;
+    let sweep: Animation[] = [];
     let timer: number | undefined;
     let due = false;
     let visible = false;
@@ -275,12 +323,12 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const stop = () => {
       touched.current = true;
       window.clearTimeout(timer);
-      sweep?.cancel();
+      for (const animation of sweep) animation.cancel();
       delete stage.dataset.gliding;
       delete stage.dataset.sweep;
     };
     const run = () => {
-      if (touched.current || !due || !visible || sweep) return;
+      if (touched.current || !due || !visible || sweep.length) return;
       const quiet = performance.now() - scrolled;
       if (quiet < SWEEP_QUIET) {
         window.clearTimeout(timer);
@@ -291,15 +339,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       stage.dataset.gliding = '';
       stage.dataset.sweep = 'run';
       const phone = phoneNow();
-      sweep = stage.animate(
-        [
-          { '--split': '100%', easing: 'cubic-bezier(.35, 0, .3, 1)' },
-          { '--split': `${phone ? SWEEP_TURN_PHONE : SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
-          { '--split': `${DEFAULT_SPLIT}%` },
-        ],
-        { duration: phone ? SWEEP_MS_PHONE : SWEEP_MS },
-      );
-      sweep.onfinish = () => {
+      const keyframes = [
+        { '--split': '100%', easing: 'cubic-bezier(.35, 0, .3, 1)' },
+        { '--split': `${phone ? SWEEP_TURN_PHONE : SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
+        { '--split': `${DEFAULT_SPLIT}%` },
+      ];
+      const carriers = [paneRef.current, innerRef.current, railRef.current, handleRef.current].filter((element) => element !== null);
+      sweep = carriers.map((element) => element.animate(keyframes, { duration: phone ? SWEEP_MS_PHONE : SWEEP_MS }));
+      sweep[0].onfinish = () => {
         delete stage.dataset.gliding;
         delete stage.dataset.sweep;
         // Two rings from the handle, once: this is the thing to drag
@@ -335,7 +382,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       seen.disconnect();
       arrived.disconnect();
       window.clearTimeout(timer);
-      sweep?.cancel();
+      for (const animation of sweep) animation.cancel();
       delete stage.dataset.sweep;
       window.removeEventListener('scroll', onScroll);
       sheet.removeEventListener('pointerdown', onPointer);
@@ -356,7 +403,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       const stamp = stage.querySelector<HTMLElement>('.hv2-contour-stamp');
       const full = stamp && stage.dataset.stamp !== 'short' ? stamp.offsetWidth : 0;
       setRoom((previous) => {
-        const next = { width: stage.clientWidth, left, right, stamp: full || previous?.stamp || 196 };
+        // the height too: a height-only change moves the figures against the stamp (review, 04.10)
+        const next = { width: stage.clientWidth, height: stage.clientHeight, left, right, stamp: full || previous?.stamp || 196 };
         return previous && Object.entries(next).every(([key, value]) => previous[key as keyof Room] === value) ? previous : next;
       });
     };
@@ -419,26 +467,38 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const shown = (element: Element | null) => element && getComputedStyle(element).visibility === 'visible';
     const [leftTag, rightTag] = stage.querySelectorAll<HTMLElement>('.hv2-contour-seamtags > span');
     const top = box.top + 10;
-    const covers: { left: number; right: number; top: number; bottom: number }[] = [];
+    type Box = { left: number; right: number; top: number; bottom: number };
+    const meets = (a: Box, b: Box) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    const covers: Box[] = [];
     if (shown(leftTag)) covers.push({ left: seam - 3 - leftTag.offsetWidth, right: seam - 3, top, bottom: top + leftTag.offsetHeight });
-    if (shown(rightTag)) covers.push({ left: seam + 3, right: seam + 3 + rightTag.offsetWidth, top, bottom: top + rightTag.offsetHeight });
     const stamp = stage.querySelector<HTMLElement>('.hv2-contour-stamp');
     if (stamp && shown(stamp)) covers.push(stamp.getBoundingClientRect());
+    // The right-hand name would stand here were it shown — it gives way to a word of the drawing, not the other way
+    const rightTagWould = rightTag && !narrowRight && !snap && layer !== 'load' && layer !== 'wind' && getComputedStyle(rightTag.parentElement!).display !== 'none';
+    const rightBox = rightTag ? { left: seam + 3, right: seam + 3 + rightTag.offsetWidth, top, bottom: top + rightTag.offsetHeight } : null;
+    let yieldTag = false;
     for (const label of stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')) {
       const rect = label.getBoundingClientRect();
-      const cut = rect.left < seam + 1
-        || covers.some((cover) => rect.left < cover.right && rect.right > cover.left && rect.top < cover.bottom && rect.bottom > cover.top);
+      const cut = rect.left < seam + 1 || covers.some((cover) => meets(rect, cover));
+      // shown on this layer: the scheme's names and the figures marked for it on «Каркас», every figure on «Контур»
+      const here = layer === 'frame' ? label.dataset.tag !== undefined || label.dataset.onFrame !== undefined : layer === 'contour' && label.dataset.tag === undefined;
+      if (!cut && here && rightTagWould && rightBox && meets(rect, rightBox)) yieldTag = true;
       if (cut === ('cut' in label.dataset)) continue;
       if (cut) label.dataset.cut = '';
       else delete label.dataset.cut;
-      const tag = label.dataset.tag;
-      const leader = tag ? stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${tag}"]`) : null;
-      if (leader) {
-        if (cut) leader.dataset.cut = '';
-        else delete leader.dataset.cut;
+      // …with what points at it: a name's leader, a figure's marks (review, 04.10: the slope's leader stayed, pointing at
+      // nothing)
+      const { tag, measure } = label.dataset;
+      const pointer = tag
+        ? stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${tag}"]`)
+        : measure ? stage.querySelector<SVGGElement>(`.hv2-proof-marks [data-mark="${measure}"]`) : null;
+      if (pointer) {
+        if (cut) pointer.dataset.cut = '';
+        else delete pointer.dataset.cut;
       }
     }
-  }, [split, layer, room, snap]);
+    setTagYield(yieldTag);
+  }, [split, layer, room, snap, narrowRight]);
 
   const splitAt = (clientX: number, offset = 0, touch = false) => {
     const box = stageRef.current?.getBoundingClientRect();
@@ -460,7 +520,17 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       }
     }
     // Tenths of a per cent: a whole per cent is a 13 px jump on a wide screen
-    setSplit(Math.round(value * 10) / 10);
+    const tenths = Math.round(value * 10) / 10;
+    target.current = tenths;
+    if (stageRef.current?.dataset.following === undefined) paint(tenths);
+    commit(tenths);
+  };
+  // A mouse leading the seam: each frame it closes FOLLOW_EASE of the way left, until it is there
+  const follow = () => {
+    followFrame.current = 0;
+    const gap = target.current - live.current;
+    paint(Math.abs(gap) < 0.05 ? target.current : live.current + gap * FOLLOW_EASE);
+    if (live.current !== target.current) followFrame.current = requestAnimationFrame(follow);
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -475,15 +545,19 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       const grip = handle.getBoundingClientRect();
       drag.current = { pointer: event.pointerId, offset: event.clientX - (grip.left + grip.width / 2) };
     } else {
-      // A click elsewhere moves the seam there
+      // A click elsewhere moves the seam there (below, once the press is marked a drag)
       drag.current = { pointer: event.pointerId, offset: 0 };
-      splitAt(event.clientX, 0, event.pointerType === 'touch');
     }
     event.currentTarget.setPointerCapture(event.pointerId);
+    // set here, not only by the render: the press's own move must not glide
+    cancelAnimationFrame(followFrame.current);
+    followFrame.current = 0;
     delete event.currentTarget.dataset.following;
+    event.currentTarget.dataset.dragging = '';
     setDragging(true);
     setPointerFocus(true);
     rangeRef.current?.focus({ preventScroll: true });
+    if (!handle) splitAt(event.clientX, 0, event.pointerType === 'touch');
   };
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (drag.current?.pointer === event.pointerId) {
@@ -496,24 +570,25 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (event.pointerType !== 'mouse' || !ready || drag.current || stage.dataset.sweep !== undefined) return;
     if ((event.movementX === 0 && event.movementY === 0) || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     stage.dataset.following = '';
-    // At most once a frame: a mouse reports more often than the screen draws
-    hoverX.current = event.clientX;
-    if (hoverFrame.current) return;
-    hoverFrame.current = requestAnimationFrame(() => {
-      hoverFrame.current = 0;
-      if (!drag.current && stage.dataset.following !== undefined) splitAt(hoverX.current);
-    });
+    splitAt(event.clientX);
+    if (!followFrame.current) followFrame.current = requestAnimationFrame(follow);
   };
   const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
     if (drag.current) return;
-    cancelAnimationFrame(hoverFrame.current);
-    hoverFrame.current = 0;
+    // the seam stays where the mouse left it
+    cancelAnimationFrame(followFrame.current);
+    followFrame.current = 0;
+    target.current = live.current;
     delete event.currentTarget.dataset.following;
+    commit(live.current, true);
     snapRef.current = null;
     setSnap(null);
   };
   const endDrag = () => {
+    if (!drag.current) return;
     drag.current = null;
+    delete stageRef.current?.dataset.dragging;
+    commit(live.current, true);
     snapRef.current = null;
     setSnap(null);
     setDragging(false);
@@ -646,14 +721,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       <div
         ref={stageRef}
         className="hv2-contour-stage"
-        style={{ '--split': `${split}%` } as CSSProperties}
         data-layer={layer}
         data-dragging={dragging ? '' : undefined}
         data-lines-on-photo={linesOnPhoto ? '' : undefined}
         data-pointer-focus={pointerFocus ? '' : undefined}
         // The seam's names give way where their side is too narrow, the right one before the stamp; the stamp shortens
         data-narrow-left={narrowLeft ? '' : undefined}
-        data-narrow-right={narrowRight ? '' : undefined}
+        data-narrow-right={narrowRight || tagYield ? '' : undefined}
         data-stamp={stampNone ? 'none' : stampShort ? 'short' : undefined}
         data-photo-only={split >= 100 ? '' : undefined}
         data-snapped={snap ? '' : undefined}
@@ -666,75 +740,91 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         onPointerCancel={endDrag}
         onLostPointerCapture={endDrag}
       >
-        {/* One canvas in the photo's own proportion: the photo, its tracing and every layer over it. On a laptop the
-            stage is shorter than the canvas and crops its sky and gravel (home-v2.css) */}
+        {/* The photo, in one canvas in its own proportion; on a laptop the stage is shorter than the canvas and crops its
+            sky and gravel, on a phone it is a close-up of the gable (home-v2.css). «Контур на фото» draws the measured
+            lines over it too */}
         <div className="hv2-contour-canvas">
           <picture>
             <source type="image/webp" srcSet={SRC_SET} sizes={SIZES} />
             <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable={false} />
           </picture>
-          {/* The tracing: the same frame (the same file, so no second download), grey and dark, on a fine grid */}
-          <div className="hv2-contour-trace" aria-hidden="true" style={{ '--hv2-building': BUILDING_MASK } as CSSProperties}>
-            <svg className="hv2-contour-ground" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}>
-              <path d={`M${GROUND.map(([x, y]) => `${x} ${Math.round(y * 10) / 10}`).join('L')}`} />
-              <path className="hv2-contour-ground-hatch" d={GROUND_HATCH} />
-            </svg>
-            <picture>
-              <source type="image/webp" srcSet={SRC_SET} sizes={SIZES} />
-              <img src={photo.src} alt="" width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable={false} />
-            </picture>
-          </div>
-          {sketchMode && (
-            <div className="hv2-contour-sketch">
-              {/* eslint-disable-next-line @next/next/no-img-element -- a pre-generated WebP pair, as ResponsiveImage */}
-              <img
-                src={SKETCH.src}
-                srcSet={SKETCH.srcSet}
-                sizes="(max-width: 760px) 80vw, 75vw"
-                alt="Згенероване зображення: умовний каркас ангара зі шляхом навантаження — тестове порівняння, не цей об’єкт"
-                width={SKETCH.width}
-                height={SKETCH.height}
-                draggable={false}
-              />
-            </div>
-          )}
-          <ProofFrame loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} wind={layer === 'wind'} ready={ready} />
-          <svg
-            className="hv2-contour-lines"
-            viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}
-            role="img"
-            aria-label={label}
-          >
-            {/* A thin dark casing under each copper line keeps it legible where it crosses the photo's light cladding */}
+          <svg className="hv2-contour-lines" data-on-photo="" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`} aria-hidden="true">
             <Lines casing snapped={snap?.line} />
             <Lines snapped={snap?.line} />
           </svg>
-          {/* The held line once more, over the photo too: a jamb or a corner the seam holds lies right on it, where the
-              lines' own layer is cut off — so it lights up landing on the photo's edge (review, 04.10) */}
-          {snap && (
+        </div>
+        {/* The right side: a window as wide as the stage, moved to the seam, its content moved back by as much — so the
+            tracing and every layer stand still while the window uncovers them, and moving the seam is two transforms the
+            compositor does alone, with nothing repainted (review, 05.10: clip-paths repainted the whole drawing on every
+            frame of a drag). The same canvas inside, so nothing slides */}
+        <div className="hv2-contour-pane" ref={paneRef}>
+          <div className="hv2-contour-pane-inner" ref={innerRef}>
+            <div className="hv2-contour-canvas">
+              {/* The tracing: the same frame (the same file, so no second download), grey and dark, on a fine grid */}
+              <div className="hv2-contour-trace" aria-hidden="true" style={{ '--hv2-building': BUILDING_MASK } as CSSProperties}>
+                <svg className="hv2-contour-ground" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}>
+                  <path d={`M${GROUND.map(([x, y]) => `${x} ${Math.round(y * 10) / 10}`).join('L')}`} />
+                  <path className="hv2-contour-ground-hatch" d={GROUND_HATCH} />
+                </svg>
+                <picture>
+                  <source type="image/webp" srcSet={SRC_SET} sizes={SIZES} />
+                  <img src={photo.src} alt="" width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable={false} />
+                </picture>
+              </div>
+              {sketchMode && (
+                <div className="hv2-contour-sketch">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- a pre-generated WebP pair, as ResponsiveImage */}
+                  <img
+                    src={SKETCH.src}
+                    srcSet={SKETCH.srcSet}
+                    sizes="(max-width: 760px) 80vw, 75vw"
+                    alt="Згенероване зображення: умовний каркас ангара зі шляхом навантаження — тестове порівняння, не цей об’єкт"
+                    width={SKETCH.width}
+                    height={SKETCH.height}
+                    draggable={false}
+                  />
+                </div>
+              )}
+              <ProofFrame loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} wind={layer === 'wind'} ready={ready} />
+              <svg
+                className="hv2-contour-lines"
+                viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}
+                role="img"
+                aria-label={label}
+              >
+                {/* A thin dark casing under each copper line keeps it legible where it crosses the photo's light cladding */}
+                <Lines casing snapped={snap?.line} />
+                <Lines snapped={snap?.line} />
+              </svg>
+              <ProofMarks />
+              <ProofLabels />
+            </div>
+            {/* The right side's own words, outside the canvas (never cropped): what it is, top right */}
+            <span className="hv2-contour-corner" aria-hidden="true">
+              <span className="hv2-contour-stamp">
+                <small>
+                  {layer === 'contour' ? 'Виміряно' : layer === 'sketch' ? 'Тест' : 'Схема'}
+                  {/* a phone keeps the first word only */}
+                  <span className="hv2-contour-stamp-more">{layer === 'contour' ? ' за фото' : layer === 'sketch' ? '' : ' · без розмірів'}</span>
+                </small>
+                <span className="hv2-contour-stamp-text">
+                  {layer === 'contour' ? 'без масштабу' : layer === 'sketch' ? 'згенероване зображення' : 'каркас такого типу, як на цьому об’єкті'}
+                </span>
+              </span>
+            </span>
+          </div>
+        </div>
+        {/* The held line once more, over both sides: a jamb or a corner the seam passes lies right on the seam, so it
+            lights up landing on the photo's edge (review, 04.10) */}
+        {snap && (
+          <div className="hv2-contour-canvas" data-over="">
             <svg className="hv2-contour-held" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`} aria-hidden="true">
               <path className="hv2-contour-held-casing" d={pathOf(lines.find((line) => line.id === snap.line)!)} />
               {/* dashed where the line is approximate, as everywhere else */}
               <path d={pathOf(lines.find((line) => line.id === snap.line)!)} data-approximate={lines.find((line) => line.id === snap.line)!.approximate ? '' : undefined} />
             </svg>
-          )}
-          <ProofMarks />
-          <ProofLabels />
-        </div>
-        {/* The right side's own words, outside the canvas (never cropped) and on that side only (clipped at the seam):
-            what it is, top right; the load's chain, bottom right */}
-        <span className="hv2-contour-corner" aria-hidden="true">
-          <span className="hv2-contour-stamp">
-            <small>
-              {layer === 'contour' ? 'Виміряно' : layer === 'sketch' ? 'Тест' : 'Схема'}
-              {/* a phone keeps the first word only */}
-              <span className="hv2-contour-stamp-more">{layer === 'contour' ? ' за фото' : layer === 'sketch' ? '' : ' · без розмірів'}</span>
-            </small>
-            <span className="hv2-contour-stamp-text">
-              {layer === 'contour' ? 'без масштабу' : layer === 'sketch' ? 'згенероване зображення' : 'каркас такого типу, як на цьому об’єкті'}
-            </span>
-          </span>
-        </span>
+          </div>
+        )}
         {/* What the figures say, for a screen reader: the labels on the frame are drawn for the eye only */}
         <ul className="sr-only" aria-label="Виміряно за фото, без масштабу">
           {homeProofMeasures.map((measure) => <li key={measure.id} data-measure={measure.id}>{measure.spoken}</li>)}
@@ -759,7 +849,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         />
         {/* The seam, its handle, its names and the held line's name ride one full-width rail moved by a transform: moved
             by left, they shifted the page's layout on every frame of the sweep (review, 04.10: CLS) */}
-        <span className="hv2-contour-rail" aria-hidden="true">
+        <span className="hv2-contour-rail" ref={railRef} aria-hidden="true">
           <span className="hv2-contour-seamtags">
             <span>‹ Фото</span>
             <span>{rightSide.seam} ›</span>
@@ -773,7 +863,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             </span>
           </span>
           <span className="hv2-contour-seam" />
-          <span className="hv2-contour-handle">‹ ›</span>
+          <span className="hv2-contour-handle" ref={handleRef}>‹ ›</span>
         </span>
       </div>
     </DrawingSheet>
