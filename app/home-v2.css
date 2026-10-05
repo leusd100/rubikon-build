@@ -476,7 +476,7 @@ main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure s
    resting seam */
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { width: max-content; max-width: 8.2em; white-space: normal; }
 /* …a little further left on a narrow tablet, short of the stamp (review, 05.10: at 900 px they met by 13 px) */
-@media (min-width: 761px) and (max-width: 959px) { main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { margin-left: -20px; } }
+@media (min-width: 860px) and (max-width: 959px) { main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { margin-left: -20px; } }
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-marks [data-mark] { opacity: .8; }
 
 /* The test mode (/?xray=sketch): the generated sketch, by one scale and shift through its ridge and right base corner
@@ -718,11 +718,13 @@ main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: va
     flex: none; aspect-ratio: auto;
     height: clamp(calc(100cqw * 560 / 1536), calc(100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))), calc(100cqw * 788 / 1536));
   }
-  /* …the usual rest by width, so the server's picture is the hydrated one's (review, 04.10: measured 150 / 170 / 240) */
-  main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 150px; }
+  /* …the usual rest by width, so the server's picture is the hydrated one's (measured 05.10 on every layer: 169 from
+     1400 px, 170 at 1280–1366, 220–240 at 1100–1200, 260 below) */
+  main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 169px; }
 }
 @media (min-width: 761px) and (max-width: 1399px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 170px; } }
-@media (min-width: 761px) and (max-width: 1099px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 240px; } }
+@media (min-width: 761px) and (max-width: 1239px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 230px; } }
+@media (min-width: 761px) and (max-width: 1099px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 260px; } }
 @media (min-width: 761px) {
   main[data-home="v2"] .hv2-contour-canvas { top: calc((100% - 100cqw * 788 / 1536) * .367); }
   /* …and the note a size down, so the title block keeps to four lines on a 1280 px laptop */
