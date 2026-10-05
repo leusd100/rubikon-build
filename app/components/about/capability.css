@@ -1,28 +1,38 @@
-/* «Що робимо самі, а що організовуємо» on /pro-nas (CapabilityFigure.tsx; owner, 04.10: the hangar drawing read as
-   overloaded). The heading's two halves are the block's two columns — left what we do ourselves (01) with the scheme
-   under it, right what we organise (02) and what specialists or the customer do (03). The scheme is one flat section
-   of a building in the ledger's own three lines, visible at rest: copper = 01, thin graphite = 02, dashed = 03 (the
-   same three rules that top the groups). No tour and nothing replays; pointing lights a part.
+/* «Що робимо самі, а що організовуємо» on /pro-nas (CapabilityFigure.tsx). Owner, 04.10: the hangar drawing read as
+   overloaded; owner, 05.10: too much text. The block is a scheme and its legend: on a wide screen one flat section of
+   a building on the left and the three groups beside it, each a heading over short name tags. A tag wears its group's
+   line — copper = 01 (own team), thin graphite = 02 (organised), dashed = 03 (specialists or the customer) — the same
+   three lines the scheme is drawn in and the same three rules that top the groups. No tour and nothing replays;
+   pointing lights a part, and pointing at a part lights its tag.
    Imported by the page (app/pro-nas/page.tsx) and only there: a CSS file imported by two client modules becomes an
    empty chunk under vinext. Theme roles only (app/theme.css): Light and Dark need no rules of their own. */
 
 /* The block's root is the ledger itself (.about-cap.about-ledger — one element, so the grid below wins over any
    plain .about-ledger rule whatever the import order). --cap-own-rest is the line of group 01 at rest: copper. Set it
-   to a graphite role (e.g. var(--color-text-secondary)) to compare «graphite at rest, copper only while pointing». */
+   to a graphite role (e.g. var(--color-text-secondary)) to compare «graphite at rest, copper only while pointing».
+   The markup's order is the phone's (01, scheme, 02, 03); from 1051 px the scheme takes the left column's full height. */
 .about-cap.about-ledger {
   --cap-own-rest: var(--color-accent);
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 30px clamp(40px, 6vw, 96px); align-items: start;
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: auto auto 1fr; gap: 28px clamp(40px, 5vw, 80px); align-items: start;
 }
-.about-cap-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; min-width: 0; }
-.about-cap .about-ledger-col li > span { max-width: 62ch; }
-.about-cap li[data-cap] { transition: background-color .2s ease; }
-/* The pointed row (data-on is set by the component on that <li>) */
-.about-cap li[data-on] { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.about-cap .about-ledger-col { grid-column: 2; }
+.about-cap .cap-fig { grid-column: 1; grid-row: 1 / span 3; }
+
+/* The works as name tags. The base row styles (about.css: a ruled list) are replaced here. */
+.about-cap .about-ledger-col ul { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.about-cap .about-ledger-col li { max-width: 100%; padding: 0; border: 1px solid var(--color-text-muted); transition: background-color .2s ease, border-color .2s ease; }
+.about-cap .about-ledger-col.is-core li { border-color: var(--cap-own-rest); }
+.about-cap .about-ledger-col.is-partner li { border-style: dashed; }
+.about-cap .about-ledger-col li b { font-size: 15px; line-height: 1.3; }
+/* The whole tag is the link's target and carries its focus ring */
+.about-cap .about-ledger-col li :is(b.is-plain, b a) { display: block; padding: 8px 12px; }
+/* The pointed tag (data-on is set by the component on that <li>) */
+.about-cap li[data-on] { background: color-mix(in srgb, var(--color-accent) 12%, transparent); border-color: var(--color-accent); }
 
 /* --cap-k scales every stroke and the numbers to the width the scheme is shown at (its sheet is 360 wide): about 0.7
    beside the list, 1 on a phone, so the lines stay 1–2.6 px on screen in both. (Not non-scaling-stroke: with pathLength
    Chrome then measures the dash on screen and cuts the line's end.) */
-.cap-fig { --cap-k: .7; width: 100%; margin: 14px 0 0; }
+.cap-fig { --cap-k: .7; width: 100%; margin: 0; }
 .cap-fig svg { display: block; width: 100%; height: auto; overflow: visible; }
 .cap-fig :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .cap-ground { stroke: var(--color-border-strong); stroke-width: calc(1px * var(--cap-k)); }
@@ -37,6 +47,8 @@
 .cap-fig path.cap-part[data-caps~="foundations"] { fill: color-mix(in srgb, var(--cap-ink) 14%, transparent); }
 /* 03 specialists or the customer: dashed (never drawn in — a dashed path with pathLength would lose its dashes) */
 .cap-part[data-tier="partner"] { stroke-width: calc(1.2px * var(--cap-k)); stroke-dasharray: 5 4; }
+/* The scheme's own pointer targets: a wide stroke nobody sees, over each part */
+.cap-fig path.cap-hit { stroke: transparent; stroke-width: 13px; pointer-events: stroke; }
 .cap-tag { transition: opacity .25s ease; }
 .cap-tag path { stroke: var(--color-text-muted); stroke-width: calc(.8px * var(--cap-k)); opacity: .8; }
 .cap-tag circle { fill: var(--color-text-muted); stroke: none; }
@@ -72,7 +84,12 @@
 
 /* One column: 01, the scheme as a legend, 02, 03 (the DOM's own order) */
 @media (max-width: 1050px) {
-  .about-cap.about-ledger { grid-template-columns: minmax(0, 1fr); }
-  .cap-fig { width: min(100%, 520px); margin-top: 0; }
+  .about-cap.about-ledger { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .about-cap .about-ledger-col, .about-cap .cap-fig { grid-column: auto; grid-row: auto; }
+  .cap-fig { width: min(100%, 520px); }
+}
+@media (max-width: 760px) {
+  /* A finger's target: 40 px and up */
+  .about-cap .about-ledger-col li :is(b.is-plain, b a) { padding: 10px 12px; }
 }
 @media (max-width: 480px) { .cap-fig { --cap-k: 1; } }

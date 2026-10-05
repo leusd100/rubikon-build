@@ -3,14 +3,17 @@
 import { useState, type CSSProperties, type FocusEvent, type PointerEvent } from 'react';
 import type { CapabilityLedgerColumn } from '../../lib/deliveryModelPresentation';
 
-// /pro-nas «Що робимо самі, а що організовуємо» (owner, 04.10: the see-through hangar on its site read as overloaded;
-// the spoil heap and the depth mark had to go — and with them everything else that is not a work of the list). The
-// heading's two halves are the block's two columns: what we do ourselves (01) with the scheme under it, and beside it
-// what we organise (02) and what specialists or the customer do (03). The scheme is one flat section of a building in
-// the ledger's own three lines — copper for 01, thin graphite for 02, dashed for 03 — so it reads at rest, on a phone
-// and without a tour (the page's one auto-playing tour is the practice drawing). Pointing at a group or a work with a
-// mouse, or reaching a linked work from the keyboard, keeps that line and quiets the rest; a work the scheme has no
-// place for keeps its group's line. Decorative (aria-hidden): the list says everything, in the Delivery Model's words.
+// /pro-nas «Що робимо самі, а що організовуємо». Owner, 04.10: the see-through hangar on its site read as overloaded
+// — the spoil heap and the depth mark had to go, and with them everything that is not a work of the list. Owner, 05.10:
+// still too much text — «залишити найнеобхідніший». So the block is now a scheme and its legend: one flat section of
+// a building on the left, and beside it the three groups as short name tags — no sentences. A tag wears its group's
+// line, the same three lines the scheme is drawn in: copper for what we do ourselves (01), thin graphite for what we
+// organise (02), dashed for specialists or the customer (03); so it reads at rest, on a phone and without a tour (the
+// page's one auto-playing tour is the practice drawing). The works' full statements stay in the Delivery Model and on
+// the pages the linked tags lead to.
+// Pointing works both ways with a mouse: at a tag or a group — its part of the scheme stays and the rest goes quiet;
+// at a part of the scheme — its tag lights. The keyboard gets the same on a linked tag. The scheme is decorative
+// (aria-hidden): the tags say everything, in the Delivery Model's names.
 // Styles: capability.css (imported by the page).
 
 type Tier = CapabilityLedgerColumn['id'];
@@ -39,15 +42,15 @@ const TAGS: readonly { cap: string; leader: string; dot: readonly [number, numbe
   { cap: 'mep', leader: 'M322 198L330 182H337', dot: [322, 198], text: [341, 182], anchor: 'start' },
 ];
 
-type Pointed = { tier: Tier; cap?: string; row?: string } | null;
+type Pointed = { tier: Tier; cap?: string; rows?: readonly string[] } | null;
 
 export function CapabilityFigure({ columns }: Readonly<{ columns: readonly CapabilityLedgerColumn[] }>) {
   const [pointed, setPointed] = useState<Pointed>(null);
   const columnOf = (cap: string) => columns.findIndex((column) => column.items.some((item) => item.id === cap));
   const number = (index: number) => String(index + 1).padStart(2, '0');
-  const row = (tier: Tier, id: string): Pointed => ({ tier, row: id, cap: DRAWN.has(id) ? id : undefined });
-  // Only a real mouse points: a tap emulates hover and never leaves, which would keep a row lit on a phone — where the
-  // scheme is a legend between the groups, not beside the row
+  const row = (tier: Tier, id: string): Pointed => ({ tier, rows: [id], cap: DRAWN.has(id) ? id : undefined });
+  // Only a real mouse points: a tap emulates hover and never leaves, which would keep a tag lit on a phone — where the
+  // scheme is a legend between the groups, not beside the tag
   const mouse = (next: Pointed) => (event: PointerEvent) => { if (event.pointerType === 'mouse') setPointed(next); };
 
   const ledgerColumn = (column: CapabilityLedgerColumn, index: number) => (
@@ -63,13 +66,12 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
         <span aria-hidden="true">{number(index)}</span>
         {column.title}
       </h3>
-      {column.note && <p className="about-ledger-note">{column.note}</p>}
       <ul>
         {column.items.map((item) => (
           <li
             key={item.id}
             data-cap={item.id}
-            data-on={pointed?.row === item.id ? '' : undefined}
+            data-on={pointed?.rows?.includes(item.id) ? '' : undefined}
             onPointerEnter={mouse(row(column.id, item.id))}
             onPointerLeave={mouse({ tier: column.id })}
             // The keyboard gets the same on a linked work (focus bubbles from its link) — the keyboard only: a tap
@@ -77,55 +79,62 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
             onFocus={(event: FocusEvent<HTMLLIElement>) => { if (event.target.matches(':focus-visible')) setPointed(row(column.id, item.id)); }}
             onBlur={() => setPointed(null)}
           >
-            <b>{item.href ? <a href={item.href}>{item.label} <span aria-hidden="true">↗</span></a> : item.label}</b>
-            {item.statement && <span>{item.statement}</span>}
+            {item.href
+              ? <b><a href={item.href}>{item.short} <span aria-hidden="true">↗</span></a></b>
+              : <b className="is-plain">{item.short}</b>}
           </li>
         ))}
       </ul>
     </section>
   );
 
-  // The ledger's first group is the heading's first half («самі»); the scheme stands under it
+  // The ledger's first group is the heading's first half («самі»); in the markup the scheme follows it, which is the
+  // phone's order (01, the scheme as a legend, 02, 03). On a wide screen the scheme stands beside all three.
   const [own, ...organised] = columns;
 
   return (
     // One element is both the block's grid and the ledger (.about-ledger holds all three columns, in the model's order)
     <div className="about-cap about-ledger" data-motion data-tier={pointed?.tier} data-cap={pointed?.cap}>
-      <div className="about-cap-side">
-        {ledgerColumn(own, 0)}
-        <figure className="cap-fig" aria-hidden="true" data-motion>
-          <svg viewBox="0 24 360 184" focusable="false">
-            <path className="cap-ground" d="M8 158H50M310 158H352" />
-            <path className="cap-axis" d="M180 28V204" />
-            {PARTS.map(([caps, d]) => {
-              const ids = caps.split(' ');
-              const tier = columns[columnOf(ids[0])]?.id;
-              // Lit: the pointed work's own part, or — for a group, or a work the scheme has no place for — the group's
-              const lit = pointed && (pointed.cap ? ids.includes(pointed.cap) : pointed.tier === tier);
-              // pathLength lets the first view draw a solid line; a dashed one would lose its dashes, so it fades in
-              return <path key={caps} className="cap-part" data-tier={tier} data-caps={caps} data-on={lit ? '' : undefined} d={d} pathLength={tier === 'partner' ? undefined : 1} />;
-            })}
-            {TAGS.map((tag) => {
-              const index = columnOf(tag.cap);
-              if (index < 0) return null;
-              const tier = columns[index].id;
-              return (
-                <g className="cap-tag" data-tier={tier} data-on={pointed?.tier === tier ? '' : undefined} key={tag.cap}>
-                  <path d={tag.leader} />
-                  <circle cx={tag.dot[0]} cy={tag.dot[1]} r="1.6" />
-                  <text x={tag.text[0]} y={tag.text[1]} textAnchor={tag.anchor}>{number(index)}</text>
-                </g>
-              );
-            })}
-          </svg>
-          <figcaption>
-            <span>Схема</span>
-            <b>Переріз будівлі</b>
-            <span>Хто виконує кожну частину</span>
-          </figcaption>
-        </figure>
-      </div>
-      <div className="about-cap-side">{organised.map((column, index) => ledgerColumn(column, index + 1))}</div>
+      {ledgerColumn(own, 0)}
+      <figure className="cap-fig" aria-hidden="true" data-motion>
+        <svg viewBox="0 24 360 184" focusable="false">
+          <path className="cap-ground" d="M8 158H50M310 158H352" />
+          <path className="cap-axis" d="M180 28V204" />
+          {PARTS.map(([caps, d]) => {
+            const ids = caps.split(' ');
+            const tier = columns[columnOf(ids[0])]?.id;
+            // Lit: the pointed work's own part, or — for a group, or a work the scheme has no place for — the group's
+            const lit = pointed && (pointed.cap ? ids.includes(pointed.cap) : pointed.tier === tier);
+            // pathLength lets the first view draw a solid line; a dashed one would lose its dashes, so it fades in
+            return <path key={caps} className="cap-part" data-tier={tier} data-caps={caps} data-on={lit ? '' : undefined} d={d} pathLength={tier === 'partner' ? undefined : 1} />;
+          })}
+          {TAGS.map((tag) => {
+            const index = columnOf(tag.cap);
+            if (index < 0) return null;
+            const tier = columns[index].id;
+            return (
+              <g className="cap-tag" data-tier={tier} data-on={pointed?.tier === tier ? '' : undefined} key={tag.cap}>
+                <path d={tag.leader} />
+                <circle cx={tag.dot[0]} cy={tag.dot[1]} r="1.6" />
+                <text x={tag.text[0]} y={tag.text[1]} textAnchor={tag.anchor}>{number(index)}</text>
+              </g>
+            );
+          })}
+          {/* The other way round: a wide invisible stroke over each part, so pointing at the scheme lights its tag */}
+          {PARTS.map(([caps, d]) => {
+            const ids = caps.split(' ');
+            const tier = columns[columnOf(ids[0])]?.id;
+            if (!tier) return null;
+            return <path key={caps} className="cap-hit" data-caps={caps} d={d} onPointerEnter={mouse({ tier, cap: ids[0], rows: ids })} onPointerLeave={mouse(null)} />;
+          })}
+        </svg>
+        <figcaption>
+          <span>Схема</span>
+          <b>Переріз будівлі</b>
+          <span>Хто виконує кожну частину</span>
+        </figcaption>
+      </figure>
+      {organised.map((column, index) => ledgerColumn(column, index + 1))}
     </div>
   );
 }

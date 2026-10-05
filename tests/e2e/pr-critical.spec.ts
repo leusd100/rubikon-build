@@ -330,11 +330,12 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
   expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
   // What we do ourselves and what we organise (UX pass 2026-10, in place of the five-direction list that repeated
-  // /napryamky): the Delivery Model's three capability layers in its own words; a work with its own page links to it,
-  // and the directions are one link away. Then the region.
+  // /napryamky): the Delivery Model's three capability layers in its own names (owner, 05.10: names only — no
+  // sentences, and no tail that repeats the group's title); a work with its own page links to it, and the directions
+  // are one link away. Then the region.
   const ledger = capabilityLedger();
   await expect(page.locator('.about-ledger-col h3')).toHaveText(ledger.map((column, index) => `${String(index + 1).padStart(2, '0')}${column.title}`));
-  await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => (item.href ? `${item.label} ↗` : item.label))));
+  await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => (item.href ? `${item.short} ↗` : item.short))));
   expect(await page.locator('.about-ledger a').evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
     .toEqual(ledger.flatMap((column) => column.items.flatMap((item) => (item.href ? [item.href] : []))));
   await expect(page.locator('.about-build-all')).toHaveAttribute('href', '/napryamky');
