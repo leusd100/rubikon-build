@@ -94,14 +94,14 @@ main[data-home="v2"] .sig-hit { fill: transparent; stroke: none; pointer-events:
    motion the controller never arms and the sheet stands still. Only the shown composition moves (the other one is
    hidden, see .sig-tall). The press and the breath are on wrapper groups: the paths keep their draw-in animations. */
 @media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
-  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-thread { animation: hv2-sheet-flow 1.5s linear infinite; }
-  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-press { animation: hv2-sheet-press 3s ease-in-out infinite; }
-  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-breathe { animation: hv2-sheet-breathe 3s ease-in-out infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-thread { animation: hv2-sheet-flow .7s linear infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-press { animation: hv2-sheet-press 1.6s ease-in-out infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-breathe { animation: hv2-sheet-breathe 1.6s ease-in-out infinite; }
 }
 @media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
-  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-thread { animation: hv2-sheet-flow 1.5s linear infinite; }
-  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-press { animation: hv2-sheet-press 3s ease-in-out infinite; }
-  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-breathe { animation: hv2-sheet-breathe 3s ease-in-out infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-thread { animation: hv2-sheet-flow .7s linear infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-press { animation: hv2-sheet-press 1.6s ease-in-out infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-breathe { animation: hv2-sheet-breathe 1.6s ease-in-out infinite; }
 }
 @keyframes hv2-sheet-flow { to { stroke-dashoffset: var(--sig-period); } }
 @keyframes hv2-sheet-press { 50% { transform: translateY(var(--sig-press)); } }

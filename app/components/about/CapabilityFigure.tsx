@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties, type FocusEvent, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FocusEvent, type PointerEvent } from 'react';
 import type { CapabilityLedgerColumn } from '../../lib/deliveryModelPresentation';
 
 // /pro-nas «Що робимо самі, а що організовуємо». Owner, 04.10: the see-through hangar on its site read as overloaded
@@ -8,9 +8,11 @@ import type { CapabilityLedgerColumn } from '../../lib/deliveryModelPresentation
 // still too much text — «залишити найнеобхідніший». So the block is now a scheme and its legend: one flat section of
 // a building on the left, and beside it the three groups as short name tags — no sentences. A tag wears its group's
 // line, the same three lines the scheme is drawn in: copper for what we do ourselves (01), thin graphite for what we
-// organise (02), dashed for specialists or the customer (03); so it reads at rest, on a phone and without a tour (the
-// page's one auto-playing tour is the practice drawing). The works' full statements stay in the Delivery Model and on
-// the pages the linked tags lead to.
+// organise (02), dashed for specialists or the customer (03); so it reads at rest and on a phone. The works' full
+// statements stay in the Delivery Model and on the pages the linked tags lead to.
+// The first time the scheme comes into view it walks once through the works it draws, in the list's order — each tag
+// and its part light together (owner, 05.10: «автоматично перемикатися між елементами», as «Що враховуємо в
+// розрахунку» does on /yak-pratsyuiemo) — and then rests; pointing takes over at once. No tour with reduced motion.
 // Pointing works both ways with a mouse: at a tag or a group — its part of the scheme stays and the rest goes quiet;
 // at a part of the scheme — its tag lights. The keyboard gets the same on a linked tag. The scheme is decorative
 // (aria-hidden): the tags say everything, in the Delivery Model's names.
@@ -44,8 +46,41 @@ const TAGS: readonly { cap: string; leader: string; dot: readonly [number, numbe
 
 type Pointed = { tier: Tier; cap?: string; rows?: readonly string[] } | null;
 
+/** One step of the first-view walk, as on «Що враховуємо в розрахунку» (CostFactorsFigure) but a little quicker: the
+ *  names are short */
+const TOUR_STEP_MS = 1300;
+
 export function CapabilityFigure({ columns }: Readonly<{ columns: readonly CapabilityLedgerColumn[] }>) {
-  const [pointed, setPointed] = useState<Pointed>(null);
+  const [byPointer, setByPointer] = useState<Pointed>(null);
+  const [tour, setTour] = useState<Pointed>(null);
+  const figureRef = useRef<HTMLElement>(null);
+  const toured = useRef(false);
+  const pointed = byPointer ?? tour;
+  // Pointing ends the walk for good
+  const setPointed = (next: Pointed) => { toured.current = true; setTour(null); setByPointer(next); };
+
+  useEffect(() => {
+    const figure = figureRef.current;
+    if (!figure || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    // The works the scheme has a part for, in the list's order
+    const steps = columns.flatMap((column) => column.items.filter((item) => DRAWN.has(item.id)).map((item) => ({ tier: column.id, cap: item.id, rows: [item.id] })));
+    let timer = 0;
+    let index = -1;
+    const step = () => {
+      index += 1;
+      if (toured.current || index >= steps.length) { setTour(null); return; }
+      setTour(steps[index]);
+      timer = window.setTimeout(step, TOUR_STEP_MS);
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting || entry.intersectionRatio < 0.5) return;
+      observer.disconnect();
+      timer = window.setTimeout(step, 1200); // after the scheme has drawn itself
+    }, { threshold: [0, 0.5] });
+    observer.observe(figure);
+    return () => { observer.disconnect(); window.clearTimeout(timer); };
+  }, [columns]);
+
   const columnOf = (cap: string) => columns.findIndex((column) => column.items.some((item) => item.id === cap));
   const number = (index: number) => String(index + 1).padStart(2, '0');
   const row = (tier: Tier, id: string): Pointed => ({ tier, rows: [id], cap: DRAWN.has(id) ? id : undefined });
@@ -96,7 +131,7 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
     // One element is both the block's grid and the ledger (.about-ledger holds all three columns, in the model's order)
     <div className="about-cap about-ledger" data-motion data-tier={pointed?.tier} data-cap={pointed?.cap}>
       {ledgerColumn(own, 0)}
-      <figure className="cap-fig" aria-hidden="true" data-motion>
+      <figure className="cap-fig" aria-hidden="true" data-motion ref={figureRef}>
         <svg viewBox="0 24 360 184" focusable="false">
           <path className="cap-ground" d="M8 158H50M310 158H352" />
           <path className="cap-axis" d="M180 28V204" />

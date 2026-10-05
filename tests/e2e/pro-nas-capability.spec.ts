@@ -4,8 +4,8 @@ import { expect, test } from '@playwright/test';
 // overloaded; the spoil heap and the depth mark had to go) and its legend of name tags (owner, 05.10: too much text —
 // only the necessary stays). The works' names stay pinned in pr-critical.spec.ts; these pin what the block promised:
 // a scheme that reads at rest in three line types, nothing drawn that is not a work of the ledger, names without
-// sentences, no tour of its own, pointing that works both ways, a much shorter block, and a phone that is not asked
-// to tap at a drawing off screen.
+// sentences, one walk through the drawn works on first view (owner, 05.10 evening), pointing that works both ways,
+// a much shorter block, and a phone that is not asked to tap at a drawing off screen.
 
 const FIGURE = '.about-cap .cap-fig';
 
@@ -46,16 +46,40 @@ test('the legend is names only: no sentences, and a tag wears its group’s line
   expect(borders[2]).toMatch(/^dashed /);
 });
 
-test('the scheme runs no tour of its own: nothing is lit until the visitor points', async ({ page }) => {
-  // The page's clock is ours: ten seconds of its timers and frames are run through, instead of waiting for them
+test('the scheme walks once through the works it draws when it first comes into view, then rests', async ({ page }) => {
+  // The page's clock is ours: the walk's timers are run through instead of waited for
   await page.clock.install();
   await page.goto('/pro-nas', { waitUntil: 'load' });
   const block = page.locator('.about-cap');
-  await block.scrollIntoViewIfNeeded();
-  await page.clock.runFor(10_000);
+  const lit = block.locator('li[data-on]');
+  await page.locator(FIGURE).scrollIntoViewIfNeeded();
+  // (the observer that arms the walk is not on the clock, so the first step is polled for)
+  await expect.poll(async () => { await page.clock.runFor(400); return lit.count(); }).toBe(1);
+  const first = await lit.getAttribute('data-cap');
+  // A tag and its part of the scheme light together
+  await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).toHaveCount(1);
+  await page.clock.runFor(1300);
+  await expect(lit).not.toHaveAttribute('data-cap', first!);
+  // …and after the last work it rests, with nothing lit
+  await page.clock.runFor(20_000);
+  await expect(lit).toHaveCount(0);
   expect(await block.getAttribute('data-tier')).toBeNull();
-  expect(await block.getAttribute('data-cap')).toBeNull();
-  await expect(page.locator(`${FIGURE} [data-on]`)).toHaveCount(0);
+});
+
+test('pointing ends the walk, and no walk starts with reduced motion', async ({ page, isMobile }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.install();
+  await page.goto('/pro-nas', { waitUntil: 'load' });
+  await page.locator(FIGURE).scrollIntoViewIfNeeded();
+  await page.clock.runFor(6000);
+  await expect(page.locator('.about-cap li[data-on]')).toHaveCount(0);
+  test.skip(isMobile, 'the rest is a pointer affordance');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.reload({ waitUntil: 'load' });
+  await page.locator(FIGURE).scrollIntoViewIfNeeded();
+  await page.locator('.about-ledger li[data-cap="gates"]').hover();
+  await page.clock.runFor(6000);
+  await expect(page.locator('.about-cap li[data-on]')).toHaveAttribute('data-cap', 'gates');
 });
 
 test('pointing at a work lights its part of the scheme', async ({ page, isMobile }) => {
