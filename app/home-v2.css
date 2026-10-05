@@ -11,6 +11,11 @@
    Discard cleanly: delete this file, app/components/home-v2/, public/media/home-v2/, and restore app/page.tsx. */
 
 main[data-home="v2"] {
+  /* The proof block's tints, here on main — a phone's node sheet is portalled out of the sheet. The loads: the snow blue
+     (owner, 05.10: «сніг синім»), the wind turquoise, both cold and never read as one, each with a light tone for what
+     runs along its way. The nodes drawn as details (А–Д): a gold of their own (owner, 05.10: a node's copper ring read
+     as one of the copper lines behind the gable) */
+  --hv2-load: #5aa8ff; --hv2-load-light: #e3f0ff; --hv2-wind: #4fd8c8; --hv2-wind-light: #dcfbf6; --hv2-node: #f2c14e;
   --hv2-ink: #121413;
   --hv2-graphite: #171a18;
   --hv2-graphite-2: #1d201e;
@@ -265,11 +270,6 @@ main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight:
 @property --split { syntax: '<percentage>'; inherits: false; initial-value: 62%; }
 
 main[data-home="v2"] .hv2-proof { margin-top: 36px; }
-/* The loads' tints, on main — a phone's node sheet is portalled out of the sheet: the snow blue (owner, 05.10: «сніг
-   синім»), the wind turquoise, both cold and never read as one; each with a light tone for what runs along its way */
-main[data-home="v2"] { --hv2-load: #5aa8ff; --hv2-load-light: #e3f0ff; --hv2-wind: #4fd8c8; --hv2-wind-light: #dcfbf6; --hv2-node: #f2c14e; --hv2-node-deep: #c9921a; }
-/* The nodes drawn as details (А–Д) in a gold of their own (owner, 05.10: a node's copper ring read as one of the copper
-   lines behind the gable): their rings, letters, leader, the ring on the photo, the letters in the title block */
 main[data-home="v2"] .hv2-contour {
   --sheet-paper: var(--hv2-graphite-2); --sheet-ink: var(--hv2-line-strong); --sheet-mark: var(--hv2-copper);
   --color-text: var(--hv2-text); --color-text-secondary: var(--hv2-text-2); --color-text-muted: var(--hv2-text-3); --color-accent-strong: var(--hv2-copper-text);
@@ -765,7 +765,7 @@ main[data-home="v2"] .hv2-contour-build:disabled { cursor: default; opacity: .45
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-build { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-contour-build { display: none; } }
 /* «Тур за 20 секунд»: a filled play disc; pressed, a stop square */
-main[data-home="v2"] .hv2-contour-tour-btn { color: #f5f2eb; border-color: #f0b48a; background: rgba(204, 132, 85, .16); }
+main[data-home="v2"] .hv2-contour-tour-btn { color: #f5f2eb; border-color: #f0b48a; background: #3a2b22; }
 main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn { flex: 1 1 100%; justify-content: center; min-height: 40px; }
 @media (min-width: 761px) {
   main[data-home="v2"] .hv2-contour-controls { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
@@ -789,7 +789,7 @@ main[data-home="v2"] .hv2-contour-tour-bar { position: absolute; left: 0; bottom
 @keyframes hv2-tour-bar { from { transform: scaleX(0); } }
 @media (max-width: 760px) { main[data-home="v2"] .hv2-contour-tour { top: 6px; left: 6px; padding: 4px 9px 6px 6px; font-size: 11.5px; } }
 /* «Вузли крупно: А Б В» — the letters on the scheme, named in the title block too */
-main[data-home="v2"] .hv2-contour-nodes { display: inline-flex; align-items: center; gap: 6px; }
+main[data-home="v2"] .hv2-contour-nodes { display: inline-flex; align-items: center; gap: 6px; min-inline-size: 0; margin: 0; padding: 0; border: 0; }
 main[data-home="v2"] .hv2-contour-nodes-label { margin-right: 2px; color: var(--hv2-text-2); font: 600 12.5px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 main[data-home="v2"] .hv2-contour-nodes button {
   display: grid; place-items: center; width: 32px; height: 32px; padding: 0; color: #1b1404; background: var(--hv2-node);
@@ -997,13 +997,12 @@ main[data-home="v2"] .hv2-scope-chips li { display: grid; gap: 14px; padding: 18
 /* A cell that lights its part on the scheme above is a button filling the cell (ScopeCells) */
 main[data-home="v2"] .hv2-scope-chips li:has(> .hv2-scope-cell) { padding: 0; }
 main[data-home="v2"] .hv2-scope-cell {
-  display: grid; gap: 14px; width: 100%; height: 100%; padding: 18px 20px 16px; margin: 0; color: inherit; text-align: left; text-transform: inherit;
+  position: relative; display: grid; gap: 14px; width: 100%; height: 100%; padding: 18px 20px 16px; margin: 0; color: inherit; text-align: left; text-transform: inherit;
   font: inherit; letter-spacing: inherit; background: none; border: 0; border-radius: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 main[data-home="v2"] .hv2-scope-cell:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -4px; }
 main[data-home="v2"] .hv2-scope-cell[aria-pressed="true"] { background: color-mix(in srgb, var(--hv2-copper) 12%, transparent); box-shadow: inset 0 -2px 0 var(--hv2-copper); }
 /* «↑ на схемі»: where the part lights up — shown on a cell pointed at, focused or pressed, always on a touch screen */
-main[data-home="v2"] .hv2-scope-cell { position: relative; }
 main[data-home="v2"] .hv2-scope-hint {
   position: absolute; top: 10px; right: 12px; color: var(--hv2-copper-text); font: 600 11px/1 var(--font-manrope), sans-serif; letter-spacing: 0;
   text-transform: none; opacity: 0; transition: opacity 200ms ease;
@@ -1177,7 +1176,9 @@ main[data-home="v2"] :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opac
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"]:not([data-focus]) :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 1; visibility: visible; }
 /* not while the first view's sweep runs: the drawing's names come in when it rests, and a swipe must not catch a letter */
 main[data-home="v2"] .hv2-contour-stage[data-layer][data-sweep] :is(.hv2-proof-detail-pins, .hv2-proof-detail-rings) { opacity: 0; visibility: hidden; }
+/* (a native dialog, open: its UA margin and inline insets set aside; it grows out of its ring and back — NODE_GROW) */
 main[data-home="v2"] .hv2-detail {
+  margin: 0; inset-inline-end: auto; height: auto; max-width: none; transform-origin: 50% 50%;
   position: absolute; z-index: 6; top: 12px; left: 12px; display: grid; gap: 8px; width: clamp(300px, 46%, 420px); max-height: calc(100% - 24px); overflow: auto;
   padding: 10px 12px 10px; color: var(--hv2-text); background: #161817; border: 1px solid var(--hv2-node);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, .4); cursor: default;
@@ -1189,7 +1190,7 @@ main[data-home="v2"] .hv2-detail-close { display: grid; place-items: center; wid
 main[data-home="v2"] .hv2-detail-close:hover { color: var(--hv2-text); }
 main[data-home="v2"] .hv2-detail-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 main[data-home="v2"] .hv2-detail-note { margin: 0; color: var(--hv2-text-3); font: 500 11.5px/1.3 var(--font-manrope), sans-serif; }
-main[data-home="v2"] .hv2-detail-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+main[data-home="v2"] .hv2-detail-foot { display: flex; flex-direction: column; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: 6px 12px; }
 main[data-home="v2"] .hv2-detail-again {
   display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px; color: var(--hv2-copper-text); background: none;
   border: 1px solid rgba(204, 132, 85, .55); border-radius: 0; cursor: pointer; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase;
@@ -1198,7 +1199,6 @@ main[data-home="v2"] .hv2-detail-again span { font-size: 14px; letter-spacing: 0
 main[data-home="v2"] .hv2-detail-again:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-detail-again[aria-pressed="true"] { color: #141615; background: var(--hv2-load, #5aa8ff); border-color: var(--hv2-load, #5aa8ff); }
 main[data-home="v2"] .hv2-detail-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-main[data-home="v2"] .hv2-detail-foot { flex-direction: column; align-items: stretch; }
 /* ‹ › — the previous node and the next, round the five (a finger swipes the sheet too) */
 main[data-home="v2"] .hv2-detail-steps { display: inline-flex; gap: 2px; margin-right: 2px; }
 main[data-home="v2"] .hv2-detail-step {
@@ -1208,7 +1208,6 @@ main[data-home="v2"] .hv2-detail-step {
 main[data-home="v2"] .hv2-detail-step:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-detail-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-detail-step { width: 40px; height: 40px; } }
-main[data-home="v2"] .hv2-detail[data-sheet] { touch-action: pan-y; }
 main[data-home="v2"] .hv2-detail-flow-words { margin: 0; color: var(--hv2-load, #5aa8ff); font: 600 12px/1.35 var(--font-manrope), sans-serif; opacity: 0; transition: opacity 300ms ease; }
 /* its line kept while the node comes together, the words in once the way shows */
 main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-flow-words { opacity: 1; }
@@ -1228,10 +1227,9 @@ main[data-home="v2"] .hv2-detail-leader circle { fill: var(--hv2-node); }
 @keyframes hv2-leader-draw { to { stroke-dashoffset: 0; } }
 main[data-home="v2"] .hv2-detail-again:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-detail-again { min-height: 40px; } }
-/* Opening and closing, the panel grows out of its ring and back (ProofContour's NODE_GROW / NODE_SHRINK) */
-main[data-home="v2"] .hv2-detail { transform-origin: 50% 50%; }
 /* A phone: the node as a sheet from the screen's foot, over a dimmed page (ProofContour portals it into main) */
 main[data-home="v2"] .hv2-detail[data-sheet] {
+  touch-action: pan-y;
   position: fixed; z-index: 60; inset: auto 0 0 0; width: auto; max-height: 82vh; padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
   border-width: 1px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, .45);
 }

@@ -523,7 +523,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       const to = phoneNow() ? FOCUS_SPLIT_PHONE : FOCUS_SPLIT;
       window.clearTimeout(release);
       if (part) {
-        if (!focusFrom.current) focusFrom.current = { split: live.current, chosen: chosenRef.current };
+        focusFrom.current ??= { split: live.current, chosen: chosenRef.current };
         setFocusPart(part);
         snapRef.current = null;
         setSnap(null);
@@ -550,7 +550,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
 
   // A detail opened takes the focus to its close; Esc, or the close, gives it back to its letter
   const detailPinRefs = useRef<Partial<Record<DetailId, HTMLButtonElement | null>>>({});
-  const detailRef = useRef<HTMLDivElement>(null);
+  const detailRef = useRef<HTMLDialogElement>(null);
   // «Куди йде навантаження»: the load's way through the node, kept on from node to node once asked for
   const [flowOn, setFlowOn] = useState(false);
   // «Розібрати»: the node's parts drawn apart, named (back together on another node); «На фото»: the seam past the ring,
@@ -693,10 +693,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     showNode(PROOF_DETAILS[(at + by + PROOF_DETAILS.length) % PROOF_DETAILS.length].id, by);
   };
   // A finger swiped across the sheet: on to the next node, or back
-  const onSheetDown = (event: PointerEvent<HTMLDivElement>) => {
+  const onSheetDown = (event: PointerEvent<HTMLElement>) => {
     swipe.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
   };
-  const onSheetUp = (event: PointerEvent<HTMLDivElement>) => {
+  const onSheetUp = (event: PointerEvent<HTMLElement>) => {
     const from = swipe.current;
     swipe.current = null;
     if (!from) return;
@@ -818,9 +818,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       // …with what points at it: a name's leader, a figure's marks (review, 04.10: the slope's leader stayed, pointing at
       // nothing)
       const { tag, measure } = label.dataset;
-      const pointer = tag
-        ? stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${tag}"]`)
-        : measure ? stage.querySelector<SVGGElement>(`.hv2-proof-marks [data-mark="${measure}"]`) : null;
+      let pointer: SVGGElement | null = null;
+      if (tag) pointer = stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${tag}"]`);
+      else if (measure) pointer = stage.querySelector<SVGGElement>(`.hv2-proof-marks [data-mark="${measure}"]`);
       if (pointer) {
         if (cut) pointer.dataset.cut = '';
         else delete pointer.dataset.cut;
@@ -869,7 +869,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       pointFrame.current = 0;
       setPoint((previous) => {
         const next = pointLoadAt(pointX.current);
-        return previous && previous.node === next.node && Math.abs(previous.x - next.x) < 1 ? previous : next;
+        return previous?.node === next.node && Math.abs(previous.x - next.x) < 1 ? previous : next;
       });
       setPointed(true);
     });
@@ -925,8 +925,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     tap.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
     if (event.pointerType === 'mouse') dropHit();
     if (event.button !== 0 || !ready) return;
-    // The details' letters and the detail open are their own: no seam moves under them
-    if ((event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail')) return;
+    // The details' letters, the detail open and the «Вузли крупно» bar over the picture are their own: no seam moves
+    // under them (owner, 05.10: pressed, the bar's letters started a drag that took the pointer, and never opened a node)
+    if ((event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-nodes')) return;
     // On «Сніг» the roof takes the weight: a finger puts it there, a mouse already has, and the seam stays
     const roof = roofAt(event.clientX, event.clientY);
     if (roof) {
@@ -969,7 +970,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (roof) pointAt(roof[0]);
     else if (point || pointFrame.current) dropPoint();
     // On «Каркас», the member it is over, named — not over a letter, the node open or the handle
-    if (layerRef.current === 'frame' && !(event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle')) {
+    if (layerRef.current === 'frame' && !(event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle, .hv2-contour-nodes')) {
       showHit(event.clientX, event.clientY);
     } else dropHit();
   };
@@ -986,7 +987,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const from = tap.current;
     tap.current = null;
     if (!from || event.pointerType !== 'touch' || layerRef.current !== 'frame') return;
-    if (Math.hypot(event.clientX - from.x, event.clientY - from.y) > 10 || (event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle')) return;
+    if (Math.hypot(event.clientX - from.x, event.clientY - from.y) > 10 || (event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle, .hv2-contour-nodes')) return;
     showHit(event.clientX, event.clientY);
     window.clearTimeout(tapTimer.current);
     tapTimer.current = window.setTimeout(dropHit, 2600);
@@ -1141,7 +1142,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // laptop (the title block keeps its height there: the sheet fits the window), in the title block on a phone (its
   // frame has no room). One shows at a time (home-v2.css, data-place)
   const nodesRow = (place: 'stage' | 'block') => (
-    <span className="hv2-contour-nodes" data-place={place} role="group" aria-label="Вузли крупно">
+    <fieldset className="hv2-contour-nodes" data-place={place} aria-label="Вузли крупно">
       <span className="hv2-contour-nodes-label" aria-hidden="true">Вузли крупно</span>
       {PROOF_DETAILS.map((item) => (
         <button
@@ -1156,7 +1157,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           {item.letter}
         </button>
       ))}
-    </span>
+    </fieldset>
   );
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
   const engaged = loadRun + windRun + buildRun > 0;
@@ -1437,7 +1438,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         </div>
         {nodesRow('stage')}
         {/* «Тур»: the step on, and how far through it */}
-        <span className="hv2-contour-tour" data-on={tourStep !== null ? '' : undefined} role="status">
+        <output className="hv2-contour-tour" data-on={tourStep !== null ? '' : undefined}>
           {tourStep !== null && (
             <>
               <i>{tourStep + 1}/{TOUR.length}</i>
@@ -1445,7 +1446,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               <span className="hv2-contour-tour-bar" key={tourStep} style={{ '--hold': `${TOUR[tourStep].hold}ms` } as CSSProperties} aria-hidden="true" />
             </>
           )}
-        </span>
+        </output>
         {/* «Жива схема»: the name by the pointer */}
         <span ref={tipRef} className="hv2-proof-hover-tip" data-on={layer === 'frame' && hit ? '' : undefined} aria-hidden="true">
           <b>{hit?.name}</b>
@@ -1472,7 +1473,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         {detail && (() => {
           const item = PROOF_DETAILS.find((entry) => entry.id === detail)!;
           const body = (
-            <div
+            <dialog
+              open
               ref={detailRef}
               className="hv2-detail"
               data-sheet={detailSheet ? '' : undefined}
@@ -1484,7 +1486,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               onAnimationEnd={(event) => {
                 if (event.animationName === 'hv2-detail-names') setAssembled(true);
               }}
-              role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
+              aria-modal={detailSheet ? true : undefined}
+              aria-labelledby="hv2-detail-title"
+              aria-describedby="hv2-detail-spoken"
+            >
               <div className="hv2-detail-head">
                 <span className="hv2-detail-letter" aria-hidden="true">{item.letter}</span>
                 <b id="hv2-detail-title">Вузол {item.letter} · {item.title}</b>
@@ -1534,7 +1539,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                 </span>
               </div>
               <p className="sr-only" id="hv2-detail-spoken">{item.spoken}</p>
-            </div>
+            </dialog>
           );
           const main = detailSheet ? document.querySelector('main[data-home="v2"]') : null;
           return main ? createPortal(<><div className="hv2-detail-backdrop" aria-hidden="true" onClick={closeDetail} />{body}</>, main) : body;

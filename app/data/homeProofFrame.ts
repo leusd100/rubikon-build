@@ -371,7 +371,7 @@ export function pointLoadAt(at: number): PointLoad {
     const target = nodes.findIndex((point) => Math.abs(point[0] - support.top[0]) < 0.5);
     const step = target >= index ? 1 : -1;
     const along: Pt[] = [];
-    for (let i = index; i !== target + step; i += step) along.push(nodes[i]);
+    for (let i = index; step > 0 ? i <= target : i >= target; i += step) along.push(nodes[i]);
     return [...along, ...support.down];
   };
   const onSupport = SUPPORTS.find((support) => Math.abs(support.top[0] - node[0]) < 0.5);
@@ -426,41 +426,61 @@ const inside = ([x, y]: Pt, polygon: readonly Pt[]) => {
   return within;
 };
 const TOP_CHORD = homeProofFrame.members[0].points;
-function memberName({ group, points, closed }: FrameMember) {
-  const [[x0, y0], [x1, y1]] = [points[0], points.at(-1)!];
-  if (group === 'truss') return points.length === 3 ? 'Верхній пояс ферми' : Math.abs(x1 - x0) > 200 ? 'Нижній пояс ферми' : 'Опорна стійка ферми';
-  if (group === 'web') return Math.abs(x1 - x0) < 6 ? 'Стійка ферми' : 'Розкіс ферми';
-  if (group === 'purlin') return 'Прогін';
-  if (group === 'bracing') return 'В’язі';
-  if (group === 'column') return 'Колона центрального ряду';
-  if (group === 'footing') return 'Фундамент — умовно';
-  if (group === 'wall') return closed ? 'Перемичка над воротами' : Math.abs(y1 - y0) < Math.abs(x1 - x0) ? 'Верх стіни — армопояс' : 'Стіна — газобетон';
-  return '';
+const GROUP_NAMES: Partial<Record<FrameGroup, string>> = {
+  purlin: 'Прогін',
+  bracing: 'В’язі',
+  column: 'Колона центрального ряду',
+  footing: 'Фундамент — умовно',
+};
+function trussName(points: readonly Pt[]) {
+  if (points.length === 3) return 'Верхній пояс ферми';
+  return Math.abs(points.at(-1)![0] - points[0][0]) > 200 ? 'Нижній пояс ферми' : 'Опорна стійка ферми';
 }
-export function memberAt(at: Pt): SchemeHit | null {
-  const { members, walls } = homeProofFrame;
-  const node = homeProofDetailSpots.find(({ ring: [cx, cy], radius }) => Math.hypot(at[0] - cx, at[1] - cy) <= radius + 36)?.id;
+function wallName(points: readonly Pt[], closed?: boolean) {
+  if (closed) return 'Перемичка над воротами';
+  const [[x0, y0], [x1, y1]] = [points[0], points.at(-1)!];
+  return Math.abs(y1 - y0) < Math.abs(x1 - x0) ? 'Верх стіни — армопояс' : 'Стіна — газобетон';
+}
+function memberName({ group, points, closed }: FrameMember) {
+  if (group === 'truss') return trussName(points);
+  if (group === 'web') return Math.abs(points.at(-1)![0] - points[0][0]) < 6 ? 'Стійка ферми' : 'Розкіс ферми';
+  if (group === 'wall') return wallName(points, closed);
+  return GROUP_NAMES[group] ?? '';
+}
+/** The member of the gable's plane nearest a point, within reach */
+function nearestMember(at: Pt) {
   let best: { distance: number; member: FrameMember } | null = null;
-  for (const member of members) {
+  for (const member of homeProofFrame.members) {
     if (member.depth !== 0 || member.closed || member.group === 'footing') continue;
     const distance = toLine(at, member.points);
     if (distance <= REACH && (!best || distance < best.distance)) best = { distance, member };
   }
-  if (best) return { name: memberName(best.member), points: best.member.points, closed: false, area: false, node };
+  return best?.member ?? null;
+}
+/** The part a point stands in — a column, a footing, a lintel; the wall cut in section; a gate; the blockwork */
+function partAt(at: Pt): Omit<SchemeHit, 'node'> | null {
+  const { members, walls } = homeProofFrame;
   const shape = members.find((member) => member.depth === 0 && member.closed && inside(at, member.points));
-  if (shape) return { name: memberName(shape), points: shape.points, closed: true, area: true, node };
+  if (shape) return { name: memberName(shape), points: shape.points, closed: true, area: true };
   const cut = walls.cuts.find((polygon) => inside(at, polygon));
-  if (cut) return { name: 'Стіна в розрізі — газобетон', points: cut, closed: true, area: true, node };
+  if (cut) return { name: 'Стіна в розрізі — газобетон', points: cut, closed: true, area: true };
   const gate = walls.holes.find((polygon) => inside(at, polygon));
-  if (gate) return { name: 'Ворота', points: gate, closed: true, area: true, node };
-  if (inside(at, walls.gable)) return { name: 'Стіна з газобетонних блоків', points: walls.gable, closed: true, area: true, node };
-  if (inside(at, walls.long)) return { name: 'Бічна стіна — газобетон', points: walls.long, closed: true, area: true, node };
-  const chordY = (x: number) => {
-    const [a, b] = x <= TOP_CHORD[1][0] ? [TOP_CHORD[0], TOP_CHORD[1]] : [TOP_CHORD[1], TOP_CHORD[2]];
-    return a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
-  };
-  if (at[0] >= POINT_LOAD_RANGE.from && at[0] <= POINT_LOAD_RANGE.to && at[1] >= roofTopY(at[0]) - 6 && at[1] < chordY(at[0])) {
-    return { name: 'Покрівля по прогонах', points: homeProofParts.roof, closed: true, area: true, node };
-  }
+  if (gate) return { name: 'Ворота', points: gate, closed: true, area: true };
+  if (inside(at, walls.gable)) return { name: 'Стіна з газобетонних блоків', points: walls.gable, closed: true, area: true };
+  if (inside(at, walls.long)) return { name: 'Бічна стіна — газобетон', points: walls.long, closed: true, area: true };
   return null;
+}
+/** Over the top chord, under the roof's top: the roof on its purlins */
+function onRoofOver([x, y]: Pt) {
+  if (x < POINT_LOAD_RANGE.from || x > POINT_LOAD_RANGE.to) return false;
+  const [a, b] = x <= TOP_CHORD[1][0] ? [TOP_CHORD[0], TOP_CHORD[1]] : [TOP_CHORD[1], TOP_CHORD[2]];
+  return y >= roofTopY(x) - 6 && y < a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
+}
+export function memberAt(at: Pt): SchemeHit | null {
+  const node = homeProofDetailSpots.find(({ ring: [cx, cy], radius }) => Math.hypot(at[0] - cx, at[1] - cy) <= radius + 36)?.id;
+  const member = nearestMember(at);
+  if (member) return { name: memberName(member), points: member.points, closed: false, area: false, node };
+  const part = partAt(at);
+  if (part) return { ...part, node };
+  return onRoofOver(at) ? { name: 'Покрівля по прогонах', points: homeProofParts.roof, closed: true, area: true, node } : null;
 }

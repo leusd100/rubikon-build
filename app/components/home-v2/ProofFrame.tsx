@@ -166,14 +166,14 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
           ))}
         </g>
         {/* Each lit link: a clean light line on a dark casing, as the measured lines are kept legible — no glow */}
-        {load.links.map(({ link, points }, index) => (
-          <g key={index} className="hv2-proof-link" data-link={link} data-step={link} style={{ '--n': link } as CSSProperties}>
+        {load.links.map(({ link, points }) => (
+          <g key={`${link}-${points[0].join()}`} className="hv2-proof-link" data-link={link} data-step={link} style={{ '--n': link } as CSSProperties}>
             <path className="hv2-proof-link-casing" d={d(points)} />
             <path d={d(points)} />
           </g>
         ))}
-        {load.legs.map((leg, index) => (
-          <path key={index} className="hv2-proof-flow" data-step="flow" d={d(leg)} markerEnd="url(#hv2-proof-foot)" style={{ '--n': 3 } as CSSProperties} />
+        {load.legs.map((leg) => (
+          <path key={leg.at(-1)!.join()} className="hv2-proof-flow" data-step="flow" d={d(leg)} markerEnd="url(#hv2-proof-foot)" style={{ '--n': 3 } as CSSProperties} />
         ))}
         <g className="hv2-proof-ground" data-step="6" style={{ '--n': 6 } as CSSProperties}>
           {load.ground.map((tick, index) => <path key={index} d={d(tick)} />)}
@@ -194,14 +194,14 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
             <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
           ))}
         </g>
-        {wind.links.map(({ link, points }, index) => (
-          <g key={index} className="hv2-proof-link" data-link={link} data-step={link} style={{ '--n': link } as CSSProperties}>
+        {wind.links.map(({ link, points }) => (
+          <g key={`${link}-${points[0].join()}`} className="hv2-proof-link" data-link={link} data-step={link} style={{ '--n': link } as CSSProperties}>
             <path className="hv2-proof-link-casing" d={d(points)} />
             <path d={d(points)} />
           </g>
         ))}
-        {wind.legs.map((leg, index) => (
-          <path key={index} className="hv2-proof-flow" data-step="flow" d={d(leg)} markerEnd="url(#hv2-proof-foot-wind)" style={{ '--n': 3 } as CSSProperties} />
+        {wind.legs.map((leg) => (
+          <path key={leg.at(-1)!.join()} className="hv2-proof-flow" data-step="flow" d={d(leg)} markerEnd="url(#hv2-proof-foot-wind)" style={{ '--n': 3 } as CSSProperties} />
         ))}
         <g className="hv2-proof-reactions" data-step="6" style={{ '--n': 6 } as CSSProperties}>
           {wind.reactions.map(([from, to], index) => <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" />)}
@@ -317,8 +317,8 @@ export const ProofPoint = memo(function ProofPoint({ point }: Readonly<{ point: 
       </defs>
       {point && (
         <g key={`${point.node[0]}`}>
-          {point.legs.map(({ points, share }, index) => (
-            <g key={index} className="hv2-proof-point-leg" style={{ '--share': share.toFixed(3) } as CSSProperties}>
+          {point.legs.map(({ points, share }) => (
+            <g key={points.at(-1)!.join()} className="hv2-proof-point-leg" style={{ '--share': share.toFixed(3) } as CSSProperties}>
               <path className="hv2-proof-link-casing" d={d(points)} />
               <path className="hv2-proof-point-way" d={d(points)} />
               <path className="hv2-proof-flow" d={d(points)} markerEnd="url(#hv2-proof-point-foot)" />

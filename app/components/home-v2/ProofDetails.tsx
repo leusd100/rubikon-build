@@ -39,7 +39,8 @@ const lerp = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + 
 const heading = (degrees: number): Pt => [Math.cos((degrees * Math.PI) / 180), Math.sin((degrees * Math.PI) / 180)];
 /** Square to d, a quarter turn to its left on the sheet */
 const leftOf = ([x, y]: Pt): Pt => [y, -x];
-const line = (...points: readonly Pt[]) => `M${points.map(([x, y]) => `${at2(x)} ${at2(y)}`).join('L')}`;
+const pair = ([x, y]: Pt) => `${at2(x)} ${at2(y)}`;
+const line = (...points: readonly Pt[]) => `M${points.map(pair).join('L')}`;
 const rect = (x0: number, y0: number, x1: number, y1: number) => `${line([x0, y0], [x1, y0], [x1, y1], [x0, y1])}Z`;
 /** Where the line through p along d meets the line through q along e */
 function meet(p: Pt, d: Pt, q: Pt, e: Pt): Pt {
@@ -175,7 +176,9 @@ function PartName({ n, name, label: [x, y, anchor = 'start'] }: Readonly<{ n: nu
     if (!own) return;
     const [disc, step, word] = [own.children[0], own.children[1], own.children[2]];
     const width = 13 + 4 + (word as SVGTextElement).getComputedTextLength();
-    const start = anchor === 'middle' ? x - width / 2 : anchor === 'end' ? x - width : x;
+    let start = x;
+    if (anchor === 'middle') start = x - width / 2;
+    else if (anchor === 'end') start = x - width;
     disc.setAttribute('cx', (start + 6.5).toFixed(1));
     disc.setAttribute('cy', (y - 3.6).toFixed(1));
     step.setAttribute('x', (start + 6.5).toFixed(1));
