@@ -1,0 +1,74 @@
+/* HOME — the key plan in the «П’ять напрямів» header (DirectionsKey.tsx).
+
+   Imported by DirectionsKey.tsx only. Every rule is keyed to <main data-home="v2"> .hv2-directions and uses the page's
+   theme roles (this band is paper in Light, ink in Dark), so the two themes need no rules of their own.
+
+   The figure costs the header nothing. globals.css would give an aside a grid column of its own from 1051 px; here the
+   header keeps its one column and the aside is laid OVER it, spanning both rows at the right edge, with the figure
+   absolutely positioned inside — so the aside has no height of its own and the header is exactly as tall as its title
+   and note. Its width repeats the mosaic's right column (1.15fr / .85fr, 18 px), so the drawing stands over the cards
+   it is the key to. Shown from 1200 px, where the plan is large enough to read; below that the header is as it was. */
+main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
+main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside { display: none; }
+@media (min-width: 1200px) {
+  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside {
+    position: relative; display: block; grid-column: 1; grid-row: 1 / span 2; align-self: stretch; justify-self: end;
+    width: calc((100% - 18px) * .85 / 2); margin: 0; pointer-events: none;
+  }
+  /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
+  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-copy { grid-row: 1; }
+  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-support { grid-row: 2; }
+}
+
+main[data-home="v2"] .hv2-directions .dkey {
+  /* The position numbers' colour, in one place: copper at rest (set it to var(--color-text-secondary) to compare) */
+  --dkey-number: var(--color-accent-strong);
+  position: absolute; inset: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; margin: 0; user-select: none;
+}
+main[data-home="v2"] .hv2-directions .dkey svg { display: block; width: 100%; height: 100%; min-height: 0; overflow: visible; }
+
+/* The title strip — the direction pages' figcaption (.dsd): «Схема», the view, the subject */
+main[data-home="v2"] .hv2-directions .dkey-strip {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 14px; margin-top: 12px; padding-top: 10px;
+  color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong);
+  font: 600 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase;
+}
+main[data-home="v2"] .hv2-directions .dkey-strip b { color: var(--color-text); font-size: 14px; letter-spacing: .04em; }
+
+/* Line types. Each numbered part reads its colour from --k1…--k5 and its weight from --k1x…--k5x, unset at rest. */
+main[data-home="v2"] .hv2-directions .dkey-axis { fill: none; stroke: var(--color-text-muted); stroke-width: .8; stroke-dasharray: 12 3 2 3; opacity: .6; }
+main[data-home="v2"] .hv2-directions .dkey-dim { fill: none; stroke: var(--color-text-muted); stroke-width: .9; }
+main[data-home="v2"] .hv2-directions .dkey-dim-text { fill: var(--color-text-muted); font: italic 500 12px var(--font-manrope), sans-serif; text-anchor: middle; }
+main[data-home="v2"] .hv2-directions .dkey-bubbles circle { fill: var(--color-bg); stroke: var(--color-text-muted); stroke-width: .9; }
+main[data-home="v2"] .hv2-directions .dkey-bubbles text { fill: var(--color-text-secondary); font: 600 10.5px var(--font-condensed), sans-serif; text-anchor: middle; }
+main[data-home="v2"] .hv2-directions .dkey-leader { fill: none; stroke: var(--color-text-muted); stroke-width: .8; }
+main[data-home="v2"] .hv2-directions .dkey-dot { fill: var(--color-text-secondary); }
+main[data-home="v2"] .hv2-directions .dkey-num { fill: var(--dkey-number); font: 600 13px var(--font-condensed), sans-serif; letter-spacing: .08em; }
+
+main[data-home="v2"] .hv2-directions .dkey-part :is(path, circle, rect) { transition: stroke var(--duration-fast) ease, stroke-width var(--duration-fast) ease, fill var(--duration-fast) ease; }
+/* 01 · the building: its outline with the gate's jambs, a faint floor */
+main[data-home="v2"] .hv2-directions .dkey-fill { fill: color-mix(in srgb, var(--k1, transparent) 12%, color-mix(in srgb, var(--color-text) 4%, transparent)); }
+main[data-home="v2"] .hv2-directions .dkey-wall { fill: none; stroke: var(--k1, var(--color-text-secondary)); stroke-width: calc(1.4px * var(--k1x, 1)); stroke-linejoin: round; }
+/* 02 · the silo: the base is ours (solid), the shell is equipment and never lights */
+main[data-home="v2"] .hv2-directions .dkey-base { fill: color-mix(in srgb, var(--k2, transparent) 12%, color-mix(in srgb, var(--color-text) 4%, transparent)); stroke: var(--k2, var(--color-text-secondary)); stroke-width: calc(1.4px * var(--k2x, 1)); }
+main[data-home="v2"] .hv2-directions .dkey-equip { fill: none; stroke: var(--color-text-muted); stroke-width: .9; stroke-dasharray: 10 2.5 1.5 2.5 1.5 2.5; }
+/* 03 · the frame's columns */
+main[data-home="v2"] .hv2-directions .dkey-col { fill: none; stroke: var(--k3, var(--color-text)); stroke-width: calc(1.6px * var(--k3x, 1)); }
+/* 04 · the footings, under the floor */
+main[data-home="v2"] .hv2-directions .dkey-hidden { fill: none; stroke: var(--k4, var(--color-text-muted)); stroke-width: calc(.9px * var(--k4x, 1)); stroke-dasharray: 3 2.4; }
+/* 05 · the roof: the ridge overhead and the two slopes */
+main[data-home="v2"] .hv2-directions .dkey-over { fill: none; stroke: var(--k5, var(--color-text-muted)); stroke-width: calc(.9px * var(--k5x, 1)); stroke-dasharray: 10 2.5 1.5 2.5 1.5 2.5; }
+main[data-home="v2"] .hv2-directions .dkey-line { fill: none; stroke: var(--k5, var(--color-text-muted)); stroke-width: calc(1px * var(--k5x, 1)); stroke-linejoin: round; }
+
+/* Lit: the part of the pointed or focused card. By href, so the order of the cards may change; the spec walks all five
+   from the data, so a renamed route cannot unlink a part unnoticed. Emphasis only: nothing is hidden without it. */
+@supports selector(:has(*)) {
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) { --k1: var(--color-accent); --k1x: 1.45; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) { --k2: var(--color-accent); --k2x: 1.45; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) { --k3: var(--color-accent); --k3x: 1.3; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) { --k4: var(--color-accent); --k4x: 1.6; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) { --k5: var(--color-accent); --k5x: 1.6; }
+}
+@media (prefers-reduced-motion: reduce) {
+  main[data-home="v2"] .hv2-directions .dkey-part :is(path, circle, rect) { transition: none; }
+}

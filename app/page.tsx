@@ -1,4 +1,5 @@
 import { DirectionImageCards } from './components/DirectionCards';
+import { DirectionsKey } from './components/home-v2/DirectionsKey';
 import { DirectionsRail } from './components/home-v2/DirectionsRail';
 import { SectionHeader } from './components/SiteChrome';
 import { ConversationSection } from './components/ConversationSection';
@@ -33,6 +34,7 @@ export default function Home() {
             title="П’ять напрямів для бізнесу й агросектору"
             supporting="Оберіть напрям, найближчий до вашої задачі. Зображення на картках — ілюстрації, а не фото виконаних об’єктів."
             inverse
+            aside={<DirectionsKey />}
           />
           <DirectionsRail count={directions.length}>
             <DirectionImageCards />

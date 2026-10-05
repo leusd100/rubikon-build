@@ -53,7 +53,7 @@ test('pointing at the node’s note lights the node on the drawing', async ({ pa
   const copper = await sheet.evaluate((root) => {
     const probe = document.createElement('i');
     probe.style.color = 'var(--hv2-copper-text)';
-    root.append(probe);
+    root.appendChild(probe);
     const colour = getComputedStyle(probe).color;
     probe.remove();
     return colour;
@@ -73,8 +73,9 @@ for (const width of [360, 390]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     // The part names are the only place a sighted visitor reads them: never below 12.5 px on screen
     const smallest = await sheet.locator('svg.sig-tall .sig-name text').evaluateAll((names) => Math.min(...names.map((name) => {
-      const box = name.getBoundingClientRect();
-      return box.height > 0 ? parseFloat(getComputedStyle(name).fontSize) * (name.ownerSVGElement!.getBoundingClientRect().width / name.ownerSVGElement!.viewBox.baseVal.width) : Infinity;
+      const drawing = (name as SVGTextElement).ownerSVGElement!;
+      const scale = drawing.getBoundingClientRect().width / drawing.viewBox.baseVal.width;
+      return name.getBoundingClientRect().height > 0 ? parseFloat(getComputedStyle(name).fontSize) * scale : Infinity;
     })));
     expect(smallest).toBeGreaterThanOrEqual(12.5);
   });
