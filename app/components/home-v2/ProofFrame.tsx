@@ -65,7 +65,8 @@ function blockwork(face: readonly Pt[], courses: number, blocks: number) {
  *  `ready`: after hydration — the blockwork's thousand short strokes are drawn on the client only, to keep the page's HTML
  *  light; without them the scheme is whole */
 /** `wind`: the «Вітер» layer is on — the scheme's name says the wind's way too */
-export const ProofFrame = memo(function ProofFrame({ loadRun, windRun, shown, wind: windOn, ready }: Readonly<{ loadRun: number; windRun: number; shown: boolean; wind: boolean; ready: boolean }>) {
+/** `buildRun`: «Як це будується» — a new key on the scheme restarts its assembly (home-v2.css, data-building) */
+export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun, shown, wind: windOn, ready }: Readonly<{ buildRun: number; loadRun: number; windRun: number; shown: boolean; wind: boolean; ready: boolean }>) {
   const { silhouette, walls, members, nodes, load, wind, label, windLabel } = homeProofFrame;
   const inside = members.filter((member) => member.group !== 'footing');
   const footings = members.filter((member) => member.group === 'footing');
@@ -106,7 +107,7 @@ export const ProofFrame = memo(function ProofFrame({ loadRun, windRun, shown, wi
           <path d="M0 0L10 5L0 10z" />
         </marker>
       </defs>
-      <g className="hv2-proof-scheme">
+      <g className="hv2-proof-scheme" key={`build-${buildRun}`}>
         <g clipPath="url(#hv2-proof-silhouette)">
           {ready && (
             <>
@@ -269,6 +270,17 @@ export const ProofLabels = memo(function ProofLabels() {
       ))}
       {homeProofFrame.tags.map((tag) => (
         <span key={tag.id} className="hv2-proof-tag" data-tag={tag.id} data-align={tag.align} data-wide-only={tag.wideOnly ? '' : undefined} style={place(tag.at, tag.at, tag.atNarrow)}>{tag.text}</span>
+      ))}
+    </div>
+  );
+});
+
+/** A phone's names: numbers on the members they name (homeProofFrame's tags, in the same order as ProofContour's key) */
+export const ProofKeyPins = memo(function ProofKeyPins() {
+  return (
+    <div className="hv2-proof-keypins" aria-hidden="true">
+      {homeProofFrame.tags.map((tag, index) => (
+        <span key={tag.id} data-tag={tag.id} style={place(tag.keyAt ?? tag.anchor)}>{index + 1}</span>
       ))}
     </div>
   );

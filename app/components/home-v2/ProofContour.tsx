@@ -7,7 +7,7 @@ import { homeProofContour, type ContourLine } from '../../data/homeProofContour'
 import { homeProofDetailSpots, homeProofFrame, onRoof, pointLoadAt, type PointLoad, type ScopePart } from '../../data/homeProofFrame';
 import { DrawingSheet } from '../DrawingSheet';
 import { PROOF_DETAILS, type DetailId } from './ProofDetails';
-import { ProofFrame, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
+import { ProofFrame, ProofKeyPins, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
 import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
 import { homeProofMeasures } from '../../data/homeProofMeasures';
 
@@ -77,6 +77,15 @@ const COMMIT_EVERY = 100;
 /** A scope's cell lighting its part (ScopeCells): the seam glides here, so the whole gable shows, and back on letting go */
 const FOCUS_SPLIT = 15;
 const FOCUS_SPLIT_PHONE = 1;
+/** «Як це будується» (owner, 05.10): the scheme assembled in the order it is built, a step every BUILD_STEP ms
+ *  (home-v2.css, data-building), its step named in the corner; the names come back once the last step lands */
+const BUILD_STEP = 700;
+const BUILD_STEPS = ['Фундаменти', 'Стіни з газобетону', 'Колони', 'Ферми лягають на опори', 'Прогони й в’язі'] as const;
+const BUILD_MS = BUILD_STEP * (BUILD_STEPS.length + 1);
+/** The scheme's names as numbers on a phone (no room for words in its frame), keyed under it */
+const PHONE_KEY = ['Ферма', 'Прогони й в’язі', 'Центральний ряд колон', 'Стіни — газобетон', 'Фундаменти — умовно'] as const;
+/** Where the brief for a hangar like this one starts */
+const BRIEF_HREF = '/angary#configurator';
 /** The held line's name: its distance from the seam, px */
 const SNAP_GAP = 10;
 /** …and its padding and border, px (home-v2.css) */
@@ -184,6 +193,18 @@ const subscribeToNothing = () => () => undefined;
 const sketchRequested = () => new URLSearchParams(window.location.search).get('xray') === 'sketch';
 
 // See STAMP_OFFSET: whether the stamp keeps its full words, and which seam name gives way
+/** The whole frame in view, or near enough (a part lit may be its roof, at the top): a press below it — a scope's cell, «Як
+ *  це будується» on a phone — must not play to an empty screen */
+function bringIntoView(stage: HTMLElement) {
+  const box = stage.getBoundingClientRect();
+  const shown = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, 0);
+  if (shown >= box.height * 0.92) return false;
+  stage.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  return true;
+}
+/** How long a smooth scroll to the frame takes before the assembly starts */
+const SCROLL_FIRST = 450;
+
 function fitOf(room: Room | null, split: number) {
   if (!room) return { stampShort: false, stampNone: false, narrowLeft: split < 12, narrowRight: split > 72 };
   const right = (room.width * (100 - split)) / 100;
@@ -280,6 +301,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [detailSheet, setDetailSheet] = useState(false);
   const paneCanvasRef = useRef<HTMLDivElement>(null);
   const detailCloseRef = useRef<HTMLButtonElement>(null);
+  // «Як це будується»: replayed on every press (a new key restarts it), and whether it runs now
+  const [buildRun, setBuildRun] = useState(0);
+  const [building, setBuilding] = useState(false);
+  const buildTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(buildTimer.current), []);
 
   const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['frame', 'load', 'wind'];
   const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[0];
@@ -457,12 +483,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         setPoint(null);
         setDetail(null);
         if (live.current > to) setSplit(to);
-        if (sticky) {
-          const box = stage.getBoundingClientRect();
-          const shown = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, 0);
-          // the whole frame, or near enough: the part lit may be its roof, at the top
-          if (shown < box.height * 0.92) stage.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
-        }
+        if (sticky) bringIntoView(stage);
         return;
       }
       release = window.setTimeout(() => {
@@ -735,6 +756,26 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     }
   };
 
+  // «Як це будується»: the scheme on, the seam glided left so the gable shows whole, then the assembly
+  const build = () => {
+    clearLit();
+    dropPoint();
+    setDetail(null);
+    setChosen('frame');
+    const to = phoneNow() ? FOCUS_SPLIT_PHONE : FOCUS_SPLIT;
+    if (live.current > to) setSplit(to);
+    const wait = stageRef.current && bringIntoView(stageRef.current) ? SCROLL_FIRST : 0;
+    setBuilding(false);
+    window.clearTimeout(buildTimer.current);
+    buildTimer.current = window.setTimeout(() => {
+      setBuildRun((run) => run + 1);
+      setBuilding(true);
+      buildTimer.current = window.setTimeout(() => setBuilding(false), BUILD_MS);
+    }, wait);
+  };
+  // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
+  const engaged = loadRun + windRun + buildRun > 0;
+
   // The figures the scheme shows: the slope (the others were «Контур»'s)
   const measured = homeProofMeasures.filter((measure) => measure.onFrame && measure.chip);
   const sliderLabel = `Порівняти фото й ${{ frame: 'схему', load: 'схему', wind: 'схему', sketch: 'ескіз' }[layer]}`;
@@ -767,11 +808,17 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           // legend's
           className: 'hv2-contour-facts',
           value: (
-            <span className="hv2-contour-facts-slot" aria-hidden="true">
-              <span className="hv2-contour-chips" data-on="">
-                {measured.map((measure) => <span key={measure.id} data-measure={measure.id}>{measure.chip}</span>)}
+            <>
+              <span className="hv2-contour-facts-slot" aria-hidden="true">
+                <span className="hv2-contour-chips" data-on="">
+                  {measured.map((measure) => <span key={measure.id} data-measure={measure.id}>{measure.chip}</span>)}
+                </span>
               </span>
-            </span>
+              {/* the numbers on the scheme, named (a phone's frame has no room for the words) */}
+              <span className="hv2-contour-key" aria-hidden="true">
+                {PHONE_KEY.map((word, index) => <span key={word}><i>{index + 1}</i>{word}</span>)}
+              </span>
+            </>
           ),
         },
         {
@@ -803,6 +850,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                     )}
                   </span>
                 ))}
+              </span>
+              <span className="hv2-contour-more">
+                <button type="button" className="hv2-contour-build" disabled={!ready || layer === 'sketch'} onClick={build}>
+                  <i aria-hidden="true" />
+                  Як це будується
+                </button>
+                <a className="hv2-contour-next" href={BRIEF_HREF} data-lit={engaged ? '' : undefined}>
+                  Такий, але ваш — сформувати бриф <span aria-hidden="true">→</span>
+                </a>
               </span>
             </>
           ),
@@ -842,6 +898,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-point={point ? '' : undefined}
         data-pointed={pointed ? '' : undefined}
         data-detail={detail ?? undefined}
+        data-building={building ? '' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
@@ -894,7 +951,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   />
                 </div>
               )}
-              <ProofFrame loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} wind={layer === 'wind'} ready={ready} />
+              <ProofFrame buildRun={buildRun} loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} wind={layer === 'wind'} ready={ready} />
               <ProofPoint point={layer === 'load' ? point : null} />
               <svg
                 className="hv2-contour-lines"
@@ -908,6 +965,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               </svg>
               <ProofMarks />
               <ProofLabels />
+              <ProofKeyPins />
               {/* The details' letters (А, Б, В) beside their rings on «Каркас»: each opens its node, drawn */}
               <div className="hv2-proof-detail-pins">
                 {homeProofDetailSpots.map(({ id, badge: [x, y], badgePhone: [px, py] }) => {
@@ -950,6 +1008,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   {layer === 'sketch' ? 'згенероване зображення' : 'каркас такого типу, як на цьому об’єкті'}
                 </span>
               </span>
+              {/* «Як це будується»: the step on now */}
+              {buildRun > 0 && (
+                <span className="hv2-contour-build-steps" key={buildRun}>
+                  {BUILD_STEPS.map((word, index) => (
+                    <span key={word} style={{ '--i': index } as CSSProperties}><i>{index + 1}</i>{word}</span>
+                  ))}
+                </span>
+              )}
             </span>
           </div>
         </div>

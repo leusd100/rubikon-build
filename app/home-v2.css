@@ -677,6 +677,92 @@ main[data-home="v2"] .hv2-contour-controls button[aria-pressed="true"] { backgro
 main[data-home="v2"] .hv2-contour-controls button:disabled { cursor: default; opacity: .45; }
 main[data-home="v2"] .hv2-contour-toggle i { width: 16px; height: 2px; flex: none; background: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-contour-toggle[aria-pressed="true"] i { background: var(--hv2-text); }
+
+/* Under the layers: «Як це будується» and the way on to the visitor's own hangar — quiet until a load has gone down or the
+   frame gone up, then lit (ProofContour's engaged) */
+main[data-home="v2"] .hv2-contour-more { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 4px; }
+main[data-home="v2"] .hv2-contour-build {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 10px; color: var(--hv2-text); background: none;
+  border: 1px solid var(--hv2-copper-text); border-radius: 0; cursor: pointer;
+  font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
+}
+main[data-home="v2"] .hv2-contour-build i { width: 0; height: 0; border-block: 5px solid transparent; border-left: 8px solid var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-contour-build:disabled { cursor: default; opacity: .45; }
+@media (hover: hover) { main[data-home="v2"] .hv2-contour-build:enabled:hover { background: rgba(204, 132, 85, .14); } }
+@media (pointer: coarse) { main[data-home="v2"] .hv2-contour-build { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-contour-build { display: none; } }
+main[data-home="v2"] .hv2-contour-next {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; color: var(--hv2-copper-text); text-decoration: none;
+  font: 600 13px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none;
+  border-bottom: 1px solid transparent; transition: color 300ms ease, background-color 300ms ease, padding 300ms ease;
+}
+main[data-home="v2"] .hv2-contour-next:hover { border-bottom-color: currentColor; }
+main[data-home="v2"] .hv2-contour-next[data-lit] { padding: 0 12px; color: #f5f2eb; background: var(--hv2-copper-fill); }
+main[data-home="v2"] .hv2-contour-next[data-lit]:hover { border-bottom-color: transparent; background: var(--hv2-copper); }
+main[data-home="v2"] .hv2-contour-next:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* «Як це будується» (owner, 05.10): the scheme put up in the order it is built, a step every 700 ms (ProofContour's
+   BUILD_STEP) — the footings, the walls rising from them, the column, the trusses settling onto their bearings front
+   to back, the purlins and the bracing going back; the nodes, rings and names after the last step. Its step named in the
+   right side's lower corner */
+@keyframes hv2-build-in { from { opacity: 0; } }
+@keyframes hv2-build-rise { from { opacity: 0; transform: scaleY(0); } }
+@keyframes hv2-build-up { from { opacity: 0; transform: translateY(24px); } }
+@keyframes hv2-build-settle { from { opacity: 0; transform: translateY(-70px); } }
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-proof-scheme :is(.hv2-proof-footing, .hv2-proof-blocks, .hv2-proof-cut, [data-group], .hv2-proof-nodes, .hv2-proof-detail-rings) {
+  transform-box: fill-box; animation: hv2-build-in 620ms cubic-bezier(.2, .7, .2, 1) both;
+  animation-delay: calc(var(--step, 5) * 700ms + var(--d, 0) * 180ms);
+}
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-proof-scheme .hv2-proof-footing { --step: 0; animation-name: hv2-build-up; }
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-proof-scheme :is(.hv2-proof-blocks, .hv2-proof-cut, [data-group="wall"]) { --step: 1; transform-origin: 50% 100%; animation-name: hv2-build-rise; }
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-proof-scheme [data-group="column"] { --step: 2; transform-origin: 50% 100%; animation-name: hv2-build-rise; }
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-proof-scheme :is([data-group="truss"], [data-group="web"]) { --step: 3; animation-name: hv2-build-settle; }
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-proof-scheme :is([data-group="purlin"], [data-group="bracing"]) { --step: 4; }
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-proof-scheme [data-depth="1"] { --d: 1; }
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-proof-scheme [data-depth="2"] { --d: 2; }
+main[data-home="v2"] .hv2-contour-stage[data-building] :is(.hv2-proof-marks, .hv2-proof-labels, .hv2-proof-detail-pins, .hv2-proof-keypins) {
+  animation: hv2-build-in 500ms ease both; animation-delay: 3500ms;
+}
+main[data-home="v2"] .hv2-contour-build-steps { position: absolute; right: 12px; bottom: 12px; display: grid; justify-items: end; pointer-events: none; }
+main[data-home="v2"] .hv2-contour-build-steps > span {
+  grid-area: 1 / 1; display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; color: var(--hv2-text);
+  background: rgba(20, 22, 21, .92); border: 1px solid var(--hv2-line-strong); font: 600 14px/1 var(--font-manrope), sans-serif;
+  opacity: 0; visibility: hidden;
+}
+main[data-home="v2"] .hv2-contour-build-steps i {
+  display: grid; place-items: center; width: 22px; height: 22px; color: #f5f2eb; background: var(--hv2-copper-fill); border-radius: 50%;
+  font: 700 12px/1 var(--font-condensed), sans-serif; font-style: normal;
+}
+main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps > span { animation: hv2-build-step 700ms linear both; animation-delay: calc(var(--i) * 700ms); }
+@keyframes hv2-build-step {
+  0% { opacity: 0; visibility: visible; transform: translateY(6px); }
+  14%, 86% { opacity: 1; visibility: visible; transform: none; }
+  100% { opacity: 0; visibility: hidden; }
+}
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-contour-build-steps { top: 6px; right: auto; bottom: auto; left: 6px; }
+  main[data-home="v2"] .hv2-contour-build-steps > span { font-size: 12px; padding: 3px 9px 3px 3px; }
+  main[data-home="v2"] .hv2-contour-build-steps i { width: 18px; height: 18px; font-size: 11px; }
+}
+
+/* A phone's names: a number on each member, keyed under the frame (ProofKeyPins, ProofContour's PHONE_KEY) */
+main[data-home="v2"] .hv2-proof-keypins,
+main[data-home="v2"] .hv2-contour .hv2-contour-key { display: none; }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-proof-keypins { display: block; position: absolute; inset: 0; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 240ms; }
+  main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-keypins { opacity: 1; visibility: visible; }
+  main[data-home="v2"] .hv2-proof-keypins > span {
+    position: absolute; left: var(--x); top: var(--y); display: grid; place-items: center; width: 17px; height: 17px; margin: -8.5px 0 0 -8.5px;
+    color: #161817; background: var(--hv2-scheme); border-radius: 50%; box-shadow: 0 0 0 2px rgba(20, 22, 21, .85);
+    font: 700 10.5px/1 var(--font-condensed), sans-serif;
+  }
+  main[data-home="v2"] .hv2-contour .hv2-contour-key { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; color: var(--hv2-text-2); font: 500 12px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+  main[data-home="v2"] .hv2-contour-key > span { display: inline-flex; align-items: center; gap: 5px; }
+  main[data-home="v2"] .hv2-contour-key i {
+    display: grid; place-items: center; width: 16px; height: 16px; color: #161817; background: var(--hv2-scheme); border-radius: 50%;
+    font: 700 10px/1 var(--font-condensed), sans-serif; font-style: normal;
+  }
+}
 /* High contrast: a pressed button in the system's highlight, and the seam and the toggle's line kept as drawn marks */
 @media (forced-colors: active) {
   main[data-home="v2"] :is(.hv2-contour-controls, .hv2-contour-layers) button[aria-pressed="true"] { forced-color-adjust: none; color: HighlightText; background: Highlight; border-color: Highlight; }

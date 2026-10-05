@@ -81,7 +81,8 @@ export type FrameMember = {
 
 /** `atNarrow`: where it stands on a narrow frame (≤ 900 px, home-v2.css), its leader drawn there instead; `wideOnly`: not
  *  drawn on one — no room left on the wall's face for a third name in two lines */
-export type FrameTag = { id: string; text: string; anchor: Pt; at: Pt; align: 'start' | 'end'; atNarrow?: Pt; wideOnly?: true };
+/** `keyAt`: where a phone's number for it stands, when not on its anchor */
+export type FrameTag = { id: string; text: string; anchor: Pt; at: Pt; align: 'start' | 'end'; atNarrow?: Pt; wideOnly?: true; keyAt?: Pt };
 
 export type HomeProofFrame = {
   /** The frame it is drawn on: the contour's own photo, byte for byte */
@@ -308,14 +309,15 @@ export const homeProofFrame: HomeProofFrame = {
     // In the frame's free room (owner review, 04.10: «текст залазить на елемент»): the truss's and the purlins' names in
     // the sky over the right rake, the column's and the footings' on the ground under the base, the walls' on a face that
     // holds only blockwork — each on a backing that masks what runs under it, as a drawing's text does
-    { id: 'truss', text: 'Ферма', anchor: [1360.6, 271], at: [1352, 214], align: 'start' },
+    { id: 'truss', text: 'Ферма', anchor: [1360.6, 271], at: [1352, 214], align: 'start', keyAt: [1060, 240] },
     // on the right wall's face, which holds only blockwork: from the first bay's bracing (review, 05.10: in the sky it
     // met the slope's figure on a laptop)
-    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1350, 335.8], at: [1430, 398], align: 'end', wideOnly: true },
+    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1350, 335.8], at: [1430, 398], align: 'end', wideOnly: true, keyAt: [1238, 252] },
     // the right gate's opening holds no member: the column's name stands in it, under the walls' (apart on a tablet too)
-    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 528], align: 'start', atNarrow: [1042, 505] },
-    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 470], align: 'end', atNarrow: [1430, 410] },
-    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end' },
+    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 528], align: 'start', atNarrow: [1042, 505], keyAt: [1006, 380] },
+    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 470], align: 'end', atNarrow: [1430, 410], keyAt: [1340, 450] },
+    // keyAt: a phone's numbers (ProofKeyPins), right of the resting seam where they can be, clear of the letters А, Б, В
+    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end', keyAt: [1405, 588] },
   ],
   label:
     'Схема каркаса такого типу, як на цьому об’єкті, вписана в силует із фото: ферми, прогони, в’язі, стіни з газобетонних блоків по контуру й центральний ряд колон, фундаменти — умовно. Навантаження з покрівлі йде через прогони й ферми на стіни й колони, а з них — на фундаменти. Не креслення цього ангара: розмірів і перерізів тут немає.',
