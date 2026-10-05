@@ -1,16 +1,19 @@
 import type { ReactNode } from 'react';
 import type { DirectionId } from '../../data/directions';
 import { Concrete, Roofing, Steel } from './DirectionSectionDrawing';
+// The drawings' whole stylesheet («.cdw»). One importer only: under vinext a CSS file imported from two modules can end
+// up as an empty chunk that 404s.
+import './catalog-drawing.css';
 
-// The /napryamky catalogue's row sheets (below 1051 px): one small line scheme per direction in the «Переріз»
-// language — thin graphite, one copper detail, dash-dot axes, letters only on the dimension lines. Schematic and
-// static: no sizes, no scale, nothing that could pass for a real project drawing, and each sheet's strip says «Схема».
+// The directions' scheme sheets — the /napryamky catalogue rows (every width since 05.10) and the five sheets in HOME's
+// «П’ять напрямів» header: one small line scheme per direction in the «Переріз» language — thin graphite, one copper
+// detail, dash-dot axes, letters only on the dimension lines. Schematic and static: no sizes, no scale, nothing that
+// could pass for a real project drawing, and each sheet's strip says «Схема».
 // 03–05 are the direction pages' own bodies (one source of geometry); 01 and 02 are drawn here.
 //
-// Imported by a client component (DirectionsCatalog), so this file imports no CSS (styles: app/napryamky/
-// directions.css, «.cdw») and carries no element ids. Every body is drawn in the 360 × 248 reference space and shown
-// at half size; the letters are set outside the scaled group so they stay readable on a 150 px sheet (the reused
-// bodies' own 14-unit letters are hidden by CSS).
+// A server component (both its users are), with no element ids. Every body is drawn in the 360 × 248 reference space
+// and shown at half size; the letters are set outside the scaled group so they stay readable on a 120 px sheet (the
+// reused bodies' own 14-unit letters are hidden by CSS).
 
 /** 01 — a portal frame in cross-section. The frame is seen in elevation (stroke only), the envelope is a thin line
  *  just outside it, the footings are cut (a pedestal on a pad). Copper: the clear space the frame is built around —

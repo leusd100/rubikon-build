@@ -31,73 +31,40 @@
 .dhs-caption b { color: var(--color-accent-on-dark); font-weight: 700; }
 
 /* ---------------------------------------------------------------- 2 · The directions catalogue */
-/* Rows on the left (each the link to its page, darkening when pointed at, the one in focus marked in copper); from
-   1051 px a sticky preview on the right: the illustration, the direction's own accent line, the kinds of work. Below
-   1051 px the preview is gone and each row carries a small drawing sheet with a line scheme instead. */
-.dcat { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); align-items: start; gap: clamp(28px, 4vw, 64px); }
+/* Five rows, each the link to its page (darkening when pointed at) with its own drawing sheet: a line scheme
+   (CatalogDrawing, styles in components/directions/catalog-drawing.css) over a one-line title block. Since 05.10 at
+   every width — the sticky illustration preview a wide screen had is gone. */
+.dcat { display: block; }
 /* The section header's rule already closes the intro — the list's own top rule made a double line (UX sweep 2026-10) */
 .dcat-list.route-service-list { border-top: 0; }
-.dcat-list a.route-service { position: relative; min-height: 148px; }
-/* the active row's copper edge takes room of its own — drawn over the row's edge, it sat on the number (UX sweep 2026-10) */
-.dcat-list a.route-service[data-active]:not(:hover, :focus-visible) { padding-left: 18px; box-shadow: inset 3px 0 0 var(--color-accent); }
+.dcat-list a.route-service {
+  position: relative; grid-template-columns: 64px minmax(0, 1fr) clamp(200px, 17vw, 244px) 40px; grid-template-areas: "num body thumb arrow";
+  align-items: center; gap: 0 clamp(24px, 3vw, 48px); min-height: 0; padding-block: 26px;
+}
+.dcat-list a.route-service > span:not(.dcat-thumb) { grid-area: num; align-self: start; padding-top: 14px; }
+.dcat-list a.route-service > div { grid-area: body; }
+.dcat-list a.route-service > b { grid-area: arrow; }
+/* the «Креслення» sheet's small echo: the scheme, then its title block; its own paper in both row states */
+.dcat-list .dcat-thumb { display: flex; flex-direction: column; grid-area: thumb; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color .25s ease; }
+.dcat-list a.route-service:is(:hover, :focus-visible) .dcat-thumb { border-color: var(--color-accent); }
+.dcat-list .dcat-kinds-row { display: flex; margin-top: 16px; }
 /* On the row's dark state (pointer or keyboard) the kinds turn light with it */
 .dcat-list a.route-service:is(:hover, :focus-visible) .dcat-kinds li { color: var(--color-dark-text-secondary); border-color: var(--color-dark-line); }
-.dcat-list :is(.dcat-thumb, .dcat-kinds-row) { display: none; }
-.dcat-preview { position: sticky; top: 112px; }
-/* The preview is the «Креслення» sheet (app/components/drawing-sheet.css). Its five pictures share the picture area: a
-   new one is plotted in over the last under the copper line, and the last stays until the new one is complete. */
-.dcat-sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
-.dcat-frame { position: absolute; inset: 0; opacity: 0; }
-.dcat-frame[data-active] { z-index: 1; opacity: 1; }
-.dcat-frame img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.6) contrast(1.06); }
-.dcat-copy { padding-top: 24px; }
-.dcat-title { margin: 0; font: 400 clamp(28px, 2.5vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; text-wrap: balance; }
-.dcat-accent { margin: 4px 0 0; color: var(--color-accent-strong); font: 400 clamp(22px, 1.9vw, 30px)/1.12 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
-.dcat-kinds-label { margin: 22px 0 10px; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .dcat-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .dcat-kinds li { padding: 7px 11px; color: var(--color-text); border: 1px solid var(--color-border-strong); font: 600 13.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .03em; }
-/* Row sheets, below 1051 px (above it the thumb is display: none): a line scheme (CatalogDrawing.tsx) over a one-line
-   title block. Static — the server markup is the whole drawing. The scheme's body is drawn at half its reference size
-   (<g transform="scale(.5)">), so the widths here are in reference units: 2.4 is about 1 px on a 164 px sheet. Every
-   rule states its paint in full on purpose: after a client-side navigation from a direction page that page's global
-   .dsd-* rules may still be loaded. Line types as on the site's other drawings: dash-dot = an axis; long dash and two
-   dots = someone else's equipment (the silo); thin solid = everything else; copper = the one accent per sheet. */
-.cdw { display: block; width: 100%; height: auto; padding: 9px 9px 5px; }
-.cdw .dsd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 2.4; stroke-linejoin: round; }
-/* seen in elevation, not cut: the same line without the cut fill */
-.cdw .cdw-seen { fill: none; stroke: var(--color-text-secondary); stroke-width: 2.4; stroke-linejoin: round; }
-.cdw .dsd-line { fill: none; stroke: var(--color-text-muted); stroke-width: 2; stroke-linejoin: round; }
-.cdw .cdw-equip { fill: none; stroke: var(--color-text-muted); stroke-width: 1.6; stroke-dasharray: 15 4 2.5 4 2.5 4; }
-.cdw .dsd-axis { fill: none; stroke: var(--color-text-muted); stroke-width: 1.3; stroke-dasharray: 18 5 3 5; opacity: .75; }
-.cdw .dsd-dim { fill: none; stroke: var(--color-text-muted); stroke-width: 1.5; }
-.cdw .dsd-hatch { fill: none; stroke: var(--color-text-muted); stroke-width: 1.4; opacity: .65; }
-.cdw .dsd-insulation { fill: none; stroke: var(--color-text-muted); stroke-width: 1.6; }
-.cdw .dsd-bars circle { fill: var(--color-text-secondary); r: 3.2px; }
-.cdw .dsd-accent { fill: none; stroke: var(--color-accent); stroke-width: 3.6; stroke-linecap: round; }
-.cdw .dsd-accent circle { fill: color-mix(in srgb, var(--color-accent) 16%, transparent); }
-.cdw .dsd-accent .dsd-dashed { stroke-dasharray: 9 8; stroke-linecap: butt; stroke-width: 3; }
-/* the reused bodies' own letters are 14 reference units (under 6 px here): the sheet sets its own, outside the scale */
-.cdw .dsd-dim-text { display: none; }
-.cdw-letter { fill: var(--color-text-muted); font: italic 500 11px var(--font-manrope), sans-serif; text-anchor: middle; }
 /* The sheet keeps its own paper when its row turns dark (pointer or keyboard), and that state swaps the copper text
    token for the on-dark one. The list holds the paper's copper, resolved above the row, for the one copper letter. */
 .dcat-list { --dcat-sheet-copper: var(--color-accent-strong); }
-.cdw-letter-accent { fill: var(--dcat-sheet-copper); }
 .dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 10.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .dcat-strip span:first-child { color: var(--color-text); }
-@keyframes dcat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes dcat-plot { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
 @media (prefers-reduced-motion: no-preference) {
-  .dcat-frame { transition: opacity 0s linear 780ms; }
-  .dcat-frame[data-active] { transition: none; animation: dcat-plot 780ms cubic-bezier(.55, 0, .25, 1) both; }
-  .dcat-copy { animation: dcat-in 420ms ease both; }
   .dcat-list a.route-service { transition: color .25s ease, background .25s ease, padding .25s ease, box-shadow .25s ease; }
 }
 
 /* ---------------------------------------------------------------- 3 · Formats on one drawing */
-/* Three format buttons beside one large drawing of the same hangar (ScopeDiagram, /yak-pratsyuiemo). The format in
-   focus redraws the drawing: lines first, then RUBIKON's layers turn copper in build order, then the context settles.
-   The drawing's base styles are /yak's (delivery.css), repeated here inside .dfmt so this page carries its own. */
+/* Three format buttons beside one flat section of a building (FormatsScope.tsx) that is redrawn for the format in
+   focus: RUBIKON's parts in copper, the others' in thin graphite, and a dashed frame for whose object it is. Under it,
+   the packages as tags and the two facts that tell the formats apart. Theme roles only. */
 .dfmt { background: var(--color-surface); }
 .dfmt-grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: center; gap: clamp(28px, 4vw, 64px); }
 .dfmt-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
@@ -112,39 +79,54 @@
 .dfmt-option[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 9%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
 .dfmt-option[aria-pressed="true"] .dfmt-title { color: var(--color-accent-strong); }
 @media (hover: hover) { .dfmt-option:hover { background-color: color-mix(in srgb, var(--color-accent) 5%, transparent); } }
-.dfmt-figure { margin: 0; padding: clamp(18px, 2.4vw, 32px); background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
-.dfmt-caption { margin-top: 14px; color: var(--color-text-muted); font: 700 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
-.dfmt-caption b { margin-right: 6px; color: var(--color-accent-strong); }
+.dfmt-figure { margin: 0; padding: clamp(18px, 2.4vw, 30px) clamp(18px, 2.4vw, 32px) clamp(16px, 2vw, 24px); background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
 .dfmt .section-link { margin-top: clamp(28px, 3vw, 40px); }
-.dfmt .scope-diagram { display: block; width: 100%; height: auto; max-width: 100%; overflow: visible; }
-.dfmt .scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; } /* see delivery.css: no non-scaling-stroke with the 1-unit dash */
-/* The figure is drawn about 1.7× its viewBox here, and the strokes now scale with it: thinner in drawing units */
-.dfmt .sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: .8; stroke-linejoin: round; }
-.dfmt .sd-layer polygon { fill: color-mix(in srgb, var(--color-text) 3%, transparent); }
-.dfmt .sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.2; }
-.dfmt .sd-layer.is-scope polygon { fill: color-mix(in srgb, var(--color-accent) 18%, transparent); }
-.dfmt .sd-boundary { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.dfmt .sd-boundary-scope { stroke: var(--color-accent); stroke-width: 1.4; }
-.dfmt .sd-boundary-object { stroke: var(--color-border-strong); stroke-dasharray: 5 4; }
-.dfmt .sd-boundary-outer { stroke: var(--color-text-muted); stroke-width: 1.2; stroke-dasharray: 8 5; }
-.dfmt .sd-tab { fill: var(--color-text); }
-.dfmt .sd-tab-label { fill: var(--color-bg); font: 700 12px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-.dfmt .sd-label { fill: var(--color-text-muted); font: 700 12px var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
-.dfmt .sd-label-scope { fill: var(--color-accent-strong); }
-.dfmt .sd-leader { fill: none; stroke: var(--color-accent-strong); stroke-width: 1; }
-.dfmt .sd-dot { fill: var(--color-accent); }
-@keyframes dfmt-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes dfmt-fill { from { fill-opacity: 0; } to { fill-opacity: 1; } }
-@keyframes dfmt-fade { from { opacity: 0; } to { opacity: 1; } }
+.dfmt .fs { display: block; width: 100%; height: auto; overflow: visible; }
+.dfmt .fs :is(path, rect) { fill: none; stroke-linejoin: round; }
+.dfmt .fs-ground { stroke: var(--color-text-muted); stroke-width: 1; }
+.dfmt .fs-axis { stroke: var(--color-text-muted); stroke-width: .8; stroke-dasharray: 12 3 2 3; opacity: .6; }
+/* A part of the building: thin graphite while it is another participant's, copper and heavier while it is RUBIKON's.
+   The delay runs in build order, so a whole complex lights from the footings up. */
+.dfmt .fs-layer { stroke: var(--color-text-muted); stroke-width: 1.2; transition: stroke 320ms ease, stroke-width 320ms ease, fill 320ms ease; transition-delay: calc(var(--i, 0) * 70ms); }
+.dfmt .fs-layer[data-layer="frame"] { stroke-width: 1.8; }
+.dfmt .fs path.fs-layer[data-layer="foundation"] { fill: color-mix(in srgb, var(--color-text) 5%, transparent); }
+.dfmt .fs-layer[data-scope] { stroke: var(--color-accent); stroke-width: 2; }
+.dfmt .fs-layer[data-scope][data-layer="frame"] { stroke-width: 3; }
+.dfmt .fs path.fs-layer[data-scope][data-layer="foundation"] { fill: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+/* Whose object it is. The inner frame is the object: the customer's (graphite) or, when RUBIKON coordinates it, the
+   agreed scope (copper). The outer one appears for a general contractor's project — long dash and two dots, the
+   site's line for what is someone else's. */
+.dfmt .fs-frame { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 6 5; transition: stroke 320ms ease, stroke-width 320ms ease, opacity 320ms ease; }
+.dfmt .fs-outer { stroke-dasharray: 12 3 2 3 2 3; opacity: 0; }
+.dfmt .fs[data-format="subcontract"] .fs-outer { opacity: 1; }
+.dfmt .fs[data-format="comprehensive"] .fs-inner { stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 8 6; }
+.dfmt .fs-label { fill: var(--color-text-muted); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: 0; transition: opacity 320ms ease; }
+.dfmt .fs[data-format="comprehensive"] .fs-label-scope { fill: var(--color-accent-strong); opacity: 1; }
+.dfmt .fs[data-format="work-package"] .fs-label-client { opacity: 1; }
+.dfmt .fs[data-format="subcontract"] :is(.fs-label-part, .fs-label-outer) { opacity: 1; }
+/* The title strip, as under the site's other drawings: provenance, the view in bold, the subject */
+.dfmt-caption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 12px; padding-top: 10px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.dfmt-caption b { color: var(--color-text); font-size: 14px; letter-spacing: .04em; }
+.dfmt-caption i { color: var(--color-accent-strong); font-style: normal; }
+/* Under it: the packages as tags (the one in RUBIKON's scope in copper), then the two facts */
+.dfmt-facts { display: grid; gap: 16px; margin-top: 18px; }
+.dfmt-packages { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.dfmt-packages li { padding: 7px 12px; color: var(--color-text-secondary); border: 1px solid var(--color-border-strong); font: 600 14px/1.2 var(--font-manrope), sans-serif; transition: color 320ms ease, border-color 320ms ease, background-color 320ms ease; }
+.dfmt-packages li[data-scope] { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 12%, transparent); border-color: var(--color-accent); }
+.dfmt-packages li.dfmt-packages-note { padding-inline: 4px; color: var(--color-text-muted); border: 0; font-weight: 500; }
+.dfmt-terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin: 0; padding-top: 14px; border-top: 1px solid var(--color-border); }
+.dfmt-terms dt { color: var(--color-text-muted); font: 700 11.5px/1.3 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+/* two lines kept, so the block does not jump as the formats change */
+.dfmt-terms dd { min-height: 2.7em; margin: 5px 0 0; color: var(--color-text); font: 600 16px/1.35 var(--font-manrope), sans-serif; }
+.dfmt-terms dd b { color: var(--color-accent-strong); font-weight: 700; }
+@keyframes dfmt-march { to { stroke-dashoffset: -14; } }
+@keyframes dfmt-rise { from { opacity: 0; transform: translateY(14px); } }
 @media (prefers-reduced-motion: no-preference) {
-  /* Plays when the block arrives, and again for every format pointed at (the drawing is keyed by format) */
-  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-layer :is(path, polygon) { animation: dfmt-draw 700ms cubic-bezier(.55, 0, .25, 1) both; }
-  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-layer polygon { animation: dfmt-draw 700ms cubic-bezier(.55, 0, .25, 1) both, dfmt-fill 320ms ease 520ms both; }
-  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-1 polygon { animation-delay: 0ms, 640ms; }
-  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-1 path { animation-delay: 120ms; }
-  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-2 polygon { animation-delay: 0ms, 760ms; }
-  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-step-3 polygon { animation-delay: 0ms, 880ms; }
-  .dfmt-grid[data-motion-state="on"] .dfmt-diagram .sd-context { animation: dfmt-fade 360ms ease 900ms both; }
+  /* RUBIKON's own frame runs round the object while the block is on screen (data-live: FormatsScope) */
+  .dfmt-figure[data-live] .fs[data-format="comprehensive"] .fs-inner { animation: dfmt-march 1.4s linear infinite; }
+  /* The sheet arrives once (ProcessMotion, root .directions-page) */
+  .directions-page[data-motion-ready] .dfmt-grid:not([data-motion-state="on"]) .dfmt-figure { opacity: 0; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-figure { animation: dfmt-rise 520ms cubic-bezier(.2, .7, .1, 1) backwards; }
 }
 
 /* ---------------------------------------------------------------- 4 · Where the work starts (charcoal band) */
@@ -204,22 +186,16 @@
 
 /* ---------------------------------------------------------------- Tablet and phone */
 @media (max-width: 1050px) {
-  /* One column, no preview: every row carries a small drawing sheet with its scheme — the list stays a list, not five
+  /* The sheet moves to the row's left and the number stands over the text — the list stays a list, not five
      full-width pictures (that was ~3 phone screens) */
-  .dcat { grid-template-columns: minmax(0, 1fr); }
-  .dcat-preview { display: none; }
   .dcat-list a.route-service {
     grid-template-columns: 184px minmax(0, 1fr) 24px; grid-template-areas: "thumb num arrow" "thumb body arrow"; grid-template-rows: auto 1fr;
     align-items: start; gap: 8px 24px; min-height: 0; padding-block: 24px;
   }
-  .dcat-list a.route-service[data-active]:not(:hover, :focus-visible) { padding-left: 0; box-shadow: none; }
-  .dcat-list a.route-service > span:not(.dcat-thumb) { grid-area: num; }
-  .dcat-list a.route-service > div { grid-area: body; }
   .dcat-list a.route-service > div p { margin-top: 10px; }
-  .dcat-list a.route-service > b { grid-area: arrow; margin-top: 2px; }
-  /* the «Креслення» sheet's small echo: the scheme, then its title block; its own paper in both row states */
-  .dcat-list .dcat-thumb { display: flex; flex-direction: column; grid-area: thumb; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); }
-  .dcat-list .dcat-kinds-row { display: flex; margin-top: 14px; }
+  .dcat-list a.route-service > span:not(.dcat-thumb) { align-self: auto; padding-top: 0; }
+  .dcat-list a.route-service > b { margin-top: 2px; }
+  .dcat-list .dcat-kinds-row { margin-top: 14px; }
   .dcat-list .dcat-kinds-row li { padding: 6px 9px; font-size: 12.5px; }
   .dfmt-grid { grid-template-columns: minmax(0, 1fr); }
   .dfmt-figure { order: -1; }

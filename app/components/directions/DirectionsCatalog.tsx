@@ -1,20 +1,15 @@
-'use client';
-
-import { useState, type CSSProperties } from 'react';
 import type { DirectionId } from '../../data/directions';
-import { DrawingSheet } from '../DrawingSheet';
 import { CatalogDrawing } from './CatalogDrawing';
 
-// /napryamky — the five directions as a catalogue. Each row stays the link to its page (the route list's markup, so the
-// shared tests keep holding); from 1051 px a sticky preview beside the rows shows the direction pointed at or focused:
-// its illustration, its own accent line and the kinds of work its page lists, with the way in. On narrower screens the
-// preview is gone and every row carries a small drawing sheet instead: a line scheme of what the direction physically
-// is (CatalogDrawing) over a one-line title block, «Аркуш NN · Схема» (and the row's kinds, from 761 px). A 92 px
-// photo thumbnail stood there before; nothing in it could be read, and a phone downloaded five files for it — the
-// rows now hold no image at all.
-// Copy comes from the directions' own data. The preview's images are generated concept illustrations made for this
-// list (not the hero's slides). The preview is the site's «Креслення» sheet (DrawingSheet): its title block names the
-// direction and says «Ілюстрація», and each new picture is plotted in over the last.
+// /napryamky — the five directions as a catalogue of drawing sheets. Each row is the link to its page (the route
+// list's markup, so the shared tests keep holding) and carries its own small sheet: a line scheme of what the
+// direction physically is (CatalogDrawing) over a one-line title block, «Аркуш NN · Схема», with the kinds of work
+// its page lists under the text (from 761 px).
+// Until 05.10 a wide screen had a sticky preview with a generated illustration beside the rows, and the sheets were
+// the phone's substitute for it; the owner asked to try the sheets everywhere. So the rows hold no image at any width,
+// the page downloads none for this list, and the component needs no client code: a server component.
+// Copy comes from the directions' own data. The key plan above the list (DirectionsKey, in the section's header)
+// lights the part of the row pointed at.
 
 export type CatalogItem = {
   id: DirectionId;
@@ -22,40 +17,16 @@ export type CatalogItem = {
   href: string;
   title: string;
   routeText: string;
-  accent: string;
-  kindsLabel: string;
   kinds: readonly string[];
-  image: { src: string; srcSet: string; focal: string; width: number; height: number };
 };
 
-function Illustration({ item, sizes }: Readonly<{ item: CatalogItem; sizes: string }>) {
-  return (
-    <picture>
-      <source type="image/webp" srcSet={item.image.srcSet} sizes={sizes} />
-      <img src={item.image.src} alt="" width={item.image.width} height={item.image.height} loading="lazy" decoding="async" style={{ objectPosition: item.image.focal } as CSSProperties} />
-    </picture>
-  );
-}
-
 export function DirectionsCatalog({ items }: Readonly<{ items: readonly CatalogItem[] }>) {
-  const [active, setActive] = useState(0);
-  const current = items[active];
-  const count = String(items.length).padStart(2, '0');
-
   return (
     <div className="dcat">
       <div className="route-service-list dcat-list">
-        {items.map((item, index) => (
-          <a
-            className="route-service"
-            href={item.href}
-            id={item.id}
-            key={item.id}
-            data-active={index === active || undefined}
-            onMouseEnter={() => setActive(index)}
-            onFocus={() => setActive(index)}
-          >
-            {/* Below 1051 px only: the row's own sheet — a static scheme and its title block, no image */}
+        {items.map((item) => (
+          <a className="route-service" href={item.href} id={item.id} key={item.id}>
+            {/* The row's own sheet — a static scheme and its title block, no image */}
             <span className="dcat-thumb" aria-hidden="true">
               <CatalogDrawing id={item.id} />
               <span className="dcat-strip">
@@ -76,32 +47,6 @@ export function DirectionsCatalog({ items }: Readonly<{ items: readonly CatalogI
           </a>
         ))}
       </div>
-      {/* Decorative echo of the row in focus: the rows themselves carry every word and link */}
-      <aside className="dcat-preview" aria-hidden="true">
-        <DrawingSheet
-          className="dcat-sheet"
-          replayKey={current.id}
-          cells={[
-            { tone: 'number', label: '№', value: <>{current.number}<span> / {count}</span></> },
-            { tone: 'main', label: 'Напрям', value: current.title },
-            { label: 'Зображення', value: 'Ілюстрація' },
-          ]}
-        >
-          {items.map((item, index) => (
-            <span className="dcat-frame" data-active={index === active || undefined} key={item.id}>
-              <Illustration item={item} sizes="(max-width: 1050px) 1px, 40vw" />
-            </span>
-          ))}
-        </DrawingSheet>
-        <div className="dcat-copy" key={current.id}>
-          <p className="dcat-title">{current.title}</p>
-          <p className="dcat-accent">{current.accent}</p>
-          <p className="dcat-kinds-label">{current.kindsLabel}</p>
-          <ul className="dcat-kinds">
-            {current.kinds.map((kind) => <li key={kind}>{kind}</li>)}
-          </ul>
-        </div>
-      </aside>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+// /napryamky: every catalogue row carries a small drawing sheet (below 1051 px since 04.10, at every width since 05.10)
 // /napryamky below 1051 px: every catalogue row carries a small drawing sheet — a line scheme over a one-line title
 // block («Аркуш NN · Схема») — where a 92 px photo thumbnail used to stand (owner, 04.10: the photos were too small to
 // read on a phone). These pin what that change promised: the picture is big enough, the rows hold no image, the row is
@@ -54,10 +55,21 @@ test.describe('/napryamky rows on narrow screens', () => {
   });
 });
 
-test('/napryamky from 1051 px keeps the sticky sheet with illustrations and shows no row sheets', async ({ page }) => {
+test('/napryamky from 1051 px: the rows carry their sheets too, larger, and there is no preview panel', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/napryamky', { waitUntil: 'load' });
-  await expect(page.locator('.dcat-preview')).toBeVisible();
-  await expect(page.locator('.dcat-preview .dcat-frame img')).toHaveCount(5);
-  for (const thumb of await page.locator(`${ROWS} .dcat-thumb`).all()) await expect(thumb).toBeHidden();
+  // Until 05.10 a sticky illustration preview stood beside the rows here; the owner asked to try the sheets everywhere
+  await expect(page.locator('.dcat-preview')).toHaveCount(0);
+  await expect(page.locator(`${ROWS} img`)).toHaveCount(0);
+  await expect(page.locator(`${ROWS} .dcat-thumb svg`)).toHaveCount(5);
+  const sheets = await page.locator(`${ROWS} .dcat-thumb`).evaluateAll((thumbs) => thumbs.map((thumb) => {
+    const box = thumb.getBoundingClientRect();
+    const text = thumb.closest('a')!.querySelector('p')!.getBoundingClientRect();
+    return { width: box.width, clear: box.left - text.right };
+  }));
+  for (const sheet of sheets) {
+    expect(sheet.width).toBeGreaterThanOrEqual(200);
+    expect(sheet.clear).toBeGreaterThanOrEqual(16);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });

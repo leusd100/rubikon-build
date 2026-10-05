@@ -441,15 +441,11 @@ test('/napryamky catalogue preview follows the row in focus; hero slides name th
   await page.waitForTimeout(3600);
   await expect(hero.locator('.dhs-caption')).toHaveText(paused!);
 
+  // Since 05.10 a wide screen has no preview panel either: every row carries its scheme sheet and its kinds of work
+  await expect(page.locator('.dcat-preview')).toHaveCount(0);
+  await expect(page.locator('#directions-list .route-service .dcat-thumb svg')).toHaveCount(directions.length);
   if (testInfo.project.name === 'desktop-chromium') {
-    const preview = page.locator('.dcat-preview');
-    await expect(preview.locator('.dcat-title')).toHaveText(directions[0].serviceTitle);
-    await page.locator('#metalokonstruktsii').hover();
-    await expect(preview.locator('.dcat-title')).toHaveText('Металоконструкції');
-    await expect(preview.locator('.dcat-accent')).toHaveText('від деталі до монтажу');
-    await page.locator('#betonni-roboty').focus();
-    await expect(preview.locator('.dcat-title')).toHaveText('Бетонні роботи');
-    await expect(preview.locator('.dcat-kinds li')).toHaveText(['Фундаменти', 'Основи під обладнання', 'Промислові підлоги', 'Монолітні ділянки']);
+    await expect(page.locator('#betonni-roboty .dcat-kinds li')).toHaveText(['Фундаменти', 'Основи під обладнання', 'Промислові підлоги', 'Монолітні ділянки']);
   }
 });
 

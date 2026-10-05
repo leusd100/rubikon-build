@@ -1,0 +1,52 @@
+/* HOME — the five scheme sheets in the «П’ять напрямів» header (DirectionsSheets.tsx).
+
+   Imported by DirectionsSheets.tsx only. Every rule is keyed to <main data-home="v2"> .hv2-directions and uses the
+   page's theme roles (this band is paper in Light, ink in Dark).
+
+   The row costs the header nothing. globals.css would give an aside a grid column of its own from 1051 px; here the
+   header keeps its one column and the aside is laid OVER it, on the header's bottom line at the right. It is 54 % of
+   the header wide — the title, set in a viewport-relative size, never reaches past 43 % — and the note is kept to the
+   rest. Shown from 1200 px, where a sheet is 113 px or more; below that the header is as it was. */
+main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
+main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside { display: none; }
+@media (min-width: 1200px) {
+  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside {
+    display: block; grid-column: 1; grid-row: 1 / span 2; align-self: end; justify-self: end; width: 54%; margin: 0; pointer-events: none;
+  }
+  /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
+  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-copy { grid-row: 1; }
+  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-support { grid-row: 2; max-width: min(640px, calc(46% - 36px)); }
+}
+
+main[data-home="v2"] .hv2-directions .dsh { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; user-select: none; }
+/* A sheet: the scheme on its own paper, then the title block */
+main[data-home="v2"] .hv2-directions .dsh-sheet { display: flex; flex-direction: column; min-width: 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+main[data-home="v2"] .hv2-directions .dsh .cdw { padding: 6px 6px 3px; }
+main[data-home="v2"] .hv2-directions .dsh-strip { display: flex; justify-content: space-between; gap: 6px; padding: 4px 7px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 10px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+main[data-home="v2"] .hv2-directions .dsh-strip span:first-child { color: var(--color-text); }
+main[data-home="v2"] .hv2-directions .dsh-strip i { font-style: normal; }
+/* Under 124 px a sheet's strip keeps the number and «Схема» */
+@media (max-width: 1359px) { main[data-home="v2"] .hv2-directions .dsh-strip i { display: none; } }
+
+/* Lit: the sheet of the pointed or focused card. By href, so the order of the cards may change; the spec walks all
+   five from the data. Each sheet reads its own --kN (frame) and --kNy (lift), unset at rest. */
+main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="1"] { border-color: var(--k1, var(--color-border-strong)); transform: translateY(var(--k1y, 0)); box-shadow: 0 var(--k1s, 0) calc(var(--k1s, 0) * 2.5) rgba(20, 22, 21, .16); }
+main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="2"] { border-color: var(--k2, var(--color-border-strong)); transform: translateY(var(--k2y, 0)); box-shadow: 0 var(--k2s, 0) calc(var(--k2s, 0) * 2.5) rgba(20, 22, 21, .16); }
+main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="3"] { border-color: var(--k3, var(--color-border-strong)); transform: translateY(var(--k3y, 0)); box-shadow: 0 var(--k3s, 0) calc(var(--k3s, 0) * 2.5) rgba(20, 22, 21, .16); }
+main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="4"] { border-color: var(--k4, var(--color-border-strong)); transform: translateY(var(--k4y, 0)); box-shadow: 0 var(--k4s, 0) calc(var(--k4s, 0) * 2.5) rgba(20, 22, 21, .16); }
+main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="5"] { border-color: var(--k5, var(--color-border-strong)); transform: translateY(var(--k5y, 0)); box-shadow: 0 var(--k5s, 0) calc(var(--k5s, 0) * 2.5) rgba(20, 22, 21, .16); }
+@supports selector(:has(*)) {
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) { --k1: var(--color-accent); --k1y: -5px; --k1s: 8px; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) { --k2: var(--color-accent); --k2y: -5px; --k2s: 8px; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) { --k3: var(--color-accent); --k3y: -5px; --k3s: 8px; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) { --k4: var(--color-accent); --k4y: -5px; --k4s: 8px; }
+  main[data-home="v2"] .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) { --k5: var(--color-accent); --k5y: -5px; --k5s: 8px; }
+}
+
+/* ---- the row comes in once, on first view (HOME's one ProcessMotion). Without it — no JavaScript, reduced motion,
+   print — the five sheets simply stand. A keyframe with a backwards fill, so the pointed lift keeps its own quick
+   transition afterwards. ---- */
+main[data-home="v2"][data-motion-ready] .hv2-directions .dsh:not([data-motion-state="on"]) .dsh-sheet { opacity: 0; }
+main[data-home="v2"] .hv2-directions .dsh[data-motion-state="on"] .dsh-sheet { animation: dsh-in 460ms var(--ease-premium) calc(var(--i, 0) * 90ms) backwards; }
+@keyframes dsh-in { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-directions .dsh-sheet { transition: none; } }

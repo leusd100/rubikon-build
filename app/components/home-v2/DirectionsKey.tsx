@@ -2,13 +2,14 @@
 // empty chunk that 404s.
 import './directions-key.css';
 
-// HOME «П’ять напрямів» — the key plan in the header's empty right (owner's review, 04.10: «креслення, осі», and not
-// added for the sake of adding). One schematic PLAN, because HOME already has sections further down: a framed building
-// on its axes and, standing clear of it, the base of a silo. Five position numbers on leaders are the cards' own
-// 01–05, so the drawing is the page's legend — two objects, three works:
+// The key plan — one schematic PLAN at the head of the /napryamky catalogue: a framed building on its axes and,
+// standing clear of it, the base of a silo. Five position numbers on leaders are the catalogue rows' own 01–05, so
+// the drawing is the page's legend — two objects, three works:
 //   01 the building (its outline) · 02 the silo's base · 03 the frame's columns · 04 the footings · 05 the roof (ridge
 //   and slopes).
-// Pointing at a card, or reaching it with the keyboard, lights its part (directions-key.css, CSS only).
+// Pointing at a row, or reaching it with the keyboard, lights its part (directions-key.css, CSS only). With the rows'
+// own scheme sheets under it this is a drawing set as it is filed: a key plan, then the sheets.
+// (Drawn on 05.10 for HOME's «П’ять напрямів» header; the owner moved it: there the five sheets stand now.)
 //
 // What it is not: a drawing of any real object. No sizes and no scale — «L» and «B» are letters, the corner says
 // «Схема · План». End-wall framing is left out on purpose; the gate is an opening between its two jambs, no leaf drawn.
@@ -21,8 +22,8 @@ import './directions-key.css';
 // The plan has no frame and no rule of its own (owner, 05.10: the strip's line under it was one line too many): it
 // stands in the header's free space at the header's full height, and its name is two quiet words in its own corner.
 //
-// A server component. It draws in once on first view (HOME's one ProcessMotion, see directions-key.css).
-// SectionHeader renders it inside its aria-hidden aside: the cards say everything in words.
+// A server component. It draws in once on first view (the page's ProcessMotion, see directions-key.css).
+// SectionHeader renders it inside its aria-hidden aside: the rows say everything in words.
 
 const FRAMES = [52, 90, 128, 166] as const; // frame axes; their step is the dimension «B», about half the span
 const ROWS = [54, 126] as const; // the column rows: axis Б (top) and axis А; between them the span «L»

@@ -1,19 +1,20 @@
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionsCatalog, type CatalogItem } from '../components/directions/DirectionsCatalog';
+import { DirectionsKey } from '../components/home-v2/DirectionsKey';
 import { DirectionsHeroImageSequence } from '../components/DirectionsHeroImageSequence';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
-import { formatCards } from '../lib/deliveryModelPresentation';
+import { formatCards, participationChoices } from '../lib/deliveryModelPresentation';
 import { deliveryModel } from '../data/deliveryModel';
-import { FormatsScope } from '../components/directions/FormatsScope';
+import { FormatsScope, type FormatTerms } from '../components/directions/FormatsScope';
+import type { DeliveryFormatId } from '../types/deliveryModel';
 import { StartTrack } from '../components/directions/StartTrack';
 import { RegionBlock } from '../components/about/RegionBlock';
 import { ProcessMotion } from '../components/process/ProcessMotion';
-import { directions, undecidedDirection, type DirectionId } from '../data/directions';
+import { directions, undecidedDirection } from '../data/directions';
 import { directionPages } from '../data/directionPages';
-import { webpSrcSet } from '../lib/responsiveImages';
 import '../components/about/region.css';
 import './directions.css';
 
@@ -25,33 +26,18 @@ import './directions.css';
 // track and the map. Every word is the page's previous copy, /yak-pratsyuiemo's, the directions' own data or the
 // Delivery Model.
 
-/** The catalogue's own illustrations — generated concept images, one per direction, never the hero's slides. They are
- *  shown only in the desktop preview sheet (below 1051 px the rows carry line schemes instead); the focal points keep
- *  the subject in its 3:2 crop. */
-const CATALOG_FOCAL: Record<DirectionId, string> = {
-  angary: '50% 50%',
-  zernoskhovyshcha: '46% 50%',
-  metalokonstruktsii: '34% 50%',
-  'betonni-roboty': '63% 46%',
-  'pokrivelni-roboty': '52% 55%',
-};
+/** Each direction's row: its card copy and the kinds of work its page lists. */
+const catalog: CatalogItem[] = directions.map((direction) => ({
+  id: direction.id,
+  number: direction.number,
+  href: direction.href,
+  title: direction.serviceTitle,
+  routeText: direction.routeText,
+  kinds: (directionPages[direction.id].overview?.items ?? []).map((item) => item[1]),
+}));
 
-/** Each direction's row and preview: its card copy, its page's accent and overview, its catalogue illustration. */
-const catalog: CatalogItem[] = directions.map((direction) => {
-  const page = directionPages[direction.id];
-  const src = `/media/directions-catalog/catalog-${direction.id}.webp`;
-  return {
-    id: direction.id,
-    number: direction.number,
-    href: direction.href,
-    title: direction.serviceTitle,
-    routeText: direction.routeText,
-    accent: page.hero.accent,
-    kindsLabel: page.overview?.eyebrow ?? 'Що виконуємо',
-    kinds: (page.overview?.items ?? []).map((item) => item[1]),
-    image: { src, srcSet: webpSrcSet(src)!, focal: CATALOG_FOCAL[direction.id], width: 1448, height: 1086 },
-  };
-});
+/** What tells the formats apart, for the drawing's caption: the other party of the contract and who coordinates */
+const formatTerms = Object.fromEntries(participationChoices().map(({ id, contractWith, coordinator, rubikonCoordinates }) => [id, { contractWith, coordinator, rubikonCoordinates }])) as Record<DeliveryFormatId, FormatTerms>;
 
 export const metadata = createPageMetadata({
   path: '/napryamky',
@@ -97,19 +83,21 @@ export default function DirectionsPage() {
         <span className="hero-provenance">Ілюстрація</span>
       </section>
 
-      <section className="page-section directions-index" id="directions-list">
+      {/* 2 · The catalogue: a key plan in the header (its numbers are the rows'), then the five rows with their sheets */}
+      <section className="page-section directions-index dkey-host" id="directions-list">
         <div className="shell">
           <SectionHeader
+            aside={<DirectionsKey />}
             className="page-heading"
             eyebrow="П’ять напрямків"
             title="Оберіть потрібний вид робіт"
-            supporting="Кожен пункт веде до конкретних можливостей, процесу й чинників вартості. Для комплексного об’єкта можна почати з будь-якого близького напрямку. Зображення — ілюстрації, а не фото виконаних об’єктів."
+            supporting="Кожен пункт веде до конкретних можливостей, процесу й чинників вартості. Для комплексного об’єкта можна почати з будь-якого близького напрямку."
           />
           <DirectionsCatalog items={catalog} />
         </div>
       </section>
 
-      {/* 3 · Formats: one drawing of the same hangar, redrawn for the format pointed at, focused or pressed */}
+      {/* 3 · Formats: one section of the same building, redrawn for the format pointed at, focused or pressed */}
       <section className="page-section dfmt" aria-labelledby="dfmt-title">
         <div className="shell">
           <SectionHeader
@@ -118,7 +106,7 @@ export default function DirectionsPage() {
             titleId="dfmt-title"
             supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
-          <FormatsScope formats={formatCards()} />
+          <FormatsScope formats={formatCards()} terms={formatTerms} />
           <a className="section-link" href={`${siteRoutes.process}#obsiah`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
         </div>
       </section>
