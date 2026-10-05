@@ -45,8 +45,11 @@ const roofTopY = (x: number) => {
   return a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
 };
 const round1 = (value: number) => Math.round(value * 10) / 10;
-const COMB_XS = Array.from({ length: 13 }, (_, index) => 330 + index * ((1432 - 330) / 12));
-const COMB_ARROWS = COMB_XS.map((x): readonly [Pt, Pt] => [[round1(x), round1(roofTopY(x) - COMB_RISE)], [round1(x), round1(roofTopY(x) - COMB_GAP)]]);
+/** The top chord's panel points, eave to eave: where the purlins bear */
+const TOP_NODES: readonly Pt[] = [[299.2, 218.5], [406.9, 208], [508.1, 198.2], [603.2, 188.9], [692.8, 180.2], [777.4, 172], [857.4, 164.2], [933.2, 156.8], [1005, 149.8], [1071, 172.3], [1134, 193.8], [1194.3, 214.3], [1252.1, 234], [1307.4, 252.9], [1360.6, 271], [1411.6, 288.4], [1460.7, 305.1]];
+/** The snow's arrows stand over the nodes inside the eaves — one on the ridge — as the load reaches the frame there,
+ *  through the purlins (owner, 05.10: «навантаження до кожного вузла, одне в коник») */
+const COMB_ARROWS = TOP_NODES.slice(1, -1).map(([x]): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - COMB_RISE)], [x, round1(roofTopY(x) - COMB_GAP)]]);
 const COMB_LINE: readonly Pt[] = [COMB_ARROWS[0][0], [ROOF_TOP[1][0], round1(ROOF_TOP[1][1] - COMB_RISE)], COMB_ARROWS.at(-1)![0]];
 
 /** The wind across the building (owner review, 04.10: «навантаження від вітру», in its own colour): it presses on the
@@ -66,7 +69,7 @@ const WIND_GUSTS_WIDE = gusts(26, 22);
 /** A phone's close-up ends at the photo's column 1504: 16–26 px there (home-v2.css shows one set or the other) */
 const WIND_GUSTS = gusts(16, 10);
 /** The lift off the roof: 36 px arrows (owner, 05.10: «зараз дуже мілко»), their heads still under the photo's row 84 */
-const WIND_LIFT = [430, 580, 730, 870, 1090, 1200, 1310, 1410].map((x): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 42)]]);
+const WIND_LIFT = TOP_NODES.slice(1, -1).filter((_, index) => index % 2 === 0).map(([x]): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 42)]]);
 
 /** truss: chords and end posts; web: diagonals and verticals; wall: bearing lines and lintels; column: the central row */
 export type FrameGroup = 'truss' | 'web' | 'wall' | 'column' | 'purlin' | 'bracing' | 'footing';
@@ -264,7 +267,7 @@ export const homeProofFrame: HomeProofFrame = {
     { group: 'footing', depth: 1, points: [[251.5, 629.1], [106, 564.1]] },
     { group: 'footing', depth: 1, points: [[251, 600.3], [106, 550.6]] },
   ],
-  nodes: [[299.2, 218.5], [406.9, 208], [508.1, 198.2], [603.2, 188.9], [692.8, 180.2], [777.4, 172], [857.4, 164.2], [933.2, 156.8], [1005, 149.8], [1071, 172.3], [1134, 193.8], [1194.3, 214.3], [1252.1, 234], [1307.4, 252.9], [1360.6, 271], [1411.6, 288.4], [1460.7, 305.1]],
+  nodes: TOP_NODES,
   load: {
     arrows: COMB_ARROWS,
     comb: COMB_LINE,

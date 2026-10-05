@@ -1137,6 +1137,27 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (!phoneNow() && stageRef.current) bringIntoView(stageRef.current);
     showNode(id);
   };
+  // «Вузли крупно: А Б В Г Д» — the letters on the scheme, named again where they are seen: over the picture's foot on a
+  // laptop (the title block keeps its height there: the sheet fits the window), in the title block on a phone (its
+  // frame has no room). One shows at a time (home-v2.css, data-place)
+  const nodesRow = (place: 'stage' | 'block') => (
+    <span className="hv2-contour-nodes" data-place={place} role="group" aria-label="Вузли крупно">
+      <span className="hv2-contour-nodes-label" aria-hidden="true">Вузли крупно</span>
+      {PROOF_DETAILS.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          aria-label={`Вузол ${item.letter}: ${item.title}`}
+          aria-haspopup="dialog"
+          aria-expanded={detail === item.id}
+          disabled={!ready || layer === 'sketch'}
+          onClick={() => openNode(item.id)}
+        >
+          {item.letter}
+        </button>
+      ))}
+    </span>
+  );
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
   const engaged = loadRun + windRun + buildRun > 0;
 
@@ -1210,6 +1231,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                             key={word}
                             type="button"
                             className="hv2-chain-step"
+                            disabled={!ready}
                             style={{ '--n': n } as CSSProperties}
                             aria-pressed={layer === name && stepOn === n}
                             onClick={() => setStepOn((on) => (on === n ? null : n))}
@@ -1231,37 +1253,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                 ))}
               </span>
               <span className="hv2-contour-more">
-                <button
-                  type="button"
-                  className="hv2-contour-build hv2-contour-tour-btn"
-                  aria-pressed={tourStep !== null}
-                  disabled={!ready || layer === 'sketch'}
-                  onClick={toggleTour}
-                >
-                  <i aria-hidden="true" data-stop={tourStep !== null ? '' : undefined} />
-                  {tourStep !== null ? 'Зупинити тур' : 'Тур за 20 секунд'}
-                </button>
-                <button type="button" className="hv2-contour-build" disabled={!ready || layer === 'sketch'} onClick={build}>
-                  <i aria-hidden="true" />
-                  Як це будується
-                </button>
                 {/* The nodes drawn as details, named here too: their letters on the scheme were found by chance */}
-                <span className="hv2-contour-nodes" role="group" aria-label="Вузли крупно">
-                  <span className="hv2-contour-nodes-label" aria-hidden="true">Вузли крупно</span>
-                  {PROOF_DETAILS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      aria-label={`Вузол ${item.letter}: ${item.title}`}
-                      aria-haspopup="dialog"
-                      aria-expanded={detail === item.id}
-                      disabled={!ready || layer === 'sketch'}
-                      onClick={() => openNode(item.id)}
-                    >
-                      {item.letter}
-                    </button>
-                  ))}
-                </span>
+                {nodesRow('block')}
               </span>
             </>
           ),
@@ -1275,6 +1268,17 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               {layer === 'sketch' ? 'Ескіз' : 'Схема'}
             </button>
           </span>
+          {/* «Тур за 20 секунд» — the frame put up first (owner, 05.10: it took over «Як це будується») — over the way on */}
+          <button
+            type="button"
+            className="hv2-contour-build hv2-contour-tour-btn"
+            aria-pressed={tourStep !== null}
+            disabled={!ready || layer === 'sketch'}
+            onClick={toggleTour}
+          >
+            <i aria-hidden="true" data-stop={tourStep !== null ? '' : undefined} />
+            {tourStep !== null ? 'Зупинити тур' : 'Тур за 20 секунд'}
+          </button>
           {/* The way on: a hangar like this one, the visitor's own (owner, 05.10: in place of «Контур на фото», and
               to be seen) */}
           <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={engaged ? '' : undefined} data-call={calling ? '' : undefined}>
@@ -1431,6 +1435,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             </span>
           </div>
         </div>
+        {nodesRow('stage')}
         {/* «Тур»: the step on, and how far through it */}
         <span className="hv2-contour-tour" data-on={tourStep !== null ? '' : undefined} role="status">
           {tourStep !== null && (

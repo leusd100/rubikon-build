@@ -354,16 +354,17 @@ describe('homeProofFrame — the scheme', () => {
     }
   });
 
-  it('spreads the snow as a drawing writes a load: an even comb of equal arrows over the strip one truss carries, their tails on one line', () => {
+  // Owner, 05.10: the snow reaches the frame at its nodes, through the purlins — an arrow over every top-chord node inside
+  // the eaves, one on the ridge
+  it('spreads the snow as a drawing writes a load: a comb of equal arrows over the top chord\'s nodes, one on the ridge, their tails on one line', () => {
     const { arrows, comb, roof } = load;
     // The strip's top edge (left eave, ridge, right eave) is the edge the load layer draws the snow settling on
     const edge = roof.slice(0, 3);
-    expect(arrows).toHaveLength(13);
-    // even: one step between arrows, one length, each straight down (the points are rounded to tenths of a pixel)
     const xs = arrows.map(([from]) => from[0]);
-    const steps = xs.slice(1).map((x, index) => x - xs[index]);
+    expect(xs).toEqual(homeProofFrame.nodes.slice(1, -1).map(([x]) => x));
+    expect(xs).toContain(homeProofFrame.nodes.find(([, y]) => y === Math.min(...homeProofFrame.nodes.map(([, ny]) => ny)))![0]);
+    // one length, each straight down (the points are rounded to tenths of a pixel)
     const [length, gap] = [arrows[0][1][1] - arrows[0][0][1], polylineY(edge, xs[0]) - arrows[0][1][1]];
-    for (const step of steps) expect(Math.abs(step - steps[0])).toBeLessThanOrEqual(0.11);
     for (const [from, to] of arrows) {
       expect(to[0], String(from)).toBe(from[0]);
       expect(to[1] - from[1], String(from)).toBeCloseTo(length, 1);
