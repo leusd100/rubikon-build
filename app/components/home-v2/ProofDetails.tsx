@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import type { CSSProperties, JSX, ReactNode } from 'react';
 import './proof-details.css';
 
 // HOME proof, «Каркас»: three typical nodes of a building of this TYPE — light steel trapezoidal trusses (a vertical at
@@ -8,7 +8,9 @@ import './proof-details.css';
 // belt's edge) in copper, hatches by the drafting convention (masonry at 45°, concrete as dots and small triangles).
 // Never this building's drawn structure, and never a size, a grade or a mark: the words say what each part is, no more.
 // Every drawing is 360 × 240 and decorative (aria-hidden): `spoken` says the node in words. Ids are per drawing, and one
-// node is open at a time (ProofContour).
+// node is open at a time (ProofContour). Opened, a node is put together before the eye (owner, 05.10: «як наче
+// виїжджає»): its parts come in one by one, each from where it would be fitted from (Part, proof-details.css), and the
+// names come in last.
 
 export type DetailId = 'bearing' | 'purlin' | 'base';
 export type ProofDetail = { id: DetailId; letter: 'А' | 'Б' | 'В'; title: string; spoken: string; Drawing: () => JSX.Element };
@@ -60,12 +62,25 @@ function MasonryHatch({ id }: Readonly<{ id: string }>) {
   );
 }
 
+/** A part of the node as it is put together: the n-th to come in, from (dx, dy) off its place — in its own frame */
+function Part({ n, dx = 0, dy = 0, children }: Readonly<{ n: number; dx?: number; dy?: number; children: ReactNode }>) {
+  return <g className="hv2-detail-part" style={{ '--n': n, '--dx': `${dx}px`, '--dy': `${dy}px` } as CSSProperties}>{children}</g>;
+}
+/** The drawing's own sheet, with how many parts come in before the names */
+function Sheet({ parts, children }: Readonly<{ parts: number; children: ReactNode }>) {
+  return (
+    <svg className="hv2-detail-drawing" viewBox="0 0 360 240" aria-hidden="true" focusable="false" style={{ '--parts': parts } as CSSProperties}>
+      {children}
+    </svg>
+  );
+}
+
 /** A name on the drawing: its words, and from each part it names a thin leader that starts at a dot on that part — the
  *  last point of every leader is its landing, 4 px clear of the words */
 type Callout = { text: string; at: Pt; anchor?: 'start' | 'end' | 'middle'; leaders: readonly (readonly Pt[])[] };
 function Callouts({ items }: Readonly<{ items: readonly Callout[] }>) {
   return (
-    <g>
+    <g className="hv2-detail-callouts">
       {items.map(({ text, at: [x, y], anchor = 'start', leaders }) => (
         <g key={text}>
           {leaders.map((points) => (
@@ -131,7 +146,7 @@ function BearingDrawing() {
   const diagonal = line(meet(upperEdge, down, underChord(s1), aAlong), meet(upperEdge, down, [v0, 0], [0, 1]))
     + line(meet(lowerEdge, down, [s1, 0], [0, 1]), meet(lowerEdge, down, [0, c0], [1, 0]));
   return (
-    <svg className="hv2-detail-drawing" viewBox="0 0 360 240" aria-hidden="true" focusable="false">
+    <Sheet parts={4}>
       <defs>
         <MasonryHatch id="hv2-detail-bearing-masonry" />
         <ConcreteHatch id="hv2-detail-bearing-concrete" />
@@ -142,19 +157,28 @@ function BearingDrawing() {
           {bars.map(([cx, cy]) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="3.8" fill="#000" />)}
         </mask>
       </defs>
-      {/* The wall in section, its block courses faint across it, broken off below */}
-      <rect x={w0} y={b1} width={w1 - w0} height={A.wallBreak - b1} fill="url(#hv2-detail-bearing-masonry)" />
-      <path className="hv2-detail-course" d={A.courses.map((y) => line([w0, y], [w1, y])).join('')} />
-      <path className="hv2-detail-thin" d={line([w0, b1], [w0, A.wallBreak]) + line([w1, b1], [w1, A.wallBreak])} />
-      <path className="hv2-detail-thin" d={breakLine([(w0 + w1) / 2, A.wallBreak], [0, 1], (w1 - w0) / 2 + 6)} />
-      {/* The monolithic reinforced belt: concrete, its bars, its edge in copper */}
-      <rect x={w0} y={b0} width={w1 - w0} height={b1 - b0} fill="url(#hv2-detail-bearing-concrete)" mask="url(#hv2-detail-bearing-clear)" />
-      {bars.map(([cx, cy]) => <circle key={`${cx}-${cy}`} className="hv2-detail-thin" cx={cx} cy={cy} r="2" />)}
-      <path className="hv2-detail-key" d={rect(w0, b0, w1, b1)} />
-      {/* The support plate on two anchors */}
-      <path className="hv2-detail-key" d={anchors} />
-      <path className="hv2-detail-key" d={rect(p0, pTop, p1, pBottom) + nuts} />
-      {/* The truss's end: the end post seated on the plate, the bottom chord into it, the top chord from its head */}
+      {/* The wall in section, its block courses faint across it, broken off below — up from below */}
+      <Part n={0} dy={30}>
+        <rect x={w0} y={b1} width={w1 - w0} height={A.wallBreak - b1} fill="url(#hv2-detail-bearing-masonry)" />
+        <path className="hv2-detail-course" d={A.courses.map((y) => line([w0, y], [w1, y])).join('')} />
+        <path className="hv2-detail-thin" d={line([w0, b1], [w0, A.wallBreak]) + line([w1, b1], [w1, A.wallBreak])} />
+        <path className="hv2-detail-thin" d={breakLine([(w0 + w1) / 2, A.wallBreak], [0, 1], (w1 - w0) / 2 + 6)} />
+      </Part>
+      {/* The monolithic reinforced belt: concrete, its bars, its edge in copper, the anchors cast in it — down onto the
+          wall */}
+      <Part n={1} dy={-18}>
+        <rect x={w0} y={b0} width={w1 - w0} height={b1 - b0} fill="url(#hv2-detail-bearing-concrete)" mask="url(#hv2-detail-bearing-clear)" />
+        {bars.map(([cx, cy]) => <circle key={`${cx}-${cy}`} className="hv2-detail-thin" cx={cx} cy={cy} r="2" />)}
+        <path className="hv2-detail-key" d={rect(w0, b0, w1, b1)} />
+        <path className="hv2-detail-key" d={anchors} />
+      </Part>
+      {/* The support plate, onto the anchors, its nuts on it */}
+      <Part n={2} dy={-34}>
+        <path className="hv2-detail-key" d={rect(p0, pTop, p1, pBottom) + nuts} />
+      </Part>
+      {/* The truss's end: the end post seated on the plate, the bottom chord into it, the top chord from its head — let
+          down onto the plate last */}
+      <Part n={3} dy={-70}>
       <path
         className="hv2-detail-strong"
         d={
@@ -171,6 +195,7 @@ function BearingDrawing() {
         className="hv2-detail-thin"
         d={breakLine([A.end, (c0 + c1) / 2], [1, 0], (c1 - c0) / 2 + 5) + breakLine(add(chordEnd(0), [0, A.chordDepth / 2]), aAlong, A.chordDepth / 2 + 5)}
       />
+      </Part>
       <Callouts
         items={[
           { text: 'Стійка й пояси ферми', at: [176, 50], anchor: 'end', leaders: [[[208, 66], [188, 46], [180, 46]]] },
@@ -179,7 +204,7 @@ function BearingDrawing() {
           { text: 'Газобетонна стіна', at: [152, 208], anchor: 'end', leaders: [[[190, 198], [164, 204], [156, 204]]] },
         ]}
       />
-    </svg>
+    </Sheet>
   );
 }
 
@@ -247,8 +272,9 @@ function PurlinDrawing() {
   const nameX = (across(lower, nameY)[0] + s0) / 2;
   const nameHalf = 41;
   return (
-    <svg className="hv2-detail-drawing" viewBox="0 0 360 240" aria-hidden="true" focusable="false">
-      {/* The gusset, a hint behind the members */}
+    <Sheet parts={4}>
+      {/* The truss's node, there first: the gusset, a hint behind the members */}
+      <Part n={0}>
       <path className="hv2-detail-thin" d={gusset} />
       {/* The top chord, broken off both ways */}
       <path className="hv2-detail-strong" d={line(bChord(t0, B.half), bChord(t1, B.half)) + line(bChord(t0, -B.half), bChord(t1, -B.half))} />
@@ -258,16 +284,24 @@ function PurlinDrawing() {
       <path className="hv2-detail-thin" d={breakLine([sx, B.postEnd], [0, 1], (s1 - s0) / 2 + 5)} />
       <path className="hv2-detail-strong" d={line(upperStart, upperEnd) + line(lowerStart, lowerEnd)} />
       <path className="hv2-detail-thin" d={breakLine(diagonalEnd, bDown, B.diagonalHalf + 5)} />
-      {/* The purlin in section, a hollow profile, square to the chord on its top face */}
+      </Part>
+      {/* The purlin in section, a hollow profile, square to the chord on its top face: the cleat slid along the chord,
+          the purlin let down onto it, the bolts pushed through both */}
       <g transform={`translate(${at2(seat[0])} ${at2(seat[1])}) rotate(${at2(turn)})`}>
-        <path className="hv2-detail-strong" d={rect(-ph, -height, ph, 0)} />
-        <path className="hv2-detail-thin" d={rect(-ph + wall, -height + wall, ph - wall, -wall)} />
+        <Part n={2} dy={-60}>
+          <path className="hv2-detail-strong" d={rect(-ph, -height, ph, 0)} />
+          <path className="hv2-detail-thin" d={rect(-ph + wall, -height + wall, ph - wall, -wall)} />
+        </Part>
         {/* The cleat: an angle on the chord, its upstand against the purlin, two bolts through both */}
-        <path className="hv2-detail-key" d={`${line([-ph, 0], [-ph - reach, 0], [-ph - reach, -thick], [cx, -thick], [cx, -upstand], [-ph, -upstand])}Z`} />
-        <path
-          className="hv2-detail-key"
-          d={B.bolts.map((y) => rect(cx - 6, y - 4, cx, y + 4) + line([cx, y], [ph, y]) + rect(ph, y - 3.5, ph + 4, y + 3.5)).join('')}
-        />
+        <Part n={1} dx={-30}>
+          <path className="hv2-detail-key" d={`${line([-ph, 0], [-ph - reach, 0], [-ph - reach, -thick], [cx, -thick], [cx, -upstand], [-ph, -upstand])}Z`} />
+        </Part>
+        <Part n={3} dx={-24}>
+          <path
+            className="hv2-detail-key"
+            d={B.bolts.map((y) => rect(cx - 6, y - 4, cx, y + 4) + line([cx, y], [ph, y]) + rect(ph, y - 3.5, ph + 4, y + 3.5)).join('')}
+          />
+        </Part>
       </g>
       <Callouts
         items={[
@@ -282,7 +316,7 @@ function PurlinDrawing() {
           },
         ]}
       />
-    </svg>
+    </Sheet>
   );
 }
 
@@ -320,7 +354,7 @@ function BaseDrawing() {
     ...Array.from({ length: 19 }, (_, index) => 198 + index * 8),
   ].map((x) => line([x, C.ground], [x - 5, C.ground + 5])).join('');
   return (
-    <svg className="hv2-detail-drawing" viewBox="0 0 360 240" aria-hidden="true" focusable="false">
+    <Sheet parts={5}>
       <defs>
         <ConcreteHatch id="hv2-detail-base-concrete" />
         <pattern id="hv2-detail-base-grout" width="6" height="5" patternUnits="userSpaceOnUse">
@@ -335,19 +369,30 @@ function BaseDrawing() {
       {/* The ground's level, ticked on the soil's side, broken by the footing's neck */}
       <path className="hv2-detail-thin" d={line([16, C.ground], [n0, C.ground]) + line([n1, C.ground], [344, C.ground])} />
       <path className="hv2-detail-hatch" d={ticks} />
-      {/* The pad footing and its neck, in section, by convention */}
-      <path d={footing} fill="url(#hv2-detail-base-concrete)" mask="url(#hv2-detail-base-clear)" />
-      <path className="hv2-detail-thin" d={footing} />
+      {/* The pad footing and its neck, in section, by convention, the anchors' shanks cast in it — up from below */}
+      <Part n={0} dy={36}>
+        <path d={footing} fill="url(#hv2-detail-base-concrete)" mask="url(#hv2-detail-base-clear)" />
+        <path className="hv2-detail-thin" d={footing} />
+        <path className="hv2-detail-key hv2-detail-hidden" d={shanks} />
+      </Part>
       {/* The grout under the plate */}
-      <path d={`${line([p0 - 4, C.grout], [p0, pBottom], [p1, pBottom], [p1 + 4, C.grout])}Z`} fill="url(#hv2-detail-base-grout)" />
-      <path className="hv2-detail-thin" d={line([p0 - 4, C.grout], [p0, pBottom]) + line([p1, pBottom], [p1 + 4, C.grout])} />
-      {/* The anchors: nut and washer on the plate, the shank hidden in the concrete */}
-      <path className="hv2-detail-key hv2-detail-hidden" d={shanks} />
-      <path className="hv2-detail-key" d={rect(p0, pTop, p1, pBottom) + nuts} />
-      {/* The column: its flanges' faces, broken off above */}
-      <path className="hv2-detail-strong" d={line([l, C.top], [l, pTop]) + line([r, C.top], [r, pTop])} />
-      <path className="hv2-detail-thin" d={line([l + C.flange, C.top], [l + C.flange, pTop]) + line([r - C.flange, C.top], [r - C.flange, pTop])} />
-      <path className="hv2-detail-thin" d={breakLine([C.axis, C.top], [0, 1], C.half + 6)} />
+      <Part n={1} dy={-14}>
+        <path d={`${line([p0 - 4, C.grout], [p0, pBottom], [p1, pBottom], [p1 + 4, C.grout])}Z`} fill="url(#hv2-detail-base-grout)" />
+        <path className="hv2-detail-thin" d={line([p0 - 4, C.grout], [p0, pBottom]) + line([p1, pBottom], [p1 + 4, C.grout])} />
+      </Part>
+      {/* The plate down onto the anchors, then their nuts and washers */}
+      <Part n={2} dy={-34}>
+        <path className="hv2-detail-key" d={rect(p0, pTop, p1, pBottom)} />
+      </Part>
+      <Part n={3} dy={-52}>
+        <path className="hv2-detail-key" d={nuts} />
+      </Part>
+      {/* The column, let down onto the plate last: its flanges' faces, broken off above */}
+      <Part n={4} dy={-96}>
+        <path className="hv2-detail-strong" d={line([l, C.top], [l, pTop]) + line([r, C.top], [r, pTop])} />
+        <path className="hv2-detail-thin" d={line([l + C.flange, C.top], [l + C.flange, pTop]) + line([r - C.flange, C.top], [r - C.flange, pTop])} />
+        <path className="hv2-detail-thin" d={breakLine([C.axis, C.top], [0, 1], C.half + 6)} />
+      </Part>
       <Callouts
         items={[
           { text: 'Колона', at: [96, 40], anchor: 'end', leaders: [[[131, 56], [108, 36], [100, 36]]] },
@@ -357,7 +402,7 @@ function BaseDrawing() {
           { text: 'Фундамент — умовно', at: [232, 212], leaders: [[[206, 198], [220, 208], [228, 208]]] },
         ]}
       />
-    </svg>
+    </Sheet>
   );
 }
 

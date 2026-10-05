@@ -158,8 +158,8 @@ const SNAPS: readonly Snap[] = [
 const phoneNow = () => window.matchMedia('(max-width: 760px)').matches;
 const stillNow = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** A node opening (owner, 05.10: «плавний перехід від вузла до збільшеної моделі»): the panel grows out of its ring on the
- *  scheme, a disc as small as the ring, to its place; the drawing inside comes into focus a beat later. Closing, it
- *  shrinks back into the ring */
+ *  scheme, a disc as small as the ring, to its place, and the node is put together in it part by part (ProofDetails).
+ *  Closing, it shrinks back into the ring */
 const NODE_GROW = { duration: 480, easing: 'cubic-bezier(.2, .75, .25, 1)' } as const;
 const NODE_SHRINK = { duration: 300, easing: 'cubic-bezier(.45, 0, .7, .4)', fill: 'forwards' } as const;
 /** The transform that puts a panel onto a ring: its centre on the ring's, as wide as the ring */
@@ -527,6 +527,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // A detail opened takes the focus to its close; Esc, or the close, gives it back to its letter
   const detailPinRefs = useRef<Partial<Record<DetailId, HTMLButtonElement | null>>>({});
   const detailRef = useRef<HTMLDivElement>(null);
+  // «Зібрати ще раз»: a new key puts the node's drawing together again
+  const [nodeRun, setNodeRun] = useState(0);
   const detailMotion = useRef<Animation | null>(null);
   const ringOf = (id: DetailId) => stageRef.current?.querySelector(`.hv2-proof-detail-rings [data-detail="${id}"]`) ?? null;
   // Opening (and switching to another node): out of its ring, before the first paint so it never flashes in place
@@ -540,10 +542,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     detailMotion.current = panel.animate(
       [{ transform: from, opacity: 0.35, borderRadius: '50%' }, { transform: 'none', opacity: 1, borderRadius: '0' }],
       NODE_GROW,
-    );
-    panel.querySelector('.hv2-detail-drawing, svg')?.animate(
-      [{ opacity: 0, transform: 'scale(1.18)', filter: 'blur(3px)' }, { opacity: 1, transform: 'none', filter: 'none' }],
-      { duration: 420, delay: 200, easing: 'cubic-bezier(.2, .7, .2, 1)', fill: 'backwards' },
     );
   }, [detail, detailSheet]);
   // Closing: back into its ring, then gone; the focus to its letter
@@ -1134,8 +1132,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   <span aria-hidden="true">×</span>
                 </button>
               </div>
-              <item.Drawing />
-              <p className="hv2-detail-note">Вузол такого типу · схема без розмірів</p>
+              <item.Drawing key={nodeRun} />
+              <div className="hv2-detail-foot">
+                <p className="hv2-detail-note">Вузол такого типу · схема без розмірів</p>
+                <button type="button" className="hv2-detail-again" onClick={() => setNodeRun((run) => run + 1)}>
+                  <span aria-hidden="true">↻</span> Зібрати ще раз
+                </button>
+              </div>
               <p className="sr-only" id="hv2-detail-spoken">{item.spoken}</p>
             </div>
           );

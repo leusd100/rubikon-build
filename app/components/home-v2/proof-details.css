@@ -22,3 +22,12 @@ main[data-home="v2"] .hv2-detail .hv2-detail-course { stroke: var(--hv2-scheme, 
 main[data-home="v2"] .hv2-detail .hv2-detail-leader { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .5; stroke-width: .8; }
 main[data-home="v2"] .hv2-detail .hv2-detail-dot { fill: var(--hv2-scheme, #ede8de); }
 main[data-home="v2"] .hv2-detail .hv2-detail-label { font: 600 11px/1 var(--font-manrope), sans-serif; fill: var(--hv2-scheme, #ede8de); letter-spacing: 0; }
+
+/* Put together before the eye (ProofDetails' Part): each part in from its (dx, dy), one after another once the panel has
+   grown out of its ring, the names last; «Зібрати ще раз» replays it */
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-detail .hv2-detail-part { animation: hv2-detail-part 620ms cubic-bezier(.2, .8, .25, 1) both; animation-delay: calc(360ms + var(--n, 0) * 260ms); }
+  main[data-home="v2"] .hv2-detail .hv2-detail-callouts { animation: hv2-detail-names 360ms ease both; animation-delay: calc(360ms + var(--parts, 4) * 260ms + 260ms); }
+}
+@keyframes hv2-detail-part { from { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 0px)); } 35% { opacity: 1; } }
+@keyframes hv2-detail-names { from { opacity: 0; } }
