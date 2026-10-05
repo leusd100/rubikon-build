@@ -1,11 +1,14 @@
 'use client';
 
 import { memo, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type { HomeProofCase } from '../../data/homeProof';
 import { homeProofContour, type ContourLine } from '../../data/homeProofContour';
-import { homeProofFrame } from '../../data/homeProofFrame';
+import { homeProofDetailSpots, homeProofFrame, onRoof, pointLoadAt, type PointLoad, type ScopePart } from '../../data/homeProofFrame';
 import { DrawingSheet } from '../DrawingSheet';
-import { ProofFrame, ProofMarks, ProofLabels, SKETCH } from './ProofFrame';
+import { PROOF_DETAILS, type DetailId } from './ProofDetails';
+import { ProofFrame, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
+import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
 import { homeProofMeasures } from '../../data/homeProofMeasures';
 
 // HOME's proof (owner, 04.10): ONE «Креслення» sheet with the real photo, and right of a seam the visitor moves the same
@@ -74,6 +77,9 @@ const SWEEP_TURN_PHONE = 1;
 const COMMIT_EVERY = 100;
 /** A mouse leading the seam: the share of the way it closes each frame — eased, so it feels held, not dragged */
 const FOLLOW_EASE = 0.32;
+/** A scope's cell lighting its part (ScopeCells): the seam glides here, so the whole gable shows, and back on letting go */
+const FOCUS_SPLIT = 15;
+const FOCUS_SPLIT_PHONE = 1;
 /** The held line's name: its distance from the seam, px */
 const SNAP_GAP = 10;
 /** …and its padding and border, px (home-v2.css) */
@@ -269,10 +275,31 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [room, setRoom] = useState<Room | null>(null);
   // The seam's right-hand name gives way to a figure or a name of the drawing it would cover (review, 05.10)
   const [tagYield, setTagYield] = useState(false);
+  // The scope's cell lighting its part, and where the seam and the layer were before it (restored on letting go)
+  const [focusPart, setFocusPart] = useState<ScopePart | null>(null);
+  const focusFrom = useRef<{ split: number; chosen: Layer | null } | null>(null);
+  // «Точка навантаження»: the weight a pointer puts on the roof on «Сніг», and whether anyone has yet
+  const [point, setPoint] = useState<PointLoad | null>(null);
+  const [pointed, setPointed] = useState(false);
+  const pointFrame = useRef(0);
+  const pointX = useRef(0);
+  // The detail open (А, Б, В), and the canvas on the right side the pointer is read against
+  const [detail, setDetail] = useState<DetailId | null>(null);
+  // On a phone the frame is too low for a drawing: the node opens as a sheet from the screen's foot, over the page
+  const [detailSheet, setDetailSheet] = useState(false);
+  const paneCanvasRef = useRef<HTMLDivElement>(null);
+  const detailCloseRef = useRef<HTMLButtonElement>(null);
 
   const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['contour', 'frame', 'load', 'wind'];
   const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[sketchMode ? 0 : 1];
   const rightSide = LAYERS[layer];
+  // for the listeners set up once
+  const layerRef = useRef(layer);
+  const chosenRef = useRef(chosen);
+  useEffect(() => {
+    layerRef.current = layer;
+    chosenRef.current = chosen;
+  });
 
   // The seam's place on the page: written straight onto the four elements that carry it, never through a render — a
   // drag or a mouse moves it every frame, and nothing else on the sheet need restyle for it
@@ -423,6 +450,75 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
 
   const { stampShort, stampNone, narrowLeft, narrowRight } = fitOf(room, split);
 
+  // A scope's cell below lights its part here (ScopeCells): the scheme on — off «Контур» onto «Каркас» — and the seam
+  // glides left so the whole gable shows; letting go brings the seam and the layer back, unless the visitor has moved
+  // the seam meanwhile. A pressed cell (a tap on a phone) brings the sheet into view first
+  useEffect(() => {
+    // Letting go waits a moment: the pointer passing from one cell to the next must not send the seam back and forth
+    let release: number | undefined;
+    const onScope = (event: Event) => {
+      const { part, sticky } = (event as CustomEvent<ScopeFocus>).detail;
+      const stage = stageRef.current;
+      if (!stage) return;
+      const to = phoneNow() ? FOCUS_SPLIT_PHONE : FOCUS_SPLIT;
+      window.clearTimeout(release);
+      if (part) {
+        if (!focusFrom.current) focusFrom.current = { split: live.current, chosen: chosenRef.current };
+        setFocusPart(part);
+        cancelAnimationFrame(followFrame.current);
+        followFrame.current = 0;
+        target.current = live.current;
+        delete stage.dataset.following;
+        snapRef.current = null;
+        setSnap(null);
+        setPoint(null);
+        setDetail(null);
+        if (layerRef.current === 'contour') setChosen('frame');
+        if (live.current > to) setSplit(to);
+        if (sticky) {
+          const box = stage.getBoundingClientRect();
+          const shown = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, 0);
+          // the whole frame, or near enough: the part lit may be its roof, at the top
+          if (shown < box.height * 0.92) stage.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+        }
+        return;
+      }
+      release = window.setTimeout(() => {
+        const from = focusFrom.current;
+        focusFrom.current = null;
+        setFocusPart(null);
+        if (!from) return;
+        if (Math.abs(live.current - to) < 0.5) setSplit(from.split);
+        if (chosenRef.current === 'frame' && from.chosen !== 'frame') setChosen(from.chosen);
+      }, sticky ? 0 : 160);
+    };
+    window.addEventListener(SCOPE_FOCUS_EVENT, onScope);
+    return () => {
+      window.clearTimeout(release);
+      window.removeEventListener(SCOPE_FOCUS_EVENT, onScope);
+    };
+  }, []);
+
+  // A detail opened takes the focus to its close; Esc, or the close, gives it back to its letter
+  const detailPinRefs = useRef<Partial<Record<DetailId, HTMLButtonElement | null>>>({});
+  const closeDetail = () => {
+    const was = detail;
+    setDetail(null);
+    if (was) detailPinRefs.current[was]?.focus({ preventScroll: true });
+  };
+  useEffect(() => {
+    if (!detail) return;
+    detailCloseRef.current?.focus({ preventScroll: true });
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setDetail(null);
+      detailPinRefs.current[detail]?.focus({ preventScroll: true });
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [detail]);
+  useEffect(() => () => cancelAnimationFrame(pointFrame.current), []);
+
   // On a laptop the picture takes the height the window has left (home-v2.css): the sheet's other parts — the rulers, the
   // title block, however many lines its note wraps to — are measured here, so the title block is never pushed under the
   // picture (owner, 04.10: on a short window the picture covered the note)
@@ -536,11 +632,53 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (live.current !== target.current) followFrame.current = requestAnimationFrame(follow);
   };
 
+  // Where a pointer is in the photo's own pixels, if it is on the right side of the seam
+  const onScheme = (clientX: number, clientY: number): readonly [number, number] | null => {
+    const canvas = paneCanvasRef.current?.getBoundingClientRect();
+    const box = stageRef.current?.getBoundingClientRect();
+    if (!canvas || !box || clientX < box.left + (box.width * live.current) / 100) return null;
+    return [((clientX - canvas.left) / canvas.width) * contourPhoto.width, ((clientY - canvas.top) / canvas.height) * contourPhoto.height];
+  };
+  // «Точка навантаження»: on «Сніг», a pointer over the roof puts a weight there — at most once a frame
+  const pointAt = (x: number) => {
+    pointX.current = x;
+    if (pointFrame.current) return;
+    pointFrame.current = requestAnimationFrame(() => {
+      pointFrame.current = 0;
+      setPoint((previous) => {
+        const next = pointLoadAt(pointX.current);
+        return previous && previous.node === next.node && Math.abs(previous.x - next.x) < 1 ? previous : next;
+      });
+      setPointed(true);
+    });
+  };
+  const dropPoint = () => {
+    cancelAnimationFrame(pointFrame.current);
+    pointFrame.current = 0;
+    setPoint(null);
+  };
+  const roofAt = (clientX: number, clientY: number) => {
+    if (layerRef.current !== 'load' || detail) return null;
+    const at = onScheme(clientX, clientY);
+    return at && onRoof(at) ? at : null;
+  };
+
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || !ready) return;
+    // The details' letters and the detail open are their own: no seam moves under them
+    if ((event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail')) return;
+    // On «Сніг» the roof takes the weight: a finger puts it there, a mouse already has, and the seam stays
+    const roof = roofAt(event.clientX, event.clientY);
+    if (roof) {
+      if (event.pointerType === 'touch') pointAt(roof[0]);
+      return;
+    }
     const handle = (event.target as Element).closest('.hv2-contour-handle');
     // A finger on the photo scrolls the page; only the handle takes it
-    if (event.pointerType === 'touch' && !handle) return;
+    if (event.pointerType === 'touch' && !handle) {
+      if (point) dropPoint();
+      return;
+    }
     event.preventDefault();
     if (handle) {
       // Grabbing the handle keeps the seam where it is and the handle under the pointer. The offset is taken from where
@@ -572,12 +710,25 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const stage = event.currentTarget;
     if (event.pointerType !== 'mouse' || !ready || drag.current || stage.dataset.sweep !== undefined) return;
     if ((event.movementX === 0 && event.movementY === 0) || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    // Over a detail's letter, the detail open, or — on «Сніг» — the roof, the mouse is busy there: the seam stays
+    const roof = roofAt(event.clientX, event.clientY);
+    const busy = roof !== null || (event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail') !== null;
+    if (roof) pointAt(roof[0]);
+    else if (point || pointFrame.current) dropPoint();
+    if (busy) {
+      cancelAnimationFrame(followFrame.current);
+      followFrame.current = 0;
+      target.current = live.current;
+      delete stage.dataset.following;
+      return;
+    }
     stage.dataset.following = '';
     splitAt(event.clientX);
     if (!followFrame.current) followFrame.current = requestAnimationFrame(follow);
   };
   const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
     if (drag.current) return;
+    if (event.pointerType === 'mouse') dropPoint();
     // the seam stays where the mouse left it
     cancelAnimationFrame(followFrame.current);
     followFrame.current = 0;
@@ -628,6 +779,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // and on a phone its way down the frame wants the wider right side
   const choose = (next: Layer) => {
     clearLit();
+    dropPoint();
+    if (next !== 'frame') setDetail(null);
     setChosen(next);
     if (next === 'load' || next === 'wind') {
       (next === 'load' ? setLoadRun : setWindRun)((run) => run + 1);
@@ -741,6 +894,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-snapped={snap ? '' : undefined}
         data-snap-side={snapPlace.side}
         data-snap-wrap={snapPlace.wrap ? '' : undefined}
+        data-focus={focusPart ?? undefined}
+        data-point={point ? '' : undefined}
+        data-pointed={pointed ? '' : undefined}
+        data-detail={detail ?? undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
@@ -767,7 +924,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             frame of a drag). The same canvas inside, so nothing slides */}
         <div className="hv2-contour-pane" ref={paneRef}>
           <div className="hv2-contour-pane-inner" ref={innerRef}>
-            <div className="hv2-contour-canvas">
+            <div className="hv2-contour-canvas" ref={paneCanvasRef}>
               {/* The tracing: the same frame (the same file, so no second download), grey and dark, on a fine grid */}
               <div className="hv2-contour-trace" aria-hidden="true" style={{ '--hv2-building': BUILDING_MASK } as CSSProperties}>
                 <svg className="hv2-contour-ground" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}>
@@ -794,6 +951,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                 </div>
               )}
               <ProofFrame loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} wind={layer === 'wind'} ready={ready} />
+              <ProofPoint point={layer === 'load' ? point : null} />
               <svg
                 className="hv2-contour-lines"
                 viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}
@@ -806,6 +964,35 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               </svg>
               <ProofMarks />
               <ProofLabels />
+              {/* The details' letters (А, Б, В) beside their rings on «Каркас»: each opens its node, drawn */}
+              <div className="hv2-proof-detail-pins">
+                {homeProofDetailSpots.map(({ id, badge: [x, y], badgePhone: [px, py] }) => {
+                  const item = PROOF_DETAILS.find((entry) => entry.id === id)!;
+                  return (
+                    <button
+                      key={id}
+                      ref={(element) => { detailPinRefs.current[id] = element; }}
+                      type="button"
+                      className="hv2-proof-detail-pin"
+                      data-detail={id}
+                      style={{
+                        '--x': `${(x / contourPhoto.width) * 100}%`, '--y': `${(y / contourPhoto.height) * 100}%`,
+                        '--px': `${(px / contourPhoto.width) * 100}%`, '--py': `${(py / contourPhoto.height) * 100}%`,
+                      } as CSSProperties}
+                      aria-label={`Вузол ${item.letter}: ${item.title}`}
+                      aria-haspopup="dialog"
+                      aria-expanded={detail === id}
+                      disabled={!ready}
+                      onClick={() => {
+                        setDetailSheet(phoneNow());
+                        setDetail((open) => (open === id ? null : id));
+                      }}
+                    >
+                      {item.letter}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             {/* The right side's own words, outside the canvas (never cropped): what it is, top right */}
             <span className="hv2-contour-corner" aria-hidden="true">
@@ -833,6 +1020,26 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             </svg>
           </div>
         )}
+        {/* The node opened (ProofDetails): over the photo's side, so its ring on the scheme stays in view */}
+        {detail && (() => {
+          const item = PROOF_DETAILS.find((entry) => entry.id === detail)!;
+          const body = (
+            <div className="hv2-detail" data-sheet={detailSheet ? '' : undefined} role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
+              <div className="hv2-detail-head">
+                <span className="hv2-detail-letter" aria-hidden="true">{item.letter}</span>
+                <b id="hv2-detail-title">Вузол {item.letter} · {item.title}</b>
+                <button ref={detailCloseRef} type="button" className="hv2-detail-close" aria-label="Закрити вузол" onClick={closeDetail}>
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <item.Drawing />
+              <p className="hv2-detail-note">Вузол такого типу · схема без розмірів</p>
+              <p className="sr-only" id="hv2-detail-spoken">{item.spoken}</p>
+            </div>
+          );
+          const main = detailSheet ? document.querySelector('main[data-home="v2"]') : null;
+          return main ? createPortal(<><div className="hv2-detail-backdrop" aria-hidden="true" onClick={closeDetail} />{body}</>, main) : body;
+        })()}
         {/* What the figures say, for a screen reader: the labels on the frame are drawn for the eye only */}
         <ul className="sr-only" aria-label="Виміряно за фото, без масштабу">
           {homeProofMeasures.map((measure) => <li key={measure.id} data-measure={measure.id}>{measure.spoken}</li>)}
@@ -858,6 +1065,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         {/* The seam, its handle, its names and the held line's name ride one full-width rail moved by a transform: moved
             by left, they shifted the page's layout on every frame of the sweep (review, 04.10: CLS) */}
         <span className="hv2-contour-rail" ref={railRef} aria-hidden="true">
+          {/* On «Сніг», until the visitor has tried it: the roof takes a weight */}
+          <span className="hv2-contour-hint">
+            <span data-input="hover">Наведіть на дах — куди піде вага</span>
+            <span data-input="touch">Торкніться даху — куди піде вага</span>
+          </span>
           <span className="hv2-contour-seamtags">
             <span>‹ Фото</span>
             <span>{rightSide.seam} ›</span>

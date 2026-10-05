@@ -1,0 +1,24 @@
+/* The three nodes under HOME's proof (ProofDetails.tsx), drawn on the panel's dark graphite sheet: the members in the
+   sheet's paper colour, the connection in copper, hatches faint, the names in Manrope. Butt caps and miter joins, as a
+   drawing's lines are; no glow, no shadow, no gradient. */
+main[data-home="v2"] .hv2-detail .hv2-detail-drawing { display: block; width: 100%; height: auto; }
+main[data-home="v2"] .hv2-detail :is(.hv2-detail-strong, .hv2-detail-thin, .hv2-detail-key, .hv2-detail-hatch, .hv2-detail-course, .hv2-detail-leader) {
+  fill: none; stroke-linecap: butt; stroke-linejoin: miter;
+}
+/* The main members */
+main[data-home="v2"] .hv2-detail .hv2-detail-strong { stroke: var(--hv2-scheme, #ede8de); stroke-width: 1.8; }
+/* Secondary parts, outlines, break lines */
+main[data-home="v2"] .hv2-detail .hv2-detail-thin { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .7; stroke-width: 1; }
+/* The connection itself: plate, bolts, cleat, the belt's edge */
+main[data-home="v2"] .hv2-detail .hv2-detail-key { stroke: var(--hv2-copper-text, #d39a6f); stroke-width: 1.6; }
+/* What the concrete hides: the anchors' shanks */
+main[data-home="v2"] .hv2-detail .hv2-detail-hidden { stroke-dasharray: 4 2.5; }
+/* Section hatches: masonry lines, the concrete's aggregate and grains, the ground's ticks */
+main[data-home="v2"] .hv2-detail .hv2-detail-hatch { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .4; stroke-width: 1; }
+main[data-home="v2"] .hv2-detail .hv2-detail-grain { fill: var(--hv2-scheme, #ede8de); fill-opacity: .45; }
+/* The wall's block courses, fainter than its hatch */
+main[data-home="v2"] .hv2-detail .hv2-detail-course { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .3; stroke-width: 1; }
+/* The names: a thin leader from a dot on the part */
+main[data-home="v2"] .hv2-detail .hv2-detail-leader { stroke: var(--hv2-scheme, #ede8de); stroke-opacity: .5; stroke-width: .8; }
+main[data-home="v2"] .hv2-detail .hv2-detail-dot { fill: var(--hv2-scheme, #ede8de); }
+main[data-home="v2"] .hv2-detail .hv2-detail-label { font: 600 11px/1 var(--font-manrope), sans-serif; fill: var(--hv2-scheme, #ede8de); letter-spacing: 0; }

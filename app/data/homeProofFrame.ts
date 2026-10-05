@@ -322,3 +322,74 @@ export const homeProofFrame: HomeProofFrame = {
   windLabel:
     'Вітер тисне на бічну стіну й підіймає покрівлю; ферма передає його на другу стіну й колону, а з них — на фундаменти й ґрунт.',
 };
+
+/** The parts the scope's cells name (ScopeCells → ProofContour, owner, 05.10: «плитки оживляють схему»): pointed at, a
+ *  cell lights its part on the scheme. «Каркас» is the frame's own members; «Покрівля» the roof's planes, from the
+ *  gable's top chord back to the last bay's, over the purlins; «Стінові панелі» the cladding on the walls' faces — the
+ *  gable less its gates, and the long wall. Drawn only while lit */
+export type ScopePart = 'frame' | 'walls' | 'roof';
+export const SCOPE_PART_OF: Readonly<Record<string, ScopePart>> = { Каркас: 'frame', 'Стінові панелі': 'walls', Покрівля: 'roof' };
+export const homeProofParts: { roof: readonly Pt[]; walls: readonly (readonly Pt[])[] } = {
+  roof: [[299.2, 218.5], [1005, 149.8], [1460.7, 305.1], [1250.1, 333.7], [836.7, 208.3], [235.5, 275.6]],
+  walls: [homeProofFrame.walls.gable, ...homeProofFrame.walls.holes, homeProofFrame.walls.long],
+};
+
+/** «Точка навантаження» (owner, 05.10): a weight put anywhere on the roof, and its way down. It lands on the purlin over
+ *  the nearest top-chord node; the truss carries it to the supports either side of that node — the left wall, the
+ *  central column under the ridge, the right wall — and each of them down to its footing. The nearer support takes the
+ *  larger share (a lever's rule, the share only drawn as a line's weight — no figure); a node over a support sends it
+ *  all down that one. A scheme of the way, not a calculation */
+export type PointLoad = {
+  x: number;
+  roof: Pt;
+  node: Pt;
+  arrow: readonly [Pt, Pt];
+  legs: readonly { points: readonly Pt[]; share: number }[];
+};
+const SUPPORTS: readonly { top: Pt; down: readonly Pt[] }[] = [
+  { top: [299.2, 218.5], down: [[297.9, 252.2], [284.8, 595.7], [283.4, 634.6]] },
+  { top: [1005, 149.8], down: [[1005.9, 300.6], [1007.3, 563.5], [1007.7, 609]] },
+  { top: [1460.7, 305.1], down: [[1461.6, 331.8], [1469.3, 561.3], [1470.3, 595]] },
+];
+export const POINT_LOAD_RANGE = { from: ROOF_TOP[0][0] + 4, to: ROOF_TOP[2][0] - 4 } as const;
+export function pointLoadAt(at: number): PointLoad {
+  const x = Math.min(POINT_LOAD_RANGE.to, Math.max(POINT_LOAD_RANGE.from, at));
+  const { nodes } = homeProofFrame;
+  const index = nodes.reduce((best, node, i) => (Math.abs(node[0] - x) < Math.abs(nodes[best][0] - x) ? i : best), 0);
+  const node = nodes[index];
+  const roof: Pt = [round1(x), round1(roofTopY(x))];
+  // The span it is in: between which supports, by the node's place
+  const right = node[0] > SUPPORTS[1].top[0] + 0.5 ? 1 : 0;
+  const [a, b] = [SUPPORTS[right], SUPPORTS[right + 1]];
+  const towards = (support: (typeof SUPPORTS)[number]) => {
+    const target = nodes.findIndex((point) => Math.abs(point[0] - support.top[0]) < 0.5);
+    const step = target >= index ? 1 : -1;
+    const along: Pt[] = [];
+    for (let i = index; i !== target + step; i += step) along.push(nodes[i]);
+    return [...along, ...support.down];
+  };
+  const onSupport = SUPPORTS.find((support) => Math.abs(support.top[0] - node[0]) < 0.5);
+  const legs = onSupport
+    ? [{ points: towards(onSupport), share: 1 }]
+    : [
+      { points: towards(a), share: (b.top[0] - node[0]) / (b.top[0] - a.top[0]) },
+      { points: towards(b), share: (node[0] - a.top[0]) / (b.top[0] - a.top[0]) },
+    ];
+  return { x, roof, node, arrow: [[roof[0], round1(roof[1] - 44)], [roof[0], round1(roof[1] - 5)]], legs };
+}
+/** Where a pointer counts as pointing at the roof: over the comb's line down to the truss's bottom chord */
+export function onRoof([x, y]: Pt) {
+  if (x < POINT_LOAD_RANGE.from || x > POINT_LOAD_RANGE.to) return false;
+  const [[x0, y0], [x1, y1]] = [[297.9, 252.2], [1461.6, 331.8]];
+  const chord = y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+  return y >= roofTopY(x) - 84 && y <= chord;
+}
+
+/** The nodes drawn as details (ProofDetails, owner, 05.10 — «вузли-деталі»): a dashed ring round each on the scheme and
+ *  its letter beside it. А the truss's bearing on the right wall, Б a purlin on a top-chord node, В the column's base */
+export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base'; ring: Pt; radius: number; badge: Pt; badgePhone: Pt }[] = [
+  { id: 'bearing', ring: [1461.6, 324], radius: 26, badge: [1424, 292], badgePhone: [1424, 292] },
+  { id: 'purlin', ring: [1194.3, 214.3], radius: 20, badge: [1172, 176], badgePhone: [1172, 176] },
+  // on a phone the seam's handle stands at the frame's foot next to the column: its letter goes up into the gate
+  { id: 'base', ring: [1007.5, 570], radius: 28, badge: [1050, 596], badgePhone: [1084, 470] },
+];

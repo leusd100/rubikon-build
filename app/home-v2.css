@@ -796,6 +796,23 @@ main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { max-width: 560px;
 /* The scope as the building it made (UX pass 2026-10): three cells, the same hangar in each, the named part in copper */
 main[data-home="v2"] .hv2-scope-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin: 26px 0 0; padding: 0; list-style: none; border: 1px solid var(--hv2-line-strong); }
 main[data-home="v2"] .hv2-scope-chips li { display: grid; gap: 14px; padding: 18px 20px 16px; color: var(--hv2-text); transition: background-color .25s ease; font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+/* A cell that lights its part on the scheme above is a button filling the cell (ScopeCells) */
+main[data-home="v2"] .hv2-scope-chips li:has(> .hv2-scope-cell) { padding: 0; }
+main[data-home="v2"] .hv2-scope-cell {
+  display: grid; gap: 14px; width: 100%; height: 100%; padding: 18px 20px 16px; margin: 0; color: inherit; text-align: left; text-transform: inherit;
+  font: inherit; letter-spacing: inherit; background: none; border: 0; border-radius: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+main[data-home="v2"] .hv2-scope-cell:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -4px; }
+main[data-home="v2"] .hv2-scope-cell[aria-pressed="true"] { background: color-mix(in srgb, var(--hv2-copper) 12%, transparent); box-shadow: inset 0 -2px 0 var(--hv2-copper); }
+/* «↑ на схемі»: where the part lights up — shown on a cell pointed at, focused or pressed, always on a touch screen */
+main[data-home="v2"] .hv2-scope-cell { position: relative; }
+main[data-home="v2"] .hv2-scope-hint {
+  position: absolute; top: 10px; right: 12px; color: var(--hv2-copper-text); font: 600 11px/1 var(--font-manrope), sans-serif; letter-spacing: 0;
+  text-transform: none; opacity: 0; transition: opacity 200ms ease;
+}
+main[data-home="v2"] .hv2-scope-cell:is(:hover, :focus-visible, [aria-pressed="true"]) .hv2-scope-hint { opacity: 1; }
+@media (hover: none) { main[data-home="v2"] .hv2-scope-hint { opacity: .85; } }
+@media (max-width: 760px) { main[data-home="v2"] .hv2-scope-hint { top: 6px; right: 6px; font-size: 10px; } }
 main[data-home="v2"] .hv2-scope-chips li + li { border-left: 1px solid var(--hv2-line-strong); }
 main[data-home="v2"] .hv2-scope-glyph { display: block; width: 100%; max-width: 150px; height: auto; overflow: visible; }
 main[data-home="v2"] .hv2-scope-glyph path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -863,9 +880,113 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 }
 @media (max-width: 560px) {
   main[data-home="v2"] .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
+  main[data-home="v2"] .hv2-scope-cell { gap: 10px; padding: 12px 10px 10px; }
 }
 
 /* UX pass 2026-10: the geography line stays last, also where a very short phone moves the lead under the buttons. */
 main[data-home="v2"] .hv2-geo-bond { margin-top: clamp(40px, 5vw, 64px); }
 
 
+
+
+/* --- The scope's cells light their part (ScopeCells → ProofContour's data-focus, owner 05.10) ---
+   The lit part in the copper of «у глибині», a touch brighter; everything else in the scheme steps back; the names and
+   the figures give way to it */
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-part { opacity: 0; transition: opacity 300ms ease; }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-part[data-part="roof"] { fill: rgba(224, 154, 104, .22); stroke: #e39a68; stroke-width: calc(var(--u) * 1.4); }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-part[data-part="walls"] { fill: url(#hv2-proof-ribs); stroke: #e39a68; stroke-width: calc(var(--u) * 1.4); }
+main[data-home="v2"] #hv2-proof-ribs rect { fill: rgba(224, 154, 104, .16); }
+main[data-home="v2"] #hv2-proof-ribs path { stroke: rgba(240, 180, 138, .55); stroke-width: 1; }
+main[data-home="v2"] .hv2-contour-stage:is([data-focus="roof"], [data-focus="walls"]) .hv2-proof-part[data-part] { opacity: 0; }
+main[data-home="v2"] .hv2-contour-stage[data-focus="roof"] .hv2-proof-part[data-part="roof"],
+main[data-home="v2"] .hv2-contour-stage[data-focus="walls"] .hv2-proof-part[data-part="walls"] { opacity: 1; }
+main[data-home="v2"] .hv2-proof-scheme :is([data-group], .hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, .hv2-proof-nodes) { transition: opacity 300ms ease, stroke 300ms ease; }
+/* what steps back for each part */
+main[data-home="v2"] .hv2-contour-stage[data-focus="frame"] .hv2-proof-scheme :is(.hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, [data-group="wall"]),
+main[data-home="v2"] .hv2-contour-stage[data-focus="roof"] .hv2-proof-scheme :is(.hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, .hv2-proof-nodes, [data-group]:not([data-group="purlin"])),
+main[data-home="v2"] .hv2-contour-stage[data-focus="walls"] .hv2-proof-scheme :is(.hv2-proof-footing, .hv2-proof-nodes, [data-group]:not([data-group="wall"])) { opacity: .16; }
+/* …and what lights: the frame's members and the roof's purlins in the bright copper */
+main[data-home="v2"] .hv2-contour-stage[data-focus="frame"] .hv2-proof-scheme :is([data-group="truss"], [data-group="web"], [data-group="column"], [data-group="bracing"], [data-group="purlin"]) { stroke: #e39a68; }
+main[data-home="v2"] .hv2-contour-stage[data-focus="roof"] .hv2-proof-scheme [data-group="purlin"] { stroke: #e39a68; --depth: 1; }
+main[data-home="v2"] .hv2-contour-stage[data-focus] :is(.hv2-proof-labels, .hv2-proof-marks, .hv2-proof-detail-pins, .hv2-proof-detail-rings) { opacity: 0 !important; visibility: hidden; }
+
+/* --- «Точка навантаження» on «Сніг» (ProofContour, homeProofFrame's pointLoadAt) ---
+   The uniform load steps back while a weight stands on the roof; the weight, its landing and its ways in the load's
+   tint, each way as heavy as its share; the drops run down them */
+main[data-home="v2"] .hv2-proof-point { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+main[data-home="v2"] .hv2-proof-point path, main[data-home="v2"] .hv2-proof-point circle, main[data-home="v2"] .hv2-proof-point rect { fill: none; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="load"][data-point] .hv2-proof-load { opacity: .22; }
+main[data-home="v2"] .hv2-proof-point .hv2-proof-link-casing { stroke: #0d0f0e; stroke-opacity: .85; stroke-width: calc(var(--u) * (2.6 + 4 * var(--share))); stroke-linejoin: round; }
+main[data-home="v2"] .hv2-proof-point .hv2-proof-point-way { stroke: var(--hv2-scheme); stroke-width: calc(var(--u) * (.8 + 3 * var(--share))); stroke-linejoin: round; }
+main[data-home="v2"] .hv2-proof-point .hv2-proof-flow {
+  stroke: var(--hv2-load); stroke-width: calc(var(--u) * (2.6 + 3 * var(--share))); stroke-linecap: round; stroke-dasharray: calc(var(--u) * .5) calc(var(--u) * 13);
+}
+main[data-home="v2"] :is(#hv2-proof-point-head, #hv2-proof-point-foot) path { fill: var(--hv2-load); }
+main[data-home="v2"] .hv2-proof-point .hv2-proof-point-arrow { stroke: var(--hv2-load); stroke-width: calc(var(--u) * 2.2); }
+main[data-home="v2"] .hv2-proof-point .hv2-proof-point-weight { fill: var(--hv2-load); }
+main[data-home="v2"] .hv2-proof-point .hv2-proof-point-landing { stroke: var(--hv2-load); stroke-width: calc(var(--u) * 1.4); stroke-dasharray: calc(var(--u) * 3) calc(var(--u) * 2.5); }
+main[data-home="v2"] .hv2-proof-point .hv2-proof-point-node { fill: var(--hv2-load); }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-proof-point .hv2-proof-flow { animation: hv2-contour-flow 1400ms linear infinite; }
+  main[data-home="v2"] .hv2-proof-point[data-on] > g { animation: hv2-contour-fade 160ms ease; }
+}
+/* The hint, until the roof has taken a weight once */
+main[data-home="v2"] .hv2-contour-hint {
+  position: absolute; z-index: 3; top: 10px; left: 0; padding: 5px 9px; color: var(--hv2-load); white-space: nowrap; pointer-events: none;
+  background: rgba(19, 21, 20, .9); border: 1px solid rgba(240, 180, 138, .55); font: 600 12px/1.2 var(--font-manrope), sans-serif;
+  transform: translateX(10px); opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 240ms;
+}
+main[data-home="v2"] .hv2-contour-stage[data-layer="load"]:not([data-pointed], [data-snapped]) .hv2-contour-hint { opacity: 1; visibility: visible; }
+main[data-home="v2"] .hv2-contour-hint [data-input="touch"] { display: none; }
+@media (hover: none) {
+  main[data-home="v2"] .hv2-contour-hint [data-input="hover"] { display: none; }
+  main[data-home="v2"] .hv2-contour-hint [data-input="touch"] { display: inline; }
+}
+@media (max-width: 760px) { main[data-home="v2"] .hv2-contour-hint { top: 6px; padding: 4px 7px; font-size: 11px; } }
+
+/* --- The details (ProofDetails): a dashed ring round each node, its letter beside it, and the node drawn ---
+   On «Каркас» only. The letter is a button (44 px to a finger); the drawing opens over the photo's side */
+main[data-home="v2"] .hv2-proof-detail-rings circle { fill: none; stroke: var(--hv2-copper-text); stroke-width: calc(var(--u) * 1.1); stroke-dasharray: calc(var(--u) * 4) calc(var(--u) * 3); opacity: .85; transition: opacity 240ms ease, stroke-width 200ms ease; }
+main[data-home="v2"] .hv2-contour-stage[data-detail="bearing"] .hv2-proof-detail-rings [data-detail="bearing"],
+main[data-home="v2"] .hv2-contour-stage[data-detail="purlin"] .hv2-proof-detail-rings [data-detail="purlin"],
+main[data-home="v2"] .hv2-contour-stage[data-detail="base"] .hv2-proof-detail-rings [data-detail="base"] { stroke: #f0b48a; stroke-width: calc(var(--u) * 2); stroke-dasharray: none; }
+main[data-home="v2"] .hv2-proof-detail-pins { position: absolute; inset: 0; pointer-events: none; }
+main[data-home="v2"] .hv2-proof-detail-pin {
+  position: absolute; left: var(--x); top: var(--y); display: grid; place-items: center; width: 24px; height: 24px; margin: -12px 0 0 -12px; padding: 0;
+  color: var(--hv2-copper-text); background: #141615; border: 1.5px solid var(--hv2-copper-text); border-radius: 50%; cursor: pointer; pointer-events: auto;
+  font: 700 12px/1 var(--font-condensed), sans-serif; transition: background-color 200ms ease, color 200ms ease;
+}
+main[data-home="v2"] .hv2-proof-detail-pin::before { content: ''; position: absolute; inset: -10px; border-radius: 50%; }
+main[data-home="v2"] .hv2-proof-detail-pin:is(:hover, [aria-expanded="true"]) { color: #141615; background: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-proof-detail-pin:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+main[data-home="v2"] :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 240ms; }
+main[data-home="v2"] .hv2-contour-stage[data-layer="frame"]:not([data-focus]) :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 1; visibility: visible; }
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-proof-detail-pins { opacity: 0; visibility: hidden; }
+main[data-home="v2"] .hv2-detail {
+  position: absolute; z-index: 6; top: 12px; left: 12px; display: grid; gap: 8px; width: clamp(300px, 46%, 420px); max-height: calc(100% - 24px); overflow: auto;
+  padding: 10px 12px 10px; color: var(--hv2-text); background: #161817; border: 1px solid var(--hv2-copper-text);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .4); cursor: default;
+}
+main[data-home="v2"] .hv2-detail-head { display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--hv2-line-strong); }
+main[data-home="v2"] .hv2-detail-head b { flex: 1; font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-detail-letter { display: grid; place-items: center; width: 22px; height: 22px; color: #141615; background: var(--hv2-copper-text); border-radius: 50%; font: 700 12px/1 var(--font-condensed), sans-serif; }
+main[data-home="v2"] .hv2-detail-close { display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -6px -6px 0; padding: 0; color: var(--hv2-text-2); background: none; border: 0; font: 400 22px/1 var(--font-manrope), sans-serif; cursor: pointer; }
+main[data-home="v2"] .hv2-detail-close:hover { color: var(--hv2-text); }
+main[data-home="v2"] .hv2-detail-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+main[data-home="v2"] .hv2-detail-note { margin: 0; color: var(--hv2-text-3); font: 500 11.5px/1.3 var(--font-manrope), sans-serif; }
+@media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-detail { animation: hv2-contour-fade 200ms ease; } }
+/* A phone: the node as a sheet from the screen's foot, over a dimmed page (ProofContour portals it into main) */
+main[data-home="v2"] .hv2-detail[data-sheet] {
+  position: fixed; z-index: 60; inset: auto 0 0 0; width: auto; max-height: 82vh; padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
+  border-width: 1px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, .45);
+}
+main[data-home="v2"] .hv2-detail-backdrop { position: fixed; z-index: 59; inset: 0; background: rgba(8, 9, 9, .55); }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-detail[data-sheet] { animation: hv2-detail-rise 260ms cubic-bezier(.2, .7, .3, 1); }
+  main[data-home="v2"] .hv2-detail-backdrop { animation: hv2-contour-fade 200ms ease; }
+}
+@keyframes hv2-detail-rise { from { transform: translateY(24px); opacity: 0; } }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-detail-note { font-size: 11px; }
+  main[data-home="v2"] .hv2-proof-detail-pin { left: var(--px); top: var(--py); width: 20px; height: 20px; margin: -10px 0 0 -10px; font-size: 11px; }
+}

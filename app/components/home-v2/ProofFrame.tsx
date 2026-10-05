@@ -1,6 +1,6 @@
 import { memo, type CSSProperties } from 'react';
 import { homeProofContour } from '../../data/homeProofContour';
-import { homeProofFrame } from '../../data/homeProofFrame';
+import { homeProofDetailSpots, homeProofFrame, homeProofParts, type PointLoad } from '../../data/homeProofFrame';
 import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures';
 
 // The layers ProofContour lays right of its seam, all in the photo's own pixels on one canvas:
@@ -79,6 +79,11 @@ export const ProofFrame = memo(function ProofFrame({ loadRun, windRun, shown, wi
         <clipPath id="hv2-proof-face">
           <path d={d(walls.gable, true) + walls.holes.map((hole) => d(hole, true)).join('')} clipRule="evenodd" />
         </clipPath>
+        {/* The cladding's ribs, lit with «Стінові панелі» */}
+        <pattern id="hv2-proof-ribs" width="14" height="14" patternUnits="userSpaceOnUse">
+          <rect width="14" height="14" />
+          <path d="M3 0V14M10 0V14" />
+        </pattern>
         {/* A section's hatch: what the scheme's plane cuts — the long walls, the footings */}
         {HATCHES.map(([id, step]) => (
           <pattern key={id} id={id} className="hv2-proof-hatch" width={step} height={step} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -119,10 +124,18 @@ export const ProofFrame = memo(function ProofFrame({ loadRun, windRun, shown, wi
               data-hidden={member.hidden ? '' : undefined}
             />
           ))}
+          {/* The parts the scope's cells light (ScopeCells): the roof's planes and the cladding on the walls' faces, drawn
+              only while their cell is pointed at (home-v2.css, the stage's data-focus) */}
+          <path className="hv2-proof-part" data-part="roof" d={d(homeProofParts.roof, true)} />
+          <path className="hv2-proof-part" data-part="walls" d={homeProofParts.walls.map((face) => d(face, true)).join('')} fillRule="evenodd" />
           {/* Where the purlins bear: an open node on every top-chord panel point of the gable's truss */}
           <g className="hv2-proof-nodes">
             {nodes.map(([x, y]) => <circle key={x} cx={x} cy={y} r="3.4" />)}
           </g>
+        </g>
+        {/* The nodes drawn as details (ProofContour's А, Б, В): a dashed ring round each */}
+        <g className="hv2-proof-detail-rings">
+          {homeProofDetailSpots.map(({ id, ring: [x, y], radius }) => <circle key={id} data-detail={id} cx={x} cy={y} r={radius} />)}
         </g>
         {/* Under the ground, «умовно»: in section under the cut walls and the column, the long wall's strip going back */}
         {footings.map((member, index) => (
@@ -258,5 +271,38 @@ export const ProofLabels = memo(function ProofLabels() {
         <span key={tag.id} className="hv2-proof-tag" data-tag={tag.id} data-align={tag.align} data-wide-only={tag.wideOnly ? '' : undefined} style={place(tag.at, tag.at, tag.atNarrow)}>{tag.text}</span>
       ))}
     </div>
+  );
+});
+
+/** «Точка навантаження» (homeProofFrame's pointLoadAt): the weight over the roof, its landing on the nearest purlin, and
+ *  its way through the truss to the supports either side and down — each way drawn as heavy as its share. Its own layer,
+ *  so a pointer moving over the roof redraws these few paths, not the scheme */
+export const ProofPoint = memo(function ProofPoint({ point }: Readonly<{ point: PointLoad | null }>) {
+  return (
+    <svg className="hv2-proof-point" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" data-on={point ? '' : undefined}>
+      <defs>
+        <marker id="hv2-proof-point-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" />
+        </marker>
+        <marker id="hv2-proof-point-foot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="2" markerHeight="2" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" />
+        </marker>
+      </defs>
+      {point && (
+        <g key={`${point.node[0]}`}>
+          {point.legs.map(({ points, share }, index) => (
+            <g key={index} className="hv2-proof-point-leg" style={{ '--share': share.toFixed(3) } as CSSProperties}>
+              <path className="hv2-proof-link-casing" d={d(points)} />
+              <path className="hv2-proof-point-way" d={d(points)} />
+              <path className="hv2-proof-flow" d={d(points)} markerEnd="url(#hv2-proof-point-foot)" />
+            </g>
+          ))}
+          <path className="hv2-proof-point-landing" d={d([point.roof, point.node])} />
+          <circle className="hv2-proof-point-node" cx={point.node[0]} cy={point.node[1]} r="4.2" />
+          <rect className="hv2-proof-point-weight" x={point.arrow[0][0] - 9} y={point.arrow[0][1] - 16} width="18" height="14" />
+          <path className="hv2-proof-point-arrow" d={d(point.arrow)} markerEnd="url(#hv2-proof-point-head)" />
+        </g>
+      )}
+    </svg>
   );
 });
