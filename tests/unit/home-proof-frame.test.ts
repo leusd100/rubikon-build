@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { homeProofContour } from '../../app/data/homeProofContour';
-import { homeProofFrame } from '../../app/data/homeProofFrame';
+import { homeProofDetailSpots, homeProofFrame, memberAt } from '../../app/data/homeProofFrame';
 import { approx, homeProofMarks, homeProofMeasures, plusMinus } from '../../app/data/homeProofMeasures';
 
 // HOME's right-hand layers (04.10). Two different kinds of drawing sit on the one real photo, and these tests keep them
@@ -455,5 +455,34 @@ describe('homeProofMeasures — the figures', () => {
     expect(homeProofMarks.slope.level[0]).toEqual(rightFoot);
     // the right rake is solid (measured): the slope is read on it, not on the dashed left one
     expect(homeProofContour.lines.find((entry) => entry.id === 'gable-rake-right')!.approximate).toBe(false);
+  });
+});
+
+// «Жива схема» (owner, 05.10): what a pointer is over is named in words — never a size — from the scheme's own shapes,
+// with the nearby node drawn as a detail, and nothing off the building
+describe('memberAt', () => {
+  it('names the member or the part under a point, in words', () => {
+    const cases: [readonly [number, number], string][] = [
+      [[1200, 216.3], 'Верхній пояс ферми'],
+      [[1006, 450], 'Колона центрального ряду'],
+      [[1100, 480], 'Ворота'],
+      [[1007, 590], 'Фундамент — умовно'],
+      [[1134, 250], 'Стійка ферми'],
+      [[700, 160], 'Покрівля по прогонах'],
+      [[600, 300], 'Стіна з газобетонних блоків'],
+      [[290, 400], 'Стіна в розрізі — газобетон'],
+      [[150, 480], 'Бічна стіна — газобетон'],
+    ];
+    for (const [at, name] of cases) expect(memberAt(at)?.name, at.join()).toBe(name);
+  });
+  it('says no figure, and nothing off the building', () => {
+    for (let x = 0; x < 1536; x += 37) {
+      for (let y = 0; y < 788; y += 29) expect(memberAt([x, y])?.name ?? '', `${x},${y}`).not.toMatch(/\d/);
+    }
+    expect(memberAt([850, 650])).toBeNull();
+    expect(memberAt([1520, 60])).toBeNull();
+  });
+  it('points to the node drawn as a detail where one is near', () => {
+    for (const { id, ring } of homeProofDetailSpots) expect(memberAt(ring)?.node, id).toBe(id);
   });
 });

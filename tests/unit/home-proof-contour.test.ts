@@ -41,8 +41,8 @@ describe('homeProofContour', () => {
       expect(line.id, line.id).not.toMatch(/PG\d*/i);
       expect(line.title, line.id).not.toMatch(/PG|\d/);
       expect(line.title.trim().length, line.id).toBeGreaterThan(0);
-      // The approximate ones say so in their own title as well as by the dash
-      expect(line.title.includes('наближено'), line.id).toBe(line.approximate);
+      // Owner, 05.10: a client need not know which are measured and which approximate — no line says either
+      expect(line.title, line.id).not.toMatch(/наближено|виміряно/);
     }
   });
 
@@ -54,17 +54,15 @@ describe('homeProofContour', () => {
     expect(byKind('cladding').length).toBeGreaterThan(0);
   });
 
-  // The legend's «суцільна — виміряно» is a public claim. The approximate set (review of 04.10): the left rake, which
-  // lies off its edge; the right corner, whose edge the study finds outside it, on the trim; the two fascia ends, never
-  // checked, riding with those two; the three left strip boundaries. A changed flag fails here, and the SVG's
-  // accessible name — the one place a screen reader learns where the dashes are — has to change with it.
-  it('dashes exactly the lines the study could not place on their edge, and names them in the accessible label', () => {
+  // The study's own record stays in the data — the left rake, which lies off its edge; the right corner, whose edge the
+  // study finds outside it, on the trim; the three left strip boundaries — but the page draws every line solid and says
+  // neither «виміряно» nor «наближено» (owner, 05.10): the accessible name says what the lines are, no more
+  it('keeps the study\'s approximate set in the data, and the accessible label free of measured / approximate', () => {
     expect(lines.filter((line) => line.approximate).map((line) => line.id)).toEqual(['gable-corner-right', 'gable-rake-left', 'strip-a', 'strip-b', 'strip-c']);
     const { label } = homeProofContour;
     expect(label).not.toMatch(/\d/);
-    for (const words of ['Контур за фото', 'виміряно', 'наближено', 'лівий скат', 'правий кут', 'три ліві межі смуг облицювання']) {
-      expect(label).toContain(words);
-    }
+    expect(label).toContain('Контур за фото');
+    expect(label).not.toMatch(/виміряно|наближено/);
     // The outline's solid parts join its dashed ones end to end: one closed outline, round from the apex
     const outline = lines.filter((line) => line.kind === 'outline');
     for (let index = 1; index < outline.length; index += 1) {
