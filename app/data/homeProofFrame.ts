@@ -400,7 +400,8 @@ export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base' 
   { id: 'base', ring: [1007.5, 570], radius: 28, badge: [1050, 596], badgePhone: [1084, 470] },
   // the ridge over the central post, its letter left of the slope's figure; a bottom-chord panel point under a vertical
   // (in the letters' order: the keyboard reaches them А, Б, В, Г, Д)
-  { id: 'ridge', ring: [1005, 162], radius: 24, badge: [958, 120], badgePhone: [958, 120] },
+  // (its letter right of the ridge, over the right rake: left of it, it stood on the resting seam, half under the photo)
+  { id: 'ridge', ring: [1005, 162], radius: 24, badge: [1062, 120], badgePhone: [1062, 120] },
   { id: 'chord', ring: [1253.8, 317.6], radius: 20, badge: [1288, 352], badgePhone: [1288, 352] },
 ];
 

@@ -1507,7 +1507,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               <div className="hv2-detail-foot">
                 <p className="hv2-detail-note">Вузол такого типу · схема без розмірів</p>
                 <span className="hv2-detail-actions">
-                  <button type="button" className="hv2-detail-again" aria-pressed={flowOn} onClick={() => setFlowOn((on) => !on)}>
+                  <button type="button" className="hv2-detail-again" data-kind="load" aria-pressed={flowOn} onClick={() => setFlowOn((on) => !on)}>
                     <span aria-hidden="true">↓</span> Навантаження
                   </button>
                   <button
