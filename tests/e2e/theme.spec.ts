@@ -139,7 +139,8 @@ test.describe('site-wide theme', () => {
     await page.emulateMedia({ colorScheme: 'light' });
     await open(page, '/');
     await choose(page, 'Темна');
-    await page.locator('main a[href="/metalokonstruktsii"]').first().click();
+    // the card: since 05.10 the header's scheme sheet links there too, and it is not shown on a phone
+    await page.locator('main a.direction-card[href="/metalokonstruktsii"]').click();
     await page.waitForURL('**/metalokonstruktsii');
     await expectTheme(page, 'dark', 'dark');
     await page.goBack({ waitUntil: 'load' });

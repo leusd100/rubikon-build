@@ -148,86 +148,18 @@
 
 /* ---------------------------------------------------------------- 4 · How much we take on */
 .proc-scope { background: var(--color-bg); }
-/* Drawing, title, terms, text and link share rows across the three cards */
-.proc-scope-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); gap: 0 clamp(28px, 3vw, 48px); margin: 0; padding: 0; list-style: none; }
-/* The emphasis ground (hover / focus, below) is the card's own background: 26 px of room inside it on every side, and a
-   matching negative margin so the column — and the words' left edge — stay where the grid puts them. (Owner, 02.10: the
-   old spread-shadow ground framed the card from outside, a thick band pressed against the words.) */
-.proc-scope-grid > li {
-  --card-ground: transparent; --card-edge: transparent;
-  display: grid; grid-row: span 5; grid-template-rows: subgrid; align-content: start; min-width: 0;
-  margin: -26px; padding: 26px; border-radius: 6px; background: var(--card-ground); box-shadow: inset 0 0 0 1px var(--card-edge);
-  transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease, transform var(--duration-fast) var(--m-ease);
-}
 .proc-scope-legend { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 36px 0 0; padding: 0; list-style: none; color: var(--color-text-muted); font-size: 14px; }
 .proc-scope-legend li { display: flex; align-items: center; gap: 10px; }
 .proc-scope-legend i { width: 22px; height: 12px; border: 1.5px solid var(--color-border-control); background: color-mix(in srgb, var(--color-text) 3%, transparent); }
 .proc-scope-legend .is-scope i { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
 .proc-scope-legend .is-context i { border-style: dashed; border-color: var(--color-border-strong); background: none; }
-.proc-scope-title { margin: 22px 0 18px; }
-.proc-scope-grid .proc-scope-kicker { margin: 0 0 8px; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.proc-scope-grid h3 { margin: 0; font: 600 clamp(22px, 2vw, 26px)/1.15 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; text-wrap: balance; }
-.proc-scope-grid p { margin: 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.65; }
-/* Contract and coordination: two ruled lines, large enough to compare the three cards at a glance */
-.proc-scope-terms { display: grid; align-content: start; margin: 0 0 18px; border-top: 1px solid var(--color-border-strong); }
-.proc-scope-terms > div { display: grid; gap: 7px; padding: 12px 0 13px; border-bottom: 1px solid var(--color-border); }
-.proc-scope-terms dt { color: var(--color-text-muted); font: 700 12px/1.25 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
-.proc-scope-terms dd { margin: 0; color: var(--color-text); font: 600 17px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; }
-.proc-scope-terms dd.is-rubikon { color: var(--color-accent-strong); }
-.proc-contract { display: flex; align-items: center; min-width: 0; }
-.proc-party { flex: none; padding: 6px 10px; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
-.proc-party.is-rubikon { color: var(--color-dark-text); background: var(--color-dark); border-color: var(--color-dark); }
-.proc-contract-link { flex: 1 1 auto; min-width: 16px; max-width: 72px; height: 1px; background: var(--color-accent); transform-origin: left; }
-.scope-diagram { display: block; width: 100%; height: auto; max-width: 380px; overflow: visible; }
-/* No vector-effect: non-scaling-stroke here — with pathLength="1" and a 1-unit dash (the draw-in), Chrome measures the
-   dash on screen, so a drawing shown larger than its viewBox lost the ends of its lines (the scope frames' posts) */
-.scope-diagram :is(path, polygon) { stroke-dasharray: 1; stroke-dashoffset: 0; }
-.sd-layer :is(path, polygon) { fill: none; stroke: var(--color-border-control); stroke-width: 1; stroke-linejoin: round; }
-.sd-layer polygon { fill: color-mix(in srgb, var(--color-text) 3%, transparent); }
-.sd-layer.is-scope :is(path, polygon) { stroke: var(--color-accent); stroke-width: 1.6; }
-.sd-layer.is-scope polygon { fill: color-mix(in srgb, var(--color-accent) 18%, transparent); }
-.sd-boundary { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.sd-boundary-scope { stroke: var(--color-accent); stroke-width: 1.4; }
-.sd-boundary-object { stroke: var(--color-border-strong); stroke-dasharray: 5 4; }
-.sd-boundary-outer { stroke: var(--color-text-muted); stroke-width: 1.2; stroke-dasharray: 8 5; }
-.sd-tab { fill: var(--color-text); }
-.sd-tab-label { fill: var(--color-bg); font: 700 12px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-.sd-label { fill: var(--color-text-muted); font: 700 12px var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
-.sd-label-scope { fill: var(--color-accent-strong); }
-.sd-leader { fill: none; stroke: var(--color-accent-strong); stroke-width: 1; }
-.sd-dot { fill: var(--color-accent); }
 /* «Обговорити цей формат» */
 .proc-scope-cta { justify-self: start; align-self: end; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 18px; color: var(--color-text); border-bottom: 1px solid var(--color-accent); font: 700 12px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .proc-scope-cta span { color: var(--color-accent-strong); transition: transform var(--duration-fast) var(--m-ease); }
 .proc-scope-cta:hover span, .proc-scope-cta:focus-visible span { transform: translate(3px, -3px); }
 /* The form field it fills: a short copper halo so the visitor sees what was chosen */
 .process-page #inquiry select.is-prefilled { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent); }
-.sd-layer:not(.is-scope), .sd-context { transition: opacity var(--duration-fast) ease; }
-/* The card: hover or keyboard focus brings the agreed scope forward and quiets the rest of the object */
-@media (hover: hover) {
-  .proc-scope-grid > li:hover { --card-ground: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent); --card-edge: var(--color-border); transform: translateY(-2px); }
-  .proc-scope-grid > li:hover .sd-layer:not(.is-scope) { opacity: .4; }
-}
-/* Keyboard: focusing the card's link gives the card the same emphasis as hover */
-.proc-scope-grid > li:focus-within { --card-ground: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent); --card-edge: var(--color-border); }
-.proc-scope-grid > li:focus-within .sd-layer:not(.is-scope) { opacity: .4; }
-/* Entering the viewport: the structure is drawn, the agreed scope fills in build order, the context comes last */
-.process-page[data-motion-ready="on"] .scope-diagram :is(path, polygon) { transition: stroke-dashoffset 600ms var(--m-ease), fill-opacity 260ms ease, opacity var(--duration-fast) ease; }
-.process-page[data-motion-ready] .sd-layer polygon { fill-opacity: 1; }
-.process-page[data-motion-ready="on"] .sd-step-0 polygon { transition-delay: 0ms, 480ms, 0ms; }
-.process-page[data-motion-ready="on"] .sd-step-1 :is(path, polygon) { transition-delay: 0ms, 580ms, 0ms; }
-.process-page[data-motion-ready="on"] .sd-step-2 polygon { transition-delay: 0ms, 680ms, 0ms; }
-.process-page[data-motion-ready="on"] .sd-step-3 polygon { transition-delay: 0ms, 780ms, 0ms; }
-.process-page[data-motion-ready="on"] .sd-context { transition: opacity 280ms ease 900ms; }
-.process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) :is(.sd-layer path, .sd-layer polygon) { stroke-dashoffset: 1; }
-.process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .sd-layer polygon { fill-opacity: 0; }
-.process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .sd-context { opacity: 0; }
-.process-page[data-motion-ready="on"] .proc-contract-link { transition: transform 420ms var(--m-ease) 1100ms; }
-/* The RUBIKON chip is wiped in along the line, not faded: a faded chip is light text on a light ground until its card
-   is scrolled to, and an audit that runs before scrolling (Lighthouse, axe) reads that as failed contrast. */
-.process-page[data-motion-ready="on"] .proc-contract .is-rubikon { clip-path: inset(0); transition: clip-path 280ms var(--m-ease) 1450ms; }
-.process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .proc-contract-link { transform: scaleX(0); }
-.process-page[data-motion-ready] .proc-scope-grid > li:not([data-motion-state="on"]) .proc-contract .is-rubikon { clip-path: inset(0 100% 0 0); }
+
 
 /* ---------------------------------------------------------------- 5 · Who answers for what (signature) */
 .proc-responsibility { background: var(--color-surface); }
@@ -273,19 +205,6 @@
 .proc-responsibility:has(input[value="comprehensive"]:checked) .proc-area li[data-soft~="comprehensive"]::before,
 .proc-responsibility:has(input[value="work-package"]:checked) .proc-area li[data-soft~="work-package"]::before,
 .proc-responsibility:has(input[value="subcontract"]:checked) .proc-area li[data-soft~="subcontract"]::before { top: .45em; width: 7px; height: 7px; background: none; border: 1px solid var(--soft-ring, var(--color-accent)); border-radius: 50%; }
-/* Format switchers: three radios as one segmented control, centred under the heading. The map's (resp) and, on a
-   phone, the one over «Наш обсяг» (scope) are one choice — FormatSwitchSync.tsx keeps them in step. */
-:is(.proc-resp-switch, .proc-scope-switch) { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; }
-:is(.proc-resp-switch, .proc-scope-switch) legend { float: left; width: 100%; margin-bottom: 12px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
-:is(.proc-resp-switch, .proc-scope-switch) > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); }
-:is(.proc-resp-switch, .proc-scope-switch) label { position: relative; cursor: pointer; }
-:is(.proc-resp-switch, .proc-scope-switch) label + label { border-left: 1px solid var(--color-border-control); }
-:is(.proc-resp-switch, .proc-scope-switch) input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-:is(.proc-resp-switch, .proc-scope-switch) span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
-:is(.proc-resp-switch, .proc-scope-switch) label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
-:is(.proc-resp-switch, .proc-scope-switch) input:checked + span { color: var(--color-bg); background: var(--color-text); }
-:is(.proc-resp-switch, .proc-scope-switch) input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -6px; }
-.proc-scope-switch { display: none; }
 /* The map runs taller than a screen at every width: the map's switcher stays under the fixed header (101 px) while it
    scrolls by. The section's supporting text already asks to choose a format, so its legend is for assistive technology
    only. On a wide screen only the control floats (the strip beside it lets the pointer through to the cards). */
@@ -433,15 +352,7 @@
   /* Vertical route: the note sits under the steps, indented to the text column, and says which step it belongs to */
   .proc-design-note { margin: 40px 0 0 72px; }
   .proc-design-note::before { left: -51px; height: 40px; }
-  .proc-scope-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 40px; }
-  .proc-scope-grid > li { grid-row: auto; grid-template-rows: none; }
-  /* Stacked, the cards fill the shell: no emphasis card (it would reach past the gutter) */
-  .proc-scope-grid > li, .proc-scope-grid > li:is(:hover, :focus-within) { margin: 0; padding: 0; --card-ground: transparent; --card-edge: transparent; transform: none; }
-  .proc-scope-grid li { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); column-gap: 32px; align-items: start; }
-  .proc-scope-grid li > :not(svg) { grid-column: 2; }
-  .proc-scope-grid li > svg { grid-row: 1 / span 4; }
-  .proc-scope-title { margin-top: 0; }
-  /* The map stacks; the rail becomes one line down the left edge */
+                /* The map stacks; the rail becomes one line down the left edge */
   .proc-map { grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 40px; padding: 0 0 0 28px; }
   .proc-map::before { top: 0; bottom: 0; left: 6px; right: auto; width: 1px; height: auto; transform-origin: top; }
   .process-page[data-motion-ready] .proc-resp-figure:not([data-motion-state="on"]) .proc-map::before { transform: scaleY(0); }
@@ -499,22 +410,13 @@
   .proc-start-head h2 { font-size: var(--title-section); line-height: 1.02; }
   .proc-start-head > p:last-child { font-size: 16px; }
   .proc-start-list li { grid-template-columns: 44px minmax(0, 1fr); padding: 22px 0; }
-  .proc-scope-grid li { display: block; }
-  .scope-diagram { max-width: 100%; }
-  .proc-design-note { margin-left: 0; padding: 18px 18px 18px 16px; }
+      .proc-design-note { margin-left: 0; padding: 18px 18px 18px 16px; }
   .proc-design-note::before { left: 21px; }
   .proc-area { padding: 22px 20px 24px; }
   .proc-principle { font-size: clamp(24px, 6.8vw, 28px); }
   /* Compact under the 77 px header: one row of three */
   .proc-resp-switch { top: 77px; margin-bottom: 24px; padding: 8px 0; }
-  :is(.proc-resp-switch, .proc-scope-switch) > div { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
-  :is(.proc-resp-switch, .proc-scope-switch) span { min-height: 48px; padding: 6px; font-size: 12px; letter-spacing: .04em; }
-  /* «Наш обсяг»: one format at a time instead of three cards in a row (about three screens) */
-  .proc-scope-switch { display: flex; align-items: stretch; margin-bottom: 28px; }
-  .proc-scope:has(input[value="comprehensive"]:checked) .proc-scope-grid > li:not([data-scope="comprehensive"]),
-  .proc-scope:has(input[value="work-package"]:checked) .proc-scope-grid > li:not([data-scope="work-package"]),
-  .proc-scope:has(input[value="subcontract"]:checked) .proc-scope-grid > li:not([data-scope="subcontract"]) { display: none; }
-  .proc-area-tag { font-size: 12px; letter-spacing: .08em; }
+          .proc-area-tag { font-size: 12px; letter-spacing: .08em; }
   .proc-terms-image { background-position: center top; background-size: 180% auto; }
   .proc-hero-trace { display: none; }
   .proc-terms-grid li { padding: 22px 20px 24px; }
