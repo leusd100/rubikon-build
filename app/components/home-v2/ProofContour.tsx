@@ -180,6 +180,12 @@ const NODE_SHRINK = { duration: 300, easing: 'cubic-bezier(.45, 0, .7, .4)', fil
 const NODE_CLEAR = 12;
 /** A swipe across a phone's sheet: this far, and mostly sideways */
 const SWIPE_MIN = 48;
+/** «Зібрати» after «Розібрати»: the parts back in place (proof-details.css: 650 ms, 80 ms apart, up to seven) before the
+ *  load's way shows again */
+const REASSEMBLE_MS = 650 + 6 * 80 + 120;
+/** …and the assembly's own longest run (proof-details.css: the names in at 360 ms + six steps of 260 ms + 260 ms, for
+ *  360 ms): should its end never be heard — a hidden tab holds animations — the way shows after this */
+const ASSEMBLY_MS = 360 + 1560 + 260 + 360 + 160;
 /** The transform that puts a panel onto a ring: its centre on the ring's, as wide as the ring */
 function ontoRing(ring: Element, panel: HTMLElement) {
   const [a, b] = [ring.getBoundingClientRect(), panel.getBoundingClientRect()];
@@ -551,6 +557,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // so the node is ringed on the photo (kept from node to node)
   const [exploded, setExploded] = useState(false);
   const [nodeOnPhoto, setNodeOnPhoto] = useState(false);
+  // The node put together: its load's way only then (owner, 05.10: on the next node it ran while the parts were still
+  // coming in) — on the names' arrival, the assembly's last beat, or once the parts are back after «Зібрати»
+  const [assembled, setAssembled] = useState(false);
+  const assembledTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(assembledTimer.current), []);
   // Moving to the next or the previous node: the drawing slides in from that side instead of the panel growing again
   const nodeSwitch = useRef<-1 | 0 | 1>(0);
   const swipe = useRef<{ x: number; y: number } | null>(null);
@@ -668,6 +679,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (!detail && !step) nodeSeam.current = null;
     nodeSwitch.current = detail ? step : 0;
     setExploded(false);
+    window.clearTimeout(assembledTimer.current);
+    setAssembled(stillNow());
+    assembledTimer.current = window.setTimeout(() => setAssembled(true), ASSEMBLY_MS);
     placeSeam(id, nodeOnPhoto);
     setDetailSheet(phoneNow());
     setDetail(id);
@@ -1457,11 +1471,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               ref={detailRef}
               className="hv2-detail"
               data-sheet={detailSheet ? '' : undefined}
-              data-flow={flowOn && !exploded ? '' : undefined}
+              data-flow={flowOn && !exploded && assembled ? '' : undefined}
               data-exploded={exploded ? '' : undefined}
               onPointerDown={onSheetDown}
               onPointerUp={onSheetUp}
               onPointerCancel={() => { swipe.current = null; }}
+              onAnimationEnd={(event) => {
+                if (event.animationName === 'hv2-detail-names') setAssembled(true);
+              }}
               role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
               <div className="hv2-detail-head">
                 <span className="hv2-detail-letter" aria-hidden="true">{item.letter}</span>
@@ -1483,7 +1500,19 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   <button type="button" className="hv2-detail-again" aria-pressed={flowOn} onClick={() => setFlowOn((on) => !on)}>
                     <span aria-hidden="true">↓</span> Навантаження
                   </button>
-                  <button type="button" className="hv2-detail-again" aria-pressed={exploded} onClick={() => setExploded((on) => !on)}>
+                  <button
+                    type="button"
+                    className="hv2-detail-again"
+                    aria-pressed={exploded}
+                    onClick={() => {
+                      window.clearTimeout(assembledTimer.current);
+                      if (exploded && !stillNow()) {
+                        setAssembled(false);
+                        assembledTimer.current = window.setTimeout(() => setAssembled(true), REASSEMBLE_MS);
+                      }
+                      setExploded((on) => !on);
+                    }}
+                  >
                     <span aria-hidden="true">⇲</span> {exploded ? 'Зібрати' : 'Розібрати'}
                   </button>
                   <button

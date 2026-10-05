@@ -1180,7 +1180,9 @@ main[data-home="v2"] .hv2-detail-step:hover { color: var(--hv2-text); border-col
 main[data-home="v2"] .hv2-detail-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-detail-step { width: 40px; height: 40px; } }
 main[data-home="v2"] .hv2-detail[data-sheet] { touch-action: pan-y; }
-main[data-home="v2"] .hv2-detail-flow-words { margin: 0; color: var(--hv2-load, #5aa8ff); font: 600 12px/1.35 var(--font-manrope), sans-serif; }
+main[data-home="v2"] .hv2-detail-flow-words { margin: 0; color: var(--hv2-load, #5aa8ff); font: 600 12px/1.35 var(--font-manrope), sans-serif; opacity: 0; transition: opacity 300ms ease; }
+/* its line kept while the node comes together, the words in once the way shows */
+main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-flow-words { opacity: 1; }
 /* The open node's ring on the photo's side, the seam standing on it (ProofContour's showNode): a light ring on a dark
    casing, so it holds on the cladding */
 main[data-home="v2"] .hv2-detail-onphoto { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
