@@ -738,7 +738,7 @@ main[data-home="v2"] .hv2-contour-brief {
   display: inline-grid; align-content: center; gap: 4px; min-height: 52px; padding: 8px 16px 8px 14px; color: #f5f2eb; text-decoration: none;
   background: var(--hv2-copper-fill); border: 1px solid #f0b48a; transition: background-color 200ms ease;
 }
-main[data-home="v2"] .hv2-contour-brief small { font: 600 12px/1.1 var(--font-manrope), sans-serif; letter-spacing: 0; opacity: .9; }
+main[data-home="v2"] .hv2-contour-brief small { font: 600 12px/1.1 var(--font-manrope), sans-serif; letter-spacing: 0; }
 main[data-home="v2"] .hv2-contour-brief span { display: inline-flex; align-items: center; gap: 8px; font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 main[data-home="v2"] .hv2-contour-brief i { font-style: normal; font-size: 16px; transition: transform 200ms ease; }
 main[data-home="v2"] .hv2-contour-brief:hover { background: var(--hv2-copper); }
@@ -1199,7 +1199,6 @@ main[data-home="v2"] .hv2-detail-leader circle { fill: #f0b48a; }
 @keyframes hv2-leader-draw { to { stroke-dashoffset: 0; } }
 main[data-home="v2"] .hv2-detail-again:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-detail-again { min-height: 40px; } }
-@media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-detail-again { display: none; } }
 /* Opening and closing, the panel grows out of its ring and back (ProofContour's NODE_GROW / NODE_SHRINK) */
 main[data-home="v2"] .hv2-detail { transform-origin: 50% 50%; }
 /* A phone: the node as a sheet from the screen's foot, over a dimmed page (ProofContour portals it into main) */
