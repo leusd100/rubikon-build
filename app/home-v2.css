@@ -1072,7 +1072,8 @@ main[data-home="v2"] .hv2-detail-close { display: grid; place-items: center; wid
 main[data-home="v2"] .hv2-detail-close:hover { color: var(--hv2-text); }
 main[data-home="v2"] .hv2-detail-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 main[data-home="v2"] .hv2-detail-note { margin: 0; color: var(--hv2-text-3); font: 500 11.5px/1.3 var(--font-manrope), sans-serif; }
-@media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-detail { animation: hv2-contour-fade 200ms ease; } }
+/* Opening and closing, the panel grows out of its ring and back (ProofContour's NODE_GROW / NODE_SHRINK) */
+main[data-home="v2"] .hv2-detail { transform-origin: 50% 50%; }
 /* A phone: the node as a sheet from the screen's foot, over a dimmed page (ProofContour portals it into main) */
 main[data-home="v2"] .hv2-detail[data-sheet] {
   position: fixed; z-index: 60; inset: auto 0 0 0; width: auto; max-height: 82vh; padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
@@ -1080,10 +1081,8 @@ main[data-home="v2"] .hv2-detail[data-sheet] {
 }
 main[data-home="v2"] .hv2-detail-backdrop { position: fixed; z-index: 59; inset: 0; background: rgba(8, 9, 9, .55); }
 @media (prefers-reduced-motion: no-preference) {
-  main[data-home="v2"] .hv2-detail[data-sheet] { animation: hv2-detail-rise 260ms cubic-bezier(.2, .7, .3, 1); }
   main[data-home="v2"] .hv2-detail-backdrop { animation: hv2-contour-fade 200ms ease; }
 }
-@keyframes hv2-detail-rise { from { transform: translateY(24px); opacity: 0; } }
 @media (max-width: 760px) {
   main[data-home="v2"] .hv2-detail-note { font-size: 11px; }
   main[data-home="v2"] .hv2-proof-detail-pin { left: var(--px); top: var(--py); width: 20px; height: 20px; margin: -10px 0 0 -10px; font-size: 11px; }

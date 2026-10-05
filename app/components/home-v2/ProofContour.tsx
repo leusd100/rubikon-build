@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { HomeProofCase } from '../../data/homeProof';
 import { homeProofContour, type ContourLine } from '../../data/homeProofContour';
@@ -156,6 +156,19 @@ const SNAPS: readonly Snap[] = [
   { line: 'gable-corner-right', at: snapAt('gable-corner-right', 2), name: 'Правий кут фронтона' },
 ];
 const phoneNow = () => window.matchMedia('(max-width: 760px)').matches;
+const stillNow = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** A node opening (owner, 05.10: «плавний перехід від вузла до збільшеної моделі»): the panel grows out of its ring on the
+ *  scheme, a disc as small as the ring, to its place; the drawing inside comes into focus a beat later. Closing, it
+ *  shrinks back into the ring */
+const NODE_GROW = { duration: 480, easing: 'cubic-bezier(.2, .75, .25, 1)' } as const;
+const NODE_SHRINK = { duration: 300, easing: 'cubic-bezier(.45, 0, .7, .4)', fill: 'forwards' } as const;
+/** The transform that puts a panel onto a ring: its centre on the ring's, as wide as the ring */
+function ontoRing(ring: Element, panel: HTMLElement) {
+  const [a, b] = [ring.getBoundingClientRect(), panel.getBoundingClientRect()];
+  if (!a.width || !b.width) return null;
+  const scale = Math.max(a.width / b.width, 0.04);
+  return `translate(${a.left + a.width / 2 - (b.left + b.width / 2)}px, ${a.top + a.height / 2 - (b.top + b.height / 2)}px) scale(${scale})`;
+}
 /** Where a measured line stands in the frame, per cent: on a phone the canvas is zoomed in on the gable */
 const stageAt = (snap: Snap, phone: boolean) => (phone ? snap.at * PHONE_ZOOM - PHONE_LEFT : snap.at);
 
@@ -513,18 +526,61 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
 
   // A detail opened takes the focus to its close; Esc, or the close, gives it back to its letter
   const detailPinRefs = useRef<Partial<Record<DetailId, HTMLButtonElement | null>>>({});
+  const detailRef = useRef<HTMLDivElement>(null);
+  const detailMotion = useRef<Animation | null>(null);
+  const ringOf = (id: DetailId) => stageRef.current?.querySelector(`.hv2-proof-detail-rings [data-detail="${id}"]`) ?? null;
+  // Opening (and switching to another node): out of its ring, before the first paint so it never flashes in place
+  useLayoutEffect(() => {
+    const panel = detailRef.current;
+    const ring = detail && ringOf(detail);
+    if (!panel || !ring || stillNow()) return;
+    detailMotion.current?.cancel();
+    const from = ontoRing(ring, panel);
+    if (!from) return;
+    detailMotion.current = panel.animate(
+      [{ transform: from, opacity: 0.35, borderRadius: '50%' }, { transform: 'none', opacity: 1, borderRadius: '0' }],
+      NODE_GROW,
+    );
+    panel.querySelector('.hv2-detail-drawing, svg')?.animate(
+      [{ opacity: 0, transform: 'scale(1.18)', filter: 'blur(3px)' }, { opacity: 1, transform: 'none', filter: 'none' }],
+      { duration: 420, delay: 200, easing: 'cubic-bezier(.2, .7, .2, 1)', fill: 'backwards' },
+    );
+  }, [detail, detailSheet]);
+  // Closing: back into its ring, then gone; the focus to its letter
   const closeDetail = () => {
     const was = detail;
-    setDetail(null);
-    if (was) detailPinRefs.current[was]?.focus({ preventScroll: true });
+    const done = () => {
+      setDetail(null);
+      if (was) detailPinRefs.current[was]?.focus({ preventScroll: true });
+    };
+    const panel = detailRef.current;
+    const ring = was && ringOf(was);
+    if (!panel || !ring || stillNow()) return done();
+    detailMotion.current?.cancel();
+    const to = ontoRing(ring, panel);
+    if (!to) return done();
+    const shrink = panel.animate([{ transform: 'none', opacity: 1, borderRadius: '0' }, { transform: to, opacity: 0, borderRadius: '50%' }], NODE_SHRINK);
+    detailMotion.current = shrink;
+    // once, on its end — or a moment after, should a hidden tab hold the animation — unless another node took its place
+    let closed = false;
+    const finish = () => {
+      if (closed || detailMotion.current !== shrink) return;
+      closed = true;
+      done();
+    };
+    shrink.onfinish = finish;
+    window.setTimeout(finish, NODE_SHRINK.duration + 200);
   };
+  const closeDetailRef = useRef(closeDetail);
+  useEffect(() => {
+    closeDetailRef.current = closeDetail;
+  });
   useEffect(() => {
     if (!detail) return;
     detailCloseRef.current?.focus({ preventScroll: true });
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      setDetail(null);
-      detailPinRefs.current[detail]?.focus({ preventScroll: true });
+      closeDetailRef.current();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -794,8 +850,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (live.current > DEFAULT_SPLIT) setSplit(DEFAULT_SPLIT);
     const phone = phoneNow();
     if (!phone && stageRef.current) bringIntoView(stageRef.current);
+    if (detail === id) return closeDetail();
     setDetailSheet(phone);
-    setDetail((open) => (open === id ? null : id));
+    setDetail(id);
   };
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
   const engaged = loadRun + windRun + buildRun > 0;
@@ -1021,8 +1078,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                       aria-expanded={detail === id}
                       disabled={!ready}
                       onClick={() => {
+                        if (detail === id) return closeDetail();
                         setDetailSheet(phoneNow());
-                        setDetail((open) => (open === id ? null : id));
+                        setDetail(id);
                       }}
                     >
                       {item.letter}
@@ -1068,7 +1126,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         {detail && (() => {
           const item = PROOF_DETAILS.find((entry) => entry.id === detail)!;
           const body = (
-            <div className="hv2-detail" data-sheet={detailSheet ? '' : undefined} role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
+            <div ref={detailRef} className="hv2-detail" data-sheet={detailSheet ? '' : undefined} role="dialog" aria-modal={detailSheet ? true : undefined} aria-labelledby="hv2-detail-title" aria-describedby="hv2-detail-spoken">
               <div className="hv2-detail-head">
                 <span className="hv2-detail-letter" aria-hidden="true">{item.letter}</span>
                 <b id="hv2-detail-title">Вузол {item.letter} · {item.title}</b>
