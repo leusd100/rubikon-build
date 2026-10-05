@@ -12,6 +12,7 @@ import { capabilityLedger } from '../lib/deliveryModelPresentation';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
 import '../components/about/region.css';
+import '../components/about/capability.css';
 import './about.css';
 
 // /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we do
