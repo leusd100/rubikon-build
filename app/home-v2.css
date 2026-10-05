@@ -1200,7 +1200,7 @@ main[data-home="v2"] .hv2-detail-again {
 }
 main[data-home="v2"] .hv2-detail-again span { font-size: 14px; letter-spacing: 0; }
 main[data-home="v2"] .hv2-detail-again:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
-/* pressed: the node's own colour; «Навантаження», the load's */
+/* A pressed toggle takes the node's own colour, and «Навантаження» the load's */
 main[data-home="v2"] .hv2-detail-again[aria-pressed="true"] { color: var(--hv2-node-ink); background: var(--hv2-node); border-color: var(--hv2-node); }
 main[data-home="v2"] .hv2-detail-again[data-kind="load"][aria-pressed="true"] { color: #141615; background: var(--hv2-load, #5aa8ff); border-color: var(--hv2-load, #5aa8ff); }
 main[data-home="v2"] .hv2-detail-actions { display: flex; flex-wrap: wrap; gap: 6px; }
