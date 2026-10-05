@@ -4,10 +4,10 @@ import { memo, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStor
 import { createPortal } from 'react-dom';
 import type { HomeProofCase } from '../../data/homeProof';
 import { homeProofContour, type ContourLine } from '../../data/homeProofContour';
-import { homeProofDetailSpots, homeProofFrame, onRoof, pointLoadAt, type PointLoad, type ScopePart } from '../../data/homeProofFrame';
+import { homeProofDetailSpots, homeProofFrame, memberAt, onRoof, pointLoadAt, type PointLoad, type SchemeHit, type ScopePart } from '../../data/homeProofFrame';
 import { DrawingSheet } from '../DrawingSheet';
 import { PROOF_DETAILS, type DetailId } from './ProofDetails';
-import { ProofFrame, ProofKeyPins, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
+import { ProofFrame, ProofHover, ProofKeyPins, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
 import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
 import { homeProofMeasures } from '../../data/homeProofMeasures';
 
@@ -82,6 +82,19 @@ const FOCUS_SPLIT_PHONE = 1;
 const BUILD_STEP = 700;
 const BUILD_STEPS = ['Фундаменти', 'Стіни з газобетону', 'Колони', 'Ферми лягають на опори', 'Прогони й в’язі'] as const;
 const BUILD_MS = BUILD_STEP * (BUILD_STEPS.length + 1);
+/** «Тур за 20 секунд» (owner, 05.10): the block shows itself to whoever presses nothing — the frame put up, the snow, a
+ *  weight walking the roof, the wind, the ridge's node with its load, the way on to the brief; each step named and held
+ *  this long. Any press or key in the sheet hands it back */
+const TOUR: readonly { name: string; hold: number }[] = [
+  { name: 'Каркас збирається', hold: 4800 },
+  { name: 'Сніг: куди йде вага', hold: 3600 },
+  { name: 'Вага на даху', hold: 3000 },
+  { name: 'Вітер: куди тисне', hold: 3600 },
+  { name: 'Вузол крупно', hold: 4200 },
+  { name: 'Такий, але ваш', hold: 2600 },
+];
+/** The weight's walk along the roof (photo columns), and how long it takes */
+const WALK = { from: 430, to: 1390, ms: 2600 } as const;
 /** The scheme's names as numbers on a phone (no room for words in its frame), keyed under it */
 const PHONE_KEY = ['Ферма', 'Прогони й в’язі', 'Центральний ряд колон', 'Стіни — газобетон', 'Фундаменти — умовно'] as const;
 /** Where the brief for a hangar like this one starts */
@@ -541,6 +554,36 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // Moving to the next or the previous node: the drawing slides in from that side instead of the panel growing again
   const nodeSwitch = useRef<-1 | 0 | 1>(0);
   const swipe = useRef<{ x: number; y: number } | null>(null);
+  // «Жива схема»: what the pointer is over on «Каркас» — the member lit, its name by the pointer (moved by hand, never by a
+  // render); a finger's tap shows it a moment
+  const [hit, setHit] = useState<SchemeHit | null>(null);
+  const hitRef = useRef<SchemeHit | null>(null);
+  const tipRef = useRef<HTMLSpanElement>(null);
+  const hoverFrame = useRef(0);
+  const hoverAt = useRef<{ x: number; y: number } | null>(null);
+  const tap = useRef<{ x: number; y: number } | null>(null);
+  const tapTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => {
+    cancelAnimationFrame(hoverFrame.current);
+    window.clearTimeout(tapTimer.current);
+  }, []);
+  // The load's chain in the legend, word by word: a word pointed at or pressed lights its link on the scheme alone
+  const [stepOn, setStepOn] = useState<number | null>(null);
+  const [stepPeek, setStepPeek] = useState<number | null>(null);
+  // «Тур»: the step on, its timer, the weight's walk, the load's way as it was before (put back after), the brief's call
+  const [tourStep, setTourStep] = useState<number | null>(null);
+  const tourTimer = useRef<number | undefined>(undefined);
+  const walkFrame = useRef(0);
+  const flowBefore = useRef(false);
+  const [calling, setCalling] = useState(false);
+  const callTimer = useRef<number | undefined>(undefined);
+  // the tour's timers reach the render's own functions through this (theirs would be the first render's)
+  const tourApi = useRef<{ run: (step: number) => void; end: () => void; point: (x: number) => void } | null>(null);
+  useEffect(() => () => {
+    window.clearTimeout(tourTimer.current);
+    window.clearTimeout(callTimer.current);
+    cancelAnimationFrame(walkFrame.current);
+  }, []);
   // Where the seam was before a node took it onto its ring, and where it put it (restored on closing, unless moved)
   const nodeSeam = useRef<{ from: number; at: number } | null>(null);
   // The leader from the open panel to its ring on the scheme, as a drawing's detail is called out
@@ -828,7 +871,45 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     return at && onRoof(at) ? at : null;
   };
 
+  const showHit = (clientX: number, clientY: number) => {
+    hoverAt.current = { x: clientX, y: clientY };
+    if (hoverFrame.current) return;
+    hoverFrame.current = requestAnimationFrame(() => {
+      hoverFrame.current = 0;
+      const at = hoverAt.current;
+      const stage = stageRef.current;
+      const tip = tipRef.current;
+      if (!at || !stage) return;
+      const onIt = onScheme(at.x, at.y);
+      const next = onIt ? memberAt(onIt) : null;
+      if (tip) {
+        const box = stage.getBoundingClientRect();
+        const [x, y] = [at.x - box.left, at.y - box.top];
+        tip.style.setProperty('--tx', `${Math.round(x)}px`);
+        tip.style.setProperty('--ty', `${Math.round(y)}px`);
+        // by the pointer, and back over it near the frame's right edge or its foot
+        if (x > box.width - 240) tip.dataset.flipX = '';
+        else delete tip.dataset.flipX;
+        if (y > box.height - 70) tip.dataset.flipY = '';
+        else delete tip.dataset.flipY;
+      }
+      if (next?.name === hitRef.current?.name && next?.points === hitRef.current?.points) return;
+      hitRef.current = next;
+      setHit(next);
+    });
+  };
+  const dropHit = () => {
+    cancelAnimationFrame(hoverFrame.current);
+    hoverFrame.current = 0;
+    hoverAt.current = null;
+    if (!hitRef.current) return;
+    hitRef.current = null;
+    setHit(null);
+  };
+
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    tap.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
+    if (event.pointerType === 'mouse') dropHit();
     if (event.button !== 0 || !ready) return;
     // The details' letters and the detail open are their own: no seam moves under them
     if ((event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail')) return;
@@ -873,10 +954,28 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const roof = roofAt(event.clientX, event.clientY);
     if (roof) pointAt(roof[0]);
     else if (point || pointFrame.current) dropPoint();
+    // On «Каркас», the member it is over, named — not over a letter, the node open or the handle
+    if (layerRef.current === 'frame' && !(event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle')) {
+      showHit(event.clientX, event.clientY);
+    } else dropHit();
   };
   const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
     if (drag.current) return;
-    if (event.pointerType === 'mouse') dropPoint();
+    if (event.pointerType === 'mouse') {
+      dropPoint();
+      dropHit();
+    }
+  };
+  // A finger's tap on «Каркас» (a finger scrolls the page otherwise): the member under it, named, for a moment
+  const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    endDrag();
+    const from = tap.current;
+    tap.current = null;
+    if (!from || event.pointerType !== 'touch' || layerRef.current !== 'frame') return;
+    if (Math.hypot(event.clientX - from.x, event.clientY - from.y) > 10 || (event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle')) return;
+    showHit(event.clientX, event.clientY);
+    window.clearTimeout(tapTimer.current);
+    tapTimer.current = window.setTimeout(dropHit, 2600);
   };
   const endDrag = () => {
     if (!drag.current) return;
@@ -913,6 +1012,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // A layer chosen with the seam far right brings the right side back into view; the load is replayed on every press,
   // and on a phone its way down the frame wants the wider right side
   const choose = (next: Layer) => {
+    setStepOn(null);
+    setStepPeek(null);
+    dropHit();
     clearLit();
     dropPoint();
     if (next !== 'frame') setDetail(null);
@@ -947,6 +1049,72 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       }, BUILD_MS);
     }, wait);
   };
+  // «Тур»: one step, then the next after its hold
+  const walkRoof = () => {
+    const start = performance.now();
+    const frame = (now: number) => {
+      const t = Math.min(1, (now - start) / WALK.ms);
+      tourApi.current?.point(WALK.from + (WALK.to - WALK.from) * (0.5 - Math.cos(Math.PI * t) / 2));
+      if (t < 1) walkFrame.current = requestAnimationFrame(frame);
+    };
+    walkFrame.current = requestAnimationFrame(frame);
+  };
+  const runTour = (step: number) => {
+    setTourStep(step);
+    if (step === 0) build();
+    else if (step === 1) choose('load');
+    else if (step === 2) walkRoof();
+    else if (step === 3) {
+      cancelAnimationFrame(walkFrame.current);
+      choose('wind');
+    } else if (step === 4) {
+      choose('frame');
+      setFlowOn(true);
+      showNode('ridge');
+    } else if (step === 5) {
+      closeDetail();
+      window.setTimeout(() => setSplit(DEFAULT_SPLIT), 450);
+      setCalling(true);
+      window.clearTimeout(callTimer.current);
+      callTimer.current = window.setTimeout(() => setCalling(false), 2600);
+    }
+    window.clearTimeout(tourTimer.current);
+    tourTimer.current = window.setTimeout(() => {
+      if (step + 1 < TOUR.length) tourApi.current?.run(step + 1);
+      else tourApi.current?.end();
+    }, TOUR[step].hold);
+  };
+  const endTour = () => {
+    window.clearTimeout(tourTimer.current);
+    cancelAnimationFrame(walkFrame.current);
+    setTourStep(null);
+    setFlowOn(flowBefore.current);
+  };
+  const toggleTour = () => {
+    if (tourStep !== null) return endTour();
+    flowBefore.current = flowOn;
+    runTour(0);
+  };
+  useEffect(() => {
+    tourApi.current = { run: runTour, end: endTour, point: pointAt };
+  });
+  // Any press or key of the visitor's own in the sheet (not the tour's button) hands the block back
+  useEffect(() => {
+    if (tourStep === null) return;
+    const sheet = stageRef.current?.closest('figure');
+    if (!sheet) return;
+    const onOwn = (event: Event) => {
+      if ((event.target as Element).closest?.('.hv2-contour-tour-btn')) return;
+      tourApi.current?.end();
+    };
+    sheet.addEventListener('pointerdown', onOwn, true);
+    sheet.addEventListener('keydown', onOwn, true);
+    return () => {
+      sheet.removeEventListener('pointerdown', onOwn, true);
+      sheet.removeEventListener('keydown', onOwn, true);
+    };
+  }, [tourStep]);
+
   // A node from the title block: the scheme on, its ring in view, the frame on the screen (a phone's sheet covers it)
   const openNode = (id: DetailId) => {
     clearLit();
@@ -1023,7 +1191,22 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                       // with it on every press)
                       <span className="hv2-contour-legend-chain" data-load={name} key={name === 'load' ? loadRun : windRun}>
                         <span data-key={name}>{legendLine}</span>
-                        {CHAINS[name]!.map(([word, n]) => <span key={word} style={{ '--n': n } as CSSProperties}>{word}</span>)}
+                        {CHAINS[name]!.map(([word, n]) => (
+                          <button
+                            key={word}
+                            type="button"
+                            className="hv2-chain-step"
+                            style={{ '--n': n } as CSSProperties}
+                            aria-pressed={layer === name && stepOn === n}
+                            onClick={() => setStepOn((on) => (on === n ? null : n))}
+                            onPointerEnter={() => setStepPeek(n)}
+                            onPointerLeave={() => setStepPeek(null)}
+                            onFocus={() => setStepPeek(n)}
+                            onBlur={() => setStepPeek(null)}
+                          >
+                            {word}
+                          </button>
+                        ))}
                       </span>
                     ) : (
                       LEGEND[name].map((key) => (
@@ -1034,6 +1217,16 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                 ))}
               </span>
               <span className="hv2-contour-more">
+                <button
+                  type="button"
+                  className="hv2-contour-build hv2-contour-tour-btn"
+                  aria-pressed={tourStep !== null}
+                  disabled={!ready || layer === 'sketch'}
+                  onClick={toggleTour}
+                >
+                  <i aria-hidden="true" data-stop={tourStep !== null ? '' : undefined} />
+                  {tourStep !== null ? 'Зупинити тур' : 'Тур за 20 секунд'}
+                </button>
                 <button type="button" className="hv2-contour-build" disabled={!ready || layer === 'sketch'} onClick={build}>
                   <i aria-hidden="true" />
                   Як це будується
@@ -1070,7 +1263,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           </span>
           {/* The way on: a hangar like this one, the visitor's own (owner, 05.10: in place of «Контур на фото», and
               to be seen) */}
-          <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={engaged ? '' : undefined}>
+          <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={engaged ? '' : undefined} data-call={calling ? '' : undefined}>
             <small>Такий ангар, але ваш</small>
             <span>Сформувати бриф <i aria-hidden="true">→</i></span>
           </a>
@@ -1095,11 +1288,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-point={point ? '' : undefined}
         data-pointed={pointed ? '' : undefined}
         data-detail={detail ?? undefined}
+        data-hit-node={layer === 'frame' ? hit?.node : undefined}
+        data-step-on={(layer === 'load' || layer === 'wind') && (stepPeek ?? stepOn) !== null ? (stepPeek ?? stepOn)! : undefined}
         data-building={building ? '' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
-        onPointerUp={endDrag}
+        onPointerUp={onPointerUp}
         onPointerCancel={endDrag}
         onLostPointerCapture={endDrag}
       >
@@ -1156,6 +1351,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               )}
               <ProofFrame buildRun={buildRun} loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} wind={layer === 'wind'} ready={ready} />
               <ProofPoint point={layer === 'load' ? point : null} />
+              <ProofHover hit={layer === 'frame' ? hit : null} />
               <svg
                 className="hv2-contour-lines"
                 viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}
@@ -1221,6 +1417,21 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             </span>
           </div>
         </div>
+        {/* «Тур»: the step on, and how far through it */}
+        <span className="hv2-contour-tour" data-on={tourStep !== null ? '' : undefined} role="status">
+          {tourStep !== null && (
+            <>
+              <i>{tourStep + 1}/{TOUR.length}</i>
+              {TOUR[tourStep].name}
+              <span className="hv2-contour-tour-bar" key={tourStep} style={{ '--hold': `${TOUR[tourStep].hold}ms` } as CSSProperties} aria-hidden="true" />
+            </>
+          )}
+        </span>
+        {/* «Жива схема»: the name by the pointer */}
+        <span ref={tipRef} className="hv2-proof-hover-tip" data-on={layer === 'frame' && hit ? '' : undefined} aria-hidden="true">
+          <b>{hit?.name}</b>
+          {hit?.node && <small>Вузол {PROOF_DETAILS.find((entry) => entry.id === hit.node)?.letter} — натисніть літеру</small>}
+        </span>
         {/* The held line once more, over both sides: a jamb or a corner the seam passes lies right on the seam, so it
             lights up landing on the photo's edge (review, 04.10) */}
         {snap && (

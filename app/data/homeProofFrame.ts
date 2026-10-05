@@ -399,3 +399,64 @@ export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base' 
   // on a phone the seam's handle stands at the frame's foot next to the column: its letter goes up into the gate
   { id: 'base', ring: [1007.5, 570], radius: 28, badge: [1050, 596], badgePhone: [1084, 470] },
 ];
+
+/** «Жива схема» (owner, 05.10): what a pointer on the scheme is over, by name — the nearest member of the gable's plane
+ *  within reach, else the part it stands in: a column, a footing, a lintel, the wall cut in section, a gate, the gable's
+ *  blockwork, the long wall, the roof over the top chord. The scheme's own shapes; names in words, never a size. `node`:
+ *  a node drawn as a detail is near (its letter opens it) */
+export type SchemeHit = { name: string; points: readonly Pt[]; closed: boolean; area: boolean; node?: DetailSpotId };
+export type DetailSpotId = (typeof homeProofDetailSpots)[number]['id'];
+const REACH = 9;
+const toSegment = ([px, py]: Pt, [ax, ay]: Pt, [bx, by]: Pt) => {
+  const [dx, dy] = [bx - ax, by - ay];
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+};
+const toLine = (at: Pt, points: readonly Pt[]) => points.slice(1).reduce((best, point, i) => Math.min(best, toSegment(at, points[i], point)), Infinity);
+const inside = ([x, y]: Pt, polygon: readonly Pt[]) => {
+  let within = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+    const [[xi, yi], [xj, yj]] = [polygon[i], polygon[j]];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) within = !within;
+  }
+  return within;
+};
+const TOP_CHORD = homeProofFrame.members[0].points;
+function memberName({ group, points, closed }: FrameMember) {
+  const [[x0, y0], [x1, y1]] = [points[0], points.at(-1)!];
+  if (group === 'truss') return points.length === 3 ? 'Верхній пояс ферми' : Math.abs(x1 - x0) > 200 ? 'Нижній пояс ферми' : 'Опорна стійка ферми';
+  if (group === 'web') return Math.abs(x1 - x0) < 6 ? 'Стійка ферми' : 'Розкіс ферми';
+  if (group === 'purlin') return 'Прогін';
+  if (group === 'bracing') return 'В’язі';
+  if (group === 'column') return 'Колона центрального ряду';
+  if (group === 'footing') return 'Фундамент — умовно';
+  if (group === 'wall') return closed ? 'Перемичка над воротами' : Math.abs(y1 - y0) < Math.abs(x1 - x0) ? 'Верх стіни — армопояс' : 'Стіна — газобетон';
+  return '';
+}
+export function memberAt(at: Pt): SchemeHit | null {
+  const { members, walls } = homeProofFrame;
+  const node = homeProofDetailSpots.find(({ ring: [cx, cy], radius }) => Math.hypot(at[0] - cx, at[1] - cy) <= radius + 36)?.id;
+  let best: { distance: number; member: FrameMember } | null = null;
+  for (const member of members) {
+    if (member.depth !== 0 || member.closed || member.group === 'footing') continue;
+    const distance = toLine(at, member.points);
+    if (distance <= REACH && (!best || distance < best.distance)) best = { distance, member };
+  }
+  if (best) return { name: memberName(best.member), points: best.member.points, closed: false, area: false, node };
+  const shape = members.find((member) => member.depth === 0 && member.closed && inside(at, member.points));
+  if (shape) return { name: memberName(shape), points: shape.points, closed: true, area: true, node };
+  const cut = walls.cuts.find((polygon) => inside(at, polygon));
+  if (cut) return { name: 'Стіна в розрізі — газобетон', points: cut, closed: true, area: true, node };
+  const gate = walls.holes.find((polygon) => inside(at, polygon));
+  if (gate) return { name: 'Ворота', points: gate, closed: true, area: true, node };
+  if (inside(at, walls.gable)) return { name: 'Стіна з газобетонних блоків', points: walls.gable, closed: true, area: true, node };
+  if (inside(at, walls.long)) return { name: 'Бічна стіна — газобетон', points: walls.long, closed: true, area: true, node };
+  const chordY = (x: number) => {
+    const [a, b] = x <= TOP_CHORD[1][0] ? [TOP_CHORD[0], TOP_CHORD[1]] : [TOP_CHORD[1], TOP_CHORD[2]];
+    return a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
+  };
+  if (at[0] >= POINT_LOAD_RANGE.from && at[0] <= POINT_LOAD_RANGE.to && at[1] >= roofTopY(at[0]) - 6 && at[1] < chordY(at[0])) {
+    return { name: 'Покрівля по прогонах', points: homeProofParts.roof, closed: true, area: true, node };
+  }
+  return null;
+}

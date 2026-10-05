@@ -676,9 +676,49 @@ main[data-home="v2"] .hv2-contour-chips > span {
    window): a size down, no key — its tint is the key */
 main[data-home="v2"] .hv2-contour-legend-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 1px 0; font-size: 11.5px; font-weight: 600; line-height: 1.25; }
 main[data-home="v2"] .hv2-contour-legend-chain > span[data-key] { display: none; }
-main[data-home="v2"] .hv2-contour-legend-chain > span:not([data-key], :last-child)::after { margin-inline: 4px; color: var(--hv2-text-3); content: '→'; }
-main[data-home="v2"] .hv2-contour-legend-chain[data-load="load"] > span { color: var(--hv2-load); }
-main[data-home="v2"] .hv2-contour-legend-chain[data-load="wind"] > span { color: var(--hv2-wind); }
+main[data-home="v2"] .hv2-contour-legend-chain > :is(span, button):not([data-key], :last-child)::after { margin-inline: 4px; color: var(--hv2-text-3); content: '→'; }
+main[data-home="v2"] .hv2-contour-legend-chain[data-load="load"] > :is(span, button) { color: var(--hv2-load); }
+main[data-home="v2"] .hv2-contour-legend-chain[data-load="wind"] > :is(span, button) { color: var(--hv2-wind); }
+/* Each word lights its link on the scheme alone, pointed at or pressed (ProofContour's stepOn) */
+main[data-home="v2"] .hv2-chain-step {
+  padding: 2px 0; color: inherit; background: none; border: 0; border-radius: 0; cursor: pointer; font: inherit; letter-spacing: inherit;
+  text-decoration: underline dotted transparent; text-underline-offset: 3px; transition: text-decoration-color 160ms ease;
+}
+main[data-home="v2"] .hv2-chain-step:is(:hover, :focus-visible, [aria-pressed="true"]) { text-decoration-color: currentColor; }
+main[data-home="v2"] .hv2-chain-step[aria-pressed="true"] { text-decoration-style: solid; font-weight: 800; }
+main[data-home="v2"] .hv2-chain-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+main[data-home="v2"] .hv2-contour-stage[data-step-on] :is(.hv2-proof-load, .hv2-proof-wind) [data-step] { opacity: .14; transition: opacity 220ms ease; }
+main[data-home="v2"] .hv2-contour-stage[data-step-on] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="flow"] { opacity: .3; }
+main[data-home="v2"] .hv2-contour-stage[data-step-on="0"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="0"],
+main[data-home="v2"] .hv2-contour-stage[data-step-on="1"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="1"],
+main[data-home="v2"] .hv2-contour-stage[data-step-on="2"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="2"],
+main[data-home="v2"] .hv2-contour-stage[data-step-on="3"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="3"],
+main[data-home="v2"] .hv2-contour-stage[data-step-on="4"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="4"],
+main[data-home="v2"] .hv2-contour-stage[data-step-on="5"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="5"],
+main[data-home="v2"] .hv2-contour-stage[data-step-on="6"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="6"] { opacity: 1; }
+/* «Жива схема» (ProofFrame's ProofHover, ProofContour's showHit): the member lit in the light copper, its name by the
+   pointer; a node near it — its letter rings */
+main[data-home="v2"] .hv2-proof-hover { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+main[data-home="v2"] .hv2-proof-hover path { fill: none; stroke: #f0b48a; stroke-width: calc(var(--u) * 3); stroke-linecap: round; stroke-linejoin: round; }
+main[data-home="v2"] .hv2-proof-hover .hv2-proof-hover-casing { stroke: #0d0f0e; stroke-opacity: .8; stroke-width: calc(var(--u) * 6.4); }
+main[data-home="v2"] .hv2-proof-hover [data-area] path:not(.hv2-proof-hover-casing) { fill: rgba(240, 180, 138, .13); stroke-width: calc(var(--u) * 1.8); }
+main[data-home="v2"] .hv2-proof-hover [data-area] .hv2-proof-hover-casing { stroke-width: calc(var(--u) * 4); }
+main[data-home="v2"] .hv2-proof-hover-tip {
+  position: absolute; z-index: 5; top: 0; left: 0; display: grid; gap: 2px; padding: 6px 10px; color: var(--hv2-text); pointer-events: none;
+  background: rgba(19, 21, 20, .95); border: 1px solid rgba(240, 180, 138, .6); white-space: nowrap;
+  font: 600 12.5px/1.25 var(--font-manrope), sans-serif; transform: translate(calc(var(--tx, 0px) + 16px), calc(var(--ty, 0px) + 18px));
+  opacity: 0; visibility: hidden; transition: opacity 140ms ease, visibility 140ms;
+}
+main[data-home="v2"] .hv2-proof-hover-tip[data-flip-x] { transform: translate(calc(var(--tx, 0px) - 100% - 16px), calc(var(--ty, 0px) + 18px)); }
+main[data-home="v2"] .hv2-proof-hover-tip[data-flip-y] { transform: translate(calc(var(--tx, 0px) + 16px), calc(var(--ty, 0px) - 100% - 14px)); }
+main[data-home="v2"] .hv2-proof-hover-tip[data-flip-x][data-flip-y] { transform: translate(calc(var(--tx, 0px) - 100% - 16px), calc(var(--ty, 0px) - 100% - 14px)); }
+main[data-home="v2"] .hv2-proof-hover-tip[data-on] { opacity: 1; visibility: visible; }
+main[data-home="v2"] .hv2-proof-hover-tip small { color: #f0b48a; font: 600 11.5px/1.2 var(--font-manrope), sans-serif; }
+main[data-home="v2"] .hv2-contour-stage[data-hit-node="bearing"] .hv2-proof-detail-pin[data-detail="bearing"],
+main[data-home="v2"] .hv2-contour-stage[data-hit-node="purlin"] .hv2-proof-detail-pin[data-detail="purlin"],
+main[data-home="v2"] .hv2-contour-stage[data-hit-node="base"] .hv2-proof-detail-pin[data-detail="base"],
+main[data-home="v2"] .hv2-contour-stage[data-hit-node="ridge"] .hv2-proof-detail-pin[data-detail="ridge"],
+main[data-home="v2"] .hv2-contour-stage[data-hit-node="chord"] .hv2-proof-detail-pin[data-detail="chord"] { color: #141615; background: #f0b48a; box-shadow: 0 0 0 4px rgba(240, 180, 138, .3); }
 
 main[data-home="v2"] .hv2-contour .sheet-action { padding: 6px 8px 6px 10px; }
 main[data-home="v2"] .hv2-contour-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -722,6 +762,24 @@ main[data-home="v2"] .hv2-contour-build:disabled { cursor: default; opacity: .45
 @media (hover: hover) { main[data-home="v2"] .hv2-contour-build:enabled:hover { background: rgba(204, 132, 85, .14); } }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-build { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-contour-build { display: none; } }
+/* «Тур за 20 секунд»: a filled play disc; pressed, a stop square */
+main[data-home="v2"] .hv2-contour-tour-btn { color: #f5f2eb; border-color: #f0b48a; background: rgba(204, 132, 85, .16); }
+main[data-home="v2"] .hv2-contour-tour-btn i { border-left-color: #f0b48a; }
+main[data-home="v2"] .hv2-contour-tour-btn i[data-stop] { width: 9px; height: 9px; border: 0; background: #f0b48a; }
+main[data-home="v2"] .hv2-contour-tour {
+  position: absolute; z-index: 5; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 8px; overflow: hidden;
+  padding: 6px 12px 8px 8px; color: var(--hv2-text); background: rgba(19, 21, 20, .94); border: 1px solid rgba(240, 180, 138, .6);
+  font: 600 13px/1 var(--font-manrope), sans-serif; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 200ms ease, visibility 200ms;
+}
+main[data-home="v2"] .hv2-contour-tour[data-on] { opacity: 1; visibility: visible; }
+main[data-home="v2"] .hv2-contour-tour i { color: #f0b48a; font: 700 11px/1 var(--font-condensed), sans-serif; font-style: normal; letter-spacing: .08em; }
+main[data-home="v2"] .hv2-contour-tour-bar { position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; background: #f0b48a; transform-origin: left; }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-contour-tour-bar { animation: hv2-tour-bar var(--hold, 3000ms) linear both; }
+  main[data-home="v2"] .hv2-contour-brief[data-call] { animation: hv2-brief-ring 900ms ease-out 3; }
+}
+@keyframes hv2-tour-bar { from { transform: scaleX(0); } }
+@media (max-width: 760px) { main[data-home="v2"] .hv2-contour-tour { top: 6px; left: 6px; padding: 4px 9px 6px 6px; font-size: 11.5px; } }
 /* «Вузли крупно: А Б В» — the letters on the scheme, named in the title block too */
 main[data-home="v2"] .hv2-contour-nodes { display: inline-flex; align-items: center; gap: 6px; }
 main[data-home="v2"] .hv2-contour-nodes-label { margin-right: 2px; color: var(--hv2-text-2); font: 600 12.5px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
@@ -1053,7 +1111,10 @@ main[data-home="v2"] .hv2-contour-hint {
 }
 main[data-home="v2"] .hv2-contour-stage[data-layer="load"]:not([data-pointed], [data-snapped]) .hv2-contour-hint { opacity: 1; visibility: visible; }
 /* A phone's right side is narrow: the hint in two short lines, inside it */
-@media (max-width: 760px) { main[data-home="v2"] .hv2-contour-hint { max-width: 132px; white-space: normal; font-size: 11px; } }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-contour-hint { max-width: 132px; white-space: normal; font-size: 11px; }
+  main[data-home="v2"] .hv2-proof-hover-tip { padding: 4px 8px; font-size: 11.5px; }
+}
 main[data-home="v2"] .hv2-contour-hint [data-input="touch"] { display: none; }
 @media (hover: none) {
   main[data-home="v2"] .hv2-contour-hint [data-input="hover"] { display: none; }
