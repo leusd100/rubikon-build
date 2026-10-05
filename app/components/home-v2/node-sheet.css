@@ -13,6 +13,8 @@ main[data-home="v2"] .hv2-cards.hv2-sheet {
   --sheet-part: color-mix(in srgb, var(--hv2-graphite) 50%, var(--hv2-graphite-2));
   /* The copper thread's dash and its period (the flow runs one period) */
   --sig-dash: 7 5; --sig-period: -12;
+  /* How far the roof load presses down, in the drawing's own units */
+  --sig-press: 4px;
   display: grid; grid-template-columns: minmax(0, 1.78fr) minmax(0, 1fr); gap: 0; margin-top: 16px;
   background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line);
 }
@@ -86,11 +88,24 @@ main[data-home="v2"] .sig-hit { fill: transparent; stroke: none; pointer-events:
     main[data-home="v2"] .hv2-sheet:has([data-hit="load"]:hover, [data-note="load"]:hover) :is(.sig-part path, .sig-cut, .sig-frame) { stroke: var(--hv2-text-3); }
   }
 }
-/* The thread runs only while it is pointed at; nothing on this sheet moves by itself after the draw-in */
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  main[data-home="v2"] .hv2-sheet:has([data-hit="load"]:hover, [data-note="load"]:hover) .sig-thread { animation: hv2-sheet-flow 1s linear infinite; }
+/* ---- the load is alive while the sheet is on screen (owner, 05.10) ----
+   The copper thread runs down its way, the roof load presses, the pressure under the plate breathes. ProcessMotion
+   keeps data-motion-live="on" on the figure only while it is in view, so nothing runs out of sight; with reduced
+   motion the controller never arms and the sheet stands still. Only the shown composition moves (the other one is
+   hidden, see .sig-tall). The press and the breath are on wrapper groups: the paths keep their draw-in animations. */
+@media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-thread { animation: hv2-sheet-flow 1.5s linear infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-press { animation: hv2-sheet-press 3s ease-in-out infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-breathe { animation: hv2-sheet-breathe 3s ease-in-out infinite; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-thread { animation: hv2-sheet-flow 1.5s linear infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-press { animation: hv2-sheet-press 3s ease-in-out infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-breathe { animation: hv2-sheet-breathe 3s ease-in-out infinite; }
 }
 @keyframes hv2-sheet-flow { to { stroke-dashoffset: var(--sig-period); } }
+@keyframes hv2-sheet-press { 50% { transform: translateY(var(--sig-press)); } }
+@keyframes hv2-sheet-breathe { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 
 /* ---- the draw-in, once, on first view ----
    The page's one motion controller (ProcessMotion on <main data-home="v2">, app/page.tsx) puts data-motion-ready on
@@ -134,7 +149,7 @@ main[data-home="v2"] .hv2-process-link { margin-top: 10px; }
 }
 @media (max-width: 900px) { main[data-home="v2"] :is(.sig-name text, .sig-mark) { font-size: 17px; } }
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-cards.hv2-sheet { --sig-dash: 5 4; --sig-period: -9; margin-top: 22px; }
+  main[data-home="v2"] .hv2-cards.hv2-sheet { --sig-dash: 5 4; --sig-period: -9; --sig-press: 2.5px; margin-top: 22px; }
   main[data-home="v2"] .sig-wide { position: absolute; width: 1px; height: 1px; visibility: hidden; }
   main[data-home="v2"] .sig-tall { position: static; width: 100%; max-width: 440px; height: auto; visibility: visible; }
   main[data-home="v2"] .sig-stage { padding: 6px 0 2px; }

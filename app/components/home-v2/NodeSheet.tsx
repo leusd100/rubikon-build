@@ -12,7 +12,7 @@ import './node-sheet.css';
 //
 // What it is not: a drawing of any real object. No sizes, no scale, no level marks; the strip says «Схема · без
 // розмірів». The generated raster the first card showed is gone from the markup (the files stay until the owner
-// decides), and so is the endlessly running flow of the second.
+// decides).
 //
 // The drawing's grammar (one dictionary for every sheet of this pass): short dash — hidden below (the footings under
 // the ground); dash-dot — an axis; thin solid — everything else; copper — only the load's way. Concrete in section is
@@ -20,9 +20,12 @@ import './node-sheet.css';
 // keeps that hatch for masonry. Nodes take digits; letters belong to axes.
 //
 // A server component, no client code. It draws in once on first view: app/page.tsx mounts the page's one ProcessMotion
-// on <main data-home="v2">, which flips the figure's [data-motion] when it comes into view (node-sheet.css). Without
-// JavaScript or with reduced motion nothing is armed and the complete drawing stands. Pointing at a note, at its half
-// of the drawing or at a part's name lights it — CSS only (:has), emphasis only: nothing is hidden without it.
+// on <main data-home="v2">, which flips the figure's [data-motion] when it comes into view (node-sheet.css). After
+// that the load is alive while the sheet is on screen (owner, 05.10: «динамічним, але не тільки при наведенні»): the
+// copper thread runs down its way, the roof load presses, the pressure under the plate breathes — the controller
+// keeps [data-motion-live] "on" only in view. Without JavaScript or with reduced motion nothing is armed: the complete
+// drawing stands still. Pointing at a note, at its half of the drawing or at a part's name lights it — CSS only
+// (:has), emphasis only: nothing is hidden without it.
 
 type Point = readonly [number, number];
 type Part = 'rib' | 'plate' | 'anchor' | 'base';
@@ -233,12 +236,13 @@ function SheetDrawing({ config }: Readonly<{ config: SheetConfig }>) {
         <path className="sig-hatch" d={key.groundTicks} />
         <path className="sig-hidden" d={key.footings} />
         <path className="sig-axis" d={key.axes} />
-        <path className="sig-load" d={key.load} />
+        {/* The roof load presses, as a group: the path itself keeps its place in the draw-in */}
+        <g className="sig-press"><path className="sig-load" d={key.load} /></g>
         <path className="sig-frame" pathLength={1} d={key.frame} />
         <path className="sig-frame-inner" pathLength={1} d={key.frameInner} />
         <path className="sig-line" d={key.bases} />
         {/* The thread is dashed, so it cannot draw itself by its dash offset: it fades in, as a group, and the path
-            stays free for the flow a pointer starts */}
+            stays free for its flow */}
         <g className="sig-way">
           <path className="sig-thread" d={key.way} />
           {key.wayHeads.map((head) => <path key={head} className="sig-thread-head" d={head} />)}
@@ -270,7 +274,7 @@ function SheetDrawing({ config }: Readonly<{ config: SheetConfig }>) {
           <path className="sig-thread" d={node.way} />
           <path className="sig-thread-head" d={node.wayHead} />
         </g>
-        <path className="sig-spread" d={node.spread} />
+        <g className="sig-breathe"><path className="sig-spread" d={node.spread} /></g>
       </g>
       <path className="sig-callout sig-rim" pathLength={1} d={rim(1)} />
       <path className="sig-callout sig-rim" pathLength={1} d={rim(0)} />
@@ -317,7 +321,7 @@ export function NodeSheet() {
   return (
     // «hv2-cards» stays on the root: the page's order test (pr-critical) and the visual suite find the block by it
     <div className="hv2-cards hv2-sheet">
-      <figure className="sig-figure" data-motion>
+      <figure className="sig-figure" data-motion data-motion-live="">
         {/* One picture for a screen reader, named with the words the two cards already used; the two SVGs (one per
             layout) are its drawing */}
         <div

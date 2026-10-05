@@ -61,6 +61,33 @@ test('pointing at the node’s note lights the node on the drawing', async ({ pa
   await expect.poll(strokeOf).toBe(copper);
 });
 
+test('the load is alive while the sheet is on screen — not only under the pointer — and still with reduced motion', async ({ page, isMobile }) => {
+  await page.goto('/', { waitUntil: 'load' });
+  const sheet = page.locator(SHEET);
+  const figure = sheet.locator('.sig-figure');
+  const shown = isMobile ? 'svg.sig-tall' : 'svg.sig-wide';
+  const running = (selector: string) => sheet.locator(`${shown} ${selector}`).first().evaluate((element) => {
+    const style = getComputedStyle(element);
+    return `${style.animationName} ${style.animationIterationCount}`;
+  });
+  await sheet.scrollIntoViewIfNeeded();
+  await expect(figure).toHaveAttribute('data-motion-live', 'on');
+  // The pointer is parked: this is not the hover state
+  await page.mouse.move(2, 2);
+  expect(await running('.sig-thread')).toBe('hv2-sheet-flow infinite');
+  expect(await running('.sig-press')).toBe('hv2-sheet-press infinite');
+  expect(await running('.sig-breathe')).toBe('hv2-sheet-breathe infinite');
+  // Out of sight nothing runs
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(figure).toHaveAttribute('data-motion-live', 'off');
+  expect(await running('.sig-thread')).toBe('none 1');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload({ waitUntil: 'load' });
+  await page.locator(SHEET).scrollIntoViewIfNeeded();
+  expect(await running('.sig-thread')).toBe('none 1');
+});
+
 for (const width of [360, 390]) {
   test(`on a ${width}px phone the sheet is shorter than the two cards were and nothing overflows`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
