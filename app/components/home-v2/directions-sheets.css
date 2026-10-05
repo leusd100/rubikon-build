@@ -4,26 +4,34 @@
    page's theme roles (this band is paper in Light, ink in Dark).
 
    The row costs the header nothing. globals.css would give an aside a grid column of its own from 1051 px; here the
-   header keeps its one column and the aside is laid OVER it, on the header's bottom line at the right. It is 54 % of
-   the header wide — the title, set in a viewport-relative size, never reaches past 43 % — and the note is kept to the
-   rest. Shown from 1200 px, where a sheet is 113 px or more; below that the header is as it was. */
+   header keeps its one column and the aside is laid OVER it at the right, as tall as the header's two rows. It is
+   54 % of the header wide — the title, set in a viewport-relative size, never reaches past 43 % — and the note is
+   kept to the rest. Shown from 1200 px, where a sheet is 113 px or more; below that the header is as it was.
+
+   The sheets are set to the header's own lines: their bottom is the note's bottom, their top the top of the title's
+   capitals — 48.6 px of eyebrow above the title, then .15 of the title's size down to the capitals (measured; the
+   title's size is --title-section). Between those two lines a sheet comes out upright, about 1 : 1.5. */
 main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
 main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside { display: none; }
 @media (min-width: 1200px) {
   main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside {
-    display: block; grid-column: 1; grid-row: 1 / span 2; align-self: end; justify-self: end; width: 54%; margin: 0; pointer-events: none;
+    display: grid; grid-column: 1; grid-row: 1 / span 2; align-self: stretch; justify-self: end; width: 54%; margin: 0;
+    padding-top: calc(48.6px + .15 * var(--title-section)); pointer-events: none;
   }
   /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
   main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-copy { grid-row: 1; }
   main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-support { grid-row: 2; max-width: min(640px, calc(46% - 36px)); }
 }
 
-main[data-home="v2"] .hv2-directions .dsh { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; user-select: none; }
-/* A sheet: the scheme on its own paper, then the title block */
-main[data-home="v2"] .hv2-directions .dsh-sheet { display: flex; flex-direction: column; min-width: 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
-main[data-home="v2"] .hv2-directions .dsh .cdw { padding: 6px 6px 3px; }
-main[data-home="v2"] .hv2-directions .dsh-strip { display: flex; justify-content: space-between; gap: 6px; padding: 4px 7px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 10px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-main[data-home="v2"] .hv2-directions .dsh-strip span:first-child { color: var(--color-text); }
+main[data-home="v2"] .hv2-directions .dsh { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 8px; min-height: 0; user-select: none; }
+/* A sheet: the scheme on its own paper, in the free field over the title block. A mouse's shortcut to the direction. */
+main[data-home="v2"] .hv2-directions .dsh-sheet { display: flex; flex-direction: column; min-width: 0; min-height: 0; color: inherit; text-decoration: none; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); pointer-events: auto; transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+main[data-home="v2"] .hv2-directions .dsh-draw { display: grid; flex: 1 1 auto; align-items: center; min-height: 0; }
+main[data-home="v2"] .hv2-directions .dsh .cdw { padding: 4px 7px; }
+/* The title block: the direction's name (two lines kept, so the five blocks are one height), then the sheet's strip */
+main[data-home="v2"] .hv2-directions .dsh-block { display: block; border-top: 1px solid var(--color-border-strong); }
+main[data-home="v2"] .hv2-directions .dsh-name { display: flex; align-items: center; min-height: calc(2.3em + 12px); padding: 6px 8px; color: var(--color-text); font: 600 12.5px/1.15 var(--font-condensed), sans-serif; letter-spacing: .01em; text-wrap: balance; }
+main[data-home="v2"] .hv2-directions .dsh-strip { display: flex; justify-content: space-between; gap: 6px; padding: 0 8px 7px; color: var(--color-text-muted); font: 600 9.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 main[data-home="v2"] .hv2-directions .dsh-strip i { font-style: normal; }
 /* Under 124 px a sheet's strip keeps the number and «Схема» */
 @media (max-width: 1359px) { main[data-home="v2"] .hv2-directions .dsh-strip i { display: none; } }
@@ -35,12 +43,20 @@ main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="2"] { border-color: var(
 main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="3"] { border-color: var(--k3, var(--color-border-strong)); transform: translateY(var(--k3y, 0)); box-shadow: 0 var(--k3s, 0) calc(var(--k3s, 0) * 2.5) rgba(20, 22, 21, .16); }
 main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="4"] { border-color: var(--k4, var(--color-border-strong)); transform: translateY(var(--k4y, 0)); box-shadow: 0 var(--k4s, 0) calc(var(--k4s, 0) * 2.5) rgba(20, 22, 21, .16); }
 main[data-home="v2"] .hv2-directions .dsh-sheet[data-n="5"] { border-color: var(--k5, var(--color-border-strong)); transform: translateY(var(--k5y, 0)); box-shadow: 0 var(--k5s, 0) calc(var(--k5s, 0) * 2.5) rgba(20, 22, 21, .16); }
+/* …and the sheet under the pointer itself */
+main[data-home="v2"] .hv2-directions .dsh-sheet:hover { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(20, 22, 21, .16); }
 @supports selector(:has(*)) {
   main[data-home="v2"] .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) { --k1: var(--color-accent); --k1y: -5px; --k1s: 8px; }
   main[data-home="v2"] .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) { --k2: var(--color-accent); --k2y: -5px; --k2s: 8px; }
   main[data-home="v2"] .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) { --k3: var(--color-accent); --k3y: -5px; --k3s: 8px; }
   main[data-home="v2"] .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) { --k4: var(--color-accent); --k4y: -5px; --k4s: 8px; }
   main[data-home="v2"] .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) { --k5: var(--color-accent); --k5y: -5px; --k5s: 8px; }
+  /* The other way round: the pointed sheet marks its card */
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="1"]:hover) .direction-card[href="/angary"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="2"]:hover) .direction-card[href="/zernoskhovyshcha"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="3"]:hover) .direction-card[href="/metalokonstruktsii"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="4"]:hover) .direction-card[href="/betonni-roboty"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  main[data-home="v2"] .hv2-directions:has(.dsh-sheet[data-n="5"]:hover) .direction-card[href="/pokrivelni-roboty"] { outline: 2px solid var(--color-accent); outline-offset: 4px; }
 }
 
 /* ---- the row comes in once, on first view (HOME's one ProcessMotion). Without it — no JavaScript, reduced motion,

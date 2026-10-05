@@ -134,7 +134,8 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
       <figure className="cap-fig" aria-hidden="true" data-motion ref={figureRef}>
         <svg viewBox="0 24 360 184" focusable="false">
           <path className="cap-ground" d="M8 158H50M310 158H352" />
-          <path className="cap-axis" d="M180 28V204" />
+          {/* the building's axis and, through the middle of each footing, the two column axes (owner, 05.10) */}
+          <path className="cap-axis" d="M180 28V204M78 62V193M282 62V193" />
           {PARTS.map(([caps, d]) => {
             const ids = caps.split(' ');
             const tier = columns[columnOf(ids[0])]?.id;
