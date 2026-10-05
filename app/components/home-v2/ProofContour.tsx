@@ -204,6 +204,15 @@ function bringIntoView(stage: HTMLElement) {
 }
 /** How long a smooth scroll to the frame takes before the assembly starts */
 const SCROLL_FIRST = 450;
+/** The letters А, Б, В ring a few times once the sweep or the assembly has put them up, so the nodes behind them are
+ *  found (owner, 05.10: found by chance) */
+const NODES_HINT_MS = 2800;
+function hintNodes(stage: HTMLElement, after: number) {
+  window.setTimeout(() => {
+    stage.dataset.nodesHint = '';
+    window.setTimeout(() => delete stage.dataset.nodesHint, NODES_HINT_MS);
+  }, after);
+}
 
 function fitOf(room: Room | null, split: number) {
   if (!room) return { stampShort: false, stampNone: false, narrowLeft: split < 12, narrowRight: split > 72 };
@@ -259,7 +268,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [chosen, setChosen] = useState<Layer | null>(null);
   const [loadRun, setLoadRun] = useState(0);
   const [windRun, setWindRun] = useState(0);
-  const [linesOnPhoto, setLinesOnPhoto] = useState(false);
   const [dragging, setDragging] = useState(false);
   // The measured line the dragged seam holds, and the last one's words (they fade out after it is let go)
   const [snap, setSnap] = useState<Snap | null>(null);
@@ -395,6 +403,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         // Two rings from the handle, once: this is the thing to drag
         stage.dataset.pulse = '';
         timer = window.setTimeout(() => delete stage.dataset.pulse, 1700);
+        // …then the nodes' letters
+        hintNodes(stage, 1300);
       };
     };
     const seen = new IntersectionObserver(([entry]) => {
@@ -770,8 +780,22 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     buildTimer.current = window.setTimeout(() => {
       setBuildRun((run) => run + 1);
       setBuilding(true);
-      buildTimer.current = window.setTimeout(() => setBuilding(false), BUILD_MS);
+      buildTimer.current = window.setTimeout(() => {
+        setBuilding(false);
+        if (stageRef.current) hintNodes(stageRef.current, 0);
+      }, BUILD_MS);
     }, wait);
+  };
+  // A node from the title block: the scheme on, its ring in view, the frame on the screen (a phone's sheet covers it)
+  const openNode = (id: DetailId) => {
+    clearLit();
+    dropPoint();
+    setChosen('frame');
+    if (live.current > DEFAULT_SPLIT) setSplit(DEFAULT_SPLIT);
+    const phone = phoneNow();
+    if (!phone && stageRef.current) bringIntoView(stageRef.current);
+    setDetailSheet(phone);
+    setDetail((open) => (open === id ? null : id));
   };
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
   const engaged = loadRun + windRun + buildRun > 0;
@@ -856,9 +880,23 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   <i aria-hidden="true" />
                   Як це будується
                 </button>
-                <a className="hv2-contour-next" href={BRIEF_HREF} data-lit={engaged ? '' : undefined}>
-                  Такий, але ваш — сформувати бриф <span aria-hidden="true">→</span>
-                </a>
+                {/* The nodes drawn as details, named here too: their letters on the scheme were found by chance */}
+                <span className="hv2-contour-nodes" role="group" aria-label="Вузли крупно">
+                  <span className="hv2-contour-nodes-label" aria-hidden="true">Вузли крупно</span>
+                  {PROOF_DETAILS.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-label={`Вузол ${item.letter}: ${item.title}`}
+                      aria-haspopup="dialog"
+                      aria-expanded={detail === item.id}
+                      disabled={!ready || layer === 'sketch'}
+                      onClick={() => openNode(item.id)}
+                    >
+                      {item.letter}
+                    </button>
+                  ))}
+                </span>
               </span>
             </>
           ),
@@ -872,10 +910,12 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               {layer === 'sketch' ? 'Ескіз' : 'Схема'}
             </button>
           </span>
-          <button type="button" className="hv2-contour-toggle" aria-pressed={linesOnPhoto} disabled={!ready} onClick={() => setLinesOnPhoto((on) => !on)}>
-            <i aria-hidden="true" />
-            Контур на фото
-          </button>
+          {/* The way on: a hangar like this one, the visitor's own (owner, 05.10: in place of «Контур на фото», and
+              to be seen) */}
+          <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={engaged ? '' : undefined}>
+            <small>Такий ангар, але ваш</small>
+            <span>Сформувати бриф <i aria-hidden="true">→</i></span>
+          </a>
         </span>
       }
     >
@@ -884,7 +924,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         className="hv2-contour-stage"
         data-layer={layer}
         data-dragging={dragging ? '' : undefined}
-        data-lines-on-photo={linesOnPhoto ? '' : undefined}
         data-pointer-focus={pointerFocus ? '' : undefined}
         // The seam's names give way where their side is too narrow, the right one before the stamp; the stamp shortens
         data-narrow-left={narrowLeft ? '' : undefined}
@@ -914,10 +953,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             <source type="image/webp" srcSet={SRC_SET} sizes={SIZES} />
             <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable={false} />
           </picture>
-          <svg className="hv2-contour-lines" data-on-photo="" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`} aria-hidden="true">
-            <Lines casing snapped={snap?.line} />
-            <Lines snapped={snap?.line} />
-          </svg>
         </div>
         {/* The right side: a window as wide as the stage, moved to the seam, its content moved back by as much — so the
             tracing and every layer stand still while the window uncovers them, and moving the seam is two transforms the
