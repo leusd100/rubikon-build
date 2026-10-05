@@ -280,17 +280,20 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     live.current = value;
     for (const element of [paneRef.current, innerRef.current, railRef.current, handleRef.current]) element?.style.setProperty('--split', `${value}%`);
   };
-  // …and the rest of the sheet told, at most every COMMIT_EVERY ms while the pointer moves it, at once when it stops
+  // …and the rest of the sheet told every COMMIT_EVERY ms while the pointer moves it — a throttle, not a debounce: a
+  // steady move must not hold it back (review, 05.10: the range and the cut figures waited for the pointer to pause) —
+  // and at once when it stops. It is told where the seam is heading: a mouse's ease lands there
   const commit = (value: number, now = false) => {
-    window.clearTimeout(commitTimer.current);
-    commitTimer.current = undefined;
     if (now) {
+      window.clearTimeout(commitTimer.current);
+      commitTimer.current = undefined;
       setSplit(value);
       return;
     }
+    if (commitTimer.current !== undefined) return;
     commitTimer.current = window.setTimeout(() => {
       commitTimer.current = undefined;
-      setSplit(live.current);
+      setSplit(target.current);
     }, COMMIT_EVERY);
   };
   // A move that is not the pointer's — a key, a button, a layer, the range — reaches the seam through the state, and the
@@ -595,8 +598,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
 
   // Arrows step by one through the native range; the larger steps are the same in every browser
-  // A move that is not the pointer's — a key, a button, a layer — leaves no line lit behind it (review, 04.10)
+  // A move that is not the pointer's — a key, a button, a layer — takes the seam from a mouse resting over the frame
+  // (review, 05.10: the keys moved the range but not the seam) and leaves no line lit behind it (review, 04.10)
   const clearLit = () => {
+    cancelAnimationFrame(followFrame.current);
+    followFrame.current = 0;
+    target.current = live.current;
+    if (stageRef.current) delete stageRef.current.dataset.following;
     snapRef.current = null;
     setSnap(null);
   };

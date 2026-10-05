@@ -219,9 +219,10 @@ export const ProofMarks = memo(function ProofMarks() {
         {[...widthTicks, ...heightTicks].map((tick, index) => <path key={index} d={d(tick)} />)}
       </g>
       <g className="hv2-proof-tag-leaders">
-        {tags.map(({ id, anchor, at: to }) => (
-          <g key={id} data-tag={id}>
-            <path d={d([anchor, to])} />
+        {tags.map(({ id, anchor, at: to, atNarrow, wideOnly }) => (
+          <g key={id} data-tag={id} data-wide-only={wideOnly ? '' : undefined}>
+            <path d={d([anchor, to])} data-wide={atNarrow ? '' : undefined} />
+            {atNarrow && <path d={d([anchor, atNarrow])} data-narrow="" />}
             <circle cx={anchor[0]} cy={anchor[1]} r="2.6" />
           </g>
         ))}
@@ -230,8 +231,11 @@ export const ProofMarks = memo(function ProofMarks() {
   );
 });
 
-const place = ([x, y]: Pt, [cx, cy]: Pt = [x, y]): CSSProperties =>
-  ({ '--x': `${(x / W) * 100}%`, '--y': `${(y / H) * 100}%`, '--cx': `${(cx / W) * 100}%`, '--cy': `${(cy / H) * 100}%` }) as CSSProperties;
+const place = ([x, y]: Pt, [cx, cy]: Pt = [x, y], [nx, ny]: Pt = [x, y]): CSSProperties =>
+  ({
+    '--x': `${(x / W) * 100}%`, '--y': `${(y / H) * 100}%`, '--cx': `${(cx / W) * 100}%`, '--cy': `${(cy / H) * 100}%`,
+    '--nx': `${(nx / W) * 100}%`, '--ny': `${(ny / H) * 100}%`,
+  }) as CSSProperties;
 
 export const ProofLabels = memo(function ProofLabels() {
   return (
@@ -251,7 +255,7 @@ export const ProofLabels = memo(function ProofLabels() {
         </span>
       ))}
       {homeProofFrame.tags.map((tag) => (
-        <span key={tag.id} className="hv2-proof-tag" data-tag={tag.id} data-align={tag.align} style={place(tag.at)}>{tag.text}</span>
+        <span key={tag.id} className="hv2-proof-tag" data-tag={tag.id} data-align={tag.align} data-wide-only={tag.wideOnly ? '' : undefined} style={place(tag.at, tag.at, tag.atNarrow)}>{tag.text}</span>
       ))}
     </div>
   );

@@ -23,6 +23,12 @@ import { homeProofMeasures } from '../../app/data/homeProofMeasures';
 // the purlins' name; a key, the range, a button or a layer leaves no line lit; the scheme's name says the wind's way;
 // the wind's gusts are long where the frame has room and short in a phone's close-up; a phone's close-up keeps the
 // base clear of the handle; the seam's parts ride one rail moved by a transform, so moving it shifts no layout.
+// The review of 05.10 rebuilt the seam for speed: the right side is a window moved to the seam by a transform, its
+// content moved back by as much (no clip-path anywhere); --split lives on the four that carry it only, not on the stage;
+// a mouse leading the seam is eased by the page itself, and the rest of the sheet — the range, the names that give way,
+// the stamp — is told at most every COMMIT_EVERY while a pointer moves it, at once when it stops. The seam's right-hand
+// name gives way to a word of the drawing it would cover; the purlins' name stands on the right wall's face at every
+// width; a load's legend is compact, its tint its key.
 
 const DEFAULT_SPLIT = 62;
 // The first view's sweep (ProofContour): SWEEP_AT after the sheet arrives, once the page has been quiet SWEEP_QUIET, from
@@ -35,12 +41,22 @@ const SWEEP_MS_PHONE = 2200;
 // Passing a measured line, in per cent of the frame: it is lit within GRAB of the seam, until the seam is past RELEASE
 const SNAP_GRAB = 0.8;
 const SNAP_RELEASE = 1.4;
+// While a pointer moves the seam, the rest of the sheet is told at most this often, ms (ProofContour's COMMIT_EVERY); a
+// mouse leading the seam closes FOLLOW_EASE of the way left on each frame
+const COMMIT_EVERY = 100;
+const FOLLOW_EASE = 0.32;
+// The four that carry the seam's place (ProofContour; home-v2.css registers --split not inherited, so the stage keeps
+// its initial 62 %): the right side's window and its counter-moved content, the rail, the handle
+const CARRIERS = ['.hv2-contour-pane', '.hv2-contour-pane-inner', '.hv2-contour-rail', '.hv2-contour-handle'];
+// The right side's own copy of the measured lines (role="img"), and the photo's (aria-hidden, shown by «Контур на фото»)
+const PANE_LINES = '.hv2-contour-pane svg.hv2-contour-lines';
+const PHOTO_LINES = 'svg.hv2-contour-lines[data-on-photo]';
 // A phone's close-up of the gable (≤ 760 px): the canvas 1.22 × the frame's width, 19.46 % of it off to the left, so a
-// per cent of the canvas stands at (per cent × ZOOM − LEFT) of the frame — the photo's columns 245–1504 and rows 90–736;
+// per cent of the canvas stands at (per cent × ZOOM − LEFT) of the frame — the photo's columns 245–1504 and rows 92–738;
 // there the sweep turns at 1 %, just past the gable's left corner
 const PHONE_ZOOM = 1.22;
 const PHONE_LEFT = 19.46;
-const PHONE_TOP_ROW = 90;
+const PHONE_TOP_ROW = 92;
 const SWEEP_TURN_PHONE = 1;
 const onStage = (canvas: number, phone: boolean) => (phone ? canvas * PHONE_ZOOM - PHONE_LEFT : canvas);
 const onCanvas = (stage: number, phone: boolean) => (phone ? (stage + PHONE_LEFT) / PHONE_ZOOM : stage);
@@ -82,10 +98,8 @@ const SNAPS = [
   { line: 'gable-corner-right', at: meanX('gable-corner-right', 2), name: 'Правий кут фронтона' },
 ].map((snap) => ({ ...snap, status: lineOf(snap.line).approximate ? 'наближено' : 'виміряно' }));
 type Snap = (typeof SNAPS)[number];
-/** The seam's place in tenths of a per cent, as the stage's --split carries it */
+/** The seam's place in tenths of a per cent, as its four carriers' --split has it */
 const tenths = (value: number) => `${Math.round(value * 10) / 10}%`;
-/** A layer's clip as the left inset it uncovers the canvas from, per cent of the canvas */
-const leftInset = (clip: string) => Number(/^inset\(0px 0px 0px (-?[\d.]+)%\)$/.exec(clip)?.[1] ?? Number.NaN);
 const rgb = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
 /** How far apart two colours are: the largest difference in a channel */
 const apart = (a: string, b: string) => Math.max(...rgb(a).map((value, index) => Math.abs(value - rgb(b)[index])));
@@ -188,10 +202,48 @@ async function seamAt(stage: Locator) {
   });
 }
 
+/** The four carriers' --split: one value while they move as one, else each named (never the stage's: it has none) */
+function splitOf(stage: Locator) {
+  return stage.evaluate((element, carriers) => {
+    const values = carriers.map((selector) => getComputedStyle(element.querySelector(selector)!).getPropertyValue('--split'));
+    return new Set(values).size === 1 ? values[0] : carriers.map((selector, index) => `${selector} ${values[index]}`).join(', ');
+  }, CARRIERS);
+}
+
+/** The right side as a window (ProofContour): its left edge in per cent of the frame — where it uncovers the drawing —
+ *  and whether it clips what it holds there; how far its content stands off the frame, and its canvas off the photo's,
+ *  px (none: the window moves, the drawing never slides). Whatever lies in it is drawn right of that edge only */
+function windowOf(stage: Locator) {
+  return stage.evaluate((element) => {
+    const frame = element.getBoundingClientRect();
+    const pane = element.querySelector<HTMLElement>('.hv2-contour-pane')!;
+    const [box, inner, photo, drawing] = [pane, pane.querySelector('.hv2-contour-pane-inner')!, element.querySelector(':scope > .hv2-contour-canvas')!, pane.querySelector('.hv2-contour-canvas')!]
+      .map((part) => part.getBoundingClientRect());
+    return {
+      edge: ((box.left - frame.left) / frame.width) * 100,
+      clips: getComputedStyle(pane).overflow === 'hidden',
+      inner: Math.abs(inner.left - frame.left),
+      drift: Math.max(...(['left', 'top', 'width', 'height'] as const).map((side) => Math.abs(drawing[side] - photo[side]))),
+    };
+  });
+}
+
+/** The window's edge at `value` per cent of the frame (polled: a glide reaches it on a later frame), clipping there, its
+ *  content and its canvas standing exactly where the photo's do */
+async function expectWindow(stage: Locator, value: number, message?: string) {
+  await expect.poll(async () => (await windowOf(stage)).edge, message).toBeCloseTo(value, 2);
+  const { clips, inner, drift } = await windowOf(stage);
+  expect({ clips, inner: inner < 0.05, drift: drift < 0.05 }, `${message ?? ''} inner ${inner} px, drift ${drift} px`).toEqual({ clips: true, inner: true, drift: true });
+}
+
+/** A load's tint as the legend writes it: the colour of its way's words — the tint is the key, no line is drawn */
+const tintOf = (sheet: Locator, load: Load) => sheet.locator(`.hv2-contour-legend-chain[data-load="${load}"] > span:not([data-key])`).first().evaluate((word) => getComputedStyle(word).color);
+
 /** A load's way as the legend writes it, read with reduced motion (no word mid-way through its light): the active
- *  layer's set — the only one shown — holds one chain: the load's key first, its tint's line with no word, then each
- *  link's word in that tint, in the way's order, each with the --n of its part of the drawing (so the word lights with
- *  it). Nothing of it is on the frame or in a phone's facts any more (review, 04.10: no free room there on a laptop) */
+ *  layer's set — the only one shown — holds one chain: its key first, not drawn (compact, so the title block keeps its
+ *  height on a laptop — review, 05.10: the tint is the key), then each link's word in that tint, in the way's order,
+ *  each with the --n of its part of the drawing (so the word lights with it). Nothing of it is on the frame or in a
+ *  phone's facts any more (review, 04.10: no free room there on a laptop) */
 async function expectChain(sheet: Locator, load: Load, tint: string) {
   const sets = await sheet.locator('.hv2-contour-legend-set').evaluateAll((elements) => elements.map((element) => ({
     layer: (element as HTMLElement).dataset.layer, on: 'on' in (element as HTMLElement).dataset, visibility: getComputedStyle(element).visibility,
@@ -201,15 +253,13 @@ async function expectChain(sheet: Locator, load: Load, tint: string) {
   await expect(chain).toHaveCount(1);
   await expect(chain).toHaveAttribute('data-load', load);
   await expect(chain).toBeVisible();
-  const parts = await chain.evaluate((element) => [...element.children].map((child) => {
-    const line = child.querySelector('svg path');
-    return {
-      key: (child as HTMLElement).dataset.key ?? null, text: child.textContent, n: (child as HTMLElement).style.getPropertyValue('--n'),
-      color: getComputedStyle(child).color, line: line ? getComputedStyle(line).stroke : null,
-    };
-  }));
-  expect(parts[0], load).toEqual({ key: load, text: '', n: '', color: tint, line: tint });
-  expect(parts.slice(1).map(({ key, text, n, line }) => [key, text, Number(n), line]), load).toEqual(CHAINS[load].words.map(([word, n]) => [null, word, n, null]));
+  const parts = await chain.evaluate((element) => [...element.children].map((child) => ({
+    key: (child as HTMLElement).dataset.key ?? null, text: child.textContent, n: (child as HTMLElement).style.getPropertyValue('--n'),
+    color: getComputedStyle(child).color, drawn: getComputedStyle(child).display !== 'none',
+  })));
+  const [lead] = parts;
+  expect({ key: lead.key, text: lead.text, n: lead.n, drawn: lead.drawn }, load).toEqual({ key: load, text: '', n: '', drawn: false });
+  expect(parts.slice(1).map(({ key, text, n, drawn }) => [key, text, Number(n), drawn]), load).toEqual(CHAINS[load].words.map(([word, n]) => [null, word, n, true]));
   for (const part of parts.slice(1)) expect(part.color, `${load} ${part.text}`).toBe(tint);
   const stage = sheet.locator('.hv2-contour-stage');
   for (const [word, n, part] of CHAINS[load].words) {
@@ -233,12 +283,18 @@ function pointerAt(stage: Locator, clientX: number, offset = 0) {
 /** The seam as drawn and what it lights: --split, data-snapped, the measured lines marked lit (casing and ink), and the
  *  paths of the lit line's copy over the photo */
 function seamState(stage: Locator) {
-  return stage.evaluate((element) => ({
-    split: getComputedStyle(element).getPropertyValue('--split'),
-    snapped: element.dataset.snapped ?? null,
-    lines: [...element.querySelectorAll<SVGPathElement>('.hv2-contour-lines path[data-snapped]')].map((path) => `${path.parentElement!.getAttribute('class')} ${path.dataset.line}`),
-    held: element.querySelectorAll('svg.hv2-contour-held path').length,
-  }));
+  return stage.evaluate((element, carriers) => {
+    const splits = carriers.map((selector) => getComputedStyle(element.querySelector(selector)!).getPropertyValue('--split'));
+    return {
+      // the four carriers as one, or each named
+      split: new Set(splits).size === 1 ? splits[0] : carriers.map((selector, index) => `${selector} ${splits[index]}`).join(', '),
+      snapped: element.dataset.snapped ?? null,
+      // both copies of the lines, the photo's and the right side's
+      lines: [...element.querySelectorAll<SVGPathElement>('.hv2-contour-lines path[data-snapped]')]
+        .map((path) => `${path.closest('.hv2-contour-pane') ? 'pane' : 'photo'} ${path.parentElement!.getAttribute('class')} ${path.dataset.line}`),
+      held: element.querySelectorAll('svg.hv2-contour-held path').length,
+    };
+  }, CARRIERS);
 }
 
 /** Which measured line a seam moved by a pointer lights (ProofContour's splitAt): the first within GRAB of it, kept until
@@ -260,7 +316,7 @@ function litModel(phone: boolean) {
     /** The seamState a seam at `value` shows */
     state(value: number) {
       return lit
-        ? { split: tenths(value), snapped: '', lines: [`hv2-contour-casing ${lit.line}`, `hv2-contour-ink ${lit.line}`], held: 2 }
+        ? { split: tenths(value), snapped: '', lines: ['photo', 'pane'].flatMap((copy) => [`${copy} hv2-contour-casing ${lit!.line}`, `${copy} hv2-contour-ink ${lit!.line}`]), held: 2 }
         : { split: tenths(value), snapped: null, lines: [], held: 0 };
     },
   };
@@ -283,7 +339,7 @@ async function settledClashes(stage: Locator, atRest = false) {
 async function clashes(stage: Locator, atRest = false) {
   return stage.evaluate((element, rest) => {
     const frame = element.getBoundingClientRect();
-    const split = parseFloat(getComputedStyle(element).getPropertyValue('--split'));
+    const split = parseFloat(getComputedStyle(element.querySelector('.hv2-contour-pane')!).getPropertyValue('--split'));
     const seam = frame.left + (frame.width * split) / 100;
     const shown = (node: Element) => {
       for (let at: Element | null = node; at && at !== element; at = at.parentElement) {
@@ -357,12 +413,13 @@ async function arrive(page: Page) {
 }
 
 /** One frame of the first view as the page drew it: the stage's data-sweep, data-gliding, data-pulse and data-following;
- *  its --split and where the seam is drawn, how far the tracing and the scheme are uncovered (per cent of the frame — on
- *  a phone from the zoomed canvas's per cent); the range's value; the figures' and the names' opacity; whether the
- *  picture is still plotting in; the handle's rings; whatever else animates on the stage */
+ *  the seam's --split (its four carriers', and how far apart they are) and where the seam is drawn; where the right
+ *  side's window has its edge (per cent of the frame) and how far its drawing stands off the photo's canvas (px); the
+ *  script animations of --split on the carriers (the sweep's); the range's value; the figures' and the names' opacity;
+ *  whether the picture is still plotting in; the handle's rings; whatever else animates on the stage */
 type Frame = {
-  t: number; sweep: string | null; gliding: boolean; pulse: boolean; following: boolean; split: number; seam: number; trace: number; scheme: number;
-  range: string; words: number[]; plotting: boolean; rings: string; others: string[];
+  t: number; sweep: string | null; gliding: boolean; pulse: boolean; following: boolean; split: number; spread: number; seam: number; window: number; drift: number;
+  sweeps: number; range: string; words: number[]; plotting: boolean; rings: string; others: string[];
 };
 /** The frames, and when the sheet arrived, the sweep started and the seam stopped waiting or sweeping, and the page
  *  scrolled; and every layout shift meanwhile, by what shifted */
@@ -371,12 +428,15 @@ type Arrival = { frames: Frame[]; on: number | null; run: number | null; ended: 
 /** Records every frame of the first view in the page itself — a test's polls are too far apart for a three-second
  *  sweep — until 2.5 s after the seam stops waiting or sweeping (the rings have rung by then) */
 async function recordArrival(page: Page) {
-  await page.evaluate(([zoom, shift]) => {
+  await page.evaluate((selectors) => {
     const stage = document.querySelector<HTMLElement>('#real-object .hv2-contour-stage')!;
-    const phone = matchMedia('(max-width: 760px)').matches;
     const sheet = stage.closest('figure')!;
     const image = sheet.querySelector('.sheet-image')!;
     const handle = stage.querySelector('.hv2-contour-handle')!;
+    const carriers = selectors.map((selector) => stage.querySelector(selector)!);
+    const [pane] = carriers;
+    const photo = stage.querySelector(':scope > .hv2-contour-canvas')!;
+    const drawing = pane.querySelector('.hv2-contour-canvas')!;
     const arrival = { frames: [] as unknown[], on: null as number | null, run: null as number | null, ended: null as number | null, scrolls: [] as number[], shifts: [] as string[][], done: false };
     Object.assign(window, { arrival });
     new PerformanceObserver((list) => {
@@ -391,41 +451,47 @@ async function recordArrival(page: Page) {
       if (arrival.ended === null && arrival.on !== null && stage.dataset.sweep === undefined) arrival.ended = now;
     }).observe(sheet, { attributes: true, subtree: true, attributeFilter: ['data-sheet-state', 'data-sweep'] });
     addEventListener('scroll', () => arrival.scrolls.push(performance.now()), { passive: true });
-    // A layer's clip is a per cent of the canvas: on a phone, back to the frame's (to a thousandth — the computed value
-    // keeps six digits)
-    const inset = (selector: string) => {
-      const value = parseFloat(getComputedStyle(stage.querySelector(selector)!).clipPath.split(' ').at(-1) ?? '');
-      return phone ? Math.round((value * zoom - shift) * 1000) / 1000 : value;
-    };
     const opacity = (selector: string) => Number(getComputedStyle(stage.querySelector(selector)!).opacity);
+    // The sweep's own: a script's animation of --split on a carrier
+    const sweeping = (animation: Animation) => {
+      const effect = animation.effect as KeyframeEffect | null;
+      return !(animation instanceof CSSAnimation) && !(animation instanceof CSSTransition) && carriers.includes(effect?.target as Element)
+        && (effect?.getKeyframes() ?? []).every((keyframe) => '--split' in keyframe);
+    };
     const tick = () => {
       const frame = stage.getBoundingClientRect();
       const seam = stage.querySelector('.hv2-contour-seam')!.getBoundingClientRect();
+      const [box, inside, under] = [pane, drawing, photo].map((part) => part.getBoundingClientRect());
+      const splits = carriers.map((carrier) => parseFloat(getComputedStyle(carrier).getPropertyValue('--split')));
       const rings = getComputedStyle(handle, '::after');
+      const animations = document.getAnimations().filter((animation) => {
+        const target = (animation.effect as KeyframeEffect | null)?.target;
+        return target && target !== stage && stage.contains(target);
+      });
       arrival.frames.push({
         t: performance.now(),
         sweep: stage.dataset.sweep ?? null,
         gliding: stage.dataset.gliding !== undefined,
         pulse: stage.dataset.pulse !== undefined,
         following: stage.dataset.following !== undefined,
-        split: parseFloat(getComputedStyle(stage).getPropertyValue('--split')),
+        split: splits[0],
+        spread: Math.max(...splits) - Math.min(...splits),
         seam: ((seam.left + seam.width / 2 - frame.left) / frame.width) * 100,
-        trace: inset('.hv2-contour-trace'),
-        scheme: inset('svg.hv2-proof-frame'),
+        window: ((box.left - frame.left) / frame.width) * 100,
+        drift: Math.max(Math.abs(inside.left - under.left), Math.abs(inside.top - under.top), Math.abs(inside.width - under.width)),
+        sweeps: animations.filter(sweeping).length,
         range: stage.querySelector<HTMLInputElement>('.hv2-contour-range')!.value,
         words: [opacity('.hv2-proof-labels'), opacity('svg.hv2-proof-marks')],
         plotting: image.getAnimations().some((animation) => animation.playState === 'running'),
         rings: `${rings.animationName} ${rings.animationIterationCount}`,
-        others: document.getAnimations().filter((animation) => {
-          const target = (animation.effect as KeyframeEffect | null)?.target;
-          return target && target !== stage && stage.contains(target);
-        }).map((animation) => (animation as CSSAnimation).animationName ?? (animation as CSSTransition).transitionProperty ?? 'script'),
+        others: animations.filter((animation) => !sweeping(animation))
+          .map((animation) => (animation as CSSAnimation).animationName ?? (animation as CSSTransition).transitionProperty ?? 'script'),
       });
       if ((arrival.ended !== null && performance.now() - arrival.ended > 2500) || arrival.frames.length > 3000) arrival.done = true;
       else requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  }, [PHONE_ZOOM, PHONE_LEFT] as const);
+  }, CARRIERS);
 }
 
 async function arrivalOf(page: Page) {
@@ -450,22 +516,31 @@ test('the sheet names both sides, states the retouch and what the scheme is, and
   await expect(stage.locator('.hv2-contour-stamp')).toHaveText(/Схема · без розмірів\s*каркас такого типу, як на цьому об’єкті/);
   await expect(stage.locator('.hv2-contour-canvas > picture img')).toHaveAttribute('src', homeProofContour.photo.src);
 
-  // The lines: one per record, the approximate ones dashed, each with its words, in the photo's own pixels
-  const lines = stage.locator('svg.hv2-contour-lines .hv2-contour-ink path');
+  // The lines: one per record, the approximate ones dashed, each with its words, in the photo's own pixels — the right
+  // side's copy, and the same lines once more in the photo's (aria-hidden: «Контур на фото» shows it)
+  const lines = stage.locator(`${PANE_LINES} .hv2-contour-ink path`);
   await expect(lines).toHaveCount(homeProofContour.lines.length);
   expect(await lines.evaluateAll((paths) => paths.map((path) => path.getAttribute('data-line')))).toEqual(homeProofContour.lines.map((line) => line.id));
-  await expect(stage.locator('.hv2-contour-ink path[data-approximate]')).toHaveCount(homeProofContour.lines.filter((line) => line.approximate).length);
-  // …solid on the scheme's layers (owner, 04.10: one outline there), dashed in «Контур», where the legend reads them
-  for (const path of await stage.locator('.hv2-contour-ink path[data-approximate]').all()) {
+  await expect(stage.locator(`${PANE_LINES} .hv2-contour-ink path[data-approximate]`)).toHaveCount(homeProofContour.lines.filter((line) => line.approximate).length);
+  await expect(stage.locator('svg.hv2-contour-lines')).toHaveCount(2);
+  await expect(stage.locator(PHOTO_LINES)).toHaveAttribute('aria-hidden', 'true');
+  expect(await stage.locator(`${PHOTO_LINES} path`).evaluateAll((paths) => paths.map((path) => [path.parentElement!.getAttribute('class'), path.getAttribute('data-line'), path.getAttribute('d')])))
+    .toEqual(await stage.locator(`${PANE_LINES} path`).evaluateAll((paths) => paths.map((path) => [path.parentElement!.getAttribute('class'), path.getAttribute('data-line'), path.getAttribute('d')])));
+  // …solid on the scheme's layers (owner, 04.10: one outline there), dashed in «Контур», where the legend reads them —
+  // in both copies alike
+  const approximate = stage.locator('svg.hv2-contour-lines .hv2-contour-ink path[data-approximate]');
+  await expect(approximate).toHaveCount(2 * homeProofContour.lines.filter((line) => line.approximate).length);
+  for (const path of await approximate.all()) {
     expect(await path.evaluate((element) => getComputedStyle(element).strokeDasharray)).toBe('none');
   }
   await layers.getByRole('button', { name: 'Контур' }).click();
-  for (const path of await stage.locator('.hv2-contour-ink path[data-approximate]').all()) {
+  for (const path of await approximate.all()) {
     expect(await path.evaluate((element) => getComputedStyle(element).strokeDasharray)).toMatch(/^[\d.]+px,? [\d.]+px$/);
   }
   await layers.getByRole('button', { name: 'Каркас' }).click();
   for (const svg of ['svg.hv2-contour-lines', 'svg.hv2-proof-frame', 'svg.hv2-proof-marks']) {
-    await expect(stage.locator(svg)).toHaveAttribute('viewBox', `0 0 ${homeProofContour.photo.width} ${homeProofContour.photo.height}`);
+    expect(new Set(await stage.locator(svg).evaluateAll((elements) => elements.map((element) => element.getAttribute('viewBox')))), svg)
+      .toEqual(new Set([`0 0 ${homeProofContour.photo.width} ${homeProofContour.photo.height}`]));
   }
   // Under role="img" the lines' own titles reach no one: the accessible names say which lines are approximate, and
   // what the scheme is and is not
@@ -507,7 +582,7 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   await expect(stage.locator('.hv2-contour-lines [data-group]')).toHaveCount(0);
   const strokes = new Set(await scheme.locator('.hv2-proof-scheme [data-group]:not([data-hidden])').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)));
   expect([...strokes]).toEqual([PAPER]);
-  expect(await stage.locator('.hv2-contour-ink path').first().evaluate((path) => getComputedStyle(path).stroke)).toBe(COPPER);
+  expect(await stage.locator(`${PANE_LINES} .hv2-contour-ink path`).first().evaluate((path) => getComputedStyle(path).stroke)).toBe(COPPER);
   const hidden = scheme.locator('.hv2-proof-scheme [data-hidden]');
   await expect(hidden).toHaveCount(homeProofFrame.members.filter((member) => member.hidden).length);
   expect(new Set(await hidden.evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)))).toEqual(new Set([COPPER]));
@@ -517,7 +592,7 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   // what the section cuts one step down; its webs another; the blockwork finest. Square ends and sharp joins, as a
   // plotter draws them (the outline's approximate pieces are the «Контур» layer's to tell apart)
   const weight = (selector: string) => stage.locator(selector).first().evaluate((element) => parseFloat(getComputedStyle(element).strokeWidth));
-  const outline = await weight('.hv2-contour-ink path[data-kind="outline"]:not([data-approximate])');
+  const outline = await weight(`${PANE_LINES} .hv2-contour-ink path[data-kind="outline"]:not([data-approximate])`);
   const chord = await weight('.hv2-proof-scheme [data-group="truss"][data-depth="0"]');
   const web = await weight('.hv2-proof-scheme [data-group="web"][data-depth="0"]');
   expect(outline).toBeGreaterThan(chord);
@@ -546,9 +621,11 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
     expect(look.shadow).toBe('none');
   }
 
-  // The stamp belongs to the right side and lies on it only, clipped at the seam: in full while that side has room for
-  // it, its first word where it has not, none at all where not even that fits (never a fragment — review, 04.10: «ХЕМА»),
-  // never over the photo and never under «‹ Фото»
+  // The stamp belongs to the right side and lies on it only — in its window, cut at the seam with it: in full while that
+  // side has room for it, its first word where it has not, none at all where not even that fits (never a fragment —
+  // review, 04.10: «ХЕМА»), never over the photo and never under «‹ Фото»
+  await expect(stage.locator('.hv2-contour-pane .hv2-contour-corner .hv2-contour-stamp')).toHaveCount(1);
+  await expect(stage.locator('.hv2-contour-stamp')).toHaveCount(1);
   const frame = (await stage.boundingBox())!;
   const phone = page.viewportSize()!.width <= 760;
   const stamp = stage.locator('.hv2-contour-stamp');
@@ -566,7 +643,7 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
     const box = (await stamp.boundingBox())!;
     expect(box.x + box.width, `${value}`).toBeLessThanOrEqual(frame.x + frame.width);
     expect(box.y, `${value}`).toBeGreaterThanOrEqual(frame.y);
-    await expect(stage.locator('.hv2-contour-corner'), `${value}`).toHaveCSS('clip-path', `inset(0px 0px 0px ${value}%)`);
+    await expectWindow(stage, value, `${value}`);
     if (phone) {
       // a phone's stamp is its first word
       await expect(stamp, `${value}`).toHaveText(/^схема$/i, { useInnerText: true });
@@ -611,7 +688,8 @@ test('the snow is drawn in its own tint, as a drawing writes it, and lights the 
     expect(part.stroke === COPPER && part.dash === 'none', `${part.kind}: ${part.stroke} ${part.dash}`).toBe(false);
     expect(part.fill, part.kind).not.toBe(COPPER);
   }
-  const load = await page.locator('#real-object .hv2-contour-legend [data-on] [data-key="load"] path').evaluate((path) => getComputedStyle(path).stroke);
+  // (the legend's tint: its words', the tint being the key)
+  const load = await tintOf(page.locator('#real-object .hv2-contour'), 'load');
   expect(load).not.toBe(COPPER);
   const strokesOf = async (selector: string) => new Set(await stage.locator(selector).evaluateAll((parts) => parts.map((part) => getComputedStyle(part).stroke)));
 
@@ -674,11 +752,10 @@ test('the wind is its own layer in a cool tint of its own: gusts on the wall, li
   await expect(slider).toHaveAccessibleName('Порівняти фото й схему');
   await expect(stage.getByRole('img', { name: `${homeProofFrame.label} ${homeProofFrame.windLabel}`, exact: true })).toBeVisible();
 
-  // Its tint: the legend's key, cool, and far from the snow's, the measured copper and the scheme's paper — the two loads
-  // never read as one (owner, 04.10: «розумно кольорів»)
-  const legend = (key: string) => page.locator(`#real-object .hv2-contour-legend [data-key="${key}"] path`).evaluate((path) => getComputedStyle(path).stroke);
-  await expect(page.locator('#real-object .hv2-contour-legend [data-on] [data-key="wind"]')).toBeVisible();
-  const [tint, snow] = [await legend('wind'), await legend('load')];
+  // Its tint: the legend's (its words' — the tint is the key), cool, and far from the snow's, the measured copper and the
+  // scheme's paper — the two loads never read as one (owner, 04.10: «розумно кольорів»)
+  await expect(sheet.locator('.hv2-contour-legend-set[data-on] > .hv2-contour-legend-chain[data-load="wind"]')).toBeVisible();
+  const [tint, snow] = [await tintOf(sheet, 'wind'), await tintOf(sheet, 'load')];
   for (const other of [snow, COPPER, PAPER]) expect(apart(tint, other), `${tint} / ${other}`).toBeGreaterThan(60);
   expect(rgb(tint)[2]).toBeGreaterThan(rgb(tint)[0]);
 
@@ -819,8 +896,15 @@ test('the seam rests between the gates, and nothing of the right side lies over 
   expect(DEFAULT_SPLIT).toBeGreaterThan(onStage(rightmost, phone));
   expect(DEFAULT_SPLIT).toBeLessThan(onStage(leftmost, phone));
 
-  // Pixels of the photo side (clear of the seam, its handle and the seam's names) are the same with and without every
-  // layer of the right side: the scheme, the lines, the figures and the names…
+  // Every part of the right side — the tracing, the scheme, its copy of the lines, the figures' marks and words, the stamp
+  // — lies in its window and nowhere else, and the window stands at the seam, cut there, the drawing in it on the photo's
+  // own canvas (review, 05.10: a window moved by transforms, no clip-path)
+  for (const part of ['.hv2-contour-trace', 'svg.hv2-proof-frame', PANE_LINES, 'svg.hv2-proof-marks', '.hv2-proof-labels', '.hv2-contour-corner']) {
+    expect(await stage.locator(part).evaluateAll((elements) => elements.map((element) => element.closest('.hv2-contour-pane') !== null)), part).toEqual([true]);
+  }
+  await expectWindow(stage, DEFAULT_SPLIT);
+  // …so pixels of the photo side (clear of the seam, its handle and the seam's names) are the same with and without
+  // every layer of the right side: the scheme, the lines, the figures and the names…
   const frame = (await stage.boundingBox())!;
   const photoSide = { x: frame.x + 1, y: frame.y + 40, width: frame.width * (DEFAULT_SPLIT / 100) - 30, height: frame.height - 41 };
   const layers = stage.locator('.hv2-contour-canvas > :is(svg, .hv2-proof-labels)');
@@ -833,21 +917,26 @@ test('the seam rests between the gates, and nothing of the right side lies over 
 
   // …and differ once «Контур на фото» lays the measured lines over the photo (so the comparison can see a line) —
   // the lines only: with them on, the photo side is the same with and without the scheme
+  // — the photo's own copy of them, shown; the window stays where it was
   const toggle = page.locator('#real-object').getByRole('button', { name: 'Контур на фото', exact: true });
-  const lines = stage.locator('svg.hv2-contour-lines');
+  const onPhoto = () => stage.locator(PHOTO_LINES).evaluate((element) => `${getComputedStyle(element).visibility} ${getComputedStyle(element).opacity}`);
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  expect(await onPhoto()).toMatch(/^hidden /);
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-  await expect.poll(() => lines.evaluate((element) => getComputedStyle(element).clipPath)).toMatch(/^inset\(0px\)$|^none$/);
+  await expect.poll(onPhoto).toBe('visible 1');
   const linesOnPhoto = await steadyShot(page, photoSide);
   expect(await differing(page, linesOnPhoto, withoutLayers)).toBeGreaterThan(200);
   await stage.locator('svg.hv2-proof-frame').evaluate((element) => { (element as SVGElement).style.visibility = 'hidden'; });
   expect(await differing(page, await steadyShot(page, photoSide), linesOnPhoto)).toBeLessThan(SPECKS);
   await stage.locator('svg.hv2-proof-frame').evaluate((element) => { (element as SVGElement).style.visibility = ''; });
-  expect(leftInset(await stage.locator('svg.hv2-proof-frame').evaluate((element) => getComputedStyle(element).clipPath))).toBeCloseTo(onCanvas(DEFAULT_SPLIT, phone), 3);
+  await expectWindow(stage, DEFAULT_SPLIT);
+  // Off again: the photo side is the photo alone once more
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-  await expect.poll(async () => leftInset(await lines.evaluate((element) => getComputedStyle(element).clipPath))).toBeCloseTo(onCanvas(DEFAULT_SPLIT, phone), 3);
+  await expect.poll(onPhoto).toMatch(/^hidden /);
+  expect(await differing(page, await steadyShot(page, photoSide), withLayers)).toBeLessThan(SPECKS);
+  await expectWindow(stage, DEFAULT_SPLIT);
 });
 
 test('the title block switches the right side: the contour with its figures, the scheme with its names, each load link by link', async ({ page }) => {
@@ -921,7 +1010,9 @@ test('the title block switches the right side: the contour with its figures, the
     expect(Number(await stage.locator('.hv2-proof-scheme').evaluate((element) => getComputedStyle(element).opacity))).toBeLessThan(0.6);
     await expect(stage.locator(`${shown} .hv2-proof-flow`)).toHaveCount(legs);
     await expect(figure('slope')).toBeHidden();
-    const tint = await sheet.locator(`.hv2-contour-legend [data-key="${load}"] path`).evaluate((path) => getComputedStyle(path).stroke);
+    // the legend's words in the tint the drawing's load is drawn in
+    const tint = await tintOf(sheet, load);
+    expect(await stage.locator(`${shown} .hv2-proof-flow`).first().evaluate((path) => getComputedStyle(path).stroke), button).toBe(tint);
     await expectChain(sheet, load, tint);
     // the scheme's name for a screen reader: the wind's way said on «Вітер» only
     await expect(stage.getByRole('img', { name, exact: true })).toBeVisible();
@@ -1041,7 +1132,7 @@ test('passing a measured line the seam lights it over the photo and names it at 
   const at = onStage(jamb.at, phone);
   expect(Math.abs(DEFAULT_SPLIT - at)).toBeGreaterThan(SNAP_RELEASE);
   const name = stage.locator('.hv2-contour-snap');
-  const ink = stage.locator(`.hv2-contour-ink path[data-line="${jamb.line}"]`);
+  const ink = stage.locator(`${PANE_LINES} .hv2-contour-ink path[data-line="${jamb.line}"]`);
   const look = () => ink.evaluate((path) => ({ stroke: getComputedStyle(path).stroke, width: parseFloat(getComputedStyle(path).strokeWidth) }));
   const plain = await look();
   expect(plain.stroke).toBe(COPPER);
@@ -1069,15 +1160,19 @@ test('passing a measured line the seam lights it over the photo and names it at 
   if (touch) await finger('touchStart', x);
   else await page.mouse.down();
   // At every whole pixel of the way the seam stands where the pointer puts it, to the tenth — a magnet would hold it on
-  // the line — and the line within GRAB of it, or still within RELEASE, is lit
+  // the line — and the line within GRAB of it, or still within RELEASE, is lit. The seam itself is there at once, on the
+  // move itself (review, 05.10: drawn on every move, not when the rest of the sheet is told)
   const dragTo = async (value: number) => {
     const to = Math.round(frame.x + (frame.width * value) / 100);
     for (let step = 1; step <= 6; step += 1) {
       const point = Math.round(x + ((to - x) * step) / 6);
       if (touch) await finger('touchMove', point);
       else await page.mouse.move(point, y);
+      // «at once» is by the next frame: Chrome hands a finger's moves to the page in step with its frames
+      await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
       const seam = await pointerAt(stage, point, offset);
       model.move(seam);
+      expect(await splitOf(stage), `${point} at once`).toBe(tenths(seam));
       await expect.poll(() => seamState(stage), `${point}`).toEqual(model.state(seam));
     }
     x = to;
@@ -1088,14 +1183,22 @@ test('passing a measured line the seam lights it over the photo and names it at 
   let seam = await dragTo(at + SNAP_GRAB * 0.6);
   expect(model.lit).toBe(jamb);
   expect(tenths(seam)).not.toBe(tenths(at));
-  // …the line heavier and out of the measured copper, and drawn once more over the photo, unclipped, where the lines' own
-  // layer is cut off at the seam
+  // …the line heavier and out of the measured copper, and drawn once more over both sides, where the lines' own copy is
+  // cut off at the seam with its window: in a canvas of its own over the window, on the photo's canvas exactly
   const lit = await look();
   expect(lit.stroke).not.toBe(COPPER);
   expect(lit.width).toBeGreaterThan(plain.width);
   const held = stage.locator('svg.hv2-contour-held');
   await expect(held.locator('path')).toHaveCount(2);
-  expect(await held.evaluate((element) => getComputedStyle(element).clipPath)).toBe('none');
+  expect(await held.evaluate((element) => {
+    const canvas = element.parentElement!;
+    const [over, photo] = [canvas, canvas.parentElement!.querySelector(':scope > .hv2-contour-canvas')!].map((part) => part.getBoundingClientRect());
+    return {
+      over: canvas.matches('.hv2-contour-stage > .hv2-contour-canvas[data-over]'), inWindow: element.closest('.hv2-contour-pane') !== null,
+      above: Number(getComputedStyle(canvas).zIndex) > Number(getComputedStyle(canvas.parentElement!.querySelector('.hv2-contour-pane')!).zIndex),
+      onPhoto: Math.max(...(['left', 'top', 'width', 'height'] as const).map((side) => Math.abs(over[side] - photo[side]))) < 0.05,
+    };
+  })).toEqual({ over: true, inWindow: false, above: true, onPhoto: true });
   expect(new Set(await held.locator('path').evaluateAll((paths) => paths.map((path) => path.getAttribute('d'))))).toEqual(new Set([await ink.getAttribute('d')]));
   // …its name and status at the top of the seam in place of the seam's names, beside it on the side with room, inside the
   // frame, for the eye only; and a finger feels it once
@@ -1178,7 +1281,7 @@ test('the lit line’s name stays whole inside the frame and over no other word,
         await page.mouse.down();
         const to = Math.round(frame.x + (frame.width * (onStage(snap.at, phone) + SNAP_GRAB * 0.4)) / 100);
         await page.mouse.move(to, y, { steps: 5 });
-        await expect.poll(() => stage.evaluate((element) => getComputedStyle(element).getPropertyValue('--split'))).toBe(tenths(await pointerAt(stage, to)));
+        await expect.poll(() => splitOf(stage)).toBe(tenths(await pointerAt(stage, to)));
         await expect(stage).toHaveAttribute('data-snapped', '');
         await expect(name).toHaveCSS('opacity', '1');
         // its words say «наближено» exactly where the line is approximate
@@ -1190,7 +1293,9 @@ test('the lit line’s name stays whole inside the frame and over no other word,
         })));
         const approximate = snap.status === 'наближено';
         expect(held, snap.name).toEqual([{ casing: true, approximate: false, dashed: false }, { casing: false, approximate, dashed: approximate }]);
-        found.push(...(await clashes(stage)).map((clash) => `${width}×${height} ${layer} ${snap.name} (${snap.at.toFixed(1)} %): ${clash}`));
+        // (once the rest of the sheet is told where the seam is — at most COMMIT_EVERY after the move — the name has its
+        // place by the measured room)
+        found.push(...(await settledClashes(stage)).map((clash) => `${width}×${height} ${layer} ${snap.name} (${snap.at.toFixed(1)} %): ${clash}`));
         await page.mouse.up();
         await expect(name).toHaveCSS('opacity', '0');
       }
@@ -1200,6 +1305,7 @@ test('the lit line’s name stays whole inside the frame and over no other word,
 });
 
 test('a mouse over the frame leads the seam, no press needed: exactly where it points, eased, lighting the lines it passes; leaving keeps the seam; a key or a layer clears the light; no layout shifts; a finger never hovers', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   // Every layout shift from here on, by what shifted, and whether it came within half a second of a press or a key (the
   // visitor's own change, which CLS leaves out — a layer's new words)
@@ -1228,7 +1334,11 @@ test('a mouse over the frame leads the seam, no press needed: exactly where it p
   }
   const model = litModel(false);
   const name = stage.locator('.hv2-contour-snap');
-  const duration = (selector: string) => stage.locator(selector).evaluate((element) => getComputedStyle(element).transitionDuration.split(', ')[0]);
+  // The seam's CSS glide, as each of its four carriers has it
+  const glides = () => stage.evaluate((element, carriers) => carriers.map((selector) => {
+    const style = getComputedStyle(element.querySelector(selector)!);
+    return `${selector} ${style.transitionProperty} ${style.transitionDuration}`;
+  }), CARRIERS);
   await expect(stage).not.toHaveAttribute('data-following', /.*/);
   // Every pixel of the way: the seam where the mouse is, to the tenth, the range on its whole per cent, the lines it
   // passes lit as a drag lights them
@@ -1240,7 +1350,9 @@ test('a mouse over the frame leads the seam, no press needed: exactly where it p
     model.move(value);
     await expect.poll(() => seamState(stage), `${point}`).toEqual(model.state(value));
     await expect(stage).toHaveAttribute('data-following', '');
-    await expect(slider).toHaveValue(String(Math.round(Math.round(value * 10) / 10)));
+    // (soft: the rest of the test still runs, every miss named; told at most COMMIT_EVERY after the move, so a second is
+    // ample)
+    await expect.soft(slider, `${point}: the range catches up with the seam`).toHaveValue(String(Math.round(Math.round(value * 10) / 10)), { timeout: 1_000 });
   };
   const hoverTo = async (value: number) => {
     const to = xAt(value);
@@ -1253,10 +1365,34 @@ test('a mouse over the frame leads the seam, no press needed: exactly where it p
   };
   await page.mouse.move(x, y);
   await check(x);
-  // It eases after the mouse — short, so it feels held, not dragged — where a key or a button glides
-  expect(await duration('.hv2-contour-rail')).toBe('0.18s');
-  expect(await duration('.hv2-contour-trace')).toBe('0.18s');
-  await hoverTo(47);
+  // It eases after the mouse, so it feels held, not dragged: the page itself closes FOLLOW_EASE of the way left on each
+  // frame, the four carriers with no CSS glide meanwhile (a key or a button glides them). One jump of the mouse, every
+  // frame after it: never past the mouse, never back, each frame the same share of what was left, then exactly there
+  expect(await glides()).toEqual(CARRIERS.map((selector) => `${selector} all 0s`));
+  const start = parseFloat(await splitOf(stage));
+  await stage.evaluate((element) => {
+    const pane = element.querySelector('.hv2-contour-pane')!;
+    const eased: number[] = [];
+    Object.assign(window, { eased });
+    const tick = () => {
+      eased.push(parseFloat(getComputedStyle(pane).getPropertyValue('--split')));
+      if (eased.length < 40) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  x = xAt(47);
+  await page.mouse.move(x, y);
+  await page.waitForFunction(() => (window as unknown as { eased: number[] }).eased.length >= 40);
+  const eased = await page.evaluate(() => (window as unknown as { eased: number[] }).eased);
+  const goal = parseFloat(tenths(await pointerAt(stage, x)));
+  const way = eased.slice(eased.findIndex((value) => value !== start));
+  expect(way.every((value, index) => value <= goal && value >= (way[index - 1] ?? start)), `${start} → ${goal}: ${way.join(' ')}`).toBe(true);
+  const gaps = [start, ...way].map((value) => goal - value);
+  for (let index = 0; gaps[index] > 0.5; index += 1) expect(gaps[index + 1] / gaps[index], `${start} → ${goal}: ${way.join(' ')}`).toBeCloseTo(1 - FOLLOW_EASE, 2);
+  expect(way.indexOf(goal), `${start} → ${goal}: ${way.join(' ')}`).toBeGreaterThan(5);
+  expect(way.indexOf(goal), `${start} → ${goal}: ${way.join(' ')}`).toBeLessThanOrEqual(20);
+  expect(eased.at(-1)).toBe(goal);
+  await check(x);
   await hoverTo(80.5);
   // Passing the left gate's jamb it lights it and names it, then lets it go
   const jamb = SNAPS[2];
@@ -1276,7 +1412,7 @@ test('a mouse over the frame leads the seam, no press needed: exactly where it p
   await expect.poll(() => seamState(stage)).toEqual(model.state(left));
   await expect(stage).not.toHaveAttribute('data-following', /.*/);
   await expect(name).toHaveCSS('opacity', '0');
-  expect(await duration('.hv2-contour-rail')).toBe('0.42s');
+  expect(await glides()).toEqual(CARRIERS.map((selector) => `${selector} --split 0.42s`));
   // A hover is no press: the range never took the focus, and no ring is drawn
   await expect(slider).not.toBeFocused();
   expect(await ringOf(stage)).toBe('none');
@@ -1304,7 +1440,8 @@ test('a mouse over the frame leads the seam, no press needed: exactly where it p
   await slider.focus();
   await page.keyboard.press('ArrowLeft');
   model.reset();
-  await expect.poll(() => seamState(stage)).toEqual(model.state(Math.round(Math.round(lit * 10) / 10) - 1));
+  // (soft: the layer's part still runs)
+  await expect.configure({ soft: true }).poll(() => seamState(stage), 'a key, the mouse resting over the frame').toEqual(model.state(Math.round(Math.round(lit * 10) / 10) - 1));
   await expect(name).toHaveCSS('opacity', '0');
   // …or a layer chosen from the keyboard
   await hoverTo(jamb.at - SNAP_GRAB * 0.5);
@@ -1460,10 +1597,10 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   // Armed below the fold: the seam waits at the right edge — the photo whole — while the range keeps its resting value
   await expect(sheet).toHaveAttribute('data-sheet-state', 'armed');
   await expect(stage).toHaveAttribute('data-sweep', 'wait');
-  expect(await stage.evaluate((element) => getComputedStyle(element).getPropertyValue('--split'))).toBe('100%');
+  // (the four carriers glide there once on hydration, unseen: the armed sheet's picture is clipped away)
+  await expect.poll(() => splitOf(stage)).toBe('100%');
   await expect(range).toHaveValue(String(DEFAULT_SPLIT));
-  // (the tracing goes there once on hydration, unseen: the armed sheet's picture is clipped away)
-  await expect.poll(async () => leftInset(await stage.locator('.hv2-contour-trace').evaluate((element) => getComputedStyle(element).clipPath))).toBeCloseTo(onCanvas(100, phone), 3);
+  await expectWindow(stage, 100);
   await recordArrival(page);
   await page.evaluate(() => Promise.all([...document.querySelectorAll<HTMLImageElement>('.hv2-contour img')].map((image) => { image.loading = 'eager'; return image.decode().catch(() => undefined); })));
   await sheet.scrollIntoViewIfNeeded();
@@ -1480,8 +1617,9 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   // nothing drawing in
   expect(plotting.length).toBeGreaterThan(10);
   for (const frame of plotting) {
-    expect(frame, `${frame.t}`).toMatchObject({ sweep: 'wait', gliding: false, split: 100, trace: 100, scheme: 100, others: [] });
+    expect(frame, `${frame.t}`).toMatchObject({ sweep: 'wait', gliding: false, split: 100, spread: 0, sweeps: 0, others: [] });
     expect(frame.seam, `${frame.t}`).toBeCloseTo(100, 1);
+    expect(frame.window, `${frame.t}`).toBeCloseTo(100, 2);
   }
   // The sweep starts SWEEP_AT after the sheet arrived, the picture plotted in by then (a few ms: two observers read the
   // clock a moment apart), and runs its time once — a shorter one on a phone
@@ -1490,7 +1628,8 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   expect(ended! - run!).toBeGreaterThanOrEqual(duration - 20);
   expect(ended! - run!).toBeLessThan(duration + 400);
   expect(sweep.length).toBeGreaterThan(20);
-  for (const frame of sweep) expect(frame, `${frame.t}`).toMatchObject({ sweep: 'run', gliding: true, plotting: false });
+  // …on the four carriers, one script animation of --split each, in step
+  for (const frame of sweep) expect(frame, `${frame.t}`).toMatchObject({ sweep: 'run', gliding: true, plotting: false, sweeps: 4, spread: 0 });
 
   // From the edge across the gable — past its left corner, to the turn — and back to rest: one way out, one way back
   const splits = sweep.map((frame) => frame.split);
@@ -1501,13 +1640,14 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   expect.soft(splits[turn], 'the turn is past the gable’s left corner').toBeLessThan(onStage(SNAPS[0].at, phone));
   expect(splits.slice(0, turn + 1)).toEqual(splits.slice(0, turn + 1).toSorted((a, b) => b - a));
   expect(splits.slice(turn)).toEqual(splits.slice(turn).toSorted((a, b) => a - b));
-  // The seam is drawn where --split is, and the tracing and the scheme are uncovered exactly to it: what it has passed is
-  // the drawing, whole — no line draws in, nothing else moves on the stage, and nothing leads the seam
+  // The seam is drawn where --split is, and the right side's window has its edge exactly there, its drawing standing on
+  // the photo's canvas: what it has passed is the drawing, whole — no line draws in, nothing slides, nothing else moves on
+  // the stage, and nothing leads the seam
   for (const frame of sweep) {
     expect(frame.following, `${frame.t}`).toBe(false);
     expect(frame.seam, `${frame.t}`).toBeCloseTo(frame.split, 1);
-    expect(frame.trace, `${frame.t}`).toBeCloseTo(frame.split, 2);
-    expect(frame.scheme, `${frame.t}`).toBeCloseTo(frame.split, 2);
+    expect(frame.window, `${frame.t}`).toBeCloseTo(frame.split, 2);
+    expect(frame.drift, `${frame.t}`).toBeLessThan(0.05);
     expect(frame.others, `${frame.t}`).toEqual([]);
   }
   // The range and what it says never move; the figures and the names wait until the seam rests
@@ -1636,18 +1776,22 @@ test('with reduced motion the sheet stands static and complete at its resting sp
   }));
   expect(rail.parts).toEqual(['hv2-contour-seamtags', 'hv2-contour-snap', 'hv2-contour-seam', 'hv2-contour-handle']);
   expect(rail.width).toBe(rail.frame);
-  const [a, b, c, d, tx, ty] = (/^matrix\((.+)\)$/.exec(rail.transform)?.[1] ?? '').split(', ').map(Number);
-  expect([a, b, c, d, ty]).toEqual([1, 0, 0, 1, 0]);
-  expect(tx).toBeCloseTo((rail.frame * DEFAULT_SPLIT) / 100, 1);
+  // …and so does the right side's window, as wide as the frame, its content moved back by as much (review, 05.10)
+  for (const [part, sign] of [['.hv2-contour-rail', 1], ['.hv2-contour-pane', 1], ['.hv2-contour-pane-inner', -1]] as const) {
+    const transform = await stage.locator(part).evaluate((element) => getComputedStyle(element).transform);
+    const [a, b, c, d, tx, ty] = (/^matrix\((.+)\)$/.exec(transform)?.[1] ?? '').split(', ').map(Number);
+    expect([a, b, c, d, ty], part).toEqual([1, 0, 0, 1, 0]);
+    expect(tx, part).toBeCloseTo((sign * rail.frame * DEFAULT_SPLIT) / 100, 1);
+  }
   // The seam and the layers do not slide (the site's reduced-motion rule leaves a hundredth of a millisecond at most)
-  for (const part of ['svg.hv2-contour-lines', 'svg.hv2-proof-frame', '.hv2-contour-trace', '.hv2-contour-seam', '.hv2-contour-handle']) {
+  for (const part of [...CARRIERS, PANE_LINES, 'svg.hv2-proof-frame', '.hv2-contour-trace', '.hv2-contour-seam']) {
     expect(await stage.locator(part).evaluate((element) => Math.max(...getComputedStyle(element).transitionDuration.split(',').map(parseFloat))), part).toBeLessThanOrEqual(0.0001);
   }
   // No sweep — the seam never waits at the edge — and no rings, ever
   await page.waitForTimeout(6_000);
   for (const mark of ['data-sweep', 'data-gliding', 'data-pulse', 'data-following']) await expect(stage).not.toHaveAttribute(mark, /.*/);
-  expect(await stage.evaluate((element) => getComputedStyle(element).getPropertyValue('--split'))).toBe(`${DEFAULT_SPLIT}%`);
-  expect(leftInset(await stage.locator('.hv2-contour-trace').evaluate((element) => getComputedStyle(element).clipPath))).toBeCloseTo(onCanvas(DEFAULT_SPLIT, phoneOf(page)), 3);
+  expect(await splitOf(stage)).toBe(`${DEFAULT_SPLIT}%`);
+  await expectWindow(stage, DEFAULT_SPLIT);
 });
 
 test.describe('without JavaScript', () => {
@@ -1659,15 +1803,16 @@ test.describe('without JavaScript', () => {
     await stage.scrollIntoViewIfNeeded();
     await expect(page.locator('#real-object .hv2-contour')).not.toHaveAttribute('data-sheet-state', /.+/);
     await expect.poll(() => seamAt(stage)).toBeCloseTo(DEFAULT_SPLIT, 0);
-    await expect(stage.locator('.hv2-contour-ink path')).toHaveCount(homeProofContour.lines.length);
+    await expect(stage.locator(`${PANE_LINES} .hv2-contour-ink path`)).toHaveCount(homeProofContour.lines.length);
     await expect(stage.locator('picture img')).toHaveCount(2);
     await expect(stage.locator('picture img').first()).toBeVisible();
     await expect(stage.locator('.hv2-proof-scheme')).toBeVisible();
     await expect(stage.locator('.hv2-contour-stamp')).toContainText('каркас такого типу, як на цьому об’єкті');
-    expect(leftInset(await stage.locator('.hv2-contour-trace').evaluate((element) => getComputedStyle(element).clipPath))).toBeCloseTo(onCanvas(DEFAULT_SPLIT, phoneOf(page)), 3);
+    // The right side's window at rest, the drawing on the photo's canvas: the four carriers' --split is CSS's initial value
+    await expectWindow(stage, DEFAULT_SPLIT);
     // No sweep waits on a script that never runs: the seam at rest, the figures and the names in
     await expect(stage).not.toHaveAttribute('data-sweep', /.*/);
-    expect(await stage.evaluate((element) => getComputedStyle(element).getPropertyValue('--split'))).toBe(`${DEFAULT_SPLIT}%`);
+    expect(await splitOf(stage)).toBe(`${DEFAULT_SPLIT}%`);
     for (const part of ['.hv2-proof-labels', 'svg.hv2-proof-marks']) expect(await stage.locator(part).evaluate((element) => getComputedStyle(element).opacity), part).toBe('1');
     if ((page.viewportSize()?.width ?? 0) > 760) await expect(stage.locator('.hv2-proof-measure[data-measure="slope"]')).toBeVisible();
     // Nothing offers a move the static sheet cannot make: the slider and the buttons are disabled, out of the tab order
@@ -1706,11 +1851,11 @@ test('on a laptop the sheet fits under the header where the window has the room,
     expect.soft(room >= least, `${at}: the picture has its room`).toBe(fits);
     expect(image.height, at).toBeCloseTo(Math.min(most, Math.max(least, room)), 0);
     if (fits) expect.soft(box.y + box.height, `${at}: the sheet fits`).toBeLessThanOrEqual(height);
-    // Without a script the usual rest by width stands in for the measured one — 150 px from 1400 px, 170 px from 1100,
-    // 240 px below — and on the usual laptops it is the measured one, so the server's picture is the hydrated one's
-    // (review, 04.10)
+    // Without a script the usual rest by width stands in for the measured one — 169 px from 1400 px, 170 px from 1240,
+    // 230 px from 1100, 260 px below (measured 05.10 on every layer) — and on the usual laptops it is the measured one,
+    // so the server's picture is the hydrated one's (review, 04.10)
     const fallback = await sheet.evaluate((element) => getComputedStyle(element).getPropertyValue('--hv2-sheet-rest-0'));
-    expect(fallback, at).toBe(`${width >= 1400 ? 150 : width >= 1100 ? 170 : 240}px`);
+    expect(fallback, at).toBe(`${width >= 1400 ? 169 : width >= 1240 ? 170 : width >= 1100 ? 230 : 260}px`);
     if (fits) expect.soft(fallback, `${at}: the server's picture is the hydrated one's`).toBe(`${rest.measured}px`);
     // The title block keeps its place under the picture, inside the sheet…
     const stamp = (await sheet.locator('figcaption').boundingBox())!;
@@ -1798,53 +1943,125 @@ test('from tablet to wide screen, no word on the frame covers another or runs of
   expect(found).toEqual([]);
 });
 
-test('a word the seam cuts, or one that meets the seam’s names or the stamp, is hidden whole with its leader, and comes back once clear', async ({ page }, testInfo) => {
+test('a word the seam cuts, or one that meets «‹ Фото» or the stamp, is hidden whole with what points at it, and comes back once clear; the seam’s «Схема ›» gives way to a word of the drawing instead', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'a phone has no words in its frame');
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  // A short laptop, where the purlins' name stands under the top of the seam (review, 04.10: «Схема ›» landed on it)
+  // A short laptop, where the seam's right-hand name meets the slope's figure as the seam moves right (review, 05.10: the
+  // name gives way, not the figure)
   await page.setViewportSize({ width: 1280, height: 720 });
   const { stage, slider } = await open(page);
-  /** Every word on the frame: whether the page marks it cut, whether it is drawn, and whether it should be — the seam
-   *  left of its box, or its box meeting a seam name or the stamp that is shown (ProofContour's covers) */
-  const words = () => stage.evaluate((element) => {
+  /** Every word on the frame: whether the page marks it cut, whether it is drawn, what points at it (a name's leader, a
+   *  figure's marks) — and whether it should be cut: the seam (where its carriers put it) left of its box, or its box
+   *  meeting a shown «‹ Фото» or the stamp (ProofContour's covers). And the seam's right-hand name: shown or not, the
+   *  drawn words its box would meet, and whether it would run into the full stamp (ProofContour's fit: AIR 8 px) */
+  const sheetState = () => stage.evaluate((element) => {
     const frame = element.getBoundingClientRect();
-    const seam = frame.left + (frame.width * parseFloat(getComputedStyle(element).getPropertyValue('--split'))) / 100;
-    const shown = (node: Element) => getComputedStyle(node).visibility === 'visible';
-    const covers = [...element.querySelectorAll('.hv2-contour-seamtags > span'), element.querySelector('.hv2-contour-stamp')!]
-      .filter(shown).map((node) => ({ name: node.textContent!.trim().slice(0, 12), box: node.getBoundingClientRect() }));
-    return [...element.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')].map((word) => {
+    const seam = frame.left + (frame.width * parseFloat(getComputedStyle(element.querySelector('.hv2-contour-pane')!).getPropertyValue('--split'))) / 100;
+    const visible = (node: Element) => getComputedStyle(node).visibility === 'visible';
+    const meet = (a: DOMRect, b: DOMRect) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    const [left, right] = element.querySelectorAll<HTMLElement>('.hv2-contour-seamtags > span');
+    const stamp = element.querySelector<HTMLElement>('.hv2-contour-stamp')!;
+    const covers = [left, stamp].filter(visible).map((node) => ({ name: node.textContent!.trim().slice(0, 12), box: node.getBoundingClientRect() }));
+    // (a name that gives way keeps its box)
+    const would = right.getBoundingClientRect();
+    const words = [...element.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')].map((word) => {
       const box = word.getBoundingClientRect();
-      const met = covers.filter(({ box: cover }) => box.left < cover.right && box.right > cover.left && box.top < cover.bottom && box.bottom > cover.top);
-      const tag = word.dataset.tag;
-      const leader = tag ? element.querySelector<SVGElement>(`.hv2-proof-tag-leaders [data-tag="${tag}"]`)! : null;
+      const { tag, measure } = word.dataset;
+      const pointer = element.querySelector<SVGElement>(tag ? `.hv2-proof-tag-leaders [data-tag="${tag}"]` : `.hv2-proof-marks [data-mark="${measure}"]`)!;
       return {
-        id: tag ?? word.dataset.measure!, cut: 'cut' in word.dataset, hidden: getComputedStyle(word).visibility === 'hidden',
-        leader: leader ? { cut: 'cut' in leader.dataset, hidden: getComputedStyle(leader).visibility === 'hidden' } : null,
-        bySeam: box.left < seam + 1, met: met.map(({ name }) => name),
+        id: tag ?? measure!, cut: 'cut' in word.dataset, hidden: !visible(word), pointer: { cut: 'cut' in pointer.dataset, hidden: !visible(pointer) },
+        bySeam: box.left < seam + 1, met: covers.filter((cover) => meet(box, cover.box)).map(({ name }) => name), meetsRight: meet(box, would),
       };
     });
+    return {
+      words,
+      right: {
+        shown: visible(right), narrow: element.dataset.narrowRight !== undefined,
+        yields: words.filter((word) => !word.hidden && word.meetsRight).map(({ id }) => id),
+        crowded: visible(stamp) && element.dataset.stamp === undefined && would.right + 8 > stamp.getBoundingClientRect().left,
+      },
+    };
   });
-  const metOnly = new Set<string>();
+  /** What the page got wrong of it: a word cut or not as it should be, one hidden in part (without what points at it),
+   *  «Схема ›» shown over a word or into the stamp, or given way with nothing to give way to */
+  const misses = async () => {
+    const { words, right } = await sheetState();
+    const yields = right.yields.length > 0 || right.crowded;
+    return [
+      ...words.filter((word) => word.cut !== (word.bySeam || word.met.length > 0)).map((word) => `${word.id} cut: ${JSON.stringify(word)}`),
+      ...words.filter((word) => word.pointer.cut !== word.cut || (word.cut && !(word.hidden && word.pointer.hidden))).map((word) => `${word.id} not hidden whole: ${JSON.stringify(word)}`),
+      ...(right.shown === yields || right.narrow !== yields ? [`«Схема ›»: ${JSON.stringify(right)}`] : []),
+    ];
+  };
+  const yielded = new Set<string>();
   for (const value of [DEFAULT_SPLIT, 64, 66, 68, 70, 72, 74, 76, 62]) {
     await splitTo(page, slider, value);
-    await expect.poll(async () => (await words()).filter((word) => word.cut !== (word.bySeam || word.met.length > 0)).map((word) => `${word.id} ${JSON.stringify(word)}`), `${value}`).toEqual([]);
-    for (const word of await words()) {
-      // hidden whole, never in part, and its leader with it
-      if (word.cut) expect(word.hidden, `${value} ${word.id}`).toBe(true);
-      if (word.leader) expect(word.leader, `${value} ${word.id}`).toEqual({ cut: word.cut, hidden: word.cut || word.hidden });
-      if (word.cut && !word.bySeam) metOnly.add(`${word.id} × ${word.met.join(', ')}`);
-    }
+    await expect.poll(misses, `${value}`).toEqual([]);
+    for (const id of (await sheetState()).right.yields) yielded.add(id);
   }
-  // …so the purlins' name went for meeting «Схема ›» while the seam was still left of it, and came back at rest
-  expect([...metOnly]).toContainEqual(expect.stringMatching(/^bracing × .*Схема/));
-  expect((await words()).find((word) => word.id === 'bracing')).toMatchObject({ cut: false, hidden: false });
+  // …so «Схема ›» gave way to the slope's figure while the seam was still left of it, and came back at rest
+  expect([...yielded]).toContain('slope');
+  expect((await sheetState()).right).toMatchObject({ shown: true, narrow: false, yields: [] });
   // …and so it is again when only the frame's height changes, the seam where it was — a window's height, or the title
   // block's rest measured on hydration: the crop moves every word up or down, so one now clear comes back and one now
   // met goes
   for (const height of [900, 720]) {
     await page.setViewportSize({ width: 1280, height });
-    await expect.poll(async () => (await words()).filter((word) => word.cut !== (word.bySeam || word.met.length > 0)).map((word) => `${word.id} ${JSON.stringify(word)}`), `1280×${height}`).toEqual([]);
+    await expect.poll(misses, `1280×${height}`).toEqual([]);
   }
+
+  // While a pointer drags the seam across a word, the seam is drawn on every move and the rest of the sheet is told at
+  // most every COMMIT_EVERY (review, 05.10): so the word the seam cuts goes within that, the pointer still moving, and
+  // the range catches up as the seam goes — not only once the pointer stops. A drag at a mouse's pace, a move every
+  // 16 ms, over the slope's figure, every frame recorded
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await splitTo(page, slider, DEFAULT_SPLIT);
+  await expect.poll(misses).toEqual([]);
+  await stage.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+  const frame = (await stage.boundingBox())!;
+  const y = Math.round(frame.y + frame.height * 0.6);
+  const xAt = (value: number) => Math.round(frame.x + (frame.width * value) / 100);
+  await page.mouse.move(Math.round(frame.x - 30), y);
+  await page.mouse.move(xAt(DEFAULT_SPLIT), y);
+  await expect.poll(() => splitOf(stage)).toBe(tenths(await pointerAt(stage, xAt(DEFAULT_SPLIT))));
+  await stage.evaluate((element) => {
+    const pane = element.querySelector('.hv2-contour-pane')!;
+    const slope = element.querySelector<HTMLElement>('.hv2-proof-measure[data-measure="slope"]')!;
+    const range = element.querySelector<HTMLInputElement>('.hv2-contour-range')!;
+    const drag = { frames: [] as { t: number; cutBySeam: boolean; cut: boolean; range: string }[], released: 0, done: false };
+    Object.assign(window, { drag });
+    addEventListener('pointerup', () => { drag.released = performance.now(); }, { capture: true, once: true });
+    const tick = () => {
+      const box = element.getBoundingClientRect();
+      const seam = box.left + (box.width * parseFloat(getComputedStyle(pane).getPropertyValue('--split'))) / 100;
+      drag.frames.push({ t: performance.now(), cutBySeam: slope.getBoundingClientRect().left < seam - 1, cut: 'cut' in slope.dataset, range: range.value });
+      if (drag.released && performance.now() - drag.released > 300) drag.done = true;
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await page.mouse.down();
+  for (let step = 1; step <= 60; step += 1) {
+    await page.mouse.move(xAt(DEFAULT_SPLIT + (18 * step) / 60), y);
+    await page.waitForTimeout(16);
+  }
+  await page.mouse.up();
+  await page.waitForFunction(() => (window as unknown as { drag: { done: boolean } }).drag.done);
+  const drag = await page.evaluate(() => (window as unknown as { drag: { frames: { t: number; cutBySeam: boolean; cut: boolean; range: string }[]; released: number } }).drag);
+  const moving = drag.frames.filter((at) => at.t < drag.released);
+  const reached = moving.find((at) => at.cutBySeam);
+  expect(reached, 'the seam reached the slope’s figure while it moved').toBeDefined();
+  const gone = moving.find((at) => at.t >= reached!.t && at.cut);
+  // (soft: each of these named in one run; a frame's slack on top of COMMIT_EVERY)
+  expect.soft(gone, `the figure the seam cuts goes while the pointer still moves (it moved ${Math.round(drag.released - reached!.t)} ms more)`).toBeDefined();
+  if (gone) expect.soft(gone.t - reached!.t, 'the figure the seam cuts goes within COMMIT_EVERY').toBeLessThanOrEqual(COMMIT_EVERY + 40);
+  // …the range told as the seam goes, never more often than COMMIT_EVERY
+  const told = moving.filter((at, index) => index > 0 && at.range !== moving[index - 1].range);
+  expect.soft(told.length, `the range caught up while the seam moved (${Math.round(moving.at(-1)!.t - moving[0].t)} ms of moves)`).toBeGreaterThan(2);
+  for (const [index, at] of told.slice(1).entries()) expect.soft(at.t - told[index].t, 'the range told at most every COMMIT_EVERY').toBeGreaterThanOrEqual(COMMIT_EVERY - 20);
+  // …and at once when the pointer lets go: the range on the seam's whole per cent, the figure gone
+  await expect(slider).toHaveValue(String(Math.round(parseFloat(await splitOf(stage)))));
+  await expect.poll(misses).toEqual([]);
 });
 
 test('a narrower frame drops the figures’ second lines: from 1023 px down «Контур» writes each figure’s title only, the whole words staying for a screen reader', async ({ page }, testInfo) => {
@@ -1863,10 +2080,15 @@ test('a narrower frame drops the figures’ second lines: from 1023 px down «К
   }
 });
 
-test('the scheme’s names stand in free room: the truss’s and the purlins’ over the rake, the column’s in the right gate’s opening, the footings’ under the base, none over another or off the frame; a narrower frame drops the purlins’ name', async ({ page }, testInfo) => {
+test('the scheme’s names stand in free room: the truss’s over the rake, the purlins’ and the walls’ on the right wall’s face, the column’s in the right gate’s opening, the footings’ under the base, none over another or off the frame, at every width', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'a phone has no names in its frame');
   test.setTimeout(60_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  // The lowest any member behind the gable crosses the right wall's face, right of the right gate (the depth bays' chords
+  // and wall tops): the names on that face stand under it
+  const [, , headFar] = homeProofFrame.walls.holes[1];
+  const deepest = Math.max(...homeProofFrame.members.filter((member) => member.depth > 0 && member.group !== 'footing' && member.group !== 'column')
+    .flatMap((member) => member.points.filter(([x]) => x > headFar[0]).map(([, y]) => y)));
   for (const [width, height] of [[1920, 1080], [1440, 900], [1280, 720], [1200, 800], [1199, 800], [1024, 768], [768, 1024]]) {
     await page.setViewportSize({ width, height });
     const { stage, slider } = await open(page);
@@ -1875,46 +2097,72 @@ test('the scheme’s names stand in free room: the truss’s and the purlins’ 
     // height changed after load keeps its first reading — the test of that is the hidden words' own)
     await splitTo(page, slider, DEFAULT_SPLIT);
     // Each name's box against the drawn right rake and the gable's base where it stands (their screen y at its ends:
-    // both are straight), and against the right gate's opening — its left jamb at the name's middle, its head and its
-    // foot — in the photo's own pixels mapped to the screen
-    const boxes = await stage.evaluate((element, [rake, base, opening]) => {
-      const ctm = element.querySelector<SVGSVGElement>('svg.hv2-contour-lines')!.getScreenCTM()!;
-      const screen = ([x, y]: number[]) => [ctm.a * x + ctm.e, ctm.d * y + ctm.f];
-      const yAt = (line: number[][], x: number) => { const [[x0, y0], [x1, y1]] = line.map(screen); return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0); };
-      const [footNear, footFar, headFar, headNear] = opening.map(screen);
+    // both are straight); against the right gate's opening — its left jamb at the name's middle, its head and its foot —
+    // and its right jamb; against the right wall's section (its inner edge at the name's middle) and the lowest member
+    // behind the face — in the photo's own pixels mapped to the screen
+    const boxes = await stage.evaluate((element, [rake, base, opening, section, low]) => {
+      const ctm = element.querySelector<SVGSVGElement>(`.hv2-contour-pane svg.hv2-contour-lines`)!.getScreenCTM()!;
+      const screen = ([x, y]: readonly number[]) => [ctm.a * x + ctm.e, ctm.d * y + ctm.f];
+      const yAt = (line: readonly (readonly number[])[], x: number) => { const [[x0, y0], [x1, y1]] = line.map(screen); return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0); };
+      const xAt = (from: readonly number[], to: readonly number[], y: number) => { const [[x0, y0], [x1, y1]] = [screen(from), screen(to)]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); };
+      const [footNear, footFar, headFar, headNear] = opening;
       return [...element.querySelectorAll<HTMLElement>('.hv2-proof-tag')].map((tag) => {
         const box = tag.getBoundingClientRect();
         const leader = element.querySelector(`.hv2-proof-tag-leaders [data-tag="${tag.dataset.tag}"]`)!;
         const middle = (box.top + box.bottom) / 2;
         return {
           id: tag.dataset.tag!,
-          drawn: getComputedStyle(tag).display !== 'none', leader: getComputedStyle(leader).display !== 'none',
-          left: box.left, top: box.top, bottom: box.bottom,
+          drawn: getComputedStyle(tag).display !== 'none' && getComputedStyle(tag).visibility === 'visible',
+          leader: getComputedStyle(leader).display !== 'none' && getComputedStyle(leader).visibility === 'visible',
+          left: box.left, right: box.right, top: box.top, bottom: box.bottom,
           rake: Math.min(yAt(rake, box.left), yAt(rake, box.right)),
           base: Math.max(yAt(base, box.left), yAt(base, box.right)),
-          jamb: footNear[0] + ((headNear[0] - footNear[0]) * (middle - footNear[1])) / (headNear[1] - footNear[1]),
-          head: Math.max(headNear[1], headFar[1]), foot: Math.min(footNear[1], footFar[1]), scale: ctm.a,
+          baseUnder: Math.min(yAt(base, box.left), yAt(base, box.right)),
+          jamb: xAt(footNear, headNear, middle), farJamb: xAt(footFar, headFar, middle), section: xAt(section[0], section[1], middle),
+          head: Math.max(screen(headNear)[1], screen(headFar)[1]), foot: Math.min(screen(footNear)[1], screen(footFar)[1]), low: screen([0, low])[1], scale: ctm.a,
         };
       });
     }, [
-      lineOf('gable-rake-right').points.map(([x, y]) => [x, y]), lineOf('gable-base').points.slice(0, 2).map(([x, y]) => [x, y]),
-      homeProofFrame.walls.holes[1].map(([x, y]) => [x, y]),
+      lineOf('gable-rake-right').points, lineOf('gable-base').points.slice(0, 2), homeProofFrame.walls.holes[1],
+      [homeProofFrame.walls.cuts[1][2], homeProofFrame.walls.cuts[1][3]], deepest,
     ] as const);
     expect(boxes.map((box) => box.id), at).toEqual(homeProofFrame.tags.map((tag) => tag.id));
+    const byId = Object.fromEntries(boxes.map((box) => [box.id, box]));
     // (soft: every window's misses named in one run)
     for (const box of boxes) {
-      // Below 1200 px the frame has no free sky for the purlins' name beside the slope's figure: it goes, with its leader
-      const drawn = !(width < 1200 && box.id === 'bracing');
+      // Every name with its leader — but on a narrow frame (≤ 900 px) the purlins' is not drawn: three two-line names do
+      // not fit the wall's face (homeProofFrame's wideOnly)
+      const drawn = !(width <= 900 && homeProofFrame.tags.find((tag) => tag.id === box.id)!.wideOnly);
       expect.soft({ drawn: box.drawn, leader: box.leader }, `${at} ${box.id} drawn`).toEqual({ drawn, leader: drawn });
       if (!drawn) continue;
-      if (box.id === 'truss' || box.id === 'bracing') expect.soft(box.bottom, `${at} ${box.id} over the rake`).toBeLessThanOrEqual(box.rake);
+      if (box.id === 'truss') expect.soft(box.bottom, `${at} ${box.id} over the rake`).toBeLessThanOrEqual(box.rake);
       if (box.id === 'footing') expect.soft(box.top, `${at} ${box.id} under the base`).toBeGreaterThanOrEqual(box.base);
+      if (box.id === 'bracing' || box.id === 'wall') {
+        // on the face that holds only blockwork: right of the right gate, short of the right wall's section, under every
+        // member behind it, over the base
+        expect.soft(box.left, `${at} ${box.id} right of the right gate`).toBeGreaterThanOrEqual(box.farJamb);
+        expect.soft(box.right, `${at} ${box.id} short of the right wall's section`).toBeLessThanOrEqual(box.section);
+        expect.soft(box.top, `${at} ${box.id} under the members behind the face`).toBeGreaterThanOrEqual(box.low);
+        expect.soft(box.bottom, `${at} ${box.id} over the base`).toBeLessThanOrEqual(box.baseUnder);
+      }
       if (box.id === 'column') {
         // in the opening, which holds no member of the gable's plane: from its left jamb (within the 15 photo pixels the
         // data allows), between its head and its foot
         expect.soft(Math.abs(box.left - box.jamb), `${at} column at the gate's left jamb`).toBeLessThanOrEqual(15 * box.scale);
         expect.soft(box.top, `${at} column under the gate's head`).toBeGreaterThanOrEqual(box.head);
         expect.soft(box.bottom, `${at} column over the gate's foot`).toBeLessThanOrEqual(box.foot);
+      }
+    }
+    // …the purlins' over the walls', where both are drawn
+    if (width > 900) expect.soft(byId.bracing.bottom, `${at} the purlins' name over the walls'`).toBeLessThanOrEqual(byId.wall.top);
+    // and on a narrow frame each leader runs to where its name stands there
+    if (width <= 900) {
+      const narrow = await stage.evaluate((element) => [...element.querySelectorAll('.hv2-proof-tag-leaders path')].map((path) => ({
+        tag: path.parentElement!.getAttribute('data-tag'), narrow: path.hasAttribute('data-narrow'), wide: path.hasAttribute('data-wide'), shown: getComputedStyle(path).display !== 'none',
+      })));
+      for (const leader of narrow) {
+        if (leader.narrow) expect.soft(leader.shown, `${at} ${leader.tag} narrow leader`).toBe(true);
+        if (leader.wide) expect.soft(leader.shown, `${at} ${leader.tag} wide leader`).toBe(false);
       }
     }
     expect.soft(await settledClashes(stage, true), at).toEqual([]);
@@ -1976,7 +2224,7 @@ test('the tracing is quiet: the photo only inside the building, the sheet’s pa
     return { x: ctm.a * x0 + ctm.e, y: ctm.d * y0 + ctm.f, width: ctm.a * (x1 - x0), height: ctm.d * (y1 - y0) };
   };
   const wall = await region([1260, 380, 1440, 520]);
-  // (a phone's close-up starts at the photo's row 90 and ends at its column 1504)
+  // (a phone's close-up starts at the photo's row 92 and ends at its column 1504)
   const sky = await region(phoneOf(page) ? [1200, 94, 1490, 180] : [1030, 65, 1480, 125]);
   const frame = (await stage.boundingBox())!;
   for (const part of [wall, sky]) {
@@ -2013,7 +2261,7 @@ test('the tracing is quiet: the photo only inside the building, the sheet’s pa
   expect(await differing(page, ...ofGrid.wall, 10), 'no grid on the building').toBeLessThan(SPECKS);
 });
 
-test('on a phone the frame is a close-up of the gable: the canvas zoomed in, every layer clipped at the seam in its own per cent, the photo fetched for it, the lines at their set weight', async ({ page }, testInfo) => {
+test('on a phone the frame is a close-up of the gable: the canvas zoomed in, the right side’s window at the seam with its drawing on that canvas, the photo fetched for it, the lines at their set weight', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'desktop-chromium', 'a phone\'s frame');
   test.setTimeout(90_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -2025,17 +2273,17 @@ test('on a phone the frame is a close-up of the gable: the canvas zoomed in, eve
       return { frame: { left: frame.left, top: frame.top, right: frame.right, bottom: frame.bottom, width: frame.width }, canvas: { left: canvas.left, top: canvas.top, width: canvas.width } };
     });
     const { frame, canvas } = await geometry();
-    // The canvas 1.22 × the frame's width, 19.46 % of it off to the left, the photo's row 90 at the frame's top (review,
+    // The canvas 1.22 × the frame's width, 19.46 % of it off to the left, the photo's row 92 at the frame's top (review,
     // 04.10: from row 59 the base and the gates' feet sat under the handle at 320–360 px)…
     expect(canvas.width, `${width}`).toBeCloseTo(frame.width * PHONE_ZOOM, 0);
     expect(canvas.left - frame.left, `${width}`).toBeCloseTo((-frame.width * PHONE_LEFT) / 100, 0);
     expect(canvas.top - frame.top, `${width}`).toBeCloseTo((-canvas.width * PHONE_TOP_ROW) / 1536, 0);
-    // …so the frame shows the photo's columns 245–1504 and rows 90–736
+    // …so the frame shows the photo's columns 245–1504 and rows 92–738
     const scale = canvas.width / 1536;
     expect(Math.abs((frame.left - canvas.left) / scale - 245), `${width}`).toBeLessThanOrEqual(1);
     expect(Math.abs((frame.right - canvas.left) / scale - 1504), `${width}`).toBeLessThanOrEqual(1);
     expect(Math.abs((frame.top - canvas.top) / scale - PHONE_TOP_ROW), `${width}`).toBeLessThanOrEqual(1);
-    expect(Math.abs((frame.bottom - canvas.top) / scale - 736), `${width}`).toBeLessThanOrEqual(1);
+    expect(Math.abs((frame.bottom - canvas.top) / scale - 738), `${width}`).toBeLessThanOrEqual(1);
     // …the gable whole in it: its outline, its footings, the snow's comb and every part of the wind — its short gusts'
     // tails, its lift, its links, its legs and the ground's answer
     const { wind } = homeProofFrame;
@@ -2055,32 +2303,28 @@ test('on a phone the frame is a close-up of the gable: the canvas zoomed in, eve
     // (soft: every width's misses named in one run, and the rest of the close-up still checked)
     expect.soft(outside, `${width}`).toEqual([]);
 
-    // Every layer over the tracing is clipped in the canvas's own per cent, (seam + 19.46) / 1.22 — on screen exactly at
-    // the seam; the right side's words, outside the canvas, at the seam's own per cent
+    // The right side's window has its edge on screen exactly at the seam, a per cent of the frame, and the drawing in it
+    // stands on the same zoomed canvas as the photo (review, 05.10: every canvas placed alike, so the window lines up) —
+    // its tracing, its layers and its words, the stamp too
     for (const value of [0, 30, DEFAULT_SPLIT, 100]) {
       await splitTo(page, slider, value);
-      for (const part of ['.hv2-contour-trace', 'svg.hv2-proof-frame', 'svg.hv2-contour-lines', 'svg.hv2-proof-marks', '.hv2-proof-labels']) {
-        // (polled: even the reduced-motion transition samples its end on the next frame)
-        const read = async () => leftInset(await stage.locator(part).evaluate((element) => getComputedStyle(element).clipPath));
-        await expect.poll(read, `${width} ${value} ${part}`).toBeCloseTo(onCanvas(value, true), 3);
-        const inset = await read();
-        expect(canvas.left + (canvas.width * inset) / 100, `${width} ${value} ${part}`).toBeCloseTo(frame.left + (frame.width * value) / 100, 0);
-      }
-      await expect(stage.locator('.hv2-contour-corner'), `${width} ${value}`).toHaveCSS('clip-path', `inset(0px 0px 0px ${value}%)`);
+      await expectWindow(stage, value, `${width} ${value}`);
+      expect(await seamAt(stage), `${width} ${value}`).toBeCloseTo(value, 1);
     }
     await splitTo(page, slider, DEFAULT_SPLIT);
-    // «Контур на фото» lays the lines over the whole canvas
+    // «Контур на фото» lays the lines over the photo, on its canvas
     const toggle = sheet.getByRole('button', { name: 'Контур на фото', exact: true });
     await toggle.click();
-    await expect(stage.locator('svg.hv2-contour-lines')).toHaveCSS('clip-path', 'inset(0px)');
+    await expect(stage.locator(PHOTO_LINES)).toHaveCSS('visibility', 'visible');
     await toggle.click();
+    await expect(stage.locator(PHOTO_LINES)).toHaveCSS('visibility', 'hidden');
 
     // The photo is fetched for the canvas's width, not the frame's (the srcset's sizes × 1.22)
     const fetched = await stage.locator('.hv2-contour-canvas > picture img').evaluate((element) => [(element as HTMLImageElement).naturalWidth, element.getBoundingClientRect().width]);
     expect(Math.abs(fetched[0] - fetched[1]), `${width}`).toBeLessThanOrEqual(1);
     // The lines keep their set weight on the screen, within a fifth (home-v2.css: --u stepped by width and divided by the
     // zoom): the measured outline is --lw-1 × --k CSS pixels
-    const outline = await stage.locator('.hv2-contour-ink path[data-kind="outline"]').first().evaluate((path) => {
+    const outline = await stage.locator(`${PANE_LINES} .hv2-contour-ink path[data-kind="outline"]`).first().evaluate((path) => {
       const style = getComputedStyle(path);
       const sheetStyle = getComputedStyle(path.closest('.hv2-contour')!);
       return { width: parseFloat(style.strokeWidth), set: parseFloat(sheetStyle.getPropertyValue('--lw-1')) * parseFloat(sheetStyle.getPropertyValue('--k')) };
@@ -2141,12 +2385,22 @@ test('the sketch shows only in its test mode, read on the client, never on the d
   await expect(sketch.sheet.locator('.sheet-cell-note')).toContainText('Тестовий режим для порівняння.');
   // The scheme's name is not read while the sketch is on
   await expect(sketch.stage.getByRole('img', { name: homeProofFrame.label })).toHaveCount(0);
-  // «Контур на фото» lays the measured lines over the photo only: the sketch has its own composition
+  // «Контур на фото» lays the measured lines over the photo only: the sketch has its own composition. The photo's copy
+  // shows, the right side's stays hidden, and the window — the sketch's own dark ground — covers the photo's copy right
+  // of the seam: there the pixels are the same with the lines and without, left of it they are not
   const toggle = sketch.sheet.getByRole('button', { name: 'Контур на фото', exact: true });
+  const frame = (await sketch.stage.boundingBox())!;
+  const seam = frame.x + (frame.width * DEFAULT_SPLIT) / 100;
+  const photoSide = { x: frame.x + 1, y: frame.y + 40, width: seam - 30 - frame.x, height: frame.height - 41 };
+  const rightSide = { x: seam + 30, y: frame.y + 80, width: frame.x + frame.width - seam - 31, height: frame.height - 81 };
+  await expect(sketch.stage.locator('.hv2-contour-pane .hv2-contour-sketch')).toHaveCSS('background-color', 'rgb(22, 24, 23)');
+  const before = [await steadyShot(page, photoSide), await steadyShot(page, rightSide)];
   await toggle.click();
-  await expect(sketch.stage.locator('svg.hv2-contour-lines')).toBeVisible();
-  const rightInset = async () => Number(/^inset\(0px (?:calc\()?([\d.]+)%\)? 0px 0px\)$/.exec(await sketch.stage.locator('svg.hv2-contour-lines').evaluate((element) => getComputedStyle(element).clipPath))?.[1] ?? Number.NaN);
-  await expect.poll(rightInset).toBeCloseTo(100 - onCanvas(DEFAULT_SPLIT, phoneOf(page)), 3);
+  await expect(sketch.stage.locator(PHOTO_LINES)).toBeVisible();
+  await expect(sketch.stage.locator(PANE_LINES)).toBeHidden();
+  await expectWindow(sketch.stage, DEFAULT_SPLIT);
+  expect(await differing(page, before[0], await steadyShot(page, photoSide)), 'the lines over the photo').toBeGreaterThan(200);
+  expect(await differing(page, before[1], await steadyShot(page, rightSide)), 'none over the sketch').toBeLessThan(SPECKS);
   await toggle.click();
   // The scheme is one press away, for the comparison — with its own note, not the sketch's
   await sketch.layers.getByRole('button', { name: 'Каркас' }).click();

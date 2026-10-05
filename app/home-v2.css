@@ -475,6 +475,22 @@ main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure s
 /* …and on a tablet's narrower frame the slope's in two lines, its words over its figure: in one it reached past the
    resting seam */
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { width: max-content; max-width: 8.2em; white-space: normal; }
+/* A narrower frame: the names on the right wall's face and in the gate's opening in two lines and a size down, so they
+   stay on the face and inside the opening, clear of the right gate's measured jamb (review, 05.10: at 768–1024 px they
+   ran over it) */
+@media (max-width: 1099px) {
+  main[data-home="v2"] .hv2-proof-tag:is([data-tag="bracing"], [data-tag="wall"]) { width: max-content; max-width: 6.2em; white-space: normal; font-size: 12px; }
+  main[data-home="v2"] .hv2-proof-tag[data-tag="column"] { width: max-content; max-width: 9em; white-space: normal; font-size: 12px; }
+}
+/* …and narrower still (≤ 900 px), the walls' and the column's names at their own places (homeProofFrame's atNarrow, their
+   leaders drawn there), the purlins' not drawn: three two-line names do not fit the wall's face */
+main[data-home="v2"] .hv2-proof-tag-leaders path[data-narrow] { display: none; }
+@media (max-width: 900px) {
+  main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag { left: var(--nx); top: var(--ny); }
+  main[data-home="v2"] .hv2-proof-tag-leaders path[data-wide] { display: none; }
+  main[data-home="v2"] .hv2-proof-tag-leaders path[data-narrow] { display: inline; }
+  main[data-home="v2"] :is(.hv2-proof-tag, .hv2-proof-tag-leaders > g)[data-wide-only] { display: none; }
+}
 /* …a little further left on a narrow tablet, short of the stamp (review, 05.10: at 900 px they met by 13 px) */
 @media (min-width: 860px) and (max-width: 959px) { main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { margin-left: -20px; } }
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-marks [data-mark] { opacity: .8; }
