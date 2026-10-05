@@ -129,7 +129,7 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
           <p className="hv2-kicker"><span aria-hidden="true" /> Реалізований об’єкт до створення RUBIKON BUILD</p>
           <h3>Ангар: каркас, стінові панелі, покрівля</h3>
           <p>{proof.attribution}</p>
-          <ScopeCells items={scope.subject} />
+          <ScopeCells items={scope.subject} linked />
         </div>
         {/* Roles sit next to the proof, compactly — no portraits (the generated ones were removed in #124). */}
         <div className="hv2-people">

@@ -158,7 +158,7 @@ test('homepage server HTML carries the H1, the real-object proof, the conversati
     // The photo's caption is the sentence cell of its «Креслення» title block (one sheet: the photo, its contour and the
     // scheme of its frame's type, 04.10)
     proofCaption: '#real-object .hv2-contour .sheet-cell-note > b',
-    proofScope: '#real-object .hv2-scope-chips li',
+    proofScope: '#real-object .hv2-scope-chips li .hv2-scope-name',
     conversationSteps: '#inquiry .conversation-journey h3',
     cooperation: '.inquiry-details select option',
   });

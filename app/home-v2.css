@@ -961,7 +961,8 @@ main[data-home="v2"] .hv2-proof-detail-pin:is(:hover, [aria-expanded="true"]) { 
 main[data-home="v2"] .hv2-proof-detail-pin:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 main[data-home="v2"] :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 240ms; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"]:not([data-focus]) :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 1; visibility: visible; }
-main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-proof-detail-pins { opacity: 0; visibility: hidden; }
+/* not while the first view's sweep runs: the drawing's names come in when it rests, and a swipe must not catch a letter */
+main[data-home="v2"] .hv2-contour-stage[data-layer][data-sweep] :is(.hv2-proof-detail-pins, .hv2-proof-detail-rings) { opacity: 0; visibility: hidden; }
 main[data-home="v2"] .hv2-detail {
   position: absolute; z-index: 6; top: 12px; left: 12px; display: grid; gap: 8px; width: clamp(300px, 46%, 420px); max-height: calc(100% - 24px); overflow: auto;
   padding: 10px 12px 10px; color: var(--hv2-text); background: #161817; border: 1px solid var(--hv2-copper-text);

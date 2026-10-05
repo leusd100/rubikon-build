@@ -37,7 +37,8 @@ const SCOPE_PARTS: Record<string, string> = {
 /** A part's lines one by one: a dash pattern starts over on every line, so the light runs along each of them */
 const linesOf = (path: string) => path.split('M').filter(Boolean).map((line) => `M${line}`);
 
-export function ScopeCells({ items }: Readonly<{ items: readonly string[] }>) {
+/** `linked`: on HOME, where the proof's scheme stands above — elsewhere (/angary) the cells only name the scope */
+export function ScopeCells({ items, linked = false }: Readonly<{ items: readonly string[]; linked?: boolean }>) {
   const listRef = useRef<HTMLUListElement>(null);
   // The cell pressed, which keeps its part lit
   const [held, setHeld] = useState<ScopePart | null>(null);
@@ -88,7 +89,7 @@ export function ScopeCells({ items }: Readonly<{ items: readonly string[] }>) {
   return (
     <ul className="hv2-scope-chips" aria-label="Роботи на цьому об’єкті" ref={listRef}>
       {items.map((item, index) => {
-        const part = SCOPE_PART_OF[item];
+        const part = linked ? SCOPE_PART_OF[item] : undefined;
         const glyph = SCOPE_PARTS[item] && (
           <svg className="hv2-scope-glyph" viewBox="0 0 92 72" aria-hidden="true" focusable="false">
             <path className="hv2-scope-outline" d={SCOPE_OUTLINE} />
@@ -112,14 +113,14 @@ export function ScopeCells({ items }: Readonly<{ items: readonly string[] }>) {
                 onClick={() => press(part)}
               >
                 {glyph}
-                {item}
+                <span className="hv2-scope-name">{item}</span>
                 <span className="hv2-scope-hint" aria-hidden="true">↑ на схемі</span>
                 <span className="sr-only"> — показати на схемі вище</span>
               </button>
             ) : (
               <>
                 {glyph}
-                {item}
+                <span className="hv2-scope-name">{item}</span>
               </>
             )}
           </li>

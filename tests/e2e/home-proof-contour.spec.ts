@@ -1274,7 +1274,8 @@ test('the lit line’s name stays whole inside the frame and over no other word,
       for (const snap of SNAPS) {
         await stage.evaluate((element) => element.scrollIntoView({ block: 'center' }));
         const frame = (await stage.boundingBox())!;
-        const y = Math.round(frame.y + frame.height * 0.3);
+        // on the walls, under the roof: on «Сніг» the roof takes a weight, not the seam
+        const y = Math.round(frame.y + frame.height * 0.62);
         // a mouse takes the frame anywhere, so each line is reached from the middle (no line within GRAB there), the
         // seam standing where the mouse is
         await page.mouse.move(Math.round(frame.x + frame.width / 2), y);
@@ -1774,7 +1775,7 @@ test('with reduced motion the sheet stands static and complete at its resting sp
     width: (element as HTMLElement).offsetWidth,
     frame: element.parentElement!.clientWidth,
   }));
-  expect(rail.parts).toEqual(['hv2-contour-seamtags', 'hv2-contour-snap', 'hv2-contour-seam', 'hv2-contour-handle']);
+  expect(rail.parts).toEqual(['hv2-contour-hint', 'hv2-contour-seamtags', 'hv2-contour-snap', 'hv2-contour-seam', 'hv2-contour-handle']);
   expect(rail.width).toBe(rail.frame);
   // …and so does the right side's window, as wide as the frame, its content moved back by as much (review, 05.10)
   for (const [part, sign] of [['.hv2-contour-rail', 1], ['.hv2-contour-pane', 1], ['.hv2-contour-pane-inner', -1]] as const) {
