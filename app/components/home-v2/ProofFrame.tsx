@@ -92,18 +92,18 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
             <path d={`M0 0V${step}`} />
           </pattern>
         ))}
-        <marker id="hv2-proof-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+        <marker id="hv2-proof-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3.4" markerHeight="3.4" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" />
         </marker>
         {/* The legs' heads: their lines are three times as heavy as the snow's */}
-        <marker id="hv2-proof-foot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="2.2" markerHeight="2.2" orient="auto-start-reverse">
+        <marker id="hv2-proof-foot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="2.3" markerHeight="2.3" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" />
         </marker>
         {/* …and the wind's, in its own colour */}
-        <marker id="hv2-proof-head-wind" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+        <marker id="hv2-proof-head-wind" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3.4" markerHeight="3.4" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" />
         </marker>
-        <marker id="hv2-proof-foot-wind" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="2.2" markerHeight="2.2" orient="auto-start-reverse">
+        <marker id="hv2-proof-foot-wind" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="2.3" markerHeight="2.3" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" />
         </marker>
       </defs>

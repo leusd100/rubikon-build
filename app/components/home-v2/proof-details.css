@@ -44,9 +44,9 @@ main[data-home="v2"] .hv2-detail .hv2-detail-label { font: 600 11px/1 var(--font
 main[data-home="v2"] .hv2-detail .hv2-detail-flow { opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 0s 240ms; }
 main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-flow { opacity: 1; visibility: visible; transition: opacity 240ms ease, visibility 0s; }
 main[data-home="v2"] .hv2-detail .hv2-detail-flow-way {
-  fill: none; stroke: var(--hv2-load, #f0b48a); stroke-width: 2.4; stroke-linecap: butt; stroke-linejoin: round; stroke-dasharray: 6 4;
+  fill: none; stroke: var(--hv2-load, #5aa8ff); stroke-width: 2.4; stroke-linecap: butt; stroke-linejoin: round; stroke-dasharray: 6 4;
 }
-main[data-home="v2"] .hv2-detail .hv2-detail-flow-head { fill: var(--hv2-load, #f0b48a); stroke: none; }
+main[data-home="v2"] .hv2-detail .hv2-detail-flow-head { fill: var(--hv2-load, #5aa8ff); stroke: none; }
 main[data-home="v2"] .hv2-detail .hv2-detail-assembly { transition: opacity 240ms ease; }
 main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-assembly { opacity: .55; }
 

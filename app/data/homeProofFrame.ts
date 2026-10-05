@@ -65,7 +65,8 @@ const gusts = (base: number, growth: number) => [0.12, 0.31, 0.5, 0.69, 0.88].ma
 const WIND_GUSTS_WIDE = gusts(26, 22);
 /** A phone's close-up ends at the photo's column 1504: 16–26 px there (home-v2.css shows one set or the other) */
 const WIND_GUSTS = gusts(16, 10);
-const WIND_LIFT = [430, 580, 730, 870, 1090, 1200, 1310, 1410].map((x): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 30)]]);
+/** The lift off the roof: 36 px arrows (owner, 05.10: «зараз дуже мілко»), their heads still under the photo's row 84 */
+const WIND_LIFT = [430, 580, 730, 870, 1090, 1200, 1310, 1410].map((x): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 42)]]);
 
 /** truss: chords and end posts; web: diagonals and verticals; wall: bearing lines and lintels; column: the central row */
 export type FrameGroup = 'truss' | 'web' | 'wall' | 'column' | 'purlin' | 'bracing' | 'footing';
