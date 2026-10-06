@@ -85,8 +85,20 @@
 }
 
 /* The node as a drawing (NodeDrawing.tsx, UX pass 2026-10): graphite on the sheet, the shown step's parts in copper. No
-   will-change on its stage, so the browser draws it again at the pushed-in scale and the lines stay sharp. */
+   will-change on its stage, so the browser draws it again at the pushed-in scale and the lines stay sharp. The drawing
+   and its marks (.is-node: not /angary's frame, which shares the stage) are boxes as large as the whole drawing at
+   cover, centred on the frame, which is what `slice` showed, only nothing is cropped off their sides any more: the
+   frame clips them, and the camera (drawingTransform) can show what lies past cover's crop in a frame narrower than the
+   drawing. --dn-aspect: the drawing's width / height. */
 .dn-stage.is-drawing { will-change: auto; }
+.dn-stage.is-node { container-type: size; }
+.dn-stage.is-node :is(.node-drawing, .dn-overlay) {
+  inset: auto;
+  top: calc((100cqh - max(100cqw / var(--dn-aspect), 100cqh)) / 2);
+  left: calc((100cqw - max(100cqw, 100cqh * var(--dn-aspect))) / 2);
+  width: max(100cqw, 100cqh * var(--dn-aspect));
+  height: max(100cqw / var(--dn-aspect), 100cqh);
+}
 .node-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .node-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .node-drawing .nd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 3; }
