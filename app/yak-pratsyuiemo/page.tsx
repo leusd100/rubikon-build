@@ -3,6 +3,7 @@ import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../com
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
+import { ResponsibilityMatrix } from '../components/process/ResponsibilityMatrix';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { FormatsScope, type FormatTerms } from '../components/directions/FormatsScope';
 import { ProcessDrawing } from '../components/directions/ProcessDrawing';
@@ -26,6 +27,7 @@ import type { CSSProperties } from 'react';
 import type { DeliveryFormatId } from '../types/deliveryModel';
 import type { ProcessSplit } from '../types/directionPage';
 import './delivery.css';
+import '../components/process/resp-matrix.css';
 import '../components/directions/formats-scope.css';
 import '../components/directions/process-split.css';
 
@@ -65,11 +67,6 @@ const STARTS = [
   },
 ] as const;
 
-const ZONES = [
-  { id: 'rubikon', title: 'RUBIKON', lead: 'Роботи, зазначені в нашому договорі, та їхній результат.' },
-  { id: 'client', title: 'Замовник', lead: 'Що забезпечує замовник.' },
-  { id: 'specialists', title: 'Профільні спеціалісти', lead: 'Окремі спеціалізовані роботи. Хто їх залучає й координує, фіксуємо в договорі.' },
-] as const;
 
 /** The change loop's way back (step 2 of changePolicy: the impact on works, cost and time). */
 const CHANGE_BACK = 'Вплив на кошторис і строки — до виконання';
@@ -246,7 +243,7 @@ export default function DeliveryModelPage() {
             eyebrow="Хто за що відповідає"
             title="Відповідальність без дрібного шрифту"
             titleId="proc-responsibility-title"
-            supporting="Оберіть формат участі — схема покаже, що виконує RUBIKON, що забезпечує інша сторона договору і хто веде спеціалізовані роботи."
+            supporting="Оберіть формат участі — таблиця покаже, що виконує RUBIKON, що забезпечує інша сторона договору і хто веде спеціалізовані роботи."
           />
           {/* Format switcher: plain radios; CSS (:has) shows the chosen format, so it works without JavaScript */}
           <fieldset className="proc-resp-switch">
@@ -260,60 +257,7 @@ export default function DeliveryModelPage() {
               ))}
             </div>
           </fieldset>
-          <div className="proc-resp-figure" data-motion>
-            {resp.formats.map((format) => <p className="proc-principle" data-format={format.id} key={format.id}>{format.principle}</p>)}
-            <ul className="proc-map">
-              {ZONES.map((zone, index) => (
-                <li className={`proc-area proc-area-${zone.id}`} key={zone.id} style={{ '--i': index } as CSSProperties}>
-                  <h3>
-                    {zone.id === 'client'
-                      ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>{format.clientTitle}</span>)
-                      : zone.title}
-                  </h3>
-                  {/* Who coordinates the object in the chosen format: the tag sits on that party's card */}
-                  {resp.formats.filter((format) => format.coordinator.zone === zone.id).map((format) => (
-                    <p className="proc-area-tag" data-format={format.id} key={format.id}>
-                      Координує об’єкт{format.coordinator.note && ` · ${format.coordinator.note}`}
-                    </p>
-                  ))}
-                  <p className="proc-area-lead">
-                    {zone.id === 'client'
-                      ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>Що забезпечує {format.clientTitle.toLowerCase()}.</span>)
-                      : zone.lead}
-                  </p>
-                  <ul>
-                    {resp.items.filter((item) => item.zones[zone.id].length > 0).map((item) => {
-                      // A work RUBIKON coordinates or organises (rather than does) gets the open marker in RUBIKON's card
-                      const soft = zone.id === 'rubikon'
-                        ? (Object.entries(item.rubikonRole) as [string, string][]).filter(([, role]) => role !== 'executes').map(([format]) => format)
-                        : [];
-                      return (
-                        <li key={item.text} data-formats={item.zones[zone.id].join(' ')} data-soft={soft.length ? soft.join(' ') : undefined}>
-                          <span className="proc-area-work">{item.text}</span>
-                          {Object.entries(item.notes[zone.id] ?? {}).map(([format, note]) => (
-                            <span className="proc-area-note" data-format={format} key={format}>{note}</span>
-                          ))}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-            {/* The base of the map: everything above is fixed in the contract before work starts */}
-            <div className="proc-contract-base">
-              <span className="proc-contract-drops" aria-hidden="true"><i /><i /><i /></span>
-              <div className="proc-contract-band">
-                <h3 className="proc-contract-tab">Договір</h3>
-                <p>{map.boundary}</p>
-                {resp.formats.filter((format) => format.outOfScope.length > 0).map((format) => (
-                  <p className="proc-out-of-scope" data-format={format.id} key={format.id}>
-                    <b>Поза обсягом RUBIKON у цьому форматі:</b> {format.outOfScope.join('; ').toLowerCase()}.
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
+          <ResponsibilityMatrix formats={resp.formats} items={resp.items} boundary={map.boundary} />
         </div>
       </section>
 
