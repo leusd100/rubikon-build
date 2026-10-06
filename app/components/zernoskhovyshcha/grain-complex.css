@@ -3,7 +3,9 @@
    building part RUBIKON does, long dash the specialists' equipment, the grain in --color-grain; the dotted golden lines
    are the grain moving. */
 
-.gc-band .gc { display: grid; gap: 26px; margin-top: 34px; }
+.gc-band .gc { display: grid; gap: 24px; margin-top: 34px; }
+/* the sheet and the choices together: the choices sit right under the drawing (owner, 06.10: both in one screen) */
+.gc-stage { display: grid; gap: 12px; }
 
 /* Each crop's colour: the grain in its silo or zone, and the swatch on its chip (no colour is a claim about a crop's
    look — it only tells the silos apart) */
@@ -53,6 +55,31 @@
 /* The storage grows to the right; the incline and the grain follow it (Chrome animates the path, others jump) */
 .gc-mod-shipping .gc-partner, .gc-mod-gallery .gc-partner, .gc-flow { transition: d .6s ease; }
 
+/* The drawing answers a pointer (owner, 06.10): a module under it is lit and named in a tip; a press changes it and the
+   changed module flashes. Pointer only — the chips are the same choices for a keyboard and a screen reader. */
+.gc-drawing .gc-hit { fill: transparent; stroke: none; cursor: pointer; pointer-events: all; transition: fill .2s ease; }
+.gc-drawing .gc-hit.is-hover { fill: color-mix(in srgb, var(--color-accent) 7%, transparent); }
+@keyframes gc-flash { from { fill: color-mix(in srgb, var(--color-accent) 26%, transparent); } to { fill: transparent; } }
+.gc-drawing .gc-hit.is-flash { animation: gc-flash 1.4s ease-out; }
+.gc-mod.is-hot .gc-own { stroke-width: 4.4; }
+.gc-mod.is-hot .gc-partner { stroke: var(--color-text-secondary); }
+.gc-mod.is-off.is-hot { opacity: .42; }
+/* the tip: placed by GrainComplexBuilder beside its module, whole and inside the drawing */
+.gc-tip {
+  position: absolute; z-index: 6; top: 0; left: 0; display: grid; gap: 4px; width: 250px; padding: 10px 12px;
+  color: var(--color-text-secondary); background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong);
+  box-shadow: 0 10px 26px var(--color-shadow); font-size: 13px; line-height: 1.4; pointer-events: none;
+}
+.gc-tip b { color: var(--color-text); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.gc-tip-own { color: var(--color-text); }
+.gc-tip-own::before { display: inline-block; width: 14px; margin-right: 7px; vertical-align: middle; content: ''; border-top: 3px solid var(--color-accent); }
+.gc-tip-partner::before { display: inline-block; width: 14px; height: 2px; margin-right: 7px; vertical-align: middle; content: ''; background: repeating-linear-gradient(90deg, var(--color-text-muted) 0 5px, transparent 5px 8px); }
+.gc-tip em { color: var(--color-accent-strong); font: 600 12px/1.3 var(--font-condensed), sans-serif; font-style: normal; letter-spacing: .04em; }
+/* the title block's end: the pause, then the way into the form (owner, 06.10: the button right under the drawing) */
+.gc-stamp-actions { display: flex; align-items: center; gap: 14px; }
+.gc-stamp-actions .gc-cta { min-height: 44px; padding: 0 18px; white-space: nowrap; }
+.gc-pause-phone, .gc-cta-phone { display: none; }
+
 /* Arriving: the complex assembles module by module (--o is each module's turn), the grain starts once it stands. Without
    motion none of this applies: the finished complex, still. */
 @keyframes gc-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
@@ -74,14 +101,14 @@
 .gc[data-gc="assembled"][data-flow="on"][data-inview] .gc-flow { animation: gc-flow 900ms linear infinite; }
 
 /* The choices */
-.gc-controls { display: flex; flex-wrap: wrap; gap: 20px 40px; }
+.gc-controls { display: flex; flex-wrap: wrap; gap: 10px 40px; }
 .gc-group { min-width: 0; margin: 0; padding: 0; border: 0; }
-.gc-group legend { margin: 0 0 10px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.gc-group legend { margin: 0 0 6px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .gc-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .gc-chip { position: relative; display: inline-flex; }
 .gc-chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .gc-chip span {
-  display: inline-flex; align-items: center; min-height: 46px; padding: 0 18px; color: var(--color-text); background: var(--color-surface-elevated);
+  display: inline-flex; align-items: center; min-height: 42px; padding: 0 16px; color: var(--color-text); background: var(--color-surface-elevated);
   border: 1px solid var(--color-border-control); font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .03em;
   transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
@@ -98,26 +125,38 @@
 .gc-scope-col li { position: relative; padding-left: 16px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.45; }
 .gc-scope-col li::before { position: absolute; top: .62em; left: 0; width: 7px; height: 7px; content: ''; background: var(--color-accent); }
 .gc-scope-col[data-tone="partner"] li::before { background: none; border: 1.5px solid var(--color-text-muted); }
-.gc-next p { margin: 0 0 16px; color: var(--color-text-muted); font-size: 14px; line-height: 1.5; }
-.gc-next .gc-cta { width: 100%; justify-content: space-between; }
+.gc-scope .gc-next { margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.55; }
+/* a line the last change brought in lights for a moment */
+@keyframes gc-new { from { background-color: color-mix(in srgb, var(--color-accent) 24%, transparent); } to { background-color: transparent; } }
+.gc-scope-col li.is-new { animation: gc-new 1.4s ease-out; }
 
 @media (max-width: 1050px) {
   .gc-scope { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .gc-next { grid-column: 1 / -1; }
-  .gc-next .gc-cta { width: auto; }
+  .gc-scope .gc-next { grid-column: 1 / -1; }
 }
 
 @media (max-width: 760px) {
   .gc-band .gc { gap: 22px; margin-top: 24px; }
+  /* the drawing stays at the top under the header while the choices pass under it, so a choice is seen where it is
+     made; the title block gives way (its chain is on the drawing, its pause sits on it, its button follows the choices) */
+  .gc-stage .gc-sheet { position: sticky; z-index: 4; top: 77px; }
+  .gc-sheet .sheet-stamp { display: none; }
+  .gc-pause-phone { position: absolute; z-index: 5; right: 6px; bottom: 6px; display: block; }
+  .gc-pause-phone .dn-control { padding-left: 10px; background: color-mix(in srgb, var(--color-surface-elevated) 88%, transparent); border-radius: 22px; }
+  .gc-cta-phone { display: flex; width: 100%; justify-content: space-between; }
+  .gc-tip { width: 220px; font-size: 12px; }
+  /* each group of choices one row that scrolls sideways */
+  .gc-options { flex-wrap: nowrap; margin-inline: -16px; padding: 2px 16px 4px; overflow-x: auto; scrollbar-width: none; }
+  .gc-options::-webkit-scrollbar { display: none; }
+  .gc-chip { flex: none; }
   /* the elevation scrolls sideways at a width its words can be read at */
-  .gc-sheet .gc-visual { aspect-ratio: auto; height: 330px; }
+  .gc-sheet .gc-visual { aspect-ratio: auto; height: 250px; }
   .gc-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
-  .gc-drawing { width: 990px; height: 330px; }
-  .gc-drawing .gc-label { font-size: 32px; }
+  .gc-drawing { width: 750px; height: 250px; }
+  .gc-drawing .gc-label { font-size: 40px; }
   .gc-controls { display: grid; gap: 18px; }
   .gc-chip span { min-height: 44px; padding: 0 14px; font-size: 14px; }
   .gc-scope { grid-template-columns: 1fr; gap: 20px; padding-top: 20px; }
   .gc-scope-col ul { gap: 4px; }
   .gc-scope-col li { font-size: 14px; }
-  .gc-next .gc-cta { width: 100%; }
 }

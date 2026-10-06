@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import type { GrainComplexModel, GrainCrop } from '../../lib/grainComplex';
+import type { GrainComplexModel, GrainCrop, GrainModuleKey } from '../../lib/grainComplex';
 
 // The grain complex as one schematic elevation (2400 × 800 units), drawn the way the grain goes — one module after
 // another (owner, 06.10: «чи не має це все по ланцюжку?»): a truck tips into the receiving pit; a conveyor in a tunnel
@@ -21,9 +21,9 @@ const SHIP_X = 2150;
 const binSize = (count: number) => (count >= 6 ? { w: 92, step: 112 } : count >= 4 ? { w: 108, step: 130 } : { w: 130, step: 154 });
 
 /** A module's group: its turn in the arrival (--o) and whether the visitor has it in the chain */
-function Mod({ name, order, on = true, children }: Readonly<{ name: string; order: number; on?: boolean; children: ReactNode }>) {
+function Mod({ name, order, on = true, hot = false, children }: Readonly<{ name: string; order: number; on?: boolean; hot?: boolean; children: ReactNode }>) {
   return (
-    <g className={`gc-mod gc-mod-${name}${on ? '' : ' is-off'}`} style={{ '--o': order } as CSSProperties}>
+    <g className={`gc-mod gc-mod-${name}${on ? '' : ' is-off'}${hot ? ' is-hot' : ''}`} style={{ '--o': order } as CSSProperties}>
       {children}
     </g>
   );
@@ -62,7 +62,24 @@ function heapZone(from: number, to: number, x0: number, x1: number) {
 
 const cropClass = (crop: GrainCrop | 'mixed') => `gc-grain gc-crop-${crop}`;
 
-export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainComplexModel; label: string }>) {
+/** Where a module sits along the drawing (its units, 0–2400): a phone's sideways view is brought to it after a change */
+export function grainModuleCentre(key: GrainModuleKey, model: GrainComplexModel) {
+  const { w, step } = binSize(model.silos);
+  const storeEnd = model.state.storage === 'silos' ? STORE_X + (model.silos - 1) * step + w + 10 : model.state.storage === 'floor' ? STORE_X - 10 + model.floorLength : 1920;
+  const centres: Record<GrainModuleKey, number> = { receiving: 340, cleaning: 860, drying: 1140, feed: 1300, storage: (STORE_X + storeEnd) / 2, shipping: 2250 };
+  return centres[key];
+}
+
+export type GrainDrawingPointer = {
+  /** The module a pointer is on, and the one that just changed (it flashes) */
+  hovered?: GrainModuleKey | null;
+  flash?: GrainModuleKey | null;
+  onEnter?: (key: GrainModuleKey, pointerType: string) => void;
+  onLeave?: (pointerType: string) => void;
+  onPress?: (key: GrainModuleKey) => void;
+};
+
+export function GrainComplexDrawing({ model, label, hovered = null, flash = null, onEnter, onLeave, onPress }: Readonly<{ model: GrainComplexModel; label: string } & GrainDrawingPointer>) {
   const { state, silos, floorLength, binCrops, zoneCrops } = model;
   const { w: binW, step: binStep } = binSize(silos);
   const bins = Array.from({ length: silos }, (_, index) => STORE_X + index * binStep);
@@ -73,6 +90,16 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
   const floorColumns = Array.from({ length: Math.floor(floorLength / 120) + 1 }, (_, index) => STORE_X - 10 + index * 120).filter((x) => x <= STORE_X - 10 + floorLength);
   const zoneWidth = (floorLength - 12) / zoneCrops.length;
   const zones = zoneCrops.map((crop, index) => ({ crop, x0: STORE_X - 4 + index * zoneWidth, x1: STORE_X - 4 + (index + 1) * zoneWidth }));
+
+  /** Each module's place for the pointer, in the drawing's units */
+  const areas: readonly { key: GrainModuleKey; x: number; y: number; w: number; h: number }[] = [
+    { key: 'receiving', x: 80, y: 400, w: 548, h: 330 },
+    { key: 'cleaning', x: 632, y: 84, w: 350, h: 560 },
+    { key: 'drying', x: 990, y: 80, w: 260, h: 566 },
+    { key: 'feed', x: 1252, y: 16, w: 100, h: 620 },
+    { key: 'storage', x: STORE_X - 14, y: state.storage === 'silos' ? 236 : 300, w: storeEnd - STORE_X + 28, h: state.storage === 'silos' ? 404 : 340 },
+    { key: 'shipping', x: storeEnd + 22, y: 230, w: 2390 - storeEnd - 22, h: 400 },
+  ];
 
   // The grain's one way through the chosen chain: into the pit, along the tunnel, up and through each chosen module and
   // back down, up the last elevator and along the gallery
@@ -90,7 +117,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
       <path className="gc-hatch" d={[60, 100, 140, 180, 220, 260, 300, 340, 380, 1000, 1040, 2100, 2320, 2356].map((x) => `M${x} ${G + 18}l-14 20`).join('')} />
 
       {/* receiving: the apron, the pit in concrete under its grate, the truck tipping its body over it */}
-      <Mod name="receiving" order={0}>
+      <Mod name="receiving" order={0} hot={hovered === 'receiving'}>
         <path pathLength={1} className="gc-own" d={`M76 ${G}H420V${G + 14}H76Z`} />
         <path pathLength={1} className="gc-own" d={`M420 ${G}L486 ${TUNNEL.top}H500L440 ${G}ZM598 ${G}L546 ${TUNNEL.top}H560L618 ${G}Z`} />
         <path className="gc-grate" d={`M440 ${G}H598`} />
@@ -111,7 +138,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
       </Mod>
 
       {/* cleaning: an elevator on its mast lifts the grain into the separator on its platform; it falls back to the tunnel */}
-      <Mod name="cleaning" order={2} on={state.cleaning} key={`cleaning-${state.cleaning}`}>
+      <Mod name="cleaning" order={2} on={state.cleaning} hot={hovered === 'cleaning'} key={`cleaning-${state.cleaning}`}>
         <path pathLength={1} className="gc-own gc-line" d={mast(712, 150)} />
         <path pathLength={1} className="gc-own" d={footing(719, 18)} />
         <path className="gc-partner" d={elevator(636, 140)} />
@@ -126,7 +153,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
 
       {/* drying: the next elevator lifts the grain into the dryer's top; it falls through the louvred tower; the burner
           beside it; all on a foundation */}
-      <Mod name="drying" order={3} on={state.drying} key={`drying-${state.drying}`}>
+      <Mod name="drying" order={3} on={state.drying} hot={hovered === 'drying'} key={`drying-${state.drying}`}>
         <path pathLength={1} className="gc-own gc-line" d={mast(1072, 138)} />
         <path pathLength={1} className="gc-own" d={footing(1079, 18)} />
         <path className="gc-partner" d={elevator(1000, 128)} />
@@ -139,7 +166,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
       </Mod>
 
       {/* the last elevator, on its mast, up to the gallery over the storage */}
-      <Mod name="feed" order={4}>
+      <Mod name="feed" order={4} hot={hovered === 'feed'}>
         <path pathLength={1} className="gc-own gc-line" d={mast(1252, 80)} />
         <path pathLength={1} className="gc-own" d={footing(1259, 18)} />
         <path className="gc-partner" d={elevator(1280, 72)} />
@@ -149,7 +176,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
       {/* storage: silos on their slab — rings, roofs, inlets, each with its crop — over the discharge tunnel; or the floor
           store cut open to its heap, in a zone per crop; or a place still to be decided */}
       {state.storage === 'silos' && (
-        <Mod name="storage" order={5} key={`silos-${silos}-${binCrops.join()}`}>
+        <Mod name="storage" order={5} hot={hovered === 'storage'} key={`silos-${silos}-${binCrops.join()}`}>
           {bins.map((x, index) => <path key={`g${x}`} className={cropClass(binCrops[index])} d={`M${x + 4} 596V334L${x + binW / 2} 312L${x + binW - 4} 334V596Z`} />)}
           <path className="gc-partner" d={bins.map((x) => `M${x} ${G}V298L${x + binW / 2} 254L${x + binW} 298V${G}M${x + binW / 2 - 9} 254V244H${x + binW / 2 + 9}V254`).join('')} />
           <path className="gc-ring" d={bins.map((x) => Array.from({ length: 6 }, (_, ring) => `M${x} ${322 + ring * 46}H${x + binW}`).join('')).join('')} />
@@ -158,7 +185,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
         </Mod>
       )}
       {state.storage === 'floor' && (
-        <Mod name="storage" order={5} key={`floor-${floorLength}-${zoneCrops.join()}`}>
+        <Mod name="storage" order={5} hot={hovered === 'storage'} key={`floor-${floorLength}-${zoneCrops.join()}`}>
           <path pathLength={1} className="gc-own" d={`M${STORE_X - 10} 520H${storeEnd}V${G}H${STORE_X - 10}Z`} />
           {zones.map((zone) => <path key={zone.x0} className={cropClass(zone.crop)} d={heapZone(STORE_X - 4, storeEnd - 6, zone.x0, zone.x1)} />)}
           {zones.length > 1 && <path pathLength={1} className="gc-own gc-line" d={zones.slice(1).map((zone) => `M${zone.x0.toFixed(1)} ${G}V470`).join('')} />}
@@ -168,7 +195,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
         </Mod>
       )}
       {state.storage === 'unknown' && (
-        <Mod name="storage" order={5} key="unknown">
+        <Mod name="storage" order={5} hot={hovered === 'storage'} key="unknown">
           <path className="gc-unknown" d={`M1380 ${G}V330H1920V${G}`} />
           <text className="gc-unknown-mark" x="1650" y="500">?</text>
           <path pathLength={1} className="gc-own" d={`M1370 ${G}H1920V616H1370Z`} />
@@ -182,7 +209,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
       </Mod>
 
       {/* shipping: the incline up from the discharge tunnel to the loading bin, on its frame, over a truck */}
-      <Mod name="shipping" order={6}>
+      <Mod name="shipping" order={6} hot={hovered === 'shipping'}>
         <path className="gc-partner" d={`M${dischargeEnd - 10} ${TUNNEL.belt - 8}L${SHIP_X + 12} 262M${dischargeEnd + 6} ${TUNNEL.belt + 4}L${SHIP_X + 28} 274M${SHIP_X} 250H2290V356L2234 400H2206L${SHIP_X} 356ZM2206 400V412H2234V400`} />
         <path pathLength={1} className="gc-own gc-line" d={`M2146 356H2294M2160 356V${G}M2280 356V${G}M2160 420L2280 500M2280 420L2160 500`} />
         <path pathLength={1} className="gc-own" d={`${footing(2160)}${footing(2280)}`} />
@@ -208,6 +235,26 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
       <text className="gc-label" x="300" y="772">Приймання</text>
       <text className="gc-label" x={storeCentre} y="772">Зберігання</text>
       <text className="gc-label" x="2256" y="772">Відвантаження</text>
+
+      {/* the modules a pointer can find: a press adds or removes cleaning and drying or swaps the storage, and every one
+          names who builds what in it (GrainComplexBuilder's tip). The chips under the sheet do the same for a keyboard. */}
+      <g className="gc-hits" aria-hidden="true">
+        {areas.map(({ key, x, y, w, h }) => (
+          <rect
+            key={key}
+            className={`gc-hit${hovered === key ? ' is-hover' : ''}${flash === key ? ' is-flash' : ''}`}
+            data-module={key}
+            x={x}
+            y={y}
+            width={w}
+            height={h}
+            rx="14"
+            onPointerEnter={(event) => onEnter?.(key, event.pointerType)}
+            onPointerLeave={(event) => onLeave?.(event.pointerType)}
+            onClick={() => onPress?.(key)}
+          />
+        ))}
+      </g>
     </svg>
   );
 }

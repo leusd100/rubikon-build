@@ -123,3 +123,52 @@ export function grainComplexModel(state: GrainComplexState): GrainComplexModel {
     inquiryText,
   };
 }
+
+/** The drawing's modules a pointer can find (GrainComplexDrawing's hit areas) */
+export type GrainModuleKey = 'receiving' | 'cleaning' | 'drying' | 'feed' | 'storage' | 'shipping';
+
+export type GrainModuleInfo = {
+  name: string;
+  /** What RUBIKON builds there (copper on the drawing) and what specialists supply (long dash) */
+  own: string;
+  partners?: string;
+  /** What a press on it does: adds or removes the module, or swaps the storage; nothing for the fixed ones */
+  action?: string;
+};
+
+/**
+ * Who does what in one module, for the drawing's pointer tip (owner, 06.10: «креслення як пульт»). The building part is
+ * RUBIKON's, the equipment the specialists'; the action says what a press on the module would change.
+ */
+export function grainModuleInfo(key: GrainModuleKey, state: GrainComplexState): GrainModuleInfo {
+  switch (key) {
+    case 'receiving':
+      return { name: 'Приймання', own: 'Приймальний бункер і майданчик розвантаження', partners: 'Конвеєр у тунелі' };
+    case 'cleaning':
+      return {
+        name: 'Очищення', own: 'Майданчик, опори й приямок норії', partners: 'Машина очищення й норія',
+        action: state.cleaning ? 'Натисніть, щоб прибрати з ланцюга' : 'Натисніть, щоб додати в ланцюг',
+      };
+    case 'drying':
+      return {
+        name: 'Сушіння', own: 'Фундамент під сушарку, приямок і щогла норії', partners: 'Зерносушарка й норія',
+        action: state.drying ? 'Натисніть, щоб прибрати з ланцюга' : 'Натисніть, щоб додати в ланцюг',
+      };
+    case 'feed':
+      return { name: 'Подача в сховище', own: 'Приямок і щогла норії, тунель конвеєра', partners: 'Норія й галерея' };
+    case 'storage':
+      if (state.storage === 'silos') return { name: 'Силоси', own: 'Бетонні основи й тунель під силосами', partners: 'Силоси й конвеєри', action: 'Натисніть — підлогове сховище' };
+      if (state.storage === 'floor') return { name: 'Підлогове сховище', own: 'Будівля: фундаменти, підпірні стіни, каркас, покрівля', partners: 'Аерація й конвеєри', action: 'Натисніть — силоси' };
+      return { name: 'Сховище', own: 'Основа або будівля — щойно визначите тип', action: 'Натисніть — силоси' };
+    case 'shipping':
+      return { name: 'Відвантаження', own: 'Опори бункера й тунель під сховищем', partners: 'Бункер і похилий конвеєр' };
+  }
+}
+
+/** What a press on a module changes in the state, or nothing for the modules every chain has */
+export function grainModulePress(key: GrainModuleKey, state: GrainComplexState): Partial<GrainComplexState> | null {
+  if (key === 'cleaning') return { cleaning: !state.cleaning };
+  if (key === 'drying') return { drying: !state.drying };
+  if (key === 'storage') return { storage: state.storage === 'silos' ? 'floor' : 'silos' };
+  return null;
+}
