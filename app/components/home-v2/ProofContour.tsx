@@ -713,7 +713,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       setExploded(false);
       if (seam && Math.abs(live.current - seam.at) < 0.5) setSplit(seam.from);
       setDetail(null);
-      if (was) detailPinRefs.current[was]?.focus({ preventScroll: true });
+      // the focus back on its letter — or, where the scheme's letter has given way (data-cut), on the bar's
+      const pin = was ? detailPinRefs.current[was] : null;
+      if (pin && pin.dataset.cut === undefined) pin.focus({ preventScroll: true });
+      else if (was) {
+        const bar = stageRef.current?.closest('figure')?.querySelector<HTMLElement>('.hv2-contour-nodes:not([data-place="block"])');
+        const place = bar && getComputedStyle(bar).display !== 'none' ? '' : '[data-place="block"]';
+        stageRef.current?.closest('figure')?.querySelector<HTMLButtonElement>(`.hv2-contour-nodes${place} button[aria-label^="Вузол ${PROOF_DETAILS.find((entry) => entry.id === was)?.letter}:"]`)?.focus({ preventScroll: true });
+      }
     };
     const panel = detailRef.current;
     const ring = was && ringOf(was);
@@ -826,6 +833,19 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         else delete pointer.dataset.cut;
       }
     }
+    // A node's letter gives way to a word of the drawing it would cover — the word says what the drawing is; the letter
+    // is in the «Вузли крупно» bar too, and its ring stays (06.10: on a tablet's frame the walls' and the footings'
+    // names lay under Д and В). «Схема ›» gives way to a letter as to a word (on a short laptop with the seam at 64 % it
+    // covered «Г»)
+    const words = [...stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span:not([data-cut])')].filter((label) => shown(label));
+    for (const pin of stage.querySelectorAll<HTMLElement>('.hv2-proof-detail-pin')) {
+      const rect = pin.getBoundingClientRect();
+      // (and, as a word, it is hidden whole where the seam cuts it — never half a letter)
+      const under = layer === 'frame' && (rect.left < seam + 1 || words.some((label) => meets(rect, label.getBoundingClientRect())));
+      if (under) pin.dataset.cut = '';
+      else delete pin.dataset.cut;
+      if (!under && layer === 'frame' && rightTagWould && rightBox && rect.left >= seam && meets(rect, rightBox)) yieldTag = true;
+    }
     setTagYield(yieldTag);
   }, [split, layer, room, snap, narrowRight]);
 
@@ -907,7 +927,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         if (y > box.height - 70) tip.dataset.flipY = '';
         else delete tip.dataset.flipY;
       }
-      if (next?.name === hitRef.current?.name && next?.points === hitRef.current?.points) return;
+      if (next?.name === hitRef.current?.name && next?.points === hitRef.current?.points && next?.node === hitRef.current?.node) return;
       hitRef.current = next;
       setHit(next);
     });
@@ -1310,6 +1330,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-hit-node={layer === 'frame' ? hit?.node : undefined}
         data-step-on={(layer === 'load' || layer === 'wind') && (stepPeek ?? stepOn) !== null ? (stepPeek ?? stepOn)! : undefined}
         data-building={building ? '' : undefined}
+        data-touring={tourStep !== null ? '' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
@@ -1386,7 +1407,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               <ProofKeyPins />
               {/* The details' letters (А, Б, В) beside their rings on «Каркас»: each opens its node, drawn */}
               <div className="hv2-proof-detail-pins">
-                {homeProofDetailSpots.map(({ id, badge: [x, y], badgePhone: [px, py] }) => {
+                {homeProofDetailSpots.map(({ id, badge: [x, y], badgePhone: [px, py], badgeNarrow: [nx, ny] = [x, y] }) => {
                   const item = PROOF_DETAILS.find((entry) => entry.id === id)!;
                   return (
                     <button
@@ -1398,6 +1419,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                       style={{
                         '--x': `${(x / contourPhoto.width) * 100}%`, '--y': `${(y / contourPhoto.height) * 100}%`,
                         '--px': `${(px / contourPhoto.width) * 100}%`, '--py': `${(py / contourPhoto.height) * 100}%`,
+                        '--nx': `${(nx / contourPhoto.width) * 100}%`, '--ny': `${(ny / contourPhoto.height) * 100}%`,
                       } as CSSProperties}
                       aria-label={`Вузол ${item.letter}: ${item.title}`}
                       aria-haspopup="dialog"

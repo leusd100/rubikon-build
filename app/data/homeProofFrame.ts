@@ -393,16 +393,19 @@ export function onRoof([x, y]: Pt) {
 
 /** The nodes drawn as details (ProofDetails, owner, 05.10 — «вузли-деталі»): a dashed ring round each on the scheme and
  *  its letter beside it. А the truss's bearing on the right wall, Б a purlin on a top-chord node, В the column's base */
-export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base' | 'ridge' | 'chord'; ring: Pt; radius: number; badge: Pt; badgePhone: Pt }[] = [
+/** `badgeNarrow`: on a tablet's frame (761–1180 px), where the letter over the rake would meet the slope's figure */
+export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base' | 'ridge' | 'chord'; ring: Pt; radius: number; badge: Pt; badgePhone: Pt; badgeNarrow?: Pt }[] = [
   { id: 'bearing', ring: [1461.6, 324], radius: 26, badge: [1424, 292], badgePhone: [1424, 292] },
-  { id: 'purlin', ring: [1194.3, 214.3], radius: 20, badge: [1172, 176], badgePhone: [1172, 176] },
+  { id: 'purlin', ring: [1194.3, 214.3], radius: 20, badge: [1172, 176], badgePhone: [1172, 176], badgeNarrow: [1146, 250] },
   // on a phone the seam's handle stands at the frame's foot next to the column: its letter goes up into the gate
   { id: 'base', ring: [1007.5, 570], radius: 28, badge: [1050, 596], badgePhone: [1084, 470] },
   // the ridge over the central post, its letter left of the slope's figure; a bottom-chord panel point under a vertical
   // (in the letters' order: the keyboard reaches them А, Б, В, Г, Д)
-  // (its letter right of the ridge, over the right rake: left of it, it stood on the resting seam, half under the photo)
-  { id: 'ridge', ring: [1005, 162], radius: 24, badge: [1062, 120], badgePhone: [1062, 120] },
-  { id: 'chord', ring: [1253.8, 317.6], radius: 20, badge: [1288, 352], badgePhone: [1288, 352] },
+  // (its letter right of the ridge, on the right rake's edge: left of it, it stood on the resting seam, half under the
+  // photo; higher, «Схема ›» at rest met it on a short laptop — the seam's name ends at photo x 1050, the slope's figure
+  // starts at 1084, so the letter stands under the one and left of the other)
+  { id: 'ridge', ring: [1005, 162], radius: 24, badge: [1062, 150], badgePhone: [1084, 150], badgeNarrow: [1046, 214] },
+  { id: 'chord', ring: [1253.8, 317.6], radius: 20, badge: [1288, 352], badgePhone: [1288, 352], badgeNarrow: [1300, 285] },
 ];
 
 /** «Жива схема» (owner, 05.10): what a pointer on the scheme is over, by name — the nearest member of the gable's plane
