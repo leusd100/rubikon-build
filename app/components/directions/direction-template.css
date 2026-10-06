@@ -123,3 +123,72 @@
   .cost-list.has-glyphs h3 { grid-column: 3; }
   .cost-glyph { width: 36px; height: 36px; }
 }
+
+/* ── «Ви · Ми» (DirectionProcess with `split`, owner 06.10): every step's two sides around one rail — what you do over it,
+   what we do under it (the step's own text) — and on it what you get after the step, drawn small (ProcessDrawing) with
+   its caption. The rows line up across the steps (subgrid), so the rail is one line and the drawings stand on it. ── */
+.process-key { display: flex; gap: 28px; margin: -6px 0 28px; color: var(--color-dark-text-secondary); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.process-key span::before { display: inline-block; width: 22px; margin-right: 10px; vertical-align: middle; content: ''; border-top: 1px solid var(--color-dark-text-muted); }
+.process-key span:last-child::before { border-top: 2px solid var(--color-accent-on-dark); }
+.process-split { --gap: clamp(24px, 3vw, 44px); position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); column-gap: var(--gap); margin: 0; padding: 0; list-style: none; container-type: inline-size; }
+.process-split li { display: grid; grid-row: span 5; grid-template-rows: subgrid; min-width: 0; }
+.process-split h3 { margin: 0; padding-bottom: 12px; color: var(--color-dark-text); font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }
+.process-split h3 b { display: block; margin-bottom: 7px; color: var(--color-accent-on-dark); font: 600 13px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
+.process-split :is(.ps-you, .ps-we) { margin: 0; font-size: 15px; line-height: 1.55; }
+.process-split .ps-you { padding-bottom: 6px; color: var(--color-dark-text); }
+.process-split .ps-we { padding-top: 14px; color: var(--color-dark-text-secondary); }
+.process-split small { display: block; margin-bottom: 5px; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+.process-split .ps-you small { color: var(--color-dark-text-muted); }
+.process-split .ps-we small { color: var(--color-accent-on-dark); }
+.ps-node { position: relative; height: 96px; }
+.ps-node::before { position: absolute; right: calc(-1 * var(--gap)); bottom: 0; left: 0; height: 1px; content: ''; background: var(--color-accent); transform-origin: left center; }
+.process-split li:last-child .ps-node::before { right: 0; }
+.ps-node .pd { position: absolute; bottom: -15px; left: -10px; width: 140px; height: 88px; overflow: visible; }
+.ps-result { display: flex; align-items: center; gap: 9px; margin: 0; padding-top: 14px; color: var(--color-dark-text); font: 600 12px/1.25 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.ps-result::before { flex: none; width: 9px; height: 9px; content: ''; background: var(--color-accent-on-dark); border-radius: 50%; }
+/* the small drawings' ink, on the dark band in both themes */
+.pd :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.pd .pd-ink { stroke: var(--color-dark-text-secondary); stroke-width: 1.6; }
+.pd .pd-cut { fill: color-mix(in srgb, var(--color-dark-text) 10%, transparent); stroke: var(--color-dark-text-secondary); stroke-width: 1.6; }
+.pd .pd-own { fill: color-mix(in srgb, var(--color-accent-on-dark) 18%, transparent); stroke: var(--color-accent-on-dark); stroke-width: 2; }
+.pd .pd-own-line { stroke: var(--color-accent-on-dark); stroke-width: 2; }
+.pd .pd-heavy { stroke-width: 3; }
+.pd .pd-partner { stroke: var(--color-dark-text-muted); stroke-width: 1.5; stroke-dasharray: 7 4; }
+.pd .pd-grain { fill: color-mix(in srgb, #D7B45A 35%, transparent); stroke: #D7B45A; stroke-width: 1.2; }
+.pd .pd-sight { stroke: var(--color-accent-on-dark); stroke-width: 1.4; stroke-dasharray: 3 4; }
+.pd .pd-water { stroke: #6DB0DD; stroke-width: 3; stroke-dasharray: 1 8; }
+.pd .pd-letter { fill: var(--color-dark-text-muted); stroke: none; font: italic 500 12px var(--font-manrope), sans-serif; }
+/* a copper light that runs the rail once, first step to last, after the drawings have plotted in */
+.ps-spark { position: absolute; z-index: 1; bottom: -1px; left: 0; width: 80px; height: 3px; background: linear-gradient(90deg, transparent, var(--color-accent-on-dark)); border-radius: 2px; box-shadow: 0 0 12px 1px var(--color-accent-on-dark); opacity: 0; pointer-events: none; }
+@keyframes ps-run { 0% { opacity: 0; transform: translateX(0); } 8%, 90% { opacity: 1; } 100% { opacity: 0; transform: translateX(calc(100cqw - 80px)); } }
+
+/* Arriving (ProcessMotion arms the list): the rail draws step by step, each drawing plots in on its stretch, the outcome
+   follows, then the light runs. Without motion: all of it at once, and no light. */
+.process-split .pd [pathLength="1"] { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.direction-page[data-motion-ready] .process-split:not([data-motion-state="on"]) .ps-node::before { transform: scaleX(0); }
+.direction-page[data-motion-ready] .process-split:not([data-motion-state="on"]) .pd [pathLength="1"] { stroke-dashoffset: 1; }
+.direction-page[data-motion-ready] .process-split:not([data-motion-state="on"]) .pd :is(.pd-ink, .pd-cut, .pd-partner, .pd-grain, .pd-sight, .pd-water, .pd-letter) { opacity: 0; }
+.direction-page[data-motion-ready] .process-split:not([data-motion-state="on"]) .ps-result { opacity: 0; transform: translateY(6px); }
+.direction-page[data-motion-ready="on"] .process-split .ps-node::before { transition: transform 500ms var(--m-ease) calc(150ms + var(--i, 0) * 340ms); }
+.direction-page[data-motion-ready="on"] .process-split .pd [pathLength="1"] { transition: stroke-dashoffset 900ms var(--m-ease) calc(350ms + var(--i, 0) * 340ms); }
+.direction-page[data-motion-ready="on"] .process-split .pd :is(.pd-ink, .pd-cut, .pd-partner, .pd-grain, .pd-sight, .pd-water, .pd-letter) { transition: opacity 500ms ease calc(250ms + var(--i, 0) * 340ms); }
+.direction-page[data-motion-ready="on"] .process-split .ps-result { transition: opacity 400ms ease calc(750ms + var(--i, 0) * 340ms), transform 400ms var(--m-ease) calc(750ms + var(--i, 0) * 340ms); }
+.direction-page[data-motion-ready] .process-split[data-motion-state="on"] .ps-spark { animation: ps-run 2400ms var(--m-ease) 1900ms both; }
+
+/* One column from 1050 px down: the rail runs down the left, each step's drawing beside its outcome */
+@media (max-width: 1050px) {
+  .process-split { grid-template-columns: 1fr; grid-template-rows: none; max-width: 720px; container-type: normal; }
+  .process-split li { position: relative; display: grid; grid-row: auto; grid-template-columns: 112px minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "title title" "you you" "node result" "we we"; column-gap: 14px; padding: 0 0 30px 40px; }
+  .process-split li::before { position: absolute; top: 8px; bottom: 0; left: 8px; width: 1px; content: ''; background: var(--color-accent); }
+  .process-split li:last-child { padding-bottom: 0; }
+  .process-split li:last-child::before { display: none; }
+  .process-split h3 { grid-area: title; padding-bottom: 10px; }
+  .process-split h3::after { position: absolute; top: 0; left: 0; width: 18px; height: 18px; content: ''; background: var(--color-dark); border: 1.5px solid var(--color-accent-on-dark); border-radius: 50%; }
+  .process-split li:is(:first-child, :last-child) h3::after { background: var(--color-accent-on-dark); }
+  .process-split .ps-you { grid-area: you; padding-bottom: 8px; }
+  .ps-node { grid-area: node; height: 70px; }
+  .ps-node::before, .ps-spark { display: none; }
+  .ps-node .pd { bottom: 0; left: -8px; width: 112px; height: 70px; }
+  .ps-result { grid-area: result; align-self: center; padding-top: 0; }
+  .process-split .ps-we { grid-area: we; padding-top: 8px; }
+}

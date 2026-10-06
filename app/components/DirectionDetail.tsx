@@ -7,9 +7,10 @@ import { ConversationSection } from './ConversationSection';
 import ResponsiveImage from './ResponsiveImage';
 import { DrawingSheet, type SheetCell } from './DrawingSheet';
 import { DirectionNode } from './directions/DirectionNode';
+import { ProcessDrawing } from './directions/ProcessDrawing';
 import { DirectionHeroImage } from './DirectionHeroImage';
 import { absoluteUrl, siteUrl } from '../lib/seo';
-import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep } from '../types/directionPage';
+import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep, ProcessSplit } from '../types/directionPage';
 import { getDirection } from '../lib/directions';
 import { faqAnswerText } from '../lib/deliveryModelPresentation';
 import { relatedDirections, type RelatedDirection } from '../data/relatedDirections';
@@ -150,24 +151,50 @@ export function DirectionProcess({
   title,
   text,
   steps,
+  split,
   className,
 }: {
   eyebrow?: string;
   title: string;
   text: string;
   steps: readonly DirectionStep[];
+  split?: readonly ProcessSplit[];
   className?: string;
 }) {
+  const sides = split && split.length === steps.length ? split : undefined;
   return (
     <section className={classNames('page-section page-section-dark', className)}>
       <div className="shell">
         <SectionHeader className="page-heading" eyebrow={eyebrow} title={title} supporting={text} inverse />
-        <ol className="detail-steps" data-motion>
-          {/* A sequence on one rail (globals.css .detail-steps); in view, the rail draws from node to node */}
-          {steps.map(([stepNumber, stepTitle, stepText], index) => (
-            <li key={stepNumber} style={{ '--i': index } as CSSProperties}><span>{stepNumber}</span><h3>{stepTitle}</h3><p>{stepText}</p></li>
-          ))}
-        </ol>
+        {sides ? (
+          <>
+            {/* «Ви · Ми» (owner, 06.10): over the rail what you do, under it what we do (the step's own text), on the
+                rail what you get after the step, drawn small; the rail is their ground. In view the drawings plot in
+                one by one and a copper light runs the rail once (direction-template.css). */}
+            <p className="process-key" aria-hidden="true"><span>Ви</span><span>RUBIKON</span></p>
+            <ol className="process-split" data-motion>
+              {steps.map(([stepNumber, stepTitle, stepText], index) => (
+                <li key={stepNumber} style={{ '--i': index } as CSSProperties}>
+                  <h3><b>{stepNumber}</b>{stepTitle}</h3>
+                  <p className="ps-you"><small>Ви</small>{sides[index].you}</p>
+                  <div className="ps-node">
+                    <ProcessDrawing kind={sides[index].drawing} />
+                    {index === 0 && <span className="ps-spark" aria-hidden="true" />}
+                  </div>
+                  <p className="ps-result"><span className="sr-only">Результат: </span>{sides[index].result}</p>
+                  <p className="ps-we"><small>Ми</small>{stepText}</p>
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : (
+          <ol className="detail-steps" data-motion>
+            {/* A sequence on one rail (globals.css .detail-steps); in view, the rail draws from node to node */}
+            {steps.map(([stepNumber, stepTitle, stepText], index) => (
+              <li key={stepNumber} style={{ '--i': index } as CSSProperties}><span>{stepNumber}</span><h3>{stepTitle}</h3><p>{stepText}</p></li>
+            ))}
+          </ol>
+        )}
       </div>
     </section>
   );

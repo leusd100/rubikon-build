@@ -104,6 +104,11 @@ export type DirectionPageConfig = {
     title: string;
     text: string;
     steps: readonly DirectionStep[];
+    /**
+     * «Ви · Ми» (owner, 06.10): each step's two sides — what you do over the rail, what RUBIKON does under it (the step's
+     * own text) — and on the rail what you get, drawn small (ProcessDrawing) with its caption. Index-aligned with steps.
+     */
+    split?: readonly ProcessSplit[];
   };
   cost?: {
     title: string;
@@ -124,6 +129,15 @@ export type DirectionPageConfig = {
     lead: string;
   };
 };
+
+export type ProcessDrawingKind =
+  | 'grain-brief' | 'checklist' | 'grain-project' | 'grain-built'
+  | 'metal-data' | 'metal-project' | 'metal-fabricated' | 'metal-erected'
+  | 'concrete-levels' | 'concrete-formwork' | 'concrete-pour' | 'concrete-check'
+  | 'roof-survey' | 'roof-kit' | 'roof-laid' | 'roof-checked';
+
+/** A process step's other side and its outcome: what the client does, what they get after it, and its small drawing */
+export type ProcessSplit = { you: string; result: string; drawing: ProcessDrawingKind };
 
 /** One step of a direction's node tour: what it is, what the camera shows, and where on the picture. */
 export type DirectionNodeStep = {

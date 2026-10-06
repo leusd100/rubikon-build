@@ -137,7 +137,6 @@ const grainDirection: DirectionPageConfig = {
  * factors, the process, the FAQ — its planner questions reworded for the drawing. grainDirection above stays the planner
  * composition's (/planner-preview).
  */
-const [, ...processAfterBrief] = grainDirection.process.steps;
 const grainComplexDirection: DirectionPageConfig = {
   ...grainDirection,
   hero: {
@@ -176,9 +175,18 @@ const grainComplexDirection: DirectionPageConfig = {
   process: {
     ...grainDirection.process,
     eyebrow: 'Після звернення',
+    // «Ви · Ми» (owner, 06.10): each step's text is what we do; split adds what you do and what you get after it
     steps: [
-      ['01', 'Ваш опис', 'Схема комплексу з цієї сторінки або кілька слів про задачу — відправна точка.', ClipboardList],
-      ...processAfterBrief,
+      ['01', 'Ваш опис', 'Читаємо опис і готуємо питання до першої розмови.', ClipboardList],
+      ['02', 'Перша розмова', 'Уточнюємо призначення, місткість і умови майданчика; кажемо, чого бракує для рішення.', MessagesSquare],
+      ['03', 'Узгодження з проєктом', 'Узгоджуємо будівельну частину з проєктувальником і постачальником обладнання, складаємо кошторис.', DraftingCompass],
+      ['04', 'Реалізація', 'Виконуємо погоджені будівельні роботи в узгодженій послідовності.', HardHat],
+    ],
+    split: [
+      { you: 'Складаєте комплекс на кресленні або описуєте задачу кількома словами.', result: 'Опис задачі', drawing: 'grain-brief' },
+      { you: 'Розповідаєте про об’єкт і показуєте, що вже є.', result: 'Список даних, яких бракує', drawing: 'checklist' },
+      { you: 'Надаєте проєкт або залучаєте проєктувальника; обладнання погоджуєте з постачальником.', result: 'Склад робіт і кошторис', drawing: 'grain-project' },
+      { you: 'Погоджуєте графік і приймаєте виконані етапи.', result: 'Готова будівельна частина', drawing: 'grain-built' },
     ],
   },
   faq: {
