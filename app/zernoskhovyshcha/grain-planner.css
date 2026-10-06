@@ -186,7 +186,8 @@
 .grain-planner-root .planner-diagram .node.is-active rect { fill: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface-elevated)); stroke: var(--color-accent); stroke-width: 1.8; }
 .grain-planner-root .planner-diagram .node-title { fill: var(--color-text-secondary); font-size: 13px; font-weight: 600; }
 .grain-planner-root .planner-diagram .node.is-active .node-title { fill: var(--color-accent-strong); }
-.grain-planner-root .planner-diagram .node-title.is-long { font-size: 11.5px; letter-spacing: .01em; }
+/* «ВІДВАНТАЖЕННЯ» spelled out: tighter, but 12 units keep it ≥ 11 px effective in the 1051 px panel (97 of the node's 114) */
+.grain-planner-root .planner-diagram .node-title.is-long { font-size: 12px; letter-spacing: .01em; }
 .grain-planner-root .planner-diagram .node-sub { fill: var(--color-text-muted); font-size: 12px; }
 .grain-planner-root .planner-diagram .storage > path { fill: var(--color-surface-elevated); stroke: var(--color-text-muted); stroke-width: 1.4; }
 .grain-planner-root .planner-diagram .storage > text { fill: var(--color-text-secondary); font-size: 12.5px; font-weight: 600; }
@@ -270,15 +271,17 @@
 .grain-planner-root .planner-approach-visual .gcv-own { fill: color-mix(in srgb, var(--color-accent) 12%, transparent); stroke: var(--color-accent); stroke-width: 2; }
 .grain-planner-root .planner-approach-visual .gcv-own.gcv-line { fill: none; }
 .grain-planner-root .planner-approach-visual .gcv-partner { stroke: var(--color-text-muted); stroke-width: 1.5; stroke-dasharray: 9 4; }
-/* The overview's three draw in once in view (ProcessMotion arms [data-motion]): copper and the grain's slope plot, the
-   grain and the specialists' lines fade in; card by card */
-.planner-approach-grid[data-motion] > :nth-child(2) { --i: 1; }
-.planner-approach-grid[data-motion] > :nth-child(3) { --i: 2; }
-.planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { stroke-dasharray: 1; stroke-dashoffset: 0; }
-.direction-page[data-motion-ready="on"] .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { transition: stroke-dashoffset var(--m-draw, 1100ms) var(--ease-premium) calc(var(--i, 0) * 180ms + 250ms); }
-.direction-page[data-motion-ready="on"] .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-grain, .gcv-partner) { transition: opacity 600ms ease calc(var(--i, 0) * 180ms + 700ms); }
-.direction-page[data-motion-ready] .planner-approach-grid[data-motion]:not([data-motion-state="on"]) .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { stroke-dashoffset: 1; }
-.direction-page[data-motion-ready] .planner-approach-grid[data-motion]:not([data-motion-state="on"]) .planner-approach-visual :is(.gcv-grain, .gcv-partner) { opacity: 0; }
+/* The overview's three draw in once in view (ProcessMotion arms [data-motion] on the page): copper and the grain's slope
+   plot, the grain and the specialists' lines fade in; card by card. Reduced motion arms nothing: the drawings stand. */
+.grain-planner-root .planner-approach-grid[data-motion] > :nth-child(2) { --i: 1; }
+.grain-planner-root .planner-approach-grid[data-motion] > :nth-child(3) { --i: 2; }
+.grain-planner-root .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { stroke-dasharray: 1; stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .grain-planner-root:is([data-motion-ready="on"] *) .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { transition: stroke-dashoffset var(--m-draw, 1100ms) var(--ease-premium) calc(var(--i, 0) * 180ms + 250ms); }
+  .grain-planner-root:is([data-motion-ready="on"] *) .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-grain, .gcv-partner) { transition: opacity 600ms ease calc(var(--i, 0) * 180ms + 700ms); }
+  .grain-planner-root:is([data-motion-ready] *) .planner-approach-grid[data-motion]:not([data-motion-state="on"]) .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { stroke-dashoffset: 1; }
+  .grain-planner-root:is([data-motion-ready] *) .planner-approach-grid[data-motion]:not([data-motion-state="on"]) .planner-approach-visual :is(.gcv-grain, .gcv-partner) { opacity: 0; }
+}
 
 .grain-planner-root .planner-compare-action { display: flex; justify-content: flex-end; margin-top: 16px; }
 .grain-planner-root .planner-comparison { overflow-x: auto; margin-top: 16px; border: 1px solid var(--planner-line-strong); background: var(--planner-surface); }

@@ -10,7 +10,7 @@ type GlyphKind =
   | 'roof-area' | 'roof-layers' | 'deck' | 'gutter'
   | 'grain-capacity' | 'grain-preparation' | 'grain-handling' | 'grain-site' | 'grain-scope';
 
-/** Each direction's four cost factors, in their order on the page */
+/** Each direction's cost factors, in their order on the page (four; the grain complex's five) */
 export const COST_GLYPHS: Partial<Record<DirectionPageConfig['id'], readonly GlyphKind[]>> = {
   metalokonstruktsii: ['tonnage', 'joint', 'coating', 'erection'],
   'betonni-roboty': ['footing', 'rebar', 'flatness', 'pour'],

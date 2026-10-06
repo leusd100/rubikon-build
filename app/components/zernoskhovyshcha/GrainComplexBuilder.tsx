@@ -60,6 +60,10 @@ export function GrainComplexBuilder() {
   const [tip, setTip] = useState<Tip | null>(null);
   const [flash, setFlash] = useState<GrainModuleKey | null>(null);
   const [fresh, setFresh] = useState<readonly string[]>([]);
+  /** Counts the changes, so a module or a line lit twice in a row lights again (its element is drawn anew) */
+  const [pulse, setPulse] = useState(0);
+  /** Whether the drawing is wider than its view (a phone): only then is it a scroll region to reach by Tab */
+  const [scrolls, setScrolls] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
@@ -80,6 +84,15 @@ export function GrainComplexBuilder() {
   useEffect(() => () => {
     window.clearTimeout(flashTimer.current);
     window.clearTimeout(tipTimer.current);
+  }, []);
+
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    // fires once on observing, then on every resize
+    const observer = new ResizeObserver(() => setScrolls(scroller.scrollWidth - scroller.clientWidth > 12));
+    observer.observe(scroller);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -106,6 +119,8 @@ export function GrainComplexBuilder() {
     };
     scroller.addEventListener('pointerdown', stopGlide);
     scroller.addEventListener('wheel', stopGlide, { passive: true });
+    // The drawing itself is watched, not the whole block: on a low screen (a phone on its side, a laptop at 200 %) the
+    // block never shows a third of itself at once, and the complex would stay unassembled
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) root.dataset.inview = '';
       else delete root.dataset.inview;
@@ -116,13 +131,16 @@ export function GrainComplexBuilder() {
         assemble = window.setTimeout(() => { root.dataset.gc = 'assembled'; }, 3600);
       }
     }, { threshold: [0, 0.35] });
-    observer.observe(root);
+    observer.observe(scroller);
     return () => {
       observer.disconnect();
       window.clearTimeout(assemble);
       stopGlide();
       scroller.removeEventListener('pointerdown', stopGlide);
       scroller.removeEventListener('wheel', stopGlide);
+      // motion turned off mid-visit (or the block leaves): the finished complex, still — nothing armed, nothing running
+      delete root.dataset.gc;
+      delete root.dataset.inview;
     };
   }, [motion]);
 
@@ -176,6 +194,7 @@ export function GrainComplexBuilder() {
     setState(next);
     setFresh([...after.own, ...after.partners].filter((item) => !before.own.includes(item) && !before.partners.includes(item)));
     setFlash(changed);
+    setPulse((count) => count + 1);
     window.clearTimeout(flashTimer.current);
     flashTimer.current = window.setTimeout(() => { setFlash(null); setFresh([]); }, FLASH_MS);
     const scroller = scrollRef.current;
@@ -212,6 +231,8 @@ export function GrainComplexBuilder() {
   };
 
   const info = tip ? grainModuleInfo(tip.key, state) : null;
+  const crops = GRAIN_CROP_OPTIONS.filter((option) => state.crops.includes(option.value)).map((option) => option.genitive).join(', ');
+  const lit = (item: string) => (fresh.includes(item) ? { key: `${item}-${pulse}`, className: 'is-new' } : { key: item });
   const pause = motion && <TourControl touring={running} toggle={() => setRunning(!running)} what="руху зерна" />;
   const cta = (className: string) => (
     <PrefillInquiryLink className={`button button-primary ${className}`} text={touched ? model.inquiryText : ''}>
@@ -227,19 +248,25 @@ export function GrainComplexBuilder() {
           className="gc-sheet"
           imageClassName="gc-visual"
           cells={[
-            { tone: 'main', label: 'Ланцюг', value: <span aria-live="polite">{model.chain.join(' → ')}</span> },
-            { label: 'Масштаб', value: `${model.scaleLabel} · умовно` },
+            {
+              tone: 'main',
+              label: 'Ланцюг',
+              // the arrows are seen; a screen reader hears the modules in their order
+              value: <><span aria-hidden="true">{model.chain.join(' → ')}</span><span className="sr-only">{model.chain.join(', ')}</span></>,
+            },
+            { label: 'Місткість', value: `${model.scaleLabel} · умовно` },
             { label: 'Зображення', value: 'Схема' },
           ]}
           action={cta('gc-cta')}
         >
           {/* On a phone the elevation is wider than the screen: it scrolls sideways, at a size its words can be read */}
-          <div className="gc-scroll" ref={scrollRef} role="region" tabIndex={0} aria-label="Схема комплексу, гортайте вбік">
+          <div className="gc-scroll" ref={scrollRef} role="region" tabIndex={scrolls ? 0 : undefined} aria-label={scrolls ? 'Схема комплексу, гортайте вбік' : 'Схема комплексу'}>
             <GrainComplexDrawing
               model={model}
-              label={`Схема зернового комплексу: ${model.chain.join(', ')}`}
+              label={`Схема зернового комплексу: ${model.chain.join(', ')}${crops ? ` — ${crops}` : ''}`}
               hovered={tip?.key ?? null}
               flash={flash}
+              pulse={pulse}
               onEnter={enter}
               onLeave={leave}
               onPress={press}
@@ -257,6 +284,8 @@ export function GrainComplexBuilder() {
               chain, and a phone's sheet has no title block */}
           {pause && <span className="gc-pause">{pause}</span>}
         </DrawingSheet>
+        {/* what changed, said once — outside the title block, which a phone does not show */}
+        <p className="sr-only" aria-live="polite">Ланцюг: {model.chain.join(', ')}</p>
 
         <div className="gc-controls">
           {/* each crop keeps its own silo (or zone) and colour on the drawing; its icon on the chip is in that colour */}
@@ -296,7 +325,7 @@ export function GrainComplexBuilder() {
             </div>
           </fieldset>
           <fieldset className="gc-group">
-            <legend>Масштаб</legend>
+            <legend>Місткість</legend>
             <div className="gc-options">
               {GRAIN_SCALE_OPTIONS.map((option) => (
                 <label className="gc-chip" key={option.value}>
@@ -313,13 +342,17 @@ export function GrainComplexBuilder() {
       <div className="gc-scope">
         <div className="gc-scope-col" data-tone="own">
           <h3>Будує RUBIKON</h3>
-          <ul>{model.own.map((item) => <li key={item} className={fresh.includes(item) ? 'is-new' : undefined}>{item}</li>)}</ul>
+          <ul>{model.own.map((item) => { const { key, className } = lit(item); return <li key={key} className={className}>{item}</li>; })}</ul>
         </div>
         <div className="gc-scope-col" data-tone="partner">
           <h3>Постачають і монтують профільні спеціалісти</h3>
-          <ul>{model.partners.map((item) => <li key={item} className={fresh.includes(item) ? 'is-new' : undefined}>{item}</li>)}</ul>
+          <ul>{model.partners.map((item) => { const { key, className } = lit(item); return <li key={key} className={className}>{item}</li>; })}</ul>
         </div>
-        <p className="gc-next">Схема без масштабу: кількість силосів і розміри визначає проєкт. Наведіть на модуль креслення — побачите, хто що в ньому робить; натисніть — додасте чи приберете його.</p>
+        <p className="gc-next">
+          Схема без масштабу: кількість силосів і розміри визначає проєкт.{' '}
+          <span className="gc-next-pointer">Наведіть на модуль креслення — побачите, хто що в ньому робить; натисніть — додасте чи приберете його.</span>
+          <span className="gc-next-touch">Торкніться модуля креслення — побачите, хто що в ньому робить, і додасте чи приберете його.</span>
+        </p>
       </div>
     </div>
   );

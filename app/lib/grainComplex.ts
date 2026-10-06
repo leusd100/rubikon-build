@@ -48,10 +48,11 @@ export const GRAIN_SCALE_OPTIONS: readonly { value: GrainScale; label: string }[
 ];
 
 /** Silos drawn per scale (never fewer than the crops: each keeps its own), and the floor store's length on the drawing
- *  (its units) — a picture of size only */
+ *  (its units) — a picture of size only. The longest ends where six silos do, so the incline to the loading bin keeps
+ *  its slope and clears the truck under it. */
 const SILOS = [2, 3, 4, 5] as const;
 const MAX_SILOS = 6;
-const FLOOR_LENGTH = [330, 450, 590, 730] as const;
+const FLOOR_LENGTH = [330, 450, 590, 660] as const;
 
 export type GrainComplexModel = {
   state: GrainComplexState;

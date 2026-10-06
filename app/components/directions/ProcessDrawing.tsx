@@ -26,12 +26,11 @@ const DRAWINGS: Record<ProcessDrawingKind, ReactNode> = {
       <circle className="pd-ink" cx="64" cy="79" r="5" />
     </>
   ),
-  // agreed with the project: a sheet, a section on it, its title block and the approval stamp
+  // agreed with the project: the designer's sheet — a section on it, its title block, both in graphite (RUBIKON does not
+  // design) — and RUBIKON's approval stamp on it, the one copper mark
   'grain-project': (
     <>
-      <path className="pd-ink" d="M36 12H140V92H36ZM50 64V44L76 30L102 44V64M44 64H108" />
-      <path pathLength={1} className="pd-own" d="M108 74H140V92H108Z" />
-      <path pathLength={1} className="pd-own-line" d="M108 80H140M124 74V92" />
+      <path className="pd-ink" d="M36 12H140V92H36ZM50 64V44L76 30L102 44V64M44 64H108M108 74H140V92H108ZM108 80H140M124 74V92" />
       <circle pathLength={1} className="pd-own-line" cx="122" cy="40" r="11" />
       <circle pathLength={1} className="pd-own-line" cx="122" cy="40" r="6" />
     </>
@@ -54,14 +53,13 @@ const DRAWINGS: Record<ProcessDrawingKind, ReactNode> = {
       <text className="pd-letter" x="86" y="91">b</text>
     </>
   ),
-  // agreed with the project: the frame on the sheet, its title block and stamp
+  // agreed with the project: the frame on the designer's sheet and its title block in graphite, RUBIKON's approval stamp
+  // in copper
   'metal-project': (
     <>
-      <path className="pd-ink" d="M36 12H140V92H36ZM50 66V42L76 30L102 42V66M46 66H106" />
+      <path className="pd-ink" d="M36 12H140V92H36ZM50 66V42L76 30L102 42V66M46 66H106M108 74H140V92H108ZM108 80H140M124 74V92" />
       <circle className="pd-ink" cx="50" cy="42" r="2.5" />
       <circle className="pd-ink" cx="102" cy="42" r="2.5" />
-      <path pathLength={1} className="pd-own" d="M108 74H140V92H108Z" />
-      <path pathLength={1} className="pd-own-line" d="M108 80H140M124 74V92" />
       <circle pathLength={1} className="pd-own-line" cx="122" cy="40" r="11" />
       <circle pathLength={1} className="pd-own-line" cx="122" cy="40" r="6" />
     </>

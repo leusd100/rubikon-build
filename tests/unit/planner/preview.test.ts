@@ -31,7 +31,7 @@ describe('/planner-preview stays a private review surface', () => {
   it('keeps both route branches available for the release flag', () => {
     const route = readFileSync(join(process.cwd(), 'app', 'zernoskhovyshcha', 'page.tsx'), 'utf8');
     expect(route).toContain("grainPlannerRouteMode(releaseFlags.grainPlannerOnZernoskhovyshcha) === 'planner'");
-    expect(route).toContain('<GrainPlannerPage />');
+    expect(route).toContain('<GrainComplexPage />');
     expect(route).toContain("<DirectionPage config={getDirectionPage('zernoskhovyshcha')} />");
   });
 

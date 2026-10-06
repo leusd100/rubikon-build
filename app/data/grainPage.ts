@@ -32,9 +32,10 @@ export const GRAIN_SCOPE_KEY = [
 export type GrainCase = { title: string; location: string; scope: string; image: string; imageAlt: string };
 
 /**
- * /zernoskhovyshcha as a direction-page config: hero (01), «Як RUBIKON реалізує» (04, editorial
- * with the work points), the process after the brief (05), FAQ v2 (07), related directions (08,
- * relatedDirections.zernoskhovyshcha) and the inquiry (09). Bands 02–03 are the planner.
+ * The planner composition (/planner-preview) as a direction-page config: hero (01), «Як RUBIKON
+ * реалізує» (04, the building part as a drawing tour), the process after the brief (05), FAQ v2 (07),
+ * related directions (08, relatedDirections.zernoskhovyshcha) and the inquiry (09). Bands 02–03 are
+ * the planner. /zernoskhovyshcha renders grainComplexDirection below, built on this one.
  * directionPages.zernoskhovyshcha keeps the previous page for the flag-off rollback until the
  * cleanup PR moves this content there.
  */

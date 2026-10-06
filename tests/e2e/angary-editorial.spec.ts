@@ -205,14 +205,18 @@ test('/angary process stage follows the authoritative attachment state', async (
 
   const rail = page.locator('#process ol');
   const firstStage = page.locator('#process li').first();
-  await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
+  // «Ви · Ми» since 06.10: 01's «Ви» and its result follow the brief's state
+  const idle = 'Складаєте базову конфігурацію вище або описуєте задачу словами.';
+  await expect(firstStage.locator('.ps-you')).toContainText(idle);
+  await expect(firstStage.locator('.ps-result')).toHaveText('Результат: Бриф до заявки');
   await expect(rail).toHaveAttribute('data-brief', 'idle');
   // Owner, 03.10: 01 acts on its state — up to the configurator while nothing is attached
   await expect(firstStage.getByRole('link')).toHaveText('Сформувати бриф ↑');
   await expect(firstStage.getByRole('link')).toHaveAttribute('href', '#configurator');
 
   await page.getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
-  await expect(firstStage).toContainText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  await expect(firstStage.locator('.ps-you')).toContainText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  await expect(firstStage.locator('.ps-result')).toHaveText('Результат: Бриф у заявці');
   await expect(rail).toHaveAttribute('data-brief', 'attached');
   // …and down to the attached brief in the form once something is: it lands on the brief, which says so once
   const send = firstStage.getByRole('link');
@@ -224,7 +228,7 @@ test('/angary process stage follows the authoritative attachment state', async (
   await expect(page.locator('#inquiry-brief-status')).toHaveText('Додано до заявки: 24 × 60 × 8 м · Холодний');
 
   await page.getByRole('button', { name: 'Не додавати' }).click();
-  await expect(firstStage).toContainText('Базову конфігурацію можна сформувати вище.');
+  await expect(firstStage.locator('.ps-you')).toContainText(idle);
   await expect(rail).toHaveAttribute('data-brief', 'detached');
   await expect(firstStage.getByRole('link')).toHaveAttribute('href', '#configurator');
 });

@@ -4,6 +4,23 @@ import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(join(process.cwd(), 'app', 'zernoskhovyshcha', 'grain-planner.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const editorialCss = readFileSync(join(process.cwd(), 'app', 'zernoskhovyshcha', 'grain-editorial.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const nodeCss = readFileSync(join(process.cwd(), 'app', 'components', 'directions', 'direction-node.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+/** A selector list split at its own commas only — not at those inside :is(…), :not(…) or :where(…) */
+function splitSelectorList(list: string) {
+  const parts: string[] = [];
+  let depth = 0;
+  let part = '';
+  for (const char of list) {
+    if (char === '(') depth += 1;
+    if (char === ')') depth -= 1;
+    if (char === ',' && depth === 0) {
+      parts.push(part);
+      part = '';
+    } else part += char;
+  }
+  return [...parts, part];
+}
 
 /** Every style rule's selectors, with the at-rule (if any) each sits in. Keyframe steps are skipped. */
 function styleRuleSelectors(source: string) {
@@ -15,7 +32,7 @@ function styleRuleSelectors(source: string) {
       const head = prelude.trim();
       const parent = stack[stack.length - 1] ?? null;
       if (!head.startsWith('@') && !(parent ?? '').startsWith('@keyframes')) {
-        for (const selector of head.split(',')) selectors.push({ selector: selector.trim(), within: parent });
+        for (const selector of splitSelectorList(head)) selectors.push({ selector: selector.trim(), within: parent });
       }
       stack.push(head);
       prelude = '';
@@ -63,8 +80,10 @@ describe('grain-planner.css', () => {
     expect(animated.length).toBeGreaterThan(0);
   });
 
+  // Band 04's steps are the drawing tour's since 06.10 (DirectionNode): their small numbers keep the AA-safe dark accent,
+  // and the grain page does not repaint them
   it('uses the AA-safe dark accent for small editorial step numbers', () => {
-    expect(editorialCss).toMatch(/\.direction-editorial-points span\s*\{[^}]*color:\s*var\(--color-accent-strong\)/);
-    expect(editorialCss).not.toMatch(/\.direction-editorial-points span\s*\{[^}]*color:\s*var\(--color-accent\);/);
+    expect(nodeCss).toMatch(/\.dn-step-index\s*\{[^}]*color:\s*var\(--color-accent-strong\)/);
+    expect(editorialCss).not.toMatch(/\.dn-step-index[^{]*\{[^}]*color:/);
   });
 });

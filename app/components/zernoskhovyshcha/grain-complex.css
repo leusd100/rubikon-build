@@ -36,8 +36,6 @@
 .gc-drawing .gc-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .6; }
 .gc-drawing .gc-own { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--color-accent); stroke-width: 3.4; }
 .gc-drawing .gc-own.gc-line { fill: none; stroke-width: 2.6; }
-/* the gallery's trestles: the building part too, but a support — quieter than the modules */
-.gc-mod-trestle .gc-own.gc-line { stroke-width: 2; opacity: .8; }
 .gc-drawing .gc-partner { stroke: var(--color-text-muted); stroke-width: 2.6; stroke-dasharray: 26 9; }
 .gc-drawing .gc-vehicle :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 2.2; opacity: .8; }
 .gc-drawing .gc-grain { fill: color-mix(in srgb, var(--crop, var(--color-grain)) 48%, transparent); stroke: var(--crop, var(--color-grain)); stroke-width: 2.6; }
@@ -57,7 +55,7 @@
 .gc-mod { transition: opacity .5s ease; }
 .gc-mod.is-off { opacity: .16; }
 /* The storage grows to the right; the incline and the grain follow it (Chrome animates the path, others jump) */
-.gc-mod-shipping .gc-partner, .gc-mod-gallery .gc-partner, .gc-flow { transition: d .6s ease; }
+.gc-mod-shipping .gc-partner, .gc-flow { transition: d .6s ease; }
 
 /* The drawing answers a pointer (owner, 06.10): a module under it is lit and named in a tip; a press changes it and the
    changed module flashes. Pointer only — the chips are the same choices for a keyboard and a screen reader. */
@@ -113,7 +111,9 @@
 .gc[data-gc="assembled"] .gc-mod { --o: 0 !important; }
 .gc-flows { transition: opacity .6s ease; }
 .gc[data-gc]:not([data-gc="assembled"]) .gc-flows { opacity: 0; }
-.gc[data-gc="assembled"][data-flow="on"][data-inview] .gc-flow { animation: gc-flow 900ms linear infinite; }
+@media (prefers-reduced-motion: no-preference) {
+  .gc[data-gc="assembled"][data-flow="on"][data-inview] .gc-flow { animation: gc-flow 900ms linear infinite; }
+}
 
 /* The choices */
 .gc-controls { display: flex; flex-wrap: wrap; gap: 10px 40px; }
@@ -141,6 +141,12 @@
 .gc-scope-col li::before { position: absolute; top: .62em; left: 0; width: 7px; height: 7px; content: ''; background: var(--color-accent); }
 .gc-scope-col[data-tone="partner"] li::before { background: none; border: 1.5px solid var(--color-text-muted); }
 .gc-scope .gc-next { margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.55; }
+/* the drawing answers a mouse's pointing, a finger's tap: the note says the one this screen has */
+.gc-next-touch { display: none; }
+@media (hover: none) {
+  .gc-next-pointer { display: none; }
+  .gc-next-touch { display: inline; }
+}
 /* a line the last change brought in lights for a moment */
 @keyframes gc-new { from { background-color: color-mix(in srgb, var(--color-accent) 24%, transparent); } to { background-color: transparent; } }
 .gc-scope-col li.is-new { animation: gc-new 1.4s ease-out; }
@@ -152,9 +158,8 @@
 
 @media (max-width: 760px) {
   .gc-band .gc { gap: 22px; margin-top: 24px; }
-  /* the drawing stays at the top under the header while the choices pass under it, so a choice is seen where it is
-     made; the title block gives way (its chain is on the drawing, its pause sits on it, its button follows the choices) */
-  .gc-stage .gc-sheet { position: sticky; z-index: 4; top: 77px; }
+  /* the title block gives way (its chain is on the drawing, its pause sits on it, its button follows the choices); the
+     drawing stays at the top while the choices pass under it where the screen is tall enough (below) */
   .gc-sheet .sheet-stamp { display: none; }
   /* the pause keeps to the drawing's top corner (its bottom holds the labels), as its round button alone: its words stay
      for a screen reader */
@@ -164,7 +169,7 @@
   .gc-cta-phone { display: flex; width: 100%; justify-content: space-between; }
   .gc-tip { width: 220px; font-size: 12px; }
   /* each group of choices one row that scrolls sideways */
-  .gc-options { flex-wrap: nowrap; margin-inline: -16px; padding: 2px 16px 4px; overflow-x: auto; scrollbar-width: none; }
+  .gc-options { flex-wrap: nowrap; margin-inline: -16px; padding: 4px 16px; overflow-x: auto; scrollbar-width: none; }
   .gc-options::-webkit-scrollbar { display: none; }
   .gc-chip { flex: none; }
   /* the elevation scrolls sideways at a width its words can be read at */
@@ -177,4 +182,10 @@
   .gc-scope { grid-template-columns: 1fr; gap: 20px; padding-top: 20px; }
   .gc-scope-col ul { gap: 4px; }
   .gc-scope-col li { font-size: 14px; }
+}
+
+/* The phone's sheet stays at the top only where it leaves the choices room under it (header 77 + sheet 284 px): a phone on
+   its side or a laptop at 200 % scrolls it away with the rest, so no choice and no focus ring ever hides behind it */
+@media (max-width: 760px) and (min-height: 560px) {
+  .gc-stage .gc-sheet { position: sticky; z-index: 4; top: 77px; }
 }

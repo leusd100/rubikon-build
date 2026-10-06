@@ -13,6 +13,11 @@
    «РОЗРІЗ 1–1» as one circle twice): the site draws nothing that passes for a project drawing, so the picture fades into
    the dark band above that strip (owner, 06.10). The silos keep their footing. */
 .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 66%, transparent 79%); mask-image: linear-gradient(#000 66%, transparent 79%); }
+/* A screen narrower than the picture's 3 : 2 (a tablet, 1366 × 1024, a phone) shows its full height, the made-up strip
+   from ~70 % of it: the fade ends above that, the silos' footings (~58 %) still in view */
+@media (max-aspect-ratio: 3 / 2) {
+  .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 56%, transparent 68%); mask-image: linear-gradient(#000 56%, transparent 68%); }
+}
 
 /* ---------- 04 Як RUBIKON реалізує: the building part as a tour of one drawing (GrainStoreDrawing in DirectionNode) ---------- */
 .grain-page .grain-implementation-band { padding-block: var(--section-space-compact); }
@@ -23,6 +28,12 @@
 .grain-page .grain-implementation-band .dn-media { align-self: start; }
 .grain-page .grain-implementation-band .dn-media .direction-editorial-media { min-height: 0; }
 .grain-page .grain-implementation-band .dn-sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
+/* A tablet's two columns would leave the half-section 280–350 px wide (the copy column keeps its 360 px): up to 900 px
+   the band stacks as on a phone — the copy, the whole drawing, the steps */
+@media (min-width: 761px) and (max-width: 900px) {
+  .grain-page .grain-implementation-band .dn.direction-editorial-grid[data-layout] { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "copy" "media" "steps"; }
+  .grain-page .grain-implementation-band .dn-media { margin-top: 28px; }
+}
 
 /* The drawing: the grain in its own colour, the partners' equipment in long dash; what each step adds to the overview */
 .node-drawing-grain-store .gsd-fill { fill: color-mix(in srgb, var(--color-text) 6%, transparent); }
@@ -66,7 +77,7 @@
   .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(4) { animation-delay: 1510ms; }
   .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(5) { animation-delay: 1640ms; }
   .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(6) { animation-delay: 1770ms; }
-  .dn[data-step="4"] .node-drawing-grain-store .gsd-air path { animation: gsd-air 700ms linear 600ms infinite; }
+  .dn[data-step="4"] .node-drawing-grain-store .gsd-air path { animation: gsd-air 700ms linear 600ms 7; }
   .dn[data-step="4"] .node-drawing-grain-store .gsd-joint circle { animation: gsd-ping 900ms ease-in-out 900ms 2; }
 }
 
@@ -80,6 +91,9 @@
 .grain-page .direction-entry-list p { font-size: 15px; line-height: 1.6; }
 @media (min-width: 761px) and (max-width: 1050px) {
   .grain-page .direction-entry-list { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 26px; }
+  /* two columns at every tablet width: the template's single-column rules below 900 px (a rule over each card but the
+     first, no divider) give way to the divider between the columns */
+  .grain-page .direction-entry-list li, .grain-page .direction-entry-list li:first-child { padding: 0 26px 26px; border-top: 0; border-left: 1px solid var(--color-border-strong); }
   .grain-page .direction-entry-list li:nth-child(odd) { padding-left: 0; border-left: 0; }
 }
 /* Each situation over a drawing of itself (GrainSituations); the whole card is the way into the form */
@@ -107,7 +121,8 @@
   .direction-page[data-motion-ready="on"] .gs-list .gs-own { transition: stroke-dashoffset 900ms var(--ease-premium) calc(var(--i, 0) * 160ms + 300ms); }
   .gs-card:is(:hover, :focus-within) .gs-own { animation: gs-draw 800ms var(--ease-premium) both; }
   .gs-card:is(:hover, :focus-within) .gs-press path { animation: gs-push 1.2s ease-in-out 2; }
-  .gs-card:is(:hover, :focus-within) .gs-press path:nth-child(odd) { --push: -3px; }
+  .gs-card .gs-press .gs-press-left { --push: -3px; }
+  .gs-card .gs-press .gs-press-right { --push: 3px; }
 }
 @media (hover: hover) {
   .gs-card:hover h3 { color: var(--color-accent-strong); }
@@ -154,7 +169,7 @@
 @media (max-width: 760px) {
   .grain-page .service-subhero.grain-service-subhero { min-height: 0; }
   /* the four situations as a row of cards that scrolls sideways (one and a bit on screen), not four screens of text */
-  .grain-page .direction-entry-list { display: flex; gap: 12px; margin-inline: -16px; padding: 2px 16px 18px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; border-bottom: 0; }
+  .grain-page .direction-entry-list { display: flex; gap: 12px; margin-inline: -16px; padding: 6px 16px 18px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; border-bottom: 0; }
   .grain-page .direction-entry-list li, .grain-page .direction-entry-list li:first-child { flex: 0 0 82%; padding: 20px 18px; border: 1px solid var(--color-border-strong); background: var(--color-surface-elevated); scroll-snap-align: start; }
   .grain-page .direction-entry-list h3 { font-size: 24px; }
   .grain-page .cost-list article { padding-block: 14px; }

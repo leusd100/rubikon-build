@@ -74,12 +74,14 @@ export type GrainDrawingPointer = {
   /** The module a pointer is on, and the one that just changed (it flashes) */
   hovered?: GrainModuleKey | null;
   flash?: GrainModuleKey | null;
+  /** Counts the changes: the flashed module's hit area is drawn anew each time, so its flash replays */
+  pulse?: number;
   onEnter?: (key: GrainModuleKey, pointerType: string) => void;
   onLeave?: (pointerType: string) => void;
   onPress?: (key: GrainModuleKey) => void;
 };
 
-export function GrainComplexDrawing({ model, label, hovered = null, flash = null, onEnter, onLeave, onPress }: Readonly<{ model: GrainComplexModel; label: string } & GrainDrawingPointer>) {
+export function GrainComplexDrawing({ model, label, hovered = null, flash = null, pulse = 0, onEnter, onLeave, onPress }: Readonly<{ model: GrainComplexModel; label: string } & GrainDrawingPointer>) {
   const { state, silos, floorLength, binCrops, zoneCrops } = model;
   const { w: binW, step: binStep } = binSize(silos);
   const bins = Array.from({ length: silos }, (_, index) => STORE_X + index * binStep);
@@ -242,7 +244,7 @@ export function GrainComplexDrawing({ model, label, hovered = null, flash = null
       <g className="gc-hits" aria-hidden="true">
         {areas.map(({ key, x, y, w, h }) => (
           <rect
-            key={key}
+            key={flash === key ? `${key}-${pulse}` : key}
             className={`gc-hit${hovered === key ? ' is-hover' : ''}${flash === key ? ' is-flash' : ''}`}
             data-module={key}
             x={x}

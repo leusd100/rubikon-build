@@ -45,7 +45,10 @@ function SituationDrawing({ kind }: Readonly<{ kind: Kind }>) {
           <path pathLength={1} className="gs-own" d={`M82 ${GROUND}V98H90V${GROUND}ZM230 ${GROUND}V98H238V${GROUND}Z`} />
           <g className="gs-press">
             {[106, 114, 122].map((y, index) => (
-              <path key={y} d={`M${96 + index * 6} ${y}H82M88 ${y - 4}L82 ${y}L88 ${y + 4}M${224 - index * 6} ${y}H238M232 ${y - 4}L238 ${y}L232 ${y + 4}`} />
+              <g key={y}>
+                <path className="gs-press-left" d={`M${96 + index * 6} ${y}H82M88 ${y - 4}L82 ${y}L88 ${y + 4}`} />
+                <path className="gs-press-right" d={`M${224 - index * 6} ${y}H238M232 ${y - 4}L238 ${y}L232 ${y + 4}`} />
+              </g>
             ))}
           </g>
         </>

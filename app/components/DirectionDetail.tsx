@@ -211,7 +211,8 @@ export function DirectionCostSection({
   items: readonly DirectionItem[];
   directionId: DirectionPageConfig['id'];
 }) {
-  const glyphs = COST_GLYPHS[directionId];
+  // a direction's glyphs belong to its own list of factors: another list (the grain page's flag-off rollback) draws none
+  const glyphs = COST_GLYPHS[directionId]?.length === items.length ? COST_GLYPHS[directionId] : undefined;
   // Process (right above this section) is a sequence — ordered steps, a bordered card grid says
   // that correctly. Cost factors aren't ordered — they're simultaneous considerations, so this
   // deliberately does NOT reuse .cost-grid's box-grid logic (that class stays exactly as-is for
