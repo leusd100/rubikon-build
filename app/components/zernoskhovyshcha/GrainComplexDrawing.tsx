@@ -11,8 +11,8 @@ import type { GrainComplexModel } from '../../lib/grainComplex';
 
 const GROUND = 600;
 const STORE_X = 1330;
-const BIN_W = 130;
-const BIN_STEP = 154;
+/** A silo's width and step: narrower from four silos on, so the incline to the loading bin keeps its slope */
+const binSize = (count: number) => (count >= 4 ? { w: 108, step: 128 } : { w: 130, step: 154 });
 const SHIP_X = 2150;
 
 /** A module's group: its order in the arrival (--d) and whether the visitor has it in the chain */
@@ -40,6 +40,7 @@ function Trestle({ x, order }: Readonly<{ x: number; order: number }>) {
 
 export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainComplexModel; label: string }>) {
   const { state, silos, floorLength } = model;
+  const { w: BIN_W, step: BIN_STEP } = binSize(silos);
   const bins = Array.from({ length: silos }, (_, index) => STORE_X + index * BIN_STEP);
   const storeEnd = state.storage === 'silos' ? bins[bins.length - 1] + BIN_W + 10 : state.storage === 'floor' ? STORE_X - 10 + floorLength : 1910;
   const storeCentre = state.storage === 'silos' ? (STORE_X + storeEnd - 10) / 2 : state.storage === 'floor' ? STORE_X - 10 + floorLength / 2 : 1625;
@@ -98,8 +99,8 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
       {/* storage: silos on their slab, or the floor store cut open to its grain, or a place still to be decided */}
       {state.storage === 'silos' && (
         <Mod name="storage" order={5} key={`silos-${silos}`}>
-          {bins.map((x) => <path key={`g${x}`} className="gc-grain" d={`M${x + 4} 596V336L${x + 65} 312L${x + 126} 336V596Z`} />)}
-          <path className="gc-partner" d={bins.map((x) => `M${x} ${GROUND}V300L${x + 65} 252L${x + BIN_W} 300V${GROUND}`).join('')} />
+          {bins.map((x) => <path key={`g${x}`} className="gc-grain" d={`M${x + 4} 596V336L${x + BIN_W / 2} 312L${x + BIN_W - 4} 336V596Z`} />)}
+          <path className="gc-partner" d={bins.map((x) => `M${x} ${GROUND}V300L${x + BIN_W / 2} 252L${x + BIN_W} 300V${GROUND}`).join('')} />
           <path pathLength={1} className="gc-own" d={`M${STORE_X - 10} ${GROUND}H${storeEnd}V626H${STORE_X - 10}Z`} />
         </Mod>
       )}
@@ -139,7 +140,7 @@ export function GrainComplexDrawing({ model, label }: Readonly<{ model: GrainCom
         <path className="gc-flow" d={`M700 712V88H${galleryEnd - 10}`} />
         {state.cleaning && <path className="gc-flow" d="M870 94V252" />}
         {state.drying && <path className="gc-flow" d="M1130 94V158" />}
-        {state.storage === 'silos' && bins.map((x) => <path key={`f${x}`} className="gc-flow" d={`M${x + 65} 94V256`} />)}
+        {state.storage === 'silos' && bins.map((x) => <path key={`f${x}`} className="gc-flow" d={`M${x + BIN_W / 2} 94V256`} />)}
         {state.storage === 'floor' && <path className="gc-flow" d={`M1380 94V340H${storeEnd - 50}`} />}
         {state.storage === 'unknown' && <path className="gc-flow" d="M1625 94V330" />}
         <path className="gc-flow" d={`M${storeEnd + 7} 594L${SHIP_X + 19} 274M2220 370V500`} />
