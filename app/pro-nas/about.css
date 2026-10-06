@@ -191,7 +191,8 @@
 /* ---------------------------------------------------------------- Tablet */
 @media (max-width: 1050px) {
   .about-story-layout { grid-template-columns: minmax(0, 1fr); }
-  /* Full width: close to the image's own 4 : 5, so every mark stays in the frame */
+  /* Full width: the image's own 4 : 5 up to 640 px tall, then wider than the drawing (1.41 at 1024) — the camera
+     (useDrawingCamera) keeps every mark and label in the frame there */
   .about-story-section .promise-visual { min-height: 0; aspect-ratio: 4 / 5; max-height: 640px; }
   .about-principles-grid { grid-template-columns: minmax(0, 1fr); }
 }
@@ -217,8 +218,19 @@
 }
 
 /* The practice tour on a drawing (PracticeDrawing.tsx, UX pass 2026-10): graphite on the sheet, the shown step's parts in
-   copper; no will-change on its stage, so the browser draws it again at the pushed-in scale and the lines stay sharp */
-.ps-stage.is-drawing { will-change: auto; }
+   copper; no will-change on its stage, so the browser draws it again at the pushed-in scale and the lines stay sharp.
+   The drawing and its marks are boxes as large as the whole drawing at cover, centred on the frame, which is what
+   `slice` showed, only nothing is cropped off their sides any more: the frame clips them, and the camera
+   (useDrawingCamera) can show what lies past cover's crop in a frame wider or narrower than the drawing.
+   --ps-aspect: the drawing's width / height. */
+.ps-stage.is-drawing { will-change: auto; container-type: size; }
+.ps-stage.is-drawing :is(.practice-drawing, .aqc-overlay) {
+  inset: auto;
+  top: calc((100cqh - max(100cqw / var(--ps-aspect), 100cqh)) / 2);
+  left: calc((100cqw - max(100cqw, 100cqh * var(--ps-aspect))) / 2);
+  width: max(100cqw, 100cqh * var(--ps-aspect));
+  height: max(100cqw / var(--ps-aspect), 100cqh);
+}
 .ps-sheet .promise-visual:has(.practice-drawing)::after { content: none; }
 .practice-drawing {
   position: absolute; inset: 0; display: block; width: 100%; height: 100%;
