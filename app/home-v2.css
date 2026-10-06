@@ -950,14 +950,14 @@ main[data-home="v2"] .hv2-contour .hv2-contour-key { display: none; }
   main[data-home="v2"] .hv2-contour {
     max-width: max(min(100%, 1147px), calc((100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))) * 1536 / 560 + 46px));
     margin-inline: auto;
+    /* …the usual rest by width, so the server's picture is the hydrated one's (measured 05.10 on every layer: 169 from
+       1400 px, 170 at 1280–1366, 220–240 at 1100–1200, 260 below) */
+    --hv2-sheet-rest-0: 177px;
   }
   main[data-home="v2"] .hv2-contour .sheet-image {
     flex: none; aspect-ratio: auto;
     height: clamp(calc(100cqw * 560 / 1536), calc(100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))), calc(100cqw * 788 / 1536));
   }
-  /* …the usual rest by width, so the server's picture is the hydrated one's (measured 05.10 on every layer: 169 from
-     1400 px, 170 at 1280–1366, 220–240 at 1100–1200, 260 below) */
-  main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 177px; }
 }
 /* (measured 06.10 on the compact title block: 177 px from 1239 px, 247–248 px from 813, 267–268 px below) */
 @media (min-width: 761px) and (max-width: 1238px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 248px; } }
