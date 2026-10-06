@@ -130,7 +130,7 @@
 .process-key { display: flex; gap: 28px; margin: -6px 0 28px; color: var(--color-dark-text-secondary); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .16em; text-transform: uppercase; }
 .process-key span::before { display: inline-block; width: 22px; margin-right: 10px; vertical-align: middle; content: ''; border-top: 1px solid var(--color-dark-text-muted); }
 .process-key span:last-child::before { border-top: 2px solid var(--color-accent-on-dark); }
-.process-split { --gap: clamp(24px, 3vw, 44px); position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); column-gap: var(--gap); margin: 0; padding: 0; list-style: none; container-type: inline-size; }
+.process-split { --gap: clamp(24px, 3vw, 44px); position: relative; display: grid; grid-template-columns: repeat(var(--steps, 4), minmax(0, 1fr)); grid-template-rows: repeat(5, auto); column-gap: var(--gap); margin: 0; padding: 0; list-style: none; container-type: inline-size; }
 .process-split li { display: grid; grid-row: span 5; grid-template-rows: subgrid; min-width: 0; }
 .process-split h3 { margin: 0; padding-bottom: 12px; color: var(--color-dark-text); font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }
 .process-split h3 b { display: block; margin-bottom: 7px; color: var(--color-accent-on-dark); font: 600 13px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
@@ -143,7 +143,9 @@
 .ps-node { position: relative; height: 96px; }
 .ps-node::before { position: absolute; right: calc(-1 * var(--gap)); bottom: 0; left: 0; height: 1px; content: ''; background: var(--color-accent); transform-origin: left center; }
 .process-split li:last-child .ps-node::before { right: 0; }
-.ps-node .pd { position: absolute; bottom: -15px; left: -10px; width: 140px; height: 88px; overflow: visible; }
+/* centred over its column, its ground (y 92 of 110) exactly on the rail's line: 140 × 87.5 keeps the box's 1.6, the ground
+   sits 73.2 px down it, the 1 px rail's middle 0.5 px over the node's foot (owner, 06.10: «лінія йде не по самому низу») */
+.ps-node .pd { position: absolute; bottom: -13.8px; left: 50%; width: 140px; height: 87.5px; overflow: visible; transform: translateX(-50%); }
 .ps-result { display: flex; align-items: center; gap: 9px; margin: 0; padding-top: 14px; color: var(--color-dark-text); font: 600 12px/1.25 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .ps-result::before { flex: none; width: 9px; height: 9px; content: ''; background: var(--color-accent-on-dark); border-radius: 50%; }
 /* the small drawings' ink, on the dark band in both themes */
@@ -188,7 +190,7 @@
   .process-split .ps-you { grid-area: you; padding-bottom: 8px; }
   .ps-node { grid-area: node; height: 70px; }
   .ps-node::before, .ps-spark { display: none; }
-  .ps-node .pd { bottom: 0; left: -8px; width: 112px; height: 70px; }
+  .ps-node .pd { bottom: 0; left: -8px; width: 112px; height: 70px; transform: none; }
   .ps-result { grid-area: result; align-self: center; padding-top: 0; }
   .process-split .ps-we { grid-area: we; padding-top: 8px; }
 }

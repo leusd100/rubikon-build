@@ -156,6 +156,31 @@ const DRAWINGS: Record<ProcessDrawingKind, ReactNode> = {
       <path className="pd-water" d="M138 30L36 64M26 76V90" />
     </>
   ),
+
+  // hangars — the brief: the configured frame on a sheet, its span and length as letters
+  'hangar-brief': (
+    <>
+      <path className="pd-ink" d="M50 10H112L126 24V92H50ZM112 10V24H126M64 82H112M64 78v8M112 78v8" />
+      <path pathLength={1} className="pd-own-line" d="M64 72V50L88 36L112 50V72M64 72H112" />
+      <text className="pd-letter" x="85" y="91">B</text>
+    </>
+  ),
+  // the proposal agreed: the estimate's sheet behind, the contract in front with its signature
+  contract: (
+    <>
+      <path className="pd-ink" d="M44 14H108V80H44ZM54 28H96M54 40H90M54 52H96M54 64H82" />
+      <path className="pd-cut" d="M68 26H132V92H68Z" />
+      <path className="pd-ink" d="M78 40H120M78 50H116M78 60H120" />
+      <path pathLength={1} className="pd-own-line" d="M80 80c6-10 10 6 16-2s8 6 14-2" />
+    </>
+  ),
+  // handed over: the hangar stands, its gate in the end wall
+  'hangar-built': (
+    <>
+      <path pathLength={1} className="pd-own" d="M30 92V52L88 26L146 52V92Z" />
+      <path className="pd-ink" d="M68 92V60H108V92M88 60V92" />
+    </>
+  ),
 };
 
 export function ProcessDrawing({ kind }: Readonly<{ kind: ProcessDrawingKind }>) {

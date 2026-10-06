@@ -10,6 +10,7 @@ import { costFactors, processSteps } from '../lib/deliveryModelPresentation';
 import { deliveryModel } from '../data/deliveryModel';
 import { homeProofCase } from '../data/homeProof';
 import { leadership } from '../data/people';
+import type { ProcessSplit } from '../types/directionPage';
 import '../configurator-preview/configurator.css';
 import './angary-editorial.css';
 
@@ -26,7 +27,15 @@ export default function HangarsPage() {
       customerScope: deliveryModel.statements.customerScope,
     },
     route: {
-      steps: processSteps().map(({ title, result }) => ({ title, result })),
+      // «Ви · Ми» (owner, 06.10, as on the other direction pages): the Delivery Model's steps say what we do (word for word);
+      // the page adds what you do at each and what you get after it, with its small drawing
+      steps: processSteps().map(({ title, text }) => ({ title, text })),
+      sides: [
+        { you: 'Розповідаєте, що потрібно, де об’єкт і що вже підготовлено.', result: 'Задача й список даних', drawing: 'checklist' },
+        { you: 'Надаєте креслення або параметри об’єкта.', result: 'Основа для пропозиції', drawing: 'metal-project' },
+        { you: 'Погоджуєте пропозицію й підписуєте договір.', result: 'Пропозиція, кошторис і договір', drawing: 'contract' },
+        { you: 'Приймаєте роботи й підписуєте акти.', result: 'Прийняті роботи й акти', drawing: 'hangar-built' },
+      ] satisfies ProcessSplit[],
       boundary: deliveryModel.statements.boundary,
       leadCta: deliveryModel.contactRoles.constructionLead.cta,
     },

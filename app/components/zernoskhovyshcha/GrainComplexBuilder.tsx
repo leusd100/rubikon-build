@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Bean, Flower, Flower2, Sprout, Vegan, Wheat } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   GRAIN_COMPLEX_DEFAULT,
   GRAIN_CROP_OPTIONS,
@@ -15,6 +16,16 @@ import { PrefillInquiryLink } from '../directions/PrefillInquiryLink';
 import { TourControl } from '../directions/TourParts';
 import { GrainComplexDrawing } from './GrainComplexDrawing';
 import './grain-complex.css';
+
+/** Each crop's icon on its chip — the planner's own (StorageQuestion), rapeseed's added — drawn in the crop's colour */
+const CROP_ICONS: Record<GrainCrop, ReactNode> = {
+  wheat: <Wheat />,
+  corn: <Vegan />,
+  sunflower: <Flower2 />,
+  barley: <Sprout />,
+  rapeseed: <Flower />,
+  soy: <Bean />,
+};
 
 /** How long the phone's view takes to glide along the elevation while it assembles (its modules arrive over ~3.3 s) */
 const GLIDE_MS = 3600;
@@ -114,14 +125,14 @@ export function GrainComplexBuilder() {
       </DrawingSheet>
 
       <div className="gc-controls">
-        {/* each crop keeps its own silo (or zone) and colour on the drawing; the swatch is that colour */}
+        {/* each crop keeps its own silo (or zone) and colour on the drawing; its icon on the chip is in that colour */}
         <fieldset className="gc-group gc-group-crops">
           <legend>Що зберігаєте</legend>
           <div className="gc-options">
             {GRAIN_CROP_OPTIONS.map((option) => (
               <label className="gc-chip" key={option.value}>
                 <input type="checkbox" checked={state.crops.includes(option.value)} onChange={(event) => toggleCrop(option.value, event.target.checked)} />
-                <span><i className={`gc-swatch gc-crop-${option.value}`} aria-hidden="true" />{option.label}</span>
+                <span><i className={`gc-crop-icon gc-crop-${option.value}`} aria-hidden="true">{CROP_ICONS[option.value]}</i>{option.label}</span>
               </label>
             ))}
           </div>

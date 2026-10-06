@@ -20,7 +20,8 @@
 .gc-crop-rapeseed { --crop: var(--crop-rapeseed); }
 .gc-crop-soy { --crop: var(--crop-soy); }
 .gc-crop-mixed { --crop: var(--crop-mixed); }
-.gc-swatch { flex: none; width: 12px; height: 12px; margin-right: 9px; background: var(--crop); border-radius: 50%; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 25%, transparent); }
+.gc-crop-icon { display: inline-grid; flex: none; place-items: center; width: 22px; height: 22px; margin-right: 9px; color: var(--crop); }
+.gc-crop-icon svg { width: 20px; height: 20px; stroke-width: 1.8; }
 
 /* The sheet: a light drawing on paper (the sheet's image area is dark by default, for photographs) at the elevation's
    own 3 : 1 */

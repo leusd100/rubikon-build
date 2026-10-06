@@ -134,7 +134,8 @@ export type ProcessDrawingKind =
   | 'grain-brief' | 'checklist' | 'grain-project' | 'grain-built'
   | 'metal-data' | 'metal-project' | 'metal-fabricated' | 'metal-erected'
   | 'concrete-levels' | 'concrete-formwork' | 'concrete-pour' | 'concrete-check'
-  | 'roof-survey' | 'roof-kit' | 'roof-laid' | 'roof-checked';
+  | 'roof-survey' | 'roof-kit' | 'roof-laid' | 'roof-checked'
+  | 'hangar-brief' | 'contract' | 'hangar-built';
 
 /** A process step's other side and its outcome: what the client does, what they get after it, and its small drawing */
 export type ProcessSplit = { you: string; result: string; drawing: ProcessDrawingKind };
