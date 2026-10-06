@@ -1660,8 +1660,24 @@ test('passing a line of the outline the seam lights it over the photo and names 
   }
   // Held off the seam by where the handle was taken (ProofContour's offset), read off the page as the press reads it
   const offset = await handle.evaluate((element, from) => { const box = element.getBoundingClientRect(); return from - (box.left + box.width / 2); }, x);
-  if (touch) await finger('touchStart', x);
-  else await page.mouse.down();
+  if (touch) {
+    // Under a finger nothing lights: the seam just follows it, past the jamb (owner, 06.10: on a phone the lit jamb, its
+    // name and a buzz read as the seam sticking to the gates — it never moved off the finger)
+    await finger('touchStart', x);
+    const to = Math.round(frame.x + (frame.width * (at + SNAP_GRAB * 0.6)) / 100);
+    for (let step = 1; step <= 6; step += 1) {
+      const point = Math.round(x + ((to - x) * step) / 6);
+      await finger('touchMove', point);
+      await nextFrames(page, 1);
+      expect(await splitOf(stage), `${point} at once`).toBe(tenths(await pointerAt(stage, point, offset)));
+      await expect(stage, `${point}`).not.toHaveAttribute('data-snapped', /.*/);
+      await expect(stage.locator('svg.hv2-contour-held'), `${point}`).toHaveCount(0);
+    }
+    await finger('touchEnd', to);
+    expect(await ticks()).toEqual([]);
+    return;
+  }
+  await page.mouse.down();
   // At every whole pixel of the way the seam stands where the pointer puts it, to the tenth — a magnet would hold it on
   // the line — and the line within GRAB of it, or still within RELEASE, is lit. The seam itself is there at once, on the
   // move itself (review, 05.10: drawn on every move, not when the rest of the sheet is told)
@@ -2762,9 +2778,11 @@ test('on a laptop the sheet fits under the header where the window has the room,
   test.skip(testInfo.project.name !== 'desktop-chromium', 'laptop windows');
   test.setTimeout(90_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  // The usual laptops fit, as before; on a short window (owner, 04.10: there the picture covered the note) the picture
-  // keeps the photo's rows 84–644 and the sheet runs past the window instead
-  const windows = [[1280, 720, true], [1366, 768, true], [1440, 900, true], [1536, 864, true], [1920, 1080, true], [1280, 600, false], [1100, 650, false], [1024, 600, false]] as const;
+  // The usual laptops fit, as before, and so does a window a little short of that — a Mac with its dock showing, 1440 ×
+  // 700–760: the sheet narrows to fit it (owner, 06.10), never below the title block's one row; on a short window (owner,
+  // 04.10: there the picture covered the note) the picture keeps the photo's rows 84–644 and the sheet runs past the
+  // window instead
+  const windows = [[1280, 720, true], [1366, 768, true], [1440, 900, true], [1440, 760, true], [1440, 700, true], [1536, 864, true], [1920, 1080, true], [1280, 600, false], [1100, 650, false], [1024, 600, false]] as const;
   for (const [width, height, fits] of windows) {
     const at = `${width}×${height}`;
     await page.setViewportSize({ width, height });
@@ -2817,7 +2835,10 @@ test('on a laptop the sheet fits under the header where the window has the room,
     await sheet.evaluate((element) => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - 117, behavior: 'instant' }));
     // The photo is fetched for the frame's width (the srcset's sizes)
     const fetched = await stage.locator('.hv2-contour-canvas > picture img').evaluate((element) => [(element as HTMLImageElement).naturalWidth, element.getBoundingClientRect().width]);
-    expect(Math.abs(fetched[0] - fetched[1]), at).toBeLessThanOrEqual(1);
+    // (never drawn larger than fetched; a sheet narrowed to fit the window draws it a little smaller — the srcset's sizes
+    // are the full width's)
+    expect(fetched[0], at).toBeGreaterThanOrEqual(fetched[1] - 1);
+    expect(fetched[0] / fetched[1], at).toBeLessThan(1.45);
     // The canvas keeps the sheet's width; the stage shows the photo's rows from above the apex to below the base
     const rows = await stage.evaluate((element) => {
       const frame = element.getBoundingClientRect();

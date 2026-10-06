@@ -17,9 +17,9 @@ main[data-home="v2"] {
      as one of the copper lines behind the gable) */
   --hv2-load: #5aa8ff; --hv2-load-light: #e3f0ff; --hv2-wind: #4fd8c8; --hv2-wind-light: #dcfbf6;
   /* (a calm drawing blue — owner, 06.10: the magenta «прикольно, але занадто», the gold before it too close to the copper
-     and the photo's yellow strips; cooler and paler than the snow's azure, which never shows with the nodes; dark
-     letters on it) */
-  --hv2-node: #8fa8ff; --hv2-node-light: #c3cfff; --hv2-node-edge: #e4e9ff; --hv2-node-ink: #0e1331;
+     and the photo's yellow strips; a periwinkle, apart from the snow's azure — which never shows with the nodes — as from
+     the wind and the copper; dark letters on it) */
+  --hv2-node: #9ba0ff; --hv2-node-light: #cdd0ff; --hv2-node-edge: #e8e9ff; --hv2-node-ink: #0e1331;
   --hv2-ink: #121413;
   --hv2-graphite: #171a18;
   --hv2-graphite-2: #1d201e;
@@ -942,10 +942,13 @@ main[data-home="v2"] .hv2-contour .hv2-contour-key { display: none; }
   main[data-home="v2"] .hv2-contour .sheet-stamp { flex: none; }
   /* Owner, 06.10: the block should fit the window it is seen in, a Mac's dock and the browser's bars and all: where the
      picture at its least (rows 84–644) and the title block would not fit under the header, the whole sheet narrows —
-     the drawing scales down with it, centred — so they do; never below 70 % of its width (there it scrolls, as before:
-     a smaller drawing reads worse than a scroll). 46 px: the sheet's own side margins round the picture */
+     the drawing scales down with it, centred — so they do; where even that is not enough it scrolls, as before (a
+     smaller drawing reads worse than a scroll). Never narrower than 1147 px: the sheet's content is then 1101 px, just
+     past the 1100 px at which the title block takes two rows (the @container above), so the one row the owner asked for
+     on 05.10 stays and the drawing stays large; a window narrower than that does not narrow the sheet at all. 46 px:
+     the sheet's own side margins round the picture */
   main[data-home="v2"] .hv2-contour {
-    max-width: max(70%, calc((100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))) * 1536 / 560 + 46px));
+    max-width: max(min(100%, 1147px), calc((100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))) * 1536 / 560 + 46px));
     margin-inline: auto;
   }
   main[data-home="v2"] .hv2-contour .sheet-image {

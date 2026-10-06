@@ -797,7 +797,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const stage = stageRef.current;
     if (!stage || !room) return;
     const box = stage.getBoundingClientRect();
-    const seam = box.left + (room.width * split) / 100;
+    // (on the frame's own width to the fraction: a sheet narrowed to fit the window is no whole number of pixels wide, and
+    // the rounded clientWidth put the seam half a pixel off — a word touching it was taken for cut, 06.10)
+    const seam = box.left + (box.width * split) / 100;
     // …and one under the seam's names or the stamp (review, 04.10): their boxes where they will stand once the seam has
     // glided there (measured now, a gliding name would be read mid-way)
     const shown = (element: Element | null) => element && getComputedStyle(element).visibility === 'visible';
