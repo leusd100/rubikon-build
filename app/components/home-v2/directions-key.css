@@ -1,0 +1,87 @@
+/* The key plan (DirectionsKey.tsx) — at the head of the /napryamky catalogue since 05.10 (it was drawn for HOME's
+   «П’ять напрямів» header; the owner: «класний, але більше підходить для іншої сторінки»).
+
+   Imported by DirectionsKey.tsx only. Every rule is keyed to .dkey-host — the section that holds the header with the
+   plan and the links it is the key to — and uses the page's theme roles, so Light and Dark need no rules of their own.
+
+   globals.css would give an aside a grid column of its own from 1051 px; here the header keeps its one column and
+   the aside is laid OVER it, spanning both rows at the right edge, with the figure absolutely positioned inside. The
+   aside asks for 236 px of height — a one-line title and its note are lower than that, and the plan would be too
+   small to read — and the room it adds goes under the note (the second row is the flexible one), so the title and
+   the note stay together. Shown from 1200 px; below that the header is as it was.
+   No frame, no rule and no title strip: the plan stands free and is named in its own corner. */
+.dkey-host .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
+.dkey-host .section-header.has-aside .section-header-aside { display: none; }
+@media (min-width: 1200px) {
+  .dkey-host .section-header.has-aside .section-header-aside {
+    position: relative; display: block; grid-column: 1; grid-row: 1 / span 2; align-self: stretch; justify-self: end;
+    width: min(42%, calc(100% - 680px)); min-height: 236px; margin: 0; pointer-events: none;
+  }
+  .dkey-host .section-header.has-aside { grid-template-rows: auto 1fr; }
+  /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
+  .dkey-host .section-header.has-aside .section-header-copy { grid-row: 1; }
+  .dkey-host .section-header.has-aside .section-header-support { grid-row: 2; }
+}
+
+.dkey-host .dkey {
+  /* The position numbers' colour, in one place: copper at rest (set it to var(--color-text-secondary) to compare) */
+  --dkey-number: var(--color-accent-strong);
+  position: absolute; inset: 0; margin: 0; user-select: none;
+}
+/* The drawing fills the figure by position, not by a percentage height: a percentage is left unresolved by some
+   browsers here, the drawing then takes its height from its width and runs out of the header. */
+.dkey-host .dkey svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+.dkey-host .dkey-cap { fill: var(--color-text-muted); font: 600 8.6px var(--font-condensed), sans-serif; letter-spacing: .1em; text-anchor: end; text-transform: uppercase; }
+.dkey-host .dkey-cap tspan { fill: var(--color-text); }
+
+/* Line types. Each numbered part reads its colour from --k1…--k5 and its weight from --k1x…--k5x, unset at rest. */
+.dkey-host .dkey-axis { fill: none; stroke: var(--color-text-muted); stroke-width: .8; stroke-dasharray: 12 3 2 3; opacity: .6; }
+.dkey-host .dkey-dim { fill: none; stroke: var(--color-text-muted); stroke-width: .9; }
+.dkey-host .dkey-dim-text { fill: var(--color-text-muted); font: italic 500 12px var(--font-manrope), sans-serif; text-anchor: middle; }
+.dkey-host .dkey-bubbles circle { fill: var(--color-bg); stroke: var(--color-text-muted); stroke-width: .9; }
+.dkey-host .dkey-bubbles text { fill: var(--color-text-secondary); font: 600 10.5px var(--font-condensed), sans-serif; text-anchor: middle; }
+.dkey-host .dkey-leader { fill: none; stroke: var(--color-text-muted); stroke-width: .8; }
+.dkey-host .dkey-dot { fill: var(--color-text-secondary); }
+.dkey-host .dkey-num { fill: var(--dkey-number); font: 600 13px var(--font-condensed), sans-serif; letter-spacing: .08em; }
+
+.dkey-host .dkey-part :is(path, circle, rect) { transition: stroke var(--duration-fast) ease, stroke-width var(--duration-fast) ease, fill var(--duration-fast) ease; }
+/* 01 · the building: its outline with the gate's jambs, a faint floor */
+.dkey-host .dkey-fill { fill: color-mix(in srgb, var(--k1, transparent) 12%, color-mix(in srgb, var(--color-text) 4%, transparent)); }
+.dkey-host .dkey-wall { fill: none; stroke: var(--k1, var(--color-text-secondary)); stroke-width: calc(1.4px * var(--k1x, 1)); stroke-linejoin: round; }
+/* 02 · the silo: the base is ours (solid), the shell is equipment and never lights */
+.dkey-host .dkey-base { fill: color-mix(in srgb, var(--k2, transparent) 12%, color-mix(in srgb, var(--color-text) 4%, transparent)); stroke: var(--k2, var(--color-text-secondary)); stroke-width: calc(1.4px * var(--k2x, 1)); }
+.dkey-host .dkey-equip { fill: none; stroke: var(--color-text-muted); stroke-width: .9; stroke-dasharray: 10 2.5 1.5 2.5 1.5 2.5; }
+/* 03 · the frame's columns */
+.dkey-host .dkey-col { fill: none; stroke: var(--k3, var(--color-text)); stroke-width: calc(1.6px * var(--k3x, 1)); }
+/* 04 · the footings, under the floor */
+.dkey-host .dkey-hidden { fill: none; stroke: var(--k4, var(--color-text-muted)); stroke-width: calc(.9px * var(--k4x, 1)); stroke-dasharray: 3 2.4; }
+/* 05 · the roof: the ridge overhead and the two slopes */
+.dkey-host .dkey-over { fill: none; stroke: var(--k5, var(--color-text-muted)); stroke-width: calc(.9px * var(--k5x, 1)); stroke-dasharray: 10 2.5 1.5 2.5 1.5 2.5; }
+.dkey-host .dkey-line { fill: none; stroke: var(--k5, var(--color-text-muted)); stroke-width: calc(1px * var(--k5x, 1)); stroke-linejoin: round; }
+
+/* Lit: the part of the pointed or focused row. By href, so the order of the rows may change; the spec walks all five
+   from the data, so a renamed route cannot unlink a part unnoticed. Emphasis only: nothing is hidden without it. */
+@supports selector(:has(*)) {
+  .dkey-host:has(.route-service[href="/angary"]:is(:hover, :focus-visible)) { --k1: var(--color-accent); --k1x: 1.45; }
+  .dkey-host:has(.route-service[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) { --k2: var(--color-accent); --k2x: 1.45; }
+  .dkey-host:has(.route-service[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) { --k3: var(--color-accent); --k3x: 1.3; }
+  .dkey-host:has(.route-service[href="/betonni-roboty"]:is(:hover, :focus-visible)) { --k4: var(--color-accent); --k4x: 1.6; }
+  .dkey-host:has(.route-service[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) { --k5: var(--color-accent); --k5x: 1.6; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dkey-host .dkey-part :is(path, circle, rect) { transition: none; }
+}
+
+/* ---- the draw-in, once, on first view (the page's ProcessMotion puts data-motion-ready on <main> and flips the
+   figure's data-motion-state). Without it — no JavaScript, reduced motion, print — the complete plan stands. The two
+   solid outlines draw by their dash offset (pathLength = 1, butt caps); everything dashed or small only fades:
+   axes first, then the outlines, the frame and its footings, the roof, and the numbers last. ---- */
+[data-motion-ready] .dkey-host .dkey:not([data-motion-state="on"]) :is(.dkey-wall, .dkey-base) { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; }
+[data-motion-ready] .dkey-host .dkey:not([data-motion-state="on"]) :is(.dkey-axis, .dkey-bubbles, .dkey-dim, .dkey-dim-text, .dkey-fill, .dkey-col, .dkey-hidden, .dkey-over, .dkey-line, .dkey-equip, .dkey-leader, .dkey-dot, .dkey-num, .dkey-cap) { opacity: 0; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-axis, .dkey-bubbles) { animation: dkey-fade 400ms ease backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-wall, .dkey-base) { animation: dkey-draw 800ms var(--ease-premium) 200ms backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-fill, .dkey-col, .dkey-hidden) { animation: dkey-fade 400ms ease 700ms backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-over, .dkey-line, .dkey-equip, .dkey-dim, .dkey-dim-text) { animation: dkey-fade 400ms ease 950ms backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-leader, .dkey-dot, .dkey-num, .dkey-cap) { animation: dkey-fade 400ms ease 1200ms backwards; }
+@keyframes dkey-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; } to { stroke-dasharray: 1; stroke-dashoffset: 0; stroke-linecap: butt; } }
+@keyframes dkey-fade { from { opacity: 0; } }

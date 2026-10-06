@@ -212,7 +212,8 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
             text: 'Розміри деталей і розташування отворів мають збігатися з кресленням — інакше вузол не збереться на майданчику.',
             caption: 'Отвори й розміри на кресленні вузла',
             focus: [1440, 600], zoom: 1.7,
-            mark: { d: 'M1270 300 H1340 M1520 300 H1590 V370 M1590 830 V900 H1520 M1340 900 H1270 V830 M1270 370 V300', badge: [1270, 300] },
+            // the badge at the bottom corner: at the top one it sat on the view's title
+            mark: { d: 'M1270 300 H1340 M1520 300 H1590 V370 M1590 830 V900 H1520 M1340 900 H1270 V830 M1270 370 V300', badge: [1270, 900] },
           },
           {
             title: 'Болтове з’єднання',
@@ -299,7 +300,8 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
             text: 'Каркас і сітки — за проєктом, із захисним шаром бетону до арматури.',
             caption: 'Арматурний каркас колони й сітка',
             focus: [900, 700], zoom: 1.5,
-            mark: { d: 'M450 640 H520 M1280 640 H1350 V700 M1350 830 V890 H1280 M520 890 H450 V830 M450 700 V640', badge: [1350, 640] },
+            // a circle across the cage (owner, 05.10: corner brackets ran beside the bars and merged with them)
+            mark: { d: 'M640 690 a260 260 0 1 0 520 0 a260 260 0 1 0 -520 0', badge: [1084, 506] },
           },
           {
             title: 'Анкери й закладні',
@@ -313,7 +315,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
             text: 'Опалубка тримає геометрію, висотні відмітки — рівень, на який сяде каркас.',
             caption: 'Опалубка фундаменту',
             focus: [420, 770], zoom: 2,
-            mark: { d: 'M276 600 H420 V950 H276 Z', badge: [276, 600] },
+            mark: { d: 'M244 592 H424 V972 H244 Z', badge: [244, 592] },
           },
         ],
       },

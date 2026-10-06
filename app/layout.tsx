@@ -5,6 +5,8 @@ import './fonts/ibm-plex-sans-condensed.css';
 import './theme.css';
 import './globals.css';
 import './conversation.css';
+// The sheet's field (margin decor); inert until a page's <main> carries data-field
+import './components/sheet-field.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
 import { SmoothScroll } from './components/SmoothScroll';

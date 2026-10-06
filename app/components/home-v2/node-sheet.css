@@ -1,0 +1,167 @@
+/* HOME — the explanation sheet «Вузол 1» (NodeSheet.tsx) and the «Як працюємо» link under it.
+
+   One sheet in place of the two explanation cards: a key frame, a callout, the column's base in a lens, two notes.
+   Imported by NodeSheet.tsx only. Every rule is keyed to <main data-home="v2">, like home-v2.css, and uses its --hv2-*
+   roles: the engineering band is dark in both themes, so the sheet is one rendering.
+
+   The root still carries «hv2-cards» (tests find the block by it), so the root rules below are written as
+   .hv2-cards.hv2-sheet: they outweigh the cards' grid in home-v2.css whichever file loads first. */
+
+main[data-home="v2"] .hv2-cards.hv2-sheet {
+  /* The drawing's field and the fill of a part in section, between the band's own surfaces */
+  --sheet-field: color-mix(in srgb, var(--hv2-ink) 40%, var(--hv2-graphite));
+  --sheet-part: color-mix(in srgb, var(--hv2-graphite) 50%, var(--hv2-graphite-2));
+  /* The copper thread's dash and its period (the flow runs one period) */
+  --sig-dash: 7 5; --sig-period: -12;
+  /* How far the roof load presses down, in the drawing's own units */
+  --sig-press: 4px;
+  display: grid; grid-template-columns: minmax(0, 1.78fr) minmax(0, 1fr); gap: 0; margin-top: 16px;
+  background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line);
+}
+main[data-home="v2"] .sig-figure { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-width: 0; margin: 0; background: var(--sheet-field); }
+main[data-home="v2"] .sig-stage { position: relative; display: grid; align-items: center; padding: 10px 18px 4px; }
+main[data-home="v2"] .sig-svg { display: block; width: 100%; max-width: 920px; height: auto; margin-inline: auto; overflow: visible; }
+/* Both compositions are in the markup and one is shown. The other is hidden, not removed: it draws in together with
+   the shown one, so turning a phone does not play the drawing a second time (display: none would restart it). */
+main[data-home="v2"] .sig-tall { position: absolute; width: 1px; height: 1px; visibility: hidden; }
+
+/* The title strip — the direction pages' figcaption (.dsd) in this band's roles */
+main[data-home="v2"] .sig-strip {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0 24px; padding: 11px 0 14px;
+  color: var(--hv2-text-3); border-top: 1px solid var(--hv2-line-strong);
+  font: 600 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase;
+}
+main[data-home="v2"] .sig-strip b { color: var(--hv2-text); font-size: 14px; letter-spacing: .04em; }
+
+/* The notes — the retired cards' text styles */
+main[data-home="v2"] .sig-notes { display: grid; grid-template-rows: 1fr 1fr; border-left: 1px solid var(--hv2-line); }
+main[data-home="v2"] .sig-note { display: grid; align-content: center; gap: 10px; min-width: 0; padding: 24px 30px; }
+main[data-home="v2"] .sig-note + .sig-note { border-top: 1px solid var(--hv2-line); }
+main[data-home="v2"] .sig-note-number { display: flex; align-items: center; gap: 12px; color: var(--hv2-copper-text); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
+main[data-home="v2"] .sig-note-number svg { width: 34px; height: 12px; overflow: visible; }
+main[data-home="v2"] .sig-note h3 { margin: 0; font: 400 clamp(24px, 1.9vw, 30px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+main[data-home="v2"] .sig-note p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.65; }
+
+/* ---- the drawing: graphite lines at the «Переріз» weights (.dsd), one copper accent — the load's way ----
+   Line types: short dash — hidden under the ground; dash-dot — an axis; solid — everything else. */
+main[data-home="v2"] .sig-frame { fill: none; stroke: var(--hv2-text-2); stroke-width: 1.4; stroke-linejoin: round; transition: stroke .2s ease; }
+main[data-home="v2"] .sig-frame-inner { fill: none; stroke: var(--hv2-text-3); stroke-width: .9; stroke-linejoin: round; }
+main[data-home="v2"] .sig-line { fill: none; stroke: var(--hv2-text-3); stroke-width: 1.1; }
+main[data-home="v2"] .sig-hatch { fill: none; stroke: var(--hv2-text-3); stroke-width: .8; opacity: .65; }
+main[data-home="v2"] .sig-hidden { fill: none; stroke: var(--hv2-text-3); stroke-width: .9; stroke-dasharray: 4 3; opacity: .8; }
+main[data-home="v2"] .sig-axis { fill: none; stroke: var(--hv2-text-3); stroke-width: .8; stroke-dasharray: 12 3 2 3; opacity: .7; }
+main[data-home="v2"] .sig-load { fill: none; stroke: var(--hv2-text-3); stroke-width: .9; stroke-linejoin: round; }
+main[data-home="v2"] .sig-callout { fill: none; stroke: var(--hv2-text-2); stroke-width: 1.1; transition: stroke .2s ease; }
+main[data-home="v2"] .sig-fan { fill: none; stroke: var(--hv2-text-3); stroke-width: .8; opacity: .6; }
+main[data-home="v2"] .sig-lens { fill: var(--hv2-ink); }
+main[data-home="v2"] .sig-mark { fill: var(--hv2-text); font: 700 15px var(--font-condensed), sans-serif; letter-spacing: .04em; }
+/* The node in section: steel cut and filled; concrete a faint cut fill with its bars end-on (no hatch — the site keeps
+   the 45° hatch for masonry) */
+main[data-home="v2"] .sig-cut { fill: color-mix(in srgb, var(--hv2-text) 5%, transparent); stroke: var(--hv2-text-2); stroke-width: 1.4; stroke-linejoin: round; transition: stroke .2s ease; }
+main[data-home="v2"] .sig-web { fill: color-mix(in srgb, var(--hv2-text) 2.5%, transparent); }
+main[data-home="v2"] .sig-part path { fill: var(--sheet-part); stroke: var(--hv2-text-2); stroke-width: 1.3; stroke-linejoin: round; transition: stroke .2s ease, fill .2s ease; }
+main[data-home="v2"] .sig-grout { fill: color-mix(in srgb, var(--hv2-text) 10%, transparent); stroke: var(--hv2-text-3); stroke-width: .8; }
+main[data-home="v2"] .sig-concrete { fill: color-mix(in srgb, var(--hv2-text) 5.5%, transparent); }
+main[data-home="v2"] .sig-bars circle { fill: var(--hv2-text-3); }
+main[data-home="v2"] .sig-edge { fill: none; stroke: var(--hv2-text-2); stroke-width: 1.3; transition: stroke .2s ease; }
+main[data-home="v2"] .sig-thread { fill: none; stroke: var(--hv2-copper-text); stroke-width: 2; stroke-dasharray: var(--sig-dash); stroke-linejoin: round; transition: opacity .2s ease, stroke-width .2s ease; }
+main[data-home="v2"] .sig-thread-head { fill: var(--hv2-copper-text); transition: opacity .2s ease; }
+main[data-home="v2"] .sig-spread { fill: none; stroke: var(--hv2-copper-text); stroke-width: 1.4; stroke-linejoin: round; transition: opacity .2s ease; }
+main[data-home="v2"] .sig-leader { fill: none; stroke: var(--hv2-text-3); stroke-width: .9; }
+main[data-home="v2"] .sig-dot { fill: var(--hv2-text); }
+main[data-home="v2"] .sig-name text { fill: var(--hv2-text); font: 600 15px var(--font-manrope), sans-serif; }
+main[data-home="v2"] .sig-hit { fill: transparent; stroke: none; pointer-events: visibleFill; }
+
+/* ---- lit: pointing at a note, at its half of the drawing or at a part's name. Emphasis only — nothing is hidden
+   without it, so a keyboard and a touch screen miss nothing. The note's own key (the glyph by its number) lights with
+   its subject. ---- */
+@media (hover: hover) {
+  @supports selector(:has(*)) {
+    main[data-home="v2"] .hv2-sheet:has([data-hit="node"]:hover, [data-note="node"]:hover) .sig-part path,
+    main[data-home="v2"] .hv2-sheet:has(.sig-name[data-part="rib"]:hover) .sig-part[data-part="rib"] path,
+    main[data-home="v2"] .hv2-sheet:has(.sig-name[data-part="plate"]:hover) .sig-part[data-part="plate"] path,
+    main[data-home="v2"] .hv2-sheet:has(.sig-name[data-part="anchor"]:hover) .sig-part[data-part="anchor"] path { fill: color-mix(in srgb, var(--hv2-copper-text) 14%, var(--sheet-part)); stroke: var(--hv2-copper-text); }
+    main[data-home="v2"] .hv2-sheet:has(.sig-name[data-part="base"]:hover) .sig-edge,
+    main[data-home="v2"] .hv2-sheet:has([data-hit="node"]:hover, [data-note="node"]:hover) .sig-note[data-note="node"] .sig-callout { stroke: var(--hv2-copper-text); }
+    main[data-home="v2"] .hv2-sheet:has([data-hit="node"]:hover, [data-note="node"]:hover, .sig-name:hover) :is(.sig-thread, .sig-thread-head, .sig-spread) { opacity: .28; }
+    main[data-home="v2"] .hv2-sheet:has([data-hit="load"]:hover, [data-note="load"]:hover) .sig-thread { stroke-width: 2.6; }
+    main[data-home="v2"] .hv2-sheet:has([data-hit="load"]:hover, [data-note="load"]:hover) :is(.sig-part path, .sig-cut, .sig-frame) { stroke: var(--hv2-text-3); }
+  }
+}
+/* ---- the load is alive while the sheet is on screen (owner, 05.10) ----
+   The copper thread runs down its way, the roof load presses, the pressure under the plate breathes. ProcessMotion
+   keeps data-motion-live="on" on the figure only while it is in view, so nothing runs out of sight; with reduced
+   motion the controller never arms and the sheet stands still. Only the shown composition moves (the other one is
+   hidden, see .sig-tall). The press and the breath are on wrapper groups: the paths keep their draw-in animations. */
+@media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-thread { animation: hv2-sheet-flow .7s linear infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-press { animation: hv2-sheet-press 1.6s ease-in-out infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-wide .sig-breathe { animation: hv2-sheet-breathe 1.6s ease-in-out infinite; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-thread { animation: hv2-sheet-flow .7s linear infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-press { animation: hv2-sheet-press 1.6s ease-in-out infinite; }
+  main[data-home="v2"] .sig-figure[data-motion-live="on"] .sig-tall .sig-breathe { animation: hv2-sheet-breathe 1.6s ease-in-out infinite; }
+}
+@keyframes hv2-sheet-flow { to { stroke-dashoffset: var(--sig-period); } }
+@keyframes hv2-sheet-press { 50% { transform: translateY(var(--sig-press)); } }
+@keyframes hv2-sheet-breathe { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+
+/* ---- the draw-in, once, on first view ----
+   The page's one motion controller (ProcessMotion on <main data-home="v2">, app/page.tsx) puts data-motion-ready on
+   <main> after hydration and data-motion-state="on" on the figure when it comes into view. Without it — no JavaScript,
+   reduced motion, print — nothing here matches and the complete drawing stands. The strip is never hidden.
+   Solid lines draw by their dash offset (pathLength = 1; butt caps, or a hidden line leaves a dot); dashed ones — the
+   thread, the axes, the footings — only fade. 2.3 s in all: the frame 0–700, the thread 500–1000, the callout and its
+   opening 900–1300, the lens 1200–1700, the node 1400–2000, the load into the concrete and the names by 2300 ms. */
+main[data-home="v2"][data-motion-ready] .sig-figure:not([data-motion-state="on"]) :is(.sig-frame, .sig-frame-inner, .sig-cut, .sig-part path, .sig-ring, .sig-rim, .sig-fan) { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; }
+main[data-home="v2"][data-motion-ready] .sig-figure:not([data-motion-state="on"]) :is(.sig-line, .sig-hatch, .sig-hidden, .sig-axis, .sig-load, .sig-way, .sig-mark-group, .sig-lens, .sig-node, .sig-spread, .sig-name) { opacity: 0; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-key :is(.sig-frame, .sig-frame-inner) { animation: hv2-sheet-draw 700ms var(--ease-premium) backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-key :is(.sig-line, .sig-hatch, .sig-hidden, .sig-axis, .sig-load) { animation: hv2-sheet-fade 400ms ease 200ms backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-key .sig-way { animation: hv2-sheet-fade 500ms ease 500ms backwards; }
+/* The circle is whole before the lines that open it into the lens leave it … */
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-ring { animation: hv2-sheet-draw 250ms ease-out 900ms backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-mark-group { animation: hv2-sheet-fade 300ms ease 1000ms backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-fan { animation: hv2-sheet-draw 200ms ease-in-out 1100ms backwards; }
+/* … and the lens's rim, running both ways from the point nearest the callout, is there when they arrive */
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-lens { animation: hv2-sheet-fade 300ms ease 1200ms backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-rim { animation: hv2-sheet-draw 500ms var(--ease-premium) 1200ms backwards; }
+/* The node's parts are filled (each covers what is behind it), so the whole group fades in under its drawing lines */
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-node { animation: hv2-sheet-fade 300ms ease 1400ms backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-node :is(.sig-cut, .sig-part path) { animation: hv2-sheet-draw 600ms var(--ease-premium) 1400ms backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-node .sig-way { animation: hv2-sheet-fade 300ms ease 1800ms backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-spread { animation: hv2-sheet-fade 300ms ease 2000ms backwards; }
+main[data-home="v2"] .sig-figure[data-motion-state="on"] .sig-name { animation: hv2-sheet-fade 310ms ease calc(1900ms + var(--i, 0) * 30ms) backwards; }
+@keyframes hv2-sheet-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; } to { stroke-dasharray: 1; stroke-dashoffset: 0; stroke-linecap: butt; } }
+@keyframes hv2-sheet-fade { from { opacity: 0; } }
+
+/* ---- the «Як працюємо» link under the boundary sentence: the band's own link (.hv2-people-link), set under the text ---- */
+main[data-home="v2"] .hv2-process-link { margin-top: 10px; }
+
+/* ---- widths. The drawing scales with the sheet; its type steps the other way, so a name stays readable ---- */
+@media (max-width: 1320px) { main[data-home="v2"] :is(.sig-name text, .sig-mark) { font-size: 16.5px; } }
+@media (max-width: 1180px) {
+  main[data-home="v2"] .hv2-cards.hv2-sheet { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  main[data-home="v2"] .sig-notes { grid-template-rows: none; grid-template-columns: repeat(2, minmax(0, 1fr)); border-left: 0; border-top: 1px solid var(--hv2-line); }
+  main[data-home="v2"] .sig-note + .sig-note { border-top: 0; border-left: 1px solid var(--hv2-line); }
+  main[data-home="v2"] .sig-name text { font-size: 14.5px; }
+  /* «svg» gives the rule the weight of the :is() list above, which counts as its heaviest member */
+  main[data-home="v2"] svg .sig-mark { font-size: 15px; }
+}
+@media (max-width: 900px) { main[data-home="v2"] :is(.sig-name text, .sig-mark) { font-size: 17px; } }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-cards.hv2-sheet { --sig-dash: 5 4; --sig-period: -9; --sig-press: 2.5px; margin-top: 22px; }
+  main[data-home="v2"] .sig-wide { position: absolute; width: 1px; height: 1px; visibility: hidden; }
+  main[data-home="v2"] .sig-tall { position: static; width: 100%; max-width: 440px; height: auto; visibility: visible; }
+  main[data-home="v2"] .sig-stage { padding: 6px 0 2px; }
+  main[data-home="v2"] .sig-strip { margin: 0 16px; padding: 10px 0 12px; }
+  main[data-home="v2"] .sig-notes { grid-template-columns: minmax(0, 1fr); }
+  main[data-home="v2"] .sig-note { gap: 8px; padding: 18px 18px 20px; }
+  main[data-home="v2"] .sig-note + .sig-note { border-left: 0; border-top: 1px solid var(--hv2-line); }
+  main[data-home="v2"] .sig-note h3 { font-size: 26px; }
+  main[data-home="v2"] .sig-note p { font-size: 16px; line-height: 1.55; }
+  /* A phone's names: 12.5 px and up from a 360 px screen */
+  main[data-home="v2"] :is(.sig-name text, .sig-mark) { font-size: 14px; }
+  main[data-home="v2"] .sig-thread { stroke-width: 1.7; }
+  main[data-home="v2"] .sig-frame { stroke-width: 1.2; }
+}

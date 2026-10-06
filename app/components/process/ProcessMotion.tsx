@@ -5,8 +5,9 @@ import { useEffect } from 'react';
 // The page's one motion controller (/yak-pratsyuiemo, /pro-nas; `root` names the page element). The markup is
 // complete and final without it: this only adds `data-motion-ready` to the page (which lets the page's CSS hold
 // [data-motion] blocks in their "before" state) and flips each block to `data-motion-state="on"` once, when it
-// meaningfully enters the viewport. Nothing replays; every observer disconnects when its work is done. With
-// prefers-reduced-motion nothing is armed, so the final state shows at once. (The background parallax was removed in
+// meaningfully enters the viewport. Nothing replays; the reveal observer lets go of a block once it has shown. A block that
+// keeps moving after its reveal (HOME's node sheet: the load) carries [data-motion-live] and is "on" only while it is
+// on screen. With prefers-reduced-motion nothing is armed, so the final state shows at once and nothing moves. (The background parallax was removed in
 // the 2026-10 UX pass: a drifting backdrop explained nothing.)
 
 export function ProcessMotion({ root = '.process-page' }: Readonly<{ root?: string }>) {
@@ -31,8 +32,17 @@ export function ProcessMotion({ root = '.process-page' }: Readonly<{ root?: stri
     }, { threshold: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3], rootMargin: '0px 0px -8% 0px' });
     blocks.forEach((block) => reveal.observe(block));
 
+    // Live blocks: "on" while any of the block is on screen, "off" otherwise — nothing animates out of sight
+    const live = [...page.querySelectorAll<HTMLElement>('[data-motion-live]')];
+    const watch = new IntersectionObserver((entries) => {
+      for (const entry of entries) (entry.target as HTMLElement).dataset.motionLive = entry.isIntersecting ? 'on' : 'off';
+    });
+    live.forEach((block) => watch.observe(block));
+
     return () => {
       reveal.disconnect();
+      watch.disconnect();
+      live.forEach((block) => { block.dataset.motionLive = ''; });
       cancelAnimationFrame(arm);
       delete page.dataset.motionReady;
     };

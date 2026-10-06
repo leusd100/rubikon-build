@@ -1,6 +1,6 @@
 'use client';
 
-// /yak-pratsyuiemo scope cards — «Обговорити цей формат»: goes to the form (a plain #inquiry link without JavaScript)
+// /yak-pratsyuiemo scope block (under FormatsScope's drawing, for the format it shows) — «Обговорити цей формат»: goes to the form (a plain #inquiry link without JavaScript)
 // and picks this format in «Який обсяг робіт вас цікавить?», opening «Додати параметри об’єкта» so the choice is seen.
 // Focus stays with the visitor; a polite live region says what was selected.
 export function FormatPrefillLink({ label }: Readonly<{ label: string }>) {
