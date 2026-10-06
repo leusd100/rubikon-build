@@ -167,23 +167,25 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .mobile-call { display: none; width: 46px; height: 46px; flex: 0 0 auto; align-items: center; justify-content: center; margin-left: auto; color: var(--color-dark-text); border: 1px solid rgba(255,255,255,.3); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .mobile-call svg { width: 19px; height: 19px; color: var(--color-accent); stroke-width: 1.8; }
 .mobile-call:hover, .mobile-call:focus-visible { border-color: var(--color-accent); background: rgba(255,255,255,.06); }
-/* Theme control (ThemeControl.tsx) — a quiet cell after the header contacts: no copper, so it never competes with
-   the phone. On phones the same three options sit at the end of the menu. */
-.theme-menu { position: relative; display: flex; }
+/* Theme switch (ThemeControl.tsx) — its own pill beside the contacts box, not a cell inside it: a sun|moon track with a
+   paper knob reads as a switch, never as one more contact. No copper, so it never competes with the phone. The knob
+   follows data-theme (set before paint). On phones the three options sit at the end of the menu. */
+.header-actions { display: flex; align-items: center; gap: 12px; }
+.theme-switch { --ts-w: 52px; --ts-h: 28px; position: relative; width: var(--ts-w); height: 44px; display: grid; place-items: center; flex: none; padding: 0; color: var(--color-dark-text-secondary); border: 0; background: transparent; cursor: pointer; }
+.theme-switch-track { position: relative; width: var(--ts-w); height: var(--ts-h); display: block; border: 1px solid rgba(245, 242, 235, .3); border-radius: 999px; background: rgba(245, 242, 235, .045); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.theme-switch-knob { position: absolute; top: 2px; left: 2px; width: calc(var(--ts-h) - 6px); height: calc(var(--ts-h) - 6px); border-radius: 50%; background: var(--color-dark-text); transition: transform .28s cubic-bezier(.3, .7, .2, 1); }
+.theme-switch-track svg { position: absolute; top: 50%; width: calc(var(--ts-h) - 14px); height: calc(var(--ts-h) - 14px); stroke-width: 1.9; transform: translateY(-50%); transition: color .28s ease; }
+.theme-switch-sun { left: 6px; }
+.theme-switch-moon { right: 6px; }
+:root[data-theme="dark"] .theme-switch-knob { transform: translateX(calc(var(--ts-w) - var(--ts-h))); }
+:root:not([data-theme="dark"]) .theme-switch-sun, :root[data-theme="dark"] .theme-switch-moon { color: var(--color-dark); }
+.theme-switch:hover .theme-switch-track { border-color: rgba(245, 242, 235, .62); background: rgba(245, 242, 235, .09); }
+.theme-switch:hover { color: var(--color-dark-text); }
+.theme-switch:focus-visible { outline: none; }
+.theme-switch:focus-visible .theme-switch-track { outline: 2px solid var(--color-accent-on-dark); outline-offset: 3px; }
 /* Without JavaScript the head script never ran ([data-theme] absent): the page follows the OS, and a control
    that cannot act is hidden rather than shown broken. */
-:root:not([data-theme]) :is(.theme-menu, .theme-options) { display: none; }
-.theme-menu-trigger { width: 44px; display: grid; place-items: center; padding: 0; color: var(--color-dark-text-secondary); border: 0; border-left: 1px solid rgba(245, 242, 235, .18); background: transparent; cursor: pointer; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
-.theme-menu-trigger:hover, .theme-menu-trigger[aria-expanded="true"] { color: var(--color-dark-text); background: rgba(245, 242, 235, .08); }
-.theme-menu-trigger svg { width: 17px; height: 17px; stroke-width: 1.7; }
-/* The icon follows data-theme-preference, set before paint — never the React state, which arrives after hydration */
-.theme-icon { display: none; }
-:root:not([data-theme-preference]) .theme-icon-system,
-:root[data-theme-preference="system"] .theme-icon-system,
-:root[data-theme-preference="light"] .theme-icon-light,
-:root[data-theme-preference="dark"] .theme-icon-dark { display: block; }
-.theme-menu-panel { position: absolute; z-index: 60; top: calc(100% + 10px); right: -1px; width: 312px; padding: 16px 16px 14px; color: var(--color-dark-text); background: var(--color-dark); border: 1px solid rgba(245, 242, 235, .2); box-shadow: 0 24px 54px rgba(0, 0, 0, .34); }
-.theme-menu-panel[hidden] { display: none; }
+:root:not([data-theme]) :is(.theme-switch, .theme-options) { display: none; }
 .theme-options { min-width: 0; margin: 0; padding: 0; border: 0; }
 /* float: a legend otherwise sits on the fieldset's top edge instead of inside its padding */
 .theme-options legend { float: left; width: 100%; margin-bottom: 10px; padding: 0; color: var(--color-dark-text-secondary); font: 700 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
@@ -253,11 +255,11 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
    they are calling before the tap. Same box as every .button; only the content is two lines.
    min-width reserves the box: the number is ~4.5 px wider in Plex Condensed than in its fallback,
    and without it the font swap nudged the two actions beside it (a measured layout shift). */
-.hero-call-primary { min-width: 260px; gap: 14px; padding-inline: 22px 26px; }
+.hero-call-primary { min-width: 236px; gap: 14px; padding-inline: 22px 26px; }
 .hero-call-primary svg { width: 20px; height: 20px; flex: 0 0 20px; stroke-width: 1.8; }
 .hero-call-primary > span { display: grid; gap: 5px; text-align: left; }
-.hero-call-primary small { font-size: 12px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
-.hero-call-primary strong { font: 600 20px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
+.hero-call-primary small { font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
+.hero-call-primary strong { font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
 .button:active, .text-link:active, .section-link:active { transform: translateY(0) scale(.985); }
 .text-link { padding-block: 10px; border-bottom: 1px solid currentColor; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .text-link span { margin-left: 18px; color: var(--color-accent-strong); }
@@ -842,9 +844,9 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .header-email { width: 40px; }
 }
 
-/* Nav switches to the mobile menu at the wider max-width:1000px block below (960 < 1000, so
+/* Nav switches to the mobile menu at the wider max-width:1099px block below (960 < 1099, so
    that block already covers this whole range) — this block now only owns the footer's tablet
-   layout. The two thresholds are deliberately different: 1000/1001px is where the compact
+   layout. The two thresholds are deliberately different: 1099/1100px is where the compact
    desktop header itself runs out of room; 960px is where the footer's own 3-column tablet
    composition starts looking right. Kept distinct rather than merged into one number. */
 @media (max-width: 960px) {
@@ -863,9 +865,9 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .footer-phone, .footer-email { white-space: nowrap; }
 }
 
-/* The compact desktop header reaches its safe minimum at 1001px. */
-@media (max-width: 1000px) {
-  .desktop-nav, .header-contacts { display: none; }
+/* The compact desktop header reaches its safe minimum at 1100px (see «Desktop header tiers» near the end). */
+@media (max-width: 1099px) {
+  .desktop-nav, .header-actions { display: none; }
   .mobile-menu { display: block; }
   .mobile-call { display: inline-flex; }
 }
@@ -1351,20 +1353,29 @@ a.route-service:focus-visible { padding-inline: 26px; color: var(--color-dark-te
   .mobile-menu summary > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
-/* Room for the theme cell — kept at the end, so it outranks the header's own ≤1180 tier. 1001–1279: the header's
-   compact values plus 36 px icon cells; 1001–1099 tightens further — 34 px cells, 8 px cell padding, 8 px between logo, nav and contacts, 10 px between nav links. The logo keeps its
-   226 px (the brand test holds it at ≥225 px on desktop). */
-@media (min-width: 1001px) and (max-width: 1279px) {
+/* Desktop header tiers — kept at the end, so they outrank the header's own ≤1180 tier. Measured (2026-10-06, with the
+   theme switch outside the contacts box): logo + nav + contacts + switch need ~1003 px at the compact values, so the
+   burger header now runs to 1099 px (at 1001 the old desktop row already ran 21 px past the shell). 1100–1279: 36 px
+   icon cells and the compact switch; the gaps step down where each tier starts tight (1100, 1181, 1280). The logo
+   keeps its 226 px (the brand test holds it at ≥225 px on desktop). */
+@media (min-width: 1100px) and (max-width: 1279px) {
   .nav-wrap { gap: 10px; }
   .header-contact { padding-inline: 10px; }
   .header-phone { min-width: 150px; }
-  :is(.header-messengers .messenger-link, .header-email, .theme-menu-trigger) { width: 36px; }
+  :is(.header-messengers .messenger-link, .header-email) { width: 36px; }
+  .header-actions { gap: 8px; }
+  .theme-switch { --ts-w: 46px; --ts-h: 26px; }
 }
-@media (min-width: 1001px) and (max-width: 1099px) {
-  .nav-wrap { gap: 8px; }
-  .desktop-nav { gap: 10px; }
-  .header-contact { padding-inline: 8px; }
-  :is(.header-messengers .messenger-link, .header-email, .theme-menu-trigger) { width: 34px; }
+@media (min-width: 1100px) and (max-width: 1180px) {
+  .desktop-nav { gap: 11px; }
+  .header-actions { gap: 6px; }
+}
+@media (min-width: 1181px) and (max-width: 1279px) {
+  .desktop-nav { gap: 18px; }
+}
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .nav-wrap { gap: 12px; }
+  .desktop-nav { gap: 22px; }
 }
 
 /* ── UX pass 2026-10 · Phone: the call leads every inner hero ─────────────────────────────────────────────────────
@@ -1393,9 +1404,7 @@ a.route-service:focus-visible { padding-inline: 26px; color: var(--color-dark-te
 .footer-geo { margin: 0 0 6px; color: var(--color-dark-text-secondary); font-size: 13px; line-height: 1.45; max-width: 260px; }
 
 /* Header phone: 16 px where the header has room; the compact desktop tiers step it down so the row still fits. */
-@media (min-width: 1001px) and (max-width: 1279px) { .header-phone { min-width: 0; } .header-phone strong { font-size: 15px; } }
-@media (min-width: 1001px) and (max-width: 1099px) { .header-phone strong { font-size: 14px; } }
-@media (min-width: 1001px) and (max-width: 1059px) { .header-phone strong { font-size: 13px; } }
+@media (min-width: 1100px) and (max-width: 1279px) { .header-phone { min-width: 0; } .header-phone strong { font-size: 15px; } }
 
 /* ── UX pass 2026-10 · Phone fields at 16 px ─────────────────────────────────────────────────────────────────────────
    iOS Safari zooms the page into any field whose text is under 16 px. Every text field, select and textarea on a phone
