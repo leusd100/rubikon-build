@@ -558,10 +558,16 @@ main[data-home="v2"] .hv2-contour-stage[data-narrow-right] .hv2-contour-seamtags
 main[data-home="v2"] .hv2-contour-seam { position: absolute; z-index: 2; top: 0; bottom: 0; left: 0; width: 2px; margin-left: -1px; background: var(--hv2-copper-text); }
 /* The handle is the finger's one grip (44 px); a vertical swipe on it still scrolls the page — the browser cancels the
    drag. Its disc is drawn under the glyph, so a phone can draw it smaller than the area it answers to */
+/* held clear of the frame's edges: the rail stands at the seam, so the clamp is relative to it. The grip is as wide as
+   the rail and takes the rail's --split, so its transform's per cents are the rail's: as the handle's left, the clamp
+   moved the layout while the sweep left the edge (CLS) */
+main[data-home="v2"] .hv2-contour-grip {
+  --split: inherit; position: absolute; z-index: 4; inset: 0; pointer-events: none;
+  transform: translateX(clamp(calc(22px - var(--split)), 0px, calc(100% - 22px - var(--split))));
+}
 main[data-home="v2"] .hv2-contour-handle {
-  /* held clear of the frame's edges: the rail stands at the seam, so the clamp is relative to it */
   /* --handle-y: stepped off a node's ring where the frame's edge holds it onto one (ProofContour's placeSeam) */
-  position: absolute; z-index: 4; top: var(--handle-y, 50%); left: clamp(calc(22px - var(--split)), 0px, calc(100% - 22px - var(--split))); isolation: isolate; display: grid; place-items: center;
+  position: absolute; z-index: 4; top: var(--handle-y, 50%); left: 0; isolation: isolate; display: grid; place-items: center;
   pointer-events: auto;
   width: 44px; height: 44px; margin: -22px 0 0 -22px; color: var(--hv2-text); border-radius: 50%; cursor: grab; touch-action: pan-y pinch-zoom;
   padding-bottom: 3px; font: 700 24px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; white-space: nowrap; /* the guillemets sit low */

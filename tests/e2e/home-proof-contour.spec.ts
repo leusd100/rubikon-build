@@ -2158,7 +2158,8 @@ test('with reduced motion the sheet stands static and complete at its resting sp
     width: (element as HTMLElement).offsetWidth,
     frame: element.parentElement!.clientWidth,
   }));
-  expect(rail.parts).toEqual(['hv2-contour-hint', 'hv2-contour-seamtags', 'hv2-contour-snap', 'hv2-contour-seam', 'hv2-contour-handle']);
+  // (the handle in its grip: the clamp off the frame's edges is the grip's transform)
+  expect(rail.parts).toEqual(['hv2-contour-hint', 'hv2-contour-seamtags', 'hv2-contour-snap', 'hv2-contour-seam', 'hv2-contour-grip']);
   expect(rail.width).toBe(rail.frame);
   // …and so does the right side's window, as wide as the frame, its content moved back by as much (review, 05.10)
   for (const [part, sign] of [['.hv2-contour-rail', 1], ['.hv2-contour-pane', 1], ['.hv2-contour-pane-inner', -1]] as const) {
