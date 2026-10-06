@@ -221,7 +221,7 @@ export function GrainComplexBuilder() {
             { label: 'Масштаб', value: `${model.scaleLabel} · умовно` },
             { label: 'Зображення', value: 'Схема' },
           ]}
-          action={<span className="gc-stamp-actions">{pause}{cta('gc-cta')}</span>}
+          action={cta('gc-cta')}
         >
           {/* On a phone the elevation is wider than the screen: it scrolls sideways, at a size its words can be read */}
           <div className="gc-scroll" ref={scrollRef} role="region" tabIndex={0} aria-label="Схема комплексу, гортайте вбік">
@@ -243,8 +243,9 @@ export function GrainComplexBuilder() {
               </div>
             )}
           </div>
-          {/* a phone has no title block under the sheet (it would cover the choices): its pause sits on the drawing */}
-          {pause && <span className="gc-pause-phone">{pause}</span>}
+          {/* the grain's pause sits on the drawing it stops, in its empty top corner: the title block keeps its line for the
+              chain, and a phone's sheet has no title block */}
+          {pause && <span className="gc-pause">{pause}</span>}
         </DrawingSheet>
 
         <div className="gc-controls">

@@ -48,6 +48,10 @@
 .gc-drawing .gc-unknown { stroke: var(--color-border-control); stroke-width: 2.6; stroke-dasharray: 14 10; }
 .gc-drawing .gc-unknown-mark { fill: var(--color-border-control); font: 400 150px var(--font-display), sans-serif; text-anchor: middle; }
 .gc-drawing .gc-label { fill: var(--color-text-secondary); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; text-anchor: middle; }
+.gc-drawing .gc-label-end { text-anchor: end; }
+/* the labels keep a readable size as the drawing narrows (26 units are 12 px at 1280, 8 at a tablet's 834) */
+@media (min-width: 1024px) and (max-width: 1279px) { .gc-drawing .gc-label { font-size: 32px; } }
+@media (min-width: 761px) and (max-width: 1023px) { .gc-drawing .gc-label { font-size: 40px; } }
 .gc-drawing .gc-flow { stroke: var(--color-grain); stroke-width: 11; stroke-linecap: round; stroke-dasharray: 1 24; }
 /* A module out of the chain stays as a ghost, so the chain keeps its places */
 .gc-mod { transition: opacity .5s ease; }
@@ -75,10 +79,21 @@
 .gc-tip-own::before { display: inline-block; width: 14px; margin-right: 7px; vertical-align: middle; content: ''; border-top: 3px solid var(--color-accent); }
 .gc-tip-partner::before { display: inline-block; width: 14px; height: 2px; margin-right: 7px; vertical-align: middle; content: ''; background: repeating-linear-gradient(90deg, var(--color-text-muted) 0 5px, transparent 5px 8px); }
 .gc-tip em { color: var(--color-accent-strong); font: 600 12px/1.3 var(--font-condensed), sans-serif; font-style: normal; letter-spacing: .04em; }
-/* the title block's end: the pause, then the way into the form (owner, 06.10: the button right under the drawing) */
-.gc-stamp-actions { display: flex; align-items: center; gap: 14px; }
-.gc-stamp-actions .gc-cta { min-height: 44px; padding: 0 18px; white-space: nowrap; }
-.gc-pause-phone, .gc-cta-phone { display: none; }
+/* the title block's end: the way into the form (owner, 06.10: the button right under the drawing) */
+.gc-sheet .gc-cta { min-height: 44px; padding: 0 18px; white-space: nowrap; }
+.gc-cta-phone { display: none; }
+.gc-pause { position: absolute; z-index: 5; top: 8px; right: 8px; }
+.gc-pause .dn-control { padding-left: 10px; background: color-mix(in srgb, var(--color-surface-elevated) 88%, transparent); border-radius: 22px; }
+/* where the longest chain («… → Підлогове сховище → …») takes two lines, every chain has room for two: a choice never
+   moves the choices under the pointer */
+@media (min-width: 761px) and (max-width: 1339px) { .gc-sheet .sheet-stamp { min-height: 62px; } }
+/* a tablet's title block: the chain on its own row over the rest (as a narrow sheet's, drawing-sheet.css), one line */
+@media (min-width: 761px) and (max-width: 1023px) {
+  .gc-sheet .sheet-stamp { flex-wrap: wrap; }
+  .gc-sheet .sheet-stamp .sheet-cell { flex: 1 1 auto; }
+  .gc-sheet .sheet-stamp .sheet-cell-main { order: -1; flex-basis: 100%; border-bottom: 1px solid var(--sheet-ink); border-left: 0; }
+  .gc-sheet .sheet-action { margin-left: auto; }
+}
 
 /* Arriving: the complex assembles module by module (--o is each module's turn), the grain starts once it stands. Without
    motion none of this applies: the finished complex, still. */
@@ -141,8 +156,11 @@
      made; the title block gives way (its chain is on the drawing, its pause sits on it, its button follows the choices) */
   .gc-stage .gc-sheet { position: sticky; z-index: 4; top: 77px; }
   .gc-sheet .sheet-stamp { display: none; }
-  .gc-pause-phone { position: absolute; z-index: 5; right: 6px; bottom: 6px; display: block; }
-  .gc-pause-phone .dn-control { padding-left: 10px; background: color-mix(in srgb, var(--color-surface-elevated) 88%, transparent); border-radius: 22px; }
+  /* the pause keeps to the drawing's top corner (its bottom holds the labels), as its round button alone: its words stay
+     for a screen reader */
+  .gc-pause { top: 6px; right: 6px; }
+  .gc-pause .dn-control { padding: 2px; }
+  .gc-pause .dn-control-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .gc-cta-phone { display: flex; width: 100%; justify-content: space-between; }
   .gc-tip { width: 220px; font-size: 12px; }
   /* each group of choices one row that scrolls sideways */

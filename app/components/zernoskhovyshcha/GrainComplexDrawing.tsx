@@ -234,7 +234,8 @@ export function GrainComplexDrawing({ model, label, hovered = null, flash = null
       {/* the labels under the ground; the storage's follows its group */}
       <text className="gc-label" x="300" y="772">Приймання</text>
       <text className="gc-label" x={storeCentre} y="772">Зберігання</text>
-      <text className="gc-label" x="2256" y="772">Відвантаження</text>
+      {/* the last label ends at the drawing's edge: at a phone's larger size a centred one ran past it */}
+      <text className="gc-label gc-label-end" x="2384" y="772">Відвантаження</text>
 
       {/* the modules a pointer can find: a press adds or removes cleaning and drying or swaps the storage, and every one
           names who builds what in it (GrainComplexBuilder's tip). The chips under the sheet do the same for a keyboard. */}
