@@ -20,6 +20,8 @@ import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures'
 const { width: W, height: H } = homeProofContour.photo;
 type Pt = readonly [number, number];
 const d = (points: readonly Pt[], closed = false) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}${closed ? 'Z' : ''}`;
+/** A lit link's React key, by both its ends: the truss's two halves start at the one ridge node */
+export const linkKey = ({ link, points }: Readonly<{ link: number; points: readonly Pt[] }>) => `${link}-${points[0].join()}-${points.at(-1)!.join()}`;
 /** The section hatch's step in photo pixels per frame width (home-v2.css picks one by the --u steps): a narrower frame
  *  draws it coarser, so on a phone it stays lines, not grey */
 const HATCHES = [['hv2-proof-hatch', 6], ['hv2-proof-hatch-m', 9], ['hv2-proof-hatch-l', 13]] as const;
@@ -167,7 +169,7 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
         </g>
         {/* Each lit link: a clean light line on a dark casing, as the measured lines are kept legible — no glow */}
         {load.links.map(({ link, points }) => (
-          <g key={`${link}-${points[0].join()}`} className="hv2-proof-link" data-link={link} data-step={link} style={{ '--n': link } as CSSProperties}>
+          <g key={linkKey({ link, points })} className="hv2-proof-link" data-link={link} data-step={link} style={{ '--n': link } as CSSProperties}>
             <path className="hv2-proof-link-casing" d={d(points)} />
             <path d={d(points)} />
           </g>
@@ -195,7 +197,7 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
           ))}
         </g>
         {wind.links.map(({ link, points }) => (
-          <g key={`${link}-${points[0].join()}`} className="hv2-proof-link" data-link={link} data-step={link} style={{ '--n': link } as CSSProperties}>
+          <g key={linkKey({ link, points })} className="hv2-proof-link" data-link={link} data-step={link} style={{ '--n': link } as CSSProperties}>
             <path className="hv2-proof-link-casing" d={d(points)} />
             <path d={d(points)} />
           </g>

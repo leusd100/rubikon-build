@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { linkKey } from '../../app/components/home-v2/ProofFrame';
 import { homeProofContour } from '../../app/data/homeProofContour';
 import { homeProofDetailSpots, homeProofFrame, memberAt } from '../../app/data/homeProofFrame';
 import { approx, homeProofMarks, homeProofMeasures, plusMinus } from '../../app/data/homeProofMeasures';
@@ -266,6 +267,10 @@ describe('homeProofFrame — the scheme', () => {
       expect(from[1]).toBeLessThan(rakeY(from[0]));
       expect(to[1]).toBeLessThan(rakeY(to[0]));
     }
+  });
+
+  it('keys every lit link apart, the truss’s two halves from the one ridge node too', () => {
+    for (const { links } of [load, wind]) expect(new Set(links.map(linkKey)).size).toBe(links.length);
   });
 
   it('blows the wind onto the right wall and lifts it off the roof, then takes it through the frame to the ground at every footing', () => {
