@@ -272,12 +272,15 @@ async function openNode(page: Page, node: ProofNode) {
   return panel;
 }
 
-async function touchDrag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }, steps = 10) {
+/** `rest`: how long the finger stays put before it lifts. The moves land a few ms apart, a flick of thousands of px/s,
+ *  so a swipe that scrolls the page lifts into a fling; after a rest the browser takes the finger as stopped. */
+async function touchDrag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }, steps = 10, rest = 0) {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [from] });
   for (let step = 1; step <= steps; step += 1) {
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from.x + ((to.x - from.x) * step) / steps, y: from.y + ((to.y - from.y) * step) / steps }] });
   }
+  if (rest) await page.waitForTimeout(rest);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 }
 
@@ -2066,12 +2069,13 @@ test('arriving the usual way â€” the wheel, or a finger swiping over the sheet â
       await expect.poll(top).toBeLessThan(before);
     }
   } else {
-    // The sheet enters from below; the finger starts on it and swipes it up
+    // The sheet enters from below; the finger starts on it and swipes it up, and rests before it lifts: the flick's fling
+    // carried the 178 px stage clean out of view now and then, and out of view the seam rightly never sweeps
     await sheet.evaluate((element) => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - window.innerHeight + 200, behavior: 'instant' }));
     for (let swipe = 0; swipe < 6 && (await top()) > 90; swipe += 1) {
       const before = await top();
       const from = { x: viewport.width / 2, y: Math.min(viewport.height - 20, before + 120) };
-      await touchDrag(page, from, { x: from.x, y: from.y - 160 });
+      await touchDrag(page, from, { x: from.x, y: from.y - 160 }, 10, 150);
       await expect.poll(top).toBeLessThan(before);
     }
   }
