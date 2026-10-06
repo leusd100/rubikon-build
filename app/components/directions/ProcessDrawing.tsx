@@ -182,6 +182,27 @@ const DRAWINGS: Record<ProcessDrawingKind, ReactNode> = {
       <path className="pd-ink" d="M68 92V60H108V92M88 60V92" />
     </>
   ),
+
+  // /yak-pratsyuiemo — the project checked: the designer's sheet in graphite, RUBIKON's lens on the frame's knee
+  review: (
+    <>
+      <path className="pd-ink" d="M30 12H134V92H30ZM44 72V50L72 34L100 50V72M40 72H104M108 76H134V92H108ZM108 82H134" />
+      <circle pathLength={1} className="pd-own-line" cx="100" cy="48" r="15" />
+      <path pathLength={1} className="pd-own-line pd-heavy" d="M110.6 58.6L126 74" />
+      <path pathLength={1} className="pd-own-line" d="M93 48l5 5l9 -10" />
+    </>
+  ),
+  // handed over: the building stands, and beside it the acts — signed, stamped
+  handover: (
+    <>
+      <path pathLength={1} className="pd-own" d="M20 92V56L60 36L100 56V92Z" />
+      <path className="pd-ink" d="M48 92V66H72V92" />
+      <path className="pd-cut" d="M112 30H156V92H112Z" />
+      <path className="pd-ink" d="M120 42H148M120 51H144M120 60H148" />
+      <path pathLength={1} className="pd-own-line" d="M120 78c4-8 7 5 11-1s6 4 9-1" />
+      <circle pathLength={1} className="pd-own-line" cx="144" cy="80" r="6.5" />
+    </>
+  ),
 };
 
 export function ProcessDrawing({ kind }: Readonly<{ kind: ProcessDrawingKind }>) {

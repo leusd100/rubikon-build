@@ -1,4 +1,3 @@
-import { DraftingCompass } from 'lucide-react';
 import { CostFactorsFigure } from '../components/process/CostFactorsFigure';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
@@ -6,6 +5,7 @@ import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { FormatsScope, type FormatTerms } from '../components/directions/FormatsScope';
+import { ProcessDrawing } from '../components/directions/ProcessDrawing';
 import { StartGlyph } from '../components/process/StartGlyph';
 import { company } from '../data/company';
 import { deliveryModel } from '../data/deliveryModel';
@@ -24,8 +24,10 @@ import {
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
 import type { CSSProperties } from 'react';
 import type { DeliveryFormatId } from '../types/deliveryModel';
+import type { ProcessSplit } from '../types/directionPage';
 import './delivery.css';
 import '../components/directions/formats-scope.css';
+import '../components/directions/process-split.css';
 
 // /yak-pratsyuiemo v2 — what happens with the client's task, in seven zones: where to start, the four steps, how much
 // RUBIKON can take on, who answers for what, what drives cost and time, a short FAQ and the conversation. Every business
@@ -79,8 +81,19 @@ const TERMS = [
   { title: 'Погоджуємо зміни', text: deliveryModel.changePolicy.principle },
 ] as const;
 
+/**
+ * «Від задачі до будівництва» as «Ви · Ми»: what the client does at each of processSteps(), what they have after it (a
+ * short caption; the model's full result is read to screen readers) and its small drawing. Wording as on the /angary
+ * route; step 02's «Ви» adds the Delivery Model's design statement (statements.design) in short.
+ */
+const ROUTE_SIDES: readonly ProcessSplit[] = [
+  { you: 'Розповідаєте, що потрібно, де об’єкт і що вже підготовлено.', result: 'Задача й список даних', drawing: 'checklist' },
+  { you: 'Надаєте креслення або параметри об’єкта. Якщо проєктувальника ще немає — порадимо, до кого звернутися.', result: 'Основа для пропозиції', drawing: 'review' },
+  { you: 'Погоджуєте пропозицію й підписуєте договір.', result: 'Пропозиція, кошторис і договір', drawing: 'contract' },
+  { you: 'Приймаєте роботи й підписуєте акти.', result: 'Прийняті роботи й акти', drawing: 'handover' },
+];
+
 export default function DeliveryModelPage() {
-  const { statements } = deliveryModel;
   const steps = processSteps();
   // What tells the formats apart, for the scope drawing: the other party of the contract and who coordinates
   const formatTerms = Object.fromEntries(participationChoices().map(({ id, contractWith, coordinator, rubikonCoordinates }) => [id, { contractWith, coordinator, rubikonCoordinates }])) as Record<DeliveryFormatId, FormatTerms>;
@@ -184,24 +197,24 @@ export default function DeliveryModelPage() {
             titleId="proc-route-title"
             supporting="Після кожного кроку зрозуміло, що вже вирішено і що потрібно для наступного."
           />
-          <ol className="proc-steps" data-motion>
+          {/* «Ви · Ми» (owner 06.10, as on the direction pages): over the rail what you do, under it what we do — the
+              Delivery Model's step text word for word — and on it what you have after the step, drawn small. The old
+              «Хто готує проєкт» note is step 02's «Ви» now; the full result sentence stays for screen readers. */}
+          <p className="process-key" aria-hidden="true"><span>Ви</span><span>RUBIKON</span></p>
+          <ol className="process-split proc-split" data-motion>
             {steps.map((step, index) => (
               <li key={step.number} style={{ '--i': index } as CSSProperties}>
-                <span className="proc-step-node" aria-hidden="true">{step.number}</span>
-                <h3><span className="visually-hidden">Крок {step.number}. </span>{step.title}</h3>
-                <p>{step.text}</p>
-                <p className="proc-step-result"><b>На виході:</b> {step.result}</p>
+                <h3><b>{step.number}</b>{step.title}</h3>
+                <p className="ps-you"><small>Ви</small>{ROUTE_SIDES[index].you}</p>
+                <div className="ps-node">
+                  <ProcessDrawing kind={ROUTE_SIDES[index].drawing} />
+                  {index === 0 && <span className="ps-spark" aria-hidden="true" />}
+                </div>
+                <p className="ps-result"><span className="sr-only">Результат: {step.result}</span><span aria-hidden="true">{ROUTE_SIDES[index].result}</span></p>
+                <p className="ps-we"><small>Ми</small>{step.text}</p>
               </li>
             ))}
           </ol>
-          {/* Belongs to step 02 (checking the project): aligned under it on the horizontal route, named on the vertical one */}
-          <aside className="proc-design-note" aria-labelledby="proc-design-note-title">
-            <DraftingCompass aria-hidden="true" />
-            <div>
-              <p className="proc-design-note-title" id="proc-design-note-title"><span>До кроку 02</span> Хто готує проєкт</p>
-              <p>{statements.design}</p>
-            </div>
-          </aside>
         </div>
       </section>
 

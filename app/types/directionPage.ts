@@ -135,7 +135,8 @@ export type ProcessDrawingKind =
   | 'metal-data' | 'metal-project' | 'metal-fabricated' | 'metal-erected'
   | 'concrete-levels' | 'concrete-formwork' | 'concrete-pour' | 'concrete-check'
   | 'roof-survey' | 'roof-kit' | 'roof-laid' | 'roof-checked'
-  | 'hangar-brief' | 'contract' | 'hangar-built';
+  | 'hangar-brief' | 'contract' | 'hangar-built'
+  | 'review' | 'handover';
 
 /** A process step's other side and its outcome: what the client does, what they get after it, and its small drawing */
 export type ProcessSplit = { you: string; result: string; drawing: ProcessDrawingKind };
