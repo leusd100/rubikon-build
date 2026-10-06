@@ -176,7 +176,28 @@
 .about-principles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2vw, 28px); margin: 0; padding: 0; list-style: none; }
 .about-principles-grid li { display: grid; grid-template-rows: auto auto auto 1fr auto; min-width: 0; padding: 28px 28px 26px; border: 1px solid var(--color-dark-line); border-top: 2px solid var(--color-accent-on-dark); }
 .about-principle-index { color: var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
-.about-principle-icon { width: 26px; height: 26px; margin-top: 22px; color: var(--color-accent-on-dark); stroke-width: 1.5; }
+/* PrincipleMark: the principle's mark on a sheet. Copper = the mark (RUBIKON's part), graphite the drawing under it,
+   long dash someone else's. Drawn once when the cards come into view: copper plots, graphite fades in. */
+.principle-mark { width: 100%; height: auto; margin-top: 18px; overflow: visible; }
+.principle-mark :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.principle-mark .pm-ink { stroke: var(--color-dark-text-muted); stroke-width: 1.4; }
+.principle-mark .pm-text-line { stroke-width: 2; opacity: .7; }
+.principle-mark .pm-cut { fill: color-mix(in srgb, var(--color-dark-text) 12%, transparent); stroke: var(--color-dark-text-muted); stroke-width: 1.4; }
+.principle-mark .pm-own { stroke: var(--color-accent-on-dark); stroke-width: 1.9; }
+.principle-mark .pm-fill { fill: color-mix(in srgb, var(--color-accent-on-dark) 12%, transparent); }
+.principle-mark .pm-thin { stroke-width: 1.2; }
+.principle-mark .pm-line { stroke-width: 1.6; }
+.principle-mark .pm-partner { stroke: var(--color-dark-text-muted); stroke-width: 1.4; stroke-dasharray: 9 5; }
+.principle-mark .pm-dot { fill: var(--color-accent-on-dark); stroke: none; }
+.principle-mark text { stroke: none; font: 700 10px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-anchor: middle; }
+.principle-mark .pm-delta { fill: var(--color-accent-on-dark); font-size: 11px; letter-spacing: 0; }
+.principle-mark .pm-label { fill: var(--color-dark-text-muted); text-transform: uppercase; }
+.principle-mark .pm-label-own { fill: var(--color-accent-on-dark); }
+.principle-mark [pathLength="1"] { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.about-page[data-motion-ready] .about-principles-grid:not([data-motion-state="on"]) .principle-mark [pathLength="1"] { stroke-dashoffset: 1; }
+.about-page[data-motion-ready] .about-principles-grid:not([data-motion-state="on"]) .principle-mark :is(.pm-ink, .pm-cut, .pm-partner, .pm-dot, text) { opacity: 0; }
+.about-page[data-motion-ready="on"] .about-principles-grid .principle-mark [pathLength="1"] { transition: stroke-dashoffset 1100ms var(--m-ease) calc(450ms + var(--i, 0) * 260ms); }
+.about-page[data-motion-ready="on"] .about-principles-grid .principle-mark :is(.pm-ink, .pm-cut, .pm-partner, .pm-dot, text) { transition: opacity 500ms ease calc(250ms + var(--i, 0) * 260ms); }
 .about-principles-grid h3 { margin: 18px 0 12px; color: var(--color-dark-text); font: 600 22px/1.12 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; }
 .about-principles-grid p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.65; }
 .about-principle-link {

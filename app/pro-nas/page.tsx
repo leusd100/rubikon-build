@@ -1,10 +1,10 @@
-import { ClipboardCheck, FileSignature, ShieldCheck } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { CapabilityFigure } from '../components/about/CapabilityFigure';
+import { PrincipleMark } from '../components/about/PrincipleMark';
 import { RegionBlock } from '../components/about/RegionBlock';
 import { PracticeSteps, type PracticeStep } from '../components/about/PracticeSteps';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
@@ -59,26 +59,26 @@ const BEFORE_SITE: readonly PracticeStep[] = [
   },
 ];
 
-/** Each principle ends where the page shows how it works in practice. */
+/** Each principle is drawn as its mark on a sheet (PrincipleMark) and ends where the page shows how it works in practice. */
 const PRINCIPLES = [
   {
-    Icon: ClipboardCheck,
+    mark: 'revision',
     title: 'Прямота у складних ситуаціях',
-    text: 'Якщо під час підготовки або робіт змінюються вихідні умови, обсяг чи технічні вимоги, обговорюємо це до того, як рішення вплине на наступні етапи.',
+    text: 'Якщо змінюються умови, обсяг чи вимоги, обговорюємо це до того, як рішення вплине на наступні етапи.',
     href: `${siteRoutes.process}#koshtorys`,
     link: 'Як погоджуємо зміни',
   },
   {
-    Icon: ShieldCheck,
+    mark: 'node',
     title: 'Контроль ключових рішень',
-    text: 'Ключові конструктивні вузли та етапи не залишаємо без уваги: вони мають бути зрозумілими до переходу до наступної частини робіт.',
+    text: 'Ключові вузли й етапи мають бути зрозумілими до переходу до наступної частини робіт.',
     href: `${siteRoutes.process}#etapy`,
     link: 'Етапи роботи',
   },
   {
-    Icon: FileSignature,
+    mark: 'boundary',
     title: 'Чіткі межі відповідальності',
-    text: 'До початку робіт погоджуємо, що входить у нашу частину проєкту, а що залишається відповідальністю інших учасників.',
+    text: 'До початку робіт погоджуємо, що входить у нашу частину, а що — відповідальність інших учасників.',
     href: `${siteRoutes.process}#vidpovidalnist`,
     link: 'Хто за що відповідає',
   },
@@ -166,10 +166,10 @@ export default function AboutPage() {
             supporting="Строки, бюджет і технічні рішення залежать від конкретного об’єкта. Тому спочатку вивчаємо завдання, а потім фіксуємо реалістичні домовленості."
           />
           <ol className="about-principles-grid" data-motion>
-            {PRINCIPLES.map(({ Icon, title, text, href, link }, index) => (
+            {PRINCIPLES.map(({ mark, title, text, href, link }, index) => (
               <li key={title} style={{ '--i': index } as CSSProperties}>
                 <span className="about-principle-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <Icon className="about-principle-icon" aria-hidden="true" />
+                <PrincipleMark kind={mark} />
                 <h3>{title}</h3>
                 <p>{text}</p>
                 <a className="about-principle-link" href={href}>{link} <span aria-hidden="true">↗</span></a>
