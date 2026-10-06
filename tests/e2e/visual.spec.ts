@@ -21,12 +21,19 @@ async function preparePage(page: Page, path: string) {
   await expect(essentialCookiesButton).toBeVisible({ timeout: 10_000 });
   await essentialCookiesButton.click();
 
+  // The form's own state proves it hydrated too — where it shows. Phones and tablets fold it behind «Залишити запит»
+  // (ConversationFormToggle, UX pass 2026-10) and the shots record that default: unfolding it here timed every shot out
+  // on the hidden radios.
   const form = page.locator('form.inquiry-form');
-  await form.getByText('Telegram', { exact: true }).click();
-  await expect(form.getByRole('radio', { name: 'Telegram', exact: true })).toBeChecked();
-  await form.getByText('Дзвінок', { exact: true }).click();
-  await expect(form.getByRole('radio', { name: 'Дзвінок', exact: true })).toBeChecked();
-  await expect(form.getByRole('button', { name: 'Надіслати запит', exact: true })).toBeVisible();
+  if (await form.isVisible()) {
+    await form.getByText('Telegram', { exact: true }).click();
+    await expect(form.getByRole('radio', { name: 'Telegram', exact: true })).toBeChecked();
+    await form.getByText('Дзвінок', { exact: true }).click();
+    await expect(form.getByRole('radio', { name: 'Дзвінок', exact: true })).toBeChecked();
+    await expect(form.getByRole('button', { name: 'Надіслати запит', exact: true })).toBeVisible();
+  } else {
+    await expect(page.locator('#inquiry .conversation-form-toggle')).toBeVisible();
+  }
 
   await page.addStyleTag({
     content: `

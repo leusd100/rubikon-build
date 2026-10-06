@@ -244,6 +244,12 @@ const SCROLL_FIRST = 450;
 /** The letters А, Б, В ring a few times once the sweep or the assembly has put them up, so the nodes behind them are
  *  found (owner, 05.10: found by chance) */
 const NODES_HINT_MS = 2800;
+/** Settles when the sheet's picture has finished plotting in (DrawingSheet's clip-path transition), or at once */
+function plottedIn(sheet: Element) {
+  const plotting = sheet.querySelector('.sheet-image')?.getAnimations() ?? [];
+  return Promise.all(plotting.map((animation) => animation.finished.catch(() => undefined)));
+}
+
 function hintNodes(stage: HTMLElement, after: number) {
   window.setTimeout(() => {
     stage.dataset.nodesHint = '';
@@ -407,6 +413,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     let due = false;
     let visible = false;
     let scrolled = 0;
+    let live = true;
     stage.dataset.sweep = 'wait';
     const stop = () => {
       touched.current = true;
@@ -453,8 +460,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       if (sheet.getAttribute('data-sheet-state') !== 'on') return;
       arrived.disconnect();
       timer = window.setTimeout(() => {
-        due = true;
-        run();
+        // …and only once the picture has plotted in: the plot's transition starts a frame after data-sheet-state, so on a
+        // busy page SWEEP_AT alone could start the sweep with the plot's last frames still running
+        void plottedIn(sheet).then(() => {
+          if (!live) return;
+          due = true;
+          run();
+        });
       }, SWEEP_AT);
     });
     arrived.observe(sheet, { attributes: true, attributeFilter: ['data-sheet-state'] });
@@ -469,6 +481,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     sheet.addEventListener('pointerdown', onPointer, { passive: true });
     sheet.addEventListener('keydown', stop);
     return () => {
+      live = false;
       seen.disconnect();
       arrived.disconnect();
       window.clearTimeout(timer);
@@ -1605,7 +1618,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             <span className="hv2-contour-snap-measure">{snapWords?.name}</span>
           </span>
           <span className="hv2-contour-seam" />
-          <span className="hv2-contour-handle" ref={handleRef}>‹ ›</span>
+          {/* The handle's clamp off the frame's edges is a transform too, on a rail-wide grip (a transform's per cent is
+              its own box's): as left it shifted the layout through the sweep's first 22 px */}
+          <span className="hv2-contour-grip">
+            <span className="hv2-contour-handle" ref={handleRef}>‹ ›</span>
+          </span>
         </span>
       </div>
     </DrawingSheet>

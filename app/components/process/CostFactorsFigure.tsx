@@ -265,8 +265,10 @@ export function CostFactorsFigure({
               key={factor.key}
               data-factor={factor.key}
               style={{ '--i': index } as CSSProperties}
-              onMouseEnter={() => point(factor.key)}
-              onMouseLeave={() => point(null)}
+              // The mouse lights the factor on hover. A tap's compatibility mouse events are left out: lighting a factor
+              // retitles the sheet above the list, the list moves under the finger and the browser's mouseleave put it out
+              onPointerEnter={(event) => { if (event.pointerType === 'mouse') point(factor.key); }}
+              onPointerLeave={(event) => { if (event.pointerType === 'mouse') point(null); }}
               // A tap lights the factor's part (the mouse already does on hover); the drawing is decorative
               onPointerUp={(event) => { if (event.pointerType !== 'mouse') point(pointed === factor.key ? null : factor.key); }}
             >

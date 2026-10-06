@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import { Jost, Manrope } from 'next/font/google';
 // Self-hosted rather than next/font/google: Google's copy of Plex Sans Condensed has no Cyrillic.
 import './fonts/ibm-plex-sans-condensed.css';
+import condensedBoldCyrillic from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-Bold-Cyrillic.woff2?url';
+import condensedBoldLatin from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-Bold-Latin1.woff2?url';
+import condensedSemiBoldCyrillic from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-SemiBold-Cyrillic.woff2?url';
+import condensedSemiBoldLatin from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-SemiBold-Latin1.woff2?url';
 import './theme.css';
 import './globals.css';
 import './conversation.css';
@@ -126,6 +130,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {/* Resolves system/light/dark onto <html> before the first paint, so the first frame already has the right
             theme (app/lib/theme.ts, app/theme.css). */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* Plex Condensed sets first-screen text since the UX pass (the «Ілюстрація» stamp, the configurator's eyebrow on
+            a phone). Fetched with the CSS, as next/font does for Manrope and Jost, it is in before the first paint
+            instead of swapping in later and shifting the hero (direction-static-hero.spec.ts). Only the faces nearly every
+            page sets: 600 and 700, Latin and Cyrillic; 500 and the Pi subsets stay on demand. */}
+        {[condensedSemiBoldLatin, condensedSemiBoldCyrillic, condensedBoldLatin, condensedBoldCyrillic].map((href) => (
+          <link key={href} rel="preload" href={href} as="font" type="font/woff2" crossOrigin="anonymous" />
+        ))}
         <script
           dangerouslySetInnerHTML={{
             __html: `

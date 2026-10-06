@@ -191,7 +191,12 @@ test.describe('configurator 3D visual states', () => {
 // 0.9, plus reserving the dimension readout's band). litMean did NOT move, and that split is the
 // useful part: this guard separates "the scene is shaded differently" from "the model occupies a
 // different share of the frame", and a pure reframing must move only the second. It did.
-const RENDER_TONE = { litMean: 64.2769, litFrac: 0.2357 } as const;
+// Both moved with #142 (/angary v3): litMean 64.2769 -> 63.7019, litFrac 0.2357 -> 0.2249. That
+// pass changed the shading (new roof purlins and roof bracing) and the framing (the preview now
+// lies on a DrawingSheet with rulers on two sides) at once, so here both halves moving is
+// expected rather than a split to read. Measured on Linux Chromium; the same machine read
+// 64.3256 / 0.2358 on the commit before #142, within 0.05 of the previous pin.
+const RENDER_TONE = { litMean: 63.7019, litFrac: 0.2249 } as const;
 const LIT_MEAN_TOLERANCE = 0.3;
 const LIT_FRAC_TOLERANCE = 0.002;
 
