@@ -163,7 +163,7 @@
 .proc-contract-band p { max-width: 920px; margin: 0; color: var(--color-text); font-size: 16.5px; line-height: 1.6; }
 /* The chosen format's words settle in (display: none → shown restarts the animation) */
 @media (prefers-reduced-motion: no-preference) {
-  .proc-principle, .rm-col > b span, .rm-coordinator, .rm-say, .rm-out { animation: resp-in 320ms var(--m-ease); }
+  .rm-when, .rm-who, .rm-coordinator, .rm-say, .rm-out { animation: resp-in 320ms var(--m-ease); }
 }
 @keyframes resp-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 

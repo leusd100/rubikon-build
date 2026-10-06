@@ -243,7 +243,7 @@ export default function DeliveryModelPage() {
             eyebrow="Хто за що відповідає"
             title="Відповідальність без дрібного шрифту"
             titleId="proc-responsibility-title"
-            supporting="Оберіть формат участі — таблиця покаже, що виконує RUBIKON, що забезпечує інша сторона договору і хто веде спеціалізовані роботи."
+            supporting="Оберіть формат — таблиця покаже, що робимо ми, що лишається на вас і що виконують профільні спеціалісти."
           />
           {/* Format switcher: plain radios; CSS (:has) shows the chosen format, so it works without JavaScript */}
           <fieldset className="proc-resp-switch">
