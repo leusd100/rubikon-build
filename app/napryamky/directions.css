@@ -84,8 +84,25 @@
 .dstart-entry small { color: var(--color-dark-text-secondary); font-size: 13.5px; line-height: 1.5; }
 .dstart-entry[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent-on-dark) 12%, transparent); border-color: var(--color-accent-on-dark); box-shadow: inset 0 3px 0 var(--color-accent-on-dark); }
 @media (hover: hover) { .dstart-entry:hover { border-color: color-mix(in srgb, var(--color-accent-on-dark) 70%, transparent); } }
-.dstart-track { position: relative; }
-.dstart-rail, .dstart-run { position: absolute; top: 10px; height: 2px; }
+/* The entries' drawings (StartDrawing): graphite at rest, copper on the chosen card */
+.start-drawing { display: block; width: 132px; height: auto; margin: 0 0 6px -6px; overflow: visible; }
+.start-drawing :is(path) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.start-drawing .sd-ink { stroke: var(--color-dark-text-secondary); stroke-width: 1.7; stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke 300ms ease; }
+.start-drawing .sd-faint { stroke: var(--color-dark-text-muted); stroke-width: 1.2; opacity: .8; }
+.start-drawing .sd-hidden { stroke: var(--color-dark-text-muted); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.start-drawing .sd-boundary { stroke: var(--color-dark-text-secondary); stroke-width: 1.5; stroke-dasharray: 12 3 2 3; transition: stroke 300ms ease; }
+.start-drawing .sd-sheet { fill: var(--color-dark); }
+.start-drawing text { stroke: none; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-anchor: middle; }
+.start-drawing .sd-mark { fill: var(--color-dark-text-secondary); font: 400 30px/1 var(--font-display), var(--font-manrope), sans-serif; transition: fill 300ms ease; }
+.start-drawing .sd-letter { fill: var(--color-dark-text-muted); }
+:is(.dstart-entry[aria-pressed="true"], .dstart-token) .start-drawing :is(.sd-ink, .sd-boundary) { stroke: var(--color-accent-on-dark); }
+:is(.dstart-entry[aria-pressed="true"], .dstart-token) .start-drawing .sd-mark { fill: var(--color-accent-on-dark); }
+/* The track keeps room over the rail for the token: the chosen entry, small, over its start stage */
+.dstart-track { --token-room: 74px; position: relative; padding-top: var(--token-room); }
+.dstart-rail, .dstart-run { position: absolute; top: calc(var(--token-room) + 10px); height: 2px; }
+.dstart-token { position: absolute; z-index: 2; top: 0; left: calc((var(--start, 0) + .5) * var(--stage)); display: grid; justify-items: center; width: 84px; transform: translateX(-50%); }
+.dstart-token::after { content: ''; width: 0; height: 18px; border-left: 1.5px dashed var(--color-accent-on-dark); }
+.start-drawing-token { width: 84px; margin: 0; padding: 2px; background: var(--color-dark); }
 /* Each node sits centred over its stage's text (owner, round 7 — as on the other rails): the rail runs from the first
    column's centre to the last one's */
 .dstart-rail { left: calc(var(--stage) / 2); width: calc(var(--last, 7) * var(--stage)); background: var(--color-dark-line); }
@@ -105,7 +122,14 @@
 .dstart-stage b { margin-right: 10px; color: var(--color-accent-on-dark); font-weight: 400; }
 .dstart-what { grid-column: 2; grid-row: 1 / span 2; margin: 0; color: var(--color-dark-text-secondary); font-size: 16px; line-height: 1.7; }
 @keyframes dstart-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes sd-plot { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes sd-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
+  .dstart-token { transition: left 650ms cubic-bezier(.55, 0, .25, 1); }
+  .dstart-entry[aria-pressed="true"] .start-drawing .sd-ink, .start-drawing-token .sd-ink { animation: sd-plot 900ms cubic-bezier(.3, .7, .2, 1) both; }
+  .start-drawing-token :is(.sd-faint, .sd-hidden, .sd-boundary, text) { animation: sd-fade 500ms ease both; }
+  :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) .dstart-token { opacity: 0; }
+  :where([data-motion-ready="on"]) .dstart .dstart-token { transition: left 650ms cubic-bezier(.55, 0, .25, 1), opacity 400ms ease 700ms; }
   .dstart-run { transition: left 650ms cubic-bezier(.55, 0, .25, 1), width 650ms cubic-bezier(.55, 0, .25, 1), top 650ms cubic-bezier(.55, 0, .25, 1), height 650ms cubic-bezier(.55, 0, .25, 1); }
   .dstart-node { transition: background-color 300ms ease, border-color 300ms ease, box-shadow 300ms ease; }
   .dstart-detail { animation: dstart-in 420ms ease both; }
@@ -162,6 +186,13 @@
   .dstart .dstart-entries { grid-template-columns: minmax(0, 1fr); }
   /* The track turns vertical: one stage per row, the rail and the run down the left */
   .dstart { --row: 48px; }
+  /* phone: the drawing stands beside the label (one column of cards), and the vertical track has no token */
+  .dstart-entry { display: grid; grid-template-columns: minmax(0, 1fr) 92px; grid-template-areas: "label drawing" "note drawing"; align-items: center; gap: 6px 14px; padding: 14px 14px 14px 18px; }
+  .dstart-entry b { grid-area: label; }
+  .dstart-entry small { grid-area: note; }
+  .dstart-entry .start-drawing { grid-area: drawing; grid-row: 1 / span 2; width: 92px; margin: 0; }
+  .dstart-track { --token-room: 0px; }
+  .dstart-token { display: none; }
   .dstart-stages { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); }
   .dstart-stages li { grid-template-columns: 22px 30px minmax(0, 1fr); align-items: center; justify-items: start; gap: 12px; height: var(--row); padding: 0; text-align: left; }
   .dstart-rail, .dstart-run { left: 10px; width: 2px; }
