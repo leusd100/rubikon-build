@@ -70,16 +70,19 @@ test('pointing ends the walk, and no walk starts with reduced motion', async ({ 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
   await page.goto('/pro-nas', { waitUntil: 'load' });
+  const lit = page.locator('.about-cap li[data-on]');
   await page.locator(FIGURE).scrollIntoViewIfNeeded();
-  await page.clock.runFor(6000);
-  await expect(page.locator('.about-cap li[data-on]')).toHaveCount(0);
+  // the observer that would arm a walk is not on the clock: give it rounds of real time between steps of fake time
+  for (let round = 0; round < 8; round += 1) { await page.clock.runFor(1000); await expect(lit).toHaveCount(0); }
   test.skip(isMobile, 'the rest is a pointer affordance');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.reload({ waitUntil: 'load' });
   await page.locator(FIGURE).scrollIntoViewIfNeeded();
   await page.locator('.about-ledger li[data-cap="gates"]').hover();
-  await page.clock.runFor(6000);
-  await expect(page.locator('.about-cap li[data-on]')).toHaveAttribute('data-cap', 'gates');
+  await expect(lit).toHaveAttribute('data-cap', 'gates');
+  // …and once the pointer has left, nothing lights by itself: the walk is over for good
+  await page.mouse.move(2, 2);
+  for (let round = 0; round < 8; round += 1) { await page.clock.runFor(1000); await expect(lit).toHaveCount(0); }
 });
 
 test('pointing at a work lights its part of the scheme', async ({ page, isMobile }) => {

@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-// /napryamky: every catalogue row carries a small drawing sheet (below 1051 px since 04.10, at every width since 05.10)
-// /napryamky below 1051 px: every catalogue row carries a small drawing sheet — a line scheme over a one-line title
-// block («Аркуш NN · Схема») — where a 92 px photo thumbnail used to stand (owner, 04.10: the photos were too small to
-// read on a phone). These pin what that change promised: the picture is big enough, the rows hold no image, the row is
-// still one link, nothing overflows on the narrowest phones, and the desktop catalogue is as it was.
+// /napryamky: every catalogue row carries a small drawing sheet — a line scheme over a one-line title block («Аркуш NN
+// · Схема») — where a 92 px photo thumbnail used to stand (owner, 04.10: the photos were too small to read on a
+// phone), and since 05.10 at every width: the sticky illustration preview a wide screen had is gone. These pin what
+// that promised: the picture is big enough, the rows hold no image, the row is still one link, and nothing overflows
+// on the narrowest phones.
 
 const ROWS = '#directions-list .route-service';
 

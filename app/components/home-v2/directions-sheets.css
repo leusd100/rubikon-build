@@ -25,7 +25,7 @@ main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-a
 
 main[data-home="v2"] .hv2-directions .dsh { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 8px; min-height: 0; user-select: none; }
 /* A sheet: the scheme on its own paper, in the free field over the title block. A mouse's shortcut to the direction. */
-main[data-home="v2"] .hv2-directions .dsh-sheet { display: flex; flex-direction: column; min-width: 0; min-height: 0; color: inherit; text-decoration: none; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); pointer-events: auto; transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+main[data-home="v2"] .hv2-directions .dsh-sheet { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; color: inherit; text-decoration: none; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); pointer-events: auto; transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
 main[data-home="v2"] .hv2-directions .dsh-draw { display: grid; flex: 1 1 auto; align-items: center; min-height: 0; }
 main[data-home="v2"] .hv2-directions .dsh .cdw { padding: 4px 7px; }
 /* The title block: the direction's name (two lines kept, so the five blocks are one height), then the sheet's strip */
@@ -40,7 +40,6 @@ main[data-home="v2"] .hv2-directions .dsh-strip i { font-style: normal; }
    matched by their href, so neither the order of the cards nor of the sheets matters; the spec walks all five from
    the data. A lifted sheet keeps the room it left under itself (::after), or a pointer resting on its bottom edge
    would lose it and find it again in a loop. */
-main[data-home="v2"] .hv2-directions .dsh-sheet { position: relative; }
 main[data-home="v2"] .hv2-directions .dsh-sheet::after { content: ''; position: absolute; inset: 0 0 -6px; }
 main[data-home="v2"] .hv2-directions .dsh-sheet:hover { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(20, 22, 21, .16); }
 @supports selector(:has(*)) {

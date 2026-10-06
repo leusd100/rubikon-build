@@ -21,7 +21,8 @@ test('the engineering block explains with one scheme sheet: both notes, no image
   expect(await sheet.locator('svg.sig-svg').evaluateAll((drawings) => drawings.every((drawing) => drawing.getAttribute('aria-hidden') === 'true'))).toBe(true);
   // A scheme carries letters and names, never sizes: the only figure among its labels is the node's mark
   const labels = await sheet.locator('svg.sig-svg text').allTextContents();
-  for (const label of labels) expect(label, label).not.toMatch(/\d{2,}|мм|см|\bм\b/);
+  // (no \b here: in JavaScript it knows only ASCII word characters, so «\bм\b» never matched a Cyrillic letter)
+  for (const label of labels) expect(label, label).not.toMatch(/\d{2,}|\d\s*(?:мм|см|м)(?![а-яіїєґ’])/iu);
   const text = await sheet.innerText();
   for (const forbidden of [/digital twin/i, /двійник/i, /x-?ray/i, /рентген/i]) expect(text).not.toMatch(forbidden);
   // The boundary sentence still closes the block

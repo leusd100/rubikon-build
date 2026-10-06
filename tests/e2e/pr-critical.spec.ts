@@ -423,9 +423,9 @@ test('direction heroes keep the call on a phone\'s first screen and the full lea
 });
 
 // /napryamky: the five directions as a catalogue — every row stays the link to its page, and from 1051 px the preview
-// follows the row pointed at or focused (its own title, accent and kinds); the hero slides say which direction they
-// show and can be paused.
-test('/napryamky catalogue preview follows the row in focus; hero slides name their direction and pause', async ({ page }, testInfo) => {
+// Since 05.10 every row carries its own scheme sheet and kinds of work (no preview panel); the hero slides say which
+// direction they show and can be paused.
+test('/napryamky rows carry their scheme sheets; hero slides name their direction and pause', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/napryamky', { waitUntil: 'load' });
   const rows = page.locator('#directions-list .route-service');
@@ -470,9 +470,12 @@ test('homepage separates labelled illustrations from the one real photo', async 
   await expect(sheet.locator('figcaption')).toContainText('каркас показано схемою — такого типу, як на цьому об’єкті, без розмірів');
   await expect(sheet.locator('.hv2-contour-stamp')).toContainText('Схема · без розмірів');
   await expect(page.locator('#real-object img[src*="/concepts/"], #real-object source[srcset*="/concepts/"]')).toHaveCount(0);
-  for (const tag of await page.locator('#engineering .hv2-card .hv2-tag').allTextContents()) expect(['Ілюстрація', 'Схема']).toContain(tag);
+  // The explanation is one drawing sheet (05.10), labelled as a scheme and holding no generated picture
+  await expect(page.locator('#engineering .hv2-sheet')).toHaveCount(1);
+  await expect(page.locator('#engineering .hv2-sheet .sig-strip')).toContainText('Схема');
+  await expect(page.locator('#engineering .hv2-sheet img')).toHaveCount(0);
   // Concept images live only inside a labelled illustration, never in the conversation block.
-  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card, .hv2-card-visual, .hv2-hero')).length)).toBe(0);
+  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card, .hv2-hero')).length)).toBe(0);
   await expect(page.locator('#inquiry img[src*="/concepts/"]')).toHaveCount(0);
 });
 
