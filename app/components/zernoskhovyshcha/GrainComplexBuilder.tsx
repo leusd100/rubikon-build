@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   GRAIN_COMPLEX_DEFAULT,
+  GRAIN_CROP_OPTIONS,
   GRAIN_SCALE_OPTIONS,
   GRAIN_STORAGE_OPTIONS,
   grainComplexModel,
   type GrainComplexState,
+  type GrainCrop,
 } from '../../lib/grainComplex';
 import { DrawingSheet } from '../DrawingSheet';
 import { PrefillInquiryLink } from '../directions/PrefillInquiryLink';
@@ -88,6 +90,10 @@ export function GrainComplexBuilder() {
     setTouched(true);
     setState((current) => ({ ...current, ...patch }));
   };
+  const toggleCrop = (crop: GrainCrop, on: boolean) => {
+    setTouched(true);
+    setState((current) => ({ ...current, crops: on ? [...current.crops, crop] : current.crops.filter((item) => item !== crop) }));
+  };
 
   return (
     <div className="gc" ref={rootRef} data-flow={running ? 'on' : 'off'}>
@@ -108,6 +114,18 @@ export function GrainComplexBuilder() {
       </DrawingSheet>
 
       <div className="gc-controls">
+        {/* each crop keeps its own silo (or zone) and colour on the drawing; the swatch is that colour */}
+        <fieldset className="gc-group gc-group-crops">
+          <legend>Що зберігаєте</legend>
+          <div className="gc-options">
+            {GRAIN_CROP_OPTIONS.map((option) => (
+              <label className="gc-chip" key={option.value}>
+                <input type="checkbox" checked={state.crops.includes(option.value)} onChange={(event) => toggleCrop(option.value, event.target.checked)} />
+                <span><i className={`gc-swatch gc-crop-${option.value}`} aria-hidden="true" />{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <fieldset className="gc-group">
           <legend>Підготовка зерна</legend>
           <div className="gc-options">

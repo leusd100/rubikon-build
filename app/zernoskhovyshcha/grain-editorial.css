@@ -82,6 +82,37 @@
   .grain-page .direction-entry-list { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 26px; }
   .grain-page .direction-entry-list li:nth-child(odd) { padding-left: 0; border-left: 0; }
 }
+/* Each situation over a drawing of itself (GrainSituations); the whole card is the way into the form */
+.gs-card { position: relative; transition: background-color var(--duration-fast) ease; }
+.gs-card .direction-entry-link::after { position: absolute; inset: 0; content: ''; }
+.gs-card .direction-entry-link:focus-visible { outline: none; }
+.gs-card:has(.direction-entry-link:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+.gs-drawing { display: block; width: 100%; height: auto; margin-bottom: 6px; overflow: visible; }
+.gs-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.gs-ground { stroke: var(--color-text-muted); stroke-width: 1.2; }
+.gs-hatch { stroke: var(--color-text-muted); stroke-width: .9; opacity: .6; }
+.gs-own { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--color-accent); stroke-width: 2; }
+.gs-own.gs-line { fill: none; }
+.gs-partner { stroke: var(--color-text-muted); stroke-width: 1.5; stroke-dasharray: 9 4; }
+.gs-future { stroke: var(--color-border-control); stroke-width: 1.4; stroke-dasharray: 4 4; }
+.gs-ink { stroke: var(--color-text-secondary); stroke-width: 1.6; }
+.gs-grain { fill: color-mix(in srgb, var(--color-grain) 30%, transparent); stroke: var(--color-grain); stroke-width: 1.2; }
+.gs-press { stroke: var(--color-grain); stroke-width: 1.6; }
+@keyframes gs-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes gs-push { 0%, 100% { transform: none; } 50% { transform: translateX(var(--push, 0)); } }
+@media (prefers-reduced-motion: no-preference) {
+  /* arriving, each card's copper draws in after its card; pointing at a card draws it again and the grain pushes */
+  .gs-list[data-motion] .gs-own { stroke-dasharray: 1; }
+  .direction-page[data-motion-ready] .gs-list:not([data-motion-state="on"]) .gs-own { stroke-dashoffset: 1; }
+  .direction-page[data-motion-ready="on"] .gs-list .gs-own { transition: stroke-dashoffset 900ms var(--ease-premium) calc(var(--i, 0) * 160ms + 300ms); }
+  .gs-card:is(:hover, :focus-within) .gs-own { animation: gs-draw 800ms var(--ease-premium) both; }
+  .gs-card:is(:hover, :focus-within) .gs-press path { animation: gs-push 1.2s ease-in-out 2; }
+  .gs-card:is(:hover, :focus-within) .gs-press path:nth-child(odd) { --push: -3px; }
+}
+@media (hover: hover) {
+  .gs-card:hover h3 { color: var(--color-accent-strong); }
+}
+
 /* the cost factors: five rows, kept close */
 .grain-page .cost-list article { padding-block: 16px; }
 

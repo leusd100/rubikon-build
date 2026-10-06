@@ -5,6 +5,23 @@
 
 .gc-band .gc { display: grid; gap: 26px; margin-top: 34px; }
 
+/* Each crop's colour: the grain in its silo or zone, and the swatch on its chip (no colour is a claim about a crop's
+   look — it only tells the silos apart) */
+.gc {
+  --crop-wheat: #C29A3C; --crop-corn: #E0A126; --crop-sunflower: #5E5D57; --crop-barley: #CDB676; --crop-rapeseed: #6E4E2F; --crop-soy: #B9A27A;
+  --crop-mixed: var(--color-grain);
+}
+:root[data-theme="dark"] .gc { --crop-sunflower: #ABA89E; --crop-rapeseed: #B08560; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gc { --crop-sunflower: #ABA89E; --crop-rapeseed: #B08560; } }
+.gc-crop-wheat { --crop: var(--crop-wheat); }
+.gc-crop-corn { --crop: var(--crop-corn); }
+.gc-crop-sunflower { --crop: var(--crop-sunflower); }
+.gc-crop-barley { --crop: var(--crop-barley); }
+.gc-crop-rapeseed { --crop: var(--crop-rapeseed); }
+.gc-crop-soy { --crop: var(--crop-soy); }
+.gc-crop-mixed { --crop: var(--crop-mixed); }
+.gc-swatch { flex: none; width: 12px; height: 12px; margin-right: 9px; background: var(--crop); border-radius: 50%; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 25%, transparent); }
+
 /* The sheet: a light drawing on paper (the sheet's image area is dark by default, for photographs) at the elevation's
    own 3 : 1 */
 .gc-sheet .gc-visual { flex: none; aspect-ratio: 3 / 1; background: var(--color-surface-alt); }
@@ -20,7 +37,10 @@
 .gc-mod-trestle .gc-own.gc-line { stroke-width: 2; opacity: .8; }
 .gc-partner { stroke: var(--color-text-muted); stroke-width: 2.6; stroke-dasharray: 26 9; }
 .gc-vehicle :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 2.2; opacity: .8; }
-.gc-grain { fill: color-mix(in srgb, var(--color-grain) 26%, transparent); stroke: var(--color-grain); stroke-width: 2.2; }
+.gc-grain { fill: color-mix(in srgb, var(--crop, var(--color-grain)) 48%, transparent); stroke: var(--crop, var(--color-grain)); stroke-width: 2.6; }
+/* a silo's rings and the pipes between the machines: the specialists' too, quieter than their outlines */
+.gc-ring { stroke: color-mix(in srgb, var(--color-text-muted) 30%, transparent); stroke-width: 1.1; }
+.gc-pipe { stroke-width: 3.4; }
 .gc-grate { stroke: var(--color-text-secondary); stroke-width: 3; stroke-dasharray: 10 8; }
 .gc-unknown { stroke: var(--color-border-control); stroke-width: 2.6; stroke-dasharray: 14 10; }
 .gc-unknown-mark { fill: var(--color-border-control); font: 400 150px var(--font-display), sans-serif; text-anchor: middle; }
@@ -37,12 +57,12 @@
 @keyframes gc-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes gc-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes gc-flow { to { stroke-dashoffset: -25; } }
-.gc[data-gc="armed"] .gc-drawing :is(.gc-own, .gc-partner, .gc-grain, .gc-vehicle, .gc-grate, .gc-label, .gc-unknown, .gc-unknown-mark) { opacity: 0; }
+.gc[data-gc="armed"] .gc-drawing :is(.gc-own, .gc-partner, .gc-grain, .gc-ring, .gc-vehicle, .gc-grate, .gc-label, .gc-unknown, .gc-unknown-mark) { opacity: 0; }
 .gc[data-gc]:not([data-gc="armed"]) .gc-mod .gc-own {
   stroke-dasharray: 1;
   animation: gc-draw 900ms var(--ease-premium) calc(var(--o) * 380ms + 150ms) both, gc-fade 500ms ease calc(var(--o) * 380ms + 150ms) both;
 }
-.gc[data-gc]:not([data-gc="armed"]) .gc-mod :is(.gc-partner, .gc-grain, .gc-vehicle, .gc-grate, .gc-label, .gc-unknown, .gc-unknown-mark) {
+.gc[data-gc]:not([data-gc="armed"]) .gc-mod :is(.gc-partner, .gc-grain, .gc-ring, .gc-vehicle, .gc-grate, .gc-label, .gc-unknown, .gc-unknown-mark) {
   animation: gc-fade 600ms ease calc(var(--o) * 380ms + 450ms) both;
 }
 .gc[data-gc]:not([data-gc="armed"]) .gc-drawing > .gc-label { animation: gc-fade 600ms ease 2.2s both; }

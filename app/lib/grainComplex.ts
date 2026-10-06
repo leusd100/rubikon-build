@@ -11,8 +11,11 @@
 
 export type GrainStorage = 'silos' | 'floor' | 'unknown';
 export type GrainScale = 0 | 1 | 2 | 3;
+export type GrainCrop = 'wheat' | 'corn' | 'sunflower' | 'barley' | 'rapeseed' | 'soy';
 
 export type GrainComplexState = {
+  /** What is stored: each crop gets its own silo or zone and its own colour on the drawing (owner, 06.10) */
+  crops: GrainCrop[];
   cleaning: boolean;
   drying: boolean;
   storage: GrainStorage;
@@ -20,7 +23,16 @@ export type GrainComplexState = {
 };
 
 /** What the block opens with: a full chain, so the first view is the whole complex at work */
-export const GRAIN_COMPLEX_DEFAULT: GrainComplexState = { cleaning: true, drying: true, storage: 'silos', scale: 1 };
+export const GRAIN_COMPLEX_DEFAULT: GrainComplexState = { crops: ['wheat', 'corn'], cleaning: true, drying: true, storage: 'silos', scale: 1 };
+
+export const GRAIN_CROP_OPTIONS: readonly { value: GrainCrop; label: string; genitive: string }[] = [
+  { value: 'wheat', label: 'Пшениця', genitive: 'пшениця' },
+  { value: 'corn', label: 'Кукурудза', genitive: 'кукурудза' },
+  { value: 'sunflower', label: 'Соняшник', genitive: 'соняшник' },
+  { value: 'barley', label: 'Ячмінь', genitive: 'ячмінь' },
+  { value: 'rapeseed', label: 'Ріпак', genitive: 'ріпак' },
+  { value: 'soy', label: 'Соя', genitive: 'соя' },
+];
 
 export const GRAIN_STORAGE_OPTIONS: readonly { value: GrainStorage; label: string }[] = [
   { value: 'silos', label: 'Силоси' },
@@ -35,12 +47,17 @@ export const GRAIN_SCALE_OPTIONS: readonly { value: GrainScale; label: string }[
   { value: 3, label: 'понад 20 тис. т' },
 ];
 
-/** Silos drawn per scale, and the floor store's length on the drawing (its units) — a picture of size only */
+/** Silos drawn per scale (never fewer than the crops: each keeps its own), and the floor store's length on the drawing
+ *  (its units) — a picture of size only */
 const SILOS = [2, 3, 4, 5] as const;
+const MAX_SILOS = 6;
 const FLOOR_LENGTH = [330, 450, 590, 730] as const;
 
 export type GrainComplexModel = {
   state: GrainComplexState;
+  /** The crop in each silo (left to right) or each zone of the floor store; 'mixed' while none is chosen */
+  binCrops: (GrainCrop | 'mixed')[];
+  zoneCrops: (GrainCrop | 'mixed')[];
   /** The modules in the order the grain passes them, as the title block names them */
   chain: string[];
   silos: number;
@@ -65,9 +82,12 @@ export function grainComplexModel(state: GrainComplexState): GrainComplexModel {
     'Відвантаження',
   ];
 
+  const silos = Math.min(MAX_SILOS, Math.max(SILOS[state.scale], state.crops.length));
+  const cropOf = (index: number): GrainCrop | 'mixed' => (state.crops.length ? state.crops[index % state.crops.length] : 'mixed');
+
   const own = [
     'Приймальний бункер і майданчик розвантаження',
-    'Фундаменти й опори під норію та галерею',
+    'Приямки норій, тунелі конвеєрів, опори норій і галереї',
     ...(state.cleaning ? ['Майданчик і опорні конструкції під очищення'] : []),
     ...(state.drying ? ['Фундамент під сушарку'] : []),
     state.storage === 'silos'
@@ -79,7 +99,7 @@ export function grainComplexModel(state: GrainComplexState): GrainComplexModel {
   ];
 
   const partners = [
-    'Норія та конвеєри',
+    'Норії та конвеєри',
     ...(state.cleaning ? ['Машина очищення'] : []),
     ...(state.drying ? ['Зерносушарка'] : []),
     ...(state.storage === 'silos' ? ['Силоси'] : state.storage === 'floor' ? ['Аерація й конвеєри сховища'] : []),
@@ -87,12 +107,15 @@ export function grainComplexModel(state: GrainComplexState): GrainComplexModel {
   ];
 
   const preparation = [state.cleaning && 'очищення', state.drying && 'сушіння'].filter(Boolean).join(' і ');
-  const inquiryText = `Зерновий комплекс: ${preparation ? `${preparation}, ` : 'без підготовки, '}${storageWord[state.storage]}, орієнтовно ${scaleLabel}. `;
+  const crops = GRAIN_CROP_OPTIONS.filter((option) => state.crops.includes(option.value)).map((option) => option.genitive).join(', ');
+  const inquiryText = `Зерновий комплекс: ${crops ? `${crops}; ` : ''}${preparation ? `${preparation}, ` : 'без підготовки, '}${storageWord[state.storage]}, орієнтовно ${scaleLabel}. `;
 
   return {
     state,
+    binCrops: Array.from({ length: silos }, (_, index) => cropOf(index)),
+    zoneCrops: state.crops.length ? [...state.crops] : ['mixed'],
     chain,
-    silos: SILOS[state.scale],
+    silos,
     floorLength: FLOOR_LENGTH[state.scale],
     scaleLabel,
     own,
