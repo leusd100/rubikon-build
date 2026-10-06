@@ -109,7 +109,6 @@ for (const viewport of viewports) {
       await expectStableScreenshot(
         page.locator('.directions > .shell'),
         `homepage-directions-${viewport.name}.png`,
-        { legacyPointer: true },
       );
     });
 

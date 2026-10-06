@@ -330,11 +330,12 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   const anchors = ['#koshtorys', '#etapy', '#vidpovidalnist'];
   expect(await page.locator('.about-principle-link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(anchors.map((anchor) => `/yak-pratsyuiemo${anchor}`));
   // What we do ourselves and what we organise (UX pass 2026-10, in place of the five-direction list that repeated
-  // /napryamky): the Delivery Model's three capability layers in its own words; a work with its own page links to it,
-  // and the directions are one link away. Then the region.
+  // /napryamky): the Delivery Model's three capability layers in its own names (owner, 05.10: names only — no
+  // sentences, and no tail that repeats the group's title); a work with its own page links to it, and the directions
+  // are one link away. Then the region.
   const ledger = capabilityLedger();
   await expect(page.locator('.about-ledger-col h3')).toHaveText(ledger.map((column, index) => `${String(index + 1).padStart(2, '0')}${column.title}`));
-  await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => (item.href ? `${item.label} ↗` : item.label))));
+  await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => (item.href ? `${item.short} ↗` : item.short))));
   expect(await page.locator('.about-ledger a').evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
     .toEqual(ledger.flatMap((column) => column.items.flatMap((item) => (item.href ? [item.href] : []))));
   await expect(page.locator('.about-build-all')).toHaveAttribute('href', '/napryamky');
@@ -422,9 +423,9 @@ test('direction heroes keep the call on a phone\'s first screen and the full lea
 });
 
 // /napryamky: the five directions as a catalogue — every row stays the link to its page, and from 1051 px the preview
-// follows the row pointed at or focused (its own title, accent and kinds); the hero slides say which direction they
-// show and can be paused.
-test('/napryamky catalogue preview follows the row in focus; hero slides name their direction and pause', async ({ page }, testInfo) => {
+// Since 05.10 every row carries its own scheme sheet and kinds of work (no preview panel); the hero slides say which
+// direction they show and can be paused.
+test('/napryamky rows carry their scheme sheets; hero slides name their direction and pause', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/napryamky', { waitUntil: 'load' });
   const rows = page.locator('#directions-list .route-service');
@@ -440,15 +441,11 @@ test('/napryamky catalogue preview follows the row in focus; hero slides name th
   await page.waitForTimeout(3600);
   await expect(hero.locator('.dhs-caption')).toHaveText(paused!);
 
+  // Since 05.10 a wide screen has no preview panel either: every row carries its scheme sheet and its kinds of work
+  await expect(page.locator('.dcat-preview')).toHaveCount(0);
+  await expect(page.locator('#directions-list .route-service .dcat-thumb svg')).toHaveCount(directions.length);
   if (testInfo.project.name === 'desktop-chromium') {
-    const preview = page.locator('.dcat-preview');
-    await expect(preview.locator('.dcat-title')).toHaveText(directions[0].serviceTitle);
-    await page.locator('#metalokonstruktsii').hover();
-    await expect(preview.locator('.dcat-title')).toHaveText('Металоконструкції');
-    await expect(preview.locator('.dcat-accent')).toHaveText('від деталі до монтажу');
-    await page.locator('#betonni-roboty').focus();
-    await expect(preview.locator('.dcat-title')).toHaveText('Бетонні роботи');
-    await expect(preview.locator('.dcat-kinds li')).toHaveText(['Фундаменти', 'Основи під обладнання', 'Промислові підлоги', 'Монолітні ділянки']);
+    await expect(page.locator('#betonni-roboty .dcat-kinds li')).toHaveText(['Фундаменти', 'Основи під обладнання', 'Промислові підлоги', 'Монолітні ділянки']);
   }
 });
 
@@ -473,9 +470,12 @@ test('homepage separates labelled illustrations from the one real photo', async 
   await expect(sheet.locator('figcaption')).toContainText('каркас показано схемою — такого типу, як на цьому об’єкті, без розмірів');
   await expect(sheet.locator('.hv2-contour-stamp')).toContainText('Схема · без розмірів');
   await expect(page.locator('#real-object img[src*="/concepts/"], #real-object source[srcset*="/concepts/"]')).toHaveCount(0);
-  for (const tag of await page.locator('#engineering .hv2-card .hv2-tag').allTextContents()) expect(['Ілюстрація', 'Схема']).toContain(tag);
+  // The explanation is one drawing sheet (05.10), labelled as a scheme and holding no generated picture
+  await expect(page.locator('#engineering .hv2-sheet')).toHaveCount(1);
+  await expect(page.locator('#engineering .hv2-sheet .sig-strip')).toContainText('Схема');
+  await expect(page.locator('#engineering .hv2-sheet img')).toHaveCount(0);
   // Concept images live only inside a labelled illustration, never in the conversation block.
-  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card, .hv2-card-visual, .hv2-hero')).length)).toBe(0);
+  expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card, .hv2-hero')).length)).toBe(0);
   await expect(page.locator('#inquiry img[src*="/concepts/"]')).toHaveCount(0);
 });
 
@@ -615,10 +615,9 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
     starts: '.proc-start-list h3',
     steps: '.proc-steps h3',
     results: '.proc-steps .proc-step-result',
-    formats: '.proc-scope-kicker',
-    headlines: '.proc-scope-grid h3',
-    formatTexts: '.proc-scope-grid p',
-    formatTerms: '.proc-scope-terms dd',
+    formats: '#obsiah .dfmt-option .dfmt-title',
+    formatTexts: '#obsiah .dfmt-option .dfmt-text',
+    formatTerms: '#obsiah .dfmt-option .dfmt-sr',
     principle: '.proc-principle',
     areas: '.proc-area h3',
     areaItems: '.proc-area ul li .proc-area-work',
@@ -633,10 +632,10 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
   expect(text.results).toEqual(processSteps().map((step) => `На виході: ${step.result}`));
   expect(text.formats).toEqual(FORMAT_LABELS);
   const choices = participationChoices();
-  expect(text.headlines).toEqual(choices.map((choice) => choice.headline));
   for (const format of deliveryModel.formats) expect(text.formatTexts).toEqual(expect.arrayContaining([format.summary]));
-  // Each card names the other party of the contract and who coordinates the object
-  expect(text.formatTerms).toEqual(choices.flatMap((choice) => [`${choice.contractWith} і RUBIKON`, choice.coordinator]));
+  // Since 05.10 the three scope cards are one drawing with three format buttons; every button still names the other
+  // party of the contract and who coordinates the object (hidden text: the drawing shows them for one format at a time)
+  expect(text.formatTerms).toEqual(choices.map((choice) => `Договір: ${choice.contractWith} і RUBIKON. Координує об’єкт: ${choice.coordinator}.`));
   const resp = responsibilityByFormat();
   expect(text.principle).toEqual(resp.formats.map((format) => format.principle));
   expect(text.principle).toEqual(deliveryModel.formats.map((format) => format.interfaces));
@@ -727,7 +726,7 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     await expect(page.locator('.process-page')).not.toHaveAttribute('data-motion-ready', /.*/);
     await expect(page.locator('.proc-area').first()).toHaveCSS('opacity', '1');
-    await expect(page.locator('.scope-diagram-comprehensive .sd-context').first()).toHaveCSS('opacity', '1');
+    await expect(page.locator('#obsiah .dfmt-figure')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-start-merge')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-change')).toHaveCSS('opacity', '1');
@@ -757,16 +756,22 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await expect(route.locator('li').last().locator('h3')).toHaveCSS('opacity', '1', { timeout: 5000 });
   });
 
-  test('keyboard focus on a scope card brings the agreed scope forward, as hover does', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'desktop emphasis');
+  test('pressing a format from the keyboard selects it: the drawing shows that format’s scope', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'keyboard');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const card = page.locator('#obsiah .proc-scope-grid > li').nth(1);
-    await card.locator('.proc-scope-cta').focus();
-    await expect(card.locator('.proc-scope-cta')).toBeFocused();
-    await expect(card.locator('.sd-layer:not(.is-scope)').first()).toHaveCSS('opacity', '0.4');
-    await expect(card.locator('.sd-layer.is-scope')).toHaveCSS('opacity', '1');
+    const option = page.locator('#obsiah .dfmt-option').nth(1);
+    // Focus alone chooses nothing here: this block and the map below hold one choice, and tabbing past must not rewrite it
+    await option.focus();
+    await expect(option).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('.proc-resp-switch input[value="comprehensive"]')).toBeChecked();
+    await page.keyboard.press('Enter');
+    await expect(option).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'work-package');
+    // one package is RUBIKON's, the rest are the other participants'
+    await expect(page.locator('#obsiah svg.fs .fs-layer[data-scope]')).toHaveCount(1);
   });
+
 });
 
 test.describe('/yak-pratsyuiemo interactions', () => {
@@ -849,27 +854,30 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     await expect(control).toHaveCSS('pointer-events', 'auto');
   });
 
-  test('a phone shows one scope format at a time, and that choice is the map\'s too', async ({ page }) => {
+  test('the scope drawing and the responsibility map hold one choice of format', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const cards = page.locator('#obsiah .proc-scope-grid > li');
-    await expect(cards.filter({ visible: true })).toHaveCount(1);
-    await expect(cards.filter({ visible: true })).toHaveAttribute('data-scope', 'comprehensive');
-    await page.locator('.proc-scope-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check();
-    await expect(cards.filter({ visible: true })).toHaveAttribute('data-scope', 'subcontract');
+    const drawing = page.locator('#obsiah svg.fs');
+    const options = page.locator('#obsiah .dfmt-option');
+    await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
+    await options.filter({ hasText: 'Субпідряд' }).click();
+    await expect(drawing).toHaveAttribute('data-format', 'subcontract');
     await expect(page.locator('.proc-resp-switch input[value="subcontract"]')).toBeChecked();
     await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText('Генпідрядник');
     // and back from the map
     await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
-    await expect(page.locator('.proc-scope-switch input[value="work-package"]')).toBeChecked();
+    await expect(options.nth(1)).toHaveAttribute('aria-pressed', 'true');
+    await expect(drawing).toHaveAttribute('data-format', 'work-package');
   });
 
-  test('the scope cards stay side by side on a wide screen, with no second switcher', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'desktop layout');
+  test('the scope block is one drawing with three format buttons, and no second switcher', async ({ page }) => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    await expect(page.locator('.proc-scope-switch')).toBeHidden();
-    await expect(page.locator('#obsiah .proc-scope-grid > li').filter({ visible: true })).toHaveCount(3);
+    // Until 05.10 three cards stood here, each with its own drawing (owner: overloaded, the focus was lost)
+    await expect(page.locator('.proc-scope-switch, .proc-scope-grid')).toHaveCount(0);
+    await expect(page.locator('#obsiah .dfmt-option')).toHaveCount(3);
+    await expect(page.locator('#obsiah svg.fs')).toHaveCount(1);
+    await expect(page.locator('#obsiah .proc-scope-legend li')).toHaveCount(3);
   });
 
   test('after a switch the works that moved into a zone are marked for a moment', async ({ page }) => {
@@ -898,10 +906,9 @@ test.describe('/yak-pratsyuiemo interactions', () => {
   test('«Обговорити цей формат» takes the visitor to the form with that format chosen', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    // A phone shows one format at a time: choose the third first
-    const scopeSwitch = page.locator('.proc-scope-switch');
-    if (await scopeSwitch.isVisible()) await scopeSwitch.getByRole('radio', { name: 'Субпідряд', exact: true }).check();
-    await page.locator('#obsiah .proc-scope-grid > li').nth(2).locator('.proc-scope-cta').click();
+    // The link carries the format the drawing shows: choose the third first
+    await page.locator('#obsiah .dfmt-option').nth(2).click();
+    await page.locator('#obsiah .proc-scope-cta').click();
     await expect(page).toHaveURL(/#inquiry$/);
     await expect(page.locator('#inquiry select[name="cooperation"]')).toHaveValue('Субпідряд');
     await expect(page.locator('#inquiry details.inquiry-details')).toHaveAttribute('open', '');

@@ -1,145 +1,176 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FocusEvent, type PointerEvent } from 'react';
 import type { CapabilityLedgerColumn } from '../../lib/deliveryModelPresentation';
 
-// /pro-nas «Що робимо самі, а що організовуємо» (UX pass 2026-10, owner: «зробимо цікавіше і живіше» — in the language of
-// /yak's cost-factor drawing). One object on its site, the main works of the Delivery Model drawn where they happen, all
-// in quiet graphite until one lights: our own team's in copper, what we organise in a strong line, specialist works
-// dashed. Pointing at a work (or tapping it) lights its part; pointing at a group lights the group; the first view walks
-// the three groups once. (A first version drew every work at once in its colour and read as overloaded — owner, 02.10.)
-// The drawing is decorative (aria-hidden): the list beside it says everything, in the model's words.
+// /pro-nas «Що робимо самі, а що організовуємо». Owner, 04.10: the see-through hangar on its site read as overloaded
+// — the spoil heap and the depth mark had to go, and with them everything that is not a work of the list. Owner, 05.10:
+// still too much text — «залишити найнеобхідніший». So the block is now a scheme and its legend: one flat section of
+// a building on the left, and beside it the three groups as short name tags — no sentences. A tag wears its group's
+// line, the same three lines the scheme is drawn in: copper for what we do ourselves (01), thin graphite for what we
+// organise (02), dashed for specialists or the customer (03); so it reads at rest and on a phone. The works' full
+// statements stay in the Delivery Model and on the pages the linked tags lead to.
+// The first time the scheme comes into view it walks once through the works it draws, in the list's order — each tag
+// and its part light together (owner, 05.10: «автоматично перемикатися між елементами», as «Що враховуємо в
+// розрахунку» does on /yak-pratsyuiemo) — and then rests; pointing takes over at once. No tour with reduced motion.
+// Pointing works both ways with a mouse: at a tag or a group — its part of the scheme stays and the rest goes quiet;
+// at a part of the scheme — its tag lights. The keyboard gets the same on a linked tag. The scheme is decorative
+// (aria-hidden): the tags say everything, in the Delivery Model's names.
+// Styles: capability.css (imported by the page).
 
-type Point = readonly [number, number, number];
-const OX = 190;
-const OY = 300;
-const p = ([x, d, z]: Point) => `${(OX + x - d * 0.4).toFixed(1)},${(OY - z - d * 0.4).toFixed(1)}`;
-const line = (...points: Point[]) => `M${points.map(p).join('L')}`;
-const poly = (...points: Point[]) => `${line(...points)}Z`;
+type Tier = CapabilityLedgerColumn['id'];
 
-const W = 150;
-const EAVE = 78;
-const RIDGE = 108;
-const DEPTH = 200;
-const FRAMES = [0, 50, 100, 150, 200];
-const STEPS = [25, 50, 75, 100, 125, 150, 175];
+/** The scheme's parts in a 360-wide sheet (viewBox 0 24 360 184): the capability ids a part shows
+ *  (deliveryModel.capabilities) and its path. Later parts draw over earlier ones. A part's group comes from the
+ *  ledger, never from here. Everything drawn is a row of the list — plus the ground and the axis. */
+const PARTS: readonly (readonly [caps: string, d: string])[] = [
+  // two local pits, one under each footing; the inner slopes stop at the underside of the floor slab
+  ['earthworks', 'M50 158L57 185H99L104.8 162.5M255.2 162.5L261 185H303L310 158'],
+  ['industrial-floors', 'M85 158H275M85 162.5H275'], // the floor slab, on the ground between the footings
+  ['gates', 'M150 158V112H210V158M150 127.3H210M150 142.7H210'], // the gate in the far wall: its outline, two panel joints
+  ['mep', 'M352 198H244V144'], // a service line in from the site's edge, under the footing and up through the floor
+  ['foundations', 'M71 158H85V172H95V185H61V172H71ZM275 158H289V172H299V185H265V172H275Z'], // a pedestal on a pad, standing on each pit's bottom
+  ['panels', 'M71 81V154M289 81V154'], // the wall panels, at the columns' outer face
+  ['roofing panels', 'M66 82.4L180 46.6L294 82.4'], // the roof covering, parallel to the rafters
+  ['steel', 'M78 158V86L180 54L282 86V158'], // the frame: two columns, two rafters
+];
+const DRAWN = new Set(PARTS.flatMap(([caps]) => caps.split(' ')));
 
-/** Height of a gable wall at x: the eave at the sides, the ridge in the middle */
-const gableTop = (x: number) => EAVE + (RIDGE - EAVE) * (1 - Math.abs(x - W / 2) / (W / 2));
-const gable = (d: number) => line([0, d, 0], [0, d, EAVE], [W / 2, d, RIDGE], [W, d, EAVE], [W, d, 0]);
-/** Panel joints on a gable wall: full height beside the gate, above it over the gate's width (the front only) */
-const gableJoints = (d: number, gate: boolean) => [15, 30, 45, 60, 75, 90, 105, 120, 135]
-  .map((x) => line([x, d, gate && x > 50 && x < 100 ? 50 : 0], [x, d, gableTop(x)])).join('');
-const sideWall = (x: number) => `${poly([x, 0, 0], [x, DEPTH, 0], [x, DEPTH, EAVE], [x, 0, EAVE])}${STEPS.map((d) => line([x, d, 0], [x, d, EAVE])).join('')}`;
-const slope = (x: number) => `${poly([x, 0, EAVE], [W / 2, 0, RIDGE], [W / 2, DEPTH, RIDGE], [x, DEPTH, EAVE])}${STEPS.map((d) => line([x, d, EAVE], [W / 2, d, RIDGE])).join('')}`;
-/** The pit, cut under the front of the building: sloped sides, the soil hatched round them, its depth, the spoil heap */
-const PIT_TICKS = [0.2, 0.45, 0.7, 0.95];
-const pit = [
-  line([-30, 0, 0], [-6, 0, -34], [156, 0, -34], [180, 0, 0]),
-  ...PIT_TICKS.map((t) => line([-30 + 24 * t, 0, -34 * t], [-36 + 24 * t, 0, -6 - 34 * t])),
-  ...PIT_TICKS.map((t) => line([180 - 24 * t, 0, -34 * t], [186 - 24 * t, 0, -6 - 34 * t])),
-  ...[14, 44, 74, 104, 134].map((x) => line([x, 0, -34], [x - 6, 0, -40])),
-  line([-44, 0, 0], [-44, 0, -34]), line([-49, 0, 0], [-39, 0, 0]), line([-49, 0, -34], [-39, 0, -34]),
-  line([-110, 0, 0], [-98, 0, 12], [-84, 0, 17], [-70, 0, 12], [-58, 0, 0]),
-].join('');
+/** The groups' numbers on the scheme: the part a number points at (its group, and so its number, come from the ledger),
+ *  the leader from a dot on that part, and where the number stands */
+const TAGS: readonly { cap: string; leader: string; dot: readonly [number, number]; text: readonly [number, number]; anchor: 'start' | 'end' }[] = [
+  { cap: 'roofing', leader: 'M128 62.9L114 40H102', dot: [128, 62.9], text: [98, 40], anchor: 'end' },
+  { cap: 'earthworks', leader: 'M53.5 171.5L43.5 196H36.5', dot: [53.5, 171.5], text: [32.5, 196], anchor: 'end' }, // on the left pit's slope
+  { cap: 'mep', leader: 'M322 198L330 182H337', dot: [322, 198], text: [341, 182], anchor: 'start' },
+];
 
-/** Every part of the drawing, keyed by the capability it shows (deliveryModel.capabilities ids). Works the drawing
- *  has no place for (fencing, landscaping, floors, ventilation, other works) light only their row in the list. */
-const PARTS: Record<string, string> = {
-  foundations: `${poly([0, 0, 0], [W, 0, 0], [W, DEPTH, 0], [0, DEPTH, 0])}${line([0, 0, 0], [0, 0, -8], [W, 0, -8], [W, 0, 0])}${line([0, 0, -8], [0, DEPTH, -8], [0, DEPTH, 0])}`,
-  steel: [...FRAMES].reverse().map((d) => line([0, d, 0], [0, d, EAVE], [W / 2, d, RIDGE], [W, d, EAVE], [W, d, 0])).join('')
-    + line([0, 0, EAVE], [0, DEPTH, EAVE]) + line([W, 0, EAVE], [W, DEPTH, EAVE]) + line([W / 2, 0, RIDGE], [W / 2, DEPTH, RIDGE]),
-  // both slopes, with their sheets' ribs
-  roofing: `${slope(0)}${slope(W)}`,
-  // every wall: both sides, both gables (the front's joints stop over the gate)
-  panels: `${sideWall(0)}${sideWall(W)}${gable(0)}${gableJoints(0, true)}${gable(DEPTH)}${gableJoints(DEPTH, false)}`,
-  gates: `${poly([50, 0, 0], [100, 0, 0], [100, 0, 50], [50, 0, 50])}${[12.5, 25, 37.5].map((z) => line([50, 0, z], [100, 0, z])).join('')}`,
-  // a compact stack of beams, delivered for erection
-  'steel-fabrication': [0, 7, 14].map((z) => `${line([W + 34, -10, z], [W + 34, 46, z])}${line([W + 62, -10, z], [W + 62, 46, z])}${line([W + 34, -10, z], [W + 62, -10, z])}`).join(''),
-  earthworks: pit,
-  mep: `${line([W + 120, 150, -10], [W, 150, -10])}${line([W + 120, 120, -16], [W, 120, -16])}${line([W + 120, 150, -10], [W + 120, 150, 70])}`,
-};
+type Pointed = { tier: Tier; cap?: string; rows?: readonly string[] } | null;
 
-const TOUR_STEP_MS = 1700;
+/** One step of the first-view walk, as on «Що враховуємо в розрахунку» (CostFactorsFigure) but a little quicker: the
+ *  names are short */
+const TOUR_STEP_MS = 1300;
 
 export function CapabilityFigure({ columns }: Readonly<{ columns: readonly CapabilityLedgerColumn[] }>) {
-  const [pointed, setPointed] = useState<{ tier?: string; cap?: string } | null>(null);
-  const [tour, setTour] = useState<string | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const tierOf = (cap: string) => columns.find((column) => column.items.some((item) => item.id === cap))?.id;
+  const [byPointer, setByPointer] = useState<Pointed>(null);
+  const [tour, setTour] = useState<Pointed>(null);
+  const figureRef = useRef<HTMLElement>(null);
+  const toured = useRef(false);
+  const pointed = byPointer ?? tour;
+  // Pointing ends the walk for good
+  const setPointed = (next: Pointed) => { toured.current = true; setTour(null); setByPointer(next); };
 
   useEffect(() => {
-    const root = rootRef.current;
-    if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const figure = figureRef.current;
+    if (!figure || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    // The works the scheme has a part for, in the list's order
+    const steps = columns.flatMap((column) => column.items.filter((item) => DRAWN.has(item.id)).map((item) => ({ tier: column.id, cap: item.id, rows: [item.id] })));
     let timer = 0;
     let index = -1;
     const step = () => {
       index += 1;
-      if (index >= columns.length) { setTour(null); return; }
-      setTour(columns[index].id);
+      if (toured.current || index >= steps.length) { setTour(null); return; }
+      setTour(steps[index]);
       timer = window.setTimeout(step, TOUR_STEP_MS);
     };
     const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting || entry.intersectionRatio < 0.35) return;
+      if (!entry?.isIntersecting || entry.intersectionRatio < 0.5) return;
       observer.disconnect();
-      timer = window.setTimeout(step, 400);
-    }, { threshold: [0, 0.35] });
-    observer.observe(root);
+      timer = window.setTimeout(step, 1200); // after the scheme has drawn itself
+    }, { threshold: [0, 0.5] });
+    observer.observe(figure);
     return () => { observer.disconnect(); window.clearTimeout(timer); };
   }, [columns]);
 
-  const activeTier = pointed?.tier ?? (pointed?.cap ? undefined : tour ?? undefined);
-  const activeCap = pointed?.cap;
-  // A work the drawing has no part for tints its row and leaves the drawing as it is
-  const drawnCap = activeCap && PARTS[activeCap] ? activeCap : undefined;
-  const point = (next: { tier?: string; cap?: string } | null) => { setTour(null); setPointed(next); };
+  const columnOf = (cap: string) => columns.findIndex((column) => column.items.some((item) => item.id === cap));
+  const number = (index: number) => String(index + 1).padStart(2, '0');
+  const row = (tier: Tier, id: string): Pointed => ({ tier, rows: [id], cap: DRAWN.has(id) ? id : undefined });
+  // Only a real mouse points: a tap emulates hover and never leaves, which would keep a tag lit on a phone — where the
+  // scheme is a legend between the groups, not beside the tag
+  const mouse = (next: Pointed) => (event: PointerEvent) => { if (event.pointerType === 'mouse') setPointed(next); };
+
+  const ledgerColumn = (column: CapabilityLedgerColumn, index: number) => (
+    <section
+      className={`about-ledger-col is-${column.id}`}
+      aria-labelledby={`about-ledger-${column.id}`}
+      key={column.id}
+      style={{ '--i': index } as CSSProperties}
+      onPointerEnter={mouse({ tier: column.id })}
+      onPointerLeave={mouse(null)}
+    >
+      <h3 id={`about-ledger-${column.id}`}>
+        <span aria-hidden="true">{number(index)}</span>
+        {column.title}
+      </h3>
+      <ul>
+        {column.items.map((item) => (
+          <li
+            key={item.id}
+            data-cap={item.id}
+            data-on={pointed?.rows?.includes(item.id) ? '' : undefined}
+            onPointerEnter={mouse(row(column.id, item.id))}
+            onPointerLeave={mouse({ tier: column.id })}
+            // The keyboard gets the same on a linked work (focus bubbles from its link) — the keyboard only: a tap
+            // focuses the link too, and would light a scheme that is off the screen
+            onFocus={(event: FocusEvent<HTMLLIElement>) => { if (event.target.matches(':focus-visible')) setPointed(row(column.id, item.id)); }}
+            onBlur={() => setPointed(null)}
+          >
+            {item.href
+              ? <b><a href={item.href}>{item.short} <span aria-hidden="true">↗</span></a></b>
+              : <b className="is-plain">{item.short}</b>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+
+  // The ledger's first group is the heading's first half («самі»); in the markup the scheme follows it, which is the
+  // phone's order (01, the scheme as a legend, 02, 03). On a wide screen the scheme stands beside all three.
+  const [own, ...organised] = columns;
 
   return (
-    <div className="about-cap" ref={rootRef} data-tier={activeTier} data-cap={drawnCap} data-row={activeCap}>
-      <figure className="about-cap-figure" aria-hidden="true">
-        <svg viewBox="70 96 380 256" focusable="false">
-          <path className="cap-ground" d={`M${p([-120, 0, 0])}L${p([260, 0, 0])}`} />
-          {Object.entries(PARTS).map(([cap, d]) => (
-            <path key={cap} className="cap-part" data-cap={cap} data-tier={tierOf(cap)} d={d} pathLength={cap === 'earthworks' ? 1 : undefined} />
-          ))}
+    // One element is both the block's grid and the ledger (.about-ledger holds all three columns, in the model's order)
+    <div className="about-cap about-ledger" data-motion data-tier={pointed?.tier} data-cap={pointed?.cap}>
+      {ledgerColumn(own, 0)}
+      <figure className="cap-fig" aria-hidden="true" data-motion ref={figureRef}>
+        <svg viewBox="0 24 360 184" focusable="false">
+          <path className="cap-ground" d="M8 158H50M310 158H352" />
+          {/* the building's axis and, through the middle of each footing, the two column axes (owner, 05.10) */}
+          <path className="cap-axis" d="M180 28V204M78 62V193M282 62V193" />
+          {PARTS.map(([caps, d]) => {
+            const ids = caps.split(' ');
+            const tier = columns[columnOf(ids[0])]?.id;
+            // Lit: the pointed work's own part, or — for a group, or a work the scheme has no place for — the group's
+            const lit = pointed && (pointed.cap ? ids.includes(pointed.cap) : pointed.tier === tier);
+            // pathLength lets the first view draw a solid line; a dashed one would lose its dashes, so it fades in
+            return <path key={caps} className="cap-part" data-tier={tier} data-caps={caps} data-on={lit ? '' : undefined} d={d} pathLength={tier === 'partner' ? undefined : 1} />;
+          })}
+          {TAGS.map((tag) => {
+            const index = columnOf(tag.cap);
+            if (index < 0) return null;
+            const tier = columns[index].id;
+            return (
+              <g className="cap-tag" data-tier={tier} data-on={pointed?.tier === tier ? '' : undefined} key={tag.cap}>
+                <path d={tag.leader} />
+                <circle cx={tag.dot[0]} cy={tag.dot[1]} r="1.6" />
+                <text x={tag.text[0]} y={tag.text[1]} textAnchor={tag.anchor}>{number(index)}</text>
+              </g>
+            );
+          })}
+          {/* The other way round: a wide invisible stroke over each part, so pointing at the scheme lights its tag */}
+          {PARTS.map(([caps, d]) => {
+            const ids = caps.split(' ');
+            const tier = columns[columnOf(ids[0])]?.id;
+            if (!tier) return null;
+            return <path key={caps} className="cap-hit" data-caps={caps} d={d} onPointerEnter={mouse({ tier, cap: ids[0], rows: ids })} onPointerLeave={mouse(null)} />;
+          })}
         </svg>
+        <figcaption>
+          <span>Схема</span>
+          <b>Переріз будівлі</b>
+          <span>Хто виконує кожну частину</span>
+        </figcaption>
       </figure>
-      <div className="about-ledger" data-motion>
-        {columns.map((column, index) => (
-          <section
-            className={`about-ledger-col is-${column.id}`}
-            aria-labelledby={`about-ledger-${column.id}`}
-            key={column.id}
-            style={{ '--i': index } as CSSProperties}
-            onMouseEnter={() => point({ tier: column.id })}
-            onMouseLeave={() => point(null)}
-          >
-            <h3 id={`about-ledger-${column.id}`}>
-              <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-              {column.title}
-            </h3>
-            {column.note && <p className="about-ledger-note">{column.note}</p>}
-            <ul>
-              {column.items.map((item) => (
-                <li
-                  key={item.id}
-                  data-cap={item.id}
-                  onMouseEnter={() => point({ cap: item.id })}
-                  onMouseLeave={() => point({ tier: column.id })}
-                  // A tap lights the work's part (the mouse already does on hover); the drawing is decorative, so the
-                  // keyboard gets the same through focus on a linked work, not a click handler on the row
-                  onPointerUp={(event) => { if (event.pointerType !== 'mouse') point(activeCap === item.id ? null : { cap: item.id }); }}
-                  onFocus={() => point({ cap: item.id })}
-                  onBlur={() => point(null)}
-                >
-                  <b>{item.href ? <a href={item.href}>{item.label} <span aria-hidden="true">↗</span></a> : item.label}</b>
-                  {item.statement && <span>{item.statement}</span>}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
+      {organised.map((column, index) => ledgerColumn(column, index + 1))}
     </div>
   );
 }

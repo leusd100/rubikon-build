@@ -244,7 +244,8 @@ export function capabilityLayers(): readonly CapabilityLayer[] {
 }
 
 /** /pro-nas «Що робимо самі, а що організовуємо»: the three capability layers under the client's words (the layer names
- *  stay internal). Each work keeps its label and, where the model has one, its public statement and competency page. */
+ *  stay internal). Each work keeps its label and, where the model has one, its public statement and competency page;
+ *  `short` is the label without a tail that only repeats the group's own title. */
 const LEDGER_TITLES: Record<CapabilityLayerId, string> = {
   core: 'Виконуємо власною командою',
   flexible: 'Організовуємо під проєкт',
@@ -255,8 +256,15 @@ export type CapabilityLedgerColumn = {
   id: CapabilityLayerId;
   title: string;
   note?: string;
-  items: readonly { id: string; label: string; statement?: string; href?: string }[];
+  items: readonly { id: string; label: string; short: string; statement?: string; href?: string }[];
 };
+
+/** «Земляні роботи — організовуємо під проєкт із потрібною технікою» under «Організовуємо під проєкт» is «Земляні
+ *  роботи»; a tail that says something the title does not («Благоустрій — погоджений виконавець або замовник») stays. */
+function shortLabel(label: string, title: string) {
+  const [name, tail] = label.split(/\s—\s/);
+  return tail?.toLowerCase().startsWith(title.toLowerCase()) ? name : label;
+}
 
 export function capabilityLedger(): readonly CapabilityLedgerColumn[] {
   return (Object.keys(LEDGER_TITLES) as CapabilityLayerId[]).map((layer) => ({
@@ -268,6 +276,7 @@ export function capabilityLedger(): readonly CapabilityLedgerColumn[] {
       .map((capability) => ({
         id: capability.id,
         label: capability.label,
+        short: shortLabel(capability.label, LEDGER_TITLES[layer]),
         ...(capability.statement ? { statement: capability.statement } : {}),
         ...(capability.directionId ? { href: `/${capability.directionId}` } : {}),
       })),
@@ -719,7 +728,7 @@ export function responsibilityByFormat(): { formats: readonly SwitchFormat[]; it
     }
     return { text, rows, zones, rubikonRole, notes: withRoleNotes(notes, rubikonRole) };
   });
-  // How the parties work together in each format (the promise of result is already said on the scope cards above).
+  // How the parties work together in each format (the promise of result is already said in the scope block above).
   const principles = Object.fromEntries(model.formats.map((format) => [format.id, format.interfaces])) as Record<DeliveryFormatId, string>;
   const formats = model.formats.map((format) => ({
     id: format.id,

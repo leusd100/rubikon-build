@@ -31,6 +31,8 @@
 }
 
 /* ---------------------------------------------------------------- 2 · The two people */
+/* The people's header has no rule under it (owner, 05.10): the title leads straight to the two people */
+.team-about .team-heading { padding-bottom: 0; border-bottom: 0; }
 .team-about .team-stories { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--grid-gap); padding-bottom: 76px; border-top: 0; }
 .team-about .person-story,
 .team-about .person-story-reverse,
@@ -62,61 +64,23 @@
 
 /* ---------------------------------------------------------------- 3 · What we do, what we organise, and where */
 .about-build { background: var(--color-surface); }
-/* «Що робимо самі, а що організовуємо» (CapabilityLedger.tsx, UX pass 2026-10): three ruled columns, marked as on the
-   /yak scope drawings — own team on a copper rule, organised work on graphite, specialists on a dashed line */
-.about-ledger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 44px); }
+/* «Що робимо самі, а що організовуємо» (CapabilityFigure.tsx): the three groups' own typography — own team on a copper
+   rule, organised work on graphite, specialists on a dashed line. The block's grid, the scheme and the pointed states
+   live in app/components/about/capability.css */
 .about-ledger-col { min-width: 0; padding-top: 22px; border-top: 1px solid var(--color-text); }
 .about-ledger-col.is-core { border-top: 3px solid var(--color-accent); padding-top: 20px; }
 .about-ledger-col.is-partner { border-top: 1px dashed var(--color-border-strong); }
 .about-ledger-col h3 { display: flex; align-items: baseline; gap: 12px; margin: 0; color: var(--color-text); font: 600 clamp(22px, 2vw, 28px)/1.12 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; }
 .about-ledger-col h3 span { color: var(--color-accent-strong); font-size: 13px; letter-spacing: .14em; }
-.about-ledger-note { margin: 12px 0 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.55; }
 .about-ledger-col ul { display: grid; gap: 0; margin: 18px 0 0; padding: 0; list-style: none; }
 .about-ledger-col li { padding: 14px 0; border-top: 1px solid var(--color-border); }
 .about-ledger-col li b { display: block; color: var(--color-text); font: 600 17px/1.35 var(--font-manrope), sans-serif; }
 .about-ledger-col li b a { color: inherit; text-decoration: none; }
 .about-ledger-col li b a span { color: var(--color-accent-strong); }
 .about-ledger-col li b a:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
-.about-ledger-col li > span { display: block; margin-top: 4px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
 .about-build-all { display: inline-flex; margin-top: 28px; }
-
-/* «Що робимо самі, а що організовуємо» on a drawing (CapabilityFigure.tsx, UX pass 2026-10): the object on its site in quiet
-   graphite; a pointed work or group — or the first view's walk through the three — lights in its group's line: own team
-   copper, organised works a strong line, specialist works dashed. The drawing stays beside the list while it scrolls. */
-.about-cap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 64px); align-items: start; }
-.about-cap-figure { position: sticky; top: 128px; margin: 0; padding: clamp(14px, 1.6vw, 22px); background: color-mix(in srgb, var(--color-surface-elevated) 92%, transparent); border: 1px solid var(--color-border); }
-.about-cap-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
-.about-cap .about-ledger { grid-template-columns: minmax(0, 1fr); gap: 30px; }
-.cap-ground { fill: none; stroke: var(--color-border-strong); stroke-width: 1.1; }
-.cap-part { fill: none; stroke: var(--color-border-control); stroke-width: 1.1; stroke-linejoin: round; stroke-linecap: round; transition: stroke .3s ease, stroke-width .3s ease, opacity .3s ease; }
-/* Lit, each part in its group's line */
-.cap-part[data-tier="core"] { --cap-lit: var(--color-accent); --cap-lit-width: 2.2; }
-.cap-part[data-tier="flexible"] { --cap-lit: var(--color-text); --cap-lit-width: 2; }
-.cap-part[data-tier="partner"] { --cap-lit: var(--color-text-secondary); --cap-lit-width: 1.8; stroke-dasharray: 6 5; }
-.cap-part[data-cap="steel"] { stroke: var(--color-text-muted); }
-.about-cap[data-tier] .cap-part, .about-cap[data-cap] .cap-part { opacity: .35; }
-.about-cap[data-tier="core"] .cap-part[data-tier="core"], .about-cap[data-tier="flexible"] .cap-part[data-tier="flexible"], .about-cap[data-tier="partner"] .cap-part[data-tier="partner"], .about-cap[data-cap="foundations"] .cap-part[data-cap="foundations"], .about-cap[data-cap="steel"] .cap-part[data-cap="steel"], .about-cap[data-cap="roofing"] .cap-part[data-cap="roofing"], .about-cap[data-cap="panels"] .cap-part[data-cap="panels"], .about-cap[data-cap="gates"] .cap-part[data-cap="gates"], .about-cap[data-cap="steel-fabrication"] .cap-part[data-cap="steel-fabrication"], .about-cap[data-cap="earthworks"] .cap-part[data-cap="earthworks"], .about-cap[data-cap="mep"] .cap-part[data-cap="mep"] { opacity: 1; stroke: var(--cap-lit); stroke-width: var(--cap-lit-width); }
-/* The pit digs itself each time it lights: its outline, then the soil round it, the depth and the heap */
-.cap-part[data-cap="earthworks"] { stroke-dasharray: 1; stroke-dashoffset: 0; }
-@media (prefers-reduced-motion: no-preference) {
-  .about-cap:is([data-tier="flexible"], [data-cap="earthworks"]) .cap-part[data-cap="earthworks"] { animation: cap-dig 1200ms var(--ease-premium) both; }
-}
-@keyframes cap-dig { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-.about-cap[data-tier="core"] .about-ledger-col.is-core, .about-cap[data-tier="flexible"] .about-ledger-col.is-flexible, .about-cap[data-tier="partner"] .about-ledger-col.is-partner { background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
-.about-cap[data-row="foundations"] li[data-cap="foundations"], .about-cap[data-row="steel"] li[data-cap="steel"], .about-cap[data-row="roofing"] li[data-cap="roofing"], .about-cap[data-row="panels"] li[data-cap="panels"], .about-cap[data-row="gates"] li[data-cap="gates"], .about-cap[data-row="industrial-floors"] li[data-cap="industrial-floors"], .about-cap[data-row="steel-fabrication"] li[data-cap="steel-fabrication"], .about-cap[data-row="earthworks"] li[data-cap="earthworks"], .about-cap[data-row="envelope"] li[data-cap="envelope"], .about-cap[data-row="other-construction"] li[data-cap="other-construction"], .about-cap[data-row="mep"] li[data-cap="mep"], .about-cap[data-row="ventilation"] li[data-cap="ventilation"], .about-cap[data-row="landscaping"] li[data-cap="landscaping"] { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
-.about-cap .about-ledger-col { transition: background-color .25s ease; }
-.about-cap li[data-cap] { cursor: default; transition: background-color .2s ease; }
-@media (max-width: 1050px) {
-  .about-cap { grid-template-columns: minmax(0, 1fr); }
-  .about-cap-figure { position: static; }
-}
 /* The phone still (AboutHeroVideo): the footage's grey grade would put its sunset out — a lighter one, framed on the light */
 .about-hero-media > img.about-hero-still { filter: saturate(.85) contrast(1.04) brightness(.95); object-position: 62% 40%; }
-@media (max-width: 760px) {
-  .about-ledger-col li { padding: 11px 0; }
-  .about-ledger-col li b { font-size: 16px; }
-  .about-ledger-col li > span { font-size: 14px; line-height: 1.5; }
-}
 .about-page[data-motion-ready="on"] .about-ledger-col { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
 .about-page[data-motion-ready] .about-ledger:not([data-motion-state="on"]) .about-ledger-col { opacity: 0; transform: translateY(12px); }
 /* The region (RegionBlock) closes the block; its own styles live in app/components/about/region.css */
@@ -230,7 +194,6 @@
   /* Full width: close to the image's own 4 : 5, so every mark stays in the frame */
   .about-story-section .promise-visual { min-height: 0; aspect-ratio: 4 / 5; max-height: 640px; }
   .about-principles-grid { grid-template-columns: minmax(0, 1fr); }
-  .about-ledger { grid-template-columns: minmax(0, 1fr); gap: 32px; }
 }
 
 /* ---------------------------------------------------------------- Phone */

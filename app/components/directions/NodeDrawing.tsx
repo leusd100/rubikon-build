@@ -21,7 +21,9 @@ function SteelJoint() {
       {/* the beam, broken off on the right */}
       <path className="nd-web" d="M460 410H1100V790H460Z" />
       <path className="nd-cut" d="M460 380H1100V410H460ZM460 790H1100V820H460Z" />
-      <path className="nd-line" d="M1100 360l-14 40 28 40-14 40V760l-14 40 28 40-14 40" />
+      {/* the break line: thin, past both flanges, with one zigzag on the beam's axis (owner, 05.10: the two zigzags over
+          the flanges read as a tangle) */}
+      <path className="nd-line" d="M1100 344V566l-24 22 48 24-24 22V856" />
       {/* the end plate */}
       <path className="nd-cut" d="M420 330H460V870H420Z" />
       {/* step 2 — the bolts through the plate and the column flange: shank, head, nut */}
@@ -34,25 +36,26 @@ function SteelJoint() {
       <g className="nd-part nd-weld" data-part="3">
         <path pathLength={1} d="M460 380h22l-22-22zM460 410h22l-22 22zM460 790h22l-22-22zM460 820h22l-22 22z" />
         <path pathLength={1} d="M460 432h8v336h-8z" />
-        <path pathLength={1} className="nd-leader" d="M474 366L560 280H700M600 280l14-18 14 18" />
+        {/* the shelf and its word end before x = 760: further right they showed in the corner of step 1's frame */}
+        <path pathLength={1} className="nd-leader" d="M474 366L560 280H756M572 280l14-18 14 18" />
+        <text className="nd-note" x="608" y="268">зварний шов</text>
       </g>
       {/* the beam's depth */}
       <path className="nd-dim" d="M1150 380V820M1138 380h24M1138 820h24" />
       <text className="nd-text" x="1172" y="612">h</text>
-      {/* view A: the end plate seen from the beam, its holes and their spacing */}
-      <path className="nd-line" d="M560 210L470 300M470 300l6-24M470 300l24-6" />
-      <text className="nd-text" x="572" y="206">А</text>
-      <text className="nd-title" x="1430" y="296" textAnchor="middle">Вид А</text>
+      {/* the end plate seen from the beam's end, its holes and their spacing. (Until 05.10 this was «Вид А» with an
+          arrow «А» over the joint; the arrow stopped short of the plate and read as a pointer to the weld's circle.) */}
+      <text className="nd-title" x="1430" y="282" textAnchor="middle">Вид з торця</text>
       <path className="nd-cut" d="M1300 330H1560V870H1300Z" />
       <path className="nd-hidden" d="M1300 380H1560M1300 410H1560M1300 790H1560M1300 820H1560" />
       <g className="nd-part" data-part="1">
         {holes.map(([x, y]) => <circle pathLength={1} key={`${x}-${y}`} cx={x} cy={y} r="20" />)}
-        <path pathLength={1} d="M1365 920H1495M1365 906v28M1495 906v28" />
+        <path pathLength={1} d="M1365 940H1495M1365 928v24M1495 928v24" />
         <path pathLength={1} d="M1610 360V840M1596 360h28M1596 470h28M1596 730h28M1596 840h28" />
       </g>
-      <text className="nd-text" x="1422" y="962">g</text>
-      <text className="nd-text" x="1630" y="424">p</text>
-      <text className="nd-text" x="1630" y="794">p</text>
+      <text className="nd-text" x="1420" y="924">g</text>
+      <text className="nd-text" x="1620" y="424">p</text>
+      <text className="nd-text" x="1620" y="794">p</text>
     </>
   );
 }
@@ -84,10 +87,18 @@ function Footing() {
         <path pathLength={1} d="M834 236h36v14h-36zM930 236h36v14h-36zM826 256h52M922 256h52" />
         <path className="nd-dashed" d="M780 268H1020V300H780" />
       </g>
-      {/* step 3 — the formwork: boards and braces round the pad and the pedestal, the level marks */}
+      {/* step 3 — the formwork (owner, 05.10: «показати поцікавіше» — it was one line and a brace): the sheathing on the
+          concrete's face, two walers behind it, a strut from the upper waler down to a foot board held by a stake; the
+          same, smaller, round the pedestal, standing on the pad; and the level marks */}
       <g className="nd-part" data-part="3">
-        <path pathLength={1} d="M370 630V910M1430 630V910M750 290V630M1050 290V630" />
-        <path pathLength={1} d="M370 700L300 900M1430 700L1500 900M750 360L690 600M1050 360L1110 600" />
+        {/* sheathing */}
+        <path pathLength={1} d="M386 622H400V908H386ZM1400 622H1414V908H1400ZM766 292H780V640H766ZM1020 292H1034V640H1020Z" />
+        {/* walers, in section */}
+        <path pathLength={1} d="M360 664h26v26h-26zM360 832h26v26h-26zM1414 664h26v26h-26zM1414 832h26v26h-26zM742 340h24v24h-24zM742 548h24v24h-24zM1034 340h24v24h-24zM1034 548h24v24h-24z" />
+        {/* struts: a doubled line, so a strut reads as a timber and not as a leader */}
+        <path pathLength={1} d="M360 672L292 892M372 690L306 904M1440 672L1508 892M1428 690L1494 904M742 352L694 622M754 366L708 628M1058 352L1106 622M1046 366L1092 628" />
+        {/* foot boards on the pit's bottom and their stakes; the pedestal's struts stand on the pad */}
+        <path pathLength={1} d="M262 904H334V920H262ZM282 884V956M1466 904H1538V920H1466ZM1518 884V956M676 626H724V640H676ZM1076 626H1124V640H1076Z" />
         <path pathLength={1} d="M1520 640H1640M1540 640l-14-20h28zM1520 300H1640M1540 300l-14-20h28z" />
       </g>
     </>

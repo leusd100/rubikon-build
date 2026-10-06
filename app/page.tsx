@@ -1,9 +1,12 @@
+import type { CSSProperties } from 'react';
 import { DirectionImageCards } from './components/DirectionCards';
+import { DirectionsSheets } from './components/home-v2/DirectionsSheets';
 import { DirectionsRail } from './components/home-v2/DirectionsRail';
 import { SectionHeader } from './components/SiteChrome';
 import { ConversationSection } from './components/ConversationSection';
 import { EngineeringSignature } from './components/home-v2/EngineeringSignature';
 import { HomeV2Hero } from './components/home-v2/HomeV2Hero';
+import { ProcessMotion } from './components/process/ProcessMotion';
 import { directions, undecidedDirection } from './data/directions';
 import { homeProofCase } from './data/homeProof';
 import { company } from './data/company';
@@ -16,7 +19,11 @@ import './home-v2.css';
 // Illustrations explain, the one real photo proves; the two are labelled differently and never compete.
 export default function Home() {
   return (
-    <main id="main-content" data-home="v2">
+    <main id="main-content" data-home="v2" data-field="" style={{ '--field-name': '"RUBIKON BUILD · Промислове будівництво"' } as CSSProperties}>
+      {/* HOME's one motion controller: it reveals each [data-motion] block once, as it comes into view (today the
+          drawing sheet of the engineering block). New blocks key their before-states to main[data-motion-ready]
+          instead of mounting a controller of their own. */}
+      <ProcessMotion root='main[data-home="v2"]' />
       <HomeV2Hero />
 
       {/* The direction images are concept illustrations of the service directions, not project evidence — each card
@@ -28,6 +35,7 @@ export default function Home() {
             title="П’ять напрямів для бізнесу й агросектору"
             supporting="Оберіть напрям, найближчий до вашої задачі. Зображення на картках — ілюстрації, а не фото виконаних об’єктів."
             inverse
+            aside={<DirectionsSheets />}
           />
           <DirectionsRail count={directions.length}>
             <DirectionImageCards />

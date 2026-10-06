@@ -43,6 +43,7 @@
   --color-action-hover: #7F3D1D;      /* 7.26:1 */
   --color-on-action: #F5F2EB;
   --color-focus: #934923;
+  --color-water: #2B6C9A;              /* water on a drawing (the roof node's drops): the one colour that is not copper or graphite */
 
   /* Status */
   --color-success: #2F6B41;           /* ≥4.93:1 */
@@ -95,6 +96,7 @@
   --color-action-hover: #D6956A;
   --color-on-action: #171918;
   --color-focus: #CC8455;
+  --color-water: #6DB0DD;
   --color-success: #8CC49B;
   --color-warning: #D9B45F;
   --color-error: #E7907A;
@@ -130,6 +132,7 @@
     --color-action-hover: #D6956A;
     --color-on-action: #171918;
     --color-focus: #CC8455;
+    --color-water: #6DB0DD;
     --color-success: #8CC49B;
     --color-warning: #D9B45F;
     --color-error: #E7907A;

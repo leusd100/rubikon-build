@@ -12,6 +12,7 @@ import { capabilityLedger } from '../lib/deliveryModelPresentation';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
 import '../components/about/region.css';
+import '../components/about/capability.css';
 import './about.css';
 
 // /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we do
@@ -85,7 +86,7 @@ const PRINCIPLES = [
 
 export default function AboutPage() {
   return (
-    <main className="inner-page about-page" id="main-content">
+    <main className="inner-page about-page" id="main-content" data-field="" style={{ '--field-name': '"RUBIKON BUILD · Про нас"' } as CSSProperties}>
       <ProcessMotion root=".about-page" />
 
       {/* 1 · Hero — the names behind the reputation; words and actions under the title, as on /yak-pratsyuiemo */}

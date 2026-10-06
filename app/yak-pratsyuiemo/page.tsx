@@ -3,10 +3,9 @@ import { CostFactorsFigure } from '../components/process/CostFactorsFigure';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
-import { FormatPrefillLink } from '../components/process/FormatPrefillLink';
 import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
 import { ProcessMotion } from '../components/process/ProcessMotion';
-import { ScopeDiagram } from '../components/process/ScopeDiagram';
+import { FormatsScope, type FormatTerms } from '../components/directions/FormatsScope';
 import { StartGlyph } from '../components/process/StartGlyph';
 import { company } from '../data/company';
 import { deliveryModel } from '../data/deliveryModel';
@@ -16,6 +15,7 @@ import {
   changeSteps,
   costFactors,
   deliveryFaq,
+  formatCards,
   participationChoices,
   processSteps,
   responsibilityByFormat,
@@ -23,7 +23,9 @@ import {
 } from '../lib/deliveryModelPresentation';
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
 import type { CSSProperties } from 'react';
+import type { DeliveryFormatId } from '../types/deliveryModel';
 import './delivery.css';
+import '../components/directions/formats-scope.css';
 
 // /yak-pratsyuiemo v2 — what happens with the client's task, in seven zones: where to start, the four steps, how much
 // RUBIKON can take on, who answers for what, what drives cost and time, a short FAQ and the conversation. Every business
@@ -80,7 +82,8 @@ const TERMS = [
 export default function DeliveryModelPage() {
   const { statements } = deliveryModel;
   const steps = processSteps();
-  const choices = participationChoices();
+  // What tells the formats apart, for the scope drawing: the other party of the contract and who coordinates
+  const formatTerms = Object.fromEntries(participationChoices().map(({ id, contractWith, coordinator, rubikonCoordinates }) => [id, { contractWith, coordinator, rubikonCoordinates }])) as Record<DeliveryFormatId, FormatTerms>;
   const map = responsibilityMap();
   const resp = responsibilityByFormat();
   const pageData = {
@@ -96,7 +99,7 @@ export default function DeliveryModelPage() {
   };
 
   return (
-    <main className="inner-page process-page" id="main-content">
+    <main className="inner-page process-page" id="main-content" data-field="" style={{ '--field-name': '"RUBIKON BUILD · Як працюємо"' } as CSSProperties}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageData) }} />
       <ProcessMotion />
       <FormatSwitchSync />
@@ -211,49 +214,11 @@ export default function DeliveryModelPage() {
             titleId="proc-scope-title"
             supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
-          {/* A phone shows one format at a time (delivery.css); this switcher and the map's below are one choice */}
-          <fieldset className="proc-scope-switch">
-            <legend>Формат участі</legend>
-            <div>
-              {choices.map((choice) => (
-                <label key={choice.id}>
-                  <input type="radio" name="scope-format" value={choice.id} defaultChecked={choice.id === 'comprehensive'} />
-                  <span>{choice.title}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <ul className="proc-scope-grid">
-            {choices.map((choice) => (
-              <li key={choice.id} data-motion data-scope={choice.id}>
-                <ScopeDiagram format={choice.id} />
-                <div className="proc-scope-title">
-                  <p className="proc-scope-kicker">{choice.title}</p>
-                  <h3 id={`proc-scope-${choice.id}`}>{choice.headline}</h3>
-                </div>
-                {/* What actually tells the formats apart: the other party of the contract and who coordinates the object */}
-                <dl className="proc-scope-terms">
-                  <div>
-                    <dt>Договір</dt>
-                    <dd className="proc-contract">
-                      <span className="proc-party">{choice.contractWith}</span>
-                      <span className="proc-contract-link" aria-hidden="true" />
-                      <span className="visually-hidden"> і </span>
-                      <span className="proc-party is-rubikon">RUBIKON</span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Координує об’єкт</dt>
-                    <dd className={choice.rubikonCoordinates ? 'is-rubikon' : undefined}>{choice.coordinator}</dd>
-                  </div>
-                </dl>
-                <p>{choice.text}</p>
-                <FormatPrefillLink label={choice.title} />
-              </li>
-            ))}
-          </ul>
+          {/* One drawing, redrawn for the format in focus, in place of three cards (owner, 05.10: the block was
+              overloaded). Its buttons and the map's switcher below are one choice of format. */}
+          <FormatsScope formats={formatCards()} terms={formatTerms} mirror="resp-format" prefill />
           <p id="format-prefill-status" className="visually-hidden" aria-live="polite" />
-          <ul className="proc-scope-legend" aria-label="Позначення на схемах">
+          <ul className="proc-scope-legend" aria-label="Позначення на схемі">
             <li className="is-scope"><i aria-hidden="true" /> Обсяг RUBIKON</li>
             <li><i aria-hidden="true" /> Роботи інших учасників</li>
             <li className="is-context"><i aria-hidden="true" /> Хто координує об’єкт</li>

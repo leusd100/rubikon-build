@@ -1,0 +1,25 @@
+/* The directions' small scheme sheets (CatalogDrawing.tsx): the /napryamky catalogue rows and HOME's «П’ять напрямів»
+   header. Imported by CatalogDrawing.tsx only. A line scheme over a one-line title block. Static — the server markup is the whole drawing. The scheme's body is drawn at half its reference size
+   (<g transform="scale(.5)">), so the widths here are in reference units: 2.4 is about 1 px on a 164 px sheet. Every
+   rule states its paint in full on purpose: after a client-side navigation from a direction page that page's global
+   .dsd-* rules may still be loaded. Line types as on the site's other drawings: dash-dot = an axis; long dash and two
+   dots = someone else's equipment (the silo); thin solid = everything else; copper = the one accent per sheet. */
+.cdw { display: block; width: 100%; height: auto; padding: 9px 9px 5px; }
+.cdw .dsd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 2.4; stroke-linejoin: round; }
+/* seen in elevation, not cut: the same line without the cut fill */
+.cdw .cdw-seen { fill: none; stroke: var(--color-text-secondary); stroke-width: 2.4; stroke-linejoin: round; }
+.cdw .dsd-line { fill: none; stroke: var(--color-text-muted); stroke-width: 2; stroke-linejoin: round; }
+.cdw .cdw-equip { fill: none; stroke: var(--color-text-muted); stroke-width: 1.6; stroke-dasharray: 15 4 2.5 4 2.5 4; }
+.cdw .dsd-axis { fill: none; stroke: var(--color-text-muted); stroke-width: 1.3; stroke-dasharray: 18 5 3 5; opacity: .75; }
+.cdw .dsd-dim { fill: none; stroke: var(--color-text-muted); stroke-width: 1.5; }
+.cdw .dsd-hatch { fill: none; stroke: var(--color-text-muted); stroke-width: 1.4; opacity: .65; }
+.cdw .dsd-insulation { fill: none; stroke: var(--color-text-muted); stroke-width: 1.6; }
+.cdw .dsd-bars circle { fill: var(--color-text-secondary); r: 3.2px; }
+.cdw .dsd-accent { fill: none; stroke: var(--color-accent); stroke-width: 3.6; stroke-linecap: round; }
+.cdw .dsd-accent circle { fill: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+.cdw .dsd-accent .dsd-dashed { stroke-dasharray: 9 8; stroke-linecap: butt; stroke-width: 3; }
+/* the reused bodies' own letters are 14 reference units (under 6 px here): the sheet sets its own, outside the scale */
+.cdw .dsd-dim-text { display: none; }
+.cdw-letter { fill: var(--color-text-muted); font: italic 500 11px var(--font-manrope), sans-serif; text-anchor: middle; }
+/* The one copper letter: a host that turns dark around the sheet resolves the paper's copper above it (--dcat-sheet-copper) */
+.cdw-letter-accent { fill: var(--dcat-sheet-copper, var(--color-accent-strong)); }
