@@ -856,17 +856,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     // The measured line the seam is passing: lit from within GRAB until past RELEASE, so it does not flicker at the edge
     const phone = phoneNow();
     const lit = snapRef.current;
-    const near = lit && Math.abs(value - stageAt(lit, phone)) < SNAP_RELEASE
-      ? lit
-      : SNAPS.find((candidate) => Math.abs(value - stageAt(candidate, phone)) < SNAP_GRAB) ?? null;
+    // Not under a finger (owner, 06.10: on a phone the lit gate line, its name and a buzz read as the seam sticking to
+    // the gates — it never did; under a finger nothing lights, the seam just follows it)
+    let near: Snap | null = null;
+    if (!touch && lit && Math.abs(value - stageAt(lit, phone)) < SNAP_RELEASE) near = lit;
+    else if (!touch) near = SNAPS.find((candidate) => Math.abs(value - stageAt(candidate, phone)) < SNAP_GRAB) ?? null;
     if (near !== lit) {
       snapRef.current = near;
       setSnap(near);
-      if (near) {
-        setSnapWords(near);
-        // A touch on Android feels it; nowhere else does anything happen
-        if (touch) navigator.vibrate?.(6);
-      }
+      if (near) setSnapWords(near);
     }
     // Tenths of a per cent: a whole per cent is a 13 px jump on a wide screen
     const tenths = Math.round(value * 10) / 10;

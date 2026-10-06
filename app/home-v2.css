@@ -16,9 +16,10 @@ main[data-home="v2"] {
      runs along its way. The nodes drawn as details (А–Д): a magenta of their own (owner, 05.10: a node's copper ring read
      as one of the copper lines behind the gable) */
   --hv2-load: #5aa8ff; --hv2-load-light: #e3f0ff; --hv2-wind: #4fd8c8; --hv2-wind-light: #dcfbf6;
-  /* (magenta, not the first gold: no other hue on the sheet or in the photo — its cladding has yellow strips — owner,
-     05.10; dark letters on it, 6.5:1) */
-  --hv2-node: #ff52b0; --hv2-node-light: #ffa3d4; --hv2-node-edge: #ffd1ea; --hv2-node-ink: #1f0614;
+  /* (a calm drawing blue — owner, 06.10: the magenta «прикольно, але занадто», the gold before it too close to the copper
+     and the photo's yellow strips; cooler and paler than the snow's azure, which never shows with the nodes; dark
+     letters on it) */
+  --hv2-node: #8fa8ff; --hv2-node-light: #c3cfff; --hv2-node-edge: #e4e9ff; --hv2-node-ink: #0e1331;
   --hv2-ink: #121413;
   --hv2-graphite: #171a18;
   --hv2-graphite-2: #1d201e;
@@ -939,6 +940,14 @@ main[data-home="v2"] .hv2-contour .hv2-contour-key { display: none; }
      not fit, the sheet is taller than the window and scrolls; the title block is never pushed under the picture (owner,
      04.10). Without JavaScript, a usual title block's height */
   main[data-home="v2"] .hv2-contour .sheet-stamp { flex: none; }
+  /* Owner, 06.10: the block should fit the window it is seen in, a Mac's dock and the browser's bars and all: where the
+     picture at its least (rows 84–644) and the title block would not fit under the header, the whole sheet narrows —
+     the drawing scales down with it, centred — so they do; never below 70 % of its width (there it scrolls, as before:
+     a smaller drawing reads worse than a scroll). 46 px: the sheet's own side margins round the picture */
+  main[data-home="v2"] .hv2-contour {
+    max-width: max(70%, calc((100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))) * 1536 / 560 + 46px));
+    margin-inline: auto;
+  }
   main[data-home="v2"] .hv2-contour .sheet-image {
     flex: none; aspect-ratio: auto;
     height: clamp(calc(100cqw * 560 / 1536), calc(100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))), calc(100cqw * 788 / 1536));
