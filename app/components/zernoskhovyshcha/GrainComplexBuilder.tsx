@@ -127,8 +127,9 @@ export function GrainComplexBuilder() {
   }, [motion]);
 
   // The tip sits inside the drawing, beside its module: over it, under it, to its right or left — the first place where it
-  // is whole and in view; failing all (a phone's drawing is low), at the drawing's top over the module. It lives in the
-  // sideways view's own coordinates, so it travels with the drawing; measured after the drawing has changed.
+  // is whole, in view and clear of the pause in the top corner; failing all (a phone's drawing is low), at the drawing's
+  // top over the module, beside the pause or under it. It lives in the sideways view's own coordinates, so it travels with
+  // the drawing; measured after the drawing has changed.
   useLayoutEffect(() => {
     const element = tipRef.current;
     const scroller = scrollRef.current;
@@ -145,13 +146,22 @@ export function GrainComplexBuilder() {
     const maxX = view + scroller.clientWidth - width - TIP_EDGE;
     const maxY = scroller.clientHeight - height - TIP_EDGE;
     const centred = Math.min(Math.max(left + box.width / 2 - width / 2, minX), maxX);
+    // the pause stays put over the sideways view: where it will be once the view has got where it is going
+    const pause = rootRef.current?.querySelector('.gc-pause')?.getBoundingClientRect();
+    const pauseLeft = pause ? pause.left - frame.left + view : Infinity;
+    const pauseBottom = pause ? pause.bottom - frame.top : 0;
+    const clear = (px: number, py: number) =>
+      !pause || px + width + TIP_GAP <= pauseLeft || px >= pauseLeft + pause.width + TIP_GAP || py >= pauseBottom + TIP_GAP;
     const places = [
       [centred, top - TIP_GAP - height],
       [centred, top + box.height + TIP_GAP],
       [left + box.width + TIP_GAP, top + TIP_EDGE],
       [left - TIP_GAP - width, top + TIP_EDGE],
+      [centred, TIP_EDGE],
+      [Math.min(centred, pauseLeft - TIP_GAP - width), TIP_EDGE],
+      [centred, pauseBottom + TIP_GAP],
     ];
-    const [x, y] = places.find(([px, py]) => px >= minX && px <= maxX && py >= TIP_EDGE && py <= maxY) ?? [centred, TIP_EDGE];
+    const [x, y] = places.find(([px, py]) => px >= minX && px <= maxX && py >= TIP_EDGE && py <= maxY && clear(px, py)) ?? [centred, TIP_EDGE];
     element.style.left = `${Math.round(x)}px`;
     element.style.top = `${Math.round(y)}px`;
   }, [tip, state]);
