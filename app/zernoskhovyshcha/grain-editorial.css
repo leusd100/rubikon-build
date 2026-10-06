@@ -89,15 +89,15 @@
 .gs-card:has(.direction-entry-link:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 4px; }
 .gs-drawing { display: block; width: 100%; height: auto; margin-bottom: 6px; overflow: visible; }
 .gs-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.gs-ground { stroke: var(--color-text-muted); stroke-width: 1.2; }
-.gs-hatch { stroke: var(--color-text-muted); stroke-width: .9; opacity: .6; }
-.gs-own { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--color-accent); stroke-width: 2; }
-.gs-own.gs-line { fill: none; }
-.gs-partner { stroke: var(--color-text-muted); stroke-width: 1.5; stroke-dasharray: 9 4; }
-.gs-future { stroke: var(--color-border-control); stroke-width: 1.4; stroke-dasharray: 4 4; }
-.gs-ink { stroke: var(--color-text-secondary); stroke-width: 1.6; }
-.gs-grain { fill: color-mix(in srgb, var(--color-grain) 30%, transparent); stroke: var(--color-grain); stroke-width: 1.2; }
-.gs-press { stroke: var(--color-grain); stroke-width: 1.6; }
+.gs-drawing .gs-ground { stroke: var(--color-text-muted); stroke-width: 1.2; }
+.gs-drawing .gs-hatch { stroke: var(--color-text-muted); stroke-width: .9; opacity: .6; }
+.gs-drawing .gs-own { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--color-accent); stroke-width: 2; }
+.gs-drawing .gs-own.gs-line { fill: none; }
+.gs-drawing .gs-partner { stroke: var(--color-text-muted); stroke-width: 1.5; stroke-dasharray: 9 4; }
+.gs-drawing .gs-future { stroke: var(--color-border-control); stroke-width: 1.4; stroke-dasharray: 4 4; }
+.gs-drawing .gs-ink { stroke: var(--color-text-secondary); stroke-width: 1.6; }
+.gs-drawing .gs-grain { fill: color-mix(in srgb, var(--color-grain) 30%, transparent); stroke: var(--color-grain); stroke-width: 1.2; }
+.gs-drawing .gs-press { stroke: var(--color-grain); stroke-width: 1.6; }
 @keyframes gs-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes gs-push { 0%, 100% { transform: none; } 50% { transform: translateX(var(--push, 0)); } }
 @media (prefers-reduced-motion: no-preference) {

@@ -29,23 +29,23 @@
 .gc-scroll:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
 .gc-drawing { display: block; width: 100%; height: 100%; }
 .gc-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.gc-ground { stroke: var(--color-text-muted); stroke-width: 2.4; }
-.gc-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .6; }
-.gc-own { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--color-accent); stroke-width: 3.4; }
-.gc-own.gc-line { fill: none; stroke-width: 2.6; }
+.gc-drawing .gc-ground { stroke: var(--color-text-muted); stroke-width: 2.4; }
+.gc-drawing .gc-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .6; }
+.gc-drawing .gc-own { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--color-accent); stroke-width: 3.4; }
+.gc-drawing .gc-own.gc-line { fill: none; stroke-width: 2.6; }
 /* the gallery's trestles: the building part too, but a support — quieter than the modules */
 .gc-mod-trestle .gc-own.gc-line { stroke-width: 2; opacity: .8; }
-.gc-partner { stroke: var(--color-text-muted); stroke-width: 2.6; stroke-dasharray: 26 9; }
-.gc-vehicle :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 2.2; opacity: .8; }
-.gc-grain { fill: color-mix(in srgb, var(--crop, var(--color-grain)) 48%, transparent); stroke: var(--crop, var(--color-grain)); stroke-width: 2.6; }
+.gc-drawing .gc-partner { stroke: var(--color-text-muted); stroke-width: 2.6; stroke-dasharray: 26 9; }
+.gc-drawing .gc-vehicle :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 2.2; opacity: .8; }
+.gc-drawing .gc-grain { fill: color-mix(in srgb, var(--crop, var(--color-grain)) 48%, transparent); stroke: var(--crop, var(--color-grain)); stroke-width: 2.6; }
 /* a silo's rings and the pipes between the machines: the specialists' too, quieter than their outlines */
-.gc-ring { stroke: color-mix(in srgb, var(--color-text-muted) 30%, transparent); stroke-width: 1.1; }
-.gc-pipe { stroke-width: 3.4; }
-.gc-grate { stroke: var(--color-text-secondary); stroke-width: 3; stroke-dasharray: 10 8; }
-.gc-unknown { stroke: var(--color-border-control); stroke-width: 2.6; stroke-dasharray: 14 10; }
-.gc-unknown-mark { fill: var(--color-border-control); font: 400 150px var(--font-display), sans-serif; text-anchor: middle; }
-.gc-label { fill: var(--color-text-secondary); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; text-anchor: middle; }
-.gc-flow { stroke: var(--color-grain); stroke-width: 11; stroke-linecap: round; stroke-dasharray: 1 24; }
+.gc-drawing .gc-ring { stroke: color-mix(in srgb, var(--color-text-muted) 30%, transparent); stroke-width: 1.1; }
+.gc-drawing .gc-pipe { stroke-width: 3.4; }
+.gc-drawing .gc-grate { stroke: var(--color-text-secondary); stroke-width: 3; stroke-dasharray: 10 8; }
+.gc-drawing .gc-unknown { stroke: var(--color-border-control); stroke-width: 2.6; stroke-dasharray: 14 10; }
+.gc-drawing .gc-unknown-mark { fill: var(--color-border-control); font: 400 150px var(--font-display), sans-serif; text-anchor: middle; }
+.gc-drawing .gc-label { fill: var(--color-text-secondary); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; text-anchor: middle; }
+.gc-drawing .gc-flow { stroke: var(--color-grain); stroke-width: 11; stroke-linecap: round; stroke-dasharray: 1 24; }
 /* A module out of the chain stays as a ghost, so the chain keeps its places */
 .gc-mod { transition: opacity .5s ease; }
 .gc-mod.is-off { opacity: .16; }
@@ -112,7 +112,7 @@
   .gc-sheet .gc-visual { aspect-ratio: auto; height: 330px; }
   .gc-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
   .gc-drawing { width: 990px; height: 330px; }
-  .gc-label { font-size: 32px; }
+  .gc-drawing .gc-label { font-size: 32px; }
   .gc-controls { display: grid; gap: 18px; }
   .gc-chip span { min-height: 44px; padding: 0 14px; font-size: 14px; }
   .gc-scope { grid-template-columns: 1fr; gap: 20px; padding-top: 20px; }
