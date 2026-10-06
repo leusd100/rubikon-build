@@ -244,6 +244,12 @@ const SCROLL_FIRST = 450;
 /** The letters А, Б, В ring a few times once the sweep or the assembly has put them up, so the nodes behind them are
  *  found (owner, 05.10: found by chance) */
 const NODES_HINT_MS = 2800;
+/** Settles when the sheet's picture has finished plotting in (DrawingSheet's clip-path transition), or at once */
+function plottedIn(sheet: Element) {
+  const plotting = sheet.querySelector('.sheet-image')?.getAnimations() ?? [];
+  return Promise.all(plotting.map((animation) => animation.finished.catch(() => undefined)));
+}
+
 function hintNodes(stage: HTMLElement, after: number) {
   window.setTimeout(() => {
     stage.dataset.nodesHint = '';
@@ -456,8 +462,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       timer = window.setTimeout(() => {
         // …and only once the picture has plotted in: the plot's transition starts a frame after data-sheet-state, so on a
         // busy page SWEEP_AT alone could start the sweep with the plot's last frames still running
-        const plotting = sheet.querySelector('.sheet-image')?.getAnimations() ?? [];
-        void Promise.all(plotting.map((animation) => animation.finished.catch(() => undefined))).then(() => {
+        void plottedIn(sheet).then(() => {
           if (!live) return;
           due = true;
           run();
