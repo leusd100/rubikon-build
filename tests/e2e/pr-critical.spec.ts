@@ -6,7 +6,7 @@ import { company, companyContactLinks } from '../../app/data/company';
 import { homeProofCase } from '../../app/data/homeProof';
 import { directions, undecidedDirection } from '../../app/data/directions';
 import { stubTurnstile } from './turnstile.helpers';
-import { GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT } from '../../app/data/grainPage';
+import { GRAIN_HERO_BOUNDARY } from '../../app/data/grainPage';
 
 function collectFatalBrowserErrors(page: Page) {
   const errors: string[] = [];
@@ -410,7 +410,8 @@ test('direction heroes keep the call on a phone\'s first screen and the full lea
       await expect(page.locator('.service-subhero-lead .lead-phone'), path).toBeVisible();
     }
     await page.goto('/zernoskhovyshcha', { waitUntil: 'load' });
-    await expect(page.locator('.service-subhero-note')).toHaveText(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    // the boundary under a phone's grain hero is the short one since 06.10; the whole statement stands beside the drawing
+    await expect(page.locator('.service-subhero-note')).toHaveText(GRAIN_HERO_BOUNDARY);
     await expect(page.locator('.service-subhero-note')).toBeVisible();
   } else {
     for (const path of PHONE_HERO_PAGES) {

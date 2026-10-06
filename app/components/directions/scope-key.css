@@ -1,0 +1,5 @@
+/* ScopeKey: a drawing's key — a short line drawn as the drawing draws it, then its meaning */
+.scope-key { display: flex; flex-wrap: wrap; gap: 8px 26px; margin: 14px 0 0; padding: 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.4; list-style: none; }
+.scope-key li { display: flex; align-items: center; gap: 10px; }
+.scope-key-line { flex: none; width: 34px; height: 0; border-top: 3px solid var(--color-accent); }
+.scope-key [data-tone="partner"] .scope-key-line { height: 2px; border: 0; background: repeating-linear-gradient(90deg, var(--color-text-muted) 0 12px, transparent 12px 17px); }

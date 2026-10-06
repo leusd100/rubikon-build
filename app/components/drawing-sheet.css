@@ -115,5 +115,4 @@
   /* On a phone the picture keeps its own proportion and the sheet grows around it */
   .direction-editorial-grid[data-layout] .direction-editorial-media.sheet { aspect-ratio: auto; }
   .direction-editorial-media.sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
-  .grain-implementation-band .direction-editorial-media.sheet .sheet-image { aspect-ratio: 16 / 9; }
 }

@@ -48,29 +48,14 @@
 /* ---------- Route ---------- */
 .angary-process { overflow: hidden; background: var(--color-dark); color: var(--color-dark-text); }
 .angary-process .angary-section-heading { margin-bottom: 56px; }
-/* The site's step rail, as on /yak and the direction pages: a numbered node centred over each step, the rail from the
-   first node to the last. 01 is the visitor's own brief — open until something is attached, filled once it is, dashed
-   after «Не додавати» — and the last node (the handed-over works) is filled. */
-.angary-process-rail { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
-.angary-process-rail::before { content: ''; position: absolute; top: 22px; left: 10%; right: 10%; height: 1px; background: var(--color-accent); transform-origin: left; }
-.angary-process-rail li { position: relative; min-width: 0; padding: 0 14px; text-align: center; }
-.angary-process-rail li > span { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 24px; color: var(--color-accent-on-dark); background: var(--color-dark); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 15px/1 var(--font-condensed), sans-serif; transition: color .3s ease, background-color .3s ease, border-color .3s ease, box-shadow .3s ease, transform .5s var(--ease-premium); }
-.angary-process-rail li:last-child > span, .angary-process-rail[data-brief="attached"] li:first-child > span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
-.angary-process-rail[data-brief="attached"] li:first-child > span { box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent-on-dark) 22%, transparent); }
-.angary-process-rail[data-brief="detached"] li:first-child > span { border-style: dashed; }
-.angary-process-rail h3 { max-width: 220px; margin: 0 auto; color: var(--color-dark-text); font: 600 clamp(18px, 1.5vw, 21px)/1.15 var(--font-condensed), sans-serif; text-transform: none; text-wrap: balance; }
-.angary-process-rail p { max-width: 240px; margin: 12px auto 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.6; }
-.angary-process-rail p b { color: var(--color-dark-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+/* The route is the direction pages' «Ви · Ми» (direction-template.css .process-split), five steps; 01 is the brief */
 /* 01's action follows the brief's state (owner, 03.10): up to the configurator, or down to the attached brief */
 .angary-route-brief-action { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 8px; color: var(--color-accent-on-dark); border-bottom: 1px solid currentColor; font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .angary-route-brief-action:hover { color: var(--color-dark-text); }
+/* in the brief's «Ви», under its sentence */
+.process-split .ps-you .angary-route-brief-action { display: flex; width: fit-content; margin-top: 10px; }
 .angary-route-more { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 40px; color: var(--color-dark-text); border-bottom: 1px solid var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
 .angary-route-more:hover { color: var(--color-accent-on-dark); }
-/* The line draws node to node once the rail is in view, as on /yak (ProcessMotion arms [data-motion]) */
-:where([data-motion-ready]) .angary-process-rail:not([data-motion-state="on"])::before { transform: scaleX(0); }
-:where([data-motion-ready]) .angary-process-rail:not([data-motion-state="on"]) li > span { color: var(--color-dark-text-muted); background: var(--color-dark); border-color: var(--color-dark-line); transform: scale(.86); }
-:where([data-motion-ready="on"]) .angary-process-rail::before { transition: transform 900ms cubic-bezier(.45, 0, .25, 1) 100ms; }
-:where([data-motion-ready="on"]) .angary-process-rail li > span { transition-delay: calc(150ms + var(--i, 0) * 170ms); }
 
 /* ---------- The route's title block: who answers for the agreed scope (it replaced the separate people section) ---------- */
 /* #responsibility is an anchor of its own: it lands under the site header, as the sections do (04.10) */
@@ -112,16 +97,6 @@
   .angary-page { --section-space: 72px; --section-space-compact: 56px; --grid-gap: 36px; }
   .angary-page .hangar-configurator-embedded { padding-block: 56px 88px; }
   .angary-section-heading { max-width: var(--content-copy); }
-  .angary-process-rail { grid-template-columns: 1fr; max-width: var(--content-copy); }
-  /* vertical: a segment from each node down to the next one, so the rail ends at the last node */
-  .angary-process-rail::before { content: none; }
-  .angary-process-rail li:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 22px; width: 1px; background: var(--color-accent); transform-origin: top; transition: transform 500ms var(--ease-premium) calc(250ms + var(--i, 0) * 170ms); }
-  .angary-process-rail li { padding: 0 0 30px 68px; text-align: left; }
-  .angary-process-rail li:last-child { padding-bottom: 0; }
-  .angary-process-rail li > span { position: absolute; top: 0; left: 0; margin: 0; }
-  .angary-process-rail h3 { padding-top: 10px; }
-  .angary-process-rail :is(h3, p) { max-width: 560px; margin-inline: 0; }
-  :where([data-motion-ready]) .angary-process-rail:not([data-motion-state="on"]) li:not(:last-child)::before { transform: scaleY(0); }
   .angary-stamp dl { grid-template-columns: 1fr 1fr; }
   .angary-stamp dl > .is-wide { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--color-dark-line); }
   .angary-real-grid { grid-template-columns: 1fr; max-width: var(--content-copy); }
@@ -140,14 +115,6 @@
   /* 16 px on phones, as every lead on the site (HOME's mobile standard); at 14 px the cost lead was the smallest */
   .angary-section-heading > p:not(.eyebrow) { margin-top: 22px; font-size: 16px; line-height: 1.6; }
   .angary-process .angary-section-heading { margin-bottom: 50px; }
-  .angary-process-rail { grid-template-columns: 1fr; }
-  .angary-process-rail::before { content: none; }
-  .angary-process-rail li:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 22px; width: 1px; background: var(--color-accent); transform-origin: top; transition: transform 500ms var(--ease-premium) calc(250ms + var(--i, 0) * 170ms); }
-  .angary-process-rail li { padding: 0 0 28px 60px; text-align: left; }
-  .angary-process-rail li:last-child { padding-bottom: 0; }
-  .angary-process-rail li > span { position: absolute; top: 0; left: 0; margin: 0; }
-  .angary-process-rail h3 { max-width: none; margin-inline: 0; padding-top: 10px; font-size: 18px; }
-  :where([data-motion-ready]) .angary-process-rail:not([data-motion-state="on"]) li:not(:last-child)::before { transform: scaleY(0); }
   .angary-cost-foot { margin-top: 28px; }
   .angary-cost-actions .button { width: 100%; justify-content: space-between; }
   .angary-stamp dl { grid-template-columns: 1fr; }
@@ -168,7 +135,6 @@
   .angary-real-facts h2 { font-size: clamp(26px, 7.4vw, 30px); }
   .angary-real .hv2-scope-chips { margin-top: 22px; }
   .angary-real .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
-  .angary-process-rail p { max-width: none; margin-inline: 0; font-size: 15px; }
   .angary-page .faq-heading { position: static; margin-bottom: 36px; }
   .angary-stamp { scroll-margin-top: 88px; }
   /* While «До заявки» is fixed over the bottom of the screen, what takes the focus scrolls clear of it (04.10: a focused

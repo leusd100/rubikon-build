@@ -13,6 +13,8 @@ import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { FrameTour } from './FrameTour';
+import { ProcessDrawing } from '../directions/ProcessDrawing';
+import type { ProcessSplit } from '../../types/directionPage';
 
 // /angary below the configurator (UX review 2026-10, report «/angary по блоках»): the visitor's frame from roof to
 // footing, a real hangar built that way, what drives the cost, and the route from the brief to handed-over works with
@@ -25,7 +27,14 @@ import { FrameTour } from './FrameTour';
 export type AngaryEditorialContent = {
   cost: { title: string; text: string; factors: readonly CostFactorItem[]; customerScope: string };
   /** leadCta: the Delivery Model's contactRoles.constructionLead.cta, the title block's way to the form */
-  route: { steps: readonly { title: string; result: string }[]; boundary: string; leadCta: string };
+  route: {
+    /** The Delivery Model's steps: what we do */
+    steps: readonly { title: string; text: string }[];
+    /** Per model step: what you do, what you get after it, its drawing on the rail */
+    sides: readonly ProcessSplit[];
+    boundary: string;
+    leadCta: string;
+  };
   people: readonly { name: string; role: string }[];
 };
 
@@ -92,35 +101,45 @@ export function HangarEditorialArchitecture({
             <p className="eyebrow light"><span /> Від брифу до об’єкта</p>
             <h2 id="angary-process-title">Зрозумілий шлях від першого брифу</h2>
           </header>
-          {/* 01 is the visitor's own brief: open while nothing is attached, filled once it is; then the route as
-              /yak-pratsyuiemo «Етапи» tells it, word for word — with the estimate, the contract and the handover */}
-          <ol className="angary-process-rail" data-motion data-brief={briefState}>
+          {/* «Ви · Ми» (owner, 06.10, as on the other direction pages): over the rail what you do, under it what we do — the
+              Delivery Model's steps word for word — and on it what you get, drawn small. 01 is the visitor's own brief: its
+              «Ви» follows the brief's state, its action goes up to the configurator or down to the attached brief. */}
+          <p className="process-key" aria-hidden="true"><span>Ви</span><span>RUBIKON</span></p>
+          <ol className="process-split angary-route" data-motion data-brief={briefState} style={{ '--steps': content.route.steps.length + 1 } as CSSProperties}>
             <li className="angary-route-brief" style={{ '--i': 0 } as CSSProperties}>
-              <span>01</span>
-              <h3>Ваш бриф</h3>
-              <p>
+              <h3><b>01</b>Ваш бриф</h3>
+              <div className="ps-you">
+                <small>Ви</small>
                 {attached
                   ? <>{sent ? 'Надіслано з вашим запитом' : 'Додано до заявки'}: <b>{briefHeadline}</b></>
-                  : 'Базову конфігурацію можна сформувати вище.'}
-              </p>
-              {/* Owner, 03.10: the brief's node acts on its own state — up to the configurator while nothing is attached,
-                  down to the attached brief in the form once something is */}
-              {attached && !sent && (
-                <a className="angary-route-brief-action" href="#inquiry" onClick={revealAttachedBrief}>
-                  Надіслати бриф <span aria-hidden="true">↓</span>
-                </a>
-              )}
-              {!attached && (
-                <a className="angary-route-brief-action" href="#configurator">
-                  Сформувати бриф <span aria-hidden="true">↑</span>
-                </a>
-              )}
+                  : 'Складаєте базову конфігурацію вище або описуєте задачу словами.'}
+                {/* Owner, 03.10: the brief's node acts on its own state — up to the configurator while nothing is attached,
+                    down to the attached brief in the form once something is */}
+                {attached && !sent && (
+                  <a className="angary-route-brief-action" href="#inquiry" onClick={revealAttachedBrief}>
+                    Надіслати бриф <span aria-hidden="true">↓</span>
+                  </a>
+                )}
+                {!attached && (
+                  <a className="angary-route-brief-action" href="#configurator">
+                    Сформувати бриф <span aria-hidden="true">↑</span>
+                  </a>
+                )}
+              </div>
+              <div className="ps-node">
+                <ProcessDrawing kind="hangar-brief" />
+                <span className="ps-spark" aria-hidden="true" />
+              </div>
+              <p className="ps-result"><span className="sr-only">Результат: </span>{attached ? 'Бриф у заявці' : 'Бриф до заявки'}</p>
+              <p className="ps-we"><small>Ми</small>Читаємо бриф і готуємо питання до розмови.</p>
             </li>
             {content.route.steps.map((step, index) => (
               <li key={step.title} style={{ '--i': index + 1 } as CSSProperties}>
-                <span>{pad(index + 2)}</span>
-                <h3>{step.title}</h3>
-                <p>{step.result}</p>
+                <h3><b>{pad(index + 2)}</b>{step.title}</h3>
+                <p className="ps-you"><small>Ви</small>{content.route.sides[index]?.you}</p>
+                <div className="ps-node">{content.route.sides[index] && <ProcessDrawing kind={content.route.sides[index].drawing} />}</div>
+                <p className="ps-result"><span className="sr-only">Результат: </span>{content.route.sides[index]?.result}</p>
+                <p className="ps-we"><small>Ми</small>{step.text}</p>
               </li>
             ))}
           </ol>

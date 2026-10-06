@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { directionPages } from '../../../app/data/directionPages';
 import { directions } from '../../../app/data/directions';
-import { GRAIN_RESPONSIBILITY_STATEMENT, GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT, grainPage } from '../../../app/data/grainPage';
+import { GRAIN_HERO_BOUNDARY, GRAIN_RESPONSIBILITY_STATEMENT, GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT, grainPage } from '../../../app/data/grainPage';
 import { relatedDirections } from '../../../app/data/relatedDirections';
 
 // Decision 1 of the Grain Planner Implementation Spec v1, as the owner approved it.
@@ -24,7 +24,9 @@ describe('grain page copy', () => {
   });
 
   it('uses the conservative website boundary without changing the Planner decision', () => {
-    expect(config.hero.intro.endsWith(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT)).toBe(true);
+    // short in the hero (06.10); whole beside the drawing of the building part, which shows the same split, and in the FAQ
+    expect(config.hero.intro.endsWith(GRAIN_HERO_BOUNDARY)).toBe(true);
+    expect(config.editorial.text).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
     expect(config.editorial.text).toContain('погоджену будівельну частину');
     expect(config.process.text).toContain('склад будівельних робіт');
     expect(config.faq?.items.find(([question]) => question === 'Чи займаєтеся ви технологічним обладнанням?')?.[1]).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
@@ -80,5 +82,44 @@ describe('grain page copy', () => {
     expect(live.overview?.eyebrow).toBe('Склад робіт');
     expect(live.cost).toBeDefined();
     expect(live.faq?.items.map(([question]) => question)).toContain('Чи можете оцінити вартість без готового проєкту, лише за орієнтовною місткістю?');
+  });
+});
+
+// /zernoskhovyshcha itself since 06.10: the complex on a drawing (the planner composition above stays on /planner-preview)
+describe('grain complex page copy', () => {
+  const complex = grainPage.complexDirection;
+  const questions = complex.faq?.items.map(([question]) => question) ?? [];
+
+  it('keeps the same boundary as the planner page', () => {
+    expect(complex.hero.intro.endsWith(GRAIN_HERO_BOUNDARY)).toBe(true);
+    expect(complex.editorial.text).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    expect(complex.faq?.items.find(([question]) => question === 'Чи займаєтеся ви технологічним обладнанням?')?.[1]).toBe(GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT);
+    expect(strings(complex).join(' ')).not.toContain(DECISION_1);
+  });
+
+  it('leads the hero into the complex and the conversation', () => {
+    expect(complex.hero.actions?.items.map(({ label, href }) => [label, href])).toEqual([
+      ['Скласти комплекс', '#kompleks'],
+      ['Обговорити зерносховище', '#inquiry'],
+    ]);
+  });
+
+  it('speaks of the scheme, never of a planner the page no longer has', () => {
+    expect(questions).toContain('Чи схема комплексу — це проєкт?');
+    expect(strings(complex.faq).join(' ')).not.toMatch(/планувальник/i);
+    expect(complex.faq?.collapsible).toBe(true);
+  });
+
+  it('gives every process step what the client does and what comes of it, with its drawing', () => {
+    expect(complex.process.split).toHaveLength(complex.process.steps.length);
+    for (const { you, result } of complex.process.split ?? []) {
+      expect(you.trim().length).toBeGreaterThan(0);
+      expect(result.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it('starts each situation with what the first conversation needs', () => {
+    expect(complex.entry?.items.map(({ situation }) => situation)).toEqual(['Нове зерносховище', 'Основа під силоси', 'Зерно в наявній будівлі', 'Розширення комплексу']);
+    for (const { start } of complex.entry?.items ?? []) expect(start.trim().length).toBeGreaterThan(0);
   });
 });

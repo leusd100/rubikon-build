@@ -15,13 +15,27 @@ export const GRAIN_RESPONSIBILITY_STATEMENT =
 export const GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT =
   'RUBIKON виконує погоджену будівельну частину зерносховища. Вимоги до основ, отворів, закладних і навантажень узгоджуємо з документацією на обладнання. Підбір, постачання й монтаж технологічного обладнання замовник погоджує окремо з профільними спеціалістами.';
 
+/**
+ * The boundary in the hero, short (owner, 06.10: the hero's lead had grown to four lines, three of them this boundary). The
+ * full statement stands beside the drawing of the building part (band 04), which shows the same split, and in the FAQ.
+ */
+export const GRAIN_HERO_BOUNDARY =
+  'Будівельну частину виконуємо ми; технологічне обладнання замовник погоджує з профільними спеціалістами.';
+
+/** What the copper and the long dash mean on this page's drawings — band 04's section and the approaches' cards */
+export const GRAIN_SCOPE_KEY = [
+  { tone: 'own', label: 'Будівельна частина RUBIKON' },
+  { tone: 'partner', label: 'Обладнання й роботи профільних спеціалістів' },
+] as const;
+
 /** A real, confirmed grain object RUBIKON built — never an illustration or a placeholder. */
 export type GrainCase = { title: string; location: string; scope: string; image: string; imageAlt: string };
 
 /**
- * /zernoskhovyshcha as a direction-page config: hero (01), «Як RUBIKON реалізує» (04, editorial
- * with the work points), the process after the brief (05), FAQ v2 (07), related directions (08,
- * relatedDirections.zernoskhovyshcha) and the inquiry (09). Bands 02–03 are the planner.
+ * The planner composition (/planner-preview) as a direction-page config: hero (01), «Як RUBIKON
+ * реалізує» (04, the building part as a drawing tour), the process after the brief (05), FAQ v2 (07),
+ * related directions (08, relatedDirections.zernoskhovyshcha) and the inquiry (09). Bands 02–03 are
+ * the planner. /zernoskhovyshcha renders grainComplexDirection below, built on this one.
  * directionPages.zernoskhovyshcha keeps the previous page for the flag-off rollback until the
  * cleanup PR moves this content there.
  */
@@ -32,10 +46,10 @@ const grainDirection: DirectionPageConfig = {
     breadcrumbLabel: 'Зерносховища',
     title: 'Зерносховища',
     accent: 'під вашу задачу зберігання',
-    intro: `Скільки зерна, які партії, чи потрібна підготовка і що дозволяє майданчик — з цього починається рішення. ${GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT}`,
+    intro: `Скільки зерна, які партії, чи потрібна підготовка і що дозволяє майданчик — з цього починається рішення. ${GRAIN_HERO_BOUNDARY}`,
     // A phone: the opening question as the lead, the boundary right under the actions — still in the hero, after the call
     introPhone: 'Скільки зерна, які партії, чи потрібна підготовка і що дозволяє майданчик — з цього починається рішення.',
-    notePhone: GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT,
+    notePhone: GRAIN_HERO_BOUNDARY,
     actions: {
       className: 'grain-hero-actions',
       sectionClassName: 'grain-service-subhero',
@@ -48,15 +62,48 @@ const grainDirection: DirectionPageConfig = {
   editorial: {
     eyebrow: 'Як RUBIKON реалізує',
     title: 'Будівельна частина',
-    text: 'Виконуємо погоджену будівельну частину й враховуємо вимоги до обладнання за наданою документацією.',
-    points: [
-      ['01', 'Основа й фундаменти', 'Бетонні основи під силоси чи підлогове сховище, опорні конструкції та майданчики.'],
-      ['02', 'Каркас, огородження і покрівля', 'Несучий каркас і захищений контур з увагою до герметичності та примикань.'],
-      ['03', 'Технологічні вимоги', 'Отвори, закладні, місця кріплення й навантаження від обладнання — у будівельному рішенні.'],
-      ['04', 'Стики між системами', 'Узгодження нашої будівельної частини з роботами спеціалістів замовника з обладнання.'],
-    ],
+    // The full boundary, beside the drawing that shows it: copper is the building part, the long dash the equipment
+    text: GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT,
     image: directionPages.zernoskhovyshcha.editorial.image,
     imageAlt: directionPages.zernoskhovyshcha.editorial.imageAlt,
+    // The four work points as a tour of one drawing (GrainStoreDrawing): half a section of a framed floor store
+    node: {
+      drawing: 'grain-store',
+      width: 1800,
+      height: 1200,
+      overviewCaption: 'Переріз підлогового зерносховища',
+      legend: GRAIN_SCOPE_KEY,
+      steps: [
+        {
+          title: 'Основа й фундаменти',
+          text: 'Фундаменти, підлога й підпірні стіни, що тримають тиск зерна; бетонні основи під силоси.',
+          caption: 'Фундамент, підпірна стіна й підлога',
+          focus: [520, 860], zoom: 1.6,
+          mark: { d: 'M330 700V640H390M600 640H660V700M660 1020V1080H600M390 1080H330V1020', badge: [640, 1040] },
+        },
+        {
+          title: 'Каркас, огородження і покрівля',
+          text: 'Несучий каркас і захищений контур з увагою до герметичності та примикань.',
+          caption: 'Каркас, стіни й покрівля',
+          focus: [760, 380], zoom: 1.5,
+          mark: { d: 'M380 350V290H440M700 290H760V350M760 540V600H700M440 600H380V540', badge: [320, 300] },
+        },
+        {
+          title: 'Технологічні вимоги',
+          text: 'Отвори, канали, закладні, місця кріплення й навантаження від обладнання — у будівельному рішенні.',
+          caption: 'Отвір, канал аерації й закладні',
+          focus: [720, 905], zoom: 1.7,
+          mark: { d: 'M420 880V840H460M1250 840H1290V880M1290 952V992H1250M460 992H420V952', badge: [880, 1040] },
+        },
+        {
+          title: 'Стики між системами',
+          text: 'Узгодження нашої будівельної частини з роботами спеціалістів замовника з обладнання.',
+          caption: 'Де обладнання стикується з будівлею',
+          focus: [900, 600], zoom: 1,
+          mark: { d: 'M196 884a104 104 0 1 0 208 0a104 104 0 1 0 -208 0M1468 212a98 98 0 1 0 196 0a98 98 0 1 0 -196 0', badge: [170, 770] },
+        },
+      ],
+    },
   },
   process: {
     eyebrow: 'Після брифу',
@@ -85,6 +132,77 @@ const grainDirection: DirectionPageConfig = {
   cta: directionPages.zernoskhovyshcha.cta,
 };
 
+/**
+ * /zernoskhovyshcha since 06.10 (owner: the planner's five themes are more than a client fills in): the complex
+ * assembled on a drawing (band 02, GrainComplexBand), the situations people come with, the building part, the cost
+ * factors, the process, the FAQ — its planner questions reworded for the drawing. grainDirection above stays the planner
+ * composition's (/planner-preview).
+ */
+const grainComplexDirection: DirectionPageConfig = {
+  ...grainDirection,
+  hero: {
+    ...grainDirection.hero,
+    actions: {
+      className: 'grain-hero-actions',
+      sectionClassName: 'grain-service-subhero',
+      items: [
+        { label: 'Скласти комплекс', href: '#kompleks', className: 'button button-primary', arrow: '↓' },
+        { label: 'Обговорити зерносховище', href: '#inquiry', className: 'button grain-hero-secondary', arrow: '↓' },
+      ],
+    },
+  },
+  entry: {
+    eyebrow: 'З чим звертаються',
+    title: 'Яка у вас ситуація?',
+    text: 'Оберіть найближчу — з неї почнемо розмову.',
+    items: [
+      { situation: 'Нове зерносховище', text: 'Є ділянка й розуміння обсягів — потрібна будівельна частина нового об’єкта: від основ до готового контуру.', start: 'місткості, підготовки зерна й умов майданчика' },
+      { situation: 'Основа під силоси', text: 'Силоси вже обрані в постачальника — виконуємо основи й опорні конструкції за його документацією.', start: 'документації на силоси й вимог до основи' },
+      { situation: 'Зерно в наявній будівлі', text: 'Є склад чи ангар, де хочете зберігати зерно: стіни й підлога мають витримати його тиск.', start: 'того, що вже стоїть: фото, креслення, стан стін і підлоги' },
+      { situation: 'Розширення комплексу', text: 'Друга черга: більше місткості, сушіння чи нове відвантаження поруч із тим, що вже працює.', start: 'схеми наявного комплексу й того, що має додатися' },
+    ],
+  },
+  cost: {
+    title: 'Вартість визначає склад комплексу, а не одна цифра за тонну',
+    text: 'Однакова місткість — ще не однакова ціна. Кошторис складаємо за погодженим складом робіт і проєктними даними.',
+    items: [
+      ['01', 'Місткість і окремі партії', 'Скільки силосів чи якої довжини сховище — і скільки основ під них.'],
+      ['02', 'Підготовка зерна', 'Очищення й сушіння додають у ланцюг фундаменти, майданчики й опори.'],
+      ['03', 'Рух зерна', 'Норії й конвеєри потребують опор і закладних; мобільна техніка — міцної підлоги й проїздів.'],
+      ['04', 'Майданчик і ґрунти', 'Рельєф і ґрунти визначають фундаменти й підготовку території.'],
+      ['05', 'Обсяг робіт RUBIKON', 'Лише основа під силоси чи вся будівельна частина — кошторис складаємо під погоджений склад.'],
+    ],
+  },
+  process: {
+    ...grainDirection.process,
+    eyebrow: 'Після звернення',
+    // «Ви · Ми» (owner, 06.10): each step's text is what we do; split adds what you do and what you get after it
+    steps: [
+      ['01', 'Ваш опис', 'Читаємо опис і готуємо питання до першої розмови.', ClipboardList],
+      ['02', 'Перша розмова', 'Уточнюємо призначення, місткість і умови майданчика; кажемо, чого бракує для рішення.', MessagesSquare],
+      ['03', 'Узгодження з проєктом', 'Узгоджуємо будівельну частину з проєктувальником і постачальником обладнання, складаємо кошторис.', DraftingCompass],
+      ['04', 'Реалізація', 'Виконуємо погоджені будівельні роботи в узгодженій послідовності.', HardHat],
+    ],
+    split: [
+      { you: 'Складаєте комплекс на кресленні або описуєте задачу кількома словами.', result: 'Опис задачі', drawing: 'grain-brief' },
+      { you: 'Розповідаєте про об’єкт і показуєте, що вже є.', result: 'Список даних, яких бракує', drawing: 'checklist' },
+      { you: 'Надаєте проєкт або залучаєте проєктувальника; обладнання погоджуєте з постачальником.', result: 'Склад робіт і кошторис', drawing: 'grain-project' },
+      { you: 'Погоджуєте графік і приймаєте виконані етапи.', result: 'Готова будівельна частина', drawing: 'grain-built' },
+    ],
+  },
+  faq: {
+    title: 'Перед першою розмовою',
+    collapsible: true,
+    items: [
+      ['Чи схема комплексу — це проєкт?', 'Ні. Схема показує ланцюг і те, що з нього будуємо ми. Конструктивні рішення й розрахунки готує проєктувальник замовника. Кошторис будівельних робіт складаємо за достатніми проєктними даними.'],
+      ['Що, якщо я ще не знаю, що саме потрібно?', 'Це нормально. Розкажіть, що зберігаєте й скільки, — решту з’ясуємо на першій розмові.'],
+      ['Чи займаєтеся ви технологічним обладнанням?', GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT],
+      ['Чи виконуєте лише бетонну основу під зерносховище?', 'Так, можемо виконати основу окремим етапом за наявною документацією, узгодивши межі відповідальності з іншими підрядниками.'],
+      ['У яких регіонах ви будуєте зерносховища?', company.geography],
+    ],
+  },
+};
+
 export const grainPage = {
   /** Band 02 — the planner's section header. */
   planner: {
@@ -92,7 +210,23 @@ export const grainPage = {
     title: 'Який зерновий об’єкт вам насправді потрібен?',
     supporting: 'Відповіді готують предметну розмову — без передчасного вибору будівлі.',
   },
+  /**
+   * Band 03 before a consultation: what each approach is, in one plain sentence (owner, 06.10: the planner's own summaries
+   * describe how a card is «shown», not the store). Who does which part, the drawings say — with GRAIN_SCOPE_KEY.
+   */
+  approaches: {
+    silo: 'Металеві силоси на бетонній основі; зерно подають і забирають норії та конвеєри.',
+    framed: 'Каркасна будівля з підпірними стінами: зерно лежить на підлозі.',
+    arch: 'Арочна оболонка без внутрішнього каркаса на бетонній основі; зерно лежить на підлозі.',
+  },
   /** Band 06: real objects only. While this is empty the band is not rendered — no placeholders. */
   cases: [] as readonly GrainCase[],
   direction: grainDirection,
+  /** Band 02 since 06.10: the complex on a drawing (GrainComplexBand) */
+  complex: {
+    eyebrow: 'Ваш зерновий комплекс',
+    title: 'Зберіть свій комплекс на кресленні',
+    supporting: 'Оберіть культури, підготовку, сховище й масштаб — схема збереться, а під нею буде видно, що з неї будуємо ми.',
+  },
+  complexDirection: grainComplexDirection,
 } as const;

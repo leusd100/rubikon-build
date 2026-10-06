@@ -104,6 +104,11 @@ export type DirectionPageConfig = {
     title: string;
     text: string;
     steps: readonly DirectionStep[];
+    /**
+     * «Ви · Ми» (owner, 06.10): each step's two sides — what you do over the rail, what RUBIKON does under it (the step's
+     * own text) — and on the rail what you get, drawn small (ProcessDrawing) with its caption. Index-aligned with steps.
+     */
+    split?: readonly ProcessSplit[];
   };
   cost?: {
     title: string;
@@ -125,6 +130,16 @@ export type DirectionPageConfig = {
   };
 };
 
+export type ProcessDrawingKind =
+  | 'grain-brief' | 'checklist' | 'grain-project' | 'grain-built'
+  | 'metal-data' | 'metal-project' | 'metal-fabricated' | 'metal-erected'
+  | 'concrete-levels' | 'concrete-formwork' | 'concrete-pour' | 'concrete-check'
+  | 'roof-survey' | 'roof-kit' | 'roof-laid' | 'roof-checked'
+  | 'hangar-brief' | 'contract' | 'hangar-built';
+
+/** A process step's other side and its outcome: what the client does, what they get after it, and its small drawing */
+export type ProcessSplit = { you: string; result: string; drawing: ProcessDrawingKind };
+
 /** One step of a direction's node tour: what it is, what the camera shows, and where on the picture. */
 export type DirectionNodeStep = {
   title: string;
@@ -140,11 +155,14 @@ export type DirectionNodeStep = {
 
 export type DirectionNode = {
   /** A technical drawing instead of the picture (NodeDrawing): vector, so the push-in stays sharp */
-  drawing?: 'steel-joint' | 'footing' | 'eave';
+  drawing?: 'steel-joint' | 'footing' | 'eave' | 'grain-store';
   /** The picture's (or the drawing's) own size — the marks are drawn in it */
   width: number;
   height: number;
   /** What the overview (no step) shows, in the title block */
   overviewCaption: string;
-  steps: readonly [DirectionNodeStep, DirectionNodeStep, DirectionNodeStep];
+  /** The drawing's key under the sheet, where its line types say who does what (the grain store: copper and long dash) */
+  legend?: readonly { tone: 'own' | 'partner'; label: string }[];
+  /** Three steps; the grain store's building part takes four (its four work points) */
+  steps: readonly DirectionNodeStep[];
 };

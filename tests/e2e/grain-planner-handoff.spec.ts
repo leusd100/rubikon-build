@@ -7,6 +7,7 @@ import {
   next,
   openPlanner,
   openResultDetails,
+  PREVIEW,
   planner,
   plannerSettled,
   questions,
@@ -123,7 +124,8 @@ test.describe('Grain Planner → inquiry handoff', () => {
     });
     expect(lead?.details?.attachment?.data?.answers).toMatchObject({ capacity: '12 000', separation: 'required', processing: 'both' });
     expect(lead?.details?.dimensions).toBe('');
-    expect(lead?.sourcePage).toBe('/zernoskhovyshcha');
+    // the planner composition lives on /planner-preview since 06.10: the lead names the page it came from
+    expect(lead?.sourcePage).toBe(PREVIEW);
     expect(lead?.direction).toBe('Зерносховища');
   });
 

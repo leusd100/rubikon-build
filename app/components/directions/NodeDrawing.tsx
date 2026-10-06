@@ -3,7 +3,9 @@
 // step names carries data-part="1|2|3" and lights in copper while that step is shown (direction-node.css). Schematic
 // only: no sizes and no scale — letters on the dimension lines, as on the «Переріз» drawings.
 
-export type NodeDrawingKind = 'steel-joint' | 'footing' | 'eave';
+import { GrainStore } from '../zernoskhovyshcha/GrainStoreDrawing';
+
+export type NodeDrawingKind = 'steel-joint' | 'footing' | 'eave' | 'grain-store';
 
 const range = (from: number, to: number, step: number) => Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, index) => from + index * step);
 
@@ -154,6 +156,7 @@ export function NodeDrawing({ kind, label }: Readonly<{ kind: NodeDrawingKind; l
       {kind === 'steel-joint' && <SteelJoint />}
       {kind === 'footing' && <Footing />}
       {kind === 'eave' && <Eave />}
+      {kind === 'grain-store' && <GrainStore />}
     </svg>
   );
 }
