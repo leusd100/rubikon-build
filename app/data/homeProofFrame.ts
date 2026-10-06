@@ -319,7 +319,8 @@ export const homeProofFrame: HomeProofFrame = {
     { id: 'bracing', text: 'Прогони й в’язі', anchor: [1350, 335.8], at: [1430, 398], align: 'end', wideOnly: true, keyAt: [1238, 252] },
     // the right gate's opening holds no member: the column's name stands in it, under the walls' (apart on a tablet too)
     { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 528], align: 'start', atNarrow: [1042, 505], keyAt: [1006, 380] },
-    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 470], align: 'end', atNarrow: [1430, 410], keyAt: [1340, 450] },
+    // (on a tablet 3 px lower than it was: at 410 its top met the lowest member behind the face to a third of a pixel)
+    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 470], align: 'end', atNarrow: [1430, 413], keyAt: [1340, 450] },
     // keyAt: a phone's numbers (ProofKeyPins), right of the resting seam where they can be, clear of the letters А, Б, В
     { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end', keyAt: [1405, 588] },
   ],
