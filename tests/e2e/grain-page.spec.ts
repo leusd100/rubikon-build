@@ -120,10 +120,15 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
 // on a phone behind «Залишити запит», so the phone page is ~1.1 screens shorter and stays well inside 11.85.
 // Owner, 02.10: the grain hero is now the window's height like every direction hero (it was 78 % of it, a «reveal» of
 // the planner): +198 px at 1440×900 (7.37 → 7.59 screens), so the desktop budget is 7.65 — content may not grow into it.
+// The page is measured without the cookie banner. While it shows, the footer keeps its clearance below the links
+// (+237 px at 1440×900), and it mounts only after hydration, which can land after `load`; `isVisible()` doesn't wait
+// for it (its timeout is ignored), so the budget used to be measured with or without that padding by chance.
 async function settledHeight(page: Page, path: string) {
   await page.goto(path, { waitUntil: 'load' });
   const essential = page.getByRole('button', { name: 'Лише необхідні', exact: true });
-  if (await essential.isVisible({ timeout: 10_000 }).catch(() => false)) await essential.click();
+  await expect(essential).toBeVisible({ timeout: 10_000 });
+  await essential.click();
+  await expect(page.locator('.cookie-banner')).toHaveCount(0);
   await page.evaluate(() => document.fonts.ready);
   return page.evaluate(() => document.documentElement.scrollHeight);
 }
