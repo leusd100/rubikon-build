@@ -16,11 +16,11 @@
 .dn-badge text { fill: #fff; font: 700 32px var(--font-condensed), sans-serif; letter-spacing: .04em; text-anchor: middle; }
 .dn-mark, .dn-badge { transition: opacity 400ms ease; }
 .dn[data-step] .dn-mark { opacity: 0; }
-.dn[data-step="1"] .dn-mark-1, .dn[data-step="2"] .dn-mark-2, .dn[data-step="3"] .dn-mark-3 { opacity: 1; }
+.dn[data-step="1"] .dn-mark-1, .dn[data-step="2"] .dn-mark-2, .dn[data-step="3"] .dn-mark-3, .dn[data-step="4"] .dn-mark-4 { opacity: 1; }
 .dn[data-step] .dn-badge { opacity: 0; }
 
-/* Three bars, like stories — dark on the light drawings */
-.dn-progress { position: absolute; z-index: 3; top: 14px; right: 14px; left: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+/* One bar a step (three; the grain store's four — --dn-count on the tour), like stories — dark on the light drawings */
+.dn-progress { position: absolute; z-index: 3; top: 14px; right: 14px; left: 14px; display: grid; grid-template-columns: repeat(var(--dn-count, 3), minmax(0, 1fr)); gap: 6px; }
 .dn-progress span { position: relative; height: 3px; overflow: hidden; background: rgba(23, 25, 24, .22); }
 .dn-progress span.is-done { background: var(--color-accent); }
 .dn-fill { position: absolute; inset: 0; background: var(--color-accent); transform-origin: left; }
@@ -48,6 +48,8 @@
 .dn.direction-editorial-grid[data-layout] .direction-editorial-copy { grid-area: copy; align-self: end; }
 .dn.direction-editorial-grid[data-layout] .dn-steps { grid-area: steps; align-self: start; }
 .dn.direction-editorial-grid[data-layout] .dn-sheet { grid-area: media; }
+/* A sheet with its key under it (DirectionNode with `legend`): the pair takes the picture's place */
+.dn.direction-editorial-grid[data-layout] .dn-media { grid-area: media; min-width: 0; }
 
 /* The steps under the text: each is the button that shows its step; the shown one takes the copper bar */
 .dn-steps { max-width: 520px; margin: 26px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
@@ -70,7 +72,8 @@
   .dn-stage { transition: transform 1100ms cubic-bezier(.65, 0, .25, 1); }
   .dn[data-step="1"] .dn-mark-1 .dn-line,
   .dn[data-step="2"] .dn-mark-2 .dn-line,
-  .dn[data-step="3"] .dn-mark-3 .dn-line { animation: dn-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
+  .dn[data-step="3"] .dn-mark-3 .dn-line,
+  .dn[data-step="4"] .dn-mark-4 .dn-line { animation: dn-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
 }
 
 @media (max-width: 760px) {
@@ -107,7 +110,8 @@
 .dn[data-step="3"] .node-drawing [data-part="3"] .nd-note { fill: var(--color-accent-strong); }
 /* A shown step lights its parts and the rest of the drawing steps back */
 .dn[data-step] .node-drawing .nd-part { opacity: .38; }
-.dn[data-step="1"] .node-drawing [data-part="1"], .dn[data-step="2"] .node-drawing [data-part="2"], .dn[data-step="3"] .node-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }
+.dn[data-step="1"] .node-drawing [data-part="1"], .dn[data-step="2"] .node-drawing [data-part="2"], .dn[data-step="3"] .node-drawing [data-part="3"],
+.dn[data-step="4"] .node-drawing [data-part="4"] { opacity: 1; stroke: var(--color-accent); }
 .dn[data-step="1"] .node-drawing [data-part="1"] circle, .dn[data-step="2"] .node-drawing [data-part="2"] circle, .dn[data-step="3"] .node-drawing [data-part="3"] circle,
 .dn[data-step="3"] .node-drawing .nd-weld path:not(.nd-leader) { fill: color-mix(in srgb, var(--color-accent) 28%, transparent); }
 /* Each step builds what it names once the camera has arrived; on the roofing drainage step the water runs down the sheet
@@ -119,7 +123,8 @@
 @media (prefers-reduced-motion: no-preference) {
   .dn[data-step="1"] .node-drawing [data-part="1"] :is(path, circle):not(.nd-dashed),
   .dn[data-step="2"] .node-drawing [data-part="2"] :is(path, circle):not(.nd-dashed),
-  .dn[data-step="3"] .node-drawing [data-part="3"] :is(path, circle):not(.nd-leader, .nd-dashed) { stroke-dasharray: 1; animation: nd-draw 900ms var(--ease-premium) 700ms both; }
+  .dn[data-step="3"] .node-drawing [data-part="3"] :is(path, circle):not(.nd-leader, .nd-dashed),
+  .dn[data-step="4"] .node-drawing [data-part="4"] :is(path, circle):not(.nd-leader, .nd-dashed) { stroke-dasharray: 1; animation: nd-draw 900ms var(--ease-premium) 700ms both; }
   /* the roof's build-up is laid bottom-up: deck, barrier, insulation, sheet */
   .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq] { animation-duration: 650ms; }
   .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="1"] { animation-delay: 600ms; }

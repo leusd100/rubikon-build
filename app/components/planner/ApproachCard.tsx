@@ -12,7 +12,8 @@ export function ApproachCard({
   actionLabel,
   onAction,
 }: {
-  category: string;
+  /** The card's kind over its drawing; the grain overview leaves it out (it repeated the title) */
+  category?: string;
   label?: string;
   title: string;
   summary: string;
@@ -23,10 +24,12 @@ export function ApproachCard({
 }) {
   return (
     <article className="planner-approach">
-      <div className="planner-approach-top">
-        <span>{category}</span>
-        {label && <b>{label}</b>}
-      </div>
+      {(category || label) && (
+        <div className="planner-approach-top">
+          <span>{category}</span>
+          {label && <b>{label}</b>}
+        </div>
+      )}
       {visual}
       <h3>{title}</h3>
       <p>{summary}</p>

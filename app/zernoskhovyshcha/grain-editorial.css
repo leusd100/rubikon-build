@@ -9,16 +9,66 @@
 .grain-page .service-subhero-content .grain-hero-actions .button { margin-top: 0; }
 .grain-page .grain-hero-secondary { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .58); background: rgba(12, 13, 15, .18); }
 .grain-page .grain-hero-secondary:hover { border-color: var(--color-dark-text); background: rgba(255, 255, 255, .09); transform: translateY(-2px); }
+/* The concept picture's lower strip carries a generated «drawing» with made-up sizes (Ø14500, +27,100, «ПЛАН» and
+   «РОЗРІЗ 1–1» as one circle twice): the site draws nothing that passes for a project drawing, so the picture fades into
+   the dark band above that strip (owner, 06.10). The silos keep their footing. */
+.grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 66%, transparent 79%); mask-image: linear-gradient(#000 66%, transparent 79%); }
 
-/* ---------- 04 Як RUBIKON реалізує ---------- */
+/* ---------- 04 Як RUBIKON реалізує: the building part as a tour of one drawing (GrainStoreDrawing in DirectionNode) ---------- */
 .grain-page .grain-implementation-band { padding-block: var(--section-space-compact); }
 .grain-page .grain-implementation-band .direction-editorial-copy h2 { font-size: clamp(34px, 3.2vw, 48px); }
-.grain-page .grain-implementation-band .direction-editorial-copy > p:not(.eyebrow) { margin-top: 18px; }
-.grain-page .direction-editorial-points { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin: 20px 0 0; padding: 18px 0 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
-.grain-page .direction-editorial-points li { min-width: 0; }
-.grain-page .direction-editorial-points span { color: var(--color-accent-strong); font: 500 12px/1 var(--font-condensed), sans-serif; }
-.grain-page .direction-editorial-points h3 { margin: 6px 0 5px; font: 600 16px/1.2 var(--font-condensed), sans-serif; text-transform: none; }
-.grain-page .direction-editorial-points p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.55; }
+.grain-page .grain-implementation-band .direction-editorial-copy > p:not(.eyebrow) { margin-top: 18px; font-size: 15px; line-height: 1.7; }
+.grain-page .grain-implementation-band .dn-steps { margin-top: 22px; }
+/* The whole half-section at every width: the sheet's picture keeps the drawing's own 3 : 2 */
+.grain-page .grain-implementation-band .dn-media { align-self: start; }
+.grain-page .grain-implementation-band .dn-media .direction-editorial-media { min-height: 0; }
+.grain-page .grain-implementation-band .dn-sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
+
+/* The drawing: the grain in its own colour, the partners' equipment in long dash; what each step adds to the overview */
+.node-drawing-grain-store .gsd-fill { fill: color-mix(in srgb, var(--color-text) 6%, transparent); }
+/* the building's cut parts read at the overview's scale: heavier than the node drawings' details */
+.node-drawing.node-drawing-grain-store .nd-part { stroke-width: 4.4; }
+.node-drawing-grain-store .gsd-angle { stroke: var(--color-grain); stroke-width: 2.2; }
+.node-drawing.node-drawing-grain-store .gsd-angle-text { fill: color-mix(in srgb, var(--color-grain) 70%, var(--color-text)); }
+.node-drawing-grain-store .gsd-grain { fill: color-mix(in srgb, var(--color-grain) 13%, transparent); stroke: none; }
+.node-drawing-grain-store .gsd-grain-dots { fill: url(#gsd-grain-dots); stroke: none; }
+.node-drawing-grain-store pattern circle { fill: var(--color-grain); stroke: none; opacity: .5; }
+.node-drawing-grain-store .gsd-grain-line { stroke: var(--color-grain); stroke-width: 3; }
+.node-drawing-grain-store .gsd-grate { stroke-dasharray: 10 8; }
+.node-drawing-grain-store .gsd-equip :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 3; stroke-dasharray: 34 10; transition: stroke .3s ease, opacity .3s ease; }
+.node-drawing-grain-store .nd-axis-letter { fill: var(--color-text-muted); font: 600 36px var(--font-condensed), sans-serif; text-anchor: middle; }
+.node-drawing-grain-store .gsd-press { stroke: var(--color-grain); stroke-width: 3.4; }
+.node-drawing-grain-store .gsd-air { stroke: var(--color-air); stroke-width: 9; stroke-dasharray: 1 26; }
+.node-drawing-grain-store .gsd-joint circle { fill: var(--color-surface-elevated); stroke: var(--color-accent); stroke-width: 4.5; }
+.node-drawing-grain-store .gsd-note {
+  fill: var(--color-accent-strong); font: 700 30px var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase;
+  paint-order: stroke; stroke: var(--color-surface-elevated); stroke-width: 10px; stroke-linejoin: round;
+}
+.node-drawing-grain-store .gsd-note[data-show="1"] { fill: color-mix(in srgb, var(--color-grain) 80%, var(--color-text)); }
+.node-drawing-grain-store [data-show] { opacity: 0; transition: opacity .4s ease; }
+.dn[data-step="1"] .node-drawing-grain-store [data-show="1"],
+.dn[data-step="3"] .node-drawing-grain-store [data-show="3"],
+.dn[data-step="4"] .node-drawing-grain-store [data-show="4"] { opacity: 1; }
+/* The overview shows the steps' numbers only; a step draws its own mark */
+.grain-implementation-band .dn:not([data-step]) .dn-line { opacity: 0; }
+/* Steps 1–3 are the building's: the equipment steps back. Step 4 is where the two meet: the equipment comes forward and
+   the building (no part of its own in this step) steps back with the other parts. */
+.dn[data-step]:not([data-step="4"]) .node-drawing-grain-store .gsd-equip { opacity: .38; }
+.dn[data-step="4"] .node-drawing-grain-store .gsd-equip :is(path, circle) { stroke: var(--color-text); }
+@keyframes gsd-air { to { stroke-dashoffset: -27; } }
+@keyframes gsd-ping { 0% { stroke-width: 4.5; } 40% { stroke-width: 12; } 100% { stroke-width: 4.5; } }
+@media (prefers-reduced-motion: no-preference) {
+  /* the pressure plots in arrow by arrow, deeper ones later; the air runs; the meeting points ring twice */
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path { stroke-dasharray: 1; animation: nd-draw 520ms var(--ease-premium) both; }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(1) { animation-delay: 1000ms; }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(2) { animation-delay: 1250ms; }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(3) { animation-delay: 1380ms; }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(4) { animation-delay: 1510ms; }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(5) { animation-delay: 1640ms; }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(6) { animation-delay: 1770ms; }
+  .dn[data-step="4"] .node-drawing-grain-store .gsd-air path { animation: gsd-air 700ms linear 600ms infinite; }
+  .dn[data-step="4"] .node-drawing-grain-store .gsd-joint circle { animation: gsd-ping 900ms ease-in-out 900ms 2; }
+}
 
 /* ---------- 05 Після брифу ---------- */
 .grain-page .grain-process-band { padding-block: var(--section-space-compact); }
@@ -42,10 +92,12 @@
 }
 
 @media (min-width: 761px) {
-  .grain-page .service-subhero-content .service-subhero-lead { max-width: 820px; }
+  /* the drawing takes the wider column: the half-section reads at its own 3 : 2 */
+  .grain-page .grain-implementation-band .direction-editorial-grid[data-layout="media-first"] { grid-template-columns: minmax(0, 1.22fr) minmax(320px, .78fr); }
+  /* the question and the short boundary, two lines from 1280 px */
+  .grain-page .service-subhero-content .service-subhero-lead { max-width: 920px; }
   /* The supporting line here is the full responsibility statement: a wider measure under the title. */
   .grain-page .grain-process-band .section-header-support { max-width: 820px; }
-  .grain-page .grain-implementation-band .direction-editorial-grid[data-layout="media-first"] .direction-editorial-media { min-height: 440px; }
 }
 
 @media (max-width: 1050px) {
@@ -55,12 +107,10 @@
 
 @media (max-width: 760px) {
   .grain-page .service-subhero.grain-service-subhero { min-height: 0; }
+  .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 56%, transparent 67%); mask-image: linear-gradient(#000 56%, transparent 67%); }
   /* 126 px like every direction hero, so the crumbs sit under the «Ілюстрація» stamp (UX pass 2026-10) */
   .grain-page .service-subhero-content { padding-top: 126px; padding-bottom: 44px; }
   .grain-page .grain-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 24px; }
-  /* Four short points: two columns keep them scannable without four full-width rows. */
-  .grain-page .direction-editorial-points { gap: 14px 16px; margin-top: 18px; padding-top: 16px; }
-  .grain-page .grain-implementation-band .direction-editorial-media { aspect-ratio: 16 / 9; }
   .grain-page .grain-process-band .section-header { margin-bottom: 28px; padding-bottom: 22px; }
   .grain-page .faq-heading { margin-bottom: 22px; }
   .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }

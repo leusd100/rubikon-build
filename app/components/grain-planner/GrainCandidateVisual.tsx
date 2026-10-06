@@ -7,37 +7,45 @@ const titles: Record<CandidateKey, string> = {
 };
 
 /**
- * Conceptual line drawing of an approach — no scale, no dimensions. Geometry from the prototype.
- * Named with aria-label rather than a useId-linked <title>: the generic overview renders this
- * inside a server component handed to a client band, and generated ids there could mismatch on
- * hydration.
+ * An approach as a small section in the page's drawing language (owner, 06.10): the grain at its slope in its own colour,
+ * copper for the building part RUBIKON does — the silos' foundation slab; the whole framed store; the arch's base — and a
+ * long graphite dash for the specialists' part — the silos and their gallery, the arched shell (the page's ScopeKey says
+ * so under the cards). No scale, no dimensions. Named with aria-label rather than a useId-linked <title>: the generic
+ * overview renders this inside a server component handed to a client band, and generated ids there could mismatch on
+ * hydration; for the same reason it carries no element ids (the result can show it twice).
  */
 export function GrainCandidateVisual({ type }: { type: CandidateKey }) {
   return (
     <svg className="planner-approach-visual" viewBox="0 0 360 170" role="img" aria-label={`Концептуальна схема ${titles[type]}`}>
-      <path className="ground" d="M20 140H340" />
+      <path className="gcv-ground" d="M12 140H348" />
+      <path className="gcv-hatch" d="M22 140l-7 10M34 140l-7 10M332 140l-7 10M344 140l-7 10" />
       {type === 'silo' && (
         <>
-          <g className="silo-shape">
-            <ellipse cx="103" cy="60" rx="35" ry="12" /><path d="M68 60V126M138 60V126" /><ellipse cx="103" cy="126" rx="35" ry="12" />
-            <ellipse cx="180" cy="50" rx="42" ry="14" /><path d="M138 50V126M222 50V126" /><ellipse cx="180" cy="126" rx="42" ry="14" />
-            <ellipse cx="266" cy="66" rx="32" ry="11" /><path d="M234 66V126M298 66V126" /><ellipse cx="266" cy="126" rx="32" ry="11" />
-          </g>
-          <path className="accent-line" d="M103 48V31H266V55" />
+          <path className="gcv-grain" d="M56 134V76L110 62L164 76V134ZM196 134V76L250 62L304 76V134Z" />
+          <path pathLength={1} className="gcv-grain-line" d="M56 76L110 62L164 76" />
+          <path pathLength={1} className="gcv-grain-line" d="M196 76L250 62L304 76" />
+          <path className="gcv-partner" d="M54 134V60L110 38L166 60V134M194 134V60L250 38L306 60V134M84 20H276M84 26H276M110 26V38M250 26V38" />
+          <path pathLength={1} className="gcv-own" d="M40 134H320V146H40Z" />
         </>
       )}
       {type === 'framed' && (
         <>
-          <path className="building-shape" d="M46 130V62L180 20L314 62V130Z" />
-          <path className="structure" d="M82 130V64L180 34L278 64V130M124 130V51M180 130V34M236 130V51" />
-          <path className="accent-line" d="M46 62L180 20L314 62" />
+          <path className="gcv-grain" d="M50 134V112L180 66L310 112V134Z" />
+          <path pathLength={1} className="gcv-grain-line" d="M50 112L180 66L310 112" />
+          <path pathLength={1} className="gcv-own" d="M32 140H58V152H32ZM302 140H328V152H302Z" />
+          <path pathLength={1} className="gcv-own" d="M40 104H50V140H40ZM310 104H320V140H310Z" />
+          <path pathLength={1} className="gcv-own" d="M50 134H310V140H50Z" />
+          <path pathLength={1} className="gcv-own gcv-line" d="M45 104V80M315 104V80" />
+          <path pathLength={1} className="gcv-own gcv-line" d="M36 79L180 43L324 79M50 86L180 53L310 86" />
         </>
       )}
       {type === 'arch' && (
         <>
-          <path className="building-shape" d="M52 132C52 62 108 25 180 25S308 62 308 132Z" />
-          <path className="structure" d="M77 132C77 76 123 45 180 45S283 76 283 132M105 132C105 91 138 66 180 66S255 91 255 132" />
-          <path className="accent-line" d="M52 132C52 62 108 25 180 25S308 62 308 132" />
+          <path className="gcv-grain" d="M66 134L180 70L294 134Z" />
+          <path pathLength={1} className="gcv-grain-line" d="M66 134L180 70L294 134" />
+          <path className="gcv-partner" d="M42 132C42 66 102 26 180 26S318 66 318 132M60 132C60 78 112 44 180 44S300 78 300 132" />
+          <path pathLength={1} className="gcv-own" d="M30 132H54V150H30ZM306 132H330V150H306Z" />
+          <path pathLength={1} className="gcv-own" d="M54 134H306V140H54Z" />
         </>
       )}
     </svg>

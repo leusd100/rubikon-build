@@ -168,24 +168,30 @@
 .grain-planner-root .planner-live-strip span { display: block; margin-top: 8px; color: var(--color-accent-strong); font-size: 14px; font-weight: 700; line-height: 1.4; }
 
 /* Diagram: viewBox units; sizes keep labels ≥ 11 px effective in the 1051 px panel and ≥ 10 px at 390 px */
-.grain-planner-root .planner-diagram { margin: 18px 0 0; border: 1px solid var(--planner-line); background: var(--color-field); }
+.grain-planner-root .planner-diagram { margin: 18px 0 0; border: 1px solid var(--planner-line); background: var(--color-surface-elevated); }
 .grain-planner-root .planner-diagram figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 10px 14px; border-bottom: 1px solid var(--planner-line); color: var(--color-text-secondary); font: var(--planner-label); letter-spacing: .1em; text-transform: uppercase; }
 .grain-planner-root .planner-diagram figcaption small { color: var(--color-text-muted); font: 500 12px/1.3 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+/* The scheme in the page's drawing language (owner, 06.10): paper and a faint grid; thin graphite outlines on paper (no grey
+   fills); what is not known yet in short dash, as hidden lines are drawn; what the answers confirmed in copper; the grain's
+   way in its own colour with open arrowheads; the storage's zones tinted as grain */
 .grain-planner-root .planner-diagram svg { display: block; width: 100%; height: auto; color: var(--color-text-secondary); }
-.grain-planner-root .planner-diagram .grid-line { stroke: currentColor; opacity: .07; }
+.grain-planner-root .planner-diagram .grid-line { stroke: currentColor; opacity: .06; }
 .grain-planner-root .planner-diagram text { fill: var(--color-text-muted); font-family: var(--font-condensed), sans-serif; font-size: 12.5px; letter-spacing: .04em; text-anchor: middle; }
-.grain-planner-root .planner-diagram .site-boundary { fill: none; stroke: var(--color-border-control); stroke-dasharray: 4 5; }
+.grain-planner-root .planner-diagram .site-boundary { fill: none; stroke: var(--color-border-strong); stroke-width: 1; }
 .grain-planner-root .planner-diagram .site-caption { fill: var(--color-text-muted); font-size: 12px; text-anchor: start; }
-.grain-planner-root .planner-diagram .flow-line { fill: none; stroke: var(--color-accent); stroke-width: 1.4; stroke-dasharray: 5 5; }
-.grain-planner-root .planner-diagram .node rect { fill: var(--color-surface-alt); stroke: var(--color-border-strong); }
-.grain-planner-root .planner-diagram .node.is-active rect { fill: var(--planner-tint); stroke: var(--color-accent); }
+.grain-planner-root .planner-diagram .flow-line { fill: none; stroke: var(--color-grain); stroke-width: 1.6; }
+.grain-planner-root .planner-diagram .flow-arrow { fill: none; stroke: var(--color-grain); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.grain-planner-root .planner-diagram .node rect { fill: var(--color-surface-elevated); stroke: var(--color-text-muted); stroke-width: 1.2; }
+.grain-planner-root .planner-diagram .node.is-unknown rect { stroke: var(--color-border-control); stroke-dasharray: 6 4; }
+.grain-planner-root .planner-diagram .node.is-active rect { fill: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface-elevated)); stroke: var(--color-accent); stroke-width: 1.8; }
 .grain-planner-root .planner-diagram .node-title { fill: var(--color-text-secondary); font-size: 13px; font-weight: 600; }
 .grain-planner-root .planner-diagram .node.is-active .node-title { fill: var(--color-accent-strong); }
+.grain-planner-root .planner-diagram .node-title.is-long { font-size: 11.5px; letter-spacing: .01em; }
 .grain-planner-root .planner-diagram .node-sub { fill: var(--color-text-muted); font-size: 12px; }
-.grain-planner-root .planner-diagram .storage > path { fill: var(--color-surface); stroke: var(--color-border-control); stroke-width: 1.2; }
-.grain-planner-root .planner-diagram .storage > text { fill: var(--color-text-muted); font-size: 12.5px; }
-.grain-planner-root .planner-diagram .zone { fill: color-mix(in srgb, var(--color-surface) 70%, var(--color-border)); stroke: var(--color-accent); }
-.grain-planner-root .planner-diagram .zone-label { fill: var(--color-accent-strong); font-size: 16px; font-weight: 600; }
+.grain-planner-root .planner-diagram .storage > path { fill: var(--color-surface-elevated); stroke: var(--color-text-muted); stroke-width: 1.4; }
+.grain-planner-root .planner-diagram .storage > text { fill: var(--color-text-secondary); font-size: 12.5px; font-weight: 600; }
+.grain-planner-root .planner-diagram .zone { fill: color-mix(in srgb, var(--color-grain) 16%, transparent); stroke: var(--color-grain); }
+.grain-planner-root .planner-diagram .zone-label { fill: color-mix(in srgb, var(--color-grain) 60%, var(--color-text)); font-size: 16px; font-weight: 600; }
 .grain-planner-root .planner-diagram .unknown-mark { fill: var(--color-border-control); font-size: 36px; }
 .grain-planner-root .planner-diagram .phase-two path { fill: color-mix(in srgb, var(--color-accent) 6%, transparent); stroke: var(--color-accent); stroke-dasharray: 5 4; }
 .grain-planner-root .planner-diagram .phase-two text, .grain-planner-root .planner-diagram .phase-unknown { fill: var(--color-accent-strong); font-size: 12px; }
@@ -253,10 +259,26 @@
 .grain-planner-root .planner-approach > button:hover { color: var(--color-accent-strong); }
 .grain-planner-root .planner-approach > button svg { width: 16px; height: 16px; }
 .grain-planner-root .planner-approach-visual { width: 100%; height: 170px; margin: 12px 0 14px; color: var(--color-text-secondary); }
-.grain-planner-root .planner-approach-visual .ground { stroke: var(--color-border-strong); stroke-width: 1; }
-.grain-planner-root .planner-approach-visual .silo-shape ellipse, .grain-planner-root .planner-approach-visual .silo-shape path, .grain-planner-root .planner-approach-visual .building-shape { fill: none; stroke: var(--color-text-muted); stroke-width: 1.5; }
-.grain-planner-root .planner-approach-visual .structure { fill: none; stroke: var(--color-border-strong); stroke-width: 1; }
-.grain-planner-root .planner-approach-visual .accent-line { fill: none; stroke: var(--color-accent); stroke-width: 2; }
+.grain-planner-root .planner-overview-key { margin-top: 18px; }
+/* The approaches as small sections (GrainCandidateVisual): copper = the building part RUBIKON does, long dash = the
+   specialists' part, the grain in its own colour (theme.css --color-grain) — the same key as band 04's drawing */
+.grain-planner-root .planner-approach-visual :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.grain-planner-root .planner-approach-visual .gcv-ground { stroke: var(--color-border-strong); stroke-width: 1; }
+.grain-planner-root .planner-approach-visual .gcv-hatch { stroke: var(--color-text-muted); stroke-width: .9; opacity: .6; }
+.grain-planner-root .planner-approach-visual .gcv-grain { fill: color-mix(in srgb, var(--color-grain) 20%, transparent); stroke: none; }
+.grain-planner-root .planner-approach-visual .gcv-grain-line { stroke: var(--color-grain); stroke-width: 1.6; }
+.grain-planner-root .planner-approach-visual .gcv-own { fill: color-mix(in srgb, var(--color-accent) 12%, transparent); stroke: var(--color-accent); stroke-width: 2; }
+.grain-planner-root .planner-approach-visual .gcv-own.gcv-line { fill: none; }
+.grain-planner-root .planner-approach-visual .gcv-partner { stroke: var(--color-text-muted); stroke-width: 1.5; stroke-dasharray: 9 4; }
+/* The overview's three draw in once in view (ProcessMotion arms [data-motion]): copper and the grain's slope plot, the
+   grain and the specialists' lines fade in; card by card */
+.planner-approach-grid[data-motion] > :nth-child(2) { --i: 1; }
+.planner-approach-grid[data-motion] > :nth-child(3) { --i: 2; }
+.planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.direction-page[data-motion-ready="on"] .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { transition: stroke-dashoffset var(--m-draw, 1100ms) var(--ease-premium) calc(var(--i, 0) * 180ms + 250ms); }
+.direction-page[data-motion-ready="on"] .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-grain, .gcv-partner) { transition: opacity 600ms ease calc(var(--i, 0) * 180ms + 700ms); }
+.direction-page[data-motion-ready] .planner-approach-grid[data-motion]:not([data-motion-state="on"]) .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { stroke-dashoffset: 1; }
+.direction-page[data-motion-ready] .planner-approach-grid[data-motion]:not([data-motion-state="on"]) .planner-approach-visual :is(.gcv-grain, .gcv-partner) { opacity: 0; }
 
 .grain-planner-root .planner-compare-action { display: flex; justify-content: flex-end; margin-top: 16px; }
 .grain-planner-root .planner-comparison { overflow-x: auto; margin-top: 16px; border: 1px solid var(--planner-line-strong); background: var(--planner-surface); }

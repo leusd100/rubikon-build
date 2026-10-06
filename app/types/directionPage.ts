@@ -140,11 +140,14 @@ export type DirectionNodeStep = {
 
 export type DirectionNode = {
   /** A technical drawing instead of the picture (NodeDrawing): vector, so the push-in stays sharp */
-  drawing?: 'steel-joint' | 'footing' | 'eave';
+  drawing?: 'steel-joint' | 'footing' | 'eave' | 'grain-store';
   /** The picture's (or the drawing's) own size — the marks are drawn in it */
   width: number;
   height: number;
   /** What the overview (no step) shows, in the title block */
   overviewCaption: string;
-  steps: readonly [DirectionNodeStep, DirectionNodeStep, DirectionNodeStep];
+  /** The drawing's key under the sheet, where its line types say who does what (the grain store: copper and long dash) */
+  legend?: readonly { tone: 'own' | 'partner'; label: string }[];
+  /** Three steps; the grain store's building part takes four (its four work points) */
+  steps: readonly DirectionNodeStep[];
 };

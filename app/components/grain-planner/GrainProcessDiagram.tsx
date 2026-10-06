@@ -7,14 +7,24 @@ const GRID = [
 ].join('');
 
 function DiagramNode({ x, y, w, title, sub, active = false }: { x: number; y: number; w: number; title: string; sub?: string; active?: boolean }) {
+  // a step not known yet is drawn as hidden is on a drawing — short dash; a confirmed one in copper
+  const state = active ? ' is-active' : sub === '?' ? ' is-unknown' : '';
   return (
-    <g className={active ? 'node is-active' : 'node'}>
+    <g className={`node${state}`}>
       <rect x={x} y={y} width={w} height="66" />
-      <text className="node-title" x={x + w / 2} y={y + (sub ? 29 : 38)}>{title}</text>
+      <text className={title.length > 11 ? 'node-title is-long' : 'node-title'} x={x + w / 2} y={y + (sub ? 29 : 38)}>{title}</text>
       {sub ? <text className="node-sub" x={x + w / 2} y={y + 49}>{sub}</text> : null}
     </g>
   );
 }
+
+/** A small open arrowhead at (x, y), pointing right or down — the grain's way through the diagram */
+function arrow(x: number, y: number, to: 'right' | 'down') {
+  return to === 'right' ? `M${x - 7} ${y - 5}L${x} ${y}L${x - 7} ${y + 5}` : `M${x - 5} ${y - 7}L${x} ${y}L${x + 5} ${y - 7}`;
+}
+
+/** The model keeps the prototype's abbreviation (golden parity); the drawing has room for the whole word */
+const spelledOut = (title: string) => (title === 'ВІДВАНТ.' ? 'ВІДВАНТАЖЕННЯ' : title);
 
 /**
  * The conceptual process diagram. Content comes from grainDiagramModel; the geometry is the
@@ -42,6 +52,7 @@ export function GrainProcessDiagram({ answers }: { answers: Answers }) {
         {row.length > 1 && <path className="flow-line" d={`M${x0 + nodeW / 2} ${rowY + 33}H${lastCenter}`} />}
         <path className="flow-line" d={`M${lastCenter} ${rowY + 66}V${rowY + 84}H${storage.x + storage.w / 2}V${storage.y}`} />
         {row.map((node, index) => <DiagramNode key={node.title} x={x0 + index * (nodeW + gap)} y={rowY} w={nodeW} title={node.title} sub={node.sub} active={node.active} />)}
+        <path className="flow-arrow" d={[...row.slice(1).map((_, index) => arrow(x0 + (index + 1) * (nodeW + gap), rowY + 33, 'right')), arrow(storage.x + storage.w / 2, storage.y, 'down')].join('')} />
         <g className="storage">
           <path d={`M${storage.x} ${storage.y + 14}L${storage.x + 14} ${storage.y}H${storage.x + storage.w - 14}L${storage.x + storage.w} ${storage.y + 14}V${storage.y + storage.h - 14}L${storage.x + storage.w - 14} ${storage.y + storage.h}H${storage.x + 14}L${storage.x} ${storage.y + storage.h - 14}Z`} />
           <text x={storage.x + storage.w / 2} y={storage.y + 28}>{model.storageLabel}</text>
@@ -55,8 +66,9 @@ export function GrainProcessDiagram({ answers }: { answers: Answers }) {
             );
           }) : <text className="unknown-mark" x={storage.x + storage.w / 2} y={storage.y + 94}>?</text>}
         </g>
-        <path className="flow-line" d={`M${storage.x + storage.w} ${storage.y + storage.h / 2}H280`} />
-        <DiagramNode x={280} y={storage.y + storage.h / 2 - 33} w={106} title={model.shipping.title} />
+        <path className="flow-line" d={`M${storage.x + storage.w} ${storage.y + storage.h / 2}H276`} />
+        <path className="flow-arrow" d={arrow(276, storage.y + storage.h / 2, 'right')} />
+        <DiagramNode x={276} y={storage.y + storage.h / 2 - 33} w={114} title={spelledOut(model.shipping.title)} />
         {model.phases.map((phase) => phase.kind === 'second'
           ? <g className="phase-two" key={phase.kind}><path d="M246 288H386V318H246Z" /><text x="316" y="308">{phase.label}</text></g>
           : <text className="phase-unknown" key={phase.kind} x="316" y="308">{phase.label}</text>)}
