@@ -131,6 +131,69 @@ const grainDirection: DirectionPageConfig = {
   cta: directionPages.zernoskhovyshcha.cta,
 };
 
+/**
+ * /zernoskhovyshcha since 06.10 (owner: the planner's five themes are more than a client fills in): the complex
+ * assembled on a drawing (band 02, GrainComplexBand), the situations people come with, the building part, the cost
+ * factors, the process, the FAQ — its planner questions reworded for the drawing. grainDirection above stays the planner
+ * composition's (/planner-preview).
+ */
+const [, ...processAfterBrief] = grainDirection.process.steps;
+const grainComplexDirection: DirectionPageConfig = {
+  ...grainDirection,
+  hero: {
+    ...grainDirection.hero,
+    actions: {
+      className: 'grain-hero-actions',
+      sectionClassName: 'grain-service-subhero',
+      items: [
+        { label: 'Скласти комплекс', href: '#kompleks', className: 'button button-primary', arrow: '↓' },
+        { label: 'Обговорити зерносховище', href: '#inquiry', className: 'button grain-hero-secondary', arrow: '↓' },
+      ],
+    },
+  },
+  entry: {
+    eyebrow: 'З чим звертаються',
+    title: 'Яка у вас ситуація?',
+    text: 'Оберіть найближчу — з неї почнемо розмову.',
+    items: [
+      { situation: 'Нове зерносховище', text: 'Є ділянка й розуміння обсягів — потрібна будівельна частина нового об’єкта: від основ до готового контуру.', start: 'місткості, підготовки зерна й умов майданчика' },
+      { situation: 'Основа під силоси', text: 'Силоси вже обрані в постачальника — виконуємо основи й опорні конструкції за його документацією.', start: 'документації на силоси й вимог до основи' },
+      { situation: 'Зерно в наявній будівлі', text: 'Є склад чи ангар, де хочете зберігати зерно: стіни й підлога мають витримати його тиск.', start: 'того, що вже стоїть: фото, креслення, стан стін і підлоги' },
+      { situation: 'Розширення комплексу', text: 'Друга черга: більше місткості, сушіння чи нове відвантаження поруч із тим, що вже працює.', start: 'схеми наявного комплексу й того, що має додатися' },
+    ],
+  },
+  cost: {
+    title: 'Вартість визначає склад комплексу, а не одна цифра за тонну',
+    text: 'Однакова місткість — ще не однакова ціна. Кошторис складаємо за погодженим складом робіт і проєктними даними.',
+    items: [
+      ['01', 'Місткість і окремі партії', 'Скільки силосів чи якої довжини сховище — і скільки основ під них.'],
+      ['02', 'Підготовка зерна', 'Очищення й сушіння додають у ланцюг фундаменти, майданчики й опори.'],
+      ['03', 'Рух зерна', 'Норії й конвеєри потребують опор і закладних; мобільна техніка — міцної підлоги й проїздів.'],
+      ['04', 'Майданчик і ґрунти', 'Рельєф і ґрунти визначають фундаменти й підготовку території.'],
+      ['05', 'Обсяг робіт RUBIKON', 'Лише основа під силоси чи вся будівельна частина — кошторис складаємо під погоджений склад.'],
+    ],
+  },
+  process: {
+    ...grainDirection.process,
+    eyebrow: 'Після звернення',
+    steps: [
+      ['01', 'Ваш опис', 'Схема комплексу з цієї сторінки або кілька слів про задачу — відправна точка.', ClipboardList],
+      ...processAfterBrief,
+    ],
+  },
+  faq: {
+    title: 'Перед першою розмовою',
+    collapsible: true,
+    items: [
+      ['Чи схема комплексу — це проєкт?', 'Ні. Схема показує ланцюг і те, що з нього будуємо ми. Конструктивні рішення й розрахунки готує проєктувальник замовника. Кошторис будівельних робіт складаємо за достатніми проєктними даними.'],
+      ['Що, якщо я ще не знаю, що саме потрібно?', 'Це нормально. Розкажіть, що зберігаєте й скільки, — решту з’ясуємо на першій розмові.'],
+      ['Чи займаєтеся ви технологічним обладнанням?', GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT],
+      ['Чи виконуєте лише бетонну основу під зерносховище?', 'Так, можемо виконати основу окремим етапом за наявною документацією, узгодивши межі відповідальності з іншими підрядниками.'],
+      ['У яких регіонах ви будуєте зерносховища?', company.geography],
+    ],
+  },
+};
+
 export const grainPage = {
   /** Band 02 — the planner's section header. */
   planner: {
@@ -150,4 +213,11 @@ export const grainPage = {
   /** Band 06: real objects only. While this is empty the band is not rendered — no placeholders. */
   cases: [] as readonly GrainCase[],
   direction: grainDirection,
+  /** Band 02 since 06.10: the complex on a drawing (GrainComplexBand) */
+  complex: {
+    eyebrow: 'Ваш зерновий комплекс',
+    title: 'Зберіть свій комплекс на кресленні',
+    supporting: 'Оберіть підготовку, сховище й масштаб — схема збереться, а під нею буде видно, що з неї будуємо ми.',
+  },
+  complexDirection: grainComplexDirection,
 } as const;

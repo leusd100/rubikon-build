@@ -7,13 +7,15 @@ import type { DirectionPageConfig } from '../../types/directionPage';
 type GlyphKind =
   | 'tonnage' | 'joint' | 'coating' | 'erection'
   | 'footing' | 'rebar' | 'flatness' | 'pour'
-  | 'roof-area' | 'roof-layers' | 'deck' | 'gutter';
+  | 'roof-area' | 'roof-layers' | 'deck' | 'gutter'
+  | 'grain-capacity' | 'grain-preparation' | 'grain-handling' | 'grain-site' | 'grain-scope';
 
 /** Each direction's four cost factors, in their order on the page */
 export const COST_GLYPHS: Partial<Record<DirectionPageConfig['id'], readonly GlyphKind[]>> = {
   metalokonstruktsii: ['tonnage', 'joint', 'coating', 'erection'],
   'betonni-roboty': ['footing', 'rebar', 'flatness', 'pour'],
   'pokrivelni-roboty': ['roof-area', 'roof-layers', 'deck', 'gutter'],
+  zernoskhovyshcha: ['grain-capacity', 'grain-preparation', 'grain-handling', 'grain-site', 'grain-scope'],
 };
 
 /** [graphite lines, copper detail] in a 48 × 48 box */
@@ -42,6 +44,16 @@ const GLYPHS: Record<GlyphKind, readonly [string, string]> = {
   deck: ['M6 20h36M6 26h36M12 26v12M36 26v12', 'M20 20v6M28 20v6'],
   // an eave, a gutter and the pipe down
   gutter: ['M6 12l24 12', 'M30 24a6 6 0 0 0 12 0M36 30v14'],
+  // grain (/zernoskhovyshcha): a silo and the level of its grain
+  'grain-capacity': ['M14 42V14L24 7L34 14V42M8 42h32', 'M14 27h20'],
+  // a dryer tower, its louvers marked
+  'grain-preparation': ['M17 42V11h14v31M11 42h26', 'M20 19l4 3 4-3M20 29l4 3 4-3'],
+  // a bucket elevator and the gallery off its head, grain on the belt
+  'grain-handling': ['M8 42V9h8v33M16 12h26v6H16M4 42h16', 'M23 15h2M30 15h2M37 15h2'],
+  // ground layers, a footing set into them
+  'grain-site': ['M4 20h40M4 31h40M4 42h40', 'M18 20V34h12V20'],
+  // a silo above, the slab it stands on — the slab is the building part
+  'grain-scope': ['M15 37V15L24 9L33 15V37', 'M8 37h32v5H8z'],
 };
 
 export function CostGlyph({ kind }: Readonly<{ kind: GlyphKind }>) {

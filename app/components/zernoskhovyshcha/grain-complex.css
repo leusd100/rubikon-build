@@ -1,0 +1,102 @@
+/* «Зберіть свій комплекс на кресленні» (GrainComplexBuilder, GrainComplexDrawing): the elevation on the «Креслення» sheet,
+   three groups of choices under it, then who builds what and the way into the form. In the page's key: copper is the
+   building part RUBIKON does, long dash the specialists' equipment, the grain in --color-grain; the dotted golden lines
+   are the grain moving. */
+
+.gc-band .gc { display: grid; gap: 26px; margin-top: 34px; }
+
+/* The sheet: a light drawing on paper (the sheet's image area is dark by default, for photographs) at the elevation's
+   own 3 : 1 */
+.gc-sheet .gc-visual { flex: none; aspect-ratio: 3 / 1; background: var(--color-surface-alt); }
+.gc-scroll { position: absolute; inset: 0; }
+.gc-scroll:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.gc-drawing { display: block; width: 100%; height: 100%; }
+.gc-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.gc-ground { stroke: var(--color-text-muted); stroke-width: 2.4; }
+.gc-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .6; }
+.gc-own { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--color-accent); stroke-width: 3.4; }
+.gc-own.gc-line { fill: none; stroke-width: 2.6; }
+/* the gallery's trestles: the building part too, but a support — quieter than the modules */
+.gc-mod-trestle .gc-own.gc-line { stroke-width: 2; opacity: .8; }
+.gc-partner { stroke: var(--color-text-muted); stroke-width: 2.6; stroke-dasharray: 26 9; }
+.gc-vehicle :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 2.2; opacity: .8; }
+.gc-grain { fill: color-mix(in srgb, var(--color-grain) 26%, transparent); stroke: var(--color-grain); stroke-width: 2.2; }
+.gc-grate { stroke: var(--color-text-secondary); stroke-width: 3; stroke-dasharray: 10 8; }
+.gc-unknown { stroke: var(--color-border-control); stroke-width: 2.6; stroke-dasharray: 14 10; }
+.gc-unknown-mark { fill: var(--color-border-control); font: 400 150px var(--font-display), sans-serif; text-anchor: middle; }
+.gc-label { fill: var(--color-text-secondary); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; text-anchor: middle; }
+.gc-flow { stroke: var(--color-grain); stroke-width: 11; stroke-linecap: round; stroke-dasharray: 1 24; }
+/* A module out of the chain stays as a ghost, so the chain keeps its places */
+.gc-mod { transition: opacity .5s ease; }
+.gc-mod.is-off { opacity: .16; }
+/* The storage grows to the right; the incline and the grain follow it (Chrome animates the path, others jump) */
+.gc-mod-shipping .gc-partner, .gc-mod-gallery .gc-partner, .gc-flow { transition: d .6s ease; }
+
+/* Arriving: the complex assembles module by module (--o is each module's turn), the grain starts once it stands. Without
+   motion none of this applies: the finished complex, still. */
+@keyframes gc-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes gc-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gc-flow { to { stroke-dashoffset: -25; } }
+.gc[data-gc="armed"] .gc-drawing :is(.gc-own, .gc-partner, .gc-grain, .gc-vehicle, .gc-grate, .gc-label, .gc-unknown, .gc-unknown-mark) { opacity: 0; }
+.gc[data-gc]:not([data-gc="armed"]) .gc-mod .gc-own {
+  stroke-dasharray: 1;
+  animation: gc-draw 900ms var(--ease-premium) calc(var(--o) * 380ms + 150ms) both, gc-fade 500ms ease calc(var(--o) * 380ms + 150ms) both;
+}
+.gc[data-gc]:not([data-gc="armed"]) .gc-mod :is(.gc-partner, .gc-grain, .gc-vehicle, .gc-grate, .gc-label, .gc-unknown, .gc-unknown-mark) {
+  animation: gc-fade 600ms ease calc(var(--o) * 380ms + 450ms) both;
+}
+.gc[data-gc]:not([data-gc="armed"]) .gc-drawing > .gc-label { animation: gc-fade 600ms ease 2.2s both; }
+/* After the arrival a module that comes into the chain draws in at once */
+.gc[data-gc="assembled"] .gc-mod { --o: 0 !important; }
+.gc-flows { transition: opacity .6s ease; }
+.gc[data-gc]:not([data-gc="assembled"]) .gc-flows { opacity: 0; }
+.gc[data-gc="assembled"][data-flow="on"][data-inview] .gc-flow { animation: gc-flow 900ms linear infinite; }
+
+/* The choices */
+.gc-controls { display: flex; flex-wrap: wrap; gap: 20px 40px; }
+.gc-group { min-width: 0; margin: 0; padding: 0; border: 0; }
+.gc-group legend { margin: 0 0 10px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.gc-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.gc-chip { position: relative; display: inline-flex; }
+.gc-chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.gc-chip span {
+  display: inline-flex; align-items: center; min-height: 46px; padding: 0 18px; color: var(--color-text); background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-control); font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .03em;
+  transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.gc-chip:hover span { border-color: var(--color-accent); }
+.gc-chip input:checked + span { color: var(--color-accent-hover); background: color-mix(in srgb, var(--color-accent) 11%, var(--color-surface-elevated)); border-color: var(--color-accent); box-shadow: inset 0 -3px 0 var(--color-accent); }
+.gc-chip input:focus-visible + span { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+/* Who builds what, and the way on */
+.gc-scope { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(260px, .8fr); gap: 24px 44px; padding-top: 24px; border-top: 1px solid var(--color-border-strong); }
+.gc-scope-col h3 { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; color: var(--color-text); font: 700 13px/1.3 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.gc-scope-col h3::before { flex: none; width: 30px; content: ''; border-top: 3px solid var(--color-accent); }
+.gc-scope-col[data-tone="partner"] h3::before { height: 2px; border: 0; background: repeating-linear-gradient(90deg, var(--color-text-muted) 0 10px, transparent 10px 15px); }
+.gc-scope-col ul { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.gc-scope-col li { position: relative; padding-left: 16px; color: var(--color-text-secondary); font-size: 15px; line-height: 1.45; }
+.gc-scope-col li::before { position: absolute; top: .62em; left: 0; width: 7px; height: 7px; content: ''; background: var(--color-accent); }
+.gc-scope-col[data-tone="partner"] li::before { background: none; border: 1.5px solid var(--color-text-muted); }
+.gc-next p { margin: 0 0 16px; color: var(--color-text-muted); font-size: 14px; line-height: 1.5; }
+.gc-next .gc-cta { width: 100%; justify-content: space-between; }
+
+@media (max-width: 1050px) {
+  .gc-scope { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .gc-next { grid-column: 1 / -1; }
+  .gc-next .gc-cta { width: auto; }
+}
+
+@media (max-width: 760px) {
+  .gc-band .gc { gap: 22px; margin-top: 24px; }
+  /* the elevation scrolls sideways at a width its words can be read at */
+  .gc-sheet .gc-visual { aspect-ratio: auto; height: 330px; }
+  .gc-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+  .gc-drawing { width: 990px; height: 330px; }
+  .gc-label { font-size: 32px; }
+  .gc-controls { display: grid; gap: 18px; }
+  .gc-chip span { min-height: 44px; padding: 0 14px; font-size: 14px; }
+  .gc-scope { grid-template-columns: 1fr; gap: 20px; padding-top: 20px; }
+  .gc-scope-col ul { gap: 4px; }
+  .gc-scope-col li { font-size: 14px; }
+  .gc-next .gc-cta { width: 100%; }
+}

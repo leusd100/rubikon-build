@@ -173,7 +173,7 @@ export function DirectionProcess({
   );
 }
 
-function DirectionCostSection({
+export function DirectionCostSection({
   title,
   text,
   items,

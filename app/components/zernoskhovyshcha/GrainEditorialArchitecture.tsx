@@ -1,5 +1,5 @@
 import type { DirectionPageConfig } from '../../types/directionPage';
-import { DirectionEditorial, DirectionProcess } from '../DirectionDetail';
+import { DirectionCostSection, DirectionEditorial, DirectionProcess } from '../DirectionDetail';
 
 /**
  * Bands 04–05 of the grain composition, through the site's own editorial system: «Як RUBIKON
@@ -11,6 +11,8 @@ export function GrainEditorialArchitecture({ config }: { config: DirectionPageCo
   return (
     <>
       <DirectionEditorial directionId={config.id} editorial={config.editorial} className="grain-implementation-band" />
+      {/* the cost factors, with their line glyphs (since 06.10; the planner composition has none) */}
+      {config.cost && <DirectionCostSection {...config.cost} directionId={config.id} />}
       <DirectionProcess {...config.process} className="grain-process-band" />
     </>
   );

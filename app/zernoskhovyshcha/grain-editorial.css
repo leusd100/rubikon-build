@@ -70,6 +70,21 @@
   .dn[data-step="4"] .node-drawing-grain-store .gsd-joint circle { animation: gsd-ping 900ms ease-in-out 900ms 2; }
 }
 
+/* ---------- 02–03 The complex on a drawing and the situations (since 06.10) ---------- */
+.grain-page :is(.gc-band, .direction-entry, .cost-section) { padding-block: var(--section-space-compact); }
+/* four situations side by side (the roofing template has three): one row from 1051 px, two below */
+.grain-page .direction-entry-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grain-page .direction-entry-list li { gap: 12px; padding: 0 26px 26px; }
+.grain-page .direction-entry-list li:first-child { padding-left: 0; }
+.grain-page .direction-entry-list h3 { font-size: clamp(24px, 2vw, 28px); }
+.grain-page .direction-entry-list p { font-size: 15px; line-height: 1.6; }
+@media (min-width: 761px) and (max-width: 1050px) {
+  .grain-page .direction-entry-list { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 26px; }
+  .grain-page .direction-entry-list li:nth-child(odd) { padding-left: 0; border-left: 0; }
+}
+/* the cost factors: five rows, kept close */
+.grain-page .cost-list article { padding-block: 16px; }
+
 /* ---------- 05 Після брифу ---------- */
 .grain-page .grain-process-band { padding-block: var(--section-space-compact); }
 
@@ -107,6 +122,12 @@
 
 @media (max-width: 760px) {
   .grain-page .service-subhero.grain-service-subhero { min-height: 0; }
+  /* the four situations as a row of cards that scrolls sideways (one and a bit on screen), not four screens of text */
+  .grain-page .direction-entry-list { display: flex; gap: 12px; margin-inline: -16px; padding: 2px 16px 18px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; border-bottom: 0; }
+  .grain-page .direction-entry-list li, .grain-page .direction-entry-list li:first-child { flex: 0 0 82%; padding: 20px 18px; border: 1px solid var(--color-border-strong); background: var(--color-surface-elevated); scroll-snap-align: start; }
+  .grain-page .direction-entry-list h3 { font-size: 24px; }
+  .grain-page .cost-list article { padding-block: 14px; }
+  .grain-page .cost-list p { margin-top: 4px; font-size: 15px; line-height: 1.55; }
   .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 56%, transparent 67%); mask-image: linear-gradient(#000 56%, transparent 67%); }
   /* 126 px like every direction hero, so the crumbs sit under the «Ілюстрація» stamp (UX pass 2026-10) */
   .grain-page .service-subhero-content { padding-top: 126px; padding-bottom: 44px; }
