@@ -161,7 +161,7 @@ export function DirectionProcess({
   split?: readonly ProcessSplit[];
   className?: string;
 }) {
-  const sides = split && split.length === steps.length ? split : undefined;
+  const sides = split?.length === steps.length ? split : undefined;
   return (
     <section className={classNames('page-section page-section-dark', className)}>
       <div className="shell">
@@ -205,12 +205,12 @@ export function DirectionCostSection({
   text,
   items,
   directionId,
-}: {
+}: Readonly<{
   title: string;
   text: string;
   items: readonly DirectionItem[];
   directionId: DirectionPageConfig['id'];
-}) {
+}>) {
   // a direction's glyphs belong to its own list of factors: another list (the grain page's flag-off rollback) draws none
   const glyphs = COST_GLYPHS[directionId]?.length === items.length ? COST_GLYPHS[directionId] : undefined;
   // Process (right above this section) is a sequence — ordered steps, a bordered card grid says

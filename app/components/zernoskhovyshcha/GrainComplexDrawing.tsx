@@ -17,8 +17,27 @@ const TUNNEL = { top: 656, bottom: 716, belt: 690, from: 476, to: 1340 };
 const STORE_X = 1370;
 const SHIP_X = 2150;
 
+/** The dryer's louvres: two columns of chevrons down its tower */
+const DRYER_LOUVRES = [222, 264, 306, 348, 390, 432, 474, 516].map((y) => `M1112 ${y}L1128 ${y + 16}L1144 ${y}M1156 ${y}L1172 ${y + 16}L1188 ${y}`).join('');
+
 /** A silo's width and step: narrower as they get more, so the incline to the loading bin keeps its slope */
-const binSize = (count: number) => (count >= 6 ? { w: 92, step: 112 } : count >= 4 ? { w: 108, step: 130 } : { w: 130, step: 154 });
+function binSize(count: number) {
+  if (count >= 6) return { w: 92, step: 112 };
+  if (count >= 4) return { w: 108, step: 130 };
+  return { w: 130, step: 154 };
+}
+
+/** Where the storage ends, where its middle (its label) is, and where the gallery over it stops — per storage */
+function storageGeometry({ state, silos, floorLength }: GrainComplexModel) {
+  const { w, step } = binSize(silos);
+  const lastBin = STORE_X + (silos - 1) * step;
+  if (state.storage === 'silos') {
+    const storeEnd = lastBin + w + 10;
+    return { storeEnd, storeCentre: (STORE_X + storeEnd - 10) / 2, galleryEnd: lastBin + w / 2 + 22 };
+  }
+  if (state.storage === 'floor') return { storeEnd: STORE_X - 10 + floorLength, storeCentre: STORE_X - 10 + floorLength / 2, galleryEnd: 1420 };
+  return { storeEnd: 1920, storeCentre: 1645, galleryEnd: 1660 };
+}
 
 /** A module's group: its turn in the arrival (--o) and whether the visitor has it in the chain */
 function Mod({ name, order, on = true, hot = false, children }: Readonly<{ name: string; order: number; on?: boolean; hot?: boolean; children: ReactNode }>) {
@@ -64,8 +83,7 @@ const cropClass = (crop: GrainCrop | 'mixed') => `gc-grain gc-crop-${crop}`;
 
 /** Where a module sits along the drawing (its units, 0–2400): a phone's sideways view is brought to it after a change */
 export function grainModuleCentre(key: GrainModuleKey, model: GrainComplexModel) {
-  const { w, step } = binSize(model.silos);
-  const storeEnd = model.state.storage === 'silos' ? STORE_X + (model.silos - 1) * step + w + 10 : model.state.storage === 'floor' ? STORE_X - 10 + model.floorLength : 1920;
+  const { storeEnd } = storageGeometry(model);
   const centres: Record<GrainModuleKey, number> = { receiving: 340, cleaning: 860, drying: 1140, feed: 1300, storage: (STORE_X + storeEnd) / 2, shipping: 2250 };
   return centres[key];
 }
@@ -85,11 +103,10 @@ export function GrainComplexDrawing({ model, label, hovered = null, flash = null
   const { state, silos, floorLength, binCrops, zoneCrops } = model;
   const { w: binW, step: binStep } = binSize(silos);
   const bins = Array.from({ length: silos }, (_, index) => STORE_X + index * binStep);
-  const storeEnd = state.storage === 'silos' ? bins[bins.length - 1] + binW + 10 : state.storage === 'floor' ? STORE_X - 10 + floorLength : 1920;
-  const storeCentre = state.storage === 'silos' ? (STORE_X + storeEnd - 10) / 2 : state.storage === 'floor' ? STORE_X - 10 + floorLength / 2 : 1645;
-  const galleryEnd = state.storage === 'silos' ? bins[bins.length - 1] + binW / 2 + 22 : state.storage === 'floor' ? 1420 : 1660;
+  const { storeEnd, storeCentre, galleryEnd } = storageGeometry(model);
   const dischargeEnd = storeEnd + 40;
   const floorColumns = Array.from({ length: Math.floor(floorLength / 120) + 1 }, (_, index) => STORE_X - 10 + index * 120).filter((x) => x <= STORE_X - 10 + floorLength);
+  const columnLines = floorColumns.map((x) => `M${x} ${G}V380`).join('');
   const zoneWidth = (floorLength - 12) / zoneCrops.length;
   const zones = zoneCrops.map((crop, index) => ({ crop, x0: STORE_X - 4 + index * zoneWidth, x1: STORE_X - 4 + (index + 1) * zoneWidth }));
 
@@ -160,7 +177,7 @@ export function GrainComplexDrawing({ model, label, hovered = null, flash = null
         <path pathLength={1} className="gc-own" d={footing(1079, 18)} />
         <path className="gc-partner" d={elevator(1000, 128)} />
         <path className="gc-partner gc-pipe" d="M1054 122L1140 160" />
-        <path className="gc-partner" d={`M1100 580V200H1200V580ZM1100 200L1150 164L1200 200M1110 580L1144 594H1156L1190 580M1106 580V${G}M1194 580V${G}${[222, 264, 306, 348, 390, 432, 474, 516].map((y) => `M1112 ${y}L1128 ${y + 16}L1144 ${y}M1156 ${y}L1172 ${y + 16}L1188 ${y}`).join('')}M1200 452H1244V560H1200ZM1230 452V418H1240V452`} />
+        <path className="gc-partner" d={`M1100 580V200H1200V580ZM1100 200L1150 164L1200 200M1110 580L1144 594H1156L1190 580M1106 580V${G}M1194 580V${G}${DRYER_LOUVRES}M1200 452H1244V560H1200ZM1230 452V418H1240V452`} />
         <circle className="gc-partner" cx="1222" cy="490" r="14" />
         <path className="gc-partner gc-pipe" d={`M1150 594V${TUNNEL.belt - 6}`} />
         <path pathLength={1} className="gc-own" d={`M1086 ${G}H1214V${G + 28}H1086Z`} />
@@ -191,7 +208,7 @@ export function GrainComplexDrawing({ model, label, hovered = null, flash = null
           <path pathLength={1} className="gc-own" d={`M${STORE_X - 10} 520H${storeEnd}V${G}H${STORE_X - 10}Z`} />
           {zones.map((zone) => <path key={zone.x0} className={cropClass(zone.crop)} d={heapZone(STORE_X - 4, storeEnd - 6, zone.x0, zone.x1)} />)}
           {zones.length > 1 && <path pathLength={1} className="gc-own gc-line" d={zones.slice(1).map((zone) => `M${zone.x0.toFixed(1)} ${G}V470`).join('')} />}
-          <path pathLength={1} className="gc-own gc-line" d={`${floorColumns.map((x) => `M${x} ${G}V380`).join('')}M${STORE_X - 10} 380H${storeEnd}M${STORE_X + 10} 330H${storeEnd - 20}M${STORE_X - 10} 380L${STORE_X + 10} 330M${storeEnd} 380L${storeEnd - 20} 330`} />
+          <path pathLength={1} className="gc-own gc-line" d={`${columnLines}M${STORE_X - 10} 380H${storeEnd}M${STORE_X + 10} 330H${storeEnd - 20}M${STORE_X - 10} 380L${STORE_X + 10} 330M${storeEnd} 380L${storeEnd - 20} 330`} />
           <path pathLength={1} className="gc-own" d={`M${STORE_X - 14} ${G}H${storeEnd + 4}V616H${STORE_X - 14}Z`} />
           <path className="gc-partner" d={`M${STORE_X + 40} 348H${storeEnd - 40}M1414 70V348`} />
         </Mod>

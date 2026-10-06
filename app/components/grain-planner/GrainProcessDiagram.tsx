@@ -8,7 +8,9 @@ const GRID = [
 
 function DiagramNode({ x, y, w, title, sub, active = false }: { x: number; y: number; w: number; title: string; sub?: string; active?: boolean }) {
   // a step not known yet is drawn as hidden is on a drawing — short dash; a confirmed one in copper
-  const state = active ? ' is-active' : sub === '?' ? ' is-unknown' : '';
+  let state = '';
+  if (active) state = ' is-active';
+  else if (sub === '?') state = ' is-unknown';
   return (
     <g className={`node${state}`}>
       <rect x={x} y={y} width={w} height="66" />

@@ -65,7 +65,7 @@ export function GrainComplexBuilder() {
   /** Whether the drawing is wider than its view (a phone): only then is it a scroll region to reach by Tab */
   const [scrolls, setScrolls] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef('mouse');
   const stopGlideRef = useRef<() => void>(() => undefined);
@@ -260,10 +260,11 @@ export function GrainComplexBuilder() {
           action={cta('gc-cta')}
         >
           {/* On a phone the elevation is wider than the screen: it scrolls sideways, at a size its words can be read */}
-          <div className="gc-scroll" ref={scrollRef} role="region" tabIndex={scrolls ? 0 : undefined} aria-label={scrolls ? 'Схема комплексу, гортайте вбік' : 'Схема комплексу'}>
+          {/* a phone's sideways view takes Tab, so the keyboard can scroll it (axe: scrollable-region-focusable) */}
+          <section className="gc-scroll" ref={scrollRef} tabIndex={scrolls ? 0 : undefined} aria-label={scrolls ? 'Схема комплексу, гортайте вбік' : 'Схема комплексу'}>
             <GrainComplexDrawing
               model={model}
-              label={`Схема зернового комплексу: ${model.chain.join(', ')}${crops ? ` — ${crops}` : ''}`}
+              label={[`Схема зернового комплексу: ${model.chain.join(', ')}`, crops].filter(Boolean).join(' — ')}
               hovered={tip?.key ?? null}
               flash={flash}
               pulse={pulse}
@@ -279,7 +280,7 @@ export function GrainComplexBuilder() {
                 {info.action && <em>{info.action}</em>}
               </div>
             )}
-          </div>
+          </section>
           {/* the grain's pause sits on the drawing it stops, in its empty top corner: the title block keeps its line for the
               chain, and a phone's sheet has no title block */}
           {pause && <span className="gc-pause">{pause}</span>}

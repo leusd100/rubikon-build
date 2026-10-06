@@ -71,15 +71,34 @@ export type GrainComplexModel = {
   inquiryText: string;
 };
 
-const storageWord: Record<GrainStorage, string> = { silos: 'силоси', floor: 'підлогове сховище', unknown: 'сховище (тип ще не визначили)' };
+/** Each storage: as the chain names it, as the inquiry says it, the building part it takes, the specialists' part */
+const STORAGE: Record<GrainStorage, { chain: string; word: string; own: string; partners: readonly string[] }> = {
+  silos: { chain: 'Силоси', word: 'силоси', own: 'Бетонні основи під силоси', partners: ['Силоси'] },
+  floor: {
+    chain: 'Підлогове сховище',
+    word: 'підлогове сховище',
+    own: 'Підлогове сховище: фундаменти, підпірні стіни, каркас і покрівля',
+    partners: ['Аерація й конвеєри сховища'],
+  },
+  unknown: { chain: 'Сховище', word: 'сховище (тип ще не визначили)', own: 'Основа або будівля — щойно визначите тип сховища', partners: [] },
+};
+
+/** The inquiry's first line: the crops, the preparation, the storage, the rough scale */
+function inquiryLine(state: GrainComplexState, scaleLabel: string) {
+  const crops = GRAIN_CROP_OPTIONS.filter((option) => state.crops.includes(option.value)).map((option) => option.genitive).join(', ');
+  const preparation = [state.cleaning && 'очищення', state.drying && 'сушіння'].filter(Boolean).join(' і ') || 'без підготовки';
+  const parts = [crops && `${crops};`, `${preparation},`, `${STORAGE[state.storage].word},`, `орієнтовно ${scaleLabel}.`];
+  return `Зерновий комплекс: ${parts.filter(Boolean).join(' ')} `;
+}
 
 export function grainComplexModel(state: GrainComplexState): GrainComplexModel {
   const scaleLabel = GRAIN_SCALE_OPTIONS[state.scale].label;
+  const storage = STORAGE[state.storage];
   const chain = [
     'Приймання',
     ...(state.cleaning ? ['Очищення'] : []),
     ...(state.drying ? ['Сушіння'] : []),
-    state.storage === 'silos' ? 'Силоси' : state.storage === 'floor' ? 'Підлогове сховище' : 'Сховище',
+    storage.chain,
     'Відвантаження',
   ];
 
@@ -91,11 +110,7 @@ export function grainComplexModel(state: GrainComplexState): GrainComplexModel {
     'Приямки норій, тунелі конвеєрів, опори норій і галереї',
     ...(state.cleaning ? ['Майданчик і опорні конструкції під очищення'] : []),
     ...(state.drying ? ['Фундамент під сушарку'] : []),
-    state.storage === 'silos'
-      ? 'Бетонні основи під силоси'
-      : state.storage === 'floor'
-        ? 'Підлогове сховище: фундаменти, підпірні стіни, каркас і покрівля'
-        : 'Основа або будівля — щойно визначите тип сховища',
+    storage.own,
     'Опори бункера відвантаження',
   ];
 
@@ -103,13 +118,9 @@ export function grainComplexModel(state: GrainComplexState): GrainComplexModel {
     'Норії та конвеєри',
     ...(state.cleaning ? ['Машина очищення'] : []),
     ...(state.drying ? ['Зерносушарка'] : []),
-    ...(state.storage === 'silos' ? ['Силоси'] : state.storage === 'floor' ? ['Аерація й конвеєри сховища'] : []),
+    ...storage.partners,
     'Бункер відвантаження',
   ];
-
-  const preparation = [state.cleaning && 'очищення', state.drying && 'сушіння'].filter(Boolean).join(' і ');
-  const crops = GRAIN_CROP_OPTIONS.filter((option) => state.crops.includes(option.value)).map((option) => option.genitive).join(', ');
-  const inquiryText = `Зерновий комплекс: ${crops ? `${crops}; ` : ''}${preparation ? `${preparation}, ` : 'без підготовки, '}${storageWord[state.storage]}, орієнтовно ${scaleLabel}. `;
 
   return {
     state,
@@ -121,7 +132,7 @@ export function grainComplexModel(state: GrainComplexState): GrainComplexModel {
     scaleLabel,
     own,
     partners,
-    inquiryText,
+    inquiryText: inquiryLine(state, scaleLabel),
   };
 }
 

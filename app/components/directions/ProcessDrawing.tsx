@@ -6,6 +6,9 @@ import type { ProcessDrawingKind } from '../../types/directionPage';
 // dark band: copper is what RUBIKON does or hands over, graphite the rest, long dash the specialists' equipment, the grain
 // and the water in their colours. Decorative: the caption under each says the same.
 
+/** The levelling staff's ticks (concrete's first result) */
+const STAFF_TICKS = [28, 38, 48, 58, 68, 78].map((y) => `M122 ${y}h7`).join('');
+
 const DRAWINGS: Record<ProcessDrawingKind, ReactNode> = {
   // grain — the description: a sheet with the complex sketched on it
   'grain-brief': (
@@ -85,7 +88,7 @@ const DRAWINGS: Record<ProcessDrawingKind, ReactNode> = {
   // concrete — levels and marks: the instrument on its tripod, the sight line to the staff, the mark it gives
   'concrete-levels': (
     <>
-      <path className="pd-ink" d={`M40 92L52 58M64 92L54 58M52 92V58M44 48H62V58H44ZM122 92V20${[28, 38, 48, 58, 68, 78].map((y) => `M122 ${y}h7`).join('')}`} />
+      <path className="pd-ink" d={`M40 92L52 58M64 92L54 58M52 92V58M44 48H62V58H44ZM122 92V20${STAFF_TICKS}`} />
       <path className="pd-sight" d="M62 52H120" />
       <path pathLength={1} className="pd-own" d="M92 40H106L99 48Z" />
       <path pathLength={1} className="pd-own-line" d="M86 40H112" />
