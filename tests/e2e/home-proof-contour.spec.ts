@@ -272,16 +272,18 @@ async function openNode(page: Page, node: ProofNode) {
   return panel;
 }
 
-/** `rest`: how long the finger stays put before it lifts. The moves land a few ms apart, a flick of thousands of px/s,
- *  so a swipe that scrolls the page lifts into a fling; after a rest the browser takes the finger as stopped. */
+/** `rest`: how long (ms) the finger stays put before it lifts. The moves land a few ms apart, a flick of thousands of
+ *  px/s, so a swipe that scrolls the page lifts into a fling. With a rest the touch and its moves are stamped that much
+ *  earlier than the lift, so the browser reads the finger as stopped by then, and nothing waits on the clock. */
 async function touchDrag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }, steps = 10, rest = 0) {
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [from] });
+  // CDP takes seconds since the epoch; without a rest the browser stamps each event as it arrives
+  const at = (back: number) => (rest ? { timestamp: (Date.now() - back) / 1000 } : {});
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [from], ...at(rest) });
   for (let step = 1; step <= steps; step += 1) {
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from.x + ((to.x - from.x) * step) / steps, y: from.y + ((to.y - from.y) * step) / steps }] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from.x + ((to.x - from.x) * step) / steps, y: from.y + ((to.y - from.y) * step) / steps }], ...at(rest) });
   }
-  if (rest) await page.waitForTimeout(rest);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [], ...at(0) });
 }
 
 /** A screenshot of the region once two in a row agree (the photo may still be painting after it has loaded) */
