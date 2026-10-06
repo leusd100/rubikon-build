@@ -73,7 +73,7 @@ export const homeProofContour: HomeProofContour = {
       kind: 'outline',
       points: [[1483.7, 295.2], [1484.2, 309.1], [1470.4, 310.6], [1478.6, 551.7]],
       approximate: true,
-      title: 'Правий кут фронтона, наближено',
+      title: 'Правий кут фронтона',
     },
     {
       id: 'gable-base',
@@ -87,7 +87,7 @@ export const homeProofContour: HomeProofContour = {
       kind: 'outline',
       points: [[277.7, 217.9], [280.5, 214.3], [281.4, 193.3], [1004.9, 128.6]],
       approximate: true,
-      title: 'Лівий скат фронтона, наближено',
+      title: 'Лівий скат фронтона',
     },
     {
       id: 'gate-left',
@@ -106,14 +106,14 @@ export const homeProofContour: HomeProofContour = {
     { id: 'cladding-corner-left', kind: 'cladding', points: [[273.3, 581.9], [287.4, 218.7]], approximate: false, title: 'Межа облицювання біля лівого кута' },
     { id: 'cladding-corner-right', kind: 'cladding', points: [[1459.5, 552.2], [1451.5, 309.1]], approximate: false, title: 'Межа облицювання біля правого кута' },
     // The strip boundaries, left to right
-    { id: 'strip-a', kind: 'cladding', points: [[463.9, 577.2], [474.2, 199.0]], approximate: true, title: 'Межа смуг облицювання, наближено' },
-    { id: 'strip-b', kind: 'cladding', points: [[708.8, 571.0], [713.7, 175.9]], approximate: true, title: 'Межа смуг облицювання, наближено' },
-    { id: 'strip-c', kind: 'cladding', points: [[919.5, 322.0], [919.4, 156.0]], approximate: true, title: 'Межа смуг облицювання, наближено' },
+    { id: 'strip-a', kind: 'cladding', points: [[463.9, 577.2], [474.2, 199.0]], approximate: true, title: 'Межа смуг облицювання' },
+    { id: 'strip-b', kind: 'cladding', points: [[708.8, 571.0], [713.7, 175.9]], approximate: true, title: 'Межа смуг облицювання' },
+    { id: 'strip-c', kind: 'cladding', points: [[919.5, 322.0], [919.4, 156.0]], approximate: true, title: 'Межа смуг облицювання' },
     { id: 'strip-d', kind: 'cladding', points: [[1156.8, 336.9], [1154.8, 203.4]], approximate: false, title: 'Межа смуг облицювання' },
     { id: 'strip-e', kind: 'cladding', points: [[1266.3, 557.0], [1259.5, 238.9]], approximate: false, title: 'Межа смуг облицювання' },
   ],
   // Names the approximate set in words; tests/unit/home-proof-contour.test.ts pins that set, so a changed flag fails
   // until this sentence is changed with it
   label:
-    'Контур за фото: обрис фронтона, ворота й межі смуг облицювання. Суцільні лінії виміряно, пунктирні наближено — це лівий скат і правий кут фронтона та три ліві межі смуг облицювання.',
+    'Контур за фото: обрис фронтона, ворота й межі смуг облицювання.',
 };

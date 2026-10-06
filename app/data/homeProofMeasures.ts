@@ -74,8 +74,9 @@ export const homeProofMeasures: readonly Measure[] = [
     detail: 'для кута масштаб не потрібен',
     spoken: `Схил даху приблизно ${comma(PITCH)} градуса, похибка ${comma(PITCH_U)} градуса; для кута масштаб не потрібен`,
     chip: `Схил ${approx(PITCH)}° ${plusMinus(PITCH_U)}°`,
-    // In the sky over the right rake, clear of the copper outline and the purlins it would otherwise mask (review, 04.10)
-    at: [1300, 138],
+    // In the sky over the right rake, in two lines (home-v2.css), clear of the copper outline and short of the stamp at
+    // every laptop width (review, 05.10: at [1300, 138] it met the stamp from 900 to 1366 px and was hidden)
+    at: [1240, 128],
     align: 'end',
     atContour: [1318, 330],
     alignContour: 'middle',
@@ -105,7 +106,8 @@ export const homeProofMeasures: readonly Measure[] = [
     title: `Ширина торця ${approx(WIDTH_PER_HEIGHT)} висоти`,
     detail: 'висота — від низу облицювання до гребеня',
     spoken: `Ширина торця — приблизно ${comma(WIDTH_PER_HEIGHT)} його висоти до гребеня`,
-    at: [1180, 586],
+    // under the width's dimension line, which stands above the laptop crop's last row (review, 05.10)
+    at: [1180, 614],
     align: 'middle',
     onFrame: false,
   },
@@ -122,8 +124,10 @@ export const homeProofMarks = {
     [[825.4, 333.8], [830.7, 299.4]], [[835.7, 334.3], [840.9, 300.1]], [[908.9, 455.6], [942.9, 447.6]], [[908.9, 438.5], [942.9, 430.7]],
     [[1129.9, 351], [1133.7, 320]], [[1138.3, 351.4], [1142, 320.6]], [[1201.8, 459.8], [1229.2, 452.6]], [[1201.5, 444.4], [1228.9, 437.3]],
   ] as readonly (readonly Pt[])[],
-  width: [[260.2, 662.3], [1480.4, 604.2]] as readonly Pt[],
-  widthTicks: [[[248.3, 680.7], [272, 643.9]], [[1476, 616.2], [1484.8, 592.3]], [[261.9, 617.7], [259.3, 683.7]], [[1479.4, 575], [1480.9, 618.2]]] as readonly (readonly Pt[])[],
+  // 24 px higher than first drawn and its ticks shorter: a laptop's crop keeps rows to 644 (review, 05.10: its left end
+  // and tick were cut off)
+  width: [[260.2, 638.3], [1480.4, 580.2]] as readonly Pt[],
+  widthTicks: [[[253, 646], [267.5, 630.5]], [[1476, 592.2], [1484.8, 568.3]], [[261.9, 593.7], [259.6, 646]], [[1479.4, 556], [1480.9, 594.2]]] as readonly (readonly Pt[])[],
   height: [[1007.3, 563.5], [1004.9, 128.6]] as readonly Pt[],
   heightTicks: [[[998.1, 572.2], [1016.5, 554.9]], [[995.9, 135.4], [1013.8, 121.8]]] as readonly (readonly Pt[])[],
 };

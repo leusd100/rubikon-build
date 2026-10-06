@@ -38,15 +38,18 @@ type Pt = readonly [number, number];
  *  eave), each standing a little over the roof, their tails on one line that follows the roof. The tails stay below the
  *  photo's row 84, which the laptop crop keeps (home-v2.css) */
 const ROOF_TOP: readonly Pt[] = [[300.2, 191.6], [1004.9, 128.6], [1460.1, 287]];
-const COMB_RISE = 42;
+const COMB_RISE = 36;
 const COMB_GAP = 7;
 const roofTopY = (x: number) => {
   const [a, b] = x <= ROOF_TOP[1][0] ? [ROOF_TOP[0], ROOF_TOP[1]] : [ROOF_TOP[1], ROOF_TOP[2]];
   return a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
 };
 const round1 = (value: number) => Math.round(value * 10) / 10;
-const COMB_XS = Array.from({ length: 13 }, (_, index) => 330 + index * ((1432 - 330) / 12));
-const COMB_ARROWS = COMB_XS.map((x): readonly [Pt, Pt] => [[round1(x), round1(roofTopY(x) - COMB_RISE)], [round1(x), round1(roofTopY(x) - COMB_GAP)]]);
+/** The top chord's panel points, eave to eave: where the purlins bear */
+const TOP_NODES: readonly Pt[] = [[299.2, 218.5], [406.9, 208], [508.1, 198.2], [603.2, 188.9], [692.8, 180.2], [777.4, 172], [857.4, 164.2], [933.2, 156.8], [1005, 149.8], [1071, 172.3], [1134, 193.8], [1194.3, 214.3], [1252.1, 234], [1307.4, 252.9], [1360.6, 271], [1411.6, 288.4], [1460.7, 305.1]];
+/** The snow's arrows stand over the nodes inside the eaves — one on the ridge — as the load reaches the frame there,
+ *  through the purlins (owner, 05.10: «навантаження до кожного вузла, одне в коник») */
+const COMB_ARROWS = TOP_NODES.slice(1, -1).map(([x]): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - COMB_RISE)], [x, round1(roofTopY(x) - COMB_GAP)]]);
 const COMB_LINE: readonly Pt[] = [COMB_ARROWS[0][0], [ROOF_TOP[1][0], round1(ROOF_TOP[1][1] - COMB_RISE)], COMB_ARROWS.at(-1)![0]];
 
 /** The wind across the building (owner review, 04.10: «навантаження від вітру», in its own colour): it presses on the
@@ -65,7 +68,8 @@ const gusts = (base: number, growth: number) => [0.12, 0.31, 0.5, 0.69, 0.88].ma
 const WIND_GUSTS_WIDE = gusts(26, 22);
 /** A phone's close-up ends at the photo's column 1504: 16–26 px there (home-v2.css shows one set or the other) */
 const WIND_GUSTS = gusts(16, 10);
-const WIND_LIFT = [430, 580, 730, 870, 1090, 1200, 1310, 1410].map((x): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 30)]]);
+/** The lift off the roof: 36 px arrows (owner, 05.10: «зараз дуже мілко»), their heads still under the photo's row 84 */
+const WIND_LIFT = TOP_NODES.slice(1, -1).filter((_, index) => index % 2 === 0).map(([x]): readonly [Pt, Pt] => [[x, round1(roofTopY(x) - 6)], [x, round1(roofTopY(x) - 42)]]);
 
 /** truss: chords and end posts; web: diagonals and verticals; wall: bearing lines and lintels; column: the central row */
 export type FrameGroup = 'truss' | 'web' | 'wall' | 'column' | 'purlin' | 'bracing' | 'footing';
@@ -79,7 +83,10 @@ export type FrameMember = {
   closed?: boolean;
 };
 
-export type FrameTag = { id: string; text: string; anchor: Pt; at: Pt; align: 'start' | 'end' };
+/** `atNarrow`: where it stands on a narrow frame (≤ 900 px, home-v2.css), its leader drawn there instead; `wideOnly`: not
+ *  drawn on one — no room left on the wall's face for a third name in two lines */
+/** `keyAt`: where a phone's number for it stands, when not on its anchor */
+export type FrameTag = { id: string; text: string; anchor: Pt; at: Pt; align: 'start' | 'end'; atNarrow?: Pt; wideOnly?: true; keyAt?: Pt };
 
 export type HomeProofFrame = {
   /** The frame it is drawn on: the contour's own photo, byte for byte */
@@ -260,7 +267,7 @@ export const homeProofFrame: HomeProofFrame = {
     { group: 'footing', depth: 1, points: [[251.5, 629.1], [106, 564.1]] },
     { group: 'footing', depth: 1, points: [[251, 600.3], [106, 550.6]] },
   ],
-  nodes: [[299.2, 218.5], [406.9, 208], [508.1, 198.2], [603.2, 188.9], [692.8, 180.2], [777.4, 172], [857.4, 164.2], [933.2, 156.8], [1005, 149.8], [1071, 172.3], [1134, 193.8], [1194.3, 214.3], [1252.1, 234], [1307.4, 252.9], [1360.6, 271], [1411.6, 288.4], [1460.7, 305.1]],
+  nodes: TOP_NODES,
   load: {
     arrows: COMB_ARROWS,
     comb: COMB_LINE,
@@ -306,15 +313,178 @@ export const homeProofFrame: HomeProofFrame = {
     // In the frame's free room (owner review, 04.10: «текст залазить на елемент»): the truss's and the purlins' names in
     // the sky over the right rake, the column's and the footings' on the ground under the base, the walls' on a face that
     // holds only blockwork — each on a backing that masks what runs under it, as a drawing's text does
-    { id: 'truss', text: 'Ферма', anchor: [1360.6, 271], at: [1352, 214], align: 'start' },
-    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1071, 172.3], at: [1080, 104], align: 'start' },
-    // the right gate's opening holds no member: the column's name stands in it
-    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 500], align: 'start' },
-    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 410], at: [1430, 452], align: 'end' },
-    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end' },
+    { id: 'truss', text: 'Ферма', anchor: [1360.6, 271], at: [1352, 214], align: 'start', keyAt: [1060, 240] },
+    // on the right wall's face, which holds only blockwork: from the first bay's bracing (review, 05.10: in the sky it
+    // met the slope's figure on a laptop)
+    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1350, 335.8], at: [1430, 398], align: 'end', wideOnly: true, keyAt: [1238, 252] },
+    // the right gate's opening holds no member: the column's name stands in it, under the walls' (apart on a tablet too)
+    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 528], align: 'start', atNarrow: [1042, 505], keyAt: [1006, 380] },
+    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 470], align: 'end', atNarrow: [1430, 410], keyAt: [1340, 450] },
+    // keyAt: a phone's numbers (ProofKeyPins), right of the resting seam where they can be, clear of the letters А, Б, В
+    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end', keyAt: [1405, 588] },
   ],
   label:
     'Схема каркаса такого типу, як на цьому об’єкті, вписана в силует із фото: ферми, прогони, в’язі, стіни з газобетонних блоків по контуру й центральний ряд колон, фундаменти — умовно. Навантаження з покрівлі йде через прогони й ферми на стіни й колони, а з них — на фундаменти. Не креслення цього ангара: розмірів і перерізів тут немає.',
   windLabel:
     'Вітер тисне на бічну стіну й підіймає покрівлю; ферма передає його на другу стіну й колону, а з них — на фундаменти й ґрунт.',
 };
+
+/** The parts the scope's cells name (ScopeCells → ProofContour, owner, 05.10: «плитки оживляють схему»): pointed at, a
+ *  cell lights its part on the scheme. «Каркас» is the frame's own members; «Покрівля» the roof's planes, from the
+ *  gable's top chord back to the last bay's, over the purlins; «Стінові панелі» the cladding on the walls' faces — the
+ *  gable less its gates, and the long wall. Drawn only while lit */
+export type ScopePart = 'frame' | 'walls' | 'roof';
+export const SCOPE_PART_OF: Readonly<Record<string, ScopePart>> = { Каркас: 'frame', 'Стінові панелі': 'walls', Покрівля: 'roof' };
+export const homeProofParts: { roof: readonly Pt[]; walls: readonly (readonly Pt[])[] } = {
+  roof: [[299.2, 218.5], [1005, 149.8], [1460.7, 305.1], [1250.1, 333.7], [836.7, 208.3], [235.5, 275.6]],
+  walls: [homeProofFrame.walls.gable, ...homeProofFrame.walls.holes, homeProofFrame.walls.long],
+};
+
+/** «Точка навантаження» (owner, 05.10): a weight put anywhere on the roof, and its way down. It lands on the purlin over
+ *  the nearest top-chord node; the truss carries it to the supports either side of that node — the left wall, the
+ *  central column under the ridge, the right wall — and each of them down to its footing. The nearer support takes the
+ *  larger share (a lever's rule, the share only drawn as a line's weight — no figure); a node over a support sends it
+ *  all down that one. A scheme of the way, not a calculation */
+export type PointLoad = {
+  x: number;
+  roof: Pt;
+  node: Pt;
+  arrow: readonly [Pt, Pt];
+  legs: readonly { points: readonly Pt[]; share: number }[];
+};
+const SUPPORTS: readonly { top: Pt; down: readonly Pt[] }[] = [
+  { top: [299.2, 218.5], down: [[297.9, 252.2], [284.8, 595.7], [283.4, 634.6]] },
+  { top: [1005, 149.8], down: [[1005.9, 300.6], [1007.3, 563.5], [1007.7, 609]] },
+  { top: [1460.7, 305.1], down: [[1461.6, 331.8], [1469.3, 561.3], [1470.3, 595]] },
+];
+export const POINT_LOAD_RANGE = { from: ROOF_TOP[0][0] + 4, to: ROOF_TOP[2][0] - 4 } as const;
+export function pointLoadAt(at: number): PointLoad {
+  const x = Math.min(POINT_LOAD_RANGE.to, Math.max(POINT_LOAD_RANGE.from, at));
+  const { nodes } = homeProofFrame;
+  const index = nodes.reduce((best, node, i) => (Math.abs(node[0] - x) < Math.abs(nodes[best][0] - x) ? i : best), 0);
+  const node = nodes[index];
+  const roof: Pt = [round1(x), round1(roofTopY(x))];
+  // The span it is in: between which supports, by the node's place
+  const right = node[0] > SUPPORTS[1].top[0] + 0.5 ? 1 : 0;
+  const [a, b] = [SUPPORTS[right], SUPPORTS[right + 1]];
+  const towards = (support: (typeof SUPPORTS)[number]) => {
+    const target = nodes.findIndex((point) => Math.abs(point[0] - support.top[0]) < 0.5);
+    const step = target >= index ? 1 : -1;
+    const along: Pt[] = [];
+    for (let i = index; step > 0 ? i <= target : i >= target; i += step) along.push(nodes[i]);
+    return [...along, ...support.down];
+  };
+  const onSupport = SUPPORTS.find((support) => Math.abs(support.top[0] - node[0]) < 0.5);
+  const legs = onSupport
+    ? [{ points: towards(onSupport), share: 1 }]
+    : [
+      { points: towards(a), share: (b.top[0] - node[0]) / (b.top[0] - a.top[0]) },
+      { points: towards(b), share: (node[0] - a.top[0]) / (b.top[0] - a.top[0]) },
+    ];
+  return { x, roof, node, arrow: [[roof[0], round1(roof[1] - 44)], [roof[0], round1(roof[1] - 5)]], legs };
+}
+/** Where a pointer counts as pointing at the roof: over the comb's line down to the truss's bottom chord */
+export function onRoof([x, y]: Pt) {
+  if (x < POINT_LOAD_RANGE.from || x > POINT_LOAD_RANGE.to) return false;
+  const [[x0, y0], [x1, y1]] = [[297.9, 252.2], [1461.6, 331.8]];
+  const chord = y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+  return y >= roofTopY(x) - 84 && y <= chord;
+}
+
+/** The nodes drawn as details (ProofDetails, owner, 05.10 — «вузли-деталі»): a dashed ring round each on the scheme and
+ *  its letter beside it. А the truss's bearing on the right wall, Б a purlin on a top-chord node, В the column's base */
+/** `badgeNarrow`: on a tablet's frame (761–1180 px), where the letter over the rake would meet the slope's figure */
+export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base' | 'ridge' | 'chord'; ring: Pt; radius: number; badge: Pt; badgePhone: Pt; badgeNarrow?: Pt }[] = [
+  { id: 'bearing', ring: [1461.6, 324], radius: 26, badge: [1424, 292], badgePhone: [1424, 292] },
+  { id: 'purlin', ring: [1194.3, 214.3], radius: 20, badge: [1172, 176], badgePhone: [1172, 176], badgeNarrow: [1146, 250] },
+  // on a phone the seam's handle stands at the frame's foot next to the column: its letter goes up into the gate
+  { id: 'base', ring: [1007.5, 570], radius: 28, badge: [1050, 596], badgePhone: [1084, 470] },
+  // the ridge over the central post, its letter left of the slope's figure; a bottom-chord panel point under a vertical
+  // (in the letters' order: the keyboard reaches them А, Б, В, Г, Д)
+  // (its letter right of the ridge, on the right rake's edge: left of it, it stood on the resting seam, half under the
+  // photo; higher, «Схема ›» at rest met it on a short laptop — the seam's name ends at photo x 1050, the slope's figure
+  // starts at 1084, so the letter stands under the one and left of the other)
+  { id: 'ridge', ring: [1005, 162], radius: 24, badge: [1062, 150], badgePhone: [1084, 150], badgeNarrow: [1046, 214] },
+  { id: 'chord', ring: [1253.8, 317.6], radius: 20, badge: [1288, 352], badgePhone: [1288, 352], badgeNarrow: [1300, 285] },
+];
+
+/** «Жива схема» (owner, 05.10): what a pointer on the scheme is over, by name — the nearest member of the gable's plane
+ *  within reach, else the part it stands in: a column, a footing, a lintel, the wall cut in section, a gate, the gable's
+ *  blockwork, the long wall, the roof over the top chord. The scheme's own shapes; names in words, never a size. `node`:
+ *  a node drawn as a detail is near (its letter opens it) */
+export type SchemeHit = { name: string; points: readonly Pt[]; closed: boolean; area: boolean; node?: DetailSpotId };
+export type DetailSpotId = (typeof homeProofDetailSpots)[number]['id'];
+const REACH = 9;
+const toSegment = ([px, py]: Pt, [ax, ay]: Pt, [bx, by]: Pt) => {
+  const [dx, dy] = [bx - ax, by - ay];
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+};
+const toLine = (at: Pt, points: readonly Pt[]) => points.slice(1).reduce((best, point, i) => Math.min(best, toSegment(at, points[i], point)), Infinity);
+const inside = ([x, y]: Pt, polygon: readonly Pt[]) => {
+  let within = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+    const [[xi, yi], [xj, yj]] = [polygon[i], polygon[j]];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) within = !within;
+  }
+  return within;
+};
+const TOP_CHORD = homeProofFrame.members[0].points;
+const GROUP_NAMES: Partial<Record<FrameGroup, string>> = {
+  purlin: 'Прогін',
+  bracing: 'В’язі',
+  column: 'Колона центрального ряду',
+  footing: 'Фундамент — умовно',
+};
+function trussName(points: readonly Pt[]) {
+  if (points.length === 3) return 'Верхній пояс ферми';
+  return Math.abs(points.at(-1)![0] - points[0][0]) > 200 ? 'Нижній пояс ферми' : 'Опорна стійка ферми';
+}
+function wallName(points: readonly Pt[], closed?: boolean) {
+  if (closed) return 'Перемичка над воротами';
+  const [[x0, y0], [x1, y1]] = [points[0], points.at(-1)!];
+  return Math.abs(y1 - y0) < Math.abs(x1 - x0) ? 'Верх стіни — армопояс' : 'Стіна — газобетон';
+}
+function memberName({ group, points, closed }: FrameMember) {
+  if (group === 'truss') return trussName(points);
+  if (group === 'web') return Math.abs(points.at(-1)![0] - points[0][0]) < 6 ? 'Стійка ферми' : 'Розкіс ферми';
+  if (group === 'wall') return wallName(points, closed);
+  return GROUP_NAMES[group] ?? '';
+}
+/** The member of the gable's plane nearest a point, within reach */
+function nearestMember(at: Pt) {
+  let best: { distance: number; member: FrameMember } | null = null;
+  for (const member of homeProofFrame.members) {
+    if (member.depth !== 0 || member.closed || member.group === 'footing') continue;
+    const distance = toLine(at, member.points);
+    if (distance <= REACH && (!best || distance < best.distance)) best = { distance, member };
+  }
+  return best?.member ?? null;
+}
+/** The part a point stands in — a column, a footing, a lintel; the wall cut in section; a gate; the blockwork */
+function partAt(at: Pt): Omit<SchemeHit, 'node'> | null {
+  const { members, walls } = homeProofFrame;
+  const shape = members.find((member) => member.depth === 0 && member.closed && inside(at, member.points));
+  if (shape) return { name: memberName(shape), points: shape.points, closed: true, area: true };
+  const cut = walls.cuts.find((polygon) => inside(at, polygon));
+  if (cut) return { name: 'Стіна в розрізі — газобетон', points: cut, closed: true, area: true };
+  const gate = walls.holes.find((polygon) => inside(at, polygon));
+  if (gate) return { name: 'Ворота', points: gate, closed: true, area: true };
+  if (inside(at, walls.gable)) return { name: 'Стіна з газобетонних блоків', points: walls.gable, closed: true, area: true };
+  if (inside(at, walls.long)) return { name: 'Бічна стіна — газобетон', points: walls.long, closed: true, area: true };
+  return null;
+}
+/** Over the top chord, under the roof's top: the roof on its purlins */
+function onRoofOver([x, y]: Pt) {
+  if (x < POINT_LOAD_RANGE.from || x > POINT_LOAD_RANGE.to) return false;
+  const [a, b] = x <= TOP_CHORD[1][0] ? [TOP_CHORD[0], TOP_CHORD[1]] : [TOP_CHORD[1], TOP_CHORD[2]];
+  return y >= roofTopY(x) - 6 && y < a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
+}
+export function memberAt(at: Pt): SchemeHit | null {
+  const node = homeProofDetailSpots.find(({ ring: [cx, cy], radius }) => Math.hypot(at[0] - cx, at[1] - cy) <= radius + 36)?.id;
+  const member = nearestMember(at);
+  if (member) return { name: memberName(member), points: member.points, closed: false, area: false, node };
+  const part = partAt(at);
+  if (part) return { ...part, node };
+  return onRoofOver(at) ? { name: 'Покрівля по прогонах', points: homeProofParts.roof, closed: true, area: true, node } : null;
+}

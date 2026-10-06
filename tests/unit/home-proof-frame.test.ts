@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { homeProofContour } from '../../app/data/homeProofContour';
-import { homeProofFrame } from '../../app/data/homeProofFrame';
+import { homeProofDetailSpots, homeProofFrame, memberAt } from '../../app/data/homeProofFrame';
 import { approx, homeProofMarks, homeProofMeasures, plusMinus } from '../../app/data/homeProofMeasures';
 
 // HOME's right-hand layers (04.10). Two different kinds of drawing sit on the one real photo, and these tests keep them
@@ -202,22 +202,32 @@ describe('homeProofFrame — the scheme', () => {
     for (const tag of tags) expect(inSilhouette(tag.anchor) || baseY(tag.anchor[0]) < tag.anchor[1], tag.id).toBe(true);
   });
 
-  it('sets its names in the frame’s free room: the truss’s and the purlins’ in the sky over the right rake, the column’s in the right gate’s opening, the footings’ on the ground under the base, each led from a member of its own', () => {
+  it('sets its names in the frame’s free room: the truss’s in the sky over the right rake, the purlins’ and the walls’ on the right wall’s face, the column’s in the right gate’s opening, the footings’ on the ground under the base, each led from a member of its own', () => {
     const tag = (id: string) => tags.find((entry) => entry.id === id)!;
-    // Where each stands and which way it runs from there (review, 04.10: the purlins' name off the slope's figure, the
-    // column's off the ground into the opening, the footings' a little higher)
+    // Where each stands and which way it runs from there (review, 05.10: the purlins' name off the sky, where it met the
+    // slope's figure on a laptop, onto the right wall's face; the walls' and the column's lower, apart on a tablet)
     expect(Object.fromEntries(tags.map(({ id, at, align }) => [id, { at, align }]))).toEqual({
       truss: { at: [1352, 214], align: 'start' },
-      bracing: { at: [1080, 104], align: 'start' },
-      column: { at: [1042, 500], align: 'start' },
-      wall: { at: [1430, 452], align: 'end' },
+      bracing: { at: [1430, 398], align: 'end' },
+      column: { at: [1042, 528], align: 'start' },
+      wall: { at: [1430, 470], align: 'end' },
       footing: { at: [1446, 620], align: 'end' },
     });
-    // over the right rake, right of the apex
-    for (const id of ['truss', 'bracing']) {
-      expect(tag(id).at[0], id).toBeGreaterThan(apex[0]);
-      expect(tag(id).at[1], id).toBeLessThan(rakeY(tag(id).at[0]));
+    // the truss's over the right rake, right of the apex
+    expect(tag('truss').at[0]).toBeGreaterThan(apex[0]);
+    expect(tag('truss').at[1]).toBeLessThan(rakeY(tag('truss').at[0]));
+    // the purlins' and the walls' on the right wall's face: right of the right gate, below every member that crosses the
+    // face behind the gable (the depth bays' chords and wall tops end above row 360), above the base, ending short of the
+    // right wall's section, the purlins' over the walls'
+    const [, , gateHeadFar] = walls.holes[1];
+    const deepest = Math.max(...members.filter((member) => member.depth > 0 && member.group !== 'footing' && member.group !== 'column').flatMap((member) => member.points.filter(([x]) => x > gateHeadFar[0]).map(([, y]) => y)));
+    for (const id of ['bracing', 'wall']) {
+      const [x, y] = tag(id).at;
+      expect(x, id).toBeLessThan(walls.cuts[1][2][0]);
+      expect(y, id).toBeGreaterThan(deepest + 20);
+      expect(y, id).toBeLessThan(baseY(x) - 40);
     }
+    expect(tag('wall').at[1] - tag('bracing').at[1]).toBeGreaterThanOrEqual(60);
     expect(tag('footing').at[1]).toBeGreaterThan(baseY(tag('footing').at[0]));
     // The right gate's opening holds no member of the gable's plane: the column's name starts at its left jamb, between
     // its head and its foot, and runs into it
@@ -229,8 +239,14 @@ describe('homeProofFrame — the scheme', () => {
     expect(y).toBeLessThan(Math.min(footNear[1], footFar[1]));
     const inOpening = members.filter((member) => member.depth === 0 && member.points.some((point) => insidePolygon(point, walls.holes[1]) && distanceToPolygon(point, walls.holes[1]) > 2));
     expect(inOpening).toEqual([]);
-    // the truss's and the purlins' leaders start on a node of the truss, the purlins bearing there
-    for (const id of ['truss', 'bracing']) expect(nodes.some((node) => same(node, tag(id).anchor)), id).toBe(true);
+    // the truss's leader starts on a node of the truss; the purlins' on the first bay's bracing, along its bottom chord
+    expect(nodes.some((node) => same(node, tag('truss').anchor))).toBe(true);
+    const onSegment = ([x, y]: Pt, [a, b]: readonly [Pt, Pt]) => {
+      const t = ((x - a[0]) * (b[0] - a[0]) + (y - a[1]) * (b[1] - a[1])) / ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2);
+      return t >= 0 && t <= 1 && Math.hypot(x - (a[0] + t * (b[0] - a[0])), y - (a[1] + t * (b[1] - a[1]))) < 0.5;
+    };
+    const bracing = members.filter((member) => member.group === 'bracing').flatMap((member) => member.points.slice(1).map((point, index): readonly [Pt, Pt] => [member.points[index], point]));
+    expect(bracing.some((segment) => onSegment(tag('bracing').anchor, segment))).toBe(true);
     // the column's on the central column, the footings' on a footing in section
     const inside = (point: Pt, group: string) => members.some((member) => member.group === group && member.closed && insidePolygon(point, member.points));
     expect(inside(tag('column').anchor, 'column')).toBe(true);
@@ -338,16 +354,17 @@ describe('homeProofFrame — the scheme', () => {
     }
   });
 
-  it('spreads the snow as a drawing writes a load: an even comb of equal arrows over the strip one truss carries, their tails on one line', () => {
+  // Owner, 05.10: the snow reaches the frame at its nodes, through the purlins — an arrow over every top-chord node inside
+  // the eaves, one on the ridge
+  it('spreads the snow as a drawing writes a load: a comb of equal arrows over the top chord\'s nodes, one on the ridge, their tails on one line', () => {
     const { arrows, comb, roof } = load;
     // The strip's top edge (left eave, ridge, right eave) is the edge the load layer draws the snow settling on
     const edge = roof.slice(0, 3);
-    expect(arrows).toHaveLength(13);
-    // even: one step between arrows, one length, each straight down (the points are rounded to tenths of a pixel)
     const xs = arrows.map(([from]) => from[0]);
-    const steps = xs.slice(1).map((x, index) => x - xs[index]);
+    expect(xs).toEqual(homeProofFrame.nodes.slice(1, -1).map(([x]) => x));
+    expect(xs).toContain(homeProofFrame.nodes.find(([, y]) => y === Math.min(...homeProofFrame.nodes.map(([, ny]) => ny)))![0]);
+    // one length, each straight down (the points are rounded to tenths of a pixel)
     const [length, gap] = [arrows[0][1][1] - arrows[0][0][1], polylineY(edge, xs[0]) - arrows[0][1][1]];
-    for (const step of steps) expect(Math.abs(step - steps[0])).toBeLessThanOrEqual(0.11);
     for (const [from, to] of arrows) {
       expect(to[0], String(from)).toBe(from[0]);
       expect(to[1] - from[1], String(from)).toBeCloseTo(length, 1);
@@ -413,9 +430,9 @@ describe('homeProofMeasures — the figures', () => {
     // Where each stands and which way it runs from there (review, 04.10: the slope's clear of the copper outline and the
     // purlins; the gates' backing covered the right jamb)
     expect(Object.fromEntries(homeProofMeasures.map(({ id, at, align, atContour, alignContour, onFrame }) => [id, { at, align, atContour, alignContour, onFrame }]))).toEqual({
-      slope: { at: [1300, 138], align: 'end', atContour: [1318, 330], alignContour: 'middle', onFrame: true },
+      slope: { at: [1240, 128], align: 'end', atContour: [1318, 330], alignContour: 'middle', onFrame: true },
       gates: { at: [1135, 422], align: 'middle', atContour: [1135, 486], alignContour: 'middle', onFrame: false },
-      proportion: { at: [1180, 586], align: 'middle', atContour: undefined, alignContour: undefined, onFrame: false },
+      proportion: { at: [1180, 614], align: 'middle', atContour: undefined, alignContour: undefined, onFrame: false },
     });
     // the slope's, right of the apex and over the drawn right rake
     const slope = byId('slope').at;
@@ -439,5 +456,34 @@ describe('homeProofMeasures — the figures', () => {
     expect(homeProofMarks.slope.level[0]).toEqual(rightFoot);
     // the right rake is solid (measured): the slope is read on it, not on the dashed left one
     expect(homeProofContour.lines.find((entry) => entry.id === 'gable-rake-right')!.approximate).toBe(false);
+  });
+});
+
+// «Жива схема» (owner, 05.10): what a pointer is over is named in words — never a size — from the scheme's own shapes,
+// with the nearby node drawn as a detail, and nothing off the building
+describe('memberAt', () => {
+  it('names the member or the part under a point, in words', () => {
+    const cases: [readonly [number, number], string][] = [
+      [[1200, 216.3], 'Верхній пояс ферми'],
+      [[1006, 450], 'Колона центрального ряду'],
+      [[1100, 480], 'Ворота'],
+      [[1007, 590], 'Фундамент — умовно'],
+      [[1134, 250], 'Стійка ферми'],
+      [[700, 160], 'Покрівля по прогонах'],
+      [[600, 300], 'Стіна з газобетонних блоків'],
+      [[290, 400], 'Стіна в розрізі — газобетон'],
+      [[150, 480], 'Бічна стіна — газобетон'],
+    ];
+    for (const [at, name] of cases) expect(memberAt(at)?.name, at.join()).toBe(name);
+  });
+  it('says no figure, and nothing off the building', () => {
+    for (let x = 0; x < 1536; x += 37) {
+      for (let y = 0; y < 788; y += 29) expect(memberAt([x, y])?.name ?? '', `${x},${y}`).not.toMatch(/\d/);
+    }
+    expect(memberAt([850, 650])).toBeNull();
+    expect(memberAt([1520, 60])).toBeNull();
+  });
+  it('points to the node drawn as a detail where one is near', () => {
+    for (const { id, ring } of homeProofDetailSpots) expect(memberAt(ring)?.node, id).toBe(id);
   });
 });

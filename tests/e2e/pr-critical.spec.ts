@@ -158,14 +158,14 @@ test('homepage server HTML carries the H1, the real-object proof, the conversati
     // The photo's caption is the sentence cell of its «Креслення» title block (one sheet: the photo, its contour and the
     // scheme of its frame's type, 04.10)
     proofCaption: '#real-object .hv2-contour .sheet-cell-note > b',
-    proofScope: '#real-object .hv2-scope-chips li',
+    proofScope: '#real-object .hv2-scope-chips li .hv2-scope-name',
     conversationSteps: '#inquiry .conversation-journey h3',
     cooperation: '.inquiry-details select option',
   });
 
   expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
   expect(text.proofCaption.map((caption) => caption.replace(/\s+/g, ' '))).toEqual([
-    'Реальний об’єкт: фото, виміри, схема. Фото з ретушшю переднього плану; контур, схил і пропорції — за вісьмома фото цього ангара, без масштабу. Креслень саме цього ангара в нас немає, тож каркас показано схемою — такого типу, як на цьому об’єкті, без розмірів.',
+    'Реальний об’єкт: фото, виміри, схема. Фото з ретушшю переднього плану. Контур і схил — за вісьмома фото цього ангара, без масштабу. Каркас показано схемою такого типу, як на цьому об’єкті.',
   ]);
   expect(text.proofScope).toEqual(['Каркас', 'Стінові панелі', 'Покрівля']);
   expect(text.conversationSteps).toEqual(['Уточнюємо задачу', 'Дивимося, що вже є', 'Узгоджуємо склад робіт', 'Готуємо кошторис']);
@@ -463,11 +463,12 @@ test('homepage separates labelled illustrations from the one real photo', async 
   await expect(sheet.locator('figcaption')).toContainText('Фото з ретушшю переднього плану');
   await expect(page.locator('#real-object')).toContainText('до створення RUBIKON BUILD');
 
-  // Owner's decisions (04.10): right of the seam, what was measured from the photos — the contour and scale-free
-  // figures — and a SCHEME of a frame of this object's type, said to be one, with no sizes; never the frame over the
-  // photo itself, never the generated X-ray sketch on the default page. Every explanation card carries its label.
+  // Owner's decisions (04.10, 05.10): right of the seam, the outline and the slope taken from the photos, no scale, and a
+  // SCHEME of a frame of this object's type, said to be one — its stamp on the drawing says it has no sizes; never the
+  // frame over the photo itself, never the generated X-ray sketch on the default page. Every explanation card carries its
+  // label.
   await expect(sheet.locator('figcaption')).toContainText('за вісьмома фото цього ангара, без масштабу');
-  await expect(sheet.locator('figcaption')).toContainText('каркас показано схемою — такого типу, як на цьому об’єкті, без розмірів');
+  await expect(sheet.locator('figcaption')).toContainText('Каркас показано схемою такого типу, як на цьому об’єкті');
   await expect(sheet.locator('.hv2-contour-stamp')).toContainText('Схема · без розмірів');
   await expect(page.locator('#real-object img[src*="/concepts/"], #real-object source[srcset*="/concepts/"]')).toHaveCount(0);
   // The explanation is one drawing sheet (05.10), labelled as a scheme and holding no generated picture
