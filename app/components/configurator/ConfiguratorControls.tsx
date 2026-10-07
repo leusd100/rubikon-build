@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import {
   CONTROL_GROUP_TITLES,
   CONTROL_STEPS,
@@ -177,6 +177,8 @@ function NumericField({
         {/* Named by the label alone, with its value in metres: it was «Ширина, слайдер» and a bare «10.600000381469727» */}
         <input
           type="range"
+          // how far along the track the value is: the drawn part of the track (configurator-controls.css)
+          style={{ '--fill': `${((value - min) / Math.max(max - min, 1e-9)) * 100}%` } as CSSProperties}
           aria-label={label}
           aria-valuetext={`${formatMetres(value)} м`}
           min={min}

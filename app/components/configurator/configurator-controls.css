@@ -270,3 +270,69 @@
 /* «Каркас»: the step's questions, then how the frame works */
 .hc-frame-heading { margin: 0 0 12px; padding-top: 18px; border-top: 1px solid var(--color-border); font: 700 15px/1.2 var(--font-manrope), sans-serif; }
 .hc-scope-list { margin-top: 14px; }
+
+/* ── Beauty pass (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────
+   The controls speak the sheet's language: square like its frame, its tabs and its buttons (owner, 03.10: the square
+   «Креслення», no rounding); one height for every answer; a chosen answer filled, with a copper tick; the sliders drawn
+   as a dimension line — a thin rule, the part up to the value in copper, a square handle. */
+.hangar-configurator-embedded .hc-option-card span,
+.hangar-configurator-embedded .hc-field-controls input[type='text'],
+.hangar-configurator-embedded .hc-select { border-radius: 0; }
+.hangar-configurator-embedded .hc-option-card span {
+  min-height: 46px; padding: 8px 14px; color: var(--color-text); font-size: 14px;
+  transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium),
+    background var(--duration-fast) var(--ease-premium), transform 120ms var(--ease-premium);
+}
+.hangar-configurator-embedded .hc-option-card:hover input:not(:checked, :disabled) + span { border-color: var(--color-text-secondary); background: color-mix(in srgb, var(--color-text) 5%, var(--color-bg)); }
+.hangar-configurator-embedded .hc-option-card:active input:not(:disabled) + span { transform: scale(.98); }
+/* the tick: drawn, so it never changes the chip's width — the chip makes room for it on both sides from the start */
+.hangar-configurator-embedded .hc-option-card span { position: relative; padding-inline: 26px; }
+.hangar-configurator-embedded .hc-option-card span::before {
+  position: absolute; top: 50%; left: 10px; width: 9px; height: 5px; border: solid var(--color-accent); border-width: 0 0 2px 2px;
+  content: ''; opacity: 0; transform: translateY(-70%) rotate(-45deg) scale(.6); transition: opacity 160ms ease, transform 160ms var(--ease-premium);
+}
+.hangar-configurator-embedded .hc-option-card input:checked + span::before { opacity: 1; transform: translateY(-70%) rotate(-45deg); }
+/* in a grid of equal tiles the tick goes to the corner, so the words keep the tile's whole width («Ще не знаю» broke
+   into three lines between two reserved margins) */
+.hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card span { padding-inline: 8px; }
+.hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card span::before { top: 7px; left: 7px; width: 7px; height: 4px; transform: rotate(-45deg) scale(.6); }
+.hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card input:checked + span::before { transform: rotate(-45deg); }
+
+/* «Де будуємо?»: the browser's own rounded field (Safari) gives way to a square one with a drawn chevron */
+.hangar-configurator-embedded .hc-select {
+  min-height: 46px; padding: 0 40px 0 14px; appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+.hangar-configurator-embedded .hc-select:hover { border-color: var(--color-text-secondary); }
+
+/* the sliders: a dimension line */
+.hangar-configurator-embedded .hc-field-controls input[type='range'] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-webkit-slider-runnable-track {
+  height: 2px; background: linear-gradient(to right, var(--color-accent) 0 var(--fill, 50%), var(--color-border-strong) var(--fill, 50%) 100%);
+}
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-moz-range-track { height: 2px; background: var(--color-border-strong); }
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-moz-range-progress { height: 2px; background: var(--color-accent); }
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-webkit-slider-thumb {
+  width: 18px; height: 18px; margin-top: -8px; -webkit-appearance: none; appearance: none;
+  border: 2px solid var(--color-accent); border-radius: 0; background: var(--color-bg); transition: transform 120ms var(--ease-premium);
+}
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-moz-range-thumb {
+  width: 14px; height: 14px; border: 2px solid var(--color-accent); border-radius: 0; background: var(--color-bg);
+}
+.hangar-configurator-embedded .hc-field-controls input[type='range']:hover::-webkit-slider-thumb,
+.hangar-configurator-embedded .hc-field-controls input[type='range']:active::-webkit-slider-thumb { transform: scale(1.15); }
+.hangar-configurator-embedded .hc-field-controls input[type='range']:focus-visible { outline: none; }
+.hangar-configurator-embedded .hc-field-controls input[type='range']:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.hangar-configurator-embedded .hc-field-controls input[type='range']:focus-visible::-moz-range-thumb { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.hangar-configurator-embedded .hc-field-controls input[type='text'] { min-height: 46px; }
+.hangar-configurator-embedded .hc-field-controls input[type='text']:hover { border-color: var(--color-text-secondary); }
+
+/* checkboxes in the copper of the rest */
+.hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--color-accent); }
+
+/* one rhythm inside a step: 24 between questions, 10 from a question to its answers */
+.hangar-configurator-embedded .hc-step-panel .hc-field + .hc-field { margin-top: 24px; }
+.hangar-configurator-embedded .hc-step-panel .hc-field-head { margin-bottom: 10px; }
+.hangar-configurator-embedded .hc-field-head :is(label, span) { color: var(--color-text); font-weight: 600; }

@@ -334,3 +334,33 @@
   .hangar-configurator-embedded .hc-step-panel .hc-control-group { padding-block: 16px 18px; }
   .hangar-configurator-embedded .hc-step-nav { padding-block: 12px 14px; }
 }
+
+/* ── The general view on a wide sheet (07.10) ─────────────────────────────────────────────────────────────────────────
+   The drawing is held by the sheet's height, so a wide sheet left bands of empty paper either side, and the section
+   callout lay over the hangar's end (owner: «щоб не залазило», «не використовуємо вільне місце по боках»). On a sheet
+   wide enough, the callout is a column of its own on the left — a drawing's legend — and the hangar takes the rest. */
+@container sheet (min-width: 700px) {
+  /* the legend as narrow as its words allow: wider, it took the hangar's width and the drawing shrank */
+  .hc-preview-image:has(> .hc-section) { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; }
+  .hc-preview-image:has(> .hc-section) > .hc-preview-svg { grid-area: 1 / 2; min-width: 0; }
+  .hc-preview-image > .hc-section {
+    position: static; grid-area: 1 / 1; align-self: center; margin: 0 0 0 16px; padding: 10px 0 10px 12px;
+    border: 0; border-left: 1px solid rgba(255, 255, 255, .16); background: transparent;
+  }
+  .hc-preview-image > .hc-section figcaption { margin-bottom: 14px; line-height: 1.4; }
+  .hc-preview-image > .hc-section dl { gap: 16px; }
+  .hc-preview-image > .hc-section .hc-section-row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
+  .hc-preview-image > .hc-section .hc-section-row dd { flex-direction: column; align-items: flex-start; gap: 8px; white-space: normal; font-size: 13px; line-height: 1.35; }
+  .hc-preview-image > .hc-section .hc-section-glyph { width: 96px; height: 32px; }
+  .hc-preview-image > .hc-section .hc-section-row dd { font-size: 12.5px; }
+}
+/* …and on a narrower sheet (a tablet, a laptop's 1024, a phone) the callout is the drawing's legend under it, never on
+   the hangar; the phone's mini drawing keeps its corner glyphs (below) */
+@container sheet (max-width: 699px) {
+  .hc-preview-image:has(> .hc-section) { display: flex; flex-direction: column; }
+  .hc-preview-image > .hc-section { position: static; align-self: flex-start; margin: 0 0 10px 10px; }
+  .hc-preview-image:has(> .hc-section) > .hc-preview-svg { flex: none; }
+}
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-image > .hc-section { position: absolute; margin: 0; }
+}
