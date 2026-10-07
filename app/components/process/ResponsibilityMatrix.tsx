@@ -1,5 +1,8 @@
 import { Fragment, type CSSProperties } from 'react';
-import type { ResponsibilityZone, SwitchFormat, SwitchItem } from '../../lib/deliveryModelPresentation';
+import type { SwitchFormat, SwitchItem } from '../../lib/deliveryModelPresentation';
+import {
+  FORMAT_WHEN, RESPONSIBILITY_GROUPS, RESPONSIBILITY_ZONES, TO_YOU, kindOf, noteOf, wordOf, workName, type MarkKind,
+} from '../../lib/responsibilityTable';
 
 // /yak-pratsyuiemo «Відповідальність без дрібного шрифту» as one table (owner 06.10: the three lists were hard to compare,
 // then «зробити більш зрозумілішим для клієнта»). A row per work, a column per party, and the reader is one of the
@@ -9,38 +12,6 @@ import type { ResponsibilityZone, SwitchFormat, SwitchItem } from '../../lib/del
 // chosen format's set wins — so on a switch the marks slide to their new columns. The cells repeat the word for screen
 // readers (the marks are decoration), with the model's note where the parties share a work.
 
-const ZONES: readonly { id: ResponsibilityZone; title: string }[] = [
-  { id: 'rubikon', title: 'RUBIKON' },
-  { id: 'client', title: 'Ви' },
-  { id: 'specialists', title: 'Профільні спеціалісти' },
-];
-
-/** When a format is the visitor's, in plain words — built from the page's own entries (STARTS), the formats' contract
- *  terms (CHOICE_TERMS: who coordinates) and their interfaces; no new promise. The model's interfaces line follows it. */
-const WHEN: Record<SwitchFormat['id'], string> = {
-  comprehensive: 'Потрібно звести об’єкт комплексно — ми координуємо погоджений обсяг робіт.',
-  'work-package': 'Потрібен окремий етап: фундамент, каркас чи покрівля. Об’єкт загалом координуєте ви або ваш генпідрядник.',
-  subcontract: 'Ви генпідрядник, і вам потрібен виконавець на пакет робіт.',
-};
-
-/** The rows in three groups, by the first matrix row each work stands for. */
-const GROUPS: readonly { title: string; rows: readonly string[] }[] = [
-  { title: 'Підготовка', rows: ['task-framing', 'site-inputs', 'design', 'interfaces', 'estimate'] },
-  { title: 'Будівництво', rows: ['materials', 'steel', 'steel-fabrication', 'flexible-packages', 'engineering-systems', 'external-utilities', 'process-equipment', 'quality-control'] },
-  { title: 'Нагляд, дозволи й здача', rows: ['permits', 'surveys', 'acceptance'] },
-];
-
-/** Plainer names for the most technical works (same scope; the model's wording stays in the data). */
-const PLAIN: Readonly<Record<string, string>> = {
-  'task-framing': 'Розібрати задачу й скласти список потрібних даних',
-  design: 'Проєкт об’єкта',
-  interfaces: 'Ув’язка наших робіт з іншими роботами на об’єкті',
-  steel: 'Будівельні роботи: фундаменти, бетон, каркас, покрівля',
-  surveys: 'Геодезія й геологія, технічний і авторський нагляд',
-};
-
-type MarkKind = 'own' | 'soft' | 'client' | 'specialist';
-
 /** Fill, line, line style and word colour of each kind of mark (resp-matrix.css defines the --rm-* values per theme). */
 const KIND_LOOK: Record<MarkKind, readonly [fill: string, line: string, style: string, ink: string]> = {
   own: ['var(--rm-own)', 'var(--rm-own)', 'solid', 'var(--rm-own-ink)'],
@@ -49,50 +20,13 @@ const KIND_LOOK: Record<MarkKind, readonly [fill: string, line: string, style: s
   specialist: ['transparent', 'var(--rm-specialist)', 'dashed', 'var(--rm-specialist)'],
 };
 
-function kindOf(item: SwitchItem, zone: ResponsibilityZone, format: SwitchFormat['id']): MarkKind {
-  if (zone === 'client') return 'client';
-  if (zone === 'specialists') return 'specialist';
-  const role = item.rubikonRole[format];
-  return role && role !== 'executes' ? 'soft' : 'own';
-}
-
-/** The word in a cell: what that party does with the work in that format. */
-function wordOf(item: SwitchItem, zone: ResponsibilityZone, format: SwitchFormat['id']): string {
-  const kind = kindOf(item, zone, format);
-  if (kind === 'soft') return item.rubikonRole[format] === 'organizes' ? 'Організовуємо' : 'Координуємо';
-  return { own: 'Робимо', client: 'На вас', specialist: 'Виконують' }[kind];
-}
-
-/** The model's notes were written about «замовник» / «генпідрядник»; the table speaks to them as «ви». */
-const TO_YOU: Readonly<Record<string, string>> = {
-  'або надає замовник — залежно від договору': 'або надаєте ви — залежно від договору',
-  'або надає генпідрядник — залежно від договору': 'або надаєте ви — залежно від договору',
-  'або окремо на стороні замовника': 'або окремо, на вашому боці',
-  'координує об’єкт загалом': 'координуєте об’єкт загалом',
-  'описує пакет робіт і графік': 'описуєте пакет робіт і графік',
-  'спеціалісти замовника': 'ваші спеціалісти',
-  'спеціалісти генпідрядника': 'ваші спеціалісти',
-  'сам або через свого генпідрядника': 'самі або через свого генпідрядника',
-};
-
-/**
- * The model's note for a cell, in the second person — unless it only repeats the cell's word (the generated
- * «координуємо» / «організовуємо», «виконують») or the RUBIKON cell's note in the same row.
- */
-function noteOf(item: SwitchItem, zone: ResponsibilityZone, format: SwitchFormat['id']): string | undefined {
-  const note = item.notes[zone]?.[format];
-  if (!note || note.toLowerCase() === wordOf(item, zone, format).toLowerCase()) return undefined;
-  if (zone !== 'rubikon' && note === item.notes.rubikon?.[format] && item.zones.rubikon.includes(format)) return undefined;
-  return TO_YOU[note] ?? note;
-}
-
 /**
  * The word-marks of one row: as many as the row ever needs in one format. Mark k in a format stands in the column of the
  * k-th party holding the work there; where the format needs fewer, it folds into its neighbour and fades — so a work
  * that gains or loses a party splits or merges on the switch.
  */
 function marksOf(item: SwitchItem, formats: readonly SwitchFormat[]) {
-  const placed = formats.map((format) => ZONES
+  const placed = formats.map((format) => RESPONSIBILITY_ZONES
     .map((zone, col) => ({ col, zone: zone.id }))
     .filter(({ zone }) => item.zones[zone].includes(format.id))
     .map(({ col, zone }) => ({ col, kind: kindOf(item, zone, format.id), word: wordOf(item, zone, format.id) })));
@@ -125,14 +59,14 @@ export function ResponsibilityMatrix({ formats, items, boundary }: Readonly<{
     <div className="resp-matrix-wrap" data-motion>
       {formats.map((format) => (
         <div className="rm-when" data-format={format.id} key={format.id}>
-          <p className="proc-principle">{WHEN[format.id]}</p>
+          <p className="proc-principle">{FORMAT_WHEN[format.id]}</p>
           <p className="rm-when-how">{format.principle}</p>
         </div>
       ))}
       <div className="resp-matrix" role="table" aria-labelledby="proc-responsibility-title">
         <div className="rm-head" role="row">
           <span className="rm-work-head" role="columnheader">Робота</span>
-          {ZONES.map((zone) => (
+          {RESPONSIBILITY_ZONES.map((zone) => (
             <span className={`rm-col rm-col-${zone.id}`} role="columnheader" key={zone.id}>
               <b>{zone.title}</b>
               {zone.id === 'client' && formats.map((format) => (
@@ -148,23 +82,23 @@ export function ResponsibilityMatrix({ formats, items, boundary }: Readonly<{
             </span>
           ))}
         </div>
-        {GROUPS.map((group) => (
+        {RESPONSIBILITY_GROUPS.map((group) => (
           <Fragment key={group.title}>
             <div className="rm-group" role="row">
               <span role="cell" aria-colspan={4}>{group.title}</span>
             </div>
             {items.filter((item) => group.rows.includes(item.rows[0])).map((item) => {
               const i = index++;
-              const out = formats.filter((format) => ZONES.every((zone) => !item.zones[zone.id].includes(format.id)));
+              const out = formats.filter((format) => RESPONSIBILITY_ZONES.every((zone) => !item.zones[zone.id].includes(format.id)));
               // What the row's placement is in each format, for FormatSwitchSync to light the rows a switch has moved
               const places = Object.fromEntries(formats.map((format) => [
                 `data-${format.id}`,
-                ZONES.filter((zone) => item.zones[zone.id].includes(format.id)).map((zone) => `${zone.id}:${kindOf(item, zone.id, format.id)}`).join(' ') || 'out',
+                RESPONSIBILITY_ZONES.filter((zone) => item.zones[zone.id].includes(format.id)).map((zone) => `${zone.id}:${kindOf(item, zone.id, format.id)}`).join(' ') || 'out',
               ]));
               return (
                 <div className="rm-row" role="row" key={item.text} style={{ '--i': i } as CSSProperties} data-out={out.map((format) => format.id).join(' ') || undefined} {...places}>
-                  <span className="rm-work" role="rowheader">{PLAIN[item.rows[0]] ?? item.text}</span>
-                  {ZONES.map((zone) => (
+                  <span className="rm-work" role="rowheader">{workName(item)}</span>
+                  {RESPONSIBILITY_ZONES.map((zone) => (
                     <span className="rm-cell" role="cell" key={zone.id}>
                       {formats.filter((format) => item.zones[zone.id].includes(format.id)).map((format) => {
                         const note = noteOf(item, zone.id, format.id);

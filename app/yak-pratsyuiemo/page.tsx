@@ -82,16 +82,17 @@ const TERMS = [
 /**
  * «Від задачі до будівництва» as «Ви · Ми»: what the client does at each of processSteps(), what they have after it (a
  * short caption; the model's full result is read to screen readers) and its small drawing. Wording as on the /angary
- * route; step 02's «Ви» adds the Delivery Model's design statement (statements.design) in short.
+ * route. Who prepares the project is said once, under the route, in the Delivery Model's own words (statements.design).
  */
 const ROUTE_SIDES: readonly ProcessSplit[] = [
   { you: 'Розповідаєте, що потрібно, де об’єкт і що вже підготовлено.', result: 'Задача й список даних', drawing: 'checklist' },
-  { you: 'Надаєте креслення або параметри об’єкта. Якщо проєктувальника ще немає — порадимо, до кого звернутися.', result: 'Основа для пропозиції', drawing: 'review' },
+  { you: 'Надаєте креслення або параметри об’єкта.', result: 'Основа для пропозиції', drawing: 'review' },
   { you: 'Погоджуєте пропозицію й підписуєте договір.', result: 'Пропозиція, кошторис і договір', drawing: 'contract' },
   { you: 'Приймаєте роботи й підписуєте акти.', result: 'Прийняті роботи й акти', drawing: 'handover' },
 ];
 
 export default function DeliveryModelPage() {
+  const { statements } = deliveryModel;
   const steps = processSteps();
   // What tells the formats apart, for the scope drawing: the other party of the contract and who coordinates
   const formatTerms = Object.fromEntries(participationChoices().map(({ id, contractWith, coordinator, rubikonCoordinates }) => [id, { contractWith, coordinator, rubikonCoordinates }])) as Record<DeliveryFormatId, FormatTerms>;
@@ -213,6 +214,8 @@ export default function DeliveryModelPage() {
               </li>
             ))}
           </ol>
+          {/* Who prepares the project — once, in the model's words: RUBIKON builds to the client's or their designer's project */}
+          <p className="proc-design-line"><b>Хто готує проєкт.</b> {statements.design}</p>
         </div>
       </section>
 
