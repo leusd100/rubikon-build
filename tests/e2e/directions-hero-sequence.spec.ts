@@ -16,9 +16,13 @@ test('directions static hero sequence crossfades in the approved order without v
     }
   });
 
+  await page.clock.install();
   await page.goto('/napryamky', { waitUntil: 'load' });
-
   const hero = page.locator('.directions-subhero');
+  // Deferred loading starts after hydration, which can take longer than the old 2 s
+  // source assertion under parallel load. Freeze only once the real carousel is ready.
+  await expect(hero.getByRole('button', { name: 'Пауза показу напрямів', exact: true })).toBeVisible();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   const frames = hero.locator('img.directions-hero-sequence-image');
   await expect(frames).toHaveCount(5);
   await expect(hero.locator('video')).toHaveCount(0);
@@ -41,10 +45,10 @@ test('directions static hero sequence crossfades in the approved order without v
     null,
   ]);
 
-  // One slide lasts 6 s (UX pass 2026-10), so the second one is active within ~9 s.
+  // Advance one complete slide interval without depending on the machine's speed.
+  await page.clock.fastForward(6000);
   await expect.poll(
     () => frames.evaluateAll((images) => images.map((image) => image.classList.contains('is-active'))),
-    { timeout: 9_000 },
   ).toEqual([false, true, false, false, false]);
 
   // By the time slide 1 becomes active, slide 2 should already be unlocked one step ahead of
@@ -106,6 +110,8 @@ for (const viewport of [
   { width: 2560, height: 1080 },
 ]) {
   test(`all five hero photographs load and fit at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
+    // Five full crossfades and native-size screenshots need more than a single-route budget.
+    test.setTimeout(60_000);
     await page.setViewportSize(viewport);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.clock.install();
@@ -125,6 +131,9 @@ for (const viewport of [
       const frame = frames.nth(index);
       await expect(frame).toHaveClass(/is-active/);
       await expect.poll(() => frame.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+      await frame.evaluate((image: HTMLImageElement) => image.decode());
+      // Loading and the active class alone can pass before the crossfade has painted.
+      await expect(frame).toHaveCSS('opacity', '1');
       const source = await frame.evaluate((image: HTMLImageElement) => image.currentSrc);
       expect(source).toContain(`directions-sequence-${sequenceNames[index]}-`);
       expect(source.includes('-portrait-')).toBe(portrait);

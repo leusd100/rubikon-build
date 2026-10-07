@@ -4,7 +4,7 @@ The five clean `/napryamky` photographs and the revised hangar framing were revi
 
 ## Responsive coverage
 
-`directions-hero-sequence.spec.ts` exercises all five decoded slides at 320×568, 375×812, 390×844, 430×932, 768×1024, 820×1180, 844×390, 1024×768, 1280×720, 1366×657, 1920×1080 and 2560×1080. It checks source selection, horizontal overflow, action bounds, the pause touch target, pausing across two slide intervals, and resuming with the keyboard. Each slide has a screenshot for visual inspection. The hero rhythm suite also checks spacing and the direction-list anchor.
+`directions-hero-sequence.spec.ts` exercises all five decoded slides at 320×568, 375×812, 390×844, 430×932, 768×1024, 820×1180, 844×390, 1024×768, 1280×720, 1366×657, 1920×1080 and 2560×1080. It checks source selection, horizontal overflow, action bounds, the pause touch target, pausing across two slide intervals, and resuming with the keyboard. Each slide has a screenshot for visual inspection, captured only after image decoding and full crossfade opacity. The hero rhythm suite also checks spacing and the direction-list anchor.
 
 The final desktop/mobile run passed all 32 cases. The clock is paused after hydration, so slow screenshot encoding cannot advance the carousel between explicit ticks. The focused visual run passed all 15 inquiry/process cases with the reviewed macOS baselines. TypeScript, targeted ESLint and diff checks passed. Light and dark hero layouts were also reviewed on phone and short-laptop viewports.
 
