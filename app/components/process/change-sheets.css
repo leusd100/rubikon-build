@@ -23,7 +23,9 @@
 .cs-rows li, .cs-total { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr) 34%; align-items: center; gap: 10px; min-height: 34px; }
 .cs-rows li { border-bottom: 1px dashed var(--color-border); }
 .cs-num { display: grid; place-items: center; width: 18px; height: 18px; color: var(--cs-copper-ink); border: 1px solid var(--cs-copper); border-radius: 50%; font: 700 10px/1 var(--font-condensed), sans-serif; }
-.cs-name { overflow: hidden; color: var(--color-text-secondary); font-size: 13.5px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+/* the names wrap rather than end in «…» where a sheet is narrow (07.10: «Залежності від інших робіт і стр…» on tablets
+   and phones; a two-line name still fits the row's 34 px) */
+.cs-name { color: var(--color-text-secondary); font-size: 13.5px; line-height: 1.25; }
 .cs-sum { position: relative; display: flex; align-items: center; height: 10px; }
 .cs-sum i { width: var(--sum, 70%); height: 2px; background: var(--cs-ink); }
 .cs-sum .cs-grow { width: 18%; height: 4px; margin-left: 2px; background: var(--cs-copper); transform: scaleX(0); transform-origin: left; }
@@ -44,7 +46,7 @@
 /* The schedule: a lane per work over thirteen columns; the «зараз» line where the change comes */
 .cs-gantt { --name: 36%; position: relative; display: grid; flex: 1; align-content: space-evenly; gap: 9px; padding-top: 18px; }
 .cs-lane { display: grid; grid-template-columns: var(--name) minmax(0, 1fr); align-items: center; min-height: 22px; }
-.cs-lane-name { overflow: hidden; padding-right: 10px; color: var(--color-text-secondary); font-size: 13px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.cs-lane-name { padding-right: 10px; color: var(--color-text-secondary); font-size: 13px; line-height: 1.2; }
 .cs-track { position: relative; height: 18px; background: repeating-linear-gradient(90deg, var(--color-border) 0 1px, transparent 1px calc(100% / 13)); }
 .cs-bar { --shift: 0; position: absolute; top: 3px; left: calc((var(--s) + var(--shift)) / 13 * 100%); width: calc(var(--l) / 13 * 100%); height: 12px; border: 1.5px solid var(--cs-ink); }
 .cs-bar-other { border-style: dashed; border-color: var(--color-text-muted); }
@@ -71,6 +73,7 @@
 .cs-stamp { position: absolute; right: 12px; bottom: 34px; width: 44px; height: 44px; transform: rotate(-12deg); }
 
 /* The procedure under the sheets */
+.cs-said { display: none; }
 .cs-change { position: relative; padding: 30px 28px 24px; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); }
 .cs-tab { position: absolute; top: -13px; left: 24px; margin: 0; padding: 6px 12px; color: var(--color-bg); background: var(--color-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
 .cs-principle { max-width: 860px; margin: 0; color: var(--color-text); font-size: 16.5px; line-height: 1.6; }
@@ -116,13 +119,13 @@
   .cs-fill { transition: transform 900ms cubic-bezier(.3, .7, .2, 1); }
   .cs-signs path { transition: stroke-dashoffset 700ms ease; }
   .cs-signs > span + span path { transition-delay: 500ms; }
+  .cs-said > p { transition: opacity 300ms ease, visibility 300ms; }
   .cs-stamp circle { transition: stroke-dashoffset 600ms ease 1000ms; }
 }
 
 /* Tablet: the two sheets side by side, the slip under them */
 @media (max-width: 1179px) {
   .cs-sheets { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .cs-lane-name { white-space: normal; line-height: 1.2; }
   .cs-order { grid-column: 1 / -1; grid-row: 3; justify-self: start; width: min(100%, 320px); margin-top: 24px; }
 }
 /* Phone: the procedure first (its steps fold to their titles, the chosen one opens), then the sheets it acts on */
@@ -138,10 +141,13 @@
   .cs-steps::before { top: calc(var(--rail) / 2); bottom: calc(var(--rail) / 2); left: calc(var(--rail) / 2 - .75px); right: auto; width: 1.5px; height: auto; }
   .cs-node { font-size: 15px; }
   .cs-steps button { grid-template-columns: var(--rail) minmax(0, 1fr); justify-items: start; align-items: center; gap: 2px 12px; padding: 7px 0; text-align: left; }
-  .cs-steps .cs-detail { grid-column: 2; display: none; }
-  .cs-steps li[data-state="now"] .cs-detail { display: block; }
+  /* the steps fold to their titles; the chosen one's words show under them (.cs-said), the buttons keep theirs for a
+     screen reader */
+  .cs-steps .cs-detail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .cs-said { display: grid; margin: 8px 0 0 calc(var(--rail) + 12px); }
+  .cs-said > p { grid-area: 1 / 1; margin: 0; color: var(--color-text-secondary); font-size: 14.5px; line-height: 1.5; visibility: hidden; opacity: 0; }
+  .cs-said > p[data-on] { visibility: visible; opacity: 1; }
   .cs-paper { padding: 14px 14px 16px; }
   .cs-gantt { --name: 40%; }
   .cs-lane-name, .cs-name { font-size: 12.5px; }
-  .cs-lane-name { white-space: normal; line-height: 1.2; }
 }

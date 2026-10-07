@@ -202,6 +202,12 @@ export function ChangeSheets({ rows, estimate, schedule, principle, steps, back 
             </li>
           ))}
         </ol>
+        {/* A phone shows the chosen step's words here, under the folded steps — all four laid in one place, so the block
+            keeps its height while the procedure walks (each step opening under its own title moved the sheets below, and
+            the rest of the page with them, at every step of the walk: 07.10) */}
+        <div className="cs-said" aria-hidden="true">
+          {steps.map((item, index) => <p key={item.title} data-on={index + 1 === step || undefined}>{item.detail}</p>)}
+        </div>
       </div>
     </div>
   );
