@@ -181,6 +181,10 @@ export function ChangeSheets({ rows, estimate, schedule, principle, steps, back 
         <h3 className="cs-tab">Якщо щось змінюється</h3>
         <p className="cs-principle">{principle}</p>
         <p className="cs-example" aria-hidden="true">Приклад на аркушах: змінилось утеплення</p>
+        <p className="cs-hint" aria-hidden="true">
+          <span className="cs-hint-pointer">Наведіть на крок — аркуші покажуть, що змінюється</span>
+          <span className="cs-hint-touch">Торкніться кроку — аркуші покажуть, що змінюється</span>
+        </p>
         <ol className="cs-steps">
           {steps.map((item, index) => (
             <li key={item.title} data-state={index + 1 === step ? 'now' : index + 1 < step ? 'done' : undefined}>

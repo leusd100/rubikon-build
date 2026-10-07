@@ -75,17 +75,26 @@
 .cs-tab { position: absolute; top: -13px; left: 24px; margin: 0; padding: 6px 12px; color: var(--color-bg); background: var(--color-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
 .cs-principle { max-width: 860px; margin: 0; color: var(--color-text); font-size: 16.5px; line-height: 1.6; }
 .cs-example { margin: 6px 0 0; color: var(--color-text-muted); font-size: 13.5px; font-style: italic; }
-.cs-steps { --rail: 22px; position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 18px; margin: 26px 0 0; padding: 0; list-style: none; }
-.cs-steps::before { content: ''; position: absolute; top: calc(var(--rail) / 2); right: calc(12.5% - 9px); left: calc(12.5% - 9px); height: 1px; background: var(--cs-faint); }
-.cs-steps button { display: grid; justify-items: center; gap: 8px; width: 100%; padding: 0 4px 6px; color: inherit; text-align: center; background: none; border: 0; font: inherit; cursor: pointer; }
-.cs-node { position: relative; z-index: 1; display: grid; place-items: center; width: var(--rail); height: var(--rail); color: var(--cs-copper-ink); background: var(--color-surface-elevated); border: 1.5px solid var(--cs-copper); border-radius: 50%; font: 700 12px/1 var(--font-condensed), sans-serif; transition: background-color 250ms ease, color 250ms ease, box-shadow 250ms ease; }
+/* Says the steps are live (owner 07.10: big nodes, and it must be obvious the sheets answer) — pointer or touch wording */
+.cs-hint { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; color: var(--cs-copper-ink); font: 700 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.cs-hint::before { content: ''; flex: none; width: 8px; height: 8px; background: var(--cs-copper); border-radius: 50%; box-shadow: 0 0 0 4px color-mix(in srgb, var(--cs-copper) 22%, transparent); }
+.cs-hint-touch { display: none; }
+@media (hover: none) { .cs-hint-pointer { display: none; } .cs-hint-touch { display: inline; } }
+.cs-steps { --rail: 40px; position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 18px; margin: 26px 0 0; padding: 0; list-style: none; }
+.cs-steps::before { content: ''; position: absolute; top: calc(var(--rail) / 2); right: calc(12.5% - 9px); left: calc(12.5% - 9px); height: 1.5px; background: var(--cs-faint); }
+.cs-steps button { display: grid; justify-items: center; gap: 10px; width: 100%; padding: 0 4px 6px; color: inherit; text-align: center; background: none; border: 0; font: inherit; cursor: pointer; }
+.cs-node { position: relative; z-index: 1; display: grid; place-items: center; width: var(--rail); height: var(--rail); color: var(--cs-copper-ink); background: var(--color-surface-elevated); border: 2px solid var(--cs-copper); border-radius: 50%; font: 700 17px/1 var(--font-condensed), sans-serif; transition: background-color 250ms ease, color 250ms ease, box-shadow 250ms ease, transform 250ms cubic-bezier(.3, 1.5, .5, 1); }
 .cs-steps b { color: var(--color-text); font: 600 17px/1.2 var(--font-condensed), sans-serif; transition: color 250ms ease; }
 .cs-detail { color: var(--color-text-secondary); font-size: 14.5px; line-height: 1.5; }
 .cs-steps li[data-state="done"] .cs-node { color: var(--color-on-action); background: var(--cs-copper); }
-.cs-steps li[data-state="now"] .cs-node { color: var(--color-on-action); background: var(--color-action); box-shadow: 0 0 0 6px color-mix(in srgb, var(--cs-copper) 22%, transparent); }
+.cs-steps li[data-state="now"] .cs-node { color: var(--color-on-action); background: var(--color-action); box-shadow: 0 0 0 8px color-mix(in srgb, var(--cs-copper) 22%, transparent); transform: scale(1.08); }
 .cs-steps li[data-state="now"] b { color: var(--cs-copper-ink); }
 .cs-steps button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-@media (hover: hover) { .cs-steps button:hover b { color: var(--cs-copper-ink); } }
+@media (hover: hover) {
+  .cs-steps button:hover b { color: var(--cs-copper-ink); }
+  .cs-steps li:not([data-state="now"]) button:hover .cs-node { background: color-mix(in srgb, var(--cs-copper) 14%, var(--color-surface-elevated)); box-shadow: 0 0 0 6px color-mix(in srgb, var(--cs-copper) 14%, transparent); transform: scale(1.06); }
+  .cs-steps li[data-state="done"] button:hover .cs-node { color: var(--color-on-action); background: var(--cs-copper); }
+}
 
 /* Each mark from its step on */
 .cs[data-reached~="1"] .cs-cloud path { stroke-dashoffset: 0; }
@@ -127,8 +136,10 @@
   .cs-order { grid-row: auto; }
   .cs-order { width: min(100%, 280px); }
   .cs-steps { grid-template-columns: minmax(0, 1fr); gap: 2px; margin-top: 18px; }
-  .cs-steps::before { top: 11px; bottom: 11px; left: 10.5px; right: auto; width: 1px; height: auto; }
-  .cs-steps button { grid-template-columns: 22px minmax(0, 1fr); justify-items: start; align-items: center; gap: 2px 12px; padding: 7px 0; text-align: left; }
+  .cs-steps { --rail: 34px; }
+  .cs-steps::before { top: calc(var(--rail) / 2); bottom: calc(var(--rail) / 2); left: calc(var(--rail) / 2 - .75px); right: auto; width: 1.5px; height: auto; }
+  .cs-node { font-size: 15px; }
+  .cs-steps button { grid-template-columns: var(--rail) minmax(0, 1fr); justify-items: start; align-items: center; gap: 2px 12px; padding: 7px 0; text-align: left; }
   .cs-steps .cs-detail { grid-column: 2; display: none; }
   .cs-steps li[data-state="now"] .cs-detail { display: block; }
   .cs-paper { padding: 14px 14px 16px; }
