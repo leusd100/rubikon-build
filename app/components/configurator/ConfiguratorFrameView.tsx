@@ -23,7 +23,8 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
   const [nodeId, setNodeId] = useState<string | null>(null);
   // A node belongs to the frame's step: the tour moving on, or another step chosen, closes it
   const node = step === 2 ? nodes.find((item) => item.id === nodeId) ?? null : null;
-  const active = node ?? (step ? steps[step - 1] : undefined);
+  // with nothing chosen, the whole frame centred (07.10: it sat off to the left of the sheet)
+  const active = node ?? (step ? steps[step - 1] : g.cameras.overview);
 
   const caption = node ? `${node.title} · схема` : captions[step];
   useEffect(() => onCaption(caption), [caption, onCaption]);

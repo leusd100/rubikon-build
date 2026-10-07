@@ -468,6 +468,21 @@ function frameGeometry(domain: HangarDomainModel) {
   ];
   const baysCamera = camera(baysFocus, 1.5, union([baysEssentials, ...baysTags.map((tag) => tag.box)]));
 
+  // The overview as the configurator shows it (07.10): the frame, its footings and the letters of its dimensions held
+  // together and centred — the picture's own fit leaves room on the right for the bays' bubbles, which the configurator
+  // does not draw, and the hangar sat off to the left
+  const overviewBox = union([
+    pointsBox([[0, 0, 0], [W, 0, 0], [0, end, 0], [W, end, 0], [0, 0, E], [W / 2, 0, R], [W / 2, end, R], [W, end, E], [0, end, E],
+      [0, 0, DIM_Z], [W, 0, DIM_Z], [W + DIM_A, 0, 0], [W + DIM_A, s, 0]]),
+    ...footings.map((footing) => footing.box), [hx - 6, hty, hx + 6, hy],
+    letterBox(letters.L), letterBox(letters.H), letterBox(letters.a, true),
+  ]);
+  const overviewCamera = camera(
+    [(overviewBox[0] + overviewBox[2]) / 2, (overviewBox[1] + overviewBox[3]) / 2],
+    1.6,
+    [overviewBox[0] - 10, overviewBox[1] - 10, overviewBox[2] + 10, overviewBox[3] + 10],
+  );
+
   // the wind's window holds its whole path, down to the ground under the footings, and the leaning bay
   const windCamera = camera(xy([W * 0.62, -1.2, E * 0.45]), 1.15, union([
     pointsBox([[W * 0.2, -WIND, E * 0.25], [W * 0.8, -WIND, E * 0.25], [0, 0, R], [W / 2, s * (1 + LEAN), R + 0.3], [W, s * (1 + LEAN), E]]),
@@ -486,7 +501,7 @@ function frameGeometry(domain: HangarDomainModel) {
     windArrows, endWall, braceFootings, windGround: groundUnder(braceBases.map(([x, d]) => [x, d, -1.1] as P3)), windFlow, ghost,
     tags: { frame: frameTags, bays: baysTags },
     nodePoints,
-    cameras: { span: shot(spanCamera), frame: shot(frameCamera), bays: shot(baysCamera), wind: shot(windCamera) },
+    cameras: { span: shot(spanCamera), frame: shot(frameCamera), bays: shot(baysCamera), wind: shot(windCamera), overview: shot(overviewCamera) },
   };
 }
 

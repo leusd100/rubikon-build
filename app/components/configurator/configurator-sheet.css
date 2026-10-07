@@ -364,3 +364,13 @@
 @media (max-width: 760px) {
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-image > .hc-section { position: absolute; margin: 0; }
 }
+
+/* The overview on the configurator's sheet reads in three weights (07.10, owner: «деякі елементи виділити»): the front
+   frame in the paper's ink and the heaviest line — one frame, read whole; the bracing in copper — what holds the frames
+   upright along the building; behind them the other frames, purlins and wall purlins stepped back. */
+.hc-frame:not([data-step]) .ft-member { stroke: var(--color-text); stroke-width: calc(2.6px * var(--ft-k)); }
+.hc-frame:not([data-step]) .ft-brace { stroke: var(--color-accent); stroke-width: calc(1.4px * var(--ft-k)); }
+.hc-frame:not([data-step]) .ft-brace-far { stroke: var(--color-accent); opacity: .5; }
+.hc-frame:not([data-step]) :is(.ft-back, .ft-opening) { opacity: .55; }
+.hc-frame:not([data-step]) .ft-thin { opacity: .6; }
+.hc-frame:not([data-step]) :is(.ft-footing, .ft-slab) { opacity: .7; }
