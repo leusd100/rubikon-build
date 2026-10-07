@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import type { CSSProperties } from 'react';
 import ResponsiveImage from '../ResponsiveImage';
 import { NodeDrawing } from './NodeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
-import { stageTransform, useDrawingTour } from '../useDrawingTour';
-import { drawingTransform, type PictureBox } from '../../lib/drawingCamera';
+import { useDrawingCamera, type ViewNeeds } from '../useDrawingCamera';
+import { useDrawingTour } from '../useDrawingTour';
 import type { DirectionNode as DirectionNodeConfig } from '../../types/directionPage';
 import { TourControl, TourProgress, TourSteps, tourStepCell } from './TourParts';
 import { ScopeKey } from './ScopeKey';
@@ -20,57 +20,19 @@ import { ScopeKey } from './ScopeKey';
 //
 // The mechanics are /pro-nas practice's (useDrawingTour, shared with PracticeSteps), with the marks given as data: the picture is cropped by cover
 // and the stage wraps it and its marks, so one transform moves both and keeps them aligned at any size. A drawing's
-// camera (drawingTransform, lib/drawingCamera.ts) also keeps what each view must show in the frame, measured on the
-// drawing (useNeed): the frame beside the text is narrower than the drawing up to wide screens (half as wide as tall on
-// a 768 px tablet; 3:2, as the drawings, only on a phone), and cover alone cropped numbers, labels and the steps' marks
-// off its sides.
+// camera (useDrawingCamera) also keeps what each view must show in the frame, measured on the drawing (NEEDS): the
+// frame beside the text is narrower than the drawing up to wide screens (half as wide as tall on a 768 px tablet; 3:2,
+// as the drawings, only on a phone), and cover alone cropped numbers, labels and the steps' marks off its sides.
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
-type Need = { overview: PictureBox; steps: readonly PictureBox[] };
-
-/** An element's box in its svg's own units (the drawing's), whatever the stage's transform is */
-function unitBox(element: SVGGraphicsElement): PictureBox | null {
-  const toUnits = element.ownerSVGElement?.getScreenCTM()?.inverse();
-  const own = element.getScreenCTM();
-  if (!toUnits || !own) return null;
-  const matrix = toUnits.multiply(own);
-  const { x, y, width, height } = element.getBBox();
-  const corners = [[x, y], [x + width, y], [x, y + height], [x + width, y + height]].map(([px, py]) => new DOMPoint(px, py).matrixTransform(matrix));
-  return [Math.min(...corners.map((p) => p.x)), Math.min(...corners.map((p) => p.y)), Math.max(...corners.map((p) => p.x)), Math.max(...corners.map((p) => p.y))];
-}
-
-function union(elements: Iterable<SVGGraphicsElement>): PictureBox | null {
-  let box: PictureBox | null = null;
-  for (const element of elements) {
-    const next = unitBox(element);
-    if (next) box = box ? [Math.min(box[0], next[0]), Math.min(box[1], next[1]), Math.max(box[2], next[2]), Math.max(box[3], next[3])] : next;
-  }
-  return box;
-}
-
-/** What each view of a drawing must show (drawingTransform), measured on the drawing itself once its fonts are in: the
- *  overview — every mark with its number, every part a step lights and every label; a step — its mark and the labels
- *  of its parts (a step's parts may lie on both sides, as the concrete's formwork: its mark says which it shows) */
-function useNeed(stageRef: RefObject<HTMLDivElement | null>, count: number, drawing: boolean) {
-  const [need, setNeed] = useState<Need | null>(null);
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage || !drawing) return;
-    let live = true;
-    void document.fonts.ready.then(() => {
-      const overview = union(stage.querySelectorAll<SVGGraphicsElement>('.dn-mark, .node-drawing [data-part], .node-drawing text'));
-      const steps = Array.from({ length: count }, (_, index) => union(
-        stage.querySelectorAll<SVGGraphicsElement>(`.dn-mark-${index + 1} .dn-line, .node-drawing [data-part="${index + 1}"] text`),
-      ));
-      if (live && overview && steps.every((box): box is PictureBox => box !== null)) setNeed({ overview, steps });
-    });
-    return () => {
-      live = false;
-    };
-  }, [stageRef, count, drawing]);
-  return need;
-}
+/** What each view of a drawing must show: the overview — every mark with its number, every part a step lights and
+ *  every label; a step — its mark and the labels of its parts (a step's parts may lie on both sides, as the concrete's
+ *  formwork: its mark says which it shows) */
+const NEEDS: ViewNeeds = {
+  overview: '.dn-mark, .node-drawing [data-part], .node-drawing text',
+  step: (index) => `.dn-mark-${index} .dn-line, .node-drawing [data-part="${index}"] text`,
+};
 
 export function DirectionNode({
   eyebrow,
@@ -95,23 +57,10 @@ export function DirectionNode({
 }>) {
   const { steps } = node;
   const { visualRef, step, touring, run, size, motion, choose, toggle, hover } = useDrawingTour(steps.length);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const need = useNeed(stageRef, steps.length, Boolean(node.drawing));
-  // The measured camera takes its place at once, not in a camera move: the stage's transition waits until it is drawn
-  const [placed, setPlaced] = useState(false);
-  const ready = Boolean(size && need);
-  useEffect(() => {
-    if (!ready || placed) return;
-    let frame = requestAnimationFrame(() => {
-      frame = requestAnimationFrame(() => setPlaced(true));
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [ready, placed]);
+  // A photo keeps the tours' own camera: only a drawing is measured
+  const { stageRef, transform, placed } = useDrawingCamera(size, node, steps, step, node.drawing ? NEEDS : null);
 
   const active = step ? steps[step - 1] : undefined;
-  const camera = node.drawing && need
-    ? drawingTransform(size, node, active, step ? need.steps[step - 1] : need.overview)
-    : stageTransform(size, node, active);
 
   const sheet = (
     <DrawingSheet
@@ -128,7 +77,7 @@ export function DirectionNode({
       <div
         ref={stageRef}
         className={`dn-stage${node.drawing ? ' is-drawing is-node' : ''}`}
-        style={{ transform: camera, transition: node.drawing && !placed ? 'none' : undefined, '--dn-aspect': node.width / node.height } as CSSProperties}
+        style={{ transform, transition: placed ? undefined : 'none', '--dn-aspect': node.width / node.height } as CSSProperties}
       >
         {node.drawing
           ? <NodeDrawing kind={node.drawing} label={`Схема: ${node.overviewCaption}`} />

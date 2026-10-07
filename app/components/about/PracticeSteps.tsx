@@ -3,7 +3,8 @@
 import type { CSSProperties } from 'react';
 import { PracticeDrawing } from './PracticeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
-import { stageTransform, useDrawingTour } from '../useDrawingTour';
+import { useDrawingCamera, type ViewNeeds } from '../useDrawingCamera';
+import { useDrawingTour } from '../useDrawingTour';
 
 // /pro-nas «Досвід працює ще до початку робіт»: the illustration answers the list one step at a time. The camera
 // pushes in on that step's place in the image — the drawing under the hands, the order the frame goes up (base
@@ -16,7 +17,9 @@ import { stageTransform, useDrawingTour } from '../useDrawingTour';
 // the control (no «Ілюстрація» here — the owner's choice for /pro-nas).
 //
 // The marks are drawn in image pixels and the image is cropped by cover; the stage wraps both, so one transform
-// moves them together and keeps them aligned at any size.
+// moves them together and keeps them aligned at any size. The camera (useDrawingCamera) also keeps what each view
+// must show in the frame (NEEDS), measured on the drawing: the frame is the drawing's 4:5 only on a phone, and cover
+// alone cut «L», the bracket of 01 and the frame lit in 02 off its edges on tablets and laptops (06.10).
 
 export type PracticeStep = {
   title: string;
@@ -29,6 +32,14 @@ export type PracticeStep = {
 };
 
 const IMAGE = { width: 1440, height: 1800 };
+/** What each view must show whole: the overview — every mark with its number, every part a step lights and both
+ *  letters of the dimensions; a step — its mark with its numbered circles, and the parts it lights, clear of the
+ *  step bars (.ps-progress: 16 px from the top, 3 px tall) */
+const NEEDS: ViewNeeds = {
+  overview: '.aqc-mark, .practice-drawing [data-part], .practice-drawing text',
+  step: (index) => `.aqc-mark-${index} :is(.aqc-line, .aqc-step), .practice-drawing [data-part="${index}"]`,
+  stepTop: 19,
+};
 const pad = (value: number) => String(value).padStart(2, '0');
 
 export function PracticeSteps({
@@ -49,6 +60,7 @@ export function PracticeSteps({
   overviewCaption: string;
 }>) {
   const { visualRef, step, touring, run, size, motion, choose, toggle, hover } = useDrawingTour(steps.length);
+  const { stageRef, transform, placed } = useDrawingCamera(size, IMAGE, steps, step, NEEDS);
 
   const active = step ? steps[step - 1] : undefined;
 
@@ -72,7 +84,11 @@ export function PracticeSteps({
         )}
       >
         {/* A vector drawing, so every push-in stays sharp (UX pass 2026-10: zooming the picture lost its quality) */}
-        <div className="ps-stage is-drawing" style={{ transform: stageTransform(size, IMAGE, active) }}>
+        <div
+          ref={stageRef}
+          className="ps-stage is-drawing"
+          style={{ transform, transition: placed ? undefined : 'none', '--ps-aspect': IMAGE.width / IMAGE.height } as CSSProperties}
+        >
           <PracticeDrawing />
           <svg className="aqc-overlay" viewBox="0 0 1440 1800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
             <g className="aqc-mark aqc-mark-1">

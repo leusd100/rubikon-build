@@ -1,11 +1,13 @@
-// The camera for a «Вузол напряму» drawing (DirectionNode). The tours' own camera (stageTransform, useDrawingTour.ts)
-// works inside what cover shows of the picture, so a frame narrower than the drawing loses its sides: the frame beside
-// the text is 0.5–1.4 times as wide as it is tall from a 768 px tablet up to a wide screen, the drawings are 3:2, and the
-// third number of the concrete overview, the end view's labels and whole steps' marks lay outside it (06.10). A
-// drawing's boxes hold the whole drawing past the frame's edges (direction-node.css), so this camera can go further:
-// what each view must show stays whole in view, FRAME_MARGIN clear of the edges. Where it already is, the view is
-// stageTransform's own (none in the overview); otherwise the camera moves over to it, and pulls back from the step's
-// zoom (in the overview, below cover) only as far as it must. Past the picture's own edges it never needs to look.
+// The camera for a «Вузол напряму» drawing (DirectionNode) and the /pro-nas practice drawing (PracticeSteps), through
+// useDrawingCamera. The tours' own camera (stageTransform, useDrawingTour.ts) works inside what cover shows of the
+// picture, so a frame narrower than the drawing loses its sides: the frame beside the text is 0.5–1.4 times as wide as
+// it is tall from a 768 px tablet up to a wide screen, the drawings are 3:2, and the third number of the concrete
+// overview, the end view's labels and whole steps' marks lay outside it (06.10); the practice's tablet frame, wider than
+// its 4:5 drawing, lost its top and bottom the same way. A drawing's boxes hold the whole drawing past the frame's edges
+// (direction-node.css, about.css), so this camera can go further: what each view must show stays whole in view,
+// FRAME_MARGIN clear of the edges. Where it already is, the view is stageTransform's own (none in the overview);
+// otherwise the camera moves over to it, and pulls back from the step's zoom (in the overview, below cover) only as far
+// as it must. Past the picture's own edges it never needs to look.
 
 /** The frame's (or the picture's) size: pixels, or the picture's own units */
 export type FrameSize = { width: number; height: number };
