@@ -17,13 +17,14 @@ const responsiveSrcSet = (name: string, variants: ResponsiveVariants, portrait =
 
 export const directionsHeroSequenceAssets: readonly DirectionsHeroSequenceAsset[] = [
   {
-    fallbackSrc: '/media-responsive/directions-sequence-angary-1536w.a4dd2c2b.webp',
-    srcSet: responsiveSrcSet('angary', [[480, '11b75790'], [768, '8365e609'], [1200, '7345f2f0'], [1536, 'a4dd2c2b'], [1896, '2d7384ca']]),
-    portraitSrcSet: responsiveSrcSet('angary', [[320, '6ba98586'], [480, 'fc0f5e23'], [622, 'bdb2f746']], true),
+    fallbackSrc: '/media-responsive/directions-sequence-angary-1536w.3c8e8cc9.webp',
+    srcSet: responsiveSrcSet('angary', [[480, '94e4a740'], [768, 'ca3d62f7'], [1200, '452a338b'], [1536, '3c8e8cc9'], [1896, '050ba3f4']]),
+    portraitSrcSet: responsiveSrcSet('angary', [[320, '41c00eaa'], [480, 'eb1e77b6'], [622, '6e4983de']], true),
     width: 1896,
     height: 830,
-    focalPosition: '55% center',
-    mobileFocalPosition: '50% center',
+    // Preserve the sky above the roof apex when wide screens crop the image vertically.
+    focalPosition: '55% top',
+    mobileFocalPosition: '50% top',
   },
   {
     fallbackSrc: '/media-responsive/directions-sequence-zernoskhovyshcha-1536w.6945f8a6.webp',

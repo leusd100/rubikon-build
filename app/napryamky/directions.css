@@ -13,6 +13,17 @@
 .directions-page .directions-hero-actions :is(.subhero-side-cta, .text-link, .hero-call) { margin: 0; }
 /* The clean photographs carry the visual detail; no blueprint grid or blur over their geometry. */
 .directions-page .directions-hero-sequence-image { filter: saturate(.72) contrast(1.03); }
+/* Keep the hangar apex below the fixed header, as on the individual direction pages. */
+.directions-page .directions-hero-sequence-image[src*="directions-sequence-angary-"] {
+  top: 101px;
+  height: calc(100% - 101px);
+}
+@media (max-width: 760px) {
+  .directions-page .directions-hero-sequence-image[src*="directions-sequence-angary-"] {
+    top: 77px;
+    height: calc(100% - 77px);
+  }
+}
 /* Dark under the words on the left, the slide open on the right, a little shade at the top for the slide caption */
 .directions-page .directions-subhero .subhero-overlay {
   background:
