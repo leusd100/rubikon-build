@@ -18,6 +18,8 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const HOVER_QUERY = '(hover: hover) and (pointer: fine)';
 /** How long after the page's last scroll step the pointer counts again */
 const SCROLL_REST_MS = 120;
+/** A scroll this soon after a wheel event is the wheel's; a mouse that moved this recently is not at rest */
+const WHEEL_SCROLL_MS = 150;
 /** What a press caught by the scroll shield is passed on to */
 const CONTROLS = 'a[href], button, summary, label, input, select, textarea, [role="button"]';
 
@@ -106,10 +108,12 @@ export function SmoothScroll() {
   // While the page scrolls under a resting mouse, nothing under the pointer takes :hover. The browser re-hit-tests a
   // resting pointer as the page moves, so the rows, cards and sheets passing under it lit up one after another (and a
   // lit factor retitled its drawing) all the way down a page (07.10). A transparent shield over the page (not the
-  // header) takes the pointer for the scroll's duration — one fixed box shown and hidden, nothing under it restyled —
-  // and goes the moment the mouse really moves, a button goes down, or SCROLL_REST_MS after the last scroll step. With
-  // a button held (a drag selecting text) it never shows. A click that lands on it (the page had only just stopped
-  // under a pointer that never moved) is passed on to the link or button under the pointer.
+  // header) takes the pointer for the scroll's duration — one fixed box shown and hidden, nothing under it restyled.
+  // Only a wheel or a trackpad raises it, and only while the mouse rests: a scroll from a link, a key or a script, or
+  // one with the mouse on the move, leaves the pointer alone. It goes the moment the mouse really moves, a button goes
+  // down, or SCROLL_REST_MS after the page's last scroll step; with a button held (a drag selecting text) it never
+  // shows. A click that lands on it (the page had only just stopped under a pointer that never moved) is passed on to
+  // the link or button under the pointer.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const hoverQuery = window.matchMedia(HOVER_QUERY);
@@ -120,6 +124,8 @@ export function SmoothScroll() {
     document.body.appendChild(shield);
     let timer = 0;
     let pressed = false;
+    let lastWheel = -Infinity;
+    let lastMove = -Infinity;
     let caught: { control: HTMLElement | null; x: number; y: number; id: number } | null = null;
 
     const release = () => {
@@ -127,15 +133,23 @@ export function SmoothScroll() {
       timer = 0;
       if (root.hasAttribute('data-scroll-still')) root.removeAttribute('data-scroll-still');
     };
+    const onWheel = (event: WheelEvent) => {
+      // (ctrl + wheel is a zoom, not a scroll)
+      if (!event.ctrlKey) lastWheel = performance.now();
+    };
     const onScroll = () => {
-      if (pressed || !hoverQuery.matches) return;
-      if (!root.hasAttribute('data-scroll-still')) root.setAttribute('data-scroll-still', '');
+      const up = root.hasAttribute('data-scroll-still');
+      const now = performance.now();
+      if (!up && (pressed || !hoverQuery.matches || now - lastWheel > WHEEL_SCROLL_MS || now - lastMove < WHEEL_SCROLL_MS)) return;
+      if (!up) root.setAttribute('data-scroll-still', '');
       window.clearTimeout(timer);
       timer = window.setTimeout(release, SCROLL_REST_MS);
     };
     // The browser's own re-hit-test after a scroll comes as a move that went nowhere: only a real one counts
     const onMove = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse' && (event.movementX !== 0 || event.movementY !== 0)) release();
+      if (event.pointerType !== 'mouse' || (event.movementX === 0 && event.movementY === 0)) return;
+      lastMove = performance.now();
+      release();
     };
     const onDown = (event: PointerEvent) => {
       pressed = true;
@@ -155,12 +169,14 @@ export function SmoothScroll() {
       press.control.click();
     };
 
+    window.addEventListener('wheel', onWheel, { passive: true, capture: true });
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('pointerdown', onDown, { passive: true });
     window.addEventListener('pointerup', onUp, { passive: true });
     window.addEventListener('pointercancel', onUp, { passive: true });
     return () => {
+      window.removeEventListener('wheel', onWheel, { capture: true });
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerdown', onDown);
