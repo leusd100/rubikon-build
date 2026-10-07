@@ -45,7 +45,7 @@ function marksOf(item: SwitchItem, formats: readonly SwitchFormat[]) {
       style[`--k-${format.id}`] = ink;
       style[`--t-${format.id}`] = `"${mark?.word ?? ''}"`;
     });
-    return style as CSSProperties;
+    return { id: `${item.rows[0]}-mark-${k}`, style: style as CSSProperties };
   });
 }
 
@@ -115,7 +115,7 @@ export function ResponsibilityMatrix({ formats, items, boundary }: Readonly<{
                     <span className="rm-out" data-format={format.id} key={format.id}>Поза обсягом цього формату</span>
                   ))}
                   <span className="rm-track" aria-hidden="true">
-                    {marksOf(item, formats).map((style, k) => <i className="rm-mark" style={style} key={k} />)}
+                    {marksOf(item, formats).map((mark) => <i className="rm-mark" style={mark.style} key={mark.id} />)}
                   </span>
                 </div>
               );

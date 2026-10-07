@@ -21,6 +21,12 @@ type Term = { title: string; text: string };
 const STEP_MS = 2300;
 const LAST = 4;
 
+/** A step's place against the one shown: shown now, already passed, or still ahead (no attribute). */
+function stateOf(value: number, shown: number): 'now' | 'done' | undefined {
+  if (value === shown) return 'now';
+  return value < shown ? 'done' : undefined;
+}
+
 /** The estimate's row lengths (% of the amount column) — a picture of a table, not figures */
 const SUMS = [64, 80, 52, 42, 58, 46, 36];
 /** The changed row: «Утеплення», the fourth factor */
@@ -187,7 +193,7 @@ export function ChangeSheets({ rows, estimate, schedule, principle, steps, back 
         </p>
         <ol className="cs-steps">
           {steps.map((item, index) => (
-            <li key={item.title} data-state={index + 1 === step ? 'now' : index + 1 < step ? 'done' : undefined}>
+            <li key={item.title} data-state={stateOf(index + 1, step)}>
               <button type="button" aria-pressed={index + 1 === step} onClick={() => choose(index + 1)} {...hover(index + 1)}>
                 <span className="cs-node" aria-hidden="true">{index + 1}</span>
                 <b>{item.title}</b>

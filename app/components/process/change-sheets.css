@@ -133,10 +133,8 @@
   .cs-sheet { grid-row: auto; grid-template-rows: auto auto; }
   .cs-estimate, .cs-schedule { grid-column: 1; }
   .cs-schedule { margin-top: 28px; }
-  .cs-order { grid-row: auto; }
-  .cs-order { width: min(100%, 280px); }
-  .cs-steps { grid-template-columns: minmax(0, 1fr); gap: 2px; margin-top: 18px; }
-  .cs-steps { --rail: 34px; }
+  .cs-order { grid-row: auto; width: min(100%, 280px); }
+  .cs-steps { --rail: 34px; grid-template-columns: minmax(0, 1fr); gap: 2px; margin-top: 18px; }
   .cs-steps::before { top: calc(var(--rail) / 2); bottom: calc(var(--rail) / 2); left: calc(var(--rail) / 2 - .75px); right: auto; width: 1.5px; height: auto; }
   .cs-node { font-size: 15px; }
   .cs-steps button { grid-template-columns: var(--rail) minmax(0, 1fr); justify-items: start; align-items: center; gap: 2px 12px; padding: 7px 0; text-align: left; }
