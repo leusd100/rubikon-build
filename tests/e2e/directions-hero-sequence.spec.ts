@@ -93,21 +93,29 @@ test('directions static hero sequence remains on the first image for reduced mot
 // selected on a tall screen otherwise looks like a blank/soft background without any build error.
 for (const viewport of [
   { width: 320, height: 568 },
+  { width: 375, height: 812 },
   { width: 390, height: 844 },
+  { width: 430, height: 932 },
   { width: 768, height: 1024 },
+  { width: 820, height: 1180 },
+  { width: 844, height: 390 },
   { width: 1024, height: 768 },
   { width: 1280, height: 720 },
+  { width: 1366, height: 657 },
   { width: 1920, height: 1080 },
+  { width: 2560, height: 1080 },
 ]) {
   test(`all five hero photographs load and fit at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.clock.install();
     await page.goto('/napryamky', { waitUntil: 'load' });
-    await page.clock.fastForward(1000);
 
     const hero = page.locator('.directions-subhero');
     await expect(hero.getByRole('button', { name: 'Пауза показу напрямів', exact: true })).toBeVisible();
+    // Let hydration and deferred loading complete first, then freeze between explicit ticks:
+    // screenshot encoding must not advance the real-time carousel on slower CI machines.
+    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
     const necessaryCookies = page.getByRole('button', { name: 'Лише необхідні', exact: true });
     if (await necessaryCookies.isVisible()) await necessaryCookies.click();
     const frames = hero.locator('img.directions-hero-sequence-image');
@@ -121,9 +129,12 @@ for (const viewport of [
       expect(source).toContain(`directions-sequence-${sequenceNames[index]}-`);
       expect(source.includes('-portrait-')).toBe(portrait);
 
-      if (index === 0) {
-        await page.screenshot({ path: testInfo.outputPath(`directions-${viewport.width}x${viewport.height}.png`) });
-      }
+      const suffix = index === 0 ? '' : `-${sequenceNames[index]}`;
+      await page.screenshot({
+        path: testInfo.outputPath(`directions-${viewport.width}x${viewport.height}${suffix}.png`),
+        animations: 'disabled',
+        scale: 'css',
+      });
       if (index < sequenceNames.length - 1) await page.clock.fastForward(6000);
     }
 
@@ -136,5 +147,15 @@ for (const viewport of [
       expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 1);
       expect(box!.y + box!.height).toBeLessThanOrEqual(heroBox!.y + heroBox!.height);
     }
+    const pause = hero.locator('.hero-video-control');
+    expect((await pause.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await pause.click();
+    await expect(pause).toHaveAccessibleName('Відтворити показ напрямів');
+    await page.clock.fastForward(12_000);
+    await expect(frames.last()).toHaveClass(/is-active/);
+    await pause.press('Space');
+    await expect(pause).toHaveAccessibleName('Пауза показу напрямів');
+    await page.clock.fastForward(6000);
+    await expect(frames.first()).toHaveClass(/is-active/);
   });
 }
