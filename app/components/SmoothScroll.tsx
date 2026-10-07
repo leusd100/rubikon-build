@@ -48,8 +48,20 @@ export function SmoothScroll() {
     let loading = false;
     let cancelled = false;
 
+    // An A/B switch for comparing browsers (07.10, owner: Safari feels less smooth than Chrome and Firefox):
+    // `?lenis=off` turns the smoothing off and `?lenis=on` back on, for the rest of the tab's session
+    let forcedOff = false;
+    try {
+      const asked = new URLSearchParams(window.location.search).get('lenis');
+      if (asked === 'off' || asked === 'on') window.sessionStorage.setItem('rubikon-lenis', asked);
+      forcedOff = window.sessionStorage.getItem('rubikon-lenis') === 'off';
+    } catch {
+      // storage blocked: the default stands
+    }
+    const wanted = () => !forcedOff && desktopQuery.matches && !reducedMotionQuery.matches;
+
     const sync = () => {
-      const shouldRun = desktopQuery.matches && !reducedMotionQuery.matches;
+      const shouldRun = wanted();
 
       if (shouldRun && !lenis && !loading) {
         loading = true;
@@ -64,7 +76,7 @@ export function SmoothScroll() {
         // we're going to use it means non-qualifying viewports never pay for it at all.
         import('lenis').then(({ default: Lenis }) => {
           loading = false;
-          if (cancelled || !(desktopQuery.matches && !reducedMotionQuery.matches)) return;
+          if (cancelled || !wanted()) return;
 
           lenis = new Lenis({
             // Tuned live against Lenis's own 0.1 default: 0.12 read as fine on Home alone,
