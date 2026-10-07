@@ -12,7 +12,6 @@ import { costFactorNotes } from '../../lib/configurator/costNotes';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
-import { FrameTour } from './FrameTour';
 import { ProcessDrawing } from '../directions/ProcessDrawing';
 import type { ProcessSplit } from '../../types/directionPage';
 
@@ -67,10 +66,8 @@ export function HangarEditorialArchitecture({
 
   return (
     <>
-      <section className="page-section direction-editorial-section dn-section angary-structure" id="structure" aria-labelledby="angary-structure-title">
-        <FrameTour titleId="angary-structure-title" />
-      </section>
-
+      {/* «Каркас вашого ангара» is no longer a section of its own (07.10): its drawing is the configurator's «Каркас»
+          view (ConfiguratorFrameView), on the sheet the visitor is already looking at */}
       {realObject}
 
       <section className="page-section angary-cost" id="vartist" aria-labelledby="angary-cost-title">
