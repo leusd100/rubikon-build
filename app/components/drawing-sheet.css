@@ -37,6 +37,17 @@
     repeating-linear-gradient(180deg, var(--sheet-mark) 0 1px, transparent 1px 50px) right top / 12px 100% no-repeat;
 }
 
+/* The plot's cover: the sheet's paper over the picture, drawn back down under the plotter line as the picture is plotted
+   in. Only while the sheet is armed or on (without JavaScript or with reduced motion it is not there). A transform, so
+   the compositor moves it alone; the picture under it is never re-rastered. The plot was a clip-path transition on the
+   picture: Chrome runs that as a paint worklet with a fresh layer tree on almost every frame, and on a phone fling the
+   main thread's frames waited behind them (07.10, /angary phone fling at CPU ×4: 6.3 % of rAF frames skipped → 2.2 %).
+   The picture isolates its own layers, so none of them (the proof frame's handle and rails, z 2–5) rises above it. */
+.sheet-cover { display: none; }
+.sheet[data-sheet-state] .sheet-image { isolation: isolate; }
+.sheet[data-sheet-state] .sheet-cover { position: absolute; z-index: 3; inset: 0; display: block; background: var(--sheet-paper); transform-origin: bottom; }
+.sheet[data-sheet-state="on"] .sheet-cover { transform: scaleY(0); }
+
 /* The plotter line: rides down the picture as it is drawn in, then goes out — on a transform of a box as tall as the
    picture (its own 100 %): moving it by `top` made 25 small layout shifts per reveal (03.10) */
 .sheet-scan { position: absolute; z-index: 4; inset: 0 0 auto; height: 100%; opacity: 0; pointer-events: none; }
@@ -74,15 +85,13 @@
 }
 
 /* Arriving: the picture is plotted in, the rulers draw, the title block fills (only once armed — see the component) */
-.sheet[data-sheet-state="armed"] .sheet-image { clip-path: inset(0 0 100% 0); }
 .sheet[data-sheet-state="armed"] .sheet-ruler-x { transform: scaleX(0); }
 .sheet[data-sheet-state="armed"] .sheet-ruler-y { transform: scaleY(0); }
 .sheet[data-sheet-state="armed"] :is(.sheet-cell, .sheet-action) { opacity: 0; transform: translateY(6px); }
 @keyframes sheet-scan { 0% { transform: translateY(0); opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(calc(100% - 2px)); opacity: 0; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(6px); } }
 @media (prefers-reduced-motion: no-preference) {
-  /* clip-path needs an explicit end: inset() → none does not interpolate */
-  .sheet[data-sheet-state="on"] .sheet-image { clip-path: inset(0); transition: clip-path 900ms var(--sheet-plot) 120ms; }
+  .sheet[data-sheet-state="on"] .sheet-cover { transition: transform 900ms var(--sheet-plot) 120ms; }
   .sheet[data-sheet-state="on"] .sheet-scan { animation: sheet-scan 900ms var(--sheet-plot) 120ms both; }
   .sheet[data-sheet-state="on"] :is(.sheet-ruler-x, .sheet-ruler-y) { transition: transform 700ms var(--sheet-plot); }
   .sheet[data-sheet-state="on"] :is(.sheet-cell, .sheet-action) { transition: opacity 360ms ease, transform 360ms ease; transition-delay: calc(700ms + var(--sheet-i, 0) * 80ms); }
