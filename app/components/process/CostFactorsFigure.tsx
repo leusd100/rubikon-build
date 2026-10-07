@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { DrawingSheet } from '../DrawingSheet';
 import './cost-factors.css';
 
@@ -251,7 +251,19 @@ export function CostFactorsFigure({
               activeIndex >= 0
                 ? { tone: 'number', label: 'Фактор', value: <>{pad2(activeIndex + 1)}<span> / {pad2(factors.length)}</span></> }
                 : { label: 'Факторів', value: String(factors.length) },
-              { tone: 'main', label: 'Що показано', value: activeIndex >= 0 ? factors[activeIndex].title : 'Що впливає на вартість' },
+              {
+                // every title laid in one place, only the one on show visible: the title block keeps its height when a
+                // factor is pointed at or tapped, and the list under it stays put (07.10)
+                tone: 'main',
+                label: 'Що показано',
+                value: (
+                  <span className="cf-titles">
+                    {['Що впливає на вартість', ...factors.map((factor) => factor.title)].map((text, index) => (
+                      <Fragment key={text}><span data-on={index === activeIndex + 1 || undefined}>{text}</span>{' '}</Fragment>
+                    ))}
+                  </span>
+                ),
+              },
             ]}
           >
             {drawing}

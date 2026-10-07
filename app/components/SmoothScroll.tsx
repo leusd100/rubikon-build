@@ -14,6 +14,14 @@ import type Lenis from 'lenis';
 // smoothing in a way touch input doesn't.
 const DESKTOP_QUERY = '(min-width: 1181px)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+// A mouse or a trackpad: the pointers that hover
+const HOVER_QUERY = '(hover: hover) and (pointer: fine)';
+/** How long after the page's last scroll step the pointer counts again */
+const SCROLL_REST_MS = 120;
+/** A scroll this soon after a wheel event is the wheel's; a mouse that moved this recently is not at rest */
+const WHEEL_SCROLL_MS = 150;
+/** What a press caught by the scroll shield is passed on to */
+const CONTROLS = 'a[href], button, summary, label, input, select, textarea, [role="button"]';
 
 /**
  * A very restrained Lenis smooth-scroll layer, mounted sitewide (see app/layout.tsx) but
@@ -23,7 +31,7 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
  * position on a wrapper element — sticky positioning, the native scrollbar, keyboard
  * scrolling, and scroll restoration all keep working. No custom rAF loop either (`autoRaf`
  * lets Lenis drive its own single frame loop) — this component is the smoothing foundation
- * only, nothing scroll-triggered.
+ * only, nothing scroll-triggered. It also keeps a resting mouse from hovering what scrolls under it (second effect).
  */
 export function SmoothScroll() {
   useEffect(() => {
@@ -40,8 +48,20 @@ export function SmoothScroll() {
     let loading = false;
     let cancelled = false;
 
+    // An A/B switch for comparing browsers (07.10, owner: Safari feels less smooth than Chrome and Firefox):
+    // `?lenis=off` turns the smoothing off and `?lenis=on` back on, for the rest of the tab's session
+    let forcedOff = false;
+    try {
+      const asked = new URLSearchParams(window.location.search).get('lenis');
+      if (asked === 'off' || asked === 'on') window.sessionStorage.setItem('rubikon-lenis', asked);
+      forcedOff = window.sessionStorage.getItem('rubikon-lenis') === 'off';
+    } catch {
+      // storage blocked: the default stands
+    }
+    const wanted = () => !forcedOff && desktopQuery.matches && !reducedMotionQuery.matches;
+
     const sync = () => {
-      const shouldRun = desktopQuery.matches && !reducedMotionQuery.matches;
+      const shouldRun = wanted();
 
       if (shouldRun && !lenis && !loading) {
         loading = true;
@@ -56,7 +76,7 @@ export function SmoothScroll() {
         // we're going to use it means non-qualifying viewports never pay for it at all.
         import('lenis').then(({ default: Lenis }) => {
           loading = false;
-          if (cancelled || !(desktopQuery.matches && !reducedMotionQuery.matches)) return;
+          if (cancelled || !wanted()) return;
 
           lenis = new Lenis({
             // Tuned live against Lenis's own 0.1 default: 0.12 read as fine on Home alone,
@@ -94,6 +114,88 @@ export function SmoothScroll() {
       desktopQuery.removeEventListener('change', sync);
       reducedMotionQuery.removeEventListener('change', sync);
       lenis?.destroy();
+    };
+  }, []);
+
+  // While the page scrolls under a resting mouse, nothing under the pointer takes :hover. The browser re-hit-tests a
+  // resting pointer as the page moves, so the rows, cards and sheets passing under it lit up one after another (and a
+  // lit factor retitled its drawing) all the way down a page (07.10). A transparent shield over the page (not the
+  // header) takes the pointer for the scroll's duration — one fixed box shown and hidden, nothing under it restyled.
+  // Only a wheel or a trackpad raises it, and only while the mouse rests: a scroll from a link, a key or a script, or
+  // one with the mouse on the move, leaves the pointer alone. It goes the moment the mouse really moves, a button goes
+  // down, or SCROLL_REST_MS after the page's last scroll step; with a button held (a drag selecting text) it never
+  // shows. A click that lands on it (the page had only just stopped under a pointer that never moved) is passed on to
+  // the link or button under the pointer.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hoverQuery = window.matchMedia(HOVER_QUERY);
+    const root = document.documentElement;
+    const shield = document.createElement('div');
+    shield.className = 'scroll-shield';
+    shield.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(shield);
+    let timer = 0;
+    let pressed = false;
+    let lastWheel = -Infinity;
+    let lastMove = -Infinity;
+    let caught: { control: HTMLElement | null; x: number; y: number; id: number } | null = null;
+
+    const release = () => {
+      window.clearTimeout(timer);
+      timer = 0;
+      if ('scrollStill' in root.dataset) delete root.dataset.scrollStill;
+    };
+    const onWheel = (event: WheelEvent) => {
+      // (ctrl + wheel is a zoom, not a scroll)
+      if (!event.ctrlKey) lastWheel = performance.now();
+    };
+    const onScroll = () => {
+      const up = 'scrollStill' in root.dataset;
+      const now = performance.now();
+      if (!up && (pressed || !hoverQuery.matches || now - lastWheel > WHEEL_SCROLL_MS || now - lastMove < WHEEL_SCROLL_MS)) return;
+      if (!up) root.dataset.scrollStill = '';
+      window.clearTimeout(timer);
+      timer = window.setTimeout(release, SCROLL_REST_MS);
+    };
+    // The browser's own re-hit-test after a scroll comes as a move that went nowhere: only a real one counts
+    const onMove = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse' || (event.movementX === 0 && event.movementY === 0)) return;
+      lastMove = performance.now();
+      release();
+    };
+    const onDown = (event: PointerEvent) => {
+      pressed = true;
+      const onShield = event.target === shield;
+      release();
+      if (!onShield || event.button !== 0) return;
+      const under = document.elementFromPoint(event.clientX, event.clientY);
+      caught = { control: under?.closest<HTMLElement>(CONTROLS) ?? null, x: event.clientX, y: event.clientY, id: event.pointerId };
+    };
+    const onUp = (event: PointerEvent) => {
+      pressed = false;
+      const press = caught;
+      caught = null;
+      if (!press?.control || event.type !== 'pointerup' || event.pointerId !== press.id) return;
+      if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > 6) return;
+      press.control.focus({ preventScroll: true });
+      press.control.click();
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: true, capture: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerdown', onDown, { passive: true });
+    window.addEventListener('pointerup', onUp, { passive: true });
+    window.addEventListener('pointercancel', onUp, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', onWheel, { capture: true });
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      release();
+      shield.remove();
     };
   }, []);
 

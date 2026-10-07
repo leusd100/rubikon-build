@@ -7,7 +7,7 @@ import { DrawingSheet } from '../DrawingSheet';
 import { useDrawingCamera, type ViewNeeds } from '../useDrawingCamera';
 import { useDrawingTour } from '../useDrawingTour';
 import type { DirectionNode as DirectionNodeConfig } from '../../types/directionPage';
-import { TourControl, TourProgress, TourSteps, tourStepCell } from './TourParts';
+import { TourCaptions, TourControl, TourProgress, TourSteps, tourStepCell } from './TourParts';
 import { ScopeKey } from './ScopeKey';
 
 // «Вузол напряму» — a direction page's editorial picture as a tour of one node, in three steps (metal: the drawing,
@@ -60,7 +60,7 @@ export function DirectionNode({
   // A photo keeps the tours' own camera: only a drawing is measured
   const { stageRef, transform, placed } = useDrawingCamera(size, node, steps, step, node.drawing ? NEEDS : null);
 
-  const active = step ? steps[step - 1] : undefined;
+  const captions = [node.overviewCaption, ...steps.map((item) => item.caption)];
 
   const sheet = (
     <DrawingSheet
@@ -69,7 +69,7 @@ export function DirectionNode({
       imageRef={visualRef}
       cells={[
         tourStepCell(step, steps.length),
-        { tone: 'main', label: 'Що показано', value: <span className="dn-caption">{active ? active.caption : node.overviewCaption}</span> },
+        { tone: 'main', label: 'Що показано', value: <TourCaptions captions={captions} step={step} /> },
         { label: 'Зображення', value: node.drawing ? 'Схема' : 'Ілюстрація' },
       ]}
       action={motion && <TourControl touring={touring} toggle={toggle} what="вузла" />}

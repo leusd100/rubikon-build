@@ -57,7 +57,10 @@ test('leaving during a crossfade does not preserve an extra visible clip on retu
   await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
   await expect(page.locator('video.direction-hero-video.is-active')).toHaveCount(2, { timeout: 15_000 });
   await page.evaluate(() => window.scrollTo(0, 2000));
-  await expect(page.locator('video[src]')).toHaveCount(0);
+  // Out of sight the clips pause and keep their sources (07.10: taking them away reloaded the clip on the way back up,
+  // and the hero showed its bare ground until the first frame came)
+  await expect.poll(() => page.locator('video.direction-hero-video').evaluateAll((videos) => videos.every((node) => (node as HTMLVideoElement).paused))).toBe(true);
+  await expect(page.locator('video[src]')).not.toHaveCount(0);
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator('video.direction-hero-video.is-active')).toHaveCount(1);
   await expect.poll(() => page.locator('video.direction-hero-video.is-active').evaluate(

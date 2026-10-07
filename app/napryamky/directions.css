@@ -80,7 +80,7 @@
 .dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 10.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .dcat-strip span:first-child { color: var(--color-text); }
 @media (prefers-reduced-motion: no-preference) {
-  .dcat-list a.route-service { transition: color .25s ease, background .25s ease, padding .25s ease, box-shadow .25s ease; }
+  .dcat-list a.route-service { transition: color .25s ease; }
 }
 
 /* ---------------------------------------------------------------- 3 · Formats on one drawing */
@@ -140,9 +140,11 @@
 .dstart-stages li[data-state="start"] .dstart-name { color: var(--color-dark-text); }
 .dstart-detail { display: grid; grid-template-columns: minmax(0, .42fr) minmax(0, .58fr); align-items: start; gap: 6px clamp(24px, 4vw, 64px); padding-top: clamp(24px, 3vw, 36px); border-top: 1px solid var(--color-dark-line); }
 .dstart-kicker { grid-column: 1; margin: 0; color: var(--color-dark-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.dstart-stage { grid-column: 1; margin: 0; color: var(--color-dark-text); font: 400 clamp(28px, 2.6vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
+.dstart-stage { grid-column: 1; grid-row: 2; margin: 0; color: var(--color-dark-text); font: 400 clamp(28px, 2.6vw, 40px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
 .dstart-stage b { margin-right: 10px; color: var(--color-accent-on-dark); font-weight: 400; }
 .dstart-what { grid-column: 2; grid-row: 1 / span 2; margin: 0; color: var(--color-dark-text-secondary); font-size: 16px; line-height: 1.7; }
+/* the stages not chosen keep their room (StartTrack) */
+:is(.dstart-stage, .dstart-what):not([data-on]) { visibility: hidden; }
 @keyframes dstart-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes sd-plot { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes sd-fade { from { opacity: 0; } to { opacity: 1; } }
@@ -154,7 +156,7 @@
   :where([data-motion-ready="on"]) .dstart .dstart-token { transition: left 650ms cubic-bezier(.55, 0, .25, 1), opacity 400ms ease 700ms; }
   .dstart-run { transition: left 650ms cubic-bezier(.55, 0, .25, 1), width 650ms cubic-bezier(.55, 0, .25, 1), top 650ms cubic-bezier(.55, 0, .25, 1), height 650ms cubic-bezier(.55, 0, .25, 1); }
   .dstart-node { transition: background-color 300ms ease, border-color 300ms ease, box-shadow 300ms ease; }
-  .dstart-detail { animation: dstart-in 420ms ease both; }
+  .dstart-detail :is(.dstart-stage, .dstart-what)[data-on] { animation: dstart-in 420ms ease both; }
   /* Arriving: the rail and the run draw from the first stage, the nodes light up along them */
   :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) :is(.dstart-rail, .dstart-run) { transform: scaleX(0); }
   :where([data-motion-ready]) .dstart:not([data-motion-state="on"]) .dstart-stages li { opacity: 0; }
@@ -183,7 +185,7 @@
   .dcat-list .dcat-kinds-row li { padding: 6px 9px; font-size: 12.5px; }
   .dstart .dstart-entries { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dstart-detail { grid-template-columns: minmax(0, 1fr); }
-  .dstart-what { grid-column: 1; grid-row: auto; margin-top: 8px; }
+  .dstart-what { grid-column: 1; grid-row: 3; margin-top: 8px; }
 }
 @media (max-width: 760px) {
   .directions-page .directions-subhero-side { margin-top: 22px; }
@@ -192,14 +194,13 @@
   /* Phone rows: number and name across the row (a one-word name such as «Металоконструкції» needs it), then the
      line on the left and the sheet on the right, under the ↗; the kinds stay on the direction's page (the link's name
      never carried them). The sheet spans the last two columns, so it is exactly --dcat-fig wide: 46 % of the list
-     (100vw − 32 px), as a vw formula and not a percentage, so the sheet keeps its size when the row takes its
-     pointer/keyboard padding (12 px, not 26, so the name still fits at 320 px). */
+     (100vw − 32 px), as a vw formula and not a percentage. The row's dark state reaches 12 px past it (--route-bleed,
+     globals.css), inside the 16 px gutter. */
   .dcat-list a.route-service {
     --dcat-fig: clamp(132px, calc(46vw - 15px), 172px);
     grid-template-columns: minmax(0, 1fr) calc(var(--dcat-fig) - 34px) 20px; grid-template-areas: "num num arrow" "title title arrow" "text thumb thumb"; grid-template-rows: auto auto auto;
     gap: 6px 14px; padding-block: 20px;
   }
-  .dcat-list a.route-service:is(:hover, :focus-visible) { padding-inline: 12px; }
   .dcat-list a.route-service > div { display: contents; }
   .dcat-list a.route-service h3 { grid-area: title; }
   .dcat-list a.route-service > div p { grid-area: text; align-self: start; margin-top: 6px; }
@@ -229,9 +230,8 @@
   .dcat-list a.route-service { grid-template-columns: minmax(0, 1fr) 172px 20px; grid-template-areas: "num thumb arrow" "title thumb arrow" "text thumb arrow"; grid-template-rows: auto auto 1fr; }
   .dcat-list .dcat-thumb { margin-top: 0; }
 }
-/* Up to 350 px: a narrower sheet, so the line beside it keeps «Швидкомонтовані» (129 px at 15 px) whole even in the
-   row's padded pointer/keyboard state (the text column is 134 px there at 320). On a 116 px sheet the dimension
-   letters would be about 6 px: they go, with their lines. */
+/* Up to 350 px: a narrower sheet, so the line beside it keeps «Швидкомонтовані» (129 px at 15 px) whole (the text
+   column is 134 px at 320). On a 116 px sheet the dimension letters would be about 6 px: they go, with their lines. */
 @media (max-width: 350px) {
   .dcat-list a.route-service { --dcat-fig: 116px; }
   .cdw :is(.cdw-letter, .dsd-dim) { display: none; }

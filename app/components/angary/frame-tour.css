@@ -41,18 +41,10 @@
 /* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
 .ft .dn-progress span:not(.is-done) { background: color-mix(in srgb, var(--color-text) 20%, transparent); }
 
-/* The title block keeps its geometry through the tour (04.10): the step's cell as wide for «Огляд» as for «Крок 05 / 05»,
-   the control as wide for «Пауза» as for «Відтворити», and «Що показано» holding every caption in one place, so it is
-   as tall as the longest — the cells jumped ~40 px sideways as the tour started and stopped, and the sheet changed
-   height from step to step. «Що показано» never narrows below a readable column (at 1100 px it fell to 34 px and broke
-   a letter a line): «Об’єкт» gives way first, breaking after its «·». «Крок 05 / 05» sets 111.6 px wide here, so the
-   cell keeps a few pixels over it (at 111 the steps outgrew the overview by a pixel on CI's Chromium). */
-.ft-sheet .sheet-stamp > .sheet-cell:first-child { flex: none; min-width: 116px; }
+/* The title block keeps its geometry through the tour (04.10; the rules every tour shares are in direction-node.css).
+   «Що показано» never narrows below a readable column (at 1100 px it fell to 34 px and broke a letter a line): «Об’єкт»
+   gives way first, breaking after its «·». */
 .ft-sheet .sheet-stamp > .sheet-cell-main { flex: 1 1 0; min-width: 150px; }
-.ft-sheet .dn-control-label { min-width: 7.5em; text-align: end; }
-.ft-captions { display: grid; }
-.ft-captions > span { grid-area: 1 / 1; }
-.ft-captions > span:not([data-on]) { visibility: hidden; }
 
 /* The title block's «Об’єкт» with the way back up to the sizes: under the value, so the cell stays one value wide and
    leaves «Що показано» its room; on a narrow sheet in the caption row, where the cell has the width (below) */

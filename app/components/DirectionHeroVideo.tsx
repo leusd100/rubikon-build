@@ -42,7 +42,10 @@ export function DirectionHeroVideo({
     fallbackDelayMs: 450,
     observeKey: sourceKey,
   });
-  const shouldAttachVideo = shouldLoadMedia && isVisible && canUseVideo;
+  // Attached once loaded and kept: out of sight the clips only pause. Taking the source away on the way down and giving it
+  // back on the way up reloaded the clip from its start, and the hero showed its bare ground until the first frame
+  // came (07.10).
+  const shouldAttachVideo = shouldLoadMedia && canUseVideo;
 
   useEffect(() => {
     const preferredMedia = window.matchMedia(videoMediaQuery);
@@ -61,7 +64,7 @@ export function DirectionHeroVideo({
     videos.forEach((video) => {
       if (video) video.playbackRate = playbackRate;
     });
-    const shouldPlay = shouldAttachVideo && !userPaused;
+    const shouldPlay = shouldAttachVideo && isVisible && !userPaused;
     if (!shouldPlay) {
       videos.forEach((video) => video?.pause());
       return;

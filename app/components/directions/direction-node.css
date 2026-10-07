@@ -42,6 +42,24 @@
 .dn-control:hover .dn-control-label { color: var(--color-text); }
 .dn-control:hover .dn-control-icon { border-color: var(--color-accent); }
 
+/* The title block keeps its geometry through the tour (as /angary's frame since 04.10, every tour since 07.10): the
+   step's cell as wide for «Огляд» as for «Крок 05 / 05», the control as wide for «Пауза» as for «Відтворити», and «Що
+   показано» holding every caption in one place, so it is as tall as the longest (TourCaptions). Without it the cells
+   jumped ~40 px sideways each time the tour started or paused — which it does by itself as the sheet scrolls in and out
+   of view — and the picture shrank and grew by a line from step to step. «Крок 05 / 05» sets 111.6 px wide, so the
+   cell keeps a few pixels over it. */
+.dn-sheet .sheet-stamp > .sheet-cell:first-child { flex: none; min-width: 116px; }
+/* (:where — a place that hides the word on a phone, /angary's frame, overrides this whatever order the chunks load in) */
+:where(.sheet-action) .dn-control-label { min-width: 7.5em; text-align: end; }
+/* A narrow sheet (a phone): the control is its round icon alone, its word for a screen reader — as on /angary's frame —
+   so the step, the image cell and the control keep one row whatever the tour does */
+@container sheet (max-width: 480px) {
+  :where(.sheet-action) .dn-control-label { position: absolute; width: 1px; min-width: 0; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+.tour-captions { display: grid; }
+.tour-captions > span { grid-area: 1 / 1; }
+.tour-captions > span:not([data-on]) { visibility: hidden; }
+
 /* Grid areas: copy over steps beside the picture (desktop, either layout); copy → picture → steps on a phone */
 .dn.direction-editorial-grid { grid-template-rows: auto auto; grid-template-areas: "copy media" "steps media"; row-gap: 0; }
 .dn.direction-editorial-grid[data-layout="media-first"] { grid-template-areas: "media copy" "media steps"; }
