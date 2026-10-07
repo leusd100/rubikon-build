@@ -414,13 +414,30 @@ function frameGeometry(domain: HangarDomainModel) {
     ...spanBubbles.map(({ at }) => around(at, BUBBLE + 2)), letterBox(letters.L), letterBox(letters.H),
   ]));
 
+  // the front frame's nodes the configurator's «Каркас» view opens (07.10): the heel over the left column, the ridge,
+  // on a truss a node of the bottom chord near the left quarter and a purlin's node on the right slope, and the right
+  // column's base — placed before the members' names, which keep clear of their markers
+  const bottomNodes = panelXs.slice(1, -1).filter((_, index) => index % 2 === 1);
+  const nearest = (xs: readonly number[], to: number) => xs.reduce((best, x) => (Math.abs(x - to) < Math.abs(best - to) ? x : best));
+  const purlinNode = purlinXs.length > 0 ? nearest(purlinXs, W * 0.7) : null;
+  const nodePoints = {
+    heel: xy([0, 0, E]),
+    ridge: xy([W / 2, 0, R]),
+    web: truss && bottomNodes.length > 0 ? xy([nearest(bottomNodes, W / 4), 0, E]) : null,
+    purlin: truss && purlinNode !== null ? xy([purlinNode, 0, roofZ(purlinNode)]) : null,
+    base: xy([W, 0, 0]),
+  };
+  const nodeBoxes = Object.values(nodePoints).filter((point): point is Pt => point !== null).map((point) => around(point, 16));
+
   const frameFocus = xy([W / 2, 0, E * 0.6]);
   const frameBase = camera(frameFocus, 1.2, frontFrame);
   const roofTagAt = [0.3, 0.22, 0.4].map((t) => xy([W * t, 0, roofZ(W * t)]));
+  // the names keep clear of the nodes' markers only here; the section's own tour had none
+  const frameTaken = [...taken, ...nodeBoxes];
   const frameTags = [
-    placeTag(truss ? 'ферма' : 'ригель рами', roofTagAt.map((from) => ({ from, leaders: [[-24, -30], [-30, -18], [-14, -40], [24, -34]] as Pt[] })), frameBase.view, taken, lines),
+    placeTag(truss ? 'ферма' : 'ригель рами', roofTagAt.map((from) => ({ from, leaders: [[-24, -30], [-30, -18], [-14, -40], [24, -34]] as Pt[] })), frameBase.view, frameTaken, lines),
     // to the left of the right column, inside the frame: to its right the camera's edge cut it on phones (03.10)
-    placeTag('колона', [0.3, 0.5, 0.7].map((t) => ({ from: xy([W, 0, E * t]), leaders: [[-30, 12], [-30, -12], [-24, 26]] as Pt[] })), frameBase.view, taken, lines),
+    placeTag('колона', [0.3, 0.5, 0.7].map((t) => ({ from: xy([W, 0, E * t]), leaders: [[-30, 12], [-30, -12], [-24, 26]] as Pt[] })), frameBase.view, frameTaken, lines),
   ];
   const frameCamera = camera(frameFocus, 1.2, union([frontFrame, ...frameTags.map((tag) => tag.box)]));
 
@@ -457,9 +474,6 @@ function frameGeometry(domain: HangarDomainModel) {
     ...braceBases.map(([x, d]) => around(down([x, d, -1.1], 6), 18, 6)),
   ]));
 
-  // the web's nodes on the bottom chord: the even panel points between the heels (see roofAt)
-  const bottomNodes = panelXs.slice(1, -1).filter((_, index) => index % 2 === 1);
-  const nearest = (xs: readonly number[], to: number) => xs.reduce((best, x) => (Math.abs(x - to) < Math.abs(best - to) ? x : best));
   return {
     W, lengthM, E, truss, centre,
     slab, footings: footings.map((footing) => footing.d), backFrames, longitudinals, farEnd, purlins, girts, posts, openingOutlines,
@@ -471,16 +485,7 @@ function frameGeometry(domain: HangarDomainModel) {
     snowGround: groundUnder(columnXs.map((x) => [x, s, -1.1] as P3)), snowFlow,
     windArrows, endWall, braceFootings, windGround: groundUnder(braceBases.map(([x, d]) => [x, d, -1.1] as P3)), windFlow, ghost,
     tags: { frame: frameTags, bays: baysTags },
-    // the front frame's nodes the configurator's «Каркас» view opens (07.10): the heel over the left column, the ridge,
-    // on a truss a node of the bottom chord and a purlin's node on the top chord, and the right column's base
-    nodePoints: {
-      heel: xy([0, 0, E]),
-      ridge: xy([W / 2, 0, R]),
-      // spread along the frame: a bottom-chord node near the left quarter, a purlin's node on the right slope
-      web: truss && bottomNodes.length > 0 ? xy([nearest(bottomNodes, W / 4), 0, E]) : null,
-      purlin: truss && purlinXs.length > 0 ? xy([nearest(purlinXs, W * 0.7), 0, roofZ(nearest(purlinXs, W * 0.7))]) : null,
-      base: xy([W, 0, 0]),
-    },
+    nodePoints,
     cameras: { span: shot(spanCamera), frame: shot(frameCamera), bays: shot(baysCamera), wind: shot(windCamera) },
   };
 }
@@ -717,10 +722,14 @@ export function FrameTourStage({
                   drawing are the way for the keyboard and a screen reader */}
                 {nodes && (
                   <g className="ft-nodes" aria-hidden="true">
-                    {nodes.map((item) => (
+                    {nodes.map((item, index) => (
                       <g key={item.id} className="ft-node" data-on={node === item.id || undefined} onClick={() => onNode?.(item.id)}>
                         <circle className="ft-node-hit" cx={n(item.at[0])} cy={n(item.at[1])} r={20} />
-                        <circle className="ft-node-ring" cx={n(item.at[0])} cy={n(item.at[1])} r={8} />
+                        {/* numbered as the buttons under the drawing are */}
+                        <g className="ft-node-mark" style={{ transformOrigin: `${n(item.at[0])}px ${n(item.at[1])}px` }}>
+                          <circle className="ft-node-ring" cx={n(item.at[0])} cy={n(item.at[1])} r={9} />
+                          <text className="ft-node-number" x={n(item.at[0])} y={n(item.at[1] + 3.6)}>{index + 1}</text>
+                        </g>
                       </g>
                     ))}
                   </g>

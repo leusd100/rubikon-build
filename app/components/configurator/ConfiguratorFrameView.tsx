@@ -95,7 +95,7 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
         {step === 2 && (
           <div className="hc-frame-nodes" role="group" aria-label="Вузли">
             <span aria-hidden="true">Вузли:</span>
-            {nodes.map((item) => (
+            {nodes.map((item, index) => (
               <button
                 key={item.id}
                 type="button"
@@ -103,6 +103,7 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
                 aria-pressed={node?.id === item.id}
                 onClick={() => openNode(item.id)}
               >
+                <span className="hc-frame-node-number" aria-hidden="true">{index + 1}</span>
                 {item.title}
               </button>
             ))}
