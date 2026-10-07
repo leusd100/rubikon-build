@@ -29,7 +29,7 @@ export function DirectionsHeroImageSequence() {
   // every loop.
   const [maxUnlockedIndex, setMaxUnlockedIndex] = useState(1);
   const firstImageRef = useRef<HTMLImageElement>(null);
-  const { shouldLoadMedia } = useDeferredMedia(firstImageRef, {
+  const { isVisible, shouldLoadMedia } = useDeferredMedia(firstImageRef, {
     observeKey: 'directions-static-hero-sequence',
   });
   // The slides change on their own, so they can be paused (the same round control as the hero videos); the active
@@ -38,7 +38,9 @@ export function DirectionsHeroImageSequence() {
   const [resumes, setResumes] = useState(0);
 
   useEffect(() => {
-    if (!shouldLoadMedia || paused) return;
+    // Out of sight the slides wait (07.10): every 6 s the sequence re-rendered, cross-faded two full-screen pictures and
+    // decoded the next one while the visitor read the page far below
+    if (!shouldLoadMedia || paused || !isVisible) return;
 
     const timer = window.setInterval(() => {
       setActiveIndex((current) => {
@@ -49,7 +51,7 @@ export function DirectionsHeroImageSequence() {
     }, CLIP_DURATION_MS);
 
     return () => window.clearInterval(timer);
-  }, [shouldLoadMedia, paused]);
+  }, [shouldLoadMedia, paused, isVisible]);
 
   const visibleIndex = shouldLoadMedia ? activeIndex : 0;
   const count = directionsHeroSequenceAssets.length;
@@ -92,7 +94,8 @@ export function DirectionsHeroImageSequence() {
             <span className="dhs-bars">
               {directionsHeroSequenceAssets.map((asset, index) => (
                 <i key={asset.fallbackSrc} className={index < visibleIndex ? 'is-done' : undefined}>
-                  {index === visibleIndex && <b key={`${visibleIndex}-${resumes}`} />}
+                  {/* restarts with the slide, a resume and a return into view — so it fills with the slide's own time */}
+                  {index === visibleIndex && <b key={`${visibleIndex}-${resumes}-${isVisible}`} />}
                 </i>
               ))}
             </span>
