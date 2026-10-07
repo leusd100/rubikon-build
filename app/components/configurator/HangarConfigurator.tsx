@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
+import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
 import { ConfiguratorControls } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
@@ -121,6 +122,8 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
   // /angary's drawing sheet names the object as the frame drawing does: the example until the visitor makes it theirs
   const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
   const presentationDemo = sharedInquiry?.presentationDemo;
+  // The open step: the controls show it, the drawing follows it (the frame on «Каркас», 07.10). The sizes first.
+  const [step, setStep] = useState(0);
 
   return (
     <section
@@ -140,16 +143,17 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         )}
         <p className="hc-lede">
           {embedded
-            ? 'Три кроки: габарити, стіни й ворота, обсяг робіт — креслення змінюється з кожним вибором. У виді «Каркас» — як він тримає сніг і вітер. Технічне рішення уточнимо разом.'
+            ? 'Чотири кроки: габарити, стіни й ворота, каркас, обсяг робіт. Креслення змінюється з кожним вибором, технічне рішення уточнимо разом.'
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
       </header>
 
       <div className="hc-layout" ref={layoutRef}>
-        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} foundationChoice={!embedded} />
+        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} step={step} onStep={setStep} foundationChoice={!embedded} />
         <div className="hc-preview-pane" id="hangar-live-preview">
           <HangarPreviewModes
             domain={previewDomain}
+            frame={CONTROL_STEPS[step].id === 'frame'}
             presentationDemo={presentationDemo}
             presentationAnnouncement={sharedInquiry?.presentationAnnouncement}
             onEndPresentationDemo={sharedInquiry?.endPresentationDemo}

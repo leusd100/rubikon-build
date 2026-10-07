@@ -36,7 +36,7 @@
    number in copper. */
 .hc-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border-bottom: 1px solid var(--color-border);
 }
 .hc-step-tab {
@@ -172,3 +172,48 @@
 /* «До зведення ↓» lands on the stamp clear of the header, like a section's own anchor (globals.css section[id]) */
 #hc-stamp { scroll-margin-top: 116px; }
 @media (max-width: 760px) { #hc-stamp { scroll-margin-top: 93px; } }
+
+/* ── «Каркас»: what to show of the frame (07.10, ConfiguratorFrameView through #hc-frame-panel) ───────────────────────
+   A list of five, like any other step's choices; the shown one's words under it, and on the frame its nodes, numbered
+   as on the drawing. The play control last and quiet: nothing plays by itself. */
+.hc-frame-panel { padding: 22px 22px 8px; }
+.hc-frame-panel:empty { display: none; }
+.hc-frame-list { display: grid; gap: 6px; }
+.hc-frame-item {
+  display: flex; align-items: center; min-height: 46px; padding: 0 16px; border: 1px solid var(--color-border-control); border-radius: 0;
+  background: var(--color-bg); color: var(--color-text); font: 600 15px/1.2 var(--font-manrope), sans-serif; text-align: left; cursor: pointer;
+}
+.hc-frame-item:hover { border-color: var(--color-text-secondary); }
+.hc-frame-item[aria-pressed='true'] { border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
+.hc-frame-item:focus-visible, .hc-frame-node:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.hc-frame-text { min-height: 4.6em; margin: 16px 0 0; color: var(--color-text-secondary); font: 500 14px/1.55 var(--font-manrope), sans-serif; }
+.hc-frame-nodes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.hc-frame-node {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px 0 8px; border: 1px solid var(--color-border-control); border-radius: 0;
+  background: transparent; color: var(--color-text); font: 600 13px/1 var(--font-manrope), sans-serif; cursor: pointer;
+}
+.hc-frame-node:hover { border-color: var(--color-accent); }
+.hc-frame-node[aria-pressed='true'] { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-bg); }
+.hc-frame-node-number {
+  display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 8px; border: 1px solid var(--color-accent);
+  border-radius: 50%; color: var(--color-accent-strong); font: 700 11px/1 var(--font-condensed), sans-serif;
+}
+.hc-frame-node[aria-pressed='true'] .hc-frame-node-number { border-color: currentColor; color: inherit; }
+.hc-frame-play { display: flex; align-items: center; gap: 10px; margin-top: 18px; color: var(--color-text-secondary); font: 500 14px/1.2 var(--font-manrope), sans-serif; }
+.hc-frame-play .dn-control-label { position: absolute; width: 1px; min-width: 0; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ── Quiet type (07.10) ───────────────────────────────────────────────────────────────────────────────────────────────
+   Capitals stay in the drawing's title block, where a drawing has them; in the controls the words are set as words —
+   25 to 29 capitalised labels spoke at once. A step with one group needs no heading of its own: the tab names it. */
+.hc-step-title { font: 700 14px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+.hc-control-group h3 { font: 700 15px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+.hc-step-panel > .hc-control-group:only-of-type > h3 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.hc-step-back, .hc-step-next { font: 700 15px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+.hc-step-back { font-size: 18px; }
+@media (max-width: 760px) {
+  .hc-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .hc-step-title { font-size: 12.5px; }
+  .hc-step-value { display: none; }
+  .hc-step-tab { min-height: 64px; padding: 10px 8px; }
+  .hc-frame-panel { padding: 20px 20px 4px; }
+}

@@ -1,22 +1,24 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { FRAME_TOUR_DURATIONS, FrameTourStage, frameNodes, useFrameTourModel } from '../angary/FrameTour';
 import { TourControl } from '../directions/TourParts';
 import { useDrawingTour } from '../useDrawingTour';
 
-// The configurator's «Каркас» view (07.10): the frame drawing that was its own section under the configurator —
-// «Каркас вашого ангара — від покрівлі до основи» — now on the configurator's own sheet, so the visitor sees the frame
-// of the hangar they are setting up without leaving it. The same five steps (span, frame, purlins and bracing, snow,
-// wind), the same one automatic tour, which starts when the view is opened; on the frame's step the front frame's nodes
-// open one by one — the camera pushes in on the node and the strip under the drawing says what it does.
-
-const pad = (value: number) => String(value).padStart(2, '0');
+// The configurator's «Каркас» step (07.10): the frame drawing that was its own section under the configurator —
+// «Каркас вашого ангара — від покрівлі до основи» — on the configurator's own sheet, so the visitor sees the frame of
+// the hangar they are setting up without leaving it.
+//
+// The drawing is the picture only. What to show of it — the span, the frame, purlins and bracing, snow, wind, and on
+// the frame its nodes — is chosen in the step's own panel beside it (a portal into #hc-frame-panel, ConfiguratorControls),
+// like every other step's choices: one way round the block, the controls on the left and the picture on the right.
+// Nothing plays by itself — the visitor came to set up a hangar, not to watch; «Показати по черзі» plays the five once.
 
 export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (caption: string) => void }>) {
   const { g, summary, steps, captions } = useFrameTourModel();
   const nodes = useMemo(() => frameNodes(g), [g]);
-  const tour = useDrawingTour(steps.length, { loops: 1, durations: FRAME_TOUR_DURATIONS });
+  const tour = useDrawingTour(steps.length, { loops: 0, durations: FRAME_TOUR_DURATIONS });
   const { visualRef, step, touring, run, size, motion, stepMs, choose, toggle } = tour;
   const [nodeId, setNodeId] = useState<string | null>(null);
   // A node belongs to the frame's step: the tour moving on, or another step chosen, closes it
@@ -26,6 +28,10 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
   const caption = node ? `${node.title} · схема` : captions[step];
   useEffect(() => onCaption(caption), [caption, onCaption]);
 
+  // The step's panel: the controls render it with every step, so it is on the page before this view opens (never on the
+  // server: the sizes' step is the first)
+  const [panel] = useState(() => (typeof document === 'undefined' ? null : document.getElementById('hc-frame-panel')));
+
   function openNode(id: string) {
     choose(2);
     setNodeId((current) => (current === id ? null : id));
@@ -33,20 +39,11 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
 
   function chooseStep(index: number) {
     setNodeId(null);
-    choose(index);
+    // the shown item pressed again goes back to the whole frame
+    choose(step === index ? 0 : index);
   }
 
-  // On a phone the steps are one row that scrolls sideways: the step on show, chosen or reached by the tour, is brought
-  // into it (07.10)
-  const stepsRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const row = stepsRef.current;
-    const chip = row?.querySelector<HTMLElement>(`[data-index="${step}"]`);
-    if (!row || !chip || row.scrollWidth <= row.clientWidth) return;
-    row.scrollTo({ left: chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2, behavior: 'smooth' });
-  }, [step]);
-
-  let text = 'Каркас вашого ангара крок за кроком: проліт, ферма, прогони й в’язі, а потім як сніг і вітер проходять крізь нього до основи. Оберіть крок.';
+  let text = 'Оберіть, що показати на кресленні вашого каркаса.';
   if (node) text = node.text;
   else if (step) text = steps[step - 1].text;
 
@@ -71,45 +68,47 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
         node={node?.id ?? null}
         onNode={openNode}
       />
-      <div className="hc-frame-bar">
-        <div className="hc-frame-steps" role="group" aria-label="Кроки схеми каркаса" ref={stepsRef}>
-          {steps.map((item, index) => (
-            <button
-              key={item.title}
-              type="button"
-              className="hc-frame-step"
-              data-index={index + 1}
-              aria-pressed={step === index + 1}
-              onClick={() => chooseStep(index + 1)}
-            >
-              <span aria-hidden="true">{pad(index + 1)}</span> {item.title}
-            </button>
-          ))}
-        </div>
-        {motion && <TourControl touring={touring} toggle={toggle} what="каркаса" />}
-      </div>
-      {/* The step's words, and on the frame's step its nodes: one slot as tall as the longest text, so nothing under the
-          sheet moves from step to step */}
-      <div className="hc-frame-text">
-        <p aria-live="polite">{text}</p>
-        {step === 2 && (
-          <div className="hc-frame-nodes" role="group" aria-label="Вузли">
-            <span aria-hidden="true">Вузли:</span>
-            {nodes.map((item, index) => (
+      {panel && createPortal(
+        <>
+          <div className="hc-frame-list" role="group" aria-label="Що показати">
+            {steps.map((item, index) => (
               <button
-                key={item.id}
+                key={item.title}
                 type="button"
-                className="hc-frame-node"
-                aria-pressed={node?.id === item.id}
-                onClick={() => openNode(item.id)}
+                className="hc-frame-item"
+                aria-pressed={step === index + 1}
+                onClick={() => chooseStep(index + 1)}
               >
-                <span className="hc-frame-node-number" aria-hidden="true">{index + 1}</span>
                 {item.title}
               </button>
             ))}
           </div>
-        )}
-      </div>
+          <p className="hc-frame-text" aria-live="polite">{text}</p>
+          {step === 2 && (
+            <div className="hc-frame-nodes" role="group" aria-label="Вузли ферми">
+              {nodes.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="hc-frame-node"
+                  aria-pressed={node?.id === item.id}
+                  onClick={() => openNode(item.id)}
+                >
+                  <span className="hc-frame-node-number" aria-hidden="true">{index + 1}</span>
+                  {item.title}
+                </button>
+              ))}
+            </div>
+          )}
+          {motion && (
+            <div className="hc-frame-play">
+              <TourControl touring={touring} toggle={toggle} what="каркаса" />
+              <span aria-hidden="true">{touring ? 'Показуємо по черзі' : 'Показати по черзі'}</span>
+            </div>
+          )}
+        </>,
+        panel,
+      )}
     </div>
   );
 }

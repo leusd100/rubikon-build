@@ -242,36 +242,16 @@
 }
 
 /* ── «Каркас» (07.10, ConfiguratorFrameView.tsx) ──────────────────────────────────────────────────────────────────────
-   The frame tour's picture on the configurator's sheet: the legend's band, the camera's window in the drawing's own
-   proportion, then a bar of the five steps with the round control, and the step's words (with the frame's nodes on its
-   step) in one slot as tall as the longest. The drawing follows the theme here, as it did in its own section. */
+   The frame tour's picture on the configurator's sheet: the legend's band and the camera's window in the drawing's own
+   proportion, nothing under it — what to show is chosen in the step's panel beside it (configurator-controls.css). The
+   drawing follows the theme, as it did in its own section. */
 .hangar-configurator-embedded .hc-preview-sheet .sheet-image.hc-frame-image { display: flex; flex-direction: column; background: var(--color-surface-alt); }
 .hc-frame { display: flex; flex-direction: column; min-height: 0; padding-top: 25px; }
 .hc-frame .ft-window { width: 100%; }
-.hc-frame-bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px 0; border-top: 1px solid var(--color-border); }
-.hc-frame-steps { display: flex; flex: 1; flex-wrap: wrap; gap: 6px; }
-.hc-frame-step, .hc-frame-node {
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--color-border-control);
-  border-radius: 0;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font: 600 12px/1 var(--font-condensed), sans-serif;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-.hc-frame-step span { color: var(--color-text-muted); }
-.hc-frame-step:hover, .hc-frame-node:hover { color: var(--color-text); border-color: var(--color-text-secondary); }
-.hc-frame-step[aria-pressed='true'], .hc-frame-node[aria-pressed='true'] { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-bg); }
-.hc-frame-step[aria-pressed='true'] span { color: inherit; }
-.hc-frame-step:focus-visible, .hc-frame-node:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
-.hc-frame-text { padding: 10px 14px 14px; color: var(--color-text-secondary); font: 500 14px/1.5 var(--font-manrope), sans-serif; }
-.hc-frame-text p { min-height: 4.5em; margin: 0; }
-.hc-frame-nodes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
-.hc-frame-nodes > span { margin-right: 4px; color: var(--color-text-muted); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-.hc-frame-node { text-transform: none; font: 600 13px/1 var(--font-manrope), sans-serif; letter-spacing: 0; }
+/* One numbering on the screen (07.10): the steps' and the nodes'. The drawing's axes — А, Б, В across and 1–4 along —
+   are a drafter's; they are shown only on «Проліт», whose words name А and Б. */
+.hc-frame [data-part="3"] :is(.ft-bubble, .ft-axis) { display: none; }
+.hc-frame:not([data-step="1"]) [data-part="1"] :is(.ft-bubble, .ft-axis) { display: none; }
 
 /* The nodes on the drawing: numbered copper bubbles on the frame's step, as the buttons under it are numbered; the one
    on show filled. The push-in on a node is the camera's (stageTransform). */
@@ -307,20 +287,17 @@
   .hc-frame { --ft-k: 1.55; --ft-t: 1.5; padding-top: 22px; }
   .hc-frame .ft-legend { padding-inline: 8px; }
   .hc-frame .ft-chain { font-size: 12px; }
-  /* the five steps in one row that scrolls sideways, the control beside it as its icon alone */
-  .hc-frame-bar { padding-inline: 8px; }
-  .hc-frame-steps { flex-wrap: nowrap; min-width: 0; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
-  .hc-frame-steps::-webkit-scrollbar { display: none; }
-  .hc-frame-step { flex: none; padding: 0 8px; font-size: 11px; white-space: nowrap; }
-  .hc-frame-bar .dn-control-label { position: absolute; width: 1px; min-width: 0; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .hc-frame-text { font-size: 13px; }
   .hc-frame-image .dn-progress { right: 146px; left: 10px; }
 }
 
 @media (max-width: 760px) {
   /* the mini drawing under the header: the frame's window alone, as high as the general view's */
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame { padding-top: 0; }
-  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame :is(.ft-legend, .hc-frame-bar, .hc-frame-text, .dn-progress) { display: none; }
-  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame .ft-window { aspect-ratio: auto; height: var(--hc-sheet-h); }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame :is(.ft-legend, .dn-progress) { display: none; }
+  /* the frame is chosen from under it: held a little taller than the general view, so a node pushed in on still reads */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame .ft-window { aspect-ratio: auto; height: max(50vw, 180px); }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-sheet-tools { display: none; }
 }
+
+/* The 3D chip in words, not capitals (07.10) */
+.hc-sheet-chip.hc-sheet-three { font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }

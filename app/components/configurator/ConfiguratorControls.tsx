@@ -4,10 +4,8 @@ import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent, typ
 import {
   CONTROL_GROUP_TITLES,
   CONTROL_STEPS,
-  describeControlSteps,
   stepOfGroup,
   type ControlGroupId,
-  type ControlStepId,
 } from '../../lib/configurator/controlGroups';
 import { NBSP, formatRoofSlope, formatSize } from '../../lib/configurator/deriveSummary';
 import { deriveDomainModel, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../lib/configurator/domainModel';
@@ -60,12 +58,14 @@ import {
   type GateType,
   type GatesCount,
 } from '../../lib/configurator/types';
-import { ConfiguratorWhy } from './ConfiguratorWhy';
 import './configurator-controls.css';
 
 type Props = {
   state: ConfiguratorState;
   onChange: (next: ConfiguratorState) => void;
+  /** The open step (CONTROL_STEPS), held by HangarConfigurator: the drawing follows it — the frame on «Каркас» */
+  step: number;
+  onStep: (step: number) => void;
   /** The foundation type is offered on the research screen only. On /angary the visitor does not choose it: the
    *  designer decides it from the site and the loads (owner, 03.10), so the brief stays «Визначити після розрахунку». */
   foundationChoice?: boolean;
@@ -205,7 +205,8 @@ function NumericField({
 
 /* ── Three steps (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────
    The groups are walked as three steps (CONTROL_STEPS): «Габарити», «Стіни й ворота», «Обсяг і задача», one open at a time
-   on every width. The tabs say what is set in each step, so a closed one never has to be opened to be known. They replace
+   on every width (a fourth, «Каркас», since 07.10). The tabs carry the steps' names only: in four narrow tabs the values
+   were cut to «24 × 60 ×…», and the sizes are in the drawing's title block anyway. They replace
    the phone accordion (03.10), which opened on «Об’єкт» — four questions the drawing does not answer — and left the
    sizes, the part that moves the drawing, folded. */
 
@@ -251,9 +252,8 @@ function ControlGroup({ id, children }: Readonly<{ id: ControlGroupId; children:
 
 function StepTabs({
   step,
-  values,
   onSelect,
-}: Readonly<{ step: number; values: Record<ControlStepId, string>; onSelect: (index: number, focus?: boolean) => void }>) {
+}: Readonly<{ step: number; onSelect: (index: number, focus?: boolean) => void }>) {
   // Arrow keys move between the tabs (the tabs pattern): one stop in the tab order, the open step's tab
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const last = CONTROL_STEPS.length - 1;
@@ -280,7 +280,6 @@ function StepTabs({
         >
           <span className="hc-step-number" aria-hidden="true">{index + 1}</span>
           <span className="hc-step-title">{item.title}</span>
-          <span className="hc-step-value">{values[item.id]}</span>
         </button>
       ))}
     </div>
@@ -306,13 +305,10 @@ const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
   height: 'Висота стін',
 };
 
-export function ConfiguratorControls({ state, onChange, foundationChoice = true }: Readonly<Props>) {
-  // The sizes first: the step the drawing answers at once
-  const [step, setStep] = useState(0);
+export function ConfiguratorControls({ state, onChange, step, onStep: setStep, foundationChoice = true }: Readonly<Props>) {
   const tabsRef = useRef<HTMLDivElement>(null);
   // The same resolved model the summary reads, so a folded header and the ridge hint never disagree with the stamp
   const domain = useMemo(() => deriveDomainModel(state), [state]);
-  const stepValues = describeControlSteps(domain);
   // The ridge's legal range depends on the CURRENT width and eave height, so it is recomputed on every render rather
   // than read from a static table. The value shown is the resolved one: the span rule's until the visitor edits it.
   const ridgeRange = ridgeHeightRangeM(state.dimensions.width, state.dimensions.height);
@@ -346,7 +342,7 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
     };
     document.addEventListener('click', openFromLink);
     return () => document.removeEventListener('click', openFromLink);
-  }, []);
+  }, [setStep]);
 
   /** Opens a step. From the buttons under a step the visitor is below the tabs: bring them back into view. */
   function selectStep(index: number, focus = false, land = false) {
@@ -529,7 +525,6 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
             ))}
           </div>
         </div>
-        <ConfiguratorWhy topic="object" />
       </ControlGroup>
     ),
     dimensions: (
@@ -586,7 +581,6 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
             Контур описує стіни та покрівлю — увімкніть їх в «Обсязі заявки», щоб обрати.
           </p>
         )}
-        <ConfiguratorWhy topic="contour" />
       </ControlGroup>
     ),
     cladding: (
@@ -635,7 +629,6 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
             <p className="hc-field-note">Покрівля не входить в обсяг заявки.</p>
           )}
         </div>
-        <ConfiguratorWhy topic="cladding" />
       </ControlGroup>
     ),
     // The foundation type is offered on the research screen only (see Props.foundationChoice)
@@ -663,7 +656,6 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
         <p className="hc-field-note">
           Тут можна вказати попереднє побажання: тип фундаменту визначає проєктувальник за даними майданчика й навантаженнями.
         </p>
-        <ConfiguratorWhy topic="foundation" />
       </ControlGroup>
     ) : null,
     // "Обсяг заявки" is the master fact for everything else. A cladding system, a colour or an opening for a surface the
@@ -792,7 +784,6 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
         </div>
 
         {heldNote && <p className="hc-field-note hc-field-note-warning">{heldNote}</p>}
-        <ConfiguratorWhy topic="openings" />
       </ControlGroup>
     ),
   };
@@ -800,7 +791,7 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
   return (
     <div className="hc-controls" data-steps="">
       <div ref={tabsRef}>
-        <StepTabs step={step} values={stepValues} onSelect={selectStep} />
+        <StepTabs step={step} onSelect={selectStep} />
       </div>
       {CONTROL_STEPS.map((item, index) => {
         const previous = CONTROL_STEPS[index - 1];
@@ -815,6 +806,8 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
             hidden={step !== index}
           >
             {item.groups.map((group) => <Fragment key={group}>{groups[group]}</Fragment>)}
+            {/* «Каркас»: what to show of the frame — filled by the drawing's own frame view (ConfiguratorFrameView) */}
+            {item.id === 'frame' && <div className="hc-frame-panel" id="hc-frame-panel" />}
             <div className="hc-step-nav">
               {previous && (
                 // the arrow alone, so the next step's button keeps the row beside it; named for what it opens

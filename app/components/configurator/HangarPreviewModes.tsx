@@ -95,21 +95,6 @@ function ModeSwitch({
   );
 }
 
-/** /angary's drawing sheet (07.10): two views of the drawing — the whole building and its frame — in the title block; 3D is
- *  a secondary look from a chip on the picture (SheetThreeChip), so neither of these is pressed while it is on */
-function SheetViewSwitch({ mode, onSelect }: Readonly<{ mode: Mode; onSelect: (mode: Mode) => void }>) {
-  return (
-    <span className="hc-mode-switch" role="group" aria-label="Вид креслення">
-      <button type="button" aria-pressed={mode === 'technical'} className={mode === 'technical' ? 'is-active' : undefined} onClick={() => onSelect('technical')}>
-        Загальний
-      </button>
-      <button type="button" aria-pressed={mode === 'frame'} className={mode === 'frame' ? 'is-active' : undefined} onClick={() => onSelect('frame')}>
-        Каркас
-      </button>
-    </span>
-  );
-}
-
 function ThreeLoading() {
   // Occupies the canvas slot exactly, so switching modes never shifts the surrounding layout.
   return (
@@ -149,8 +134,11 @@ export function HangarPreviewModes({
   presentationAnnouncement,
   onEndPresentationDemo,
   sheet,
+  frame = false,
 }: {
   domain: HangarDomainModel;
+  /** The configurator's «Каркас» step is open (07.10): the sheet shows the frame (ConfiguratorFrameView) */
+  frame?: boolean;
   presentationDemo?: HangarPresentationDemo | null;
   presentationAnnouncement?: string;
   onEndPresentationDemo?: () => void;
@@ -158,7 +146,9 @@ export function HangarPreviewModes({
    *  switch, a dark image field in both themes (configurator-sheet.css). /configurator-preview keeps its card. */
   sheet?: PreviewSheet;
 }) {
-  const [mode, setMode] = useState<Mode>('technical');
+  // 3D is opened over one view and goes when the step changes the view (07.10): it remembers the view it was opened on
+  const view2d: Mode = frame && sheet ? 'frame' : 'technical';
+  const [threeOver, setThreeOver] = useState<Mode | null>(null);
   const descriptionId = useId();
   const [threeFailed, setThreeFailed] = useState(false);
   const webgl = useWebglSupport();
@@ -177,7 +167,6 @@ export function HangarPreviewModes({
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
   const modeSwitchAnchorRef = useRef<HTMLDivElement>(null);
-  const sheetViewRef = useRef<HTMLSpanElement>(null);
   const drawingRef = useRef<HTMLDivElement>(null);
   const released = useFirstViewBuildUp(drawingRef, Boolean(sheet), sheet?.untouched ?? false);
   // The phone's mini drawing reads its sizes in the title block, not off the drawing (configurator-sheet.css)
@@ -192,24 +181,24 @@ export function HangarPreviewModes({
 
   const handleThreeError = useCallback(() => {
     setThreeFailed(true);
-    setMode('technical');
+    setThreeOver(null);
     setIsFullscreen(false);
   }, []);
 
   // Derived, not stored-and-corrected: if 3D is unavailable (probe says no, or the renderer threw)
   // the technical view is simply what "3D mode" resolves to, so there is no window in which an
   // empty frame is on screen waiting for an effect to fix the state.
-  const effectiveMode: Mode = mode === 'three' && !threeAvailable ? 'technical' : mode;
+  const effectiveMode: Mode = threeOver === view2d && threeAvailable ? 'three' : view2d;
   const showThree = effectiveMode === 'three';
 
   const exitFullscreen = useCallback(() => setIsFullscreen(false), []);
   const selectMode = useCallback((next: Mode) => {
-    setMode(next);
-  }, []);
+    setThreeOver(next === 'three' ? view2d : null);
+  }, [view2d]);
   const handleEndPresentationDemo = useCallback(() => {
     onEndPresentationDemo?.();
     if (!isFullscreen) {
-      const anchor = sheetViewRef.current ?? modeSwitchAnchorRef.current;
+      const anchor = modeSwitchAnchorRef.current;
       requestAnimationFrame(() => anchor?.querySelector<HTMLButtonElement>('button')?.focus());
     }
   }, [isFullscreen, onEndPresentationDemo]);
@@ -385,12 +374,6 @@ export function HangarPreviewModes({
           imageClassName={`hc-preview-image${effectiveMode === 'frame' ? ' hc-frame-image' : ''}`}
           imageRef={drawingRef}
           cells={sheetCells}
-          action={(
-            <span className="hc-sheet-view" ref={sheetViewRef}>
-              <small aria-hidden="true">Вид</small>
-              <SheetViewSwitch mode={effectiveMode} onSelect={selectMode} />
-            </span>
-          )}
         >
           {view}
           {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) */}
@@ -399,7 +382,7 @@ export function HangarPreviewModes({
           {!showThree && threeAvailable && (
             <div className="hc-sheet-tools">
               <button type="button" className="hc-sheet-chip hc-sheet-three" onClick={() => selectMode('three')}>
-                Подивитись у 3D
+                Подивитися в 3D
               </button>
             </div>
           )}
