@@ -5,7 +5,8 @@ import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { NBSP, deriveSummary } from '../../lib/configurator/deriveSummary';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import { deriveBayLayout, ridgeHeightM, trussPanelNodesM } from '../../lib/configurator/parametricModel';
-import { DEFAULT_CONFIGURATOR_STATE, type ConfirmedTopic } from '../../lib/configurator/types';
+import { objectProfileLine } from '../../lib/configurator/objectProfile';
+import { DEFAULT_CONFIGURATOR_STATE, INTERNAL_SUPPORTS_LABELS, type ConfirmedTopic } from '../../lib/configurator/types';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 
@@ -140,8 +141,10 @@ export function ConfiguratorSummary({
   // «Ви обрали» once the visitor answered anything; until then the stamp is the example's. Each value the visitor left
   // as it was says so beside its name (07.10: changing the width alone made every default «their» choice)
   const chosen = (topic: ConfirmedTopic): Status | undefined => (domain.confirmed.includes(topic) ? undefined : 'example');
-  const example = domain.confirmed.length === 0 && (inquiry ? sameDrawnHangar(inquiry.state, DEFAULT_CONFIGURATOR_STATE) : true);
+  const example = domain.confirmed.length === 0 && !domain.sizesUnknown && (inquiry ? sameDrawnHangar(inquiry.state, DEFAULT_CONFIGURATOR_STATE) : true);
   const dimensionsWithoutUnit = summary.dimensionsLabel.replace(/\s+м$/, '');
+  const taskLine = objectProfileLine(domain.objectProfile);
+  const taskAnswered = taskLine !== objectProfileLine(DEFAULT_CONFIGURATOR_STATE.objectProfile) ? taskLine : null;
   const dimensionsRef = useChangeMark<HTMLParagraphElement>(`${summary.dimensionsLabel} ${summary.ridgeHeightLabel}`);
 
   if (!showInquiryAction) {
@@ -204,7 +207,8 @@ export function ConfiguratorSummary({
       <div className="hc-summary-grid">
         <div className="hc-summary-selected">
           <h3 className="hc-summary-title">{example ? 'Приклад конфігурації' : 'Ви обрали'}</h3>
-          {!example && !domain.confirmed.includes('dimensions') && <p className="hc-summary-dimensions-status"><StatusTag status="example" /></p>}
+          {domain.sizesUnknown && <p className="hc-summary-dimensions-status"><span className="hc-fact-status">орієнтовно · уточнюємо</span></p>}
+          {!example && !domain.sizesUnknown && !domain.confirmed.includes('dimensions') && <p className="hc-summary-dimensions-status"><StatusTag status="example" /></p>}
           <p className="hc-summary-dimensions" ref={dimensionsRef}>
             {dimensionsWithoutUnit}<span className="hc-summary-dimensions-unit">{NBSP}м</span>
           </p>
@@ -223,7 +227,12 @@ export function ConfiguratorSummary({
           {summary.doorsLabel !== null && <Fact label="Двері" value={summary.doorsLabel} status={example ? undefined : chosen('openings')} />}
           {/* «Об’єкт» (03.10): only once a purpose is chosen, last, so an unanswered question does not grow the stamp on a
               phone (styles: configurator-controls.css) */}
-          {summary.objectProfile.purpose !== null && <Fact label="Призначення" value={summary.objectProfile.purpose} purpose />}
+          {/* The task as answered (07.10: purpose, region, project, lifting — the stamp showed the purpose alone), and the
+              columns inside once answered */}
+          {taskAnswered && <Fact label="Задача" value={taskAnswered} purpose />}
+          {domain.internalSupports !== 'unknown' && (
+            <Fact label="Колони всередині" value={INTERNAL_SUPPORTS_LABELS[domain.internalSupports]} />
+          )}
         </dl>
         <div className="hc-summary-handoff">
           <a

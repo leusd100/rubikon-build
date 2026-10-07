@@ -16,6 +16,8 @@ import {
   FOUNDATION_TYPE_ORDER,
   GATES_OPTIONS,
   GATE_TYPE_ORDER,
+  INTERNAL_SUPPORTS_ORDER,
+  SCOPE_MODE_ORDER,
   SCOPE_ORDER,
   clampDimension,
   type ConfiguratorState,
@@ -78,6 +80,9 @@ export function readConfiguration(raw: unknown): ConfiguratorState {
     doors: oneOf(DOOR_OPTIONS, value.doors, base.doors),
     objectProfile: readObjectProfile(value.objectProfile),
     confirmed: Array.isArray(value.confirmed) ? CONFIRMED_TOPICS.filter((topic) => (value.confirmed as unknown[]).includes(topic)) : [],
+    sizesUnknown: value.sizesUnknown === true,
+    internalSupports: oneOf(INTERNAL_SUPPORTS_ORDER, value.internalSupports, base.internalSupports),
+    scopeMode: oneOf(SCOPE_MODE_ORDER, value.scopeMode, base.scopeMode),
   };
 }
 

@@ -28,6 +28,9 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   gateType: 'standard',
   objectProfile: DEFAULT_OBJECT_PROFILE,
   confirmed: [],
+  sizesUnknown: false,
+  internalSupports: 'unknown',
+  scopeMode: 'full',
 };
 
 function DimensionSlider({

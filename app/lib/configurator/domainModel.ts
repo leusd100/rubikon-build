@@ -11,6 +11,8 @@ import type {
   CladdingSystem,
   ConfirmedTopic,
   ConfiguratorState,
+  InternalSupports,
+  ScopeMode,
   EnvelopeChoice,
   FoundationType,
   GateType,
@@ -117,6 +119,9 @@ export type HangarDomainModel = {
   objectProfile: ObjectProfile;
   /** The groups the visitor answered (types.ts ConfirmedTopic): what the stamp and the lead may call their choice */
   confirmed: ConfirmedTopic[];
+  sizesUnknown: boolean;
+  internalSupports: InternalSupports;
+  scopeMode: ScopeMode;
 };
 
 /**
@@ -158,8 +163,11 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, resolveRidgeHeightM(state)) },
     envelope: { walls: state.envelope, roof: state.envelope, wallSystem: state.wallSystem, roofSystem: state.roofSystem },
     foundation: { type: state.foundationType },
-    // Width-derived, not read from state — see `structural`'s own doc comment above.
-    structural: deriveStructuralVisualization(width),
+    // Width-derived, not read from state — see `structural`'s own doc comment above — except where the visitor said no
+    // columns may stand inside (07.10): the span is then drawn clear, whatever the width's rule would draw
+    structural: state.internalSupports === 'not-allowed'
+      ? { ...deriveStructuralVisualization(width), scheme: 'clearSpan' }
+      : deriveStructuralVisualization(width),
     scope: {
       foundation: state.scope.includes('foundation'),
       frame: state.scope.includes('frame'),
@@ -173,5 +181,8 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     areaSqm: Math.round(width * length),
     objectProfile: { ...state.objectProfile },
     confirmed: [...state.confirmed],
+    sizesUnknown: state.sizesUnknown,
+    internalSupports: state.internalSupports,
+    scopeMode: state.scopeMode,
   };
 }

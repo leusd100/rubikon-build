@@ -159,6 +159,11 @@ export type ConfiguratorState = {
   objectProfile: ObjectProfile;
   /** The groups the visitor answered (ConfirmedTopic); the rest is the example's */
   confirmed: ConfirmedTopic[];
+  /** «Точних розмірів ще немає» (07.10): the drawn sizes are then only an orientation */
+  sizesUnknown: boolean;
+  internalSupports: InternalSupports;
+  /** How the visitor answered the scope; `scope` stays the drawn list (all four unless «Окремі роботи») */
+  scopeMode: ScopeMode;
 };
 
 /**
@@ -174,6 +179,25 @@ export const CONFIRMED_TOPICS: ConfirmedTopic[] = ['dimensions', 'envelope', 'cl
 export function withConfirmed(state: ConfiguratorState, topic: ConfirmedTopic): ConfiguratorState {
   return state.confirmed.includes(topic) ? state : { ...state, confirmed: [...state.confirmed, topic] };
 }
+
+/** «Колони всередині ангара» (07.10): whether a row of columns may stand inside. Until answered, the drawing's centre row
+ *  is the width's visualisation rule (deriveStructuralVisualization); «Не можна» draws the span clear. */
+export type InternalSupports = 'allowed' | 'not-allowed' | 'unknown';
+export const INTERNAL_SUPPORTS_LABELS: Record<InternalSupports, string> = {
+  allowed: 'Можна',
+  'not-allowed': 'Не можна',
+  unknown: 'Ще не знаю',
+};
+export const INTERNAL_SUPPORTS_ORDER: InternalSupports[] = ['allowed', 'not-allowed', 'unknown'];
+
+/** «Обсяг робіт» (07.10): the whole set, some of the works (the list), or help to decide */
+export type ScopeMode = 'full' | 'partial' | 'help';
+export const SCOPE_MODE_LABELS: Record<ScopeMode, string> = {
+  full: 'Комплекс робіт',
+  partial: 'Окремі роботи',
+  help: 'Допоможіть визначити',
+};
+export const SCOPE_MODE_ORDER: ScopeMode[] = ['full', 'partial', 'help'];
 
 export type DimensionBounds = { min: number; max: number; step: number };
 
@@ -284,6 +308,9 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   objectProfile: DEFAULT_OBJECT_PROFILE,
   // Nothing answered yet: every value above is the example's
   confirmed: [],
+  sizesUnknown: false,
+  internalSupports: 'unknown',
+  scopeMode: 'full',
 };
 
 export function clampDimension(key: keyof Dimensions, value: number): number {

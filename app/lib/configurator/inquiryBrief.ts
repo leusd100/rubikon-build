@@ -1,6 +1,6 @@
 import type { HangarDomainModel } from './domainModel';
 import { deriveSummary } from './deriveSummary';
-import type { ConfirmedTopic } from './types';
+import { INTERNAL_SUPPORTS_LABELS, SCOPE_MODE_LABELS, type ConfirmedTopic } from './types';
 
 export type HangarInquiryBrief = ReturnType<typeof createHangarInquiryBrief>;
 export type HangarInquiryBriefRow = { label: string; value: string };
@@ -46,6 +46,10 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     regionLabel: summary.objectProfile.region,
     liftingLabel: summary.objectProfile.lifting,
     confirmed: domain.confirmed,
+    sizesUnknown: domain.sizesUnknown,
+    // «Колони всередині» (07.10): null until answered
+    supportsLabel: domain.internalSupports === 'unknown' ? null : INTERNAL_SUPPORTS_LABELS[domain.internalSupports],
+    scopeMode: domain.scopeMode,
   };
 }
 
@@ -67,24 +71,35 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
     answeredRow('Проєкт', brief.projectLabel),
     answeredRow('Область', brief.regionLabel),
     answeredRow('Підйомне обладнання', brief.liftingLabel),
+    answeredRow('Колони всередині', brief.supportsLabel),
   ]);
+  // «Точних розмірів ще немає» (07.10): the drawn sizes are then the example's orientation, whatever was moved
+  const sizes = brief.sizesUnknown ? 'Орієнтовні габарити на кресленні' : 'Габарити';
+  let scope = brief.scopeSummaryLabel;
+  if (brief.scopeMode === 'help') scope = SCOPE_MODE_LABELS.help;
+  else if (brief.scopeMode === 'full') scope = `${SCOPE_MODE_LABELS.full}: ${brief.scopeSummaryLabel}`;
   const rows: Array<TopicRow | null> = [
-    { topic: 'dimensions', label: 'Габарити', value: brief.dimensionsLabel },
+    { topic: 'dimensions', label: sizes, value: brief.dimensionsLabel },
     // The ridge the visitor set used to stop here, like the door once did (2026-10); with its slope since 03.10
     { topic: 'dimensions', label: 'Висота в конику', value: brief.ridgeHeightLabel },
     { topic: 'envelope', label: 'Утеплення', value: brief.envelopeLabel },
     { topic: 'cladding', label: 'Огородження', value: brief.claddingSystemLabel },
-    { topic: 'scope', label: 'Обсяг', value: brief.scopeSummaryLabel },
+    { topic: 'scope', label: 'Обсяг', value: scope },
     brief.gatesLabel === null ? null : { topic: 'openings', label: 'Ворота', value: brief.gatesLabel },
     brief.doorsLabel === null ? null : { topic: 'openings', label: 'Двері', value: brief.doorsLabel },
   ];
   const drawn = rows.filter((row): row is TopicRow => row !== null && row.value !== '');
   const plain = ({ label, value }: TopicRow): HangarInquiryBriefRow => ({ label, value });
+  const answeredTopic = (topic: ConfirmedTopic) => brief.confirmed.includes(topic) && !(topic === 'dimensions' && brief.sizesUnknown);
 
   return {
     object,
-    selected: drawn.filter((row) => brief.confirmed.includes(row.topic)).map(plain),
-    defaults: drawn.filter((row) => !brief.confirmed.includes(row.topic)).map(plain),
+    // the answer «sizes still to be found» stands first among the visitor's; the drawn sizes go with the example's
+    selected: [
+      ...(brief.sizesUnknown ? [{ label: 'Габарити', value: 'Ще уточнюються' }] : []),
+      ...drawn.filter((row) => answeredTopic(row.topic)).map(plain),
+    ],
+    defaults: drawn.filter((row) => !answeredTopic(row.topic)).map(plain),
     preliminary: [
       {
         label: 'Площа забудови',

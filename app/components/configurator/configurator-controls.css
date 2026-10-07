@@ -240,3 +240,33 @@
   text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: 3px; cursor: pointer;
 }
 .hc-draft-reset:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ── The route after the GPT review (07.10) ───────────────────────────────────────────────────────────────────────── */
+.hc-step-current { display: none; }
+@media (max-width: 760px) {
+  .hc-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .hc-step-tab { min-height: 52px; place-items: center; padding: 8px 4px; }
+  .hc-step-tab .hc-step-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .hc-step-current {
+    display: block; margin: 0; padding: 12px 20px 0; color: var(--color-text); font: 700 15px/1.3 var(--font-manrope), sans-serif;
+  }
+}
+@media (min-width: 761px) {
+  .hc-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .hc-step-tab { min-height: 76px; padding: 12px 10px 10px; }
+  .hc-step-title { font-size: 13px; }
+}
+/* «Точних розмірів ще немає» under the three sizes, the ridge folded under them */
+.hc-sizes-unknown { margin-top: 18px; }
+.hc-more { margin-top: 16px; border-top: 1px dashed var(--color-border); }
+.hc-more > summary {
+  display: flex; align-items: center; justify-content: space-between; min-height: 48px; color: var(--color-text-secondary);
+  font: 600 14px/1.3 var(--font-manrope), sans-serif; cursor: pointer; list-style: none;
+}
+.hc-more > summary::-webkit-details-marker { display: none; }
+.hc-more > summary::after { content: '+' / ''; color: var(--color-text-muted); font: 400 20px/1 var(--font-manrope), sans-serif; }
+.hc-more[open] > summary::after { content: '\2212' / ''; }
+.hc-more > summary:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+/* «Каркас»: the step's questions, then how the frame works */
+.hc-frame-heading { margin: 0 0 12px; padding-top: 18px; border-top: 1px solid var(--color-border); font: 700 15px/1.2 var(--font-manrope), sans-serif; }
+.hc-scope-list { margin-top: 14px; }

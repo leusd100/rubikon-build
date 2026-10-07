@@ -73,5 +73,8 @@ export function sameBusinessConfiguration(a: ConfiguratorState, b: ConfiguratorS
     && a.scope.every((item) => b.scope.includes(item))
     // an answer that repeats the example's value is still an answer (07.10)
     && a.confirmed.length === b.confirmed.length
-    && a.confirmed.every((topic) => b.confirmed.includes(topic));
+    && a.confirmed.every((topic) => b.confirmed.includes(topic))
+    && a.sizesUnknown === b.sizesUnknown
+    && a.internalSupports === b.internalSupports
+    && a.scopeMode === b.scopeMode;
 }

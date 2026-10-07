@@ -29,8 +29,8 @@ export function createHangarAttachment(state: ConfiguratorState): InquiryAttachm
   const outline = createHangarInquiryBriefOutline(brief);
   const objectAnswered = outline.some((section) => section.id === 'object');
   // The sizes are the visitor's only once they answered them (07.10): until then the form keeps its own field for them
-  const ownSizes = state.confirmed.includes('dimensions');
-  const nothingChosen = state.confirmed.length === 0;
+  const ownSizes = state.confirmed.includes('dimensions') && !state.sizesUnknown;
+  const nothingChosen = state.confirmed.length === 0 && !state.sizesUnknown;
   // The card's one line names the insulation only when the visitor chose it: «30 × 60 × 8 м · Без утеплення» put the
   // example's answer in their mouth (07.10)
   const headline = state.confirmed.includes('envelope') ? brief.headlineLabel : brief.dimensionsLabel;

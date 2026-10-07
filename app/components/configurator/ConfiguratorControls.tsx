@@ -50,6 +50,11 @@ import {
   hasScopeItem,
   toggleScopeItem,
   withConfirmed,
+  INTERNAL_SUPPORTS_LABELS,
+  INTERNAL_SUPPORTS_ORDER,
+  SCOPE_MODE_LABELS,
+  SCOPE_MODE_ORDER,
+  type ScopeMode,
   type CladdingSystem,
   type ConfirmedTopic,
   type ConfiguratorState,
@@ -234,7 +239,9 @@ function landOnSteps(tabs: HTMLElement) {
 
 // The ids the groups have always had: page sections and tests point at them
 const GROUP_HEADING_IDS: Record<ControlGroupId, string> = {
-  object: 'hc-object-heading',
+  need: 'hc-object-heading',
+  space: 'hc-space-heading',
+  project: 'hc-project-heading',
   dimensions: 'hc-dimensions-heading',
   envelope: 'hc-envelope-heading',
   cladding: 'hc-cladding-heading',
@@ -269,6 +276,7 @@ function StepTabs({
     onSelect(Math.min(last, Math.max(0, next)), true);
   }
   return (
+    <>
     <div className="hc-steps" role="tablist" aria-label="Кроки конфігурації">
       {CONTROL_STEPS.map((item, index) => (
         <button
@@ -290,6 +298,9 @@ function StepTabs({
         </button>
       ))}
     </div>
+    {/* A phone shows the tabs' numbers only: the step on show is named under them (07.10) */}
+    <p className="hc-step-current" aria-hidden="true">Крок {step + 1} з {CONTROL_STEPS.length} · {CONTROL_STEPS[step].title}</p>
+    </>
   );
 }
 
@@ -305,6 +316,9 @@ function heldOpeningsNote(gatesHeld: boolean, doorHeld: boolean): string | null 
   if (doorHeld) return 'Для дверей немає місця за цієї ширини й цих воріт, тому в конфігурації їх немає. Вони повернуться, щойно місце знайдеться.';
   return null;
 }
+
+/** «Чи потрібне утеплення?» answered in the visitor's words (07.10) */
+const ENVELOPE_CHOICE_WORDS: Record<EnvelopeChoice, string> = { cold: 'Без утеплення', insulated: 'Утеплений', undecided: 'Ще не знаю' };
 
 const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
   width: 'Ширина',
@@ -421,6 +435,11 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     onChange(withConfirmed({ ...state, doors }, 'openings'));
   }
 
+  // «Комплекс робіт» and «Допоможіть визначити» draw the whole set; «Окремі роботи» opens the list as it stands
+  function setScopeMode(scopeMode: ScopeMode) {
+    onChange(withConfirmed({ ...state, scopeMode, scope: scopeMode === 'partial' ? state.scope : [...SCOPE_ORDER] }, 'scope'));
+  }
+
   function setScope(item: (typeof SCOPE_ORDER)[number]) {
     onChange(withConfirmed({ ...state, scope: toggleScopeItem(state.scope, item) }, 'scope'));
   }
@@ -439,27 +458,28 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   const hasEnvelopeScope = wallsInScope || roofInScope;
   const { objectProfile } = state;
   // A step is answered once the visitor set something in it themselves (types.ts ConfirmedTopic)
-  const objectAnswered = objectProfile.purpose !== null || objectProfile.project !== 'unknown'
-    || objectProfile.region !== 'unknown' || objectProfile.lifting !== 'unknown';
   const answered = CONTROL_STEPS.map((item) => {
-    if (item.id === 'size') return state.confirmed.includes('dimensions');
+    if (item.id === 'task') return objectProfile.purpose !== null || objectProfile.region !== 'unknown';
+    if (item.id === 'size') return state.confirmed.includes('dimensions') || state.sizesUnknown;
     if (item.id === 'shell') return ['envelope', 'cladding', 'openings'].some((topic) => state.confirmed.includes(topic as ConfirmedTopic));
-    if (item.id === 'task') return state.confirmed.includes('scope') || objectAnswered;
-    return false;
+    if (item.id === 'frame') return state.internalSupports !== 'unknown' || objectProfile.lifting !== 'unknown';
+    return state.confirmed.includes('scope') || objectProfile.project !== 'unknown';
   });
 
   // The groups, each placed in its step below
   const groups: Record<ControlGroupId, ReactNode> = {
     // «Об’єкт» (owner, 03.10) now closes the walk, in «Обсяг і задача» (07.10): nothing on the drawing answers it, so it
     // goes to the brief. Every question is optional and starts unanswered, so a visitor who skips it sends nothing from it.
-    object: (
-      <ControlGroup id="object">
-        <p className="hc-field-note hc-object-note">Необов’язково — можна пропустити й уточнити під час розмови.</p>
+    need: (
+      <ControlGroup id="need">
+        <p className="hc-field-note hc-object-note">Дві відповіді, обидві можна пропустити: від них залежить, що запропонуємо.</p>
         <div className="hc-field">
           <div className="hc-field-head">
             <span id="hc-purpose-label">Для чого ангар?</span>
           </div>
-          <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-purpose-label" aria-describedby="hc-purpose-hint">
+          {/* «Ще не знаю» is a chip of its own (07.10): a chosen chip pressed again used to take the answer back, which no
+              radio button does */}
+          <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-purpose-label">
             {PURPOSE_ORDER.map((option) => (
               <label key={option} className="hc-option-card">
                 <input
@@ -468,45 +488,25 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   value={option}
                   checked={objectProfile.purpose === option}
                   onChange={() => setObjectProfile({ purpose: option })}
-                  // The purpose has no «Ще не знаю» chip (the owner's list): the chosen chip clicked again is taken back
-                  onClick={() => {
-                    if (objectProfile.purpose === option) setObjectProfile({ purpose: null });
-                  }}
-                  // …and from the keyboard (04.10): Space on a checked radio sends no click, so it could not be taken back
-                  onKeyDown={(event) => {
-                    if (objectProfile.purpose !== option || ![' ', 'Delete', 'Backspace'].includes(event.key)) return;
-                    event.preventDefault();
-                    setObjectProfile({ purpose: null });
-                  }}
                 />
                 <span>{PURPOSE_LABELS[option]}</span>
               </label>
             ))}
-          </div>
-          <span className="hc-visually-hidden" id="hc-purpose-hint">Щоб зняти вибір, натисніть обраний варіант ще раз.</span>
-        </div>
-        <div className="hc-field">
-          <div className="hc-field-head">
-            <span id="hc-project-label">Проєкт є?</span>
-          </div>
-          <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-project-label">
-            {PROJECT_STATUS_ORDER.map((option) => (
-              <label key={option} className="hc-option-card">
-                <input
-                  type="radio"
-                  name="hc-project"
-                  value={option}
-                  checked={objectProfile.project === option}
-                  onChange={() => setObjectProfile({ project: option })}
-                />
-                <span>{PROJECT_STATUS_LABELS[option]}</span>
-              </label>
-            ))}
+            <label className="hc-option-card">
+              <input
+                type="radio"
+                name="hc-purpose"
+                value=""
+                checked={objectProfile.purpose === null}
+                onChange={() => setObjectProfile({ purpose: null })}
+              />
+              <span>Ще не знаю</span>
+            </label>
           </div>
         </div>
         <div className="hc-field">
           <div className="hc-field-head">
-            <label htmlFor="hc-object-region">Область будівництва</label>
+            <label htmlFor="hc-object-region">Де будуємо?</label>
           </div>
           <select
             id="hc-object-region"
@@ -522,6 +522,33 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
               <option key={region} value={region}>{region}</option>
             ))}
           </select>
+        </div>
+      </ControlGroup>
+    ),
+    space: (
+      <ControlGroup id="space">
+        <div className="hc-field">
+          <div className="hc-field-head">
+            <span id="hc-supports-label">Колони всередині ангара</span>
+          </div>
+          <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-supports-label">
+            {INTERNAL_SUPPORTS_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-supports"
+                  value={option}
+                  checked={state.internalSupports === option}
+                  onChange={() => onChange({ ...state, internalSupports: option })}
+                />
+                <span>{INTERNAL_SUPPORTS_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+          <p className="hc-field-note">
+            Ряд колон посередині ділить проліт навпіл. Якщо простір має лишитися вільним, скажіть «Не можна»: креслення
+            покаже проліт без опор, а розрахунок підбере ферму під нього.
+          </p>
         </div>
         <div className="hc-field">
           <div className="hc-field-head">
@@ -544,6 +571,29 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
         </div>
       </ControlGroup>
     ),
+    project: (
+      <ControlGroup id="project">
+        <div className="hc-field">
+          <div className="hc-field-head">
+            <span id="hc-project-label">Проєкт є?</span>
+          </div>
+          <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-project-label">
+            {PROJECT_STATUS_ORDER.map((option) => (
+              <label key={option} className="hc-option-card">
+                <input
+                  type="radio"
+                  name="hc-project"
+                  value={option}
+                  checked={objectProfile.project === option}
+                  onChange={() => setObjectProfile({ project: option })}
+                />
+                <span>{PROJECT_STATUS_LABELS[option]}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </ControlGroup>
+    ),
     dimensions: (
       <ControlGroup id="dimensions">
         {(['width', 'length', 'height'] as const).map((key) => (
@@ -559,6 +609,16 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             onCommit={(v) => setDimension(key, v)}
           />
         ))}
+        {/* «Точних розмірів ще немає» (07.10): a request without invented numbers — the drawing keeps its sizes as an
+            orientation, and the lead says the sizes are still to be found */}
+        <label className="hc-checkbox-row hc-sizes-unknown">
+          <input type="checkbox" checked={state.sizesUnknown} onChange={() => onChange({ ...state, sizesUnknown: !state.sizesUnknown })} />
+          <span>Точних розмірів ще немає — уточнимо разом</span>
+        </label>
+        {state.sizesUnknown && <p className="hc-field-note">На кресленні — орієнтовні розміри, їх можна змінювати.</p>}
+        {/* The ridge is a refinement, not a first question (07.10): folded, unless the visitor set it */}
+        <details className="hc-more" open={state.ridgeEdited || undefined}>
+          <summary>Висота в конику — за потреби</summary>
         <NumericField
           inputId="hc-dimension-ridge"
           label="Висота в конику"
@@ -575,6 +635,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             <button type="button" className="hc-field-reset" onClick={() => onChange(withConfirmed(withSpanRuleRidge(state), 'dimensions'))}>Підбирати ухил за шириною</button>
           )}
         </NumericField>
+        </details>
       </ControlGroup>
     ),
     envelope: (
@@ -589,13 +650,15 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                 disabled={!hasEnvelopeScope}
                 onChange={() => setEnvelope(option)}
               />
-              <span>{ENVELOPE_LABELS[option]}</span>
+              <span>{ENVELOPE_CHOICE_WORDS[option]}</span>
             </label>
           ))}
         </div>
-        {!hasEnvelopeScope && (
+        {hasEnvelopeScope ? (
+          <p className="hc-field-note">«Утеплений» одразу ставить сендвіч-панелі — нижче їх можна змінити.</p>
+        ) : (
           <p className="hc-field-note hc-field-note-warning">
-            Контур описує стіни та покрівлю — увімкніть їх в «Обсязі заявки», щоб обрати.
+            Утеплення стосується стін і покрівлі — увімкніть їх в «Обсязі робіт», щоб обрати.
           </p>
         )}
       </ControlGroup>
@@ -681,18 +744,33 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     // and putting them back must not cost the visitor their gate choice.
     scope: (
       <ControlGroup id="scope">
-        <div className="hc-option-list">
-          {SCOPE_ORDER.map((item) => {
-            const checked = hasScopeItem(state.scope, item);
-            return (
-              <label key={item} className="hc-checkbox-row">
-                <input type="checkbox" checked={checked} onChange={() => setScope(item)} />
-                <span>{SCOPE_LABELS[item]}</span>
-              </label>
-            );
-          })}
+        {/* The whole set, some works, or help to decide (07.10): four boxes ticked in advance read as already chosen */}
+        <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-scope-heading">
+          {SCOPE_MODE_ORDER.map((option) => (
+            <label key={option} className="hc-option-card">
+              <input type="radio" name="hc-scope-mode" checked={state.scopeMode === option} onChange={() => setScopeMode(option)} />
+              <span>{SCOPE_MODE_LABELS[option]}</span>
+            </label>
+          ))}
         </div>
-        <p className="hc-field-note">Позначте, які роботи вас цікавлять. Їхній склад уточнимо після перегляду проєкту.</p>
+        {state.scopeMode === 'partial' && (
+          <div className="hc-option-list hc-scope-list">
+            {SCOPE_ORDER.map((item) => {
+              const checked = hasScopeItem(state.scope, item);
+              return (
+                <label key={item} className="hc-checkbox-row">
+                  <input type="checkbox" checked={checked} onChange={() => setScope(item)} />
+                  <span>{SCOPE_LABELS[item]}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+        <p className="hc-field-note">
+          {state.scopeMode === 'help'
+            ? 'Розберемо разом, що робимо ми, а що організуємо, — після перегляду ваших даних.'
+            : 'Склад робіт уточнимо після перегляду проєкту.'}
+        </p>
       </ControlGroup>
     ),
     openings: (
@@ -751,18 +829,12 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     disabled={disabled}
                     onChange={() => setGateType(option)}
                   />
-                  <span>{GATE_TYPE_LABELS[option]}</span>
+                  {/* the size in the name (07.10), not in a note under the buttons */}
+                  <span>{GATE_TYPE_LABELS[option]} · {formatSize(GATE_DIMENSIONS_M[option].widthM, GATE_DIMENSIONS_M[option].heightM)}</span>
                 </label>
               );
             })}
           </div>
-        )}
-        {shown.gates > 0 && (
-          <p className="hc-field-note">
-            {/* a dash never opens a line */}
-            Стандартні ворота{NBSP}— {formatSize(GATE_DIMENSIONS_M.standard.widthM, GATE_DIMENSIONS_M.standard.heightM)},
-            для заїзду техніки{NBSP}— {formatSize(GATE_DIMENSIONS_M.double.widthM, GATE_DIMENSIONS_M.double.heightM)}.
-          </p>
         )}
         <div className="hc-field hc-door-field">
           <div className="hc-field-head">

@@ -70,6 +70,8 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
       />
       {panel && createPortal(
         <>
+          {/* after the step's own questions: how the frame works, shown on the drawing — for whoever wants it */}
+          <h3 className="hc-frame-heading">Як працює ваш каркас</h3>
           <div className="hc-frame-list" role="group" aria-label="Що показати">
             {steps.map((item, index) => (
               <button
