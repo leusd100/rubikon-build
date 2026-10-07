@@ -33,12 +33,16 @@ async function expectTheme(page: Page, theme: 'light' | 'dark', preference: 'sys
   });
 }
 
-/** Chooses an option through the visible control: the header panel on desktop, the menu on a phone. */
+/**
+ * Chooses an option through the visible control. Desktop (owner 06.10): the header's own light|dark switch — one click
+ * flips the shown theme; System is the default until then and is chosen in the phone menu only. Phone: the menu's three.
+ */
 async function choose(page: Page, label: 'Як у системі' | 'Світла' | 'Темна') {
-  const trigger = page.locator('.theme-menu-trigger');
-  if (await trigger.isVisible()) {
-    if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
-    await page.locator('.theme-menu-panel').getByLabel(label, { exact: true }).check();
+  const toggle = page.locator('.theme-switch');
+  if (await toggle.isVisible()) {
+    if (label === 'Як у системі') throw new Error('the desktop switch has no System option: System is the default');
+    const dark = (await toggle.getAttribute('aria-checked')) === 'true';
+    if (dark !== (label === 'Темна')) await toggle.click();
   } else {
     const menu = page.locator('.mobile-menu');
     if (!(await menu.evaluate((element) => (element as HTMLDetailsElement).open))) await menu.locator('summary').click();
@@ -110,7 +114,8 @@ test.describe('site-wide theme', () => {
     await expectTheme(page, 'dark', 'dark');
   });
 
-  test('8 · returning to System restores OS behaviour and clears the stored choice', async ({ page }) => {
+  test('8 · returning to System restores OS behaviour and clears the stored choice', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'System is chosen in the phone menu; the desktop switch has only light and dark');
     await page.emulateMedia({ colorScheme: 'dark' });
     await open(page);
     await choose(page, 'Світла');
@@ -151,18 +156,17 @@ test.describe('site-wide theme', () => {
     test.skip(isMobile, 'desktop header control');
     await page.emulateMedia({ colorScheme: 'light' });
     await open(page);
-    const trigger = page.locator('.theme-menu-trigger');
-    await expect(trigger).toHaveAttribute('aria-label', 'Тема оформлення: як у системі');
-    await trigger.focus();
+    // A switch of its own beside the contacts (owner 06.10): «Темна тема», on or off
+    const toggle = page.getByRole('switch', { name: 'Темна тема' });
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await expect(page.locator('.header-contacts .theme-switch')).toHaveCount(0);
+    await toggle.focus();
     await page.keyboard.press('Enter');
-    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('ArrowRight'); // radio group: System → Light
-    await page.keyboard.press('ArrowRight'); // → Dark
     await expectTheme(page, 'dark', 'dark');
-    await page.keyboard.press('Escape');
-    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    await expect(trigger).toBeFocused();
-    await expect(trigger).toHaveAttribute('aria-label', 'Тема оформлення: темна');
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await expect(toggle).toBeFocused();
+    await page.keyboard.press('Space');
+    await expectTheme(page, 'light', 'light');
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
   });
 });

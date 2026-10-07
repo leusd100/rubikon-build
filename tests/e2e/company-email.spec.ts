@@ -48,15 +48,17 @@ test.describe('the corporate email', () => {
   });
 
   test('the desktop header has a mail button next to the messengers, without crowding it', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'below 1000 px the header contacts move into the menu');
-    for (const width of [1001, 1100, 1181, 1280, 1440]) {
+    test.skip(isMobile, 'below 1100 px the header contacts move into the menu');
+    // From 1100 px (owner 06.10: the theme switch stands beside the contacts box, so the burger header runs to 1099)
+    for (const width of [1100, 1181, 1280, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/', { waitUntil: 'load' });
       const button = page.locator('.header-contacts').getByRole('link', { name: EMAIL });
       await expect(button, `${width}px`).toHaveAttribute('href', MAILTO);
       await expect(button, `${width}px`).toBeVisible();
       const fits = await page.evaluate(() => {
-        const contacts = document.querySelector('.header-contacts')?.getBoundingClientRect();
+        // the contacts box and the theme switch beside it
+        const contacts = document.querySelector('.header-actions')?.getBoundingClientRect();
         const brand = document.querySelector('.site-header .brand-link')?.getBoundingClientRect();
         return Boolean(contacts && brand && contacts.right <= document.documentElement.clientWidth && Math.abs(contacts.top - brand.top) < brand.height);
       });
