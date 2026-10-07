@@ -327,8 +327,10 @@
   .hangar-configurator-embedded .hc-hero { gap: 8px var(--grid-gap); margin-bottom: 18px; }
   .hangar-configurator-embedded .hc-hero :is(h1, h2) { font-size: 34px; max-width: none; }
   .hangar-configurator-embedded .hc-lede { font-size: 14px; line-height: 1.5; }
-  /* the number beside the step's name, not over it */
-  .hangar-configurator-embedded .hc-step-tab { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; min-height: 52px; padding-block: 8px; }
+  /* the number over the name as everywhere — a desktop tab is 76 px wide, too narrow to set them side by side (07.10:
+     the names ran into the next tab) — only closer together */
+  .hangar-configurator-embedded .hc-step-tab { row-gap: 4px; min-height: 0; padding: 8px 8px 7px; }
+  .hangar-configurator-embedded .hc-step-number { width: 18px; height: 18px; font-size: 11px; }
   .hangar-configurator-embedded .hc-step-panel .hc-control-group { padding-block: 16px 18px; }
   .hangar-configurator-embedded .hc-step-nav { padding-block: 12px 14px; }
 }
