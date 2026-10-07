@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { useId, useSyncExternalStore } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { readEffectiveTheme, readPreference, setThemePreference, subscribeTheme, type ThemePreference } from '../lib/theme';
 
 const OPTIONS: ReadonlyArray<{ value: ThemePreference; label: string }> = [
@@ -9,8 +9,6 @@ const OPTIONS: ReadonlyArray<{ value: ThemePreference; label: string }> = [
   { value: 'light', label: 'Світла' },
   { value: 'dark', label: 'Темна' },
 ];
-
-const LABEL: Record<ThemePreference, string> = { system: 'як у системі', light: 'світла', dark: 'темна' };
 
 // Server render and hydration use 'system'; the real value arrives right after hydration. The visible
 // selection never waits for it: CSS reads data-theme-preference on <html>, which the head script set before paint.
@@ -51,57 +49,29 @@ export function ThemeOptions({ variant }: Readonly<{ variant: 'panel' | 'menu' }
   );
 }
 
-/** Desktop header: one quiet 44 px cell beside the contacts, opening the labelled options. */
-export function ThemeMenu() {
-  const preference = usePreference();
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const panelId = useId();
-
-  useEffect(() => {
-    if (!open) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key !== 'Escape') return;
-      setOpen(false);
-      buttonRef.current?.focus();
-    }
-    function onPointer(event: PointerEvent) {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
-    }
-    function onFocus(event: FocusEvent) {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
-    }
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('focusin', onFocus);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('focusin', onFocus);
-    };
-  }, [open]);
-
+/**
+ * Desktop header: a light/dark switch of its own, set apart from the contacts so it never reads as one more contact.
+ * One click flips the shown theme and stores it; until the first click the theme follows the system (the phone menu
+ * keeps all three options). The knob's side follows data-theme on <html>, which the head script sets before paint, so
+ * the first frame is right; aria-checked catches up right after hydration.
+ */
+export function ThemeSwitch() {
+  const dark = useEffective() === 'dark';
   return (
-    <div className="theme-menu" ref={rootRef}>
-      <button
-        ref={buttonRef}
-        type="button"
-        className="theme-menu-trigger"
-        aria-expanded={open}
-        aria-controls={panelId}
-        aria-label={`Тема оформлення: ${LABEL[preference]}`}
-        title={`Тема: ${LABEL[preference]}`}
-        onClick={() => setOpen((value) => !value)}
-      >
-        {/* All three drawn; CSS shows the one matching data-theme-preference, so the icon is right from the first frame. */}
-        <Monitor aria-hidden="true" className="theme-icon theme-icon-system" />
-        <Sun aria-hidden="true" className="theme-icon theme-icon-light" />
-        <Moon aria-hidden="true" className="theme-icon theme-icon-dark" />
-      </button>
-      <div className="theme-menu-panel" id={panelId} hidden={!open}>
-        <ThemeOptions variant="panel" />
-      </div>
-    </div>
+    <button
+      type="button"
+      role="switch"
+      className="theme-switch"
+      aria-checked={dark}
+      aria-label="Темна тема"
+      title={dark ? 'Увімкнути світлу тему' : 'Увімкнути темну тему'}
+      onClick={() => setThemePreference(dark ? 'light' : 'dark')}
+    >
+      <span className="theme-switch-track" aria-hidden="true">
+        <span className="theme-switch-knob" />
+        <Sun className="theme-switch-sun" />
+        <Moon className="theme-switch-moon" />
+      </span>
+    </button>
   );
 }

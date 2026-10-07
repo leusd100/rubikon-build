@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import BrandLogo from './BrandLogo';
 import MobileMenu from './MobileMenu';
-import { ThemeMenu, ThemeOptions } from './ThemeControl';
+import { ThemeOptions, ThemeSwitch } from './ThemeControl';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
 import { directions } from '../data/directions';
@@ -120,17 +120,19 @@ export function SiteHeader() {
         <nav className="desktop-nav" aria-label="Основна навігація">
           {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
-        <div className="header-contacts" aria-label="Контакти компанії">
-          {/* The number itself is the label: one readable line (16 px), the icon says what it is. */}
-          <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Телефон, ${company.phone.display}`}>
-            <Phone aria-hidden="true" />
-            <span><strong>{company.phone.display}</strong></span>
-          </a>
-          <MessengerLinks className="header-messengers" />
-          <a className="messenger-link header-email" href={companyContactLinks.email} aria-label={`Email, ${company.email}`} title={company.email}>
-            <Mail aria-hidden="true" />
-          </a>
-          <ThemeMenu />
+        <div className="header-actions">
+          <div className="header-contacts" aria-label="Контакти компанії">
+            {/* The number itself is the label: one readable line (16 px), the icon says what it is. */}
+            <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Телефон, ${company.phone.display}`}>
+              <Phone aria-hidden="true" />
+              <span><strong>{company.phone.display}</strong></span>
+            </a>
+            <MessengerLinks className="header-messengers" />
+            <a className="messenger-link header-email" href={companyContactLinks.email} aria-label={`Email, ${company.email}`} title={company.email}>
+              <Mail aria-hidden="true" />
+            </a>
+          </div>
+          <ThemeSwitch />
         </div>
         <a className="mobile-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
           <Phone aria-hidden="true" />

@@ -1,11 +1,13 @@
-import { DraftingCompass } from 'lucide-react';
+import { ChangeSheets } from '../components/process/ChangeSheets';
 import { CostFactorsFigure } from '../components/process/CostFactorsFigure';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
+import { ResponsibilityMatrix } from '../components/process/ResponsibilityMatrix';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { FormatsScope, type FormatTerms } from '../components/directions/FormatsScope';
+import { ProcessDrawing } from '../components/directions/ProcessDrawing';
 import { StartGlyph } from '../components/process/StartGlyph';
 import { company } from '../data/company';
 import { deliveryModel } from '../data/deliveryModel';
@@ -24,8 +26,11 @@ import {
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
 import type { CSSProperties } from 'react';
 import type { DeliveryFormatId } from '../types/deliveryModel';
+import type { ProcessSplit } from '../types/directionPage';
 import './delivery.css';
+import '../components/process/resp-matrix.css';
 import '../components/directions/formats-scope.css';
+import '../components/directions/process-split.css';
 
 // /yak-pratsyuiemo v2 — what happens with the client's task, in seven zones: where to start, the four steps, how much
 // RUBIKON can take on, who answers for what, what drives cost and time, a short FAQ and the conversation. Every business
@@ -63,21 +68,28 @@ const STARTS = [
   },
 ] as const;
 
-const ZONES = [
-  { id: 'rubikon', title: 'RUBIKON', lead: 'Роботи, зазначені в нашому договорі, та їхній результат.' },
-  { id: 'client', title: 'Замовник', lead: 'Що забезпечує замовник.' },
-  { id: 'specialists', title: 'Профільні спеціалісти', lead: 'Окремі спеціалізовані роботи. Хто їх залучає й координує, фіксуємо в договорі.' },
-] as const;
 
 /** The change loop's way back (step 2 of changePolicy: the impact on works, cost and time). */
 const CHANGE_BACK = 'Вплив на кошторис і строки — до виконання';
 
-/** After the factors: the order in which they turn into numbers, a schedule and — if needed — an agreed change. */
+/** After the factors: the estimate and the schedule they turn into (ChangeSheets' captions) and the change policy. */
 const TERMS = [
   { title: 'Рахуємо кошторис', text: 'Підготуємо кошторис, коли погодимо перелік робіт і матимемо дані для розрахунку.' },
   { title: 'Плануємо строки', text: 'На графік впливають обсяг робіт, готовність проєкту й майданчика, постачання матеріалів і роботи інших підрядників.' },
   { title: 'Погоджуємо зміни', text: deliveryModel.changePolicy.principle },
 ] as const;
+
+/**
+ * «Від задачі до будівництва» as «Ви · Ми»: what the client does at each of processSteps(), what they have after it (a
+ * short caption; the model's full result is read to screen readers) and its small drawing. Wording as on the /angary
+ * route. Who prepares the project is said once, under the route, in the Delivery Model's own words (statements.design).
+ */
+const ROUTE_SIDES: readonly ProcessSplit[] = [
+  { you: 'Розповідаєте, що потрібно, де об’єкт і що вже підготовлено.', result: 'Задача й список даних', drawing: 'checklist' },
+  { you: 'Надаєте креслення або параметри об’єкта.', result: 'Основа для пропозиції', drawing: 'review' },
+  { you: 'Погоджуєте пропозицію й підписуєте договір.', result: 'Пропозиція, кошторис і договір', drawing: 'contract' },
+  { you: 'Приймаєте роботи й підписуєте акти.', result: 'Прийняті роботи й акти', drawing: 'handover' },
+];
 
 export default function DeliveryModelPage() {
   const { statements } = deliveryModel;
@@ -184,24 +196,26 @@ export default function DeliveryModelPage() {
             titleId="proc-route-title"
             supporting="Після кожного кроку зрозуміло, що вже вирішено і що потрібно для наступного."
           />
-          <ol className="proc-steps" data-motion>
+          {/* «Ви · Ми» (owner 06.10, as on the direction pages): over the rail what you do, under it what we do — the
+              Delivery Model's step text word for word — and on it what you have after the step, drawn small. The old
+              «Хто готує проєкт» note is step 02's «Ви» now; the full result sentence stays for screen readers. */}
+          <p className="process-key" aria-hidden="true"><span>Ви</span><span>RUBIKON</span></p>
+          <ol className="process-split proc-split" data-motion>
             {steps.map((step, index) => (
               <li key={step.number} style={{ '--i': index } as CSSProperties}>
-                <span className="proc-step-node" aria-hidden="true">{step.number}</span>
-                <h3><span className="visually-hidden">Крок {step.number}. </span>{step.title}</h3>
-                <p>{step.text}</p>
-                <p className="proc-step-result"><b>На виході:</b> {step.result}</p>
+                <h3><b>{step.number}</b>{step.title}</h3>
+                <p className="ps-you"><small>Ви</small>{ROUTE_SIDES[index].you}</p>
+                <div className="ps-node">
+                  <ProcessDrawing kind={ROUTE_SIDES[index].drawing} />
+                  {index === 0 && <span className="ps-spark" aria-hidden="true" />}
+                </div>
+                <p className="ps-result"><span className="sr-only">Результат: {step.result}</span><span aria-hidden="true">{ROUTE_SIDES[index].result}</span></p>
+                <p className="ps-we"><small>Ми</small>{step.text}</p>
               </li>
             ))}
           </ol>
-          {/* Belongs to step 02 (checking the project): aligned under it on the horizontal route, named on the vertical one */}
-          <aside className="proc-design-note" aria-labelledby="proc-design-note-title">
-            <DraftingCompass aria-hidden="true" />
-            <div>
-              <p className="proc-design-note-title" id="proc-design-note-title"><span>До кроку 02</span> Хто готує проєкт</p>
-              <p>{statements.design}</p>
-            </div>
-          </aside>
+          {/* Who prepares the project — once, in the model's words: RUBIKON builds to the client's or their designer's project */}
+          <p className="proc-design-line"><b>Хто готує проєкт.</b> {statements.design}</p>
         </div>
       </section>
 
@@ -233,7 +247,7 @@ export default function DeliveryModelPage() {
             eyebrow="Хто за що відповідає"
             title="Відповідальність без дрібного шрифту"
             titleId="proc-responsibility-title"
-            supporting="Оберіть формат участі — схема покаже, що виконує RUBIKON, що забезпечує інша сторона договору і хто веде спеціалізовані роботи."
+            supporting="Оберіть формат — таблиця покаже, що робимо ми, що лишається на вас і що виконують профільні спеціалісти."
           />
           {/* Format switcher: plain radios; CSS (:has) shows the chosen format, so it works without JavaScript */}
           <fieldset className="proc-resp-switch">
@@ -247,60 +261,7 @@ export default function DeliveryModelPage() {
               ))}
             </div>
           </fieldset>
-          <div className="proc-resp-figure" data-motion>
-            {resp.formats.map((format) => <p className="proc-principle" data-format={format.id} key={format.id}>{format.principle}</p>)}
-            <ul className="proc-map">
-              {ZONES.map((zone, index) => (
-                <li className={`proc-area proc-area-${zone.id}`} key={zone.id} style={{ '--i': index } as CSSProperties}>
-                  <h3>
-                    {zone.id === 'client'
-                      ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>{format.clientTitle}</span>)
-                      : zone.title}
-                  </h3>
-                  {/* Who coordinates the object in the chosen format: the tag sits on that party's card */}
-                  {resp.formats.filter((format) => format.coordinator.zone === zone.id).map((format) => (
-                    <p className="proc-area-tag" data-format={format.id} key={format.id}>
-                      Координує об’єкт{format.coordinator.note && ` · ${format.coordinator.note}`}
-                    </p>
-                  ))}
-                  <p className="proc-area-lead">
-                    {zone.id === 'client'
-                      ? resp.formats.map((format) => <span data-format={format.id} key={format.id}>Що забезпечує {format.clientTitle.toLowerCase()}.</span>)
-                      : zone.lead}
-                  </p>
-                  <ul>
-                    {resp.items.filter((item) => item.zones[zone.id].length > 0).map((item) => {
-                      // A work RUBIKON coordinates or organises (rather than does) gets the open marker in RUBIKON's card
-                      const soft = zone.id === 'rubikon'
-                        ? (Object.entries(item.rubikonRole) as [string, string][]).filter(([, role]) => role !== 'executes').map(([format]) => format)
-                        : [];
-                      return (
-                        <li key={item.text} data-formats={item.zones[zone.id].join(' ')} data-soft={soft.length ? soft.join(' ') : undefined}>
-                          <span className="proc-area-work">{item.text}</span>
-                          {Object.entries(item.notes[zone.id] ?? {}).map(([format, note]) => (
-                            <span className="proc-area-note" data-format={format} key={format}>{note}</span>
-                          ))}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-            {/* The base of the map: everything above is fixed in the contract before work starts */}
-            <div className="proc-contract-base">
-              <span className="proc-contract-drops" aria-hidden="true"><i /><i /><i /></span>
-              <div className="proc-contract-band">
-                <h3 className="proc-contract-tab">Договір</h3>
-                <p>{map.boundary}</p>
-                {resp.formats.filter((format) => format.outOfScope.length > 0).map((format) => (
-                  <p className="proc-out-of-scope" data-format={format.id} key={format.id}>
-                    <b>Поза обсягом RUBIKON у цьому форматі:</b> {format.outOfScope.join('; ').toLowerCase()}.
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
+          <ResponsibilityMatrix formats={resp.formats} items={resp.items} boundary={map.boundary} />
         </div>
       </section>
 
@@ -317,40 +278,15 @@ export default function DeliveryModelPage() {
           {/* The seven factors beside one drawing of a hangar on its site, each numbered where it acts */}
           <CostFactorsFigure factors={costFactors().map((factor) => ({ key: factor.ids[0], title: factor.title, detail: factor.detail }))} />
           <p className="proc-factors-title proc-terms-flow-title">Як із цього виходять кошторис і графік</p>
-          <div className="proc-terms-flow" data-motion>
-            <ol className="proc-terms-grid">
-              {TERMS.map((term, index) => (
-                <li key={term.title} style={{ '--i': index } as CSSProperties}>
-                  <span className="proc-terms-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                  <h3>{term.title}</h3>
-                  <p>{term.text}</p>
-                </li>
-              ))}
-            </ol>
-            {/* A change goes back to the estimate and the schedule before anything is built: 03 → the procedure, and from
-                its second step (assessing the impact) back up into 01 and 02 */}
-            <div className="proc-change-links" aria-hidden="true">
-              <i className="proc-link-03" />
-              <i className="proc-link-stem" />
-              <i className="proc-link-fork" />
-              <i className="proc-link-up proc-link-up-1" />
-              <i className="proc-link-up proc-link-up-2" />
-              <span className="proc-link-label">{CHANGE_BACK}</span>
-            </div>
-            <div className="proc-change">
-              <h3 className="proc-change-tab">Якщо щось змінюється</h3>
-              <ol className="proc-change-steps">
-                {changeSteps().map((step, index) => (
-                  <li key={step.title} style={{ '--i': index } as CSSProperties}>
-                    <span className="proc-change-node" aria-hidden="true">{index + 1}</span>
-                    <b>{step.title}</b>
-                    <span className="proc-change-detail">{step.detail}</span>
-                    {index === 1 && <span className="proc-change-back" aria-hidden="true">↺ {CHANGE_BACK}</span>}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
+          {/* The estimate and the schedule as sheets, and the change procedure acting on them (owner 07.10, variant A) */}
+          <ChangeSheets
+            rows={costFactors().map((factor) => factor.title)}
+            estimate={TERMS[0]}
+            schedule={TERMS[1]}
+            principle={TERMS[2].text}
+            steps={changeSteps()}
+            back={CHANGE_BACK}
+          />
           <p className="proc-documents">
             На першій розмові скажемо, які документи вже можна використати і що потрібно підготувати додатково.
           </p>

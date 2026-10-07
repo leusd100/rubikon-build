@@ -20,6 +20,7 @@ import { DIRECTION_JOURNEY } from '../data/conversation';
 import { siteRoutes } from '../data/navigation';
 import type { CSSProperties, ReactNode } from 'react';
 import './directions/direction-template.css';
+import './directions/process-split.css';
 import './faq.css';
 
 const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([

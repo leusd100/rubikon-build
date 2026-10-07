@@ -3,15 +3,15 @@
 import { useEffect } from 'react';
 
 // /yak-pratsyuiemo: one choice of format through the page. The scope drawing over «Наш обсяг» (FormatsScope, which
-// mirrors the map's radio group by itself) and the map's switcher (resp-format) show the same format, and after a switch
-// on the map the works that have just moved into a zone are marked for a moment (data-fresh, delivery.css). The map's
-// switcher works without this (CSS :has); this only adds the marks.
+// mirrors the table's radio group by itself) and the responsibility table's switcher (resp-format) show the same format,
+// and after a switch the table's rows whose parties changed are lit for a moment (data-fresh, resp-matrix.css). The
+// switcher works without this (CSS :has); this only adds the light.
 const GROUP = 'resp-format';
 const FRESH_MS = 2400;
 
 export function FormatSwitchSync() {
   useEffect(() => {
-    const figure = document.querySelector<HTMLElement>('.proc-resp-figure');
+    const figure = document.querySelector<HTMLElement>('.resp-matrix');
     let shown = document.querySelector<HTMLInputElement>('input[name="resp-format"]:checked')?.value;
     let timer = 0;
     const clear = () => figure?.querySelectorAll<HTMLElement>('[data-fresh]').forEach((element) => { delete element.dataset.fresh; });
@@ -19,9 +19,9 @@ export function FormatSwitchSync() {
     const mark = (from: string, to: string) => {
       window.clearTimeout(timer);
       clear();
-      for (const item of figure?.querySelectorAll<HTMLElement>('li[data-formats]') ?? []) {
-        const formats = new Set((item.dataset.formats ?? '').split(' '));
-        if (formats.has(to) && !formats.has(from)) item.dataset.fresh = '';
+      // Each row says where it stands per format (data-<format>): light it where that changes
+      for (const row of figure?.querySelectorAll<HTMLElement>('.rm-row') ?? []) {
+        if (row.getAttribute(`data-${from}`) !== row.getAttribute(`data-${to}`)) row.dataset.fresh = '';
       }
       timer = window.setTimeout(clear, FRESH_MS);
     };

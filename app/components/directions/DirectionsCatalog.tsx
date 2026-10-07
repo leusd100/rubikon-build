@@ -26,8 +26,8 @@ export function DirectionsCatalog({ items }: Readonly<{ items: readonly CatalogI
       <div className="route-service-list dcat-list">
         {items.map((item) => (
           <a className="route-service" href={item.href} id={item.id} key={item.id}>
-            {/* The row's own sheet — a static scheme and its title block, no image */}
-            <span className="dcat-thumb" aria-hidden="true">
+            {/* The row's own sheet — a scheme and its title block, no image; it plots in when it comes into view */}
+            <span className="dcat-thumb" aria-hidden="true" data-motion>
               <CatalogDrawing id={item.id} />
               <span className="dcat-strip">
                 <span>Аркуш {item.number}</span>

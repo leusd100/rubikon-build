@@ -1,0 +1,111 @@
+/* ── ResponsibilityMatrix (/yak-pratsyuiemo «Відповідальність без дрібного шрифту», owner 06.10) ──────────────────────────
+   One table: a row per work, a column per party («Ви» is the reader). The format switcher's radios (name="resp-format")
+   pick the format with :has; each word-mark carries --c/--o/--f/--l/--s/--k/--t per format (column, visibility, fill,
+   line, line style, word colour, word), and the chosen format's set becomes the live one, so a switch slides the words to
+   their new columns (the track is the three party columns; a mark is one column wide). Theme tokens, light and dark;
+   «Робимо» wears the site's action pair (button colours). */
+.resp-matrix-wrap {
+  --rm-own: var(--color-action);
+  --rm-own-ink: var(--color-on-action);
+  --rm-soft-ink: var(--color-accent-strong);
+  --rm-client: var(--color-text);
+  --rm-client-ink: var(--color-bg);
+  --rm-specialist: var(--color-text-secondary);
+  --rm-cols: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr));
+  margin-top: 8px;
+}
+/* When the chosen format is yours, in plain words; the model's line on how the parties work together under it */
+.rm-when { max-width: 860px; margin: 0 auto 30px; text-align: center; }
+.resp-matrix-wrap .proc-principle { margin: 0; font-size: clamp(22px, 1.9vw, 28px); }
+.rm-when-how { margin: 10px 0 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.55; }
+
+.resp-matrix { border-top: 1px solid var(--color-border-strong); }
+.rm-head, .rm-row { display: grid; grid-template-columns: var(--rm-cols); align-items: start; column-gap: 0; }
+/* sticks right under the format switcher, which itself sticks under the header (measured: 161 px ≥1051, 169 px ≤1050, 143 px on phones) */
+.rm-head { position: sticky; z-index: 3; top: 162px; padding: 14px 0 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border-strong); }
+.rm-head > span { display: grid; gap: 6px; min-width: 0; padding: 0 12px; }
+.rm-work-head { padding-left: 0 !important; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.rm-col { justify-items: start; padding-left: 16px !important; }
+.rm-col > b { color: var(--color-text); font: 600 20px/1.1 var(--font-condensed), sans-serif; letter-spacing: .02em; }
+.rm-col-rubikon > b { color: var(--color-accent-strong); }
+.rm-who { color: var(--color-text-muted); font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; }
+.rm-coordinator { display: grid; justify-items: start; gap: 2px; color: var(--color-accent-strong); font: 700 11px/1.3 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.rm-coordinator b { font: inherit; }
+.rm-coordinator b::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 8px 1px 0; background: currentColor; transform: rotate(45deg); }
+.rm-coordinator span { color: var(--color-text-muted); letter-spacing: .06em; text-transform: none; font-weight: 600; font-size: 12px; }
+
+/* The three groups: Підготовка · Будівництво · Нагляд, дозволи й здача */
+.rm-group > span { display: block; padding: 26px 0 10px; color: var(--color-accent-strong); border-bottom: 1px solid var(--color-border-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.rm-row { position: relative; min-height: 46px; border-bottom: 1px solid var(--color-border); transition: background-color var(--duration-fast) ease; }
+@media (hover: hover) { .rm-row:hover { background: color-mix(in srgb, var(--color-accent) 5%, transparent); } }
+.rm-work { grid-column: 1; grid-row: 1; padding: 11px 20px 11px 0; color: var(--color-text); font-size: 16px; line-height: 1.4; }
+/* each party cell: its word on top (drawn by the track), the model's note under it */
+.rm-cell { grid-row: 1; display: grid; align-content: start; min-width: 0; padding: 42px 14px 12px 16px; }
+.rm-cell:nth-child(2) { grid-column: 2; }
+.rm-cell:nth-child(3) { grid-column: 3; }
+.rm-cell:nth-child(4) { grid-column: 4; }
+.rm-say small { display: block; color: var(--color-text-muted); font-size: 13.5px; line-height: 1.4; }
+.rm-out { grid-column: 2 / -1; grid-row: 1; padding: 13px 0 11px 16px; color: var(--color-text-muted); font-size: 14px; font-style: italic; }
+.rm-row[data-out] .rm-work { transition: color var(--duration-fast) ease; }
+
+/* The words: a track over the three party columns, one column-wide box per word, the word at the top of its cell */
+.rm-track { position: relative; grid-row: 1; grid-column: 2 / -1; align-self: start; height: 44px; pointer-events: none; }
+.rm-mark {
+  --c: var(--c-comprehensive); --o: var(--o-comprehensive); --f: var(--f-comprehensive); --l: var(--l-comprehensive); --s: var(--s-comprehensive); --k: var(--k-comprehensive); --t: var(--t-comprehensive);
+  position: absolute; top: 0; left: 0; width: calc(100% / 3); height: 100%; padding: 10px 0 0 16px;
+  opacity: var(--o); transform: translateX(calc(var(--c) * 100%));
+  transition: transform 640ms cubic-bezier(.3, .7, .2, 1) calc(var(--i, 0) * 22ms), opacity 360ms ease calc(var(--i, 0) * 22ms);
+}
+.rm-mark::before {
+  content: var(--t); display: inline-block; padding: 6px 9px 5px; color: var(--k); background: var(--f); border: 1.5px var(--s) var(--l);
+  font: 700 11.5px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
+}
+.proc-responsibility:has(input[value="work-package"]:checked) .rm-mark { --c: var(--c-work-package); --o: var(--o-work-package); --f: var(--f-work-package); --l: var(--l-work-package); --s: var(--s-work-package); --k: var(--k-work-package); --t: var(--t-work-package); }
+.proc-responsibility:has(input[value="subcontract"]:checked) .rm-mark { --c: var(--c-subcontract); --o: var(--o-subcontract); --f: var(--f-subcontract); --l: var(--l-subcontract); --s: var(--s-subcontract); --k: var(--k-subcontract); --t: var(--t-subcontract); }
+.proc-responsibility:has(input[value="comprehensive"]:checked) .rm-row[data-out~="comprehensive"] .rm-work,
+.proc-responsibility:has(input[value="work-package"]:checked) .rm-row[data-out~="work-package"] .rm-work,
+.proc-responsibility:has(input[value="subcontract"]:checked) .rm-row[data-out~="subcontract"] .rm-work { color: var(--color-text-muted); }
+
+/* After a switch, the rows whose parties changed are lit for a moment (FormatSwitchSync) */
+.rm-row[data-fresh] { background: color-mix(in srgb, var(--color-accent) 11%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .rm-row[data-fresh] { animation: rm-fresh 2400ms ease-out forwards; }
+}
+@keyframes rm-fresh { 0%, 40% { background: color-mix(in srgb, var(--color-accent) 11%, transparent); } 100% { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .rm-mark { transition: none; } }
+
+/* Arriving: the rows rise in one by one, their words pop onto them */
+.process-page[data-motion-ready="on"] .rm-row { transition: background-color var(--duration-fast) ease, opacity 420ms ease calc(var(--i, 0) * 45ms), transform 420ms var(--m-ease) calc(var(--i, 0) * 45ms); }
+.process-page[data-motion-ready] .resp-matrix-wrap:not([data-motion-state="on"]) .rm-row { opacity: 0; transform: translateY(8px); }
+.process-page[data-motion-ready] .resp-matrix-wrap:not([data-motion-state="on"]) .rm-mark::before { transform: scale(0); }
+.process-page[data-motion-ready="on"] .rm-mark::before { transition: background-color 300ms ease, border-color 300ms ease, transform 420ms cubic-bezier(.3, 1.5, .5, 1) calc(220ms + var(--i, 0) * 45ms); }
+
+.resp-matrix-wrap .proc-contract-band { margin-top: 44px; }
+
+@media (max-width: 1050px) { .rm-head { top: 169px; } .rm-when { margin-inline: 0; text-align: left; } }
+@media (max-width: 760px) { .rm-head { top: 143px; } }
+
+/* Narrower: the work goes over its row, the three party columns under it — each word over its note */
+@media (max-width: 860px) {
+  .resp-matrix-wrap { --rm-cols: repeat(3, minmax(0, 1fr)); }
+  .rm-head { padding: 12px 0 10px; }
+  .rm-work-head { display: none !important; }
+  .rm-head > span.rm-col { padding: 0 8px 0 0 !important; }
+  .rm-col > b { font-size: 15px; }
+  .rm-coordinator { font-size: 10px; letter-spacing: .06em; }
+  .rm-coordinator b::before { display: none; }
+  .rm-coordinator span { display: none; }
+  .rm-row { grid-template-rows: auto auto; }
+  .rm-work { grid-column: 1 / -1; grid-row: 1; padding: 14px 0 0; font-size: 15.5px; }
+  .rm-cell { grid-row: 2; padding: 38px 8px 12px 0; }
+  .rm-cell:nth-child(2) { grid-column: 1; }
+  .rm-cell:nth-child(3) { grid-column: 2; }
+  .rm-cell:nth-child(4) { grid-column: 3; }
+  .rm-say small { font-size: 12.5px; }
+  .rm-out { grid-column: 1 / -1; grid-row: 2; padding: 10px 0 14px; }
+  .rm-track { grid-row: 2; grid-column: 1 / -1; height: 36px; }
+  .rm-mark { padding: 8px 0 0; }
+  .rm-mark::before { padding: 5px 7px 4px; font-size: 10.5px; letter-spacing: .04em; }
+  .rm-group > span { padding-top: 22px; }
+}

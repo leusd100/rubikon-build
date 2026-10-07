@@ -49,7 +49,7 @@
 /* The closing contact block: one column of fixed width, so the call and the four channels share both edges. */
 .conversation-contact { display: grid; gap: 12px; width: min(100%, 520px); margin-top: 32px; }
 /* The call: a segmented button — icon cell | label + number | arrow. Colours stay the theme's action role. */
-.conversation-call { width: 100%; min-width: 0; min-height: 68px; justify-content: flex-start; gap: 0; padding: 0; }
+.conversation-call { width: 100%; min-width: 0; min-height: 62px; justify-content: flex-start; gap: 0; padding: 0; }
 .conversation-call > span { display: flex; align-items: center; }
 .conversation-call .conversation-call-icon {
   align-self: stretch; width: 66px; flex: none; justify-content: center;
@@ -59,8 +59,8 @@
 }
 .conversation-call .conversation-call-icon svg { width: 22px; height: 22px; flex: none; stroke-width: 1.7; }
 .conversation-call .conversation-call-text { flex: 1 1 auto; display: grid; gap: 7px; padding: 0 20px; text-align: left; }
-.conversation-call small { font-size: 12px; letter-spacing: .14em; }
-.conversation-call strong { font-size: 24px; letter-spacing: .025em; }
+.conversation-call small { font-size: 11px; letter-spacing: .12em; }
+.conversation-call strong { font-size: 20px; letter-spacing: .025em; }
 .conversation-call .conversation-call-arrow { flex: none; padding: 0 24px 0 8px; font-size: 18px; font-weight: 500; transition: transform var(--duration-fast) ease; }
 .conversation-call:is(:hover, :focus-visible) .conversation-call-icon { background: color-mix(in srgb, var(--color-on-action) 15%, transparent); }
 .conversation-call:is(:hover, :focus-visible) .conversation-call-arrow { transform: translate(3px, -3px); }
@@ -153,7 +153,7 @@
   .conversation-contact { width: 100%; margin-top: 24px; }
   .conversation-call .conversation-call-icon { width: 58px; }
   .conversation-call .conversation-call-text { padding: 0 14px; }
-  .conversation-call strong { font-size: 22px; }
+  .conversation-call strong { font-size: 19px; }
   .conversation-call .conversation-call-arrow { padding-right: 16px; }
   .conversation-channels { gap: 6px; }
   .conversation-channels .messenger-link { flex-direction: column; gap: 7px; min-height: 64px; padding: 8px 4px; font-size: 12px; }
@@ -172,7 +172,7 @@
   }
 }
 @media (max-width: 340px) {
-  .conversation-call strong { font-size: 20px; }
+  .conversation-call strong { font-size: 18px; }
   .conversation-call .conversation-call-icon { width: 52px; }
   .conversation-channels .messenger-link { font-size: 12px; }
 }

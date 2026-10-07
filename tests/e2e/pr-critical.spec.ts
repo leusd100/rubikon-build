@@ -7,6 +7,7 @@ import { homeProofCase } from '../../app/data/homeProof';
 import { directions, undecidedDirection } from '../../app/data/directions';
 import { stubTurnstile } from './turnstile.helpers';
 import { GRAIN_HERO_BOUNDARY } from '../../app/data/grainPage';
+import { FORMAT_WHEN, RESPONSIBILITY_GROUPS, RESPONSIBILITY_ZONES, kindOf, noteOf, wordOf, workName } from '../../app/lib/responsibilityTable';
 
 function collectFatalBrowserErrors(page: Page) {
   const errors: string[] = [];
@@ -615,23 +616,25 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
     main: 'main',
     h1: 'main h1',
     starts: '.proc-start-list h3',
-    steps: '.proc-steps h3',
-    results: '.proc-steps .proc-step-result',
+    steps: '.proc-split h3',
+    results: '.proc-split .ps-result .sr-only',
     formats: '#obsiah .dfmt-option .dfmt-title',
     formatTexts: '#obsiah .dfmt-option .dfmt-text',
     formatTerms: '#obsiah .dfmt-option .dfmt-sr',
-    principle: '.proc-principle',
-    areas: '.proc-area h3',
-    areaItems: '.proc-area ul li .proc-area-work',
-    terms: '.proc-terms-grid h3',
+    when: '.rm-when .proc-principle',
+    principle: '.rm-when-how',
+    areas: '.rm-col > b',
+    areaItems: '.rm-row .rm-work',
+    terms: '.cs-sheet figcaption strong',
     inquiry: '#inquiry h2',
   });
   const main = text.main.join(' ');
 
   expect(text.h1).toEqual(['Від задачі — до зрозумілого плану робіт']);
   expect(text.starts).toEqual(['Є ідея об’єкта', 'Є креслення або проєкт', 'Потрібен окремий етап робіт']);
-  expect(text.steps).toEqual(processSteps().map((step) => `Крок ${step.number}. ${step.title}`));
-  expect(text.results).toEqual(processSteps().map((step) => `На виході: ${step.result}`));
+  // «Ви · Ми» (owner 06.10): each step's number and title; its full result is read to screen readers under the caption
+  expect(text.steps).toEqual(processSteps().map((step) => `${step.number}${step.title}`));
+  expect(text.results).toEqual(processSteps().map((step) => `Результат: ${step.result}`));
   expect(text.formats).toEqual(FORMAT_LABELS);
   const choices = participationChoices();
   for (const format of deliveryModel.formats) expect(text.formatTexts).toEqual(expect.arrayContaining([format.summary]));
@@ -639,11 +642,16 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
   // party of the contract and who coordinates the object (hidden text: the drawing shows them for one format at a time)
   expect(text.formatTerms).toEqual(choices.map((choice) => `Договір: ${choice.contractWith} і RUBIKON. Координує об’єкт: ${choice.coordinator}.`));
   const resp = responsibilityByFormat();
+  // The responsibility table (owner 06.10): each format opens with when it is yours, then the model's interfaces line;
+  // a column per party, the client being «Ви»; a row per work — all of them, in three groups, plainer names where set
+  expect(text.when).toEqual(resp.formats.map((format) => FORMAT_WHEN[format.id]));
   expect(text.principle).toEqual(resp.formats.map((format) => format.principle));
   expect(text.principle).toEqual(deliveryModel.formats.map((format) => format.interfaces));
-  expect(text.areas).toEqual(['RUBIKON', 'ЗамовникЗамовникГенпідрядник', 'Профільні спеціалісти']);
-  expect(text.areaItems).toEqual((['rubikon', 'client', 'specialists'] as const).flatMap((zone) => resp.items.filter((item) => item.zones[zone].length > 0).map((item) => item.text)));
-  expect(text.terms).toEqual(['Рахуємо кошторис', 'Плануємо строки', 'Погоджуємо зміни']);
+  expect(text.areas).toEqual(RESPONSIBILITY_ZONES.map((zone) => zone.title));
+  expect(text.areaItems).toEqual(RESPONSIBILITY_GROUPS.flatMap((group) => resp.items.filter((item) => group.rows.includes(item.rows[0]))).map(workName));
+  expect(text.areaItems).toHaveLength(resp.items.length);
+  // The estimate and the schedule as sheets (owner 07.10); the change policy is the procedure's lead (statements below)
+  expect(text.terms).toEqual(['Рахуємо кошторис', 'Плануємо строки']);
   expect(text.inquiry).toEqual(['Є задача — почнемо з неї']);
   for (const statement of [deliveryModel.statements.design, deliveryModel.statements.boundary, deliveryModel.statements.materials, deliveryModel.changePolicy.principle]) {
     expect(main).toContain(statement);
@@ -709,11 +717,14 @@ test.describe('/yak-pratsyuiemo without JavaScript', () => {
 
   test('is complete: route, scope, responsibility map and terms read without scripts; the FAQ opens natively', async ({ page }) => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    await expect(page.locator('.proc-steps li')).toHaveCount(4);
-    await expect(page.locator('.proc-steps .proc-step-result').last()).toBeVisible();
-    await expect(page.locator('.proc-area')).toHaveCount(3);
-    await expect(page.locator('.proc-terms-grid li')).toHaveCount(3);
-    await expect(page.locator('.proc-change-steps li')).toHaveCount(4);
+    await expect(page.locator('.proc-split li')).toHaveCount(4);
+    await expect(page.locator('.proc-split .ps-result').last()).toBeVisible();
+    await expect(page.locator('.rm-row')).toHaveCount(responsibilityByFormat().items.length);
+    await expect(page.locator('.rm-row').last()).toBeVisible();
+    await expect(page.locator('.cs-sheet')).toHaveCount(2);
+    await expect(page.locator('.cs-steps li')).toHaveCount(4);
+    // the change procedure's whole story is drawn on the sheets without scripts
+    await expect(page.locator('.cs')).toHaveAttribute('data-reached', '1 2 3 4');
     await expect(page.locator('.proc-contract-band')).toBeVisible();
     const first = page.locator('.faq-list details').first();
     await first.locator('summary').click();
@@ -727,18 +738,19 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     await expect(page.locator('.process-page')).not.toHaveAttribute('data-motion-ready', /.*/);
-    await expect(page.locator('.proc-area').first()).toHaveCSS('opacity', '1');
+    await expect(page.locator('.rm-row').first()).toHaveCSS('opacity', '1');
     await expect(page.locator('#obsiah .dfmt-figure')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-start-merge')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1');
-    await expect(page.locator('.proc-change')).toHaveCSS('opacity', '1');
+    await expect(page.locator('.cs')).toHaveAttribute('data-reached', '1 2 3 4');
+    await expect(page.locator('.cs-order')).toHaveCSS('opacity', '1');
   });
 
-  test('a block taller than the screen still plays: the stacked responsibility map on a phone', async ({ page }) => {
+  test('a block taller than the screen still plays: the responsibility table on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const figure = page.locator('.proc-resp-figure');
+    const figure = page.locator('.resp-matrix-wrap');
     await figure.scrollIntoViewIfNeeded();
     await expect(figure).toHaveAttribute('data-motion-state', 'on');
     await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1', { timeout: 5000 });
@@ -747,7 +759,7 @@ test.describe('/yak-pratsyuiemo motion', () => {
   test('each block plays once when it enters the viewport and never replays', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const route = page.locator('.proc-steps');
+    const route = page.locator('.proc-split');
     await expect(route).not.toHaveAttribute('data-motion-state', 'on');
     await route.scrollIntoViewIfNeeded();
     await expect(route).toHaveAttribute('data-motion-state', 'on');
@@ -777,86 +789,103 @@ test.describe('/yak-pratsyuiemo motion', () => {
 });
 
 test.describe('/yak-pratsyuiemo interactions', () => {
-  const visibleItems = (page: Page, zone: string) => page.locator(`.proc-area-${zone} ul li:visible .proc-area-work`);
-  const visibleNotes = (page: Page, zone: string) => page.locator(`.proc-area-${zone} ul li:visible .proc-area-note:visible`);
+  /** What the table shows for the chosen format: per row, per party column, the cell's word (+ note) and the columns
+   *  its visible word-marks stand in. Hidden cells are display: none (CSS :has on the switcher's radios). */
+  const tableState = (page: Page) => page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.rm-row')].map((row) => ({
+    work: row.querySelector('.rm-work')?.textContent?.trim() ?? '',
+    cells: [...row.querySelectorAll<HTMLElement>('.rm-cell')].map((cell) => [...cell.querySelectorAll<HTMLElement>('.rm-say')]
+      .filter((say) => getComputedStyle(say).display !== 'none')
+      .map((say) => say.querySelector('.sr-only')?.textContent?.trim() ?? '')),
+    marks: [...row.querySelectorAll<HTMLElement>('.rm-mark')]
+      .filter((mark) => getComputedStyle(mark).opacity === '1')
+      .map((mark) => Number(getComputedStyle(mark).getPropertyValue('--c').trim()))
+      .sort(),
+    words: [...row.querySelectorAll<HTMLElement>('.rm-mark')]
+      .filter((mark) => getComputedStyle(mark).opacity === '1')
+      .map((mark) => getComputedStyle(mark, '::before').content.replace(/^"|"$/g, ''))
+      .sort(),
+  })));
 
-  test('the format switcher moves each work to the zone the model names for that format', async ({ page }) => {
+  test('the format switcher puts each work with the parties the model names for that format, in words', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     const resp = responsibilityByFormat();
+    const rows = RESPONSIBILITY_GROUPS.flatMap((group) => resp.items.filter((item) => group.rows.includes(item.rows[0])));
     for (const format of resp.formats) {
       await page.locator('.proc-resp-switch').getByRole('radio', { name: format.label, exact: true }).check();
-      for (const zone of ['rubikon', 'client', 'specialists'] as const) {
-        await expect(visibleItems(page, zone)).toHaveText(resp.items.filter((item) => item.zones[zone].includes(format.id)).map((item) => item.text));
-      }
-      await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText(format.clientTitle);
-      await expect(page.locator('.proc-principle:visible')).toHaveText(format.principle);
-      // «Координує об’єкт» sits only on the coordinator's card; shared works say how they are split
-      await expect(page.locator('.proc-area-tag:visible')).toHaveCount(1);
-      await expect(page.locator(`.proc-area-${format.coordinator.zone} .proc-area-tag:visible`)).toHaveCount(1);
-      for (const zone of ['rubikon', 'client', 'specialists'] as const) {
-        const notes = resp.items.filter((item) => item.zones[zone].includes(format.id) && item.notes[zone]?.[format.id]).map((item) => item.notes[zone]![format.id]!);
-        await expect(visibleNotes(page, zone)).toHaveText(notes);
-      }
+      await expect(page.locator('.rm-col-client .rm-who:visible')).toHaveText(format.clientTitle.toLowerCase());
+      await expect(page.locator('.rm-when-how:visible')).toHaveText(format.principle);
+      await expect(page.locator('.rm-when .proc-principle:visible')).toHaveText(FORMAT_WHEN[format.id]);
+      // «Координує(те) об’єкт» stands under one party only — the format's coordinator
+      await expect(page.locator('.rm-coordinator:visible')).toHaveCount(1);
+      await expect(page.locator(`.rm-col-${format.coordinator.zone} .rm-coordinator:visible`)).toHaveCount(1);
+      const state = await tableState(page);
+      expect(state.map((row) => row.work)).toEqual(rows.map(workName));
+      rows.forEach((item, index) => {
+        const zones = RESPONSIBILITY_ZONES.map((zone) => zone.id);
+        const held = zones.filter((zone) => item.zones[zone].includes(format.id));
+        // each party cell says its word and the model's note (in the second person) — or nothing
+        expect(state[index].cells, `${item.text} · ${format.id}`).toEqual(zones.map((zone) => (held.includes(zone)
+          ? [`${wordOf(item, zone, format.id)}${noteOf(item, zone, format.id) ? `: ${noteOf(item, zone, format.id)}` : ''}`]
+          : [])));
+        // and its word-marks stand in exactly those columns, saying the same words
+        expect(state[index].marks, `${item.text} · ${format.id} marks`).toEqual(held.map((zone) => zones.indexOf(zone)).sort());
+        expect(state[index].words, `${item.text} · ${format.id} words`).toEqual(held.map((zone) => wordOf(item, zone, format.id)).sort());
+      });
     }
   });
 
-  test('the map cards are all light and turn dark only while pointed at', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'hover devices only');
+  test('the table needs no key: the marks are words, the client is «Ви»', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    // The first-visit cookie banner must not sit under the pointer
-    await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
-    const card = (zone: string) => page.locator(`.proc-area-${zone}`);
-    const light = await card('client').evaluate((element) => getComputedStyle(element).backgroundColor);
-    // RUBIKON's card starts light too
-    await expect(card('rubikon')).toHaveCSS('background-color', light);
-    // Smooth scrolling may still be settling when the pointer arrives: point again until the card answers
-    let dark = light;
-    await expect(async () => {
-      await card('rubikon').hover();
-      dark = await card('rubikon').evaluate((element) => getComputedStyle(element).backgroundColor);
-      expect(dark).not.toBe(light);
-    }).toPass({ timeout: 5000 });
-    for (const zone of ['client', 'specialists']) {
-      await card(zone).hover();
-      await expect(card(zone)).toHaveCSS('background-color', dark);
-      await expect(card('rubikon')).toHaveCSS('background-color', light);
-    }
+    await expect(page.locator('.rm-key')).toHaveCount(0);
+    await expect(page.locator('.rm-col-client > b')).toHaveText('Ви');
+    const state = await tableState(page);
+    const row = (work: string) => state.find((item) => item.work === work)!;
+    expect(row('Кошторис').words).toEqual(['Робимо']);
+    expect(row('Проєкт об’єкта').words).toEqual(['На вас']);
+    expect(row('Виготовлення металоконструкцій').words).toEqual(['Організовуємо']);
   });
 
-  test('on a phone the switcher stays under the header while the stacked map scrolls by', async ({ page }) => {
+  test('on a phone the switcher and the table head stay under the header while the rows scroll by', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     await page.evaluate(() => {
-      const card = document.querySelector('.proc-area-client')!;
-      window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2, behavior: 'instant' });
+      const row = document.querySelectorAll('.rm-row')[8]!;
+      window.scrollTo({ top: row.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2, behavior: 'instant' });
     });
     const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
-    expect(await page.locator('.proc-resp-switch').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
-    await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
-    await expect(page.locator('.proc-area-client .proc-area-tag:visible')).toBeVisible();
+    const switcher = page.locator('.proc-resp-switch');
+    expect(await switcher.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
+    const switcherBottom = await switcher.evaluate((element) => Math.round(element.getBoundingClientRect().bottom));
+    expect(await page.locator('.rm-head').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(switcherBottom);
+    await switcher.getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
+    await expect(page.locator('.rm-col-client .rm-coordinator:visible')).toBeVisible();
   });
 
-  test('on a wide screen the switcher floats under the header while the map scrolls by', async ({ page, isMobile }) => {
+  test('on a wide screen the switcher floats under the header and the table head sticks under it', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop layout');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    // The map's top 400 px above the viewport: well inside it
+    // The table's top 400 px above the viewport: well inside it
     await page.evaluate(() => {
-      const figure = document.querySelector('.proc-resp-figure')!;
-      window.scrollTo({ top: figure.getBoundingClientRect().top + window.scrollY + 400, behavior: 'instant' });
+      const table = document.querySelector('.resp-matrix')!;
+      window.scrollTo({ top: table.getBoundingClientRect().top + window.scrollY + 400, behavior: 'instant' });
     });
     const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
     const control = page.locator('.proc-resp-switch > div');
     expect(await control.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header + 12);
-    // Only the control takes the pointer: the strip beside it does not cover the cards
+    // Only the control takes the pointer: the strip beside it does not cover the table
     await expect(page.locator('.proc-resp-switch')).toHaveCSS('pointer-events', 'none');
     await expect(control).toHaveCSS('pointer-events', 'auto');
+    const controlBottom = await control.evaluate((element) => element.getBoundingClientRect().bottom);
+    const headTop = await page.locator('.rm-head').evaluate((element) => element.getBoundingClientRect().top);
+    expect(headTop).toBeGreaterThanOrEqual(controlBottom);
+    expect(headTop - controlBottom).toBeLessThan(4);
   });
 
-  test('the scope drawing and the responsibility map hold one choice of format', async ({ page }) => {
+  test('the scope drawing and the responsibility table hold one choice of format', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
@@ -866,8 +895,8 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     await options.filter({ hasText: 'Субпідряд' }).click();
     await expect(drawing).toHaveAttribute('data-format', 'subcontract');
     await expect(page.locator('.proc-resp-switch input[value="subcontract"]')).toBeChecked();
-    await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText('Генпідрядник');
-    // and back from the map
+    await expect(page.locator('.rm-col-client .rm-who:visible')).toHaveText('генпідрядник');
+    // and back from the table
     await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
     await expect(options.nth(1)).toHaveAttribute('aria-pressed', 'true');
     await expect(drawing).toHaveAttribute('data-format', 'work-package');
@@ -882,17 +911,19 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     await expect(page.locator('#obsiah .proc-scope-legend li')).toHaveCount(3);
   });
 
-  test('after a switch the works that moved into a zone are marked for a moment', async ({ page }) => {
+  test('after a switch the rows whose parties changed are lit for a moment', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     const resp = responsibilityByFormat();
-    const moved = (['rubikon', 'client', 'specialists'] as const).flatMap((zone) => resp.items
-      .filter((item) => item.zones[zone].includes('subcontract') && !item.zones[zone].includes('comprehensive'))
-      .map((item) => item.text));
+    const place = (item: (typeof resp.items)[number], format: 'comprehensive' | 'subcontract') => RESPONSIBILITY_ZONES
+      .filter((zone) => item.zones[zone.id].includes(format)).map((zone) => `${zone.id}:${kindOf(item, zone.id, format)}`).join(' ');
+    const moved = RESPONSIBILITY_GROUPS.flatMap((group) => resp.items.filter((item) => group.rows.includes(item.rows[0])))
+      .filter((item) => place(item, 'comprehensive') !== place(item, 'subcontract'))
+      .map(workName);
     expect(moved.length).toBeGreaterThan(0);
     await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check();
-    await expect(page.locator('.proc-area li[data-fresh] .proc-area-work')).toHaveText(moved);
-    await expect(page.locator('.proc-area li[data-fresh]')).toHaveCount(0, { timeout: 5000 });
+    await expect(page.locator('.rm-row[data-fresh] .rm-work')).toHaveText(moved);
+    await expect(page.locator('.rm-row[data-fresh]')).toHaveCount(0, { timeout: 5000 });
   });
 
   test.describe('without JavaScript', () => {
@@ -900,8 +931,9 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     test('the format switcher still works (CSS only)', async ({ page }) => {
       await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
       await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check();
-      await expect(page.locator('.proc-area-client h3 span:visible')).toHaveText('Генпідрядник');
-      await expect(page.locator('.proc-out-of-scope:visible')).toHaveCount(1);
+      await expect(page.locator('.rm-col-client .rm-who:visible')).toHaveText('генпідрядник');
+      const subcontract = responsibilityByFormat().formats.find((format) => format.id === 'subcontract')!;
+      await expect(page.locator('.rm-out:visible')).toHaveCount(subcontract.outOfScope.length);
     });
   });
 

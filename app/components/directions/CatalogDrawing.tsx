@@ -11,6 +11,11 @@ import './catalog-drawing.css';
 // could pass for a real project drawing, and each sheet's strip says «Схема».
 // 03–05 are the direction pages' own bodies (one source of geometry); 01 and 02 are drawn here.
 //
+// Motion (owner 07.10, «додати трохи динаміки… щоб це не було забагато»): each sheet plots in once when it comes into view
+// (its host carries [data-motion]), and pointing at its row or card makes its copper detail do its job, once per
+// pointing — the clear space traced, the silo set on its base, the bolts tightened, the anchors set, the rain run off the
+// slope into the gutter (catalog-drawing.css). Nothing loops.
+//
 // A server component (both its users are), with no element ids. Every body is drawn in the 360 × 248 reference space
 // and shown at half size; the letters are set outside the scaled group so they stay readable on a 120 px sheet (the
 // reused bodies' own 14-unit letters are hidden by CSS).
@@ -22,18 +27,18 @@ function HangarFrame() {
   return (
     <>
       {/* ground outside, floor inside */}
-      <path className="dsd-line" d="M16 196 H60 M84 196 H276 M300 196 H344" />
+      <path pathLength={1} className="dsd-line" d="M16 196 H60 M84 196 H276 M300 196 H344" />
       <path className="dsd-hatch" d="M26 196 l-8 10 M42 196 l-8 10 M326 196 l-8 10 M342 196 l-8 10" />
       {/* footings in section: a pedestal on a pad */}
-      <path className="dsd-cut" d="M60 196 H84 V204 H92 V214 H52 V204 H60 Z" />
-      <path className="dsd-cut" d="M276 196 H300 V204 H308 V214 H268 V204 H276 Z" />
+      <path pathLength={1} className="dsd-cut" d="M60 196 H84 V204 H92 V214 H52 V204 H60 Z" />
+      <path pathLength={1} className="dsd-cut" d="M276 196 H300 V204 H308 V214 H268 V204 H276 Z" />
       {/* envelope: half a column depth outside the frame, landing on the pedestals */}
-      <path className="dsd-line" d="M60 196 V88.9 L180 42.6 L300 88.9 V196" />
+      <path pathLength={1} className="dsd-line" d="M60 196 V88.9 L180 42.6 L300 88.9 V196" />
       {/* the frame with its haunches, in elevation */}
-      <path className="cdw-seen" d="M66 196 V92 L180 48 L294 92 V196 H282 V126 L248 85 L180 58.7 L112 85 L78 126 V196 Z" />
+      <path pathLength={1} className="cdw-seen" d="M66 196 V92 L180 48 L294 92 V196 H282 V126 L248 85 L180 58.7 L112 85 L78 126 V196 Z" />
       <path className="dsd-axis" d="M72 70 V238 M288 70 V238 M180 26 V214" />
       {/* span between the axes; clear height */}
-      <path className="dsd-dim" d="M72 230 H288 M72 224 V236 M288 224 V236 M328 196 V124 M322 196 H334 M322 124 H334" />
+      <path pathLength={1} className="dsd-dim" d="M72 230 H288 M72 224 V236 M288 224 V236 M328 196 V124 M322 196 H334 M322 124 H334" />
       <g className="dsd-accent">
         <path className="dsd-dashed" d="M98 196 V124 H262 V196" />
       </g>
@@ -47,22 +52,26 @@ function HangarFrame() {
 function SiloBase() {
   return (
     <>
-      <path className="dsd-line" d="M16 186 H84 M276 186 H344" />
+      <path pathLength={1} className="dsd-line" d="M16 186 H84 M276 186 H344" />
       <path className="dsd-hatch" d="M28 186 l-8 10 M46 186 l-8 10 M64 186 l-8 10 M300 186 l-8 10 M318 186 l-8 10 M336 186 l-8 10" />
       {/* each half runs from its foot to the ridge, so the dash pattern is the same on both sides; then the eave */}
       <path className="cdw-equip" d="M113 174 V72 L180 40 M247 174 V72 L180 40 M113 72 H247" />
-      <path className="dsd-cut" d="M84 174 H276 V194 H84 Z" />
+      <path pathLength={1} className="dsd-cut" d="M84 174 H276 V194 H84 Z" />
       <path className="dsd-axis" d="M180 22 V238" />
-      <path className="dsd-dim" d="M113 228 H247 M113 222 V234 M247 222 V234" />
+      <path pathLength={1} className="dsd-dim" d="M113 228 H247 M113 222 V234 M247 222 V234" />
       <g className="dsd-accent">
-        <path d="M101 174 H125 M113 174 V158 M235 174 H259 M247 174 V158" />
+        <path pathLength={1} d="M101 174 H125 M113 174 V158 M235 174 H259 M247 174 V158" />
       </g>
     </>
   );
 }
 
-/** Body and letters per direction. Letters are in the sheet's own 180 × 126 space. */
-const SCHEMES: Record<DirectionId, { body: () => ReactNode; letters: ReactNode }> = {
+/** The roof's rain, for the pointed sheet only: over the ribs down the slope, off the eave into the gutter, down the pipe.
+ *  In the reference space; the ribs' tops lie 10 units over the sheet's line (the build-up's own -17° turn applied). */
+const ROOF_RAIN = <path className="cdw-water" d="M290 73 L47 147 Q36 151 31 166 V214" />;
+
+/** Body, letters and any sheet-only layer per direction. Letters are in the sheet's own 180 × 126 space. */
+const SCHEMES: Record<DirectionId, { body: () => ReactNode; letters: ReactNode; extra?: ReactNode }> = {
   angary: {
     body: HangarFrame,
     letters: (
@@ -91,16 +100,17 @@ const SCHEMES: Record<DirectionId, { body: () => ReactNode; letters: ReactNode }
   },
   'pokrivelni-roboty': {
     body: Roofing,
+    extra: ROOF_RAIN,
     // along the slope, like the arrow it names
     letters: <g transform="translate(20 80) rotate(-17)"><text className="cdw-letter" x="65" y="48">i</text></g>,
   },
 };
 
 export function CatalogDrawing({ id }: Readonly<{ id: DirectionId }>) {
-  const { body: Body, letters } = SCHEMES[id];
+  const { body: Body, letters, extra } = SCHEMES[id];
   return (
-    <svg className="cdw" viewBox="0 0 180 126" focusable="false" aria-hidden="true">
-      <g transform="scale(.5)"><Body /></g>
+    <svg className="cdw" data-dir={id} viewBox="0 0 180 126" focusable="false" aria-hidden="true">
+      <g transform="scale(.5)"><Body />{extra}</g>
       {letters}
     </svg>
   );
