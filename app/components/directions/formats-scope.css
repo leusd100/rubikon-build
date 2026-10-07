@@ -53,8 +53,13 @@
 .dfmt-packages li.dfmt-packages-note { padding-inline: 4px; color: var(--color-text-muted); border: 0; font-weight: 500; }
 .dfmt-terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin: 0; padding-top: 14px; border-top: 1px solid var(--color-border); }
 .dfmt-terms dt { color: var(--color-text-muted); font: 700 11.5px/1.3 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
-/* two lines kept, so the block does not jump as the formats change */
-.dfmt-terms dd { min-height: 2.7em; margin: 5px 0 0; color: var(--color-text); font: 600 16px/1.35 var(--font-manrope), sans-serif; }
+.dfmt-terms dd { margin: 5px 0 0; color: var(--color-text); font: 600 16px/1.35 var(--font-manrope), sans-serif; }
+/* A line that changes with the format keeps every variant in one place (FormatsScope's Shown): as tall as its longest
+   variant at any width, so nothing under it moves as the formats change */
+.dfmt-shown { display: inline-grid; }
+.dfmt-terms .dfmt-shown { display: grid; }
+.dfmt-shown > span { grid-area: 1 / 1; }
+.dfmt-shown > span:not([data-on]) { visibility: hidden; }
 .dfmt-terms dd b { color: var(--color-accent-strong); font-weight: 700; }
 @keyframes dfmt-march { to { stroke-dashoffset: -14; } }
 @keyframes dfmt-rise { from { opacity: 0; transform: translateY(14px); } }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FormatPrefillLink } from '../process/FormatPrefillLink';
 import type { FormatCard } from '../../lib/deliveryModelPresentation';
 import type { DeliveryFormatId } from '../../types/deliveryModel';
@@ -42,6 +42,18 @@ const LAYERS: readonly (readonly [Layer, string])[] = [
 const PACKAGES: readonly (readonly [Layer, string])[] = [['foundation', 'Фундамент'], ['frame', 'Каркас'], ['roof', 'Покрівля']];
 const STEP_MS = 1150;
 const TOUR_MS = 3600;
+
+/** Every variant of a changing line laid in one place, only the one on show visible: the line is as tall as its longest
+ *  variant at any width, so the block keeps its height while the formats change (on a phone one fact wrapped to a third
+ *  line for one format, and the buttons under the drawing jumped 22 px at each step of the walk, 07.10) */
+function Shown<K extends string>({ keys, on, children }: Readonly<{ keys: readonly K[]; on: K; children: (key: K) => ReactNode }>) {
+  return (
+    <span className="dfmt-shown">
+      {/* (a space between the variants: whitespace takes no room in the grid, and the words do not run together) */}
+      {keys.map((key) => <Fragment key={key}><span data-on={key === on || undefined}>{children(key)}</span>{' '}</Fragment>)}
+    </span>
+  );
+}
 
 export function FormatsScope({ formats, terms, mirror, prefill = false }: Readonly<{
   formats: readonly FormatCard[];
@@ -123,7 +135,6 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
   }, [whole, inView]);
 
   const scoped = (layer: Layer) => whole || PACKAGES[turn][0] === layer;
-  const term = terms[active];
 
   return (
     <div className="dfmt-grid" data-motion>
@@ -167,23 +178,37 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
         <figcaption className="dfmt-caption">
           <span>Схема</span>
           <b>Переріз</b>
-          <span><i>{current.number}</i> {current.title}</span>
+          <Shown keys={formats.map((format) => format.id)} on={active}>
+            {(id) => { const format = formats.find((item) => item.id === id)!; return <><i>{format.number}</i> {format.title}</>; }}
+          </Shown>
         </figcaption>
         {/* The words under the drawing repeat what the pressed button says (each button carries its format's two facts
             as hidden text); they change with the format, so this copy is kept out of the accessibility tree */}
         <div className="dfmt-facts" aria-hidden="true">
           <ul className="dfmt-packages">
             {PACKAGES.map(([layer, name]) => <li key={layer} data-scope={scoped(layer) ? '' : undefined}>{name}</li>)}
-            <li className="dfmt-packages-note">{whole ? 'увесь погоджений комплекс' : 'або інший погоджений обсяг'}</li>
+            <li className="dfmt-packages-note">
+              <Shown keys={['whole', 'part']} on={whole ? 'whole' : 'part'}>
+                {(id) => (id === 'whole' ? 'увесь погоджений комплекс' : 'або інший погоджений обсяг')}
+              </Shown>
+            </li>
           </ul>
           <dl className="dfmt-terms">
             <div>
               <dt>Договір</dt>
-              <dd>{term.contractWith} — <b>RUBIKON</b></dd>
+              <dd>
+                <Shown keys={formats.map((format) => format.id)} on={active}>
+                  {(id) => <>{terms[id].contractWith} — <b>RUBIKON</b></>}
+                </Shown>
+              </dd>
             </div>
             <div>
               <dt>Координує об’єкт</dt>
-              <dd>{term.rubikonCoordinates ? <b>{term.coordinator}</b> : term.coordinator}</dd>
+              <dd>
+                <Shown keys={formats.map((format) => format.id)} on={active}>
+                  {(id) => (terms[id].rubikonCoordinates ? <b>{terms[id].coordinator}</b> : terms[id].coordinator)}
+                </Shown>
+              </dd>
             </div>
           </dl>
         </div>

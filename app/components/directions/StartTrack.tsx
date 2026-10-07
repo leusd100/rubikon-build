@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { Fragment, useState, type CSSProperties } from 'react';
 import { StartDrawing } from './StartDrawing';
 
 // /napryamky «Що у вас уже є — з того й почнемо»: pick what you already have, and the eight stages of the Delivery
@@ -17,6 +17,8 @@ export function StartTrack({ entries, stages }: Readonly<{ entries: readonly Sta
   const entry = entries.find((item) => item.id === active) ?? entries[0];
   const startIndex = Math.max(0, stages.findIndex((stage) => stage.id === entry.startStage));
   const start = stages[startIndex];
+  // the stages the entries start at, in the track's order
+  const startStages = stages.filter((stage) => entries.some((item) => item.startStage === stage.id));
 
   return (
     <div className="dstart" data-motion style={{ '--start': startIndex, '--last': stages.length - 1 } as CSSProperties}>
@@ -55,10 +57,17 @@ export function StartTrack({ entries, stages }: Readonly<{ entries: readonly Sta
           ))}
         </ol>
       </div>
-      <div className="dstart-detail" key={entry.id} aria-live="polite">
+      {/* Every start stage an entry can lead to, laid in one place, only the chosen one shown: the description is as tall
+          as its longest, so pointing from entry to entry no longer moves the page under it (48 px on a laptop, 109 on a
+          phone, 07.10) */}
+      <div className="dstart-detail" aria-live="polite">
         <p className="dstart-kicker">Почнемо з етапу</p>
-        <p className="dstart-stage"><b>{start.number}</b> {start.title}</p>
-        <p className="dstart-what">{start.what}</p>
+        {startStages.map((stage) => (
+          <Fragment key={stage.id}>
+            <p className="dstart-stage" data-on={stage.id === start.id || undefined}><b>{stage.number}</b> {stage.title}</p>
+            <p className="dstart-what" data-on={stage.id === start.id || undefined}>{stage.what}</p>
+          </Fragment>
+        ))}
       </div>
     </div>
   );

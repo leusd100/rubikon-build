@@ -32,9 +32,10 @@ test('each format redraws the section: the whole complex, one package, one packa
     const whole = choice.id === 'comprehensive';
     await expect(drawing.locator('.fs-layer[data-scope]')).toHaveCount(whole ? 4 : 1);
     await expect(grid.locator('.dfmt-packages li[data-scope]')).toHaveCount(whole ? 3 : 1);
-    // The two facts, in the model's words
-    await expect(grid.locator('.dfmt-terms dd').first()).toHaveText(`${choice.contractWith} — RUBIKON`);
-    await expect(grid.locator('.dfmt-terms dd').nth(1)).toHaveText(choice.coordinator);
+    // The two facts, in the model's words (each line keeps every format's words in one place, the shown one visible)
+    await expect(grid.locator('.dfmt-terms dd').first().locator('[data-on]')).toHaveText(`${choice.contractWith} — RUBIKON`);
+    await expect(grid.locator('.dfmt-terms dd').nth(1).locator('[data-on]')).toHaveText(choice.coordinator);
+    await expect(grid.locator('.dfmt-terms dd [data-on]')).toHaveCount(2);
     // The outer frame is a general contractor's project and nothing else
     await expect(drawing.locator('.fs-outer')).toHaveCSS('opacity', choice.id === 'subcontract' ? '1' : '0');
   }

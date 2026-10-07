@@ -626,8 +626,14 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .logo-choice-note strong { color: var(--color-accent-strong); }
 
 .route-service-list { border-top: 1px solid var(--color-border); }
-.route-service { display: grid; grid-template-columns: 90px 1fr 64px; align-items: center; min-height: 185px; border-bottom: 1px solid var(--color-border); transition: color .25s ease, background .25s ease, padding .25s ease; }
-a.route-service:hover { padding-inline: 26px; color: var(--color-dark-text); background: var(--color-dark); --color-accent-strong: var(--color-accent-on-dark); }
+.route-service { position: relative; isolation: isolate; display: grid; grid-template-columns: 90px 1fr 64px; align-items: center; min-height: 185px; border-bottom: 1px solid var(--color-border); transition: color .25s ease; }
+/* The row's dark state is a band behind it, wider than the row by --route-bleed a side, so nothing in the row moves:
+   taking that room as inline padding re-wrapped the row's text, and pointing at a row — or a row passing under a
+   resting pointer while the page scrolls — moved every row below it by a line (CLS 1.03 over one scroll at 1100 px,
+   07.10) */
+.route-service::before { content: ''; position: absolute; z-index: -1; inset: 0 calc(var(--route-bleed, 26px) * -1); background: var(--color-dark); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+a.route-service:is(:hover, :focus-visible)::before { opacity: 1; }
+a.route-service:hover { color: var(--color-dark-text); --color-accent-strong: var(--color-accent-on-dark); }
 .route-service > span { color: var(--color-accent-strong); font: 500 13px/1 var(--font-condensed), sans-serif; }
 .route-service h3 { margin: 0; font: 600 clamp(26px, 3vw, 40px)/1 var(--font-condensed), sans-serif; text-transform: none; }
 .route-service p { max-width: 720px; margin: 14px 0 0; color: var(--color-text-muted); font-size: 16px; line-height: 1.7; }
@@ -1012,7 +1018,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
      Keep it whole instead: it runs on into the empty top of the ↗ column, and the ↗ sits lower, centred in the card. */
   .route-service h3 { font-size: 25px; overflow-wrap: normal; }
   .route-service p { font-size: 15px; }
-  a.route-service:hover { padding-inline: 12px; }
+  .route-service { --route-bleed: 12px; }
   .sticky-heading { position: static; }
   .faq-list h3 { font-size: 21px; }
   .footer-grid { min-height: 0; grid-template-columns: 1fr 1fr; gap: 0 28px; padding-block: 30px; }
@@ -1194,7 +1200,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 
 /* Accessibility refinements shared by every page. */
 .breadcrumb a:hover, .breadcrumb a:focus-visible { color: var(--color-dark-text); }
-a.route-service:focus-visible { padding-inline: 26px; color: var(--color-dark-text); background: var(--color-dark); --color-accent-strong: var(--color-accent-on-dark); }
+a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-strong: var(--color-accent-on-dark); }
 
 @media (forced-colors: active) {
   :where(a, button, input, select, textarea, summary):focus-visible {
