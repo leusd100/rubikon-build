@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import { Fragment, type CSSProperties } from 'react';
 import { PracticeDrawing } from './PracticeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
 import { useDrawingCamera, type ViewNeeds } from '../useDrawingCamera';
@@ -62,7 +62,7 @@ export function PracticeSteps({
   const { visualRef, step, touring, run, size, motion, choose, toggle, hover } = useDrawingTour(steps.length);
   const { stageRef, transform, placed } = useDrawingCamera(size, IMAGE, steps, step, NEEDS);
 
-  const active = step ? steps[step - 1] : undefined;
+  const captions = [overviewCaption, ...steps.map((item) => item.caption)];
 
   return (
     <div className="shell about-story-layout ps" data-motion data-step={step || undefined} data-touring={touring || undefined}>
@@ -74,7 +74,21 @@ export function PracticeSteps({
           step
             ? { tone: 'number', label: 'Крок', value: <>{pad(step)}<span> / {pad(steps.length)}</span></> }
             : { label: 'Показ', value: 'Огляд' },
-          { tone: 'main', label: 'Що показано', value: <span className="ps-caption-text">{active ? active.caption : overviewCaption}</span> },
+          {
+            // every caption laid in one place, only the one on show visible: the title block keeps its height from step
+            // to step (about.css)
+            tone: 'main',
+            label: 'Що показано',
+            value: (
+              <span className="ps-captions">
+                {captions.map((caption, index) => (
+                  <Fragment key={`${index}-${caption}`}>
+                    <span className={index === step ? 'ps-caption-text' : undefined} data-on={index === step || undefined}>{caption}</span>{' '}
+                  </Fragment>
+                ))}
+              </span>
+            ),
+          },
         ]}
         action={motion && (
           <button type="button" className="ps-control" data-paused={touring ? undefined : true} onClick={toggle}>

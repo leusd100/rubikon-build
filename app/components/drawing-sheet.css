@@ -55,7 +55,9 @@
 .sheet-cell-main b { white-space: normal; text-wrap: balance; }
 .sheet-cell-note b { color: var(--color-text-secondary); font: 400 15px/1.5 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; white-space: normal; }
 .sheet-cell-note b b { color: var(--color-text); font-weight: 700; }
-.sheet-cell-number { flex-direction: row; align-items: baseline; gap: 5px; color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; }
+/* (a tour holds this cell at one width for every step: its words start at the left as the other cells' do and stand in
+   the middle of its height — 07.10) */
+.sheet-cell-number { flex-direction: row; flex-wrap: wrap; align-content: center; align-items: baseline; justify-content: flex-start; gap: 5px; color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; }
 .sheet-cell-number b { color: var(--color-accent-strong); font-size: 20px; letter-spacing: 0; }
 .sheet-cell-number b span { color: var(--color-text-muted); font-size: 12px; font-weight: 600; }
 .sheet-action { display: flex; flex: none; align-items: center; padding: 4px 6px 4px 10px; border-left: 1px solid var(--sheet-ink); }

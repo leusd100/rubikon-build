@@ -11,7 +11,7 @@ import {
   buildParametricModel, deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM,
 } from '../../lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
-import { TourControl, TourProgress, TourSteps, tourStepCell } from '../directions/TourParts';
+import { TourCaptions, TourControl, TourProgress, TourSteps, tourStepCell } from '../directions/TourParts';
 import { endWallFraming } from './endWallFraming';
 import './frame-tour.css';
 
@@ -588,13 +588,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
           {
             tone: 'main',
             label: 'Що показано',
-            value: (
-              <span className="ft-captions">
-                {captions.map((caption, index) => (
-                  <span key={`${index}-${caption}`} className={index === step ? 'dn-caption' : undefined} data-on={index === step || undefined}>{caption}</span>
-                ))}
-              </span>
-            ),
+            value: <TourCaptions captions={captions} step={step} className="ft-captions" />,
           },
           {
             // the way back up to the sizes (03.10): under the value, so the cell stays one value wide; on a narrow

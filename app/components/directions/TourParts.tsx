@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties, PointerEvent } from 'react';
+import { Fragment, type CSSProperties, type PointerEvent } from 'react';
 import './direction-node.css';
 
 // The parts every drawing tour on a direction page shares — «Вузол напряму» (DirectionNode) and /angary «Каркас вашого
@@ -61,6 +61,21 @@ export function TourProgress({ count, step, run, className }: Readonly<{ count: 
         </span>
       ))}
     </div>
+  );
+}
+
+/** «Що показано»: every caption of the tour laid in one place, only the one on show visible, so the cell is as tall as
+ *  the longest and the title block keeps its height from step to step (the picture above it shrank and grew by a
+ *  line as the tour walked, 07.10). The caption on show carries `dn-caption`. */
+export function TourCaptions({ captions, step, className }: Readonly<{ captions: readonly string[]; step: number; className?: string }>) {
+  return (
+    <span className={['tour-captions', className].filter(Boolean).join(' ')}>
+      {captions.map((caption, index) => (
+        <Fragment key={`${index}-${caption}`}>
+          <span className={index === step ? 'dn-caption' : undefined} data-on={index === step || undefined}>{caption}</span>{' '}
+        </Fragment>
+      ))}
+    </span>
   );
 }
 

@@ -57,6 +57,12 @@
 
 /* /angary: the drawing on the «Креслення» sheet, its title block naming the factor on show */
 .cf-sheet-image.sheet-image { padding: clamp(10px, 1.4vw, 18px); background: var(--color-surface-alt); }
+/* …a title block that keeps its geometry whichever factor is on show (07.10): the first cell as wide for «Факторів 7» as
+   for «Фактор 07 / 07» (128.1 px where the number is 20 px), and every title laid in one place */
+.cf-sheet .sheet-stamp > .sheet-cell:first-child { flex: none; min-width: 130px; }
+.cf-titles { display: grid; }
+.cf-titles > span { grid-area: 1 / 1; }
+.cf-titles > span:not([data-on]) { visibility: hidden; }
 
 @media (max-width: 1050px) {
   .cf-layout { grid-template-columns: minmax(0, 1fr); }
