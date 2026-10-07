@@ -178,53 +178,8 @@
   background: linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 98%, transparent) 0%, color-mix(in srgb, var(--color-bg) 94%, transparent) 50%, color-mix(in srgb, var(--color-bg) 80%, transparent) 100%);
 }
 :root[data-theme="dark"] .proc-terms-image { filter: grayscale(.6) brightness(.5); }
-/* Factors → estimate → schedule → agreed change: one sequence, arrows between the cards */
+/* The estimate and the schedule as sheets with the change procedure acting on them: components/process/change-sheets.css */
 .proc-factors-title.proc-terms-flow-title { margin-top: 48px; }
-.proc-terms-flow { --flow-gap: clamp(28px, 3vw, 44px); position: relative; }
-.proc-terms-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--flow-gap); margin: 0; padding: 0; list-style: none; }
-.proc-terms-grid li { position: relative; min-width: 0; padding: 26px 28px 30px; background: color-mix(in srgb, var(--color-surface-elevated) 88%, transparent); border: 1px solid var(--color-border); border-top: 2px solid var(--color-accent); }
-.proc-terms-grid li + li::before { content: '→'; position: absolute; top: 50%; right: calc(100% + 1px); width: var(--flow-gap); color: var(--color-accent-strong); font: 400 20px/1 var(--font-condensed), sans-serif; text-align: center; transform: translateY(-50%); }
-.proc-terms-index { display: block; margin-bottom: 14px; color: var(--color-accent-strong); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; }
-.proc-terms-grid h3 { margin: 0 0 12px; font: 400 clamp(24px, 2vw, 30px)/1.1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
-.process-page[data-motion-ready="on"] .proc-terms-grid li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 180ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 180ms); }
-.process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) .proc-terms-grid li { opacity: 0; transform: translateY(10px); }
-/* The change loop: 03 drops into «Якщо щось змінюється»; from its second step (assessing the impact) a stem rises into
-   a fork with arrows back up into 01 and 02. Positions are the card and step centres, from the shared --flow-gap:
-   card centres at a sixth of the width less the gaps; step 02's node 44 px (border + padding + half a node) into its column. */
-.proc-change-links { position: relative; z-index: 2; height: 72px; }
-.proc-change-links i { position: absolute; display: block; background: var(--color-accent); }
-.proc-link-03 { top: 0; left: calc(100% - (100% - 2 * var(--flow-gap)) / 6); width: 1px; height: 60px; transform-origin: top; }
-/* to step 2's node, centred over its column (UX sweep 2026-10: the loop's nodes centred like every other rail) */
-.proc-link-stem { top: 28px; left: calc(29px + 1.5 * (100% - 58px - 3 * var(--flow-gap)) / 4 + var(--flow-gap)); width: 1px; height: 75px; transform-origin: bottom; }
-.proc-link-fork { top: 28px; left: calc((100% - 2 * var(--flow-gap)) / 6); width: calc(50% - (100% - 2 * var(--flow-gap)) / 6); height: 1px; }
-.proc-link-up { top: 8px; width: 1px; height: 20px; transform-origin: bottom; }
-.proc-link-up::before { content: ''; position: absolute; top: -8px; left: -4px; border-right: 4.5px solid transparent; border-bottom: 8px solid var(--color-accent); border-left: 4.5px solid transparent; }
-.proc-link-up-1 { left: calc((100% - 2 * var(--flow-gap)) / 6); }
-.proc-link-up-2 { left: 50%; }
-.proc-link-label { position: absolute; top: 4px; left: calc(((100% - 2 * var(--flow-gap)) / 6 + 50%) / 2); color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; transform: translateX(-50%); }
-.proc-change { position: relative; z-index: 1; padding: 30px 28px 26px; background: color-mix(in srgb, var(--color-surface-elevated) 92%, transparent); border: 1px solid var(--color-border-strong); }
-.proc-change-tab { position: absolute; top: -13px; left: calc(100% - (100% - 2 * var(--flow-gap)) / 6); margin: 0; padding: 6px 12px; color: var(--color-bg); background: var(--color-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; transform: translateX(-50%); }
-.proc-change-steps { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 var(--flow-gap); margin: 0; padding: 0; list-style: none; }
-.proc-change-steps::before { content: ''; position: absolute; z-index: 0; top: 15px; left: calc((100% - 3 * var(--flow-gap)) / 8); right: calc((100% - 3 * var(--flow-gap)) / 8); height: 1px; background: var(--color-border-strong); }
-.proc-change-steps li { position: relative; display: grid; align-content: start; justify-items: center; gap: 6px; min-width: 0; text-align: center; }
-.proc-change-node { position: relative; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; margin-bottom: 8px; color: var(--color-accent-strong); background: var(--color-surface-elevated); border: 1px solid var(--color-accent); border-radius: 50%; font: 700 13px/1 var(--font-condensed), sans-serif; }
-.proc-change-steps b { color: var(--color-text); font: 600 16px/1.25 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: none; }
-.proc-change-detail { color: var(--color-text-secondary); font-size: 14px; line-height: 1.55; }
-.proc-change-back { display: none; }
-.process-page[data-motion-ready="on"] .proc-link-03 { transition: transform 320ms var(--m-ease) 650ms; }
-.process-page[data-motion-ready="on"] .proc-change { transition: opacity var(--m-reveal) ease 850ms, transform var(--m-reveal) var(--m-ease) 850ms; }
-.process-page[data-motion-ready="on"] .proc-change-node { transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--m-reveal) var(--m-ease); transition-delay: calc(1050ms + var(--i, 0) * 220ms); }
-.process-page[data-motion-ready="on"] .proc-link-stem { transition: transform 300ms var(--m-ease) 1400ms; }
-.process-page[data-motion-ready="on"] .proc-link-fork { transition: transform 360ms var(--m-ease) 1650ms; }
-.process-page[data-motion-ready="on"] .proc-link-up { transition: transform 240ms var(--m-ease) 1950ms; }
-.process-page[data-motion-ready="on"] .proc-link-label { transition: opacity var(--m-reveal) ease 2050ms; }
-.process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) .proc-link-03 { transform: scaleY(0); }
-.process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) .proc-change { opacity: 0; transform: translateY(10px); }
-.process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) .proc-change-node { color: var(--color-text-muted); border-color: var(--color-border-strong); transform: scale(.86); }
-.process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) :is(.proc-link-stem, .proc-link-up) { transform: scaleY(0); }
-.process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) .proc-link-fork { transform: scaleX(0); }
-.process-page[data-motion-ready] .proc-terms-flow:not([data-motion-state="on"]) .proc-link-label { opacity: 0; }
-.proc-terms-grid p { margin: 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.65; }
 /* .proc-factors / .cf-* moved to app/components/process/cost-factors.css (imported by CostFactorsFigure) */
 .proc-documents { max-width: 760px; margin: 32px 0 0; color: var(--color-text-muted); font-size: 14.5px; line-height: 1.65; }
 
@@ -256,20 +211,6 @@
     .proc-resp-switch > div { box-shadow: none; }
   }
   .proc-contract-band { padding: 28px 20px 20px; }
-  .proc-terms-flow { --flow-gap: 36px; }
-  .proc-terms-grid { grid-template-columns: minmax(0, 1fr); }
-  /* The loop turns vertical: 03 ↓ the procedure, whose second step says where the change goes back to */
-  .proc-change-links { display: none; }
-  .proc-change { margin-top: 44px; padding: 30px 20px 22px; }
-  .proc-change::before { content: '↓'; position: absolute; bottom: calc(100% + 1px); left: 28px; display: grid; place-items: center; height: 44px; color: var(--color-accent-strong); font: 400 20px/1 var(--font-condensed), sans-serif; }
-  .proc-change-tab { left: 56px; transform: none; }
-  .proc-change-steps { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .proc-change-steps::before { top: 15px; bottom: 15px; left: 15px; right: auto; width: 1px; height: auto; }
-  .proc-change-steps li { justify-items: start; padding-left: 46px; text-align: left; }
-  .proc-change-node { position: absolute; top: 0; left: 0; margin: 0; }
-  .proc-change-steps b { padding-top: 5px; }
-  .proc-change-back { display: block; margin-top: 2px; color: var(--color-accent-strong); font: 700 12px/1.4 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-  .proc-terms-grid li + li::before { content: '↓'; top: auto; right: auto; bottom: calc(100% + 1px); left: 28px; width: auto; height: var(--flow-gap); display: grid; place-items: center; transform: none; }
 }
 
 /* ---------------------------------------------------------------- Phone */
@@ -297,5 +238,4 @@
   .proc-resp-switch span { min-height: 48px; padding: 6px; font-size: 12px; letter-spacing: .04em; }
   .proc-terms-image { background-position: center top; background-size: 180% auto; }
   .proc-hero-trace { display: none; }
-  .proc-terms-grid li { padding: 22px 20px 24px; }
 }

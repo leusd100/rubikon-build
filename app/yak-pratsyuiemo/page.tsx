@@ -1,3 +1,4 @@
+import { ChangeSheets } from '../components/process/ChangeSheets';
 import { CostFactorsFigure } from '../components/process/CostFactorsFigure';
 import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
@@ -71,7 +72,7 @@ const STARTS = [
 /** The change loop's way back (step 2 of changePolicy: the impact on works, cost and time). */
 const CHANGE_BACK = 'Вплив на кошторис і строки — до виконання';
 
-/** After the factors: the order in which they turn into numbers, a schedule and — if needed — an agreed change. */
+/** After the factors: the estimate and the schedule they turn into (ChangeSheets' captions) and the change policy. */
 const TERMS = [
   { title: 'Рахуємо кошторис', text: 'Підготуємо кошторис, коли погодимо перелік робіт і матимемо дані для розрахунку.' },
   { title: 'Плануємо строки', text: 'На графік впливають обсяг робіт, готовність проєкту й майданчика, постачання матеріалів і роботи інших підрядників.' },
@@ -274,40 +275,15 @@ export default function DeliveryModelPage() {
           {/* The seven factors beside one drawing of a hangar on its site, each numbered where it acts */}
           <CostFactorsFigure factors={costFactors().map((factor) => ({ key: factor.ids[0], title: factor.title, detail: factor.detail }))} />
           <p className="proc-factors-title proc-terms-flow-title">Як із цього виходять кошторис і графік</p>
-          <div className="proc-terms-flow" data-motion>
-            <ol className="proc-terms-grid">
-              {TERMS.map((term, index) => (
-                <li key={term.title} style={{ '--i': index } as CSSProperties}>
-                  <span className="proc-terms-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                  <h3>{term.title}</h3>
-                  <p>{term.text}</p>
-                </li>
-              ))}
-            </ol>
-            {/* A change goes back to the estimate and the schedule before anything is built: 03 → the procedure, and from
-                its second step (assessing the impact) back up into 01 and 02 */}
-            <div className="proc-change-links" aria-hidden="true">
-              <i className="proc-link-03" />
-              <i className="proc-link-stem" />
-              <i className="proc-link-fork" />
-              <i className="proc-link-up proc-link-up-1" />
-              <i className="proc-link-up proc-link-up-2" />
-              <span className="proc-link-label">{CHANGE_BACK}</span>
-            </div>
-            <div className="proc-change">
-              <h3 className="proc-change-tab">Якщо щось змінюється</h3>
-              <ol className="proc-change-steps">
-                {changeSteps().map((step, index) => (
-                  <li key={step.title} style={{ '--i': index } as CSSProperties}>
-                    <span className="proc-change-node" aria-hidden="true">{index + 1}</span>
-                    <b>{step.title}</b>
-                    <span className="proc-change-detail">{step.detail}</span>
-                    {index === 1 && <span className="proc-change-back" aria-hidden="true">↺ {CHANGE_BACK}</span>}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
+          {/* The estimate and the schedule as sheets, and the change procedure acting on them (owner 07.10, variant A) */}
+          <ChangeSheets
+            rows={costFactors().map((factor) => factor.title)}
+            estimate={TERMS[0]}
+            schedule={TERMS[1]}
+            principle={TERMS[2].text}
+            steps={changeSteps()}
+            back={CHANGE_BACK}
+          />
           <p className="proc-documents">
             На першій розмові скажемо, які документи вже можна використати і що потрібно підготувати додатково.
           </p>
