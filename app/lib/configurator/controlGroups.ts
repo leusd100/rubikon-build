@@ -65,7 +65,7 @@ export const CONTROL_STEPS: ControlStep[] = [
   { id: 'shell', title: 'Стіни й ворота', groups: ['envelope', 'cladding', 'foundation', 'openings'] },
   // its own questions, then what to show of the frame (ConfiguratorFrameView, through a portal into the step)
   { id: 'frame', title: 'Каркас', groups: ['space'] },
-  { id: 'check', title: 'Обсяг і перевірка', groups: ['scope', 'project'] },
+  { id: 'check', title: 'Обсяг', groups: ['scope', 'project'] },
 ];
 
 export function stepOfGroup(group: ControlGroupId): number {

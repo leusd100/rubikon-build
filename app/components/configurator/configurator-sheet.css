@@ -301,3 +301,34 @@
 
 /* The 3D chip in words, not capitals (07.10) */
 .hc-sheet-chip.hc-sheet-three { font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+
+/* ── The phone's mini drawing folds (07.10) ───────────────────────────────────────────────────────────────────────────
+   Its title block carries «Згорнути»: the picture goes, the sizes' line and the toggle stay. Only the mini drawing has
+   the toggle; the whole sheet in its own place is never folded. */
+.hc-preview-sheet .sheet-action:has(.hc-mini-toggle) { display: none; }
+.hc-mini-toggle {
+  position: relative; min-height: 32px; padding: 0 10px; border: 1px solid var(--sheet-ink, var(--color-border)); border-radius: 0;
+  background: transparent; color: var(--color-text); font: 700 12px/1 var(--font-manrope), sans-serif; cursor: pointer;
+}
+.hc-mini-toggle::after { position: absolute; inset: -6px 0; content: ''; }
+.hc-mini-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet .sheet-action:has(.hc-mini-toggle) { display: flex; align-items: center; }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet.is-folded :is(.sheet-image, .sheet-ruler) { display: none; }
+}
+
+/* ── A short laptop (07.10): the configurator's own heading gives the room to the step ──────────────────────────────── */
+@media (min-width: 1024px) and (max-height: 760px) {
+  /* a jump to #configurator lands just under the header, on a band with less paper above its heading */
+  .hangar-configurator-embedded { padding-top: 40px; scroll-margin-top: 101px; }
+  .hangar-configurator-embedded .hc-eyebrow { display: none; }
+  /* «Ще не знаю» among the answers says they can be skipped */
+  .hangar-configurator-embedded .hc-object-note { display: none; }
+  .hangar-configurator-embedded .hc-hero { gap: 8px var(--grid-gap); margin-bottom: 18px; }
+  .hangar-configurator-embedded .hc-hero :is(h1, h2) { font-size: 34px; max-width: none; }
+  .hangar-configurator-embedded .hc-lede { font-size: 14px; line-height: 1.5; }
+  /* the number beside the step's name, not over it */
+  .hangar-configurator-embedded .hc-step-tab { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; min-height: 52px; padding-block: 8px; }
+  .hangar-configurator-embedded .hc-step-panel .hc-control-group { padding-block: 16px 18px; }
+  .hangar-configurator-embedded .hc-step-nav { padding-block: 12px 14px; }
+}

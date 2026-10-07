@@ -163,6 +163,9 @@ export function HangarPreviewModes({
   const [frameCaption, setFrameCaption] = useState('Каркас, прогони й в’язі');
   const [showScaleFigure, setShowScaleFigure] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // The phone's mini drawing folds to its sizes' line on request (07.10): over a step's fields it took a third of the
+  // screen, more on «Каркас»
+  const [miniFolded, setMiniFolded] = useState(false);
   // How much of the canvas's bottom edge the dimension readout covers, measured by the overlay
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
@@ -370,10 +373,16 @@ export function HangarPreviewModes({
       {sheet ? (
         // The sheet is the surface: the phone's mini drawing holds the whole sheet under the header (HangarConfigurator)
         <DrawingSheet
-          className="hc-preview-surface hc-preview-sheet"
+          className={`hc-preview-surface hc-preview-sheet${miniFolded ? ' is-folded' : ''}`}
           imageClassName={`hc-preview-image${effectiveMode === 'frame' ? ' hc-frame-image' : ''}`}
           imageRef={drawingRef}
           cells={sheetCells}
+          // shown only by the phone's mini drawing (configurator-sheet.css)
+          action={(
+            <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={() => setMiniFolded((folded) => !folded)}>
+              {miniFolded ? 'Показати ескіз' : 'Згорнути'}
+            </button>
+          )}
         >
           {view}
           {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) */}

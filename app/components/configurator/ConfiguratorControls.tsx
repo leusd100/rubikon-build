@@ -213,10 +213,10 @@ function NumericField({
   );
 }
 
-/* ── Three steps (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────
-   The groups are walked as three steps (CONTROL_STEPS): «Габарити», «Стіни й ворота», «Обсяг і задача», one open at a time
-   on every width (a fourth, «Каркас», since 07.10). The tabs carry the steps' names only: in four narrow tabs the values
-   were cut to «24 × 60 ×…», and the sizes are in the drawing's title block anyway. They replace
+/* ── Steps (07.10) ────────────────────────────────────────────────────────────────────────────────────────────────────
+   The groups are walked as steps (CONTROL_STEPS: five since the GPT review), one open at a time on every width. The tabs
+   carry the steps' names only — in narrow tabs the values were cut to «24 × 60 ×…», and the sizes are in the drawing's
+   title block anyway; a phone shows their numbers and names the open step under them. They replace
    the phone accordion (03.10), which opened on «Об’єкт» — four questions the drawing does not answer — and left the
    sizes, the part that moves the drawing, folded. */
 
@@ -468,8 +468,8 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
 
   // The groups, each placed in its step below
   const groups: Record<ControlGroupId, ReactNode> = {
-    // «Об’єкт» (owner, 03.10) now closes the walk, in «Обсяг і задача» (07.10): nothing on the drawing answers it, so it
-    // goes to the brief. Every question is optional and starts unanswered, so a visitor who skips it sends nothing from it.
+    // «Об’єкт» (owner, 03.10) is split by where each answer matters (07.10, controlGroups.ts). Every question is optional
+    // and starts unanswered, so a visitor who skips it sends nothing from it.
     need: (
       <ControlGroup id="need">
         <p className="hc-field-note hc-object-note">Дві відповіді, обидві можна пропустити: від них залежить, що запропонуємо.</p>

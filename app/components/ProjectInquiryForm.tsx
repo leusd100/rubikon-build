@@ -38,26 +38,35 @@ const subscribeToHydration = () => () => undefined;
 
 type ValidatedField = HTMLInputElement | HTMLSelectElement;
 
+type FieldKey = 'name' | 'phone' | 'direction';
+type FieldMessages = { missing: string; format?: string };
+
 /**
- * Ukrainian words for the browser's own validation bubble. The browser keeps its behaviour — it stops the submit and
- * focuses the first field to fix — but its default message follows the visitor's system language (an audit browser
- * said «Заполните это поле»). The message is set when a field is found invalid and cleared on the next edit, so the
- * browser checks the field afresh.
+ * Ukrainian words for the browser's own validation bubble — and, since 07.10, the same words kept under the field. The
+ * browser keeps its behaviour — it stops the submit and focuses the first field to fix — but its default message follows
+ * the visitor's system language (an audit browser said «Заполните это поле»), and the bubble vanished at the next tap
+ * while the consent kept its message on the page: now every field does, until it is edited. The message is set when a
+ * field is found invalid and cleared on the next edit, so the browser checks the field afresh.
  */
-function ukrainianValidity(messages: { missing: string; format?: string }) {
+function ukrainianValidity(key: FieldKey, messages: FieldMessages, report: (key: FieldKey, message: string | null) => void) {
   return {
     onInvalid: (event: SyntheticEvent<ValidatedField>) => {
       const field = event.currentTarget;
-      if (field.validity.customError) return;
-      field.setCustomValidity(field.validity.valueMissing ? messages.missing : messages.format ?? messages.missing);
+      if (!field.validity.customError) {
+        field.setCustomValidity(field.validity.valueMissing ? messages.missing : messages.format ?? messages.missing);
+      }
+      report(key, field.validationMessage);
     },
-    onInput: (event: SyntheticEvent<ValidatedField>) => event.currentTarget.setCustomValidity(''),
+    onInput: (event: SyntheticEvent<ValidatedField>) => {
+      event.currentTarget.setCustomValidity('');
+      report(key, null);
+    },
   };
 }
 
-const NAME_VALIDITY = ukrainianValidity({ missing: 'Вкажіть, як до вас звертатися.', format: 'Ім’я — щонайменше 2 літери.' });
-const PHONE_VALIDITY = ukrainianValidity({ missing: 'Вкажіть номер телефону.', format: 'Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.' });
-const DIRECTION_VALIDITY = ukrainianValidity({ missing: 'Оберіть напрям робіт або «Ще не визначено».' });
+const NAME_MESSAGES: FieldMessages = { missing: 'Вкажіть, як до вас звертатися.', format: 'Ім’я — щонайменше 2 літери.' };
+const PHONE_MESSAGES: FieldMessages = { missing: 'Вкажіть номер телефону.', format: 'Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.' };
+const DIRECTION_MESSAGES: FieldMessages = { missing: 'Оберіть напрям робіт або «Ще не визначено».' };
 const CONSENT_MESSAGE = 'Підтвердьте згоду на обробку персональних даних.';
 
 function enabledFieldName(jsReady: boolean, name: string): string | undefined {
@@ -106,6 +115,21 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const [status, setStatus] = useState('');
   const [statusAction, setStatusAction] = useState<'error' | null>(null);
   const [consentError, setConsentError] = useState(false);
+  // The fields' own messages, kept under them while they stand (07.10)
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
+  const report = (key: FieldKey, message: string | null) => setFieldErrors((current) => {
+    if ((current[key] ?? null) === message) return current;
+    const next = { ...current };
+    if (message) next[key] = message;
+    else delete next[key];
+    return next;
+  });
+  const NAME_VALIDITY = ukrainianValidity('name', NAME_MESSAGES, report);
+  const PHONE_VALIDITY = ukrainianValidity('phone', PHONE_MESSAGES, report);
+  const DIRECTION_VALIDITY = ukrainianValidity('direction', DIRECTION_MESSAGES, report);
+  const fieldError = (key: FieldKey) => fieldErrors[key] && (
+    <small id={`inquiry-${key}-error`} className="inquiry-field-error">{fieldErrors[key]}</small>
+  );
   const [consentAt, setConsentAt] = useState('');
   const [submissionId, setSubmissionId] = useState(() => createSubmissionId());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -280,11 +304,22 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         <h3 className="inquiry-form-section-title" id="inquiry-contact-heading">Контакт</h3>
         <div className="inquiry-form-section-body">
           <div className="inquiry-fields inquiry-fields-two">
-            <label>
+            <label className={fieldErrors.name ? 'is-invalid' : undefined}>
               <span>Ваше ім’я *</span>
-              <input name={enabledFieldName(jsReady, 'name')} type="text" minLength={2} maxLength={80} autoComplete="name" required {...NAME_VALIDITY} />
+              <input
+                name={enabledFieldName(jsReady, 'name')}
+                type="text"
+                minLength={2}
+                maxLength={80}
+                autoComplete="name"
+                required
+                aria-invalid={Boolean(fieldErrors.name)}
+                aria-describedby={fieldErrors.name ? 'inquiry-name-error' : undefined}
+                {...NAME_VALIDITY}
+              />
+              {fieldError('name')}
             </label>
-            <label>
+            <label className={fieldErrors.phone ? 'is-invalid' : undefined}>
               <span>Телефон *</span>
               <input
                 name={enabledFieldName(jsReady, 'phone')}
@@ -294,12 +329,14 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                 maxLength={13}
                 defaultValue="+380"
                 title="Введіть номер у форматі +380XXXXXXXXX"
-                aria-describedby="phone-hint"
+                aria-describedby={fieldErrors.phone ? 'phone-hint inquiry-phone-error' : 'phone-hint'}
+                aria-invalid={Boolean(fieldErrors.phone)}
                 autoComplete="tel"
                 required
                 {...PHONE_VALIDITY}
               />
               <small id="phone-hint" className="inquiry-field-hint">Після +380 введіть 9 цифр</small>
+              {fieldError('phone')}
             </label>
           </div>
 
@@ -332,12 +369,14 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         <h3 className="inquiry-form-section-title" id="inquiry-project-heading" tabIndex={-1}>Завдання</h3>
         <div className="inquiry-form-section-body">
           {!fixedDirection && (
-            <label className="inquiry-select">
+            <label className={`inquiry-select${fieldErrors.direction ? ' is-invalid' : ''}`}>
               <span>Напрям робіт *</span>
               <select
                 name={enabledFieldName(jsReady, 'direction')}
                 value={chosenDirection}
                 required
+                aria-invalid={Boolean(fieldErrors.direction)}
+                aria-describedby={fieldErrors.direction ? 'inquiry-direction-error' : undefined}
                 onInvalid={DIRECTION_VALIDITY.onInvalid}
                 onChange={(event) => {
                   DIRECTION_VALIDITY.onInput(event);
@@ -347,6 +386,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                 <option value="" disabled>Оберіть напрям</option>
                 {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
               </select>
+              {fieldError('direction')}
             </label>
           )}
 

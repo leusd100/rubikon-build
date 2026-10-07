@@ -1441,3 +1441,10 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 @media (max-width: 760px) {
   .hero-provenance, .directions-subhero .hero-provenance { top: 88px; right: 16px; bottom: auto; }
 }
+
+/* The form's fields keep their message under them while it stands, as the consent does (07.10); a field focused to fix
+   it lands with its label clear of the fixed header, not under it */
+.inquiry-field-error { display: block; margin-top: 6px; color: var(--color-error); font: 600 13px/1.4 var(--font-manrope), sans-serif; }
+.inquiry-form label.is-invalid :is(input, select) { border-color: var(--color-error); }
+.inquiry-form :is(input, select, textarea) { scroll-margin-top: 156px; }
+@media (max-width: 760px) { .inquiry-form :is(input, select, textarea) { scroll-margin-top: 118px; } }
