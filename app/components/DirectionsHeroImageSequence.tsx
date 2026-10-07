@@ -7,6 +7,10 @@ import { useDeferredMedia } from '../hooks/useDeferredMedia';
 
 const CLIP_DURATION_MS = 6000; // UX pass 2026-10: 3 s per slide was too fast to read the indicator and the picture
 const FADE_DURATION_MS = 2000;
+// Cover scales to the hero's height as well as its width; 100vw alone downloaded a tiny,
+// heavily stretched landscape on tall screens. Portrait sources keep a native-height crop.
+const LANDSCAPE_SIZES = '(min-aspect-ratio: 23/10) 100vw, 230svh';
+const PORTRAIT_SIZES = '(max-width: 760px) 640px, 100vw';
 const pad = (value: number) => String(value).padStart(2, '0');
 
 /** The direction a slide shows, by the asset's own file name (the sequence follows the directions' order). */
@@ -62,16 +66,17 @@ export function DirectionsHeroImageSequence() {
 
         return (
           <picture key={asset.fallbackSrc}>
-            {shouldAttachSource && <source type="image/webp" srcSet={asset.srcSet} sizes="100vw" />}
+            {shouldAttachSource && <source media="(max-width: 1050px) and (orientation: portrait)" type="image/webp" srcSet={asset.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
+            {shouldAttachSource && <source type="image/webp" srcSet={asset.srcSet} sizes={LANDSCAPE_SIZES} />}
             <img
               ref={index === 0 ? firstImageRef : undefined}
               aria-hidden="true"
               className={`directions-hero-sequence-image${index === visibleIndex ? ' is-active' : ''}`}
               src={shouldAttachSource ? asset.fallbackSrc : undefined}
               alt=""
-              width={1672}
-              height={941}
-              sizes="100vw"
+              width={asset.width}
+              height={asset.height}
+              sizes={LANDSCAPE_SIZES}
               loading={index === 0 ? 'eager' : 'lazy'}
               fetchPriority={index === 0 ? 'high' : 'auto'}
               decoding="async"

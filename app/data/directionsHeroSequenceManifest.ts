@@ -1,47 +1,64 @@
 export type DirectionsHeroSequenceAsset = {
   fallbackSrc: string;
   srcSet: string;
+  portraitSrcSet: string;
+  width: number;
+  height: number;
   focalPosition: string;
   mobileFocalPosition: string;
 };
 
-const responsiveSrcSet = (name: string, variants: { w480: string; w768: string; w1200: string; w1536: string }) =>
-  [
-    `/media-responsive/directions-sequence-${name}-480w.${variants.w480}.webp 480w`,
-    `/media-responsive/directions-sequence-${name}-768w.${variants.w768}.webp 768w`,
-    `/media-responsive/directions-sequence-${name}-1200w.${variants.w1200}.webp 1200w`,
-    `/media-responsive/directions-sequence-${name}-1536w.${variants.w1536}.webp 1536w`,
-  ].join(', ');
+type ResponsiveVariants = readonly (readonly [width: number, hash: string])[];
+
+const responsiveSrcSet = (name: string, variants: ResponsiveVariants, portrait = false) =>
+  variants.map(([width, hash]) =>
+    `/media-responsive/directions-sequence-${name}${portrait ? '-portrait' : ''}-${width}w.${hash}.webp ${width}w`,
+  ).join(', ');
 
 export const directionsHeroSequenceAssets: readonly DirectionsHeroSequenceAsset[] = [
   {
-    fallbackSrc: '/media-responsive/directions-sequence-angary-1536w.ec149673.webp',
-    srcSet: responsiveSrcSet('angary', { w480: '6d4f7f9b', w768: 'c246316c', w1200: '16a5481c', w1536: 'ec149673' }),
+    fallbackSrc: '/media-responsive/directions-sequence-angary-1536w.a4dd2c2b.webp',
+    srcSet: responsiveSrcSet('angary', [[480, '11b75790'], [768, '8365e609'], [1200, '7345f2f0'], [1536, 'a4dd2c2b'], [1896, '2d7384ca']]),
+    portraitSrcSet: responsiveSrcSet('angary', [[320, '6ba98586'], [480, 'fc0f5e23'], [622, 'bdb2f746']], true),
+    width: 1896,
+    height: 830,
     focalPosition: '55% center',
-    mobileFocalPosition: '58% center',
+    mobileFocalPosition: '50% center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-zernoskhovyshcha-1536w.f2e9e6ee.webp',
-    srcSet: responsiveSrcSet('zernoskhovyshcha', { w480: 'b0e41daa', w768: '6c117447', w1200: '3d667f36', w1536: 'f2e9e6ee' }),
-    focalPosition: '57% center',
-    mobileFocalPosition: '60% center',
+    fallbackSrc: '/media-responsive/directions-sequence-zernoskhovyshcha-1536w.6945f8a6.webp',
+    srcSet: responsiveSrcSet('zernoskhovyshcha', [[480, 'fa55a2fd'], [768, 'd080dd16'], [1200, '18ffadd1'], [1536, '6945f8a6'], [1897, 'ccffd996']]),
+    portraitSrcSet: responsiveSrcSet('zernoskhovyshcha', [[320, '0a144acc'], [480, '9510e977'], [622, '06076313']], true),
+    width: 1897,
+    height: 829,
+    focalPosition: '60% center',
+    mobileFocalPosition: '50% center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-metalokonstruktsii-1536w.f68a46a9.webp',
-    srcSet: responsiveSrcSet('metalokonstruktsii', { w480: 'dae71d68', w768: 'a531b57e', w1200: '6871257a', w1536: 'f68a46a9' }),
-    focalPosition: '55% center',
-    mobileFocalPosition: '57% center',
+    fallbackSrc: '/media-responsive/directions-sequence-metalokonstruktsii-1536w.8a84480d.webp',
+    srcSet: responsiveSrcSet('metalokonstruktsii', [[480, '85ea0d2b'], [768, '9abe6e6d'], [1200, '33589eca'], [1536, '8a84480d'], [1896, '0ac262e3']]),
+    portraitSrcSet: responsiveSrcSet('metalokonstruktsii', [[320, 'b56d8ce5'], [480, '897afad8'], [622, 'd7fff708']], true),
+    width: 1896,
+    height: 830,
+    focalPosition: '58% center',
+    mobileFocalPosition: '50% center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-betonni-roboty-1536w.4aea6812.webp',
-    srcSet: responsiveSrcSet('betonni-roboty', { w480: 'dda69ddd', w768: '376a40f4', w1200: '73b67512', w1536: '4aea6812' }),
-    focalPosition: '53% center',
-    mobileFocalPosition: '55% center',
+    fallbackSrc: '/media-responsive/directions-sequence-betonni-roboty-1536w.1a79bbe0.webp',
+    srcSet: responsiveSrcSet('betonni-roboty', [[480, '3adf44c0'], [768, 'ad38b775'], [1200, '87a74886'], [1536, '1a79bbe0'], [1896, '29919ad1']]),
+    portraitSrcSet: responsiveSrcSet('betonni-roboty', [[320, '20cf5818'], [480, '88e0e3eb'], [622, 'b8fd147d']], true),
+    width: 1896,
+    height: 830,
+    focalPosition: '72% center',
+    mobileFocalPosition: '50% center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-pokrivelni-roboty-1536w.527623f0.webp',
-    srcSet: responsiveSrcSet('pokrivelni-roboty', { w480: 'a8d86378', w768: 'b79e923a', w1200: '40a54a55', w1536: '527623f0' }),
-    focalPosition: '55% center',
-    mobileFocalPosition: '58% center',
+    fallbackSrc: '/media-responsive/directions-sequence-pokrivelni-roboty-1536w.622e9f02.webp',
+    srcSet: responsiveSrcSet('pokrivelni-roboty', [[480, '33d6df46'], [768, '90478a2d'], [1200, 'cc2f8b08'], [1536, '622e9f02'], [1896, '6983fba3']]),
+    portraitSrcSet: responsiveSrcSet('pokrivelni-roboty', [[320, '7eb1ec0a'], [480, 'fa139c18'], [622, '642d338e']], true),
+    width: 1896,
+    height: 830,
+    focalPosition: '60% center',
+    mobileFocalPosition: '50% center',
   },
 ];

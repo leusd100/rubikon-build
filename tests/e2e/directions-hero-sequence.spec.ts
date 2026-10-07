@@ -88,3 +88,53 @@ test('directions static hero sequence remains on the first image for reduced mot
       null,
     ]);
 });
+
+// Exercise actual decoded images, including later slides: a missing hashed variant or a landscape
+// selected on a tall screen otherwise looks like a blank/soft background without any build error.
+for (const viewport of [
+  { width: 320, height: 568 },
+  { width: 390, height: 844 },
+  { width: 768, height: 1024 },
+  { width: 1024, height: 768 },
+  { width: 1280, height: 720 },
+  { width: 1920, height: 1080 },
+]) {
+  test(`all five hero photographs load and fit at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.clock.install();
+    await page.goto('/napryamky', { waitUntil: 'load' });
+    await page.clock.fastForward(1000);
+
+    const hero = page.locator('.directions-subhero');
+    await expect(hero.getByRole('button', { name: 'Пауза показу напрямів', exact: true })).toBeVisible();
+    const necessaryCookies = page.getByRole('button', { name: 'Лише необхідні', exact: true });
+    if (await necessaryCookies.isVisible()) await necessaryCookies.click();
+    const frames = hero.locator('img.directions-hero-sequence-image');
+    const portrait = viewport.width <= 1050 && viewport.height >= viewport.width;
+
+    for (let index = 0; index < sequenceNames.length; index++) {
+      const frame = frames.nth(index);
+      await expect(frame).toHaveClass(/is-active/);
+      await expect.poll(() => frame.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+      const source = await frame.evaluate((image: HTMLImageElement) => image.currentSrc);
+      expect(source).toContain(`directions-sequence-${sequenceNames[index]}-`);
+      expect(source.includes('-portrait-')).toBe(portrait);
+
+      if (index === 0) {
+        await page.screenshot({ path: testInfo.outputPath(`directions-${viewport.width}x${viewport.height}.png`) });
+      }
+      if (index < sequenceNames.length - 1) await page.clock.fastForward(6000);
+    }
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+    const heroBox = await hero.boundingBox();
+    for (const link of await hero.locator('.directions-hero-actions a:visible').all()) {
+      const box = await link.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 1);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(heroBox!.y + heroBox!.height);
+    }
+  });
+}
