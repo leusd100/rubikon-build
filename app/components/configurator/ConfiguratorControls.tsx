@@ -49,7 +49,9 @@ import {
   clampDimension,
   hasScopeItem,
   toggleScopeItem,
+  withConfirmed,
   type CladdingSystem,
+  type ConfirmedTopic,
   type ConfiguratorState,
   type DoorCount,
   type Dimensions,
@@ -91,10 +93,12 @@ function parseMetres(raw: string): number | null {
 }
 
 /** What the field says after a typed value had to be changed on blur — it used to be clamped in silence (04.10) */
-function clampNote(parsed: number | null, min: number, max: number, kept: number): string | null {
+function clampNote(parsed: number | null, min: number, max: number, kept: number, step: number): string | null {
   if (parsed === null) return `Потрібне число в метрах — залишено ${formatMetres(kept)}${NBSP}м.`;
   if (parsed > max) return `Найбільше можливе значення — ${formatMetres(max)}${NBSP}м.`;
   if (parsed < min) return `Найменше можливе значення — ${formatMetres(min)}${NBSP}м.`;
+  // …and a value between the steps, which was rounded in silence: «6,7» became 6,5 м with no word (07.10)
+  if (Math.abs(parsed - kept) > 1e-9) return `Округлено до ${formatMetres(kept)}${NBSP}м: крок ${formatMetres(step)}${NBSP}м.`;
   return null;
 }
 
@@ -151,8 +155,9 @@ function NumericField({
     const parsed = parseMetres(draft ?? '');
     // An abandoned or nonsensical entry falls back to the last good value rather than to the
     // minimum — clearing the field and clicking away should not silently reset the object.
-    if (draft !== null) setNote(clampNote(parsed, min, max, value));
-    onCommit(parsed === null ? value : clamp(parsed));
+    const committed = parsed === null ? value : clamp(parsed);
+    if (draft !== null) setNote(clampNote(parsed, min, max, parsed === null ? value : committed, step));
+    onCommit(committed);
     setDraft(null);
   }
 
@@ -252,8 +257,9 @@ function ControlGroup({ id, children }: Readonly<{ id: ControlGroupId; children:
 
 function StepTabs({
   step,
+  answered,
   onSelect,
-}: Readonly<{ step: number; onSelect: (index: number, focus?: boolean) => void }>) {
+}: Readonly<{ step: number; answered: readonly boolean[]; onSelect: (index: number, focus?: boolean) => void }>) {
   // Arrow keys move between the tabs (the tabs pattern): one stop in the tab order, the open step's tab
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const last = CONTROL_STEPS.length - 1;
@@ -274,7 +280,8 @@ function StepTabs({
           aria-selected={step === index}
           aria-controls={`hc-step-${item.id}`}
           tabIndex={step === index ? 0 : -1}
-          data-done={index < step ? '' : undefined}
+          // answered, not merely passed (07.10): a step skipped over looked done
+          data-done={answered[index] && step !== index ? '' : undefined}
           onClick={() => onSelect(index)}
           onKeyDown={(event) => onKeyDown(event, index)}
         >
@@ -360,14 +367,14 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // the width to 12 and back to 24 used to cost the second gate and the door for good, and a typed «5,5» lost the
   // «Для заїзду техніки» gate to the «5» on the way. The same rule as the scope's — a choice is held, never cleared.
   function setDimension(key: keyof Dimensions, value: number) {
-    onChange({ ...state, dimensions: { ...state.dimensions, [key]: value } });
+    onChange(withConfirmed({ ...state, dimensions: { ...state.dimensions, [key]: value } }, 'dimensions'));
   }
 
   function setRidge(ridgeHeightM: number) {
     // Only a changed value is the visitor's own ridge: focusing the field and leaving it (a blur commits the value it
     // shows) must not stop the ridge following the width.
     if (ridgeHeightM === ridgeValue) return;
-    onChange(withRidge(state, ridgeHeightM));
+    onChange(withConfirmed(withRidge(state, ridgeHeightM), 'dimensions'));
   }
 
   function setObjectProfile(answer: Partial<ObjectProfile>) {
@@ -380,19 +387,20 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     // comment). `undecided` applies nothing: "independent material choices remain available" is
     // the brief's own wording for that specific option.
     const preset = envelope === 'undecided' ? null : ENVELOPE_MATERIAL_PRESET[envelope];
-    onChange({
+    // the materials the preset sets are a starting point, not the visitor's answer about them
+    onChange(withConfirmed({
       ...state,
       envelope,
       ...(preset ? { wallSystem: preset.wallSystem, roofSystem: preset.roofSystem } : {}),
-    });
+    }, 'envelope'));
   }
 
   function setWallSystem(wallSystem: CladdingSystem) {
-    onChange({ ...state, wallSystem });
+    onChange(withConfirmed({ ...state, wallSystem }, 'cladding'));
   }
 
   function setRoofSystem(roofSystem: CladdingSystem) {
-    onChange({ ...state, roofSystem });
+    onChange(withConfirmed({ ...state, roofSystem }, 'cladding'));
   }
 
   function setFoundationType(foundationType: FoundationType) {
@@ -402,19 +410,19 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // Each opening control sets only its own choice (04.10). A door the new gates leave no room for is held, not dropped,
   // like a gate the sizes leave no room for: deriveDomainModel places what fits, and the rest returns with the room.
   function setGates(gates: GatesCount) {
-    onChange({ ...state, gates });
+    onChange(withConfirmed({ ...state, gates }, 'openings'));
   }
 
   function setGateType(gateType: GateType) {
-    onChange({ ...state, gateType });
+    onChange(withConfirmed({ ...state, gateType }, 'openings'));
   }
 
   function setDoors(doors: DoorCount) {
-    onChange({ ...state, doors });
+    onChange(withConfirmed({ ...state, doors }, 'openings'));
   }
 
   function setScope(item: (typeof SCOPE_ORDER)[number]) {
-    onChange({ ...state, scope: toggleScopeItem(state.scope, item) });
+    onChange(withConfirmed({ ...state, scope: toggleScopeItem(state.scope, item) }, 'scope'));
   }
 
   // The openings as placed — held to what fits at these sizes (deriveDomainModel). The controls show these; the
@@ -430,6 +438,15 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // is being asked for.
   const hasEnvelopeScope = wallsInScope || roofInScope;
   const { objectProfile } = state;
+  // A step is answered once the visitor set something in it themselves (types.ts ConfirmedTopic)
+  const objectAnswered = objectProfile.purpose !== null || objectProfile.project !== 'unknown'
+    || objectProfile.region !== 'unknown' || objectProfile.lifting !== 'unknown';
+  const answered = CONTROL_STEPS.map((item) => {
+    if (item.id === 'size') return state.confirmed.includes('dimensions');
+    if (item.id === 'shell') return ['envelope', 'cladding', 'openings'].some((topic) => state.confirmed.includes(topic as ConfirmedTopic));
+    if (item.id === 'task') return state.confirmed.includes('scope') || objectAnswered;
+    return false;
+  });
 
   // The groups, each placed in its step below
   const groups: Record<ControlGroupId, ReactNode> = {
@@ -555,7 +572,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
         >
           {/* The way back to the span rule, which an edited ridge never had (04.10) */}
           {state.ridgeEdited && (
-            <button type="button" className="hc-field-reset" onClick={() => onChange(withSpanRuleRidge(state))}>Підбирати ухил за шириною</button>
+            <button type="button" className="hc-field-reset" onClick={() => onChange(withConfirmed(withSpanRuleRidge(state), 'dimensions'))}>Підбирати ухил за шириною</button>
           )}
         </NumericField>
       </ControlGroup>
@@ -791,7 +808,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   return (
     <div className="hc-controls" data-steps="">
       <div ref={tabsRef}>
-        <StepTabs step={step} onSelect={selectStep} />
+        <StepTabs step={step} answered={answered} onSelect={selectStep} />
       </div>
       {CONTROL_STEPS.map((item, index) => {
         const previous = CONTROL_STEPS[index - 1];

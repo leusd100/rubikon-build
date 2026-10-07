@@ -9,6 +9,7 @@ import {
 import type { ObjectProfile } from './objectProfile';
 import type {
   CladdingSystem,
+  ConfirmedTopic,
   ConfiguratorState,
   EnvelopeChoice,
   FoundationType,
@@ -114,6 +115,8 @@ export type HangarDomainModel = {
   areaSqm: number;
   /** «Об’єкт» answers, copied as given: business facts for the lead, nothing the geometry reads. */
   objectProfile: ObjectProfile;
+  /** The groups the visitor answered (types.ts ConfirmedTopic): what the stamp and the lead may call their choice */
+  confirmed: ConfirmedTopic[];
 };
 
 /**
@@ -169,5 +172,6 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     ...clampDoorSelection(state.doors, gateSelection.gates, gateSelection.gateType, width),
     areaSqm: Math.round(width * length),
     objectProfile: { ...state.objectProfile },
+    confirmed: [...state.confirmed],
   };
 }

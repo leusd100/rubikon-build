@@ -5,7 +5,7 @@ import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { NBSP, deriveSummary } from '../../lib/configurator/deriveSummary';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import { deriveBayLayout, ridgeHeightM, trussPanelNodesM } from '../../lib/configurator/parametricModel';
-import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
+import { DEFAULT_CONFIGURATOR_STATE, type ConfirmedTopic } from '../../lib/configurator/types';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 
@@ -55,10 +55,31 @@ function useChangeMark<T extends HTMLElement>(value: string) {
   return ref;
 }
 
-function Fact({ label, value, wide = false, purpose = false }: Readonly<{ label: string; value: string; wide?: boolean; purpose?: boolean }>) {
+/** A value the visitor did not choose says what it is (07.10): «приклад» — the page's example, left as it was — or
+ *  «попередньо» — worked out by the configurator, for the designer to decide */
+type Status = 'example' | 'derived';
+const STATUS_WORDS: Record<Status, string> = { example: 'приклад', derived: 'попередньо' };
+
+function StatusTag({ status }: Readonly<{ status?: Status }>) {
+  if (!status) return null;
+  return <span className="hc-fact-status" data-status={status}>{STATUS_WORDS[status]}</span>;
+}
+
+function Fact({
+  label,
+  value,
+  wide = false,
+  purpose = false,
+  status,
+}: Readonly<{ label: string; value: string; wide?: boolean; purpose?: boolean; status?: Status }>) {
   const ref = useChangeMark<HTMLDivElement>(value);
   const className = [wide && 'is-wide', purpose && 'hc-fact-purpose'].filter(Boolean).join(' ') || undefined;
-  return <div ref={ref} className={className}><dt>{label}</dt><dd>{value}</dd></div>;
+  return (
+    <div ref={ref} className={className} data-status={status}>
+      <dt>{label} <StatusTag status={status} /></dt>
+      <dd>{value}</dd>
+    </div>
+  );
 }
 
 /** The stamp's thumbnail: the configured hangar's section and plan, to proportion, with the frames' rhythm in the plan.
@@ -116,7 +137,10 @@ export function ConfiguratorSummary({
   // The stamp names the untouched example as the sheet above it does — «Приклад» — and says «Ви обрали» once the drawn
   // hangar is the visitor's (sameDrawnHangar, as the drawings and the cost notes decide it; 04.10)
   const inquiry = useHangarInquiryContext();
-  const example = inquiry ? sameDrawnHangar(inquiry.state, DEFAULT_CONFIGURATOR_STATE) : false;
+  // «Ви обрали» once the visitor answered anything; until then the stamp is the example's. Each value the visitor left
+  // as it was says so beside its name (07.10: changing the width alone made every default «their» choice)
+  const chosen = (topic: ConfirmedTopic): Status | undefined => (domain.confirmed.includes(topic) ? undefined : 'example');
+  const example = domain.confirmed.length === 0 && (inquiry ? sameDrawnHangar(inquiry.state, DEFAULT_CONFIGURATOR_STATE) : true);
   const dimensionsWithoutUnit = summary.dimensionsLabel.replace(/\s+м$/, '');
   const dimensionsRef = useChangeMark<HTMLParagraphElement>(`${summary.dimensionsLabel} ${summary.ridgeHeightLabel}`);
 
@@ -133,7 +157,7 @@ export function ConfiguratorSummary({
           <p className="hc-summary-area">{summary.areaLabel} площі забудови</p>
           <dl className="hc-summary-facts">
             <div>
-              <dt>Контур</dt>
+              <dt>Утеплення</dt>
               <dd>{summary.envelopeLabel}</dd>
             </div>
             <div>
@@ -180,6 +204,7 @@ export function ConfiguratorSummary({
       <div className="hc-summary-grid">
         <div className="hc-summary-selected">
           <h3 className="hc-summary-title">{example ? 'Приклад конфігурації' : 'Ви обрали'}</h3>
+          {!example && !domain.confirmed.includes('dimensions') && <p className="hc-summary-dimensions-status"><StatusTag status="example" /></p>}
           <p className="hc-summary-dimensions" ref={dimensionsRef}>
             {dimensionsWithoutUnit}<span className="hc-summary-dimensions-unit">{NBSP}м</span>
           </p>
@@ -188,14 +213,14 @@ export function ConfiguratorSummary({
         </div>
         {/* A value that changes lights for a moment, so an edit made in the controls shows where it landed */}
         <dl className="hc-summary-facts">
-          <Fact label="Контур" value={summary.envelopeLabel} />
-          <Fact label="Огородження" value={summary.claddingSystemLabel} />
-          <Fact label="Схема" value={summary.structuralVisualizationLabel} wide />
-          <Fact label="Обсяг" value={summary.scopeSummaryLabel} wide />
+          <Fact label="Утеплення" value={summary.envelopeLabel} status={example ? undefined : chosen('envelope')} />
+          <Fact label="Огородження" value={summary.claddingSystemLabel} status={example ? undefined : chosen('cladding')} />
+          <Fact label="Схема" value={summary.structuralVisualizationLabel} wide status="derived" />
+          <Fact label="Обсяг" value={summary.scopeSummaryLabel} wide status={example ? undefined : chosen('scope')} />
           {/* Dropped entirely, not shown as "поза обсягом": an opening in a wall nobody ordered is not part of this
               request, so it has no row. The controls keep the choice, disabled, and it comes back with the walls. */}
-          {summary.gatesLabel !== null && <Fact label="Ворота" value={summary.gatesLabel} />}
-          {summary.doorsLabel !== null && <Fact label="Двері" value={summary.doorsLabel} />}
+          {summary.gatesLabel !== null && <Fact label="Ворота" value={summary.gatesLabel} status={example ? undefined : chosen('openings')} />}
+          {summary.doorsLabel !== null && <Fact label="Двері" value={summary.doorsLabel} status={example ? undefined : chosen('openings')} />}
           {/* «Об’єкт» (03.10): only once a purpose is chosen, last, so an unanswered question does not grow the stamp on a
               phone (styles: configurator-controls.css) */}
           {summary.objectProfile.purpose !== null && <Fact label="Призначення" value={summary.objectProfile.purpose} purpose />}

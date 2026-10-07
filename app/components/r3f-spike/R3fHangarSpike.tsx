@@ -27,6 +27,7 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   doors: 0,
   gateType: 'standard',
   objectProfile: DEFAULT_OBJECT_PROFILE,
+  confirmed: [],
 };
 
 function DimensionSlider({

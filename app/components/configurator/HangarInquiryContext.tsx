@@ -1,12 +1,14 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
 import {
   INITIAL_HANGAR_ATTACHMENT,
   sameBusinessConfiguration,
   transitionHangarAttachment,
   type HangarAttachmentState,
 } from '../../lib/configurator/attachmentContract';
+import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
+import { clearDraft, readDraft, saveDraft } from '../../lib/configurator/draft';
 import { createHangarAttachment } from '../../lib/configurator/hangarAttachment';
 import { useInquiryAttachmentSource } from '../inquiry/InquiryAttachmentProvider';
 import {
@@ -27,6 +29,13 @@ type HangarInquiryContextValue = {
   detachConfiguration: () => void;
   togglePresentationDemo: (kind: HangarPresentationDemoKind) => void;
   endPresentationDemo: () => void;
+  /** The configurator's open step (CONTROL_STEPS), kept with the draft */
+  step: number;
+  setStep: (step: number) => void;
+  /** The draft was read back from this browser (07.10): the configurator offers to start again */
+  restored: boolean;
+  /** Back to the page's example, the draft forgotten */
+  startOver: () => void;
 };
 
 const HangarInquiryContext = createContext<HangarInquiryContextValue | null>(null);
@@ -36,6 +45,8 @@ type HangarInquiryState = {
   attachment: HangarAttachmentState;
   presentationDemo: HangarPresentationDemo | null;
   presentationAnnouncement: string;
+  step: number;
+  restored: boolean;
 };
 
 type HangarInquiryAction =
@@ -43,21 +54,39 @@ type HangarInquiryAction =
   | { type: 'explicit-attach' }
   | { type: 'explicit-detach' }
   | { type: 'toggle-presentation'; kind: HangarPresentationDemoKind }
-  | { type: 'end-presentation' };
+  | { type: 'end-presentation' }
+  | { type: 'step'; step: number }
+  | { type: 'restore'; configuration: ConfiguratorState; attached: boolean; step: number }
+  | { type: 'start-over' };
 
 const INITIAL_HANGAR_INQUIRY_STATE: HangarInquiryState = {
   configuration: DEFAULT_CONFIGURATOR_STATE,
   attachment: INITIAL_HANGAR_ATTACHMENT,
   presentationDemo: null,
   presentationAnnouncement: '',
+  step: 0,
+  restored: false,
 };
 
 function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryAction): HangarInquiryState {
+  if (action.type === 'step') return current.step === action.step ? current : { ...current, step: action.step };
+  if (action.type === 'restore') {
+    return {
+      ...current,
+      configuration: action.configuration,
+      attachment: action.attached ? { status: 'attached', reason: 'explicit-action' } : INITIAL_HANGAR_ATTACHMENT,
+      step: action.step,
+      restored: true,
+    };
+  }
+  if (action.type === 'start-over') return { ...INITIAL_HANGAR_INQUIRY_STATE };
+
   if (action.type === 'business-edit') {
     // Numeric fields commit on blur as well as while typing. Merely focusing and leaving an
     // unchanged default must not count as intent, so identical commits are true no-ops.
     if (sameBusinessConfiguration(current.configuration, action.configuration)) return current;
     return {
+      ...current,
       configuration: action.configuration,
       attachment: transitionHangarAttachment(current.attachment, { type: 'business-edit' }),
       presentationDemo: null,
@@ -110,6 +139,21 @@ function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryA
 export function HangarInquiryProvider({ children }: { children: ReactNode }) {
   const [model, dispatch] = useReducer(reduceHangarInquiry, INITIAL_HANGAR_INQUIRY_STATE);
   const detachConfiguration = useCallback(() => dispatch({ type: 'explicit-detach' }), []);
+
+  // The draft (07.10, draft.ts): read back once after the page has hydrated — the server knows nothing of it — then kept
+  // on every change. The first save waits for the read, so the example never overwrites a draft before it is read.
+  const read = useRef(false);
+  useEffect(() => {
+    const draft = readDraft(CONTROL_STEPS.length);
+    read.current = true;
+    if (draft) dispatch({ type: 'restore', ...draft });
+  }, []);
+  const untouched = model.configuration === INITIAL_HANGAR_INQUIRY_STATE.configuration && model.step === 0;
+  useEffect(() => {
+    // nothing to keep until the visitor did something: a page opened and left stores nothing
+    if (!read.current || untouched) return;
+    saveDraft({ configuration: model.configuration, attached: model.attachment.status === 'attached', step: model.step });
+  }, [model.configuration, model.attachment, model.step, untouched]);
   const value = useMemo(
     () => ({
       state: model.configuration,
@@ -126,6 +170,13 @@ export function HangarInquiryProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'toggle-presentation', kind });
       },
       endPresentationDemo: () => dispatch({ type: 'end-presentation' }),
+      step: model.step,
+      setStep: (step: number) => dispatch({ type: 'step', step }),
+      restored: model.restored,
+      startOver: () => {
+        clearDraft();
+        dispatch({ type: 'start-over' });
+      },
     }),
     [model, detachConfiguration],
   );

@@ -157,7 +157,23 @@ export type ConfiguratorState = {
   doors: DoorCount;
   /** «Об’єкт»: purpose, project, region, lifting equipment — see objectProfile.ts. */
   objectProfile: ObjectProfile;
+  /** The groups the visitor answered (ConfirmedTopic); the rest is the example's */
+  confirmed: ConfirmedTopic[];
 };
+
+/**
+ * The groups the visitor answered themselves (07.10). Everything else in the state is the page's example — the
+ * configurator starts from 24 × 60 × 8 м, cold, profiled sheet, one gate, the whole scope — and the stamp and the lead
+ * must not call it «Ви обрали»: changing the width alone used to make every default the visitor's choice. A group is
+ * confirmed by any change in it, or by choosing its current value again: an answer, not a difference.
+ */
+export type ConfirmedTopic = 'dimensions' | 'envelope' | 'cladding' | 'openings' | 'scope';
+export const CONFIRMED_TOPICS: ConfirmedTopic[] = ['dimensions', 'envelope', 'cladding', 'openings', 'scope'];
+
+/** The state with `topic` answered */
+export function withConfirmed(state: ConfiguratorState, topic: ConfirmedTopic): ConfiguratorState {
+  return state.confirmed.includes(topic) ? state : { ...state, confirmed: [...state.confirmed, topic] };
+}
 
 export type DimensionBounds = { min: number; max: number; step: number };
 
@@ -266,6 +282,8 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   doors: 0,
   // Every «Об’єкт» answer starts unanswered — «Ще не знаю», no purpose — so the defaults stay «untouched»
   objectProfile: DEFAULT_OBJECT_PROFILE,
+  // Nothing answered yet: every value above is the example's
+  confirmed: [],
 };
 
 export function clampDimension(key: keyof Dimensions, value: number): number {

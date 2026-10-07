@@ -3,13 +3,11 @@ import { objectProfileLabels, type ObjectProfileLabels } from './objectProfile';
 import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M, ridgeHeightM } from './parametricModel';
 import {
   CLADDING_SYSTEM_LABELS,
-  ENVELOPE_LABELS,
   FOUNDATION_TYPE_LABELS,
   ROOF_STRUCTURE_LABELS,
   SCOPE_LABELS,
   SCOPE_ORDER,
   STRUCTURAL_SCHEME_LABELS,
-  envelopeMatchesPreset,
   type GateType,
 } from './types';
 
@@ -113,23 +111,22 @@ function formatCladdingSystemLabel(
 }
 
 /**
- * Phase 3E, brief §18 — the high-level "Контур" label, honest about drift from its own preset.
- * With neither walls nor roof in the request it is «Поза обсягом заявки», as the controls and the phone header say:
- * the stamp kept «Контур: Холодний» beside «Огородження: Поза обсягом заявки» (04.10).
- * `envelope.walls`/`envelope.roof` (the stored intent) still always equal what the customer last
- * clicked in "Контур будівлі" — this function does not change that, it only decides what the
- * SUMMARY calls it: as soon as a manual wall/roof system override means the actual materials no
- * longer match what "Холодний"/"Утеплений" would imply, claiming that simple label would
- * misrepresent a now-mixed configuration (brief's own explicit "must no longer claim a simple
- * preset if that would be semantically misleading") — surfaced as "Індивідуальна конфігурація"
- * instead, with the real systems still fully visible in `claddingSystemLabel` right below it.
+ * «Утеплення» (07.10; until then «Контур»): the thermal answer on its own, beside the materials in «Огородження». A
+ * changed material used to turn it into «Індивідуальна конфігурація», and the visitor could no longer tell which
+ * thermal envelope they were asking for. Now: «Утеплений» or «Уточнимо» as answered; «Без утеплення» for a cold
+ * building — unless a sandwich panel is asked for, which carries its own insulation, and then it says where.
+ * With neither walls nor roof in the request it is «Поза обсягом заявки», as the controls say.
  */
 function formatEnvelopeLabel(envelope: HangarDomainModel['envelope'], scope: HangarDomainModel['scope']): string {
   if (!scope.walls && !scope.roof) return OUT_OF_SCOPE_LABEL;
-  if (envelopeMatchesPreset(envelope.walls, envelope.wallSystem, envelope.roofSystem)) {
-    return ENVELOPE_LABELS[envelope.walls];
-  }
-  return 'Індивідуальна конфігурація';
+  if (envelope.walls === 'insulated') return 'Утеплений';
+  if (envelope.walls === 'undecided') return 'Уточнимо';
+  const sandwichWalls = scope.walls && envelope.wallSystem === 'sandwich-panel';
+  const sandwichRoof = scope.roof && envelope.roofSystem === 'sandwich-panel';
+  if (sandwichWalls && sandwichRoof) return 'У сендвіч-панелях';
+  if (sandwichWalls) return 'Лише в стінах (сендвіч-панелі)';
+  if (sandwichRoof) return 'Лише в покрівлі (сендвіч-панелі)';
+  return 'Без утеплення';
 }
 
 // Ворота and двері have no singular: «одні ворота», «двоє воріт», «одні двері», never «1 ворота» or «2 ворота» (04.10)

@@ -217,3 +217,26 @@
   .hc-step-tab { min-height: 64px; padding: 10px 8px; }
   .hc-frame-panel { padding: 20px 20px 4px; }
 }
+
+/* ── What the visitor chose, and what they did not (07.10) ────────────────────────────────────────────────────────────
+   A value left as the example's, or worked out by the configurator, says so beside its name in a quiet tag; its value
+   steps back a shade. The visitor's own answers stand plain. */
+.hc-fact-status {
+  display: inline-block; margin-left: 6px; padding: 2px 6px; border: 1px dashed var(--color-border-strong); border-radius: 0;
+  color: var(--color-text-muted); font: 600 11px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; vertical-align: 1px;
+}
+.hc-summary-facts > div[data-status='example'] dd { color: var(--color-text-secondary); }
+.hc-summary-dimensions-status { margin: 4px 0 0; }
+.hc-summary-dimensions-status .hc-fact-status { margin-left: 0; }
+
+/* The draft read back (07.10): one quiet line over the configurator, with the way back to the example */
+.hangar-configurator-embedded .hc-draft-note {
+  width: min(var(--container-max), calc(100% - var(--container-gutter) * 2)); margin: 0 auto 14px;
+  color: var(--color-text-secondary); font: 500 14px/1.4 var(--font-manrope), sans-serif;
+}
+@media (max-width: 760px) { .hangar-configurator-embedded .hc-draft-note { width: min(100% - 32px, 620px); } }
+.hc-draft-reset {
+  min-height: 44px; padding: 0 2px; border: 0; background: transparent; color: var(--color-text); font: inherit; font-weight: 700;
+  text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: 3px; cursor: pointer;
+}
+.hc-draft-reset:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }

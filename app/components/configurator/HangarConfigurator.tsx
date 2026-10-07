@@ -122,8 +122,11 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
   // /angary's drawing sheet names the object as the frame drawing does: the example until the visitor makes it theirs
   const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
   const presentationDemo = sharedInquiry?.presentationDemo;
-  // The open step: the controls show it, the drawing follows it (the frame on «Каркас», 07.10). The sizes first.
-  const [step, setStep] = useState(0);
+  // The open step: the controls show it, the drawing follows it (the frame on «Каркас», 07.10). The sizes first. On
+  // /angary it lives with the configuration, so the draft brings the visitor back to the step they left.
+  const [localStep, setLocalStep] = useState(0);
+  const step = sharedInquiry?.step ?? localStep;
+  const setStep = sharedInquiry?.setStep ?? setLocalStep;
 
   return (
     <section
@@ -148,6 +151,13 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         </p>
       </header>
 
+      {/* A draft read back from this browser says so, with the way back to the example (07.10) */}
+      {embedded && sharedInquiry?.restored && (
+        <p className="hc-draft-note" role="status">
+          Відновлено вашу конфігурацію з минулого візиту.{' '}
+          <button type="button" className="hc-draft-reset" onClick={sharedInquiry.startOver}>Почати заново</button>
+        </p>
+      )}
       <div className="hc-layout" ref={layoutRef}>
         <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} step={step} onStep={setStep} foundationChoice={!embedded} />
         <div className="hc-preview-pane" id="hangar-live-preview">

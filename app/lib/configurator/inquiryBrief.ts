@@ -1,20 +1,22 @@
 import type { HangarDomainModel } from './domainModel';
 import { deriveSummary } from './deriveSummary';
+import type { ConfirmedTopic } from './types';
 
 export type HangarInquiryBrief = ReturnType<typeof createHangarInquiryBrief>;
 export type HangarInquiryBriefRow = { label: string; value: string };
+type TopicRow = HangarInquiryBriefRow & { topic: ConfirmedTopic };
 export type HangarInquiryBriefSections = {
   /** «Об’єкт»: only the questions answered */
   object: HangarInquiryBriefRow[];
-  /** What the drawing draws: the sizes, the contour, the scope and the openings */
-  configuration: HangarInquiryBriefRow[];
-  /** object + configuration — the visitor's own configuration, read as one list */
+  /** What the drawing draws and the visitor answered: the sizes, the insulation, the cladding, the scope, the openings */
   selected: HangarInquiryBriefRow[];
+  /** …and what they left as the page's example (07.10): sent too, so the manager sees the whole drawing, but apart */
+  defaults: HangarInquiryBriefRow[];
   preliminary: HangarInquiryBriefRow[];
 };
 /** A headed part of the brief: `heading` in the form's card, `textHeading` as the lead's text line */
 export type HangarInquiryBriefSection = {
-  id: 'object' | 'selected' | 'preliminary';
+  id: 'object' | 'selected' | 'defaults' | 'preliminary';
   heading: string;
   textHeading: string;
   rows: HangarInquiryBriefRow[];
@@ -43,6 +45,7 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     projectLabel: summary.objectProfile.project,
     regionLabel: summary.objectProfile.region,
     liftingLabel: summary.objectProfile.lifting,
+    confirmed: domain.confirmed,
   };
 }
 
@@ -65,21 +68,23 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
     answeredRow('Область', brief.regionLabel),
     answeredRow('Підйомне обладнання', brief.liftingLabel),
   ]);
-  const configuration = present([
-    { label: 'Габарити', value: brief.dimensionsLabel },
+  const rows: Array<TopicRow | null> = [
+    { topic: 'dimensions', label: 'Габарити', value: brief.dimensionsLabel },
     // The ridge the visitor set used to stop here, like the door once did (2026-10); with its slope since 03.10
-    { label: 'Висота в конику', value: brief.ridgeHeightLabel },
-    { label: 'Контур', value: brief.envelopeLabel },
-    { label: 'Огородження', value: brief.claddingSystemLabel },
-    { label: 'Обсяг', value: brief.scopeSummaryLabel },
-    brief.gatesLabel === null ? null : { label: 'Ворота', value: brief.gatesLabel },
-    brief.doorsLabel === null ? null : { label: 'Двері', value: brief.doorsLabel },
-  ]);
+    { topic: 'dimensions', label: 'Висота в конику', value: brief.ridgeHeightLabel },
+    { topic: 'envelope', label: 'Утеплення', value: brief.envelopeLabel },
+    { topic: 'cladding', label: 'Огородження', value: brief.claddingSystemLabel },
+    { topic: 'scope', label: 'Обсяг', value: brief.scopeSummaryLabel },
+    brief.gatesLabel === null ? null : { topic: 'openings', label: 'Ворота', value: brief.gatesLabel },
+    brief.doorsLabel === null ? null : { topic: 'openings', label: 'Двері', value: brief.doorsLabel },
+  ];
+  const drawn = rows.filter((row): row is TopicRow => row !== null && row.value !== '');
+  const plain = ({ label, value }: TopicRow): HangarInquiryBriefRow => ({ label, value });
 
   return {
     object,
-    configuration,
-    selected: [...object, ...configuration],
+    selected: drawn.filter((row) => brief.confirmed.includes(row.topic)).map(plain),
+    defaults: drawn.filter((row) => !brief.confirmed.includes(row.topic)).map(plain),
     preliminary: [
       {
         label: 'Площа забудови',
@@ -97,43 +102,29 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
 }
 
 /**
- * The brief in its headed parts, for the card and the text alike. `example`: the drawn hangar is still the page's
- * example (sameDrawnHangar) — its sizes are then the defaults, never the visitor's choice, even when «Об’єкт» answers
- * came with it; those go first under a heading of their own (04.10: the lead called the example's 24 × 60 × 8 м
- * «Вибрана конфігурація» while both drawings said «Приклад»).
+ * The brief in its headed parts, for the card and the text alike (07.10): what the visitor answered about the object,
+ * the configuration they chose, what they left as the page's example — the manager must be able to tell the two apart,
+ * as the stamp now does — and the preliminary data the configurator works out. Empty parts are left out.
  */
-export function createHangarInquiryBriefOutline(brief: HangarInquiryBrief, example = false): HangarInquiryBriefSection[] {
+export function createHangarInquiryBriefOutline(brief: HangarInquiryBrief): HangarInquiryBriefSection[] {
   const sections = createHangarInquiryBriefSections(brief);
-  const preliminary: HangarInquiryBriefSection = {
-    id: 'preliminary',
-    // «Системні попередні дані» was the code's word for it, shown to the visitor (04.10)
-    heading: 'Попередні дані',
-    textHeading: 'Попередні дані:',
-    rows: sections.preliminary,
-  };
-  if (!example) {
-    return [
-      { id: 'selected', heading: 'Вибрана конфігурація', textHeading: 'Вибрана конфігурація:', rows: sections.selected },
-      preliminary,
-    ];
-  }
-  return [
-    ...(sections.object.length
-      ? [{ id: 'object' as const, heading: 'Про об’єкт', textHeading: 'Про об’єкт:', rows: sections.object }]
-      : []),
+  const parts: HangarInquiryBriefSection[] = [
+    { id: 'object', heading: 'Про об’єкт', textHeading: 'Про об’єкт:', rows: sections.object },
+    { id: 'selected', heading: 'Вибрана конфігурація', textHeading: 'Вибрана конфігурація:', rows: sections.selected },
     {
-      id: 'selected',
-      heading: 'Базові параметри (за замовчуванням)',
-      // Values that are the defaults (never changed, or changed back) — the manager reading the lead has to know (2026-10)
-      textHeading: 'Базова конфігурація (параметри за замовчуванням):',
-      rows: sections.configuration,
+      id: 'defaults',
+      heading: 'Не уточнено — значення прикладу',
+      textHeading: 'Не уточнено клієнтом (значення прикладу на сайті):',
+      rows: sections.defaults,
     },
-    preliminary,
+    // «Системні попередні дані» was the code's word for it, shown to the visitor (04.10)
+    { id: 'preliminary', heading: 'Попередні дані', textHeading: 'Попередні дані:', rows: sections.preliminary },
   ];
+  return parts.filter((part) => part.rows.length > 0);
 }
 
-export function formatHangarInquiryBrief(brief: HangarInquiryBrief, example = false): string {
-  return createHangarInquiryBriefOutline(brief, example)
+export function formatHangarInquiryBrief(brief: HangarInquiryBrief): string {
+  return createHangarInquiryBriefOutline(brief)
     .flatMap((section) => [section.textHeading, ...section.rows.map((row) => `${row.label}: ${row.value}`)])
     .join('\n');
 }
