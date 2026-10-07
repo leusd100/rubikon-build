@@ -202,13 +202,13 @@ async function open(page: Page, path = '/') {
     const image = document.querySelector<HTMLImageElement>('#real-object .hv2-contour-canvas > picture img');
     return Boolean(image?.complete && image.naturalWidth > 0);
   });
-  // With motion the picture is still being plotted in for a second, clipped, and a clipped frame takes no pointer; then
+  // With motion the picture is still being plotted in for a second, under the sheet's cover, which takes the pointer; then
   // the seam sweeps for three more. The tests here start from the sheet at rest (the arrival has tests of its own)
   await page.waitForFunction(() => {
     const figure = document.querySelector<HTMLElement>('.hv2-contour');
-    const image = figure?.querySelector('.sheet-image');
-    if (!figure || !image || figure.dataset.sheetState === 'armed' || figure.querySelector('.hv2-contour-stage[data-sweep]')) return false;
-    return image.getAnimations().every((animation) => animation.playState === 'finished');
+    const cover = figure?.querySelector('.sheet-cover');
+    if (!figure || !cover || figure.dataset.sheetState === 'armed' || figure.querySelector('.hv2-contour-stage[data-sweep]')) return false;
+    return cover.getAnimations().every((animation) => animation.playState === 'finished');
   });
   const slider = sheet.getByRole('slider', { name: SLIDER });
   // The controls come alive with hydration
@@ -569,7 +569,7 @@ async function recordArrival(page: Page) {
   await page.evaluate((selectors) => {
     const stage = document.querySelector<HTMLElement>('#real-object .hv2-contour-stage')!;
     const sheet = stage.closest('figure')!;
-    const image = sheet.querySelector('.sheet-image')!;
+    const cover = sheet.querySelector('.sheet-cover')!;
     const handle = stage.querySelector('.hv2-contour-handle')!;
     const carriers = selectors.map((selector) => stage.querySelector(selector)!);
     const [pane] = carriers;
@@ -619,7 +619,7 @@ async function recordArrival(page: Page) {
         sweeps: animations.filter(sweeping).length,
         range: stage.querySelector<HTMLInputElement>('.hv2-contour-range')!.value,
         words: [opacity('.hv2-proof-labels'), opacity('svg.hv2-proof-marks')],
-        plotting: image.getAnimations().some((animation) => animation.playState === 'running'),
+        plotting: cover.getAnimations().some((animation) => animation.playState === 'running'),
         rings: `${rings.animationName} ${rings.animationIterationCount}`,
         others: animations.filter((animation) => !sweeping(animation))
           .map((animation) => (animation as CSSAnimation).animationName ?? (animation as CSSTransition).transitionProperty ?? 'script'),
@@ -1983,7 +1983,7 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   // Armed below the fold: the seam waits at the right edge — the photo whole — while the range keeps its resting value
   await expect(sheet).toHaveAttribute('data-sheet-state', 'armed');
   await expect(stage).toHaveAttribute('data-sweep', 'wait');
-  // (the four carriers glide there once on hydration, unseen: the armed sheet's picture is clipped away)
+  // (the four carriers glide there once on hydration, unseen: the armed sheet's picture is under its cover)
   await expect.poll(() => splitOf(stage)).toBe('100%');
   await expect(range).toHaveValue(String(DEFAULT_SPLIT));
   await expectWindow(stage, 100);

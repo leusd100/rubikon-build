@@ -244,9 +244,9 @@ const SCROLL_FIRST = 450;
 /** The letters А, Б, В ring a few times once the sweep or the assembly has put them up, so the nodes behind them are
  *  found (owner, 05.10: found by chance) */
 const NODES_HINT_MS = 2800;
-/** Settles when the sheet's picture has finished plotting in (DrawingSheet's clip-path transition), or at once */
+/** Settles when the sheet's picture has finished plotting in (the transition of DrawingSheet's cover), or at once */
 function plottedIn(sheet: Element) {
-  const plotting = sheet.querySelector('.sheet-image')?.getAnimations() ?? [];
+  const plotting = sheet.querySelector('.sheet-cover')?.getAnimations() ?? [];
   return Promise.all(plotting.map((animation) => animation.finished.catch(() => undefined)));
 }
 

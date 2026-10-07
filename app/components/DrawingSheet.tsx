@@ -8,9 +8,12 @@ import './drawing-sheet.css';
 // «Схема», «Фото об’єкта») — the provenance label lives in the frame instead of a chip over the picture.
 //
 // Arriving in view (35 %), the picture is plotted in from the top under a copper line, the rulers draw and the title
-// block fills — once. The sheet arms itself only after hydration and only with motion allowed, so without JavaScript
-// or with reduced motion it stands complete. `replayKey` (the /napryamky catalogue) replays the line and the title
-// block whenever the picture changes. Styles: app/components/drawing-sheet.css.
+// block fills — once. The plot is a paper cover drawn back down under the line (`.sheet-cover`, a transform the
+// compositor runs alone), not a clip-path on the picture: Chrome runs a clip-path transition as a paint worklet that
+// re-rasters the picture every frame, and while a finger flings the page that held back the main thread's frames.
+// The sheet arms itself only after hydration and only with motion allowed, so without JavaScript or with reduced
+// motion it stands complete. `replayKey` (the /napryamky catalogue) replays the line and the title block whenever the
+// picture changes. Styles: app/components/drawing-sheet.css.
 
 export type SheetCell = {
   /** The small caption above the value («Напрям», «Зображення»…) */
@@ -64,6 +67,7 @@ export function DrawingSheet({
         <div className={`sheet-image${imageClassName ? ` ${imageClassName}` : ''}`} ref={imageRef}>
           {children}
         </div>
+        <i className="sheet-cover" aria-hidden="true" />
         <i className="sheet-scan" aria-hidden="true" key={replayKey} data-replay={replayKey ? '' : undefined} />
       </div>
       <figcaption className="sheet-stamp" key={replayKey} data-replay={replayKey ? '' : undefined}>
