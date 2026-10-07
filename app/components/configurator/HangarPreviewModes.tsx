@@ -5,6 +5,7 @@ import { DrawingSheet, type SheetCell } from '../DrawingSheet';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
 import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
+import { CladdingSection } from './CladdingSection';
 import { HangarPreview } from './HangarPreview';
 import { miniReadout, previewDescription } from './sheetLabels';
 import { useFirstViewBuildUp } from './useFirstViewBuildUp';
@@ -404,6 +405,8 @@ export function HangarPreviewModes({
           )}
         >
           {view}
+          {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) */}
+          {!showThree && <CladdingSection domain={domain} />}
           {/* On the 3D picture itself, out of the title block: they are the picture's own actions */}
           {showThree && (
             // the colours follow their chip in the tab order, before «Розгорнути»; Escape folds them back to it

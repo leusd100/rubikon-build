@@ -114,7 +114,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         )}
         <p className="hc-lede">
           {embedded
-            ? 'Задайте габарити, контур і обсяг робіт — креслення оновиться одразу. Технічне рішення уточнимо разом.'
+            ? 'Три кроки: габарити, стіни й ворота, обсяг робіт — креслення змінюється з кожним вибором. Технічне рішення уточнимо разом.'
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
       </header>
@@ -131,12 +131,13 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
               ? { object: sheetObjectLabel(own, businessDomain.dimensions), untouched: !own && !presentationDemo }
               : undefined}
           />
-          {!embedded && <ConfiguratorSummary domain={businessDomain} />}
+          {!embedded && <div id="hc-stamp"><ConfiguratorSummary domain={businessDomain} /></div>}
         </div>
       </div>
       {/* On the page the summary is the drawing's title block, under the layout: only the drawing stays sticky */}
       {embedded && (
-        <div className="hc-stamp-row">
+        // «До зведення ↓» under the last step lands here
+        <div className="hc-stamp-row" id="hc-stamp">
           <ConfiguratorSummary domain={businessDomain} showInquiryAction onInquiryAction={sharedInquiry?.attachConfiguration} />
         </div>
       )}

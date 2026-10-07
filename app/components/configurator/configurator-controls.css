@@ -1,4 +1,4 @@
-/* The configurator's controls: «Об’єкт» and the phone accordion (03.10). Imported by ConfiguratorControls.tsx only. The
+/* The configurator's controls: «Об’єкт» and the three steps (07.10). Imported by ConfiguratorControls.tsx only. The
    shared look of fields, cards and notes stays in configurator-preview/configurator.css. */
 
 /* ── «Об’єкт» ─────────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -30,77 +30,119 @@
   .hc-stamp-row .hc-summary-facts > div.hc-fact-purpose { border-left: 0; }
 }
 
-/* ── Phone accordion (/angary ≤ 760 px) ───────────────────────────────────────────────────────────────────────────────
-   Set by ConfiguratorControls only on a phone, so the desktop and the no-JavaScript page never see these rules: there
-   the groups keep their headings and stay open. The header is the whole row — a 64 px target — with the group's value
-   on a second, smaller line. */
-.hc-controls[data-accordion] .hc-control-group { padding: 0; }
-.hc-controls[data-accordion] .hc-group-heading { margin: 0; }
-.hc-controls[data-accordion] .hc-group-panel { padding: 2px 20px 24px; }
-
-.hc-group-toggle {
+/* ── Three steps (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────
+   The tabs sit on top of the panel as one row of three equal cells, a drawing's title-block row: the number, the step's
+   name, and on a second line what is set in it. The open step is the paper-coloured cell; a passed step keeps its
+   number in copper. */
+.hc-steps {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 14px;
-  width: 100%;
-  min-height: 64px;
-  padding: 12px 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--color-border);
+}
+.hc-step-tab {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  justify-items: start;
+  row-gap: 8px;
+  min-height: 96px;
+  padding: 14px 14px 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--color-text);
+  color: var(--color-text-secondary);
   text-align: left;
   cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-premium), color var(--duration-fast) var(--ease-premium);
 }
-.hc-group-title { font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-.hc-group-value {
-  grid-column: 1;
-  margin-top: 6px;
+.hc-step-tab + .hc-step-tab { border-left: 1px solid var(--color-border); }
+/* the open step's edge: a copper rule along the bottom, over the row's own */
+.hc-step-tab::after {
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 3px;
+  background: var(--color-accent);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--duration-medium) var(--ease-premium);
+}
+.hc-step-tab[aria-selected='true'] { background: var(--color-surface-elevated); color: var(--color-text); }
+.hc-step-tab[aria-selected='true']::after { transform: none; }
+.hc-step-tab:hover:not([aria-selected='true']) { color: var(--color-text); background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.hc-step-tab:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
+.hc-step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid currentColor;
+  font: 700 12px/1 var(--font-condensed), sans-serif;
+}
+.hc-step-tab[aria-selected='true'] .hc-step-number { border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
+.hc-step-tab[data-done] .hc-step-number { border-color: var(--color-accent); color: var(--color-accent-strong); }
+.hc-step-title { font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; overflow-wrap: normal; }
+.hc-step-value {
+  max-width: 100%;
   overflow: hidden;
-  color: var(--color-text-secondary);
-  font: 500 14px/1.3 var(--font-manrope), sans-serif;
-  letter-spacing: 0;
-  text-transform: none;
+  color: var(--color-text-muted);
+  font: 500 13px/1.3 var(--font-manrope), sans-serif;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.hc-group-toggle::after {
-  content: '+';
-  /* drawn, not read: generated content is part of the button's name («Розміри 24 × 60 × 8 м +»); «/ ''» is its empty
-     alternative text, and a browser without the syntax keeps the line above (04.10) */
-  content: '+' / '';
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  color: var(--color-text-muted);
-  font: 400 22px/1 var(--font-manrope), sans-serif;
+.hc-step-tab[aria-selected='true'] .hc-step-value { color: var(--color-text-secondary); }
+
+/* Under each step: a square back arrow on the left, the next step filling the rest of the row */
+.hc-step-nav {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 18px 22px 22px;
+  border-top: 1px solid var(--color-border);
 }
-.hc-group-toggle[aria-expanded='true']::after { content: '\2212'; content: '\2212' / ''; color: var(--color-text); }
-.hc-group-toggle[aria-expanded='true'] .hc-group-value { color: var(--color-text-muted); }
-.hc-group-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
+.hc-step-back, .hc-step-next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--color-border-control);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: 700 13px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+.hc-step-back { flex: none; width: 48px; padding: 0; font-size: 18px; }
+.hc-step-next { flex: 1 1 auto; min-width: 0; text-align: center; border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
+.hc-step-back:hover { border-color: var(--color-text); }
+.hc-step-next:hover { background: var(--color-accent-strong); border-color: var(--color-accent-strong); }
+.hc-step-back:focus-visible, .hc-step-next:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* A step that opens arrives, it does not pop: the panel fades up a few pixels (none under reduced motion, globals.css) */
+.hc-step-panel:not([hidden]) { animation: hc-step-in var(--duration-medium) var(--ease-premium); }
+@keyframes hc-step-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* Without JavaScript ([data-theme] is set by the head script) the tabs cannot switch: every step is open, one after the
+   other, and the tabs and the step buttons are not shown */
+:root:not([data-theme]) .hc-step-panel[hidden] { display: block; }
+:root:not([data-theme]) :is(.hc-steps, .hc-step-nav) { display: none; }
+
+@media (max-width: 760px) {
+  .hc-step-tab { min-height: 84px; padding: 10px 10px 9px; row-gap: 6px; }
+  .hc-step-title { font-size: 11px; letter-spacing: .04em; }
+  .hc-step-value { font-size: 12px; }
+  .hc-step-nav { padding: 16px 20px 20px; }
+}
 
 /* «Чому це важливо»: its sign is drawn in configurator.css; four summaries were each named «Чому це важливо +» (04.10) */
 .hc-controls .hc-why summary::after { content: '+' / ''; }
 .hc-controls .hc-why[open] summary::after { content: '\2212' / ''; }
-
-/* ── Before hydration (/angary ≤ 760 px) ─────────────────────────────────────────────────────────────────────────────
-   The server markup has every group open — 2419 px of controls that hydration then folds to about 1000. A link to
-   #vartist, #process or #inquiry aimed at the long layout and landed 1316 px past its heading, and a reload further down
-   jumped (04.10). With JavaScript on ([data-theme] is set by the head script before paint, the same flag the inquiry
-   form's folding uses) the server markup is folded the way the accordion will be — «Об’єкт» open, each heading the
-   toggle's height — so hydration moves nothing. Without JavaScript [data-theme] is absent and every group stays open. */
-@media (max-width: 760px) {
-  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group { padding: 0; }
-  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group > h3 {
-    display: flex;
-    align-items: center;
-    min-height: 64px;
-    margin: 0;
-    padding: 12px 20px;
-  }
-  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-group-panel { padding: 2px 20px 24px; }
-  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group:not([data-group='object']) .hc-group-panel { display: none; }
-}
 
 /* «Двері»: chips at their own width, as tall as the gate tiles above and at least as wide */
 .hc-door-options .hc-option-card { min-width: 68px; }
@@ -126,3 +168,7 @@
 }
 .hc-field-reset:hover { color: var(--color-accent-strong); }
 .hc-field-reset:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* «До зведення ↓» lands on the stamp clear of the header, like a section's own anchor (globals.css section[id]) */
+#hc-stamp { scroll-margin-top: 116px; }
+@media (max-width: 760px) { #hc-stamp { scroll-margin-top: 93px; } }

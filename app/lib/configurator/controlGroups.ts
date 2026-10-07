@@ -41,3 +41,34 @@ export function describeControlGroups(domain: HangarDomainModel): Record<Control
     openings: openingsLine(domain),
   };
 }
+
+// ── Three steps (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────
+// The groups are walked as three steps, one open at a time on every width: the sizes first — the drawing answers them at
+// once — then the shell and its openings, then what the request covers and the questions that only go into the brief
+// (purpose, project, region, lifting equipment: nothing on the drawing changes with them). It replaces the phone
+// accordion, which opened on «Об’єкт» and left the sizes folded.
+
+export type ControlStepId = 'size' | 'shell' | 'task';
+
+export type ControlStep = { id: ControlStepId; title: string; groups: ControlGroupId[] };
+
+export const CONTROL_STEPS: ControlStep[] = [
+  { id: 'size', title: 'Габарити', groups: ['dimensions'] },
+  { id: 'shell', title: 'Стіни й ворота', groups: ['envelope', 'cladding', 'foundation', 'openings'] },
+  { id: 'task', title: 'Обсяг і задача', groups: ['scope', 'object'] },
+];
+
+export function stepOfGroup(group: ControlGroupId): number {
+  return Math.max(0, CONTROL_STEPS.findIndex((step) => step.groups.includes(group)));
+}
+
+/** What each step's tab says is set in it, from the same lines as the groups' */
+export function describeControlSteps(domain: HangarDomainModel): Record<ControlStepId, string> {
+  const groups = describeControlGroups(domain);
+  const purpose = domain.objectProfile.purpose === null ? null : objectProfileLine({ ...domain.objectProfile, region: 'unknown', project: 'unknown', lifting: 'unknown' });
+  return {
+    size: groups.dimensions,
+    shell: groups.envelope === OUT_OF_SCOPE_LABEL ? groups.openings : `${groups.envelope} · ${groups.openings}`,
+    task: purpose ? `${groups.scope} · ${purpose}` : groups.scope,
+  };
+}

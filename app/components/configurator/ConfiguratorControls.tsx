@@ -1,7 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { CONTROL_GROUP_TITLES, describeControlGroups, type ControlGroupId } from '../../lib/configurator/controlGroups';
+import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import {
+  CONTROL_GROUP_TITLES,
+  CONTROL_STEPS,
+  describeControlSteps,
+  stepOfGroup,
+  type ControlGroupId,
+  type ControlStepId,
+} from '../../lib/configurator/controlGroups';
 import { NBSP, formatRoofSlope, formatSize } from '../../lib/configurator/deriveSummary';
 import { deriveDomainModel, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../lib/configurator/domainModel';
 import {
@@ -196,50 +203,24 @@ function NumericField({
   );
 }
 
-/* ── Phone accordion (/angary, 03.10) ──────────────────────────────────────────────────────────────────────────────
-   On a phone the groups were 2 screens of controls under the mini drawing. At ≤ 760 px on /angary they fold: one group
-   open at a time, each header saying what is set in it. Rendered on the server and without JavaScript as before —
-   plain headings, every group open — and the research screen (/configurator-preview) keeps its open groups: it has no
-   mini drawing to scroll under, and like every other /angary-only phone rule this is keyed on the embedded layout. */
+/* ── Three steps (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────
+   The groups are walked as three steps (CONTROL_STEPS): «Габарити», «Стіни й ворота», «Обсяг і задача», one open at a time
+   on every width. The tabs say what is set in each step, so a closed one never has to be opened to be known. They replace
+   the phone accordion (03.10), which opened on «Об’єкт» — four questions the drawing does not answer — and left the
+   sizes, the part that moves the drawing, folded. */
 
 const PHONE_QUERY = '(max-width: 760px)';
 
-function subscribePhone(onChange: () => void) {
-  const media = window.matchMedia(PHONE_QUERY);
-  media.addEventListener('change', onChange);
-  return () => media.removeEventListener('change', onChange);
-}
-
-const isPhone = () => window.matchMedia(PHONE_QUERY).matches;
-const notOnServer = () => false;
-
-function usePhoneAccordion() {
-  const phone = useSyncExternalStore(subscribePhone, isPhone, notOnServer);
-  const [embedded, setEmbedded] = useState(false);
-  const controlsRef = useCallback((node: HTMLDivElement | null) => {
-    if (node) setEmbedded(node.closest('.hangar-configurator-embedded') !== null);
-  }, []);
-  return { controlsRef, accordion: phone && embedded };
-}
-
-/** Opening a group folds the one above it, so its header can jump up under the mini drawing held below the site header
- *  (useMiniPreview in HangarConfigurator.tsx) or above the screen: bring it back just under the drawing. The drawing is
- *  counted even when it is not stuck yet: the observer sticks it a moment after this jump, and a header placed under
- *  the site header alone was then covered by it. */
-function keepHeaderInView(header: HTMLElement) {
-  const stage = header.closest('.hc-layout')?.querySelector<HTMLElement>('.hc-preview-surface');
-  const covered = (document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0) + (stage?.offsetHeight ?? 0);
-  const top = header.getBoundingClientRect().top;
-  if (top < covered) window.scrollBy({ top: top - covered - 8, behavior: 'instant' });
-}
-
-/** Brings a header just under the site header and the mini drawing, from above or below — twice, because arriving at the
- *  controls switches the drawing to its compact size a frame later */
-function landOnHeader(header: HTMLElement) {
+/** Brings the steps' tabs back into view after a step changed from below them: under the site header, and on a phone
+ *  under the mini drawing held below it as well (useMiniPreview in HangarConfigurator.tsx). Twice, because arriving at
+ *  the controls switches the drawing to its compact size a frame later. Left alone when they are already in view. */
+function landOnSteps(tabs: HTMLElement) {
   const land = () => {
-    const stage = header.closest('.hc-layout')?.querySelector<HTMLElement>('.hc-preview-surface');
+    const phone = window.matchMedia(PHONE_QUERY).matches;
+    const stage = phone ? tabs.closest('.hangar-configurator-embedded .hc-layout')?.querySelector<HTMLElement>('.hc-preview-surface') : null;
     const covered = (document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0) + (stage?.offsetHeight ?? 0);
-    window.scrollBy({ top: header.getBoundingClientRect().top - covered - 8, behavior: 'instant' });
+    const top = tabs.getBoundingClientRect().top;
+    if (top < covered || top > window.innerHeight * 0.5) window.scrollBy({ top: top - covered - 8, behavior: 'instant' });
   };
   land();
   window.requestAnimationFrame(() => window.requestAnimationFrame(land));
@@ -256,46 +237,53 @@ const GROUP_HEADING_IDS: Record<ControlGroupId, string> = {
   openings: 'hc-gates-heading',
 };
 
-function ControlGroup({
-  id,
-  accordion,
-  open,
-  value,
-  onToggle,
-  children,
-}: Readonly<{
-  id: ControlGroupId;
-  accordion: boolean;
-  open: boolean;
-  value: string;
-  onToggle: (id: ControlGroupId, header: HTMLElement) => void;
-  children: ReactNode;
-}>) {
+function ControlGroup({ id, children }: Readonly<{ id: ControlGroupId; children: ReactNode }>) {
   const headingId = GROUP_HEADING_IDS[id];
-  const panelId = `hc-${id}-panel`;
   return (
     <section className="hc-control-group" aria-labelledby={headingId} data-group={id}>
-      {accordion ? (
-        <h3 className="hc-group-heading">
-          {/* The button's name is the title and the value: a folded group is announced with what is set in it */}
-          <button
-            type="button"
-            className="hc-group-toggle"
-            aria-expanded={open}
-            aria-controls={panelId}
-            onClick={(event) => onToggle(id, event.currentTarget)}
-          >
-            <span className="hc-group-title" id={headingId}>{CONTROL_GROUP_TITLES[id]}</span>
-            <span className="hc-group-value">{value}</span>
-          </button>
-        </h3>
-      ) : (
-        <h3 id={headingId}>{CONTROL_GROUP_TITLES[id]}</h3>
-      )}
-      <div className="hc-group-panel" id={panelId} hidden={accordion && !open}>
+      <h3 id={headingId}>{CONTROL_GROUP_TITLES[id]}</h3>
+      <div className="hc-group-panel" id={`hc-${id}-panel`}>
         {children}
       </div>
     </section>
+  );
+}
+
+function StepTabs({
+  step,
+  values,
+  onSelect,
+}: Readonly<{ step: number; values: Record<ControlStepId, string>; onSelect: (index: number, focus?: boolean) => void }>) {
+  // Arrow keys move between the tabs (the tabs pattern): one stop in the tab order, the open step's tab
+  function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const last = CONTROL_STEPS.length - 1;
+    const next = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: last }[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    onSelect(Math.min(last, Math.max(0, next)), true);
+  }
+  return (
+    <div className="hc-steps" role="tablist" aria-label="Кроки конфігурації">
+      {CONTROL_STEPS.map((item, index) => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          id={`hc-step-${item.id}-tab`}
+          className="hc-step-tab"
+          aria-selected={step === index}
+          aria-controls={`hc-step-${item.id}`}
+          tabIndex={step === index ? 0 : -1}
+          data-done={index < step ? '' : undefined}
+          onClick={() => onSelect(index)}
+          onKeyDown={(event) => onKeyDown(event, index)}
+        >
+          <span className="hc-step-number" aria-hidden="true">{index + 1}</span>
+          <span className="hc-step-title">{item.title}</span>
+          <span className="hc-step-value">{values[item.id]}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -319,12 +307,12 @@ const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
 };
 
 export function ConfiguratorControls({ state, onChange, foundationChoice = true }: Readonly<Props>) {
-  const { controlsRef, accordion } = usePhoneAccordion();
-  // The first group open on a phone; one at a time after that, and every group may be folded
-  const [openGroup, setOpenGroup] = useState<ControlGroupId | null>('object');
+  // The sizes first: the step the drawing answers at once
+  const [step, setStep] = useState(0);
+  const tabsRef = useRef<HTMLDivElement>(null);
   // The same resolved model the summary reads, so a folded header and the ridge hint never disagree with the stamp
   const domain = useMemo(() => deriveDomainModel(state), [state]);
-  const groupValues = describeControlGroups(domain);
+  const stepValues = describeControlSteps(domain);
   // The ridge's legal range depends on the CURRENT width and eave height, so it is recomputed on every render rather
   // than read from a static table. The value shown is the resolved one: the span rule's until the visitor edits it.
   const ridgeRange = ridgeHeightRangeM(state.dimensions.width, state.dimensions.height);
@@ -341,39 +329,34 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
     else ridgeHint = `${ridgeNow} — найвищий для цієї ширини й висоти стін. ${typed}`;
   }
 
-  // A link elsewhere on the page that names a group (the frame drawing's «Змінити габарити ↑», data-open-group) opens it
-  // on a phone and lands on its header — it used to arrive at the configurator with «Розміри» folded (03.10). Without the
-  // accordion the link's own anchor scrolls as usual.
+  // A link elsewhere on the page that names a group (the frame drawing's «Змінити габарити ↑», data-open-group) opens its
+  // step and lands on the group's heading: with the steps, «Розміри» may be behind another tab.
   useEffect(() => {
-    if (!accordion) return undefined;
     const openFromLink = (event: MouseEvent) => {
       const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[data-open-group]');
       const id = link?.dataset.openGroup as ControlGroupId | undefined;
       if (!id || !(id in GROUP_HEADING_IDS)) return;
+      const tabs = tabsRef.current;
+      if (!tabs) return;
       event.preventDefault();
       // the address follows the visitor back up: it kept «#inquiry» from an earlier reveal (04.10)
       if (link?.hash) window.history.replaceState(null, '', link.hash);
-      setOpenGroup(id);
-      window.requestAnimationFrame(() => {
-        const header = document.querySelector<HTMLElement>(`.hangar-configurator-embedded [data-group="${id}"] .hc-group-toggle`);
-        if (!header) return;
-        landOnHeader(header);
-        header.focus({ preventScroll: true });
-      });
+      setStep(stepOfGroup(id));
+      window.requestAnimationFrame(() => landOnSteps(tabs));
     };
     document.addEventListener('click', openFromLink);
     return () => document.removeEventListener('click', openFromLink);
-  }, [accordion]);
+  }, []);
 
-  function toggleGroup(id: ControlGroupId, header: HTMLElement) {
-    const opening = openGroup !== id;
-    setOpenGroup(opening ? id : null);
-    // React commits a click's update before the next frame: measure once the group above has folded
-    if (opening) window.requestAnimationFrame(() => keepHeaderInView(header));
-  }
-
-  function groupProps(id: ControlGroupId) {
-    return { id, accordion, open: openGroup === id, value: groupValues[id], onToggle: toggleGroup };
+  /** Opens a step. From the buttons under a step the visitor is below the tabs: bring them back into view. */
+  function selectStep(index: number, focus = false, land = false) {
+    setStep(index);
+    window.requestAnimationFrame(() => {
+      const tabs = tabsRef.current;
+      if (!tabs) return;
+      if (focus || land) tabs.querySelector<HTMLButtonElement>(`#hc-step-${CONTROL_STEPS[index].id}-tab`)?.focus({ preventScroll: true });
+      if (land) landOnSteps(tabs);
+    });
   }
 
   // The sizes change only the sizes (04.10). The gates, the door and an edited ridge stay as the visitor chose them and are
@@ -452,11 +435,12 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
   const hasEnvelopeScope = wallsInScope || roofInScope;
   const { objectProfile } = state;
 
-  return (
-    <div className="hc-controls" ref={controlsRef} data-accordion={accordion ? '' : undefined}>
-      {/* «Об’єкт» first (owner, 03.10): what the hangar is for and where it stands come before its sizes. Every
-          question is optional and starts unanswered, so a visitor who skips it sends nothing from it. */}
-      <ControlGroup {...groupProps('object')}>
+  // The groups, each placed in its step below
+  const groups: Record<ControlGroupId, ReactNode> = {
+    // «Об’єкт» (owner, 03.10) now closes the walk, in «Обсяг і задача» (07.10): nothing on the drawing answers it, so it
+    // goes to the brief. Every question is optional and starts unanswered, so a visitor who skips it sends nothing from it.
+    object: (
+      <ControlGroup id="object">
         <p className="hc-field-note hc-object-note">Необов’язково — можна пропустити й уточнити під час розмови.</p>
         <div className="hc-field">
           <div className="hc-field-head">
@@ -547,13 +531,9 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
         </div>
         <ConfiguratorWhy topic="object" />
       </ControlGroup>
-
-      {/* "Обсяг заявки" is the master fact for everything below it. A cladding system, a colour
-          or an opening for a surface the customer is not asking for is not something they can
-          order, and offering it is how the summary ended up contradicting its own Обсяг line. The
-          controls are DISABLED, never cleared: dropping walls to look at the frame and putting
-          them back must not cost the visitor their gate choice. */}
-      <ControlGroup {...groupProps('dimensions')}>
+    ),
+    dimensions: (
+      <ControlGroup id="dimensions">
         {(['width', 'length', 'height'] as const).map((key) => (
           <NumericField
             key={key}
@@ -584,8 +564,9 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
           )}
         </NumericField>
       </ControlGroup>
-
-      <ControlGroup {...groupProps('envelope')}>
+    ),
+    envelope: (
+      <ControlGroup id="envelope">
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-envelope-heading">
           {(Object.keys(ENVELOPE_LABELS) as EnvelopeChoice[]).map((option) => (
             <label key={option} className="hc-option-card" aria-disabled={!hasEnvelopeScope}>
@@ -607,8 +588,9 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
         )}
         <ConfiguratorWhy topic="contour" />
       </ControlGroup>
-
-      <ControlGroup {...groupProps('cladding')}>
+    ),
+    cladding: (
+      <ControlGroup id="cladding">
         <div className="hc-field">
           <div className="hc-field-head">
             <span id="hc-wall-system-label">Стіни</span>
@@ -655,15 +637,10 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
         </div>
         <ConfiguratorWhy topic="cladding" />
       </ControlGroup>
-
-      {/* Phase 3F.1: the read-only "Попередня конструктивна схема" info block that used to live
-          here was removed — it duplicated the exact same fact already shown in the summary panel
-          ("Ваш об'єкт") one scroll away, and having it in two places read as noise rather than
-          information (live product review). The derived value itself (deriveStructuralVisualization)
-          is unchanged and still surfaces exactly once, in ConfiguratorSummary.tsx. */}
-
-      {foundationChoice && (
-      <ControlGroup {...groupProps('foundation')}>
+    ),
+    // The foundation type is offered on the research screen only (see Props.foundationChoice)
+    foundation: foundationChoice ? (
+      <ControlGroup id="foundation">
         <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-foundation-heading">
           {FOUNDATION_TYPE_ORDER.map((option) => (
             <label key={option} className="hc-option-card" aria-disabled={!foundationInScope}>
@@ -688,9 +665,13 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
         </p>
         <ConfiguratorWhy topic="foundation" />
       </ControlGroup>
-      )}
-
-      <ControlGroup {...groupProps('scope')}>
+    ) : null,
+    // "Обсяг заявки" is the master fact for everything else. A cladding system, a colour or an opening for a surface the
+    // customer is not asking for is not something they can order, and offering it is how the summary ended up
+    // contradicting its own Обсяг line. Those controls are DISABLED, never cleared: dropping walls to look at the frame
+    // and putting them back must not cost the visitor their gate choice.
+    scope: (
+      <ControlGroup id="scope">
         <div className="hc-option-list">
           {SCOPE_ORDER.map((item) => {
             const checked = hasScopeItem(state.scope, item);
@@ -704,8 +685,9 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
         </div>
         <p className="hc-field-note">Позначте, які роботи вас цікавлять. Їхній склад уточнимо після перегляду проєкту.</p>
       </ControlGroup>
-
-      <ControlGroup {...groupProps('openings')}>
+    ),
+    openings: (
+      <ControlGroup id="openings">
         {!wallsInScope && (
           <p className="hc-field-note hc-field-note-warning">
             Ворота й двері — це прорізи в стінах. Увімкніть «Стіни / огороджувальний контур» в
@@ -812,6 +794,53 @@ export function ConfiguratorControls({ state, onChange, foundationChoice = true 
         {heldNote && <p className="hc-field-note hc-field-note-warning">{heldNote}</p>}
         <ConfiguratorWhy topic="openings" />
       </ControlGroup>
+    ),
+  };
+
+  return (
+    <div className="hc-controls" data-steps="">
+      <div ref={tabsRef}>
+        <StepTabs step={step} values={stepValues} onSelect={selectStep} />
+      </div>
+      {CONTROL_STEPS.map((item, index) => {
+        const previous = CONTROL_STEPS[index - 1];
+        const next = CONTROL_STEPS[index + 1];
+        return (
+          <div
+            key={item.id}
+            className="hc-step-panel"
+            role="tabpanel"
+            id={`hc-step-${item.id}`}
+            aria-labelledby={`hc-step-${item.id}-tab`}
+            hidden={step !== index}
+          >
+            {item.groups.map((group) => <Fragment key={group}>{groups[group]}</Fragment>)}
+            <div className="hc-step-nav">
+              {previous && (
+                // the arrow alone, so the next step's button keeps the row beside it; named for what it opens
+                <button
+                  type="button"
+                  className="hc-step-back"
+                  aria-label={`Назад: ${previous.title}`}
+                  title={`Назад: ${previous.title}`}
+                  onClick={() => selectStep(index - 1, false, true)}
+                >
+                  <span aria-hidden="true">←</span>
+                </button>
+              )}
+              {next ? (
+                <button type="button" className="hc-step-next" onClick={() => selectStep(index + 1, false, true)}>
+                  Далі: {next.title} <span aria-hidden="true">→</span>
+                </button>
+              ) : (
+                <a className="hc-step-next" href="#hc-stamp">
+                  До зведення <span aria-hidden="true">↓</span>
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
