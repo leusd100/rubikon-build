@@ -1017,12 +1017,11 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .cost-list p { grid-column: 1 / -1; margin-top: 8px; }
   /* minmax(0, 1fr), not 1fr: a 1fr track can't shrink below the title's longest word, so at 360–375px
      «МЕТАЛОКОНСТРУКЦІЇ» (~246px) widened it and pushed the ↗ column past the card and the viewport. */
-  .route-service { grid-template-columns: 48px minmax(0, 1fr) 30px; min-height: 190px; gap: 12px; }
+  .route-service { grid-template-columns: 48px minmax(0, 1fr) 30px; min-height: 190px; gap: 12px; --route-bleed: 12px; }
   /* With the track capped, the global heading rule would break that word mid-letter («…КЦІ / Ї»).
      Keep it whole instead: it runs on into the empty top of the ↗ column, and the ↗ sits lower, centred in the card. */
   .route-service h3 { font-size: 25px; overflow-wrap: normal; }
   .route-service p { font-size: 15px; }
-  .route-service { --route-bleed: 12px; }
   .sticky-heading { position: static; }
   .faq-list h3 { font-size: 21px; }
   .footer-grid { min-height: 0; grid-template-columns: 1fr 1fr; gap: 0 28px; padding-block: 30px; }

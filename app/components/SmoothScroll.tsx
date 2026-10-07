@@ -131,17 +131,17 @@ export function SmoothScroll() {
     const release = () => {
       window.clearTimeout(timer);
       timer = 0;
-      if (root.hasAttribute('data-scroll-still')) root.removeAttribute('data-scroll-still');
+      if ('scrollStill' in root.dataset) delete root.dataset.scrollStill;
     };
     const onWheel = (event: WheelEvent) => {
       // (ctrl + wheel is a zoom, not a scroll)
       if (!event.ctrlKey) lastWheel = performance.now();
     };
     const onScroll = () => {
-      const up = root.hasAttribute('data-scroll-still');
+      const up = 'scrollStill' in root.dataset;
       const now = performance.now();
       if (!up && (pressed || !hoverQuery.matches || now - lastWheel > WHEEL_SCROLL_MS || now - lastMove < WHEEL_SCROLL_MS)) return;
-      if (!up) root.setAttribute('data-scroll-still', '');
+      if (!up) root.dataset.scrollStill = '';
       window.clearTimeout(timer);
       timer = window.setTimeout(release, SCROLL_REST_MS);
     };
