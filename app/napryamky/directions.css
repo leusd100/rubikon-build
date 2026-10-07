@@ -11,11 +11,33 @@
 .directions-page .directions-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
 .directions-page .directions-hero-actions { gap: 18px 36px; margin-top: var(--hero-gap-actions); }
 .directions-page .directions-hero-actions :is(.subhero-side-cta, .text-link, .hero-call) { margin: 0; }
+/* The clean photographs carry the visual detail; no blueprint grid or blur over their geometry. */
+.directions-page .directions-hero-sequence-image { filter: saturate(.72) contrast(1.03); }
+/* Keep the hangar apex below the fixed header, as on the individual direction pages. */
+.directions-page .directions-hero-sequence-image[src*="directions-sequence-angary-"] {
+  top: 101px;
+  height: calc(100% - 101px);
+}
+@media (max-width: 760px) {
+  .directions-page .directions-hero-sequence-image[src*="directions-sequence-angary-"] {
+    top: 77px;
+    height: calc(100% - 77px);
+  }
+}
 /* Dark under the words on the left, the slide open on the right, a little shade at the top for the slide caption */
 .directions-page .directions-subhero .subhero-overlay {
   background:
-    linear-gradient(90deg, rgba(10, 11, 12, .92) 0%, rgba(10, 11, 12, .8) 42%, rgba(10, 11, 12, .34) 100%),
-    linear-gradient(0deg, rgba(10, 11, 12, .82) 0%, transparent 50%, rgba(10, 11, 12, .5) 100%);
+    linear-gradient(90deg, rgba(10, 11, 12, .9) 0%, rgba(10, 11, 12, .76) 40%, rgba(10, 11, 12, .28) 72%, rgba(10, 11, 12, .14) 100%),
+    linear-gradient(0deg, rgba(10, 11, 12, .76) 0%, transparent 50%, rgba(10, 11, 12, .38) 100%);
+}
+/* Portrait art direction preserves the subject and enough pixels for a tall phone/tablet hero.
+   Text spans the frame on these screens, so it needs shade across the entire image. */
+@media (max-width: 1050px) and (orientation: portrait) {
+  .directions-page .directions-subhero .subhero-overlay {
+    background:
+      linear-gradient(90deg, rgba(10, 11, 12, .64), rgba(10, 11, 12, .5)),
+      linear-gradient(180deg, rgba(10, 11, 12, .15) 0%, rgba(10, 11, 12, .32) 36%, rgba(10, 11, 12, .82) 100%);
+  }
 }
 /* Clear of the window's edges at every height: the hero standard (globals.css --hero-*) sizes by the window's height */
 /* Which direction the slide shows, top right: five bars (the current one filling for the slide's 6 s) and its name */
