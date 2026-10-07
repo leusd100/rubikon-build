@@ -77,6 +77,10 @@ img { display: block; }
 }
 .skip-link { position: fixed; z-index: 1000; top: 12px; left: 12px; padding: 12px 16px; color: var(--color-text); background: var(--color-surface-elevated); border: 2px solid var(--color-accent); font-weight: 800; transform: translateY(-160%); transition: transform var(--duration-fast) ease; }
 .skip-link:focus { transform: translateY(0); }
+/* SmoothScroll's shield: over the page, under the header, while the page scrolls under a resting mouse — so what passes
+   under the pointer does not light up (07.10) */
+.scroll-shield { position: fixed; z-index: 45; inset: 0; display: none; }
+html[data-scroll-still] .scroll-shield { display: block; }
 .shell { width: min(var(--container-max), calc(100% - (var(--container-gutter) * 2))); margin-inline: auto; }
 .section { padding-block: var(--section-space); }
 section[id] { scroll-margin-top: 116px; }
