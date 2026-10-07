@@ -1,5 +1,5 @@
 /* The directions' small scheme sheets (CatalogDrawing.tsx): the /napryamky catalogue rows and HOME's «П’ять напрямів»
-   header. Imported by CatalogDrawing.tsx only. A line scheme over a one-line title block. Static — the server markup is the whole drawing. The scheme's body is drawn at half its reference size
+   header. Imported by CatalogDrawing.tsx only. A line scheme over a one-line title block. The server markup is the whole drawing (motion at the end). The scheme's body is drawn at half its reference size
    (<g transform="scale(.5)">), so the widths here are in reference units: 2.4 is about 1 px on a 164 px sheet. Every
    rule states its paint in full on purpose: after a client-side navigation from a direction page that page's global
    .dsd-* rules may still be loaded. Line types as on the site's other drawings: dash-dot = an axis; long dash and two
@@ -23,3 +23,47 @@
 .cdw-letter { fill: var(--color-text-muted); font: italic 500 11px var(--font-manrope), sans-serif; text-anchor: middle; }
 /* The one copper letter: a host that turns dark around the sheet resolves the paper's copper above it (--dcat-sheet-copper) */
 .cdw-letter-accent { fill: var(--dcat-sheet-copper, var(--color-accent-strong)); }
+
+/* ── Motion (owner 07.10: «трохи динаміки», not too much, not on every block) ─────────────────────────────────────────
+   1 · Plot-in, once: a sheet's host carries [data-motion] (the /napryamky row's .dcat-thumb, HOME's .dsh row) and the
+       page's ProcessMotion flips it on in view — the lines draw, the rest fades in, the copper detail comes last.
+   2 · Its job, once per pointing: pointing at (or tabbing to) the row on /napryamky, the sheet on HOME, or HOME's card
+       of the same direction makes the sheet's copper do what it stands for. No loops; nothing at rest moves.
+   Without JavaScript or with reduced motion: the sheets stand as drawn. */
+.cdw [pathLength="1"] { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.cdw .cdw-water { fill: none; stroke: var(--color-water); stroke-width: 5; stroke-linecap: round; stroke-dasharray: .1 14; opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  :where([data-motion-ready]) :is(.dcat-thumb, .dsh):not([data-motion-state="on"]) .cdw [pathLength="1"] { stroke-dashoffset: 1; }
+  :where([data-motion-ready]) :is(.dcat-thumb, .dsh):not([data-motion-state="on"]) .cdw :is(path, circle, text):not([pathLength="1"], .cdw-water) { opacity: 0; }
+  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw [pathLength="1"] { transition: stroke-dashoffset 1000ms cubic-bezier(.3, .7, .2, 1) calc(200ms + var(--i, 0) * 90ms); }
+  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw :is(path, circle, text):not([pathLength="1"], .cdw-water) { transition: opacity 500ms ease calc(150ms + var(--i, 0) * 90ms); }
+  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw .dsd-accent :is(path, circle) { transition-delay: calc(950ms + var(--i, 0) * 90ms); }
+  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw .cdw-letter { transition-delay: calc(1100ms + var(--i, 0) * 90ms); }
+
+  /* 01 · Ангари: the clear space is traced, the span and the height light up */
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) .dsh-sheet[href="/angary"]) .cdw[data-dir="angary"] .dsd-dashed { animation: cdw-trace 1300ms linear; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) .dsh-sheet[href="/angary"]) .cdw[data-dir="angary"] .dsd-dim { animation: cdw-copper 1300ms ease; }
+  /* 02 · Зерносховища: the silo comes down onto its base, the two meeting points click */
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) .dsh-sheet[href="/zernoskhovyshcha"]) .cdw[data-dir="zernoskhovyshcha"] .cdw-equip { animation: cdw-set 900ms cubic-bezier(.3, .7, .2, 1); }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) .dsh-sheet[href="/zernoskhovyshcha"]) .cdw[data-dir="zernoskhovyshcha"] .dsd-accent path { animation: cdw-click 520ms ease 760ms; }
+  /* 03 · Металоконструкції: the four bolts are tightened one by one */
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle { animation: cdw-bolt 460ms cubic-bezier(.3, 1.6, .5, 1) backwards; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(2) { animation-delay: 150ms; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(3) { animation-delay: 300ms; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(4) { animation-delay: 450ms; }
+  /* 04 · Бетонні роботи: the anchors are set into the pedestal, then the cover «a» under the bars lights */
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .dsd-accent path:nth-child(-n + 2) { animation: cdw-set 700ms cubic-bezier(.3, .7, .2, 1); }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .dsd-accent path:nth-child(3) { animation: cdw-click 520ms ease 650ms; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .cdw-letter-accent { animation: cdw-letter 520ms ease 650ms; }
+  /* 05 · Покрівельні роботи: the rain runs off the slope into the gutter and down the pipe; the gutter clicks */
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/pokrivelni-roboty"]) .cdw[data-dir="pokrivelni-roboty"] .cdw-water { animation: cdw-rain 1900ms linear; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/pokrivelni-roboty"]) .cdw[data-dir="pokrivelni-roboty"] .dsd-accent path:nth-child(2) { animation: cdw-click 520ms ease 1100ms; }
+}
+.cdw .dsd-accent circle, .cdw .cdw-letter-accent { transform-box: fill-box; transform-origin: center; }
+@keyframes cdw-trace { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -68; } }
+@keyframes cdw-copper { 25%, 70% { stroke: var(--color-accent); stroke-width: 2.6; } }
+@keyframes cdw-set { from { transform: translateY(-48px); opacity: .2; } }
+@keyframes cdw-click { 45% { stroke-width: 7.5; } }
+@keyframes cdw-bolt { from { transform: scale(1.9); stroke-width: 1.4; } }
+@keyframes cdw-letter { 45% { transform: scale(1.45); } }
+@keyframes cdw-rain { 0% { opacity: 0; stroke-dashoffset: 0; } 12%, 82% { opacity: 1; } 100% { opacity: 0; stroke-dashoffset: -98.7; } }
