@@ -187,6 +187,56 @@ test('on a phone the mini drawing reads its sizes in one readout, and nothing un
   await expect(readout).toBeHidden();
 });
 
+test('on a phone the page scrolls on without measuring the sheet: only holding and letting go do', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit mobile viewport runs once');
+  // 07.10: every scroll event read the sheet's box, and each read forced the page's style and layout, all down the page
+  await page.addInitScript(() => {
+    const read = Element.prototype.getBoundingClientRect;
+    const counter = window as unknown as { sheetReads: number };
+    counter.sheetReads = 0;
+    Element.prototype.getBoundingClientRect = function getBoundingClientRect(this: Element) {
+      if (this.matches('#configurator .hc-preview-surface')) counter.sheetReads += 1;
+      return read.call(this);
+    };
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const layout = page.locator('#configurator .hc-layout');
+  const reads = () => page.evaluate(() => (window as unknown as { sheetReads: number }).sheetReads);
+  /** Scroll steps a frame apart, each with its scroll event */
+  const scrollSteps = (steps: number, by: number) => page.evaluate(async ([count, offset]) => {
+    for (let step = 0; step < count; step += 1) {
+      window.scrollBy({ top: offset, behavior: 'instant' });
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    }
+  }, [steps, by] as const);
+
+  // Above the configurator, the sheet on its way up the screen
+  await bringSheetIntoView(page);
+  await page.evaluate(() => window.scrollBy({ top: -600, behavior: 'instant' }));
+  await expect(layout).not.toHaveAttribute('data-configuring', '');
+  const before = await reads();
+  await scrollSteps(12, 40);
+  await expect(layout).not.toHaveAttribute('data-configuring', '');
+  expect(await reads()).toBe(before);
+
+  // Held through the controls
+  await scrollSteps(4, 120);
+  await expect(layout).toHaveAttribute('data-configuring', '');
+  const held = await reads();
+  await scrollSteps(12, 40);
+  await expect(layout).toHaveAttribute('data-configuring', '');
+  expect(await reads()).toBe(held);
+
+  // A jump back up lets go, and the way down holds it again
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await expect(layout).not.toHaveAttribute('data-configuring', '');
+  await bringSheetIntoView(page);
+  await scrollSteps(4, 120);
+  await expect(layout).toHaveAttribute('data-configuring', '');
+});
+
 test.describe('the first view builds the drawing', () => {
   test('in build order, once, the first time the sheet comes into view', async ({ page }) => {
     await openHangarPage(page);
