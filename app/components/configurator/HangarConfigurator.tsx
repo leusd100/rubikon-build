@@ -25,6 +25,15 @@ const PHONE_HEADER_PX = 77;
  * the controls' observer it replaces counted the whole sheet in its margin, and the stage shrank in front of the eyes.)
  * Held, the layout also carries the mini drawing's height (`--hc-mini-h`), so a control that takes keyboard focus is
  * scrolled clear of it rather than under it (configurator-sheet.css; 03.10: Shift+Tab hid 7 of 13 stops behind it).
+ * Where the sheet is comes from two intersection observers, not from its box read on every scroll event: that read
+ * forced the page's style and layout on each one, all down the page (07.10: 351 of them in one phone fling run).
+ * Each observer's root starts at a line under the screen's top and runs far below the screen, so the sheet lies wholly
+ * in it exactly while its top is at or under that line, wherever the page is scrolled or jumps to: the header for the
+ * hold, half a pixel under it to let go — held, the sheet sticks at the header itself (Chrome rounds an observer's
+ * margin to whole pixels, so there it is one). The change waits for the next frame, where the scroll event made it:
+ * made straight from the observers' task, the hold's measuring layout (the sheet already mini, its height not yet
+ * given back) let scroll anchoring lift the page by that height mid-fling, and the sheet let go again at once (07.10:
+ * 12 of 30 fast flings).
  */
 function useMiniPreview(enabled: boolean) {
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -55,25 +64,42 @@ function useMiniPreview(enabled: boolean) {
       layout.style.setProperty('--hc-mini-h', `${mini}px`);
       miniHeight.observe(sheet);
     };
+    const held = () => 'configuring' in layout.dataset;
+    // Where the observers last saw the sheet's top: at or under the header line, and at or under the let-go line
+    let underHeader = true;
+    let underLetGo = true;
+    let frame = 0;
+    const settle = () => {
+      frame = 0;
+      if (!phone.matches) return;
+      if (!held() && !underHeader) hold();
+      else if (held() && underLetGo) release();
+    };
+    // Calls back with whether the sheet's top is at or under `line` px from the top of the screen, whenever that changes
+    const watchLine = (line: number, onChange: (under: boolean) => void) => new IntersectionObserver((entries) => {
+      onChange(entries.at(-1)!.intersectionRatio === 1);
+      frame ||= window.requestAnimationFrame(settle);
+    }, { rootMargin: `-${line}px 0px 100000px 0px`, threshold: 1 });
+    const reach = watchLine(PHONE_HEADER_PX, (under) => { underHeader = under; });
+    // Held, the sheet sticks at the header: its top under the header means its own place is in view again
+    const leave = watchLine(PHONE_HEADER_PX + 0.5, (under) => { underLetGo = under; });
     const update = () => {
-      const held = 'configuring' in layout.dataset;
-      if (!phone.matches) {
-        if (held) release();
+      if (phone.matches) {
+        reach.observe(sheet);
+        leave.observe(sheet);
         return;
       }
-      // Held, the sheet sticks at the header: its top below the header means its own place is in view again
-      const top = sheet.getBoundingClientRect().top;
-      if (!held && top <= PHONE_HEADER_PX) hold();
-      else if (held && top > PHONE_HEADER_PX + 0.5) release();
+      reach.disconnect();
+      leave.disconnect();
+      if (held()) release();
     };
     update();
     phone.addEventListener('change', update);
-    window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
     return () => {
       phone.removeEventListener('change', update);
-      window.removeEventListener('scroll', update);
-      window.removeEventListener('resize', update);
+      reach.disconnect();
+      leave.disconnect();
+      window.cancelAnimationFrame(frame);
       release();
     };
   }, [enabled]);
