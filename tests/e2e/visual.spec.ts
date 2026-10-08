@@ -53,14 +53,7 @@ async function preparePage(page: Page, path: string) {
 async function expectStableScreenshot(
   locator: Locator,
   name: string,
-  {
-    includeSiteChrome = false,
-    legacyPointer = false,
-  }: {
-    includeSiteChrome?: boolean;
-    /** Baseline recorded before the parking rule, with the pointer resting on a card; drop at its next visual freeze. */
-    legacyPointer?: boolean;
-  } = {},
+  { includeSiteChrome = false }: { includeSiteChrome?: boolean } = {},
 ) {
   if (!includeSiteChrome) {
     await locator.page().addStyleTag({
@@ -88,7 +81,7 @@ async function expectStableScreenshot(
 
   // A screenshot records the default state. preparePage's last click leaves the pointer mid-page, where cards and links
   // react to hover, so park it at the page's edge (outside every shell); a hover or focus shot requests that state itself.
-  if (!legacyPointer) await locator.page().mouse.move(0, 0);
+  await locator.page().mouse.move(0, 0);
   await expect(locator).toHaveScreenshot(name, {
     animations: 'disabled',
     caret: 'hide',
@@ -144,7 +137,6 @@ for (const viewport of viewports) {
       await expectStableScreenshot(
         page.locator('main > section.page-section > .shell').first(),
         `directions-hub-${viewport.name}.png`,
-        { legacyPointer: true },
       );
     });
 
