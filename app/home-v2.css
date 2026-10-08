@@ -1276,3 +1276,126 @@ main[data-home="v2"] .hv2-detail-backdrop { position: fixed; z-index: 59; inset:
   main[data-home="v2"] .hv2-detail-note { font-size: 11px; }
   main[data-home="v2"] .hv2-proof-detail-pin { left: var(--px); top: var(--py); width: 20px; height: 20px; margin: -10px 0 0 -10px; font-size: 11px; }
 }
+
+/* ── Концепти (ТЕСТ, 08.10, аудит блоку) ───────────────────────────────────────────────────────────────────────────
+   ?concept=shov | zavisa | brief | razom (ProofContour marks .hv2-signature). Without the parameter none of this applies.
+   shov   «Один прийом — шов»: one line, three words, «Детальніше», a quiet scene, a taller phone frame
+   zavisa «Завіса → Шов → Імена»: the arrival in beats — the photo, the seam to 38 %, the names one by one, the rest after
+   brief  «Фото → Схема → Бриф»: one line, one filled button, a quiet way out to the conversation, the nodes after it
+   razom  shov + the seam and the names of zavisa + the way on of brief */
+.hv2-concept-switch {
+  position: fixed; z-index: 2000; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: nowrap; align-items: center; gap: 3px;
+  max-width: calc(100vw - 24px); padding: 6px; color: #f5f2eb; background: rgba(15, 17, 16, .95); border: 1px solid #f0b48a; box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+  font: 600 12px/1 var(--font-manrope), system-ui, sans-serif;
+}
+.hv2-concept-switch small { padding: 0 4px; color: #f0b48a; font: 700 10.5px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.hv2-concept-switch a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 8px; color: #f5f2eb; text-decoration: none; border: 1px solid rgba(245, 242, 235, .25); }
+.hv2-concept-switch a[aria-current] { color: #171918; background: #f0b48a; border-color: #f0b48a; }
+.hv2-concept-switch a:focus-visible { outline: 2px solid #f0b48a; outline-offset: 2px; }
+
+/* the line that says what this is (shov, razom, brief) */
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour .sheet-stamp > .sheet-cell:first-child,
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour .sheet-cell-note > small,
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour-right > small { display: none; }
+main[data-home="v2"] .hv2-concept-line { display: block; color: var(--hv2-text); font: 400 19px/1.35 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.005em; }
+main[data-home="v2"] .hv2-signature[data-brief-first]:not([data-compact]) .hv2-concept-line { font: 500 16px/1.45 var(--font-manrope), sans-serif; }
+main[data-home="v2"] .hv2-concept-line [data-narrow] { display: none; }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-concept-line { font-size: 16px; }
+  main[data-home="v2"] .hv2-concept-line [data-wide] { display: none; }
+  main[data-home="v2"] .hv2-concept-line [data-narrow] { display: inline; }
+}
+/* one filled button on the sheet — the brief: the layers are words, the active one underlined; the tour a quiet action */
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour-layers { gap: 16px; border: 0; }
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour-layers button { padding: 0 2px; border: 0; background: none; }
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour-layers button[aria-pressed="true"] { color: var(--hv2-copper-text); background: none; box-shadow: inset 0 -2px 0 var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour-controls .hv2-contour-tour-btn { color: var(--hv2-text); background: none; border-color: transparent; }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour-layers { display: flex; width: 100%; }
+  main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-contour-layers button { flex: 1; min-height: 44px; }
+}
+/* under the sheet: a caption, not a box; «Про команду» is in the menu; the second sheet goes (owner's question 1) */
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-proof-facts { margin-top: 8px; padding: 22px 0 0; background: none; border: 0; }
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-people-link { display: none; }
+main[data-home="v2"] .hv2-signature:is([data-compact], [data-brief-first]) .hv2-cards.hv2-sheet { display: none; }
+main[data-home="v2"] .hv2-signature[data-concept] #real-object { scroll-margin-top: 116px; }
+
+/* «Детальніше» (shov, razom): the legend, the photo/scheme buttons, the nodes named, a phone's key — one press away */
+main[data-home="v2"] .hv2-concept-more {
+  align-self: start; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; color: var(--hv2-text-2); background: none; border: 0; cursor: pointer;
+  font: 600 12.5px/1 var(--font-manrope), sans-serif;
+}
+main[data-home="v2"] .hv2-concept-more i { font-style: normal; transition: transform 200ms ease; }
+main[data-home="v2"] .hv2-concept-more[aria-expanded="true"] i { transform: rotate(180deg); }
+main[data-home="v2"] .hv2-concept-more:hover { color: var(--hv2-text); }
+main[data-home="v2"] .hv2-concept-more:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+@media (pointer: coarse) { main[data-home="v2"] .hv2-concept-more { min-height: 44px; } }
+main[data-home="v2"] .hv2-signature[data-compact]:not([data-more]) :is(.hv2-contour-legend, .hv2-contour-more, .hv2-contour-sides, .hv2-contour-facts, .hv2-proof-keypins) { display: none; }
+main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-nodes[data-place="stage"] { display: none; }
+main[data-home="v2"] .hv2-signature[data-compact][data-more] .hv2-contour-more { display: flex; }
+main[data-home="v2"] .hv2-signature[data-compact][data-more] .hv2-contour-nodes[data-place="block"] { display: inline-flex; flex-wrap: wrap; }
+main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-nodes[data-place="block"] button { width: auto; min-width: 28px; padding: 0 10px 0 8px; gap: 6px; border-radius: 999px; }
+main[data-home="v2"] .hv2-concept-word { font: 600 12px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+/* a quiet scene at rest: the seam, two names, faint rings; the rest under the cursor (a touch screen shows it all) */
+main[data-home="v2"] .hv2-signature[data-compact] .hv2-proof-detail-rings circle { stroke-opacity: .4; transition: stroke-opacity 300ms ease; }
+main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stage:is(:hover, :focus-within, [data-touring], [data-nodes-hint]) .hv2-proof-detail-rings circle { stroke-opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-detail-pin:not([aria-expanded="true"]),
+  main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-labels > :not([data-tag="truss"], [data-tag="column"]),
+  main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-tag-leaders > :not([data-tag="truss"], [data-tag="column"]) { opacity: 0 !important; }
+  main[data-home="v2"] .hv2-signature[data-compact] :is(.hv2-proof-detail-pin, .hv2-proof-labels > *, .hv2-proof-tag-leaders > *) { transition: opacity 280ms ease; }
+}
+/* the stamp at the scheme's foot, clear of the header */
+main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stamp { top: auto; bottom: 10px; }
+/* a phone: the frame's full height (rows 0–788 of the photo: the gable whole, +22 %), not the band cut to 92–738 */
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour .sheet-image { aspect-ratio: 1536 / 961; }
+  main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour .hv2-contour-canvas { top: 0; }
+}
+
+/* «Фото → Схема → Бриф» on its own: the legend and the figures go; the nodes are one row, after the brief; photo/scheme
+   only on a phone */
+main[data-home="v2"] .hv2-signature[data-concept="brief"] :is(.hv2-contour-legend, .hv2-contour-facts, .hv2-proof-keypins) { display: none; }
+/* a laptop keeps the letters' bar on the picture (a row under the brief made the title block tall and the picture short);
+   on a phone the row comes after the brief: the layers' cell opens up so the row can take its place in the title block */
+@media (min-width: 761px) { main[data-home="v2"] .hv2-signature[data-concept="brief"] .hv2-contour-sides { display: none; } }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-signature[data-concept="brief"] .hv2-contour .sheet-stamp { flex-direction: column; flex-wrap: nowrap; }
+  main[data-home="v2"] .hv2-signature[data-concept="brief"] :is(.hv2-contour-right, .hv2-contour-right > b) { display: contents; }
+  main[data-home="v2"] .hv2-signature[data-concept="brief"] .hv2-contour-layers { order: 1; padding: 4px 14px; border-top: 1px solid var(--sheet-ink); }
+  main[data-home="v2"] .hv2-signature[data-concept="brief"] .sheet-action { order: 2; }
+  main[data-home="v2"] .hv2-signature[data-concept="brief"] .hv2-contour-more { order: 3; margin: 0; padding: 10px 14px 14px; border-top: 1px solid var(--sheet-ink); }
+  main[data-home="v2"] .hv2-signature[data-concept="brief"] .hv2-contour-sides button { min-height: 40px; border-color: transparent; }
+}
+/* a quiet way out for another task (brief, razom) */
+main[data-home="v2"] .hv2-concept-exit {
+  align-self: center; display: inline-flex; align-items: center; gap: 6px; min-height: 22px; color: var(--hv2-text-2); text-decoration: underline;
+  text-underline-offset: 3px; font: 500 12.5px/1.2 var(--font-manrope), sans-serif;
+}
+main[data-home="v2"] .hv2-concept-exit:hover { color: var(--hv2-text); }
+@media (pointer: coarse) { main[data-home="v2"] .hv2-concept-exit { min-height: 44px; } }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-contour-brief[data-ring] { animation: hv2-brief-ring 1100ms ease-out 1; }
+}
+
+/* «Завіса → Шов → Імена» (zavisa: all beats; razom: the seam and the names): one ring from the handle, no ringing letters,
+   the names in the order the frame is built */
+main[data-home="v2"] .hv2-signature[data-choreo] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation-iteration-count: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-signature[data-choreo] .hv2-contour-stage[data-names-in] :is(.hv2-proof-labels > *, .hv2-proof-tag-leaders > *) {
+    animation: hv2-concept-name 320ms ease both; animation-delay: var(--name-d, 1000ms);
+  }
+}
+main[data-home="v2"] .hv2-signature[data-choreo] [data-tag="footing"] { --name-d: 0ms; }
+main[data-home="v2"] .hv2-signature[data-choreo] [data-tag="wall"] { --name-d: 200ms; }
+main[data-home="v2"] .hv2-signature[data-choreo] [data-tag="column"] { --name-d: 400ms; }
+main[data-home="v2"] .hv2-signature[data-choreo] [data-tag="truss"] { --name-d: 600ms; }
+main[data-home="v2"] .hv2-signature[data-choreo] [data-tag="bracing"] { --name-d: 800ms; }
+@keyframes hv2-concept-name { from { opacity: 0; transform: translateY(4px); } }
+/* zavisa only: the title block, the nodes, the stamp and the letters' bar wait their beat (ProofContour's ARRIVAL) */
+main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour :is(.sheet-cell, .sheet-action) { transition-delay: calc(var(--sheet-i, 0) * 80ms) !important; }
+main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour[data-hold-title] :is(.sheet-cell, .sheet-action) { opacity: 0 !important; }
+main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour[data-hold-pins] :is(.hv2-proof-detail-pins, .hv2-proof-detail-rings) { opacity: 0 !important; visibility: hidden !important; }
+main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour-stamp { transition: opacity 360ms ease; }
+main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour[data-hold-stamp] .hv2-contour-stamp { opacity: 0; }
+main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour[data-hold-bar] .hv2-contour-nodes[data-place="stage"] { opacity: 0; visibility: hidden; }

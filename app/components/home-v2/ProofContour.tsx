@@ -228,6 +228,20 @@ const clamp = (value: number) => Math.min(100, Math.max(0, value));
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
 const sketchRequested = () => new URLSearchParams(window.location.search).get('xray') === 'sketch';
+/** TEST ONLY (08.10, the block's audit): ?concept=… puts the block in one of the three concepts proposed for its next
+ *  version, or in their union, so the owner can try them side by side. Without the parameter nothing changes */
+const CONCEPTS = { shov: 'Шов', zavisa: 'Завіса', brief: 'Бриф', razom: 'Разом' } as const;
+type Concept = keyof typeof CONCEPTS;
+const conceptRequested = (): Concept | null => {
+  const value = new URLSearchParams(window.location.search).get('concept');
+  return value && value in CONCEPTS ? (value as Concept) : null;
+};
+const conceptAsked = () => new URLSearchParams(window.location.search).has('concept');
+/** «Детальніше»: the nodes named by a word beside their letter (the audit: bare letters are chosen blind) */
+const NODE_WORDS: Record<string, string> = { bearing: 'Опора ферми', purlin: 'Прогін', base: 'База колони', ridge: 'Гребінь', chord: 'Нижній пояс' };
+/** «Завіса → Шов → Імена»: after the seam, the drawing's names come one by one in the order it is built */
+const NAMES_IN_MS = 1400;
+const ARRIVAL: readonly (readonly [string, number])[] = [['holdTitle', 1200], ['holdPins', 2000], ['holdStamp', 2600], ['holdBar', 3400]];
 
 // See STAMP_OFFSET: whether the stamp keeps its full words, and which seam name gives way
 /** The whole frame in view, or near enough (a part lit may be its roof, at the top): a press below it — a scope's cell, «Як
@@ -320,6 +334,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const snapLabelRef = useRef<HTMLSpanElement>(null);
   const ready = useSyncExternalStore(subscribeToNothing, () => true, () => false);
   const sketchMode = useSyncExternalStore(subscribeToNothing, sketchRequested, () => false);
+  const concept = useSyncExternalStore(subscribeToNothing, conceptRequested, () => null);
+  const conceptSwitcher = useSyncExternalStore(subscribeToNothing, conceptAsked, () => false);
+  const compact = concept === 'shov' || concept === 'razom';
+  const briefFirst = concept === 'brief' || concept === 'razom';
+  const [more, setMore] = useState(false);
   // Focus the pointer put on the range: the keyboard's ring stays off until a key is pressed
   const [pointerFocus, setPointerFocus] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -357,6 +376,23 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [building, setBuilding] = useState(false);
   const buildTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(buildTimer.current), []);
+
+  // The concept on test marks the whole section (home-v2.css, «Концепти»): the facts and the second sheet under it change too
+  useEffect(() => {
+    const section = stageRef.current?.closest<HTMLElement>('.hv2-signature');
+    if (!section) return;
+    const flags: Record<string, string | undefined> = {
+      concept: concept ?? undefined,
+      compact: compact ? '' : undefined,
+      briefFirst: briefFirst ? '' : undefined,
+      choreo: concept === 'zavisa' ? 'full' : concept === 'razom' ? 'lite' : undefined,
+      more: more ? '' : undefined,
+    };
+    for (const [key, value] of Object.entries(flags)) {
+      if (value === undefined) delete section.dataset[key];
+      else section.dataset[key] = value;
+    }
+  }, [concept, compact, briefFirst, more]);
 
   const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['frame', 'load', 'wind'];
   const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[0];
@@ -414,9 +450,20 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     let visible = false;
     let scrolled = 0;
     let live = true;
+    const concept = conceptRequested();
+    const choreo = concept === 'zavisa' ? 'full' : concept === 'razom' ? 'lite' : null;
+    const after: number[] = [];
+    const holds = choreo === 'full' ? ARRIVAL.map(([hold]) => hold) : [];
+    for (const hold of holds) sheet.dataset[hold] = '';
+    const release = () => {
+      for (const hold of holds) delete sheet.dataset[hold];
+      delete stage.dataset.namesIn;
+      for (const id of after) window.clearTimeout(id);
+    };
     stage.dataset.sweep = 'wait';
     const stop = () => {
       touched.current = true;
+      release();
       window.clearTimeout(timer);
       for (const animation of sweep) animation.cancel();
       delete stage.dataset.gliding;
@@ -434,19 +481,36 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       stage.dataset.gliding = '';
       stage.dataset.sweep = 'run';
       const phone = phoneNow();
+      // the concepts on test: «Завіса» and «Разом» turn where the photo never goes (38 %), «Шов» on a phone too
+      const turn = choreo || (concept === 'shov' && phone) ? 38 : phone ? SWEEP_TURN_PHONE : SWEEP_TURN;
       const keyframes = [
         { '--split': '100%', easing: 'cubic-bezier(.35, 0, .3, 1)' },
-        { '--split': `${phone ? SWEEP_TURN_PHONE : SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
+        { '--split': `${turn}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
         { '--split': `${DEFAULT_SPLIT}%` },
       ];
       const carriers = [paneRef.current, innerRef.current, railRef.current, handleRef.current].filter((element) => element !== null);
-      sweep = carriers.map((element) => element.animate(keyframes, { duration: phone ? SWEEP_MS_PHONE : SWEEP_MS }));
+      sweep = carriers.map((element) => element.animate(keyframes, { duration: choreo ? 1800 : phone ? SWEEP_MS_PHONE : SWEEP_MS }));
       sweep[0].onfinish = () => {
         delete stage.dataset.gliding;
         delete stage.dataset.sweep;
-        // Two rings from the handle, once: this is the thing to drag
+        // Two rings from the handle, once: this is the thing to drag (a concept: one)
         stage.dataset.pulse = '';
         timer = window.setTimeout(() => delete stage.dataset.pulse, 1700);
+        if (concept === 'brief' || concept === 'razom') {
+          // the way on rings once as soon as the seam rests, not only after the tour
+          const brief = sheet.querySelector<HTMLElement>('.hv2-contour-brief');
+          if (brief) {
+            brief.dataset.ring = '';
+            after.push(window.setTimeout(() => delete brief.dataset.ring, 1200));
+          }
+        }
+        if (choreo) {
+          // the names one by one, then (in full) the title block, the nodes, the stamp, the letters' bar — no rings
+          stage.dataset.namesIn = '';
+          after.push(window.setTimeout(() => delete stage.dataset.namesIn, NAMES_IN_MS));
+          for (const [hold, at] of ARRIVAL) after.push(window.setTimeout(() => delete sheet.dataset[hold], at));
+          return;
+        }
         // …then the nodes' letters
         hintNodes(stage, 1300);
       };
@@ -454,7 +518,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const seen = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
       run();
-    }, { threshold: 0.35 });
+    }, { threshold: choreo ? 0.6 : 0.35 });
     seen.observe(stage);
     const arrived = new MutationObserver(() => {
       if (sheet.getAttribute('data-sheet-state') !== 'on') return;
@@ -482,6 +546,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     sheet.addEventListener('keydown', stop);
     return () => {
       live = false;
+      release();
       seen.disconnect();
       arrived.disconnect();
       window.clearTimeout(timer);
@@ -1188,6 +1253,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           onClick={() => openNode(item.id)}
         >
           {item.letter}
+          {compact && place !== 'stage' && <span className="hv2-concept-word" aria-hidden="true">{NODE_WORDS[item.id]}</span>}
         </button>
       ))}
     </fieldset>
@@ -1200,6 +1266,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const sliderLabel = `Порівняти фото й ${{ frame: 'схему', load: 'схему', wind: 'схему', sketch: 'ескіз' }[layer]}`;
 
   return (
+    <>
     <DrawingSheet
       className="hv2-contour"
       imageClassName="hv2-contour-media"
@@ -1214,6 +1281,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               <b>Тестовий режим для порівняння.</b> Праворуч — згенероване зображення, не фото й не креслення; його
               композиція не збігається з фото.
             </>
+          ) : compact ? (
+            <span className="hv2-concept-line">
+              <span data-wide="">Реальний ангар, який Сергій Іванович вів до RUBIKON BUILD, — і схема каркаса такого типу, без розмірів.</span>
+              <span data-narrow="">Реальний ангар і схема каркаса такого типу, без розмірів.</span>
+            </span>
+          ) : briefFirst ? (
+            <span className="hv2-concept-line">
+              Реальний ангар — досвід Сергія Івановича до RUBIKON BUILD. Праворуч — схема каркаса такого типу, без розмірів.
+            </span>
           ) : (
             <>
               {/* owner, 05.10: shorter — the stamp says «Схема · без розмірів» on the drawing itself */}
@@ -1252,6 +1328,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   </button>
                 ))}
               </span>
+              {compact && (
+                <button type="button" className="hv2-concept-more" aria-expanded={more} onClick={() => setMore((open) => !open)}>
+                  {more ? 'Згорнути' : 'Детальніше'} <i aria-hidden="true">▾</i>
+                </button>
+              )}
               <span className="hv2-contour-legend">
                 {layers.map((name) => (
                   <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={name === layer ? '' : undefined}>
@@ -1319,6 +1400,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             <small>Такий ангар, але ваш</small>
             <span>Сформувати бриф <i aria-hidden="true">→</i></span>
           </a>
+          {briefFirst && <a className="hv2-concept-exit" href="#inquiry">Інша задача? Розкажіть коротко <span aria-hidden="true">↓</span></a>}
         </span>
       }
     >
@@ -1626,5 +1708,20 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         </span>
       </div>
     </DrawingSheet>
+    {conceptSwitcher && ready && createPortal(<ConceptSwitch current={concept} />, document.body)}
+    </>
+  );
+}
+
+/** TEST ONLY: the concepts side by side — each link reloads the page at the section, so the block arrives again */
+function ConceptSwitch({ current }: Readonly<{ current: Concept | null }>) {
+  const options: readonly (readonly [string, string])[] = [['0', 'Зараз'], ...Object.entries(CONCEPTS)];
+  return (
+    <nav className="hv2-concept-switch" aria-label="Тест концептів блоку">
+      <small aria-hidden="true">Тест</small>
+      {options.map(([key, name]) => (
+        <a key={key} href={`?concept=${key}#engineering`} aria-current={(current ?? '0') === key ? 'true' : undefined}>{name}</a>
+      ))}
+    </nav>
   );
 }
