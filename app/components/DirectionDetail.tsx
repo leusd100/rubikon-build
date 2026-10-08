@@ -199,7 +199,7 @@ export function DirectionProcess({
           </ol>
         )}
         {link && (
-          <a className="section-link" href={link.href}>
+          <a className="section-link direction-process-link" href={link.href}>
             {link.label} <span aria-hidden="true">↗</span>
           </a>
         )}

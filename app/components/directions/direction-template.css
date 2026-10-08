@@ -124,4 +124,7 @@
   .cost-glyph { width: 36px; height: 36px; }
 }
 
+/* Whole-pixel line boxes keep the following cost section on its existing pixel grid. */
+.direction-process-link { line-height: 20px; }
+
 /* «Ви · Ми» (.process-split) lives in process-split.css — shared with /yak-pratsyuiemo and /angary. */
