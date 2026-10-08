@@ -187,14 +187,17 @@ test('without motion the wind step stands complete: the leaning bay and its note
 test('«Пауза» stops all the frame tour\'s motion, and nothing loops out of view or on a chosen step', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
+  // the page's timers on a clock the test can run ahead: time flows as usual until it does
+  await page.clock.install();
   await openHangarPage(page);
   const { frame, items } = await openFrame(page);
   const control = page.locator('#hc-step-frame .dn-control');
   const looping = () => page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === 'running'
     && animation.effect?.getTiming().iterations === Infinity
     && (animation.effect as KeyframeEffect).target?.closest('#configurator .hc-frame')).length);
-  // the visitor came to set up a hangar, not to watch: the frame waits (useDrawingTour's first beat is 1.2 s)
-  await page.waitForTimeout(2000);
+  // the visitor came to set up a hangar, not to watch: past the moment a tour would start (useDrawingTour's first beat
+  // is 1.2 s) — every timer due in 2 s fired — the frame still waits
+  await page.clock.runFor(2000);
   await expect(frame).not.toHaveAttribute('data-touring', /.*/);
   await expect(frame).not.toHaveAttribute('data-step', /.*/);
   await expect(page.locator('#hc-step-frame .hc-frame-play')).toContainText('Показати по черзі');

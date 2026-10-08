@@ -1,10 +1,9 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { Fragment, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import {
   CONTROL_GROUP_TITLES,
   CONTROL_STEPS,
-  stepOfGroup,
   type ControlGroupId,
 } from '../../lib/configurator/controlGroups';
 import { NBSP, formatRoofSlope, formatSize } from '../../lib/configurator/deriveSummary';
@@ -377,25 +376,6 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     else ridgeHint = `${ridgeNow} — найвищий для цієї ширини й висоти стін. ${typed}`;
   }
 
-  // A link elsewhere on the page that names a group (the frame drawing's «Змінити габарити ↑», data-open-group) opens its
-  // step and lands on the group's heading: with the steps, «Розміри» may be behind another tab.
-  useEffect(() => {
-    const openFromLink = (event: MouseEvent) => {
-      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[data-open-group]');
-      const id = link?.dataset.openGroup as ControlGroupId | undefined;
-      if (!id || !(id in GROUP_HEADING_IDS)) return;
-      const tabs = tabsRef.current;
-      if (!tabs) return;
-      event.preventDefault();
-      // the address follows the visitor back up: it kept «#inquiry» from an earlier reveal (04.10)
-      if (link?.hash) window.history.replaceState(null, '', link.hash);
-      setStep(stepOfGroup(id));
-      window.requestAnimationFrame(() => landOnSteps(tabs));
-    };
-    document.addEventListener('click', openFromLink);
-    return () => document.removeEventListener('click', openFromLink);
-  }, [setStep]);
-
   /** Opens a step. From the buttons under a step the visitor is below the tabs: bring them back into view. */
   function selectStep(index: number, focus = false, land = false) {
     setStep(index);
@@ -433,9 +413,9 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     // the brief's own wording for that specific option.
     // «Ще не знаю» brings the example's materials back unless the visitor chose materials themselves (07.10, audit:
     // after «Утеплений» the sandwich panels stayed and the legend said «з утеплювачем» beside «Уточнимо»)
-    const preset = envelope === 'undecided'
-      ? (state.confirmed.includes('cladding') ? null : { wallSystem: DEFAULT_CONFIGURATOR_STATE.wallSystem, roofSystem: DEFAULT_CONFIGURATOR_STATE.roofSystem })
-      : ENVELOPE_MATERIAL_PRESET[envelope];
+    let preset: { wallSystem: CladdingSystem; roofSystem: CladdingSystem } | null = null;
+    if (envelope !== 'undecided') preset = ENVELOPE_MATERIAL_PRESET[envelope];
+    else if (!state.confirmed.includes('cladding')) preset = { wallSystem: DEFAULT_CONFIGURATOR_STATE.wallSystem, roofSystem: DEFAULT_CONFIGURATOR_STATE.roofSystem };
     // the materials the preset sets are a starting point, not the visitor's answer about them
     onChange(withConfirmed({
       ...state,

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
 
 // Visual regression for the 3D mode. Deliberately a SMALL set (Phase 3A brief §15): WebGL
 // snapshots are the most expensive kind to maintain, so this covers the states whose geometry or
@@ -109,12 +110,10 @@ test.describe('configurator 3D visual states', () => {
 
   test('2 — frame only, desktop (the readability case)', async ({ page }) => {
     await openConfigurator(page);
-    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
-    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
-    // text match on that one label now resolves to two elements.
-    const scopeGroup = page.getByLabel('Обсяг заявки');
+    // the works leave the request from «Окремі роботи», where each has its own box (07.10)
+    await chooseSeparateWorks(page);
     for (const label of ['Фундамент', 'Стіни / огороджувальний контур', 'Покрівля']) {
-      await scopeGroup.getByText(label, { exact: true }).click();
+      await page.locator('.hc-scope-list .hc-checkbox-row').filter({ hasText: label }).click();
     }
     await enterThreeMode(page);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-3d-frame-only.png', SCREENSHOT_OPTIONS);
@@ -122,6 +121,7 @@ test.describe('configurator 3D visual states', () => {
 
   test('3 — changed dimensions (wide and short)', async ({ page }) => {
     await openConfigurator(page);
+    await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-width').fill('48');
     await page.locator('#hc-dimension-length').fill('30');
     await page.locator('#hc-dimension-height').fill('6');

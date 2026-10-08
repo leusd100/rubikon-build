@@ -73,7 +73,7 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
         <>
           {/* after the step's own questions: how the frame works, shown on the drawing — for whoever wants it */}
           <h3 className="hc-frame-heading">Як працює ваш каркас</h3>
-          <div className="hc-frame-list" role="group" aria-label="Що показати">
+          <fieldset className="hc-frame-list" aria-label="Що показати">
             {steps.map((item, index) => (
               <button
                 key={item.title}
@@ -85,10 +85,10 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
                 {item.title}
               </button>
             ))}
-          </div>
+          </fieldset>
           <p className="hc-frame-text" aria-live="polite"><span key={text}>{text}</span></p>
           {step === 2 && (
-            <div className="hc-frame-nodes" role="group" aria-label="Вузли ферми">
+            <fieldset className="hc-frame-nodes" aria-label="Вузли ферми">
               {nodes.map((item, index) => (
                 <button
                   key={item.id}
@@ -101,7 +101,7 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
                   {item.title}
                 </button>
               ))}
-            </div>
+            </fieldset>
           )}
           {motion && (
             <div className="hc-frame-play">

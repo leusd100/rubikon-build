@@ -153,10 +153,10 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
 
       {/* A draft read back from this browser says so, with the way back to the example (07.10) */}
       {embedded && sharedInquiry?.restored && (
-        <p className="hc-draft-note" role="status">
+        <output className="hc-draft-note">
           Відновлено вашу конфігурацію.{' '}
           <button type="button" className="hc-draft-reset" onClick={sharedInquiry.startOver}>Почати заново</button>
-        </p>
+        </output>
       )}
       <div className="hc-layout" ref={layoutRef}>
         <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} step={step} onStep={setStep} foundationChoice={!embedded} />

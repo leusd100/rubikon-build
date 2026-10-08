@@ -35,6 +35,7 @@
    name, and on a second line what is set in it. The open step is the paper-coloured cell; a passed step keeps its
    number in copper. */
 .hc-steps {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border-bottom: 1px solid var(--color-border);
@@ -56,7 +57,6 @@
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-premium), color var(--duration-fast) var(--ease-premium);
 }
-.hc-step-tab + .hc-step-tab { border-left: 1px solid var(--color-border); }
 /* the open step's edge: a copper rule along the bottom, over the row's own */
 .hc-step-tab::after {
   position: absolute;
@@ -68,21 +68,8 @@
   transform-origin: left;
   transition: transform var(--duration-medium) var(--ease-premium);
 }
-.hc-step-tab[aria-selected='true'] { background: var(--color-surface-elevated); color: var(--color-text); }
 .hc-step-tab[aria-selected='true']::after { transform: none; }
-.hc-step-tab:hover:not([aria-selected='true']) { color: var(--color-text); background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 .hc-step-tab:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
-.hc-step-number {
-  display: inline-grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid currentColor;
-  font: 700 12px/1 var(--font-condensed), sans-serif;
-}
-.hc-step-tab[aria-selected='true'] .hc-step-number { border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
-.hc-step-tab[data-done] .hc-step-number { border-color: var(--color-accent); color: var(--color-accent-strong); }
-.hc-step-title { font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; overflow-wrap: normal; }
 .hc-step-value {
   max-width: 100%;
   overflow: hidden;
@@ -112,9 +99,9 @@
   border-radius: 0;
   background: transparent;
   color: var(--color-text);
-  font: 700 13px/1 var(--font-condensed), sans-serif;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font: 700 15px/1 var(--font-manrope), sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
   text-decoration: none;
   cursor: pointer;
 }
@@ -143,10 +130,6 @@
   .hc-step-value { font-size: 12px; }
   .hc-step-nav { padding: 16px 20px 20px; }
 }
-
-/* «Чому це важливо»: its sign is drawn in configurator.css; four summaries were each named «Чому це важливо +» (04.10) */
-.hc-controls .hc-why summary::after { content: '+' / ''; }
-.hc-controls .hc-why[open] summary::after { content: '\2212' / ''; }
 
 /* «Двері»: chips at their own width, as tall as the gate tiles above and at least as wide */
 .hc-door-options .hc-option-card { min-width: 68px; }
@@ -183,6 +166,8 @@
 .hc-frame-panel { padding: 22px 22px 8px; }
 .hc-frame-panel:empty { display: none; }
 .hc-frame-list { display: grid; gap: 6px; }
+/* both lists are fieldsets (their buttons are one choice's group): a fieldset is as wide as its content at least */
+.hc-frame-list, .hc-frame-nodes { min-inline-size: 0; }
 .hc-frame-item {
   display: flex; align-items: center; min-height: 46px; padding: 0 16px; border: 1px solid var(--color-border-control); border-radius: 0;
   background: var(--color-bg); color: var(--color-text); font: 600 15px/1.2 var(--font-manrope), sans-serif; text-align: left; cursor: pointer;
@@ -209,11 +194,8 @@
 /* ── Quiet type (07.10) ───────────────────────────────────────────────────────────────────────────────────────────────
    Capitals stay in the drawing's title block, where a drawing has them; in the controls the words are set as words —
    25 to 29 capitalised labels spoke at once. A step with one group needs no heading of its own: the tab names it. */
-.hc-step-title { font: 700 14px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 .hc-control-group h3 { font: 700 15px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 .hc-step-panel > .hc-control-group:only-of-type > h3 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.hc-step-back, .hc-step-next { font: 700 15px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
-.hc-step-back { font-size: 18px; }
 @media (max-width: 760px) {
   .hc-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .hc-step-title { font-size: 12.5px; }
@@ -233,9 +215,10 @@
 .hc-summary-dimensions-status { margin: 4px 0 0; }
 .hc-summary-dimensions-status .hc-fact-status { margin-left: 0; }
 
-/* The draft read back (07.10): one quiet line over the configurator, with the way back to the example */
+/* The draft read back (07.10): one quiet line over the configurator, with the way back to the example (an <output>, a
+   block like the paragraph it was) */
 .hangar-configurator-embedded .hc-draft-note {
-  width: min(var(--container-max), calc(100% - var(--container-gutter) * 2)); margin: 0 auto 14px;
+  display: block; width: min(var(--container-max), calc(100% - var(--container-gutter) * 2)); margin: 0 auto 14px;
   color: var(--color-text-secondary); font: 500 14px/1.4 var(--font-manrope), sans-serif;
 }
 @media (max-width: 760px) { .hangar-configurator-embedded .hc-draft-note { width: min(100% - 32px, 620px); } }
@@ -283,14 +266,13 @@
 .hangar-configurator-embedded .hc-field-controls input[type='text'],
 .hangar-configurator-embedded .hc-select { border-radius: 0; }
 .hangar-configurator-embedded .hc-option-card span {
-  min-height: 46px; padding: 8px 14px; color: var(--color-text); font-size: 14px;
+  position: relative; min-height: 46px; padding: 8px 26px; color: var(--color-text); font-size: 14px;
   transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium),
     background var(--duration-fast) var(--ease-premium), transform 120ms var(--ease-premium);
 }
 .hangar-configurator-embedded .hc-option-card:hover input:not(:checked, :disabled) + span { border-color: var(--color-text-secondary); background: color-mix(in srgb, var(--color-text) 5%, var(--color-bg)); }
 .hangar-configurator-embedded .hc-option-card:active input:not(:disabled) + span { transform: scale(.98); }
 /* the tick: drawn, so it never changes the chip's width — the chip makes room for it on both sides from the start */
-.hangar-configurator-embedded .hc-option-card span { position: relative; padding-inline: 26px; }
 .hangar-configurator-embedded .hc-option-card span::before {
   position: absolute; top: 50%; left: 10px; width: 9px; height: 5px; border: solid var(--color-accent); border-width: 0 0 2px 2px;
   content: ''; opacity: 0; transform: translateY(-70%) rotate(-45deg) scale(.6); transition: opacity 160ms ease, transform 160ms var(--ease-premium);
@@ -345,7 +327,6 @@
    Each tab centres its number over its name; the numbers sit on one thin rail that runs from step to step instead of the
    tabs' dividing lines; the open step's number is filled, an answered one copper, the rest quiet. The copper rule under
    the open tab stays. */
-.hc-steps { position: relative; }
 .hc-step-tab,
 .hangar-configurator-embedded .hc-step-tab {
   justify-items: center; align-content: start; row-gap: 8px; padding: 14px 4px 12px; text-align: center;
@@ -358,17 +339,21 @@
 }
 .hc-step-tab[data-done]:not(:last-child)::before { background: var(--color-accent); }
 .hc-step-number {
-  position: relative; z-index: 1; width: 24px; height: 24px; border-color: var(--color-border-strong);
-  background: var(--color-surface-elevated); color: var(--color-text-muted); font-size: 12px;
+  display: inline-grid; place-items: center; position: relative; z-index: 1; width: 24px; height: 24px;
+  border: 1px solid var(--color-border-strong); background: var(--color-surface-elevated); color: var(--color-text-muted);
+  font: 700 12px/1 var(--font-condensed), sans-serif;
   transition: background var(--duration-fast) var(--ease-premium), color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium);
 }
 .hc-step-tab:hover .hc-step-number { border-color: var(--color-text-secondary); color: var(--color-text); }
 .hc-step-tab[data-done] .hc-step-number { border-color: var(--color-accent); color: var(--color-accent-strong); }
 .hc-step-tab[aria-selected='true'] .hc-step-number { border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
-.hc-step-title { max-width: 100%; color: var(--color-text-secondary); font-size: 13px; line-height: 1.25; text-wrap: balance; }
+.hc-step-title {
+  max-width: 100%; color: var(--color-text-secondary); font: 700 13px/1.25 var(--font-manrope), sans-serif; letter-spacing: 0;
+  text-transform: none; overflow-wrap: normal; text-wrap: balance;
+}
 .hc-step-tab[aria-selected='true'] .hc-step-title { color: var(--color-text); }
-.hc-step-tab[aria-selected='true'] { background: transparent; }
-.hc-step-tab:hover:not([aria-selected='true']) { background: transparent; }
+.hc-step-tab[aria-selected='true'] { background: transparent; color: var(--color-text); }
+.hc-step-tab:hover:not([aria-selected='true']) { color: var(--color-text); background: transparent; }
 @media (min-width: 1024px) and (max-height: 760px) {
   .hangar-configurator-embedded .hc-step-tab { row-gap: 6px; padding: 10px 4px 9px; }
   .hangar-configurator-embedded .hc-step-tab:not(:last-child)::before { top: calc(10px + 11px); }
