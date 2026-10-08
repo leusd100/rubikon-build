@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
 
 // Not run by `pnpm test:e2e` (the CI-blocking script) — same as visual.spec.ts, this only runs
 // via `pnpm test:visual`/`test:visual:update`, both local/manual. See playwright.config.ts's
@@ -23,6 +24,26 @@ async function openConfigurator(page: Page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
+// The configurator walks its groups as steps (07.10): each control is used from its own step. The works leave the
+// request from «Окремі роботи», where each has its own box; the gates are chosen in their own group.
+async function dropWorks(page: Page, labels: readonly string[]) {
+  await chooseSeparateWorks(page);
+  for (const label of labels) await page.locator('.hc-scope-list .hc-checkbox-row').filter({ hasText: label }).click();
+}
+
+async function setSizes(page: Page, width: string, length: string, height: string) {
+  await openControlGroup(page, 'dimensions');
+  await page.locator('#hc-dimension-width').fill(width);
+  await page.locator('#hc-dimension-length').fill(length);
+  await page.locator('#hc-dimension-height').fill(height);
+  await page.locator('#hc-dimension-height').blur();
+}
+
+async function setGates(page: Page, count: number) {
+  await openControlGroup(page, 'openings');
+  await page.locator('[aria-labelledby="hc-gate-count-label"] .hc-option-card').filter({ hasText: new RegExp(`^${count}$`) }).click();
+}
+
 test.describe('hangar configurator visual states', () => {
   test('default configuration (24×60×8, insulated, full scope, 1 gate)', async ({ page }) => {
     await openConfigurator(page);
@@ -31,28 +52,21 @@ test.describe('hangar configurator visual states', () => {
 
   test('changed dimensions (narrow + short + tall)', async ({ page }) => {
     await openConfigurator(page);
-    await page.locator('#hc-dimension-width').fill('14');
-    await page.locator('#hc-dimension-length').fill('20');
-    await page.locator('#hc-dimension-height').fill('14');
-    await page.locator('#hc-dimension-height').blur();
+    await setSizes(page, '14', '20', '14');
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-changed-dimensions.png');
   });
 
   test('(C) full structural frame — no foundation, walls or roof', async ({ page }) => {
     await openConfigurator(page);
-    await page.getByText('Фундамент', { exact: true }).click();
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
-    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
-    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
-    // text match now resolves to two elements.
-    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
+    await dropWorks(page, ['Фундамент', 'Стіни / огороджувальний контур', 'Покрівля']);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-frame-only.png');
   });
 
   test('full envelope, undecided insulation, two gates', async ({ page }) => {
     await openConfigurator(page);
-    await page.locator('.hc-option-card', { hasText: 'Ще не визначено' }).click();
-    await page.locator('.hc-option-card', { hasText: '2' }).click();
+    await openControlGroup(page, 'envelope');
+    await page.locator('[aria-labelledby="hc-envelope-heading"] .hc-option-card', { hasText: 'Ще не знаю' }).click();
+    await setGates(page, 2);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-undecided-two-gates.png');
   });
 });
@@ -63,22 +77,13 @@ test.describe('hangar configurator visual states', () => {
 test.describe('hangar configurator visual states — named build states (A–F)', () => {
   test('(A) foundation only', async ({ page }) => {
     await openConfigurator(page);
-    await page.getByText('Металокаркас', { exact: true }).click();
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
-    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
-    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
-    // text match now resolves to two elements.
-    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
+    await dropWorks(page, ['Металокаркас', 'Стіни / огороджувальний контур', 'Покрівля']);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-a-foundation-only.png');
   });
 
   test('(B) foundation + frame', async ({ page }) => {
     await openConfigurator(page);
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
-    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
-    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
-    // text match now resolves to two elements.
-    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
+    await dropWorks(page, ['Стіни / огороджувальний контур', 'Покрівля']);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-b-foundation-frame.png');
   });
 
@@ -87,22 +92,19 @@ test.describe('hangar configurator visual states — named build states (A–F)'
 
   test('(D) frame + walls, no roof yet', async ({ page }) => {
     await openConfigurator(page);
-    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
-    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
-    // text match now resolves to two elements.
-    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
+    await dropWorks(page, ['Покрівля']);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-d-frame-walls.png');
   });
 
   test('(E) complete shell — foundation, frame, walls and roof, no gates', async ({ page }) => {
     await openConfigurator(page);
-    await page.locator('.hc-option-card', { hasText: '0' }).click();
+    await setGates(page, 0);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-e-complete-shell.png');
   });
 
   test('(F) gates/openings — two gates, default envelope', async ({ page }) => {
     await openConfigurator(page);
-    await page.locator('.hc-option-card', { hasText: '2' }).click();
+    await setGates(page, 2);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-f-gates.png');
   });
 });
@@ -137,31 +139,22 @@ test.describe('hangar configurator visual states — edge scenarios (J–L)', ()
     // Two real toggles after load, both under reduced motion — the point is confirming the FSM
     // still converges to the correct final visual through an actual interaction, not only when
     // reduced motion was already active before anything ever mounted.
-    // Scoped to the scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section
-    // added its own "Покрівля" (roof cladding system) heading to the same page, so an unscoped
-    // text match now resolves to two elements.
-    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
-    await page.locator('.hc-option-card', { hasText: '2' }).click();
+    await dropWorks(page, ['Покрівля']);
+    await setGates(page, 2);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-j-reduced-motion-interaction.png');
   });
 
   test('(K) large hangar — max width/length/height', async ({ page }) => {
     await openConfigurator(page);
     // DIMENSION_BOUNDS: width max 50 (Phase 3E.1), length max 120, height max 15 (app/lib/configurator/types.ts).
-    await page.locator('#hc-dimension-width').fill('50');
-    await page.locator('#hc-dimension-length').fill('120');
-    await page.locator('#hc-dimension-height').fill('15');
-    await page.locator('#hc-dimension-height').blur();
+    await setSizes(page, '50', '120', '15');
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-k-large-hangar.png');
   });
 
   test('(L) minimal hangar — min width/length/height', async ({ page }) => {
     await openConfigurator(page);
     // DIMENSION_BOUNDS: width min 10, length min 10, height min 4.
-    await page.locator('#hc-dimension-width').fill('10');
-    await page.locator('#hc-dimension-length').fill('10');
-    await page.locator('#hc-dimension-height').fill('4');
-    await page.locator('#hc-dimension-height').blur();
+    await setSizes(page, '10', '10', '4');
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-l-minimal-hangar.png');
   });
 });
