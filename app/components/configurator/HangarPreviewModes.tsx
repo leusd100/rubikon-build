@@ -354,10 +354,11 @@ export function HangarPreviewModes({
   if (effectiveMode === 'frame') shownOnSheet = frameCaption;
   else if (showThree) shownOnSheet = '3D-модель · попередня схема';
   const sheetCells: SheetCell[] = sheet ? [
-    { tone: 'main', label: 'Що показано', value: shownOnSheet },
-    { label: 'Об’єкт', value: <SheetValue text={sheet.object} /> },
+    // keyed, and the sizes untranslated: a page translation left them at their old values (08.10)
+    { tone: 'main', label: 'Що показано', value: <span key={shownOnSheet}>{shownOnSheet}</span> },
+    { label: 'Об’єкт', value: <span translate="no"><SheetValue text={sheet.object} /></span> },
     // shown only by the phone's mini drawing, in place of the other cells
-    { value: readout, className: 'hc-sheet-readout' },
+    { value: <span translate="no">{readout}</span>, className: 'hc-sheet-readout' },
   ] : [];
 
   return (

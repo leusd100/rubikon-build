@@ -86,7 +86,7 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
               </button>
             ))}
           </div>
-          <p className="hc-frame-text" aria-live="polite">{text}</p>
+          <p className="hc-frame-text" aria-live="polite"><span key={text}>{text}</span></p>
           {step === 2 && (
             <div className="hc-frame-nodes" role="group" aria-label="Вузли ферми">
               {nodes.map((item, index) => (

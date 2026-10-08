@@ -87,7 +87,7 @@ function Row({ title, layers }: Readonly<{ title: string; layers: Layers }>) {
       <dt>{title}</dt>
       <dd>
         <Glyph layers={layers} />
-        <span>{LAYERS_TEXT[layers]}</span>
+        <span key={layers}>{LAYERS_TEXT[layers]}</span>
       </dd>
     </div>
   );

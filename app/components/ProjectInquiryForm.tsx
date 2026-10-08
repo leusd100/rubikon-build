@@ -101,6 +101,11 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const attachment = inquiryAttachment?.attachment ?? null;
   // A brief that went out with a saved lead stays on the form, says so, and is not sent again until it changes (04.10)
   const briefSent = Boolean(inquiryAttachment?.sent);
+  // A brief went out, then the configuration changed (08.10, audit): «Дякуємо!» under a card showing the changed brief let
+  // the visitor think the manager had it. The status says the changed one has not gone yet.
+  const changedSinceSent = Boolean(attachment && inquiryAttachment?.sentBefore && !briefSent);
+  // «Інше» as the purpose: the task field asks what for (08.10, audit — the lead said «Призначення: Інше» and nothing more)
+  const otherPurpose = Boolean(attachment?.sections.some((section) => section.rows.some((row) => row.label === 'Призначення' && row.value === 'Інше')));
   const leadAttachment = briefSent ? null : attachment;
   // A brief from the page's own tool already says what the work is: the page's preset direction becomes a line in the
   // brief card and is submitted unchanged (owner, 03.10). «Не додавати» brings the select back — with the visitor's own
@@ -114,6 +119,9 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const [contactMethod, setContactMethod] = useState<ContactMethod>('Дзвінок');
   const [status, setStatus] = useState('');
   const [statusAction, setStatusAction] = useState<'error' | null>(null);
+  const shownStatus = status === successMessage && changedSinceSent
+    ? 'Попередній варіант надіслано. Змінене ще не надіслано — натисніть «Надіслати запит».'
+    : status;
   const [consentError, setConsentError] = useState(false);
   // The fields' own messages, kept under them while they stand (07.10)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
@@ -397,7 +405,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
               name={enabledFieldName(jsReady, 'comment')}
               rows={3}
               maxLength={800}
-              placeholder="Що потрібно побудувати або який етап виконати"
+              placeholder={otherPurpose ? 'Для чого ангар? Кілька слів' : 'Що потрібно побудувати або який етап виконати'}
               aria-describedby="inquiry-comment-hint"
             />
             <small id="inquiry-comment-hint" className="inquiry-field-hint">
@@ -513,10 +521,10 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
         <input name={enabledFieldName(jsReady, 'companyWebsite')} type="text" tabIndex={-1} autoComplete="off" />
       </label>
 
-      <p className={`inquiry-status${status ? ' is-visible' : ''}${statusAction === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
+      <p className={`inquiry-status${shownStatus ? ' is-visible' : ''}${statusAction === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
         {status === VERIFICATION_FAILED_MESSAGE ? (
           <>{VERIFICATION_FAILED_MESSAGE.slice(0, -company.phone.display.length)}<a href={companyContactLinks.phone}>{company.phone.display}</a></>
-        ) : status}
+        ) : <span key={shownStatus}>{shownStatus}</span>}
         {statusAction === 'error' && status !== VERIFICATION_FAILED_MESSAGE && (
           <span className="inquiry-status-actions">
             <a href={companyContactLinks.phone}><Phone aria-hidden="true" /> {company.phone.display}</a>

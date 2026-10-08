@@ -1,4 +1,4 @@
-import type { HangarDomainModel } from '../../lib/configurator/domainModel';
+import type { HangarDomainModel, SizesProvenance } from '../../lib/configurator/domainModel';
 
 // The words on the configurator's drawing sheet (/angary, 03.10): its title block, the phone's mini readout and what a
 // screen reader hears for the picture. Kept out of the components so the formatting is tested; decimals with a comma,
@@ -12,17 +12,22 @@ const sizes = ({ widthM, lengthM, eaveHeightM }: HangarDomainModel['dimensions']
 /** «·» stays at the end of the line it closes: a wrapped line never starts with it */
 const SEPARATOR = ' · ';
 
-/** «Об’єкт»: «Приклад · 24 × 60 × 8 м» while the configuration is the default, «Ваш ангар · …» once it is the
- *  visitor's — the frame drawing's title block says it the same way (FrameTour.tsx) */
-export function sheetObjectLabel(own: boolean, dimensions: HangarDomainModel['dimensions']): string {
-  return `${own ? 'Ваш ангар' : 'Приклад'}${SEPARATOR}${sizes(dimensions)}`;
+/** The word before the sizes, by where they come from (08.10, audit: «Точних розмірів ще немає» turned the example into
+ *  «Ваш ангар · 24 × 60 × 8 м»; sizes the visitor typed stayed «Приклад» while the stamp said they were theirs) */
+export const SIZES_PREFIX: Record<SizesProvenance, string> = { own: 'Ваш ангар', example: 'Приклад', approx: 'Орієнтовно' };
+
+/** «Об’єкт»: «Приклад · 24 × 60 × 8 м», «Ваш ангар · …» or «Орієнтовно · …» — the frame drawing's title block says it
+ *  the same way (FrameTour.tsx) */
+export function sheetObjectLabel(provenance: SizesProvenance, dimensions: HangarDomainModel['dimensions']): string {
+  return `${SIZES_PREFIX[provenance]}${SEPARATOR}${sizes(dimensions)}`;
 }
 
 /** The phone's mini drawing reads its sizes here, not off the drawing: «24 × 60 × 8 м», one line beside the view
  *  switch. (03.10: with the ridge and the gates it ran to three lines at 320 px, and the mini drawing covered 40 % of a
  *  short phone; the ridge is under «Розміри» and the gates in the «Прорізи» header the visitor is setting them in.) */
 export function miniReadout(domain: HangarDomainModel): string {
-  return sizes(domain.dimensions);
+  // «≈» while the sizes are an orientation (08.10)
+  return `${domain.sizesUnknown ? '≈ ' : ''}${sizes(domain.dimensions)}`;
 }
 
 /** «метр», «метри», «метрів» after a whole number, «метра» after a fraction */

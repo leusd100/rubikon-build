@@ -7,7 +7,9 @@ import {
   pitchDegForRidge,
 } from './parametricModel';
 import type { ObjectProfile } from './objectProfile';
+import { CONFIRMED_TOPICS, DEFAULT_CONFIGURATOR_STATE, SCOPE_ORDER } from './types';
 import type {
+  ScopeItem,
   CladdingSystem,
   ConfirmedTopic,
   ConfiguratorState,
@@ -122,6 +124,10 @@ export type HangarDomainModel = {
   sizesUnknown: boolean;
   internalSupports: InternalSupports;
   scopeMode: ScopeMode;
+  /** The groups still the page's example: not answered, and holding the example's value (exampleTopics) */
+  exampleTopics: ConfirmedTopic[];
+  /** The openings as chosen, before the sizes held them to what fits */
+  requestedOpenings: { gates: GatesCount; gateType: GateType; doors: DoorCount };
 };
 
 /**
@@ -168,11 +174,13 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     structural: state.internalSupports === 'not-allowed'
       ? { ...deriveStructuralVisualization(width), scheme: 'clearSpan' }
       : deriveStructuralVisualization(width),
+    // «Комплекс робіт» and «Допоможіть визначити» draw the whole set; the list is the visitor's under «Окремі роботи»
+    // only — and it is kept while they look at another mode (07.10: switching modes wiped it)
     scope: {
-      foundation: state.scope.includes('foundation'),
-      frame: state.scope.includes('frame'),
-      walls: state.scope.includes('walls'),
-      roof: state.scope.includes('roof'),
+      foundation: drawnScope(state).includes('foundation'),
+      frame: drawnScope(state).includes('frame'),
+      walls: drawnScope(state).includes('walls'),
+      roof: drawnScope(state).includes('roof'),
     },
     ...gateSelection,
     // Door placement reads the CLAMPED gate selection, not the raw state: if a gate was just
@@ -184,5 +192,46 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     sizesUnknown: state.sizesUnknown,
     internalSupports: state.internalSupports,
     scopeMode: state.scopeMode,
+    exampleTopics: exampleTopics(state),
+    // the openings as the visitor chose them: the summary says which of them the sizes leave no room for
+    requestedOpenings: { gates: state.gates, gateType: state.gateType, doors: state.doors },
   };
+}
+
+/** The works drawn: the visitor's list under «Окремі роботи», every work otherwise */
+export function drawnScope(state: ConfiguratorState): ScopeItem[] {
+  return state.scopeMode === 'partial' ? state.scope : [...SCOPE_ORDER];
+}
+
+/**
+ * Where a value comes from (07.10, after the audit): a group is the page's example only while the visitor has not
+ * answered it AND it still holds the example's value. A value that another answer set — the sandwich panels that
+ * «Утеплений» brings, the gates the sizes leave no room for — is the consequence of the visitor's choice, not the
+ * example's, and the stamp, the sheet, the cost notes and the lead all read it from here, so they never disagree.
+ */
+export function exampleTopics(state: ConfiguratorState): ConfirmedTopic[] {
+  const base = DEFAULT_CONFIGURATOR_STATE;
+  const holds: Record<ConfirmedTopic, boolean> = {
+    dimensions: state.dimensions.width === base.dimensions.width && state.dimensions.length === base.dimensions.length
+      && state.dimensions.height === base.dimensions.height && !state.ridgeEdited,
+    envelope: state.envelope === base.envelope,
+    cladding: state.wallSystem === base.wallSystem && state.roofSystem === base.roofSystem,
+    openings: state.gates === base.gates && state.gateType === base.gateType && state.doors === base.doors,
+    scope: state.scopeMode === base.scopeMode,
+  };
+  return CONFIRMED_TOPICS.filter((topic) => holds[topic] && !state.confirmed.includes(topic));
+}
+
+/** The sizes as the visitor gave them: their own, still the example's, or an orientation while they look for theirs */
+export type SizesProvenance = 'own' | 'example' | 'approx';
+export function sizesProvenance(domain: Pick<HangarDomainModel, 'sizesUnknown' | 'exampleTopics'>): SizesProvenance {
+  if (domain.sizesUnknown) return 'approx';
+  return domain.exampleTopics.includes('dimensions') ? 'example' : 'own';
+}
+
+/** The visitor answered something — a group of the drawing, the sizes' «not yet», or a question of the task */
+export function anythingChosen(domain: HangarDomainModel): boolean {
+  const profile = domain.objectProfile;
+  return domain.exampleTopics.length < CONFIRMED_TOPICS.length || domain.sizesUnknown || domain.internalSupports !== 'unknown'
+    || profile.purpose !== null || profile.project !== 'unknown' || profile.region !== 'unknown' || profile.lifting !== 'unknown';
 }

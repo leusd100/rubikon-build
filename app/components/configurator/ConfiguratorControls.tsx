@@ -50,6 +50,7 @@ import {
   hasScopeItem,
   toggleScopeItem,
   withConfirmed,
+  DEFAULT_CONFIGURATOR_STATE,
   INTERNAL_SUPPORTS_LABELS,
   INTERNAL_SUPPORTS_ORDER,
   SCOPE_MODE_LABELS,
@@ -100,7 +101,8 @@ function parseMetres(raw: string): number | null {
 /** What the field says after a typed value had to be changed on blur — it used to be clamped in silence (04.10) */
 function clampNote(parsed: number | null, min: number, max: number, kept: number, step: number): string | null {
   if (parsed === null) return `Потрібне число в метрах — залишено ${formatMetres(kept)}${NBSP}м.`;
-  if (parsed > max) return `Найбільше можливе значення — ${formatMetres(max)}${NBSP}м.`;
+  // the configurator holds the common sizes; a larger hangar is still welcome, said in the request (owner, 08.10)
+  if (parsed > max) return `У конфігураторі — до ${formatMetres(max)}${NBSP}м. Більший розмір вкажіть у заявці.`;
   if (parsed < min) return `Найменше можливе значення — ${formatMetres(min)}${NBSP}м.`;
   // …and a value between the steps, which was rounded in silence: «6,7» became 6,5 м with no word (07.10)
   if (Math.abs(parsed - kept) > 1e-9) return `Округлено до ${formatMetres(kept)}${NBSP}м: крок ${formatMetres(step)}${NBSP}м.`;
@@ -157,12 +159,16 @@ function NumericField({
   }
 
   function handleBlur() {
+    // A field entered and left without typing commits nothing: the click alone made the example's sizes the visitor's
+    // answer (07.10, audit). What they type counts, even when it is the example's own number.
+    if (draft === null) return;
     const parsed = parseMetres(draft ?? '');
     // An abandoned or nonsensical entry falls back to the last good value rather than to the
     // minimum — clearing the field and clicking away should not silently reset the object.
     const committed = parsed === null ? value : clamp(parsed);
-    if (draft !== null) setNote(clampNote(parsed, min, max, parsed === null ? value : committed, step));
-    onCommit(committed);
+    setNote(clampNote(parsed, min, max, parsed === null ? value : committed, step));
+    // nonsense or an emptied field keeps the last good value and answers nothing
+    if (parsed !== null) onCommit(committed);
     setDraft(null);
   }
 
@@ -171,7 +177,8 @@ function NumericField({
     <div className="hc-field">
       <div className="hc-field-head">
         <label htmlFor={inputId}>{label}</label>
-        <span className="hc-field-value">{formatMetres(value)}{NBSP}м</span>
+        {/* figures are not translated (08.10): a page translation replaced them, and they stayed at the old value */}
+        <span className="hc-field-value" translate="no">{formatMetres(value)}{NBSP}м</span>
       </div>
       <div className="hc-field-controls">
         {/* Named by the label alone, with its value in metres: it was «Ширина, слайдер» and a bare «10.600000381469727» */}
@@ -202,7 +209,7 @@ function NumericField({
         />
       </div>
       {hint ? (
-        <p className="hc-field-hint" id={`${inputId}-hint`}>
+        <p className="hc-field-hint" id={`${inputId}-hint`} key={hint}>
           {hint}
         </p>
       ) : (
@@ -301,22 +308,35 @@ function StepTabs({
       ))}
     </div>
     {/* A phone shows the tabs' numbers only: the step on show is named under them (07.10) */}
-    <p className="hc-step-current" aria-hidden="true">Крок {step + 1} з {CONTROL_STEPS.length} · {CONTROL_STEPS[step].title}</p>
+    <p className="hc-step-current" aria-hidden="true" key={step}>Крок {step + 1} з {CONTROL_STEPS.length} · {CONTROL_STEPS[step].title}</p>
     </>
   );
 }
 
 /** Says why the openings shown are not the ones chosen. It used to warn «оберіть менший тип» while the sizes had
  *  already dropped the visitor's gates for good; now they are held and come back (04.10). */
-function heldOpeningsNote(gatesHeld: boolean, doorHeld: boolean): string | null {
-  if (gatesHeld && doorHeld) {
-    return 'Обрані ворота й двері не поміщаються за поточних розмірів будівлі, тому в конфігурації лише те, що поміщається. Ваш вибір повернеться, щойно розміри це дозволять.';
-  }
+/** The lowest wall height, on the slider's own steps, a gate type stands under */
+function wallHeightFor(gateType: GateType): number {
+  const { min, max, step } = DIMENSION_BOUNDS.height;
+  for (let h = min; h <= max; h += step) if (gateHeightFits(gateType, h)) return h;
+  return max;
+}
+
+/** Says why the openings shown are not the ones chosen — with the reason (08.10, audit: «лише ті, що вміщуються» while
+ *  none did, and the greyed options said nothing). The choice is held and comes back with the room. */
+function heldOpeningsNote(state: ConfiguratorState, gatesHeld: boolean, doorHeld: boolean): string | null {
+  const back = 'Ваш вибір повернеться, щойно розміри це дозволять.';
+  const gate = GATE_DIMENSIONS_M[state.gateType];
+  const gateWords = `Ворота ${formatSize(gate.widthM, gate.heightM)}`;
+  let gates: string | null = null;
   if (gatesHeld) {
-    return 'Обрані ворота не поміщаються за поточних розмірів будівлі, тому в конфігурації лише ті, що поміщаються. Ваш вибір повернеться, щойно розміри це дозволять.';
+    gates = gateHeightFits(state.gateType, state.dimensions.height)
+      ? `${gateWords} у такій кількості не вміщуються за ширини ${formatMetres(state.dimensions.width)}${NBSP}м.`
+      : `${gateWords} потребують стін від ${formatMetres(wallHeightFor(state.gateType))}${NBSP}м.`;
   }
-  if (doorHeld) return 'Для дверей немає місця за цієї ширини й цих воріт, тому в конфігурації їх немає. Вони повернуться, щойно місце знайдеться.';
-  return null;
+  const door = doorHeld ? 'Для дверей немає місця за цієї ширини й цих воріт.' : null;
+  const said = [gates, door].filter(Boolean).join(' ');
+  return said ? `${said} ${back}` : null;
 }
 
 /** «Чи потрібне утеплення?» answered in the visitor's words (07.10) */
@@ -402,13 +422,23 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     // later independent override of either still sticks (see ENVELOPE_MATERIAL_PRESET's own doc
     // comment). `undecided` applies nothing: "independent material choices remain available" is
     // the brief's own wording for that specific option.
-    const preset = envelope === 'undecided' ? null : ENVELOPE_MATERIAL_PRESET[envelope];
+    // «Ще не знаю» brings the example's materials back unless the visitor chose materials themselves (07.10, audit:
+    // after «Утеплений» the sandwich panels stayed and the legend said «з утеплювачем» beside «Уточнимо»)
+    const preset = envelope === 'undecided'
+      ? (state.confirmed.includes('cladding') ? null : { wallSystem: DEFAULT_CONFIGURATOR_STATE.wallSystem, roofSystem: DEFAULT_CONFIGURATOR_STATE.roofSystem })
+      : ENVELOPE_MATERIAL_PRESET[envelope];
     // the materials the preset sets are a starting point, not the visitor's answer about them
     onChange(withConfirmed({
       ...state,
       envelope,
       ...(preset ? { wallSystem: preset.wallSystem, roofSystem: preset.roofSystem } : {}),
     }, 'envelope'));
+  }
+
+  /** A chosen answer pressed again is an answer (07.10, audit): agreeing with the example's value counts as the visitor's
+   *  — and changes nothing else (an «Утеплений» pressed again does not reset materials the visitor changed) */
+  function confirmTopic(topic: ConfirmedTopic) {
+    onChange(withConfirmed(state, topic));
   }
 
   function setWallSystem(wallSystem: CladdingSystem) {
@@ -437,9 +467,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     onChange(withConfirmed({ ...state, doors }, 'openings'));
   }
 
-  // «Комплекс робіт» and «Допоможіть визначити» draw the whole set; «Окремі роботи» opens the list as it stands
+  // The mode alone (07.10, audit: switching wiped the list): «Комплекс робіт» and «Допоможіть визначити» draw the whole
+  // set (domainModel.ts drawnScope), «Окремі роботи» the visitor's list, kept while they looked at another mode
   function setScopeMode(scopeMode: ScopeMode) {
-    onChange(withConfirmed({ ...state, scopeMode, scope: scopeMode === 'partial' ? state.scope : [...SCOPE_ORDER] }, 'scope'));
+    onChange(withConfirmed({ ...state, scopeMode }, 'scope'));
   }
 
   function setScope(item: (typeof SCOPE_ORDER)[number]) {
@@ -451,10 +482,11 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   const shown = { gates: domain.gates, gateType: domain.gateType, doors: domain.doors };
   const gatesHeld = state.gates !== shown.gates || state.gateType !== shown.gateType;
   const doorHeld = state.doors !== shown.doors;
-  const wallsInScope = state.scope.includes('walls');
-  const heldNote = wallsInScope ? heldOpeningsNote(gatesHeld, doorHeld) : null;
-  const roofInScope = state.scope.includes('roof');
-  const foundationInScope = state.scope.includes('foundation');
+  // what the drawing, the stamp and the lead treat as asked for: the mode's works (drawnScope), not the kept list
+  const wallsInScope = domain.scope.walls;
+  const heldNote = wallsInScope ? heldOpeningsNote(state, gatesHeld, doorHeld) : null;
+  const roofInScope = domain.scope.roof;
+  const foundationInScope = domain.scope.foundation;
   // "Контур" sets the wall AND roof systems together, so it stays available while either surface
   // is being asked for.
   const hasEnvelopeScope = wallsInScope || roofInScope;
@@ -467,6 +499,13 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     if (item.id === 'frame') return state.internalSupports !== 'unknown' || objectProfile.lifting !== 'unknown';
     return state.confirmed.includes('scope') || objectProfile.project !== 'unknown';
   });
+
+  let scopeNote = 'Склад робіт уточнимо після перегляду проєкту.';
+  if (state.scopeMode === 'help') scopeNote = 'Розберемо разом, що робимо ми, а що організуємо, — після перегляду ваших даних.';
+  // an empty list is said so, without blocking the request (07.10, audit)
+  else if (state.scopeMode === 'partial' && state.scope.length === 0) scopeNote = 'Позначте хоча б одну роботу або оберіть «Допоможіть визначити».';
+  // At the configurator's largest sizes, the way to a larger hangar (owner, 08.10: the common sizes here, the rest in the request)
+  const atLargest = state.dimensions.width === DIMENSION_BOUNDS.width.max || state.dimensions.length === DIMENSION_BOUNDS.length.max;
 
   // The groups, each placed in its step below
   const groups: Record<ControlGroupId, ReactNode> = {
@@ -618,6 +657,11 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
           <span>Точних розмірів ще немає — уточнимо разом</span>
         </label>
         {state.sizesUnknown && <p className="hc-field-note">На кресленні — орієнтовні розміри, їх можна змінювати.</p>}
+        {atLargest && (
+          <p className="hc-field-note">
+            У конфігураторі — до {DIMENSION_BOUNDS.width.max}{NBSP}×{NBSP}{DIMENSION_BOUNDS.length.max}{NBSP}м. Більший ангар? Вкажіть розміри в заявці.
+          </p>
+        )}
         {/* The ridge is a refinement, not a first question (07.10): folded, unless the visitor set it */}
         <details className="hc-more" open={state.ridgeEdited || undefined}>
           <summary>Висота в конику — за потреби</summary>
@@ -651,6 +695,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                 checked={state.envelope === option}
                 disabled={!hasEnvelopeScope}
                 onChange={() => setEnvelope(option)}
+                onClick={() => { if (state.envelope === option) confirmTopic('envelope'); }}
               />
               <span>{ENVELOPE_CHOICE_WORDS[option]}</span>
             </label>
@@ -680,6 +725,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   checked={state.wallSystem === option}
                   disabled={!wallsInScope}
                   onChange={() => setWallSystem(option)}
+                onClick={() => { if (state.wallSystem === option) confirmTopic('cladding'); }}
                 />
                 <span>{CLADDING_SYSTEM_LABELS[option]}</span>
               </label>
@@ -702,6 +748,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   checked={state.roofSystem === option}
                   disabled={!roofInScope}
                   onChange={() => setRoofSystem(option)}
+                onClick={() => { if (state.roofSystem === option) confirmTopic('cladding'); }}
                 />
                 <span>{CLADDING_SYSTEM_LABELS[option]}</span>
               </label>
@@ -750,7 +797,13 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
         <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-scope-heading">
           {SCOPE_MODE_ORDER.map((option) => (
             <label key={option} className="hc-option-card">
-              <input type="radio" name="hc-scope-mode" checked={state.scopeMode === option} onChange={() => setScopeMode(option)} />
+              <input
+                type="radio"
+                name="hc-scope-mode"
+                checked={state.scopeMode === option}
+                onChange={() => setScopeMode(option)}
+                onClick={() => { if (state.scopeMode === option) confirmTopic('scope'); }}
+              />
               <span>{SCOPE_MODE_LABELS[option]}</span>
             </label>
           ))}
@@ -769,9 +822,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
           </div>
         )}
         <p className="hc-field-note">
-          {state.scopeMode === 'help'
-            ? 'Розберемо разом, що робимо ми, а що організуємо, — після перегляду ваших даних.'
-            : 'Склад робіт уточнимо після перегляду проєкту.'}
+          {scopeNote}
         </p>
       </ControlGroup>
     ),
@@ -802,6 +853,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   checked={shown.gates === option}
                   disabled={disabled}
                   onChange={() => setGates(option)}
+                onClick={() => { if (shown.gates === option) confirmTopic('openings'); }}
                 />
                 <span>{option}</span>
               </label>
@@ -830,6 +882,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     checked={shown.gateType === option}
                     disabled={disabled}
                     onChange={() => setGateType(option)}
+                onClick={() => { if (shown.gateType === option) confirmTopic('openings'); }}
                   />
                   {/* the size in the name (07.10), not in a note under the buttons */}
                   <span>{GATE_TYPE_LABELS[option]} · {formatSize(GATE_DIMENSIONS_M[option].widthM, GATE_DIMENSIONS_M[option].heightM)}</span>
@@ -858,6 +911,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     disabled={disabled}
                     aria-disabled={disabled}
                     onChange={() => setDoors(option)}
+                onClick={() => { if (shown.doors === option) confirmTopic('openings'); }}
                   />
                   <span>{DOOR_LABELS[option]}</span>
                 </label>

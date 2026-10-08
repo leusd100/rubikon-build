@@ -146,14 +146,20 @@ export function HangarInquiryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const draft = readDraft(CONTROL_STEPS.length);
     read.current = true;
-    if (draft) dispatch({ type: 'restore', ...draft });
+    // Only a draft that holds something of the visitor's (08.10, audit): opening a tab and reloading showed «Відновлено
+    // вашу конфігурацію» over the untouched example
+    if (draft && (draft.attached || !sameBusinessConfiguration(draft.configuration, DEFAULT_CONFIGURATOR_STATE))) {
+      dispatch({ type: 'restore', ...draft });
+    }
   }, []);
-  const untouched = model.configuration === INITIAL_HANGAR_INQUIRY_STATE.configuration && model.step === 0;
+  // Kept only while it is the visitor's: changed, or attached to the request (the example attached by «Обговорити» too —
+  // it disappeared on a reload); back to the untouched example, the draft is forgotten. The step travels with it, never alone.
+  const worthKeeping = model.attachment.status === 'attached' || !sameBusinessConfiguration(model.configuration, DEFAULT_CONFIGURATOR_STATE);
   useEffect(() => {
-    // nothing to keep until the visitor did something: a page opened and left stores nothing
-    if (!read.current || untouched) return;
-    saveDraft({ configuration: model.configuration, attached: model.attachment.status === 'attached', step: model.step });
-  }, [model.configuration, model.attachment, model.step, untouched]);
+    if (!read.current) return;
+    if (worthKeeping) saveDraft({ configuration: model.configuration, attached: model.attachment.status === 'attached', step: model.step });
+    else clearDraft();
+  }, [model.configuration, model.attachment, model.step, worthKeeping]);
   const value = useMemo(
     () => ({
       state: model.configuration,

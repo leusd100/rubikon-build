@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
-import { deriveDomainModel } from '../../lib/configurator/domainModel';
+import { deriveDomainModel, sizesProvenance } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
 import { ConfiguratorControls } from './ConfiguratorControls';
@@ -154,7 +154,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
       {/* A draft read back from this browser says so, with the way back to the example (07.10) */}
       {embedded && sharedInquiry?.restored && (
         <p className="hc-draft-note" role="status">
-          Відновлено вашу конфігурацію з минулого візиту.{' '}
+          Відновлено вашу конфігурацію.{' '}
           <button type="button" className="hc-draft-reset" onClick={sharedInquiry.startOver}>Почати заново</button>
         </p>
       )}
@@ -168,7 +168,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
             presentationAnnouncement={sharedInquiry?.presentationAnnouncement}
             onEndPresentationDemo={sharedInquiry?.endPresentationDemo}
             sheet={embedded
-              ? { object: sheetObjectLabel(own, businessDomain.dimensions), untouched: !own && !presentationDemo }
+              ? { object: sheetObjectLabel(sizesProvenance(businessDomain), businessDomain.dimensions), untouched: !own && !presentationDemo }
               : undefined}
           />
           {!embedded && <div id="hc-stamp"><ConfiguratorSummary domain={businessDomain} /></div>}

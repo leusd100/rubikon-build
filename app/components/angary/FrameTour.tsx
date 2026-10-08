@@ -5,7 +5,8 @@ import { DrawingSheet } from '../DrawingSheet';
 import { stageTransform, useDrawingTour, type StageSize, type TourFocus } from '../useDrawingTour';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
-import { deriveDomainModel, type HangarDomainModel } from '../../lib/configurator/domainModel';
+import { deriveDomainModel, sizesProvenance, type HangarDomainModel } from '../../lib/configurator/domainModel';
+import { SIZES_PREFIX } from '../configurator/sheetLabels';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import {
   buildParametricModel, deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM,
@@ -541,7 +542,10 @@ export function useFrameTourModel() {
   const g = useMemo(() => frameGeometry(domain), [domain]);
   const summary = deriveSummary(domain);
   const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
-  const where = own ? 'у вашій конфігурації' : 'у прикладі';
+  // the sizes said as the visitor gave them, one rule with the sheet and the stamp (08.10, audit): their own, the
+  // example's, or an orientation while they look for theirs
+  const provenance = sizesProvenance(domain);
+  const where = { own: 'у вашій конфігурації', example: 'у прикладі', approx: 'орієнтовно' }[provenance];
 
   const steps: TourStep[] = [
     // With a centre row the width between the outer axes holds two spans, so it is not called the span (owner, 03.10)
@@ -587,7 +591,7 @@ export function useFrameTourModel() {
   ];
   // «Приклад · 24 × 60 × 8 м»: the sizes held together and to their unit, which stays a lower-case «м» in the title
   // block's capitals (04.10, drawing-sheet.css .sheet-unit); a line may break only after the «·»
-  const object = `${own ? 'Ваш ангар' : 'Приклад'}\u00A0· ${[g.W, g.lengthM, g.E].map(fmt).join('\u00A0×\u00A0')}\u00A0`;
+  const object = `${SIZES_PREFIX[provenance]}\u00A0· ${[g.W, g.lengthM, g.E].map(fmt).join('\u00A0×\u00A0')}\u00A0`;
   /** The title block's «Що показано»: every caption laid out in one cell, only the shown one visible — the cell is as
    *  tall as the longest at any width, so the sheet no longer changes height from step to step (04.10) */
   const captions = [OVERVIEW_CAPTION, ...steps.map((item) => item.caption)];
