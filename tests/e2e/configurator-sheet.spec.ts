@@ -2,9 +2,11 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { openControlGroup } from './configurator.helpers';
 
 // /angary's configurator on the «Креслення» sheet and its first view (owner, 03.10): the preview lies on a drawing
-// sheet — square, no shadow, a dark field in both themes, the view switch, what is shown and the object in the title
-// block — the phone's mini drawing reads its sizes in one readout, and the drawing builds itself once, in build order,
-// the first time it comes into view. /configurator-preview keeps its card.
+// sheet — square, no shadow, a dark field in both themes, what is shown and the object in the title block — the phone's
+// mini drawing reads its sizes in one readout, and the drawing builds itself once, in build order, the first time it
+// comes into view. /configurator-preview keeps its card. Since 07.10 3D is a secondary look: a chip on the drawing,
+// «Подивитися в 3D», opens it and «← Креслення» goes back (no view switch in the title block, no colours on /angary);
+// the controls are steps, one open at a time (openControlGroup).
 
 async function openHangarPage(page: Page) {
   await page.goto('/angary', { waitUntil: 'load' });
@@ -15,6 +17,20 @@ async function openHangarPage(page: Page) {
 
 const sheetOf = (page: Page) => page.locator('#configurator .hc-preview-sheet');
 const pictureOf = (page: Page) => page.locator('#configurator .hc-preview-image');
+/** The chip on the drawing that opens 3D: rendered once the page has hydrated and the WebGL probe has said yes */
+const threeChipOf = (page: Page) => pictureOf(page).getByRole('button', { name: 'Подивитися в 3D', exact: true });
+const drawingChipOf = (page: Page) => pictureOf(page).getByRole('button', { name: /Креслення$/ });
+
+/** The height of a control's hit target: its box, or the box its ::after reaches past it (the sheet's 32 px chips) */
+async function targetHeight(locator: Locator) {
+  return locator.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const after = getComputedStyle(element, '::after');
+    if (after.content === 'none' || after.position !== 'absolute') return box.height;
+    const reach = -(parseFloat(after.top) || 0) - (parseFloat(after.bottom) || 0);
+    return box.height + Math.max(reach, 0);
+  });
+}
 
 /** Relative luminance of a computed rgb() colour */
 async function luminance(locator: Locator, property: 'backgroundColor' | 'color' = 'backgroundColor') {
@@ -64,7 +80,7 @@ for (const theme of ['light', 'dark'] as const) {
     expect(await luminance(picture)).toBeLessThan(0.05);
     expect(Math.abs((await luminance(sheet)) - (await luminance(picture)))).toBeGreaterThan(0.01);
 
-    // the title block: what is shown, the object, the view
+    // the title block: what is shown and the object — no view switch in it any more (07.10)
     const stamp = sheet.locator('.sheet-stamp');
     await expect(stamp).toContainText('Що показано');
     await expect(stamp).toContainText('Загальний вид · попередня схема');
@@ -73,20 +89,34 @@ for (const theme of ['light', 'dark'] as const) {
     // the title block sets its values in capitals, but the metre stays «м»
     await expect(stamp.locator('.sheet-unit')).toHaveText('м');
     await expect(stamp.locator('.sheet-unit')).toHaveCSS('text-transform', 'none');
-    const views = stamp.getByRole('group', { name: 'Вид візуалізації' });
-    await expect(views).toHaveCSS('border-radius', '0px');
-    const technical = views.getByRole('button', { name: 'Технічний вид', exact: true });
-    await expect(technical).toHaveText('Технічний вид');
-    await expect(technical).toHaveAttribute('aria-pressed', 'true');
-    // the cell says «Технічний»; «вид» stays in its name only
-    await expect(technical.locator('.hc-visually-hidden')).toHaveText('вид');
-    await expect(technical.locator('.hc-visually-hidden')).toHaveCSS('position', 'absolute');
+    await expect(stamp.getByRole('group', { name: 'Вид візуалізації' })).toHaveCount(0);
+    // the phone's mini readout and its fold stay out of the whole sheet
+    await expect(stamp.locator('.hc-sheet-readout')).toBeHidden();
+    await expect(stamp.getByRole('button', { name: 'Згорнути', exact: true })).toBeHidden();
+
+    // the technical view carries the cladding's section as a callout on the field, in the sheet's square language
+    const section = picture.locator('.hc-section');
+    await expect(section).toBeVisible();
+    await expect(section.locator('figcaption')).toHaveText('Переріз огородження · схема');
+    await expect(section).toHaveCSS('border-radius', '0px');
+
+    // 3D is a chip on the drawing, square too
+    const chip = threeChipOf(page);
+    await expect(chip).toBeVisible();
+    await expect(chip).toHaveCSS('border-radius', '0px');
+    expect(await targetHeight(chip)).toBeGreaterThanOrEqual(44);
 
     // 3D fills the same field edge to edge: no ring, no seam, and nothing around it moves
     const before = await sheet.boundingBox();
-    await views.getByRole('button', { name: '3D', exact: true }).click();
+    await chip.click();
     await expect(picture.locator('canvas')).toBeVisible({ timeout: 20_000 });
-    await expect(views.getByRole('button', { name: '3D', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(stamp).toContainText('3D-модель · попередня схема');
+    await expect(section).toHaveCount(0);
+    await expect(drawingChipOf(page)).toBeVisible();
+    // /angary's 3D has no colours and no scale figure (07.10, owner): light steel on the dark sheet
+    await expect(page.locator('#configurator .hc-preview-secondary-panel')).toHaveCount(0);
+    await expect(page.getByRole('radiogroup', { name: 'Обшивка', exact: true })).toHaveCount(0);
+    await expect(page.locator('#configurator .hc-scale-figure-toggle')).toHaveCount(0);
     // the canvas slot (R3F's canvas fills it once it has measured it) covers the field to the pixel
     await expect.poll(async () => {
       const [field, slot] = [await picture.boundingBox(), await picture.locator('.hc-preview-canvas').boundingBox()];
@@ -113,8 +143,10 @@ for (const theme of ['light', 'dark'] as const) {
     expect((await dialog.locator('.hc-fullscreen-close').boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await page.getByRole('button', { name: /Закрити/ }).click();
     await expect(expand).toBeFocused();
-    await views.getByRole('button', { name: 'Технічний вид', exact: true }).click();
+    await drawingChipOf(page).click();
     await expect(picture.locator('svg.hc-preview-svg')).toBeVisible();
+    await expect(stamp).toContainText('Загальний вид · попередня схема');
+    await expect(threeChipOf(page)).toBeVisible();
   });
 }
 
@@ -124,8 +156,26 @@ test('the title block names the visitor’s own hangar once it is theirs', async
   await openHangarPage(page);
   const stamp = sheetOf(page).locator('.sheet-stamp');
   await expect(stamp).toContainText('Приклад · 24 × 60 × 8 м');
-  await page.locator('#hc-dimension-width').fill('30');
-  await page.locator('#hc-dimension-width').blur();
+  await openControlGroup(page, 'dimensions');
+  const width = page.locator('#hc-dimension-width');
+  // opening the step and the field alone answers nothing
+  await width.focus();
+  await width.blur();
+  await expect(stamp).toContainText('Приклад · 24 × 60 × 8 м');
+  // what the visitor types counts, even the example's own number (08.10) — typed key by key, as a visitor does: a fill
+  // of the same value is no change for React's input, so it would answer nothing
+  await width.fill('');
+  await width.pressSequentially('24');
+  await width.blur();
+  await expect(stamp).toContainText('Ваш ангар · 24 × 60 × 8 м');
+  await width.fill('30');
+  await width.blur();
+  await expect(stamp).toContainText('Ваш ангар · 30 × 60 × 8 м');
+  // «Точних розмірів ще немає»: the sizes on the drawing are an orientation, and the title block says so
+  const unknown = page.getByRole('checkbox', { name: /Точних розмірів ще немає/ });
+  await unknown.check();
+  await expect(stamp).toContainText('Орієнтовно · 30 × 60 × 8 м');
+  await unknown.uncheck();
   await expect(stamp).toContainText('Ваш ангар · 30 × 60 × 8 м');
 });
 
@@ -157,7 +207,10 @@ test('on a phone the mini drawing reads its sizes in one readout, and nothing un
   await expect(sheet.locator('.hc-dimension').first()).toBeVisible();
   const controlsTop = await pageTop(controls);
 
-  // Scrolled on, it is held under the header as the mini drawing, and gives back the height it lost: the controls stay
+  // Scrolled on, it is held under the header as the mini drawing, and gives back the height it lost: the controls stay.
+  // 08.10: under reduced motion the hold and the let-go alternated every frame (scrollY 810 ↔ 1024 ↔ 1109, the sheet at
+  // −156 or 143 instead of 77) — the give eased over .01 ms and lagged the hold; the sheet no longer eases at all under
+  // reduced motion (configurator-sheet.css). A product bug if this fails again, not a test to loosen.
   await page.evaluate((offset) => window.scrollBy({ top: offset, behavior: 'instant' }), 160);
   await expect(layout).toHaveAttribute('data-configuring', '');
   expect(await sheet.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
@@ -166,14 +219,17 @@ test('on a phone the mini drawing reads its sizes in one readout, and nothing un
   expect((await pictureOf(page).boundingBox())!.height).toBeCloseTo(140, 0);
   await expect(sheet).toHaveCSS('box-shadow', 'none');
 
-  // The sizes in one readout of 13 px figures, one line, in place of the drawing's labels; the view switch stays in reach
+  // The sizes in one readout of 13 px figures, one line, in place of the drawing's labels; the fold stays in reach
   await expect(readout).toBeVisible();
   expect((await readout.innerText()).replaceAll(/\s+/g, ' ').trim()).toBe('24 × 60 × 8 м');
   await expect(readout.locator('b')).toHaveCSS('font-size', '13px');
   await expect(readout.locator('b')).toHaveCSS('font-variant-numeric', 'tabular-nums');
   await expect(sheet.locator('.hc-dimension').first()).toBeHidden();
   await expect(sheet.locator('.sheet-cell-main')).toBeHidden();
-  await expect(sheet.getByRole('button', { name: '3D', exact: true })).toBeVisible();
+  const fold = sheet.getByRole('button', { name: 'Згорнути', exact: true });
+  await expect(fold).toBeVisible();
+  await expect(fold).toHaveAttribute('aria-expanded', 'true');
+  expect(await targetHeight(fold)).toBeGreaterThanOrEqual(44);
 
   // The readout is live
   await openControlGroup(page, 'dimensions');
@@ -185,6 +241,46 @@ test('on a phone the mini drawing reads its sizes in one readout, and nothing un
   await bringSheetIntoView(page);
   await expect(layout).not.toHaveAttribute('data-configuring', '');
   await expect(readout).toBeHidden();
+});
+
+test('on a phone the mini drawing folds to its sizes’ line and back, and says «≈» while they are an orientation', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit mobile viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const layout = page.locator('#configurator .hc-layout');
+  const sheet = sheetOf(page);
+  const readout = sheet.locator('.hc-sheet-readout');
+  await openControlGroup(page, 'dimensions');
+  // held well into the controls (the 160 px case above is the hold's own test)
+  await bringSheetIntoView(page);
+  await page.evaluate(() => window.scrollBy({ top: 480, behavior: 'instant' }));
+  await expect(layout).toHaveAttribute('data-configuring', '');
+  await expect(readout).toBeVisible();
+
+  const unknown = page.getByRole('checkbox', { name: /Точних розмірів ще немає/ });
+  await unknown.check();
+  await expect(readout).toHaveText('≈ 24 × 60 × 8 м');
+  await unknown.uncheck();
+  await expect(readout).toHaveText('24 × 60 × 8 м');
+
+  // Folded, the picture goes and the sizes' line stays with the way back; shown again, the picture returns
+  await expect(layout).toHaveAttribute('data-configuring', '');
+  const fold = sheet.getByRole('button', { name: 'Згорнути', exact: true });
+  await fold.click();
+  const show = sheet.getByRole('button', { name: 'Показати ескіз', exact: true });
+  await expect(show).toHaveAttribute('aria-expanded', 'false');
+  await expect(pictureOf(page)).toBeHidden();
+  await expect(readout).toBeVisible();
+  expect((await sheet.boundingBox())!.height).toBeLessThan(100);
+  await show.click();
+  await expect(sheet.getByRole('button', { name: 'Згорнути', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await expect(pictureOf(page)).toBeVisible();
+
+  // Back in its own place the whole sheet has no fold
+  await bringSheetIntoView(page);
+  await expect(layout).not.toHaveAttribute('data-configuring', '');
+  await expect(sheet.getByRole('button', { name: 'Згорнути', exact: true })).toBeHidden();
 });
 
 test('on a phone the page scrolls on without measuring the sheet: only holding and letting go do', async ({ page }, testInfo) => {
@@ -287,7 +383,8 @@ test.describe('the first view builds the drawing', () => {
     await expect(picture).toHaveAttribute('data-build', 'armed');
     await bringSheetIntoView(page);
     await expect(picture.locator(LAYERS.foundation)).not.toHaveClass(/hc-phase-hidden/, { timeout: 4000 });
-    await page.locator('#hc-dimension-width').focus();
+    // the first control in reach: the next step's tab (the sizes' fields are behind it since 07.10)
+    await page.locator('#hc-step-size-tab').focus();
     for (const selector of Object.values(LAYERS)) {
       await expect(picture.locator(selector).first()).toHaveClass(/hc-phase-(materializing|visible)/, { timeout: 500 });
     }
@@ -306,9 +403,9 @@ test.describe('the first view builds the drawing', () => {
     await bringSheetIntoView(page);
     await expect(picture.locator(LAYERS.foundation)).not.toHaveClass(/hc-phase-hidden/, { timeout: 4000 });
     await expect(picture.locator(LAYERS.gates)).toHaveClass(/hc-phase-hidden/);
-    await sheetOf(page).getByRole('button', { name: '3D', exact: true }).click();
+    await threeChipOf(page).click();
     await expect(picture.locator('canvas')).toBeVisible({ timeout: 20_000 });
-    await sheetOf(page).getByRole('button', { name: 'Технічний вид', exact: true }).click();
+    await drawingChipOf(page).click();
     for (const selector of Object.values(LAYERS)) await expect(picture.locator(selector).first()).toHaveClass(/hc-phase-visible/);
   });
 
@@ -316,8 +413,8 @@ test.describe('the first view builds the drawing', () => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openHangarPage(page);
-    // hydrated (the WebGL probe has answered) — and nothing armed
-    await expect(sheetOf(page).getByRole('button', { name: '3D', exact: true })).toBeEnabled();
+    // hydrated (the WebGL probe has answered: the 3D chip is on the drawing) — and nothing armed
+    await expect(threeChipOf(page)).toBeVisible();
     await expect(pictureOf(page)).not.toHaveAttribute('data-build', 'armed');
     for (const selector of Object.values(LAYERS)) await expect(pictureOf(page).locator(selector).first()).toHaveClass(/hc-phase-visible/);
 
@@ -325,7 +422,7 @@ test.describe('the first view builds the drawing', () => {
     // a fresh load straight at the configurator (the consent is already given, so no banner to dismiss)
     await page.goto('about:blank');
     await page.goto('/angary#configurator', { waitUntil: 'load' });
-    await expect(sheetOf(page).getByRole('button', { name: '3D', exact: true })).toBeEnabled();
+    await expect(threeChipOf(page)).toBeVisible();
     await expect(sheetOf(page)).toHaveAttribute('data-sheet-state', /.+/);
     await expect(pictureOf(page)).not.toHaveAttribute('data-build', 'armed');
     for (const selector of Object.values(LAYERS)) await expect(pictureOf(page).locator(selector).first()).toHaveClass(/hc-phase-visible/);
@@ -352,7 +449,7 @@ test.describe('the first view builds the drawing', () => {
 async function openForViewport(page: Page, first: boolean) {
   if (first) await openHangarPage(page);
   else await page.goto('/angary', { waitUntil: 'load' });
-  await expect(sheetOf(page).getByRole('button', { name: '3D', exact: true })).toBeEnabled();
+  await expect(threeChipOf(page)).toBeVisible();
 }
 
 /** The smallest dimension label of the drawing as rendered on screen, CSS px */
@@ -372,6 +469,7 @@ test('the drawing’s own sizes read at 12 px or more wherever it is shown small
     await bringSheetIntoView(page);
     await expect.poll(() => smallestLabelPx(page), { message: `${width}×${height}` }).toBeGreaterThanOrEqual(11.9);
   }
+  await openControlGroup(page, 'dimensions');
   await page.locator('#hc-dimension-height').fill('7.5');
   await page.locator('#hc-dimension-height').blur();
   await expect(page.locator('#configurator .hc-preview-svg')).toHaveAttribute('aria-label', /висота стін 7,5 м, .* приблизно 10,1 м$/);
@@ -383,7 +481,19 @@ test('at 1024–1200 px the field keeps a landscape proportion and «Що пок
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openHangarPage(page);
   const field = (await pictureOf(page).boundingBox())!;
-  expect(field.width / field.height).toBeGreaterThan(1.3);
+  // The drawing's own stage: on a sheet under 700 px the field also holds the cladding's section as the drawing's legend,
+  // under the drawing and never on the hangar (07.10) — the stage, not the legend, is what was letterboxed at 03.10
+  const stage = (await pictureOf(page).locator('.hc-preview-svg').boundingBox())!;
+  expect(stage.width).toBeGreaterThan(field.width - 1);
+  expect(stage.width / stage.height).toBeGreaterThan(1.3);
+  const legend = (await pictureOf(page).locator('.hc-section').boundingBox())!;
+  expect(legend.y).toBeGreaterThanOrEqual(stage.y + stage.height - 1);
+  expect(legend.y + legend.height).toBeLessThanOrEqual(field.y + field.height + 1);
+  // and in 3D, where the field is the canvas alone, the same proportion
+  await threeChipOf(page).click();
+  await expect(pictureOf(page).locator('canvas')).toBeVisible({ timeout: 20_000 });
+  const three = (await pictureOf(page).boundingBox())!;
+  expect(three.width / three.height).toBeGreaterThan(1.3);
   const main = (await sheetOf(page).locator('.sheet-cell-main').boundingBox())!;
   expect(main.width).toBeGreaterThan(field.width * 0.9);
   expect(main.height).toBeLessThan(60);
@@ -438,10 +548,14 @@ test('on a phone a control that takes keyboard focus is never hidden behind the 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openHangarPage(page);
-  await page.locator('#configurator .hc-control-group[data-group="scope"] .hc-group-toggle').focus();
+  // The step with the most controls (07.10): the shell — insulation, materials, gates and doors — from its last stop back
+  await openControlGroup(page, 'openings');
+  await page.locator('#hc-step-shell .hc-step-next').focus();
   await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+  let inControls = 0;
   for (let stop = 0; stop < 8; stop += 1) {
     await page.keyboard.press('Shift+Tab');
+    if (await page.evaluate(() => Boolean(document.activeElement?.closest('#configurator .hc-controls')))) inControls += 1;
     const covered = await page.evaluate(() => {
       const focused = document.activeElement as HTMLElement | null;
       if (!focused?.closest('#configurator .hc-controls')) return null;
@@ -452,6 +566,8 @@ test('on a phone a control that takes keyboard focus is never hidden behind the 
     });
     expect(covered, `stop ${stop + 1}`).toBeNull();
   }
+  // every stop was a control of the step, not a way out of it
+  expect(inControls).toBe(8);
 });
 
 test('at 320 px the 3D view stays inside the page, square, with 44 px targets', async ({ page }, testInfo) => {
@@ -460,55 +576,69 @@ test('at 320 px the 3D view stays inside the page, square, with 44 px targets', 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openHangarPage(page);
   await bringSheetIntoView(page);
-  // no empty cell in the title block: «Вид» takes the row it is alone on
-  const action = (await sheetOf(page).locator('.sheet-action').boundingBox())!;
-  const object = (await sheetOf(page).locator('.sheet-stamp > .sheet-cell').nth(1).boundingBox())!;
-  expect(Math.abs(action.width - object.width)).toBeLessThanOrEqual(1);
+  // no empty cell in the title block: each cell shown takes the whole row it is alone on
+  const stamp = sheetOf(page).locator('.sheet-stamp');
+  const rows = await stamp.evaluate((element) => {
+    const inner = element.getBoundingClientRect();
+    return [...element.children]
+      .filter((cell) => getComputedStyle(cell).display !== 'none')
+      .map((cell) => Math.round(inner.width - cell.getBoundingClientRect().width));
+  });
+  expect(rows.length).toBeGreaterThanOrEqual(2);
+  for (const gap of rows) expect(gap).toBeLessThanOrEqual(2);
 
-  await sheetOf(page).getByRole('button', { name: '3D', exact: true }).click();
+  await threeChipOf(page).click();
   await expect(pictureOf(page).locator('canvas')).toBeVisible({ timeout: 20_000 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
   // the readout of the four sizes stays inside the picture
   const field = (await pictureOf(page).boundingBox())!;
   const readout = (await pictureOf(page).locator('.hc-three-overlay').boundingBox())!;
   expect(readout.x + readout.width).toBeLessThanOrEqual(field.x + field.width);
-  for (const swatch of await page.locator('#configurator .hc-material-swatch-row button').all()) {
-    await expect(swatch).toHaveCSS('border-radius', '0px');
-    expect((await swatch.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  // «Сховати розміри» is not offered at ≤ 480 px (configurator.css): the sizes stay
+  await expect(pictureOf(page).locator('.hc-three-overlay-toggle')).toBeHidden();
+  // the picture's own actions: square, inside the picture, 44 px targets
+  for (const action of [drawingChipOf(page), pictureOf(page).getByRole('button', { name: 'Розгорнути', exact: true })]) {
+    await expect(action).toBeVisible();
+    await expect(action).toHaveCSS('border-radius', '0px');
+    const box = (await action.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(field.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(field.x + field.width);
+    expect(await targetHeight(action)).toBeGreaterThanOrEqual(44);
   }
-  expect((await page.locator('#configurator .hc-scale-figure-toggle').boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  // the colour swatches and the scale figure are gone from /angary (07.10, owner)
+  await expect(page.locator('#configurator .hc-material-swatch-row')).toHaveCount(0);
+  await expect(page.locator('#configurator .hc-scale-figure-toggle')).toHaveCount(0);
 });
 
-test('in the sticky pane the 3D view fits the screen: its colours open from a chip on the picture', async ({ page }, testInfo) => {
+test('in the sticky pane the 3D view fits the screen, its actions on the picture and clear of the sizes', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the sticky pane is the desktop’s');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   for (const [index, [width, height]] of ([[1440, 900], [1024, 768]] as const).entries()) {
     await page.setViewportSize({ width, height });
     await openForViewport(page, index === 0);
     await bringSheetIntoView(page);
-    await sheetOf(page).getByRole('button', { name: '3D', exact: true }).click();
+    await threeChipOf(page).click();
     await expect(pictureOf(page).locator('canvas')).toBeVisible({ timeout: 20_000 });
     await page.evaluate(() => window.scrollBy({ top: 400, behavior: 'instant' }));
     // nothing under the sheet any more: the pane ends where the sheet does, inside the screen
     await expect(page.locator('#configurator .hc-preview-pane > .hc-preview-secondary-panel')).toHaveCount(0);
-    expect((await page.locator('#configurator .hc-preview-pane').boundingBox())!.y + (await page.locator('#configurator .hc-preview-pane').boundingBox())!.height).toBeLessThanOrEqual(height);
-    // «Сховати розміри» sits at the top, clear of the readout
+    const pane = (await page.locator('#configurator .hc-preview-pane').boundingBox())!;
+    expect(pane.y + pane.height, `${width}×${height}`).toBeLessThanOrEqual(height);
+    // «Сховати розміри» sits at the top, clear of the readout and of the chips on the other side
     const toggle = (await pictureOf(page).locator('.hc-three-overlay-toggle').boundingBox())!;
     const readout = (await pictureOf(page).locator('.hc-three-overlay').boundingBox())!;
     expect(toggle.y + toggle.height).toBeLessThan(readout.y);
+    const tools = (await pictureOf(page).locator('.hc-sheet-tools').boundingBox())!;
+    expect(toggle.x + toggle.width).toBeLessThan(tools.x);
+    expect(tools.y + tools.height).toBeLessThan(readout.y);
 
-    const chip = pictureOf(page).getByRole('button', { name: 'Кольори й масштаб', exact: true });
-    await expect(chip).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.getByRole('radiogroup', { name: 'Обшивка', exact: true })).toBeHidden();
-    await chip.click();
-    await expect(chip).toHaveAttribute('aria-expanded', 'true');
-    const walls = page.getByRole('radiogroup', { name: 'Обшивка', exact: true });
-    await expect(walls).toBeVisible();
-    // the colours follow their chip in the tab order, and Escape folds them back to it
+    // /angary's 3D has no colours (07.10, owner): no chip for them, no swatches
+    await expect(pictureOf(page).getByRole('button', { name: 'Кольори й масштаб', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('radiogroup', { name: 'Обшивка', exact: true })).toHaveCount(0);
+    // «← Креслення» comes first among the picture's actions, «Розгорнути» after it
+    const back = drawingChipOf(page);
+    await back.focus();
     await page.keyboard.press('Tab');
-    await expect(walls.getByRole('radio').first()).toBeFocused();
-    await page.keyboard.press('Escape');
-    await expect(chip).toHaveAttribute('aria-expanded', 'false');
-    await expect(chip).toBeFocused();
+    await expect(pictureOf(page).getByRole('button', { name: 'Розгорнути', exact: true })).toBeFocused();
   }
 });

@@ -94,17 +94,20 @@ test('a brief sent with a saved lead says so, stops asking to be sent, and goes 
   const submit = form.getByRole('button', { name: 'Надіслати запит', exact: true });
   await submit.click();
   await expect(form.locator('.inquiry-status')).toContainText('Дякуємо! Запит надіслано');
-  expect(leads[0].details.configuration).toContain('Базова конфігурація');
+  // nothing answered: the lead carries the drawing's example as the example, never as the visitor's choice (1.4.1)
+  expect(leads[0].details.configuration).toContain('Не уточнено клієнтом (значення прикладу на сайті):');
+  expect(leads[0].details.configuration).not.toContain('Вибрана конфігурація');
 
   await expect(brief(page).locator('.inquiry-config-brief-title')).toHaveText('Надіслано з вашим запитом');
   await expect(brief(page)).toContainText('Повторно не надсилатимемо, доки ви нічого не зміните.');
   await expect(brief(page).getByRole('button', { name: 'Не додавати', exact: true })).toHaveCount(0);
-  await expect(routeBrief(page)).toContainText(`Надіслано з вашим запитом: 24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м · Холодний`);
+  await expect(routeBrief(page)).toContainText(`Надіслано з вашим запитом: Приклад з креслення · 24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м`);
   await expect(routeBrief(page).getByRole('link')).toHaveCount(0);
 
   // «Запит надіслано» stands in place of the fields (08.10); its button brings them back for another request
-  await expect(form.locator('.inquiry-sent')).toContainText(`Конфігурація24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м · Холодний`);
+  await expect(form.locator('.inquiry-sent')).toContainText(`КонфігураціяПриклад з креслення · 24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м`);
   await form.getByRole('button', { name: 'Виправити номер або надіслати ще один запит', exact: true }).click();
+  await expect(form.getByLabel(/Телефон/)).toBeFocused();
 
   // the next submit is a new lead (form.spec.ts) — without the brief it already carried
   await submit.click();
@@ -112,8 +115,12 @@ test('a brief sent with a saved lead says so, stops asking to be sent, and goes 
   expect(leads[1].details).not.toHaveProperty('configuration');
   expect(leads[1].submissionId).not.toBe(leads[0].submissionId);
 
-  // a change makes a new brief: attached, asked for and sent again
+  // a change makes a new brief: «Запит надіслано» gives the fields back, and the brief is attached, asked for and sent
+  // again (08.10)
+  await expect(form.locator('.inquiry-sent')).toBeVisible();
   await setDimension(page, 'width', '30');
+  await expect(form.locator('.inquiry-sent')).toHaveCount(0);
+  await expect(form.locator('.inquiry-status')).toHaveText('Попередній варіант надіслано. Змінене ще не надіслано — натисніть «Надіслати запит».');
   await expect(brief(page).locator('.inquiry-config-brief-title')).toHaveText('До заявки додано вашу конфігурацію');
   await expect(brief(page).getByRole('button', { name: 'Не додавати', exact: true })).toBeVisible();
   await expect(routeBrief(page).getByRole('link')).toHaveText('Надіслати бриф ↓');
@@ -141,7 +148,7 @@ test('on a phone the sent brief hides «До заявки», and every CTA to th
     await link.click();
     await expect(brief(page)).toBeFocused();
     await expect(page).toHaveURL(/#inquiry$/);
-    await expect(page.locator('#inquiry-brief-status')).toHaveText(`Додано до заявки: 24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м · Холодний`);
+    await expect(page.locator('#inquiry-brief-status')).toHaveText(`Додано до заявки: Приклад з креслення · 24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м`);
     await expect.poll(() => brief(page).evaluate((element) => Math.round(element.getBoundingClientRect().top)), { timeout: 5_000 }).toBeLessThan(160);
   }
 
@@ -161,17 +168,18 @@ test('the brief\'s status line empties once the brief changes under it, and its 
   await setDimension(page, 'width', '30');
   await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
   const status = page.locator('#inquiry-brief-status');
-  await expect(status).toHaveText(`Додано до заявки: 30${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м · Холодний`);
+  await expect(status).toHaveText(`Додано до заявки: 30${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м`);
   await setDimension(page, 'length', '72');
-  await expect(brief(page).locator('strong')).toHaveText(`30${NBSP}×${NBSP}72${NBSP}×${NBSP}8${NBSP}м · Холодний`);
+  await expect(brief(page).locator('strong')).toHaveText(`30${NBSP}×${NBSP}72${NBSP}×${NBSP}8${NBSP}м`);
   await expect(status).toHaveText('');
 
-  // h2 → h3 (the brief) → h4 (its sections) → h3 «Контакт», «Завдання»: no level skipped
+  // h2 → h3 (the brief) → h4 (its sections: the visitor's sizes, what is still the example's, the preliminary data)
+  // → h3 «Контакт», «Завдання»: no level skipped
   await brief(page).getByText('Переглянути параметри', { exact: true }).click();
   const outline = await page.locator('#inquiry').evaluate((section) => [...section.querySelectorAll('h2, h3, h4')]
     .filter((heading) => heading.getClientRects().length > 0)
     .map((heading) => heading.tagName));
-  expect(outline).toEqual(['H2', 'H3', 'H4', 'H4', 'H3', 'H3']);
+  expect(outline).toEqual(['H2', 'H3', 'H4', 'H4', 'H4', 'H3', 'H3']);
   await expect(page.locator('#inquiry h3').first()).toHaveText('До заявки додано вашу конфігурацію');
 });
 

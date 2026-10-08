@@ -1,8 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openControlGroup } from './configurator.helpers';
 
 async function openThree(page: Page) {
   await page.goto('/configurator-preview');
   await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
+  // The sizes are a step of their own (07.10): open it, so the width field behind the modal is a live, focusable control
+  await openControlGroup(page, 'dimensions');
   await page.getByRole('button', { name: '3D', exact: true }).click();
   await expect(page.locator('.hc-preview-surface canvas')).toBeVisible({ timeout: 20_000 });
 }
