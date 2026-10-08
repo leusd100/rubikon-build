@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
+import { useHeroControlPlacement } from './useHeroControlPlacement';
 
 type DirectionHeroVideoProps = {
   sources: string[];
@@ -28,6 +29,8 @@ export function DirectionHeroVideo({
   playbackRate = 1,
   videoMediaQuery = '(min-width: 761px)',
 }: DirectionHeroVideoProps) {
+  // on a computer the pause / play stands on the line of the hero's buttons, clear of the cookie strip (08.10)
+  const placeControl = useHeroControlPlacement();
   const [activeSource, setActiveSource] = useState(0);
   const [outgoingSource, setOutgoingSource] = useState<number | null>(null);
   const [readySources, setReadySources] = useState<Record<number, boolean>>({});
@@ -169,7 +172,7 @@ export function DirectionHeroVideo({
       {/* The word names the next action and the name changes with it («Пауза відео» / «Відтворити відео»), so the
           button carries no aria-pressed; the icon beside it says the same */}
       {hasStartedPlayback && canUseVideo && shouldLoadMedia && (
-        <button type="button" className="hero-video-control" data-paused={userPaused || undefined} onClick={togglePause}>
+        <button ref={placeControl} type="button" className="hero-video-control" data-paused={userPaused || undefined} onClick={togglePause}>
           <span className="hero-video-control-label">{userPaused ? 'Відтворити' : 'Пауза'}<span className="sr-only"> відео</span></span>
           <span className="hero-video-control-icon" aria-hidden="true" />
         </button>

@@ -562,6 +562,10 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .hero-video-control:hover .hero-video-control-label { color: var(--color-dark-text); }
 .hero-video-control:hover .hero-video-control-icon { background: rgba(13, 16, 14, .82); border-color: var(--color-accent-on-dark); }
 .hero-video-control:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+/* Where a hero button reaches under it, the control keeps its circle; the word stays for screen readers
+   (useHeroControlPlacement) */
+.hero-video-control[data-compact] { padding-left: 0; }
+.hero-video-control[data-compact] .hero-video-control-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 760px) {
   .hero-video-control { right: 16px; bottom: 16px; }
 }
