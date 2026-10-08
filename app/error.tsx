@@ -21,11 +21,11 @@ export default function PageError({ reset }: Readonly<{ error: Error & { digest?
         <div className="shell">
           <p className="eyebrow light"><span /> Сторінка не довантажилась</p>
           <h1>Щось пішло<br />не так</h1>
-          <p className="not-found-lead" role="status">
+          <output className="not-found-lead">
             {reloading
               ? 'Оновлюємо сторінку…'
               : 'Частина сторінки не довантажилась — так буває при обриві зв’язку. Оновіть сторінку або зв’яжіться з нами напряму.'}
-          </p>
+          </output>
           <div className="hero-action-row">
             <button className="button button-primary" type="button" onClick={() => { reset(); window.location.reload(); }}>Оновити сторінку</button>
             <a className="text-link" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>{company.phone.display}</a>

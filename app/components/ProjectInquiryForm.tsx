@@ -100,6 +100,41 @@ type ProjectInquiryFormProps = {
   successMessage: string;
 };
 
+type SentRequest = { phone: string; method: ContactMethod; brief: string | null };
+
+function withFieldError(current: Partial<Record<FieldKey, string>>, key: FieldKey, message: string | null) {
+  if ((current[key] ?? null) === message) return current;
+  const next = { ...current };
+  if (message) next[key] = message;
+  else delete next[key];
+  return next;
+}
+
+/** After a saved request: what went out, in place of the filled form (08.10, audit F155) */
+function InquirySentPanel({ sent, onAnother }: Readonly<{ sent: SentRequest; onAnother: () => void }>) {
+  return (
+    <section className="inquiry-sent" aria-labelledby="inquiry-sent-title">
+      <h3 id="inquiry-sent-title">Запит надіслано</h3>
+      <dl>
+        {sent.brief && <div><dt>Конфігурація</dt><dd translate="no">{sent.brief}</dd></div>}
+        <div><dt>Зв’яжемося</dt><dd translate="no">{sent.phone} · {sent.method}</dd></div>
+      </dl>
+      <button type="button" onClick={onAnother}>Виправити номер або надіслати ще один запит</button>
+    </section>
+  );
+}
+
+/** «Не додавати» leaves a line with the way back, not nothing (08.10, audit F87) */
+function DetachedBriefLine({ source }: Readonly<{ source: ReturnType<typeof useInquiryAttachment> }>) {
+  if (source?.status.status !== 'detached' || !source.reattach) return null;
+  return (
+    <p className="inquiry-config-detached">
+      Конфігурацію не додано.{' '}
+      <button type="button" onClick={source.reattach}>Додати знову</button>
+    </p>
+  );
+}
+
 export default function ProjectInquiryForm({ defaultDirection = '', cooperationOptions, successMessage }: Readonly<ProjectInquiryFormProps>) {
   const pathname = usePathname();
   // Whatever the page's configurator or planner attached — the form knows neither of them.
@@ -122,16 +157,10 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const [statusAction, setStatusAction] = useState<'error' | null>(null);
   const [consentError, setConsentError] = useState(false);
   // After a saved request: what went out, shown in place of the filled form (08.10, audit F155)
-  const [sentPanel, setSentPanel] = useState<{ phone: string; method: ContactMethod; brief: string | null } | null>(null);
+  const [sentPanel, setSentPanel] = useState<SentRequest | null>(null);
   // The fields' own messages, kept under them while they stand (07.10)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
-  const report = (key: FieldKey, message: string | null) => setFieldErrors((current) => {
-    if ((current[key] ?? null) === message) return current;
-    const next = { ...current };
-    if (message) next[key] = message;
-    else delete next[key];
-    return next;
-  });
+  const report = (key: FieldKey, message: string | null) => setFieldErrors((current) => withFieldError(current, key, message));
   const NAME_VALIDITY = ukrainianValidity('name', NAME_MESSAGES, report);
   const PHONE_VALIDITY = ukrainianValidity('phone', PHONE_MESSAGES, report);
   const DIRECTION_VALIDITY = ukrainianValidity('direction', DIRECTION_MESSAGES, report);
@@ -303,32 +332,17 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       </div>
 
       {shownSent && (
-        <section className="inquiry-sent" aria-labelledby="inquiry-sent-title">
-          <h3 id="inquiry-sent-title">Запит надіслано</h3>
-          <dl>
-            {shownSent.brief && <div><dt>Конфігурація</dt><dd translate="no">{shownSent.brief}</dd></div>}
-            <div><dt>Зв’яжемося</dt><dd translate="no">{shownSent.phone} · {shownSent.method}</dd></div>
-          </dl>
-          <button
-            type="button"
-            onClick={() => {
-              setSentPanel(null);
-              setStatus('');
-              window.requestAnimationFrame(() => formRef.current?.querySelector<HTMLInputElement>('input[type="tel"]')?.focus());
-            }}
-          >
-            Виправити номер або надіслати ще один запит
-          </button>
-        </section>
+        <InquirySentPanel
+          sent={shownSent}
+          onAnother={() => {
+            setSentPanel(null);
+            setStatus('');
+            window.requestAnimationFrame(() => formRef.current?.querySelector<HTMLInputElement>('input[type="tel"]')?.focus());
+          }}
+        />
       )}
       <div className="inquiry-form-fields" hidden={Boolean(shownSent)}>
-        {/* «Не додавати» leaves a line with the way back, not nothing (08.10, audit F87) */}
-        {!attachment && inquiryAttachment?.status.status === 'detached' && inquiryAttachment.reattach && (
-          <p className="inquiry-config-detached">
-            Конфігурацію не додано.
-            <button type="button" onClick={inquiryAttachment.reattach}>Додати знову</button>
-          </p>
-        )}
+        {!attachment && <DetachedBriefLine source={inquiryAttachment} />}
         {/* Owner, 03.10: an attached brief opens the form, above «Контакт» — after «Обговорити цю конфігурацію» a phone shows
             the brief, the name and the phone on one screen. Without a brief the form starts with «Контакт» as before. */}
         {attachment && inquiryAttachment && (
