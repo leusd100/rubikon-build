@@ -66,6 +66,7 @@
 
 /* ---------------------------------------------------------------- 2 · Where to start */
 .proc-start { background: var(--color-bg); }
+.proc-start-list a { text-decoration: underline; text-underline-offset: 3px; }
 .proc-start-layout { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: start; gap: var(--grid-gap); }
 .proc-start-head .eyebrow { margin-bottom: 22px; }
 .proc-start-flow { display: grid; grid-template-columns: minmax(0, 1fr) 176px; align-items: center; column-gap: 72px; }

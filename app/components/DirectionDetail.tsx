@@ -153,6 +153,7 @@ export function DirectionProcess({
   text,
   steps,
   split,
+  link,
   className,
 }: {
   eyebrow?: string;
@@ -160,6 +161,7 @@ export function DirectionProcess({
   text: string;
   steps: readonly DirectionStep[];
   split?: readonly ProcessSplit[];
+  link?: DirectionPageConfig['process']['link'];
   className?: string;
 }) {
   const sides = split?.length === steps.length ? split : undefined;
@@ -195,6 +197,11 @@ export function DirectionProcess({
               <li key={stepNumber} style={{ '--i': index } as CSSProperties}><span>{stepNumber}</span><h3>{stepTitle}</h3><p>{stepText}</p></li>
             ))}
           </ol>
+        )}
+        {link && (
+          <a className="section-link direction-process-link" href={link.href}>
+            {link.label} <span aria-hidden="true">↗</span>
+          </a>
         )}
       </div>
     </section>
