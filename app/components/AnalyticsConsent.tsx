@@ -254,15 +254,13 @@ export default function AnalyticsConsent() {
       aria-labelledby="analytics-consent-title"
     >
       <div className="cookie-banner-body">
-        <div>
-          <strong id="analytics-consent-title">Файли cookie</strong>
-          <p>
-            За вашою згодою використовуємо аналітичні та рекламні cookie Google, щоб розуміти,
-            які сторінки корисні відвідувачам, і — якщо ви прийшли за рекламним оголошенням —
-            оцінити його ефективність. Необхідні функції сайту працюють у будь-якому разі.
-          </p>
+        {/* One sentence (owner, 08.10: «полюбому спростити, щоб не заважало»); what each kind does is under «Налаштувати»
+            and in the privacy policy. The title names the region for a screen reader. */}
+        <div className="cookie-banner-text">
+          <strong id="analytics-consent-title" className="sr-only">Файли cookie</strong>
+          <p>Cookie Google для аналітики й реклами вмикаємо лише з вашої згоди — сайт працює і без них.</p>
           <div className="cookie-banner-links">
-            <a href={siteRoutes.privacy}>Докладніше про конфіденційність</a>
+            <a href={siteRoutes.privacy} aria-label="Докладніше про конфіденційність">Докладніше</a>
             {!customizing && (
               <button className="cookie-settings-link" type="button" onClick={() => setCustomizing(true)}>Налаштувати</button>
             )}
@@ -299,9 +297,8 @@ export default function AnalyticsConsent() {
           </>
         ) : (
           <>
-            <button className="cookie-accept" type="button" onClick={() => applyChoice(GRANT_ALL_STATE)}>
-              Прийняти все
-            </button>
+            {/* Two equal answers (owner, 08.10): neither is the highlighted one */}
+            <button type="button" onClick={() => applyChoice(GRANT_ALL_STATE)}>Прийняти все</button>
             <button type="button" onClick={() => applyChoice(DENY_ALL_STATE)}>Лише необхідні</button>
           </>
         )}

@@ -204,7 +204,8 @@ test.describe('configurator attachment contract', () => {
     const form = page.locator('form.inquiry-form');
     const brief = attachmentCard(page);
     await expect(brief).toBeVisible();
-    const order = await form.evaluate((element) => [...element.children].map((child) => (
+    // the form's sections sit in one block that «Запит надіслано» replaces after a saved request (08.10)
+    const order = await form.evaluate((element) => [element.firstElementChild!, ...element.querySelector('.inquiry-form-fields')!.children].map((child) => (
       child.classList.contains('inquiry-form-section-brief') ? 'brief' : child.querySelector('h3')?.textContent ?? child.className
     )));
     expect(order.slice(0, 4)).toEqual(['inquiry-form-heading', 'brief', 'Контакт', 'Завдання']);

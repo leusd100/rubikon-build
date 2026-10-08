@@ -14,7 +14,8 @@ function focusBlocksStickyCta() {
 }
 
 function overlayBlocksStickyCta() {
-  return Boolean(document.querySelector('.cookie-banner, .mobile-menu[open], .hc-fullscreen-overlay, [aria-modal="true"]'));
+  // the cookie strip no longer hides the shortcut: it stands above the strip (08.10, audit F158)
+  return Boolean(document.querySelector('.mobile-menu[open], .hc-fullscreen-overlay, [aria-modal="true"]'));
 }
 
 /**

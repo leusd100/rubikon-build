@@ -31,6 +31,13 @@ async function fillInquiryFields(page: Page) {
   await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
 }
 
+// A saved request is replaced by «Запит надіслано» (08.10, audit F155): sending another one goes through its button,
+// which brings the filled fields back
+async function sendAnother(page: Page) {
+  await page.getByRole('button', { name: 'Виправити номер або надіслати ще один запит', exact: true }).click();
+  await expect(page.locator('form.inquiry-form').getByLabel(/Телефон/)).toBeFocused();
+}
+
 async function fillValidInquiry(page: Page) {
   await acceptOnlyEssentialCookies(page);
   await fillInquiryFields(page);
@@ -142,6 +149,7 @@ test.describe('project inquiry form', () => {
     await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
     await submit.click();
     await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+    await sendAnother(page);
     await submit.click();
     await expect.poll(() => ids.length).toBe(3);
 
@@ -259,6 +267,7 @@ test.describe('Turnstile on the inquiry form', () => {
 
     await submit.click();
     await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+    await sendAnother(page);
     await submit.click();
     await expect.poll(() => tokens.length).toBe(2);
 
@@ -422,7 +431,8 @@ test.describe('validation messages', () => {
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
     await expect(form.getByLabel(/Ваше ім’я/)).toBeFocused();
     expect(await message(/Ваше ім’я/)).toBe('Вкажіть, як до вас звертатися.');
-    expect(await message(/Телефон/)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    // nothing after +380 asks for the number itself (08.10, audit F142); the format is named once digits are there
+    expect(await message(/Телефон/)).toBe('Вкажіть номер телефону.');
     expect(await message(/Напрям робіт/)).toBe('Оберіть напрям робіт або «Ще не визначено».');
     expect(await message(/Погоджуюся на обробку персональних даних/)).toBe('Підтвердьте згоду на обробку персональних даних.');
 
@@ -430,6 +440,9 @@ test.describe('validation messages', () => {
     await form.getByLabel(/Ваше ім’я/).fill('І');
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
     expect(await message(/Ваше ім’я/)).toBe('Ім’я — щонайменше 2 літери.');
+    await form.getByLabel(/Телефон/).fill('+38067');
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    expect(await message(/Телефон/)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
 
     await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
     await form.getByLabel(/Телефон/).fill('+380671234567');
@@ -527,9 +540,10 @@ test.describe('generate_lead with Turnstile', () => {
     await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
 
     // An idempotent replay of the same lead (isNew: false) is not a second conversion.
+    await sendAnother(page);
     await submit.click();
     await expect.poll(() => call).toBe(6);
-    await expect(submit).toBeEnabled();
+    await expect(page.getByRole('heading', { name: 'Запит надіслано' })).toBeVisible();
     expect(await leadEvents(page, 'generate_lead')).toBe(1);
     expect(await leadEvents(page, 'inquiry_contact_attempt')).toBe(7);
   });
@@ -635,8 +649,9 @@ test('accepted lead queues its conversion without gtag and repeated acknowledgem
   const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
   await submit.click();
   await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+  await sendAnother(page);
   await submit.click();
-  await expect(submit).toBeEnabled();
+  await expect(page.getByRole('heading', { name: 'Запит надіслано' })).toBeVisible();
   await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
 });
 
@@ -650,6 +665,7 @@ test('a broken analytics queue cannot prevent saving or rotate retry behavior in
   await submit.click();
   await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
   await page.evaluate(() => { window.dataLayer = []; });
+  await sendAnother(page);
   await submit.click();
   await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
 });
