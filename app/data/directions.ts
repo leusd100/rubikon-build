@@ -83,7 +83,7 @@ export const directions: readonly Direction[] = [
     heroImage: directionHeroImageAssets.metalokonstruktsii,
     imageAlt: 'Болтовий вузол несучої металоконструкції з фасонними пластинами',
     cardClassName: 'compact',
-    seoTitle: brandedTitle('Металоконструкції у Дніпрі'),
+    seoTitle: brandedTitle('Монтаж металоконструкцій у Дніпрі'),
     seoDescription: 'Організація виготовлення та монтаж металоконструкцій у Дніпропетровській області за документацією замовника.',
   },
   {
@@ -102,7 +102,7 @@ export const directions: readonly Direction[] = [
     heroImage: directionHeroImageAssets['betonni-roboty'],
     imageAlt: 'Армування промислового фундаменту з анкерною групою',
     cardClassName: 'concrete',
-    seoTitle: brandedTitle('Бетонні роботи у Дніпрі'),
+    seoTitle: brandedTitle('Бетонні роботи та фундаменти у Дніпрі'),
     seoDescription: 'Типові фундаменти й бетонні основи у Дніпропетровській області. Спеціалізовані етапи промислових підлог — за окремим погодженням.',
   },
   {
@@ -121,7 +121,7 @@ export const directions: readonly Direction[] = [
     heroImage: directionHeroImageAssets['pokrivelni-roboty'],
     imageAlt: 'Монтаж вузла металевої покрівлі промислової споруди',
     cardClassName: 'roof',
-    seoTitle: brandedTitle('Покрівельні роботи у Дніпрі'),
+    seoTitle: brandedTitle('Промислові покрівлі: монтаж, ремонт у Дніпрі'),
     seoDescription: 'Монтаж і ремонт промислових покрівель у Дніпрі та області: профільований лист, утеплені системи, герметизація вузлів і примикань.',
   },
 ] as const;
