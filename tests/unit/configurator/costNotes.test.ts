@@ -3,10 +3,11 @@ import { costFactorNotes } from '../../../app/lib/configurator/costNotes';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
-const plain = (text: string | undefined) => text?.replaceAll(' ', ' ');
+const plain = (text: string | undefined) => text?.replaceAll('\u00A0', ' ');
 
 function notesFor(overrides: Partial<ConfiguratorState>) {
   const notes = costFactorNotes(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides }));
+  if (!notes) return undefined;
   return {
     dimensions: plain(notes.dimensions),
     structure: notes.structure,
@@ -15,36 +16,50 @@ function notesFor(overrides: Partial<ConfiguratorState>) {
   };
 }
 
-describe('/angary cost factor notes (04.10)', () => {
-  it('say what the configuration holds without crediting the visitor with defaults', () => {
-    // «Ви вказали: холодний, профнастил» after only the width changed — a contour and a cladding nobody had chosen
-    const notes = notesFor({ dimensions: { width: 30, length: 60, height: 7.5 } });
-    expect(notes.dimensions).toBe('У вашій конфігурації: 30 × 60 × 7,5 м, коник 10,5 м · ухил ≈ 11°');
-    expect(notes.structure).toBe('У попередній схемі: металева ферма · центральний ряд опор');
-    expect(notes.insulation).toBe('У вашій конфігурації: холодний контур, профнастил');
-    expect(notes.technology).toBe('Ворота: одні стандартні, 4 × 4 м');
-    expect(Object.values(notes).join(' ')).not.toContain('Ви вказали');
+const STRUCTURE = 'У попередній схемі: металева ферма · центральний ряд опор';
+
+// 08.10, after the audit: a note only for what the visitor answered. The example's values say nothing about the cost.
+describe('/angary cost factor notes (04.10; answered only 08.10)', () => {
+  it('say nothing while the drawing is the untouched example', () => {
+    expect(notesFor({})).toBeUndefined();
   });
 
-  it('name an insulated or undecided contour, and walls and roof of different systems one by one', () => {
-    expect(notesFor({ envelope: 'insulated', wallSystem: 'sandwich-panel', roofSystem: 'sandwich-panel' }).insulation)
-      .toBe('У вашій конфігурації: утеплений контур, сендвіч-панель');
-    expect(notesFor({ envelope: 'undecided' }).insulation).toBe('У вашій конфігурації: контур ще не визначено, профнастил');
-    // it read «Ви вказали: індивідуальна конфігурація, стіни: профнастил, покрівля: сендвіч-панель»
-    expect(notesFor({ envelope: 'insulated', wallSystem: 'profiled-sheet', roofSystem: 'sandwich-panel' }).insulation)
-      .toBe('У вашій конфігурації: стіни — профнастил, покрівля — сендвіч-панель');
-    expect(notesFor({ scope: ['frame', 'walls'] }).insulation).toBe('У вашій конфігурації: холодний контур, стіни: профнастил');
+  it('name the sizes the visitor set, and nothing they did not touch', () => {
+    // «Ви вказали: холодний, профнастил» after only the width changed — a contour and a cladding nobody had chosen
+    expect(notesFor({ dimensions: { width: 30, length: 60, height: 7.5 } })).toEqual({
+      dimensions: 'У вашій конфігурації: 30 × 60 × 7,5 м, коник 10,5 м · ухил ≈ 11°',
+      structure: STRUCTURE,
+      insulation: undefined,
+      technology: undefined,
+    });
+  });
+
+  it('call sizes not known yet an orientation', () => {
+    expect(notesFor({ sizesUnknown: true })?.dimensions).toBe('Орієнтовно: 24 × 60 × 8 м — розміри уточнюємо');
+  });
+
+  it('name the insulation and cladding once answered, in the stamp’s words', () => {
+    expect(notesFor({ envelope: 'insulated', wallSystem: 'sandwich-panel', roofSystem: 'sandwich-panel' })?.insulation)
+      .toBe('У вашій конфігурації: утеплений, сендвіч-панель');
+    expect(notesFor({ envelope: 'undecided' })?.insulation).toBe('У вашій конфігурації: уточнимо, профнастил');
+    // the example's own answer, chosen again, is an answer (07.10): «без утеплення», never the retired «холодний контур»
+    expect(notesFor({ confirmed: ['envelope'] })?.insulation).toBe('У вашій конфігурації: без утеплення, профнастил');
+    // walls and roof of different systems one by one, in lower case mid-sentence
+    expect(notesFor({ envelope: 'insulated', wallSystem: 'profiled-sheet', roofSystem: 'sandwich-panel' })?.insulation)
+      .toBe('У вашій конфігурації: утеплений, стіни: профнастил, покрівля: сендвіч-панель');
+    expect(notesFor({ scopeMode: 'partial', scope: ['frame', 'walls'], envelope: 'insulated' })?.insulation)
+      .toBe('У вашій конфігурації: утеплений, стіни: профнастил');
   });
 
   it('say walls and roof are outside the request rather than «холодний, поза обсягом заявки»', () => {
-    const notes = notesFor({ scope: ['foundation', 'frame'] });
-    expect(notes.insulation).toBe('Стіни й покрівля поза обсягом заявки');
+    const notes = notesFor({ scopeMode: 'partial', scope: ['foundation', 'frame'] });
+    expect(notes?.insulation).toBe('Стіни й покрівля поза обсягом заявки');
     // no walls, no openings in the request: no gate note
-    expect(notes.technology).toBeUndefined();
+    expect(notes?.technology).toBeUndefined();
   });
 
-  it('count the gates, or say there are none', () => {
-    expect(notesFor({ gates: 2, gateType: 'double' }).technology).toBe('Ворота: двоє для заїзду техніки, 5 × 5 м');
-    expect(notesFor({ gates: 0 }).technology).toBe('Без воріт');
+  it('count the gates the visitor asked for, or say there are none', () => {
+    expect(notesFor({ gates: 2, gateType: 'double' })?.technology).toBe('Ворота: двоє для заїзду техніки, 5 × 5 м');
+    expect(notesFor({ gates: 0 })?.technology).toBe('Без воріт');
   });
 });

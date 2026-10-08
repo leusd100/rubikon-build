@@ -24,7 +24,7 @@ describe('deriveSummary', () => {
     expect(summary.dimensionsLabel).toBe(nb('24_×_60_×_8_м'));
     expect(summary.areaSqm).toBe(1440);
     expect(summary.areaLabel).toBe(nb('≈_1\u00A0440_м²'));
-    expect(summary.headlineLabel).toBe(nb('24_×_60_×_8_м_· Холодний'));
+    expect(summary.headlineLabel).toBe(nb('24_×_60_×_8_м_· Без утеплення'));
     expect(summary.structuralVisualizationDescription).toBe(
       nb('Для ширини 24_м у попередній візуалізації показано ферму з центральним рядом опор.'),
     );
@@ -61,27 +61,22 @@ describe('deriveSummary', () => {
   });
 
   it.each([
-    ['cold', 'Холодний', 'profiled-sheet'],
+    ['cold', 'Без утеплення', 'profiled-sheet'],
     ['insulated', 'Утеплений', 'sandwich-panel'],
-    ['undecided', 'Ще не визначено', 'profiled-sheet'],
-  ] as const)('labels envelope "%s" as "%s" when the actual wall/roof system matches its own preset', (envelope, label, system) => {
-    // Phase 3E, brief §18: the simple label only holds while the materials still match what this
-    // envelope choice implies — set them explicitly here (rather than relying on
-    // DEFAULT_CONFIGURATOR_STATE's own profiled-sheet default, which only happens to match
-    // 'cold') so this test exercises the "matches" case specifically, not an accident of the
-    // default state. The "mismatch" case has its own describe block below.
+    ['undecided', 'Уточнимо', 'profiled-sheet'],
+  ] as const)('labels envelope "%s" as "%s" with its usual system (07.10)', (envelope, label, system) => {
     expect(summaryFor({ envelope, wallSystem: system, roofSystem: system }).envelopeLabel).toBe(label);
   });
 
   it('lists scope items in a fixed reading order regardless of toggle order', () => {
-    const summary = summaryFor({ scope: ['roof', 'foundation', 'walls'] });
+    const summary = summaryFor({ scopeMode: 'partial' as const, scope: ['roof', 'foundation', 'walls'] });
 
     expect(summary.scopeLabels).toEqual(['Фундамент', 'Стіни / огороджувальний контур', 'Покрівля']);
     expect(summary.scopeSummaryLabel).toBe('Фундамент + Стіни / огороджувальний контур + Покрівля');
   });
 
   it('says so plainly when no scope item is selected, instead of an empty string', () => {
-    const summary = summaryFor({ scope: [] });
+    const summary = summaryFor({ scopeMode: 'partial' as const, scope: [] });
 
     // under the row label «Обсяг»: «Обсяг: Обсяг робіт ще не обрано» said it twice (04.10)
     expect(summary.scopeSummaryLabel).toBe('Ще не обрано');
@@ -107,23 +102,28 @@ describe('deriveSummary', () => {
   });
 });
 
-describe('envelope preset drift (Phase 3E, brief §18)', () => {
-  it('stops claiming "Утеплений" the moment one system is manually overridden away from its preset', () => {
+// 07.10: «Утеплення» is the thermal answer on its own. A changed material used to turn it into «Індивідуальна
+// конфігурація», and the visitor could no longer tell which envelope they asked for; a sandwich panel carries its own
+// insulation, so it says where (iteration 1, 08.10: also over «Ще не знаю»).
+describe('the insulation label beside the materials (07.10)', () => {
+  it('keeps «Утеплений» when the materials differ, and names them one by one below it', () => {
     const summary = summaryFor({ envelope: 'insulated', wallSystem: 'profiled-sheet', roofSystem: 'sandwich-panel' });
-    expect(summary.envelopeLabel).toBe('Індивідуальна конфігурація');
-    // The real systems are still fully visible right below it — nothing is hidden, just not
-    // mislabelled as the simple preset any more.
+    expect(summary.envelopeLabel).toBe('Утеплений');
     expect(summary.claddingSystemLabel).toBe('Стіни: Профнастил, покрівля: Сендвіч-панель');
   });
 
-  it('stops claiming "Холодний" the same way, in the other direction', () => {
-    const summary = summaryFor({ envelope: 'cold', wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' });
-    expect(summary.envelopeLabel).toBe('Індивідуальна конфігурація');
+  it('says where a sandwich panel brings insulation to a building asked without it', () => {
+    expect(summaryFor({ envelope: 'cold', wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' }).envelopeLabel)
+      .toBe('Лише в стінах (сендвіч-панелі)');
+    expect(summaryFor({ envelope: 'cold', wallSystem: 'profiled-sheet', roofSystem: 'sandwich-panel' }).envelopeLabel)
+      .toBe('Лише в покрівлі (сендвіч-панелі)');
+    expect(summaryFor({ envelope: 'cold', wallSystem: 'sandwich-panel', roofSystem: 'sandwich-panel' }).envelopeLabel)
+      .toBe('У сендвіч-панелях');
   });
 
-  it('"Ще не визначено" never drifts — it never implied a system to begin with', () => {
-    const summary = summaryFor({ envelope: 'undecided', wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' });
-    expect(summary.envelopeLabel).toBe('Ще не визначено');
+  it('lets a sandwich panel answer «Ще не знаю», instead of «Уточнимо» beside «з утеплювачем»', () => {
+    expect(summaryFor({ envelope: 'undecided', wallSystem: 'sandwich-panel', roofSystem: 'profiled-sheet' }).envelopeLabel)
+      .toBe('Лише в стінах (сендвіч-панелі)');
   });
 
   it('dimensions and every other summary fact stay unaffected by a mismatched envelope/system pair', () => {
@@ -150,7 +150,7 @@ describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 
   // nobody had asked for. The 3D renderer already refused to DRAW them in that state
   // (threeSceneModel: "a gate is an opening cut INTO a wall"); the summary simply did not know the
   // rule, which is the same bug one layer up.
-  const noWalls = { scope: ['foundation', 'frame', 'roof'] as ConfiguratorState['scope'] };
+  const noWalls = { scopeMode: 'partial' as const, scope: ['foundation', 'frame', 'roof'] as ConfiguratorState['scope'] };
 
   it('drops gates and doors from the request entirely when walls are not ordered', () => {
     const summary = summaryFor({ ...noWalls, gates: 2, gateType: 'standard', doors: 1 });
@@ -180,19 +180,19 @@ describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 
 
   it('names only the clad surfaces the customer is asking for', () => {
     expect(summaryFor({ ...noWalls }).claddingSystemLabel).toMatch(/^Покрівля: /);
-    expect(summaryFor({ scope: ['foundation', 'frame', 'walls'] }).claddingSystemLabel).toMatch(/^Стіни: /);
-    expect(summaryFor({ scope: ['foundation', 'frame'] }).claddingSystemLabel).toBe('Поза обсягом заявки');
+    expect(summaryFor({ scopeMode: 'partial' as const, scope: ['foundation', 'frame', 'walls'] }).claddingSystemLabel).toMatch(/^Стіни: /);
+    expect(summaryFor({ scopeMode: 'partial' as const, scope: ['foundation', 'frame'] }).claddingSystemLabel).toBe('Поза обсягом заявки');
     // Both in scope and agreeing: still the single combined label, unchanged.
     expect(summaryFor({}).claddingSystemLabel).not.toContain(':');
   });
 
   it('says the contour is outside the request when walls and roof are, and leaves it out of the headline (04.10)', () => {
     // The stamp said «Контур: Холодний» beside «Огородження: Поза обсягом заявки», the route «24 × 60 × 8 м · Холодний»
-    const summary = summaryFor({ scope: ['foundation', 'frame'] });
+    const summary = summaryFor({ scopeMode: 'partial' as const, scope: ['foundation', 'frame'] });
     expect(summary.envelopeLabel).toBe('Поза обсягом заявки');
     expect(summary.headlineLabel).toBe(summary.dimensionsLabel);
     // one surface is enough for a contour
-    expect(summaryFor({ scope: ['frame', 'roof'] }).envelopeLabel).toBe('Холодний');
+    expect(summaryFor({ scopeMode: 'partial' as const, scope: ['frame', 'roof'] }).envelopeLabel).toBe('Без утеплення');
   });
 });
 

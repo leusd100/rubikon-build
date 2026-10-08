@@ -137,8 +137,8 @@ describe('buildThreeScene', () => {
   });
 
   it('mirrors scope into visibility flags without dropping geometry', () => {
-    const on = buildThreeScene(domainFor({ scope: ['foundation', 'frame', 'walls', 'roof'] }));
-    const off = buildThreeScene(domainFor({ scope: [] }));
+    const on = buildThreeScene(domainFor({ scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] }));
+    const off = buildThreeScene(domainFor({ scopeMode: 'partial', scope: [] }));
 
     // footings stay false here regardless of scope — domainFor()'s default foundationType
     // ('engineeringDecision') always resolves to the slab representation, never footings. See the
@@ -189,9 +189,9 @@ describe('buildThreeScene', () => {
     // Real bug, not a hypothetical: caught live on the running preview (both this renderer and
     // SVG's HangarPreview.tsx independently had `gates > 0` alone as the trigger), a gate stayed
     // on screen after switching walls out of scope. Fixed identically in both places.
-    const noGates = buildThreeScene(domainFor({ gates: 0, scope: ['foundation', 'frame', 'walls', 'roof'] }));
-    const gatesNoWalls = buildThreeScene(domainFor({ gates: 2, scope: ['foundation', 'frame', 'roof'] }));
-    const gatesWithWalls = buildThreeScene(domainFor({ gates: 2, scope: ['foundation', 'frame', 'walls', 'roof'] }));
+    const noGates = buildThreeScene(domainFor({ gates: 0, scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] }));
+    const gatesNoWalls = buildThreeScene(domainFor({ gates: 2, scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'] }));
+    const gatesWithWalls = buildThreeScene(domainFor({ gates: 2, scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] }));
 
     expect(noGates.visible.gates).toBe(false);
     expect(gatesNoWalls.visible.gates).toBe(false);

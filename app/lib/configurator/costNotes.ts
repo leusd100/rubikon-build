@@ -34,7 +34,8 @@ export function costFactorNotes(domain: HangarDomainModel): CostFactorNotes | un
   const enclosed = domain.scope.walls || domain.scope.roof;
   if (!enclosed) notes.insulation = 'Стіни й покрівля поза обсягом заявки';
   else if (!fromExample('envelope') || !fromExample('cladding')) {
-    notes.insulation = `У вашій конфігурації: ${lowerFirst(summary.envelopeLabel)}, ${lowerFirst(summary.claddingSystemLabel)}`;
+    // the whole cladding line in lower case, as the step header has it: «стіни: профнастил, покрівля: сендвіч-панель»
+    notes.insulation = `У вашій конфігурації: ${lowerFirst(summary.envelopeLabel)}, ${summary.claddingSystemLabel.toLowerCase()}`;
   }
   // No walls, no openings in the request (deriveSummary's rule) — and no note about them
   if (summary.gatesLabel !== null && !fromExample('openings')) {

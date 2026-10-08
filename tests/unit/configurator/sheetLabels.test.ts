@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { miniReadout, previewDescription, sheetObjectLabel } from '../../../app/components/configurator/sheetLabels';
-import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
+import { deriveDomainModel, sizesProvenance } from '../../../app/lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
 function domainWith(overrides: Partial<ConfiguratorState>) {
@@ -10,21 +10,34 @@ function domainWith(overrides: Partial<ConfiguratorState>) {
 /** The labels keep their parts whole with no-break spaces; what a visitor reads has plain ones */
 const read = (text: string) => text.replaceAll(' ', ' ');
 
-describe('the configurator sheet’s title block (/angary, 03.10)', () => {
-  it('names the default configuration as the example, as the frame drawing does', () => {
+describe('the configurator sheet’s title block (/angary, 03.10; provenance 08.10)', () => {
+  it('names the untouched default configuration as the example, as the frame drawing does', () => {
     const domain = deriveDomainModel(DEFAULT_CONFIGURATOR_STATE);
-    expect(read(sheetObjectLabel(false, domain.dimensions))).toBe('Приклад · 24 × 60 × 8 м');
+    expect(sizesProvenance(domain)).toBe('example');
+    expect(read(sheetObjectLabel(sizesProvenance(domain), domain.dimensions))).toBe('Приклад · 24 × 60 × 8 м');
   });
 
   it('names the visitor’s own configuration, with a decimal comma', () => {
     const domain = domainWith({ dimensions: { width: 16, length: 42, height: 7.5 } });
-    expect(read(sheetObjectLabel(true, domain.dimensions))).toBe('Ваш ангар · 16 × 42 × 7,5 м');
+    expect(sizesProvenance(domain)).toBe('own');
+    expect(read(sheetObjectLabel(sizesProvenance(domain), domain.dimensions))).toBe('Ваш ангар · 16 × 42 × 7,5 м');
+  });
+
+  it('the example’s own sizes, answered as they are, are the visitor’s', () => {
+    const domain = domainWith({ confirmed: ['dimensions'] });
+    expect(read(sheetObjectLabel(sizesProvenance(domain), domain.dimensions))).toBe('Ваш ангар · 24 × 60 × 8 м');
+  });
+
+  it('sizes not known yet are an orientation, not the visitor’s hangar', () => {
+    const domain = domainWith({ sizesUnknown: true, dimensions: { width: 18, length: 36, height: 6 } });
+    expect(sizesProvenance(domain)).toBe('approx');
+    expect(read(sheetObjectLabel(sizesProvenance(domain), domain.dimensions))).toBe('Орієнтовно · 18 × 36 × 6 м');
   });
 
   it('keeps the sizes one piece, so a narrow sheet wraps only after «·»', () => {
     const domain = deriveDomainModel(DEFAULT_CONFIGURATOR_STATE);
     // the one breakable space is the one after «·»
-    expect(sheetObjectLabel(false, domain.dimensions).split(' ')).toEqual(['Приклад\u00A0·', '24\u00A0×\u00A060\u00A0×\u00A08\u00A0м']);
+    expect(sheetObjectLabel('example', domain.dimensions).split(' ')).toEqual(['Приклад\u00A0·', '24\u00A0×\u00A060\u00A0×\u00A08\u00A0м']);
   });
 });
 
@@ -36,6 +49,10 @@ describe('the phone’s mini readout', () => {
   it('leaves the ridge and the gates to their own groups, so it never runs to a second line', () => {
     const readout = read(miniReadout(domainWith({ gates: 2 })));
     expect(readout).not.toMatch(/коник|ворот/);
+  });
+
+  it('marks sizes not known yet with «≈»', () => {
+    expect(read(miniReadout(domainWith({ sizesUnknown: true })))).toBe('≈ 24 × 60 × 8 м');
   });
 
   it('is one unbreakable piece, decimals with a comma', () => {

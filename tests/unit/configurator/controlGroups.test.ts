@@ -10,17 +10,21 @@ function valuesFor(overrides: Partial<ConfiguratorState>) {
   return describeControlGroups(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides }));
 }
 
-describe('phone accordion header values (03.10)', () => {
+describe('step header values (03.10; steps 07.10)', () => {
   it('says what is set in each group of the default configuration', () => {
     expect(valuesFor({})).toEqual({
-      object: 'Ще не вказано',
+      need: 'Ще не вказано',
       dimensions: nb('24_×_60_×_8_м'),
-      envelope: 'Холодний · профнастил',
+      // a cold contour is named by what it lacks (07.10, GPT review): «Холодний» read as a defect
+      envelope: 'Без утеплення · профнастил',
       cladding: 'Профнастил',
       foundation: 'Визначити після розрахунку',
-      scope: '4 з 4 робіт',
+      // the whole list unless the visitor narrows it (scopeMode, 07.10)
+      scope: 'Комплекс робіт',
       // «одні ворота», not «1 ворота» (04.10)
       openings: 'одні ворота · без дверей',
+      space: 'Ще не знаю',
+      project: 'Ще не вказано',
     });
   });
 
@@ -30,12 +34,13 @@ describe('phone accordion header values (03.10)', () => {
       envelope: 'insulated',
       wallSystem: 'sandwich-panel',
       roofSystem: 'sandwich-panel',
-      scope: ['frame', 'walls'],
+      scopeMode: 'partial', scope: ['frame', 'walls'],
       gates: 2,
       doors: 1,
       objectProfile: { purpose: 'storage', project: 'unknown', region: 'Київська область', lifting: 'unknown' },
     });
-    expect(values.object).toBe('Склад · Київська обл.');
+    expect(values.need).toBe('Склад · Київська обл.');
+    expect(values.project).toBe('Ще не вказано');
     expect(values.dimensions).toBe(nb('30_×_72_×_9_м'));
     expect(values.envelope).toBe('Утеплений · стіни: сендвіч-панель');
     expect(values.cladding).toBe('Стіни: Сендвіч-панель');
@@ -44,13 +49,17 @@ describe('phone accordion header values (03.10)', () => {
   });
 
   it('says an opening or an envelope is outside the request when its walls and roof are', () => {
-    const noWalls = valuesFor({ scope: ['foundation', 'frame', 'roof'], gates: 2 });
+    const noWalls = valuesFor({ scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'], gates: 2 });
     expect(noWalls.openings).toBe('Поза обсягом заявки');
-    expect(noWalls.envelope).toBe('Холодний · покрівля: профнастил');
-    const frameOnly = valuesFor({ scope: ['frame'] });
+    expect(noWalls.envelope).toBe('Без утеплення · покрівля: профнастил');
+    const frameOnly = valuesFor({ scopeMode: 'partial', scope: ['frame'] });
     expect(frameOnly.envelope).toBe('Поза обсягом заявки');
     expect(frameOnly.scope).toBe('1 з 4 робіт');
     expect(valuesFor({ gates: 0 }).openings).toBe('без воріт · без дверей');
+  });
+
+  it('marks sizes not known yet as an orientation', () => {
+    expect(valuesFor({ sizesUnknown: true }).dimensions).toBe(nb('уточнюємо · 24_×_60_×_8_м'));
   });
 
   it('has a title for every group it describes', () => {

@@ -32,13 +32,13 @@ describe('deriveDomainModel', () => {
   });
 
   it('resolves scope into named booleans instead of leaving a raw array for every consumer to re-check', () => {
-    const domain = deriveDomainModel(withState({ scope: ['roof', 'walls'] }));
+    const domain = deriveDomainModel(withState({ scopeMode: 'partial', scope: ['roof', 'walls'] }));
 
     expect(domain.scope).toEqual({ foundation: false, frame: false, walls: true, roof: true });
   });
 
   it('resolves an empty scope to all-false, not a missing/undefined shape', () => {
-    expect(deriveDomainModel(withState({ scope: [] })).scope).toEqual({
+    expect(deriveDomainModel(withState({ scopeMode: 'partial', scope: [] })).scope).toEqual({
       foundation: false,
       frame: false,
       walls: false,

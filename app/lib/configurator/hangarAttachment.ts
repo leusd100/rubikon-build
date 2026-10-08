@@ -27,6 +27,14 @@ export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.4.1';
  * sizes are labelled as the defaults, and the form keeps its own «Орієнтовні розміри» field, so the lead's «Габарити»
  * is never the example's 24 × 60 × 8 м on the visitor's behalf.
  */
+// A value after «Назва: » goes lower-case — every item of a list «Фундамент + Металокаркас», not just the first — except
+// a place name, which keeps its capital (08.10: «Область: київська область»)
+const KEEPS_CASE = new Set(['Область']);
+function inLine(label: string, value: string): string {
+  if (KEEPS_CASE.has(label)) return value;
+  return value.split(' + ').map((part) => part.charAt(0).toLowerCase() + part.slice(1)).join(' + ');
+}
+
 export function createHangarAttachment(state: ConfiguratorState): InquiryAttachment {
   const domain = deriveDomainModel(state);
   const brief = createHangarInquiryBrief(domain);
@@ -49,7 +57,7 @@ export function createHangarAttachment(state: ConfiguratorState): InquiryAttachm
     if (!chosen.length) title = 'До заявки додано відповіді про об’єкт';
     // the ridge is the sizes' detail, not a line of its own
     const lines = [...chosen, ...object].filter((row) => row.label !== 'Висота в конику').slice(0, 2).map((row) => {
-      if (row.label !== 'Габарити') return `${row.label}: ${row.value.charAt(0).toLowerCase()}${row.value.slice(1)}`;
+      if (row.label !== 'Габарити') return `${row.label}: ${inLine(row.label, row.value)}`;
       if (!row.value.startsWith('Ще уточнюються')) return row.value;
       const orientation = row.value.slice('Ще уточнюються'.length).replace(' · орієнтир клієнта', ' · орієнтир');
       return `Габарити ще уточнюються${orientation}`;

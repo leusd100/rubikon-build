@@ -95,8 +95,8 @@ describe('projectIsometricScene', () => {
     // Flat, deliberately — the technical view draws the slab as a footprint line, not an extruded
     // box (see isometricProjection.ts's own comment at the call site this exercises). The 3D
     // view is where the slab's real thickness is actually rendered.
-    const on = projectFor({ scope: ['foundation'] });
-    const off = projectFor({ scope: ['frame'] });
+    const on = projectFor({ scopeMode: 'partial', scope: ['foundation'] });
+    const off = projectFor({ scopeMode: 'partial', scope: ['frame'] });
 
     expect(on.foundation.points).toHaveLength(4);
     expect(on.foundation.visible).toBe(true);
@@ -143,7 +143,7 @@ describe('projectIsometricScene', () => {
   });
 
   it('reflects hasFill/envelope from the scene model on wall and roof surfaces', () => {
-    const scene = projectFor({ scope: ['walls'], envelope: 'cold' });
+    const scene = projectFor({ scopeMode: 'partial', scope: ['walls'], envelope: 'cold' });
 
     expect(scene.wallSegments.every((s) => s.hasFill && s.envelope === 'cold')).toBe(true);
     expect(scene.roofSegments.every((s) => !s.hasFill)).toBe(true);
@@ -171,8 +171,8 @@ describe('projectIsometricScene', () => {
   });
 
   it('never omits frame lines when frame is out of scope — `visible` goes false instead', () => {
-    const on = projectFor({ scope: ['frame'] });
-    const off = projectFor({ scope: [] });
+    const on = projectFor({ scopeMode: 'partial', scope: ['frame'] });
+    const off = projectFor({ scopeMode: 'partial', scope: [] });
 
     expect(off.frame.columns).toHaveLength(on.frame.columns.length);
     expect(off.frame.rafters).toHaveLength(on.frame.rafters.length);
@@ -299,15 +299,15 @@ describe('bounds', () => {
   });
 
   it('keeps bounds stable whether or not foundation is in scope — the exact regression the always-present + `visible` pattern exists to prevent', () => {
-    const withF = projectFor({ scope: ['foundation', 'frame', 'walls', 'roof'] }).bounds;
-    const withoutF = projectFor({ scope: ['frame', 'walls', 'roof'] }).bounds;
+    const withF = projectFor({ scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] }).bounds;
+    const withoutF = projectFor({ scopeMode: 'partial', scope: ['frame', 'walls', 'roof'] }).bounds;
 
     expect(withoutF).toEqual(withF);
   });
 
   it('keeps bounds stable whether or not frame is in scope', () => {
-    const withFrame = projectFor({ scope: ['foundation', 'frame', 'walls', 'roof'] }).bounds;
-    const withoutFrame = projectFor({ scope: ['foundation', 'walls', 'roof'] }).bounds;
+    const withFrame = projectFor({ scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] }).bounds;
+    const withoutFrame = projectFor({ scopeMode: 'partial', scope: ['foundation', 'walls', 'roof'] }).bounds;
 
     expect(withoutFrame).toEqual(withFrame);
   });
