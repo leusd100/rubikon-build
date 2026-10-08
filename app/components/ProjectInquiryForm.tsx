@@ -110,6 +110,21 @@ function withFieldError(current: Partial<Record<FieldKey, string>>, key: FieldKe
   return next;
 }
 
+/** A field's message under it while it stands, in place of its hint; the label and the input point at whichever shows */
+function fieldState(errors: Partial<Record<FieldKey, string>>, key: FieldKey, hint?: { id: string; text: string }) {
+  const message = errors[key];
+  if (message) {
+    const id = `inquiry-${key}-error`;
+    return { invalid: true, invalidClass: 'is-invalid', describedBy: id, note: <small id={id} className="inquiry-field-error">{message}</small> };
+  }
+  return {
+    invalid: false,
+    invalidClass: undefined,
+    describedBy: hint?.id,
+    note: hint ? <small id={hint.id} className="inquiry-field-hint">{hint.text}</small> : null,
+  };
+}
+
 /** After a saved request: what went out, in place of the filled form (08.10, audit F155) */
 function InquirySentPanel({ sent, onAnother }: Readonly<{ sent: SentRequest; onAnother: () => void }>) {
   return (
@@ -166,9 +181,9 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const DIRECTION_VALIDITY = ukrainianValidity('direction', DIRECTION_MESSAGES, report);
   // A new brief to send (the configuration changed after the request went out) closes the panel: the form shows it
   const shownSent = leadAttachment ? null : sentPanel;
-  const fieldError = (key: FieldKey) => fieldErrors[key] && (
-    <small id={`inquiry-${key}-error`} className="inquiry-field-error">{fieldErrors[key]}</small>
-  );
+  const nameState = fieldState(fieldErrors, 'name');
+  const phoneState = fieldState(fieldErrors, 'phone', { id: 'phone-hint', text: 'Після +380 введіть 9 цифр' });
+  const directionState = fieldState(fieldErrors, 'direction');
   const [consentAt, setConsentAt] = useState('');
   const [submissionId, setSubmissionId] = useState(() => createSubmissionId());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -356,7 +371,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
           <h3 className="inquiry-form-section-title" id="inquiry-contact-heading">Контакт</h3>
           <div className="inquiry-form-section-body">
             <div className="inquiry-fields inquiry-fields-two">
-              <label className={fieldErrors.name ? 'is-invalid' : undefined}>
+              <label className={nameState.invalidClass}>
                 <span>Ваше ім’я *</span>
                 <input
                   name={enabledFieldName(jsReady, 'name')}
@@ -365,13 +380,13 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                   maxLength={80}
                   autoComplete="name"
                   required
-                  aria-invalid={Boolean(fieldErrors.name)}
-                  aria-describedby={fieldErrors.name ? 'inquiry-name-error' : undefined}
+                  aria-invalid={nameState.invalid}
+                  aria-describedby={nameState.describedBy}
                   {...NAME_VALIDITY}
                 />
-                {fieldError('name')}
+                {nameState.note}
               </label>
-              <label className={fieldErrors.phone ? 'is-invalid' : undefined}>
+              <label className={phoneState.invalidClass}>
                 <span>Телефон *</span>
                 <input
                   name={enabledFieldName(jsReady, 'phone')}
@@ -381,14 +396,14 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                   maxLength={13}
                   defaultValue="+380"
                   title="Введіть номер у форматі +380XXXXXXXXX"
-                  aria-describedby={fieldErrors.phone ? 'inquiry-phone-error' : 'phone-hint'}
-                  aria-invalid={Boolean(fieldErrors.phone)}
+                  aria-describedby={phoneState.describedBy}
+                  aria-invalid={phoneState.invalid}
                   autoComplete="tel"
                   required
                   {...PHONE_VALIDITY}
                 />
                 {/* the error takes the hint's place: one line under the field, never the same thing said twice (08.10) */}
-                {fieldErrors.phone ? fieldError('phone') : <small id="phone-hint" className="inquiry-field-hint">Після +380 введіть 9 цифр</small>}
+                {phoneState.note}
               </label>
             </div>
 
@@ -421,14 +436,14 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
           <h3 className="inquiry-form-section-title" id="inquiry-project-heading" tabIndex={-1}>Завдання</h3>
           <div className="inquiry-form-section-body">
             {!fixedDirection && (
-              <label className={`inquiry-select${fieldErrors.direction ? ' is-invalid' : ''}`}>
+              <label className={['inquiry-select', directionState.invalidClass].filter(Boolean).join(' ')}>
                 <span>Напрям робіт *</span>
                 <select
                   name={enabledFieldName(jsReady, 'direction')}
                   value={chosenDirection}
                   required
-                  aria-invalid={Boolean(fieldErrors.direction)}
-                  aria-describedby={fieldErrors.direction ? 'inquiry-direction-error' : undefined}
+                  aria-invalid={directionState.invalid}
+                  aria-describedby={directionState.describedBy}
                   onInvalid={DIRECTION_VALIDITY.onInvalid}
                   onChange={(event) => {
                     DIRECTION_VALIDITY.onInput(event);
@@ -438,7 +453,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                   <option value="" disabled>Оберіть напрям</option>
                   {inquiryDirectionOptions.map((direction) => <option key={direction}>{direction}</option>)}
                 </select>
-                {fieldError('direction')}
+                {directionState.note}
               </label>
             )}
 
