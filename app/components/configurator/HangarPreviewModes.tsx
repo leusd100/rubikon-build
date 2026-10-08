@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, lazy, useCallback, useId, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DrawingSheet, type SheetCell } from '../DrawingSheet';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
@@ -299,7 +299,8 @@ export function HangarPreviewModes({
     </div>
   ) : null;
 
-  const view = showThree ? (
+  let view: ReactNode;
+  if (showThree) view = (
     <FullscreenPreviewFrame
       active={isFullscreen}
       onExit={exitFullscreen}
@@ -313,11 +314,9 @@ export function HangarPreviewModes({
     >
       {threeCanvas}
     </FullscreenPreviewFrame>
-  ) : effectiveMode === 'frame' && sheet ? (
-    <ConfiguratorFrameView onCaption={setFrameCaption} />
-  ) : (
-    <HangarPreview domain={domain} released={released} />
   );
+  else if (effectiveMode === 'frame' && sheet) view = <ConfiguratorFrameView onCaption={setFrameCaption} />;
+  else view = <HangarPreview domain={domain} released={released} />;
 
   // Fullscreen and secondary 3D actions — brief §10's own suggested hierarchy: mode switch stays
   // primary, everything else stays a small, clearly secondary action beside it. Only meaningful in

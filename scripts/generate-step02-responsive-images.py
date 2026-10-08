@@ -34,24 +34,6 @@ MANIFEST_PATH = "app/data/responsiveImageManifest.ts"
 WIDTHS = [480, 768, 1200]
 QUALITY = 78
 
-# Final, authored `/angary` crops. The source renders remain in public/media/angary so
-# capture-angary-editorial-assets.mjs can keep refreshing its own raw renderer references
-# without overwriting the crops the page actually serves. Crop first, then build every WebP
-# candidate from this exact master so CSS never has to enlarge a full-building render.
-ANGARY_CROPS = [
-    {
-        "source": "media/angary/foundation-slab-accent.jpg",
-        "output": "media/angary/foundation-slab-detail.jpg",
-        "box": (450, 360, 1350, 990),
-    },
-    {
-        "source": "media/angary/foundation-isolated-accent.jpg",
-        "output": "media/angary/foundation-isolated-detail.jpg",
-        "box": (450, 360, 1350, 990),
-    },
-]
-ANGARY_MASTER_SIZE = (1200, 840)
-
 # Paths are relative to public/ (not to public/media/). Output names are still derived
 # from the basename alone, so every pre-existing variant keeps its exact filename and hash.
 FILES = [
@@ -72,13 +54,6 @@ FILES = [
     # resizing is a no-op in this deployment, so every viewport got the full-resolution original.
     "media/about-industrial-concept.webp",
     "photos/serhii-prior-hangar.jpeg",
-    # `/angary` editorial comparisons: the two foundation detail masters above plus
-    # the two already-finalized material cutaways. Their displayed width is ~180–360 CSS px;
-    # 480/768/1200 cover DPR 1/2 without tying quality to a byte target.
-    "media/angary/envelope-profiled-cutaway.jpg",
-    "media/angary/envelope-sandwich-cutaway.jpg",
-    "media/angary/foundation-slab-detail.jpg",
-    "media/angary/foundation-isolated-detail.jpg",
     # /napryamky catalogue: one illustration per direction, different from the hero slides. Shown up to ~575 CSS px
     # wide in the desktop preview and ~100 px in the narrow-screen rows.
     "media/directions-catalog/catalog-angary.webp",
@@ -87,15 +62,6 @@ FILES = [
     "media/directions-catalog/catalog-betonni-roboty.webp",
     "media/directions-catalog/catalog-pokrivelni-roboty.webp",
 ]
-
-
-def build_angary_crops() -> None:
-    for crop in ANGARY_CROPS:
-        source_path = os.path.join(SRC_DIR, crop["source"])
-        output_path = os.path.join(SRC_DIR, crop["output"])
-        source = Image.open(source_path).convert("RGB")
-        detail = source.crop(crop["box"]).resize(ANGARY_MASTER_SIZE, Image.LANCZOS)
-        detail.save(output_path, format="JPEG", quality=92, optimize=True, subsampling=0)
 
 
 def write_manifest(results) -> None:
@@ -124,7 +90,6 @@ def write_manifest(results) -> None:
 
 def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
-    build_angary_crops()
     results = []
 
     for fname in FILES:

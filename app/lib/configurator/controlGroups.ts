@@ -67,7 +67,3 @@ export const CONTROL_STEPS: ControlStep[] = [
   { id: 'frame', title: 'Каркас', groups: ['space'] },
   { id: 'check', title: 'Обсяг', groups: ['scope', 'project'] },
 ];
-
-export function stepOfGroup(group: ControlGroupId): number {
-  return Math.max(0, CONTROL_STEPS.findIndex((step) => step.groups.includes(group)));
-}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCladdingLines, claddingStepM } from '../../../app/lib/configurator/claddingLines';
+import { buildCladdingLines, claddingLineKey, claddingStepM } from '../../../app/lib/configurator/claddingLines';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
 import { buildParametricModel } from '../../../app/lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
@@ -67,5 +67,16 @@ describe('the drawing’s cladding lines', () => {
 
   it('draws different lines for the two systems', () => {
     expect(linesFor({ wallSystem: 'profiled-sheet' }).lines.side).not.toEqual(linesFor({ wallSystem: 'sandwich-panel' }).lines.side);
+  });
+
+  it('names every line on a face by its ends, no two alike (the drawing keys them so)', () => {
+    for (const wallSystem of ['profiled-sheet', 'sandwich-panel'] as const) {
+      for (const dimensions of [DEFAULT_CONFIGURATOR_STATE.dimensions, { width: 12, length: 18, height: 4 }, { width: 50, length: 120, height: 12 }]) {
+        const { lines } = linesFor({ wallSystem, roofSystem: wallSystem, dimensions });
+        for (const face of [lines.side, lines.front, lines.roof]) {
+          expect(new Set(face.map(claddingLineKey)).size).toBe(face.length);
+        }
+      }
+    }
   });
 });
