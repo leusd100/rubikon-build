@@ -444,6 +444,8 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 /* Focused by script after «Обговорити цю конфігурацію» (revealAttachedBrief): not interactive, so no ring; it lands under
    the header (scroll-margin-top on the rule below) */
 .inquiry-config-brief:focus, .inquiry-form-section-title:focus { outline: none; }
+/* …but a keyboard user arriving at the brief sees where they are (08.10, audit F135) */
+.inquiry-config-brief:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 @media (max-width: 760px) { .inquiry-config-brief { scroll-margin-top: 93px; } }
 .inquiry-config-brief { scroll-margin-top: 117px; margin: 0 0 20px; padding: 18px 20px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); background: color-mix(in srgb, var(--color-field) 60%, transparent); }
 /* An attached brief opens the form, above «Контакт» (owner, 03.10): its own ruled band, the card without its gap */
@@ -468,6 +470,12 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-config-brief-heading button, .inquiry-config-edit { min-height: 44px; display: inline-flex; align-items: center; }
 .inquiry-config-brief-heading button:focus-visible, .inquiry-config-edit:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .inquiry-config-brief-heading .inquiry-config-brief-toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text); }
+/* «Не додавати» steps back from the copper of the ways forward (08.10, audit F87) */
+.inquiry-config-brief-heading .inquiry-config-brief-detach { color: var(--color-text-secondary); }
+/* …and leaves a line with the way back in place of the card */
+.inquiry-config-detached { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 0; padding: 12px 16px; color: var(--color-text-secondary); border: 1px dashed var(--color-border-strong); font-size: 14px; }
+.inquiry-config-detached button { min-height: 44px; padding: 0; border: 0; background: none; color: var(--color-accent-strong); font: 700 14px/1.3 var(--font-manrope), sans-serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.inquiry-config-detached button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .inquiry-config-brief-toggle svg { width: 15px; height: 15px; color: var(--color-accent); transition: transform .25s ease; }
 .inquiry-config-brief-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 .inquiry-config-brief-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; margin-top: 16px; padding: 18px 0 2px; border-top: 1px solid var(--color-border); }
@@ -511,8 +519,10 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .inquiry-submit-note { margin: 10px 0 0; color: var(--color-text-muted); font-size: 13px; line-height: 1.5; text-align: center; }
 .inquiry-noscript { margin: 10px 0 0; padding: 10px 12px; color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 9%, transparent); border-left: 3px solid var(--color-accent); font-size: 13px; line-height: 1.5; }
 .inquiry-noscript a { color: var(--color-accent-strong); font-weight: 800; }
-.inquiry-status { display: none; margin: 0; padding: 16px clamp(24px, 2.5vw, 36px); color: var(--color-status-text); background: var(--color-success-surface); border-left: 3px solid var(--color-success); font-size: 12px; line-height: 1.55; }
-.inquiry-status.is-visible { display: block; }
+.inquiry-status { margin: 0; padding: 16px clamp(24px, 2.5vw, 36px); color: var(--color-status-text); background: var(--color-success-surface); border-left: 3px solid var(--color-success); font-size: 15px; line-height: 1.55; }
+/* Empty, the status is on the page for a screen reader — only out of sight — so what it says next is announced (08.10,
+   audit F157: hidden with display:none until its first words, it was often not read out) */
+.inquiry-status:not(.is-visible) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; border: 0; white-space: nowrap; }
 .inquiry-status.is-error { background: var(--color-error-surface); border-left-color: var(--color-error); }
 .inquiry-submit:disabled { opacity: .7; cursor: not-allowed; }
 .inquiry-status-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -759,12 +769,14 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
    --cookie-banner-clearance: its height plus the gap below it. */
 html:has(> body > .cookie-banner) { scroll-padding-bottom: calc(var(--cookie-banner-clearance, 0px) + 12px); }
 body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-clearance, 0px); }
-.cookie-banner { position: fixed; z-index: 200; right: 24px; bottom: 24px; width: min(620px, calc(100% - 48px)); max-height: calc(100vh - 32px); overflow-y: auto; display: grid; grid-template-columns: 1fr auto; gap: 24px; padding: 22px 24px; color: var(--color-dark-text); background: var(--color-dark); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 20px 70px rgba(0,0,0,.35); }
-.cookie-banner strong { display: block; margin-bottom: 6px; font: 600 19px/1.1 var(--font-condensed), sans-serif; text-transform: uppercase; }
-.cookie-banner p { max-width: 430px; margin: 0; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.65; }
-.cookie-banner a { display: inline-block; margin-top: 10px; color: var(--color-accent-on-dark); font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+/* One low strip along the bottom (owner, 08.10): a sentence with its two links, then two equal answers — it no longer
+   covers the working part of a page (audit F152: 22–54 % of the screen, over the configurator's controls and stamp) */
+.cookie-banner { position: fixed; z-index: 200; right: 0; bottom: 0; left: 0; max-height: calc(100vh - 16px); overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 28px; padding: 12px max(24px, calc((100% - var(--container-max)) / 2)) calc(12px + env(safe-area-inset-bottom, 0px)); color: var(--color-dark-text); background: var(--color-dark); border-top: 1px solid rgba(255,255,255,.2); box-shadow: 0 -12px 40px rgba(0,0,0,.28); }
+.cookie-banner p { display: inline; max-width: none; margin: 0 14px 0 0; color: rgba(255,255,255,.82); font-size: 14px; line-height: 1.5; }
+.cookie-banner a { display: inline-block; margin-top: 0; color: var(--color-accent-on-dark); font-size: 13px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.cookie-banner-text { min-width: 0; font-size: 14px; line-height: 1.5; }
 .cookie-banner-body { display: flex; flex-direction: column; gap: 18px; }
-.cookie-banner-links { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; margin-top: 8px; }
+.cookie-banner-links { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; }
 .cookie-banner .cookie-banner-links a { margin-top: 0; }
 .cookie-settings-link { min-height: 24px; padding: 0; color: rgba(255,255,255,.78); border: 0; background: none; font: 700 12px/1 var(--font-manrope), sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .cookie-settings-link:hover { color: var(--color-dark-text); }
@@ -779,15 +791,27 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 .cookie-toggle-options span { display: flex; min-height: 36px; align-items: center; justify-content: center; padding: 6px 10px; color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.28); background: transparent; font: 700 12px/1 var(--font-manrope), sans-serif; letter-spacing: .05em; text-transform: uppercase; text-align: center; transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .cookie-toggle-options input:checked + span { color: var(--color-dark); border-color: var(--color-dark-text); background: var(--color-dark-text); }
 .cookie-toggle-options input:focus-visible + span { outline: 2px solid var(--color-accent-on-dark); outline-offset: 2px; }
-.cookie-actions { display: grid; align-content: end; gap: 8px; }
+.cookie-actions { display: grid; grid-template-columns: 1fr 1fr; align-content: end; gap: 8px; }
 .cookie-actions button { min-height: 42px; padding: 0 16px; color: var(--color-dark-text); border: 1px solid rgba(255,255,255,.28); background: transparent; font: 700 12px/1 var(--font-manrope), sans-serif; letter-spacing: .055em; text-transform: uppercase; cursor: pointer; }
+.cookie-actions button:hover { border-color: var(--color-dark-text); }
+.cookie-actions button:focus-visible { outline: 2px solid var(--color-accent-on-dark); outline-offset: 2px; }
 .cookie-actions .cookie-accept { color: var(--color-on-action); border-color: var(--color-action); background: var(--color-action); }
 .cookie-actions .cookie-accept:hover { border-color: var(--color-action-hover); background: var(--color-action-hover); }
+/* With a mouse the strip is a line, not a block (owner, 08.10: «трошки меншим»): smaller buttons — still well over the
+   24 px target size — and less air. A finger keeps 44 px buttons (the phone rules below). */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .cookie-banner { gap: 8px 24px; padding-top: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .cookie-banner-text, .cookie-banner p { font-size: 13px; }
+  .cookie-banner a { font-size: 12px; }
+  .cookie-settings-link { font-size: 11.5px; }
+  .cookie-actions { gap: 6px; }
+  .cookie-actions button { min-height: 32px; padding: 0 14px; font-size: 11px; }
+}
 
 .privacy-hero { padding: 180px 0 80px; color: var(--color-dark-text); background: var(--color-dark); }
 .privacy-hero h1 { max-width: 980px; margin: 28px 0 24px; font: 400 clamp(56px, 8vw, 106px)/.92 var(--font-display), sans-serif; letter-spacing: -.045em; }
 .privacy-hero > .shell > p:last-child { margin: 0; color: var(--color-dark-text-secondary); font-size: 13px; }
-.not-found-hero .not-found-lead { max-width: 560px; margin: 0; color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.6; }
+.not-found-hero .not-found-lead { display: block; max-width: 560px; margin: 0; color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.6; }
 .not-found-hero .text-link { color: var(--color-dark-text); }
 .privacy-content { max-width: 980px; }
 .privacy-content article { display: grid; grid-template-columns: .7fr 1.3fr; gap: 60px; padding: 36px 0; border-bottom: 1px solid var(--color-border); }
@@ -1042,21 +1066,14 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .footer-messengers .messenger-link { width: 42px; height: 42px; }
   .footer-legal { grid-column: 1 / -1; grid-row: 4; width: 100%; margin: 2px 0 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); }
   .footer-contact-stack > span { grid-column: 1 / -1; grid-row: 5; }
-  /* Compact on phones: title runs into the text, the two equal choices share one row, settings is a text button. */
-  .cookie-banner { right: 10px; bottom: 10px; width: calc(100% - 20px); max-height: calc(100vh - 20px); grid-template-columns: 1fr; gap: 10px; padding: 14px 16px; }
-  .cookie-banner-body > div { font-size: 12px; line-height: 1.45; }
-  .cookie-banner strong { display: inline; margin: 0 .4em 0 0; font-size: 14px; line-height: 1; }
-  .cookie-banner p { display: inline; font-size: 12px; line-height: 1.45; }
-  .cookie-banner-links { margin-top: 4px; }
-  .cookie-actions { grid-template-columns: 1fr 1fr; }
+  /* Phones: the sentence and its links, then the two answers side by side */
+  .cookie-banner { grid-template-columns: 1fr; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .cookie-banner-text, .cookie-banner p { font-size: 13px; line-height: 1.4; }
+  .cookie-banner p { margin-right: 8px; }
+  .cookie-banner-links { gap: 2px 14px; }
+  .cookie-banner a, .cookie-settings-link { font-size: 12.5px; }
   .cookie-actions button { min-height: 44px; padding: 0 10px; }
   .cookie-toggle-options { max-width: none; }
-  /* Narrow phones (≤ 400 px): tighter still, so the banner leaves more of the first screen (UX pass 2026-10) */
-  @media (max-width: 400px) {
-    .cookie-banner { gap: 8px; padding: 11px 13px 12px; }
-    .cookie-banner p, .cookie-banner-body > div { line-height: 1.38; }
-    .cookie-banner-links { margin-top: 2px; }
-  }
   .privacy-hero { padding: 132px 0 62px; }
   .privacy-hero h1 { font-size: clamp(45px, 13vw, 64px); }
   .privacy-content article { grid-template-columns: 1fr; gap: 16px; }
@@ -1442,9 +1459,26 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
   .hero-provenance, .directions-subhero .hero-provenance { top: 88px; right: 16px; bottom: auto; }
 }
 
+/* A phone on its side: the strip stays one row */
+@media (max-height: 500px) and (orientation: landscape) {
+  .cookie-banner { grid-template-columns: minmax(0, 1fr) auto; padding-block: 8px; }
+  .cookie-actions button { min-height: 40px; }
+}
+
 /* The form's fields keep their message under them while it stands, as the consent does (07.10); a field focused to fix
    it lands with its label clear of the fixed header, not under it */
 .inquiry-field-error { display: block; margin-top: 6px; color: var(--color-error); font: 600 13px/1.4 var(--font-manrope), sans-serif; }
 .inquiry-form label.is-invalid :is(input, select) { border-color: var(--color-error); }
 .inquiry-form :is(input, select, textarea) { scroll-margin-top: 156px; }
 @media (max-width: 760px) { .inquiry-form :is(input, select, textarea) { scroll-margin-top: 118px; } }
+
+/* After a saved request (08.10, audit F155): a calm panel in place of the filled form — what went out and how we reply */
+.inquiry-sent { display: grid; gap: 10px; padding: 22px clamp(24px, 2.5vw, 36px); border-left: 3px solid var(--color-success); background: var(--color-success-surface); color: var(--color-status-text); }
+.inquiry-sent h3 { margin: 0; color: var(--color-text); font: 700 20px/1.25 var(--font-manrope), sans-serif; }
+.inquiry-sent dl { display: grid; gap: 6px; margin: 0; }
+.inquiry-sent dl div { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.inquiry-sent dt { color: var(--color-text-muted); font-size: 13px; font-weight: 700; }
+.inquiry-sent dd { margin: 0; color: var(--color-text); font-weight: 600; }
+.inquiry-sent button { justify-self: start; min-height: 44px; padding: 0; border: 0; background: none; color: var(--color-text); font: 700 14px/1.3 var(--font-manrope), sans-serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.inquiry-sent button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+.inquiry-form-fields[hidden] { display: none; }

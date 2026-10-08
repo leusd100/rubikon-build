@@ -140,7 +140,7 @@
   /* While «До заявки» is fixed over the bottom of the screen, what takes the focus scrolls clear of it (04.10: a focused
      FAQ question sat 85 % under it) */
   html:has(.angary-mobile-inquiry-cta:not([hidden])) { scroll-padding-bottom: 70px; }
-  .angary-mobile-inquiry-cta:not([hidden]) { position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 58px; padding: 15px 24px calc(15px + env(safe-area-inset-bottom)); color: var(--color-on-action); background: var(--color-accent-strong); border-top: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 -10px 36px rgba(0, 0, 0, .24); font: 800 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .angary-mobile-inquiry-cta:not([hidden]) { position: fixed; z-index: 90; left: 0; right: 0; bottom: var(--cookie-banner-clearance, 0px); display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 58px; padding: 15px 24px calc(15px + env(safe-area-inset-bottom)); color: var(--color-on-action); background: var(--color-accent-strong); border-top: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 -10px 36px rgba(0, 0, 0, .24); font: 800 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
   .angary-mobile-inquiry-cta:focus-visible { outline: 3px solid var(--color-on-action); outline-offset: -6px; }
 }
 

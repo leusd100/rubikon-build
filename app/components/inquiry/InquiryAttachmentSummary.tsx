@@ -65,6 +65,7 @@ export function InquiryAttachmentSummary({
           {!sent && (
             <button
               type="button"
+              className="inquiry-config-brief-detach"
               onClick={() => {
                 setExpanded(false);
                 // The button unmounts with the brief: focus goes to the form's «Завдання», not to the page body

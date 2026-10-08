@@ -194,9 +194,10 @@ export function HangarInquiryProvider({ children }: { children: ReactNode }) {
     () => (isAttached ? createHangarAttachment(model.configuration) : null),
     [isAttached, model.configuration],
   );
+  const reattach = useCallback(() => dispatch({ type: 'explicit-attach' }), []);
   const source = useMemo(
-    () => ({ attachment, status: model.attachment, detach: detachConfiguration }),
-    [attachment, model.attachment, detachConfiguration],
+    () => ({ attachment, status: model.attachment, detach: detachConfiguration, reattach }),
+    [attachment, model.attachment, detachConfiguration, reattach],
   );
   useInquiryAttachmentSource(source);
 

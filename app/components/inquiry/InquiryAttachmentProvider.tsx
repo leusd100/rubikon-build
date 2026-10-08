@@ -9,6 +9,8 @@ export type InquiryAttachmentSource = {
   attachment: InquiryAttachment | null;
   status: AttachmentStatus;
   detach: () => void;
+  /** Attach it again after «Не додавати» (08.10): the form offers it in place of the card it took away */
+  reattach?: () => void;
 };
 
 /** What the form, the CTAs and the page read: the source's state, and whether its brief has already gone out. */
