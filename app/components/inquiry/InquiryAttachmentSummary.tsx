@@ -45,7 +45,8 @@ export function InquiryAttachmentSummary({
         <div>
           {/* h3, under the form's h2 and beside its «Контакт» / «Завдання»: the brief's own section headings are h4 (sweep 03.10) */}
           <h3 className="inquiry-config-brief-title" id="inquiry-config-brief-title">{sent ? 'Надіслано з вашим запитом' : attachment.title}</h3>
-          <strong>{attachment.headline}</strong>
+          {/* the brief's own words go out as they stand: not translated by the page (08.10) */}
+          <strong translate="no">{attachment.headline}</strong>
           {/* Not a dl: the brief's rows (dl > div) are exactly the lead's text, and the direction is a field of its own */}
           {direction && <p className="inquiry-config-brief-direction"><span>Напрям робіт</span> <b>{direction}</b></p>}
           {sent && <p className="inquiry-config-brief-sent">Повторно не надсилатимемо, доки ви нічого не зміните.</p>}
@@ -87,7 +88,7 @@ export function InquiryAttachmentSummary({
             <h4 id={`inquiry-config-${section.id}-heading`}>{section.heading}</h4>
             <dl>
               {section.rows.map((row) => (
-                <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
+                <div key={row.label}><dt>{row.label}</dt><dd translate="no">{row.value}</dd></div>
               ))}
             </dl>
           </section>

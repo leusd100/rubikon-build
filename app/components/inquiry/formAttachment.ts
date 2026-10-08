@@ -16,6 +16,30 @@ export function isSentAttachment(attachment: InquiryAttachment | null, sentKey: 
   return attachment !== null && sentKey !== null && sentAttachmentKey(attachment) === sentKey;
 }
 
+/** The sent briefs, in this browser only (08.10): no name, no phone — the brief's own text — the last 10, for 30 days */
+const SENT_STORAGE_KEY = 'rubikon-inquiry-sent';
+const SENT_DAYS = 30;
+const SENT_KEEP = 10;
+
+export function readSentKeys(): string[] {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(SENT_STORAGE_KEY) ?? 'null') as { at: number; keys: unknown } | null;
+    if (!stored || typeof stored.at !== 'number' || !Array.isArray(stored.keys)) return [];
+    if (Date.now() - stored.at > SENT_DAYS * 24 * 3600 * 1000) return [];
+    return stored.keys.filter((key): key is string => typeof key === 'string').slice(-SENT_KEEP);
+  } catch {
+    return [];
+  }
+}
+
+export function saveSentKeys(keys: string[]) {
+  try {
+    window.localStorage.setItem(SENT_STORAGE_KEY, JSON.stringify({ at: Date.now(), keys: keys.slice(-SENT_KEEP) }));
+  } catch {
+    // storage off: the sent state lasts this visit only
+  }
+}
+
 export type DimensionsFieldView = {
   /** The visitor's own «Орієнтовні розміри» field is on the form */
   input: boolean;

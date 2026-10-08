@@ -227,3 +227,19 @@
   .ft-sheet.sheet .sheet-stamp > .ft-object { flex: 1 1 0; }
   .ft-sheet .ft-object b { grid-template-areas: "label" "value" "link"; grid-template-columns: none; }
 }
+
+/* The loads in their own colours (07.10, owner: «все одним кольором трохи зливається»), the same as HOME's proof frame
+   (home-v2.css --hv2-load / --hv2-wind): the snow blue, the wind teal — the arrows, the area they press on and the drops
+   running through the frame. The members that carry the load stay copper, so the eye tells the load from the structure. */
+.ft { --ft-snow: #5aa8ff; --ft-wind: #4fd8c8; }
+:root[data-theme="light"] .ft { --ft-snow: #2f7fd6; --ft-wind: #16958a; }
+.ft [data-load="snow"] { --ft-load: var(--ft-snow); }
+.ft [data-load="wind"] { --ft-load: var(--ft-wind); }
+.ft-load .ft-arrows { stroke: var(--ft-load); }
+.ft-load .ft-flow { stroke: var(--ft-load); }
+.ft-drawing .ft-load .ft-plane { fill: var(--ft-load); fill-opacity: .16; }
+.ft-drawing .ft-load .ft-edge { stroke: var(--ft-load); }
+/* the legend names the load in its colour: its first link is what the load presses on */
+.ft-chain li:first-child { color: var(--ft-load); }
+.ft[data-step="4"] .ft-chain[data-load="snow"] li:first-child, .ft[data-step="5"] .ft-chain[data-load="wind"] li:first-child { animation-name: ft-load-on; }
+@keyframes ft-load-on { from { color: var(--color-text-muted); } to { color: var(--ft-load); } }

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
 
 // Phase 3B — 3D build-up integration. `ThreeHangarView` consumes the SAME `useLayerLifecycle`
 // hook and `buildUpSequence.ts` timing table the SVG renderer already uses (see that module's own
@@ -40,15 +41,15 @@ const scopeLabel = {
   roof: 'Покрівля',
 } as const;
 
-// Scoped to the scope-of-work group specifically (not a bare page-wide text match): Phase 3C's
-// material colour presets added their own "Покрівля" / "Обшивка" swatch-group legends to the same
-// 3D view, so an unscoped `getByText('Покрівля')` now matches two elements once in 3D mode.
-function scopeGroup(page: Page) {
-  return page.getByLabel('Обсяг заявки');
+// By its checkbox, not a page-wide text match: Phase 3C's material colour presets and «Матеріали» name their own
+// «Покрівля» groups on the same page. Each work has a checkbox only once «Окремі роботи» is chosen (07.10) — the default
+// «Комплекс робіт» draws all four — so every test that toggles a layer chooses it first.
+function scopeBox(page: Page, item: keyof typeof scopeLabel) {
+  return page.getByRole('checkbox', { name: scopeLabel[item], exact: true });
 }
 
 async function toggleScope(page: Page, item: keyof typeof scopeLabel) {
-  await scopeGroup(page).getByText(scopeLabel[item], { exact: true }).click();
+  await scopeBox(page, item).click();
 }
 
 /** Instruments the canvas's WebGL context to count draw calls, without touching app code — the
@@ -108,6 +109,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);
+    await chooseSeparateWorks(page);
 
     for (const item of ['roof', 'walls', 'frame', 'foundation'] as const) {
       await toggleScope(page, item); // off
@@ -129,8 +131,9 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);
+    await chooseSeparateWorks(page);
 
-    const roof = scopeGroup(page).getByText(scopeLabel.roof, { exact: true });
+    const roof = scopeBox(page, 'roof');
     await roof.click(); // off
     await roof.click(); // on — interrupts the dematerialize that just started
     await roof.click(); // off again — interrupts the materialize that just started
@@ -148,8 +151,11 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);
+    await chooseSeparateWorks(page);
 
     await toggleScope(page, 'frame'); // off — starts a ~350ms dematerialize
+    // the sizes are another step (07.10): one click away, well inside the frame's ~350ms
+    await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-width').fill('40');
     await page.locator('#hc-dimension-width').blur(); // fires while columns/rafters are still shrinking
     await page.waitForTimeout(500);
@@ -163,6 +169,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);
+    await chooseSeparateWorks(page);
 
     await toggleScope(page, 'roof');
     await toggleScope(page, 'roof');
@@ -176,6 +183,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await installDrawCallCounter(page);
     await openConfigurator(page);
     await enterThreeMode(page);
+    await chooseSeparateWorks(page);
 
     await page.waitForTimeout(300); // let the initial mount's own frame(s) settle
     await toggleScope(page, 'roof'); // off — the only thing that should cause further draw calls
@@ -190,11 +198,13 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
 
   test('switching Technical → 3D → Technical mid build-up preserves configuration exactly', async ({ page }) => {
     await openConfigurator(page);
+    await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-length').fill('80');
     await page.locator('#hc-dimension-length').blur();
     const summaryBefore = await page.locator('.hc-summary-facts').innerText();
 
     await enterThreeMode(page);
+    await chooseSeparateWorks(page);
     await toggleScope(page, 'walls'); // start a transition in 3D
     await page.getByRole('button', { name: 'Технічний вид', exact: true }).click(); // switch away mid-flight
 
@@ -204,6 +214,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     // by the mode switch.
     await expect(page.locator('.hc-side-left polygon.no-walls').first()).toBeVisible();
     expect(await page.locator('.hc-summary-facts').innerText()).not.toBe(summaryBefore); // walls did change
+    await openControlGroup(page, 'dimensions');
     await expect(page.locator('#hc-dimension-length')).toHaveValue('80'); // but nothing else drifted
   });
 });

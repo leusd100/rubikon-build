@@ -1356,3 +1356,14 @@
   /* the mini drawing held under the header while configuring takes less of the phone (it was 39% of the screen) */
   .hangar-configurator-embedded .hc-layout[data-configuring] :is(.hc-preview-svg, .hc-preview-canvas, .hc-preview-loading) { height: 46vw; min-height: 170px; }
 }
+
+/* The cladding's lines (07.10, claddingLines.ts): the profiled sheet's upright ribs, the sandwich panels' joints across
+   the wall, both down the roof's slope. Quieter than the bay seams — a surface's texture, not structure — and the panel
+   joints a step stronger than the sheet's ribs, so the two systems read apart. */
+.hc-cladding line {
+  stroke: var(--color-dark-text-muted);
+  stroke-width: .5;
+  stroke-opacity: .55;
+  vector-effect: non-scaling-stroke;
+}
+.hc-cladding-sandwich-panel line { stroke: var(--color-dark-text-secondary); stroke-width: .75; stroke-opacity: .5; }

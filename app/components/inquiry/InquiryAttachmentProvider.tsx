@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { AttachmentStatus, InquiryAttachment } from '../../lib/inquiry/attachment';
-import { isSentAttachment, sentAttachmentKey } from './formAttachment';
+import { readSentKeys, saveSentKeys, sentAttachmentKey } from './formAttachment';
 
 export type InquiryAttachmentSource = {
   /** The attachment's content — present only while it is attached. */
@@ -21,6 +21,8 @@ export type InquiryAttachmentState = InquiryAttachmentSource & {
    * stop asking to send it. An edit in the configurator or the planner makes a new brief, and this is false again.
    */
   sent: boolean;
+  /** A brief went out from this page (this visit or a recent one): with `sent` false, the attached one changed since */
+  sentBefore: boolean;
   /** For the form, after a saved lead that carried `attachment`. */
   markSent: (attachment: InquiryAttachment) => void;
 };
@@ -40,8 +42,15 @@ const AttachmentContext = createContext<InquiryAttachmentState | null>(null);
  */
 export function InquiryAttachmentProvider({ children }: { children: ReactNode }) {
   const [source, setSource] = useState<InquiryAttachmentSource | null>(null);
-  // The last brief a saved lead carried: kept here, not by the source, so the hangar and the grain brief share the rule
-  const [sentKey, setSentKey] = useState<string | null>(null);
+  // The briefs saved leads carried: kept here, not by the source, so the hangar and the grain brief share the rule — every
+  // one of them, not only the last (08.10, audit: a variant sent earlier and returned to looked unsent), and in this
+  // browser across a reload (formAttachment.ts readSentKeys), so a sent brief does not come back asking to be sent
+  const [sentKeys, setSentKeys] = useState<string[]>([]);
+  useEffect(() => {
+    const stored = readSentKeys();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read once after hydration: the server knows nothing of it
+    if (stored.length) setSentKeys(stored);
+  }, []);
   const sources = useRef(0);
   const registry = useMemo<AttachmentRegistry>(() => ({
     publish: setSource,
@@ -55,10 +64,19 @@ export function InquiryAttachmentProvider({ children }: { children: ReactNode })
       };
     },
   }), []);
-  const markSent = useCallback((attachment: InquiryAttachment) => setSentKey(sentAttachmentKey(attachment)), []);
+  const markSent = useCallback((attachment: InquiryAttachment) => setSentKeys((current) => {
+    const next = [...current.filter((key) => key !== sentAttachmentKey(attachment)), sentAttachmentKey(attachment)];
+    saveSentKeys(next);
+    return next;
+  }), []);
   const state = useMemo<InquiryAttachmentState | null>(
-    () => (source ? { ...source, sent: isSentAttachment(source.attachment, sentKey), markSent } : null),
-    [source, sentKey, markSent],
+    () => (source ? {
+      ...source,
+      sent: source.attachment !== null && sentKeys.includes(sentAttachmentKey(source.attachment)),
+      sentBefore: source.attachment !== null && sentKeys.some((key) => key.startsWith(`${source.attachment!.kind}@`)),
+      markSent,
+    } : null),
+    [source, sentKeys, markSent],
   );
 
   return (

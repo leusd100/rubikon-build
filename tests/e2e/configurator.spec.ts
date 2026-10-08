@@ -1,10 +1,36 @@
 import { expect, test, type Page } from '@playwright/test';
+import { backToDrawing, chooseSeparateWorks, openControlGroup, openThree } from './configurator.helpers';
 
 async function openConfigurator(page: Page) {
   await page.goto('/configurator-preview', { waitUntil: 'load' });
   const essentialCookiesButton = page.getByRole('button', { name: 'Лише необхідні', exact: true });
   await expect(essentialCookiesButton).toBeVisible({ timeout: 10_000 });
   await essentialCookiesButton.click();
+}
+
+/** A work's own checkbox in «Обсяг робіт» — there only once «Окремі роботи» is chosen (chooseSeparateWorks, 07.10) */
+function scopeBox(page: Page, name: 'Фундамент' | 'Металокаркас' | 'Стіни / огороджувальний контур' | 'Покрівля') {
+  return page.getByRole('checkbox', { name, exact: true });
+}
+
+/** The gate count's option card («0», «1», «2») — the step's other option cards carry words, not bare digits */
+function gateCount(page: Page, count: 0 | 1 | 2) {
+  return page.locator('label.hc-option-card', { has: page.locator('input[name="hc-gates"]'), hasText: new RegExp(`^${count}$`) });
+}
+
+/** «Для заїзду техніки · 5 × 5 м»: the type's size is in its name since 07.10 */
+function equipmentGate(page: Page) {
+  return page.locator('label.hc-option-card', { has: page.locator('input[name="hc-gate-type"]'), hasText: 'Для заїзду техніки' });
+}
+
+/** «Висота в конику» is a refinement, folded under the sizes unless the visitor set it (07.10) */
+async function openRidge(page: Page) {
+  await openControlGroup(page, 'dimensions');
+  const more = page.locator('details.hc-more');
+  if (!(await more.evaluate((element) => (element as HTMLDetailsElement).open))) {
+    await more.locator('summary').click();
+  }
+  await expect(page.locator('#hc-dimension-ridge')).toBeVisible();
 }
 
 test.describe('hangar configurator POC', () => {
@@ -29,7 +55,8 @@ test.describe('hangar configurator POC', () => {
 
   test('changing a dimension updates both the summary text and the on-screen dimension label', async ({ page }) => {
     await openConfigurator(page);
-    const widthInput = page.getByRole('spinbutton', { name: /Ширина/i }).or(page.locator('#hc-dimension-width'));
+    await openControlGroup(page, 'dimensions');
+    const widthInput = page.locator('#hc-dimension-width');
 
     await widthInput.fill('30');
     await widthInput.blur();
@@ -40,6 +67,7 @@ test.describe('hangar configurator POC', () => {
 
   test('area recalculates as width × length', async ({ page }) => {
     await openConfigurator(page);
+    await openControlGroup(page, 'dimensions');
     const widthInput = page.locator('#hc-dimension-width');
     const lengthInput = page.locator('#hc-dimension-length');
 
@@ -59,7 +87,11 @@ test.describe('hangar configurator POC', () => {
     await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(1);
     await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(0);
     await expect(page.locator('.hc-side-left polygon.has-walls')).toHaveCount(10);
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
+    // «Комплекс робіт» draws every work; a work can be left out only from «Окремі роботи» (07.10)
+    await chooseSeparateWorks(page);
+    await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(1);
+    await expect(page.locator('.hc-summary-facts')).toContainText('Стіни');
+    await scopeBox(page, 'Стіни / огороджувальний контур').click();
 
     await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(1);
     await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(0);
@@ -68,32 +100,38 @@ test.describe('hangar configurator POC', () => {
 
   test('gate size class widens and heightens the opening, and is only offered when a gate exists', async ({ page }) => {
     await openConfigurator(page);
+    await openControlGroup(page, 'openings');
 
-    const equipmentOption = page.getByText('Для заїзду техніки', { exact: true });
+    const equipmentOption = equipmentGate(page);
     await expect(equipmentOption).toBeVisible();
 
     const standardBox = await page.locator('.hc-preview-svg .hc-gate').first().boundingBox();
     await equipmentOption.click();
+    await expect(equipmentOption.locator('input')).toBeChecked();
     const wideBox = await page.locator('.hc-preview-svg .hc-gate').first().boundingBox();
 
     expect(wideBox!.width).toBeGreaterThan(standardBox!.width);
     expect(wideBox!.height).toBeGreaterThan(standardBox!.height);
 
     // With no gate there is nothing to size, so the choice is withdrawn rather than shown inert.
-    await page.locator('.hc-option-card', { hasText: '0' }).click();
+    await gateCount(page, 0).click();
     await expect(equipmentOption).toHaveCount(0);
   });
 
   test('the gate size class survives a switch to 3D and back', async ({ page }) => {
     await openConfigurator(page);
-    await page.getByText('Для заїзду техніки', { exact: true }).click();
+    await openControlGroup(page, 'openings');
+    await equipmentGate(page).click();
+    await expect(equipmentGate(page).locator('input')).toBeChecked();
+    await expect(page.locator('.hc-summary-facts')).toContainText('Одні для заїзду техніки');
 
-    await page.getByRole('button', { name: '3D', exact: true }).click();
-    await expect(page.locator('.hc-preview-surface canvas')).toBeVisible({ timeout: 20_000 });
-    await page.getByRole('button', { name: 'Технічний вид', exact: true }).click();
+    await openThree(page);
+    await backToDrawing(page);
 
     await expect(page.locator('.hc-preview-svg')).toBeVisible();
-    await expect(page.getByText('Для заїзду техніки', { exact: true })).toBeVisible();
+    await expect(equipmentGate(page)).toBeVisible();
+    await expect(equipmentGate(page).locator('input')).toBeChecked();
+    await expect(page.locator('.hc-summary-facts')).toContainText('Одні для заїзду техніки');
   });
 
   // Reported bug: the dimension boxes clamped on every keystroke, so clearing one produced
@@ -101,6 +139,7 @@ test.describe('hangar configurator POC', () => {
   // first digit is below the minimum was therefore impossible.
   test('a dimension box accepts a value typed digit by digit after being cleared', async ({ page }) => {
     await openConfigurator(page);
+    await openControlGroup(page, 'dimensions');
 
     const length = page.locator('#hc-dimension-length');
     await length.click();
@@ -122,6 +161,9 @@ test.describe('hangar configurator POC', () => {
 
   test('an out-of-range typed value is clamped once, on blur', async ({ page }) => {
     await openConfigurator(page);
+    await openControlGroup(page, 'dimensions');
+    const largerHangar = page.getByText('Більший ангар? Вкажіть розміри в заявці.', { exact: false });
+    await expect(largerHangar).toHaveCount(0);
 
     const width = page.locator('#hc-dimension-width');
     await width.click();
@@ -132,10 +174,40 @@ test.describe('hangar configurator POC', () => {
 
     await width.blur();
     await expect(width).toHaveValue('50');
+    // The clamp is said, not silent (04.10), and at the largest size offered the way to a larger hangar is the request
+    // (08.10)
+    await expect(page.locator('#hc-dimension-width-note')).toContainText('до 50');
+    await expect(largerHangar).toBeVisible();
+    await expect(page.locator('.hc-summary-dimensions')).toHaveText('50 × 60 × 8 м');
+  });
+
+  test('focusing a size and leaving it without typing answers nothing; typing does, even the example’s number', async ({ page }) => {
+    // 07.10, audit: a blur used to commit the value it showed, so a click alone made the example's sizes the visitor's
+    await openConfigurator(page);
+    await openControlGroup(page, 'dimensions');
+    const sizeTab = page.locator('#hc-step-size-tab');
+
+    const width = page.locator('#hc-dimension-width');
+    await width.click();
+    await width.blur();
+    await expect(width).toHaveValue('24');
+    await openControlGroup(page, 'need');
+    // A step reads «done» only once answered (data-done)
+    await expect(sizeTab).not.toHaveAttribute('data-done', '');
+
+    await openControlGroup(page, 'dimensions');
+    await width.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('24');
+    await width.blur();
+    await expect(width).toHaveValue('24');
+    await openControlGroup(page, 'need');
+    await expect(sizeTab).toHaveAttribute('data-done', '');
   });
 
   test('abandoning an empty box restores the previous value rather than the minimum', async ({ page }) => {
     await openConfigurator(page);
+    await openControlGroup(page, 'dimensions');
 
     const width = page.locator('#hc-dimension-width');
     await width.click();
@@ -148,6 +220,7 @@ test.describe('hangar configurator POC', () => {
 
   test('the ridge height is adjustable and clamped to the range shown for the current width', async ({ page }) => {
     await openConfigurator(page);
+    await openRidge(page);
 
     const ridge = page.locator('#hc-dimension-ridge');
     await expect(ridge).toHaveValue('10,6');
@@ -171,6 +244,7 @@ test.describe('hangar configurator POC', () => {
 
   test('widening the building keeps the ridge legal for the new footprint', async ({ page }) => {
     await openConfigurator(page);
+    await openRidge(page);
 
     const ridge = page.locator('#hc-dimension-ridge');
     await ridge.click();
@@ -189,17 +263,18 @@ test.describe('hangar configurator POC', () => {
 
   test('gate count controls how many gate shapes render and what the summary says', async ({ page }) => {
     await openConfigurator(page);
+    await openControlGroup(page, 'openings');
 
     // Phase 3F.1: the summary now carries the gate's own real, fixed size alongside count/type
     // (brief §D), not just a bare count — counted «одні / двоє» since 04.10.
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(1);
     await expect(page.locator('.hc-summary-facts')).toContainText('Одні стандартні, 4 × 4 м');
 
-    await page.locator('.hc-option-card', { hasText: '2' }).click();
+    await gateCount(page, 2).click();
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(2);
     await expect(page.locator('.hc-summary-facts')).toContainText('Двоє стандартних, 4 × 4 м');
 
-    await page.locator('.hc-option-card', { hasText: '0' }).click();
+    await gateCount(page, 0).click();
     await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(0);
     await expect(page.locator('.hc-summary-facts')).toContainText('Без воріт');
   });
@@ -219,17 +294,19 @@ test.describe('hangar configurator POC', () => {
     const gate = page.locator('.hc-preview-svg .hc-gate').first();
     await expect(gate).toHaveAttribute('class', /hc-phase-visible/);
 
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls off
+    await chooseSeparateWorks(page);
+    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls off
     await expect(gate).toHaveAttribute('class', /hc-phase-(dematerializing|hidden)/);
     await expect(gate).not.toHaveAttribute('class', /hc-phase-visible/);
 
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls back on
+    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls back on
     await expect(gate).toHaveAttribute('class', /hc-phase-(materializing|visible)/);
   });
 
   test('respects prefers-reduced-motion — no animation classes block the update', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openConfigurator(page);
+    await openControlGroup(page, 'dimensions');
 
     const widthInput = page.locator('#hc-dimension-width');
     await widthInput.fill('45');
@@ -268,13 +345,22 @@ test.describe('hangar configurator POC — mobile', () => {
     expect(order).toBe(true);
   });
 
-  // The phone accordion is /angary's (03.10): this screen has no mini drawing to scroll under, so its groups stay open
-  test('keeps every control group open, «Об’єкт» first', async ({ page }) => {
+  // Until 07.10 this screen kept every group open on a phone (the accordion was /angary's). The groups are now walked as
+  // five steps on every width and on both pages, one open at a time, «Задача» first.
+  test('walks the controls as steps, one open at a time, «Задача» first', async ({ page }) => {
     await openConfigurator(page);
-    await expect(page.locator('.hc-group-toggle')).toHaveCount(0);
-    await expect(page.locator('.hc-control-group h3').first()).toHaveText('Об’єкт');
-    await expect(page.locator('#hc-dimension-width')).toBeVisible();
+    const tabs = page.getByRole('tablist', { name: 'Кроки конфігурації' }).getByRole('tab');
+    await expect(tabs).toHaveCount(5);
+    await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+    await expect(tabs.first()).toContainText('Задача');
+    await expect(page.locator('.hc-step-panel:visible')).toHaveCount(1);
     await expect(page.locator('#hc-object-region')).toBeVisible();
+    await expect(page.locator('#hc-dimension-width')).toBeHidden();
+
+    await openControlGroup(page, 'dimensions');
+    await expect(page.locator('.hc-step-panel:visible')).toHaveCount(1);
+    await expect(page.locator('#hc-dimension-width')).toBeVisible();
+    await expect(page.locator('#hc-object-region')).toBeHidden();
   });
 
   test('summary is collapsible', async ({ page }) => {
@@ -336,18 +422,21 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
     await openConfigurator(page);
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/);
 
-    await page.getByText('Фундамент', { exact: true }).click();
+    await chooseSeparateWorks(page);
+    await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/);
+    await scopeBox(page, 'Фундамент').click();
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-dematerializing/);
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 2000 });
 
-    await page.getByText('Фундамент', { exact: true }).click();
+    await scopeBox(page, 'Фундамент').click();
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-materializing/);
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/, { timeout: 2000 });
   });
 
   test('columns and rafters stage in sequence — rafters only start once columns have (a real build order, not simultaneous)', async ({ page }) => {
     await openConfigurator(page);
-    await page.getByText('Металокаркас', { exact: true }).click(); // off
+    await chooseSeparateWorks(page);
+    await scopeBox(page, 'Металокаркас').click(); // off
 
     const columnsDelay = await page.locator('.hc-columns line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
     const raftersDelay = await page.locator('.hc-rafters line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
@@ -358,6 +447,7 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
     await openConfigurator(page);
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-visible/);
 
+    await openControlGroup(page, 'dimensions');
     const widthInput = page.locator('#hc-dimension-width');
     await widthInput.fill('40');
     await widthInput.blur();
@@ -370,10 +460,11 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
 
   test('toggling one scope item never replays an unrelated layer\'s build-up', async ({ page }) => {
     await openConfigurator(page);
+    await chooseSeparateWorks(page);
     const before = await firstColumnClass(page);
     expect(before).toMatch(/hc-phase-visible/);
 
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls, not frame
+    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls, not frame
     await page.waitForTimeout(50);
     const after = await firstColumnClass(page);
     expect(after).toBe(before); // no transitional class was ever entered
@@ -381,7 +472,8 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
 
   test('rapid ON/OFF/ON settles cleanly on the final requested state', async ({ page }) => {
     await openConfigurator(page);
-    const foundationToggle = page.getByText('Фундамент', { exact: true });
+    await chooseSeparateWorks(page);
+    const foundationToggle = scopeBox(page, 'Фундамент');
 
     await foundationToggle.click();
     await foundationToggle.click();
@@ -398,7 +490,8 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
     const duration = await page.locator('.hc-foundation').evaluate((el) => (el as HTMLElement).style.transitionDuration);
     expect(parseFloat(duration)).toBe(0);
 
-    await page.getByText('Фундамент', { exact: true }).click();
+    await chooseSeparateWorks(page);
+    await scopeBox(page, 'Фундамент').click();
     // Never observe an in-flight phase — it must resolve to hidden on the very next paint.
     await expect(page.locator('.hc-foundation')).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 300 });
     await expect(page.locator('.hc-foundation')).not.toHaveAttribute('class', /hc-phase-dematerializing/);
@@ -426,7 +519,8 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     await openConfigurator(page);
     await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
 
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click();
+    await chooseSeparateWorks(page);
+    await scopeBox(page, 'Стіни / огороджувальний контур').click();
     await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-dematerializing/);
     // Walls are independently triggered (their own checkbox, not part of the frame group) — zero
     // start offset, so this settles within its own ~250ms duration; timeout padded well past
@@ -436,24 +530,26 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
 
   test('roof stages a real materialize/dematerialize transition, independent of walls', async ({ page }) => {
     await openConfigurator(page);
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls off
+    await chooseSeparateWorks(page);
+    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls off
 
     // Roof must be unaffected by the walls toggle above (no cross-layer replay)...
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
 
-    // ...but does stage its own transition when its own scope item changes. Scoped to the
-    // scope-of-work group: Phase 3D's own "Огороджувальні конструкції" section added its own
-    // "Покрівля" heading to the same page.
-    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
+    // ...but does stage its own transition when its own scope item changes. By its checkbox: «Матеріали» names its own
+    // «Покрівля» radiogroup on the same page.
+    await scopeBox(page, 'Покрівля').click();
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-dematerializing/);
   });
 
   test('gates replay on the 0↔some transition, never on a 1↔2 count change', async ({ page }) => {
     await openConfigurator(page);
     await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
+    await openControlGroup(page, 'openings');
 
     // 1 → 2 gates: never touches the gate layer's phase.
-    await page.locator('.hc-option-card', { hasText: '2' }).click();
+    await gateCount(page, 2).click();
+    await expect(page.locator('.hc-gate')).toHaveCount(2);
     await page.waitForTimeout(50);
     await expect(page.locator('.hc-gate').first()).toHaveAttribute('class', /hc-phase-visible/);
     await expect(page.locator('.hc-gate').first()).not.toHaveAttribute('class', /hc-phase-materializing/);
@@ -463,7 +559,7 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     // itself, so there is nothing left to render a fade-out from once count hits 0 (a disclosed,
     // low-impact limitation: gates are the lowest-emphasis layer, and the fade-*in* on 0→some is
     // unaffected). Observable behaviour is the outline/cutout disappearing with the geometry.
-    await page.locator('.hc-option-card', { hasText: '0' }).click();
+    await gateCount(page, 0).click();
     await expect(page.locator('.hc-gate-outline')).toHaveCount(0);
   });
 
@@ -487,6 +583,7 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
     await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
 
+    await openControlGroup(page, 'dimensions');
     const widthInput = page.locator('#hc-dimension-width');
     await widthInput.fill('40');
     await widthInput.blur();
@@ -501,8 +598,9 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openConfigurator(page);
 
-    // Scoped to the scope-of-work group — see the same fix earlier in this file.
-    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click();
+    // By its checkbox — see the same note earlier in this file.
+    await chooseSeparateWorks(page);
+    await scopeBox(page, 'Покрівля').click();
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 300 });
     await expect(page.locator('.hc-top polygon').first()).not.toHaveAttribute('class', /hc-phase-dematerializing/);
   });

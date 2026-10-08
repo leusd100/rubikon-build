@@ -1,4 +1,4 @@
-/* The configurator's controls: «Об’єкт» and the phone accordion (03.10). Imported by ConfiguratorControls.tsx only. The
+/* The configurator's controls: «Об’єкт» and the three steps (07.10). Imported by ConfiguratorControls.tsx only. The
    shared look of fields, cards and notes stays in configurator-preview/configurator.css. */
 
 /* ── «Об’єкт» ─────────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -30,77 +30,123 @@
   .hc-stamp-row .hc-summary-facts > div.hc-fact-purpose { border-left: 0; }
 }
 
-/* ── Phone accordion (/angary ≤ 760 px) ───────────────────────────────────────────────────────────────────────────────
-   Set by ConfiguratorControls only on a phone, so the desktop and the no-JavaScript page never see these rules: there
-   the groups keep their headings and stay open. The header is the whole row — a 64 px target — with the group's value
-   on a second, smaller line. */
-.hc-controls[data-accordion] .hc-control-group { padding: 0; }
-.hc-controls[data-accordion] .hc-group-heading { margin: 0; }
-.hc-controls[data-accordion] .hc-group-panel { padding: 2px 20px 24px; }
-
-.hc-group-toggle {
+/* ── Three steps (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────
+   The tabs sit on top of the panel as one row of three equal cells, a drawing's title-block row: the number, the step's
+   name, and on a second line what is set in it. The open step is the paper-coloured cell; a passed step keeps its
+   number in copper. */
+.hc-steps {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 14px;
-  width: 100%;
-  min-height: 64px;
-  padding: 12px 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--color-border);
+}
+.hc-step-tab {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  justify-items: start;
+  row-gap: 8px;
+  min-height: 96px;
+  padding: 14px 14px 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--color-text);
+  color: var(--color-text-secondary);
   text-align: left;
   cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-premium), color var(--duration-fast) var(--ease-premium);
 }
-.hc-group-title { font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-.hc-group-value {
-  grid-column: 1;
-  margin-top: 6px;
+.hc-step-tab + .hc-step-tab { border-left: 1px solid var(--color-border); }
+/* the open step's edge: a copper rule along the bottom, over the row's own */
+.hc-step-tab::after {
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 3px;
+  background: var(--color-accent);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--duration-medium) var(--ease-premium);
+}
+.hc-step-tab[aria-selected='true'] { background: var(--color-surface-elevated); color: var(--color-text); }
+.hc-step-tab[aria-selected='true']::after { transform: none; }
+.hc-step-tab:hover:not([aria-selected='true']) { color: var(--color-text); background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.hc-step-tab:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
+.hc-step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid currentColor;
+  font: 700 12px/1 var(--font-condensed), sans-serif;
+}
+.hc-step-tab[aria-selected='true'] .hc-step-number { border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
+.hc-step-tab[data-done] .hc-step-number { border-color: var(--color-accent); color: var(--color-accent-strong); }
+.hc-step-title { font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; overflow-wrap: normal; }
+.hc-step-value {
+  max-width: 100%;
   overflow: hidden;
-  color: var(--color-text-secondary);
-  font: 500 14px/1.3 var(--font-manrope), sans-serif;
-  letter-spacing: 0;
-  text-transform: none;
+  color: var(--color-text-muted);
+  font: 500 13px/1.3 var(--font-manrope), sans-serif;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.hc-group-toggle::after {
-  content: '+';
-  /* drawn, not read: generated content is part of the button's name («Розміри 24 × 60 × 8 м +»); «/ ''» is its empty
-     alternative text, and a browser without the syntax keeps the line above (04.10) */
-  content: '+' / '';
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  color: var(--color-text-muted);
-  font: 400 22px/1 var(--font-manrope), sans-serif;
+.hc-step-tab[aria-selected='true'] .hc-step-value { color: var(--color-text-secondary); }
+
+/* Under each step: a square back arrow on the left, the next step filling the rest of the row */
+.hc-step-nav {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 18px 22px 22px;
+  border-top: 1px solid var(--color-border);
 }
-.hc-group-toggle[aria-expanded='true']::after { content: '\2212'; content: '\2212' / ''; color: var(--color-text); }
-.hc-group-toggle[aria-expanded='true'] .hc-group-value { color: var(--color-text-muted); }
-.hc-group-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
+.hc-step-back, .hc-step-next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--color-border-control);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: 700 13px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+.hc-step-back { flex: none; width: 48px; padding: 0; font-size: 18px; }
+.hc-step-next { flex: 1 1 auto; min-width: 0; text-align: center; border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
+.hc-step-back:hover { border-color: var(--color-text); }
+.hc-step-next:hover { background: var(--color-accent-strong); border-color: var(--color-accent-strong); }
+.hc-step-back:focus-visible, .hc-step-next:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* A step that opens arrives, it does not pop: the panel fades up a few pixels (none under reduced motion, globals.css) */
+.hc-step-panel:not([hidden]) { animation: hc-step-in var(--duration-medium) var(--ease-premium); }
+@keyframes hc-step-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* Without JavaScript ([data-theme] is set by the head script) the tabs cannot switch: every step is open, one after the
+   other, and the tabs and the step buttons are not shown */
+/* In Tailwind's base layer, beside its own `[hidden] { display: none !important }`: an important rule in a layer beats an
+   unlayered one whatever its specificity, so outside the layer this never applied and only «Задача» showed (08.10) */
+@layer base {
+  :root:not([data-theme]) .hc-step-panel[hidden] { display: block !important; }
+}
+:root:not([data-theme]) :is(.hc-steps, .hc-step-nav) { display: none; }
+
+@media (max-width: 760px) {
+  .hc-step-tab { min-height: 84px; padding: 10px 10px 9px; row-gap: 6px; }
+  .hc-step-title { font-size: 11px; letter-spacing: .04em; }
+  .hc-step-value { font-size: 12px; }
+  .hc-step-nav { padding: 16px 20px 20px; }
+}
 
 /* «Чому це важливо»: its sign is drawn in configurator.css; four summaries were each named «Чому це важливо +» (04.10) */
 .hc-controls .hc-why summary::after { content: '+' / ''; }
 .hc-controls .hc-why[open] summary::after { content: '\2212' / ''; }
-
-/* ── Before hydration (/angary ≤ 760 px) ─────────────────────────────────────────────────────────────────────────────
-   The server markup has every group open — 2419 px of controls that hydration then folds to about 1000. A link to
-   #vartist, #process or #inquiry aimed at the long layout and landed 1316 px past its heading, and a reload further down
-   jumped (04.10). With JavaScript on ([data-theme] is set by the head script before paint, the same flag the inquiry
-   form's folding uses) the server markup is folded the way the accordion will be — «Об’єкт» open, each heading the
-   toggle's height — so hydration moves nothing. Without JavaScript [data-theme] is absent and every group stays open. */
-@media (max-width: 760px) {
-  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group { padding: 0; }
-  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group > h3 {
-    display: flex;
-    align-items: center;
-    min-height: 64px;
-    margin: 0;
-    padding: 12px 20px;
-  }
-  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-group-panel { padding: 2px 20px 24px; }
-  :root[data-theme] .hangar-configurator-embedded .hc-controls:not([data-accordion]) .hc-control-group:not([data-group='object']) .hc-group-panel { display: none; }
-}
 
 /* «Двері»: chips at their own width, as tall as the gate tiles above and at least as wide */
 .hc-door-options .hc-option-card { min-width: 68px; }
@@ -126,3 +172,210 @@
 }
 .hc-field-reset:hover { color: var(--color-accent-strong); }
 .hc-field-reset:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* «До зведення ↓» lands on the stamp clear of the header, like a section's own anchor (globals.css section[id]) */
+#hc-stamp { scroll-margin-top: 116px; }
+@media (max-width: 760px) { #hc-stamp { scroll-margin-top: 93px; } }
+
+/* ── «Каркас»: what to show of the frame (07.10, ConfiguratorFrameView through #hc-frame-panel) ───────────────────────
+   A list of five, like any other step's choices; the shown one's words under it, and on the frame its nodes, numbered
+   as on the drawing. The play control last and quiet: nothing plays by itself. */
+.hc-frame-panel { padding: 22px 22px 8px; }
+.hc-frame-panel:empty { display: none; }
+.hc-frame-list { display: grid; gap: 6px; }
+.hc-frame-item {
+  display: flex; align-items: center; min-height: 46px; padding: 0 16px; border: 1px solid var(--color-border-control); border-radius: 0;
+  background: var(--color-bg); color: var(--color-text); font: 600 15px/1.2 var(--font-manrope), sans-serif; text-align: left; cursor: pointer;
+}
+.hc-frame-item:hover { border-color: var(--color-text-secondary); }
+.hc-frame-item[aria-pressed='true'] { border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
+.hc-frame-item:focus-visible, .hc-frame-node:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.hc-frame-text { min-height: 4.6em; margin: 16px 0 0; color: var(--color-text-secondary); font: 500 14px/1.55 var(--font-manrope), sans-serif; }
+.hc-frame-nodes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.hc-frame-node {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px 0 8px; border: 1px solid var(--color-border-control); border-radius: 0;
+  background: transparent; color: var(--color-text); font: 600 13px/1 var(--font-manrope), sans-serif; cursor: pointer;
+}
+.hc-frame-node:hover { border-color: var(--color-accent); }
+.hc-frame-node[aria-pressed='true'] { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-bg); }
+.hc-frame-node-number {
+  display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 8px; border: 1px solid var(--color-accent);
+  border-radius: 50%; color: var(--color-accent-strong); font: 700 11px/1 var(--font-condensed), sans-serif;
+}
+.hc-frame-node[aria-pressed='true'] .hc-frame-node-number { border-color: currentColor; color: inherit; }
+.hc-frame-play { display: flex; align-items: center; gap: 10px; margin-top: 18px; color: var(--color-text-secondary); font: 500 14px/1.2 var(--font-manrope), sans-serif; }
+.hc-frame-play .dn-control-label { position: absolute; width: 1px; min-width: 0; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ── Quiet type (07.10) ───────────────────────────────────────────────────────────────────────────────────────────────
+   Capitals stay in the drawing's title block, where a drawing has them; in the controls the words are set as words —
+   25 to 29 capitalised labels spoke at once. A step with one group needs no heading of its own: the tab names it. */
+.hc-step-title { font: 700 14px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+.hc-control-group h3 { font: 700 15px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+.hc-step-panel > .hc-control-group:only-of-type > h3 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.hc-step-back, .hc-step-next { font: 700 15px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+.hc-step-back { font-size: 18px; }
+@media (max-width: 760px) {
+  .hc-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .hc-step-title { font-size: 12.5px; }
+  .hc-step-value { display: none; }
+  .hc-step-tab { min-height: 64px; padding: 10px 8px; }
+  .hc-frame-panel { padding: 20px 20px 4px; }
+}
+
+/* ── What the visitor chose, and what they did not (07.10) ────────────────────────────────────────────────────────────
+   A value left as the example's, or worked out by the configurator, says so beside its name in a quiet tag; its value
+   steps back a shade. The visitor's own answers stand plain. */
+.hc-fact-status {
+  display: inline-block; margin-left: 6px; padding: 2px 6px; border: 1px dashed var(--color-border-strong); border-radius: 0;
+  color: var(--color-text-muted); font: 600 11px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; vertical-align: 1px;
+}
+.hc-summary-facts > div[data-status='example'] dd { color: var(--color-text-secondary); }
+.hc-summary-dimensions-status { margin: 4px 0 0; }
+.hc-summary-dimensions-status .hc-fact-status { margin-left: 0; }
+
+/* The draft read back (07.10): one quiet line over the configurator, with the way back to the example */
+.hangar-configurator-embedded .hc-draft-note {
+  width: min(var(--container-max), calc(100% - var(--container-gutter) * 2)); margin: 0 auto 14px;
+  color: var(--color-text-secondary); font: 500 14px/1.4 var(--font-manrope), sans-serif;
+}
+@media (max-width: 760px) { .hangar-configurator-embedded .hc-draft-note { width: min(100% - 32px, 620px); } }
+.hc-draft-reset {
+  min-height: 44px; padding: 0 2px; border: 0; background: transparent; color: var(--color-text); font: inherit; font-weight: 700;
+  text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: 3px; cursor: pointer;
+}
+.hc-draft-reset:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ── The route after the GPT review (07.10) ───────────────────────────────────────────────────────────────────────── */
+.hc-step-current { display: none; }
+@media (max-width: 760px) {
+  .hc-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .hc-step-tab { min-height: 52px; place-items: center; padding: 8px 4px; }
+  .hc-step-tab .hc-step-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .hc-step-current {
+    display: block; margin: 0; padding: 12px 20px 0; color: var(--color-text); font: 700 15px/1.3 var(--font-manrope), sans-serif;
+  }
+}
+@media (min-width: 761px) {
+  .hc-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .hc-step-tab { min-height: 76px; padding: 12px 10px 10px; }
+  .hc-step-title { font-size: 13px; }
+}
+/* «Точних розмірів ще немає» under the three sizes, the ridge folded under them */
+.hc-sizes-unknown { margin-top: 18px; }
+.hc-more { margin-top: 16px; border-top: 1px dashed var(--color-border); }
+.hc-more > summary {
+  display: flex; align-items: center; justify-content: space-between; min-height: 48px; color: var(--color-text-secondary);
+  font: 600 14px/1.3 var(--font-manrope), sans-serif; cursor: pointer; list-style: none;
+}
+.hc-more > summary::-webkit-details-marker { display: none; }
+.hc-more > summary::after { content: '+' / ''; color: var(--color-text-muted); font: 400 20px/1 var(--font-manrope), sans-serif; }
+.hc-more[open] > summary::after { content: '\2212' / ''; }
+.hc-more > summary:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+/* «Каркас»: the step's questions, then how the frame works */
+.hc-frame-heading { margin: 0 0 12px; padding-top: 18px; border-top: 1px solid var(--color-border); font: 700 15px/1.2 var(--font-manrope), sans-serif; }
+.hc-scope-list { margin-top: 14px; }
+
+/* ── Beauty pass (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────
+   The controls speak the sheet's language: square like its frame, its tabs and its buttons (owner, 03.10: the square
+   «Креслення», no rounding); one height for every answer; a chosen answer filled, with a copper tick; the sliders drawn
+   as a dimension line — a thin rule, the part up to the value in copper, a square handle. */
+.hangar-configurator-embedded .hc-option-card span,
+.hangar-configurator-embedded .hc-field-controls input[type='text'],
+.hangar-configurator-embedded .hc-select { border-radius: 0; }
+.hangar-configurator-embedded .hc-option-card span {
+  min-height: 46px; padding: 8px 14px; color: var(--color-text); font-size: 14px;
+  transition: color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium),
+    background var(--duration-fast) var(--ease-premium), transform 120ms var(--ease-premium);
+}
+.hangar-configurator-embedded .hc-option-card:hover input:not(:checked, :disabled) + span { border-color: var(--color-text-secondary); background: color-mix(in srgb, var(--color-text) 5%, var(--color-bg)); }
+.hangar-configurator-embedded .hc-option-card:active input:not(:disabled) + span { transform: scale(.98); }
+/* the tick: drawn, so it never changes the chip's width — the chip makes room for it on both sides from the start */
+.hangar-configurator-embedded .hc-option-card span { position: relative; padding-inline: 26px; }
+.hangar-configurator-embedded .hc-option-card span::before {
+  position: absolute; top: 50%; left: 10px; width: 9px; height: 5px; border: solid var(--color-accent); border-width: 0 0 2px 2px;
+  content: ''; opacity: 0; transform: translateY(-70%) rotate(-45deg) scale(.6); transition: opacity 160ms ease, transform 160ms var(--ease-premium);
+}
+.hangar-configurator-embedded .hc-option-card input:checked + span::before { opacity: 1; transform: translateY(-70%) rotate(-45deg); }
+/* in a grid of equal tiles the tick goes to the corner, so the words keep the tile's whole width («Ще не знаю» broke
+   into three lines between two reserved margins) */
+.hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card span { padding-inline: 8px; }
+.hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card span::before { top: 7px; left: 7px; width: 7px; height: 4px; transform: rotate(-45deg) scale(.6); }
+.hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card input:checked + span::before { transform: rotate(-45deg); }
+
+/* «Де будуємо?»: the browser's own rounded field (Safari) gives way to a square one with a drawn chevron */
+.hangar-configurator-embedded .hc-select {
+  min-height: 46px; padding: 0 40px 0 14px; appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+.hangar-configurator-embedded .hc-select:hover { border-color: var(--color-text-secondary); }
+
+/* the sliders: a dimension line */
+.hangar-configurator-embedded .hc-field-controls input[type='range'] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-webkit-slider-runnable-track {
+  height: 2px; background: linear-gradient(to right, var(--color-accent) 0 var(--fill, 50%), var(--color-border-strong) var(--fill, 50%) 100%);
+}
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-moz-range-track { height: 2px; background: var(--color-border-strong); }
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-moz-range-progress { height: 2px; background: var(--color-accent); }
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-webkit-slider-thumb {
+  width: 18px; height: 18px; margin-top: -8px; -webkit-appearance: none; appearance: none;
+  border: 2px solid var(--color-accent); border-radius: 0; background: var(--color-bg); transition: transform 120ms var(--ease-premium);
+}
+.hangar-configurator-embedded .hc-field-controls input[type='range']::-moz-range-thumb {
+  width: 14px; height: 14px; border: 2px solid var(--color-accent); border-radius: 0; background: var(--color-bg);
+}
+.hangar-configurator-embedded .hc-field-controls input[type='range']:hover::-webkit-slider-thumb,
+.hangar-configurator-embedded .hc-field-controls input[type='range']:active::-webkit-slider-thumb { transform: scale(1.15); }
+.hangar-configurator-embedded .hc-field-controls input[type='range']:focus-visible { outline: none; }
+.hangar-configurator-embedded .hc-field-controls input[type='range']:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.hangar-configurator-embedded .hc-field-controls input[type='range']:focus-visible::-moz-range-thumb { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.hangar-configurator-embedded .hc-field-controls input[type='text'] { min-height: 46px; }
+.hangar-configurator-embedded .hc-field-controls input[type='text']:hover { border-color: var(--color-text-secondary); }
+
+/* checkboxes in the copper of the rest */
+.hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--color-accent); }
+
+/* one rhythm inside a step: 24 between questions, 10 from a question to its answers */
+.hangar-configurator-embedded .hc-step-panel .hc-field + .hc-field { margin-top: 24px; }
+.hangar-configurator-embedded .hc-step-panel .hc-field-head { margin-bottom: 10px; }
+.hangar-configurator-embedded .hc-field-head :is(label, span) { color: var(--color-text); font-weight: 600; }
+
+/* ── Step tabs as a stepper (07.10, owner: «більш красивіше, елементи по центру боксів») ────────────────────────────────
+   Each tab centres its number over its name; the numbers sit on one thin rail that runs from step to step instead of the
+   tabs' dividing lines; the open step's number is filled, an answered one copper, the rest quiet. The copper rule under
+   the open tab stays. */
+.hc-steps { position: relative; }
+.hc-step-tab,
+.hangar-configurator-embedded .hc-step-tab {
+  justify-items: center; align-content: start; row-gap: 8px; padding: 14px 4px 12px; text-align: center;
+}
+.hc-step-tab + .hc-step-tab { border-left: 0; }
+/* the rail: from this number's centre to the next one's, behind the numbers */
+.hc-step-tab:not(:last-child)::before {
+  position: absolute; z-index: 0; top: calc(14px + 12px); left: 50%; width: 100%; height: 1px;
+  background: var(--color-border-strong); content: '';
+}
+.hc-step-tab[data-done]:not(:last-child)::before { background: var(--color-accent); }
+.hc-step-number {
+  position: relative; z-index: 1; width: 24px; height: 24px; border-color: var(--color-border-strong);
+  background: var(--color-surface-elevated); color: var(--color-text-muted); font-size: 12px;
+  transition: background var(--duration-fast) var(--ease-premium), color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium);
+}
+.hc-step-tab:hover .hc-step-number { border-color: var(--color-text-secondary); color: var(--color-text); }
+.hc-step-tab[data-done] .hc-step-number { border-color: var(--color-accent); color: var(--color-accent-strong); }
+.hc-step-tab[aria-selected='true'] .hc-step-number { border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
+.hc-step-title { max-width: 100%; color: var(--color-text-secondary); font-size: 13px; line-height: 1.25; text-wrap: balance; }
+.hc-step-tab[aria-selected='true'] .hc-step-title { color: var(--color-text); }
+.hc-step-tab[aria-selected='true'] { background: transparent; }
+.hc-step-tab:hover:not([aria-selected='true']) { background: transparent; }
+@media (min-width: 1024px) and (max-height: 760px) {
+  .hangar-configurator-embedded .hc-step-tab { row-gap: 6px; padding: 10px 4px 9px; }
+  .hangar-configurator-embedded .hc-step-tab:not(:last-child)::before { top: calc(10px + 11px); }
+  .hangar-configurator-embedded .hc-step-number { width: 22px; height: 22px; }
+}
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-step-tab { padding: 12px 4px 12px; min-height: 0; }
+  .hangar-configurator-embedded .hc-step-tab:not(:last-child)::before { top: calc(12px + 14px); }
+  .hangar-configurator-embedded .hc-step-number { width: 28px; height: 28px; font-size: 13px; }
+}

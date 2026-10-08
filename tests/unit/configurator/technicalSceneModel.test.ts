@@ -72,8 +72,8 @@ describe('buildTechnicalScene', () => {
   });
 
   it('always emits exactly one foundation-slab, visible following scope.foundation, never omitted', () => {
-    const withF = kinds(sceneFor({ scope: ['foundation'] }), 'foundation-slab');
-    const withoutF = kinds(sceneFor({ scope: ['frame'] }), 'foundation-slab');
+    const withF = kinds(sceneFor({ scopeMode: 'partial', scope: ['foundation'] }), 'foundation-slab');
+    const withoutF = kinds(sceneFor({ scopeMode: 'partial', scope: ['frame'] }), 'foundation-slab');
 
     expect(withF).toHaveLength(1);
     expect(withF[0].visible).toBe(true);
@@ -83,12 +83,12 @@ describe('buildTechnicalScene', () => {
   });
 
   it('always emits a terrain-plane, independent of scope', () => {
-    expect(kinds(sceneFor({ scope: [] }), 'terrain-plane')).toHaveLength(1);
+    expect(kinds(sceneFor({ scopeMode: 'partial', scope: [] }), 'terrain-plane')).toHaveLength(1);
   });
 
   it('never omits frame members when frame is out of scope — `visible` goes false so a fade-out has geometry to animate', () => {
-    const on = sceneFor({ scope: ['frame'] });
-    const off = sceneFor({ scope: [] });
+    const on = sceneFor({ scopeMode: 'partial', scope: ['frame'] });
+    const off = sceneFor({ scopeMode: 'partial', scope: [] });
 
     for (const kind of ['frame-column', 'frame-rafter', 'wall-girt', 'roof-purlin', 'roof-brace'] as const) {
       expect(kinds(off, kind).length).toBe(kinds(on, kind).length);
@@ -120,7 +120,7 @@ describe('buildTechnicalScene', () => {
   });
 
   it('emits two roof slopes and a ridge line, fill following scope.roof', () => {
-    const scene = sceneFor({ scope: ['roof'] });
+    const scene = sceneFor({ scopeMode: 'partial', scope: ['roof'] });
     const bays = scene.building.bays.count;
 
     expect(kinds(scene, 'roof-segment').filter((s) => s.slope === 'left')).toHaveLength(bays);
@@ -203,7 +203,7 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
   });
 
   it('internal columns respect scope.frame the same way external columns do', () => {
-    const scene = sceneForStructural({ scheme: 'centerSupport', roofStructure: 'truss' }, { scope: ['foundation', 'walls', 'roof'] });
+    const scene = sceneForStructural({ scheme: 'centerSupport', roofStructure: 'truss' }, { scopeMode: 'partial', scope: ['foundation', 'walls', 'roof'] });
     expect(kinds(scene, 'internal-column').every((p) => !p.visible)).toBe(true);
     expect(kinds(scene, 'frame-column').every((p) => !p.visible)).toBe(true);
   });
@@ -220,7 +220,7 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
   });
 
   it('truss visibility also respects scope.frame — off scope means invisible even in truss mode', () => {
-    const scene = sceneForStructural({ scheme: 'clearSpan', roofStructure: 'truss' }, { scope: ['foundation', 'walls', 'roof'] });
+    const scene = sceneForStructural({ scheme: 'clearSpan', roofStructure: 'truss' }, { scopeMode: 'partial', scope: ['foundation', 'walls', 'roof'] });
     expect(kinds(scene, 'truss-chord').every((p) => !p.visible)).toBe(true);
     expect(kinds(scene, 'truss-web').every((p) => !p.visible)).toBe(true);
   });
@@ -231,7 +231,7 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
     expect(kinds(scene, 'wall-brace')).toHaveLength(building.bracing.length * 2);
     expect(kinds(scene, 'wall-brace').every((p) => p.visible)).toBe(true);
 
-    const frameOff = sceneFor({ scope: ['foundation', 'walls', 'roof'] });
+    const frameOff = sceneFor({ scopeMode: 'partial', scope: ['foundation', 'walls', 'roof'] });
     expect(kinds(frameOff, 'wall-brace').every((p) => !p.visible)).toBe(true);
     expect(kinds(frameOff, 'wall-brace')).toHaveLength(building.bracing.length * 2); // still present, just invisible
   });
@@ -244,7 +244,7 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
     expect(lines.map((p) => p.role)).toEqual(roofPurlins.map((p) => p.kind));
     lines.forEach((p, i) => expect([p.a, p.b]).toEqual([roofPurlins[i].member.a, roofPurlins[i].member.b]));
     expect(lines.every((p) => p.visible)).toBe(true);
-    expect(kinds(sceneFor({ scope: ['roof'] }), 'roof-purlin').every((p) => !p.visible)).toBe(true);
+    expect(kinds(sceneFor({ scopeMode: 'partial', scope: ['roof'] }), 'roof-purlin').every((p) => !p.visible)).toBe(true);
   });
 
   it('roof-brace primitives: two per cross of the model, gated on scope.frame (03.10)', () => {
@@ -253,7 +253,7 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
     expect(lines).toHaveLength(scene.building.roofBracing.length * 2);
     expect(lines.length).toBeGreaterThan(0);
     expect(lines.every((p) => p.visible)).toBe(true);
-    expect(kinds(sceneFor({ scope: ['roof'] }), 'roof-brace').every((p) => !p.visible)).toBe(true);
+    expect(kinds(sceneFor({ scopeMode: 'partial', scope: ['roof'] }), 'roof-brace').every((p) => !p.visible)).toBe(true);
   });
 
   it('the side-wall girts are wall-girt, not purlins: both walls, below the eave (03.10 rename)', () => {

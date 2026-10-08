@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openControlGroup } from './configurator.helpers';
+import { backToDrawing, chooseSeparateWorks, openControlGroup, openThree } from './configurator.helpers';
 import { stubTurnstile } from './turnstile.helpers';
 
 type LeadPayload = {
@@ -81,32 +81,34 @@ test.describe('configurator attachment contract', () => {
     await expect(attachmentCard(page)).toHaveCount(0);
   });
 
-  test('Technical to 3D and back is presentation-only', async ({ page }, testInfo) => {
+  // 3D is a chip on the drawing, «Подивитися в 3D», and «← Креслення» goes back (07.10)
+  test('drawing to 3D and back is presentation-only', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'covered once; attachment state is viewport-independent');
     await openHangarPage(page);
-    await page.getByRole('button', { name: '3D', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Технічний вид', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Технічний вид', exact: true }).click();
+    await openThree(page);
+    await expect(page.getByRole('button', { name: /Креслення$/ })).toBeVisible();
+    await backToDrawing(page);
+    await expect(page.getByRole('button', { name: 'Подивитися в 3D', exact: true })).toBeVisible();
     await expect(attachmentCard(page)).toHaveCount(0);
   });
 
   test('fullscreen is presentation-only', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'covered once; attachment state is viewport-independent');
     await openHangarPage(page);
-    await page.getByRole('button', { name: '3D', exact: true }).click();
+    await openThree(page);
     await page.getByRole('button', { name: 'Розгорнути', exact: true }).click();
     await page.getByRole('button', { name: /Закрити/ }).click();
     await expect(attachmentCard(page)).toHaveCount(0);
   });
 
-  test('scale figure and render colours are presentation-only', async ({ page }, testInfo) => {
+  // /angary's 3D has no colours or scale figure since 07.10 (they stay on /configurator-preview, which has no form):
+  // its one presentation control is the dimensions overlay
+  test('hiding the 3D dimensions is presentation-only', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'covered once; attachment state is viewport-independent');
     await openHangarPage(page);
-    await page.getByRole('button', { name: '3D', exact: true }).click();
-    // in the desktop's sticky pane the colours open from their chip on the picture (03.10)
-    await page.getByRole('button', { name: 'Кольори й масштаб', exact: true }).click();
-    await page.getByRole('radio', { name: 'Світло-сіра', exact: true }).first().click();
-    await page.getByRole('checkbox', { name: 'Показати людину для масштабу' }).check();
+    await openThree(page);
+    await page.getByRole('button', { name: 'Сховати розміри', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Показати розміри', exact: true })).toBeVisible();
     await expect(attachmentCard(page)).toHaveCount(0);
   });
 
@@ -141,18 +143,28 @@ test.describe('configurator attachment contract', () => {
         await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
       },
     },
+    // «Обсяг робіт» is «Комплекс робіт» until the visitor picks «Окремі роботи» (07.10): the works are ticked there
     {
       name: 'application scope',
       edit: async (page) => {
-        await openControlGroup(page, 'scope');
+        await chooseSeparateWorks(page);
         await page.getByRole('checkbox', { name: 'Покрівля', exact: true }).uncheck();
       },
     },
-    // «Об’єкт» (03.10): business configuration like the sizes
+    {
+      name: 'scope mode',
+      edit: async (page) => {
+        await openControlGroup(page, 'scope');
+        // the answer's square covers its input, as for every option card: click the answer, as a visitor does
+        await page.locator('.hc-option-card').filter({ hasText: 'Допоможіть визначити' }).click();
+        await expect(page.getByRole('radio', { name: 'Допоможіть визначити', exact: true })).toBeChecked();
+      },
+    },
+    // «Об’єкт» (03.10), split over «Задача» and «Каркас» (07.10): business configuration like the sizes
     {
       name: 'purpose',
       edit: async (page) => {
-        await openControlGroup(page, 'object');
+        await openControlGroup(page, 'need');
         await page.locator('label:has(input[name="hc-purpose"][value="storage"])').click();
       },
       title: 'До заявки додано відповіді про об’єкт',
@@ -160,8 +172,24 @@ test.describe('configurator attachment contract', () => {
     {
       name: 'region',
       edit: async (page) => {
-        await openControlGroup(page, 'object');
-        await page.getByLabel('Область будівництва', { exact: true }).selectOption('Київська область');
+        await openControlGroup(page, 'need');
+        await page.getByLabel('Де будуємо?', { exact: true }).selectOption('Київська область');
+      },
+      title: 'До заявки додано відповіді про об’єкт',
+    },
+    {
+      name: 'lifting equipment',
+      edit: async (page) => {
+        await openControlGroup(page, 'space');
+        await page.locator('label:has(input[name="hc-lifting"][value="craneOrHoist"])').click();
+      },
+      title: 'До заявки додано відповіді про об’єкт',
+    },
+    {
+      name: 'project',
+      edit: async (page) => {
+        await openControlGroup(page, 'project');
+        await page.locator('label:has(input[name="hc-project"][value="ready"])').click();
       },
       title: 'До заявки додано відповіді про об’єкт',
     },
@@ -181,10 +209,14 @@ test.describe('configurator attachment contract', () => {
     await setDimension(page, 'width', '24');
 
     const brief = attachmentCard(page);
-    // back on the default values: attached, and said to be the default (hangar-configurator@1.1.0); the ridge followed
-    // the width there and back, so it is the default's too (03.10)
-    await expect(brief).toContainText('До заявки додано базову конфігурацію');
-    await expect(brief).toContainText('24 × 60 × 8 м · Холодний');
+    // back on the example's sizes: still attached, and the sizes are the visitor's answer — the example's own value
+    // chosen again is an answer (hangar-configurator@1.4.1); the ridge followed the width there and back
+    await expect(brief.locator('.inquiry-config-brief-title')).toHaveText('До заявки додано вашу конфігурацію');
+    await expect(brief.locator('strong')).toHaveText('24 × 60 × 8 м');
+    await brief.getByText('Переглянути параметри', { exact: true }).click();
+    const selected = brief.locator('section').filter({ has: page.getByRole('heading', { name: 'Вибрана конфігурація', exact: true }) });
+    await expect(selected.locator('dt')).toHaveText(['Габарити', 'Висота в конику']);
+    await expect(selected.locator('dd').first()).toHaveText('24 × 60 × 8 м');
   });
 
   test('explicit configurator CTA attaches an untouched default', async ({ page }) => {
@@ -192,7 +224,12 @@ test.describe('configurator attachment contract', () => {
     await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
 
     await expect(page).toHaveURL(/#inquiry$/);
-    await expect(attachmentCard(page)).toContainText('24 × 60 × 8 м · Холодний');
+    // nothing answered: the card says it carries the drawing's example, not the visitor's choice (1.4.1)
+    const brief = attachmentCard(page);
+    await expect(brief.locator('.inquiry-config-brief-title')).toHaveText('До заявки додано приклад з креслення');
+    await expect(brief.locator('strong')).toHaveText('Приклад з креслення · 24 × 60 × 8 м');
+    await brief.getByText('Переглянути параметри', { exact: true }).click();
+    await expect(brief.locator('h4')).toHaveText(['Не уточнено — значення прикладу', 'Попередні дані']);
   });
 
   // Owner, 03.10: an attached brief opens the form, above «Контакт», and carries the page's direction read-only
@@ -251,7 +288,8 @@ test.describe('configurator attachment contract', () => {
     await attachmentCard(page).getByRole('button', { name: 'Не додавати', exact: true }).click();
 
     await setDimension(page, 'length', '50');
-    await expect(attachmentCard(page)).toContainText('30 × 50 × 8 м · Холодний');
+    await expect(attachmentCard(page).locator('.inquiry-config-brief-title')).toHaveText('До заявки додано вашу конфігурацію');
+    await expect(attachmentCard(page).locator('strong')).toHaveText('30 × 50 × 8 м');
   });
 
   test('a business edit reaches the normal form and payload without using the configurator CTA', async ({ page }) => {
@@ -261,7 +299,8 @@ test.describe('configurator attachment contract', () => {
     await setDimension(page, 'length', '50');
 
     const brief = attachmentCard(page);
-    await expect(brief).toContainText('30 × 50 × 8 м · Холодний');
+    await expect(brief.locator('strong')).toHaveText('30 × 50 × 8 м');
+    // the sizes are the visitor's own, so they are the lead's «Габарити» (07.10)
     await expect(page.locator('form.inquiry-form').getByLabel('Орієнтовні розміри', { exact: true })).toHaveCount(0);
     // the sizes hold together with no-break spaces (04.10)
     await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue('30\u00A0×\u00A050\u00A0×\u00A08\u00A0м');
@@ -281,14 +320,15 @@ test.describe('configurator attachment contract', () => {
     await setDimension(page, 'width', '30');
     await openControlGroup(page, 'openings');
     await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
-    await openControlGroup(page, 'object');
+    // lifting equipment is asked in «Каркас» since 07.10
+    await openControlGroup(page, 'space');
     await page.locator('label:has(input[name="hc-lifting"][value="none"])').click();
 
     const brief = attachmentCard(page);
     await brief.getByText('Переглянути параметри', { exact: true }).click();
-    await expect(brief.getByRole('heading', { name: 'Вибрана конфігурація' })).toBeVisible();
+    // the answers about the object, the visitor's choices, what is still the example's, then the preliminary data (1.4.1);
     // «Системні» was the code's word, shown to the visitor (04.10)
-    await expect(brief.getByRole('heading', { name: 'Попередні дані', exact: true })).toBeVisible();
+    await expect(brief.locator('h4')).toHaveText(['Про об’єкт', 'Вибрана конфігурація', 'Не уточнено — значення прикладу', 'Попередні дані']);
 
     const visibleRows = await brief.locator('dl > div').evaluateAll((rows) => rows.map((row) => {
       const label = row.querySelector('dt')?.textContent?.trim() ?? '';
@@ -300,6 +340,8 @@ test.describe('configurator attachment contract', () => {
     const configuration = submitted()?.details?.configuration ?? '';
     const payloadRows = configuration.split('\n').filter((line) => !line.endsWith(':'));
     expect(payloadRows).toEqual(visibleRows);
+    expect(configuration).toContain('Про об’єкт:\nПідйомне обладнання: Немає\nВибрана конфігурація:\nГабарити:');
+    expect(configuration).toContain('Не уточнено клієнтом (значення прикладу на сайті):\n');
     expect(configuration).toContain('Попередні дані:\nПлоща забудови:');
     expect(configuration).toContain('Попередня конструктивна схема:');
     expect(configuration).not.toMatch(/Світло-сіра|Графіт|Нейтральна/);
@@ -314,7 +356,7 @@ test.describe('configurator attachment contract', () => {
     await openHangarPage(page);
     await openControlGroup(page, 'openings');
     await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
-    await openControlGroup(page, 'scope');
+    await chooseSeparateWorks(page);
     await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
 
     const brief = attachmentCard(page);
@@ -336,7 +378,7 @@ test('on a phone «Обговорити цю конфігурацію» lands on
 
   const brief = attachmentCard(page);
   await expect(brief).toBeFocused();
-  await expect(page.locator('#inquiry-brief-status')).toHaveText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  await expect(page.locator('#inquiry-brief-status')).toHaveText('Додано до заявки: Приклад з креслення · 24 × 60 × 8 м');
   // let the smooth scroll finish before measuring
   await expect.poll(async () => page.evaluate(() => {
     const top = document.getElementById('inquiry-brief')?.getBoundingClientRect().top ?? 0;

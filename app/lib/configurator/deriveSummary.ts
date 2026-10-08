@@ -1,15 +1,14 @@
 import type { HangarDomainModel } from './domainModel';
 import { objectProfileLabels, type ObjectProfileLabels } from './objectProfile';
-import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M, ridgeHeightM } from './parametricModel';
+import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M, gateHeightFits, ridgeHeightM } from './parametricModel';
 import {
   CLADDING_SYSTEM_LABELS,
-  ENVELOPE_LABELS,
   FOUNDATION_TYPE_LABELS,
   ROOF_STRUCTURE_LABELS,
   SCOPE_LABELS,
+  SCOPE_MODE_LABELS,
   SCOPE_ORDER,
   STRUCTURAL_SCHEME_LABELS,
-  envelopeMatchesPreset,
   type GateType,
 } from './types';
 
@@ -113,23 +112,24 @@ function formatCladdingSystemLabel(
 }
 
 /**
- * Phase 3E, brief §18 — the high-level "Контур" label, honest about drift from its own preset.
- * With neither walls nor roof in the request it is «Поза обсягом заявки», as the controls and the phone header say:
- * the stamp kept «Контур: Холодний» beside «Огородження: Поза обсягом заявки» (04.10).
- * `envelope.walls`/`envelope.roof` (the stored intent) still always equal what the customer last
- * clicked in "Контур будівлі" — this function does not change that, it only decides what the
- * SUMMARY calls it: as soon as a manual wall/roof system override means the actual materials no
- * longer match what "Холодний"/"Утеплений" would imply, claiming that simple label would
- * misrepresent a now-mixed configuration (brief's own explicit "must no longer claim a simple
- * preset if that would be semantically misleading") — surfaced as "Індивідуальна конфігурація"
- * instead, with the real systems still fully visible in `claddingSystemLabel` right below it.
+ * «Утеплення» (07.10; until then «Контур»): the thermal answer on its own, beside the materials in «Огородження». A
+ * changed material used to turn it into «Індивідуальна конфігурація», and the visitor could no longer tell which
+ * thermal envelope they were asking for. Now: «Утеплений» or «Уточнимо» as answered; «Без утеплення» for a cold
+ * building — unless a sandwich panel is asked for, which carries its own insulation, and then it says where.
+ * With neither walls nor roof in the request it is «Поза обсягом заявки», as the controls say.
  */
 function formatEnvelopeLabel(envelope: HangarDomainModel['envelope'], scope: HangarDomainModel['scope']): string {
   if (!scope.walls && !scope.roof) return OUT_OF_SCOPE_LABEL;
-  if (envelopeMatchesPreset(envelope.walls, envelope.wallSystem, envelope.roofSystem)) {
-    return ENVELOPE_LABELS[envelope.walls];
-  }
-  return 'Індивідуальна конфігурація';
+  if (envelope.walls === 'insulated') return 'Утеплений';
+  // A sandwich panel carries its insulation whatever was answered: «Ще не знаю» with sandwich walls read «Уточнимо»
+  // beside a legend saying «з утеплювачем» (07.10, audit)
+  const sandwichWalls = scope.walls && envelope.wallSystem === 'sandwich-panel';
+  const sandwichRoof = scope.roof && envelope.roofSystem === 'sandwich-panel';
+  if (sandwichWalls && sandwichRoof) return 'У сендвіч-панелях';
+  if (sandwichWalls) return 'Лише в стінах (сендвіч-панелі)';
+  if (sandwichRoof) return 'Лише в покрівлі (сендвіч-панелі)';
+  if (envelope.walls === 'undecided') return 'Уточнимо';
+  return 'Без утеплення';
 }
 
 // Ворота and двері have no singular: «одні ворота», «двоє воріт», «одні двері», never «1 ворота» or «2 ворота» (04.10)
@@ -163,8 +163,10 @@ const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
  */
 /** Customer input, not derived visualization — the door is something the customer asked for, so
  *  it belongs in the summary (and in any future lead brief) with its real fixed size. */
-function formatDoorsLabel(doors: HangarDomainModel['doors'], wallsInScope: boolean): string | null {
+function formatDoorsLabel(doors: HangarDomainModel['doors'], wallsInScope: boolean, asked: HangarDomainModel['doors']): string | null {
   if (!wallsInScope) return null;
+  // a door the gates and the width leave no room for: asked, and said why it is not drawn
+  if (asked > doors) return `Одні службові, ${formatSize(DOOR_DIMENSIONS_M.widthM, DOOR_DIMENSIONS_M.heightM)}${NBSP}— у схемі немає місця`;
   if (doors === 0) return 'Не передбачені';
   // «Одні службові, 1 × 2,1 м»: it read «1 × 1×2,1 м», a count and a size with the same sign (04.10)
   return `Одні службові, ${formatSize(DOOR_DIMENSIONS_M.widthM, DOOR_DIMENSIONS_M.heightM)}`;
@@ -187,15 +189,32 @@ function formatDoorsLabel(doors: HangarDomainModel['doors'], wallsInScope: boole
  * absence, so every consumer has to decide what to do with it instead of accidentally printing a
  * caveat as though it were a line item.
  */
-function formatGatesLabel(
-  gates: HangarDomainModel['gates'],
-  gateType: HangarDomainModel['gateType'],
-  wallsInScope: boolean,
-): string | null {
-  if (!wallsInScope) return null;
-  if (gates === 0) return 'Без воріт';
-  const { widthM, heightM } = GATE_DIMENSIONS_M[gateType];
-  return `${capitalise(GATES_COUNTED[gates])} ${GATE_TYPE_COUNTED[gateType][gates]}, ${formatSize(widthM, heightM)}`;
+function formatGatesLabel(domain: HangarDomainModel): string | null {
+  if (!domain.scope.walls) return null;
+  const asked = domain.requestedOpenings;
+  // Gates the sizes leave no room for are still the visitor's answer: the lead says what they asked and why the scheme
+  // does not draw it (07.10, audit: «Без воріт» told the manager no gates were wanted)
+  if (asked.gates > 0 && (asked.gates !== domain.gates || asked.gateType !== domain.gateType)) {
+    const { widthM, heightM } = GATE_DIMENSIONS_M[asked.gateType];
+    const reason = gateHeightFits(asked.gateType, domain.dimensions.eaveHeightM)
+      ? `за ширини ${formatMeters(domain.dimensions.widthM)}${NBSP}м у схемі не вміщуються`
+      : `під стіни ${formatMeters(domain.dimensions.eaveHeightM)}${NBSP}м у схемі не вміщуються`;
+    const count = asked.gates as 1 | 2;
+    return `${capitalise(GATES_COUNTED[count])} ${GATE_TYPE_COUNTED[asked.gateType][count]}, ${formatSize(widthM, heightM)}${NBSP}— ${reason}`;
+  }
+  if (domain.gates === 0) return 'Без воріт';
+  const { widthM, heightM } = GATE_DIMENSIONS_M[domain.gateType];
+  return `${capitalise(GATES_COUNTED[domain.gates])} ${GATE_TYPE_COUNTED[domain.gateType][domain.gates]}, ${formatSize(widthM, heightM)}`;
+}
+
+/** «Обсяг» said as answered, the same words in the stamp and the lead (07.10, audit: «Допоможіть визначити» read
+ *  «Фундамент + Металокаркас + …» in the stamp, as if every work had been ordered) */
+function formatScopeLabel(domain: HangarDomainModel, ordered: string[]): string {
+  if (domain.scopeMode === 'help') return SCOPE_MODE_LABELS.help;
+  const list = ordered.join(' + ');
+  if (domain.scopeMode === 'full') return `${SCOPE_MODE_LABELS.full}: ${list}`;
+  // under the row label «Обсяг» (04.10: «Обсяг: Обсяг робіт ще не обрано»)
+  return ordered.length ? list : 'Ще не обрано';
 }
 
 function formatOpeningsLabel(gatesLabel: string | null, doorsLabel: string | null): string {
@@ -223,8 +242,8 @@ function formatStructuralVisualizationDescription(domain: HangarDomainModel): st
 export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
   const { widthM, lengthM, eaveHeightM } = domain.dimensions;
   const orderedScope = SCOPE_ORDER.filter((item) => domain.scope[item]);
-  const gatesLabel = formatGatesLabel(domain.gates, domain.gateType, domain.scope.walls);
-  const doorsLabel = formatDoorsLabel(domain.doors, domain.scope.walls);
+  const gatesLabel = formatGatesLabel(domain);
+  const doorsLabel = formatDoorsLabel(domain.doors, domain.scope.walls, domain.requestedOpenings.doors);
   const ridge = formatMeters(ridgeHeightM(widthM, eaveHeightM, domain.roof.pitchDeg));
   const roofSlopeLabel = formatRoofSlope(domain.roof.pitchDeg);
   const dimensionsLabel = formatSize(widthM, lengthM, eaveHeightM);
@@ -247,10 +266,7 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     structuralVisualizationLabel: `${ROOF_STRUCTURE_LABELS[domain.structural.roofStructure]} · ${STRUCTURAL_SCHEME_LABELS[domain.structural.scheme]}`,
     structuralVisualizationDescription: formatStructuralVisualizationDescription(domain),
     scopeLabels: orderedScope.map((item) => SCOPE_LABELS[item]),
-    scopeSummaryLabel: orderedScope.length
-      ? orderedScope.map((item) => SCOPE_LABELS[item]).join(' + ')
-      // under the row label «Обсяг» (04.10: «Обсяг: Обсяг робіт ще не обрано»)
-      : 'Ще не обрано',
+    scopeSummaryLabel: formatScopeLabel(domain, orderedScope.map((item) => SCOPE_LABELS[item])),
     gatesLabel,
     doorsLabel,
     openingsLabel: formatOpeningsLabel(gatesLabel, doorsLabel),

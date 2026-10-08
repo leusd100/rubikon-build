@@ -7,12 +7,10 @@ import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { useInquiryAttachment } from '../inquiry/InquiryAttachmentProvider';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { company, companyContactLinks } from '../../data/company';
-import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { costFactorNotes } from '../../lib/configurator/costNotes';
 import { deriveDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
-import { FrameTour } from './FrameTour';
 import { ProcessDrawing } from '../directions/ProcessDrawing';
 import type { ProcessSplit } from '../../types/directionPage';
 
@@ -52,9 +50,8 @@ export function HangarEditorialArchitecture({
   const inquiryAttachment = useInquiryAttachment();
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
   const summary = deriveSummary(deriveDomainModel(state));
-  // What the visitor's own configuration already says about a factor — only once they have set something
-  const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
-  const notes = own ? costFactorNotes(deriveDomainModel(state)) : undefined;
+  // What the visitor's own answers already say about a factor — only those (costNotes.ts, 08.10)
+  const notes = costFactorNotes(deriveDomainModel(state));
   const attached = Boolean(inquiry?.isAttached);
   // Sent with a saved lead and unchanged since (04.10): 01 says so and no longer asks to send it
   const sent = attached && Boolean(inquiryAttachment?.sent);
@@ -67,10 +64,8 @@ export function HangarEditorialArchitecture({
 
   return (
     <>
-      <section className="page-section direction-editorial-section dn-section angary-structure" id="structure" aria-labelledby="angary-structure-title">
-        <FrameTour titleId="angary-structure-title" />
-      </section>
-
+      {/* «Каркас вашого ангара» is no longer a section of its own (07.10): its drawing is the configurator's «Каркас»
+          view (ConfiguratorFrameView), on the sheet the visitor is already looking at */}
       {realObject}
 
       <section className="page-section angary-cost" id="vartist" aria-labelledby="angary-cost-title">
@@ -110,9 +105,12 @@ export function HangarEditorialArchitecture({
               <h3><b>01</b>Ваш бриф</h3>
               <div className="ps-you">
                 <small>Ви</small>
+                {/* Each state its own keyed element (08.10, audit): a browser's page translation wraps text in its own nodes,
+                    and a bare string swapped in place made React remove a node the translation had replaced — the page fell
+                    to «This page couldn’t load» on the first size change. The brief's line itself is not translated. */}
                 {attached
-                  ? <>{sent ? 'Надіслано з вашим запитом' : 'Додано до заявки'}: <b>{briefHeadline}</b></>
-                  : 'Складаєте базову конфігурацію вище або описуєте задачу словами.'}
+                  ? <span key={sent ? 'sent' : 'attached'}>{sent ? 'Надіслано з вашим запитом' : 'Додано до заявки'}: <b translate="no">{briefHeadline}</b></span>
+                  : <span key="idle">Складаєте базову конфігурацію вище або описуєте задачу словами.</span>}
                 {/* Owner, 03.10: the brief's node acts on its own state — up to the configurator while nothing is attached,
                     down to the attached brief in the form once something is */}
                 {attached && !sent && (
@@ -130,7 +128,7 @@ export function HangarEditorialArchitecture({
                 <ProcessDrawing kind="hangar-brief" />
                 <span className="ps-spark" aria-hidden="true" />
               </div>
-              <p className="ps-result"><span className="sr-only">Результат: </span>{attached ? 'Бриф у заявці' : 'Бриф до заявки'}</p>
+              <p className="ps-result"><span className="sr-only">Результат: </span><span key={attached ? 'in' : 'to'}>{attached ? 'Бриф у заявці' : 'Бриф до заявки'}</span></p>
               <p className="ps-we"><small>Ми</small>Читаємо бриф і готуємо питання до розмови.</p>
             </li>
             {content.route.steps.map((step, index) => (

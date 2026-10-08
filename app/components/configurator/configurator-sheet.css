@@ -144,6 +144,12 @@
 /* While useMiniPreview measures the mini sheet: under reduced motion every property eases over .01 ms (globals.css), so
    a read in the same frame still saw the whole sheet and the controls jumped by the difference */
 .hc-preview-sheet[data-measuring], .hc-preview-sheet[data-measuring] * { transition-property: none; }
+/* …and not only while measuring (08.10, review): the give the mini sheet takes as its bottom margin lagged a frame behind
+   the hold, scroll anchoring lifted the page by the give, the let-go fired, and the mini drawing flip-flopped on every
+   frame. Under reduced motion nothing on the sheet eases at all. */
+@media (prefers-reduced-motion: reduce) {
+  .hc-preview-sheet, .hc-preview-sheet * { transition-property: none; }
+}
 
 /* The mini readout is the phone's, while configuring (below) */
 .hc-preview-sheet .sheet-cell.hc-sheet-readout { display: none; }
@@ -186,4 +192,195 @@
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-controls :is(a[href], button, summary, input, select, textarea) {
     scroll-margin-top: calc(var(--hc-mini-h, 0px) + 85px);
   }
+}
+
+/* ── «Переріз огородження» (07.10, CladdingSection.tsx) ───────────────────────────────────────────────────────────────
+   In the drawing's top-left corner, which the hangar never reaches from this camera: a detail callout in the sheet's own
+   inks on its dark field. The glyphs use the drawing's symbols — the sheet's profile, the insulation's wave. */
+.hc-section {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  z-index: 1;
+  margin: 0;
+  padding: 10px 12px 8px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  background: rgba(14, 15, 17, .72);
+  color: var(--color-dark-text-secondary);
+  pointer-events: none;
+}
+.hc-section figcaption {
+  margin-bottom: 8px;
+  color: var(--color-dark-text-muted);
+  font: 700 10px/1 var(--font-condensed), sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.hc-section dl { display: grid; gap: 6px; margin: 0; }
+.hc-section-row { display: grid; grid-template-columns: 64px auto; align-items: center; column-gap: 10px; }
+.hc-section-row dt { color: var(--color-dark-text-muted); font: 600 11px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.hc-section-row dd { display: flex; align-items: center; gap: 10px; margin: 0; font: 500 12px/1.2 var(--font-manrope), sans-serif; white-space: nowrap; }
+.hc-section-glyph { flex: none; overflow: visible; }
+.hc-section-glyph :is(path, line, rect) { fill: none; stroke: var(--color-dark-text-secondary); stroke-width: 1.2; stroke-linejoin: miter; }
+.hc-section-glyph .is-core { stroke: var(--color-accent-on-dark); stroke-width: 1; }
+.hc-section-glyph .is-joint { stroke-width: 1; }
+.hc-section-glyph .is-open { stroke-dasharray: 3 2; stroke: var(--color-dark-text-muted); }
+.hc-section-glyph .is-out { stroke-dasharray: 3 3; stroke: var(--color-dark-text-muted); }
+.hc-section-glyph text { fill: var(--color-dark-text-muted); font: 700 9px/1 var(--font-condensed), sans-serif; }
+.hc-section-row[data-layers='none'] dd { color: var(--color-dark-text-muted); }
+/* a changed row flashes copper for a moment, with the surfaces it describes */
+.hc-section-row dd { transition: color var(--duration-fast) var(--ease-premium); }
+.hc-section-row[data-active] dd { color: var(--color-accent-on-dark); }
+
+@media (max-width: 760px) {
+  .hc-section { top: 8px; left: 8px; padding: 7px 8px 6px; }
+  .hc-section figcaption { display: none; }
+  .hc-section-row { grid-template-columns: auto auto; column-gap: 8px; }
+  .hc-section-row dt { font-size: 10px; letter-spacing: .04em; white-space: nowrap; }
+  .hc-section-row dd span { display: none; }
+  .hc-section-glyph { width: 48px; height: 16px; }
+  /* the mini drawing held under the header: the glyphs alone, walls over roof, clear of the hangar's end */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-section { top: 6px; left: 6px; padding: 5px 6px; }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-section-row { grid-template-columns: auto; }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-section-row dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-section dl { gap: 3px; }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-section-glyph { width: 40px; height: 13px; }
+}
+
+/* ── «Каркас» (07.10, ConfiguratorFrameView.tsx) ──────────────────────────────────────────────────────────────────────
+   The frame tour's picture on the configurator's sheet: the legend's band and the camera's window in the drawing's own
+   proportion, nothing under it — what to show is chosen in the step's panel beside it (configurator-controls.css). The
+   drawing follows the theme, as it did in its own section. */
+.hangar-configurator-embedded .hc-preview-sheet .sheet-image.hc-frame-image { display: flex; flex-direction: column; background: var(--color-surface-alt); }
+.hc-frame { display: flex; flex-direction: column; min-height: 0; padding-top: 25px; }
+.hc-frame .ft-window { width: 100%; }
+/* One numbering on the screen (07.10): the steps' and the nodes'. The drawing's axes — А, Б, В across and 1–4 along —
+   are a drafter's; they are shown only on «Проліт», whose words name А and Б. */
+.hc-frame [data-part="3"] :is(.ft-bubble, .ft-axis) { display: none; }
+.hc-frame:not([data-step="1"]) [data-part="1"] :is(.ft-bubble, .ft-axis) { display: none; }
+
+/* The nodes on the drawing: numbered copper bubbles on the frame's step, as the buttons under it are numbered; the one
+   on show filled. The push-in on a node is the camera's (stageTransform). */
+.ft-nodes { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+.hc-frame[data-step="2"] .ft-nodes { opacity: 1; pointer-events: auto; }
+.ft-node { cursor: pointer; }
+.ft-node-hit { fill: transparent; stroke: none; }
+.ft-node-mark { transform: scale(var(--ft-k)); transition: transform .3s ease; }
+.ft-drawing .ft-node-ring { fill: var(--color-surface-alt); stroke: var(--color-accent); stroke-width: 1.6px; transition: fill .2s ease; }
+.ft-node-number { fill: var(--color-accent-strong); font: 700 10.5px var(--font-condensed), sans-serif; text-anchor: middle; pointer-events: none; transition: fill .2s ease; }
+.ft-node:hover .ft-node-ring, .ft-node[data-on] .ft-node-ring { fill: var(--color-accent); }
+.ft-node:hover .ft-node-number, .ft-node[data-on] .ft-node-number { fill: var(--color-surface-alt); }
+@media (prefers-reduced-motion: no-preference) {
+  .hc-frame[data-step="2"]:not([data-node]) .ft-node-mark { animation: hc-node-pulse 1800ms ease-in-out 1600ms 3; }
+}
+@keyframes hc-node-pulse { 0%, 100% { transform: scale(var(--ft-k)); } 50% { transform: scale(calc(var(--ft-k) * 1.25)); } }
+/* pushed in on a node: its bubble against the camera's zoom, the others back, and the frame's names away — they named
+   the members the node joins */
+.hc-frame[data-node] .ft-node-mark { transform: scale(calc(var(--ft-k) * .55)); }
+.hc-frame[data-node] .ft-node:not([data-on]) { opacity: .4; }
+.hc-frame[data-node] [data-tags="2"] { opacity: 0; }
+/* The frame's step reads as one frame: what stands behind it steps further back than on the other steps */
+.hc-frame.ft[data-step="2"] :is(.ft-back, .ft-opening) { opacity: .28; }
+.hc-frame.ft[data-step="2"] :is(.ft-footing, .ft-slab) { opacity: .35; }
+.hc-frame-node-number {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 7px; border: 1px solid currentColor;
+  border-radius: 50%; font: 700 10.5px/1 var(--font-condensed), sans-serif;
+}
+/* The tour's progress bars stop short of the «Подивитись у 3D» chip in the picture's corner (07.10: they ran under it) */
+.hc-frame-image .dn-progress { right: 172px; }
+
+@container sheet (max-width: 480px) {
+  .hc-frame { --ft-k: 1.55; --ft-t: 1.5; padding-top: 22px; }
+  .hc-frame .ft-legend { padding-inline: 8px; }
+  .hc-frame .ft-chain { font-size: 12px; }
+  .hc-frame-image .dn-progress { right: 146px; left: 10px; }
+}
+
+@media (max-width: 760px) {
+  /* the mini drawing under the header: the frame's window alone, as high as the general view's */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame { padding-top: 0; }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame :is(.ft-legend, .dn-progress) { display: none; }
+  /* the frame is chosen from under it: held a little taller than the general view, so a node pushed in on still reads */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame .ft-window { aspect-ratio: auto; height: max(50vw, 180px); }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-sheet-tools { display: none; }
+}
+
+/* The 3D chip in words, not capitals (07.10) */
+.hc-sheet-chip.hc-sheet-three { font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+
+/* ── The phone's mini drawing folds (07.10) ───────────────────────────────────────────────────────────────────────────
+   Its title block carries «Згорнути»: the picture goes, the sizes' line and the toggle stay. Only the mini drawing has
+   the toggle; the whole sheet in its own place is never folded. */
+.hc-preview-sheet .sheet-action:has(.hc-mini-toggle) { display: none; }
+.hc-mini-toggle {
+  position: relative; min-height: 32px; padding: 0 10px; border: 1px solid var(--sheet-ink, var(--color-border)); border-radius: 0;
+  background: transparent; color: var(--color-text); font: 700 12px/1 var(--font-manrope), sans-serif; cursor: pointer;
+}
+.hc-mini-toggle::after { position: absolute; inset: -6px 0; content: ''; }
+.hc-mini-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet .sheet-action:has(.hc-mini-toggle) { display: flex; align-items: center; }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet.is-folded :is(.sheet-image, .sheet-ruler) { display: none; }
+}
+
+/* ── A short laptop (07.10): the configurator's own heading gives the room to the step ──────────────────────────────── */
+@media (min-width: 1024px) and (max-height: 760px) {
+  /* a jump to #configurator lands just under the header, on a band with less paper above its heading */
+  .hangar-configurator-embedded { padding-top: 40px; scroll-margin-top: 101px; }
+  .hangar-configurator-embedded .hc-eyebrow { display: none; }
+  /* «Ще не знаю» among the answers says they can be skipped */
+  .hangar-configurator-embedded .hc-object-note { display: none; }
+  .hangar-configurator-embedded .hc-hero { gap: 8px var(--grid-gap); margin-bottom: 18px; }
+  .hangar-configurator-embedded .hc-hero :is(h1, h2) { font-size: 34px; max-width: none; }
+  .hangar-configurator-embedded .hc-lede { font-size: 14px; line-height: 1.5; }
+  /* the step tabs' own short-screen sizes are with the stepper (configurator-controls.css) */
+  .hangar-configurator-embedded .hc-step-panel .hc-control-group { padding-block: 16px 18px; }
+  .hangar-configurator-embedded .hc-step-nav { padding-block: 12px 14px; }
+}
+
+/* ── The general view on a wide sheet (07.10) ─────────────────────────────────────────────────────────────────────────
+   The drawing is held by the sheet's height, so a wide sheet left bands of empty paper either side, and the section
+   callout lay over the hangar's end (owner: «щоб не залазило», «не використовуємо вільне місце по боках»). On a sheet
+   wide enough, the callout is a column of its own on the left — a drawing's legend — and the hangar takes the rest. */
+@container sheet (min-width: 700px) {
+  /* the legend as narrow as its words allow: wider, it took the hangar's width and the drawing shrank */
+  .hc-preview-image:has(> .hc-section) { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; }
+  .hc-preview-image:has(> .hc-section) > .hc-preview-svg { grid-area: 1 / 2; min-width: 0; }
+  .hc-preview-image > .hc-section {
+    position: static; grid-area: 1 / 1; align-self: center; margin: 0 0 0 16px; padding: 10px 0 10px 12px;
+    border: 0; border-left: 1px solid rgba(255, 255, 255, .16); background: transparent;
+  }
+  .hc-preview-image > .hc-section figcaption { margin-bottom: 14px; line-height: 1.4; }
+  .hc-preview-image > .hc-section dl { gap: 16px; }
+  .hc-preview-image > .hc-section .hc-section-row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
+  .hc-preview-image > .hc-section .hc-section-row dd { flex-direction: column; align-items: flex-start; gap: 8px; white-space: normal; font-size: 13px; line-height: 1.35; }
+  .hc-preview-image > .hc-section .hc-section-glyph { width: 96px; height: 32px; }
+  .hc-preview-image > .hc-section .hc-section-row dd { font-size: 12.5px; }
+}
+/* …and on a narrower sheet (a tablet, a laptop's 1024, a phone) the callout is the drawing's legend under it, never on
+   the hangar; the phone's mini drawing keeps its corner glyphs (below) */
+@container sheet (max-width: 699px) {
+  .hc-preview-image:has(> .hc-section) { display: flex; flex-direction: column; }
+  .hc-preview-image > .hc-section { position: static; align-self: flex-start; margin: 0 0 10px 10px; }
+  .hc-preview-image:has(> .hc-section) > .hc-preview-svg { flex: none; }
+}
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-image > .hc-section { position: absolute; margin: 0; }
+}
+
+/* The overview on the configurator's sheet reads in three weights (07.10, owner: «деякі елементи виділити»): the front
+   frame in the paper's ink and the heaviest line — one frame, read whole; the bracing in copper — what holds the frames
+   upright along the building; behind them the other frames, purlins and wall purlins stepped back. */
+.hc-frame:not([data-step]) .ft-member { stroke: var(--color-text); stroke-width: calc(2.6px * var(--ft-k)); }
+.hc-frame:not([data-step]) .ft-brace { stroke: var(--color-accent); stroke-width: calc(1.4px * var(--ft-k)); }
+.hc-frame:not([data-step]) .ft-brace-far { stroke: var(--color-accent); opacity: .5; }
+.hc-frame:not([data-step]) :is(.ft-back, .ft-opening) { opacity: .55; }
+.hc-frame:not([data-step]) .ft-thin { opacity: .6; }
+.hc-frame:not([data-step]) :is(.ft-footing, .ft-slab) { opacity: .7; }
+
+/* The frame's captions on a phone (08.10, review): «Металева ферма · Центральний ряд опор» took a second line and the
+   title block grew 15 px under the drawing from one step to the next. Two lines are kept for every frame caption, as the
+   old frame tour kept all its captions in one cell. */
+@media (max-width: 480px) {
+  .hc-preview-sheet .sheet-cell.hc-sheet-shown.is-frame b { min-height: 2.4em; }
 }

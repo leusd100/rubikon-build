@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo, type CSSProperties, type RefObject } from 'react';
 import { DrawingSheet } from '../DrawingSheet';
-import { stageTransform, useDrawingTour } from '../useDrawingTour';
+import { stageTransform, useDrawingTour, type StageSize, type TourFocus } from '../useDrawingTour';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
-import { deriveDomainModel, type HangarDomainModel } from '../../lib/configurator/domainModel';
+import { deriveDomainModel, sizesProvenance, type HangarDomainModel } from '../../lib/configurator/domainModel';
+import { SIZES_PREFIX } from '../configurator/sheetLabels';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import {
   buildParametricModel, deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM,
@@ -414,13 +415,30 @@ function frameGeometry(domain: HangarDomainModel) {
     ...spanBubbles.map(({ at }) => around(at, BUBBLE + 2)), letterBox(letters.L), letterBox(letters.H),
   ]));
 
+  // the front frame's nodes the configurator's «Каркас» view opens (07.10): the heel over the left column, the ridge,
+  // on a truss a node of the bottom chord near the left quarter and a purlin's node on the right slope, and the right
+  // column's base — placed before the members' names, which keep clear of their markers
+  const bottomNodes = panelXs.slice(1, -1).filter((_, index) => index % 2 === 1);
+  const nearest = (xs: readonly number[], to: number) => xs.reduce((best, x) => (Math.abs(x - to) < Math.abs(best - to) ? x : best));
+  const purlinNode = purlinXs.length > 0 ? nearest(purlinXs, W * 0.7) : null;
+  const nodePoints = {
+    heel: xy([0, 0, E]),
+    ridge: xy([W / 2, 0, R]),
+    web: truss && bottomNodes.length > 0 ? xy([nearest(bottomNodes, W / 4), 0, E]) : null,
+    purlin: truss && purlinNode !== null ? xy([purlinNode, 0, roofZ(purlinNode)]) : null,
+    base: xy([W, 0, 0]),
+  };
+  const nodeBoxes = Object.values(nodePoints).filter((point): point is Pt => point !== null).map((point) => around(point, 16));
+
   const frameFocus = xy([W / 2, 0, E * 0.6]);
   const frameBase = camera(frameFocus, 1.2, frontFrame);
   const roofTagAt = [0.3, 0.22, 0.4].map((t) => xy([W * t, 0, roofZ(W * t)]));
+  // the names keep clear of the nodes' markers only here; the section's own tour had none
+  const frameTaken = [...taken, ...nodeBoxes];
   const frameTags = [
-    placeTag(truss ? 'ферма' : 'ригель рами', roofTagAt.map((from) => ({ from, leaders: [[-24, -30], [-30, -18], [-14, -40], [24, -34]] as Pt[] })), frameBase.view, taken, lines),
+    placeTag(truss ? 'ферма' : 'ригель рами', roofTagAt.map((from) => ({ from, leaders: [[-24, -30], [-30, -18], [-14, -40], [24, -34]] as Pt[] })), frameBase.view, frameTaken, lines),
     // to the left of the right column, inside the frame: to its right the camera's edge cut it on phones (03.10)
-    placeTag('колона', [0.3, 0.5, 0.7].map((t) => ({ from: xy([W, 0, E * t]), leaders: [[-30, 12], [-30, -12], [-24, 26]] as Pt[] })), frameBase.view, taken, lines),
+    placeTag('колона', [0.3, 0.5, 0.7].map((t) => ({ from: xy([W, 0, E * t]), leaders: [[-30, 12], [-30, -12], [-24, 26]] as Pt[] })), frameBase.view, frameTaken, lines),
   ];
   const frameCamera = camera(frameFocus, 1.2, union([frontFrame, ...frameTags.map((tag) => tag.box)]));
 
@@ -451,6 +469,21 @@ function frameGeometry(domain: HangarDomainModel) {
   ];
   const baysCamera = camera(baysFocus, 1.5, union([baysEssentials, ...baysTags.map((tag) => tag.box)]));
 
+  // The overview as the configurator shows it (07.10): the frame, its footings and the letters of its dimensions held
+  // together and centred — the picture's own fit leaves room on the right for the bays' bubbles, which the configurator
+  // does not draw, and the hangar sat off to the left
+  const overviewBox = union([
+    pointsBox([[0, 0, 0], [W, 0, 0], [0, end, 0], [W, end, 0], [0, 0, E], [W / 2, 0, R], [W / 2, end, R], [W, end, E], [0, end, E],
+      [0, 0, DIM_Z], [W, 0, DIM_Z], [W + DIM_A, 0, 0], [W + DIM_A, s, 0]]),
+    ...footings.map((footing) => footing.box), [hx - 6, hty, hx + 6, hy],
+    letterBox(letters.L), letterBox(letters.H), letterBox(letters.a, true),
+  ]);
+  const overviewCamera = camera(
+    [(overviewBox[0] + overviewBox[2]) / 2, (overviewBox[1] + overviewBox[3]) / 2],
+    1.6,
+    [overviewBox[0] - 10, overviewBox[1] - 10, overviewBox[2] + 10, overviewBox[3] + 10],
+  );
+
   // the wind's window holds its whole path, down to the ground under the footings, and the leaning bay
   const windCamera = camera(xy([W * 0.62, -1.2, E * 0.45]), 1.15, union([
     pointsBox([[W * 0.2, -WIND, E * 0.25], [W * 0.8, -WIND, E * 0.25], [0, 0, R], [W / 2, s * (1 + LEAN), R + 0.3], [W, s * (1 + LEAN), E]]),
@@ -468,7 +501,8 @@ function frameGeometry(domain: HangarDomainModel) {
     snowGround: groundUnder(columnXs.map((x) => [x, s, -1.1] as P3)), snowFlow,
     windArrows, endWall, braceFootings, windGround: groundUnder(braceBases.map(([x, d]) => [x, d, -1.1] as P3)), windFlow, ghost,
     tags: { frame: frameTags, bays: baysTags },
-    cameras: { span: shot(spanCamera), frame: shot(frameCamera), bays: shot(baysCamera), wind: shot(windCamera) },
+    nodePoints,
+    cameras: { span: shot(spanCamera), frame: shot(frameCamera), bays: shot(baysCamera), wind: shot(windCamera), overview: shot(overviewCamera) },
   };
 }
 
@@ -499,14 +533,19 @@ function focusWidth() {
   window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('#hc-dimension-width')?.focus({ preventScroll: true }));
 }
 
-export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
+/** The frame drawing's model from the business configuration: its geometry, the five steps and the title block's words —
+ *  shared by the section and by the configurator's «Каркас» view (07.10) */
+export function useFrameTourModel() {
   const inquiry = useHangarInquiryContext();
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
   const domain = useMemo(() => deriveDomainModel(state), [state]);
   const g = useMemo(() => frameGeometry(domain), [domain]);
   const summary = deriveSummary(domain);
   const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
-  const where = own ? 'у вашій конфігурації' : 'у прикладі';
+  // the sizes said as the visitor gave them, one rule with the sheet and the stamp (08.10, audit): their own, the
+  // example's, or an orientation while they look for theirs
+  const provenance = sizesProvenance(domain);
+  const where = { own: 'у вашій конфігурації', example: 'у прикладі', approx: 'орієнтовно' }[provenance];
 
   const steps: TourStep[] = [
     // With a centre row the width between the outer axes holds two spans, so it is not called the span (owner, 03.10)
@@ -550,15 +589,206 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
       ...g.cameras.wind,
     },
   ];
-  const { visualRef, step, touring, run, size, motion, pending, stepMs, choose, toggle, hover } = useDrawingTour(steps.length, { loops: 3, durations: STEP_DURATIONS });
-  const active = step ? steps[step - 1] : undefined;
   // «Приклад · 24 × 60 × 8 м»: the sizes held together and to their unit, which stays a lower-case «м» in the title
   // block's capitals (04.10, drawing-sheet.css .sheet-unit); a line may break only after the «·»
-  const object = `${own ? 'Ваш ангар' : 'Приклад'}\u00A0· ${[g.W, g.lengthM, g.E].map(fmt).join('\u00A0×\u00A0')}\u00A0`;
+  const object = `${SIZES_PREFIX[provenance]}\u00A0· ${[g.W, g.lengthM, g.E].map(fmt).join('\u00A0×\u00A0')}\u00A0`;
   /** The title block's «Що показано»: every caption laid out in one cell, only the shown one visible — the cell is as
    *  tall as the longest at any width, so the sheet no longer changes height from step to step (04.10) */
   const captions = [OVERVIEW_CAPTION, ...steps.map((item) => item.caption)];
+  return { g, summary, own, steps, object, captions };
+}
 
+export const FRAME_TOUR_DURATIONS = STEP_DURATIONS;
+
+/** A node of the front frame the configurator's «Каркас» view lets the visitor open (07.10) */
+export type FrameNode = { id: string; title: string; text: string; at: Pt; focus: Pt; zoom: number };
+
+/** The camera on a node: pushed in close, the node and a little round it in the window */
+function nodeShot(at: Pt) {
+  return shot(camera(at, 2.4, around(at, 60)));
+}
+
+/** The nodes, in the order they are offered. Schematic words only — what the node does and that the project decides how it
+ *  is made; Сергій Іванович reads them before they are final. */
+export function frameNodes(g: ReturnType<typeof frameGeometry>): FrameNode[] {
+  const { nodePoints: at, truss } = g;
+  const list: (FrameNode | null)[] = truss
+    ? [
+      { id: 'heel', title: 'Опорний вузол', at: at.heel, ...nodeShot(at.heel), text: 'Тут ферма спирається на колону: усе, що ферма зібрала з покрівлі, разом зі снігом, переходить у колону. Як з’єднати ферму з колоною, визначає проєкт.' },
+      { id: 'ridge', title: 'Коньковий вузол', at: at.ridge, ...nodeShot(at.ridge), text: 'Верх ферми, де сходяться обидва схили. Велику ферму можна виготовити двома половинами й з’єднати тут на монтажі, щоб її було легше привезти. Чи буде стик, вирішує проєкт.' },
+      at.web && { id: 'web', title: 'Вузол решітки', at: at.web, ...nodeShot(at.web), text: 'Тут розкоси сходяться з нижнім поясом. Осі стрижнів зводять в одну точку: тоді ферма працює на розтяг і стиск, а не на згин.' },
+      at.purlin && { id: 'purlin', title: 'Прогін на вузлі', at: at.purlin, ...nodeShot(at.purlin), text: 'Прогони кладуть у вузли верхнього пояса: вага покрівлі й снігу приходить прямо у вузол, а не в середину стрижня, де пояс згинався б.' },
+      { id: 'base', title: 'База колони', at: at.base, ...nodeShot(at.base), text: 'Колона стоїть на фундаменті через опорну плиту з анкерами. Тип фундаменту й анкерів визначає проєктувальник за ґрунтом і навантаженнями.' },
+    ]
+    : [
+      { id: 'heel', title: 'Карнизний вузол', at: at.heel, ...nodeShot(at.heel), text: 'Тут ригель рами з’єднується з колоною. Вузол жорсткий: він тримає форму рами, тому біля нього ригель роблять вищим.' },
+      { id: 'ridge', title: 'Коньковий вузол', at: at.ridge, ...nodeShot(at.ridge), text: 'Верх рами, де сходяться два ригелі. Тут їх з’єднують на монтажі; як саме, визначає проєкт.' },
+      { id: 'base', title: 'База колони', at: at.base, ...nodeShot(at.base), text: 'Колона стоїть на фундаменті через опорну плиту з анкерами. Тип фундаменту й анкерів визначає проєктувальник за ґрунтом і навантаженнями.' },
+    ];
+  return list.filter((item): item is FrameNode => Boolean(item));
+}
+
+/** The legend, the camera's window with the drawing, and the progress bars: the picture of the frame tour, in the
+ *  section's sheet or in the configurator's (07.10). With `nodes`, the front frame's nodes are marked on the frame's
+ *  step and the chosen one is circled; the camera is the caller's (`active`). */
+export function FrameTourStage({
+  g,
+  summary,
+  visualRef,
+  size,
+  active,
+  step,
+  run,
+  count,
+  nodes,
+  node,
+  onNode,
+}: Readonly<{
+  g: ReturnType<typeof frameGeometry>;
+  summary: ReturnType<typeof deriveSummary>;
+  visualRef: RefObject<HTMLDivElement | null>;
+  size: StageSize | null;
+  active: TourFocus | undefined;
+  step: number;
+  run: number;
+  count: number;
+  nodes?: readonly FrameNode[];
+  node?: string | null;
+  onNode?: (id: string) => void;
+}>) {
+  return (
+    <>
+          {/* The legend, in its own band above the camera's window, so it never covers the drawing: both chains and the note
+              always laid out there, so the band is as tall as the tallest and nothing moves from step to step */}
+          <div className="ft-legend" aria-hidden="true">
+            <ol className="ft-chain" data-load="snow">
+              {snowChain(g.truss).map((link, index) => <li key={link} style={at(index)}>{link}</li>)}
+            </ol>
+            <ol className="ft-chain" data-load="wind">
+              {WIND_CHAIN.map((link, index) => <li key={link} style={at(index)} data-brace={BRACE_LINKS.has(index) || undefined}>{link}</li>)}
+            </ol>
+            <p className="ft-note">Деформацію показано умовно, у{'\u00A0'}збільшеному масштабі</p>
+          </div>
+          {/* the camera's window: the picture's own proportion (on a phone the legend's band sits above it) */}
+          <div className="ft-window" ref={visualRef}>
+            <div className="dn-stage is-drawing" style={{ transform: stageTransform(size, VIEW, active) }}>
+              <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру`}>
+                <defs>
+                  <filter id="ft-glow" x="-10%" y="-10%" width="120%" height="120%">
+                    <feGaussianBlur stdDeviation="2.2" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                </defs>
+                <path className="ft-slab" d={g.slab} />
+                {g.footings.map((d) => <path key={d} className="ft-footing" d={d} />)}
+                {/* the axes across the span run through the front columns, under them */}
+                <g className="ft-part" data-part="1">
+                  <path className="ft-axis" d={g.spanAxes} />
+                </g>
+                {/* the structure, back to front */}
+                <path className="ft-back" d={`${g.backFrames}${g.longitudinals}${g.farEnd}`} />
+                {/* the gates and the door on the near end wall, as the configurator places them (04.10) */}
+                {g.openingOutlines && <path className="ft-opening" d={g.openingOutlines} />}
+                <g className="ft-part" data-part="3">
+                  <path className="ft-axis" d={g.bayAxes} />
+                  <path className="ft-thin" d={`${g.purlins}${g.girts}`} />
+                  <path className="ft-post" pathLength={1} d={g.posts} />
+                  <path className="ft-brace ft-brace-far" pathLength={1} d={g.farBracing} />
+                  <path className="ft-brace" pathLength={1} d={g.wallBracing} />
+                  <path className="ft-brace" pathLength={1} d={g.roofBracing} />
+                  {g.laterBracing && <path className="ft-brace ft-brace-far" pathLength={1} d={g.laterFarBracing} />}
+                  {g.laterBracing && <path className="ft-brace" pathLength={1} d={g.laterBracing} />}
+                  <path className="ft-dim" d={g.bayDim} />
+                  {g.bayBubbles.map(({ label, at: [x, y] }) => (
+                    <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 5)}>{label}</text></g>
+                  ))}
+                  <text className="ft-letter" x={n(g.letters.a[0])} y={n(g.letters.a[1])}>a</text>
+                </g>
+                {/* the front columns belong to the span and to the frame */}
+                <g className="ft-part" data-part="1 2">
+                  <path className="ft-member" pathLength={1} d={g.frontColumns} />
+                </g>
+                <g className="ft-part" data-part="1">
+                  <path className="ft-dim" pathLength={1} d={g.spanDim} />
+                  <text className="ft-letter" x={n(g.letters.L[0])} y={n(g.letters.L[1])}>L</text>
+                  <path className="ft-dim" d={g.heightDim} />
+                  <text className="ft-letter" x={n(g.letters.H[0])} y={n(g.letters.H[1])}>H</text>
+                  {g.spanBubbles.map(({ label, at: [x, y] }) => (
+                    <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 5)}>{label}</text></g>
+                  ))}
+                </g>
+                <g className="ft-part" data-part="2">
+                  <path className="ft-member" pathLength={1} d={g.frontRoof} />
+                </g>
+
+                {/* the members named, for the frame and the bays */}
+                {([['2', g.tags.frame], ['3', g.tags.bays]] as const).map(([part, list]) => (
+                  <g key={part} className="ft-tags" data-tags={part} aria-hidden="true">
+                    {list.map((item) => (
+                      <g key={item.label}>
+                        <path className="ft-leader" d={item.d} />
+                        <text className="ft-tag" x={n(item.x)} y={n(item.y)} textAnchor={item.anchor}>
+                          {item.lines.length > 1
+                            ? item.lines.map((row, index) => <tspan key={row} x={n(item.x)} dy={index ? '1.1em' : undefined}>{row}</tspan>)
+                            : item.label}
+                        </text>
+                      </g>
+                    ))}
+                  </g>
+                ))}
+
+                {/* the front frame's nodes, on the frame's step (07.10): a pointer opens one; the buttons under the
+                  drawing are the way for the keyboard and a screen reader */}
+                {nodes && (
+                  <g className="ft-nodes" aria-hidden="true">
+                    {nodes.map((item, index) => (
+                      <g key={item.id} className="ft-node" data-on={node === item.id || undefined} onClick={() => onNode?.(item.id)}>
+                        <circle className="ft-node-hit" cx={n(item.at[0])} cy={n(item.at[1])} r={20} />
+                        {/* numbered as the buttons under the drawing are */}
+                        <g className="ft-node-mark" style={{ transformOrigin: `${n(item.at[0])}px ${n(item.at[1])}px` }}>
+                          <circle className="ft-node-ring" cx={n(item.at[0])} cy={n(item.at[1])} r={9} />
+                          <text className="ft-node-number" x={n(item.at[0])} y={n(item.at[1] + 3.6)}>{index + 1}</text>
+                        </g>
+                      </g>
+                    ))}
+                  </g>
+                )}
+                {/* snow: the links light in turn (--n), as the legend does, and the drops run on each link as it lights */}
+                <g className="ft-load" data-load="snow" aria-hidden="true">
+                  <path className="ft-link ft-plane" style={at(0)} d={g.snowStrip} />
+                  <path className="ft-link ft-edge" style={at(0)} d={g.stripEdges} />
+                  {g.snowArrows.map((d, index) => <path key={d} className="ft-arrows" style={beat((index * 3) % 8)} d={d} />)}
+                  <path className="ft-link" style={at(1)} d={g.stripPurlins} />
+                  <path className="ft-link" style={at(2)} d={g.snowFrame} />
+                  <path className="ft-link" style={at(3)} d={g.snowColumns} />
+                  <path className="ft-link ft-link-footing" style={at(4)} d={g.snowFootings} />
+                  <path className="ft-link" style={at(5)} d={g.snowGround} />
+                  {g.snowFlow.map(({ d, link }) => <path key={d} className="ft-flow" style={at(link)} d={d} />)}
+                </g>
+                {/* wind: the same, then the bracing steps back while the first bay leans as it would without it */}
+                <g className="ft-load" data-load="wind" aria-hidden="true">
+                  <path className="ft-link ft-plane" style={at(0)} d={g.endWall} />
+                  {g.windArrows.map((d, index) => <path key={d} className="ft-arrows ft-arrows-wind" style={beat((Math.floor(index / 3) + 2 * (index % 3)) % 3)} d={d} />)}
+                  <path className="ft-link" style={at(1)} d={g.windPosts} />
+                  <path className="ft-link" style={at(2)} data-brace="" d={g.roofBracing} />
+                  <path className="ft-link" style={at(3)} data-brace="" d={`${g.wallBracing}${g.farBracing}`} />
+                  <path className="ft-link ft-link-footing" style={at(4)} d={g.braceFootings} />
+                  <path className="ft-link" style={at(4)} d={g.windGround} />
+                  {g.windFlow.map(({ d, link }) => <path key={d} className="ft-flow" style={at(link)} data-brace={BRACE_LINKS.has(link) ? '' : undefined} d={d} />)}
+                  <path className="ft-ghost" d={g.ghost} />
+                </g>
+              </svg>
+            </div>
+          </div>
+          <TourProgress count={count} step={step} run={run} className="ft-progress" />
+    </>
+  );
+}
+
+export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
+  const { g, summary, own, steps, object, captions } = useFrameTourModel();
+  const { visualRef, step, touring, run, size, motion, pending, stepMs, choose, toggle, hover } = useDrawingTour(steps.length, { loops: 3, durations: STEP_DURATIONS });
+  const active = step ? steps[step - 1] : undefined;
   return (
     <div
       className="shell direction-editorial-grid dn ft"
@@ -610,113 +840,7 @@ export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
         ]}
         action={motion && <TourControl touring={touring} toggle={toggle} what="каркаса" />}
       >
-        {/* The legend, in its own band above the camera's window, so it never covers the drawing: both chains and the note
-            always laid out there, so the band is as tall as the tallest and nothing moves from step to step */}
-        <div className="ft-legend" aria-hidden="true">
-          <ol className="ft-chain" data-load="snow">
-            {snowChain(g.truss).map((link, index) => <li key={link} style={at(index)}>{link}</li>)}
-          </ol>
-          <ol className="ft-chain" data-load="wind">
-            {WIND_CHAIN.map((link, index) => <li key={link} style={at(index)} data-brace={BRACE_LINKS.has(index) || undefined}>{link}</li>)}
-          </ol>
-          <p className="ft-note">Деформацію показано умовно, у{'\u00A0'}збільшеному масштабі</p>
-        </div>
-        {/* the camera's window: the picture's own proportion (on a phone the legend's band sits above it) */}
-        <div className="ft-window" ref={visualRef}>
-          <div className="dn-stage is-drawing" style={{ transform: stageTransform(size, VIEW, active) }}>
-            <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру`}>
-              <defs>
-                <filter id="ft-glow" x="-10%" y="-10%" width="120%" height="120%">
-                  <feGaussianBlur stdDeviation="2.2" result="blur" />
-                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-              </defs>
-              <path className="ft-slab" d={g.slab} />
-              {g.footings.map((d) => <path key={d} className="ft-footing" d={d} />)}
-              {/* the axes across the span run through the front columns, under them */}
-              <g className="ft-part" data-part="1">
-                <path className="ft-axis" d={g.spanAxes} />
-              </g>
-              {/* the structure, back to front */}
-              <path className="ft-back" d={`${g.backFrames}${g.longitudinals}${g.farEnd}`} />
-              {/* the gates and the door on the near end wall, as the configurator places them (04.10) */}
-              {g.openingOutlines && <path className="ft-opening" d={g.openingOutlines} />}
-              <g className="ft-part" data-part="3">
-                <path className="ft-axis" d={g.bayAxes} />
-                <path className="ft-thin" d={`${g.purlins}${g.girts}`} />
-                <path className="ft-post" pathLength={1} d={g.posts} />
-                <path className="ft-brace ft-brace-far" pathLength={1} d={g.farBracing} />
-                <path className="ft-brace" pathLength={1} d={g.wallBracing} />
-                <path className="ft-brace" pathLength={1} d={g.roofBracing} />
-                {g.laterBracing && <path className="ft-brace ft-brace-far" pathLength={1} d={g.laterFarBracing} />}
-                {g.laterBracing && <path className="ft-brace" pathLength={1} d={g.laterBracing} />}
-                <path className="ft-dim" d={g.bayDim} />
-                {g.bayBubbles.map(({ label, at: [x, y] }) => (
-                  <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 5)}>{label}</text></g>
-                ))}
-                <text className="ft-letter" x={n(g.letters.a[0])} y={n(g.letters.a[1])}>a</text>
-              </g>
-              {/* the front columns belong to the span and to the frame */}
-              <g className="ft-part" data-part="1 2">
-                <path className="ft-member" pathLength={1} d={g.frontColumns} />
-              </g>
-              <g className="ft-part" data-part="1">
-                <path className="ft-dim" pathLength={1} d={g.spanDim} />
-                <text className="ft-letter" x={n(g.letters.L[0])} y={n(g.letters.L[1])}>L</text>
-                <path className="ft-dim" d={g.heightDim} />
-                <text className="ft-letter" x={n(g.letters.H[0])} y={n(g.letters.H[1])}>H</text>
-                {g.spanBubbles.map(({ label, at: [x, y] }) => (
-                  <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 5)}>{label}</text></g>
-                ))}
-              </g>
-              <g className="ft-part" data-part="2">
-                <path className="ft-member" pathLength={1} d={g.frontRoof} />
-              </g>
-
-              {/* the members named, for the frame and the bays */}
-              {([['2', g.tags.frame], ['3', g.tags.bays]] as const).map(([part, list]) => (
-                <g key={part} className="ft-tags" data-tags={part} aria-hidden="true">
-                  {list.map((item) => (
-                    <g key={item.label}>
-                      <path className="ft-leader" d={item.d} />
-                      <text className="ft-tag" x={n(item.x)} y={n(item.y)} textAnchor={item.anchor}>
-                        {item.lines.length > 1
-                          ? item.lines.map((row, index) => <tspan key={row} x={n(item.x)} dy={index ? '1.1em' : undefined}>{row}</tspan>)
-                          : item.label}
-                      </text>
-                    </g>
-                  ))}
-                </g>
-              ))}
-
-              {/* snow: the links light in turn (--n), as the legend does, and the drops run on each link as it lights */}
-              <g className="ft-load" data-load="snow" aria-hidden="true">
-                <path className="ft-link ft-plane" style={at(0)} d={g.snowStrip} />
-                <path className="ft-link ft-edge" style={at(0)} d={g.stripEdges} />
-                {g.snowArrows.map((d, index) => <path key={d} className="ft-arrows" style={beat((index * 3) % 8)} d={d} />)}
-                <path className="ft-link" style={at(1)} d={g.stripPurlins} />
-                <path className="ft-link" style={at(2)} d={g.snowFrame} />
-                <path className="ft-link" style={at(3)} d={g.snowColumns} />
-                <path className="ft-link ft-link-footing" style={at(4)} d={g.snowFootings} />
-                <path className="ft-link" style={at(5)} d={g.snowGround} />
-                {g.snowFlow.map(({ d, link }) => <path key={d} className="ft-flow" style={at(link)} d={d} />)}
-              </g>
-              {/* wind: the same, then the bracing steps back while the first bay leans as it would without it */}
-              <g className="ft-load" data-load="wind" aria-hidden="true">
-                <path className="ft-link ft-plane" style={at(0)} d={g.endWall} />
-                {g.windArrows.map((d, index) => <path key={d} className="ft-arrows ft-arrows-wind" style={beat((Math.floor(index / 3) + 2 * (index % 3)) % 3)} d={d} />)}
-                <path className="ft-link" style={at(1)} d={g.windPosts} />
-                <path className="ft-link" style={at(2)} data-brace="" d={g.roofBracing} />
-                <path className="ft-link" style={at(3)} data-brace="" d={`${g.wallBracing}${g.farBracing}`} />
-                <path className="ft-link ft-link-footing" style={at(4)} d={g.braceFootings} />
-                <path className="ft-link" style={at(4)} d={g.windGround} />
-                {g.windFlow.map(({ d, link }) => <path key={d} className="ft-flow" style={at(link)} data-brace={BRACE_LINKS.has(link) ? '' : undefined} d={d} />)}
-                <path className="ft-ghost" d={g.ghost} />
-              </g>
-            </svg>
-          </div>
-        </div>
-        <TourProgress count={steps.length} step={step} run={run} className="ft-progress" />
+        <FrameTourStage g={g} summary={summary} visualRef={visualRef} size={size} active={active} step={step} run={run} count={steps.length} />
       </DrawingSheet>
       {/* Phone: the shown step's text under the drawing, in one slot as tall as the longest — the list above it keeps
           only the titles, so the page no longer jumps on every step (it did by up to 65 px, three rounds over). The

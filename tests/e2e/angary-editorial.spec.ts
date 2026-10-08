@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { company } from '../../app/data/company';
 import { deliveryModel } from '../../app/data/deliveryModel';
 import { homeProofCase } from '../../app/data/homeProof';
+import { openControlGroup } from './configurator.helpers';
 
 const viewports = [
   { name: 'desktop', width: 1440, height: 900, heroReveal: true },
@@ -36,11 +37,11 @@ for (const viewport of viewports) {
     await expect(hero.locator('.hc-controls, .hc-preview-surface')).toHaveCount(0);
 
     // Owner, 03.10: brief → the visitor's frame → a real hangar → cost → route with its title block → FAQ → the form,
-    // and the separate stages after it
+    // and the separate stages after it. The frame is the configurator's «Каркас» step since 07.10, not a section of its own
+    await expect(page.locator('#structure')).toHaveCount(0);
     const sequence = await page.locator([
       '.service-subhero',
       '#configurator',
-      '#structure',
       '#real-object',
       '#vartist',
       '#process',
@@ -53,7 +54,7 @@ for (const viewport of viewports) {
     })));
 
     expect(sequence.map(({ key }) => key)).toEqual([
-      'service-subhero', 'configurator', 'structure', 'real-object', 'vartist', 'process', 'faq-section', 'inquiry',
+      'service-subhero', 'configurator', 'real-object', 'vartist', 'process', 'faq-section', 'inquiry',
       'related-directions-section',
     ]);
     expect(sequence.map(({ top }) => top)).toEqual([...sequence.map(({ top }) => top)].sort((a, b) => a - b));
@@ -61,12 +62,14 @@ for (const viewport of viewports) {
     const configurator = page.locator('#configurator');
     await expect(configurator).toContainText('Сформуйте базову конфігурацію ангара');
     // No vocabulary cells (they repeated the groups under other names); the summary is the drawing's title block under
-    // the layout — not inside the sticky pane — and the preliminary scheme is told by the frame drawing below
+    // the layout — not inside the sticky pane — and the preliminary scheme is told by the frame drawing on «Каркас»
     await expect(configurator.locator('.hc-vocabulary')).toHaveCount(0);
     await expect(configurator.locator('.hc-preview-pane .hc-summary')).toHaveCount(0);
     await expect(configurator.locator('.hc-stamp-row .hc-summary-flagship')).toBeVisible();
-    // the untouched example is called one, as the sheet above it says «Приклад» (04.10); «Ви обрали» once it is the visitor's
+    // the untouched example is called one, as the sheet above it says «Приклад» (04.10); «Ваша конфігурація» once the
+    // visitor answers anything (08.10)
     await expect(configurator.getByRole('heading', { name: 'Приклад конфігурації' })).toBeVisible();
+    await expect(configurator.locator('.hc-preview-sheet .sheet-stamp')).toContainText('Приклад · 24 × 60 × 8 м');
     await expect(configurator.locator('.hc-summary-area')).toContainText('коник 10,6 м');
     // the stamp's thumbnail: the configured hangar's section and plan
     await expect(configurator.locator('.hc-stamp-row svg.hc-sketch')).toBeVisible();
@@ -74,10 +77,6 @@ for (const viewport of viewports) {
     await expect(disclaimer).toBeVisible();
     expect(await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)))
       .toBeGreaterThanOrEqual(13);
-    await expect(page.locator('#structure .ft-step, #structure .dn-step')).toHaveCount(5);
-    await expect(page.locator('#structure .dn-step').nth(1)).toContainText(
-      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
-    );
 
     if (viewport.heroReveal) {
       // The hero standard (owner, 02.10): the window's height, as every direction page — no longer a shorter «reveal»;
@@ -96,17 +95,25 @@ for (const viewport of viewports) {
       expect(metrics.heroOverflow).toBeLessThanOrEqual(1);
     }
 
-    // «Рішення, які приймаєте ви» lives in the configurator now: one folded «Чому це важливо» per decision, and one for
-    // «Об’єкт» (03.10)
+    // «Рішення, які приймаєте ви» is gone as a section; the decisions are the configurator's five steps (07.10), one open
+    // at a time on every width, the task first
     await expect(page.locator('#decisions')).toHaveCount(0);
-    await expect(configurator.locator('.hc-why')).toHaveCount(4);
-    await expect(configurator.locator('.hc-why').first()).toHaveAttribute('data-why', 'object');
-    await expect(configurator.locator('.hc-why[open]')).toHaveCount(0);
+    await expect(configurator.getByRole('tab')).toHaveText(['1Задача', '2Габарити', '3Стіни й ворота', '4Каркас', '5Обсяг']);
+    await expect(configurator.getByRole('tab', { selected: true })).toHaveText('1Задача');
+    await expect(configurator.locator('[role="tabpanel"]:visible')).toHaveCount(1);
+    // «Каркас»: the frame drawing on the configurator's own sheet, and its five steps in the step's panel
+    await openControlGroup(page, 'space');
+    await expect(configurator.locator('svg.ft-drawing')).toBeVisible();
+    const frameItems = configurator.locator('#hc-frame-panel .hc-frame-item');
+    await expect(frameItems).toHaveCount(5);
+    await frameItems.nth(1).click();
+    await expect(configurator.locator('#hc-frame-panel .hc-frame-text')).toContainText(
+      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
+    );
     // The cost block: the seven factors of the model on the /yak drawing, laid on the «Креслення» sheet, no prices
     await expect(page.locator('#vartist .proc-factors li')).toHaveCount(7);
     await expect(page.locator('#vartist .cf-sheet .sheet-stamp')).toContainText('Що впливає на вартість');
     await expect(page.locator('#vartist')).not.toContainText('грн');
-    await expect(page.locator('#structure svg.ft-drawing')).toBeVisible();
     await expect(page.locator('#process li')).toHaveCount(5);
     await expect(page.locator('#process li').nth(3)).toContainText('Узгоджуємо обсяг і кошторис');
     // The two people as named roles in the route's title block: the generated portraits were withdrawn (#124)
@@ -191,7 +198,10 @@ test('/angary keeps content readable with enlarged text', async ({ page }, testI
   await page.addStyleTag({ content: 'html { font-size: 125% !important; }' });
 
   await expect(page.locator('.hc-summary-disclaimer')).toBeVisible();
-  await expect(page.locator('#structure svg.ft-drawing')).toBeVisible();
+  // the frame drawing is the configurator's «Каркас» step (07.10)
+  await openControlGroup(page, 'space');
+  await expect(page.locator('#configurator svg.ft-drawing')).toBeVisible();
+  await expect(page.locator('#hc-frame-panel .hc-frame-item')).toHaveCount(5);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
@@ -214,8 +224,9 @@ test('/angary process stage follows the authoritative attachment state', async (
   await expect(firstStage.getByRole('link')).toHaveText('Сформувати бриф ↑');
   await expect(firstStage.getByRole('link')).toHaveAttribute('href', '#configurator');
 
+  // the untouched example goes as what it is (08.10): «Приклад з креслення · …», never as the visitor's sizes
   await page.getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
-  await expect(firstStage.locator('.ps-you')).toContainText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  await expect(firstStage.locator('.ps-you')).toContainText('Додано до заявки: Приклад з креслення · 24 × 60 × 8 м');
   await expect(firstStage.locator('.ps-result')).toHaveText('Результат: Бриф у заявці');
   await expect(rail).toHaveAttribute('data-brief', 'attached');
   // …and down to the attached brief in the form once something is: it lands on the brief, which says so once
@@ -225,7 +236,7 @@ test('/angary process stage follows the authoritative attachment state', async (
   await page.locator('#inquiry-brief-status').evaluate((status) => { status.textContent = ''; });
   await send.click();
   await expect(page.locator('#inquiry-brief')).toBeFocused();
-  await expect(page.locator('#inquiry-brief-status')).toHaveText('Додано до заявки: 24 × 60 × 8 м · Холодний');
+  await expect(page.locator('#inquiry-brief-status')).toHaveText('Додано до заявки: Приклад з креслення · 24 × 60 × 8 м');
 
   await page.getByRole('button', { name: 'Не додавати' }).click();
   await expect(firstStage.locator('.ps-you')).toContainText(idle);
@@ -253,8 +264,12 @@ for (const width of [320, 390, 760, 761, 820, 1000]) {
     test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport matrix runs once');
     await page.setViewportSize({ width, height: width <= 390 ? 844 : 1024 });
     await page.goto('/angary', { waitUntil: 'load' });
+    // the frame drawing is the configurator's «Каркас» step (07.10): its steps in the step's panel, its title block the
+    // configurator's sheet; a step shown, so its text is on the page
+    await openControlGroup(page, 'space');
+    await page.locator('#hc-frame-panel .hc-frame-item').nth(1).click();
 
-    const texts = page.locator('#structure :is(.dn-step-text, .sheet-stamp dd, .sheet-stamp strong, .sheet-stamp b)');
+    const texts = page.locator('#configurator :is(.hc-frame-item, .hc-frame-text, .hc-preview-sheet .sheet-stamp b, .hc-preview-sheet .sheet-stamp small)');
     const sizes = await texts.evaluateAll((elements) => elements.map((element) => Number.parseFloat(getComputedStyle(element).fontSize)));
     expect(sizes.length).toBeGreaterThan(0);
     expect(Math.min(...sizes)).toBeGreaterThanOrEqual(11);
@@ -263,34 +278,9 @@ for (const width of [320, 390, 760, 761, 820, 1000]) {
   });
 }
 
-for (const dpr of [1, 2]) {
-  test.describe(`editorial responsive images at DPR ${dpr}`, () => {
-    test.use({ deviceScaleFactor: dpr, viewport: { width: 1440, height: 900 } });
-
-    test('selects generated WebP candidates', async ({ page }, testInfo) => {
-      test.skip(testInfo.project.name === 'mobile-chromium', 'the DPR matrix runs once');
-      await page.goto('/angary', { waitUntil: 'load' });
-      // The pictures live in «Чому це важливо» under the cladding group (180 px wide on a desktop); /angary offers no foundation choice
-      for (const selector of ['.hc-why[data-why="cladding"]']) {
-        const section = page.locator(selector);
-        await section.locator('summary').click();
-        await section.scrollIntoViewIfNeeded();
-        await section.locator('img').evaluateAll((images) => Promise.all(
-          (images as HTMLImageElement[]).map((image) => image.decode()),
-        ));
-      }
-
-      const selected = await page.locator('.hc-why[data-why="cladding"] img').evaluateAll((images) => (
-        images as HTMLImageElement[]
-      ).map((image) => image.currentSrc));
-      expect(selected).toHaveLength(2);
-      for (const source of selected) {
-        expect(source).toContain('/media-responsive/');
-        expect(source).toContain('-480w.');
-      }
-    });
-  });
-}
+// «editorial responsive images» (the cladding pictures in «Чому це важливо») went with «Чому це важливо» itself, removed
+// from the configurator's steps on 07.10 (550c450); the page's other pictures are covered by the real-hangar tests here
+// and direction-static-hero.spec.ts.
 
 // 04.10: the blocks after the frame keep their shape between the breakpoints
 for (const width of [768, 820, 1024]) {
@@ -351,7 +341,7 @@ test('on a phone the focused FAQ question scrolls clear of «До заявки»
   await page.goto('/angary', { waitUntil: 'load' });
   await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();
   // a size changed attaches the brief, which shows the shortcut once the summary has scrolled past
-  await page.locator('#configurator .hc-group-toggle[aria-controls="hc-dimensions-panel"]').click();
+  await openControlGroup(page, 'dimensions');
   await page.locator('#hc-dimension-width').fill('30');
   await page.locator('#hc-dimension-width').blur();
   const cta = page.locator('.angary-mobile-inquiry-cta');

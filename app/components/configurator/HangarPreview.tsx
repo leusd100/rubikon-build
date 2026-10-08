@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
+import { buildCladdingLines, type CladdingLine } from '../../lib/configurator/claddingLines';
 import {
   labelScaleToFit,
   pointsAttr,
+  project,
   projectIsometricScene,
   viewBoxOf,
   type DimensionGuide,
@@ -100,6 +102,20 @@ function BuildLayerPolygon({
   return <polygon className={className} style={style} points={pointsAttr(points)} />;
 }
 
+/** The cladding's ribs or joints on one face (claddingLines.ts), arriving and leaving with that face's layer */
+function CladdingLinesEl({ lines, system, phase, style }: { lines: CladdingLine[]; system: string; phase: string; style: CSSProperties }) {
+  if (lines.length === 0) return null;
+  return (
+    <g className={`hc-cladding hc-cladding-${system} hc-buildlayer hc-phase-${phase}`} style={style} aria-hidden="true">
+      {lines.map(([from, to], index) => {
+        const a = project(from);
+        const b = project(to);
+        return <line key={index} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
+      })}
+    </g>
+  );
+}
+
 /** Shared renderer for any envelope surface (side wall bay, gable end, roof bay). */
 function EnvelopeSurface({
   segment,
@@ -138,6 +154,10 @@ export function HangarPreview({
   // TechnicalSceneModel → this projection. A future 3D renderer branches at the parametric
   // model, NOT here — which is what stops the two views drawing different buildings.
   const technical = useMemo(() => buildTechnicalScene(domain), [domain]);
+  const cladding = useMemo(
+    () => buildCladdingLines(technical.building, envelope.wallSystem, envelope.roofSystem),
+    [technical, envelope.wallSystem, envelope.roofSystem],
+  );
   // The labels keep a legible size on screen however small the drawing is shown (03.10: 6.9 px on a 390 px phone)
   const svgRef = useRef<SVGSVGElement>(null);
   const labelBox = useLabelBox(svgRef);
@@ -163,9 +183,14 @@ export function HangarPreview({
   // places with the same rule; see that file's matching comment.)
   const gateLayer = useLayerLifecycle(scope.walls && gates > 0 && shown('gates'), LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
 
-  const facadeActive = widthActive || heightActive;
-  const sideActive = lengthActive || heightActive;
-  const topActive = widthActive || lengthActive;
+  // A changed cladding or insulation flashes the surfaces it is on, as a changed size flashes its faces (07.10): the
+  // choice is answered on the drawing, not only in the stamp
+  const wallChoiceActive = useLayerHighlight(`${envelope.walls}|${envelope.wallSystem}`);
+  const roofChoiceActive = useLayerHighlight(`${envelope.roof}|${envelope.roofSystem}`);
+
+  const facadeActive = widthActive || heightActive || wallChoiceActive;
+  const sideActive = lengthActive || heightActive || wallChoiceActive;
+  const topActive = widthActive || lengthActive || roofChoiceActive;
 
   const frame = viewBoxOf(scene.bounds);
   const viewBox = `${frame.x} ${frame.y} ${frame.width} ${frame.height}`;
@@ -275,6 +300,7 @@ export function HangarPreview({
             emptyClass="no-roof"
           />
         ))}
+        <CladdingLinesEl lines={cladding.roof} system={envelope.roofSystem} phase={roof.phase} style={transitionStyle(roof)} />
       </g>
 
       <g className={`hc-layer hc-side hc-side-right hc-envelope-${envelope.walls} ${sideActive ? 'is-active' : ''}`}>
@@ -288,6 +314,7 @@ export function HangarPreview({
             emptyClass="no-walls"
           />
         ))}
+        <CladdingLinesEl lines={cladding.side} system={envelope.wallSystem} phase={walls.phase} style={transitionStyle(walls)} />
       </g>
 
       <g className={`hc-layer hc-front hc-gable hc-gable-front hc-envelope-${envelope.walls} ${facadeActive ? 'is-active' : ''}`}>
@@ -300,6 +327,8 @@ export function HangarPreview({
             emptyClass="no-walls"
           />
         )}
+        {/* under the openings, which are cut through it */}
+        <CladdingLinesEl lines={cladding.front} system={envelope.wallSystem} phase={walls.phase} style={transitionStyle(walls)} />
         {scene.gates.map((gate, index) => (
           <BuildLayerPolygon
             key={index}

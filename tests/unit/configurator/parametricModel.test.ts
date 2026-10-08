@@ -429,8 +429,8 @@ describe('slab', () => {
   it('always exists, even when the foundation is out of scope — invisible is not nonexistent', () => {
     // Omitting slab geometry when out of scope silently tightened the SVG viewBox once already
     // (caught by visual regression, ~3792px diff). Geometry is a fact; visibility is a renderer's.
-    const withFoundation = modelFor({}, { scope: ['foundation', 'frame', 'walls', 'roof'] });
-    const without = modelFor({}, { scope: ['frame'] });
+    const withFoundation = modelFor({}, { scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] });
+    const without = modelFor({}, { scopeMode: 'partial', scope: ['frame'] });
 
     expect(without.slab).not.toBeNull();
     expect(without.slab.corners).toEqual(withFoundation.slab.corners);

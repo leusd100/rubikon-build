@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
-import { deriveDomainModel } from '../../lib/configurator/domainModel';
+import { deriveDomainModel, sizesProvenance } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
+import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
 import { ConfiguratorControls } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
@@ -121,6 +122,11 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
   // /angary's drawing sheet names the object as the frame drawing does: the example until the visitor makes it theirs
   const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
   const presentationDemo = sharedInquiry?.presentationDemo;
+  // The open step: the controls show it, the drawing follows it (the frame on «Каркас», 07.10). The sizes first. On
+  // /angary it lives with the configuration, so the draft brings the visitor back to the step they left.
+  const [localStep, setLocalStep] = useState(0);
+  const step = sharedInquiry?.step ?? localStep;
+  const setStep = sharedInquiry?.setStep ?? setLocalStep;
 
   return (
     <section
@@ -140,29 +146,38 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         )}
         <p className="hc-lede">
           {embedded
-            ? 'Задайте габарити, контур і обсяг робіт — креслення оновиться одразу. Технічне рішення уточнимо разом.'
+            ? 'П’ять коротких кроків — від задачі до обсягу робіт. Креслення змінюється з кожним вибором, технічне рішення уточнимо разом.'
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
       </header>
 
+      {/* A draft read back from this browser says so, with the way back to the example (07.10) */}
+      {embedded && sharedInquiry?.restored && (
+        <p className="hc-draft-note" role="status">
+          Відновлено вашу конфігурацію.{' '}
+          <button type="button" className="hc-draft-reset" onClick={sharedInquiry.startOver}>Почати заново</button>
+        </p>
+      )}
       <div className="hc-layout" ref={layoutRef}>
-        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} foundationChoice={!embedded} />
+        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} step={step} onStep={setStep} foundationChoice={!embedded} />
         <div className="hc-preview-pane" id="hangar-live-preview">
           <HangarPreviewModes
             domain={previewDomain}
+            frame={CONTROL_STEPS[step].id === 'frame'}
             presentationDemo={presentationDemo}
             presentationAnnouncement={sharedInquiry?.presentationAnnouncement}
             onEndPresentationDemo={sharedInquiry?.endPresentationDemo}
             sheet={embedded
-              ? { object: sheetObjectLabel(own, businessDomain.dimensions), untouched: !own && !presentationDemo }
+              ? { object: sheetObjectLabel(sizesProvenance(businessDomain), businessDomain.dimensions), untouched: !own && !presentationDemo }
               : undefined}
           />
-          {!embedded && <ConfiguratorSummary domain={businessDomain} />}
+          {!embedded && <div id="hc-stamp"><ConfiguratorSummary domain={businessDomain} /></div>}
         </div>
       </div>
       {/* On the page the summary is the drawing's title block, under the layout: only the drawing stays sticky */}
       {embedded && (
-        <div className="hc-stamp-row">
+        // «До зведення ↓» under the last step lands here
+        <div className="hc-stamp-row" id="hc-stamp">
           <ConfiguratorSummary domain={businessDomain} showInquiryAction onInquiryAction={sharedInquiry?.attachConfiguration} />
         </div>
       )}

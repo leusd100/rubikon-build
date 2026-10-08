@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
 
 // Phase 3A — the Technical ↔ 3D mode switch.
 //
@@ -25,6 +26,9 @@ async function openConfigurator(page: Page) {
   await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click({ timeout: 15000 }).catch(() => {});
   await expect(page.locator('.hc-preview-surface')).toBeVisible();
 }
+
+/** A work's own checkbox in «Обсяг робіт» — there only once «Окремі роботи» is chosen (07.10) */
+const scopeBox = (page: Page, name: 'Стіни / огороджувальний контур' | 'Покрівля') => page.getByRole('checkbox', { name, exact: true });
 
 const technicalButton = (page: Page) => page.getByRole('button', { name: 'Технічний вид', exact: true });
 const threeButton = (page: Page) => page.getByRole('button', { name: '3D', exact: true });
@@ -67,13 +71,17 @@ test.describe('configurator 3D mode (Phase 3A)', () => {
   test('switching Technical → 3D → Technical changes no configuration', async ({ page }) => {
     await openConfigurator(page);
 
+    await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-width').fill('36');
     await page.locator('#hc-dimension-width').blur();
-    // Scoped to the scope-of-work group specifically: Phase 3D's own new "Огороджувальні
-    // конструкції" section added its own "Покрівля" (roof cladding system) heading to the same
-    // page, so an unscoped text match now resolves to two elements.
-    await page.getByLabel('Обсяг заявки').getByText('Покрівля', { exact: true }).click(); // roof off
-    await page.locator('.hc-option-card', { hasText: '2' }).click(); // two gates
+    // By its checkbox, which exists once «Окремі роботи» is chosen (07.10): «Матеріали» names its own «Покрівля»
+    // radiogroup on the same page.
+    await chooseSeparateWorks(page);
+    await scopeBox(page, 'Покрівля').click(); // roof off
+    await openControlGroup(page, 'openings');
+    await page.locator('label.hc-option-card', { has: page.locator('input[name="hc-gates"]'), hasText: /^2$/ }).click(); // two gates
+    await expect(page.locator('.hc-summary-facts')).toContainText('Двоє стандартних');
+    await expect(page.locator('.hc-summary-facts')).not.toContainText('Покрівля');
 
     const summaryBefore = await page.locator('.hc-summary-facts').innerText();
     const dimsBefore = await page.locator('#hc-dimension-width').inputValue();
@@ -82,6 +90,8 @@ test.describe('configurator 3D mode (Phase 3A)', () => {
     await technicalButton(page).click();
     await expect(page.locator('.hc-preview-svg')).toBeVisible();
 
+    // the step the visitor was on stays open (the view switch is the preview's, not the controls')
+    await expect(page.locator('#hc-step-shell-tab')).toHaveAttribute('aria-selected', 'true');
     expect(await page.locator('#hc-dimension-width').inputValue()).toBe(dimsBefore);
     expect(await page.locator('.hc-summary-facts').innerText()).toBe(summaryBefore);
   });
@@ -101,6 +111,7 @@ test.describe('configurator 3D mode (Phase 3A)', () => {
     await openConfigurator(page);
     await enterThreeMode(page);
 
+    await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-length').fill('90');
     await page.locator('#hc-dimension-length').blur();
     // .hc-summary-area is the FOOTPRINT in m², not the length — assert the dimensions label.
@@ -115,7 +126,8 @@ test.describe('configurator 3D mode (Phase 3A)', () => {
     await openConfigurator(page);
     await enterThreeMode(page);
 
-    await page.getByText('Стіни / огороджувальний контур', { exact: true }).click(); // walls off
+    await chooseSeparateWorks(page);
+    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls off
     await expect(page.locator('.hc-summary-facts')).not.toContainText('Стіни');
 
     await technicalButton(page).click();

@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { NBSP, deriveSummary } from '../../lib/configurator/deriveSummary';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import { deriveBayLayout, ridgeHeightM, trussPanelNodesM } from '../../lib/configurator/parametricModel';
-import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
+import { objectProfileLine } from '../../lib/configurator/objectProfile';
+import { DEFAULT_CONFIGURATOR_STATE, INTERNAL_SUPPORTS_LABELS, type ConfirmedTopic } from '../../lib/configurator/types';
+import { anythingChosen, sizesProvenance } from '../../lib/configurator/domainModel';
+import { useInquiryAttachment } from '../inquiry/InquiryAttachmentProvider';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 
@@ -55,10 +57,38 @@ function useChangeMark<T extends HTMLElement>(value: string) {
   return ref;
 }
 
-function Fact({ label, value, wide = false, purpose = false }: Readonly<{ label: string; value: string; wide?: boolean; purpose?: boolean }>) {
+/** A value the visitor did not choose says what it is (07.10): «приклад» — the page's example, left as it was — or
+ *  «попередньо» — worked out by the configurator, for the designer to decide */
+type Status = 'example' | 'derived';
+// «з прикладу», not «приклад» (08.10, audit: the short word read as «наприклад»); a screen reader hears what it means
+const STATUS_WORDS: Record<Status, string> = { example: 'з прикладу', derived: 'попередньо' };
+const STATUS_SPOKEN: Record<Status, string> = { example: ', значення з прикладу — ви його ще не обирали', derived: ', попередньо — визначає проєктувальник' };
+
+function StatusTag({ status }: Readonly<{ status?: Status }>) {
+  if (!status) return null;
+  return (
+    <span className="hc-fact-status" data-status={status}>
+      {STATUS_WORDS[status]}<span className="hc-visually-hidden">{STATUS_SPOKEN[status]}</span>
+    </span>
+  );
+}
+
+function Fact({
+  label,
+  value,
+  wide = false,
+  purpose = false,
+  status,
+}: Readonly<{ label: string; value: string; wide?: boolean; purpose?: boolean; status?: Status }>) {
   const ref = useChangeMark<HTMLDivElement>(value);
   const className = [wide && 'is-wide', purpose && 'hc-fact-purpose'].filter(Boolean).join(' ') || undefined;
-  return <div ref={ref} className={className}><dt>{label}</dt><dd>{value}</dd></div>;
+  return (
+    <div ref={ref} className={className} data-status={status}>
+      <dt>{label} <StatusTag status={status} /></dt>
+      {/* a new element for a new value: a page translation replaced the text node, and the old value stayed (08.10) */}
+      <dd key={value}>{value}</dd>
+    </div>
+  );
 }
 
 /** The stamp's thumbnail: the configured hangar's section and plan, to proportion, with the frames' rhythm in the plan.
@@ -116,8 +146,20 @@ export function ConfiguratorSummary({
   // The stamp names the untouched example as the sheet above it does — «Приклад» — and says «Ви обрали» once the drawn
   // hangar is the visitor's (sameDrawnHangar, as the drawings and the cost notes decide it; 04.10)
   const inquiry = useHangarInquiryContext();
-  const example = inquiry ? sameDrawnHangar(inquiry.state, DEFAULT_CONFIGURATOR_STATE) : false;
+  // «Ви обрали» once the visitor answered anything; until then the stamp is the example's. Each value the visitor left
+  // as it was says so beside its name (07.10: changing the width alone made every default «their» choice)
+  // One rule with the sheet and the lead (domainModel.ts exampleTopics, 08.10 after the audit): a value is «з прикладу»
+  // only while unanswered and still the example's; what another answer set is the visitor's. «Ваша конфігурація» once
+  // anything is answered — «Ви обрали» over a stamp of example values read as a promise the stamp did not keep.
+  const chosen = (topic: ConfirmedTopic): Status | undefined => (domain.exampleTopics.includes(topic) ? 'example' : undefined);
+  const example = !anythingChosen(domain);
+  const provenance = sizesProvenance(domain);
+  const enclosed = domain.scope.walls || domain.scope.roof;
+  // sent with a saved lead and unchanged since: the stamp no longer promises to add it
+  const sent = Boolean(useInquiryAttachment()?.sent) && Boolean(inquiry?.isAttached);
   const dimensionsWithoutUnit = summary.dimensionsLabel.replace(/\s+м$/, '');
+  const taskLine = objectProfileLine(domain.objectProfile);
+  const taskAnswered = taskLine !== objectProfileLine(DEFAULT_CONFIGURATOR_STATE.objectProfile) ? taskLine : null;
   const dimensionsRef = useChangeMark<HTMLParagraphElement>(`${summary.dimensionsLabel} ${summary.ridgeHeightLabel}`);
 
   if (!showInquiryAction) {
@@ -133,7 +175,7 @@ export function ConfiguratorSummary({
           <p className="hc-summary-area">{summary.areaLabel} площі забудови</p>
           <dl className="hc-summary-facts">
             <div>
-              <dt>Контур</dt>
+              <dt>Утеплення</dt>
               <dd>{summary.envelopeLabel}</dd>
             </div>
             <div>
@@ -179,26 +221,34 @@ export function ConfiguratorSummary({
     <section className="hc-summary hc-summary-flagship" aria-label="Підсумок конфігурації">
       <div className="hc-summary-grid">
         <div className="hc-summary-selected">
-          <h3 className="hc-summary-title">{example ? 'Приклад конфігурації' : 'Ви обрали'}</h3>
-          <p className="hc-summary-dimensions" ref={dimensionsRef}>
+          <h3 className="hc-summary-title" key={example ? 'example' : 'own'}>{example ? 'Приклад конфігурації' : 'Ваша конфігурація'}</h3>
+          {provenance === 'approx' && <p className="hc-summary-dimensions-status"><span className="hc-fact-status">орієнтовно · уточнюємо</span></p>}
+          {!example && provenance === 'example' && <p className="hc-summary-dimensions-status"><StatusTag status="example" /></p>}
+          <p className="hc-summary-dimensions" ref={dimensionsRef} translate="no">
             {dimensionsWithoutUnit}<span className="hc-summary-dimensions-unit">{NBSP}м</span>
           </p>
-          <p className="hc-summary-area">коник {summary.ridgeHeightLabel} · {summary.areaLabel} площі забудови</p>
+          <p className="hc-summary-area" translate="no">коник {summary.ridgeHeightLabel} · {summary.areaLabel} площі забудови</p>
           <SummarySketch domain={domain} />
         </div>
         {/* A value that changes lights for a moment, so an edit made in the controls shows where it landed */}
         <dl className="hc-summary-facts">
-          <Fact label="Контур" value={summary.envelopeLabel} />
-          <Fact label="Огородження" value={summary.claddingSystemLabel} />
-          <Fact label="Схема" value={summary.structuralVisualizationLabel} wide />
-          <Fact label="Обсяг" value={summary.scopeSummaryLabel} wide />
+          {/* without walls and roof there is no envelope to describe — no rows, as the openings have none (08.10) */}
+          {enclosed && <Fact label="Утеплення" value={summary.envelopeLabel} status={example ? undefined : chosen('envelope')} />}
+          {enclosed && <Fact label="Огородження" value={summary.claddingSystemLabel} status={example ? undefined : chosen('cladding')} />}
+          <Fact label="Схема" value={summary.structuralVisualizationLabel} wide status="derived" />
+          <Fact label="Обсяг" value={summary.scopeSummaryLabel} wide status={example ? undefined : chosen('scope')} />
           {/* Dropped entirely, not shown as "поза обсягом": an opening in a wall nobody ordered is not part of this
               request, so it has no row. The controls keep the choice, disabled, and it comes back with the walls. */}
-          {summary.gatesLabel !== null && <Fact label="Ворота" value={summary.gatesLabel} />}
-          {summary.doorsLabel !== null && <Fact label="Двері" value={summary.doorsLabel} />}
+          {summary.gatesLabel !== null && <Fact label="Ворота" value={summary.gatesLabel} status={example ? undefined : chosen('openings')} />}
+          {summary.doorsLabel !== null && <Fact label="Двері" value={summary.doorsLabel} status={example ? undefined : chosen('openings')} />}
           {/* «Об’єкт» (03.10): only once a purpose is chosen, last, so an unanswered question does not grow the stamp on a
               phone (styles: configurator-controls.css) */}
-          {summary.objectProfile.purpose !== null && <Fact label="Призначення" value={summary.objectProfile.purpose} purpose />}
+          {/* The task as answered (07.10: purpose, region, project, lifting — the stamp showed the purpose alone), and the
+              columns inside once answered */}
+          {taskAnswered && <Fact label="Задача" value={taskAnswered} purpose />}
+          {domain.internalSupports !== 'unknown' && (
+            <Fact label="Колони всередині" value={INTERNAL_SUPPORTS_LABELS[domain.internalSupports]} />
+          )}
         </dl>
         <div className="hc-summary-handoff">
           <a
@@ -211,7 +261,7 @@ export function ConfiguratorSummary({
           >
             Обговорити цю конфігурацію <span aria-hidden="true">↓</span>
           </a>
-          <p>Параметри автоматично додамо до заявки.</p>
+          <p key={sent ? 'sent' : 'add'}>{sent ? 'Надіслано з вашим запитом.' : 'Параметри автоматично додамо до заявки.'}</p>
         </div>
       </div>
       <SummaryDisclaimer />

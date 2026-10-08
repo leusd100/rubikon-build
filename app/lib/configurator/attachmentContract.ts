@@ -42,7 +42,7 @@ export function transitionHangarAttachment(
  * which changes no drawing — answering «Для чого ангар?» must not relabel the example's drawings «Ваш ангар» (03.10).
  */
 export function sameDrawnHangar(a: ConfiguratorState, b: ConfiguratorState): boolean {
-  return sameBusinessConfiguration({ ...a, objectProfile: b.objectProfile }, b);
+  return sameBusinessConfiguration({ ...a, objectProfile: b.objectProfile, confirmed: b.confirmed }, b);
 }
 
 /**
@@ -70,5 +70,11 @@ export function sameBusinessConfiguration(a: ConfiguratorState, b: ConfiguratorS
     && a.doors === b.doors
     && sameObjectProfile(a.objectProfile, b.objectProfile)
     && a.scope.length === b.scope.length
-    && a.scope.every((item) => b.scope.includes(item));
+    && a.scope.every((item) => b.scope.includes(item))
+    // an answer that repeats the example's value is still an answer (07.10)
+    && a.confirmed.length === b.confirmed.length
+    && a.confirmed.every((topic) => b.confirmed.includes(topic))
+    && a.sizesUnknown === b.sizesUnknown
+    && a.internalSupports === b.internalSupports
+    && a.scopeMode === b.scopeMode;
 }

@@ -27,7 +27,7 @@ describe('hangar inquiry brief', () => {
     expect(plain(brief.dimensionsLabel)).toBe('30 × 50 × 8 м');
     expect(brief.areaSqm).toBe(1500);
     expect(formatted).toContain('Площа забудови: ≈ 1 500 м²');
-    expect(formatted).toContain('Контур: Утеплений');
+    expect(formatted).toContain('Утеплення: Утеплений');
     expect(formatted).toContain('Огородження: Сендвіч-панель');
     expect(formatted).toContain('Ворота: Двоє стандартних, 4 × 4 м');
   });
@@ -74,7 +74,7 @@ describe('inquiry brief — Phase 3F.2', () => {
     const text = formatHangarInquiryBrief(
       createHangarInquiryBrief(deriveDomainModel({
         ...DEFAULT_CONFIGURATOR_STATE,
-        scope: ['foundation', 'frame', 'roof'],
+        scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'],
         gates: 2,
         doors: 1,
       })),
@@ -122,62 +122,85 @@ describe('«Об’єкт» rows (03.10)', () => {
     for (const label of ['Призначення', 'Проєкт', 'Область', 'Підйомне обладнання']) expect(text).not.toContain(`${label}:`);
   });
 
-  it('leads the selected rows with the answered questions, in the order they are asked', () => {
+  it('puts the answered questions in their own part, in the order they are asked', () => {
     const brief = createHangarInquiryBrief(deriveDomainModel({
       ...DEFAULT_CONFIGURATOR_STATE,
       objectProfile: { purpose: 'machinery', project: 'inProgress', region: 'Дніпропетровська область', lifting: 'craneOrHoist' },
     }));
-    expect(createHangarInquiryBriefSections(brief).selected.slice(0, 5)).toEqual([
+    const sections = createHangarInquiryBriefSections(brief);
+    expect(sections.object).toEqual([
       { label: 'Призначення', value: 'Техніка' },
       { label: 'Проєкт', value: 'Готується' },
       { label: 'Область', value: 'Дніпропетровська область' },
       { label: 'Підйомне обладнання', value: 'Кран-балка або тельфер' },
-      { label: 'Габарити', value: brief.dimensionsLabel },
     ]);
+    // answering about the object does not make the drawn hangar the visitor's
+    expect(sections.selected).toEqual([]);
+    expect(sections.defaults[0]).toEqual({ label: 'Габарити', value: brief.dimensionsLabel });
   });
 
   it('keeps an answered «Немає» and drops each «Ще не знаю» on its own', () => {
     const rows = createHangarInquiryBriefSections(createHangarInquiryBrief(deriveDomainModel({
       ...DEFAULT_CONFIGURATOR_STATE,
       objectProfile: { purpose: null, project: 'ready', region: 'unknown', lifting: 'none' },
-    }))).selected;
-    expect(rows.slice(0, 3).map((row) => ({ ...row, value: plain(row.value) }))).toEqual([
+    }))).object;
+    expect(rows).toEqual([
       { label: 'Проєкт', value: 'Є' },
       { label: 'Підйомне обладнання', value: 'Немає' },
-      { label: 'Габарити', value: '24 × 60 × 8 м' },
     ]);
   });
 });
 
-describe('the example’s sizes are never the visitor’s choice (04.10)', () => {
+// 04.10, sharpened 08.10 (audit iteration 1): a value is the visitor's only once answered — a changed one, or the
+// example's own chosen again. The rest is the site's example and the lead says so: «Не уточнено клієнтом».
+describe('the example’s values are never the visitor’s choice (04.10; 08.10)', () => {
   const answered = createHangarInquiryBrief(deriveDomainModel({
     ...DEFAULT_CONFIGURATOR_STATE,
     objectProfile: { ...DEFAULT_CONFIGURATOR_STATE.objectProfile, purpose: 'storage', region: 'м. Київ' },
   }));
 
-  it('puts the «Об’єкт» answers under «Про об’єкт» and the sizes under the defaults’ heading', () => {
-    const outline = createHangarInquiryBriefOutline(answered, true);
+  it('puts the «Об’єкт» answers under «Про об’єкт» and the untouched sizes under «Не уточнено клієнтом»', () => {
+    const outline = createHangarInquiryBriefOutline(answered);
     expect(outline.map((section) => [section.id, section.heading])).toEqual([
       ['object', 'Про об’єкт'],
-      ['selected', 'Базові параметри (за замовчуванням)'],
+      ['defaults', 'Не уточнено — значення прикладу'],
       ['preliminary', 'Попередні дані'],
     ]);
     expect(outline[0].rows).toEqual([{ label: 'Призначення', value: 'Склад' }, { label: 'Область', value: 'м. Київ' }]);
     expect(outline[1].rows[0].label).toBe('Габарити');
-    expect(plain(formatHangarInquiryBrief(answered, true)).split('\n').slice(0, 5)).toEqual([
+    expect(plain(formatHangarInquiryBrief(answered)).split('\n').slice(0, 5)).toEqual([
       'Про об’єкт:',
       'Призначення: Склад',
       'Область: м. Київ',
-      'Базова конфігурація (параметри за замовчуванням):',
+      'Не уточнено клієнтом (значення прикладу на сайті):',
       'Габарити: 24 × 60 × 8 м',
     ]);
   });
 
-  it('has no «Про об’єкт» part when nothing was answered, and one list when the hangar is the visitor’s', () => {
+  it('has no «Про об’єкт» part when nothing was answered', () => {
     const unanswered = createHangarInquiryBrief(deriveDomainModel(DEFAULT_CONFIGURATOR_STATE));
-    expect(createHangarInquiryBriefOutline(unanswered, true).map((section) => section.id)).toEqual(['selected', 'preliminary']);
-    const own = createHangarInquiryBriefOutline(answered, false);
-    expect(own.map((section) => section.heading)).toEqual(['Вибрана конфігурація', 'Попередні дані']);
-    expect(own[0].rows[0]).toEqual({ label: 'Призначення', value: 'Склад' });
+    expect(createHangarInquiryBriefOutline(unanswered).map((section) => section.id)).toEqual(['defaults', 'preliminary']);
+  });
+
+  it('lists only what the visitor answered as «Вибрана конфігурація», the rest stays the example’s', () => {
+    const outline = createHangarInquiryBriefOutline(createHangarInquiryBrief(deriveDomainModel({
+      ...DEFAULT_CONFIGURATOR_STATE,
+      dimensions: { width: 30, length: 50, height: 8 },
+      envelope: 'insulated',
+      wallSystem: 'sandwich-panel',
+      roofSystem: 'sandwich-panel',
+      gates: 2,
+    })));
+    const part = (id: string) => outline.find((section) => section.id === id)?.rows.map((row) => row.label);
+    expect(part('selected')).toEqual(['Габарити', 'Висота в конику', 'Утеплення', 'Огородження', 'Ворота', 'Двері']);
+    expect(part('defaults')).toEqual(['Обсяг']);
+  });
+
+  it('the example’s own value chosen again is an answer', () => {
+    const outline = createHangarInquiryBriefOutline(createHangarInquiryBrief(deriveDomainModel({
+      ...DEFAULT_CONFIGURATOR_STATE,
+      confirmed: ['envelope'],
+    })));
+    expect(outline.find((section) => section.id === 'selected')?.rows).toEqual([{ label: 'Утеплення', value: 'Без утеплення' }]);
   });
 });
