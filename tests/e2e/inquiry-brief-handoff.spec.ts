@@ -102,6 +102,10 @@ test('a brief sent with a saved lead says so, stops asking to be sent, and goes 
   await expect(routeBrief(page)).toContainText(`Надіслано з вашим запитом: 24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м · Холодний`);
   await expect(routeBrief(page).getByRole('link')).toHaveCount(0);
 
+  // «Запит надіслано» stands in place of the fields (08.10); its button brings them back for another request
+  await expect(form.locator('.inquiry-sent')).toContainText(`Конфігурація24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м · Холодний`);
+  await form.getByRole('button', { name: 'Виправити номер або надіслати ще один запит', exact: true }).click();
+
   // the next submit is a new lead (form.spec.ts) — without the brief it already carried
   await submit.click();
   await expect.poll(() => leads.length).toBe(2);
