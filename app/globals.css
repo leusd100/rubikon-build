@@ -797,6 +797,16 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 .cookie-actions button:focus-visible { outline: 2px solid var(--color-accent-on-dark); outline-offset: 2px; }
 .cookie-actions .cookie-accept { color: var(--color-on-action); border-color: var(--color-action); background: var(--color-action); }
 .cookie-actions .cookie-accept:hover { border-color: var(--color-action-hover); background: var(--color-action-hover); }
+/* With a mouse the strip is a line, not a block (owner, 08.10: «трошки меншим»): smaller buttons — still well over the
+   24 px target size — and less air. A finger keeps 44 px buttons (the phone rules below). */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .cookie-banner { gap: 8px 24px; padding-top: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .cookie-banner-text, .cookie-banner p { font-size: 13px; }
+  .cookie-banner a { font-size: 12px; }
+  .cookie-settings-link { font-size: 11.5px; }
+  .cookie-actions { gap: 6px; }
+  .cookie-actions button { min-height: 32px; padding: 0 14px; font-size: 11px; }
+}
 
 .privacy-hero { padding: 180px 0 80px; color: var(--color-dark-text); background: var(--color-dark); }
 .privacy-hero h1 { max-width: 980px; margin: 28px 0 24px; font: 400 clamp(56px, 8vw, 106px)/.92 var(--font-display), sans-serif; letter-spacing: -.045em; }
