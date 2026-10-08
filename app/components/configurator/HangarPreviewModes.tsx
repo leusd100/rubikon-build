@@ -355,7 +355,13 @@ export function HangarPreviewModes({
   else if (showThree) shownOnSheet = '3D-модель · попередня схема';
   const sheetCells: SheetCell[] = sheet ? [
     // keyed, and the sizes untranslated: a page translation left them at their old values (08.10)
-    { tone: 'main', label: 'Що показано', value: <span key={shownOnSheet}>{shownOnSheet}</span> },
+    {
+      tone: 'main',
+      label: 'Що показано',
+      value: <span key={shownOnSheet}>{shownOnSheet}</span>,
+      // the frame's captions differ in length from step to step: a phone keeps two lines for them (sheet css)
+      className: effectiveMode === 'frame' ? 'hc-sheet-shown is-frame' : 'hc-sheet-shown',
+    },
     { label: 'Об’єкт', value: <span translate="no"><SheetValue text={sheet.object} /></span> },
     // shown only by the phone's mini drawing, in place of the other cells
     { value: <span translate="no">{readout}</span>, className: 'hc-sheet-readout' },

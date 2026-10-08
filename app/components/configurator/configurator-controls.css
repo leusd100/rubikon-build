@@ -130,7 +130,11 @@
 
 /* Without JavaScript ([data-theme] is set by the head script) the tabs cannot switch: every step is open, one after the
    other, and the tabs and the step buttons are not shown */
-:root:not([data-theme]) .hc-step-panel[hidden] { display: block; }
+/* In Tailwind's base layer, beside its own `[hidden] { display: none !important }`: an important rule in a layer beats an
+   unlayered one whatever its specificity, so outside the layer this never applied and only «Задача» showed (08.10) */
+@layer base {
+  :root:not([data-theme]) .hc-step-panel[hidden] { display: block !important; }
+}
 :root:not([data-theme]) :is(.hc-steps, .hc-step-nav) { display: none; }
 
 @media (max-width: 760px) {

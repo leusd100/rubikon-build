@@ -144,6 +144,12 @@
 /* While useMiniPreview measures the mini sheet: under reduced motion every property eases over .01 ms (globals.css), so
    a read in the same frame still saw the whole sheet and the controls jumped by the difference */
 .hc-preview-sheet[data-measuring], .hc-preview-sheet[data-measuring] * { transition-property: none; }
+/* …and not only while measuring (08.10, review): the give the mini sheet takes as its bottom margin lagged a frame behind
+   the hold, scroll anchoring lifted the page by the give, the let-go fired, and the mini drawing flip-flopped on every
+   frame. Under reduced motion nothing on the sheet eases at all. */
+@media (prefers-reduced-motion: reduce) {
+  .hc-preview-sheet, .hc-preview-sheet * { transition-property: none; }
+}
 
 /* The mini readout is the phone's, while configuring (below) */
 .hc-preview-sheet .sheet-cell.hc-sheet-readout { display: none; }
@@ -371,3 +377,10 @@
 .hc-frame:not([data-step]) :is(.ft-back, .ft-opening) { opacity: .55; }
 .hc-frame:not([data-step]) .ft-thin { opacity: .6; }
 .hc-frame:not([data-step]) :is(.ft-footing, .ft-slab) { opacity: .7; }
+
+/* The frame's captions on a phone (08.10, review): «Металева ферма · Центральний ряд опор» took a second line and the
+   title block grew 15 px under the drawing from one step to the next. Two lines are kept for every frame caption, as the
+   old frame tour kept all its captions in one cell. */
+@media (max-width: 480px) {
+  .hc-preview-sheet .sheet-cell.hc-sheet-shown.is-frame b { min-height: 2.4em; }
+}

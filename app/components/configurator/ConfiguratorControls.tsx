@@ -355,6 +355,15 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // The ridge's legal range depends on the CURRENT width and eave height, so it is recomputed on every render rather
   // than read from a static table. The value shown is the resolved one: the span rule's until the visitor edits it.
   const ridgeRange = ridgeHeightRangeM(state.dimensions.width, state.dimensions.height);
+  // The ridge's fold is the visitor's to open and close (08.10, review): tied to ridgeEdited, «Підбирати ухил за
+  // шириною» folded it away with the new value and dropped focus to the page. It opens by itself for an edited ridge
+  // (a restored draft), once.
+  const [ridgeOpen, setRidgeOpen] = useState(state.ridgeEdited);
+  const [ridgeEditedSeen, setRidgeEditedSeen] = useState(state.ridgeEdited);
+  if (state.ridgeEdited !== ridgeEditedSeen) {
+    setRidgeEditedSeen(state.ridgeEdited);
+    if (state.ridgeEdited) setRidgeOpen(true);
+  }
   const ridgeValue = resolveRidgeHeightM(state);
   const ridgeRangeText = `Діапазон для цієї ширини й висоти стін: ${formatMetres(ridgeRange.min)}–${formatMetres(ridgeRange.max)}${NBSP}м.`;
   const ridgeNow = `Коник ${formatMetres(ridgeValue)}${NBSP}м · ${formatRoofSlope(domain.roof.pitchDeg, true)}`;
@@ -663,7 +672,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
           </p>
         )}
         {/* The ridge is a refinement, not a first question (07.10): folded, unless the visitor set it */}
-        <details className="hc-more" open={state.ridgeEdited || undefined}>
+        <details className="hc-more" open={ridgeOpen} onToggle={(event) => setRidgeOpen(event.currentTarget.open)}>
           <summary>Висота в конику — за потреби</summary>
         <NumericField
           inputId="hc-dimension-ridge"
@@ -678,7 +687,17 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
         >
           {/* The way back to the span rule, which an edited ridge never had (04.10) */}
           {state.ridgeEdited && (
-            <button type="button" className="hc-field-reset" onClick={() => onChange(withConfirmed(withSpanRuleRidge(state), 'dimensions'))}>Підбирати ухил за шириною</button>
+            <button
+              type="button"
+              className="hc-field-reset"
+              onClick={() => {
+                onChange(withConfirmed(withSpanRuleRidge(state), 'dimensions'));
+                // the button goes with the edit: the field it belonged to keeps the focus and shows the new value
+                window.requestAnimationFrame(() => document.getElementById('hc-dimension-ridge')?.focus());
+              }}
+            >
+              Підбирати ухил за шириною
+            </button>
           )}
         </NumericField>
         </details>
@@ -831,7 +850,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
         {!wallsInScope && (
           <p className="hc-field-note hc-field-note-warning">
             Ворота й двері — це прорізи в стінах. Увімкніть «Стіни / огороджувальний контур» в
-            «Обсязі заявки», щоб їх обрати. Поточний вибір збережеться.
+            «Обсязі робіт», щоб їх обрати. Поточний вибір збережеться.
           </p>
         )}
         <div className="hc-field-head">
