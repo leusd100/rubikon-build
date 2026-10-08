@@ -24,6 +24,7 @@ import {
   responsibilityMap,
 } from '../lib/deliveryModelPresentation';
 import { absoluteUrl, brandedTitle, createPageMetadata } from '../lib/seo';
+import { getDirection } from '../lib/directions';
 import type { CSSProperties } from 'react';
 import type { DeliveryFormatId } from '../types/deliveryModel';
 import type { ProcessSplit } from '../types/directionPage';
@@ -64,7 +65,7 @@ const STARTS = [
   {
     kind: 'scope',
     title: 'Потрібен окремий етап робіт',
-    text: 'Наприклад, фундамент, металевий каркас або покрівля. Обговоримо саме цей етап і його межі.',
+    text: <>Наприклад, <a href={getDirection('betonni-roboty').href}>фундамент</a>, <a href={getDirection('metalokonstruktsii').href}>металевий каркас</a> або <a href={getDirection('pokrivelni-roboty').href}>покрівля</a>. Обговоримо саме цей етап і його межі.</>,
   },
 ] as const;
 

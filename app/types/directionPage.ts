@@ -104,6 +104,8 @@ export type DirectionPageConfig = {
     title: string;
     text: string;
     steps: readonly DirectionStep[];
+    /** A contextual explanation of this direction's scope, stages or estimate on the process page. */
+    link?: { href: string; label: string };
     /**
      * «Ви · Ми» (owner, 06.10): each step's two sides — what you do over the rail, what RUBIKON does under it (the step's
      * own text) — and on the rail what you get, drawn small (ProcessDrawing) with its caption. Index-aligned with steps.
