@@ -110,3 +110,38 @@ test('the homepage phone hero has no video and no pause button', async ({ page }
     await expect(page.locator('.hero img.hv2-hero-still')).toBeVisible();
   }
 });
+
+// Owner, 08.10: the cookie strip along the bottom covered the pause in the hero's corner. On a computer it stands on the
+// line of the hero's buttons — its centre on theirs where there is room, its circle alone or just above the row where a
+// button reaches under it — and never under the strip or over a button.
+for (const route of ['/', '/pro-nas', '/napryamky']) {
+  for (const [width, height] of [[1440, 900], [1280, 720], [1024, 768], [768, 1024]] as const) {
+    test(`hero ${route} at ${width}×${height}: the pause stays clear of the cookie strip and the buttons`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name === 'mobile-chromium', 'explicit desktop and tablet viewports run once');
+      await page.setViewportSize({ width, height });
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.goto(route);
+      await expect(page.locator('.cookie-banner')).toBeVisible();
+      const control = page.locator('.hero-video-control');
+      await expect(control).toBeVisible();
+      const geometry = await control.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const strip = document.querySelector('.cookie-banner')!.getBoundingClientRect();
+        const row = document.querySelector('[data-hero-actions]')!;
+        const buttons = [...row.children].map((child) => child.getBoundingClientRect()).filter((rect) => rect.width > 0);
+        const overButton = buttons.some((rect) => rect.right > box.left && rect.left < box.right && rect.bottom > box.top && rect.top < box.bottom);
+        const rowBox = row.getBoundingClientRect();
+        return {
+          clearOfStrip: box.bottom <= strip.top,
+          overButton,
+          centreOffset: Math.abs((box.top + box.bottom) / 2 - (rowBox.top + rowBox.bottom) / 2),
+          compact: element.hasAttribute('data-compact'),
+        };
+      });
+      expect(geometry.clearOfStrip).toBe(true);
+      expect(geometry.overButton).toBe(false);
+      // on the row's line wherever it has the room in full
+      if (!geometry.compact) expect(geometry.centreOffset).toBeLessThanOrEqual(1);
+    });
+  }
+}

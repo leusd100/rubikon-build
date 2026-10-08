@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceManifest';
 import { directions } from '../data/directions';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
+import { useHeroControlPlacement } from './useHeroControlPlacement';
 
 const CLIP_DURATION_MS = 6000; // UX pass 2026-10: 3 s per slide was too fast to read the indicator and the picture
 const FADE_DURATION_MS = 2000;
@@ -19,6 +20,8 @@ function directionTitle(src: string) {
 }
 
 export function DirectionsHeroImageSequence() {
+  // on a computer the pause / play stands on the line of the hero's buttons, clear of the cookie strip (08.10)
+  const placeControl = useHeroControlPlacement();
   const [activeIndex, setActiveIndex] = useState(0);
   // One index ahead of whatever's on screen, and never decreases — so each slide gets a full
   // CLIP_DURATION_MS head start to load before its turn, instead of every slide after the first
@@ -104,6 +107,7 @@ export function DirectionsHeroImageSequence() {
             </span>
           </div>
           <button
+            ref={placeControl}
             type="button"
             className="hero-video-control"
             data-paused={paused || undefined}
