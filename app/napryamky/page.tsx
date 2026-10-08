@@ -70,7 +70,7 @@ export default function DirectionsPage() {
           </div>
           <div className="subhero-side directions-subhero-side">
             <p>Ангари й склади, зерносховища, металоконструкції, бетонні й покрівельні роботи — окремим етапом або погодженим комплексом. Не знаєте, з чого почати? Опишіть завдання — допоможемо визначити склад робіт.</p>
-            <div className="directions-hero-actions">
+            <div className="directions-hero-actions" data-hero-actions>
               <HeroCallButton />
               <a className="button button-primary subhero-side-cta" href="#directions-list">
                 Обрати напрям <span aria-hidden="true">↓</span>

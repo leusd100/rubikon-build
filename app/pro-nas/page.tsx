@@ -107,7 +107,7 @@ export default function AboutPage() {
           </div>
           <div className="subhero-side about-subhero-side">
             <p>RUBIKON BUILD — родинна будівельна компанія з Дніпра. Практичний досвід Сергія Івановича поєднуємо із системною організацією роботи та зрозумілою комунікацією з клієнтом.</p>
-            <div className="about-hero-actions">
+            <div className="about-hero-actions" data-hero-actions>
               <HeroCallButton />
               <a className="button button-primary about-hero-cta" href="#inquiry">
                 Обговорити задачу <span aria-hidden="true">↓</span>
