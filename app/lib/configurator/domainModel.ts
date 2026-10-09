@@ -159,6 +159,12 @@ export function withSpanRuleRidge(state: ConfiguratorState): ConfiguratorState {
 export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   const { width, length, height } = state.dimensions;
   const gateSelection = clampGateSelection(state.gates, state.gateType, width, height);
+  // Width-derived, not read from state — see `structural`'s own doc comment above — except where the visitor said no
+  // columns may stand inside (07.10): the span is then drawn clear, whatever the width's rule would draw. Resolved
+  // first, because the door's place depends on it: it steps round a centre row only where one stands (09.10)
+  const structural: HangarDomainModel['structural'] = state.internalSupports === 'not-allowed'
+    ? { ...deriveStructuralVisualization(width), scheme: 'clearSpan' }
+    : deriveStructuralVisualization(width);
 
   return {
     objectType: 'hangar',
@@ -169,11 +175,7 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     roof: { type: 'gable', pitchDeg: pitchDegForRidge(width, height, resolveRidgeHeightM(state)) },
     envelope: { walls: state.envelope, roof: state.envelope, wallSystem: state.wallSystem, roofSystem: state.roofSystem },
     foundation: { type: state.foundationType },
-    // Width-derived, not read from state — see `structural`'s own doc comment above — except where the visitor said no
-    // columns may stand inside (07.10): the span is then drawn clear, whatever the width's rule would draw
-    structural: state.internalSupports === 'not-allowed'
-      ? { ...deriveStructuralVisualization(width), scheme: 'clearSpan' }
-      : deriveStructuralVisualization(width),
+    structural,
     // «Комплекс робіт» and «Допоможіть визначити» draw the whole set; the list is the visitor's under «Окремі роботи»
     // only — and it is kept while they look at another mode (07.10: switching modes wiped it)
     scope: {
@@ -185,7 +187,7 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
     ...gateSelection,
     // Door placement reads the CLAMPED gate selection, not the raw state: if a gate was just
     // dropped for not fitting, the door's legal positions change with it.
-    ...clampDoorSelection(state.doors, gateSelection.gates, gateSelection.gateType, width),
+    ...clampDoorSelection(state.doors, gateSelection.gates, gateSelection.gateType, width, structural.scheme === 'centerSupport'),
     areaSqm: Math.round(width * length),
     objectProfile: { ...state.objectProfile },
     confirmed: [...state.confirmed],

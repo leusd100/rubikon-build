@@ -898,8 +898,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
           <div className="hc-option-cards hc-chips hc-door-options" role="radiogroup" aria-labelledby="hc-doors-label">
             {DOOR_OPTIONS.map((option) => {
               // Disabled rather than hidden, and only ever for a real reason: at this width the
-              // door has no position clear of the corners, the gates and the centre-support line.
-              const disabled = option > 0 && (!wallsInScope || !doorFits(shown.gates, shown.gateType, state.dimensions.width));
+              // door has no position clear of the corners, the gates and the centre-support line —
+              // where one stands, as the model decides it (09.10, audit F60: the same scheme)
+              const disabled = option > 0 && (!wallsInScope
+                || !doorFits(shown.gates, shown.gateType, state.dimensions.width, domain.structural.scheme === 'centerSupport'));
               return (
                 <label className="hc-option-card" key={option}>
                   <input
