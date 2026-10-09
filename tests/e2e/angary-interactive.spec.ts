@@ -200,13 +200,15 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   await page.clock.runFor(2000);
   await expect(frame).not.toHaveAttribute('data-touring', /.*/);
   await expect(frame).not.toHaveAttribute('data-step', /.*/);
-  await expect(page.locator('#hc-step-frame .hc-frame-play')).toContainText('Показати по черзі');
+  // the words are the button's own name (09.10, audit F44), and a click on them plays — the button says what it does,
+  // «Зупинити показ» while the tour plays (it said the state, «Показуємо по черзі», beside the button)
+  await expect(control).toHaveAccessibleName('Показати по черзі');
   // played from a load step: it runs, and loops while it does
   await items.nth(3).click();
-  await control.click();
+  await page.locator('#hc-step-frame .hc-frame-play').getByText('Показати по черзі', { exact: true }).click();
   await expect(frame).toHaveAttribute('data-touring', 'true');
   await expect(frame).toHaveAttribute('data-step', '4');
-  await expect(page.locator('#hc-step-frame .hc-frame-play')).toContainText('Показуємо по черзі');
+  await expect(control).toHaveAccessibleName('Зупинити показ');
   await expect.poll(looping, { timeout: 5_000 }).toBeGreaterThan(0);
   await control.click();
   await expect(frame).not.toHaveAttribute('data-touring', /.*/);

@@ -189,8 +189,9 @@
   border-radius: 50%; color: var(--color-accent-strong); font: 700 11px/1 var(--font-condensed), sans-serif;
 }
 .hc-frame-node[aria-pressed='true'] .hc-frame-node-number { border-color: currentColor; color: inherit; }
-.hc-frame-play { display: flex; align-items: center; gap: 10px; margin-top: 18px; color: var(--color-text-secondary); font: 500 14px/1.2 var(--font-manrope), sans-serif; }
-.hc-frame-play .dn-control-label { position: absolute; width: 1px; min-width: 0; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.hc-frame-play { display: flex; align-items: center; margin-top: 18px; }
+/* «Показати по черзі» is the button's own label (09.10, audit F44): after its round icon, set as the panel's words */
+.hc-frame-play .dn-control { flex-direction: row-reverse; padding: 0 6px 0 0; font: 500 14px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 
 /* ── Quiet type (07.10) ───────────────────────────────────────────────────────────────────────────────────────────────
    Capitals stay in the drawing's title block, where a drawing has them; in the controls the words are set as words —
