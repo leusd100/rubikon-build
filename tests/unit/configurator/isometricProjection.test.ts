@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MIN_LABEL_SCREEN_PX,
+  LABEL_SCREEN_PX,
   labelScaleToFit,
   pointsAttr,
   project,
@@ -189,6 +189,30 @@ describe('projectIsometricScene', () => {
     expect(dims.ridge.valueM).toBeGreaterThan(dims.eave.valueM);
     // Nested dimension chain: the derived ridge guide sits outside the eave guide.
     expect(dims.ridge.line[0].x).toBeLessThan(dims.eave.line[0].x);
+  });
+
+  // 09.10, audit F72: the ridge chain hangs off the eave corner, where there is no ridge — its top tick stood 30–36 px
+  // above the apex at 1440 px, level with nothing. An extension line from the apex, in the gable's plane, to over that
+  // corner ends level with the tick, as the eave corner is level with the eave chain's.
+  it('ties the ridge chain to the ridge with an extension line from the apex, ending level with its top tick', () => {
+    for (const dimensions of [{ width: 24, length: 60, height: 8 }, { width: 10, length: 10, height: 4 }, { width: 50, length: 120, height: 15 }]) {
+      const technical = technicalFor({ dimensions });
+      const { ridgeHeightM } = technical.dimensions;
+      const { ridge, eave, width } = projectIsometricScene(technical).dimensions;
+      const label = `${dimensions.width}x${dimensions.length}x${dimensions.height}`;
+      expect(ridge.extension, label).toBeDefined();
+      const [from, to] = ridge.extension!;
+      expect(from, label).toEqual(project({ x: dimensions.width / 2, y: ridgeHeightM, z: 0 }));
+      expect(to, label).toEqual(project({ x: dimensions.width, y: ridgeHeightM, z: 0 }));
+      // the chain's top end — and its tick — are level with the extension's end, as the eave's are with its corner
+      expect(Math.min(ridge.line[0].y, ridge.line[1].y), label).toBeCloseTo(to.y, 6);
+      expect(Math.min(eave.line[0].y, eave.line[1].y), label).toBeCloseTo(project({ x: dimensions.width, y: dimensions.height, z: 0 }).y, 6);
+      // it runs out towards the chain, never past it
+      expect(Math.abs(to.x - from.x), label).toBeLessThan(Math.abs(ridge.line[0].x - from.x));
+      // only the ridge measures from a point that is not its own corner
+      expect(eave.extension).toBeUndefined();
+      expect(width.extension).toBeUndefined();
+    }
   });
 });
 
@@ -488,21 +512,45 @@ describe('labels at a legible size (03.10)', () => {
     return { scale, px: projectIsometricScene(technical, scale).dimensions.ridge.fontPx * screenPerUnit };
   }
 
-  it('leaves a drawing shown large as it was', () => {
+  // 09.10, audit F20: the scale only ever grew (Math.max(1, …)), so a small hangar shown large drew its labels at 36 px
+  // on a 1440 px screen — «10 м» and «5,2 м» outweighed the drawing. A drafted sheet letters its sizes one height.
+  it('draws a small hangar shown large with labels no larger than the default’s', () => {
     // 1440×900: the field's content box
-    expect(labelScaleToFit(technicalFor(), { width: 772, height: 532 })).toBe(1);
+    const box = { width: 772, height: 532 };
+    const small = smallestOnScreen({ dimensions: { width: 10, length: 10, height: 4 } }, box);
+    expect(small.scale).toBeLessThan(1);
+    expect(small.px).toBeCloseTo(LABEL_SCREEN_PX, 0);
+    expect(smallestOnScreen({}, box).px).toBeCloseTo(LABEL_SCREEN_PX, 0);
   });
 
-  it('keeps every label at 12 px or more on a phone, whatever the hangar', () => {
+  it('holds every label at the same size on screen, whatever the hangar and the screen', () => {
     for (const dims of [
       { width: 24, length: 60, height: 8 },
+      { width: 10, length: 10, height: 4 },
+      { width: 14, length: 30, height: 5 },
       { width: DIMENSION_BOUNDS.width.min, length: DIMENSION_BOUNDS.length.min, height: DIMENSION_BOUNDS.height.max },
       { width: DIMENSION_BOUNDS.width.max, length: DIMENSION_BOUNDS.length.max, height: DIMENSION_BOUNDS.height.max },
     ]) {
-      // 390×844 and 320×640: the field's content box
-      for (const box of [{ width: 296, height: 226 }, { width: 226, height: 200 }]) {
+      // 1440×900, 1024×768, 390×844 and 320×640: the field's content box
+      for (const box of [{ width: 772, height: 532 }, { width: 520, height: 364 }, { width: 296, height: 226 }, { width: 226, height: 200 }]) {
         const { px } = smallestOnScreen({ dimensions: dims }, box);
-        expect(px, `${dims.width}x${dims.length}x${dims.height} in ${box.width}`).toBeGreaterThanOrEqual(MIN_LABEL_SCREEN_PX - 0.1);
+        const label = `${dims.width}x${dims.length}x${dims.height} in ${box.width}`;
+        // within half a pixel either way: the scale is rounded up to hundredths
+        expect(px, label).toBeGreaterThanOrEqual(LABEL_SCREEN_PX - 0.1);
+        expect(px, label).toBeLessThanOrEqual(LABEL_SCREEN_PX + 0.5);
+      }
+    }
+  });
+
+  it('settles on its scale: a re-measure of the same box gives the same scale, below 1 as above it', () => {
+    for (const dims of [{ width: 10, length: 10, height: 4 }, { width: 24, length: 60, height: 8 }]) {
+      for (const box of [{ width: 772, height: 532 }, { width: 296, height: 226 }]) {
+        const technical = technicalFor({ dimensions: dims });
+        expect(labelScaleToFit(technical, box)).toBe(labelScaleToFit(technical, box));
+        const scale = labelScaleToFit(technical, box);
+        const view = viewBoxOf(projectIsometricScene(technical, scale).bounds);
+        const next = Math.ceil((LABEL_SCREEN_PX / (12 * Math.min(box.width / view.width, box.height / view.height))) * 100) / 100;
+        expect(Math.abs(next - scale), `${dims.width} in ${box.width}`).toBeLessThanOrEqual(0.01);
       }
     }
   });

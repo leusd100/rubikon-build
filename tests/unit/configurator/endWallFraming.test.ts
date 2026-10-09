@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { endWallFraming, postSpacingM, type EndWallOpening } from '../../../app/components/angary/endWallFraming';
+import { endWallFraming, postSpacingM, sheetOpenings, type EndWallOpening } from '../../../app/components/angary/endWallFraming';
 import { buildParametricModel } from '../../../app/lib/configurator/parametricModel';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
+import { projectToView } from '../../../app/lib/configurator/viewProjection';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState, type GateType } from '../../../app/lib/configurator/types';
 
 // The frame tour's end wall (04.10): its posts frame the configurator's gates and never stand in an opening; its wall
@@ -20,7 +21,7 @@ function framingFor(patch: Partial<ConfiguratorState> & { width?: number; height
     dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, ...(width ? { width } : {}), ...(height ? { height } : {}) },
   };
   const domain = deriveDomainModel(state);
-  const openings = buildParametricModel(domain).openings.map(({ kind, rect }) => ({ kind, xM: rect.xM, widthM: rect.widthM, heightM: rect.heightM }));
+  const openings = sheetOpenings(buildParametricModel(domain).openings, domain.dimensions.widthM, domain.scope.walls);
   const centre = domain.structural.scheme === 'centerSupport';
   return { openings, centre, widthM: domain.dimensions.widthM, eaveM: domain.dimensions.eaveHeightM, ...endWallFraming({ widthM: domain.dimensions.widthM, eaveM: domain.dimensions.eaveHeightM, centre, openings }) };
 }
@@ -121,5 +122,50 @@ describe('every configuration the configurator allows', () => {
       expect(postXs).toContain(only.xM);
       expect(postXs).toContain(only.xM + only.widthM);
     }
+  });
+});
+
+// 09.10, audit F18: the general view and the 3D put the model's x = 0 at the front wall's right corner, the sheet puts
+// axis А on the left — the gates and the door stood on the other side of the centre on «Каркас»
+describe('the openings on the sheet', () => {
+  const stateFor = (patch: Partial<ConfiguratorState>): ConfiguratorState => ({ ...DEFAULT_CONFIGURATOR_STATE, ...patch });
+
+  it.each([
+    ['24 × 60 × 8, a gate and the door', stateFor({ gates: 1, doors: 1 })],
+    ['10 × 10 × 4, the door', stateFor({ dimensions: { width: 10, length: 10, height: 4 }, gates: 1, doors: 1 })],
+    ['20 × 40 × 6, the door alone', stateFor({ dimensions: { width: 20, length: 40, height: 6 }, gates: 0, doors: 1 })],
+    ['36 × 60 × 8, two gates and the door', stateFor({ dimensions: { width: 36, length: 60, height: 8 }, gates: 2, doors: 1 })],
+    ['24 × 60 × 8 with no columns inside', stateFor({ gates: 1, doors: 1, internalSupports: 'not-allowed' })],
+  ])('stand in the order and on the side the general view and the 3D show them: %s', (_, state) => {
+    const domain = deriveDomainModel(state);
+    const W = domain.dimensions.widthM;
+    const model = buildParametricModel(domain).openings;
+    // the general view and the 3D: one camera (viewProjection.ts), left to right on the screen
+    const onScreen = (x: number) => projectToView({ x, y: 0, z: 0 }).x;
+    const general = model.map(({ kind, rect }) => ({ kind, at: onScreen(rect.xM + rect.widthM / 2) - onScreen(W / 2) }))
+      .sort((a, b) => a.at - b.at);
+    // the sheet: its x runs left to right, from axis А
+    const sheet = sheetOpenings(model, W, true).map(({ kind, xM, widthM }) => ({ kind, at: xM + widthM / 2 - W / 2 }))
+      .sort((a, b) => a.at - b.at);
+    expect(model.length).toBeGreaterThan(0);
+    expect(sheet.map((o) => o.kind)).toEqual(general.map((o) => o.kind));
+    expect(sheet.map((o) => Math.sign(Math.round(o.at * 1000)))).toEqual(general.map((o) => Math.sign(Math.round(o.at * 1000))));
+    // mirrored, not moved: each as far from the centre as in the model
+    const distances = (list: readonly { at: number }[]) => list.map((o) => +Math.abs(o.at).toFixed(3)).sort((a, b) => a - b);
+    expect(distances(sheet)).toEqual(distances(model.map(({ rect }) => ({ at: rect.xM + rect.widthM / 2 - W / 2 }))));
+  });
+
+  // 09.10, audit F124: the general view and the stamp drop the gates without walls in the request; the sheet drew them,
+  // and its posts and wall purlins still stepped round them
+  it('are none without walls in the request, and the end wall is framed as a wall with no openings', () => {
+    const domain = deriveDomainModel(stateFor({ gates: 1, doors: 1, scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'] }));
+    const openings = sheetOpenings(buildParametricModel(domain).openings, domain.dimensions.widthM, domain.scope.walls);
+    expect(openings).toEqual([]);
+    const { widthM, eaveHeightM } = domain.dimensions;
+    const centre = domain.structural.scheme === 'centerSupport';
+    expect(endWallFraming({ widthM, eaveM: eaveHeightM, centre, openings }).postXs).toEqual(
+      endWallFraming({ widthM, eaveM: eaveHeightM, centre, openings: [] }).postXs,
+    );
+    expect(framingFor({ gates: 1, doors: 1, scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'] }).openings).toEqual([]);
   });
 });

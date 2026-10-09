@@ -61,5 +61,8 @@ describe('/angary cost factor notes (04.10; answered only 08.10)', () => {
   it('count the gates the visitor asked for, or say there are none', () => {
     expect(notesFor({ gates: 2, gateType: 'double' })?.technology).toBe('Ворота: двоє для заїзду техніки, 5 × 5 м');
     expect(notesFor({ gates: 0 })?.technology).toBe('Без воріт');
+    // held by the width: what was asked and what the scheme draws, as the stamp says it (09.10)
+    expect(notesFor({ gates: 2, gateType: 'double', dimensions: { width: 12, length: 60, height: 8 } })?.technology)
+      .toBe('Ворота: двоє для заїзду техніки, 5 × 5 м — за ширини 12 м у схемі вміщуються лише одні');
   });
 });

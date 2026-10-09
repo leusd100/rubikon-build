@@ -1,5 +1,5 @@
 import { buildParametricModel, type ParametricBuildingModel, type Vec3 } from './parametricModel';
-import type { HangarDomainModel } from './domainModel';
+import { openingsShown, type HangarDomainModel } from './domainModel';
 import type { CladdingSystem } from './types';
 
 // The 3D VIEW's scene description — a sibling of technicalSceneModel.ts, not a consumer of it.
@@ -21,6 +21,10 @@ import type { CladdingSystem } from './types';
 // divergence Phase 3-0 was built to eliminate. Both now live upstream in ParametricBuildingModel
 // (`roof.overhangM`, `slab.overhangM`) for that same reason, and this file still adds none of its
 // own — `roofSegments`/`slab.corners` below are copied verbatim, overhang included.
+//
+// One more presentation choice, of the same kind as a member's section (09.10, audit F68): where the cladding hangs.
+// The panels' corners are still the model's planes — the members' centre lines — copied verbatim; `standoff` says how
+// far outside them the renderer hangs the cladding, so the frame stands inside it rather than on top of it.
 
 /**
  * Phase 3F — `wall`/`roof` split into per-cladding-system variants (`-profiled`/`-sandwich`), so
@@ -87,6 +91,12 @@ export type PanelMesh = {
   thicknessM: number;
   material: MaterialKey;
   claddingSystem?: CladdingSystem;
+  /** Wall and roof cladding only (09.10, audit F68): `outwardM` — how far the panel's inner face stands outside its
+   *  plane (`corners`, the members' centre lines), so the frame on that plane sits inside the cladding; `startM`/`endM`
+   *  — how far it runs on past its first and last corners along its first edge (the building's length), to meet the
+   *  gables, which stand off the end frames the same way (`CLADDING_END_REACH_M`); `riseM` — walls only — how far it
+   *  runs up past its top edge, to the roof's underside, which the roof's own standoff lifts off the eave line. */
+  standoff?: { outwardM: number; startM: number; endM: number; riseM: number };
 };
 
 export type Point2 = { x: number; y: number };
@@ -96,7 +106,12 @@ export type Point2 = { x: number; y: number };
  *  overlay on the gable's own outward face — see ThreeHangarView's `Gable` component. */
 export type GableMesh = {
   id: string;
+  /** The gable cladding's pentagon (09.10, audit F68): the model's gable (`buildGableEnds`) widened by the walls'
+   *  standoff to meet the side walls' inner faces, and raised by the roof's to meet its underside — the same slope, so
+   *  still a gable of `widthM` × `eaveM` × `ridgeM`, its left edge at `xM`. The holes stay where the model cuts them. */
   outline: Point2[];
+  /** The left edge of `outline`: −(the walls' standoff) — where the cladding overlay's own x = 0 lands */
+  xM: number;
   /** The same three numbers `outline`'s 5 points already encode, exposed directly rather than
    *  left for a consumer to re-derive by indexing into the outline array — Phase 3D.1's cladding
    *  overlay (`buildGableCladdingOverlay`) needs exactly these three to compute its own roofline
@@ -178,9 +193,14 @@ export type ThreeSceneModel = {
    *  the dark backdrop, a banded/inset one for the leaf — see `GateLeafMesh`'s own doc comment. */
   leaves: GateLeafMesh[];
   ground: { yM: number; sizeM: number };
-  /** `gates` mirrors SVG's own `gates > 0` boolean (buildUpSequence's `gates` layer trigger) —
-   *  independent of `walls`, because a gate opening is only meaningful once there is an envelope
-   *  to cut it into, but its OWN build-up layer fires off the gate count, not the walls toggle.
+  /** How the roof's cladding stands off the rafters (09.10, audit F68), for the one roof piece that is not a panel —
+   *  the ridge cap: `outerM` — its outer face's distance from the rafters' centre line, along the slope's normal;
+   *  `endReachM` — how far it runs on past the end frames (`CLADDING_END_REACH_M`). */
+  roofCladding: { outerM: number; endReachM: number };
+  /** `gates` is the openings' layer — the gates AND the door — and mirrors SVG's own trigger for it
+   *  exactly: both read `openingsShown` (domainModel.ts), walls in the request and a gate or a door
+   *  to show (09.10, audit F19: a door with no gates used to leave this false, and the gable showed
+   *  its hole with no door leaf in it). Its OWN build-up layer, not the walls toggle.
    *
    *  `slab` and `footings` are mutually exclusive foundation REPRESENTATIONS, not two independent
    *  scope items — see deriveFoundationVisibility below for exactly which `foundation.type` shows
@@ -233,6 +253,16 @@ const TRUSS_CHORD_SECTION_M = RAFTER_SECTION_M;
 const TRUSS_WEB_SECTION_M = 0.16;
 const WALL_THICKNESS_M = 0.16;
 const ROOF_THICKNESS_M = 0.14;
+// Where the cladding hangs (09.10, audit F68). Its geometry used to grow INWARD from the members' centre-line planes,
+// so every member stood out of it by half its section — columns outside the walls, rafters, purlins and the bracing
+// crosses on top of the roof, the front frame's truss on the gable: an exoskeleton an engineer reads as a mistake. The
+// cladding now stands off those planes by half the primary section, which is the frame's outer face (the sections above
+// were chosen for exactly that), and the members stay on the model's axes, where the drawing and its dimensions are.
+const WALL_STANDOFF_M = COLUMN_SECTION_M / 2;
+const ROOF_STANDOFF_M = RAFTER_SECTION_M / 2;
+/** The gables' outer faces, past the end frames' centre lines: the standoff and the gable's own thickness — and so how
+ *  far the side walls, the roof and the ridge cap run on past the end frames, to meet them with no gap at a corner */
+export const CLADDING_END_REACH_M = WALL_STANDOFF_M + WALL_THICKNESS_M;
 // Phase 3D.1: shallower than the original 0.35 m — that depth was tuned back when the recess WAS
 // the gate (brief §3A: "an opening is the absence of light"), reading as a loading-dock void. Now
 // that a real door leaf (see `GateLeafMesh`, `leaves` below) sits in front of it at
@@ -365,6 +395,21 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
   }
 
   // ── Envelope: side walls and both roof slopes, per bay ──
+  // The roof's underside stands ROOF_STANDOFF_M off the rafters along the slope's normal (09.10, F68): higher than the
+  // rafter line by that over the slope's cosine, which is the same slope's hypotenuse — no angle is derived here, only
+  // the model's own rise over its half-span. The walls run up to it at their outer face, where it is lowest; the gables
+  // up to it in their own plane.
+  const { eaveM, ridgeM } = building.heights;
+  const slope = (ridgeM - eaveM) / (widthM / 2);
+  const roofUndersideRiseM = ROOF_STANDOFF_M * Math.hypot(1, slope);
+  const wallRiseM = roofUndersideRiseM - CLADDING_END_REACH_M * slope;
+  // the end bays run on to the gables (CLADDING_END_REACH_M); the corners' first edge is the building's length
+  const reach = (segment: { index: number; segmentCount: number }, outwardM: number, riseM = 0) => ({
+    outwardM,
+    startM: segment.index === 0 ? CLADDING_END_REACH_M : 0,
+    endM: segment.index === segment.segmentCount - 1 ? CLADDING_END_REACH_M : 0,
+    riseM,
+  });
   for (const segment of building.envelope.wallSegments) {
     panels.push({
       id: `wall-${segment.face}-${segment.index}`,
@@ -372,6 +417,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       thicknessM: WALL_THICKNESS_M,
       material: claddingMaterialKey('wall', domain.envelope.wallSystem),
       claddingSystem: domain.envelope.wallSystem,
+      standoff: reach(segment, WALL_STANDOFF_M, wallRiseM),
     });
   }
   for (const segment of building.envelope.roofSegments) {
@@ -381,27 +427,40 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       thicknessM: ROOF_THICKNESS_M,
       material: claddingMaterialKey('roof', domain.envelope.roofSystem),
       claddingSystem: domain.envelope.roofSystem,
+      standoff: reach(segment, ROOF_STANDOFF_M),
     });
   }
 
   // ── Gable ends, with the front one carrying the gate openings as real holes ──
+  // The cladding's pentagon (09.10, F68): out to the side walls' inner faces, up to the roof's underside. The same
+  // slope, so its eave follows from its ridge.
+  const claddingRidgeM = ridgeM + roofUndersideRiseM;
+  const claddingEaveM = claddingRidgeM - (widthM / 2 + WALL_STANDOFF_M) * slope;
+  const [left, right] = [-WALL_STANDOFF_M, widthM + WALL_STANDOFF_M];
   for (const gable of building.envelope.gableEnds) {
     const onThisFace = building.openings.filter((o) => o.face === gable.face);
     gables.push({
       id: `gable-${gable.face}`,
-      outline: gable.outline.map((p) => ({ x: p.x, y: p.y })),
-      widthM,
-      eaveM: building.heights.eaveM,
-      ridgeM: building.heights.ridgeM,
+      outline: [
+        { x: left, y: 0 },
+        { x: right, y: 0 },
+        { x: right, y: claddingEaveM },
+        { x: widthM / 2, y: claddingRidgeM },
+        { x: left, y: claddingEaveM },
+      ],
+      xM: left,
+      widthM: right - left,
+      eaveM: claddingEaveM,
+      ridgeM: claddingRidgeM,
       holes: onThisFace.map((o) => [
         { x: o.rect.xM, y: o.rect.yM },
         { x: o.rect.xM + o.rect.widthM, y: o.rect.yM },
         { x: o.rect.xM + o.rect.widthM, y: o.rect.yM + o.rect.heightM },
         { x: o.rect.xM, y: o.rect.yM + o.rect.heightM },
       ]),
-      // The front gable sits at z=0 and extrudes inward; the rear sits one thickness short of
-      // the far face so its extrusion lands exactly on it.
-      zM: gable.face === 'front' ? 0 : lengthM - WALL_THICKNESS_M,
+      // Each extrudes toward +Z from `zM`, outside its end frame by the walls' standoff (09.10, F68): the front's outer
+      // face at −CLADDING_END_REACH_M, the rear's at lengthM + CLADDING_END_REACH_M.
+      zM: gable.face === 'front' ? -CLADDING_END_REACH_M : lengthM + WALL_STANDOFF_M,
       thicknessM: WALL_THICKNESS_M,
       material: claddingMaterialKey('wall', domain.envelope.wallSystem),
       claddingSystem: domain.envelope.wallSystem,
@@ -409,10 +468,12 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     });
   }
 
-  // ── Gate recesses: a dark plane set back behind each opening ──
+  // ── Gate recesses: a dark plane set back behind each opening — measured from the front gable's outer face, which
+  // stands CLADDING_END_REACH_M in front of the first frame (09.10, F68) ──
+  const frontFaceZ = -CLADDING_END_REACH_M;
   for (const opening of building.openings) {
     const { xM, yM, widthM: gw, heightM: gh } = opening.rect;
-    const z = GATE_RECESS_INSET_M;
+    const z = frontFaceZ + GATE_RECESS_INSET_M;
     recesses.push({
       id: `recess-${opening.index}`,
       corners: [
@@ -432,7 +493,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       heightM: gh,
       // The door sits a little deeper than a gate: a sectional gate hangs just inside its opening,
       // a personnel door is set back in a frame. Both stay well in front of the recess plane.
-      zM: opening.kind === 'door' ? DOOR_LEAF_DEPTH_M : GATE_LEAF_DEPTH_M,
+      zM: frontFaceZ + (opening.kind === 'door' ? DOOR_LEAF_DEPTH_M : GATE_LEAF_DEPTH_M),
       material: opening.kind === 'door' ? 'door' : 'gate',
     });
   }
@@ -487,10 +548,12 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       // A gate is an opening cut INTO a wall — it cannot read as an opening with no wall to cut
       // into, so it's visible only when both are true. (Real bug caught live, not hypothetical:
       // this was `domain.gates > 0` alone, which left a gate recess on screen after switching
-      // walls out of scope — same fix, same reasoning, in HangarPreview.tsx's `gateLayer`.)
-      gates: domain.scope.walls && domain.gates > 0,
+      // walls out of scope — same fix, same reasoning, in HangarPreview.tsx's `gateLayer`.) A door
+      // alone counts too (09.10): the gable cuts its hole whatever this says, so the leaf must come.
+      gates: openingsShown(domain),
     },
     building,
     envelope: { wallSystem: domain.envelope.wallSystem, roofSystem: domain.envelope.roofSystem },
+    roofCladding: { outerM: ROOF_STANDOFF_M + ROOF_THICKNESS_M, endReachM: CLADDING_END_REACH_M },
   };
 }

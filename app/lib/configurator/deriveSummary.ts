@@ -196,15 +196,29 @@ function formatGatesLabel(domain: HangarDomainModel): string | null {
   // does not draw it (07.10, audit: «Без воріт» told the manager no gates were wanted)
   if (asked.gates > 0 && (asked.gates !== domain.gates || asked.gateType !== domain.gateType)) {
     const { widthM, heightM } = GATE_DIMENSIONS_M[asked.gateType];
-    const reason = gateHeightFits(asked.gateType, domain.dimensions.eaveHeightM)
-      ? `за ширини ${formatMeters(domain.dimensions.widthM)}${NBSP}м у схемі не вміщуються`
-      : `під стіни ${formatMeters(domain.dimensions.eaveHeightM)}${NBSP}м у схемі не вміщуються`;
     const count = asked.gates as 1 | 2;
-    return `${capitalise(GATES_COUNTED[count])} ${GATE_TYPE_COUNTED[asked.gateType][count]}, ${formatSize(widthM, heightM)}${NBSP}— ${reason}`;
+    return `${capitalise(GATES_COUNTED[count])} ${GATE_TYPE_COUNTED[asked.gateType][count]}, ${formatSize(widthM, heightM)}${NBSP}— ${heldGatesReason(domain)}`;
   }
   if (domain.gates === 0) return 'Без воріт';
   const { widthM, heightM } = GATE_DIMENSIONS_M[domain.gateType];
   return `${capitalise(GATES_COUNTED[domain.gates])} ${GATE_TYPE_COUNTED[domain.gateType][domain.gates]}, ${formatSize(widthM, heightM)}`;
+}
+
+/**
+ * Why the scheme does not draw the gates asked for, and what it draws in their place (09.10, owner: at 12 m «двоє для
+ * заїзду техніки» read «у схемі не вміщуються» beside a scheme that drew one of them, and never said so). The sizes
+ * that hold them — the width or the wall height — then what is drawn: none, fewer of the same, or the smaller type.
+ */
+function heldGatesReason(domain: HangarDomainModel): string {
+  const asked = domain.requestedOpenings;
+  const { widthM, eaveHeightM } = domain.dimensions;
+  const sizes = gateHeightFits(asked.gateType, eaveHeightM)
+    ? `за ширини ${formatMeters(widthM)}${NBSP}м`
+    : `під стіни ${formatMeters(eaveHeightM)}${NBSP}м`;
+  if (domain.gates === 0) return `${sizes} у схемі не вміщуються`;
+  if (domain.gateType === asked.gateType) return `${sizes} у схемі вміщуються лише ${GATES_COUNTED[domain.gates]}`;
+  const drawn = GATE_DIMENSIONS_M[domain.gateType];
+  return `${sizes} у схемі показано ${GATES_COUNTED[domain.gates]} ${GATE_TYPE_COUNTED[domain.gateType][domain.gates]}, ${formatSize(drawn.widthM, drawn.heightM)}`;
 }
 
 /** «Обсяг» said as answered, the same words in the stamp and the lead (07.10, audit: «Допоможіть визначити» read

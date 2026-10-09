@@ -6,7 +6,7 @@ import {
   CONTROL_STEPS,
   type ControlGroupId,
 } from '../../lib/configurator/controlGroups';
-import { NBSP, formatRoofSlope, formatSize } from '../../lib/configurator/deriveSummary';
+import { NBSP, formatRoofSlope, formatSize, gatesCountPhrase } from '../../lib/configurator/deriveSummary';
 import { deriveDomainModel, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../lib/configurator/domainModel';
 import {
   BUILD_REGIONS,
@@ -322,16 +322,27 @@ function wallHeightFor(gateType: GateType): number {
 }
 
 /** Says why the openings shown are not the ones chosen — with the reason (08.10, audit: «лише ті, що вміщуються» while
- *  none did, and the greyed options said nothing). The choice is held and comes back with the room. */
-function heldOpeningsNote(state: ConfiguratorState, gatesHeld: boolean, doorHeld: boolean): string | null {
+ *  none did, and the greyed options said nothing) and, since 09.10 (owner), what the scheme draws instead, in the
+ *  stamp's terms (deriveSummary heldGatesReason). The choice is held and comes back with the room. */
+function heldOpeningsNote(
+  state: ConfiguratorState,
+  shown: Readonly<{ gates: number; gateType: GateType }>,
+  gatesHeld: boolean,
+  doorHeld: boolean,
+): string | null {
   const back = 'Ваш вибір повернеться, щойно розміри це дозволять.';
   const gate = GATE_DIMENSIONS_M[state.gateType];
-  const gateWords = `Ворота ${formatSize(gate.widthM, gate.heightM)}`;
+  const size = formatSize(gate.widthM, gate.heightM);
   let gates: string | null = null;
-  if (gatesHeld) {
-    gates = gateHeightFits(state.gateType, state.dimensions.height)
-      ? `${gateWords} у такій кількості не вміщуються за ширини ${formatMetres(state.dimensions.width)}${NBSP}м.`
-      : `${gateWords} потребують стін від ${formatMetres(wallHeightFor(state.gateType))}${NBSP}м.`;
+  if (gatesHeld && !gateHeightFits(state.gateType, state.dimensions.height)) {
+    const drawn = GATE_DIMENSIONS_M[shown.gateType];
+    gates = `Ворота ${size} потребують стін від ${formatMetres(wallHeightFor(state.gateType))}${NBSP}м.`;
+    if (shown.gates > 0) gates += ` У схемі показано ${GATE_TYPE_LABELS[shown.gateType].toLowerCase()}, ${formatSize(drawn.widthM, drawn.heightM)}.`;
+  } else if (gatesHeld) {
+    const width = `${formatMetres(state.dimensions.width)}${NBSP}м`;
+    gates = shown.gates > 0
+      ? `За ширини ${width} вміщуються лише ${gatesCountPhrase(shown.gates)} ${size}${NBSP}— їх показано у схемі.`
+      : `Ворота ${size} у такій кількості не вміщуються за ширини ${width}.`;
   }
   const door = doorHeld ? 'Для дверей немає місця за цієї ширини й цих воріт.' : null;
   const said = [gates, door].filter(Boolean).join(' ');
@@ -473,7 +484,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   const doorHeld = state.doors !== shown.doors;
   // what the drawing, the stamp and the lead treat as asked for: the mode's works (drawnScope), not the kept list
   const wallsInScope = domain.scope.walls;
-  const heldNote = wallsInScope ? heldOpeningsNote(state, gatesHeld, doorHeld) : null;
+  const heldNote = wallsInScope ? heldOpeningsNote(state, shown, gatesHeld, doorHeld) : null;
   const roofInScope = domain.scope.roof;
   const foundationInScope = domain.scope.foundation;
   // "Контур" sets the wall AND roof systems together, so it stays available while either surface
@@ -898,8 +909,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
           <div className="hc-option-cards hc-chips hc-door-options" role="radiogroup" aria-labelledby="hc-doors-label">
             {DOOR_OPTIONS.map((option) => {
               // Disabled rather than hidden, and only ever for a real reason: at this width the
-              // door has no position clear of the corners, the gates and the centre-support line.
-              const disabled = option > 0 && (!wallsInScope || !doorFits(shown.gates, shown.gateType, state.dimensions.width));
+              // door has no position clear of the corners, the gates and the centre-support line —
+              // where one stands, as the model decides it (09.10, audit F60: the same scheme)
+              const disabled = option > 0 && (!wallsInScope
+                || !doorFits(shown.gates, shown.gateType, state.dimensions.width, domain.structural.scheme === 'centerSupport'));
               return (
                 <label className="hc-option-card" key={option}>
                   <input

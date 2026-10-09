@@ -32,6 +32,12 @@ describe('hangar inquiry brief', () => {
     expect(formatted).toContain('Ворота: Двоє стандартних, 4 × 4 м');
   });
 
+  it('tells the manager the gates asked for and what the scheme draws in their place, in the stamp’s words (09.10)', () => {
+    const domain = deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, dimensions: { width: 12, length: 60, height: 8 }, gates: 2, gateType: 'double' });
+    expect(plain(formatHangarInquiryBrief(createHangarInquiryBrief(domain))))
+      .toContain('Ворота: Двоє для заїзду техніки, 5 × 5 м — за ширини 12 м у схемі вміщуються лише одні');
+  });
+
   it('uses the same non-empty rows for the visible summary and submitted payload', () => {
     const brief = createHangarInquiryBrief(deriveDomainModel({
       ...DEFAULT_CONFIGURATOR_STATE,

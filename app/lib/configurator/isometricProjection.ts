@@ -99,6 +99,10 @@ export type DimensionGuide = {
   derived: boolean;
   /** The label's type size in drawing units: the stylesheet's size times the drawing's label scale */
   fontPx: number;
+  /** The ridge chain's extension line (09.10, audit F72): from the front gable's apex, in the gable's plane, to the
+   *  point over the corner the chain hangs off — so its top tick is read against the ridge, as the eave chain's is
+   *  against the eave corner. The other guides measure from a corner of their own and have none. */
+  extension?: [Point, Point];
 };
 
 /** Font sizes the stylesheet gives dimension labels, mirrored here only to estimate extents. */
@@ -339,7 +343,13 @@ export function projectIsometricScene(scene: TechnicalSceneModel, labelScale = 1
     // Both height chains hang off the same corner — the one the width edge ends at, which the
     // camera basis puts on the outside of the drawing.
     eave: eaveGuide,
-    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, ridgeOffset, true, labelScale),
+    // The ridge chain hangs off the same corner, where there is no ridge: its top tick stood 30–36 px above the apex on
+    // a 1440 px screen, level with nothing (09.10, audit F72). A dashed extension line from the apex to over that
+    // corner ties it to the ridge, as the eave corner itself ties the eave chain — no words added to either label.
+    ridge: {
+      ...heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, ridgeOffset, true, labelScale),
+      extension: [project({ x: widthM / 2, y: ridgeHeightM, z: 0 }), project({ x: widthM, y: ridgeHeightM, z: 0 })],
+    } satisfies DimensionGuide,
   };
 
   const allPoints = [
@@ -544,16 +554,18 @@ export function viewBoxOf({ minX, minY, maxX, maxY }: IsometricScene['bounds']):
   return { x: minX - padding, y: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 };
 }
 
-/** The smallest a dimension label may read on screen, in CSS px — the ridge's, the smaller of the two sizes, so the
- *  three set sizes read at 14 px or more (03.10: on a 390 px phone they were 6.9 px and the ridge 5.9 px) */
-export const MIN_LABEL_SCREEN_PX = 12;
+/** What a dimension label reads at on screen, in CSS px — the ridge's, the smaller of the two sizes, so the three set
+ *  sizes read at 14 px. Held both ways: on a 390 px phone they were 6.9 px and the ridge 5.9 px (03.10), and a small
+ *  hangar shown large drew them at 36 px, 2,5 times the default's, outweighing the drawing (09.10, audit F20). A drafted
+ *  sheet letters its sizes one height whatever the scale of the drawing; so does this one. */
+export const LABEL_SCREEN_PX = 12;
 
 /**
- * The label scale (`projectIsometricScene`) that keeps every dimension label at least MIN_LABEL_SCREEN_PX on screen
- * once the drawing is fitted into `box` — the svg's content box in CSS px, the viewBox fitted whole (`xMidYMid meet`).
- * 1 wherever the drawing is shown large enough already, so a wide screen draws exactly what it always did. Larger
- * labels push the frame out and the drawing shrinks a little to fit, so the scale is found in a few passes; it is
- * rounded up to hundredths so a re-measure of the same box lands on the same value.
+ * The label scale (`projectIsometricScene`) that draws every dimension label at LABEL_SCREEN_PX on screen once the
+ * drawing is fitted into `box` — the svg's content box in CSS px, the viewBox fitted whole (`xMidYMid meet`). Above 1
+ * where the drawing is shown small, below 1 where it is shown large (until 09.10 it only ever grew). The labels take
+ * room in the frame, so a changed size moves the frame and the drawing's scale a little: the scale is found in a few
+ * passes, and rounded up to hundredths so a re-measure of the same box lands on the same value.
  */
 export function labelScaleToFit(scene: TechnicalSceneModel, box: { width: number; height: number }): number {
   if (!(box.width > 0 && box.height > 0)) return 1;
@@ -561,7 +573,7 @@ export function labelScaleToFit(scene: TechnicalSceneModel, box: { width: number
   for (let pass = 0; pass < 4; pass += 1) {
     const view = viewBoxOf(projectIsometricScene(scene, scale).bounds);
     const screenPerUnit = Math.min(box.width / view.width, box.height / view.height);
-    const next = Math.max(1, Math.ceil((MIN_LABEL_SCREEN_PX / (DERIVED_LABEL_FONT_PX * screenPerUnit)) * 100) / 100);
+    const next = Math.ceil((LABEL_SCREEN_PX / (DERIVED_LABEL_FONT_PX * screenPerUnit)) * 100) / 100;
     if (next === scale) break;
     scale = next;
   }
