@@ -1355,6 +1355,42 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       ))}
     </fieldset>
   );
+  // A layer's place in the legend: a load's way, link by link; «Каркас»'s five nodes; else the draughtsman's key
+  const legendSet = (name: Layer) => {
+    const chain = CHAINS[name];
+    if (chain) {
+      // A load's legend is its way: its tint's key, then each link lit as the drawing reaches it (replayed with it on
+      // every press)
+      return (
+        <span className="hv2-contour-legend-chain" data-load={name} key={name === 'load' ? loadRun : windRun}>
+          <span data-key={name}>{legendLine}</span>
+          {chain.map(([word, n]) => (
+            <button
+              key={word}
+              type="button"
+              className="hv2-chain-step"
+              disabled={!ready}
+              style={{ '--n': n } as CSSProperties}
+              aria-pressed={layer === name && stepOn === n}
+              onClick={() => setStepOn((on) => (on === n ? null : n))}
+              onPointerEnter={() => setStepPeek(n)}
+              onPointerLeave={() => setStepPeek(null)}
+              onFocus={() => setStepPeek(n)}
+              onBlur={() => setStepPeek(null)}
+            >
+              {word}
+            </button>
+          ))}
+        </span>
+      );
+    }
+    // «Каркас»'s own row: its five nodes, named, at once (owner, 09.10: «Детальніше» hid them, and the letters on the
+    // scheme were found by chance); the draughtsman's key gave it its place
+    if (name === 'frame') return nodesRow('block');
+    return LEGEND[name].map((key) => (
+      <span key={key} data-key={key}>{legendLine}{LEGEND_WORDS[key]}</span>
+    ));
+  };
   // A quiet way out for another task than a hangar (audit 08.10: the brief leads to hangars only): under the line on a
   // laptop (the action cell's height is the title block's, and the sheet must fit the window), under the brief on a phone
   // (the thumb is there). One shows at a time (home-v2.css, data-place)
@@ -1417,38 +1453,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               <span className="hv2-contour-legend">
                 {layers.map((name) => (
                   <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={name === layer ? '' : undefined}>
-                    {CHAINS[name] ? (
-                      // A load's legend is its way: its tint's key, then each link lit as the drawing reaches it (replayed
-                      // with it on every press)
-                      <span className="hv2-contour-legend-chain" data-load={name} key={name === 'load' ? loadRun : windRun}>
-                        <span data-key={name}>{legendLine}</span>
-                        {CHAINS[name]!.map(([word, n]) => (
-                          <button
-                            key={word}
-                            type="button"
-                            className="hv2-chain-step"
-                            disabled={!ready}
-                            style={{ '--n': n } as CSSProperties}
-                            aria-pressed={layer === name && stepOn === n}
-                            onClick={() => setStepOn((on) => (on === n ? null : n))}
-                            onPointerEnter={() => setStepPeek(n)}
-                            onPointerLeave={() => setStepPeek(null)}
-                            onFocus={() => setStepPeek(n)}
-                            onBlur={() => setStepPeek(null)}
-                          >
-                            {word}
-                          </button>
-                        ))}
-                      </span>
-                    ) : name === 'frame' ? (
-                      // «Каркас»'s own row: its five nodes, named, at once (owner, 09.10: «Детальніше» hid them, and the
-                      // letters on the scheme were found by chance); the draughtsman's key gave it its place
-                      nodesRow('block')
-                    ) : (
-                      LEGEND[name].map((key) => (
-                        <span key={key} data-key={key}>{legendLine}{LEGEND_WORDS[key]}</span>
-                      ))
-                    )}
+                    {legendSet(name)}
                   </span>
                 ))}
               </span>
