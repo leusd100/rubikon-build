@@ -1,7 +1,6 @@
 import { expect, test, type BrowserContext, type Locator, type Page } from '@playwright/test';
 import { homeProofContour } from '../../app/data/homeProofContour';
 import { homeProofDetailSpots, homeProofFrame } from '../../app/data/homeProofFrame';
-import { homeProofMeasures } from '../../app/data/homeProofMeasures';
 
 // The sheet plots in and sweeps before most tests start, and a machine running other suites stretches that: a minute a
 // test unless a test sets its own
@@ -43,12 +42,13 @@ test.describe.configure({ timeout: 60_000 });
 
 const DEFAULT_SPLIT = 62;
 // The first view's sweep (ProofContour): SWEEP_AT after the sheet arrives, once the page has been quiet SWEEP_QUIET, from
-// the right edge to SWEEP_TURN and back to rest over SWEEP_MS (SWEEP_MS_PHONE on a phone)
+// the right edge to SWEEP_TURN and back to rest over SWEEP_MS — on a phone too (audit 08.10: turning at 38 %, the photo is
+// never gone, and 1.8 s, not 3)
 const SWEEP_AT = 1050;
 const SWEEP_QUIET = 250;
-const SWEEP_TURN = 15;
-const SWEEP_MS = 3000;
-const SWEEP_MS_PHONE = 2200;
+const SWEEP_TURN = 38;
+const SWEEP_MS = 1800;
+const SWEEP_MS_PHONE = 1800;
 // Passing a line of the outline, in per cent of the frame: it is lit within GRAB of the seam, until the seam is past
 // RELEASE
 const SNAP_GRAB = 0.8;
@@ -61,12 +61,12 @@ const CARRIERS = ['.hv2-contour-pane', '.hv2-contour-pane-inner', '.hv2-contour-
 // The right side's copy of the outline (role="img") — the only one: the photo's own copy went with «Контур на фото»
 const PANE_LINES = '.hv2-contour-pane svg.hv2-contour-lines';
 // A phone's close-up of the gable (≤ 760 px): the canvas 1.22 × the frame's width, 19.46 % of it off to the left, so a
-// per cent of the canvas stands at (per cent × ZOOM − LEFT) of the frame — the photo's columns 245–1504 and rows 92–738;
-// there the sweep turns at 1 %, just past the gable's left corner
+// per cent of the canvas stands at (per cent × ZOOM − LEFT) of the frame — the photo's columns 245–1504 and, since 09.10,
+// all its rows (0–788: the frame the photo's full height, the sheet edge to edge); the sweep turns at 38 % there too
 const PHONE_ZOOM = 1.22;
 const PHONE_LEFT = 19.46;
-const PHONE_TOP_ROW = 92;
-const SWEEP_TURN_PHONE = 1;
+const PHONE_TOP_ROW = 0;
+const SWEEP_TURN_PHONE = 38;
 const onStage = (canvas: number, phone: boolean) => (phone ? canvas * PHONE_ZOOM - PHONE_LEFT : canvas);
 const onCanvas = (stage: number, phone: boolean) => (phone ? (stage + PHONE_LEFT) / PHONE_ZOOM : stage);
 const phoneOf = (page: Page) => page.viewportSize()!.width <= 760;
@@ -173,9 +173,9 @@ const NODES = [
 type ProofNode = (typeof NODES)[number];
 // The note under the picture, word for word (owner, 05.10: shorter — the drawing's stamp says «Схема · без розмірів»;
 // pr-critical holds the server's to the same)
-const NOTE = 'Реальний об’єкт: фото, виміри, схема. Фото з ретушшю переднього плану. Контур і схил — за вісьмома фото цього ангара, без масштабу. Каркас показано схемою такого типу, як на цьому об’єкті.';
-// A phone's names of the scheme, keyed under the frame to its numbers (ProofContour's PHONE_KEY)
-const PHONE_KEY = ['Ферма', 'Прогони й в’язі', 'Центральний ряд колон', 'Стіни — газобетон', 'Фундаменти — умовно'];
+// The title block's one line (audit 08.10); the provenance and the retouch are said under the sheet
+const LINE = 'Реальний ангар, який вів Сергій Іванович, і схема каркаса такого типу, без розмірів.';
+const PROVENANCE = 'Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD. Фото з ретушшю переднього плану.';
 // «Тур за 20 секунд» (ProofContour's TOUR): each step's name and how long it holds, ms
 const TOUR = [
   ['Каркас збирається', 4800], ['Сніг: куди йде вага', 3600], ['Вага на даху', 3000], ['Вітер: куди тисне', 3600], ['Вузол крупно', 4200], ['Такий, але ваш', 2600],
@@ -213,6 +213,10 @@ async function open(page: Page, path = '/') {
   const slider = sheet.getByRole('slider', { name: SLIDER });
   // The controls come alive with hydration
   await expect(slider).toBeEnabled();
+  // A key on the sheet (Shift: it does nothing) counts as the visitor's own: the arrival's afterbeats — the handle's
+  // ring, the names, and on a laptop node Г opened by itself two seconds on — stand down, so no test meets them midway
+  // (the arrival's tests, which do, go through arrivalOf / settleArrival)
+  await sheet.dispatchEvent('keydown', { key: 'Shift' });
   return { sheet, stage, slider, layers: sheet.getByRole('group', { name: 'Що показати праворуч' }) };
 }
 
@@ -597,6 +601,11 @@ async function recordArrival(page: Page) {
         && (effect?.getKeyframes() ?? []).every((keyframe) => '--split' in keyframe);
     };
     const tick = () => {
+      // (not past the node the arrival opens by itself: it moves the seam clear of its ring, which is its own test)
+      if (arrival.ended !== null && stage.dataset.detail !== undefined) {
+        arrival.done = true;
+        return;
+      }
       const frame = stage.getBoundingClientRect();
       const seam = stage.querySelector('.hv2-contour-seam')!.getBoundingClientRect();
       const [box, inside, under] = [pane, drawing, photo].map((part) => part.getBoundingClientRect());
@@ -624,11 +633,25 @@ async function recordArrival(page: Page) {
         others: animations.filter((animation) => !sweeping(animation))
           .map((animation) => (animation as CSSAnimation).animationName ?? (animation as CSSTransition).transitionProperty ?? 'script'),
       });
-      if ((arrival.ended !== null && performance.now() - arrival.ended > 2500) || arrival.frames.length > 3000) arrival.done = true;
+      // (to 2.5 s after the sweep — or until the node the arrival opens by itself, AUTO_NODE: it moves the seam clear of its
+      // ring, which is its own test)
+      if ((arrival.ended !== null && (performance.now() - arrival.ended > 2500 || stage.dataset.detail !== undefined)) || arrival.frames.length > 3000) arrival.done = true;
       else requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }, CARRIERS);
+}
+
+/** After an arrival with motion a node opens by itself on a laptop or a tablet (ProofContour's AUTO_NODE, owner 09.10),
+ *  its seam clear of its ring: closed again, the seam back at rest, for what a test checks after */
+async function settleArrival(page: Page) {
+  if (phoneOf(page)) return;
+  const stage = page.locator('#real-object .hv2-contour-stage');
+  await expect(stage).toHaveAttribute('data-detail', 'ridge', { timeout: 6_000 });
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.hv2-detail')).toHaveCount(0);
+  // Closing it, the seam glides back to its rest
+  await expect.poll(() => splitOf(stage)).toBe(`${DEFAULT_SPLIT}%`);
 }
 
 async function arrivalOf(page: Page) {
@@ -636,17 +659,16 @@ async function arrivalOf(page: Page) {
   return page.evaluate(() => (window as unknown as { arrival: Arrival }).arrival);
 }
 
-test('the sheet names both sides, states the retouch and what the scheme is, and carries the outline — one solid line, no «виміряно» or «наближено»', async ({ page }) => {
+test('the sheet says in one line what the two halves are, the retouch and the provenance under it, and carries the outline — one solid line, no «виміряно» or «наближено»', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { sheet, stage, layers } = await open(page);
   const stamp = sheet.locator('figcaption');
-  for (const words of ['Ліворуч', 'Фото об’єкта', 'Праворуч', 'схема', 'Реальний об’єкт: фото, виміри, схема.', 'Фото з ретушшю переднього плану']) {
-    await expect(stamp).toContainText(words);
-  }
-  // The note says what is the photo's and what is the scheme's, word for word — the hydrated sheet's as the server's
-  // (pr-critical): the retouch, the outline and the slope from eight photos of this hangar, no scale, the frame a scheme
-  // of the type; that it has no sizes, the drawing's own stamp says
-  expect((await stamp.locator('.sheet-cell-note > b').textContent())!.replace(/\s+/g, ' ').trim()).toBe(NOTE);
+  // One line says what this is, word for word — the hydrated sheet's as the server's (pr-critical): a real hangar, who led
+  // it, a scheme of the type, no sizes (audit 08.10: no kickers «Ліворуч / Об’єкт / Праворуч», no four-sentence note)
+  await expect(stamp.locator('.hv2-contour-line')).toHaveText(LINE);
+  for (const words of ['Ліворуч', 'Праворуч', 'Об’єкт']) await expect(stamp.getByText(words, { exact: true })).toBeHidden();
+  // …and right under the sheet, where the facts begin: before RUBIKON BUILD, the photo's foreground retouched
+  await expect(page.locator('#real-object .hv2-evidence-lead > p:not(.hv2-kicker)')).toHaveText(PROVENANCE);
   // Three layers: «Каркас» (the default), «Сніг», «Вітер». «Контур» is gone (owner, 05.10: «клієнту точно цього не
   // треба знати») and with it every word of the outline's measured / approximate split, on the page and for a screen
   // reader alike
@@ -673,34 +695,25 @@ test('the sheet names both sides, states the retouch and what the scheme is, and
   // and is not
   await expect(stage.getByRole('img', { name: homeProofContour.label })).toBeVisible();
   await expect(stage.getByRole('img', { name: homeProofFrame.label, exact: true })).toBeVisible();
-  // The one figure the scheme keeps — the slope, its title only, at every width (its second line and the contour's other
-  // figures, the gates' and the proportion's, with their marks, left with «Контур») — and, for a screen reader, the whole
-  // of it in words
-  const figures = homeProofMeasures.filter((measure) => measure.onFrame);
-  expect(figures.map((measure) => measure.id)).toEqual(['slope']);
-  await expect(stage.getByRole('list', { name: 'За фото цього ангара, без масштабу' }).getByRole('listitem')).toHaveText(figures.map((measure) => measure.spoken));
-  for (const id of ['gates', 'proportion']) {
-    await expect(stage.locator(`.hv2-proof-measure[data-measure="${id}"]`), id).toBeHidden();
-    await expect(stage.locator(`.hv2-proof-marks > [data-mark="${id}"]`), id).toBeHidden();
-  }
-  await expect(stage.locator('.hv2-proof-measure[data-measure="slope"] small')).toBeHidden();
-  if (phoneOf(page)) await expect(sheet.locator('.hv2-contour-chips > span')).toHaveText([figures[0].chip!]);
-  else await expect(stage.locator('.hv2-proof-measure[data-measure="slope"]')).toHaveText(figures[0].title, { useInnerText: true });
+  // No figure on the scheme any more (owner, 09.10: «Схил даху можна взагалі прибрати» — the last one; the gates' and the
+  // proportion's had left with «Контур»): no measure, no mark, no chip, no list of figures for a screen reader
+  await expect(stage.locator('.hv2-proof-measure, .hv2-proof-marks > [data-mark]')).toHaveCount(0);
+  await expect(sheet.locator('.hv2-contour-chips')).toHaveCount(0);
+  await expect(stage.getByRole('list', { name: 'За фото цього ангара, без масштабу' })).toHaveCount(0);
   const visible = await sheet.innerText();
   for (const words of ['Ширина торця', 'Ворота однакові']) expect(visible, words).not.toContain(words);
 
   // Figures only where something was measured, each with its sign; never a size; none of the words that claim more. The
-  // sheet's other digits are the tour's length and a phone's numbers for the scheme's names, each checked as such
+  // sheet's other digits are the tour's length, checked as such (a phone's numbered key went with «Детальніше», 09.10)
   const text = await sheet.evaluate((element) => element.textContent ?? '');
   const outsideMeasures = await sheet.evaluate((element) => {
     const copy = element.cloneNode(true) as HTMLElement;
-    for (const node of copy.querySelectorAll('[data-measure], .hv2-contour-tour-btn, .hv2-contour-tour, .hv2-proof-keypins, .hv2-contour-key i')) node.remove();
+    for (const node of copy.querySelectorAll('[data-measure], .hv2-contour-tour-btn, .hv2-contour-tour')) node.remove();
     return copy.textContent ?? '';
   });
   expect(outsideMeasures).not.toMatch(/\d/);
   await expect(sheet.locator('.hv2-contour-tour-btn')).toHaveText('Тур за 20 секунд');
-  expect(await stage.locator('.hv2-proof-keypins > span').allTextContents()).toEqual(['1', '2', '3', '4', '5']);
-  expect(await sheet.locator('.hv2-contour-key i').allTextContents()).toEqual(['1', '2', '3', '4', '5']);
+  await expect(sheet.locator('.hv2-proof-keypins, .hv2-contour-key, .hv2-contour-more-btn')).toHaveCount(0);
   for (const figure of await sheet.locator('[data-measure]').allTextContents()) {
     // (the signs' space is a no-break one)
     for (const match of figure.matchAll(/\d+(?:,\d+)?/g)) expect(figure.slice(0, match.index), figure).toMatch(/(?:[≈±]\s|приблизно |похибка )$/);
@@ -722,11 +735,22 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   await expect(scheme).toBeVisible();
   // Every member of the scheme is in it and none carries the outline's «approximate» mark. The gable's own plane is
   // paper-white; what stands behind it is copper, solid (owner, 04.10), and only behind it
-  await expect(scheme.locator('[data-group]')).toHaveCount(homeProofFrame.members.filter((member) => member.group !== 'footing').length);
+  await expect(scheme.locator('[data-group]:not(.hv2-proof-core, .hv2-proof-flange)')).toHaveCount(homeProofFrame.members.filter((member) => member.group !== 'footing').length);
+  // The gable's column a profile too (owner, 09.10): its outline over a dark core, two thin lines for its flanges' faces
+  const columnPath = scheme.locator('.hv2-proof-scheme path[data-group="column"][data-depth="0"]:not(.hv2-proof-flange)').first();
+  expect(await columnPath.evaluate((path) => [getComputedStyle(path).fill, Number(getComputedStyle(path).fillOpacity) > 0.8])).toEqual(['rgb(20, 22, 21)', true]);
+  await expect(scheme.locator('.hv2-proof-flange')).toHaveCount(2);
   await expect(scheme.locator('[data-approximate]')).toHaveCount(0);
   await expect(stage.locator('.hv2-contour-lines [data-group]')).toHaveCount(0);
-  const strokes = new Set(await scheme.locator('.hv2-proof-scheme [data-group]:not([data-hidden])').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)));
+  const strokes = new Set(await scheme.locator('.hv2-proof-scheme [data-group]:not([data-hidden], .hv2-proof-core)').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)));
   expect([...strokes]).toEqual([PAPER]);
+  // Of what stands behind, the first truss only, faint (owner, 09.10: «досить багато шуму»): the second one back, every
+  // purlin's run into depth and the far bracing are not drawn
+  for (const hiddenPart of await scheme.locator('.hv2-proof-scheme [data-hidden]:is([data-depth="2"], [data-group="purlin"])').all()) await expect(hiddenPart).toBeHidden();
+  // The gable's chords are profiles: the member's line wide, its dark core over it — one core per chord
+  const cores = scheme.locator('.hv2-proof-scheme .hv2-proof-core');
+  await expect(cores).toHaveCount(homeProofFrame.members.filter((member) => member.group === 'truss' && member.depth === 0 && !member.hidden && !member.closed).length);
+  expect(await cores.first().evaluate((path) => parseFloat(getComputedStyle(path).strokeWidth))).toBeLessThan(await scheme.locator('.hv2-proof-scheme [data-group="truss"][data-depth="0"]:not(.hv2-proof-core)').first().evaluate((path) => parseFloat(getComputedStyle(path).strokeWidth)) / 1.5);
   expect(await stage.locator(`${PANE_LINES} .hv2-contour-ink path`).first().evaluate((path) => getComputedStyle(path).stroke)).toBe(COPPER);
   const hidden = scheme.locator('.hv2-proof-scheme [data-hidden]');
   await expect(hidden).toHaveCount(homeProofFrame.members.filter((member) => member.hidden).length);
@@ -738,14 +762,20 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   // them (the outline is one solid line — owner, 05.10)
   const weight = (selector: string) => stage.locator(selector).first().evaluate((element) => parseFloat(getComputedStyle(element).strokeWidth));
   const outline = await weight(`${PANE_LINES} .hv2-contour-ink path[data-kind="outline"]:not([data-approximate])`);
-  const chord = await weight('.hv2-proof-scheme [data-group="truss"][data-depth="0"]');
+  // (since 09.10 the chords are profiles, drawn wider than the outline: their dark core makes the two edges; the columns
+  // and what the section cuts keep the chords' old weight)
+  const chord = await weight('.hv2-proof-scheme [data-group="truss"][data-depth="0"]:not(.hv2-proof-core)');
+  const column = await weight('.hv2-proof-scheme [data-group="column"][data-depth="0"]');
   const web = await weight('.hv2-proof-scheme [data-group="web"][data-depth="0"]');
-  expect(outline).toBeGreaterThan(chord);
-  for (const selector of ['.hv2-proof-scheme [data-group="column"][data-depth="0"]', '.hv2-proof-cut']) expect(await weight(selector), selector).toBe(chord);
-  expect(chord).toBeGreaterThan(web);
+  expect(outline).toBeGreaterThan(column);
+  expect(chord).toBeGreaterThan(outline);
+  expect(await weight('.hv2-proof-cut'), 'cut').toBe(column);
+  expect(column).toBeGreaterThan(web);
   expect(web).toBeGreaterThan(await weight('.hv2-proof-blocks'));
-  const ends = await stage.locator('.hv2-proof-scheme [data-group], .hv2-contour-ink path:not([data-approximate], [data-kind="outline"])').evaluateAll((paths) => paths.map((path) => `${getComputedStyle(path).strokeLinecap} ${getComputedStyle(path).strokeLinejoin}`));
+  const ends = await stage.locator('.hv2-proof-scheme [data-group]:not(.hv2-proof-core, [data-group="truss"][data-depth="0"]:not([data-hidden])), .hv2-contour-ink path:not([data-approximate], [data-kind="outline"])').evaluateAll((paths) => paths.map((path) => `${getComputedStyle(path).strokeLinecap} ${getComputedStyle(path).strokeLinejoin}`));
   expect(new Set(ends)).toEqual(new Set(['butt miter']));
+  // (a profile's ends square, so its two edges close at the corners)
+  expect(new Set(await stage.locator('.hv2-proof-scheme :is(.hv2-proof-core, [data-group="truss"][data-depth="0"]:not([data-hidden]))').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).strokeLinecap)))).toEqual(new Set(['square']));
   // …but the outline, drawn in parts, closes its corners with square ends (butt ends notched them)
   const outlineEnds = await stage.locator('.hv2-contour-ink path[data-kind="outline"]').evaluateAll((paths) => paths.map((path) => `${getComputedStyle(path).strokeLinecap} ${getComputedStyle(path).strokeLinejoin}`));
   expect(new Set(outlineEnds)).toEqual(new Set(['square miter']));
@@ -753,9 +783,11 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   const nodes = stage.locator('.hv2-proof-nodes circle');
   await expect(nodes).toHaveCount(homeProofFrame.nodes.length);
   expect(new Set(await nodes.evaluateAll((circles) => circles.map((circle) => `${getComputedStyle(circle).stroke} ${getComputedStyle(circle).fill === getComputedStyle(circle).stroke}`)))).toEqual(new Set([`${PAPER} false`]));
-  // Its names are words on the scheme, its legend says «схема» in the scheme's own colour
+  // Its names are words on the scheme; «Каркас»'s place in the legend is its nodes' row, at once (owner, 09.10: the
+  // draughtsman's key «контур / схема / у глибині» under «Детальніше» gave it its place)
   for (const tag of homeProofFrame.tags) await expect(stage.locator(`.hv2-proof-tag[data-tag="${tag.id}"]`)).toHaveText(tag.text);
-  await expect(page.locator('#real-object .hv2-contour-legend [data-on] [data-key="scheme"]')).toBeVisible();
+  await expect(page.locator('#real-object .hv2-contour-legend [data-on] [data-key]')).toHaveCount(0);
+  await expect(page.locator('#real-object .hv2-contour-legend [data-on] .hv2-contour-nodes')).toBeVisible();
   // Every word on the frame stands on a dark backing that masks what runs under it, as a drawing's text does — not on a
   // text-shadow (owner, 04.10: «текст залазить на елемент»)
   for (const word of await stage.locator('.hv2-proof-labels > :is(.hv2-proof-tag, .hv2-proof-measure)').all()) {
@@ -1029,8 +1061,8 @@ test('the wind is its own layer in turquoise: gusts on the wall, lift off every 
     // the seam's names give way to the frame's top, as for the snow
     await expect(stage.locator('.hv2-contour-seamtags')).toBeHidden();
   } else {
-    await expect(sheet.locator('.hv2-contour-facts-slot > *')).toHaveCount(1);
-    await expect(sheet.locator('.hv2-contour-facts-slot > .hv2-contour-chips')).toBeVisible();
+    // (no figure left for a phone's facts: the slope went, 09.10)
+    await expect(sheet.locator('.hv2-contour-chips')).toHaveCount(0);
   }
   // With reduced motion it stands whole, nothing running
   expect(await group.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
@@ -1248,45 +1280,42 @@ test('the title block switches the right side: the scheme with its names, each l
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { sheet, stage, slider, layers } = await open(page);
   const desktop = page.viewportSize()!.width > 760;
-  const figure = (id: string) => stage.locator(`.hv2-proof-measure[data-measure="${id}"]`);
   const pressed = async (name: string) => {
     for (const button of await layers.getByRole('button').all()) {
       await expect(button).toHaveAttribute('aria-pressed', String((await button.textContent()) === name));
     }
   };
-  // The legend's width is its cell's, never its own (contain: inline-size): a load's way in one line widened the cell and
-  // squeezed the note (review, 04.10) — the note keeps one width whichever layer is on
-  await expect(sheet.locator('.hv2-contour-legend')).toHaveCSS('contain', 'inline-size');
+  // A load's way takes its cell's width, never its own: in one line it widened the cell and squeezed the note (review,
+  // 04.10) — the note keeps one width whichever layer is on (on a laptop «Каркас»'s pills size the cell, 09.10)
   const noteWidth = () => sheet.locator('.sheet-cell-note').evaluate((element) => element.getBoundingClientRect().width);
   const note = await noteWidth();
-  const slopeChip = homeProofMeasures.find((measure) => measure.id === 'slope')!.chip!;
 
   // «Каркас»: the scheme, its names, the slope's title; the loads wait. «Контур» is gone
   await expect(layers.getByRole('button', { name: 'Контур' })).toHaveCount(0);
   await expect(stage.locator('.hv2-proof-scheme')).toBeVisible();
   for (const load of ['.hv2-proof-load', '.hv2-proof-wind']) await expect(stage.locator(load)).toBeHidden();
   if (desktop) {
-    await expect(figure('slope')).toBeVisible();
-    // the gates' «=» marks read as stray strokes across the scheme (owner, 04.10), and the proportion left with «Контур»
-    for (const id of ['gates', 'proportion']) await expect(figure(id)).toBeHidden();
-    await expect(figure('slope').locator('small')).toBeHidden();
-    // the slope's uncertainty is part of its title
-    await expect(figure('slope')).toContainText('± 0,6°', { useInnerText: true });
+    // At rest a quiet frame: two names, the truss and the central row of columns (audit 08.10); the others and the slope
+    // under the cursor
+    const quiet = (element: Locator) => element.evaluate((node) => getComputedStyle(node).opacity);
+    await page.mouse.move(2, 2);
     await expect(stage.locator('.hv2-proof-tag')).toHaveCount(homeProofFrame.tags.length);
-    for (const tag of await stage.locator('.hv2-proof-tag').all()) await expect(tag).toBeVisible();
+    for (const tag of homeProofFrame.tags) {
+      await expect.poll(() => quiet(stage.locator(`.hv2-proof-tag[data-tag="${tag.id}"]`)), tag.id).toBe(['truss', 'column'].includes(tag.id) ? '1' : '0');
+    }
+    await stage.hover({ position: { x: 20, y: 20 } });
+    for (const tag of await stage.locator('.hv2-proof-tag').all()) await expect.poll(() => quiet(tag)).toBe('1');
+    // no figure on the scheme (owner, 09.10: the slope gone too)
+    await expect(stage.locator('.hv2-proof-measure')).toHaveCount(0);
+    await page.mouse.move(2, 2);
     await expect(stage.locator('.hv2-contour-seamtags > span').nth(1)).toHaveText('Схема ›');
-    // the names in words: a phone's numbers and their key are not drawn
-    await expect(stage.locator('.hv2-proof-keypins')).toBeHidden();
-    await expect(sheet.locator('.hv2-contour-key')).toBeHidden();
+    // the names in words, no numbered key
+    await expect(sheet.locator('.hv2-proof-keypins, .hv2-contour-key')).toHaveCount(0);
   } else {
-    // A phone: no words inside the frame — the slope is a chip under the note, the scheme's names numbers on it, keyed
-    // under the frame
+    // A phone: no words inside the frame, only the nodes' letters on it (audit 08.10: two systems of marks on a 123 px
+    // strip); the members are named in the nodes' close-ups (owner, 09.10: «Детальніше» and its numbered key went)
     await expect(stage.locator('.hv2-proof-labels')).toBeHidden();
-    await expect(sheet.locator('.hv2-contour-chips > span')).toHaveText([slopeChip]);
-    await expect(stage.locator('.hv2-proof-keypins > span')).toHaveText(['1', '2', '3', '4', '5']);
-    for (const number of await stage.locator('.hv2-proof-keypins > span').all()) await expect(number).toBeVisible();
-    await expect(sheet.locator('.hv2-contour-key > span')).toHaveText(PHONE_KEY.map((word, index) => `${index + 1}${word}`));
-    await expect(sheet.locator('.hv2-contour-key')).toBeVisible();
+    await expect(sheet.locator('.hv2-proof-keypins, .hv2-contour-key')).toHaveCount(0);
   }
   await expect(stage.getByRole('img', { name: homeProofFrame.label, exact: true })).toBeVisible();
 
@@ -1304,7 +1333,6 @@ test('the title block switches the right side: the scheme with its names, each l
     await expect(stage.locator(hidden)).toBeHidden();
     expect(Number(await stage.locator('.hv2-proof-scheme').evaluate((element) => getComputedStyle(element).opacity))).toBeLessThan(0.6);
     await expect(stage.locator(`${shown} .hv2-proof-flow`)).toHaveCount(legs);
-    await expect(figure('slope')).toBeHidden();
     // the way's links in the tint the legend's words are written in, the drops in its light tone
     const tint = await tintOf(sheet, load);
     expect(await stage.locator(`${shown} .hv2-proof-link path:not(.hv2-proof-link-casing)`).first().evaluate((path) => getComputedStyle(path).stroke), button).toBe(tint);
@@ -1316,10 +1344,6 @@ test('the title block switches the right side: the scheme with its names, each l
     if (!desktop) {
       // its way down the frame wants the wider right side
       await expectSplit(slider, stage, 40);
-      // the phone's facts stay the slope's chip; the scheme's numbers wait on «Каркас»
-      await expect(sheet.locator('.hv2-contour-facts-slot > *')).toHaveCount(1);
-      await expect(sheet.locator('.hv2-contour-chips > span')).toHaveText([slopeChip]);
-      await expect(stage.locator('.hv2-proof-keypins')).toBeHidden();
     }
     // With reduced motion the way stands lit, nothing running
     expect(await stage.locator(shown).evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
@@ -1327,17 +1351,17 @@ test('the title block switches the right side: the scheme with its names, each l
   // the snow as a drawing writes a spread load: its comb's line and the arrows down from it
   await expect(stage.locator('.hv2-proof-snow path')).toHaveCount(homeProofFrame.load.arrows.length + 1);
 
-  // And back: the default layer, the seam where the visitor left it, the legend's keys again — no way written
+  // And back: the default layer, the seam where the visitor left it, the nodes' row again — no way written
   await layers.getByRole('button', { name: 'Каркас' }).click();
   await pressed('Каркас');
   for (const load of ['.hv2-proof-load', '.hv2-proof-wind']) await expect(stage.locator(load)).toBeHidden();
   for (const chain of await sheet.locator('.hv2-contour-legend-chain').all()) await expect(chain).toBeHidden();
   await expect(sheet.locator('.hv2-contour-legend-set[data-on]')).toHaveAttribute('data-layer', 'frame');
-  await expect(sheet.locator('.hv2-contour-legend-set[data-on] > span')).toHaveText(['контур', 'схема', 'у глибині']);
+  await expect(sheet.locator('.hv2-contour-legend-set[data-on] .hv2-contour-nodes')).toBeVisible();
   await expect(stage.getByRole('img', { name: homeProofFrame.label, exact: true })).toBeVisible();
 
   // The action cell (owner, 05.10: in place of «Контур на фото»): «Тур за 20 секунд» over the way on to the visitor's own
-  // hangar — «Такий ангар, але ваш · Сформувати бриф →», the configurator's brief; a phone puts «Фото» / «Схема» first
+  // hangar — «Такий ангар, але ваш · Сформувати бриф →», the configurator's brief
   const action = sheet.locator('figcaption .sheet-action');
   const tour = action.locator('.hv2-contour-tour-btn');
   const brief = action.locator('a.hv2-contour-brief');
@@ -1347,14 +1371,8 @@ test('the title block switches the right side: the scheme with its names, each l
   await expect(brief).toHaveText(/^Такий ангар, але ваш\s*Сформувати бриф\s*→$/);
   const [tourBox, briefBox] = [(await tour.boundingBox())!, (await brief.boundingBox())!];
   expect(tourBox.y + tourBox.height).toBeLessThanOrEqual(briefBox.y + 0.5);
-  const sides = action.locator('.hv2-contour-sides');
-  if (desktop) {
-    await expect(sides).toBeHidden();
-  } else {
-    await expect(sides.getByRole('button')).toHaveText(['Фото', 'Схема']);
-    const sidesBox = (await sides.boundingBox())!;
-    expect(sidesBox.y + sidesBox.height).toBeLessThanOrEqual(tourBox.y + 0.5);
-  }
+  // («Фото» / «Схема» went with «Детальніше», 09.10: the handle and the range move the seam)
+  await expect(action.locator('.hv2-contour-sides')).toHaveCount(0);
 });
 
 test('the keys move the seam: arrows by one, PageUp / PageDown by ten, Home and End to the edges', async ({ page }) => {
@@ -1851,6 +1869,7 @@ test('during the first view’s sweep a mouse over the frame leads nothing — t
   expect(ended! - run!).toBeGreaterThanOrEqual(SWEEP_MS - 20);
   expect(new Set(frames.map((frame) => frame.range))).toEqual(new Set([String(DEFAULT_SPLIT)]));
   for (const frame of frames.filter((at) => at.t >= ended!)) expect(frame, `${frame.t}`).toMatchObject({ sweep: null, split: DEFAULT_SPLIT });
+  await settleArrival(page);
   // At rest the same mouse moving over the frame still leaves the seam where it rests (owner, 05.10)…
   await page.mouse.move(xAt(25), y, { steps: 2 });
   await nextFrames(page, 3);
@@ -1864,13 +1883,15 @@ test('during the first view’s sweep a mouse over the frame leads nothing — t
 });
 
 test('grabbed at either end of the frame, the handle stays under the finger', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'desktop-chromium', '«Фото», «Схема» and the finger are the phone\'s');
+  test.skip(testInfo.project.name === 'desktop-chromium', 'the finger is the phone\'s');
   // Without the sweep, so the handle is measured where it rests
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const { sheet, stage, slider } = await open(page);
+  const { stage, slider } = await open(page);
   const handle = stage.locator('.hv2-contour-handle');
   for (const [side, edge, move] of [['Схема', 0, 120], ['Фото', 100, -120]] as const) {
-    await sheet.getByRole('button', { name: side, exact: true }).click();
+    // the seam to the edge by the range's keys (Home: the scheme whole; End: the photo)
+    await slider.focus();
+    await page.keyboard.press(edge === 0 ? 'Home' : 'End');
     await expectSplit(slider, stage, edge);
     // The buttons sit under the frame: bring the frame back clear of the sticky header
     await stage.evaluate((element) => element.scrollIntoView({ block: 'center' }));
@@ -1917,29 +1938,15 @@ test('on a phone the handle rests under the gable, clear of both gates and the b
   }
 });
 
-test('on a phone «Фото» and «Схема» show one side whole, and bring the seam back when pressed again; the title block’s controls are a finger’s 44 px', async ({ page }, testInfo) => {
-  const { sheet, stage, slider } = await open(page);
-  const photo = sheet.getByRole('button', { name: 'Фото', exact: true });
-  const scheme = sheet.getByRole('button', { name: 'Схема', exact: true });
-  if (testInfo.project.name === 'desktop-chromium') {
-    // A mouse has the whole frame to drag; the two buttons are for fingers
-    await expect(photo).toBeHidden();
-    await expect(scheme).toBeHidden();
-    return;
-  }
-  await expect(photo).toHaveAttribute('aria-pressed', 'false');
-  await photo.click();
-  await expect(photo).toHaveAttribute('aria-pressed', 'true');
-  await expectSplit(slider, stage, 100);
-  await scheme.click();
-  await expect(scheme).toHaveAttribute('aria-pressed', 'true');
-  await expect(photo).toHaveAttribute('aria-pressed', 'false');
-  await expectSplit(slider, stage, 0);
-  await scheme.click();
-  await expect(scheme).toHaveAttribute('aria-pressed', 'false');
-  await expectSplit(slider, stage, DEFAULT_SPLIT);
-  // «Фото», «Схема», the way on to a brief and the layers (the tour's button: the fixme below)
-  for (const control of [photo, scheme, sheet.locator('figcaption a.hv2-contour-brief'), ...await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button').all()]) {
+test('on a phone the title block’s controls are a finger’s 44 px: the layers, the nodes’ pills, the way on to a brief — and no «Фото» / «Схема» buttons', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'desktop-chromium', 'a finger’s');
+  const { sheet } = await open(page);
+  // («Фото» / «Схема» went with «Детальніше», 09.10: the handle and the range move the seam)
+  await expect(sheet.getByRole('button', { name: 'Фото', exact: true })).toHaveCount(0);
+  await expect(sheet.getByRole('button', { name: 'Схема', exact: true })).toHaveCount(0);
+  const pills = sheet.locator('figcaption .hv2-contour-nodes[data-place="block"]').getByRole('button');
+  await expect(pills).toHaveCount(NODES.length);
+  for (const control of [sheet.locator('figcaption a.hv2-contour-brief'), ...await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button').all(), ...await pills.all()]) {
     const box = (await control.boundingBox())!;
     expect(box.height, (await control.textContent()) ?? '').toBeGreaterThanOrEqual(44);
   }
@@ -2018,13 +2025,12 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   // …on the four carriers, one script animation of --split each, in step
   for (const frame of sweep) expect(frame, `${frame.t}`).toMatchObject({ sweep: 'run', gliding: true, plotting: false, sweeps: 4, spread: 0 });
 
-  // From the edge across the gable — past its left corner, to the turn — and back to rest: one way out, one way back
+  // From the edge across the gable to the turn — 38 %: the ridge and both gates in view, the photo never gone (audit 08.10;
+  // it used to turn past the gable's left corner, the photo a strip) — and back to rest: one way out, one way back
   const splits = sweep.map((frame) => frame.split);
   const turn = splits.indexOf(Math.min(...splits));
   expect(splits[0]).toBeGreaterThan(99);
   expect(splits[turn]).toBeCloseTo(phone ? SWEEP_TURN_PHONE : SWEEP_TURN, 0);
-  // (on a phone the corner stands where the close-up puts it)
-  expect.soft(splits[turn], 'the turn is past the gable’s left corner').toBeLessThan(onStage(SNAPS[0].at, phone));
   expect(splits.slice(0, turn + 1)).toEqual(splits.slice(0, turn + 1).toSorted((a, b) => b - a));
   expect(splits.slice(turn)).toEqual(splits.slice(turn).toSorted((a, b) => a - b));
   // The seam is drawn where --split is, and the right side's window has its edge exactly there, its drawing standing on
@@ -2040,7 +2046,8 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   for (const frame of [...plotting, ...sweep]) expect([frame.range, ...frame.words], `${frame.t}`).toEqual([String(DEFAULT_SPLIT), 0, 0]);
 
   // At rest, in one frame: the sweep's marks gone, the seam at its split, and two rings from the handle — once
-  expect(after[0]).toMatchObject({ sweep: null, gliding: false, pulse: true, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT), rings: 'hv2-contour-pulse 2' });
+  // one ring from the handle, not two (audit 08.10: the arrival settles sooner)
+  expect(after[0]).toMatchObject({ sweep: null, gliding: false, pulse: true, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT), rings: 'hv2-contour-pulse 1' });
   for (const frame of after) expect(frame, `${frame.t}`).toMatchObject({ sweep: null, gliding: false, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT) });
   expect(frames.filter((frame) => frame.t < ended!).some((frame) => frame.pulse)).toBe(false);
   const rung = after.findIndex((frame) => !frame.pulse);
@@ -2050,8 +2057,45 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   for (const part of ['.hv2-proof-labels', 'svg.hv2-proof-marks']) {
     await expect.poll(() => stage.locator(part).evaluate((element) => getComputedStyle(element).opacity), part).toBe('1');
   }
-  if (!phone) await expect(stage.locator('.hv2-proof-measure[data-measure="slope"]')).toBeVisible();
+  await settleArrival(page);
   await expectSplit(range, stage, DEFAULT_SPLIT);
+});
+
+test('after the arrival a laptop opens node Г by itself, quietly — focus stays where it was — a phone only shows its letters; a visitor who acted first gets neither', async ({ page }) => {
+  test.setTimeout(45_000);
+  const { stage } = await arrive(page);
+  await centre(stage);
+  const panel = page.locator('.hv2-detail');
+  if (phoneOf(page)) {
+    // A phone: the letter В calls for a moment on the scheme, no panel comes up over the page
+    await expect(stage).toHaveAttribute('data-nodes-tease', '', { timeout: 12_000 });
+    await expect(panel).toHaveCount(0);
+    await expect(stage).not.toHaveAttribute('data-nodes-tease', '', { timeout: 6_000 });
+    await expect(panel).toHaveCount(0);
+    return;
+  }
+  await expect(stage).toHaveAttribute('data-detail', 'ridge', { timeout: 12_000 });
+  await expect(panel.locator('#hv2-detail-title')).toHaveText('Вузол Г · Коньковий вузол');
+  expect(await panel.evaluate((element) => element.contains(document.activeElement))).toBe(false);
+  await settleArrival(page);
+
+  // Again, but the visitor presses a key on the sheet while the seam still sweeps: nothing opens by itself
+  const second = await arrive(page);
+  await centre(second.stage);
+  await expect(second.stage).toHaveAttribute('data-sweep', 'run', { timeout: 12_000 });
+  await second.sheet.dispatchEvent('keydown', { key: 'Shift' });
+  await expect(second.stage).not.toHaveAttribute('data-sweep', /.*/);
+  // Watched in the page: a node opening ends the watch at once (and fails); else it ends well past the auto node's time
+  // (ProofContour's AUTO_NODE_AT, 2 s after the sweep's end)
+  const opened = await second.stage.evaluate((stage, ms) => new Promise<string | null>((resolve) => {
+    const watch = new MutationObserver(() => {
+      if (stage.dataset.detail) { watch.disconnect(); resolve(stage.dataset.detail); }
+    });
+    watch.observe(stage, { attributes: true, attributeFilter: ['data-detail'] });
+    window.setTimeout(() => { watch.disconnect(); resolve(stage.dataset.detail ?? null); }, ms);
+  }), 3_500);
+  expect(opened).toBeNull();
+  await expect(panel).toHaveCount(0);
 });
 
 test('arriving the usual way — the wheel, or a finger swiping over the sheet — the seam still sweeps once, when the page is quiet', async ({ page }, testInfo) => {
@@ -2093,6 +2137,7 @@ test('arriving the usual way — the wheel, or a finger swiping over the sheet �
   expect(Math.min(...frames.filter((frame) => frame.t >= run! && frame.t < ended!).map((frame) => frame.split))).toBeCloseTo(testInfo.project.name === 'desktop-chromium' ? SWEEP_TURN : SWEEP_TURN_PHONE, 0);
   expect(frames.find((frame) => frame.t >= ended!)).toMatchObject({ sweep: null, gliding: false, pulse: true, split: DEFAULT_SPLIT });
   expect(new Set(frames.map((frame) => frame.range))).toEqual(new Set([String(DEFAULT_SPLIT)]));
+  await settleArrival(page);
   await expectSplit(range, stage, DEFAULT_SPLIT);
 });
 
@@ -2128,8 +2173,8 @@ test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the
     // A finger on a button (here the layer already on: it changes nothing else)
     await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button', { name: 'Каркас' }).tap();
   } else {
-    // A mouse on the title block, clear of every control: the press moves nothing itself
-    const cell = (await sheet.locator('figcaption .sheet-cell').first().boundingBox())!;
+    // A mouse on the title block, clear of every control (its line): the press moves nothing itself
+    const cell = (await sheet.locator('figcaption .hv2-contour-line').boundingBox())!;
     await page.mouse.click(cell.x + cell.width / 2, cell.y + cell.height / 2);
   }
   const { frames, run, ended } = await arrivalOf(page);
@@ -2215,7 +2260,6 @@ test.describe('without JavaScript', () => {
     await expect(stage).not.toHaveAttribute('data-sweep', /.*/);
     expect(await splitOf(stage)).toBe(`${DEFAULT_SPLIT}%`);
     for (const part of ['.hv2-proof-labels', 'svg.hv2-proof-marks']) expect(await stage.locator(part).evaluate((element) => getComputedStyle(element).opacity), part).toBe('1');
-    if ((page.viewportSize()?.width ?? 0) > 760) await expect(stage.locator('.hv2-proof-measure[data-measure="slope"]')).toBeVisible();
     // Nothing offers a move the static sheet cannot make: the slider and every button of the sheet — the layers, the
     // legend's words, the nodes' letters on the scheme and in «Вузли крупно», «Фото» / «Схема», the tour — are disabled,
     // out of the tab order; the way on to a brief is a link, and works
@@ -2230,7 +2274,7 @@ test.describe('without JavaScript', () => {
   });
 });
 
-test('«Вузли крупно»: five letters over the picture’s foot on a laptop, in the title block on a phone, each naming its node — the nodes drawn in a colour of their own, on «Каркас» only', async ({ page }) => {
+test('«Вузли крупно»: five letters, each with its word, in the title block one press away — the nodes drawn in a colour of their own, quiet on the scheme at rest, on «Каркас» only', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { sheet, stage, layers } = await open(page);
   const phone = phoneOf(page);
@@ -2240,42 +2284,59 @@ test('«Вузли крупно»: five letters over the picture’s foot on a l
   const [colour, ink] = [await tokenColour(page, '--hv2-node'), await tokenColour(page, '--hv2-node-ink')];
   for (const other of [COPPER, PAPER, SNOW, WIND]) expect(apart(colour, other), `${colour} / ${other}`).toBeGreaterThan(60);
   expect(contrast(colour, ink), `${ink} on ${colour}`).toBeGreaterThanOrEqual(4.5);
+  // No bar over the picture any more (audit 08.10: a second way to the nodes, over the photo): the row is the title
+  // block's, «Каркас»'s own, at once (owner, 09.10: under «Детальніше» it went unseen)
   const overPicture = stage.locator('.hv2-contour-nodes[data-place="stage"]');
-  const inBlock = sheet.locator('figcaption .hv2-contour-nodes[data-place="block"]');
-  const [row, other] = phone ? [inBlock, overPicture] : [overPicture, inBlock];
+  const row = sheet.locator('figcaption .hv2-contour-nodes[data-place="block"]');
+  await expect(overPicture).toBeHidden();
   await expect(row).toBeVisible();
-  await expect(other).toBeHidden();
   await expect(row).toHaveRole('group');
   await expect(row).toHaveAccessibleName('Вузли крупно');
   const letters = row.getByRole('button');
-  await expect(letters).toHaveText(NODES.map((node) => node.letter));
+  // each letter with a word of its node (audit 08.10: bare letters were chosen blind) — for the eye; the name is the
+  // button's whole title
+  await expect(letters).toHaveText(NODES.map((node) => new RegExp(`^${node.letter}\\s*\\S`)));
   for (const [index, node] of NODES.entries()) {
     const letter = letters.nth(index);
     await expect(letter).toHaveAccessibleName(`Вузол ${node.letter}: ${node.title}`);
     await expect(letter).toHaveAttribute('aria-haspopup', 'dialog');
     await expect(letter).toHaveAttribute('aria-expanded', 'false');
-    expect(await letter.evaluate((element) => [getComputedStyle(element).backgroundColor, getComputedStyle(element).color]), node.letter).toEqual([colour, ink]);
+    // an outlined pill — the brief stays the sheet's one filled button — its letter a disc in the nodes' colour
+    expect(await letter.evaluate((element) => getComputedStyle(element).backgroundColor), node.letter).toBe('rgba(0, 0, 0, 0)');
+    expect(await letter.locator('.hv2-contour-node-letter').evaluate((element) => [getComputedStyle(element).backgroundColor, getComputedStyle(element).color]), node.letter).toEqual([colour, ink]);
   }
-  const [box, frame, caption] = [(await row.boundingBox())!, (await stage.boundingBox())!, (await sheet.locator('figcaption').boundingBox())!];
-  if (phone) {
-    // in the title block: a phone's frame has no room for it
-    expect(box.y).toBeGreaterThanOrEqual(caption.y);
-    expect(box.y + box.height).toBeLessThanOrEqual(caption.y + caption.height);
-  } else {
-    // over the picture's foot, at its left, inside the frame: the title block keeps its one row (review, 05.10)
-    expect(box.x - frame.x).toBeLessThanOrEqual(16);
-    expect(frame.y + frame.height - (box.y + box.height)).toBeLessThanOrEqual(16);
-    expect(box.y + box.height).toBeLessThanOrEqual(frame.y + frame.height);
-  }
+  const [box, caption] = [(await row.boundingBox())!, (await sheet.locator('figcaption').boundingBox())!];
+  expect(box.y).toBeGreaterThanOrEqual(caption.y);
+  expect(box.y + box.height).toBeLessThanOrEqual(caption.y + caption.height);
+  void phone;
   // On the scheme: a ring in the nodes' colour round each node and its letter beside it — a button naming its node too
   const rings = stage.locator('.hv2-proof-detail-rings circle');
   expect(await rings.evaluateAll((circles) => circles.map((circle) => [circle.getAttribute('data-detail'), getComputedStyle(circle).stroke]))).toEqual(NODES.map((node) => [node.id, colour]));
   const pins = stage.locator('.hv2-proof-detail-pin');
   await expect(pins).toHaveText(NODES.map((node) => node.letter));
+  // at rest the letters are quiet — paper on graphite, so the eye goes to the truss first (audit 08.10) — and take the
+  // nodes' colour under the cursor (a touch screen: in the tour, or open)
+  await page.mouse.move(2, 2);
   for (const [index, node] of NODES.entries()) {
     await expect(pins.nth(index)).toHaveAccessibleName(`Вузол ${node.letter}: ${node.title}`);
     await expect(pins.nth(index)).toHaveAttribute('data-detail', node.id);
-    expect(await pins.nth(index).evaluate((element) => [getComputedStyle(element).backgroundColor, getComputedStyle(element).color]), node.letter).toEqual([colour, ink]);
+    await expect.poll(() => pins.nth(index).evaluate((element) => getComputedStyle(element).backgroundColor), node.letter).not.toBe(colour);
+  }
+  if (!phone) {
+    await stage.hover({ position: { x: 20, y: 20 } });
+    for (const [index, node] of NODES.entries()) {
+      await expect.poll(() => pins.nth(index).evaluate((element) => [getComputedStyle(element).backgroundColor, getComputedStyle(element).color]), node.letter).toEqual([colour, ink]);
+    }
+    await page.mouse.move(2, 2);
+    // a pill pointed at shows where its node is: its ring on the scheme as an open node's, its letter lit
+    await letters.nth(2).hover();
+    await expect(stage).toHaveAttribute('data-peek-node', NODES[2].id);
+    await expect.poll(async () => {
+      const widths = await rings.evaluateAll((circles) => circles.map((circle) => Number.parseFloat(getComputedStyle(circle).strokeWidth)));
+      return widths[2] > Math.max(...widths.filter((_, index) => index !== 2));
+    }).toBe(true);
+    await page.mouse.move(2, 2);
+    await expect(stage).not.toHaveAttribute('data-peek-node', /.*/);
   }
   await expect(stage.locator('.hv2-proof-detail-rings')).toBeVisible();
   // …on «Каркас» only: a load's layer has neither letters nor rings
@@ -2286,31 +2347,30 @@ test('«Вузли крупно»: five letters over the picture’s foot on a l
   }
 });
 
-test('on a laptop a letter of «Вузли крупно» over the picture, clicked with the mouse, opens its node, and the seam does not jump to the click', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop-chromium', 'the bar over the picture is a laptop’s');
+test('a node’s ring on the scheme, clicked or tapped, opens its node — the seam does not jump to the press — and the mouse over it is a hand', async ({ page }) => {
   test.setTimeout(45_000);
   for (const motion of ['reduce', 'no-preference'] as const) {
     await page.emulateMedia({ reducedMotion: motion });
     const { stage, slider } = await open(page);
-    const bar = stage.locator('.hv2-contour-nodes[data-place="stage"]');
-    await expect(bar).toBeVisible();
-    for (const node of [NODES[1], NODES[4]]) {
-      const letter = bar.getByRole('button', { name: `Вузол ${node.letter}: ${node.title}` });
-      const box = (await letter.boundingBox())!;
-      // (owner, 05.10: the stage took the bar's press for a drag of the seam — it jumped there, and no node opened)
-      const clickedAt = await pointerAt(stage, box.x + box.width / 2);
-      await letter.click();
+    // (audit 08.10, F06: the ring — the largest thing that rings after the sweep — moved the seam and hid the node)
+    for (const node of [NODES[0], NODES[4]]) {
+      const ring = (await stage.locator(`.hv2-proof-detail-rings [data-detail="${node.id}"]`).boundingBox())!;
+      // its centre, clear of its letter
+      const [x, y] = [ring.x + ring.width / 2, ring.y + ring.height / 2];
+      if (!phoneOf(page)) {
+        await page.mouse.move(x, y);
+        await expect(stage).toHaveAttribute('data-over-ring', '');
+        expect(await stage.evaluate((element) => getComputedStyle(element).cursor)).toBe('pointer');
+      }
+      const clickedAt = await pointerAt(stage, x);
+      if (phoneOf(page)) await page.touchscreen.tap(x, y);
+      else await page.mouse.click(x, y);
       const panel = page.locator('.hv2-detail');
       await expect(panel, `${motion} ${node.letter}`).toBeVisible();
-      await expect(panel).toHaveRole('dialog');
       await expect(panel).toHaveAccessibleName(`Вузол ${node.letter} · ${node.title}`);
       await expect(stage).toHaveAttribute('data-detail', node.id);
-      await expect(letter).toHaveAttribute('aria-expanded', 'true');
-      // the seam where the node puts it — clear of its ring, right of the bar — never under the pointer
-      const ring = (await stage.locator(`.hv2-proof-detail-rings [data-detail="${node.id}"]`).boundingBox())!;
-      await expect.poll(() => seamAt(stage), `${motion} ${node.letter}`).toBeLessThan(((ring.x - (await stage.boundingBox())!.x) / (await stage.boundingBox())!.width) * 100);
-      expect(Math.abs((await seamAt(stage)) - clickedAt), `${motion} ${node.letter}: the seam at the click`).toBeGreaterThan(20);
-      expect(Number(await slider.inputValue())).toBeGreaterThan(clickedAt + 20);
+      // the seam where the node puts it — clear of its ring — never at the press (the bug: it went right there)
+      expect(Math.abs(Number(await slider.inputValue()) - clickedAt), `${motion} ${node.letter}: the seam at the press`).toBeGreaterThan(2);
       await page.keyboard.press('Escape');
       await expect(panel).toHaveCount(0);
       await expectSplit(slider, stage, DEFAULT_SPLIT);
@@ -2900,7 +2960,7 @@ test('without a script the usual rest by width stands in for the measured one: o
   }
 });
 
-test('from tablet to wide screen, no word on the frame covers another or runs off it, and at rest the scheme keeps the slope’s figure', async ({ page }, testInfo) => {
+test('from tablet to wide screen, no word on the frame covers another or runs off it', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'desktop windows');
   test.setTimeout(150_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -2921,12 +2981,6 @@ test('from tablet to wide screen, no word on the frame covers another or runs of
       for (const value of splits) {
         await splitTo(page, slider, value);
         found.push(...(await settledClashes(stage, value === DEFAULT_SPLIT)).map((clash) => `${width}×${height} ${layer} ${value}: ${clash}`));
-        // A word that would meet the seam's names or the stamp is hidden whole, as one the seam cuts — but at rest the
-        // scheme's one figure, the slope's, is never the one to go: it stands in the free sky over the rake
-        if (layer === 'Каркас' && value === DEFAULT_SPLIT) {
-          const slope = await stage.locator('.hv2-proof-measure[data-measure="slope"]').evaluate((element) => ({ cut: 'cut' in (element as HTMLElement).dataset, visibility: getComputedStyle(element).visibility }));
-          if (slope.cut || slope.visibility !== 'visible') found.push(`${width}×${height} Каркас ${value}: the slope's figure hidden at rest (${slope.cut ? 'data-cut' : slope.visibility})`);
-        }
       }
     }
   }
@@ -2989,8 +3043,9 @@ test('a word the seam cuts, or one that meets «‹ Фото» or the stamp, is 
     await expect.poll(misses, `${value}`).toEqual([]);
     for (const id of (await sheetState()).right.yields) yielded.add(id);
   }
-  // …so «Схема ›» gave way to the slope's figure while the seam was still left of it, and came back at rest
-  expect([...yielded]).toContain('slope');
+  // …and «Схема ›» is back at rest (the slope's figure it used to give way to went on 09.10; what it yields to on the way
+  // is checked frame by frame above)
+  void yielded;
   expect((await sheetState()).right).toMatchObject({ shown: true, narrow: false, yields: [] });
   // …and so it is again when only the frame's height changes, the seam where it was — a window's height, or the title
   // block's rest measured on hydration: the crop moves every word up or down, so one now clear comes back and one now
@@ -3003,7 +3058,7 @@ test('a word the seam cuts, or one that meets «‹ Фото» or the stamp, is 
   // While a pointer drags the seam across a word, the seam is drawn on every move and the rest of the sheet is told at
   // most every COMMIT_EVERY (review, 05.10): so the word the seam cuts goes within that, the pointer still moving, and
   // the range catches up as the seam goes — not only once the pointer stops. A drag at a mouse's pace, a move every
-  // frame, over the slope's figure, every frame recorded
+  // frame, over the column's name (under the ground since 09.10; the slope's figure went), every frame recorded
   await page.setViewportSize({ width: 1280, height: 720 });
   await splitTo(page, slider, DEFAULT_SPLIT);
   await expect.poll(misses).toEqual([]);
@@ -3018,7 +3073,7 @@ test('a word the seam cuts, or one that meets «‹ Фото» or the stamp, is 
   await expect.poll(() => splitOf(stage)).toBe(tenths(await pointerAt(stage, xAt(DEFAULT_SPLIT))));
   await stage.evaluate((element) => {
     const pane = element.querySelector('.hv2-contour-pane')!;
-    const slope = element.querySelector<HTMLElement>('.hv2-proof-measure[data-measure="slope"]')!;
+    const slope = element.querySelector<HTMLElement>('.hv2-proof-tag[data-tag="column"]')!;
     const range = element.querySelector<HTMLInputElement>('.hv2-contour-range')!;
     const drag = { frames: [] as { t: number; cutBySeam: boolean; cut: boolean; range: string }[], released: 0, done: false };
     Object.assign(window, { drag });
@@ -3042,7 +3097,7 @@ test('a word the seam cuts, or one that meets «‹ Фото» or the stamp, is 
   const drag = await page.evaluate(() => (window as unknown as { drag: { frames: { t: number; cutBySeam: boolean; cut: boolean; range: string }[]; released: number } }).drag);
   const moving = drag.frames.filter((at) => at.t < drag.released);
   const reached = moving.find((at) => at.cutBySeam);
-  expect(reached, 'the seam reached the slope’s figure while it moved').toBeDefined();
+  expect(reached, 'the seam reached the column’s name while it moved').toBeDefined();
   const gone = moving.find((at) => at.t >= reached!.t && at.cut);
   // (soft: each of these named in one run; a frame's slack on top of COMMIT_EVERY)
   expect.soft(gone, `the figure the seam cuts goes while the pointer still moves (it moved ${Math.round(drag.released - reached!.t)} ms more)`).toBeDefined();
@@ -3056,7 +3111,7 @@ test('a word the seam cuts, or one that meets «‹ Фото» or the stamp, is 
   await expect.poll(misses).toEqual([]);
 });
 
-test('the scheme’s names stand in free room: the truss’s over the rake, the purlins’ and the walls’ on the right wall’s face, the column’s in the right gate’s opening, the footings’ under the base, none over another or off the frame, at every width', async ({ page }, testInfo) => {
+test('the scheme’s names stand in free room: the truss’s over the rake, the purlins’ and the walls’ on the right wall’s face, the column’s under the ground by its footing, the footings’ under the base, none over another or off the frame, at every width', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'a phone has no names in its frame');
   test.setTimeout(60_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -3112,7 +3167,9 @@ test('the scheme’s names stand in free room: the truss’s over the rake, the 
       expect.soft({ drawn: box.drawn, leader: box.leader }, `${at} ${box.id} drawn`).toEqual({ drawn, leader: drawn });
       if (!drawn) continue;
       if (box.id === 'truss') expect.soft(box.bottom, `${at} ${box.id} over the rake`).toBeLessThanOrEqual(box.rake);
+      // the footings' under the base — below 1240 px under the column's too (09.10: side by side they met there)
       if (box.id === 'footing') expect.soft(box.top, `${at} ${box.id} under the base`).toBeGreaterThanOrEqual(box.base);
+      if (box.id === 'footing' && width <= 1239) expect.soft(box.top, `${at} ${box.id} under the column's name`).toBeGreaterThanOrEqual(byId.column.bottom);
       if (box.id === 'bracing' || box.id === 'wall') {
         // on the face that holds only blockwork: right of the right gate, short of the right wall's section, under every
         // member behind it, over the base
@@ -3122,11 +3179,10 @@ test('the scheme’s names stand in free room: the truss’s over the rake, the 
         expect.soft(box.bottom, `${at} ${box.id} over the base`).toBeLessThanOrEqual(box.baseUnder);
       }
       if (box.id === 'column') {
-        // in the opening, which holds no member of the gable's plane: from its left jamb (within the 15 photo pixels the
-        // data allows), between its head and its foot
-        expect.soft(Math.abs(box.left - box.jamb), `${at} column at the gate's left jamb`).toBeLessThanOrEqual(15 * box.scale);
-        expect.soft(box.top, `${at} column under the gate's head`).toBeGreaterThanOrEqual(box.head);
-        expect.soft(box.bottom, `${at} column over the gate's foot`).toBeLessThanOrEqual(box.foot);
+        // under the ground, beside the column's footing (owner, 09.10: in the right gate's opening it lay on the gate):
+        // under the gable's base, left of the right gate's jamb
+        expect.soft(box.top, `${at} column under the base`).toBeGreaterThanOrEqual(box.baseUnder);
+        expect.soft(box.left, `${at} column left of the gate's jamb`).toBeLessThanOrEqual(box.jamb);
       }
     }
     // …the purlins' over the walls', where both are drawn
@@ -3251,17 +3307,18 @@ test('on a phone the frame is a close-up of the gable: the canvas zoomed in, the
       return { frame: { left: frame.left, top: frame.top, right: frame.right, bottom: frame.bottom, width: frame.width }, canvas: { left: canvas.left, top: canvas.top, width: canvas.width } };
     });
     const { frame, canvas } = await geometry();
-    // The canvas 1.22 × the frame's width, 19.46 % of it off to the left, the photo's row 92 at the frame's top (review,
-    // 04.10: from row 59 the base and the gates' feet sat under the handle at 320–360 px)…
+    // The canvas 1.22 × the frame's width, 19.46 % of it off to the left, the photo's first row at the frame's top (since
+    // 09.10 the frame is the photo's full height — 1536 / 961 — and the sheet edge to edge: 390 × 244 at 390 px)…
     expect(canvas.width, `${width}`).toBeCloseTo(frame.width * PHONE_ZOOM, 0);
     expect(canvas.left - frame.left, `${width}`).toBeCloseTo((-frame.width * PHONE_LEFT) / 100, 0);
     expect(canvas.top - frame.top, `${width}`).toBeCloseTo((-canvas.width * PHONE_TOP_ROW) / 1536, 0);
-    // …so the frame shows the photo's columns 245–1504 and rows 92–738
+    // …so the frame shows the photo's columns 245–1504 and all its rows, 0–788
     const scale = canvas.width / 1536;
     expect(Math.abs((frame.left - canvas.left) / scale - 245), `${width}`).toBeLessThanOrEqual(1);
     expect(Math.abs((frame.right - canvas.left) / scale - 1504), `${width}`).toBeLessThanOrEqual(1);
     expect(Math.abs((frame.top - canvas.top) / scale - PHONE_TOP_ROW), `${width}`).toBeLessThanOrEqual(1);
-    expect(Math.abs((frame.bottom - canvas.top) / scale - 738), `${width}`).toBeLessThanOrEqual(1);
+    expect(Math.abs((frame.bottom - canvas.top) / scale - 788), `${width}`).toBeLessThanOrEqual(1);
+    expect(frame.width, `${width}: edge to edge`).toBeCloseTo(width, 0);
     // …the gable whole in it: its outline, its footings, the snow's comb and every part of the wind — its short gusts'
     // tails, its lift, its links, its legs and the ground's answer
     const { wind } = homeProofFrame;
@@ -3371,7 +3428,7 @@ test('the sketch shows only in its test mode, read on the client, never on the d
   await expect(sketch.stage.locator('.hv2-contour-sketch')).toBeHidden();
   const note = sketch.sheet.locator('.sheet-cell-note');
   await expect(note).not.toContainText('згенероване');
-  await expect(note).toContainText('Каркас показано схемою такого типу, як на цьому об’єкті.');
+  await expect(note).toContainText(LINE);
   await expect(sketch.stage.getByRole('img', { name: homeProofFrame.label, exact: true })).toBeVisible();
   await expect(sketch.sheet.locator('figcaption .hv2-contour-tour-btn')).toBeEnabled();
   // No visible word names the old idea

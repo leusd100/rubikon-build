@@ -2,14 +2,14 @@
 
 import { memo, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { queueProofEvent } from '../../lib/proofAnalytics';
 import type { HomeProofCase } from '../../data/homeProof';
 import { homeProofContour, type ContourLine } from '../../data/homeProofContour';
 import { homeProofDetailSpots, homeProofFrame, memberAt, onRoof, pointLoadAt, type PointLoad, type SchemeHit, type ScopePart } from '../../data/homeProofFrame';
 import { DrawingSheet } from '../DrawingSheet';
 import { PROOF_DETAILS, type DetailId } from './ProofDetails';
-import { ProofFrame, ProofHover, ProofKeyPins, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
+import { ProofFrame, ProofHover, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
 import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
-import { homeProofMeasures } from '../../data/homeProofMeasures';
 
 // HOME's proof (owner, 04.10): ONE «Креслення» sheet with the real photo, and right of a seam the visitor moves the same
 // frame as a tracing — grey, dark, on a fine grid — with one of three layers over it, chosen in the title block:
@@ -53,13 +53,13 @@ type Layer = 'frame' | 'load' | 'wind' | 'sketch';
 /** The seam's resting place: right of the left gate and left of the ridge, so each side keeps a gate */
 export const DEFAULT_SPLIT = 62;
 const PAGE_STEP = 10;
-/** The first view's sweep: once the photo has plotted in (DrawingSheet: 120 + 900 ms), from the right edge to just past
- *  the gable's left corner, then back to rest — the turn at 62 % of its time, each leg eased on its own (one easing over
- *  both would reverse at full speed) */
+/** The first view's sweep: once the photo has plotted in (DrawingSheet: 120 + 900 ms), from the right edge to 38 % — the
+ *  ridge and both gates in view, the photo never gone (audit 08.10: at 15 % it showed little but the scheme for 1.5 s) —
+ *  then back to rest; the turn at 62 % of its time, each leg eased on its own (one easing over both would reverse at full
+ *  speed) */
 const SWEEP_AT = 1050;
-const SWEEP_TURN = 15;
-const SWEEP_MS = 3000;
-const SWEEP_MS_PHONE = 2200;
+const SWEEP_TURN = 38;
+const SWEEP_MS = 1800;
 /** The page must have stopped scrolling this long before the sweep: the eye is on the way, not on the seam */
 const SWEEP_QUIET = 250;
 /** Passing a measured line, in per cent of the frame: lit within GRAB of it, until the seam is past RELEASE */
@@ -70,7 +70,6 @@ const SNAP_RELEASE = 1.4;
  *  (per cent × ZOOM − LEFT) of the frame; the sweep turns just past the gable's left corner there */
 const PHONE_ZOOM = 1.22;
 const PHONE_LEFT = 19.46;
-const SWEEP_TURN_PHONE = 1;
 /** While the seam moves under a pointer, the rest of the sheet (the range's value, the names that give way, the stamp)
  *  catches up at most this often, ms: the seam itself moves every frame (review, 05.10: dragging it stuttered) */
 const COMMIT_EVERY = 100;
@@ -95,8 +94,6 @@ const TOUR: readonly { name: string; hold: number }[] = [
 ];
 /** The weight's walk along the roof (photo columns), and how long it takes */
 const WALK = { from: 430, to: 1390, ms: 2600 } as const;
-/** The scheme's names as numbers on a phone (no room for words in its frame), keyed under it */
-const PHONE_KEY = ['Ферма', 'Прогони й в’язі', 'Центральний ряд колон', 'Стіни — газобетон', 'Фундаменти — умовно'] as const;
 /** Where the brief for a hangar like this one starts */
 const BRIEF_HREF = '/angary#configurator';
 /** The held line's name: its distance from the seam, px */
@@ -146,9 +143,11 @@ const LEGEND_WORDS: Record<LegendKey, string> = {
 };
 
 const { photo: contourPhoto, variants, lines, label } = homeProofContour;
-const SRC_SET = variants.map(({ src, width }) => `${src} ${width}w`).join(', ');
+// Up to 2304w: a retina laptop took 3072w (378 KB) where 2304w (236 KB) looks the same (audit 08.10, F22)
+const SRC_SET = variants.filter(({ width }) => width <= 2304).map(({ src, width }) => `${src} ${width}w`).join(', ');
 // The frame's width: the shell less the sheet's margins (34 px on a phone, 46 px above), at most 1440 − 46
-const SIZES = '(max-width: 760px) calc((100vw - 66px) * 1.22), (max-width: 1556px) calc(92.5vw - 46px), 1394px';
+// (a phone's frame is the screen's width since 09.10 — the sheet edge to edge — and its canvas 1.22 × that)
+const SIZES = '(max-width: 760px) calc(100vw * 1.22), (max-width: 1556px) calc(92.5vw - 46px), 1394px';
 
 const pathOf = ({ points }: ContourLine) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}`;
 
@@ -169,6 +168,9 @@ const SNAPS: readonly Snap[] = [
   { line: 'gable-corner-right', at: snapAt('gable-corner-right', 2), name: 'Правий кут фронтона' },
 ];
 const phoneNow = () => window.matchMedia('(max-width: 760px)').matches;
+/** A node opens as a sheet from the screen's foot up to a narrow tablet: in a 768 px frame its drawing had to shrink to
+ *  unreadable to fit the panel (QA 09.10) */
+const sheetNow = () => window.matchMedia('(max-width: 900px)').matches;
 const stillNow = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** A node opening (owner, 05.10: «плавний перехід від вузла до збільшеної моделі»): the panel grows out of its ring on the
  *  scheme, a disc as small as the ring, to its place, and the node is put together in it part by part (ProofDetails).
@@ -228,15 +230,33 @@ const clamp = (value: number) => Math.min(100, Math.max(0, value));
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
 const sketchRequested = () => new URLSearchParams(window.location.search).get('xray') === 'sketch';
+/** The title block's nodes, named by a word beside their letter (audit 08.10: bare letters were chosen blind) */
+const NODE_WORDS: Record<string, string> = { bearing: 'Опора ферми', purlin: 'Прогін', base: 'База колони', ridge: 'Гребінь', chord: 'Нижній пояс' };
+/** After the seam, the drawing's names come one by one in the order the frame is built (home-v2.css, data-names-in) */
+const NAMES_IN_MS = 1400;
+/** …and the one letter that calls, once: В, the column's base (the letters are quiet at rest) */
+const TEASE_AT = 1200;
+const TEASE_MS = 2400;
+/** After the arrival, on a laptop or a tablet, this node opens by itself (owner, 09.10) */
+const AUTO_NODE: DetailId = 'ridge';
+// (after the handle's ring, 1.7 s: one thing at a time)
+const AUTO_NODE_AT = 2000;
+const AUTO_NODE_EVENT = 'hv2:auto-node';
+/** The way on rings once as soon as the seam rests */
+const RING_MS = 1200;
 
 // See STAMP_OFFSET: whether the stamp keeps its full words, and which seam name gives way
 /** The whole frame in view, or near enough (a part lit may be its roof, at the top): a press below it — a scope's cell, «Як
  *  це будується» on a phone — must not play to an empty screen */
 function bringIntoView(stage: HTMLElement) {
   const box = stage.getBoundingClientRect();
-  const shown = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, 0);
-  if (shown >= box.height * 0.92) return false;
-  stage.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  // the site's fixed header covers the window's top (audit 08.10, F11: a node's panel head and its «×» went under it)
+  const top = Math.max(0, document.querySelector('header')?.getBoundingClientRect().bottom ?? 0);
+  const shown = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, top);
+  if (shown >= box.height * 0.92 && box.top >= top - 1) return false;
+  const room = window.innerHeight - top;
+  const by = box.top - top - Math.max(8, (room - box.height) / 2);
+  window.scrollBy({ top: by, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   return true;
 }
 /** How long a smooth scroll to the frame takes before the assembly starts */
@@ -322,6 +342,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const sketchMode = useSyncExternalStore(subscribeToNothing, sketchRequested, () => false);
   // Focus the pointer put on the range: the keyboard's ring stays off until a key is pressed
   const [pointerFocus, setPointerFocus] = useState(false);
+  // The title block's node pointed at or focused: its letter and its ring light on the scheme, before the press
+  const [peekNode, setPeekNode] = useState<DetailId | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const rangeRef = useRef<HTMLInputElement>(null);
   // The four that carry the seam's place (home-v2.css: --split is theirs only, not inherited): the right side's window
@@ -357,6 +379,19 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [building, setBuilding] = useState(false);
   const buildTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(buildTimer.current), []);
+
+  // Loops (a load's streams, its drops) stop while the frame is off the screen (audit 08.10, F15: 19 infinite animations
+  // ran to the end of the visit, 6 % of a laptop's main thread, ~20 % of a slow phone's)
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const seen = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) delete stage.dataset.offscreen;
+      else stage.dataset.offscreen = '';
+    });
+    seen.observe(stage);
+    return () => seen.disconnect();
+  }, []);
 
   const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['frame', 'load', 'wind'];
   const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[0];
@@ -414,9 +449,17 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     let visible = false;
     let scrolled = 0;
     let live = true;
+    const after: number[] = [];
+    const release = () => {
+      sheet.querySelector('.hv2-contour-brief')?.removeAttribute('data-ring');
+      delete stage.dataset.namesIn;
+      delete stage.dataset.nodesTease;
+      for (const id of after) window.clearTimeout(id);
+    };
     stage.dataset.sweep = 'wait';
     const stop = () => {
       touched.current = true;
+      release();
       window.clearTimeout(timer);
       for (const animation of sweep) animation.cancel();
       delete stage.dataset.gliding;
@@ -433,28 +476,43 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       // In one task: the hold at the edge gives way to the sweep's first frame, at the same edge
       stage.dataset.gliding = '';
       stage.dataset.sweep = 'run';
-      const phone = phoneNow();
       const keyframes = [
         { '--split': '100%', easing: 'cubic-bezier(.35, 0, .3, 1)' },
-        { '--split': `${phone ? SWEEP_TURN_PHONE : SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
+        { '--split': `${SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
         { '--split': `${DEFAULT_SPLIT}%` },
       ];
       const carriers = [paneRef.current, innerRef.current, railRef.current, handleRef.current].filter((element) => element !== null);
-      sweep = carriers.map((element) => element.animate(keyframes, { duration: phone ? SWEEP_MS_PHONE : SWEEP_MS }));
+      sweep = carriers.map((element) => element.animate(keyframes, { duration: SWEEP_MS }));
       sweep[0].onfinish = () => {
         delete stage.dataset.gliding;
         delete stage.dataset.sweep;
-        // Two rings from the handle, once: this is the thing to drag
+        // One ring from the handle: this is the thing to drag
         stage.dataset.pulse = '';
         timer = window.setTimeout(() => delete stage.dataset.pulse, 1700);
-        // …then the nodes' letters
-        hintNodes(stage, 1300);
+        // the way on rings once as soon as the seam rests, not only after the tour
+        const brief = sheet.querySelector<HTMLElement>('.hv2-contour-brief');
+        if (brief) {
+          brief.dataset.ring = '';
+          after.push(window.setTimeout(() => delete brief.dataset.ring, RING_MS));
+        }
+        // the names one by one in the order the frame is built; then one letter calls (no three rings on all five)
+        stage.dataset.namesIn = '';
+        after.push(window.setTimeout(() => delete stage.dataset.namesIn, NAMES_IN_MS));
+        // …then a node opens by itself — Г, the ridge — so nobody passes the block without seeing that the scheme opens
+        // (owner, 09.10); a phone's node is a sheet over the page, so there one letter only calls
+        if (sheetNow()) {
+          after.push(
+            window.setTimeout(() => { stage.dataset.nodesTease = ''; }, TEASE_AT),
+            window.setTimeout(() => delete stage.dataset.nodesTease, TEASE_AT + TEASE_MS),
+          );
+        } else after.push(window.setTimeout(() => stage.dispatchEvent(new Event(AUTO_NODE_EVENT)), AUTO_NODE_AT));
       };
     };
     const seen = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
       run();
-    }, { threshold: 0.35 });
+    // most of the frame in view, not its top edge: the arrival plays where it is seen (audit 08.10)
+    }, { threshold: 0.6 });
     seen.observe(stage);
     const arrived = new MutationObserver(() => {
       if (sheet.getAttribute('data-sheet-state') !== 'on') return;
@@ -482,6 +540,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     sheet.addEventListener('keydown', stop);
     return () => {
       live = false;
+      release();
       seen.disconnect();
       arrived.disconnect();
       window.clearTimeout(timer);
@@ -602,7 +661,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [calling, setCalling] = useState(false);
   const callTimer = useRef<number | undefined>(undefined);
   // the tour's timers reach the render's own functions through this (theirs would be the first render's)
-  const tourApi = useRef<{ run: (step: number) => void; end: () => void; point: (x: number) => void } | null>(null);
+  // (and the node the arrival opens by itself — `node`: no focus moved, no visit counted, the visitor did nothing)
+  const tourApi = useRef<{ run: (step: number) => void; end: (restore?: boolean) => void; point: (x: number) => void; node: () => void } | null>(null);
+  // the tour moves the focus nowhere (audit 08.10, F13: it took it to «Закрити вузол», then to a letter)
+  const touring = useRef(false);
+  const quietOpen = useRef(false);
   useEffect(() => () => {
     window.clearTimeout(tourTimer.current);
     window.clearTimeout(callTimer.current);
@@ -696,7 +759,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     setAssembled(stillNow());
     assembledTimer.current = window.setTimeout(() => setAssembled(true), ASSEMBLY_MS);
     placeSeam(id, nodeOnPhoto);
-    setDetailSheet(phoneNow());
+    setDetailSheet(sheetNow());
     setDetail(id);
   };
   // The next node or the previous one, round the five
@@ -728,11 +791,20 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       setDetail(null);
       // the focus back on its letter — or, where the scheme's letter has given way (data-cut), on the bar's
       const pin = was ? detailPinRefs.current[was] : null;
+      if (touring.current) return;
       if (pin && pin.dataset.cut === undefined) pin.focus({ preventScroll: true });
       else if (was) {
-        const bar = stageRef.current?.closest('figure')?.querySelector<HTMLElement>('.hv2-contour-nodes:not([data-place="block"])');
-        const place = bar && getComputedStyle(bar).display !== 'none' ? '' : '[data-place="block"]';
-        stageRef.current?.closest('figure')?.querySelector<HTMLButtonElement>(`.hv2-contour-nodes${place} button[aria-label^="Вузол ${PROOF_DETAILS.find((entry) => entry.id === was)?.letter}:"]`)?.focus({ preventScroll: true });
+        // the letter given way: the title block's row while «Каркас» shows it, else — a frame on, once the cut is read
+        // again — the letter, else the seam's range (review 09.10: the focus fell to <body>)
+        const sheet = stageRef.current?.closest('figure');
+        const inRow = sheet?.querySelector<HTMLButtonElement>(`.hv2-contour-nodes[data-place="block"] button[aria-label^="Вузол ${PROOF_DETAILS.find((entry) => entry.id === was)?.letter}:"]`);
+        if (inRow?.checkVisibility({ visibilityProperty: true })) inRow.focus({ preventScroll: true });
+        else {
+          requestAnimationFrame(() => {
+            if (pin && pin.dataset.cut === undefined && pin.offsetParent) pin.focus({ preventScroll: true });
+            else rangeRef.current?.focus({ preventScroll: true });
+          });
+        }
       }
     };
     const panel = detailRef.current;
@@ -759,7 +831,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   });
   useEffect(() => {
     if (!detail) return;
-    detailCloseRef.current?.focus({ preventScroll: true });
+    if (!touring.current && !quietOpen.current) detailCloseRef.current?.focus({ preventScroll: true });
+    quietOpen.current = false;
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       closeDetailRef.current();
@@ -768,6 +841,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     return () => document.removeEventListener('keydown', onKey);
   }, [detail]);
   useEffect(() => () => cancelAnimationFrame(pointFrame.current), []);
+  // A phone's node sheet holds the page still under it (audit 08.10, F18: a finger on it scrolled the page away)
+  useEffect(() => {
+    if (!detail || !detailSheet) return;
+    const roots = [document.documentElement, document.body];
+    const was = roots.map((root) => root.style.overflow);
+    for (const root of roots) root.style.overflow = 'hidden';
+    return () => roots.forEach((root, index) => { root.style.overflow = was[index]; });
+  }, [detail, detailSheet]);
 
   // On a laptop the picture takes the height the window has left (home-v2.css): the sheet's other parts — the rulers, the
   // title block, however many lines its note wraps to — are measured here, so the title block is never pushed under the
@@ -776,7 +857,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const image = stageRef.current?.parentElement;
     const sheet = image?.closest<HTMLElement>('figure');
     if (!image || !sheet) return;
-    const measure = () => sheet.style.setProperty('--hv2-sheet-rest', `${Math.ceil(sheet.offsetHeight - image.offsetHeight)}px`);
+    const measure = () => {
+      sheet.style.setProperty('--hv2-sheet-rest', `${Math.ceil(sheet.offsetHeight - image.offsetHeight)}px`);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(sheet);
@@ -954,6 +1037,27 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     setHit(null);
   };
 
+  // The ring of a node under a pointer, on the scheme's side, while the rings are shown (frame, at rest)
+  const ringAt = (x: number, y: number): DetailId | null => {
+    const stage = stageRef.current;
+    if (!stage || layerRef.current !== 'frame' || stage.dataset.sweep !== undefined || stage.dataset.focus !== undefined) return null;
+    const box = stage.getBoundingClientRect();
+    if (x < box.left + (box.width * live.current) / 100) return null;
+    for (const { id } of homeProofDetailSpots) {
+      const ring = ringOf(id)?.getBoundingClientRect();
+      if (!ring?.width) continue;
+      if (Math.hypot(x - (ring.left + ring.width / 2), y - (ring.top + ring.height / 2)) <= ring.width / 2 + 4) return id;
+    }
+    return null;
+  };
+  // A mouse or a pen pressed on a node's ring: the node opens, the seam stays
+  const pressedRing = (event: PointerEvent<HTMLDivElement>) => {
+    const ring = event.pointerType === 'touch' ? null : ringAt(event.clientX, event.clientY);
+    if (!ring) return false;
+    event.preventDefault();
+    pressNode(ring);
+    return true;
+  };
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     tap.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
     if (event.pointerType === 'mouse') dropHit();
@@ -961,6 +1065,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     // The details' letters, the detail open and the «Вузли крупно» bar over the picture are their own: no seam moves
     // under them (owner, 05.10: pressed, the bar's letters started a drag that took the pointer, and never opened a node)
     if ((event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-nodes')) return;
+    // A node's ring opens the node (a finger's tap does it on lifting, below)
+    if (pressedRing(event)) return;
     // On «Сніг» the roof takes the weight: a finger puts it there, a mouse already has, and the seam stays
     const roof = roofAt(event.clientX, event.clientY);
     if (roof) {
@@ -1002,6 +1108,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const roof = roofAt(event.clientX, event.clientY);
     if (roof) pointAt(roof[0]);
     else if (point || pointFrame.current) dropPoint();
+    // a ring under the mouse is a button: the cursor says so (home-v2.css)
+    if (ringAt(event.clientX, event.clientY)) event.currentTarget.dataset.overRing = '';
+    else delete event.currentTarget.dataset.overRing;
     // On «Каркас», the member it is over, named — not over a letter, the node open or the handle
     if (layerRef.current === 'frame' && !(event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle, .hv2-contour-nodes')) {
       showHit(event.clientX, event.clientY);
@@ -1021,6 +1130,19 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     tap.current = null;
     if (!from || event.pointerType !== 'touch' || layerRef.current !== 'frame') return;
     if (Math.hypot(event.clientX - from.x, event.clientY - from.y) > 10 || (event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle, .hv2-contour-nodes')) return;
+    const ring = ringAt(event.clientX, event.clientY);
+    if (ring) {
+      pressNode(ring);
+      // the tap's own click, a moment later, would land on the panel now drawn under the finger and press its
+      // «Розібрати» or «Навантаження» (review 09.10, a touch tablet): it is swallowed, once
+      const swallow = (click: MouseEvent) => {
+        click.preventDefault();
+        click.stopPropagation();
+      };
+      window.addEventListener('click', swallow, { capture: true, once: true });
+      window.setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 500);
+      return;
+    }
     showHit(event.clientX, event.clientY);
     window.clearTimeout(tapTimer.current);
     tapTimer.current = window.setTimeout(dropHit, 2600);
@@ -1049,12 +1171,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (to === undefined) return;
     event.preventDefault();
     setSplit(clamp(to));
-  };
-
-  // «Фото» / «Схема» show one side whole; pressed again, they bring the seam back to rest
-  const showOnly = (side: 100 | 0) => {
-    clearLit();
-    setSplit(split === side ? DEFAULT_SPLIT : side);
   };
 
   // A layer chosen with the seam far right brings the right side back into view; the load is replayed on every press,
@@ -1099,8 +1215,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
   // «Тур»: one step, then the next after its hold
   const walkRoof = () => {
-    const start = performance.now();
+    // timed from its own first frame (the React compiler reads a performance.now() here as a call during render)
+    let start = -1;
     const frame = (now: number) => {
+      if (start < 0) start = now;
       const t = Math.min(1, (now - start) / WALK.ms);
       tourApi.current?.point(WALK.from + (WALK.to - WALK.from) * (0.5 - Math.cos(Math.PI * t) / 2));
       if (t < 1) walkFrame.current = requestAnimationFrame(frame);
@@ -1108,6 +1226,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     walkFrame.current = requestAnimationFrame(frame);
   };
   const runTour = (step: number) => {
+    // a frame scrolled out of sight is not played to: the next step finds it gone and ends the tour
+    const box = stageRef.current?.getBoundingClientRect();
+    if (step > 0 && box && (box.bottom < 60 || box.top > window.innerHeight - 60)) return endTour();
+    touring.current = true;
     setTourStep(step);
     if (step === 0) build();
     else if (step === 1) choose('load');
@@ -1132,20 +1254,42 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       else tourApi.current?.end();
     }, TOUR[step].hold);
   };
-  const endTour = () => {
+  // Ended by the visitor's own press: the seam stays where they put it; otherwise (the button, Esc, the frame scrolled
+  // away) it goes back to rest — not the tour's 15 % (audit 08.10, F13)
+  const endTour = (restore = true) => {
+    touring.current = false;
     window.clearTimeout(tourTimer.current);
     cancelAnimationFrame(walkFrame.current);
     setTourStep(null);
     setFlowOn(flowBefore.current);
+    if (restore) setSplit(DEFAULT_SPLIT);
   };
   const toggleTour = () => {
     if (tourStep !== null) return endTour();
     flowBefore.current = flowOn;
     runTour(0);
+    queueProofEvent('tour_start');
   };
   useEffect(() => {
-    tourApi.current = { run: runTour, end: endTour, point: pointAt };
+    tourApi.current = {
+      run: runTour,
+      end: endTour,
+      point: pointAt,
+      node: () => {
+        if (detail || touched.current || layerRef.current !== 'frame') return;
+        quietOpen.current = true;
+        showNode(AUTO_NODE);
+      },
+    };
   });
+  // The arrival's own node (see AUTO_NODE): the sweep's effect asks for it by an event on the stage
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const open = () => tourApi.current?.node();
+    stage.addEventListener(AUTO_NODE_EVENT, open);
+    return () => stage.removeEventListener(AUTO_NODE_EVENT, open);
+  }, []);
   // Any press or key of the visitor's own in the sheet (not the tour's button) hands the block back
   useEffect(() => {
     if (tourStep === null) return;
@@ -1153,13 +1297,19 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (!sheet) return;
     const onOwn = (event: Event) => {
       if ((event.target as Element).closest?.('.hv2-contour-tour-btn')) return;
-      tourApi.current?.end();
+      tourApi.current?.end(false);
+    };
+    // Esc anywhere, the tour's own button focused included
+    const onEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') tourApi.current?.end();
     };
     sheet.addEventListener('pointerdown', onOwn, true);
     sheet.addEventListener('keydown', onOwn, true);
+    document.addEventListener('keydown', onEscape);
     return () => {
       sheet.removeEventListener('pointerdown', onOwn, true);
       sheet.removeEventListener('keydown', onOwn, true);
+      document.removeEventListener('keydown', onEscape);
     };
   }, [tourStep]);
 
@@ -1170,6 +1320,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     setChosen('frame');
     if (!phoneNow() && stageRef.current) bringIntoView(stageRef.current);
     showNode(id);
+    if (detail !== id) queueProofEvent('node_open', id);
+  };
+  // A node from the scheme itself — its letter, or its ring (audit 08.10, F06: a click on the ring moved the seam and hid
+  // the node instead of opening it)
+  const pressNode = (id: DetailId) => {
+    if (detail !== id && !phoneNow() && stageRef.current) bringIntoView(stageRef.current);
+    showNode(id);
+    if (detail !== id) queueProofEvent('node_open', id);
   };
   // «Вузли крупно: А Б В Г Д» — the letters on the scheme, named again where they are seen: over the picture's foot on a
   // laptop (the title block keeps its height there: the sheet fits the window), in the title block on a phone (its
@@ -1186,17 +1344,65 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           aria-expanded={detail === item.id}
           disabled={!ready || layer === 'sketch'}
           onClick={() => openNode(item.id)}
+          onPointerEnter={place === 'block' ? () => setPeekNode(item.id) : undefined}
+          onPointerLeave={place === 'block' ? () => setPeekNode(null) : undefined}
+          onFocus={place === 'block' ? () => setPeekNode(item.id) : undefined}
+          onBlur={place === 'block' ? () => setPeekNode(null) : undefined}
         >
-          {item.letter}
+          {place === 'stage' ? item.letter : <i className="hv2-contour-node-letter">{item.letter}</i>}
+          {place !== 'stage' && <span className="hv2-contour-node-word" aria-hidden="true">{NODE_WORDS[item.id]}</span>}
         </button>
       ))}
     </fieldset>
+  );
+  // A layer's place in the legend: a load's way, link by link; «Каркас»'s five nodes; else the draughtsman's key
+  const legendSet = (name: Layer) => {
+    const chain = CHAINS[name];
+    if (chain) {
+      // A load's legend is its way: its tint's key, then each link lit as the drawing reaches it (replayed with it on
+      // every press)
+      return (
+        <span className="hv2-contour-legend-chain" data-load={name} key={name === 'load' ? loadRun : windRun}>
+          <span data-key={name}>{legendLine}</span>
+          {chain.map(([word, n]) => (
+            <button
+              key={word}
+              type="button"
+              className="hv2-chain-step"
+              disabled={!ready}
+              style={{ '--n': n } as CSSProperties}
+              aria-pressed={layer === name && stepOn === n}
+              onClick={() => setStepOn((on) => (on === n ? null : n))}
+              onPointerEnter={() => setStepPeek(n)}
+              onPointerLeave={() => setStepPeek(null)}
+              onFocus={() => setStepPeek(n)}
+              onBlur={() => setStepPeek(null)}
+            >
+              {word}
+            </button>
+          ))}
+        </span>
+      );
+    }
+    // «Каркас»'s own row: its five nodes, named, at once (owner, 09.10: «Детальніше» hid them, and the letters on the
+    // scheme were found by chance); the draughtsman's key gave it its place
+    if (name === 'frame') return nodesRow('block');
+    return LEGEND[name].map((key) => (
+      <span key={key} data-key={key}>{legendLine}{LEGEND_WORDS[key]}</span>
+    ));
+  };
+  // A quiet way out for another task than a hangar (audit 08.10: the brief leads to hangars only): under the line on a
+  // laptop (the action cell's height is the title block's, and the sheet must fit the window), under the brief on a phone
+  // (the thumb is there). One shows at a time (home-v2.css, data-place)
+  const exitLink = (place: 'line' | 'action') => (
+    <a className="hv2-contour-exit" data-place={place} href="#inquiry" onClick={() => queueProofEvent('exit_click')}>
+      Інша задача? Розкажіть коротко <span aria-hidden="true">↓</span>
+    </a>
   );
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
   const engaged = loadRun + windRun + buildRun > 0;
 
   // The figures the scheme shows: the slope (the others were «Контур»'s)
-  const measured = homeProofMeasures.filter((measure) => measure.onFrame && measure.chip);
   const sliderLabel = `Порівняти фото й ${{ frame: 'схему', load: 'схему', wind: 'схему', sketch: 'ескіз' }[layer]}`;
 
   return (
@@ -1215,28 +1421,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               композиція не збігається з фото.
             </>
           ) : (
+            // One line that says what this is (audit 08.10: three kickers and a four-sentence note, all under 14 px). The
+            // provenance — before RUBIKON BUILD, the foreground retouched — stays under the sheet (EngineeringSignature)
             <>
-              {/* owner, 05.10: shorter — the stamp says «Схема · без розмірів» on the drawing itself */}
-              <b>Реальний об’єкт: фото, виміри, схема.</b> Фото з ретушшю переднього плану. Контур і схил — за вісьмома
-              фото цього ангара, без масштабу. Каркас показано схемою такого типу, як на цьому об’єкті.
-            </>
-          ),
-        },
-        {
-          // A phone's figures: the measured facts as chips (the frame has no room for labels there); a load's way is the
-          // legend's
-          className: 'hv2-contour-facts',
-          value: (
-            <>
-              <span className="hv2-contour-facts-slot" aria-hidden="true">
-                <span className="hv2-contour-chips" data-on="">
-                  {measured.map((measure) => <span key={measure.id} data-measure={measure.id}>{measure.chip}</span>)}
-                </span>
-              </span>
-              {/* the numbers on the scheme, named (a phone's frame has no room for the words) */}
-              <span className="hv2-contour-key" aria-hidden="true">
-                {PHONE_KEY.map((word, index) => <span key={word}><i>{index + 1}</i>{word}</span>)}
-              </span>
+              <span className="hv2-contour-line">Реальний ангар, який вів Сергій Іванович, і схема каркаса такого типу, без розмірів.</span>
+              {exitLink('line')}
             </>
           ),
         },
@@ -1247,7 +1436,16 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             <>
               <span className="hv2-contour-layers" role="group" aria-label="Що показати праворуч">
                 {layers.map((name) => (
-                  <button key={name} type="button" aria-pressed={layer === name} disabled={!ready} onClick={() => choose(name)}>
+                  <button
+                    key={name}
+                    type="button"
+                    aria-pressed={layer === name}
+                    disabled={!ready}
+                    onClick={() => {
+                      choose(name);
+                      queueProofEvent('layer', name);
+                    }}
+                  >
                     {LAYERS[name].button}
                   </button>
                 ))}
@@ -1255,40 +1453,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               <span className="hv2-contour-legend">
                 {layers.map((name) => (
                   <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={name === layer ? '' : undefined}>
-                    {CHAINS[name] ? (
-                      // A load's legend is its way: its tint's key, then each link lit as the drawing reaches it (replayed
-                      // with it on every press)
-                      <span className="hv2-contour-legend-chain" data-load={name} key={name === 'load' ? loadRun : windRun}>
-                        <span data-key={name}>{legendLine}</span>
-                        {CHAINS[name]!.map(([word, n]) => (
-                          <button
-                            key={word}
-                            type="button"
-                            className="hv2-chain-step"
-                            disabled={!ready}
-                            style={{ '--n': n } as CSSProperties}
-                            aria-pressed={layer === name && stepOn === n}
-                            onClick={() => setStepOn((on) => (on === n ? null : n))}
-                            onPointerEnter={() => setStepPeek(n)}
-                            onPointerLeave={() => setStepPeek(null)}
-                            onFocus={() => setStepPeek(n)}
-                            onBlur={() => setStepPeek(null)}
-                          >
-                            {word}
-                          </button>
-                        ))}
-                      </span>
-                    ) : (
-                      LEGEND[name].map((key) => (
-                        <span key={key} data-key={key}>{legendLine}{LEGEND_WORDS[key]}</span>
-                      ))
-                    )}
+                    {legendSet(name)}
                   </span>
                 ))}
-              </span>
-              <span className="hv2-contour-more">
-                {/* The nodes drawn as details, named here too: their letters on the scheme were found by chance */}
-                {nodesRow('block')}
               </span>
             </>
           ),
@@ -1296,12 +1463,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       ]}
       action={
         <span className="hv2-contour-controls">
-          <span className="hv2-contour-sides">
-            <button type="button" aria-pressed={split === 100} disabled={!ready} onClick={() => showOnly(100)}>Фото</button>
-            <button type="button" aria-pressed={split === 0} disabled={!ready} onClick={() => showOnly(0)}>
-              {layer === 'sketch' ? 'Ескіз' : 'Схема'}
-            </button>
-          </span>
           {/* «Тур за 20 секунд» — the frame put up first (owner, 05.10: it took over «Як це будується») — over the way on */}
           <button
             type="button"
@@ -1315,10 +1476,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           </button>
           {/* The way on: a hangar like this one, the visitor's own (owner, 05.10: in place of «Контур на фото», and
               to be seen) */}
-          <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={engaged ? '' : undefined} data-call={calling ? '' : undefined}>
+          <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={engaged ? '' : undefined} data-call={calling ? '' : undefined} onClick={() => queueProofEvent('brief_click')}>
             <small>Такий ангар, але ваш</small>
             <span>Сформувати бриф <i aria-hidden="true">→</i></span>
           </a>
+          {exitLink('action')}
         </span>
       }
     >
@@ -1341,6 +1503,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-pointed={pointed ? '' : undefined}
         data-detail={detail ?? undefined}
         data-hit-node={layer === 'frame' ? hit?.node : undefined}
+        data-peek-node={layer === 'frame' && peekNode && !detail ? peekNode : undefined}
         data-step-on={(layer === 'load' || layer === 'wind') && (stepPeek ?? stepOn) !== null ? (stepPeek ?? stepOn)! : undefined}
         data-building={building ? '' : undefined}
         data-touring={tourStep !== null ? '' : undefined}
@@ -1417,7 +1580,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               </svg>
               <ProofMarks />
               <ProofLabels />
-              <ProofKeyPins />
               {/* The details' letters (А, Б, В) beside their rings on «Каркас»: each opens its node, drawn */}
               <div className="hv2-proof-detail-pins">
                 {homeProofDetailSpots.map(({ id, badge: [x, y], badgePhone: [px, py], badgeNarrow: [nx, ny] = [x, y] }) => {
@@ -1438,9 +1600,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                       aria-haspopup="dialog"
                       aria-expanded={detail === id}
                       disabled={!ready}
-                      onClick={() => {
-                        showNode(id);
-                      }}
+                      onClick={() => pressNode(id)}
                     >
                       {item.letter}
                     </button>
@@ -1579,10 +1739,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           const main = detailSheet ? document.querySelector('main[data-home="v2"]') : null;
           return main ? createPortal(<><div className="hv2-detail-backdrop" aria-hidden="true" onClick={closeDetail} />{body}</>, main) : body;
         })()}
-        {/* What the figures say, for a screen reader: the labels on the frame are drawn for the eye only */}
-        <ul className="sr-only" aria-label="За фото цього ангара, без масштабу">
-          {homeProofMeasures.filter((measure) => measure.onFrame).map((measure) => <li key={measure.id} data-measure={measure.id}>{measure.spoken}</li>)}
-        </ul>
         <input
           ref={rangeRef}
           className="hv2-contour-range"

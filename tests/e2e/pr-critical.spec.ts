@@ -156,9 +156,9 @@ test('server HTML of every public route speaks the Delivery Model taxonomy', asy
 test('homepage server HTML carries the H1, the real-object proof, the conversation steps and cooperation options', async ({ page }) => {
   const text = await serverText(page, '/', {
     h1: '.hero h1',
-    // The photo's caption is the sentence cell of its «Креслення» title block (one sheet: the photo, its contour and the
-    // scheme of its frame's type, 04.10)
-    proofCaption: '#real-object .hv2-contour .sheet-cell-note > b',
+    // The photo's caption is the one line of its «Креслення» title block (audit 08.10), the provenance under the sheet
+    proofCaption: '#real-object .hv2-contour .hv2-contour-line',
+    proofProvenance: '#real-object .hv2-evidence-lead > p:not(.hv2-kicker)',
     proofScope: '#real-object .hv2-scope-chips li .hv2-scope-name',
     conversationSteps: '#inquiry .conversation-journey h3',
     cooperation: '.inquiry-details select option',
@@ -166,7 +166,10 @@ test('homepage server HTML carries the H1, the real-object proof, the conversati
 
   expect(text.h1).toEqual(['Промислове будівництво — від окремих робіт до комплексної реалізації об’єкта']);
   expect(text.proofCaption.map((caption) => caption.replace(/\s+/g, ' '))).toEqual([
-    'Реальний об’єкт: фото, виміри, схема. Фото з ретушшю переднього плану. Контур і схил — за вісьмома фото цього ангара, без масштабу. Каркас показано схемою такого типу, як на цьому об’єкті.',
+    'Реальний ангар, який вів Сергій Іванович, і схема каркаса такого типу, без розмірів.',
+  ]);
+  expect(text.proofProvenance.map((line) => line.replace(/\s+/g, ' '))).toEqual([
+    'Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD. Фото з ретушшю переднього плану.',
   ]);
   expect(text.proofScope).toEqual(['Каркас', 'Стінові панелі', 'Покрівля']);
   expect(text.conversationSteps).toEqual(['Уточнюємо задачу', 'Дивимося, що вже є', 'Узгоджуємо склад робіт', 'Готуємо кошторис']);
@@ -226,12 +229,10 @@ const HOME_SECTION_ORDER = ['top', 'directions', 'engineering', 'inquiry'];
 test('homepage sections come in the v2 order, each message with one home', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   expect(await page.locator('main#main-content > section').evaluateAll((sections) => sections.map((section) => section.id))).toEqual(HOME_SECTION_ORDER);
-  // The real object opens the engineering block, before the explanation cards.
-  expect(await page.locator('#engineering').evaluate((section) => {
-    const proof = section.querySelector('#real-object');
-    const cards = section.querySelector('.hv2-cards');
-    return Boolean(proof && cards && proof.compareDocumentPosition(cards) & Node.DOCUMENT_POSITION_FOLLOWING);
-  })).toBe(true);
+  // The real object is the engineering block's one sheet: the second («Вузол 1») left HOME after the block's audit (09.10)
+  // — node В on the sheet shows the same column base
+  await expect(page.locator('#engineering #real-object')).toHaveCount(1);
+  await expect(page.locator('#engineering .hv2-cards')).toHaveCount(0);
   // Retired blocks stay retired: the Slice 02 capability, people and first-conversation sections, the old teasers.
   await expect(page.locator('#services, #about, #first-conversation, .promise, .process, .process-teaser, section.estimate-brief, .hero-contact-card')).toHaveCount(0);
 });
@@ -458,25 +459,22 @@ test('homepage separates labelled illustrations from the one real photo', async 
   for (const card of await cards.all()) await expect(card.locator('.direction-provenance')).toHaveText('Ілюстрація');
   await expect(page.locator('#directions .section-header-support')).toContainText('ілюстрації, а не фото виконаних об’єктів');
 
-  // The one real photo proves: labelled as a photo, its retouch stated, the time before RUBIKON BUILD named.
+  // The one real photo proves: said to be a real hangar, its retouch stated, the time before RUBIKON BUILD named.
   const sheet = page.locator('#real-object .hv2-contour');
   await expect(sheet.locator('.hv2-contour-canvas > picture img')).toHaveAttribute('src', '/photos/serhii-prior-hangar-retouched.jpeg');
-  await expect(sheet.locator('figcaption')).toContainText('Фото об’єкта');
-  await expect(sheet.locator('figcaption')).toContainText('Фото з ретушшю переднього плану');
+  await expect(sheet.locator('figcaption')).toContainText('Реальний ангар');
+  await expect(page.locator('#real-object')).toContainText('Фото з ретушшю переднього плану');
   await expect(page.locator('#real-object')).toContainText('до створення RUBIKON BUILD');
 
   // Owner's decisions (04.10, 05.10): right of the seam, the outline and the slope taken from the photos, no scale, and a
   // SCHEME of a frame of this object's type, said to be one — its stamp on the drawing says it has no sizes; never the
   // frame over the photo itself, never the generated X-ray sketch on the default page. Every explanation card carries its
   // label.
-  await expect(sheet.locator('figcaption')).toContainText('за вісьмома фото цього ангара, без масштабу');
-  await expect(sheet.locator('figcaption')).toContainText('Каркас показано схемою такого типу, як на цьому об’єкті');
+  await expect(sheet.locator('figcaption')).toContainText('схема каркаса такого типу, без розмірів');
   await expect(sheet.locator('.hv2-contour-stamp')).toContainText('Схема · без розмірів');
   await expect(page.locator('#real-object img[src*="/concepts/"], #real-object source[srcset*="/concepts/"]')).toHaveCount(0);
-  // The explanation is one drawing sheet (05.10), labelled as a scheme and holding no generated picture
-  await expect(page.locator('#engineering .hv2-sheet')).toHaveCount(1);
-  await expect(page.locator('#engineering .hv2-sheet .sig-strip')).toContainText('Схема');
-  await expect(page.locator('#engineering .hv2-sheet img')).toHaveCount(0);
+  // No second sheet under it (09.10): the explanation is the block's own scheme
+  await expect(page.locator('#engineering .hv2-sheet')).toHaveCount(0);
   // Concept images live only inside a labelled illustration, never in the conversation block.
   expect(await page.locator('main img[src*="/concepts/"]').evaluateAll((images) => images.filter((image) => !image.closest('.direction-card, .hv2-hero')).length)).toBe(0);
   await expect(page.locator('#inquiry img[src*="/concepts/"]')).toHaveCount(0);
