@@ -5,10 +5,10 @@ import { queueGoogleCommand } from './googleCommand';
  *  nodes or layers are used). Only with analytics consent; queued, never a delivery receipt; a failure never breaks it. */
 export type ProofAction = 'tour_start' | 'node_open' | 'layer' | 'brief_click' | 'exit_click' | 'more_open';
 
-export function queueProofEvent(action: ProofAction, detail = '', concept = ''): boolean {
+export function queueProofEvent(action: ProofAction, detail = ''): boolean {
   if (!hasAnalyticsConsent()) return false;
   try {
-    queueGoogleCommand('event', 'proof_interaction', { proof_action: action, proof_detail: detail, proof_concept: concept });
+    queueGoogleCommand('event', 'proof_interaction', { proof_action: action, proof_detail: detail });
     return true;
   } catch {
     return false;
