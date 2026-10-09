@@ -29,7 +29,12 @@
 /* 14 px in the 22 px circle (12.5 before): the letters and figures as large as the circle takes, so a phone's read
    at ~10 px (04.10) */
 .ft-bubble text { fill: var(--color-text-secondary); font: 700 14px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill .3s ease; }
-.ft-letter { fill: var(--color-text-secondary); font: italic 600 calc(19px * var(--ft-k)) var(--font-manrope), sans-serif; text-anchor: middle; transition: fill .3s ease, opacity .3s ease; }
+.ft-letter { fill: var(--color-text-secondary); font: italic 600 calc(19px * var(--ft-k)) var(--font-manrope), sans-serif; text-anchor: middle; dominant-baseline: central; transition: fill .3s ease, opacity .3s ease; }
+/* Set on its middle, beside its line (FrameTour letters, 09.10): H ends at its point, a starts at its own; the field's
+   paint round it parts an axis that runs behind L, as the members' names part what they lie on */
+.ft-letter[data-anchor="end"] { text-anchor: end; }
+.ft-letter[data-anchor="start"] { text-anchor: start; }
+.ft-letter { paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(6px * var(--ft-k)); stroke-linejoin: round; }
 .ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }
 .ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */

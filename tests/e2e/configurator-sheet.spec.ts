@@ -874,8 +874,8 @@ test('on a portrait tablet the whole sheet stays under the header while a step i
   // down the step it stays
   await page.mouse.wheel(0, 400);
   await expect.poll(() => sheet.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(header, 0);
-  // the step keeps more than a third of the screen
-  expect(1024 - (box.y + box.height)).toBeGreaterThan(1024 / 3);
+  // the step keeps nearly half the screen (09.10, owner: the drawing lower — it kept 36 %)
+  expect(1024 - (box.y + box.height)).toBeGreaterThan(1024 * 0.45);
 
   // keyboard from the step's last stop back: no control is behind the sheet
   await page.locator('#hc-step-shell .hc-step-next').focus();

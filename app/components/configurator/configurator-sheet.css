@@ -202,6 +202,12 @@
 @media (min-width: 761px) and (max-width: 1023px) and (min-height: 700px) {
   .hangar-configurator-embedded .hc-preview-surface.hc-preview-sheet { position: sticky; z-index: 6; top: 101px; }
   .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: min(46vw, 34svh); }
+  /* A tablet held upright, lower (owner, 09.10: «Зробити креслення нижчим, щоб кроку лишалось більше місця» — at
+     768 × 1024 the step kept 36 % of the screen, now 46 %; 52–58 % on taller ones). On its side the 24 % left the frame's
+     window a 169 px strip, so it keeps its height there. */
+  @media (orientation: portrait) {
+    .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: min(46vw, 24svh); }
+  }
   /* The frame's field as tall as the general view's (09.10, after merging F15 and F22): the window in the general
      drawing's height left the field 47 px taller or 55 px shorter than the general view's — the drawing under it, its
      cladding legend under it on a sheet under 700 px — and the stuck sheet, with the tabs under it, moved on every
@@ -211,6 +217,18 @@
   .hangar-configurator-embedded .hc-preview-sheet .hc-frame .ft-window { aspect-ratio: auto; height: auto; }
   @container sheet (max-width: 699px) {
     .hangar-configurator-embedded .hc-preview-sheet .hc-frame { --hc-frame-h: calc(var(--hc-sheet-h) + 102px); }
+  }
+  /* The lower drawing (09.10) left the legend's narrow column taller than it — the general view grew back to the
+     column's 278 px and the frame's field did not: on a wide tablet sheet the legend is a wider column with each glyph
+     beside its words, lower than the drawing. The drawing loses nothing: held by the sheet's height it is narrower than
+     its share. */
+  @container sheet (min-width: 700px) {
+    .hangar-configurator-embedded .hc-preview-image:has(> .hc-section) { grid-template-columns: 220px minmax(0, 1fr); }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section figcaption { margin-bottom: 10px; }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section dl { gap: 10px; }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section .hc-section-row { row-gap: 6px; }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section .hc-section-row dd { flex-direction: row; align-items: center; gap: 10px; }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section .hc-section-glyph { width: 64px; height: 21px; }
   }
   .hangar-configurator-embedded .hc-controls :is(a[href], button, summary, input, select, textarea) {
     scroll-margin-top: calc(var(--hc-mini-h, 0px) + 109px);
@@ -445,3 +463,9 @@
 @media (max-width: 480px) {
   .hc-preview-sheet .sheet-cell.hc-sheet-shown.is-frame b { min-height: 2.4em; }
 }
+
+/* «Колони всередині» moves the gates (09.10, owner: ворота перескакували миттєво — «так», плавно): the gates' outline,
+   the posts at their jambs and the wall purlins between them glide to their new places where the browser eases a
+   path's shape (the same commands, other numbers); where it does not, or where the posts change in number, they are
+   simply there. Under reduced motion nothing eases (globals.css). */
+.hc-frame .ft-drawing :is(.ft-opening, .ft-post, .ft-thin) { transition: stroke .3s ease, opacity .3s ease, d .45s var(--ease-premium); }

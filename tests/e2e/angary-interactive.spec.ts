@@ -87,21 +87,27 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   // frames' numbers along the building are not drawn at all (09.10, audit F89: hidden, they still pulled the bays'
   // camera back)
   await expect(frame.locator('[data-part~="3"] :is(.ft-bubble, .ft-axis)')).toHaveCount(0);
-  // L names the whole width (09.10, audit F126): under the middle of its line, past Б's bubble — not between А and Б —
-  // and Б's column lit with the outer ones, not left as a dashed axis
+  // L names the whole width (09.10, audit F126; owner: «навести лад з a L H»): at the middle of its line, between it and
+  // the axes' bubbles — Б's bubble under it, not beside it («Б L») — and Б's column lit with the outer ones
   const span = await frame.evaluate((root) => {
     const box = (element: Element) => element.getBoundingClientRect();
     const letter = box([...root.querySelectorAll('[data-part~="1"] .ft-letter')].find((element) => element.textContent === 'L')!);
     const bubbles = [...root.querySelectorAll('[data-part~="1"] .ft-bubble circle')].map(box);
     return {
       at: (letter.left + letter.right) / 2,
-      a: bubbles[0].x + bubbles[0].width / 2, b: bubbles[1].right, c: bubbles[2].x + bubbles[2].width / 2,
+      bottom: letter.bottom,
+      a: bubbles[0].x + bubbles[0].width / 2, c: bubbles[2].x + bubbles[2].width / 2,
+      bTop: bubbles[1].top,
       columns: root.querySelector('[data-part="1 2"] .ft-member')!.getAttribute('d')!.split('M').filter(Boolean).length,
     };
   });
-  expect(span.at).toBeGreaterThan(span.b);
-  expect(span.at - span.a).toBeLessThan((span.c - span.a) * 0.65);
+  expect(Math.abs(span.at - (span.a + span.c) / 2)).toBeLessThanOrEqual(3);
+  expect(span.bottom).toBeLessThanOrEqual(span.bTop);
   expect(span.columns).toBe(3);
+  // one way for the three dimensions: H and a with their line, a 45° tick at each end and two extension lines; L with its
+  // line and two ticks, the axes standing for its extension lines
+  const runs = await frame.evaluate((root) => [...root.querySelectorAll('.ft-dim')].map((path) => path.getAttribute('d')!.split('M').filter(Boolean).length));
+  expect(runs.sort()).toEqual([3, 5, 5]);
   // the shown item pressed again goes back to the whole frame
   await items.nth(0).click();
   await expect(items.nth(0)).toHaveAttribute('aria-pressed', 'false');
@@ -938,3 +944,30 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
     expect(await tabsUnderCover(page)).toBeLessThanOrEqual(16);
   });
 }
+
+// «Колони всередині» moves the gate on «Каркас» (09.10, owner: «так» — плавно, not in one frame): its outline glides
+test('the gate glides to its new place when «Колони всередині» changes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await openHangarPage(page);
+  await openControlGroup(page, 'space');
+  const opening = previewSheet(page).locator('path.ft-opening');
+  await expect(opening).toHaveCount(1);
+  const before = await opening.evaluate((path) => (path as SVGPathElement).getBBox().x);
+  await opening.evaluate(() => {
+    const samples: number[] = [];
+    (window as unknown as { gateXs: number[] }).gateXs = samples;
+    const read = () => {
+      samples.push((document.querySelector('#configurator path.ft-opening') as SVGPathElement).getBBox().x);
+      if (samples.length < 40) requestAnimationFrame(read);
+    };
+    requestAnimationFrame(read);
+  });
+  await page.locator('#hc-step-frame .hc-option-card').filter({ hasText: 'Не можна' }).first().click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { gateXs: number[] }).gateXs.length)).toBe(40);
+  const xs = await page.evaluate(() => (window as unknown as { gateXs: number[] }).gateXs);
+  const after = xs.at(-1)!;
+  expect(Math.abs(after - before)).toBeGreaterThan(5);
+  // places between the two: it travelled, not jumped
+  expect(xs.filter((x) => Math.abs(x - before) > 0.5 && Math.abs(x - after) > 0.5).length).toBeGreaterThanOrEqual(5);
+});
