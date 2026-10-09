@@ -50,6 +50,10 @@ function faceOf([[x0, y0], [x1, y1], [x2, y2], [x3, y3]]: readonly Pt[]) {
   };
 }
 const at1 = (value: number) => Math.round(value * 10) / 10;
+/** The gable's column, drawn as a profile: its closed outline */
+const isColumnProfile = (member: { group: string; depth: number; hidden?: boolean; closed?: boolean }) =>
+  member.group === 'column' && member.depth === 0 && !member.hidden && Boolean(member.closed);
+const lerpPoint = ([ax, ay]: readonly number[], [bx, by]: readonly number[], t: number): [number, number] => [ax + (bx - ax) * t, ay + (by - ay) * t];
 /** A member drawn as a profile: the gable's own chords (the truss's open lines on its plane) */
 const isProfile = (member: { group: string; depth: number; hidden?: boolean; closed?: boolean }) =>
   member.group === 'truss' && member.depth === 0 && !member.hidden && !member.closed;
@@ -134,6 +138,20 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
           {inside.filter(isProfile).map((member) => (
             <path key={d(member.points)} className="hv2-proof-core" d={d(member.points)} data-group={member.group} data-depth={member.depth} />
           ))}
+          {/* The gable's column as a profile too (owner, 09.10): its outline over a dark core, and the flanges' inner faces
+              a fifth of its width in from each edge — an I-section seen from its flange edge, for reading, not measured */}
+          {inside.filter(isColumnProfile).flatMap((member) => {
+            const [topNear, topFar, footFar, footNear] = member.points;
+            return [0.22, 0.78].map((t) => (
+              <path
+                key={`flange-${t}`}
+                className="hv2-proof-flange"
+                d={d([lerpPoint(topNear, topFar, t), lerpPoint(footNear, footFar, t)])}
+                data-group={member.group}
+                data-depth={member.depth}
+              />
+            ));
+          })}
           {/* The parts the scope's cells light (ScopeCells): the roof's planes and the cladding on the walls' faces, drawn
               only while their cell is pointed at (home-v2.css, the stage's data-focus) */}
           <path className="hv2-proof-part" data-part="roof" d={d(homeProofParts.roof, true)} />
@@ -251,17 +269,6 @@ export const ProofLabels = memo(function ProofLabels() {
     <div className="hv2-proof-labels" aria-hidden="true">
       {homeProofFrame.tags.map((tag) => (
         <span key={tag.id} className="hv2-proof-tag" data-tag={tag.id} data-align={tag.align} data-wide-only={tag.wideOnly ? '' : undefined} style={place(tag.at, tag.at, tag.atNarrow)}>{tag.text}</span>
-      ))}
-    </div>
-  );
-});
-
-/** A phone's names: numbers on the members they name (homeProofFrame's tags, in the same order as ProofContour's key) */
-export const ProofKeyPins = memo(function ProofKeyPins() {
-  return (
-    <div className="hv2-proof-keypins" aria-hidden="true">
-      {homeProofFrame.tags.map((tag, index) => (
-        <span key={tag.id} data-tag={tag.id} style={place(tag.keyAt ?? tag.anchor)}>{index + 1}</span>
       ))}
     </div>
   );

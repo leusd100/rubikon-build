@@ -8,7 +8,7 @@ import { homeProofContour, type ContourLine } from '../../data/homeProofContour'
 import { homeProofDetailSpots, homeProofFrame, memberAt, onRoof, pointLoadAt, type PointLoad, type SchemeHit, type ScopePart } from '../../data/homeProofFrame';
 import { DrawingSheet } from '../DrawingSheet';
 import { PROOF_DETAILS, type DetailId } from './ProofDetails';
-import { ProofFrame, ProofHover, ProofKeyPins, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
+import { ProofFrame, ProofHover, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
 import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
 
 // HOME's proof (owner, 04.10): ONE «Креслення» sheet with the real photo, and right of a seam the visitor moves the same
@@ -94,8 +94,6 @@ const TOUR: readonly { name: string; hold: number }[] = [
 ];
 /** The weight's walk along the roof (photo columns), and how long it takes */
 const WALK = { from: 430, to: 1390, ms: 2600 } as const;
-/** The scheme's names as numbers on a phone (no room for words in its frame), keyed under it */
-const PHONE_KEY = ['Ферма', 'Прогони й в’язі', 'Центральний ряд колон', 'Стіни — газобетон', 'Фундаменти — умовно'] as const;
 /** Where the brief for a hangar like this one starts */
 const BRIEF_HREF = '/angary#configurator';
 /** The held line's name: its distance from the seam, px */
@@ -232,7 +230,7 @@ const clamp = (value: number) => Math.min(100, Math.max(0, value));
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
 const sketchRequested = () => new URLSearchParams(window.location.search).get('xray') === 'sketch';
-/** «Детальніше»: the nodes named by a word beside their letter (audit 08.10: bare letters were chosen blind) */
+/** The title block's nodes, named by a word beside their letter (audit 08.10: bare letters were chosen blind) */
 const NODE_WORDS: Record<string, string> = { bearing: 'Опора ферми', purlin: 'Прогін', base: 'База колони', ridge: 'Гребінь', chord: 'Нижній пояс' };
 /** After the seam, the drawing's names come one by one in the order the frame is built (home-v2.css, data-names-in) */
 const NAMES_IN_MS = 1400;
@@ -342,10 +340,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const snapLabelRef = useRef<HTMLSpanElement>(null);
   const ready = useSyncExternalStore(subscribeToNothing, () => true, () => false);
   const sketchMode = useSyncExternalStore(subscribeToNothing, sketchRequested, () => false);
-  // «Детальніше»: the legend, photo/scheme, the nodes named, a phone's figures — one press away (audit 08.10)
-  const [more, setMore] = useState(false);
   // Focus the pointer put on the range: the keyboard's ring stays off until a key is pressed
   const [pointerFocus, setPointerFocus] = useState(false);
+  // The title block's node pointed at or focused: its letter and its ring light on the scheme, before the press
+  const [peekNode, setPeekNode] = useState<DetailId | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const rangeRef = useRef<HTMLInputElement>(null);
   // The four that carry the seam's place (home-v2.css: --split is theirs only, not inherited): the right side's window
@@ -381,14 +379,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [building, setBuilding] = useState(false);
   const buildTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(buildTimer.current), []);
-
-  // «Детальніше» opens on the sheet (home-v2.css: what it shows is in the title block and on the frame)
-  useEffect(() => {
-    const sheet = stageRef.current?.closest<HTMLElement>('figure');
-    if (!sheet) return;
-    if (more) sheet.dataset.more = '';
-    else delete sheet.dataset.more;
-  }, [more]);
 
   // Loops (a load's streams, its drops) stop while the frame is off the screen (audit 08.10, F15: 19 infinite animations
   // ran to the end of the visit, 6 % of a laptop's main thread, ~20 % of a slow phone's)
@@ -804,15 +794,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       if (touring.current) return;
       if (pin && pin.dataset.cut === undefined) pin.focus({ preventScroll: true });
       else if (was) {
-        // the letter given way: the title block's row if it is open, else — a frame on, once the cut is read again — the
-        // letter, else «Детальніше» (review 09.10: the focus fell to <body>, the bar over the picture being gone)
+        // the letter given way: the title block's row while «Каркас» shows it, else — a frame on, once the cut is read
+        // again — the letter, else the seam's range (review 09.10: the focus fell to <body>)
         const sheet = stageRef.current?.closest('figure');
         const inRow = sheet?.querySelector<HTMLButtonElement>(`.hv2-contour-nodes[data-place="block"] button[aria-label^="Вузол ${PROOF_DETAILS.find((entry) => entry.id === was)?.letter}:"]`);
-        if (inRow?.offsetParent) inRow.focus({ preventScroll: true });
+        if (inRow?.checkVisibility({ visibilityProperty: true })) inRow.focus({ preventScroll: true });
         else {
           requestAnimationFrame(() => {
             if (pin && pin.dataset.cut === undefined && pin.offsetParent) pin.focus({ preventScroll: true });
-            else sheet?.querySelector<HTMLButtonElement>('.hv2-contour-more-btn')?.focus({ preventScroll: true });
+            else rangeRef.current?.focus({ preventScroll: true });
           });
         }
       }
@@ -867,9 +857,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const image = stageRef.current?.parentElement;
     const sheet = image?.closest<HTMLElement>('figure');
     if (!image || !sheet) return;
-    // («Детальніше» open keeps the last measure: the picture must not shrink under a press in the title block)
     const measure = () => {
-      if (sheet.dataset.more !== undefined) return;
       sheet.style.setProperty('--hv2-sheet-rest', `${Math.ceil(sheet.offsetHeight - image.offsetHeight)}px`);
     };
     measure();
@@ -1185,12 +1173,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     setSplit(clamp(to));
   };
 
-  // «Фото» / «Схема» show one side whole; pressed again, they bring the seam back to rest
-  const showOnly = (side: 100 | 0) => {
-    clearLit();
-    setSplit(split === side ? DEFAULT_SPLIT : side);
-  };
-
   // A layer chosen with the seam far right brings the right side back into view; the load is replayed on every press,
   // and on a phone its way down the frame wants the wider right side
   const choose = (next: Layer) => {
@@ -1362,8 +1344,12 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           aria-expanded={detail === item.id}
           disabled={!ready || layer === 'sketch'}
           onClick={() => openNode(item.id)}
+          onPointerEnter={place === 'block' ? () => setPeekNode(item.id) : undefined}
+          onPointerLeave={place === 'block' ? () => setPeekNode(null) : undefined}
+          onFocus={place === 'block' ? () => setPeekNode(item.id) : undefined}
+          onBlur={place === 'block' ? () => setPeekNode(null) : undefined}
         >
-          {item.letter}
+          {place === 'stage' ? item.letter : <i className="hv2-contour-node-letter">{item.letter}</i>}
           {place !== 'stage' && <span className="hv2-contour-node-word" aria-hidden="true">{NODE_WORDS[item.id]}</span>}
         </button>
       ))}
@@ -1404,19 +1390,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             <>
               <span className="hv2-contour-line">Реальний ангар, який вів Сергій Іванович, і схема каркаса такого типу, без розмірів.</span>
               {exitLink('line')}
-            </>
-          ),
-        },
-        {
-          // A phone's key to the numbers on the scheme (its frame has no room for the words); the slope's chip is gone with
-          // the slope (owner, 09.10)
-          className: 'hv2-contour-facts',
-          value: (
-            <>
-              {/* the numbers on the scheme, named (a phone's frame has no room for the words) */}
-              <span className="hv2-contour-key" aria-hidden="true">
-                {PHONE_KEY.map((word, index) => <span key={word}><i>{index + 1}</i>{word}</span>)}
-              </span>
             </>
           ),
         },
@@ -1467,6 +1440,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                           </button>
                         ))}
                       </span>
+                    ) : name === 'frame' ? (
+                      // «Каркас»'s own row: its five nodes, named, at once (owner, 09.10: «Детальніше» hid them, and the
+                      // letters on the scheme were found by chance); the draughtsman's key gave it its place
+                      nodesRow('block')
                     ) : (
                       LEGEND[name].map((key) => (
                         <span key={key} data-key={key}>{legendLine}{LEGEND_WORDS[key]}</span>
@@ -1475,34 +1452,12 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   </span>
                 ))}
               </span>
-              <button
-                type="button"
-                className="hv2-contour-more-btn"
-                aria-expanded={more}
-                disabled={!ready}
-                onClick={() => {
-                  if (!more) queueProofEvent('more_open');
-                  setMore(!more);
-                }}
-              >
-                {more ? 'Згорнути' : 'Детальніше'} <i aria-hidden="true">▾</i>
-              </button>
-              <span className="hv2-contour-more">
-                {/* The nodes drawn as details, named here too: their letters on the scheme were found by chance */}
-                {nodesRow('block')}
-              </span>
             </>
           ),
         },
       ]}
       action={
         <span className="hv2-contour-controls">
-          <span className="hv2-contour-sides">
-            <button type="button" aria-pressed={split === 100} disabled={!ready} onClick={() => showOnly(100)}>Фото</button>
-            <button type="button" aria-pressed={split === 0} disabled={!ready} onClick={() => showOnly(0)}>
-              {layer === 'sketch' ? 'Ескіз' : 'Схема'}
-            </button>
-          </span>
           {/* «Тур за 20 секунд» — the frame put up first (owner, 05.10: it took over «Як це будується») — over the way on */}
           <button
             type="button"
@@ -1543,6 +1498,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-pointed={pointed ? '' : undefined}
         data-detail={detail ?? undefined}
         data-hit-node={layer === 'frame' ? hit?.node : undefined}
+        data-peek-node={layer === 'frame' && peekNode && !detail ? peekNode : undefined}
         data-step-on={(layer === 'load' || layer === 'wind') && (stepPeek ?? stepOn) !== null ? (stepPeek ?? stepOn)! : undefined}
         data-building={building ? '' : undefined}
         data-touring={tourStep !== null ? '' : undefined}
@@ -1619,7 +1575,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               </svg>
               <ProofMarks />
               <ProofLabels />
-              <ProofKeyPins />
               {/* The details' letters (А, Б, В) beside their rings on «Каркас»: each opens its node, drawn */}
               <div className="hv2-proof-detail-pins">
                 {homeProofDetailSpots.map(({ id, badge: [x, y], badgePhone: [px, py], badgeNarrow: [nx, ny] = [x, y] }) => {

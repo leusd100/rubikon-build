@@ -176,8 +176,6 @@ type ProofNode = (typeof NODES)[number];
 // The title block's one line (audit 08.10); the provenance and the retouch are said under the sheet
 const LINE = 'Реальний ангар, який вів Сергій Іванович, і схема каркаса такого типу, без розмірів.';
 const PROVENANCE = 'Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD. Фото з ретушшю переднього плану.';
-// A phone's names of the scheme, keyed under the frame to its numbers (ProofContour's PHONE_KEY)
-const PHONE_KEY = ['Ферма', 'Прогони й в’язі', 'Центральний ряд колон', 'Стіни — газобетон', 'Фундаменти — умовно'];
 // «Тур за 20 секунд» (ProofContour's TOUR): each step's name and how long it holds, ms
 const TOUR = [
   ['Каркас збирається', 4800], ['Сніг: куди йде вага', 3600], ['Вага на даху', 3000], ['Вітер: куди тисне', 3600], ['Вузол крупно', 4200], ['Такий, але ваш', 2600],
@@ -267,15 +265,7 @@ function photoPoint(stage: Locator, [x, y]: readonly [number, number]) {
 /** Opens a node as a visitor does — on a laptop by its letter on the scheme, on a phone from «Вузли крупно» in the title
  *  block (there its letter on the scheme may stand left of the resting seam, under the photo) — and lets the panel finish
  *  growing out of its ring (a press inside it mid-way lands where the panel is not yet) */
-/** «Детальніше»: the legend, photo/scheme, the nodes named and a phone's figures are one press away (audit 08.10) */
-async function openMore(page: Page) {
-  const more = page.locator('#real-object .hv2-contour-more-btn');
-  if ((await more.getAttribute('aria-expanded')) !== 'true') await more.click();
-  await expect(more).toHaveAttribute('aria-expanded', 'true');
-}
-
 async function openNode(page: Page, node: ProofNode) {
-  if (phoneOf(page)) await openMore(page);
   const letter = phoneOf(page)
     ? page.locator('#real-object figcaption .hv2-contour-nodes').getByRole('button', { name: `Вузол ${node.letter}: ${node.title}` })
     : page.locator(`#real-object .hv2-proof-detail-pin[data-detail="${node.id}"]`);
@@ -714,17 +704,16 @@ test('the sheet says in one line what the two halves are, the retouch and the pr
   for (const words of ['Ширина торця', 'Ворота однакові']) expect(visible, words).not.toContain(words);
 
   // Figures only where something was measured, each with its sign; never a size; none of the words that claim more. The
-  // sheet's other digits are the tour's length and a phone's numbers for the scheme's names, each checked as such
+  // sheet's other digits are the tour's length, checked as such (a phone's numbered key went with «Детальніше», 09.10)
   const text = await sheet.evaluate((element) => element.textContent ?? '');
   const outsideMeasures = await sheet.evaluate((element) => {
     const copy = element.cloneNode(true) as HTMLElement;
-    for (const node of copy.querySelectorAll('[data-measure], .hv2-contour-tour-btn, .hv2-contour-tour, .hv2-proof-keypins, .hv2-contour-key i')) node.remove();
+    for (const node of copy.querySelectorAll('[data-measure], .hv2-contour-tour-btn, .hv2-contour-tour')) node.remove();
     return copy.textContent ?? '';
   });
   expect(outsideMeasures).not.toMatch(/\d/);
   await expect(sheet.locator('.hv2-contour-tour-btn')).toHaveText('Тур за 20 секунд');
-  expect(await stage.locator('.hv2-proof-keypins > span').allTextContents()).toEqual(['1', '2', '3', '4', '5']);
-  expect(await sheet.locator('.hv2-contour-key i').allTextContents()).toEqual(['1', '2', '3', '4', '5']);
+  await expect(sheet.locator('.hv2-proof-keypins, .hv2-contour-key, .hv2-contour-more-btn')).toHaveCount(0);
   for (const figure of await sheet.locator('[data-measure]').allTextContents()) {
     // (the signs' space is a no-break one)
     for (const match of figure.matchAll(/\d+(?:,\d+)?/g)) expect(figure.slice(0, match.index), figure).toMatch(/(?:[≈±]\s|приблизно |похибка )$/);
@@ -746,7 +735,11 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   await expect(scheme).toBeVisible();
   // Every member of the scheme is in it and none carries the outline's «approximate» mark. The gable's own plane is
   // paper-white; what stands behind it is copper, solid (owner, 04.10), and only behind it
-  await expect(scheme.locator('[data-group]:not(.hv2-proof-core)')).toHaveCount(homeProofFrame.members.filter((member) => member.group !== 'footing').length);
+  await expect(scheme.locator('[data-group]:not(.hv2-proof-core, .hv2-proof-flange)')).toHaveCount(homeProofFrame.members.filter((member) => member.group !== 'footing').length);
+  // The gable's column a profile too (owner, 09.10): its outline over a dark core, two thin lines for its flanges' faces
+  const columnPath = scheme.locator('.hv2-proof-scheme path[data-group="column"][data-depth="0"]:not(.hv2-proof-flange)').first();
+  expect(await columnPath.evaluate((path) => [getComputedStyle(path).fill, Number(getComputedStyle(path).fillOpacity) > 0.8])).toEqual(['rgb(20, 22, 21)', true]);
+  await expect(scheme.locator('.hv2-proof-flange')).toHaveCount(2);
   await expect(scheme.locator('[data-approximate]')).toHaveCount(0);
   await expect(stage.locator('.hv2-contour-lines [data-group]')).toHaveCount(0);
   const strokes = new Set(await scheme.locator('.hv2-proof-scheme [data-group]:not([data-hidden], .hv2-proof-core)').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)));
@@ -790,12 +783,11 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   const nodes = stage.locator('.hv2-proof-nodes circle');
   await expect(nodes).toHaveCount(homeProofFrame.nodes.length);
   expect(new Set(await nodes.evaluateAll((circles) => circles.map((circle) => `${getComputedStyle(circle).stroke} ${getComputedStyle(circle).fill === getComputedStyle(circle).stroke}`)))).toEqual(new Set([`${PAPER} false`]));
-  // Its names are words on the scheme, its legend says «схема» in the scheme's own colour — one press away, «Детальніше»
-  // (audit 08.10: «контур / схема / у глибині» is a draughtsman's key)
+  // Its names are words on the scheme; «Каркас»'s place in the legend is its nodes' row, at once (owner, 09.10: the
+  // draughtsman's key «контур / схема / у глибині» under «Детальніше» gave it its place)
   for (const tag of homeProofFrame.tags) await expect(stage.locator(`.hv2-proof-tag[data-tag="${tag.id}"]`)).toHaveText(tag.text);
-  await expect(page.locator('#real-object .hv2-contour-legend [data-on] [data-key="scheme"]')).toBeHidden();
-  await openMore(page);
-  await expect(page.locator('#real-object .hv2-contour-legend [data-on] [data-key="scheme"]')).toBeVisible();
+  await expect(page.locator('#real-object .hv2-contour-legend [data-on] [data-key]')).toHaveCount(0);
+  await expect(page.locator('#real-object .hv2-contour-legend [data-on] .hv2-contour-nodes')).toBeVisible();
   // Every word on the frame stands on a dark backing that masks what runs under it, as a drawing's text does — not on a
   // text-shadow (owner, 04.10: «текст залазить на елемент»)
   for (const word of await stage.locator('.hv2-proof-labels > :is(.hv2-proof-tag, .hv2-proof-measure)').all()) {
@@ -1293,9 +1285,8 @@ test('the title block switches the right side: the scheme with its names, each l
       await expect(button).toHaveAttribute('aria-pressed', String((await button.textContent()) === name));
     }
   };
-  // The legend's width is its cell's, never its own (contain: inline-size): a load's way in one line widened the cell and
-  // squeezed the note (review, 04.10) — the note keeps one width whichever layer is on
-  await expect(sheet.locator('.hv2-contour-legend')).toHaveCSS('contain', 'inline-size');
+  // A load's way takes its cell's width, never its own: in one line it widened the cell and squeezed the note (review,
+  // 04.10) — the note keeps one width whichever layer is on (on a laptop «Каркас»'s pills size the cell, 09.10)
   const noteWidth = () => sheet.locator('.sheet-cell-note').evaluate((element) => element.getBoundingClientRect().width);
   const note = await noteWidth();
 
@@ -1318,20 +1309,13 @@ test('the title block switches the right side: the scheme with its names, each l
     await expect(stage.locator('.hv2-proof-measure')).toHaveCount(0);
     await page.mouse.move(2, 2);
     await expect(stage.locator('.hv2-contour-seamtags > span').nth(1)).toHaveText('Схема ›');
-    // the names in words: a phone's numbers and their key are not drawn
-    await expect(stage.locator('.hv2-proof-keypins')).toBeHidden();
-    await expect(sheet.locator('.hv2-contour-key')).toBeHidden();
+    // the names in words, no numbered key
+    await expect(sheet.locator('.hv2-proof-keypins, .hv2-contour-key')).toHaveCount(0);
   } else {
-    // A phone: no words inside the frame and, at rest, only the nodes' letters on it (audit 08.10: two systems of marks on
-    // a 123 px strip); «Детальніше» puts back the scheme's names as numbers on it, keyed under the frame (the slope's chip
-    // went with the slope, 09.10)
+    // A phone: no words inside the frame, only the nodes' letters on it (audit 08.10: two systems of marks on a 123 px
+    // strip); the members are named in the nodes' close-ups (owner, 09.10: «Детальніше» and its numbered key went)
     await expect(stage.locator('.hv2-proof-labels')).toBeHidden();
-    await expect(stage.locator('.hv2-proof-keypins')).toBeHidden();
-    await openMore(page);
-    await expect(stage.locator('.hv2-proof-keypins > span')).toHaveText(['1', '2', '3', '4', '5']);
-    for (const number of await stage.locator('.hv2-proof-keypins > span').all()) await expect(number).toBeVisible();
-    await expect(sheet.locator('.hv2-contour-key > span')).toHaveText(PHONE_KEY.map((word, index) => `${index + 1}${word}`));
-    await expect(sheet.locator('.hv2-contour-key')).toBeVisible();
+    await expect(sheet.locator('.hv2-proof-keypins, .hv2-contour-key')).toHaveCount(0);
   }
   await expect(stage.getByRole('img', { name: homeProofFrame.label, exact: true })).toBeVisible();
 
@@ -1360,8 +1344,6 @@ test('the title block switches the right side: the scheme with its names, each l
     if (!desktop) {
       // its way down the frame wants the wider right side
       await expectSplit(slider, stage, 40);
-      // the scheme's numbers wait on «Каркас»
-      await expect(stage.locator('.hv2-proof-keypins')).toBeHidden();
     }
     // With reduced motion the way stands lit, nothing running
     expect(await stage.locator(shown).evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
@@ -1369,17 +1351,17 @@ test('the title block switches the right side: the scheme with its names, each l
   // the snow as a drawing writes a spread load: its comb's line and the arrows down from it
   await expect(stage.locator('.hv2-proof-snow path')).toHaveCount(homeProofFrame.load.arrows.length + 1);
 
-  // And back: the default layer, the seam where the visitor left it, the legend's keys again — no way written
+  // And back: the default layer, the seam where the visitor left it, the nodes' row again — no way written
   await layers.getByRole('button', { name: 'Каркас' }).click();
   await pressed('Каркас');
   for (const load of ['.hv2-proof-load', '.hv2-proof-wind']) await expect(stage.locator(load)).toBeHidden();
   for (const chain of await sheet.locator('.hv2-contour-legend-chain').all()) await expect(chain).toBeHidden();
   await expect(sheet.locator('.hv2-contour-legend-set[data-on]')).toHaveAttribute('data-layer', 'frame');
-  await expect(sheet.locator('.hv2-contour-legend-set[data-on] > span')).toHaveText(['контур', 'схема', 'у глибині']);
+  await expect(sheet.locator('.hv2-contour-legend-set[data-on] .hv2-contour-nodes')).toBeVisible();
   await expect(stage.getByRole('img', { name: homeProofFrame.label, exact: true })).toBeVisible();
 
   // The action cell (owner, 05.10: in place of «Контур на фото»): «Тур за 20 секунд» over the way on to the visitor's own
-  // hangar — «Такий ангар, але ваш · Сформувати бриф →», the configurator's brief; a phone puts «Фото» / «Схема» first
+  // hangar — «Такий ангар, але ваш · Сформувати бриф →», the configurator's brief
   const action = sheet.locator('figcaption .sheet-action');
   const tour = action.locator('.hv2-contour-tour-btn');
   const brief = action.locator('a.hv2-contour-brief');
@@ -1389,14 +1371,8 @@ test('the title block switches the right side: the scheme with its names, each l
   await expect(brief).toHaveText(/^Такий ангар, але ваш\s*Сформувати бриф\s*→$/);
   const [tourBox, briefBox] = [(await tour.boundingBox())!, (await brief.boundingBox())!];
   expect(tourBox.y + tourBox.height).toBeLessThanOrEqual(briefBox.y + 0.5);
-  const sides = action.locator('.hv2-contour-sides');
-  if (desktop) {
-    await expect(sides).toBeHidden();
-  } else {
-    await expect(sides.getByRole('button')).toHaveText(['Фото', 'Схема']);
-    const sidesBox = (await sides.boundingBox())!;
-    expect(sidesBox.y + sidesBox.height).toBeLessThanOrEqual(tourBox.y + 0.5);
-  }
+  // («Фото» / «Схема» went with «Детальніше», 09.10: the handle and the range move the seam)
+  await expect(action.locator('.hv2-contour-sides')).toHaveCount(0);
 });
 
 test('the keys move the seam: arrows by one, PageUp / PageDown by ten, Home and End to the edges', async ({ page }) => {
@@ -1907,15 +1883,15 @@ test('during the first view’s sweep a mouse over the frame leads nothing — t
 });
 
 test('grabbed at either end of the frame, the handle stays under the finger', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'desktop-chromium', '«Фото», «Схема» and the finger are the phone\'s');
+  test.skip(testInfo.project.name === 'desktop-chromium', 'the finger is the phone\'s');
   // Without the sweep, so the handle is measured where it rests
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const { sheet, stage, slider } = await open(page);
-  // («Фото» and «Схема» are one press away: «Детальніше»)
-  await openMore(page);
+  const { stage, slider } = await open(page);
   const handle = stage.locator('.hv2-contour-handle');
   for (const [side, edge, move] of [['Схема', 0, 120], ['Фото', 100, -120]] as const) {
-    await sheet.getByRole('button', { name: side, exact: true }).click();
+    // the seam to the edge by the range's keys (Home: the scheme whole; End: the photo)
+    await slider.focus();
+    await page.keyboard.press(edge === 0 ? 'Home' : 'End');
     await expectSplit(slider, stage, edge);
     // The buttons sit under the frame: bring the frame back clear of the sticky header
     await stage.evaluate((element) => element.scrollIntoView({ block: 'center' }));
@@ -1962,32 +1938,15 @@ test('on a phone the handle rests under the gable, clear of both gates and the b
   }
 });
 
-test('on a phone «Фото» and «Схема» show one side whole, and bring the seam back when pressed again; the title block’s controls are a finger’s 44 px', async ({ page }, testInfo) => {
-  const { sheet, stage, slider } = await open(page);
-  const photo = sheet.getByRole('button', { name: 'Фото', exact: true });
-  const scheme = sheet.getByRole('button', { name: 'Схема', exact: true });
-  if (testInfo.project.name === 'desktop-chromium') {
-    // A mouse has the whole frame to drag; the two buttons are for fingers
-    await expect(photo).toBeHidden();
-    await expect(scheme).toBeHidden();
-    return;
-  }
-  // one press away — «Детальніше» (audit 08.10: the default seam already shows both halves)
-  await expect(photo).toBeHidden();
-  await openMore(page);
-  await expect(photo).toHaveAttribute('aria-pressed', 'false');
-  await photo.click();
-  await expect(photo).toHaveAttribute('aria-pressed', 'true');
-  await expectSplit(slider, stage, 100);
-  await scheme.click();
-  await expect(scheme).toHaveAttribute('aria-pressed', 'true');
-  await expect(photo).toHaveAttribute('aria-pressed', 'false');
-  await expectSplit(slider, stage, 0);
-  await scheme.click();
-  await expect(scheme).toHaveAttribute('aria-pressed', 'false');
-  await expectSplit(slider, stage, DEFAULT_SPLIT);
-  // «Фото», «Схема», the way on to a brief and the layers (the tour's button: the fixme below)
-  for (const control of [photo, scheme, sheet.locator('figcaption a.hv2-contour-brief'), ...await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button').all()]) {
+test('on a phone the title block’s controls are a finger’s 44 px: the layers, the nodes’ pills, the way on to a brief — and no «Фото» / «Схема» buttons', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'desktop-chromium', 'a finger’s');
+  const { sheet } = await open(page);
+  // («Фото» / «Схема» went with «Детальніше», 09.10: the handle and the range move the seam)
+  await expect(sheet.getByRole('button', { name: 'Фото', exact: true })).toHaveCount(0);
+  await expect(sheet.getByRole('button', { name: 'Схема', exact: true })).toHaveCount(0);
+  const pills = sheet.locator('figcaption .hv2-contour-nodes[data-place="block"]').getByRole('button');
+  await expect(pills).toHaveCount(NODES.length);
+  for (const control of [sheet.locator('figcaption a.hv2-contour-brief'), ...await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button').all(), ...await pills.all()]) {
     const box = (await control.boundingBox())!;
     expect(box.height, (await control.textContent()) ?? '').toBeGreaterThanOrEqual(44);
   }
@@ -2108,7 +2067,7 @@ test('after the arrival a laptop opens node Г by itself, quietly — focus stay
   await centre(stage);
   const panel = page.locator('.hv2-detail');
   if (phoneOf(page)) {
-    // The phone's letters sit under «Детальніше»: they show for a moment, no panel comes up over the page
+    // A phone: the letter В calls for a moment on the scheme, no panel comes up over the page
     await expect(stage).toHaveAttribute('data-nodes-tease', '', { timeout: 12_000 });
     await expect(panel).toHaveCount(0);
     await expect(stage).not.toHaveAttribute('data-nodes-tease', '', { timeout: 6_000 });
@@ -2326,12 +2285,10 @@ test('«Вузли крупно»: five letters, each with its word, in the titl
   for (const other of [COPPER, PAPER, SNOW, WIND]) expect(apart(colour, other), `${colour} / ${other}`).toBeGreaterThan(60);
   expect(contrast(colour, ink), `${ink} on ${colour}`).toBeGreaterThanOrEqual(4.5);
   // No bar over the picture any more (audit 08.10: a second way to the nodes, over the photo): the row is the title
-  // block's, under «Детальніше»
+  // block's, «Каркас»'s own, at once (owner, 09.10: under «Детальніше» it went unseen)
   const overPicture = stage.locator('.hv2-contour-nodes[data-place="stage"]');
   const row = sheet.locator('figcaption .hv2-contour-nodes[data-place="block"]');
   await expect(overPicture).toBeHidden();
-  await expect(row).toBeHidden();
-  await openMore(page);
   await expect(row).toBeVisible();
   await expect(row).toHaveRole('group');
   await expect(row).toHaveAccessibleName('Вузли крупно');
@@ -2344,7 +2301,9 @@ test('«Вузли крупно»: five letters, each with its word, in the titl
     await expect(letter).toHaveAccessibleName(`Вузол ${node.letter}: ${node.title}`);
     await expect(letter).toHaveAttribute('aria-haspopup', 'dialog');
     await expect(letter).toHaveAttribute('aria-expanded', 'false');
-    expect(await letter.evaluate((element) => [getComputedStyle(element).backgroundColor, getComputedStyle(element).color]), node.letter).toEqual([colour, ink]);
+    // an outlined pill — the brief stays the sheet's one filled button — its letter a disc in the nodes' colour
+    expect(await letter.evaluate((element) => getComputedStyle(element).backgroundColor), node.letter).toBe('rgba(0, 0, 0, 0)');
+    expect(await letter.locator('.hv2-contour-node-letter').evaluate((element) => [getComputedStyle(element).backgroundColor, getComputedStyle(element).color]), node.letter).toEqual([colour, ink]);
   }
   const [box, caption] = [(await row.boundingBox())!, (await sheet.locator('figcaption').boundingBox())!];
   expect(box.y).toBeGreaterThanOrEqual(caption.y);
@@ -2369,6 +2328,15 @@ test('«Вузли крупно»: five letters, each with its word, in the titl
       await expect.poll(() => pins.nth(index).evaluate((element) => [getComputedStyle(element).backgroundColor, getComputedStyle(element).color]), node.letter).toEqual([colour, ink]);
     }
     await page.mouse.move(2, 2);
+    // a pill pointed at shows where its node is: its ring on the scheme as an open node's, its letter lit
+    await letters.nth(2).hover();
+    await expect(stage).toHaveAttribute('data-peek-node', NODES[2].id);
+    await expect.poll(async () => {
+      const widths = await rings.evaluateAll((circles) => circles.map((circle) => Number.parseFloat(getComputedStyle(circle).strokeWidth)));
+      return widths[2] > Math.max(...widths.filter((_, index) => index !== 2));
+    }).toBe(true);
+    await page.mouse.move(2, 2);
+    await expect(stage).not.toHaveAttribute('data-peek-node', /.*/);
   }
   await expect(stage.locator('.hv2-proof-detail-rings')).toBeVisible();
   // …on «Каркас» only: a load's layer has neither letters nor rings
