@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { deriveDomainModel, sizesProvenance } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
-import { ConfiguratorControls } from './ConfiguratorControls';
+import { ConfiguratorControls, landOnSteps } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 import { HangarPreviewModes } from './HangarPreviewModes';
@@ -15,101 +15,221 @@ import './configurator-sheet.css';
 /** The site header's height on a phone (globals.css): the mini preview is held right under it (configurator-sheet.css) */
 const PHONE_HEADER_PX = 77;
 
+/** Where the mini drawing is held: a phone's width, with the height for it. On a short screen — a window zoomed to
+ *  200–400 %, a phone on its side — the header and the mini covered 55–100 % of it, and on «Каркас» every control of the
+ *  step (09.10, audit F23). Every rule of the mini keys on `data-configuring`, so this query is the one place it is
+ *  decided. 500, not 560: Safari's bars leave an iPhone SE or mini about 548–560 px, and the mini must stay there. */
+const MINI_QUERY = '(max-width: 760px) and (min-height: 500px)';
+/** A portrait tablet's sheet sticks under the header whole (configurator-sheet.css, 09.10): its height is the controls'
+ *  focus margin, as the mini drawing's is on a phone */
+const TABLET_QUERY = '(min-width: 761px) and (max-width: 1023px) and (min-height: 700px)';
+
 /**
- * On a phone (/angary only) the drawing stays in view while the visitor sets the parameters. The moment the sheet would
- * scroll under the header, the layout carries `data-configuring`: the sheet sticks under the header as a mini drawing
- * (a ~140 px picture, its sizes in a readout beside the view switch, configurator-sheet.css) and gives the height it
- * lost back as its bottom margin, so nothing under it moves — the controls never jump under the finger, and the summary
- * after the layout never moves or hides (the sheet cannot stick past the layout). Back in its own place, above the
- * controls, it is the whole sheet again. The state follows where the sheet is, not which way the visitor scrolled, so a
- * jump (the hero's «Зібрати конфігурацію», the top of the page, a reload further down) lands in the right one. (03.10:
- * the controls' observer it replaces counted the whole sheet in its margin, and the stage shrank in front of the eyes.)
- * Held, the layout also carries the mini drawing's height (`--hc-mini-h`), so a control that takes keyboard focus is
- * scrolled clear of it rather than under it (configurator-sheet.css; 03.10: Shift+Tab hid 7 of 13 stops behind it).
- * Where the sheet is comes from two intersection observers, not from its box read on every scroll event: that read
+ * On a phone (/angary only) the drawing stays in view while the visitor sets the parameters. When the sheet's bottom edge
+ * reaches the line where the mini drawing's will be, the layout carries `data-configuring`: the sheet sticks under the
+ * header as a mini drawing (a ~140 px picture, its sizes in a readout beside the view switch, configurator-sheet.css)
+ * and gives the height it lost back as its bottom margin, so nothing under it moves — the controls never jump under the
+ * finger, and the summary after the layout never moves or hides (the sheet cannot stick past the layout). Back in its
+ * own place, above the controls, it is the whole sheet again. The state follows where the sheet is, not which way the
+ * visitor scrolled, so a jump (the top of the page, a reload further down) lands in the right one. (03.10: the
+ * controls' observer it replaces counted the whole sheet in its margin, and the stage shrank in front of the eyes.)
+ * The layout carries the mini drawing's height (`--hc-mini-h`): held, a control that takes keyboard focus is scrolled
+ * clear of it rather than under it (configurator-sheet.css; 03.10: Shift+Tab hid 7 of 13 stops behind it), and «Далі»
+ * lands the steps under it before it is held (landOnSteps in ConfiguratorControls).
+ * The line: the sheet used to turn mini as its top reached the header, and the controls, held where they were, stood
+ * a ~230 px empty band under the new mini drawing until scrolled up to it (09.10, audit F120). Now it turns mini as its
+ * bottom edge reaches the mini's — the controls' top at the header, the mini drawing and the grid's gap — so the steps
+ * stand right under the mini drawing the moment it appears, and nothing moves. The mini drawing's height comes from its
+ * own title block (the step, the readout, a fold), so it is measured whenever the sheet's size changes, and the line
+ * moves with it.
+ * Where the controls are comes from two intersection observers, not from a box read on every scroll event: that read
  * forced the page's style and layout on each one, all down the page (07.10: 351 of them in one phone fling run).
- * Each observer's root starts at a line under the screen's top and runs far below the screen, so the sheet lies wholly
- * in it exactly while its top is at or under that line, wherever the page is scrolled or jumps to: the header for the
- * hold, half a pixel under it to let go — held, the sheet sticks at the header itself (Chrome rounds an observer's
- * margin to whole pixels, so there it is one). The change waits for the next frame, where the scroll event made it:
- * made straight from the observers' task, the hold's measuring layout (the sheet already mini, its height not yet
- * given back) let scroll anchoring lift the page by that height mid-fling, and the sheet let go again at once (07.10:
- * 12 of 30 fast flings).
+ * Each observer's root starts at a line under the screen's top and runs far below the screen, so the controls lie wholly
+ * in it exactly while their top is at or under that line: the hold line, and a pixel under it to let go (Chrome rounds
+ * an observer's margin to whole pixels, so the lines are whole pixels). The change waits for the next frame, where the
+ * scroll event made it: made straight from the observers' task, the hold's measuring layout (the sheet already mini,
+ * its height not yet given back) let scroll anchoring lift the page by that height mid-fling, and the sheet let go again
+ * at once (07.10: 12 of 30 fast flings).
  */
 function useMiniPreview(enabled: boolean) {
   const layoutRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const layout = layoutRef.current;
     const sheet = layout?.querySelector<HTMLElement>('.hc-preview-surface');
-    if (!enabled || !layout || !sheet) return undefined;
-    const phone = window.matchMedia('(max-width: 760px)');
-    // The mini drawing's height follows its title block (the readout, a 3D view): measured whenever it changes
-    const miniHeight = new ResizeObserver(() => {
-      if ('configuring' in layout.dataset) layout.style.setProperty('--hc-mini-h', `${sheet.offsetHeight}px`);
-    });
+    const controls = layout?.querySelector<HTMLElement>('.hc-controls');
+    if (!enabled || !layout || !sheet || !controls) return undefined;
+    const phone = window.matchMedia(MINI_QUERY);
+    const tablet = window.matchMedia(TABLET_QUERY);
+    const held = () => 'configuring' in layout.dataset;
+    /** Where the controls' top holds the sheet for a mini drawing `mini` px high: whole pixels, as Chrome rounds them */
+    const lineFor = (mini: number) => Math.round(PHONE_HEADER_PX + mini + (Number.parseFloat(getComputedStyle(layout).rowGap) || 0));
+    let line = 0;
+    // The whole sheet's height when the mini drawing was last measured: a let-go brings it back, and needs no new read
+    let whole = 0;
+    // Where the observers last saw the controls' top: at or under the hold line, and at or under the let-go line
+    let underReach = true;
+    let underLetGo = true;
+    let reach: IntersectionObserver | undefined;
+    let leave: IntersectionObserver | undefined;
+    let frame = 0;
+    // Calls back with whether the controls' top is at or under `at` px from the top of the screen, whenever that changes
+    const watchLine = (at: number, onChange: (under: boolean) => void) => {
+      const observer = new IntersectionObserver((entries) => {
+        onChange(entries.at(-1)!.intersectionRatio === 1);
+        frame ||= window.requestAnimationFrame(settle);
+      }, { rootMargin: `-${at}px 0px 100000px 0px`, threshold: 1 });
+      observer.observe(controls);
+      return observer;
+    };
+    const unwatch = () => {
+      reach?.disconnect();
+      leave?.disconnect();
+      line = 0;
+    };
+    /** The mini drawing is `mini` px high: the layout says so, and the lines move with it */
+    const setMini = (mini: number) => {
+      layout.style.setProperty('--hc-mini-h', `${mini}px`);
+      const at = lineFor(mini);
+      if (at === line) return;
+      unwatch();
+      line = at;
+      // until the new observers report, the state stays as it is
+      underReach = !held();
+      underLetGo = underReach;
+      reach = watchLine(at, (under) => { underReach = under; });
+      leave = watchLine(at + 1, (under) => { underLetGo = under; });
+    };
     const release = () => {
       delete layout.dataset.configuring;
       sheet.style.removeProperty('--hc-mini-give');
-      layout.style.removeProperty('--hc-mini-h');
-      miniHeight.disconnect();
+    };
+    /** Lets go of a sheet held for a read alone, in the same task, so nothing is painted or scrolled in between: whole
+     *  again with its transitions still off (`data-measuring`), so nothing eases back from the mini */
+    const unholdUnseen = () => {
+      delete layout.dataset.configuring;
+      sheet.getBoundingClientRect();
     };
     const hold = () => {
       // Measured with the sheet's transitions off (configurator-sheet.css): under reduced motion they still run for
       // .01 ms, and a read in the same frame saw the whole sheet
       sheet.dataset.measuring = '';
-      const whole = sheet.getBoundingClientRect().height;
+      whole = sheet.getBoundingClientRect().height;
+      const controlsTop = controls.getBoundingClientRect().top;
       layout.dataset.configuring = '';
       const mini = sheet.getBoundingClientRect().height;
+      // The line was drawn for a mini drawing of another height (its title block changed while the sheet was whole): not
+      // there yet, the sheet stays whole and the line moves
+      if (controlsTop >= lineFor(mini)) unholdUnseen();
+      else sheet.style.setProperty('--hc-mini-give', `${whole - mini}px`);
       delete sheet.dataset.measuring;
-      sheet.style.setProperty('--hc-mini-give', `${whole - mini}px`);
-      layout.style.setProperty('--hc-mini-h', `${mini}px`);
-      miniHeight.observe(sheet);
+      setMini(mini);
     };
-    const held = () => 'configuring' in layout.dataset;
-    // Where the observers last saw the sheet's top: at or under the header line, and at or under the let-go line
-    let underHeader = true;
-    let underLetGo = true;
-    let frame = 0;
+    /** The mini drawing's height while the sheet is whole: held for the read alone, with the page's scroll anchoring off —
+     *  Chrome anchors on every forced layout, and the read would scroll the page by the give and back */
+    const measureMini = () => {
+      const anchoring = document.body.style.overflowAnchor;
+      document.body.style.overflowAnchor = 'none';
+      sheet.dataset.measuring = '';
+      layout.dataset.configuring = '';
+      const mini = sheet.getBoundingClientRect().height;
+      unholdUnseen();
+      delete sheet.dataset.measuring;
+      document.body.style.overflowAnchor = anchoring;
+      return mini;
+    };
     const settle = () => {
       frame = 0;
       if (!phone.matches) return;
-      if (!held() && !underHeader) hold();
+      if (!held() && !underReach) hold();
       else if (held() && underLetGo) release();
     };
-    // Calls back with whether the sheet's top is at or under `line` px from the top of the screen, whenever that changes
-    const watchLine = (line: number, onChange: (under: boolean) => void) => new IntersectionObserver((entries) => {
-      onChange(entries.at(-1)!.intersectionRatio === 1);
-      frame ||= window.requestAnimationFrame(settle);
-    }, { rootMargin: `-${line}px 0px 100000px 0px`, threshold: 1 });
-    const reach = watchLine(PHONE_HEADER_PX, (under) => { underHeader = under; });
-    // Held, the sheet sticks at the header: its top under the header means its own place is in view again
-    const leave = watchLine(PHONE_HEADER_PX + 0.5, (under) => { underLetGo = under; });
+    // Whenever the sheet's size changes — the step, the readout, a fold, a 3D view, the fonts — and once on observing.
+    // A portrait tablet's sheet sticks whole: its height is all the layout needs.
+    const resized = new ResizeObserver(([entry]) => {
+      const height = entry.borderBoxSize[0]?.blockSize ?? sheet.offsetHeight;
+      if (tablet.matches) layout.style.setProperty('--hc-mini-h', `${height}px`);
+      if (!phone.matches) return;
+      if (held()) setMini(height);
+      else if (Math.abs(height - whole) >= 0.5) {
+        whole = height;
+        setMini(measureMini());
+      }
+    });
     const update = () => {
-      if (phone.matches) {
-        reach.observe(sheet);
-        leave.observe(sheet);
+      if (!phone.matches) {
+        unwatch();
+        whole = 0;
+        if (held()) release();
+      }
+      if (phone.matches || tablet.matches) {
+        resized.observe(sheet);
         return;
       }
-      reach.disconnect();
-      leave.disconnect();
-      if (held()) release();
+      resized.disconnect();
+      layout.style.removeProperty('--hc-mini-h');
     };
     update();
     phone.addEventListener('change', update);
+    tablet.addEventListener('change', update);
     return () => {
       phone.removeEventListener('change', update);
-      reach.disconnect();
-      leave.disconnect();
+      tablet.removeEventListener('change', update);
+      resized.disconnect();
+      unwatch();
       window.cancelAnimationFrame(frame);
       release();
+      layout.style.removeProperty('--hc-mini-h');
     };
   }, [enabled]);
   return layoutRef;
 }
 
+/**
+ * Same-page links to the configurator land where they are for (09.10, audit F24); both used to land on its heading and
+ * lede, the tabs below a phone's screen. The attached brief's «Змінити у конфігураторі ↑» (`data-open-steps`) brings
+ * back the steps, on the step the visitor left, on any width: under a phone's mini drawing, the open step's tab focused
+ * as the default jump would have moved focus there. Any other — the hero's «Зібрати конфігурацію ↓» — lands on a phone
+ * with the drawing whole right under the header and the tabs under it: a first look, not yet the mini drawing. The
+ * browser makes that jump itself (smooth, into the history), only its margin moves. Without JS, and from another page
+ * (HOME's /angary#configurator), the link stays a plain anchor.
+ */
+function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const onClick = (event: MouseEvent) => {
+      const link = event.target instanceof Element ? event.target.closest('a[href="#configurator"]') : null;
+      const layout = layoutRef.current;
+      const section = layout?.closest<HTMLElement>('#configurator');
+      const tabs = layout?.querySelector<HTMLElement>('.hc-steps');
+      if (!link || !layout || !section || !tabs || event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (link.hasAttribute('data-open-steps')) {
+        // handled here: the desktop's smooth scrolling (Lenis, SmoothScroll.tsx) takes anchor clicks on the window too,
+        // read the page mid-jump and carried it back down to the form
+        event.preventDefault();
+        event.stopPropagation();
+        window.history.replaceState(window.history.state, '', '#configurator');
+        tabs.querySelector<HTMLElement>('[aria-selected="true"]')?.focus({ preventScroll: true });
+        landOnSteps(tabs);
+        return;
+      }
+      if (!window.matchMedia(MINI_QUERY).matches) {
+        section.style.removeProperty('scroll-margin-top');
+        return;
+      }
+      const header = document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? PHONE_HEADER_PX;
+      const lead = layout.getBoundingClientRect().top - section.getBoundingClientRect().top;
+      section.style.scrollMarginTop = `${header - lead}px`;
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, [enabled, layoutRef]);
+}
+
 export function HangarConfigurator({ embedded = false }: { embedded?: boolean }) {
   const sharedInquiry = useHangarInquiryContext();
   const layoutRef = useMiniPreview(embedded);
+  useConfiguratorLinks(embedded, layoutRef);
   const [localState, setLocalState] = useState<ConfiguratorState>(DEFAULT_CONFIGURATOR_STATE);
   const state = sharedInquiry?.state ?? localState;
   const updateBusinessConfiguration = sharedInquiry?.updateBusinessConfiguration ?? setLocalState;
