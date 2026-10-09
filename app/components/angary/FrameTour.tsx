@@ -10,7 +10,7 @@ import {
 } from '../../lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { TourProgress } from '../directions/TourParts';
-import { endWallFraming } from './endWallFraming';
+import { endWallFraming, sheetOpenings } from './endWallFraming';
 import './frame-tour.css';
 
 // /angary «Каркас вашого ангара — від покрівлі до основи» (UX review 2026-10; redrawn 03.10 — owner: «не завжди
@@ -174,9 +174,10 @@ function frameGeometry(domain: HangarDomainModel) {
   const centre = domain.structural.scheme === 'centerSupport';
   const roofZ = (x: number) => E + (R - E) * (1 - Math.abs(x - W / 2) / (W / 2));
   const columnXs = centre ? [0, W / 2, W] : [0, W];
-  // The configurator's own model: its gates and door on this end wall, and the bays it braces
+  // The configurator's own model: its gates and door on this end wall — on the same side of the centre as the general
+  // view and the 3D show them, and only with walls in the request (09.10, sheetOpenings) — and the bays it braces
   const model = buildParametricModel(domain);
-  const openings = model.openings.map(({ kind, rect }) => ({ kind, xM: rect.xM, widthM: rect.widthM, heightM: rect.heightM }));
+  const openings = sheetOpenings(model.openings, W, domain.scope.walls);
   // The end wall's posts (стійки фахверку) carry its wall purlins between the corner columns, about every 7 m (with a
   // centre row a post halves each span, 03.10) — and frame its gates, never standing in one (04.10, endWallFraming.ts)
   const framing = endWallFraming({ widthM: W, eaveM: E, centre, openings });
