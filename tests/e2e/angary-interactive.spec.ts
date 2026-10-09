@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { chooseSeparateWorks, openControlGroup, openThree } from './configurator.helpers';
+import { chooseSeparateWorks, openControlGroup, openThree, scrollToMiniHold } from './configurator.helpers';
 
 async function openHangarPage(page: Page, dismissCookies = true) {
   await page.goto('/angary', { waitUntil: 'load' });
@@ -301,10 +301,20 @@ test('on a wide screen «Далі» under a step opens the next one and brings i
     await expect(tab).toBeFocused();
     await expect(page.locator('#hc-step-shell')).toBeVisible();
     await expect(page.locator('#hc-step-size')).toBeHidden();
-    // the tabs just under the site header, the step's first answers on the screen
+    // the tabs just under the site header, the step's first answers on the screen. On a portrait tablet the whole sheet
+    // stays stuck under the header (09.10, audit F22): the tabs land right under it, the drawing in view.
     const header = await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom);
-    await expect.poll(() => tab.evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(header - 1);
-    expect(await tab.evaluate((element) => element.getBoundingClientRect().top)).toBeLessThan(viewport.height / 2);
+    const sheet = page.locator('#configurator .hc-preview-surface');
+    const tabTop = () => tab.evaluate((element) => element.getBoundingClientRect().top);
+    if (viewport.width < 1024) {
+      expect(await sheet.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(header, 0);
+      const sheetBottom = await sheet.evaluate((element) => element.getBoundingClientRect().bottom);
+      await expect.poll(tabTop).toBeGreaterThanOrEqual(sheetBottom - 1);
+      expect(await tabTop()).toBeLessThanOrEqual(sheetBottom + 16);
+    } else {
+      await expect.poll(tabTop).toBeGreaterThanOrEqual(header - 1);
+      expect(await tabTop()).toBeLessThan(viewport.height / 2);
+    }
     const first = await page.locator('#hc-step-shell input[name="hc-envelope"]').first().locator('xpath=..').boundingBox();
     expect(first!.y + first!.height).toBeLessThan(viewport.height);
   }
@@ -443,8 +453,8 @@ test('on a phone the model stays under the header while the parameters are set, 
   const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
 
   await openControlGroup(page, 'scope');
-  await page.locator('#hc-scope-heading').scrollIntoViewIfNeeded();
-  await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+  // into the step: the mini drawing holds once the sheet's bottom edge, not its top, reaches its line (09.10, audit F120)
+  await scrollToMiniHold(page);
   expect(await stage.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
   const stageHeight = await stage.evaluate((element) => element.getBoundingClientRect().height);
   expect(stageHeight).toBeLessThan(844 * 0.3);
@@ -780,3 +790,80 @@ test.describe('without JavaScript', () => {
     for (const heading of await controls.locator('.hc-control-group h3').all()) await expect(heading).toBeVisible();
   });
 });
+
+/** The gap between what stays over the steps (the held mini drawing, or the header) and the steps' tabs */
+async function tabsUnderCover(page: Page) {
+  return page.locator('#configurator .hc-layout').evaluate((layout) => {
+    const tabs = layout.querySelector('[role="tablist"]')!.getBoundingClientRect().top;
+    const over = 'configuring' in (layout as HTMLElement).dataset
+      ? layout.querySelector('.hc-preview-surface')!.getBoundingClientRect().bottom
+      : document.querySelector('.site-header')!.getBoundingClientRect().bottom;
+    return tabs - over;
+  });
+}
+
+// 09.10, audit F52: «Каркас» holds a taller mini drawing (a node pushed in on still reads). A tab tap left the tabs where
+// they were — under it — and the next tap on «Обсяг» hit «Згорнути»; back on a shorter one a 50–80 px gap stayed. A tab
+// tapped under the held mini drawing lands the steps as «Далі» does, right under it.
+test('on a phone a tab tapped under the mini drawing lands the steps right under it, the taller «Каркас» too', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  await scrollToMiniHold(page);
+  // a finger on the middle of the tab, where it is on the screen: no scrolling it into view first
+  for (const id of ['frame', 'check', 'size', 'frame', 'task']) {
+    const box = (await page.locator(`#hc-step-${id}-tab`).boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.locator(`#hc-step-${id}-tab`), id).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+    await expect.poll(() => tabsUnderCover(page), id).toBeGreaterThanOrEqual(0);
+    expect(await tabsUnderCover(page), id).toBeLessThanOrEqual(16);
+  }
+});
+
+// 09.10, audit F24: both same-page links to the configurator landed on its heading and lede, a phone's tabs below the
+// screen. The hero's «Зібрати конфігурацію» lands a phone on the whole drawing with the tabs under it.
+test('on a phone «Зібрати конфігурацію» lands on the whole drawing with the steps under it', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewports run once');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 640 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/angary', { waitUntil: 'load' });
+    // hydrated: without JS the link stays a plain anchor to the heading
+    await expect.poll(() => page.locator('#configurator .hc-layout').evaluate((element: HTMLElement) => element.style.getPropertyValue('--hc-mini-h'))).not.toBe('');
+    await page.locator('a[href="#configurator"]', { hasText: 'Зібрати конфігурацію' }).first().click();
+    await expect(page).toHaveURL(/#configurator$/);
+    const header = await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom);
+    const sheet = page.locator('#configurator .hc-preview-surface');
+    await expect.poll(() => sheet.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(header, 0);
+    await expect(page.locator('#configurator .hc-layout')).not.toHaveAttribute('data-configuring', '');
+    const tabs = (await page.locator('#configurator [role="tablist"]').boundingBox())!;
+    expect(tabs.y + tabs.height, `${viewport.width}×${viewport.height}`).toBeLessThanOrEqual(viewport.height);
+  }
+});
+
+// …and the attached brief's «Змінити у конфігураторі ↑» brings back the steps, on the step the visitor left: under the
+// mini drawing on a phone, under the header beside the drawing on a wide screen, the open step's tab focused
+for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+  test(`«Змінити у конфігураторі ↑» lands on the steps without changing the step at ${viewport.width} px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewports run once');
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openHangarPage(page);
+    await openControlGroup(page, 'envelope');
+    await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
+    const card = attachmentCard(page);
+    await expect(card).toBeVisible();
+    await card.locator('.inquiry-config-brief-toggle').click();
+    await card.getByRole('link', { name: 'Змінити у конфігураторі ↑' }).click();
+    await expect(page).toHaveURL(/#configurator$/);
+    const tab = page.locator('#hc-step-shell-tab');
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    await expect(tab).toBeFocused();
+    if (viewport.width <= 760) await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+    await expect.poll(() => tabsUnderCover(page)).toBeGreaterThanOrEqual(0);
+    expect(await tabsUnderCover(page)).toBeLessThanOrEqual(16);
+  });
+}
