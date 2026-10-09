@@ -4,8 +4,6 @@
 Crop and resize only: no retouching, no compositing, no generated pixels. Sources and boxes:
 
   concepts/hero-mobile-band media/directions-sequence-source/angary.png   (720, 84, 1472, 762) concept render, phone band
-  concepts/card-photo-drawing media/direction-hero-source/metalokonstruktsii.png (470, 230, 1482, 989) concept photo + drawings, 4:3
-  concepts/card-node        media/concepts/about-experience-v2.jpg        (0, 620, 1440, 1700) concept image, 4:3
   hangar-wide               photos/serhii-prior-hangar.jpeg               (0, 440, 1550, 1060) the approved frame, sky/ground trimmed
   hangar-narrow             photos/serhii-prior-hangar.jpeg               (20, 455, 1020, 1122)
   conversation-bg           media/engineering-planning.jpg                (0, 600, 1800, 1800) decorative
@@ -21,9 +19,9 @@ Iteration 3 (made once by hand, sources live outside the repo, so they are not i
       contour lines are registered on (scale 0.347884, shift under 1 px, rms 0.68 px), then LANCZOS resizes; WebP q80,
       the JPEG q86. app/data/homeProofContour.ts pins every file's sha256.
   The X-ray sketch made here once (concepts/hangar-xray-{1100,1774}w) left HOME on 04.10: the owner's variant A
-      «Калька» draws the lines measured from the photos and a labelled scheme instead. Its files came back the same day,
-      restored from dc1a8c4 unchanged, for the test-only comparison /?xray=sketch (ProofFrame's SKETCH) — never on the
-      default page.
+      «Калька» draws the lines measured from the photos and a labelled scheme instead. Its files stayed for the
+      test-only comparison /?xray=sketch until the proof block's cleanup (09.10), which removed both.
+  The two explanation cards' crops (concepts/card-photo-drawing, concepts/card-node) left with the cards (09.10).
 
 Everything derived from a concept source sits in concepts/, so the existing «no concept image outside the direction
 cards» check (tests/e2e/pr-critical.spec.ts) sees it. The callout positions in EngineeringSignature.tsx are
@@ -47,8 +45,6 @@ OUT = 'public/media/home-v2/'
 
 JOBS = [
     ('concepts/hero-mobile-band', 'media/directions-sequence-source/angary.png', (720, 84, 1472, 762), [480, 752], 80),
-    ('concepts/card-photo-drawing', 'media/direction-hero-source/metalokonstruktsii.png', (470, 230, 1482, 989), [640, 1012], 80),
-    ('concepts/card-node', 'media/concepts/about-experience-v2.jpg', (0, 620, 1440, 1700), [640, 1040], 80),
     ('hangar-wide', 'photos/serhii-prior-hangar.jpeg', (0, 440, 1550, 1060), [960, 1550], 80),
     ('hangar-narrow', 'photos/serhii-prior-hangar.jpeg', (20, 455, 1020, 1122), [640, 1000], 80),
     ('conversation-bg', 'media/engineering-planning.jpg', (0, 600, 1800, 1800), [960, 1600], 72),
