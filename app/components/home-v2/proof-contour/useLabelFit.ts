@@ -40,10 +40,6 @@ function placeOf(width: number, left: number, right: number): SnapPlace {
 
 const meets = (a: Box, b: Box) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 const shown = (element: Element | null) => element && getComputedStyle(element).visibility === 'visible';
-const markCut = (element: HTMLElement | SVGElement, cut: boolean) => {
-  if (cut) element.dataset.cut = '';
-  else delete element.dataset.cut;
-};
 
 /** The drawing's words the seam cuts, or a name or the stamp covers (`covers`): hidden whole, with their leaders (review,
  *  04.10: a leader stayed, pointing at nothing). Whether a word shown on «Каркас» meets the seam's right-hand name where
@@ -55,9 +51,9 @@ function cutWords(stage: HTMLElement, seam: number, covers: readonly Box[], yiel
     const cut = rect.left < seam + 1 || covers.some((cover) => meets(rect, cover));
     if (!cut && yieldTo && meets(rect, yieldTo)) yieldTag = true;
     if (cut === ('cut' in label.dataset)) continue;
-    markCut(label, cut);
+    label.toggleAttribute('data-cut', cut);
     const pointer = stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${label.dataset.tag}"]`);
-    if (pointer) markCut(pointer, cut);
+    pointer?.toggleAttribute('data-cut', cut);
   }
   return yieldTag;
 }
@@ -72,7 +68,7 @@ function cutLetters(stage: HTMLElement, seam: number, onFrame: boolean, yieldTo:
   for (const pin of stage.querySelectorAll<HTMLElement>('.hv2-proof-detail-pin')) {
     const rect = pin.getBoundingClientRect();
     const under = onFrame && (rect.left < seam + 1 || words.some((label) => meets(rect, label.getBoundingClientRect())));
-    markCut(pin, under);
+    pin.toggleAttribute('data-cut', under);
     if (!under && yieldTo && rect.left >= seam && meets(rect, yieldTo)) yieldTag = true;
   }
   return yieldTag;
@@ -129,7 +125,9 @@ export function useLabelFit(stageRef: RefObject<HTMLDivElement | null>, { room, 
     // Its width in one line, read off a hidden copy: the label itself may still be wrapped from the line held before
     const width = (label.querySelector<HTMLElement>('.hv2-contour-snap-measure')?.offsetWidth ?? label.scrollWidth) + SNAP_FRAME;
     const seam = (room.width * split) / 100;
-    const stamp = stampNone ? 0 : (stampShort ? SHORT_STAMP : room.stamp) + STAMP_OFFSET;
+    // what the stamp takes of the scheme's side, if it shows
+    const stampWidth = stampShort ? SHORT_STAMP : room.stamp;
+    const stamp = stampNone ? 0 : stampWidth + STAMP_OFFSET;
     const left = seam - SNAP_GAP - AIR;
     const right = room.width - seam - SNAP_GAP - AIR - stamp;
     const next = placeOf(width, left, right);
