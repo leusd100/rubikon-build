@@ -572,6 +572,11 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 @media (max-width: 760px) {
   .hero-video-control { top: 122px; right: 16px; bottom: auto; }
 }
+/* The narrowest phones keep the circle alone (09.10): with its word the control reached the breadcrumbs at 320 px */
+@media (max-width: 359px) {
+  .hero-video-control { padding-left: 0; }
+  .hero-video-control .hero-video-control-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 .subhero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,11,12,.94), rgba(10,11,12,.73) 50%, rgba(10,11,12,.4)), linear-gradient(0deg, rgba(10,11,12,.72), transparent 62%); }
 .subhero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .55fr); align-items: end; gap: clamp(56px, 7vw, 104px); padding-top: var(--hero-pad-top); padding-bottom: var(--hero-pad-bottom); }
 .subhero-copy { min-width: 0; }
