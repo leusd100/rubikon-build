@@ -145,7 +145,7 @@ const tokenColour = (page: Page, token: string) => page.evaluate((name) => {
   probe.remove();
   return colour;
 }, token);
-const SLIDER = /^Порівняти фото й (?:схему|ескіз)$/;
+const SLIDER = 'Порівняти фото й схему';
 // Words that claim more than a photo and a scheme can give. «Не креслення цього ангара» — the scheme saying what it is
 // not — stays allowed by the look-behind.
 const FORBIDDEN = /digital\s*twin|двійник|3\s*d\b|тривимір|модел|точн|обмір|x-?ray|рентген|(?<!не\s)креслення\s+(?:цього|ангара)|конструкція цього ангара|паспорт|load\s*path|explorer|наш каркас/i;
@@ -3384,10 +3384,9 @@ test('the sheet stays dark in the light theme', async ({ page }) => {
   expect(light).toBe('rgb(29, 32, 30)');
 });
 
-// Test only (owner, 04.10): /?xray=sketch puts the old generated sketch on the right, to compare it with the scheme.
-// Read on the client: the server HTML is the default page's, so no second indexable version exists, and the default
-// page never loads the sketch.
-test('the sketch shows only in its test mode, read on the client, never on the default page', async ({ page }) => {
+// The test mode /?xray=sketch (the old generated sketch beside the scheme, owner's comparison of 04.10) is gone with the
+// proof block's cleanup (09.10): the parameter changes nothing, on the server or the client, and no concept image loads
+test('/?xray=sketch is the default page: no sketch, no concept image', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const server = async (path: string) => {
     const response = await page.request.get(path);
@@ -3398,39 +3397,10 @@ test('the sketch shows only in its test mode, read on the client, never on the d
   expect(plain).not.toContain('/concepts/');
   expect(await server('/?xray=sketch')).toBe(plain);
 
-  const { stage } = await open(page);
+  const { stage, layers, slider } = await open(page, '/?xray=sketch');
+  await expect(layers.getByRole('button')).toHaveText(['Каркас', 'Сніг', 'Вітер']);
+  await expect(slider).toHaveAccessibleName('Порівняти фото й схему');
+  await expect(stage.getByRole('img', { name: homeProofFrame.label, exact: true })).toBeVisible();
   await expect(page.locator('#real-object img[src*="/concepts/"], #real-object [srcset*="/concepts/"]')).toHaveCount(0);
   expect(await page.evaluate(() => performance.getEntriesByType('resource').filter((entry) => entry.name.includes('/concepts/hangar-')).length)).toBe(0);
-  await expect(stage.locator('.hv2-contour-sketch')).toHaveCount(0);
-
-  const sketch = await open(page, '/?xray=sketch');
-  await expect(sketch.layers.getByRole('button')).toHaveText(['Ескіз', 'Каркас']);
-  await expect(sketch.layers.getByRole('button', { name: 'Ескіз' })).toHaveAttribute('aria-pressed', 'true');
-  const image = sketch.stage.getByRole('img', { name: /^Згенероване зображення/ });
-  await expect(image).toBeVisible();
-  await expect(image).toHaveAttribute('src', /\/concepts\/hangar-xray-/);
-  await expect(sketch.slider).toHaveAccessibleName('Порівняти фото й ескіз');
-  await expect(sketch.stage.locator('.hv2-contour-stamp')).toHaveText(/Тест\s*згенероване зображення/);
-  await expect(sketch.sheet.locator('.sheet-cell-note')).toContainText('Тестовий режим для порівняння.');
-  // The scheme's name is not read while the sketch is on, nor are its nodes or its tour offered: they are the scheme's
-  await expect(sketch.stage.getByRole('img', { name: homeProofFrame.label })).toHaveCount(0);
-  await expect(sketch.sheet.locator('figcaption .hv2-contour-tour-btn')).toBeDisabled();
-  for (const letter of await sketch.sheet.locator('.hv2-contour-nodes button').all()) await expect(letter).toBeDisabled();
-  await expect(sketch.stage.locator('.hv2-proof-detail-pins')).toBeHidden();
-  // The sketch lies on the right side only, in its window: its own dark ground over the tracing, nothing of it over the
-  // photo
-  await expect(sketch.stage.locator('.hv2-contour-pane .hv2-contour-sketch')).toHaveCSS('background-color', 'rgb(22, 24, 23)');
-  expect(await sketch.stage.locator('.hv2-contour-sketch').evaluate((element) => element.closest('.hv2-contour-pane') !== null)).toBe(true);
-  await expectWindow(sketch.stage, DEFAULT_SPLIT);
-  // The scheme is one press away, for the comparison — with its own note, not the sketch's
-  await sketch.layers.getByRole('button', { name: 'Каркас' }).click();
-  await expect(sketch.stage.locator('.hv2-proof-scheme')).toBeVisible();
-  await expect(sketch.stage.locator('.hv2-contour-sketch')).toBeHidden();
-  const note = sketch.sheet.locator('.sheet-cell-note');
-  await expect(note).not.toContainText('згенероване');
-  await expect(note).toContainText(LINE);
-  await expect(sketch.stage.getByRole('img', { name: homeProofFrame.label, exact: true })).toBeVisible();
-  await expect(sketch.sheet.locator('figcaption .hv2-contour-tour-btn')).toBeEnabled();
-  // No visible word names the old idea
-  expect(await sketch.sheet.innerText()).not.toMatch(/x-?ray|рентген/i);
 });

@@ -8,7 +8,7 @@ import { homeProofContour, type ContourLine } from '../../data/homeProofContour'
 import { homeProofDetailSpots, homeProofFrame, memberAt, onRoof, pointLoadAt, type PointLoad, type SchemeHit, type ScopePart } from '../../data/homeProofFrame';
 import { DrawingSheet } from '../DrawingSheet';
 import { PROOF_DETAILS, type DetailId } from './ProofDetails';
-import { ProofFrame, ProofHover, ProofMarks, ProofLabels, ProofPoint, SKETCH } from './ProofFrame';
+import { ProofFrame, ProofHover, ProofMarks, ProofLabels, ProofPoint } from './ProofFrame';
 import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
 
 // HOME's proof (owner, 04.10): ONE «Креслення» sheet with the real photo, and right of a seam the visitor moves the same
@@ -42,13 +42,10 @@ import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
 //
 // On a laptop the sheet fits under the header: the stage keeps the sheet's width and crops the photo's sky and gravel
 // (home-v2.css); the photo, its tracing and every layer share one canvas in the photo's own pixels, so nothing slides.
-//
-// Test only (owner, 04.10): /?xray=sketch puts the old generated sketch on the right instead, to compare it with the
-// drawn scheme. Read on the client after hydration — the server HTML is the default page's — and never linked.
 
 // «Контур» is gone (owner, 05.10: «клієнту точно цього не треба знати» — the measured / approximate split): the copper
 // outline stays on the scheme's layers, one solid line
-type Layer = 'frame' | 'load' | 'wind' | 'sketch';
+type Layer = 'frame' | 'load' | 'wind';
 
 /** The seam's resting place: right of the left gate and left of the ridge, so each side keeps a gate */
 export const DEFAULT_SPLIT = 62;
@@ -109,12 +106,12 @@ const SHORT_STAMP = 96;
 const AIR = 8;
 type Room = { width: number; height: number; left: number; right: number; stamp: number };
 
+const LAYER_ORDER: readonly Layer[] = ['frame', 'load', 'wind'];
 const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; genitive: string }> = {
   frame: { button: 'Каркас', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
   // Two loads, each its own layer and its own colour (owner review, 04.10: «розумно кольорів, наприклад вітер»)
   load: { button: 'Сніг', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
   wind: { button: 'Вітер', seam: 'Схема', nominative: 'схема', genitive: 'схеми' },
-  sketch: { button: 'Ескіз', seam: 'Ескіз · тест', nominative: 'ескіз', genitive: 'ескізу' },
 };
 /** Each load's way, link by link, in its own words, each word lit with its part of the drawing (n: ProofFrame's --n) —
  *  in the legend under the layers, not on the frame: on a laptop's crop the frame has no free room for it (review, 04.10) */
@@ -131,7 +128,6 @@ const LEGEND: Record<Layer, readonly LegendKey[]> = {
   frame: ['outline', 'scheme', 'depth'],
   load: ['outline', 'scheme', 'load'],
   wind: ['outline', 'scheme', 'wind'],
-  sketch: [],
 };
 const LEGEND_WORDS: Record<LegendKey, string> = {
   // One word: every set shares one cell, and a second line on a laptop pushed the title block over the picture
@@ -229,7 +225,6 @@ const GROUND_HATCH = (() => {
 const clamp = (value: number) => Math.min(100, Math.max(0, value));
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
-const sketchRequested = () => new URLSearchParams(window.location.search).get('xray') === 'sketch';
 /** The title block's nodes, named by a word beside their letter (audit 08.10: bare letters were chosen blind) */
 const NODE_WORDS: Record<string, string> = { bearing: 'Опора ферми', purlin: 'Прогін', base: 'База колони', ridge: 'Гребінь', chord: 'Нижній пояс' };
 /** After the seam, the drawing's names come one by one in the order the frame is built (home-v2.css, data-names-in) */
@@ -339,7 +334,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [snapPlace, setSnapPlace] = useState<{ side: 'left' | 'right'; wrap: boolean; max: number }>({ side: 'left', wrap: false, max: 0 });
   const snapLabelRef = useRef<HTMLSpanElement>(null);
   const ready = useSyncExternalStore(subscribeToNothing, () => true, () => false);
-  const sketchMode = useSyncExternalStore(subscribeToNothing, sketchRequested, () => false);
   // Focus the pointer put on the range: the keyboard's ring stays off until a key is pressed
   const [pointerFocus, setPointerFocus] = useState(false);
   // The title block's node pointed at or focused: its letter and its ring light on the scheme, before the press
@@ -393,8 +387,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     return () => seen.disconnect();
   }, []);
 
-  const layers: readonly Layer[] = sketchMode ? ['sketch', 'frame'] : ['frame', 'load', 'wind'];
-  const layer: Layer = chosen && layers.includes(chosen) ? chosen : layers[0];
+  const layer: Layer = chosen ?? 'frame';
   const rightSide = LAYERS[layer];
   // for the listeners set up once
   const layerRef = useRef(layer);
@@ -1342,7 +1335,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           aria-label={`Вузол ${item.letter}: ${item.title}`}
           aria-haspopup="dialog"
           aria-expanded={detail === item.id}
-          disabled={!ready || layer === 'sketch'}
+          disabled={!ready}
           onClick={() => openNode(item.id)}
           onPointerEnter={place === 'block' ? () => setPeekNode(item.id) : undefined}
           onPointerLeave={place === 'block' ? () => setPeekNode(null) : undefined}
@@ -1403,7 +1396,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const engaged = loadRun + windRun + buildRun > 0;
 
   // The figures the scheme shows: the slope (the others were «Контур»'s)
-  const sliderLabel = `Порівняти фото й ${{ frame: 'схему', load: 'схему', wind: 'схему', sketch: 'ескіз' }[layer]}`;
+  const sliderLabel = 'Порівняти фото й схему';
 
   return (
     <DrawingSheet
@@ -1414,15 +1407,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         {
           tone: 'note',
           label: 'Об’єкт',
-          // The sketch's own note only while the sketch is on the right: the drawn scheme keeps its own in test mode too
-          value: layer === 'sketch' ? (
-            <>
-              <b>Тестовий режим для порівняння.</b> Праворуч — згенероване зображення, не фото й не креслення; його
-              композиція не збігається з фото.
-            </>
-          ) : (
-            // One line that says what this is (audit 08.10: three kickers and a four-sentence note, all under 14 px). The
-            // provenance — before RUBIKON BUILD, the foreground retouched — stays under the sheet (EngineeringSignature)
+          // One line that says what this is (audit 08.10: three kickers and a four-sentence note, all under 14 px). The
+          // provenance — before RUBIKON BUILD, the foreground retouched — stays under the sheet (EngineeringSignature)
+          value: (
             <>
               <span className="hv2-contour-line">Реальний ангар, який вів Сергій Іванович, і схема каркаса такого типу, без розмірів.</span>
               {exitLink('line')}
@@ -1435,7 +1422,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           value: (
             <>
               <span className="hv2-contour-layers" role="group" aria-label="Що показати праворуч">
-                {layers.map((name) => (
+                {LAYER_ORDER.map((name) => (
                   <button
                     key={name}
                     type="button"
@@ -1451,7 +1438,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                 ))}
               </span>
               <span className="hv2-contour-legend">
-                {layers.map((name) => (
+                {LAYER_ORDER.map((name) => (
                   <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={name === layer ? '' : undefined}>
                     {legendSet(name)}
                   </span>
@@ -1468,7 +1455,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             type="button"
             className="hv2-contour-build hv2-contour-tour-btn"
             aria-pressed={tourStep !== null}
-            disabled={!ready || layer === 'sketch'}
+            disabled={!ready}
             onClick={toggleTour}
           >
             <i aria-hidden="true" data-stop={tourStep !== null ? '' : undefined} />
@@ -1551,21 +1538,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   <img src={photo.src} alt="" width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable={false} />
                 </picture>
               </div>
-              {sketchMode && (
-                <div className="hv2-contour-sketch">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- a pre-generated WebP pair, as ResponsiveImage */}
-                  <img
-                    src={SKETCH.src}
-                    srcSet={SKETCH.srcSet}
-                    sizes="(max-width: 760px) 80vw, 75vw"
-                    alt="Згенероване зображення: умовний каркас ангара зі шляхом навантаження — тестове порівняння, не цей об’єкт"
-                    width={SKETCH.width}
-                    height={SKETCH.height}
-                    draggable={false}
-                  />
-                </div>
-              )}
-              <ProofFrame buildRun={buildRun} loadRun={loadRun} windRun={windRun} shown={layer === 'frame' || layer === 'load' || layer === 'wind'} wind={layer === 'wind'} ready={ready} />
+              <ProofFrame buildRun={buildRun} loadRun={loadRun} windRun={windRun} wind={layer === 'wind'} ready={ready} />
               <ProofPoint point={layer === 'load' ? point : null} />
               <ProofHover hit={layer === 'frame' ? hit : null} />
               <svg
@@ -1612,13 +1585,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             <span className="hv2-contour-corner" aria-hidden="true">
               <span className="hv2-contour-stamp">
                 <small>
-                  {layer === 'sketch' ? 'Тест' : 'Схема'}
+                  Схема
                   {/* a phone keeps the first word only */}
-                  <span className="hv2-contour-stamp-more">{layer === 'sketch' ? '' : ' · без розмірів'}</span>
+                  <span className="hv2-contour-stamp-more"> · без розмірів</span>
                 </small>
-                <span className="hv2-contour-stamp-text">
-                  {layer === 'sketch' ? 'згенероване зображення' : 'каркас такого типу, як на цьому об’єкті'}
-                </span>
+                <span className="hv2-contour-stamp-text">каркас такого типу, як на цьому об’єкті</span>
               </span>
               {/* «Як це будується»: the step on now */}
               {buildRun > 0 && (

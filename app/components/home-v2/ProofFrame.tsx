@@ -25,15 +25,6 @@ export const linkKey = ({ link, points }: Readonly<{ link: number; points: reado
  *  draws it coarser, so on a phone it stays lines, not grey */
 const HATCHES = [['hv2-proof-hatch', 6], ['hv2-proof-hatch-m', 9], ['hv2-proof-hatch-l', 13]] as const;
 
-/** The old generated sketch, for the test mode only (/?xray=sketch). It has its own composition: laid on the photo by
- *  one scale and shift through its ridge and right base corner, it still misses the gates and the left half */
-export const SKETCH = {
-  src: '/media/home-v2/concepts/hangar-xray-1774w.webp',
-  srcSet: '/media/home-v2/concepts/hangar-xray-1100w.webp 1100w, /media/home-v2/concepts/hangar-xray-1774w.webp 1774w',
-  width: 1774,
-  height: 887,
-};
-
 /** Where (u along the base from the near corner, v up from the base) lands on a wall face: the square-to-quad homography
  *  of its four corners — base near, base far, top far, top near — so courses and joints recede as the photo does */
 function faceOf([[x0, y0], [x1, y1], [x2, y2], [x3, y3]]: readonly Pt[]) {
@@ -69,17 +60,16 @@ function blockwork(face: readonly Pt[], courses: number, blocks: number) {
   return path;
 }
 
-/** `shown`: false while another layer is on the right (the scheme fades out, and its name must not be read).
- *  `ready`: after hydration — the blockwork's thousand short strokes are drawn on the client only, to keep the page's HTML
+/** `ready`: after hydration — the blockwork's thousand short strokes are drawn on the client only, to keep the page's HTML
  *  light; without them the scheme is whole */
 /** `wind`: the «Вітер» layer is on — the scheme's name says the wind's way too */
 /** `buildRun`: «Як це будується» — a new key on the scheme restarts its assembly (home-v2.css, data-building) */
-export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun, shown, wind: windOn, ready }: Readonly<{ buildRun: number; loadRun: number; windRun: number; shown: boolean; wind: boolean; ready: boolean }>) {
+export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun, wind: windOn, ready }: Readonly<{ buildRun: number; loadRun: number; windRun: number; wind: boolean; ready: boolean }>) {
   const { silhouette, walls, members, nodes, load, wind, label, windLabel } = homeProofFrame;
   const inside = members.filter((member) => member.group !== 'footing');
   const footings = members.filter((member) => member.group === 'footing');
   return (
-    <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={windOn ? `${label} ${windLabel}` : label} aria-hidden={shown ? undefined : true}>
+    <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={windOn ? `${label} ${windLabel}` : label}>
       <defs>
         <clipPath id="hv2-proof-silhouette">
           {silhouette.map((outline, index) => <path key={index} d={d(outline, true)} />)}
