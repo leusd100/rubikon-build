@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { openControlGroup } from './configurator.helpers';
+import { openControlGroup, scrollToMiniHold } from './configurator.helpers';
 
 // /angary's configurator on the «Креслення» sheet and its first view (owner, 03.10): the preview lies on a drawing
 // sheet — square, no shadow, a dark field in both themes, what is shown and the object in the title block — the phone's
@@ -211,8 +211,22 @@ test('on a phone the mini drawing reads its sizes in one readout, and nothing un
   // 08.10: under reduced motion the hold and the let-go alternated every frame (scrollY 810 ↔ 1024 ↔ 1109, the sheet at
   // −156 or 143 instead of 77) — the give eased over .01 ms and lagged the hold; the sheet no longer eases at all under
   // reduced motion (configurator-sheet.css). A product bug if this fails again, not a test to loosen.
-  await page.evaluate((offset) => window.scrollBy({ top: offset, behavior: 'instant' }), 160);
+  // 09.10 (audit F120): it turns mini as its bottom edge reaches the mini drawing's, so the steps stand right under the
+  // mini drawing the moment it appears — the layout's own gap — where a ~240 px empty band used to open. Scrolled on 20 px
+  // a frame, as a finger does, until it holds.
+  const gap = await layout.evaluate((element) => Number.parseFloat(getComputedStyle(element).rowGap));
+  await expect.poll(() => layout.evaluate((element: HTMLElement) => element.style.getPropertyValue('--hc-mini-h'))).not.toBe('');
+  const band = await layout.evaluate(async (element) => {
+    for (let step = 0; step < 60 && !('configuring' in (element as HTMLElement).dataset); step += 1) {
+      window.scrollBy({ top: 20, behavior: 'instant' });
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    }
+    const sheetBottom = element.querySelector('.hc-preview-surface')!.getBoundingClientRect().bottom;
+    return element.querySelector('.hc-controls')!.getBoundingClientRect().top - sheetBottom;
+  });
   await expect(layout).toHaveAttribute('data-configuring', '');
+  expect(band).toBeGreaterThanOrEqual(0);
+  expect(band).toBeLessThanOrEqual(gap + 20 + 1);
   expect(await sheet.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
   expect(Math.abs((await pageTop(controls)) - controlsTop)).toBeLessThanOrEqual(1);
   expect((await sheet.boundingBox())!.height).toBeLessThan(844 * 0.3);
@@ -529,8 +543,7 @@ test('on a short phone the mini drawing stays under a third of the screen, its s
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openHangarPage(page);
   await bringSheetIntoView(page);
-  await page.evaluate(() => window.scrollBy({ top: 200, behavior: 'instant' }));
-  await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+  await scrollToMiniHold(page);
   expect((await sheetOf(page).boundingBox())!.height).toBeLessThan(568 / 3);
   // the longest sizes still hold one line beside the switch, whole
   await openControlGroup(page, 'dimensions');
@@ -641,4 +654,252 @@ test('in the sticky pane the 3D view fits the screen, its actions on the picture
     await page.keyboard.press('Tab');
     await expect(pictureOf(page).getByRole('button', { name: 'Розгорнути', exact: true })).toBeFocused();
   }
+});
+
+// 3D and «Каркас» (09.10, owner: «Давай спробуємо прибрати»; audit F14, F76): the frame's step is its line drawing, with
+// no 3D chip on it — 3D showed the clad hangar there and took the step's own list from beside it. 3D opened over the
+// general view is forgotten when the step changes the view: it came back by itself on «Обсяг». The chip is one button
+// whose words change, so keyboard focus stays on it both ways (it fell to the page's start), and the hidden status line
+// says what the sheet now shows.
+test('3D is not offered on «Каркас», does not come back by itself after it, and its chip keeps focus both ways', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the view contract is viewport-independent');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  await bringSheetIntoView(page);
+  const chip = threeChipOf(page);
+  await expect(chip).toBeVisible();
+  // the sheet's own status line (the expanded view's is quiet while it is closed)
+  const status = page.locator('#configurator p.hc-presentation-announcement[role="status"]');
+
+  await chip.focus();
+  await page.keyboard.press('Enter');
+  await expect(pictureOf(page).locator('canvas')).toBeVisible({ timeout: 20_000 });
+  const back = drawingChipOf(page);
+  await expect(back).toBeFocused();
+  await expect(status).toHaveText('3D-модель · попередня схема');
+  await page.keyboard.press('Enter');
+  await expect(pictureOf(page).locator('svg.hc-preview-svg')).toBeVisible();
+  await expect(chip).toBeFocused();
+  await expect(status).toHaveText('Загальний вид · попередня схема');
+
+  // opened on «Задача», then «Каркас»: the frame's drawing, and no chip on it
+  await chip.click();
+  await expect(pictureOf(page).locator('canvas')).toBeVisible({ timeout: 20_000 });
+  await openControlGroup(page, 'space');
+  await expect(pictureOf(page).locator('.hc-frame')).toBeVisible();
+  await expect(pictureOf(page).locator('.hc-sheet-tools')).toHaveCount(0);
+  await expect(page.locator('#hc-frame-panel .hc-frame-item')).toHaveCount(5);
+  // …then «Обсяг»: the general view, not the 3D left open three steps back
+  await openControlGroup(page, 'scope');
+  await expect(pictureOf(page).locator('svg.hc-preview-svg')).toBeVisible();
+  await expect(pictureOf(page).locator('canvas')).toHaveCount(0);
+  await expect(sheetOf(page).locator('.sheet-stamp')).toContainText('Загальний вид · попередня схема');
+  await expect(chip).toBeVisible();
+});
+
+// The frame's field is the sheet's dark one in both themes (09.10, audit F16 — «never flips paper ↔ dark», top of
+// configurator-sheet.css): in Light it turned cream on «Каркас» and back on «Обсяг». The loads' legend reads in their
+// Dark colours on it (audit F75: 3.38 : 1 and 3.04 : 1 on the cream field).
+for (const theme of ['light', 'dark'] as const) {
+  test(`the frame's field is the general view's dark field, in ${theme}`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the field contract is viewport-independent');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript((value) => window.localStorage.setItem('rubikon-theme', value), theme);
+    await openHangarPage(page);
+    const general = await pictureOf(page).evaluate((element) => getComputedStyle(element).backgroundColor);
+    await openControlGroup(page, 'space');
+    const frame = pictureOf(page).locator('.hc-frame');
+    await expect(frame).toBeVisible();
+    await expect(pictureOf(page)).toHaveCSS('background-color', general);
+    expect(await luminance(pictureOf(page))).toBeLessThan(0.05);
+    for (const [item, load] of [[3, 'snow'], [4, 'wind']] as const) {
+      await page.locator('#hc-frame-panel .hc-frame-item').nth(item).click();
+      const link = frame.locator(`.ft-chain[data-load="${load}"] li`).first();
+      await expect(link).toBeVisible();
+      const [ink, field] = [await luminance(link, 'color'), await luminance(pictureOf(page))];
+      expect((Math.max(ink, field) + 0.05) / (Math.min(ink, field) + 0.05), load).toBeGreaterThanOrEqual(4.5);
+    }
+    await openControlGroup(page, 'scope');
+    await expect(pictureOf(page)).toHaveCSS('background-color', general);
+  });
+}
+
+// One field height on a computer (09.10, audit F15 + F45): from «Стіни й ворота» to «Каркас» to «Обсяг» the sheet keeps
+// its size, and held under the header it stays whole inside the window — on «Каркас» its title block went 94–113 px
+// under the window's edge on short laptops, and at 1280 px wide the general view's legend under the drawing pushed it
+// 25–45 px out on the other steps. The frame's window keeps its own proportion, centred in the field.
+test('on a computer the sheet keeps one size from step to step and stays inside the window', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the sticky pane is the desktop’s');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const [index, [width, height]] of ([[1366, 657], [1536, 730], [1280, 600], [1280, 720], [1440, 900], [1100, 700], [1024, 768]] as const).entries()) {
+    await page.setViewportSize({ width, height });
+    if (index === 0) await openHangarPage(page);
+    else await page.goto('/angary', { waitUntil: 'load' });
+    const sizes: number[] = [];
+    for (const step of ['shell', 'frame', 'check'] as const) {
+      await page.evaluate(() => {
+        const layout = document.querySelector('#configurator .hc-layout')!;
+        window.scrollTo({ top: window.scrollY + layout.getBoundingClientRect().top - 117, behavior: 'instant' });
+      });
+      const tab = page.locator(`#hc-step-${step}-tab`);
+      await tab.click();
+      await expect(tab).toHaveAttribute('aria-selected', 'true');
+      // the pane held under the header
+      await page.evaluate(() => window.scrollBy({ top: 150, behavior: 'instant' }));
+      const box = (await sheetOf(page).boundingBox())!;
+      sizes.push(Math.round(box.height));
+      expect(box.y + box.height, `${width}×${height} ${step}`).toBeLessThanOrEqual(height);
+      if (step === 'frame') {
+        const [field, camera] = [(await pictureOf(page).boundingBox())!, (await pictureOf(page).locator('.ft-window').boundingBox())!];
+        expect(camera.width / camera.height, `${width}×${height}`).toBeCloseTo(720 / 440, 1);
+        expect(camera.y + camera.height).toBeLessThanOrEqual(field.y + field.height + 0.5);
+        expect(Math.abs(camera.x + camera.width / 2 - (field.x + field.width / 2))).toBeLessThanOrEqual(1);
+      }
+    }
+    expect(Math.max(...sizes) - Math.min(...sizes), `${width}×${height}: ${sizes.join(' → ')}`).toBeLessThanOrEqual(2);
+  }
+});
+
+/** The gap between the held mini drawing's bottom edge and the steps' tabs (negative: the tabs are under it) */
+async function miniToTabs(page: Page) {
+  return page.locator('#configurator .hc-layout').evaluate((layout) => {
+    const tabs = layout.querySelector('[role="tablist"]')!.getBoundingClientRect().top;
+    return tabs - layout.querySelector('.hc-preview-surface')!.getBoundingClientRect().bottom;
+  });
+}
+
+/** What a finger lands on at the middle of each step tab: the tab itself, or what covers it */
+async function tabHits(page: Page) {
+  return page.locator('#configurator [role="tab"]').evaluateAll((tabs) => tabs.map((tab) => {
+    const box = tab.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return hit !== null && tab.contains(hit) ? 'tab' : (hit?.getAttribute('class') ?? 'nothing');
+  }));
+}
+
+// 09.10, audit F21: scroll anchoring held the steps where they were, so «Згорнути» left a 120–150 px empty band under the
+// folded drawing, and «Показати ескіз» opened it over the tabs. The steps follow the fold now, both ways.
+for (const reducedMotion of ['reduce', 'no-preference'] as const) {
+  test(`on a phone the steps follow the mini drawing's fold, folded and shown again (motion: ${reducedMotion})`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit mobile viewport runs once');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion });
+    await openHangarPage(page);
+    const sheet = sheetOf(page);
+    await scrollToMiniHold(page);
+    // «Далі» from «Задача»: the steps land right under the mini drawing
+    await page.locator('#hc-step-task .hc-step-next').click();
+    await expect(page.locator('#hc-step-size-tab')).toHaveAttribute('aria-selected', 'true');
+    await expect.poll(() => miniToTabs(page)).toBeGreaterThanOrEqual(0);
+    expect(await miniToTabs(page)).toBeLessThanOrEqual(16);
+
+    await sheet.getByRole('button', { name: 'Згорнути', exact: true }).click();
+    await expect(sheet).toHaveClass(/is-folded/);
+    await expect.poll(() => miniToTabs(page)).toBeLessThanOrEqual(16);
+    expect(await miniToTabs(page)).toBeGreaterThanOrEqual(0);
+
+    await sheet.getByRole('button', { name: 'Показати ескіз', exact: true }).click();
+    await expect(pictureOf(page)).toBeVisible();
+    await expect.poll(() => miniToTabs(page)).toBeGreaterThanOrEqual(0);
+    expect(await miniToTabs(page)).toBeLessThanOrEqual(16);
+    expect(await tabHits(page)).toEqual(['tab', 'tab', 'tab', 'tab', 'tab']);
+    // anchoring is the page's again
+    await expect.poll(() => page.evaluate(() => document.body.style.overflowAnchor)).toBe('');
+  });
+}
+
+// 09.10, audit F23: on a short screen — a window zoomed to 200–400 %, a phone on its side — the header and the mini
+// drawing covered 55–100 % of it, and on «Каркас» every control of the step, the fold and the tabs too. There the sheet
+// scrolls by whole; a phone in portrait keeps the mini drawing, and its frame's window stays within 30 % of the screen.
+test('on a short screen the sheet is not held, and a held frame stays within its share of the screen', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewports run once');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const layout = page.locator('#configurator .hc-layout');
+  for (const viewport of [{ width: 740, height: 360 }, { width: 720, height: 450 }, { width: 360, height: 225 }]) {
+    await page.setViewportSize(viewport);
+    await openControlGroup(page, 'space');
+    await page.locator('#configurator .hc-controls').evaluate((controls) => window.scrollTo({ top: window.scrollY + controls.getBoundingClientRect().top - 40, behavior: 'instant' }));
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    await expect(layout, `${viewport.width}×${viewport.height}`).not.toHaveAttribute('data-configuring', '');
+    expect(await layout.evaluate((element: HTMLElement) => element.style.getPropertyValue('--hc-mini-h'))).toBe('');
+    // a control taken by keyboard is not under anything but the header
+    await page.locator('#hc-step-frame-tab').focus();
+    await page.keyboard.press('Tab');
+    const box = await page.evaluate(() => document.activeElement!.getBoundingClientRect().toJSON() as DOMRect);
+    expect(box.bottom, `${viewport.width}×${viewport.height}`).toBeGreaterThan(await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom));
+  }
+  // 760 × 500 still holds it (a phone's width, enough height); the frame's window is capped at 30 % of the screen
+  await page.setViewportSize({ width: 760, height: 500 });
+  await page.goto('/angary', { waitUntil: 'load' });
+  await openControlGroup(page, 'space');
+  await scrollToMiniHold(page);
+  expect((await sheetOf(page).locator('.ft-window').boundingBox())!.height).toBeLessThanOrEqual(500 * 0.3 + 1);
+  const fold = sheetOf(page).getByRole('button', { name: 'Згорнути', exact: true });
+  const foldBox = (await fold.boundingBox())!;
+  expect(foldBox.y + foldBox.height).toBeLessThan(500);
+  // and a portrait phone keeps it: an iPhone SE in Safari has about 548 px
+  for (const viewport of [{ width: 375, height: 548 }, { width: 375, height: 667 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/angary', { waitUntil: 'load' });
+    await openControlGroup(page, 'dimensions');
+    await scrollToMiniHold(page);
+  }
+});
+
+// 09.10, audit F22: on a portrait tablet the layout is one column and the drawing does not stay: after «Далі», and down a
+// long step, 0 px of it was on the screen while the step was edited. The whole sheet sticks under the header now.
+test('on a portrait tablet the whole sheet stays under the header while a step is edited, and no focus hides behind it', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewport runs once');
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const sheet = sheetOf(page);
+  const header = await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom);
+  await openControlGroup(page, 'dimensions');
+  await page.locator('#hc-step-size .hc-step-next').scrollIntoViewIfNeeded();
+  await page.locator('#hc-step-size .hc-step-next').click();
+  await expect(page.locator('#hc-step-shell-tab')).toHaveAttribute('aria-selected', 'true');
+  // the sheet stuck under the header, its picture whole on the screen, the tabs right under it, the step's first answers below
+  await expect.poll(() => sheet.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(header, 0);
+  const box = (await sheet.boundingBox())!;
+  const picture = (await pictureOf(page).boundingBox())!;
+  expect(picture.y).toBeGreaterThanOrEqual(header);
+  expect(picture.y + picture.height).toBeLessThanOrEqual(box.y + box.height);
+  const tabsTop = await page.locator('#configurator [role="tablist"]').evaluate((element) => element.getBoundingClientRect().top);
+  expect(tabsTop - (box.y + box.height)).toBeGreaterThanOrEqual(0);
+  expect(tabsTop - (box.y + box.height)).toBeLessThanOrEqual(16);
+  const answer = (await page.locator('#hc-step-shell input[name="hc-envelope"]').first().locator('xpath=..').boundingBox())!;
+  expect(answer.y + answer.height).toBeLessThan(1024);
+  // down the step it stays
+  await page.mouse.wheel(0, 400);
+  await expect.poll(() => sheet.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(header, 0);
+  // the step keeps nearly half the screen (09.10, owner: the drawing lower — it kept 36 %)
+  expect(1024 - (box.y + box.height)).toBeGreaterThan(1024 * 0.45);
+
+  // keyboard from the step's last stop back: no control is behind the sheet
+  await page.locator('#hc-step-shell .hc-step-next').focus();
+  for (let stop = 0; stop < 8; stop += 1) {
+    await page.keyboard.press('Shift+Tab');
+    const covered = await page.evaluate(() => {
+      const focused = document.activeElement as HTMLElement | null;
+      if (!focused?.closest('#configurator .hc-controls')) return null;
+      const target = focused.closest('label') ?? focused;
+      const rect = target.getBoundingClientRect();
+      const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return top !== null && !target.contains(top) ? (top.closest('.hc-preview-sheet, .site-header')?.className ?? null) : null;
+    });
+    expect(covered, `stop ${stop + 1}`).toBeNull();
+  }
+
+  // «Каркас»: the frame's field as tall as the general view's (09.10), so the stuck sheet and the tabs under it stay put
+  // from step to step, and the frame's window takes the sheet's width
+  await openControlGroup(page, 'space');
+  await expect(sheet.locator('.ft-window')).toBeVisible();
+  const frameSheet = (await sheet.boundingBox())!;
+  expect(Math.abs(frameSheet.height - box.height)).toBeLessThanOrEqual(1);
+  const frameWindow = (await sheet.locator('.ft-window').boundingBox())!;
+  expect(frameWindow.width).toBeGreaterThan(box.width * 0.9);
+  await openControlGroup(page, 'scope');
+  expect(Math.abs((await sheet.boundingBox())!.height - box.height)).toBeLessThanOrEqual(1);
 });

@@ -60,3 +60,20 @@ export async function backToDrawing(page: Page) {
   if (await chip.count()) await chip.click();
   else await page.getByRole('button', { name: 'Технічний вид', exact: true }).click();
 }
+
+/**
+ * On a phone, scrolls on until the mini drawing holds, and `past` px further (09.10, audit F120): the sheet turns mini
+ * as its bottom edge reaches the mini drawing's — the controls' top under the header, the mini drawing (`--hc-mini-h`,
+ * measured by the page once it has hydrated) and the layout's gap — not as its top reaches the header.
+ */
+export async function scrollToMiniHold(page: Page, past = 40) {
+  const layout = page.locator('#configurator .hc-layout');
+  await expect.poll(() => layout.evaluate((element: HTMLElement) => element.style.getPropertyValue('--hc-mini-h'))).not.toBe('');
+  await layout.evaluate((element: HTMLElement, extra) => {
+    const controls = element.querySelector('.hc-controls')!;
+    const header = document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0;
+    const line = header + Number.parseFloat(element.style.getPropertyValue('--hc-mini-h')) + (Number.parseFloat(getComputedStyle(element).rowGap) || 0);
+    window.scrollBy({ top: controls.getBoundingClientRect().top - line + extra, behavior: 'instant' });
+  }, past);
+  await expect(layout).toHaveAttribute('data-configuring', '');
+}

@@ -194,6 +194,47 @@
   }
 }
 
+/* A portrait tablet (09.10, audit F22): one column, and after «Далі», or down a long step, the drawing was off the screen
+   while the step was edited — 0 px of it at 768 × 1024 and 820 × 1180. The whole sheet sticks under the header (a grid
+   item of the layout, it lets go at the layout's end, before the title block) with a lower picture, so the step keeps
+   room under it. No mini drawing, no fold: the sheet as it is. Its height is the controls' focus margin (--hc-mini-h,
+   useMiniPreview); landOnSteps lands the tabs under it. Not on a short screen (a phone on its side): it would fill it. */
+@media (min-width: 761px) and (max-width: 1023px) and (min-height: 700px) {
+  .hangar-configurator-embedded .hc-preview-surface.hc-preview-sheet { position: sticky; z-index: 6; top: 101px; }
+  .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: min(46vw, 34svh); }
+  /* A tablet held upright, lower (owner, 09.10: «Зробити креслення нижчим, щоб кроку лишалось більше місця» — at
+     768 × 1024 the step kept 36 % of the screen, now 46 %; 52–58 % on taller ones). On its side the 24 % left the frame's
+     window a 169 px strip, so it keeps its height there. */
+  @media (orientation: portrait) {
+    .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: min(46vw, 24svh); }
+  }
+  /* The frame's field as tall as the general view's (09.10, after merging F15 and F22): the window in the general
+     drawing's height left the field 47 px taller or 55 px shorter than the general view's — the drawing under it, its
+     cladding legend under it on a sheet under 700 px — and the stuck sheet, with the tabs under it, moved on every
+     step into «Каркас» and out. The window takes what the load band above it leaves, the sheet's full width. */
+  .hangar-configurator-embedded .hc-preview-sheet .hc-frame { box-sizing: border-box; height: var(--hc-frame-h, var(--hc-sheet-h)); }
+  .hangar-configurator-embedded .hc-frame .ft-slot { display: flex; flex: 1 1 0; min-height: 0; }
+  .hangar-configurator-embedded .hc-preview-sheet .hc-frame .ft-window { aspect-ratio: auto; height: auto; }
+  @container sheet (max-width: 699px) {
+    .hangar-configurator-embedded .hc-preview-sheet .hc-frame { --hc-frame-h: calc(var(--hc-sheet-h) + 102px); }
+  }
+  /* The lower drawing (09.10) left the legend's narrow column taller than it — the general view grew back to the
+     column's 278 px and the frame's field did not: on a wide tablet sheet the legend is a wider column with each glyph
+     beside its words, lower than the drawing. The drawing loses nothing: held by the sheet's height it is narrower than
+     its share. */
+  @container sheet (min-width: 700px) {
+    .hangar-configurator-embedded .hc-preview-image:has(> .hc-section) { grid-template-columns: 220px minmax(0, 1fr); }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section figcaption { margin-bottom: 10px; }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section dl { gap: 10px; }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section .hc-section-row { row-gap: 6px; }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section .hc-section-row dd { flex-direction: row; align-items: center; gap: 10px; }
+    .hangar-configurator-embedded .hc-preview-image > .hc-section .hc-section-glyph { width: 64px; height: 21px; }
+  }
+  .hangar-configurator-embedded .hc-controls :is(a[href], button, summary, input, select, textarea) {
+    scroll-margin-top: calc(var(--hc-mini-h, 0px) + 109px);
+  }
+}
+
 /* ── «Переріз огородження» (07.10, CladdingSection.tsx) ───────────────────────────────────────────────────────────────
    In the drawing's top-left corner, which the hangar never reaches from this camera: a detail callout in the sheet's own
    inks on its dark field. The glyphs use the drawing's symbols — the sheet's profile, the insulation's wave. */
@@ -248,14 +289,28 @@
 
 /* ── «Каркас» (07.10, ConfiguratorFrameView.tsx) ──────────────────────────────────────────────────────────────────────
    The frame tour's picture on the configurator's sheet: the legend's band and the camera's window in the drawing's own
-   proportion, nothing under it — what to show is chosen in the step's panel beside it (configurator-controls.css). The
-   drawing follows the theme, as it did in its own section. */
-.hangar-configurator-embedded .hc-preview-sheet .sheet-image.hc-frame-image { display: flex; flex-direction: column; background: var(--color-surface-alt); }
+   proportion, nothing under it — what to show is chosen in the step's panel beside it (configurator-controls.css).
+   The field is the sheet's dark one in both themes, as the general view's and the 3D's (09.10, audit F16 — the rule at
+   the top of this file): in Light the frame followed the theme and the largest thing in the block turned cream on
+   «Каркас» and back to charcoal on «Обсяг». The drawing's inks are its Dark roles here, the copper text the band's. */
+.hangar-configurator-embedded .hc-preview-sheet .sheet-image.hc-frame-image {
+  display: flex; flex-direction: column;
+  color-scheme: dark;
+  background: var(--color-dark);
+  --color-surface-alt: var(--color-dark); /* the bubbles', the nodes' rings' and the names' halo fill */
+  --color-text: var(--color-dark-text);
+  --color-text-secondary: var(--color-dark-text-secondary);
+  --color-text-muted: var(--color-dark-text-muted);
+  --color-accent-strong: var(--color-accent-on-dark);
+  --color-border-strong: #6A6C66; /* Dark's (theme.css) */
+}
+/* …and the loads in their Dark colours, which the light theme's rule on .ft (frame-tour.css) swapped for paper ones:
+   the legend's first link read 3.38:1 (snow) and 3.04:1 (wind) on the light field (audit F75) */
+.hangar-configurator-embedded .hc-frame.ft { --ft-snow: #5aa8ff; --ft-wind: #4fd8c8; }
 .hc-frame { display: flex; flex-direction: column; min-height: 0; padding-top: 25px; }
 .hc-frame .ft-window { width: 100%; }
-/* One numbering on the screen (07.10): the steps' and the nodes'. The drawing's axes — А, Б, В across and 1–4 along —
-   are a drafter's; they are shown only on «Проліт», whose words name А and Б. */
-.hc-frame [data-part="3"] :is(.ft-bubble, .ft-axis) { display: none; }
+/* One numbering on the screen (07.10): the steps' and the nodes'. The drawing's axes — А, Б, В across — are a
+   drafter's; they are shown only on «Проліт», whose words name А and Б (the frames' 1–4 along are not drawn, 09.10). */
 .hc-frame:not([data-step="1"]) [data-part="1"] :is(.ft-bubble, .ft-axis) { display: none; }
 
 /* The nodes on the drawing: numbered copper bubbles on the frame's step, as the buttons under it are numbered; the one
@@ -267,7 +322,9 @@
 .ft-node-mark { transform: scale(var(--ft-k)); transition: transform .3s ease; }
 .ft-drawing .ft-node-ring { fill: var(--color-surface-alt); stroke: var(--color-accent); stroke-width: 1.6px; transition: fill .2s ease; }
 .ft-node-number { fill: var(--color-accent-strong); font: 700 10.5px var(--font-condensed), sans-serif; text-anchor: middle; pointer-events: none; transition: fill .2s ease; }
-.ft-node:hover .ft-node-ring, .ft-node[data-on] .ft-node-ring { fill: var(--color-accent); }
+/* filled in the copper of text, as the pressed button under the drawing (09.10, audit F47): on --color-accent the 10.5 px
+   number read 4.11:1 */
+.ft-node:hover .ft-node-ring, .ft-node[data-on] .ft-node-ring { fill: var(--color-accent-strong); }
 .ft-node:hover .ft-node-number, .ft-node[data-on] .ft-node-number { fill: var(--color-surface-alt); }
 @media (prefers-reduced-motion: no-preference) {
   .hc-frame[data-step="2"]:not([data-node]) .ft-node-mark { animation: hc-node-pulse 1800ms ease-in-out 1600ms 3; }
@@ -285,23 +342,47 @@
   display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 7px; border: 1px solid currentColor;
   border-radius: 50%; font: 700 10.5px/1 var(--font-condensed), sans-serif;
 }
-/* The tour's progress bars stop short of the «Подивитись у 3D» chip in the picture's corner (07.10: they ran under it) */
-.hc-frame-image .dn-progress { right: 172px; }
+/* The tour's progress bars run the field's width: they stopped short of the «Подивитися в 3D» chip in its corner (07.10),
+   and «Каркас» has no chip since 09.10 (HangarPreviewModes) */
 
 @container sheet (max-width: 480px) {
   .hc-frame { --ft-k: 1.55; --ft-t: 1.5; padding-top: 22px; }
   .hc-frame .ft-legend { padding-inline: 8px; }
   .hc-frame .ft-chain { font-size: 12px; }
-  .hc-frame-image .dn-progress { right: 146px; left: 10px; }
+  .hc-frame-image .dn-progress { right: 10px; left: 10px; }
 }
 
 @media (max-width: 760px) {
   /* the mini drawing under the header: the frame's window alone, as high as the general view's */
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame { padding-top: 0; }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame :is(.ft-legend, .dn-progress) { display: none; }
-  /* the frame is chosen from under it: held a little taller than the general view, so a node pushed in on still reads */
-  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame .ft-window { aspect-ratio: auto; height: max(50vw, 180px); }
+  /* the frame is chosen from under it: held a little taller than the general view, so a node pushed in on still reads —
+     but never past 30 % of the screen: half the width of a 760 × 500 window is 380 px, and the mini drawing with the
+     header covered all of it, the fold and the tabs too (09.10, audit F23; a portrait phone stays at half its width) */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame .ft-window { aspect-ratio: auto; height: min(max(50vw, 180px), 30svh); }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-sheet-tools { display: none; }
+}
+
+/* ── One field height for the general view and the frame on a computer (09.10, audit F15 + F45) ──────────────────────
+   The sheet's field is as tall on «Каркас» as on the steps either side of it, so the sheet keeps its size from step to
+   step (3 → 4 → 5 it grew and shrank by up to 190 px) and, held under the header, stays inside the window (the frame's
+   title block and lower edge went 94–113 px under it at 1366 × 657, 1536 × 730, 1280 × 600). The frame's window keeps
+   its 720 × 440 — the camera's arithmetic is untouched — and fits, centred, in what the legend leaves of the field: the
+   slot is a size container, so the legend's one, two or three rows are counted as they are. On a sheet under 700 px
+   the general view's cladding legend stands under the drawing (92 px and its 10 px margin): the drawing's window-height
+   term gives that room back, so drawing and legend keep the budget a wide sheet's drawing has (at 1280 × 720 the title
+   block ran 25 px past the window, at 1280 × 600 45 px); where that term does not bind — a tall window — the drawing
+   is as it was, and the frame's field is as tall as the drawing with its legend. Under 1024 px the layout is one column
+   and the sheet is not held on screen (a phone holds its mini drawing, above): there its sizes stay as they were, the
+   frame's camera the sheet's full width. */
+@media (min-width: 1024px) {
+  .hangar-configurator-embedded .hc-preview-sheet .hc-frame { box-sizing: border-box; height: var(--hc-frame-h, var(--hc-sheet-h)); }
+  .hangar-configurator-embedded .hc-frame .ft-slot { display: flex; flex: 1 1 0; align-items: center; justify-content: center; min-height: 0; container-type: size; }
+  .hangar-configurator-embedded .hc-frame .ft-window { width: min(100cqw, 100cqh * 720 / 440); }
+  @container sheet (max-width: 699px) {
+    .hangar-configurator-embedded .hc-preview-sheet .hc-preview-image:has(> .hc-section) { --hc-sheet-h: clamp(220px, min(46vw + 40px, 100vh - 402px, 70cqw), 580px); }
+    .hangar-configurator-embedded .hc-preview-sheet .hc-frame { --hc-frame-h: calc(clamp(220px, min(46vw + 40px, 100vh - 402px, 70cqw), 580px) + 102px); }
+  }
 }
 
 /* The 3D chip in words, not capitals (07.10) */
@@ -382,3 +463,9 @@
 @media (max-width: 480px) {
   .hc-preview-sheet .sheet-cell.hc-sheet-shown.is-frame b { min-height: 2.4em; }
 }
+
+/* «Колони всередині» moves the gates (09.10, owner: ворота перескакували миттєво — «так», плавно): the gates' outline,
+   the posts at their jambs and the wall purlins between them glide to their new places where the browser eases a
+   path's shape (the same commands, other numbers); where it does not, or where the posts change in number, they are
+   simply there. Under reduced motion nothing eases (globals.css). */
+.hc-frame .ft-drawing :is(.ft-opening, .ft-post, .ft-thin) { transition: stroke .3s ease, opacity .3s ease, d .45s var(--ease-premium); }

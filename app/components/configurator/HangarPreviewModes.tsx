@@ -47,6 +47,10 @@ const ThreeHangarView = lazy(() => import('./three/ThreeHangarView'));
 
 type Mode = 'technical' | 'frame' | 'three';
 
+/** «Що показано» in the sheet's title block for the general view and the 3D */
+const GENERAL_SHOWN = 'Загальний вид · попередня схема';
+const THREE_SHOWN = '3D-модель · попередня схема';
+
 /** The title block sets its values in capitals; the metre stays a lower-case «м» (drawing-sheet.css .sheet-unit) */
 function SheetValue({ text }: Readonly<{ text: string }>) {
   if (!text.endsWith('\u00A0м')) return text;
@@ -149,6 +153,13 @@ export function HangarPreviewModes({
   // 3D is opened over one view and goes when the step changes the view (07.10): it remembers the view it was opened on
   const view2d: Mode = frame && sheet ? 'frame' : 'technical';
   const [threeOver, setThreeOver] = useState<Mode | null>(null);
+  // …and is forgotten when the view changes (09.10, audit F14): opened on «Задача», gone on «Каркас», it came back by
+  // itself on «Обсяг», with a new WebGL context nobody asked for. Reset while rendering, so 3D never shows for a frame.
+  const [shownView, setShownView] = useState(view2d);
+  if (shownView !== view2d) {
+    setShownView(view2d);
+    setThreeOver(null);
+  }
   const descriptionId = useId();
   const [threeFailed, setThreeFailed] = useState(false);
   const webgl = useWebglSupport();
@@ -166,6 +177,15 @@ export function HangarPreviewModes({
   // The phone's mini drawing folds to its sizes' line on request (07.10): over a step's fields it took a third of the
   // screen, more on «Каркас»
   const [miniFolded, setMiniFolded] = useState(false);
+  // The steps follow the fold (09.10, audit F21): the page's scroll anchoring held them where they were, so folding left
+  // a 120–150 px gap under the mini drawing and showing it again covered the tabs. Off for the frame of the change only:
+  // everywhere else anchoring is what keeps the fields still under the finger. On the body, not the root: Chrome keeps
+  // anchoring the page with `overflow-anchor: none` on <html>.
+  const toggleMiniFold = () => {
+    document.body.style.setProperty('overflow-anchor', 'none');
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => document.body.style.removeProperty('overflow-anchor')));
+    setMiniFolded((folded) => !folded);
+  };
   // How much of the canvas's bottom edge the dimension readout covers, measured by the overlay
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
@@ -198,6 +218,9 @@ export function HangarPreviewModes({
   const selectMode = useCallback((next: Mode) => {
     setThreeOver(next === 'three' ? view2d : null);
   }, [view2d]);
+  // What the sheet's one 3D button just showed, for the hidden status line (09.10, audit F76): the button keeps focus
+  // as its words change, and a screen reader hears the new «Що показано»
+  const [viewNote, setViewNote] = useState('');
   const handleEndPresentationDemo = useCallback(() => {
     onEndPresentationDemo?.();
     if (!isFullscreen) {
@@ -349,9 +372,9 @@ export function HangarPreviewModes({
     </>
   );
 
-  let shownOnSheet = 'Загальний вид · попередня схема';
+  let shownOnSheet = GENERAL_SHOWN;
   if (effectiveMode === 'frame') shownOnSheet = frameCaption;
-  else if (showThree) shownOnSheet = '3D-модель · попередня схема';
+  else if (showThree) shownOnSheet = THREE_SHOWN;
   const sheetCells: SheetCell[] = sheet ? [
     // keyed, and the sizes untranslated: a page translation left them at their old values (08.10)
     {
@@ -370,7 +393,7 @@ export function HangarPreviewModes({
     <>
       {!isFullscreen && (
         <p className="hc-visually-hidden hc-presentation-announcement" role="status" aria-live="polite" aria-atomic="true">
-          {presentationAnnouncement}
+          {presentationAnnouncement || viewNote}
         </p>
       )}
       {presentationDemo && !isFullscreen && (
@@ -385,7 +408,7 @@ export function HangarPreviewModes({
           cells={sheetCells}
           // shown only by the phone's mini drawing (configurator-sheet.css)
           action={(
-            <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={() => setMiniFolded((folded) => !folded)}>
+            <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={toggleMiniFold}>
               {miniFolded ? 'Показати ескіз' : 'Згорнути'}
             </button>
           )}
@@ -393,22 +416,24 @@ export function HangarPreviewModes({
           {view}
           {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) */}
           {effectiveMode === 'technical' && <CladdingSection domain={domain} />}
-          {/* 3D, a secondary look: a chip on the drawing opens it, and in 3D a chip goes back (07.10) */}
-          {!showThree && threeAvailable && (
+          {/* 3D, a secondary look: a chip on the drawing opens it, and in 3D the same chip goes back (07.10). One button in
+              one place whose words change (09.10, audit F76): two buttons swapped out from under the keyboard, and focus
+              fell to the page's start. Not on «Каркас» (09.10, owner, audit F14): the step is the frame's line drawing —
+              3D showed the clad hangar and took the step's own list from beside it. «Розгорнути» joins it in 3D, the
+              picture's own action. */}
+          {threeAvailable && view2d !== 'frame' && (
             <div className="hc-sheet-tools">
-              <button type="button" className="hc-sheet-chip hc-sheet-three" onClick={() => selectMode('three')}>
-                Подивитися в 3D
+              <button
+                type="button"
+                className={showThree ? 'hc-sheet-chip' : 'hc-sheet-chip hc-sheet-three'}
+                onClick={() => {
+                  selectMode(showThree ? 'technical' : 'three');
+                  setViewNote(showThree ? GENERAL_SHOWN : THREE_SHOWN);
+                }}
+              >
+                {showThree ? <><span aria-hidden="true">←</span> Креслення</> : 'Подивитися в 3D'}
               </button>
-            </div>
-          )}
-          {/* On the 3D picture itself, out of the title block: they are the picture's own actions */}
-          {showThree && (
-            // the colours follow their chip in the tab order, before «Розгорнути»; Escape folds them back to it
-            <div className="hc-sheet-tools">
-              <button type="button" className="hc-sheet-chip" onClick={() => selectMode('technical')}>
-                <span aria-hidden="true">←</span> Креслення
-              </button>
-              {expand}
+              {showThree && expand}
             </div>
           )}
         </DrawingSheet>

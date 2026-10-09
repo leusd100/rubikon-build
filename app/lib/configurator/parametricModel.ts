@@ -579,9 +579,10 @@ export const STRUCTURAL_VISUALIZATION_THRESHOLDS = {
  * to *look* more complete would be the wrong kind of honesty for a function whose whole job is to
  * say plainly what actually drives it.
  */
-/** Whether this width gets a centre-support column row. Extracted so the gate placement, the door
- *  placement and the column builder all read ONE rule rather than three copies of a threshold
- *  comparison — the same single-source discipline `deriveBayLayout` exists for. */
+/** Whether this width gets a centre-support column row by the width's rule. The gate placement,
+ *  the door placement and the column builder no longer read it directly: they read the scheme in
+ *  force (`domain.structural.scheme`), which this rule decides unless the visitor said no columns
+ *  may stand inside (09.10, audit F60) — still one rule, read through one field. */
 function hasCentreSupport(widthM: number): boolean {
   return widthM >= STRUCTURAL_VISUALIZATION_THRESHOLDS.CENTER_SUPPORT_FROM_WIDTH_M;
 }
@@ -926,10 +927,15 @@ const GATE_COLUMN_CLEARANCE_M = 0.5;
 
 /** Every X where a 1 m door would be legal on the front face, in preference order. Pure, and
  *  shared by the fit check and the geometry builder so the UI can never offer a door the model
- *  then refuses to place. */
-function doorCandidateXs(gates: number, gateType: GateType, widthM: number): number[] {
+ *  then refuses to place.
+ *
+ *  `centreRow` is whether a centre-support column stands on the front face's centre line — the
+ *  scheme in force (`domain.structural.scheme === 'centerSupport'`), not the width's rule: with
+ *  «Колони всередині: Не можна» a 24 m building is drawn clear-span, and the door used to step
+ *  round a column that was not there (09.10, audit F60). */
+function doorCandidateXs(gates: number, gateType: GateType, widthM: number, centreRow: boolean): number[] {
   const { widthM: doorWidthM } = DOOR_DIMENSIONS_M;
-  const gateRects = buildGateRects(gates, gateType, widthM);
+  const gateRects = buildGateRects(gates, gateType, widthM, centreRow);
   const midX = widthM / 2;
 
   const minX = DOOR_CORNER_CLEARANCE_M;
@@ -960,7 +966,7 @@ function doorCandidateXs(gates: number, gateType: GateType, widthM: number): num
     || xM >= rect.xM + rect.widthM + DOOR_GATE_CLEARANCE_M
   ));
   const clearOfColumnLine = (xM: number) => (
-    xM + doorWidthM + DOOR_COLUMN_CLEARANCE_M <= midX || xM >= midX + DOOR_COLUMN_CLEARANCE_M
+    !centreRow || xM + doorWidthM + DOOR_COLUMN_CLEARANCE_M <= midX || xM >= midX + DOOR_COLUMN_CLEARANCE_M
   );
 
   return preferred
@@ -969,10 +975,12 @@ function doorCandidateXs(gates: number, gateType: GateType, widthM: number): num
 }
 
 /** Can a door be placed at all at these dimensions? Same answer the geometry builder will give,
- *  because both read `doorCandidateXs`. Consumed by the controls (to disable the option) and by
- *  `clampDoorSelection` (so the model stays self-consistent however state was produced). */
-export function doorFits(gates: number, gateType: GateType, widthM: number): boolean {
-  return doorCandidateXs(gates, gateType, widthM).length > 0;
+ *  because both read `doorCandidateXs` — with the same `centreRow` (the scheme in force), or the
+ *  control and the model would disagree about whether the door fits. Consumed by the controls (to
+ *  disable the option) and by `clampDoorSelection` (so the model stays self-consistent however
+ *  state was produced). */
+export function doorFits(gates: number, gateType: GateType, widthM: number, centreRow: boolean): boolean {
+  return doorCandidateXs(gates, gateType, widthM, centreRow).length > 0;
 }
 
 /** Domain-level safety net, exactly mirroring `clampGateSelection`: a door that cannot be placed
@@ -982,9 +990,10 @@ export function clampDoorSelection(
   gates: number,
   gateType: GateType,
   widthM: number,
+  centreRow: boolean,
 ): { doors: 0 | 1 } {
   if (doors <= 0) return { doors: 0 };
-  return { doors: doorFits(gates, gateType, widthM) ? 1 : 0 };
+  return { doors: doorFits(gates, gateType, widthM, centreRow) ? 1 : 0 };
 }
 
 /** Where the gates sit on the front face, as plain rectangles. Extracted so the door's placement
@@ -994,6 +1003,7 @@ function buildGateRects(
   gates: number,
   gateType: GateType,
   widthM: number,
+  centreRow: boolean,
 ): { xM: number; widthM: number; heightM: number }[] {
   if (gates === 0) return [];
 
@@ -1004,7 +1014,7 @@ function buildGateRects(
   const totalWidthM = gates * gateWidthM + (gates - 1) * gapM;
   const centredStartM = marginM + Math.max(0, (usableM - totalWidthM) / 2);
   const pitchM = gateWidthM + gapM;
-  const startM = clearOfCentreColumn(centredStartM, { gates, gateWidthM, pitchM, totalWidthM, marginM, widthM });
+  const startM = centreRow ? clearOfCentreColumn(centredStartM, { gates, gateWidthM, pitchM, totalWidthM, marginM, widthM }) : centredStartM;
 
   return Array.from({ length: gates }, (_, index) => ({
     xM: round(startM + index * (gateWidthM + gapM)),
@@ -1035,17 +1045,17 @@ function buildGateRects(
  * as one: both directions were checked and they are equivalent for the door, which lands beside
  * the gate either way because `doorCandidateXs` avoids the column line on its own account.
  *
- * Returns the centred start unchanged when the building has no centre row, when nothing clashes,
- * or when no candidate fits between the margins. That last case is a real dead end rather than a
- * silent squeeze, and `buildInternalColumns` still drops the column there.
+ * Called only where a centre row stands — the scheme in force, which «Колони всередині: Не можна»
+ * makes clear-span at any width (09.10, audit F60: the gate stepped aside at 24 m for a column that
+ * was not drawn). Returns the centred start unchanged when nothing clashes, or when no candidate
+ * fits between the margins. That last case is a real dead end rather than a silent squeeze, and
+ * `buildInternalColumns` still drops the column there.
  */
 function clearOfCentreColumn(
   centredStartM: number,
   geom: { gates: number; gateWidthM: number; pitchM: number; totalWidthM: number; marginM: number; widthM: number },
 ): number {
   const { gates, gateWidthM, pitchM, totalWidthM, marginM, widthM } = geom;
-  if (!hasCentreSupport(widthM)) return centredStartM;
-
   const midX = widthM / 2;
   const offsets = Array.from({ length: gates }, (_, index) => index * pitchM);
   // Strictly inside the forbidden band, with a hair of tolerance. Every candidate below is built
@@ -1101,8 +1111,9 @@ function buildOpenings(
   gateType: GateType,
   doors: number,
   widthM: number,
+  centreRow: boolean,
 ): OpeningGeometry[] {
-  const openings = buildGateRects(gates, gateType, widthM)
+  const openings = buildGateRects(gates, gateType, widthM, centreRow)
     .map((rect, index) => openingFromRect(index, 'gate', rect));
 
   if (doors > 0) {
@@ -1110,7 +1121,7 @@ function buildOpenings(
     // rejected anything too close to a corner, a gate or the centre-support line, so there is no
     // second-guessing to do here. No candidate means no door: the opening is dropped rather than
     // forced somewhere invalid, and the control offering it is disabled by the same predicate.
-    const [xM] = doorCandidateXs(gates, gateType, widthM);
+    const [xM] = doorCandidateXs(gates, gateType, widthM, centreRow);
     if (xM !== undefined) {
       openings.push(openingFromRect(openings.length, 'door', { xM, ...DOOR_DIMENSIONS_M }));
     }
@@ -1456,7 +1467,9 @@ export function buildParametricModel(domain: HangarDomainModel): ParametricBuild
   const frames = buildFrames(widthM, eaveHeightM, ridgeM, stationsM);
   // Hoisted: buildInternalColumns needs the real gate rectangles to resolve its own conflict
   // check (brief §4) — never a reason for a renderer to invent its own copy of this call.
-  const openings = buildOpenings(domain.gates, domain.gateType, domain.doors, widthM);
+  // The openings step round the centre row only where one stands — the scheme in force, the same
+  // one `buildInternalColumns` reads just below (09.10, audit F60)
+  const openings = buildOpenings(domain.gates, domain.gateType, domain.doors, widthM, domain.structural.scheme === 'centerSupport');
   const internalColumns = buildInternalColumns(
     widthM, eaveHeightM, ridgeM, stationsM, openings, domain.structural.scheme, domain.structural.roofStructure,
   );

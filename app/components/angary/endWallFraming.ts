@@ -17,6 +17,28 @@ export type EndWallFraming = {
   girts: GirtRun[];
 };
 
+/**
+ * The configurator's openings as the frame sheet draws them on the near end wall (09.10, audit F18, F124).
+ *
+ * The sheet looks at the same front facade as the general view and the 3D, but its x runs from axis А on the left,
+ * while the model's x = 0 is the front wall's RIGHT corner on those two (viewProjection.ts: the camera's right is −x).
+ * Read as they were, the gates and the door stood on the other side of the centre on «Каркас» — two drawings of one
+ * hangar with different facades. The openings are the only part of the frame that is not symmetric, so they alone are
+ * mirrored, here and only here: x → W − x − width. The axes stay А, Б(, В) from left to right, as a drawing letters
+ * them; the posts and wall purlins (endWallFraming) follow the openings wherever they stand.
+ *
+ * And none without walls in the request: an opening is cut into a wall, and the general view and the stamp drop them
+ * there. Dropped here, before the framing reads them, the posts and wall purlins stop framing gates that are not drawn.
+ */
+export function sheetOpenings(
+  openings: readonly Readonly<{ kind: EndWallOpening['kind']; rect: Readonly<{ xM: number; widthM: number; heightM: number }> }>[],
+  widthM: number,
+  wallsInScope: boolean,
+): EndWallOpening[] {
+  if (!wallsInScope) return [];
+  return openings.map(({ kind, rect }) => ({ kind, xM: widthM - rect.xM - rect.widthM, widthM: rect.widthM, heightM: rect.heightM }));
+}
+
 /** The wall purlins' levels, as the side walls' (parametricModel GIRT_LEVELS) */
 const GIRT_LEVELS = [1 / 3, 2 / 3] as const;
 /** A gate's jamb this close to a column is framed by the column: a post there would stand on the column's footing

@@ -742,6 +742,36 @@ describe('internal columns — centreline support (Phase 3E, brief §3-4)', () =
     }
   });
 
+  // 09.10, audit F60: the gates step aside only for a centre row that stands. With «Колони всередині: Не можна» a
+  // 24 m building is drawn clear-span, and a single gate stood at 7,5–11,5 m beside a column that was not there.
+  it('with no columns allowed inside, a single gate stands centred: there is no centre row to step round', () => {
+    for (const width of [24, 30, 36, W.max]) {
+      for (const gateType of ['standard', 'double'] as const) {
+        const m = modelFor({ width }, { gates: 1, gateType, internalSupports: 'not-allowed' });
+        expect(m.internalColumns, `${width}m`).toHaveLength(0);
+        const gate = m.openings.find((o) => o.kind === 'gate')!;
+        expect(gate.rect.xM + gate.rect.widthM / 2, `${width}m ${gateType}`).toBeCloseTo(width / 2, 6);
+        // the same building with the centre row allowed still steps aside, as before
+        const allowed = modelFor({ width }, { gates: 1, gateType, internalSupports: 'allowed' }).openings.find((o) => o.kind === 'gate')!;
+        expect(allowed.rect.xM + allowed.rect.widthM < width / 2 || allowed.rect.xM > width / 2, `${width}m ${gateType} allowed`).toBe(true);
+      }
+    }
+  });
+
+  it('with no columns allowed inside, the door no longer steps round the centre line either', () => {
+    // No size the controls reach puts the door's preferred places on the centre line (swept 09.10: beside the gates,
+    // then the quarter points), so this checks the rule itself: a centre row can only take places from the door,
+    // never give it one — and without one nothing is taken
+    for (const width of [24, 30, 36, W.max]) {
+      for (const gates of [0, 1, 2] as const) {
+        const centreRow = doorFits(gates, 'standard', width, true);
+        const clear = doorFits(gates, 'standard', width, false);
+        // a centre row can only take places away from the door, never give it one
+        expect(!centreRow || clear, `${width}m ${gates} gates`).toBe(true);
+      }
+    }
+  });
+
   it('two gates leave the centreline clear at z=0 (the gap between them), so no support is skipped', () => {
     const m = modelForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' }, {}, { gates: 2, gateType: 'standard' });
     expect(m.internalColumns.some((c) => c.stationM === 0)).toBe(true);
@@ -1272,30 +1302,35 @@ describe('personnel door (product surface pass)', () => {
     for (const width of [W.min, 12, 16, 24, W.max]) {
       for (const gates of [0, 1, 2] as const) {
         for (const gateType of ['standard', 'double'] as const) {
-          // Compare against the CLAMPED selection the geometry actually saw: the domain model may
-          // have dropped a gate that did not fit, which legitimately changes the door's options.
-          const domain = deriveDomainModel({
-            ...DEFAULT_CONFIGURATOR_STATE,
-            dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width },
-            doors: 1,
-            gates,
-            gateType,
-          });
-          const fits = doorFits(domain.gates, domain.gateType, width);
-          const placed = doorOf(modelFor({ width }, { doors: 1, gates, gateType })) !== undefined;
-          expect(placed, `${width}m / ${gates} ${gateType}`).toBe(fits);
+          // with the scheme in force, which «Колони всередині: Не можна» makes clear-span (09.10, F60): the control
+          // passes the same flag, or the two would disagree about whether the door fits
+          for (const internalSupports of ['unknown', 'not-allowed'] as const) {
+            // Compare against the CLAMPED selection the geometry actually saw: the domain model may
+            // have dropped a gate that did not fit, which legitimately changes the door's options.
+            const domain = deriveDomainModel({
+              ...DEFAULT_CONFIGURATOR_STATE,
+              dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width },
+              doors: 1,
+              gates,
+              gateType,
+              internalSupports,
+            });
+            const fits = doorFits(domain.gates, domain.gateType, width, domain.structural.scheme === 'centerSupport');
+            const placed = doorOf(modelFor({ width }, { doors: 1, gates, gateType, internalSupports })) !== undefined;
+            expect(placed, `${width}m / ${gates} ${gateType} / ${internalSupports}`).toBe(fits);
+          }
         }
       }
     }
   });
 
   it('clampDoorSelection drops an unplaceable door instead of moving or resizing it', () => {
-    expect(clampDoorSelection(0, 1, 'standard', 24)).toEqual({ doors: 0 });
-    expect(clampDoorSelection(1, 1, 'standard', 24)).toEqual({ doors: 1 });
-    const impossible = clampDoorSelection(1, 2, 'double', DIMENSION_BOUNDS.width.min);
+    expect(clampDoorSelection(0, 1, 'standard', 24, true)).toEqual({ doors: 0 });
+    expect(clampDoorSelection(1, 1, 'standard', 24, true)).toEqual({ doors: 1 });
+    const impossible = clampDoorSelection(1, 2, 'double', DIMENSION_BOUNDS.width.min, false);
     expect(impossible.doors === 0 || impossible.doors === 1).toBe(true);
-    expect(clampDoorSelection(1, 1, 'standard', 24)).toEqual(
-      clampDoorSelection(1, 1, 'standard', 24),
+    expect(clampDoorSelection(1, 1, 'standard', 24, true)).toEqual(
+      clampDoorSelection(1, 1, 'standard', 24, true),
     );
   });
 

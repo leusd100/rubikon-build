@@ -6,7 +6,7 @@ import {
   CONTROL_STEPS,
   type ControlGroupId,
 } from '../../lib/configurator/controlGroups';
-import { NBSP, formatRoofSlope, formatSize } from '../../lib/configurator/deriveSummary';
+import { NBSP, formatRoofSlope, formatSize, gatesCountPhrase } from '../../lib/configurator/deriveSummary';
 import { deriveDomainModel, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../lib/configurator/domainModel';
 import {
   BUILD_REGIONS,
@@ -228,18 +228,24 @@ function NumericField({
    the phone accordion (03.10), which opened on «Об’єкт» — four questions the drawing does not answer — and left the
    sizes, the part that moves the drawing, folded. */
 
-const PHONE_QUERY = '(max-width: 760px)';
-
-/** Brings the steps' tabs back into view after a step changed from below them: under the site header, and on a phone
- *  under the mini drawing held below it as well (useMiniPreview in HangarConfigurator.tsx). Twice, because arriving at
- *  the controls switches the drawing to its compact size a frame later. Left alone when they are already in view. */
-function landOnSteps(tabs: HTMLElement) {
+/** Brings the steps' tabs back into view after a step changed from below them: under the site header and under what
+ *  stays over the steps — a phone's mini drawing (useMiniPreview in HangarConfigurator.tsx) or a portrait tablet's
+ *  sticky sheet (09.10, audit F22). Under either the tabs are put right under it, from either side: after «Каркас» a
+ *  shorter mini drawing left a 52–83 px gap above them, and a taller one covered them (09.10, audit F52). With nothing
+ *  over them they are left alone when already in view. Twice, because arriving at the controls switches the drawing to
+ *  its compact size a frame later, and the frame's step measures its taller mini drawing then. */
+export function landOnSteps(tabs: HTMLElement) {
   const land = () => {
-    const phone = window.matchMedia(PHONE_QUERY).matches;
-    const stage = phone ? tabs.closest('.hangar-configurator-embedded .hc-layout')?.querySelector<HTMLElement>('.hc-preview-surface') : null;
-    const covered = (document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0) + (stage?.offsetHeight ?? 0);
+    const layout = tabs.closest<HTMLElement>('.hangar-configurator-embedded .hc-layout');
+    const stage = layout?.querySelector<HTMLElement>('.hc-preview-surface');
+    // Stuck, it is measured as it is; a phone's sheet not yet held, by the mini drawing it turns into as the tabs land
+    let over = 0;
+    if (stage && getComputedStyle(stage).position === 'sticky') over = stage.offsetHeight;
+    else if (layout) over = Number.parseFloat(layout.style.getPropertyValue('--hc-mini-h')) || 0;
+    const covered = (document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0) + over;
     const top = tabs.getBoundingClientRect().top;
-    if (top < covered || top > window.innerHeight * 0.5) window.scrollBy({ top: top - covered - 8, behavior: 'instant' });
+    const away = over > 0 ? Math.abs(top - covered - 8) > 1 : top < covered || top > window.innerHeight * 0.5;
+    if (away) window.scrollBy({ top: top - covered - 8, behavior: 'instant' });
   };
   land();
   window.requestAnimationFrame(() => window.requestAnimationFrame(land));
@@ -274,7 +280,7 @@ function StepTabs({
   step,
   answered,
   onSelect,
-}: Readonly<{ step: number; answered: readonly boolean[]; onSelect: (index: number, focus?: boolean) => void }>) {
+}: Readonly<{ step: number; answered: readonly boolean[]; onSelect: (index: number, focus?: boolean, land?: boolean) => void }>) {
   // Arrow keys move between the tabs (the tabs pattern): one stop in the tab order, the open step's tab
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const last = CONTROL_STEPS.length - 1;
@@ -298,7 +304,9 @@ function StepTabs({
           tabIndex={step === index ? 0 : -1}
           // answered, not merely passed (07.10): a step skipped over looked done
           data-done={answered[index] && step !== index ? '' : undefined}
-          onClick={() => onSelect(index)}
+          // Under the phone's held mini drawing a tab lands the steps under it, as «Далі» does: «Каркас» has a taller
+          // mini drawing, and its tabs went under it, a tap on «Обсяг» then hitting «Згорнути» (09.10, audit F52)
+          onClick={(event) => onSelect(index, false, event.currentTarget.closest('[data-configuring]') !== null)}
           onKeyDown={(event) => onKeyDown(event, index)}
         >
           <span className="hc-step-number" aria-hidden="true">{index + 1}</span>
@@ -322,16 +330,27 @@ function wallHeightFor(gateType: GateType): number {
 }
 
 /** Says why the openings shown are not the ones chosen — with the reason (08.10, audit: «лише ті, що вміщуються» while
- *  none did, and the greyed options said nothing). The choice is held and comes back with the room. */
-function heldOpeningsNote(state: ConfiguratorState, gatesHeld: boolean, doorHeld: boolean): string | null {
+ *  none did, and the greyed options said nothing) and, since 09.10 (owner), what the scheme draws instead, in the
+ *  stamp's terms (deriveSummary heldGatesReason). The choice is held and comes back with the room. */
+function heldOpeningsNote(
+  state: ConfiguratorState,
+  shown: Readonly<{ gates: number; gateType: GateType }>,
+  gatesHeld: boolean,
+  doorHeld: boolean,
+): string | null {
   const back = 'Ваш вибір повернеться, щойно розміри це дозволять.';
   const gate = GATE_DIMENSIONS_M[state.gateType];
-  const gateWords = `Ворота ${formatSize(gate.widthM, gate.heightM)}`;
+  const size = formatSize(gate.widthM, gate.heightM);
   let gates: string | null = null;
-  if (gatesHeld) {
-    gates = gateHeightFits(state.gateType, state.dimensions.height)
-      ? `${gateWords} у такій кількості не вміщуються за ширини ${formatMetres(state.dimensions.width)}${NBSP}м.`
-      : `${gateWords} потребують стін від ${formatMetres(wallHeightFor(state.gateType))}${NBSP}м.`;
+  if (gatesHeld && !gateHeightFits(state.gateType, state.dimensions.height)) {
+    const drawn = GATE_DIMENSIONS_M[shown.gateType];
+    gates = `Ворота ${size} потребують стін від ${formatMetres(wallHeightFor(state.gateType))}${NBSP}м.`;
+    if (shown.gates > 0) gates += ` У схемі показано ${GATE_TYPE_LABELS[shown.gateType].toLowerCase()}, ${formatSize(drawn.widthM, drawn.heightM)}.`;
+  } else if (gatesHeld) {
+    const width = `${formatMetres(state.dimensions.width)}${NBSP}м`;
+    gates = shown.gates > 0
+      ? `За ширини ${width} вміщуються лише ${gatesCountPhrase(shown.gates)} ${size}${NBSP}— їх показано у схемі.`
+      : `Ворота ${size} у такій кількості не вміщуються за ширини ${width}.`;
   }
   const door = doorHeld ? 'Для дверей немає місця за цієї ширини й цих воріт.' : null;
   const said = [gates, door].filter(Boolean).join(' ');
@@ -473,7 +492,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   const doorHeld = state.doors !== shown.doors;
   // what the drawing, the stamp and the lead treat as asked for: the mode's works (drawnScope), not the kept list
   const wallsInScope = domain.scope.walls;
-  const heldNote = wallsInScope ? heldOpeningsNote(state, gatesHeld, doorHeld) : null;
+  const heldNote = wallsInScope ? heldOpeningsNote(state, shown, gatesHeld, doorHeld) : null;
   const roofInScope = domain.scope.roof;
   const foundationInScope = domain.scope.foundation;
   // "Контур" sets the wall AND roof systems together, so it stays available while either surface
@@ -898,8 +917,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
           <div className="hc-option-cards hc-chips hc-door-options" role="radiogroup" aria-labelledby="hc-doors-label">
             {DOOR_OPTIONS.map((option) => {
               // Disabled rather than hidden, and only ever for a real reason: at this width the
-              // door has no position clear of the corners, the gates and the centre-support line.
-              const disabled = option > 0 && (!wallsInScope || !doorFits(shown.gates, shown.gateType, state.dimensions.width));
+              // door has no position clear of the corners, the gates and the centre-support line —
+              // where one stands, as the model decides it (09.10, audit F60: the same scheme)
+              const disabled = option > 0 && (!wallsInScope
+                || !doorFits(shown.gates, shown.gateType, state.dimensions.width, domain.structural.scheme === 'centerSupport'));
               return (
                 <label className="hc-option-card" key={option}>
                   <input

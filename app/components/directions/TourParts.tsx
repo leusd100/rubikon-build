@@ -41,11 +41,21 @@ export function TourSteps({
   );
 }
 
-/** «Пауза» / «Відтворити»; `what` completes the label for a screen reader («показу вузла», «показ каркаса») */
-export function TourControl({ touring, toggle, what }: Readonly<{ touring: boolean; toggle: () => void; what: string }>) {
+/** «Пауза» / «Відтворити»; `what` completes the label for a screen reader («показу вузла», «показ каркаса»). With `label`
+ *  the button says its own words instead, seen and heard alike — the action it takes, never the tour's state (09.10,
+ *  audit F44: the configurator's «Показати по черзі» stood beside the button, not in it, and a click on the words did
+ *  nothing; a voice command naming them found no button) */
+export function TourControl({ touring, toggle, what, label }: Readonly<{
+  touring: boolean;
+  toggle: () => void;
+  what: string;
+  label?: { play: string; stop: string };
+}>) {
   return (
     <button type="button" className="dn-control" data-paused={touring ? undefined : true} onClick={toggle}>
-      <span className="dn-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ` показу ${what}` : ` показ ${what}`}</span></span>
+      {label
+        ? <span className="dn-control-label">{touring ? label.stop : label.play}</span>
+        : <span className="dn-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ` показу ${what}` : ` показ ${what}`}</span></span>}
       <span className="dn-control-icon" aria-hidden="true" />
     </button>
   );

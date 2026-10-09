@@ -10,7 +10,7 @@ import {
 } from '../../lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { TourProgress } from '../directions/TourParts';
-import { endWallFraming } from './endWallFraming';
+import { endWallFraming, sheetOpenings } from './endWallFraming';
 import './frame-tour.css';
 
 // /angary «Каркас вашого ангара — від покрівлі до основи» (UX review 2026-10; redrawn 03.10 — owner: «не завжди
@@ -53,6 +53,10 @@ const LEAN = 0.3;
 const TAG = 15 * 1.5;
 const LETTER = 19 * 1.55;
 const BUBBLE = 11 * 1.55;
+/** Between a dimension line and its letter, and between L and the axes' bubbles past it */
+const LETTER_GAP = 6;
+/** How far under the span's dimension line its axes' bubbles stand: past L (09.10) */
+const BUBBLE_DOWN = LETTER_GAP * 2 + LETTER * 0.72 + BUBBLE;
 /** A name's width: Manrope 600 runs at most ~0.62 em a letter in these words (measured, 03.10) */
 const tagWidth = (label: string) => label.length * TAG * 0.62;
 /** The axes across the span, lettered in sequence (ДСТУ Б А.2.4-4 skips none of these) */
@@ -63,7 +67,9 @@ const metres = (value: number) => `${fmt(value)}\u00A0м`;
 /** A dash or a «·» keeps to the word before it, so no line of a step's text or caption starts with one (04.10) */
 const keepMarks = (text: string) => text.replaceAll(' — ', '\u00A0— ').replaceAll(' · ', '\u00A0· ');
 const OVERVIEW_CAPTION = 'Каркас, прогони й в’язі';
-/** The paint around a name, half of it on either side of the letters, at a phone's line weight (--ft-k) */
+/** The paint around a name, half of it on either side of the letters, at a phone's line weight (--ft-k). Laid out at
+ *  the 5 px it was: the 7 px painted since 09.10 (frame-tour.css .ft-tag, audit F73) only parts the members a name
+ *  still lies on from its letters — counted here, it moved the names onto more of them (141 → 166 crossings) */
 const HALO = (5 * 1.55) / 2;
 const n = (value: number) => value.toFixed(1);
 const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), high);
@@ -113,12 +119,21 @@ function camera(focus: Pt, zoom: number, box: Box) {
 /** What a step hands the stage: its camera without the window it was fitted to */
 const shot = ({ focus, zoom }: { focus: Pt; zoom: number }) => ({ focus, zoom });
 
+/** The straight runs of a path the drawing built with `line()` (absolute M…L…) */
+const segmentsOf = (d: string): Segment[] => d.split('M').filter(Boolean).flatMap((run) => {
+  const points = run.split('L').map((pair) => pair.split(',').map(Number) as unknown as Pt);
+  return points.slice(1).map((point, index): Segment => [points[index], point]);
+});
+
 type Tag = { label: string; lines: readonly string[]; d: string; x: number; y: number; anchor: 'start' | 'end'; box: Box };
 /** Names a member with a short leader to its label: the first way out (from one of the member's points, at one of the
  *  leaders) that keeps the label inside the window and clear of every label, bubble, footing, dimension line and
  *  leader placed so far — on one line if it can, else in two (a phone's labels are half as large again); failing that,
- *  the first clear one inside the picture, and the camera eases back to take it in */
-function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt[] }[], view: Box, taken: Box[], lines: Segment[]): Tag {
+ *  the first clear one inside the picture, and the camera eases back to take it in. With `bars` — the members the step
+ *  lights — of the ways that fit, the one fewest of them run through (09.10, audit F73: «стійки фахверку» sat on the
+ *  roof bracing, «стінові прогони» on the wall's cross, copper names on copper lines). Not a hard rule: on the bays'
+ *  dense copper grid no way is often clear of all of them. */
+function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt[] }[], view: Box, taken: Box[], lines: Segment[], bars: readonly Segment[] = []): Tag {
   const words = label.split(' ');
   const layouts = words.length > 1 ? [[label], [words[0], words.slice(1).join(' ')]] : [[label]];
   const options = layouts.flatMap((rows) => ways.flatMap(({ from: [x, y], leaders }) => leaders.map(([dx, dy]) => {
@@ -137,7 +152,10 @@ function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt
   const clear = (option: (typeof options)[number]) => !taken.some((box) => overlaps(box, option.box) || crosses(option.leader, box))
     && !lines.some((segment) => crosses(segment, option.box));
   const picture: Box = [4, 4, VIEW.width - 4, VIEW.height - 4];
-  const chosen = options.find((option) => within(option.box, view) && clear(option))
+  const crossed = (option: (typeof options)[number]) => bars.filter((bar) => crosses(bar, option.box)).length;
+  // the earliest of the least crossed: with no bars, the first that fits, as before
+  const fitting = options.filter((option) => within(option.box, view) && clear(option));
+  const chosen = fitting.reduce<(typeof options)[number] | undefined>((best, option) => (best && crossed(best) <= crossed(option) ? best : option), undefined)
     ?? options.find((option) => within(option.box, picture) && clear(option))
     ?? options.find((option) => within(option.box, picture))
     ?? options[0];
@@ -174,9 +192,10 @@ function frameGeometry(domain: HangarDomainModel) {
   const centre = domain.structural.scheme === 'centerSupport';
   const roofZ = (x: number) => E + (R - E) * (1 - Math.abs(x - W / 2) / (W / 2));
   const columnXs = centre ? [0, W / 2, W] : [0, W];
-  // The configurator's own model: its gates and door on this end wall, and the bays it braces
+  // The configurator's own model: its gates and door on this end wall — on the same side of the centre as the general
+  // view and the 3D show them, and only with walls in the request (09.10, sheetOpenings) — and the bays it braces
   const model = buildParametricModel(domain);
-  const openings = model.openings.map(({ kind, rect }) => ({ kind, xM: rect.xM, widthM: rect.widthM, heightM: rect.heightM }));
+  const openings = sheetOpenings(model.openings, W, domain.scope.walls);
   // The end wall's posts (стійки фахверку) carry its wall purlins between the corner columns, about every 7 m (with a
   // centre row a post halves each span, 03.10) — and frame its gates, never standing in one (04.10, endWallFraming.ts)
   const framing = endWallFraming({ widthM: W, eaveM: E, centre, openings });
@@ -189,7 +208,9 @@ function frameGeometry(domain: HangarDomainModel) {
   const frames = Array.from({ length: bays + 1 }, (_, index) => index * s);
 
   // Fit the frame with its footings, dimensions and the wind arrows into the sheet: room on top for the snow arrows,
-  // under the span's dimension for its axes' bubbles, and right of the frame spacing's for theirs
+  // under the span's dimension for its axes' bubbles, and right of the frame spacing's for theirs. The frames' bubbles
+  // are no longer drawn (09.10, below), but their room stays: it sets the scale of all five cameras and the overview
+  // tuned on 07.10, and is taken out only with a pass over every step's picture.
   const extremes: P3[] = [
     [-0.9, -0.75, -1.1], [-3.6, 0, E / 2], [0, 0, DIM_Z], [W, 0, DIM_Z],
     [W * 0.2, -WIND, E * 0.25], [W * 0.8, -WIND, E * 0.25],
@@ -201,7 +222,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const [minY, maxY] = [Math.min(...raw.map(([, y]) => y)), Math.max(...raw.map(([, y]) => y))];
   const bubblesOut = (k: number) => bayBubblesOut(frames, s, k);
   const fit = (reach: number) => {
-    const pad = { left: 22, right: 22 + reach, top: 32, bottom: 10 + 8 + 2 * BUBBLE };
+    const pad = { left: 22, right: 22 + reach, top: 32, bottom: 10 + BUBBLE_DOWN + BUBBLE };
     const k = Math.min((VIEW.width - pad.left - pad.right) / (maxX - minX), (VIEW.height - pad.top - pad.bottom) / (maxY - minY));
     return {
       k,
@@ -213,7 +234,6 @@ function frameGeometry(domain: HangarDomainModel) {
   let placed = fit(BUBBLE_OUT + BUBBLE);
   placed = fit(Math.max(...bubblesOut(placed.k)) + BUBBLE);
   placed = fit(Math.max(...bubblesOut(placed.k)) + BUBBLE);
-  const outs = bubblesOut(placed.k);
   const { k, ox, oy } = placed;
   const xy = (point: P3) => { const [x, y] = unit(point); return [ox + x * k, oy + y * k] as const; };
   const p = (point: P3) => xy(point).map(n).join(',');
@@ -304,39 +324,50 @@ function frameGeometry(domain: HangarDomainModel) {
   const slab = line([-0.75, -0.75, 0], [W + 0.75, -0.75, 0], [W + 0.75, end, 0]);
 
   // Dimensions: the span L under the front frame, below its footings (as on a section — in front of them it crossed the
-  // foundations, 03.10), the wall height H at the near-left column, the frame spacing a along the side. Ticks at 45°.
-  const tick = (point: P3, rising: boolean) => { const [x, y] = xy(point); return rising ? `M${n(x - 4)},${n(y + 4)}l8,-8` : `M${n(x - 4)},${n(y - 4)}l8,8`; };
-  const spanDim = `${line([0, 0, DIM_Z], [W, 0, DIM_Z])}${tick([0, 0, DIM_Z], true)}${tick([W, 0, DIM_Z], true)}`;
+  // foundations, 03.10), the wall height H at the near-left column, the frame spacing a along the side. One way for all
+  // three (owner, 09.10: «з цими розмірними лініями треба навести лад»): extension lines from what is measured to just
+  // past the dimension line, a 45° tick at each end, and the letter at the line's middle on its outer side, a gap off it.
+  // H had flat ticks and no lower extension line, a stood off past its line's end, L beside Б's bubble.
+  const tickAt = ([x, y]: Pt) => `M${n(x - 4)},${n(y + 4)}l8,-8`;
+  const tick = (point: P3) => tickAt(xy(point));
+  const spanDim = `${line([0, 0, DIM_Z], [W, 0, DIM_Z])}${tick([0, 0, DIM_Z])}${tick([W, 0, DIM_Z])}`;
   const [hx, hy] = xy([-2.2, 0, 0]);
   const [, hty] = xy([-2.2, 0, E]);
-  const heightDim = `M${n(hx)},${n(hy)}V${n(hty)}M${n(hx - 5)},${n(hy)}h10M${n(hx - 5)},${n(hty)}h10${line([-0.9, 0, E], [-2.6, 0, E])}`;
-  const bayDim = `${line([W + DIM_A, 0, 0], [W + DIM_A, s, 0])}${tick([W + DIM_A, 0, 0], false)}${tick([W + DIM_A, s, 0], false)}`;
+  const heightDim = `M${n(hx)},${n(hy)}V${n(hty)}${tickAt([hx, hy])}${tickAt([hx, hty])}`
+    + `${line([-0.9, 0, 0], [-2.6, 0, 0])}${line([-0.9, 0, E], [-2.6, 0, E])}`;
+  const bayDim = `${line([W + DIM_A, 0, 0], [W + DIM_A, s, 0])}${tick([W + DIM_A, 0, 0])}${tick([W + DIM_A, s, 0])}`
+    + `${line([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0])}${line([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0])}`;
 
   // Coordinate axes, dash-dot, with their bubbles past the dimension lines (03.10): across the span in letters, one after
   // another as a drawing letters them (04.10) — А, Б on a clear span, А, Б, В with the centre row (Б) — down through
-  // the front columns to under L; along the building 1, 2, 3(, 4) — out through the side wall's columns past a. Only
-  // the drawn frames are numbered: the axis at the break is left open.
+  // the front columns to under L. The axes along the building (1, 2, 3…) are not drawn (09.10, audit F89): the
+  // configurator's sheet has one numbering, the steps' and the nodes' (07.10), and their hidden bubbles still pulled the
+  // «Прогони й в’язі» camera back, leaving a sixth of its window empty on the right.
   const down = (point: P3, by: number) => { const [x, y] = xy(point); return [x, y + by] as const; };
-  const spanBubbles = columnXs.map((x, index) => ({ label: AXIS_LETTERS[index], at: down([x, 0, DIM_Z], 8 + BUBBLE) }));
+  // the bubbles past L, so the letter keeps the line's middle whatever axis runs there (09.10)
+  const spanBubbles = columnXs.map((x, index) => ({ label: AXIS_LETTERS[index], at: down([x, 0, DIM_Z], BUBBLE_DOWN) }));
   const spanAxes = columnXs.map((x, index) => `M${p([x, 0, roofZ(x) + 0.7])}L${spanBubbles[index].at.map(n).join(',')}`).join('');
-  const bayBubbles = frames.map((d, index) => {
-    const [x, y] = xy([W + DIM_A, d, 0]);
-    return { label: String(index + 1), at: [x + outs[index] * AX[0], y + outs[index] * AX[1]] as const };
-  });
-  const bayAxes = frames.map((d, index) => `M${p([W - 1.2, d, 0])}L${bayBubbles[index].at.map(n).join(',')}`).join('');
+  // Each letter's centre (they are set on their middle, frame-tour.css): L under the middle of its line — with the centre
+  // row Б's axis runs behind it, parted by the letter's paint, and Б's bubble stands past it (audit F126: beside the
+  // bubble it read «Б L»); H left of its line, a right of its own, each by the same gap
   const letters = {
-    L: down([centre ? W / 4 : W / 2, 0, DIM_Z], 26),
-    H: down([-3.3, 0, E / 2], 6),
-    // past its dimension line, before the bubbles
-    a: (() => { const [x, y] = xy([W + DIM_A, s / 2, 0]); return [x + 22 * AX[0], y + 22 * AX[1] + 6] as const; })(),
+    L: down([W / 2, 0, DIM_Z], LETTER_GAP + LETTER * 0.36),
+    H: [hx - LETTER_GAP, (hy + hty) / 2] as const,
+    a: (() => { const [x, y] = xy([W + DIM_A, s / 2, 0]); return [x + LETTER_GAP, y] as const; })(),
   };
 
-  // What labels must keep clear of, at a phone's sizes
-  const letterBox = ([x, y]: Pt, lowercase = false) => [x - LETTER * 0.36, y - LETTER * (lowercase ? 0.56 : 0.76), x + LETTER * 0.36, y + LETTER * 0.08] as Box;
-  const bubbleBoxes = [...spanBubbles, ...bayBubbles].map(({ at }) => around(at, BUBBLE + 2));
-  const letterBoxes = [letterBox(letters.L), letterBox(letters.H), letterBox(letters.a, true)];
+  // What labels must keep clear of, at a phone's sizes: L on its centre, H ending at its point, a starting at its point
+  const letterBox = ([x, y]: Pt, anchor: 'middle' | 'end' | 'start' = 'middle', lowercase = false) => {
+    const width = LETTER * 0.72;
+    const half = LETTER * (lowercase ? 0.28 : 0.38);
+    const left = anchor === 'middle' ? x - width / 2 : anchor === 'end' ? x - width : x;
+    return [left, y - half, left + width, y + half] as Box;
+  };
+  const bubbleBoxes = spanBubbles.map(({ at }) => around(at, BUBBLE + 2));
+  const letterBoxes = [letterBox(letters.L), letterBox(letters.H, 'end'), letterBox(letters.a, 'start', true)];
   const dimLines: Segment[] = [
     segment([0, 0, DIM_Z], [W, 0, DIM_Z]), segment([W + DIM_A, 0, 0], [W + DIM_A, s, 0]), [[hx, hy], [hx, hty]], segment([-0.9, 0, E], [-2.6, 0, E]),
+    segment([-0.9, 0, 0], [-2.6, 0, 0]), segment([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0]), segment([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0]),
   ];
 
   // ── snow, followed through one frame (the second): the strip of roof it carries — half a bay either side — then
@@ -416,7 +447,7 @@ function frameGeometry(domain: HangarDomainModel) {
 
   const spanCamera = camera(xy([W / 2, 0, E * 0.4]), 1.3, union([
     frontFrame, pointsBox(columnXs.map((x) => [x, 0, roofZ(x) + 0.7] as P3)),
-    ...spanBubbles.map(({ at }) => around(at, BUBBLE + 2)), letterBox(letters.L), letterBox(letters.H),
+    ...spanBubbles.map(({ at }) => around(at, BUBBLE + 2)), letterBox(letters.L), letterBox(letters.H, 'end'),
   ]));
 
   // the front frame's nodes the configurator's «Каркас» view opens (07.10): the heel over the left column, the ridge,
@@ -449,7 +480,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const baysFocus = xy([W * 0.86, s, E * 0.6]);
   const baysEssentials = union([
     pointsBox([[W, 0, 0], [W, s, 0], [W, 0, E], [W, s, E], [W / 2, 0, R], [W / 2, s, R], ...postXs.map((x) => [x, 0, roofZ(x)] as P3)]),
-    ...bayBubbles.map(({ at }) => around(at, BUBBLE + 2)), letterBox(letters.a, true),
+    letterBox(letters.a, 'start', true),
   ]);
   const baysBase = camera(baysFocus, 1.5, baysEssentials);
   const topPurlin = Math.max(...purlinXs);
@@ -457,19 +488,21 @@ function frameGeometry(domain: HangarDomainModel) {
   // the end wall's wall purlins, from the right, the lower first, each at its middle: where a name can sit on one
   // without crossing a post's footing; the short pieces beside a gate last
   const bands = [...framing.girts].sort((a, b) => Number(a.to - a.from < 2) - Number(b.to - b.from < 2) || b.from - a.from || a.z - b.z);
+  // the members this step lights — purlins, wall purlins, posts and all its bracing: its names keep off them where they can
+  const bars = segmentsOf(`${purlins}${girts}${posts}${wallBracing}${farBracing}${roofBracing}${laterBracing}${laterFarBracing}`);
   const baysTags = [
-    placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, taken, lines),
-    placeTag('прогони', [1.5, 1.2, 1.9].map((t) => ({ from: xy([topPurlin, s * t, roofZ(topPurlin)]), leaders: [[22, -26], [28, -12], [12, -36]] as Pt[] })), baysBase.view, taken, lines),
+    placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, taken, lines, bars),
+    placeTag('прогони', [1.5, 1.2, 1.9].map((t) => ({ from: xy([topPurlin, s * t, roofZ(topPurlin)]), leaders: [[22, -26], [28, -12], [12, -36]] as Pt[] })), baysBase.view, taken, lines, bars),
     // on a wall purlin of the end wall, the name above or below it; else out from the side wall's
     placeTag('стінові прогони', [
       ...bands.map(({ z, from, to }) => ({ from: xy([(from + to) / 2, 0, z]), leaders: [[-14, -20], [14, -20], [-14, 22], [14, 22]] as Pt[] })),
       ...sideWall.flatMap((t) => [(2 * E) / 3, E / 3].map((z) => ({ from: xy([W, s * t, z]), leaders: [[26, -16], [30, 10], [26, 16]] as Pt[] }))),
-    ], baysBase.view, taken, lines),
+    ], baysBase.view, taken, lines, bars),
     // on a post, into the end wall beside it, or above the roof from its top
     placeTag('стійки фахверку', [
       ...[...postXs].reverse().flatMap((x) => [0.8, 0.62, 0.45].map((t) => ({ from: xy([x, 0, E * t]), leaders: [[-24, -14], [24, -14], [-24, 14], [24, 14]] as Pt[] }))),
       ...postXs.map((x) => ({ from: xy([x, 0, roofZ(x) - 0.3]), leaders: [[-18, -34], [18, -34], [-30, -50]] as Pt[] })),
-    ], baysBase.view, taken, lines),
+    ], baysBase.view, taken, lines, bars),
   ];
   const baysCamera = camera(baysFocus, 1.5, union([baysEssentials, ...baysTags.map((tag) => tag.box)]));
 
@@ -480,7 +513,7 @@ function frameGeometry(domain: HangarDomainModel) {
     pointsBox([[0, 0, 0], [W, 0, 0], [0, end, 0], [W, end, 0], [0, 0, E], [W / 2, 0, R], [W / 2, end, R], [W, end, E], [0, end, E],
       [0, 0, DIM_Z], [W, 0, DIM_Z], [W + DIM_A, 0, 0], [W + DIM_A, s, 0]]),
     ...footings.map((footing) => footing.box), [hx - 6, hty, hx + 6, hy],
-    letterBox(letters.L), letterBox(letters.H), letterBox(letters.a, true),
+    letterBox(letters.L), letterBox(letters.H, 'end'), letterBox(letters.a, 'start', true),
   ]);
   const overviewCamera = camera(
     [(overviewBox[0] + overviewBox[2]) / 2, (overviewBox[1] + overviewBox[3]) / 2],
@@ -499,8 +532,10 @@ function frameGeometry(domain: HangarDomainModel) {
     slab, footings: footings.map((footing) => footing.d), backFrames, longitudinals, farEnd, purlins, girts, posts, openingOutlines,
     wallBracing, farBracing, roofBracing, laterBracing, laterFarBracing,
     windPosts: windPosts.map(({ x, top }) => line([x, 0, 0], [x, 0, top])).join(''),
-    frontColumns: columnsAt(0, [0, W]), frontRoof: `${roofAt(0)}${centre ? columnsAt(0, [W / 2]) : ''}`, spanDim, heightDim, bayDim,
-    spanAxes, bayAxes, spanBubbles, bayBubbles, letters,
+    // the front frame's columns, the centre row's Б among them: on the span's step it stood stepped back with the frame's
+    // roof, and its axis over it read as a dashed column (09.10, audit F126) — the step's words name Б, so it lights
+    frontColumns: columnsAt(0), frontRoof: roofAt(0), spanDim, heightDim, bayDim,
+    spanAxes, spanBubbles, letters,
     snowArrows, snowStrip, stripEdges, stripPurlins, snowFrame: roofAt(s), snowColumns: columnsAt(s), snowFootings,
     snowGround: groundUnder(columnXs.map((x) => [x, s, -1.1] as P3)), snowFlow,
     windArrows, endWall, braceFootings, windGround: groundUnder(braceBases.map(([x, d]) => [x, d, -1.1] as P3)), windFlow, ghost,
@@ -654,7 +689,9 @@ export function FrameTourStage({
             </ol>
             <p className="ft-note">Деформацію показано умовно, у{'\u00A0'}збільшеному масштабі</p>
           </div>
-          {/* the camera's window: the picture's own proportion (on a phone the legend's band sits above it) */}
+          {/* the camera's window: the picture's own proportion (on a phone the legend's band sits above it), in a slot that
+              on a computer is the height the sheet leaves under the legend, so the window fits it whole (09.10, F15) */}
+          <div className="ft-slot">
           <div className="ft-window" ref={visualRef}>
             <div className="dn-stage is-drawing" style={{ transform: stageTransform(size, VIEW, active) }}>
               <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру`}>
@@ -675,7 +712,6 @@ export function FrameTourStage({
                 {/* the gates and the door on the near end wall, as the configurator places them (04.10) */}
                 {g.openingOutlines && <path className="ft-opening" d={g.openingOutlines} />}
                 <g className="ft-part" data-part="3">
-                  <path className="ft-axis" d={g.bayAxes} />
                   <path className="ft-thin" d={`${g.purlins}${g.girts}`} />
                   <path className="ft-post" pathLength={1} d={g.posts} />
                   <path className="ft-brace ft-brace-far" pathLength={1} d={g.farBracing} />
@@ -684,10 +720,7 @@ export function FrameTourStage({
                   {g.laterBracing && <path className="ft-brace ft-brace-far" pathLength={1} d={g.laterFarBracing} />}
                   {g.laterBracing && <path className="ft-brace" pathLength={1} d={g.laterBracing} />}
                   <path className="ft-dim" d={g.bayDim} />
-                  {g.bayBubbles.map(({ label, at: [x, y] }) => (
-                    <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 5)}>{label}</text></g>
-                  ))}
-                  <text className="ft-letter" x={n(g.letters.a[0])} y={n(g.letters.a[1])}>a</text>
+                  <text className="ft-letter" data-anchor="start" x={n(g.letters.a[0])} y={n(g.letters.a[1])}>a</text>
                 </g>
                 {/* the front columns belong to the span and to the frame */}
                 <g className="ft-part" data-part="1 2">
@@ -697,7 +730,7 @@ export function FrameTourStage({
                   <path className="ft-dim" pathLength={1} d={g.spanDim} />
                   <text className="ft-letter" x={n(g.letters.L[0])} y={n(g.letters.L[1])}>L</text>
                   <path className="ft-dim" d={g.heightDim} />
-                  <text className="ft-letter" x={n(g.letters.H[0])} y={n(g.letters.H[1])}>H</text>
+                  <text className="ft-letter" data-anchor="end" x={n(g.letters.H[0])} y={n(g.letters.H[1])}>H</text>
                   {g.spanBubbles.map(({ label, at: [x, y] }) => (
                     <g key={label} className="ft-bubble"><circle cx={n(x)} cy={n(y)} r={11} /><text x={n(x)} y={n(y + 5)}>{label}</text></g>
                   ))}
@@ -764,6 +797,7 @@ export function FrameTourStage({
                 </g>
               </svg>
             </div>
+          </div>
           </div>
           <TourProgress count={count} step={step} run={run} className="ft-progress" />
     </>

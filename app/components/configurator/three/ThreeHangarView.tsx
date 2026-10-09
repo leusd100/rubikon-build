@@ -438,14 +438,21 @@ function EnvelopePanel({
     const pointsInward = towardInterior.dot(naturalNormal) >= 0;
 
     const un = pointsInward ? naturalUn.clone().negate() : naturalUn;
-    const origin = pointsInward ? c1 : c0;
     const normal = new THREE.Vector3().crossVectors(un, wn).normalize();
+    // Where the cladding hangs (09.10, audit F68; threeSceneModel.ts `standoff`): the geometry spans local Z
+    // [−thickness, 0], so its origin moves out along the outward normal by the standoff AND the thickness — the inner
+    // face then stands `outwardM` off the members' plane, the frame inside it. Along the first edge it runs on past
+    // its corners by `startM`/`endM`, from whichever corner the flipped basis starts at; a wall's first corner is on
+    // its top edge, and it runs up past it by `riseM`, back along the second edge.
+    const { outwardM = 0, startM = 0, endM = 0, riseM = 0 } = panel.standoff ?? {};
+    const origin = pointsInward ? c1.clone().addScaledVector(naturalUn, endM) : c0.clone().addScaledVector(naturalUn, -startM);
+    origin.addScaledVector(wn, -riseM).addScaledVector(normal, outwardM + (panel.standoff ? panel.thicknessM : 0));
 
     const basis = new THREE.Matrix4().makeBasis(un, wn, normal);
     const quaternion = new THREE.Quaternion().setFromRotationMatrix(basis);
     const matrix = new THREE.Matrix4().compose(origin, quaternion, new THREE.Vector3(1, 1, 1));
 
-    return { matrix, geometry: envelopeGeometryFor(lu, lw, panel.thicknessM, panel.claddingSystem) };
+    return { matrix, geometry: envelopeGeometryFor(lu + startM + endM, lw + riseM, panel.thicknessM, panel.claddingSystem) };
   }, [panel, interiorPoint]);
 
   return (
@@ -492,8 +499,16 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
+  // The overlay is authored from its own x = 0; the cladding's pentagon starts at `gable.xM` (09.10, F68: widened to
+  // the side walls), so the holes move into the overlay's frame and the mesh back out to the gable's
   const overlay = useMemo(
-    () => buildGableCladdingOverlay(gable.widthM, gable.eaveM, gable.ridgeM, gable.holes, gable.claddingSystem),
+    () => buildGableCladdingOverlay(
+      gable.widthM,
+      gable.eaveM,
+      gable.ridgeM,
+      gable.holes.map((hole) => hole.map((p) => ({ x: p.x - gable.xM, y: p.y }))),
+      gable.claddingSystem,
+    ),
     [gable],
   );
   useEffect(() => () => overlay?.geometry.dispose(), [overlay]);
@@ -517,7 +532,7 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
         <mesh
           geometry={overlay.geometry}
           material={sharedMaterial(gable.material)}
-          position={[0, 0, overlayZ]}
+          position={[gable.xM, 0, overlayZ]}
           castShadow={castShadow}
           receiveShadow
         />
@@ -538,13 +553,27 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
  * opacity driver of its own and fades in lockstep with the roof for free, same reasoning as
  * `Footing` sharing the slab's own material/driver above.
  */
-function RidgeCap({ building, roofSystem, castShadow }: { building: ParametricBuildingModel; roofSystem: CladdingSystem; castShadow: boolean }) {
+function RidgeCap({
+  building,
+  roofSystem,
+  cladding,
+  castShadow,
+}: {
+  building: ParametricBuildingModel;
+  roofSystem: CladdingSystem;
+  cladding: ThreeSceneModel['roofCladding'];
+  castShadow: boolean;
+}) {
   const { widthM, lengthM } = building.footprint;
   const { ridgeM } = building.heights;
   const { pitchDeg } = building.roof;
+  // On the roof's outer faces, which stand `outerM` off the rafters along each slope's normal — so meet that much over
+  // the slope's cosine above the ridge line — and as long as the roof, which runs on past both end frames (09.10, F68)
+  const capRidgeM = ridgeM + cladding.outerM / Math.cos((pitchDeg * Math.PI) / 180);
+  const capLengthM = lengthM + 2 * cladding.endReachM;
   const geometry = useMemo(
-    () => buildRidgeCapGeometry(widthM, lengthM, ridgeM, pitchDeg),
-    [widthM, lengthM, ridgeM, pitchDeg],
+    () => buildRidgeCapGeometry(widthM, capLengthM, capRidgeM, pitchDeg),
+    [widthM, capLengthM, capRidgeM, pitchDeg],
   );
   useEffect(() => () => geometry.dispose(), [geometry]);
 
@@ -552,6 +581,7 @@ function RidgeCap({ building, roofSystem, castShadow }: { building: ParametricBu
     <mesh
       geometry={geometry}
       material={sharedMaterial(claddingMaterialKey('roof', roofSystem))}
+      position={[0, 0, -cladding.endReachM]}
       castShadow={castShadow}
       receiveShadow
     />
@@ -1060,7 +1090,7 @@ export function ThreeHangarView({
       {roof.mounted && roofPanels.map((panel) => (
         <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={envelopeCastsShadow} />
       ))}
-      {roof.mounted && <RidgeCap building={building} roofSystem={scene.envelope.roofSystem} castShadow={envelopeCastsShadow} />}
+      {roof.mounted && <RidgeCap building={building} roofSystem={scene.envelope.roofSystem} cladding={scene.roofCladding} castShadow={envelopeCastsShadow} />}
     </Canvas>
   );
 }

@@ -37,8 +37,8 @@ export const BUILD_LAYER_ORDER: readonly BuildLayer[] = [
 
 /** The only layers that share a single trigger — `scope.frame` — and therefore always
  * materialize/dematerialize together, in one user action. Every other layer in
- * `BUILD_LAYER_ORDER` is the sole member of its own trigger (its own checkbox, or the gate
- * count's 0↔some transition), so by the time a user toggles it independently there is nothing
+ * `BUILD_LAYER_ORDER` is the sole member of its own trigger (its own checkbox, or the openings'
+ * none↔some transition — a gate or the door, `openingsShown` in domainModel.ts), so by the time a user toggles it independently there is nothing
  * "still building" left to wait for, however that layer is ordered in the wider convention above. */
 const FRAME_GROUP: readonly BuildLayer[] = ['columns', 'rafters', 'purlins'];
 

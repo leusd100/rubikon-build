@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { chooseSeparateWorks, openControlGroup, openThree } from './configurator.helpers';
+import { chooseSeparateWorks, openControlGroup, openThree, scrollToMiniHold } from './configurator.helpers';
 
 async function openHangarPage(page: Page, dismissCookies = true) {
   await page.goto('/angary', { waitUntil: 'load' });
@@ -83,10 +83,31 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await expect(text).toHaveText('L — 24 м між осями крайніх колон А і В у прикладі. Центральний ряд Б ділить її на два прольоти. H — висота стіни.');
   await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б', 'В']);
   await expect(frame.locator('[data-part~="1"] .ft-bubble').first()).toBeVisible();
-  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3', '4']);
   // one numbering on the screen (07.10): the axes are shown only on «Ширина L» / «Проліт L», whose words name them; the
-  // frames' numbers along the building are not drawn on the configurator's sheet (the steps and the nodes are numbered)
-  await expect(frame.locator('[data-part~="3"] .ft-bubble').first()).toBeHidden();
+  // frames' numbers along the building are not drawn at all (09.10, audit F89: hidden, they still pulled the bays'
+  // camera back)
+  await expect(frame.locator('[data-part~="3"] :is(.ft-bubble, .ft-axis)')).toHaveCount(0);
+  // L names the whole width (09.10, audit F126; owner: «навести лад з a L H»): at the middle of its line, between it and
+  // the axes' bubbles — Б's bubble under it, not beside it («Б L») — and Б's column lit with the outer ones
+  const span = await frame.evaluate((root) => {
+    const box = (element: Element) => element.getBoundingClientRect();
+    const letter = box([...root.querySelectorAll('[data-part~="1"] .ft-letter')].find((element) => element.textContent === 'L')!);
+    const bubbles = [...root.querySelectorAll('[data-part~="1"] .ft-bubble circle')].map(box);
+    return {
+      at: (letter.left + letter.right) / 2,
+      bottom: letter.bottom,
+      a: bubbles[0].x + bubbles[0].width / 2, c: bubbles[2].x + bubbles[2].width / 2,
+      bTop: bubbles[1].top,
+      columns: root.querySelector('[data-part="1 2"] .ft-member')!.getAttribute('d')!.split('M').filter(Boolean).length,
+    };
+  });
+  expect(Math.abs(span.at - (span.a + span.c) / 2)).toBeLessThanOrEqual(3);
+  expect(span.bottom).toBeLessThanOrEqual(span.bTop);
+  expect(span.columns).toBe(3);
+  // one way for the three dimensions: H and a with their line, a 45° tick at each end and two extension lines; L with its
+  // line and two ticks, the axes standing for its extension lines
+  const runs = await frame.evaluate((root) => [...root.querySelectorAll('.ft-dim')].map((path) => path.getAttribute('d')!.split('M').filter(Boolean).length));
+  expect(runs.sort()).toEqual([3, 5, 5]);
   // the shown item pressed again goes back to the whole frame
   await items.nth(0).click();
   await expect(items.nth(0)).toHaveAttribute('aria-pressed', 'false');
@@ -105,15 +126,18 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await items.nth(0).click();
   await expect(text).toHaveText('Проліт L — відстань між осями крайніх колон А і Б: 16 м у вашій конфігурації. Усередині колон немає. H — висота стіни.');
   await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б']);
-  // a short building is drawn whole: as many axes as frames, none at a break (counted in the drawing, not shown)
+  // a short building is drawn whole and a long one to a break after three bays: four frames at 18 m as at 60 m, three at
+  // 12 m — counted by their footings, a frame's two (the frames' axis numbers are not drawn since 09.10)
+  const footings = () => frame.locator('.ft-footing').count();
   await setLength(page, '18');
   ({ frame, items, text } = await openFrame(page));
-  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3', '4']);
+  const fourFrames = await footings();
   await setLength(page, '12');
   ({ frame, items, text } = await openFrame(page));
-  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3']);
+  expect(await footings()).toBe(fourFrames - 2);
   await setLength(page, '60');
   ({ frame, items, text } = await openFrame(page));
+  expect(await footings()).toBe(fourFrames);
 
   // each step holds as long as it builds, and its progress bar fills as long
   const durations = ['4200ms', '4800ms', '5200ms', '6400ms', '7600ms'];
@@ -200,13 +224,15 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   await page.clock.runFor(2000);
   await expect(frame).not.toHaveAttribute('data-touring', /.*/);
   await expect(frame).not.toHaveAttribute('data-step', /.*/);
-  await expect(page.locator('#hc-step-frame .hc-frame-play')).toContainText('Показати по черзі');
+  // the words are the button's own name (09.10, audit F44), and a click on them plays — the button says what it does,
+  // «Зупинити показ» while the tour plays (it said the state, «Показуємо по черзі», beside the button)
+  await expect(control).toHaveAccessibleName('Показати по черзі');
   // played from a load step: it runs, and loops while it does
   await items.nth(3).click();
-  await control.click();
+  await page.locator('#hc-step-frame .hc-frame-play').getByText('Показати по черзі', { exact: true }).click();
   await expect(frame).toHaveAttribute('data-touring', 'true');
   await expect(frame).toHaveAttribute('data-step', '4');
-  await expect(page.locator('#hc-step-frame .hc-frame-play')).toContainText('Показуємо по черзі');
+  await expect(control).toHaveAccessibleName('Зупинити показ');
   await expect.poll(looping, { timeout: 5_000 }).toBeGreaterThan(0);
   await control.click();
   await expect(frame).not.toHaveAttribute('data-touring', /.*/);
@@ -226,6 +252,57 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   await page.waitForTimeout(1500);
   expect(await looping()).toBe(0);
 });
+
+/** WCAG contrast of two computed rgb() colours */
+function contrastOf(foreground: string, background: string) {
+  const luminance = (color: string) => {
+    const [r, g, b] = color.match(/\d+(\.\d+)?/g)!.slice(0, 3).map((value) => {
+      const channel = Number(value) / 255;
+      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [light, dark] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (light + 0.05) / (dark + 0.05);
+}
+
+// The node numbers on «Ферма» take the pointer (09.10, audit F09): the invisible snow and wind layers, drawn after them,
+// caught every click at a number's centre (0 of 5), so only the buttons under the drawing opened a node. The chosen node
+// is filled in the copper of text, its name and number at 4.5 : 1 or more (audit F47: 3.78 : 1 on --color-accent).
+for (const theme of ['light', 'dark'] as const) {
+  test(`a node's number on the frame opens the node from its centre, in ${theme}`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the pointer contract is viewport-independent');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript((value) => window.localStorage.setItem('rubikon-theme', value), theme);
+    await openHangarPage(page);
+    const { frame, items } = await openFrame(page);
+    await items.nth(1).click();
+    await showWholeSheet(page);
+    const buttons = page.locator('#hc-step-frame .hc-frame-node');
+    await expect(buttons).toHaveCount(5);
+    for (let index = 0; index < 5; index += 1) {
+      const ring = (await frame.locator('.ft-node-ring').nth(index).boundingBox())!;
+      const centre = [ring.x + ring.width / 2, ring.y + ring.height / 2] as const;
+      const hit = await page.evaluate(([x, y]) => {
+        const element = document.elementFromPoint(x, y);
+        return { node: Boolean(element?.closest('g.ft-node')), cursor: element ? getComputedStyle(element).cursor : '' };
+      }, centre);
+      expect(hit, `node ${index + 1}`).toEqual({ node: true, cursor: 'pointer' });
+      await page.mouse.click(...centre);
+      await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true');
+      await expect(frame).toHaveAttribute('data-node', /.+/);
+      const colours = await buttons.nth(index).evaluate((button) => ({ text: getComputedStyle(button).color, fill: getComputedStyle(button).backgroundColor }));
+      expect(contrastOf(colours.text, colours.fill), `node ${index + 1}'s button`).toBeGreaterThanOrEqual(4.5);
+      const mark = await frame.locator('.ft-node[data-on]').evaluate((node) => ({
+        number: getComputedStyle(node.querySelector('.ft-node-number')!).fill, ring: getComputedStyle(node.querySelector('.ft-node-ring')!).fill,
+      }));
+      expect(contrastOf(mark.number, mark.ring), `node ${index + 1}'s mark`).toBeGreaterThanOrEqual(4.5);
+      // back to the whole frame, from its button
+      await buttons.nth(index).click();
+      await expect(frame).not.toHaveAttribute('data-node', /.*/);
+    }
+  });
+}
 
 // The title block keeps its geometry through the frame's steps (04.10): at 1100 px «Що показано» broke a letter a line and
 // the sheet changed height on every step; at 1440 the cells jumped ~40 px as the tour started; at 320–360 the caption
@@ -301,10 +378,20 @@ test('on a wide screen «Далі» under a step opens the next one and brings i
     await expect(tab).toBeFocused();
     await expect(page.locator('#hc-step-shell')).toBeVisible();
     await expect(page.locator('#hc-step-size')).toBeHidden();
-    // the tabs just under the site header, the step's first answers on the screen
+    // the tabs just under the site header, the step's first answers on the screen. On a portrait tablet the whole sheet
+    // stays stuck under the header (09.10, audit F22): the tabs land right under it, the drawing in view.
     const header = await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom);
-    await expect.poll(() => tab.evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(header - 1);
-    expect(await tab.evaluate((element) => element.getBoundingClientRect().top)).toBeLessThan(viewport.height / 2);
+    const sheet = page.locator('#configurator .hc-preview-surface');
+    const tabTop = () => tab.evaluate((element) => element.getBoundingClientRect().top);
+    if (viewport.width < 1024) {
+      expect(await sheet.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(header, 0);
+      const sheetBottom = await sheet.evaluate((element) => element.getBoundingClientRect().bottom);
+      await expect.poll(tabTop).toBeGreaterThanOrEqual(sheetBottom - 1);
+      expect(await tabTop()).toBeLessThanOrEqual(sheetBottom + 16);
+    } else {
+      await expect.poll(tabTop).toBeGreaterThanOrEqual(header - 1);
+      expect(await tabTop()).toBeLessThan(viewport.height / 2);
+    }
     const first = await page.locator('#hc-step-shell input[name="hc-envelope"]').first().locator('xpath=..').boundingBox();
     expect(first!.y + first!.height).toBeLessThan(viewport.height);
   }
@@ -443,8 +530,8 @@ test('on a phone the model stays under the header while the parameters are set, 
   const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
 
   await openControlGroup(page, 'scope');
-  await page.locator('#hc-scope-heading').scrollIntoViewIfNeeded();
-  await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+  // into the step: the mini drawing holds once the sheet's bottom edge, not its top, reaches its line (09.10, audit F120)
+  await scrollToMiniHold(page);
   expect(await stage.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header);
   const stageHeight = await stage.evaluate((element) => element.getBoundingClientRect().height);
   expect(stageHeight).toBeLessThan(844 * 0.3);
@@ -779,4 +866,108 @@ test.describe('without JavaScript', () => {
     ]);
     for (const heading of await controls.locator('.hc-control-group h3').all()) await expect(heading).toBeVisible();
   });
+});
+
+/** The gap between what stays over the steps (the held mini drawing, or the header) and the steps' tabs */
+async function tabsUnderCover(page: Page) {
+  return page.locator('#configurator .hc-layout').evaluate((layout) => {
+    const tabs = layout.querySelector('[role="tablist"]')!.getBoundingClientRect().top;
+    const over = 'configuring' in (layout as HTMLElement).dataset
+      ? layout.querySelector('.hc-preview-surface')!.getBoundingClientRect().bottom
+      : document.querySelector('.site-header')!.getBoundingClientRect().bottom;
+    return tabs - over;
+  });
+}
+
+// 09.10, audit F52: «Каркас» holds a taller mini drawing (a node pushed in on still reads). A tab tap left the tabs where
+// they were — under it — and the next tap on «Обсяг» hit «Згорнути»; back on a shorter one a 50–80 px gap stayed. A tab
+// tapped under the held mini drawing lands the steps as «Далі» does, right under it.
+test('on a phone a tab tapped under the mini drawing lands the steps right under it, the taller «Каркас» too', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  await scrollToMiniHold(page);
+  // a finger on the middle of the tab, where it is on the screen: no scrolling it into view first
+  for (const id of ['frame', 'check', 'size', 'frame', 'task']) {
+    const box = (await page.locator(`#hc-step-${id}-tab`).boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.locator(`#hc-step-${id}-tab`), id).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+    await expect.poll(() => tabsUnderCover(page), id).toBeGreaterThanOrEqual(0);
+    expect(await tabsUnderCover(page), id).toBeLessThanOrEqual(16);
+  }
+});
+
+// 09.10, audit F24: both same-page links to the configurator landed on its heading and lede, a phone's tabs below the
+// screen. The hero's «Зібрати конфігурацію» lands a phone on the whole drawing with the tabs under it.
+test('on a phone «Зібрати конфігурацію» lands on the whole drawing with the steps under it', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewports run once');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 640 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/angary', { waitUntil: 'load' });
+    // hydrated: without JS the link stays a plain anchor to the heading
+    await expect.poll(() => page.locator('#configurator .hc-layout').evaluate((element: HTMLElement) => element.style.getPropertyValue('--hc-mini-h'))).not.toBe('');
+    await page.locator('a[href="#configurator"]', { hasText: 'Зібрати конфігурацію' }).first().click();
+    await expect(page).toHaveURL(/#configurator$/);
+    const header = await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom);
+    const sheet = page.locator('#configurator .hc-preview-surface');
+    await expect.poll(() => sheet.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(header, 0);
+    await expect(page.locator('#configurator .hc-layout')).not.toHaveAttribute('data-configuring', '');
+    const tabs = (await page.locator('#configurator [role="tablist"]').boundingBox())!;
+    expect(tabs.y + tabs.height, `${viewport.width}×${viewport.height}`).toBeLessThanOrEqual(viewport.height);
+  }
+});
+
+// …and the attached brief's «Змінити у конфігураторі ↑» brings back the steps, on the step the visitor left: under the
+// mini drawing on a phone, under the header beside the drawing on a wide screen, the open step's tab focused
+for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+  test(`«Змінити у конфігураторі ↑» lands on the steps without changing the step at ${viewport.width} px`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewports run once');
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openHangarPage(page);
+    await openControlGroup(page, 'envelope');
+    await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
+    const card = attachmentCard(page);
+    await expect(card).toBeVisible();
+    await card.locator('.inquiry-config-brief-toggle').click();
+    await card.getByRole('link', { name: 'Змінити у конфігураторі ↑' }).click();
+    await expect(page).toHaveURL(/#configurator$/);
+    const tab = page.locator('#hc-step-shell-tab');
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    await expect(tab).toBeFocused();
+    if (viewport.width <= 760) await expect(page.locator('#configurator .hc-layout')).toHaveAttribute('data-configuring', '');
+    await expect.poll(() => tabsUnderCover(page)).toBeGreaterThanOrEqual(0);
+    expect(await tabsUnderCover(page)).toBeLessThanOrEqual(16);
+  });
+}
+
+// «Колони всередині» moves the gate on «Каркас» (09.10, owner: «так» — плавно, not in one frame): its outline glides
+test('the gate glides to its new place when «Колони всередині» changes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await openHangarPage(page);
+  await openControlGroup(page, 'space');
+  const opening = previewSheet(page).locator('path.ft-opening');
+  await expect(opening).toHaveCount(1);
+  const before = await opening.evaluate((path) => (path as SVGPathElement).getBBox().x);
+  await opening.evaluate(() => {
+    const samples: number[] = [];
+    (window as unknown as { gateXs: number[] }).gateXs = samples;
+    const read = () => {
+      samples.push((document.querySelector('#configurator path.ft-opening') as SVGPathElement).getBBox().x);
+      if (samples.length < 40) requestAnimationFrame(read);
+    };
+    requestAnimationFrame(read);
+  });
+  await page.locator('#hc-step-frame .hc-option-card').filter({ hasText: 'Не можна' }).first().click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { gateXs: number[] }).gateXs.length)).toBe(40);
+  const xs = await page.evaluate(() => (window as unknown as { gateXs: number[] }).gateXs);
+  const after = xs.at(-1)!;
+  expect(Math.abs(after - before)).toBeGreaterThan(5);
+  // places between the two: it travelled, not jumped
+  expect(xs.filter((x) => Math.abs(x - before) > 0.5 && Math.abs(x - after) > 0.5).length).toBeGreaterThanOrEqual(5);
 });

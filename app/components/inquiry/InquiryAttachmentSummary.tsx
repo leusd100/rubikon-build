@@ -93,7 +93,9 @@ export function InquiryAttachmentSummary({
             </dl>
           </section>
         ))}
-        <a className="inquiry-config-edit" href={attachment.editHref}>{labels.edit}</a>
+        {/* Back to the source's steps, on the step left (09.10): the hangar configurator takes it there (HangarConfigurator);
+            a source without steps keeps the plain anchor */}
+        <a className="inquiry-config-edit" href={attachment.editHref} data-open-steps="">{labels.edit}</a>
       </div>
     </aside>
   );
