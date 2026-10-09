@@ -3399,3 +3399,43 @@ test('/?xray=sketch is the default page: no sketch, no concept image', async ({ 
   await expect(page.locator('#real-object img[src*="/concepts/"], #real-object [srcset*="/concepts/"]')).toHaveCount(0);
   expect(await page.evaluate(() => performance.getEntriesByType('resource').filter((entry) => entry.name.includes('/concepts/hangar-')).length)).toBe(0);
 });
+
+// The scope's cells under the sheet light their part on the scheme (ScopeCells → ProofContour's useScopeFocus, owner
+// 05.10): pointed at or focused, the stage takes data-focus, the part is drawn, the rest of the frame steps back and the
+// seam glides left so the gable shows whole; let go, the seam glides back where it was. Pressed (a tap), the part stays
+// lit until the cell is pressed again
+test('a scope cell lights its part on the scheme: the seam glides aside, and back when it is let go', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { stage, slider } = await open(page);
+  const aside = phoneOf(page) ? 1 : 15;
+  await expect(page.locator('#real-object .hv2-scope-cell')).toHaveCount(3);
+  const roof = page.locator('#real-object .hv2-scope-cell', { hasText: 'Покрівля' });
+  const roofPart = stage.locator('.hv2-proof-part[data-part="roof"]');
+  const opacity = (locator: Locator) => locator.evaluate((element) => getComputedStyle(element).opacity);
+  await expect(stage).not.toHaveAttribute('data-focus');
+  expect(await opacity(roofPart)).toBe('0');
+
+  // Focused (the keyboard's way, on every project): lit for as long as it has the focus
+  await roof.focus();
+  await expect(stage).toHaveAttribute('data-focus', 'roof');
+  await expect.poll(() => opacity(roofPart)).toBe('1');
+  await expect.poll(() => splitOf(stage)).toBe(`${aside}%`);
+  await expect(slider).toHaveValue(String(aside));
+  // …and let go: the part gone, the seam back at rest
+  await roof.evaluate((element: HTMLElement) => element.blur());
+  await expect(stage).not.toHaveAttribute('data-focus');
+  await expect.poll(() => opacity(roofPart)).toBe('0');
+  await expect.poll(() => splitOf(stage)).toBe(`${DEFAULT_SPLIT}%`);
+  await expect(slider).toHaveValue(String(DEFAULT_SPLIT));
+
+  // Pressed: held until pressed again
+  await roof.click();
+  await expect(roof).toHaveAttribute('aria-pressed', 'true');
+  await expect(stage).toHaveAttribute('data-focus', 'roof');
+  await expect.poll(() => splitOf(stage)).toBe(`${aside}%`);
+  await roof.click();
+  await expect(roof).toHaveAttribute('aria-pressed', 'false');
+  await expect(stage).not.toHaveAttribute('data-focus');
+  await expect.poll(() => splitOf(stage)).toBe(`${DEFAULT_SPLIT}%`);
+  await expect(slider).toHaveValue(String(DEFAULT_SPLIT));
+});

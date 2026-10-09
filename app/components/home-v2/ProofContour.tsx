@@ -1,15 +1,20 @@
 'use client';
 
-import { memo, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
+import { memo, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { queueProofEvent } from '../../lib/proofAnalytics';
 import type { HomeProofCase } from '../../data/homeProof';
 import { homeProofContour, type ContourLine } from '../../data/homeProofContour';
-import { homeProofDetailSpots, homeProofFrame, memberAt, onRoof, pointLoadAt, type PointLoad, type SchemeHit, type ScopePart } from '../../data/homeProofFrame';
+import { homeProofDetailSpots, homeProofFrame, memberAt, onRoof, pointLoadAt, type PointLoad, type SchemeHit } from '../../data/homeProofFrame';
 import { DrawingSheet } from '../DrawingSheet';
 import { PROOF_DETAILS, type DetailId } from './ProofDetails';
 import { ProofFrame, ProofHover, ProofMarks, ProofLabels, ProofPoint } from './ProofFrame';
-import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
+import { useFirstSweep } from './proof-contour/useFirstSweep';
+import { useLabelFit, useRoom } from './proof-contour/useLabelFit';
+import { useNodeDetail } from './proof-contour/useNodeDetail';
+import { bringIntoView, FOCUS_SPLIT, FOCUS_SPLIT_PHONE, useScopeFocus } from './proof-contour/useScopeFocus';
+import { clamp, DEFAULT_SPLIT, phoneNow, useSeam } from './proof-contour/useSeam';
+import { TOUR, useTour } from './proof-contour/useTour';
 
 // HOME's proof (owner, 04.10): ONE «Креслення» sheet with the real photo, and right of a seam the visitor moves the same
 // frame as a tracing — grey, dark, on a fine grid — with one of three layers over it, chosen in the title block:
@@ -43,68 +48,23 @@ import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
 // On a laptop the sheet fits under the header: the stage keeps the sheet's width and crops the photo's sky and gravel
 // (home-v2.css); the photo, its tracing and every layer share one canvas in the photo's own pixels, so nothing slides.
 
+// The parts that keep their own state and timing live in ./proof-contour: the seam and its drag (useSeam), the first
+// view's sweep (useFirstSweep), the room the words have against the seam (useLabelFit), a scope's cell lighting its part
+// (useScopeFocus), the node open (useNodeDetail) and the tour (useTour). Their effects run in this order, as when they
+// were written here.
+
 // «Контур» is gone (owner, 05.10: «клієнту точно цього не треба знати» — the measured / approximate split): the copper
 // outline stays on the scheme's layers, one solid line
-type Layer = 'frame' | 'load' | 'wind';
+export type Layer = 'frame' | 'load' | 'wind';
 
-/** The seam's resting place: right of the left gate and left of the ridge, so each side keeps a gate */
-export const DEFAULT_SPLIT = 62;
 const PAGE_STEP = 10;
-/** The first view's sweep: once the photo has plotted in (DrawingSheet: 120 + 900 ms), from the right edge to 38 % — the
- *  ridge and both gates in view, the photo never gone (audit 08.10: at 15 % it showed little but the scheme for 1.5 s) —
- *  then back to rest; the turn at 62 % of its time, each leg eased on its own (one easing over both would reverse at full
- *  speed) */
-const SWEEP_AT = 1050;
-const SWEEP_TURN = 38;
-const SWEEP_MS = 1800;
-/** The page must have stopped scrolling this long before the sweep: the eye is on the way, not on the seam */
-const SWEEP_QUIET = 250;
-/** Passing a measured line, in per cent of the frame: lit within GRAB of it, until the seam is past RELEASE */
-const SNAP_GRAB = 0.8;
-const SNAP_RELEASE = 1.4;
-/** A phone's close-up of the gable (home-v2.css, ≤ 760 px): the canvas 1.22 × the frame's width, shifted left by 19.46 %
- *  of it — the photo's columns 245–1504, the gable whole — so a line at a per cent of the canvas stands at
- *  (per cent × ZOOM − LEFT) of the frame; the sweep turns just past the gable's left corner there */
-const PHONE_ZOOM = 1.22;
-const PHONE_LEFT = 19.46;
-/** While the seam moves under a pointer, the rest of the sheet (the range's value, the names that give way, the stamp)
- *  catches up at most this often, ms: the seam itself moves every frame (review, 05.10: dragging it stuttered) */
-const COMMIT_EVERY = 100;
-/** A scope's cell lighting its part (ScopeCells): the seam glides here, so the whole gable shows, and back on letting go */
-const FOCUS_SPLIT = 15;
-const FOCUS_SPLIT_PHONE = 1;
 /** «Як це будується» (owner, 05.10): the scheme assembled in the order it is built, a step every BUILD_STEP ms
  *  (home-v2.css, data-building), its step named in the corner; the names come back once the last step lands */
 const BUILD_STEP = 700;
 const BUILD_STEPS = ['Фундаменти', 'Стіни з газобетону', 'Колони', 'Ферми лягають на опори', 'Прогони й в’язі'] as const;
 const BUILD_MS = BUILD_STEP * (BUILD_STEPS.length + 1);
-/** «Тур за 20 секунд» (owner, 05.10): the block shows itself to whoever presses nothing — the frame put up, the snow, a
- *  weight walking the roof, the wind, the ridge's node with its load, the way on to the brief; each step named and held
- *  this long. Any press or key in the sheet hands it back */
-const TOUR: readonly { name: string; hold: number }[] = [
-  { name: 'Каркас збирається', hold: 4800 },
-  { name: 'Сніг: куди йде вага', hold: 3600 },
-  { name: 'Вага на даху', hold: 3000 },
-  { name: 'Вітер: куди тисне', hold: 3600 },
-  { name: 'Вузол крупно', hold: 4200 },
-  { name: 'Такий, але ваш', hold: 2600 },
-];
-/** The weight's walk along the roof (photo columns), and how long it takes */
-const WALK = { from: 430, to: 1390, ms: 2600 } as const;
 /** Where the brief for a hangar like this one starts */
 const BRIEF_HREF = '/angary#configurator';
-/** The held line's name: its distance from the seam, px */
-const SNAP_GAP = 10;
-/** …and its padding and border, px (home-v2.css) */
-const SNAP_FRAME = 20;
-// What fits right of the seam (review, 04.10). The stamp and the load's chain lie on the right side only, clipped at the
-// seam (home-v2.css): the stamp keeps its full words while that side is wider than it, its first word below that, and
-// the seam's names give way before they reach the stamp or the frame's edge. Measured on the page (the frame's width,
-// the names' and the stamp's); in the server markup and without JavaScript, by per cent.
-const STAMP_OFFSET = 10;
-const SHORT_STAMP = 96;
-const AIR = 8;
-type Room = { width: number; height: number; left: number; right: number; stamp: number };
 
 const LAYER_ORDER: readonly Layer[] = ['frame', 'load', 'wind'];
 const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; genitive: string }> = {
@@ -115,27 +75,9 @@ const LAYERS: Record<Layer, { button: string; seam: string; nominative: string; 
 };
 /** Each load's way, link by link, in its own words, each word lit with its part of the drawing (n: ProofFrame's --n) —
  *  in the legend under the layers, not on the frame: on a laptop's crop the frame has no free room for it (review, 04.10) */
-const CHAINS: Partial<Record<Layer, readonly (readonly [string, number])[]>> = {
+const CHAINS: Record<Exclude<Layer, 'frame'>, readonly (readonly [string, number])[]> = {
   load: [['Сніг', 0], ['покрівля', 1], ['прогони', 2], ['ферма', 3], ['стіни й колони', 4], ['фундаменти', 5], ['ґрунт', 6]],
   wind: [['Вітер', 0], ['стіна', 2], ['ферма', 3], ['стіна й колона', 4], ['фундаменти', 5], ['ґрунт', 6]],
-};
-// The legend's keys per layer. Every layer's set is laid out in one cell, the others hidden, so the title block keeps one
-// height whichever is on (review, 04.10: on a 360 px phone the load's set took a second line and pushed the controls)
-// On the scheme's layers the outline is one solid line and what stands behind the gable is copper (owner, 04.10): the
-// measured / approximate split is the «Контур» layer's
-type LegendKey = 'outline' | 'scheme' | 'depth' | 'load' | 'wind';
-const LEGEND: Record<Layer, readonly LegendKey[]> = {
-  frame: ['outline', 'scheme', 'depth'],
-  load: ['outline', 'scheme', 'load'],
-  wind: ['outline', 'scheme', 'wind'],
-};
-const LEGEND_WORDS: Record<LegendKey, string> = {
-  // One word: every set shares one cell, and a second line on a laptop pushed the title block over the picture
-  outline: 'контур',
-  scheme: 'схема',
-  depth: 'у глибині',
-  load: 'сніг',
-  wind: 'вітер',
 };
 
 const { photo: contourPhoto, variants, lines, label } = homeProofContour;
@@ -146,53 +88,6 @@ const SRC_SET = variants.filter(({ width }) => width <= 2304).map(({ src, width 
 const SIZES = '(max-width: 760px) calc(100vw * 1.22), (max-width: 1556px) calc(92.5vw - 46px), 1394px';
 
 const pathOf = ({ points }: ContourLine) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}`;
-
-// What the seam snaps to: the measured verticals — both gates' jambs and the gable's corners, each at its mean x — with
-// the words for the seam's foot. Not the ridge: nobody measured where it stands
-type Snap = { line: string; at: number; name: string };
-const pointsOf = (id: string) => lines.find((line) => line.id === id)!.points;
-const snapAt = (id: string, from: number, to?: number) => {
-  const part = pointsOf(id).slice(from, to);
-  return (part.reduce((sum, [x]) => sum + x, 0) / part.length / contourPhoto.width) * 100;
-};
-const SNAPS: readonly Snap[] = [
-  { line: 'gable-base', at: snapAt('gable-base', 1), name: 'Лівий кут фронтона' },
-  { line: 'gate-left', at: snapAt('gate-left', 0, 2), name: 'Ліві ворота, одвірок' },
-  { line: 'gate-left', at: snapAt('gate-left', 2), name: 'Ліві ворота, одвірок' },
-  { line: 'gate-right', at: snapAt('gate-right', 0, 2), name: 'Праві ворота, одвірок' },
-  { line: 'gate-right', at: snapAt('gate-right', 2), name: 'Праві ворота, одвірок' },
-  { line: 'gable-corner-right', at: snapAt('gable-corner-right', 2), name: 'Правий кут фронтона' },
-];
-const phoneNow = () => window.matchMedia('(max-width: 760px)').matches;
-/** A node opens as a sheet from the screen's foot up to a narrow tablet: in a 768 px frame its drawing had to shrink to
- *  unreadable to fit the panel (QA 09.10) */
-const sheetNow = () => window.matchMedia('(max-width: 900px)').matches;
-const stillNow = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-/** A node opening (owner, 05.10: «плавний перехід від вузла до збільшеної моделі»): the panel grows out of its ring on the
- *  scheme, a disc as small as the ring, to its place, and the node is put together in it part by part (ProofDetails).
- *  Closing, it shrinks back into the ring */
-const NODE_GROW = { duration: 480, easing: 'cubic-bezier(.2, .75, .25, 1)' } as const;
-const NODE_SHRINK = { duration: 300, easing: 'cubic-bezier(.45, 0, .7, .4)', fill: 'forwards' } as const;
-/** A node's ring and the seam (owner, 05.10: on «А» the seam stood across it, the handle over it): the seam stops this
- *  far past the handle's half width from the ring, on the scheme's side of it or — «На фото» — past it */
-const NODE_CLEAR = 12;
-/** A swipe across a phone's sheet: this far, and mostly sideways */
-const SWIPE_MIN = 48;
-/** «Зібрати» after «Розібрати»: the parts back in place (proof-details.css: 650 ms, 80 ms apart, up to seven) before the
- *  load's way shows again */
-const REASSEMBLE_MS = 650 + 6 * 80 + 120;
-/** …and the assembly's own longest run (proof-details.css: the names in at 360 ms + six steps of 260 ms + 260 ms, for
- *  360 ms): should its end never be heard — a hidden tab holds animations — the way shows after this */
-const ASSEMBLY_MS = 360 + 1560 + 260 + 360 + 160;
-/** The transform that puts a panel onto a ring: its centre on the ring's, as wide as the ring */
-function ontoRing(ring: Element, panel: HTMLElement) {
-  const [a, b] = [ring.getBoundingClientRect(), panel.getBoundingClientRect()];
-  if (!a.width || !b.width) return null;
-  const scale = Math.max(a.width / b.width, 0.04);
-  return `translate(${a.left + a.width / 2 - (b.left + b.width / 2)}px, ${a.top + a.height / 2 - (b.top + b.height / 2)}px) scale(${scale})`;
-}
-/** Where a measured line stands in the frame, per cent: on a phone the canvas is zoomed in on the gable */
-const stageAt = (snap: Snap, phone: boolean) => (phone ? snap.at * PHONE_ZOOM - PHONE_LEFT : snap.at);
 
 // The quiet tracing (owner review, 04.10 — «тиха калька»): right of the seam the photo stays only inside the building —
 // its drawn silhouette, widened a little for the gutters and the fascia — and the sky and the gravel become the sheet's
@@ -222,67 +117,21 @@ const GROUND_HATCH = (() => {
   }
   return path;
 })();
-const clamp = (value: number) => Math.min(100, Math.max(0, value));
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
 /** The title block's nodes, named by a word beside their letter (audit 08.10: bare letters were chosen blind) */
 const NODE_WORDS: Record<string, string> = { bearing: 'Опора ферми', purlin: 'Прогін', base: 'База колони', ridge: 'Гребінь', chord: 'Нижній пояс' };
-/** After the seam, the drawing's names come one by one in the order the frame is built (home-v2.css, data-names-in) */
-const NAMES_IN_MS = 1400;
-/** …and the one letter that calls, once: В, the column's base (the letters are quiet at rest) */
-const TEASE_AT = 1200;
-const TEASE_MS = 2400;
-/** After the arrival, on a laptop or a tablet, this node opens by itself (owner, 09.10) */
-const AUTO_NODE: DetailId = 'ridge';
-// (after the handle's ring, 1.7 s: one thing at a time)
-const AUTO_NODE_AT = 2000;
-const AUTO_NODE_EVENT = 'hv2:auto-node';
-/** The way on rings once as soon as the seam rests */
-const RING_MS = 1200;
-
-// See STAMP_OFFSET: whether the stamp keeps its full words, and which seam name gives way
-/** The whole frame in view, or near enough (a part lit may be its roof, at the top): a press below it — a scope's cell, «Як
- *  це будується» on a phone — must not play to an empty screen */
-function bringIntoView(stage: HTMLElement) {
-  const box = stage.getBoundingClientRect();
-  // the site's fixed header covers the window's top (audit 08.10, F11: a node's panel head and its «×» went under it)
-  const top = Math.max(0, document.querySelector('header')?.getBoundingClientRect().bottom ?? 0);
-  const shown = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, top);
-  if (shown >= box.height * 0.92 && box.top >= top - 1) return false;
-  const room = window.innerHeight - top;
-  const by = box.top - top - Math.max(8, (room - box.height) / 2);
-  window.scrollBy({ top: by, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  return true;
-}
 /** How long a smooth scroll to the frame takes before the assembly starts */
 const SCROLL_FIRST = 450;
 /** The letters А, Б, В ring a few times once the sweep or the assembly has put them up, so the nodes behind them are
  *  found (owner, 05.10: found by chance) */
 const NODES_HINT_MS = 2800;
-/** Settles when the sheet's picture has finished plotting in (the transition of DrawingSheet's cover), or at once */
-function plottedIn(sheet: Element) {
-  const plotting = sheet.querySelector('.sheet-cover')?.getAnimations() ?? [];
-  return Promise.all(plotting.map((animation) => animation.finished.catch(() => undefined)));
-}
 
 function hintNodes(stage: HTMLElement, after: number) {
   window.setTimeout(() => {
     stage.dataset.nodesHint = '';
     window.setTimeout(() => delete stage.dataset.nodesHint, NODES_HINT_MS);
   }, after);
-}
-
-function fitOf(room: Room | null, split: number) {
-  if (!room) return { stampShort: false, stampNone: false, narrowLeft: split < 12, narrowRight: split > 72 };
-  const right = (room.width * (100 - split)) / 100;
-  const stampShort = right < room.stamp + STAMP_OFFSET + AIR;
-  return {
-    stampShort,
-    // Narrower than even its first word: no stamp at all, not a fragment of one (review, 04.10: «ХЕМА» at the corner)
-    stampNone: right < SHORT_STAMP + STAMP_OFFSET + AIR,
-    narrowLeft: (room.width * split) / 100 < room.left + 3 + AIR,
-    narrowRight: right < room.right + 3 + AIR + (stampShort ? SHORT_STAMP : room.stamp) + STAMP_OFFSET,
-  };
 }
 
 // What the slider says instead of a per cent: which side is which, and roughly how much of each shows
@@ -321,17 +170,9 @@ const Lines = memo(function Lines({ casing, snapped }: Readonly<{ casing?: boole
 const legendLine = <svg viewBox="0 0 28 4" aria-hidden="true" focusable="false"><path d="M2 2H26" /></svg>;
 
 export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo'] }>) {
-  const [split, setSplit] = useState(DEFAULT_SPLIT);
   const [chosen, setChosen] = useState<Layer | null>(null);
   const [loadRun, setLoadRun] = useState(0);
   const [windRun, setWindRun] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  // The measured line the dragged seam holds, and the last one's words (they fade out after it is let go)
-  const [snap, setSnap] = useState<Snap | null>(null);
-  const snapRef = useRef<Snap | null>(null);
-  const [snapWords, setSnapWords] = useState<Snap | null>(null);
-  const [snapPlace, setSnapPlace] = useState<{ side: 'left' | 'right'; wrap: boolean; max: number }>({ side: 'left', wrap: false, max: 0 });
-  const snapLabelRef = useRef<HTMLSpanElement>(null);
   const ready = useSyncExternalStore(subscribeToNothing, () => true, () => false);
   // Focus the pointer put on the range: the keyboard's ring stays off until a key is pressed
   const [pointerFocus, setPointerFocus] = useState(false);
@@ -339,34 +180,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [peekNode, setPeekNode] = useState<DetailId | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const rangeRef = useRef<HTMLInputElement>(null);
-  // The four that carry the seam's place (home-v2.css: --split is theirs only, not inherited): the right side's window
-  // and its counter-moved content, the rail with the seam and its names, the handle
-  const paneRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const railRef = useRef<HTMLSpanElement>(null);
-  const handleRef = useRef<HTMLSpanElement>(null);
-  // Where the seam is drawn now; a commit to React waiting to go
-  const live = useRef(DEFAULT_SPLIT);
-  const commitTimer = useRef<number | undefined>(undefined);
-  const drag = useRef<{ pointer: number; offset: number } | null>(null);
-  const touched = useRef(false);
-  const [room, setRoom] = useState<Room | null>(null);
-  // The seam's right-hand name gives way to a figure or a name of the drawing it would cover (review, 05.10)
-  const [tagYield, setTagYield] = useState(false);
-  // The scope's cell lighting its part, and where the seam and the layer were before it (restored on letting go)
-  const [focusPart, setFocusPart] = useState<ScopePart | null>(null);
-  const focusFrom = useRef<{ split: number; chosen: Layer | null } | null>(null);
   // «Точка навантаження»: the weight a pointer puts on the roof on «Сніг», and whether anyone has yet
   const [point, setPoint] = useState<PointLoad | null>(null);
   const [pointed, setPointed] = useState(false);
   const pointFrame = useRef(0);
   const pointX = useRef(0);
-  // The detail open (А, Б, В), and the canvas on the right side the pointer is read against
-  const [detail, setDetail] = useState<DetailId | null>(null);
-  // On a phone the frame is too low for a drawing: the node opens as a sheet from the screen's foot, over the page
-  const [detailSheet, setDetailSheet] = useState(false);
+  // The canvas on the right side the pointer is read against
   const paneCanvasRef = useRef<HTMLDivElement>(null);
-  const detailCloseRef = useRef<HTMLButtonElement>(null);
   // «Як це будується»: replayed on every press (a new key restarts it), and whether it runs now
   const [buildRun, setBuildRun] = useState(0);
   const [building, setBuilding] = useState(false);
@@ -390,245 +210,18 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const rightSide = LAYERS[layer];
   // for the listeners set up once
   const layerRef = useRef(layer);
-  const chosenRef = useRef(chosen);
   useEffect(() => {
     layerRef.current = layer;
-    chosenRef.current = chosen;
   });
 
-  // The seam's place on the page: written straight onto the four elements that carry it, never through a render — a
-  // drag or a mouse moves it every frame, and nothing else on the sheet need restyle for it
-  const paint = (value: number) => {
-    live.current = value;
-    for (const element of [paneRef.current, innerRef.current, railRef.current, handleRef.current]) element?.style.setProperty('--split', `${value}%`);
-  };
-  // …and the rest of the sheet told every COMMIT_EVERY ms while the pointer moves it — a throttle, not a debounce: a
-  // steady move must not hold it back (review, 05.10: the range and the cut figures waited for the pointer to pause) —
-  // and at once when it stops
-  const commit = (value: number, now = false) => {
-    if (now) {
-      window.clearTimeout(commitTimer.current);
-      commitTimer.current = undefined;
-      setSplit(value);
-      return;
-    }
-    if (commitTimer.current !== undefined) return;
-    commitTimer.current = window.setTimeout(() => {
-      commitTimer.current = undefined;
-      setSplit(live.current);
-    }, COMMIT_EVERY);
-  };
-  // A move that is not the pointer's — a key, a button, a layer, the range — reaches the seam through the state, and the
-  // seam glides there (the four's transition on --split)
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage || stage.dataset.dragging !== undefined) return;
-    if (Math.abs(split - live.current) > 0.001 || !paneRef.current?.style.getPropertyValue('--split')) paint(split);
-  }, [split]);
-  useEffect(() => () => window.clearTimeout(commitTimer.current), []);
-
-  // The first view (see SWEEP_AT): the seam waits at the right edge — the photo whole — while the sheet plots in, then
-  // sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
-  // never move. It waits until the stage is in view and the page has stopped scrolling. The visitor's own move in the
-  // sheet first, or reduced motion: no sweep, the seam at rest.
-  useEffect(() => {
-    const stage = stageRef.current;
-    const sheet = stage?.closest('figure');
-    if (!stage || !sheet || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let sweep: Animation[] = [];
-    let timer: number | undefined;
-    let due = false;
-    let visible = false;
-    let scrolled = 0;
-    let live = true;
-    const after: number[] = [];
-    const release = () => {
-      sheet.querySelector('.hv2-contour-brief')?.removeAttribute('data-ring');
-      delete stage.dataset.namesIn;
-      delete stage.dataset.nodesTease;
-      for (const id of after) window.clearTimeout(id);
-    };
-    stage.dataset.sweep = 'wait';
-    const stop = () => {
-      touched.current = true;
-      release();
-      window.clearTimeout(timer);
-      for (const animation of sweep) animation.cancel();
-      delete stage.dataset.gliding;
-      delete stage.dataset.sweep;
-    };
-    const run = () => {
-      if (touched.current || !due || !visible || sweep.length) return;
-      const quiet = performance.now() - scrolled;
-      if (quiet < SWEEP_QUIET) {
-        window.clearTimeout(timer);
-        timer = window.setTimeout(run, SWEEP_QUIET - quiet);
-        return;
-      }
-      // In one task: the hold at the edge gives way to the sweep's first frame, at the same edge
-      stage.dataset.gliding = '';
-      stage.dataset.sweep = 'run';
-      const keyframes = [
-        { '--split': '100%', easing: 'cubic-bezier(.35, 0, .3, 1)' },
-        { '--split': `${SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
-        { '--split': `${DEFAULT_SPLIT}%` },
-      ];
-      const carriers = [paneRef.current, innerRef.current, railRef.current, handleRef.current].filter((element) => element !== null);
-      sweep = carriers.map((element) => element.animate(keyframes, { duration: SWEEP_MS }));
-      sweep[0].onfinish = () => {
-        delete stage.dataset.gliding;
-        delete stage.dataset.sweep;
-        // One ring from the handle: this is the thing to drag
-        stage.dataset.pulse = '';
-        timer = window.setTimeout(() => delete stage.dataset.pulse, 1700);
-        // the way on rings once as soon as the seam rests, not only after the tour
-        const brief = sheet.querySelector<HTMLElement>('.hv2-contour-brief');
-        if (brief) {
-          brief.dataset.ring = '';
-          after.push(window.setTimeout(() => delete brief.dataset.ring, RING_MS));
-        }
-        // the names one by one in the order the frame is built; then one letter calls (no three rings on all five)
-        stage.dataset.namesIn = '';
-        after.push(window.setTimeout(() => delete stage.dataset.namesIn, NAMES_IN_MS));
-        // …then a node opens by itself — Г, the ridge — so nobody passes the block without seeing that the scheme opens
-        // (owner, 09.10); a phone's node is a sheet over the page, so there one letter only calls
-        if (sheetNow()) {
-          after.push(
-            window.setTimeout(() => { stage.dataset.nodesTease = ''; }, TEASE_AT),
-            window.setTimeout(() => delete stage.dataset.nodesTease, TEASE_AT + TEASE_MS),
-          );
-        } else after.push(window.setTimeout(() => stage.dispatchEvent(new Event(AUTO_NODE_EVENT)), AUTO_NODE_AT));
-      };
-    };
-    const seen = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      run();
-    // most of the frame in view, not its top edge: the arrival plays where it is seen (audit 08.10)
-    }, { threshold: 0.6 });
-    seen.observe(stage);
-    const arrived = new MutationObserver(() => {
-      if (sheet.getAttribute('data-sheet-state') !== 'on') return;
-      arrived.disconnect();
-      timer = window.setTimeout(() => {
-        // …and only once the picture has plotted in: the plot's transition starts a frame after data-sheet-state, so on a
-        // busy page SWEEP_AT alone could start the sweep with the plot's last frames still running
-        void plottedIn(sheet).then(() => {
-          if (!live) return;
-          due = true;
-          run();
-        });
-      }, SWEEP_AT);
-    });
-    arrived.observe(sheet, { attributes: true, attributeFilter: ['data-sheet-state'] });
-    const onScroll = () => { scrolled = performance.now(); };
-    // A mouse or a pen pressed anywhere in the sheet is the visitor's own move; a finger only on what it can move (the
-    // handle, a button): elsewhere it scrolls the page. Keys reach the sheet only on its range and buttons
-    const onPointer = (event: globalThis.PointerEvent) => {
-      if (event.pointerType === 'touch' && !(event.target as Element).closest('.hv2-contour-handle, button')) return;
-      stop();
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    sheet.addEventListener('pointerdown', onPointer, { passive: true });
-    sheet.addEventListener('keydown', stop);
-    return () => {
-      live = false;
-      release();
-      seen.disconnect();
-      arrived.disconnect();
-      window.clearTimeout(timer);
-      for (const animation of sweep) animation.cancel();
-      delete stage.dataset.sweep;
-      window.removeEventListener('scroll', onScroll);
-      sheet.removeEventListener('pointerdown', onPointer);
-      sheet.removeEventListener('keydown', stop);
-    };
-  }, []);
-
-  // The room right and left of the seam (see STAMP_OFFSET): the frame's width, the seam names' and the full stamp's,
-  // again when the frame resizes, the layer changes their words or the fonts arrive. A short stamp keeps the full
-  // stamp's width last measured
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    let live = true;
-    const measure = () => {
-      if (!live) return;
-      const [left = 0, right = 0] = [...stage.querySelectorAll<HTMLElement>('.hv2-contour-seamtags > span')].map((tag) => tag.offsetWidth);
-      const stamp = stage.querySelector<HTMLElement>('.hv2-contour-stamp');
-      const full = stamp && stage.dataset.stamp !== 'short' ? stamp.offsetWidth : 0;
-      setRoom((previous) => {
-        // the height too: a height-only change moves the figures against the stamp (review, 04.10)
-        const next = { width: stage.clientWidth, height: stage.clientHeight, left, right, stamp: full || previous?.stamp || 196 };
-        return previous && Object.entries(next).every(([key, value]) => previous[key as keyof Room] === value) ? previous : next;
-      });
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(stage);
-    void document.fonts?.ready.then(measure);
-    return () => {
-      live = false;
-      observer.disconnect();
-    };
-  }, [layer]);
-
-  const { stampShort, stampNone, narrowLeft, narrowRight } = fitOf(room, split);
-
-  // A scope's cell below lights its part here (ScopeCells): the scheme on — off «Контур» onto «Каркас» — and the seam
-  // glides left so the whole gable shows; letting go brings the seam and the layer back, unless the visitor has moved
-  // the seam meanwhile. A pressed cell (a tap on a phone) brings the sheet into view first
-  useEffect(() => {
-    // Letting go waits a moment: the pointer passing from one cell to the next must not send the seam back and forth
-    let release: number | undefined;
-    const onScope = (event: Event) => {
-      const { part, sticky } = (event as CustomEvent<ScopeFocus>).detail;
-      const stage = stageRef.current;
-      if (!stage) return;
-      const to = phoneNow() ? FOCUS_SPLIT_PHONE : FOCUS_SPLIT;
-      window.clearTimeout(release);
-      if (part) {
-        focusFrom.current ??= { split: live.current, chosen: chosenRef.current };
-        setFocusPart(part);
-        snapRef.current = null;
-        setSnap(null);
-        setPoint(null);
-        setDetail(null);
-        if (live.current > to) setSplit(to);
-        if (sticky) bringIntoView(stage);
-        return;
-      }
-      release = window.setTimeout(() => {
-        const from = focusFrom.current;
-        focusFrom.current = null;
-        setFocusPart(null);
-        if (!from) return;
-        if (Math.abs(live.current - to) < 0.5) setSplit(from.split);
-      }, sticky ? 0 : 160);
-    };
-    window.addEventListener(SCOPE_FOCUS_EVENT, onScope);
-    return () => {
-      window.clearTimeout(release);
-      window.removeEventListener(SCOPE_FOCUS_EVENT, onScope);
-    };
-  }, []);
-
-  // A detail opened takes the focus to its close; Esc, or the close, gives it back to its letter
-  const detailPinRefs = useRef<Partial<Record<DetailId, HTMLButtonElement | null>>>({});
-  const detailRef = useRef<HTMLDialogElement>(null);
-  // «Куди йде навантаження»: the load's way through the node, kept on from node to node once asked for
-  const [flowOn, setFlowOn] = useState(false);
-  // «Розібрати»: the node's parts drawn apart, named (back together on another node); «На фото»: the seam past the ring,
-  // so the node is ringed on the photo (kept from node to node)
-  const [exploded, setExploded] = useState(false);
-  const [nodeOnPhoto, setNodeOnPhoto] = useState(false);
-  // The node put together: its load's way only then (owner, 05.10: on the next node it ran while the parts were still
-  // coming in) — on the names' arrival, the assembly's last beat, or once the parts are back after «Зібрати»
-  const [assembled, setAssembled] = useState(false);
-  const assembledTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(assembledTimer.current), []);
-  // Moving to the next or the previous node: the drawing slides in from that side instead of the panel growing again
-  const nodeSwitch = useRef<-1 | 0 | 1>(0);
-  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const { split, setSplit, dragging, setDragging, snap, snapWords, liveRef, dragRef, paneRef, innerRef, railRef, handleRef, splitAt, endDrag, clearLit } = useSeam(stageRef);
+  const touchedRef = useFirstSweep(stageRef, { paneRef, innerRef, railRef, handleRef });
+  const room = useRoom(stageRef, layer);
+  const {
+    detail, setDetail, detailSheet, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
+    detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef, quietOpenRef,
+    ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto, onAssembled,
+  } = useNodeDetail(stageRef, rangeRef, { liveRef, handleRef, setSplit });
   // «Жива схема»: what the pointer is over on «Каркас» — the member lit, its name by the pointer (moved by hand, never by a
   // render); a finger's tap shows it a moment
   const [hit, setHit] = useState<SchemeHit | null>(null);
@@ -645,202 +238,17 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // The load's chain in the legend, word by word: a word pointed at or pressed lights its link on the scheme alone
   const [stepOn, setStepOn] = useState<number | null>(null);
   const [stepPeek, setStepPeek] = useState<number | null>(null);
-  // «Тур»: the step on, its timer, the weight's walk, the load's way as it was before (put back after), the brief's call
-  const [tourStep, setTourStep] = useState<number | null>(null);
-  const tourTimer = useRef<number | undefined>(undefined);
-  const walkFrame = useRef(0);
-  const flowBefore = useRef(false);
-  const [calling, setCalling] = useState(false);
-  const callTimer = useRef<number | undefined>(undefined);
-  // the tour's timers reach the render's own functions through this (theirs would be the first render's)
-  // (and the node the arrival opens by itself — `node`: no focus moved, no visit counted, the visitor did nothing)
-  const tourApi = useRef<{ run: (step: number) => void; end: (restore?: boolean) => void; point: (x: number) => void; node: () => void } | null>(null);
-  // the tour moves the focus nowhere (audit 08.10, F13: it took it to «Закрити вузол», then to a letter)
-  const touring = useRef(false);
-  const quietOpen = useRef(false);
-  useEffect(() => () => {
-    window.clearTimeout(tourTimer.current);
-    window.clearTimeout(callTimer.current);
-    cancelAnimationFrame(walkFrame.current);
-  }, []);
-  // Where the seam was before a node took it onto its ring, and where it put it (restored on closing, unless moved)
-  const nodeSeam = useRef<{ from: number; at: number } | null>(null);
-  // The leader from the open panel to its ring on the scheme, as a drawing's detail is called out
-  const leaderRef = useRef<SVGPathElement>(null);
-  const leaderDotRef = useRef<SVGCircleElement>(null);
-  const detailMotion = useRef<Animation | null>(null);
-  const ringOf = (id: DetailId) => stageRef.current?.querySelector(`.hv2-proof-detail-rings [data-detail="${id}"]`) ?? null;
-  // Opening (and switching to another node): out of its ring, before the first paint so it never flashes in place
-  useLayoutEffect(() => {
-    const panel = detailRef.current;
-    const ring = detail && ringOf(detail);
-    const step = nodeSwitch.current;
-    nodeSwitch.current = 0;
-    if (!panel || !ring || stillNow()) return;
-    if (step) {
-      panel.querySelector('.hv2-detail-drawing')?.animate(
-        [{ transform: `translateX(${step * 36}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
-        { duration: 320, easing: 'cubic-bezier(.2, .75, .25, 1)' },
-      );
-      return;
-    }
-    detailMotion.current?.cancel();
-    const from = ontoRing(ring, panel);
-    if (!from) return;
-    detailMotion.current = panel.animate(
-      [{ transform: from, opacity: 0.35, borderRadius: '50%' }, { transform: 'none', opacity: 1, borderRadius: '0' }],
-      NODE_GROW,
-    );
-  }, [detail, detailSheet]);
-  // The leader: from the panel's right edge at its title, a short level run, then straight to the ring's edge — measured
-  // on the panel's own layout (not its growing transform) and again when the frame resizes; none on a phone's sheet
-  useLayoutEffect(() => {
-    const stage = stageRef.current;
-    const panel = detailRef.current;
-    if (!detail || detailSheet || !stage || !panel) return;
-    const measure = () => {
-      const ring = ringOf(detail);
-      const path = leaderRef.current;
-      if (!ring || !path) return;
-      const box = stage.getBoundingClientRect();
-      const r = ring.getBoundingClientRect();
-      const [px, py] = [panel.offsetLeft + panel.offsetWidth, panel.offsetTop + 22];
-      const [cx, cy, radius] = [r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top, r.width / 2];
-      const ex = px + 16;
-      const length = Math.hypot(ex - cx, py - cy) || 1;
-      const [tx, ty] = [cx + ((ex - cx) / length) * radius, cy + ((py - cy) / length) * radius];
-      path.setAttribute('d', `M${px.toFixed(1)} ${py.toFixed(1)}H${ex.toFixed(1)}L${tx.toFixed(1)} ${ty.toFixed(1)}`);
-      leaderDotRef.current?.setAttribute('cx', tx.toFixed(1));
-      leaderDotRef.current?.setAttribute('cy', ty.toFixed(1));
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(stage);
-    return () => observer.disconnect();
-  }, [detail, detailSheet]);
-  // Where the seam stands for a node: clear of its ring by the handle's half width and NODE_CLEAR — before it, the ring
-  // whole on the scheme, or past it («На фото»), the ring whole on the photo and ringed there. Where the frame's edge
-  // holds the handle back onto the ring (the right gable corner, on the photo), the handle steps down or up off it
-  const placeSeam = (id: DetailId, onPhoto: boolean) => {
-    const stage = stageRef.current;
-    const ring = ringOf(id);
-    const handle = handleRef.current;
-    if (!stage || !ring) return;
-    const box = stage.getBoundingClientRect();
-    const r = ring.getBoundingClientRect();
-    const half = (handle?.offsetWidth || 44) / 2;
-    const x = onPhoto ? r.right + half + NODE_CLEAR : r.left - half - NODE_CLEAR;
-    const at = clamp(((x - box.left) / box.width) * 100);
-    nodeSeam.current = { from: nodeSeam.current?.from ?? live.current, at };
-    setSplit(at);
-    if (!handle) return;
-    const handleX = Math.min(Math.max((at / 100) * box.width, half), box.width - half);
-    const [cx, cy, radius] = [r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top, r.width / 2];
-    const middle = box.height / 2;
-    if (Math.hypot(handleX - cx, middle - cy) >= radius + half + NODE_CLEAR) return handle.style.removeProperty('--handle-y');
-    const below = cy + radius + half + NODE_CLEAR;
-    handle.style.setProperty('--handle-y', `${Math.round(below + half <= box.height ? below : cy - radius - half - NODE_CLEAR)}px`);
-  };
-  // A node opened (owner, 05.10: «позначка вузла на фото»); pressed again, it closes. `step`: reached by ‹ › or a swipe
-  const showNode = (id: DetailId, step: -1 | 0 | 1 = 0) => {
-    if (detail === id && !step) return closeDetail();
-    if (!detail && !step) nodeSeam.current = null;
-    nodeSwitch.current = detail ? step : 0;
-    setExploded(false);
-    window.clearTimeout(assembledTimer.current);
-    setAssembled(stillNow());
-    assembledTimer.current = window.setTimeout(() => setAssembled(true), ASSEMBLY_MS);
-    placeSeam(id, nodeOnPhoto);
-    setDetailSheet(sheetNow());
-    setDetail(id);
-  };
-  // The next node or the previous one, round the five
-  const stepNode = (by: -1 | 1) => {
-    if (!detail) return;
-    const at = PROOF_DETAILS.findIndex((entry) => entry.id === detail);
-    showNode(PROOF_DETAILS[(at + by + PROOF_DETAILS.length) % PROOF_DETAILS.length].id, by);
-  };
-  // A finger swiped across the sheet: on to the next node, or back
-  const onSheetDown = (event: PointerEvent<HTMLElement>) => {
-    swipe.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
-  };
-  const onSheetUp = (event: PointerEvent<HTMLElement>) => {
-    const from = swipe.current;
-    swipe.current = null;
-    if (!from) return;
-    const [dx, dy] = [event.clientX - from.x, event.clientY - from.y];
-    if (Math.abs(dx) >= SWIPE_MIN && Math.abs(dx) > Math.abs(dy) * 1.5) stepNode(dx < 0 ? 1 : -1);
-  };
-  // Closing: back into its ring, then gone; the seam back where it was; the focus to its letter
-  const closeDetail = () => {
-    const was = detail;
-    const done = () => {
-      const seam = nodeSeam.current;
-      nodeSeam.current = null;
-      handleRef.current?.style.removeProperty('--handle-y');
-      setExploded(false);
-      if (seam && Math.abs(live.current - seam.at) < 0.5) setSplit(seam.from);
-      setDetail(null);
-      // the focus back on its letter — or, where the scheme's letter has given way (data-cut), on the bar's
-      const pin = was ? detailPinRefs.current[was] : null;
-      if (touring.current) return;
-      if (pin && pin.dataset.cut === undefined) pin.focus({ preventScroll: true });
-      else if (was) {
-        // the letter given way: the title block's row while «Каркас» shows it, else — a frame on, once the cut is read
-        // again — the letter, else the seam's range (review 09.10: the focus fell to <body>)
-        const sheet = stageRef.current?.closest('figure');
-        const inRow = sheet?.querySelector<HTMLButtonElement>(`.hv2-contour-nodes[data-place="block"] button[aria-label^="Вузол ${PROOF_DETAILS.find((entry) => entry.id === was)?.letter}:"]`);
-        if (inRow?.checkVisibility({ visibilityProperty: true })) inRow.focus({ preventScroll: true });
-        else {
-          requestAnimationFrame(() => {
-            if (pin && pin.dataset.cut === undefined && pin.offsetParent) pin.focus({ preventScroll: true });
-            else rangeRef.current?.focus({ preventScroll: true });
-          });
-        }
-      }
-    };
-    const panel = detailRef.current;
-    const ring = was && ringOf(was);
-    if (!panel || !ring || stillNow()) return done();
-    detailMotion.current?.cancel();
-    const to = ontoRing(ring, panel);
-    if (!to) return done();
-    const shrink = panel.animate([{ transform: 'none', opacity: 1, borderRadius: '0' }, { transform: to, opacity: 0, borderRadius: '50%' }], NODE_SHRINK);
-    detailMotion.current = shrink;
-    // once, on its end — or a moment after, should a hidden tab hold the animation — unless another node took its place
-    let closed = false;
-    const finish = () => {
-      if (closed || detailMotion.current !== shrink) return;
-      closed = true;
-      done();
-    };
-    shrink.onfinish = finish;
-    window.setTimeout(finish, NODE_SHRINK.duration + 200);
-  };
-  const closeDetailRef = useRef(closeDetail);
-  useEffect(() => {
-    closeDetailRef.current = closeDetail;
-  });
-  useEffect(() => {
-    if (!detail) return;
-    if (!touring.current && !quietOpen.current) detailCloseRef.current?.focus({ preventScroll: true });
-    quietOpen.current = false;
-    const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      closeDetailRef.current();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [detail]);
   useEffect(() => () => cancelAnimationFrame(pointFrame.current), []);
-  // A phone's node sheet holds the page still under it (audit 08.10, F18: a finger on it scrolled the page away)
-  useEffect(() => {
-    if (!detail || !detailSheet) return;
-    const roots = [document.documentElement, document.body];
-    const was = roots.map((root) => root.style.overflow);
-    for (const root of roots) root.style.overflow = 'hidden';
-    return () => roots.forEach((root, index) => { root.style.overflow = was[index]; });
-  }, [detail, detailSheet]);
+  // A scope's cell lighting its part: nothing else lit meanwhile — no held line, no weight on the roof, no node open
+  const focusPart = useScopeFocus(stageRef, {
+    liveRef,
+    setSplit,
+    onFocus: () => {
+      clearLit();
+      setPoint(null);
+      setDetail(null);
+    },
+  });
 
   // On a laptop the picture takes the height the window has left (home-v2.css): the sheet's other parts — the rulers, the
   // title block, however many lines its note wraps to — are measured here, so the title block is never pushed under the
@@ -860,109 +268,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     return () => observer.disconnect();
   }, []);
 
-  // The held line's name stands at the top of the seam, where the seam's own names were (they give way while it is held):
-  // on the photo's side if it fits there, else on the scheme's side short of the stamp, else wrapped on the roomier side
-  // — never off the frame (review, 04.10: on a phone it ran off and lost «виміряно»)
-  useEffect(() => {
-    const stage = stageRef.current;
-    const label = snapLabelRef.current;
-    if (!snap || !stage || !label || !room) return;
-    // Its width in one line, read off a hidden copy: the label itself may still be wrapped from the line held before
-    const width = (label.querySelector<HTMLElement>('.hv2-contour-snap-measure')?.offsetWidth ?? label.scrollWidth) + SNAP_FRAME;
-    const seam = (room.width * split) / 100;
-    const stamp = stampNone ? 0 : (stampShort ? SHORT_STAMP : room.stamp) + STAMP_OFFSET;
-    const left = seam - SNAP_GAP - AIR;
-    const right = room.width - seam - SNAP_GAP - AIR - stamp;
-    const next = width <= left ? { side: 'left' as const, wrap: false, max: 0 }
-      : width <= right ? { side: 'right' as const, wrap: false, max: 0 }
-        : { side: left >= right ? 'left' as const : 'right' as const, wrap: true, max: Math.max(left, right) };
-    setSnapPlace((previous) => (previous.side === next.side && previous.wrap === next.wrap && previous.max === next.max ? previous : next));
-  }, [snap, split, room, stampNone, stampShort]);
-
-  // A figure or a name the seam cuts through is hidden whole, never shown in part (review, 04.10: «≈ 3,2 висоти» cut to
-  // «2 висоти» changes what the figure says). Measured on the page whenever the seam, the layer or the frame changes
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage || !room) return;
-    const box = stage.getBoundingClientRect();
-    // (on the frame's own width to the fraction: a sheet narrowed to fit the window is no whole number of pixels wide, and
-    // the rounded clientWidth put the seam half a pixel off — a word touching it was taken for cut, 06.10)
-    const seam = box.left + (box.width * split) / 100;
-    // …and one under the seam's names or the stamp (review, 04.10): their boxes where they will stand once the seam has
-    // glided there (measured now, a gliding name would be read mid-way)
-    const shown = (element: Element | null) => element && getComputedStyle(element).visibility === 'visible';
-    const [leftTag, rightTag] = stage.querySelectorAll<HTMLElement>('.hv2-contour-seamtags > span');
-    const top = box.top + 10;
-    type Box = { left: number; right: number; top: number; bottom: number };
-    const meets = (a: Box, b: Box) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-    const covers: Box[] = [];
-    if (shown(leftTag)) covers.push({ left: seam - 3 - leftTag.offsetWidth, right: seam - 3, top, bottom: top + leftTag.offsetHeight });
-    const stamp = stage.querySelector<HTMLElement>('.hv2-contour-stamp');
-    if (stamp && shown(stamp)) covers.push(stamp.getBoundingClientRect());
-    // The right-hand name would stand here were it shown — it gives way to a word of the drawing, not the other way
-    const rightTagWould = rightTag && !narrowRight && !snap && layer !== 'load' && layer !== 'wind' && getComputedStyle(rightTag.parentElement!).display !== 'none';
-    const rightBox = rightTag ? { left: seam + 3, right: seam + 3 + rightTag.offsetWidth, top, bottom: top + rightTag.offsetHeight } : null;
-    let yieldTag = false;
-    for (const label of stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')) {
-      const rect = label.getBoundingClientRect();
-      const cut = rect.left < seam + 1 || covers.some((cover) => meets(rect, cover));
-      // shown on this layer: the scheme's names, on «Каркас»
-      const here = layer === 'frame';
-      if (!cut && here && rightTagWould && rightBox && meets(rect, rightBox)) yieldTag = true;
-      if (cut === ('cut' in label.dataset)) continue;
-      if (cut) label.dataset.cut = '';
-      else delete label.dataset.cut;
-      // …with its leader (review, 04.10: a leader stayed, pointing at nothing)
-      const pointer = stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${label.dataset.tag}"]`);
-      if (pointer) {
-        if (cut) pointer.dataset.cut = '';
-        else delete pointer.dataset.cut;
-      }
-    }
-    // A node's letter gives way to a word of the drawing it would cover — the word says what the drawing is; the letter
-    // is in the «Вузли крупно» bar too, and its ring stays (06.10: on a tablet's frame the walls' and the footings'
-    // names lay under Д and В). «Схема ›» gives way to a letter as to a word (on a short laptop with the seam at 64 % it
-    // covered «Г»)
-    const words = [...stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span:not([data-cut])')].filter((label) => shown(label));
-    for (const pin of stage.querySelectorAll<HTMLElement>('.hv2-proof-detail-pin')) {
-      const rect = pin.getBoundingClientRect();
-      // (and, as a word, it is hidden whole where the seam cuts it — never half a letter)
-      const under = layer === 'frame' && (rect.left < seam + 1 || words.some((label) => meets(rect, label.getBoundingClientRect())));
-      if (under) pin.dataset.cut = '';
-      else delete pin.dataset.cut;
-      if (!under && layer === 'frame' && rightTagWould && rightBox && rect.left >= seam && meets(rect, rightBox)) yieldTag = true;
-    }
-    setTagYield(yieldTag);
-  }, [split, layer, room, snap, narrowRight]);
-
-  const splitAt = (clientX: number, offset = 0, touch = false) => {
-    const box = stageRef.current?.getBoundingClientRect();
-    if (!box || box.width === 0) return;
-    const value = clamp(((clientX - offset - box.left) / box.width) * 100);
-    // The measured line the seam is passing: lit from within GRAB until past RELEASE, so it does not flicker at the edge
-    const phone = phoneNow();
-    const lit = snapRef.current;
-    // Not under a finger (owner, 06.10: on a phone the lit gate line, its name and a buzz read as the seam sticking to
-    // the gates — it never did; under a finger nothing lights, the seam just follows it)
-    let near: Snap | null = null;
-    if (!touch && lit && Math.abs(value - stageAt(lit, phone)) < SNAP_RELEASE) near = lit;
-    else if (!touch) near = SNAPS.find((candidate) => Math.abs(value - stageAt(candidate, phone)) < SNAP_GRAB) ?? null;
-    if (near !== lit) {
-      snapRef.current = near;
-      setSnap(near);
-      if (near) setSnapWords(near);
-    }
-    // Tenths of a per cent: a whole per cent is a 13 px jump on a wide screen
-    const tenths = Math.round(value * 10) / 10;
-    paint(tenths);
-    commit(tenths);
-  };
+  const { stampShort, stampNone, narrowLeft, narrowRight, tagYield, snapPlace, snapLabelRef } = useLabelFit(stageRef, { room, split, layer, snap });
 
   // Where a pointer is in the photo's own pixels, if it is on the right side of the seam
   const onScheme = (clientX: number, clientY: number): readonly [number, number] | null => {
     const canvas = paneCanvasRef.current?.getBoundingClientRect();
     const box = stageRef.current?.getBoundingClientRect();
-    if (!canvas || !box || clientX < box.left + (box.width * live.current) / 100) return null;
+    if (!canvas || !box || clientX < box.left + (box.width * liveRef.current) / 100) return null;
     return [((clientX - canvas.left) / canvas.width) * contourPhoto.width, ((clientY - canvas.top) / canvas.height) * contourPhoto.height];
   };
   // «Точка навантаження»: on «Сніг», a pointer over the roof puts a weight there — at most once a frame
@@ -1030,7 +342,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     const stage = stageRef.current;
     if (!stage || layerRef.current !== 'frame' || stage.dataset.sweep !== undefined || stage.dataset.focus !== undefined) return null;
     const box = stage.getBoundingClientRect();
-    if (x < box.left + (box.width * live.current) / 100) return null;
+    if (x < box.left + (box.width * liveRef.current) / 100) return null;
     for (const { id } of homeProofDetailSpots) {
       const ring = ringOf(id)?.getBoundingClientRect();
       if (!ring?.width) continue;
@@ -1072,10 +384,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       // Grabbing the handle keeps the seam where it is and the handle under the pointer. The offset is taken from where
       // the handle is drawn, not from the seam: at either end of the frame it is held clear of the edge, off the seam
       const grip = handle.getBoundingClientRect();
-      drag.current = { pointer: event.pointerId, offset: event.clientX - (grip.left + grip.width / 2) };
+      dragRef.current = { pointer: event.pointerId, offset: event.clientX - (grip.left + grip.width / 2) };
     } else {
       // A click elsewhere moves the seam there (below, once the press is marked a drag)
-      drag.current = { pointer: event.pointerId, offset: 0 };
+      dragRef.current = { pointer: event.pointerId, offset: 0 };
     }
     event.currentTarget.setPointerCapture(event.pointerId);
     // set here, not only by the render: the press's own move must not glide
@@ -1086,13 +398,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (!handle) splitAt(event.clientX, 0, event.pointerType === 'touch');
   };
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (drag.current?.pointer === event.pointerId) {
-      splitAt(event.clientX, drag.current.offset, event.pointerType === 'touch');
+    if (dragRef.current?.pointer === event.pointerId) {
+      splitAt(event.clientX, dragRef.current.offset, event.pointerType === 'touch');
       return;
     }
     // A mouse over the frame, no press, moves no seam (owner, 05.10: only while the button is held). On «Сніг» it puts
     // a weight on the roof it is over
-    if (event.pointerType !== 'mouse' || !ready || drag.current || event.currentTarget.dataset.sweep !== undefined) return;
+    if (event.pointerType !== 'mouse' || !ready || dragRef.current || event.currentTarget.dataset.sweep !== undefined) return;
     const roof = roofAt(event.clientX, event.clientY);
     if (roof) pointAt(roof[0]);
     else if (point || pointFrame.current) dropPoint();
@@ -1105,7 +417,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     } else dropHit();
   };
   const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
-    if (drag.current) return;
+    if (dragRef.current) return;
     if (event.pointerType === 'mouse') {
       dropPoint();
       dropHit();
@@ -1135,23 +447,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     window.clearTimeout(tapTimer.current);
     tapTimer.current = window.setTimeout(dropHit, 2600);
   };
-  const endDrag = () => {
-    if (!drag.current) return;
-    drag.current = null;
-    delete stageRef.current?.dataset.dragging;
-    commit(live.current, true);
-    snapRef.current = null;
-    setSnap(null);
-    setDragging(false);
-  };
 
   // Arrows step by one through the native range; the larger steps are the same in every browser
-  // A move that is not the pointer's — a key, a button, a layer — leaves no line lit behind it (review, 04.10)
-  const clearLit = () => {
-    snapRef.current = null;
-    setSnap(null);
-  };
-
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     setPointerFocus(false);
     clearLit();
@@ -1188,7 +485,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     setDetail(null);
     setChosen('frame');
     const to = phoneNow() ? FOCUS_SPLIT_PHONE : FOCUS_SPLIT;
-    if (live.current > to) setSplit(to);
+    if (liveRef.current > to) setSplit(to);
     const wait = stageRef.current && bringIntoView(stageRef.current) ? SCROLL_FIRST : 0;
     setBuilding(false);
     window.clearTimeout(buildTimer.current);
@@ -1201,105 +498,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       }, BUILD_MS);
     }, wait);
   };
-  // «Тур»: one step, then the next after its hold
-  const walkRoof = () => {
-    // timed from its own first frame (the React compiler reads a performance.now() here as a call during render)
-    let start = -1;
-    const frame = (now: number) => {
-      if (start < 0) start = now;
-      const t = Math.min(1, (now - start) / WALK.ms);
-      tourApi.current?.point(WALK.from + (WALK.to - WALK.from) * (0.5 - Math.cos(Math.PI * t) / 2));
-      if (t < 1) walkFrame.current = requestAnimationFrame(frame);
-    };
-    walkFrame.current = requestAnimationFrame(frame);
-  };
-  const runTour = (step: number) => {
-    // a frame scrolled out of sight is not played to: the next step finds it gone and ends the tour
-    const box = stageRef.current?.getBoundingClientRect();
-    if (step > 0 && box && (box.bottom < 60 || box.top > window.innerHeight - 60)) return endTour();
-    touring.current = true;
-    setTourStep(step);
-    if (step === 0) build();
-    else if (step === 1) choose('load');
-    else if (step === 2) walkRoof();
-    else if (step === 3) {
-      cancelAnimationFrame(walkFrame.current);
-      choose('wind');
-    } else if (step === 4) {
-      choose('frame');
-      setFlowOn(true);
-      showNode('ridge');
-    } else if (step === 5) {
-      closeDetail();
-      window.setTimeout(() => setSplit(DEFAULT_SPLIT), 450);
-      setCalling(true);
-      window.clearTimeout(callTimer.current);
-      callTimer.current = window.setTimeout(() => setCalling(false), 2600);
-    }
-    window.clearTimeout(tourTimer.current);
-    tourTimer.current = window.setTimeout(() => {
-      if (step + 1 < TOUR.length) tourApi.current?.run(step + 1);
-      else tourApi.current?.end();
-    }, TOUR[step].hold);
-  };
-  // Ended by the visitor's own press: the seam stays where they put it; otherwise (the button, Esc, the frame scrolled
-  // away) it goes back to rest — not the tour's 15 % (audit 08.10, F13)
-  const endTour = (restore = true) => {
-    touring.current = false;
-    window.clearTimeout(tourTimer.current);
-    cancelAnimationFrame(walkFrame.current);
-    setTourStep(null);
-    setFlowOn(flowBefore.current);
-    if (restore) setSplit(DEFAULT_SPLIT);
-  };
-  const toggleTour = () => {
-    if (tourStep !== null) return endTour();
-    flowBefore.current = flowOn;
-    runTour(0);
-    queueProofEvent('tour_start');
-  };
-  useEffect(() => {
-    tourApi.current = {
-      run: runTour,
-      end: endTour,
-      point: pointAt,
-      node: () => {
-        if (detail || touched.current || layerRef.current !== 'frame') return;
-        quietOpen.current = true;
-        showNode(AUTO_NODE);
-      },
-    };
+
+  const { tourStep, calling, toggleTour } = useTour(stageRef, {
+    layerRef, touchedRef, touringRef, quietOpenRef, detail, flowOn, setFlowOn, setSplit, showNode, closeDetail, build, choose, pointAt,
   });
-  // The arrival's own node (see AUTO_NODE): the sweep's effect asks for it by an event on the stage
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const open = () => tourApi.current?.node();
-    stage.addEventListener(AUTO_NODE_EVENT, open);
-    return () => stage.removeEventListener(AUTO_NODE_EVENT, open);
-  }, []);
-  // Any press or key of the visitor's own in the sheet (not the tour's button) hands the block back
-  useEffect(() => {
-    if (tourStep === null) return;
-    const sheet = stageRef.current?.closest('figure');
-    if (!sheet) return;
-    const onOwn = (event: Event) => {
-      if ((event.target as Element).closest?.('.hv2-contour-tour-btn')) return;
-      tourApi.current?.end(false);
-    };
-    // Esc anywhere, the tour's own button focused included
-    const onEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') tourApi.current?.end();
-    };
-    sheet.addEventListener('pointerdown', onOwn, true);
-    sheet.addEventListener('keydown', onOwn, true);
-    document.addEventListener('keydown', onEscape);
-    return () => {
-      sheet.removeEventListener('pointerdown', onOwn, true);
-      sheet.removeEventListener('keydown', onOwn, true);
-      document.removeEventListener('keydown', onEscape);
-    };
-  }, [tourStep]);
 
   // A node from the title block: the scheme on, its ring in view, the frame on the screen (a phone's sheet covers it)
   const openNode = (id: DetailId) => {
@@ -1343,41 +545,35 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       ))}
     </fieldset>
   );
-  // A layer's place in the legend: a load's way, link by link; «Каркас»'s five nodes; else the draughtsman's key
+  // A layer's place in the legend: «Каркас»'s five nodes; a load's way, link by link
   const legendSet = (name: Layer) => {
-    const chain = CHAINS[name];
-    if (chain) {
-      // A load's legend is its way: its tint's key, then each link lit as the drawing reaches it (replayed with it on
-      // every press)
-      return (
-        <span className="hv2-contour-legend-chain" data-load={name} key={name === 'load' ? loadRun : windRun}>
-          <span data-key={name}>{legendLine}</span>
-          {chain.map(([word, n]) => (
-            <button
-              key={word}
-              type="button"
-              className="hv2-chain-step"
-              disabled={!ready}
-              style={{ '--n': n } as CSSProperties}
-              aria-pressed={layer === name && stepOn === n}
-              onClick={() => setStepOn((on) => (on === n ? null : n))}
-              onPointerEnter={() => setStepPeek(n)}
-              onPointerLeave={() => setStepPeek(null)}
-              onFocus={() => setStepPeek(n)}
-              onBlur={() => setStepPeek(null)}
-            >
-              {word}
-            </button>
-          ))}
-        </span>
-      );
-    }
     // «Каркас»'s own row: its five nodes, named, at once (owner, 09.10: «Детальніше» hid them, and the letters on the
     // scheme were found by chance); the draughtsman's key gave it its place
     if (name === 'frame') return nodesRow('block');
-    return LEGEND[name].map((key) => (
-      <span key={key} data-key={key}>{legendLine}{LEGEND_WORDS[key]}</span>
-    ));
+    // A load's legend is its way: its tint's key, then each link lit as the drawing reaches it (replayed with it on
+    // every press)
+    return (
+      <span className="hv2-contour-legend-chain" data-load={name} key={name === 'load' ? loadRun : windRun}>
+        <span data-key={name}>{legendLine}</span>
+        {CHAINS[name].map(([word, n]) => (
+          <button
+            key={word}
+            type="button"
+            className="hv2-chain-step"
+            disabled={!ready}
+            style={{ '--n': n } as CSSProperties}
+            aria-pressed={layer === name && stepOn === n}
+            onClick={() => setStepOn((on) => (on === n ? null : n))}
+            onPointerEnter={() => setStepPeek(n)}
+            onPointerLeave={() => setStepPeek(null)}
+            onFocus={() => setStepPeek(n)}
+            onBlur={() => setStepPeek(null)}
+          >
+            {word}
+          </button>
+        ))}
+      </span>
+    );
   };
   // A quiet way out for another task than a hangar (audit 08.10: the brief leads to hangars only): under the line on a
   // laptop (the action cell's height is the title block's, and the sheet must fit the window), under the brief on a phone
@@ -1553,7 +749,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   return (
                     <button
                       key={id}
-                      ref={(element) => { detailPinRefs.current[id] = element; }}
+                      ref={(element) => { detailPinsRef.current[id] = element; }}
                       type="button"
                       className="hv2-proof-detail-pin"
                       data-detail={id}
@@ -1641,9 +837,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               data-exploded={exploded ? '' : undefined}
               onPointerDown={onSheetDown}
               onPointerUp={onSheetUp}
-              onPointerCancel={() => { swipe.current = null; }}
+              onPointerCancel={onSheetCancel}
               onAnimationEnd={(event) => {
-                if (event.animationName === 'hv2-detail-names') setAssembled(true);
+                if (event.animationName === 'hv2-detail-names') onAssembled();
               }}
               aria-modal={detailSheet ? true : undefined}
               aria-labelledby="hv2-detail-title"
@@ -1669,30 +865,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                   <button type="button" className="hv2-detail-again" data-kind="load" aria-pressed={flowOn} onClick={() => setFlowOn((on) => !on)}>
                     <span aria-hidden="true">↓</span> Навантаження
                   </button>
-                  <button
-                    type="button"
-                    className="hv2-detail-again"
-                    aria-pressed={exploded}
-                    onClick={() => {
-                      window.clearTimeout(assembledTimer.current);
-                      if (exploded && !stillNow()) {
-                        setAssembled(false);
-                        assembledTimer.current = window.setTimeout(() => setAssembled(true), REASSEMBLE_MS);
-                      }
-                      setExploded((on) => !on);
-                    }}
-                  >
+                  <button type="button" className="hv2-detail-again" aria-pressed={exploded} onClick={toggleExploded}>
                     <span aria-hidden="true">⇲</span> {exploded ? 'Зібрати' : 'Розібрати'}
                   </button>
-                  <button
-                    type="button"
-                    className="hv2-detail-again"
-                    aria-pressed={nodeOnPhoto}
-                    onClick={() => {
-                      placeSeam(item.id, !nodeOnPhoto);
-                      setNodeOnPhoto((on) => !on);
-                    }}
-                  >
+                  <button type="button" className="hv2-detail-again" aria-pressed={nodeOnPhoto} onClick={() => toggleOnPhoto(item.id)}>
                     <span aria-hidden="true">◎</span> На фото
                   </button>
                 </span>
