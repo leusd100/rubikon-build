@@ -6,7 +6,7 @@ import { stubTurnstile } from './turnstile.helpers';
 // a brief sent with a saved lead says so and is not sent again until it changes, every way to the form lands on the
 // brief, and the brief's status line and headings stay true.
 
-type Lead = { submissionId: string; direction?: string; details: { configuration?: string; dimensions?: string } };
+type Lead = { submissionId: string; phone?: string; direction?: string; details: { configuration?: string; dimensions?: string } };
 
 const NBSP = ' ';
 
@@ -108,11 +108,16 @@ test('a brief sent with a saved lead says so, stops asking to be sent, and goes 
   await expect(form.locator('.inquiry-sent')).toContainText(`КонфігураціяПриклад з креслення · 24${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м`);
   await form.getByRole('button', { name: 'Виправити номер або надіслати ще один запит', exact: true }).click();
   await expect(form.getByLabel(/Телефон/)).toBeFocused();
+  // the corrected request carries the brief again (owner, 09.10): the card and route node 01 ask for it to be sent
+  await expect(brief(page).locator('.inquiry-config-brief-title')).not.toHaveText('Надіслано з вашим запитом');
+  await expect(routeBrief(page).getByRole('link', { name: /Надіслати бриф/ })).toBeVisible();
 
-  // the next submit is a new lead (form.spec.ts) — without the brief it already carried
+  // the next submit is a new lead (form.spec.ts), with the corrected number and the brief again
+  await form.getByLabel(/Телефон/).fill('+380671112233');
   await submit.click();
   await expect.poll(() => leads.length).toBe(2);
-  expect(leads[1].details).not.toHaveProperty('configuration');
+  expect(leads[1].phone).toBe('+380671112233');
+  expect(leads[1].details.configuration).toBe(leads[0].details.configuration);
   expect(leads[1].submissionId).not.toBe(leads[0].submissionId);
 
   // a change makes a new brief: «Запит надіслано» gives the fields back, and the brief is attached, asked for and sent

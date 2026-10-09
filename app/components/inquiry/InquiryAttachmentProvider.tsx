@@ -25,6 +25,11 @@ export type InquiryAttachmentState = InquiryAttachmentSource & {
   sentBefore: boolean;
   /** For the form, after a saved lead that carried `attachment`. */
   markSent: (attachment: InquiryAttachment) => void;
+  /**
+   * For the form's «Виправити номер або надіслати ще один запит» (owner, 09.10): the request that follows is the same one
+   * corrected, or another one, and either way the manager needs the brief with it — so it counts as not sent again.
+   */
+  unmarkSent: (attachment: InquiryAttachment) => void;
 };
 
 type AttachmentRegistry = {
@@ -69,14 +74,21 @@ export function InquiryAttachmentProvider({ children }: { children: ReactNode })
     saveSentKeys(next);
     return next;
   }), []);
+  const unmarkSent = useCallback((attachment: InquiryAttachment) => setSentKeys((current) => {
+    const next = current.filter((key) => key !== sentAttachmentKey(attachment));
+    if (next.length === current.length) return current;
+    saveSentKeys(next);
+    return next;
+  }), []);
   const state = useMemo<InquiryAttachmentState | null>(
     () => (source ? {
       ...source,
       sent: source.attachment !== null && sentKeys.includes(sentAttachmentKey(source.attachment)),
       sentBefore: source.attachment !== null && sentKeys.some((key) => key.startsWith(`${source.attachment!.kind}@`)),
       markSent,
+      unmarkSent,
     } : null),
-    [source, sentKeys, markSent],
+    [source, sentKeys, markSent, unmarkSent],
   );
 
   return (
