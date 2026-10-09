@@ -68,68 +68,70 @@ const INITIAL_HANGAR_INQUIRY_STATE: HangarInquiryState = {
   restored: false,
 };
 
-function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryAction): HangarInquiryState {
-  if (action.type === 'step') return current.step === action.step ? current : { ...current, step: action.step };
-  if (action.type === 'restore') {
-    return {
-      ...current,
-      configuration: action.configuration,
-      attachment: action.attached ? { status: 'attached', reason: 'explicit-action' } : INITIAL_HANGAR_ATTACHMENT,
-      step: action.step,
-      restored: true,
-    };
-  }
-  if (action.type === 'start-over') return { ...INITIAL_HANGAR_INQUIRY_STATE };
-
-  if (action.type === 'business-edit') {
-    // Numeric fields commit on blur as well as while typing. Merely focusing and leaving an
-    // unchanged default must not count as intent, so identical commits are true no-ops.
-    if (sameBusinessConfiguration(current.configuration, action.configuration)) return current;
-    return {
-      ...current,
-      configuration: action.configuration,
-      attachment: transitionHangarAttachment(current.attachment, { type: 'business-edit' }),
-      presentationDemo: null,
-      presentationAnnouncement: current.presentationDemo
-        ? 'Показ завершено. Застосовано нові параметри.'
-        : current.presentationAnnouncement,
-    };
-  }
-
-  if (action.type === 'toggle-presentation') {
-    if (current.presentationDemo?.kind === action.kind) {
-      return {
-        ...current,
-        attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
-        presentationDemo: null,
-        presentationAnnouncement: 'Повернуто ваш варіант.',
-      };
-    }
-    const presentationDemo = createHangarPresentationDemo(action.kind, current.configuration);
-    return {
-      ...current,
-      attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
-      presentationDemo,
-      presentationAnnouncement: `${presentationDemo.label}. Ваш вибір не змінено.`,
-    };
-  }
-
-  if (action.type === 'end-presentation') {
-    if (!current.presentationDemo) return current;
-    return {
-      ...current,
-      attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
-      presentationDemo: null,
-      presentationAnnouncement: 'Повернуто ваш варіант.',
-    };
-  }
-
+/** Back to the visitor's own variant: a presentation ends without touching what they chose */
+function endPresentation(current: HangarInquiryState): HangarInquiryState {
   return {
     ...current,
-    attachment: transitionHangarAttachment(current.attachment, {
-      type: action.type,
-    }),
+    attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
+    presentationDemo: null,
+    presentationAnnouncement: 'Повернуто ваш варіант.',
   };
+}
+
+function togglePresentation(current: HangarInquiryState, kind: HangarPresentationDemoKind): HangarInquiryState {
+  if (current.presentationDemo?.kind === kind) return endPresentation(current);
+  const presentationDemo = createHangarPresentationDemo(kind, current.configuration);
+  return {
+    ...current,
+    attachment: transitionHangarAttachment(current.attachment, { type: 'presentation-only' }),
+    presentationDemo,
+    presentationAnnouncement: `${presentationDemo.label}. Ваш вибір не змінено.`,
+  };
+}
+
+function applyBusinessEdit(current: HangarInquiryState, configuration: ConfiguratorState): HangarInquiryState {
+  // Numeric fields commit on blur as well as while typing. Merely focusing and leaving an
+  // unchanged default must not count as intent, so identical commits are true no-ops.
+  if (sameBusinessConfiguration(current.configuration, configuration)) return current;
+  return {
+    ...current,
+    configuration,
+    attachment: transitionHangarAttachment(current.attachment, { type: 'business-edit' }),
+    presentationDemo: null,
+    presentationAnnouncement: current.presentationDemo
+      ? 'Показ завершено. Застосовано нові параметри.'
+      : current.presentationAnnouncement,
+  };
+}
+
+function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryAction): HangarInquiryState {
+  switch (action.type) {
+    case 'step':
+      return current.step === action.step ? current : { ...current, step: action.step };
+    case 'restore':
+      return {
+        ...current,
+        configuration: action.configuration,
+        attachment: action.attached ? { status: 'attached', reason: 'explicit-action' } : INITIAL_HANGAR_ATTACHMENT,
+        step: action.step,
+        restored: true,
+      };
+    case 'start-over':
+      return { ...INITIAL_HANGAR_INQUIRY_STATE };
+    case 'business-edit':
+      return applyBusinessEdit(current, action.configuration);
+    case 'toggle-presentation':
+      return togglePresentation(current, action.kind);
+    case 'end-presentation':
+      return current.presentationDemo ? endPresentation(current) : current;
+    default:
+      return {
+        ...current,
+        attachment: transitionHangarAttachment(current.attachment, {
+          type: action.type,
+        }),
+      };
+  }
 }
 
 /**

@@ -219,7 +219,8 @@
 .hc-section dl { display: grid; gap: 6px; margin: 0; }
 .hc-section-row { display: grid; grid-template-columns: 64px auto; align-items: center; column-gap: 10px; }
 .hc-section-row dt { color: var(--color-dark-text-muted); font: 600 11px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-.hc-section-row dd { display: flex; align-items: center; gap: 10px; margin: 0; font: 500 12px/1.2 var(--font-manrope), sans-serif; white-space: nowrap; }
+/* a changed row flashes copper for a moment, with the surfaces it describes (data-active, below) */
+.hc-section-row dd { display: flex; align-items: center; gap: 10px; margin: 0; font: 500 12px/1.2 var(--font-manrope), sans-serif; white-space: nowrap; transition: color var(--duration-fast) var(--ease-premium); }
 .hc-section-glyph { flex: none; overflow: visible; }
 .hc-section-glyph :is(path, line, rect) { fill: none; stroke: var(--color-dark-text-secondary); stroke-width: 1.2; stroke-linejoin: miter; }
 .hc-section-glyph .is-core { stroke: var(--color-accent-on-dark); stroke-width: 1; }
@@ -228,8 +229,6 @@
 .hc-section-glyph .is-out { stroke-dasharray: 3 3; stroke: var(--color-dark-text-muted); }
 .hc-section-glyph text { fill: var(--color-dark-text-muted); font: 700 9px/1 var(--font-condensed), sans-serif; }
 .hc-section-row[data-layers='none'] dd { color: var(--color-dark-text-muted); }
-/* a changed row flashes copper for a moment, with the surfaces it describes */
-.hc-section-row dd { transition: color var(--duration-fast) var(--ease-premium); }
 .hc-section-row[data-active] dd { color: var(--color-accent-on-dark); }
 
 @media (max-width: 760px) {
@@ -353,9 +352,8 @@
   .hc-preview-image > .hc-section figcaption { margin-bottom: 14px; line-height: 1.4; }
   .hc-preview-image > .hc-section dl { gap: 16px; }
   .hc-preview-image > .hc-section .hc-section-row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
-  .hc-preview-image > .hc-section .hc-section-row dd { flex-direction: column; align-items: flex-start; gap: 8px; white-space: normal; font-size: 13px; line-height: 1.35; }
+  .hc-preview-image > .hc-section .hc-section-row dd { flex-direction: column; align-items: flex-start; gap: 8px; white-space: normal; font-size: 12.5px; line-height: 1.35; }
   .hc-preview-image > .hc-section .hc-section-glyph { width: 96px; height: 32px; }
-  .hc-preview-image > .hc-section .hc-section-row dd { font-size: 12.5px; }
 }
 /* …and on a narrower sheet (a tablet, a laptop's 1024, a phone) the callout is the drawing's legend under it, never on
    the hangar; the phone's mini drawing keeps its corner glyphs (below) */

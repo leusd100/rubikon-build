@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
-import { buildCladdingLines, type CladdingLine } from '../../lib/configurator/claddingLines';
+import { buildCladdingLines, claddingLineKey, type CladdingLine } from '../../lib/configurator/claddingLines';
 import {
   labelScaleToFit,
   pointsAttr,
@@ -103,14 +103,14 @@ function BuildLayerPolygon({
 }
 
 /** The cladding's ribs or joints on one face (claddingLines.ts), arriving and leaving with that face's layer */
-function CladdingLinesEl({ lines, system, phase, style }: { lines: CladdingLine[]; system: string; phase: string; style: CSSProperties }) {
+function CladdingLinesEl({ lines, system, phase, style }: Readonly<{ lines: CladdingLine[]; system: string; phase: string; style: CSSProperties }>) {
   if (lines.length === 0) return null;
   return (
     <g className={`hc-cladding hc-cladding-${system} hc-buildlayer hc-phase-${phase}`} style={style} aria-hidden="true">
-      {lines.map(([from, to], index) => {
+      {lines.map(([from, to]) => {
         const a = project(from);
         const b = project(to);
-        return <line key={index} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
+        return <line key={claddingLineKey([from, to])} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
       })}
     </g>
   );

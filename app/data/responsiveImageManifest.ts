@@ -11,26 +11,6 @@ export const responsiveWebpVariants: Record<string, { w480: string; w768: string
     w768: '/media-responsive/about-quality-control-768w.dd8e3cd8.webp',
     w1200: '/media-responsive/about-quality-control-1200w.e025ddbf.webp',
   },
-  '/media/angary/envelope-profiled-cutaway.jpg': {
-    w480: '/media-responsive/envelope-profiled-cutaway-480w.5929c901.webp',
-    w768: '/media-responsive/envelope-profiled-cutaway-768w.32cd5c2d.webp',
-    w1200: '/media-responsive/envelope-profiled-cutaway-1200w.63825915.webp',
-  },
-  '/media/angary/envelope-sandwich-cutaway.jpg': {
-    w480: '/media-responsive/envelope-sandwich-cutaway-480w.fa2b7957.webp',
-    w768: '/media-responsive/envelope-sandwich-cutaway-768w.043142d9.webp',
-    w1200: '/media-responsive/envelope-sandwich-cutaway-1200w.c86c045f.webp',
-  },
-  '/media/angary/foundation-isolated-detail.jpg': {
-    w480: '/media-responsive/foundation-isolated-detail-480w.ceb0113b.webp',
-    w768: '/media-responsive/foundation-isolated-detail-768w.303f918f.webp',
-    w1200: '/media-responsive/foundation-isolated-detail-1200w.b45a9078.webp',
-  },
-  '/media/angary/foundation-slab-detail.jpg': {
-    w480: '/media-responsive/foundation-slab-detail-480w.4a5c0426.webp',
-    w768: '/media-responsive/foundation-slab-detail-768w.ff0427ab.webp',
-    w1200: '/media-responsive/foundation-slab-detail-1200w.7ffbea9c.webp',
-  },
   '/media/concepts/about-experience-v2.jpg': {
     w480: '/media-responsive/about-experience-v2-480w.2c0532e4.webp',
     w768: '/media-responsive/about-experience-v2-768w.e4f4a770.webp',

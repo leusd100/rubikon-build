@@ -1,18 +1,15 @@
 'use client';
 
 import { useMemo, type CSSProperties, type RefObject } from 'react';
-import { DrawingSheet } from '../DrawingSheet';
-import { stageTransform, useDrawingTour, type StageSize, type TourFocus } from '../useDrawingTour';
+import { stageTransform, type StageSize, type TourFocus } from '../useDrawingTour';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
-import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
 import { deriveDomainModel, sizesProvenance, type HangarDomainModel } from '../../lib/configurator/domainModel';
-import { SIZES_PREFIX } from '../configurator/sheetLabels';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import {
   buildParametricModel, deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM,
 } from '../../lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
-import { TourCaptions, TourControl, TourProgress, TourSteps, tourStepCell } from '../directions/TourParts';
+import { TourProgress } from '../directions/TourParts';
 import { endWallFraming } from './endWallFraming';
 import './frame-tour.css';
 
@@ -30,7 +27,10 @@ import './frame-tour.css';
 // the end wall (end wall → its posts → roof bracing, split at the ridge → the bracing of both long walls → footings),
 // which is what the bracing is for — then, for a moment, what the first bay would do without it (03.10). Schematic:
 // letters on the dimension lines and in the axis bubbles, no sizes or forces; every number on the page is the
-// configurator's own. Reads the business configuration only, attaches nothing. One automatic tour per page — this one.
+// configurator's own. Reads the business configuration only, attaches nothing.
+//
+// Since 07.10 the drawing is the configurator's «Каркас» step (ConfiguratorFrameView), not a section of its own: this
+// file keeps its model and its picture; the section and its «Змінити габарити ↑» link are gone.
 
 type P3 = readonly [number, number, number];
 type Pt = readonly [number, number];
@@ -146,6 +146,21 @@ function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt
   return { label: chosen.label, lines: chosen.lines, d: chosen.d, x: chosen.x, y: chosen.y, anchor: chosen.anchor, box: chosen.box };
 }
 
+/** The numbered bubbles stand off the frame spacing's line, past its letter; where the bays come too close on the sheet
+ *  for two bubbles side by side, a bubble moves further out along its axis until it is clear */
+const BUBBLE_OUT = 54 + BUBBLE;
+function bayBubblesOut(frames: readonly number[], s: number, k: number) {
+  return frames.reduce<number[]>((outs, _, index) => {
+    const clear = (out: number) => outs.every((other, j) => Math.hypot(
+      0.5 * s * k * DIR[0] * (index - j) + (out - other) * AX[0],
+      0.5 * s * k * DIR[1] * (index - j) + (out - other) * AX[1],
+    ) >= 2 * BUBBLE + 10);
+    let out = BUBBLE_OUT;
+    while (!clear(out)) out += 4;
+    return [...outs, out];
+  }, []);
+}
+
 function frameGeometry(domain: HangarDomainModel) {
   const { widthM: W, lengthM, eaveHeightM: E } = domain.dimensions;
   const R = ridgeHeightM(W, E, domain.roof.pitchDeg);
@@ -184,18 +199,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const raw = extremes.map(unit);
   const [minX, maxX] = [Math.min(...raw.map(([x]) => x)), Math.max(...raw.map(([x]) => x))];
   const [minY, maxY] = [Math.min(...raw.map(([, y]) => y)), Math.max(...raw.map(([, y]) => y))];
-  /** The numbered bubbles stand off the frame spacing's line, past its letter; where the bays come too close on the
-   *  sheet for two bubbles side by side, a bubble moves further out along its axis until it is clear */
-  const BUBBLE_OUT = 54 + BUBBLE;
-  const bubblesOut = (k: number) => frames.reduce<number[]>((outs, _, index) => {
-    const clear = (out: number) => outs.every((other, j) => Math.hypot(
-      0.5 * s * k * DIR[0] * (index - j) + (out - other) * AX[0],
-      0.5 * s * k * DIR[1] * (index - j) + (out - other) * AX[1],
-    ) >= 2 * BUBBLE + 10);
-    let out = BUBBLE_OUT;
-    while (!clear(out)) out += 4;
-    return [...outs, out];
-  }, []);
+  const bubblesOut = (k: number) => bayBubblesOut(frames, s, k);
   const fit = (reach: number) => {
     const pad = { left: 22, right: 22 + reach, top: 32, bottom: 10 + 8 + 2 * BUBBLE };
     const k = Math.min((VIEW.width - pad.left - pad.right) / (maxX - minX), (VIEW.height - pad.top - pad.bottom) / (maxY - minY));
@@ -518,30 +522,14 @@ const STEP_DURATIONS = [4200, 4800, 5200, 6400, 7600] as const;
 const at = (index: number) => ({ '--n': index }) as CSSProperties;
 /** An arrow's own beat in the falling snow and the wind's gusts */
 const beat = (index: number) => ({ '--k': index }) as CSSProperties;
-/** Under the sheet on a phone, before a step is shown: it promises a show only while one is still to come */
-function overviewText(pending: boolean, motion: boolean) {
-  if (pending) return 'Креслення показує каркас крок за кроком: оберіть крок нижче або дочекайтеся показу.';
-  if (motion) return 'Креслення показує каркас крок за кроком: оберіть крок нижче або натисніть «Відтворити».';
-  return 'Креслення показує каркас крок за кроком: оберіть крок нижче.';
-}
-
-/** «Змінити габарити ↑» wider than a phone: its anchor scrolls to «Розміри», and then the width field takes the focus, so
- *  the next key changes a size — after the jump, which would take it away again. On a phone the configurator's
- *  accordion has the click (ConfiguratorControls). */
-function focusWidth() {
-  if (document.querySelector('#configurator .hc-group-toggle')) return;
-  window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('#hc-dimension-width')?.focus({ preventScroll: true }));
-}
-
 /** The frame drawing's model from the business configuration: its geometry, the five steps and the title block's words —
- *  shared by the section and by the configurator's «Каркас» view (07.10) */
+ *  for the configurator's «Каркас» view (07.10) */
 export function useFrameTourModel() {
   const inquiry = useHangarInquiryContext();
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
   const domain = useMemo(() => deriveDomainModel(state), [state]);
   const g = useMemo(() => frameGeometry(domain), [domain]);
   const summary = deriveSummary(domain);
-  const own = !sameDrawnHangar(state, DEFAULT_CONFIGURATOR_STATE);
   // the sizes said as the visitor gave them, one rule with the sheet and the stamp (08.10, audit): their own, the
   // example's, or an orientation while they look for theirs
   const provenance = sizesProvenance(domain);
@@ -589,13 +577,10 @@ export function useFrameTourModel() {
       ...g.cameras.wind,
     },
   ];
-  // «Приклад · 24 × 60 × 8 м»: the sizes held together and to their unit, which stays a lower-case «м» in the title
-  // block's capitals (04.10, drawing-sheet.css .sheet-unit); a line may break only after the «·»
-  const object = `${SIZES_PREFIX[provenance]}\u00A0· ${[g.W, g.lengthM, g.E].map(fmt).join('\u00A0×\u00A0')}\u00A0`;
   /** The title block's «Що показано»: every caption laid out in one cell, only the shown one visible — the cell is as
    *  tall as the longest at any width, so the sheet no longer changes height from step to step (04.10) */
   const captions = [OVERVIEW_CAPTION, ...steps.map((item) => item.caption)];
-  return { g, summary, own, steps, object, captions };
+  return { g, summary, steps, captions };
 }
 
 export const FRAME_TOUR_DURATIONS = STEP_DURATIONS;
@@ -782,73 +767,5 @@ export function FrameTourStage({
           </div>
           <TourProgress count={count} step={step} run={run} className="ft-progress" />
     </>
-  );
-}
-
-export function FrameTour({ titleId }: Readonly<{ titleId: string }>) {
-  const { g, summary, own, steps, object, captions } = useFrameTourModel();
-  const { visualRef, step, touring, run, size, motion, pending, stepMs, choose, toggle, hover } = useDrawingTour(steps.length, { loops: 3, durations: STEP_DURATIONS });
-  const active = step ? steps[step - 1] : undefined;
-  return (
-    <div
-      className="shell direction-editorial-grid dn ft"
-      data-layout="copy-first"
-      data-step={step || undefined}
-      data-touring={touring || undefined}
-      // the progress bar fills as long as the step holds
-      style={{ '--dn-step-ms': `${stepMs}ms` } as CSSProperties}
-    >
-      <div className="direction-editorial-copy">
-        <p className="eyebrow"><span /> Схема каркаса</p>
-        <h2 id={titleId}>Каркас вашого ангара — від покрівлі до основи</h2>
-        <p>
-          {/* the section follows the configurator (03.10): until the visitor sets a size, the drawing is the example */}
-          {!own && keepMarks('Задайте свої габарити вище — схема перебудується. ')}
-          {keepMarks('Креслення будується з вашої конфігурації — проліт, висоти, схема каркаса — і показує, як сніг і вітер '
-            + 'проходять крізь каркас до основи. Це попередня схема без масштабу; фундаменти показано умовно — конструктив '
-            + 'визначає проєктувальник.')}
-        </p>
-      </div>
-      <TourSteps steps={steps} step={step} choose={choose} hover={hover} />
-      <DrawingSheet
-        className="direction-editorial-media dn-sheet ft-sheet"
-        imageClassName="dn-visual ft-visual"
-        cells={[
-          tourStepCell(step, steps.length),
-          {
-            tone: 'main',
-            label: 'Що показано',
-            value: <TourCaptions captions={captions} step={step} className="ft-captions" />,
-          },
-          {
-            // the way back up to the sizes (03.10): under the value, so the cell stays one value wide; on a narrow
-            // sheet, in the caption row (frame-tour.css)
-            value: (
-              <>
-                <small>Об’єкт</small>
-                <span className="ft-object-value">{object}<span className="sheet-unit">м</span></span>
-                {/* to «Розміри» itself: on a phone the configurator opens the group (data-open-group); wider, the anchor
-                    lands on its heading and the width field takes the focus (04.10 — it stopped at the configurator's
-                    top, with the sizes a screen below) */}
-                <a className="ft-resize" href="#hc-dimensions-heading" data-open-group="dimensions" onClick={focusWidth}>
-                  Змінити габарити <span aria-hidden="true">↑</span>
-                </a>
-              </>
-            ),
-            className: 'ft-object',
-          },
-        ]}
-        action={motion && <TourControl touring={touring} toggle={toggle} what="каркаса" />}
-      >
-        <FrameTourStage g={g} summary={summary} visualRef={visualRef} size={size} active={active} step={step} run={run} count={steps.length} />
-      </DrawingSheet>
-      {/* Phone: the shown step's text under the drawing, in one slot as tall as the longest — the list above it keeps
-          only the titles, so the page no longer jumps on every step (it did by up to 65 px, three rounds over). The
-          buttons keep their full text for screen readers; this copy is for the eye only. */}
-      <div className="ft-step-caption" aria-hidden="true">
-        <p data-on={step === 0 || undefined}>{overviewText(pending, motion)}</p>
-        {steps.map((item, index) => <p key={item.title} data-on={step === index + 1 || undefined}>{item.text}</p>)}
-      </div>
-    </div>
   );
 }

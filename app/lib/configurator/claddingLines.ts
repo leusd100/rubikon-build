@@ -16,6 +16,11 @@ export type CladdingLines = {
   roof: CladdingLine[];
 };
 
+/** A line's own name, from its ends: no two lines on one face share both (they stand at different stations) */
+export function claddingLineKey([from, to]: CladdingLine): string {
+  return `${from.x},${from.y},${from.z}:${to.x},${to.y},${to.z}`;
+}
+
 /** A sandwich panel's cover width, metres — the joints across the wall */
 const PANEL_WIDTH_M = 1;
 
@@ -62,8 +67,7 @@ export function buildCladdingLines(
   // roof the sheet is the finer of the two, as it is on the building
   const roof: CladdingLine[] = [];
   for (const z of stations(L, roofSystem === 'sandwich-panel' ? step * 2 : step)) {
-    roof.push([{ x: 0, y: eaveM, z }, { x: half, y: ridgeM, z }]);
-    roof.push([{ x: W, y: eaveM, z }, { x: half, y: ridgeM, z }]);
+    roof.push([{ x: 0, y: eaveM, z }, { x: half, y: ridgeM, z }], [{ x: W, y: eaveM, z }, { x: half, y: ridgeM, z }]);
   }
   return { side, front, roof };
 }
