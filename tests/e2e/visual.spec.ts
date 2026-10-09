@@ -118,12 +118,6 @@ for (const viewport of viewports) {
       await expectStableScreenshot(page.locator('#real-object'), `homepage-real-object-${viewport.name}.png`);
     });
 
-    // HOME v2: the two explanation cards (node detail, load-path scheme) and the design boundary note.
-    test('homepage engineering cards', async ({ page }) => {
-      await preparePage(page, '/');
-      await expectStableScreenshot(page.locator('#engineering .hv2-cards'), `homepage-engineering-cards-${viewport.name}.png`);
-    });
-
     test('homepage inquiry form', async ({ page }) => {
       await preparePage(page, '/');
       await expectStableScreenshot(

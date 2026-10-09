@@ -375,6 +375,8 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
           onAnother={() => {
             setSentPanel(null);
             setStatus('');
+            // the corrected request carries the brief again (owner, 09.10): without it the manager gets a phone number alone
+            if (attachment && briefSent) inquiryAttachment?.unmarkSent(attachment);
             window.requestAnimationFrame(() => formRef.current?.querySelector<HTMLInputElement>('input[type="tel"]')?.focus());
           }}
         />

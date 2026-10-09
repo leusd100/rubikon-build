@@ -145,3 +145,29 @@ for (const route of ['/', '/pro-nas', '/napryamky']) {
     });
   }
 }
+
+// Owner, 09.10: on a phone the bottom corner lay under the cookie strip too, and the buttons fill the width — the control
+// stands at the top right, under the «Ілюстрація» tag and clear of every word
+for (const [width, height] of [[390, 844], [320, 568], [740, 360]] as const) {
+  test(`/napryamky on a ${width}×${height} phone: the pause stands at the top, clear of the strip, the tag and the text`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'explicit phone viewports run once');
+    await page.setViewportSize({ width, height });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/napryamky');
+    await expect(page.locator('.cookie-banner')).toBeVisible();
+    const control = page.locator('.hero-video-control');
+    await expect(control).toBeVisible();
+    const geometry = await control.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const meets = (rect: DOMRect) => rect.right > box.left && rect.left < box.right && rect.bottom > box.top && rect.top < box.bottom;
+      const range = document.createRange();
+      const words = [...document.querySelectorAll('.directions-subhero :is(nav, .eyebrow, h1, p, a, .hero-provenance)')]
+        .filter((node) => !element.contains(node))
+        .flatMap((node) => { range.selectNodeContents(node); return [...range.getClientRects()]; });
+      const header = document.querySelector('.site-header')!.getBoundingClientRect();
+      const strip = document.querySelector('.cookie-banner')!.getBoundingClientRect();
+      return { overWords: words.some(meets), underHeader: box.top >= header.bottom, aboveStrip: box.bottom <= strip.top };
+    });
+    expect(geometry).toEqual({ overWords: false, underHeader: true, aboveStrip: true });
+  });
+}
