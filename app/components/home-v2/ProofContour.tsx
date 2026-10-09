@@ -500,11 +500,11 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         }
         // the names one by one in the order the frame is built; then one letter calls (no three rings on all five)
         stage.dataset.namesIn = '';
-        after.push(window.setTimeout(() => delete stage.dataset.namesIn, NAMES_IN_MS));
-        after.push(window.setTimeout(() => {
-          stage.dataset.nodesTease = '';
-          after.push(window.setTimeout(() => delete stage.dataset.nodesTease, TEASE_MS));
-        }, TEASE_AT));
+        after.push(
+          window.setTimeout(() => delete stage.dataset.namesIn, NAMES_IN_MS),
+          window.setTimeout(() => { stage.dataset.nodesTease = ''; }, TEASE_AT),
+          window.setTimeout(() => delete stage.dataset.nodesTease, TEASE_AT + TEASE_MS),
+        );
       };
     };
     const seen = new IntersectionObserver(([entry]) => {
@@ -1043,10 +1043,18 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     if (x < box.left + (box.width * live.current) / 100) return null;
     for (const { id } of homeProofDetailSpots) {
       const ring = ringOf(id)?.getBoundingClientRect();
-      if (!ring || !ring.width) continue;
+      if (!ring?.width) continue;
       if (Math.hypot(x - (ring.left + ring.width / 2), y - (ring.top + ring.height / 2)) <= ring.width / 2 + 4) return id;
     }
     return null;
+  };
+  // A mouse or a pen pressed on a node's ring: the node opens, the seam stays
+  const pressedRing = (event: PointerEvent<HTMLDivElement>) => {
+    const ring = event.pointerType === 'touch' ? null : ringAt(event.clientX, event.clientY);
+    if (!ring) return false;
+    event.preventDefault();
+    pressNode(ring);
+    return true;
   };
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     tap.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
@@ -1056,12 +1064,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     // under them (owner, 05.10: pressed, the bar's letters started a drag that took the pointer, and never opened a node)
     if ((event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-nodes')) return;
     // A node's ring opens the node (a finger's tap does it on lifting, below)
-    const ring = event.pointerType === 'touch' ? null : ringAt(event.clientX, event.clientY);
-    if (ring) {
-      event.preventDefault();
-      pressNode(ring);
-      return;
-    }
+    if (pressedRing(event)) return;
     // On «Сніг» the roof takes the weight: a finger puts it there, a mouse already has, and the seam stays
     const roof = roofAt(event.clientX, event.clientY);
     if (roof) {
