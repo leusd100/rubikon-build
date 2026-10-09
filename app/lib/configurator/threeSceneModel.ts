@@ -1,5 +1,5 @@
 import { buildParametricModel, type ParametricBuildingModel, type Vec3 } from './parametricModel';
-import type { HangarDomainModel } from './domainModel';
+import { openingsShown, type HangarDomainModel } from './domainModel';
 import type { CladdingSystem } from './types';
 
 // The 3D VIEW's scene description — a sibling of technicalSceneModel.ts, not a consumer of it.
@@ -178,9 +178,10 @@ export type ThreeSceneModel = {
    *  the dark backdrop, a banded/inset one for the leaf — see `GateLeafMesh`'s own doc comment. */
   leaves: GateLeafMesh[];
   ground: { yM: number; sizeM: number };
-  /** `gates` mirrors SVG's own `gates > 0` boolean (buildUpSequence's `gates` layer trigger) —
-   *  independent of `walls`, because a gate opening is only meaningful once there is an envelope
-   *  to cut it into, but its OWN build-up layer fires off the gate count, not the walls toggle.
+  /** `gates` is the openings' layer — the gates AND the door — and mirrors SVG's own trigger for it
+   *  exactly: both read `openingsShown` (domainModel.ts), walls in the request and a gate or a door
+   *  to show (09.10, audit F19: a door with no gates used to leave this false, and the gable showed
+   *  its hole with no door leaf in it). Its OWN build-up layer, not the walls toggle.
    *
    *  `slab` and `footings` are mutually exclusive foundation REPRESENTATIONS, not two independent
    *  scope items — see deriveFoundationVisibility below for exactly which `foundation.type` shows
@@ -487,8 +488,9 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       // A gate is an opening cut INTO a wall — it cannot read as an opening with no wall to cut
       // into, so it's visible only when both are true. (Real bug caught live, not hypothetical:
       // this was `domain.gates > 0` alone, which left a gate recess on screen after switching
-      // walls out of scope — same fix, same reasoning, in HangarPreview.tsx's `gateLayer`.)
-      gates: domain.scope.walls && domain.gates > 0,
+      // walls out of scope — same fix, same reasoning, in HangarPreview.tsx's `gateLayer`.) A door
+      // alone counts too (09.10): the gable cuts its hole whatever this says, so the leaf must come.
+      gates: openingsShown(domain),
     },
     building,
     envelope: { wallSystem: domain.envelope.wallSystem, roofSystem: domain.envelope.roofSystem },

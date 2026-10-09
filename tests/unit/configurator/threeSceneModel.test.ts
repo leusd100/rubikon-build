@@ -201,6 +201,21 @@ describe('buildThreeScene', () => {
     expect(gatesNoWalls.recesses).toHaveLength(gatesWithWalls.recesses.length);
   });
 
+  // 09.10, audit F19: the door rides the gates' layer, and a door with no gates (chosen, or held off a 4 m wall) left the
+  // layer off — the gable still cut the door's hole, so the 3D showed an empty hole and the general view nothing
+  it('shows a door with no gates, as the general view does — the layer is the openings’, not the gate count’s', () => {
+    const doorOnly = buildThreeScene(domainFor({ dimensions: { width: 20, length: 40, height: 4 }, gates: 0, doors: 1 }));
+    expect(doorOnly.building.openings.map((o) => o.kind)).toEqual(['door']);
+    expect(doorOnly.gables.find((g) => g.face === 'front')!.holes).toHaveLength(1);
+    expect(doorOnly.leaves.map((leaf) => leaf.kind)).toEqual(['door']);
+    expect(doorOnly.visible.gates).toBe(true);
+    // gates asked for but held off a 4 m wall: the door alone, shown
+    expect(buildThreeScene(domainFor({ dimensions: { width: 20, length: 40, height: 4 }, gates: 1, doors: 1 })).visible.gates).toBe(true);
+    // still nothing without walls, and nothing with no opening at all
+    expect(buildThreeScene(domainFor({ gates: 0, doors: 1, scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'] })).visible.gates).toBe(false);
+    expect(buildThreeScene(domainFor({ gates: 0, doors: 0 })).visible.gates).toBe(false);
+  });
+
   it('tags every strut with a build-up role, distinguishing columns from rafters from girts', () => {
     const three = buildThreeScene(domainFor());
 

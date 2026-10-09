@@ -200,6 +200,16 @@ export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   };
 }
 
+/**
+ * Whether the drawings show the front end wall's openings (09.10, audit F19): a gate or a door is a hole cut into a
+ * wall, so none without walls in the request — and a door with no gates is still one. The general view and the 3D
+ * both read this, so they cannot disagree again: the door alone was in the stamp, the 3D cut and the frame drawing,
+ * but its layer waited for a gate, so the general view showed nothing and the 3D an empty hole.
+ */
+export function openingsShown(domain: Pick<HangarDomainModel, 'scope' | 'gates' | 'doors'>): boolean {
+  return domain.scope.walls && (domain.gates > 0 || domain.doors > 0);
+}
+
 /** The works drawn: the visitor's list under «Окремі роботи», every work otherwise */
 export function drawnScope(state: ConfiguratorState): ScopeItem[] {
   return state.scopeMode === 'partial' ? state.scope : [...SCOPE_ORDER];

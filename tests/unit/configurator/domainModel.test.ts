@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveDomainModel, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../../app/lib/configurator/domainModel';
+import { deriveDomainModel, openingsShown, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../../app/lib/configurator/domainModel';
 import {
   clampRidgeHeightM,
   defaultRidgeHeightM,
@@ -180,5 +180,17 @@ describe('the visitor’s choices are held, not cleared, while the sizes leave n
     // a «5» on the way to «5,5»: the type falls back while it does not fit, and is the visitor’s again at 5,5
     expect(deriveDomainModel({ ...withState({ gates: 1, gateType: 'double' }), dimensions: { width: 24, length: 60, height: 5 } }).gateType).toBe('standard');
     expect(deriveDomainModel({ ...withState({ gates: 1, gateType: 'double' }), dimensions: { width: 24, length: 60, height: 5.5 } }).gateType).toBe('double');
+  });
+});
+
+describe('the openings the drawings show (09.10, audit F19)', () => {
+  it('shows a door with no gates, and nothing without walls', () => {
+    const at = (state: Partial<ConfiguratorState>) => openingsShown(deriveDomainModel(withState(state)));
+    expect(at({ gates: 0, doors: 1 })).toBe(true);
+    expect(at({ gates: 1, doors: 0 })).toBe(true);
+    expect(at({ gates: 0, doors: 0 })).toBe(false);
+    // the gates held off a 4 m wall: the door stays, and is shown
+    expect(at({ gates: 1, doors: 1, dimensions: { width: 20, length: 40, height: 4 } })).toBe(true);
+    expect(at({ gates: 1, doors: 1, scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'] })).toBe(false);
   });
 });

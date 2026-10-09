@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
-import type { HangarDomainModel } from '../../lib/configurator/domainModel';
+import { openingsShown, type HangarDomainModel } from '../../lib/configurator/domainModel';
 import { buildCladdingLines, claddingLineKey, type CladdingLine } from '../../lib/configurator/claddingLines';
 import {
   labelScaleToFit,
@@ -148,7 +148,7 @@ export function HangarPreview({
    *  whatever the scope says, then arrives through its usual lifecycle. All of them by default. */
   released?: number;
 }>) {
-  const { dimensions, envelope, scope, gates } = domain;
+  const { dimensions, envelope, scope } = domain;
   const shown = (stage: BuildStage) => isStageReleased(stage, released);
   // State → Domain → ParametricBuildingModel (the single source of geometric truth) →
   // TechnicalSceneModel → this projection. A future 3D renderer branches at the parametric
@@ -179,9 +179,10 @@ export function HangarPreview({
   // so it materializes only when both are true. (Real bug, not a hypothetical: this used to be
   // `gates > 0` alone, letting a gate rectangle stay on screen after switching walls out of scope
   // — caught live by a user testing the running preview, on both this view and the 3D one, which
-  // mirrored the same `gates > 0` condition in threeSceneModel.ts's `visible.gates`. Fixed in both
-  // places with the same rule; see that file's matching comment.)
-  const gateLayer = useLayerLifecycle(scope.walls && gates > 0 && shown('gates'), LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
+  // mirrored the same `gates > 0` condition in threeSceneModel.ts's `visible.gates`.) The door rides
+  // this layer too, so a door with no gates needs it as much as a gate does (09.10, audit F19): one
+  // shared condition, `openingsShown`, read here and by the 3D view's `visible.gates`.
+  const gateLayer = useLayerLifecycle(openingsShown(domain) && shown('gates'), LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
 
   // A changed cladding or insulation flashes the surfaces it is on, as a changed size flashes its faces (07.10): the
   // choice is answered on the drawing, not only in the stamp
