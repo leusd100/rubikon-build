@@ -683,3 +683,30 @@ test('3D is not offered on «Каркас», does not come back by itself after 
   await expect(sheetOf(page).locator('.sheet-stamp')).toContainText('Загальний вид · попередня схема');
   await expect(chip).toBeVisible();
 });
+
+// The frame's field is the sheet's dark one in both themes (09.10, audit F16 — «never flips paper ↔ dark», top of
+// configurator-sheet.css): in Light it turned cream on «Каркас» and back on «Обсяг». The loads' legend reads in their
+// Dark colours on it (audit F75: 3.38 : 1 and 3.04 : 1 on the cream field).
+for (const theme of ['light', 'dark'] as const) {
+  test(`the frame's field is the general view's dark field, in ${theme}`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the field contract is viewport-independent');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript((value) => window.localStorage.setItem('rubikon-theme', value), theme);
+    await openHangarPage(page);
+    const general = await pictureOf(page).evaluate((element) => getComputedStyle(element).backgroundColor);
+    await openControlGroup(page, 'space');
+    const frame = pictureOf(page).locator('.hc-frame');
+    await expect(frame).toBeVisible();
+    await expect(pictureOf(page)).toHaveCSS('background-color', general);
+    expect(await luminance(pictureOf(page))).toBeLessThan(0.05);
+    for (const [item, load] of [[3, 'snow'], [4, 'wind']] as const) {
+      await page.locator('#hc-frame-panel .hc-frame-item').nth(item).click();
+      const link = frame.locator(`.ft-chain[data-load="${load}"] li`).first();
+      await expect(link).toBeVisible();
+      const [ink, field] = [await luminance(link, 'color'), await luminance(pictureOf(page))];
+      expect((Math.max(ink, field) + 0.05) / (Math.min(ink, field) + 0.05), load).toBeGreaterThanOrEqual(4.5);
+    }
+    await openControlGroup(page, 'scope');
+    await expect(pictureOf(page)).toHaveCSS('background-color', general);
+  });
+}

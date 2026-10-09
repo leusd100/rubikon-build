@@ -248,9 +248,24 @@
 
 /* ── «Каркас» (07.10, ConfiguratorFrameView.tsx) ──────────────────────────────────────────────────────────────────────
    The frame tour's picture on the configurator's sheet: the legend's band and the camera's window in the drawing's own
-   proportion, nothing under it — what to show is chosen in the step's panel beside it (configurator-controls.css). The
-   drawing follows the theme, as it did in its own section. */
-.hangar-configurator-embedded .hc-preview-sheet .sheet-image.hc-frame-image { display: flex; flex-direction: column; background: var(--color-surface-alt); }
+   proportion, nothing under it — what to show is chosen in the step's panel beside it (configurator-controls.css).
+   The field is the sheet's dark one in both themes, as the general view's and the 3D's (09.10, audit F16 — the rule at
+   the top of this file): in Light the frame followed the theme and the largest thing in the block turned cream on
+   «Каркас» and back to charcoal on «Обсяг». The drawing's inks are its Dark roles here, the copper text the band's. */
+.hangar-configurator-embedded .hc-preview-sheet .sheet-image.hc-frame-image {
+  display: flex; flex-direction: column;
+  color-scheme: dark;
+  background: var(--color-dark);
+  --color-surface-alt: var(--color-dark); /* the bubbles', the nodes' rings' and the names' halo fill */
+  --color-text: var(--color-dark-text);
+  --color-text-secondary: var(--color-dark-text-secondary);
+  --color-text-muted: var(--color-dark-text-muted);
+  --color-accent-strong: var(--color-accent-on-dark);
+  --color-border-strong: #6A6C66; /* Dark's (theme.css) */
+}
+/* …and the loads in their Dark colours, which the light theme's rule on .ft (frame-tour.css) swapped for paper ones:
+   the legend's first link read 3.38:1 (snow) and 3.04:1 (wind) on the light field (audit F75) */
+.hangar-configurator-embedded .hc-frame.ft { --ft-snow: #5aa8ff; --ft-wind: #4fd8c8; }
 .hc-frame { display: flex; flex-direction: column; min-height: 0; padding-top: 25px; }
 .hc-frame .ft-window { width: 100%; }
 /* One numbering on the screen (07.10): the steps' and the nodes'. The drawing's axes — А, Б, В across and 1–4 along —
