@@ -268,9 +268,8 @@
 .hangar-configurator-embedded .hc-frame.ft { --ft-snow: #5aa8ff; --ft-wind: #4fd8c8; }
 .hc-frame { display: flex; flex-direction: column; min-height: 0; padding-top: 25px; }
 .hc-frame .ft-window { width: 100%; }
-/* One numbering on the screen (07.10): the steps' and the nodes'. The drawing's axes — А, Б, В across and 1–4 along —
-   are a drafter's; they are shown only on «Проліт», whose words name А and Б. */
-.hc-frame [data-part="3"] :is(.ft-bubble, .ft-axis) { display: none; }
+/* One numbering on the screen (07.10): the steps' and the nodes'. The drawing's axes — А, Б, В across — are a
+   drafter's; they are shown only on «Проліт», whose words name А and Б (the frames' 1–4 along are not drawn, 09.10). */
 .hc-frame:not([data-step="1"]) [data-part="1"] :is(.ft-bubble, .ft-axis) { display: none; }
 
 /* The nodes on the drawing: numbered copper bubbles on the frame's step, as the buttons under it are numbered; the one

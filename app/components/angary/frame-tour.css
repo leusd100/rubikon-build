@@ -35,12 +35,15 @@
 /* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
 .ft .dn-progress span:not(.is-done) { background: color-mix(in srgb, var(--color-text) 20%, transparent); }
 
-/* Names on the members (steps 2 and 3), haloed in the sheet's colour so they read over the wireframe */
+/* Names on the members (steps 2 and 3), haloed in the sheet's colour so they read over the wireframe — 7 px of halo
+   since 09.10 (5 before; audit F73): on the bays' dense copper grid a name cannot always keep off every member
+   (FrameTour placeTag), and the wider halo parts the lines it lies on from its letters (FrameTour's HALO lays names out
+   at the 5 px) */
 .ft-tags { opacity: 0; }
 .ft-leader { stroke: var(--color-accent); stroke-width: calc(1px * var(--ft-k)); }
 .ft-tag {
   fill: var(--color-accent-strong); font: 600 calc(15px * var(--ft-t, 1)) var(--font-manrope), sans-serif;
-  paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(5px * var(--ft-k)); stroke-linejoin: round;
+  paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(7px * var(--ft-k)); stroke-linejoin: round;
 }
 
 /* A step: its parts copper, the rest back */
