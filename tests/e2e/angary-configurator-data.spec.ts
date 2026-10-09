@@ -202,10 +202,11 @@ test('a size passing through a smaller one keeps the gates, the door and the rid
   await openControlGroup(page, 'openings');
   await expect(page.locator('label:has(input[name="hc-gates"]:checked)')).toHaveText('1');
   await expect(page.locator('input[name="hc-doors"]:checked')).toHaveValue('1');
-  await expect(held).toContainText(`Ворота 5${NBSP}×${NBSP}5${NBSP}м у такій кількості не вміщуються за ширини 12${NBSP}м.`);
+  // what is drawn, and why (09.10, owner: it said only that the two did not fit, beside a scheme that drew one)
+  await expect(held).toContainText(`За ширини 12${NBSP}м вміщуються лише одні ворота 5${NBSP}×${NBSP}5${NBSP}м${NBSP}— їх показано у схемі.`);
   await expect(held).toContainText('Ваш вибір повернеться');
-  // the stamp (and the lead) name the gates asked for and why the scheme does not draw them (08.10)
-  await expect(stampFact(page, 'Ворота').locator('dd')).toHaveText('Двоє для заїзду техніки, 5 × 5 м — за ширини 12 м у схемі не вміщуються');
+  // the stamp (and the lead) name the gates asked for, why the scheme holds them and what it draws (08.10; 09.10)
+  await expect(stampFact(page, 'Ворота').locator('dd')).toHaveText('Двоє для заїзду техніки, 5 × 5 м — за ширини 12 м у схемі вміщуються лише одні');
   await typeSize(page, 'width', '24');
   await expect(stampFact(page, 'Ворота').locator('dd')).toHaveText('Двоє для заїзду техніки, 5 × 5 м');
   await expect(stampFact(page, 'Двері').locator('dd')).toHaveText('Одні службові, 1 × 2,1 м');

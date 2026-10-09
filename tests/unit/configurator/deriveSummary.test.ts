@@ -96,6 +96,20 @@ describe('deriveSummary', () => {
     expect(summaryFor({ gates, gateType }).gatesLabel).toBe(nb(label));
   });
 
+  // 09.10, owner («Звичайно»): at 12 m two 5 × 5 m gates asked for, the scheme draws one — and the stamp said only «у схемі
+  // не вміщуються», never that one is drawn. The label says what was asked, the size that holds it, and what is drawn.
+  it.each([
+    // the width holds the count: fewer of the same are drawn
+    [{ gates: 2, gateType: 'double', dimensions: { width: 12, length: 60, height: 8 } }, 'Двоє для заїзду техніки, 5_×_5_м_— за ширини 12_м у схемі вміщуються лише одні'],
+    // the wall height holds the type: the smaller type is drawn
+    [{ gates: 1, gateType: 'double', dimensions: { width: 24, length: 60, height: 5 } }, 'Одні для заїзду техніки, 5_×_5_м_— під стіни 5_м у схемі показано одні стандартні, 4_×_4_м'],
+    [{ gates: 2, gateType: 'double', dimensions: { width: 24, length: 60, height: 5 } }, 'Двоє для заїзду техніки, 5_×_5_м_— під стіни 5_м у схемі показано двоє стандартних, 4_×_4_м'],
+    // nothing stands under a 4 m wall: none drawn, said as before
+    [{ gates: 1, gateType: 'standard', dimensions: { width: 24, length: 60, height: 4 } }, 'Одні стандартні, 4_×_4_м_— під стіни 4_м у схемі не вміщуються'],
+  ] as const)('says the gates asked for, why the scheme holds them and what it draws instead: %j', (state, label) => {
+    expect(summaryFor(state).gatesLabel).toBe(nb(label));
+  });
+
   it('counts plural-only nouns with «одні» and «двоє», never «1 ворота» or «2 ворота» (04.10)', () => {
     expect([0, 1, 2].map(gatesCountPhrase)).toEqual(['без воріт', 'одні ворота', 'двоє воріт']);
     expect([0, 1].map(doorsCountPhrase)).toEqual(['без дверей', 'одні двері']);
