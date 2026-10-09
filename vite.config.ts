@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/postcss';
 import vinext from 'vinext';
 import { defineConfig } from 'vite';
 import hostingConfig from './.openai/hosting.json';
+import { videoAssetsPlugin } from './scripts/video-assets';
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   '00000000-0000-4000-8000-000000000000';
@@ -24,10 +25,11 @@ const localBindingConfig = {
   main: './worker.ts',
   compatibility_flags: ['nodejs_compat'],
   // Sites currently serves matching files before the Worker and does not apply
-  // public/_headers. Route only version-safe assets through our thin header adapter.
+  // public/_headers. Route version-safe assets through the cache adapter, and
+  // MP4s through the byte-range adapter (with their existing one-week cache).
   assets: {
     binding: 'ASSETS',
-    run_worker_first: ['/_next/static/*', '/media-responsive/*'],
+    run_worker_first: ['/_next/static/*', '/media-responsive/*', '/media/*.mp4'],
   },
   d1_databases: d1
     ? [
@@ -70,6 +72,7 @@ export default defineConfig(async () => {
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,
     plugins: [
+      videoAssetsPlugin(),
       vinext(),
       sites(),
       cloudflare({
