@@ -166,6 +166,15 @@ export function HangarPreviewModes({
   // The phone's mini drawing folds to its sizes' line on request (07.10): over a step's fields it took a third of the
   // screen, more on «Каркас»
   const [miniFolded, setMiniFolded] = useState(false);
+  // The steps follow the fold (09.10, audit F21): the page's scroll anchoring held them where they were, so folding left
+  // a 120–150 px gap under the mini drawing and showing it again covered the tabs. Off for the frame of the change only:
+  // everywhere else anchoring is what keeps the fields still under the finger. On the body, not the root: Chrome keeps
+  // anchoring the page with `overflow-anchor: none` on <html>.
+  const toggleMiniFold = () => {
+    document.body.style.setProperty('overflow-anchor', 'none');
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => document.body.style.removeProperty('overflow-anchor')));
+    setMiniFolded((folded) => !folded);
+  };
   // How much of the canvas's bottom edge the dimension readout covers, measured by the overlay
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
@@ -385,7 +394,7 @@ export function HangarPreviewModes({
           cells={sheetCells}
           // shown only by the phone's mini drawing (configurator-sheet.css)
           action={(
-            <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={() => setMiniFolded((folded) => !folded)}>
+            <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={toggleMiniFold}>
               {miniFolded ? 'Показати ескіз' : 'Згорнути'}
             </button>
           )}

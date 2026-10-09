@@ -194,6 +194,21 @@
   }
 }
 
+/* A portrait tablet (09.10, audit F22): one column, and after «Далі», or down a long step, the drawing was off the screen
+   while the step was edited — 0 px of it at 768 × 1024 and 820 × 1180. The whole sheet sticks under the header (a grid
+   item of the layout, it lets go at the layout's end, before the title block) with a lower picture, so the step keeps
+   room under it. No mini drawing, no fold: the sheet as it is. Its height is the controls' focus margin (--hc-mini-h,
+   useMiniPreview); landOnSteps lands the tabs under it. Not on a short screen (a phone on its side): it would fill it. */
+@media (min-width: 761px) and (max-width: 1023px) and (min-height: 700px) {
+  .hangar-configurator-embedded .hc-preview-surface.hc-preview-sheet { position: sticky; z-index: 6; top: 101px; }
+  .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: min(46vw, 34svh); }
+  /* the frame's window in the same height, not its own proportion (406–487 px) */
+  .hangar-configurator-embedded .hc-preview-sheet .hc-frame .ft-window { aspect-ratio: auto; height: var(--hc-sheet-h); }
+  .hangar-configurator-embedded .hc-controls :is(a[href], button, summary, input, select, textarea) {
+    scroll-margin-top: calc(var(--hc-mini-h, 0px) + 109px);
+  }
+}
+
 /* ── «Переріз огородження» (07.10, CladdingSection.tsx) ───────────────────────────────────────────────────────────────
    In the drawing's top-left corner, which the hangar never reaches from this camera: a detail callout in the sheet's own
    inks on its dark field. The glyphs use the drawing's symbols — the sheet's profile, the insulation's wave. */
@@ -299,8 +314,10 @@
   /* the mini drawing under the header: the frame's window alone, as high as the general view's */
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame { padding-top: 0; }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame :is(.ft-legend, .dn-progress) { display: none; }
-  /* the frame is chosen from under it: held a little taller than the general view, so a node pushed in on still reads */
-  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame .ft-window { aspect-ratio: auto; height: max(50vw, 180px); }
+  /* the frame is chosen from under it: held a little taller than the general view, so a node pushed in on still reads —
+     but never past 30 % of the screen: half the width of a 760 × 500 window is 380 px, and the mini drawing with the
+     header covered all of it, the fold and the tabs too (09.10, audit F23; a portrait phone stays at half its width) */
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-frame .ft-window { aspect-ratio: auto; height: min(max(50vw, 180px), 30svh); }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-sheet-tools { display: none; }
 }
 
