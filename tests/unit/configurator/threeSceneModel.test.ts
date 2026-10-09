@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as THREE from 'three';
 import { buildThreeScene, claddingMaterialKey } from '../../../app/lib/configurator/threeSceneModel';
 import { MATERIALS } from '../../../app/components/configurator/three/materials';
 import { buildTechnicalScene } from '../../../app/lib/configurator/technicalSceneModel';
@@ -384,5 +385,90 @@ describe('Phase 3F — cladding-system material split', () => {
     const sandwich = buildThreeScene(domainFor({ wallSystem: 'sandwich-panel' }));
     expect(Object.keys(profiled.panels[0])).not.toContain('color');
     expect(Object.keys(sandwich.panels[0])).not.toContain('color');
+  });
+});
+
+// 09.10, audit F68: the cladding grew INWARD from the members' centre-line planes, so every member stood out of it by
+// half its section — columns outside the walls, rafters, purlins and bracing on top of the roof, the front truss on the
+// gable. It now hangs outside the frame; the members stay on the model's axes.
+describe('the cladding hangs outside the frame (09.10, audit F68)', () => {
+  const X_AXIS = new THREE.Vector3(1, 0, 0);
+  /** A member's box as ThreeHangarView draws it (grownMatrix): its centre line, `sectionM` square, turned from +X */
+  function boxCorners(a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }, sectionM: number) {
+    const va = new THREE.Vector3(a.x, a.y, a.z);
+    const dir = new THREE.Vector3(b.x - a.x, b.y - a.y, b.z - a.z);
+    const matrix = new THREE.Matrix4().compose(
+      va.clone().addScaledVector(dir, 0.5),
+      new THREE.Quaternion().setFromUnitVectors(X_AXIS, dir.clone().normalize()),
+      new THREE.Vector3(dir.length(), sectionM, sectionM),
+    );
+    return [-0.5, 0.5].flatMap((x) => [-0.5, 0.5].flatMap((y) => [-0.5, 0.5].map((z) => new THREE.Vector3(x, y, z).applyMatrix4(matrix))));
+  }
+  /** How far inside its plane each piece of cladding's inner face is, outward positive; before 09.10 the panels spanned
+   *  [−thickness, 0] from the plane and had no standoff */
+  const innerFace = (panel: { thicknessM: number; standoff?: { outwardM: number } }) => panel.standoff?.outwardM ?? -panel.thicknessM;
+
+  it.each([
+    [10, 10, 4], [14, 30, 5], [24, 60, 8], [36, 60, 8], [W.max, L.max, H.max], [12, 20, 6],
+  ])('keeps every member inside the walls, the gables and the roof at %d × %d × %d', (width, length, height) => {
+    const scene = buildThreeScene(domainFor({ dimensions: { width, length, height }, gates: 1, doors: 1 }));
+    const { eaveM, ridgeM } = scene.building.heights;
+    const slope = (ridgeM - eaveM) / (width / 2);
+    const wall = innerFace(scene.panels.find((p) => p.id.startsWith('wall-'))!);
+    const roof = innerFace(scene.panels.find((p) => p.id.startsWith('roof-'))!);
+    const front = scene.gables.find((g) => g.face === 'front')!;
+    const rear = scene.gables.find((g) => g.face === 'rear')!;
+    const EPS = 1e-6;
+    const outside: string[] = [];
+    for (const strut of scene.struts) {
+      for (const p of boxCorners(strut.a, strut.b, strut.sectionM)) {
+        const aboveLeft = (p.y - (eaveM + slope * p.x)) / Math.hypot(1, slope);
+        const aboveRight = (p.y - (eaveM + slope * (width - p.x))) / Math.hypot(1, slope);
+        if (-p.x > wall + EPS || p.x - width > wall + EPS) outside.push(`${strut.id} through a side wall`);
+        else if (p.z < front.zM + front.thicknessM - EPS || p.z > rear.zM + EPS) outside.push(`${strut.id} through a gable`);
+        else if (aboveLeft > roof + EPS || aboveRight > roof + EPS) outside.push(`${strut.id} through the roof`);
+      }
+    }
+    expect([...new Set(outside)]).toEqual([]);
+  });
+
+  it('closes the corners: the side walls and the roof run on to the gables’ outer faces, the walls up to the roof', () => {
+    const scene = buildThreeScene(domainFor({ dimensions: { width: 24, length: 60, height: 8 } }));
+    const { eaveM, ridgeM } = scene.building.heights;
+    const slope = (ridgeM - eaveM) / 12;
+    const front = scene.gables.find((g) => g.face === 'front')!;
+    const rear = scene.gables.find((g) => g.face === 'rear')!;
+    const firstWall = scene.panels.find((p) => p.id === 'wall-left-0')!;
+    const lastBay = scene.building.bays.count - 1;
+    const lastRoof = scene.panels.find((p) => p.id === `roof-left-${lastBay}`)!;
+    expect(firstWall.standoff!.startM).toBeCloseTo(-front.zM, 9);
+    expect(lastRoof.standoff!.endM).toBeCloseTo(rear.zM + rear.thicknessM - scene.building.footprint.lengthM, 9);
+    expect(scene.panels.find((p) => p.id === 'wall-left-1')!.standoff).toMatchObject({ startM: 0, endM: 0 });
+    // the wall's top, at its outer face, is the roof's underside there
+    const { outwardM, riseM } = firstWall.standoff!;
+    const roofInner = scene.panels.find((p) => p.id === 'roof-left-0')!.standoff!.outwardM;
+    const x = -(outwardM + firstWall.thicknessM);
+    expect((eaveM + riseM - (eaveM + slope * x)) / Math.hypot(1, slope)).toBeCloseTo(roofInner, 9);
+    // the gable's cladding: out to the side walls' inner faces, its top on the roof's underside, the same slope
+    expect(front.xM).toBeCloseTo(-outwardM, 9);
+    expect(front.widthM).toBeCloseTo(24 + 2 * outwardM, 9);
+    expect((front.ridgeM - ridgeM) / Math.hypot(1, slope)).toBeCloseTo(roofInner, 9);
+    expect((front.ridgeM - front.eaveM) / (front.widthM / 2)).toBeCloseTo(slope, 9);
+    // the ridge cap rides the roof's outer faces and runs as far
+    expect(scene.roofCladding.outerM).toBeCloseTo(roofInner + lastRoof.thicknessM, 9);
+    expect(scene.roofCladding.endReachM).toBeCloseTo(-front.zM, 9);
+  });
+
+  it('sets the gates and the door into the front gable where it now stands', () => {
+    const scene = buildThreeScene(domainFor({ gates: 1, doors: 1 }));
+    const front = scene.gables.find((g) => g.face === 'front')!;
+    for (const recess of scene.recesses) {
+      // the dark plane at the gable's inner face, as it was against the old gable at z = 0
+      expect(recess.corners[0].z).toBeCloseTo(front.zM + front.thicknessM, 9);
+    }
+    for (const leaf of scene.leaves) {
+      expect(leaf.zM).toBeGreaterThan(front.zM);
+      expect(leaf.zM).toBeLessThan(front.zM + front.thicknessM);
+    }
   });
 });
