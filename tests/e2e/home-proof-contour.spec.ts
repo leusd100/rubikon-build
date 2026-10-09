@@ -500,7 +500,6 @@ async function clashes(stage: Locator, atRest = false) {
       const seamCut = rightSide && /^(?:figure|name) /.test(name) ? seam - box.left : 0;
       boxes.push({ name, left, right, top: Math.max(box.top, frame.top), bottom: Math.min(box.bottom, frame.bottom), cut, seamCut });
     };
-    for (const node of element.querySelectorAll<HTMLElement>('.hv2-proof-measure')) add(node, `figure ${node.dataset.measure}`, true);
     for (const node of element.querySelectorAll<HTMLElement>('.hv2-proof-tag')) add(node, `name ${node.dataset.tag}`, true);
     add(element.querySelector('.hv2-contour-stamp'), 'stamp', true);
     const [left, right] = element.querySelectorAll('.hv2-contour-seamtags > span');
@@ -703,21 +702,17 @@ test('the sheet says in one line what the two halves are, the retouch and the pr
   const visible = await sheet.innerText();
   for (const words of ['Ширина торця', 'Ворота однакові']) expect(visible, words).not.toContain(words);
 
-  // Figures only where something was measured, each with its sign; never a size; none of the words that claim more. The
-  // sheet's other digits are the tour's length, checked as such (a phone's numbered key went with «Детальніше», 09.10)
+  // No figure at all, never a size; none of the words that claim more. The sheet's only digits are the tour's length,
+  // checked as such (a phone's numbered key went with «Детальніше», 09.10)
   const text = await sheet.evaluate((element) => element.textContent ?? '');
-  const outsideMeasures = await sheet.evaluate((element) => {
+  const outsideTour = await sheet.evaluate((element) => {
     const copy = element.cloneNode(true) as HTMLElement;
-    for (const node of copy.querySelectorAll('[data-measure], .hv2-contour-tour-btn, .hv2-contour-tour')) node.remove();
+    for (const node of copy.querySelectorAll('.hv2-contour-tour-btn, .hv2-contour-tour')) node.remove();
     return copy.textContent ?? '';
   });
-  expect(outsideMeasures).not.toMatch(/\d/);
+  expect(outsideTour).not.toMatch(/\d/);
   await expect(sheet.locator('.hv2-contour-tour-btn')).toHaveText('Тур за 20 секунд');
   await expect(sheet.locator('.hv2-proof-keypins, .hv2-contour-key, .hv2-contour-more-btn')).toHaveCount(0);
-  for (const figure of await sheet.locator('[data-measure]').allTextContents()) {
-    // (the signs' space is a no-break one)
-    for (const match of figure.matchAll(/\d+(?:,\d+)?/g)) expect(figure.slice(0, match.index), figure).toMatch(/(?:[≈±]\s|приблизно |похибка )$/);
-  }
   expect(text).not.toMatch(UNITS);
   expect(homeProofContour.label).not.toMatch(/\d/);
   expect(homeProofFrame.label).not.toMatch(/\d/);
@@ -733,14 +728,14 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   const { stage, slider } = await open(page);
   const scheme = stage.locator('svg.hv2-proof-frame[data-layer="scheme"]');
   await expect(scheme).toBeVisible();
-  // Every member of the scheme is in it and none carries the outline's «approximate» mark. The gable's own plane is
+  // Every member of the scheme is in it and nothing on the frame carries an «approximate» mark. The gable's own plane is
   // paper-white; what stands behind it is copper, solid (owner, 04.10), and only behind it
   await expect(scheme.locator('[data-group]:not(.hv2-proof-core, .hv2-proof-flange)')).toHaveCount(homeProofFrame.members.filter((member) => member.group !== 'footing').length);
   // The gable's column a profile too (owner, 09.10): its outline over a dark core, two thin lines for its flanges' faces
   const columnPath = scheme.locator('.hv2-proof-scheme path[data-group="column"][data-depth="0"]:not(.hv2-proof-flange)').first();
   expect(await columnPath.evaluate((path) => [getComputedStyle(path).fill, Number(getComputedStyle(path).fillOpacity) > 0.8])).toEqual(['rgb(20, 22, 21)', true]);
   await expect(scheme.locator('.hv2-proof-flange')).toHaveCount(2);
-  await expect(scheme.locator('[data-approximate]')).toHaveCount(0);
+  await expect(stage.locator('[data-approximate]')).toHaveCount(0);
   await expect(stage.locator('.hv2-contour-lines [data-group]')).toHaveCount(0);
   const strokes = new Set(await scheme.locator('.hv2-proof-scheme [data-group]:not([data-hidden], .hv2-proof-core)').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke)));
   expect([...strokes]).toEqual([PAPER]);
@@ -761,7 +756,7 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   // section cuts one step down; its webs another; the blockwork finest. Square ends and sharp joins, as a plotter draws
   // them (the outline is one solid line — owner, 05.10)
   const weight = (selector: string) => stage.locator(selector).first().evaluate((element) => parseFloat(getComputedStyle(element).strokeWidth));
-  const outline = await weight(`${PANE_LINES} .hv2-contour-ink path[data-kind="outline"]:not([data-approximate])`);
+  const outline = await weight(`${PANE_LINES} .hv2-contour-ink path[data-kind="outline"]`);
   // (since 09.10 the chords are profiles, drawn wider than the outline: their dark core makes the two edges; the columns
   // and what the section cuts keep the chords' old weight)
   const chord = await weight('.hv2-proof-scheme [data-group="truss"][data-depth="0"]:not(.hv2-proof-core)');
@@ -772,7 +767,7 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   expect(await weight('.hv2-proof-cut'), 'cut').toBe(column);
   expect(column).toBeGreaterThan(web);
   expect(web).toBeGreaterThan(await weight('.hv2-proof-blocks'));
-  const ends = await stage.locator('.hv2-proof-scheme [data-group]:not(.hv2-proof-core, [data-group="truss"][data-depth="0"]:not([data-hidden])), .hv2-contour-ink path:not([data-approximate], [data-kind="outline"])').evaluateAll((paths) => paths.map((path) => `${getComputedStyle(path).strokeLinecap} ${getComputedStyle(path).strokeLinejoin}`));
+  const ends = await stage.locator('.hv2-proof-scheme [data-group]:not(.hv2-proof-core, [data-group="truss"][data-depth="0"]:not([data-hidden])), .hv2-contour-ink path:not([data-kind="outline"])').evaluateAll((paths) => paths.map((path) => `${getComputedStyle(path).strokeLinecap} ${getComputedStyle(path).strokeLinejoin}`));
   expect(new Set(ends)).toEqual(new Set(['butt miter']));
   // (a profile's ends square, so its two edges close at the corners)
   expect(new Set(await stage.locator('.hv2-proof-scheme :is(.hv2-proof-core, [data-group="truss"][data-depth="0"]:not([data-hidden]))').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).strokeLinecap)))).toEqual(new Set(['square']));
@@ -790,7 +785,7 @@ test('the scheme is its own layer: its gable plane paper-white, what stands behi
   await expect(page.locator('#real-object .hv2-contour-legend [data-on] .hv2-contour-nodes')).toBeVisible();
   // Every word on the frame stands on a dark backing that masks what runs under it, as a drawing's text does — not on a
   // text-shadow (owner, 04.10: «текст залазить на елемент»)
-  for (const word of await stage.locator('.hv2-proof-labels > :is(.hv2-proof-tag, .hv2-proof-measure)').all()) {
+  for (const word of await stage.locator('.hv2-proof-labels > .hv2-proof-tag').all()) {
     const look = await word.evaluate((element) => ({ background: getComputedStyle(element).backgroundColor, shadow: getComputedStyle(element).textShadow }));
     const [r, g, b, alpha = 1] = (look.background.match(/[\d.]+/g) ?? []).map(Number);
     expect(Math.max(r, g, b), look.background).toBeLessThan(40);
@@ -2821,7 +2816,7 @@ test('the nodes’ letters cover no word on the frame — no name, no figure, no
           return { left: Math.max(rect.left, rightSide ? seam : frame.left), right: Math.min(rect.right, frame.right), top: rect.top, bottom: rect.bottom };
         };
         const words = [
-          ...[...element.querySelectorAll<HTMLElement>('.hv2-proof-measure, .hv2-proof-tag, .hv2-contour-stamp')].filter(shown).map((node) => ({ name: node.textContent ?? '', ...box(node, true) })),
+          ...[...element.querySelectorAll<HTMLElement>('.hv2-proof-tag, .hv2-contour-stamp')].filter(shown).map((node) => ({ name: node.textContent ?? '', ...box(node, true) })),
           ...[...element.querySelectorAll('.hv2-contour-seamtags > span')].filter(shown).map((node) => ({ name: node.textContent ?? '', ...box(node, false) })),
         ];
         const misses: string[] = [];
@@ -3010,10 +3005,10 @@ test('a word the seam cuts, or one that meets «‹ Фото» or the stamp, is 
     const would = right.getBoundingClientRect();
     const words = [...element.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')].map((word) => {
       const box = word.getBoundingClientRect();
-      const { tag, measure } = word.dataset;
-      const pointer = element.querySelector<SVGElement>(tag ? `.hv2-proof-tag-leaders [data-tag="${tag}"]` : `.hv2-proof-marks [data-mark="${measure}"]`)!;
+      const { tag } = word.dataset;
+      const pointer = element.querySelector<SVGElement>(`.hv2-proof-tag-leaders [data-tag="${tag}"]`)!;
       return {
-        id: tag ?? measure!, cut: 'cut' in word.dataset, hidden: !visible(word), pointer: { cut: 'cut' in pointer.dataset, hidden: !visible(pointer) },
+        id: tag!, cut: 'cut' in word.dataset, hidden: !visible(word), pointer: { cut: 'cut' in pointer.dataset, hidden: !visible(pointer) },
         bySeam: box.left < seam + 1, met: covers.filter((cover) => meet(box, cover.box)).map(({ name }) => name), meetsRight: meet(box, would),
       };
     });

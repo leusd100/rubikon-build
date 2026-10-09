@@ -17,15 +17,15 @@ import { SCOPE_FOCUS_EVENT, type ScopeFocus } from './ScopeCells';
 //     silhouette measured from eight photos of this hangar, in the photo's own perspective (app/data/homeProofFrame.ts,
 //     app/data/homeProofContour.ts): illustrative, labelled so on the sheet («Схема · без розмірів») and in the note;
 //     with the walls and the central row of columns the owner remembers, but never this building's drawn structure —
-//     nobody can see it under the cladding and its drawings were not kept. The outline is one solid copper line, with
-//     the one measured figure the scheme keeps, the roof's slope with its «≈» and «±» (app/data/homeProofMeasures.ts);
+//     nobody can see it under the cladding and its drawings were not kept. The outline is one solid copper line, and the
+//     scheme carries no figure (owner, 09.10: the roof's slope, the last one, is gone too);
 //   «Сніг» — the same scheme with the snow's way through it, link by link, roof to ground; «Вітер» — the wind's, across
 //     the building, in its own cool tint (owner review, 04.10).
 // («Контур», the measured lines with their measured / approximate split and three figures, is gone — owner, 05.10:
 // «клієнту точно цього не треба знати».)
 // The scheme never goes over the photo: it lives right of the seam only, and so do the words that belong to it — the
-// stamp that says what it is and the load's chain, clipped at the seam. «Контур на фото» lays the measured lines (and
-// only those) over the photo as well, as proof that they land on it.
+// stamp that says what it is and the load's chain, clipped at the seam (owner, 05.10: «Контур на фото», which laid the
+// measured lines over the photo too, is gone).
 //
 // The seam is a real range input (keys, screen readers). Mouse and pen drag anywhere in the frame; a finger drags only
 // the handle, so the page still scrolls and zooms under a thumb, and on a phone «Фото» / «Схема» show one side whole.
@@ -148,7 +148,7 @@ const SIZES = '(max-width: 760px) calc(100vw * 1.22), (max-width: 1556px) calc(9
 const pathOf = ({ points }: ContourLine) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}`;
 
 // What the seam snaps to: the measured verticals — both gates' jambs and the gable's corners, each at its mean x — with
-// the words for the seam's foot. Not the ridge: nobody measured where it stands (homeProofMeasures.ts)
+// the words for the seam's foot. Not the ridge: nobody measured where it stands
 type Snap = { line: string; at: number; name: string };
 const pointsOf = (id: string) => lines.find((line) => line.id === id)!.points;
 const snapAt = (id: string, from: number, to?: number) => {
@@ -309,7 +309,6 @@ const Lines = memo(function Lines({ casing, snapped }: Readonly<{ casing?: boole
           d={pathOf(line)}
           data-line={line.id}
           data-kind={line.kind}
-          data-approximate={line.approximate ? '' : undefined}
           data-snapped={snapped === line.id ? '' : undefined}
         >
           {!casing && <title>{line.title}</title>}
@@ -907,18 +906,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     for (const label of stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')) {
       const rect = label.getBoundingClientRect();
       const cut = rect.left < seam + 1 || covers.some((cover) => meets(rect, cover));
-      // shown on this layer: the scheme's names and the figures marked for it on «Каркас», every figure on «Контур»
-      const here = layer === 'frame' && (label.dataset.tag !== undefined || label.dataset.onFrame !== undefined);
+      // shown on this layer: the scheme's names, on «Каркас»
+      const here = layer === 'frame';
       if (!cut && here && rightTagWould && rightBox && meets(rect, rightBox)) yieldTag = true;
       if (cut === ('cut' in label.dataset)) continue;
       if (cut) label.dataset.cut = '';
       else delete label.dataset.cut;
-      // …with what points at it: a name's leader, a figure's marks (review, 04.10: the slope's leader stayed, pointing at
-      // nothing)
-      const { tag, measure } = label.dataset;
-      let pointer: SVGGElement | null = null;
-      if (tag) pointer = stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${tag}"]`);
-      else if (measure) pointer = stage.querySelector<SVGGElement>(`.hv2-proof-marks [data-mark="${measure}"]`);
+      // …with its leader (review, 04.10: a leader stayed, pointing at nothing)
+      const pointer = stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${label.dataset.tag}"]`);
       if (pointer) {
         if (cut) pointer.dataset.cut = '';
         else delete pointer.dataset.cut;
@@ -1395,7 +1390,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
   const engaged = loadRun + windRun + buildRun > 0;
 
-  // The figures the scheme shows: the slope (the others were «Контур»'s)
   const sliderLabel = 'Порівняти фото й схему';
 
   return (
@@ -1502,8 +1496,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         onLostPointerCapture={endDrag}
       >
         {/* The photo, in one canvas in its own proportion; on a laptop the stage is shorter than the canvas and crops its
-            sky and gravel, on a phone it is a close-up of the gable (home-v2.css). «Контур на фото» draws the measured
-            lines over it too */}
+            sky and gravel, on a phone it is a close-up of the gable (home-v2.css) */}
         <div className="hv2-contour-canvas">
           {/* The open node's ring on the photo too: the seam stands on it, the photo's half of it here */}
           {detail && (() => {

@@ -51,14 +51,16 @@ describe('homeProofContour', () => {
     expect(byKind('outline').length).toBeGreaterThanOrEqual(1);
     expect(byKind('gate')).toHaveLength(2);
     expect(byKind('gate').every((gate) => !gate.approximate)).toBe(true);
-    expect(byKind('cladding').length).toBeGreaterThan(0);
+    // nothing else: the cladding's strip lines left the data with the proof block's cleanup (09.10) — never drawn since
+    // «Контур» went (05.10)
+    expect(lines.length).toBe(byKind('outline').length + byKind('gate').length);
   });
 
   // The study's own record stays in the data — the left rake, which lies off its edge; the right corner, whose edge the
-  // study finds outside it, on the trim; the three left strip boundaries — but the page draws every line solid and says
+  // study finds outside it, on the trim — but the page draws every line solid and says
   // neither «виміряно» nor «наближено» (owner, 05.10): the accessible name says what the lines are, no more
   it('keeps the study\'s approximate set in the data, and the accessible label free of measured / approximate', () => {
-    expect(lines.filter((line) => line.approximate).map((line) => line.id)).toEqual(['gable-corner-right', 'gable-rake-left', 'strip-a', 'strip-b', 'strip-c']);
+    expect(lines.filter((line) => line.approximate).map((line) => line.id)).toEqual(['gable-corner-right', 'gable-rake-left']);
     const { label } = homeProofContour;
     expect(label).not.toMatch(/\d/);
     expect(label).toContain('Контур за фото');

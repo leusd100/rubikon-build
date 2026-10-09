@@ -9,8 +9,8 @@ import { homeProofDetailSpots, homeProofFrame, homeProofParts, type PointLoad, t
 //     aerated-concrete blockwork in perspective, cut in section at both corners; and the snow's way through it, link by link
 //     (the «Сніг» layer; the «Вітер» layer the same in its own cool tint): the members it passes lit in that paper colour, the load itself in its own lighter,
 //     dotted tint — the legend's «навантаження», never the measured copper (review, 04.10);
-//   ProofMarks and ProofLabels — the measured figures' marks on the contour's own lines and their words
-//     (app/data/homeProofMeasures.ts), and the scheme's names on its members.
+//   ProofMarks and ProofLabels — the scheme's names on its members and their leaders (the measured figures went with
+//     «Контур» and the roof's slope, 05.10 and 09.10).
 // Which of them shows is the stage's data-layer (home-v2.css). On the first view nothing draws in on its own: the seam
 // sweeps across the gable and uncovers the drawing whole, as a plotter would (ProofContour). Line weights follow a
 // drawing's scale (home-v2.css, --lw-*): the measured outline heaviest, then chords and columns, then webs, purlins and
