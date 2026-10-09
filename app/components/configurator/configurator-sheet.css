@@ -287,14 +287,14 @@
   display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 7px; border: 1px solid currentColor;
   border-radius: 50%; font: 700 10.5px/1 var(--font-condensed), sans-serif;
 }
-/* The tour's progress bars stop short of the «Подивитись у 3D» chip in the picture's corner (07.10: they ran under it) */
-.hc-frame-image .dn-progress { right: 172px; }
+/* The tour's progress bars run the field's width: they stopped short of the «Подивитися в 3D» chip in its corner (07.10),
+   and «Каркас» has no chip since 09.10 (HangarPreviewModes) */
 
 @container sheet (max-width: 480px) {
   .hc-frame { --ft-k: 1.55; --ft-t: 1.5; padding-top: 22px; }
   .hc-frame .ft-legend { padding-inline: 8px; }
   .hc-frame .ft-chain { font-size: 12px; }
-  .hc-frame-image .dn-progress { right: 146px; left: 10px; }
+  .hc-frame-image .dn-progress { right: 10px; left: 10px; }
 }
 
 @media (max-width: 760px) {

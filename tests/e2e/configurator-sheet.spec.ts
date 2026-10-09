@@ -642,3 +642,44 @@ test('in the sticky pane the 3D view fits the screen, its actions on the picture
     await expect(pictureOf(page).getByRole('button', { name: 'Розгорнути', exact: true })).toBeFocused();
   }
 });
+
+// 3D and «Каркас» (09.10, owner: «Давай спробуємо прибрати»; audit F14, F76): the frame's step is its line drawing, with
+// no 3D chip on it — 3D showed the clad hangar there and took the step's own list from beside it. 3D opened over the
+// general view is forgotten when the step changes the view: it came back by itself on «Обсяг». The chip is one button
+// whose words change, so keyboard focus stays on it both ways (it fell to the page's start), and the hidden status line
+// says what the sheet now shows.
+test('3D is not offered on «Каркас», does not come back by itself after it, and its chip keeps focus both ways', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the view contract is viewport-independent');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  await bringSheetIntoView(page);
+  const chip = threeChipOf(page);
+  await expect(chip).toBeVisible();
+  // the sheet's own status line (the expanded view's is quiet while it is closed)
+  const status = page.locator('#configurator p.hc-presentation-announcement[role="status"]');
+
+  await chip.focus();
+  await page.keyboard.press('Enter');
+  await expect(pictureOf(page).locator('canvas')).toBeVisible({ timeout: 20_000 });
+  const back = drawingChipOf(page);
+  await expect(back).toBeFocused();
+  await expect(status).toHaveText('3D-модель · попередня схема');
+  await page.keyboard.press('Enter');
+  await expect(pictureOf(page).locator('svg.hc-preview-svg')).toBeVisible();
+  await expect(chip).toBeFocused();
+  await expect(status).toHaveText('Загальний вид · попередня схема');
+
+  // opened on «Задача», then «Каркас»: the frame's drawing, and no chip on it
+  await chip.click();
+  await expect(pictureOf(page).locator('canvas')).toBeVisible({ timeout: 20_000 });
+  await openControlGroup(page, 'space');
+  await expect(pictureOf(page).locator('.hc-frame')).toBeVisible();
+  await expect(pictureOf(page).locator('.hc-sheet-tools')).toHaveCount(0);
+  await expect(page.locator('#hc-frame-panel .hc-frame-item')).toHaveCount(5);
+  // …then «Обсяг»: the general view, not the 3D left open three steps back
+  await openControlGroup(page, 'scope');
+  await expect(pictureOf(page).locator('svg.hc-preview-svg')).toBeVisible();
+  await expect(pictureOf(page).locator('canvas')).toHaveCount(0);
+  await expect(sheetOf(page).locator('.sheet-stamp')).toContainText('Загальний вид · попередня схема');
+  await expect(chip).toBeVisible();
+});
