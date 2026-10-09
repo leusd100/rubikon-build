@@ -316,13 +316,15 @@ export const homeProofFrame: HomeProofFrame = {
     { id: 'truss', text: 'Ферма', anchor: [1360.6, 271], at: [1352, 214], align: 'start', keyAt: [1060, 240] },
     // on the right wall's face, which holds only blockwork: from the first bay's bracing (review, 05.10: in the sky it
     // met the slope's figure on a laptop)
-    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1350, 335.8], at: [1430, 398], align: 'end', wideOnly: true, keyAt: [1238, 252] },
-    // the right gate's opening holds no member: the column's name stands in it, under the walls' (apart on a tablet too)
-    { id: 'column', text: 'Центральний ряд колон', anchor: [1008.2, 452], at: [1042, 528], align: 'start', atNarrow: [1042, 505], keyAt: [1006, 380] },
+    { id: 'bracing', text: 'Прогони й в’язі', anchor: [1350, 335.8], at: [1430, 418], align: 'end', wideOnly: true, keyAt: [1238, 252] },
+    // under the ground, beside the column's footing (owner, 09.10: in the right gate's opening it lay on the gate); the
+    // leader from the column's foot, clear of the footing
+    { id: 'column', text: 'Центральний ряд колон', anchor: [1012.6, 520], at: [1040, 612], align: 'start', atNarrow: [1040, 634], keyAt: [1006, 380] },
     // (on a tablet 3 px lower than it was: at 410 its top met the lowest member behind the face to a third of a pixel)
-    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 470], align: 'end', atNarrow: [1430, 413], keyAt: [1340, 450] },
+    { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 482], align: 'end', atNarrow: [1430, 440], keyAt: [1340, 450] },
     // keyAt: a phone's numbers (ProofKeyPins), right of the resting seam where they can be, clear of the letters А, Б, В
-    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end', keyAt: [1405, 588] },
+    // (below 1240 px, where the names are larger against the frame, the column's and the footings' stack under the ground)
+    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end', atNarrow: [1446, 668], keyAt: [1405, 588] },
   ],
   label:
     'Схема каркаса такого типу, як на цьому об’єкті, вписана в силует із фото: ферми, прогони, в’язі, стіни з газобетонних блоків по контуру й центральний ряд колон, фундаменти — умовно. Навантаження з покрівлі йде через прогони й ферми на стіни й колони, а з них — на фундаменти. Не креслення цього ангара: розмірів і перерізів тут немає.',
@@ -396,17 +398,20 @@ export function onRoof([x, y]: Pt) {
  *  its letter beside it. А the truss's bearing on the right wall, Б a purlin on a top-chord node, В the column's base */
 /** `badgeNarrow`: on a tablet's frame (761–1180 px), where the letter over the rake would meet the slope's figure */
 export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base' | 'ridge' | 'chord'; ring: Pt; radius: number; badge: Pt; badgePhone: Pt; badgeNarrow?: Pt }[] = [
-  { id: 'bearing', ring: [1461.6, 324], radius: 26, badge: [1424, 292], badgePhone: [1424, 292] },
-  { id: 'purlin', ring: [1194.3, 214.3], radius: 20, badge: [1172, 176], badgePhone: [1172, 176], badgeNarrow: [1146, 250] },
+  // (owner, 09.10: each ring centred on the node its close-up draws, and a size up: the truss's end on the wall's belt —
+  // the bottom chord's end; the ridge's apex; the base plate under the column)
+  { id: 'bearing', ring: [1461.6, 331.8], radius: 32, badge: [1424, 292], badgePhone: [1424, 292] },
+  { id: 'purlin', ring: [1194.3, 214.3], radius: 26, badge: [1172, 176], badgePhone: [1172, 176], badgeNarrow: [1146, 250] },
   // on a phone the seam's handle stands at the frame's foot next to the column: its letter goes up into the gate
-  { id: 'base', ring: [1007.5, 570], radius: 28, badge: [1050, 596], badgePhone: [1084, 470] },
+  // (its letter up and right of the ring, between the column and the right gate: under it the column's name now stands)
+  { id: 'base', ring: [1007.3, 563.5], radius: 32, badge: [1052, 526], badgePhone: [1084, 470] },
   // the ridge over the central post, its letter left of the slope's figure; a bottom-chord panel point under a vertical
   // (in the letters' order: the keyboard reaches them А, Б, В, Г, Д)
   // (its letter right of the ridge, on the right rake's edge: left of it, it stood on the resting seam, half under the
   // photo; higher, «Схема ›» at rest met it on a short laptop — the seam's name ends at photo x 1050, the slope's figure
   // starts at 1084, so the letter stands under the one and left of the other)
-  { id: 'ridge', ring: [1005, 162], radius: 24, badge: [1062, 150], badgePhone: [1084, 150], badgeNarrow: [1046, 214] },
-  { id: 'chord', ring: [1253.8, 317.6], radius: 20, badge: [1288, 352], badgePhone: [1288, 352], badgeNarrow: [1300, 285] },
+  { id: 'ridge', ring: [1005, 149.8], radius: 30, badge: [1062, 150], badgePhone: [1084, 150], badgeNarrow: [1046, 214] },
+  { id: 'chord', ring: [1253.8, 317.6], radius: 26, badge: [1288, 352], badgePhone: [1288, 352], badgeNarrow: [1300, 285] },
 ];
 
 /** «Жива схема» (owner, 05.10): what a pointer on the scheme is over, by name — the nearest member of the gable's plane

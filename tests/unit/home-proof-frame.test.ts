@@ -203,15 +203,15 @@ describe('homeProofFrame — the scheme', () => {
     for (const tag of tags) expect(inSilhouette(tag.anchor) || baseY(tag.anchor[0]) < tag.anchor[1], tag.id).toBe(true);
   });
 
-  it('sets its names in the frame’s free room: the truss’s in the sky over the right rake, the purlins’ and the walls’ on the right wall’s face, the column’s in the right gate’s opening, the footings’ on the ground under the base, each led from a member of its own', () => {
+  it('sets its names in the frame’s free room: the truss’s in the sky over the right rake, the purlins’ and the walls’ on the right wall’s face, the column’s and the footings’ on the ground under the base, each led from a member of its own', () => {
     const tag = (id: string) => tags.find((entry) => entry.id === id)!;
     // Where each stands and which way it runs from there (review, 05.10: the purlins' name off the sky, where it met the
     // slope's figure on a laptop, onto the right wall's face; the walls' and the column's lower, apart on a tablet)
     expect(Object.fromEntries(tags.map(({ id, at, align }) => [id, { at, align }]))).toEqual({
       truss: { at: [1352, 214], align: 'start' },
-      bracing: { at: [1430, 398], align: 'end' },
-      column: { at: [1042, 528], align: 'start' },
-      wall: { at: [1430, 470], align: 'end' },
+      bracing: { at: [1430, 418], align: 'end' },
+      column: { at: [1040, 612], align: 'start' },
+      wall: { at: [1430, 482], align: 'end' },
       footing: { at: [1446, 620], align: 'end' },
     });
     // the truss's over the right rake, right of the apex
@@ -230,16 +230,16 @@ describe('homeProofFrame — the scheme', () => {
     }
     expect(tag('wall').at[1] - tag('bracing').at[1]).toBeGreaterThanOrEqual(60);
     expect(tag('footing').at[1]).toBeGreaterThan(baseY(tag('footing').at[0]));
-    // The right gate's opening holds no member of the gable's plane: the column's name starts at its left jamb, between
-    // its head and its foot, and runs into it
-    const [footNear, footFar, headFar, headNear] = walls.holes[1];
+    // The column's name under the ground, right of the column, left of the right gate (owner, 09.10: in the gate's
+    // opening it lay on the gate); below 1240 px it and the footings' stack, the footings' under it
+    const [footNear, , , headNear] = walls.holes[1];
     const [x, y] = tag('column').at;
     const jambX = footNear[0] + ((headNear[0] - footNear[0]) * (y - footNear[1])) / (headNear[1] - footNear[1]);
-    expect(Math.abs(x - jambX)).toBeLessThan(15);
-    expect(y).toBeGreaterThan(Math.max(headNear[1], headFar[1]));
-    expect(y).toBeLessThan(Math.min(footNear[1], footFar[1]));
-    const inOpening = members.filter((member) => member.depth === 0 && member.points.some((point) => insidePolygon(point, walls.holes[1]) && distanceToPolygon(point, walls.holes[1]) > 2));
-    expect(inOpening).toEqual([]);
+    expect(y).toBeGreaterThan(baseY(x));
+    expect(x).toBeGreaterThan(Math.max(...members.filter((member) => member.group === 'column' && member.depth === 0).flatMap((member) => member.points.map(([px]) => px))));
+    expect(x).toBeLessThan(jambX);
+    expect(tag('footing').atNarrow![1] - tag('column').atNarrow![1]).toBeGreaterThanOrEqual(30);
+    void distanceToPolygon;
     // the truss's leader starts on a node of the truss; the purlins' on the first bay's bracing, along its bottom chord
     expect(nodes.some((node) => same(node, tag('truss').anchor))).toBe(true);
     const onSegment = ([x, y]: Pt, [a, b]: readonly [Pt, Pt]) => {

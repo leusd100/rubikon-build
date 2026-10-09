@@ -1,7 +1,6 @@
 import { memo, type CSSProperties } from 'react';
 import { homeProofContour } from '../../data/homeProofContour';
 import { homeProofDetailSpots, homeProofFrame, homeProofParts, type PointLoad, type SchemeHit } from '../../data/homeProofFrame';
-import { homeProofMarks, homeProofMeasures } from '../../data/homeProofMeasures';
 
 // The layers ProofContour lays right of its seam, all in the photo's own pixels on one canvas:
 //   ProofFrame — the SCHEME of a frame of this object's type inside its silhouette (app/data/homeProofFrame.ts):
@@ -51,6 +50,9 @@ function faceOf([[x0, y0], [x1, y1], [x2, y2], [x3, y3]]: readonly Pt[]) {
   };
 }
 const at1 = (value: number) => Math.round(value * 10) / 10;
+/** A member drawn as a profile: the gable's own chords (the truss's open lines on its plane) */
+const isProfile = (member: { group: string; depth: number; hidden?: boolean; closed?: boolean }) =>
+  member.group === 'truss' && member.depth === 0 && !member.hidden && !member.closed;
 /** Aerated-concrete blockwork on a face: its courses, and the joints of every course, offset by half a block */
 function blockwork(face: readonly Pt[], courses: number, blocks: number) {
   const on = faceOf(face);
@@ -126,6 +128,11 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
               data-depth={member.depth}
               data-hidden={member.hidden ? '' : undefined}
             />
+          ))}
+          {/* The gable's chords as profiles (owner, 09.10: «більш детальніше»): each drawn as its two edges — the member's
+              own line made wide, its dark core over it — as the nodes' drawings draw a C-section */}
+          {inside.filter(isProfile).map((member, index) => (
+            <path key={`core-${index}`} className="hv2-proof-core" d={d(member.points)} data-group={member.group} data-depth={member.depth} />
           ))}
           {/* The parts the scope's cells light (ScopeCells): the roof's planes and the cladding on the walls' faces, drawn
               only while their cell is pointed at (home-v2.css, the stage's data-focus) */}
@@ -214,26 +221,12 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
 });
 
 export const ProofMarks = memo(function ProofMarks() {
-  const { slope, gates, width, widthTicks, height, heightTicks } = homeProofMarks;
   const { tags } = homeProofFrame;
-  const at = (id: string) => homeProofMeasures.find((measure) => measure.id === id)!.at;
+  // The names' leaders only (owner, 09.10: «Схил даху можна взагалі прибрати» — the last figure on the scheme; the gates'
+  // and the proportion's marks had left with «Контур»). Each from a dot on its member to the foot of its name, whose
+  // underline is the leader's shelf (home-v2.css)
   return (
     <svg className="hv2-proof-marks" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-      <g data-mark="slope" data-on-frame="">
-        <path d={d(slope.arc)} />
-        <path className="hv2-proof-mark-level" d={d(slope.level)} />
-        {/* to the label over the roof in «Каркас», a short one down to it in «Контур» */}
-        <path className="hv2-proof-leader" data-for="frame" d={d([slope.anchor, at('slope')])} />
-        <path className="hv2-proof-leader" data-for="contour" d={d([slope.arc[0], [slope.arc[0][0] - 3, slope.arc[0][1] + 18]])} />
-      </g>
-      <g data-mark="gates">
-        {gates.map((tick, index) => <path key={index} d={d(tick)} />)}
-      </g>
-      <g data-mark="proportion">
-        <path d={d(width)} />
-        <path d={d(height)} />
-        {[...widthTicks, ...heightTicks].map((tick, index) => <path key={index} d={d(tick)} />)}
-      </g>
       <g className="hv2-proof-tag-leaders">
         {tags.map(({ id, anchor, at: to, atNarrow, wideOnly }) => (
           <g key={id} data-tag={id} data-wide-only={wideOnly ? '' : undefined}>
@@ -256,20 +249,6 @@ const place = ([x, y]: Pt, [cx, cy]: Pt = [x, y], [nx, ny]: Pt = [x, y]): CSSPro
 export const ProofLabels = memo(function ProofLabels() {
   return (
     <div className="hv2-proof-labels" aria-hidden="true">
-      {homeProofMeasures.map((measure) => (
-        <span
-          key={measure.id}
-          className="hv2-proof-measure"
-          data-measure={measure.id}
-          data-align={measure.align}
-          data-align-contour={measure.alignContour ?? measure.align}
-          data-on-frame={measure.onFrame ? '' : undefined}
-          style={place(measure.at, measure.atContour)}
-        >
-          {measure.title}
-          <small>{measure.detail}</small>
-        </span>
-      ))}
       {homeProofFrame.tags.map((tag) => (
         <span key={tag.id} className="hv2-proof-tag" data-tag={tag.id} data-align={tag.align} data-wide-only={tag.wideOnly ? '' : undefined} style={place(tag.at, tag.at, tag.atNarrow)}>{tag.text}</span>
       ))}

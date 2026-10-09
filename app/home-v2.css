@@ -19,7 +19,9 @@ main[data-home="v2"] {
   /* (a calm drawing blue — owner, 06.10: the magenta «прикольно, але занадто», the gold before it too close to the copper
      and the photo's yellow strips; a periwinkle, apart from the snow's azure — which never shows with the nodes — as from
      the wind and the copper; dark letters on it) */
-  --hv2-node: #9ba0ff; --hv2-node-light: #cdd0ff; --hv2-node-edge: #e8e9ff; --hv2-node-ink: #0e1331;
+  /* the nodes' brass (owner, 09.10: «підібрати підходящий колір»): of the copper's family, apart from it, the scheme's
+     paper and both loads' tints */
+  --hv2-node: #e6c76a; --hv2-node-light: #f5e3a8; --hv2-node-edge: #fcf1cf; --hv2-node-ink: #241a06;
   --hv2-ink: #121413;
   --hv2-graphite: #171a18;
   --hv2-graphite-2: #1d201e;
@@ -308,7 +310,8 @@ main[data-home="v2"] .hv2-contour-trace picture {
   position: absolute; inset: 0; display: block;
   -webkit-mask: var(--hv2-building) 0 0 / 100% 100% no-repeat; mask: var(--hv2-building) 0 0 / 100% 100% no-repeat;
 }
-main[data-home="v2"] .hv2-contour-trace img { filter: grayscale(1) brightness(.44) contrast(.92); }
+/* (09.10: darker and softer, so the cladding's colour bands no longer read through the scheme) */
+main[data-home="v2"] .hv2-contour-trace img { filter: grayscale(1) brightness(.32) contrast(.72); }
 main[data-home="v2"] .hv2-contour-ground { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 main[data-home="v2"] .hv2-contour-ground path { fill: none; stroke: var(--hv2-scheme); stroke-opacity: .42; stroke-width: calc(var(--u) * 1.1); }
 main[data-home="v2"] .hv2-contour-ground .hv2-contour-ground-hatch { stroke-opacity: .22; stroke-width: calc(var(--u) * .7); }
@@ -366,16 +369,25 @@ main[data-home="v2"] .hv2-proof-scheme [data-group] {
 main[data-home="v2"] .hv2-proof-scheme [data-depth="1"] { --depth: .37; }
 main[data-home="v2"] .hv2-proof-scheme [data-depth="2"] { --depth: .18; }
 main[data-home="v2"] .hv2-proof-scheme :is([data-group="truss"], [data-group="column"]) { --w: var(--lw-2); }
+/* The gable's chords as profiles (owner, 09.10): the member's line wide, its dark core over it (ProofFrame's isProfile) —
+   two edges, as the nodes' drawings draw a section */
+main[data-home="v2"] .hv2-proof-scheme [data-group="truss"][data-depth="0"]:not([data-hidden]) { --w: 3.4; --o: 1; stroke-linecap: square; }
+main[data-home="v2"] .hv2-proof-scheme [data-group].hv2-proof-core { stroke: #141615 !important; stroke-opacity: 1; stroke-width: calc(var(--u) * 1.5); stroke-linecap: square; fill: none; }
 main[data-home="v2"] .hv2-proof-scheme [data-group="web"] { --w: var(--lw-3); --o: .9; }
 main[data-home="v2"] .hv2-proof-scheme [data-group="wall"] { --w: 1.1; --o: .72; }
-main[data-home="v2"] .hv2-proof-scheme [data-group="purlin"] { --o: .6; }
+/* (09.10: quiet — at .6 the purlins' runs into depth read as a second web over the truss) */
+main[data-home="v2"] .hv2-proof-scheme [data-group="purlin"] { --o: .26; }
 main[data-home="v2"] .hv2-proof-scheme [data-group="bracing"] { --o: .9; }
 main[data-home="v2"] .hv2-proof-frame [data-group="column"][data-depth="0"] { fill: rgba(237, 232, 222, .14); }
 main[data-home="v2"] .hv2-proof-scheme [data-hidden] { --o: 1; --w: .7; stroke: var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-depth="1"] { --depth: .78; }
-main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-depth="2"] { --depth: .5; }
+/* (owner, 09.10: «досить багато шуму» — of what stands behind the gable, the first truss and its purlins' stubs only, faint;
+   the second truss back, the purlins' long runs and the bracing go) */
+main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-depth="1"] { --depth: .4; }
+main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-depth="1"][data-group="bracing"] { --depth: .24; }
+main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-group="purlin"] { display: none; }
+main[data-home="v2"] .hv2-proof-scheme [data-hidden][data-depth="2"] { display: none; }
 main[data-home="v2"] .hv2-proof-scheme [data-hidden]:is([data-group="truss"], [data-group="column"]) { --w: 1.1; }
-main[data-home="v2"] .hv2-proof-frame .hv2-proof-blocks { stroke: var(--hv2-scheme); stroke-opacity: .17; stroke-width: calc(var(--u) * var(--lw-4)); }
+main[data-home="v2"] .hv2-proof-frame .hv2-proof-blocks { stroke: var(--hv2-scheme); stroke-opacity: .12; stroke-width: calc(var(--u) * var(--lw-4)); }
 main[data-home="v2"] .hv2-proof-frame .hv2-proof-blocks[data-depth="1"] { stroke-opacity: .12; }
 /* What a section cuts: outlined heavier than anything it holds, hatched at a step the frame's width can draw */
 main[data-home="v2"] .hv2-proof-frame :is(.hv2-proof-cut, .hv2-proof-footing[data-cut]) {
@@ -453,7 +465,14 @@ main[data-home="v2"] .hv2-proof-labels [data-align="middle"] { transform: transl
 main[data-home="v2"] .hv2-proof-leader[data-for="contour"] { display: none; }
 main[data-home="v2"] .hv2-proof-measure { color: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-proof-measure small { display: block; margin-top: 2px; color: var(--hv2-text-2); font: 500 12px/1.15 var(--font-manrope), sans-serif; }
-main[data-home="v2"] .hv2-proof-tag { color: var(--hv2-scheme); }
+/* The names as a drawing's callouts (owner, 09.10: «підписи … більш красивими … в правильних місцях»): each word stands on
+   its leader's shelf — its own underline — the leader running from a dot on the member to the shelf's near end */
+main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag {
+  padding: 1px 3px 3px; color: var(--hv2-scheme); background: rgba(20, 22, 21, .88); border-bottom: 1px solid rgba(237, 232, 222, .6);
+  font: 600 12.5px/1.2 var(--font-manrope), sans-serif; letter-spacing: .01em;
+}
+main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-align="start"] { transform: translate(0, -100%); }
+main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-align="end"] { transform: translate(-100%, -100%); }
 
 /* Which layer shows: the stage's data-layer. Hidden parts are hidden for real (visibility), after a 240 ms fade */
 main[data-home="v2"] :is(.hv2-proof-scheme, .hv2-proof-load, .hv2-proof-wind, .hv2-contour-lines, .hv2-proof-marks > g, .hv2-proof-measure, .hv2-proof-tag, .hv2-contour-sketch) {
@@ -488,6 +507,17 @@ main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[d
 /* …and narrower still (≤ 900 px), the walls' and the column's names at their own places (homeProofFrame's atNarrow, their
    leaders drawn there), the purlins' not drawn: three two-line names do not fit the wall's face */
 main[data-home="v2"] .hv2-proof-tag-leaders path[data-narrow] { display: none; }
+/* below the one-row title block's width the names are larger against the frame: the column's and the footings' stack
+   under the ground (QA 09.10: side by side at 768–1200 px they met) */
+@media (max-width: 1239px) {
+  main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag:is([data-tag="footing"], [data-tag="column"]) { left: var(--nx); top: var(--ny); }
+  main[data-home="v2"] .hv2-proof-tag-leaders :is([data-tag="footing"], [data-tag="column"]) path[data-wide] { display: none; }
+  main[data-home="v2"] .hv2-proof-tag-leaders :is([data-tag="footing"], [data-tag="column"]) path[data-narrow] { display: inline; }
+  /* (a breath between the two, the column's clear of the base line) */
+  main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-tag="column"] { margin-top: 3px; }
+  main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-tag="footing"] { margin-top: 5px; }
+}
+@media (max-width: 900px) { main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-tag="footing"] { margin-top: 12px; } }
 @media (max-width: 900px) {
   main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag { left: var(--nx); top: var(--ny); }
   main[data-home="v2"] .hv2-proof-tag-leaders path[data-wide] { display: none; }
@@ -1222,6 +1252,11 @@ main[data-home="v2"] .hv2-detail {
   padding: 10px 12px 10px; color: var(--hv2-text); background: #161817; border: 1px solid var(--hv2-node);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, .4); cursor: default;
 }
+/* In the frame (not a phone's sheet) the drawing gives way to the panel's height: on a tablet's frame it ran 33–57 px under
+   the note and the buttons (audit 08.10 F19, QA 09.10) — it shrinks, its proportions kept (the svg's own «meet») */
+main[data-home="v2"] .hv2-detail:not([data-sheet]) { display: flex; flex-direction: column; }
+main[data-home="v2"] .hv2-detail:not([data-sheet]) > * { flex: none; }
+main[data-home="v2"] .hv2-detail:not([data-sheet]) > .hv2-detail-drawing { flex: 0 1 auto; min-height: 0; }
 main[data-home="v2"] .hv2-detail-head { display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--hv2-line-strong); }
 main[data-home="v2"] .hv2-detail-head b { flex: 1; font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
 main[data-home="v2"] .hv2-detail-letter { display: grid; place-items: center; width: 22px; height: 22px; color: var(--hv2-node-ink); background: var(--hv2-node); border-radius: 50%; font: 700 12px/1 var(--font-condensed), sans-serif; }
