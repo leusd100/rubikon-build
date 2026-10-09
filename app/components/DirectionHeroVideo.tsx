@@ -8,6 +8,8 @@ type DirectionHeroVideoProps = {
   sources: string[];
   poster: string;
   mobilePoster: string;
+  mobilePosterSrcSet?: string;
+  mobilePosterSizes?: string;
   className?: string;
   clipDurationMs?: number;
   fadeDurationMs?: number;
@@ -22,6 +24,8 @@ export function DirectionHeroVideo({
   sources,
   poster,
   mobilePoster,
+  mobilePosterSrcSet,
+  mobilePosterSizes,
   className,
   clipDurationMs = 6000,
   fadeDurationMs = DEFAULT_FADE_DURATION_MS,
@@ -146,6 +150,8 @@ export function DirectionHeroVideo({
         rel="preload"
         as="image"
         href={mobilePoster}
+        imageSrcSet={mobilePosterSrcSet}
+        imageSizes={mobilePosterSizes}
         media="(max-width: 760px)"
         fetchPriority="high"
       />
@@ -157,7 +163,7 @@ export function DirectionHeroVideo({
         fetchPriority="high"
       />
       <picture>
-        <source media="(max-width: 760px)" srcSet={mobilePoster} />
+        <source media="(max-width: 760px)" srcSet={mobilePosterSrcSet ?? mobilePoster} sizes={mobilePosterSizes} />
         <img
           aria-hidden="true"
           className={`direction-hero-poster${hasStartedPlayback && shouldAttachVideo ? ' is-hidden' : ''}`}

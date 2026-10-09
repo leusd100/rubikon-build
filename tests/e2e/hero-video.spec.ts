@@ -111,6 +111,33 @@ test('the homepage phone hero has no video and no pause button', async ({ page }
   }
 });
 
+for (const [density, width] of [[1, 480], [2, 752]] as const) {
+  test(`HOME first visit at 390 px / DPR ${density} fetches only its selected hero poster`, async ({ browser, baseURL }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'explicit cold contexts run once per density');
+    const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 },
+      deviceScaleFactor: density, isMobile: true, hasTouch: true });
+    try {
+      const page = await context.newPage();
+      const posters: string[] = [];
+      page.on('request', (request) => {
+        const path = new URL(request.url()).pathname;
+        if (path.includes('/hero-mobile-band-')) posters.push(path);
+      });
+      await page.goto('/');
+      const still = page.locator('.hero img.hv2-hero-still');
+      await expect(still).toBeVisible();
+      await expect.poll(() => still.evaluate((element) => {
+        const image = element as HTMLImageElement;
+        return image.complete && image.naturalWidth > 0 ? new URL(image.currentSrc).pathname : null;
+      })).toBe(`/media/home-v2/concepts/hero-mobile-band-${width}w.webp`);
+      expect(posters).toEqual([`/media/home-v2/concepts/hero-mobile-band-${width}w.webp`]);
+      await expect(page.locator('.hero video')).toHaveCount(0);
+    } finally {
+      await context.close();
+    }
+  });
+}
+
 // Owner, 08.10: the cookie strip along the bottom covered the pause in the hero's corner. On a computer it stands on the
 // line of the hero's buttons — its centre on theirs where there is room, its circle alone or just above the row where a
 // button reaches under it — and never under the strip or over a button.
