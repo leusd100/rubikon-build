@@ -190,6 +190,30 @@ describe('projectIsometricScene', () => {
     // Nested dimension chain: the derived ridge guide sits outside the eave guide.
     expect(dims.ridge.line[0].x).toBeLessThan(dims.eave.line[0].x);
   });
+
+  // 09.10, audit F72: the ridge chain hangs off the eave corner, where there is no ridge — its top tick stood 30–36 px
+  // above the apex at 1440 px, level with nothing. An extension line from the apex, in the gable's plane, to over that
+  // corner ends level with the tick, as the eave corner is level with the eave chain's.
+  it('ties the ridge chain to the ridge with an extension line from the apex, ending level with its top tick', () => {
+    for (const dimensions of [{ width: 24, length: 60, height: 8 }, { width: 10, length: 10, height: 4 }, { width: 50, length: 120, height: 15 }]) {
+      const technical = technicalFor({ dimensions });
+      const { ridgeHeightM } = technical.dimensions;
+      const { ridge, eave, width } = projectIsometricScene(technical).dimensions;
+      const label = `${dimensions.width}x${dimensions.length}x${dimensions.height}`;
+      expect(ridge.extension, label).toBeDefined();
+      const [from, to] = ridge.extension!;
+      expect(from, label).toEqual(project({ x: dimensions.width / 2, y: ridgeHeightM, z: 0 }));
+      expect(to, label).toEqual(project({ x: dimensions.width, y: ridgeHeightM, z: 0 }));
+      // the chain's top end — and its tick — are level with the extension's end, as the eave's are with its corner
+      expect(Math.min(ridge.line[0].y, ridge.line[1].y), label).toBeCloseTo(to.y, 6);
+      expect(Math.min(eave.line[0].y, eave.line[1].y), label).toBeCloseTo(project({ x: dimensions.width, y: dimensions.height, z: 0 }).y, 6);
+      // it runs out towards the chain, never past it
+      expect(Math.abs(to.x - from.x), label).toBeLessThan(Math.abs(ridge.line[0].x - from.x));
+      // only the ridge measures from a point that is not its own corner
+      expect(eave.extension).toBeUndefined();
+      expect(width.extension).toBeUndefined();
+    }
+  });
 });
 
 describe('bounds', () => {
