@@ -103,10 +103,10 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
               ))}
             </fieldset>
           )}
+          {/* the words are the button's own (09.10, audit F44), and say what it does: play the five, or stop */}
           {motion && (
             <div className="hc-frame-play">
-              <TourControl touring={touring} toggle={toggle} what="каркаса" />
-              <span aria-hidden="true">{touring ? 'Показуємо по черзі' : 'Показати по черзі'}</span>
+              <TourControl touring={touring} toggle={toggle} what="каркаса" label={{ play: 'Показати по черзі', stop: 'Зупинити показ' }} />
             </div>
           )}
         </>,

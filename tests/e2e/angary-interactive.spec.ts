@@ -83,10 +83,25 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await expect(text).toHaveText('L — 24 м між осями крайніх колон А і В у прикладі. Центральний ряд Б ділить її на два прольоти. H — висота стіни.');
   await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б', 'В']);
   await expect(frame.locator('[data-part~="1"] .ft-bubble').first()).toBeVisible();
-  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3', '4']);
   // one numbering on the screen (07.10): the axes are shown only on «Ширина L» / «Проліт L», whose words name them; the
-  // frames' numbers along the building are not drawn on the configurator's sheet (the steps and the nodes are numbered)
-  await expect(frame.locator('[data-part~="3"] .ft-bubble').first()).toBeHidden();
+  // frames' numbers along the building are not drawn at all (09.10, audit F89: hidden, they still pulled the bays'
+  // camera back)
+  await expect(frame.locator('[data-part~="3"] :is(.ft-bubble, .ft-axis)')).toHaveCount(0);
+  // L names the whole width (09.10, audit F126): under the middle of its line, past Б's bubble — not between А and Б —
+  // and Б's column lit with the outer ones, not left as a dashed axis
+  const span = await frame.evaluate((root) => {
+    const box = (element: Element) => element.getBoundingClientRect();
+    const letter = box([...root.querySelectorAll('[data-part~="1"] .ft-letter')].find((element) => element.textContent === 'L')!);
+    const bubbles = [...root.querySelectorAll('[data-part~="1"] .ft-bubble circle')].map(box);
+    return {
+      at: (letter.left + letter.right) / 2,
+      a: bubbles[0].x + bubbles[0].width / 2, b: bubbles[1].right, c: bubbles[2].x + bubbles[2].width / 2,
+      columns: root.querySelector('[data-part="1 2"] .ft-member')!.getAttribute('d')!.split('M').filter(Boolean).length,
+    };
+  });
+  expect(span.at).toBeGreaterThan(span.b);
+  expect(span.at - span.a).toBeLessThan((span.c - span.a) * 0.65);
+  expect(span.columns).toBe(3);
   // the shown item pressed again goes back to the whole frame
   await items.nth(0).click();
   await expect(items.nth(0)).toHaveAttribute('aria-pressed', 'false');
@@ -105,15 +120,18 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await items.nth(0).click();
   await expect(text).toHaveText('Проліт L — відстань між осями крайніх колон А і Б: 16 м у вашій конфігурації. Усередині колон немає. H — висота стіни.');
   await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б']);
-  // a short building is drawn whole: as many axes as frames, none at a break (counted in the drawing, not shown)
+  // a short building is drawn whole and a long one to a break after three bays: four frames at 18 m as at 60 m, three at
+  // 12 m — counted by their footings, a frame's two (the frames' axis numbers are not drawn since 09.10)
+  const footings = () => frame.locator('.ft-footing').count();
   await setLength(page, '18');
   ({ frame, items, text } = await openFrame(page));
-  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3', '4']);
+  const fourFrames = await footings();
   await setLength(page, '12');
   ({ frame, items, text } = await openFrame(page));
-  await expect(frame.locator('[data-part~="3"] .ft-bubble')).toHaveText(['1', '2', '3']);
+  expect(await footings()).toBe(fourFrames - 2);
   await setLength(page, '60');
   ({ frame, items, text } = await openFrame(page));
+  expect(await footings()).toBe(fourFrames);
 
   // each step holds as long as it builds, and its progress bar fills as long
   const durations = ['4200ms', '4800ms', '5200ms', '6400ms', '7600ms'];
@@ -200,13 +218,15 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   await page.clock.runFor(2000);
   await expect(frame).not.toHaveAttribute('data-touring', /.*/);
   await expect(frame).not.toHaveAttribute('data-step', /.*/);
-  await expect(page.locator('#hc-step-frame .hc-frame-play')).toContainText('Показати по черзі');
+  // the words are the button's own name (09.10, audit F44), and a click on them plays — the button says what it does,
+  // «Зупинити показ» while the tour plays (it said the state, «Показуємо по черзі», beside the button)
+  await expect(control).toHaveAccessibleName('Показати по черзі');
   // played from a load step: it runs, and loops while it does
   await items.nth(3).click();
-  await control.click();
+  await page.locator('#hc-step-frame .hc-frame-play').getByText('Показати по черзі', { exact: true }).click();
   await expect(frame).toHaveAttribute('data-touring', 'true');
   await expect(frame).toHaveAttribute('data-step', '4');
-  await expect(page.locator('#hc-step-frame .hc-frame-play')).toContainText('Показуємо по черзі');
+  await expect(control).toHaveAccessibleName('Зупинити показ');
   await expect.poll(looping, { timeout: 5_000 }).toBeGreaterThan(0);
   await control.click();
   await expect(frame).not.toHaveAttribute('data-touring', /.*/);
@@ -226,6 +246,57 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   await page.waitForTimeout(1500);
   expect(await looping()).toBe(0);
 });
+
+/** WCAG contrast of two computed rgb() colours */
+function contrastOf(foreground: string, background: string) {
+  const luminance = (color: string) => {
+    const [r, g, b] = color.match(/\d+(\.\d+)?/g)!.slice(0, 3).map((value) => {
+      const channel = Number(value) / 255;
+      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [light, dark] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (light + 0.05) / (dark + 0.05);
+}
+
+// The node numbers on «Ферма» take the pointer (09.10, audit F09): the invisible snow and wind layers, drawn after them,
+// caught every click at a number's centre (0 of 5), so only the buttons under the drawing opened a node. The chosen node
+// is filled in the copper of text, its name and number at 4.5 : 1 or more (audit F47: 3.78 : 1 on --color-accent).
+for (const theme of ['light', 'dark'] as const) {
+  test(`a node's number on the frame opens the node from its centre, in ${theme}`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the pointer contract is viewport-independent');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript((value) => window.localStorage.setItem('rubikon-theme', value), theme);
+    await openHangarPage(page);
+    const { frame, items } = await openFrame(page);
+    await items.nth(1).click();
+    await showWholeSheet(page);
+    const buttons = page.locator('#hc-step-frame .hc-frame-node');
+    await expect(buttons).toHaveCount(5);
+    for (let index = 0; index < 5; index += 1) {
+      const ring = (await frame.locator('.ft-node-ring').nth(index).boundingBox())!;
+      const centre = [ring.x + ring.width / 2, ring.y + ring.height / 2] as const;
+      const hit = await page.evaluate(([x, y]) => {
+        const element = document.elementFromPoint(x, y);
+        return { node: Boolean(element?.closest('g.ft-node')), cursor: element ? getComputedStyle(element).cursor : '' };
+      }, centre);
+      expect(hit, `node ${index + 1}`).toEqual({ node: true, cursor: 'pointer' });
+      await page.mouse.click(...centre);
+      await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true');
+      await expect(frame).toHaveAttribute('data-node', /.+/);
+      const colours = await buttons.nth(index).evaluate((button) => ({ text: getComputedStyle(button).color, fill: getComputedStyle(button).backgroundColor }));
+      expect(contrastOf(colours.text, colours.fill), `node ${index + 1}'s button`).toBeGreaterThanOrEqual(4.5);
+      const mark = await frame.locator('.ft-node[data-on]').evaluate((node) => ({
+        number: getComputedStyle(node.querySelector('.ft-node-number')!).fill, ring: getComputedStyle(node.querySelector('.ft-node-ring')!).fill,
+      }));
+      expect(contrastOf(mark.number, mark.ring), `node ${index + 1}'s mark`).toBeGreaterThanOrEqual(4.5);
+      // back to the whole frame, from its button
+      await buttons.nth(index).click();
+      await expect(frame).not.toHaveAttribute('data-node', /.*/);
+    }
+  });
+}
 
 // The title block keeps its geometry through the frame's steps (04.10): at 1100 px «Що показано» broke a letter a line and
 // the sheet changed height on every step; at 1440 the cells jumped ~40 px as the tour started; at 320–360 the caption
