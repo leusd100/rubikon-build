@@ -13,9 +13,8 @@ import { ScopeCells } from './ScopeCells';
 // on the right side, a test of what the frame could be) — a SCHEME of a frame of the type the owner names for this
 // object, drawn inside its measured silhouette and labelled as a scheme without sizes («Каркас», «Сніг», «Вітер»). It is
 // never this building's structure and never goes over the photo itself; the generated X-ray sketch that once stood
-// beside the photo is gone from the page (only /?xray=sketch shows it, for the owner's comparison). Two explanation
-// cards followed until 09.10; the second sheet («Вузол 1») left HOME after the block's audit — node В on the sheet shows
-// the same column base, larger, taken apart and with its load.
+// beside the photo is gone. Two explanation cards followed until 09.10; the second sheet («Вузол 1») left HOME after
+// the block's audit — node В on the sheet shows the same column base, larger, taken apart and with its load.
 //
 // Nothing here names a product: no «digital twin», explorer, load-path software or building passport.
 

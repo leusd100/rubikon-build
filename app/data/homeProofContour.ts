@@ -1,9 +1,10 @@
 /**
  * «Контур за фото» — the lines HOME draws over its one real photo (EngineeringSignature → ProofContour). Owner's
- * decision (04.10): publish what was measured from the photos of this hangar — the gable's outline, both gates and the
- * gable's cladding-strip boundaries — on the photo's own «калька». They stay the MEASURED layer: the scheme of a frame
- * the page draws inside this outline (04.10, app/data/homeProofFrame.ts) is illustrative, in its own colour and
- * labelled as a scheme, and the figures read off these lines live in app/data/homeProofMeasures.ts.
+ * decision (04.10): publish what was measured from the photos of this hangar — the gable's outline and both gates — on
+ * the photo's own «калька». They stay the MEASURED layer: the scheme of a frame the page draws inside this outline
+ * (04.10, app/data/homeProofFrame.ts) is illustrative, in its own colour and labelled as a scheme. (The gable's
+ * cladding-strip boundaries and the figures read off these lines left with «Контур», 05.10; the proof block's cleanup
+ * of 09.10 dropped them from the data too.)
  *
  * The lines come from the photo study of this hangar (eight photos of it; the owner's report of 04.10), registered
  * onto this exact frame and written here in its own pixels: x to the right, y down, origin at the top-left corner.
@@ -18,7 +19,7 @@
  * never checked against an edge — drawn dashed and called «наближено»; every other line is solid, «виміряно». Nothing here is a size: no scale, no
  * proportions, no internal register ids — only where each line sits on this frame.
  */
-export type ContourLineKind = 'outline' | 'gate' | 'cladding';
+export type ContourLineKind = 'outline' | 'gate';
 
 export type ContourLine = {
   id: string;
@@ -35,8 +36,8 @@ export type HomeProofContour = {
   /** The WebP copies the page draws (same frame, resized only), hashed for the same reason */
   variants: readonly { src: string; sha256: string; width: number }[];
   lines: readonly ContourLine[];
-  /** The lines' accessible name: what is drawn and which lines are approximate. Under role="img" the per-line titles
-   *  reach no one, so this is the only place a screen reader learns where the dashes are */
+  /** The lines' accessible name: what is drawn (never measured / approximate — owner, 05.10). Under role="img" the
+   *  per-line titles reach no one, so this is the only place a screen reader learns what the lines are */
   label: string;
 };
 
@@ -103,17 +104,9 @@ export const homeProofContour: HomeProofContour = {
       approximate: false,
       title: 'Праві ворота: одвірки й верх прорізу',
     },
-    { id: 'cladding-corner-left', kind: 'cladding', points: [[273.3, 581.9], [287.4, 218.7]], approximate: false, title: 'Межа облицювання біля лівого кута' },
-    { id: 'cladding-corner-right', kind: 'cladding', points: [[1459.5, 552.2], [1451.5, 309.1]], approximate: false, title: 'Межа облицювання біля правого кута' },
-    // The strip boundaries, left to right
-    { id: 'strip-a', kind: 'cladding', points: [[463.9, 577.2], [474.2, 199.0]], approximate: true, title: 'Межа смуг облицювання' },
-    { id: 'strip-b', kind: 'cladding', points: [[708.8, 571.0], [713.7, 175.9]], approximate: true, title: 'Межа смуг облицювання' },
-    { id: 'strip-c', kind: 'cladding', points: [[919.5, 322.0], [919.4, 156.0]], approximate: true, title: 'Межа смуг облицювання' },
-    { id: 'strip-d', kind: 'cladding', points: [[1156.8, 336.9], [1154.8, 203.4]], approximate: false, title: 'Межа смуг облицювання' },
-    { id: 'strip-e', kind: 'cladding', points: [[1266.3, 557.0], [1259.5, 238.9]], approximate: false, title: 'Межа смуг облицювання' },
   ],
   // Names the approximate set in words; tests/unit/home-proof-contour.test.ts pins that set, so a changed flag fails
   // until this sentence is changed with it
   label:
-    'Контур за фото: обрис фронтона, ворота й межі смуг облицювання.',
+    'Контур за фото: обрис фронтона й ворота.',
 };

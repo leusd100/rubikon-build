@@ -2,26 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { linkKey } from '../../app/components/home-v2/ProofFrame';
 import { homeProofContour } from '../../app/data/homeProofContour';
 import { homeProofDetailSpots, homeProofFrame, memberAt } from '../../app/data/homeProofFrame';
-import { approx, homeProofMarks, homeProofMeasures, plusMinus } from '../../app/data/homeProofMeasures';
 
-// HOME's right-hand layers (04.10). Two different kinds of drawing sit on the one real photo, and these tests keep them
-// apart:
-//   the SCHEME (app/data/homeProofFrame.ts) — illustrative, a frame of this object's type fitted to the drawn silhouette:
-//     it must stay inside that silhouette, under the rakes, on the same photo, and speak in words only — no marks,
-//     sizes, places or firms from any drawing;
-//   the FIGURES (app/data/homeProofMeasures.ts) — measured, scale-free: each one keeps its register record's value, and
-//     its words come from that value through one formatter, always with «≈» and «±».
+// HOME's right-hand layers (04.10): the SCHEME (app/data/homeProofFrame.ts) — illustrative, a frame of this object's
+// type fitted to the drawn silhouette: it must stay inside that silhouette, under the rakes, on the same photo, and speak
+// in words only — no marks, sizes, places or firms from any drawing. (The measured FIGURES — the slope, the gates, the
+// proportion — left the page with «Контур» and the slope's removal, 05.10 and 09.10; their data and tests went with the
+// proof block's cleanup.)
 
 type Pt = readonly [number, number];
-const NBSP = ' ';
-/** The frozen register's records each figure rests on (PHOTO_GEOMETRY_REGISTER_CA_v1.0_FROZEN): kept here, not in the
- *  shipped data. PG011 is not among them: it is the eaves' height-difference test bound, not a ridge offset, so the
- *  page states no «ridge in the middle» (review, 04.10) */
-const REGISTER = {
-  slope: { records: ['PG006'], value: 10.52, u: 0.6 },
-  gates: { records: ['PG012', 'PG013', 'PG014', 'PG015', 'PG016', 'PG017', 'PG018', 'PG019'] },
-  proportion: { records: ['PG003'], ridge: 0.3154, u: 0.0029 },
-} as const;
 /** The laptop crop always keeps the photo's rows 84–644 (home-v2.css): the scheme and the load end above 644, and the
  *  snow's comb starts below 84 */
 const FIRST_ROW = 84;
@@ -388,79 +376,6 @@ describe('homeProofFrame — the scheme', () => {
     for (const [from] of arrows) expect(Math.abs(polylineY(comb, from[0]) - from[1]), String(from)).toBeLessThan(0.1);
     // …all of it below the rows a laptop crops off the sky
     for (const [, y] of [...comb, ...arrows.flat()]) expect(y).toBeGreaterThan(FIRST_ROW);
-  });
-});
-
-describe('homeProofMeasures — the figures', () => {
-  const byId = (id: string) => homeProofMeasures.find((measure) => measure.id === id)!;
-
-  it('formats every figure one way: a sign, a no-break space, a decimal comma', () => {
-    expect(approx(10.52)).toBe(`≈${NBSP}10,5`);
-    expect(plusMinus(0.6)).toBe(`±${NBSP}0,6`);
-    expect(approx(1 / 0.3154)).toBe(`≈${NBSP}3,2`);
-  });
-
-  it('keeps each figure’s register value and makes its words from it, the uncertainty in the figure itself', () => {
-    expect(homeProofMeasures.map((measure) => measure.id)).toEqual(Object.keys(REGISTER));
-    expect(byId('slope')).toMatchObject({ value: REGISTER.slope.value, u: REGISTER.slope.u });
-    // one profile figure, its ± in the title and the chip — on every layer and on a phone
-    expect(byId('slope').title).toBe(`Схил даху ${approx(10.52)}° ${plusMinus(0.6)}°`);
-    expect(byId('slope').chip).toBe(`Схил ${approx(10.52)}° ${plusMinus(0.6)}°`);
-    for (const text of [byId('slope').title, byId('slope').detail, byId('slope').spoken]) expect(text).not.toMatch(/обидва|скати/);
-    expect(byId('proportion').value).toBeCloseTo(1 / REGISTER.proportion.ridge, 6);
-    expect(byId('proportion').u).toBeCloseTo(REGISTER.proportion.u / REGISTER.proportion.ridge ** 2, 6);
-    expect(byId('proportion').title).toBe(`Ширина торця ${approx(1 / 0.3154)} висоти`);
-    expect(REGISTER.gates.records).toHaveLength(8);
-    // No figure says the ridge is in the middle: the frozen shell assumes it, nobody measured it
-    for (const measure of homeProofMeasures) expect(`${measure.title} ${measure.detail} ${measure.spoken}`).not.toMatch(/гребінь посередині|зсув/i);
-  });
-
-  it('writes no figure without its sign, no size and no register id', () => {
-    for (const measure of homeProofMeasures) {
-      for (const text of [measure.title, measure.detail, measure.chip ?? '']) {
-        for (const match of text.matchAll(/\d+(?:,\d+)?/g)) {
-          expect(text.slice(0, match.index), `${measure.id}: ${text}`).toMatch(/[≈±] $/);
-        }
-        expect(text).not.toMatch(/\d\.\d|PG\d|</);
-        expect(text).not.toMatch(/\d\s*(?:мм|см|м|км|м²|кг|т)(?![а-яіїєґʼ’])|метр|відмітк/iu);
-      }
-      // what a screen reader hears says the figures in words, with the same signs' meaning
-      for (const match of measure.spoken.matchAll(/\d+(?:,\d+)?/g)) {
-        expect(measure.spoken.slice(0, match.index), measure.spoken).toMatch(/(?:приблизно|похибка) $/);
-      }
-    }
-  });
-
-  it('sets each figure in free room: the slope’s in the sky over the right rake on the scheme, the gates’ inside the right gate’s opening in «Контур», under its head’s «=» marks and clear of both jambs', () => {
-    // Where each stands and which way it runs from there (review, 04.10: the slope's clear of the copper outline and the
-    // purlins; the gates' backing covered the right jamb)
-    expect(Object.fromEntries(homeProofMeasures.map(({ id, at, align, atContour, alignContour, onFrame }) => [id, { at, align, atContour, alignContour, onFrame }]))).toEqual({
-      slope: { at: [1240, 128], align: 'end', atContour: [1318, 330], alignContour: 'middle', onFrame: true },
-      gates: { at: [1135, 422], align: 'middle', atContour: [1135, 486], alignContour: 'middle', onFrame: false },
-      proportion: { at: [1180, 614], align: 'middle', atContour: undefined, alignContour: undefined, onFrame: false },
-    });
-    // the slope's, right of the apex and over the drawn right rake
-    const slope = byId('slope').at;
-    expect(slope[0]).toBeGreaterThan(apex[0]);
-    expect(slope[1]).toBeLessThan(rakeY(slope[0]));
-    // the gates', in the right gate's opening, below its head's «=» marks and between their columns, as far from either
-    // jamb (within a pixel)
-    const [x, y] = byId('gates').atContour!;
-    const [footNear, footFar, headFar, headNear] = homeProofFrame.walls.holes[1];
-    expect(insidePolygon([x, y], homeProofFrame.walls.holes[1])).toBe(true);
-    const jamb = (foot: Pt, head: Pt) => foot[0] + ((head[0] - foot[0]) * (y - foot[1])) / (head[1] - foot[1]);
-    expect(Math.abs((x - jamb(footNear, headNear)) - (jamb(footFar, headFar) - x))).toBeLessThan(2);
-    const marks = homeProofMarks.gates.slice(4, 6).flat();
-    expect(x).toBeGreaterThan(Math.min(...marks.map(([markX]) => markX)));
-    expect(x).toBeLessThan(Math.max(...marks.map(([markX]) => markX)));
-    expect(y).toBeGreaterThan(Math.max(...marks.map(([, markY]) => markY)));
-  });
-
-  it('draws the ridge’s height to the drawn apex and the slope’s arc on the drawn right rake', () => {
-    expect(homeProofMarks.height[1]).toEqual(apex);
-    expect(homeProofMarks.slope.level[0]).toEqual(rightFoot);
-    // the right rake is solid (measured): the slope is read on it, not on the dashed left one
-    expect(homeProofContour.lines.find((entry) => entry.id === 'gable-rake-right')!.approximate).toBe(false);
   });
 });
 

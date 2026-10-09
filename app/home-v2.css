@@ -191,71 +191,6 @@ main[data-home="v2"] .hv2-signature-head h2 {
 }
 main[data-home="v2"] .hv2-signature-support { max-width: 460px; margin: 0; padding-left: 24px; color: var(--hv2-text-2); border-left: 2px solid var(--hv2-copper); font-size: 16px; line-height: 1.7; }
 
-/* --- two explanation cards: image | text side by side on desktop, stacked on a phone --- */
-main[data-home="v2"] .hv2-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-main[data-home="v2"] .hv2-card { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); min-width: 0; background: var(--hv2-graphite-2); border: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-card-visual { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #111312; }
-main[data-home="v2"] .hv2-card-visual > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.72) contrast(1.05); }
-/* Crop marks in the four corners — the drawing-sheet detail that ties the three cards together */
-main[data-home="v2"] .hv2-card-visual::before,
-main[data-home="v2"] .hv2-card-visual::after {
-  content: ''; position: absolute; z-index: 2; inset: 12px; pointer-events: none;
-  background:
-    linear-gradient(var(--hv2-copper), var(--hv2-copper)) left top / 14px 1px no-repeat,
-    linear-gradient(var(--hv2-copper), var(--hv2-copper)) left top / 1px 14px no-repeat,
-    linear-gradient(var(--hv2-copper), var(--hv2-copper)) right bottom / 14px 1px no-repeat,
-    linear-gradient(var(--hv2-copper), var(--hv2-copper)) right bottom / 1px 14px no-repeat;
-}
-main[data-home="v2"] .hv2-card-visual::after {
-  background:
-    linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) right top / 14px 1px no-repeat,
-    linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) right top / 1px 14px no-repeat,
-    linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) left bottom / 14px 1px no-repeat,
-    linear-gradient(var(--hv2-line-strong), var(--hv2-line-strong)) left bottom / 1px 14px no-repeat;
-}
-main[data-home="v2"] .hv2-card-body { display: grid; align-content: center; gap: 10px; padding: 24px 26px; border-left: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-card-number { color: var(--hv2-copper-text); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
-main[data-home="v2"] .hv2-card h3 { margin: 0; font: 400 clamp(24px, 1.9vw, 30px)/1.08 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
-main[data-home="v2"] .hv2-card h3 [aria-hidden="true"] { color: var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-card p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.65; }
-
-/* Provenance tags on the explanation cards: «Ілюстрація», «Схема» (the real photo says so in its sheet's title block) */
-main[data-home="v2"] .hv2-tag {
-  position: absolute; z-index: 3; top: 16px; right: 16px; padding: 7px 10px;
-  color: var(--hv2-text); background: rgba(18, 20, 19, .8); border: 1px solid rgba(245, 242, 235, .5);
-  font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .05em;
-}
-
-/* Callouts on the illustrations: a copper ring, a short leader and a label */
-main[data-home="v2"] .hv2-pin { position: absolute; z-index: 2; left: var(--x); top: var(--y); display: flex; align-items: center; transform: translate(-7px, -50%); pointer-events: none; }
-main[data-home="v2"] .hv2-pin > i { width: 14px; height: 14px; flex: none; border: 2px solid var(--hv2-copper-text); border-radius: 50%; background: rgba(18, 20, 19, .55); box-shadow: 0 0 0 5px rgba(204, 132, 85, .18); }
-main[data-home="v2"] .hv2-pin > span {
-  position: relative; margin-left: 16px; padding: 5px 8px; color: var(--hv2-text); background: rgba(18, 20, 19, .84);
-  border-left: 2px solid var(--hv2-copper-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
-}
-main[data-home="v2"] .hv2-pin > span::before { content: ''; position: absolute; top: 50%; left: -16px; width: 14px; height: 1px; background: var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-pin-left { flex-direction: row-reverse; transform: translate(calc(-100% + 7px), -50%); }
-main[data-home="v2"] .hv2-pin-left > span { margin: 0 16px 0 0; border-left: 0; border-right: 2px solid var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-pin-left > span::before { left: auto; right: -16px; }
-
-/* Card 03 — the drawing */
-main[data-home="v2"] .hv2-scheme { position: absolute; inset: 0; width: 100%; height: 100%; background: radial-gradient(80% 70% at 50% 45%, #1c1f1d, #131514); }
-main[data-home="v2"] .hv2-scheme-grid { fill: none; stroke: rgba(245, 242, 235, .055); stroke-width: 1; }
-main[data-home="v2"] .hv2-scheme-load { fill: none; stroke: var(--hv2-text-3); stroke-width: 1.4; }
-main[data-home="v2"] .hv2-scheme-arrowhead { fill: var(--hv2-text-3); }
-main[data-home="v2"] .hv2-scheme-ground { stroke: #6f726d; stroke-width: 1.4; }
-main[data-home="v2"] .hv2-scheme-footing { fill: rgba(245, 242, 235, .06); stroke: #8a857c; stroke-width: 1.3; }
-main[data-home="v2"] .hv2-scheme-frame { fill: none; stroke: #ddd7cb; stroke-width: 2.4; stroke-linejoin: round; }
-main[data-home="v2"] .hv2-scheme-frame-inner { fill: none; stroke: rgba(221, 215, 203, .38); stroke-width: 1; stroke-linejoin: round; }
-main[data-home="v2"] .hv2-scheme-flow { fill: none; stroke: var(--hv2-copper-text); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 9; animation: hv2-flow 1.6s linear infinite; }
-@keyframes hv2-flow { to { stroke-dashoffset: -38; } }
-main[data-home="v2"] .hv2-scheme-flowhead { fill: var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-scheme-dim { stroke: #6f726d; stroke-width: 1; }
-main[data-home="v2"] .hv2-scheme-axis { fill: none; stroke: #8a857c; stroke-width: 1.2; }
-main[data-home="v2"] :is(.hv2-scheme-axis-label, .hv2-scheme-label) { fill: var(--hv2-text); font: 700 19px var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
-main[data-home="v2"] .hv2-scheme-axis-label { font-size: 15px; fill: var(--hv2-text-2); }
-@media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-scheme-flow { animation: none; } }
-
 main[data-home="v2"] .hv2-boundary { max-width: 880px; margin: 22px 0 0; color: var(--hv2-text-3); font-size: 15px; line-height: 1.6; }
 main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight: 700; }
 
@@ -330,12 +265,9 @@ main[data-home="v2"] .hv2-contour-trace::after {
 main[data-home="v2"] .hv2-contour-pane { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; transform: translateX(var(--split)); will-change: transform; }
 main[data-home="v2"] .hv2-contour-pane-inner { position: absolute; inset: 0; transform: translateX(calc(var(--split) * -1)); will-change: transform; }
 main[data-home="v2"] .hv2-contour-canvas[data-over] { z-index: 2; pointer-events: none; }
-main[data-home="v2"] .hv2-contour-canvas > :is(svg, .hv2-proof-labels, .hv2-contour-sketch) {
+main[data-home="v2"] .hv2-contour-canvas > :is(svg, .hv2-proof-labels) {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none;
 }
-/* The measured lines over the photo once «Контур на фото» is pressed: their copy under the window (in the test mode the
-   sketch's own ground covers it on the right, so there they lie over the photo only) */
-
 /* The outline measured from the photos (app/data/homeProofContour.ts): one solid copper line (owner, 05.10: no measured /
    approximate split shown) */
 main[data-home="v2"] .hv2-contour-lines path {
@@ -353,7 +285,7 @@ main[data-home="v2"] .hv2-contour-held path { fill: none; stroke: #e39a68; strok
 main[data-home="v2"] .hv2-contour-held .hv2-contour-held-casing { stroke: rgba(13, 15, 14, .7); stroke-width: calc(var(--u) * (2 * var(--k, 1) + 2.4)); }
 @media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-contour-held { animation: hv2-contour-fade 160ms ease; } }
 /* A figure or a name the seam cuts through: hidden whole (ProofContour sets data-cut) */
-main[data-home="v2"] .hv2-contour-stage :is(.hv2-proof-labels > [data-cut], .hv2-proof-tag-leaders > [data-cut], .hv2-proof-marks > [data-cut]) { visibility: hidden !important; }
+main[data-home="v2"] .hv2-contour-stage :is(.hv2-proof-labels > [data-cut], .hv2-proof-tag-leaders > [data-cut]) { visibility: hidden !important; }
 main[data-home="v2"] .hv2-contour-ink path { stroke: var(--hv2-copper-text); }
 /* A thin dark casing under each line: it disappears on the tracing and keeps the copper legible on the light cladding */
 main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); stroke-width: calc(var(--u) * (var(--w) * var(--k, 1) + 2)); }
@@ -445,61 +377,37 @@ main[data-home="v2"] :is(#hv2-proof-head-wind, #hv2-proof-foot-wind) path { fill
 main[data-home="v2"] #hv2-proof-foot path { fill: var(--hv2-load-light); }
 main[data-home="v2"] #hv2-proof-foot-wind path { fill: var(--hv2-wind-light); }
 
-/* The measured figures' marks, on the contour's own lines, and the names on the scheme */
+/* The names' leaders on the scheme */
 main[data-home="v2"] .hv2-proof-marks path { fill: none; stroke: var(--hv2-copper-text); stroke-width: calc(var(--u) * 1.15); stroke-linecap: round; }
-main[data-home="v2"] .hv2-proof-marks .hv2-proof-mark-level { stroke-dasharray: calc(var(--u) * 3) calc(var(--u) * 3); }
-main[data-home="v2"] .hv2-proof-marks .hv2-proof-leader { stroke-opacity: .85; stroke-width: var(--u); }
 main[data-home="v2"] .hv2-proof-tag-leaders path { stroke: var(--hv2-scheme); stroke-opacity: .55; stroke-width: var(--u); }
 main[data-home="v2"] .hv2-proof-tag-leaders circle { fill: var(--hv2-scheme); fill-opacity: .9; }
 /* Each word on a backing that masks what runs under it, as a drawing's text does (owner review, 04.10: «текст залазить
-   на елемент») */
-main[data-home="v2"] .hv2-proof-labels :is(.hv2-proof-measure, .hv2-proof-tag) {
+   на елемент»), and as a drawing's callout (owner, 09.10: «підписи … більш красивими … в правильних місцях»): it stands
+   on its leader's shelf — its own underline — the leader running from a dot on the member to the shelf's near end */
+main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag {
   position: absolute; left: var(--x); top: var(--y); transform: translate(0, -50%); white-space: nowrap; pointer-events: none;
-  padding: 2px 6px 3px; background: rgba(20, 22, 21, .88); font: 600 13px/1.15 var(--font-manrope), sans-serif; letter-spacing: 0;
+  padding: 1px 3px 3px; color: var(--hv2-scheme); background: rgba(20, 22, 21, .88); border-bottom: 1px solid rgba(237, 232, 222, .6);
+  font: 600 12.5px/1.2 var(--font-manrope), sans-serif; letter-spacing: .01em;
 }
 main[data-home="v2"] .hv2-proof-labels [data-align="start"] { transform: translate(5px, -50%); }
 main[data-home="v2"] .hv2-proof-labels [data-align="end"] { transform: translate(calc(-100% - 5px), -50%); text-align: right; }
 main[data-home="v2"] .hv2-proof-labels [data-align="middle"] { transform: translate(-50%, -50%); text-align: center; }
-/* A narrow frame wraps the lines under the figures, so each stays whole right of the resting seam */
-/* A narrower frame has no room for the figures' second lines: three of them crossed each other at 768 px (review,
-   04.10). They stay in the note under the frame and in what a screen reader hears */
-@media (max-width: 1023px) { main[data-home="v2"] .hv2-contour-stage .hv2-proof-measure small { display: none; } }
-
-main[data-home="v2"] .hv2-proof-leader[data-for="contour"] { display: none; }
-main[data-home="v2"] .hv2-proof-measure { color: var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-proof-measure small { display: block; margin-top: 2px; color: var(--hv2-text-2); font: 500 12px/1.15 var(--font-manrope), sans-serif; }
-/* The names as a drawing's callouts (owner, 09.10: «підписи … більш красивими … в правильних місцях»): each word stands on
-   its leader's shelf — its own underline — the leader running from a dot on the member to the shelf's near end */
-main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag {
-  padding: 1px 3px 3px; color: var(--hv2-scheme); background: rgba(20, 22, 21, .88); border-bottom: 1px solid rgba(237, 232, 222, .6);
-  font: 600 12.5px/1.2 var(--font-manrope), sans-serif; letter-spacing: .01em;
-}
 main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-align="start"] { transform: translate(0, -100%); }
 main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-align="end"] { transform: translate(-100%, -100%); }
 
 /* Which layer shows: the stage's data-layer. Hidden parts are hidden for real (visibility), after a 240 ms fade */
-main[data-home="v2"] :is(.hv2-proof-scheme, .hv2-proof-load, .hv2-proof-wind, .hv2-contour-lines, .hv2-proof-marks > g, .hv2-proof-measure, .hv2-proof-tag, .hv2-contour-sketch) {
+main[data-home="v2"] :is(.hv2-proof-scheme, .hv2-proof-load, .hv2-proof-wind, .hv2-contour-lines, .hv2-proof-marks > g, .hv2-proof-tag) {
   transition: opacity 240ms ease, visibility 240ms;
 }
-main[data-home="v2"] :is(.hv2-proof-load, .hv2-proof-wind, .hv2-proof-marks > g, .hv2-proof-measure, .hv2-proof-tag) { opacity: 0; visibility: hidden; }
-main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-proof-scheme { opacity: 0; visibility: hidden; }
+main[data-home="v2"] :is(.hv2-proof-load, .hv2-proof-wind, .hv2-proof-marks > g, .hv2-proof-tag) { opacity: 0; visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage:is([data-layer="load"], [data-layer="wind"]) .hv2-proof-scheme { opacity: .5; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load,
 main[data-home="v2"] .hv2-contour-stage[data-layer="wind"] .hv2-proof-wind { opacity: 1; visibility: visible; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-contour-lines { opacity: .75; }
-/* On the scheme's layers the outline is one solid line and the cladding's strip lines are off: they are the colour bands
-   of the cladding, not structure, and only crowd the frame (owner, 04.10) */
-main[data-home="v2"] .hv2-contour-stage:is([data-layer="frame"], [data-layer="load"], [data-layer="wind"]) .hv2-contour-lines path[data-kind="cladding"] { visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage:is([data-layer="load"], [data-layer="wind"]) .hv2-contour-lines { opacity: .35; }
-main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-lines { opacity: 0; visibility: hidden; }
-main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] :is(.hv2-proof-marks > [data-on-frame], .hv2-proof-measure[data-on-frame], .hv2-proof-tag-leaders, .hv2-proof-tag) {
+main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] :is(.hv2-proof-tag-leaders, .hv2-proof-tag) {
   opacity: 1; visibility: visible;
 }
-/* The scheme's own layer keeps the figures' titles only */
-main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure small { display: none; }
-/* …and on a tablet's narrower frame the slope's in two lines, its words over its figure: in one it reached past the
-   resting seam */
-main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { width: max-content; max-width: 8.2em; white-space: normal; }
 /* A narrower frame: the names on the right wall's face and in the gate's opening in two lines and a size down, so they
    stay on the face and inside the opening, clear of the right gate's measured jamb (review, 05.10: at 768–1024 px they
    ran over it) */
@@ -527,15 +435,6 @@ main[data-home="v2"] .hv2-proof-tag-leaders path[data-narrow] { display: none; }
   main[data-home="v2"] .hv2-proof-tag-leaders path[data-narrow] { display: inline; }
   main[data-home="v2"] :is(.hv2-proof-tag, .hv2-proof-tag-leaders > g)[data-wide-only] { display: none; }
 }
-/* …a little further left on a narrow tablet, short of the stamp (review, 05.10: at 900 px they met by 13 px) */
-@media (min-width: 860px) and (max-width: 959px) { main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-measure[data-measure="slope"] { margin-left: -20px; } }
-main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] .hv2-proof-marks [data-mark] { opacity: .8; }
-
-/* The test mode (/?xray=sketch): the generated sketch, by one scale and shift through its ridge and right base corner
-   (ProofFrame's SKETCH); the canvas round it in the tracing's dark */
-main[data-home="v2"] .hv2-contour-sketch { background: #161817; }
-main[data-home="v2"] .hv2-contour-stage:not([data-layer="sketch"]) .hv2-contour-sketch { opacity: 0; visibility: hidden; }
-main[data-home="v2"] .hv2-contour-sketch img { position: absolute; top: 9.49%; left: 19.01%; width: 81.07%; height: auto; max-width: none; }
 
 /* On the stage, outside the canvas (never cropped): the stamp that says what the right side is, the load's chain, the
    seam's names, the seam and its handle. The stamp and the chain belong to the right side and lie on it only — clipped at
@@ -552,8 +451,6 @@ main[data-home="v2"] .hv2-contour-stage[data-stamp="short"] :is(.hv2-contour-sta
 /* A tablet's frame is too short for two lines there: they covered the slope's figure (review, 04.10). The stamp keeps
    «Схема · без розмірів»; the note under the frame says the rest */
 @media (min-width: 761px) and (max-width: 1199px) { main[data-home="v2"] .hv2-contour-stamp-text { display: none; } }
-main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-stamp { color: #f5f2eb; background: rgba(160, 82, 42, .94); border-color: var(--hv2-copper-fill); }
-main[data-home="v2"] .hv2-contour-stage[data-layer="sketch"] .hv2-contour-stamp small { color: #f5f2eb; }
 main[data-home="v2"] .hv2-contour-stage:is([data-photo-only], [data-stamp="none"]) .hv2-contour-stamp { visibility: hidden; }
 /* The narrowest phones: the loads' comb and gusts need the frame's top corner; the legend names the layer (review, 04.10) */
 @media (max-width: 389px) { main[data-home="v2"] .hv2-contour-stage:is([data-layer="load"], [data-layer="wind"]) .hv2-contour-stamp { visibility: hidden; } }
@@ -628,7 +525,7 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
   main[data-home="v2"] .hv2-contour-stage:not([data-dragging], [data-gliding]) :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) {
     transition: --split 420ms var(--sheet-plot);
   }
-  main[data-home="v2"] :is(.hv2-contour-canvas > svg, .hv2-proof-labels, .hv2-contour-sketch) { transition: opacity 240ms ease, visibility 240ms; }
+  main[data-home="v2"] :is(.hv2-contour-canvas > svg, .hv2-proof-labels) { transition: opacity 240ms ease, visibility 240ms; }
   main[data-home="v2"] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation: hv2-contour-pulse 850ms ease-out 2; }
 }
 @keyframes hv2-contour-pulse { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
@@ -860,8 +757,8 @@ main[data-home="v2"] .hv2-contour-nodes[data-place="stage"] {
 }
 main[data-home="v2"] .hv2-contour-nodes[data-place="stage"] .hv2-contour-nodes-label { color: var(--hv2-text); }
 main[data-home="v2"] .hv2-contour-nodes[data-place="stage"] button { width: 28px; height: 28px; font-size: 12px; }
-/* not over a node's panel, the tour's start, the sweep or a sketch */
-main[data-home="v2"] .hv2-contour-stage:is([data-sweep], [data-layer="sketch"]) .hv2-contour-nodes[data-place="stage"] { opacity: 0; visibility: hidden; }
+/* not over a node's panel, the tour's start or the sweep */
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-contour-nodes[data-place="stage"] { opacity: 0; visibility: hidden; }
 @media (max-width: 760px) {
   main[data-home="v2"] .hv2-contour-nodes[data-place="stage"] { display: none; }
 }
@@ -1085,13 +982,8 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 
 /* ================================ Tablet ================================ */
 
-@media (max-width: 1180px) {
-  main[data-home="v2"] .hv2-cards { gap: 14px; }
-  main[data-home="v2"] .hv2-card-body { padding: 20px 22px; }
-}
 @media (max-width: 1050px) {
   main[data-home="v2"] .hv2-signature-head { grid-template-columns: 1fr; }
-  main[data-home="v2"] .hv2-cards { grid-template-columns: 1fr; }
   main[data-home="v2"] .hv2-proof-facts { grid-template-columns: 1fr; }
   main[data-home="v2"] .hv2-people { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--hv2-line); }
 }
@@ -1106,13 +998,6 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
   /* The sheet keeps the page's gutter (the photo used to run edge to edge as a bare picture) */
   main[data-home="v2"] .hv2-contour .sheet-cell-note b { font-size: 14.5px; }
   /* (no box any more, so no bleed: the facts keep the page's gutter — 09.10, the heading ran to the screen's edge) */
-  main[data-home="v2"] .hv2-cards { margin-top: 22px; }
-  main[data-home="v2"] .hv2-card { grid-template-columns: 1fr; }
-  main[data-home="v2"] .hv2-card-body { gap: 8px; padding: 18px 18px 22px; border-left: 0; border-top: 1px solid var(--hv2-line); }
-  main[data-home="v2"] .hv2-card h3 { font-size: 26px; }
-  main[data-home="v2"] .hv2-card p { font-size: 16px; line-height: 1.55; }
-  main[data-home="v2"] .hv2-tag { top: 12px; right: 12px; font-size: 12px; }
-  main[data-home="v2"] .hv2-pin > span { font-size: 12px; padding: 4px 7px; }
 }
 @media (max-width: 560px) {
   main[data-home="v2"] .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }

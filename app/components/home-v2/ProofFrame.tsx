@@ -9,8 +9,8 @@ import { homeProofDetailSpots, homeProofFrame, homeProofParts, type PointLoad, t
 //     aerated-concrete blockwork in perspective, cut in section at both corners; and the snow's way through it, link by link
 //     (the «Сніг» layer; the «Вітер» layer the same in its own cool tint): the members it passes lit in that paper colour, the load itself in its own lighter,
 //     dotted tint — the legend's «навантаження», never the measured copper (review, 04.10);
-//   ProofMarks and ProofLabels — the measured figures' marks on the contour's own lines and their words
-//     (app/data/homeProofMeasures.ts), and the scheme's names on its members.
+//   ProofMarks and ProofLabels — the scheme's names on its members and their leaders (the measured figures went with
+//     «Контур» and the roof's slope, 05.10 and 09.10).
 // Which of them shows is the stage's data-layer (home-v2.css). On the first view nothing draws in on its own: the seam
 // sweeps across the gable and uncovers the drawing whole, as a plotter would (ProofContour). Line weights follow a
 // drawing's scale (home-v2.css, --lw-*): the measured outline heaviest, then chords and columns, then webs, purlins and
@@ -24,15 +24,6 @@ export const linkKey = ({ link, points }: Readonly<{ link: number; points: reado
 /** The section hatch's step in photo pixels per frame width (home-v2.css picks one by the --u steps): a narrower frame
  *  draws it coarser, so on a phone it stays lines, not grey */
 const HATCHES = [['hv2-proof-hatch', 6], ['hv2-proof-hatch-m', 9], ['hv2-proof-hatch-l', 13]] as const;
-
-/** The old generated sketch, for the test mode only (/?xray=sketch). It has its own composition: laid on the photo by
- *  one scale and shift through its ridge and right base corner, it still misses the gates and the left half */
-export const SKETCH = {
-  src: '/media/home-v2/concepts/hangar-xray-1774w.webp',
-  srcSet: '/media/home-v2/concepts/hangar-xray-1100w.webp 1100w, /media/home-v2/concepts/hangar-xray-1774w.webp 1774w',
-  width: 1774,
-  height: 887,
-};
 
 /** Where (u along the base from the near corner, v up from the base) lands on a wall face: the square-to-quad homography
  *  of its four corners — base near, base far, top far, top near — so courses and joints recede as the photo does */
@@ -69,17 +60,16 @@ function blockwork(face: readonly Pt[], courses: number, blocks: number) {
   return path;
 }
 
-/** `shown`: false while another layer is on the right (the scheme fades out, and its name must not be read).
- *  `ready`: after hydration — the blockwork's thousand short strokes are drawn on the client only, to keep the page's HTML
+/** `ready`: after hydration — the blockwork's thousand short strokes are drawn on the client only, to keep the page's HTML
  *  light; without them the scheme is whole */
 /** `wind`: the «Вітер» layer is on — the scheme's name says the wind's way too */
 /** `buildRun`: «Як це будується» — a new key on the scheme restarts its assembly (home-v2.css, data-building) */
-export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun, shown, wind: windOn, ready }: Readonly<{ buildRun: number; loadRun: number; windRun: number; shown: boolean; wind: boolean; ready: boolean }>) {
+export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun, wind: windOn, ready }: Readonly<{ buildRun: number; loadRun: number; windRun: number; wind: boolean; ready: boolean }>) {
   const { silhouette, walls, members, nodes, load, wind, label, windLabel } = homeProofFrame;
   const inside = members.filter((member) => member.group !== 'footing');
   const footings = members.filter((member) => member.group === 'footing');
   return (
-    <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={windOn ? `${label} ${windLabel}` : label} aria-hidden={shown ? undefined : true}>
+    <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={windOn ? `${label} ${windLabel}` : label}>
       <defs>
         <clipPath id="hv2-proof-silhouette">
           {silhouette.map((outline, index) => <path key={index} d={d(outline, true)} />)}
