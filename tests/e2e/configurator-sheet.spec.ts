@@ -892,8 +892,14 @@ test('on a portrait tablet the whole sheet stays under the header while a step i
     expect(covered, `stop ${stop + 1}`).toBeNull();
   }
 
-  // «Каркас»: the frame's window in the same capped height, not its own proportion
+  // «Каркас»: the frame's field as tall as the general view's (09.10), so the stuck sheet and the tabs under it stay put
+  // from step to step, and the frame's window takes the sheet's width
   await openControlGroup(page, 'space');
+  await expect(sheet.locator('.ft-window')).toBeVisible();
+  const frameSheet = (await sheet.boundingBox())!;
+  expect(Math.abs(frameSheet.height - box.height)).toBeLessThanOrEqual(1);
   const frameWindow = (await sheet.locator('.ft-window').boundingBox())!;
-  expect(frameWindow.height).toBeLessThanOrEqual(1024 * 0.34 + 1);
+  expect(frameWindow.width).toBeGreaterThan(box.width * 0.9);
+  await openControlGroup(page, 'scope');
+  expect(Math.abs((await sheet.boundingBox())!.height - box.height)).toBeLessThanOrEqual(1);
 });

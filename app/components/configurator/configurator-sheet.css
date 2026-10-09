@@ -202,8 +202,16 @@
 @media (min-width: 761px) and (max-width: 1023px) and (min-height: 700px) {
   .hangar-configurator-embedded .hc-preview-surface.hc-preview-sheet { position: sticky; z-index: 6; top: 101px; }
   .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: min(46vw, 34svh); }
-  /* the frame's window in the same height, not its own proportion (406–487 px) */
-  .hangar-configurator-embedded .hc-preview-sheet .hc-frame .ft-window { aspect-ratio: auto; height: var(--hc-sheet-h); }
+  /* The frame's field as tall as the general view's (09.10, after merging F15 and F22): the window in the general
+     drawing's height left the field 47 px taller or 55 px shorter than the general view's — the drawing under it, its
+     cladding legend under it on a sheet under 700 px — and the stuck sheet, with the tabs under it, moved on every
+     step into «Каркас» and out. The window takes what the load band above it leaves, the sheet's full width. */
+  .hangar-configurator-embedded .hc-preview-sheet .hc-frame { box-sizing: border-box; height: var(--hc-frame-h, var(--hc-sheet-h)); }
+  .hangar-configurator-embedded .hc-frame .ft-slot { display: flex; flex: 1 1 0; min-height: 0; }
+  .hangar-configurator-embedded .hc-preview-sheet .hc-frame .ft-window { aspect-ratio: auto; height: auto; }
+  @container sheet (max-width: 699px) {
+    .hangar-configurator-embedded .hc-preview-sheet .hc-frame { --hc-frame-h: calc(var(--hc-sheet-h) + 102px); }
+  }
   .hangar-configurator-embedded .hc-controls :is(a[href], button, summary, input, select, textarea) {
     scroll-margin-top: calc(var(--hc-mini-h, 0px) + 109px);
   }
