@@ -53,7 +53,7 @@ describe('homeProofContour', () => {
     expect(byKind('gate').every((gate) => !gate.approximate)).toBe(true);
     // nothing else: the cladding's strip lines left the data with the proof block's cleanup (09.10) — never drawn since
     // «Контур» went (05.10)
-    expect(lines.length).toBe(byKind('outline').length + byKind('gate').length);
+    expect(lines).toHaveLength(byKind('outline').length + byKind('gate').length);
   });
 
   // The study's own record stays in the data — the left rake, which lies off its edge; the right corner, whose edge the

@@ -14,6 +14,8 @@ const SNAP_GAP = 10;
 /** …and its padding and border, px (home-v2.css) */
 const SNAP_FRAME = 20;
 type Room = { width: number; height: number; left: number; right: number; stamp: number };
+type Box = { left: number; right: number; top: number; bottom: number };
+type SnapPlace = { side: 'left' | 'right'; wrap: boolean; max: number };
 
 function fitOf(room: Room | null, split: number) {
   if (!room) return { stampShort: false, stampNone: false, narrowLeft: split < 12, narrowRight: split > 72 };
@@ -26,6 +28,54 @@ function fitOf(room: Room | null, split: number) {
     narrowLeft: (room.width * split) / 100 < room.left + 3 + AIR,
     narrowRight: right < room.right + 3 + AIR + (stampShort ? SHORT_STAMP : room.stamp) + STAMP_OFFSET,
   };
+}
+
+/** The held line's name, `width` px: on the photo's side if it fits there, else on the scheme's side, else wrapped on the
+ *  roomier side */
+function placeOf(width: number, left: number, right: number): SnapPlace {
+  if (width <= left) return { side: 'left', wrap: false, max: 0 };
+  if (width <= right) return { side: 'right', wrap: false, max: 0 };
+  return { side: left >= right ? 'left' : 'right', wrap: true, max: Math.max(left, right) };
+}
+
+const meets = (a: Box, b: Box) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+const shown = (element: Element | null) => element && getComputedStyle(element).visibility === 'visible';
+const markCut = (element: HTMLElement | SVGElement, cut: boolean) => {
+  if (cut) element.dataset.cut = '';
+  else delete element.dataset.cut;
+};
+
+/** The drawing's words the seam cuts, or a name or the stamp covers (`covers`): hidden whole, with their leaders (review,
+ *  04.10: a leader stayed, pointing at nothing). Whether a word shown on «Каркас» meets the seam's right-hand name where
+ *  it would stand (`yieldTo`) */
+function cutWords(stage: HTMLElement, seam: number, covers: readonly Box[], yieldTo: Box | null) {
+  let yieldTag = false;
+  for (const label of stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')) {
+    const rect = label.getBoundingClientRect();
+    const cut = rect.left < seam + 1 || covers.some((cover) => meets(rect, cover));
+    if (!cut && yieldTo && meets(rect, yieldTo)) yieldTag = true;
+    if (cut === ('cut' in label.dataset)) continue;
+    markCut(label, cut);
+    const pointer = stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${label.dataset.tag}"]`);
+    if (pointer) markCut(pointer, cut);
+  }
+  return yieldTag;
+}
+
+/** A node's letter gives way to a word of the drawing it would cover — the word says what the drawing is; the letter
+ *  is in the «Вузли крупно» bar too, and its ring stays (06.10: on a tablet's frame the walls' and the footings' names
+ *  lay under Д and В) — and, as a word, it is hidden whole where the seam cuts it. «Схема ›» gives way to a letter as to
+ *  a word (on a short laptop with the seam at 64 % it covered «Г»): whether one meets it (`yieldTo`) */
+function cutLetters(stage: HTMLElement, seam: number, onFrame: boolean, yieldTo: Box | null) {
+  const words = [...stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span:not([data-cut])')].filter((label) => shown(label));
+  let yieldTag = false;
+  for (const pin of stage.querySelectorAll<HTMLElement>('.hv2-proof-detail-pin')) {
+    const rect = pin.getBoundingClientRect();
+    const under = onFrame && (rect.left < seam + 1 || words.some((label) => meets(rect, label.getBoundingClientRect())));
+    markCut(pin, under);
+    if (!under && yieldTo && rect.left >= seam && meets(rect, yieldTo)) yieldTag = true;
+  }
+  return yieldTag;
 }
 
 // The room right and left of the seam (see STAMP_OFFSET): the frame's width, the seam names' and the full stamp's,
@@ -64,7 +114,7 @@ export function useRoom(stageRef: RefObject<HTMLDivElement | null>, layer: Layer
  *  where the held line's name goes — and which of the drawing's words and letters the seam cuts */
 export function useLabelFit(stageRef: RefObject<HTMLDivElement | null>, { room, split, layer, snap }: Readonly<{ room: Room | null; split: number; layer: Layer; snap: Snap | null }>) {
   const snapLabelRef = useRef<HTMLSpanElement>(null);
-  const [snapPlace, setSnapPlace] = useState<{ side: 'left' | 'right'; wrap: boolean; max: number }>({ side: 'left', wrap: false, max: 0 });
+  const [snapPlace, setSnapPlace] = useState<SnapPlace>({ side: 'left', wrap: false, max: 0 });
   // The seam's right-hand name gives way to a figure or a name of the drawing it would cover (review, 05.10)
   const [tagYield, setTagYield] = useState(false);
   const { stampShort, stampNone, narrowLeft, narrowRight } = fitOf(room, split);
@@ -82,9 +132,7 @@ export function useLabelFit(stageRef: RefObject<HTMLDivElement | null>, { room, 
     const stamp = stampNone ? 0 : (stampShort ? SHORT_STAMP : room.stamp) + STAMP_OFFSET;
     const left = seam - SNAP_GAP - AIR;
     const right = room.width - seam - SNAP_GAP - AIR - stamp;
-    const next = width <= left ? { side: 'left' as const, wrap: false, max: 0 }
-      : width <= right ? { side: 'right' as const, wrap: false, max: 0 }
-        : { side: left >= right ? 'left' as const : 'right' as const, wrap: true, max: Math.max(left, right) };
+    const next = placeOf(width, left, right);
     setSnapPlace((previous) => (previous.side === next.side && previous.wrap === next.wrap && previous.max === next.max ? previous : next));
   }, [stageRef, snap, split, room, stampNone, stampShort]);
 
@@ -99,48 +147,19 @@ export function useLabelFit(stageRef: RefObject<HTMLDivElement | null>, { room, 
     const seam = box.left + (box.width * split) / 100;
     // …and one under the seam's names or the stamp (review, 04.10): their boxes where they will stand once the seam has
     // glided there (measured now, a gliding name would be read mid-way)
-    const shown = (element: Element | null) => element && getComputedStyle(element).visibility === 'visible';
     const [leftTag, rightTag] = stage.querySelectorAll<HTMLElement>('.hv2-contour-seamtags > span');
     const top = box.top + 10;
-    type Box = { left: number; right: number; top: number; bottom: number };
-    const meets = (a: Box, b: Box) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
     const covers: Box[] = [];
     if (shown(leftTag)) covers.push({ left: seam - 3 - leftTag.offsetWidth, right: seam - 3, top, bottom: top + leftTag.offsetHeight });
     const stamp = stage.querySelector<HTMLElement>('.hv2-contour-stamp');
     if (stamp && shown(stamp)) covers.push(stamp.getBoundingClientRect());
-    // The right-hand name would stand here were it shown — it gives way to a word of the drawing, not the other way
-    const rightTagWould = rightTag && !narrowRight && !snap && layer !== 'load' && layer !== 'wind' && getComputedStyle(rightTag.parentElement!).display !== 'none';
-    const rightBox = rightTag ? { left: seam + 3, right: seam + 3 + rightTag.offsetWidth, top, bottom: top + rightTag.offsetHeight } : null;
-    let yieldTag = false;
-    for (const label of stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')) {
-      const rect = label.getBoundingClientRect();
-      const cut = rect.left < seam + 1 || covers.some((cover) => meets(rect, cover));
-      // shown on this layer: the scheme's names, on «Каркас»
-      const here = layer === 'frame';
-      if (!cut && here && rightTagWould && rightBox && meets(rect, rightBox)) yieldTag = true;
-      if (cut === ('cut' in label.dataset)) continue;
-      if (cut) label.dataset.cut = '';
-      else delete label.dataset.cut;
-      // …with its leader (review, 04.10: a leader stayed, pointing at nothing)
-      const pointer = stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${label.dataset.tag}"]`);
-      if (pointer) {
-        if (cut) pointer.dataset.cut = '';
-        else delete pointer.dataset.cut;
-      }
-    }
-    // A node's letter gives way to a word of the drawing it would cover — the word says what the drawing is; the letter
-    // is in the «Вузли крупно» bar too, and its ring stays (06.10: on a tablet's frame the walls' and the footings'
-    // names lay under Д and В). «Схема ›» gives way to a letter as to a word (on a short laptop with the seam at 64 % it
-    // covered «Г»)
-    const words = [...stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span:not([data-cut])')].filter((label) => shown(label));
-    for (const pin of stage.querySelectorAll<HTMLElement>('.hv2-proof-detail-pin')) {
-      const rect = pin.getBoundingClientRect();
-      // (and, as a word, it is hidden whole where the seam cuts it — never half a letter)
-      const under = layer === 'frame' && (rect.left < seam + 1 || words.some((label) => meets(rect, label.getBoundingClientRect())));
-      if (under) pin.dataset.cut = '';
-      else delete pin.dataset.cut;
-      if (!under && layer === 'frame' && rightTagWould && rightBox && rect.left >= seam && meets(rect, rightBox)) yieldTag = true;
-    }
+    // The right-hand name would stand here were it shown — it gives way to a word of the drawing on «Каркас», not the
+    // other way
+    const onFrame = layer === 'frame';
+    const rightTagWould = onFrame && rightTag && !narrowRight && !snap && getComputedStyle(rightTag.parentElement!).display !== 'none';
+    const yieldTo = rightTagWould ? { left: seam + 3, right: seam + 3 + rightTag.offsetWidth, top, bottom: top + rightTag.offsetHeight } : null;
+    const wordYields = cutWords(stage, seam, covers, yieldTo);
+    const yieldTag = cutLetters(stage, seam, onFrame, yieldTo) || wordYields;
     setTagYield(yieldTag);
   }, [stageRef, split, layer, room, snap, narrowRight]);
 

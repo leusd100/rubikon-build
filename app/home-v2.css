@@ -382,20 +382,16 @@ main[data-home="v2"] .hv2-proof-marks path { fill: none; stroke: var(--hv2-coppe
 main[data-home="v2"] .hv2-proof-tag-leaders path { stroke: var(--hv2-scheme); stroke-opacity: .55; stroke-width: var(--u); }
 main[data-home="v2"] .hv2-proof-tag-leaders circle { fill: var(--hv2-scheme); fill-opacity: .9; }
 /* Each word on a backing that masks what runs under it, as a drawing's text does (owner review, 04.10: «текст залазить
-   на елемент») */
+   на елемент»), and as a drawing's callout (owner, 09.10: «підписи … більш красивими … в правильних місцях»): it stands
+   on its leader's shelf — its own underline — the leader running from a dot on the member to the shelf's near end */
 main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag {
   position: absolute; left: var(--x); top: var(--y); transform: translate(0, -50%); white-space: nowrap; pointer-events: none;
-  padding: 2px 6px 3px; background: rgba(20, 22, 21, .88); font: 600 13px/1.15 var(--font-manrope), sans-serif; letter-spacing: 0;
+  padding: 1px 3px 3px; color: var(--hv2-scheme); background: rgba(20, 22, 21, .88); border-bottom: 1px solid rgba(237, 232, 222, .6);
+  font: 600 12.5px/1.2 var(--font-manrope), sans-serif; letter-spacing: .01em;
 }
 main[data-home="v2"] .hv2-proof-labels [data-align="start"] { transform: translate(5px, -50%); }
 main[data-home="v2"] .hv2-proof-labels [data-align="end"] { transform: translate(calc(-100% - 5px), -50%); text-align: right; }
 main[data-home="v2"] .hv2-proof-labels [data-align="middle"] { transform: translate(-50%, -50%); text-align: center; }
-/* The names as a drawing's callouts (owner, 09.10: «підписи … більш красивими … в правильних місцях»): each word stands on
-   its leader's shelf — its own underline — the leader running from a dot on the member to the shelf's near end */
-main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag {
-  padding: 1px 3px 3px; color: var(--hv2-scheme); background: rgba(20, 22, 21, .88); border-bottom: 1px solid rgba(237, 232, 222, .6);
-  font: 600 12.5px/1.2 var(--font-manrope), sans-serif; letter-spacing: .01em;
-}
 main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-align="start"] { transform: translate(0, -100%); }
 main[data-home="v2"] .hv2-proof-labels .hv2-proof-tag[data-align="end"] { transform: translate(-100%, -100%); }
 

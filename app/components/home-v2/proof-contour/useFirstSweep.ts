@@ -45,7 +45,7 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
   const touchedRef = useRef(false);
   useEffect(() => {
     const stage = stageRef.current;
-    const sheet = stage?.closest('figure');
+    const sheet = stage?.closest<HTMLElement>('figure');
     if (!stage || !sheet || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let sweep: Animation[] = [];
     let timer: number | undefined;
@@ -119,7 +119,7 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     }, { threshold: 0.6 });
     seen.observe(stage);
     const arrived = new MutationObserver(() => {
-      if (sheet.getAttribute('data-sheet-state') !== 'on') return;
+      if (sheet.dataset.sheetState !== 'on') return;
       arrived.disconnect();
       timer = window.setTimeout(() => {
         // …and only once the picture has plotted in: the plot's transition starts a frame after data-sheet-state, so on a
