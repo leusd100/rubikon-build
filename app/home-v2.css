@@ -1282,7 +1282,9 @@ main[data-home="v2"] .hv2-detail-backdrop { position: fixed; z-index: 59; inset:
    shov   «Один прийом — шов»: one line, three words, «Детальніше», a quiet scene, a taller phone frame
    zavisa «Завіса → Шов → Імена»: the arrival in beats — the photo, the seam to 38 %, the names one by one, the rest after
    brief  «Фото → Схема → Бриф»: one line, one filled button, a quiet way out to the conversation, the nodes after it
-   razom  shov + the seam and the names of zavisa + the way on of brief */
+   razom  shov + the seam and the names of zavisa + the way on of brief
+   plus   razom, finished: quiet letters at rest (В calls once), a phone frame edge to edge with two names, the line without
+          «до RUBIKON BUILD» */
 .hv2-concept-switch {
   position: fixed; z-index: 2000; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: nowrap; align-items: center; gap: 3px;
   max-width: calc(100vw - 24px); padding: 6px; color: #f5f2eb; background: rgba(15, 17, 16, .95); border: 1px solid #f0b48a; box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
@@ -1340,7 +1342,7 @@ main[data-home="v2"] .hv2-concept-word { font: 600 12px/1 var(--font-manrope), s
 main[data-home="v2"] .hv2-signature[data-compact] .hv2-proof-detail-rings circle { stroke-opacity: .4; transition: stroke-opacity 300ms ease; }
 main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stage:is(:hover, :focus-within, [data-touring], [data-nodes-hint]) .hv2-proof-detail-rings circle { stroke-opacity: 1; }
 @media (hover: hover) and (pointer: fine) {
-  main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-detail-pin:not([aria-expanded="true"]),
+  main[data-home="v2"] .hv2-signature[data-compact]:not([data-plus]) .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-detail-pin:not([aria-expanded="true"]),
   main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-labels > :not([data-tag="truss"], [data-tag="column"]),
   main[data-home="v2"] .hv2-signature[data-compact] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-tag-leaders > :not([data-tag="truss"], [data-tag="column"]) { opacity: 0 !important; }
   main[data-home="v2"] .hv2-signature[data-compact] :is(.hv2-proof-detail-pin, .hv2-proof-labels > *, .hv2-proof-tag-leaders > *) { transition: opacity 280ms ease; }
@@ -1399,3 +1401,34 @@ main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour[data-hold-p
 main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour-stamp { transition: opacity 360ms ease; }
 main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour[data-hold-stamp] .hv2-contour-stamp { opacity: 0; }
 main[data-home="v2"] .hv2-signature[data-choreo="full"] .hv2-contour[data-hold-bar] .hv2-contour-nodes[data-place="stage"] { opacity: 0; visibility: hidden; }
+
+/* «Разом+»: the letters stay on the scheme at rest, quiet — paper on graphite — and take their colour under the cursor,
+   in the tour or open; after the seam, В (the column's base) calls once */
+main[data-home="v2"] .hv2-signature[data-plus] .hv2-proof-detail-pin {
+  color: var(--hv2-text); background: rgba(20, 22, 21, .82); border-color: rgba(237, 232, 222, .6); transition: background-color 280ms ease, color 280ms ease, border-color 280ms ease;
+}
+main[data-home="v2"] .hv2-signature[data-plus] .hv2-contour-stage:is(:hover, :focus-within, [data-touring]) .hv2-proof-detail-pin,
+main[data-home="v2"] .hv2-signature[data-plus] .hv2-contour-stage[data-nodes-tease] .hv2-proof-detail-pin[data-detail="base"] {
+  color: var(--hv2-node-ink); background: var(--hv2-node); border-color: var(--hv2-node-edge);
+}
+main[data-home="v2"] .hv2-signature[data-plus] .hv2-proof-detail-pin:is(:hover, [aria-expanded="true"]) { color: var(--hv2-node-ink); background: var(--hv2-node-light); border-color: var(--hv2-node-edge); }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-signature[data-plus] .hv2-contour-stage[data-nodes-tease] .hv2-proof-detail-pin[data-detail="base"]::after { animation: hv2-contour-pulse 1100ms ease-out 1; }
+}
+@media (max-width: 760px) {
+  /* the sheet edge to edge: its frame the screen's width (390 × 244 on a 390 phone) */
+  main[data-home="v2"] .hv2-signature[data-plus] .hv2-contour { margin-inline: -16px; padding-right: 0; padding-left: 0; border-inline: 0; }
+  main[data-home="v2"] .hv2-signature[data-plus] .hv2-contour .sheet-ruler-y { display: none; }
+  main[data-home="v2"] .hv2-signature[data-plus] .hv2-contour .sheet-stamp { margin-inline: 12px; }
+  /* no numbers 1–5 on the frame (they doubled the letters); words do not fit it either — each covered a node's letter at
+     390 px — so the frame keeps the five letters; «‹ Фото» on the photo's half, the scheme's half has its stamp */
+  main[data-home="v2"] .hv2-signature[data-plus] .hv2-contour-seamtags { display: block; }
+  main[data-home="v2"] .hv2-signature[data-plus] .hv2-contour-seamtags > span:last-child { display: none; }
+}
+
+/* For every variant (audit 08.10): a ring under the mouse is a button (F06); the loops rest off the screen (F15); an
+   anchor to the object lands under the fixed header, not behind it (F11) */
+main[data-home="v2"] .hv2-contour-stage[data-over-ring],
+main[data-home="v2"] .hv2-contour-stage[data-over-ring] * { cursor: pointer !important; }
+main[data-home="v2"] .hv2-contour-stage[data-offscreen] :is(*, *::before, *::after) { animation-play-state: paused !important; }
+main[data-home="v2"] #real-object { scroll-margin-top: 116px; }
