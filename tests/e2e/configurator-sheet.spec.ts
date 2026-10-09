@@ -710,3 +710,39 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(pictureOf(page)).toHaveCSS('background-color', general);
   });
 }
+
+// One field height on a computer (09.10, audit F15 + F45): from «Стіни й ворота» to «Каркас» to «Обсяг» the sheet keeps
+// its size, and held under the header it stays whole inside the window — on «Каркас» its title block went 94–113 px
+// under the window's edge on short laptops, and at 1280 px wide the general view's legend under the drawing pushed it
+// 25–45 px out on the other steps. The frame's window keeps its own proportion, centred in the field.
+test('on a computer the sheet keeps one size from step to step and stays inside the window', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the sticky pane is the desktop’s');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const [index, [width, height]] of ([[1366, 657], [1536, 730], [1280, 600], [1280, 720], [1440, 900], [1100, 700], [1024, 768]] as const).entries()) {
+    await page.setViewportSize({ width, height });
+    if (index === 0) await openHangarPage(page);
+    else await page.goto('/angary', { waitUntil: 'load' });
+    const sizes: number[] = [];
+    for (const step of ['shell', 'frame', 'check'] as const) {
+      await page.evaluate(() => {
+        const layout = document.querySelector('#configurator .hc-layout')!;
+        window.scrollTo({ top: window.scrollY + layout.getBoundingClientRect().top - 117, behavior: 'instant' });
+      });
+      const tab = page.locator(`#hc-step-${step}-tab`);
+      await tab.click();
+      await expect(tab).toHaveAttribute('aria-selected', 'true');
+      // the pane held under the header
+      await page.evaluate(() => window.scrollBy({ top: 150, behavior: 'instant' }));
+      const box = (await sheetOf(page).boundingBox())!;
+      sizes.push(Math.round(box.height));
+      expect(box.y + box.height, `${width}×${height} ${step}`).toBeLessThanOrEqual(height);
+      if (step === 'frame') {
+        const [field, camera] = [(await pictureOf(page).boundingBox())!, (await pictureOf(page).locator('.ft-window').boundingBox())!];
+        expect(camera.width / camera.height, `${width}×${height}`).toBeCloseTo(720 / 440, 1);
+        expect(camera.y + camera.height).toBeLessThanOrEqual(field.y + field.height + 0.5);
+        expect(Math.abs(camera.x + camera.width / 2 - (field.x + field.width / 2))).toBeLessThanOrEqual(1);
+      }
+    }
+    expect(Math.max(...sizes) - Math.min(...sizes), `${width}×${height}: ${sizes.join(' → ')}`).toBeLessThanOrEqual(2);
+  }
+});

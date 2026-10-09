@@ -321,6 +321,28 @@
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-sheet-tools { display: none; }
 }
 
+/* ── One field height for the general view and the frame on a computer (09.10, audit F15 + F45) ──────────────────────
+   The sheet's field is as tall on «Каркас» as on the steps either side of it, so the sheet keeps its size from step to
+   step (3 → 4 → 5 it grew and shrank by up to 190 px) and, held under the header, stays inside the window (the frame's
+   title block and lower edge went 94–113 px under it at 1366 × 657, 1536 × 730, 1280 × 600). The frame's window keeps
+   its 720 × 440 — the camera's arithmetic is untouched — and fits, centred, in what the legend leaves of the field: the
+   slot is a size container, so the legend's one, two or three rows are counted as they are. On a sheet under 700 px
+   the general view's cladding legend stands under the drawing (92 px and its 10 px margin): the drawing's window-height
+   term gives that room back, so drawing and legend keep the budget a wide sheet's drawing has (at 1280 × 720 the title
+   block ran 25 px past the window, at 1280 × 600 45 px); where that term does not bind — a tall window — the drawing
+   is as it was, and the frame's field is as tall as the drawing with its legend. Under 1024 px the layout is one column
+   and the sheet is not held on screen (a phone holds its mini drawing, above): there its sizes stay as they were, the
+   frame's camera the sheet's full width. */
+@media (min-width: 1024px) {
+  .hangar-configurator-embedded .hc-preview-sheet .hc-frame { box-sizing: border-box; height: var(--hc-frame-h, var(--hc-sheet-h)); }
+  .hangar-configurator-embedded .hc-frame .ft-slot { display: flex; flex: 1 1 0; align-items: center; justify-content: center; min-height: 0; container-type: size; }
+  .hangar-configurator-embedded .hc-frame .ft-window { width: min(100cqw, 100cqh * 720 / 440); }
+  @container sheet (max-width: 699px) {
+    .hangar-configurator-embedded .hc-preview-sheet .hc-preview-image:has(> .hc-section) { --hc-sheet-h: clamp(220px, min(46vw + 40px, 100vh - 402px, 70cqw), 580px); }
+    .hangar-configurator-embedded .hc-preview-sheet .hc-frame { --hc-frame-h: calc(clamp(220px, min(46vw + 40px, 100vh - 402px, 70cqw), 580px) + 102px); }
+  }
+}
+
 /* The 3D chip in words, not capitals (07.10) */
 .hc-sheet-chip.hc-sheet-three { font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 

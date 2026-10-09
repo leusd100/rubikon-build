@@ -654,7 +654,9 @@ export function FrameTourStage({
             </ol>
             <p className="ft-note">Деформацію показано умовно, у{'\u00A0'}збільшеному масштабі</p>
           </div>
-          {/* the camera's window: the picture's own proportion (on a phone the legend's band sits above it) */}
+          {/* the camera's window: the picture's own proportion (on a phone the legend's band sits above it), in a slot that
+              on a computer is the height the sheet leaves under the legend, so the window fits it whole (09.10, F15) */}
+          <div className="ft-slot">
           <div className="ft-window" ref={visualRef}>
             <div className="dn-stage is-drawing" style={{ transform: stageTransform(size, VIEW, active) }}>
               <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру`}>
@@ -764,6 +766,7 @@ export function FrameTourStage({
                 </g>
               </svg>
             </div>
+          </div>
           </div>
           <TourProgress count={count} step={step} run={run} className="ft-progress" />
     </>
