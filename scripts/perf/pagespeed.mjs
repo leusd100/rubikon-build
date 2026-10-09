@@ -8,18 +8,30 @@
 // it cannot leak through request URLs, error messages or logs.
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 export const FORM_FACTORS = /** @type {const} */ (['mobile', 'desktop']);
 const PSI_ENDPOINT = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
 
 /** @typedef {{ score: number | null, fcp: number | null, lcp: number | null, tbt: number | null, cls: number | null,
  *   si: number | null, ttfb: number | null, bytes: number | null, lcpElement: string | null,
- *   lighthouseVersion: string | null, fetchTime: string | null, fieldData: boolean }} PsiRun */
+ *   lighthouseVersion: string | null, fetchTime: string | null, fieldData: boolean,
+ *   observedFcp: number | null, observedLcp: number | null,
+ *   labProfile: object | null, fieldMetrics: Record<string, string[]>, requestCount: number | null }} PsiRun */
 
 const numeric = (audits, id) => {
   const value = audits?.[id]?.numericValue;
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 };
+
+const finite = (value) => typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+/** Empty metric maps and placeholder objects do not represent CrUX measurements. */
+function availableFieldMetrics(experience) {
+  return Object.entries(experience?.metrics ?? {})
+    .filter(([, metric]) => finite(metric?.percentile) !== null)
+    .map(([name]) => name);
+}
 
 /** First DOM node snippet found anywhere in an audit's details (the LCP element's shape differs by version). */
 function firstNodeSnippet(details) {
@@ -44,8 +56,13 @@ export function extractRun(psi) {
   const lhr = psi?.lighthouseResult ?? {};
   const audits = lhr.audits ?? {};
   const score = lhr.categories?.performance?.score;
+  const observed = audits.metrics?.details?.items?.[0];
+  const fieldMetrics = {
+    url: availableFieldMetrics(psi?.loadingExperience),
+    origin: availableFieldMetrics(psi?.originLoadingExperience),
+  };
   return {
-    score: typeof score === 'number' ? Math.round(score * 100) : null,
+    score: finite(score) !== null && score >= 0 && score <= 1 ? Math.round(score * 100) : null,
     fcp: numeric(audits, 'first-contentful-paint'),
     lcp: numeric(audits, 'largest-contentful-paint'),
     tbt: numeric(audits, 'total-blocking-time'),
@@ -57,14 +74,25 @@ export function extractRun(psi) {
       ?? firstNodeSnippet(audits['lcp-breakdown-insight']?.details),
     lighthouseVersion: lhr.lighthouseVersion ?? null,
     fetchTime: lhr.fetchTime ?? null,
-    // CrUX field data is present only when Google has enough real Chrome traffic for the URL or origin.
-    fieldData: Boolean(psi?.loadingExperience?.metrics || psi?.originLoadingExperience?.metrics),
+    // These clocks are recorded separately: observed timings must not be added to simulated lab metrics.
+    observedFcp: finite(observed?.observedFirstContentfulPaint),
+    observedLcp: finite(observed?.observedLargestContentfulPaint),
+    labProfile: lhr.configSettings ? {
+      formFactor: lhr.configSettings.formFactor ?? null,
+      throttlingMethod: lhr.configSettings.throttlingMethod ?? null,
+      throttling: lhr.configSettings.throttling ?? null,
+      screenEmulation: lhr.configSettings.screenEmulation ?? null,
+    } : null,
+    requestCount: Array.isArray(audits['network-requests']?.details?.items)
+      ? audits['network-requests'].details.items.length : null,
+    fieldMetrics,
+    fieldData: fieldMetrics.url.length > 0 || fieldMetrics.origin.length > 0,
   };
 }
 
 /** Median of the non-null values; null when there are none. */
 export function median(values) {
-  const sorted = values.filter((value) => typeof value === 'number').sort((a, b) => a - b);
+  const sorted = values.filter((value) => finite(value) !== null).sort((a, b) => a - b);
   if (!sorted.length) return null;
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
@@ -103,11 +131,13 @@ export function summaryMarkdown({ url, sha, startedAt, requestedRuns, results })
   const counts = FORM_FACTORS.filter((formFactor) => results[formFactor])
     .map((formFactor) => `${formFactor} ${results[formFactor].runs.length}`).join(', ');
   const requested = requestedRuns ? ` of ${requestedRuns} requested` : '';
-  const field = allRuns.some((run) => run.fieldData) ? 'available — see the PSI UI' : 'not available (not enough CrUX traffic)';
+  const field = allRuns.some((run) => run.fieldData)
+    ? 'some URL/origin metrics available — inspect raw JSON for metric and scope; this does not establish a CWV pass'
+    : 'not available in these responses; this is not a CWV failure';
   const lines = [
     `### PageSpeed Insights — ${url}`,
     '',
-    `Commit \`${sha ? sha.slice(0, 7) : 'n/a'}\` · ${startedAt} · Lighthouse ${versions} · median of independent analyses per form factor: ${counts}${requested} · lab data`,
+    `Workflow commit \`${sha ? sha.slice(0, 7) : 'n/a'}\` (deployed commit not verified) · ${startedAt} · Lighthouse ${versions} · median of independent analyses per form factor: ${counts}${requested} · lab data`,
     `Field data (CrUX): ${field}`,
     '',
     HEADER,
@@ -121,6 +151,17 @@ export function summaryMarkdown({ url, sha, startedAt, requestedRuns, results })
   for (const formFactor of FORM_FACTORS) {
     (results[formFactor]?.runs ?? []).forEach((run, index) => lines.push(row(`${formFactor} #${index + 1}`, run)));
   }
+  lines.push('', '| Run | Fetch time (UTC) | Observed FCP | Observed LCP | Requests | Lab profile | CrUX metrics (scope) |',
+    '|---|---|---|---|---|---|---|');
+  for (const formFactor of FORM_FACTORS) {
+    (results[formFactor]?.runs ?? []).forEach((run, index) => {
+      const profile = run.labProfile;
+      const fields = Object.entries(run.fieldMetrics ?? {}).filter(([, names]) => names.length)
+        .map(([scope, names]) => `${scope}: ${names.join(', ')}`).join('; ') || 'none returned';
+      lines.push(`| ${formFactor} #${index + 1} | ${escapeCell(run.fetchTime ?? '—')} | ${seconds(run.observedFcp ?? null)} | ${seconds(run.observedLcp ?? null)} | ${run.requestCount ?? '—'} | ${escapeCell(profile ? JSON.stringify(profile) : 'not returned')} | ${escapeCell(fields)} |`);
+    });
+  }
+  lines.push('', 'Observed timings use the recorded trace clock. The headline table uses the Lighthouse lab metrics, which may be simulated. Full throttling/viewport settings and URL/origin field metric availability are in summary.json and raw PSI reports. TBT is not field INP.');
   lines.push('', '| Run | LCP element |', '|---|---|');
   for (const formFactor of FORM_FACTORS) {
     (results[formFactor]?.runs ?? []).forEach((run, index) => lines.push(`| ${formFactor} #${index + 1} | \`${escapeCell(run.lcpElement ?? '—')}\` |`));
@@ -188,8 +229,15 @@ export async function collectRuns({ runs, call, wait = (ms) => new Promise((reso
         break;
       }
       const analysis = extractRun(body);
-      if (!analysis.fetchTime || !seen.has(analysis.fetchTime)) {
-        if (analysis.fetchTime) seen.add(analysis.fetchTime);
+      if (body?.lighthouseResult?.runtimeError || analysis.score === null
+        || analysis.fcp === null || analysis.lcp === null || !analysis.fetchTime
+        || !Number.isFinite(Date.parse(analysis.fetchTime))) {
+        result.failures.push(`run ${run}: no usable, timestamped Lighthouse performance analysis`);
+        log(`${label} #${run}: invalid Lighthouse analysis, not counted`);
+        break;
+      }
+      if (!seen.has(analysis.fetchTime)) {
+        seen.add(analysis.fetchTime);
         result.runs.push(analysis);
         result.bodies.push(body);
         log(`${label} #${run}: performance ${analysis.score}`);
@@ -206,25 +254,36 @@ export async function collectRuns({ runs, call, wait = (ms) => new Promise((reso
   return result;
 }
 
-function parseArgs(argv) {
-  const args = { url: 'https://rubikonbuild.com/', runs: 3, out: 'psi-results' };
+export function parseArgs(argv) {
+  const args = { url: 'https://rubikonbuild.com/', runs: 3, out: 'psi-results', strategy: 'both' };
   for (let index = 0; index < argv.length; index += 2) {
     const [flag, value] = [argv[index], argv[index + 1]];
+    if (!value || value.startsWith('--')) throw new Error(`Missing value for ${flag}`);
     if (flag === '--url') args.url = value;
-    else if (flag === '--runs') args.runs = Math.min(5, Math.max(1, Number.parseInt(value, 10) || 3));
+    else if (flag === '--runs') {
+      const count = Number(value);
+      if (!Number.isInteger(count) || count < 1 || count > 5) throw new Error('--runs must be an integer from 1 to 5');
+      args.runs = count;
+    }
     else if (flag === '--out') args.out = value;
+    else if (flag === '--strategy') args.strategy = value;
     else throw new Error(`Unknown argument ${flag}`);
   }
-  if (!/^https:\/\//.test(args.url)) throw new Error('--url must be an https:// URL');
+  try {
+    const url = new URL(args.url);
+    if (url.protocol !== 'https:' || url.username || url.password) throw new Error();
+  } catch { throw new Error('--url must be an https:// URL without embedded credentials'); }
+  if (!['both', ...FORM_FACTORS].includes(args.strategy)) throw new Error('--strategy must be mobile, desktop, or both');
   return args;
 }
 
 async function main() {
-  const { url, runs, out } = parseArgs(process.argv.slice(2));
+  const { url, runs, out, strategy } = parseArgs(process.argv.slice(2));
+  const strategies = strategy === 'both' ? FORM_FACTORS : [strategy];
   const apiKey = process.env.PAGESPEED_API_KEY;
   const summaryFile = process.env.GITHUB_STEP_SUMMARY;
   if (!apiKey) {
-    const message = '### PageSpeed Insights\n\nSkipped: the `PAGESPEED_API_KEY` secret is not configured. Anonymous PSI quota is shared and exhausted (HTTP 429), so runs need a key.\n';
+    const message = '### PageSpeed Insights\n\nSkipped: the `PAGESPEED_API_KEY` secret is not configured. No anonymous requests were made.\n';
     console.log(message);
     if (summaryFile) appendFileSync(summaryFile, message);
     return;
@@ -233,7 +292,7 @@ async function main() {
   mkdirSync(out, { recursive: true });
   const startedAt = new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
   const results = {};
-  for (const strategy of FORM_FACTORS) {
+  for (const strategy of strategies) {
     // Sequential on purpose: parallel PSI calls against the same URL compete for the same origin.
     const { bodies, ...collected } = await collectRuns({
       runs,
@@ -250,15 +309,15 @@ async function main() {
   writeFileSync(join(out, 'summary.md'), markdown);
   writeFileSync(join(out, 'summary.json'), JSON.stringify({
     ...report,
-    median: Object.fromEntries(FORM_FACTORS.map((formFactor) => [formFactor, medianRun(results[formFactor].runs)])),
+    median: Object.fromEntries(strategies.map((formFactor) => [formFactor, medianRun(results[formFactor].runs)])),
   }, null, 2));
   if (summaryFile) appendFileSync(summaryFile, markdown);
   console.log(markdown);
 
-  if (FORM_FACTORS.some((formFactor) => results[formFactor].runs.length === 0)) process.exitCode = 1;
+  if (strategies.some((formFactor) => results[formFactor].runs.length === 0)) process.exitCode = 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;
