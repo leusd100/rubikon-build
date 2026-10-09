@@ -63,8 +63,10 @@
 .ft[data-step="1"] [data-part~="1"] .ft-bubble text, .ft[data-step="3"] [data-part~="3"] .ft-bubble text { fill: var(--color-accent-strong); }
 .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { opacity: 1; }
 
-/* The loads: the frame stays in graphite under them; the lit links glow */
-.ft-load { opacity: 0; }
+/* The loads: the frame stays in graphite under them; the lit links glow. Pure picture (aria-hidden), so they never take
+   the pointer (09.10, audit F09): drawn after the nodes, the invisible snow and wind layers caught the clicks meant for
+   the node numbers on «Ферма» — 0 of 5 opened from their centre. */
+.ft-load { opacity: 0; pointer-events: none; }
 .ft[data-step="4"] [data-load="snow"], .ft[data-step="5"] [data-load="wind"] { opacity: 1; }
 .ft[data-step="4"] .ft-part, .ft[data-step="5"] .ft-part { opacity: .55; }
 .ft-link { stroke: var(--color-accent); stroke-width: calc(2.6px * var(--ft-k)); filter: url(#ft-glow); }

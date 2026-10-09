@@ -182,7 +182,8 @@
   background: transparent; color: var(--color-text); font: 600 13px/1 var(--font-manrope), sans-serif; cursor: pointer;
 }
 .hc-frame-node:hover { border-color: var(--color-accent); }
-.hc-frame-node[aria-pressed='true'] { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-bg); }
+/* the copper of text (09.10, audit F47): on --color-accent the 13 px name read 3.78:1 in Light, 4.11:1 in Dark */
+.hc-frame-node[aria-pressed='true'] { border-color: var(--color-accent-strong); background: var(--color-accent-strong); color: var(--color-bg); }
 .hc-frame-node-number {
   display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 8px; border: 1px solid var(--color-accent);
   border-radius: 50%; color: var(--color-accent-strong); font: 700 11px/1 var(--font-condensed), sans-serif;

@@ -227,6 +227,57 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   expect(await looping()).toBe(0);
 });
 
+/** WCAG contrast of two computed rgb() colours */
+function contrastOf(foreground: string, background: string) {
+  const luminance = (color: string) => {
+    const [r, g, b] = color.match(/\d+(\.\d+)?/g)!.slice(0, 3).map((value) => {
+      const channel = Number(value) / 255;
+      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [light, dark] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (light + 0.05) / (dark + 0.05);
+}
+
+// The node numbers on «Ферма» take the pointer (09.10, audit F09): the invisible snow and wind layers, drawn after them,
+// caught every click at a number's centre (0 of 5), so only the buttons under the drawing opened a node. The chosen node
+// is filled in the copper of text, its name and number at 4.5 : 1 or more (audit F47: 3.78 : 1 on --color-accent).
+for (const theme of ['light', 'dark'] as const) {
+  test(`a node's number on the frame opens the node from its centre, in ${theme}`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the pointer contract is viewport-independent');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript((value) => window.localStorage.setItem('rubikon-theme', value), theme);
+    await openHangarPage(page);
+    const { frame, items } = await openFrame(page);
+    await items.nth(1).click();
+    await showWholeSheet(page);
+    const buttons = page.locator('#hc-step-frame .hc-frame-node');
+    await expect(buttons).toHaveCount(5);
+    for (let index = 0; index < 5; index += 1) {
+      const ring = (await frame.locator('.ft-node-ring').nth(index).boundingBox())!;
+      const centre = [ring.x + ring.width / 2, ring.y + ring.height / 2] as const;
+      const hit = await page.evaluate(([x, y]) => {
+        const element = document.elementFromPoint(x, y);
+        return { node: Boolean(element?.closest('g.ft-node')), cursor: element ? getComputedStyle(element).cursor : '' };
+      }, centre);
+      expect(hit, `node ${index + 1}`).toEqual({ node: true, cursor: 'pointer' });
+      await page.mouse.click(...centre);
+      await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true');
+      await expect(frame).toHaveAttribute('data-node', /.+/);
+      const colours = await buttons.nth(index).evaluate((button) => ({ text: getComputedStyle(button).color, fill: getComputedStyle(button).backgroundColor }));
+      expect(contrastOf(colours.text, colours.fill), `node ${index + 1}'s button`).toBeGreaterThanOrEqual(4.5);
+      const mark = await frame.locator('.ft-node[data-on]').evaluate((node) => ({
+        number: getComputedStyle(node.querySelector('.ft-node-number')!).fill, ring: getComputedStyle(node.querySelector('.ft-node-ring')!).fill,
+      }));
+      expect(contrastOf(mark.number, mark.ring), `node ${index + 1}'s mark`).toBeGreaterThanOrEqual(4.5);
+      // back to the whole frame, from its button
+      await buttons.nth(index).click();
+      await expect(frame).not.toHaveAttribute('data-node', /.*/);
+    }
+  });
+}
+
 // The title block keeps its geometry through the frame's steps (04.10): at 1100 px «Що показано» broke a letter a line and
 // the sheet changed height on every step; at 1440 the cells jumped ~40 px as the tour started; at 320–360 the caption
 // grew a line on some steps. The configurator's sheet carries the frame's caption in the same cell (07.10).

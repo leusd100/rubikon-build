@@ -267,7 +267,9 @@
 .ft-node-mark { transform: scale(var(--ft-k)); transition: transform .3s ease; }
 .ft-drawing .ft-node-ring { fill: var(--color-surface-alt); stroke: var(--color-accent); stroke-width: 1.6px; transition: fill .2s ease; }
 .ft-node-number { fill: var(--color-accent-strong); font: 700 10.5px var(--font-condensed), sans-serif; text-anchor: middle; pointer-events: none; transition: fill .2s ease; }
-.ft-node:hover .ft-node-ring, .ft-node[data-on] .ft-node-ring { fill: var(--color-accent); }
+/* filled in the copper of text, as the pressed button under the drawing (09.10, audit F47): on --color-accent the 10.5 px
+   number read 4.11:1 */
+.ft-node:hover .ft-node-ring, .ft-node[data-on] .ft-node-ring { fill: var(--color-accent-strong); }
 .ft-node:hover .ft-node-number, .ft-node[data-on] .ft-node-number { fill: var(--color-surface-alt); }
 @media (prefers-reduced-motion: no-preference) {
   .hc-frame[data-step="2"]:not([data-node]) .ft-node-mark { animation: hc-node-pulse 1800ms ease-in-out 1600ms 3; }
