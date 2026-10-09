@@ -131,8 +131,8 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
           ))}
           {/* The gable's chords as profiles (owner, 09.10: «більш детальніше»): each drawn as its two edges — the member's
               own line made wide, its dark core over it — as the nodes' drawings draw a C-section */}
-          {inside.filter(isProfile).map((member, index) => (
-            <path key={`core-${index}`} className="hv2-proof-core" d={d(member.points)} data-group={member.group} data-depth={member.depth} />
+          {inside.filter(isProfile).map((member) => (
+            <path key={d(member.points)} className="hv2-proof-core" d={d(member.points)} data-group={member.group} data-depth={member.depth} />
           ))}
           {/* The parts the scope's cells light (ScopeCells): the roof's planes and the cladding on the walls' faces, drawn
               only while their cell is pointed at (home-v2.css, the stage's data-focus) */}

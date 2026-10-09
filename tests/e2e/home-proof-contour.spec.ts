@@ -2126,9 +2126,17 @@ test('after the arrival a laptop opens node Г by itself, quietly — focus stay
   await expect(second.stage).toHaveAttribute('data-sweep', 'run', { timeout: 12_000 });
   await second.sheet.dispatchEvent('keydown', { key: 'Shift' });
   await expect(second.stage).not.toHaveAttribute('data-sweep', /.*/);
-  await page.waitForTimeout(3_500);
+  // Watched in the page: a node opening ends the watch at once (and fails); else it ends well past the auto node's time
+  // (ProofContour's AUTO_NODE_AT, 2 s after the sweep's end)
+  const opened = await second.stage.evaluate((stage, ms) => new Promise<string | null>((resolve) => {
+    const watch = new MutationObserver(() => {
+      if (stage.dataset.detail) { watch.disconnect(); resolve(stage.dataset.detail); }
+    });
+    watch.observe(stage, { attributes: true, attributeFilter: ['data-detail'] });
+    window.setTimeout(() => { watch.disconnect(); resolve(stage.dataset.detail ?? null); }, ms);
+  }), 3_500);
+  expect(opened).toBeNull();
   await expect(panel).toHaveCount(0);
-  expect(await second.stage.getAttribute('data-detail')).toBeNull();
 });
 
 test('arriving the usual way — the wheel, or a finger swiping over the sheet — the seam still sweeps once, when the page is quiet', async ({ page }, testInfo) => {
