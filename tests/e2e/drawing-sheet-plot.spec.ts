@@ -14,8 +14,12 @@ const sheets = (page: Page) => page.locator('.sheet:has(> .sheet-body)');
 test('armed, each picture lies under the sheet’s own paper; arriving, only the cover moves, by a transform; then the picture is whole', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the plot is viewport-independent');
   await open(page);
-  const count = await sheets(page).count();
-  expect(count).toBeGreaterThanOrEqual(4);
+  // The frame explanation now lives in the configurator's sheet (HangarEditorialArchitecture),
+  // rather than a fourth standalone sheet. Require every current surface, not an obsolete count.
+  const surfaces = ['.hc-preview-sheet', '.angary-real-sheet', '.cf-sheet'];
+  await expect(sheets(page)).toHaveCount(surfaces.length);
+  for (const surface of surfaces) await expect(sheets(page).and(page.locator(surface))).toHaveCount(1);
+  const count = surfaces.length;
   for (let index = 0; index < count; index++) {
     const sheet = sheets(page).nth(index);
     await expect(sheet).toHaveAttribute('data-sheet-state', /.+/);

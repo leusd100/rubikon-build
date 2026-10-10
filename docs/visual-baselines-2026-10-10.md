@@ -67,3 +67,7 @@ are recorded in the PR description and the accompanying Ukrainian report.
 Owner review is still required for the baseline contract, especially the low-impact FAQ capture
 shift with an unproven original capture cause. A green check confirms consistency with these
 reviewed captures; it does not prove performance improvement or approve a deployment.
+
+## DrawingSheet composition guard
+
+The completed main regression also failed `drawing-sheet-plot.spec.ts` on all three attempts: it expected at least four sheets on `/angary`, while the current route contains three. `HangarEditorialArchitecture` documents that the frame explanation moved into the configurator sheet on October 7. Require exactly one configurator sheet (`hc-preview-sheet`), one real-object sheet (`angary-real-sheet`), and one cost-factors sheet (`cf-sheet`). Preserve every paper-cover, transform-only, picture-animation and reduced-motion check. This corrects the test's composition premise without adding redundant production markup.
