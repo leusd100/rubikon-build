@@ -355,7 +355,7 @@
 .hc-frame[data-node] [data-tags="2"] { opacity: 0; }
 /* The frame's step reads as one frame: what stands behind it steps further back than on the other steps */
 .hc-frame.ft[data-step="2"] :is(.ft-back, .ft-opening) { opacity: .28; }
-.hc-frame.ft[data-step="2"] :is(.ft-footing, .ft-slab) { opacity: .35; }
+.hc-frame.ft[data-step="2"] :is(.ft-footing, .ft-footing-top, .ft-slab, .ft-ground) { opacity: .35; }
 .hc-frame-node-number {
   display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 7px; border: 1px solid currentColor;
   border-radius: 50%; font: 700 10.5px/1 var(--font-condensed), sans-serif;
@@ -480,7 +480,7 @@
 .hc-frame:not([data-step]) .ft-brace-far { stroke: var(--color-accent); opacity: .5; }
 .hc-frame:not([data-step]) :is(.ft-back, .ft-opening) { opacity: .55; }
 .hc-frame:not([data-step]) .ft-thin { opacity: .6; }
-.hc-frame:not([data-step]) :is(.ft-footing, .ft-slab) { opacity: .7; }
+.hc-frame:not([data-step]) :is(.ft-footing, .ft-footing-top, .ft-slab, .ft-ground) { opacity: .7; }
 
 /* The frame's captions on a phone (08.10, review): «Металева ферма · Центральний ряд опор» took a second line and the
    title block grew 15 px under the drawing from one step to the next. Two lines are kept for every frame caption, as the

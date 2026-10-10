@@ -12,6 +12,9 @@ import {
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { TourProgress } from '../directions/TourParts';
 import { keepShortWords } from '../../lib/typography';
+import {
+  AX, DIR, around, crosses, overlaps, roofHeight, roofMembersAt, union, unit, within, type Box, type P3, type Pt, type Segment,
+} from './dimetric';
 import { endWallFraming, sheetOpenings } from './endWallFraming';
 import './frame-tour.css';
 
@@ -21,7 +24,9 @@ import './frame-tour.css';
 // dimetric (the span at 7°, true size; the length at 41°, half size — so the gable keeps its shape): columns,
 // trusses or rafters, purlins on the roof, wall purlins on the side and end walls, the end wall’s posts around its gates
 // and door (endWallFraming.ts, 04.10), bracing in the braced bays it shows, the coordinate axes with their bubbles, and
-// the footings drawn dashed, because their type is the designer's.
+// the footings under the ground line — since 10.10 a schematic pad foundation, dashed below the ground, because their
+// type is the designer's (the note over the drawing says «умовно»). Its projection and frame members are shared with
+// the general view (dimetric.ts), so the two read as one set of drawings.
 //
 // Five steps, the camera pushing in as on the direction nodes: the span, the frame, purlins and bracing — then two
 // loads followed through the structure link by link, each link lighting in copper with its name in the legend above
@@ -34,11 +39,6 @@ import './frame-tour.css';
 // Since 07.10 the drawing is the configurator's «Каркас» step (ConfiguratorFrameView), not a section of its own: this
 // file keeps its model and its picture; the section and its «Змінити габарити ↑» link are gone.
 
-type P3 = readonly [number, number, number];
-type Pt = readonly [number, number];
-/** A box on the sheet: left, top, right, bottom */
-type Box = readonly [number, number, number, number];
-type Segment = readonly [Pt, Pt];
 const VIEW = { width: 720, height: 440 };
 /** Bays drawn at most; a longer building continues past a break */
 const BAYS = 3;
@@ -78,34 +78,6 @@ const OVERVIEW_CAPTION = 'Каркас · попередня схема';
 const HALO = (5 * 1.55) / 2;
 const n = (value: number) => value.toFixed(1);
 const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), high);
-
-/** Dimetric axes on the sheet: x — across the span, right and a little down; d — along the building, right and up */
-const AX = [Math.cos((7.18 * Math.PI) / 180), Math.sin((7.18 * Math.PI) / 180)] as const;
-const AD = [0.5 * Math.cos((41.42 * Math.PI) / 180), -0.5 * Math.sin((41.42 * Math.PI) / 180)] as const;
-/** The unit along +d on the sheet, and its normal: the wind arrows' heads */
-const DIR = [AD[0] / 0.5, AD[1] / 0.5] as const;
-const unit = ([x, d, z]: P3) => [x * AX[0] + d * AD[0], x * AX[1] + d * AD[1] - z] as const;
-
-const union = (boxes: readonly Box[]): Box => [
-  Math.min(...boxes.map((box) => box[0])), Math.min(...boxes.map((box) => box[1])),
-  Math.max(...boxes.map((box) => box[2])), Math.max(...boxes.map((box) => box[3])),
-];
-const around = ([x, y]: Pt, rx: number, ry = rx): Box => [x - rx, y - ry, x + rx, y + ry];
-const overlaps = (a: Box, b: Box) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
-const within = (a: Box, b: Box) => a[0] >= b[0] && a[1] >= b[1] && a[2] <= b[2] && a[3] <= b[3];
-/** Whether a segment runs through a box (Liang–Barsky) */
-function crosses([[x0, y0], [x1, y1]]: Segment, [left, top, right, bottom]: Box) {
-  const [dx, dy] = [x1 - x0, y1 - y0];
-  let [low, high] = [0, 1];
-  for (const [p, q] of [[-dx, x0 - left], [dx, right - x0], [-dy, y0 - top], [dy, bottom - y0]] as const) {
-    if (p === 0) {
-      if (q < 0) return false;
-    } else if (p < 0) low = Math.max(low, q / p);
-    else high = Math.min(high, q / p);
-    if (low > high) return false;
-  }
-  return true;
-}
 
 /** A step's camera: pushed in on its focus as far as `zoom`, eased back and moved over just enough to hold `box` whole —
  *  what a step names never leaves its window (03.10). The window is the picture's 720 × 440 over the zoom, kept inside
@@ -222,7 +194,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const end = continues ? DEP + s * 0.45 : DEP;
   const truss = domain.structural.roofStructure === 'truss';
   const centre = domain.structural.scheme === 'centerSupport';
-  const roofZ = (x: number) => E + (R - E) * (1 - Math.abs(x - W / 2) / (W / 2));
+  const roofZ = roofHeight(W, E, R);
   const columnXs = centre ? [0, W / 2, W] : [0, W];
   // The configurator's own model: its gates and door on this end wall — on the same side of the centre as the general
   // view and the 3D show them, and only with walls in the request (09.10, sheetOpenings) — and the bays it braces
@@ -274,23 +246,9 @@ function frameGeometry(domain: HangarDomainModel) {
 
   // ── the frame ──
   const columnsAt = (d: number, xs: readonly number[] = columnXs) => xs.map((x) => line([x, d, 0], [x, d, E])).join('');
-  const knee = Math.min(1.6, W / 8);
-  const roofAt = (d: number) => truss
-    ? [
-      line([0, d, E], [W / 2, d, R], [W, d, E]),
-      line([0, d, E], [W, d, E]),
-      // the web: odd panel points on the top chord, even ones on the bottom chord (the centre among them, where a centre
-      // column lands); from the first panel point to the last — the heel's would lie on the chords — and a vertical under
-      // the ridge, which makes the ridge a node
-      `M${panelXs.slice(1, -1).map((x, index) => p([x, d, index % 2 === 0 ? roofZ(x) : E])).join('L')}`,
-      line([W / 2, d, E], [W / 2, d, R]),
-    ].join('')
-    : [
-      line([0, d, E], [W / 2, d, R], [W, d, E]),
-      // haunches at the knees
-      line([0, d, E - knee * 0.75], [knee, d, roofZ(knee)]),
-      line([W, d, E - knee * 0.75], [W - knee, d, roofZ(W - knee)]),
-    ].join('');
+  // the truss with its web, or the portal frame's rafters with their haunches (dimetric.ts, shared with the general view's
+  // frame where a surface is not clad, 10.10)
+  const roofAt = (d: number) => roofMembersAt(d, { W, E, R, truss, panelXs }).map((points) => line(...points)).join('');
   const backFrames = frames.slice(1).map((d) => `${columnsAt(d)}${roofAt(d)}`).join('');
   const zig = (point: P3) => { const [x, y] = xy(point); return `M${n(x)},${n(y)}l4,-7l5,7l4,-7`; };
   const edges: P3[] = [[0, 0, E], [W, 0, E], [W / 2, 0, R], [W, 0, 0], [0, 0, 0]];
@@ -323,37 +281,59 @@ function frameGeometry(domain: HangarDomainModel) {
   const laterBracing = laterBays.map((d) => `${wallCross(W, d)}${roofCrosses(d)}`).join('');
   const laterFarBracing = laterBays.map((d) => wallCross(0, d)).join('');
 
-  // Footings: a dashed box under every column and post (the type is the designer's), its visible edges only
-  const footingAt = (x: number, d: number, b = 0.75) => {
-    const h = 1.1;
+  // Footings (10.10, owner: «це буде справді цікавіше»): a pad foundation under every column and post — a pedestal
+  // (підколонник) under the base on a wider pad (подушка) — in place of the dashed box that stood for it. Below the
+  // ground, so dashed, as hidden edges are; only the pedestal's top, where the column stands, at the ground and solid.
+  // A type hint, the same for every hangar: its type and sizes are the designer's, by the soil and the loads, and the
+  // note over the drawing says so («умовно»). The visible edges only: the pedestal's top, its three near verticals and
+  // its foot on the pad; the pad's top, its three near verticals and its two near lower edges.
+  const PEDESTAL_DEPTH = 0.75;
+  const FOOTING_DEPTH = 1.1;
+  const footingAt = (x: number, d: number, [bx, bd]: Pt = [0.75, 0.75], [px, pd]: Pt = [0.3, 0.3]) => {
+    const [t, h] = [PEDESTAL_DEPTH, FOOTING_DEPTH];
     return {
+      top: line([x - px, d - pd, 0], [x + px, d - pd, 0], [x + px, d + pd, 0], [x - px, d + pd, 0], [x - px, d - pd, 0]),
       d: [
-        line([x - b, d - b, 0], [x + b, d - b, 0], [x + b, d + b, 0], [x - b, d + b, 0], [x - b, d - b, 0]),
-        line([x - b, d - b, 0], [x - b, d - b, -h], [x + b, d - b, -h], [x + b, d + b, -h], [x + b, d + b, 0]),
-        line([x + b, d - b, 0], [x + b, d - b, -h]),
+        line([x - px, d - pd, 0], [x - px, d - pd, -t]), line([x + px, d - pd, 0], [x + px, d - pd, -t]), line([x + px, d + pd, 0], [x + px, d + pd, -t]),
+        line([x - px, d - pd, -t], [x + px, d - pd, -t], [x + px, d + pd, -t]),
+        line([x - bx, d - bd, -t], [x + bx, d - bd, -t], [x + bx, d + bd, -t], [x - bx, d + bd, -t], [x - bx, d - bd, -t]),
+        line([x - bx, d - bd, -t], [x - bx, d - bd, -h], [x + bx, d - bd, -h], [x + bx, d + bd, -h], [x + bx, d + bd, -t]),
+        line([x + bx, d - bd, -t], [x + bx, d - bd, -h]),
       ].join(''),
-      box: union(([[x - b, d - b, 0], [x + b, d + b, 0], [x - b, d - b, -h], [x + b, d + b, -h], [x + b, d - b, -h], [x - b, d + b, -h]] as P3[]).map((point) => around(xy(point), 1))),
+      box: union(([[x - px, d - pd, 0], [x + px, d + pd, 0], [x - bx, d - bd, -t], [x + bx, d + bd, -t], [x - bx, d - bd, -h], [x + bx, d + bd, -h], [x + bx, d - bd, -h], [x - bx, d + bd, -h]] as P3[]).map((point) => around(xy(point), 1))),
     };
   };
-  // The posts' footings: one under two posts that stand closer than their footings are wide (the jambs of two gates
-  // side by side, 04.10), as wide as both
+  // The posts' footings smaller than the columns' — a 1 m pad, a 0.4 m pedestal; one under two posts that stand closer
+  // than their footings are wide (the jambs of two gates side by side, 04.10), its pad and pedestal as wide as both
   const postFootings = postXs.reduce<{ from: number; to: number }[]>((groups, x) => {
     const last = groups.at(-1);
     if (last && x - last.to < 1.1) last.to = x;
     else groups.push({ from: x, to: x });
     return groups;
-  }, []).map(({ from, to }) => ({ x: (from + to) / 2, b: 0.5 + (to - from) / 2 }));
+  }, []).map(({ from, to }) => ({ x: (from + to) / 2, pad: [0.5 + (to - from) / 2, 0.5] as Pt, pedestal: [0.2 + (to - from) / 2, 0.2] as Pt }));
   const footings = [
     ...frames.flatMap((d) => columnXs.map((x) => footingAt(x, d))),
-    ...postFootings.map(({ x, b }) => footingAt(x, 0, b)),
+    ...postFootings.map(({ x, pad, pedestal }) => footingAt(x, 0, pad, pedestal)),
   ];
-  const footingPath = (x: number, d: number, b = 0.75) => footingAt(x, d, b).d;
+  const footingPath = (x: number, d: number, pad?: Pt, pedestal?: Pt) => {
+    const footing = footingAt(x, d, pad, pedestal);
+    return `${footing.top}${footing.d}`;
+  };
   const groundUnder = (points: readonly P3[]) => points.map((point) => {
     const [cx, cy] = xy(point);
     return [9, 16].map((r) => `M${n(cx - r)},${n(cy + r * 0.3)}q${r},${n(r * 0.5)} ${r * 2},0`).join('');
   }).join('');
-  // The ground line along the footings' outer top edges — out at 1.4 m it ran through the side footings (03.10)
+  // The ground line along the footings' outer top edges — out at 1.4 m it ran through the side footings (03.10) — with
+  // a short hatch under it, as a section marks the ground (10.10): strokes at 45° in the line's own vertical plane, the
+  // same length and about the same spacing on the sheet along the front and along the side
   const slab = line([-0.75, -0.75, 0], [W + 0.75, -0.75, 0], [W + 0.75, end, 0]);
+  const hatchLength = 6 / k;
+  const hatchAlong = (from: number, to: number, spacing: number, stroke: (at: number) => string) => {
+    const count = Math.max(1, Math.floor((to - from) / spacing));
+    return Array.from({ length: count }, (_, index) => stroke(from + ((index + 0.5) * (to - from)) / count)).join('');
+  };
+  const groundHatch = hatchAlong(-0.75, W + 0.75, 11 / k, (x) => line([x, -0.75, 0], [x - hatchLength, -0.75, -hatchLength]))
+    + hatchAlong(-0.75, end, 22 / k, (d) => line([W + 0.75, d, 0], [W + 0.75, d - hatchLength, -hatchLength]));
 
   // Dimensions: the span L under the front frame, below its footings (as on a section — in front of them it crossed the
   // foundations, 03.10), the wall height H at the near-left column, the frame spacing a along the side. One way for all
@@ -367,7 +347,15 @@ function frameGeometry(domain: HangarDomainModel) {
   const [, hty] = xy([-2.2, 0, E]);
   const heightDim = `M${n(hx)},${n(hy)}V${n(hty)}${tickAt([hx, hy])}${tickAt([hx, hty])}`
     + `${line([-0.9, 0, 0], [-2.6, 0, 0])}${line([-0.9, 0, E], [-2.6, 0, E])}`;
-  const bayDim = `${line([W + DIM_A, 0, 0], [W + DIM_A, s, 0])}${tick([W + DIM_A, 0, 0])}${tick([W + DIM_A, s, 0])}`
+  // a's ticks at 45° to it in the ground's plane (10.10): the sheet's «/» of the other two lay along a's line, at 41°,
+  // and did not show
+  const groundTick = (point: P3) => {
+    const [tx, ty] = unit([-1, 1, 0]);
+    const length = Math.hypot(tx, ty);
+    const [x, y] = xy(point);
+    return `M${n(x - (tx / length) * 5.7)},${n(y - (ty / length) * 5.7)}l${n((2 * tx / length) * 5.7)},${n((2 * ty / length) * 5.7)}`;
+  };
+  const bayDim = `${line([W + DIM_A, 0, 0], [W + DIM_A, s, 0])}${groundTick([W + DIM_A, 0, 0])}${groundTick([W + DIM_A, s, 0])}`
     + `${line([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0])}${line([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0])}`;
 
   // Coordinate axes, dash-dot, with their bubbles past the dimension lines (03.10): across the span in letters, one after
@@ -450,7 +438,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const braceBases: P3[] = [[0, 0, 0], [0, s, 0], [W, 0, 0], [W, s, 0], ...windPosts.map(({ x }) => [x, 0, 0] as P3)];
   const braceFootings = [
     ...[0, W].flatMap((x) => [footingPath(x, 0), footingPath(x, s)]),
-    ...postFootings.map(({ x, b }) => footingPath(x, 0, b)),
+    ...postFootings.map(({ x, pad, pedestal }) => footingPath(x, 0, pad, pedestal)),
     ...(centre ? [footingPath(W / 2, 0)] : []),
   ].join('');
   // …and the wind's drops: each post from its middle up to the roof and down to its footing; along the roof bracing out
@@ -570,7 +558,7 @@ function frameGeometry(domain: HangarDomainModel) {
 
   return {
     W, lengthM, E, truss, centre,
-    slab, footings: footings.map((footing) => footing.d), backFrames, longitudinals, farEnd, purlins, girts, posts, openingOutlines,
+    slab, groundHatch, footings: footings.map((footing) => footing.d), footingTops: footings.map((footing) => footing.top).join(''), backFrames, longitudinals, farEnd, purlins, girts, posts, openingOutlines,
     wallBracing, farBracing, roofBracing, laterBracing, laterFarBracing,
     windPosts: windPosts.map(({ x, top }) => line([x, 0, 0], [x, 0, top])).join(''),
     // the front frame's columns, the centre row's Б among them: on the span's step it stood stepped back with the frame's
@@ -738,13 +726,16 @@ export function FrameTourStage({
               {WIND_CHAIN.map((link, index) => <li key={link} style={at(index)} data-brace={BRACE_LINKS.has(index) || undefined}>{link}</li>)}
             </ol>
             <p className="ft-note">Деформацію показано умовно, у{'\u00A0'}збільшеному масштабі</p>
+            {/* the drawing's note on what it does not decide (10.10): the footings are a type hint, the designer's to choose —
+                in the band the loads' chains take on their own steps, so it costs the sheet no height */}
+            <p className="ft-remark">Фундаменти показано умовно</p>
           </div>
           {/* the camera's window: the picture's own proportion (on a phone the legend's band sits above it), in a slot that
               on a computer is the height the sheet leaves under the legend, so the window fits it whole (09.10, F15) */}
           <div className="ft-slot">
           <div className="ft-window" ref={visualRef}>
             <div className="dn-stage is-drawing" style={{ transform: stageTransform(size, VIEW, active) }}>
-              <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру`}>
+              <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру; фундаменти показано умовно`}>
                 <defs>
                   <filter id="ft-glow" x="-10%" y="-10%" width="120%" height="120%">
                     <feGaussianBlur stdDeviation="2.2" result="blur" />
@@ -752,7 +743,10 @@ export function FrameTourStage({
                   </filter>
                 </defs>
                 <path className="ft-slab" d={g.slab} />
+                <path className="ft-ground" d={g.groundHatch} />
                 {g.footings.map((d) => <path key={d} className="ft-footing" d={d} />)}
+                {/* where the columns and posts stand on their pedestals, at the ground */}
+                <path className="ft-footing-top" d={g.footingTops} />
                 {/* the axes across the span run through the front columns, under them */}
                 <g className="ft-part" data-part="1">
                   <path className="ft-axis" d={g.spanAxes} />

@@ -12,8 +12,9 @@ import { BUILD_STAGE_ORDER, firstViewStageStartsMs, totalSequenceDurationMs } fr
 // a presentation demo gets the whole drawing at once — `data-build="complete"` turns the fades off while the layers
 // still on their way settle, or the frame, which staggers columns → rafters → purlins, arrived last, after the walls and
 // the roof (03.10). Returns how many stages are requested — all of them unless the first view is armed or playing — for
-// HangarPreview to hold the rest back through its usual layer lifecycle; the 3D view never needs it: switching to it is
-// reaching for a control.
+// the drawing to hold the rest back: HangarPreview through its usual layer lifecycle, /angary's general view
+// (HangarGeneralView, 10.10) as its ground, outline, cladding and openings; the 3D view never needs it: switching to it
+// is reaching for a control.
 
 const ALL_STAGES = BUILD_STAGE_ORDER.length;
 /** The sheet plots its picture in for ~1 s as it arrives (DrawingSheet, from 35 % in view): the foundation, at the

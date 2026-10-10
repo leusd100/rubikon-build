@@ -10,8 +10,12 @@
 .ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
 .ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke .3s ease, opacity .3s ease; }
 .ft-slab { stroke: var(--color-border-strong); stroke-width: calc(1.1px * var(--ft-k)); }
-/* the footings are the designer's: drawn dashed, as «умовно» */
-.ft-footing { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); stroke-dasharray: 4 3; }
+/* The footings are the designer's (10.10): a pad foundation drawn under the ground, its edges dashed as hidden ones are —
+   a finer dash than the 4 3 of the box it replaces, which on the pad's short edges read as dots — and only the
+   pedestal's top, where the column stands, solid at the ground. The ground line has a short hatch under it. */
+.ft-footing { stroke: var(--color-text-muted); stroke-width: calc(.9px * var(--ft-k)); stroke-dasharray: 3 2; }
+.ft-footing-top { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); }
+.ft-ground { stroke: var(--color-border-strong); stroke-width: calc(.8px * var(--ft-k)); }
 .ft-back { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
 /* the end wall's gates and door, outlined as the configurator places them (04.10) */
 .ft-opening { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); }
@@ -98,6 +102,9 @@
 }
 .ft[data-step="4"] .ft-chain[data-load="snow"], .ft[data-step="5"] .ft-chain[data-load="wind"] { visibility: visible; }
 .ft-chain li:not(:last-child)::after { margin-inline: 6px; color: var(--color-text-muted); content: '→'; }
+/* The drawing's standing remark, where the loads' chains are not (10.10): the footings are drawn «умовно» */
+.ft-remark { margin: 0; color: var(--color-text-muted); font: italic 500 12.5px/1.25 var(--font-manrope), sans-serif; }
+.ft:is([data-step="4"], [data-step="5"]) .ft-remark { visibility: hidden; }
 /* …and in its place, while the first bay leans, the note on the deformation */
 .ft-note { margin: 0; color: var(--color-text-secondary); font: italic 500 12.5px/1.25 var(--font-manrope), sans-serif; opacity: 0; pointer-events: none; }
 /* Reduced motion (04.10): the wind's step stands complete — the leaning bay drawn over the braced frame, and its note
@@ -164,7 +171,7 @@
 @media (max-width: 760px) {
   /* a phone's legend in smaller type and closer to the sheet's edge */
   .ft-legend { padding-inline: 8px; }
-  .ft-chain, .ft-note { font-size: 12px; }
+  .ft-chain, .ft-note, .ft-remark { font-size: 12px; }
   .ft-chain li:not(:last-child)::after { margin-inline: 4px; }
 }
 
