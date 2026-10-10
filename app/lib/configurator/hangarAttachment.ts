@@ -16,7 +16,12 @@ import type { ConfiguratorState } from './types';
 // is the visitor's; «Обсяг» as answered («Допоможіть визначити», «Комплекс робіт: …»); gates the sizes leave no room
 // for are named with the reason; «Габарити: Ще уточнюються · орієнтир клієнта …»; no «Утеплення»/«Огородження»
 // without walls and roof; the card's line built from its own sections.
-export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.4.1';
+// 1.4.2 (10.10, audit iteration 4 «Ясно й рівно»): «Обсяг» names the mode — «Комплекс робіт» or «Допоможіть визначити» —
+// and lists the works only for «Окремі роботи», comma-separated: «Фундамент, каркас, стіни, покрівля» (was «Комплекс
+// робіт: Фундамент + Металокаркас + Стіни / огороджувальний контур + Покрівля»); «Огородження» is «Стіни й покрівля»,
+// or «Стіни» / «Покрівля» when only one is asked for; «Основа: Визначити після розрахунку» is «Фундамент: Після
+// розрахунку проєктувальника»; the preliminary scheme says «колон» for «опор» and «Ферма» for «Металева ферма».
+export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.4.2';
 
 /**
  * The hangar configuration as a shared inquiry attachment. The text is formatHangarInquiryBrief verbatim and the
@@ -27,8 +32,9 @@ export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.4.1';
  * sizes are labelled as the defaults, and the form keeps its own «Орієнтовні розміри» field, so the lead's «Габарити»
  * is never the example's 24 × 60 × 8 м on the visitor's behalf.
  */
-// A value after «Назва: » goes lower-case — every item of a list «Фундамент + Металокаркас», not just the first — except
-// a place name, which keeps its capital (08.10: «Область: київська область»)
+// A value after «Назва: » goes lower-case — every item of a list joined by « + », not just the first (since 10.10 a list
+// of works is comma-separated and lower-case after its first word already) — except a place name, which keeps its
+// capital (08.10: «Область: київська область»)
 const KEEPS_CASE = new Set(['Область']);
 function inLine(label: string, value: string): string {
   if (KEEPS_CASE.has(label)) return value;

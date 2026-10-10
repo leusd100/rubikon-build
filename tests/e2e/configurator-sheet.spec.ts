@@ -83,7 +83,7 @@ for (const theme of ['light', 'dark'] as const) {
     // the title block: what is shown and the object — no view switch in it any more (07.10)
     const stamp = sheet.locator('.sheet-stamp');
     await expect(stamp).toContainText('Що показано');
-    await expect(stamp).toContainText('Загальний вид · попередня схема');
+    await expect(stamp).toContainText('Загальний вигляд · попередня схема');
     await expect(stamp).toContainText('Об’єкт');
     await expect(stamp).toContainText('Приклад · 24 × 60 × 8 м');
     // the title block sets its values in capitals, but the metre stays «м»
@@ -97,7 +97,8 @@ for (const theme of ['light', 'dark'] as const) {
     // the technical view carries the cladding's section as a callout on the field, in the sheet's square language
     const section = picture.locator('.hc-section');
     await expect(section).toBeVisible();
-    await expect(section.locator('figcaption')).toHaveText('Переріз огородження · схема');
+    // the surfaces by name (10.10, audit F36)
+    await expect(section.locator('figcaption')).toHaveText('Переріз стіни й покрівлі · схема');
     await expect(section).toHaveCSS('border-radius', '0px');
 
     // 3D is a chip on the drawing, square too
@@ -145,7 +146,7 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(expand).toBeFocused();
     await drawingChipOf(page).click();
     await expect(picture.locator('svg.hc-preview-svg')).toBeVisible();
-    await expect(stamp).toContainText('Загальний вид · попередня схема');
+    await expect(stamp).toContainText('Загальний вигляд · попередня схема');
     await expect(threeChipOf(page)).toBeVisible();
   });
 }
@@ -282,7 +283,7 @@ test('on a phone the mini drawing folds to its sizes’ line and back, and says 
   await expect(layout).toHaveAttribute('data-configuring', '');
   const fold = sheet.getByRole('button', { name: 'Згорнути', exact: true });
   await fold.click();
-  const show = sheet.getByRole('button', { name: 'Показати ескіз', exact: true });
+  const show = sheet.getByRole('button', { name: 'Показати креслення', exact: true });
   await expect(show).toHaveAttribute('aria-expanded', 'false');
   await expect(pictureOf(page)).toBeHidden();
   await expect(readout).toBeVisible();
@@ -680,7 +681,7 @@ test('3D is not offered on «Каркас», does not come back by itself after 
   await page.keyboard.press('Enter');
   await expect(pictureOf(page).locator('svg.hc-preview-svg')).toBeVisible();
   await expect(chip).toBeFocused();
-  await expect(status).toHaveText('Загальний вид · попередня схема');
+  await expect(status).toHaveText('Загальний вигляд · попередня схема');
 
   // opened on «Задача», then «Каркас»: the frame's drawing, and no chip on it
   await chip.click();
@@ -693,7 +694,7 @@ test('3D is not offered on «Каркас», does not come back by itself after 
   await openControlGroup(page, 'scope');
   await expect(pictureOf(page).locator('svg.hc-preview-svg')).toBeVisible();
   await expect(pictureOf(page).locator('canvas')).toHaveCount(0);
-  await expect(sheetOf(page).locator('.sheet-stamp')).toContainText('Загальний вид · попередня схема');
+  await expect(sheetOf(page).locator('.sheet-stamp')).toContainText('Загальний вигляд · попередня схема');
   await expect(chip).toBeVisible();
 });
 
@@ -778,7 +779,7 @@ async function tabHits(page: Page) {
 }
 
 // 09.10, audit F21: scroll anchoring held the steps where they were, so «Згорнути» left a 120–150 px empty band under the
-// folded drawing, and «Показати ескіз» opened it over the tabs. The steps follow the fold now, both ways.
+// folded drawing, and «Показати ескіз» (now «Показати креслення») opened it over the tabs. The steps follow the fold now, both ways.
 for (const reducedMotion of ['reduce', 'no-preference'] as const) {
   test(`on a phone the steps follow the mini drawing's fold, folded and shown again (motion: ${reducedMotion})`, async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit mobile viewport runs once');
@@ -798,7 +799,7 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
     await expect.poll(() => miniToTabs(page)).toBeLessThanOrEqual(16);
     expect(await miniToTabs(page)).toBeGreaterThanOrEqual(0);
 
-    await sheet.getByRole('button', { name: 'Показати ескіз', exact: true }).click();
+    await sheet.getByRole('button', { name: 'Показати креслення', exact: true }).click();
     await expect(pictureOf(page)).toBeVisible();
     await expect.poll(() => miniToTabs(page)).toBeGreaterThanOrEqual(0);
     expect(await miniToTabs(page)).toBeLessThanOrEqual(16);

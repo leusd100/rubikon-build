@@ -33,6 +33,8 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     areaLabel: summary.areaLabel,
     envelopeLabel: summary.envelopeLabel,
     claddingSystemLabel: summary.claddingSystemLabel,
+    // «Стіни й покрівля», or the one surface asked for (10.10, audit F36): the stamp's own row
+    claddingRow: summary.claddingRow,
     structuralVisualizationLabel: summary.structuralVisualizationLabel,
     foundationTypeLabel: summary.foundationTypeLabel,
     scopeSummaryLabel: summary.scopeSummaryLabel,
@@ -50,7 +52,7 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     sizesUnknown: domain.sizesUnknown,
     // «Колони всередині» (07.10): null until answered
     supportsLabel: domain.internalSupports === 'unknown' ? null : INTERNAL_SUPPORTS_LABELS[domain.internalSupports],
-    // without walls and roof there is no envelope to describe: no «Утеплення» or «Огородження» rows (07.10, audit)
+    // without walls and roof there is no envelope to describe: no «Утеплення» or «Стіни й покрівля» rows (07.10, audit)
     enclosed: domain.scope.walls || domain.scope.roof,
   };
 }
@@ -81,7 +83,7 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
     // The ridge the visitor set used to stop here, like the door once did (2026-10); with its slope since 03.10
     { topic: 'dimensions', label: 'Висота в конику', value: brief.ridgeHeightLabel },
     brief.enclosed ? { topic: 'envelope', label: 'Утеплення', value: brief.envelopeLabel } : null,
-    brief.enclosed ? { topic: 'cladding', label: 'Огородження', value: brief.claddingSystemLabel } : null,
+    brief.claddingRow ? { topic: 'cladding', label: brief.claddingRow.label, value: brief.claddingRow.value } : null,
     { topic: 'scope', label: 'Обсяг', value: brief.scopeSummaryLabel },
     brief.gatesLabel === null ? null : { topic: 'openings', label: 'Ворота', value: brief.gatesLabel },
     brief.doorsLabel === null ? null : { topic: 'openings', label: 'Двері', value: brief.doorsLabel },
@@ -119,8 +121,9 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
         value: brief.structuralVisualizationLabel,
       },
       // Not a choice: /angary offers no foundation control, the designer decides it (owner, 03.10) — it sat among the
-      // visitor's answers as «Основа: Визначити після розрахунку» (04.10)
-      { label: 'Основа', value: brief.foundationTypeLabel },
+      // visitor's answers as «Основа: Визначити після розрахунку» (04.10). «Фундамент: Після розрахунку проєктувальника»
+      // since 10.10 (audit F43): in ДБН «основа» is the ground under the foundation, and the infinitive read as an order
+      { label: 'Фундамент', value: brief.foundationTypeLabel },
     ],
   };
 }

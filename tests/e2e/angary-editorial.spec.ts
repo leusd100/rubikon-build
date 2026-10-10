@@ -108,7 +108,7 @@ for (const viewport of viewports) {
     await expect(frameItems).toHaveCount(5);
     await frameItems.nth(1).click();
     await expect(configurator.locator('#hc-frame-panel .hc-frame-text')).toContainText(
-      'Для ширини 24 м у попередній візуалізації показано ферму з центральним рядом опор.',
+      'Для ширини 24 м на попередній схемі показано ферму з центральним рядом колон.',
     );
     // The cost block: the seven factors of the model on the /yak drawing, laid on the «Креслення» sheet, no prices
     await expect(page.locator('#vartist .proc-factors li')).toHaveCount(7);

@@ -137,7 +137,11 @@
 /* A typed size the field had to change says so here; empty, it takes no room */
 .hc-field-note-live:empty { margin: 0; }
 
-/* «Підбирати ухил за шириною»: a text action under the ridge's hint, a full-height target */
+/* «Обсязі робіт» in a step's hint: the way to that step, underlined as a link in the hint's own colour (10.10, audit F32) */
+.hc-note-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.hc-note-link:hover { color: var(--color-accent-strong); }
+
+/* «Повернути ухил за шириною»: a text action under the ridge's hint, a full-height target */
 .hc-field-reset {
   display: inline-flex;
   align-items: center;
@@ -195,8 +199,9 @@
 
 /* ── Quiet type (07.10) ───────────────────────────────────────────────────────────────────────────────────────────────
    Capitals stay in the drawing's title block, where a drawing has them; in the controls the words are set as words —
-   25 to 29 capitalised labels spoke at once. A step with one group needs no heading of its own: the tab names it. */
-.hc-control-group h3 { font: 700 15px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+   25 to 29 capitalised labels spoke at once. A step with one group needs no heading of its own: the tab names it.
+   A group's heading is 17 px, a step up from a field's 14 px name (10.10, audit F51: at 15 px the two read alike). */
+.hc-control-group h3 { font: 700 17px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 .hc-step-panel > .hc-control-group:only-of-type > h3 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 760px) {
   .hc-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -256,8 +261,11 @@
 .hc-more > summary::after { content: '+' / ''; color: var(--color-text-muted); font: 400 20px/1 var(--font-manrope), sans-serif; }
 .hc-more[open] > summary::after { content: '\2212' / ''; }
 .hc-more > summary:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
-/* «Каркас»: the step's questions, then how the frame works */
-.hc-frame-heading { margin: 0 0 12px; padding-top: 18px; border-top: 1px solid var(--color-border); font: 700 15px/1.2 var(--font-manrope), sans-serif; }
+/* The ridge's field is named by its fold, «Змінити висоту в конику»: its own «Висота в конику» stays for a screen reader
+   only (10.10, audit F51) */
+.hc-more .hc-field-head > label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* «Каркас»: the step's questions, then how the frame works — a group's heading, as large (10.10, audit F51) */
+.hc-frame-heading { margin: 0 0 12px; padding-top: 18px; border-top: 1px solid var(--color-border); font: 700 17px/1.2 var(--font-manrope), sans-serif; }
 .hc-scope-list { margin-top: 14px; }
 
 /* ── Beauty pass (07.10) ──────────────────────────────────────────────────────────────────────────────────────────────

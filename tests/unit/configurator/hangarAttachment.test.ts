@@ -14,21 +14,22 @@ const plain = (text: string) => text.replaceAll('\u00A0', ' ');
 // details.configuration for the untouched example attached through «Обговорити цю конфігурацію», as the lead reads it
 // since 1.4.1 (08.10, audit iteration 1): nothing in it is the visitor's, so every value sits under «Не уточнено
 // клієнтом» — the manager reads the site's example as the example, not as an answer. The ridge row (1.1.0) with its
-// slope (1.2.0), «Основа» among the preliminary data and «одні / двоє» gates (1.3.0), «Утеплення» in place of «Контур»
-// and the scope as answered (1.4.x).
+// slope (1.2.0), the foundation among the preliminary data and «одні / двоє» gates (1.3.0), «Утеплення» in place of
+// «Контур» and the scope as answered (1.4.x). 1.4.2 (10.10): «Стіни й покрівля» for «Огородження», the scope by its mode
+// with one colon, «Фундамент: Після розрахунку проєктувальника» for «Основа: Визначити після розрахунку», «колон».
 const DEFAULT_CONFIGURATION_TEXT = [
   'Не уточнено клієнтом (значення прикладу на сайті):',
   'Габарити: 24 × 60 × 8 м',
   'Висота в конику: 10,6 м · ухил ≈ 12°',
   'Утеплення: Без утеплення',
-  'Огородження: Профнастил',
-  'Обсяг: Комплекс робіт: Фундамент + Металокаркас + Стіни / огороджувальний контур + Покрівля',
+  'Стіни й покрівля: Профнастил',
+  'Обсяг: Комплекс робіт',
   'Ворота: Одні стандартні, 4 × 4 м',
   'Двері: Не передбачені',
   'Попередні дані:',
   'Площа забудови: ≈ 1 440 м²',
-  'Попередня конструктивна схема: Металева ферма · Центральний ряд опор',
-  'Основа: Визначити після розрахунку',
+  'Попередня конструктивна схема: Ферма · Центральний ряд колон',
+  'Фундамент: Після розрахунку проєктувальника',
 ].join('\n');
 
 const answeredProfile = { purpose: 'storage', project: 'none', region: 'Київська область', lifting: 'unknown' } as const;
@@ -46,7 +47,7 @@ const variants: Record<string, { state: ConfiguratorState; ownSizes: boolean }> 
 };
 
 describe('createHangarAttachment', () => {
-  it('sends the untouched example as the example (1.4.1)', () => {
+  it('sends the untouched example as the example (1.4.2)', () => {
     expect(plain(createHangarAttachment(DEFAULT_CONFIGURATOR_STATE).text)).toBe(DEFAULT_CONFIGURATION_TEXT);
   });
 
@@ -78,8 +79,8 @@ describe('createHangarAttachment', () => {
 });
 
 describe('createHangarAttachment — the card’s title and line (03.10; built from its sections 08.10)', () => {
-  it('is version 1.4.1', () => {
-    expect(HANGAR_CONFIGURATOR_VERSION).toBe('hangar-configurator@1.4.1');
+  it('is version 1.4.2', () => {
+    expect(HANGAR_CONFIGURATOR_VERSION).toBe('hangar-configurator@1.4.2');
   });
 
   it('the untouched example says it is the example from the drawing', () => {
@@ -132,12 +133,31 @@ describe('createHangarAttachment — the card’s title and line (03.10; built f
     expect(plain(attachment.text)).toBe(DEFAULT_CONFIGURATION_TEXT);
   });
 
-  it('without walls and roof there is no «Утеплення» or «Огородження», and the line is the answered scope', () => {
+  it('without walls and roof there is no «Утеплення» or «Стіни й покрівля», and the line is the answered scope', () => {
     const attachment = createHangarAttachment({ ...DEFAULT_CONFIGURATOR_STATE, scopeMode: 'partial', scope: ['foundation', 'frame'] });
-    // every item of the list in lower case after «Обсяг:» (08.10: «фундамент + Металокаркас»)
-    expect(plain(attachment.headline)).toBe('Обсяг: фундамент + металокаркас');
-    expect(attachment.text).not.toMatch(/Утеплення|Огородження|Контур/);
-    expect(plain(attachment.text)).toContain('Обсяг: Фундамент + Металокаркас');
+    // every item of the list in lower case after «Обсяг:» (08.10: «фундамент + Металокаркас»; a comma list since 10.10)
+    expect(plain(attachment.headline)).toBe('Обсяг: фундамент, каркас');
+    expect(attachment.text).not.toMatch(/Утеплення|Стіни й покрівля|Огородження|Контур/);
+    expect(plain(attachment.text)).toContain('Обсяг: Фундамент, каркас');
+  });
+
+  it('one colon after «Обсяг», whatever the mode (10.10, audit F43: «Обсяг: Комплекс робіт: …»)', () => {
+    for (const scopeMode of ['full', 'partial', 'help'] as const) {
+      const lines = createHangarAttachment({ ...DEFAULT_CONFIGURATOR_STATE, scopeMode, confirmed: ['scope'] }).text.split('\n');
+      const scope = lines.find((line) => line.startsWith('Обсяг:'));
+      expect(scope?.split(':')).toHaveLength(2);
+    }
+  });
+
+  it('the cladding row is named by the surfaces asked for (10.10, audit F36)', () => {
+    const rowOf = (state: ConfiguratorState) => createHangarAttachment({ ...state, confirmed: ['cladding'] }).sections
+      .flatMap((section) => section.rows)
+      .find((row) => ['Стіни й покрівля', 'Стіни', 'Покрівля'].includes(row.label));
+    expect(rowOf(DEFAULT_CONFIGURATOR_STATE)).toEqual({ label: 'Стіни й покрівля', value: 'Профнастил' });
+    expect(rowOf({ ...DEFAULT_CONFIGURATOR_STATE, wallSystem: 'sandwich-panel' }))
+      .toEqual({ label: 'Стіни й покрівля', value: 'Стіни\u00A0— сендвіч-панель, покрівля\u00A0— профнастил' });
+    expect(rowOf({ ...DEFAULT_CONFIGURATOR_STATE, scopeMode: 'partial', scope: ['frame', 'roof'] })).toEqual({ label: 'Покрівля', value: 'Профнастил' });
+    expect(rowOf({ ...DEFAULT_CONFIGURATOR_STATE, scopeMode: 'partial', scope: ['frame', 'walls'] })).toEqual({ label: 'Стіни', value: 'Профнастил' });
   });
 
   it('sizes not known yet say so in the line, with the visitor’s orientation', () => {

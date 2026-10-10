@@ -16,7 +16,8 @@ function notesFor(overrides: Partial<ConfiguratorState>) {
   };
 }
 
-const STRUCTURE = 'У попередній схемі: металева ферма · центральний ряд опор';
+// «ферма», «колон» (10.10, audit F37)
+const STRUCTURE = 'У попередній схемі: ферма · центральний ряд колон';
 
 // 08.10, after the audit: a note only for what the visitor answered. The example's values say nothing about the cost.
 describe('/angary cost factor notes (04.10; answered only 08.10)', () => {
@@ -53,7 +54,7 @@ describe('/angary cost factor notes (04.10; answered only 08.10)', () => {
 
   it('say walls and roof are outside the request rather than «холодний, поза обсягом заявки»', () => {
     const notes = notesFor({ scopeMode: 'partial', scope: ['foundation', 'frame'] });
-    expect(notes?.insulation).toBe('Стіни й покрівля поза обсягом заявки');
+    expect(notes?.insulation).toBe('Стіни й покрівля поза обсягом робіт');
     // no walls, no openings in the request: no gate note
     expect(notes?.technology).toBeUndefined();
   });

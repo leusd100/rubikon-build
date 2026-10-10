@@ -62,8 +62,9 @@ export const PURPOSE_LABELS: Record<HangarPurpose, string> = {
 };
 export const PURPOSE_ORDER: HangarPurpose[] = ['storage', 'machinery', 'production', 'agricultural', 'other'];
 
+// The chips under «Чи є у вас проєкт?»: «Є», not «Є проєкт» (10.10, audit F42 — «Проєкт» three times in a row)
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
-  ready: 'Є проєкт',
+  ready: 'Є',
   inProgress: 'Готується',
   none: 'Ще немає',
   unknown: 'Ще не знаю',

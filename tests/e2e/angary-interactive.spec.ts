@@ -121,7 +121,7 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await expect(stamp).toContainText('Ваш ангар · 16 × 60 × 8 м');
   await expect(items.nth(1)).toHaveText('Рама');
   await items.nth(1).click();
-  await expect(text).toContainText('Для ширини 16 м у попередній візуалізації показано портальну раму');
+  await expect(text).toContainText('Для ширини 16 м на попередній схемі показано портальну раму');
   // a clear span's two axes are lettered in sequence, А and Б (04.10: А and В skipped Б)
   await items.nth(0).click();
   await expect(text).toHaveText('Проліт L — відстань між осями крайніх колон А і Б: 16 м у вашій конфігурації. Усередині колон немає. H — висота стіни.');
@@ -489,12 +489,14 @@ test('the summary carries the scope-aware choices; the foundation is not the vis
   await page.getByRole('radiogroup', { name: 'Стіни' }).getByText('Сендвіч-панель', { exact: true }).click();
   // 07.10: «Утеплення» stays the thermal answer, and says where the panels bring insulation; the materials one by one
   await expect(stampFact(page, 'Утеплення')).toHaveText('Лише в стінах (сендвіч-панелі)');
-  await expect(stampFact(page, 'Огородження')).toHaveText('Стіни: Сендвіч-панель, покрівля: Профнастил');
+  // the cladding by its surfaces (10.10, audit F36), each named when they differ
+  await expect(stampFact(page, 'Стіни й покрівля')).toHaveText('Стіни — сендвіч-панель, покрівля — профнастил');
 
   await chooseSeparateWorks(page);
-  await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
+  await page.getByRole('checkbox', { name: 'Стіни', exact: true }).uncheck();
   await expect(page.locator('.hc-summary-flagship .hc-summary-facts')).not.toContainText('Ворота');
-  await expect(stampFact(page, 'Огородження')).toHaveText('Покрівля: Профнастил');
+  // the one surface asked for names the row
+  await expect(stampFact(page, 'Покрівля')).toHaveText('Профнастил');
   // the foundation type is not the visitor's choice on /angary (owner, 03.10)
   await expect(page.locator('#hc-foundation-heading, input[name="hc-foundation-type"]')).toHaveCount(0);
 });
@@ -542,7 +544,7 @@ test('on a phone the model stays under the header while the parameters are set, 
   await expect(stage.locator('.sheet-image')).toBeHidden();
   await expect(stage.locator('.hc-sheet-readout')).toContainText('24 × 60 × 8 м');
   expect(await stage.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(stageHeight);
-  const unfold = stage.getByRole('button', { name: 'Показати ескіз', exact: true });
+  const unfold = stage.getByRole('button', { name: 'Показати креслення', exact: true });
   await expect(unfold).toHaveAttribute('aria-expanded', 'false');
   await unfold.click();
   await expect(stage.locator('.sheet-image')).toBeVisible();
@@ -705,9 +707,10 @@ test('on a phone the steps walk one panel at a time: numbered tabs, the open ste
     await expect(tab).toHaveAttribute('aria-selected', index === 0 ? 'true' : 'false');
     await expect(page.locator(`#hc-step-${step.id}`)).toBeVisible({ visible: index === 0 });
   }
-  // a group is still named by its title alone
-  await expect(page.locator('section[data-group="dimensions"]')).toHaveAttribute('aria-labelledby', 'hc-dimensions-heading');
-  await expect(page.locator('#hc-dimensions-heading')).toHaveText('Розміри');
+  // a group is no named region (10.10, audit F133: «Задача» was heard as the tab, the region and the heading), and its
+  // heading says the tab's word
+  await expect(page.locator('section[data-group="dimensions"]')).not.toHaveAttribute('aria-labelledby', /./);
+  await expect(page.locator('#hc-dimensions-heading')).toHaveText('Габарити');
 
   // one at a time: «Далі» opens «Габарити», closes «Задача», and the tabs are not left under the mini drawing
   const next = page.locator('#hc-step-task .hc-step-next');
@@ -762,10 +765,10 @@ test('on a wide screen the configurator walks the same steps, one panel at a tim
   await expect(page.locator('#hc-step-task h3')).toHaveText(['Задача']);
   // each step's groups under their plain headings; no foundation on /angary (owner, 03.10)
   await openControlGroup(page, 'envelope');
-  await expect(page.locator('#hc-step-shell h3')).toHaveText(['Чи потрібне утеплення?', 'Матеріали', 'Ворота й двері']);
+  await expect(page.locator('#hc-step-shell h3')).toHaveText(['Чи потрібне утеплення?', 'Стіни й покрівля', 'Ворота й двері']);
   await expect(controls.locator('.hc-step-panel:visible')).toHaveCount(1);
   await openControlGroup(page, 'scope');
-  await expect(page.locator('#hc-step-check h3')).toHaveText(['Обсяг робіт', 'Проєкт']);
+  await expect(page.locator('#hc-step-check h3')).toHaveText(['Обсяг робіт', 'Чи є у вас проєкт?']);
   // the arrow keys move between the tabs (the tabs pattern)
   await page.locator('#hc-step-check-tab').focus();
   await page.keyboard.press('ArrowLeft');
@@ -822,7 +825,8 @@ test('an unedited ridge keeps the span rule’s slope as the width changes; an e
   const ridge = page.locator('#hc-dimension-ridge');
   const area = page.locator('.hc-stamp-row .hc-summary-area');
   await expect(area).toContainText('коник 10,6 м · ухил ≈ 12°');
-  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('Коник 10,6 м · ухил ≈ 12° (22 %)');
+  // the range and the slope, no repeated number and no percent (10.10, audit F102)
+  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('Від 9,1 до 12,3 м. Ухил ≈ 12° — підібраний за шириною ангара.');
   // the ridge is a refinement, not a first question (07.10): folded until asked for
   await expect(ridge).toBeHidden();
   await page.locator('#hc-step-size details.hc-more summary').click();
@@ -838,12 +842,12 @@ test('an unedited ridge keeps the span rule’s slope as the width changes; an e
 
   await ridge.fill('13');
   await ridge.blur();
-  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('ваше значення');
+  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('за вашою висотою в конику');
   await setWidth(page, '40');
   await expect(ridge).toHaveValue('13');
   // an edited ridge stays unfolded, with the way back to the span rule
   await expect(ridge).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Підбирати ухил за шириною', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Повернути ухил за шириною', exact: true })).toBeVisible();
   const brief = attachmentCard(page);
   await brief.getByText('Переглянути параметри', { exact: true }).click();
   await expect(brief).toContainText('Висота в конику13 м · ухил ≈ 14°');
@@ -862,7 +866,8 @@ test.describe('without JavaScript', () => {
     await expect(controls.locator('.hc-steps')).toBeHidden();
     await expect(controls.locator('.hc-step-nav:visible')).toHaveCount(0);
     await expect(controls.locator('.hc-control-group h3')).toHaveText([
-      'Задача', 'Розміри', 'Чи потрібне утеплення?', 'Матеріали', 'Ворота й двері', 'Простір усередині', 'Обсяг робіт', 'Проєкт',
+      'Задача', 'Габарити', 'Чи потрібне утеплення?', 'Стіни й покрівля', 'Ворота й двері', 'Простір усередині', 'Обсяг робіт',
+      'Чи є у вас проєкт?',
     ]);
     for (const heading of await controls.locator('.hc-control-group h3').all()) await expect(heading).toBeVisible();
   });

@@ -32,7 +32,8 @@ export function costFactorNotes(domain: HangarDomainModel): CostFactorNotes | un
   if (sizes === 'own') notes.dimensions = `У вашій конфігурації: ${summary.dimensionsLabel}, коник ${summary.ridgeHeightLabel}`;
   if (sizes === 'approx') notes.dimensions = `Орієнтовно: ${summary.dimensionsLabel} — розміри уточнюємо`;
   const enclosed = domain.scope.walls || domain.scope.roof;
-  if (!enclosed) notes.insulation = 'Стіни й покрівля поза обсягом заявки';
+  // the scope's one name, the step's (10.10, audit F32)
+  if (!enclosed) notes.insulation = 'Стіни й покрівля поза обсягом робіт';
   else if (!fromExample('envelope') || !fromExample('cladding')) {
     // the whole cladding line in lower case, as the step header has it: «стіни: профнастил, покрівля: сендвіч-панель»
     notes.insulation = `У вашій конфігурації: ${lowerFirst(summary.envelopeLabel)}, ${summary.claddingSystemLabel.toLowerCase()}`;

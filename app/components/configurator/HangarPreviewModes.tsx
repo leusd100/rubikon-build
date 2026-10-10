@@ -47,8 +47,9 @@ const ThreeHangarView = lazy(() => import('./three/ThreeHangarView'));
 
 type Mode = 'technical' | 'frame' | 'three';
 
-/** «Що показано» in the sheet's title block for the general view and the 3D */
-const GENERAL_SHOWN = 'Загальний вид · попередня схема';
+/** «Що показано» in the sheet's title block for the general view and the 3D. «Загальний вигляд», as drawings say it
+ *  (10.10, audit F39: «вид» is a calque here); the «·» keeps to it, so a 320 px sheet's second line does not start with it */
+const GENERAL_SHOWN = 'Загальний вигляд\u00A0· попередня схема';
 const THREE_SHOWN = '3D-модель · попередня схема';
 
 /** The title block sets its values in capitals; the metre stays a lower-case «м» (drawing-sheet.css .sheet-unit) */
@@ -171,7 +172,7 @@ export function HangarPreviewModes({
   const [wallPreset, setWallPreset] = useState<WallPresetId>(sheet ? 'light-grey' : DEFAULT_WALL_PRESET);
   const [roofPreset, setRoofPreset] = useState<RoofPresetId>(sheet ? 'light-grey' : DEFAULT_ROOF_PRESET);
   // «Що показано» in the «Каркас» view: the step or the node on show (ConfiguratorFrameView)
-  const [frameCaption, setFrameCaption] = useState('Каркас, прогони й в’язі');
+  const [frameCaption, setFrameCaption] = useState('Каркас · попередня схема');
   const [showScaleFigure, setShowScaleFigure] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   // The phone's mini drawing folds to its sizes' line on request (07.10): over a step's fields it took a third of the
@@ -409,7 +410,8 @@ export function HangarPreviewModes({
           // shown only by the phone's mini drawing (configurator-sheet.css)
           action={(
             <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={toggleMiniFold}>
-              {miniFolded ? 'Показати ескіз' : 'Згорнути'}
+              {/* the picture is «креслення» everywhere (10.10, audit F101: «ескіз» here only) */}
+              {miniFolded ? 'Показати креслення' : 'Згорнути'}
             </button>
           )}
         >

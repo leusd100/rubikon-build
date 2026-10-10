@@ -25,9 +25,11 @@ describe('deriveSummary', () => {
     expect(summary.areaSqm).toBe(1440);
     expect(summary.areaLabel).toBe(nb('≈_1\u00A0440_м²'));
     expect(summary.headlineLabel).toBe(nb('24_×_60_×_8_м_· Без утеплення'));
+    // «колон», as the step asks it, on a «схема» (10.10, audit F37, F101)
     expect(summary.structuralVisualizationDescription).toBe(
-      nb('Для ширини 24_м у попередній візуалізації показано ферму з центральним рядом опор.'),
+      nb('Для ширини 24_м на попередній схемі показано ферму з центральним рядом колон.'),
     );
+    expect(summary.structuralVisualizationLabel).toBe('Ферма · Центральний ряд колон');
   });
 
   it('recalculates area as width × length whenever a dimension changes', () => {
@@ -71,8 +73,15 @@ describe('deriveSummary', () => {
   it('lists scope items in a fixed reading order regardless of toggle order', () => {
     const summary = summaryFor({ scopeMode: 'partial' as const, scope: ['roof', 'foundation', 'walls'] });
 
-    expect(summary.scopeLabels).toEqual(['Фундамент', 'Стіни / огороджувальний контур', 'Покрівля']);
-    expect(summary.scopeSummaryLabel).toBe('Фундамент + Стіни / огороджувальний контур + Покрівля');
+    expect(summary.scopeLabels).toEqual(['Фундамент', 'Стіни', 'Покрівля']);
+    // the steps' own names, as a sentence lists them (10.10, audit F35)
+    expect(summary.scopeSummaryLabel).toBe('Фундамент, стіни, покрівля');
+  });
+
+  it('names the scope by its mode, and lists the works only when the visitor picked them (10.10, audit F35)', () => {
+    expect(summaryFor({}).scopeSummaryLabel).toBe('Комплекс робіт');
+    expect(summaryFor({ scopeMode: 'help' as const }).scopeSummaryLabel).toBe('Допоможіть визначити');
+    expect(summaryFor({ scopeMode: 'partial' as const }).scopeSummaryLabel).toBe('Фундамент, каркас, стіни, покрівля');
   });
 
   it('says so plainly when no scope item is selected, instead of an empty string', () => {
@@ -174,7 +183,7 @@ describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 
     // disabled rather than cleared, and returns with the walls.
     expect(summary.gatesLabel).toBeNull();
     expect(summary.doorsLabel).toBeNull();
-    expect(summary.openingsLabel).toBe('Поза обсягом заявки');
+    expect(summary.openingsLabel).toBe('Поза обсягом робіт');
   });
 
   it('restores them as soon as walls are ordered again', () => {
@@ -195,15 +204,25 @@ describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 
   it('names only the clad surfaces the customer is asking for', () => {
     expect(summaryFor({ ...noWalls }).claddingSystemLabel).toMatch(/^Покрівля: /);
     expect(summaryFor({ scopeMode: 'partial' as const, scope: ['foundation', 'frame', 'walls'] }).claddingSystemLabel).toMatch(/^Стіни: /);
-    expect(summaryFor({ scopeMode: 'partial' as const, scope: ['foundation', 'frame'] }).claddingSystemLabel).toBe('Поза обсягом заявки');
+    expect(summaryFor({ scopeMode: 'partial' as const, scope: ['foundation', 'frame'] }).claddingSystemLabel).toBe('Поза обсягом робіт');
     // Both in scope and agreeing: still the single combined label, unchanged.
     expect(summaryFor({}).claddingSystemLabel).not.toContain(':');
+  });
+
+  it('names the cladding row by the surfaces asked for, so the value never repeats it (10.10, audit F36)', () => {
+    expect(summaryFor({}).claddingRow).toEqual({ label: 'Стіни й покрівля', value: 'Профнастил' });
+    expect(summaryFor({ ...noWalls }).claddingRow).toEqual({ label: 'Покрівля', value: 'Профнастил' });
+    expect(summaryFor({ scopeMode: 'partial' as const, scope: ['frame', 'walls'], wallSystem: 'sandwich-panel' }).claddingRow)
+      .toEqual({ label: 'Стіни', value: 'Сендвіч-панель' });
+    expect(summaryFor({ roofSystem: 'sandwich-panel' }).claddingRow)
+      .toEqual({ label: 'Стіни й покрівля', value: nb('Стіни_— профнастил, покрівля_— сендвіч-панель') });
+    expect(summaryFor({ scopeMode: 'partial' as const, scope: ['foundation', 'frame'] }).claddingRow).toBeNull();
   });
 
   it('says the contour is outside the request when walls and roof are, and leaves it out of the headline (04.10)', () => {
     // The stamp said «Контур: Холодний» beside «Огородження: Поза обсягом заявки», the route «24 × 60 × 8 м · Холодний»
     const summary = summaryFor({ scopeMode: 'partial' as const, scope: ['foundation', 'frame'] });
-    expect(summary.envelopeLabel).toBe('Поза обсягом заявки');
+    expect(summary.envelopeLabel).toBe('Поза обсягом робіт');
     expect(summary.headlineLabel).toBe(summary.dimensionsLabel);
     // one surface is enough for a contour
     expect(summaryFor({ scopeMode: 'partial' as const, scope: ['frame', 'roof'] }).envelopeLabel).toBe('Без утеплення');

@@ -15,7 +15,8 @@ async function openHangarPage(page: Page) {
   await essentialCookies.click();
 }
 
-/** The ridge is a refinement under «Висота в конику — за потреби», folded until the visitor sets it (07.10) */
+/** The ridge is a refinement under «Змінити висоту в конику» (10.10; was «Висота в конику — за потреби»), folded until
+ *  the visitor sets it (07.10) */
 async function openRidge(page: Page) {
   const more = page.locator('#hc-dimensions-panel details.hc-more');
   if (!(await more.evaluate((details) => (details as HTMLDetailsElement).open))) await more.locator('summary').click();
@@ -145,18 +146,18 @@ test('the cost notes speak only of what the visitor answered, never of the examp
   await expect(stampFact(page, 'Утеплення').locator('dd')).toHaveText('Без утеплення');
   await expect(stampFact(page, 'Утеплення')).not.toContainText('з прикладу');
   // the cladding was not answered: still the example's
-  await expect(stampFact(page, 'Огородження')).toContainText('з прикладу');
+  await expect(stampFact(page, 'Стіни й покрівля')).toContainText('з прикладу');
 
   // walls and roof out of the request: no envelope rows in the stamp, and the note says so
   // «Окремі роботи», clicked as a visitor clicks it: on its label (the drawn square covers the radio itself)
   await openControlGroup(page, 'scope');
   await page.locator('#hc-scope-panel label').filter({ hasText: 'Окремі роботи' }).click();
   await expect(page.getByRole('radio', { name: 'Окремі роботи', exact: true })).toBeChecked();
-  await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
+  await page.getByRole('checkbox', { name: 'Стіни', exact: true }).uncheck();
   await page.getByRole('checkbox', { name: 'Покрівля', exact: true }).uncheck();
   await expect(stampFacts(page)).not.toContainText('Утеплення');
-  await expect(stampFacts(page)).not.toContainText('Огородження');
-  await expect(notes).toContainText('Стіни й покрівля поза обсягом заявки');
+  await expect(stampFacts(page)).not.toContainText('Стіни й покрівля');
+  await expect(notes).toContainText('Стіни й покрівля поза обсягом робіт');
 });
 
 test('openings: «одні / двоє», one sign per size, the door placed where it goes, «Без дверей» on one line', async ({ page }, testInfo) => {
@@ -170,10 +171,14 @@ test('openings: «одні / двоє», one sign per size, the door placed wher
   await expect(stampFact(page, 'Двері').locator('dd')).toHaveText('Одні службові, 1 × 2,1 м');
 
   const doorNote = page.locator('.hc-door-field .hc-field-note');
-  await expect(doorNote).toContainText('поруч із воротами, поза їхнім прорізом');
+  // the place only once a door is chosen, in one short sentence (10.10, audit F104)
+  await expect(doorNote).toContainText('Місце підбираємо автоматично — поруч із воротами, поза колонами');
   await page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^0$/ }).click();
-  await expect(doorNote).toContainText('у торцевій стіні, без перетину з колонами');
+  await expect(doorNote).toContainText('у торцевій стіні, поза колонами');
   await expect(doorNote).not.toContainText('воротами');
+  await page.locator('label:has(input[name="hc-doors"][value="0"])').click();
+  await expect(doorNote).toHaveText('Службові двері 1 × 2,1 м.');
+  await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
 
   // «Без дверей» used to break into two lines in a 68 px tile
   const chips = page.locator('.hc-door-options .hc-option-card span');
@@ -231,22 +236,23 @@ test('the ridge hint says when the sizes hold the ridge, and the span rule can b
   await openHangarPage(page);
   const ridge = page.locator('#hc-dimension-ridge');
   const hint = page.locator('#hc-dimension-ridge-hint');
-  const reset = page.getByRole('button', { name: 'Підбирати ухил за шириною' });
+  const reset = page.getByRole('button', { name: 'Повернути ухил за шириною' });
   await expect(reset).toHaveCount(0);
 
   await typeSize(page, 'ridge', '11,5');
-  await expect(hint).toContainText('Коник 11,5 м · ухил ≈ 16° (29 %) — ваше значення');
+  // the range, then the slope and where it comes from (10.10, audit F102)
+  await expect(hint).toContainText('Ухил ≈ 16° — за вашою висотою в конику');
   await typeSize(page, 'height', '4');
   // held at the range's top, and not called the visitor's
   await expect(ridge).toHaveValue('8,3');
-  await expect(hint).toContainText('Коник 8,3 м · ухил ≈ 20° (36 %) — найвищий для цієї ширини й висоти стін. Ваші 11,5 м повернуться');
-  await expect(hint).not.toContainText('ваше значення');
+  await expect(hint).toContainText('Показано найвищий коник для цих розмірів, ухил ≈ 20°. Ваші 11,5 м повернуться');
+  await expect(hint).not.toContainText('за вашою висотою');
   await typeSize(page, 'height', '8');
   await expect(ridge).toHaveValue('11,5');
 
   await reset.click();
   await expect(ridge).toHaveValue('10,6');
-  await expect(hint).toContainText('Поки ви не задали коник самі');
+  await expect(hint).toContainText('підібраний за шириною ангара');
   await expect(reset).toHaveCount(0);
   // the way back leaves the field open with the new value in sight, and the focus on it (08.10: the fold closed and the
   // focus fell to the page)
@@ -256,7 +262,7 @@ test('the ridge hint says when the sizes hold the ridge, and the span rule can b
   // typing the span rule's own value is the span rule again: it follows the width
   await typeSize(page, 'ridge', '12');
   await typeSize(page, 'ridge', '10,6');
-  await expect(hint).toContainText('Поки ви не задали коник самі');
+  await expect(hint).toContainText('підібраний за шириною ангара');
   await typeSize(page, 'width', '30');
   await expect(ridge).toHaveValue('11');
 });

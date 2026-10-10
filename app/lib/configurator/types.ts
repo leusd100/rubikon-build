@@ -231,8 +231,10 @@ export const CLADDING_SYSTEM_LABELS: Record<CladdingSystem, string> = {
 
 export const CLADDING_SYSTEM_ORDER: CladdingSystem[] = ['profiled-sheet', 'sandwich-panel'];
 
+// «Після розрахунку проєктувальника» (10.10, audit F43): it was «Визначити після розрахунку», an infinitive that read as
+// an order to the reader, under the row name «Основа» — the ground under a foundation in ДБН, not the foundation
 export const FOUNDATION_TYPE_LABELS: Record<FoundationType, string> = {
-  engineeringDecision: 'Визначити після розрахунку',
+  engineeringDecision: 'Після розрахунку проєктувальника',
   slab: 'Монолітна плита',
   isolated: 'Окремі фундаменти під колони',
 };
@@ -244,20 +246,24 @@ export const FOUNDATION_TYPE_ORDER: FoundationType[] = ['engineeringDecision', '
 // Labels for the DERIVED result only now (Phase 3E.1) — there is no radiogroup to order any more,
 // see StructuralScheme/RoofStructure's own doc comments, so the `_ORDER` arrays that used to drive
 // those controls were removed along with them.
+// «колони», the visitor's own word (10.10, audit F37): the step asks «Колони всередині ангара», and the stamp beside it
+// said «Без внутрішніх опор»; «Ферма» as the step and the frame drawing name it, without «Металева»
 export const STRUCTURAL_SCHEME_LABELS: Record<StructuralScheme, string> = {
-  clearSpan: 'Без внутрішніх опор',
-  centerSupport: 'Центральний ряд опор',
+  clearSpan: 'Без внутрішніх колон',
+  centerSupport: 'Центральний ряд колон',
 };
 
 export const ROOF_STRUCTURE_LABELS: Record<RoofStructure, string> = {
   portalRafter: 'Рама',
-  truss: 'Металева ферма',
+  truss: 'Ферма',
 };
 
+// The works as the steps name them (10.10, audit F35): «Каркас» is the step's name, and «Стіни / огороджувальний контур»
+// ran the scope to 2–4 lines while its «контур» took in the roof listed beside it
 export const SCOPE_LABELS: Record<ScopeItem, string> = {
   foundation: 'Фундамент',
-  frame: 'Металокаркас',
-  walls: 'Стіни / огороджувальний контур',
+  frame: 'Каркас',
+  walls: 'Стіни',
   roof: 'Покрівля',
 };
 
