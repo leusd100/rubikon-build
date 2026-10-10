@@ -66,7 +66,8 @@ describe('what a screen reader hears for the picture', () => {
   it('reads the drawing’s figures with a decimal comma, as the sheet shows them', () => {
     const domain = domainWith({ dimensions: { width: 24, length: 60, height: 7.5 } });
     expect(previewDescription('technical', domain.dimensions, 10.06)).toBe(
-      'Схематичний ескіз ангара: 24 на 60 метрів, висота стін 7,5 м, двосхила покрівля, висота в конику приблизно 10,1 м',
+      // the picture is the «креслення», a «попередня схема» (10.10, audit F101: «Схематичний ескіз»)
+      'Креслення ангара, попередня схема: 24 на 60 метрів, висота стін 7,5 м, двосхила покрівля, висота в конику приблизно 10,1 м',
     );
   });
 
