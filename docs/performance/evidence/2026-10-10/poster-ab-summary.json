@@ -1,0 +1,194 @@
+[
+  {
+    "variant": "webp",
+    "run": 1,
+    "time": "2026-10-10T06:30:14.901Z",
+    "score": 0.48,
+    "lcp": 6960.694,
+    "fcp": 2238.056,
+    "tbt": 1212.5180000000005,
+    "cls": 0.001229999489941076,
+    "bytes": 877134,
+    "poster": [
+      {
+        "url": "http://127.0.0.1:4191/media/home-v2/concepts/hero-mobile-band-752w.webp",
+        "sessionTargetType": "page",
+        "protocol": "http/1.1",
+        "cache": "none",
+        "rendererStartTime": 701.687000002712,
+        "networkRequestTime": 705.5010000020266,
+        "networkEndTime": 6909.854000002146,
+        "finished": true,
+        "transferSize": 115368,
+        "resourceSize": 115190,
+        "statusCode": 200,
+        "mimeType": "image/webp",
+        "resourceType": "Image",
+        "priority": "High",
+        "isLinkPreload": true,
+        "experimentalFromMainFrame": true,
+        "entity": "127.0.0.1"
+      }
+    ]
+  },
+  {
+    "variant": "avif",
+    "run": 1,
+    "time": "2026-10-10T06:30:45.371Z",
+    "score": 0.75,
+    "lcp": 6282.197,
+    "fcp": 1754.608,
+    "tbt": 89.52400000000034,
+    "cls": 0.001229999489941076,
+    "bytes": 845269,
+    "poster": [
+      {
+        "url": "http://127.0.0.1:4193/media/home-v2/concepts/hero-mobile-band-752w.webp",
+        "sessionTargetType": "page",
+        "protocol": "http/1.1",
+        "cache": "none",
+        "rendererStartTime": 607.0760000012815,
+        "networkRequestTime": 608.2820000015199,
+        "networkEndTime": 6266.339999999851,
+        "finished": true,
+        "transferSize": 83503,
+        "resourceSize": 83326,
+        "statusCode": 200,
+        "mimeType": "image/avif",
+        "resourceType": "Image",
+        "priority": "High",
+        "isLinkPreload": true,
+        "experimentalFromMainFrame": true,
+        "entity": "127.0.0.1"
+      }
+    ]
+  },
+  {
+    "variant": "avif",
+    "run": 2,
+    "time": "2026-10-10T06:31:14.637Z",
+    "score": 0.76,
+    "lcp": 6284.692,
+    "fcp": 1643.347,
+    "tbt": 71.47100000000046,
+    "cls": 0.001229999489941076,
+    "bytes": 845269,
+    "poster": [
+      {
+        "url": "http://127.0.0.1:4193/media/home-v2/concepts/hero-mobile-band-752w.webp",
+        "sessionTargetType": "page",
+        "protocol": "http/1.1",
+        "cache": "none",
+        "rendererStartTime": 599.769999999553,
+        "networkRequestTime": 606.4119999967515,
+        "networkEndTime": 6273.27499999851,
+        "finished": true,
+        "transferSize": 83503,
+        "resourceSize": 83326,
+        "statusCode": 200,
+        "mimeType": "image/avif",
+        "resourceType": "Image",
+        "priority": "High",
+        "isLinkPreload": true,
+        "experimentalFromMainFrame": true,
+        "entity": "127.0.0.1"
+      }
+    ]
+  },
+  {
+    "variant": "webp",
+    "run": 2,
+    "time": "2026-10-10T06:31:43.853Z",
+    "score": 0.75,
+    "lcp": 6832.63,
+    "fcp": 1673.12,
+    "tbt": 68.33500000000004,
+    "cls": 0.001229999489941076,
+    "bytes": 877134,
+    "poster": [
+      {
+        "url": "http://127.0.0.1:4191/media/home-v2/concepts/hero-mobile-band-752w.webp",
+        "sessionTargetType": "page",
+        "protocol": "http/1.1",
+        "cache": "none",
+        "rendererStartTime": 596.9899999983609,
+        "networkRequestTime": 597.1059999987483,
+        "networkEndTime": 6825.445000000298,
+        "finished": true,
+        "transferSize": 115368,
+        "resourceSize": 115190,
+        "statusCode": 200,
+        "mimeType": "image/webp",
+        "resourceType": "Image",
+        "priority": "High",
+        "isLinkPreload": true,
+        "experimentalFromMainFrame": true,
+        "entity": "127.0.0.1"
+      }
+    ]
+  },
+  {
+    "variant": "webp",
+    "run": 3,
+    "time": "2026-10-10T06:32:13.447Z",
+    "score": 0.73,
+    "lcp": 6827.474,
+    "fcp": 1771.717,
+    "tbt": 130.6199999999999,
+    "cls": 0.001229999489941076,
+    "bytes": 877134,
+    "poster": [
+      {
+        "url": "http://127.0.0.1:4191/media/home-v2/concepts/hero-mobile-band-752w.webp",
+        "sessionTargetType": "page",
+        "protocol": "http/1.1",
+        "cache": "none",
+        "rendererStartTime": 600.7990000024438,
+        "networkRequestTime": 601.0680000036955,
+        "networkEndTime": 6819.058000002056,
+        "finished": true,
+        "transferSize": 115368,
+        "resourceSize": 115190,
+        "statusCode": 200,
+        "mimeType": "image/webp",
+        "resourceType": "Image",
+        "priority": "High",
+        "isLinkPreload": true,
+        "experimentalFromMainFrame": true,
+        "entity": "127.0.0.1"
+      }
+    ]
+  },
+  {
+    "variant": "avif",
+    "run": 3,
+    "time": "2026-10-10T06:32:43.053Z",
+    "score": 0.75,
+    "lcp": 6272.192,
+    "fcp": 1636.095,
+    "tbt": 97.73199999999997,
+    "cls": 0.001229999489941076,
+    "bytes": 845269,
+    "poster": [
+      {
+        "url": "http://127.0.0.1:4193/media/home-v2/concepts/hero-mobile-band-752w.webp",
+        "sessionTargetType": "page",
+        "protocol": "http/1.1",
+        "cache": "none",
+        "rendererStartTime": 601.7170000039041,
+        "networkRequestTime": 601.8260000050068,
+        "networkEndTime": 6254.497000005096,
+        "finished": true,
+        "transferSize": 83503,
+        "resourceSize": 83326,
+        "statusCode": 200,
+        "mimeType": "image/avif",
+        "resourceType": "Image",
+        "priority": "High",
+        "isLinkPreload": true,
+        "experimentalFromMainFrame": true,
+        "entity": "127.0.0.1"
+      }
+    ]
+  }
+]

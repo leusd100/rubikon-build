@@ -10,6 +10,7 @@ type DirectionHeroVideoProps = {
   mobilePoster: string;
   mobilePosterSrcSet?: string;
   mobilePosterSizes?: string;
+  mobilePosterAvif?: { src: string; srcSet: string };
   className?: string;
   clipDurationMs?: number;
   fadeDurationMs?: number;
@@ -26,6 +27,7 @@ export function DirectionHeroVideo({
   mobilePoster,
   mobilePosterSrcSet,
   mobilePosterSizes,
+  mobilePosterAvif,
   className,
   clipDurationMs = 6000,
   fadeDurationMs = DEFAULT_FADE_DURATION_MS,
@@ -147,10 +149,13 @@ export function DirectionHeroVideo({
   return (
     <>
       <link
+        // Preload one supported format, never both. Without AVIF support the
+        // browser skips this typed hint and discovers the high-priority WebP in picture.
         rel="preload"
         as="image"
-        href={mobilePoster}
-        imageSrcSet={mobilePosterSrcSet}
+        href={mobilePosterAvif?.src ?? mobilePoster}
+        type={mobilePosterAvif ? 'image/avif' : undefined}
+        imageSrcSet={mobilePosterAvif?.srcSet ?? mobilePosterSrcSet}
         imageSizes={mobilePosterSizes}
         media="(max-width: 760px)"
         fetchPriority="high"
@@ -163,6 +168,9 @@ export function DirectionHeroVideo({
         fetchPriority="high"
       />
       <picture>
+        {mobilePosterAvif && (
+          <source type="image/avif" media="(max-width: 760px)" srcSet={mobilePosterAvif.srcSet} sizes={mobilePosterSizes} />
+        )}
         <source media="(max-width: 760px)" srcSet={mobilePosterSrcSet ?? mobilePoster} sizes={mobilePosterSizes} />
         <img
           aria-hidden="true"

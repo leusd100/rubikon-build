@@ -54,6 +54,17 @@ export function DirectionImageCards() {
   // detail instead of requesting an undersized landscape image.
   const portraitPhoneSizes = '(max-width: 340px) calc(88vw - 28.16px), (max-width: 760px) calc(84vw - 26.88px)';
   const landscapePhoneSizes = '(max-width: 340px) calc(165vw - 52.8px), (max-width: 760px) calc(157.5vw - 50.4px)';
+  // globals.css: shell = min(1440px, viewport - 2 × gutter), then
+  // 1.15fr / .85fr columns separated by 18px. cover may need more source
+  // width than the card: the portrait spans 738px, landscape rows are 360/330px.
+  const gridWidth = '(min(1440px, calc(100vw - clamp(56px, 7.5vw, 144px))) - 18px)';
+  const leftColumn = `calc(${gridWidth} * .575)`;
+  const rightColumn = `calc(${gridWidth} * .425)`;
+  const desktopSizes = (id: string) => {
+    if (id === 'angary') return `max(590.4px, ${leftColumn})`;
+    if (id === 'betonni-roboty') return `max(495px, ${leftColumn})`;
+    return `max(${id === 'pokrivelni-roboty' ? 495 : 540}px, ${rightColumn})`;
+  };
 
   return (
     <div className="direction-grid">
@@ -62,7 +73,7 @@ export function DirectionImageCards() {
           <ResponsiveImage
             src={direction.image}
             alt={direction.imageAlt}
-            sizes={`${direction.id === 'angary' ? portraitPhoneSizes : landscapePhoneSizes}, ${direction.cardClassName === 'wide' ? '(max-width: 800px) 100vw, 65vw' : '(max-width: 800px) 100vw, 35vw'}`}
+            sizes={`${direction.id === 'angary' ? portraitPhoneSizes : landscapePhoneSizes}, (max-width: 800px) 100vw, ${desktopSizes(direction.id)}`}
           />
           <span className="direction-shade" />
           <span className="direction-number">{direction.number}</span>
