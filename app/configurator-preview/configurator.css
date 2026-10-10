@@ -374,19 +374,9 @@
   padding: 24px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  /* the field under both views — the 3D's canvas is transparent over it (10.10, materials.ts) */
   background: var(--color-dark);
   box-shadow: var(--shadow-card);
-}
-
-/* Phase 3F: the 3D view's own studio backdrop (materials.ts's STUDIO_BACKGROUND, #0e0f11) is
-   deliberately darker than --surface-dark (#141416) — see that constant's own doc comment for why.
-   Left unmatched, the 24px padding ring above would show the lighter site-wide token around a
-   darker WebGL canvas, a visible seam this scoped override (3D mode only — Technical view's own
-   surface keeps --surface-dark untouched) exists to close. Kept as a literal, not a shared build
-   constant, because one side is TypeScript/WebGL and the other a static stylesheet — see
-   STUDIO_BACKGROUND's own comment for the "keep these two equal by hand" pairing. */
-.hc-preview-surface:has(.hc-preview-canvas) {
-  background: #0e0f11;
 }
 
 /* The view controls sit in one quiet row above the model, anchored to the right. (The schematic note that shared the
