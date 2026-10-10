@@ -310,8 +310,11 @@ function StepTabs({
           onClick={(event) => onSelect(index, false, event.currentTarget.closest('[data-configuring]') !== null)}
           onKeyDown={(event) => onKeyDown(event, index)}
         >
-          <span className="hc-step-number" aria-hidden="true">{index + 1}</span>
+          {/* The number is in the tab's name, «2 Габарити», and an answered step says so (10.10, audit F130): a phone
+              shows the number alone, so «Натисни 2» found no tab, and «answered» was the copper rim alone */}
+          <span className="hc-step-number">{index + 1}</span>{' '}
           <span className="hc-step-title">{item.title}</span>
+          {answered[index] && step !== index && <span className="hc-visually-hidden">, обрано</span>}
         </button>
       ))}
     </div>

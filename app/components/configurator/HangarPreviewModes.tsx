@@ -406,9 +406,10 @@ export function HangarPreviewModes({
           imageClassName={`hc-preview-image${effectiveMode === 'frame' ? ' hc-frame-image' : ''}`}
           imageRef={drawingRef}
           cells={sheetCells}
-          // shown only by the phone's mini drawing (configurator-sheet.css)
+          // shown only by the phone's mini drawing (configurator-sheet.css). Its words are its state, said once (10.10,
+          // audit F131): with aria-expanded as well, a screen reader heard «Згорнути, розгорнуто».
           action={(
-            <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={toggleMiniFold}>
+            <button type="button" className="hc-mini-toggle" onClick={toggleMiniFold}>
               {miniFolded ? 'Показати ескіз' : 'Згорнути'}
             </button>
           )}

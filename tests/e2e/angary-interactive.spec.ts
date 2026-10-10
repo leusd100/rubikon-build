@@ -543,10 +543,11 @@ test('on a phone the model stays under the header while the parameters are set, 
   await expect(stage.locator('.hc-sheet-readout')).toContainText('24 × 60 × 8 м');
   expect(await stage.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(stageHeight);
   const unfold = stage.getByRole('button', { name: 'Показати ескіз', exact: true });
-  await expect(unfold).toHaveAttribute('aria-expanded', 'false');
+  // its words are its state, said once (10.10, audit F131)
+  await expect(unfold).not.toHaveAttribute('aria-expanded');
   await unfold.click();
   await expect(stage.locator('.sheet-image')).toBeVisible();
-  await expect(stage.getByRole('button', { name: 'Згорнути', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await expect(stage.getByRole('button', { name: 'Згорнути', exact: true })).not.toHaveAttribute('aria-expanded');
 
   // Past the controls the model stays small, out of sight: grown back above the screen it pushed the summary down
   // under the finger (03.10). It cannot stick beyond the layout, so nothing covers the summary, and nothing moves.

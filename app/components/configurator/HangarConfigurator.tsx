@@ -297,7 +297,9 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
       {/* On the page the summary is the drawing's title block, under the layout: only the drawing stays sticky */}
       {embedded && (
         // «До зведення ↓» under the last step lands here
-        <div className="hc-stamp-row" id="hc-stamp">
+        <div className="hc-stamp-row" id="hc-stamp" tabIndex={-1}>
+          {/* Focusable for the jump to it (10.10, audit F129): the focus lands here, not on the page, and a screen reader
+              says where the visitor went (configurator-controls.css drops the ring) */}
           <ConfiguratorSummary domain={businessDomain} showInquiryAction onInquiryAction={sharedInquiry?.attachConfiguration} />
         </div>
       )}
