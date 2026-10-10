@@ -832,6 +832,7 @@ export function ThreeHangarView({
   roofColor,
   showScaleFigure = false,
   bottomInsetPx = 0,
+  topInsetPx = 0,
 }: {
   scene: ThreeSceneModel;
   shadows?: boolean;
@@ -848,6 +849,8 @@ export function ThreeHangarView({
   /** Height of the overlay band along the canvas's bottom edge, measured by the readout that
    *  draws it. Framing only — see `FitOrthographicCamera`. */
   bottomInsetPx?: number;
+  /** How far down the canvas the actions laid on it reach (10.10, /angary's sheet). Framing only, as `bottomInsetPx`. */
+  topInsetPx?: number;
   wallColor?: string;
   roofColor?: string;
   /** Phase 3C optional scale reference — off by default (brief §6: "do not clutter the scene"). */
@@ -942,7 +945,7 @@ export function ThreeHangarView({
       // configuration, and HangarPreviewModes supplies the accessible text alternative.
       aria-hidden="true"
     >
-      <FitOrthographicCamera scene={scene} bottomInsetPx={bottomInsetPx} />
+      <FitOrthographicCamera scene={scene} bottomInsetPx={bottomInsetPx} topInsetPx={topInsetPx} />
       <InvalidateOnChange scene={scene} />
       <TestRenderSyncAPI />
       <SceneLighting scene={scene} shadows={shadows} shadowMapSize={shadowMapSize} />

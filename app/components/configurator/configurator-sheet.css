@@ -63,9 +63,11 @@
   border: 1px solid rgba(255, 255, 255, .18);
   border-radius: 0;
   backdrop-filter: blur(6px);
-  font: 700 11px/1 var(--font-condensed), sans-serif;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  /* Actions in words, as «Подивитися в 3D» (10.10, audit F112): «← Креслення», «Розгорнути» and «Сховати розміри» were
+     11 px capitals beside it — one switch in two voices. The drawing's labels («Що показано», «Ширина») keep theirs. */
+  font: 700 13px/1 var(--font-manrope), sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
 }
 /* 32 px chips with a 1 px border: the target reaches 7 px past the padding box each way, 44 px in all */
@@ -86,9 +88,10 @@
   min-height: 32px;
   color: var(--color-dark-text-secondary);
   border-color: rgba(255, 255, 255, .18);
-  font: 700 11px/1 var(--font-condensed), sans-serif;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  /* in words, as the chips beside it (10.10, audit F112) */
+  font: 700 13px/1 var(--font-manrope), sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
 }
 .hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle::after { position: absolute; inset: -7px 0; content: ''; }
 /* A phone's picture reads the 3D sizes in two columns of two: in one row of four they ran past the picture at 320–390 px
@@ -155,11 +158,22 @@
 .hc-preview-sheet .sheet-cell.hc-sheet-readout { display: none; }
 
 @media (max-width: 760px) {
-  .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: max(58vw + 20px, 220px); --hc-sheet-inset: 10px; }
+  /* 40 px lower since the legend under it names its materials (10.10, audit F56: 59–91 px taller): the hangar keeps its
+     size — held by the width, it had 47–64 px of empty field above and below — and the steps' tabs stay on a 360 × 640
+     screen under the whole sheet */
+  .hangar-configurator-embedded .hc-preview-sheet { --hc-sheet-h: max(58vw - 20px, 180px); --hc-sheet-inset: 10px; }
   .hangar-configurator-embedded .hc-preview-sheet .sheet-action { padding-left: 10px; }
   .hc-sheet-tools { top: 8px; right: 8px; }
   .hc-sheet-expand, .hc-sheet-chip { min-height: 28px; padding: 0 10px; }
   .hc-sheet-expand::after, .hc-sheet-chip::after { inset: -9px 0; }
+  /* 3D on a phone (10.10, audit F55): the four sizes' table took 84 of the picture's 246 px and pressed the model up
+     under the chips — the sizes are in the title block and the stamp — and the picture is as tall as the drawing with
+     its legend under it (--hc-legend-h, measured as 3D opens: HangarPreviewModes), so the sheet no longer jumps by
+     63 px either way. The expanded view keeps its sizes. */
+  .hangar-configurator-embedded .hc-preview-sheet :is(.hc-three-overlay, .hc-three-overlay-toggle) { display: none; }
+  .hangar-configurator-embedded .hc-layout:not([data-configuring]) .hc-preview-sheet :is(.hc-preview-canvas, .hc-preview-loading) {
+    height: calc(var(--hc-sheet-h) + var(--hc-legend-h, 0px));
+  }
 
   /* The mini drawing, held under the header while the parameters are set (useMiniPreview, HangarConfigurator.tsx):
      a picture of up to 140 px with no dimension labels — unreadable at that size — and a title block of one readout of
@@ -274,11 +288,15 @@
 
 @media (max-width: 760px) {
   .hc-section { top: 8px; left: 8px; padding: 7px 8px 6px; }
-  .hc-section figcaption { display: none; }
-  .hc-section-row { grid-template-columns: auto auto; column-gap: 8px; }
-  .hc-section-row dt { font-size: 10px; letter-spacing: .04em; white-space: nowrap; }
-  .hc-section-row dd span { display: none; }
+  /* The whole sheet's legend names its materials (10.10, audit F56): its caption and, under each glyph, the words —
+     wrapping, in the width under the drawing it had left empty. The glyphs alone did not say what the material was.
+     The mini drawing keeps the glyphs alone (below). */
+  .hc-section-row { grid-template-columns: 52px minmax(0, 1fr); align-items: start; column-gap: 8px; }
+  .hc-section-row dt { font-size: 10px; line-height: 16px; letter-spacing: .04em; white-space: nowrap; }
+  .hc-section-row dd { flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12.5px; line-height: 1.3; white-space: normal; }
   .hc-section-glyph { width: 48px; height: 16px; }
+  .hc-preview-image > .hc-section { max-width: calc(100% - 20px); }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-section :is(figcaption, dd span) { display: none; }
   /* the mini drawing held under the header: the glyphs alone, walls over roof, clear of the hangar's end */
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-section { top: 6px; left: 6px; padding: 5px 6px; }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-section-row { grid-template-columns: auto; }
@@ -343,10 +361,16 @@
   border-radius: 50%; font: 700 10.5px/1 var(--font-condensed), sans-serif;
 }
 /* The tour's progress bars run the field's width: they stopped short of the «Подивитися в 3D» chip in its corner (07.10),
-   and «Каркас» has no chip since 09.10 (HangarPreviewModes) */
+   and «Каркас» has no chip since 09.10 (HangarPreviewModes) — and are there only while «Показати по черзі» plays (10.10,
+   audit F115): after an item chosen by hand they hung over the drawing as «4 of 5 loaded», repeating the list beside it
+   and vying with the step tabs */
+.hc-frame:not([data-touring]) .dn-progress { display: none; }
 
 @container sheet (max-width: 480px) {
   .hc-frame { --ft-k: 1.55; --ft-t: 1.5; padding-top: 22px; }
+  /* the nodes' numbers larger in their rings (10.10, audit F74): 6.9 px on a 320 px phone, 8.7 at 390 — now 8.2 and
+     10.3; the rings and the camera as they were, the number lowered by the difference to stay centred */
+  .ft-node-number { font-size: 12.5px; transform: translateY(.8px); }
   .hc-frame .ft-legend { padding-inline: 8px; }
   .hc-frame .ft-chain { font-size: 12px; }
   .hc-frame-image .dn-progress { right: 10px; left: 10px; }
@@ -384,9 +408,6 @@
     .hangar-configurator-embedded .hc-preview-sheet .hc-frame { --hc-frame-h: calc(clamp(220px, min(46vw + 40px, 100vh - 402px, 70cqw), 580px) + 102px); }
   }
 }
-
-/* The 3D chip in words, not capitals (07.10) */
-.hc-sheet-chip.hc-sheet-three { font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 
 /* ── The phone's mini drawing folds (07.10) ───────────────────────────────────────────────────────────────────────────
    Its title block carries «Згорнути»: the picture goes, the sizes' line and the toggle stay. Only the mini drawing has
@@ -431,6 +452,10 @@
     border: 0; border-left: 1px solid rgba(255, 255, 255, .16); background: transparent;
   }
   .hc-preview-image > .hc-section figcaption { margin-bottom: 14px; line-height: 1.4; }
+  /* …in two lines, «Переріз / огородження», without its «· схема» (10.10, audit F111 — for the owner to confirm): in the
+     column's 121 px it ran to three, «· схема» hanging at the second's end; on its own line «схема» would still have
+     made three. The sheet's «Що показано» says «попередня схема» under it. Narrower sheets keep the whole caption. */
+  .hc-preview-image > .hc-section .hc-section-scheme { display: none; }
   .hc-preview-image > .hc-section dl { gap: 16px; }
   .hc-preview-image > .hc-section .hc-section-row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
   .hc-preview-image > .hc-section .hc-section-row dd { flex-direction: column; align-items: flex-start; gap: 8px; white-space: normal; font-size: 12.5px; line-height: 1.35; }

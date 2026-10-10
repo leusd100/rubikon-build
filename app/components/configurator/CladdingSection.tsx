@@ -97,7 +97,8 @@ export function CladdingSection({ domain }: Readonly<{ domain: HangarDomainModel
   const { envelope, scope } = domain;
   return (
     <figure className="hc-section">
-      <figcaption>Переріз огородження · схема</figcaption>
+      {/* «· схема» goes in the wide sheet's narrow legend column, so the caption keeps two lines (10.10, audit F111) */}
+      <figcaption>Переріз огородження<span className="hc-section-scheme"> · схема</span></figcaption>
       <dl>
         <Row title="Стіни" layers={layersOf(scope.walls, envelope.wallSystem, envelope.walls)} />
         <Row title="Покрівля" layers={layersOf(scope.roof, envelope.roofSystem, envelope.roof)} />

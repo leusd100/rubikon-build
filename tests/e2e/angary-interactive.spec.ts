@@ -503,7 +503,10 @@ test('the summary carries the scope-aware choices; the foundation is not the vis
 test('a chosen option is graphite with a copper tick; a copper fill is left for actions', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
   await openHangarPage(page);
-  const chosen = page.locator('#configurator .hc-option-card input:checked + span').first();
+  // an answer: «Ще не знаю», chosen from the start on «Задача», is outlined, not filled (10.10, audit F110;
+  // configurator-polish.spec) — the walls' step has answers chosen from the start
+  await openControlGroup(page, 'openings');
+  const chosen = page.locator('#configurator .hc-option-card input:checked:not([value="unknown"], [value=""]) + span').first();
   await expect(chosen).toBeVisible();
   const text = await page.locator('body').evaluate((element) => getComputedStyle(element).color);
   const accent = await page.evaluate(() => {

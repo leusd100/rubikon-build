@@ -1278,6 +1278,13 @@
 .hc-stamp-row .hc-summary-area { margin: 8px 0 0; font-size: 13px; font-variant-numeric: tabular-nums; }
 .hc-stamp-row .hc-summary-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0 0 -1px; padding: 0; border-top: 0; }
 .hc-stamp-row .hc-summary-facts > div { display: grid; align-content: start; gap: 4px; min-width: 0; padding: 14px 16px; border-left: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+/* A row's values on one line (10.10, audit F108): a label with its «з прикладу» or «попередньо» is taller than one
+   without — 19 px against 14, and 33 where the tag wraps under «Огородження» (1440 and 375 px) — and the values beside
+   it stood 5–19 px lower. Each cell takes two of the facts' rows, its label's and its value's, so a row's labels are
+   as tall as its tallest. (A 20 px minimum, the audit's line, left the wrapped tag's 13 px.) The facts stretch to the
+   stamp's height: the values' rows take what is left, the labels' keep their own. */
+.hc-stamp-row .hc-summary-facts { grid-auto-rows: min-content auto; }
+.hc-stamp-row .hc-summary-facts > div { grid-row: span 2; grid-template-rows: subgrid; }
 .hc-stamp-row .hc-summary-facts > .is-wide { grid-column: span 2; }
 .hc-stamp-row .hc-summary-facts dt { font-size: 11px; letter-spacing: .08em; }
 .hc-stamp-row .hc-summary-facts dd { max-width: none; font-size: 14px; text-align: left; }

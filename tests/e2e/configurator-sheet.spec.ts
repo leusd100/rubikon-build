@@ -600,15 +600,16 @@ test('at 320 px the 3D view stays inside the page, square, with 44 px targets', 
   expect(rows.length).toBeGreaterThanOrEqual(2);
   for (const gap of rows) expect(gap).toBeLessThanOrEqual(2);
 
+  const drawingSheet = (await sheetOf(page).boundingBox())!;
   await threeChipOf(page).click();
   await expect(pictureOf(page).locator('canvas')).toBeVisible({ timeout: 20_000 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
-  // the readout of the four sizes stays inside the picture
+  // A phone's 3D has no table of the four sizes (10.10, audit F55: it took 84 of the picture's 246 px; the sizes are in
+  // the title block and the stamp), nor its toggle, and the sheet is as tall as with the drawing and its legend
   const field = (await pictureOf(page).boundingBox())!;
-  const readout = (await pictureOf(page).locator('.hc-three-overlay').boundingBox())!;
-  expect(readout.x + readout.width).toBeLessThanOrEqual(field.x + field.width);
-  // «Сховати розміри» is not offered at ≤ 480 px (configurator.css): the sizes stay
+  await expect(pictureOf(page).locator('.hc-three-overlay')).toBeHidden();
   await expect(pictureOf(page).locator('.hc-three-overlay-toggle')).toBeHidden();
+  expect(Math.abs((await sheetOf(page).boundingBox())!.height - drawingSheet.height)).toBeLessThanOrEqual(1);
   // the picture's own actions: square, inside the picture, 44 px targets
   for (const action of [drawingChipOf(page), pictureOf(page).getByRole('button', { name: 'Розгорнути', exact: true })]) {
     await expect(action).toBeVisible();
