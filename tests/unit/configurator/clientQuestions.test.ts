@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   deriveDomainModel,
   materialsSetApart,
+  shellFitsColdStore,
+  withEffectiveShell,
   withPurpose,
   withShellAnswer,
   withShellConfirmedAgain,
@@ -50,9 +52,30 @@ describe('«Холодильний склад»', () => {
 
   it('sends the temperature under its purpose, and only with it', () => {
     const frozen = { ...coldStore, objectProfile: { ...coldStore.objectProfile, temperature: 'frozen' as const } };
-    expect(brief(frozen)).toContain('Призначення: Холодильний склад\nТемпература всередині: Мінусова — заморозка');
+    expect(brief(frozen)).toContain('Призначення: Холодильний склад\nТемпература всередині: Заморозка — нижче 0 °C');
     expect(brief(withPurpose(frozen, 'storage'))).not.toContain('Температура');
     expect(brief({ ...frozen, envelope: 'undecided', confirmed: ['envelope'] })).toContain('Утеплення: Уточнимо');
+  });
+
+  it('never shows a cold store in profiled sheet, and keeps the visitor’s own shell underneath (10.10, owner + QA)', () => {
+    // an answered «Без утеплення» with the walls set apart in sandwich panels…
+    const mixed = withShellMaterial(withShellAnswer(DEFAULT_CONFIGURATOR_STATE, 'cold'), 'wallSystem', 'sandwich-panel');
+    expect(shellFitsColdStore(mixed)).toBe(false);
+    const detour = withPurpose(mixed, 'coldStore');
+    // …is not written over by the cold store: the state keeps it, the page shows the warm one as a suggestion
+    expect([detour.envelope, detour.wallSystem, detour.roofSystem]).toEqual(['cold', 'sandwich-panel', 'profiled-sheet']);
+    const shown = withEffectiveShell(detour);
+    expect([shown.envelope, shown.wallSystem, shown.roofSystem]).toEqual(['insulated', 'sandwich-panel', 'sandwich-panel']);
+    expect(examples(detour)).toEqual(expect.arrayContaining(['envelope', 'cladding']));
+    expect(brief(detour)).toContain('Утеплення: Утеплений — запропоновано для холодильного складу');
+    // back to a warehouse: the visitor's own shell again
+    const back = withPurpose(detour, 'storage');
+    expect(withEffectiveShell(back)).toBe(back);
+    expect(examples(back)).not.toContain('cladding');
+    // a shell that fits a cold store is shown as it is
+    const warm = withShellAnswer(detour, 'insulated');
+    expect(withEffectiveShell(warm)).toBe(warm);
+    expect(examples(warm)).not.toContain('envelope');
   });
 
   it('says the space inside as asked', () => {
