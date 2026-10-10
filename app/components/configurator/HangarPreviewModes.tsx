@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, lazy, useCallback, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DrawingSheet, type SheetCell } from '../DrawingSheet';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
@@ -190,6 +190,8 @@ export function HangarPreviewModes({
   // How much of the canvas's bottom edge the dimension readout covers, measured by the overlay
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
+  // …and how far down it the sheet's chips reach (10.10, audit F55): on a phone the model stood up under them
+  const [toolsInsetPx, setToolsInsetPx] = useState(0);
   const modeSwitchAnchorRef = useRef<HTMLDivElement>(null);
   const drawingRef = useRef<HTMLDivElement>(null);
   const released = useFirstViewBuildUp(drawingRef, Boolean(sheet), sheet?.untouched ?? false);
@@ -222,6 +224,28 @@ export function HangarPreviewModes({
   // What the sheet's one 3D button just showed, for the hidden status line (09.10, audit F76): the button keeps focus
   // as its words change, and a screen reader hears the new «Що показано»
   const [viewNote, setViewNote] = useState('');
+  /** As 3D opens on the sheet (10.10, audit F55): what the drawing's legend under it took, which a phone's 3D picture
+   *  takes too, so the sheet keeps its height both ways (configurator-sheet.css --hc-legend-h; it jumped 63 px); and how
+   *  far down the picture its chips reach, for the model to stand clear under them */
+  const holdField = (chip: HTMLElement) => {
+    const image = drawingRef.current;
+    const drawing = image?.querySelector('.hc-preview-svg');
+    const tools = chip.closest<HTMLElement>('.hc-sheet-tools');
+    if (!image || !drawing || !tools) return;
+    image.style.setProperty('--hc-legend-h', `${Math.max(0, image.clientHeight - drawing.getBoundingClientRect().height)}px`);
+    setToolsInsetPx(tools.offsetTop + tools.offsetHeight + 8);
+  };
+  // 3D goes when the phone's mini drawing comes (10.10, audit F55): the mini drawing has no chip to go back by, and held
+  // the 3D picture under the header with no way to the drawing
+  useEffect(() => {
+    const layout = drawingRef.current?.closest<HTMLElement>('.hc-layout');
+    if (!sheet || !showThree || isFullscreen || !layout) return undefined;
+    const observer = new MutationObserver(() => {
+      if ('configuring' in layout.dataset) setThreeOver(null);
+    });
+    observer.observe(layout, { attributes: true, attributeFilter: ['data-configuring'] });
+    return () => observer.disconnect();
+  }, [sheet, showThree, isFullscreen]);
   const handleEndPresentationDemo = useCallback(() => {
     onEndPresentationDemo?.();
     if (!isFullscreen) {
@@ -300,6 +324,7 @@ export function HangarPreviewModes({
             roofColor={roofPresetColor(roofPreset)}
             showScaleFigure={showScaleFigure}
             bottomInsetPx={overlayInsetPx}
+            topInsetPx={sheet && !isFullscreen ? toolsInsetPx : 0}
           />
         </Suspense>
       </ThreeErrorBoundary>
@@ -430,7 +455,8 @@ export function HangarPreviewModes({
               <button
                 type="button"
                 className={showThree ? 'hc-sheet-chip' : 'hc-sheet-chip hc-sheet-three'}
-                onClick={() => {
+                onClick={(event) => {
+                  if (!showThree) holdField(event.currentTarget);
                   selectMode(showThree ? 'technical' : 'three');
                   setViewNote(showThree ? GENERAL_SHOWN : THREE_SHOWN);
                 }}

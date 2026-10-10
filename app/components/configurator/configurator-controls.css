@@ -172,20 +172,31 @@
    as on the drawing. The play control last and quiet: nothing plays by itself. */
 .hc-frame-panel { padding: 22px 22px 8px; }
 .hc-frame-panel:empty { display: none; }
-.hc-frame-list { display: grid; gap: 6px; }
+/* The five as a drawing's legend, not as answers (10.10, audit F29 — for the owner to confirm): boxed and filled like
+   the step's choices above them, a pressed «Ферма» read as an answer given. Rows between thin rules, as the «Вартість»
+   factors are; the one on show marked by a copper rule on its left. A line above them says what they are for. */
+.hc-frame-list { display: grid; gap: 0; border-top: 1px solid var(--color-border); }
 /* both lists are fieldsets (their buttons are one choice's group): a fieldset is as wide as its content at least */
 .hc-frame-list, .hc-frame-nodes { min-inline-size: 0; }
 .hc-frame-item {
-  display: flex; align-items: center; min-height: 46px; padding: 0 16px; border: 1px solid var(--color-border-control); border-radius: 0;
-  background: var(--color-bg); color: var(--color-text); font: 600 15px/1.2 var(--font-manrope), sans-serif; text-align: left; cursor: pointer;
+  display: flex; align-items: center; min-height: 44px; padding: 0 12px 0 13px; border: 0; border-bottom: 1px solid var(--color-border);
+  border-left: 3px solid transparent; border-radius: 0; background: transparent; color: var(--color-text); font: 600 15px/1.2 var(--font-manrope), sans-serif;
+  text-align: left; cursor: pointer;
 }
-.hc-frame-item:hover { border-color: var(--color-text-secondary); }
-.hc-frame-item[aria-pressed='true'] { border-color: var(--color-text); background: var(--color-text); color: var(--color-bg); }
+.hc-frame-item:hover { border-left-color: var(--color-border-strong); }
+.hc-frame-item[aria-pressed='true'] { border-left-color: var(--color-accent); }
+.hc-frame-panel .hc-frame-intro { margin: 0 0 12px; }
+/* in forced colours the rule on the left is the system's highlight, and nothing on the rows not shown */
+@media (forced-colors: active) {
+  .hc-frame-item { border-left-color: Canvas; }
+  .hc-frame-item[aria-pressed='true'] { border-left-color: Highlight; }
+}
 .hc-frame-item:focus-visible, .hc-frame-node:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 .hc-frame-text { min-height: 4.6em; margin: 16px 0 0; color: var(--color-text-secondary); font: 500 14px/1.55 var(--font-manrope), sans-serif; }
 .hc-frame-nodes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+/* 44 px, the page's targets (10.10, audit F119: 40 px) */
 .hc-frame-node {
-  display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px 0 8px; border: 1px solid var(--color-border-control); border-radius: 0;
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px 0 8px; border: 1px solid var(--color-border-control); border-radius: 0;
   background: transparent; color: var(--color-text); font: 600 13px/1 var(--font-manrope), sans-serif; cursor: pointer;
 }
 .hc-frame-node:hover { border-color: var(--color-accent); }
@@ -196,9 +207,20 @@
   border-radius: 50%; color: var(--color-accent-strong); font: 700 11px/1 var(--font-condensed), sans-serif;
 }
 .hc-frame-node[aria-pressed='true'] .hc-frame-node-number { border-color: currentColor; color: inherit; }
-.hc-frame-play { display: flex; align-items: center; margin-top: 18px; }
+.hc-frame-play { display: flex; align-items: center; }
 /* «Показати по черзі» is the button's own label (09.10, audit F44): after its round icon, set as the panel's words */
 .hc-frame-play .dn-control { flex-direction: row-reverse; padding: 0 6px 0 0; font: 500 14px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
+/* In the heading's row, over the list (10.10, audit F118): under the list it slid down as the shown step's words grew
+   and the nodes' buttons came, up to 190 px — past a phone's screen on «Ферма», when the visitor reached to stop it.
+   Where the row has no room (a phone; the column's 334 px at 1440 too) it takes a row of its own under the heading,
+   still over the list. Its words keep the longer one's width, so «Зупинити показ» never moves it or lets it back up
+   beside the heading. */
+.hc-frame-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px;
+  margin: 0 0 12px; padding-top: 18px; border-top: 1px solid var(--color-border);
+}
+.hc-frame-head .hc-frame-heading { margin: 0; padding: 0; border: 0; }
+.hc-frame-play .dn-control-label { min-width: 8.7em; text-align: start; }
 
 /* ── Quiet type (07.10) ───────────────────────────────────────────────────────────────────────────────────────────────
    Capitals stay in the drawing's title block, where a drawing has them; in the controls the words are set as words —
@@ -212,6 +234,15 @@
   .hc-step-value { display: none; }
   .hc-step-tab { min-height: 64px; padding: 10px 8px; }
   .hc-frame-panel { padding: 20px 20px 4px; }
+}
+/* A phone's small print (10.10, audit F54): the hints and notes a choice depends on, the line under «Обговорити» and the
+   disclaimer in 14 px — no larger than the answers (14 px) — and the stamp's «з прикладу» / «попередньо» in 12; they
+   were 13 and 11 px while the site's phone copy went to 16. The nodes' buttons stay at 13: in 14 their row wrapped once
+   more at 360 px (four rows to five). The stamp's labels stay, and the site's buttons are the owner's own decision. */
+@media (max-width: 760px) {
+  .hangar-configurator-embedded :is(.hc-field-hint, .hc-field-note) { font-size: 14px; }
+  .hc-stamp-row :is(.hc-summary-handoff p, .hc-summary-disclaimer) { font-size: 14px; }
+  .hc-stamp-row .hc-fact-status { font-size: 12px; }
 }
 
 /* ── What the visitor chose, and what they did not (07.10) ────────────────────────────────────────────────────────────
@@ -292,10 +323,20 @@
 }
 .hangar-configurator-embedded .hc-option-card input:checked + span::before { opacity: 1; transform: translateY(-70%) rotate(-45deg); }
 /* in a grid of equal tiles the tick goes to the corner, so the words keep the tile's whole width («Ще не знаю» broke
-   into three lines between two reserved margins) */
+   into three lines between two reserved margins) — and in the chips too (10.10, audit F109): one tick for every answer,
+   where a chip had a larger one beside its words and kept a margin for it on either side */
 .hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card span { padding-inline: 8px; }
-.hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card span::before { top: 7px; left: 7px; width: 7px; height: 4px; transform: rotate(-45deg) scale(.6); }
-.hangar-configurator-embedded .hc-option-cards:not(.hc-chips) .hc-option-card input:checked + span::before { transform: rotate(-45deg); }
+.hangar-configurator-embedded .hc-chips .hc-option-card span { padding-inline: 14px; }
+.hangar-configurator-embedded .hc-option-cards .hc-option-card span::before { top: 7px; left: 7px; width: 7px; height: 4px; transform: rotate(-45deg) scale(.6); }
+.hangar-configurator-embedded .hc-option-cards .hc-option-card input:checked + span::before { transform: rotate(-45deg); }
+/* «Ще не знаю» is not yet an answer (10.10, audit F110): its outline dashed and its words quieter, and chosen — as it is
+   from the start — not filled: the outline drawn darker and the copper tick. Three filled ones side by side on
+   «Каркас» read as answered. It is the purpose's empty value and every other chip group's «unknown»; «Допоможіть
+   визначити» is an answer and stays as it is. */
+.hangar-configurator-embedded .hc-chips .hc-option-card input:is([value='unknown'], [value='']) + span { border-style: dashed; color: var(--color-text-secondary); }
+.hangar-configurator-embedded .hc-chips .hc-option-card input:is([value='unknown'], [value='']):checked + span {
+  border-color: var(--color-text); background: var(--color-bg); color: var(--color-text-secondary);
+}
 
 /* «Де будуємо?»: the browser's own rounded field (Safari) gives way to a square one with a drawn chevron */
 .hangar-configurator-embedded .hc-select {
@@ -326,10 +367,41 @@
 .hangar-configurator-embedded .hc-field-controls input[type='range']:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 .hangar-configurator-embedded .hc-field-controls input[type='range']:focus-visible::-moz-range-thumb { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 .hangar-configurator-embedded .hc-field-controls input[type='text'] { min-height: 46px; }
+/* The metre in the field, after the value, quiet (10.10, audit F114): the value is no longer written over the field as
+   well. The field a little wider for it — «10,55 м» holds — on a phone too, where it was 64 px (72 on a computer). */
+.hangar-configurator .hc-field .hc-field-controls { position: relative; grid-template-columns: minmax(0, 1fr) 84px; }
+.hangar-configurator .hc-field .hc-field-controls input[type='text'] { padding-right: 26px; }
+.hc-field-unit {
+  position: absolute; top: 50%; right: 11px; color: var(--color-text-muted); font: 500 15px/1 var(--font-manrope), sans-serif;
+  transform: translateY(-50%); pointer-events: none;
+}
+/* …at the value's size on a phone, whose fields are 16 px (globals.css: iOS zooms into smaller ones) */
+@media (max-width: 760px) { .hc-field-unit { font-size: 16px; } }
 .hangar-configurator-embedded .hc-field-controls input[type='text']:hover { border-color: var(--color-text-secondary); }
 
-/* checkboxes in the copper of the rest */
-.hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--color-accent); }
+/* The boxes as the answers are drawn (10.10, audit F113): an 18 px square, filled when ticked, with the chips' copper
+   tick — the browser's own box was rounded (Safari, Chrome) beside square answers, its words 15 px beside their 14.
+   The tick is drawn by the words' span over the box: an input draws no pseudo-element in every browser. In forced
+   colours the browser's own box comes back, drawn in the system's colours. */
+.hangar-configurator-embedded .hc-checkbox-row { position: relative; }
+.hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] {
+  flex: none; width: 18px; height: 18px; margin: 0; appearance: none; -webkit-appearance: none; border: 1px solid var(--color-border-control);
+  border-radius: 0; background: var(--color-bg); cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium);
+}
+.hangar-configurator-embedded .hc-checkbox-row:hover input[type='checkbox']:not(:checked) { border-color: var(--color-text-secondary); }
+.hangar-configurator-embedded .hc-checkbox-row input[type='checkbox']:checked { border-color: var(--color-text); background: var(--color-text); }
+.hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] + span { font-size: 14px; }
+/* the box's centre: the row's 2 px padding and half the box, less half the tick */
+.hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] + span::before {
+  position: absolute; top: 50%; left: 6.5px; width: 9px; height: 5px; border: solid var(--color-accent); border-width: 0 0 2px 2px;
+  content: ''; opacity: 0; pointer-events: none; transform: translateY(-70%) rotate(-45deg);
+}
+.hangar-configurator-embedded .hc-checkbox-row input[type='checkbox']:checked + span::before { opacity: 1; }
+@media (forced-colors: active) {
+  .hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] { appearance: auto; -webkit-appearance: auto; }
+  .hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] + span::before { display: none; }
+}
 
 /* one rhythm inside a step: 24 between questions, 10 from a question to its answers */
 .hangar-configurator-embedded .hc-step-panel .hc-field + .hc-field { margin-top: 24px; }

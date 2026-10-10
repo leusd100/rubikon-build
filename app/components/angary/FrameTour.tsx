@@ -682,6 +682,14 @@ export function FrameTourStage({
   node?: string | null;
   onNode?: (id: string) => void;
 }>) {
+  // A node's target on the drawing (10.10, audit F119): about 30 px across on the screen — on a phone the 40 units it was
+  // came to 17–23 px — never less than those 40 units, and never reaching a neighbour's: under half the way to the
+  // nearest. The screen's pixels to a unit, as stageTransform scales the picture.
+  const pxPerUnit = size ? Math.max(size.width / VIEW.width, size.height / VIEW.height) * (active?.zoom ?? 1) : 0;
+  const hitRadius = (at: Pt) => {
+    const nearest = Math.min(...(nodes ?? []).filter((other) => other.at !== at).map((other) => Math.hypot(other.at[0] - at[0], other.at[1] - at[1])));
+    return Math.min(Math.max(20, pxPerUnit ? 15 / pxPerUnit : 0), nearest / 2 - 1);
+  };
   return (
     <>
           {/* The legend, in its own band above the camera's window, so it never covers the drawing: both chains and the note
@@ -767,7 +775,7 @@ export function FrameTourStage({
                   <g className="ft-nodes" aria-hidden="true">
                     {nodes.map((item, index) => (
                       <g key={item.id} className="ft-node" data-on={node === item.id || undefined} onClick={() => onNode?.(item.id)}>
-                        <circle className="ft-node-hit" cx={n(item.at[0])} cy={n(item.at[1])} r={20} />
+                        <circle className="ft-node-hit" cx={n(item.at[0])} cy={n(item.at[1])} r={n(hitRadius(item.at))} />
                         {/* numbered as the buttons under the drawing are */}
                         <g className="ft-node-mark" style={{ transformOrigin: `${n(item.at[0])}px ${n(item.at[1])}px` }}>
                           <circle className="ft-node-ring" cx={n(item.at[0])} cy={n(item.at[1])} r={9} />

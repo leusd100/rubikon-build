@@ -71,8 +71,19 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
       />
       {panel && createPortal(
         <>
-          {/* after the step's own questions: how the frame works, shown on the drawing — for whoever wants it */}
-          <h3 className="hc-frame-heading">Як працює ваш каркас</h3>
+          {/* after the step's own questions: how the frame works, shown on the drawing — for whoever wants it. Its play
+              control in the heading's row, over the list, where nothing under it moves it (10.10, audit F118); the words
+              are the button's own (09.10, audit F44), and say what it does: play the five, or stop */}
+          <div className="hc-frame-head">
+            <h3 className="hc-frame-heading">Як працює ваш каркас</h3>
+            {motion && (
+              <div className="hc-frame-play">
+                <TourControl touring={touring} toggle={toggle} what="каркаса" label={{ play: 'Показати по черзі', stop: 'Зупинити показ' }} />
+              </div>
+            )}
+          </div>
+          {/* the list is a legend for reference, not a question (10.10, audit F29 — for the owner to confirm) */}
+          <p className="hc-field-note hc-frame-intro">Для довідки{'\u00A0'}— натисніть пункт, креслення покаже. На вашу конфігурацію не впливає.</p>
           <fieldset className="hc-frame-list" aria-label="Що показати">
             {steps.map((item, index) => (
               <button
@@ -102,12 +113,6 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
                 </button>
               ))}
             </fieldset>
-          )}
-          {/* the words are the button's own (09.10, audit F44), and say what it does: play the five, or stop */}
-          {motion && (
-            <div className="hc-frame-play">
-              <TourControl touring={touring} toggle={toggle} what="каркаса" label={{ play: 'Показати по черзі', stop: 'Зупинити показ' }} />
-            </div>
           )}
         </>,
         panel,

@@ -177,10 +177,10 @@ function NumericField({
   const range = `Від ${formatMetres(min)} до ${formatMetres(max)}${NBSP}м${step < 1 ? `, крок ${formatMetres(step)}${NBSP}м` : ''}.`;
   return (
     <div className="hc-field">
+      {/* The value once, in its field, with its metre beside it (10.10, audit F114): «24 м» over a field reading «24» showed
+          the four sizes as eight numbers */}
       <div className="hc-field-head">
         <label htmlFor={inputId}>{label}</label>
-        {/* figures are not translated (08.10): a page translation replaced them, and they stayed at the old value */}
-        <span className="hc-field-value" translate="no">{formatMetres(value)}{NBSP}м</span>
       </div>
       <div className="hc-field-controls">
         {/* Named by the label alone, with its value in metres: it was «Ширина, слайдер» and a bare «10.600000381469727» */}
@@ -209,6 +209,8 @@ function NumericField({
           onChange={(event) => handleTyped(event.target.value)}
           onBlur={handleBlur}
         />
+        {/* in the field, after the value: laid over the field's right end (configurator-controls.css) */}
+        <span className="hc-field-unit" aria-hidden="true">м</span>
       </div>
       {hint ? (
         <p className="hc-field-hint" id={`${inputId}-hint`} key={hint}>
