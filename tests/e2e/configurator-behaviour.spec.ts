@@ -82,16 +82,20 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
 }
 
 // Audit F131: «Згорнути» (a phone, aria-expanded) and «Сховати розміри» (3D, aria-pressed) said their state twice — the
-// words and the attribute, «Згорнути, розгорнуто». The words alone say it now.
+// words and the attribute, «Згорнути, розгорнуто». The words alone say it now. Since 10.10 (round 5) the sheet's 3D
+// reads its sizes as one quiet line with no toggle: «Сховати розміри» is the expanded view's.
 test('«Сховати розміри» says its state in its words alone', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'mobile-chromium', 'the 3D sizes are not offered on a phone');
+  test.skip(testInfo.project.name === 'mobile-chromium', 'covered once, at the desktop width');
   await openHangarPage(page);
   await openThree(page);
-  const hide = page.getByRole('button', { name: 'Сховати розміри', exact: true });
+  await expect(page.locator('#configurator .hc-preview-sheet .hc-three-overlay')).toBeVisible();
+  await expect(page.locator('#configurator .hc-preview-sheet .hc-three-overlay-toggle')).toBeHidden();
+  await page.getByRole('button', { name: 'Розгорнути', exact: true }).click();
+  const hide = page.locator('.hc-fullscreen-sheet').getByRole('button', { name: 'Сховати розміри', exact: true });
   await expect(hide).toBeVisible();
   await expect(hide).not.toHaveAttribute('aria-pressed');
   await hide.click();
-  const show = page.getByRole('button', { name: 'Показати розміри', exact: true });
+  const show = page.locator('.hc-fullscreen-sheet').getByRole('button', { name: 'Показати розміри', exact: true });
   await expect(show).toBeFocused();
   await expect(show).not.toHaveAttribute('aria-pressed');
 });

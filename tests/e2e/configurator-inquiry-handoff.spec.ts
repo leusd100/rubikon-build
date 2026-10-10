@@ -102,13 +102,16 @@ test.describe('configurator attachment contract', () => {
   });
 
   // /angary's 3D has no colours or scale figure since 07.10 (they stay on /configurator-preview, which has no form):
-  // its one presentation control is the dimensions overlay
+  // its one presentation control is the dimensions overlay — in the expanded view since 10.10 (round 5): the sheet
+  // reads the sizes as one quiet line, with no toggle
   test('hiding the 3D dimensions is presentation-only', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'covered once; attachment state is viewport-independent');
     await openHangarPage(page);
     await openThree(page);
+    await page.getByRole('button', { name: 'Розгорнути', exact: true }).click();
     await page.getByRole('button', { name: 'Сховати розміри', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Показати розміри', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: /Закрити/ }).click();
     await expect(attachmentCard(page)).toHaveCount(0);
   });
 

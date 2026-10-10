@@ -49,6 +49,12 @@ test('a phone’s small print: hints and notes at 14 px, no larger than the answ
   notes.push(...await fontSizes(page, '#hc-step-size :is(.hc-field-hint, .hc-field-note)'));
   await openControlGroup(page, 'openings');
   notes.push(...await fontSizes(page, '#hc-step-shell .hc-field-note'));
+  // «Стіни й ворота» asks one question since 10.10 (round 5) and its notes come only with a cold store or a scope without
+  // walls: «Каркас» and «Обсяг» carry the rest of the small print
+  await openControlGroup(page, 'space');
+  notes.push(...await fontSizes(page, '#hc-step-frame .hc-field-note'));
+  await openControlGroup(page, 'scope');
+  notes.push(...await fontSizes(page, '#hc-step-check .hc-field-note'));
   expect(notes.length).toBeGreaterThanOrEqual(4);
   for (const size of notes) expect(size).toBe(14);
   expect(Math.max(...notes)).toBeLessThanOrEqual(Math.min(...answers));
@@ -214,7 +220,9 @@ test('one tick for every answer: the chips’ is the tiles’ corner tick, clear
 test('«Ще не знаю» chosen is outlined, not filled like an answer (F110)', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the look is viewport-independent');
   await openHangarPage(page, { width: 1440, height: 900 });
-  const look = (label: string) => page.locator('#hc-step-task .hc-option-card span').filter({ hasText: label }).evaluate((span) => {
+  // matched whole: «Склад» stands beside «Холодильний склад» since 10.10 (round 5)
+  const exactly = (label: string) => new RegExp(`^${label}$`);
+  const look = (label: string) => page.locator('#hc-step-task .hc-option-card span').filter({ hasText: exactly(label) }).evaluate((span) => {
     const style = getComputedStyle(span);
     return { border: style.borderTopStyle, background: style.backgroundColor, checked: (span.previousElementSibling as HTMLInputElement).checked };
   });
@@ -224,7 +232,7 @@ test('«Ще не знаю» chosen is outlined, not filled like an answer (F110
   expect(unsure.border).toBe('dashed');
   // not filled: the same paper as an answer not chosen
   expect(unsure.background).toBe(other.background);
-  await page.locator('#hc-step-task .hc-option-card').filter({ hasText: 'Склад' }).click();
+  await page.locator('#hc-step-task .hc-option-card').filter({ hasText: exactly('Склад') }).click();
   const chosen = await look('Склад');
   expect(chosen.checked).toBe(true);
   expect(chosen.border).toBe('solid');

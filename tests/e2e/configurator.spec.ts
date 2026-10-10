@@ -23,10 +23,13 @@ function equipmentGate(page: Page) {
   return page.locator('label.hc-option-card', { has: page.locator('input[name="hc-gate-type"]'), hasText: 'Для заїзду техніки' });
 }
 
-/** «Висота в конику» is a refinement, folded under the sizes unless the visitor set it (07.10) */
+/**
+ * «Висота в конику» is a refinement, folded under the sizes unless the visitor set it (07.10). Since 10.10 the shell's
+ * «Налаштувати окремо» is a second `details.hc-more` on the page: the ridge's fold is the one that holds its field.
+ */
 async function openRidge(page: Page) {
   await openControlGroup(page, 'dimensions');
-  const more = page.locator('details.hc-more');
+  const more = page.locator('details.hc-more', { has: page.locator('#hc-dimension-ridge') });
   if (!(await more.evaluate((element) => (element as HTMLDetailsElement).open))) {
     await more.locator('summary').click();
   }
