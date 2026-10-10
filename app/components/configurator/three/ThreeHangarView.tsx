@@ -127,7 +127,7 @@ function sharedBraceMaterial(): THREE.MeshStandardMaterial {
  * be redundant, and columns/rafters share one material instance so mutating its opacity would
  * incorrectly apply to both at once even though they run on independently offset timings.
  */
-function MaterialOpacityDriver({ materialKey, layer }: { materialKey: MaterialKey | 'brace'; layer: LayerTransitionStyle }) {
+function MaterialOpacityDriver({ materialKey, layer }: Readonly<{ materialKey: MaterialKey | 'brace'; layer: LayerTransitionStyle }>) {
   const progressRef = useBuildProgress(layer);
   useFrame(() => {
     const material = materialKey === 'brace' ? sharedBraceMaterial() : sharedMaterial(materialKey);
@@ -165,7 +165,7 @@ function grownMatrix(a: THREE.Vector3, b: THREE.Vector3, sectionM: number, progr
  *  `MaterialOpacityDriver`, keyed on their shared `frame-secondary` material), so there is nothing
  *  for this component to animate — and it costs nothing extra to render one, unlike a growth-
  *  capable strut which needs a `useFrame` subscription whether or not it is currently animating. */
-function StaticStrut({ strut, castShadow }: { strut: StrutMesh; castShadow: boolean }) {
+function StaticStrut({ strut, castShadow }: Readonly<{ strut: StrutMesh; castShadow: boolean }>) {
   const matrix = useMemo(() => grownMatrix(v(strut.a), v(strut.b), strut.sectionM, 1), [strut]);
   return (
     <mesh
@@ -190,7 +190,7 @@ function StaticStrut({ strut, castShadow }: { strut: StrutMesh; castShadow: bool
  * blending into either. Both materials have their own driver on the SAME `foundation` layer (see
  * this file's own driver block), so pad and pedestal still fade in lockstep despite the split.
  */
-function Footing({ footing, castShadow, layer }: { footing: FootingMesh; castShadow: boolean; layer: LayerTransitionStyle }) {
+function Footing({ footing, castShadow, layer }: Readonly<{ footing: FootingMesh; castShadow: boolean; layer: LayerTransitionStyle }>) {
   const padMaterial = sharedMaterial(footing.material);
   const pedestalMaterial = sharedMaterial('footing');
   // The pedestal's outline in muted ink (10.10): the one part of a footing above grade, drawn as the frame drawing draws
@@ -237,7 +237,7 @@ const OPENING_FRAME_PROUD_M = 0.012;
  * and mounts on the SAME `gateLayer` as the recess it sits in front of, so the two arrive and leave
  * together with no separate driver of their own.
  */
-function GateLeaf({ leaf, castShadow, layer }: { leaf: GateLeafMesh; castShadow: boolean; layer: LayerTransitionStyle }) {
+function GateLeaf({ leaf, castShadow, layer }: Readonly<{ leaf: GateLeafMesh; castShadow: boolean; layer: LayerTransitionStyle }>) {
   const geometry = useMemo(
     () => (leaf.kind === 'door'
       ? buildDoorLeafGeometry(leaf.widthM, leaf.heightM)
@@ -292,11 +292,11 @@ function AnimatedStrut({
   strut,
   castShadow,
   layer,
-}: {
+}: Readonly<{
   strut: StrutMesh;
   castShadow: boolean;
   layer: LayerTransitionStyle;
-}) {
+}>) {
   const meshRef = useRef<THREE.Mesh>(null);
   const progressRef = useBuildProgress(layer);
   const a = useMemo(() => v(strut.a), [strut]);
@@ -388,14 +388,14 @@ function Panel({
   castShadow,
   thicknessDirection = 'outward',
   ink,
-}: {
+}: Readonly<{
   panel: PanelMesh;
   interiorPoint: THREE.Vector3;
   castShadow: boolean;
   thicknessDirection?: 'inward' | 'outward';
   /** The box's twelve edges in paper ink, on this layer (10.10): the slab's outline, which makes it a part */
   ink?: LayerTransitionStyle;
-}) {
+}>) {
   const matrix = useMemo(() => panelMatrix(panel, interiorPoint, thicknessDirection), [panel, interiorPoint, thicknessDirection]);
   const edges = useMemo(() => (ink ? boxEdges(matrix) : null), [ink, matrix]);
 
@@ -528,11 +528,11 @@ function EnvelopePanel({
   panel,
   interiorPoint,
   castShadow,
-}: {
+}: Readonly<{
   panel: PanelMesh;
   interiorPoint: THREE.Vector3;
   castShadow: boolean;
-}) {
+}>) {
   const { matrix, geometry } = useMemo(() => {
     const placement = envelopePlacement(panel, interiorPoint);
     return { matrix: placement.matrix, geometry: envelopeGeometryFor(placement.widthM, placement.heightM, panel.thicknessM, panel.claddingSystem) };
@@ -548,6 +548,61 @@ function EnvelopePanel({
       receiveShadow
     />
   );
+}
+
+/** A line along a panel's face, from one point of it to another, in the panel's own metres */
+function inkAlong(matrix: THREE.Matrix4, target: Segments, [x0, y0]: readonly [number, number], [x1, y1]: readonly [number, number]) {
+  const a = new THREE.Vector3(x0, y0, 0).applyMatrix4(matrix);
+  const b = new THREE.Vector3(x1, y1, 0).applyMatrix4(matrix);
+  target.push(a.x, a.y, a.z, b.x, b.y, b.z);
+}
+
+type EnvelopeInk = { segments: Segments; seams: Segments; ribs: Segments; joints: Segments };
+
+/** A bay's cladding texture (10.10): a profiled sheet's ribs along its height — up the wall, down the slope; a sandwich
+ *  wall's joints across it; the roof's panels' seams down the slope */
+function claddingInk(panel: PanelMesh, placement: { matrix: THREE.Matrix4; widthM: number; heightM: number }, surface: 'walls' | 'roof', ribPitchM: number, ink: EnvelopeInk) {
+  const { matrix, widthM, heightM } = placement;
+  if (panel.claddingSystem === 'profiled-sheet') {
+    for (const x of profiledRibsM(widthM, ribPitchM)) inkAlong(matrix, ink.ribs, [x, 0], [x, heightM]);
+  } else if (panel.claddingSystem === 'sandwich-panel' && surface === 'walls') {
+    for (const y of sandwichCoursesM(heightM)) inkAlong(matrix, ink.joints, [0, y], [widthM, y]);
+  } else if (panel.claddingSystem === 'sandwich-panel') {
+    for (const x of sandwichSeamsM(widthM)) inkAlong(matrix, ink.seams, [x, 0], [x, heightM]);
+  }
+}
+
+/** One face's outline — its bays' outer faces with the joints between them taken out — and, for the roof, its
+ *  underside's, which shows the lid's thickness where it oversails the walls */
+function faceInk(facePanels: PanelMesh[], interiorPoint: THREE.Vector3, surface: 'walls' | 'roof', roofShown: boolean, ribPitchM: number, ink: EnvelopeInk) {
+  const outer: Array<[THREE.Vector3, THREE.Vector3]> = [];
+  const under: Array<[THREE.Vector3, THREE.Vector3]> = [];
+  for (const panel of facePanels) {
+    const placement = envelopePlacement(panel, interiorPoint);
+    outer.push(...faceRectangle(placement.matrix, placement.widthM, placement.heightM));
+    claddingInk(panel, placement, surface, ribPitchM, ink);
+    if (surface === 'roof') {
+      const back = placement.matrix.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -panel.thicknessM));
+      under.push(...faceRectangle(back, placement.widthM, placement.heightM));
+    }
+  }
+  const outerSides = outlineSides(surfaceOutline(outer));
+  const headHidden = surface === 'roof' || roofShown;
+  pushSegments(ink.segments, headHidden ? outerSides.filter((edge) => edge.side !== 'top') : outerSides);
+  if (surface === 'roof') pushSegments(ink.segments, outlineSides(surfaceOutline(under)).filter((edge) => edge.side !== 'top'));
+}
+
+/** A surface's ink: each face drawn on its own — a face's joints cancel only against its own bays, grouped by the face
+ *  the panel's id names (wall-left-3, roof-right-0) */
+function envelopeInk(panels: PanelMesh[], interiorPoint: THREE.Vector3, surface: 'walls' | 'roof', roofShown: boolean, ribPitchM: number): EnvelopeInk {
+  const ink: EnvelopeInk = { segments: [], seams: [], ribs: [], joints: [] };
+  const faces = new Map<string, PanelMesh[]>();
+  for (const panel of panels) {
+    const face = panel.id.replace(/-\d+$/, '');
+    faces.set(face, [...(faces.get(face) ?? []), panel]);
+  }
+  for (const facePanels of faces.values()) faceInk(facePanels, interiorPoint, surface, roofShown, ribPitchM, ink);
+  return ink;
 }
 
 /**
@@ -570,7 +625,7 @@ function EnvelopeOutline({
   surface,
   roofShown = true,
   ribPitchM,
-}: {
+}: Readonly<{
   panels: PanelMesh[];
   interiorPoint: THREE.Vector3;
   layer: LayerTransitionStyle;
@@ -578,50 +633,11 @@ function EnvelopeOutline({
   roofShown?: boolean;
   /** How far apart a profiled sheet's ribs are drawn (inkRibPitchM) */
   ribPitchM: number;
-}) {
-  const { segments, seams, ribs, joints } = useMemo(() => {
-    const out: Segments = [];
-    const seamOut: Segments = [];
-    const ribOut: Segments = [];
-    const jointOut: Segments = [];
-    const along = (matrix: THREE.Matrix4, target: Segments, [x0, y0]: [number, number], [x1, y1]: [number, number]) => {
-      const a = new THREE.Vector3(x0, y0, 0).applyMatrix4(matrix);
-      const b = new THREE.Vector3(x1, y1, 0).applyMatrix4(matrix);
-      target.push(a.x, a.y, a.z, b.x, b.y, b.z);
-    };
-    // A face's joints cancel only against its own bays: grouped by the face the panel's id names (wall-left-3, roof-right-0)
-    const faces = new Map<string, PanelMesh[]>();
-    for (const panel of panels) {
-      const face = panel.id.replace(/-\d+$/, '');
-      faces.set(face, [...(faces.get(face) ?? []), panel]);
-    }
-    for (const facePanels of faces.values()) {
-      const outer: Array<[THREE.Vector3, THREE.Vector3]> = [];
-      const under: Array<[THREE.Vector3, THREE.Vector3]> = [];
-      for (const panel of facePanels) {
-        const { matrix, widthM, heightM } = envelopePlacement(panel, interiorPoint);
-        outer.push(...faceRectangle(matrix, widthM, heightM));
-        // the cladding's texture (10.10): a profiled sheet's ribs along its height — up the wall, down the slope; a
-        // sandwich wall's joints across it, the roof's panels' seams down the slope as before
-        if (panel.claddingSystem === 'profiled-sheet') {
-          for (const x of profiledRibsM(widthM, ribPitchM)) along(matrix, ribOut, [x, 0], [x, heightM]);
-        } else if (panel.claddingSystem === 'sandwich-panel' && surface === 'walls') {
-          for (const y of sandwichCoursesM(heightM)) along(matrix, jointOut, [0, y], [widthM, y]);
-        } else if (panel.claddingSystem === 'sandwich-panel') {
-          for (const x of sandwichSeamsM(widthM)) along(matrix, seamOut, [x, 0], [x, heightM]);
-        }
-        if (surface === 'roof') {
-          const back = matrix.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -panel.thicknessM));
-          under.push(...faceRectangle(back, widthM, heightM));
-        }
-      }
-      const outerSides = outlineSides(surfaceOutline(outer));
-      const headHidden = surface === 'roof' || roofShown;
-      pushSegments(out, headHidden ? outerSides.filter((e) => e.side !== 'top') : outerSides);
-      if (surface === 'roof') pushSegments(out, outlineSides(surfaceOutline(under)).filter((e) => e.side !== 'top'));
-    }
-    return { segments: out, seams: seamOut, ribs: ribOut, joints: jointOut };
-  }, [panels, interiorPoint, surface, roofShown, ribPitchM]);
+}>) {
+  const { segments, seams, ribs, joints } = useMemo(
+    () => envelopeInk(panels, interiorPoint, surface, roofShown, ribPitchM),
+    [panels, interiorPoint, surface, roofShown, ribPitchM],
+  );
 
   return (
     <>
@@ -647,13 +663,13 @@ function EnvelopeOutline({
  * length, so the front's outward face is its NEAR (local Z=0) end and the rear's is its FAR
  * (local Z=+thicknessM) end. See `GableMesh.face`'s own doc comment.
  */
-function Gable({ gable, castShadow, layer, roofShown, ribPitchM }: {
+function Gable({ gable, castShadow, layer, roofShown, ribPitchM }: Readonly<{
   gable: GableMesh;
   castShadow: boolean;
   layer: LayerTransitionStyle;
   roofShown: boolean;
   ribPitchM: number;
-}) {
+}>) {
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
     gable.outline.forEach((p, i) => (i === 0 ? shape.moveTo(p.x, p.y) : shape.lineTo(p.x, p.y)));
@@ -763,13 +779,13 @@ function RidgeCap({
   cladding,
   castShadow,
   layer,
-}: {
+}: Readonly<{
   building: ParametricBuildingModel;
   roofSystem: CladdingSystem;
   cladding: ThreeSceneModel['roofCladding'];
   castShadow: boolean;
   layer: LayerTransitionStyle;
-}) {
+}>) {
   const { widthM, lengthM } = building.footprint;
   const { ridgeM } = building.heights;
   const { pitchDeg } = building.roof;
@@ -820,11 +836,11 @@ function SettlingSlab({
   children,
   layer,
   thicknessM,
-}: {
+}: Readonly<{
   children: React.ReactNode;
   layer: LayerTransitionStyle;
   thicknessM: number;
-}) {
+}>) {
   // Must be called from IN here, not passed down as a ready-made ref: useBuildProgress calls
   // useThree/useFrame internally, and those only work inside <Canvas>'s own React tree — calling
   // it in ThreeHangarView's body (the component that RENDERS <Canvas>, and so sits OUTSIDE it)
@@ -861,7 +877,7 @@ const HEMISPHERE_INTENSITY = 1.4;
 const KEY_INTENSITY = 3.85;
 const FILL_INTENSITY = 0.4;
 
-function SceneLighting({ scene, shadows, shadowMapSize }: { scene: ThreeSceneModel; shadows: boolean; shadowMapSize: number }) {
+function SceneLighting({ scene, shadows, shadowMapSize }: Readonly<{ scene: ThreeSceneModel; shadows: boolean; shadowMapSize: number }>) {
   const { center, size: extent } = scene.bounds;
   const radius = Math.max(Math.hypot(extent.x, extent.y, extent.z), 1);
   const keyLightRef = useRef<THREE.DirectionalLight>(null);
@@ -936,7 +952,7 @@ function SceneLighting({ scene, shadows, shadowMapSize }: { scene: ThreeSceneMod
 const CONTACT_SHADE_FALLOFF_M = 5;
 const CONTACT_SHADE_STRENGTH = 0.6;
 
-function ContactShade({ building, yM }: { building: ParametricBuildingModel; yM: number }) {
+function ContactShade({ building, yM }: Readonly<{ building: ParametricBuildingModel; yM: number }>) {
   const xs = building.slab.corners.map((c) => c.x);
   const zs = building.slab.corners.map((c) => c.z);
   const [minX, maxX, minZ, maxZ] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
@@ -981,7 +997,7 @@ function ContactShade({ building, yM }: { building: ParametricBuildingModel; yM:
 
 /** frameloop="demand" renders nothing until asked. Any change to the model must therefore
  *  explicitly request a frame, or the canvas would keep showing the previous configuration. */
-function InvalidateOnChange({ scene }: { scene: ThreeSceneModel }) {
+function InvalidateOnChange({ scene }: Readonly<{ scene: ThreeSceneModel }>) {
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => {
     invalidate();
@@ -1057,13 +1073,13 @@ function TestRenderSyncAPI() {
  * the Canvas component!" earlier this project (see SettlingSlab's own doc comment) — same fix
  * shape here, applied before repeating it.
  */
-function MaterialColorSync({ wallColor, roofColor, wallSandwichColor = wallColor, roofSandwichColor = roofColor }: {
+function MaterialColorSync({ wallColor, roofColor, wallSandwichColor = wallColor, roofSandwichColor = roofColor }: Readonly<{
   wallColor: string;
   roofColor: string;
   /** A sandwich panel's own colour (/angary, 10.10); the research screen's presets paint both systems alike */
   wallSandwichColor?: string;
   roofSandwichColor?: string;
-}) {
+}>) {
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => {
     // Phase 3F: both cladding-system variants set unconditionally, every time — only one of each
@@ -1091,7 +1107,7 @@ export function ThreeHangarView({
   showScaleFigure = false,
   bottomInsetPx = 0,
   topInsetPx = 0,
-}: {
+}: Readonly<{
   scene: ThreeSceneModel;
   shadows?: boolean;
   maxDpr?: number;
@@ -1116,7 +1132,7 @@ export function ThreeHangarView({
   roofSandwichColor?: string;
   /** Phase 3C optional scale reference — off by default (brief §6: "do not clutter the scene"). */
   showScaleFigure?: boolean;
-}) {
+}>) {
   const { visible, building } = scene;
   // the profiled sheet's ribs drawn a step apart that keeps them a texture at this building's size (envelopePanelGeometry)
   const ribPitchM = inkRibPitchM(Math.max(building.footprint.widthM, building.footprint.lengthM));

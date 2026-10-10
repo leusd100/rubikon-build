@@ -415,6 +415,23 @@ const TEMPERATURE_WORDS: Record<ColdStoreTemperature, TileWords> = {
   unknown: { word: NOT_YET },
 };
 
+/**
+ * The ridge's hint: the range, then the slope and where it comes from (10.10, audit F102: three sentences repeated the
+ * field's number and gave the slope in percent too). The visitor's ridge is kept as typed and held in the range
+ * (04.10), so a ridge the sizes moved is said to be the range's end, not «ваше значення» — the hint used to call a
+ * clamped 8,3 м the visitor's after they typed 11,5 м.
+ */
+function ridgeHintFor(state: ConfiguratorState, range: { min: number; max: number }, slope: string): string {
+  const rangeText = `Від ${formatMetres(range.min)} до ${formatMetres(range.max)}${NBSP}м.`;
+  const Slope = slope.charAt(0).toUpperCase() + slope.slice(1);
+  if (!state.ridgeEdited) return keepShortWords(`${rangeText} ${Slope}${NBSP}— підібраний за шириною ангара.`);
+  const shown = resolveRidgeHeightM(state);
+  if (shown === state.ridgeHeightM) return keepShortWords(`${rangeText} ${Slope}${NBSP}— за вашою висотою в конику.`);
+  const typed = `Ваші ${formatMetres(state.ridgeHeightM)}${NBSP}м повернуться, щойно розміри це дозволять.`;
+  const end = shown > state.ridgeHeightM ? 'найнижчий' : 'найвищий';
+  return keepShortWords(`${rangeText} Показано ${end} коник для цих розмірів, ${slope}. ${typed}`);
+}
+
 type ShownOpenings = Pick<ConfiguratorState, 'gates' | 'gateType' | 'doors'>;
 
 /**
@@ -490,21 +507,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     if (shellApart) setShellOpen(true);
   }
   const ridgeValue = resolveRidgeHeightM(state);
-  // The range, then the slope and where it comes from (10.10, audit F102): three sentences repeated the field's number
-  // and gave the slope in percent too
-  const ridgeRangeText = `Від ${formatMetres(ridgeRange.min)} до ${formatMetres(ridgeRange.max)}${NBSP}м.`;
-  const slope = formatRoofSlope(domain.roof.pitchDeg);
-  const Slope = slope.charAt(0).toUpperCase() + slope.slice(1);
-  // The visitor's ridge is kept as typed and held in the range here (04.10), so a ridge the sizes moved is said to be the
-  // range's end, not «ваше значення» — the hint used to call a clamped 8,3 м the visitor's after they typed 11,5 м
-  let ridgeHint = `${ridgeRangeText} ${Slope}${NBSP}— підібраний за шириною ангара.`;
-  if (state.ridgeEdited) {
-    const typed = `Ваші ${formatMetres(state.ridgeHeightM)}${NBSP}м повернуться, щойно розміри це дозволять.`;
-    if (ridgeValue === state.ridgeHeightM) ridgeHint = `${ridgeRangeText} ${Slope}${NBSP}— за вашою висотою в конику.`;
-    else if (ridgeValue > state.ridgeHeightM) ridgeHint = `${ridgeRangeText} Показано найнижчий коник для цих розмірів, ${slope}. ${typed}`;
-    else ridgeHint = `${ridgeRangeText} Показано найвищий коник для цих розмірів, ${slope}. ${typed}`;
-  }
-  ridgeHint = keepShortWords(ridgeHint);
+  const ridgeHint = ridgeHintFor(state, ridgeRange, formatRoofSlope(domain.roof.pitchDeg));
 
   /** Opens a step. From the buttons under a step the visitor is below the tabs: bring them back into view. */
   function selectStep(index: number, focus = false, land = false) {
@@ -1137,8 +1140,8 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             {/* after the last step, before the stamp: what happens once the brief is sent, in the route's own words —
                 the whole route, with what the visitor does at each step, is the section under the configurator */}
             {!next && nextSteps && nextSteps.length > 0 && (
-              <div className="hc-next" role="group" aria-labelledby="hc-next-title">
-                <p className="hc-next-title" id="hc-next-title">Що далі, після запиту</p>
+              <div className="hc-next">
+                <p className="hc-next-title">Що далі, після запиту</p>
                 <ol className="hc-next-steps">
                   {nextSteps.map((title, number) => (
                     <li key={title}><span className="hc-next-number" aria-hidden="true">{String(number + 1).padStart(2, '0')}</span>{title}</li>

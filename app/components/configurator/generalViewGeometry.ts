@@ -90,7 +90,7 @@ const textHeight = (size: number) => size * 0.78;
 
 const add = ([x, y]: Pt, [dx, dy]: Pt, by = 1): Pt => [x + dx * by, y + dy * by];
 const norm = ([x, y]: Pt): Pt => { const length = Math.hypot(x, y) || 1; return [x / length, y / length]; };
-const pathOf = (points: readonly Pt[], close = false) => `M${points.map(([x, y]) => `${n(x)},${n(y)}`).join('L')}${close ? 'Z' : ''}`;
+const pathOf = (points: readonly Pt[], close = false) => `M${points.map(([x, y]) => [n(x), n(y)].join(',')).join('L')}${close ? 'Z' : ''}`;
 
 /** Unit directions on the sheet: along the span (x) and along the building (d) */
 const UX = norm(AX);
@@ -139,6 +139,107 @@ function polygonMeets(polygon: readonly Pt[], box: Box) {
 
 const shiftBox = (box: Box, [dx, dy]: Pt): Box => [box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy];
 
+/** The sizes' type and gaps: a phone's narrow drawing sets them smaller and closer */
+function sheetType(small: boolean) {
+  return small
+    ? { type: { value: 13, ridge: 12 }, gap: DIM_GAP_SMALL, labelGap: LABEL_GAP_SMALL }
+    : { type: { value: 15, ridge: 13.5 }, gap: DIM_GAP, labelGap: LABEL_GAP };
+}
+
+/** Whether a laid-out drawing — its silhouette and its sizes — meets a box on the picture */
+function layoutMeets(layout: { silhouette: readonly Pt[]; sizes: readonly { box: Box; segments: readonly Segment[] }[] }, box: Box) {
+  return polygonMeets(layout.silhouette, box)
+    || layout.sizes.some((size) => overlaps(size.box, box) || size.segments.some((segment) => crosses(segment, box)));
+}
+
+type Edges = { frontBase: string; frontTop: string; sideBase: string; sideEave: string; roofEdges: string };
+/** The front end wall's base and corners are the wall's; its top edges are the wall's and the roof's; the side's base
+ *  and far corner the wall's; the eave over the side both; the near eave, the ridge and the far gable's top the roof's.
+ *  An edge is drawn whole while anything it bounds is in the request, dashed once nothing is — the legend's «Поза
+ *  обсягом робіт» is a dashed line too (CladdingSection). */
+function outlinePaths(wallsIn: boolean, roofIn: boolean, edge: Edges) {
+  const either = wallsIn || roofIn;
+  const whole = (on: boolean, d: string) => (on ? d : '');
+  return {
+    front: whole(wallsIn, `${edge.frontBase}${edge.frontTop}`),
+    edges: [whole(wallsIn, edge.sideBase), whole(either, edge.sideEave), whole(!wallsIn && roofIn, edge.frontTop), whole(roofIn, edge.roofEdges)].join(''),
+    out: [whole(!wallsIn, `${edge.frontBase}${edge.sideBase}`), whole(!either, `${edge.frontTop}${edge.sideEave}`), whole(!roofIn, edge.roofEdges)].join(''),
+  };
+}
+
+type Line = (...points: P3[]) => string;
+type Opening = { xM: number; widthM: number; heightM: number };
+
+/** The walls' cladding pattern: a profiled sheet's ribs upright, round the corner from the side to the end wall and
+ *  stopping at an opening's head; a sandwich panel's joints across the walls, closing to the ridge on the end wall and
+ *  broken at the openings' jambs */
+function wallPattern(system: CladdingSystem, at: { W: number; L: number; E: number; R: number; roofZ: (x: number) => number }, steps: { rib: number; joint: number }, openings: readonly Opening[], line: Line): string {
+  const { W, L, E, R, roofZ } = at;
+  if (system === 'profiled-sheet') {
+    const frontRibs = [W / 2, ...Array.from({ length: Math.ceil(W / 2 / steps.rib) }, (_, index) => (index + 1) * steps.rib)
+      .flatMap((offset) => [W / 2 - offset, W / 2 + offset])]
+      .filter((x) => x > steps.rib * 0.3 && x < W - steps.rib * 0.3);
+    // what the openings take from the front's pattern: a rib stops at an opening's head
+    const ribFrom = (x: number) => Math.max(0, ...openings.filter((opening) => x > opening.xM && x < opening.xM + opening.widthM).map((opening) => opening.heightM));
+    return [
+      ...stations(L, steps.rib).map((along) => line([W, along, 0], [W, along, E])),
+      ...frontRibs.filter((x) => ribFrom(x) < roofZ(x) - 0.2).map((x) => line([x, 0, ribFrom(x)], [x, 0, roofZ(x)])),
+    ].join('');
+  }
+  // the end wall's width at z: whole up to the eave, closing to the ridge; a joint stops at an opening's jambs
+  const endWallJoint = (z: number) => {
+    const half = z <= E ? W / 2 : (W / 2) * (1 - (z - E) / (R - E));
+    if (half < 0.3) return [];
+    const cut = openings.filter((opening) => opening.heightM > z).map((opening) => [opening.xM, opening.xM + opening.widthM] as const);
+    return free([W / 2 - half, W / 2 + half], cut).map(([a, b]) => line([a, 0, z], [b, 0, z]));
+  };
+  return [...stations(E, steps.joint).map((z) => line([W, 0, z], [W, L, z])), ...stations(R, steps.joint).flatMap(endWallJoint)].join('');
+}
+
+/** The frame where a surface is not clad and the frame is in the request: as «Каркас» draws it — the front frame in the
+ *  paper's ink and the heaviest line, the frames behind and the members between them thin, the bracing in copper. Its
+ *  outermost members only: through the open walls the near columns, under the open roof the frames' top chords and the
+ *  purlins; what lies further in is left to «Каркас». */
+function frameOutside(domain: HangarDomainModel, model: ReturnType<typeof buildParametricModel>, at: { W: number; L: number; E: number; R: number; roofZ: (x: number) => number }, open: { walls: boolean; roof: boolean }, line: Line): NonNullable<GeneralView['frame']> {
+  const { W, L, E, R, roofZ } = at;
+  const truss = domain.structural.roofStructure === 'truss';
+  const centre = domain.structural.scheme === 'centerSupport';
+  const frames = deriveBayLayout(L).stationsM;
+  const braced = [...new Set(model.bracing.map((brace) => brace.bayIndex))].filter((bay) => bay >= 0 && bay < frames.length - 1);
+  const parts = { front: [] as string[], back: [] as string[], thin: [] as string[], brace: [] as string[] };
+  if (open.walls) {
+    const columnXs = centre ? [0, W / 2, W] : [0, W];
+    const framing = endWallFraming({ widthM: W, eaveM: E, centre, openings: [] });
+    parts.front.push(
+      ...columnXs.map((x) => line([x, 0, 0], [x, 0, E])),
+      ...roofMembersAt(0, { W, E, R, truss, panelXs: trussPanelNodesM(W).panelXsM }).map((points) => line(...points)),
+    );
+    parts.back.push(...frames.slice(1).map((d) => line([W, d, 0], [W, d, E])));
+    parts.thin.push(
+      ...[E / 3, (2 * E) / 3].map((z) => line([W, 0, z], [W, L, z])),
+      ...framing.postXs.map((x) => line([x, 0, 0], [x, 0, roofZ(x)])),
+      ...framing.girts.map(({ z, from, to }) => line([from, 0, z], [to, 0, z])),
+    );
+    parts.brace.push(...braced.map((bay) => {
+      const [a, b] = [frames[bay], frames[bay + 1]];
+      return `${line([W, a, 0], [W, b, E])}${line([W, b, 0], [W, a, E])}`;
+    }));
+  }
+  if (open.roof) {
+    // the front frame's top chord is the end wall's top edge, or the front frame's own
+    const purlinXs = roofPurlinPositionsM(W, domain.structural.roofStructure).filter((purlin) => purlin.kind === 'purlin').map((purlin) => purlin.xM);
+    const slopes = [[0, ...purlinXs.filter((x) => x < W / 2), W / 2], [W / 2, ...purlinXs.filter((x) => x > W / 2), W]];
+    const panels = slopes.flatMap((xs) => xs.slice(1).map((x, index): Pt => [xs[index], x]));
+    parts.back.push(...frames.slice(1).map((d) => line([0, d, E], [W / 2, d, R], [W, d, E])));
+    parts.thin.push(...purlinXs.map((x) => line([x, 0, roofZ(x)], [x, L, roofZ(x)])));
+    parts.brace.push(...braced.flatMap((bay) => {
+      const [a, b] = [frames[bay], frames[bay + 1]];
+      return panels.map(([p, q]) => `${line([p, a, roofZ(p)], [q, b, roofZ(q)])}${line([p, b, roofZ(p)], [q, a, roofZ(q)])}`);
+    }));
+  }
+  return { front: parts.front.join(''), back: parts.back.join(''), thin: parts.thin.join(''), brace: parts.brace.join('') };
+}
+
 export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralViewFrame): GeneralView {
   const { widthM: W, lengthM: L, eaveHeightM: E } = domain.dimensions;
   const R = ridgeHeightM(W, E, domain.roof.pitchDeg);
@@ -147,9 +248,7 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
   const model = buildParametricModel(domain);
   // The configurator's gates and door on the near end wall, as «Каркас» and the 3D place them — none without walls
   const openings = sheetOpenings(model.openings, W, scope.walls);
-  const small = frame.width < 480;
-  const type = { value: small ? 13 : 15, ridge: small ? 12 : 13.5 };
-  const [gap, labelGap] = small ? [DIM_GAP_SMALL, LABEL_GAP_SMALL] : [DIM_GAP, LABEL_GAP];
+  const { type, gap, labelGap } = sheetType(frame.width < 480);
 
   // ── the layout's key points at a scale k (px a metre) and an origin O: the silhouette, the sizes' lines and values —
   //    all the fit needs; the cladding's pattern stays inside the silhouette ──
@@ -247,11 +346,7 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
       // the room the drawing has to move in its box, either way
       const slack = { left: centred[0] + extent[0] - area[0], right: area[2] - (centred[0] + extent[2]), up: centred[1] + extent[1] - area[1], down: area[3] - (centred[1] + extent[3]) };
       // the layout moved by O is the layout at the origin moved: tested as it is, not laid out again
-      const clearAt = (O: Pt) => keepClear.every((box) => {
-        const back = shiftBox(box, [-O[0], -O[1]]);
-        return !polygonMeets(at0.silhouette, back)
-          && !at0.sizes.some((size) => overlaps(size.box, back) || size.segments.some((segment) => crosses(segment, back)));
-      });
+      const clearAt = (O: Pt) => keepClear.every((box) => !layoutMeets(at0, shiftBox(box, [-O[0], -O[1]])));
       // the nearest place to the centre that is clear, in 4 px steps
       const moves: Pt[] = [[0, 0]];
       for (let dx = -Math.floor(slack.left / 4) * 4; dx <= slack.right; dx += 4) {
@@ -288,58 +383,23 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
     [[W / 2, 0, R], [W, 0, E], [W, L, E], [W / 2, L, R]],
   ];
   const planes = faces.map((face) => pathOf(face.map(P), true)).join('');
-  // The front end wall's base and corners are the wall's; its top edges are the wall's and the roof's; the side's base
-  // and far corner the wall's; the eave over the side both; the near eave, the ridge and the far gable's top the roof's.
-  // An edge is drawn whole while anything it bounds is in the request, dashed once nothing is — the legend's
-  // «Поза обсягом робіт» is a dashed line too (CladdingSection).
-  const frontBase = line([0, 0, E], [0, 0, 0], [W, 0, 0], [W, 0, E]);
-  const frontTop = line([0, 0, E], [W / 2, 0, R], [W, 0, E]);
-  const sideBase = line([W, 0, 0], [W, L, 0], [W, L, E]);
-  const sideEave = line([W, 0, E], [W, L, E]);
-  const roofEdges = `${line([0, 0, E], [0, L, E], [W / 2, L, R], [W, L, E])}${line([W / 2, 0, R], [W / 2, L, R])}`;
-  const front = wallsIn ? `${frontBase}${frontTop}` : '';
-  const edges = [
-    wallsIn ? sideBase : '',
-    wallsIn || roofIn ? sideEave : '',
-    !wallsIn && roofIn ? frontTop : '',
-    roofIn ? roofEdges : '',
-  ].join('');
-  const out = [
-    wallsIn ? '' : `${frontBase}${sideBase}`,
-    wallsIn || roofIn ? '' : `${frontTop}${sideEave}`,
-    roofIn ? '' : roofEdges,
-  ].join('');
+  const { front, edges, out } = outlinePaths(wallsIn, roofIn, {
+    frontBase: line([0, 0, E], [0, 0, 0], [W, 0, 0], [W, 0, E]),
+    frontTop: line([0, 0, E], [W / 2, 0, R], [W, 0, E]),
+    sideBase: line([W, 0, 0], [W, L, 0], [W, L, E]),
+    sideEave: line([W, 0, E], [W, L, E]),
+    roofEdges: `${line([0, 0, E], [0, L, E], [W / 2, L, R], [W, L, E])}${line([W / 2, 0, R], [W / 2, L, R])}`,
+  });
 
   // ── the cladding's pattern ──
   // ribs along the building at a step that stays RIB_PX apart where the length is halved; the front's at the same step,
   // centred on the ridge, as one sheet's ribs run round the corner
   const ribStep = niceStep(RIB_PX / (k * 0.5));
   const jointStep = Math.max(PANEL_M, Math.ceil(JOINT_PX / k / PANEL_M) * PANEL_M);
-  const sideStations = stations(L, ribStep);
-  const frontRibs = [W / 2, ...Array.from({ length: Math.ceil(W / 2 / ribStep) }, (_, index) => (index + 1) * ribStep)
-    .flatMap((offset) => [W / 2 - offset, W / 2 + offset])]
-    .filter((x) => x > ribStep * 0.3 && x < W - ribStep * 0.3);
-  // what the openings take from the front's pattern: a rib stops at an opening's head, a joint at its jambs
-  const ribFrom = (x: number) => Math.max(0, ...openings.filter((opening) => x > opening.xM && x < opening.xM + opening.widthM).map((opening) => opening.heightM));
-  let walls: GeneralView['walls'] = null;
-  if (wallsIn) {
-    const d = envelope.wallSystem === 'profiled-sheet'
-      ? [
-        ...sideStations.map((at) => line([W, at, 0], [W, at, E])),
-        ...frontRibs.filter((x) => ribFrom(x) < roofZ(x) - 0.2).map((x) => line([x, 0, ribFrom(x)], [x, 0, roofZ(x)])),
-      ].join('')
-      : [
-        ...stations(E, jointStep).map((z) => line([W, 0, z], [W, L, z])),
-        ...stations(R, jointStep).flatMap((z) => {
-          // the end wall's width at z: whole up to the eave, closing to the ridge
-          const half = z <= E ? W / 2 : (W / 2) * (1 - (z - E) / (R - E));
-          if (half < 0.3) return [];
-          const cut = openings.filter((opening) => opening.heightM > z).map((opening) => [opening.xM, opening.xM + opening.widthM] as const);
-          return free([W / 2 - half, W / 2 + half], cut).map(([a, b]) => line([a, 0, z], [b, 0, z]));
-        }),
-      ].join('');
-    walls = { system: envelope.wallSystem, d };
-  }
+  const at = { W, L, E, R, roofZ };
+  const walls: GeneralView['walls'] = wallsIn
+    ? { system: envelope.wallSystem, d: wallPattern(envelope.wallSystem, at, { rib: ribStep, joint: jointStep }, openings, line) }
+    : null;
   let roof: GeneralView['roof'] = null;
   if (roofIn) {
     // down both slopes, eave to ridge: the sheet's ribs at the walls' step, a roof panel's joints twice as far apart
@@ -354,42 +414,9 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
   //    the paper's ink and the heaviest line, the frames behind and the members between them thin, the bracing in
   //    copper. Its outermost members only: through the open walls the near columns, under the open roof the frames'
   //    top chords and the purlins; what lies further in is left to «Каркас». ──
-  let frameLines: GeneralView['frame'] = null;
-  if (scope.frame && (!wallsIn || !roofIn)) {
-    const truss = domain.structural.roofStructure === 'truss';
-    const centre = domain.structural.scheme === 'centerSupport';
-    const columnXs = centre ? [0, W / 2, W] : [0, W];
-    const layout = deriveBayLayout(L);
-    const frames = layout.stationsM;
-    const braced = [...new Set(model.bracing.map((brace) => brace.bayIndex))].filter((bay) => bay >= 0 && bay < frames.length - 1);
-    const purlinXs = roofPurlinPositionsM(W, domain.structural.roofStructure).filter((purlin) => purlin.kind === 'purlin').map((purlin) => purlin.xM);
-    const parts = { front: [] as string[], back: [] as string[], thin: [] as string[], brace: [] as string[] };
-    if (!wallsIn) {
-      parts.front.push(...columnXs.map((x) => line([x, 0, 0], [x, 0, E])));
-      parts.front.push(...roofMembersAt(0, { W, E, R, truss, panelXs: trussPanelNodesM(W).panelXsM }).map((points) => line(...points)));
-      parts.back.push(...frames.slice(1).map((d) => line([W, d, 0], [W, d, E])));
-      parts.thin.push(...[E / 3, (2 * E) / 3].map((z) => line([W, 0, z], [W, L, z])));
-      const framing = endWallFraming({ widthM: W, eaveM: E, centre, openings: [] });
-      parts.thin.push(...framing.postXs.map((x) => line([x, 0, 0], [x, 0, roofZ(x)])));
-      parts.thin.push(...framing.girts.map(({ z, from, to }) => line([from, 0, z], [to, 0, z])));
-      parts.brace.push(...braced.map((bay) => {
-        const [a, b] = [frames[bay], frames[bay + 1]];
-        return `${line([W, a, 0], [W, b, E])}${line([W, b, 0], [W, a, E])}`;
-      }));
-    }
-    if (!roofIn) {
-      // the front frame's top chord is the end wall's top edge, or the front frame's own
-      parts.back.push(...frames.slice(1).map((d) => line([0, d, E], [W / 2, d, R], [W, d, E])));
-      parts.thin.push(...purlinXs.map((x) => line([x, 0, roofZ(x)], [x, L, roofZ(x)])));
-      const slopes = [[0, ...purlinXs.filter((x) => x < W / 2), W / 2], [W / 2, ...purlinXs.filter((x) => x > W / 2), W]];
-      const panels = slopes.flatMap((xs) => xs.slice(1).map((x, index): Pt => [xs[index], x]));
-      parts.brace.push(...braced.flatMap((bay) => {
-        const [a, b] = [frames[bay], frames[bay + 1]];
-        return panels.map(([p, q]) => `${line([p, a, roofZ(p)], [q, b, roofZ(q)])}${line([p, b, roofZ(p)], [q, a, roofZ(q)])}`);
-      }));
-    }
-    frameLines = { front: parts.front.join(''), back: parts.back.join(''), thin: parts.thin.join(''), brace: parts.brace.join('') };
-  }
+  const frameLines: GeneralView['frame'] = scope.frame && (!wallsIn || !roofIn)
+    ? frameOutside(domain, model, at, { walls: !wallsIn, roof: !roofIn }, line)
+    : null;
 
   // ── the ground: a line along the building's base, past its ends, with a short hatch under it — as on «Каркас» ──
   const groundPath = pathOf(ground);

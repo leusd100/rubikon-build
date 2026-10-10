@@ -82,18 +82,6 @@
   border: 1px solid var(--sheet-ink);
 }
 .hangar-configurator-embedded .hc-preview-sheet .hc-sheet-options[hidden] { display: none; }
-/* «Сховати розміри» joins them at the top: at the bottom it covered «10,6 м» on a 460 px picture (1024 px, 03.10) */
-.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle {
-  top: 12px; right: auto; bottom: auto; left: 12px;
-  min-height: 32px;
-  color: var(--color-dark-text-secondary);
-  border-color: rgba(255, 255, 255, .18);
-  /* in words, as the chips beside it (10.10, audit F112) */
-  font: 700 13px/1 var(--font-manrope), sans-serif;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle::after { position: absolute; inset: -7px 0; content: ''; }
 /* A phone's picture reads the 3D sizes in two columns of two: in one row of four they ran past the picture at 320–390 px
    and cut «Висота в конику» off (03.10) */
 @container sheet (max-width: 360px) {
@@ -115,6 +103,8 @@
 :is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay > div { display: flex; align-items: baseline; gap: 6px; }
 :is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dt { margin: 0; font-size: 10px; letter-spacing: .1em; }
 :is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dd { font-size: 13px; }
+/* «Сховати розміри» is not on the sheet (10.10): its 3D shows the sizes as this one quiet line; the expanded view keeps
+   the toggle */
 .hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle { display: none; }
 
 /* the rest of the configurator's chrome is square too — the colour swatches and the expanded 3D view included, which

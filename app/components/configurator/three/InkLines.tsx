@@ -44,14 +44,14 @@ export function InkLines({
   widthPx,
   opacity = 1,
   layer,
-}: {
+}: Readonly<{
   segments: Segments;
   color: string;
   widthPx: number;
   /** The ink's own strength once settled: a quieter line (a gate's sections) is the same ink at less opacity */
   opacity?: number;
   layer: LayerTransitionStyle;
-}) {
+}>) {
   const size = useThree((s) => s.size);
   const invalidate = useThree((s) => s.invalidate);
   const geometry = useMemo(() => {

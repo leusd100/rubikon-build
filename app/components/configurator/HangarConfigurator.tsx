@@ -251,7 +251,7 @@ function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElem
   }, [enabled, layoutRef]);
 }
 
-export function HangarConfigurator({ embedded = false, nextSteps }: { embedded?: boolean; nextSteps?: readonly string[] }) {
+export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ embedded?: boolean; nextSteps?: readonly string[] }>) {
   const sharedInquiry = useHangarInquiryContext();
   const layoutRef = useMiniPreview(embedded);
   useConfiguratorLinks(embedded, layoutRef);

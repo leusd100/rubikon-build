@@ -121,6 +121,63 @@ const segmentsOf = (d: string): Segment[] => d.split('M').filter(Boolean).flatMa
   return points.slice(1).map((point, index): Segment => [points[index], point]);
 });
 
+/** A path through points already on the sheet */
+const pathOf = (...points: readonly Pt[]) => `M${points.map(([x, y]) => [n(x), n(y)].join(',')).join('L')}`;
+/** A dimension line's 45° tick at a point on the sheet */
+const tickAt = ([x, y]: Pt) => `M${n(x - 4)},${n(y + 4)}l8,-8`;
+
+/** Each dimension's words along its line, at its middle, on its outer side a gap off it (10.10, owner: «розміри можна
+ *  робити паралельно розмірних ліній»): L's and the spans' under their lines, H's left of its own reading upward, a's
+ *  beside its line along the building. Their box — at a phone's sizes, turned with them — is what the cameras hold and
+ *  the members' names keep clear of. */
+function dimLabel(key: string, from: Pt, to: Pt, side: DimLabel['side'], words: Pick<DimLabel, 'letter' | 'value' | 'note' | 'answer'>): DimLabel {
+  let angle = (Math.atan2(to[1] - from[1], to[0] - from[0]) * 180) / Math.PI;
+  // readable from the bottom or the right, as a drawing's are: an upright line's words read upward (−90°)
+  if (angle > 90) angle -= 180;
+  if (angle < -90) angle += 180;
+  const [x, y] = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2];
+  const width = (words.letter ? LETTER * 0.62 * words.letter.length : 0) + valueWidth(`${words.value ?? ''}${words.note ?? ''}`);
+  const height = words.letter ? LETTER_CAP : VALUE_CAP;
+  const [top, bottom] = side === 'below' ? [LETTER_GAP, LETTER_GAP + height] : [-LETTER_GAP - height, -LETTER_GAP];
+  const turn = (angle * Math.PI) / 180;
+  const corners = [[-width / 2, top], [width / 2, top], [-width / 2, bottom], [width / 2, bottom]].map(([cx, cy]): Pt => [
+    x + cx * Math.cos(turn) - cy * Math.sin(turn), y + cx * Math.sin(turn) + cy * Math.cos(turn),
+  ]);
+  return { key, x, y, angle, side, ...words, box: union(corners.map((corner) => around(corner, 1))) };
+}
+
+/**
+ * The span's dimensions under the frame (10.10, owner): L between the outer columns' axes («розмірні лінії мають міряти
+ * між центрами крайніх колон»), their extension lines down from under the footings; with a centre row in two rows («1
+ * ряд буде показувати по 15 метрів, а 2-й ряд загальну суму») — the spans А–Б and Б–В under the frame, L under them,
+ * Б's extension line to the first row only. The visitor's answer on the columns is on them («розмірні лінії об'єднати й
+ * винести за межі ангару»): «· без колон» after L for their own «Так, без колон» — not for «Колони можна» on a portal
+ * frame drawn without them — and with a centre row the spans' row, the answer's part (`answerDim`) in copper.
+ */
+function spanDimensions(sheet: { xy: (point: P3) => Pt; k: number }, W: number, centre: boolean, answer: HangarDomainModel['internalSupports'], valueL: string) {
+  const { xy, k } = sheet;
+  const down = (point: P3, by: number): Pt => { const [x, y] = xy(point); return [x, y + by]; };
+  const rowL = centre ? ROW_GAP : 0;
+  const [l0, l1] = [down([0, 0, DIM_Z], rowL), down([W, 0, DIM_Z], rowL)];
+  const totalRow = `${pathOf(l0, l1)}${tickAt(l0)}${tickAt(l1)}`;
+  const extensions = [0, W].map((x) => pathOf(xy([x, 0, -1.3]), down([x, 0, DIM_Z], rowL + 0.4 * k))).join('');
+  const total = dimLabel('L', l0, l1, 'below', { letter: 'L', value: valueL, note: answer === 'not-allowed' ? '\u00A0· без колон' : undefined });
+  const lines: Segment[] = [[l0, l1], [xy([0, 0, -1.3]), down([0, 0, DIM_Z], rowL)], [xy([W, 0, -1.3]), down([W, 0, DIM_Z], rowL)]];
+  if (!centre) return { rowL, spanDim: `${totalRow}${extensions}`, answerDim: `${totalRow}${extensions}`, labels: [total], lines };
+  const spansRow = `${pathOf(xy([0, 0, DIM_Z]), xy([W, 0, DIM_Z]))}${[0, W / 2, W].map((x) => tickAt(xy([x, 0, DIM_Z]))).join('')}`
+    + pathOf(xy([W / 2, 0, -1.3]), xy([W / 2, 0, DIM_Z]));
+  const spans = [[0, W / 2], [W / 2, W]].map(([a, b], index) => dimLabel(`span-${index}`, xy([a, 0, DIM_Z]), xy([b, 0, DIM_Z]), 'below', {
+    value: metres(b - a), answer: answer !== 'unknown',
+  }));
+  return {
+    rowL,
+    spanDim: `${spansRow}${totalRow}${extensions}`,
+    answerDim: spansRow,
+    labels: [...spans, total],
+    lines: [...lines, [xy([0, 0, DIM_Z]), xy([W, 0, DIM_Z])] as Segment],
+  };
+}
+
 type Tag = { label: string; lines: readonly string[]; d: string; x: number; y: number; anchor: 'start' | 'end'; box: Box };
 /** Names a member with a short leader to its label: the first way out (from one of the member's points, at one of the
  *  leaders) that keeps the label inside the window and clear of every label, bubble, footing, dimension line and
@@ -139,7 +196,10 @@ function segmentsCross([[ax, ay], [bx, by]]: Segment, [[cx, cy], [dx, dy]]: Segm
 const RING: readonly Pt[] = [40, 60, 84, 112].flatMap((r) => [[1, -1], [-1, -1], [1, 0], [-1, 0], [1, 1], [-1, 1], [0.5, -1], [-0.5, -1]]
   .map(([dx, dy]) => [Math.round(r * dx / Math.hypot(dx, dy)), Math.round(r * dy / Math.hypot(dx, dy))] as Pt));
 
-function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt[] }[], view: Box, taken: Box[], lines: Segment[], bars: readonly Segment[] = [], others: readonly Segment[] = [], ring = true): Tag {
+/** What a name keeps off on a step that lights members: those members (`bars`), the drawing's other lines (`others`),
+ *  and whether it may go further out on a ring of longer leaders (`ring`) */
+type TagAvoid = { bars?: readonly Segment[]; others?: readonly Segment[]; ring?: boolean };
+function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt[] }[], view: Box, taken: Box[], lines: Segment[], { bars = [], others = [], ring = true }: TagAvoid = {}): Tag {
   const words = label.split(' ');
   const layouts = words.length > 1 ? [[label], [words[0], words.slice(1).join(' ')]] : [[label]];
   // With lit members to keep off (the «Прогони й в’язі» step), a name may go further out on a longer leader (10.10, owner:
@@ -203,11 +263,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const end = continues ? DEP + s * 0.45 : DEP;
   const truss = domain.structural.roofStructure === 'truss';
   const centre = domain.structural.scheme === 'centerSupport';
-  // The visitor's answer on the columns, on the dimensions under the frame (10.10, owner: «розмірні лінії об'єднати й
-  // винести за межі ангару»): «· без колон» after L; with a centre row the spans' own row says it, «15 м | 15 м»
   const answered = domain.internalSupports !== 'unknown';
-  // the visitor's own «без колон» only: «Колони можна» on a portal frame, drawn without them, is not that answer
-  const spanNote = domain.internalSupports === 'not-allowed' ? '\u00A0· без колон' : '';
   const roofZ = roofHeight(W, E, R);
   const columnXs = centre ? [0, W / 2, W] : [0, W];
   // The configurator's own model: its gates and door on this end wall — on the same side of the centre as the general
@@ -250,10 +306,9 @@ function frameGeometry(domain: HangarDomainModel) {
   };
   // H's words stand left of its line, a phone's capitals off it: where a wide, low hangar leaves them less room than
   // that, the picture gives it (10.10, QA: 50 × 60 × 4 on a 360 px phone cut «H = 4 м» at the edge)
-  let placed = fit(LETTER_GAP + LETTER * 0.72);
-  const hWordsLeft = placed.ox + unit([-2.2, 0, 0])[0] * placed.k - LETTER_GAP - LETTER_CAP;
-  if (hWordsLeft < 22) placed = fit(LETTER_GAP + LETTER * 0.72, 22 + 22 - hWordsLeft);
-  const { k, ox, oy } = placed;
+  const first = fit(LETTER_GAP + LETTER * 0.72);
+  const hWordsLeft = first.ox + unit([-2.2, 0, 0])[0] * first.k - LETTER_GAP - LETTER_CAP;
+  const { k, ox, oy } = fit(LETTER_GAP + LETTER * 0.72, 22 + Math.max(0, 22 - hWordsLeft));
   const xy = (point: P3) => { const [x, y] = unit(point); return [ox + x * k, oy + y * k] as const; };
   const p = (point: P3) => xy(point).map(n).join(',');
   const line = (...points: P3[]) => `M${points.map(p).join('L')}`;
@@ -358,8 +413,6 @@ function frameGeometry(domain: HangarDomainModel) {
   // three (owner, 09.10: «з цими розмірними лініями треба навести лад»): extension lines from what is measured to just
   // past the dimension line, a 45° tick at each end, and the letter at the line's middle on its outer side, a gap off it.
   // H had flat ticks and no lower extension line, a stood off past its line's end, L beside Б's bubble.
-  const tickAt = ([x, y]: Pt) => `M${n(x - 4)},${n(y + 4)}l8,-8`;
-  const tick = (point: P3) => tickAt(xy(point));
   const [hx, hy] = xy([-2.2, 0, 0]);
   const [, hty] = xy([-2.2, 0, E]);
   const heightDim = `M${n(hx)},${n(hy)}V${n(hty)}${tickAt([hx, hy])}${tickAt([hx, hty])}`
@@ -375,21 +428,8 @@ function frameGeometry(domain: HangarDomainModel) {
   const bayDim = `${line([W + DIM_A, 0, 0], [W + DIM_A, s, 0])}${groundTick([W + DIM_A, 0, 0])}${groundTick([W + DIM_A, s, 0])}`
     + `${line([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0])}${line([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0])}`;
   const down = (point: P3, by: number) => { const [x, y] = xy(point); return [x, y + by] as const; };
-  const path = (...points: Pt[]) => `M${points.map(([x, y]) => `${n(x)},${n(y)}`).join('L')}`;
-
-  // L between the outer columns' axes (10.10, owner: «розмірні лінії мають міряти між центрами крайніх колон»), their
-  // extension lines down from under the footings. With a centre row in two rows (owner: «1 ряд буде показувати по 15
-  // метрів, а 2-й ряд загальну суму»): the spans А–Б and Б–В under the frame, L under them, Б's extension line to the
-  // first row only. The answer's part of it is `answerDim`: the spans' row, or L alone on a clear span.
-  const rowL = centre ? ROW_GAP : 0;
-  const [l0, l1] = [down([0, 0, DIM_Z], rowL), down([W, 0, DIM_Z], rowL)];
-  const totalRow = `${path(l0, l1)}${tickAt(l0)}${tickAt(l1)}`;
-  const spansRow = centre
-    ? `${line([0, 0, DIM_Z], [W, 0, DIM_Z])}${[0, W / 2, W].map((x) => tick([x, 0, DIM_Z])).join('')}${line([W / 2, 0, -1.3], [W / 2, 0, DIM_Z])}`
-    : '';
-  const extensions = [0, W].map((x) => path(xy([x, 0, -1.3]), down([x, 0, DIM_Z], rowL + 0.4 * k))).join('');
-  const spanDim = `${spansRow}${totalRow}${extensions}`;
-  const answerDim = centre ? spansRow : `${totalRow}${extensions}`;
+  const span = spanDimensions({ xy, k }, W, centre, domain.internalSupports, values.L);
+  const { rowL, spanDim, answerDim } = span;
 
   // Coordinate axes, dash-dot, with their bubbles past the dimension lines (03.10): across the span in letters, one after
   // another as a drawing letters them (04.10) — А, Б on a clear span, А, Б, В with the centre row (Б) — down through
@@ -400,30 +440,8 @@ function frameGeometry(domain: HangarDomainModel) {
   const spanBubbles = columnXs.map((x, index) => ({ label: AXIS_LETTERS[index], at: down([x, 0, DIM_Z], rowL + BUBBLE_DOWN) }));
   const spanAxes = columnXs.map((x, index) => `M${p([x, 0, roofZ(x) + 0.7])}L${spanBubbles[index].at.map(n).join(',')}`).join('');
 
-  // Each dimension's words along its line, at its middle, on its outer side a gap off it (10.10, owner: «розміри можна
-  // робити паралельно розмірних ліній»): L's and the spans' under their lines, H's left of its own reading upward, a's
-  // beside its line along the building. Their box — at a phone's sizes, turned with them — is what the cameras hold and
-  // the members' names keep clear of.
-  const dimLabel = (key: string, from: Pt, to: Pt, side: DimLabel['side'], words: Pick<DimLabel, 'letter' | 'value' | 'note' | 'answer'>): DimLabel => {
-    let angle = (Math.atan2(to[1] - from[1], to[0] - from[0]) * 180) / Math.PI;
-    // readable from the bottom or the right, as a drawing's are: an upright line's words read upward (−90°)
-    if (angle > 90) angle -= 180;
-    if (angle < -90) angle += 180;
-    const [x, y] = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2];
-    const width = (words.letter ? LETTER * 0.62 * words.letter.length : 0) + valueWidth(`${words.value ?? ''}${words.note ?? ''}`);
-    const height = words.letter ? LETTER_CAP : VALUE_CAP;
-    const [top, bottom] = side === 'below' ? [LETTER_GAP, LETTER_GAP + height] : [-LETTER_GAP - height, -LETTER_GAP];
-    const turn = (angle * Math.PI) / 180;
-    const corners = [[-width / 2, top], [width / 2, top], [-width / 2, bottom], [width / 2, bottom]].map(([cx, cy]): Pt => [
-      x + cx * Math.cos(turn) - cy * Math.sin(turn), y + cx * Math.sin(turn) + cy * Math.cos(turn),
-    ]);
-    return { key, x, y, angle, side, ...words, box: union(corners.map((corner) => around(corner, 1))) };
-  };
-  const spanLabels = centre
-    ? [[0, W / 2], [W / 2, W]].map(([a, b], index) => dimLabel(`span-${index}`, xy([a, 0, DIM_Z]), xy([b, 0, DIM_Z]), 'below', { value: metres(b - a), answer: answered }))
-    : [];
   const dimLabels = {
-    L: [...spanLabels, dimLabel('L', l0, l1, 'below', { letter: 'L', value: values.L, note: spanNote || undefined })],
+    L: span.labels,
     H: dimLabel('H', [hx, hy], [hx, hty], 'above', { letter: 'H', value: values.H }),
     a: dimLabel('a', xy([W + DIM_A, 0, 0]), xy([W + DIM_A, s, 0]), 'below', { letter: 'a' }),
   };
@@ -431,8 +449,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const bubbleBoxes = spanBubbles.map(({ at }) => around(at, BUBBLE + 2));
   const letterBoxes = [...dimLabels.L.map((label) => label.box), labelBoxes.H, labelBoxes.a];
   const dimLines: Segment[] = [
-    [l0, l1], [xy([0, 0, -1.3]), down([0, 0, DIM_Z], rowL)], [xy([W, 0, -1.3]), down([W, 0, DIM_Z], rowL)],
-    ...(centre ? [segment([0, 0, DIM_Z], [W, 0, DIM_Z])] : []),
+    ...span.lines,
     segment([W + DIM_A, 0, 0], [W + DIM_A, s, 0]), [[hx, hy], [hx, hty]], segment([-0.9, 0, E], [-2.6, 0, E]),
     segment([-0.9, 0, 0], [-2.6, 0, 0]), segment([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0]), segment([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0]),
   ];
@@ -566,25 +583,25 @@ function frameGeometry(domain: HangarDomainModel) {
   const bayLines: Segment[] = [segment([W + DIM_A, 0, 0], [W + DIM_A, s, 0]), segment([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0]), segment([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0])];
   const greyLines = [...segmentsOf(`${backFrames}${longitudinals}${farEnd}${columnsAt(0)}${roofAt(0)}`), ...dimLines];
   const baysTags = [
-    placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, bayTaken, bayLines, bars, greyLines),
+    placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, bayTaken, bayLines, { bars, others: greyLines }),
     // up from a purlin, over the roof where the picture is free (10.10, owner: «"прогони" краще показати зверху де є
     // вільне місце» — the ring had put it under the side wall, among the other names)
     placeTag('прогони', [...purlinXs].filter((x) => x > W / 2).reverse().flatMap((x) => [1.5, 1.2, 1.9, 2.3].filter((t) => t * s < end).map((t) => ({
       from: xy([x, s * t, roofZ(x)]),
       leaders: [[0, -44], [16, -42], [-16, -42], [10, -60], [-10, -60], [26, -34], [0, -78], [22, -74]] as Pt[],
-    }))), baysBase.view, bayTaken, bayLines, bars, greyLines, false),
+    }))), baysBase.view, bayTaken, bayLines, { bars, others: greyLines, ring: false }),
     // on a wall purlin of the end wall, the name above or below it; else out from the side wall's
     placeTag('стінові прогони', [
       ...bands.map(({ z, from, to }) => ({ from: xy([(from + to) / 2, 0, z]), leaders: [[-14, -20], [14, -20], [-14, 22], [14, 22]] as Pt[] })),
       ...sideWall.flatMap((t) => [(2 * E) / 3, E / 3].map((z) => ({ from: xy([W, s * t, z]), leaders: [[26, -16], [30, 10], [26, 16]] as Pt[] }))),
-    ], baysBase.view, bayTaken, bayLines, bars, greyLines),
+    ], baysBase.view, bayTaken, bayLines, { bars, others: greyLines }),
     // on a post, into the end wall beside it, or above the roof from its top
     placeTag('стійки фахверку', [
       ...[...postXs].reverse().flatMap((x) => [0.8, 0.62, 0.45].map((t) => ({ from: xy([x, 0, E * t]), leaders: [[-24, -14], [24, -14], [-24, 14], [24, 14]] as Pt[] }))),
       ...postXs.map((x) => ({ from: xy([x, 0, roofZ(x) - 0.3]), leaders: [[-18, -34], [18, -34], [-30, -50]] as Pt[] })),
       // or down from a post's foot, under the end wall
       ...postXs.map((x) => ({ from: xy([x, 0, E * 0.12]), leaders: [[-24, 58], [24, 58], [-36, 74], [36, 74]] as Pt[] })),
-    ], baysBase.view, bayTaken, bayLines, bars, greyLines),
+    ], baysBase.view, bayTaken, bayLines, { bars, others: greyLines }),
   ];
   const baysCamera = camera(baysFocus, 1.5, union([baysEssentials, ...baysTags.map((tag) => tag.box)]));
 
