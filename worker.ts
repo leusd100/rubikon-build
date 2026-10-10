@@ -1,4 +1,6 @@
 import vinextWorker from 'vinext/server/app-router-entry';
+import videoByteLengths from 'virtual:rubikon-video-byte-lengths';
+import { withVideoByteRange } from './worker/video-range';
 import {
   isImmutableAssetPathname,
   withImmutableCacheControl,
@@ -16,9 +18,15 @@ const worker = {
     env?: WorkerEnv,
     ctx?: Parameters<typeof vinextWorker.fetch>[2],
   ) {
+    const pathname = new URL(request.url).pathname;
+    const videoLength = videoByteLengths[pathname];
+    if (env?.ASSETS && videoLength !== undefined) {
+      const asset = await env.ASSETS.fetch(request);
+      return withVideoByteRange(request, asset, videoLength);
+    }
     if (
       !env?.ASSETS ||
-      !isImmutableAssetPathname(new URL(request.url).pathname)
+      !isImmutableAssetPathname(pathname)
     ) {
       return vinextWorker.fetch(request, env, ctx);
     }
