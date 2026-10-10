@@ -223,47 +223,55 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
   // ── the fit: the largest scale that holds the drawing in its box, centred; then clear of what lies on the picture ──
   const area: Box = [PAD, PAD, Math.max(frame.width - PAD, PAD + 1), Math.max(frame.height - PAD, PAD + 1)];
   const [areaW, areaH] = [area[2] - area[0], area[3] - area[1]];
-  const fits = (k: number) => {
-    const { extent } = layoutAt(k, [0, 0]);
-    return extent[2] - extent[0] <= areaW && extent[3] - extent[1] <= areaH;
-  };
-  let [low, high] = [0.05, 400];
-  for (let pass = 0; pass < 40; pass += 1) {
-    const mid = (low + high) / 2;
-    if (fits(mid)) low = mid;
-    else high = mid;
-  }
   const keepClear = frame.keepClear.map((box): Box => [box[0] - 4, box[1] - 4, box[2] + 4, box[3] + 4]);
-  const placeAt = (k: number) => {
-    const at0 = layoutAt(k, [0, 0]);
-    const { extent } = at0;
-    const centred: Pt = [(area[0] + area[2]) / 2 - (extent[0] + extent[2]) / 2, (area[1] + area[3]) / 2 - (extent[1] + extent[3]) / 2];
-    if (!keepClear.length) return centred;
-    // the room the drawing has to move in its box, either way
-    const slack = { left: centred[0] + extent[0] - area[0], right: area[2] - (centred[0] + extent[2]), up: centred[1] + extent[1] - area[1], down: area[3] - (centred[1] + extent[3]) };
-    // the layout moved by O is the layout at the origin moved: tested as it is, not laid out again
-    const clearAt = (O: Pt) => keepClear.every((box) => {
-      const back = shiftBox(box, [-O[0], -O[1]]);
-      return !polygonMeets(at0.silhouette, back)
-        && !at0.sizes.some((size) => overlaps(size.box, back) || size.segments.some((segment) => crosses(segment, back)));
-    });
-    // the nearest place to the centre that is clear, in 4 px steps
-    const moves: Pt[] = [[0, 0]];
-    for (let dx = -Math.floor(slack.left / 4) * 4; dx <= slack.right; dx += 4) {
-      for (let dy = -Math.floor(slack.up / 4) * 4; dy <= slack.down; dy += 4) if (dx || dy) moves.push([dx, dy]);
+  const fit = () => {
+    const fits = (k: number) => {
+      const { extent } = layoutAt(k, [0, 0]);
+      return extent[2] - extent[0] <= areaW && extent[3] - extent[1] <= areaH;
+    };
+    let [low, high] = [0.05, 400];
+    for (let pass = 0; pass < 40; pass += 1) {
+      const mid = (low + high) / 2;
+      if (fits(mid)) low = mid;
+      else high = mid;
     }
-    moves.sort((a, b) => Math.hypot(...a) - Math.hypot(...b));
-    const move = moves.find((by) => clearAt(add(centred, by)));
-    return move ? add(centred, move) : null;
+    const centredAt = (extent: Box): Pt => [(area[0] + area[2]) / 2 - (extent[0] + extent[2]) / 2, (area[1] + area[3]) / 2 - (extent[1] + extent[3]) / 2];
+    const placeAt = (k: number) => {
+      const at0 = layoutAt(k, [0, 0]);
+      const { extent } = at0;
+      const centred = centredAt(extent);
+      if (!keepClear.length) return centred;
+      // the room the drawing has to move in its box, either way
+      const slack = { left: centred[0] + extent[0] - area[0], right: area[2] - (centred[0] + extent[2]), up: centred[1] + extent[1] - area[1], down: area[3] - (centred[1] + extent[3]) };
+      // the layout moved by O is the layout at the origin moved: tested as it is, not laid out again
+      const clearAt = (O: Pt) => keepClear.every((box) => {
+        const back = shiftBox(box, [-O[0], -O[1]]);
+        return !polygonMeets(at0.silhouette, back)
+          && !at0.sizes.some((size) => overlaps(size.box, back) || size.segments.some((segment) => crosses(segment, back)));
+      });
+      // the nearest place to the centre that is clear, in 4 px steps
+      const moves: Pt[] = [[0, 0]];
+      for (let dx = -Math.floor(slack.left / 4) * 4; dx <= slack.right; dx += 4) {
+        for (let dy = -Math.floor(slack.up / 4) * 4; dy <= slack.down; dy += 4) if (dx || dy) moves.push([dx, dy]);
+      }
+      moves.sort((a, b) => Math.hypot(...a) - Math.hypot(...b));
+      const move = moves.find((by) => clearAt(add(centred, by)));
+      return move ? add(centred, move) : null;
+    };
+    // …a little smaller each time until it is: on a phone's 186 px high picture the chip cost it about a fifth
+    let k = low;
+    let O = placeAt(k);
+    for (let tries = 0; !O && tries < 24; tries += 1) {
+      k *= 0.97;
+      O = placeAt(k);
+    }
+    // a picture too crowded to keep clear of them all is drawn whole at its size, centred
+    if (!O) return { k: low, O: centredAt(layoutAt(low, [0, 0]).extent) };
+    return { k, O };
   };
-  // …a little smaller each time until it is: on a phone's 186 px high picture the chip costs it about a fifth
-  let k = low;
-  let O = placeAt(k);
-  for (let tries = 0; !O && tries < 24; tries += 1) {
-    k *= 0.97;
-    O = placeAt(k);
-  }
-  O ??= placeAt(k) ?? [0, 0];
+  // (Measuring the length along the near eave instead, up in the empty corner, was tried for the phone, 10.10: the
+  // picture is held by its height there, and the eave's size made it taller — it came out smaller still.)
+  const { k, O } = fit();
   const { P, ground, sizes } = layoutAt(k, O);
   const line = (...points: P3[]) => pathOf(points.map(P));
 
