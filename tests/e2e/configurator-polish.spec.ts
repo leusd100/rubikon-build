@@ -362,15 +362,20 @@ test('the frame tour’s play control stays put over the list while the tour pla
     await play.click();
     await expect(play).toHaveText('Зупинити показ');
     // through the span and into «Ферма», whose nodes' buttons come under the list: where the control is, and what is shown
-    const samples: { top: number; shown: number }[] = [];
-    while (!samples.some((sample) => sample.shown === 1) || samples.length < 24) {
-      samples.push(await page.evaluate(() => ({
-        top: document.querySelector('#hc-frame-panel .hc-frame-play button')!.getBoundingClientRect().top,
-        shown: [...document.querySelectorAll('#hc-frame-panel .hc-frame-item')].findIndex((item) => item.getAttribute('aria-pressed') === 'true'),
-      })));
-      expect(samples.length).toBeLessThan(200);
-      await page.waitForTimeout(250);
-    }
+    // sampled in the page every 250 ms until «Ферма» has shown and at least 24 samples are in (at most 200)
+    const samples = await page.evaluate(() => new Promise<{ top: number; shown: number }[]>((resolve) => {
+      const taken: { top: number; shown: number }[] = [];
+      const sample = () => {
+        taken.push({
+          top: document.querySelector('#hc-frame-panel .hc-frame-play button')!.getBoundingClientRect().top,
+          shown: [...document.querySelectorAll('#hc-frame-panel .hc-frame-item')].findIndex((item) => item.getAttribute('aria-pressed') === 'true'),
+        });
+        if ((taken.some((one) => one.shown === 1) && taken.length >= 24) || taken.length >= 200) resolve(taken);
+        else setTimeout(sample, 250);
+      };
+      sample();
+    }));
+    expect(samples.length).toBeLessThan(200);
     const tops = samples.map((sample) => sample.top);
     expect(Math.max(...tops) - Math.min(...tops), `${width}`).toBeLessThanOrEqual(1);
     const box = (await play.boundingBox())!;

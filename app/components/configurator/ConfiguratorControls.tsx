@@ -415,6 +415,36 @@ const TEMPERATURE_WORDS: Record<ColdStoreTemperature, TileWords> = {
   unknown: { word: NOT_YET },
 };
 
+type ShownOpenings = Pick<ConfiguratorState, 'gates' | 'gateType' | 'doors'>;
+
+/**
+ * An answer about the openings (04.10: each control sets only its own choice). The example's openings the sizes leave no
+ * room for are nobody's to keep (10.10, QA: walls of 4 m showed «0» gates, and a door answered put the example's
+ * 4 × 4 m gate under «Вибрана конфігурація»): the first answer takes the rest as the drawing shows them. A choice the
+ * visitor made is still held, never cleared — deriveDomainModel places what fits, and the rest returns with the room.
+ */
+function withOpeningsAnswer(state: ConfiguratorState, shown: ShownOpenings, answer: Partial<ShownOpenings>): ConfiguratorState {
+  const base = state.confirmed.includes('openings') ? state : { ...state, ...shown };
+  return withConfirmed({ ...base, ...answer }, 'openings');
+}
+
+/** The shown gate count pressed: an answer — and where it is not the one held (walls too low for the gates), it becomes
+ *  the choice: «0» says «без воріт» (10.10, QA). Null for a count not shown: its own change answers it. */
+function shownGatesPressed(state: ConfiguratorState, shown: ShownOpenings, option: GatesCount): ConfiguratorState | null {
+  if (shown.gates !== option) return null;
+  return state.gates === option ? withConfirmed(state, 'openings') : withOpeningsAnswer(state, shown, { gates: option });
+}
+
+/** A cold store's note under the shell (10.10): why there is no «Без утеплення», and while its warm hangar is a
+ *  suggestion, the way to answer it */
+function coldStoreShellNote(suggestion: boolean): string {
+  const why = 'Холодильному складу потрібні утеплені стіни й покрівля, тому «Без утеплення» тут недоступний.';
+  return keepShortWords(suggestion ? `${why} Натисніть «Утеплений», щоб підтвердити.` : why);
+}
+
+/** A shell tile off: no walls or roof in the request, or a cold store's «Без утеплення» (10.10, owner) */
+const shellTileOff = (option: EnvelopeChoice, hasScope: boolean, coldStore: boolean) => !hasScope || (coldStore && option === 'cold');
+
 function TileLabel({ word, detail, apart = false }: Readonly<TileWords>) {
   // «Ще не знаю» has nothing under it and is not yet an answer: its words stay as quiet as the chips' (audit F110)
   if (!detail) return <span>{word}</span>;
@@ -530,25 +560,17 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     onChange({ ...state, foundationType });
   }
 
-  // Each opening control sets only its own choice (04.10). A door the new gates leave no room for is held, not dropped,
-  // like a gate the sizes leave no room for: deriveDomainModel places what fits, and the rest returns with the room.
-  // The example's openings the sizes leave no room for are nobody's to keep (10.10, QA: walls of 4 m showed «0» gates,
-  // and a door answered put the example's 4 × 4 m gate under «Вибрана конфігурація»): the first answer about the
-  // openings takes the rest as the drawing shows them. A choice the visitor made is still held, never cleared.
-  const openingsBase = () => (state.confirmed.includes('openings')
-    ? state
-    : { ...state, gates: shown.gates, gateType: shown.gateType, doors: shown.doors });
-
+  // Each opening control sets only its own choice (withOpeningsAnswer above)
   function setGates(gates: GatesCount) {
-    onChange(withConfirmed({ ...openingsBase(), gates }, 'openings'));
+    onChange(withOpeningsAnswer(state, shown, { gates }));
   }
 
   function setGateType(gateType: GateType) {
-    onChange(withConfirmed({ ...openingsBase(), gateType }, 'openings'));
+    onChange(withOpeningsAnswer(state, shown, { gateType }));
   }
 
   function setDoors(doors: DoorCount) {
-    onChange(withConfirmed({ ...openingsBase(), doors }, 'openings'));
+    onChange(withOpeningsAnswer(state, shown, { doors }));
   }
 
   // The mode alone (07.10, audit: switching wiped the list): «Комплекс робіт» and «Допоможіть визначити» draw the whole
@@ -833,7 +855,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             const words = SHELL_PRESET_WORDS[option];
             // the chosen preset's materials changed in the fold: its tile no longer promises them
             const apart = option === shellState.envelope && option !== 'undecided' && shellApart;
-            const off = !hasEnvelopeScope || (coldStore && option === 'cold');
+            const off = shellTileOff(option, hasEnvelopeScope, coldStore);
             return (
               <label key={option} className="hc-option-card" aria-disabled={off}>
                 <input
@@ -850,16 +872,8 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             );
           })}
         </div>
-        {/* The warm hangar a cold store brings is a suggestion (10.10): «з прикладу» in the stamp until answered, and here
-            the way to answer it */}
         {/* a cold store: why there is no «Без утеплення», and while its warm hangar is a suggestion, the way to answer it */}
-        {hasEnvelopeScope && coldStore && (
-          <p className="hc-field-note">
-            {keepShortWords(coldStoreSuggestion
-              ? 'Холодильному складу потрібні утеплені стіни й покрівля, тому «Без утеплення» тут недоступний. Натисніть «Утеплений», щоб підтвердити.'
-              : 'Холодильному складу потрібні утеплені стіни й покрівля, тому «Без утеплення» тут недоступний.')}
-          </p>
-        )}
+        {hasEnvelopeScope && coldStore && <p className="hc-field-note">{coldStoreShellNote(coldStoreSuggestion)}</p>}
         {!hasEnvelopeScope && (
           <p className="hc-field-note hc-field-note-warning">
             Утеплення стосується стін і{NBSP}покрівлі — увімкніть їх в{NBSP}<ScopeLink onOpen={openScope} />, щоб обрати.
@@ -1011,12 +1025,9 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     checked={shown.gates === option}
                     disabled={disabled}
                     onChange={() => setGates(option)}
-                    // the shown count pressed: an answer — and where it is not the one held (walls too low for the
-                    // gates), it becomes the choice: «0» says «без воріт» (10.10, QA)
                     onClick={() => {
-                      if (shown.gates !== option) return;
-                      if (state.gates === option) confirmTopic('openings');
-                      else setGates(option);
+                      const next = shownGatesPressed(state, shown, option);
+                      if (next) onChange(next);
                     }}
                   />
                   <span>{option}</span>
@@ -1047,7 +1058,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     checked={shown.gateType === option}
                     disabled={disabled}
                     onChange={() => setGateType(option)}
-                    onClick={() => { if (shown.gateType === option) confirmTopic('openings'); }}
+                    onClick={() => { if (shown.gateType === option) onChange(withOpeningsAnswer(state, shown, {})); }}
                   />
                   {/* the size in the name (07.10), not in a note under the buttons */}
                   {/* the type and its size on two lines, as the shell's tiles (10.10, QA: «Стандартні ·» / «4 × 4 м»
@@ -1081,7 +1092,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     disabled={disabled}
                     aria-disabled={disabled}
                     onChange={() => setDoors(option)}
-                    onClick={() => { if (shown.doors === option) confirmTopic('openings'); }}
+                    onClick={() => { if (shown.doors === option) onChange(withOpeningsAnswer(state, shown, {})); }}
                   />
                   <span>{DOOR_LABELS[option]}</span>
                 </label>
