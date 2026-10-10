@@ -280,8 +280,20 @@ const withShellConfirmed = (state: ConfiguratorState) => withConfirmed(withConfi
  */
 export function withPurpose(state: ConfiguratorState, purpose: HangarPurpose | null): ConfiguratorState {
   const next = { ...state, objectProfile: { ...state.objectProfile, purpose } };
+  // A cold store is never in profiled sheet (10.10, owner: «Холодильний склад» with «Холодний — профнастил» «вже не
+  // в'яжеться»): a shell with sheet anywhere — answered or not — goes to the cold store's warm one, as a suggestion
+  // again («з прикладу») for the visitor to confirm; the controls offer no sheet for it (ConfiguratorControls)
+  if (purpose === 'coldStore' && !shellFitsColdStore(state)) {
+    const confirmed = state.confirmed.filter((topic) => topic !== 'envelope' && topic !== 'cladding');
+    return { ...next, ...exampleShellFor(purpose), confirmed };
+  }
   if (state.confirmed.includes('envelope') || state.confirmed.includes('cladding')) return next;
   return { ...next, ...exampleShellFor(purpose) };
+}
+
+/** A shell a cold store can have: insulated or not yet decided, and no surface in profiled sheet */
+export function shellFitsColdStore(shell: Shell): boolean {
+  return shell.envelope !== 'cold' && shell.wallSystem !== 'profiled-sheet' && shell.roofSystem !== 'profiled-sheet';
 }
 
 /**

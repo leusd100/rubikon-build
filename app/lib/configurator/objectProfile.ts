@@ -97,8 +97,9 @@ export const LIFTING_EQUIPMENT_ANSWER_ORDER: LiftingEquipment[] = ['craneOrHoist
 
 /** «Яка температура всередині?»: the answer as one line, for the brief and the stamp — what the visitor read on its tile */
 export const TEMPERATURE_LABELS: Record<ColdStoreTemperature, string> = {
-  chilled: 'Плюсова\u00A0— охолодження',
-  frozen: 'Мінусова\u00A0— заморозка',
+  // the answer by what it does, and on which side of zero (10.10, owner: not «Плюсова»)
+  chilled: 'Охолодження\u00A0— від 0\u00A0°C',
+  frozen: 'Заморозка\u00A0— нижче 0\u00A0°C',
   unknown: 'Ще не знаю',
 };
 export const TEMPERATURE_ORDER: ColdStoreTemperature[] = ['chilled', 'frozen', 'unknown'];

@@ -408,15 +408,17 @@ type TileWords = { word: string; detail?: string; apart?: boolean };
  *  was «Чи потрібне утеплення?» over «Без утеплення / Утеплений», then the walls and the roof one by one. */
 const SHELL_PRESET_ORDER: EnvelopeChoice[] = ['cold', 'insulated', 'undecided'];
 const SHELL_PRESET_WORDS: Record<EnvelopeChoice, TileWords> = {
-  cold: { word: 'Холодний', detail: 'профнастил' },
-  insulated: { word: 'Теплий', detail: 'сендвіч-панелі' },
+  // by the insulation, as the stamp says it (10.10, owner): «Холодний / Теплий» stood beside «Холодильний склад»
+  cold: { word: 'Без утеплення', detail: 'профнастил' },
+  insulated: { word: 'Утеплений', detail: 'сендвіч-панелі' },
   undecided: { word: NOT_YET },
 };
 
 /** «Яка температура всередині?» — a cold store's one more question (10.10, owner); its answer goes to the manager only */
 const TEMPERATURE_WORDS: Record<ColdStoreTemperature, TileWords> = {
-  chilled: { word: 'Плюсова', detail: 'охолодження' },
-  frozen: { word: 'Мінусова', detail: 'заморозка' },
+  // what it does, and on which side of zero (10.10, owner: «краще писати не "плюсова"»)
+  chilled: { word: 'Охолодження', detail: `від 0${NBSP}°C` },
+  frozen: { word: 'Заморозка', detail: `нижче 0${NBSP}°C` },
   unknown: { word: NOT_YET },
 };
 
@@ -574,8 +576,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   const hasEnvelopeScope = wallsInScope || roofInScope;
   const { objectProfile } = state;
   // the warm hangar a cold store brought, not yet answered: both topics still the (purpose's) example's (10.10)
-  const coldStoreSuggestion = objectProfile.purpose === 'coldStore'
-    && domain.exampleTopics.includes('envelope') && domain.exampleTopics.includes('cladding');
+  const coldStore = objectProfile.purpose === 'coldStore';
+  const coldStoreSuggestion = coldStore && domain.exampleTopics.includes('envelope') && domain.exampleTopics.includes('cladding');
+  /** A cold store is never in profiled sheet (10.10, owner): its «Без утеплення» and the sheet in the fold are off */
+  const sheetOff = (system: CladdingSystem) => coldStore && system === 'profiled-sheet';
   // A step is answered once the visitor set something in it themselves (types.ts ConfirmedTopic)
   const answered = CONTROL_STEPS.map((item) => {
     if (item.id === 'task') return objectProfile.purpose !== null || objectProfile.region !== 'unknown';
@@ -820,14 +824,15 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             const words = SHELL_PRESET_WORDS[option];
             // the chosen preset's materials changed in the fold: its tile no longer promises them
             const apart = option === state.envelope && option !== 'undecided' && shellApart;
+            const off = !hasEnvelopeScope || (coldStore && option === 'cold');
             return (
-              <label key={option} className="hc-option-card" aria-disabled={!hasEnvelopeScope}>
+              <label key={option} className="hc-option-card" aria-disabled={off}>
                 <input
                   type="radio"
                   name="hc-envelope"
                   value={option}
                   checked={state.envelope === option}
-                  disabled={!hasEnvelopeScope}
+                  disabled={off}
                   onChange={() => setShellPreset(option)}
                   onClick={() => { if (state.envelope === option) onChange(withShellConfirmedAgain(state)); }}
                 />
@@ -838,9 +843,12 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
         </div>
         {/* The warm hangar a cold store brings is a suggestion (10.10): «з прикладу» in the stamp until answered, and here
             the way to answer it */}
-        {hasEnvelopeScope && coldStoreSuggestion && (
+        {/* a cold store: why there is no «Без утеплення», and while its warm hangar is a suggestion, the way to answer it */}
+        {hasEnvelopeScope && coldStore && (
           <p className="hc-field-note">
-            {keepShortWords('Теплий варіант підставили для холодильного складу. Натисніть його, щоб підтвердити, або оберіть інший.')}
+            {keepShortWords(coldStoreSuggestion
+              ? 'Холодильному складу потрібні утеплені стіни й покрівля, тому «Без утеплення» тут недоступний. Натисніть «Утеплений», щоб підтвердити.'
+              : 'Холодильному складу потрібні утеплені стіни й покрівля, тому «Без утеплення» тут недоступний.')}
           </p>
         )}
         {!hasEnvelopeScope && (
@@ -857,12 +865,12 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             </div>
             <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-wall-system-label">
               {CLADDING_SYSTEM_ORDER.map((option) => (
-                <label key={option} className="hc-option-card" aria-disabled={!wallsInScope}>
+                <label key={option} className="hc-option-card" aria-disabled={!wallsInScope || sheetOff(option)}>
                   <input
                     type="radio"
                     name="hc-wall-system"
                     checked={state.wallSystem === option}
-                    disabled={!wallsInScope}
+                    disabled={!wallsInScope || sheetOff(option)}
                     onChange={() => setShellMaterial('wallSystem', option)}
                     onClick={() => { if (state.wallSystem === option) setShellMaterial('wallSystem', option); }}
                   />
@@ -878,12 +886,12 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             </div>
             <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-roof-system-label">
               {CLADDING_SYSTEM_ORDER.map((option) => (
-                <label key={option} className="hc-option-card" aria-disabled={!roofInScope}>
+                <label key={option} className="hc-option-card" aria-disabled={!roofInScope || sheetOff(option)}>
                   <input
                     type="radio"
                     name="hc-roof-system"
                     checked={state.roofSystem === option}
-                    disabled={!roofInScope}
+                    disabled={!roofInScope || sheetOff(option)}
                     onChange={() => setShellMaterial('roofSystem', option)}
                     onClick={() => { if (state.roofSystem === option) setShellMaterial('roofSystem', option); }}
                   />

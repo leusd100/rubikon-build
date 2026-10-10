@@ -39,9 +39,12 @@
 .ft-letter[data-anchor="end"] { text-anchor: end; }
 .ft-letter[data-anchor="start"] { text-anchor: start; }
 .ft-letter { paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(6px * var(--ft-k)); stroke-linejoin: round; }
-/* L with its value and the columns' answer on one baseline (10.10, owner): set on the letter's middle, the smaller
-   figures sat on their own middle and rode high; on the alphabetic line, moved down by the letter's half */
-.ft-letter-row { dominant-baseline: alphabetic; transform: translateY(calc(6.8px * var(--ft-k))); }
+/* A dimension's words along its line (10.10, owner: «паралельно розмірних ліній», FrameTour DimText): letter, value and
+   answer on one baseline — on the letter's middle the smaller figures rode high — a gap off the line on its outer side:
+   below it the baseline moves down by the capitals' height, whatever the sheet's size (--ft-k) */
+.ft-dim-text { dominant-baseline: alphabetic; }
+.ft-dim-text[data-side="below"][data-cap="letter"] { transform: translateY(calc(13.7px * var(--ft-k))); }
+.ft-dim-text[data-side="below"][data-cap="value"] { transform: translateY(calc(10.8px * var(--ft-k))); }
 /* A size's value beside its letter, once the visitor gave the sizes (10.10): upright figures, smaller than the letter */
 .ft-value { font-style: normal; font-weight: 600; font-size: calc(15px * var(--ft-k)); font-variant-numeric: tabular-nums; }
 .ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }

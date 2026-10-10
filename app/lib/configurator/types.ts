@@ -228,7 +228,8 @@ export const DIMENSION_BOUNDS: Record<keyof Dimensions, DimensionBounds> = {
 };
 
 export const ENVELOPE_LABELS: Record<EnvelopeChoice, string> = {
-  cold: 'Холодний',
+  // «Без утеплення» (10.10, owner): «Холодний» stood one word from «Холодильний склад», and read as one
+  cold: 'Без утеплення',
   insulated: 'Утеплений',
   undecided: 'Ще не визначено',
 };
