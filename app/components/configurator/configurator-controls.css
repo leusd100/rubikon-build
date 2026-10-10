@@ -269,7 +269,7 @@
   display: inline-block; margin-left: 6px; padding: 2px 6px; border: 1px dashed var(--color-border-strong); border-radius: 0;
   color: var(--color-text-muted); font: 600 11px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; vertical-align: 1px;
 }
-.hc-summary-facts > div[data-status='example'] dd { color: var(--color-text-secondary); }
+.hc-summary-facts > div:is([data-status='example'], [data-status='suggested']) dd { color: var(--color-text-secondary); }
 .hc-summary-dimensions-status { margin: 4px 0 0; }
 .hc-summary-dimensions-status .hc-fact-status { margin-left: 0; }
 

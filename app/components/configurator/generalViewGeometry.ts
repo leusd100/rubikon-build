@@ -47,7 +47,7 @@ export type GeneralView = {
   ground: string;
   hatch: string;
   /** The sizes: each one's lines (extension lines, dimension line, ticks — or the ridge's leader) and its value */
-  sizes: { key: SizeKey; d: string; dot?: Pt; label: SizeLabel }[];
+  sizes: { key: SizeKey; d: string; dot?: Pt; label: SizeLabel; plate?: Box }[];
 };
 
 const n = (value: number) => value.toFixed(1);
@@ -157,7 +157,7 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
     const P = (point: P3): Pt => { const [u, v] = unit(point); return [O[0] + u * k, O[1] + v * k]; };
     const silhouette: Pt[] = ([[0, 0, 0], [W, 0, 0], [W, L, 0], [W, L, E], [W / 2, L, R], [0, L, E], [0, 0, E]] as P3[]).map(P);
     const ground: Pt[] = [add(P([0, 0, 0]), UX, -GROUND_PAST), P([0, 0, 0]), P([W, 0, 0]), P([W, L, 0]), add(P([W, L, 0]), UD, GROUND_PAST)];
-    const sizes: { key: SizeKey; segments: Segment[]; ticks: Pt[]; label: SizeLabel; box: Box; tick: Pt; dot?: Pt }[] = [];
+    const sizes: { key: SizeKey; segments: Segment[]; ticks: Pt[]; label: SizeLabel; box: Box; tick: Pt; dot?: Pt; plate?: Box }[] = [];
     if (frame.annotated) {
       /** A size measured from a to b, its dimension line off the object along `out` (a unit vector on the sheet); `tick`
        *  the 45° tick's direction in the dimension's own plane, in sheet space */
@@ -208,7 +208,10 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
       const ways: Pt[] = [[-12, -18], [-18, -28], [-26, -40], [-8, -44]];
       const ridge = ways.map(ridgeAt).find((way) => !taken.some((box) => overlaps(box, way.box)) && !lines.some((segment) => crosses(segment, way.box)))
         ?? ridgeAt(ways[0]);
-      sizes.push({ key: 'ridge', segments: ridge.segments, ticks: [], tick: [0, 0], label: ridge.label, box: ridge.box, dot: apex });
+      // On the roof, where no leader keeps it clear of the slope's edge and the cladding (wide hangars, 10.10, QA: the
+      // eave ran between the figures of «11 м», read «1,1 м»): a plate in the field's colour under the figures
+      const plate: Box = [ridge.label.x - w / 2 - 3, ridge.label.y - h / 2 - 2, ridge.label.x + w / 2 + 3, ridge.label.y + h / 2 + 2];
+      sizes.push({ key: 'ridge', segments: ridge.segments, ticks: [], tick: [0, 0], label: ridge.label, box: ridge.box, dot: apex, plate });
     }
     const points = [...silhouette, ...ground, ...sizes.flatMap((size) => size.segments.flat())];
     const extent = union([
@@ -411,6 +414,7 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
     d: `${size.segments.map((segment) => pathOf(segment)).join('')}${size.ticks.map((point) => tickAt(point, size.tick)).join('')}`,
     dot: size.dot,
     label: size.label,
+    plate: size.plate,
   }));
 
   return {

@@ -40,6 +40,8 @@
    copper a moment. */
 .gv-dim { stroke: var(--gv-ink-3); stroke-width: 1.1px; }
 .gv-dot { fill: var(--gv-ink-2); }
+/* the ridge's figures on the roof: a plate in the field's colour under them, so no edge or rib runs between them */
+.gv-plate { fill: var(--gv-field); }
 .gv-value {
   fill: var(--gv-ink-2); font-family: var(--font-manrope), sans-serif; font-weight: 600; font-variant-numeric: tabular-nums;
   text-anchor: middle; dominant-baseline: central;
@@ -82,6 +84,7 @@
   /* an even ease, in and out: the premium ease ran four fifths of the way in the first tenth of a second, a jump */
   .gv[data-morph] path:not(.gv-cladding, .gv-hatch) { transition: d .55s cubic-bezier(.45, 0, .2, 1), stroke .7s ease, fill .7s ease, opacity .5s var(--ease-premium); }
   .gv[data-morph] .gv-dot { transition: cx .55s cubic-bezier(.45, 0, .2, 1), cy .55s cubic-bezier(.45, 0, .2, 1); }
+  .gv[data-morph] .gv-plate { transition: x .55s cubic-bezier(.45, 0, .2, 1), y .55s cubic-bezier(.45, 0, .2, 1), width .55s, height .55s; }
   .gv[data-morph] .gv-value { transition: transform .55s cubic-bezier(.45, 0, .2, 1), fill .7s ease; }
   .gv[data-morph] :is(.gv-cladding, .gv-hatch) { opacity: 0; transition: none; }
 }

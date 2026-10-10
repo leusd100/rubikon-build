@@ -67,7 +67,13 @@ export function createHangarAttachment(state: ConfiguratorState): InquiryAttachm
   } else {
     if (!chosen.length) title = 'До заявки додано відповіді про об’єкт';
     // the ridge is the sizes' detail, not a line of its own
-    const lines = [...chosen, ...object].filter((row) => row.label !== 'Висота в конику').slice(0, 2).map((row) => {
+    // the sizes, then what the hangar is for — a cold store says more than its gates (10.10, QA: the form's line left
+    // the purpose out) — then the rest in the card's order
+    const ordered = [...chosen, ...object].filter((row) => row.label !== 'Висота в конику');
+    const rank = (label: string) => ['Габарити', 'Призначення'].indexOf(label);
+    const lines = [...ordered].sort((a, b) => (rank(a.label) === -1 ? 9 : rank(a.label)) - (rank(b.label) === -1 ? 9 : rank(b.label))).slice(0, 2).map((row) => {
+      // the purpose and the insulation by their answers, as the stamp says them (10.10): «Утеплення: утеплений» twice
+      if (row.label === 'Утеплення' || row.label === 'Призначення') return row.value;
       if (row.label !== 'Габарити') return `${row.label}: ${inLine(row.label, row.value)}`;
       if (!row.value.startsWith('Ще уточнюються')) return row.value;
       const orientation = row.value.slice('Ще уточнюються'.length).replace(' · орієнтир клієнта', ' · орієнтир');

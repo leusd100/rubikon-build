@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
-import { deriveDomainModel, sizesProvenance } from '../../lib/configurator/domainModel';
+import { anythingChosen, deriveDomainModel, sizesProvenance } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
 import { ConfiguratorControls, landOnSteps } from './ConfiguratorControls';
@@ -321,7 +321,7 @@ export function HangarConfigurator({ embedded = false, nextSteps }: { embedded?:
             presentationAnnouncement={sharedInquiry?.presentationAnnouncement}
             onEndPresentationDemo={sharedInquiry?.endPresentationDemo}
             sheet={embedded
-              ? { object: sheetObjectLabel(sizesProvenance(businessDomain), businessDomain.dimensions), untouched: !own && !presentationDemo }
+              ? { object: sheetObjectLabel(sizesProvenance(businessDomain), businessDomain.dimensions, anythingChosen(businessDomain)), untouched: !own && !presentationDemo }
               : undefined}
           />
           {!embedded && <div id="hc-stamp"><ConfiguratorSummary domain={businessDomain} /></div>}

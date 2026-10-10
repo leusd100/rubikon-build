@@ -19,7 +19,10 @@ export const SIZES_PREFIX: Record<SizesProvenance, string> = { own: 'Ваш ан
 
 /** «Об’єкт»: «Приклад · 24 × 60 × 8 м», «Ваш ангар · …» or «Орієнтовно · …» — the frame drawing's title block says it
  *  the same way (FrameTour.tsx) */
-export function sheetObjectLabel(provenance: SizesProvenance, dimensions: HangarDomainModel['dimensions']): string {
+export function sheetObjectLabel(provenance: SizesProvenance, dimensions: HangarDomainModel['dimensions'], chosen = false): string {
+  // the visitor's hangar once they answered anything, as the stamp says «Ваша конфігурація» (10.10, QA: «Приклад» stood
+  // under their own gates and door) — the sizes still the example's, so said
+  if (provenance === 'example' && chosen) return `${SIZES_PREFIX.own}${SEPARATOR}${sizes(dimensions)} з\u00A0прикладу`;
   return `${SIZES_PREFIX[provenance]}${SEPARATOR}${sizes(dimensions)}`;
 }
 

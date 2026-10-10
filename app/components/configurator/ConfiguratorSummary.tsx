@@ -61,10 +61,15 @@ function useChangeMark<T extends HTMLElement>(value: string) {
 
 /** A value the visitor did not choose says what it is (07.10): «приклад» — the page's example, left as it was — or
  *  «попередньо» — worked out by the configurator, for the designer to decide */
-type Status = 'example' | 'derived';
-// «з прикладу», not «приклад» (08.10, audit: the short word read as «наприклад»); a screen reader hears what it means
-const STATUS_WORDS: Record<Status, string> = { example: 'з прикладу', derived: 'попередньо' };
-const STATUS_SPOKEN: Record<Status, string> = { example: ', значення з прикладу — ви його ще не обирали', derived: ', попередньо — визначає проєктувальник' };
+type Status = 'example' | 'suggested' | 'derived';
+// «з прикладу», not «приклад» (08.10, audit: the short word read as «наприклад»); a screen reader hears what it means.
+// «запропоновано» (10.10, QA): the cold store's warm shell is not the example's — the example is «Без утеплення»
+const STATUS_WORDS: Record<Status, string> = { example: 'з прикладу', suggested: 'запропоновано', derived: 'попередньо' };
+const STATUS_SPOKEN: Record<Status, string> = {
+  example: ', значення з прикладу — ви його ще не обирали',
+  suggested: ', запропоновано для холодильного складу — ви ще не підтвердили',
+  derived: ', попередньо — визначає проєктувальник',
+};
 
 function StatusTag({ status }: Readonly<{ status?: Status }>) {
   if (!status) return null;
@@ -153,7 +158,12 @@ export function ConfiguratorSummary({
   // One rule with the sheet and the lead (domainModel.ts exampleTopics, 08.10 after the audit): a value is «з прикладу»
   // only while unanswered and still the example's; what another answer set is the visitor's. «Ваша конфігурація» once
   // anything is answered — «Ви обрали» over a stamp of example values read as a promise the stamp did not keep.
-  const chosen = (topic: ConfirmedTopic): Status | undefined => (domain.exampleTopics.includes(topic) ? 'example' : undefined);
+  const chosen = (topic: ConfirmedTopic): Status | undefined => {
+    if (!domain.exampleTopics.includes(topic)) return undefined;
+    // the shell a cold store brings is its suggestion, not the page's example (10.10, QA)
+    const suggested = domain.objectProfile.purpose === 'coldStore' && (topic === 'envelope' || topic === 'cladding');
+    return suggested ? 'suggested' : 'example';
+  };
   const example = !anythingChosen(domain);
   const provenance = sizesProvenance(domain);
   const enclosed = domain.scope.walls || domain.scope.roof;

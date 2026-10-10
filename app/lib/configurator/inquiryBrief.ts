@@ -37,6 +37,7 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     claddingRow: summary.claddingRow,
     structuralVisualizationLabel: summary.structuralVisualizationLabel,
     foundationTypeLabel: summary.foundationTypeLabel,
+    foundationInScope: domain.scope.foundation,
     scopeSummaryLabel: summary.scopeSummaryLabel,
     gatesLabel: summary.gatesLabel,
     // The door was collected by the configurator, shown in "Ваш об'єкт", and then never reached
@@ -51,6 +52,8 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     liftingLabel: summary.objectProfile.lifting,
     // the groups still the page's example (domainModel.ts exampleTopics: not answered and holding the example's value)
     exampleTopics: domain.exampleTopics,
+    // a cold store's shell, while unanswered, is its suggestion (withEffectiveShell)
+    coldStore: domain.objectProfile.purpose === 'coldStore',
     sizesUnknown: domain.sizesUnknown,
     // «Простір усередині» (07.10 as «Колони всередині»; the client's words since 10.10): null until answered
     supportsLabel: domain.internalSupports === 'unknown' ? null : INTERNAL_SUPPORTS_LABELS[domain.internalSupports],
@@ -112,10 +115,15 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
     sizeRows.selected.push({ label: 'Габарити', value: brief.dimensionsLabel }, { label: 'Висота в конику', value: brief.ridgeHeightLabel });
   }
 
+  // the warm shell a cold store brings is its suggestion, not the page's example (10.10, QA)
+  const asDefault = (row: TopicRow): HangarInquiryBriefRow => (brief.coldStore && (row.topic === 'envelope' || row.topic === 'cladding')
+    ? { label: row.label, value: `${row.value} — запропоновано для холодильного складу` }
+    : plain(row));
+
   return {
     object,
     selected: [...sizeRows.selected, ...drawn.filter((row) => !fromExample(row.topic)).map(plain)],
-    defaults: [...sizeRows.defaults, ...drawn.filter((row) => fromExample(row.topic)).map(plain)],
+    defaults: [...sizeRows.defaults, ...drawn.filter((row) => fromExample(row.topic)).map(asDefault)],
     preliminary: [
       {
         label: 'Площа забудови',
@@ -128,7 +136,8 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
       // Not a choice: /angary offers no foundation control, the designer decides it (owner, 03.10) — it sat among the
       // visitor's answers as «Основа: Визначити після розрахунку» (04.10). «Фундамент: Після розрахунку проєктувальника»
       // since 10.10 (audit F43): in ДБН «основа» is the ground under the foundation, and the infinitive read as an order
-      { label: 'Фундамент', value: brief.foundationTypeLabel },
+      // …and only with the foundation in the request (10.10, QA: it stayed with «Каркас, стіни, покрівля»)
+      ...(brief.foundationInScope ? [{ label: 'Фундамент', value: brief.foundationTypeLabel }] : []),
     ],
   };
 }

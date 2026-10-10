@@ -152,12 +152,13 @@ const LIFTING_SHORT: Record<Exclude<LiftingEquipment, 'unknown'>, string> = {
   craneOrHoist: 'кран-балка або тельфер',
 };
 const TEMPERATURE_SHORT: Record<Exclude<ColdStoreTemperature, 'unknown'>, string> = {
-  chilled: 'плюсова температура',
-  frozen: 'мінусова температура',
+  // as the tiles name them (10.10, QA: «плюсова» stayed here after the tiles changed)
+  chilled: 'охолодження',
+  frozen: 'заморозка',
 };
 
 /** One line for the group's phone header — «Склад · Київська обл.» — in the order the questions are asked; a cold store's
- *  temperature right after it (10.10): «Холодильний склад · мінусова температура · Одеська обл.» */
+ *  temperature right after it (10.10): «Холодильний склад · заморозка · Одеська обл.» */
 export function objectProfileLine(profile: ObjectProfile): string {
   const parts = [
     profile.purpose === null ? null : PURPOSE_LABELS[profile.purpose],

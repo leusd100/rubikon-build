@@ -515,3 +515,9 @@
    path's shape (the same commands, other numbers); where it does not, or where the posts change in number, they are
    simply there. Under reduced motion nothing eases (globals.css). */
 .hc-frame .ft-drawing :is(.ft-opening, .ft-post, .ft-thin) { transition: stroke .3s ease, opacity .3s ease, d .45s var(--ease-premium); }
+
+/* The 3D with nothing in the request (10.10, QA): a line in the middle of the field instead of an empty shadow */
+.hc-three-empty {
+  position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 16px; pointer-events: none;
+  color: var(--color-dark-text-secondary); font: 600 15px/1.35 var(--font-manrope), sans-serif; text-align: center;
+}

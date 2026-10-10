@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, type CSSProperties, type RefObject } from 'react';
-import { stageTransform, type StageSize, type TourFocus } from '../useDrawingTour';
+import type { StageSize, TourFocus } from '../useDrawingTour';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { deriveDomainModel, sizesProvenance, type HangarDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
@@ -238,9 +238,9 @@ function frameGeometry(domain: HangarDomainModel) {
   const raw = extremes.map(unit);
   const [minX, maxX] = [Math.min(...raw.map(([x]) => x)), Math.max(...raw.map(([x]) => x))];
   const [minY, maxY] = [Math.min(...raw.map(([, y]) => y)), Math.max(...raw.map(([, y]) => y))];
-  const fit = (reach: number) => {
+  const fit = (reach: number, left = 22) => {
     // with a centre row, the spans' row under the frame above L's
-    const pad = { left: 22, right: 22 + reach, top: 32, bottom: 10 + BUBBLE_DOWN + BUBBLE + (centre ? ROW_GAP : 0) };
+    const pad = { left, right: 22 + reach, top: 32, bottom: 10 + BUBBLE_DOWN + BUBBLE + (centre ? ROW_GAP : 0) };
     const k = Math.min((VIEW.width - pad.left - pad.right) / (maxX - minX), (VIEW.height - pad.top - pad.bottom) / (maxY - minY));
     return {
       k,
@@ -248,7 +248,12 @@ function frameGeometry(domain: HangarDomainModel) {
       oy: pad.top + (VIEW.height - pad.top - pad.bottom - (maxY - minY) * k) / 2 - minY * k,
     };
   };
-  const { k, ox, oy } = fit(LETTER_GAP + LETTER * 0.72);
+  // H's words stand left of its line, a phone's capitals off it: where a wide, low hangar leaves them less room than
+  // that, the picture gives it (10.10, QA: 50 × 60 × 4 on a 360 px phone cut «H = 4 м» at the edge)
+  let placed = fit(LETTER_GAP + LETTER * 0.72);
+  const hWordsLeft = placed.ox + unit([-2.2, 0, 0])[0] * placed.k - LETTER_GAP - LETTER_CAP;
+  if (hWordsLeft < 22) placed = fit(LETTER_GAP + LETTER * 0.72, 22 + 22 - hWordsLeft);
+  const { k, ox, oy } = placed;
   const xy = (point: P3) => { const [x, y] = unit(point); return [ox + x * k, oy + y * k] as const; };
   const p = (point: P3) => xy(point).map(n).join(',');
   const line = (...points: P3[]) => `M${points.map(p).join('L')}`;
@@ -759,6 +764,24 @@ function DimText({ label }: Readonly<{ label: DimLabel }>) {
   );
 }
 
+/** The camera on the frame's window (10.10, QA). The drawing is fitted whole into its window (the svg's «meet»), so
+ *  where the window is not the picture's 720 × 440 — a tablet's, taller or wider — the picture stands in it with bands
+ *  beside it. The shared stageTransform assumes it covers the window, and there the nodes' close-ups came off centre
+ *  (on 768 × 1024 «Опорний вузол» at 66 % across, the left half of the window empty). Here the picture's own scale and
+ *  bands are taken in; the window, in the picture's units, is kept inside the picture where it is narrower than it,
+ *  and centred on it where it is wider. Where the window is the picture's proportion this is stageTransform's own. */
+function frameStageTransform(size: StageSize | null, step: TourFocus | undefined) {
+  if (!size || !step) return undefined;
+  const { width, height } = size;
+  const scale = Math.min(width / VIEW.width, height / VIEW.height);
+  const [bandX, bandY] = [(width - VIEW.width * scale) / 2, (height - VIEW.height * scale) / 2];
+  const half = [width / (2 * step.zoom * scale), height / (2 * step.zoom * scale)];
+  const hold = (at: number, h: number, extent: number) => (h >= extent / 2 ? extent / 2 : clamp(at, h, extent - h));
+  const fx = hold(step.focus[0], half[0], VIEW.width);
+  const fy = hold(step.focus[1], half[1], VIEW.height);
+  return `translate(${width / 2}px, ${height / 2}px) scale(${step.zoom}) translate(${-(bandX + fx * scale)}px, ${-(bandY + fy * scale)}px)`;
+}
+
 /** The legend, the camera's window with the drawing, and the progress bars: the picture of the frame tour, in the
  *  section's sheet or in the configurator's (07.10). With `nodes`, the front frame's nodes are marked on the frame's
  *  step and the chosen one is circled; the camera is the caller's (`active`). */
@@ -789,8 +812,8 @@ export function FrameTourStage({
 }>) {
   // A node's target on the drawing (10.10, audit F119): about 30 px across on the screen — on a phone the 40 units it was
   // came to 17–23 px — never less than those 40 units, and never reaching a neighbour's: under half the way to the
-  // nearest. The screen's pixels to a unit, as stageTransform scales the picture.
-  const pxPerUnit = size ? Math.max(size.width / VIEW.width, size.height / VIEW.height) * (active?.zoom ?? 1) : 0;
+  // nearest. The screen's pixels to a unit, as frameStageTransform scales the picture.
+  const pxPerUnit = size ? Math.min(size.width / VIEW.width, size.height / VIEW.height) * (active?.zoom ?? 1) : 0;
   const hitRadius = (at: Pt) => {
     const nearest = Math.min(...(nodes ?? []).filter((other) => other.at !== at).map((other) => Math.hypot(other.at[0] - at[0], other.at[1] - at[1])));
     return Math.min(Math.max(20, pxPerUnit ? 15 / pxPerUnit : 0), nearest / 2 - 1);
@@ -815,7 +838,7 @@ export function FrameTourStage({
               on a computer is the height the sheet leaves under the legend, so the window fits it whole (09.10, F15) */}
           <div className="ft-slot">
           <div className="ft-window" ref={visualRef}>
-            <div className="dn-stage is-drawing" style={{ transform: stageTransform(size, VIEW, active) }}>
+            <div className="dn-stage is-drawing" style={{ transform: frameStageTransform(size, active) }}>
               <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру; фундаменти показано умовно`}>
                 <defs>
                   <filter id="ft-glow" x="-10%" y="-10%" width="120%" height="120%">

@@ -20,7 +20,7 @@ export type ConfiguratorSummary = {
   areaLabel: string;
   /** «24 × 60 × 8 м», with no-break spaces: a fixed field of the lead */
   dimensionsLabel: string;
-  /** The brief's one line — «24 × 60 × 8 м · Холодний», the sizes alone when neither walls nor roof are in the request */
+  /** The brief's one line — «24 × 60 × 8 м · Без утеплення», the sizes alone when neither walls nor roof are in the request */
   headlineLabel: string;
   /** «Висота в конику» with the slope it makes — «10,6 м · ухил ≈ 12°» (decimal comma; 03.10: a ridge alone does not
    *  say how steep the roof is). The dimensions label stays width × length × wall height: it is a fixed field of the

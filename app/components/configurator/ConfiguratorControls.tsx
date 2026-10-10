@@ -8,15 +8,7 @@ import {
 } from '../../lib/configurator/controlGroups';
 import { NBSP, formatRoofSlope, formatSize, gatesCountPhrase } from '../../lib/configurator/deriveSummary';
 import {
-  deriveDomainModel,
-  materialsSetApart,
-  resolveRidgeHeightM,
-  withPurpose,
-  withRidge,
-  withShellAnswer,
-  withShellConfirmedAgain,
-  withShellMaterial,
-  withSpanRuleRidge,
+  deriveDomainModel, materialsSetApart, resolveRidgeHeightM, withEffectiveShell, withPurpose, withRidge, withShellAnswer, withShellConfirmedAgain, withShellMaterial, withSpanRuleRidge,
 } from '../../lib/configurator/domainModel';
 import {
   BUILD_REGIONS,
@@ -400,8 +392,8 @@ function ScopeLink({ onOpen }: Readonly<{ onOpen: () => void }>) {
 /** In a narrow tile «Ще не знаю» breaks as «Ще / не знаю», not «Ще не / знаю» (10.10, audit F103: at 375 px) */
 const NOT_YET = `Ще не${NBSP}знаю`;
 
-/** A tile's words on two lines: the answer, and what it brings under it — «Теплий» / «сендвіч-панелі». One name for a
- *  screen reader, «Теплий — сендвіч-панелі», the dash said only to it (10.10, round 5) */
+/** A tile's words on two lines: the answer, and what it brings under it — «Утеплений» / «сендвіч-панелі». One name for a
+ *  screen reader, «Утеплений — сендвіч-панелі», the dash said only to it (10.10, round 5) */
 type TileWords = { word: string; detail?: string; apart?: boolean };
 
 /** «Який ангар потрібен?» answered from the client's side (10.10, owner): the warmth and the material in one answer. It
@@ -410,7 +402,8 @@ const SHELL_PRESET_ORDER: EnvelopeChoice[] = ['cold', 'insulated', 'undecided'];
 const SHELL_PRESET_WORDS: Record<EnvelopeChoice, TileWords> = {
   // by the insulation, as the stamp says it (10.10, owner): «Холодний / Теплий» stood beside «Холодильний склад»
   cold: { word: 'Без утеплення', detail: 'профнастил' },
-  insulated: { word: 'Утеплений', detail: 'сендвіч-панелі' },
+  // the material as the stamp and the brief name it (10.10, QA: «сендвіч-панелі» here, «Сендвіч-панель» there)
+  insulated: { word: 'Утеплений', detail: 'сендвіч-панель' },
   undecided: { word: NOT_YET },
 };
 
@@ -457,7 +450,9 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   }
   // «Налаштувати окремо» is the visitor's to open and close, as the ridge's fold is; it opens by itself once the materials
   // stand apart from the answer above them (a restored draft, a mix set in it), so nothing chosen is ever folded away
-  const shellApart = materialsSetApart(state);
+  // the shell as shown: a cold store's suggestion over a sheet the visitor answered, theirs kept underneath (domainModel)
+  const shellState = withEffectiveShell(state);
+  const shellApart = materialsSetApart(shellState);
   const [shellOpen, setShellOpen] = useState(shellApart);
   const [shellApartSeen, setShellApartSeen] = useState(shellApart);
   if (shellApart !== shellApartSeen) {
@@ -518,7 +513,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // «Налаштувати окремо» answers the same question in detail (domainModel.ts withShellAnswer, withShellMaterial). Still
   // a starting point, never a lock (brief §18): the fold changes either surface after the preset.
   function setShellPreset(envelope: EnvelopeChoice) {
-    onChange(withShellAnswer(state, envelope));
+    onChange(withShellAnswer(shellState, envelope));
   }
 
   /** A chosen answer pressed again is an answer (07.10, audit): agreeing with the example's value counts as the visitor's
@@ -528,7 +523,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   }
 
   function setShellMaterial(surface: 'wallSystem' | 'roofSystem', system: CladdingSystem) {
-    onChange(withShellMaterial(state, surface, system));
+    onChange(withShellMaterial(shellState, surface, system));
   }
 
   function setFoundationType(foundationType: FoundationType) {
@@ -537,16 +532,23 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
 
   // Each opening control sets only its own choice (04.10). A door the new gates leave no room for is held, not dropped,
   // like a gate the sizes leave no room for: deriveDomainModel places what fits, and the rest returns with the room.
+  // The example's openings the sizes leave no room for are nobody's to keep (10.10, QA: walls of 4 m showed «0» gates,
+  // and a door answered put the example's 4 × 4 m gate under «Вибрана конфігурація»): the first answer about the
+  // openings takes the rest as the drawing shows them. A choice the visitor made is still held, never cleared.
+  const openingsBase = () => (state.confirmed.includes('openings')
+    ? state
+    : { ...state, gates: shown.gates, gateType: shown.gateType, doors: shown.doors });
+
   function setGates(gates: GatesCount) {
-    onChange(withConfirmed({ ...state, gates }, 'openings'));
+    onChange(withConfirmed({ ...openingsBase(), gates }, 'openings'));
   }
 
   function setGateType(gateType: GateType) {
-    onChange(withConfirmed({ ...state, gateType }, 'openings'));
+    onChange(withConfirmed({ ...openingsBase(), gateType }, 'openings'));
   }
 
   function setDoors(doors: DoorCount) {
-    onChange(withConfirmed({ ...state, doors }, 'openings'));
+    onChange(withConfirmed({ ...openingsBase(), doors }, 'openings'));
   }
 
   // The mode alone (07.10, audit: switching wiped the list): «Комплекс робіт» and «Допоможіть визначити» draw the whole
@@ -830,7 +832,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
           {SHELL_PRESET_ORDER.map((option) => {
             const words = SHELL_PRESET_WORDS[option];
             // the chosen preset's materials changed in the fold: its tile no longer promises them
-            const apart = option === state.envelope && option !== 'undecided' && shellApart;
+            const apart = option === shellState.envelope && option !== 'undecided' && shellApart;
             const off = !hasEnvelopeScope || (coldStore && option === 'cold');
             return (
               <label key={option} className="hc-option-card" aria-disabled={off}>
@@ -838,10 +840,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   type="radio"
                   name="hc-envelope"
                   value={option}
-                  checked={state.envelope === option}
+                  checked={shellState.envelope === option}
                   disabled={off}
                   onChange={() => setShellPreset(option)}
-                  onClick={() => { if (state.envelope === option) onChange(withShellConfirmedAgain(state)); }}
+                  onClick={() => { if (shellState.envelope === option) onChange(withShellConfirmedAgain(shellState)); }}
                 />
                 <TileLabel word={words.word} detail={apart ? 'налаштовано окремо' : words.detail} apart={apart} />
               </label>
@@ -876,10 +878,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   <input
                     type="radio"
                     name="hc-wall-system"
-                    checked={state.wallSystem === option}
+                    checked={shellState.wallSystem === option}
                     disabled={!wallsInScope || sheetOff(option)}
                     onChange={() => setShellMaterial('wallSystem', option)}
-                    onClick={() => { if (state.wallSystem === option) setShellMaterial('wallSystem', option); }}
+                    onClick={() => { if (shellState.wallSystem === option) setShellMaterial('wallSystem', option); }}
                   />
                   <span>{CLADDING_SYSTEM_LABELS[option]}</span>
                 </label>
@@ -897,10 +899,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   <input
                     type="radio"
                     name="hc-roof-system"
-                    checked={state.roofSystem === option}
+                    checked={shellState.roofSystem === option}
                     disabled={!roofInScope || sheetOff(option)}
                     onChange={() => setShellMaterial('roofSystem', option)}
-                    onClick={() => { if (state.roofSystem === option) setShellMaterial('roofSystem', option); }}
+                    onClick={() => { if (shellState.roofSystem === option) setShellMaterial('roofSystem', option); }}
                   />
                   <span>{CLADDING_SYSTEM_LABELS[option]}</span>
                 </label>
@@ -1009,7 +1011,13 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     checked={shown.gates === option}
                     disabled={disabled}
                     onChange={() => setGates(option)}
-                    onClick={() => { if (shown.gates === option) confirmTopic('openings'); }}
+                    // the shown count pressed: an answer — and where it is not the one held (walls too low for the
+                    // gates), it becomes the choice: «0» says «без воріт» (10.10, QA)
+                    onClick={() => {
+                      if (shown.gates !== option) return;
+                      if (state.gates === option) confirmTopic('openings');
+                      else setGates(option);
+                    }}
                   />
                   <span>{option}</span>
                 </label>
@@ -1042,7 +1050,9 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     onClick={() => { if (shown.gateType === option) confirmTopic('openings'); }}
                   />
                   {/* the size in the name (07.10), not in a note under the buttons */}
-                  <span>{GATE_TYPE_LABELS[option]} · {formatSize(GATE_DIMENSIONS_M[option].widthM, GATE_DIMENSIONS_M[option].heightM)}</span>
+                  {/* the type and its size on two lines, as the shell's tiles (10.10, QA: «Стандартні ·» / «4 × 4 м»
+                      broke after its «·» on a phone) */}
+                  <TileLabel word={GATE_TYPE_LABELS[option]} detail={formatSize(GATE_DIMENSIONS_M[option].widthM, GATE_DIMENSIONS_M[option].heightM)} />
                 </label>
               );
             })}

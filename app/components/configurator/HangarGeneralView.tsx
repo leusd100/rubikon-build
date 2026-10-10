@@ -162,11 +162,12 @@ export function HangarGeneralView({
         <path className="gv-front" pathLength={1} d={g.front} />
       </g>
       <g className="gv-sizes" aria-hidden="true">
-        {g.sizes.map(({ key, d, dot, label }) => (
+        {g.sizes.map(({ key, d, dot, label, plate }) => (
           // the ridge's note points at the apex: it comes with the outline (the others measure the ground's corners)
           <g key={key} className="gv-size" data-size={key} data-active={on(active[key])} data-held={key === 'ridge' ? held('frame') : undefined}>
             <path className="gv-dim" d={d} />
             {dot && <circle className="gv-dot" cx={dot[0].toFixed(1)} cy={dot[1].toFixed(1)} r={2.2} />}
+            {plate && <rect className="gv-plate" x={plate[0].toFixed(1)} y={plate[1].toFixed(1)} width={(plate[2] - plate[0]).toFixed(1)} height={(plate[3] - plate[1]).toFixed(1)} />}
             {/* placed by a transform, so a new size moves it with its line */}
             <text className="gv-value" style={{ fontSize: `${label.size}px`, transform: `translate(${label.x.toFixed(1)}px, ${label.y.toFixed(1)}px)` }}>{label.text}</text>
           </g>

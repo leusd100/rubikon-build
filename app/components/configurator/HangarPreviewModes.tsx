@@ -346,6 +346,10 @@ export function HangarPreviewModes({
         eaveM={domain.dimensions.eaveHeightM}
         ridgeM={threeScene.building.heights.ridgeM}
       />
+      {/* nothing in the request: the 3D has nothing to build — said, rather than an empty field with a shadow (10.10, QA) */}
+      {!domain.scope.foundation && !domain.scope.frame && !domain.scope.walls && !domain.scope.roof && (
+        <p className="hc-three-empty">Нічого не обрано в{'\u00A0'}обсязі робіт</p>
+      )}
       {/* Travels with the same Canvas into fullscreen, where the rest of the page is inert.
           Remains available even when the visitor hides the visual dimension overlay. */}
       <p id={descriptionId} className="hc-visually-hidden">
@@ -452,8 +456,10 @@ export function HangarPreviewModes({
           )}
         >
           {view}
-          {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) */}
-          {effectiveMode === 'technical' && <CladdingSection domain={domain} />}
+          {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) — in the 3D
+              too since 10.10 (QA: on a tablet the legend under the drawing left with the 3D, and the stuck sheet, with
+              the step under it, jumped 102 px each way; the 3D's surfaces are the same materials) */}
+          {(effectiveMode === 'technical' || showThree) && <CladdingSection domain={domain} />}
           {/* 3D, a secondary look: a chip on the drawing opens it, and in 3D the same chip goes back (07.10). One button in
               one place whose words change (09.10, audit F76): two buttons swapped out from under the keyboard, and focus
               fell to the page's start. Not on «Каркас» (09.10, owner, audit F14): the step is the frame's line drawing —

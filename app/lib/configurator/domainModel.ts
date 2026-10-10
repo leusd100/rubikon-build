@@ -156,7 +156,8 @@ export function withSpanRuleRidge(state: ConfiguratorState): ConfiguratorState {
   return { ...state, ridgeHeightM: defaultRidgeHeightM(state.dimensions.width, state.dimensions.height), ridgeEdited: false };
 }
 
-export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
+export function deriveDomainModel(answered: ConfiguratorState): HangarDomainModel {
+  const state = withEffectiveShell(answered);
   const { width, length, height } = state.dimensions;
   const gateSelection = clampGateSelection(state.gates, state.gateType, width, height);
   // Width-derived — see `structural`'s own doc comment above — except where the visitor answered the columns (07.10):
@@ -284,13 +285,6 @@ const withShellConfirmed = (state: ConfiguratorState) => withConfirmed(withConfi
  */
 export function withPurpose(state: ConfiguratorState, purpose: HangarPurpose | null): ConfiguratorState {
   const next = { ...state, objectProfile: { ...state.objectProfile, purpose } };
-  // A cold store is never in profiled sheet (10.10, owner: «Холодильний склад» with «Холодний — профнастил» «вже не
-  // в'яжеться»): a shell with sheet anywhere — answered or not — goes to the cold store's warm one, as a suggestion
-  // again («з прикладу») for the visitor to confirm; the controls offer no sheet for it (ConfiguratorControls)
-  if (purpose === 'coldStore' && !shellFitsColdStore(state)) {
-    const confirmed = state.confirmed.filter((topic) => topic !== 'envelope' && topic !== 'cladding');
-    return { ...next, ...exampleShellFor(purpose), confirmed };
-  }
   if (state.confirmed.includes('envelope') || state.confirmed.includes('cladding')) return next;
   return { ...next, ...exampleShellFor(purpose) };
 }
@@ -298,6 +292,19 @@ export function withPurpose(state: ConfiguratorState, purpose: HangarPurpose | n
 /** A shell a cold store can have: insulated or not yet decided, and no surface in profiled sheet */
 export function shellFitsColdStore(shell: Shell): boolean {
   return shell.envelope !== 'cold' && shell.wallSystem !== 'profiled-sheet' && shell.roofSystem !== 'profiled-sheet';
+}
+
+/**
+ * The shell as the page shows it (10.10). A cold store is never in profiled sheet (owner: «Холодильний склад» with
+ * «Холодний — профнастил» «вже не в'яжеться»): over a shell with sheet anywhere it shows its warm one, as a suggestion
+ * for the visitor to confirm. The shell the visitor answered stays underneath, untouched (QA: a detour through the cold
+ * store wiped «Стіни: Сендвіч-панель» set apart), and comes back with another purpose. Everything derived — the
+ * drawing, the stamp, the brief — and the shell's controls read this.
+ */
+export function withEffectiveShell(state: ConfiguratorState): ConfiguratorState {
+  if (state.objectProfile.purpose !== 'coldStore' || shellFitsColdStore(state)) return state;
+  const confirmed = state.confirmed.filter((topic) => topic !== 'envelope' && topic !== 'cladding');
+  return { ...state, ...exampleShellFor('coldStore'), confirmed };
 }
 
 /**
