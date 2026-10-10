@@ -295,11 +295,15 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         </p>
       </header>
 
-      {/* A draft read back from this browser says so, with the way back to the example (07.10) */}
-      {embedded && sharedInquiry?.restored && (
+      {/* A draft read back from this browser says so, with the way back to the example (07.10). «Почати заново» turns the
+          same line into the way back to the visitor's configuration, its button keeping the focus, until they change
+          something or open another step (10.10, audit F64): the line went, the focus with it, and the draft for good. */}
+      {embedded && (sharedInquiry?.restored || sharedInquiry?.canUndoStartOver) && (
         <output className="hc-draft-note">
-          Відновлено вашу конфігурацію.{' '}
-          <button type="button" className="hc-draft-reset" onClick={sharedInquiry.startOver}>Почати заново</button>
+          {sharedInquiry.canUndoStartOver ? 'Показано приклад.' : 'Відновлено вашу конфігурацію.'}{' '}
+          <button type="button" className="hc-draft-reset" onClick={sharedInquiry.canUndoStartOver ? sharedInquiry.undoStartOver : sharedInquiry.startOver}>
+            {sharedInquiry.canUndoStartOver ? 'Повернути мою конфігурацію' : 'Почати заново'}
+          </button>
         </output>
       )}
       <div className="hc-layout" ref={layoutRef}>
