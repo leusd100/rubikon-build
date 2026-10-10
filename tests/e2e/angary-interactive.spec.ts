@@ -982,3 +982,40 @@ test('the gate glides to its new place when «Колони всередині» 
   // places between the two: it travelled, not jumped
   expect(xs.filter((x) => Math.abs(x - before) > 0.5 && Math.abs(x - after) > 0.5).length).toBeGreaterThanOrEqual(5);
 });
+
+// «Прогони й в’язі» (owner, 10.10: there «текст налазить»; on «Ферма» it only adds to the drawing): every name stands
+// clear of the step's lit members — its thin leader may cross one, as a drawing's leaders do — for small and large hangars
+for (const [width, length, height] of [[24, 60, 8], [12, 18, 4], [18, 36, 6]] as const) {
+  test(`on «Прогони й в’язі» no name lies on a lit member at ${width} × ${length} × ${height} m`, async ({ page }) => {
+    await openHangarPage(page);
+    await openControlGroup(page, 'dimensions');
+    for (const [id, value] of [['width', width], ['length', length], ['height', height]] as const) {
+      const field = page.locator(`#hc-dimension-${id}`);
+      await field.click();
+      await field.press('ControlOrMeta+a');
+      await field.pressSequentially(String(value));
+      await field.press('Tab');
+    }
+    await openControlGroup(page, 'space');
+    await page.locator('.hc-frame-item').nth(2).click();
+    const drawing = page.locator('#configurator .ft-drawing');
+    await expect(drawing.locator('[data-tags="3"] .ft-tag').first()).toBeVisible();
+    const onLit = await drawing.evaluate((svg) => {
+      const lit = [...svg.querySelectorAll('[data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace)')] as SVGGeometryElement[];
+      return [...svg.querySelectorAll('[data-tags="3"] .ft-tag')].filter((tag) => {
+        const box = tag.getBoundingClientRect();
+        return lit.some((path) => {
+          const matrix = path.getScreenCTM()!;
+          for (let at = 0; at <= path.getTotalLength(); at += 2) {
+            const point = path.getPointAtLength(at);
+            const x = matrix.a * point.x + matrix.c * point.y + matrix.e;
+            const y = matrix.b * point.x + matrix.d * point.y + matrix.f;
+            if (x > box.left + 1 && x < box.right - 1 && y > box.top + 1 && y < box.bottom - 1) return true;
+          }
+          return false;
+        });
+      }).map((tag) => tag.textContent);
+    });
+    expect(onLit).toEqual([]);
+  });
+}

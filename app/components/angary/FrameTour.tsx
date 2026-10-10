@@ -138,10 +138,23 @@ type Tag = { label: string; lines: readonly string[]; d: string; x: number; y: n
  *  lights — of the ways that fit, the one fewest of them run through (09.10, audit F73: «стійки фахверку» sat on the
  *  roof bracing, «стінові прогони» on the wall's cross, copper names on copper lines). Not a hard rule: on the bays'
  *  dense copper grid no way is often clear of all of them. */
-function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt[] }[], view: Box, taken: Box[], lines: Segment[], bars: readonly Segment[] = []): Tag {
+/** Whether two segments cross (their ends on either side of each other's line) */
+function segmentsCross([[ax, ay], [bx, by]]: Segment, [[cx, cy], [dx, dy]]: Segment) {
+  const side = (px: number, py: number, qx: number, qy: number, rx: number, ry: number) => Math.sign((qx - px) * (ry - py) - (qy - py) * (rx - px));
+  return side(ax, ay, bx, by, cx, cy) * side(ax, ay, bx, by, dx, dy) < 0 && side(cx, cy, dx, dy, ax, ay) * side(cx, cy, dx, dy, bx, by) < 0;
+}
+
+/** Further ways out from a member's point, when its own short ones all meet a lit member: 8 directions, 3 reaches */
+const RING: readonly Pt[] = [40, 60, 84, 112].flatMap((r) => [[1, -1], [-1, -1], [1, 0], [-1, 0], [1, 1], [-1, 1], [0.5, -1], [-0.5, -1]]
+  .map(([dx, dy]) => [Math.round(r * dx / Math.hypot(dx, dy)), Math.round(r * dy / Math.hypot(dx, dy))] as Pt));
+
+function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt[] }[], view: Box, taken: Box[], lines: Segment[], bars: readonly Segment[] = [], others: readonly Segment[] = []): Tag {
   const words = label.split(' ');
   const layouts = words.length > 1 ? [[label], [words[0], words.slice(1).join(' ')]] : [[label]];
-  const options = layouts.flatMap((rows) => ways.flatMap(({ from: [x, y], leaders }) => leaders.map(([dx, dy]) => {
+  // With lit members to keep off (the «Прогони й в’язі» step), a name may go further out on a longer leader (10.10, owner:
+  // there «текст налазить», on «Ферма» it only adds to the drawing and stays clear)
+  const reach = (leaders: readonly Pt[]) => (bars.length ? [...leaders, ...RING] : leaders);
+  const options = layouts.flatMap((rows) => ways.flatMap(({ from: [x, y], leaders }) => reach(leaders).map(([dx, dy]) => {
     const anchor = dx < 0 ? 'end' as const : 'start' as const;
     const [tx, ty] = [x + dx + (dx < 0 ? -4 : 4), y + dy + 5];
     const width = Math.max(...rows.map(tagWidth));
@@ -152,21 +165,35 @@ function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt
       anchor === 'end' ? tx + 3 : tx + width + 3, ty + TAG * (0.24 + 1.1 * (rows.length - 1)) + 2 + (rows.length > 1 ? HALO : 0),
     ];
     const leader: Segment = [[x, y], [x + dx, y + dy]];
-    return { label, lines: rows, d: `M${n(x)},${n(y)}l${dx},${dy}`, x: tx, y: ty, anchor, box, leader };
+    // the leader leaves its own member: tested from a few units out
+    const length = Math.hypot(dx, dy);
+    const out: Segment = [[x + (dx * 5) / length, y + (dy * 5) / length], [x + dx, y + dy]];
+    return { label, rows, d: `M${n(x)},${n(y)}l${dx},${dy}`, x: tx, y: ty, anchor, box, leader, out };
   })));
   const clear = (option: (typeof options)[number]) => !taken.some((box) => overlaps(box, option.box) || crosses(option.leader, box))
     && !lines.some((segment) => crosses(segment, option.box));
   const picture: Box = [4, 4, VIEW.width - 4, VIEW.height - 4];
+  // a name keeps off the lit members; its thin leader may cross one on its way, as a drawing's leaders do
   const crossed = (option: (typeof options)[number]) => bars.filter((bar) => crosses(bar, option.box)).length;
-  // the earliest of the least crossed: with no bars, the first that fits, as before
-  const fitting = options.filter((option) => within(option.box, view) && clear(option));
-  const chosen = fitting.reduce<(typeof options)[number] | undefined>((best, option) => (best && crossed(best) <= crossed(option) ? best : option), undefined)
+  const single = (option: (typeof options)[number]) => option.rows.length === 1;
+  // On a step with lit members: of the places where neither the name nor its leader lies on any of them, the one in the
+  // clearest space — in one line rather than two, in the step's window rather than out of it (the camera then takes it
+  // in), over the fewest of the drawing's other lines, on a short leader that crosses few lit members; only then the
+  // least crossed, as it was
+  const greyed = (option: (typeof options)[number]) => others.filter((line) => crosses(line, option.box) || segmentsCross(line, option.out)).length;
+  const score = (option: (typeof options)[number]) => (single(option) ? 0 : 1000) + (within(option.box, view) ? 0 : 300)
+    + greyed(option) * 12 + bars.filter((bar) => segmentsCross(bar, option.out)).length * 10
+    + Math.hypot(option.leader[1][0] - option.leader[0][0], option.leader[1][1] - option.leader[0][1]) * 0.35;
+  const untouched = bars.length ? options.filter((option) => within(option.box, picture) && clear(option) && crossed(option) === 0) : [];
+  const chosen = untouched.reduce<(typeof options)[number] | undefined>((best, option) => (best && score(best) <= score(option) ? best : option), undefined)
+    ?? options.filter((option) => within(option.box, view) && clear(option))
+      .reduce<(typeof options)[number] | undefined>((best, option) => (best && crossed(best) <= crossed(option) ? best : option), undefined)
     ?? options.find((option) => within(option.box, picture) && clear(option))
     ?? options.find((option) => within(option.box, picture))
     ?? options[0];
   taken.push(chosen.box);
   lines.push(chosen.leader);
-  return { label: chosen.label, lines: chosen.lines, d: chosen.d, x: chosen.x, y: chosen.y, anchor: chosen.anchor, box: chosen.box };
+  return { label: chosen.label, lines: chosen.rows, d: chosen.d, x: chosen.x, y: chosen.y, anchor: chosen.anchor, box: chosen.box };
 }
 
 /** The numbered bubbles stand off the frame spacing's line, past its letter; where the bays come too close on the sheet
@@ -495,19 +522,28 @@ function frameGeometry(domain: HangarDomainModel) {
   const bands = [...framing.girts].sort((a, b) => Number(a.to - a.from < 2) - Number(b.to - b.from < 2) || b.from - a.from || a.z - b.z);
   // the members this step lights — purlins, wall purlins, posts and all its bracing: its names keep off them where they can
   const bars = segmentsOf(`${purlins}${girts}${posts}${wallBracing}${farBracing}${roofBracing}${laterBracing}${laterFarBracing}`);
+  // On this step the span's bubbles and the L and H letters are not shown: they do not hold its names off the ground
+  // under the end wall (10.10). The rest of the drawing's lines the names keep clear of where they can.
+  const bayTaken: Box[] = [...footings.map((footing) => footing.box), letterBox(letters.a, 'start', true)];
+  // a name keeps off this step's own dimension, a; the span's and the height's are grey here, among the drawing's
+  // other lines, which a name crosses only where no clearer place is
+  const bayLines: Segment[] = [segment([W + DIM_A, 0, 0], [W + DIM_A, s, 0]), segment([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0]), segment([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0])];
+  const greyLines = [...segmentsOf(`${backFrames}${longitudinals}${farEnd}${columnsAt(0)}${roofAt(0)}`), ...dimLines];
   const baysTags = [
-    placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, taken, lines, bars),
-    placeTag('прогони', [1.5, 1.2, 1.9].map((t) => ({ from: xy([topPurlin, s * t, roofZ(topPurlin)]), leaders: [[22, -26], [28, -12], [12, -36]] as Pt[] })), baysBase.view, taken, lines, bars),
+    placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, bayTaken, bayLines, bars, greyLines),
+    placeTag('прогони', [1.5, 1.2, 1.9].map((t) => ({ from: xy([topPurlin, s * t, roofZ(topPurlin)]), leaders: [[22, -26], [28, -12], [12, -36]] as Pt[] })), baysBase.view, bayTaken, bayLines, bars, greyLines),
     // on a wall purlin of the end wall, the name above or below it; else out from the side wall's
     placeTag('стінові прогони', [
       ...bands.map(({ z, from, to }) => ({ from: xy([(from + to) / 2, 0, z]), leaders: [[-14, -20], [14, -20], [-14, 22], [14, 22]] as Pt[] })),
       ...sideWall.flatMap((t) => [(2 * E) / 3, E / 3].map((z) => ({ from: xy([W, s * t, z]), leaders: [[26, -16], [30, 10], [26, 16]] as Pt[] }))),
-    ], baysBase.view, taken, lines, bars),
+    ], baysBase.view, bayTaken, bayLines, bars, greyLines),
     // on a post, into the end wall beside it, or above the roof from its top
     placeTag('стійки фахверку', [
       ...[...postXs].reverse().flatMap((x) => [0.8, 0.62, 0.45].map((t) => ({ from: xy([x, 0, E * t]), leaders: [[-24, -14], [24, -14], [-24, 14], [24, 14]] as Pt[] }))),
       ...postXs.map((x) => ({ from: xy([x, 0, roofZ(x) - 0.3]), leaders: [[-18, -34], [18, -34], [-30, -50]] as Pt[] })),
-    ], baysBase.view, taken, lines, bars),
+      // or down from a post's foot, under the end wall
+      ...postXs.map((x) => ({ from: xy([x, 0, E * 0.12]), leaders: [[-24, 58], [24, 58], [-36, 74], [36, 74]] as Pt[] })),
+    ], baysBase.view, bayTaken, bayLines, bars, greyLines),
   ];
   const baysCamera = camera(baysFocus, 1.5, union([baysEssentials, ...baysTags.map((tag) => tag.box)]));
 
