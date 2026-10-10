@@ -200,7 +200,7 @@ describe('homeProofFrame — the scheme', () => {
       bracing: { at: [1430, 418], align: 'end' },
       column: { at: [1040, 612], align: 'start' },
       wall: { at: [1430, 482], align: 'end' },
-      footing: { at: [1446, 620], align: 'end' },
+      footing: { at: [1486, 620], align: 'end' },
     });
     // the truss's over the right rake, right of the apex
     expect(tag('truss').at[0]).toBeGreaterThan(apex[0]);

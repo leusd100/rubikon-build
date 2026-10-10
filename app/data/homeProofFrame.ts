@@ -324,7 +324,9 @@ export const homeProofFrame: HomeProofFrame = {
     { id: 'wall', text: 'Стіни — газобетон', anchor: [1464.6, 430], at: [1430, 482], align: 'end', atNarrow: [1430, 440], keyAt: [1340, 450] },
     // keyAt: a phone's numbers (ProofKeyPins), right of the resting seam where they can be, clear of the letters А, Б, В
     // (below 1240 px, where the names are larger against the frame, the column's and the footings' stack under the ground)
-    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1446, 620], align: 'end', atNarrow: [1446, 668], keyAt: [1405, 588] },
+    // Short laptops fit the sheet by height: fixed-size names otherwise touch, especially in Linux.
+    // Move only the wide label/leader endpoint; the real footing anchor and narrow positions stay.
+    { id: 'footing', text: 'Фундаменти — умовно', anchor: [1468, 580], at: [1486, 620], align: 'end', atNarrow: [1446, 668], keyAt: [1405, 588] },
   ],
   label:
     'Схема каркаса такого типу, як на цьому об’єкті, вписана в силует із фото: ферми, прогони, в’язі, стіни з газобетонних блоків по контуру й центральний ряд колон, фундаменти — умовно. Навантаження з покрівлі йде через прогони й ферми на стіни й колони, а з них — на фундаменти. Не креслення цього ангара: розмірів і перерізів тут немає.',

@@ -3115,7 +3115,7 @@ test('the scheme’s names stand in free room: the truss’s over the rake, the 
   const [, , headFar] = homeProofFrame.walls.holes[1];
   const deepest = Math.max(...homeProofFrame.members.filter((member) => member.depth > 0 && member.group !== 'footing' && member.group !== 'column')
     .flatMap((member) => member.points.filter(([x]) => x > headFar[0]).map(([, y]) => y)));
-  for (const [width, height] of [[1920, 1080], [1440, 900], [1280, 720], [1200, 800], [1199, 800], [1024, 768], [768, 1024]]) {
+  for (const [width, height] of [[1920, 1080], [1440, 900], [1280, 720], [1250, 613], [1240, 740], [1200, 800], [1199, 800], [1024, 768], [768, 1024]]) {
     await page.setViewportSize({ width, height });
     const { stage, slider } = await open(page);
     const at = `${width}×${height}`;
@@ -3180,6 +3180,11 @@ test('the scheme’s names stand in free room: the truss’s over the rake, the 
         expect.soft(box.left, `${at} column left of the gate's jamb`).toBeLessThanOrEqual(box.jamb);
       }
     }
+    // A short laptop scales the drawing while the labels keep their font size. Leave actual
+    // air between these two names; a near-zero gap passed on Mac but overlapped in Linux CI.
+    if (width > 1239) expect.soft(
+      byId.footing.left - byId.column.right, `${at} space between column and footing names`,
+    ).toBeGreaterThanOrEqual(4);
     // …the purlins' over the walls', where both are drawn
     if (width > 900) expect.soft(byId.bracing.bottom, `${at} the purlins' name over the walls'`).toBeLessThanOrEqual(byId.wall.top);
     // and on a narrow frame each leader runs to where its name stands there
