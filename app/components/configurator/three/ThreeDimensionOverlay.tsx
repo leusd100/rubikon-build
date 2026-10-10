@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { formatNumber } from '../../../lib/configurator/formatNumber';
 
 // Phase 3B — minimal technical overlay for the 3D view (brief §27).
 //
@@ -25,7 +26,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 function formatMetres(value: number): string {
   const rounded = Math.round(value * 10) / 10;
-  return new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 1 }).format(rounded);
+  return formatNumber(rounded);
 }
 
 export function ThreeDimensionOverlay({

@@ -5,6 +5,7 @@ import { stageTransform, type StageSize, type TourFocus } from '../useDrawingTou
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { deriveDomainModel, sizesProvenance, type HangarDomainModel } from '../../lib/configurator/domainModel';
 import { deriveSummary } from '../../lib/configurator/deriveSummary';
+import { formatNumber } from '../../lib/configurator/formatNumber';
 import {
   buildParametricModel, deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM,
 } from '../../lib/configurator/parametricModel';
@@ -61,7 +62,7 @@ const BUBBLE_DOWN = LETTER_GAP * 2 + LETTER * 0.72 + BUBBLE;
 const tagWidth = (label: string) => label.length * TAG * 0.62;
 /** The axes across the span, lettered in sequence (ДСТУ Б А.2.4-4 skips none of these) */
 const AXIS_LETTERS = ['А', 'Б', 'В'] as const;
-const fmt = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+const fmt = (value: number) => formatNumber(value);
 /** A size with its unit, never split from it (04.10) */
 const metres = (value: number) => `${fmt(value)}\u00A0м`;
 /** A dash or a «·» keeps to the word before it, so no line of a step's text or caption starts with one (04.10) */

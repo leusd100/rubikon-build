@@ -1,10 +1,11 @@
 import type { HangarDomainModel, SizesProvenance } from '../../lib/configurator/domainModel';
+import { formatNumber } from '../../lib/configurator/formatNumber';
 
 // The words on the configurator's drawing sheet (/angary, 03.10): its title block, the phone's mini readout and what a
 // screen reader hears for the picture. Kept out of the components so the formatting is tested; decimals with a comma,
 // as everywhere else on the page.
 
-const fmt = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+const fmt = (value: number) => formatNumber(value);
 
 /** The three sizes as one unbreakable piece: on a narrow sheet a label wraps after «·», never inside the sizes */
 const sizes = ({ widthM, lengthM, eaveHeightM }: HangarDomainModel['dimensions']) =>

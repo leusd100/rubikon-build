@@ -65,6 +65,7 @@ import {
   type GateType,
   type GatesCount,
 } from '../../lib/configurator/types';
+import { formatNumber } from '../../lib/configurator/formatNumber';
 import './configurator-controls.css';
 
 type Props = {
@@ -84,7 +85,7 @@ type Props = {
  * "7.5 м" ended up sitting over a box reading "7,5".
  */
 function formatMetres(value: number): string {
-  return value.toLocaleString('uk-UA', { maximumFractionDigits: 2 });
+  return formatNumber(value, 2);
 }
 
 /** Accepts either decimal separator, since the field now displays a comma but keyboards and
