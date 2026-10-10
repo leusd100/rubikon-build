@@ -250,11 +250,12 @@ export function ConfiguratorSummary({
           {summary.doorsLabel !== null && <Fact label="Двері" value={summary.doorsLabel} status={example ? undefined : chosen('openings')} />}
           {/* «Об’єкт» (03.10): only once a purpose is chosen, last, so an unanswered question does not grow the stamp on a
               phone (styles: configurator-controls.css) */}
-          {/* The task as answered (07.10: purpose, region, project, lifting — the stamp showed the purpose alone), and the
-              columns inside once answered */}
+          {/* The task as answered (07.10: purpose, region, project, lifting — the stamp showed the purpose alone; a cold
+              store's temperature since 10.10), and the space inside once answered — «Простір усередині: Без колон», as the
+              step asks it and the lead says it (10.10, owner: it was «Колони всередині: Не можна») */}
           {taskAnswered && <Fact label="Задача" value={taskAnswered} purpose />}
           {domain.internalSupports !== 'unknown' && (
-            <Fact label="Колони всередині" value={INTERNAL_SUPPORTS_LABELS[domain.internalSupports]} />
+            <Fact label="Простір усередині" value={INTERNAL_SUPPORTS_LABELS[domain.internalSupports]} />
           )}
         </dl>
         <div className="hc-summary-handoff">

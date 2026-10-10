@@ -3,6 +3,7 @@ import {
   LIFTING_EQUIPMENT_ORDER,
   PROJECT_STATUS_ORDER,
   PURPOSE_ORDER,
+  TEMPERATURE_ORDER,
   isBuildRegion,
   type ObjectProfile,
 } from './objectProfile';
@@ -52,6 +53,8 @@ function readObjectProfile(raw: unknown): ObjectProfile {
     project: oneOf(PROJECT_STATUS_ORDER, value.project, fallback.project),
     region: typeof value.region === 'string' && isBuildRegion(value.region) ? value.region : fallback.region,
     lifting: oneOf(LIFTING_EQUIPMENT_ORDER, value.lifting, fallback.lifting),
+    // a draft from before 10.10 has none: not answered
+    temperature: oneOf(TEMPERATURE_ORDER, value.temperature, fallback.temperature),
   };
 }
 

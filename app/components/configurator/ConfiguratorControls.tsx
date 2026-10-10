@@ -7,17 +7,29 @@ import {
   type ControlGroupId,
 } from '../../lib/configurator/controlGroups';
 import { NBSP, formatRoofSlope, formatSize, gatesCountPhrase } from '../../lib/configurator/deriveSummary';
-import { deriveDomainModel, resolveRidgeHeightM, withRidge, withSpanRuleRidge } from '../../lib/configurator/domainModel';
+import {
+  deriveDomainModel,
+  materialsSetApart,
+  resolveRidgeHeightM,
+  withPurpose,
+  withRidge,
+  withShellAnswer,
+  withShellConfirmedAgain,
+  withShellMaterial,
+  withSpanRuleRidge,
+} from '../../lib/configurator/domainModel';
 import {
   BUILD_REGIONS,
-  LIFTING_EQUIPMENT_LABELS,
-  LIFTING_EQUIPMENT_ORDER,
+  LIFTING_EQUIPMENT_ANSWERS,
+  LIFTING_EQUIPMENT_ANSWER_ORDER,
   PROJECT_STATUS_LABELS,
   PROJECT_STATUS_ORDER,
   PURPOSE_LABELS,
   PURPOSE_ORDER,
+  TEMPERATURE_ORDER,
   UNKNOWN_REGION_LABEL,
   isBuildRegion,
+  type ColdStoreTemperature,
   type ObjectProfile,
 } from '../../lib/configurator/objectProfile';
 import {
@@ -34,12 +46,10 @@ import {
   CLADDING_SYSTEM_LABELS,
   CLADDING_SYSTEM_ORDER,
   DIMENSION_BOUNDS,
-  ENVELOPE_LABELS,
-  ENVELOPE_MATERIAL_PRESET,
   FOUNDATION_TYPE_LABELS,
   FOUNDATION_TYPE_ORDER,
   DOOR_LABELS,
-  DOOR_OPTIONS,
+  DOOR_SWITCH_ORDER,
   GATES_OPTIONS,
   GATE_TYPE_LABELS,
   GATE_TYPE_ORDER,
@@ -49,8 +59,7 @@ import {
   hasScopeItem,
   toggleScopeItem,
   withConfirmed,
-  DEFAULT_CONFIGURATOR_STATE,
-  INTERNAL_SUPPORTS_LABELS,
+  INTERNAL_SUPPORTS_ANSWERS,
   INTERNAL_SUPPORTS_ORDER,
   SCOPE_MODE_LABELS,
   SCOPE_MODE_ORDER,
@@ -385,9 +394,39 @@ function ScopeLink({ onOpen }: Readonly<{ onOpen: () => void }>) {
   );
 }
 
-/** «Чи потрібне утеплення?» answered in the visitor's words (07.10). In a narrow tile «Ще не знаю» breaks as «Ще / не
- *  знаю», not «Ще не / знаю» (10.10, audit F103: at 375 px) */
-const ENVELOPE_CHOICE_WORDS: Record<EnvelopeChoice, string> = { cold: 'Без утеплення', insulated: 'Утеплений', undecided: `Ще не${NBSP}знаю` };
+/** In a narrow tile «Ще не знаю» breaks as «Ще / не знаю», not «Ще не / знаю» (10.10, audit F103: at 375 px) */
+const NOT_YET = `Ще не${NBSP}знаю`;
+
+/** A tile's words on two lines: the answer, and what it brings under it — «Теплий» / «сендвіч-панелі». One name for a
+ *  screen reader, «Теплий — сендвіч-панелі», the dash said only to it (10.10, round 5) */
+type TileWords = { word: string; detail?: string; apart?: boolean };
+
+/** «Який ангар потрібен?» answered from the client's side (10.10, owner): the warmth and the material in one answer. It
+ *  was «Чи потрібне утеплення?» over «Без утеплення / Утеплений», then the walls and the roof one by one. */
+const SHELL_PRESET_ORDER: EnvelopeChoice[] = ['cold', 'insulated', 'undecided'];
+const SHELL_PRESET_WORDS: Record<EnvelopeChoice, TileWords> = {
+  cold: { word: 'Холодний', detail: 'профнастил' },
+  insulated: { word: 'Теплий', detail: 'сендвіч-панелі' },
+  undecided: { word: NOT_YET },
+};
+
+/** «Яка температура всередині?» — a cold store's one more question (10.10, owner); its answer goes to the manager only */
+const TEMPERATURE_WORDS: Record<ColdStoreTemperature, TileWords> = {
+  chilled: { word: 'Плюсова', detail: 'охолодження' },
+  frozen: { word: 'Мінусова', detail: 'заморозка' },
+  unknown: { word: NOT_YET },
+};
+
+function TileLabel({ word, detail, apart = false }: Readonly<TileWords>) {
+  // «Ще не знаю» has nothing under it and is not yet an answer: its words stay as quiet as the chips' (audit F110)
+  if (!detail) return <span>{word}</span>;
+  return (
+    <span>
+      <strong className="hc-tile-word">{word}</strong>
+      <small className="hc-tile-detail" data-apart={apart ? '' : undefined}><i className="hc-visually-hidden"> — </i>{detail}</small>
+    </span>
+  );
+}
 
 const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
   width: 'Ширина',
@@ -410,6 +449,15 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   if (state.ridgeEdited !== ridgeEditedSeen) {
     setRidgeEditedSeen(state.ridgeEdited);
     if (state.ridgeEdited) setRidgeOpen(true);
+  }
+  // «Налаштувати окремо» is the visitor's to open and close, as the ridge's fold is; it opens by itself once the materials
+  // stand apart from the answer above them (a restored draft, a mix set in it), so nothing chosen is ever folded away
+  const shellApart = materialsSetApart(state);
+  const [shellOpen, setShellOpen] = useState(shellApart);
+  const [shellApartSeen, setShellApartSeen] = useState(shellApart);
+  if (shellApart !== shellApartSeen) {
+    setShellApartSeen(shellApart);
+    if (shellApart) setShellOpen(true);
   }
   const ridgeValue = resolveRidgeHeightM(state);
   // The range, then the slope and where it comes from (10.10, audit F102): three sentences repeated the field's number
@@ -461,22 +509,11 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     onChange({ ...state, objectProfile: { ...state.objectProfile, ...answer } });
   }
 
-  function setEnvelope(envelope: EnvelopeChoice) {
-    // brief §18: cold/insulated set a sensible STARTING wall/roof system, not a locked rule — a
-    // later independent override of either still sticks (see ENVELOPE_MATERIAL_PRESET's own doc
-    // comment). `undecided` applies nothing: "independent material choices remain available" is
-    // the brief's own wording for that specific option.
-    // «Ще не знаю» brings the example's materials back unless the visitor chose materials themselves (07.10, audit:
-    // after «Утеплений» the sandwich panels stayed and the legend said «з утеплювачем» beside «Уточнимо»)
-    let preset: { wallSystem: CladdingSystem; roofSystem: CladdingSystem } | null = null;
-    if (envelope !== 'undecided') preset = ENVELOPE_MATERIAL_PRESET[envelope];
-    else if (!state.confirmed.includes('cladding')) preset = { wallSystem: DEFAULT_CONFIGURATOR_STATE.wallSystem, roofSystem: DEFAULT_CONFIGURATOR_STATE.roofSystem };
-    // the materials the preset sets are a starting point, not the visitor's answer about them
-    onChange(withConfirmed({
-      ...state,
-      envelope,
-      ...(preset ? { wallSystem: preset.wallSystem, roofSystem: preset.roofSystem } : {}),
-    }, 'envelope'));
+  // «Який ангар потрібен?» (10.10, owner): a preset brings its materials and answers both topics; a material set under
+  // «Налаштувати окремо» answers the same question in detail (domainModel.ts withShellAnswer, withShellMaterial). Still
+  // a starting point, never a lock (brief §18): the fold changes either surface after the preset.
+  function setShellPreset(envelope: EnvelopeChoice) {
+    onChange(withShellAnswer(state, envelope));
   }
 
   /** A chosen answer pressed again is an answer (07.10, audit): agreeing with the example's value counts as the visitor's
@@ -485,12 +522,8 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     onChange(withConfirmed(state, topic));
   }
 
-  function setWallSystem(wallSystem: CladdingSystem) {
-    onChange(withConfirmed({ ...state, wallSystem }, 'cladding'));
-  }
-
-  function setRoofSystem(roofSystem: CladdingSystem) {
-    onChange(withConfirmed({ ...state, roofSystem }, 'cladding'));
+  function setShellMaterial(surface: 'wallSystem' | 'roofSystem', system: CladdingSystem) {
+    onChange(withShellMaterial(state, surface, system));
   }
 
   function setFoundationType(foundationType: FoundationType) {
@@ -537,6 +570,9 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // is being asked for.
   const hasEnvelopeScope = wallsInScope || roofInScope;
   const { objectProfile } = state;
+  // the warm hangar a cold store brought, not yet answered: both topics still the (purpose's) example's (10.10)
+  const coldStoreSuggestion = objectProfile.purpose === 'coldStore'
+    && domain.exampleTopics.includes('envelope') && domain.exampleTopics.includes('cladding');
   // A step is answered once the visitor set something in it themselves (types.ts ConfirmedTopic)
   const answered = CONTROL_STEPS.map((item) => {
     if (item.id === 'task') return objectProfile.purpose !== null || objectProfile.region !== 'unknown';
@@ -554,13 +590,14 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // At the configurator's largest sizes, the way to a larger hangar (owner, 08.10: the common sizes here, the rest in the request)
   const atLargest = state.dimensions.width === DIMENSION_BOUNDS.width.max || state.dimensions.length === DIMENSION_BOUNDS.length.max;
 
-  // The groups, each placed in its step below
-  const groups: Record<ControlGroupId, ReactNode> = {
+  // The groups, each placed in its step below — «Стіни й покрівля» is folded into «Який ангар потрібен?» (10.10)
+  const groups: Partial<Record<ControlGroupId, ReactNode>> = {
     // «Об’єкт» (owner, 03.10) is split by where each answer matters (07.10, controlGroups.ts). Every question is optional
     // and starts unanswered, so a visitor who skips it sends nothing from it.
     need: (
       <ControlGroup id="need">
-        <p className="hc-field-note hc-object-note">Дві відповіді, обидві можна пропустити: від них залежить, що запропонуємо.</p>
+        {/* «Відповіді», not «Дві відповіді» (10.10): a cold store adds a third */}
+        <p className="hc-field-note hc-object-note">Відповіді можна пропустити: від них залежить, що запропонуємо.</p>
         <div className="hc-field">
           <div className="hc-field-head">
             <span id="hc-purpose-label">Для чого ангар?</span>
@@ -575,7 +612,8 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   name="hc-purpose"
                   value={option}
                   checked={objectProfile.purpose === option}
-                  onChange={() => setObjectProfile({ purpose: option })}
+                  // a cold store brings the warm hangar as the example's, until the visitor answers (10.10)
+                  onChange={() => onChange(withPurpose(state, option))}
                 />
                 <span>{PURPOSE_LABELS[option]}</span>
               </label>
@@ -586,12 +624,35 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                 name="hc-purpose"
                 value=""
                 checked={objectProfile.purpose === null}
-                onChange={() => setObjectProfile({ purpose: null })}
+                onChange={() => onChange(withPurpose(state, null))}
               />
               <span>Ще не знаю</span>
             </label>
           </div>
         </div>
+        {/* A cold store's one more question, under its purpose (10.10, owner). The answer goes to the manager as said: the
+            configurator draws nothing from it and claims nothing — no panel, no insulation value. */}
+        {objectProfile.purpose === 'coldStore' && (
+          <div className="hc-field hc-follow-up">
+            <div className="hc-field-head">
+              <span id="hc-temperature-label">Яка температура всередині?</span>
+            </div>
+            <div className="hc-option-cards hc-tiles" role="radiogroup" aria-labelledby="hc-temperature-label">
+              {TEMPERATURE_ORDER.map((option) => (
+                <label key={option} className="hc-option-card">
+                  <input
+                    type="radio"
+                    name="hc-temperature"
+                    value={option}
+                    checked={objectProfile.temperature === option}
+                    onChange={() => setObjectProfile({ temperature: option })}
+                  />
+                  <TileLabel {...TEMPERATURE_WORDS[option]} />
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="hc-field">
           <div className="hc-field-head">
             <label htmlFor="hc-object-region">Де будуємо?</label>
@@ -616,8 +677,9 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
     space: (
       <ControlGroup id="space">
         <div className="hc-field">
+          {/* the client's question, not the engineer's (10.10, owner): «Колони всередині ангара: Можна / Не можна» */}
           <div className="hc-field-head">
-            <span id="hc-supports-label">Колони всередині ангара</span>
+            <span id="hc-supports-label">Потрібен простір без колон усередині?</span>
           </div>
           <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-supports-label">
             {INTERNAL_SUPPORTS_ORDER.map((option) => (
@@ -629,24 +691,24 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   checked={state.internalSupports === option}
                   onChange={() => onChange({ ...state, internalSupports: option })}
                 />
-                <span>{INTERNAL_SUPPORTS_LABELS[option]}</span>
+                <span>{INTERNAL_SUPPORTS_ANSWERS[option]}</span>
               </label>
             ))}
           </div>
-          {/* No type of structure (10.10, audit F37): it promised «ферму» where 12–20 m draw a portal frame, and «скажіть»
-              where a chip is pressed. «колони», as the field asks */}
+          {/* No type of structure (10.10, audit F37): it promised «ферму» where 12–20 m draw a portal frame. In the answers'
+              words since round 5 (10.10): it sent the visitor to a «Не можна» no longer there */}
           <p className="hc-field-note">
-            {keepShortWords('Ряд колон посередині ділить ширину на два прольоти. Якщо всередині потрібен вільний простір, '
-              + 'оберіть «Не можна»: креслення покаже каркас без колон усередині, а конструкцію під такий проліт підбере '
-              + 'проєктувальник.')}
+            {keepShortWords('Ряд колон посередині ділить ширину на два прольоти. Без колон — один проліт на всю ширину: '
+              + 'креслення покаже такий каркас, а конструкцію під нього підбере проєктувальник.')}
           </p>
         </div>
         <div className="hc-field">
+          {/* asked as the client would say it (10.10, owner); the lead names the equipment (objectProfile.ts) */}
           <div className="hc-field-head">
-            <span id="hc-lifting-label">Підйомне обладнання</span>
+            <span id="hc-lifting-label">Буде кран-балка або тельфер?</span>
           </div>
           <div className="hc-option-cards hc-chips" role="radiogroup" aria-labelledby="hc-lifting-label">
-            {LIFTING_EQUIPMENT_ORDER.map((option) => (
+            {LIFTING_EQUIPMENT_ANSWER_ORDER.map((option) => (
               <label key={option} className="hc-option-card">
                 <input
                   type="radio"
@@ -655,7 +717,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   checked={objectProfile.lifting === option}
                   onChange={() => setObjectProfile({ lifting: option })}
                 />
-                <span>{LIFTING_EQUIPMENT_LABELS[option]}</span>
+                <span>{LIFTING_EQUIPMENT_ANSWERS[option]}</span>
               </label>
             ))}
           </div>
@@ -745,80 +807,90 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
         </details>
       </ControlGroup>
     ),
+    // «Який ангар потрібен?» (10.10, owner): one question, three answers that bring their materials; the walls and the roof
+    // one by one under «Налаштувати окремо». The step asked five things — the insulation, the walls, the roof, the gates,
+    // the door — and asks three: this, the gates, the door.
     envelope: (
       <ControlGroup id="envelope">
-        <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-envelope-heading">
-          {(Object.keys(ENVELOPE_LABELS) as EnvelopeChoice[]).map((option) => (
-            <label key={option} className="hc-option-card" aria-disabled={!hasEnvelopeScope}>
-              <input
-                type="radio"
-                name="hc-envelope"
-                checked={state.envelope === option}
-                disabled={!hasEnvelopeScope}
-                onChange={() => setEnvelope(option)}
-                onClick={() => { if (state.envelope === option) confirmTopic('envelope'); }}
-              />
-              <span>{ENVELOPE_CHOICE_WORDS[option]}</span>
-            </label>
-          ))}
+        <div className="hc-option-cards hc-tiles" role="radiogroup" aria-labelledby="hc-envelope-heading">
+          {SHELL_PRESET_ORDER.map((option) => {
+            const words = SHELL_PRESET_WORDS[option];
+            // the chosen preset's materials changed in the fold: its tile no longer promises them
+            const apart = option === state.envelope && option !== 'undecided' && shellApart;
+            return (
+              <label key={option} className="hc-option-card" aria-disabled={!hasEnvelopeScope}>
+                <input
+                  type="radio"
+                  name="hc-envelope"
+                  value={option}
+                  checked={state.envelope === option}
+                  disabled={!hasEnvelopeScope}
+                  onChange={() => setShellPreset(option)}
+                  onClick={() => { if (state.envelope === option) onChange(withShellConfirmedAgain(state)); }}
+                />
+                <TileLabel word={words.word} detail={apart ? 'налаштовано окремо' : words.detail} apart={apart} />
+              </label>
+            );
+          })}
         </div>
-        {hasEnvelopeScope ? (
-          <p className="hc-field-note">«Утеплений» одразу ставить сендвіч-панелі — нижче їх можна змінити.</p>
-        ) : (
+        {/* The warm hangar a cold store brings is a suggestion (10.10): «з прикладу» in the stamp until answered, and here
+            the way to answer it */}
+        {hasEnvelopeScope && coldStoreSuggestion && (
+          <p className="hc-field-note">
+            {keepShortWords('Теплий варіант підставили для холодильного складу. Натисніть його, щоб підтвердити, або оберіть інший.')}
+          </p>
+        )}
+        {!hasEnvelopeScope && (
           <p className="hc-field-note hc-field-note-warning">
             Утеплення стосується стін і{NBSP}покрівлі — увімкніть їх в{NBSP}<ScopeLink onOpen={openScope} />, щоб обрати.
           </p>
         )}
-      </ControlGroup>
-    ),
-    cladding: (
-      <ControlGroup id="cladding">
-        <div className="hc-field">
-          <div className="hc-field-head">
-            <span id="hc-wall-system-label">Стіни</span>
+        {/* The walls and the roof one by one: the rare case, folded (10.10) — open while they stand apart from the answer */}
+        <details className="hc-more hc-shell-more" open={shellOpen} onToggle={(event) => setShellOpen(event.currentTarget.open)}>
+          <summary>Налаштувати окремо</summary>
+          <div className="hc-field">
+            <div className="hc-field-head">
+              <span id="hc-wall-system-label">Стіни</span>
+            </div>
+            <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-wall-system-label">
+              {CLADDING_SYSTEM_ORDER.map((option) => (
+                <label key={option} className="hc-option-card" aria-disabled={!wallsInScope}>
+                  <input
+                    type="radio"
+                    name="hc-wall-system"
+                    checked={state.wallSystem === option}
+                    disabled={!wallsInScope}
+                    onChange={() => setShellMaterial('wallSystem', option)}
+                    onClick={() => { if (state.wallSystem === option) setShellMaterial('wallSystem', option); }}
+                  />
+                  <span>{CLADDING_SYSTEM_LABELS[option]}</span>
+                </label>
+              ))}
+            </div>
+            {!wallsInScope && <p className="hc-field-note">Стіни не входять в обсяг робіт.</p>}
           </div>
-          <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-wall-system-label">
-            {CLADDING_SYSTEM_ORDER.map((option) => (
-              <label key={option} className="hc-option-card" aria-disabled={!wallsInScope}>
-                <input
-                  type="radio"
-                  name="hc-wall-system"
-                  checked={state.wallSystem === option}
-                  disabled={!wallsInScope}
-                  onChange={() => setWallSystem(option)}
-                onClick={() => { if (state.wallSystem === option) confirmTopic('cladding'); }}
-                />
-                <span>{CLADDING_SYSTEM_LABELS[option]}</span>
-              </label>
-            ))}
+          <div className="hc-field">
+            <div className="hc-field-head">
+              <span id="hc-roof-system-label">Покрівля</span>
+            </div>
+            <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-roof-system-label">
+              {CLADDING_SYSTEM_ORDER.map((option) => (
+                <label key={option} className="hc-option-card" aria-disabled={!roofInScope}>
+                  <input
+                    type="radio"
+                    name="hc-roof-system"
+                    checked={state.roofSystem === option}
+                    disabled={!roofInScope}
+                    onChange={() => setShellMaterial('roofSystem', option)}
+                    onClick={() => { if (state.roofSystem === option) setShellMaterial('roofSystem', option); }}
+                  />
+                  <span>{CLADDING_SYSTEM_LABELS[option]}</span>
+                </label>
+              ))}
+            </div>
+            {!roofInScope && <p className="hc-field-note">Покрівля не входить в обсяг робіт.</p>}
           </div>
-          {!wallsInScope && (
-            <p className="hc-field-note">Стіни не входять в обсяг робіт.</p>
-          )}
-        </div>
-        <div className="hc-field">
-          <div className="hc-field-head">
-            <span id="hc-roof-system-label">Покрівля</span>
-          </div>
-          <div className="hc-option-cards" role="radiogroup" aria-labelledby="hc-roof-system-label">
-            {CLADDING_SYSTEM_ORDER.map((option) => (
-              <label key={option} className="hc-option-card" aria-disabled={!roofInScope}>
-                <input
-                  type="radio"
-                  name="hc-roof-system"
-                  checked={state.roofSystem === option}
-                  disabled={!roofInScope}
-                  onChange={() => setRoofSystem(option)}
-                onClick={() => { if (state.roofSystem === option) confirmTopic('cladding'); }}
-                />
-                <span>{CLADDING_SYSTEM_LABELS[option]}</span>
-              </label>
-            ))}
-          </div>
-          {!roofInScope && (
-            <p className="hc-field-note">Покрівля не входить в обсяг робіт.</p>
-          )}
-        </div>
+        </details>
       </ControlGroup>
     ),
     // The foundation type is offered on the research screen only (see Props.foundationChoice)
@@ -898,31 +970,34 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             обрати. Поточний вибір збережеться.
           </p>
         )}
-        <div className="hc-field-head">
-          <span id="hc-gate-count-label">Ворота</span>
-        </div>
-        <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-gate-count-label">
-          {GATES_OPTIONS.map((option) => {
-            // Phase 3F.1, brief §B2-B3: a gate count is only offered if the CURRENTLY selected
-            // gate type actually fits that many times at the current width/eave height — real,
-            // fixed-size gates (GATE_DIMENSIONS_M), not scaled to fit. 0 is always available.
-            const disabled = option > 0 && (!wallsInScope
-              || !gateHeightFits(shown.gateType, state.dimensions.height)
-              || option > maxGateCountThatFits(shown.gateType, state.dimensions.width));
-            return (
-              <label key={option} className="hc-option-card" aria-disabled={disabled}>
-                <input
-                  type="radio"
-                  name="hc-gates"
-                  checked={shown.gates === option}
-                  disabled={disabled}
-                  onChange={() => setGates(option)}
-                onClick={() => { if (shown.gates === option) confirmTopic('openings'); }}
-                />
-                <span>{option}</span>
-              </label>
-            );
-          })}
+        {/* The question and its short answers on one row (10.10): «Ворота» over three tiles took a row of its own */}
+        <div className="hc-inline-field">
+          <div className="hc-field-head">
+            <span id="hc-gate-count-label">Ворота</span>
+          </div>
+          <div className="hc-option-cards hc-option-cards-compact" role="radiogroup" aria-labelledby="hc-gate-count-label">
+            {GATES_OPTIONS.map((option) => {
+              // Phase 3F.1, brief §B2-B3: a gate count is only offered if the CURRENTLY selected
+              // gate type actually fits that many times at the current width/eave height — real,
+              // fixed-size gates (GATE_DIMENSIONS_M), not scaled to fit. 0 is always available.
+              const disabled = option > 0 && (!wallsInScope
+                || !gateHeightFits(shown.gateType, state.dimensions.height)
+                || option > maxGateCountThatFits(shown.gateType, state.dimensions.width));
+              return (
+                <label key={option} className="hc-option-card" aria-disabled={disabled}>
+                  <input
+                    type="radio"
+                    name="hc-gates"
+                    checked={shown.gates === option}
+                    disabled={disabled}
+                    onChange={() => setGates(option)}
+                    onClick={() => { if (shown.gates === option) confirmTopic('openings'); }}
+                  />
+                  <span>{option}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
         {/* Only meaningful once there is a gate to size, so it is hidden at zero rather than
             shown disabled — a control that cannot do anything is noise. */}
@@ -946,7 +1021,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     checked={shown.gateType === option}
                     disabled={disabled}
                     onChange={() => setGateType(option)}
-                onClick={() => { if (shown.gateType === option) confirmTopic('openings'); }}
+                    onClick={() => { if (shown.gateType === option) confirmTopic('openings'); }}
                   />
                   {/* the size in the name (07.10), not in a note under the buttons */}
                   <span>{GATE_TYPE_LABELS[option]} · {formatSize(GATE_DIMENSIONS_M[option].widthM, GATE_DIMENSIONS_M[option].heightM)}</span>
@@ -955,13 +1030,14 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             })}
           </div>
         )}
-        <div className="hc-field hc-door-field">
+        {/* «Службові двері: Так / Ні» (10.10, owner): one switch on the question's row — «Двері» over «Без дверей» and «1»
+            read as a count to tune. The door's size and place are said once it is asked for. */}
+        <div className="hc-field hc-door-field hc-inline-field">
           <div className="hc-field-head">
-            <span id="hc-doors-label">Двері</span>
+            <span id="hc-doors-label">Службові двері</span>
           </div>
-          {/* Chips at their own width, like «Об’єкт»: «Без дверей» broke into two lines in a 68 px tile (04.10) */}
           <div className="hc-option-cards hc-chips hc-door-options" role="radiogroup" aria-labelledby="hc-doors-label">
-            {DOOR_OPTIONS.map((option) => {
+            {DOOR_SWITCH_ORDER.map((option) => {
               // Disabled rather than hidden, and only ever for a real reason: at this width the
               // door has no position clear of the corners, the gates and the centre-support line —
               // where one stands, as the model decides it (09.10, audit F60: the same scheme)
@@ -977,7 +1053,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     disabled={disabled}
                     aria-disabled={disabled}
                     onChange={() => setDoors(option)}
-                onClick={() => { if (shown.doors === option) confirmTopic('openings'); }}
+                    onClick={() => { if (shown.doors === option) confirmTopic('openings'); }}
                   />
                   <span>{DOOR_LABELS[option]}</span>
                 </label>
@@ -985,14 +1061,13 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             })}
           </div>
           {/* Without gates the door goes to the quarter points of the gable end (doorCandidateXs): it said «поруч із
-              воротами» there too (04.10). One short line until a door is chosen (10.10, audit F104): three lines in the
-              passive stood under «Без дверей»; the size says what the chip «1» is. */}
-          <p className="hc-field-note">
-            Службові двері {formatSize(DOOR_DIMENSIONS_M.widthM, DOOR_DIMENSIONS_M.heightM)}.
-            {wallsInScope && shown.doors > 0 && (shown.gates > 0
-              ? ` Місце підбираємо автоматично${NBSP}— поруч із${NBSP}воротами, поза колонами.`
-              : ` Місце підбираємо автоматично${NBSP}— у${NBSP}торцевій стіні, поза колонами.`)}
-          </p>
+              воротами» there too (04.10) */}
+          {wallsInScope && shown.doors > 0 && (
+            <p className="hc-field-note">
+              Двері {formatSize(DOOR_DIMENSIONS_M.widthM, DOOR_DIMENSIONS_M.heightM)}. Місце підбираємо автоматично{NBSP}—{' '}
+              {shown.gates > 0 ? <>поруч із{NBSP}воротами, поза колонами.</> : <>у{NBSP}торцевій стіні, поза колонами.</>}
+            </p>
+          )}
         </div>
 
         {heldNote && <p className="hc-field-note hc-field-note-warning">{heldNote}</p>}

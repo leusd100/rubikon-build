@@ -137,9 +137,12 @@ function formatCladdingRow(envelope: HangarDomainModel['envelope'], scope: Hanga
  * building — unless a sandwich panel is asked for, which carries its own insulation, and then it says where.
  * With neither walls nor roof in the request it is «Поза обсягом заявки», as the controls say.
  */
-function formatEnvelopeLabel(envelope: HangarDomainModel['envelope'], scope: HangarDomainModel['scope']): string {
+function formatEnvelopeLabel(envelope: HangarDomainModel['envelope'], scope: HangarDomainModel['scope'], exampleMaterials: boolean): string {
   if (!scope.walls && !scope.roof) return OUT_OF_SCOPE_LABEL;
   if (envelope.walls === 'insulated') return 'Утеплений';
+  // «Ще не знаю» over materials the visitor did not choose — the sandwich panels a cold store's example brings (10.10) —
+  // is still «Уточнимо»: the panels are the example's, said apart in their own row
+  if (envelope.walls === 'undecided' && exampleMaterials) return 'Уточнимо';
   // A sandwich panel carries its insulation whatever was answered: «Ще не знаю» with sandwich walls read «Уточнимо»
   // beside a legend saying «з утеплювачем» (07.10, audit)
   const sandwichWalls = scope.walls && envelope.wallSystem === 'sandwich-panel';
@@ -281,7 +284,7 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
   const ridge = formatMeters(ridgeHeightM(widthM, eaveHeightM, domain.roof.pitchDeg));
   const roofSlopeLabel = formatRoofSlope(domain.roof.pitchDeg);
   const dimensionsLabel = formatSize(widthM, lengthM, eaveHeightM);
-  const envelopeLabel = formatEnvelopeLabel(domain.envelope, domain.scope);
+  const envelopeLabel = formatEnvelopeLabel(domain.envelope, domain.scope, domain.exampleTopics.includes('cladding'));
 
   return {
     areaSqm: domain.areaSqm,

@@ -255,12 +255,12 @@ describe('the ridge with its slope (03.10)', () => {
 
 describe('«Об’єкт» labels (03.10)', () => {
   it('are null while unanswered, so nothing shows them', () => {
-    expect(summaryFor({}).objectProfile).toEqual({ purpose: null, project: null, region: null, lifting: null });
+    expect(summaryFor({}).objectProfile).toEqual({ purpose: null, project: null, region: null, lifting: null, temperature: null });
   });
 
   it('carry the answers as the lead reads them', () => {
     expect(summaryFor({
-      objectProfile: { purpose: 'production', project: 'ready', region: 'м. Київ', lifting: 'craneOrHoist' },
-    }).objectProfile).toEqual({ purpose: 'Виробництво', project: 'Є', region: 'м. Київ', lifting: 'Кран-балка або тельфер' });
+      objectProfile: { purpose: 'production', project: 'ready', region: 'м. Київ', lifting: 'craneOrHoist', temperature: 'unknown' },
+    }).objectProfile).toEqual({ purpose: 'Виробництво', project: 'Є', region: 'м. Київ', lifting: 'Кран-балка або тельфер', temperature: null });
   });
 });

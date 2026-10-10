@@ -1,10 +1,14 @@
 // «Об’єкт» (owner, 03.10): what the hangar is for, whether there is a project, where it stands and whether it carries
 // lifting equipment. Four optional answers, all business configuration — they travel to the lead like the sizes do,
 // but only once answered: an unanswered question is not a row of the brief. Nothing here feeds the geometry.
+// 10.10 (owner): a fifth, asked only of a cold store — the temperature inside, for the manager. No engineering follows
+// from it here: no panel thickness, no insulation value; the purpose alone suggests the warm hangar (domainModel.ts).
 
-export type HangarPurpose = 'storage' | 'machinery' | 'production' | 'agricultural' | 'other';
+export type HangarPurpose = 'storage' | 'coldStore' | 'machinery' | 'production' | 'agricultural' | 'other';
 export type ProjectStatus = 'ready' | 'inProgress' | 'none' | 'unknown';
 export type LiftingEquipment = 'none' | 'craneOrHoist' | 'unknown';
+/** «Яка температура всередині?» — asked of a cold store only (10.10) */
+export type ColdStoreTemperature = 'chilled' | 'frozen' | 'unknown';
 
 /** The 24 oblasts and Kyiv, by their names: the value is what the lead reads, so there is no code to look up. */
 export const BUILD_REGIONS = [
@@ -44,6 +48,8 @@ export type ObjectProfile = {
   project: ProjectStatus;
   region: BuildRegion;
   lifting: LiftingEquipment;
+  /** Kept when the purpose changes, as every answer is held (04.10), but sent only with «Холодильний склад» */
+  temperature: ColdStoreTemperature;
 };
 
 export const DEFAULT_OBJECT_PROFILE: ObjectProfile = {
@@ -51,16 +57,19 @@ export const DEFAULT_OBJECT_PROFILE: ObjectProfile = {
   project: 'unknown',
   region: 'unknown',
   lifting: 'unknown',
+  temperature: 'unknown',
 };
 
 export const PURPOSE_LABELS: Record<HangarPurpose, string> = {
   storage: 'Склад',
+  coldStore: 'Холодильний склад',
   machinery: 'Техніка',
   production: 'Виробництво',
   agricultural: 'Аграрний об’єкт',
   other: 'Інше',
 };
-export const PURPOSE_ORDER: HangarPurpose[] = ['storage', 'machinery', 'production', 'agricultural', 'other'];
+// the cold store beside the plain one, where a visitor reading «Склад» looks for it (10.10)
+export const PURPOSE_ORDER: HangarPurpose[] = ['storage', 'coldStore', 'machinery', 'production', 'agricultural', 'other'];
 
 // The chips under «Чи є у вас проєкт?»: «Є», not «Є проєкт» (10.10, audit F42 — «Проєкт» three times in a row)
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -77,6 +86,22 @@ export const LIFTING_EQUIPMENT_LABELS: Record<LiftingEquipment, string> = {
   unknown: 'Ще не знаю',
 };
 export const LIFTING_EQUIPMENT_ORDER: LiftingEquipment[] = ['none', 'craneOrHoist', 'unknown'];
+/** The question in the client's words, «Буде кран-балка або тельфер?», answered «Так / Ні / Ще не знаю» (10.10, owner);
+ *  the lead keeps the equipment's name (LIFTING_EQUIPMENT_LABELS), which a bare «Так» would not say */
+export const LIFTING_EQUIPMENT_ANSWERS: Record<LiftingEquipment, string> = {
+  craneOrHoist: 'Так',
+  none: 'Ні',
+  unknown: 'Ще не знаю',
+};
+export const LIFTING_EQUIPMENT_ANSWER_ORDER: LiftingEquipment[] = ['craneOrHoist', 'none', 'unknown'];
+
+/** «Яка температура всередині?»: the answer as one line, for the brief and the stamp — what the visitor read on its tile */
+export const TEMPERATURE_LABELS: Record<ColdStoreTemperature, string> = {
+  chilled: 'Плюсова\u00A0— охолодження',
+  frozen: 'Мінусова\u00A0— заморозка',
+  unknown: 'Ще не знаю',
+};
+export const TEMPERATURE_ORDER: ColdStoreTemperature[] = ['chilled', 'frozen', 'unknown'];
 
 export const UNKNOWN_REGION_LABEL = 'Ще не знаю';
 
@@ -90,6 +115,8 @@ export type ObjectProfileLabels = {
   project: string | null;
   region: string | null;
   lifting: string | null;
+  /** only for a cold store, once answered */
+  temperature: string | null;
 };
 
 // «Проєкт: Є проєкт» repeats itself in a brief row, so the row says only the answer
@@ -105,7 +132,13 @@ export function objectProfileLabels(profile: ObjectProfile): ObjectProfileLabels
     project: profile.project === 'unknown' ? null : PROJECT_BRIEF_VALUES[profile.project],
     region: profile.region === 'unknown' ? null : profile.region,
     lifting: profile.lifting === 'unknown' ? null : LIFTING_EQUIPMENT_LABELS[profile.lifting],
+    temperature: coldStoreTemperature(profile),
   };
+}
+
+/** The temperature the lead carries: a cold store's, once answered — held for another purpose, never sent with it */
+function coldStoreTemperature(profile: ObjectProfile): string | null {
+  return profile.purpose === 'coldStore' && profile.temperature !== 'unknown' ? TEMPERATURE_LABELS[profile.temperature] : null;
 }
 
 const PROJECT_SHORT: Record<Exclude<ProjectStatus, 'unknown'>, string> = {
@@ -117,11 +150,17 @@ const LIFTING_SHORT: Record<Exclude<LiftingEquipment, 'unknown'>, string> = {
   none: 'без підйомного обладнання',
   craneOrHoist: 'кран-балка або тельфер',
 };
+const TEMPERATURE_SHORT: Record<Exclude<ColdStoreTemperature, 'unknown'>, string> = {
+  chilled: 'плюсова температура',
+  frozen: 'мінусова температура',
+};
 
-/** One line for the group's phone header — «Склад · Київська обл.» — in the order the questions are asked. */
+/** One line for the group's phone header — «Склад · Київська обл.» — in the order the questions are asked; a cold store's
+ *  temperature right after it (10.10): «Холодильний склад · мінусова температура · Одеська обл.» */
 export function objectProfileLine(profile: ObjectProfile): string {
   const parts = [
     profile.purpose === null ? null : PURPOSE_LABELS[profile.purpose],
+    profile.purpose === 'coldStore' && profile.temperature !== 'unknown' ? TEMPERATURE_SHORT[profile.temperature] : null,
     profile.region === 'unknown' ? null : profile.region.replace(/ область$/, ' обл.'),
     profile.project === 'unknown' ? null : PROJECT_SHORT[profile.project],
     profile.lifting === 'unknown' ? null : LIFTING_SHORT[profile.lifting],
@@ -130,5 +169,6 @@ export function objectProfileLine(profile: ObjectProfile): string {
 }
 
 export function sameObjectProfile(a: ObjectProfile, b: ObjectProfile): boolean {
-  return a.purpose === b.purpose && a.project === b.project && a.region === b.region && a.lifting === b.lifting;
+  return a.purpose === b.purpose && a.project === b.project && a.region === b.region && a.lifting === b.lifting
+    && a.temperature === b.temperature;
 }

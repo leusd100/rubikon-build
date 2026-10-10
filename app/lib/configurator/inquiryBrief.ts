@@ -44,13 +44,15 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     doorsLabel: summary.doorsLabel,
     // «Об’єкт» (03.10): null until answered
     purposeLabel: summary.objectProfile.purpose,
+    // a cold store's «Яка температура всередині?» (10.10): null until answered, and for any other purpose
+    temperatureLabel: summary.objectProfile.temperature,
     projectLabel: summary.objectProfile.project,
     regionLabel: summary.objectProfile.region,
     liftingLabel: summary.objectProfile.lifting,
     // the groups still the page's example (domainModel.ts exampleTopics: not answered and holding the example's value)
     exampleTopics: domain.exampleTopics,
     sizesUnknown: domain.sizesUnknown,
-    // «Колони всередині» (07.10): null until answered
+    // «Простір усередині» (07.10 as «Колони всередині»; the client's words since 10.10): null until answered
     supportsLabel: domain.internalSupports === 'unknown' ? null : INTERNAL_SUPPORTS_LABELS[domain.internalSupports],
     // without walls and roof there is no envelope to describe: no «Утеплення» or «Стіни й покрівля» rows (07.10, audit)
     enclosed: domain.scope.walls || domain.scope.roof,
@@ -72,10 +74,13 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
   // «Об’єкт» first, as in the controls: what and where before the sizes. Only what was answered (03.10)
   const object = present([
     answeredRow('Призначення', brief.purposeLabel),
+    // under the purpose it belongs to (10.10): «Температура всередині: Мінусова — заморозка», nothing more claimed
+    answeredRow('Температура всередині', brief.temperatureLabel),
     answeredRow('Проєкт', brief.projectLabel),
     answeredRow('Область', brief.regionLabel),
     answeredRow('Підйомне обладнання', brief.liftingLabel),
-    answeredRow('Колони всередині', brief.supportsLabel),
+    // the stamp's row (10.10): «Простір усередині: Без колон», as the question asked it
+    answeredRow('Простір усередині', brief.supportsLabel),
   ]);
   const fromExample = (topic: ConfirmedTopic) => brief.exampleTopics.includes(topic);
   const rows: Array<TopicRow | null> = [

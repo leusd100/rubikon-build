@@ -21,7 +21,12 @@ import type { ConfiguratorState } from './types';
 // робіт: Фундамент + Металокаркас + Стіни / огороджувальний контур + Покрівля»); «Огородження» is «Стіни й покрівля»,
 // or «Стіни» / «Покрівля» when only one is asked for; «Основа: Визначити після розрахунку» is «Фундамент: Після
 // розрахунку проєктувальника»; the preliminary scheme says «колон» for «опор» and «Ферма» for «Металева ферма».
-export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.4.2';
+// 1.5.0 (10.10, round 5 — the questions from the client's side): «Призначення: Холодильний склад» and, under it,
+// «Температура всередині: Плюсова — охолодження / Мінусова — заморозка» when answered — nothing claimed from it; a cold
+// store's warm suggestion («Утеплений», «Сендвіч-панель») goes among the values not answered until confirmed;
+// «Колони всередині: Можна / Не можна» is «Простір усередині: Колони можна / Без колон»; «Утеплення: Уточнимо» for «Ще не
+// знаю» over the example's sandwich panels.
+export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.5.0';
 
 /**
  * The hangar configuration as a shared inquiry attachment. The text is formatHangarInquiryBrief verbatim and the

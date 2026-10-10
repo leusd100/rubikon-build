@@ -183,12 +183,21 @@ export function withConfirmed(state: ConfiguratorState, topic: ConfirmedTopic): 
 /** «Колони всередині ангара» (07.10): whether a row of columns may stand inside. Until answered, the drawing's centre row
  *  is the width's visualisation rule (deriveStructuralVisualization); «Не можна» draws the span clear. */
 export type InternalSupports = 'allowed' | 'not-allowed' | 'unknown';
+/** The answer as the stamp and the lead say it, under «Простір усередині» — the space the client asked about, not the
+ *  engineer's «колони: не можна» (10.10, owner) */
 export const INTERNAL_SUPPORTS_LABELS: Record<InternalSupports, string> = {
-  allowed: 'Можна',
-  'not-allowed': 'Не можна',
+  allowed: 'Колони можна',
+  'not-allowed': 'Без колон',
   unknown: 'Ще не знаю',
 };
-export const INTERNAL_SUPPORTS_ORDER: InternalSupports[] = ['allowed', 'not-allowed', 'unknown'];
+/** The question from the client's side, «Потрібен простір без колон усередині?», and its answers (10.10, owner): the
+ *  space without columns first, as it is asked */
+export const INTERNAL_SUPPORTS_ANSWERS: Record<InternalSupports, string> = {
+  'not-allowed': 'Так, без колон',
+  allowed: 'Колони можна',
+  unknown: 'Ще не знаю',
+};
+export const INTERNAL_SUPPORTS_ORDER: InternalSupports[] = ['not-allowed', 'allowed', 'unknown'];
 
 /** «Обсяг робіт» (07.10): the whole set, some of the works (the list), or help to decide */
 export type ScopeMode = 'full' | 'partial' | 'help';
@@ -271,7 +280,9 @@ export const SCOPE_ORDER: ScopeItem[] = ['foundation', 'frame', 'walls', 'roof']
 
 export const GATES_OPTIONS: GatesCount[] = [0, 1, 2];
 export const DOOR_OPTIONS: DoorCount[] = [0, 1];
-export const DOOR_LABELS: Record<DoorCount, string> = { 0: 'Без дверей', 1: '1' };
+/** «Службові двері: Так / Ні» (10.10, owner): one switch — «Без дверей» and «1» read as a count to tune */
+export const DOOR_LABELS: Record<DoorCount, string> = { 1: 'Так', 0: 'Ні' };
+export const DOOR_SWITCH_ORDER: DoorCount[] = [1, 0];
 
 export const GATE_TYPE_LABELS: Record<GateType, string> = {
   standard: 'Стандартні',

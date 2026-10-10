@@ -37,7 +37,7 @@ describe('step header values (03.10; steps 07.10)', () => {
       scopeMode: 'partial', scope: ['frame', 'walls'],
       gates: 2,
       doors: 1,
-      objectProfile: { purpose: 'storage', project: 'unknown', region: 'Київська область', lifting: 'unknown' },
+      objectProfile: { purpose: 'storage', project: 'unknown', region: 'Київська область', lifting: 'unknown', temperature: 'unknown' },
     });
     expect(values.need).toBe('Склад · Київська обл.');
     expect(values.project).toBe('Ще не вказано');
