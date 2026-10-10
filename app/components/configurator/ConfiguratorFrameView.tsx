@@ -44,7 +44,9 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
     choose(step === index ? 0 : index);
   }
 
-  let text = 'Оберіть, що показати на кресленні вашого каркаса.';
+  // Nothing chosen, nothing under the list: the line above it already says what the list is for (10.10, after F29 — the
+  // two said it twice); the paragraph stays, so a chosen item's text is announced
+  let text = '';
   if (node) text = node.text;
   else if (step) text = steps[step - 1].text;
 
@@ -97,7 +99,7 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
               </button>
             ))}
           </fieldset>
-          <p className="hc-frame-text" aria-live="polite"><span key={text}>{text}</span></p>
+          <p className="hc-frame-text" aria-live="polite">{text && <span key={text}>{text}</span>}</p>
           {step === 2 && (
             <fieldset className="hc-frame-nodes" aria-label="Вузли ферми">
               {nodes.map((item, index) => (

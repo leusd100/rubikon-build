@@ -129,7 +129,11 @@ test('in forced colours the open step, a pressed frame item and node, and a chos
   await page.reload({ waitUntil: 'load' });
   const text = await page.locator('body').evaluate((body) => getComputedStyle(body).color);
   const normal = await marks();
-  for (const [what, [chosen]] of Object.entries(normal)) if (what !== 'node') expect(chosen, what).toBe(text);
+  for (const [what, [chosen]] of Object.entries(normal)) if (what !== 'node' && what !== 'item') expect(chosen, what).toBe(text);
+  // the «Що показати» list is a drawing's legend since 10.10 (audit F29): the shown item is marked by a copper rule on
+  // its left, not filled
+  const leftRule = (locator: Locator) => locator.evaluate((element) => getComputedStyle(element).borderLeftColor);
+  expect(await leftRule(page.locator('.hc-frame-item[aria-pressed="true"]'))).not.toBe(await leftRule(page.locator('.hc-frame-item[aria-pressed="false"]').first()));
 });
 
 // Audit F64: «Почати заново» threw a restored draft away for good with one press; the line went, and the focus with it.

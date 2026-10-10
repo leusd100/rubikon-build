@@ -75,7 +75,9 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await expect(frame.locator('path.ft-opening')).toHaveCount(1);
   // nothing chosen yet: the whole frame, and the panel says what it offers
   await expect(items).toHaveText(['Ширина L', 'Ферма', 'Прогони й в’язі', 'Сніг на покрівлі', 'Вітер у торець']);
-  await expect(text).toHaveText('Оберіть, що показати на кресленні вашого каркаса.');
+  // the line above the list says what it is for; under it nothing until an item is chosen (10.10)
+  await expect(page.locator('#hc-step-frame .hc-frame-intro')).toContainText('Для довідки');
+  await expect(text).toHaveText('');
   await expect(frame).not.toHaveAttribute('data-step', /.*/);
   // 24 m has the centre row: the width between the outer axes is not «the span»; the axes are lettered А, Б, В across it
   // and numbered for the drawn frames along it

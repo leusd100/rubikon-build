@@ -488,6 +488,11 @@
 @media (max-width: 480px) {
   .hc-preview-sheet .sheet-cell.hc-sheet-shown.is-frame b { min-height: 2.4em; }
 }
+/* The narrowest phones (10.10): «Загальний вигляд · попередня схема» takes two lines there too, so every view keeps two —
+   at 320 px the sheet grew 14 px from the drawing into 3D («3D-модель · попередня схема», one line) */
+@media (max-width: 359px) {
+  .hc-preview-sheet .sheet-cell.hc-sheet-shown b { min-height: 2.4em; }
+}
 
 /* «Колони всередині» moves the gates (09.10, owner: ворота перескакували миттєво — «так», плавно): the gates' outline,
    the posts at their jambs and the wall purlins between them glide to their new places where the browser eases a
