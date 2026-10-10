@@ -1181,16 +1181,14 @@ test('a word of a load’s way in the legend lights its link alone — pointed a
     await expect(words).toHaveText(CHAINS[load].words.map(([word]) => word));
     // Nothing steps back while no word is chosen
     await expect(stage).not.toHaveAttribute('data-step-on', /.*/);
-    // Even the .01ms reduced-motion transition needs a rendering frame.
-    // The attribute can be committed before computed opacity reaches its target.
-    await expect.poll(async () => [...new Set((await steps(load)).map(([, opacity]) => opacity))], load).toEqual(['1']);
+    expect(new Set((await steps(load)).map(([, opacity]) => opacity)), load).toEqual(new Set(['1']));
     // Pressed, each word lights its link alone and says so; the next word pressed takes over
     for (const [index, [word, n]] of CHAINS[load].words.entries()) {
       await words.nth(index).click();
       await away();
       await expect(words.nth(index), word).toHaveAttribute('aria-pressed', 'true');
       await expect(stage, word).toHaveAttribute('data-step-on', String(n));
-      await expect.poll(() => steps(load), word).toEqual(await litAlone(load, n));
+      expect(await steps(load), word).toEqual(await litAlone(load, n));
       expect(await words.evaluateAll((buttons) => buttons.filter((button) => button.getAttribute('aria-pressed') === 'true').length), word).toBe(1);
     }
     // …and pressed again it lets go: the whole way back

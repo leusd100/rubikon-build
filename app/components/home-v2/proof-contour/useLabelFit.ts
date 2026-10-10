@@ -46,15 +46,10 @@ const shown = (element: Element | null) => element && getComputedStyle(element).
  *  it would stand (`yieldTo`) */
 function cutWords(stage: HTMLElement, seam: number, covers: readonly Box[], yieldTo: Box | null) {
   let yieldTag = false;
-  // Read the whole set before changing visibility: a data-cut change can
-  // otherwise make the next geometry read flush styles again.
-  const cuts = [...stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')].map((label) => {
+  for (const label of stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span')) {
     const rect = label.getBoundingClientRect();
     const cut = rect.left < seam + 1 || covers.some((cover) => meets(rect, cover));
     if (!cut && yieldTo && meets(rect, yieldTo)) yieldTag = true;
-    return { label, cut };
-  });
-  for (const { label, cut } of cuts) {
     if (cut === ('cut' in label.dataset)) continue;
     label.toggleAttribute('data-cut', cut);
     const pointer = stage.querySelector<SVGGElement>(`.hv2-proof-tag-leaders [data-tag="${label.dataset.tag}"]`);
@@ -68,19 +63,13 @@ function cutWords(stage: HTMLElement, seam: number, covers: readonly Box[], yiel
  *  lay under Д and В) — and, as a word, it is hidden whole where the seam cuts it. «Схема ›» gives way to a letter as to
  *  a word (on a short laptop with the seam at 64 % it covered «Г»): whether one meets it (`yieldTo`) */
 function cutLetters(stage: HTMLElement, seam: number, onFrame: boolean, yieldTo: Box | null) {
-  // Word cuts have already been applied: read their final visibility once,
-  // then reuse each box for all pins. Pin writes follow every geometry read.
-  const words = [...stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span:not([data-cut])')]
-    .filter((label) => shown(label)).map((label) => label.getBoundingClientRect());
+  const words = [...stage.querySelectorAll<HTMLElement>('.hv2-proof-labels > span:not([data-cut])')].filter((label) => shown(label));
   let yieldTag = false;
-  const cuts = [...stage.querySelectorAll<HTMLElement>('.hv2-proof-detail-pin')].map((pin) => {
+  for (const pin of stage.querySelectorAll<HTMLElement>('.hv2-proof-detail-pin')) {
     const rect = pin.getBoundingClientRect();
-    const under = onFrame && (rect.left < seam + 1 || words.some((word) => meets(rect, word)));
+    const under = onFrame && (rect.left < seam + 1 || words.some((label) => meets(rect, label.getBoundingClientRect())));
+    pin.toggleAttribute('data-cut', under);
     if (!under && yieldTo && rect.left >= seam && meets(rect, yieldTo)) yieldTag = true;
-    return { pin, under };
-  });
-  for (const { pin, under } of cuts) {
-    if (under !== pin.hasAttribute('data-cut')) pin.toggleAttribute('data-cut', under);
   }
   return yieldTag;
 }
