@@ -254,10 +254,8 @@ export function buildEnvelopePanelGeometry(
 // sandwich-panel detail in its own right (a cover strip over the seam), not a fabricated one, and
 // visually reads as "a seam is here" at normal viewing distance just as the wall's recessed groove
 // does. Documented as a deliberate simplification, not an inconsistency overlooked — see the
-// Phase 3D.1 report.
-
-const GABLE_SANDWICH_CAP_HEIGHT_M = 0.006;
-const GABLE_SANDWICH_CAP_WIDTH_M = 0.06;
+// Phase 3D.1 report. Since 10.10 a sandwich gable has no caps: its panels lie across the wall, their joints in ink
+// (gableCourses), and the upright caps crossed them into a grid.
 
 type Rect = { minX: number; maxX: number; maxY: number };
 
@@ -305,9 +303,10 @@ export function buildGableCladdingOverlay(
   holes: Array<Array<{ x: number; y: number }>>,
   system: CladdingSystem | undefined,
 ): { geometry: THREE.BufferGeometry; depthM: number } | null {
-  if (system !== 'profiled-sheet' && system !== 'sandwich-panel') return null;
-  const minWidth = system === 'profiled-sheet' ? MIN_PROFILED_WIDTH_M : MIN_SANDWICH_WIDTH_M;
-  if (widthM < minWidth) return null;
+  // A sandwich gable has no overlay since 10.10: its panels lie across the wall, their joints drawn in ink
+  // (gableCourses) — the upright seam caps crossed them into a grid (owner's screenshot)
+  if (system !== 'profiled-sheet') return null;
+  if (widthM < MIN_PROFILED_WIDTH_M) return null;
 
   const holeBounds = holeBoundsFrom(holes);
   const shapes: THREE.Shape[] = [];
@@ -318,23 +317,11 @@ export function buildGableCladdingOverlay(
     shapes.push(rectShape(x0, yBottom, x1, yTop));
   };
 
-  let depthM: number;
-  if (system === 'profiled-sheet') {
-    depthM = PROFILED_RIB_HEIGHT_M;
-    const periods = Math.max(1, Math.round(widthM / PROFILED_RIB_PITCH_M));
-    const pitch = widthM / periods;
-    const crestW = pitch * PROFILED_CREST_FRACTION;
-    for (let i = 0, x = 0; i < periods; i += 1, x += pitch) addStrip(x, x + crestW);
-  } else {
-    depthM = GABLE_SANDWICH_CAP_HEIGHT_M;
-    const modules = Math.max(1, Math.round(widthM / SANDWICH_MODULE_WIDTH_M));
-    const moduleWidth = widthM / modules;
-    const capHalf = GABLE_SANDWICH_CAP_WIDTH_M / 2;
-    for (let i = 1; i < modules; i += 1) {
-      const seamCentre = i * moduleWidth;
-      addStrip(seamCentre - capHalf, seamCentre + capHalf);
-    }
-  }
+  const depthM = PROFILED_RIB_HEIGHT_M;
+  const periods = Math.max(1, Math.round(widthM / PROFILED_RIB_PITCH_M));
+  const pitch = widthM / periods;
+  const crestW = pitch * PROFILED_CREST_FRACTION;
+  for (let i = 0, x = 0; i < periods; i += 1, x += pitch) addStrip(x, x + crestW);
 
   if (shapes.length === 0) return null;
   const geometry = new THREE.ExtrudeGeometry(shapes, { depth: depthM, bevelEnabled: false, curveSegments: 1 });
