@@ -29,6 +29,11 @@ import './general-view.css';
 // were.
 
 const ALL_STAGES = BUILD_STAGE_ORDER.length;
+/** How long a changed choice stays copper on the drawing (10.10, owner: «що змінив — те засвітилось»): the 260 ms it
+ *  was, with its fade, came and went before the eye got from the control to the picture */
+const ANSWER_HOLD_MS = 1100;
+/** How long the hangar's lines take to run to a new size, and its cladding to come back after (general-view.css) */
+const MORPH_MS = 650;
 /** Laid out for this until the first measure: a desktop sheet's drawing box */
 const FIRST_FRAME: GeneralViewFrame = { width: 640, height: 430, annotated: true, keepClear: [] };
 
@@ -91,16 +96,30 @@ export function HangarGeneralView({
   const { dimensions, envelope, scope } = domain;
   const ridgeM = ridgeHeightM(dimensions.widthM, dimensions.eaveHeightM, domain.roof.pitchDeg);
 
+  // A new size runs the lines to their new places (10.10, owner: «каркас перетікає, а не стрибає»): marked in the very
+  // render that draws them, so the drawing's new lines and their transition land together — a new box to fit (the
+  // first measure, a resize) is not a new size and lays out at once
+  const sizeKey = `${dimensions.widthM}|${dimensions.lengthM}|${dimensions.eaveHeightM}|${Math.round(ridgeM * 10)}`;
+  const [sizes, setSizes] = useState({ key: sizeKey, changes: 0 });
+  if (sizes.key !== sizeKey) setSizes({ key: sizeKey, changes: sizes.changes + 1 });
+  const [settled, setSettled] = useState(0);
+  useEffect(() => {
+    if (!sizes.changes) return undefined;
+    const timer = window.setTimeout(() => setSettled(sizes.changes), MORPH_MS);
+    return () => window.clearTimeout(timer);
+  }, [sizes.changes]);
+  const morphing = sizes.changes > settled;
+
   // a changed choice is answered on the drawing a moment in copper: the size's value, the surface's pattern, the openings
   const active = {
-    width: useLayerHighlight(dimensions.widthM),
-    length: useLayerHighlight(dimensions.lengthM),
-    height: useLayerHighlight(dimensions.eaveHeightM),
-    ridge: useLayerHighlight(Math.round(ridgeM * 10)),
+    width: useLayerHighlight(dimensions.widthM, ANSWER_HOLD_MS),
+    length: useLayerHighlight(dimensions.lengthM, ANSWER_HOLD_MS),
+    height: useLayerHighlight(dimensions.eaveHeightM, ANSWER_HOLD_MS),
+    ridge: useLayerHighlight(Math.round(ridgeM * 10), ANSWER_HOLD_MS),
   };
-  const wallsActive = useLayerHighlight(`${scope.walls}|${envelope.wallSystem}`);
-  const roofActive = useLayerHighlight(`${scope.roof}|${envelope.roofSystem}`);
-  const openingsActive = useLayerHighlight(`${domain.gates}|${domain.gateType}|${domain.doors}|${domain.structural.scheme}|${scope.walls}`);
+  const wallsActive = useLayerHighlight(`${scope.walls}|${envelope.wallSystem}`, ANSWER_HOLD_MS);
+  const roofActive = useLayerHighlight(`${scope.roof}|${envelope.roofSystem}`, ANSWER_HOLD_MS);
+  const openingsActive = useLayerHighlight(`${domain.gates}|${domain.gateType}|${domain.doors}|${domain.structural.scheme}|${scope.walls}`, ANSWER_HOLD_MS);
   const on = (value: boolean) => (value ? '' : undefined);
   const held = (stage: BuildStage) => on(!isStageReleased(stage, released));
 
@@ -112,6 +131,7 @@ export function HangarGeneralView({
       role="img"
       aria-label={previewDescription('technical', dimensions, ridgeM)}
       data-building={on(released < ALL_STAGES)}
+      data-morph={on(morphing)}
     >
       {/* the faces the camera sees, in the field's colour */}
       <path className="gv-plane" d={g.planes} />
@@ -147,7 +167,8 @@ export function HangarGeneralView({
           <g key={key} className="gv-size" data-size={key} data-active={on(active[key])} data-held={key === 'ridge' ? held('frame') : undefined}>
             <path className="gv-dim" d={d} />
             {dot && <circle className="gv-dot" cx={dot[0].toFixed(1)} cy={dot[1].toFixed(1)} r={2.2} />}
-            <text className="gv-value" x={label.x.toFixed(1)} y={label.y.toFixed(1)} style={{ fontSize: `${label.size}px` }}>{label.text}</text>
+            {/* placed by a transform, so a new size moves it with its line */}
+            <text className="gv-value" style={{ fontSize: `${label.size}px`, transform: `translate(${label.x.toFixed(1)}px, ${label.y.toFixed(1)}px)` }}>{label.text}</text>
           </g>
         ))}
       </g>

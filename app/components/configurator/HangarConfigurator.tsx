@@ -251,7 +251,7 @@ function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElem
   }, [enabled, layoutRef]);
 }
 
-export function HangarConfigurator({ embedded = false }: { embedded?: boolean }) {
+export function HangarConfigurator({ embedded = false, nextSteps }: { embedded?: boolean; nextSteps?: readonly string[] }) {
   const sharedInquiry = useHangarInquiryContext();
   const layoutRef = useMiniPreview(embedded);
   useConfiguratorLinks(embedded, layoutRef);
@@ -312,7 +312,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         </output>
       )}
       <div className="hc-layout" ref={layoutRef}>
-        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} step={step} onStep={setStep} foundationChoice={!embedded} />
+        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} step={step} onStep={setStep} foundationChoice={!embedded} nextSteps={nextSteps} />
         <div className="hc-preview-pane" id="hangar-live-preview">
           <HangarPreviewModes
             domain={previewDomain}

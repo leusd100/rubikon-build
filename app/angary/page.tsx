@@ -47,7 +47,8 @@ export default function HangarsPage() {
       <HangarInquiryProvider>
         <DirectionPage
           config={config}
-          signatureExperience={<HangarConfigurator embedded />}
+          // «Що далі» under the configurator's last step: the route's first three steps, up to the estimate (10.10, owner)
+          signatureExperience={<HangarConfigurator embedded nextSteps={editorial.route.steps.slice(0, 3).map((step) => step.title)} />}
           editorialArchitecture={(
             <HangarEditorialArchitecture
               content={editorial}

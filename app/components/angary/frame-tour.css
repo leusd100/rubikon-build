@@ -39,6 +39,8 @@
 .ft-letter[data-anchor="end"] { text-anchor: end; }
 .ft-letter[data-anchor="start"] { text-anchor: start; }
 .ft-letter { paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(6px * var(--ft-k)); stroke-linejoin: round; }
+/* A size's value beside its letter, once the visitor gave the sizes (10.10): upright figures, smaller than the letter */
+.ft-value { font-style: normal; font-weight: 600; font-size: calc(15px * var(--ft-k)); font-variant-numeric: tabular-nums; }
 .ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }
 .ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
@@ -91,6 +93,22 @@
   .ft-clear :is(.ft-clear-line, .ft-clear-row) { stroke-dasharray: 1; animation: ft-draw .7s var(--ease-premium, ease) both; }
   .ft-clear-label { animation: ft-rise .4s ease .45s both; }
 }
+/* The first view of the frame builds itself (10.10, ConfiguratorFrameView data-build): the ground and the footings come
+   up, the columns rise, the trusses and the lines along the building are laid on them, then the purlins, the end wall's
+   posts and its openings, the bracing, and last the sizes — ~1.7 s, once per page load */
+@media (prefers-reduced-motion: no-preference) {
+  .hc-frame[data-build]:not([data-step]) :is(.ft-slab, .ft-ground) { animation: ft-in .3s ease both; }
+  .hc-frame[data-build]:not([data-step]) :is(.ft-footing, .ft-footing-top) { animation: ft-rise .35s ease .1s both; }
+  .hc-frame[data-build]:not([data-step]) :is([data-build-stage="columns"], [data-part="1 2"] .ft-member) { stroke-dasharray: 1; animation: ft-draw .45s var(--ease-premium, ease) .3s both; }
+  .hc-frame[data-build]:not([data-step]) :is([data-build-stage="roof"], [data-part="2"] .ft-member) { stroke-dasharray: 1; animation: ft-draw .5s var(--ease-premium, ease) .6s both; }
+  .hc-frame[data-build]:not([data-step]) :is(.ft-thin, .ft-post) { stroke-dasharray: 1; animation: ft-draw .4s var(--ease-premium, ease) .9s both; }
+  .hc-frame[data-build]:not([data-step]) .ft-opening { animation: ft-in .35s ease .95s both; }
+  .hc-frame[data-build]:not([data-step]) .ft-brace { stroke-dasharray: 1; animation: ft-draw .4s var(--ease-premium, ease) 1.1s both; }
+  .hc-frame[data-build]:not([data-step]) :is(.ft-dim, .ft-letter) { animation: ft-in .35s ease 1.35s both; }
+  .hc-frame[data-build]:not([data-step]) .ft-clear :is(.ft-clear-line, .ft-clear-row) { animation-delay: 1.35s; }
+  .hc-frame[data-build]:not([data-step]) .ft-clear-label { animation-delay: 1.75s; }
+}
+@keyframes ft-in { from { opacity: 0; } }
 @keyframes ft-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* The loads: the frame stays in graphite under them; the lit links glow. Pure picture (aria-hidden), so they never take

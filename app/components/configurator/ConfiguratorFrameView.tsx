@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { FRAME_TOUR_DURATIONS, FrameTourStage, frameNodes, useFrameTourModel } from '../angary/FrameTour';
 import { TourControl } from '../directions/TourParts';
@@ -15,12 +15,32 @@ import { useDrawingTour } from '../useDrawingTour';
 // like every other step's choices: one way round the block, the controls on the left and the picture on the right.
 // Nothing plays by itself — the visitor came to set up a hangar, not to watch; «Показати по черзі» plays the five once.
 
+/** The first time the frame is opened it builds itself (10.10, owner): the ground and the footings, the columns, the
+ *  trusses on them, the purlins and the posts, the bracing, then its sizes — once per page load, never with reduced
+ *  motion (frame-tour.css .hc-frame[data-build]). How long the last stage runs out. */
+const BUILD_MS = 1800;
+let builtThisLoad = false;
+
 export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (caption: string) => void }>) {
   const { g, summary, steps, captions } = useFrameTourModel();
   const nodes = useMemo(() => frameNodes(g), [g]);
   const tour = useDrawingTour(steps.length, { loops: 0, durations: FRAME_TOUR_DURATIONS });
   const { visualRef, step, touring, run, size, motion, stepMs, choose, toggle } = tour;
   const [nodeId, setNodeId] = useState<string | null>(null);
+  // set on the element before the first paint, so the finished frame never shows for a moment before it builds; the
+  // whole frame only — an item chosen while it builds shows at once (frame-tour.css :not([data-step]))
+  const frameRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || builtThisLoad || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    builtThisLoad = true;
+    frame.dataset.build = '';
+    const timer = window.setTimeout(() => delete frame.dataset.build, BUILD_MS);
+    return () => {
+      window.clearTimeout(timer);
+      delete frame.dataset.build;
+    };
+  }, []);
   // A node belongs to the frame's step: the tour moving on, or another step chosen, closes it
   const node = step === 2 ? nodes.find((item) => item.id === nodeId) ?? null : null;
   // with nothing chosen, the whole frame centred (07.10: it sat off to the left of the sheet)
@@ -64,6 +84,7 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
   return (
     <div
       className="ft dn hc-frame"
+      ref={frameRef}
       data-step={step || undefined}
       data-touring={touring || undefined}
       data-node={node?.id}

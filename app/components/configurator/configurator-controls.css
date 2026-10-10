@@ -171,6 +171,23 @@
    A list of five, like any other step's choices; the shown one's words under it, and on the frame its nodes, numbered
    as on the drawing. The play control last and quiet: nothing plays by itself. */
 .hc-frame-panel { padding: 22px 22px 8px; }
+/* «Що далі, після запиту» under the last step (10.10, owner): the route's first three steps by their titles, numbered as
+   its rail is, between the step's questions and its «До підсумку» — a heading as «Як працює ваш каркас» is, quiet rows */
+.hc-next { margin: 4px 22px 0; padding-top: 18px; border-top: 1px solid var(--color-border); }
+.hc-next-title { margin: 0 0 10px; font: 700 17px/1.2 var(--font-manrope), sans-serif; }
+.hc-next-steps { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.hc-next-steps li {
+  display: flex; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--color-border);
+  color: var(--color-text); font: 600 15px/1.35 var(--font-manrope), sans-serif;
+}
+.hc-next-number { flex: none; min-width: 1.6em; color: var(--color-accent-strong); font: 700 13px/1 var(--font-manrope), sans-serif; font-variant-numeric: tabular-nums; }
+.hc-next-more {
+  display: inline-flex; gap: 6px; align-items: center; min-height: 44px; color: var(--color-accent-strong);
+  font: 600 14px/1.3 var(--font-manrope), sans-serif; text-decoration: underline; text-underline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .hc-next { margin-inline: 20px; }
+}
 .hc-frame-panel:empty { display: none; }
 /* The five as a drawing's legend, not as answers (10.10, audit F29 — for the owner to confirm): boxed and filled like
    the step's choices above them, a pressed «Ферма» read as an answer given. Rows between thin rules, as the «Вартість»

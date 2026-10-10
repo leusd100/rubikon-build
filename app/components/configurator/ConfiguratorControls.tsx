@@ -87,6 +87,9 @@ type Props = {
   /** The foundation type is offered on the research screen only. On /angary the visitor does not choose it: the
    *  designer decides it from the site and the loads (owner, 03.10), so the brief stays «Визначити після розрахунку». */
   foundationChoice?: boolean;
+  /** «Що далі» under the last step (10.10, owner): the Delivery Model's first steps after a request, by their titles —
+   *  resolved on the server (app/angary/page.tsx), so the model does not ship to the browser */
+  nextSteps?: readonly string[];
 };
 
 /**
@@ -434,7 +437,7 @@ const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
   height: 'Висота стін',
 };
 
-export function ConfiguratorControls({ state, onChange, step, onStep: setStep, foundationChoice = true }: Readonly<Props>) {
+export function ConfiguratorControls({ state, onChange, step, onStep: setStep, foundationChoice = true, nextSteps }: Readonly<Props>) {
   const tabsRef = useRef<HTMLDivElement>(null);
   // The same resolved model the summary reads, so a folded header and the ridge hint never disagree with the stamp
   const domain = useMemo(() => deriveDomainModel(state), [state]);
@@ -1095,6 +1098,19 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             {item.groups.map((group) => <Fragment key={group}>{groups[group]}</Fragment>)}
             {/* «Каркас»: what to show of the frame — filled by the drawing's own frame view (ConfiguratorFrameView) */}
             {item.id === 'frame' && <div className="hc-frame-panel" id="hc-frame-panel" />}
+            {/* after the last step, before the stamp: what happens once the brief is sent, in the route's own words —
+                the whole route, with what the visitor does at each step, is the section under the configurator */}
+            {!next && nextSteps && nextSteps.length > 0 && (
+              <div className="hc-next" role="group" aria-labelledby="hc-next-title">
+                <p className="hc-next-title" id="hc-next-title">Що далі, після запиту</p>
+                <ol className="hc-next-steps">
+                  {nextSteps.map((title, number) => (
+                    <li key={title}><span className="hc-next-number" aria-hidden="true">{String(number + 1).padStart(2, '0')}</span>{title}</li>
+                  ))}
+                </ol>
+                <a className="hc-next-more" href="#process">Увесь шлях і хто відповідає <span aria-hidden="true">↓</span></a>
+              </div>
+            )}
             <div className="hc-step-nav">
               {previous && (
                 // the arrow alone, so the next step's button keeps the row beside it; named for what it opens

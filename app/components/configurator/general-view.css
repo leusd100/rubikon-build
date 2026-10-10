@@ -20,12 +20,12 @@
 /* a surface out of the request: its outline dashed, as the legend's «Поза обсягом робіт» */
 .gv-out { stroke: var(--gv-ink-3); stroke-width: 1.1px; stroke-dasharray: 5 4; }
 /* the cladding's pattern: a profiled sheet's ribs finer than a sandwich panel's joints, so the two systems read apart */
-.gv-cladding { stroke: var(--gv-ink-3); stroke-width: .8px; opacity: .6; transition: stroke .3s ease, opacity .3s ease; }
+.gv-cladding { stroke: var(--gv-ink-3); stroke-width: .8px; opacity: .6; }
 .gv-cladding[data-system="sandwich-panel"] { stroke: var(--gv-ink-2); stroke-width: .9px; opacity: .55; }
 .gv-cladding[data-active] { stroke: var(--color-accent); opacity: 1; }
 /* the gates and the door: a leaf darker than the field, outlined */
-.gv .gv-opening { fill: #0a0b0b; stroke: var(--gv-ink); stroke-width: 1.4px; stroke-linejoin: miter; transition: stroke .3s ease; }
-.gv .gv-opening[data-active] { stroke: var(--color-accent); }
+.gv .gv-opening { fill: #0a0b0b; stroke: var(--gv-ink); stroke-width: 1.4px; stroke-linejoin: miter; }
+.gv .gv-opening[data-active] { fill: color-mix(in srgb, var(--color-accent) 22%, #0a0b0b); stroke: var(--color-accent); }
 /* the frame where a surface is not clad, in «Каркас»'s weights (configurator-sheet.css, the overview) */
 .gv-frame-front { stroke: var(--gv-ink); stroke-width: calc(2.6px * var(--gv-w)); }
 .gv-frame-back { stroke: var(--gv-ink-3); stroke-width: 1.2px; }
@@ -38,14 +38,14 @@
 /* The sizes in «Каркас»'s style — extension lines, 45° ticks, the value at the line's middle on its outer side — with
    their values: upright figures in the letters' face and ink, haloed in the field's colour. A changed size flashes
    copper a moment. */
-.gv-dim { stroke: var(--gv-ink-3); stroke-width: 1.1px; transition: stroke .3s ease; }
+.gv-dim { stroke: var(--gv-ink-3); stroke-width: 1.1px; }
 .gv-dot { fill: var(--gv-ink-2); }
 .gv-value {
   fill: var(--gv-ink-2); font-family: var(--font-manrope), sans-serif; font-weight: 600; font-variant-numeric: tabular-nums;
   text-anchor: middle; dominant-baseline: central;
-  paint-order: stroke; stroke: var(--gv-field); stroke-width: 5px; stroke-linejoin: round; transition: fill .3s ease;
+  paint-order: stroke; stroke: var(--gv-field); stroke-width: 5px; stroke-linejoin: round;
 }
-.gv-size[data-active] .gv-dim { stroke: var(--color-accent); }
+.gv-size[data-active] .gv-dim { stroke: var(--color-accent); stroke-width: 1.6px; }
 .gv-size[data-active] .gv-value { fill: var(--color-accent-on-dark); }
 
 /* a phone's sheet: the lines a step lighter, as the drawing is smaller */
@@ -56,7 +56,11 @@
 /* The first view builds itself (useFirstViewBuildUp): a stage still held back is away; released, it comes in — the
    outline plotted along its lines, the rest faded in. Armed or completed early, nothing eases (the picture's
    data-build, as configurator-sheet.css does for the old view's layers). */
-.gv :is(.gv-stage, .gv-size) { transition: opacity .5s var(--ease-premium), stroke .3s ease; }
+/* A changed choice comes up copper at once and goes back slowly (10.10, owner: «що змінив — те засвітилось»: it held
+   260 ms, HangarGeneralView ANSWER_HOLD_MS) */
+.gv :is(.gv-stage, .gv-size, .gv-dim) { transition: opacity .5s var(--ease-premium), stroke .7s ease, stroke-width .7s ease, fill .7s ease; }
+.gv :is(.gv-value, .gv-hatch) { transition: opacity .4s ease, fill .7s ease; }
+.gv :is([data-active], [data-active] .gv-dim, [data-active] .gv-value) { transition-duration: .5s, .12s, .12s, .12s; }
 .gv [data-held] { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
   .gv[data-building] :is(.gv-front, .gv-edge) { stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 1.1s var(--ease-premium); }
@@ -68,4 +72,16 @@
    ground's line without its hatch, which on a 100 px picture was a comb under the hangar */
 @media (max-width: 760px) {
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet :is(.gv-sizes, .gv-hatch) { display: none; }
+}
+
+/* A new size (10.10, owner: «каркас перетікає, а не стрибає»): the hangar's lines run to their new places — Chrome
+   animates a path's d between two shapes of the same make-up; elsewhere they land at once — the sizes' values move
+   with their lines, and the cladding's pattern and the ground's hatch, whose number of strokes changes, step away
+   while it moves and come back on the new size (HangarGeneralView data-morph, set in the render that draws it) */
+@media (prefers-reduced-motion: no-preference) {
+  /* an even ease, in and out: the premium ease ran four fifths of the way in the first tenth of a second, a jump */
+  .gv[data-morph] path:not(.gv-cladding, .gv-hatch) { transition: d .55s cubic-bezier(.45, 0, .2, 1), stroke .7s ease, fill .7s ease, opacity .5s var(--ease-premium); }
+  .gv[data-morph] .gv-dot { transition: cx .55s cubic-bezier(.45, 0, .2, 1), cy .55s cubic-bezier(.45, 0, .2, 1); }
+  .gv[data-morph] .gv-value { transition: transform .55s cubic-bezier(.45, 0, .2, 1), fill .7s ease; }
+  .gv[data-morph] :is(.gv-cladding, .gv-hatch) { opacity: 0; transition: none; }
 }

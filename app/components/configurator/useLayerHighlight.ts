@@ -10,7 +10,7 @@ const HIGHLIGHT_DURATION_MS = 260;
  * `prefers-reduced-motion` rule (globals.css) already collapses to ~0ms, so this hook needs no
  * reduced-motion branching of its own.
  */
-export function useLayerHighlight(value: unknown): boolean {
+export function useLayerHighlight(value: unknown, holdMs = HIGHLIGHT_DURATION_MS): boolean {
   const [active, setActive] = useState(false);
   const mounted = useRef(false);
 
@@ -20,9 +20,9 @@ export function useLayerHighlight(value: unknown): boolean {
       return;
     }
     setActive(true);
-    const timer = window.setTimeout(() => setActive(false), HIGHLIGHT_DURATION_MS);
+    const timer = window.setTimeout(() => setActive(false), holdMs);
     return () => window.clearTimeout(timer);
-  }, [value]);
+  }, [value, holdMs]);
 
   return active;
 }
