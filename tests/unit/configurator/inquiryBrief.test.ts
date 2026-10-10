@@ -138,7 +138,7 @@ describe('«Об’єкт» rows (03.10)', () => {
   it('puts the answered questions in their own part, in the order they are asked', () => {
     const brief = createHangarInquiryBrief(deriveDomainModel({
       ...DEFAULT_CONFIGURATOR_STATE,
-      objectProfile: { purpose: 'machinery', project: 'inProgress', region: 'Дніпропетровська область', lifting: 'craneOrHoist' },
+      objectProfile: { purpose: 'machinery', project: 'inProgress', region: 'Дніпропетровська область', lifting: 'craneOrHoist', temperature: 'unknown' },
     }));
     const sections = createHangarInquiryBriefSections(brief);
     expect(sections.object).toEqual([
@@ -155,7 +155,7 @@ describe('«Об’єкт» rows (03.10)', () => {
   it('keeps an answered «Немає» and drops each «Ще не знаю» on its own', () => {
     const rows = createHangarInquiryBriefSections(createHangarInquiryBrief(deriveDomainModel({
       ...DEFAULT_CONFIGURATOR_STATE,
-      objectProfile: { purpose: null, project: 'ready', region: 'unknown', lifting: 'none' },
+      objectProfile: { purpose: null, project: 'ready', region: 'unknown', lifting: 'none', temperature: 'unknown' },
     }))).object;
     expect(rows).toEqual([
       { label: 'Проєкт', value: 'Є' },

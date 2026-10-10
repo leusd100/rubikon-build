@@ -32,7 +32,7 @@ const DEFAULT_CONFIGURATION_TEXT = [
   'Фундамент: Після розрахунку проєктувальника',
 ].join('\n');
 
-const answeredProfile = { purpose: 'storage', project: 'none', region: 'Київська область', lifting: 'unknown' } as const;
+const answeredProfile = { purpose: 'storage', project: 'none', region: 'Київська область', lifting: 'unknown', temperature: 'unknown' } as const;
 
 // ownSizes: the sizes are the visitor's (sizesProvenance 'own') — only then do they fill the form's «Габарити» field
 const variants: Record<string, { state: ConfiguratorState; ownSizes: boolean }> = {
@@ -79,8 +79,8 @@ describe('createHangarAttachment', () => {
 });
 
 describe('createHangarAttachment — the card’s title and line (03.10; built from its sections 08.10)', () => {
-  it('is version 1.4.2', () => {
-    expect(HANGAR_CONFIGURATOR_VERSION).toBe('hangar-configurator@1.4.2');
+  it('is version 1.5.0', () => {
+    expect(HANGAR_CONFIGURATOR_VERSION).toBe('hangar-configurator@1.5.0');
   });
 
   it('the untouched example says it is the example from the drawing', () => {

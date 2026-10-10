@@ -149,7 +149,7 @@ describe('the ridge follows the span rule until the visitor edits it (03.10)', (
   });
 
   it('copies the «Об’єкт» answers as given', () => {
-    const objectProfile = { purpose: 'agricultural', project: 'ready', region: 'Полтавська область', lifting: 'none' } as const;
+    const objectProfile = { purpose: 'agricultural', project: 'ready', region: 'Полтавська область', lifting: 'none', temperature: 'unknown' } as const;
     expect(deriveDomainModel(withState({ objectProfile })).objectProfile).toEqual(objectProfile);
   });
 });

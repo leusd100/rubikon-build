@@ -469,3 +469,46 @@
     forced-color-adjust: none; border-color: Highlight; background: Canvas; color: GrayText;
   }
 }
+
+/* ── The questions from the client's side (10.10, owner, round 5) ─────────────────────────────────────────────────────
+   «Який ангар потрібен?» and a cold store's «Яка температура всередині?» answer in tiles of two lines — the answer and
+   what it brings, «Теплий» / «сендвіч-панелі» — so one tap says both and a phone keeps three in a row. */
+/* The three as wide as their words want, the rest shared: in equal thirds of a phone «сендвіч-панелі» broke at its hyphen
+   into a third line, and every tile in the row grew with it */
+.hc-option-cards.hc-tiles { grid-template-columns: repeat(3, auto); }
+/* …and as tall as the row: «налаштовано окремо» on two lines left its neighbours short */
+.hc-tiles .hc-option-card span { flex-direction: column; gap: 2px; height: 100%; box-sizing: border-box; }
+/* narrow sides, and the corner tick above the words, not over their first letter */
+.hangar-configurator-embedded .hc-tiles .hc-option-card span { padding: 13px 6px 9px; }
+.hc-tile-word { font-weight: 700; }
+.hc-tile-detail { font: 500 12.5px/1.25 var(--font-manrope), sans-serif; opacity: .8; white-space: nowrap; }
+/* «налаштовано окремо» in place of the material may take two lines: it is the exception, with the fold open under it */
+.hc-tile-detail[data-apart] { white-space: normal; }
+/* «Ще не знаю» is not yet an answer, as in the chips (audit F110): dashed, quieter, and chosen not filled */
+.hangar-configurator-embedded .hc-tiles .hc-option-card input:is([value='undecided'], [value='unknown']) + span {
+  border-style: dashed; color: var(--color-text-secondary);
+}
+.hangar-configurator-embedded .hc-tiles .hc-option-card input:is([value='undecided'], [value='unknown']):checked + span {
+  border-color: var(--color-text); background: var(--color-bg); color: var(--color-text-secondary);
+}
+/* A short question and its short answers on one row — «Ворота» 0 · 1 · 2, «Службові двері» Так · Ні — the answers in one
+   column on the right, as wide as each other; a note under them takes the row's width */
+/* The question takes what the answers leave and wraps its own words («Службові / двері») before the answers leave the row;
+   only where even that does not fit (a 320 px phone) do the answers go under it */
+.hc-inline-field { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px; }
+.hc-inline-field > .hc-field-head { flex: 1 1 72px; min-width: 72px; }
+.hc-inline-field > .hc-field-head > span { line-height: 1.25; }
+.hc-inline-field > .hc-field-head,
+.hangar-configurator-embedded .hc-step-panel .hc-inline-field > .hc-field-head { margin-bottom: 0; }
+.hc-inline-field > .hc-option-cards { flex: none; width: 172px; max-width: 100%; }
+.hc-inline-field > .hc-door-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hc-inline-field > .hc-field-note { flex-basis: 100%; margin-top: 0; }
+.hangar-configurator .hc-inline-field.hc-door-field { margin-top: 16px; }
+/* The gate's size under its count, before the door's row */
+.hc-inline-field + .hc-gate-types { margin-top: 12px; }
+/* A cold store's question hangs under the purpose it belongs to: closer than the next question, on a copper rule */
+.hc-follow-up { padding-left: 14px; border-left: 2px solid var(--color-accent); }
+.hangar-configurator-embedded .hc-step-panel .hc-field + .hc-follow-up { margin-top: 16px; }
+/* «Налаштувати окремо»: the walls and the roof one by one, folded under the answer */
+.hc-shell-more > .hc-field:first-of-type { margin-top: 2px; }
+.hc-shell-more[open] { padding-bottom: 4px; }

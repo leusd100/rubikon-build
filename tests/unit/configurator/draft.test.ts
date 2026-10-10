@@ -24,7 +24,7 @@ const OWN: ConfiguratorState = {
   confirmed: ['dimensions', 'envelope'],
   scopeMode: 'partial',
   scope: ['frame', 'walls'],
-  objectProfile: { purpose: 'storage', project: 'none', region: 'Київська область', lifting: 'none' },
+  objectProfile: { purpose: 'storage', project: 'none', region: 'Київська область', lifting: 'none', temperature: 'unknown' },
 };
 
 describe('the configurator draft', () => {
@@ -103,7 +103,7 @@ describe('a stored configuration is read through the controls’ bounds', () => 
     expect(read.scope).toEqual(['frame', 'roof']);
     expect(read.confirmed).toEqual(['dimensions']);
     expect(read.scopeMode).toBe(DEFAULT_CONFIGURATOR_STATE.scopeMode);
-    expect(read.objectProfile).toEqual({ purpose: null, project: 'ready', region: DEFAULT_CONFIGURATOR_STATE.objectProfile.region, lifting: 'none' });
+    expect(read.objectProfile).toEqual({ purpose: null, project: 'ready', region: DEFAULT_CONFIGURATOR_STATE.objectProfile.region, lifting: 'none', temperature: 'unknown' });
     expect(read.sizesUnknown).toBe(false);
   });
 

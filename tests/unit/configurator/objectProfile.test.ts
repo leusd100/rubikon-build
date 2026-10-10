@@ -14,7 +14,7 @@ import {
 
 describe('«Об’єкт» (03.10)', () => {
   it('offers the owner’s answers in the owner’s order', () => {
-    expect(PURPOSE_ORDER.map((purpose) => PURPOSE_LABELS[purpose])).toEqual(['Склад', 'Техніка', 'Виробництво', 'Аграрний об’єкт', 'Інше']);
+    expect(PURPOSE_ORDER.map((purpose) => PURPOSE_LABELS[purpose])).toEqual(['Склад', 'Холодильний склад', 'Техніка', 'Виробництво', 'Аграрний об’єкт', 'Інше']);
     expect(PROJECT_STATUS_ORDER).toEqual(['ready', 'inProgress', 'none', 'unknown']);
     expect(LIFTING_EQUIPMENT_ORDER).toEqual(['none', 'craneOrHoist', 'unknown']);
   });
@@ -34,15 +34,15 @@ describe('«Об’єкт» (03.10)', () => {
   });
 
   it('starts unanswered', () => {
-    expect(DEFAULT_OBJECT_PROFILE).toEqual({ purpose: null, project: 'unknown', region: 'unknown', lifting: 'unknown' });
-    expect(objectProfileLabels(DEFAULT_OBJECT_PROFILE)).toEqual({ purpose: null, project: null, region: null, lifting: null });
+    expect(DEFAULT_OBJECT_PROFILE).toEqual({ purpose: null, project: 'unknown', region: 'unknown', lifting: 'unknown', temperature: 'unknown' });
+    expect(objectProfileLabels(DEFAULT_OBJECT_PROFILE)).toEqual({ purpose: null, project: null, region: null, lifting: null, temperature: null });
     expect(objectProfileLine(DEFAULT_OBJECT_PROFILE)).toBe('Ще не вказано');
   });
 
   it('writes the phone header line in the order the questions are asked, the oblast shortened', () => {
     expect(objectProfileLine({ ...DEFAULT_OBJECT_PROFILE, purpose: 'storage', region: 'Київська область' })).toBe('Склад · Київська обл.');
     expect(objectProfileLine({ ...DEFAULT_OBJECT_PROFILE, region: 'м. Київ' })).toBe('м. Київ');
-    expect(objectProfileLine({ purpose: 'other', project: 'none', region: 'unknown', lifting: 'craneOrHoist' }))
+    expect(objectProfileLine({ purpose: 'other', project: 'none', region: 'unknown', lifting: 'craneOrHoist', temperature: 'unknown' }))
       .toBe('Інше · проєкту ще немає · кран-балка або тельфер');
     expect(objectProfileLine({ ...DEFAULT_OBJECT_PROFILE, project: 'inProgress', lifting: 'none' }))
       .toBe('проєкт готується · без підйомного обладнання');
