@@ -6,8 +6,8 @@ import {
   deriveStructuralVisualization,
   pitchDegForRidge,
 } from './parametricModel';
-import type { ObjectProfile } from './objectProfile';
-import { CONFIRMED_TOPICS, DEFAULT_CONFIGURATOR_STATE, SCOPE_ORDER } from './types';
+import type { HangarPurpose, ObjectProfile } from './objectProfile';
+import { CONFIRMED_TOPICS, DEFAULT_CONFIGURATOR_STATE, ENVELOPE_MATERIAL_PRESET, SCOPE_ORDER, envelopeMatchesPreset, withConfirmed } from './types';
 import type {
   ScopeItem,
   CladdingSystem,
@@ -156,15 +156,20 @@ export function withSpanRuleRidge(state: ConfiguratorState): ConfiguratorState {
   return { ...state, ridgeHeightM: defaultRidgeHeightM(state.dimensions.width, state.dimensions.height), ridgeEdited: false };
 }
 
-export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
+export function deriveDomainModel(answered: ConfiguratorState): HangarDomainModel {
+  const state = withEffectiveShell(answered);
   const { width, length, height } = state.dimensions;
   const gateSelection = clampGateSelection(state.gates, state.gateType, width, height);
-  // Width-derived, not read from state — see `structural`'s own doc comment above — except where the visitor said no
-  // columns may stand inside (07.10): the span is then drawn clear, whatever the width's rule would draw. Resolved
-  // first, because the door's place depends on it: it steps round a centre row only where one stands (09.10)
-  const structural: HangarDomainModel['structural'] = state.internalSupports === 'not-allowed'
-    ? { ...deriveStructuralVisualization(width), scheme: 'clearSpan' }
-    : deriveStructuralVisualization(width);
+  // Width-derived — see `structural`'s own doc comment above — except where the visitor answered the columns (07.10):
+  // «Так, без колон» draws the span clear whatever the width's rule would draw, and «Колони можна» (10.10, owner:
+  // «знову не працює центральна колона» — under 24 m it changed nothing) draws the centre row wherever the frame is a
+  // truss, whose bottom chord has a node at the middle for it; a portal frame (under 18 m) stays without one. Still
+  // the preliminary scheme the stamp says the designer decides. Resolved first, because the door's place depends on
+  // it: it steps round a centre row only where one stands (09.10)
+  const byWidth = deriveStructuralVisualization(width);
+  let structural: HangarDomainModel['structural'] = byWidth;
+  if (state.internalSupports === 'not-allowed') structural = { ...byWidth, scheme: 'clearSpan' };
+  else if (state.internalSupports === 'allowed' && byWidth.roofStructure === 'truss') structural = { ...byWidth, scheme: 'centerSupport' };
 
   return {
     objectType: 'hangar',
@@ -223,11 +228,13 @@ export function drawnScope(state: ConfiguratorState): ScopeItem[] {
  */
 export function exampleTopics(state: ConfiguratorState): ConfirmedTopic[] {
   const base = DEFAULT_CONFIGURATOR_STATE;
+  // the shell the page suggests for this purpose: the warm hangar for a cold store (10.10)
+  const shell = exampleShellFor(state.objectProfile.purpose);
   const holds: Record<ConfirmedTopic, boolean> = {
     dimensions: state.dimensions.width === base.dimensions.width && state.dimensions.length === base.dimensions.length
       && state.dimensions.height === base.dimensions.height && !state.ridgeEdited,
-    envelope: state.envelope === base.envelope,
-    cladding: state.wallSystem === base.wallSystem && state.roofSystem === base.roofSystem,
+    envelope: state.envelope === shell.envelope,
+    cladding: state.wallSystem === shell.wallSystem && state.roofSystem === shell.roofSystem,
     openings: state.gates === base.gates && state.gateType === base.gateType && state.doors === base.doors,
     scope: state.scopeMode === base.scopeMode,
   };
@@ -246,4 +253,90 @@ export function anythingChosen(domain: HangarDomainModel): boolean {
   const profile = domain.objectProfile;
   return domain.exampleTopics.length < CONFIRMED_TOPICS.length || domain.sizesUnknown || domain.internalSupports !== 'unknown'
     || profile.purpose !== null || profile.project !== 'unknown' || profile.region !== 'unknown' || profile.lifting !== 'unknown';
+}
+
+// ── «Який ангар потрібен?» (10.10, owner) ───────────────────────────────────────────────────────────────────────────
+// The insulation and the materials are one question now, asked from the client's side: «Холодний — профнастил»,
+// «Теплий — сендвіч-панелі» or «Ще не знаю», with the walls and the roof one by one folded under «Налаштувати окремо».
+// The answer names the material, so a preset answers both topics — the insulation and the cladding — and so does a
+// material set in the fold: one question, one answer. Nothing the visitor has not touched is called theirs: the
+// example's shell, and the warm one a cold store brings, stay «з прикладу» (exampleTopics) until answered.
+
+type Shell = Pick<ConfiguratorState, 'envelope' | 'wallSystem' | 'roofSystem'>;
+
+/**
+ * The shell the page offers for a purpose before the visitor answers «Який ангар потрібен?»: the example's cold hangar
+ * in profiled sheet, and for «Холодильний склад» the warm one in sandwich panels (10.10, owner). A suggestion, not an
+ * engineering claim — no panel thickness, no insulation value; the manager hears the temperature and decides.
+ */
+export function exampleShellFor(purpose: HangarPurpose | null): Shell {
+  if (purpose === 'coldStore') return { envelope: 'insulated', ...ENVELOPE_MATERIAL_PRESET.insulated };
+  const base = DEFAULT_CONFIGURATOR_STATE;
+  return { envelope: base.envelope, wallSystem: base.wallSystem, roofSystem: base.roofSystem };
+}
+
+/** Both topics of the one question answered */
+const withShellConfirmed = (state: ConfiguratorState) => withConfirmed(withConfirmed(state, 'envelope'), 'cladding');
+
+/**
+ * «Для чого ангар?» answered. While the shell is not yet answered, it follows the purpose's example — a cold store
+ * brings the warm hangar, another purpose takes the example's back — still unanswered, so still «з прикладу». A shell
+ * the visitor answered is theirs whatever the purpose.
+ */
+export function withPurpose(state: ConfiguratorState, purpose: HangarPurpose | null): ConfiguratorState {
+  const next = { ...state, objectProfile: { ...state.objectProfile, purpose } };
+  if (state.confirmed.includes('envelope') || state.confirmed.includes('cladding')) return next;
+  return { ...next, ...exampleShellFor(purpose) };
+}
+
+/** A shell a cold store can have: insulated or not yet decided, and no surface in profiled sheet */
+export function shellFitsColdStore(shell: Shell): boolean {
+  return shell.envelope !== 'cold' && shell.wallSystem !== 'profiled-sheet' && shell.roofSystem !== 'profiled-sheet';
+}
+
+/**
+ * The shell as the page shows it (10.10). A cold store is never in profiled sheet (owner: «Холодильний склад» with
+ * «Холодний — профнастил» «вже не в'яжеться»): over a shell with sheet anywhere it shows its warm one, as a suggestion
+ * for the visitor to confirm. The shell the visitor answered stays underneath, untouched (QA: a detour through the cold
+ * store wiped «Стіни: Сендвіч-панель» set apart), and comes back with another purpose. Everything derived — the
+ * drawing, the stamp, the brief — and the shell's controls read this.
+ */
+export function withEffectiveShell(state: ConfiguratorState): ConfiguratorState {
+  if (state.objectProfile.purpose !== 'coldStore' || shellFitsColdStore(state)) return state;
+  const confirmed = state.confirmed.filter((topic) => topic !== 'envelope' && topic !== 'cladding');
+  return { ...state, ...exampleShellFor('coldStore'), confirmed };
+}
+
+/**
+ * The materials stand apart from the answer above them: changed under «Налаштувати окремо» from what the preset brings,
+ * or — with «Ще не знаю», which brings none — set there at all. The fold opens by itself for them, and the chosen
+ * preset's tile says «налаштовано окремо».
+ */
+export function materialsSetApart(state: ConfiguratorState): boolean {
+  if (state.envelope === 'undecided') return state.confirmed.includes('cladding');
+  return !envelopeMatchesPreset(state.envelope, state.wallSystem, state.roofSystem);
+}
+
+/**
+ * A preset chosen. «Холодний» and «Теплий» bring their materials, both surfaces, and answer both topics: the tile says
+ * «профнастил» or «сендвіч-панелі». «Ще не знаю» brings none: materials the visitor set apart stay theirs, and the ones a
+ * preset brought go back to the purpose's example — unanswered again, «з прикладу» (it used to keep a preset's sandwich
+ * panels, and the stamp said «У сендвіч-панелях» beside «Ще не знаю»).
+ */
+export function withShellAnswer(state: ConfiguratorState, envelope: ConfiguratorState['envelope']): ConfiguratorState {
+  if (envelope !== 'undecided') return withShellConfirmed({ ...state, envelope, ...ENVELOPE_MATERIAL_PRESET[envelope] });
+  if (materialsSetApart(state) && state.confirmed.includes('cladding')) return withConfirmed({ ...state, envelope }, 'envelope');
+  const { wallSystem, roofSystem } = exampleShellFor(state.objectProfile.purpose);
+  const confirmed = state.confirmed.filter((topic) => topic !== 'cladding');
+  return withConfirmed({ ...state, envelope, wallSystem, roofSystem, confirmed }, 'envelope');
+}
+
+/** The chosen preset pressed again: an answer, changing nothing (07.10) — «Ще не знаю» answers the insulation alone */
+export function withShellConfirmedAgain(state: ConfiguratorState): ConfiguratorState {
+  return state.envelope === 'undecided' ? withConfirmed(state, 'envelope') : withShellConfirmed(state);
+}
+
+/** A surface's material set under «Налаштувати окремо»: the same question answered in detail */
+export function withShellMaterial(state: ConfiguratorState, surface: 'wallSystem' | 'roofSystem', system: ConfiguratorState['wallSystem']): ConfiguratorState {
+  return withShellConfirmed({ ...state, [surface]: system });
 }

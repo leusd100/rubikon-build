@@ -11,16 +11,20 @@ import { FOUNDATION_TYPE_LABELS, INTERNAL_SUPPORTS_LABELS, SCOPE_MODE_LABELS, SC
 // lifting equipment with the columns inside («Простір усередині», on «Каркас»); the project with the scope, last.
 export type ControlGroupId = 'need' | 'dimensions' | 'envelope' | 'cladding' | 'foundation' | 'openings' | 'space' | 'scope' | 'project';
 
+// 10.10 (audit iteration 4): «Габарити», the tab's name, not «Розміри» (F133); the cladding by its surfaces, «Стіни й
+// покрівля», not «Матеріали» (F36); «Фундамент» without «Основа» (F43, the research screen's); the project's one question
+// as its heading (F42, F51). 10.10 (owner, round 5): the insulation and the materials are one question from the client's
+// side, «Який ангар потрібен?»; «Стіни й покрівля» is no longer a group of the step but its fold, «Налаштувати окремо»
 export const CONTROL_GROUP_TITLES: Record<ControlGroupId, string> = {
   need: 'Задача',
-  dimensions: 'Розміри',
-  envelope: 'Чи потрібне утеплення?',
-  cladding: 'Матеріали',
-  foundation: 'Основа / фундамент',
+  dimensions: 'Габарити',
+  envelope: 'Який ангар потрібен?',
+  cladding: 'Стіни й покрівля',
+  foundation: 'Фундамент',
   openings: 'Ворота й двері',
   space: 'Простір усередині',
   scope: 'Обсяг робіт',
-  project: 'Проєкт',
+  project: 'Чи є у вас проєкт?',
 };
 
 function openingsLine(domain: HangarDomainModel): string {
@@ -62,7 +66,8 @@ export type ControlStep = { id: ControlStepId; title: string; groups: ControlGro
 export const CONTROL_STEPS: ControlStep[] = [
   { id: 'task', title: 'Задача', groups: ['need'] },
   { id: 'size', title: 'Габарити', groups: ['dimensions'] },
-  { id: 'shell', title: 'Стіни й ворота', groups: ['envelope', 'cladding', 'foundation', 'openings'] },
+  // the materials one by one are folded into «Який ангар потрібен?» (10.10): three decisions here, not five
+  { id: 'shell', title: 'Стіни й ворота', groups: ['envelope', 'foundation', 'openings'] },
   // its own questions, then what to show of the frame (ConfiguratorFrameView, through a portal into the step)
   { id: 'frame', title: 'Каркас', groups: ['space'] },
   { id: 'check', title: 'Обсяг', groups: ['scope', 'project'] },

@@ -1,10 +1,11 @@
 import type { HangarDomainModel, SizesProvenance } from '../../lib/configurator/domainModel';
+import { formatNumber } from '../../lib/configurator/formatNumber';
 
 // The words on the configurator's drawing sheet (/angary, 03.10): its title block, the phone's mini readout and what a
 // screen reader hears for the picture. Kept out of the components so the formatting is tested; decimals with a comma,
 // as everywhere else on the page.
 
-const fmt = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+const fmt = (value: number) => formatNumber(value);
 
 /** The three sizes as one unbreakable piece: on a narrow sheet a label wraps after «·», never inside the sizes */
 const sizes = ({ widthM, lengthM, eaveHeightM }: HangarDomainModel['dimensions']) =>
@@ -18,7 +19,10 @@ export const SIZES_PREFIX: Record<SizesProvenance, string> = { own: 'Ваш ан
 
 /** «Об’єкт»: «Приклад · 24 × 60 × 8 м», «Ваш ангар · …» or «Орієнтовно · …» — the frame drawing's title block says it
  *  the same way (FrameTour.tsx) */
-export function sheetObjectLabel(provenance: SizesProvenance, dimensions: HangarDomainModel['dimensions']): string {
+export function sheetObjectLabel(provenance: SizesProvenance, dimensions: HangarDomainModel['dimensions'], chosen = false): string {
+  // the visitor's hangar once they answered anything, as the stamp says «Ваша конфігурація» (10.10, QA: «Приклад» stood
+  // under their own gates and door) — the sizes still the example's, so said
+  if (provenance === 'example' && chosen) return `${SIZES_PREFIX.own}${SEPARATOR}${sizes(dimensions)} з\u00A0прикладу`;
   return `${SIZES_PREFIX[provenance]}${SEPARATOR}${sizes(dimensions)}`;
 }
 
@@ -51,5 +55,6 @@ export function previewDescription(
     + `висота в конику приблизно ${fmt(ridgeM)} м`;
   return view === 'three'
     ? `Тривимірна візуалізація ангара: ${figures}. Повний опис конфігурації — у полях керування та підсумку.`
-    : `Схематичний ескіз ангара: ${figures}`;
+    // the picture is the «креслення», its status a «попередня схема» (10.10, audit F101: it was «Схематичний ескіз»)
+    : `Креслення ангара, попередня схема: ${figures}`;
 }

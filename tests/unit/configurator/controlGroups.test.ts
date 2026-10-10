@@ -18,7 +18,7 @@ describe('step header values (03.10; steps 07.10)', () => {
       // a cold contour is named by what it lacks (07.10, GPT review): «Холодний» read as a defect
       envelope: 'Без утеплення · профнастил',
       cladding: 'Профнастил',
-      foundation: 'Визначити після розрахунку',
+      foundation: 'Після розрахунку проєктувальника',
       // the whole list unless the visitor narrows it (scopeMode, 07.10)
       scope: 'Комплекс робіт',
       // «одні ворота», not «1 ворота» (04.10)
@@ -37,7 +37,7 @@ describe('step header values (03.10; steps 07.10)', () => {
       scopeMode: 'partial', scope: ['frame', 'walls'],
       gates: 2,
       doors: 1,
-      objectProfile: { purpose: 'storage', project: 'unknown', region: 'Київська область', lifting: 'unknown' },
+      objectProfile: { purpose: 'storage', project: 'unknown', region: 'Київська область', lifting: 'unknown', temperature: 'unknown' },
     });
     expect(values.need).toBe('Склад · Київська обл.');
     expect(values.project).toBe('Ще не вказано');
@@ -50,10 +50,10 @@ describe('step header values (03.10; steps 07.10)', () => {
 
   it('says an opening or an envelope is outside the request when its walls and roof are', () => {
     const noWalls = valuesFor({ scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'], gates: 2 });
-    expect(noWalls.openings).toBe('Поза обсягом заявки');
+    expect(noWalls.openings).toBe('Поза обсягом робіт');
     expect(noWalls.envelope).toBe('Без утеплення · покрівля: профнастил');
     const frameOnly = valuesFor({ scopeMode: 'partial', scope: ['frame'] });
-    expect(frameOnly.envelope).toBe('Поза обсягом заявки');
+    expect(frameOnly.envelope).toBe('Поза обсягом робіт');
     expect(frameOnly.scope).toBe('1 з 4 робіт');
     expect(valuesFor({ gates: 0 }).openings).toBe('без воріт · без дверей');
   });

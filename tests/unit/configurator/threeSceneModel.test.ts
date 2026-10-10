@@ -370,9 +370,9 @@ describe('Phase 3F — cladding-system material split', () => {
     expect(MATERIALS['roof-sandwich'].metalness).toBeLessThan(MATERIALS['roof-profiled'].metalness);
   });
 
-  it('galvanized structural steel (frame-primary) reads as metallic but not mirror-like — metalness up from the pre-3F baseline, roughness still comfortably above 0 (brief §4)', () => {
-    expect(MATERIALS['frame-primary'].metalness).toBeGreaterThanOrEqual(0.5);
-    expect(MATERIALS['frame-primary'].roughness).toBeGreaterThan(0.2);
+  it('structural steel (frame-primary) is matte in the technical look — no environment to reflect, a metallic frame read near-black (10.10, materials.ts)', () => {
+    expect(MATERIALS['frame-primary'].metalness).toBeLessThanOrEqual(0.2);
+    expect(MATERIALS['frame-primary'].roughness).toBeGreaterThan(0.5);
   });
 
   it('the gate reads a visibly different roughness from either wall system (brief §6)', () => {

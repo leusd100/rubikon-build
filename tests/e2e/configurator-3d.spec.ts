@@ -28,7 +28,7 @@ async function openConfigurator(page: Page) {
 }
 
 /** A work's own checkbox in «Обсяг робіт» — there only once «Окремі роботи» is chosen (07.10) */
-const scopeBox = (page: Page, name: 'Стіни / огороджувальний контур' | 'Покрівля') => page.getByRole('checkbox', { name, exact: true });
+const scopeBox = (page: Page, name: 'Стіни' | 'Покрівля') => page.getByRole('checkbox', { name, exact: true });
 
 const technicalButton = (page: Page) => page.getByRole('button', { name: 'Технічний вид', exact: true });
 const threeButton = (page: Page) => page.getByRole('button', { name: '3D', exact: true });
@@ -74,7 +74,7 @@ test.describe('configurator 3D mode (Phase 3A)', () => {
     await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-width').fill('36');
     await page.locator('#hc-dimension-width').blur();
-    // By its checkbox, which exists once «Окремі роботи» is chosen (07.10): «Матеріали» names its own «Покрівля»
+    // By its checkbox, which exists once «Окремі роботи» is chosen (07.10): «Стіни й покрівля» names its own «Покрівля»
     // radiogroup on the same page.
     await chooseSeparateWorks(page);
     await scopeBox(page, 'Покрівля').click(); // roof off
@@ -127,7 +127,7 @@ test.describe('configurator 3D mode (Phase 3A)', () => {
     await enterThreeMode(page);
 
     await chooseSeparateWorks(page);
-    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls off
+    await scopeBox(page, 'Стіни').click(); // walls off
     await expect(page.locator('.hc-summary-facts')).not.toContainText('Стіни');
 
     await technicalButton(page).click();

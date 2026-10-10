@@ -33,8 +33,11 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     areaLabel: summary.areaLabel,
     envelopeLabel: summary.envelopeLabel,
     claddingSystemLabel: summary.claddingSystemLabel,
+    // «Стіни й покрівля», or the one surface asked for (10.10, audit F36): the stamp's own row
+    claddingRow: summary.claddingRow,
     structuralVisualizationLabel: summary.structuralVisualizationLabel,
     foundationTypeLabel: summary.foundationTypeLabel,
+    foundationInScope: domain.scope.foundation,
     scopeSummaryLabel: summary.scopeSummaryLabel,
     gatesLabel: summary.gatesLabel,
     // The door was collected by the configurator, shown in "Ваш об'єкт", and then never reached
@@ -42,15 +45,19 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     doorsLabel: summary.doorsLabel,
     // «Об’єкт» (03.10): null until answered
     purposeLabel: summary.objectProfile.purpose,
+    // a cold store's «Яка температура всередині?» (10.10): null until answered, and for any other purpose
+    temperatureLabel: summary.objectProfile.temperature,
     projectLabel: summary.objectProfile.project,
     regionLabel: summary.objectProfile.region,
     liftingLabel: summary.objectProfile.lifting,
     // the groups still the page's example (domainModel.ts exampleTopics: not answered and holding the example's value)
     exampleTopics: domain.exampleTopics,
+    // a cold store's shell, while unanswered, is its suggestion (withEffectiveShell)
+    coldStore: domain.objectProfile.purpose === 'coldStore',
     sizesUnknown: domain.sizesUnknown,
-    // «Колони всередині» (07.10): null until answered
+    // «Простір усередині» (07.10 as «Колони всередині»; the client's words since 10.10): null until answered
     supportsLabel: domain.internalSupports === 'unknown' ? null : INTERNAL_SUPPORTS_LABELS[domain.internalSupports],
-    // without walls and roof there is no envelope to describe: no «Утеплення» or «Огородження» rows (07.10, audit)
+    // without walls and roof there is no envelope to describe: no «Утеплення» or «Стіни й покрівля» rows (07.10, audit)
     enclosed: domain.scope.walls || domain.scope.roof,
   };
 }
@@ -70,10 +77,13 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
   // «Об’єкт» first, as in the controls: what and where before the sizes. Only what was answered (03.10)
   const object = present([
     answeredRow('Призначення', brief.purposeLabel),
+    // under the purpose it belongs to (10.10): «Температура всередині: Мінусова — заморозка», nothing more claimed
+    answeredRow('Температура всередині', brief.temperatureLabel),
     answeredRow('Проєкт', brief.projectLabel),
     answeredRow('Область', brief.regionLabel),
     answeredRow('Підйомне обладнання', brief.liftingLabel),
-    answeredRow('Колони всередині', brief.supportsLabel),
+    // the stamp's row (10.10): «Простір усередині: Без колон», as the question asked it
+    answeredRow('Простір усередині', brief.supportsLabel),
   ]);
   const fromExample = (topic: ConfirmedTopic) => brief.exampleTopics.includes(topic);
   const rows: Array<TopicRow | null> = [
@@ -81,7 +91,7 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
     // The ridge the visitor set used to stop here, like the door once did (2026-10); with its slope since 03.10
     { topic: 'dimensions', label: 'Висота в конику', value: brief.ridgeHeightLabel },
     brief.enclosed ? { topic: 'envelope', label: 'Утеплення', value: brief.envelopeLabel } : null,
-    brief.enclosed ? { topic: 'cladding', label: 'Огородження', value: brief.claddingSystemLabel } : null,
+    brief.claddingRow ? { topic: 'cladding', label: brief.claddingRow.label, value: brief.claddingRow.value } : null,
     { topic: 'scope', label: 'Обсяг', value: brief.scopeSummaryLabel },
     brief.gatesLabel === null ? null : { topic: 'openings', label: 'Ворота', value: brief.gatesLabel },
     brief.doorsLabel === null ? null : { topic: 'openings', label: 'Двері', value: brief.doorsLabel },
@@ -105,10 +115,15 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
     sizeRows.selected.push({ label: 'Габарити', value: brief.dimensionsLabel }, { label: 'Висота в конику', value: brief.ridgeHeightLabel });
   }
 
+  // the warm shell a cold store brings is its suggestion, not the page's example (10.10, QA)
+  const asDefault = (row: TopicRow): HangarInquiryBriefRow => (brief.coldStore && (row.topic === 'envelope' || row.topic === 'cladding')
+    ? { label: row.label, value: `${row.value} — запропоновано для холодильного складу` }
+    : plain(row));
+
   return {
     object,
     selected: [...sizeRows.selected, ...drawn.filter((row) => !fromExample(row.topic)).map(plain)],
-    defaults: [...sizeRows.defaults, ...drawn.filter((row) => fromExample(row.topic)).map(plain)],
+    defaults: [...sizeRows.defaults, ...drawn.filter((row) => fromExample(row.topic)).map(asDefault)],
     preliminary: [
       {
         label: 'Площа забудови',
@@ -119,8 +134,10 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
         value: brief.structuralVisualizationLabel,
       },
       // Not a choice: /angary offers no foundation control, the designer decides it (owner, 03.10) — it sat among the
-      // visitor's answers as «Основа: Визначити після розрахунку» (04.10)
-      { label: 'Основа', value: brief.foundationTypeLabel },
+      // visitor's answers as «Основа: Визначити після розрахунку» (04.10). «Фундамент: Після розрахунку проєктувальника»
+      // since 10.10 (audit F43): in ДБН «основа» is the ground under the foundation, and the infinitive read as an order
+      // …and only with the foundation in the request (10.10, QA: it stayed with «Каркас, стіни, покрівля»)
+      ...(brief.foundationInScope ? [{ label: 'Фундамент', value: brief.foundationTypeLabel }] : []),
     ],
   };
 }

@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { sameDrawnHangar } from '../../lib/configurator/attachmentContract';
-import { deriveDomainModel, sizesProvenance } from '../../lib/configurator/domainModel';
+import { anythingChosen, deriveDomainModel, sizesProvenance } from '../../lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
 import { ConfiguratorControls, landOnSteps } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 import { HangarPreviewModes } from './HangarPreviewModes';
+import { keepShortWords } from '../../lib/typography';
 import { sheetObjectLabel } from './sheetLabels';
 import './configurator-sheet.css';
 
@@ -23,6 +24,9 @@ const MINI_QUERY = '(max-width: 760px) and (min-height: 500px)';
 /** A portrait tablet's sheet sticks under the header whole (configurator-sheet.css, 09.10): its height is the controls'
  *  focus margin, as the mini drawing's is on a phone */
 const TABLET_QUERY = '(min-width: 761px) and (max-width: 1023px) and (min-height: 700px)';
+/** The block's own jumps (10.10, audit F161): the last step's to the stamp, and the stamp's «Обговорити» to the form —
+ *  by where they lead, not by their words */
+const IN_BLOCK_JUMPS = '#configurator a[href="#hc-stamp"], #hc-stamp a[href="#inquiry"]';
 
 /**
  * On a phone (/angary only) the drawing stays in view while the visitor sets the parameters. When the sheet's bottom edge
@@ -192,6 +196,11 @@ function useMiniPreview(enabled: boolean) {
  * with the drawing whole right under the header and the tabs under it: a first look, not yet the mini drawing. The
  * browser makes that jump itself (smooth, into the history), only its margin moves. Without JS, and from another page
  * (HOME's /angary#configurator), the link stays a plain anchor.
+ * The block's own jumps (IN_BLOCK_JUMPS) move the page and leave the history as it was (10.10, audit F161): each added an
+ * entry, and Back went to the stamp, then the steps, before it left /angary — three presses at 1440 px, two on a phone.
+ * They make the browser's own jump — to the target's top under its scroll margin, smooth unless motion is reduced
+ * (globals.css) — and the stamp takes the focus, as the browser gives it to a focusable target (audit F129). Up to
+ * 1180 px wide «Обговорити» never reaches here: revealAttachedBrief makes that jump itself, to the brief.
  */
 function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElement | null>) {
   useEffect(() => {
@@ -221,12 +230,28 @@ function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElem
       const lead = layout.getBoundingClientRect().top - section.getBoundingClientRect().top;
       section.style.scrollMarginTop = `${header - lead}px`;
     };
+    const onJump = (event: MouseEvent) => {
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>(IN_BLOCK_JUMPS) : null;
+      const target = link ? document.getElementById(link.hash.slice(1)) : null;
+      if (!link || !target || event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      // the desktop's smooth scrolling (Lenis) would make the same jump again from the window
+      event.stopPropagation();
+      window.history.replaceState(window.history.state, '', link.hash);
+      target.scrollIntoView({ block: 'start' });
+      if (target.hasAttribute('tabindex')) target.focus({ preventScroll: true });
+    };
     document.addEventListener('click', onClick);
-    return () => document.removeEventListener('click', onClick);
+    document.addEventListener('click', onJump);
+    return () => {
+      document.removeEventListener('click', onClick);
+      document.removeEventListener('click', onJump);
+    };
   }, [enabled, layoutRef]);
 }
 
-export function HangarConfigurator({ embedded = false }: { embedded?: boolean }) {
+export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ embedded?: boolean; nextSteps?: readonly string[] }>) {
   const sharedInquiry = useHangarInquiryContext();
   const layoutRef = useMiniPreview(embedded);
   useConfiguratorLinks(embedded, layoutRef);
@@ -264,22 +289,30 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         ) : (
           <h1 id="hangar-configurator-title">Живий конфігуратор ангара</h1>
         )}
+        {/* 10.10 (audit F34, F11): what the drawing shows — it did not change for 15 of 24 answers under «Креслення
+            змінюється з кожним вибором» — and that the request goes from any step: «Обговорити» is below the screen on
+            all five, and «п’ять кроків» read as «all five first» */}
         <p className="hc-lede">
           {embedded
-            ? 'П’ять коротких кроків — від задачі до обсягу робіт. Креслення змінюється з кожним вибором, технічне рішення уточнимо разом.'
+            ? keepShortWords('П’ять коротких кроків — від задачі до обсягу робіт. Розміри, стіни, ворота й каркас видно '
+              + 'на кресленні. Надіслати можна з будь-якого кроку: технічне рішення й те, чого не оберете, уточнимо разом.')
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
       </header>
 
-      {/* A draft read back from this browser says so, with the way back to the example (07.10) */}
-      {embedded && sharedInquiry?.restored && (
+      {/* A draft read back from this browser says so, with the way back to the example (07.10). «Почати заново» turns the
+          same line into the way back to the visitor's configuration, its button keeping the focus, until they change
+          something or open another step (10.10, audit F64): the line went, the focus with it, and the draft for good. */}
+      {embedded && (sharedInquiry?.restored || sharedInquiry?.canUndoStartOver) && (
         <output className="hc-draft-note">
-          Відновлено вашу конфігурацію.{' '}
-          <button type="button" className="hc-draft-reset" onClick={sharedInquiry.startOver}>Почати заново</button>
+          {sharedInquiry.canUndoStartOver ? 'Показано приклад.' : 'Відновлено вашу конфігурацію.'}{' '}
+          <button type="button" className="hc-draft-reset" onClick={sharedInquiry.canUndoStartOver ? sharedInquiry.undoStartOver : sharedInquiry.startOver}>
+            {sharedInquiry.canUndoStartOver ? 'Повернути мою конфігурацію' : 'Почати заново'}
+          </button>
         </output>
       )}
       <div className="hc-layout" ref={layoutRef}>
-        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} step={step} onStep={setStep} foundationChoice={!embedded} />
+        <ConfiguratorControls state={state} onChange={updateBusinessConfiguration} step={step} onStep={setStep} foundationChoice={!embedded} nextSteps={nextSteps} />
         <div className="hc-preview-pane" id="hangar-live-preview">
           <HangarPreviewModes
             domain={previewDomain}
@@ -288,7 +321,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
             presentationAnnouncement={sharedInquiry?.presentationAnnouncement}
             onEndPresentationDemo={sharedInquiry?.endPresentationDemo}
             sheet={embedded
-              ? { object: sheetObjectLabel(sizesProvenance(businessDomain), businessDomain.dimensions), untouched: !own && !presentationDemo }
+              ? { object: sheetObjectLabel(sizesProvenance(businessDomain), businessDomain.dimensions, anythingChosen(businessDomain)), untouched: !own && !presentationDemo }
               : undefined}
           />
           {!embedded && <div id="hc-stamp"><ConfiguratorSummary domain={businessDomain} /></div>}
@@ -296,8 +329,10 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
       </div>
       {/* On the page the summary is the drawing's title block, under the layout: only the drawing stays sticky */}
       {embedded && (
-        // «До зведення ↓» under the last step lands here
-        <div className="hc-stamp-row" id="hc-stamp">
+        // «До підсумку ↓» under the last step lands here
+        <div className="hc-stamp-row" id="hc-stamp" tabIndex={-1}>
+          {/* Focusable for the jump to it (10.10, audit F129): the focus lands here, not on the page, and a screen reader
+              says where the visitor went (configurator-controls.css drops the ring) */}
           <ConfiguratorSummary domain={businessDomain} showInquiryAction onInquiryAction={sharedInquiry?.attachConfiguration} />
         </div>
       )}

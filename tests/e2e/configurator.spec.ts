@@ -9,7 +9,7 @@ async function openConfigurator(page: Page) {
 }
 
 /** A work's own checkbox in «Обсяг робіт» — there only once «Окремі роботи» is chosen (chooseSeparateWorks, 07.10) */
-function scopeBox(page: Page, name: 'Фундамент' | 'Металокаркас' | 'Стіни / огороджувальний контур' | 'Покрівля') {
+function scopeBox(page: Page, name: 'Фундамент' | 'Каркас' | 'Стіни' | 'Покрівля') {
   return page.getByRole('checkbox', { name, exact: true });
 }
 
@@ -23,10 +23,13 @@ function equipmentGate(page: Page) {
   return page.locator('label.hc-option-card', { has: page.locator('input[name="hc-gate-type"]'), hasText: 'Для заїзду техніки' });
 }
 
-/** «Висота в конику» is a refinement, folded under the sizes unless the visitor set it (07.10) */
+/**
+ * «Висота в конику» is a refinement, folded under the sizes unless the visitor set it (07.10). Since 10.10 the shell's
+ * «Налаштувати окремо» is a second `details.hc-more` on the page: the ridge's fold is the one that holds its field.
+ */
 async function openRidge(page: Page) {
   await openControlGroup(page, 'dimensions');
-  const more = page.locator('details.hc-more');
+  const more = page.locator('details.hc-more', { has: page.locator('#hc-dimension-ridge') });
   if (!(await more.evaluate((element) => (element as HTMLDetailsElement).open))) {
     await more.locator('summary').click();
   }
@@ -45,8 +48,9 @@ test.describe('hangar configurator POC', () => {
     // UX pass 2026-10: one disclaimer instead of five (over the model, under the sizes, the gates, the summary, the
     // frame schemes)
     const disclaimer = page.locator('.hc-summary-disclaimer');
-    await expect(disclaimer).toContainText('попередня схематична візуалізація, а не проєктна документація');
-    await expect(disclaimer).toContainText('Межі розмірів і розміри воріт орієнтовні');
+    // reworded 10.10 (audit F106, F101): a «попередня схема», and «розмір» no longer twice
+    await expect(disclaimer).toContainText('Це попередня схема, а не проєктна документація');
+    await expect(disclaimer).toContainText('Діапазони габаритів і розміри воріт орієнтовні — це не будівельні норми');
     await expect(disclaimer).toBeVisible();
     await expect(page.locator('.hc-preview-disclaimer')).toHaveCount(0);
     const fontSize = await disclaimer.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
@@ -91,7 +95,7 @@ test.describe('hangar configurator POC', () => {
     await chooseSeparateWorks(page);
     await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(1);
     await expect(page.locator('.hc-summary-facts')).toContainText('Стіни');
-    await scopeBox(page, 'Стіни / огороджувальний контур').click();
+    await scopeBox(page, 'Стіни').click();
 
     await expect(page.locator('.hc-front polygon.no-walls')).toHaveCount(1);
     await expect(page.locator('.hc-front polygon.has-walls')).toHaveCount(0);
@@ -295,11 +299,11 @@ test.describe('hangar configurator POC', () => {
     await expect(gate).toHaveAttribute('class', /hc-phase-visible/);
 
     await chooseSeparateWorks(page);
-    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls off
+    await scopeBox(page, 'Стіни').click(); // walls off
     await expect(gate).toHaveAttribute('class', /hc-phase-(dematerializing|hidden)/);
     await expect(gate).not.toHaveAttribute('class', /hc-phase-visible/);
 
-    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls back on
+    await scopeBox(page, 'Стіни').click(); // walls back on
     await expect(gate).toHaveAttribute('class', /hc-phase-(materializing|visible)/);
   });
 
@@ -436,7 +440,7 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
   test('columns and rafters stage in sequence — rafters only start once columns have (a real build order, not simultaneous)', async ({ page }) => {
     await openConfigurator(page);
     await chooseSeparateWorks(page);
-    await scopeBox(page, 'Металокаркас').click(); // off
+    await scopeBox(page, 'Каркас').click(); // off
 
     const columnsDelay = await page.locator('.hc-columns line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
     const raftersDelay = await page.locator('.hc-rafters line').first().evaluate((el) => (el as HTMLElement).style.transitionDelay);
@@ -464,7 +468,7 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
     const before = await firstColumnClass(page);
     expect(before).toMatch(/hc-phase-visible/);
 
-    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls, not frame
+    await scopeBox(page, 'Стіни').click(); // walls, not frame
     await page.waitForTimeout(50);
     const after = await firstColumnClass(page);
     expect(after).toBe(before); // no transitional class was ever entered
@@ -520,7 +524,7 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
 
     await chooseSeparateWorks(page);
-    await scopeBox(page, 'Стіни / огороджувальний контур').click();
+    await scopeBox(page, 'Стіни').click();
     await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-dematerializing/);
     // Walls are independently triggered (their own checkbox, not part of the frame group) — zero
     // start offset, so this settles within its own ~250ms duration; timeout padded well past
@@ -531,12 +535,12 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
   test('roof stages a real materialize/dematerialize transition, independent of walls', async ({ page }) => {
     await openConfigurator(page);
     await chooseSeparateWorks(page);
-    await scopeBox(page, 'Стіни / огороджувальний контур').click(); // walls off
+    await scopeBox(page, 'Стіни').click(); // walls off
 
     // Roof must be unaffected by the walls toggle above (no cross-layer replay)...
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
 
-    // ...but does stage its own transition when its own scope item changes. By its checkbox: «Матеріали» names its own
+    // ...but does stage its own transition when its own scope item changes. By its checkbox: «Стіни й покрівля» names its own
     // «Покрівля» radiogroup on the same page.
     await scopeBox(page, 'Покрівля').click();
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-dematerializing/);

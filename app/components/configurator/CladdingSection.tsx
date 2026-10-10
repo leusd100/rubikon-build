@@ -76,7 +76,8 @@ const LAYERS_TEXT: Record<Layers, string> = {
   'sheet-insulated': 'Профнастил з утеплювачем',
   'sheet-undecided': 'Профнастил · утеплення уточнимо',
   sandwich: 'Сендвіч-панель з утеплювачем',
-  none: 'Поза обсягом заявки',
+  // the scope's one name (10.10, audit F32)
+  none: 'Поза обсягом робіт',
 };
 
 function Row({ title, layers }: Readonly<{ title: string; layers: Layers }>) {
@@ -97,7 +98,9 @@ export function CladdingSection({ domain }: Readonly<{ domain: HangarDomainModel
   const { envelope, scope } = domain;
   return (
     <figure className="hc-section">
-      <figcaption>Переріз огородження · схема</figcaption>
+      {/* the surfaces by name (10.10, audit F36: «огородження» read as a fence); «· схема» goes in the wide sheet's narrow
+          legend column, so the caption keeps to two lines there (audit F111) */}
+      <figcaption>Переріз стіни й{'\u00A0'}покрівлі<span className="hc-section-scheme"> · схема</span></figcaption>
       <dl>
         <Row title="Стіни" layers={layersOf(scope.walls, envelope.wallSystem, envelope.walls)} />
         <Row title="Покрівля" layers={layersOf(scope.roof, envelope.roofSystem, envelope.roof)} />

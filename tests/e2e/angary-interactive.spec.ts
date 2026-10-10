@@ -75,7 +75,9 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await expect(frame.locator('path.ft-opening')).toHaveCount(1);
   // nothing chosen yet: the whole frame, and the panel says what it offers
   await expect(items).toHaveText(['Ширина L', 'Ферма', 'Прогони й в’язі', 'Сніг на покрівлі', 'Вітер у торець']);
-  await expect(text).toHaveText('Оберіть, що показати на кресленні вашого каркаса.');
+  // the line above the list says what it is for; under it nothing until an item is chosen (10.10)
+  await expect(page.locator('#hc-step-frame .hc-frame-intro')).toContainText('Для довідки');
+  await expect(text).toHaveText('');
   await expect(frame).not.toHaveAttribute('data-step', /.*/);
   // 24 m has the centre row: the width between the outer axes is not «the span»; the axes are lettered А, Б, В across it
   // and numbered for the drawn frames along it
@@ -87,27 +89,37 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   // frames' numbers along the building are not drawn at all (09.10, audit F89: hidden, they still pulled the bays'
   // camera back)
   await expect(frame.locator('[data-part~="3"] :is(.ft-bubble, .ft-axis)')).toHaveCount(0);
-  // L names the whole width (09.10, audit F126; owner: «навести лад з a L H»): at the middle of its line, between it and
-  // the axes' bubbles — Б's bubble under it, not beside it («Б L») — and Б's column lit with the outer ones
+  // the sizes by their words along their lines (10.10, owner): «L = 24 м», «H = 8 м», the frame spacing a letter alone;
+  // with the centre row the span is dimensioned in two rows — the spans «12 м | 12 м», then L under them
+  await expect(frame.locator('[data-part~="1"] .ft-dim-text')).toHaveText(['12 м', '12 м', 'L = 24 м', 'H = 8 м']);
+  await expect(frame.locator('[data-part~="3"] .ft-dim-text')).toHaveText(['a']);
+  // L names the whole width (09.10, audit F126; owner: «навести лад з a L H»): at the middle of its line, between the
+  // spans' row and the axes' bubbles — Б's bubble under it, not beside it («Б L») — and Б's column lit with the outer ones
   const span = await frame.evaluate((root) => {
     const box = (element: Element) => element.getBoundingClientRect();
-    const letter = box([...root.querySelectorAll('[data-part~="1"] .ft-letter')].find((element) => element.textContent === 'L')!);
+    const words = [...root.querySelectorAll('[data-part~="1"] .ft-dim-text')];
+    const letter = box(words.find((element) => element.textContent?.startsWith('L'))!);
+    const spans = words.filter((element) => /^\d/.test(element.textContent ?? '')).map(box);
     const bubbles = [...root.querySelectorAll('[data-part~="1"] .ft-bubble circle')].map(box);
     return {
       at: (letter.left + letter.right) / 2,
+      top: letter.top,
       bottom: letter.bottom,
+      spansBottom: Math.max(...spans.map((rect) => rect.bottom)),
       a: bubbles[0].x + bubbles[0].width / 2, c: bubbles[2].x + bubbles[2].width / 2,
       bTop: bubbles[1].top,
       columns: root.querySelector('[data-part="1 2"] .ft-member')!.getAttribute('d')!.split('M').filter(Boolean).length,
     };
   });
   expect(Math.abs(span.at - (span.a + span.c) / 2)).toBeLessThanOrEqual(3);
+  expect(span.spansBottom).toBeLessThanOrEqual(span.top);
   expect(span.bottom).toBeLessThanOrEqual(span.bTop);
   expect(span.columns).toBe(3);
-  // one way for the three dimensions: H and a with their line, a 45° tick at each end and two extension lines; L with its
-  // line and two ticks, the axes standing for its extension lines
+  // one way for the three dimensions (10.10: L measured between the outer columns' axes, its own extension lines down
+  // from under the footings): H and a with their line, a 45° tick at each end and two extension lines; L in two rows —
+  // the spans' line, its three ticks and Б's extension line, then L's line, its two ticks and the two extension lines
   const runs = await frame.evaluate((root) => [...root.querySelectorAll('.ft-dim')].map((path) => path.getAttribute('d')!.split('M').filter(Boolean).length));
-  expect(runs.sort()).toEqual([3, 5, 5]);
+  expect(runs.sort((x, y) => x - y)).toEqual([5, 5, 10]);
   // the shown item pressed again goes back to the whole frame
   await items.nth(0).click();
   await expect(items.nth(0)).toHaveAttribute('aria-pressed', 'false');
@@ -121,11 +133,13 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   await expect(stamp).toContainText('Ваш ангар · 16 × 60 × 8 м');
   await expect(items.nth(1)).toHaveText('Рама');
   await items.nth(1).click();
-  await expect(text).toContainText('Для ширини 16 м у попередній візуалізації показано портальну раму');
+  await expect(text).toContainText('Для ширини 16 м на попередній схемі показано портальну раму');
   // a clear span's two axes are lettered in sequence, А and Б (04.10: А and В skipped Б)
   await items.nth(0).click();
   await expect(text).toHaveText('Проліт L — відстань між осями крайніх колон А і Б: 16 м у вашій конфігурації. Усередині колон немає. H — висота стіни.');
   await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б']);
+  // a clear span: L in one row, no spans' row over it
+  await expect(frame.locator('[data-part~="1"] .ft-dim-text')).toHaveText(['L = 16 м', 'H = 8 м']);
   // a short building is drawn whole and a long one to a break after three bays: four frames at 18 m as at 60 m, three at
   // 12 m — counted by their footings, a frame's two (the frames' axis numbers are not drawn since 09.10)
   const footings = () => frame.locator('.ft-footing').count();
@@ -397,8 +411,10 @@ test('on a wide screen «Далі» under a step opens the next one and brings i
   }
 });
 
-// Every name, axis bubble and dimension letter a step shows sits whole inside that step's camera window, clear of the
-// others and of the footings — at a phone's sizes too (03.10). The legend sits in its own band above the window.
+// Every name, axis bubble and dimension's words a step shows sits whole inside that step's camera window, clear of the
+// others the step shows and of the footings — at a phone's sizes too (03.10). The legend sits in its own band above the
+// window. Since 10.10 the sizes are words along their lines («L = 24 м», turned with a slanted or upright line), and
+// step 3 places «прогони» above the roof (owner).
 for (const [width, length] of [['24', '60'], ['12', '18'], ['50', '120']] as const) {
   test(`the frame's labels stay inside each step's camera at ${width} × ${length} m`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -410,18 +426,22 @@ for (const [width, length] of [['24', '60'], ['12', '18'], ['50', '120']] as con
       await items.nth(step - 1).click();
       await showWholeSheet(page);
       await expect(frame).toHaveAttribute('data-step', String(step));
-      // the names fade in over 0.3 s
+      // the names fade in over 0.3 s, the other steps' words fade out: measured once the drawing stands still
       if (step > 1) await expect(frame.locator(`[data-tags="${step}"]`)).toHaveCSS('opacity', '1');
+      await expect.poll(() => frame.evaluate((root) => root.getAnimations({ subtree: true }).filter((animation) => animation.playState === 'running').length)).toBe(0);
       const { count, problems } = await frame.evaluate((root, shown) => {
         const camera = root.querySelector('.ft-window')!.getBoundingClientRect();
         const context = document.createElement('canvas').getContext('2d')!;
-        // a text's inked box (its em box is a third taller than the letters); a bubble's circle's
+        // a text's inked box (its em box is a third taller than the letters), turned as the text is — a dimension's words
+        // lie along its line (10.10) — and a bubble's circle's
         const box = (element: Element) => {
           if (element.tagName !== 'text') return element.querySelector('circle')!.getBoundingClientRect();
           const style = getComputedStyle(element);
           context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
           const matrix = (element as SVGTextElement).getScreenCTM()!;
-          const rows = element.querySelectorAll('tspan').length ? [...element.querySelectorAll('tspan')] : [element];
+          const onScreen = (x: number, y: number) => [matrix.a * x + matrix.c * y + matrix.e, matrix.b * x + matrix.d * y + matrix.f] as const;
+          // a name on two rows is measured row by row; a dimension's letter and its value are one row
+          const rows = element.querySelectorAll('tspan[x]').length ? [...element.querySelectorAll('tspan')] : [element];
           const rects = rows.map((row) => {
             const text = row as SVGTextContentElement;
             const first = text.getStartPositionOfChar(0);
@@ -429,10 +449,9 @@ for (const [width, length] of [['24', '60'], ['12', '18'], ['50', '120']] as con
             const metrics = context.measureText(row.textContent ?? '');
             const top = first.y - metrics.actualBoundingBoxAscent;
             const bottom = first.y + metrics.actualBoundingBoxDescent;
-            return new DOMRect(
-              Math.min(first.x, last.x) * matrix.a + matrix.e, top * matrix.d + matrix.f,
-              Math.abs(last.x - first.x) * matrix.a, (bottom - top) * matrix.d,
-            );
+            const corners = [onScreen(first.x, top), onScreen(last.x, top), onScreen(first.x, bottom), onScreen(last.x, bottom)];
+            const [xs, ys] = [corners.map(([x]) => x), corners.map(([, y]) => y)];
+            return new DOMRect(Math.min(...xs), Math.min(...ys), Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
           });
           const left = Math.min(...rects.map((rect) => rect.left));
           const top = Math.min(...rects.map((rect) => rect.top));
@@ -448,8 +467,17 @@ for (const [width, length] of [['24', '60'], ['12', '18'], ['50', '120']] as con
           for (let node: Element | null = element; node && node !== root; node = node.parentElement) if (getComputedStyle(node).display === 'none') return false;
           return true;
         };
+        // …and what this step shows: another step's words stand faded out (opacity 0) where they are, so a name may lie
+        // over them — «стійки фахверку» over L's «L = 50 м», hidden on «Прогони й в’язі»
+        const visible = (element: Element) => {
+          for (let node: Element | null = element; node && node !== root; node = node.parentElement) {
+            const style = getComputedStyle(node);
+            if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+          }
+          return true;
+        };
         const labels = [...root.querySelectorAll(selectors[shown])].filter(drawn);
-        const others = [...root.querySelectorAll('.ft-bubble, .ft-letter')].filter(drawn);
+        const others = [...root.querySelectorAll('.ft-bubble, .ft-letter')].filter(visible);
         const name = (element: Element) => element.textContent;
         const found: string[] = [];
         const footings = [...root.querySelectorAll<SVGPathElement>('.ft-footing')].map((path) => path.getBoundingClientRect());
@@ -479,22 +507,34 @@ for (const [width, length] of [['24', '60'], ['12', '18'], ['50', '120']] as con
   });
 }
 
+/** The walls and the roof one by one: folded under «Налаштувати окремо», below «Який ангар потрібен?» (10.10) */
+async function openShellApart(page: Page) {
+  await openControlGroup(page, 'cladding');
+  const apart = page.locator('#hc-step-shell details.hc-more');
+  if (!(await apart.evaluate((details) => (details as HTMLDetailsElement).open))) await apart.locator('summary').click();
+  await expect(page.getByRole('radiogroup', { name: 'Стіни', exact: true })).toBeVisible();
+}
+
 // «Чому це важливо» under the groups is gone (07.10, simplicity pass: one way round the configurator) — the summary half
 // of this test stays.
 test('the summary carries the scope-aware choices; the foundation is not the visitor\'s choice', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
   await openHangarPage(page);
 
-  await openControlGroup(page, 'cladding');
-  await page.getByRole('radiogroup', { name: 'Стіни' }).getByText('Сендвіч-панель', { exact: true }).click();
+  await openShellApart(page);
+  await page.getByRole('radiogroup', { name: 'Стіни', exact: true }).getByText('Сендвіч-панель', { exact: true }).click();
   // 07.10: «Утеплення» stays the thermal answer, and says where the panels bring insulation; the materials one by one
   await expect(stampFact(page, 'Утеплення')).toHaveText('Лише в стінах (сендвіч-панелі)');
-  await expect(stampFact(page, 'Огородження')).toHaveText('Стіни: Сендвіч-панель, покрівля: Профнастил');
+  // the cladding by its surfaces (10.10, audit F36), each named when they differ
+  await expect(stampFact(page, 'Стіни й покрівля')).toHaveText('Стіни — сендвіч-панель, покрівля — профнастил');
+  // the answer whose materials were changed one by one no longer promises them on its tile (10.10)
+  await expect(page.locator('#hc-envelope-panel label:has(input[name="hc-envelope"]:checked) .hc-tile-detail')).toContainText('налаштовано окремо');
 
   await chooseSeparateWorks(page);
-  await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
+  await page.getByRole('checkbox', { name: 'Стіни', exact: true }).uncheck();
   await expect(page.locator('.hc-summary-flagship .hc-summary-facts')).not.toContainText('Ворота');
-  await expect(stampFact(page, 'Огородження')).toHaveText('Покрівля: Профнастил');
+  // the one surface asked for names the row
+  await expect(stampFact(page, 'Покрівля')).toHaveText('Профнастил');
   // the foundation type is not the visitor's choice on /angary (owner, 03.10)
   await expect(page.locator('#hc-foundation-heading, input[name="hc-foundation-type"]')).toHaveCount(0);
 });
@@ -503,7 +543,10 @@ test('the summary carries the scope-aware choices; the foundation is not the vis
 test('a chosen option is graphite with a copper tick; a copper fill is left for actions', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
   await openHangarPage(page);
-  const chosen = page.locator('#configurator .hc-option-card input:checked + span').first();
+  // an answer: «Ще не знаю», chosen from the start on «Задача», is outlined, not filled (10.10, audit F110;
+  // configurator-polish.spec) — the walls' step has answers chosen from the start
+  await openControlGroup(page, 'openings');
+  const chosen = page.locator('#configurator .hc-option-card input:checked:not([value="unknown"], [value=""]) + span').first();
   await expect(chosen).toBeVisible();
   const text = await page.locator('body').evaluate((element) => getComputedStyle(element).color);
   const accent = await page.evaluate(() => {
@@ -542,11 +585,12 @@ test('on a phone the model stays under the header while the parameters are set, 
   await expect(stage.locator('.sheet-image')).toBeHidden();
   await expect(stage.locator('.hc-sheet-readout')).toContainText('24 × 60 × 8 м');
   expect(await stage.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(stageHeight);
-  const unfold = stage.getByRole('button', { name: 'Показати ескіз', exact: true });
-  await expect(unfold).toHaveAttribute('aria-expanded', 'false');
+  const unfold = stage.getByRole('button', { name: 'Показати креслення', exact: true });
+  // its words are its state, said once (10.10, audit F131)
+  await expect(unfold).not.toHaveAttribute('aria-expanded');
   await unfold.click();
   await expect(stage.locator('.sheet-image')).toBeVisible();
-  await expect(stage.getByRole('button', { name: 'Згорнути', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await expect(stage.getByRole('button', { name: 'Згорнути', exact: true })).not.toHaveAttribute('aria-expanded');
 
   // Past the controls the model stays small, out of sight: grown back above the screen it pushed the summary down
   // under the finger (03.10). It cannot stick beyond the layout, so nothing covers the summary, and nothing moves.
@@ -705,9 +749,10 @@ test('on a phone the steps walk one panel at a time: numbered tabs, the open ste
     await expect(tab).toHaveAttribute('aria-selected', index === 0 ? 'true' : 'false');
     await expect(page.locator(`#hc-step-${step.id}`)).toBeVisible({ visible: index === 0 });
   }
-  // a group is still named by its title alone
-  await expect(page.locator('section[data-group="dimensions"]')).toHaveAttribute('aria-labelledby', 'hc-dimensions-heading');
-  await expect(page.locator('#hc-dimensions-heading')).toHaveText('Розміри');
+  // a group is no named region (10.10, audit F133: «Задача» was heard as the tab, the region and the heading), and its
+  // heading says the tab's word
+  await expect(page.locator('section[data-group="dimensions"]')).not.toHaveAttribute('aria-labelledby', /./);
+  await expect(page.locator('#hc-dimensions-heading')).toHaveText('Габарити');
 
   // one at a time: «Далі» opens «Габарити», closes «Задача», and the tabs are not left under the mini drawing
   const next = page.locator('#hc-step-task .hc-step-next');
@@ -760,12 +805,17 @@ test('on a wide screen the configurator walks the same steps, one panel at a tim
   await expect(controls.locator('.hc-step-panel:visible')).toHaveCount(1);
   await expect(page.locator('#hc-step-task')).toBeVisible();
   await expect(page.locator('#hc-step-task h3')).toHaveText(['Задача']);
-  // each step's groups under their plain headings; no foundation on /angary (owner, 03.10)
+  // each step's groups under their plain headings; no foundation on /angary (owner, 03.10). «Стіни й ворота» asks one
+  // question for the shell, «Який ангар потрібен?» (10.10): the walls and the roof one by one are folded under it
   await openControlGroup(page, 'envelope');
-  await expect(page.locator('#hc-step-shell h3')).toHaveText(['Чи потрібне утеплення?', 'Матеріали', 'Ворота й двері']);
+  await expect(page.locator('#hc-step-shell h3')).toHaveText(['Який ангар потрібен?', 'Ворота й двері']);
+  const apart = page.locator('#hc-step-shell details.hc-more');
+  await expect(apart.locator('summary')).toHaveText('Налаштувати окремо');
+  await expect(apart).not.toHaveAttribute('open', /.*/);
+  await expect(page.getByRole('radiogroup', { name: 'Стіни', exact: true })).toBeHidden();
   await expect(controls.locator('.hc-step-panel:visible')).toHaveCount(1);
   await openControlGroup(page, 'scope');
-  await expect(page.locator('#hc-step-check h3')).toHaveText(['Обсяг робіт', 'Проєкт']);
+  await expect(page.locator('#hc-step-check h3')).toHaveText(['Обсяг робіт', 'Чи є у вас проєкт?']);
   // the arrow keys move between the tabs (the tabs pattern)
   await page.locator('#hc-step-check-tab').focus();
   await page.keyboard.press('ArrowLeft');
@@ -793,13 +843,16 @@ test('«Задача» and the other optional answers reach the stamp and the br
   await openControlGroup(page, 'need');
   await page.locator('label:has(input[name="hc-purpose"][value="machinery"])').click();
   await expect(stampFact(page, 'Задача')).toHaveText('Техніка');
-  // the drawn hangar is still the example: the answers are added, its sizes are not the visitor's (04.10)
+  // the answers are added, the drawn hangar's sizes are not the visitor's (04.10): the title block names it the
+  // visitor's hangar on the example's sizes (10.10: «Приклад» stood over the visitor's own answers)
   await expect(attachmentCard(page)).toContainText('До заявки додано відповіді про об’єкт');
-  await expect(previewSheet(page).locator('.sheet-stamp')).toContainText('Приклад · 24 × 60 × 8 м');
-  // «Ще не знаю» takes the answer back (07.10: a chip of its own — a chosen chip pressed again took it back before)
+  await expect(previewSheet(page).locator('.sheet-stamp')).toContainText('Ваш ангар · 24 × 60 × 8 м з прикладу');
+  // «Ще не знаю» takes the answer back (07.10: a chip of its own — a chosen chip pressed again took it back before), and
+  // with nothing answered the title block is the example's again
   await page.locator('label:has(input[name="hc-purpose"][value=""])').click();
   await expect(page.locator('input[name="hc-purpose"]:checked')).toHaveValue('');
   await expect(facts).not.toContainText('Задача');
+  await expect(previewSheet(page).locator('.sheet-stamp')).toContainText('Приклад · 24 × 60 × 8 м');
 
   // the project is asked with the scope, the lifting equipment with the frame (07.10)
   await openControlGroup(page, 'project');
@@ -822,7 +875,8 @@ test('an unedited ridge keeps the span rule’s slope as the width changes; an e
   const ridge = page.locator('#hc-dimension-ridge');
   const area = page.locator('.hc-stamp-row .hc-summary-area');
   await expect(area).toContainText('коник 10,6 м · ухил ≈ 12°');
-  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('Коник 10,6 м · ухил ≈ 12° (22 %)');
+  // the range and the slope, no repeated number and no percent (10.10, audit F102)
+  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('Від 9,1 до 12,3 м. Ухил ≈ 12° — підібраний за шириною ангара.');
   // the ridge is a refinement, not a first question (07.10): folded until asked for
   await expect(ridge).toBeHidden();
   await page.locator('#hc-step-size details.hc-more summary').click();
@@ -838,12 +892,12 @@ test('an unedited ridge keeps the span rule’s slope as the width changes; an e
 
   await ridge.fill('13');
   await ridge.blur();
-  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('ваше значення');
+  await expect(page.locator('#hc-dimension-ridge-hint')).toContainText('за вашою висотою в конику');
   await setWidth(page, '40');
   await expect(ridge).toHaveValue('13');
   // an edited ridge stays unfolded, with the way back to the span rule
   await expect(ridge).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Підбирати ухил за шириною', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Повернути ухил за шириною', exact: true })).toBeVisible();
   const brief = attachmentCard(page);
   await brief.getByText('Переглянути параметри', { exact: true }).click();
   await expect(brief).toContainText('Висота в конику13 м · ухил ≈ 14°');
@@ -861,10 +915,16 @@ test.describe('without JavaScript', () => {
     for (const step of STEPS) await expect(page.locator(`#hc-step-${step.id}`)).toBeVisible();
     await expect(controls.locator('.hc-steps')).toBeHidden();
     await expect(controls.locator('.hc-step-nav:visible')).toHaveCount(0);
+    // «Стіни й покрівля» is folded under «Який ангар потрібен?» since 10.10 — a fold that works without a script
     await expect(controls.locator('.hc-control-group h3')).toHaveText([
-      'Задача', 'Розміри', 'Чи потрібне утеплення?', 'Матеріали', 'Ворота й двері', 'Простір усередині', 'Обсяг робіт', 'Проєкт',
+      'Задача', 'Габарити', 'Який ангар потрібен?', 'Ворота й двері', 'Простір усередині', 'Обсяг робіт', 'Чи є у вас проєкт?',
     ]);
     for (const heading of await controls.locator('.hc-control-group h3').all()) await expect(heading).toBeVisible();
+    const apart = page.locator('#hc-step-shell details.hc-more');
+    await expect(apart.locator('summary')).toHaveText('Налаштувати окремо');
+    await apart.locator('summary').click();
+    await expect(page.getByRole('radiogroup', { name: 'Стіни', exact: true })).toBeVisible();
+    await expect(page.getByRole('radiogroup', { name: 'Покрівля', exact: true })).toBeVisible();
   });
 });
 
@@ -945,12 +1005,16 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
   });
 }
 
-// «Колони всередині» moves the gate on «Каркас» (09.10, owner: «так» — плавно, not in one frame): its outline glides
-test('the gate glides to its new place when «Колони всередині» changes', async ({ page }, testInfo) => {
+// The columns' answer moves the gate on «Каркас» (09.10, owner: «так» — плавно, not in one frame): its outline glides.
+// «Колони всередині: Можна / Не можна» is asked from the client's side since 10.10: «Потрібен простір без колон
+// усередині?» — «Так, без колон» / «Колони можна» / «Ще не знаю».
+test('the gate glides to its new place when the columns\' answer («Так, без колон») changes', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await openHangarPage(page);
   await openControlGroup(page, 'space');
+  await expect(page.getByRole('radiogroup', { name: 'Потрібен простір без колон усередині?' }).locator('label'))
+    .toHaveText(['Так, без колон', 'Колони можна', 'Ще не знаю']);
   const opening = previewSheet(page).locator('path.ft-opening');
   await expect(opening).toHaveCount(1);
   const before = await opening.evaluate((path) => (path as SVGPathElement).getBBox().x);
@@ -963,11 +1027,53 @@ test('the gate glides to its new place when «Колони всередині» 
     };
     requestAnimationFrame(read);
   });
-  await page.locator('#hc-step-frame .hc-option-card').filter({ hasText: 'Не можна' }).first().click();
+  await page.locator('#hc-step-frame label:has(input[name="hc-supports"][value="not-allowed"])').click();
+  await expect(page.locator('input[name="hc-supports"][value="not-allowed"]')).toBeChecked();
   await expect.poll(() => page.evaluate(() => (window as unknown as { gateXs: number[] }).gateXs.length)).toBe(40);
   const xs = await page.evaluate(() => (window as unknown as { gateXs: number[] }).gateXs);
   const after = xs.at(-1)!;
   expect(Math.abs(after - before)).toBeGreaterThan(5);
   // places between the two: it travelled, not jumped
   expect(xs.filter((x) => Math.abs(x - before) > 0.5 && Math.abs(x - after) > 0.5).length).toBeGreaterThanOrEqual(5);
+  // the answer is said on the frame too: one clear span, «· без колон» after L (10.10, owner)
+  const frame = previewSheet(page).locator('.hc-frame');
+  await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б']);
+  await expect(frame.locator('[data-part~="1"] .ft-dim-text')).toHaveText(['L = 24 м · без колон', 'H = 8 м']);
 });
+
+// «Прогони й в’язі» (owner, 10.10: there «текст налазить»; on «Ферма» it only adds to the drawing): every name stands
+// clear of the step's lit members — its thin leader may cross one, as a drawing's leaders do — for small and large hangars
+for (const [width, length, height] of [[24, 60, 8], [12, 18, 4], [18, 36, 6]] as const) {
+  test(`on «Прогони й в’язі» no name lies on a lit member at ${width} × ${length} × ${height} m`, async ({ page }) => {
+    await openHangarPage(page);
+    await openControlGroup(page, 'dimensions');
+    for (const [id, value] of [['width', width], ['length', length], ['height', height]] as const) {
+      const field = page.locator(`#hc-dimension-${id}`);
+      await field.click();
+      await field.press('ControlOrMeta+a');
+      await field.pressSequentially(String(value));
+      await field.press('Tab');
+    }
+    await openControlGroup(page, 'space');
+    await page.locator('.hc-frame-item').nth(2).click();
+    const drawing = page.locator('#configurator .ft-drawing');
+    await expect(drawing.locator('[data-tags="3"] .ft-tag').first()).toBeVisible();
+    const onLit = await drawing.evaluate((svg) => {
+      const lit = [...svg.querySelectorAll('[data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace)')] as SVGGeometryElement[];
+      return [...svg.querySelectorAll('[data-tags="3"] .ft-tag')].filter((tag) => {
+        const box = tag.getBoundingClientRect();
+        return lit.some((path) => {
+          const matrix = path.getScreenCTM()!;
+          for (let at = 0; at <= path.getTotalLength(); at += 2) {
+            const point = path.getPointAtLength(at);
+            const x = matrix.a * point.x + matrix.c * point.y + matrix.e;
+            const y = matrix.b * point.x + matrix.d * point.y + matrix.f;
+            if (x > box.left + 1 && x < box.right - 1 && y > box.top + 1 && y < box.bottom - 1) return true;
+          }
+          return false;
+        });
+      }).map((tag) => tag.textContent);
+    });
+    expect(onLit).toEqual([]);
+  });
+}

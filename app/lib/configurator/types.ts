@@ -183,12 +183,21 @@ export function withConfirmed(state: ConfiguratorState, topic: ConfirmedTopic): 
 /** «Колони всередині ангара» (07.10): whether a row of columns may stand inside. Until answered, the drawing's centre row
  *  is the width's visualisation rule (deriveStructuralVisualization); «Не можна» draws the span clear. */
 export type InternalSupports = 'allowed' | 'not-allowed' | 'unknown';
+/** The answer as the stamp and the lead say it, under «Простір усередині» — the space the client asked about, not the
+ *  engineer's «колони: не можна» (10.10, owner) */
 export const INTERNAL_SUPPORTS_LABELS: Record<InternalSupports, string> = {
-  allowed: 'Можна',
-  'not-allowed': 'Не можна',
+  allowed: 'Колони можна',
+  'not-allowed': 'Без колон',
   unknown: 'Ще не знаю',
 };
-export const INTERNAL_SUPPORTS_ORDER: InternalSupports[] = ['allowed', 'not-allowed', 'unknown'];
+/** The question from the client's side, «Потрібен простір без колон усередині?», and its answers (10.10, owner): the
+ *  space without columns first, as it is asked */
+export const INTERNAL_SUPPORTS_ANSWERS: Record<InternalSupports, string> = {
+  'not-allowed': 'Так, без колон',
+  allowed: 'Колони можна',
+  unknown: 'Ще не знаю',
+};
+export const INTERNAL_SUPPORTS_ORDER: InternalSupports[] = ['not-allowed', 'allowed', 'unknown'];
 
 /** «Обсяг робіт» (07.10): the whole set, some of the works (the list), or help to decide */
 export type ScopeMode = 'full' | 'partial' | 'help';
@@ -219,7 +228,8 @@ export const DIMENSION_BOUNDS: Record<keyof Dimensions, DimensionBounds> = {
 };
 
 export const ENVELOPE_LABELS: Record<EnvelopeChoice, string> = {
-  cold: 'Холодний',
+  // «Без утеплення» (10.10, owner): «Холодний» stood one word from «Холодильний склад», and read as one
+  cold: 'Без утеплення',
   insulated: 'Утеплений',
   undecided: 'Ще не визначено',
 };
@@ -231,8 +241,10 @@ export const CLADDING_SYSTEM_LABELS: Record<CladdingSystem, string> = {
 
 export const CLADDING_SYSTEM_ORDER: CladdingSystem[] = ['profiled-sheet', 'sandwich-panel'];
 
+// «Після розрахунку проєктувальника» (10.10, audit F43): it was «Визначити після розрахунку», an infinitive that read as
+// an order to the reader, under the row name «Основа» — the ground under a foundation in ДБН, not the foundation
 export const FOUNDATION_TYPE_LABELS: Record<FoundationType, string> = {
-  engineeringDecision: 'Визначити після розрахунку',
+  engineeringDecision: 'Після розрахунку проєктувальника',
   slab: 'Монолітна плита',
   isolated: 'Окремі фундаменти під колони',
 };
@@ -244,20 +256,24 @@ export const FOUNDATION_TYPE_ORDER: FoundationType[] = ['engineeringDecision', '
 // Labels for the DERIVED result only now (Phase 3E.1) — there is no radiogroup to order any more,
 // see StructuralScheme/RoofStructure's own doc comments, so the `_ORDER` arrays that used to drive
 // those controls were removed along with them.
+// «колони», the visitor's own word (10.10, audit F37): the step asks «Колони всередині ангара», and the stamp beside it
+// said «Без внутрішніх опор»; «Ферма» as the step and the frame drawing name it, without «Металева»
 export const STRUCTURAL_SCHEME_LABELS: Record<StructuralScheme, string> = {
-  clearSpan: 'Без внутрішніх опор',
-  centerSupport: 'Центральний ряд опор',
+  clearSpan: 'Без внутрішніх колон',
+  centerSupport: 'Центральний ряд колон',
 };
 
 export const ROOF_STRUCTURE_LABELS: Record<RoofStructure, string> = {
   portalRafter: 'Рама',
-  truss: 'Металева ферма',
+  truss: 'Ферма',
 };
 
+// The works as the steps name them (10.10, audit F35): «Каркас» is the step's name, and «Стіни / огороджувальний контур»
+// ran the scope to 2–4 lines while its «контур» took in the roof listed beside it
 export const SCOPE_LABELS: Record<ScopeItem, string> = {
   foundation: 'Фундамент',
-  frame: 'Металокаркас',
-  walls: 'Стіни / огороджувальний контур',
+  frame: 'Каркас',
+  walls: 'Стіни',
   roof: 'Покрівля',
 };
 
@@ -265,7 +281,9 @@ export const SCOPE_ORDER: ScopeItem[] = ['foundation', 'frame', 'walls', 'roof']
 
 export const GATES_OPTIONS: GatesCount[] = [0, 1, 2];
 export const DOOR_OPTIONS: DoorCount[] = [0, 1];
-export const DOOR_LABELS: Record<DoorCount, string> = { 0: 'Без дверей', 1: '1' };
+/** «Службові двері: Так / Ні» (10.10, owner): one switch — «Без дверей» and «1» read as a count to tune */
+export const DOOR_LABELS: Record<DoorCount, string> = { 1: 'Так', 0: 'Ні' };
+export const DOOR_SWITCH_ORDER: DoorCount[] = [1, 0];
 
 export const GATE_TYPE_LABELS: Record<GateType, string> = {
   standard: 'Стандартні',

@@ -374,19 +374,9 @@
   padding: 24px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  /* the field under both views — the 3D's canvas is transparent over it (10.10, materials.ts) */
   background: var(--color-dark);
   box-shadow: var(--shadow-card);
-}
-
-/* Phase 3F: the 3D view's own studio backdrop (materials.ts's STUDIO_BACKGROUND, #0e0f11) is
-   deliberately darker than --surface-dark (#141416) — see that constant's own doc comment for why.
-   Left unmatched, the 24px padding ring above would show the lighter site-wide token around a
-   darker WebGL canvas, a visible seam this scoped override (3D mode only — Technical view's own
-   surface keeps --surface-dark untouched) exists to close. Kept as a literal, not a shared build
-   constant, because one side is TypeScript/WebGL and the other a static stylesheet — see
-   STUDIO_BACKGROUND's own comment for the "keep these two equal by hand" pairing. */
-.hc-preview-surface:has(.hc-preview-canvas) {
-  background: #0e0f11;
 }
 
 /* The view controls sit in one quiet row above the model, anchored to the right. (The schematic note that shared the
@@ -1276,8 +1266,16 @@
 .hc-stamp-row .hc-summary-title { margin: 0 0 10px; color: var(--color-text-muted); font-size: 11px; }
 .hc-stamp-row .hc-summary-dimensions { margin: 0; font-size: clamp(26px, 2.4vw, 34px); }
 .hc-stamp-row .hc-summary-area { margin: 8px 0 0; font-size: 13px; font-variant-numeric: tabular-nums; }
-.hc-stamp-row .hc-summary-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0 0 -1px; padding: 0; border-top: 0; }
-.hc-stamp-row .hc-summary-facts > div { display: grid; align-content: start; gap: 4px; min-width: 0; padding: 14px 16px; border-left: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+/* A row's values on one line (10.10, audit F108): a label with its «з прикладу» or «попередньо» is taller than one
+   without — 19 px against 14, and 33 where the tag wraps under «Огородження» (1440 and 375 px) — and the values beside
+   it stood 5–19 px lower. Each cell takes two of the facts' rows, its label's and its value's, so a row's labels are
+   as tall as its tallest. (A 20 px minimum, the audit's line, left the wrapped tag's 13 px.) The facts stretch to the
+   stamp's height: the values' rows take what is left, the labels' keep their own. */
+.hc-stamp-row .hc-summary-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: min-content auto; gap: 0; margin: 0 0 -1px; padding: 0; border-top: 0; }
+.hc-stamp-row .hc-summary-facts > div {
+  display: grid; grid-row: span 2; grid-template-rows: subgrid; align-content: start; gap: 4px; min-width: 0; padding: 14px 16px;
+  border-left: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);
+}
 .hc-stamp-row .hc-summary-facts > .is-wide { grid-column: span 2; }
 .hc-stamp-row .hc-summary-facts dt { font-size: 11px; letter-spacing: .08em; }
 .hc-stamp-row .hc-summary-facts dd { max-width: none; font-size: 14px; text-align: left; }

@@ -112,7 +112,7 @@ test.describe('configurator 3D visual states', () => {
     await openConfigurator(page);
     // the works leave the request from «Окремі роботи», where each has its own box (07.10)
     await chooseSeparateWorks(page);
-    for (const label of ['Фундамент', 'Стіни / огороджувальний контур', 'Покрівля']) {
+    for (const label of ['Фундамент', 'Стіни', 'Покрівля']) {
       await page.locator('.hc-scope-list .hc-checkbox-row').filter({ hasText: label }).click();
     }
     await enterThreeMode(page);

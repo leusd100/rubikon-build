@@ -36,6 +36,7 @@ function cameraDirection(): THREE.Vector3 {
 export function FitOrthographicCamera({
   scene,
   bottomInsetPx = 0,
+  topInsetPx = 0,
 }: {
   scene: ThreeSceneModel;
   /** Height of the overlay band along the canvas's bottom edge (the dimension readout and its
@@ -43,6 +44,9 @@ export function FitOrthographicCamera({
    *  canvas and drawn behind it — reported live, where the model's near corner sat under the
    *  readout. Zero when nothing covers the edge, which puts the framing back to plain centring. */
   bottomInsetPx?: number;
+  /** The same along the top edge (10.10, audit F55): /angary's sheet lays its chips there, and on a phone the model's
+   *  roof stood up under them. The building is framed in the band between the two. */
+  topInsetPx?: number;
 }) {
   const { camera, size, invalidate } = useThree();
   const { min, max, center, size: extent } = scene.bounds;
@@ -86,7 +90,7 @@ export function FitOrthographicCamera({
     // Fit against the USABLE band — the canvas minus whatever covers its bottom edge — then grow
     // the frustum back to cover the whole canvas, so the building is sized for the space it can
     // actually occupy while the camera still renders edge to edge.
-    const usableHeightPx = Math.max(size.height - bottomInsetPx, 1);
+    const usableHeightPx = Math.max(size.height - bottomInsetPx - topInsetPx, 1);
     const usableAspect = size.width / usableHeightPx;
     const halfUsable = Math.max(projectedH / 2, projectedW / 2 / usableAspect) / FIT_MARGIN;
     const halfH = halfUsable * (size.height / usableHeightPx);
@@ -95,7 +99,8 @@ export function FitOrthographicCamera({
     // ...and slide the frustum DOWN by half the inset, which lifts the building by the same amount
     // on screen, centring it in the usable band. Sign is easy to get backwards: the object sits at
     // camera-space y = 0, so lowering the window's centre raises where the object lands in frame.
-    const shiftY = (bottomInsetPx / 2) * ((2 * halfH) / size.height);
+    // A top inset slides it the other way.
+    const shiftY = ((bottomInsetPx - topInsetPx) / 2) * ((2 * halfH) / size.height);
 
     /* eslint-disable react-hooks/immutability -- three.js cameras are mutated imperatively by
        design; there is no immutable setter for frustum bounds. R3F hands this object out
@@ -111,7 +116,7 @@ export function FitOrthographicCamera({
 
     // frameloop="demand" means nothing renders unless we ask, including after a reframe.
     invalidate();
-  }, [camera, size, invalidate, min, max, center, extent, bottomInsetPx]);
+  }, [camera, size, invalidate, min, max, center, extent, bottomInsetPx, topInsetPx]);
 
   return null;
 }

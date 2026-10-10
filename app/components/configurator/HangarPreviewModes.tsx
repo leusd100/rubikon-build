@@ -1,12 +1,13 @@
 'use client';
 
-import { Suspense, lazy, useCallback, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DrawingSheet, type SheetCell } from '../DrawingSheet';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
 import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
 import { CladdingSection } from './CladdingSection';
 import { ConfiguratorFrameView } from './ConfiguratorFrameView';
+import { HangarGeneralView } from './HangarGeneralView';
 import { HangarPreview } from './HangarPreview';
 import { miniReadout, previewDescription } from './sheetLabels';
 import { useFirstViewBuildUp } from './useFirstViewBuildUp';
@@ -22,6 +23,7 @@ import {
   type RoofPresetId,
   type WallPresetId,
 } from './three/materialPresets';
+import { SHEET_ROOF_COLOR, SHEET_ROOF_SANDWICH_COLOR, SHEET_WALL_COLOR, SHEET_WALL_SANDWICH_COLOR } from './three/materials';
 import { useConfiguratorMobile } from './three/useConfiguratorMobile';
 import { useWebglSupport } from './three/useWebglSupport';
 
@@ -47,8 +49,9 @@ const ThreeHangarView = lazy(() => import('./three/ThreeHangarView'));
 
 type Mode = 'technical' | 'frame' | 'three';
 
-/** «Що показано» in the sheet's title block for the general view and the 3D */
-const GENERAL_SHOWN = 'Загальний вид · попередня схема';
+/** «Що показано» in the sheet's title block for the general view and the 3D. «Загальний вигляд», as drawings say it
+ *  (10.10, audit F39: «вид» is a calque here); the «·» keeps to it, so a 320 px sheet's second line does not start with it */
+const GENERAL_SHOWN = 'Загальний вигляд\u00A0· попередня схема';
 const THREE_SHOWN = '3D-модель · попередня схема';
 
 /** The title block sets its values in capitals; the metre stays a lower-case «м» (drawing-sheet.css .sheet-unit) */
@@ -171,7 +174,7 @@ export function HangarPreviewModes({
   const [wallPreset, setWallPreset] = useState<WallPresetId>(sheet ? 'light-grey' : DEFAULT_WALL_PRESET);
   const [roofPreset, setRoofPreset] = useState<RoofPresetId>(sheet ? 'light-grey' : DEFAULT_ROOF_PRESET);
   // «Що показано» in the «Каркас» view: the step or the node on show (ConfiguratorFrameView)
-  const [frameCaption, setFrameCaption] = useState('Каркас, прогони й в’язі');
+  const [frameCaption, setFrameCaption] = useState('Каркас · попередня схема');
   const [showScaleFigure, setShowScaleFigure] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   // The phone's mini drawing folds to its sizes' line on request (07.10): over a step's fields it took a third of the
@@ -189,6 +192,8 @@ export function HangarPreviewModes({
   // How much of the canvas's bottom edge the dimension readout covers, measured by the overlay
   // itself. Lives here because the camera needs it and the overlay draws it, and they are siblings.
   const [overlayInsetPx, setOverlayInsetPx] = useState(0);
+  // …and how far down it the sheet's chips reach (10.10, audit F55): on a phone the model stood up under them
+  const [toolsInsetPx, setToolsInsetPx] = useState(0);
   const modeSwitchAnchorRef = useRef<HTMLDivElement>(null);
   const drawingRef = useRef<HTMLDivElement>(null);
   const released = useFirstViewBuildUp(drawingRef, Boolean(sheet), sheet?.untouched ?? false);
@@ -221,6 +226,25 @@ export function HangarPreviewModes({
   // What the sheet's one 3D button just showed, for the hidden status line (09.10, audit F76): the button keeps focus
   // as its words change, and a screen reader hears the new «Що показано»
   const [viewNote, setViewNote] = useState('');
+  /** As 3D opens on the sheet: how far down the picture its chips reach, for the model to stand clear under them. (The
+   *  drawing's legend is under the 3D too since 10.10, so the sheet keeps its height both ways without measuring it —
+   *  a phone's picture took the legend's height, --hc-legend-h, and on a tablet it jumped 102 px.) */
+  const holdField = (chip: HTMLElement) => {
+    const tools = chip.closest<HTMLElement>('.hc-sheet-tools');
+    if (!tools) return;
+    setToolsInsetPx(tools.offsetTop + tools.offsetHeight + 8);
+  };
+  // 3D goes when the phone's mini drawing comes (10.10, audit F55): the mini drawing has no chip to go back by, and held
+  // the 3D picture under the header with no way to the drawing
+  useEffect(() => {
+    const layout = drawingRef.current?.closest<HTMLElement>('.hc-layout');
+    if (!sheet || !showThree || isFullscreen || !layout) return undefined;
+    const observer = new MutationObserver(() => {
+      if ('configuring' in layout.dataset) setThreeOver(null);
+    });
+    observer.observe(layout, { attributes: true, attributeFilter: ['data-configuring'] });
+    return () => observer.disconnect();
+  }, [sheet, showThree, isFullscreen]);
   const handleEndPresentationDemo = useCallback(() => {
     onEndPresentationDemo?.();
     if (!isFullscreen) {
@@ -295,10 +319,15 @@ export function HangarPreviewModes({
             // with device testing rather than discovered again from the symptom.
             maxDpr={isMobile ? 1.5 : isFullscreen ? 3 : 2}
             shadowMapSize={isFullscreen ? 2048 : 1024}
-            wallColor={wallPresetColor(wallPreset)}
-            roofColor={roofPresetColor(roofPreset)}
+            // /angary's sheet: a colour per part and per system — the light lid, cooler steel walls, warm white sandwich
+            // panels (10.10, materials.ts)
+            wallColor={sheet ? SHEET_WALL_COLOR : wallPresetColor(wallPreset)}
+            roofColor={sheet ? SHEET_ROOF_COLOR : roofPresetColor(roofPreset)}
+            wallSandwichColor={sheet ? SHEET_WALL_SANDWICH_COLOR : undefined}
+            roofSandwichColor={sheet ? SHEET_ROOF_SANDWICH_COLOR : undefined}
             showScaleFigure={showScaleFigure}
             bottomInsetPx={overlayInsetPx}
+            topInsetPx={sheet && !isFullscreen ? toolsInsetPx : 0}
           />
         </Suspense>
       </ThreeErrorBoundary>
@@ -308,12 +337,19 @@ export function HangarPreviewModes({
           still leave this orientation readout on screen right up until the fallback to
           Technical actually happens. */}
       <ThreeDimensionOverlay
+        // on /angary's sheet, which has no toggle for them, the sizes hidden in the expanded view come back (10.10, QA);
+        // the research screen keeps the visitor's choice across visits
+        key={sheet && !isFullscreen ? 'sheet' : 'view'}
         onBottomInsetChange={setOverlayInsetPx}
         widthM={domain.dimensions.widthM}
         lengthM={domain.dimensions.lengthM}
         eaveM={domain.dimensions.eaveHeightM}
         ridgeM={threeScene.building.heights.ridgeM}
       />
+      {/* nothing in the request: the 3D has nothing to build — said, rather than an empty field with a shadow (10.10, QA) */}
+      {!domain.scope.foundation && !domain.scope.frame && !domain.scope.walls && !domain.scope.roof && (
+        <p className="hc-three-empty">Нічого не обрано в{'\u00A0'}обсязі робіт</p>
+      )}
       {/* Travels with the same Canvas into fullscreen, where the rest of the page is inert.
           Remains available even when the visitor hides the visual dimension overlay. */}
       <p id={descriptionId} className="hc-visually-hidden">
@@ -339,6 +375,9 @@ export function HangarPreviewModes({
     </FullscreenPreviewFrame>
   );
   else if (effectiveMode === 'frame' && sheet) view = <ConfiguratorFrameView onCaption={setFrameCaption} />;
+  // /angary's sheet draws the general view in the frame drawing's language (10.10, HangarGeneralView); the research
+  // screen keeps the old technical view
+  else if (sheet) view = <HangarGeneralView domain={domain} released={released} tools={threeAvailable} />;
   else view = <HangarPreview domain={domain} released={released} />;
 
   // Fullscreen and secondary 3D actions — brief §10's own suggested hierarchy: mode switch stays
@@ -406,16 +445,21 @@ export function HangarPreviewModes({
           imageClassName={`hc-preview-image${effectiveMode === 'frame' ? ' hc-frame-image' : ''}`}
           imageRef={drawingRef}
           cells={sheetCells}
-          // shown only by the phone's mini drawing (configurator-sheet.css)
+          // shown only by the phone's mini drawing (configurator-sheet.css). Its words are its state, said once (10.10,
+          // audit F131): with aria-expanded as well, a screen reader heard «Згорнути, розгорнуто».
           action={(
-            <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={toggleMiniFold}>
-              {miniFolded ? 'Показати ескіз' : 'Згорнути'}
+            <button type="button" className="hc-mini-toggle" onClick={toggleMiniFold}>
+              {/* the picture is «креслення» everywhere (10.10, audit F101: «ескіз» here only); the changing words are its only
+                  state signal (audit F131) */}
+              {miniFolded ? 'Показати креслення' : 'Згорнути'}
             </button>
           )}
         >
           {view}
-          {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) */}
-          {effectiveMode === 'technical' && <CladdingSection domain={domain} />}
+          {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) — in the 3D
+              too since 10.10 (QA: on a tablet the legend under the drawing left with the 3D, and the stuck sheet, with
+              the step under it, jumped 102 px each way; the 3D's surfaces are the same materials) */}
+          {(effectiveMode === 'technical' || showThree) && <CladdingSection domain={domain} />}
           {/* 3D, a secondary look: a chip on the drawing opens it, and in 3D the same chip goes back (07.10). One button in
               one place whose words change (09.10, audit F76): two buttons swapped out from under the keyboard, and focus
               fell to the page's start. Not on «Каркас» (09.10, owner, audit F14): the step is the frame's line drawing —
@@ -426,7 +470,8 @@ export function HangarPreviewModes({
               <button
                 type="button"
                 className={showThree ? 'hc-sheet-chip' : 'hc-sheet-chip hc-sheet-three'}
-                onClick={() => {
+                onClick={(event) => {
+                  if (!showThree) holdField(event.currentTarget);
                   selectMode(showThree ? 'technical' : 'three');
                   setViewNote(showThree ? GENERAL_SHOWN : THREE_SHOWN);
                 }}

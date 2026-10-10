@@ -16,7 +16,17 @@ import type { ConfiguratorState } from './types';
 // is the visitor's; «Обсяг» as answered («Допоможіть визначити», «Комплекс робіт: …»); gates the sizes leave no room
 // for are named with the reason; «Габарити: Ще уточнюються · орієнтир клієнта …»; no «Утеплення»/«Огородження»
 // without walls and roof; the card's line built from its own sections.
-export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.4.1';
+// 1.4.2 (10.10, audit iteration 4 «Ясно й рівно»): «Обсяг» names the mode — «Комплекс робіт» or «Допоможіть визначити» —
+// and lists the works only for «Окремі роботи», comma-separated: «Фундамент, каркас, стіни, покрівля» (was «Комплекс
+// робіт: Фундамент + Металокаркас + Стіни / огороджувальний контур + Покрівля»); «Огородження» is «Стіни й покрівля»,
+// or «Стіни» / «Покрівля» when only one is asked for; «Основа: Визначити після розрахунку» is «Фундамент: Після
+// розрахунку проєктувальника»; the preliminary scheme says «колон» for «опор» and «Ферма» for «Металева ферма».
+// 1.5.0 (10.10, round 5 — the questions from the client's side): «Призначення: Холодильний склад» and, under it,
+// «Температура всередині: Плюсова — охолодження / Мінусова — заморозка» when answered — nothing claimed from it; a cold
+// store's warm suggestion («Утеплений», «Сендвіч-панель») goes among the values not answered until confirmed;
+// «Колони всередині: Можна / Не можна» is «Простір усередині: Колони можна / Без колон»; «Утеплення: Уточнимо» for «Ще не
+// знаю» over the example's sandwich panels.
+export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.5.0';
 
 /**
  * The hangar configuration as a shared inquiry attachment. The text is formatHangarInquiryBrief verbatim and the
@@ -27,8 +37,9 @@ export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.4.1';
  * sizes are labelled as the defaults, and the form keeps its own «Орієнтовні розміри» field, so the lead's «Габарити»
  * is never the example's 24 × 60 × 8 м on the visitor's behalf.
  */
-// A value after «Назва: » goes lower-case — every item of a list «Фундамент + Металокаркас», not just the first — except
-// a place name, which keeps its capital (08.10: «Область: київська область»)
+// A value after «Назва: » goes lower-case — every item of a list joined by « + », not just the first (since 10.10 a list
+// of works is comma-separated and lower-case after its first word already) — except a place name, which keeps its
+// capital (08.10: «Область: київська область»)
 const KEEPS_CASE = new Set(['Область']);
 function inLine(label: string, value: string): string {
   if (KEEPS_CASE.has(label)) return value;
@@ -56,7 +67,13 @@ export function createHangarAttachment(state: ConfiguratorState): InquiryAttachm
   } else {
     if (!chosen.length) title = 'До заявки додано відповіді про об’єкт';
     // the ridge is the sizes' detail, not a line of its own
-    const lines = [...chosen, ...object].filter((row) => row.label !== 'Висота в конику').slice(0, 2).map((row) => {
+    // the sizes, then what the hangar is for — a cold store says more than its gates (10.10, QA: the form's line left
+    // the purpose out) — then the rest in the card's order
+    const ordered = [...chosen, ...object].filter((row) => row.label !== 'Висота в конику');
+    const rank = (label: string) => ['Габарити', 'Призначення'].indexOf(label);
+    const lines = [...ordered].sort((a, b) => (rank(a.label) === -1 ? 9 : rank(a.label)) - (rank(b.label) === -1 ? 9 : rank(b.label))).slice(0, 2).map((row) => {
+      // the purpose and the insulation by their answers, as the stamp says them (10.10): «Утеплення: утеплений» twice
+      if (row.label === 'Утеплення' || row.label === 'Призначення') return row.value;
       if (row.label !== 'Габарити') return `${row.label}: ${inLine(row.label, row.value)}`;
       if (!row.value.startsWith('Ще уточнюються')) return row.value;
       const orientation = row.value.slice('Ще уточнюються'.length).replace(' · орієнтир клієнта', ' · орієнтир');

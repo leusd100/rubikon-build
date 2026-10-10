@@ -6,7 +6,8 @@ import {
   createHangarInquiryBriefSections,
   formatHangarInquiryBrief,
 } from '../../../app/lib/configurator/inquiryBrief';
-import { DEFAULT_CONFIGURATOR_STATE } from '../../../app/lib/configurator/types';
+import { deriveSummary } from '../../../app/lib/configurator/deriveSummary';
+import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 
 /** The labels hold numbers to their units with U+00A0 (04.10); these tests read the words */
 const plain = (text: string) => text.replaceAll('\u00A0', ' ');
@@ -28,7 +29,8 @@ describe('hangar inquiry brief', () => {
     expect(brief.areaSqm).toBe(1500);
     expect(formatted).toContain('Площа забудови: ≈ 1 500 м²');
     expect(formatted).toContain('Утеплення: Утеплений');
-    expect(formatted).toContain('Огородження: Сендвіч-панель');
+    // the surfaces by name (10.10, audit F36)
+    expect(formatted).toContain('Стіни й покрівля: Сендвіч-панель');
     expect(formatted).toContain('Ворота: Двоє стандартних, 4 × 4 м');
   });
 
@@ -54,13 +56,16 @@ describe('hangar inquiry brief', () => {
       expect(row.value).not.toBe('');
       expect(formatted).toContain(`${row.label}: ${row.value}`);
     }
-    // «Основа» is not the visitor's choice on /angary (no control there): it is preliminary, last (04.10)
+    // The foundation is not the visitor's choice on /angary (no control there): it is preliminary, last (04.10) — and it
+    // is «Фундамент: Після розрахунку проєктувальника», not «Основа: Визначити після розрахунку» (10.10, audit F43)
     expect(sections.preliminary.map((row) => row.label)).toEqual([
       'Площа забудови',
       'Попередня конструктивна схема',
-      'Основа',
+      'Фундамент',
     ]);
-    expect(sections.selected.map((row) => row.label)).not.toContain('Основа');
+    expect(sections.preliminary.at(-1)?.value).toBe('Після розрахунку проєктувальника');
+    expect(sections.selected.map((row) => row.label)).not.toContain('Фундамент');
+    expect(formatted).not.toMatch(/Основа|Визначити/);
   });
 });
 
@@ -88,10 +93,12 @@ describe('inquiry brief — Phase 3F.2', () => {
 
     // There is no wall for an opening to be cut into, so quoting one would be quoting work nobody
     // asked for. The lines are absent, not caveated.
-    expect(text).toContain('Обсяг: Фундамент + Металокаркас + Покрівля');
+    expect(text).toContain('Обсяг: Фундамент, каркас, покрівля');
     expect(text).not.toContain('Ворота:');
     expect(text).not.toContain('Двері:');
-    expect(text).toContain('Огородження: Покрівля:');
+    // the one surface asked for names the row (10.10, audit F36: «Огородження: Покрівля: …»)
+    expect(text).toContain('Покрівля: Профнастил');
+    expect(text).not.toContain('Стіни й покрівля');
   });
 });
 
@@ -131,7 +138,7 @@ describe('«Об’єкт» rows (03.10)', () => {
   it('puts the answered questions in their own part, in the order they are asked', () => {
     const brief = createHangarInquiryBrief(deriveDomainModel({
       ...DEFAULT_CONFIGURATOR_STATE,
-      objectProfile: { purpose: 'machinery', project: 'inProgress', region: 'Дніпропетровська область', lifting: 'craneOrHoist' },
+      objectProfile: { purpose: 'machinery', project: 'inProgress', region: 'Дніпропетровська область', lifting: 'craneOrHoist', temperature: 'unknown' },
     }));
     const sections = createHangarInquiryBriefSections(brief);
     expect(sections.object).toEqual([
@@ -148,7 +155,7 @@ describe('«Об’єкт» rows (03.10)', () => {
   it('keeps an answered «Немає» and drops each «Ще не знаю» on its own', () => {
     const rows = createHangarInquiryBriefSections(createHangarInquiryBrief(deriveDomainModel({
       ...DEFAULT_CONFIGURATOR_STATE,
-      objectProfile: { purpose: null, project: 'ready', region: 'unknown', lifting: 'none' },
+      objectProfile: { purpose: null, project: 'ready', region: 'unknown', lifting: 'none', temperature: 'unknown' },
     }))).object;
     expect(rows).toEqual([
       { label: 'Проєкт', value: 'Є' },
@@ -198,7 +205,7 @@ describe('the example’s values are never the visitor’s choice (04.10; 08.10)
       gates: 2,
     })));
     const part = (id: string) => outline.find((section) => section.id === id)?.rows.map((row) => row.label);
-    expect(part('selected')).toEqual(['Габарити', 'Висота в конику', 'Утеплення', 'Огородження', 'Ворота', 'Двері']);
+    expect(part('selected')).toEqual(['Габарити', 'Висота в конику', 'Утеплення', 'Стіни й покрівля', 'Ворота', 'Двері']);
     expect(part('defaults')).toEqual(['Обсяг']);
   });
 
@@ -208,5 +215,43 @@ describe('the example’s values are never the visitor’s choice (04.10; 08.10)
       confirmed: ['envelope'],
     })));
     expect(outline.find((section) => section.id === 'selected')?.rows).toEqual([{ label: 'Утеплення', value: 'Без утеплення' }]);
+  });
+});
+
+// 10.10, audit iteration 4 «Ясно й рівно»: one thing, one name — the stamp (deriveSummary), the card's sections and the text
+// the manager receives say the same words, and none of the retired ones
+describe('one name for each thing across the stamp, the card and the lead (10.10)', () => {
+  const states: Array<Partial<ConfiguratorState>> = [
+    {},
+    { confirmed: ['scope', 'cladding'] },
+    { scopeMode: 'help' },
+    { scopeMode: 'partial' },
+    { scopeMode: 'partial', scope: ['frame', 'roof'], gates: 2, doors: 1, confirmed: ['openings'] },
+    { scopeMode: 'partial', scope: ['foundation', 'walls'], wallSystem: 'sandwich-panel' },
+    { scopeMode: 'partial', scope: ['frame'] },
+    { roofSystem: 'sandwich-panel', dimensions: { width: 12, length: 30, height: 6 } },
+    { internalSupports: 'not-allowed', dimensions: { width: 30, length: 60, height: 8 } },
+  ];
+
+  it.each(states.map((state) => [JSON.stringify(state), state]))('%s', (_name, overrides) => {
+    const domain = deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...overrides });
+    const summary = deriveSummary(domain);
+    const outline = createHangarInquiryBriefOutline(createHangarInquiryBrief(domain));
+    const rows = outline.flatMap((section) => section.rows);
+    const text = formatHangarInquiryBrief(createHangarInquiryBrief(domain));
+
+    // «Обсяг» and the cladding row: the stamp's label and value, in the card and the text alike
+    expect(rows.find((row) => row.label === 'Обсяг')?.value).toBe(summary.scopeSummaryLabel);
+    if (summary.claddingRow) {
+      expect(rows).toContainEqual(summary.claddingRow);
+      expect(text).toContain(`${summary.claddingRow.label}: ${summary.claddingRow.value}`);
+    } else {
+      expect(rows.map((row) => row.label)).not.toContain('Стіни й покрівля');
+    }
+    expect(rows.find((row) => row.label === 'Попередня конструктивна схема')?.value).toBe(summary.structuralVisualizationLabel);
+    for (const row of rows) expect(text).toContain(`${row.label}: ${row.value}`);
+    // the retired words, and one colon after a row's name
+    expect(text).not.toMatch(/Огородження|огороджувальн|Основа|Металокаркас|Металева|опор|обсягом заявки|Визначити/);
+    expect(text).not.toMatch(/^Обсяг: [^:\n]*:/m);
   });
 });

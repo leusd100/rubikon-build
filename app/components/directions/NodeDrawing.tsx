@@ -47,7 +47,8 @@ function SteelJoint() {
       <text className="nd-text" x="1172" y="612">h</text>
       {/* the end plate seen from the beam's end, its holes and their spacing. (Until 05.10 this was «Вид А» with an
           arrow «А» over the joint; the arrow stopped short of the plate and read as a pointer to the weld's circle.) */}
-      <text className="nd-title" x="1430" y="282" textAnchor="middle">Вид з торця</text>
+      {/* «вигляд», as drawings say it (10.10, audit F39) */}
+      <text className="nd-title" x="1430" y="282" textAnchor="middle">Вигляд з торця</text>
       <path className="nd-cut" d="M1300 330H1560V870H1300Z" />
       <path className="nd-hidden" d="M1300 380H1560M1300 410H1560M1300 790H1560M1300 820H1560" />
       <g className="nd-part" data-part="1">

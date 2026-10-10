@@ -57,7 +57,7 @@ test.describe('hangar configurator visual states', () => {
 
   test('(C) full structural frame — no foundation, walls or roof', async ({ page }) => {
     await openConfigurator(page);
-    await dropWorks(page, ['Фундамент', 'Стіни / огороджувальний контур', 'Покрівля']);
+    await dropWorks(page, ['Фундамент', 'Стіни', 'Покрівля']);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-frame-only.png');
   });
 
@@ -76,13 +76,13 @@ test.describe('hangar configurator visual states', () => {
 test.describe('hangar configurator visual states — named build states (A–F)', () => {
   test('(A) foundation only', async ({ page }) => {
     await openConfigurator(page);
-    await dropWorks(page, ['Металокаркас', 'Стіни / огороджувальний контур', 'Покрівля']);
+    await dropWorks(page, ['Каркас', 'Стіни', 'Покрівля']);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-a-foundation-only.png');
   });
 
   test('(B) foundation + frame', async ({ page }) => {
     await openConfigurator(page);
-    await dropWorks(page, ['Стіни / огороджувальний контур', 'Покрівля']);
+    await dropWorks(page, ['Стіни', 'Покрівля']);
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-b-foundation-frame.png');
   });
 

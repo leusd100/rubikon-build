@@ -170,6 +170,9 @@ export type GateLeafMesh = {
   widthM: number;
   heightM: number;
   zM: number;
+  /** The outer face of the wall the opening is cut in (10.10): where the renderer draws the opening's frame — in front
+   *  of the leaf, which hangs `zM − frameZM` behind it */
+  frameZM: number;
   material: MaterialKey;
 };
 
@@ -494,6 +497,7 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       // The door sits a little deeper than a gate: a sectional gate hangs just inside its opening,
       // a personnel door is set back in a frame. Both stay well in front of the recess plane.
       zM: frontFaceZ + (opening.kind === 'door' ? DOOR_LEAF_DEPTH_M : GATE_LEAF_DEPTH_M),
+      frameZM: frontFaceZ,
       material: opening.kind === 'door' ? 'door' : 'gate',
     });
   }

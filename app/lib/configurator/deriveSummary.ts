@@ -1,4 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
+import { formatNumber } from './formatNumber';
 import { objectProfileLabels, type ObjectProfileLabels } from './objectProfile';
 import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M, gateHeightFits, ridgeHeightM } from './parametricModel';
 import {
@@ -19,7 +20,7 @@ export type ConfiguratorSummary = {
   areaLabel: string;
   /** «24 × 60 × 8 м», with no-break spaces: a fixed field of the lead */
   dimensionsLabel: string;
-  /** The brief's one line — «24 × 60 × 8 м · Холодний», the sizes alone when neither walls nor roof are in the request */
+  /** The brief's one line — «24 × 60 × 8 м · Без утеплення», the sizes alone when neither walls nor roof are in the request */
   headlineLabel: string;
   /** «Висота в конику» with the slope it makes — «10,6 м · ухил ≈ 12°» (decimal comma; 03.10: a ridge alone does not
    *  say how steep the roof is). The dimensions label stays width × length × wall height: it is a fixed field of the
@@ -36,6 +37,9 @@ export type ConfiguratorSummary = {
    * than "Профнастил / Профнастил" — and spelled out per-surface only when they genuinely differ.
    */
   claddingSystemLabel: string;
+  /** The cladding as the stamp, the card and the lead name it (10.10, audit F36): the surfaces, not «Огородження» — read
+   *  as a fence beside «Профнастил». `null` with neither walls nor roof in the request. */
+  claddingRow: { label: string; value: string } | null;
   foundationTypeLabel: string;
   /**
    * Phase 3E, brief §19: a real business-relevant configuration fact, same status as
@@ -64,7 +68,8 @@ export type ConfiguratorSummary = {
   openingsLabel: string;
 };
 
-export const OUT_OF_SCOPE_LABEL = 'Поза обсягом заявки';
+// One name for the scope, the step's own (10.10, audit F32): «обсяг заявки» named a section the page does not have
+export const OUT_OF_SCOPE_LABEL = 'Поза обсягом робіт';
 
 /** U+00A0: a number never parts from its unit or from the «×» of a size (04.10: «4×4» and «7.5» broke off «м» at 320–360 px) */
 export const NBSP = '\u00A0';
@@ -72,7 +77,7 @@ export const NBSP = '\u00A0';
 /** Metres with the decimal comma, as the fields, the drawings and the tour print them: 24, 7,5, 2,1 (04.10 — it was
  *  toFixed, so the stamp, the route, the cost note and the lead said «7.5» beside a field reading «7,5») */
 export function formatMeters(value: number): string {
-  return value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+  return formatNumber(value);
 }
 
 /** «24 × 60 × 8 м», «4 × 4 м», «1 × 2,1 м» — one unbreakable piece, spaced «×» everywhere (it was «4×4» beside «24 × 60») */
@@ -112,15 +117,32 @@ function formatCladdingSystemLabel(
 }
 
 /**
- * «Утеплення» (07.10; until then «Контур»): the thermal answer on its own, beside the materials in «Огородження». A
+ * The cladding row (10.10, audit F36): named by the surfaces in the request — «Стіни й покрівля», or the one of them
+ * asked for — so the value never repeats its name («Огородження: Покрівля: Профнастил» would have become «Стіни й
+ * покрівля: Покрівля: …»). Different materials say which is which.
+ */
+function formatCladdingRow(envelope: HangarDomainModel['envelope'], scope: HangarDomainModel['scope']): ConfiguratorSummary['claddingRow'] {
+  const wall = CLADDING_SYSTEM_LABELS[envelope.wallSystem];
+  const roof = CLADDING_SYSTEM_LABELS[envelope.roofSystem];
+  if (!scope.walls && !scope.roof) return null;
+  if (!scope.walls) return { label: 'Покрівля', value: roof };
+  if (!scope.roof) return { label: 'Стіни', value: wall };
+  return { label: 'Стіни й покрівля', value: wall === roof ? wall : `Стіни${NBSP}— ${wall.toLowerCase()}, покрівля${NBSP}— ${roof.toLowerCase()}` };
+}
+
+/**
+ * «Утеплення» (07.10; until then «Контур»): the thermal answer on its own, beside the materials («Стіни й покрівля»). A
  * changed material used to turn it into «Індивідуальна конфігурація», and the visitor could no longer tell which
  * thermal envelope they were asking for. Now: «Утеплений» or «Уточнимо» as answered; «Без утеплення» for a cold
  * building — unless a sandwich panel is asked for, which carries its own insulation, and then it says where.
  * With neither walls nor roof in the request it is «Поза обсягом заявки», as the controls say.
  */
-function formatEnvelopeLabel(envelope: HangarDomainModel['envelope'], scope: HangarDomainModel['scope']): string {
+function formatEnvelopeLabel(envelope: HangarDomainModel['envelope'], scope: HangarDomainModel['scope'], exampleMaterials: boolean): string {
   if (!scope.walls && !scope.roof) return OUT_OF_SCOPE_LABEL;
   if (envelope.walls === 'insulated') return 'Утеплений';
+  // «Ще не знаю» over materials the visitor did not choose — the sandwich panels a cold store's example brings (10.10) —
+  // is still «Уточнимо»: the panels are the example's, said apart in their own row
+  if (envelope.walls === 'undecided' && exampleMaterials) return 'Уточнимо';
   // A sandwich panel carries its insulation whatever was answered: «Ще не знаю» with sandwich walls read «Уточнимо»
   // beside a legend saying «з утеплювачем» (07.10, audit)
   const sandwichWalls = scope.walls && envelope.wallSystem === 'sandwich-panel';
@@ -222,13 +244,13 @@ function heldGatesReason(domain: HangarDomainModel): string {
 }
 
 /** «Обсяг» said as answered, the same words in the stamp and the lead (07.10, audit: «Допоможіть визначити» read
- *  «Фундамент + Металокаркас + …» in the stamp, as if every work had been ordered) */
+ *  «Фундамент + Металокаркас + …» in the stamp, as if every work had been ordered). The mode by its name, and the list
+ *  only when the visitor picked the works (10.10, audit F35): «Комплекс робіт: Фундамент + Металокаркас + …» took two
+ *  lines in the stamp and three in the card, and «Обсяг: Комплекс робіт: …» had two colons in the lead (F43). */
 function formatScopeLabel(domain: HangarDomainModel, ordered: string[]): string {
-  if (domain.scopeMode === 'help') return SCOPE_MODE_LABELS.help;
-  const list = ordered.join(' + ');
-  if (domain.scopeMode === 'full') return `${SCOPE_MODE_LABELS.full}: ${list}`;
-  // under the row label «Обсяг» (04.10: «Обсяг: Обсяг робіт ще не обрано»)
-  return ordered.length ? list : 'Ще не обрано';
+  if (domain.scopeMode !== 'partial') return SCOPE_MODE_LABELS[domain.scopeMode];
+  // under the row label «Обсяг» (04.10: «Обсяг: Обсяг робіт ще не обрано»); a list as a sentence lists: «Фундамент, каркас»
+  return ordered.length ? ordered.map((label, index) => (index ? label.toLowerCase() : label)).join(', ') : 'Ще не обрано';
 }
 
 function formatOpeningsLabel(gatesLabel: string | null, doorsLabel: string | null): string {
@@ -239,10 +261,11 @@ function formatOpeningsLabel(gatesLabel: string | null, doorsLabel: string | nul
 
 function formatStructuralVisualizationDescription(domain: HangarDomainModel): string {
   const roof = domain.structural.roofStructure === 'truss' ? 'ферму' : 'портальну раму';
+  // «колони», as the step asks it, and the picture is a «схема» (10.10, audit F37, F101: «опор», «візуалізації»)
   const supports = domain.structural.scheme === 'centerSupport'
-    ? 'з центральним рядом опор'
-    : 'без внутрішніх опор';
-  return `Для ширини ${formatMeters(domain.dimensions.widthM)}${NBSP}м у попередній візуалізації показано ${roof} ${supports}.`;
+    ? 'з центральним рядом колон'
+    : 'без внутрішніх колон';
+  return `Для ширини ${formatMeters(domain.dimensions.widthM)}${NBSP}м на попередній схемі показано ${roof} ${supports}.`;
 }
 
 /**
@@ -261,11 +284,11 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
   const ridge = formatMeters(ridgeHeightM(widthM, eaveHeightM, domain.roof.pitchDeg));
   const roofSlopeLabel = formatRoofSlope(domain.roof.pitchDeg);
   const dimensionsLabel = formatSize(widthM, lengthM, eaveHeightM);
-  const envelopeLabel = formatEnvelopeLabel(domain.envelope, domain.scope);
+  const envelopeLabel = formatEnvelopeLabel(domain.envelope, domain.scope, domain.exampleTopics.includes('cladding'));
 
   return {
     areaSqm: domain.areaSqm,
-    areaLabel: `≈${NBSP}${domain.areaSqm.toLocaleString('uk-UA')}${NBSP}м²`,
+    areaLabel: `≈${NBSP}${formatNumber(domain.areaSqm, 3)}${NBSP}м²`,
     dimensionsLabel,
     // Without walls and roof there is no envelope to name, and «24 × 60 × 8 м · Поза обсягом заявки» read as if the
     // whole hangar were out of the request (04.10)
@@ -276,6 +299,7 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
     objectProfile: objectProfileLabels(domain.objectProfile),
     envelopeLabel,
     claddingSystemLabel: formatCladdingSystemLabel(domain.envelope, domain.scope),
+    claddingRow: formatCladdingRow(domain.envelope, domain.scope),
     foundationTypeLabel: FOUNDATION_TYPE_LABELS[domain.foundation.type],
     structuralVisualizationLabel: `${ROOF_STRUCTURE_LABELS[domain.structural.roofStructure]} · ${STRUCTURAL_SCHEME_LABELS[domain.structural.scheme]}`,
     structuralVisualizationDescription: formatStructuralVisualizationDescription(domain),

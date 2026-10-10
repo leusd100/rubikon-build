@@ -10,8 +10,12 @@
 .ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
 .ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke .3s ease, opacity .3s ease; }
 .ft-slab { stroke: var(--color-border-strong); stroke-width: calc(1.1px * var(--ft-k)); }
-/* the footings are the designer's: drawn dashed, as «умовно» */
-.ft-footing { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); stroke-dasharray: 4 3; }
+/* The footings are the designer's (10.10): a pad foundation drawn under the ground, its edges dashed as hidden ones are —
+   a finer dash than the 4 3 of the box it replaces, which on the pad's short edges read as dots — and only the
+   pedestal's top, where the column stands, solid at the ground. The ground line has a short hatch under it. */
+.ft-footing { stroke: var(--color-text-muted); stroke-width: calc(.9px * var(--ft-k)); stroke-dasharray: 3 2; }
+.ft-footing-top { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); }
+.ft-ground { stroke: var(--color-border-strong); stroke-width: calc(.8px * var(--ft-k)); }
 .ft-back { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
 /* the end wall's gates and door, outlined as the configurator places them (04.10) */
 .ft-opening { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); }
@@ -35,6 +39,14 @@
 .ft-letter[data-anchor="end"] { text-anchor: end; }
 .ft-letter[data-anchor="start"] { text-anchor: start; }
 .ft-letter { paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(6px * var(--ft-k)); stroke-linejoin: round; }
+/* A dimension's words along its line (10.10, owner: «паралельно розмірних ліній», FrameTour DimText): letter, value and
+   answer on one baseline — on the letter's middle the smaller figures rode high — a gap off the line on its outer side:
+   below it the baseline moves down by the capitals' height, whatever the sheet's size (--ft-k) */
+.ft-dim-text { dominant-baseline: alphabetic; }
+.ft-dim-text[data-side="below"][data-cap="letter"] { transform: translateY(calc(13.7px * var(--ft-k))); }
+.ft-dim-text[data-side="below"][data-cap="value"] { transform: translateY(calc(10.8px * var(--ft-k))); }
+/* A size's value beside its letter, once the visitor gave the sizes (10.10): upright figures, smaller than the letter */
+.ft-value { font-style: normal; font-weight: 600; font-size: calc(15px * var(--ft-k)); font-variant-numeric: tabular-nums; }
 .ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }
 .ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
@@ -56,9 +68,10 @@
 .ft[data-step] :is(.ft-back, .ft-opening) { opacity: .5; }
 /* …and the bubbles and letters of the parts stepped back go: a step's camera cut them at its window's edge into a half
    «H» or a half bubble (04.10). The wind's step, pushed in on the end wall, keeps no axes or dimension lines either. */
-.ft:is([data-step="1"], [data-step="2"], [data-step="3"], [data-step="5"]) .ft-part :is(.ft-bubble, .ft-letter) { opacity: 0; }
+.ft[data-step] .ft-part :is(.ft-bubble, .ft-letter) { opacity: 0; }
 .ft[data-step="1"] [data-part~="1"] :is(.ft-bubble, .ft-letter), .ft[data-step="3"] [data-part~="3"] :is(.ft-bubble, .ft-letter) { opacity: 1; }
-.ft[data-step="5"] .ft-part :is(.ft-axis, .ft-dim) { opacity: 0; }
+/* …and the loads' steps, pushed in on the hangar since 10.10, none of the dimensions either */
+.ft:is([data-step="4"], [data-step="5"]) .ft-part :is(.ft-axis, .ft-dim) { opacity: 0; }
 .ft[data-step="1"] [data-part~="1"], .ft[data-step="2"] [data-part~="2"], .ft[data-step="3"] [data-part~="3"] { opacity: 1; }
 .ft[data-step="1"] [data-part~="1"] path, .ft[data-step="2"] [data-part~="2"] path,
 .ft[data-step="3"] [data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace, .ft-dim, .ft-axis) { stroke: var(--color-accent); }
@@ -70,6 +83,20 @@
 .ft[data-step="1"] [data-part~="1"] .ft-bubble circle, .ft[data-step="3"] [data-part~="3"] .ft-bubble circle { stroke: var(--color-accent); }
 .ft[data-step="1"] [data-part~="1"] .ft-bubble text, .ft[data-step="3"] [data-part~="3"] .ft-bubble text { fill: var(--color-accent-strong); }
 .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { opacity: 1; }
+
+/* The visitor's answer on the columns (10.10), on L outside the hangar (owner: «розмірні лінії об'єднати й винести за
+   межі ангару»): «· без колон» or «· два прольоти по 12 м» in copper after L's value; on the overview L's line drawn
+   over in copper, and with a centre row the row lit. A new answer draws it anew. */
+.ft-answer { fill: var(--color-accent-strong); }
+.ft-clear { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+.ft:not([data-step]) .ft-clear { opacity: 1; }
+.ft-clear-line { stroke: var(--color-accent); stroke-width: calc(1.6px * var(--ft-k)); }
+.ft-clear-row { stroke: var(--color-accent); stroke-width: calc(2.6px * var(--ft-k)); }
+@media (prefers-reduced-motion: no-preference) {
+  .ft-clear :is(.ft-clear-line, .ft-clear-row) { stroke-dasharray: 1; animation: ft-draw .7s var(--ease-premium, ease) both; }
+  .ft-answer { animation: ft-in .4s ease .4s both; }
+}
+@keyframes ft-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* The loads: the frame stays in graphite under them; the lit links glow. Pure picture (aria-hidden), so they never take
    the pointer (09.10, audit F09): drawn after the nodes, the invisible snow and wind layers caught the clicks meant for
@@ -98,6 +125,9 @@
 }
 .ft[data-step="4"] .ft-chain[data-load="snow"], .ft[data-step="5"] .ft-chain[data-load="wind"] { visibility: visible; }
 .ft-chain li:not(:last-child)::after { margin-inline: 6px; color: var(--color-text-muted); content: '→'; }
+/* The drawing's standing remark, where the loads' chains are not (10.10): the footings are drawn «умовно» */
+.ft-remark { margin: 0; color: var(--color-text-muted); font: italic 500 12.5px/1.25 var(--font-manrope), sans-serif; }
+.ft:is([data-step="4"], [data-step="5"]) .ft-remark { visibility: hidden; }
 /* …and in its place, while the first bay leans, the note on the deformation */
 .ft-note { margin: 0; color: var(--color-text-secondary); font: italic 500 12.5px/1.25 var(--font-manrope), sans-serif; opacity: 0; pointer-events: none; }
 /* Reduced motion (04.10): the wind's step stands complete — the leaning bay drawn over the braced frame, and its note
@@ -164,7 +194,7 @@
 @media (max-width: 760px) {
   /* a phone's legend in smaller type and closer to the sheet's edge */
   .ft-legend { padding-inline: 8px; }
-  .ft-chain, .ft-note { font-size: 12px; }
+  .ft-chain, .ft-note, .ft-remark { font-size: 12px; }
   .ft-chain li:not(:last-child)::after { margin-inline: 4px; }
 }
 

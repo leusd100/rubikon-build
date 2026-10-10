@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { buildDoorLeafGeometry, buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from '../../../app/components/configurator/three/envelopePanelGeometry';
+import {
+  buildDoorLeafGeometry,
+  buildEnvelopePanelGeometry,
+  buildGableCladdingOverlay,
+  buildGateLeafGeometry,
+  buildRidgeCapGeometry,
+  gableCourses,
+  gableRibs,
+  inkRibPitchM,
+  profiledRibsM,
+  sandwichCoursesM,
+  sandwichSeamsM,
+} from '../../../app/components/configurator/three/envelopePanelGeometry';
 
 // Real geometric behaviour, not implementation trivia: these tests exist to catch exactly the
 // class of bug hand-rolling this geometry produced during development — a disconnected back face,
@@ -185,19 +197,50 @@ describe('buildGableCladdingOverlay (Phase 3D.1)', () => {
     expect(withTallHole!.geometry.attributes.position.count).toBeLessThan(withoutHole.geometry.attributes.position.count);
   });
 
-  it('sandwich produces far fewer, wider-spaced strips than profiled sheet at the same width', () => {
-    const profiled = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, 'profiled-sheet')!;
-    const sandwich = buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, 'sandwich-panel')!;
-    expect(sandwich.geometry.attributes.position.count).toBeLessThan(profiled.geometry.attributes.position.count);
-    // Sandwich caps are shallower than profiled ribs.
-    expect(sandwich.depthM).toBeLessThan(profiled.depthM);
+  it('a sandwich gable has no overlay: its joints are drawn across it in ink (10.10, owner: the upright caps made a grid)', () => {
+    expect(buildGableCladdingOverlay(WIDTH, EAVE, RIDGE, noHoles, 'sandwich-panel')).toBeNull();
+    const courses = gableCourses(WIDTH, EAVE, RIDGE, [gateHole]);
+    expect(courses.length).toBeGreaterThan(0);
+    // inside the pentagon: above the eave a course narrows towards the ridge
+    for (const { x0, x1, y } of courses) {
+      expect(x0).toBeGreaterThanOrEqual(0);
+      expect(x1).toBeLessThanOrEqual(WIDTH);
+      if (y > EAVE) expect(x1 - x0).toBeLessThan(WIDTH);
+    }
+    // broken at the gate: no course under the gate's head runs across it
+    expect(courses.filter(({ y }) => y < 5).every(({ x0, x1 }) => x1 <= 10 || x0 >= 15)).toBe(true);
+  });
+
+  it('draws a profiled gable’s ribs upright, from an opening’s head to the roofline', () => {
+    const ribs = gableRibs(WIDTH, EAVE, RIDGE, [gateHole], inkRibPitchM(60));
+    expect(ribs.length).toBeGreaterThan(10);
+    for (const { x, y0, y1 } of ribs) {
+      expect(y1).toBeGreaterThan(y0);
+      if (x > 10 && x < 15) expect(y0).toBe(5);
+    }
+  });
+
+  it('places a sandwich roof’s seams a panel apart across a bay, none on a bay too narrow for one', () => {
+    const seams = sandwichSeamsM(6);
+    expect(seams.length).toBeGreaterThan(3);
+    for (const [index, x] of seams.entries()) expect(x).toBeCloseTo(((index + 1) * 6) / (seams.length + 1));
+    expect(sandwichSeamsM(0.5)).toEqual([]);
+  });
+
+  it('draws the ribs a step that stays a texture: every third at least, wider on a long building', () => {
+    expect(inkRibPitchM(24)).toBeCloseTo(0.6);
+    expect(inkRibPitchM(120)).toBeGreaterThan(0.6);
+    const ribs = profiledRibsM(6, 0.6);
+    expect(ribs).toHaveLength(9);
+    expect(ribs[0]).toBeCloseTo(0.6);
+    expect(sandwichCoursesM(8)).toEqual([1.15, 2.3, 3.45, 4.6, 5.75, 6.9].map((y) => expect.closeTo(y, 5)));
   });
 
   it('has no NaN/Infinity vertices, including a rib straddling the exact ridge peak (width/2)', () => {
     // A width chosen so a rib period lands exactly on the peak, the one case the roofline's slope
     // discontinuity could produce a bad value if the two linear halves were not both sampled.
     const w = 24;
-    for (const system of ['profiled-sheet', 'sandwich-panel'] as const) {
+    for (const system of ['profiled-sheet'] as const) {
       const result = buildGableCladdingOverlay(w, EAVE, RIDGE, noHoles, system);
       expect(result).not.toBeNull();
       const arr = result!.geometry.attributes.position.array;

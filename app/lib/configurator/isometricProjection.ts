@@ -1,4 +1,5 @@
 import type { ScenePrimitive, TechnicalSceneModel, Vec3 } from './technicalSceneModel';
+import { formatNumber } from './formatNumber';
 import { projectToView } from './viewProjection';
 import type { EnvelopeChoice } from './types';
 
@@ -99,10 +100,6 @@ export type DimensionGuide = {
   derived: boolean;
   /** The label's type size in drawing units: the stylesheet's size times the drawing's label scale */
   fontPx: number;
-  /** The ridge chain's extension line (09.10, audit F72): from the front gable's apex, in the gable's plane, to the
-   *  point over the corner the chain hangs off — so its top tick is read against the ridge, as the eave chain's is
-   *  against the eave corner. The other guides measure from a corner of their own and have none. */
-  extension?: [Point, Point];
 };
 
 /** Font sizes the stylesheet gives dimension labels, mirrored here only to estimate extents. */
@@ -126,7 +123,7 @@ const FOUNDATION_CLEARANCE_PX = 10;
 function formatMetres(value: number): string {
   // Ukrainian decimal comma, matching the control panel's own readouts — the drawing and the
   // fields must not print the same number two different ways.
-  return value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+  return formatNumber(value);
 }
 
 /**
@@ -343,13 +340,10 @@ export function projectIsometricScene(scene: TechnicalSceneModel, labelScale = 1
     // Both height chains hang off the same corner — the one the width edge ends at, which the
     // camera basis puts on the outside of the drawing.
     eave: eaveGuide,
-    // The ridge chain hangs off the same corner, where there is no ridge: its top tick stood 30–36 px above the apex on
-    // a 1440 px screen, level with nothing (09.10, audit F72). A dashed extension line from the apex to over that
-    // corner ties it to the ridge, as the eave corner itself ties the eave chain — no words added to either label.
-    ridge: {
-      ...heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, ridgeOffset, true, labelScale),
-      extension: [project({ x: widthM / 2, y: ridgeHeightM, z: 0 }), project({ x: widthM, y: ridgeHeightM, z: 0 })],
-    } satisfies DimensionGuide,
+    // The ridge chain hangs off the same corner. The dashed extension line from the apex to over that corner (09.10,
+    // audit F72) is gone (10.10, owner: «зайвий артефакт»); /angary's general view notes the ridge at the apex itself
+    // (generalViewGeometry.ts), and this view stays on the research screen only.
+    ridge: heightGuide({ x: widthM, y: 0, z: 0 }, centroid, ridgeHeightM, ridgeOffset, true, labelScale),
   };
 
   const allPoints = [
