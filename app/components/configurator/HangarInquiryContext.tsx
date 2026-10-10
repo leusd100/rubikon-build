@@ -8,7 +8,7 @@ import {
   type HangarAttachmentState,
 } from '../../lib/configurator/attachmentContract';
 import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
-import { clearDraft, readDraft, saveDraft } from '../../lib/configurator/draft';
+import { clearDraft, readDraft, saveDraft, type HangarDraft } from '../../lib/configurator/draft';
 import { createHangarAttachment } from '../../lib/configurator/hangarAttachment';
 import { useInquiryAttachmentSource } from '../inquiry/InquiryAttachmentProvider';
 import {
@@ -36,6 +36,9 @@ type HangarInquiryContextValue = {
   restored: boolean;
   /** Back to the page's example, the draft forgotten */
   startOver: () => void;
+  /** «Почати заново» was pressed and nothing changed since: the visitor's configuration can be had back (10.10) */
+  canUndoStartOver: boolean;
+  undoStartOver: () => void;
 };
 
 const HangarInquiryContext = createContext<HangarInquiryContextValue | null>(null);
@@ -47,6 +50,9 @@ type HangarInquiryState = {
   presentationAnnouncement: string;
   step: number;
   restored: boolean;
+  /** What «Почати заново» put away (10.10, audit F64): one press threw a restored draft away for good. Kept until the
+   *  visitor changes something — the configuration or the brief — or opens another step; in this tab only. */
+  startedOver: HangarDraft | null;
 };
 
 type HangarInquiryAction =
@@ -57,7 +63,8 @@ type HangarInquiryAction =
   | { type: 'end-presentation' }
   | { type: 'step'; step: number }
   | { type: 'restore'; configuration: ConfiguratorState; attached: boolean; step: number }
-  | { type: 'start-over' };
+  | { type: 'start-over' }
+  | { type: 'undo-start-over' };
 
 const INITIAL_HANGAR_INQUIRY_STATE: HangarInquiryState = {
   configuration: DEFAULT_CONFIGURATOR_STATE,
@@ -66,6 +73,7 @@ const INITIAL_HANGAR_INQUIRY_STATE: HangarInquiryState = {
   presentationAnnouncement: '',
   step: 0,
   restored: false,
+  startedOver: null,
 };
 
 /** Back to the visitor's own variant: a presentation ends without touching what they chose */
@@ -96,6 +104,7 @@ function applyBusinessEdit(current: HangarInquiryState, configuration: Configura
   return {
     ...current,
     configuration,
+    startedOver: null,
     attachment: transitionHangarAttachment(current.attachment, { type: 'business-edit' }),
     presentationDemo: null,
     presentationAnnouncement: current.presentationDemo
@@ -107,7 +116,7 @@ function applyBusinessEdit(current: HangarInquiryState, configuration: Configura
 function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryAction): HangarInquiryState {
   switch (action.type) {
     case 'step':
-      return current.step === action.step ? current : { ...current, step: action.step };
+      return current.step === action.step ? current : { ...current, step: action.step, startedOver: null };
     case 'restore':
       return {
         ...current,
@@ -117,7 +126,13 @@ function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryA
         restored: true,
       };
     case 'start-over':
-      return { ...INITIAL_HANGAR_INQUIRY_STATE };
+      return {
+        ...INITIAL_HANGAR_INQUIRY_STATE,
+        startedOver: { configuration: current.configuration, attached: current.attachment.status === 'attached', step: current.step },
+      };
+    case 'undo-start-over':
+      // as the draft was read back: restored, with the line to start again
+      return current.startedOver ? reduceHangarInquiry({ ...current, startedOver: null }, { type: 'restore', ...current.startedOver }) : current;
     case 'business-edit':
       return applyBusinessEdit(current, action.configuration);
     case 'toggle-presentation':
@@ -127,6 +142,8 @@ function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryA
     default:
       return {
         ...current,
+        // attached or detached by hand, the example is what the visitor works on now
+        startedOver: null,
         attachment: transitionHangarAttachment(current.attachment, {
           type: action.type,
         }),
@@ -185,6 +202,8 @@ export function HangarInquiryProvider({ children }: { children: ReactNode }) {
         clearDraft();
         dispatch({ type: 'start-over' });
       },
+      canUndoStartOver: model.startedOver !== null,
+      undoStartOver: () => dispatch({ type: 'undo-start-over' }),
     }),
     [model, detachConfiguration],
   );

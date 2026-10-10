@@ -407,10 +407,12 @@ export function HangarPreviewModes({
           imageClassName={`hc-preview-image${effectiveMode === 'frame' ? ' hc-frame-image' : ''}`}
           imageRef={drawingRef}
           cells={sheetCells}
-          // shown only by the phone's mini drawing (configurator-sheet.css)
+          // shown only by the phone's mini drawing (configurator-sheet.css). Its words are its state, said once (10.10,
+          // audit F131): with aria-expanded as well, a screen reader heard «Згорнути, розгорнуто».
           action={(
-            <button type="button" className="hc-mini-toggle" aria-expanded={!miniFolded} onClick={toggleMiniFold}>
-              {/* the picture is «креслення» everywhere (10.10, audit F101: «ескіз» here only) */}
+            <button type="button" className="hc-mini-toggle" onClick={toggleMiniFold}>
+              {/* the picture is «креслення» everywhere (10.10, audit F101: «ескіз» here only); the changing words are its only
+                  state signal (audit F131) */}
               {miniFolded ? 'Показати креслення' : 'Згорнути'}
             </button>
           )}

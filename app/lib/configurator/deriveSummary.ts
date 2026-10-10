@@ -1,4 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
+import { formatNumber } from './formatNumber';
 import { objectProfileLabels, type ObjectProfileLabels } from './objectProfile';
 import { DOOR_DIMENSIONS_M, GATE_DIMENSIONS_M, gateHeightFits, ridgeHeightM } from './parametricModel';
 import {
@@ -76,7 +77,7 @@ export const NBSP = '\u00A0';
 /** Metres with the decimal comma, as the fields, the drawings and the tour print them: 24, 7,5, 2,1 (04.10 — it was
  *  toFixed, so the stamp, the route, the cost note and the lead said «7.5» beside a field reading «7,5») */
 export function formatMeters(value: number): string {
-  return value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+  return formatNumber(value);
 }
 
 /** «24 × 60 × 8 м», «4 × 4 м», «1 × 2,1 м» — one unbreakable piece, spaced «×» everywhere (it was «4×4» beside «24 × 60») */
@@ -284,7 +285,7 @@ export function deriveSummary(domain: HangarDomainModel): ConfiguratorSummary {
 
   return {
     areaSqm: domain.areaSqm,
-    areaLabel: `≈${NBSP}${domain.areaSqm.toLocaleString('uk-UA')}${NBSP}м²`,
+    areaLabel: `≈${NBSP}${formatNumber(domain.areaSqm, 3)}${NBSP}м²`,
     dimensionsLabel,
     // Without walls and roof there is no envelope to name, and «24 × 60 × 8 м · Поза обсягом заявки» read as if the
     // whole hangar were out of the request (04.10)

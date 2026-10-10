@@ -1,4 +1,5 @@
 import type { ScenePrimitive, TechnicalSceneModel, Vec3 } from './technicalSceneModel';
+import { formatNumber } from './formatNumber';
 import { projectToView } from './viewProjection';
 import type { EnvelopeChoice } from './types';
 
@@ -126,7 +127,7 @@ const FOUNDATION_CLEARANCE_PX = 10;
 function formatMetres(value: number): string {
   // Ukrainian decimal comma, matching the control panel's own readouts — the drawing and the
   // fields must not print the same number two different ways.
-  return value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+  return formatNumber(value);
 }
 
 /**

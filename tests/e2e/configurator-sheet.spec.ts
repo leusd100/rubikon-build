@@ -243,7 +243,8 @@ test('on a phone the mini drawing reads its sizes in one readout, and nothing un
   await expect(sheet.locator('.sheet-cell-main')).toBeHidden();
   const fold = sheet.getByRole('button', { name: 'Згорнути', exact: true });
   await expect(fold).toBeVisible();
-  await expect(fold).toHaveAttribute('aria-expanded', 'true');
+  // its words are its state, said once (10.10, audit F131): no aria-expanded besides them
+  await expect(fold).not.toHaveAttribute('aria-expanded');
   expect(await targetHeight(fold)).toBeGreaterThanOrEqual(44);
 
   // The readout is live
@@ -284,12 +285,12 @@ test('on a phone the mini drawing folds to its sizes’ line and back, and says 
   const fold = sheet.getByRole('button', { name: 'Згорнути', exact: true });
   await fold.click();
   const show = sheet.getByRole('button', { name: 'Показати креслення', exact: true });
-  await expect(show).toHaveAttribute('aria-expanded', 'false');
+  await expect(show).not.toHaveAttribute('aria-expanded');
   await expect(pictureOf(page)).toBeHidden();
   await expect(readout).toBeVisible();
   expect((await sheet.boundingBox())!.height).toBeLessThan(100);
   await show.click();
-  await expect(sheet.getByRole('button', { name: 'Згорнути', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await expect(sheet.getByRole('button', { name: 'Згорнути', exact: true })).not.toHaveAttribute('aria-expanded');
   await expect(pictureOf(page)).toBeVisible();
 
   // Back in its own place the whole sheet has no fold

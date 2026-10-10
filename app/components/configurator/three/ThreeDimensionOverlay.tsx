@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { formatNumber } from '../../../lib/configurator/formatNumber';
 
 // Phase 3B — minimal technical overlay for the 3D view (brief §27).
 //
@@ -25,7 +26,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 function formatMetres(value: number): string {
   const rounded = Math.round(value * 10) / 10;
-  return new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 1 }).format(rounded);
+  return formatNumber(rounded);
 }
 
 export function ThreeDimensionOverlay({
@@ -97,10 +98,11 @@ export function ThreeDimensionOverlay({
           </div>
         </dl>
       )}
+      {/* Its words are its state, said once (10.10, audit F131): pressed as well, «Показати розміри» was read as a
+          toggle not pressed — which of the two meant the sizes were shown? */}
       <button
         type="button"
         className="hc-three-overlay-toggle"
-        aria-pressed={visible}
         ref={visible ? undefined : (bandRef as React.RefObject<HTMLButtonElement>)}
         onClick={() => setVisible((v) => !v)}
       >
