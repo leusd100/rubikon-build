@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { FRAME_TOUR_DURATIONS, FrameTourStage, frameNodes, useFrameTourModel } from '../angary/FrameTour';
 import { TourControl } from '../directions/TourParts';
@@ -28,6 +28,17 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
 
   const caption = node ? `${node.title} · схема` : captions[step];
   useEffect(() => onCaption(caption), [caption, onCaption]);
+
+  // The columns' answer is shown on the whole frame (10.10, owner: «Не працює "Потрібен простір без колон усередині?"»):
+  // a new answer brings the drawing back to it from whatever item was open, so the visitor sees what the answer did
+  const answer = g.clear.answer;
+  const shownAnswer = useRef(answer);
+  useEffect(() => {
+    if (shownAnswer.current === answer) return;
+    shownAnswer.current = answer;
+    setNodeId(null);
+    choose(0);
+  }, [answer, choose]);
 
   // The step's panel: the controls render it with every step, so it is on the page before this view opens (never on the
   // server: the sizes' step is the first)

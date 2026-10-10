@@ -13,7 +13,7 @@ import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { TourProgress } from '../directions/TourParts';
 import { keepShortWords } from '../../lib/typography';
 import {
-  AX, DIR, around, crosses, overlaps, roofHeight, roofMembersAt, union, unit, within, type Box, type P3, type Pt, type Segment,
+  DIR, around, crosses, overlaps, roofHeight, roofMembersAt, union, unit, within, type Box, type P3, type Pt, type Segment,
 } from './dimetric';
 import { endWallFraming, sheetOpenings } from './endWallFraming';
 import './frame-tour.css';
@@ -46,8 +46,9 @@ const BAYS = 3;
 const WIND = 5.5;
 /** The span's dimension line: below the footings (1.1 m deep in the drawing), m */
 const DIM_Z = -2.6;
-/** The frame spacing's dimension line: out from the side wall, m */
-const DIM_A = 1.8;
+/** The frame spacing's dimension line: out from the side wall, m — 3 m since 10.10 (owner: «a трохи далі відвести»; at
+ *  1.8 m it stood among the side wall's footings) */
+const DIM_A = 3;
 /** How far the first bay leans in the racking ghost, in bays — enlarged, as the note on the sheet says (03.10) */
 const LEAN = 0.3;
 /** The labels at their largest — a phone's (--ft-t 1.5 for the names, --ft-k 1.55 for the letters and bubbles), in the
@@ -120,12 +121,13 @@ function segmentsCross([[ax, ay], [bx, by]]: Segment, [[cx, cy], [dx, dy]]: Segm
 const RING: readonly Pt[] = [40, 60, 84, 112].flatMap((r) => [[1, -1], [-1, -1], [1, 0], [-1, 0], [1, 1], [-1, 1], [0.5, -1], [-0.5, -1]]
   .map(([dx, dy]) => [Math.round(r * dx / Math.hypot(dx, dy)), Math.round(r * dy / Math.hypot(dx, dy))] as Pt));
 
-function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt[] }[], view: Box, taken: Box[], lines: Segment[], bars: readonly Segment[] = [], others: readonly Segment[] = []): Tag {
+function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt[] }[], view: Box, taken: Box[], lines: Segment[], bars: readonly Segment[] = [], others: readonly Segment[] = [], ring = true): Tag {
   const words = label.split(' ');
   const layouts = words.length > 1 ? [[label], [words[0], words.slice(1).join(' ')]] : [[label]];
   // With lit members to keep off (the «Прогони й в’язі» step), a name may go further out on a longer leader (10.10, owner:
   // there «текст налазить», on «Ферма» it only adds to the drawing and stays clear)
-  const reach = (leaders: readonly Pt[]) => (bars.length ? [...leaders, ...RING] : leaders);
+  // with `ring` off, only the name's own ways: a name the owner wants in one place (10.10, «прогони» above the roof)
+  const reach = (leaders: readonly Pt[]) => (bars.length && ring ? [...leaders, ...RING] : leaders);
   const options = layouts.flatMap((rows) => ways.flatMap(({ from: [x, y], leaders }) => reach(leaders).map(([dx, dy]) => {
     const anchor = dx < 0 ? 'end' as const : 'start' as const;
     const [tx, ty] = [x + dx + (dx < 0 ? -4 : 4), y + dy + 5];
@@ -168,21 +170,6 @@ function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt
   return { label: chosen.label, lines: chosen.rows, d: chosen.d, x: chosen.x, y: chosen.y, anchor: chosen.anchor, box: chosen.box };
 }
 
-/** The numbered bubbles stand off the frame spacing's line, past its letter; where the bays come too close on the sheet
- *  for two bubbles side by side, a bubble moves further out along its axis until it is clear */
-const BUBBLE_OUT = 54 + BUBBLE;
-function bayBubblesOut(frames: readonly number[], s: number, k: number) {
-  return frames.reduce<number[]>((outs, _, index) => {
-    const clear = (out: number) => outs.every((other, j) => Math.hypot(
-      0.5 * s * k * DIR[0] * (index - j) + (out - other) * AX[0],
-      0.5 * s * k * DIR[1] * (index - j) + (out - other) * AX[1],
-    ) >= 2 * BUBBLE + 10);
-    let out = BUBBLE_OUT;
-    while (!clear(out)) out += 4;
-    return [...outs, out];
-  }, []);
-}
-
 function frameGeometry(domain: HangarDomainModel) {
   const { widthM: W, lengthM, eaveHeightM: E } = domain.dimensions;
   const R = ridgeHeightM(W, E, domain.roof.pitchDeg);
@@ -212,9 +199,9 @@ function frameGeometry(domain: HangarDomainModel) {
   const frames = Array.from({ length: bays + 1 }, (_, index) => index * s);
 
   // Fit the frame with its footings, dimensions and the wind arrows into the sheet: room on top for the snow arrows,
-  // under the span's dimension for its axes' bubbles, and right of the frame spacing's for theirs. The frames' bubbles
-  // are no longer drawn (09.10, below), but their room stays: it sets the scale of all five cameras and the overview
-  // tuned on 07.10, and is taken out only with a pass over every step's picture.
+  // under the span's dimension for its axes' bubbles, and right of the frame spacing's for its letter. The room right of
+  // it for the frames' bubbles, no longer drawn since 09.10, is gone (10.10): it kept the hangar off to the left and
+  // small in the snow's and the wind's windows (owner: «так далеко можна не віддаляти», «відцентрувати… наш об'єкт»).
   const extremes: P3[] = [
     [-0.9, -0.75, -1.1], [-3.6, 0, E / 2], [0, 0, DIM_Z], [W, 0, DIM_Z],
     [W * 0.2, -WIND, E * 0.25], [W * 0.8, -WIND, E * 0.25],
@@ -224,7 +211,6 @@ function frameGeometry(domain: HangarDomainModel) {
   const raw = extremes.map(unit);
   const [minX, maxX] = [Math.min(...raw.map(([x]) => x)), Math.max(...raw.map(([x]) => x))];
   const [minY, maxY] = [Math.min(...raw.map(([, y]) => y)), Math.max(...raw.map(([, y]) => y))];
-  const bubblesOut = (k: number) => bayBubblesOut(frames, s, k);
   const fit = (reach: number) => {
     const pad = { left: 22, right: 22 + reach, top: 32, bottom: 10 + BUBBLE_DOWN + BUBBLE };
     const k = Math.min((VIEW.width - pad.left - pad.right) / (maxX - minX), (VIEW.height - pad.top - pad.bottom) / (maxY - minY));
@@ -234,11 +220,7 @@ function frameGeometry(domain: HangarDomainModel) {
       oy: pad.top + (VIEW.height - pad.top - pad.bottom - (maxY - minY) * k) / 2 - minY * k,
     };
   };
-  // the bubbles' reach depends on the scale, the scale on their reach: twice round settles it
-  let placed = fit(BUBBLE_OUT + BUBBLE);
-  placed = fit(Math.max(...bubblesOut(placed.k)) + BUBBLE);
-  placed = fit(Math.max(...bubblesOut(placed.k)) + BUBBLE);
-  const { k, ox, oy } = placed;
+  const { k, ox, oy } = fit(LETTER_GAP + LETTER * 0.72);
   const xy = (point: P3) => { const [x, y] = unit(point); return [ox + x * k, oy + y * k] as const; };
   const p = (point: P3) => xy(point).map(n).join(',');
   const line = (...points: P3[]) => `M${points.map(p).join('L')}`;
@@ -342,7 +324,10 @@ function frameGeometry(domain: HangarDomainModel) {
   // H had flat ticks and no lower extension line, a stood off past its line's end, L beside Б's bubble.
   const tickAt = ([x, y]: Pt) => `M${n(x - 4)},${n(y + 4)}l8,-8`;
   const tick = (point: P3) => tickAt(xy(point));
-  const spanDim = `${line([0, 0, DIM_Z], [W, 0, DIM_Z])}${tick([0, 0, DIM_Z])}${tick([W, 0, DIM_Z])}`;
+  // L between the outer columns' axes, with their extension lines down from under the footings (10.10, owner: «розмірні
+  // лінії мають міряти між центрами крайніх колон») — off step 1 the axes are not drawn, and L hung free under the frame
+  const spanDim = `${line([0, 0, DIM_Z], [W, 0, DIM_Z])}${tick([0, 0, DIM_Z])}${tick([W, 0, DIM_Z])}`
+    + `${line([0, 0, -1.3], [0, 0, DIM_Z - 0.4])}${line([W, 0, -1.3], [W, 0, DIM_Z - 0.4])}`;
   const [hx, hy] = xy([-2.2, 0, 0]);
   const [, hty] = xy([-2.2, 0, E]);
   const heightDim = `M${n(hx)},${n(hy)}V${n(hty)}${tickAt([hx, hy])}${tickAt([hx, hty])}`
@@ -386,7 +371,8 @@ function frameGeometry(domain: HangarDomainModel) {
   const bubbleBoxes = spanBubbles.map(({ at }) => around(at, BUBBLE + 2));
   const letterBoxes = [letterBox(letters.L), letterBox(letters.H, 'end'), letterBox(letters.a, 'start', true)];
   const dimLines: Segment[] = [
-    segment([0, 0, DIM_Z], [W, 0, DIM_Z]), segment([W + DIM_A, 0, 0], [W + DIM_A, s, 0]), [[hx, hy], [hx, hty]], segment([-0.9, 0, E], [-2.6, 0, E]),
+    segment([0, 0, DIM_Z], [W, 0, DIM_Z]), segment([0, 0, -1.3], [0, 0, DIM_Z - 0.4]), segment([W, 0, -1.3], [W, 0, DIM_Z - 0.4]),
+    segment([W + DIM_A, 0, 0], [W + DIM_A, s, 0]), [[hx, hy], [hx, hty]], segment([-0.9, 0, E], [-2.6, 0, E]),
     segment([-0.9, 0, 0], [-2.6, 0, 0]), segment([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0]), segment([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0]),
   ];
 
@@ -503,7 +489,6 @@ function frameGeometry(domain: HangarDomainModel) {
     letterBox(letters.a, 'start', true),
   ]);
   const baysBase = camera(baysFocus, 1.5, baysEssentials);
-  const topPurlin = Math.max(...purlinXs);
   const sideWall = [1.6, 2.2, 2.8].filter((t) => t * s < end);
   // the end wall's wall purlins, from the right, the lower first, each at its middle: where a name can sit on one
   // without crossing a post's footing; the short pieces beside a gate last
@@ -519,7 +504,12 @@ function frameGeometry(domain: HangarDomainModel) {
   const greyLines = [...segmentsOf(`${backFrames}${longitudinals}${farEnd}${columnsAt(0)}${roofAt(0)}`), ...dimLines];
   const baysTags = [
     placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, bayTaken, bayLines, bars, greyLines),
-    placeTag('прогони', [1.5, 1.2, 1.9].map((t) => ({ from: xy([topPurlin, s * t, roofZ(topPurlin)]), leaders: [[22, -26], [28, -12], [12, -36]] as Pt[] })), baysBase.view, bayTaken, bayLines, bars, greyLines),
+    // up from a purlin, over the roof where the picture is free (10.10, owner: «"прогони" краще показати зверху де є
+    // вільне місце» — the ring had put it under the side wall, among the other names)
+    placeTag('прогони', [...purlinXs].filter((x) => x > W / 2).reverse().flatMap((x) => [1.5, 1.2, 1.9, 2.3].filter((t) => t * s < end).map((t) => ({
+      from: xy([x, s * t, roofZ(x)]),
+      leaders: [[0, -44], [16, -42], [-16, -42], [10, -60], [-10, -60], [26, -34], [0, -78], [22, -74]] as Pt[],
+    }))), baysBase.view, bayTaken, bayLines, bars, greyLines, false),
     // on a wall purlin of the end wall, the name above or below it; else out from the side wall's
     placeTag('стінові прогони', [
       ...bands.map(({ z, from, to }) => ({ from: xy([(from + to) / 2, 0, z]), leaders: [[-14, -20], [14, -20], [-14, 22], [14, 22]] as Pt[] })),
@@ -550,11 +540,37 @@ function frameGeometry(domain: HangarDomainModel) {
     [overviewBox[0] - 10, overviewBox[1] - 10, overviewBox[2] + 10, overviewBox[3] + 10],
   );
 
-  // the wind's window holds its whole path, down to the ground under the footings, and the leaning bay
-  const windCamera = camera(xy([W * 0.62, -1.2, E * 0.45]), 1.15, union([
+  // The loads' windows (10.10, owner): the hangar itself — its frames, down to the footings — held whole and centred,
+  // pushed in as far as that allows. Snow was the whole picture (zoom 1), its dimensions' room round it and the hangar
+  // small in it («так далеко можна не віддаляти»); the wind's window was kept inside the picture with the hangar high and
+  // off to one side («відцентрувати по центру сцени наш об'єкт»).
+  const building = pointsBox([[0, 0, 0], [W, 0, 0], [0, 0, E], [W / 2, 0, R], [W, 0, E], [0, end, E], [W / 2, end, R], [W, end, E], [W, end, 0],
+    [-0.75, -0.75, -1.1], [W + 0.75, -0.75, -1.1], [W + 0.75, end, -1.1]]);
+  const centred = (box: Box) => camera([(box[0] + box[2]) / 2, (box[1] + box[3]) / 2], 2, box);
+  const snowCamera = centred(union([
+    building,
+    ...[0.72, 1.28].flatMap((t) => [0.17, 0.38, 0.62, 0.83].map((f) => { const [ax, ay] = xy([W * f, t * s, roofZ(W * f)]); return around([ax, ay - 26], 4); })),
+    ...columnXs.map((x) => around(down([x, s, -1.1], 6), 18, 6)),
+  ]));
+  // the wind's: its whole path too, the arrows in front of the end wall, the ground under the footings and the leaning bay
+  const windCamera = centred(union([
+    building,
     pointsBox([[W * 0.2, -WIND, E * 0.25], [W * 0.8, -WIND, E * 0.25], [0, 0, R], [W / 2, s * (1 + LEAN), R + 0.3], [W, s * (1 + LEAN), E]]),
     ...braceBases.map(([x, d]) => around(down([x, d, -1.1], 6), 18, 6)),
   ]));
+
+  // The visitor's answer on the columns (10.10, owner: «Не працює "Потрібен простір без колон усередині?"» — the click
+  // took, but the drawing hardly changed: the end wall's posts stand in front either way and read as columns). Once
+  // answered, the overview says it on the floor between the frames, in copper: the clear width between the outer
+  // columns' axes, «без колон», or with a centre row its two widths and the row itself lit.
+  const clearD = bays > 1 ? 1.5 * s : s / 2;
+  const clearSpans: Pt[] = centre ? [[0, W / 2], [W / 2, W]] : [[0, W]];
+  const clearLine = clearSpans.map(([a, b]) => `${line([a, clearD, 0], [b, clearD, 0])}${groundTick([a, clearD, 0])}${groundTick([b, clearD, 0])}`).join('');
+  const clearLabels = clearSpans.map(([a, b]) => {
+    const [x, y] = xy([(a + b) / 2, clearD, 0]);
+    return { text: centre ? metres(b - a) : `${metres(b - a)} без колон`, x, y: y - 10 };
+  });
+  const centreRow = centre ? frames.map((d) => line([W / 2, d, 0], [W / 2, d, E])).join('') : '';
 
   return {
     W, lengthM, E, truss, centre,
@@ -570,7 +586,8 @@ function frameGeometry(domain: HangarDomainModel) {
     windArrows, endWall, braceFootings, windGround: groundUnder(braceBases.map(([x, d]) => [x, d, -1.1] as P3)), windFlow, ghost,
     tags: { frame: frameTags, bays: baysTags },
     nodePoints,
-    cameras: { span: shot(spanCamera), frame: shot(frameCamera), bays: shot(baysCamera), wind: shot(windCamera), overview: shot(overviewCamera) },
+    clear: { answer: domain.internalSupports, answered: domain.internalSupports !== 'unknown', line: clearLine, labels: clearLabels, centreRow },
+    cameras: { span: shot(spanCamera), frame: shot(frameCamera), bays: shot(baysCamera), snow: shot(snowCamera), wind: shot(windCamera), overview: shot(overviewCamera) },
   };
 }
 
@@ -630,9 +647,7 @@ export function useFrameTourModel() {
       title: 'Сніг на покрівлі',
       text: keepMarks(`Сніг тисне на покрівлю. Кожна ${g.truss ? 'ферма' : 'рама'} збирає його зі своєї смуги — по половині кроку з обох боків: прогони передають навантаження на ${g.truss ? 'ферму' : 'раму'}, вона — на колони, колони — на фундаменти, а ті — у ґрунт.`),
       caption: 'Шлях навантаження від снігу',
-      // the whole frame: no push-in
-      focus: [VIEW.width / 2, VIEW.height / 2],
-      zoom: 1,
+      ...g.cameras.snow,
     },
     {
       title: 'Вітер у торець',
@@ -782,6 +797,14 @@ export function FrameTourStage({
                 <g className="ft-part" data-part="2">
                   <path className="ft-member" pathLength={1} d={g.frontRoof} />
                 </g>
+                {/* the visitor's answer on the columns, on the overview only; keyed by it, so a new answer draws anew */}
+                {g.clear.answered && (
+                  <g key={`${g.clear.answer}-${g.centre}`} className="ft-clear" aria-hidden="true">
+                    {g.clear.centreRow && <path className="ft-clear-row" pathLength={1} d={g.clear.centreRow} />}
+                    <path className="ft-clear-line" pathLength={1} d={g.clear.line} />
+                    {g.clear.labels.map(({ text, x, y }) => <text key={`${text}-${n(x)}`} className="ft-clear-label" x={n(x)} y={n(y)}>{text}</text>)}
+                  </g>
+                )}
 
                 {/* the members named, for the frame and the bays */}
                 {([['2', g.tags.frame], ['3', g.tags.bays]] as const).map(([part, list]) => (

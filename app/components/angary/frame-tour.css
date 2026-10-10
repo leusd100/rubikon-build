@@ -60,9 +60,10 @@
 .ft[data-step] :is(.ft-back, .ft-opening) { opacity: .5; }
 /* …and the bubbles and letters of the parts stepped back go: a step's camera cut them at its window's edge into a half
    «H» or a half bubble (04.10). The wind's step, pushed in on the end wall, keeps no axes or dimension lines either. */
-.ft:is([data-step="1"], [data-step="2"], [data-step="3"], [data-step="5"]) .ft-part :is(.ft-bubble, .ft-letter) { opacity: 0; }
+.ft[data-step] .ft-part :is(.ft-bubble, .ft-letter) { opacity: 0; }
 .ft[data-step="1"] [data-part~="1"] :is(.ft-bubble, .ft-letter), .ft[data-step="3"] [data-part~="3"] :is(.ft-bubble, .ft-letter) { opacity: 1; }
-.ft[data-step="5"] .ft-part :is(.ft-axis, .ft-dim) { opacity: 0; }
+/* …and the loads' steps, pushed in on the hangar since 10.10, none of the dimensions either */
+.ft:is([data-step="4"], [data-step="5"]) .ft-part :is(.ft-axis, .ft-dim) { opacity: 0; }
 .ft[data-step="1"] [data-part~="1"], .ft[data-step="2"] [data-part~="2"], .ft[data-step="3"] [data-part~="3"] { opacity: 1; }
 .ft[data-step="1"] [data-part~="1"] path, .ft[data-step="2"] [data-part~="2"] path,
 .ft[data-step="3"] [data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace, .ft-dim, .ft-axis) { stroke: var(--color-accent); }
@@ -74,6 +75,23 @@
 .ft[data-step="1"] [data-part~="1"] .ft-bubble circle, .ft[data-step="3"] [data-part~="3"] .ft-bubble circle { stroke: var(--color-accent); }
 .ft[data-step="1"] [data-part~="1"] .ft-bubble text, .ft[data-step="3"] [data-part~="3"] .ft-bubble text { fill: var(--color-accent-strong); }
 .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { opacity: 1; }
+
+/* The visitor's answer on the columns (10.10): on the overview only, in copper on the floor between the frames — the
+   clear width between the outer columns' axes, or with a centre row its two widths and the row lit. A new answer draws
+   it anew: the line runs out from its ends, the words come up after it. */
+.ft-clear { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+.ft:not([data-step]) .ft-clear { opacity: 1; }
+.ft-clear-line { stroke: var(--color-accent); stroke-width: calc(1.8px * var(--ft-k)); }
+.ft-clear-row { stroke: var(--color-accent); stroke-width: calc(2.6px * var(--ft-k)); }
+.ft-clear-label {
+  fill: var(--color-accent-strong); font: 600 calc(15px * var(--ft-t, 1)) var(--font-manrope), sans-serif; text-anchor: middle;
+  paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(7px * var(--ft-k)); stroke-linejoin: round;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ft-clear :is(.ft-clear-line, .ft-clear-row) { stroke-dasharray: 1; animation: ft-draw .7s var(--ease-premium, ease) both; }
+  .ft-clear-label { animation: ft-rise .4s ease .45s both; }
+}
+@keyframes ft-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* The loads: the frame stays in graphite under them; the lit links glow. Pure picture (aria-hidden), so they never take
    the pointer (09.10, audit F09): drawn after the nodes, the invisible snow and wind layers caught the clicks meant for
