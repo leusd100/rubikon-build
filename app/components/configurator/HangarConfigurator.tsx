@@ -9,6 +9,7 @@ import { ConfiguratorControls, landOnSteps } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 import { HangarPreviewModes } from './HangarPreviewModes';
+import { keepShortWords } from '../../lib/typography';
 import { sheetObjectLabel } from './sheetLabels';
 import './configurator-sheet.css';
 
@@ -264,9 +265,13 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
         ) : (
           <h1 id="hangar-configurator-title">Живий конфігуратор ангара</h1>
         )}
+        {/* 10.10 (audit F34, F11): what the drawing shows — it did not change for 15 of 24 answers under «Креслення
+            змінюється з кожним вибором» — and that the request goes from any step: «Обговорити» is below the screen on
+            all five, and «п’ять кроків» read as «all five first» */}
         <p className="hc-lede">
           {embedded
-            ? 'П’ять коротких кроків — від задачі до обсягу робіт. Креслення змінюється з кожним вибором, технічне рішення уточнимо разом.'
+            ? keepShortWords('П’ять коротких кроків — від задачі до обсягу робіт. Розміри, стіни, ворота й каркас видно '
+              + 'на кресленні. Надіслати можна з будь-якого кроку: технічне рішення й те, чого не оберете, уточнимо разом.')
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
       </header>
@@ -296,7 +301,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
       </div>
       {/* On the page the summary is the drawing's title block, under the layout: only the drawing stays sticky */}
       {embedded && (
-        // «До зведення ↓» under the last step lands here
+        // «До підсумку ↓» under the last step lands here
         <div className="hc-stamp-row" id="hc-stamp">
           <ConfiguratorSummary domain={businessDomain} showInquiryAction onInquiryAction={sharedInquiry?.attachConfiguration} />
         </div>

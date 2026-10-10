@@ -357,7 +357,7 @@ test.describe('configurator attachment contract', () => {
     await openControlGroup(page, 'openings');
     await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
     await chooseSeparateWorks(page);
-    await page.getByRole('checkbox', { name: 'Стіни / огороджувальний контур' }).uncheck();
+    await page.getByRole('checkbox', { name: 'Стіни', exact: true }).uncheck();
 
     const brief = attachmentCard(page);
     await brief.getByText('Переглянути параметри', { exact: true }).click();

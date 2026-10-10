@@ -36,14 +36,20 @@ function trackErrors(page: Page): string[] {
 
 const scopeLabel = {
   foundation: 'Фундамент',
-  frame: 'Металокаркас',
-  walls: 'Стіни / огороджувальний контур',
+  frame: 'Каркас',
+  walls: 'Стіни',
   roof: 'Покрівля',
 } as const;
 
-// By its checkbox, not a page-wide text match: Phase 3C's material colour presets and «Матеріали» name their own
+// By its checkbox, not a page-wide text match: Phase 3C's material colour presets and «Стіни й покрівля» name their own
 // «Покрівля» groups on the same page. Each work has a checkbox only once «Окремі роботи» is chosen (07.10) — the default
 // «Комплекс робіт» draws all four — so every test that toggles a layer chooses it first.
+/** The summary's «Обсяг»: the works as a list, «Фундамент, каркас, стіни, покрівля», since 10.10 (audit F35) — the roof's
+ *  word is in «Стіни й покрівля» too, so the scope is read on its own row */
+function scopeFact(page: Page) {
+  return page.locator('.hc-summary-facts > div').filter({ has: page.locator('dt', { hasText: /^Обсяг$/ }) }).locator('dd');
+}
+
 function scopeBox(page: Page, item: keyof typeof scopeLabel) {
   return page.getByRole('checkbox', { name: scopeLabel[item], exact: true });
 }
@@ -144,7 +150,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
 
     // Converged on the LAST requested state (on) — check via the summary, the canonical
     // description in either mode, not by trying to read WebGL pixels.
-    await expect(page.locator('.hc-summary-facts')).toContainText('Покрівля');
+    await expect(scopeFact(page)).toContainText('покрівля');
   });
 
   test('a dimension change mid-transition does not throw — geometry updates immediately, independent of the in-flight animation', async ({ page }) => {
@@ -176,7 +182,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await page.waitForTimeout(200); // reduced motion resolves same-tick; this is generous headroom
 
     expect(errors, `console/page errors under reduced motion: ${errors.join('\n')}`).toEqual([]);
-    await expect(page.locator('.hc-summary-facts')).toContainText('Покрівля');
+    await expect(scopeFact(page)).toContainText('покрівля');
   });
 
   test('idle rendering returns to zero draw calls after a build-up transition settles', async ({ page }) => {

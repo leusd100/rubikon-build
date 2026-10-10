@@ -7,20 +7,22 @@ import { deriveBayLayout, ridgeHeightM, trussPanelNodesM } from '../../lib/confi
 import { objectProfileLine } from '../../lib/configurator/objectProfile';
 import { DEFAULT_CONFIGURATOR_STATE, INTERNAL_SUPPORTS_LABELS, type ConfirmedTopic } from '../../lib/configurator/types';
 import { anythingChosen, sizesProvenance } from '../../lib/configurator/domainModel';
+import { keepShortWords } from '../../lib/typography';
 import { useInquiryAttachment } from '../inquiry/InquiryAttachmentProvider';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 
 /** The configurator's one disclaimer (UX pass 2026-10: it replaced five — over the model, under the sizes, the gates,
- *  in the summary and over the frame schemes). */
+ *  in the summary and over the frame schemes). Reworded 10.10 (audit F106): «Межі розмірів і розміри воріт» said
+ *  «розмір» twice, «орієнтовні, не будівельні норми» broke off, and the picture is a «попередня схема», as the sheet
+ *  names it (F101) — no site visit promised. Short words kept with the next one (F103: «навантажень і / умов»). */
+const DISCLAIMER = keepShortWords(
+  'Це попередня схема, а не проєктна документація. Діапазони габаритів і розміри воріт орієнтовні — це не будівельні '
+  + 'норми. Конструкцію й фундамент визначає проєктувальник після розрахунку навантажень з урахуванням умов майданчика.',
+);
+
 function SummaryDisclaimer() {
-  return (
-    <p className="hc-summary-disclaimer">
-      Це попередня схематична візуалізація, а не проєктна документація. Межі розмірів і розміри воріт орієнтовні,
-      не будівельні норми. Конструктивну схему й фундамент визначає проєктувальник після розрахунку навантажень
-      і умов майданчика.
-    </p>
-  );
+  return <p className="hc-summary-disclaimer">{DISCLAIMER}</p>;
 }
 
 /** A value unchanged this long has settled: a slider's drag sends one every frame */
@@ -178,16 +180,18 @@ export function ConfiguratorSummary({
               <dt>Утеплення</dt>
               <dd>{summary.envelopeLabel}</dd>
             </div>
-            <div>
-              <dt>Огородження</dt>
-              <dd>{summary.claddingSystemLabel}</dd>
-            </div>
+            {summary.claddingRow && (
+              <div>
+                <dt>{summary.claddingRow.label}</dt>
+                <dd>{summary.claddingRow.value}</dd>
+              </div>
+            )}
             <div>
               <dt>Попередня конструктивна схема</dt>
               <dd>{summary.structuralVisualizationLabel}</dd>
             </div>
             <div>
-              <dt>Основа</dt>
+              <dt>Фундамент</dt>
               <dd>{summary.foundationTypeLabel}</dd>
             </div>
             <div>
@@ -227,14 +231,17 @@ export function ConfiguratorSummary({
           <p className="hc-summary-dimensions" ref={dimensionsRef} translate="no">
             {dimensionsWithoutUnit}<span className="hc-summary-dimensions-unit">{NBSP}м</span>
           </p>
-          <p className="hc-summary-area" translate="no">коник {summary.ridgeHeightLabel} · {summary.areaLabel} площі забудови</p>
+          {/* the area named before its number (10.10, audit F102): «· ≈ 1 440 м² площі забудови» put «·» and «≈» side by side;
+              the name and its number one piece, so a narrow stamp breaks after the «·» */}
+          <p className="hc-summary-area" translate="no">коник {summary.ridgeHeightLabel} · площа{NBSP}забудови{NBSP}{summary.areaLabel}</p>
           <SummarySketch domain={domain} />
         </div>
         {/* A value that changes lights for a moment, so an edit made in the controls shows where it landed */}
         <dl className="hc-summary-facts">
           {/* without walls and roof there is no envelope to describe — no rows, as the openings have none (08.10) */}
           {enclosed && <Fact label="Утеплення" value={summary.envelopeLabel} status={example ? undefined : chosen('envelope')} />}
-          {enclosed && <Fact label="Огородження" value={summary.claddingSystemLabel} status={example ? undefined : chosen('cladding')} />}
+          {/* the surfaces by name (10.10, audit F36): «Огородження: Профнастил» read as a fence */}
+          {summary.claddingRow && <Fact label={summary.claddingRow.label} value={summary.claddingRow.value} status={example ? undefined : chosen('cladding')} />}
           <Fact label="Схема" value={summary.structuralVisualizationLabel} wide status="derived" />
           <Fact label="Обсяг" value={summary.scopeSummaryLabel} wide status={example ? undefined : chosen('scope')} />
           {/* Dropped entirely, not shown as "поза обсягом": an opening in a wall nobody ordered is not part of this
@@ -261,7 +268,9 @@ export function ConfiguratorSummary({
           >
             Обговорити цю конфігурацію <span aria-hidden="true">↓</span>
           </a>
-          <p key={sent ? 'sent' : 'add'}>{sent ? 'Надіслано з вашим запитом.' : 'Параметри автоматично додамо до заявки.'}</p>
+          {/* what happens after the button, in the route's own approved words (10.10, audit F12; «Читаємо бриф і готуємо
+              питання до розмови»): it jumps straight to the form, past the route */}
+          <p key={sent ? 'sent' : 'add'}>{sent ? 'Надіслано з вашим запитом.' : keepShortWords('Параметри додамо до заявки — ми прочитаємо бриф і підготуємо питання до розмови.')}</p>
         </div>
       </div>
       <SummaryDisclaimer />

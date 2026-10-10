@@ -10,6 +10,7 @@ import {
 } from '../../lib/configurator/parametricModel';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { TourProgress } from '../directions/TourParts';
+import { keepShortWords } from '../../lib/typography';
 import { endWallFraming, sheetOpenings } from './endWallFraming';
 import './frame-tour.css';
 
@@ -64,9 +65,12 @@ const AXIS_LETTERS = ['А', 'Б', 'В'] as const;
 const fmt = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
 /** A size with its unit, never split from it (04.10) */
 const metres = (value: number) => `${fmt(value)}\u00A0м`;
-/** A dash or a «·» keeps to the word before it, so no line of a step's text or caption starts with one (04.10) */
-const keepMarks = (text: string) => text.replaceAll(' — ', '\u00A0— ').replaceAll(' · ', '\u00A0· ');
-const OVERVIEW_CAPTION = 'Каркас, прогони й в’язі';
+/** A dash or a «·» keeps to the word before it, so no line of a step's text or caption starts with one (04.10); a short
+ *  word keeps to the word after it, so none ends a line (10.10, audit F103: «стін; у / торцевій») */
+const keepMarks = (text: string) => keepShortWords(text.replaceAll(' — ', '\u00A0— ').replaceAll(' · ', '\u00A0· '));
+/** The whole frame says what it is, as the other views do (10.10, audit F38): «Каркас, прогони й в’язі» read as step 3
+ *  already on, and nothing by the drawing said the scheme is preliminary */
+const OVERVIEW_CAPTION = 'Каркас · попередня схема';
 /** The paint around a name, half of it on either side of the letters, at a phone's line weight (--ft-k). Laid out at
  *  the 5 px it was: the 7 px painted since 09.10 (frame-tour.css .ft-tag, audit F73) only parts the members a name
  *  still lies on from its letters — counted here, it moved the names onto more of them (141 → 166 crossings) */
@@ -645,7 +649,8 @@ export function frameNodes(g: ReturnType<typeof frameGeometry>): FrameNode[] {
       { id: 'ridge', title: 'Коньковий вузол', at: at.ridge, ...nodeShot(at.ridge), text: 'Верх рами, де сходяться два ригелі. Тут їх з’єднують на монтажі; як саме, визначає проєкт.' },
       { id: 'base', title: 'База колони', at: at.base, ...nodeShot(at.base), text: 'Колона стоїть на фундаменті через опорну плиту з анкерами. Тип фундаменту й анкерів визначає проєктувальник за ґрунтом і навантаженнями.' },
     ];
-  return list.filter((item): item is FrameNode => Boolean(item));
+  // no short word left at a line's end (10.10, audit F103: «половинами й / з’єднати»)
+  return list.filter((item): item is FrameNode => Boolean(item)).map((item) => ({ ...item, text: keepShortWords(item.text) }));
 }
 
 /** The legend, the camera's window with the drawing, and the progress bars: the picture of the frame tour, in the
