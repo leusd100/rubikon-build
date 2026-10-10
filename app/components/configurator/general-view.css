@@ -1,0 +1,71 @@
+/* «Загальний вигляд» on /angary's drawing sheet (10.10, HangarGeneralView.tsx): the clad hangar in the frame drawing's
+   language (frame-tour.css, and the overview's three weights in configurator-sheet.css) — on the sheet's dark field in
+   both themes, in its Dark inks: the front end wall in the paper's ink and the heaviest line, as «Каркас» draws its
+   front frame; the other visible edges in the paper's ink, lighter; the cladding's pattern thin and quiet; the sizes
+   and the ground in the dimension lines' grey; copper only for what just changed and, where a surface is not clad, the
+   frame's bracing. Laid out in screen px (generalViewGeometry.ts), so these widths are on-screen widths. */
+
+.gv {
+  --gv-ink: var(--color-dark-text);
+  --gv-ink-2: var(--color-dark-text-secondary);
+  --gv-ink-3: var(--color-dark-text-muted);
+  --gv-field: var(--color-dark);
+  --gv-ground: #6A6C66; /* Dark's --color-border-strong, as «Каркас» draws its ground */
+  --gv-w: 1;
+}
+.gv path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.gv .gv-plane { fill: var(--gv-field); stroke: none; }
+.gv-front { stroke: var(--gv-ink); stroke-width: calc(2.6px * var(--gv-w)); }
+.gv-edge { stroke: var(--gv-ink); stroke-width: calc(1.6px * var(--gv-w)); }
+/* a surface out of the request: its outline dashed, as the legend's «Поза обсягом робіт» */
+.gv-out { stroke: var(--gv-ink-3); stroke-width: 1.1px; stroke-dasharray: 5 4; }
+/* the cladding's pattern: a profiled sheet's ribs finer than a sandwich panel's joints, so the two systems read apart */
+.gv-cladding { stroke: var(--gv-ink-3); stroke-width: .8px; opacity: .6; transition: stroke .3s ease, opacity .3s ease; }
+.gv-cladding[data-system="sandwich-panel"] { stroke: var(--gv-ink-2); stroke-width: .9px; opacity: .55; }
+.gv-cladding[data-active] { stroke: var(--color-accent); opacity: 1; }
+/* the gates and the door: a leaf darker than the field, outlined */
+.gv .gv-opening { fill: #0a0b0b; stroke: var(--gv-ink); stroke-width: 1.4px; stroke-linejoin: miter; transition: stroke .3s ease; }
+.gv .gv-opening[data-active] { stroke: var(--color-accent); }
+/* the frame where a surface is not clad, in «Каркас»'s weights (configurator-sheet.css, the overview) */
+.gv-frame-front { stroke: var(--gv-ink); stroke-width: calc(2.6px * var(--gv-w)); }
+.gv-frame-back { stroke: var(--gv-ink-3); stroke-width: 1.2px; }
+.gv-frame-thin { stroke: var(--gv-ink-2); stroke-width: 1px; opacity: .6; }
+.gv-frame-brace { stroke: var(--color-accent); stroke-width: 1.4px; }
+/* the ground: a line along the base, past its ends, with a short hatch under it */
+.gv-ground { stroke: var(--gv-ground); stroke-width: 1.2px; }
+.gv-hatch { stroke: var(--gv-ground); stroke-width: .9px; }
+
+/* The sizes in «Каркас»'s style — extension lines, 45° ticks, the value at the line's middle on its outer side — with
+   their values: upright figures in the letters' face and ink, haloed in the field's colour. A changed size flashes
+   copper a moment. */
+.gv-dim { stroke: var(--gv-ink-3); stroke-width: 1.1px; transition: stroke .3s ease; }
+.gv-dot { fill: var(--gv-ink-2); }
+.gv-value {
+  fill: var(--gv-ink-2); font-family: var(--font-manrope), sans-serif; font-weight: 600; font-variant-numeric: tabular-nums;
+  text-anchor: middle; dominant-baseline: central;
+  paint-order: stroke; stroke: var(--gv-field); stroke-width: 5px; stroke-linejoin: round; transition: fill .3s ease;
+}
+.gv-size[data-active] .gv-dim { stroke: var(--color-accent); }
+.gv-size[data-active] .gv-value { fill: var(--color-accent-on-dark); }
+
+/* a phone's sheet: the lines a step lighter, as the drawing is smaller */
+@container sheet (max-width: 480px) {
+  .gv { --gv-w: .8; }
+}
+
+/* The first view builds itself (useFirstViewBuildUp): a stage still held back is away; released, it comes in — the
+   outline plotted along its lines, the rest faded in. Armed or completed early, nothing eases (the picture's
+   data-build, as configurator-sheet.css does for the old view's layers). */
+.gv :is(.gv-stage, .gv-size) { transition: opacity .5s var(--ease-premium), stroke .3s ease; }
+.gv [data-held] { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .gv[data-building] :is(.gv-front, .gv-edge) { stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 1.1s var(--ease-premium); }
+  .gv[data-building] [data-held] :is(.gv-front, .gv-edge) { stroke-dashoffset: 1; }
+}
+.hc-preview-image:is([data-build="armed"], [data-build="complete"]) .gv :is(.gv-stage, .gv-size, .gv-front, .gv-edge) { transition-property: none; }
+
+/* The phone's mini drawing held under the header: the picture alone, its sizes in the title block's readout — and the
+   ground's line without its hatch, which on a 100 px picture was a comb under the hangar */
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet :is(.gv-sizes, .gv-hatch) { display: none; }
+}

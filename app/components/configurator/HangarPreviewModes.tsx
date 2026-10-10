@@ -7,6 +7,7 @@ import type { HangarPresentationDemo } from '../../lib/configurator/presentation
 import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
 import { CladdingSection } from './CladdingSection';
 import { ConfiguratorFrameView } from './ConfiguratorFrameView';
+import { HangarGeneralView } from './HangarGeneralView';
 import { HangarPreview } from './HangarPreview';
 import { miniReadout, previewDescription } from './sheetLabels';
 import { useFirstViewBuildUp } from './useFirstViewBuildUp';
@@ -365,6 +366,9 @@ export function HangarPreviewModes({
     </FullscreenPreviewFrame>
   );
   else if (effectiveMode === 'frame' && sheet) view = <ConfiguratorFrameView onCaption={setFrameCaption} />;
+  // /angary's sheet draws the general view in the frame drawing's language (10.10, HangarGeneralView); the research
+  // screen keeps the old technical view
+  else if (sheet) view = <HangarGeneralView domain={domain} released={released} tools={threeAvailable} />;
   else view = <HangarPreview domain={domain} released={released} />;
 
   // Fullscreen and secondary 3D actions — brief §10's own suggested hierarchy: mode switch stays

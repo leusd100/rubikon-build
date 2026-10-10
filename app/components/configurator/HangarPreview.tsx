@@ -63,10 +63,6 @@ function DimensionGuideGroup({ guide }: { guide: DimensionGuide }) {
       <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
       <line x1={guide.ticks[0][0].x} y1={guide.ticks[0][0].y} x2={guide.ticks[0][1].x} y2={guide.ticks[0][1].y} />
       <line x1={guide.ticks[1][0].x} y1={guide.ticks[1][0].y} x2={guide.ticks[1][1].x} y2={guide.ticks[1][1].y} />
-      {/* the ridge's extension line, from the apex to over the chain's corner (09.10) */}
-      {guide.extension && (
-        <line className="hc-dimension-extension" x1={guide.extension[0].x} y1={guide.extension[0].y} x2={guide.extension[1].x} y2={guide.extension[1].y} />
-      )}
       {/* Text comes from the projection, not composed here: the bounds calculation has to know
           the label's width to keep it inside the viewBox, so one module owns the string. */}
       <text
