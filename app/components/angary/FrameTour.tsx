@@ -206,7 +206,8 @@ function frameGeometry(domain: HangarDomainModel) {
   // The visitor's answer on the columns, on the dimensions under the frame (10.10, owner: «розмірні лінії об'єднати й
   // винести за межі ангару»): «· без колон» after L; with a centre row the spans' own row says it, «15 м | 15 м»
   const answered = domain.internalSupports !== 'unknown';
-  const spanNote = answered && !centre ? '\u00A0· без колон' : '';
+  // the visitor's own «без колон» only: «Колони можна» on a portal frame, drawn without them, is not that answer
+  const spanNote = domain.internalSupports === 'not-allowed' ? '\u00A0· без колон' : '';
   const roofZ = roofHeight(W, E, R);
   const columnXs = centre ? [0, W / 2, W] : [0, W];
   // The configurator's own model: its gates and door on this end wall — on the same side of the centre as the general

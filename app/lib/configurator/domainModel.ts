@@ -159,12 +159,16 @@ export function withSpanRuleRidge(state: ConfiguratorState): ConfiguratorState {
 export function deriveDomainModel(state: ConfiguratorState): HangarDomainModel {
   const { width, length, height } = state.dimensions;
   const gateSelection = clampGateSelection(state.gates, state.gateType, width, height);
-  // Width-derived, not read from state — see `structural`'s own doc comment above — except where the visitor said no
-  // columns may stand inside (07.10): the span is then drawn clear, whatever the width's rule would draw. Resolved
-  // first, because the door's place depends on it: it steps round a centre row only where one stands (09.10)
-  const structural: HangarDomainModel['structural'] = state.internalSupports === 'not-allowed'
-    ? { ...deriveStructuralVisualization(width), scheme: 'clearSpan' }
-    : deriveStructuralVisualization(width);
+  // Width-derived — see `structural`'s own doc comment above — except where the visitor answered the columns (07.10):
+  // «Так, без колон» draws the span clear whatever the width's rule would draw, and «Колони можна» (10.10, owner:
+  // «знову не працює центральна колона» — under 24 m it changed nothing) draws the centre row wherever the frame is a
+  // truss, whose bottom chord has a node at the middle for it; a portal frame (under 18 m) stays without one. Still
+  // the preliminary scheme the stamp says the designer decides. Resolved first, because the door's place depends on
+  // it: it steps round a centre row only where one stands (09.10)
+  const byWidth = deriveStructuralVisualization(width);
+  let structural: HangarDomainModel['structural'] = byWidth;
+  if (state.internalSupports === 'not-allowed') structural = { ...byWidth, scheme: 'clearSpan' };
+  else if (state.internalSupports === 'allowed' && byWidth.roofStructure === 'truss') structural = { ...byWidth, scheme: 'centerSupport' };
 
   return {
     objectType: 'hangar',

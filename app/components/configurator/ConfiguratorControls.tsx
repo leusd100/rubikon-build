@@ -708,6 +708,13 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
             {keepShortWords('Ряд колон посередині ділить ширину на два прольоти. Без колон — один проліт на всю ширину: '
               + 'креслення покаже такий каркас, а конструкцію під нього підбере проєктувальник.')}
           </p>
+          {/* «Колони можна» where the drawing has no centre row to show — a portal frame, under 18 m (10.10, owner: the
+              answer «не працює» when nothing on the drawing moved): why, and that the answer still goes on */}
+          {state.internalSupports === 'allowed' && domain.structural.scheme !== 'centerSupport' && (
+            <p className="hc-field-note">
+              {keepShortWords(`На ширині ${formatNumber(state.dimensions.width)}${NBSP}м креслення показує раму без колон посередині. Вашу відповідь передамо проєктувальнику.`)}
+            </p>
+          )}
         </div>
         <div className="hc-field">
           {/* asked as the client would say it (10.10, owner); the lead names the equipment (objectProfile.ts) */}

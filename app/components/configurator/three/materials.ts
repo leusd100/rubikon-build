@@ -38,10 +38,11 @@ import type { MaterialKey } from '../../../lib/configurator/threeSceneModel';
 //     frame and its sections' ink, the opening as an opening, rather than as a pale patch in the wall.
 //
 // Value ladder on /angary (base colours; the light grades them), lightest to darkest:
-//   roof (sheet)           #a9aeb2  the lid — lit from above, the lightest large surface (SHEET_ROOF_COLOR)
+//   sandwich walls         #eceeed  the insulated hangar's white panels (SHEET_WALL_SANDWICH_COLOR)
 //   frame-primary          #d6d1c7  paper-ink steel, only seen when the cladding is out of the request
 //   footing                #a29d93  isolated footing pedestals, a half-step above the slab
-//   walls (sheet)          #9aa1a7  graded by the key into a lit gable and a shaded long wall (SHEET_WALL_COLOR)
+//   walls (sheet)          #8b959d  graded by the key into a lit gable and a shaded long wall (SHEET_WALL_COLOR)
+//   roof                   #6b7379 / #4f565c  the dark grey lid, sandwich / sheet (SHEET_ROOF_*), lit from above
 //   slab                   #8f8a80  cast concrete, warm, its own part between the walls and the field
 //   frame-secondary        #8a867e  girts, purlins: present, subordinate
 //   door / gate            #41464b / #3a3f44  dark leaves in copper frames
@@ -65,15 +66,14 @@ export const INK = {
 
 /** /angary's cladding (no colour choice there, 07.10), one colour per part and per system (10.10, owner: «ворота
  *  класно вирізняються, а всі інші матеріали більше зливаються» — walls #9aa1a7 and roof #a9aeb2 were one grey, and a
- *  sandwich panel wore the profiled sheet's colour). One cool steel blue-grey and one light grey, swapped between the
- *  two systems, so they read apart at a glance (picked from five palettes compared side by side; owner: «може кольори
- *  трошки інші підібрати» — a warm beige sandwich read as dull): the sheet's walls blue-grey under a light lid; the
- *  insulated hangar's panels light under a blue-grey roof. The slab warm concrete under both. The research screen picks
- *  its own (materialPresets.ts). */
-export const SHEET_WALL_COLOR = '#71828f';
-export const SHEET_ROOF_COLOR = '#bcc3c8';
-export const SHEET_WALL_SANDWICH_COLOR = '#d5dadc';
-export const SHEET_ROOF_SANDWICH_COLOR = '#7f8d98';
+ *  sandwich panel wore the profiled sheet's colour). The owner's pick of five palettes compared side by side (10.10,
+ *  «білий + темно-сірий»): a dark grey roof over both — sheet walls in steel grey, sandwich panels white — so the roof
+ *  reads as the lid it is and the insulated hangar's white panels apart from the sheet. The slab warm concrete under
+ *  both. The research screen picks its own (materialPresets.ts). */
+export const SHEET_WALL_COLOR = '#8b959d';
+export const SHEET_ROOF_COLOR = '#4f565c';
+export const SHEET_WALL_SANDWICH_COLOR = '#eceeed';
+export const SHEET_ROOF_SANDWICH_COLOR = '#6b7379';
 
 export type MaterialSpec = {
   color: string;
