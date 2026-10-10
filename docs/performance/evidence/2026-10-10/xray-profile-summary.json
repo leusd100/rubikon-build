@@ -1,0 +1,254 @@
+[
+  {
+    "variant": "before",
+    "width": 1440,
+    "height": 900,
+    "run": 1,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 1161,
+    "changes": {
+      "LayoutCount": 41,
+      "LayoutDuration": 0.034084,
+      "RecalcStyleCount": 186,
+      "RecalcStyleDuration": 0.247533,
+      "ScriptDuration": 0.248005,
+      "TaskDuration": 1.100956
+    },
+    "layoutEvents": 41,
+    "frameP95": 17.5,
+    "framesOver50": 1,
+    "frameCount": 191
+  },
+  {
+    "variant": "after",
+    "width": 1440,
+    "height": 900,
+    "run": 1,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 583,
+    "changes": {
+      "LayoutCount": 42,
+      "LayoutDuration": 0.032389,
+      "RecalcStyleCount": 187,
+      "RecalcStyleDuration": 0.247411,
+      "ScriptDuration": 0.236251,
+      "TaskDuration": 1.04225
+    },
+    "layoutEvents": 42,
+    "frameP95": 17.599999999999454,
+    "framesOver50": 0,
+    "frameCount": 193
+  },
+  {
+    "variant": "after",
+    "width": 1440,
+    "height": 900,
+    "run": 2,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 585,
+    "changes": {
+      "LayoutCount": 42,
+      "LayoutDuration": 0.03542,
+      "RecalcStyleCount": 184,
+      "RecalcStyleDuration": 0.250547,
+      "ScriptDuration": 0.238874,
+      "TaskDuration": 1.055119
+    },
+    "layoutEvents": 42,
+    "frameP95": 17.5,
+    "framesOver50": 1,
+    "frameCount": 191
+  },
+  {
+    "variant": "before",
+    "width": 1440,
+    "height": 900,
+    "run": 2,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 1245,
+    "changes": {
+      "LayoutCount": 43,
+      "LayoutDuration": 0.037954,
+      "RecalcStyleCount": 194,
+      "RecalcStyleDuration": 0.291596,
+      "ScriptDuration": 0.301782,
+      "TaskDuration": 1.2881479999999998
+    },
+    "layoutEvents": 43,
+    "frameP95": 17.600000000000364,
+    "framesOver50": 0,
+    "frameCount": 198
+  },
+  {
+    "variant": "before",
+    "width": 1440,
+    "height": 900,
+    "run": 3,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 1174,
+    "changes": {
+      "LayoutCount": 42,
+      "LayoutDuration": 0.034622,
+      "RecalcStyleCount": 189,
+      "RecalcStyleDuration": 0.280109,
+      "ScriptDuration": 0.279476,
+      "TaskDuration": 1.238431
+    },
+    "layoutEvents": 42,
+    "frameP95": 17.600000000000364,
+    "framesOver50": 1,
+    "frameCount": 193
+  },
+  {
+    "variant": "after",
+    "width": 1440,
+    "height": 900,
+    "run": 3,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 555,
+    "changes": {
+      "LayoutCount": 40,
+      "LayoutDuration": 0.037176,
+      "RecalcStyleCount": 188,
+      "RecalcStyleDuration": 0.274227,
+      "ScriptDuration": 0.262634,
+      "TaskDuration": 1.1674149999999999
+    },
+    "layoutEvents": 40,
+    "frameP95": 17.600000000000364,
+    "framesOver50": 0,
+    "frameCount": 193
+  },
+  {
+    "variant": "before",
+    "width": 390,
+    "height": 844,
+    "run": 1,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 400,
+    "changes": {
+      "LayoutCount": 40,
+      "LayoutDuration": 0.032819,
+      "RecalcStyleCount": 173,
+      "RecalcStyleDuration": 0.168592,
+      "ScriptDuration": 0.251129,
+      "TaskDuration": 0.989101
+    },
+    "layoutEvents": 40,
+    "frameP95": 17.600000000000364,
+    "framesOver50": 0,
+    "frameCount": 193
+  },
+  {
+    "variant": "after",
+    "width": 390,
+    "height": 844,
+    "run": 1,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 400,
+    "changes": {
+      "LayoutCount": 40,
+      "LayoutDuration": 0.031915,
+      "RecalcStyleCount": 170,
+      "RecalcStyleDuration": 0.167329,
+      "ScriptDuration": 0.240117,
+      "TaskDuration": 0.951114
+    },
+    "layoutEvents": 40,
+    "frameP95": 17.5,
+    "framesOver50": 0,
+    "frameCount": 193
+  },
+  {
+    "variant": "after",
+    "width": 390,
+    "height": 844,
+    "run": 2,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 400,
+    "changes": {
+      "LayoutCount": 40,
+      "LayoutDuration": 0.031827,
+      "RecalcStyleCount": 170,
+      "RecalcStyleDuration": 0.174519,
+      "ScriptDuration": 0.252323,
+      "TaskDuration": 0.992635
+    },
+    "layoutEvents": 40,
+    "frameP95": 17.59999999999991,
+    "framesOver50": 0,
+    "frameCount": 194
+  },
+  {
+    "variant": "before",
+    "width": 390,
+    "height": 844,
+    "run": 2,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 390,
+    "changes": {
+      "LayoutCount": 39,
+      "LayoutDuration": 0.034196,
+      "RecalcStyleCount": 172,
+      "RecalcStyleDuration": 0.163036,
+      "ScriptDuration": 0.24189,
+      "TaskDuration": 0.990852
+    },
+    "layoutEvents": 39,
+    "frameP95": 17.599999999999454,
+    "framesOver50": 0,
+    "frameCount": 192
+  },
+  {
+    "variant": "before",
+    "width": 390,
+    "height": 844,
+    "run": 3,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 410,
+    "changes": {
+      "LayoutCount": 41,
+      "LayoutDuration": 0.029819,
+      "RecalcStyleCount": 172,
+      "RecalcStyleDuration": 0.165002,
+      "ScriptDuration": 0.245058,
+      "TaskDuration": 0.970053
+    },
+    "layoutEvents": 41,
+    "frameP95": 17.5,
+    "framesOver50": 0,
+    "frameCount": 202
+  },
+  {
+    "variant": "after",
+    "width": 390,
+    "height": 844,
+    "run": 3,
+    "browser": "151.0.7922.34",
+    "cpuRate": 4,
+    "readCount": 400,
+    "changes": {
+      "LayoutCount": 40,
+      "LayoutDuration": 0.030271,
+      "RecalcStyleCount": 170,
+      "RecalcStyleDuration": 0.162158,
+      "ScriptDuration": 0.244522,
+      "TaskDuration": 0.977214
+    },
+    "layoutEvents": 40,
+    "frameP95": 17.5,
+    "framesOver50": 0,
+    "frameCount": 194
+  }
+]
