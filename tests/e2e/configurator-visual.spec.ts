@@ -1,9 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
 
-// Not run by `pnpm test:e2e` (the CI-blocking script) — same as visual.spec.ts, this only runs
-// via `pnpm test:visual`/`test:visual:update`, both local/manual. See playwright.config.ts's
-// `visual-chromium` project (testMatch: /visual\.spec\.ts/) — this file matches that pattern too.
+// Runs via pnpm test:visual locally and the selected PR gate, full main regression and nightly
+// visual suites. Keep reviewed baselines for both Linux CI and macOS local checks.
 //
 // Scenario letters (A–L) below match the Phase 2 brief's own named visual-regression list
 // verbatim, so a reviewer can cross-reference this file against that list directly rather than

@@ -10,8 +10,8 @@ import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
 // 529,126). That holds for a pinned machine/driver, which is the same assumption this project's
 // existing `*-darwin.png` baselines already make.
 //
-// Same file-naming rule as configurator-visual.spec.ts: matches the `visual-chromium` project's
-// /visual\.spec\.ts/ pattern, so it runs via `pnpm test:visual`, not the CI-blocking e2e script.
+// Matches the visual-chromium project and runs locally via pnpm test:visual,
+// plus the selected PR gate, full main regression and nightly visual suites.
 //
 // PHASE 3F.1 — RELIABILITY ROOT CAUSE (this harness silently missed Phase 3F's own lighting and
 // material changes; investigated at length before finding the real cause, recorded here so it is
@@ -196,7 +196,10 @@ test.describe('configurator 3D visual states', () => {
 // lies on a DrawingSheet with rulers on two sides) at once, so here both halves moving is
 // expected rather than a split to read. Measured on Linux Chromium; the same machine read
 // 64.3256 / 0.2358 on the commit before #142, within 0.05 of the previous pin.
-const RENDER_TONE = { litMean: 63.7019, litFrac: 0.2249 } as const;
+// #168/F68 moved the cladding outside the frame, intentionally hiding members that previously
+// protruded through the roof. Reviewed Linux Chromium captures at e7e3105 measure the resulting
+// opaque shell at 61.5108356 / 0.2335065. Keep both guards and their existing tolerances.
+const RENDER_TONE = { litMean: 61.5108, litFrac: 0.2335065 } as const;
 const LIT_MEAN_TOLERANCE = 0.3;
 const LIT_FRAC_TOLERANCE = 0.002;
 
@@ -233,6 +236,10 @@ test('6 — render tone: catches lighting/material shifts a pixel diff cannot se
   await openConfigurator(page);
   await enterThreeMode(page);
   const tone = await readRenderTone(page);
+  await test.info().attach('render-tone', {
+    body: JSON.stringify({ actual: tone, expected: RENDER_TONE, platform: process.platform }),
+    contentType: 'application/json',
+  });
 
   expect(
     Math.abs(tone.litMean - RENDER_TONE.litMean),
