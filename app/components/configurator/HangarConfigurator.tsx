@@ -301,7 +301,7 @@ export function HangarConfigurator({ embedded = false }: { embedded?: boolean })
       </div>
       {/* On the page the summary is the drawing's title block, under the layout: only the drawing stays sticky */}
       {embedded && (
-        // «До підсумку ↓» under the last step lands here
+        // «До зведення ↓» under the last step lands here
         <div className="hc-stamp-row" id="hc-stamp">
           <ConfiguratorSummary domain={businessDomain} showInquiryAction onInquiryAction={sharedInquiry?.attachConfiguration} />
         </div>

@@ -160,7 +160,7 @@
 .hc-field-reset:hover { color: var(--color-accent-strong); }
 .hc-field-reset:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 
-/* «До підсумку ↓» lands on the stamp clear of the header, like a section's own anchor (globals.css section[id]) */
+/* «До зведення ↓» lands on the stamp clear of the header, like a section's own anchor (globals.css section[id]) */
 #hc-stamp { scroll-margin-top: 116px; }
 @media (max-width: 760px) { #hc-stamp { scroll-margin-top: 93px; } }
 
