@@ -11,6 +11,7 @@ import {
   inkRibPitchM,
   profiledRibsM,
   sandwichCoursesM,
+  sandwichSeamsM,
 } from '../../../app/components/configurator/three/envelopePanelGeometry';
 
 // Real geometric behaviour, not implementation trivia: these tests exist to catch exactly the
@@ -217,6 +218,13 @@ describe('buildGableCladdingOverlay (Phase 3D.1)', () => {
       expect(y1).toBeGreaterThan(y0);
       if (x > 10 && x < 15) expect(y0).toBe(5);
     }
+  });
+
+  it('places a sandwich roof’s seams a panel apart across a bay, none on a bay too narrow for one', () => {
+    const seams = sandwichSeamsM(6);
+    expect(seams.length).toBeGreaterThan(3);
+    for (const [index, x] of seams.entries()) expect(x).toBeCloseTo(((index + 1) * 6) / (seams.length + 1));
+    expect(sandwichSeamsM(0.5)).toEqual([]);
   });
 
   it('draws the ribs a step that stays a texture: every third at least, wider on a long building', () => {

@@ -389,31 +389,6 @@ export function gableCourses(
   return out;
 }
 
-/**
- * The gable's sandwich seams as lines (10.10): the overlay's own seam strips above, each as the vertical line at its
- * centre, from the ground or an opening's head up to the roofline — for the renderer's quiet ink, as `sandwichSeamsM`
- * is for the walls. In the overlay's frame (x from the cladding's left edge).
- */
-export function gableSandwichSeams(
-  widthM: number,
-  eaveM: number,
-  ridgeM: number,
-  holes: Array<Array<{ x: number; y: number }>>,
-): Array<{ x: number; y0: number; y1: number }> {
-  if (widthM < MIN_SANDWICH_WIDTH_M) return [];
-  const holeBounds = holeBoundsFrom(holes);
-  const modules = Math.max(1, Math.round(widthM / SANDWICH_MODULE_WIDTH_M));
-  const moduleWidth = widthM / modules;
-  const seams: Array<{ x: number; y0: number; y1: number }> = [];
-  for (let i = 1; i < modules; i += 1) {
-    const x = i * moduleWidth;
-    const y1 = gableRooflineY(x, widthM, eaveM, ridgeM);
-    const y0 = stripBottomY(x, x, holeBounds);
-    if (y1 > y0) seams.push({ x, y0, y1 });
-  }
-  return seams;
-}
-
 // ── Phase 3D.1 — ridge cap ───────────────────────────────────────────────────
 //
 // Chosen as the single highest-payoff finishing piece among the brief's three candidates (ridge
