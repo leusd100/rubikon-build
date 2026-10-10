@@ -31,7 +31,8 @@ function subscribe(onChange: () => void) {
 export function HomeV2HeroMedia() {
   const { variant, hasResolvedViewport } = useViewportVariant();
   // Server snapshot = not static: the SSR markup is the video component, whose ≤760 poster IS the still,
-  // so a phone paints the same image before and after hydration.
+  // so a phone selects the same responsive source before and after hydration. The preload must use that
+  // srcset too: a fixed 752w preload made DPR-1 phones fetch both 752w and 480w on the first visit.
   const isStatic = useSyncExternalStore(subscribe, () => window.matchMedia(STATIC_QUERY).matches, () => false);
 
   if (isStatic) {
@@ -58,6 +59,8 @@ export function HomeV2HeroMedia() {
       sources={tablet ? ['/media/about/home-tablet-montage-v2.mp4'] : desktopSources}
       poster={tablet ? '/media/about/home-tablet-poster.webp' : '/media/about/straight-line-poster.webp'}
       mobilePoster={HERO_STATIC_SRC}
+      mobilePosterSrcSet={HERO_STATIC_SRCSET}
+      mobilePosterSizes="100vw"
       clipDurationMs={2500}
       fadeDurationMs={800}
       loopSingleSource
