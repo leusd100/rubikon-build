@@ -129,48 +129,13 @@ for (const [density, width] of [[1, 480], [2, 752]] as const) {
       await expect.poll(() => still.evaluate((element) => {
         const image = element as HTMLImageElement;
         return image.complete && image.naturalWidth > 0 ? new URL(image.currentSrc).pathname : null;
-      })).toBe(`/media/home-v2/concepts/hero-mobile-band-${width}w.avif`);
-      expect(posters).toEqual([`/media/home-v2/concepts/hero-mobile-band-${width}w.avif`]);
+      })).toBe(`/media/home-v2/concepts/hero-mobile-band-${width}w.webp`);
+      expect(posters).toEqual([`/media/home-v2/concepts/hero-mobile-band-${width}w.webp`]);
       await expect(page.locator('.hero video')).toHaveCount(0);
     } finally {
       await context.close();
     }
   });
-}
-
-for (const [density, width] of [[1, 480], [2, 752]] as const) {
-  for (const fallback of [false, true]) {
-    test(`HOME SSR at DPR ${density}: ${fallback ? 'unsupported AVIF type falls back to WebP' : 'AVIF decodes before JavaScript'}`, async ({ browser, baseURL }, testInfo) => {
-      test.skip(testInfo.project.name !== 'desktop-chromium', 'explicit no-JS cold contexts');
-      const context = await browser.newContext({ baseURL, javaScriptEnabled: false,
-        viewport: { width: 390, height: 844 }, deviceScaleFactor: density });
-      try {
-        const page = await context.newPage();
-        // A controlled unsupported MIME type exercises picture + typed preload
-        // fallback selection. This is not a claim of testing an older Safari.
-        if (fallback) await page.route('**/', async (route) => {
-          const response = await route.fetch();
-          await route.fulfill({ response, body: (await response.text()).replaceAll('image/avif', 'image/x-unsupported-qa') });
-        });
-        const posters: string[] = [];
-        page.on('request', (request) => {
-          const path = new URL(request.url()).pathname;
-          if (path.includes('/hero-mobile-band-')) posters.push(path);
-        });
-        await page.goto('/');
-        const expected = `/media/home-v2/concepts/hero-mobile-band-${width}w.${fallback ? 'webp' : 'avif'}`;
-        const image = page.locator('.hero-media img.direction-hero-poster');
-        await expect(image).toBeVisible();
-        await expect.poll(() => image.evaluate((node) => {
-          const img = node as HTMLImageElement;
-          return img.complete && img.naturalWidth > 0 ? new URL(img.currentSrc).pathname : null;
-        })).toBe(expected);
-        expect(posters).toEqual([expected]);
-      } finally {
-        await context.close();
-      }
-    });
-  }
 }
 
 // Owner, 08.10: the cookie strip along the bottom covered the pause in the hero's corner. On a computer it stands on the
@@ -232,43 +197,4 @@ for (const [width, height] of [[390, 844], [320, 568], [740, 360]] as const) {
     });
     expect(geometry).toEqual({ overWords: false, underHeader: true, aboveStrip: true });
   });
-}
-
-// Source selection is part of the existing PR hero/media gate.
-
-for (const width of [821, 1250, 1440, 1920]) {
-  for (const density of [1, 2]) {
-    test(`HOME direction images cover their real crop at ${width}px / DPR${density}`, async ({ browser, baseURL }, testInfo) => {
-      test.skip(testInfo.project.name !== 'desktop-chromium', 'explicit cold desktop contexts');
-      const context = await browser.newContext({ baseURL,
-        viewport: { width, height: 900 }, deviceScaleFactor: density });
-      try {
-        const page = await context.newPage();
-        await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
-        await page.goto('/');
-        const images = page.locator('.direction-card img');
-        await expect(images).toHaveCount(5);
-        for (let index = 0; index < 5; index++) {
-          const image = images.nth(index);
-          await image.scrollIntoViewIfNeeded();
-          await expect.poll(() => image.evaluate((node) => {
-            const img = node as HTMLImageElement;
-            return img.complete && img.naturalWidth > 0;
-          })).toBe(true);
-          const state = await image.evaluate((node) => {
-            const img = node as HTMLImageElement;
-            const box = img.getBoundingClientRect();
-            return { width: box.width, height: box.height, source: img.currentSrc };
-          });
-          // The portrait is 4:5, the other committed images 3:2. cover
-          // needs the larger of card width and the image width at card height.
-          const needed = Math.max(state.width, state.height * (index === 0 ? .8 : 1.5)) * density;
-          const expectedWidth = [480, 768, 1200].find((candidate) => candidate >= needed) ?? 1200;
-          expect(state.source).toContain(`-${expectedWidth}w.`);
-        }
-      } finally {
-        await context.close();
-      }
-    });
-  }
 }

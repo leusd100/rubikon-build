@@ -1,7 +1,7 @@
 'use client';
 
-// As with ResponsiveImage, next/image resizing is a no-op in this deployment:
-// picture selects pre-generated AVIF variants with the existing WebP fallback.
+/* eslint-disable @next/next/no-img-element -- same reason as ResponsiveImage: next/image resizing is a no-op in
+   this vinext/Cloudflare deployment, so the static phone hero ships pre-generated WebP variants. */
 import { useSyncExternalStore } from 'react';
 import { DirectionHeroVideo } from '../DirectionHeroVideo';
 import { useViewportVariant } from '../../hooks/useViewportVariant';
@@ -13,10 +13,6 @@ import { useViewportVariant } from '../../hooks/useViewportVariant';
 const STATIC_QUERY = '(max-width: 760px)';
 export const HERO_STATIC_SRC = '/media/home-v2/concepts/hero-mobile-band-752w.webp';
 const HERO_STATIC_SRCSET = '/media/home-v2/concepts/hero-mobile-band-480w.webp 480w, /media/home-v2/concepts/hero-mobile-band-752w.webp 752w';
-const HERO_STATIC_AVIF = {
-  src: '/media/home-v2/concepts/hero-mobile-band-752w.avif',
-  srcSet: '/media/home-v2/concepts/hero-mobile-band-480w.avif 480w, /media/home-v2/concepts/hero-mobile-band-752w.avif 752w',
-};
 
 const desktopSources = [
   '/media/about/straight-line-14377591-v2.mp4',
@@ -41,21 +37,18 @@ export function HomeV2HeroMedia() {
 
   if (isStatic) {
     return (
-      <picture>
-        <source type="image/avif" srcSet={HERO_STATIC_AVIF.srcSet} sizes="100vw" />
-        <img
-          className="direction-hero-poster hv2-hero-still"
-          src={HERO_STATIC_SRC}
-          srcSet={HERO_STATIC_SRCSET}
-          sizes="100vw"
-          alt=""
-          aria-hidden="true"
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-        />
-      </picture>
+      <img
+        className="direction-hero-poster hv2-hero-still"
+        src={HERO_STATIC_SRC}
+        srcSet={HERO_STATIC_SRCSET}
+        sizes="100vw"
+        alt=""
+        aria-hidden="true"
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      />
     );
   }
 
@@ -68,7 +61,6 @@ export function HomeV2HeroMedia() {
       mobilePoster={HERO_STATIC_SRC}
       mobilePosterSrcSet={HERO_STATIC_SRCSET}
       mobilePosterSizes="100vw"
-      mobilePosterAvif={HERO_STATIC_AVIF}
       clipDurationMs={2500}
       fadeDurationMs={800}
       loopSingleSource
