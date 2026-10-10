@@ -25,8 +25,12 @@ import {
   buildGableCladdingOverlay,
   buildGateLeafGeometry,
   buildRidgeCapGeometry,
-  gableSandwichSeams,
   sandwichSeamsM,
+  inkRibPitchM,
+  profiledRibsM,
+  sandwichCoursesM,
+  gableRibs,
+  gableCourses,
 } from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
@@ -565,16 +569,26 @@ function EnvelopeOutline({
   layer,
   surface,
   roofShown = true,
+  ribPitchM,
 }: {
   panels: PanelMesh[];
   interiorPoint: THREE.Vector3;
   layer: LayerTransitionStyle;
   surface: 'walls' | 'roof';
   roofShown?: boolean;
+  /** How far apart a profiled sheet's ribs are drawn (inkRibPitchM) */
+  ribPitchM: number;
 }) {
-  const { segments, seams } = useMemo(() => {
+  const { segments, seams, ribs, joints } = useMemo(() => {
     const out: Segments = [];
     const seamOut: Segments = [];
+    const ribOut: Segments = [];
+    const jointOut: Segments = [];
+    const along = (matrix: THREE.Matrix4, target: Segments, [x0, y0]: [number, number], [x1, y1]: [number, number]) => {
+      const a = new THREE.Vector3(x0, y0, 0).applyMatrix4(matrix);
+      const b = new THREE.Vector3(x1, y1, 0).applyMatrix4(matrix);
+      target.push(a.x, a.y, a.z, b.x, b.y, b.z);
+    };
     // A face's joints cancel only against its own bays: grouped by the face the panel's id names (wall-left-3, roof-right-0)
     const faces = new Map<string, PanelMesh[]>();
     for (const panel of panels) {
@@ -587,12 +601,14 @@ function EnvelopeOutline({
       for (const panel of facePanels) {
         const { matrix, widthM, heightM } = envelopePlacement(panel, interiorPoint);
         outer.push(...faceRectangle(matrix, widthM, heightM));
-        if (panel.claddingSystem === 'sandwich-panel') {
-          for (const x of sandwichSeamsM(widthM)) {
-            const a = new THREE.Vector3(x, 0, 0).applyMatrix4(matrix);
-            const b = new THREE.Vector3(x, heightM, 0).applyMatrix4(matrix);
-            seamOut.push(a.x, a.y, a.z, b.x, b.y, b.z);
-          }
+        // the cladding's texture (10.10): a profiled sheet's ribs along its height — up the wall, down the slope; a
+        // sandwich wall's joints across it, the roof's panels' seams down the slope as before
+        if (panel.claddingSystem === 'profiled-sheet') {
+          for (const x of profiledRibsM(widthM, ribPitchM)) along(matrix, ribOut, [x, 0], [x, heightM]);
+        } else if (panel.claddingSystem === 'sandwich-panel' && surface === 'walls') {
+          for (const y of sandwichCoursesM(heightM)) along(matrix, jointOut, [0, y], [widthM, y]);
+        } else if (panel.claddingSystem === 'sandwich-panel') {
+          for (const x of sandwichSeamsM(widthM)) along(matrix, seamOut, [x, 0], [x, heightM]);
         }
         if (surface === 'roof') {
           const back = matrix.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -panel.thicknessM));
@@ -604,13 +620,15 @@ function EnvelopeOutline({
       pushSegments(out, headHidden ? outerSides.filter((e) => e.side !== 'top') : outerSides);
       if (surface === 'roof') pushSegments(out, outlineSides(surfaceOutline(under)).filter((e) => e.side !== 'top'));
     }
-    return { segments: out, seams: seamOut };
-  }, [panels, interiorPoint, surface, roofShown]);
+    return { segments: out, seams: seamOut, ribs: ribOut, joints: jointOut };
+  }, [panels, interiorPoint, surface, roofShown, ribPitchM]);
 
   return (
     <>
       {segments.length > 0 && <InkLines segments={segments} color={INK.paper} widthPx={1.25} opacity={0.9} layer={layer} />}
-      {seams.length > 0 && <InkLines segments={seams} color={INK.paper} widthPx={1} opacity={0.2} layer={layer} />}
+      {seams.length > 0 && <InkLines segments={seams} color={INK.joint} widthPx={1} opacity={0.4} layer={layer} />}
+      {ribs.length > 0 && <InkLines segments={ribs} color={INK.paper} widthPx={1} opacity={0.18} layer={layer} />}
+      {joints.length > 0 && <InkLines segments={joints} color={INK.joint} widthPx={1} opacity={0.45} layer={layer} />}
     </>
   );
 }
@@ -629,7 +647,13 @@ function EnvelopeOutline({
  * length, so the front's outward face is its NEAR (local Z=0) end and the rear's is its FAR
  * (local Z=+thicknessM) end. See `GableMesh.face`'s own doc comment.
  */
-function Gable({ gable, castShadow, layer, roofShown }: { gable: GableMesh; castShadow: boolean; layer: LayerTransitionStyle; roofShown: boolean }) {
+function Gable({ gable, castShadow, layer, roofShown, ribPitchM }: {
+  gable: GableMesh;
+  castShadow: boolean;
+  layer: LayerTransitionStyle;
+  roofShown: boolean;
+  ribPitchM: number;
+}) {
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
     gable.outline.forEach((p, i) => (i === 0 ? shape.moveTo(p.x, p.y) : shape.lineTo(p.x, p.y)));
@@ -676,15 +700,25 @@ function Gable({ gable, castShadow, layer, roofShown }: { gable: GableMesh; cast
     const faceZ = gable.face === 'front' ? gable.zM - depthM : gable.zM + gable.thicknessM + depthM;
     return polygonAtZ(gable.outline, faceZ, 0, [], roofShown ? (i) => i === 2 || i === 3 : undefined);
   }, [gable, overlay, roofShown]);
-  // …and a sandwich gable's seams in the walls' quiet ink (EnvelopeOutline), on its battens' faces
-  const seams = useMemo(() => {
-    if (gable.claddingSystem !== 'sandwich-panel') return [];
+  // …and its cladding's texture as the walls draw it (EnvelopeOutline, 10.10): a profiled gable's ribs upright, a
+  // sandwich gable's joints across it — inside the pentagon, broken at the openings
+  const { ribs, joints } = useMemo(() => {
     const depthM = overlay?.depthM ?? 0;
     const faceZ = gable.face === 'front' ? gable.zM - depthM : gable.zM + gable.thicknessM + depthM;
     const holes = gable.holes.map((hole) => hole.map((p) => ({ x: p.x - gable.xM, y: p.y })));
-    return gableSandwichSeams(gable.widthM, gable.eaveM, gable.ridgeM, holes)
-      .flatMap(({ x, y0, y1 }) => [gable.xM + x, y0, faceZ, gable.xM + x, y1, faceZ]);
-  }, [gable, overlay]);
+    if (gable.claddingSystem === 'sandwich-panel') {
+      return {
+        ribs: [],
+        joints: gableCourses(gable.widthM, gable.eaveM, gable.ridgeM, holes)
+          .flatMap(({ x0, x1, y }) => [gable.xM + x0, y, faceZ, gable.xM + x1, y, faceZ]),
+      };
+    }
+    return {
+      ribs: gableRibs(gable.widthM, gable.eaveM, gable.ridgeM, holes, ribPitchM)
+        .flatMap(({ x, y0, y1 }) => [gable.xM + x, y0, faceZ, gable.xM + x, y1, faceZ]),
+      joints: [],
+    };
+  }, [gable, overlay, ribPitchM]);
 
   return (
     <>
@@ -705,7 +739,8 @@ function Gable({ gable, castShadow, layer, roofShown }: { gable: GableMesh; cast
         />
       )}
       <InkLines segments={ink} color={INK.paper} widthPx={1.25} opacity={0.9} layer={layer} />
-      {seams.length > 0 && <InkLines segments={seams} color={INK.paper} widthPx={1} opacity={0.2} layer={layer} />}
+      {ribs.length > 0 && <InkLines segments={ribs} color={INK.paper} widthPx={1} opacity={0.18} layer={layer} />}
+      {joints.length > 0 && <InkLines segments={joints} color={INK.joint} widthPx={1} opacity={0.45} layer={layer} />}
     </>
   );
 }
@@ -1022,7 +1057,13 @@ function TestRenderSyncAPI() {
  * the Canvas component!" earlier this project (see SettlingSlab's own doc comment) — same fix
  * shape here, applied before repeating it.
  */
-function MaterialColorSync({ wallColor, roofColor }: { wallColor: string; roofColor: string }) {
+function MaterialColorSync({ wallColor, roofColor, wallSandwichColor = wallColor, roofSandwichColor = roofColor }: {
+  wallColor: string;
+  roofColor: string;
+  /** A sandwich panel's own colour (/angary, 10.10); the research screen's presets paint both systems alike */
+  wallSandwichColor?: string;
+  roofSandwichColor?: string;
+}) {
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => {
     // Phase 3F: both cladding-system variants set unconditionally, every time — only one of each
@@ -1030,11 +1071,11 @@ function MaterialColorSync({ wallColor, roofColor }: { wallColor: string; roofCo
     // MaterialKey's own doc comment), so there is no need to branch on which is active; setting
     // both keeps this in sync regardless, with no conditional logic to get out of step.
     sharedMaterial('wall-profiled').color.set(wallColor);
-    sharedMaterial('wall-sandwich').color.set(wallColor);
+    sharedMaterial('wall-sandwich').color.set(wallSandwichColor);
     sharedMaterial('roof-profiled').color.set(roofColor);
-    sharedMaterial('roof-sandwich').color.set(roofColor);
+    sharedMaterial('roof-sandwich').color.set(roofSandwichColor);
     invalidate();
-  }, [wallColor, roofColor, invalidate]);
+  }, [wallColor, roofColor, wallSandwichColor, roofSandwichColor, invalidate]);
   return null;
 }
 
@@ -1045,6 +1086,8 @@ export function ThreeHangarView({
   shadowMapSize = 1024,
   wallColor,
   roofColor,
+  wallSandwichColor,
+  roofSandwichColor,
   showScaleFigure = false,
   bottomInsetPx = 0,
   topInsetPx = 0,
@@ -1068,10 +1111,15 @@ export function ThreeHangarView({
   topInsetPx?: number;
   wallColor?: string;
   roofColor?: string;
+  /** A sandwich panel's own colours (/angary's sheet, 10.10); unset, the panel wears the profiled sheet's */
+  wallSandwichColor?: string;
+  roofSandwichColor?: string;
   /** Phase 3C optional scale reference — off by default (brief §6: "do not clutter the scene"). */
   showScaleFigure?: boolean;
 }) {
   const { visible, building } = scene;
+  // the profiled sheet's ribs drawn a step apart that keeps them a texture at this building's size (envelopePanelGeometry)
+  const ribPitchM = inkRibPitchM(Math.max(building.footprint.widthM, building.footprint.lengthM));
   const interiorPoint = useMemo(
     () =>
       new THREE.Vector3(
@@ -1179,7 +1227,12 @@ export function ThreeHangarView({
       {/* Phase 3F: 'wall-profiled'/'roof-profiled' default colours are the same values the old
           bare 'wall'/'roof' keys used — both cladding-system variants of each share one default
           colour by design (materialPresets.ts's own DEFAULT_WALL_PRESET/DEFAULT_ROOF_PRESET). */}
-      <MaterialColorSync wallColor={wallColor ?? MATERIALS['wall-profiled'].color} roofColor={roofColor ?? MATERIALS['roof-profiled'].color} />
+      <MaterialColorSync
+        wallColor={wallColor ?? MATERIALS['wall-profiled'].color}
+        roofColor={roofColor ?? MATERIALS['roof-profiled'].color}
+        wallSandwichColor={wallSandwichColor}
+        roofSandwichColor={roofSandwichColor}
+      />
 
       {/* Opacity drivers — one per material key that animates by fade rather than growth. Always
           mounted (cheap: no geometry, and useFrame only runs on already-invalidated frames — see
@@ -1265,9 +1318,9 @@ export function ThreeHangarView({
       {walls.mounted && wallPanels.map((panel) => (
         <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={false} />
       ))}
-      {walls.mounted && <EnvelopeOutline panels={wallPanels} interiorPoint={interiorPoint} layer={walls} surface="walls" roofShown={roof.mounted} />}
+      {walls.mounted && <EnvelopeOutline panels={wallPanels} interiorPoint={interiorPoint} layer={walls} surface="walls" roofShown={roof.mounted} ribPitchM={ribPitchM} />}
       {walls.mounted && scene.gables.map((gable) => (
-        <Gable key={gable.id} gable={gable} castShadow={envelopeCastsShadow} layer={walls} roofShown={roof.mounted} />
+        <Gable key={gable.id} gable={gable} castShadow={envelopeCastsShadow} layer={walls} roofShown={roof.mounted} ribPitchM={ribPitchM} />
       ))}
 
       {/* Gates mount off their OWN layer, not `walls` — matching the technical view's documented
@@ -1289,7 +1342,7 @@ export function ThreeHangarView({
       {roof.mounted && roofPanels.map((panel) => (
         <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={envelopeCastsShadow} />
       ))}
-      {roof.mounted && <EnvelopeOutline panels={roofPanels} interiorPoint={interiorPoint} layer={roof} surface="roof" />}
+      {roof.mounted && <EnvelopeOutline panels={roofPanels} interiorPoint={interiorPoint} layer={roof} surface="roof" ribPitchM={ribPitchM} />}
       {roof.mounted && <RidgeCap building={building} roofSystem={scene.envelope.roofSystem} cladding={scene.roofCladding} castShadow={envelopeCastsShadow} layer={roof} />}
     </Canvas>
   );

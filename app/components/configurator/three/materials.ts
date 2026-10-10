@@ -59,13 +59,20 @@ export const INK = {
   paper: '#F5F2EB',
   muted: '#9E988D',
   copper: '#CC8455',
+  /** A sandwich panel's joints (10.10): dark on the warm white panels, where the paper ink was all but invisible */
+  joint: '#4a4740',
 } as const;
 
-/** /angary's light steel (no colour choice there, 07.10): the roof a clear step above the walls, so it reads as the
- *  lid it is under the key light, not as one more grey-blue plane (10.10). The research screen picks its own
- *  (materialPresets.ts). */
-export const SHEET_WALL_COLOR = '#9aa1a7';
-export const SHEET_ROOF_COLOR = '#a9aeb2';
+/** /angary's cladding (no colour choice there, 07.10), one colour per part and per system (10.10, owner: «ворота
+ *  класно вирізняються, а всі інші матеріали більше зливаються» — walls #9aa1a7 and roof #a9aeb2 were one grey, and a
+ *  sandwich panel wore the profiled sheet's colour): the roof the light lid over darker, cooler steel walls; a sandwich
+ *  panel warm white, as the panels are, so the insulated envelope reads apart from the sheet at a glance; the slab
+ *  warm concrete under both. The research screen picks its own (materialPresets.ts). */
+export const SHEET_WALL_COLOR = '#87919a';
+export const SHEET_ROOF_COLOR = '#b7bcc0';
+export const SHEET_WALL_SANDWICH_COLOR = '#c4bfb3';
+// under the key light the lid comes out near white: a step below the walls' white, so it keeps its panels' joints
+export const SHEET_ROOF_SANDWICH_COLOR = '#b9b6ac';
 
 export type MaterialSpec = {
   color: string;

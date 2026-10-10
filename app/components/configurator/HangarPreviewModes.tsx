@@ -23,7 +23,7 @@ import {
   type RoofPresetId,
   type WallPresetId,
 } from './three/materialPresets';
-import { SHEET_ROOF_COLOR, SHEET_WALL_COLOR } from './three/materials';
+import { SHEET_ROOF_COLOR, SHEET_ROOF_SANDWICH_COLOR, SHEET_WALL_COLOR, SHEET_WALL_SANDWICH_COLOR } from './three/materials';
 import { useConfiguratorMobile } from './three/useConfiguratorMobile';
 import { useWebglSupport } from './three/useWebglSupport';
 
@@ -322,9 +322,12 @@ export function HangarPreviewModes({
             // with device testing rather than discovered again from the symptom.
             maxDpr={isMobile ? 1.5 : isFullscreen ? 3 : 2}
             shadowMapSize={isFullscreen ? 2048 : 1024}
-            // /angary's sheet: the technical look's light steel, the roof a step above the walls (10.10, materials.ts)
+            // /angary's sheet: a colour per part and per system — the light lid, cooler steel walls, warm white sandwich
+            // panels (10.10, materials.ts)
             wallColor={sheet ? SHEET_WALL_COLOR : wallPresetColor(wallPreset)}
             roofColor={sheet ? SHEET_ROOF_COLOR : roofPresetColor(roofPreset)}
+            wallSandwichColor={sheet ? SHEET_WALL_SANDWICH_COLOR : undefined}
+            roofSandwichColor={sheet ? SHEET_ROOF_SANDWICH_COLOR : undefined}
             showScaleFigure={showScaleFigure}
             bottomInsetPx={overlayInsetPx}
             topInsetPx={sheet && !isFullscreen ? toolsInsetPx : 0}

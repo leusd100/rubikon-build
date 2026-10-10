@@ -189,6 +189,11 @@ function frameGeometry(domain: HangarDomainModel) {
   const end = continues ? DEP + s * 0.45 : DEP;
   const truss = domain.structural.roofStructure === 'truss';
   const centre = domain.structural.scheme === 'centerSupport';
+  // The visitor's answer on the columns, on L itself (10.10, owner: «розмірні лінії об'єднати й винести за межі
+  // ангару» — a second, copper line on the floor said the same width again, among the posts): «· без колон», or with a
+  // centre row «· два прольоти по 12 м», a tick at Б dividing the line
+  const answered = domain.internalSupports !== 'unknown';
+  const spanNote = answered ? `\u00A0· ${centre ? `два прольоти по\u00A0${metres(W / 2)}` : 'без колон'}` : '';
   const roofZ = roofHeight(W, E, R);
   const columnXs = centre ? [0, W / 2, W] : [0, W];
   // The configurator's own model: its gates and door on this end wall — on the same side of the centre as the general
@@ -339,7 +344,9 @@ function frameGeometry(domain: HangarDomainModel) {
   // L between the outer columns' axes, with their extension lines down from under the footings (10.10, owner: «розмірні
   // лінії мають міряти між центрами крайніх колон») — off step 1 the axes are not drawn, and L hung free under the frame
   const spanDim = `${line([0, 0, DIM_Z], [W, 0, DIM_Z])}${tick([0, 0, DIM_Z])}${tick([W, 0, DIM_Z])}`
-    + `${line([0, 0, -1.3], [0, 0, DIM_Z - 0.4])}${line([W, 0, -1.3], [W, 0, DIM_Z - 0.4])}`;
+    + `${line([0, 0, -1.3], [0, 0, DIM_Z - 0.4])}${line([W, 0, -1.3], [W, 0, DIM_Z - 0.4])}`
+    // with a centre row, Б's tick and extension line — not past the line: L's words stand under its middle
+    + (centre ? `${tick([W / 2, 0, DIM_Z])}${line([W / 2, 0, -1.3], [W / 2, 0, DIM_Z])}` : '');
   const [hx, hy] = xy([-2.2, 0, 0]);
   const [, hty] = xy([-2.2, 0, E]);
   const heightDim = `M${n(hx)},${n(hy)}V${n(hty)}${tickAt([hx, hy])}${tickAt([hx, hty])}`
@@ -385,7 +392,7 @@ function frameGeometry(domain: HangarDomainModel) {
     return [left, y - half, left + width, y + half + below] as Box;
   };
   const labelBoxes = {
-    L: letterBox(letters.L, 'middle', false, values ? valueWidth(values.L) : 0),
+    L: letterBox(letters.L, 'middle', false, valueWidth(`${values?.L ?? ''}${spanNote}`)),
     H: letterBox(letters.H, 'end', false, values ? Math.max(0, valueWidth(values.H) - LETTER * 0.72) : 0, values ? VALUE * 1.05 : 0),
     a: letterBox(letters.a, 'start', true),
   };
@@ -580,17 +587,7 @@ function frameGeometry(domain: HangarDomainModel) {
     ...braceBases.map(([x, d]) => around(down([x, d, -1.1], 6), 18, 6)),
   ]));
 
-  // The visitor's answer on the columns (10.10, owner: «Не працює "Потрібен простір без колон усередині?"» — the click
-  // took, but the drawing hardly changed: the end wall's posts stand in front either way and read as columns). Once
-  // answered, the overview says it on the floor between the frames, in copper: the clear width between the outer
-  // columns' axes, «без колон», or with a centre row its two widths and the row itself lit.
-  const clearD = bays > 1 ? 1.5 * s : s / 2;
-  const clearSpans: Pt[] = centre ? [[0, W / 2], [W / 2, W]] : [[0, W]];
-  const clearLine = clearSpans.map(([a, b]) => `${line([a, clearD, 0], [b, clearD, 0])}${groundTick([a, clearD, 0])}${groundTick([b, clearD, 0])}`).join('');
-  const clearLabels = clearSpans.map(([a, b]) => {
-    const [x, y] = xy([(a + b) / 2, clearD, 0]);
-    return { text: centre ? metres(b - a) : `${metres(b - a)} без колон`, x, y: y - 10 };
-  });
+  // with a centre row, once the visitor answered, the row lit on the overview: the columns L's note counts (10.10)
   const centreRow = centre ? frames.map((d) => line([W / 2, d, 0], [W / 2, d, E])).join('') : '';
 
   return {
@@ -607,7 +604,7 @@ function frameGeometry(domain: HangarDomainModel) {
     windArrows, endWall, braceFootings, windGround: groundUnder(braceBases.map(([x, d]) => [x, d, -1.1] as P3)), windFlow, ghost,
     tags: { frame: frameTags, bays: baysTags },
     nodePoints,
-    clear: { answer: domain.internalSupports, answered: domain.internalSupports !== 'unknown', line: clearLine, labels: clearLabels, centreRow },
+    clear: { answer: domain.internalSupports, answered, note: spanNote, centreRow },
     cameras: { span: shot(spanCamera), frame: shot(frameCamera), bays: shot(baysCamera), snow: shot(snowCamera), wind: shot(windCamera), overview: shot(overviewCamera) },
   };
 }
@@ -809,7 +806,11 @@ export function FrameTourStage({
                 </g>
                 <g className="ft-part" data-part="1">
                   <path className="ft-dim" pathLength={1} d={g.spanDim} />
-                  <text className="ft-letter" x={n(g.letters.L[0])} y={n(g.letters.L[1])}>L{g.values && <tspan className="ft-value">{g.values.L}</tspan>}</text>
+                  {/* on one baseline, the letter, its value and the columns' answer (frame-tour.css .ft-letter-row) */}
+                  <text className="ft-letter ft-letter-row" x={n(g.letters.L[0])} y={n(g.letters.L[1])}>
+                    L{g.values && <tspan className="ft-value">{g.values.L}</tspan>}
+                    {g.clear.note && <tspan key={g.clear.answer} className="ft-value ft-answer">{g.clear.note}</tspan>}
+                  </text>
                   <path className="ft-dim" d={g.heightDim} />
                   <text className="ft-letter" data-anchor="end" x={n(g.letters.H[0])} y={n(g.letters.H[1])}>H</text>
                   {g.values && <text className="ft-letter ft-value" data-anchor="end" x={n(g.hValueAt[0])} y={n(g.hValueAt[1])}>{g.values.H}</text>}
@@ -820,12 +821,12 @@ export function FrameTourStage({
                 <g className="ft-part" data-part="2">
                   <path className="ft-member" pathLength={1} d={g.frontRoof} />
                 </g>
-                {/* the visitor's answer on the columns, on the overview only; keyed by it, so a new answer draws anew */}
+                {/* the visitor's answer on the columns, on the overview only: L drawn over in copper — keyed by the answer,
+                    so a new one draws anew — and with a centre row the row lit */}
                 {g.clear.answered && (
                   <g key={`${g.clear.answer}-${g.centre}`} className="ft-clear" aria-hidden="true">
                     {g.clear.centreRow && <path className="ft-clear-row" pathLength={1} d={g.clear.centreRow} />}
-                    <path className="ft-clear-line" pathLength={1} d={g.clear.line} />
-                    {g.clear.labels.map(({ text, x, y }) => <text key={`${text}-${n(x)}`} className="ft-clear-label" x={n(x)} y={n(y)}>{text}</text>)}
+                    <path className="ft-clear-line" pathLength={1} d={g.spanDim} />
                   </g>
                 )}
 

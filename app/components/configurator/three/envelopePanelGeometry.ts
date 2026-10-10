@@ -342,6 +342,67 @@ export function buildGableCladdingOverlay(
 }
 
 /**
+ * The cladding's texture in ink (10.10, owner: «ворота класно вирізняються, а всі інші матеріали більше зливаються —
+ * може кольорами та текстурами краще показати матеріали»), as the general view draws it: a profiled sheet by its ribs —
+ * running up a wall and down the roof's slope — and a sandwich wall by its panels' joints across it. The ribs every
+ * third at the least (0.6 m): each rib is 0.2 m, under a pixel's spacing at the drawing's distances, where drawn all it
+ * read as moiré; a long building takes a wider step (`inkRibPitchM`), so the ribs stay a texture, not a grey wash.
+ */
+export function inkRibPitchM(longestM: number): number {
+  return Math.max(PROFILED_RIB_PITCH_M * 3, Math.ceil(longestM / 100 / PROFILED_RIB_PITCH_M) * PROFILED_RIB_PITCH_M);
+}
+
+/** The ribs drawn across a bay of this width, in metres from its first edge, evenly at about `pitchM` */
+export function profiledRibsM(widthM: number, pitchM: number): number[] {
+  const count = Math.max(1, Math.round(widthM / pitchM));
+  return Array.from({ length: count - 1 }, (_, i) => ((i + 1) * widthM) / count);
+}
+
+/** A sandwich wall's joints up a panel of this height, a module apart from the ground (panels laid across the wall) */
+export function sandwichCoursesM(heightM: number): number[] {
+  const courses: number[] = [];
+  for (let y = SANDWICH_MODULE_WIDTH_M; y < heightM - SANDWICH_MODULE_WIDTH_M * 0.3; y += SANDWICH_MODULE_WIDTH_M) courses.push(y);
+  return courses;
+}
+
+/** The gable's ribs as lines: upright, from the ground or an opening's head up to the roofline. In the overlay's frame. */
+export function gableRibs(
+  widthM: number,
+  eaveM: number,
+  ridgeM: number,
+  holes: Array<Array<{ x: number; y: number }>>,
+  pitchM: number,
+): Array<{ x: number; y0: number; y1: number }> {
+  const holeBounds = holeBoundsFrom(holes);
+  return profiledRibsM(widthM, pitchM)
+    .map((x) => ({ x, y0: stripBottomY(x, x, holeBounds), y1: gableRooflineY(x, widthM, eaveM, ridgeM) }))
+    .filter(({ y0, y1 }) => y1 > y0 + 0.2);
+}
+
+/** The gable's sandwich joints as lines: across it at each course, inside the pentagon and broken at the openings.
+ *  In the overlay's frame. */
+export function gableCourses(
+  widthM: number,
+  eaveM: number,
+  ridgeM: number,
+  holes: Array<Array<{ x: number; y: number }>>,
+): Array<{ x0: number; x1: number; y: number }> {
+  const holeBounds = holeBoundsFrom(holes);
+  const out: Array<{ x0: number; x1: number; y: number }> = [];
+  for (const y of sandwichCoursesM(ridgeM)) {
+    const inset = y <= eaveM ? 0 : ((y - eaveM) / (ridgeM - eaveM)) * (widthM / 2);
+    let pieces: Array<[number, number]> = [[inset, widthM - inset]];
+    for (const hole of holeBounds.filter((h) => h.maxY > y)) {
+      pieces = pieces.flatMap(([a, b]): Array<[number, number]> => (hole.maxX <= a || hole.minX >= b
+        ? [[a, b]]
+        : [[a, Math.min(b, hole.minX)], [Math.max(a, hole.maxX), b]].filter(([c, d]) => d - c > 0.2) as Array<[number, number]>));
+    }
+    out.push(...pieces.filter(([a, b]) => b - a > 0.2).map(([x0, x1]) => ({ x0, x1, y })));
+  }
+  return out;
+}
+
+/**
  * The gable's sandwich seams as lines (10.10): the overlay's own seam strips above, each as the vertical line at its
  * centre, from the ground or an opening's head up to the roofline — for the renderer's quiet ink, as `sandwichSeamsM`
  * is for the walls. In the overlay's frame (x from the cladding's left edge).

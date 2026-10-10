@@ -39,6 +39,9 @@
 .ft-letter[data-anchor="end"] { text-anchor: end; }
 .ft-letter[data-anchor="start"] { text-anchor: start; }
 .ft-letter { paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(6px * var(--ft-k)); stroke-linejoin: round; }
+/* L with its value and the columns' answer on one baseline (10.10, owner): set on the letter's middle, the smaller
+   figures sat on their own middle and rode high; on the alphabetic line, moved down by the letter's half */
+.ft-letter-row { dominant-baseline: alphabetic; transform: translateY(calc(6.8px * var(--ft-k))); }
 /* A size's value beside its letter, once the visitor gave the sizes (10.10): upright figures, smaller than the letter */
 .ft-value { font-style: normal; font-weight: 600; font-size: calc(15px * var(--ft-k)); font-variant-numeric: tabular-nums; }
 .ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }
@@ -78,37 +81,18 @@
 .ft[data-step="1"] [data-part~="1"] .ft-bubble text, .ft[data-step="3"] [data-part~="3"] .ft-bubble text { fill: var(--color-accent-strong); }
 .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { opacity: 1; }
 
-/* The visitor's answer on the columns (10.10): on the overview only, in copper on the floor between the frames — the
-   clear width between the outer columns' axes, or with a centre row its two widths and the row lit. A new answer draws
-   it anew: the line runs out from its ends, the words come up after it. */
+/* The visitor's answer on the columns (10.10), on L outside the hangar (owner: «розмірні лінії об'єднати й винести за
+   межі ангару»): «· без колон» or «· два прольоти по 12 м» in copper after L's value; on the overview L's line drawn
+   over in copper, and with a centre row the row lit. A new answer draws it anew. */
+.ft-answer { fill: var(--color-accent-strong); }
 .ft-clear { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
 .ft:not([data-step]) .ft-clear { opacity: 1; }
-.ft-clear-line { stroke: var(--color-accent); stroke-width: calc(1.8px * var(--ft-k)); }
+.ft-clear-line { stroke: var(--color-accent); stroke-width: calc(1.6px * var(--ft-k)); }
 .ft-clear-row { stroke: var(--color-accent); stroke-width: calc(2.6px * var(--ft-k)); }
-.ft-clear-label {
-  fill: var(--color-accent-strong); font: 600 calc(15px * var(--ft-t, 1)) var(--font-manrope), sans-serif; text-anchor: middle;
-  paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(7px * var(--ft-k)); stroke-linejoin: round;
-}
 @media (prefers-reduced-motion: no-preference) {
   .ft-clear :is(.ft-clear-line, .ft-clear-row) { stroke-dasharray: 1; animation: ft-draw .7s var(--ease-premium, ease) both; }
-  .ft-clear-label { animation: ft-rise .4s ease .45s both; }
+  .ft-answer { animation: ft-in .4s ease .4s both; }
 }
-/* The first view of the frame builds itself (10.10, ConfiguratorFrameView data-build): the ground and the footings come
-   up, the columns rise, the trusses and the lines along the building are laid on them, then the purlins, the end wall's
-   posts and its openings, the bracing, and last the sizes — ~1.7 s, once per page load */
-@media (prefers-reduced-motion: no-preference) {
-  .hc-frame[data-build]:not([data-step]) :is(.ft-slab, .ft-ground) { animation: ft-in .3s ease both; }
-  .hc-frame[data-build]:not([data-step]) :is(.ft-footing, .ft-footing-top) { animation: ft-rise .35s ease .1s both; }
-  .hc-frame[data-build]:not([data-step]) :is([data-build-stage="columns"], [data-part="1 2"] .ft-member) { stroke-dasharray: 1; animation: ft-draw .45s var(--ease-premium, ease) .3s both; }
-  .hc-frame[data-build]:not([data-step]) :is([data-build-stage="roof"], [data-part="2"] .ft-member) { stroke-dasharray: 1; animation: ft-draw .5s var(--ease-premium, ease) .6s both; }
-  .hc-frame[data-build]:not([data-step]) :is(.ft-thin, .ft-post) { stroke-dasharray: 1; animation: ft-draw .4s var(--ease-premium, ease) .9s both; }
-  .hc-frame[data-build]:not([data-step]) .ft-opening { animation: ft-in .35s ease .95s both; }
-  .hc-frame[data-build]:not([data-step]) .ft-brace { stroke-dasharray: 1; animation: ft-draw .4s var(--ease-premium, ease) 1.1s both; }
-  .hc-frame[data-build]:not([data-step]) :is(.ft-dim, .ft-letter) { animation: ft-in .35s ease 1.35s both; }
-  .hc-frame[data-build]:not([data-step]) .ft-clear :is(.ft-clear-line, .ft-clear-row) { animation-delay: 1.35s; }
-  .hc-frame[data-build]:not([data-step]) .ft-clear-label { animation-delay: 1.75s; }
-}
-@keyframes ft-in { from { opacity: 0; } }
 @keyframes ft-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* The loads: the frame stays in graphite under them; the lit links glow. Pure picture (aria-hidden), so they never take
