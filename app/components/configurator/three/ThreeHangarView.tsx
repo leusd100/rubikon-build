@@ -15,10 +15,19 @@ import type {
 import { claddingMaterialKey } from '../../../lib/configurator/threeSceneModel';
 import type { ParametricBuildingModel } from '../../../lib/configurator/parametricModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
-import { MATERIALS, STUDIO_BACKGROUND } from './materials';
-import { getGroundFalloffTexture } from './proceduralTextures';
+import { INK, MATERIALS } from './materials';
 import { getRepeatedNoiseTexture } from './proceduralTextures';
-import { buildDoorLeafGeometry, buildEnvelopePanelGeometry, buildGableCladdingOverlay, buildGateLeafGeometry, buildRidgeCapGeometry } from './envelopePanelGeometry';
+import { boxEdges, creaseEdges, faceRectangle, outlineSides, polygonAtZ, pushSegments, surfaceOutline, type Segments } from './inkOutlines';
+import { InkLines } from './InkLines';
+import {
+  buildDoorLeafGeometry,
+  buildEnvelopePanelGeometry,
+  buildGableCladdingOverlay,
+  buildGateLeafGeometry,
+  buildRidgeCapGeometry,
+  gableSandwichSeams,
+  sandwichSeamsM,
+} from './envelopePanelGeometry';
 import type { CladdingSystem } from '../../../lib/configurator/types';
 import { FitOrthographicCamera } from './FitOrthographicCamera';
 import { useLayerLifecycle, type LayerTransitionStyle } from '../useLayerLifecycle';
@@ -87,6 +96,22 @@ function sharedMaterial(key: keyof typeof MATERIALS): THREE.MeshStandardMaterial
 }
 
 /**
+ * The bracing crosses in copper (10.10), as the «Каркас» drawing draws them — so a frame-only view (walls out of the
+ * request) reads in the same three inks as the drawing: paper members, muted girts and purlins, copper bracing. A
+ * renderer-side material rather than a MaterialKey: the scene model keeps braces `frame-secondary` (what they are made
+ * of), and this is only how the drawing language marks them. Fades with the girts' layer, on its own driver.
+ */
+let braceMaterial: THREE.MeshStandardMaterial | null = null;
+function sharedBraceMaterial(): THREE.MeshStandardMaterial {
+  braceMaterial ??= new THREE.MeshStandardMaterial({
+    color: '#b76432',
+    roughness: 0.7,
+    metalness: 0.1,
+  });
+  return braceMaterial;
+}
+
+/**
  * Drives one shared material's opacity from a layer's build-up progress — the opacity half of
  * Phase 3B's visual vocabulary (foundation, secondary structure, walls, roof, gates: "opacity /
  * reveal", per the brief). Renders nothing itself; every mesh using `materialKey` already reads
@@ -98,10 +123,10 @@ function sharedMaterial(key: keyof typeof MATERIALS): THREE.MeshStandardMaterial
  * be redundant, and columns/rafters share one material instance so mutating its opacity would
  * incorrectly apply to both at once even though they run on independently offset timings.
  */
-function MaterialOpacityDriver({ materialKey, layer }: { materialKey: MaterialKey; layer: LayerTransitionStyle }) {
+function MaterialOpacityDriver({ materialKey, layer }: { materialKey: MaterialKey | 'brace'; layer: LayerTransitionStyle }) {
   const progressRef = useBuildProgress(layer);
   useFrame(() => {
-    const material = sharedMaterial(materialKey);
+    const material = materialKey === 'brace' ? sharedBraceMaterial() : sharedMaterial(materialKey);
     const p = progressRef.current;
     const settled = p >= 1;
     if (material.transparent !== !settled) material.transparent = !settled;
@@ -141,7 +166,7 @@ function StaticStrut({ strut, castShadow }: { strut: StrutMesh; castShadow: bool
   return (
     <mesh
       geometry={UNIT_BOX}
-      material={sharedMaterial(strut.material)}
+      material={strut.role === 'brace' ? sharedBraceMaterial() : sharedMaterial(strut.material)}
       matrix={matrix}
       matrixAutoUpdate={false}
       castShadow={castShadow}
@@ -161,11 +186,19 @@ function StaticStrut({ strut, castShadow }: { strut: StrutMesh; castShadow: bool
  * blending into either. Both materials have their own driver on the SAME `foundation` layer (see
  * this file's own driver block), so pad and pedestal still fade in lockstep despite the split.
  */
-function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: boolean }) {
+function Footing({ footing, castShadow, layer }: { footing: FootingMesh; castShadow: boolean; layer: LayerTransitionStyle }) {
   const padMaterial = sharedMaterial(footing.material);
   const pedestalMaterial = sharedMaterial('footing');
+  // The pedestal's outline in muted ink (10.10): the one part of a footing above grade, drawn as the frame drawing draws
+  // its footings — quieter than the building's own outlines
+  const ink = useMemo(() => boxEdges(new THREE.Matrix4().compose(
+    new THREE.Vector3(0, footing.pedestalHeightM / 2, 0),
+    new THREE.Quaternion(),
+    new THREE.Vector3(footing.pedestalWidthM, footing.pedestalHeightM, footing.pedestalWidthM),
+  )), [footing]);
   return (
     <group position={[footing.xM, 0, footing.zM]}>
+      <InkLines segments={ink} color={INK.muted} widthPx={1} layer={layer} />
       {/* Pad: centred on the column, buried below grade. */}
       <mesh
         geometry={UNIT_BOX}
@@ -187,6 +220,10 @@ function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: bo
   );
 }
 
+/** How far proud of the wall's outer face an opening's frame is drawn: past the profiled overlay's 8 mm crests
+ *  (envelopePanelGeometry.ts), so no rib hides a stretch of it */
+const OPENING_FRAME_PROUD_M = 0.012;
+
 /**
  * Phase 3D.1 — the gate's own door leaf. See `buildGateLeafGeometry`'s own doc comment in
  * envelopePanelGeometry.ts for the geometry and why it needs no placement basis matrix: like
@@ -196,7 +233,7 @@ function Footing({ footing, castShadow }: { footing: FootingMesh; castShadow: bo
  * and mounts on the SAME `gateLayer` as the recess it sits in front of, so the two arrive and leave
  * together with no separate driver of their own.
  */
-function GateLeaf({ leaf, castShadow }: { leaf: GateLeafMesh; castShadow: boolean }) {
+function GateLeaf({ leaf, castShadow, layer }: { leaf: GateLeafMesh; castShadow: boolean; layer: LayerTransitionStyle }) {
   const geometry = useMemo(
     () => (leaf.kind === 'door'
       ? buildDoorLeafGeometry(leaf.widthM, leaf.heightM)
@@ -205,14 +242,42 @@ function GateLeaf({ leaf, castShadow }: { leaf: GateLeafMesh; castShadow: boolea
   );
   useEffect(() => () => geometry.dispose(), [geometry]);
 
+  // The opening's frame in copper (10.10): the one part of the facade that opens, marked in the colour the site marks
+  // what you act on — it is what makes a dark leaf read as a gate rather than as a hole. On the wall's outer face,
+  // round the opening as the gable cuts it.
+  const frame = useMemo(() => polygonAtZ(
+    [{ x: 0, y: 0 }, { x: leaf.widthM, y: 0 }, { x: leaf.widthM, y: leaf.heightM }, { x: 0, y: leaf.heightM }],
+    leaf.frameZM - OPENING_FRAME_PROUD_M,
+    leaf.xM,
+    [],
+    (i) => i === 0, // no sill line: a gate's leaf meets the slab, and the slab's own edge is drawn there
+  ), [leaf]);
+  // A sectional gate's sections in quiet ink: the leaf's front faces' edges only (local z = 0) — the back faces' would
+  // show through the gaps between the sections as a second, shifted set. A door is one flush leaf: its frame says it.
+  const sections = useMemo(() => {
+    if (leaf.kind === 'door') return null;
+    const all = creaseEdges(geometry, 30);
+    const front: Segments = [];
+    for (let i = 0; i < all.length; i += 6) {
+      if (Math.abs(all[i + 2]) < 1e-4 && Math.abs(all[i + 5]) < 1e-4) {
+        front.push(all[i] + leaf.xM, all[i + 1], leaf.zM, all[i + 3] + leaf.xM, all[i + 4], leaf.zM);
+      }
+    }
+    return front;
+  }, [geometry, leaf]);
+
   return (
-    <mesh
-      geometry={geometry}
-      material={sharedMaterial(leaf.material)}
-      position={[leaf.xM, 0, leaf.zM]}
-      castShadow={castShadow}
-      receiveShadow
-    />
+    <>
+      <mesh
+        geometry={geometry}
+        material={sharedMaterial(leaf.material)}
+        position={[leaf.xM, 0, leaf.zM]}
+        castShadow={castShadow}
+        receiveShadow
+      />
+      <InkLines segments={frame} color={INK.copper} widthPx={1.6} layer={layer} />
+      {sections && sections.length > 0 && <InkLines segments={sections} color={INK.paper} widthPx={1} opacity={0.32} layer={layer} />}
+    </>
   );
 }
 
@@ -278,61 +343,70 @@ function AnimatedStrut({
  * rather than hard-coding a sign per face: the right wall's normal points opposite to the left
  * wall's, and hard-coding that is how face-convention bugs start.
  */
+function panelMatrix(panel: PanelMesh, interiorPoint: THREE.Vector3, thicknessDirection: 'inward' | 'outward'): THREE.Matrix4 {
+  const [c0, c1, , c3] = panel.corners.map(v);
+  const u = new THREE.Vector3().subVectors(c1, c0);
+  const w = new THREE.Vector3().subVectors(c3, c0);
+  const lu = u.length() || 1e-6;
+  const lw = w.length() || 1e-6;
+  const un = u.clone().normalize();
+  const wn = w.clone().normalize();
+  const normal = new THREE.Vector3().crossVectors(un, wn).normalize();
+
+  const centre = panel.corners
+    .map(v)
+    .reduce((acc, p) => acc.add(p), new THREE.Vector3())
+    .multiplyScalar(0.25);
+
+  const towardInterior = new THREE.Vector3().subVectors(interiorPoint, centre);
+  const inwardSign = towardInterior.dot(normal) >= 0 ? 1 : -1;
+  const sign = thicknessDirection === 'inward' ? inwardSign : -inwardSign;
+  centre.addScaledVector(normal, (sign * panel.thicknessM) / 2);
+
+  // Local x → first edge, local y → second edge, local z → surface normal.
+  //
+  // The basis MUST stay right-handed. `normal` is `un × wn` by construction, so (un, wn, normal)
+  // has determinant +1; feeding the flipped normal in here instead produced a left-handed
+  // (improper) matrix, and `setFromRotationMatrix` on one of those yields a garbage rotation.
+  // That was a real, visible bug: every panel whose thickness pointed the other way came out
+  // mis-rotated, so the gable rendered as a row of dark chevrons instead of two clean slopes.
+  // The box is symmetric about its local z, so the flip only ever needed to move the centre.
+  const basis = new THREE.Matrix4().makeBasis(un, wn, normal);
+  const quaternion = new THREE.Quaternion().setFromRotationMatrix(basis);
+  const scale = new THREE.Vector3(lu, lw, panel.thicknessM);
+
+  return new THREE.Matrix4().compose(centre, quaternion, scale);
+}
+
 function Panel({
   panel,
   interiorPoint,
   castShadow,
   thicknessDirection = 'outward',
+  ink,
 }: {
   panel: PanelMesh;
   interiorPoint: THREE.Vector3;
   castShadow: boolean;
   thicknessDirection?: 'inward' | 'outward';
+  /** The box's twelve edges in paper ink, on this layer (10.10): the slab's outline, which makes it a part */
+  ink?: LayerTransitionStyle;
 }) {
-  const matrix = useMemo(() => {
-    const [c0, c1, , c3] = panel.corners.map(v);
-    const u = new THREE.Vector3().subVectors(c1, c0);
-    const w = new THREE.Vector3().subVectors(c3, c0);
-    const lu = u.length() || 1e-6;
-    const lw = w.length() || 1e-6;
-    const un = u.clone().normalize();
-    const wn = w.clone().normalize();
-    const normal = new THREE.Vector3().crossVectors(un, wn).normalize();
-
-    const centre = panel.corners
-      .map(v)
-      .reduce((acc, p) => acc.add(p), new THREE.Vector3())
-      .multiplyScalar(0.25);
-
-    const towardInterior = new THREE.Vector3().subVectors(interiorPoint, centre);
-    const inwardSign = towardInterior.dot(normal) >= 0 ? 1 : -1;
-    const sign = thicknessDirection === 'inward' ? inwardSign : -inwardSign;
-    centre.addScaledVector(normal, (sign * panel.thicknessM) / 2);
-
-    // Local x → first edge, local y → second edge, local z → surface normal.
-    //
-    // The basis MUST stay right-handed. `normal` is `un × wn` by construction, so (un, wn, normal)
-    // has determinant +1; feeding the flipped normal in here instead produced a left-handed
-    // (improper) matrix, and `setFromRotationMatrix` on one of those yields a garbage rotation.
-    // That was a real, visible bug: every panel whose thickness pointed the other way came out
-    // mis-rotated, so the gable rendered as a row of dark chevrons instead of two clean slopes.
-    // The box is symmetric about its local z, so the flip only ever needed to move the centre.
-    const basis = new THREE.Matrix4().makeBasis(un, wn, normal);
-    const quaternion = new THREE.Quaternion().setFromRotationMatrix(basis);
-    const scale = new THREE.Vector3(lu, lw, panel.thicknessM);
-
-    return new THREE.Matrix4().compose(centre, quaternion, scale);
-  }, [panel, interiorPoint, thicknessDirection]);
+  const matrix = useMemo(() => panelMatrix(panel, interiorPoint, thicknessDirection), [panel, interiorPoint, thicknessDirection]);
+  const edges = useMemo(() => (ink ? boxEdges(matrix) : null), [ink, matrix]);
 
   return (
-    <mesh
-      geometry={UNIT_BOX}
-      material={sharedMaterial(panel.material)}
-      matrix={matrix}
-      matrixAutoUpdate={false}
-      castShadow={castShadow}
-      receiveShadow
-    />
+    <>
+      <mesh
+        geometry={UNIT_BOX}
+        material={sharedMaterial(panel.material)}
+        matrix={matrix}
+        matrixAutoUpdate={false}
+        castShadow={castShadow}
+        receiveShadow
+      />
+      {ink && edges && <InkLines segments={edges} color={INK.paper} widthPx={1.2} opacity={0.78} layer={ink} />}
+    </>
   );
 }
 
@@ -414,6 +488,38 @@ function envelopeGeometryFor(widthM: number, heightM: number, thicknessM: number
  * without swapping which local axis is width vs height, which swapping `un`/`wn` would have done
  * and would have rotated every rib/seam 90° on exactly the panels that needed the flip.
  */
+function envelopePlacement(panel: PanelMesh, interiorPoint: THREE.Vector3): { matrix: THREE.Matrix4; widthM: number; heightM: number } {
+  const [c0, c1, , c3] = panel.corners.map(v);
+  const u = new THREE.Vector3().subVectors(c1, c0);
+  const w = new THREE.Vector3().subVectors(c3, c0);
+  const lu = u.length() || 1e-6;
+  const lw = w.length() || 1e-6;
+  const wn = w.clone().normalize();
+
+  const naturalUn = u.clone().normalize();
+  const naturalNormal = new THREE.Vector3().crossVectors(naturalUn, wn).normalize();
+  const centre = panel.corners.map(v).reduce((acc, p) => acc.add(p), new THREE.Vector3()).multiplyScalar(0.25);
+  const towardInterior = new THREE.Vector3().subVectors(interiorPoint, centre);
+  const pointsInward = towardInterior.dot(naturalNormal) >= 0;
+
+  const un = pointsInward ? naturalUn.clone().negate() : naturalUn;
+  const normal = new THREE.Vector3().crossVectors(un, wn).normalize();
+  // Where the cladding hangs (09.10, audit F68; threeSceneModel.ts `standoff`): the geometry spans local Z
+  // [−thickness, 0], so its origin moves out along the outward normal by the standoff AND the thickness — the inner
+  // face then stands `outwardM` off the members' plane, the frame inside it. Along the first edge it runs on past
+  // its corners by `startM`/`endM`, from whichever corner the flipped basis starts at; a wall's first corner is on
+  // its top edge, and it runs up past it by `riseM`, back along the second edge.
+  const { outwardM = 0, startM = 0, endM = 0, riseM = 0 } = panel.standoff ?? {};
+  const origin = pointsInward ? c1.clone().addScaledVector(naturalUn, endM) : c0.clone().addScaledVector(naturalUn, -startM);
+  origin.addScaledVector(wn, -riseM).addScaledVector(normal, outwardM + (panel.standoff ? panel.thicknessM : 0));
+
+  const basis = new THREE.Matrix4().makeBasis(un, wn, normal);
+  const quaternion = new THREE.Quaternion().setFromRotationMatrix(basis);
+  const matrix = new THREE.Matrix4().compose(origin, quaternion, new THREE.Vector3(1, 1, 1));
+
+  return { matrix, widthM: lu + startM + endM, heightM: lw + riseM };
+}
+
 function EnvelopePanel({
   panel,
   interiorPoint,
@@ -424,35 +530,8 @@ function EnvelopePanel({
   castShadow: boolean;
 }) {
   const { matrix, geometry } = useMemo(() => {
-    const [c0, c1, , c3] = panel.corners.map(v);
-    const u = new THREE.Vector3().subVectors(c1, c0);
-    const w = new THREE.Vector3().subVectors(c3, c0);
-    const lu = u.length() || 1e-6;
-    const lw = w.length() || 1e-6;
-    const wn = w.clone().normalize();
-
-    const naturalUn = u.clone().normalize();
-    const naturalNormal = new THREE.Vector3().crossVectors(naturalUn, wn).normalize();
-    const centre = panel.corners.map(v).reduce((acc, p) => acc.add(p), new THREE.Vector3()).multiplyScalar(0.25);
-    const towardInterior = new THREE.Vector3().subVectors(interiorPoint, centre);
-    const pointsInward = towardInterior.dot(naturalNormal) >= 0;
-
-    const un = pointsInward ? naturalUn.clone().negate() : naturalUn;
-    const normal = new THREE.Vector3().crossVectors(un, wn).normalize();
-    // Where the cladding hangs (09.10, audit F68; threeSceneModel.ts `standoff`): the geometry spans local Z
-    // [−thickness, 0], so its origin moves out along the outward normal by the standoff AND the thickness — the inner
-    // face then stands `outwardM` off the members' plane, the frame inside it. Along the first edge it runs on past
-    // its corners by `startM`/`endM`, from whichever corner the flipped basis starts at; a wall's first corner is on
-    // its top edge, and it runs up past it by `riseM`, back along the second edge.
-    const { outwardM = 0, startM = 0, endM = 0, riseM = 0 } = panel.standoff ?? {};
-    const origin = pointsInward ? c1.clone().addScaledVector(naturalUn, endM) : c0.clone().addScaledVector(naturalUn, -startM);
-    origin.addScaledVector(wn, -riseM).addScaledVector(normal, outwardM + (panel.standoff ? panel.thicknessM : 0));
-
-    const basis = new THREE.Matrix4().makeBasis(un, wn, normal);
-    const quaternion = new THREE.Quaternion().setFromRotationMatrix(basis);
-    const matrix = new THREE.Matrix4().compose(origin, quaternion, new THREE.Vector3(1, 1, 1));
-
-    return { matrix, geometry: envelopeGeometryFor(lu + startM + endM, lw + riseM, panel.thicknessM, panel.claddingSystem) };
+    const placement = envelopePlacement(panel, interiorPoint);
+    return { matrix: placement.matrix, geometry: envelopeGeometryFor(placement.widthM, placement.heightM, panel.thicknessM, panel.claddingSystem) };
   }, [panel, interiorPoint]);
 
   return (
@@ -464,6 +543,75 @@ function EnvelopePanel({
       castShadow={castShadow}
       receiveShadow
     />
+  );
+}
+
+/**
+ * One envelope surface's outline (10.10, inkOutlines.ts): every bay's outer face, placed exactly as EnvelopePanel
+ * places the bay, with the joints between bays taken out — so each side wall and each roof slope is drawn as one part.
+ *
+ * Only the edges that can be seen, chosen by side rather than left to the depth test: the ink stands a few pixels
+ * toward the camera (InkLines), so an edge hidden by less than that would show through. A wall's head is under the
+ * roof — drawn only when the roof is out of the request. The roof draws its underside's eave and rakes too, which show
+ * its thickness as a fascia (the lid's edge) where it oversails the walls; not its slopes' heads, which the ridge cap
+ * covers (RidgeCap draws the ridge), nor the underside's, deep in the roof.
+ *
+ * A sandwich panel's seams in the quietest ink (`sandwichSeamsM`): the panels' rhythm, under the outlines in weight,
+ * so the two cladding systems still read apart — profiled sheet by its ribs' fine texture, sandwich by its joints.
+ */
+function EnvelopeOutline({
+  panels,
+  interiorPoint,
+  layer,
+  surface,
+  roofShown = true,
+}: {
+  panels: PanelMesh[];
+  interiorPoint: THREE.Vector3;
+  layer: LayerTransitionStyle;
+  surface: 'walls' | 'roof';
+  roofShown?: boolean;
+}) {
+  const { segments, seams } = useMemo(() => {
+    const out: Segments = [];
+    const seamOut: Segments = [];
+    // A face's joints cancel only against its own bays: grouped by the face the panel's id names (wall-left-3, roof-right-0)
+    const faces = new Map<string, PanelMesh[]>();
+    for (const panel of panels) {
+      const face = panel.id.replace(/-\d+$/, '');
+      faces.set(face, [...(faces.get(face) ?? []), panel]);
+    }
+    for (const facePanels of faces.values()) {
+      const outer: Array<[THREE.Vector3, THREE.Vector3]> = [];
+      const under: Array<[THREE.Vector3, THREE.Vector3]> = [];
+      for (const panel of facePanels) {
+        const { matrix, widthM, heightM } = envelopePlacement(panel, interiorPoint);
+        outer.push(...faceRectangle(matrix, widthM, heightM));
+        if (panel.claddingSystem === 'sandwich-panel') {
+          for (const x of sandwichSeamsM(widthM)) {
+            const a = new THREE.Vector3(x, 0, 0).applyMatrix4(matrix);
+            const b = new THREE.Vector3(x, heightM, 0).applyMatrix4(matrix);
+            seamOut.push(a.x, a.y, a.z, b.x, b.y, b.z);
+          }
+        }
+        if (surface === 'roof') {
+          const back = matrix.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -panel.thicknessM));
+          under.push(...faceRectangle(back, widthM, heightM));
+        }
+      }
+      const outerSides = outlineSides(surfaceOutline(outer));
+      const headHidden = surface === 'roof' || roofShown;
+      pushSegments(out, headHidden ? outerSides.filter((e) => e.side !== 'top') : outerSides);
+      if (surface === 'roof') pushSegments(out, outlineSides(surfaceOutline(under)).filter((e) => e.side !== 'top'));
+    }
+    return { segments: out, seams: seamOut };
+  }, [panels, interiorPoint, surface, roofShown]);
+
+  return (
+    <>
+      {segments.length > 0 && <InkLines segments={segments} color={INK.paper} widthPx={1.25} opacity={0.9} layer={layer} />}
+      {seams.length > 0 && <InkLines segments={seams} color={INK.paper} widthPx={1} opacity={0.2} layer={layer} />}
+    </>
   );
 }
 
@@ -481,7 +629,7 @@ function EnvelopePanel({
  * length, so the front's outward face is its NEAR (local Z=0) end and the rear's is its FAR
  * (local Z=+thicknessM) end. See `GableMesh.face`'s own doc comment.
  */
-function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean }) {
+function Gable({ gable, castShadow, layer, roofShown }: { gable: GableMesh; castShadow: boolean; layer: LayerTransitionStyle; roofShown: boolean }) {
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
     gable.outline.forEach((p, i) => (i === 0 ? shape.moveTo(p.x, p.y) : shape.lineTo(p.x, p.y)));
@@ -519,6 +667,25 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
       : gable.zM + gable.thicknessM // protrudes further away (+Z) than the field's own far face
     : 0;
 
+  // The gable's outline in paper ink (10.10) on its outermost face — the overlay's crests where there is one. Its two
+  // rakes (outline edges 2 and 3) only when the roof is out of the request: under the roof they are the roof's own
+  // underside rakes, which EnvelopeOutline draws. The openings' edges are not drawn here: their frames are the gates'
+  // own (GateLeaf), in copper.
+  const ink = useMemo(() => {
+    const depthM = overlay?.depthM ?? 0;
+    const faceZ = gable.face === 'front' ? gable.zM - depthM : gable.zM + gable.thicknessM + depthM;
+    return polygonAtZ(gable.outline, faceZ, 0, [], roofShown ? (i) => i === 2 || i === 3 : undefined);
+  }, [gable, overlay, roofShown]);
+  // …and a sandwich gable's seams in the walls' quiet ink (EnvelopeOutline), on its battens' faces
+  const seams = useMemo(() => {
+    if (gable.claddingSystem !== 'sandwich-panel') return [];
+    const depthM = overlay?.depthM ?? 0;
+    const faceZ = gable.face === 'front' ? gable.zM - depthM : gable.zM + gable.thicknessM + depthM;
+    const holes = gable.holes.map((hole) => hole.map((p) => ({ x: p.x - gable.xM, y: p.y })));
+    return gableSandwichSeams(gable.widthM, gable.eaveM, gable.ridgeM, holes)
+      .flatMap(({ x, y0, y1 }) => [gable.xM + x, y0, faceZ, gable.xM + x, y1, faceZ]);
+  }, [gable, overlay]);
+
   return (
     <>
       <mesh
@@ -537,6 +704,8 @@ function Gable({ gable, castShadow }: { gable: GableMesh; castShadow: boolean })
           receiveShadow
         />
       )}
+      <InkLines segments={ink} color={INK.paper} widthPx={1.25} opacity={0.9} layer={layer} />
+      {seams.length > 0 && <InkLines segments={seams} color={INK.paper} widthPx={1} opacity={0.2} layer={layer} />}
     </>
   );
 }
@@ -558,11 +727,13 @@ function RidgeCap({
   roofSystem,
   cladding,
   castShadow,
+  layer,
 }: {
   building: ParametricBuildingModel;
   roofSystem: CladdingSystem;
   cladding: ThreeSceneModel['roofCladding'];
   castShadow: boolean;
+  layer: LayerTransitionStyle;
 }) {
   const { widthM, lengthM } = building.footprint;
   const { ridgeM } = building.heights;
@@ -576,15 +747,31 @@ function RidgeCap({
     [widthM, capLengthM, capRidgeM, pitchDeg],
   );
   useEffect(() => () => geometry.dispose(), [geometry]);
+  // The ridge in ink (10.10): the cap's crown, the one line where the two slopes meet, which the light alone drew as a
+  // soft change of tone. Its skirts are left out: 22 cm down either slope, at a 12 m span they drew the ridge as three
+  // lines, and they lie on the roof, within the ink's lift of it (InkLines).
+  const ink = useMemo(() => {
+    const creases = creaseEdges(geometry, 20, new THREE.Vector3(0, 0, -cladding.endReachM));
+    let top = -Infinity;
+    for (let i = 1; i < creases.length; i += 3) top = Math.max(top, creases[i]);
+    const crown: Segments = [];
+    for (let i = 0; i < creases.length; i += 6) {
+      if (creases[i + 1] > top - 1e-4 && creases[i + 4] > top - 1e-4) crown.push(...creases.slice(i, i + 6));
+    }
+    return crown;
+  }, [geometry, cladding.endReachM]);
 
   return (
-    <mesh
-      geometry={geometry}
-      material={sharedMaterial(claddingMaterialKey('roof', roofSystem))}
-      position={[0, 0, -cladding.endReachM]}
-      castShadow={castShadow}
-      receiveShadow
-    />
+    <>
+      <mesh
+        geometry={geometry}
+        material={sharedMaterial(claddingMaterialKey('roof', roofSystem))}
+        position={[0, 0, -cladding.endReachM]}
+        castShadow={castShadow}
+        receiveShadow
+      />
+      <InkLines segments={ink} color={INK.paper} widthPx={1.1} opacity={0.75} layer={layer} />
+    </>
   );
 }
 
@@ -618,41 +805,30 @@ function SettlingSlab({
 }
 
 /**
- * Lighting: ambient + hemisphere fill + one directional key + a weak opposing fill, plus linear
- * fog. Simple on purpose (no HDRI, no bloom, no post-processing stack).
- *
- * The fog is doing real work rather than being atmosphere: it grades contrast with depth, so the
- * near portal frames separate from the far ones. That was the cheapest available fix for the
- * frame-only readability the earlier spike lost to SVG, and it costs one line instead of an
- * outline post-processing pass.
+ * The technical look's light (10.10) — it replaces Phase 3F's «Premium Industrial» study, whose low fill and dark
+ * backdrop were exactly what the owner found unreadable on /angary: walls and roof one grey-blue, both visible walls one
+ * tone. The camera (viewProjection.ts) looks at the front gable and the left long wall from the front-left and above,
+ * so the light is set against THAT view, by direction rather than by the building's metres, so every size gets the
+ * same three tones:
+ *   • the key, high from the front-right, lights the roof most, the front gable (the gates' wall) half, and misses the
+ *     long wall — three clear value steps, lid › gable › long wall, the way an architect's axonometric shades;
+ *   • a cool-to-ground hemisphere keeps every face's own value (no face goes black on a dark field);
+ *   • a weak fill from the left lifts the long wall off the field just enough to stay a surface, not a hole.
+ * Its shadow falls forward-left, onto the ground in front of the long wall — in view, where it seats the building.
+ * No fog any more: the outlines separate near from far now (inkOutlines.ts), and fog graded the far end of a long
+ * hangar into the field — the opposite of what a drawing does. Values tuned on screen against /angary's light steel
+ * (materials.ts SHEET_*), at 24 × 60 × 8, 12 × 18 × 4 and 50 × 120 × 15.
  */
-/**
- * Phase 3F §10 — the chosen result of a three-way controlled lighting study (same camera, model
- * and material config for all three, compared live before deciding — see the Phase 3F final
- * report's own section N for screenshots and reasoning). PREMIUM INDUSTRIAL won over CLEAN STUDIO
- * (too flat/generic — closest to the pre-3F default, did not read as "premium") and ARCHITECTURAL
- * DAYLIGHT (softer directional depth, but not distinctly different from the studio option at
- * normal viewing distance): lower ambient/fill and a stronger key let the roof's two slopes read
- * with real contrast against each other, the darker background recedes rather than reading as a
- * void, and — the deciding factor given Phase 3F's own material work — the added contrast is what
- * actually shows off the new metallic response instead of washing it out under flat, bright
- * fill. Still fully readable: nothing here crushes to black, and there is no bloom/DOF/vignette —
- * brief's own "no cinematic gimmicks".
- *
- * The other two studies are intentionally NOT in this codebase (brief's own "do not permanently
- * ship all three... rejected experiments must not remain in production code") — their exact
- * parameters are recorded in the final report only.
- */
-const AMBIENT_INTENSITY = 0.42;
-const HEMISPHERE_INTENSITY = 0.48;
-const KEY_INTENSITY = 2.3;
-const FILL_INTENSITY = 0.28;
+const KEY_DIRECTION = new THREE.Vector3(0.35, 0.8, -0.5).normalize();
+const FILL_DIRECTION = new THREE.Vector3(-0.9, 0.35, 0.25).normalize();
+const AMBIENT_INTENSITY = 0.3;
+const HEMISPHERE_INTENSITY = 1.4;
+const KEY_INTENSITY = 3.85;
+const FILL_INTENSITY = 0.4;
 
 function SceneLighting({ scene, shadows, shadowMapSize }: { scene: ThreeSceneModel; shadows: boolean; shadowMapSize: number }) {
   const { center, size: extent } = scene.bounds;
   const radius = Math.max(Math.hypot(extent.x, extent.y, extent.z), 1);
-  const { ridgeM } = scene.building.heights;
-  const { widthM, lengthM } = scene.building.footprint;
   const keyLightRef = useRef<THREE.DirectionalLight>(null);
 
   // A directional light aims at its `target`, which defaults to the world origin — and this
@@ -676,30 +852,21 @@ function SceneLighting({ scene, shadows, shadowMapSize }: { scene: ThreeSceneMod
     light.shadow.map = null;
   }, [shadowMapSize]);
 
+  // Directions, placed at the building's own scale: far enough out that the shadow camera below spans the whole model
   const keyPosition = useMemo<[number, number, number]>(
-    // Tuned on screen against two failure modes, not guessed. Too low (an early ridge-relative
-    // height) threw a long raking shadow that read as a smear across the ground; too high
-    // (radius * 1.35) put the light almost overhead so the shadow fell directly under the building
-    // and was hidden by it, leaving the object apparently floating. This sits between them: the
-    // shadow stays attached to the footprint but a visible sliver falls clear of it. Height is
-    // driven by the object's own radius, so the angle holds for a 10m hangar and a 120m one alike.
-    () => [center.x + widthM * 0.7, center.y + radius * 0.8, center.z - lengthM * 0.45],
-    [center, widthM, radius, lengthM],
+    () => [center.x + KEY_DIRECTION.x * radius * 2, center.y + KEY_DIRECTION.y * radius * 2, center.z + KEY_DIRECTION.z * radius * 2],
+    [center, radius],
+  );
+  const fillPosition = useMemo<[number, number, number]>(
+    () => [center.x + FILL_DIRECTION.x * radius * 2, center.y + FILL_DIRECTION.y * radius * 2, center.z + FILL_DIRECTION.z * radius * 2],
+    [center, radius],
   );
 
   return (
     <>
-      <color attach="background" args={[STUDIO_BACKGROUND]} />
-      {/* Depth-graded contrast, doing real work rather than atmosphere: it separates the near
-          portal frames from the far ones, which is the cheapest available fix for the frame-only
-          readability the earlier spike lost to SVG — one line instead of an outline post-processing
-          pass. Deliberately restrained: an earlier range fogged the object's own centre by ~43%,
-          which just made everything muddy. Starting the ramp at the camera distance means the near
-          half is untouched and only the far end grades away. */}
-      <fog attach="fog" args={[STUDIO_BACKGROUND, radius * 2, radius * 3.8]} />
-
       <ambientLight intensity={AMBIENT_INTENSITY} />
-      <hemisphereLight args={['#ccd6dc', '#22252a', HEMISPHERE_INTENSITY]} />
+      {/* warm paper sky over a dark ground: up-facing surfaces (the roof, the slab) take the sky, walls half of it */}
+      <hemisphereLight args={['#f4f1ea', '#2a2c2b', HEMISPHERE_INTENSITY]} />
 
       <primitive object={target} position={[center.x, center.y, center.z]} />
       <directionalLight
@@ -718,14 +885,62 @@ function SceneLighting({ scene, shadows, shadowMapSize }: { scene: ThreeSceneMod
         shadow-bias={-0.0006}
         shadow-normalBias={0.02}
       />
-      {/* Weak opposing fill so the faces turned away from the key light keep their material value
-          instead of going to black — the difference between "an object in space" and "a silhouette". */}
-      <directionalLight
-        position={[center.x - widthM * 1.2, center.y + ridgeM * 0.9, center.z + lengthM * 1.1]}
-        target={target}
-        intensity={FILL_INTENSITY}
-      />
+      <directionalLight position={fillPosition} target={target} intensity={FILL_INTENSITY} />
     </>
+  );
+}
+
+/**
+ * The building's contact with the ground (10.10): a soft shade hugging the slab's footprint, fading out over a couple
+ * of metres — so it sits on the field rather than floating over it, on a phone too, where the key light casts no shadow
+ * (HangarPreviewModes turns shadows off there). A distance-to-rectangle falloff in metres, not a stretched texture: a
+ * radial texture scaled to a 24 × 60 m footprint smeared its fade along the length. One quad, one tiny shader. Under
+ * the slab's footprint whatever the request holds — the frame alone, or the walls without a foundation, stand on the
+ * same ground — so it belongs to no build-up layer.
+ */
+const CONTACT_SHADE_FALLOFF_M = 5;
+const CONTACT_SHADE_STRENGTH = 0.6;
+
+function ContactShade({ building, yM }: { building: ParametricBuildingModel; yM: number }) {
+  const xs = building.slab.corners.map((c) => c.x);
+  const zs = building.slab.corners.map((c) => c.z);
+  const [minX, maxX, minZ, maxZ] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+  const halfW = (maxX - minX) / 2;
+  const halfL = (maxZ - minZ) / 2;
+  const material = useMemo(() => new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: {
+      halfSize: { value: new THREE.Vector2() },
+      falloff: { value: CONTACT_SHADE_FALLOFF_M },
+      strength: { value: CONTACT_SHADE_STRENGTH },
+    },
+    vertexShader: `
+      varying vec2 vLocal;
+      void main() {
+        vLocal = position.xy;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: `
+      uniform vec2 halfSize;
+      uniform float falloff;
+      uniform float strength;
+      varying vec2 vLocal;
+      void main() {
+        float d = length(max(abs(vLocal) - halfSize, 0.0));
+        float t = 1.0 - clamp(d / falloff, 0.0, 1.0);
+        gl_FragColor = vec4(0.0, 0.0, 0.0, strength * t * sqrt(t));
+      }`,
+  }), []);
+  useEffect(() => () => material.dispose(), [material]);
+  useEffect(() => {
+    material.uniforms.halfSize.value.set(halfW, halfL);
+  }, [material, halfW, halfL]);
+
+  return (
+    <mesh position={[(minX + maxX) / 2, yM + 0.004, (minZ + maxZ) / 2]} rotation={[-Math.PI / 2, 0, 0]} material={material} renderOrder={-1}>
+      <planeGeometry args={[2 * (halfW + CONTACT_SHADE_FALLOFF_M), 2 * (halfL + CONTACT_SHADE_FALLOFF_M)]} />
+    </mesh>
   );
 }
 
@@ -866,6 +1081,12 @@ export function ThreeHangarView({
       ),
     [building],
   );
+  // The slab's plane is the ground line and its material grows DOWN from it, so its interior reference sits below
+  // grade. Memoised (10.10): built inline, it re-placed the slab — and now its outline — on every render.
+  const slabInteriorPoint = useMemo(
+    () => new THREE.Vector3(building.footprint.widthM / 2, -building.slab.thicknessM * 2, building.footprint.lengthM / 2),
+    [building],
+  );
 
   // Standing just outside the front face, centred on the first gate if one is configured
   // (the natural "someone walking up to the building" framing) — else centred on the front
@@ -926,8 +1147,9 @@ export function ThreeHangarView({
   const girtStruts = scene.struts.filter((s) => s.role === 'girt' || s.role === 'purlin' || s.role === 'brace');
   // Phase 3F: matched against BOTH cladding-system variants — see MaterialKey's own doc comment
   // in threeSceneModel.ts for why `wall`/`roof` split into `-profiled`/`-sandwich`.
-  const wallPanels = scene.panels.filter((p) => p.material === 'wall-profiled' || p.material === 'wall-sandwich');
-  const roofPanels = scene.panels.filter((p) => p.material === 'roof-profiled' || p.material === 'roof-sandwich');
+  // Memoised on the scene (10.10): the outlines (EnvelopeOutline) are computed from these, once per configuration
+  const wallPanels = useMemo(() => scene.panels.filter((p) => p.material === 'wall-profiled' || p.material === 'wall-sandwich'), [scene]);
+  const roofPanels = useMemo(() => scene.panels.filter((p) => p.material === 'roof-profiled' || p.material === 'roof-sandwich'), [scene]);
 
   return (
     <Canvas
@@ -940,7 +1162,12 @@ export function ThreeHangarView({
       // and quietly replaces with PCF anyway — with a console warning on every switch to 3D (03.10). Same shadows.
       shadows={shadows ? 'percentage' : false}
       dpr={[1, maxDpr]}
-      gl={{ antialias: true, preserveDrawingBuffer: true }}
+      // Transparent (10.10): the page's own field shows through — /angary's sheet, the research card, the expanded
+      // view — so the 3D sits on the same dark field as the line drawings beside it, in both themes (materials.ts)
+      gl={{ antialias: true, preserveDrawingBuffer: true, alpha: true }}
+      // No tone mapping (10.10): ACES shifted the steel's hues and flattened the lid against the walls; with the light
+      // tuned for it, the surfaces keep the values materials.ts gives them and the ink stays the drawings' own colours
+      flat
       // The canvas is decorative: the controls and summary remain the canonical description of the
       // configuration, and HangarPreviewModes supplies the accessible text alternative.
       aria-hidden="true"
@@ -965,6 +1192,7 @@ export function ThreeHangarView({
           alternates with — two drivers on one layer, not a second animation system. */}
       <MaterialOpacityDriver materialKey="footing" layer={foundation} />
       <MaterialOpacityDriver materialKey="frame-secondary" layer={girts} />
+      <MaterialOpacityDriver materialKey="brace" layer={girts} />
       {/* Phase 3F: one driver per cladding-system variant — only one of each pair is ever actually
           rendered (see MaterialKey's own doc comment), but both need to stay in lockstep with
           `walls`/`roof`'s build-up phase regardless of which is active, same reasoning as
@@ -983,42 +1211,12 @@ export function ThreeHangarView({
           opacity over a still-materializing gate. */}
       <MaterialOpacityDriver materialKey="door" layer={gateLayer} />
 
-      {/* The building has to read as standing on a surface, not floating in a dark void — the
-          single biggest thing separating this from an architectural presentation. A plain lit
-          floor was tried and rejected before (recorded here): one large enough to hide its own
-          edge necessarily fills the frame, and the preview stops being a continuous surface and
-          becomes a framed picture inside its container.
-          This plane answers that objection with an alpha ramp (getGroundFalloffTexture) instead of
-          a bigger plane: it is opaque under the model and fully transparent well before its own
-          rim, so it dissolves into the studio background and never shows an edge or a horizon.
-          It sits 1 cm below the shadow catcher so the two never z-fight, and it receives the same
-          key-light shadow — which is the actual point. The shadow used to fall on nothing and read
-          as a smear floating in black; now it lands on a surface and reads as contact.
-          Studied against the alternatives at equal camera/model (§5): no floor at all left the
-          object ungrounded, and a lighter floor (#33383d, opaque) reached too close to the frame
-          edge and started competing with the building for attention. */}
-      {(
-        <mesh
-          position={[building.footprint.widthM / 2, scene.ground.yM - 0.01, building.footprint.lengthM / 2]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          receiveShadow
-        >
-          <planeGeometry args={[scene.ground.sizeM, scene.ground.sizeM]} />
-          <meshStandardMaterial
-            color={MATERIALS.ground.color}
-            roughness={MATERIALS.ground.roughness}
-            metalness={MATERIALS.ground.metalness}
-            alphaMap={getGroundFalloffTexture()}
-            transparent
-            opacity={0.9}
-          />
-        </mesh>
-      )}
+      {/* The ground (10.10): the page's field itself, with shade drawn on it — the contact shade round the slab on every
+          screen, and the key light's shadow where shadows are on (below). Phase 3F's lit floor, a #262a2e pool under the
+          model, read as a grey stage on the sheet's field, a third tone the drawings do not have. */}
+      <ContactShade building={building} yM={scene.ground.yM} />
 
-      {/* Shadow catcher. Kept separate from the floor above rather than folded into it: the floor
-          fades out radially, so a shadow drawn only by the floor's own material would fade with
-          it. This stays a full-strength `shadowMaterial` so contact stays crisp under the model
-          even where the floor beneath it has already gone transparent. */}
+      {/* Shadow catcher: invisible except where the building casts onto it — the key light's shadow on the field */}
       {shadows && (
         <mesh
           position={[building.footprint.widthM / 2, scene.ground.yM, building.footprint.lengthM / 2]}
@@ -1026,25 +1224,22 @@ export function ThreeHangarView({
           receiveShadow
         >
           <planeGeometry args={[scene.ground.sizeM, scene.ground.sizeM]} />
-          <shadowMaterial opacity={0.46} />
+          <shadowMaterial opacity={0.5} />
         </mesh>
       )}
 
       {showScaleFigure && <ScaleFigure position={scaleFigurePosition} />}
 
-      {foundation.mounted && scene.slab && (
+      {/* `visible.slab` too (10.10): the slab and isolated footings are alternatives (deriveFoundationVisibility), but the
+          slab mounted whenever the foundation did — isolated footings stood on a full slab as well */}
+      {foundation.mounted && scene.visible.slab && scene.slab && (
         <SettlingSlab layer={foundation} thicknessM={building.slab.thicknessM}>
           <Panel
             panel={scene.slab}
-            // The slab's plane is the ground line and its material grows DOWN from it, so the
-            // interior reference sits below grade.
-            interiorPoint={new THREE.Vector3(
-              building.footprint.widthM / 2,
-              -building.slab.thicknessM * 2,
-              building.footprint.lengthM / 2,
-            )}
+            interiorPoint={slabInteriorPoint}
             thicknessDirection="inward"
             castShadow={false}
+            ink={foundation}
           />
         </SettlingSlab>
       )}
@@ -1054,7 +1249,7 @@ export function ThreeHangarView({
           Mounted on the SAME `foundation` layer as the slab above, so switching foundation type
           uses the identical build-up timing either representation would have used alone. */}
       {foundation.mounted && scene.visible.footings && scene.footings.map((footing) => (
-        <Footing key={footing.id} footing={footing} castShadow={shadows} />
+        <Footing key={footing.id} footing={footing} castShadow={shadows} layer={foundation} />
       ))}
 
       {columns.mounted && columnStruts.map((strut) => (
@@ -1070,8 +1265,9 @@ export function ThreeHangarView({
       {walls.mounted && wallPanels.map((panel) => (
         <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={false} />
       ))}
+      {walls.mounted && <EnvelopeOutline panels={wallPanels} interiorPoint={interiorPoint} layer={walls} surface="walls" roofShown={roof.mounted} />}
       {walls.mounted && scene.gables.map((gable) => (
-        <Gable key={gable.id} gable={gable} castShadow={envelopeCastsShadow} />
+        <Gable key={gable.id} gable={gable} castShadow={envelopeCastsShadow} layer={walls} roofShown={roof.mounted} />
       ))}
 
       {/* Gates mount off their OWN layer, not `walls` — matching the technical view's documented
@@ -1087,13 +1283,14 @@ export function ThreeHangarView({
         />
       ))}
       {gateLayer.mounted && scene.leaves.map((leaf) => (
-        <GateLeaf key={leaf.id} leaf={leaf} castShadow={envelopeCastsShadow} />
+        <GateLeaf key={leaf.id} leaf={leaf} castShadow={envelopeCastsShadow} layer={gateLayer} />
       ))}
 
       {roof.mounted && roofPanels.map((panel) => (
         <EnvelopePanel key={panel.id} panel={panel} interiorPoint={interiorPoint} castShadow={envelopeCastsShadow} />
       ))}
-      {roof.mounted && <RidgeCap building={building} roofSystem={scene.envelope.roofSystem} cladding={scene.roofCladding} castShadow={envelopeCastsShadow} />}
+      {roof.mounted && <EnvelopeOutline panels={roofPanels} interiorPoint={interiorPoint} layer={roof} surface="roof" />}
+      {roof.mounted && <RidgeCap building={building} roofSystem={scene.envelope.roofSystem} cladding={scene.roofCladding} castShadow={envelopeCastsShadow} layer={roof} />}
     </Canvas>
   );
 }

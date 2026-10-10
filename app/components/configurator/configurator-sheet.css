@@ -23,8 +23,8 @@
 .hangar-configurator-embedded .hc-preview-sheet :is(.hc-preview-svg, .hc-preview-canvas, .hc-preview-loading) { height: var(--hc-sheet-h); min-height: 0; }
 /* the line drawing keeps its margin inside the field; the 3D canvas fills it edge to edge — no ring, no seam */
 .hangar-configurator-embedded .hc-preview-sheet .hc-preview-svg { box-sizing: border-box; padding: var(--hc-sheet-inset); }
-/* the studio backdrop of the 3D view (materials.ts STUDIO_BACKGROUND), so the field and the canvas are one */
-.hangar-configurator-embedded .hc-preview-sheet .sheet-image:has(.hc-preview-canvas) { background: #0e0f11; }
+/* The 3D's canvas is transparent (10.10, materials.ts): the sheet's own field shows through it, the drawings' dark field
+   in both themes — the studio's #0e0f11 that used to be painted here is gone with the studio */
 
 /* The first view, armed (useFirstViewBuildUp): the layers go at once, out of sight, instead of fading out over the
    frame's 1.4 s — the lifecycle's inline durations stay, only what they transition is turned off. Completed early by a
@@ -100,6 +100,22 @@
   .hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay { grid-template-rows: repeat(4, auto); gap: 0 18px; }
   .hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay > div:nth-child(odd) > dd { margin-bottom: 10px; }
 }
+/* The 3D's sizes as a drawing's note (10.10, owner: the table of four in the picture's corner competed with the model,
+   and the sizes are in the title block too): one quiet line on the field — no box, no blur, the labels muted — and the
+   building gets the corner back (the camera frames above what the line covers, ThreeDimensionOverlay). Its toggle goes
+   from the sheet with the box: a chip to hide one line was the loudest thing about it. The expanded view keeps its
+   toggle, and the same quiet line. */
+:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay {
+  left: 14px; bottom: 12px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;
+  max-width: calc(100% - 28px);
+  padding: 0;
+  background: none; border: 0; backdrop-filter: none;
+}
+:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay > div { display: flex; align-items: baseline; gap: 6px; }
+:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dt { margin: 0; font-size: 10px; letter-spacing: .1em; }
+:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dd { font-size: 13px; }
+.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle { display: none; }
 
 /* the rest of the configurator's chrome is square too — the colour swatches and the expanded 3D view included, which
    sits outside the section and carries the sheet's class instead (HangarPreviewModes, 03.10: pills and 12 px corners) */
