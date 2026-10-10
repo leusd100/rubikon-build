@@ -523,6 +523,9 @@
 .hangar-configurator .hc-inline-field.hc-door-field { margin-top: 16px; }
 /* The gate's size under its count, before the door's row */
 .hc-inline-field + .hc-gate-types { margin-top: 12px; }
+/* the gate's type and its size on two lines, as the shell's tiles (10.10, QA: «Стандартні ·» / «4 × 4 м» broke after its
+   «·» on a phone; set as TileLabel, the two parts ran together on one row without this) */
+.hc-gate-types .hc-option-card span { flex-direction: column; gap: 2px; }
 /* A cold store's question hangs under the purpose it belongs to: closer than the next question, on a copper rule */
 .hc-follow-up { padding-left: 14px; border-left: 2px solid var(--color-accent); }
 .hangar-configurator-embedded .hc-step-panel .hc-field + .hc-follow-up { margin-top: 16px; }

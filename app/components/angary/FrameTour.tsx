@@ -533,7 +533,9 @@ function frameGeometry(domain: HangarDomainModel) {
   const nodeBoxes = Object.values(nodePoints).filter((point): point is Pt => point !== null).map((point) => around(point, 16));
 
   const frameFocus = xy([W / 2, 0, E * 0.6]);
-  const frameBase = camera(frameFocus, 1.2, frontFrame);
+  // pushed in as far as the front frame and its names allow (10.10, QA: at 1.2 the frame, smaller in the picture since its
+  // dimensions took two rows, left its nodes 22 px apart on a 320 px phone, their targets under 23 px)
+  const frameBase = camera(frameFocus, 1.6, frontFrame);
   const roofTagAt = [0.3, 0.22, 0.4].map((t) => xy([W * t, 0, roofZ(W * t)]));
   // the names keep clear of the nodes' markers only here; the section's own tour had none
   const frameTaken = [...taken, ...nodeBoxes];
@@ -542,7 +544,7 @@ function frameGeometry(domain: HangarDomainModel) {
     // to the left of the right column, inside the frame: to its right the camera's edge cut it on phones (03.10)
     placeTag('колона', [0.3, 0.5, 0.7].map((t) => ({ from: xy([W, 0, E * t]), leaders: [[-30, 12], [-30, -12], [-24, 26]] as Pt[] })), frameBase.view, frameTaken, lines),
   ];
-  const frameCamera = camera(frameFocus, 1.2, union([frontFrame, ...frameTags.map((tag) => tag.box)]));
+  const frameCamera = camera(frameFocus, 1.6, union([frontFrame, ...frameTags.map((tag) => tag.box)]));
 
   const baysFocus = xy([W * 0.86, s, E * 0.6]);
   const baysEssentials = union([

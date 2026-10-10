@@ -183,13 +183,9 @@
   .hc-sheet-expand, .hc-sheet-chip { min-height: 28px; padding: 0 10px; }
   .hc-sheet-expand::after, .hc-sheet-chip::after { inset: -9px 0; }
   /* 3D on a phone (10.10, audit F55): the four sizes' table took 84 of the picture's 246 px and pressed the model up
-     under the chips — the sizes are in the title block and the stamp — and the picture is as tall as the drawing with
-     its legend under it (--hc-legend-h, measured as 3D opens: HangarPreviewModes), so the sheet no longer jumps by
-     63 px either way. The expanded view keeps its sizes. */
+     under the chips — the sizes are in the title block and the stamp. The drawing's legend is under the 3D too (since
+     10.10, HangarPreviewModes), so the sheet keeps its height both ways. The expanded view keeps its sizes. */
   .hangar-configurator-embedded .hc-preview-sheet :is(.hc-three-overlay, .hc-three-overlay-toggle) { display: none; }
-  .hangar-configurator-embedded .hc-layout:not([data-configuring]) .hc-preview-sheet :is(.hc-preview-canvas, .hc-preview-loading) {
-    height: calc(var(--hc-sheet-h) + var(--hc-legend-h, 0px));
-  }
 
   /* The mini drawing, held under the header while the parameters are set (useMiniPreview, HangarConfigurator.tsx):
      a picture of up to 140 px with no dimension labels — unreadable at that size — and a title block of one readout of

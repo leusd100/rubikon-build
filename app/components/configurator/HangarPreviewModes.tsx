@@ -226,15 +226,12 @@ export function HangarPreviewModes({
   // What the sheet's one 3D button just showed, for the hidden status line (09.10, audit F76): the button keeps focus
   // as its words change, and a screen reader hears the new «Що показано»
   const [viewNote, setViewNote] = useState('');
-  /** As 3D opens on the sheet (10.10, audit F55): what the drawing's legend under it took, which a phone's 3D picture
-   *  takes too, so the sheet keeps its height both ways (configurator-sheet.css --hc-legend-h; it jumped 63 px); and how
-   *  far down the picture its chips reach, for the model to stand clear under them */
+  /** As 3D opens on the sheet: how far down the picture its chips reach, for the model to stand clear under them. (The
+   *  drawing's legend is under the 3D too since 10.10, so the sheet keeps its height both ways without measuring it —
+   *  a phone's picture took the legend's height, --hc-legend-h, and on a tablet it jumped 102 px.) */
   const holdField = (chip: HTMLElement) => {
-    const image = drawingRef.current;
-    const drawing = image?.querySelector('.hc-preview-svg');
     const tools = chip.closest<HTMLElement>('.hc-sheet-tools');
-    if (!image || !drawing || !tools) return;
-    image.style.setProperty('--hc-legend-h', `${Math.max(0, image.clientHeight - drawing.getBoundingClientRect().height)}px`);
+    if (!tools) return;
     setToolsInsetPx(tools.offsetTop + tools.offsetHeight + 8);
   };
   // 3D goes when the phone's mini drawing comes (10.10, audit F55): the mini drawing has no chip to go back by, and held
@@ -340,6 +337,9 @@ export function HangarPreviewModes({
           still leave this orientation readout on screen right up until the fallback to
           Technical actually happens. */}
       <ThreeDimensionOverlay
+        // on /angary's sheet, which has no toggle for them, the sizes hidden in the expanded view come back (10.10, QA);
+        // the research screen keeps the visitor's choice across visits
+        key={sheet && !isFullscreen ? 'sheet' : 'view'}
         onBottomInsetChange={setOverlayInsetPx}
         widthM={domain.dimensions.widthM}
         lengthM={domain.dimensions.lengthM}
