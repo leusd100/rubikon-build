@@ -13,6 +13,7 @@ import './conversation.css';
 import './components/sheet-field.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
+import { FocusClearance } from './components/FocusClearance';
 import { SmoothScroll } from './components/SmoothScroll';
 import { company } from './data/company';
 import { directions } from './data/directions';
@@ -170,6 +171,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <SiteFooter />
         <SmoothScroll />
+        <FocusClearance />
       </body>
     </html>
   );
