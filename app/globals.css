@@ -1191,6 +1191,15 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .hero-actions .button { min-height: 46px; }
 }
 
+/* A short laptop window (1250 × 613: a 1920 px screen at 150 %, R-UX-06 / R-UX-08 V07): the service heroes' action row
+   kept its fixed 40 px and the lead its loose 1.75 while the rest of the hero standard had already shrunk with the
+   window's height, so on /betonni-roboty — the one lead of five lines — «Обговорити задачу» ended 9 px under the window's
+   edge. Here the row takes the standard's own height-aware gap and the lead a slightly closer line */
+@media (min-width: 761px) and (max-height: 700px) {
+  .service-subhero-content .hero-action-row { margin-top: var(--hero-gap-actions); }
+  .service-subhero-content .service-subhero-lead { line-height: 1.6; }
+}
+
 /* Keep the homepage statement full-width at every non-mobile size. */
 @media (min-width: 761px) {
   .hero-layout {
