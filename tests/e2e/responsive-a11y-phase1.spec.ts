@@ -17,6 +17,39 @@ const headerBottom = (page: Page) => page.evaluate(() => document.querySelector(
 /** The keyboard's tests run in Chromium, and in Firefox and WebKit too where those projects are asked for */
 const KEYBOARD_PROJECTS = ['desktop-chromium', 'firefox', 'webkit'];
 
+/** Safari's Tab moves over buttons and fields only; Option+Tab (or its «Press Tab to highlight each item») takes in
+ * links too, as Tab does in Chrome and Firefox, and that is the keyboard user these checks stand for */
+const tabKey = (page: Page, back = false) =>
+  `${page.context().browser()?.browserType().name() === 'webkit' ? 'Alt+' : ''}${back ? 'Shift+' : ''}Tab`;
+
+/** What a page reported going wrong: its uncaught errors, console errors and scripts that did not load */
+const reports = new WeakMap<Page, string[]>();
+
+function listen(page: Page) {
+  const seen: string[] = [];
+  reports.set(page, seen);
+  page.on('pageerror', (error) => seen.push(`error: ${error.message}`));
+  page.on('console', (message) => {
+    if (message.type() === 'error') seen.push(`console: ${message.text()}`);
+  });
+  page.on('requestfailed', (request) => {
+    if (request.resourceType() === 'script') seen.push(`script: ${request.url()} ${request.failure()?.errorText ?? ''}`);
+  });
+}
+
+/** Opens a page and waits for React to take it over: the keyboard's handlers (the menu's, FocusClearance) are React's,
+ * and hydration can land after `load`. A page that never hydrates fails here, with what it reported */
+async function open(page: Page, path: string) {
+  await page.goto(path, { waitUntil: 'load' });
+  const hydrated = () => {
+    const menu = document.querySelector('.mobile-menu');
+    return !!menu && Object.keys(menu).some((key) => key.startsWith('__reactProps'));
+  };
+  await page.waitForFunction(hydrated, null, { timeout: 15_000 }).catch(() => {
+    throw new Error(`${path} did not hydrate in 15 s; the page reported: ${reports.get(page)?.join(' | ') || 'nothing'}`);
+  });
+}
+
 /** Until the page has stood still for 12 frames (the browser's own scroll for a focus, and the clearance after it) */
 const settle = (page: Page) =>
   page.evaluate(
@@ -45,7 +78,7 @@ async function walkBack(page: Page) {
   const hidden: string[] = [];
   let walked = 0;
   for (let step = 0; step < 120; step++) {
-    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press(tabKey(page, true));
     await settle(page);
     const focus = await page.evaluate(() => {
       const element = document.activeElement;
@@ -55,7 +88,9 @@ async function walkBack(page: Page) {
       if (element.matches('.hv2-contour-range')) return { skip: true };
       const box = element.getBoundingClientRect();
       if (box.width < 2 || box.height < 2) return { skip: true };
-      return { top: box.top, bottom: box.bottom, name: (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().slice(0, 40) };
+      const name = (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().slice(0, 40);
+      const tag = `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ''}${[...element.classList].slice(0, 2).map((c) => `.${c}`).join('')}`;
+      return { top: box.top, bottom: box.bottom, name: `${tag} «${name}»` };
     });
     if ('done' in focus) break;
     if ('skip' in focus) {
@@ -70,31 +105,33 @@ async function walkBack(page: Page) {
 }
 
 test.describe('keyboard', () => {
+  test.beforeEach(({ page }) => listen(page));
+
   test('Tab past the mobile menu’s last item closes it; Shift+Tab back past its button closes it too', async ({ page }, testInfo) => {
     test.skip(!KEYBOARD_PROJECTS.includes(testInfo.project.name), 'each test sets its own windows');
     await skipBanner(page);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/', { waitUntil: 'load' });
+    await open(page, '/');
     const menu = page.locator('.mobile-menu');
     const summary = menu.locator('summary');
     await summary.focus();
     await page.keyboard.press('Enter');
     await expect(menu).toHaveAttribute('open', '');
     const inMenu = () => page.evaluate(() => document.querySelector('.mobile-menu')!.contains(document.activeElement));
-    for (let step = 0; step < 20 && (await inMenu()); step++) await page.keyboard.press('Tab');
+    for (let step = 0; step < 20 && (await inMenu()); step++) await page.keyboard.press(tabKey(page));
     expect(await inMenu()).toBe(false);
     await expect(menu).not.toHaveAttribute('open', '');
 
     await summary.focus();
     await page.keyboard.press('Enter');
     await expect(menu).toHaveAttribute('open', '');
-    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press(tabKey(page, true));
     await expect(menu).not.toHaveAttribute('open', '');
 
     // Escape still closes it and hands the focus back to its button
     await summary.focus();
     await page.keyboard.press('Enter');
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey(page));
     await page.keyboard.press('Escape');
     await expect(menu).not.toHaveAttribute('open', '');
     await expect(summary).toBeFocused();
@@ -104,7 +141,7 @@ test.describe('keyboard', () => {
     test.skip(!KEYBOARD_PROJECTS.includes(testInfo.project.name), 'each test sets its own windows');
     await skipBanner(page);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/pro-nas', { waitUntil: 'load' });
+    await open(page, '/pro-nas');
     const links = page.locator('.mobile-menu nav a');
     await expect(page.locator('.mobile-menu nav a[aria-current="page"]')).toHaveText(/Про компанію/);
     await expect(page.locator('.mobile-menu nav a[aria-current]')).toHaveCount(1);
@@ -125,7 +162,7 @@ test.describe('keyboard', () => {
       await skipBanner(page);
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.setViewportSize({ width, height });
-      await page.goto(path, { waitUntil: 'load' });
+      await open(page, path);
       const { walked, hidden } = await walkBack(page);
       expect(walked).toBeGreaterThan(10);
       expect(hidden).toEqual([]);
@@ -141,7 +178,7 @@ test.describe('keyboard', () => {
       await skipBanner(page);
       await page.emulateMedia({ reducedMotion: 'no-preference' });
       await page.setViewportSize({ width, height });
-      await page.goto(path, { waitUntil: 'load' });
+      await open(page, path);
       const { walked, hidden } = await walkBack(page);
       expect(walked).toBeGreaterThan(10);
       expect(hidden).toEqual([]);
@@ -153,9 +190,9 @@ test.describe('keyboard', () => {
     await skipBanner(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/pro-nas', { waitUntil: 'load' });
+    await open(page, '/pro-nas');
     // a key pressed first, so the focus that follows counts as the keyboard's (:focus-visible)
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey(page));
     await page.evaluate(() => window.scrollTo({ top: 2500, behavior: 'instant' }));
     await settle(page);
     const moved = await page.evaluate(async () => {
@@ -174,7 +211,7 @@ test.describe('keyboard', () => {
     await skipBanner(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/angary', { waitUntil: 'load' });
+    await open(page, '/angary');
     const tab = page.locator('#hc-step-task-tab');
     await tab.scrollIntoViewIfNeeded();
     await tab.click();
@@ -182,7 +219,7 @@ test.describe('keyboard', () => {
     await radio.focus();
     await page.evaluate(() => window.scrollBy(0, document.activeElement!.getBoundingClientRect().top - window.innerHeight * 0.7));
     for (let step = 0; step < 30; step++) {
-      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press(tabKey(page, true));
       if (await page.evaluate(() => document.activeElement?.id === 'hc-step-task-tab')) break;
     }
     await expect(tab).toBeFocused();

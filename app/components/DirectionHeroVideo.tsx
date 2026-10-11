@@ -214,6 +214,9 @@ export function DirectionHeroVideo({
             }
           }}
           aria-hidden="true"
+          // Firefox puts every <video> in the Tab order, controls or not: five nameless stops on the home hero, each one
+          // under the fixed header (phase 1, Firefox keyboard run). Decorative footage is no stop for the keyboard
+          tabIndex={-1}
         />
       ))}
     </>
