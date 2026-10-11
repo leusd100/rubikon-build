@@ -23,8 +23,8 @@ type ConversationSectionProps = {
 
 /**
  * The one closing conversation block on the site (#inquiry): HOME, every direction page, /napryamky, /yak-pratsyuiemo
- * and /pro-nas. Call first, the written channels once, the form beside them and «Що буде після звернення» under the
- * call — a strip under both columns on a desktop. Pages change only the words. The background is a decorative desk-and-drawings photo — never evidence of our
+ * and /pro-nas. Call first, the written channels once in one quiet line, the form beside them and «Що буде після
+ * звернення» under the call — a strip under both columns on a desktop. Pages change only the words. The background is a decorative desk-and-drawings photo — never evidence of our
  * work. Styles: app/conversation.css.
  */
 export function ConversationSection({
@@ -55,15 +55,16 @@ export function ConversationSection({
           <p className="conversation-kicker"><span aria-hidden="true" /> {kicker}</p>
           <h2 id="conversation-title">{title}</h2>
           <p className="conversation-lead">{lead}</p>
-          {/* One aligned block: the call on top at full width, the written channels under it on an equal grid. */}
+          {/* The call is the one action; the written channels follow as a single quieter line (DEC-46, PROPOSED, Phase 2:
+              until then four equal buttons under the call). The form's own channel choice stays: a reply needs it. */}
           <div className="conversation-contact">
             <a className="button button-primary hero-call-primary conversation-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
               <span className="conversation-call-icon" aria-hidden="true"><Phone /></span>
               <span className="conversation-call-text"><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
               <span className="conversation-call-arrow" aria-hidden="true">↗</span>
             </a>
-            <p className="conversation-channels-label">Або напишіть</p>
             <div className="conversation-channels">
+              <span className="conversation-channels-label">Або напишіть:</span>
               <MessengerLinks className="conversation-messengers" showFullLabels />
               <a className="messenger-link conversation-email" href={companyContactLinks.email} aria-label={`Email: ${company.email}`}>
                 <Mail aria-hidden="true" />

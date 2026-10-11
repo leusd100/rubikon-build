@@ -46,7 +46,7 @@
 .conversation-journey-title::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
 .conversation h2 { margin: 22px 0 0; font: 400 clamp(44px, 4.4vw, 66px)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 .conversation-lead { max-width: 500px; margin: 22px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
-/* The closing contact block: one column of fixed width, so the call and the four channels share both edges. */
+/* The closing contact block: one column of fixed width — the call, and under it one quiet line of written channels. */
 .conversation-contact { display: grid; gap: 12px; width: min(100%, 520px); margin-top: 32px; }
 /* The call: a segmented button — icon cell | label + number | arrow. Colours stay the theme's action role. */
 .conversation-call { width: 100%; min-width: 0; min-height: 62px; justify-content: flex-start; gap: 0; padding: 0; }
@@ -64,36 +64,34 @@
 .conversation-call .conversation-call-arrow { flex: none; padding: 0 24px 0 8px; font-size: 18px; font-weight: 500; transition: transform var(--duration-fast) ease; }
 .conversation-call:is(:hover, :focus-visible) .conversation-call-icon { background: color-mix(in srgb, var(--color-on-action) 15%, transparent); }
 .conversation-call:is(:hover, :focus-visible) .conversation-call-arrow { transform: translate(3px, -3px); }
-.conversation-channels-label {
-  display: flex; align-items: center; gap: 14px; margin: 8px 0 0; color: var(--color-text-muted);
-  font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .16em; text-transform: uppercase;
-}
-.conversation-channels-label::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
-/* Four equal channels. Icons are one warm grey until hover/focus, when each takes its own brand colour back — the
-   saturated blue/green/purple no longer compete with the copper call. */
+/* DEC-46 (PROPOSED, Phase 2): the written channels are one line of links under the call, not four buttons equal to it —
+   «Або напишіть: Telegram · WhatsApp · Viber · Email». Each link keeps a 44 px tall target. Icons are one warm grey until
+   hover/focus, when each takes its own brand colour back — the saturated blue/green/purple never compete with the
+   copper call. */
 /* Greyscale luminance differs per brand (Telegram blue ≈148, WhatsApp green ≈166, Viber purple ≈110 of 255), so each
    icon gets its own brightness factor to land on one grey: ≈85 on paper, ≈200 on graphite. */
 :root[data-theme="dark"] .conversation { --conv-tg: 1.35; --conv-wa: 1.2; --conv-vb: 1.82; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .conversation { --conv-tg: 1.35; --conv-wa: 1.2; --conv-vb: 1.82; }
 }
-.conversation-channels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.conversation-channels { display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px; margin-top: 2px; }
 .conversation-messengers { display: contents; }
+.conversation-channels-label { color: var(--color-text-secondary); font: 500 15px/1.4 var(--font-manrope), sans-serif; }
 .conversation-channels .messenger-link {
-  min-width: 0; min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 8px;
-  color: var(--color-text); background: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent);
-  border: 1px solid var(--color-border); font: 700 13px/1 var(--font-manrope), sans-serif; letter-spacing: .01em;
-  transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+  min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0;
+  color: var(--color-text); background: none; border: 0; font: 700 15px/1 var(--font-manrope), sans-serif; letter-spacing: 0;
+  text-decoration: underline; text-decoration-color: var(--color-border-strong); text-decoration-thickness: 1px; text-underline-offset: 5px;
+  transition: color var(--duration-fast) ease, text-decoration-color var(--duration-fast) ease;
 }
-/* The label takes the button's own 13 px (12 on phones), not the 10 px caps of the header's icon links (UX sweep 2026-10) */
+/* The label takes the link's own 15 px, not the 10 px caps of the header's icon links (UX sweep 2026-10) */
 .conversation-channels .messenger-link span { font-size: inherit; font-weight: inherit; letter-spacing: inherit; }
-.conversation-channels .messenger-link:is(:hover, :focus-visible) { color: var(--color-text); border-color: var(--color-accent-strong); background: var(--color-surface-elevated); transform: translateY(-2px); }
-.conversation-channels .messenger-brand-icon { width: 20px; height: 20px; flex: none; }
+.conversation-channels .messenger-link:is(:hover, :focus-visible) { color: var(--color-accent-strong); background: none; text-decoration-color: currentColor; }
+.conversation-channels .messenger-brand-icon { width: 18px; height: 18px; flex: none; }
 .conversation-channels .messenger-telegram .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--conv-tg)); }
 .conversation-channels .messenger-whatsapp .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--conv-wa)); }
 .conversation-channels .messenger-viber .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--conv-vb)); }
 .conversation-channels .messenger-link:is(:hover, :focus-visible) .messenger-brand-icon { filter: none; transform: none; }
-.conversation-channels .conversation-email svg { width: 20px; height: 20px; flex: none; color: var(--color-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
+.conversation-channels .conversation-email svg { width: 18px; height: 18px; flex: none; color: var(--color-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
 .conversation-channels .conversation-email:is(:hover, :focus-visible) svg { color: var(--color-accent-strong); }
 /* The four steps as the title block of a drawing sheet: one outlined strip, hairline cells, the number in the corner. */
 .conversation-journey {
@@ -144,7 +142,6 @@
   .conversation-journey-wrap { max-width: none; }
 }
 @media (max-width: 760px) {
-  /* A phone keeps the channel labels, stacked under the icon: four side-by-side labels do not fit a 358 px row */
   .conversation h2 { font-size: clamp(34px, 10vw, 42px); }
   .conversation-bg img { object-position: 50% 30%; }
   /* 90 % at the top, was 80: the 12 px copper kicker «Обговорити …» sat on the photo's darker greys at 4,2 : 1 (sweep 03.10) */
@@ -155,8 +152,11 @@
   .conversation-call .conversation-call-text { padding: 0 14px; }
   .conversation-call strong { font-size: 19px; }
   .conversation-call .conversation-call-arrow { padding-right: 16px; }
-  .conversation-channels { gap: 6px; }
-  .conversation-channels .messenger-link { flex-direction: column; gap: 7px; min-height: 64px; padding: 8px 4px; font-size: 12px; }
+  /* A phone: the label on its own line, the four links under it in one row (328 px at 360; a 320 px phone wraps Email) */
+  .conversation-channels { gap: 0 10px; }
+  .conversation-channels-label { flex-basis: 100%; }
+  .conversation-channels .messenger-link { gap: 6px; font-size: 14px; }
+  .conversation-channels :is(.messenger-brand-icon, .conversation-email svg) { width: 16px; height: 16px; }
   .conversation-grid { row-gap: 28px; }
   .conversation-journey { grid-template-columns: 1fr; margin-top: 12px; background: none; border: 0; }
   /* :nth-child(n) outranks the desktop's :nth-child(even) / (n + 3) borders, which boxed rows 02 and 04 (UX review 2026-10) */
@@ -174,11 +174,11 @@
 @media (max-width: 340px) {
   .conversation-call strong { font-size: 18px; }
   .conversation-call .conversation-call-icon { width: 52px; }
-  .conversation-channels .messenger-link { font-size: 12px; }
+  .conversation-channels .messenger-link { font-size: 13px; }
 }
 
 /* Phone and tablet, one column (≤ 1180 px), with JavaScript: the form folds behind «Залишити запит» until asked for
-   (ConversationFormToggle.tsx). The call and the four channels above stay as they are. */
+   (ConversationFormToggle.tsx). The call and the line of channels above stay as they are. */
 @media (max-width: 1180px) {
   :root[data-theme] .conversation-form-wrap:not([data-open]) .conversation-form-region { display: none; }
   :root[data-theme] .conversation-form-toggle {
