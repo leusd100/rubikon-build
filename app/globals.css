@@ -1024,6 +1024,12 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .directions-hero-actions .text-link { position: relative; justify-content: center; padding: 0 48px; border: 1px solid rgba(255,255,255,.38); }
   .directions-hero-actions .text-link span { position: absolute; right: 18px; }
   .breadcrumb { margin-bottom: 34px; }
+  /* Over a hero photo on a phone the muted crumbs fell to 3.8–3.9:1 where the sky shows (review 11.10, sweep 2.3; measured
+     again on the branch, R-UX-08 V03 on production): lighter words, the page's own whitest, and a soft shade under the
+     glyphs for the brightest pixels. From 761 px the photo sits right of the words and they keep their muted tone */
+  .breadcrumb, .breadcrumb a { color: rgba(255,255,255,.86); }
+  .breadcrumb b { color: #fff; }
+  .breadcrumb :is(a, b) { text-shadow: 0 1px 2px rgba(9, 10, 12, .55); }
   .subhero h1, .service-subhero h1 { font-size: var(--hero-title); }
   .subhero-side > p { font-size: 15px; }
   .service-subhero-content { padding-top: 126px; padding-bottom: 58px; } /* the crumbs sit 49 px under the 77 px header, as on /angary */
