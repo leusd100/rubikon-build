@@ -236,11 +236,18 @@ test.describe('keyboard', () => {
       if (await page.evaluate(() => document.activeElement?.id === 'hc-step-task-tab')) break;
     }
     await expect(tab).toBeFocused();
+    // «clear», or what lay over the tab: the element, where the tab and the mini drawing stood, whether the sheet was held
     await expect.poll(() => tab.evaluate((element) => {
       const box = element.getBoundingClientRect();
       const hit = document.elementFromPoint(box.left + box.width / 2, box.top + 4);
-      return !!hit && element.contains(hit);
-    })).toBe(true);
+      if (hit && element.contains(hit)) return 'clear';
+      const layout = element.closest<HTMLElement>('.hc-layout');
+      const sheet = layout?.querySelector('.hc-preview-surface')?.getBoundingClientRect();
+      const header = document.querySelector('.site-header')!.getBoundingClientRect().bottom;
+      return `${hit ? `${hit.tagName.toLowerCase()}.${[...hit.classList].join('.')}` : 'nothing'} over the tab at ${Math.round(box.top)}; `
+        + `header ${Math.round(header)}, sheet ${Math.round(sheet?.top ?? 0)}–${Math.round(sheet?.bottom ?? 0)}, `
+        + `held ${layout ? 'configuring' in layout.dataset : '?'}, --hc-mini-h ${layout?.style.getPropertyValue('--hc-mini-h') || '–'}, scrollY ${Math.round(window.scrollY)}`;
+    })).toBe('clear');
   });
 });
 
