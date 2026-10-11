@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, HeroCallButton, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionsCatalog, type CatalogItem } from '../components/directions/DirectionsCatalog';
 import { DirectionsKey } from '../components/home-v2/DirectionsKey';
@@ -72,13 +72,12 @@ export default function DirectionsPage() {
             <p>Ангари й склади, зерносховища, металоконструкції, бетонні й покрівельні роботи — окремим етапом або погодженим комплексом. Не знаєте, з чого почати? Опишіть завдання — допоможемо визначити склад робіт.</p>
             <div className="directions-hero-actions" data-hero-actions>
               <HeroCallButton />
-              <a className="button button-primary subhero-side-cta" href="#directions-list">
+              <a className="button button-hero-secondary subhero-side-cta" href="#directions-list">
                 Обрати напрям <span aria-hidden="true">↓</span>
               </a>
-              <a className="text-link" href="#inquiry">
+              <a className="text-link" href="#inquiry" data-open-inquiry="">
                 Обговорити задачу <span aria-hidden="true">↓</span>
               </a>
-              <HeroCallLink />
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@
 /* The hero follows the site's hero standard (globals.css --hero-*), as every direction page (owner, 02.10) */
 .grain-page .grain-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 .grain-page .service-subhero-content .grain-hero-actions .button { margin-top: 0; }
+/* /planner-preview's hero only (grainPage.direction, legacyCallLink): /zernoskhovyshcha leads with the call since Phase 2 */
 .grain-page .grain-hero-secondary { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .58); background: rgba(12, 13, 15, .18); }
 .grain-page .grain-hero-secondary:hover { border-color: var(--color-dark-text); background: rgba(255, 255, 255, .09); transform: translateY(-2px); }
 /* The concept picture's lower strip carries a generated «drawing» with made-up sizes (Ø14500, +27,100, «ПЛАН» and

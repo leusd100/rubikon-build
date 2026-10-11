@@ -19,7 +19,7 @@
 .about-page .about-subhero-side { width: auto; margin-top: var(--hero-gap-lead); padding-top: 0; border-top: 0; }
 .about-page .about-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
 .about-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: var(--hero-gap-actions); }
-.about-hero-actions .about-hero-cta, .about-hero-actions .hero-call { margin: 0; }
+.about-hero-actions .about-hero-cta { margin: 0; }
 /* The actions stay well clear of the window's bottom edge at every height: the hero standard (globals.css --hero-*)
    sizes the title and the gaps by the window's height too. */
 /* Dark under the words on the left, the footage open on the right: every hero text stays at 4.5:1 or more against

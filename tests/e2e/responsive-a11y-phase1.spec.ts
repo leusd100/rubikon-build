@@ -297,8 +297,13 @@ test.describe('fit', () => {
     await page.setViewportSize({ width: 1250, height: 613 });
     for (const path of ['/betonni-roboty', '/metalokonstruktsii', '/pokrivelni-roboty']) {
       await page.goto(path, { waitUntil: 'load' });
-      const action = (await page.locator('.service-subhero-content .hero-action-row .button-primary:not(.hero-call-phone)').first().boundingBox())!;
-      expect(action.y + action.height, path).toBeLessThanOrEqual(613);
+      // Both of the row's buttons since Phase 2: the call (copper) and «Обговорити задачу» beside it (DEC-41, PROPOSED)
+      const actions = page.locator('.service-subhero-content .hero-action-row .button');
+      await expect(actions).toHaveCount(2);
+      for (const action of await actions.all()) {
+        const box = (await action.boundingBox())!;
+        expect(box.y + box.height, path).toBeLessThanOrEqual(613);
+      }
     }
   });
 

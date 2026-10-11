@@ -122,21 +122,21 @@ function DirectionHero({
         </p>
         {actions ? (
           <div className={actions.className}>
-            <HeroCallButton />
+            <HeroCallButton phoneOnly={actions.legacyCallLink} />
             {actions.items.map((action) => (
-              <a key={action.href} className={action.className} href={action.href}>
+              <a key={action.href} className={action.className} href={action.href} data-open-inquiry={action.openInquiry ? '' : undefined}>
                 {`${action.label} `}<span aria-hidden="true">{action.arrow}</span>
               </a>
             ))}
-            <HeroCallLink />
+            {actions.legacyCallLink && <HeroCallLink />}
           </div>
         ) : (
           <div className="hero-action-row">
             <HeroCallButton />
-            <a className="button button-primary" href="#inquiry">
+            {/* The written request opens the folded form on a phone or tablet, as HOME's «Написати або залишити запит» */}
+            <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">
               Обговорити задачу <span aria-hidden="true">↓</span>
             </a>
-            <HeroCallLink />
           </div>
         )}
         {notePhone && <p className="service-subhero-note">{notePhone}</p>}

@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { AboutHeroVideo } from '../components/AboutHeroVideo';
-import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader, TeamSection } from '../components/SiteChrome';
+import { Breadcrumbs, HeroCallButton, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { CapabilityFigure } from '../components/about/CapabilityFigure';
@@ -109,10 +109,9 @@ export default function AboutPage() {
             <p>RUBIKON BUILD — родинна будівельна компанія з Дніпра. Практичний досвід Сергія Івановича поєднуємо із системною організацією роботи та зрозумілою комунікацією з клієнтом.</p>
             <div className="about-hero-actions" data-hero-actions>
               <HeroCallButton />
-              <a className="button button-primary about-hero-cta" href="#inquiry">
+              <a className="button button-hero-secondary about-hero-cta" href="#inquiry" data-open-inquiry="">
                 Обговорити задачу <span aria-hidden="true">↓</span>
               </a>
-              <HeroCallLink />
             </div>
           </div>
         </div>

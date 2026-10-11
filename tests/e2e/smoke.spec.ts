@@ -144,9 +144,9 @@ test.describe('public route smoke tests', () => {
       );
 
       if (route.hasProjectCta) {
-        // On a phone the call leads the hero; /napryamky, /angary and the grain page then keep their written link in
-        // the DOM but hide it (one call, one tool — the conversation block below carries the written path).
-        const callLeads = await hero.locator('a.hero-call-phone').isVisible();
+        // The call leads every hero (DEC-41, PROPOSED). On a phone /napryamky, /angary and the grain page keep their
+        // written link in the DOM but hide it (one call, one tool — the conversation block below carries the written path).
+        const callLeads = (page.viewportSize()?.width ?? 0) <= 760;
         const ctaName = heroInquiryCta[route.path] ?? 'Обговорити задачу';
         // A hidden link has no accessible name to match, so the hidden case is found by its text.
         const projectCta = callLeads

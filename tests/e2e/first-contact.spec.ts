@@ -72,21 +72,22 @@ test.describe('phone', () => {
   });
 
   // UX pass 2026-10: on a phone the call leads every inner hero too — the same copper button with the number as HOME.
-  // The page's own action (configurator, planner, «Обговорити задачу», «Обрати напрям») follows under it, and the quiet
-  // call link that sits beside the primary action on wider screens is not repeated.
+  // The page's own action (configurator, planner, «Обговорити задачу», «Обрати напрям») follows under it as an outline.
+  // Since Phase 2 (DEC-41, PROPOSED) wider screens lead with the same button (ux-conversion-phase2.spec.ts).
   for (const path of INNER_PAGES) {
     test(`${path}: the call leads the hero on a phone`, async ({ page }) => {
       await answerCookies(page, 'denied');
       await page.goto(path, { waitUntil: 'load' });
       const hero = page.locator('main section').first();
-      const call = hero.locator('a.hero-call-phone');
+      const call = hero.locator('a.hero-call-lead');
       await expect(call).toBeVisible();
       await expect(call).toHaveAttribute('href', TEL);
       await expect(call).toHaveClass(/\bbutton-primary\b/);
       await expect(call).toHaveAccessibleName(`Зателефонувати, ${company.phone.display}`);
       await expect(call).toContainText(company.phone.display);
-      await expect(hero.locator('a.hero-call')).toBeHidden();
-      const next = hero.locator('a.button:not(.hero-call-phone)').first();
+      await expect(hero.locator('a.hero-call')).toHaveCount(0);
+      const next = hero.locator('a.button:not(.hero-call-lead)').first();
+      await expect(next).not.toHaveClass(/\bbutton-primary\b/);
       await expect(next).toBeVisible();
       const [callBox, nextBox] = await Promise.all([call.boundingBox(), next.boundingBox()]);
       expect(nextBox!.y).toBeGreaterThan(callBox!.y);
@@ -165,7 +166,7 @@ test.describe('phone', () => {
 
     await page.locator('header.site-header .mobile-call').click();
     await expect.poll(contactClicks).toEqual(['phone']);
-    await page.locator('main section').first().locator('a.hero-call-phone').click();
+    await page.locator('main section').first().locator('a.hero-call-lead').click();
     await expect.poll(contactClicks).toEqual(['phone', 'phone']);
   });
 });

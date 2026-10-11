@@ -58,7 +58,6 @@
 .proc-hero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .proc-hero-lead { max-width: 640px; margin: var(--hero-gap-lead) 0 0; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
 .proc-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: var(--hero-gap-actions); }
-.proc-hero-actions .hero-call { margin: 0; }
 .proc-provenance {
   position: absolute; right: 24px; bottom: 20px; padding: 5px 8px; color: color-mix(in srgb, var(--color-dark-text) 86%, transparent);
   background: rgba(13, 16, 14, .72); border: 1px solid rgba(255, 255, 255, .18); font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase;

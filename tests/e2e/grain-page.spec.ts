@@ -45,9 +45,9 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     await openPlanner(page, GRAIN_PAGE);
     const hero = page.locator('.service-subhero');
     await expect(hero.getByRole('link', { name: /Скласти комплекс/ })).toHaveAttribute('href', '#kompleks');
-    // A phone leads with the call and the complex; the conversation is one tap away in «Контакти» (UX pass 2026-10).
-    if (isMobile) await expect(hero.locator('a.hero-call-phone')).toBeVisible();
-    else await expect(hero.getByRole('link', { name: /Обговорити зерносховище/ })).toHaveAttribute('href', '#inquiry');
+    // The call leads and the complex follows (DEC-41, PROPOSED); a phone leaves the conversation to «Контакти», one tap away
+    await expect(hero.locator('a.hero-call-lead')).toBeVisible();
+    if (!isMobile) await expect(hero.getByRole('link', { name: /Обговорити зерносховище/ })).toHaveAttribute('href', '#inquiry');
   });
 
   test('states the boundary: short in the hero, whole beside the building part and in the FAQ; preserves the Planner decision', async ({ page }) => {
