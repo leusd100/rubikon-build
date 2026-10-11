@@ -14,9 +14,64 @@ async function skipBanner(page: Page) {
 
 const headerBottom = (page: Page) => page.evaluate(() => document.querySelector('.site-header')!.getBoundingClientRect().bottom);
 
+/** The keyboard's tests run in Chromium, and in Firefox and WebKit too where those projects are asked for */
+const KEYBOARD_PROJECTS = ['desktop-chromium', 'firefox', 'webkit'];
+
+/** Until the page has stood still for 12 frames (the browser's own scroll for a focus, and the clearance after it) */
+const settle = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const started = performance.now();
+        let last = window.scrollY;
+        let quiet = 0;
+        const tick = (now: number) => {
+          if (window.scrollY === last) quiet += 1;
+          else {
+            quiet = 0;
+            last = window.scrollY;
+          }
+          if (quiet >= 12 || now - started > 3000) resolve();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+
+/** Shift+Tab from the foot of the page to its header; every control the focus stood on, if the header lay over it */
+async function walkBack(page: Page) {
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await settle(page);
+  const hidden: string[] = [];
+  let walked = 0;
+  for (let step = 0; step < 120; step++) {
+    await page.keyboard.press('Shift+Tab');
+    await settle(page);
+    const focus = await page.evaluate(() => {
+      const element = document.activeElement;
+      if (!element || element === document.body) return { done: true };
+      if (element.closest('.site-header, .cookie-banner') || element.classList.contains('skip-link')) return { skip: true };
+      // the X-Ray's seam slider is a transparent input over the whole frame; the frame draws its focus (sweep §5)
+      if (element.matches('.hv2-contour-range')) return { skip: true };
+      const box = element.getBoundingClientRect();
+      if (box.width < 2 || box.height < 2) return { skip: true };
+      return { top: box.top, bottom: box.bottom, name: (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().slice(0, 40) };
+    });
+    if ('done' in focus) break;
+    if ('skip' in focus) {
+      if (walked > 5 && (await page.evaluate(() => !!document.activeElement?.closest('.site-header')))) break;
+      continue;
+    }
+    walked++;
+    const cover = await headerBottom(page);
+    if (focus.top! < cover - 0.5) hidden.push(`${focus.name} ${Math.round(focus.top!)}–${Math.round(focus.bottom!)} under ${Math.round(cover)}`);
+  }
+  return { walked, hidden };
+}
+
 test.describe('keyboard', () => {
   test('Tab past the mobile menu’s last item closes it; Shift+Tab back past its button closes it too', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'desktop-chromium', 'each test sets its own windows');
+    test.skip(!KEYBOARD_PROJECTS.includes(testInfo.project.name), 'each test sets its own windows');
     await skipBanner(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/', { waitUntil: 'load' });
@@ -46,7 +101,7 @@ test.describe('keyboard', () => {
   });
 
   test('the menu marks the page in view, and its numbers are not read out', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'desktop-chromium', 'each test sets its own windows');
+    test.skip(!KEYBOARD_PROJECTS.includes(testInfo.project.name), 'each test sets its own windows');
     await skipBanner(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/pro-nas', { waitUntil: 'load' });
@@ -65,45 +120,57 @@ test.describe('keyboard', () => {
   // questions, links and node pins stayed under it for good (sweep 2.1, reproduced with reduced motion too)
   for (const [path, width, height] of [['/metalokonstruktsii', 390, 844], ['/pro-nas', 390, 844], ['/yak-pratsyuiemo', 390, 844], ['/', 1250, 613], ['/metalokonstruktsii', 1440, 900]] as const) {
     test(`Shift+Tab never leaves the focus under the fixed header: ${path} at ${width}×${height}`, async ({ page }, testInfo) => {
-      test.skip(testInfo.project.name !== 'desktop-chromium', 'each test sets its own windows');
+      test.skip(!KEYBOARD_PROJECTS.includes(testInfo.project.name), 'each test sets its own windows');
       test.setTimeout(90_000);
       await skipBanner(page);
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.setViewportSize({ width, height });
       await page.goto(path, { waitUntil: 'load' });
-      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-      const hidden: string[] = [];
-      let walked = 0;
-      for (let step = 0; step < 120; step++) {
-        await page.keyboard.press('Shift+Tab');
-        // the check waits two frames for the browser's own scroll; give it those and a little more
-        await page.waitForTimeout(60);
-        const focus = await page.evaluate(() => {
-          const element = document.activeElement;
-          if (!element || element === document.body) return { done: true };
-          if (element.closest('.site-header, .cookie-banner') || element.classList.contains('skip-link')) return { skip: true };
-          // the X-Ray's seam slider is a transparent input over the whole frame; the frame draws its focus (sweep §5)
-          if (element.matches('.hv2-contour-range')) return { skip: true };
-          const box = element.getBoundingClientRect();
-          if (box.width < 2 || box.height < 2) return { skip: true };
-          return { top: box.top, bottom: box.bottom, name: (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().slice(0, 40) };
-        });
-        if ('done' in focus) break;
-        if ('skip' in focus) {
-          if (walked > 5 && (await page.evaluate(() => !!document.activeElement?.closest('.site-header')))) break;
-          continue;
-        }
-        walked++;
-        const cover = await headerBottom(page);
-        if (focus.top! < cover - 0.5) hidden.push(`${focus.name} ${Math.round(focus.top!)}–${Math.round(focus.bottom!)} under ${Math.round(cover)}`);
-      }
+      const { walked, hidden } = await walkBack(page);
       expect(walked).toBeGreaterThan(10);
       expect(hidden).toEqual([]);
     });
   }
 
+  // With motion allowed the browser scrolls smoothly to a control it does bring into view, for ~0.7 s in Chromium; the
+  // clearance waits for that scroll to end however long it runs (a fixed 700 ms wait ran out before it did)
+  for (const [path, width, height] of [['/pro-nas', 390, 844], ['/metalokonstruktsii', 1440, 900]] as const) {
+    test(`with motion allowed, Shift+Tab leaves no focus under the header once the page is still: ${path} at ${width}×${height}`, async ({ page }, testInfo) => {
+      test.skip(!KEYBOARD_PROJECTS.includes(testInfo.project.name), 'each test sets its own windows');
+      test.setTimeout(120_000);
+      await skipBanner(page);
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.setViewportSize({ width, height });
+      await page.goto(path, { waitUntil: 'load' });
+      const { walked, hidden } = await walkBack(page);
+      expect(walked).toBeGreaterThan(10);
+      expect(hidden).toEqual([]);
+    });
+  }
+
+  test('a control a script focused without a scroll, wholly above the window, is left where the script put it', async ({ page }, testInfo) => {
+    test.skip(!KEYBOARD_PROJECTS.includes(testInfo.project.name), 'each test sets its own windows');
+    await skipBanner(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/pro-nas', { waitUntil: 'load' });
+    // a key pressed first, so the focus that follows counts as the keyboard's (:focus-visible)
+    await page.keyboard.press('Tab');
+    await page.evaluate(() => window.scrollTo({ top: 2500, behavior: 'instant' }));
+    await settle(page);
+    const moved = await page.evaluate(async () => {
+      const link = [...document.querySelectorAll<HTMLElement>('main a[href]')].find((a) => a.getBoundingClientRect().bottom < 0)!;
+      const y = window.scrollY;
+      link.focus({ preventScroll: true });
+      const keyboard = link.matches(':focus-visible');
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      return { keyboard, by: window.scrollY - y, focused: document.activeElement === link };
+    });
+    expect(moved).toEqual({ keyboard: true, by: 0, focused: true });
+  });
+
   test('on a phone the configurator’s first step tab comes out from under the sticky mini preview on Shift+Tab', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'desktop-chromium', 'each test sets its own windows');
+    test.skip(!KEYBOARD_PROJECTS.includes(testInfo.project.name), 'each test sets its own windows');
     await skipBanner(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 390, height: 844 });
