@@ -83,7 +83,10 @@ img { display: block; }
 html[data-scroll-still] .scroll-shield { display: block; }
 .shell { width: min(var(--container-max), calc(100% - (var(--container-gutter) * 2))); margin-inline: auto; }
 .section { padding-block: var(--section-space); }
-section[id] { scroll-margin-top: 116px; }
+/* #inquiry is the header's «Контакти» on every page; on the privacy policy and the 404 page it is not a section (an article,
+   a div), and its heading landed under the header (review 11.10, sweep 2.5). An attribute, not #inquiry: no more weight
+   than section[id], so the pages' own [id] offsets still win */
+section[id], [id="inquiry"] { scroll-margin-top: 116px; }
 a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 
 .section-divider { width: min(var(--container-max), calc(100% - (var(--container-gutter) * 2))); height: 1px; margin-inline: auto; }
@@ -932,7 +935,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .shell { width: min(100% - 32px, 620px); }
   .section { padding-block: var(--section-space); }
   .ghost-word { display: none; }
-  section[id] { scroll-margin-top: 88px; }
+  section[id], [id="inquiry"] { scroll-margin-top: 88px; }
   a[href], button, summary, input, select, textarea { scroll-margin-top: 88px; }
   .nav-wrap { min-height: 76px; gap: 12px; }
   .brand { width: 210px; }
