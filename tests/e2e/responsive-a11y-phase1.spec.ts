@@ -164,7 +164,9 @@ test.describe('keyboard', () => {
     await expect(page.locator('.mobile-menu nav').getByRole('link', { name: 'Напрямки', exact: true })).toBeVisible();
     await page.setViewportSize({ width: 1440, height: 900 });
     await expect(page.locator('.desktop-nav a[aria-current="page"]')).toHaveText('Про компанію');
-    await expect(page.locator('.header-contacts')).toHaveAttribute('role', 'group');
+    // An <address>, which browsers expose as a named group (Chromium: group «Контакти компанії»); Playwright's own role
+    // engine does not map the tag, so the element and its name are checked as they are
+    await expect(page.locator('header address.header-contacts')).toHaveAttribute('aria-label', 'Контакти компанії');
   });
 
   // Moving back, the browser did not scroll to a control it counted as in view though the header lay over it: FAQ

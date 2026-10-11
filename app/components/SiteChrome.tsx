@@ -122,8 +122,9 @@ export function SiteHeader() {
           <PrimaryNavLinks />
         </nav>
         <div className="header-actions">
-          {/* A group, so its name is read out (ARIA 1.2 does not name a plain div; axe aria-prohibited-attr, review 11.10) */}
-          <div className="header-contacts" role="group" aria-label="Контакти компанії">
+          {/* <address> is a group in ARIA, so its name is read out (ARIA 1.2 does not name a plain div; axe
+              aria-prohibited-attr, review 11.10), and it says what the links are without an explicit role (SonarCloud) */}
+          <address className="header-contacts" aria-label="Контакти компанії">
             {/* The number itself is the label: one readable line (16 px), the icon says what it is. */}
             <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Телефон, ${company.phone.display}`}>
               <Phone aria-hidden="true" />
@@ -133,7 +134,7 @@ export function SiteHeader() {
             <a className="messenger-link header-email" href={companyContactLinks.email} aria-label={`Email, ${company.email}`} title={company.email}>
               <Mail aria-hidden="true" />
             </a>
-          </div>
+          </address>
           <ThemeSwitch />
         </div>
         <a className="mobile-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
