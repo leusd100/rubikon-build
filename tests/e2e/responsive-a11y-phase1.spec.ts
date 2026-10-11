@@ -40,6 +40,19 @@ function listen(page: Page) {
 /** Opens a page and waits for React to take it over: the keyboard's handlers (the menu's, FocusClearance) are React's,
  * and hydration can land after `load`. A page that never hydrates fails here, with what it reported */
 async function open(page: Page, path: string) {
+  // The production build's CSP ends in upgrade-insecure-requests. Chrome and Firefox leave this plain-http local server
+  // alone; WebKit asks it for https and no script loads, so the page never hydrates (the first WebKit run). The site
+  // itself is served over https only: WebKit is given the page without that one directive
+  if (page.context().browser()?.browserType().name() === 'webkit') {
+    await page.route('**/*', async (route) => {
+      if (route.request().resourceType() !== 'document') return route.fallback();
+      const response = await route.fetch();
+      const headers = { ...response.headers() };
+      headers['content-security-policy'] = (headers['content-security-policy'] ?? '').replace(/;\s*upgrade-insecure-requests/, '');
+      delete headers['strict-transport-security'];
+      await route.fulfill({ response, headers });
+    });
+  }
   await page.goto(path, { waitUntil: 'load' });
   const hydrated = () => {
     const menu = document.querySelector('.mobile-menu');
