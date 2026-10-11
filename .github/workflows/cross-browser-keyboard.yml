@@ -1,0 +1,59 @@
+name: Cross-browser keyboard
+
+# The keyboard's checks (tests/e2e/responsive-a11y-phase1.spec.ts) in Firefox and WebKit, the engines the other
+# suites never open: the menu closing as the focus leaves it, and no focus left under the fixed header or a sticky
+# panel (FocusClearance). Informational: it is not part of PR Gate. Playwright's WebKit is Safari's engine, not Safari,
+# and neither run stands for a physical iPhone or iPad.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - app/components/FocusClearance.tsx
+      - app/components/MobileMenu.tsx
+      - app/components/PrimaryNavLinks.tsx
+      - app/components/SiteChrome.tsx
+      - app/layout.tsx
+      - tests/e2e/responsive-a11y-phase1.spec.ts
+      - playwright.config.ts
+      - .github/workflows/cross-browser-keyboard.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cross-browser-keyboard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
+
+jobs:
+  keyboard:
+    name: Keyboard (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-ci
+      - name: Production build
+        run: pnpm build
+      - name: Install ${{ matrix.browser }} and its system dependencies
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - name: Run the keyboard checks
+        run: pnpm exec playwright test --project=${{ matrix.browser }} tests/e2e/responsive-a11y-phase1.spec.ts
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-browser-keyboard-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

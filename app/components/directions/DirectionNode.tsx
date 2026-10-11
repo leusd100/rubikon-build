@@ -61,6 +61,19 @@ export function DirectionNode({
   const { stageRef, transform, placed } = useDrawingCamera(size, node, steps, step, node.drawing ? NEEDS : null);
 
   const captions = [node.overviewCaption, ...steps.map((item) => item.caption)];
+  // On a phone the steps follow the picture, so after a press on the last one the drawing it lit was half above the
+  // window (review 11.10, appendix №54: 45 % on metal, 54 % on roofing; only «Крок 03 / 03» in view). The page moves up
+  // just enough to show the sheet under the header — the steps, below it, stay in view too
+  const chooseInView = (value: number) => {
+    choose(value);
+    const sheetBox = visualRef.current?.closest('.dn-sheet')?.getBoundingClientRect();
+    if (!sheetBox || !window.matchMedia('(max-width: 760px)').matches) return;
+    const cover = document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0;
+    if (sheetBox.top < cover) {
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollBy({ top: sheetBox.top - cover - 12, behavior: smooth ? 'smooth' : 'instant' });
+    }
+  };
 
   const sheet = (
     <DrawingSheet
@@ -113,7 +126,7 @@ export function DirectionNode({
           <h2 id={titleId}>{title}</h2>
           <p>{text}</p>
         </div>
-        <TourSteps steps={steps} step={step} choose={choose} hover={hover} />
+        <TourSteps steps={steps} step={step} choose={chooseInView} hover={hover} />
         {/* The sheet alone is the picture's grid item; with a key (the grain store's line types) both share the place */}
         {node.legend ? <div className="dn-media">{sheet}<ScopeKey items={node.legend} /></div> : sheet}
       </div>

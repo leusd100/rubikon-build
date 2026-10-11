@@ -38,6 +38,13 @@ export default function MobileMenu({ children }: { children: ReactNode }) {
           }, 0);
         }
       }}
+      // Tab past the menu's last item (or Shift+Tab back past its button) closes it, so the focus never lands on the page
+      // under a still-open panel — the panel covered the hero's call it went to (review 11.10, sweep 2.4). Only a focus
+      // that goes somewhere: a window losing focus (relatedTarget null) leaves the menu as it was
+      onBlur={(event) => {
+        const next = event.relatedTarget;
+        if (next instanceof Node && menuRef.current?.open && !menuRef.current.contains(next)) menuRef.current.open = false;
+      }}
     >
       {children}
     </details>

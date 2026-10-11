@@ -199,7 +199,10 @@ test.describe('configurator 3D visual states', () => {
 // #168/F68 moved the cladding outside the frame, intentionally hiding members that previously
 // protruded through the roof. Reviewed Linux Chromium captures at e7e3105 measure the resulting
 // opaque shell at 61.5108356 / 0.2335065. Keep both guards and their existing tolerances.
-const RENDER_TONE = { litMean: 61.5108, litFrac: 0.2335065 } as const;
+// #177 (configurator iteration 4) moved both again; main and the phase 1 branch read the same
+// 105.5434 / 0.2992140 on Linux Chromium, and CI read the same litMean on 507d416. Re-pinned with
+// the 21 configurator baselines on the owner's OK (11.10).
+const RENDER_TONE = { litMean: 105.5434, litFrac: 0.299214 } as const;
 const LIT_MEAN_TOLERANCE = 0.3;
 const LIT_FRAC_TOLERANCE = 0.002;
 
