@@ -65,5 +65,16 @@ export default defineConfig({
       testMatch: /visual\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
+    // The keyboard's checks in the other two engines (cross-browser-keyboard.yml); run only when asked for by name
+    {
+      name: 'firefox',
+      testMatch: /responsive-a11y-phase1\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'], viewport: { width: 1440, height: 900 } },
+    },
+    {
+      name: 'webkit',
+      testMatch: /responsive-a11y-phase1\.spec\.ts/,
+      use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } },
+    },
   ],
 });
