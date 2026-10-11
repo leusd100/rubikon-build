@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import BrandLogo from './BrandLogo';
 import MobileMenu from './MobileMenu';
+import PrimaryNavLinks from './PrimaryNavLinks';
 import { ThemeOptions, ThemeSwitch } from './ThemeControl';
 import ViberContactButton from './ViberContactButton';
 import { company, companyContactLinks } from '../data/company';
@@ -118,10 +119,11 @@ export function SiteHeader() {
           <Brand idPrefix="header" />
         </a>
         <nav className="desktop-nav" aria-label="Основна навігація">
-          {primaryNavigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
+          <PrimaryNavLinks />
         </nav>
         <div className="header-actions">
-          <div className="header-contacts" aria-label="Контакти компанії">
+          {/* A group, so its name is read out (ARIA 1.2 does not name a plain div; axe aria-prohibited-attr, review 11.10) */}
+          <div className="header-contacts" role="group" aria-label="Контакти компанії">
             {/* The number itself is the label: one readable line (16 px), the icon says what it is. */}
             <a className="header-contact header-phone" href={companyContactLinks.phone} aria-label={`Телефон, ${company.phone.display}`}>
               <Phone aria-hidden="true" />
@@ -143,9 +145,7 @@ export function SiteHeader() {
             <i aria-hidden="true"><b /><b /></i>
           </summary>
           <nav aria-label="Мобільна навігація">
-            {primaryNavigation.map((item, index) => (
-              <a href={item.href} key={item.href}><small>{String(index + 1).padStart(2, '0')}</small> {item.label}</a>
-            ))}
+            <PrimaryNavLinks numbered />
             <a className="mobile-phone" href={companyContactLinks.phone}><Phone aria-hidden="true" /> {company.phone.display}</a>
             <MessengerLinks className="mobile-messengers" />
             <a className="mobile-email" href={companyContactLinks.email}><Mail aria-hidden="true" /> {company.email}</a>
