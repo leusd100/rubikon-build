@@ -10,6 +10,10 @@ const START_FRAMES = 4;
 const QUIET_FRAMES = 6;
 /** The longest the check waits for that scroll: Chromium's smooth scroll for a focus ran 700–745 ms (11.10) */
 const SETTLE_MS = 1500;
+/** Looks at the control, the first and after each scroll of its own: that scroll can pin a new bar over the control — the
+ *  configurator's mini drawing is held as the controls pass its line — and Firefox held it after the first look
+ *  (Firefox keyboard run, 11.10: the first step tab under the mini drawing for good) */
+const LOOKS = 3;
 
 /** The fixed or sticky box `hit` lies in, unless that box holds `element` itself or is the scroll shield; else null */
 function pinnedBox(hit: Element, element: Element) {
@@ -41,12 +45,15 @@ function coverAbove(element: Element, box: DOMRect) {
   return bottom;
 }
 
+/** Scrolls `element` out from under what is pinned over it; whether it had to */
 function clear(element: Element) {
-  if (!element.isConnected || document.activeElement !== element) return;
+  if (!element.isConnected || document.activeElement !== element) return false;
   const box = element.getBoundingClientRect();
-  if (box.width === 0 || box.height === 0 || box.bottom <= 0 || box.top >= window.innerHeight) return;
+  if (box.width === 0 || box.height === 0 || box.bottom <= 0 || box.top >= window.innerHeight) return false;
   const cover = coverAbove(element, box);
-  if (cover > 0 && box.top < cover + GAP) window.scrollBy({ top: box.top - cover - GAP, behavior: 'instant' });
+  if (cover <= 0 || box.top >= cover + GAP) return false;
+  window.scrollBy({ top: box.top - cover - GAP, behavior: 'instant' });
+  return true;
 }
 
 /**
@@ -63,6 +70,8 @@ function clear(element: Element) {
  * 700 ms cap ran out before Chromium's own 745 ms scroll did, and a `scrollend` may belong to an earlier scroll, or
  * not come at all where a browser lacks it. One watch at a time: a new focus, or leaving the page, drops the one
  * before; so does the visitor's own wheel or finger, which takes the scroll over.
+ * The clearance's own scroll can pin a bar over the control in turn (the configurator's mini drawing), so after a scroll
+ * it looks again, up to three times in all.
  * A control left wholly outside the window is not chased: the browser brings a focused control into view itself, so
  * one still out of it was put there by a script that asked for no scroll (`focus({ preventScroll: true })`).
  */
@@ -73,24 +82,30 @@ export function FocusClearance() {
       const element = event.target;
       if (!(element instanceof Element) || !element.matches(':focus-visible')) return;
       cancelAnimationFrame(frame);
-      const started = performance.now();
-      let last = window.scrollY;
-      let frames = 0;
-      let quiet = 0;
-      let moved = false;
-      const watch = (now: number) => {
-        frames += 1;
-        if (window.scrollY === last) quiet += 1;
-        else {
-          moved = true;
-          quiet = 0;
-          last = window.scrollY;
-        }
-        const settled = moved ? quiet >= QUIET_FRAMES : frames >= START_FRAMES;
-        if (settled || now - started > SETTLE_MS) clear(element);
-        else frame = requestAnimationFrame(watch);
+      let looks = 0;
+      const look = () => {
+        looks += 1;
+        const started = performance.now();
+        let last = window.scrollY;
+        let frames = 0;
+        let quiet = 0;
+        let moved = false;
+        const watch = (now: number) => {
+          frames += 1;
+          if (window.scrollY === last) quiet += 1;
+          else {
+            moved = true;
+            quiet = 0;
+            last = window.scrollY;
+          }
+          // after a scroll of its own, as long as the browser may take to pin a bar in answer to it
+          const settled = moved || looks > 1 ? quiet >= QUIET_FRAMES : frames >= START_FRAMES;
+          if (!settled && now - started <= SETTLE_MS) frame = requestAnimationFrame(watch);
+          else if (clear(element) && looks < LOOKS) look();
+        };
+        frame = requestAnimationFrame(watch);
       };
-      frame = requestAnimationFrame(watch);
+      look();
     }
     const drop = () => cancelAnimationFrame(frame);
     document.addEventListener('focusin', onFocusIn);

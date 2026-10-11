@@ -102,7 +102,8 @@ async function walkBack(page: Page) {
       const box = element.getBoundingClientRect();
       if (box.width < 2 || box.height < 2) return { skip: true };
       const name = (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().slice(0, 40);
-      const tag = `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ''}${[...element.classList].slice(0, 2).map((c) => `.${c}`).join('')}`;
+      const id = element.id ? '#' + element.id : '';
+      const tag = element.tagName.toLowerCase() + id + [...element.classList].slice(0, 2).map((c) => '.' + c).join('');
       return { top: box.top, bottom: box.bottom, name: `${tag} «${name}»` };
     });
     if ('done' in focus) break;
@@ -244,7 +245,8 @@ test.describe('keyboard', () => {
       const layout = element.closest<HTMLElement>('.hc-layout');
       const sheet = layout?.querySelector('.hc-preview-surface')?.getBoundingClientRect();
       const header = document.querySelector('.site-header')!.getBoundingClientRect().bottom;
-      return `${hit ? `${hit.tagName.toLowerCase()}.${[...hit.classList].join('.')}` : 'nothing'} over the tab at ${Math.round(box.top)}; `
+      const over = hit ? [hit.tagName.toLowerCase(), ...hit.classList].join('.') : 'nothing';
+      return `${over} over the tab at ${Math.round(box.top)}; `
         + `header ${Math.round(header)}, sheet ${Math.round(sheet?.top ?? 0)}–${Math.round(sheet?.bottom ?? 0)}, `
         + `held ${layout ? 'configuring' in layout.dataset : '?'}, --hc-mini-h ${layout?.style.getPropertyValue('--hc-mini-h') || '–'}, scrollY ${Math.round(window.scrollY)}`;
     })).toBe('clear');
