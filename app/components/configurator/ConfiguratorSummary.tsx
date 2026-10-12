@@ -1,25 +1,20 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { NBSP, deriveSummary } from '../../lib/configurator/deriveSummary';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { Printer } from 'lucide-react';
+import { NBSP, deriveSummary, formatMeters } from '../../lib/configurator/deriveSummary';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import { deriveBayLayout, ridgeHeightM, trussPanelNodesM } from '../../lib/configurator/parametricModel';
 import { objectProfileLine } from '../../lib/configurator/objectProfile';
-import { DEFAULT_CONFIGURATOR_STATE, INTERNAL_SUPPORTS_LABELS, type ConfirmedTopic } from '../../lib/configurator/types';
+import { DEFAULT_CONFIGURATOR_STATE, INTERNAL_SUPPORTS_LABELS, SIZE_KEYS, SIZE_LABELS, type ConfirmedTopic } from '../../lib/configurator/types';
 import { anythingChosen, sizesProvenance } from '../../lib/configurator/domainModel';
 import { keepShortWords } from '../../lib/typography';
 import { useInquiryAttachment } from '../inquiry/InquiryAttachmentProvider';
+import { useInquiryFormHost } from '../inquiry/InquiryFormHost';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { useHangarInquiryContext } from './HangarInquiryContext';
-
-/** The configurator's one disclaimer (UX pass 2026-10: it replaced five — over the model, under the sizes, the gates,
- *  in the summary and over the frame schemes). Reworded 10.10 (audit F106): «Межі розмірів і розміри воріт» said
- *  «розмір» twice, «орієнтовні, не будівельні норми» broke off, and the picture is a «попередня схема», as the sheet
- *  names it (F101) — no site visit promised. Short words kept with the next one (F103: «навантажень і / умов»). */
-const DISCLAIMER = keepShortWords(
-  'Це попередня схема, а не проєктна документація. Діапазони габаритів і розміри воріт орієнтовні — це не будівельні '
-  + 'норми. Конструкцію й фундамент визначає проєктувальник після розрахунку навантажень з урахуванням умов майданчика.',
-);
+import { DISCLAIMER } from './disclaimer';
+import { HangarPrintSheet } from './HangarPrintSheet';
 
 function SummaryDisclaimer() {
   return <p className="hc-summary-disclaimer">{DISCLAIMER}</p>;
@@ -169,7 +164,14 @@ export function ConfiguratorSummary({
   const enclosed = domain.scope.walls || domain.scope.roof;
   // sent with a saved lead and unchanged since: the stamp no longer promises to add it
   const sent = Boolean(useInquiryAttachment()?.sent) && Boolean(inquiry?.isAttached);
-  const dimensionsWithoutUnit = summary.dimensionsLabel.replace(/\s+м$/, '');
+  // Each size by where it comes from (Phase 4): while some are the visitor's and some the example's, the example's
+  // figures step back and a tag names them — «30 × 60 × 8 м» read as three choices when the width alone was set
+  const exampleSizes = SIZE_KEYS.filter((key) => domain.sizes[key] === 'example');
+  const mixedSizes = !example && provenance === 'own' && exampleSizes.length > 0 && exampleSizes.length < SIZE_KEYS.length;
+  const sizeValues = { width: domain.dimensions.widthM, length: domain.dimensions.lengthM, height: domain.dimensions.eaveHeightM };
+  const exampleSizesWords = exampleSizes.map((key) => SIZE_LABELS[key].toLowerCase()).join(', ');
+  const formHost = useInquiryFormHost();
+  const [printing, setPrinting] = useState(false);
   const taskLine = objectProfileLine(domain.objectProfile);
   const taskAnswered = taskLine !== objectProfileLine(DEFAULT_CONFIGURATOR_STATE.objectProfile) ? taskLine : null;
   const dimensionsRef = useChangeMark<HTMLParagraphElement>(`${summary.dimensionsLabel} ${summary.ridgeHeightLabel}`);
@@ -238,8 +240,21 @@ export function ConfiguratorSummary({
           <h3 className="hc-summary-title" key={example ? 'example' : 'own'}>{example ? 'Приклад конфігурації' : 'Ваша конфігурація'}</h3>
           {provenance === 'approx' && <p className="hc-summary-dimensions-status"><span className="hc-fact-status">орієнтовно · уточнюємо</span></p>}
           {!example && provenance === 'example' && <p className="hc-summary-dimensions-status"><StatusTag status="example" /></p>}
+          {mixedSizes && (
+            <p className="hc-summary-dimensions-status">
+              <span className="hc-fact-status" data-status="example">
+                з прикладу: {exampleSizesWords}<span className="hc-visually-hidden"> — ви їх ще не обирали</span>
+              </span>
+            </p>
+          )}
           <p className="hc-summary-dimensions" ref={dimensionsRef} translate="no">
-            {dimensionsWithoutUnit}<span className="hc-summary-dimensions-unit">{NBSP}м</span>
+            {SIZE_KEYS.map((key, index) => (
+              <Fragment key={key}>
+                {index > 0 && `${NBSP}×${NBSP}`}
+                <span data-status={mixedSizes && domain.sizes[key] === 'example' ? 'example' : undefined}>{formatMeters(sizeValues[key])}</span>
+              </Fragment>
+            ))}
+            <span className="hc-summary-dimensions-unit">{NBSP}м</span>
           </p>
           {/* the area named before its number (10.10, audit F102): «· ≈ 1 440 м² площі забудови» put «·» and «≈» side by side;
               the name and its number one piece, so a narrow stamp breaks after the «·» */}
@@ -274,14 +289,23 @@ export function ConfiguratorSummary({
             href="#inquiry"
             onClick={(event) => {
               onInquiryAction?.();
-              revealAttachedBrief(event);
+              // the page's one form opens right here, under the stamp (Phase 4, InquiryFormHost) — unless the visitor
+              // already typed in it at the end of the page: then it is taken there, as before
+              const here = formHost?.bringToSource() ?? false;
+              revealAttachedBrief(event, { takeOver: here });
             }}
           >
             Обговорити цю конфігурацію <span aria-hidden="true">↓</span>
           </a>
           {/* what happens after the button, in the route's own approved words (10.10, audit F12; «Читаємо бриф і готуємо
-              питання до розмови»): it jumps straight to the form, past the route */}
+              питання до розмови»): the form opens under the stamp */}
           <p key={sent ? 'sent' : 'add'}>{sent ? 'Надіслано з вашим запитом.' : keepShortWords('Параметри додамо до заявки — ми прочитаємо бриф і підготуємо питання до розмови.')}</p>
+          {/* A4 through the browser's own print (Phase 4; R-UX-06 §14 п. 14): the sheet, its rows as the lead's, the date and
+              the disclaimer — to show a partner or an accountant. No price, no dates: the configurator works out neither. */}
+          <button type="button" className="hc-summary-print" onClick={() => setPrinting(true)}>
+            <Printer aria-hidden="true" /> Друкувати аркуш A4
+          </button>
+          {printing && <HangarPrintSheet domain={domain} onDone={setPrinting} />}
         </div>
       </div>
       <SummaryDisclaimer />

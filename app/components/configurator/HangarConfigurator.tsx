@@ -8,6 +8,7 @@ import { CONTROL_STEPS } from '../../lib/configurator/controlGroups';
 import { ConfiguratorControls, landOnSteps } from './ConfiguratorControls';
 import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
+import { InquiryFormSlot } from '../inquiry/InquiryFormHost';
 import { HangarPreviewModes } from './HangarPreviewModes';
 import { keepShortWords } from '../../lib/typography';
 import { sheetObjectLabel } from './sheetLabels';
@@ -335,6 +336,25 @@ export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ e
               says where the visitor went (configurator-controls.css drops the ring) */}
           <ConfiguratorSummary domain={businessDomain} showInquiryAction onInquiryAction={sharedInquiry?.attachConfiguration} />
         </div>
+      )}
+      {/* «Обговорити цю конфігурацію» opens the page's one form here, under the stamp (Phase 4, InquiryFormHost): the
+          configuration stays in view, and beside the form on a wide screen what happens after it, in the route's words */}
+      {embedded && (
+        <InquiryFormSlot
+          id="hc-inquiry"
+          className="hc-inquiry"
+          aside={nextSteps && nextSteps.length > 0 && (
+            <div className="hc-next hc-inquiry-next">
+              <p className="hc-next-title">Що далі, після запиту</p>
+              <ol className="hc-next-steps">
+                {nextSteps.map((title, number) => (
+                  <li key={title}><span className="hc-next-number" aria-hidden="true">{String(number + 1).padStart(2, '0')}</span>{title}</li>
+                ))}
+              </ol>
+              <a className="hc-next-more" href="#process">Увесь шлях і хто відповідає <span aria-hidden="true">↓</span></a>
+            </div>
+          )}
+        />
       )}
     </section>
   );

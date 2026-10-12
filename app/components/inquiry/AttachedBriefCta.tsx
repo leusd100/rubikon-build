@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { useInquiryAttachment } from './InquiryAttachmentProvider';
+import { useInquiryFormHost } from './InquiryFormHost';
 import { revealAttachedBrief } from './revealAttachedBrief';
 
 /** Only typing hides the shortcut. A tapped option card or a dragged slider keeps focus on its radio or range input
@@ -100,9 +101,13 @@ function watchGate(
  * `className`'s CSS (≤ 760 on /angary). A brief already sent with a saved lead needs no shortcut (04.10): it kept
  * inviting a second, identical lead after «Дякуємо!» (sweep 03.10).
  */
-export function AttachedBriefCta({ gate, className, label = 'До заявки' }: { gate: string; className: string; label?: string }) {
+export function AttachedBriefCta({ gate: sourceGate, className, label = 'До заявки' }: { gate: string; className: string; label?: string }) {
   const inquiry = useInquiryAttachment();
   const attached = Boolean(inquiry?.attachment) && !inquiry?.sent;
+  // The form opened under /angary's stamp (Phase 4, InquiryFormHost): the shortcut shows once that form has scrolled
+  // past, and points back up to it
+  const atSource = Boolean(useInquiryFormHost()?.atSource);
+  const gate = atSource ? '#hc-inquiry' : sourceGate;
   const [inquiryVisible, setInquiryVisible] = useState(false);
   const [summaryPassed, setSummaryPassed] = useState(false);
   const [uiBlocked, setUiBlocked] = useState(true);
@@ -148,10 +153,10 @@ export function AttachedBriefCta({ gate, className, label = 'До заявки' 
     <a
       className={className}
       href="#inquiry"
-      onClick={revealAttachedBrief}
+      onClick={(event) => revealAttachedBrief(event, { takeOver: atSource })}
       hidden={!summaryPassed || inquiryVisible || uiBlocked}
     >
-      {`${label} `}<span aria-hidden="true">↓</span>
+      {`${label} `}<span aria-hidden="true">{atSource ? '↑' : '↓'}</span>
     </a>
   );
 }

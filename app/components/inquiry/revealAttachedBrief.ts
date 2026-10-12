@@ -8,25 +8,32 @@
 // Every link to the form takes this way while a brief is attached (ConversationFormToggle, sweep 03.10): the cost and
 // title-block CTAs and the FAQ link used to leave a phone at the form's heading, the brief below and focus on the page.
 // A brief that already went out with a saved lead says so instead (04.10).
+// `takeOver` (Phase 4): the form stands under /angary's configurator stamp (InquiryFormHost), not in #inquiry — the jump
+// is taken over on every width, or a desktop's anchor jump would carry the visitor to the end of the page and leave the
+// focus on a brief far above it.
 
 const NARROW = '(max-width: 1180px)';
 
 /** `event`: the link's click, a React or a DOM one — only its default (the anchor jump) is taken over. */
-export function revealAttachedBrief(event?: Pick<Event, 'preventDefault'>) {
-  const narrow = window.matchMedia(NARROW).matches;
-  if (narrow && event) {
+export function revealAttachedBrief(event?: Pick<Event, 'preventDefault'>, { takeOver = false }: { takeOver?: boolean } = {}) {
+  const own = takeOver || window.matchMedia(NARROW).matches;
+  if (own && event) {
     event.preventDefault();
     window.history.replaceState(null, '', '#inquiry');
   }
   const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // Two frames: the attachment renders, then the folded form opens for it (ConversationFormToggle)
+  // Two frames: the attachment renders, then the folded form opens for it (ConversationFormToggle) or the form opens under
+  // the stamp (InquiryFormHost)
   window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
     const brief = document.getElementById('inquiry-brief');
     if (!brief) {
-      if (narrow) document.getElementById('inquiry')?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+      // no brief (detached): the form itself — under the stamp, if it stands there
+      const form = document.getElementById('hc-inquiry') ?? document.getElementById('inquiry');
+      if (own) form?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+      if (takeOver && form?.hasAttribute('tabindex')) form.focus({ preventScroll: true });
       return;
     }
-    if (narrow) brief.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+    if (own) brief.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
     brief.focus({ preventScroll: true });
     const status = document.getElementById('inquiry-brief-status');
     const headline = brief.querySelector('strong')?.textContent ?? '';

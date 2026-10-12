@@ -5,6 +5,7 @@ import { Phone } from 'lucide-react';
 import { CostFactorsFigure, type CostFactorItem } from '../process/CostFactorsFigure';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { useInquiryAttachment } from '../inquiry/InquiryAttachmentProvider';
+import { useInquiryFormHost } from '../inquiry/InquiryFormHost';
 import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { company, companyContactLinks } from '../../data/company';
 import { costFactorNotes } from '../../lib/configurator/costNotes';
@@ -55,6 +56,8 @@ export function HangarEditorialArchitecture({
   const attached = Boolean(inquiry?.isAttached);
   // Sent with a saved lead and unchanged since (04.10): 01 says so and no longer asks to send it
   const sent = attached && Boolean(inquiryAttachment?.sent);
+  // the form opened under the configurator's stamp (Phase 4, InquiryFormHost): above this route, not below it
+  const formAbove = Boolean(useInquiryFormHost()?.atSource);
   // The brief's own headline, as the form's card shows it: without the contour when walls and roof are out of scope,
   // the object answers when only they were given (04.10)
   const briefHeadline = inquiryAttachment?.attachment?.headline ?? summary.headlineLabel;
@@ -113,9 +116,10 @@ export function HangarEditorialArchitecture({
                   : <span key="idle">Складаєте базову конфігурацію вище або описуєте задачу словами.</span>}
                 {/* Owner, 03.10: the brief's node acts on its own state — up to the configurator while nothing is attached,
                     down to the attached brief in the form once something is */}
+                {/* the form under the configurator's stamp (Phase 4): up to it */}
                 {attached && !sent && (
-                  <a className="angary-route-brief-action" href="#inquiry" onClick={revealAttachedBrief}>
-                    Надіслати бриф <span aria-hidden="true">↓</span>
+                  <a className="angary-route-brief-action" href="#inquiry" onClick={(event) => revealAttachedBrief(event, { takeOver: formAbove })}>
+                    Надіслати бриф <span aria-hidden="true">{formAbove ? '↑' : '↓'}</span>
                   </a>
                 )}
                 {!attached && (
