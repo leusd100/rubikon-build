@@ -28,7 +28,7 @@ describe('CI change classification', () => {
   });
   it('selects conversion tests and nested HOME proof changes before merge', () => {
     expect(classifyChanges(['tests/e2e/ux-conversion-phase2.spec.ts']).inquiry).toBe(true);
-    for (const file of ['app/components/home-v2/proof-contour/useNodeDetail.ts', 'tests/e2e/home-proof-contour.spec.ts']) {
+    for (const file of ['app/components/home-v2/proof-contour/useNodeDetail.ts', 'tests/e2e/home-proof-contour.spec.ts', 'app/lib/theme.ts', 'tests/e2e/theme.spec.ts']) {
       expect(withVisualMode(classifyChanges([file]), 'standard').hero_playback, file).toBe(true);
     }
   });
@@ -107,6 +107,7 @@ describe('PR gate workflow', () => {
     expect(workflow.slice(workflow.indexOf('\n  inquiry:'), workflow.indexOf('\n  leads:'))).toContain('tests/e2e/ux-conversion-phase2.spec.ts');
     expect(workflow.slice(workflow.indexOf('\n  configurator:'), workflow.indexOf('\n  hero:'))).toContain('tests/e2e/configurator-polish.spec.ts');
     expect(workflow.slice(workflow.indexOf('\n  hero:'), workflow.indexOf('\n  visual:'))).toContain("tests/e2e/home-proof-contour.spec.ts --grep 'load way waits'");
+    expect(workflow.slice(workflow.indexOf('\n  hero:'), workflow.indexOf('\n  visual:'))).toContain('--repeat-each=3 --retries=0 tests/e2e/theme.spec.ts');
   });
 
   it('runs hero playback on its own path-selected job and the screenshot suites only when visual is selected', () => {

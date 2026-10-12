@@ -219,6 +219,8 @@ jobs:
       - uses: ./.github/actions/setup-playwright
       - name: Run hero playback suite
         run: pnpm exec playwright test --project=desktop-chromium tests/e2e/hero-video.spec.ts
+      - name: Run theme behavior regression
+        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --repeat-each=3 --retries=0 tests/e2e/theme.spec.ts
       - name: Run node assembly ordering regression
         run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium tests/e2e/home-proof-contour.spec.ts --grep 'load way waits'
 
