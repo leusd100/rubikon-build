@@ -1,8 +1,9 @@
 import { Fragment, type CSSProperties } from 'react';
 import type { SwitchFormat, SwitchItem } from '../../lib/deliveryModelPresentation';
 import {
-  FORMAT_WHEN, RESPONSIBILITY_GROUPS, RESPONSIBILITY_ZONES, TO_YOU, kindOf, noteOf, wordOf, workName, type MarkKind,
+  FORMAT_WHEN, RESPONSIBILITY_GROUPS, RESPONSIBILITY_ZONES, TO_YOU, kindOf, noteOf, wordOf, workName, worksCount, type MarkKind,
 } from '../../lib/responsibilityTable';
+import { MatrixGroupToggle } from './MatrixGroupToggle';
 
 // /yak-pratsyuiemo «Відповідальність без дрібного шрифту» as one table (owner 06.10: the three lists were hard to compare,
 // then «зробити більш зрозумілішим для клієнта»). A row per work, a column per party, and the reader is one of the
@@ -10,7 +11,8 @@ import {
 // key. The format switcher above (radios, name="resp-format") picks the format with CSS :has, so the table works without
 // JavaScript: each row's word-marks carry their column, word, look and visibility per format as custom properties, and the
 // chosen format's set wins — so on a switch the marks slide to their new columns. The cells repeat the word for screen
-// readers (the marks are decoration), with the model's note where the parties share a work.
+// readers (the marks are decoration), with the model's note where the parties share a work. On a phone the three groups
+// fold under their titles, the first open (Phase 3, PROPOSED: the table was ≈2 900 px there); MatrixGroupToggle.
 
 /** Fill, line, line style and word colour of each kind of mark (resp-matrix.css defines the --rm-* values per theme). */
 const KIND_LOOK: Record<MarkKind, readonly [fill: string, line: string, style: string, ink: string]> = {
@@ -55,8 +57,12 @@ export function ResponsibilityMatrix({ formats, items, boundary }: Readonly<{
   boundary: string;
 }>) {
   let index = 0;
+  const groups = RESPONSIBILITY_GROUPS.map((group) => ({
+    ...group,
+    items: items.filter((item) => group.rows.includes(item.rows[0])),
+  }));
   return (
-    <div className="resp-matrix-wrap" data-motion>
+    <div className="resp-matrix-wrap" data-motion data-open={groups[0].id}>
       {formats.map((format) => (
         <div className="rm-when" data-format={format.id} key={format.id}>
           <p className="proc-principle">{FORMAT_WHEN[format.id]}</p>
@@ -82,12 +88,21 @@ export function ResponsibilityMatrix({ formats, items, boundary }: Readonly<{
             </span>
           ))}
         </div>
-        {RESPONSIBILITY_GROUPS.map((group) => (
+        {groups.map((group, groupIndex) => (
           <Fragment key={group.title}>
             <div className="rm-group" role="row">
-              <span role="cell" aria-colspan={4}>{group.title}</span>
+              <span role="cell" aria-colspan={4}>
+                <span className="rm-group-name">{group.title}</span>
+                <MatrixGroupToggle
+                  group={group.id}
+                  title={group.title}
+                  count={worksCount(group.items.length)}
+                  rows={group.items.map((_, rowIndex) => `rm-${group.id}-${rowIndex + 1}`)}
+                  initiallyOpen={groupIndex === 0}
+                />
+              </span>
             </div>
-            {items.filter((item) => group.rows.includes(item.rows[0])).map((item) => {
+            {group.items.map((item, rowIndex) => {
               const i = index++;
               const out = formats.filter((format) => RESPONSIBILITY_ZONES.every((zone) => !item.zones[zone.id].includes(format.id)));
               // What the row's placement is in each format, for FormatSwitchSync to light the rows a switch has moved
@@ -96,7 +111,7 @@ export function ResponsibilityMatrix({ formats, items, boundary }: Readonly<{
                 RESPONSIBILITY_ZONES.filter((zone) => item.zones[zone.id].includes(format.id)).map((zone) => `${zone.id}:${kindOf(item, zone.id, format.id)}`).join(' ') || 'out',
               ]));
               return (
-                <div className="rm-row" role="row" key={item.text} style={{ '--i': i } as CSSProperties} data-out={out.map((format) => format.id).join(' ') || undefined} {...places}>
+                <div className="rm-row" role="row" id={`rm-${group.id}-${rowIndex + 1}`} data-group={group.id} key={item.text} style={{ '--i': i } as CSSProperties} data-out={out.map((format) => format.id).join(' ') || undefined} {...places}>
                   <span className="rm-work" role="rowheader">{workName(item)}</span>
                   {RESPONSIBILITY_ZONES.map((zone) => (
                     <span className="rm-cell" role="cell" key={zone.id}>

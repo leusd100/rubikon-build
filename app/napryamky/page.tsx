@@ -8,26 +8,21 @@ import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceMani
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
 import { company } from '../data/company';
-import { formatCards, participationChoices } from '../lib/deliveryModelPresentation';
-import { deliveryModel } from '../data/deliveryModel';
-import { FormatsScope, type FormatTerms } from '../components/directions/FormatsScope';
-import type { DeliveryFormatId } from '../types/deliveryModel';
-import { StartTrack } from '../components/directions/StartTrack';
+import { formatCards } from '../lib/deliveryModelPresentation';
 import { RegionBlock } from '../components/about/RegionBlock';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { directions, undecidedDirection } from '../data/directions';
 import { directionPages } from '../data/directionPages';
 import '../components/about/region.css';
-import '../components/directions/formats-scope.css';
 import './directions.css';
 
 // /napryamky — the hub: choose a direction or describe a mixed task. Hero in the /yak-pratsyuiemo composition, its
 // slides naming the direction they show; the five directions as a catalogue (a key plan over five rows, each with its scheme sheet);
-// the formats on one section drawing that redraws per format; where the work starts, on the eight-stage track; where we
-// work, on the region's real map; the conversation, its form starting on «Ще не визначено» and without the four
-// after-contact steps (the track above already says where we start). The old two-question FAQ is answered by the
-// track and the map. Every word is the page's previous copy, /yak-pratsyuiemo's, the directions' own data or the
-// Delivery Model.
+// one short band on how we take the work on — the three formats in the model's words and «what you already have», with
+// one link each to the formats, the stages and the responsibility on /yak-pratsyuiemo, which alone explains them in full (DEC-45, PROPOSED, Phase 3:
+// the formats drawing and the eight-stage track used to repeat it here); where we work, on the region's real map; the
+// conversation, its form starting on «Ще не визначено», with the four after-contact steps every page shows. Every word
+// is the page's previous copy, /yak-pratsyuiemo's, the directions' own data or the Delivery Model.
 
 /** Each direction's row: its card copy and the kinds of work its page lists. */
 const catalog: CatalogItem[] = directions.map((direction) => ({
@@ -39,8 +34,12 @@ const catalog: CatalogItem[] = directions.map((direction) => ({
   kinds: (directionPages[direction.id].overview?.items ?? []).map((item) => item[1]),
 }));
 
-/** What tells the formats apart, for the drawing's caption: the other party of the contract and who coordinates */
-const formatTerms = Object.fromEntries(participationChoices().map(({ id, contractWith, coordinator, rubikonCoordinates }) => [id, { contractWith, coordinator, rubikonCoordinates }])) as Record<DeliveryFormatId, FormatTerms>;
+/** The band's ways to /yak-pratsyuiemo: formats, stages and responsibility, each to its own section there */
+const HOW_LINKS = [
+  { hash: 'obsiah', label: 'Формати участі' },
+  { hash: 'etapy', label: 'Етапи роботи' },
+  { hash: 'vidpovidalnist', label: 'Хто за що відповідає' },
+] as const;
 
 export const metadata = createPageMetadata({
   path: '/napryamky',
@@ -98,35 +97,42 @@ export default function DirectionsPage() {
         </div>
       </section>
 
-      {/* 3 · Formats: one section of the same building, redrawn for the format pointed at, focused or pressed */}
-      <section className="page-section dfmt" aria-labelledby="dfmt-title">
-        <div className="shell">
-          <SectionHeader
-            eyebrow="Формати участі"
-            title="Який обсяг робіт можемо взяти на себе"
-            titleId="dfmt-title"
-            supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
-          />
-          <FormatsScope formats={formatCards()} terms={formatTerms} />
-          <a className="section-link" href={`${siteRoutes.process}#obsiah`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
-        </div>
-      </section>
-
-      {/* 4 · Where the work starts: what you already have → the stage we start from, on the eight-stage track */}
-      <section className="page-section page-section-dark dstart-section" aria-labelledby="dstart-title">
+      {/* 3 · How we take the work on, in short: the three formats (the model's label and summary) and «what you already
+          have», then a link to each of /yak-pratsyuiemo's formats, stages and responsibility, explained in full there */}
+      <section className="page-section page-section-dark dhow" aria-labelledby="dhow-title">
         <div className="shell">
           <SectionHeader
             inverse
-            eyebrow="Перше звернення"
-            title="Що у вас уже є — з того й почнемо"
-            titleId="dstart-title"
-            supporting="Звертайтеся і з початковою ідеєю, і з готовим проєктом. Переглянемо те, що вже є, та скажемо, які дані потрібні, щоб визначити склад робіт і підготувати кошторис."
+            eyebrow="Формати участі"
+            title="Який обсяг робіт можемо взяти на себе"
+            titleId="dhow-title"
+            supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
-          <StartTrack entries={deliveryModel.entryStates} stages={deliveryModel.stages.map(({ id, number, title, what }) => ({ id, number, title, what }))} />
+          <ol className="dhow-formats">
+            {formatCards().map((format) => (
+              <li key={format.id}>
+                <span className="dhow-number" aria-hidden="true">{format.number}</span>
+                <h3>{format.title}</h3>
+                <p>{format.text}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="dhow-start">
+            <p>
+              <b>Що у вас уже є — з того й почнемо.</b> Звертайтеся і з початковою ідеєю, і з готовим проєктом. Переглянемо те, що вже є, та скажемо, які дані потрібні, щоб визначити склад робіт і підготувати кошторис.
+            </p>
+            {/* One link per part of /yak-pratsyuiemo, each to its own section, named as the site already names them
+                (/pro-nas: «Етапи роботи», «Хто за що відповідає»; this band's own «Формати участі») */}
+            <div className="dhow-links">
+              {HOW_LINKS.map(({ hash, label }) => (
+                <a key={hash} className="section-link" href={`${siteRoutes.process}#${hash}`}>{label} <span aria-hidden="true">↗</span></a>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* 5 · Where we work: the region on its real map (shared with /pro-nas) */}
+      {/* 4 · Where we work: the region on its real map (shared with /pro-nas) */}
       <section className="page-section dregion" aria-label="Де працюємо">
         <div className="shell">
           <RegionBlock />
@@ -137,7 +143,6 @@ export default function DirectionsPage() {
         title="Опишіть завдання — підкажемо напрям"
         lead="Не впевнені, який напрямок підходить? Розберемося разом. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит."
         defaultDirection={undecidedDirection}
-        showJourney={false}
       />
     </main>
   );

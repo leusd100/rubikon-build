@@ -5,8 +5,8 @@ import { FormatPrefillLink } from '../process/FormatPrefillLink';
 import type { FormatCard } from '../../lib/deliveryModelPresentation';
 import type { DeliveryFormatId } from '../../types/deliveryModel';
 
-// /napryamky «Формати участі» — one flat section of a building that is redrawn for the format in focus (owner,
-// 05.10: the oblique wireframe was not clear enough — «більш зрозумілішим, з вау ефектом, ближче до мінімалізму»; the
+// «Формати участі» (/yak-pratsyuiemo; /napryamky until Phase 3) — one flat section of a building that is redrawn for
+// the format in focus (owner, 05.10: the oblique wireframe was not clear enough — «більш зрозумілішим, з вау ефектом, ближче до мінімалізму»; the
 // idea is the three-section scheme first mocked for HOME, which the owner liked but did not want there).
 // What the drawing says, in the site's three lines:
 //   copper          — RUBIKON's scope: every part in «Комплексна реалізація»; one package at a time in the other two

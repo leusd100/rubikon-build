@@ -176,16 +176,22 @@ test('homepage server HTML carries the H1, the real-object proof, the conversati
   expect(text.cooperation).toEqual(['Ще не визначено', ...FORMAT_LABELS]);
 });
 
-test('/napryamky server HTML takes its formats and entry points from the model', async ({ page }) => {
+test('/napryamky server HTML takes its formats from the model and leaves the detail to /yak-pratsyuiemo', async ({ page }) => {
   const text = await serverText(page, '/napryamky', {
-    formats: '.dfmt-option .dfmt-title',
-    entryPoints: '.entry-points-list b',
-    startNotes: '.entry-points-list small',
+    formats: '.dhow-formats h3',
+    formatTexts: '.dhow-formats p',
+    drawing: '.dfmt-grid',
+    links: '.dhow-links a',
   });
 
   expect(text.formats).toEqual(FORMAT_LABELS);
-  expect(text.entryPoints).toEqual(deliveryModel.entryStates.map((state) => state.label));
-  expect(text.startNotes).toEqual([deliveryModel.entryStates[3].startNote]);
+  expect(text.formatTexts).toEqual(deliveryModel.formats.map((format) => format.summary));
+  // DEC-45 (PROPOSED, Phase 3): the formats drawing lives on /yak-pratsyuiemo only; this page links to it
+  expect(text.drawing).toEqual([]);
+  // one link each to the formats, the stages and the responsibility, named as the site names them elsewhere (/pro-nas)
+  expect(text.links.map((link) => link.replace(/\s+/g, ' ').trim())).toEqual(['Формати участі ↗', 'Етапи роботи ↗', 'Хто за що відповідає ↗']);
+  await page.goto('/napryamky', { waitUntil: 'load' });
+  expect(await page.locator('.dhow-links a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(['/yak-pratsyuiemo#obsiah', '/yak-pratsyuiemo#etapy', '/yak-pratsyuiemo#vidpovidalnist']);
 });
 
 test('homepage presents the real object and leaves the participation formats to the process page', async ({ page }) => {
@@ -528,10 +534,11 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }
 
 // /yak-pratsyuiemo — the Delivery Model page, readable before and without JavaScript.
 // One closing conversation block everywhere: the same four step titles, each page's own explanations, and on a
-// direction page the form already names that direction. /yak-pratsyuiemo shows its steps in the route instead, and
-// /napryamky in its start track (see the next test).
+// direction page the form already names that direction. /yak-pratsyuiemo shows its steps in the route instead.
+// /napryamky showed its start track instead until Phase 3 (DEC-45, PROPOSED; see the next test).
 const CONVERSATION_PAGES: ReadonlyArray<{ path: string; journey: readonly string[] }> = [
   { path: '/', journey: DEFAULT_JOURNEY },
+  { path: '/napryamky', journey: DEFAULT_JOURNEY },
   { path: '/pro-nas', journey: DEFAULT_JOURNEY },
   ...Object.entries(DIRECTION_JOURNEY).map(([id, journey]) => ({ path: `/${id}`, journey: journey ?? [] })),
 ];
@@ -563,14 +570,15 @@ test('every page closes with the same conversation block, in its own words', asy
 });
 
 // /napryamky invites people who have not picked a direction: its form starts on «Ще не визначено» (a real, accepted
-// answer), and the four after-contact steps give way to the start track above, which already says where we begin.
-test('/napryamky form starts on «Ще не визначено» and the start track replaces the four steps', async ({ page }) => {
+// answer). Since Phase 3 the eight-stage start track is gone from the page (DEC-45, PROPOSED), so the four after-contact
+// steps every other page shows are back under the call.
+test('/napryamky form starts on «Ще не визначено» and shows the four after-contact steps', async ({ page }) => {
   const text = await serverText(page, '/napryamky', {
-    journey: '#inquiry .conversation-journey',
+    journey: '#inquiry .conversation-journey h3',
     track: '.dstart-track',
   });
-  expect(text.journey).toEqual([]);
-  expect(text.track).toHaveLength(1);
+  expect(text.journey).toEqual([...JOURNEY_TITLES]);
+  expect(text.track).toEqual([]);
   await page.goto('/napryamky', { waitUntil: 'load' });
   await expect(page.locator('#inquiry form.inquiry-form').getByLabel(/Напрям робіт/)).toHaveValue(undecidedDirection);
 });
@@ -849,6 +857,8 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    // Row 9 is in «Будівництво», folded on a phone until opened (Phase 3, PROPOSED)
+    await page.locator('.rm-group-toggle[data-group="construction"]').click();
     await page.evaluate(() => {
       const row = document.querySelectorAll('.rm-row')[8]!;
       window.scrollTo({ top: row.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2, behavior: 'instant' });
