@@ -230,9 +230,10 @@ test('/angary process stage follows the authoritative attachment state', async (
   await expect(firstStage.locator('.ps-you')).toContainText('Додано до заявки: Приклад з креслення · 24 × 60 × 8 м');
   await expect(firstStage.locator('.ps-result')).toHaveText('Результат: Бриф у заявці');
   await expect(rail).toHaveAttribute('data-brief', 'attached');
-  // …and down to the attached brief in the form once something is: it lands on the brief, which says so once
+  // …and to the attached brief in the form once something is: it lands on the brief, which says so once. «Обговорити»
+  // opened the form under the configurator's stamp (Phase 4): up to it
   const send = firstStage.getByRole('link');
-  await expect(send).toHaveText('Надіслати бриф ↓');
+  await expect(send).toHaveText('Надіслати бриф ↑');
   await expect(send).toHaveAttribute('href', '#inquiry');
   await page.locator('#inquiry-brief-status').evaluate((status) => { status.textContent = ''; });
   await send.click();

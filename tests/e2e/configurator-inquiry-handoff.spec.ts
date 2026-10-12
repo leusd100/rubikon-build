@@ -212,14 +212,17 @@ test.describe('configurator attachment contract', () => {
     await setDimension(page, 'width', '24');
 
     const brief = attachmentCard(page);
-    // back on the example's sizes: still attached, and the sizes are the visitor's answer — the example's own value
-    // chosen again is an answer (hangar-configurator@1.4.1); the ridge followed the width there and back
+    // back on the example's width: still attached, and the width is the visitor's answer — the example's own value
+    // chosen again is an answer (hangar-configurator@1.4.1) — the length and the wall height they never set stay the
+    // example's, and the ridge that followed the width there and back is preliminary (1.6.0, Phase 4)
     await expect(brief.locator('.inquiry-config-brief-title')).toHaveText('До заявки додано вашу конфігурацію');
     await expect(brief.locator('strong')).toHaveText('24 × 60 × 8 м');
     await brief.getByText('Переглянути параметри', { exact: true }).click();
-    const selected = brief.locator('section').filter({ has: page.getByRole('heading', { name: 'Вибрана конфігурація', exact: true }) });
-    await expect(selected.locator('dt')).toHaveText(['Габарити', 'Висота в конику']);
-    await expect(selected.locator('dd').first()).toHaveText('24 × 60 × 8 м');
+    const part = (heading: string) => brief.locator('section').filter({ has: page.getByRole('heading', { name: heading, exact: true }) });
+    await expect(part('Вибрана конфігурація').locator('dt')).toHaveText(['Ширина']);
+    await expect(part('Вибрана конфігурація').locator('dd')).toHaveText(['24 м']);
+    await expect(part('Не уточнено — значення прикладу').locator('dt').first()).toHaveText('Довжина');
+    await expect(part('Попередні дані').locator('dt').first()).toHaveText('Висота в конику');
   });
 
   test('explicit configurator CTA attaches an untouched default', async ({ page }) => {
@@ -300,19 +303,22 @@ test.describe('configurator attachment contract', () => {
     await openHangarPage(page);
     await setDimension(page, 'width', '30');
     await setDimension(page, 'length', '50');
+    // two of three: the wall height is still the example's, so the lead's «Габарити» field stays the visitor's (1.6.0)
+    await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveCount(0);
+    await setDimension(page, 'height', '7');
 
     const brief = attachmentCard(page);
-    await expect(brief.locator('strong')).toHaveText('30 × 50 × 8 м');
-    // the sizes are the visitor's own, so they are the lead's «Габарити» (07.10)
+    await expect(brief.locator('strong')).toHaveText('30 × 50 × 7 м');
+    // all three sizes are the visitor's own, so they are the lead's «Габарити» (07.10; all three since Phase 4)
     await expect(page.locator('form.inquiry-form').getByLabel('Орієнтовні розміри', { exact: true })).toHaveCount(0);
     // the sizes hold together with no-break spaces (04.10)
-    await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue('30\u00A0×\u00A050\u00A0×\u00A08\u00A0м');
+    await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue('30\u00A0×\u00A050\u00A0×\u00A07\u00A0м');
     await submitInquiry(page);
 
     expect(submitted()).toMatchObject({
       direction: 'Ангари та склади',
       sourcePage: '/angary',
-      details: { dimensions: '30\u00A0×\u00A050\u00A0×\u00A08\u00A0м' },
+      details: { dimensions: '30\u00A0×\u00A050\u00A0×\u00A07\u00A0м' },
     });
     expect(submitted()?.details?.configuration?.replaceAll('\u00A0', ' ')).toContain('Площа забудови: ≈ 1 500 м²');
   });
@@ -343,15 +349,19 @@ test.describe('configurator attachment contract', () => {
     const configuration = submitted()?.details?.configuration ?? '';
     const payloadRows = configuration.split('\n').filter((line) => !line.endsWith(':'));
     expect(payloadRows).toEqual(visibleRows);
-    expect(configuration).toContain('Про об’єкт:\nПідйомне обладнання: Немає\nВибрана конфігурація:\nГабарити:');
+    // the width alone was set: it is the visitor's, the rest of the sizes the example's (1.6.0, Phase 4)
+    expect(configuration).toContain('Про об’єкт:\nПідйомне обладнання: Немає\nВибрана конфігурація:\nШирина: 30\u00A0м');
+    expect(configuration).toContain('Не уточнено клієнтом (значення прикладу на сайті):\nДовжина: 60\u00A0м\nВисота стін: 8\u00A0м');
     expect(configuration).toContain('Не уточнено клієнтом (значення прикладу на сайті):\n');
-    expect(configuration).toContain('Попередні дані:\nПлоща забудови:');
+    // the ridge nobody set follows the width: the first of the preliminary data (1.6.0)
+    expect(configuration).toContain('Попередні дані:\nВисота в конику:');
+    expect(configuration).toContain('Площа забудови:');
     expect(configuration).toContain('Попередня конструктивна схема:');
     expect(configuration).not.toMatch(/Світло-сіра|Графіт|Нейтральна/);
     // «Об’єкт» (03.10): the answered question leads the rows, the unanswered ones are absent; the ridge says its slope
     expect(payloadRows[0]).toBe('Підйомне обладнання: Немає');
     expect(configuration).not.toMatch(/Призначення:|Проєкт:|Область:/);
-    expect(configuration).toMatch(/Висота в конику: \d+(,\d)?\u00A0м · ухил\u00A0≈\u00A0\d+°/);
+    expect(configuration).toMatch(/Висота в конику: \d+(,\d)?\u00A0м · ухил\u00A0≈\u00A0\d+° — підібраний за шириною/);
   });
 
   test('walls outside scope omit gates and door from both summary and payload', async ({ page }) => {

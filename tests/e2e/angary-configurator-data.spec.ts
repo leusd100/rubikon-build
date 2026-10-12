@@ -87,10 +87,10 @@ test('«Задача» answers alone add the answers; the example’s sizes stay
   expect(configuration).not.toContain('Вибрана конфігурація');
   expect(dimensions ?? '').toBe('');
 
-  // a size of the visitor's own makes the sizes theirs
+  // a size of the visitor's own makes that size theirs; the two they did not set are named as the example's (Phase 4)
   await typeSize(page, 'width', '30');
   await expect(sheetObject(page)).toHaveText('Ваш ангар · 30 × 60 × 8 м');
-  await expect(page.locator('.hc-stamp-row .hc-summary-dimensions-status')).toHaveCount(0);
+  await expect(page.locator('.hc-stamp-row .hc-summary-dimensions-status')).toContainText('з прикладу: довжина, висота стін');
 });
 
 test('a size field entered and left without typing answers nothing; «Точних розмірів ще немає» is an orientation', async ({ page }, testInfo) => {
@@ -121,7 +121,10 @@ test('sizes keep the decimal comma and hold their units in the stamp, the cost n
   await expect(costList(page)).not.toContainText('7.5');
   await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
   await expect(page.locator('#process li').first()).toContainText('Додано до заявки: 24 × 60 × 7,5 м');
-  await expect(page.locator('form.inquiry-form input[type="hidden"][name="dimensions"]')).toHaveValue(`24${NBSP}×${NBSP}60${NBSP}×${NBSP}7,5${NBSP}м`);
+  // the wall height alone is the visitor's: its own row, with its comma (1.6.0, Phase 4)
+  const brief = page.locator('form.inquiry-form .inquiry-config-brief');
+  await brief.getByText('Переглянути параметри', { exact: true }).click();
+  await expect(brief.locator('dl > div').filter({ hasText: 'Висота стін' }).locator('dd')).toHaveText(`7,5${NBSP}м`);
 });
 
 test('the cost notes speak only of what the visitor answered, never of the example’s defaults', async ({ page }, testInfo) => {

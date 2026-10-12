@@ -201,7 +201,8 @@ function useMiniPreview(enabled: boolean) {
  * entry, and Back went to the stamp, then the steps, before it left /angary — three presses at 1440 px, two on a phone.
  * They make the browser's own jump — to the target's top under its scroll margin, smooth unless motion is reduced
  * (globals.css) — and the stamp takes the focus, as the browser gives it to a focusable target (audit F129). Up to
- * 1180 px wide «Обговорити» never reaches here: revealAttachedBrief makes that jump itself, to the brief.
+ * 1180 px wide «Обговорити» never reaches here, nor wherever it opens the form under the stamp (Phase 4,
+ * InquiryFormHost): revealAttachedBrief makes that jump itself, to the brief.
  */
 function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElement | null>) {
   useEffect(() => {

@@ -57,14 +57,17 @@ test('the visitor\'s own direction and sizes outlive an attached brief and come 
   await form.getByText('Додати параметри об’єкта', { exact: true }).click();
   await form.getByLabel('Орієнтовні розміри', { exact: true }).fill('18 × 36 × 6 м');
 
-  // a size of the visitor's own in the configurator: the brief takes the direction (owner, 03.10), not the typed sizes
+  // sizes of the visitor's own in the configurator — all three, so they are the brief's «Габарити» (1.6.0, Phase 4): the
+  // brief takes the direction (owner, 03.10), not the typed sizes
   await setDimension(page, 'width', '30');
-  await expect(brief(page)).toContainText(`30${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м`);
+  await setDimension(page, 'length', '66');
+  await setDimension(page, 'height', '9');
+  await expect(brief(page)).toContainText(`30${NBSP}×${NBSP}66${NBSP}×${NBSP}9${NBSP}м`);
   await expect(form.locator('select[name="direction"]')).toHaveCount(0);
   await expect(form.getByText('Додати деталі до заявки', { exact: true })).toBeVisible();
   const sizes = form.getByLabel('Орієнтовні розміри', { exact: true });
   await expect(sizes).toHaveValue('18 × 36 × 6 м');
-  await expect(form.locator('#inquiry-dimensions-hint')).toHaveText(`У конфігурації, доданій до заявки: 30${NBSP}×${NBSP}60${NBSP}×${NBSP}8${NBSP}м.`);
+  await expect(form.locator('#inquiry-dimensions-hint')).toHaveText(`У конфігурації, доданій до заявки: 30${NBSP}×${NBSP}66${NBSP}×${NBSP}9${NBSP}м.`);
   await expect(form.locator('input[type="hidden"][name="dimensions"]')).toHaveCount(0);
 
   await brief(page).getByRole('button', { name: 'Не додавати', exact: true }).click();
@@ -80,7 +83,7 @@ test('the visitor\'s own direction and sizes outlive an attached brief and come 
   await expect(form.locator('.inquiry-status')).toContainText('Дякуємо! Запит надіслано');
   expect(leads[0].direction).toBe('Ангари та склади');
   expect(leads[0].details.dimensions).toBe('18 × 36 × 6 м');
-  expect(leads[0].details.configuration?.replaceAll(NBSP, ' ')).toContain('Габарити: 30 × 72 × 8 м');
+  expect(leads[0].details.configuration?.replaceAll(NBSP, ' ')).toContain('Габарити: 30 × 72 × 9 м');
 });
 
 test('a brief sent with a saved lead says so, stops asking to be sent, and goes again only once it changes', async ({ page }, testInfo) => {
@@ -128,10 +131,11 @@ test('a brief sent with a saved lead says so, stops asking to be sent, and goes 
   await expect(form.locator('.inquiry-status')).toHaveText('Попередній варіант надіслано. Змінене ще не надіслано — натисніть «Надіслати запит».');
   await expect(brief(page).locator('.inquiry-config-brief-title')).toHaveText('До заявки додано вашу конфігурацію');
   await expect(brief(page).getByRole('button', { name: 'Не додавати', exact: true })).toBeVisible();
-  await expect(routeBrief(page).getByRole('link')).toHaveText('Надіслати бриф ↓');
+  // «Обговорити» opened the form under the configurator's stamp (Phase 4): the route's link points up to it
+  await expect(routeBrief(page).getByRole('link')).toHaveText('Надіслати бриф ↑');
   await submit.click();
   await expect.poll(() => leads.length).toBe(3);
-  expect(leads[2].details.configuration?.replaceAll(NBSP, ' ')).toContain('Габарити: 30 × 60 × 8 м');
+  expect(leads[2].details.configuration?.replaceAll(NBSP, ' ')).toContain('Ширина: 30 м');
 });
 
 test('on a phone the sent brief hides «До заявки», and every CTA to the form lands on the brief', async ({ page }, testInfo) => {
@@ -179,13 +183,16 @@ test('the brief\'s status line empties once the brief changes under it, and its 
   await expect(status).toHaveText('');
 
   // h2 → h3 (the brief) → h4 (its sections: the visitor's sizes, what is still the example's, the preliminary data)
-  // → h3 «Контакт», «Завдання»: no level skipped
+  // → h3 «Контакт», «Завдання»: no level skipped. «Обговорити» opened the form under the configurator's stamp (Phase 4):
+  // the h2 above it is the configurator's
   await brief(page).getByText('Переглянути параметри', { exact: true }).click();
-  const outline = await page.locator('#inquiry').evaluate((section) => [...section.querySelectorAll('h2, h3, h4')]
-    .filter((heading) => heading.getClientRects().length > 0)
-    .map((heading) => heading.tagName));
+  await expect(page.locator('#hc-inquiry form.inquiry-form')).toHaveCount(1);
+  const outline = await page.locator('#configurator').evaluate((section) => [
+    section.querySelector('h2'),
+    ...section.querySelector('#hc-inquiry form')!.querySelectorAll('h2, h3, h4'),
+  ].filter((heading): heading is Element => heading !== null && heading.getClientRects().length > 0).map((heading) => heading.tagName));
   expect(outline).toEqual(['H2', 'H3', 'H4', 'H4', 'H4', 'H3', 'H3']);
-  await expect(page.locator('#inquiry h3').first()).toHaveText('До заявки додано вашу конфігурацію');
+  await expect(page.locator('#hc-inquiry h3').first()).toHaveText('До заявки додано вашу конфігурацію');
 });
 
 for (const theme of ['light', 'dark'] as const) {

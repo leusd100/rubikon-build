@@ -168,6 +168,8 @@ export function ConfiguratorSummary({
   // figures step back and a tag names them — «30 × 60 × 8 м» read as three choices when the width alone was set
   const exampleSizes = SIZE_KEYS.filter((key) => domain.sizes[key] === 'example');
   const mixedSizes = !example && provenance === 'own' && exampleSizes.length > 0 && exampleSizes.length < SIZE_KEYS.length;
+  // the ridge set alone answers the sizes as a group, and the three sizes are still all the example's
+  const sizesFromExample = !example && (provenance === 'example' || (provenance === 'own' && exampleSizes.length === SIZE_KEYS.length));
   const sizeValues = { width: domain.dimensions.widthM, length: domain.dimensions.lengthM, height: domain.dimensions.eaveHeightM };
   const exampleSizesWords = exampleSizes.map((key) => SIZE_LABELS[key].toLowerCase()).join(', ');
   const formHost = useInquiryFormHost();
@@ -239,7 +241,7 @@ export function ConfiguratorSummary({
         <div className="hc-summary-selected">
           <h3 className="hc-summary-title" key={example ? 'example' : 'own'}>{example ? 'Приклад конфігурації' : 'Ваша конфігурація'}</h3>
           {provenance === 'approx' && <p className="hc-summary-dimensions-status"><span className="hc-fact-status">орієнтовно · уточнюємо</span></p>}
-          {!example && provenance === 'example' && <p className="hc-summary-dimensions-status"><StatusTag status="example" /></p>}
+          {sizesFromExample && <p className="hc-summary-dimensions-status"><StatusTag status="example" /></p>}
           {mixedSizes && (
             <p className="hc-summary-dimensions-status">
               <span className="hc-fact-status" data-status="example">
