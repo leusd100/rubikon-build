@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { LifecyclePhase } from '../../../lib/configurator/layerLifecycle';
 import type { LayerTransitionStyle } from '../useLayerLifecycle';
-import { computeProgress, initialProgressForFreshMount, isAnimating } from './buildUpAnimation';
+import { computeProgress, initialProgressForFreshMount, isAnimating, phaseChangeNeedsFrame } from './buildUpAnimation';
 
 /**
  * The R3F half of 3D build-up: turns one layer's `LayerTransitionStyle` (phase + timing, from the
@@ -33,6 +33,9 @@ import { computeProgress, initialProgressForFreshMount, isAnimating } from './bu
  * (or reverses), and once per frame for as long as progress has not yet reached its phase's
  * target. The moment it settles, it stops — `frameloop="demand"` has nothing left asking for a
  * frame, so idle rendering returns to zero exactly as it does today when nothing is animating.
+ * A resting phase settles on its first frame (computeProgress puts it straight at its target), and
+ * coming to rest asks for no frame of its own once progress is already there
+ * (phaseChangeNeedsFrame).
  */
 export function useBuildProgress(layer: LayerTransitionStyle): React.RefObject<number> {
   const progressRef = useRef(initialProgressForFreshMount(layer.phase));
@@ -51,7 +54,7 @@ export function useBuildProgress(layer: LayerTransitionStyle): React.RefObject<n
     fromRef.current = progressRef.current;
     phaseStartRef.current = clock.elapsedTime;
     prevPhaseRef.current = layer.phase;
-    invalidate();
+    if (phaseChangeNeedsFrame(progressRef.current, layer.phase)) invalidate();
   }, [layer.phase, invalidate, clock]);
 
   useFrame((state) => {
