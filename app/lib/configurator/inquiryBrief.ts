@@ -1,6 +1,7 @@
 import type { HangarDomainModel } from './domainModel';
 import { deriveSummary } from './deriveSummary';
-import { INTERNAL_SUPPORTS_LABELS, type ConfirmedTopic } from './types';
+import { formatMeters, NBSP } from './deriveSummary';
+import { INTERNAL_SUPPORTS_LABELS, SIZE_KEYS, SIZE_LABELS, type ConfirmedTopic } from './types';
 
 export type HangarInquiryBrief = ReturnType<typeof createHangarInquiryBrief>;
 export type HangarInquiryBriefRow = { label: string; value: string };
@@ -55,6 +56,13 @@ export function createHangarInquiryBrief(domain: HangarDomainModel) {
     // a cold store's shell, while unanswered, is its suggestion (withEffectiveShell)
     coldStore: domain.objectProfile.purpose === 'coldStore',
     sizesUnknown: domain.sizesUnknown,
+    // each size by where it comes from (Phase 4): the visitor's, the example's, or — the ridge — the slope's for the width
+    sizes: domain.sizes,
+    sizeLabels: {
+      width: `${formatMeters(domain.dimensions.widthM)}${NBSP}м`,
+      length: `${formatMeters(domain.dimensions.lengthM)}${NBSP}м`,
+      height: `${formatMeters(domain.dimensions.eaveHeightM)}${NBSP}м`,
+    },
     // «Простір усередині» (07.10 as «Колони всередині»; the client's words since 10.10): null until answered
     supportsLabel: domain.internalSupports === 'unknown' ? null : INTERNAL_SUPPORTS_LABELS[domain.internalSupports],
     // without walls and roof there is no envelope to describe: no «Утеплення» or «Стіни й покрівля» rows (07.10, audit)
@@ -68,6 +76,43 @@ function answeredRow(label: string, value: string | null): HangarInquiryBriefRow
 
 const present = (rows: Array<HangarInquiryBriefRow | null>) =>
   rows.filter((row): row is HangarInquiryBriefRow => row !== null && row.value !== '');
+
+/** «Висота в конику» while the visitor has not set it: the slope the configurator picks for the width (resolveRidgeHeightM) —
+ *  as the field's own hint says it, «підібраний за шириною» */
+const DERIVED_RIDGE = '— підібраний за шириною';
+
+/**
+ * The sizes' rows (Phase 4, 12.10). One «Габарити» row while the three sizes are all the visitor's or all the example's,
+ * as before; a size apiece when they are mixed, so the manager reads «Ширина: 30 м» as chosen and «Довжина: 60 м» as the
+ * example's (R-UX-06 §06 п. 4: changing one size sent «8 м» and a «коник 10,6 м» nobody touched as the visitor's). The
+ * ridge: the visitor's when set; the example's while the width and the wall height are; otherwise worked out from the
+ * width, among «Попередні дані». «Точних розмірів ще немає» (07.10) says the sizes are still to be found, and the sizes
+ * the visitor set are their orientation.
+ */
+function createSizeRows(brief: HangarInquiryBrief) {
+  const selected: HangarInquiryBriefRow[] = [];
+  const defaults: HangarInquiryBriefRow[] = [];
+  const preliminary: HangarInquiryBriefRow[] = [];
+  const own = SIZE_KEYS.filter((key) => brief.sizes[key] === 'own');
+  const orientation = (value: string) => (brief.sizesUnknown ? `орієнтир клієнта ${value}` : value);
+  if (own.length === SIZE_KEYS.length) {
+    selected.push({ label: 'Габарити', value: brief.sizesUnknown ? `Ще уточнюються · орієнтир клієнта ${brief.dimensionsLabel}` : brief.dimensionsLabel });
+  } else if (own.length === 0) {
+    if (brief.sizesUnknown) selected.push({ label: 'Габарити', value: 'Ще уточнюються' });
+    defaults.push({ label: brief.sizesUnknown ? 'Габарити на кресленні' : 'Габарити', value: brief.dimensionsLabel });
+  } else {
+    if (brief.sizesUnknown) selected.push({ label: 'Габарити', value: 'Ще уточнюються' });
+    for (const key of SIZE_KEYS) {
+      if (own.includes(key)) selected.push({ label: SIZE_LABELS[key], value: orientation(brief.sizeLabels[key]) });
+      else defaults.push({ label: SIZE_LABELS[key], value: brief.sizeLabels[key] });
+    }
+  }
+  const ridge = { label: 'Висота в конику', value: brief.ridgeHeightLabel };
+  if (brief.sizes.ridge === 'own') selected.push({ ...ridge, value: orientation(ridge.value) });
+  else if (brief.sizes.ridge === 'example') defaults.push(ridge);
+  else preliminary.push({ ...ridge, value: `${ridge.value} ${DERIVED_RIDGE}` });
+  return { selected, defaults, preliminary };
+}
 
 /**
  * One canonical row model for both the visible form summary and the submitted string. Optional
@@ -87,33 +132,15 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
   ]);
   const fromExample = (topic: ConfirmedTopic) => brief.exampleTopics.includes(topic);
   const rows: Array<TopicRow | null> = [
-    { topic: 'dimensions', label: 'Габарити', value: brief.dimensionsLabel },
-    // The ridge the visitor set used to stop here, like the door once did (2026-10); with its slope since 03.10
-    { topic: 'dimensions', label: 'Висота в конику', value: brief.ridgeHeightLabel },
     brief.enclosed ? { topic: 'envelope', label: 'Утеплення', value: brief.envelopeLabel } : null,
     brief.claddingRow ? { topic: 'cladding', label: brief.claddingRow.label, value: brief.claddingRow.value } : null,
     { topic: 'scope', label: 'Обсяг', value: brief.scopeSummaryLabel },
     brief.gatesLabel === null ? null : { topic: 'openings', label: 'Ворота', value: brief.gatesLabel },
     brief.doorsLabel === null ? null : { topic: 'openings', label: 'Двері', value: brief.doorsLabel },
   ];
-  const drawn = rows.filter((row): row is TopicRow => row !== null && row.value !== '' && row.topic !== 'dimensions');
+  const drawn = rows.filter((row): row is TopicRow => row !== null && row.value !== '');
   const plain = ({ label, value }: TopicRow): HangarInquiryBriefRow => ({ label, value });
-  // «Точних розмірів ще немає» (07.10): one row says so — with the sizes the visitor set as their orientation, or, when
-  // they moved nothing, the drawn sizes go with the example's (audit: a 30 m the visitor set went out as «прикладу»)
-  const sizeRows: { selected: HangarInquiryBriefRow[]; defaults: HangarInquiryBriefRow[] } = { selected: [], defaults: [] };
-  if (brief.sizesUnknown && fromExample('dimensions')) {
-    sizeRows.selected.push({ label: 'Габарити', value: 'Ще уточнюються' });
-    sizeRows.defaults.push({ label: 'Габарити на кресленні', value: brief.dimensionsLabel }, { label: 'Висота в конику', value: brief.ridgeHeightLabel });
-  } else if (brief.sizesUnknown) {
-    sizeRows.selected.push(
-      { label: 'Габарити', value: `Ще уточнюються · орієнтир клієнта ${brief.dimensionsLabel}` },
-      { label: 'Висота в конику', value: `орієнтир клієнта ${brief.ridgeHeightLabel}` },
-    );
-  } else if (fromExample('dimensions')) {
-    sizeRows.defaults.push({ label: 'Габарити', value: brief.dimensionsLabel }, { label: 'Висота в конику', value: brief.ridgeHeightLabel });
-  } else {
-    sizeRows.selected.push({ label: 'Габарити', value: brief.dimensionsLabel }, { label: 'Висота в конику', value: brief.ridgeHeightLabel });
-  }
+  const sizeRows = createSizeRows(brief);
 
   // the warm shell a cold store brings is its suggestion, not the page's example (10.10, QA)
   const asDefault = (row: TopicRow): HangarInquiryBriefRow => (brief.coldStore && (row.topic === 'envelope' || row.topic === 'cladding')
@@ -125,6 +152,7 @@ export function createHangarInquiryBriefSections(brief: HangarInquiryBrief): Han
     selected: [...sizeRows.selected, ...drawn.filter((row) => !fromExample(row.topic)).map(plain)],
     defaults: [...sizeRows.defaults, ...drawn.filter((row) => fromExample(row.topic)).map(asDefault)],
     preliminary: [
+      ...sizeRows.preliminary,
       {
         label: 'Площа забудови',
         value: brief.areaLabel,

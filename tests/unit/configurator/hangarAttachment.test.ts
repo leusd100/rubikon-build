@@ -34,15 +34,18 @@ const DEFAULT_CONFIGURATION_TEXT = [
 
 const answeredProfile = { purpose: 'storage', project: 'none', region: 'Київська область', lifting: 'unknown', temperature: 'unknown' } as const;
 
-// ownSizes: the sizes are the visitor's (sizesProvenance 'own') — only then do they fill the form's «Габарити» field
+// ownSizes: all three sizes are the visitor's — only then do they fill the form's «Габарити» field (07.10; all three
+// since Phase 4: a width set alone sent the example's length and wall height as theirs)
 const variants: Record<string, { state: ConfiguratorState; ownSizes: boolean }> = {
   default: { state: DEFAULT_CONFIGURATOR_STATE, ownSizes: false },
-  wider: { state: { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 30 } }, ownSizes: true },
-  longer: { state: { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 30, length: 50 } }, ownSizes: true },
+  wider: { state: { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 30 } }, ownSizes: false },
+  longer: { state: { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 30, length: 50 } }, ownSizes: false },
+  'all three sizes': { state: { ...DEFAULT_CONFIGURATOR_STATE, dimensions: { width: 30, length: 50, height: 7 } }, ownSizes: true },
   // the scope is answered, the sizes are still the example's
   'narrower scope': { state: { ...DEFAULT_CONFIGURATOR_STATE, scopeMode: 'partial', scope: DEFAULT_CONFIGURATOR_STATE.scope.slice(1) }, ownSizes: false },
   'answered object': { state: { ...DEFAULT_CONFIGURATOR_STATE, objectProfile: answeredProfile }, ownSizes: false },
-  'example sizes confirmed': { state: { ...DEFAULT_CONFIGURATOR_STATE, confirmed: ['dimensions'] }, ownSizes: true },
+  // the three sizes typed again at the example's values: answers (07.10), each of them (Phase 4)
+  'example sizes confirmed': { state: { ...DEFAULT_CONFIGURATOR_STATE, confirmed: ['dimensions'], sizesAnswered: ['width', 'length', 'height'] }, ownSizes: true },
   'sizes not known yet': { state: { ...DEFAULT_CONFIGURATOR_STATE, sizesUnknown: true }, ownSizes: false },
 };
 
@@ -79,8 +82,8 @@ describe('createHangarAttachment', () => {
 });
 
 describe('createHangarAttachment — the card’s title and line (03.10; built from its sections 08.10)', () => {
-  it('is version 1.5.0', () => {
-    expect(HANGAR_CONFIGURATOR_VERSION).toBe('hangar-configurator@1.5.0');
+  it('is version 1.6.0', () => {
+    expect(HANGAR_CONFIGURATOR_VERSION).toBe('hangar-configurator@1.6.0');
   });
 
   it('the untouched example says it is the example from the drawing', () => {
@@ -114,17 +117,21 @@ describe('createHangarAttachment — the card’s title and line (03.10; built f
       objectProfile: { ...DEFAULT_CONFIGURATOR_STATE.objectProfile, region: 'Київська область' },
     });
     expect(attachment.title).toBe('До заявки додано вашу конфігурацію');
+    // the line names the hangar as drawn; the rows say which size is whose (Phase 4)
     expect(plain(attachment.headline)).toBe('30 × 60 × 8 м · Область: Київська область');
-    expect(plain(attachment.text).split('\n').slice(0, 6)).toEqual([
+    expect(plain(attachment.text).split('\n').slice(0, 7)).toEqual([
       'Про об’єкт:',
       'Область: Київська область',
       'Вибрана конфігурація:',
-      'Габарити: 30 × 60 × 8 м',
-      'Висота в конику: 11 м · ухил ≈ 11°',
-      // the insulation and the rest nobody touched are still the example's
+      'Ширина: 30 м',
+      // the length, the wall height and the rest nobody touched are still the example's
       'Не уточнено клієнтом (значення прикладу на сайті):',
+      'Довжина: 60 м',
+      'Висота стін: 8 м',
     ]);
-    expect(attachment.dimensionsField).toEqual({ mode: 'fixed', value: '30\u00A0×\u00A060\u00A0×\u00A08\u00A0м' });
+    // the ridge nobody set follows the width: preliminary, not chosen (R-UX-06 §06 п. 4)
+    expect(plain(attachment.text)).toContain('Попередні дані:\nВисота в конику: 11 м · ухил ≈ 11° — підібраний за шириною');
+    expect(attachment.dimensionsField).toEqual({ mode: 'manual' });
   });
 
   it('a ridge edited and set back to the span rule’s value is the example again', () => {

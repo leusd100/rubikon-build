@@ -57,7 +57,8 @@ describe('the title block and the brief', () => {
   it('leads the form’s line with the sizes and the purpose, the insulation by its answer', () => {
     const coldStore = withPurpose(at({ dimensions: { width: 30, length: 60, height: 8 }, confirmed: ['dimensions'], gates: 2 }), 'coldStore');
     expect(plain(createHangarAttachment({ ...coldStore, confirmed: [...coldStore.confirmed, 'openings'] }).headline)).toBe('30 × 60 × 8 м · Холодильний склад');
-    const insulated = at({ envelope: 'insulated', wallSystem: 'sandwich-panel', roofSystem: 'sandwich-panel', confirmed: ['dimensions', 'envelope', 'cladding'] });
+    // the example's sizes typed again, each of them (Phase 4: the sizes are answered one by one)
+    const insulated = at({ envelope: 'insulated', wallSystem: 'sandwich-panel', roofSystem: 'sandwich-panel', confirmed: ['dimensions', 'envelope', 'cladding'], sizesAnswered: ['width', 'length', 'height'] });
     expect(plain(createHangarAttachment(insulated).headline)).toBe('24 × 60 × 8 м · Утеплений');
   });
 });
