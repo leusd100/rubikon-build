@@ -188,9 +188,10 @@ test('/napryamky server HTML takes its formats from the model and leaves the det
   expect(text.formatTexts).toEqual(deliveryModel.formats.map((format) => format.summary));
   // DEC-45 (PROPOSED, Phase 3): the formats drawing lives on /yak-pratsyuiemo only; this page links to it
   expect(text.drawing).toEqual([]);
-  expect(text.links.map((link) => link.replace(/\s+/g, ' ').trim())).toEqual(['Детально про формати й етапи ↗', 'Хто за що відповідає ↗']);
+  // one link each to the formats, the stages and the responsibility, named as the site names them elsewhere (/pro-nas)
+  expect(text.links.map((link) => link.replace(/\s+/g, ' ').trim())).toEqual(['Формати участі ↗', 'Етапи роботи ↗', 'Хто за що відповідає ↗']);
   await page.goto('/napryamky', { waitUntil: 'load' });
-  expect(await page.locator('.dhow-links a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(['/yak-pratsyuiemo#obsiah', '/yak-pratsyuiemo#vidpovidalnist']);
+  expect(await page.locator('.dhow-links a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(['/yak-pratsyuiemo#obsiah', '/yak-pratsyuiemo#etapy', '/yak-pratsyuiemo#vidpovidalnist']);
 });
 
 test('homepage presents the real object and leaves the participation formats to the process page', async ({ page }) => {

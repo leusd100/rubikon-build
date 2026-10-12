@@ -19,7 +19,7 @@ import './directions.css';
 // /napryamky — the hub: choose a direction or describe a mixed task. Hero in the /yak-pratsyuiemo composition, its
 // slides naming the direction they show; the five directions as a catalogue (a key plan over five rows, each with its scheme sheet);
 // one short band on how we take the work on — the three formats in the model's words and «what you already have», with
-// the way to /yak-pratsyuiemo, which alone explains formats, stages and responsibility in full (DEC-45, PROPOSED, Phase 3:
+// one link each to the formats, the stages and the responsibility on /yak-pratsyuiemo, which alone explains them in full (DEC-45, PROPOSED, Phase 3:
 // the formats drawing and the eight-stage track used to repeat it here); where we work, on the region's real map; the
 // conversation, its form starting on «Ще не визначено», with the four after-contact steps every page shows. Every word
 // is the page's previous copy, /yak-pratsyuiemo's, the directions' own data or the Delivery Model.
@@ -33,6 +33,13 @@ const catalog: CatalogItem[] = directions.map((direction) => ({
   routeText: direction.routeText,
   kinds: (directionPages[direction.id].overview?.items ?? []).map((item) => item[1]),
 }));
+
+/** The band's ways to /yak-pratsyuiemo: formats, stages and responsibility, each to its own section there */
+const HOW_LINKS = [
+  { hash: 'obsiah', label: 'Формати участі' },
+  { hash: 'etapy', label: 'Етапи роботи' },
+  { hash: 'vidpovidalnist', label: 'Хто за що відповідає' },
+] as const;
 
 export const metadata = createPageMetadata({
   path: '/napryamky',
@@ -91,7 +98,7 @@ export default function DirectionsPage() {
       </section>
 
       {/* 3 · How we take the work on, in short: the three formats (the model's label and summary) and «what you already
-          have», then the way to /yak-pratsyuiemo, the one page that explains formats, stages and responsibility in full */}
+          have», then a link to each of /yak-pratsyuiemo's formats, stages and responsibility, explained in full there */}
       <section className="page-section page-section-dark dhow" aria-labelledby="dhow-title">
         <div className="shell">
           <SectionHeader
@@ -114,9 +121,12 @@ export default function DirectionsPage() {
             <p>
               <b>Що у вас уже є — з того й почнемо.</b> Звертайтеся і з початковою ідеєю, і з готовим проєктом. Переглянемо те, що вже є, та скажемо, які дані потрібні, щоб визначити склад робіт і підготувати кошторис.
             </p>
+            {/* One link per part of /yak-pratsyuiemo, each to its own section, named as the site already names them
+                (/pro-nas: «Етапи роботи», «Хто за що відповідає»; this band's own «Формати участі») */}
             <div className="dhow-links">
-              <a className="section-link" href={`${siteRoutes.process}#obsiah`}>Детально про формати й етапи <span aria-hidden="true">↗</span></a>
-              <a className="section-link" href={`${siteRoutes.process}#vidpovidalnist`}>Хто за що відповідає <span aria-hidden="true">↗</span></a>
+              {HOW_LINKS.map(({ hash, label }) => (
+                <a key={hash} className="section-link" href={`${siteRoutes.process}#${hash}`}>{label} <span aria-hidden="true">↗</span></a>
+              ))}
             </div>
           </div>
         </div>

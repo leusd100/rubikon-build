@@ -84,8 +84,9 @@
 }
 
 /* ---------------------------------------------------------------- 3 · How we take the work on (charcoal band) */
-/* The three formats in a row of three, «what you already have» and the two ways to /yak-pratsyuiemo under them (DEC-45,
-   PROPOSED: the formats drawing and the eight-stage track that stood here repeated that page). */
+/* The three formats in a row of three, «what you already have» and, beside it, one link each to /yak-pratsyuiemo's
+   formats, stages and responsibility (DEC-45, PROPOSED: the formats drawing and the eight-stage track that stood here
+   repeated that page). */
 .dhow .section-header { margin-bottom: clamp(8px, 1vw, 14px); }
 .dhow-formats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
 .dhow-formats li { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-content: start; gap: 8px 12px; padding: 22px clamp(18px, 2vw, 30px) 24px 0; }
@@ -96,7 +97,7 @@
 .dhow-start { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 18px clamp(24px, 4vw, 64px); margin-top: clamp(8px, 1vw, 14px); padding-top: clamp(22px, 2.4vw, 30px); border-top: 1px solid var(--color-dark-line); }
 .dhow-start p { max-width: 760px; margin: 0; color: var(--color-dark-text-secondary); font-size: 16px; line-height: 1.7; }
 .dhow-start b { color: var(--color-dark-text); font-weight: 700; }
-.dhow-links { display: flex; flex-wrap: wrap; gap: 14px 34px; }
+.dhow-links { display: grid; justify-items: start; gap: 12px; }
 .dhow-links .section-link { margin-top: 0; color: var(--color-dark-text); }
 .dhow-links .section-link span { color: var(--color-accent-on-dark); }
 

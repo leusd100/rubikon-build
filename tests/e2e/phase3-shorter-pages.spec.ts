@@ -7,13 +7,20 @@ import { RESPONSIBILITY_GROUPS, worksCount } from '../../app/lib/responsibilityT
 // Phase 3 «Коротші сторінки» (R-UX-06 §17, R-UX-07 §11; DEC-45 PROPOSED — a proposal for the owner's review, not an
 // approved design). What it may change and what it must keep:
 // - /napryamky no longer repeats /yak-pratsyuiemo: the formats drawing and the eight-stage start track give way to one
-//   short band (the three formats in the model's words, «what you already have», two links to /yak-pratsyuiemo), and
+//   short band (the three formats in the model's words, «what you already have», one link each to the formats, the
+//   stages and the responsibility on /yak-pratsyuiemo), and
 //   the closing block shows the four after-contact steps every page shows.
 // - On a phone the responsibility table's three groups fold under their titles, the first open; every row is still in
 //   the server HTML, nothing folds without JavaScript, and a wide screen shows the whole table as before.
 // - On a phone each «Ви · Ми» step puts its drawing beside its title instead of on a row of its own; every word stays.
 
 const yak = '/yak-pratsyuiemo';
+/** /napryamky's links to /yak-pratsyuiemo: the section, the link's name and that section's heading */
+const LINKS = [
+  ['#obsiah', 'Формати участі', 'Який обсяг робіт можемо взяти на себе'],
+  ['#etapy', 'Етапи роботи', 'Від задачі до будівництва'],
+  ['#vidpovidalnist', 'Хто за що відповідає', 'Відповідальність без дрібного шрифту'],
+] as const;
 
 test.describe('/napryamky leaves formats, stages and responsibility to /yak-pratsyuiemo', () => {
   test('one short band with the model’s formats and the way to /yak-pratsyuiemo, and the four after-contact steps', async ({ page }) => {
@@ -25,19 +32,21 @@ test.describe('/napryamky leaves formats, stages and responsibility to /yak-prat
     await expect(band.locator('.dhow-formats h3')).toHaveText(deliveryModel.formats.map((format) => format.label));
     await expect(band.locator('.dhow-formats p')).toHaveText(deliveryModel.formats.map((format) => format.summary));
     await expect(band.locator('.dhow-start')).toContainText('Звертайтеся і з початковою ідеєю, і з готовим проєктом.');
+    await expect(band.locator('.dhow-links a')).toHaveText(LINKS.map(([, name]) => `${name} ↗`));
     expect(await band.locator('.dhow-links a').evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
-      .toEqual([`${yak}#obsiah`, `${yak}#vidpovidalnist`]);
+      .toEqual(LINKS.map(([target]) => `${yak}${target}`));
     await expect(page.locator('#inquiry .conversation-journey h3')).toHaveText([...JOURNEY_TITLES]);
     await expect(page.locator('#inquiry .conversation-journey p')).toHaveText([...DEFAULT_JOURNEY]);
   });
 
-  test('both links land on their section of /yak-pratsyuiemo', async ({ page }) => {
+  test('each link lands on its own section of /yak-pratsyuiemo: formats, stages, responsibility', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    for (const [index, target] of ['#obsiah', '#vidpovidalnist'].entries()) {
+    for (const [target, name, heading] of LINKS) {
       await page.goto('/napryamky', { waitUntil: 'load' });
-      await page.locator('.dhow-links a').nth(index).click();
+      await page.locator('.dhow-links').getByRole('link', { name, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`${yak}${target}$`));
       await expect(page.locator(target)).toBeInViewport();
+      await expect(page.locator(`${target} h2`)).toHaveText(heading);
     }
   });
 
