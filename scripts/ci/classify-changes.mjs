@@ -42,6 +42,7 @@ export function classifyChanges(files) {
       'tests/e2e/form.spec.ts',
       'tests/e2e/consent.spec.ts',
       'tests/e2e/analytics-consent.spec.ts',
+      'tests/e2e/ux-conversion-phase2.spec.ts',
       'app/components/AnalyticsConsent.tsx',
     ]),
   );
@@ -69,7 +70,7 @@ export function classifyChanges(files) {
 
   const wideVisual = infrastructure || matches(
     exact(['app/globals.css', 'app/layout.tsx', 'app/page.tsx', 'app/icon.svg']),
-    prefix(['app/data/', 'public/media', 'tests/e2e/visual.spec.ts']),
+    prefix(['app/data/', 'app/components/home-v2/', 'public/media', 'tests/e2e/visual.spec.ts', 'tests/e2e/home-proof-contour.spec.ts']),
     topLevelSharedComponent,
     (file) => file.endsWith('.css'),
     (file) => file.startsWith('tests/e2e/hero-video'),

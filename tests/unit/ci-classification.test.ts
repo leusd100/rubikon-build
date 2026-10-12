@@ -26,6 +26,12 @@ describe('CI change classification', () => {
     expect(classifyChanges(['tests/e2e/analytics-consent.spec.ts']).inquiry).toBe(true);
     expect(classifyChanges(['app/angary/page.tsx']).configurator).toBe(true);
   });
+  it('selects conversion tests and nested HOME proof changes before merge', () => {
+    expect(classifyChanges(['tests/e2e/ux-conversion-phase2.spec.ts']).inquiry).toBe(true);
+    for (const file of ['app/components/home-v2/proof-contour/useNodeDetail.ts', 'tests/e2e/home-proof-contour.spec.ts']) {
+      expect(withVisualMode(classifyChanges([file]), 'standard').hero_playback, file).toBe(true);
+    }
+  });
   it('keeps documentation-only changes outside focused regression jobs', () => {
     expect(classifyChanges(['docs/audit.md']).risk_any).toBe(false);
   });
@@ -95,6 +101,12 @@ describe('PR gate workflow', () => {
     for (const id of jobIds.filter((job) => !['classify', 'fast', 'pr-gate'].includes(job))) {
       expect(workflow, id).toContain(`\${{ needs.${id}.result }}`);
     }
+  });
+
+  it('runs conversion, frame polish and assembly ordering before merge', () => {
+    expect(workflow.slice(workflow.indexOf('\n  inquiry:'), workflow.indexOf('\n  leads:'))).toContain('tests/e2e/ux-conversion-phase2.spec.ts');
+    expect(workflow.slice(workflow.indexOf('\n  configurator:'), workflow.indexOf('\n  hero:'))).toContain('tests/e2e/configurator-polish.spec.ts');
+    expect(workflow.slice(workflow.indexOf('\n  hero:'), workflow.indexOf('\n  visual:'))).toContain("tests/e2e/home-proof-contour.spec.ts --grep 'load way waits'");
   });
 
   it('runs hero playback on its own path-selected job and the screenshot suites only when visual is selected', () => {

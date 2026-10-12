@@ -220,7 +220,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const {
     detail, setDetail, detailSheet, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
     detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef, quietOpenRef,
-    ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto, onAssembled,
+    ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto,
   } = useNodeDetail(stageRef, rangeRef, { liveRef, handleRef, setSplit });
   // «Жива схема»: what the pointer is over on «Каркас» — the member lit, its name by the pointer (moved by hand, never by a
   // render); a finger's tap shows it a moment
@@ -838,9 +838,6 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               onPointerDown={onSheetDown}
               onPointerUp={onSheetUp}
               onPointerCancel={onSheetCancel}
-              onAnimationEnd={(event) => {
-                if (event.animationName === 'hv2-detail-names') onAssembled();
-              }}
               aria-modal={detailSheet ? true : undefined}
               aria-labelledby="hv2-detail-title"
               aria-describedby="hv2-detail-spoken"
