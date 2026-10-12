@@ -107,7 +107,7 @@ test.describe('/yak-pratsyuiemo responsibility table on a phone', () => {
 
   test('after a switch a folded group holding moved rows shows a dot until the next switch', async ({ page }) => {
     await openTable(page);
-    await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check({ force: true });
+    await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Субпідряд', exact: true }).check();
     const moved = await page.locator('.rm-row[data-fresh]').evaluateAll((rows) => [...new Set(rows.map((row) => (row as HTMLElement).dataset.group))]);
     expect(moved.length).toBeGreaterThan(0);
     for (const group of moved) {
@@ -144,7 +144,7 @@ test.describe('«Ви · Ми» on a phone', () => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto(path, { waitUntil: 'load' });
       const steps = page.locator('.process-split:not(.angary-route) > li');
-      expect(await steps.count()).toBe(4);
+      await expect(steps).toHaveCount(4);
       const layout = await steps.evaluateAll((items) => items.map((item) => {
         const box = (selector: string) => item.querySelector(selector)!.getBoundingClientRect();
         const [title, node, you, we, result] = ['h3', '.ps-node', '.ps-you', '.ps-we', '.ps-result'].map(box);
