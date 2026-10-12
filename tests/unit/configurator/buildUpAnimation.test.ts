@@ -3,6 +3,7 @@ import {
   computeProgress,
   initialProgressForFreshMount,
   isAnimating,
+  phaseChangeNeedsFrame,
   targetProgressForPhase,
 } from '../../../app/components/configurator/three/buildUpAnimation';
 
@@ -74,6 +75,16 @@ describe('computeProgress', () => {
     expect(computeProgress('materializing', -50, 0, 300, 0)).toBe(0);
     expect(computeProgress('dematerializing', -50, 0, 300, 1)).toBe(1);
   });
+
+  it('7. at rest (visible / hidden) it is the target at once: what the last drawn frame was short of is dropped, not replayed', () => {
+    // The lifecycle timer ends a transition a moment after the last frame drew it, so the resting phase starts a hair
+    // short of its target (≤ 0.9 % on a GPU, 12.10). Replaying that remainder took the layer's whole delay + duration
+    // again: rafters 700 + 300 ms, girts 1150 + 150 ms.
+    expect(computeProgress('visible', 0, 0, 250, 0.997)).toBe(1);
+    expect(computeProgress('hidden', 0, 0, 250, 0.003)).toBe(0);
+    expect(computeProgress('visible', 16, 700, 300, 0.991)).toBe(1); // inside the rafters' delay window
+    expect(computeProgress('hidden', 16, 1150, 150, 0.009)).toBe(0); // inside the girts' delay window
+  });
 });
 
 describe('isAnimating', () => {
@@ -82,5 +93,28 @@ describe('isAnimating', () => {
     expect(isAnimating(0, 'hidden')).toBe(false);
     expect(isAnimating(0.6, 'materializing')).toBe(true);
     expect(isAnimating(1, 'materializing')).toBe(false); // just settled
+  });
+
+  it('is false from the first frame at rest, whatever the transition left over — the demand loop stops there', () => {
+    expect(isAnimating(computeProgress('visible', 0, 700, 300, 0.991), 'visible')).toBe(false);
+    expect(isAnimating(computeProgress('hidden', 0, 1150, 150, 0.009), 'hidden')).toBe(false);
+  });
+});
+
+describe('phaseChangeNeedsFrame', () => {
+  it('a transition starting or reversing always asks for a frame', () => {
+    expect(phaseChangeNeedsFrame(1, 'dematerializing')).toBe(true);
+    expect(phaseChangeNeedsFrame(0, 'materializing')).toBe(true);
+    expect(phaseChangeNeedsFrame(0.4, 'materializing')).toBe(true);
+  });
+
+  it('coming to rest on the target asks for none — that picture is already drawn', () => {
+    expect(phaseChangeNeedsFrame(1, 'visible')).toBe(false);
+    expect(phaseChangeNeedsFrame(0, 'hidden')).toBe(false);
+  });
+
+  it('coming to rest short of the target still asks, so the frame that lands it on the target is drawn', () => {
+    expect(phaseChangeNeedsFrame(0.991, 'visible')).toBe(true);
+    expect(phaseChangeNeedsFrame(0.009, 'hidden')).toBe(true);
   });
 });

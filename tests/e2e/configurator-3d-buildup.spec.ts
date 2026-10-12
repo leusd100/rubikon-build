@@ -177,6 +177,34 @@ async function drawCallsOverFrames(page: Page, frames: number): Promise<number> 
   }), frames);
 }
 
+/**
+ * Counts the animation frames that draw (at least one draw call: R3F's demand loop rendered), and notes that count each
+ * time `data-build-up` turns 'settled'. Frames, not milliseconds: a GPU hands out a frame every 16 ms and CI's software
+ * WebGL one every second or so, and "how many more frames once the build-up has settled" means the same on both.
+ * Needs installDrawCallCounter.
+ */
+async function installSettleFrameCounter(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __drawCalls: number; __drawnFrames: number; __drawnFramesAtSettle: number | null };
+    w.__drawnFrames = 0;
+    w.__drawnFramesAtSettle = null;
+    const request = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (callback) => request((time) => {
+      const before = w.__drawCalls;
+      try {
+        callback(time);
+      } finally {
+        if (w.__drawCalls > before) w.__drawnFrames += 1;
+      }
+    });
+    new MutationObserver((records) => {
+      for (const record of records) {
+        if ((record.target as HTMLElement).getAttribute('data-build-up') === 'settled') w.__drawnFramesAtSettle = w.__drawnFrames;
+      }
+    }).observe(document, { subtree: true, attributes: true, attributeFilter: ['data-build-up'] });
+  });
+}
+
 async function slowAnimationFrames(page: Page, delayMs: number) {
   await page.evaluate((ms) => {
     (window as unknown as { __frameDelayMs: number }).__frameDelayMs = ms;
@@ -314,6 +342,37 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await slowAnimationFrames(page, 0);
 
     expect(await drawCallsOverFrames(page, 30), 'draw calls kept incrementing after the transition should have settled — frameloop="demand" is not returning to idle').toBe(0);
+  });
+
+  test('the render loop stops within two frames of the build-up settling, for every toggle', async ({ page }) => {
+    // When the lifecycle timer puts the last layer at rest, at most two frames follow: one already asked for, which can
+    // still draw the old phase (the 3D scene is its own React root and commits the new phase a moment after the page
+    // marks it), and the one that draws the resting state. Before 12.10 each layer replayed the bit of progress its last
+    // frame was short of, over its whole delay + duration again: 15 frames after the roof settled on a GPU, 78 after the
+    // frame did (its girts wait 1150 ms before they move).
+    await installDrawCallCounter(page);
+    await installSettleFrameCounter(page);
+    await openConfigurator(page);
+    await enterThreeMode(page);
+    await chooseSeparateWorks(page);
+    await waitForBuildUpToSettle(page);
+
+    const framesAfterSettle: Record<string, number> = {};
+    for (const [toggle, item] of [['roof off', 'roof'], ['roof on', 'roof'], ['frame off', 'frame'], ['frame on', 'frame']] as const) {
+      await page.evaluate(() => {
+        (window as unknown as { __drawnFramesAtSettle: number | null }).__drawnFramesAtSettle = null;
+      });
+      await toggleScope(page, item);
+      await waitForBuildUpToSettle(page); // settled, then the loop has stopped
+      framesAfterSettle[toggle] = await page.evaluate(() => {
+        const w = window as unknown as { __drawnFrames: number; __drawnFramesAtSettle: number | null };
+        return w.__drawnFramesAtSettle === null ? Number.NaN : w.__drawnFrames - w.__drawnFramesAtSettle;
+      });
+    }
+
+    for (const [toggle, frames] of Object.entries(framesAfterSettle)) {
+      expect(frames, `${toggle}: frames drawn after data-build-up="settled" (all toggles: ${JSON.stringify(framesAfterSettle)})`).toBeLessThanOrEqual(2);
+    }
   });
 
   test('switching Technical → 3D → Technical mid build-up preserves configuration exactly', async ({ page }) => {
