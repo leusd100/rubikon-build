@@ -8,7 +8,7 @@
 | PR | https://github.com/leusd100/rubikon-build/pull/181 · **Draft** до окремого погодження |
 | Гілка | `design/phase3-shorter-pages` |
 | Base | `main` `2797e9e` (#180) |
-| Статус | IMPLEMENTED у гілці · REVIEW-READY · не злито, не розгорнуто |
+| Статус | IMPLEMENTED у гілці · FROZEN (`visual-freeze`) · не злито, не розгорнуто |
 | Рішення | DEC-45 — **PROPOSED** у `DECISIONS.md`. Попередня позиція власника 12.10 збігається з реалізацією (§9). Реалізація в гілці не є погодженням |
 
 Цей файл — канонічний handoff фази 3 для обох агентів. Він не містить приватних даних: репозиторій публічний. Приватний контекст (резервні копії, локальні репозиторії) лежить у `rubikon-control`.
@@ -73,7 +73,7 @@
 | Перевірка | Де | Результат |
 |---|---|---|
 | PR Gate: Fast Gate (lint, typecheck, build, 1325 unit, `pr-critical` desktop), Hero playback, CodeQL, SonarCloud | CI | зелений на попередніх головах; SonarCloud 0 нових зауважень. Новий прогін — на `0e5fb82` і цьому handoff |
-| Візуальна регресія | CI | відкладена: `design/*` у режимі prototype до мітки `visual-freeze` (`docs/ci-tier-model.md`) |
+| Візуальна регресія | CI | `visual-freeze` за OK власника. Прогін 38273702564 (`7ac656a`): 64 passed, рівно 2 очікувані відмінності (`process-route-mobile-375`, `process-responsibility-mobile-375`). Обидва Linux-еталони замінено знімками CI з артефакту `changed-area-visual-diff` того ж прогону (усі 3 спроби побайтово однакові); інші еталони, зокрема darwin, не змінено |
 | /napryamky після правки посилань: `phase3-shorter-pages` + `pr-critical`, `-g napryamky` | локально, desktop + mobile | **18 passed** |
 | `phase3-shorter-pages.spec.ts` | локально, desktop + mobile | на `a44c302`: 31 passed, 1 skipped. На main `2797e9e` падає 29 з 31 (2 = перевірка «без JavaScript видно всі рядки», має проходити на обох) |
 | `pr-critical` + `phase3-shorter-pages` + `yak-formats-scope` | локально, desktop + mobile | 146 passed, 4 skipped |
@@ -126,7 +126,7 @@
 Що лишилось — лише за окремим OK Дмитра:
 
 1. **Підтвердити вигляд** за порівнянням у §4.
-2. Після підтвердження — **visual-freeze** за DEC-18 і `docs/ci-tier-model.md`: додати мітку `visual-freeze`; переглянути артефакт `changed-area-visual-diff`; оновити **лише два телефонні еталони** — `tests/e2e/visual.spec.ts-snapshots/process-route-mobile-375-linux.png` і `process-responsibility-mobile-375-linux.png` — знімками самого CI з цього PR. Інші еталони, зокрема darwin, не чіпати. Якщо CI покаже відмінності деінде — зупинитись і повідомити, а не оновлювати.
+2. **visual-freeze — виконано** за OK власника: мітку додано; CI показав відмінності лише у двох телефонних еталонах; їх замінено знімками CI (SHA-256 `541b8d1f…` route, `62b9e674…` responsibility). Інші еталони не змінено.
 3. Merge і deploy — окремі явні OK. Статуси в `DECISIONS.md` змінює лише Дмитро.
 
 ## 10. Пропоновані оновлення `rubikon-control` (лише після погодження)
