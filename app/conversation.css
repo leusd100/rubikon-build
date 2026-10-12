@@ -74,9 +74,9 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .conversation { --conv-tg: 1.35; --conv-wa: 1.2; --conv-vb: 1.82; }
 }
-.conversation-channels { display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px; margin-top: 2px; }
+.conversation-channels { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0 20px; margin-top: 2px; }
 .conversation-messengers { display: contents; }
-.conversation-channels-label { color: var(--color-text-secondary); font: 500 15px/1.4 var(--font-manrope), sans-serif; }
+.conversation-channels-label { color: var(--color-text-secondary); font: 500 15px/1.4 var(--font-manrope), sans-serif; text-align: center; }
 .conversation-channels .messenger-link {
   min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0;
   color: var(--color-text); background: none; border: 0; font: 700 15px/1 var(--font-manrope), sans-serif; letter-spacing: 0;

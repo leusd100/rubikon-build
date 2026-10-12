@@ -131,11 +131,11 @@ test.describe('DEC-41 · one action language', () => {
 });
 
 test.describe('DEC-46 · the closing block', () => {
-  test('the call, then one line of written channels; the form keeps its channel choice', async ({ page }, testInfo) => {
+  test('the call, then centered written channels including narrow-screen wrapping; the form keeps its channel choice', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop-chromium', 'the test sets its own windows');
     await answerCookies(page, 'denied');
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    for (const viewport of [{ width: 1440, height: 900 }, { width: 820, height: 1180 }, { width: 390, height: 844 }, { width: 360, height: 800 }]) {
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 820, height: 1180 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 320, height: 700 }]) {
       await page.setViewportSize(viewport);
       for (const path of ['/', '/angary', '/metalokonstruktsii', '/yak-pratsyuiemo']) {
         const where = `${path} ${viewport.width}`;
@@ -153,14 +153,37 @@ test.describe('DEC-46 · the closing block', () => {
         await expect(channels.nth(3)).toHaveAttribute('href', companyContactLinks.email);
         const callBox = (await contact.locator('.conversation-call').boundingBox())!;
         const boxes = await Promise.all((await channels.all()).map((channel) => channel.boundingBox()));
-        // One row under the call, each target 44 px tall, each lower than the call
-        expect(new Set(boxes.map((box) => Math.round(box!.y))).size, where).toBe(1);
+        // Wider screens keep one row; 320 px can wrap Email. Every row stays centered under the call.
+        if (viewport.width > 340) expect(new Set(boxes.map((box) => Math.round(box!.y))).size, where).toBe(1);
+        const labelBox = (await contact.locator('.conversation-channels-label').boundingBox())!;
+        const rows = Map.groupBy([...boxes, labelBox], (box) => Math.round(box!.y + box!.height / 2));
+        const callCenter = callBox.x + callBox.width / 2;
+        for (const row of rows.values()) {
+          const left = Math.min(...row.map((box) => box!.x));
+          const right = Math.max(...row.map((box) => box!.x + box!.width));
+          expect(Math.abs((left + right) / 2 - callCenter), where).toBeLessThanOrEqual(1);
+        }
+        if (viewport.width <= 760) {
+          const labelCenter = await contact.locator('.conversation-channels-label').evaluate((label) => {
+            const range = document.createRange();
+            range.selectNodeContents(label);
+            const rect = range.getBoundingClientRect();
+            return rect.x + rect.width / 2;
+          });
+          expect(Math.abs(labelCenter - callCenter), where).toBeLessThanOrEqual(1);
+        }
         for (const box of boxes) {
           expect(box!.y, where).toBeGreaterThan(callBox.y + callBox.height);
           expect(box!.height, where).toBeGreaterThanOrEqual(44);
           expect(box!.height, where).toBeLessThan(callBox.height);
         }
         expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), where).toBeLessThanOrEqual(0);
+        if (viewport.width === 390 && path === '/') {
+          await page.mouse.move(0, 0);
+          const capture = testInfo.outputPath('centered-contact-390.png');
+          await page.locator('#inquiry .conversation-grid').screenshot({ path: capture, animations: 'disabled', scale: 'css' });
+          await testInfo.attach('Centered contact block at 390 CSS px', { path: capture, contentType: 'image/png' });
+        }
       }
     }
     // The form still asks how to reply: the call or one of the three messengers
