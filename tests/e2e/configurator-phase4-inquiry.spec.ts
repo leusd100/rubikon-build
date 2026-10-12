@@ -172,7 +172,7 @@ test('«Друкувати аркуш A4» prints the configuration alone on one
 
   // the browser prints it alone, on one A4 page
   const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
-  expect((pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) ?? []).length).toBe(1);
+  expect(pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) ?? []).toHaveLength(1);
   // the print over, the sheet goes and the page is the page again
   await expect(page.locator('.hc-print-root')).toHaveCount(0);
   await expect(page.locator('html')).not.toHaveAttribute('data-print', /.*/);

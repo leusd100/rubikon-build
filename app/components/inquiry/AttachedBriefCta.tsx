@@ -101,7 +101,7 @@ function watchGate(
  * `className`'s CSS (≤ 760 on /angary). A brief already sent with a saved lead needs no shortcut (04.10): it kept
  * inviting a second, identical lead after «Дякуємо!» (sweep 03.10).
  */
-export function AttachedBriefCta({ gate: sourceGate, className, label = 'До заявки' }: { gate: string; className: string; label?: string }) {
+export function AttachedBriefCta({ gate: sourceGate, className, label = 'До заявки' }: Readonly<{ gate: string; className: string; label?: string }>) {
   const inquiry = useInquiryAttachment();
   const attached = Boolean(inquiry?.attachment) && !inquiry?.sent;
   // The form opened under /angary's stamp (Phase 4, InquiryFormHost): the shortcut shows once that form has scrolled

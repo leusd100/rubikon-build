@@ -1,6 +1,5 @@
 import type { HangarDomainModel } from './domainModel';
-import { deriveSummary } from './deriveSummary';
-import { formatMeters, NBSP } from './deriveSummary';
+import { NBSP, deriveSummary, formatMeters } from './deriveSummary';
 import { INTERNAL_SUPPORTS_LABELS, SIZE_KEYS, SIZE_LABELS, type ConfirmedTopic } from './types';
 
 export type HangarInquiryBrief = ReturnType<typeof createHangarInquiryBrief>;
@@ -81,6 +80,38 @@ const present = (rows: Array<HangarInquiryBriefRow | null>) =>
  *  as the field's own hint says it, «підібраний за шириною» */
 const DERIVED_RIDGE = '— підібраний за шириною';
 
+type SizeRows = { selected: HangarInquiryBriefRow[]; defaults: HangarInquiryBriefRow[]; preliminary: HangarInquiryBriefRow[] };
+
+/** A size the visitor set while «Точних розмірів ще немає»: their orientation, not a figure */
+const orientation = (brief: HangarInquiryBrief, value: string) => (brief.sizesUnknown ? `орієнтир клієнта ${value}` : value);
+
+/** Width, length and wall height: one «Габарити» row while they are of one provenance, a row apiece when mixed */
+function dimensionRows(brief: HangarInquiryBrief): SizeRows {
+  const own = SIZE_KEYS.filter((key) => brief.sizes[key] === 'own');
+  const stillToFind = brief.sizesUnknown ? [{ label: 'Габарити', value: 'Ще уточнюються' }] : [];
+  if (own.length === SIZE_KEYS.length) {
+    const value = brief.sizesUnknown ? `Ще уточнюються · орієнтир клієнта ${brief.dimensionsLabel}` : brief.dimensionsLabel;
+    return { selected: [{ label: 'Габарити', value }], defaults: [], preliminary: [] };
+  }
+  if (own.length === 0) {
+    const drawn = { label: brief.sizesUnknown ? 'Габарити на кресленні' : 'Габарити', value: brief.dimensionsLabel };
+    return { selected: stillToFind, defaults: [drawn], preliminary: [] };
+  }
+  return {
+    selected: [...stillToFind, ...own.map((key) => ({ label: SIZE_LABELS[key], value: orientation(brief, brief.sizeLabels[key]) }))],
+    defaults: SIZE_KEYS.filter((key) => !own.includes(key)).map((key) => ({ label: SIZE_LABELS[key], value: brief.sizeLabels[key] })),
+    preliminary: [],
+  };
+}
+
+/** The ridge: the visitor's, the example's, or the slope's for the width they set */
+function ridgeRows(brief: HangarInquiryBrief): SizeRows {
+  const ridge = { label: 'Висота в конику', value: brief.ridgeHeightLabel };
+  if (brief.sizes.ridge === 'own') return { selected: [{ ...ridge, value: orientation(brief, ridge.value) }], defaults: [], preliminary: [] };
+  if (brief.sizes.ridge === 'example') return { selected: [], defaults: [ridge], preliminary: [] };
+  return { selected: [], defaults: [], preliminary: [{ ...ridge, value: `${ridge.value} ${DERIVED_RIDGE}` }] };
+}
+
 /**
  * The sizes' rows (Phase 4, 12.10). One «Габарити» row while the three sizes are all the visitor's or all the example's,
  * as before; a size apiece when they are mixed, so the manager reads «Ширина: 30 м» as chosen and «Довжина: 60 м» as the
@@ -89,29 +120,14 @@ const DERIVED_RIDGE = '— підібраний за шириною';
  * width, among «Попередні дані». «Точних розмірів ще немає» (07.10) says the sizes are still to be found, and the sizes
  * the visitor set are their orientation.
  */
-function createSizeRows(brief: HangarInquiryBrief) {
-  const selected: HangarInquiryBriefRow[] = [];
-  const defaults: HangarInquiryBriefRow[] = [];
-  const preliminary: HangarInquiryBriefRow[] = [];
-  const own = SIZE_KEYS.filter((key) => brief.sizes[key] === 'own');
-  const orientation = (value: string) => (brief.sizesUnknown ? `орієнтир клієнта ${value}` : value);
-  if (own.length === SIZE_KEYS.length) {
-    selected.push({ label: 'Габарити', value: brief.sizesUnknown ? `Ще уточнюються · орієнтир клієнта ${brief.dimensionsLabel}` : brief.dimensionsLabel });
-  } else if (own.length === 0) {
-    if (brief.sizesUnknown) selected.push({ label: 'Габарити', value: 'Ще уточнюються' });
-    defaults.push({ label: brief.sizesUnknown ? 'Габарити на кресленні' : 'Габарити', value: brief.dimensionsLabel });
-  } else {
-    if (brief.sizesUnknown) selected.push({ label: 'Габарити', value: 'Ще уточнюються' });
-    for (const key of SIZE_KEYS) {
-      if (own.includes(key)) selected.push({ label: SIZE_LABELS[key], value: orientation(brief.sizeLabels[key]) });
-      else defaults.push({ label: SIZE_LABELS[key], value: brief.sizeLabels[key] });
-    }
-  }
-  const ridge = { label: 'Висота в конику', value: brief.ridgeHeightLabel };
-  if (brief.sizes.ridge === 'own') selected.push({ ...ridge, value: orientation(ridge.value) });
-  else if (brief.sizes.ridge === 'example') defaults.push(ridge);
-  else preliminary.push({ ...ridge, value: `${ridge.value} ${DERIVED_RIDGE}` });
-  return { selected, defaults, preliminary };
+function createSizeRows(brief: HangarInquiryBrief): SizeRows {
+  const sizes = dimensionRows(brief);
+  const ridge = ridgeRows(brief);
+  return {
+    selected: [...sizes.selected, ...ridge.selected],
+    defaults: [...sizes.defaults, ...ridge.defaults],
+    preliminary: [...sizes.preliminary, ...ridge.preliminary],
+  };
 }
 
 /**
