@@ -82,10 +82,6 @@ async function installDrawCallCounter(page: Page) {
   });
 }
 
-async function readDrawCalls(page: Page): Promise<number> {
-  return page.evaluate(() => (window as unknown as { __drawCalls: number }).__drawCalls);
-}
-
 /**
  * Lets a test hold every animation frame back, the way CI does on its own. The runners have no GPU, so WebGL runs in
  * software (SwiftShader) and the browser hands out animation frames far apart: about 1.1 s apart in the trace of run
@@ -160,6 +156,25 @@ async function waitForBuildUpToSettle(page: Page) {
     requestAnimationFrame(tick);
   }));
   expect(stopped, 'the render loop was still drawing 15 s after the build-up settled — frameloop="demand" never returned to idle').toBe(true);
+}
+
+/**
+ * Draw calls made over the next `frames` animation frames. The idle window is counted in frames, not milliseconds:
+ * frames are when R3F's demand loop would draw, so the window gives it the same number of chances on a slow CI runner as
+ * on a fast laptop. 30 frames is the half second the window used to be, at 60 Hz.
+ */
+async function drawCallsOverFrames(page: Page, frames: number): Promise<number> {
+  return page.evaluate((count) => new Promise<number>((resolve) => {
+    const w = window as unknown as { __drawCalls: number };
+    const start = w.__drawCalls;
+    let left = count;
+    const tick = () => {
+      left -= 1;
+      if (left <= 0) resolve(w.__drawCalls - start);
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }), frames);
 }
 
 async function slowAnimationFrames(page: Page, delayMs: number) {
@@ -273,15 +288,12 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await enterThreeMode(page);
     await chooseSeparateWorks(page);
 
-    await page.waitForTimeout(300); // let the initial mount's own frame(s) settle
+    await waitForBuildUpToSettle(page); // the initial mount's own frame(s) have been drawn and the loop has stopped
     await toggleScope(page, 'roof'); // off — the only thing that should cause further draw calls
     await waitForBuildUpToSettle(page); // the roof has left and its last frame is drawn, however late that frame came
 
-    const afterSettle = await readDrawCalls(page);
-    await page.waitForTimeout(500); // nothing is animating or changing — demand mode should be silent
-    const afterIdleWait = await readDrawCalls(page);
-
-    expect(afterIdleWait, 'draw calls kept incrementing after the transition should have settled — frameloop="demand" is not returning to idle').toBe(afterSettle);
+    // nothing is animating or changing — demand mode should be silent
+    expect(await drawCallsOverFrames(page, 30), 'draw calls kept incrementing after the transition should have settled — frameloop="demand" is not returning to idle').toBe(0);
   });
 
   test('idle rendering returns to zero draw calls even when animation frames come late, as on CI', async ({ page }) => {
@@ -294,18 +306,14 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await enterThreeMode(page);
     await chooseSeparateWorks(page);
 
-    await page.waitForTimeout(300); // let the initial mount's own frame(s) settle
+    await waitForBuildUpToSettle(page); // the initial mount's own frame(s) have been drawn and the loop has stopped
     await slowAnimationFrames(page, 800);
     await toggleScope(page, 'roof'); // off
     await waitForBuildUpToSettle(page);
-    // The idle window at the browser's own pace, as above: held frames would only push a stray draw past its end
+    // The idle window at the browser's own pace, as above: thirty held frames would take 24 s
     await slowAnimationFrames(page, 0);
 
-    const afterSettle = await readDrawCalls(page);
-    await page.waitForTimeout(500); // nothing is animating or changing — demand mode should be silent
-    const afterIdleWait = await readDrawCalls(page);
-
-    expect(afterIdleWait, 'draw calls kept incrementing after the transition should have settled — frameloop="demand" is not returning to idle').toBe(afterSettle);
+    expect(await drawCallsOverFrames(page, 30), 'draw calls kept incrementing after the transition should have settled — frameloop="demand" is not returning to idle').toBe(0);
   });
 
   test('switching Technical → 3D → Technical mid build-up preserves configuration exactly', async ({ page }) => {
