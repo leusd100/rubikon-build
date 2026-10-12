@@ -16,12 +16,6 @@ const NODE_SHRINK = { duration: 300, easing: 'cubic-bezier(.45, 0, .7, .4)', fil
 const NODE_CLEAR = 12;
 /** A swipe across a phone's sheet: this far, and mostly sideways */
 const SWIPE_MIN = 48;
-/** «Зібрати» after «Розібрати»: the parts back in place (proof-details.css: 650 ms, 80 ms apart, up to seven) before the
- *  load's way shows again */
-const REASSEMBLE_MS = 650 + 6 * 80 + 120;
-/** …and the assembly's own longest run (proof-details.css: the names in at 360 ms + six steps of 260 ms + 260 ms, for
- *  360 ms): should its end never be heard — a hidden tab holds animations — the way shows after this */
-const ASSEMBLY_MS = 360 + 1560 + 260 + 360 + 160;
 /** The transform that puts a panel onto a ring: its centre on the ring's, as wide as the ring */
 function ontoRing(ring: Element, panel: HTMLElement) {
   const [a, b] = [ring.getBoundingClientRect(), panel.getBoundingClientRect()];
@@ -59,8 +53,43 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   // The node put together: its load's way only then (owner, 05.10: on the next node it ran while the parts were still
   // coming in) — on the names' arrival, the assembly's last beat, or once the parts are back after «Зібрати»
   const [assembled, setAssembled] = useState(false);
-  const assembledTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(assembledTimer.current), []);
+  const assemblyRun = useRef(0);
+  // Read the committed drawing's animations: elapsed wall time cannot prove a delayed or paused assembly finished.
+  useLayoutEffect(() => {
+    const panel = detailRef.current;
+    const drawing = panel?.querySelector('.hv2-detail-drawing');
+    if (!detail || exploded || !panel || !drawing) return;
+    let active = true;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const complete = async () => {
+      const run = assemblyRun.current;
+      // Flow/assembly opacity transitions react to data-flow itself; only the members and their names gate readiness.
+      const animations = [...drawing.querySelectorAll('.hv2-detail-part, .hv2-detail-callouts, .hv2-detail-part-shift, .hv2-detail-zoom, .hv2-detail-names-wrap')]
+        .flatMap((element) => element.getAnimations())
+        .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity);
+      try {
+        await Promise.all(animations.map((animation) => animation.finished));
+      } catch {
+        // A cancelled drawing belongs to an interrupted run, never to the next node or reassembly.
+        return;
+      }
+      if (active && run === assemblyRun.current && drawing === detailRef.current?.querySelector('.hv2-detail-drawing')) {
+        setAssembled(true);
+      }
+    };
+    void complete();
+    // Switching reduced motion removes the CSS animations; inspect the new rendered state instead of a rejected run.
+    const changeMotion = () => {
+      assemblyRun.current += 1;
+      setAssembled(motion.matches);
+      void complete();
+    };
+    motion.addEventListener('change', changeMotion);
+    return () => {
+      active = false;
+      motion.removeEventListener('change', changeMotion);
+    };
+  }, [detail, exploded]);
   // Moving to the next or the previous node: the drawing slides in from that side instead of the panel growing again
   const nodeSwitch = useRef<-1 | 0 | 1>(0);
   const swipe = useRef<{ x: number; y: number } | null>(null);
@@ -152,9 +181,8 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
     if (!detail && !step) nodeSeam.current = null;
     nodeSwitch.current = detail ? step : 0;
     setExploded(false);
-    window.clearTimeout(assembledTimer.current);
+    assemblyRun.current += 1;
     setAssembled(stillNow());
-    assembledTimer.current = window.setTimeout(() => setAssembled(true), ASSEMBLY_MS);
     placeSeam(id, nodeOnPhoto);
     setDetailSheet(sheetNow());
     setDetail(id);
@@ -179,6 +207,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   const onSheetCancel = () => { swipe.current = null; };
   // Closing: back into its ring, then gone; the seam back where it was; the focus to its letter
   const closeDetail = () => {
+    assemblyRun.current += 1;
     const was = detail;
     const done = () => {
       const seam = nodeSeam.current;
@@ -249,11 +278,8 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
 
   // «Розібрати» / «Зібрати»: the parts apart, or back in place before the load's way shows again
   const toggleExploded = () => {
-    window.clearTimeout(assembledTimer.current);
-    if (exploded && !stillNow()) {
-      setAssembled(false);
-      assembledTimer.current = window.setTimeout(() => setAssembled(true), REASSEMBLE_MS);
-    }
+    assemblyRun.current += 1;
+    setAssembled(stillNow());
     setExploded((on) => !on);
   };
   // «На фото»: the seam past the ring, or back before it
@@ -261,12 +287,10 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
     placeSeam(id, !nodeOnPhoto);
     setNodeOnPhoto((on) => !on);
   };
-  // the assembly's last beat (proof-details.css): the names in
-  const onAssembled = () => setAssembled(true);
 
   return {
     detail, setDetail, detailSheet, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
     detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef, quietOpenRef,
-    ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto, onAssembled,
+    ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto,
   };
 }

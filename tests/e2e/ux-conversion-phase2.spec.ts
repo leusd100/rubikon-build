@@ -151,10 +151,15 @@ test.describe('DEC-46 · the closing block', () => {
         await expect(channels.nth(1)).toHaveAttribute('data-contact-method', 'whatsapp');
         await expect(channels.nth(2)).toHaveAttribute('data-contact-method', 'viber');
         await expect(channels.nth(3)).toHaveAttribute('href', companyContactLinks.email);
+        await page.evaluate(() => document.fonts.ready);
+        const contactBox = (await contact.boundingBox())!;
+        for (const channel of await channels.all()) await expect(channel, where).toBeVisible();
         const callBox = (await contact.locator('.conversation-call').boundingBox())!;
         const boxes = await Promise.all((await channels.all()).map((channel) => channel.boundingBox()));
-        // Wider screens keep one row; 320 px can wrap Email. Every row stays centered under the call.
-        if (viewport.width > 340) expect(new Set(boxes.map((box) => Math.round(box!.y))).size, where).toBe(1);
+        // Font metrics differ across platforms: compact phones may use two rows. Each row must stay centered.
+        const channelRows = new Set(boxes.map((box) => Math.round(box!.y))).size;
+        if (viewport.width >= 390) expect(channelRows, where).toBe(1);
+        else expect(channelRows, where).toBeLessThanOrEqual(2);
         const labelBox = (await contact.locator('.conversation-channels-label').boundingBox())!;
         const rows = Map.groupBy([...boxes, labelBox], (box) => Math.round(box!.y + box!.height / 2));
         const callCenter = callBox.x + callBox.width / 2;
@@ -176,6 +181,8 @@ test.describe('DEC-46 · the closing block', () => {
           expect(box!.y, where).toBeGreaterThan(callBox.y + callBox.height);
           expect(box!.height, where).toBeGreaterThanOrEqual(44);
           expect(box!.height, where).toBeLessThan(callBox.height);
+          expect(box!.x, where).toBeGreaterThanOrEqual(contactBox.x - 1);
+          expect(box!.x + box!.width, where).toBeLessThanOrEqual(contactBox.x + contactBox.width + 1);
         }
         expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), where).toBeLessThanOrEqual(0);
         if (viewport.width === 390 && path === '/') {

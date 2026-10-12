@@ -145,6 +145,7 @@ jobs:
           tests/e2e/form.spec.ts
           tests/e2e/consent.spec.ts
           tests/e2e/analytics-consent.spec.ts
+          tests/e2e/ux-conversion-phase2.spec.ts
           tests/e2e/configurator-inquiry-handoff.spec.ts
           tests/e2e/grain-planner-handoff.spec.ts
 
@@ -197,6 +198,7 @@ jobs:
           tests/e2e/configurator-fullscreen-accessibility.spec.ts
           tests/e2e/configurator-inquiry-handoff.spec.ts
           tests/e2e/configurator-palette-accessibility.spec.ts
+          tests/e2e/configurator-polish.spec.ts
 
   # Hero playback is behaviour (play, pause, reduced motion, touch target), not pixels: selected by the paths in
   # every visual mode, so a design/* prototype still proves it.
@@ -217,6 +219,10 @@ jobs:
       - uses: ./.github/actions/setup-playwright
       - name: Run hero playback suite
         run: pnpm exec playwright test --project=desktop-chromium tests/e2e/hero-video.spec.ts
+      - name: Run theme behavior regression
+        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --repeat-each=3 --retries=0 tests/e2e/theme.spec.ts
+      - name: Run node assembly ordering regression
+        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium tests/e2e/home-proof-contour.spec.ts --grep 'load way waits'
 
   # Screenshot suites: off for a design/* prototype (visual=false from the classifier), blocking at visual-freeze and
   # on every other branch. Baselines are contracts for approved UI — see docs/ci-tier-model.md before refreshing one.

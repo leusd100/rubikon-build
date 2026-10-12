@@ -41,7 +41,9 @@ async function choose(page: Page, label: 'Як у системі' | 'Світл�
   const toggle = page.locator('.theme-switch');
   if (await toggle.isVisible()) {
     if (label === 'Як у системі') throw new Error('the desktop switch has no System option: System is the default');
-    const dark = (await toggle.getAttribute('aria-checked')) === 'true';
+    // The head script already resolved the OS theme; the switch's SSR light snapshot catches up after hydration.
+    const dark = (await state(page)).theme === 'dark';
+    await expect(toggle).toHaveAttribute('aria-checked', String(dark));
     if (dark !== (label === 'Темна')) await toggle.click();
   } else {
     const menu = page.locator('.mobile-menu');

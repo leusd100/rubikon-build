@@ -2492,6 +2492,57 @@ test('«Розібрати» names every part of every node — its step and its
   }
 });
 
+test('«Навантаження»: the load way waits for held assembly animations and reassembly transitions', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await open(page);
+  const panel = await openNode(page, NODES[0]);
+  const heldNames = await panel.locator('.hv2-detail-callouts').evaluate((element) => {
+    const animations = element.getAnimations();
+    animations.forEach((animation) => animation.pause());
+    return animations.length;
+  });
+  expect(heldNames).toBeGreaterThan(0);
+  const heldAt = await page.evaluate(() => performance.now());
+  await panel.getByRole('button', { name: 'Навантаження' }).click();
+  // A slow/backgrounded animation must outlive the old 2700 ms readiness timer without revealing the load.
+  await pageClockPast(page, heldAt, 3_000);
+  await expect(panel).not.toHaveAttribute('data-flow', /.*/);
+  await panel.locator('.hv2-detail-callouts').evaluate((element) => element.getAnimations().forEach((animation) => animation.finish()));
+  await expect(panel).toHaveAttribute('data-flow', '');
+
+  await panel.getByRole('button', { name: 'Розібрати' }).click();
+  await panel.evaluate((element) => Promise.all(element.getAnimations({ subtree: true })
+    .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+    .map((animation) => animation.finished)));
+  await panel.getByRole('button', { name: 'Зібрати' }).click();
+  const heldParts = await panel.locator('.hv2-detail-part-shift').evaluateAll((elements) => {
+    const animations = elements.flatMap((element) => element.getAnimations());
+    animations.forEach((animation) => animation.pause());
+    return animations.length;
+  });
+  expect(heldParts).toBeGreaterThan(0);
+  const togetherAt = await page.evaluate(() => performance.now());
+  // Reassembly must also wait for the drawing rather than the old 1250 ms timer.
+  await pageClockPast(page, togetherAt, 1_500);
+  await expect(panel).not.toHaveAttribute('data-flow', /.*/);
+  await panel.locator('.hv2-detail-part-shift').evaluateAll((elements) => elements
+    .flatMap((element) => element.getAnimations()).forEach((animation) => animation.finish()));
+  await expect(panel).toHaveAttribute('data-flow', '');
+
+  // Live system-preference changes can restart assembly on a node whose load was already visible.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(panel).toHaveAttribute('data-flow', '');
+  const pauseNames = await page.addStyleTag({ content: '.hv2-detail-callouts { animation-play-state: paused !important; }' });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect(panel).not.toHaveAttribute('data-flow', /.*/);
+  const resumedAt = await page.evaluate(() => performance.now());
+  await pageClockPast(page, resumedAt, 3_000);
+  await expect(panel).not.toHaveAttribute('data-flow', /.*/);
+  await pauseNames.evaluate((element) => element.parentNode?.removeChild(element));
+  await finishAnimations(panel);
+  await expect(panel).toHaveAttribute('data-flow', '');
+});
+
 test('«Навантаження»: a node’s load way waits for the node to be put together — on opening, on every ‹ ›, and after «Зібрати»', async ({ page }) => {
   test.setTimeout(60_000);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -2499,7 +2550,7 @@ test('«Навантаження»: a node’s load way waits for the node to be
   const panel = await openNode(page, NODES[0]);
   // Every change of the panel's data-flow, when, on which node, and how far its names (the assembly's last beat) are
   await panel.evaluate((element) => {
-    const record: { t: number; flow: boolean; title: string; names: string[] }[] = [];
+    const record: { t: number; flow: boolean; title: string; names: string[]; parts: string[] }[] = [];
     Object.assign(window, { flows: record });
     let last: boolean | null = null;
     new MutationObserver(() => {
@@ -2509,10 +2560,11 @@ test('«Навантаження»: a node’s load way waits for the node to be
       record.push({
         t: performance.now(), flow, title: element.querySelector('#hv2-detail-title')?.textContent ?? '',
         names: [...element.querySelectorAll('.hv2-detail-callouts')].flatMap((names) => names.getAnimations().map((animation) => animation.playState)),
+        parts: [...element.querySelectorAll('.hv2-detail-part-shift')].flatMap((part) => part.getAnimations().map((animation) => animation.playState)),
       });
     }).observe(element, { attributes: true, attributeFilter: ['data-flow'] });
   });
-  const flows = () => page.evaluate(() => (window as unknown as { flows: { t: number; flow: boolean; title: string; names: string[] }[] }).flows);
+  const flows = () => page.evaluate(() => (window as unknown as { flows: { t: number; flow: boolean; title: string; names: string[]; parts: string[] }[] }).flows);
   const now = () => page.evaluate(() => performance.now());
   const way = panel.getByRole('button', { name: 'Навантаження' });
   const words = panel.locator('.hv2-detail-flow-words');
@@ -2553,7 +2605,8 @@ test('«Навантаження»: a node’s load way waits for the node to be
   await panel.getByRole('button', { name: 'Зібрати' }).click();
   await expect(panel).toHaveAttribute('data-flow', '', { timeout: 6_000 });
   const reassembled = (await flows()).filter((entry) => entry.t > together && entry.flow)[0];
-  expect(reassembled.t - together, 'the way after the parts are back').toBeGreaterThan(1_000);
+  // A quick reverse of «Розібрати» shortens CSS transitions: actual completion, rather than 1 s elapsed, is the contract.
+  expect(reassembled.parts.every((state) => state === 'finished'), 'all parts back before the load returns').toBe(true);
 
   // With reduced motion nothing is put together before the eye: the way shows with the next node at once
   await page.emulateMedia({ reducedMotion: 'reduce' });

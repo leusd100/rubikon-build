@@ -36,7 +36,9 @@ const fontSizes = (page: Page, selector: string) => page.locator(selector).evalu
 /** «Каркас» with one of its five shown (0 = the span, 1 = the frame) */
 async function showFrameItem(page: Page, item: number) {
   await openControlGroup(page, 'space');
-  await page.locator('#hc-frame-panel .hc-frame-item').nth(item).click();
+  const selected = page.locator('#hc-frame-panel .hc-frame-item').nth(item);
+  await selected.click();
+  await expect(selected).toHaveAttribute('aria-pressed', 'true');
 }
 
 test('a phone’s small print: hints and notes at 14 px, no larger than the answers, the stamp’s tags at 12 (F54)', async ({ page }, testInfo) => {
@@ -140,10 +142,6 @@ test('«Як працює ваш каркас» is a legend: no boxes, rules bet
   await openHangarPage(page, { width: 1440, height: 900 });
   await showFrameItem(page, 1);
   const items = page.locator('#hc-frame-panel .hc-frame-item');
-  const looks = await items.evaluateAll((elements) => elements.map((element) => {
-    const style = getComputedStyle(element);
-    return { top: style.borderTopWidth, right: style.borderRightWidth, bottom: style.borderBottomWidth, left: style.borderLeftWidth, leftColor: style.borderLeftColor, background: style.backgroundColor, height: element.getBoundingClientRect().height };
-  }));
   const accent = await page.evaluate(() => {
     const probe = document.createElement('i');
     probe.style.color = 'var(--color-accent)';
@@ -152,6 +150,12 @@ test('«Як працює ваш каркас» is a legend: no boxes, rules bet
     probe.remove();
     return color;
   });
+  // Reduced-motion transitions can retain the prior hover color until the next rendered frame.
+  await expect(items.nth(1)).toHaveCSS('border-left-color', accent);
+  const looks = await items.evaluateAll((elements) => elements.map((element) => {
+    const style = getComputedStyle(element);
+    return { top: style.borderTopWidth, right: style.borderRightWidth, bottom: style.borderBottomWidth, left: style.borderLeftWidth, leftColor: style.borderLeftColor, background: style.backgroundColor, height: element.getBoundingClientRect().height };
+  }));
   for (const [index, look] of looks.entries()) {
     expect(look.top).toBe('0px');
     expect(look.right).toBe('0px');
@@ -297,6 +301,8 @@ test('the configurator’s boxes are square 18 px boxes with the copper tick, wo
   const off = await look();
   expect(off).toMatchObject({ appearance: 'none', radius: '0px', size: '18×18', tick: '0', words: '14px' });
   await row.click();
+  await expect(box).toBeChecked();
+  await expect.poll(async () => (await look()).tick).toBe('1');
   const on = await look();
   expect(on.tick).toBe('1');
   expect(on.background).not.toBe(off.background);
@@ -309,7 +315,7 @@ test('the configurator’s boxes are square 18 px boxes with the copper tick, wo
   }
   await page.emulateMedia({ forcedColors: 'active' });
   await openControlGroup(page, 'dimensions');
-  expect(await box.evaluate((input) => getComputedStyle(input).appearance)).toBe('auto');
+  await expect(box).toHaveCSS('appearance', 'auto');
 });
 
 test('each size is shown once, in its field, with its metre inside the field — «10,55» holds at 320 px (F114)', async ({ page }, testInfo) => {

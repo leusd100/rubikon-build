@@ -152,7 +152,7 @@
   .conversation-call .conversation-call-text { padding: 0 14px; }
   .conversation-call strong { font-size: 19px; }
   .conversation-call .conversation-call-arrow { padding-right: 16px; }
-  /* A phone: the label on its own line, the four links under it in one row (328 px at 360; a 320 px phone wraps Email) */
+  /* A phone: the label on its own line, compact links under it, wrapping as needed with each row centered */
   .conversation-channels { gap: 0 10px; }
   .conversation-channels-label { flex-basis: 100%; }
   .conversation-channels .messenger-link { gap: 6px; font-size: 14px; }

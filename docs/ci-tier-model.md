@@ -47,11 +47,11 @@ pull-request diff.
 | Area | Representative paths | Focused coverage |
 | --- | --- | --- |
 | Planner | `app/components/grain-planner/`, `app/components/planner/`, `app/lib/planner/`, `app/zernoskhovyshcha/` | Grain page, planner, mobile, stabilization, handoff and planner visual suites |
-| Inquiry | `ProjectInquiryForm`, `InquirySection`, `app/components/inquiry/`, `app/lib/inquiry/` | Form, consent, GA endpoint checks and both attachment handoff suites |
+| Inquiry | `ProjectInquiryForm`, `ConversationSection`, conversation data/CSS, `app/components/inquiry/`, `app/lib/inquiry/`, conversion Phase 2 test | Form, consent, GA endpoint checks, both attachment handoff suites and conversion Phase 2 (including centered contact rows at 320–1440 px) |
 | Leads API | `app/api/leads/`, `drizzle/`, `migrations/`, leads route unit test | Full unit gate plus mocked browser lead submission |
-| Configurator | `app/components/configurator/`, `app/lib/configurator/`, configurator preview, `/angary` composition and tests | Configurator, 3D, build-up, accessibility and handoff suites in two shards |
+| Configurator | `app/components/configurator/`, `app/lib/configurator/`, configurator preview, `/angary` composition and tests | Configurator, 3D, build-up, accessibility, handoff and polish suites in two shards |
 | Brand visual | `public/brand/`, `SiteChrome`, favicon and brand snapshots | Brand visual suite |
-| Shared/global visual | any CSS, root layout/page, top-level shared components, app data and shared media | Complete visual suites (deferred for a design/* prototype) plus the hero playback job (every mode) |
+| Shared/global visual | any CSS, root layout/page, top-level shared components, nested HOME v2 components, HOME proof tests, theme implementation/tests, app data and shared media | Complete visual suites (deferred for a design/* prototype) plus hero playback, theme behavior (three runs without retries) and node assembly ordering on desktop/mobile (every mode) |
 | CI infrastructure | workflows, local actions, CI scripts, package/lock/config files, Worker/Vite/CSP, shared hooks, consent/attribution | All focused areas, ensuring changes to the test system test the system itself |
 
 ## Required context
@@ -85,7 +85,7 @@ takes effect at once. The label must exist in the repository (Issues → Labels)
 
 **Blocking in every mode:** Fast Gate (lint, explicit typecheck, unit tests — including the Delivery Model / P01 truth and
 provenance tests — production build, critical desktop/mobile routes with the mocked lead submit); the planner, inquiry,
-leads API and configurator suites when their paths change; hero playback (behaviour, not pixels) when shared visuals change.
+leads API and configurator suites when their paths change; hero playback, theme behavior and HOME node assembly ordering (behaviour, not pixels) when shared visuals or nested HOME components change.
 
 **Only at freeze for a `design/*` pull request:** the changed-area screenshot suites (`visual.spec.ts` at 1440 / 768 / 375,
 brand, configurator and planner visuals as the paths select them). After merge, the push-to-main run (full E2E + every
@@ -121,3 +121,10 @@ logic only — `vitest.config.ts` includes `app/**/*.ts` and `sonar.coverage.exc
 components and CSS — so prototype CSS/SVG work needs no tests written for a number, while projections, mappings, business
 rules and interactive behaviour keep theirs.
 
+
+## Flaky-test policy
+
+Playwright fails CI when a test passes only after a retry (`failOnFlakyTests` in `playwright.config.ts`). The two retries
+remain available to collect evidence; they do not turn an unstable test into a green gate. Normal local runs keep their
+existing zero-retry behavior. Fix readiness waits against the observed state; do not replace baselines or disable
+assertions to hide a retry-only pass.
