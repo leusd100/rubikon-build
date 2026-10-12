@@ -59,7 +59,7 @@ for (const path of editorialHeroes) {
           ).toBe(false);
         } else {
           // A phone: the call leads, «Обрати напрям» follows; the conversation link stays off the first screen.
-          const [callBox, chooseBox] = await Promise.all([hero.locator('.hero-call-phone').boundingBox(), chooseDirection.boundingBox()]);
+          const [callBox, chooseBox] = await Promise.all([hero.locator('.hero-call-lead').boundingBox(), chooseDirection.boundingBox()]);
           expect(callBox!.y + callBox!.height).toBeLessThanOrEqual(chooseBox!.y);
         }
 
@@ -69,14 +69,15 @@ for (const path of editorialHeroes) {
       }
 
       if (path === '/pro-nas') {
-        // One row of actions from 761 px; on a phone the call leads as a full-width button above «Обговорити задачу»
+        // One row of actions from 761 px, the call first (DEC-41, PROPOSED); on a phone the call is a full-width button
+        // above «Обговорити задачу»
         const [ctaBox, callBox] = await Promise.all([
           hero.getByRole('link', { name: 'Обговорити задачу' }).boundingBox(),
-          hero.locator(viewport.width > 760 ? '.hero-call' : '.hero-call-phone').boundingBox(),
+          hero.locator('.hero-call-lead').boundingBox(),
         ]);
         if (viewport.width > 760) {
           expect(Math.abs((ctaBox!.y + ctaBox!.height / 2) - (callBox!.y + callBox!.height / 2))).toBeLessThanOrEqual(6);
-          expect(ctaBox!.x + ctaBox!.width).toBeLessThan(callBox!.x);
+          expect(callBox!.x + callBox!.width).toBeLessThan(ctaBox!.x);
           expect(heroBox!.height).toBeGreaterThanOrEqual(viewport.height);
         } else {
           expect(callBox!.y + callBox!.height).toBeLessThanOrEqual(ctaBox!.y);
@@ -105,7 +106,7 @@ for (const [path, primary] of [['/pro-nas', 'Обговорити задачу']
     const hero = page.locator('.subhero');
     const [ctaBox, callBox, crumbsBox, headerBox] = await Promise.all([
       hero.getByRole('link', { name: primary }).first().boundingBox(),
-      hero.locator('.hero-call').boundingBox(),
+      hero.locator('.hero-call-lead').boundingBox(),
       hero.locator('.breadcrumb').boundingBox(),
       page.locator('.site-header').boundingBox(),
     ]);

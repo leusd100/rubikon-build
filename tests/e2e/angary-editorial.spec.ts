@@ -26,13 +26,14 @@ for (const viewport of viewports) {
     await expect(hero.getByRole('heading', { level: 1 })).toContainText('Будуємо ангари та склади');
     await expect(hero.getByRole('heading', { level: 1 })).toContainText('під вашу задачу');
     await expect(hero.getByRole('link', { name: /Зібрати конфігурацію/ })).toHaveAttribute('href', '#configurator');
-    // ≤ 760 px the call leads and the configurator follows; the conversation link stays off the phone's first screen
-    // (UX pass 2026-10). Wider screens keep the configurator + «Обговорити задачу» pair.
+    // The call leads and the configurator follows at every width (DEC-41, PROPOSED, Phase 2); «Обговорити задачу» is a
+    // quiet link beside them from 761 px and stays off the phone's first screen
+    await expect(hero.locator('a.hero-call-lead')).toBeVisible();
+    const describeTask = hero.getByRole('link', { name: /Обговорити задачу/ });
     if (viewport.width <= 760) {
-      await expect(hero.locator('a.hero-call-phone')).toBeVisible();
-      await expect(hero.locator('a.angary-hero-secondary')).toBeHidden();
+      await expect(describeTask).toBeHidden();
     } else {
-      await expect(hero.getByRole('link', { name: /Обговорити задачу/ })).toHaveAttribute('href', '#inquiry');
+      await expect(describeTask).toHaveAttribute('href', '#inquiry');
     }
     await expect(hero.locator('.hc-controls, .hc-preview-surface')).toHaveCount(0);
 
@@ -83,7 +84,7 @@ for (const viewport of viewports) {
       // its actions stay clear of the window's bottom edge
       const metrics = await page.evaluate(() => {
         const heroElement = document.querySelector<HTMLElement>('.angary-service-subhero')!;
-        const actions = [...heroElement.querySelectorAll<HTMLElement>('a.button, a.hero-call')].filter((element) => element.offsetParent);
+        const actions = [...heroElement.querySelectorAll<HTMLElement>('a.button, a.text-link')].filter((element) => element.offsetParent);
         return {
           heroHeight: heroElement.getBoundingClientRect().height,
           actionsBottom: Math.max(...actions.map((element) => element.getBoundingClientRect().bottom)),

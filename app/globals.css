@@ -210,19 +210,9 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .theme-options input:focus-visible + span { outline: 2px solid var(--color-accent-on-dark); outline-offset: -5px; }
 .theme-options-note { margin: 10px 0 0; color: var(--color-dark-text-muted); font-size: 12px; line-height: 1.45; }
 .theme-options-menu { padding: 18px 0 10px; }
-/* Inner pages' second hero action: the phone, one tap, deliberately quieter than the primary «Обговорити…». */
-.hero-call { width: fit-content; min-height: 48px; display: grid; grid-template-columns: 18px auto; align-items: center; gap: 12px; margin-top: 24px; padding: 6px 2px 8px; color: var(--color-dark-text); border-bottom: 1px solid rgba(255,255,255,.3); transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease; }
-.hero-call svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.8; }
-.hero-call span { display: grid; gap: 6px; }
-.hero-call small { color: var(--color-dark-text-muted); font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .12em; text-transform: uppercase; }
-.hero-call strong { font: 500 19px/1 var(--font-condensed), sans-serif; letter-spacing: .035em; }
-.hero-call:hover, .hero-call:focus-visible { color: var(--color-accent-on-dark-hover); border-color: color-mix(in srgb, var(--color-accent-on-dark) 72%, transparent); }
-/* On direction pages the call shares the buttons' row on wide screens, so the hero keeps its height. */
-.hero-action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; margin-top: 40px; }
+/* On direction pages the call and the page's next step share one row on wide screens, so the hero keeps its height. */
+.hero-action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: 40px; } /* HOME's .hero-actions gap */
 .service-subhero-content .hero-action-row .button { margin-top: 0; }
-.service-subhero-content .hero-action-row .hero-call,
-.service-subhero-content .angary-hero-actions .hero-call,
-.service-subhero-content .grain-hero-actions .hero-call { margin: 0 0 0 20px; align-self: center; }
 
 /* Never taller than the window: a flat 900 px floor pushed the actions onto (or under) the bottom edge of 821–899 px
    high windows — the compact block below only takes over from 820 px down. */
@@ -945,9 +935,6 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .mobile-menu summary { min-width: 92px; height: 42px; padding-inline: 13px; }
   .mobile-call { width: 44px; height: 42px; }
   .hero-action-row { display: grid; justify-items: start; gap: 14px; margin-top: 30px; }
-  .service-subhero-content .hero-action-row .hero-call,
-  .service-subhero-content .angary-hero-actions .hero-call,
-  .service-subhero-content .grain-hero-actions .hero-call { margin: 2px 0 0; justify-self: start; }
   .hero { min-height: 790px; height: auto; }
   .hero-media video { object-position: 66% center; }
   .hero-grid { background-size: 46px 46px; }
@@ -1434,18 +1421,38 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
   .desktop-nav { gap: 22px; }
 }
 
-/* ── UX pass 2026-10 · Phone: the call leads every inner hero ─────────────────────────────────────────────────────
-   HeroCallButton (SiteChrome.tsx) is the first link of each inner hero's action row and shows only ≤ 760 px, as the
-   same copper button HOME has. Behind it the page's own primary action steps down to an outline, the quiet call link
-   (now a duplicate) goes, and a third action (the conversation, which «Контакти» reaches in one tap) leaves the first
-   screen. Wider screens are unchanged. */
-.hero-call-phone { display: none; }
+/* ── Phase 2 · One action language (DEC-41, PROPOSED) ───────────────────────────────────────────────────────────────
+   Copper means the call, on every hero and at every width, as on HOME. HeroCallButton (SiteChrome.tsx) is the first
+   link of each inner hero's action row; the page's own next step (its tool, the directions list or «Обговорити задачу»)
+   follows as HOME's outline, and a page with a tool keeps the written request as a quiet text link after them. On a
+   phone the two buttons stack full width and the text link leaves the first screen: «Контакти» reaches the
+   conversation in one tap. (Until Phase 2 this was the phone's rule only; wider screens led with the page's own action
+   in copper and the call as a quiet link.) */
+:is(.hero-action-row, .angary-hero-actions, .grain-hero-actions, .directions-hero-actions, .about-hero-actions, .proc-hero-actions) > .hero-call-lead { margin: 0; }
+.button-hero-secondary { color: var(--color-dark-text); background: transparent; border-color: rgba(245, 242, 235, .4); text-align: center; }
+.button-hero-secondary:hover { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .72); }
+:is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link {
+  display: inline-flex; align-items: center; gap: 18px; align-self: center; margin: 0 0 0 12px; color: var(--color-dark-text); white-space: nowrap;
+}
+:is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link span { margin-left: 0; color: var(--color-accent-on-dark); }
+:is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link:is(:hover, :focus-visible) { color: var(--color-accent-on-dark-hover); }
+/* /planner-preview keeps its pre-Phase-2 hero while D-04 is open (DirectionPageConfig legacyCallLink): the tool in
+   copper, the call as a quiet link beside it, and the copper call only on a phone, where the tool steps down */
+.hero-call { width: fit-content; min-height: 48px; display: grid; grid-template-columns: 18px auto; align-items: center; gap: 12px; margin: 0 0 0 20px; align-self: center; padding: 6px 2px 8px; color: var(--color-dark-text); border-bottom: 1px solid rgba(255,255,255,.3); transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease; }
+.hero-call svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.8; }
+.hero-call span { display: grid; gap: 6px; }
+.hero-call small { color: var(--color-dark-text-muted); font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .12em; text-transform: uppercase; }
+.hero-call strong { font: 500 19px/1 var(--font-condensed), sans-serif; letter-spacing: .035em; }
+.hero-call:hover, .hero-call:focus-visible { color: var(--color-accent-on-dark-hover); border-color: color-mix(in srgb, var(--color-accent-on-dark) 72%, transparent); }
+.hero-call-phone-only { display: none; }
 @media (max-width: 760px) {
-  .hero-call-phone { display: inline-flex; width: 100%; min-width: 0; margin: 0 !important; justify-content: flex-start; }
-  .hero-call-phone ~ .hero-call { display: none; }
-  .hero-call-phone ~ .button-primary { color: var(--color-dark-text); background: transparent; border-color: rgba(245, 242, 235, .4); }
-  .hero-call-phone ~ .button-primary:hover { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .72); transform: none; }
-  .hero-call-phone ~ :is(.angary-hero-secondary, .grain-hero-secondary, .text-link) { display: none; }
+  .hero-call-lead { width: 100%; min-width: 0; justify-content: flex-start; }
+  .hero-call-lead ~ .text-link { display: none; }
+  .hero-call-phone-only { display: inline-flex; }
+  .hero-call-phone-only ~ .hero-call { display: none; }
+  .hero-call-phone-only ~ .button-primary { color: var(--color-dark-text); background: transparent; border-color: rgba(245, 242, 235, .4); }
+  .hero-call-phone-only ~ .button-primary:hover { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .72); transform: none; }
+  .hero-call-phone-only ~ .grain-hero-secondary { display: none; }
   :is(.directions-hero-actions, .about-hero-actions, .proc-hero-actions) { flex-direction: column; align-items: stretch; gap: 12px; }
   :is(.directions-hero-actions, .about-hero-actions, .proc-hero-actions) .button { width: 100%; }
 }

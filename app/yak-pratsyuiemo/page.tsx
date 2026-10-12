@@ -1,6 +1,6 @@
 import { ChangeSheets } from '../components/process/ChangeSheets';
 import { CostFactorsFigure } from '../components/process/CostFactorsFigure';
-import { Breadcrumbs, HeroCallButton, HeroCallLink, SectionHeader } from '../components/SiteChrome';
+import { Breadcrumbs, HeroCallButton, SectionHeader } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
@@ -151,8 +151,7 @@ export default function DeliveryModelPage() {
           </p>
           <div className="proc-hero-actions">
             <HeroCallButton />
-            <a className="button button-primary" href="#inquiry">Обговорити задачу <span aria-hidden="true">↓</span></a>
-            <HeroCallLink />
+            <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">Обговорити задачу <span aria-hidden="true">↓</span></a>
           </div>
         </div>
         <span className="proc-provenance">Ілюстрація</span>

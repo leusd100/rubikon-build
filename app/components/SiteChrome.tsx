@@ -158,25 +158,25 @@ export function SiteHeader() {
   );
 }
 
-/** The inner pages' second hero action: one tap to call, deliberately quieter than the page's primary «Обговорити…». */
-export function HeroCallLink() {
+/**
+ * The first action of every inner hero, as HOME's: the copper button calls, with the number on it (one action language,
+ * DEC-41 — PROPOSED, Phase 2). The page's own next step — its tool, the directions list or the written request — follows
+ * as an outline (`.button-hero-secondary`); a page with a tool keeps the written request as a quiet text link beside
+ * them, which a phone leaves out of the first screen (globals.css, «One action language»).
+ */
+export function HeroCallButton({ phoneOnly = false }: Readonly<{ phoneOnly?: boolean }>) {
   return (
-    <a className="hero-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
+    <a className={`button button-primary hero-call-primary hero-call-lead${phoneOnly ? ' hero-call-phone-only' : ''}`} href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
       <Phone aria-hidden="true" />
       <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
     </a>
   );
 }
 
-/**
- * Phone only (≤ 760 px): the call leads every inner hero as the same copper button HOME has, with the number on it.
- * It is rendered first in each hero's action row, so the reading order matches what a phone shows; wider screens hide
- * it and keep the page's own primary action with the quiet HeroCallLink beside it (globals.css, «Phone: the call
- * leads»).
- */
-export function HeroCallButton() {
+/** The pre-Phase-2 quiet call beside a hero's copper tool: only /planner-preview's hero (legacyCallLink, D-04) */
+export function HeroCallLink() {
   return (
-    <a className="button button-primary hero-call-primary hero-call-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
+    <a className="hero-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
       <Phone aria-hidden="true" />
       <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
     </a>

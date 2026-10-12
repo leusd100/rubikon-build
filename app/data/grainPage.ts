@@ -57,6 +57,9 @@ const grainDirection: DirectionPageConfig = {
         { label: 'Сформувати задачу', href: '#planner', className: 'button button-primary', arrow: '↓' },
         { label: 'Обговорити зерносховище', href: '#inquiry', className: 'button grain-hero-secondary', arrow: '↓' },
       ],
+      // This config is the planner composition only /planner-preview still renders: its hero stays as it was until
+      // the owner decides D-04 (Phase 2 brief), so it keeps the tool in copper and the quiet call link
+      legacyCallLink: true,
     },
   },
   editorial: {
@@ -146,8 +149,8 @@ const grainComplexDirection: DirectionPageConfig = {
       className: 'grain-hero-actions',
       sectionClassName: 'grain-service-subhero',
       items: [
-        { label: 'Скласти комплекс', href: '#kompleks', className: 'button button-primary', arrow: '↓' },
-        { label: 'Обговорити зерносховище', href: '#inquiry', className: 'button grain-hero-secondary', arrow: '↓' },
+        { label: 'Скласти комплекс', href: '#kompleks', className: 'button button-hero-secondary', arrow: '↓' },
+        { label: 'Обговорити зерносховище', href: '#inquiry', className: 'text-link', arrow: '↓', openInquiry: true },
       ],
     },
   },

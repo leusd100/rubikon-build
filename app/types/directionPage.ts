@@ -28,6 +28,8 @@ export type DirectionHeroAction = {
   className: string;
   /** ↓ for a tool further down this page, ↗ for the conversation. */
   arrow: '↓' | '↗';
+  /** The written request: opens the folded form on a phone or tablet (ConversationFormToggle), as HOME's does */
+  openInquiry?: true;
 };
 
 export type DirectionPageConfig = {
@@ -45,13 +47,18 @@ export type DirectionPageConfig = {
     /** A phone-only line under the hero's actions — for a boundary the shorter lead moved out of the way. */
     notePhone?: string;
     /**
-     * Replaces the single «Обговорити задачу ↗» link — for a page whose hero leads into its own
-     * tool first. `sectionClassName` marks the hero variant the page's stylesheet targets.
+     * Replaces the single «Обговорити задачу ↓» outline — for a page whose own tool is the hero's second action, after
+     * the call (DEC-41, PROPOSED). `sectionClassName` marks the hero variant the page's stylesheet targets.
      */
     actions?: {
       className: string;
       sectionClassName?: string;
       items: readonly DirectionHeroAction[];
+      /**
+       * The hero as it was before Phase 2: the page's tool in copper with the call as a quiet link beside it, the call
+       * leading only on a phone. Only /planner-preview's config, which stays unchanged while D-04 is open.
+       */
+      legacyCallLink?: true;
     };
   };
   /** An extra class on <main>, for a page with a stylesheet of its own. */
