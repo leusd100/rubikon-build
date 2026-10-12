@@ -451,12 +451,16 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
 
   test('a layer switched after the canvas has idled fades over its whole transition, even when its first frame comes late', async ({ page }) => {
     // Once a layer's fade has drawn its first frame, the canvas draws every frame until the build-up settles. Before
-    // 12.10 the fade timed itself on R3F's clock, which under frameloop="demand" only moves when a frame is drawn. When
-    // the layer's phase changed before the first frame after an idle spell, the fade started at the last frame drawn,
-    // a second or more back, and that first frame counted the whole idle spell as time gone by. The roof was gone in one
-    // frame, and the canvas stood still until the lifecycle's timer ended the transition: about 1 roof toggle in 20 on
-    // a GPU. Holding the frames of the first 100 ms after the click puts the phase change first every time: before the
-    // fix, 1 frame drawn and 8–9 still, for the roof switched off and on alike.
+    // 12.10 the fade was timed on R3F's clock, which under frameloop="demand" only moves when a frame is drawn. A fade
+    // anchored before the first frame after an idle spell started at the last frame drawn, a second or more back, and
+    // that first frame counted the whole idle spell as time gone by: the roof was at its target in one frame, and the
+    // canvas stood still until the lifecycle's timer ended the transition. Holding the frames of the first 100 ms after
+    // the click puts the anchor before the first frame every time: before the fix, 1 frame drawn and 9–10 still, for the
+    // roof switched off and on alike, on a GPU and under SwiftShader.
+    //
+    // The way a fade was skipped on its own (1 roof toggle in 160 on a GPU, 12.10) is not forced here: a frame between
+    // the commit of the new phase and a passive anchoring effect. Only React's scheduler running late forces that, which
+    // the diagnostic harness in docs/handoffs/2026-10-12-configurator-idle-fade-skip.md does and this test does not.
     await installDrawCallCounter(page);
     await installFramePacer(page);
     await installFrameDrawLog(page);
