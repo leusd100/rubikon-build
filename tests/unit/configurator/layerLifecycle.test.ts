@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  hasLayerSettled,
   initialLifecycleState,
   isLayerMounted,
   layerLifecycleReducer,
@@ -120,5 +121,31 @@ describe('isLayerMounted', () => {
     expect(isLayerMounted('materializing')).toBe(true);
     expect(isLayerMounted('visible')).toBe(true);
     expect(isLayerMounted('dematerializing')).toBe(true);
+  });
+});
+
+describe('hasLayerSettled', () => {
+  it('is true only at rest on the requested side — never mid-transition', () => {
+    expect(hasLayerSettled('visible', true)).toBe(true);
+    expect(hasLayerSettled('hidden', false)).toBe(true);
+    expect(hasLayerSettled('materializing', true)).toBe(false);
+    expect(hasLayerSettled('dematerializing', false)).toBe(false);
+  });
+
+  it('is false in the render where the request has flipped but the layer has not started moving yet', () => {
+    // the scope is switched off: the request is already hidden, the layer still visible
+    expect(hasLayerSettled('visible', false)).toBe(false);
+    expect(hasLayerSettled('hidden', true)).toBe(false);
+  });
+
+  it('follows the reducer through a whole hide: unsettled from the request until the transition completes', () => {
+    let state = initialLifecycleState(true);
+    expect(hasLayerSettled(state.phase, true)).toBe(true);
+
+    state = requestVisibility(state, false);
+    expect(hasLayerSettled(state.phase, false)).toBe(false);
+
+    state = complete(state);
+    expect(hasLayerSettled(state.phase, false)).toBe(true);
   });
 });
