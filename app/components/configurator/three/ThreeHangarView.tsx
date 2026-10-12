@@ -15,6 +15,7 @@ import type {
 import { claddingMaterialKey } from '../../../lib/configurator/threeSceneModel';
 import type { ParametricBuildingModel } from '../../../lib/configurator/parametricModel';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
+import { hasLayerSettled } from '../../../lib/configurator/layerLifecycle';
 import { INK, MATERIALS } from './materials';
 import { getRepeatedNoiseTexture } from './proceduralTextures';
 import { boxEdges, creaseEdges, faceRectangle, outlineSides, polygonAtZ, pushSegments, surfaceOutline, type Segments } from './inkOutlines';
@@ -1183,6 +1184,20 @@ export function ThreeHangarView({
   const roof = useLayerLifecycle(visible.roof, LAYER_DURATION_MS.roof, layerStartOffsetMs('roof'));
   const gateLayer = useLayerLifecycle(visible.gates, LAYER_DURATION_MS.gates, layerStartOffsetMs('gates'));
 
+  // Whether the build-up has caught up with the configuration: every layer at rest on the side its scope asks for. On
+  // the canvas's wrapper as `data-build-up` (12.10), the one moment a test can wait for instead of guessing a
+  // transition's length in wall time. A transition ends on its lifecycle timer, and the frame that end asks for comes
+  // whenever the browser next hands one out: under software WebGL, seconds after a 250 ms roof transition began
+  // (configurator-3d-buildup.spec.ts, its idle tests).
+  const buildUpSettled =
+    hasLayerSettled(foundation.phase, visible.slab || visible.footings) &&
+    hasLayerSettled(columns.phase, visible.frame) &&
+    hasLayerSettled(rafters.phase, visible.frame) &&
+    hasLayerSettled(girts.phase, visible.frame) &&
+    hasLayerSettled(walls.phase, visible.walls) &&
+    hasLayerSettled(roof.phase, visible.roof) &&
+    hasLayerSettled(gateLayer.phase, visible.gates);
+
   // Shadow-caster policy — a real budget decision, measured rather than assumed. Casting from
   // every mesh doubled the frame cost (175 draw calls at maximum dimensions against a 120 budget),
   // because each caster is drawn again in the shadow pass. Casting is therefore restricted to the
@@ -1235,6 +1250,7 @@ export function ThreeHangarView({
       // The canvas is decorative: the controls and summary remain the canonical description of the
       // configuration, and HangarPreviewModes supplies the accessible text alternative.
       aria-hidden="true"
+      data-build-up={buildUpSettled ? 'settled' : 'running'}
     >
       <FitOrthographicCamera scene={scene} bottomInsetPx={bottomInsetPx} topInsetPx={topInsetPx} />
       <InvalidateOnChange scene={scene} />

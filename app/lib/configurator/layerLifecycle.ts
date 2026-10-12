@@ -83,3 +83,10 @@ export function requestVisibility(
 export function isLayerMounted(phase: LifecyclePhase): boolean {
   return phase !== 'hidden';
 }
+
+/** True once a layer has caught up with what it is asked for: resting at the phase its requested visibility leads to,
+ *  with no transition in flight. Measured against the request, not the phase alone, because the request changes first:
+ *  in the render where a scope is switched off, the layer is still 'visible' and has not yet begun to leave. */
+export function hasLayerSettled(phase: LifecyclePhase, requestedVisible: boolean): boolean {
+  return phase === (requestedVisible ? 'visible' : 'hidden');
+}

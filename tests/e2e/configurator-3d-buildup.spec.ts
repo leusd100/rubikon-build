@@ -88,7 +88,7 @@ async function readDrawCalls(page: Page): Promise<number> {
 
 /**
  * Lets a test hold every animation frame back, the way CI does on its own. The runners have no GPU, so WebGL runs in
- * software (SwiftShader) and the browser hands out animation frames far apart: 0.3–1.1 s in the trace of run
+ * software (SwiftShader) and the browser hands out animation frames far apart: about 1.1 s apart in the trace of run
  * 38244513163, where the idle test below failed by exactly one frame. Installed before load but idle until
  * `slowAnimationFrames` switches it on, so the page and the 3D view open at full speed and only the transition under
  * test is paced. Timers are left alone: the build-up's own clock (useLayerLifecycle's timeout) keeps real time, as it
@@ -127,6 +127,39 @@ async function installFramePacer(page: Page) {
       live.delete(id);
     };
   });
+}
+
+/**
+ * Where an idle check can start: the build-up has caught up with the configuration, and the frames that change asked
+ * for have been drawn. Waits on both events, not on a guessed duration. On CI a 600 ms wait for a 250 ms roof transition was not
+ * always enough: the transition ends on its lifecycle timer, and the frame that end asks for came whenever the browser
+ * next gave one out. Under software WebGL that was up to 1.8 s after the click locally, and over 2 s after it in the
+ * CI run that failed. That frame then fell inside the idle window.
+ *
+ * 1. `data-build-up="settled"` on the canvas's wrapper (ThreeHangarView): every layer is at rest on the side its scope
+ *    asks for. It reads 'running' from the render where the scope changes, so it cannot be a stale 'settled' from
+ *    before the click.
+ * 2. Two animation frames in a row with no draw call. While R3F's demand loop runs it draws in every frame, so a whole
+ *    frame without one means the loop has stopped. Two, not one: in the first frame the probe can run before a loop that
+ *    was asked for a frame just after it. A loop that never stops fails here, by the deadline, not at the test's timeout.
+ */
+async function waitForBuildUpToSettle(page: Page) {
+  await expect(page.locator('.hc-preview-surface [data-build-up]')).toHaveAttribute('data-build-up', 'settled', { timeout: 15_000 });
+  const stopped = await page.evaluate(() => new Promise<boolean>((resolve) => {
+    const w = window as unknown as { __drawCalls: number };
+    const deadline = performance.now() + 15_000;
+    let last = w.__drawCalls;
+    let quietFrames = 0;
+    const tick = () => {
+      quietFrames = w.__drawCalls === last ? quietFrames + 1 : 0;
+      last = w.__drawCalls;
+      if (quietFrames >= 2) resolve(true);
+      else if (performance.now() > deadline) resolve(false);
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }));
+  expect(stopped, 'the render loop was still drawing 15 s after the build-up settled — frameloop="demand" never returned to idle').toBe(true);
 }
 
 async function slowAnimationFrames(page: Page, delayMs: number) {
@@ -242,7 +275,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
 
     await page.waitForTimeout(300); // let the initial mount's own frame(s) settle
     await toggleScope(page, 'roof'); // off — the only thing that should cause further draw calls
-    await page.waitForTimeout(600); // roof's 250ms duration, generous headroom
+    await waitForBuildUpToSettle(page); // the roof has left and its last frame is drawn, however late that frame came
 
     const afterSettle = await readDrawCalls(page);
     await page.waitForTimeout(500); // nothing is animating or changing — demand mode should be silent
@@ -252,8 +285,9 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
   });
 
   test('idle rendering returns to zero draw calls even when animation frames come late, as on CI', async ({ page }) => {
-    // The same check as above, with every frame held back 800 ms from the moment the roof is switched off — inside the
-    // range CI's software WebGL produces on its own, so what failed there once in a while happens here every time.
+    // The same check as above, with every frame held back 800 ms from the moment the roof is switched off — less than the
+    // ~1.1 s CI's software WebGL took on its own. What failed there once in a while then fails here every time if the
+    // check guesses the transition's length: with the 600 ms wait it used before 12.10, 10 runs out of 10.
     await installDrawCallCounter(page);
     await installFramePacer(page);
     await openConfigurator(page);
@@ -263,7 +297,9 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await page.waitForTimeout(300); // let the initial mount's own frame(s) settle
     await slowAnimationFrames(page, 800);
     await toggleScope(page, 'roof'); // off
-    await page.waitForTimeout(600); // roof's 250ms duration, generous headroom
+    await waitForBuildUpToSettle(page);
+    // The idle window at the browser's own pace, as above: held frames would only push a stray draw past its end
+    await slowAnimationFrames(page, 0);
 
     const afterSettle = await readDrawCalls(page);
     await page.waitForTimeout(500); // nothing is animating or changing — demand mode should be silent
