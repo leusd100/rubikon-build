@@ -86,6 +86,55 @@ async function readDrawCalls(page: Page): Promise<number> {
   return page.evaluate(() => (window as unknown as { __drawCalls: number }).__drawCalls);
 }
 
+/**
+ * Lets a test hold every animation frame back, the way CI does on its own. The runners have no GPU, so WebGL runs in
+ * software (SwiftShader) and the browser hands out animation frames far apart: 0.3–1.1 s in the trace of run
+ * 38244513163, where the idle test below failed by exactly one frame. Installed before load but idle until
+ * `slowAnimationFrames` switches it on, so the page and the 3D view open at full speed and only the transition under
+ * test is paced. Timers are left alone: the build-up's own clock (useLayerLifecycle's timeout) keeps real time, as it
+ * does on CI — only the frames that draw its result come late.
+ */
+async function installFramePacer(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __frameDelayMs: number };
+    w.__frameDelayMs = 0;
+    const request = window.requestAnimationFrame.bind(window);
+    const cancel = window.cancelAnimationFrame.bind(window);
+    const held = new Map<number, number>(); // a frame still being held back → its timer
+    const live = new Map<number, number>(); // a frame passed on to the browser → the browser's own id
+    let nextId = 1;
+    window.requestAnimationFrame = (callback) => {
+      const id = nextId;
+      nextId += 1;
+      const pass = () => {
+        held.delete(id);
+        live.set(id, request((time) => {
+          live.delete(id);
+          callback(time);
+        }));
+      };
+      if (w.__frameDelayMs > 0) held.set(id, window.setTimeout(pass, w.__frameDelayMs));
+      else pass();
+      return id;
+    };
+    // R3F's demand loop stops by cancelling the frame it has just asked for: a held frame must be cancellable too
+    window.cancelAnimationFrame = (id) => {
+      const timer = held.get(id);
+      if (timer !== undefined) window.clearTimeout(timer);
+      held.delete(id);
+      const frame = live.get(id);
+      if (frame !== undefined) cancel(frame);
+      live.delete(id);
+    };
+  });
+}
+
+async function slowAnimationFrames(page: Page, delayMs: number) {
+  await page.evaluate((ms) => {
+    (window as unknown as { __frameDelayMs: number }).__frameDelayMs = ms;
+  }, delayMs);
+}
+
 test.describe('configurator 3D build-up (Phase 3B)', () => {
   /**
    * One budget for the whole file, because the pressure is on the FILE and not on any one test.
@@ -193,6 +242,27 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
 
     await page.waitForTimeout(300); // let the initial mount's own frame(s) settle
     await toggleScope(page, 'roof'); // off — the only thing that should cause further draw calls
+    await page.waitForTimeout(600); // roof's 250ms duration, generous headroom
+
+    const afterSettle = await readDrawCalls(page);
+    await page.waitForTimeout(500); // nothing is animating or changing — demand mode should be silent
+    const afterIdleWait = await readDrawCalls(page);
+
+    expect(afterIdleWait, 'draw calls kept incrementing after the transition should have settled — frameloop="demand" is not returning to idle').toBe(afterSettle);
+  });
+
+  test('idle rendering returns to zero draw calls even when animation frames come late, as on CI', async ({ page }) => {
+    // The same check as above, with every frame held back 800 ms from the moment the roof is switched off — inside the
+    // range CI's software WebGL produces on its own, so what failed there once in a while happens here every time.
+    await installDrawCallCounter(page);
+    await installFramePacer(page);
+    await openConfigurator(page);
+    await enterThreeMode(page);
+    await chooseSeparateWorks(page);
+
+    await page.waitForTimeout(300); // let the initial mount's own frame(s) settle
+    await slowAnimationFrames(page, 800);
+    await toggleScope(page, 'roof'); // off
     await page.waitForTimeout(600); // roof's 250ms duration, generous headroom
 
     const afterSettle = await readDrawCalls(page);
