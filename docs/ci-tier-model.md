@@ -121,3 +121,10 @@ logic only — `vitest.config.ts` includes `app/**/*.ts` and `sonar.coverage.exc
 components and CSS — so prototype CSS/SVG work needs no tests written for a number, while projections, mappings, business
 rules and interactive behaviour keep theirs.
 
+
+## Flaky-test policy
+
+Playwright fails CI when a test passes only after a retry (`failOnFlakyTests` in `playwright.config.ts`). The two retries
+remain available to collect evidence; they do not turn an unstable test into a green gate. Normal local runs keep their
+existing zero-retry behavior. Fix readiness waits against the observed state; do not replace baselines or disable
+assertions to hide a retry-only pass.

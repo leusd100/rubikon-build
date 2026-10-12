@@ -301,6 +301,8 @@ test('the configurator’s boxes are square 18 px boxes with the copper tick, wo
   const off = await look();
   expect(off).toMatchObject({ appearance: 'none', radius: '0px', size: '18×18', tick: '0', words: '14px' });
   await row.click();
+  await expect(box).toBeChecked();
+  await expect.poll(async () => (await look()).tick).toBe('1');
   const on = await look();
   expect(on.tick).toBe('1');
   expect(on.background).not.toBe(off.background);
@@ -313,7 +315,7 @@ test('the configurator’s boxes are square 18 px boxes with the copper tick, wo
   }
   await page.emulateMedia({ forcedColors: 'active' });
   await openControlGroup(page, 'dimensions');
-  expect(await box.evaluate((input) => getComputedStyle(input).appearance)).toBe('auto');
+  await expect(box).toHaveCSS('appearance', 'auto');
 });
 
 test('each size is shown once, in its field, with its metre inside the field — «10,55» holds at 320 px (F114)', async ({ page }, testInfo) => {
