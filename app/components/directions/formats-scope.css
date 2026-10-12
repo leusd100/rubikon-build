@@ -1,9 +1,9 @@
-/* «Формати участі» as one drawing (FormatsScope.tsx) — on /napryamky and, since 05.10, on /yak-pratsyuiemo in place
-   of its three scope cards. Three format buttons beside one flat section of a building that is redrawn for the format
+/* «Формати участі» as one drawing (FormatsScope.tsx) — on /yak-pratsyuiemo, in place of its three scope cards since
+   05.10 (until Phase 3 it stood on /napryamky too; that page now links here, DEC-45 PROPOSED). Three format buttons beside one flat section of a building that is redrawn for the format
    in focus: RUBIKON's parts in copper, the others' in thin graphite, and a dashed frame for whose object it is. Under
    it, the packages as tags and the two facts that tell the formats apart. Theme roles only.
-   Imported by the two pages (app/napryamky/page.tsx, app/yak-pratsyuiemo/page.tsx), never by the client component:
-   a CSS file imported by two client modules becomes an empty chunk under vinext. */
+   Imported by the page (app/yak-pratsyuiemo/page.tsx), never by the client component: a CSS file imported by two
+   client modules becomes an empty chunk under vinext. */
 .dfmt-grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: center; gap: clamp(28px, 4vw, 64px); }
 .dfmt-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
 .dfmt-list li { border-bottom: 1px solid var(--color-border); }

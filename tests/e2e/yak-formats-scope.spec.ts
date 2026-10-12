@@ -1,17 +1,19 @@
 import { expect, test } from '@playwright/test';
 import { participationChoices } from '../../app/lib/deliveryModelPresentation';
 
-// /napryamky «Формати участі» — one flat section of a building, redrawn for the format in focus (owner, 05.10: the
-// oblique wireframe did not explain enough). These pin what the drawing promises: the whole building is RUBIKON's in
-// the first format and exactly one package at a time in the other two; a general contractor's project gets its outer
-// frame; the two facts under the drawing are the Delivery Model's; and the block walks through the formats once on
-// first view, which any pointing ends.
+// /yak-pratsyuiemo «Який обсяг робіт можемо взяти на себе» — one flat section of a building, redrawn for the format in
+// focus (owner, 05.10: the oblique wireframe did not explain enough). Until Phase 3 the same block stood on /napryamky
+// too, and these checks ran there; that page now links here (DEC-45, PROPOSED). They pin what the drawing promises:
+// the whole building is RUBIKON's in the first format and exactly one package at a time in the other two; a general
+// contractor's project gets its outer frame; the two facts under the drawing are the Delivery Model's; and the block
+// walks through the formats once on first view, which a press ends (here pointing does not choose: it would rewrite
+// the responsibility map below on the way to it).
 
-const GRID = '.dfmt-grid';
+const GRID = '#obsiah .dfmt-grid';
 
 test('each format redraws the section: the whole complex, one package, one package inside a general contractor’s project', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/napryamky', { waitUntil: 'load' });
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const grid = page.locator(GRID);
   const drawing = grid.locator('svg.fs');
   const options = grid.locator('.dfmt-option');
@@ -44,7 +46,7 @@ test('each format redraws the section: the whole complex, one package, one packa
 
 test('the block walks through the formats once on first view and comes back to the first; in «one package» the packages take turns', async ({ page }) => {
   await page.clock.install();
-  await page.goto('/napryamky', { waitUntil: 'load' });
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const grid = page.locator(GRID);
   const drawing = grid.locator('svg.fs');
   await grid.scrollIntoViewIfNeeded();
@@ -59,13 +61,12 @@ test('the block walks through the formats once on first view and comes back to t
   await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
 });
 
-test('pointing ends the walk', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'a pointer affordance');
+test('a press ends the walk', async ({ page }) => {
   await page.clock.install();
-  await page.goto('/napryamky', { waitUntil: 'load' });
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const grid = page.locator(GRID);
   await grid.scrollIntoViewIfNeeded();
-  await grid.locator('.dfmt-option').nth(2).hover();
+  await grid.locator('.dfmt-option').nth(2).click();
   await page.clock.runFor(20_000);
   await expect(grid.locator('svg.fs')).toHaveAttribute('data-format', 'subcontract');
 });
