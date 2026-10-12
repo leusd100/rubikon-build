@@ -34,8 +34,10 @@
 .rm-coordinator b::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 8px 1px 0; background: currentColor; transform: rotate(45deg); }
 .rm-coordinator span { color: var(--color-text-muted); letter-spacing: .06em; text-transform: none; font-weight: 600; font-size: 12px; }
 
-/* The three groups: Підготовка · Будівництво · Нагляд, дозволи й здача */
+/* The three groups: Підготовка · Будівництво · Нагляд, дозволи й здача. On a wide screen the title; on a phone, once the
+   head script has run, a button that folds the group (MatrixGroupToggle, Phase 3 PROPOSED; below) */
 .rm-group > span { display: block; padding: 26px 0 10px; color: var(--color-accent-strong); border-bottom: 1px solid var(--color-border-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.rm-group-toggle { display: none; }
 .rm-row { position: relative; min-height: 46px; border-bottom: 1px solid var(--color-border); transition: background-color var(--duration-fast) ease; }
 @media (hover: hover) { .rm-row:hover { background: color-mix(in srgb, var(--color-accent) 5%, transparent); } }
 .rm-work { grid-column: 1; grid-row: 1; padding: 11px 20px 11px 0; color: var(--color-text); font-size: 16px; line-height: 1.4; }
@@ -108,4 +110,27 @@
   .rm-mark { padding: 8px 0 0; }
   .rm-mark::before { padding: 5px 7px 4px; font-size: 10.5px; letter-spacing: .04em; }
   .rm-group > span { padding-top: 22px; }
+}
+
+/* Phone (Phase 3, PROPOSED): each group folds under its title, the first open, so the table is three short headings
+   instead of ≈2 900 px; the switcher and the «Договір» band stay. The data-open list on the wrap names the open groups
+   (MatrixGroupToggle). Keyed on :root[data-theme], which only the head script sets: without JavaScript nothing folds. */
+@media (max-width: 760px) {
+  :root[data-theme] .rm-group-name { display: none; }
+  :root[data-theme] .rm-group > span { padding: 10px 0 0; }
+  :root[data-theme] .rm-group-toggle {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto 18px; align-items: center; gap: 12px; width: 100%; min-height: 48px; margin: 0; padding: 4px 0;
+    color: inherit; background: none; border: 0; border-radius: 0; font: inherit; letter-spacing: inherit; text-align: left; text-transform: inherit; cursor: pointer;
+  }
+  .rm-group-count { color: var(--color-text-muted); font: 600 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .04em; text-transform: none; }
+  /* a plus that turns into a minus */
+  .rm-group-toggle i { position: relative; width: 18px; height: 18px; }
+  .rm-group-toggle i::before, .rm-group-toggle i::after { content: ''; position: absolute; top: 8px; left: 2px; width: 14px; height: 2px; background: currentColor; transition: transform var(--duration-fast) ease; }
+  .rm-group-toggle i::after { transform: rotate(90deg); }
+  .rm-group-toggle[aria-expanded="true"] i::after { transform: rotate(0deg); }
+  /* A folded group whose rows a switch has just moved says so with a copper dot (FormatSwitchSync) */
+  .rm-group-toggle[data-fresh][aria-expanded="false"] .rm-group-count::before { content: ''; display: inline-block; width: 7px; height: 7px; margin: 0 7px 1px 0; vertical-align: middle; background: var(--color-accent); border-radius: 50%; }
+  :root[data-theme] .resp-matrix-wrap:not([data-open~="preparation"]) .rm-row[data-group="preparation"],
+  :root[data-theme] .resp-matrix-wrap:not([data-open~="construction"]) .rm-row[data-group="construction"],
+  :root[data-theme] .resp-matrix-wrap:not([data-open~="handover"]) .rm-row[data-group="handover"] { display: none; }
 }

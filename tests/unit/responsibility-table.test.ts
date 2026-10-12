@@ -10,6 +10,7 @@ import {
   noteOf,
   wordOf,
   workName,
+  worksCount,
 } from '../../app/lib/responsibilityTable';
 
 // The /yak-pratsyuiemo responsibility table's words (owner 06.10: «зробити більш зрозумілішим для клієнта»): every one
@@ -33,6 +34,14 @@ describe('responsibility table', () => {
     for (const item of resp.items) {
       expect(RESPONSIBILITY_GROUPS.filter((group) => group.rows.includes(item.rows[0])), item.text).toHaveLength(1);
     }
+  });
+
+  it('names each group for the phone fold (Phase 3) and counts its works in Ukrainian', () => {
+    expect(RESPONSIBILITY_GROUPS.map((group) => group.id)).toEqual(['preparation', 'construction', 'handover']);
+    expect(new Set(RESPONSIBILITY_GROUPS.map((group) => group.id)).size).toBe(RESPONSIBILITY_GROUPS.length);
+    expect([1, 2, 3, 4, 5, 8, 11, 12, 14, 21, 22, 25].map(worksCount)).toEqual([
+      '1 робота', '2 роботи', '3 роботи', '4 роботи', '5 робіт', '8 робіт', '11 робіт', '12 робіт', '14 робіт', '21 робота', '22 роботи', '25 робіт',
+    ]);
   });
 
   it('names a work plainly where the model is technical, and in the model’s words otherwise', () => {

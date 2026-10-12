@@ -20,12 +20,22 @@ export const FORMAT_WHEN: Record<DeliveryFormatId, string> = {
   subcontract: 'Ви генпідрядник, і вам потрібен виконавець на пакет робіт.',
 };
 
-/** The rows in three groups, by the first matrix row each work stands for. */
-export const RESPONSIBILITY_GROUPS: readonly { title: string; rows: readonly string[] }[] = [
-  { title: 'Підготовка', rows: ['task-framing', 'site-inputs', 'design', 'interfaces', 'estimate'] },
-  { title: 'Будівництво', rows: ['materials', 'steel', 'steel-fabrication', 'flexible-packages', 'engineering-systems', 'external-utilities', 'process-equipment', 'quality-control'] },
-  { title: 'Нагляд, дозволи й здача', rows: ['permits', 'surveys', 'acceptance'] },
+/** The rows in three groups, by the first matrix row each work stands for. On a phone each group folds under its title
+ *  (Phase 3, PROPOSED); the id names it in the markup. */
+export const RESPONSIBILITY_GROUPS: readonly { id: string; title: string; rows: readonly string[] }[] = [
+  { id: 'preparation', title: 'Підготовка', rows: ['task-framing', 'site-inputs', 'design', 'interfaces', 'estimate'] },
+  { id: 'construction', title: 'Будівництво', rows: ['materials', 'steel', 'steel-fabrication', 'flexible-packages', 'engineering-systems', 'external-utilities', 'process-equipment', 'quality-control'] },
+  { id: 'handover', title: 'Нагляд, дозволи й здача', rows: ['permits', 'surveys', 'acceptance'] },
 ];
+
+/** «5 робіт», «3 роботи», «1 робота»: how many works a folded group holds. */
+export function worksCount(count: number) {
+  const tens = count % 100;
+  const units = count % 10;
+  if (units === 1 && tens !== 11) return `${count} робота`;
+  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return `${count} роботи`;
+  return `${count} робіт`;
+}
 
 /** Plainer names for the most technical works (same scope; the model's wording stays in the data). */
 const PLAIN: Readonly<Record<string, string>> = {

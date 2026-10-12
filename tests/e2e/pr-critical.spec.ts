@@ -856,6 +856,8 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
+    // Row 9 is in «Будівництво», folded on a phone until opened (Phase 3, PROPOSED)
+    await page.locator('.rm-group-toggle[data-group="construction"]').click();
     await page.evaluate(() => {
       const row = document.querySelectorAll('.rm-row')[8]!;
       window.scrollTo({ top: row.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2, behavior: 'instant' });
