@@ -1,11 +1,11 @@
-# Handoff · 3D у ракурсі креслень /angary (PR {{PR}})
+# Handoff · 3D у ракурсі креслень /angary (PR #184)
 
 | | |
 |---|---|
 | Дата | 2026-10-12 |
 | Виконавець | Claude Code (реалізація) |
 | Рев'ю | ChatGPT (незалежне), Дмитро (рішення) |
-| PR | {{PR_URL}} · **Draft**, без merge і deploy |
+| PR | https://github.com/leusd100/rubikon-build/pull/184 · **Draft**, без merge і deploy |
 | Гілка | `design/configurator-3d-dimetric` |
 | Base | `main` `7679561` (#182) |
 | Статус | Реалізовано в гілці; візуальні еталони **не** оновлювались |
