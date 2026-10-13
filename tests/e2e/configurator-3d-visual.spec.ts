@@ -51,7 +51,11 @@ import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
 // this harness now detects a real WebGL change — and, reverted, the full 5-test suite passed
 // cleanly, repeated 3x (15/15), with no observed GPU/AA flakiness on this machine. Revisit
 // together if a future change needs it loosened.
-const SCREENSHOT_OPTIONS = { threshold: 0.02 } as const;
+// …plus a handful of pixels: on CI's Linux Chromium the default shell's capture came out in two variants across a run's
+// three attempts (Phase 5, run 38386530702 on 5612861), 5 pixels apart in the surface's top-right corner, the largest
+// 12/255. The tight per-pixel threshold above is what catches a broad tone shift (hundreds of thousands of pixels); an
+// allowance of 16 pixels does not weaken that, it only keeps that corner from failing a run as flaky.
+const SCREENSHOT_OPTIONS = { threshold: 0.02, maxDiffPixels: 16 } as const;
 
 async function openConfigurator(page: Page) {
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
@@ -202,7 +206,11 @@ test.describe('configurator 3D visual states', () => {
 // #177 (configurator iteration 4) moved both again; main and the phase 1 branch read the same
 // 105.5434 / 0.2992140 on Linux Chromium, and CI read the same litMean on 507d416. Re-pinned with
 // the 21 configurator baselines on the owner's OK (11.10).
-const RENDER_TONE = { litMean: 105.5434, litFrac: 0.299214 } as const;
+// #184 (the drawings' rectangular dimetric, 13.10) turned the camera to the gable and framed the model larger: both
+// moved. CI's Linux Chromium read litMean 107.2091 on 5612861 (all three attempts); litFrac 0.398391 is this Mac's
+// Chrome on SwiftShader, which read litMean 107.0000 there — re-pinned with the 21 configurator / FAQ baselines on the
+// owner's OK (13.10, Phase 5). Both checks are soft, so a run reports both halves at once.
+const RENDER_TONE = { litMean: 107.2091, litFrac: 0.398391 } as const;
 const LIT_MEAN_TOLERANCE = 0.3;
 const LIT_FRAC_TOLERANCE = 0.002;
 
@@ -244,13 +252,13 @@ test('6 — render tone: catches lighting/material shifts a pixel diff cannot se
     contentType: 'application/json',
   });
 
-  expect(
+  expect.soft(
     Math.abs(tone.litMean - RENDER_TONE.litMean),
     `lit-mean luma ${tone.litMean.toFixed(4)} vs expected ${RENDER_TONE.litMean} — the scene got `
     + 'brighter or darker. If deliberate, update RENDER_TONE together with the PNG baselines.',
   ).toBeLessThanOrEqual(LIT_MEAN_TOLERANCE);
 
-  expect(
+  expect.soft(
     Math.abs(tone.litFrac - RENDER_TONE.litFrac),
     `silhouette share ${tone.litFrac.toFixed(4)} vs expected ${RENDER_TONE.litFrac} — the model's `
     + 'footprint in frame changed (camera, fit or geometry).',
