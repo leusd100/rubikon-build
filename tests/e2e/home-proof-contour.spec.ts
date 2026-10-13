@@ -2088,16 +2088,24 @@ test('DEC-42 (a), proposed: after the arrival node Г is lit and one line says w
   expect(await pill.evaluate((element) => getComputedStyle(element).borderTopColor)).toBe(colour);
   expect(await sheet.evaluate((element) => element.getAnimations({ subtree: true }).filter((animation) => animation instanceof CSSAnimation && animation.playState === 'running').map((animation) => (animation as CSSAnimation).animationName))).toEqual([]);
   // Nothing opens — not at the old two seconds, not later — the focus stays where it was, and the photo stays open: the
-  // line keeps to its top corner, left of the seam's «‹ Фото», a few per cent of the frame
+  // line keeps to a corner of the photo's half — the sky on a laptop, the gravel at a phone's foot — clear of the seam,
+  // its handle and «‹ Фото», a few per cent of the frame
   await pageClockPast(page, since, 3_000);
   await expect(page.locator('.hv2-detail')).toHaveCount(0);
   await expect(stage).not.toHaveAttribute('data-detail', /.*/);
   expect(await sheet.evaluate((element) => element.contains(document.activeElement))).toBe(false);
-  const [box, frame, photoTag] = [(await hint.boundingBox())!, (await stage.boundingBox())!, (await stage.locator('.hv2-contour-seamtags > span').first().boundingBox())!];
+  const box = (await hint.boundingBox())!;
+  const [frame, photoTag, handle, seam] = await Promise.all([stage, stage.locator('.hv2-contour-seamtags > span').first(), stage.locator('.hv2-contour-handle'), stage.locator('.hv2-contour-seam')].map(async (part) => (await part.boundingBox())!));
+  const apartFrom = (other: typeof box) => box.x + box.width <= other.x || other.x + other.width <= box.x || box.y + box.height <= other.y || other.y + other.height <= box.y;
   expect(box.x).toBeGreaterThanOrEqual(frame.x);
   expect(box.y).toBeGreaterThanOrEqual(frame.y);
-  expect(box.x + box.width).toBeLessThanOrEqual(photoTag.x - 2);
-  expect((box.width * box.height) / (frame.width * frame.height)).toBeLessThan(phone ? 0.1 : 0.04);
+  expect(box.y + box.height).toBeLessThanOrEqual(frame.y + frame.height);
+  expect(box.x + box.width).toBeLessThanOrEqual(seam.x - 2);
+  expect(apartFrom(photoTag), '«‹ Фото»').toBe(true);
+  expect(apartFrom(handle), 'the handle').toBe(true);
+  if (phone) expect(box.y + box.height / 2).toBeGreaterThan(frame.y + frame.height / 2);
+  else expect(box.y + box.height / 2).toBeLessThan(frame.y + frame.height / 2);
+  expect((box.width * box.height) / (frame.width * frame.height)).toBeLessThan(phone ? 0.08 : 0.03);
   // Pressed — on a laptop its letter on the scheme, on a phone its pill — it opens as it always did; the hint is over for
   // good, the node closed again included
   const panel = await openNode(page, NODES[3]);
@@ -2768,9 +2776,14 @@ test('«Тур за 20 секунд» plays six steps in order — the frame put
   const log = await recordTour(page);
   await expect(button).toHaveText('Тур за 20 секунд');
   await button.click();
-  // Pressed: «Зупинити тур», the step said in a status on the frame
+  // Pressed: «Зупинити тур», the step said in a status on the frame — a quiet, outlined button: the brief stays the
+  // sheet's one filled one (R-UX-06 §07: on a phone the stop stood over the brief in the brief's own copper)
   await expect(button).toHaveText('Зупинити тур');
   await expect(button).toHaveAttribute('aria-pressed', 'true');
+  // (the pointer off it: under a mouse it takes the controls' faint hover tint)
+  await page.mouse.move(0, 0);
+  await expect.poll(() => button.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+  expect(await sheet.locator('.hv2-contour-brief').evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
   await expect(chip).toHaveRole('status');
   await expect(chip).toHaveAttribute('data-on', '');
   // …until it ends by itself, about 22 s on

@@ -699,6 +699,11 @@ main[data-home="v2"] .hv2-contour-build:disabled { cursor: default; opacity: .45
 main[data-home="v2"] .hv2-contour-tour-btn { color: #f5f2eb; border-color: #f0b48a; background: #3a2b22; }
 /* (a quiet action now: the brief is the sheet's one filled button) */
 main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn { flex: 1 1 100%; justify-content: center; min-height: 40px; color: var(--hv2-text); background: none; border-color: transparent; }
+/* …pressed too: «Зупинити тур» outlined, never filled — on a phone it stood over the brief in the brief's own copper, two
+   «main» buttons in a row (R-UX-06 §07) */
+@media (forced-colors: none) {
+  main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn[aria-pressed="true"] { background: none; border-color: var(--hv2-line-strong); }
+}
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn { min-height: 44px; } }
 @media (min-width: 761px) {
   main[data-home="v2"] .hv2-contour-controls { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
@@ -1295,9 +1300,10 @@ main[data-home="v2"] .hv2-contour-node-hint [data-input="touch"] { display: none
   main[data-home="v2"] .hv2-contour-node-hint [data-input="hover"] { display: none; }
   main[data-home="v2"] .hv2-contour-node-hint [data-input="touch"] { display: inline; }
 }
-/* a phone: in two short lines, left of «‹ Фото» (the seam rests at 62 %, the seam's name ≈ 60 px left of it) */
+/* a phone's close-up has little sky over the gable: the line goes to the photo's foot instead — the retouched gravel — in
+   two lines, short of the seam's handle, which rests at the frame's foot at 62 % (44 px wide) */
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-contour-node-hint { top: 6px; left: 6px; max-width: calc(62% - 80px); gap: 6px; padding: 3px 8px 3px 3px; font-size: 11.5px; }
+  main[data-home="v2"] .hv2-contour-node-hint { top: auto; bottom: 6px; left: 6px; max-width: calc(62% - 40px); gap: 6px; padding: 3px 8px 3px 3px; font-size: 11.5px; }
 }
 
 /* a phone: the sheet edge to edge, the photo's full height (rows 0–788: the gable whole), the five letters and no numbers
