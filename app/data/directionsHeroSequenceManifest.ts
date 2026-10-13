@@ -1,65 +1,67 @@
 export type DirectionsHeroSequenceAsset = {
+  id: string;
+  daylight: SequenceMedia;
+  dark: SequenceMedia;
+  focalPosition: string;
+  mobileFocalPosition: string;
+};
+
+type SequenceMedia = {
   fallbackSrc: string;
   srcSet: string;
   portraitSrcSet: string;
   width: number;
   height: number;
-  focalPosition: string;
-  mobileFocalPosition: string;
 };
-
 type ResponsiveVariants = readonly (readonly [width: number, hash: string])[];
 
-const responsiveSrcSet = (name: string, variants: ResponsiveVariants, portrait = false) =>
+const responsiveSrcSet = (style: string, name: string, variants: ResponsiveVariants, portrait = false) =>
   variants.map(([width, hash]) =>
-    `/media-responsive/directions-sequence-${name}${portrait ? '-portrait' : ''}-${width}w.${hash}.webp ${width}w`,
+    `/media-responsive/directions-sequence-${style}-${name}${portrait ? "-portrait" : ""}-${width}w.${hash}.webp ${width}w`,
   ).join(', ');
+
+const media = (style: string, name: string, landscape: ResponsiveVariants, portrait: ResponsiveVariants): SequenceMedia => ({
+  fallbackSrc: `/media-responsive/directions-sequence-${style}-${name}-1536w.${landscape[3][1]}.webp`,
+  srcSet: responsiveSrcSet(style, name, landscape),
+  portraitSrcSet: responsiveSrcSet(style, name, portrait, true),
+  width: 1881,
+  height: 836,
+});
 
 export const directionsHeroSequenceAssets: readonly DirectionsHeroSequenceAsset[] = [
   {
-    fallbackSrc: '/media-responsive/directions-sequence-angary-1536w.3c8e8cc9.webp',
-    srcSet: responsiveSrcSet('angary', [[480, '94e4a740'], [768, 'ca3d62f7'], [1200, '452a338b'], [1536, '3c8e8cc9'], [1896, '050ba3f4']]),
-    portraitSrcSet: responsiveSrcSet('angary', [[320, '41c00eaa'], [480, 'eb1e77b6'], [622, '6e4983de']], true),
-    width: 1896,
-    height: 830,
-    // Preserve the sky above the roof apex when wide screens crop the image vertically.
-    focalPosition: '55% top',
-    mobileFocalPosition: '50% top',
+    id: 'angary',
+    daylight: media('daylight', 'angary', [[480, '8c8c83e4'], [768, '645a2b14'], [1200, 'a17dc873'], [1536, '528c3107'], [1881, '08b5c021']], [[320, 'e1dd8b6b'], [480, '1edf8aa8'], [627, 'bd355c5d']]),
+    dark: media('blue-hour', 'angary', [[480, 'cd16d316'], [768, 'a042958c'], [1200, '1cc95c83'], [1536, 'f3cca8bf'], [1881, '85bf3ba0']], [[320, '8c82be24'], [480, '0bec42e5'], [627, 'c24290a9']]),
+    focalPosition: 'center center',
+    mobileFocalPosition: 'center center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-zernoskhovyshcha-1536w.6945f8a6.webp',
-    srcSet: responsiveSrcSet('zernoskhovyshcha', [[480, 'fa55a2fd'], [768, 'd080dd16'], [1200, '18ffadd1'], [1536, '6945f8a6'], [1897, 'ccffd996']]),
-    portraitSrcSet: responsiveSrcSet('zernoskhovyshcha', [[320, '0a144acc'], [480, '9510e977'], [622, '06076313']], true),
-    width: 1897,
-    height: 829,
-    focalPosition: '60% center',
-    mobileFocalPosition: '50% center',
+    id: 'zernoskhovyshcha',
+    daylight: media('daylight', 'zernoskhovyshcha', [[480, '6348680d'], [768, '366bb2b7'], [1200, 'c5cb0806'], [1536, '7812a6f2'], [1881, '38c8889a']], [[320, '4a4da95e'], [480, '28a6406e'], [627, '6f7116e6']]),
+    dark: media('blue-hour', 'zernoskhovyshcha', [[480, 'bf5f2eae'], [768, 'd1b78999'], [1200, '1995b70f'], [1536, '345df3de'], [1881, '1c16e7f0']], [[320, '297f7301'], [480, '1a292946'], [627, '51085b7a']]),
+    focalPosition: 'center center',
+    mobileFocalPosition: 'center center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-metalokonstruktsii-1536w.8a84480d.webp',
-    srcSet: responsiveSrcSet('metalokonstruktsii', [[480, '85ea0d2b'], [768, '9abe6e6d'], [1200, '33589eca'], [1536, '8a84480d'], [1896, '0ac262e3']]),
-    portraitSrcSet: responsiveSrcSet('metalokonstruktsii', [[320, 'b56d8ce5'], [480, '897afad8'], [622, 'd7fff708']], true),
-    width: 1896,
-    height: 830,
-    focalPosition: '58% center',
-    mobileFocalPosition: '50% center',
+    id: 'metalokonstruktsii',
+    daylight: media('daylight', 'metalokonstruktsii', [[480, '30f66ff2'], [768, 'e65d437f'], [1200, '3be6b92c'], [1536, '10a376be'], [1881, '608e9934']], [[320, 'a27cbd7b'], [480, '79efc685'], [627, '98108f2d']]),
+    dark: media('blue-hour', 'metalokonstruktsii', [[480, 'e01ee4cd'], [768, '3eaff5a3'], [1200, 'a17a32b2'], [1536, 'fcea5b4f'], [1881, 'e1886f2b']], [[320, '16fbee9c'], [480, '20d031ef'], [627, '9bd1dccc']]),
+    focalPosition: 'center center',
+    mobileFocalPosition: 'center center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-betonni-roboty-1536w.1a79bbe0.webp',
-    srcSet: responsiveSrcSet('betonni-roboty', [[480, '3adf44c0'], [768, 'ad38b775'], [1200, '87a74886'], [1536, '1a79bbe0'], [1896, '29919ad1']]),
-    portraitSrcSet: responsiveSrcSet('betonni-roboty', [[320, '20cf5818'], [480, '88e0e3eb'], [622, 'b8fd147d']], true),
-    width: 1896,
-    height: 830,
-    focalPosition: '72% center',
-    mobileFocalPosition: '50% center',
+    id: 'betonni-roboty',
+    daylight: media('daylight', 'betonni-roboty', [[480, 'ae994f77'], [768, '1c699528'], [1200, '7134f906'], [1536, 'a3d01f75'], [1881, 'c6fd5f90']], [[320, 'a2c8878e'], [480, '2364d901'], [627, '7c481e84']]),
+    dark: media('blue-hour', 'betonni-roboty', [[480, '8ca1ce1c'], [768, '3d919ea4'], [1200, 'b265d189'], [1536, 'f7ece6a6'], [1881, '89a4cd12']], [[320, 'cceb9b50'], [480, '879f7e43'], [627, 'e72285ea']]),
+    focalPosition: 'center center',
+    mobileFocalPosition: 'center center',
   },
   {
-    fallbackSrc: '/media-responsive/directions-sequence-pokrivelni-roboty-1536w.622e9f02.webp',
-    srcSet: responsiveSrcSet('pokrivelni-roboty', [[480, '33d6df46'], [768, '90478a2d'], [1200, 'cc2f8b08'], [1536, '622e9f02'], [1896, '6983fba3']]),
-    portraitSrcSet: responsiveSrcSet('pokrivelni-roboty', [[320, '7eb1ec0a'], [480, 'fa139c18'], [622, '642d338e']], true),
-    width: 1896,
-    height: 830,
-    focalPosition: '60% center',
-    mobileFocalPosition: '50% center',
+    id: 'pokrivelni-roboty',
+    daylight: media('daylight', 'pokrivelni-roboty', [[480, '7e080fde'], [768, '62fc287a'], [1200, '83e76d7b'], [1536, '2730c5cc'], [1881, '1d684146']], [[320, 'ea1423cc'], [480, '4ffaac9d'], [627, '55f23274']]),
+    dark: media('blue-hour', 'pokrivelni-roboty', [[480, 'ca2de956'], [768, '10a0b0fc'], [1200, '1192ad0a'], [1536, '22729cc5'], [1881, 'de6ca572']], [[320, 'ab822391'], [480, '4a85d616'], [627, '7c79ca17']]),
+    focalPosition: 'center center',
+    mobileFocalPosition: 'center center',
   },
 ];

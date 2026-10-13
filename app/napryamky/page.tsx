@@ -47,8 +47,8 @@ export const metadata = createPageMetadata({
   description: 'Ангари, зерносховища, металоконструкції, бетонні й покрівельні роботи у Дніпрі. Оберіть напрям або опишіть завдання, якщо об’єкт поєднує кілька видів робіт.',
   socialTitle: `Оберіть напрям будівництва — ${company.name}`,
   socialDescription: 'П’ять напрямів промислового будівництва у Дніпрі. Один об’єкт може поєднувати кілька — підкажемо, які саме.',
-  image: directionsHeroSequenceAssets[0].fallbackSrc,
-  imageAlt: `Промислові напрями будівництва ${company.name} — металевий каркас на будівельному майданчику`,
+  image: directionsHeroSequenceAssets[0].daylight.fallbackSrc,
+  imageAlt: `Промислові напрями будівництва ${company.name} — ангар і складський комплекс`,
 });
 
 export default function DirectionsPage() {
