@@ -47,6 +47,13 @@ export function initialProgressForFreshMount(phase: LifecyclePhase): number {
  * 2. `durationMs <= 0` (reduced motion, or a layer with no configured animation at all) resolves
  *    straight to the target with no interpolation — the caller's job is to have already zeroed
  *    `durationMs` for reduced motion (useLayerLifecycle already does this), not this function's.
+ *
+ * At rest ('visible' / 'hidden') it is the target at once, whatever `fromProgress` is. The
+ * lifecycle's timer is what ends a transition, and it fires a moment after the last frame drew
+ * it, so a layer enters its resting phase a hair short of the target (under 1 % on a GPU, against
+ * a 5–11 % step per frame — 12.10). Interpolating that remainder again replayed the layer's whole
+ * delay + duration, with the demand loop drawing all along: 15 more frames after the roof
+ * settled, 78 after the frame did.
  */
 export function computeProgress(
   phase: LifecyclePhase,
@@ -56,7 +63,7 @@ export function computeProgress(
   fromProgress: number,
 ): number {
   const target = targetProgressForPhase(phase);
-  if (durationMs <= 0) return target;
+  if (durationMs <= 0 || phase === 'visible' || phase === 'hidden') return target;
   const t = clamp01((elapsedSincePhaseChangeMs - delayMs) / durationMs);
   return fromProgress + (target - fromProgress) * t;
 }
@@ -74,4 +81,13 @@ function clamp01(x: number): number {
  *  `delayMs + durationMs`, not an asymptotic approach that never quite arrives. */
 export function isAnimating(progress: number, phase: LifecyclePhase): boolean {
   return progress !== targetProgressForPhase(phase);
+}
+
+/** Whether a phase change has to ask the demand loop for a frame. A transition starting or
+ *  reversing always does. Coming to rest does only while progress is still short of the target,
+ *  and R3F's own commit of the new phase already asks for a frame when anything on screen
+ *  changes. Asking regardless drew the same settled picture once more, a frame late, whenever this
+ *  ran after that frame: the third frame after the build-up settled, under software WebGL (12.10). */
+export function phaseChangeNeedsFrame(progress: number, phase: LifecyclePhase): boolean {
+  return (phase !== 'visible' && phase !== 'hidden') || isAnimating(progress, phase);
 }
