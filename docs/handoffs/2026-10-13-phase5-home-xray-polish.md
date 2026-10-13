@@ -8,7 +8,7 @@
 | PR | https://github.com/leusd100/rubikon-build/pull/189 · **Draft**, без merge і deploy |
 | Гілка | `design/phase5-home-xray-polish` |
 | Base | `main` `2cb1996` (#183) |
-| Код | `07030ee` (останній коміт коду й тестів; цей файл — окремим комітом поверх) |
+| Код | `aaa5e49` (останній коміт коду; handoff — окремими комітами) |
 | Статус | Робочий прототип. DEC-42 (a) реалізовано як **PROPOSED**, не затверджено. Візуальні еталони не оновлювались |
 | Рішення | `DECISIONS.md` не змінено. DEC-40…46 і далі лише в R-UX-06 §18 |
 | Порівняння | Артефакт https://claude.ai/artifact/E6asoghPKp5KZJWF7n1xjy (приватний, для Дмитра) і PDF в архіві (§12) |
@@ -61,6 +61,7 @@
 | `3ec1906` | **DEC-42 (a), PROPOSED:** Г підсвічено з підказкою, діалог сам не відкривається (§5) |
 | `b002c74` | Телефон: підказка внизу фото; «Зупинити тур» більше не залита (§7) |
 | `07030ee` | Тест «натискання зупиняє появу» доводить зупинку власним кінцем руху, а не запасом 300 мс (§8) |
+| `aaa5e49` | Sonar S3776 на PR: ряд «Вузли крупно» знову під межею когнітивної складності (17 → нижче 15); розмітка й поведінка ті самі |
 
 Файли: `app/components/home-v2/ProofContour.tsx`, `ProofDetails.tsx`, `proof-contour/useFirstSweep.ts`, `useTour.ts`, `useNodeDetail.ts`, `app/home-v2.css`, `tests/e2e/home-proof-contour.spec.ts`. Конфігуратор (`/angary`, `FrameTour.tsx` зі своїми назвами), шапка, фото, креслення, `homeProofFrame.ts` і `homeProofContour.ts` не змінені.
 
@@ -135,7 +136,8 @@
 Локально, production-збірки (`vinext build` + `vinext start`), системний Chrome (`channel: 'chrome'`), Playwright 1.62:
 
 - `vitest run`: 86 файлів, 1358 із 1358. `tsc --noEmit --incremental false` і `eslint` чисті.
-- `tests/e2e/home-proof-contour.spec.ts`, desktop-chromium + mobile-chromium: **92 passed, 14 skipped** (пропуски за проєктом у самому spec), **0 failed**. Фінальний прогін на `07030ee`.
+- `tests/e2e/home-proof-contour.spec.ts`, desktop-chromium + mobile-chromium: **92 passed, 14 skipped** (пропуски за проєктом у самому spec), **0 failed**. Фінальний прогін на `07030ee`. Після `aaa5e49` (лише рефакторинг ряду чипів) повторено тести чипів, підглядання, DEC-42, ‹ ›, кілець, шарів, без JS і «літери не закривають слів»: 15 passed, 1 skipped.
+- SonarCloud на PR: Quality Gate passed; єдине нове зауваження (S3776, `nodesRow`) виправлено в `aaa5e49`.
 - Пов'язані spec-и HOME (`pr-critical`, `smoke`, `responsive-a11y-phase1`, `public-service-claims`, `editorial-focus`, `home-directions-sheets`), обидва проєкти: 191 passed, 31 skipped, 0 failed.
 - Нові й змінені тести перевірено на main `2cb1996`: падають, тобто розрізняють стару поведінку. Це тест появи (тривалість, розворот, кільця, `played`), назви чипів і діалогу, обидва тести DEC-42 і «Зупинити тур» без заливки.
 - Чутливі до часу тести (поява, DEC-42, натискання зупиняє появу), повтор ×4 при load average 17–38: 24 із 24.
