@@ -7,21 +7,18 @@ import { DEFAULT_SPLIT } from './useSeam';
  *  one by one (they come in with the rest of the drawing, at once, as the seam rests). It used to sweep out to 38 % and
  *  back over 1.8 s, then ring the handle and the brief, bring the names in one by one and call a letter: five events in
  *  a row, and only the first explained anything */
-const SWEEP_AT = 1050;
+/** …and it starts early (owner, 13.10: «починає рухатися запізно» — a visitor who scrolls on passes the block's magic):
+ *  SWEEP_AT after the sheet is a third in view, while the photo's last two thirds still plot in — the seam's ease-in
+ *  barely moves it in its first 400 ms, so the two hardly overlap — and with the page still scrolling. It used to wait
+ *  for the plot's end (1.05 s), 60 % of the frame in view and 250 ms of a still page: a visitor scrolling through at
+ *  ~1500 px/s never saw the drawing at all, only the photo, and one who stopped waited 1.3 s for the seam */
+const SWEEP_AT = 350;
 const SWEEP_MS = 1400;
-/** The page must have stopped scrolling this long before the sweep: the eye is on the way, not on the seam */
-const SWEEP_QUIET = 250;
 /** …and once the drawing's names are in (their fade, 240 ms), the arrival's last word: node Г is lit and one line says
  *  what it does (DEC-42 (a), owner 13.10 — ProofContour's NODE_HINT). Nothing opens by itself: the node opened over the
  *  photo on a laptop (owner, 09.10), 35–60 % of the photo's half on 1440 × 900 and 1250 × 613, and on a phone the letter
  *  В called instead */
 const HINT_AT = 300;
-
-/** Settles when the sheet's picture has finished plotting in (the transition of DrawingSheet's cover), or at once */
-function plottedIn(sheet: Element) {
-  const plotting = sheet.querySelector('.sheet-cover')?.getAnimations() ?? [];
-  return Promise.all(plotting.map((animation) => animation.finished.catch(() => undefined)));
-}
 
 type Carriers = Readonly<{
   paneRef: RefObject<HTMLDivElement | null>;
@@ -30,10 +27,10 @@ type Carriers = Readonly<{
   handleRef: RefObject<HTMLSpanElement | null>;
 }>;
 
-// The first view (see SWEEP_AT): the seam waits at the right edge — the photo whole — while the sheet plots in, then
-// sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
-// never move. It waits until the stage is in view and the page has stopped scrolling. The visitor's own move in the
-// sheet first, or reduced motion: no sweep, the seam at rest.
+// The first view (see SWEEP_AT): the seam waits at the right edge — the photo whole — as the sheet starts to plot in,
+// then sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
+// never move. It starts once the stage is a third in view, scrolling or not. The visitor's own move in the sheet
+// first, or reduced motion: no sweep, the seam at rest.
 // `hint` is told when the node's hint is due (true: the seam has come to rest, or at once with reduced motion — the hint
 // stands still) and when it is over (false: the visitor's own first press or key in the sheet); a visitor who moved
 // first never gets it
@@ -51,7 +48,6 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     let timer: number | undefined;
     let due = false;
     let visible = false;
-    let scrolled = 0;
     let live = true;
     const stop = () => {
       touchedRef.current = true;
@@ -81,12 +77,6 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     stage.dataset.sweep = 'wait';
     const run = () => {
       if (touchedRef.current || !due || !visible || sweep.length) return;
-      const quiet = performance.now() - scrolled;
-      if (quiet < SWEEP_QUIET) {
-        window.clearTimeout(timer);
-        timer = window.setTimeout(run, SWEEP_QUIET - quiet);
-        return;
-      }
       // In one task: the hold at the edge gives way to the sweep's first frame, at the same edge
       stage.dataset.gliding = '';
       stage.dataset.sweep = 'run';
@@ -110,25 +100,18 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     const seen = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
       run();
-    // most of the frame in view, not its top edge: the arrival plays where it is seen (audit 08.10)
-    }, { threshold: 0.6 });
+    // a third of the frame in view, as the sheet's own plot (DrawingSheet): seen arriving, not only once it is there
+    }, { threshold: 0.35 });
     seen.observe(stage);
     const arrived = new MutationObserver(() => {
       if (sheet.dataset.sheetState !== 'on') return;
       arrived.disconnect();
       timer = window.setTimeout(() => {
-        // …and only once the picture has plotted in: the plot's transition starts a frame after data-sheet-state, so on a
-        // busy page SWEEP_AT alone could start the sweep with the plot's last frames still running
-        void plottedIn(sheet).then(() => {
-          if (!live) return;
-          due = true;
-          run();
-        });
+        due = true;
+        run();
       }, SWEEP_AT);
     });
     arrived.observe(sheet, { attributes: true, attributeFilter: ['data-sheet-state'] });
-    const onScroll = () => { scrolled = performance.now(); };
-    window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       live = false;
       unlisten();
@@ -137,7 +120,6 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
       window.clearTimeout(timer);
       for (const animation of sweep) animation.cancel();
       delete stage.dataset.sweep;
-      window.removeEventListener('scroll', onScroll);
     };
   }, [stageRef, paneRef, innerRef, railRef, handleRef]);
 }

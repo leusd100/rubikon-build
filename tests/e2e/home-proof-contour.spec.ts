@@ -41,12 +41,12 @@ test.describe.configure({ timeout: 60_000 });
 // The tour shows the block in about twenty seconds and hands it back at the visitor's first press or key.
 
 const DEFAULT_SPLIT = 62;
-// The first view's one move (useFirstSweep): SWEEP_AT after the sheet arrives, once the page has been quiet SWEEP_QUIET,
-// the seam passes once from the right edge to its rest over SWEEP_MS — on a phone too. Phase 5 (R-UX-06 §07): one way, no
-// turn (it used to sweep out to 38 % and back over 1.8 s), and nothing else in the arrival — no rings from the handle or
-// the brief, no names one by one
-const SWEEP_AT = 1050;
-const SWEEP_QUIET = 250;
+// The first view's one move (useFirstSweep): SWEEP_AT after the sheet arrives — the page still scrolling or not — the seam
+// passes once from the right edge to its rest over SWEEP_MS, on a phone too. Phase 5 (R-UX-06 §07): one way, no turn (it
+// used to sweep out to 38 % and back over 1.8 s), and nothing else in the arrival — no rings from the handle or the
+// brief, no names one by one. Owner, 13.10 («починає рухатися запізно»): it no longer waits for the photo to have plotted
+// in (1.05 s) or for the page to be still (250 ms) — scrolling through, a visitor saw the photo only
+const SWEEP_AT = 350;
 const SWEEP_MS = 1400;
 const SWEEP_MS_PHONE = 1400;
 // Passing a line of the outline, in per cent of the frame: it is lit within GRAB of the seam, until the seam is past
@@ -2006,23 +2006,26 @@ test('arriving with motion, the photo plots in whole, then the seam passes once 
   const sweep = frames.filter((frame) => frame.t >= run! && frame.t < ended!);
   const after = frames.filter((frame) => frame.t >= ended!);
 
-  // While the picture plots in, the photo stands whole: the seam at the right edge, nothing of the right side uncovered,
-  // nothing drawing in
-  expect(plotting.length).toBeGreaterThan(10);
+  // While the seam waits, the photo stands whole: the seam at the right edge, nothing of the right side uncovered, nothing
+  // drawing in
+  expect(plotting.length).toBeGreaterThan(3);
   for (const frame of plotting) {
     expect(frame, `${frame.t}`).toMatchObject({ sweep: 'wait', gliding: false, split: 100, spread: 0, sweeps: 0, others: [] });
     expect(frame.seam, `${frame.t}`).toBeCloseTo(100, 1);
     expect(frame.window, `${frame.t}`).toBeCloseTo(100, 2);
   }
-  // The sweep starts SWEEP_AT after the sheet arrived, the picture plotted in by then (a few ms: two observers read the
-  // clock a moment apart), and runs its time once — a shorter one on a phone
+  // The sweep starts SWEEP_AT after the sheet arrived — not after the picture has plotted in (a few ms: two observers read
+  // the clock a moment apart) — and runs its time once
   expect(run! - on!).toBeGreaterThanOrEqual(SWEEP_AT - 5);
+  expect(run! - on!).toBeLessThan(SWEEP_AT + 300);
   const duration = phone ? SWEEP_MS_PHONE : SWEEP_MS;
   expect(ended! - run!).toBeGreaterThanOrEqual(duration - 20);
   expect(ended! - run!).toBeLessThan(duration + 400);
   expect(sweep.length).toBeGreaterThan(20);
-  // …on the four carriers, one script animation of --split each, in step
-  for (const frame of sweep) expect(frame, `${frame.t}`).toMatchObject({ sweep: 'run', gliding: true, plotting: false, sweeps: 4, spread: 0 });
+  // …on the four carriers, one script animation of --split each, in step; the picture's plotting in (120 + 900 ms from
+  // the sheet's arrival) ends early in it, while the seam's ease-in still barely moves it
+  for (const frame of sweep) expect(frame, `${frame.t}`).toMatchObject({ sweep: 'run', gliding: true, sweeps: 4, spread: 0 });
+  for (const frame of sweep.filter((at) => at.plotting)) expect(frame.t - run!, `${frame.t}`).toBeLessThan(900);
 
   // From the edge to its rest, one way: never past the rest and never back (Phase 5, R-UX-06 §07: it used to sweep out to
   // 38 % and turn back — a second move that explained nothing more)
@@ -2184,11 +2187,11 @@ test('arriving the usual way — the wheel, or a finger swiping over the sheet �
   }
   const { frames, on, run, ended, scrolls } = await arrivalOf(page);
   expect([on, run, ended].every((at) => at !== null), 'the sheet arrived, the seam swept and stopped').toBe(true);
-  // It waits for the page to have been quiet SWEEP_QUIET: the eye is on the way, not on the seam (a few ms: the page's
-  // listener and the record's read the clock a moment apart)
+  // It starts SWEEP_AT after the sheet arrived, the page still scrolling or not (owner, 13.10: it used to wait for the page
+  // to be still, and a visitor scrolling on saw the photo only)
   expect(run! - on!).toBeGreaterThanOrEqual(SWEEP_AT - 5);
+  expect(run! - on!).toBeLessThan(SWEEP_AT + 300);
   expect(scrolls.length).toBeGreaterThan(0);
-  expect(run! - Math.max(...scrolls.filter((at) => at < run!))).toBeGreaterThanOrEqual(SWEEP_QUIET - 5);
   // …then runs its whole course, to its rest — the wheel and the swipe never stopped it
   expect(ended! - run!).toBeGreaterThanOrEqual((testInfo.project.name === 'desktop-chromium' ? SWEEP_MS : SWEEP_MS_PHONE) - 20);
   expect(Math.min(...frames.filter((frame) => frame.t >= run! && frame.t < ended!).map((frame) => frame.split))).toBeGreaterThanOrEqual(DEFAULT_SPLIT - 0.05);
@@ -2202,16 +2205,19 @@ test('a key in the sheet before the sweep stops it: the seam goes from the edge 
   test.setTimeout(45_000);
   const { sheet, stage, range } = await arrive(page);
   await recordArrival(page);
+  // (the key while the sheet still waits below the fold: arrived, it would start SWEEP_AT on — sooner than a test's
+  // round trips)
+  await expect(sheet).toHaveAttribute('data-sheet-state', 'armed');
+  await range.evaluate((element) => (element as HTMLElement).focus({ preventScroll: true }));
+  await page.keyboard.press('ArrowRight');
   await centre(stage);
   await expect(sheet).toHaveAttribute('data-sheet-state', 'on');
-  await range.focus();
-  await page.keyboard.press('ArrowRight');
   const { frames, on, run, ended } = await arrivalOf(page);
-  // Stopped while it waited at the edge — and it never starts afterwards (the record runs past when it would have)
+  // Stopped before it moved — and it never starts afterwards (the record runs past when it would have)
   expect(run).toBeNull();
   expect(ended! - on!).toBeLessThan(SWEEP_AT);
   expect(frames.filter((frame) => frame.sweep === 'run' || frame.gliding || frame.pulse)).toEqual([]);
-  expect(frames.at(-1)!.t - on!).toBeGreaterThan(SWEEP_AT + SWEEP_QUIET);
+  expect(frames.at(-1)!.t - on!).toBeGreaterThan(SWEEP_AT + 300);
   // The key's own step: the seam rests at 63, never left of where the state put it
   await expect(stage).not.toHaveAttribute('data-sweep', /.*/);
   await expectSplit(range, stage, DEFAULT_SPLIT + 1);
@@ -2293,7 +2299,7 @@ test('with reduced motion the sheet stands static and complete at its resting sp
     }).observe(element, { attributes: true, attributeFilter: ['data-sweep', 'data-gliding', 'data-pulse'] });
     return performance.now();
   });
-  await pageClockPast(page, since, SWEEP_AT + SWEEP_QUIET + SWEEP_MS + 1_000);
+  await pageClockPast(page, since, SWEEP_AT + SWEEP_MS + 1_000);
   expect(await page.evaluate(() => (window as unknown as { marks: string[] }).marks)).toEqual([]);
   for (const mark of ['data-sweep', 'data-gliding', 'data-pulse']) await expect(stage).not.toHaveAttribute(mark, /.*/);
   expect(await splitOf(stage)).toBe(`${DEFAULT_SPLIT}%`);
