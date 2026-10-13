@@ -154,6 +154,18 @@ test.describe('site-wide theme', () => {
     await expectTheme(page, 'dark', 'dark');
   });
 
+  test('going back waits for HOME itself, not for a history write on the page it leaves', async ({ page }) => {
+    await open(page, '/');
+    await page.locator('main a.direction-card[href="/metalokonstruktsii"]').click();
+    await page.waitForURL('**/metalokonstruktsii');
+    // The CI order of 12.10, made certain: the service page writes its history entry in place once the way back has
+    // begun — as vinext's first hydrated commit does (history.replaceState) when it lands after `load` on a slow runner
+    await page.evaluate(() => addEventListener('beforeunload', () => history.replaceState(history.state, ''), { once: true }));
+    await page.goBack({ waitUntil: 'load' });
+    expect(new URL(page.url()).pathname).toBe('/');
+    expect(await page.evaluate(() => location.pathname)).toBe('/');
+  });
+
   test('the control is keyboard operable and labelled', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop header control');
     await page.emulateMedia({ colorScheme: 'light' });
