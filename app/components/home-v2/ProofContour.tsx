@@ -119,8 +119,9 @@ const GROUND_HATCH = (() => {
 })();
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
-/** The title block's nodes, named by a word beside their letter (audit 08.10: bare letters were chosen blind) */
-const NODE_WORDS: Record<string, string> = { bearing: 'Опора ферми', purlin: 'Прогін', base: 'База колони', ridge: 'Гребінь', chord: 'Нижній пояс' };
+/** A node's letter and plain name, the draughtsman's term after it — what its pill and its letter on the scheme are called
+ *  (the pill shows the name: the name is in what a voice can press) */
+const nodeLabel = ({ letter, title, term }: (typeof PROOF_DETAILS)[number]) => `Вузол ${letter}: ${title} (${term})`;
 /** How long a smooth scroll to the frame takes before the assembly starts */
 const SCROLL_FIRST = 450;
 /** The letters А, Б, В ring a few times once the sweep or the assembly has put them up, so the nodes behind them are
@@ -529,7 +530,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         <button
           key={item.id}
           type="button"
-          aria-label={`Вузол ${item.letter}: ${item.title}`}
+          aria-label={nodeLabel(item)}
           aria-haspopup="dialog"
           aria-expanded={detail === item.id}
           disabled={!ready}
@@ -540,7 +541,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           onBlur={place === 'block' ? () => setPeekNode(null) : undefined}
         >
           {place === 'stage' ? item.letter : <i className="hv2-contour-node-letter">{item.letter}</i>}
-          {place !== 'stage' && <span className="hv2-contour-node-word" aria-hidden="true">{NODE_WORDS[item.id]}</span>}
+          {place !== 'stage' && <span className="hv2-contour-node-word" aria-hidden="true">{item.title}</span>}
         </button>
       ))}
     </fieldset>
@@ -758,7 +759,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                         '--px': `${(px / contourPhoto.width) * 100}%`, '--py': `${(py / contourPhoto.height) * 100}%`,
                         '--nx': `${(nx / contourPhoto.width) * 100}%`, '--ny': `${(ny / contourPhoto.height) * 100}%`,
                       } as CSSProperties}
-                      aria-label={`Вузол ${item.letter}: ${item.title}`}
+                      aria-label={nodeLabel(item)}
                       aria-haspopup="dialog"
                       aria-expanded={detail === id}
                       disabled={!ready}
@@ -840,11 +841,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               onPointerCancel={onSheetCancel}
               aria-modal={detailSheet ? true : undefined}
               aria-labelledby="hv2-detail-title"
-              aria-describedby="hv2-detail-spoken"
+              aria-describedby="hv2-detail-term hv2-detail-spoken"
             >
               <div className="hv2-detail-head">
                 <span className="hv2-detail-letter" aria-hidden="true">{item.letter}</span>
-                <b id="hv2-detail-title">Вузол {item.letter} · {item.title}</b>
+                {/* its plain name, the draughtsman's word under it (R-UX-06 §07) */}
+                <span className="hv2-detail-name">
+                  <b id="hv2-detail-title">Вузол {item.letter} · {item.title}</b>
+                  <small id="hv2-detail-term">Термін: {item.term}</small>
+                </span>
                 <span className="hv2-detail-steps">
                   <button type="button" className="hv2-detail-step" aria-label="Попередній вузол" onClick={() => stepNode(-1)}>‹</button>
                   <button type="button" className="hv2-detail-step" aria-label="Наступний вузол" onClick={() => stepNode(1)}>›</button>

@@ -1137,7 +1137,10 @@ main[data-home="v2"] .hv2-detail:not([data-sheet]) { display: flex; flex-directi
 main[data-home="v2"] .hv2-detail:not([data-sheet]) > * { flex: none; }
 main[data-home="v2"] .hv2-detail:not([data-sheet]) > .hv2-detail-drawing { flex: 0 1 auto; min-height: 0; }
 main[data-home="v2"] .hv2-detail-head { display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--hv2-line-strong); }
-main[data-home="v2"] .hv2-detail-head b { flex: 1; font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+/* its plain name, the draughtsman's term under it (R-UX-06 §07) */
+main[data-home="v2"] .hv2-detail-name { flex: 1; display: grid; gap: 3px; min-width: 0; }
+main[data-home="v2"] .hv2-detail-head b { font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-detail-head small { color: var(--hv2-text-2); font: 500 11.5px/1.25 var(--font-manrope), sans-serif; }
 main[data-home="v2"] .hv2-detail-letter { display: grid; place-items: center; width: 22px; height: 22px; color: var(--hv2-node-ink); background: var(--hv2-node); border-radius: 50%; font: 700 12px/1 var(--font-condensed), sans-serif; }
 main[data-home="v2"] .hv2-detail-close { display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -6px -6px 0; padding: 0; color: var(--hv2-text-2); background: none; border: 0; font: 400 22px/1 var(--font-manrope), sans-serif; cursor: pointer; }
 main[data-home="v2"] .hv2-detail-close:hover { color: var(--hv2-text); }

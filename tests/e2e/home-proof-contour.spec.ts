@@ -162,15 +162,18 @@ const WIND_LIGHT = 'rgb(220, 251, 246)';
 // The nodes drawn as details are in a colour of their own, main's --hv2-node (owner, 05.10: a copper ring read as one of
 // the copper lines behind the gable; gold, then magenta — no other hue on the sheet or in the photo), their letters in
 // --hv2-node-ink: read off the page (tokenColour), never pinned here
-// The five nodes (ProofDetails' PROOF_DETAILS), in their letters' order
+// The five nodes (ProofDetails' PROOF_DETAILS), in their letters' order: each with ONE name in plain words wherever it is
+// shown, the draughtsman's term second (R-UX-06 §07: the pill said «Гребінь», the panel «Коньковий вузол»)
 const NODES = [
-  { id: 'bearing', letter: 'А', title: 'Опора ферми на стіну' },
-  { id: 'purlin', letter: 'Б', title: 'Прогін на вузлі ферми' },
-  { id: 'base', letter: 'В', title: 'База колони' },
-  { id: 'ridge', letter: 'Г', title: 'Коньковий вузол' },
-  { id: 'chord', letter: 'Д', title: 'Вузол нижнього поясу' },
+  { id: 'bearing', letter: 'А', title: 'Ферма на стіні', term: 'опора ферми на стіну' },
+  { id: 'purlin', letter: 'Б', title: 'Балка даху', term: 'прогін на вузлі ферми' },
+  { id: 'base', letter: 'В', title: 'Низ колони', term: 'база колони' },
+  { id: 'ridge', letter: 'Г', title: 'Верх даху', term: 'коньковий вузол' },
+  { id: 'chord', letter: 'Д', title: 'Низ ферми', term: 'вузол нижнього поясу' },
 ] as const;
 type ProofNode = (typeof NODES)[number];
+/** A node's pill and its letter on the scheme: its letter and name, the term after it */
+const nodeLabel = (node: ProofNode) => `Вузол ${node.letter}: ${node.title} (${node.term})`;
 // The note under the picture, word for word (owner, 05.10: shorter — the drawing's stamp says «Схема · без розмірів»;
 // pr-critical holds the server's to the same)
 // The title block's one line (audit 08.10); the provenance and the retouch are said under the sheet
@@ -267,7 +270,7 @@ function photoPoint(stage: Locator, [x, y]: readonly [number, number]) {
  *  growing out of its ring (a press inside it mid-way lands where the panel is not yet) */
 async function openNode(page: Page, node: ProofNode) {
   const letter = phoneOf(page)
-    ? page.locator('#real-object figcaption .hv2-contour-nodes').getByRole('button', { name: `Вузол ${node.letter}: ${node.title}` })
+    ? page.locator('#real-object figcaption .hv2-contour-nodes').getByRole('button', { name: nodeLabel(node), exact: true })
     : page.locator(`#real-object .hv2-proof-detail-pin[data-detail="${node.id}"]`);
   await letter.click();
   const panel = page.locator('.hv2-detail');
@@ -2070,7 +2073,7 @@ test('after the arrival a laptop opens node Г by itself, quietly — focus stay
     return;
   }
   await expect(stage).toHaveAttribute('data-detail', 'ridge', { timeout: 12_000 });
-  await expect(panel.locator('#hv2-detail-title')).toHaveText('Вузол Г · Коньковий вузол');
+  await expect(panel.locator('#hv2-detail-title')).toHaveText(`Вузол Г · ${NODES[3].title}`);
   expect(await panel.evaluate((element) => element.contains(document.activeElement))).toBe(false);
   await settleArrival(page);
 
@@ -2288,12 +2291,12 @@ test('«Вузли крупно»: five letters, each with its word, in the titl
   await expect(row).toHaveRole('group');
   await expect(row).toHaveAccessibleName('Вузли крупно');
   const letters = row.getByRole('button');
-  // each letter with a word of its node (audit 08.10: bare letters were chosen blind) — for the eye; the name is the
-  // button's whole title
-  await expect(letters).toHaveText(NODES.map((node) => new RegExp(`^${node.letter}\\s*\\S`)));
+  // each letter with its node's name in plain words (audit 08.10: bare letters were chosen blind; R-UX-06 §07: the same
+  // name as its panel's, not a draughtsman's word) — and the button says the term after it
+  await expect(letters).toHaveText(NODES.map((node) => new RegExp(`^${node.letter}\\s*${node.title}$`)));
   for (const [index, node] of NODES.entries()) {
     const letter = letters.nth(index);
-    await expect(letter).toHaveAccessibleName(`Вузол ${node.letter}: ${node.title}`);
+    await expect(letter).toHaveAccessibleName(nodeLabel(node));
     await expect(letter).toHaveAttribute('aria-haspopup', 'dialog');
     await expect(letter).toHaveAttribute('aria-expanded', 'false');
     // an outlined pill — the brief stays the sheet's one filled button — its letter a disc in the nodes' colour
@@ -2313,7 +2316,7 @@ test('«Вузли крупно»: five letters, each with its word, in the titl
   // nodes' colour under the cursor (a touch screen: in the tour, or open)
   await page.mouse.move(2, 2);
   for (const [index, node] of NODES.entries()) {
-    await expect(pins.nth(index)).toHaveAccessibleName(`Вузол ${node.letter}: ${node.title}`);
+    await expect(pins.nth(index)).toHaveAccessibleName(nodeLabel(node));
     await expect(pins.nth(index)).toHaveAttribute('data-detail', node.id);
     await expect.poll(() => pins.nth(index).evaluate((element) => getComputedStyle(element).backgroundColor), node.letter).not.toBe(colour);
   }
@@ -2635,6 +2638,9 @@ test('‹ › go round the five nodes — a finger swipes them too — and Esc c
     await expect(title).toHaveText(`Вузол ${node.letter} · ${node.title}`);
     await expect(stage).toHaveAttribute('data-detail', node.id);
     await expect(panel).toHaveAccessibleName(`Вузол ${node.letter} · ${node.title}`);
+    // the plain name its title, the draughtsman's term under it — said to a screen reader too, before the node in words
+    await expect(panel.locator('.hv2-detail-head small')).toHaveText(`Термін: ${node.term}`);
+    await expect(panel).toHaveAccessibleDescription(new RegExp(`^Термін: ${node.term} \\S`));
   }
   // ‹ the other way round: А → Д, then from the keyboard Д → Г
   await previous.click();
