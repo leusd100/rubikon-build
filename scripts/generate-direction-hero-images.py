@@ -41,6 +41,13 @@ SEQUENCE_CONCEPT_PORTRAIT_POSITIONS = {
     "pokrivelni-roboty": .69,
 }
 IMAGE_SETS = [
+    ("design-assets/direction-hero-blue-hour", "direction-hero-blue-hour", [
+        "angary.png",
+        "zernoskhovyshcha.png",
+        "metalokonstruktsii.png",
+        "betonni-roboty.png",
+        "pokrivelni-roboty.png",
+    ]),
     ("public/media/direction-hero-source", "direction-hero", [
         "angary.png",
         "zernoskhovyshcha.png",
@@ -111,7 +118,7 @@ def main() -> None:
             base = filename.rsplit(".", 1)[0]
             image = Image.open(source_path).convert("RGB")
             is_sequence = output_prefix.startswith("directions-sequence")
-            quality = 90 if output_prefix in ("directions-sequence-daylight", "directions-sequence-blue-hour") else QUALITY
+            quality = 90 if output_prefix in ("directions-sequence-daylight", "directions-sequence-blue-hour", "direction-hero-blue-hour") else QUALITY
             widths = sorted(set(WIDTHS + ([image.width] if is_sequence else [])))
             emit_variants(image, output_prefix, base, widths, results, quality)
             if is_sequence:
