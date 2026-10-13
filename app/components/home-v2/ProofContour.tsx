@@ -534,30 +534,39 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // «Вузли крупно: А Б В Г Д» — the letters on the scheme, named again where they are seen: over the picture's foot on a
   // laptop (the title block keeps its height there: the sheet fits the window), in the title block on a phone (its
   // frame has no room). One shows at a time (home-v2.css, data-place)
-  const nodesRow = (place: 'stage' | 'block') => (
-    <fieldset className="hv2-contour-nodes" data-place={place} aria-label="Вузли крупно">
-      <span className="hv2-contour-nodes-label" aria-hidden="true">Вузли крупно</span>
-      {PROOF_DETAILS.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          aria-label={nodeLabel(item)}
-          aria-haspopup="dialog"
-          aria-expanded={detail === item.id}
-          data-hint={place === 'block' && hinting && item.id === NODE_HINT ? '' : undefined}
-          disabled={!ready}
-          onClick={() => openNode(item.id)}
-          onPointerEnter={place === 'block' ? () => setPeekNode(item.id) : undefined}
-          onPointerLeave={place === 'block' ? () => setPeekNode(null) : undefined}
-          onFocus={place === 'block' ? () => setPeekNode(item.id) : undefined}
-          onBlur={place === 'block' ? () => setPeekNode(null) : undefined}
-        >
-          {place === 'stage' ? item.letter : <i className="hv2-contour-node-letter">{item.letter}</i>}
-          {place !== 'stage' && <span className="hv2-contour-node-word" aria-hidden="true">{item.title}</span>}
-        </button>
-      ))}
-    </fieldset>
-  );
+  // A pill in the title block pointed at or focused lights its node on the scheme (the bar over the picture does not)
+  const peekOn = (id: DetailId) => ({
+    onPointerEnter: () => setPeekNode(id),
+    onPointerLeave: () => setPeekNode(null),
+    onFocus: () => setPeekNode(id),
+    onBlur: () => setPeekNode(null),
+  });
+  const nodesRow = (place: 'stage' | 'block') => {
+    const block = place === 'block';
+    // node Г's pill, outlined while its hint shows (NODE_HINT)
+    const hinted = block && hinting ? NODE_HINT : null;
+    return (
+      <fieldset className="hv2-contour-nodes" data-place={place} aria-label="Вузли крупно">
+        <span className="hv2-contour-nodes-label" aria-hidden="true">Вузли крупно</span>
+        {PROOF_DETAILS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            aria-label={nodeLabel(item)}
+            aria-haspopup="dialog"
+            aria-expanded={detail === item.id}
+            data-hint={item.id === hinted ? '' : undefined}
+            disabled={!ready}
+            onClick={() => openNode(item.id)}
+            {...(block ? peekOn(item.id) : {})}
+          >
+            {block ? <i className="hv2-contour-node-letter">{item.letter}</i> : item.letter}
+            {block && <span className="hv2-contour-node-word" aria-hidden="true">{item.title}</span>}
+          </button>
+        ))}
+      </fieldset>
+    );
+  };
   // A layer's place in the legend: «Каркас»'s five nodes; a load's way, link by link
   const legendSet = (name: Layer) => {
     // «Каркас»'s own row: its five nodes, named, at once (owner, 09.10: «Детальніше» hid them, and the letters on the
