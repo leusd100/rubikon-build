@@ -1,64 +1,6 @@
 /* The direction-page template (metal, concrete, roofing — and the shared pieces /angary and /zernoskhovyshcha use):
    UX pass 2026-10. Colours from the theme roles (app/theme.css). */
 
-/* Phase 6 preview: the service hero's illustration is a decorative drawing layer over its existing responsive image. */
-.service-subhero.has-direction-drawing .direction-hero-drawing {
-  position: absolute;
-  z-index: 1;
-  top: 17%;
-  right: max(4.5%, calc((100vw - var(--container-max)) / 2));
-  width: min(42vw, 620px);
-  margin: 0;
-  opacity: .76;
-  pointer-events: none;
-}
-.direction-hero-drawing svg { display: block; width: 100%; height: auto; overflow: visible; }
-.direction-hero-drawing .dhd-theme-word {
-  fill: none;
-  stroke: var(--color-dark-text);
-  stroke-width: .7;
-  opacity: .075;
-  font: 700 54px/1 var(--font-condensed), sans-serif;
-  letter-spacing: .08em;
-}
-.direction-hero-drawing :is(.dhd-structure, .dhd-line, .dhd-axis) { fill: none; }
-.direction-hero-drawing .dhd-structure { stroke: var(--color-dark-text-secondary); stroke-width: 1.8; stroke-linejoin: round; }
-.direction-hero-drawing .dhd-line { stroke: var(--color-dark-text-muted); stroke-width: 1.1; stroke-linejoin: round; }
-.direction-hero-drawing .dhd-axis { stroke: var(--color-dark-line); stroke-width: .8; stroke-dasharray: 12 4 2 4; }
-.direction-hero-drawing .dhd-accent { fill: none; stroke: var(--color-accent-on-dark); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.direction-hero-drawing .dsd-cut { fill: rgba(245, 242, 235, .035); stroke: var(--color-dark-text-secondary); }
-.direction-hero-drawing .dsd-line,
-.direction-hero-drawing .dsd-dim,
-.direction-hero-drawing .dsd-hatch,
-.direction-hero-drawing .dsd-insulation,
-.direction-hero-drawing .dsd-axis { stroke: var(--color-dark-text-muted); }
-.direction-hero-drawing .dsd-axis { opacity: .72; }
-.direction-hero-drawing .dsd-dim-text { fill: var(--color-dark-text-secondary); }
-.direction-hero-drawing .dsd-bars circle { fill: var(--color-dark-text-secondary); }
-.direction-hero-drawing .dsd-accent { stroke: var(--color-accent-on-dark); }
-.direction-hero-drawing .dsd-accent-text { fill: var(--color-accent-on-dark); }
-.service-subhero.has-direction-drawing .service-subhero-content h1 { max-width: min(660px, 49vw); }
-.service-subhero.has-direction-drawing .service-subhero-lead { max-width: 520px; }
-
-@media (min-width: 761px) and (max-width: 1050px) {
-  .service-subhero.has-direction-drawing .direction-hero-drawing { top: 19%; right: 3%; width: 34vw; opacity: .48; }
-  .service-subhero.has-direction-drawing .service-subhero-content h1 { max-width: 62vw; }
-  .service-subhero.has-direction-drawing .service-subhero-lead { max-width: 560px; }
-}
-@media (min-width: 1051px) and (max-height: 700px) {
-  .service-subhero.has-direction-drawing .direction-hero-drawing { top: 15%; width: min(39vw, 560px); }
-  .service-subhero.has-direction-drawing .service-subhero-content { padding-top: 108px; padding-bottom: 28px; }
-  .service-subhero.has-direction-drawing .service-subhero-content h1 { max-width: min(700px, 55vw); font-size: clamp(42px, min(4.6vw, 8svh), 58px); }
-  .service-subhero.has-direction-drawing .service-subhero-lead { max-width: 540px; margin-top: 16px; line-height: 1.55; }
-  .service-subhero.has-direction-drawing .service-subhero-content .button { margin-top: 18px; }
-}
-@media (max-width: 760px) {
-  .service-subhero.has-direction-drawing .direction-hero-drawing { top: 108px; right: -36px; width: 232px; opacity: .19; }
-  .direction-hero-drawing .dhd-theme-word { display: none; }
-  .service-subhero.has-direction-drawing .service-subhero-content h1,
-  .service-subhero.has-direction-drawing .service-subhero-lead { max-width: 100%; }
-}
-
 /* «Що виконуємо»: the lead sits apart from its heading (it touched it, 0 px), and the column below holds the drawing */
 .direction-overview-section .sticky-heading .lead-copy { max-width: 520px; margin: 26px 0 0; color: var(--color-text-secondary); font-size: 17px; line-height: 1.7; }
 @media (max-height: 820px) { .direction-overview-section .sticky-heading { position: static; } }

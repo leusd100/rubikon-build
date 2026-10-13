@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generate responsive WebP variants for full-bleed hero artwork (direction pages, /yak-pratsyuiemo).
 
-The source images in public/media/*-source/ are the approved artwork.
+The approved source images live in public/media/*-source/. The Phase 6 photo
+variant sources live in design-assets/ so they are not deployed as PNGs.
 Landscape variants preserve the complete source. The /napryamky sequence also
 gets portrait crops for tall screens; source artwork is never modified.
 Output filenames are content-hashed for the immutable media-responsive cache policy.
@@ -32,6 +33,13 @@ SEQUENCE_PORTRAIT_POSITIONS = {
 }
 IMAGE_SETS = [
     ("public/media/direction-hero-source", "direction-hero", [
+        "angary.png",
+        "zernoskhovyshcha.png",
+        "metalokonstruktsii.png",
+        "betonni-roboty.png",
+        "pokrivelni-roboty.png",
+    ]),
+    ("design-assets/direction-hero-photo-variant", "direction-hero-photo-variant", [
         "angary.png",
         "zernoskhovyshcha.png",
         "metalokonstruktsii.png",
