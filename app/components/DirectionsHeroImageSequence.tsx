@@ -32,17 +32,16 @@ export function DirectionsHeroImageSequence() {
   // as activeIndex wraps back around the cycle, so nothing re-toggles its <source> and re-fetches
   // every loop.
   const [maxUnlockedIndex, setMaxUnlockedIndex] = useState(1);
+  const theme = useSyncExternalStore(subscribeTheme, readEffectiveTheme, () => 'light' as const);
   const firstImageRef = useRef<HTMLImageElement>(null);
   const { isVisible, shouldLoadMedia } = useDeferredMedia(firstImageRef, {
-    observeKey: 'directions-static-hero-sequence',
+    // Theme changes replace the image nodes; observe the new first slide.
+    observeKey: `directions-static-hero-sequence-${theme}`,
   });
   // The slides change on their own, so they can be paused (the same round control as the hero videos); the active
   // bar restarts with every slide and every resume
   const [paused, setPaused] = useState(false);
   const [resumes, setResumes] = useState(0);
-  // The same effective theme drives the site switch, the system preference and the hero art.
-  // A CSS guard below conceals the server's light fallback during dark-theme hydration.
-  const theme = useSyncExternalStore(subscribeTheme, readEffectiveTheme, () => 'light' as const);
 
   useEffect(() => {
     // Out of sight the slides wait (07.10): every 6 s the sequence re-rendered, cross-faded two full-screen pictures and
@@ -75,7 +74,8 @@ export function DirectionsHeroImageSequence() {
         } as CSSProperties;
 
         return (
-          <picture key={asset.id}>
+          // Keep decoded pixels scoped to their theme, including during hydration.
+          <picture key={`${asset.id}-${theme}`}>
             {shouldAttachSource && <source media="(max-width: 1050px) and (orientation: portrait)" type="image/webp" srcSet={art.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
             {shouldAttachSource && <source type="image/webp" srcSet={art.srcSet} sizes={LANDSCAPE_SIZES} />}
             <img

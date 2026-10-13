@@ -25,7 +25,9 @@ export function DirectionHeroImage({ asset }: DirectionHeroImageProps) {
   } as CSSProperties;
 
   return (
-    <picture>
+    // A new image element cannot retain the previously decoded light bitmap while
+    // its dark source loads. Updating src and data-art-theme on one node could.
+    <picture key={`${asset.fallbackSrc}-${theme}`}>
       <source type="image/webp" srcSet={art.srcSet} sizes={HERO_SIZES} />
       <img
         aria-hidden="true"

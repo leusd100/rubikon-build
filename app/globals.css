@@ -602,7 +602,7 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .service-subhero-media .direction-hero-image[data-art-theme="dark"] { filter: saturate(.88) contrast(1.02); }
 /* Conceal the server's light fallback until the saved theme selects its artwork. */
 :root[data-theme="dark"] .direction-hero-image[data-art-theme="light"],
-:root[data-theme="light"] .direction-hero-image[data-art-theme="dark"] { opacity: 0; }
+:root[data-theme="light"] .direction-hero-image[data-art-theme="dark"] { visibility: hidden; opacity: 0; }
 .service-subhero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,9,10,.95), rgba(8,9,10,.72) 52%, rgba(8,9,10,.18)), linear-gradient(0deg, rgba(8,9,10,.72), transparent 64%); }
 .service-subhero-content { position: relative; z-index: 2; padding-top: var(--hero-pad-top); padding-bottom: var(--hero-pad-bottom); }
 .service-subhero-content h1 { max-width: 1040px; }
