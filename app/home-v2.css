@@ -1251,6 +1251,10 @@ main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button:is(:hover, [a
 main[data-home="v2"] .hv2-contour-node-letter { display: grid; place-items: center; width: 20px; height: 20px; color: var(--hv2-node-ink); background: var(--hv2-node); border-radius: 50%; font-style: normal; }
 main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button:is(:hover, [aria-expanded="true"]) .hv2-contour-node-letter { background: var(--hv2-node-edge); }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button { height: 44px; } }
+/* (a phone's pills in two rows down to 375 px: with the nodes' plain names the second row — В, Г, Д — left 5 px there in
+   Chrome on macOS and too little on Linux, where Д took a third row, 35 px more; 2 px off each pill's right side up to
+   400 px gives that row ≈ 11 px) */
+@media (max-width: 400px) { main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button { padding-right: 8px; } }
 main[data-home="v2"] .hv2-contour-node-word { font: 600 12px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 
 /* a quiet frame at rest: faint rings, two names; the rest under the cursor (a touch screen has no cursor: it shows all) */

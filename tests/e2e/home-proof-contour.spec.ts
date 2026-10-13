@@ -2368,7 +2368,17 @@ test('«Вузли крупно»: five letters, each with its word, in the titl
   const [box, caption] = [(await row.boundingBox())!, (await sheet.locator('figcaption').boundingBox())!];
   expect(box.y).toBeGreaterThanOrEqual(caption.y);
   expect(box.y + box.height).toBeLessThanOrEqual(caption.y + caption.height);
-  void phone;
+  if (phone) {
+    // a phone's pills in two rows down to 375 px, with the plain names as with the old ones (Phase 5: on Linux the fifth
+    // took a third row at 375 until the pills gave up 2 px each)
+    const rowsAt = async (width: number) => {
+      await page.setViewportSize({ width, height: 812 });
+      return letters.evaluateAll((buttons) => new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top))).size);
+    };
+    const own = page.viewportSize()!;
+    for (const width of [375, 390, 412]) expect(await rowsAt(width), `${width} px`).toBe(2);
+    await page.setViewportSize(own);
+  }
   // On the scheme: a ring in the nodes' colour round each node and its letter beside it — a button naming its node too
   const rings = stage.locator('.hv2-proof-detail-rings circle');
   expect(await rings.evaluateAll((circles) => circles.map((circle) => [circle.getAttribute('data-detail'), getComputedStyle(circle).stroke]))).toEqual(NODES.map((node) => [node.id, colour]));
