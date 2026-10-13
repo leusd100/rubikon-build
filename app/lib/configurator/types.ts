@@ -14,6 +14,21 @@ export type Dimensions = {
   height: number;
 };
 
+/** One of the three sizes the visitor sets */
+export type SizeKey = keyof Dimensions;
+export const SIZE_KEYS: SizeKey[] = ['width', 'length', 'height'];
+/** The sizes' names, as the fields call them (ConfiguratorControls) and the lead's rows repeat them */
+export const SIZE_LABELS: Record<SizeKey, string> = {
+  width: 'Ширина',
+  length: 'Довжина',
+  height: 'Висота стін',
+};
+
+/** The visitor set `key` themselves */
+export function withSizeAnswered(state: ConfiguratorState, key: SizeKey): ConfiguratorState {
+  return state.sizesAnswered.includes(key) ? state : { ...state, sizesAnswered: [...state.sizesAnswered, key] };
+}
+
 export type EnvelopeChoice = 'cold' | 'insulated' | 'undecided';
 
 /**
@@ -161,6 +176,10 @@ export type ConfiguratorState = {
   confirmed: ConfirmedTopic[];
   /** «Точних розмірів ще немає» (07.10): the drawn sizes are then only an orientation */
   sizesUnknown: boolean;
+  /** The sizes the visitor set one by one (Phase 4, 12.10; R-UX-06 §06 п. 4): `confirmed` says the sizes were answered as
+   *  a group, and changing the width alone sent the example's length and wall height as «Вибрана конфігурація». A size
+   *  typed again at the example's value is the visitor's too — an answer, not a difference (07.10). */
+  sizesAnswered: SizeKey[];
   internalSupports: InternalSupports;
   /** How the visitor answered the scope; `scope` stays the drawn list (all four unless «Окремі роботи») */
   scopeMode: ScopeMode;
@@ -327,6 +346,7 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   // Nothing answered yet: every value above is the example's
   confirmed: [],
   sizesUnknown: false,
+  sizesAnswered: [],
   internalSupports: 'unknown',
   scopeMode: 'full',
 };

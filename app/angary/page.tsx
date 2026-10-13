@@ -5,6 +5,7 @@ import { HangarRealObject } from '../components/angary/HangarRealObject';
 import { HangarConfigurator } from '../components/configurator/HangarConfigurator';
 import { HangarInquiryProvider } from '../components/configurator/HangarInquiryContext';
 import { InquiryAttachmentProvider } from '../components/inquiry/InquiryAttachmentProvider';
+import { InquiryFormHost } from '../components/inquiry/InquiryFormHost';
 import { createDirectionMetadata, getDirectionPage } from '../lib/directions';
 import { costFactors, processSteps } from '../lib/deliveryModelPresentation';
 import { deliveryModel } from '../data/deliveryModel';
@@ -44,6 +45,8 @@ export default function HangarsPage() {
 
   return (
     <InquiryAttachmentProvider>
+      {/* «Обговорити цю конфігурацію» opens the page's one form under the configurator's stamp (Phase 4) */}
+      <InquiryFormHost>
       <HangarInquiryProvider>
         <DirectionPage
           config={config}
@@ -59,6 +62,7 @@ export default function HangarsPage() {
         />
         <HangarMobileInquiryCta />
       </HangarInquiryProvider>
+      </InquiryFormHost>
     </InquiryAttachmentProvider>
   );
 }

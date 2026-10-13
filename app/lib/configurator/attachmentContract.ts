@@ -75,6 +75,9 @@ export function sameBusinessConfiguration(a: ConfiguratorState, b: ConfiguratorS
     && a.confirmed.length === b.confirmed.length
     && a.confirmed.every((topic) => b.confirmed.includes(topic))
     && a.sizesUnknown === b.sizesUnknown
+    // a size typed again at the example's value is an answer too (Phase 4): the lead then says it is the visitor's
+    && a.sizesAnswered.length === b.sizesAnswered.length
+    && a.sizesAnswered.every((key) => b.sizesAnswered.includes(key))
     && a.internalSupports === b.internalSupports
     && a.scopeMode === b.scopeMode;
 }

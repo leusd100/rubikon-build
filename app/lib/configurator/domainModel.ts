@@ -7,8 +7,9 @@ import {
   pitchDegForRidge,
 } from './parametricModel';
 import type { HangarPurpose, ObjectProfile } from './objectProfile';
-import { CONFIRMED_TOPICS, DEFAULT_CONFIGURATOR_STATE, ENVELOPE_MATERIAL_PRESET, SCOPE_ORDER, envelopeMatchesPreset, withConfirmed } from './types';
+import { CONFIRMED_TOPICS, DEFAULT_CONFIGURATOR_STATE, ENVELOPE_MATERIAL_PRESET, SCOPE_ORDER, SIZE_KEYS, envelopeMatchesPreset, withConfirmed } from './types';
 import type {
+  SizeKey,
   ScopeItem,
   CladdingSystem,
   ConfirmedTopic,
@@ -126,6 +127,8 @@ export type HangarDomainModel = {
   scopeMode: ScopeMode;
   /** The groups still the page's example: not answered, and holding the example's value (exampleTopics) */
   exampleTopics: ConfirmedTopic[];
+  /** Each size by where it comes from (sizeStatuses, Phase 4): the stamp, the print sheet and the lead tell them apart */
+  sizes: SizeStatuses;
   /** The openings as chosen, before the sizes held them to what fits */
   requestedOpenings: { gates: GatesCount; gateType: GateType; doors: DoorCount };
 };
@@ -200,6 +203,7 @@ export function deriveDomainModel(answered: ConfiguratorState): HangarDomainMode
     internalSupports: state.internalSupports,
     scopeMode: state.scopeMode,
     exampleTopics: exampleTopics(state),
+    sizes: sizeStatuses(state),
     // the openings as the visitor chose them: the summary says which of them the sizes leave no room for
     requestedOpenings: { gates: state.gates, gateType: state.gateType, doors: state.doors },
   };
@@ -239,6 +243,26 @@ export function exampleTopics(state: ConfiguratorState): ConfirmedTopic[] {
     scope: state.scopeMode === base.scopeMode,
   };
   return CONFIRMED_TOPICS.filter((topic) => holds[topic] && !state.confirmed.includes(topic));
+}
+
+/**
+ * Where each size comes from (Phase 4, 12.10; R-UX-06 §06 п. 4): `own` — the visitor set it, or it is no longer the
+ * example's; `example` — the page's, untouched; `derived` — the ridge alone, which follows the span rule's slope for the
+ * width and wall height until the visitor sets it (resolveRidgeHeightM). The sizes were one group: changing the width
+ * alone made the example's 60 m and 8 m, and a ridge nobody set, the visitor's «Вибрана конфігурація».
+ */
+export type SizeStatus = 'own' | 'example' | 'derived';
+export type SizeStatuses = Record<SizeKey | 'ridge', SizeStatus>;
+
+export function sizeStatuses(state: Pick<ConfiguratorState, 'dimensions' | 'sizesAnswered' | 'ridgeEdited'>): SizeStatuses {
+  const base = DEFAULT_CONFIGURATOR_STATE.dimensions;
+  const of = (key: SizeKey): SizeStatus => (state.sizesAnswered.includes(key) || state.dimensions[key] !== base[key] ? 'own' : 'example');
+  const [width, length, height] = SIZE_KEYS.map(of);
+  // the slope follows the width, the ridge the slope and the wall height: still the example's while both are
+  let ridge: SizeStatus = 'derived';
+  if (state.ridgeEdited) ridge = 'own';
+  else if (width === 'example' && height === 'example') ridge = 'example';
+  return { width, length, height, ridge };
 }
 
 /** The sizes as the visitor gave them: their own, still the example's, or an orientation while they look for theirs */

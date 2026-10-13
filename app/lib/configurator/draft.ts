@@ -20,8 +20,11 @@ import {
   INTERNAL_SUPPORTS_ORDER,
   SCOPE_MODE_ORDER,
   SCOPE_ORDER,
+  SIZE_KEYS,
   clampDimension,
   type ConfiguratorState,
+  type ConfirmedTopic,
+  type SizeKey,
 } from './types';
 
 // The configurator's draft (07.10): a B2B visitor moves between the drawing, their mail and the site, and a reload used
@@ -58,6 +61,20 @@ function readObjectProfile(raw: unknown): ObjectProfile {
   };
 }
 
+/**
+ * The sizes the visitor set one by one (Phase 4). A draft saved before them knows only that the sizes were answered as a
+ * group: the sizes that differ from the example's are the visitor's, and a group answered at the example's very values
+ * (the width typed as 24) keeps all three as answered, as the lead said then — unless the ridge alone answered it.
+ */
+function readSizesAnswered(raw: unknown, dimensions: ConfiguratorState['dimensions'], confirmed: ConfirmedTopic[], ridgeEdited: boolean): SizeKey[] {
+  if (Array.isArray(raw)) return SIZE_KEYS.filter((key) => raw.includes(key));
+  if (!confirmed.includes('dimensions')) return [];
+  const changed = SIZE_KEYS.filter((key) => dimensions[key] !== DEFAULT_CONFIGURATOR_STATE.dimensions[key]);
+  // a ridge set alone answered the group too: the three sizes stay the example's
+  if (changed.length || ridgeEdited) return changed;
+  return [...SIZE_KEYS];
+}
+
 /** A stored configuration read through the controls' own bounds */
 export function readConfiguration(raw: unknown): ConfiguratorState {
   const value = (raw ?? {}) as Partial<Record<keyof ConfiguratorState, unknown>>;
@@ -69,6 +86,7 @@ export function readConfiguration(raw: unknown): ConfiguratorState {
     height: clampDimension('height', finite(dims.height) ? dims.height : base.dimensions.height),
   };
   const ridgeEdited = value.ridgeEdited === true;
+  const confirmed = Array.isArray(value.confirmed) ? CONFIRMED_TOPICS.filter((topic) => (value.confirmed as unknown[]).includes(topic)) : [];
   return {
     dimensions,
     ridgeHeightM: clampRidgeHeightM(finite(value.ridgeHeightM) ? value.ridgeHeightM : base.ridgeHeightM, dimensions.width, dimensions.height),
@@ -82,8 +100,9 @@ export function readConfiguration(raw: unknown): ConfiguratorState {
     gateType: oneOf(GATE_TYPE_ORDER, value.gateType, base.gateType),
     doors: oneOf(DOOR_OPTIONS, value.doors, base.doors),
     objectProfile: readObjectProfile(value.objectProfile),
-    confirmed: Array.isArray(value.confirmed) ? CONFIRMED_TOPICS.filter((topic) => (value.confirmed as unknown[]).includes(topic)) : [],
+    confirmed,
     sizesUnknown: value.sizesUnknown === true,
+    sizesAnswered: readSizesAnswered(value.sizesAnswered, dimensions, confirmed, ridgeEdited),
     internalSupports: oneOf(INTERNAL_SUPPORTS_ORDER, value.internalSupports, base.internalSupports),
     scopeMode: oneOf(SCOPE_MODE_ORDER, value.scopeMode, base.scopeMode),
   };

@@ -51,6 +51,8 @@ import {
   hasScopeItem,
   toggleScopeItem,
   withConfirmed,
+  withSizeAnswered,
+  SIZE_LABELS,
   INTERNAL_SUPPORTS_ANSWERS,
   INTERNAL_SUPPORTS_ORDER,
   SCOPE_MODE_LABELS,
@@ -473,11 +475,6 @@ function TileLabel({ word, detail, apart = false }: Readonly<TileWords>) {
   );
 }
 
-const DIMENSION_FIELD_LABELS: Record<keyof Dimensions, string> = {
-  width: 'Ширина',
-  length: 'Довжина',
-  height: 'Висота стін',
-};
 
 export function ConfiguratorControls({ state, onChange, step, onStep: setStep, foundationChoice = true, nextSteps }: Readonly<Props>) {
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -528,7 +525,8 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // the width to 12 and back to 24 used to cost the second gate and the door for good, and a typed «5,5» lost the
   // «Для заїзду техніки» gate to the «5» on the way. The same rule as the scope's — a choice is held, never cleared.
   function setDimension(key: keyof Dimensions, value: number) {
-    onChange(withConfirmed({ ...state, dimensions: { ...state.dimensions, [key]: value } }, 'dimensions'));
+    // the size set is the visitor's, the other two stay the example's until set (Phase 4: the lead tells them apart)
+    onChange(withSizeAnswered(withConfirmed({ ...state, dimensions: { ...state.dimensions, [key]: value } }, 'dimensions'), key));
   }
 
   function setRidge(ridgeHeightM: number) {
@@ -792,7 +790,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
           <NumericField
             key={key}
             inputId={`hc-dimension-${key}`}
-            label={DIMENSION_FIELD_LABELS[key]}
+            label={SIZE_LABELS[key]}
             value={state.dimensions[key]}
             min={DIMENSION_BOUNDS[key].min}
             max={DIMENSION_BOUNDS[key].max}

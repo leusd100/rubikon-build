@@ -193,3 +193,15 @@
   .conversation-grid { row-gap: 28px; }
 }
 @media (max-width: 760px) { :root[data-theme] .conversation-form-toggle { width: 100%; } }
+
+/* /angary (Phase 4, InquiryFormHost): the form opened under the configurator's stamp — here one line up to it, in the
+   form's place, beside the call and the channels */
+.conversation-form-moved {
+  margin: 0; padding: 20px 24px; color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--color-surface-elevated) 80%, transparent); border: 1px dashed var(--color-border-strong);
+  font: 500 15px/1.5 var(--font-manrope), sans-serif;
+}
+.conversation-form-moved a {
+  display: inline-flex; gap: 6px; align-items: center; min-height: 44px; color: var(--color-accent-strong); font-weight: 700;
+  text-decoration: underline; text-underline-offset: 3px; white-space: nowrap;
+}

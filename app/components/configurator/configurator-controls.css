@@ -532,3 +532,42 @@
 /* «Налаштувати окремо»: the walls and the roof one by one, folded under the answer */
 .hc-shell-more > .hc-field:first-of-type { margin-top: 2px; }
 .hc-shell-more[open] { padding-bottom: 4px; }
+
+/* ── Phase 4 (12.10): from the configuration to the request ─────────────────────────────────────────────────────────────
+   Each size by where it comes from: while some are the visitor's and some the example's, the example's figures step back
+   a shade with the tag's dashed line under them, and the tag above names them («з прикладу: довжина, висота стін»). */
+.hc-summary-dimensions [data-status='example'] {
+  color: var(--color-text-secondary);
+  text-decoration: underline dashed 1px var(--color-border-strong); text-underline-offset: .16em;
+}
+/* «Друкувати аркуш A4»: a quiet action under the request's, as the route's «Увесь шлях» link is under its steps */
+.hc-summary-print {
+  display: inline-flex; gap: 8px; align-items: center; justify-self: start; min-height: 44px; padding: 0; border: 0; background: none;
+  color: var(--color-accent-strong); cursor: pointer;
+  font: 600 14px/1.3 var(--font-manrope), sans-serif; text-decoration: underline; text-underline-offset: 3px;
+}
+.hc-summary-print svg { width: 18px; height: 18px; flex: none; }
+.hc-summary-print:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+
+/* The page's one form under the stamp (InquiryFormHost): on a wide screen the form under the stamp's answers, and in the
+   stamp's own right column what happens after it; one column of the form's width below 1181 px. Its words as the
+   closing block sets them (conversation.css). */
+.hangar-configurator-embedded .hc-inquiry {
+  width: min(var(--container-max), calc(100% - var(--container-gutter) * 2)); margin: 24px auto 0;
+  display: grid; grid-template-columns: minmax(0, 760px) minmax(0, 1fr) minmax(250px, calc(100% * 9 / 42)); align-items: start;
+}
+.hc-inquiry:focus { outline: none; }
+.hc-inquiry > .inquiry-form { grid-column: 1; min-width: 0; }
+.hc-inquiry > .hc-inquiry-next { grid-column: 3; margin: 0; padding: 18px 22px 0; border-top: 0; }
+.hc-inquiry :is(.inquiry-form label > span, .inquiry-choice legend) { font-size: 12.5px; letter-spacing: .06em; }
+.hc-inquiry .inquiry-choice label > span { font-size: 12px; }
+.hc-inquiry .inquiry-form-section-title { font-size: 12.5px; }
+.hc-inquiry :is(.inquiry-form-kicker, .inquiry-required-note) { font-size: 13px; }
+.hc-inquiry .inquiry-field-hint { font-size: 13px; }
+@media (max-width: 1180px) {
+  .hangar-configurator-embedded .hc-inquiry { grid-template-columns: minmax(0, 760px); }
+  .hc-inquiry > .hc-inquiry-next { display: none; }
+}
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-inquiry { width: min(100% - 32px, 620px); margin-top: 16px; }
+}

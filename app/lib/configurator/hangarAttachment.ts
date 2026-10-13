@@ -1,7 +1,7 @@
 import { INQUIRY_ATTACHMENT_LABELS, type InquiryAttachment } from '../inquiry/attachment';
-import { deriveDomainModel, sizesProvenance } from './domainModel';
+import { deriveDomainModel } from './domainModel';
 import { createHangarInquiryBrief, createHangarInquiryBriefOutline, formatHangarInquiryBrief } from './inquiryBrief';
-import type { ConfiguratorState } from './types';
+import { SIZE_KEYS, SIZE_LABELS, type ConfiguratorState } from './types';
 
 // 1.1.0 (2026-10): the ridge height row; a configuration on the default values is labelled as such.
 // 1.2.0 (03.10): the «Об’єкт» rows (Призначення, Проєкт, Область, Підйомне обладнання) when answered; the ridge row
@@ -26,7 +26,12 @@ import type { ConfiguratorState } from './types';
 // store's warm suggestion («Утеплений», «Сендвіч-панель») goes among the values not answered until confirmed;
 // «Колони всередині: Можна / Не можна» is «Простір усередині: Колони можна / Без колон»; «Утеплення: Уточнимо» for «Ще не
 // знаю» over the example's sandwich panels.
-export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.5.0';
+// 1.6.0 (12.10, Phase 4 — R-UX-06 §06 п. 4): each size by where it comes from. While the three sizes are all the visitor's
+// or all the example's, one «Габарити» row as before; mixed, a row apiece — «Ширина: 30 м» under «Вибрана конфігурація»,
+// «Довжина: 60 м», «Висота стін: 8 м» under the example's (the width alone sent all three, and the ridge, as chosen). The
+// ridge the visitor did not set, once the width or the wall height is theirs, goes to «Попередні дані» as «… — підібраний
+// за шириною». The lead's «Габарити» field carries the sizes only when all three are the visitor's.
+export const HANGAR_CONFIGURATOR_VERSION = 'hangar-configurator@1.6.0';
 
 /**
  * The hangar configuration as a shared inquiry attachment. The text is formatHangarInquiryBrief verbatim and the
@@ -53,8 +58,9 @@ export function createHangarAttachment(state: ConfiguratorState): InquiryAttachm
   const rowsOf = (id: string) => outline.find((section) => section.id === id)?.rows ?? [];
   const chosen = rowsOf('selected');
   const object = rowsOf('object');
-  // The sizes fill the form's own field only when they are the visitor's (07.10): not the example's, not an orientation
-  const ownSizes = sizesProvenance(domain) === 'own';
+  // The sizes fill the form's own field only when they are the visitor's (07.10): not the example's, not an orientation —
+  // and all three of them (Phase 4): a width set alone would have sent the example's length and wall height as theirs
+  const ownSizes = !domain.sizesUnknown && SIZE_KEYS.every((key) => domain.sizes[key] === 'own');
 
   // Title and the card's one line, from the card's own sections (07.10, audit: «Колони: Не можна» gave «Ще не вказано»,
   // «Точних розмірів ще немає» showed the example's sizes as «вашу конфігурацію», a crane answer started lower-case):
@@ -69,7 +75,15 @@ export function createHangarAttachment(state: ConfiguratorState): InquiryAttachm
     // the ridge is the sizes' detail, not a line of its own
     // the sizes, then what the hangar is for — a cold store says more than its gates (10.10, QA: the form's line left
     // the purpose out) — then the rest in the card's order
-    const ordered = [...chosen, ...object].filter((row) => row.label !== 'Висота в конику');
+    // The sizes as drawn, «30 × 60 × 8 м», whichever of them the visitor set (Phase 4): the line names the hangar the stamp
+    // and the drawing show; the rows say which size is whose
+    const sizeLabels = new Set<string>(Object.values(SIZE_LABELS));
+    const sizesChosen = chosen.some((row) => sizeLabels.has(row.label)) && !chosen.some((row) => row.label === 'Габарити');
+    const withSizes = [...(sizesChosen ? [{ label: 'Габарити', value: brief.dimensionsLabel }] : []), ...chosen]
+      .filter((row) => !sizeLabels.has(row.label));
+    const hasSizes = withSizes.some((row) => row.label === 'Габарити');
+    // a ridge set alone is the one size answered: it stays in the line
+    const ordered = [...withSizes, ...object].filter((row) => !hasSizes || row.label !== 'Висота в конику');
     const rank = (label: string) => ['Габарити', 'Призначення'].indexOf(label);
     const lines = [...ordered].sort((a, b) => (rank(a.label) === -1 ? 9 : rank(a.label)) - (rank(b.label) === -1 ? 9 : rank(b.label))).slice(0, 2).map((row) => {
       // the purpose and the insulation by their answers, as the stamp says them (10.10): «Утеплення: утеплений» twice

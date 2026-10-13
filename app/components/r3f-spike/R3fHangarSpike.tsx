@@ -29,6 +29,7 @@ const SPIKE_BASE_STATE: ConfiguratorState = {
   objectProfile: DEFAULT_OBJECT_PROFILE,
   confirmed: [],
   sizesUnknown: false,
+  sizesAnswered: [],
   internalSupports: 'unknown',
   scopeMode: 'full',
 };

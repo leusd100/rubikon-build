@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
+import { useInquiryFormHost } from './inquiry/InquiryFormHost';
 import { revealAttachedBrief } from './inquiry/revealAttachedBrief';
 
 /**
@@ -16,6 +17,14 @@ import { revealAttachedBrief } from './inquiry/revealAttachedBrief';
 export function ConversationFormToggle({ children }: Readonly<{ children: ReactNode }>) {
   const [opened, setOpened] = useState(false);
   const attached = Boolean(useInquiryAttachment()?.attachment);
+  // /angary (Phase 4): the form can open under the configurator's stamp instead (InquiryFormHost); this block then shows
+  // a line up to it. It hands its form over as it renders it, so both places show the same one.
+  const host = useInquiryFormHost();
+  const setHostForm = host?.setForm;
+  const movedAway = Boolean(host?.atSource);
+  useLayoutEffect(() => {
+    setHostForm?.(children);
+  }, [setHostForm, children]);
   const regionId = useId();
   const regionRef = useRef<HTMLDivElement>(null);
   const focusAfterOpen = useRef(false);
@@ -25,12 +34,13 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
       if (!(event.target instanceof Element) || !event.target.closest('[data-open-inquiry]')) return;
       setOpened(true);
       // With a brief attached every way to the form lands on it, as «Обговорити цю конфігурацію» does: /angary's cost and
-      // title-block CTAs and the FAQ link left a phone at the form's heading with the brief below (sweep 03.10)
-      if (attached) revealAttachedBrief(event);
+      // title-block CTAs and the FAQ link left a phone at the form's heading with the brief below (sweep 03.10) — and, the
+      // form under the stamp, up to it on every width (Phase 4)
+      if (attached) revealAttachedBrief(event, { takeOver: movedAway });
     };
     document.addEventListener('click', openFromLink, true);
     return () => document.removeEventListener('click', openFromLink, true);
-  }, [attached]);
+  }, [attached, movedAway]);
 
   // Once a brief has opened the form it stays open: detaching it («Не додавати», «Почати спочатку») must not fold the
   // form under the visitor's hands. (State adjusted while rendering, React's pattern for following a changed value.)
@@ -50,6 +60,20 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
     setOpened(true);
   }, []);
 
+  if (movedAway) {
+    return (
+      <div className="conversation-form-wrap" data-open="" data-moved="">
+        {/* the form stands under the configurator's stamp now: one line up to it, the call and the channels beside */}
+        <p className="conversation-form-moved">
+          Форма запиту відкрита під вашою конфігурацією.{' '}
+          <a href="#hc-inquiry" onClick={(event) => revealAttachedBrief(event, { takeOver: true })}>
+            Перейти до форми <span aria-hidden="true">↑</span>
+          </a>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="conversation-form-wrap" data-open={shown ? '' : undefined}>
       {!shown && (
@@ -57,7 +81,8 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
           Залишити запит <span aria-hidden="true">↓</span>
         </button>
       )}
-      <div className="conversation-form-region" id={regionId} ref={regionRef}>
+      {/* typing here keeps the form here (InquiryFormHost): moved, it would be a new, empty form */}
+      <div className="conversation-form-region" id={regionId} ref={regionRef} onInput={host?.markTyped}>
         {children}
       </div>
     </div>

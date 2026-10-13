@@ -205,8 +205,10 @@ describe('the example’s values are never the visitor’s choice (04.10; 08.10)
       gates: 2,
     })));
     const part = (id: string) => outline.find((section) => section.id === id)?.rows.map((row) => row.label);
-    expect(part('selected')).toEqual(['Габарити', 'Висота в конику', 'Утеплення', 'Стіни й покрівля', 'Ворота', 'Двері']);
-    expect(part('defaults')).toEqual(['Обсяг']);
+    // the wall height (8 m) is still the example's, each size on its own row (Phase 4); the ridge follows the width
+    expect(part('selected')).toEqual(['Ширина', 'Довжина', 'Утеплення', 'Стіни й покрівля', 'Ворота', 'Двері']);
+    expect(part('defaults')).toEqual(['Висота стін', 'Обсяг']);
+    expect(part('preliminary')?.[0]).toBe('Висота в конику');
   });
 
   it('the example’s own value chosen again is an answer', () => {
