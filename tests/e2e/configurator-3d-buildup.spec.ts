@@ -89,11 +89,21 @@ async function installDrawCallCounter(page: Page) {
  * `slowAnimationFrames` switches it on, so the page and the 3D view open at full speed and only the transition under
  * test is paced. Timers are left alone: the build-up's own clock (useLayerLifecycle's timeout) keeps real time, as it
  * does on CI — only the frames that draw its result come late.
+ *
+ * `holdFramesAfterNextClick` holds only the frames asked for in the first moments after the next click: the first frame
+ * of the transition that click starts comes late, and the rest at the browser's own pace.
  */
 async function installFramePacer(page: Page) {
   await page.addInitScript(() => {
-    const w = window as unknown as { __frameDelayMs: number };
+    const w = window as unknown as { __frameDelayMs: number; __holdAfterClickMs: number };
     w.__frameDelayMs = 0;
+    w.__holdAfterClickMs = 0;
+    let holdUntil = 0;
+    // On the document and in the capture phase: before React handles the click and the canvas asks for its first frame
+    document.addEventListener('click', () => {
+      if (w.__holdAfterClickMs > 0) holdUntil = performance.now() + w.__holdAfterClickMs;
+      w.__holdAfterClickMs = 0;
+    }, true);
     const request = window.requestAnimationFrame.bind(window);
     const cancel = window.cancelAnimationFrame.bind(window);
     const held = new Map<number, number>(); // a frame still being held back → its timer
@@ -109,7 +119,8 @@ async function installFramePacer(page: Page) {
           callback(time);
         }));
       };
-      if (w.__frameDelayMs > 0) held.set(id, window.setTimeout(pass, w.__frameDelayMs));
+      const delayMs = Math.max(w.__frameDelayMs, holdUntil - performance.now());
+      if (delayMs > 0) held.set(id, window.setTimeout(pass, delayMs));
       else pass();
       return id;
     };
@@ -138,10 +149,11 @@ async function installFramePacer(page: Page) {
  * 2. Two animation frames in a row with no draw call. While R3F's demand loop runs it draws in every frame, so a whole
  *    frame without one means the loop has stopped. Two, not one: in the first frame the probe can run before a loop that
  *    was asked for a frame just after it. A loop that never stops fails here, by the deadline, not at the test's timeout.
+ *    `quietFramesNeeded` asks for a longer run of them, for a test that needs the canvas to have idled.
  */
-async function waitForBuildUpToSettle(page: Page) {
+async function waitForBuildUpToSettle(page: Page, quietFramesNeeded = 2) {
   await expect(page.locator('.hc-preview-surface [data-build-up]')).toHaveAttribute('data-build-up', 'settled', { timeout: 15_000 });
-  const stopped = await page.evaluate(() => new Promise<boolean>((resolve) => {
+  const stopped = await page.evaluate((needed) => new Promise<boolean>((resolve) => {
     const w = window as unknown as { __drawCalls: number };
     const deadline = performance.now() + 15_000;
     let last = w.__drawCalls;
@@ -149,12 +161,12 @@ async function waitForBuildUpToSettle(page: Page) {
     const tick = () => {
       quietFrames = w.__drawCalls === last ? quietFrames + 1 : 0;
       last = w.__drawCalls;
-      if (quietFrames >= 2) resolve(true);
+      if (quietFrames >= needed) resolve(true);
       else if (performance.now() > deadline) resolve(false);
       else requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  }));
+  }), quietFramesNeeded);
   expect(stopped, 'the render loop was still drawing 15 s after the build-up settled — frameloop="demand" never returned to idle').toBe(true);
 }
 
@@ -209,6 +221,68 @@ async function slowAnimationFrames(page: Page, delayMs: number) {
   await page.evaluate((ms) => {
     (window as unknown as { __frameDelayMs: number }).__frameDelayMs = ms;
   }, delayMs);
+}
+
+async function holdFramesAfterNextClick(page: Page, holdMs: number) {
+  await page.evaluate((ms) => {
+    (window as unknown as { __holdAfterClickMs: number }).__holdAfterClickMs = ms;
+  }, holdMs);
+}
+
+type FadeFrames = { drawn: number; still: number };
+
+/**
+ * Notes how many draw calls each animation frame made, by the frame's timestamp. Every callback in one frame gets the
+ * same timestamp, so R3F's loop and a test's own probe count towards the same frame, whichever of them runs first.
+ * Needs installDrawCallCounter, and goes after installFramePacer: it counts the frames the pacer passes on.
+ */
+async function installFrameDrawLog(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __drawCalls: number; __drawsByFrame: Map<number, number> };
+    w.__drawsByFrame = new Map();
+    const request = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (callback) => request((time) => {
+      const before = w.__drawCalls;
+      try {
+        callback(time);
+      } finally {
+        w.__drawsByFrame.set(time, (w.__drawsByFrame.get(time) ?? 0) + w.__drawCalls - before);
+      }
+    });
+  });
+}
+
+/**
+ * Watches the next build-up, from `data-build-up` turning 'running' to 'settled': of the animation frames from its first
+ * drawn one on, how many the canvas drew in, and how many it stood still in. The probe asks for a frame every frame, so
+ * the frames in which R3F's demand loop drew nothing are counted too. Read the result with `fadeFrames`.
+ */
+async function watchNextBuildUp(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __drawsByFrame: Map<number, number>; __fade: Promise<FadeFrames | null> };
+    const wrapper = document.querySelector('.hc-preview-surface [data-build-up]');
+    const running: number[] = []; // the timestamps of the frames in which the build-up was running
+    w.__drawsByFrame.clear();
+    w.__fade = new Promise((resolve) => {
+      const deadline = performance.now() + 15_000;
+      const tick = (time: number) => {
+        const state = wrapper?.getAttribute('data-build-up');
+        if (state === 'running') running.push(time);
+        if (state === 'settled' && running.length > 0) {
+          // every frame noted above is over by now, R3F's callback in it included
+          const drew = running.map((frame) => (w.__drawsByFrame.get(frame) ?? 0) > 0);
+          const fade = drew.slice(Math.max(0, drew.indexOf(true)));
+          resolve({ drawn: fade.filter(Boolean).length, still: fade.filter((d) => !d).length });
+        } else if (performance.now() > deadline) resolve(null);
+        else requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  });
+}
+
+async function fadeFrames(page: Page): Promise<FadeFrames | null> {
+  return page.evaluate(() => (window as unknown as { __fade: Promise<FadeFrames | null> }).__fade);
 }
 
 test.describe('configurator 3D build-up (Phase 3B)', () => {
@@ -372,6 +446,40 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
 
     for (const [toggle, frames] of Object.entries(framesAfterSettle)) {
       expect(frames, `${toggle}: frames drawn after data-build-up="settled" (all toggles: ${JSON.stringify(framesAfterSettle)})`).toBeLessThanOrEqual(2);
+    }
+  });
+
+  test('a layer switched after the canvas has idled fades over its whole transition, even when its first frame comes late', async ({ page }) => {
+    // Once a layer's fade has drawn its first frame, the canvas draws every frame until the build-up settles. Before
+    // 12.10 the fade was timed on R3F's clock, which under frameloop="demand" only moves when a frame is drawn. A fade
+    // anchored before the first frame after an idle spell started at the last frame drawn, a second or more back, and
+    // that first frame counted the whole idle spell as time gone by: the roof was at its target in one frame, and the
+    // canvas stood still until the lifecycle's timer ended the transition. Holding the frames of the first 100 ms after
+    // the click puts the anchor before the first frame every time: before the fix, 1 frame drawn and 9–10 still, for the
+    // roof switched off and on alike, on a GPU and under SwiftShader.
+    //
+    // The way a fade was skipped on its own (1 roof toggle in 160 on a GPU, 12.10) is not forced here: a frame between
+    // the commit of the new phase and a passive anchoring effect. Only React's scheduler running late forces that, which
+    // the diagnostic harness in docs/handoffs/2026-10-12-configurator-idle-fade-skip.md does and this test does not.
+    await installDrawCallCounter(page);
+    await installFramePacer(page);
+    await installFrameDrawLog(page);
+    await openConfigurator(page);
+    await enterThreeMode(page);
+    await chooseSeparateWorks(page);
+
+    const fades: Record<string, FadeFrames | null> = {};
+    for (const toggle of ['roof off', 'roof on'] as const) {
+      await waitForBuildUpToSettle(page, 90); // and then idle: 90 frames in a row without a draw, 1.5 s at 60 Hz
+      await holdFramesAfterNextClick(page, 100);
+      await watchNextBuildUp(page);
+      await toggleScope(page, 'roof');
+      fades[toggle] = await fadeFrames(page);
+    }
+
+    for (const [toggle, fade] of Object.entries(fades)) {
+      expect(fade, `${toggle}: the build-up did not run and settle within 15 s`).not.toBeNull();
+      expect(fade?.still, `${toggle}: frames in which the canvas stood still mid-fade (all toggles: ${JSON.stringify(fades)})`).toBeLessThanOrEqual(1);
     }
   });
 

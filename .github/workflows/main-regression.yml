@@ -28,14 +28,14 @@ jobs:
           retention-days: 2
 
   e2e:
-    name: Main E2E (${{ matrix.shard }}/3)
+    name: Main E2E (${{ matrix.shard }}/4)
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
     env:
       PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
       PLAYWRIGHT_BLOB_REPORT: 'true'
@@ -49,7 +49,7 @@ jobs:
           path: dist
       - uses: ./.github/actions/setup-playwright
       - name: Run full E2E shard
-        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --shard=${{ matrix.shard }}/3
+        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --shard=${{ matrix.shard }}/4
       - name: Upload shard report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

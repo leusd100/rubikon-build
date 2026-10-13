@@ -544,8 +544,9 @@ describe('labels at a legible size (03.10)', () => {
 
   it('draws the labels larger, in the drawing’s units, the smaller the drawing is shown', () => {
     const technical = technicalFor();
-    // the default on a 390 px phone read 5.9 px for the ridge before
-    expect(smallestOnScreen({}, { width: 296, height: 226 }).scale).toBeGreaterThan(2);
+    // the default on a 390 px phone read 5.9 px for the ridge before; in the dimetric camera (12.10) its picture is
+    // narrower and fills the phone's frame more, so its labels need less: 1.71 (it was above 2 at 45°)
+    expect(smallestOnScreen({}, { width: 296, height: 226 }).scale).toBeGreaterThan(1.5);
     const wide = labelScaleToFit(technical, { width: 412, height: 275 });
     const narrow = labelScaleToFit(technical, { width: 226, height: 200 });
     expect(narrow).toBeGreaterThan(wide);

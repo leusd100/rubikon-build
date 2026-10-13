@@ -1,7 +1,8 @@
 // The drawing office's dimetric of the /angary configurator's sheet (10.10): «Каркас» (FrameTour.tsx) and «Загальний
 // вигляд» (generalViewGeometry.ts) are one set of drawings, so they share one projection and one frame — the span at
 // 7°, true size; the length at 41°, half size, so the gable keeps its shape. Until 10.10 the general view had a camera
-// of its own (viewProjection.ts, the 3D's), and the two pictures of one hangar sat at different angles.
+// of its own (viewProjection.ts, the 3D's), and the two pictures of one hangar sat at different angles. Since 12.10 that
+// camera is this dimetric too (elevation asin(1/3), azimuth −asin(1/√8)): the 3D shows the hangar the drawings show.
 //
 // Sheet space, in metres: x across the span from axis А (left) to the side wall the camera sees (x = W), d along the
 // building from the near end wall (d = 0), z up from the ground. The configurator's model has its x mirrored on this

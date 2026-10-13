@@ -52,6 +52,17 @@ async function choose(page: Page, label: 'Як у системі' | 'Світл�
   }
 }
 
+/**
+ * Goes back and waits for that page's own document to load. goBack() alone settles on the first navigation event, and a
+ * same-document history write counts as one: vinext writes its router state in place (history.replaceState) on the
+ * first hydrated commit, which on a slow runner lands after `load` — so goBack() returned on the page being left while
+ * the way back was still in flight (Main Regression, 12.10).
+ */
+async function goBackTo(page: Page, pathname: string) {
+  await page.goBack();
+  await page.waitForURL((url) => url.pathname === pathname, { waitUntil: 'load' });
+}
+
 test.describe('site-wide theme', () => {
   test('1 · default + OS Light → Light', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
@@ -150,8 +161,20 @@ test.describe('site-wide theme', () => {
     await page.locator('main a.direction-card[href="/metalokonstruktsii"]').click();
     await page.waitForURL('**/metalokonstruktsii');
     await expectTheme(page, 'dark', 'dark');
-    await page.goBack({ waitUntil: 'load' });
+    await goBackTo(page, '/');
     await expectTheme(page, 'dark', 'dark');
+  });
+
+  test('going back waits for HOME itself, not for a history write on the page it leaves', async ({ page }) => {
+    await open(page, '/');
+    await page.locator('main a.direction-card[href="/metalokonstruktsii"]').click();
+    await page.waitForURL('**/metalokonstruktsii');
+    // The CI order of 12.10, made certain: the service page writes its history entry in place once the way back has
+    // begun — as vinext's first hydrated commit does (history.replaceState) when it lands after `load` on a slow runner
+    await page.evaluate(() => addEventListener('beforeunload', () => history.replaceState(history.state, ''), { once: true }));
+    await goBackTo(page, '/');
+    expect(new URL(page.url()).pathname).toBe('/');
+    expect(await page.evaluate(() => location.pathname)).toBe('/');
   });
 
   test('the control is keyboard operable and labelled', async ({ page, isMobile }) => {

@@ -559,12 +559,16 @@ export const LABEL_SCREEN_PX = 12;
  * drawing is fitted into `box` — the svg's content box in CSS px, the viewBox fitted whole (`xMidYMid meet`). Above 1
  * where the drawing is shown small, below 1 where it is shown large (until 09.10 it only ever grew). The labels take
  * room in the frame, so a changed size moves the frame and the drawing's scale a little: the scale is found in a few
- * passes, and rounded up to hundredths so a re-measure of the same box lands on the same value.
+ * passes, and rounded up to hundredths so a re-measure of the same box lands on the same value. Up to eight (12.10):
+ * in the dimetric camera the largest hangar's labels take so much of a 226 px phone frame that four passes stopped at
+ * 11.86 px; eight reach 12.
  */
+const LABEL_SCALE_PASSES = 8;
+
 export function labelScaleToFit(scene: TechnicalSceneModel, box: { width: number; height: number }): number {
   if (!(box.width > 0 && box.height > 0)) return 1;
   let scale = 1;
-  for (let pass = 0; pass < 4; pass += 1) {
+  for (let pass = 0; pass < LABEL_SCALE_PASSES; pass += 1) {
     const view = viewBoxOf(projectIsometricScene(scene, scale).bounds);
     const screenPerUnit = Math.min(box.width / view.width, box.height / view.height);
     const next = Math.ceil((LABEL_SCREEN_PX / (DERIVED_LABEL_FONT_PX * screenPerUnit)) * 100) / 100;
