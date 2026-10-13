@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceManifest';
 import { directions } from '../data/directions';
+import { readEffectiveTheme, subscribeTheme } from '../lib/theme';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
 import { useHeroControlPlacement } from './useHeroControlPlacement';
 
@@ -14,9 +15,9 @@ const LANDSCAPE_SIZES = '(min-aspect-ratio: 23/10) 100vw, 230svh';
 const PORTRAIT_SIZES = '(max-width: 760px) 640px, 100vw';
 const pad = (value: number) => String(value).padStart(2, '0');
 
-/** The direction a slide shows, by the asset's own file name (the sequence follows the directions' order). */
-function directionTitle(src: string) {
-  return directions.find((direction) => src.includes(`directions-sequence-${direction.id}-`))?.title ?? '';
+/** The slide order follows the five direction records. */
+function directionTitle(id: string) {
+  return directions.find((direction) => direction.id === id)?.title ?? '';
 }
 
 export function DirectionsHeroImageSequence() {
@@ -31,9 +32,11 @@ export function DirectionsHeroImageSequence() {
   // as activeIndex wraps back around the cycle, so nothing re-toggles its <source> and re-fetches
   // every loop.
   const [maxUnlockedIndex, setMaxUnlockedIndex] = useState(1);
+  const theme = useSyncExternalStore(subscribeTheme, readEffectiveTheme, () => 'light' as const);
   const firstImageRef = useRef<HTMLImageElement>(null);
   const { isVisible, shouldLoadMedia } = useDeferredMedia(firstImageRef, {
-    observeKey: 'directions-static-hero-sequence',
+    // Theme changes replace the image nodes; observe the new first slide.
+    observeKey: `directions-static-hero-sequence-${theme}`,
   });
   // The slides change on their own, so they can be paused (the same round control as the hero videos); the active
   // bar restarts with every slide and every resume
@@ -62,6 +65,7 @@ export function DirectionsHeroImageSequence() {
   return (
     <>
       {directionsHeroSequenceAssets.map((asset, index) => {
+        const art = theme === 'dark' ? asset.dark : asset.daylight;
         const shouldAttachSource = index === 0 || (shouldLoadMedia && index <= maxUnlockedIndex);
         const style = {
           '--directions-hero-image-position': asset.focalPosition,
@@ -70,17 +74,19 @@ export function DirectionsHeroImageSequence() {
         } as CSSProperties;
 
         return (
-          <picture key={asset.fallbackSrc}>
-            {shouldAttachSource && <source media="(max-width: 1050px) and (orientation: portrait)" type="image/webp" srcSet={asset.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
-            {shouldAttachSource && <source type="image/webp" srcSet={asset.srcSet} sizes={LANDSCAPE_SIZES} />}
+          // Keep decoded pixels scoped to their theme, including during hydration.
+          <picture key={`${asset.id}-${theme}`}>
+            {shouldAttachSource && <source media="(max-width: 1050px) and (orientation: portrait)" type="image/webp" srcSet={art.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
+            {shouldAttachSource && <source type="image/webp" srcSet={art.srcSet} sizes={LANDSCAPE_SIZES} />}
             <img
               ref={index === 0 ? firstImageRef : undefined}
               aria-hidden="true"
               className={`directions-hero-sequence-image${index === visibleIndex ? ' is-active' : ''}`}
-              src={shouldAttachSource ? asset.fallbackSrc : undefined}
+              data-art-theme={theme}
+              src={shouldAttachSource ? art.fallbackSrc : undefined}
               alt=""
-              width={asset.width}
-              height={asset.height}
+              width={art.width}
+              height={art.height}
               sizes={LANDSCAPE_SIZES}
               loading={index === 0 ? 'eager' : 'lazy'}
               fetchPriority={index === 0 ? 'high' : 'auto'}
@@ -96,14 +102,14 @@ export function DirectionsHeroImageSequence() {
           <div className="dhs-indicator" data-paused={paused || undefined} aria-hidden="true">
             <span className="dhs-bars">
               {directionsHeroSequenceAssets.map((asset, index) => (
-                <i key={asset.fallbackSrc} className={index < visibleIndex ? 'is-done' : undefined}>
+                <i key={asset.id} className={index < visibleIndex ? 'is-done' : undefined}>
                   {/* restarts with the slide, a resume and a return into view — so it fills with the slide's own time */}
                   {index === visibleIndex && <b key={`${visibleIndex}-${resumes}-${isVisible}`} />}
                 </i>
               ))}
             </span>
             <span className="dhs-caption">
-              <b>{pad(visibleIndex + 1)}</b> / {pad(count)} · {directionTitle(directionsHeroSequenceAssets[visibleIndex].fallbackSrc)}
+              <b>{pad(visibleIndex + 1)}</b> / {pad(count)} · {directionTitle(directionsHeroSequenceAssets[visibleIndex].id)}
             </span>
           </div>
           <button

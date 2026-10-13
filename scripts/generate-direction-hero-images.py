@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generate responsive WebP variants for full-bleed hero artwork (direction pages, /yak-pratsyuiemo).
 
-The source images in public/media/*-source/ are the approved artwork.
+The approved source images live in public/media/*-source/. The Phase 6 photo
+variant sources live in design-assets/ so they are not deployed as PNGs.
 Landscape variants preserve the complete source. The /napryamky sequence also
 gets portrait crops for tall screens; source artwork is never modified.
 Output filenames are content-hashed for the immutable media-responsive cache policy.
@@ -30,8 +31,31 @@ SEQUENCE_PORTRAIT_POSITIONS = {
     "betonni-roboty": .78,
     "pokrivelni-roboty": .67,
 }
+SEQUENCE_CONCEPT_PORTRAIT_POSITIONS = {
+    # The new panoramic compositions reserve the left side for desktop copy.
+    # Portrait crops move toward the structure so it remains legible on phones.
+    "angary": .72,
+    "zernoskhovyshcha": .70,
+    "metalokonstruktsii": .70,
+    "betonni-roboty": .70,
+    "pokrivelni-roboty": .69,
+}
 IMAGE_SETS = [
+    ("design-assets/direction-hero-blue-hour", "direction-hero-blue-hour", [
+        "angary.png",
+        "zernoskhovyshcha.png",
+        "metalokonstruktsii.png",
+        "betonni-roboty.png",
+        "pokrivelni-roboty.png",
+    ]),
     ("public/media/direction-hero-source", "direction-hero", [
+        "angary.png",
+        "zernoskhovyshcha.png",
+        "metalokonstruktsii.png",
+        "betonni-roboty.png",
+        "pokrivelni-roboty.png",
+    ]),
+    ("design-assets/direction-hero-photo-variant", "direction-hero-photo-variant", [
         "angary.png",
         "zernoskhovyshcha.png",
         "metalokonstruktsii.png",
@@ -45,19 +69,33 @@ IMAGE_SETS = [
         "betonni-roboty.png",
         "pokrivelni-roboty.png",
     ]),
+    ("design-assets/directions-sequence-concepts/daylight", "directions-sequence-daylight", [
+        "angary.png",
+        "zernoskhovyshcha.png",
+        "metalokonstruktsii.png",
+        "betonni-roboty.png",
+        "pokrivelni-roboty.png",
+    ]),
+    ("design-assets/directions-sequence-concepts/blue-hour", "directions-sequence-blue-hour", [
+        "angary.png",
+        "zernoskhovyshcha.png",
+        "metalokonstruktsii.png",
+        "betonni-roboty.png",
+        "pokrivelni-roboty.png",
+    ]),
     ("public/media/process-hero-source", "process-hero", [
         "yak-pratsyuiemo.webp",
     ]),
 ]
 
 
-def emit_variants(image, prefix, base, widths, results) -> None:
+def emit_variants(image, prefix, base, widths, results, quality=QUALITY) -> None:
     for width in widths:
         target_width = min(width, image.width)
         target_height = round(image.height * (target_width / image.width))
         resized = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
         buffer = io.BytesIO()
-        resized.save(buffer, format="WEBP", quality=QUALITY, method=6)
+        resized.save(buffer, format="WEBP", quality=quality, method=6)
         encoded = buffer.getvalue()
         digest = hashlib.sha256(encoded).hexdigest()[:8]
         output_name = f"{prefix}-{base}-{target_width}w.{digest}.webp"
@@ -79,14 +117,16 @@ def main() -> None:
             source_path = os.path.join(source_dir, filename)
             base = filename.rsplit(".", 1)[0]
             image = Image.open(source_path).convert("RGB")
-            is_sequence = output_prefix == "directions-sequence"
+            is_sequence = output_prefix.startswith("directions-sequence")
+            quality = 90 if output_prefix in ("directions-sequence-daylight", "directions-sequence-blue-hour", "direction-hero-blue-hour") else QUALITY
             widths = sorted(set(WIDTHS + ([image.width] if is_sequence else [])))
-            emit_variants(image, output_prefix, base, widths, results)
+            emit_variants(image, output_prefix, base, widths, results, quality)
             if is_sequence:
                 crop_width = min(image.width, round(image.height * 3 / 4))
-                left = round((image.width - crop_width) * SEQUENCE_PORTRAIT_POSITIONS[base])
+                positions = SEQUENCE_CONCEPT_PORTRAIT_POSITIONS if output_prefix != "directions-sequence" else SEQUENCE_PORTRAIT_POSITIONS
+                left = round((image.width - crop_width) * positions[base])
                 portrait = image.crop((left, 0, left + crop_width, image.height))
-                emit_variants(portrait, output_prefix, base + "-portrait", [320, 480, crop_width], results)
+                emit_variants(portrait, output_prefix, base + "-portrait", [320, 480, crop_width], results, quality)
 
     total_bytes = sum(result[2] for result in results)
     print(f"Generated {len(results)} files, total {total_bytes / 1024:.1f} KiB")

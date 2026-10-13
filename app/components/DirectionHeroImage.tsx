@@ -1,5 +1,12 @@
-import type { CSSProperties } from 'react';
+'use client';
+
+import { useSyncExternalStore, type CSSProperties } from 'react';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
+import { readEffectiveTheme, subscribeTheme } from '../lib/theme';
+
+// Cover is constrained by height on tall screens. Tall phones need fewer source pixels;
+// short phones keep the larger crop so the steel and roof detail stays sharp.
+const HERO_SIZES = '(max-width: 760px) and (max-height: 700px) 150svh, (max-width: 760px) 120svh, (min-aspect-ratio: 3/2) 100vw, 150svh';
 
 type DirectionHeroImageProps = {
   asset: DirectionHeroImageAsset;
@@ -11,22 +18,27 @@ type DirectionHeroImageProps = {
  * hidden video sources or change deferred-media behaviour elsewhere.
  */
 export function DirectionHeroImage({ asset }: DirectionHeroImageProps) {
+  const theme = useSyncExternalStore(subscribeTheme, readEffectiveTheme, () => 'light' as const);
+  const art = theme === 'dark' ? asset.dark : asset;
   const style = {
     '--direction-hero-image-position': asset.focalPosition,
     '--direction-hero-image-position-mobile': asset.mobileFocalPosition,
   } as CSSProperties;
 
   return (
-    <picture>
-      <source type="image/webp" srcSet={asset.srcSet} sizes="100vw" />
+    // A new image element cannot retain the previously decoded light bitmap while
+    // its dark source loads. Updating src and data-art-theme on one node could.
+    <picture key={`${asset.fallbackSrc}-${theme}`}>
+      <source type="image/webp" srcSet={art.srcSet} sizes={HERO_SIZES} />
       <img
         aria-hidden="true"
         className="direction-hero-image"
-        src={asset.fallbackSrc}
+        data-art-theme={theme}
+        src={art.fallbackSrc}
         alt=""
         width={1536}
         height={1024}
-        sizes="100vw"
+        sizes={HERO_SIZES}
         loading="eager"
         fetchPriority="high"
         decoding="async"
