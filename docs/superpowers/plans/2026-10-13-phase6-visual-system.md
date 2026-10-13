@@ -39,7 +39,7 @@
 
 **Interfaces:**
 - Consumes: `DirectionPageConfig['id']` як ідентифікатор одного з п’яти напрямів.
-- Produces: `DirectionHeroDrawing({ id }: { id: DirectionPageConfig['id'] })), декоративний SVG-шар із `aria-hidden="true"` і `focusable="false"`.
+- Produces: `DirectionHeroDrawing({ id }: { id: DirectionPageConfig['id'] })`, декоративний SVG-шар із `aria-hidden="true"` і `focusable="false"`.
 
 - [ ] **Step 1: Додати SVG-композиції для `angary` і `zernoskhovyshcha`.** Використати повторюваний ритм рам для ангарів та вертикальний ритм ємностей для зерносховищ; лишити їх абстрактними, без розмірів, чисел і специфікацій.
 - [ ] **Step 2: Зібрати карту п’яти напрямів.** Для `metalokonstruktsii`, `betonni-roboty` і `pokrivelni-roboty` повторно використати відповідно `Steel`, `Concrete`, `Roofing`; для кожного напряму задати власну SVG-композицію в одному узгодженому `viewBox`.

@@ -9,6 +9,7 @@ import { DrawingSheet, type SheetCell } from './DrawingSheet';
 import { DirectionNode } from './directions/DirectionNode';
 import { ProcessDrawing } from './directions/ProcessDrawing';
 import { DirectionHeroImage } from './DirectionHeroImage';
+import { DirectionHeroDrawing } from './directions/DirectionHeroDrawing';
 import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep, ProcessSplit } from '../types/directionPage';
 import { getDirection } from '../lib/directions';
@@ -60,6 +61,7 @@ function DirectionItemCards({
 }
 
 type DirectionHeroProps = {
+  directionId: DirectionPageConfig['id'];
   path: string;
   number: string;
   breadcrumbLabel: string;
@@ -73,6 +75,7 @@ type DirectionHeroProps = {
 };
 
 function DirectionHero({
+  directionId,
   path,
   number,
   breadcrumbLabel,
@@ -104,12 +107,13 @@ function DirectionHero({
   };
 
   return (
-    <section className={classNames('service-subhero', actions?.sectionClassName)}>
+    <section className={classNames('service-subhero', 'has-direction-drawing', actions?.sectionClassName)}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
         <DirectionHeroImage asset={heroImage} />
       </div>
       <div className="service-subhero-overlay" />
+      <DirectionHeroDrawing id={directionId} />
       <div className="subhero-grid" aria-hidden="true" />
       <div className="shell service-subhero-content">
         <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }, { label: breadcrumbLabel, href: path }]} />
@@ -448,6 +452,7 @@ export function DirectionPage({
       {/* Arms the page's [data-motion] blocks once each is in view; with reduced motion everything shows at once */}
       <ProcessMotion root=".direction-page" />
       <DirectionHero
+        directionId={config.id}
         path={direction.href}
         number={direction.number}
         breadcrumbLabel={config.hero.breadcrumbLabel}
