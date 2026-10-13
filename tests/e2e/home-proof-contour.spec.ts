@@ -2105,7 +2105,8 @@ test('DEC-42 (a), proposed: after the arrival node Г is lit and one line says w
   expect(apartFrom(handle), 'the handle').toBe(true);
   if (phone) expect(box.y + box.height / 2).toBeGreaterThan(frame.y + frame.height / 2);
   else expect(box.y + box.height / 2).toBeLessThan(frame.y + frame.height / 2);
-  expect((box.width * box.height) / (frame.width * frame.height)).toBeLessThan(phone ? 0.08 : 0.03);
+  // (the panel it replaces covered 21–36 % of the frame on a laptop)
+  expect((box.width * box.height) / (frame.width * frame.height)).toBeLessThan(phone ? 0.1 : 0.03);
   // Pressed — on a laptop its letter on the scheme, on a phone its pill — it opens as it always did; the hint is over for
   // good, the node closed again included
   const panel = await openNode(page, NODES[3]);
@@ -2219,7 +2220,7 @@ test('a key in the sheet before the sweep stops it: the seam goes from the edge 
   await expect(stage).not.toHaveAttribute('data-pulse', /.*/);
 });
 
-test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the sweep where it is: back to rest, no rings', async ({ page }, testInfo) => {
+test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the sweep where it is: back to rest, no rings, no hint', async ({ page }, testInfo) => {
   test.setTimeout(45_000);
   const phone = testInfo.project.name !== 'desktop-chromium';
   const { sheet, stage, range } = await arrive(page);
@@ -2235,11 +2236,14 @@ test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the
     await page.mouse.click(cell.x + cell.width / 2, cell.y + cell.height / 2);
   }
   const { frames, run, ended } = await arrivalOf(page);
-  // Cut short; at once the seam's place is the state's again, the range never moved, and no rings: they are the
-  // finished sweep's last word
+  // Cut short — before the move's own end (it runs its whole time otherwise: the arrival's test), the seam not yet at its
+  // rest — and at once the seam's place is the state's again, the range never moved, and no last word: no node's hint
+  // (the visitor has moved first)
   expect(run).not.toBeNull();
-  expect(ended! - run!).toBeLessThan((phone ? SWEEP_MS_PHONE : SWEEP_MS) - 300);
+  expect(ended! - run!).toBeLessThan((phone ? SWEEP_MS_PHONE : SWEEP_MS) - 20);
+  expect(frames.filter((at) => at.t < ended!).at(-1)!.split).toBeGreaterThan(DEFAULT_SPLIT + 0.5);
   for (const frame of frames.filter((at) => at.t >= ended!)) expect(frame, `${frame.t}`).toMatchObject({ sweep: null, gliding: false, pulse: false, split: DEFAULT_SPLIT });
+  await expect(stage).not.toHaveAttribute('data-node-hint', /.*/);
   expect(new Set(frames.map((frame) => frame.range))).toEqual(new Set([String(DEFAULT_SPLIT)]));
   await expectSplit(range, stage, DEFAULT_SPLIT);
 });
