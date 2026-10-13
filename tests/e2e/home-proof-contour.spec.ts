@@ -41,14 +41,14 @@ test.describe.configure({ timeout: 60_000 });
 // The tour shows the block in about twenty seconds and hands it back at the visitor's first press or key.
 
 const DEFAULT_SPLIT = 62;
-// The first view's sweep (ProofContour): SWEEP_AT after the sheet arrives, once the page has been quiet SWEEP_QUIET, from
-// the right edge to SWEEP_TURN and back to rest over SWEEP_MS — on a phone too (audit 08.10: turning at 38 %, the photo is
-// never gone, and 1.8 s, not 3)
+// The first view's one move (useFirstSweep): SWEEP_AT after the sheet arrives, once the page has been quiet SWEEP_QUIET,
+// the seam passes once from the right edge to its rest over SWEEP_MS — on a phone too. Phase 5 (R-UX-06 §07): one way, no
+// turn (it used to sweep out to 38 % and back over 1.8 s), and nothing else in the arrival — no rings from the handle or
+// the brief, no names one by one
 const SWEEP_AT = 1050;
 const SWEEP_QUIET = 250;
-const SWEEP_TURN = 38;
-const SWEEP_MS = 1800;
-const SWEEP_MS_PHONE = 1800;
+const SWEEP_MS = 1400;
+const SWEEP_MS_PHONE = 1400;
 // Passing a line of the outline, in per cent of the frame: it is lit within GRAB of the seam, until the seam is past
 // RELEASE
 const SNAP_GRAB = 0.8;
@@ -62,11 +62,10 @@ const CARRIERS = ['.hv2-contour-pane', '.hv2-contour-pane-inner', '.hv2-contour-
 const PANE_LINES = '.hv2-contour-pane svg.hv2-contour-lines';
 // A phone's close-up of the gable (≤ 760 px): the canvas 1.22 × the frame's width, 19.46 % of it off to the left, so a
 // per cent of the canvas stands at (per cent × ZOOM − LEFT) of the frame — the photo's columns 245–1504 and, since 09.10,
-// all its rows (0–788: the frame the photo's full height, the sheet edge to edge); the sweep turns at 38 % there too
+// all its rows (0–788: the frame the photo's full height, the sheet edge to edge)
 const PHONE_ZOOM = 1.22;
 const PHONE_LEFT = 19.46;
 const PHONE_TOP_ROW = 0;
-const SWEEP_TURN_PHONE = 38;
 const onStage = (canvas: number, phone: boolean) => (phone ? canvas * PHONE_ZOOM - PHONE_LEFT : canvas);
 const onCanvas = (stage: number, phone: boolean) => (phone ? (stage + PHONE_LEFT) / PHONE_ZOOM : stage);
 const phoneOf = (page: Page) => page.viewportSize()!.width <= 760;
@@ -560,17 +559,17 @@ async function arrive(page: Page) {
  *  --split (its four carriers', and how far apart they are) and where the seam is drawn; where the right side's window
  *  has its edge (per cent of the frame) and how far its drawing stands off the photo's canvas (px); the script animations
  *  of --split on the carriers (the sweep's); the range's value; the figures' and the names' opacity; whether the picture
- *  is still plotting in; the handle's rings; whatever else animates on the stage */
+ *  is still plotting in; the handle's rings; whatever else animates on the stage; every keyframed animation in the sheet */
 type Frame = {
   t: number; sweep: string | null; gliding: boolean; pulse: boolean; split: number; spread: number; seam: number; window: number; drift: number;
-  sweeps: number; range: string; words: number[]; plotting: boolean; rings: string; others: string[];
+  sweeps: number; range: string; words: number[]; plotting: boolean; rings: string; others: string[]; played: string[];
 };
 /** The frames, and when the sheet arrived, the sweep started and the seam stopped waiting or sweeping, and the page
  *  scrolled; and every layout shift meanwhile, by what shifted */
 type Arrival = { frames: Frame[]; on: number | null; run: number | null; ended: number | null; scrolls: number[]; shifts: string[][]; done: boolean };
 
 /** Records every frame of the first view in the page itself — a test's polls are too far apart for a three-second
- *  sweep — until 2.5 s after the seam stops waiting or sweeping (the rings have rung by then) */
+ *  sweep — until 2.5 s after the seam stops waiting or sweeping */
 async function recordArrival(page: Page) {
   await page.evaluate((selectors) => {
     const stage = document.querySelector<HTMLElement>('#real-object .hv2-contour-stage')!;
@@ -634,6 +633,12 @@ async function recordArrival(page: Page) {
         rings: `${rings.animationName} ${rings.animationIterationCount}`,
         others: animations.filter((animation) => !sweeping(animation))
           .map((animation) => (animation as CSSAnimation).animationName ?? (animation as CSSTransition).transitionProperty ?? 'script'),
+        // every keyframed animation in the whole sheet, the title block's too (the brief's ring was there), but the
+        // picture's plotting in
+        played: document.getAnimations().filter((animation) => {
+          const target = (animation.effect as KeyframeEffect | null)?.target;
+          return animation instanceof CSSAnimation && animation.playState === 'running' && target instanceof Element && sheet.contains(target) && !target.closest('.sheet-cover, .sheet-scan');
+        }).map((animation) => `${(animation as CSSAnimation).animationName} ${((animation.effect as KeyframeEffect).target as Element).getAttribute('class')?.split(' ')[0] ?? ''}`),
       });
       // (to 2.5 s after the sweep — or until the node the arrival opens by itself, AUTO_NODE: it moves the seam clear of its
       // ring, which is its own test)
@@ -1981,7 +1986,7 @@ test('on a phone the title block keeps its height whichever layer is on, and bel
   }
 });
 
-test('arriving with motion, the photo plots in whole, then the seam sweeps once from the edge across the gable and back to rest, the drawing whole behind it', async ({ page }, testInfo) => {
+test('arriving with motion, the photo plots in whole, then the seam passes once from the edge to its rest — one way, no turn — the drawing whole behind it, and nothing else plays', async ({ page }, testInfo) => {
   test.setTimeout(45_000);
   const phone = testInfo.project.name !== 'desktop-chromium';
   const { sheet, stage, range } = await arrive(page);
@@ -2023,14 +2028,12 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   // …on the four carriers, one script animation of --split each, in step
   for (const frame of sweep) expect(frame, `${frame.t}`).toMatchObject({ sweep: 'run', gliding: true, plotting: false, sweeps: 4, spread: 0 });
 
-  // From the edge across the gable to the turn — 38 %: the ridge and both gates in view, the photo never gone (audit 08.10;
-  // it used to turn past the gable's left corner, the photo a strip) — and back to rest: one way out, one way back
+  // From the edge to its rest, one way: never past the rest and never back (Phase 5, R-UX-06 §07: it used to sweep out to
+  // 38 % and turn back — a second move that explained nothing more)
   const splits = sweep.map((frame) => frame.split);
-  const turn = splits.indexOf(Math.min(...splits));
   expect(splits[0]).toBeGreaterThan(99);
-  expect(splits[turn]).toBeCloseTo(phone ? SWEEP_TURN_PHONE : SWEEP_TURN, 0);
-  expect(splits.slice(0, turn + 1)).toEqual(splits.slice(0, turn + 1).toSorted((a, b) => b - a));
-  expect(splits.slice(turn)).toEqual(splits.slice(turn).toSorted((a, b) => a - b));
+  expect(splits).toEqual(splits.toSorted((a, b) => b - a));
+  expect(Math.min(...splits)).toBeGreaterThanOrEqual(DEFAULT_SPLIT - 0.05);
   // The seam is drawn where --split is, and the right side's window has its edge exactly there, its drawing standing on
   // the photo's canvas: what it has passed is the drawing, whole — no line draws in, nothing slides, nothing else moves on
   // the stage
@@ -2043,18 +2046,18 @@ test('arriving with motion, the photo plots in whole, then the seam sweeps once 
   // The range and what it says never move; the figure and the names wait until the seam rests
   for (const frame of [...plotting, ...sweep]) expect([frame.range, ...frame.words], `${frame.t}`).toEqual([String(DEFAULT_SPLIT), 0, 0]);
 
-  // At rest, in one frame: the sweep's marks gone, the seam at its split, and two rings from the handle — once
-  // one ring from the handle, not two (audit 08.10: the arrival settles sooner)
-  expect(after[0]).toMatchObject({ sweep: null, gliding: false, pulse: true, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT), rings: 'hv2-contour-pulse 1' });
-  for (const frame of after) expect(frame, `${frame.t}`).toMatchObject({ sweep: null, gliding: false, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT) });
-  expect(frames.filter((frame) => frame.t < ended!).some((frame) => frame.pulse)).toBe(false);
-  const rung = after.findIndex((frame) => !frame.pulse);
-  expect(rung).toBeGreaterThan(0);
-  expect(after.slice(rung).some((frame) => frame.pulse)).toBe(false);
-  // …and the figure and the names come in
+  // At rest, in one frame: the sweep's marks gone, the seam at its split — and no rings: not from the handle, not from the
+  // brief (Phase 5: they were the arrival's second and third events)
+  expect(after[0]).toMatchObject({ sweep: null, gliding: false, pulse: false, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT), rings: 'none 1' });
+  for (const frame of after) expect(frame, `${frame.t}`).toMatchObject({ sweep: null, gliding: false, pulse: false, split: DEFAULT_SPLIT, range: String(DEFAULT_SPLIT) });
+  // Nothing keyframed plays in the sheet through the move and the second after it: the names come in together, by the
+  // drawing's own fade, not one by one (the fourth event); the brief stays still
+  for (const frame of [...sweep, ...after.filter((at) => at.t < ended! + 1_000)]) expect(frame.played, `${frame.t}`).toEqual([]);
+  // …and the figure and the names come in, all of them, within the fade
   for (const part of ['.hv2-proof-labels', 'svg.hv2-proof-marks']) {
     await expect.poll(() => stage.locator(part).evaluate((element) => getComputedStyle(element).opacity), part).toBe('1');
   }
+  expect(await stage.locator('.hv2-proof-labels > *').evaluateAll((names) => names.filter((name) => getComputedStyle(name).animationName !== 'none').length)).toBe(0);
   await settleArrival(page);
   await expectSplit(range, stage, DEFAULT_SPLIT);
 });
@@ -2130,10 +2133,10 @@ test('arriving the usual way — the wheel, or a finger swiping over the sheet �
   expect(run! - on!).toBeGreaterThanOrEqual(SWEEP_AT - 5);
   expect(scrolls.length).toBeGreaterThan(0);
   expect(run! - Math.max(...scrolls.filter((at) => at < run!))).toBeGreaterThanOrEqual(SWEEP_QUIET - 5);
-  // …then runs its whole course, to the turn and back — the wheel and the swipe never stopped it — and rings
+  // …then runs its whole course, to its rest — the wheel and the swipe never stopped it
   expect(ended! - run!).toBeGreaterThanOrEqual((testInfo.project.name === 'desktop-chromium' ? SWEEP_MS : SWEEP_MS_PHONE) - 20);
-  expect(Math.min(...frames.filter((frame) => frame.t >= run! && frame.t < ended!).map((frame) => frame.split))).toBeCloseTo(testInfo.project.name === 'desktop-chromium' ? SWEEP_TURN : SWEEP_TURN_PHONE, 0);
-  expect(frames.find((frame) => frame.t >= ended!)).toMatchObject({ sweep: null, gliding: false, pulse: true, split: DEFAULT_SPLIT });
+  expect(Math.min(...frames.filter((frame) => frame.t >= run! && frame.t < ended!).map((frame) => frame.split))).toBeGreaterThanOrEqual(DEFAULT_SPLIT - 0.05);
+  expect(frames.find((frame) => frame.t >= ended!)).toMatchObject({ sweep: null, gliding: false, pulse: false, split: DEFAULT_SPLIT });
   expect(new Set(frames.map((frame) => frame.range))).toEqual(new Set([String(DEFAULT_SPLIT)]));
   await settleArrival(page);
   await expectSplit(range, stage, DEFAULT_SPLIT);

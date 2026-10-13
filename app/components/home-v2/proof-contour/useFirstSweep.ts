@@ -2,26 +2,22 @@ import { useEffect, useRef, type RefObject } from 'react';
 import { sheetNow } from './useNodeDetail';
 import { DEFAULT_SPLIT } from './useSeam';
 
-/** The first view's sweep: once the photo has plotted in (DrawingSheet: 120 + 900 ms), from the right edge to 38 % — the
- *  ridge and both gates in view, the photo never gone (audit 08.10: at 15 % it showed little but the scheme for 1.5 s) —
- *  then back to rest; the turn at 62 % of its time, each leg eased on its own (one easing over both would reverse at full
- *  speed) */
+/** The first view's one move (R-UX-06 §07, Phase 5: «один повільний прохід шва»): once the photo has plotted in
+ *  (DrawingSheet: 120 + 900 ms), the seam passes once, slowly, from the right edge to its rest — one way, no turn — and
+ *  what it has passed is the drawing. Nothing else plays in the arrival: no rings from the handle or the brief, no names
+ *  one by one (they come in with the rest of the drawing, at once, as the seam rests). It used to sweep out to 38 % and
+ *  back over 1.8 s, then ring the handle and the brief, bring the names in one by one and call a letter: five events in
+ *  a row, and only the first explained anything */
 const SWEEP_AT = 1050;
-const SWEEP_TURN = 38;
-const SWEEP_MS = 1800;
+const SWEEP_MS = 1400;
 /** The page must have stopped scrolling this long before the sweep: the eye is on the way, not on the seam */
 const SWEEP_QUIET = 250;
-/** After the seam, the drawing's names come one by one in the order the frame is built (home-v2.css, data-names-in) */
-const NAMES_IN_MS = 1400;
-/** …and the one letter that calls, once: В, the column's base (the letters are quiet at rest) */
+/** …and after it, a moment later, the arrival's last word (owner, 09.10; useTour's AUTO_NODE): a laptop or a tablet opens
+ *  a node by itself, a phone's letter В calls once — the names have come in by then (their fade, 240 ms) */
 const TEASE_AT = 1200;
 const TEASE_MS = 2400;
-// After the arrival, on a laptop or a tablet, a node opens by itself (owner, 09.10; useTour's AUTO_NODE)
-// (after the handle's ring, 1.7 s: one thing at a time)
 const AUTO_NODE_AT = 2000;
 export const AUTO_NODE_EVENT = 'hv2:auto-node';
-/** The way on rings once as soon as the seam rests */
-const RING_MS = 1200;
 
 /** Settles when the sheet's picture has finished plotting in (the transition of DrawingSheet's cover), or at once */
 function plottedIn(sheet: Element) {
@@ -55,8 +51,6 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     let live = true;
     const after: number[] = [];
     const release = () => {
-      sheet.querySelector('.hv2-contour-brief')?.removeAttribute('data-ring');
-      delete stage.dataset.namesIn;
       delete stage.dataset.nodesTease;
       for (const id of after) window.clearTimeout(id);
     };
@@ -80,28 +74,17 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
       // In one task: the hold at the edge gives way to the sweep's first frame, at the same edge
       stage.dataset.gliding = '';
       stage.dataset.sweep = 'run';
+      // one way, eased in and out: no turn to read as a second move
       const keyframes = [
-        { '--split': '100%', easing: 'cubic-bezier(.35, 0, .3, 1)' },
-        { '--split': `${SWEEP_TURN}%`, offset: 0.62, easing: 'cubic-bezier(.45, 0, .25, 1)' },
+        { '--split': '100%', easing: 'cubic-bezier(.45, 0, .25, 1)' },
         { '--split': `${DEFAULT_SPLIT}%` },
       ];
       const carriers = [paneRef.current, innerRef.current, railRef.current, handleRef.current].filter((element) => element !== null);
       sweep = carriers.map((element) => element.animate(keyframes, { duration: SWEEP_MS }));
       sweep[0].onfinish = () => {
+        // at rest: the drawing's names, figures and letters come in together (home-v2.css: their fade under data-sweep)
         delete stage.dataset.gliding;
         delete stage.dataset.sweep;
-        // One ring from the handle: this is the thing to drag
-        stage.dataset.pulse = '';
-        timer = window.setTimeout(() => delete stage.dataset.pulse, 1700);
-        // the way on rings once as soon as the seam rests, not only after the tour
-        const brief = sheet.querySelector<HTMLElement>('.hv2-contour-brief');
-        if (brief) {
-          brief.dataset.ring = '';
-          after.push(window.setTimeout(() => delete brief.dataset.ring, RING_MS));
-        }
-        // the names one by one in the order the frame is built; then one letter calls (no three rings on all five)
-        stage.dataset.namesIn = '';
-        after.push(window.setTimeout(() => delete stage.dataset.namesIn, NAMES_IN_MS));
         // …then a node opens by itself — Г, the ridge — so nobody passes the block without seeing that the scheme opens
         // (owner, 09.10); a phone's node is a sheet over the page, so there one letter only calls
         if (sheetNow()) {

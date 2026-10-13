@@ -505,10 +505,6 @@ main[data-home="v2"] .hv2-contour-handle {
 main[data-home="v2"] .hv2-contour-handle::before {
   content: ''; position: absolute; inset: 0; z-index: -1; background: var(--hv2-ink); border: 2px solid var(--hv2-copper-text); border-radius: 50%;
 }
-/* The first view's two rings (ProofContour sets data-pulse once, after the glide) */
-main[data-home="v2"] .hv2-contour-handle::after {
-  content: ''; position: absolute; inset: 0; border: 2px solid var(--hv2-copper-text); border-radius: 50%; opacity: 0; pointer-events: none;
-}
 main[data-home="v2"] .hv2-contour-stage[data-dragging] .hv2-contour-handle { cursor: grabbing; }
 /* A mouse over the handle: a heavier disc and a brighter seam say «drag me» */
 @media (hover: hover) and (pointer: fine) {
@@ -526,22 +522,18 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
     transition: --split 420ms var(--sheet-plot);
   }
   main[data-home="v2"] :is(.hv2-contour-canvas > svg, .hv2-proof-labels) { transition: opacity 240ms ease, visibility 240ms; }
-  main[data-home="v2"] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation: hv2-contour-pulse 850ms ease-out 2; }
 }
 @keyframes hv2-contour-pulse { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
 
-/* Arriving (owner review, 04.10 — «шов-плотер»): the sheet plots its picture in, a whole photo (DrawingSheet: 120 +
-   900 ms, the seam held at the right edge by data-sweep="wait"); then the seam sweeps from the right edge across the
-   gable and back to rest, and everything it has passed is the drawing — the tracing, the measured lines, the scheme,
-   whole (ProofContour drives --split). The figures and the names come in when it rests. Once. Without JavaScript or with
-   reduced motion the sheet stands complete at rest. */
+/* Arriving (owner review, 04.10 — «шов-плотер»; Phase 5: one move): the sheet plots its picture in, a whole photo
+   (DrawingSheet: 120 + 900 ms, the seam held at the right edge by data-sweep="wait"); then the seam passes once, slowly,
+   from the right edge to its rest, and everything it has passed is the drawing — the tracing, the measured lines, the
+   scheme, whole (useFirstSweep drives --split). The figures and the names come in together when it rests. Once. Without
+   JavaScript or with reduced motion the sheet stands complete at rest. */
 main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: 100% !important; }
 main[data-home="v2"] .hv2-contour-stage[data-sweep] :is(.hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
 @keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
-  /* The seam as the plotter's head while it sweeps: a soft copper light along it */
-  main[data-home="v2"] .hv2-contour-stage[data-sweep="run"] .hv2-contour-seam { box-shadow: 0 0 16px 3px rgba(224, 164, 122, .5); }
-
   /* The load: a link every 450 ms, the chain over the frame in step; the drops run down the legs three times, then rest
      on the lit path. Replayed on every press of «Сніг» (ProofFrame keys the group) */
   main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load > :is(g, path) { animation: hv2-contour-fade 420ms ease calc(200ms + var(--n, 0) * 450ms) backwards; }
@@ -1284,19 +1276,10 @@ main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
 main[data-home="v2"] .hv2-contour-exit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-exit { min-height: 44px; } }
 
-/* the arrival: one ring from the handle, the way on rings once, the names in the order the frame is built, В calls */
-main[data-home="v2"] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation-iteration-count: 1; }
+/* the arrival's last word on a phone: В calls once (no rings from the handle or the brief, no names one by one — Phase 5) */
 @media (prefers-reduced-motion: no-preference) {
-  main[data-home="v2"] .hv2-contour-brief[data-ring] { animation: hv2-brief-ring 1100ms ease-out 1; }
-  main[data-home="v2"] .hv2-contour-stage[data-names-in] :is(.hv2-proof-labels > *, .hv2-proof-tag-leaders > *) { animation: hv2-contour-name 320ms ease both; animation-delay: var(--name-d, 1000ms); }
   main[data-home="v2"] .hv2-contour-stage[data-nodes-tease] .hv2-proof-detail-pin[data-detail="base"]::after { animation: hv2-contour-pulse 1100ms ease-out 1; }
 }
-main[data-home="v2"] .hv2-contour-stage [data-tag="footing"] { --name-d: 0ms; }
-main[data-home="v2"] .hv2-contour-stage [data-tag="wall"] { --name-d: 200ms; }
-main[data-home="v2"] .hv2-contour-stage [data-tag="column"] { --name-d: 400ms; }
-main[data-home="v2"] .hv2-contour-stage [data-tag="truss"] { --name-d: 600ms; }
-main[data-home="v2"] .hv2-contour-stage [data-tag="bracing"] { --name-d: 800ms; }
-@keyframes hv2-contour-name { from { opacity: 0; transform: translateY(4px); } }
 
 /* a phone: the sheet edge to edge, the photo's full height (rows 0–788: the gable whole), the five letters and no numbers
    (words did not fit — each covered a letter at 390 px); «‹ Фото» on the photo's half, the scheme's half has its stamp */
