@@ -12,9 +12,9 @@ const SWEEP_MS = 1400;
 /** The page must have stopped scrolling this long before the sweep: the eye is on the way, not on the seam */
 const SWEEP_QUIET = 250;
 /** …and once the drawing's names are in (their fade, 240 ms), the arrival's last word: node Г is lit and one line says
- *  what it does (DEC-42 (a), PROPOSED — ProofContour's NODE_HINT). Nothing opens by itself: the node opened over the photo
- *  on a laptop (owner, 09.10), 36–60 % of the photo's half on 1440 × 900 and 1250 × 613, and on a phone the letter В
- *  called instead */
+ *  what it does (DEC-42 (a), owner 13.10 — ProofContour's NODE_HINT). Nothing opens by itself: the node opened over the
+ *  photo on a laptop (owner, 09.10), 35–60 % of the photo's half on 1440 × 900 and 1250 × 613, and on a phone the letter
+ *  В called instead */
 const HINT_AT = 300;
 
 /** Settles when the sheet's picture has finished plotting in (the transition of DrawingSheet's cover), or at once */

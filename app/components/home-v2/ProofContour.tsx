@@ -124,11 +124,10 @@ const subscribeToNothing = () => () => undefined;
 const nodeLabel = ({ letter, title, term }: (typeof PROOF_DETAILS)[number]) => `Вузол ${letter}: ${title} (${term})`;
 /** How long a smooth scroll to the frame takes before the assembly starts */
 const SCROLL_FIRST = 450;
-/** DEC-42 (a), PROPOSED (Phase 5): after the arrival this node is lit — its letter and its ring on the scheme, its pill —
- *  and one line over the photo's top corner says what a press does; nothing opens by itself. Until 13.10 it opened over
- *  the photo on a laptop or a tablet (owner, 09.10: so nobody passes the block without seeing that the scheme opens),
- *  covering 36–60 % of the photo's half (1440 × 900, 1250 × 613); a phone's letter В called instead. The status is the
- *  owner's to set */
+/** DEC-42 (a), the owner's choice of 13.10 (Phase 5): after the arrival this node is lit — its letter and its ring on the
+ *  scheme, its pill — and one line over the photo's corner says what a press does; nothing opens by itself. Until 13.10 it
+ *  opened over the photo on a laptop or a tablet (owner, 09.10: so nobody passes the block without seeing that the scheme
+ *  opens), covering 35–60 % of the photo's half (1440 × 900, 1250 × 613); a phone's letter В called instead */
 const NODE_HINT: DetailId = 'ridge';
 /** The letters А, Б, В ring a few times once the sweep or the assembly has put them up, so the nodes behind them are
  *  found (owner, 05.10: found by chance) */

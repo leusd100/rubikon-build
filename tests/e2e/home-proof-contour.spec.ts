@@ -2059,11 +2059,10 @@ test('arriving with motion, the photo plots in whole, then the seam passes once 
   await expectSplit(range, stage, DEFAULT_SPLIT);
 });
 
-// DEC-42 (a), PROPOSED (Phase 5; R-UX-06 §07, §18): until 13.10 a laptop or a tablet opened node Г by itself two seconds
-// after the arrival (owner, 09.10) — over 36–60 % of the photo's half — and a phone's letter В called once. Now Г is lit
-// and one line says what a press does; the panel opens only when the visitor presses, as before. The status is the
-// owner's to set: this pins the proposal, not a decision
-test('DEC-42 (a), proposed: after the arrival node Г is lit and one line says what a press does — nothing opens over the photo; pressed, it opens as before; a visitor who acted first gets no hint', async ({ page }) => {
+// DEC-42 (a), the owner's choice of 13.10 (Phase 5; R-UX-06 §07, §18): until 13.10 a laptop or a tablet opened node Г by
+// itself two seconds after the arrival (owner, 09.10) — over 35–60 % of the photo's half — and a phone's letter В called
+// once. Now Г is lit and one line says what a press does; the panel opens only when the visitor presses, as before
+test('DEC-42 (a): after the arrival node Г is lit and one line says what a press does — nothing opens over the photo; pressed, it opens as before; a visitor who acted first gets no hint', async ({ page }) => {
   test.setTimeout(60_000);
   const phone = phoneOf(page);
   const { sheet, stage } = await arrive(page);
@@ -2137,7 +2136,7 @@ test('DEC-42 (a), proposed: after the arrival node Г is lit and one line says w
   await expect(page.locator('.hv2-detail')).toHaveCount(0);
 });
 
-test('DEC-42 (a), proposed, with reduced motion: node Г is lit and its hint stands there at rest — no move, nothing fades or rings — until the visitor’s first press', async ({ page }) => {
+test('DEC-42 (a), with reduced motion: node Г is lit and its hint stands there at rest — no move, nothing fades or rings — until the visitor’s first press', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
   await page.goto('/', { waitUntil: 'load' });

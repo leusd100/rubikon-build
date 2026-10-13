@@ -1281,7 +1281,7 @@ main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
 main[data-home="v2"] .hv2-contour-exit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-exit { min-height: 44px; } }
 
-/* DEC-42 (a), PROPOSED (Phase 5): the arrival's last word — node Г lit and one line saying what a press does; nothing
+/* DEC-42 (a), the owner's choice of 13.10 (Phase 5): the arrival's last word — node Г lit and one line saying what a press does; nothing
    opens by itself (ProofContour's NODE_HINT). Still: no ring ripples, it only fades in, and it is gone at the visitor's
    first press or key in the sheet. Its letter and its ring as a pointed-at node's, its pill outlined in the nodes'
    colour; the line over the photo's top corner, where the tour tells its step — clear of every word of the drawing */
