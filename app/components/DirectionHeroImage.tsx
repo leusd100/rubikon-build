@@ -4,8 +4,9 @@ import { useSyncExternalStore, type CSSProperties } from 'react';
 import type { DirectionHeroImageAsset } from '../data/directionHeroImageManifest';
 import { readEffectiveTheme, subscribeTheme } from '../lib/theme';
 
-// Cover is constrained by height on tall screens; request enough source pixels.
-const HERO_SIZES = '(min-aspect-ratio: 3/2) 100vw, 150svh';
+// Cover is constrained by height on tall screens. Tall phones need fewer source pixels;
+// short phones keep the larger crop so the steel and roof detail stays sharp.
+const HERO_SIZES = '(max-width: 760px) and (max-height: 700px) 150svh, (max-width: 760px) 120svh, (min-aspect-ratio: 3/2) 100vw, 150svh';
 
 type DirectionHeroImageProps = {
   asset: DirectionHeroImageAsset;

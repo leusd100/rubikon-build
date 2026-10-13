@@ -68,17 +68,14 @@ for (const viewport of viewports) {
         };
       });
 
-      const selectedWidth = [480, 768, 1200, 1536].find(
-        (width) => width >= Math.ceil(imageState.imageWidth * imageState.devicePixelRatio),
-      ) ?? 1536;
-
       expect(imageState.currentSrc).toContain('/media-responsive/direction-hero-');
-      expect(imageState.currentSrc).toContain(`${selectedWidth}w`);
+      const selectedWidth = Number(imageState.currentSrc.match(/-(480|768|1200|1536)w\./)?.[1]);
+      expect([480, 768, 1200, 1536]).toContain(selectedWidth);
       expect(imageState.naturalWidth).toBeGreaterThan(0);
       expect(imageState.imageWidth).toBe(imageState.heroWidth);
       expect(imageState.heroHeight).toBeGreaterThan(0);
       if (viewport.width === 390) {
-        expect(selectedWidth, `${path} must not send its largest desktop variant to a phone`).toBeLessThan(1536);
+        expect(selectedWidth, `${path} should receive the phone-size art at DPR 1`).toBe(1200);
       }
       expect(mediaRequests, `${path} must not request a legacy hero video`).toEqual([]);
 
@@ -87,6 +84,46 @@ for (const viewport of viewports) {
         return (window as WindowWithDirectionHeroMetrics).__directionHeroLayoutShifts ?? [];
       });
       expect(layoutShifts, `${path} should not shift after its static hero image loads`).toEqual([]);
+    }
+  });
+}
+
+for (const viewport of [
+  { name: 'desktop', width: 1280, height: 720 },
+  { name: 'phone', width: 390, height: 844 },
+] as const) {
+  test(`saved dark theme never paints a daylight direction hero at ${viewport.name}`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize(viewport);
+    await page.addInitScript(() => {
+      localStorage.setItem('rubikon-theme', 'dark');
+      document.addEventListener('DOMContentLoaded', () => {
+        const image = document.querySelector<HTMLImageElement>(
+          '.direction-hero-image, .directions-hero-sequence-image',
+        );
+        (window as Window & { __heroFirstFrame?: { theme?: string; art?: string | null; visibility?: string } }).__heroFirstFrame = {
+          theme: document.documentElement.dataset.theme,
+          art: image?.dataset.artTheme,
+          visibility: image ? getComputedStyle(image).visibility : undefined,
+        };
+      }, { once: true });
+    });
+
+    for (const path of [...directions, '/napryamky']) {
+      await page.goto(path, { waitUntil: 'load' });
+      const firstFrame = await page.evaluate(() =>
+        (window as Window & { __heroFirstFrame?: { theme?: string; art?: string | null; visibility?: string } }).__heroFirstFrame,
+      );
+      expect(firstFrame?.theme, path).toBe('dark');
+      expect(firstFrame?.art, path).toMatch(/^(light|dark)$/);
+      if (firstFrame?.art === 'light') expect(firstFrame.visibility, path).toBe('hidden');
+
+      const image = page.locator('.direction-hero-image, .directions-hero-sequence-image').first();
+      await expect(image).toHaveAttribute('data-art-theme', 'dark');
+      await expect.poll(() => image.evaluate((node: HTMLImageElement) =>
+        node.complete && node.naturalWidth > 0)).toBe(true);
+      const src = await image.evaluate((node: HTMLImageElement) => node.currentSrc);
+      expect(src, path).toContain(path === '/napryamky' ? 'directions-sequence-blue-hour-' : 'direction-hero-blue-hour-');
     }
   });
 }

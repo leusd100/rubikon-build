@@ -38,8 +38,8 @@ test('directions static hero sequence crossfades in the approved order without v
     () => frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))),
     { timeout: 2_000 },
   ).toEqual([
-    expect.stringContaining(`directions-sequence-${sequenceNames[0]}`),
-    expect.stringContaining(`directions-sequence-${sequenceNames[1]}`),
+    expect.stringContaining(`directions-sequence-daylight-${sequenceNames[0]}`),
+    expect.stringContaining(`directions-sequence-daylight-${sequenceNames[1]}`),
     null,
     null,
     null,
@@ -56,9 +56,9 @@ test('directions static hero sequence crossfades in the approved order without v
   await expect.poll(
     () => frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))),
   ).toEqual([
-    expect.stringContaining(`directions-sequence-${sequenceNames[0]}`),
-    expect.stringContaining(`directions-sequence-${sequenceNames[1]}`),
-    expect.stringContaining(`directions-sequence-${sequenceNames[2]}`),
+    expect.stringContaining(`directions-sequence-daylight-${sequenceNames[0]}`),
+    expect.stringContaining(`directions-sequence-daylight-${sequenceNames[1]}`),
+    expect.stringContaining(`directions-sequence-daylight-${sequenceNames[2]}`),
     null,
     null,
   ]);
@@ -85,12 +85,59 @@ test('directions static hero sequence remains on the first image for reduced mot
     .toEqual([true, false, false, false, false]);
   expect(await frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))))
     .toEqual([
-      expect.stringContaining('directions-sequence-angary'),
+      expect.stringContaining('directions-sequence-daylight-angary'),
       null,
       null,
       null,
       null,
     ]);
+});
+
+for (const viewport of [
+  { width: 1280, height: 720 },
+  { width: 390, height: 844 },
+] as const) {
+  test(`all five evening slides remain visible and decoded at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize(viewport);
+    await page.addInitScript(() => localStorage.setItem('rubikon-theme', 'dark'));
+    await page.clock.install();
+    await page.goto('/napryamky', { waitUntil: 'load' });
+    const hero = page.locator('.directions-subhero');
+    await expect(hero.getByRole('button', { name: 'Пауза показу напрямів' })).toBeVisible();
+    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+    const frames = hero.locator('img.directions-hero-sequence-image');
+
+    for (let index = 0; index < sequenceNames.length; index++) {
+      const frame = frames.nth(index);
+      await expect(frame).toHaveClass(/is-active/);
+      await expect(frame).toHaveAttribute('data-art-theme', 'dark');
+      await expect.poll(() => frame.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0)).toBe(true);
+      const src = await frame.evaluate((node: HTMLImageElement) => node.currentSrc);
+      expect(src).toContain(`directions-sequence-blue-hour-${sequenceNames[index]}-`);
+      expect(src.includes('-portrait-')).toBe(viewport.width < viewport.height);
+      if (index < sequenceNames.length - 1) await page.clock.fastForward(6000);
+    }
+  });
+}
+
+test('changing theme while the carousel is paused preserves the slide and pause state', async ({ page }) => {
+  await page.goto('/napryamky', { waitUntil: 'load' });
+  const hero = page.locator('.directions-subhero');
+  const pause = hero.getByRole('button', { name: 'Пауза показу напрямів' });
+  await expect(pause).toBeVisible();
+  await pause.click();
+  const first = hero.locator('img.directions-hero-sequence-image').first();
+  await expect(first).toHaveClass(/is-active/);
+
+  for (const [theme, style] of [['dark', 'blue-hour'], ['light', 'daylight']] as const) {
+    await page.getByRole('switch', { name: 'Темна тема' }).click();
+    await expect(first).toHaveAttribute('data-art-theme', theme);
+    await expect.poll(() => first.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0)).toBe(true);
+    expect(await first.evaluate((node: HTMLImageElement) => node.currentSrc)).toContain(`directions-sequence-${style}-angary-`);
+    await expect(first).toHaveClass(/is-active/);
+    await expect(hero.getByRole('button', { name: 'Відтворити показ напрямів' })).toBeVisible();
+  }
 });
 
 // Exercise actual decoded images, including later slides: a missing hashed variant or a landscape
@@ -135,7 +182,7 @@ for (const viewport of [
       // Loading and the active class alone can pass before the crossfade has painted.
       await expect(frame).toHaveCSS('opacity', '1');
       const source = await frame.evaluate((image: HTMLImageElement) => image.currentSrc);
-      expect(source).toContain(`directions-sequence-${sequenceNames[index]}-`);
+      expect(source).toContain(`directions-sequence-daylight-${sequenceNames[index]}-`);
       expect(source.includes('-portrait-')).toBe(portrait);
 
       const suffix = index === 0 ? '' : `-${sequenceNames[index]}`;
