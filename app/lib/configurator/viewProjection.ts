@@ -21,20 +21,25 @@ import type { Vec3 } from './parametricModel';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Camera elevation. A true isometric direction would be 35.3°; the drawing historically used 24°.
- * 28° sits between them deliberately — at 24° the portal frames overlap almost exactly in the
- * frame-only state, while 35° starts reading as looking down onto the roof rather than at the
- * building. 28° separates the bays without flattening the front elevation.
+ * The camera of the drawing office's rectangular dimetric (12.10), the projection /angary's drawings are made in —
+ * «Загальний вигляд» and «Каркас» (app/components/angary/dimetric.ts: the span at 7°10′ in true size, the length at
+ * 41°25′ in half size, the height upright). That dimetric is an orthographic view from a real place: the span and the
+ * height foreshortened alike, the length twice as much, which an elevation of asin(1/3) and an azimuth of asin(1/√8)
+ * give. Until 12.10 the 3D looked from 45° and 28°, and «Подивитися в 3D» turned the hangar the drawings had just shown
+ * — the front end wall went from nearly face-on to a narrow side, the gates with it; now the 3D is the same picture in
+ * volume. (28° was chosen between the old drawing's 24° and a true isometric's 35.3° to keep the bays apart; the
+ * dimetric's 19.5° still parts them, as «Каркас» draws them.)
  */
-export const VIEW_ELEVATION_DEG = 28;
+export const VIEW_ELEVATION_DEG = Math.asin(1 / 3) / (Math.PI / 180);
 
 /**
  * Rotation about the vertical axis. Negative keeps the camera on the FRONT side (the domain's
  * front facade is at z = 0) and makes the length axis recede to the upper right, which is the
  * composition the drawing has always had. Getting this sign wrong hid the front wall behind the
- * building's own volume in an earlier spike.
+ * building's own volume in an earlier spike. −20.7° (12.10, was −45°): the front end wall nearly face-on, as the
+ * dimetric draws it.
  */
-export const VIEW_AZIMUTH_DEG = -45;
+export const VIEW_AZIMUTH_DEG = -Math.asin(1 / Math.sqrt(8)) / (Math.PI / 180);
 
 const DEG = Math.PI / 180;
 
