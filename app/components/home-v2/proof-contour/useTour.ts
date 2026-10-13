@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetSta
 import { queueProofEvent } from '../../../lib/proofAnalytics';
 import type { DetailId } from '../ProofDetails';
 import type { Layer } from '../ProofContour';
-import { AUTO_NODE_EVENT } from './useFirstSweep';
 import { DEFAULT_SPLIT } from './useSeam';
 
 /** «Тур за 20 секунд» (owner, 05.10): the block shows itself to whoever presses nothing — the frame put up, the snow, a
@@ -18,17 +17,10 @@ export const TOUR: readonly { name: string; hold: number }[] = [
 ];
 /** The weight's walk along the roof (photo columns), and how long it takes */
 const WALK = { from: 430, to: 1390, ms: 2600 } as const;
-/** After the arrival, on a laptop or a tablet, this node opens by itself (owner, 09.10) */
-const AUTO_NODE: DetailId = 'ridge';
 
 type Sheet = Readonly<{
-  layerRef: RefObject<Layer>;
-  /** The visitor's own move in the sheet (useFirstSweep) */
-  touchedRef: RefObject<boolean>;
-  /** The node's focus moves (useNodeDetail): none while touring, none for the arrival's own node */
+  /** The node's focus moves (useNodeDetail): none while touring */
   touringRef: RefObject<boolean>;
-  quietOpenRef: RefObject<boolean>;
-  detail: DetailId | null;
   flowOn: boolean;
   setFlowOn: Dispatch<SetStateAction<boolean>>;
   setSplit: Dispatch<SetStateAction<number>>;
@@ -39,9 +31,9 @@ type Sheet = Readonly<{
   pointAt: (x: number) => void;
 }>;
 
-/** «Тур»: one step, then the next after its hold; and the arrival's own node (see AUTO_NODE) */
+/** «Тур»: one step, then the next after its hold */
 export function useTour(stageRef: RefObject<HTMLDivElement | null>, sheet: Sheet) {
-  const { layerRef, touchedRef, touringRef, quietOpenRef, detail, flowOn, setFlowOn, setSplit, showNode, closeDetail, build, choose, pointAt } = sheet;
+  const { touringRef, flowOn, setFlowOn, setSplit, showNode, closeDetail, build, choose, pointAt } = sheet;
   // «Тур»: the step on, its timer, the weight's walk, the load's way as it was before (put back after), the brief's call
   const [tourStep, setTourStep] = useState<number | null>(null);
   const tourTimer = useRef<number | undefined>(undefined);
@@ -50,8 +42,7 @@ export function useTour(stageRef: RefObject<HTMLDivElement | null>, sheet: Sheet
   const [calling, setCalling] = useState(false);
   const callTimer = useRef<number | undefined>(undefined);
   // the tour's timers reach the render's own functions through this (theirs would be the first render's)
-  // (and the node the arrival opens by itself — `node`: no focus moved, no visit counted, the visitor did nothing)
-  const tourApi = useRef<{ run: (step: number) => void; end: (restore?: boolean) => void; point: (x: number) => void; node: () => void } | null>(null);
+  const tourApi = useRef<{ run: (step: number) => void; end: (restore?: boolean) => void; point: (x: number) => void } | null>(null);
   useEffect(() => () => {
     window.clearTimeout(tourTimer.current);
     window.clearTimeout(callTimer.current);
@@ -115,25 +106,8 @@ export function useTour(stageRef: RefObject<HTMLDivElement | null>, sheet: Sheet
     queueProofEvent('tour_start');
   };
   useEffect(() => {
-    tourApi.current = {
-      run: runTour,
-      end: endTour,
-      point: pointAt,
-      node: () => {
-        if (detail || touchedRef.current || layerRef.current !== 'frame') return;
-        quietOpenRef.current = true;
-        showNode(AUTO_NODE);
-      },
-    };
+    tourApi.current = { run: runTour, end: endTour, point: pointAt };
   });
-  // The arrival's own node (see AUTO_NODE): the sweep's effect asks for it by an event on the stage
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const open = () => tourApi.current?.node();
-    stage.addEventListener(AUTO_NODE_EVENT, open);
-    return () => stage.removeEventListener(AUTO_NODE_EVENT, open);
-  }, [stageRef]);
   // Any press or key of the visitor's own in the sheet (not the tour's button) hands the block back
   useEffect(() => {
     if (tourStep === null) return;

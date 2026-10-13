@@ -95,8 +95,6 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   const swipe = useRef<{ x: number; y: number } | null>(null);
   // the tour moves the focus nowhere (audit 08.10, F13: it took it to «Закрити вузол», then to a letter)
   const touringRef = useRef(false);
-  // (and the node the arrival opens by itself: no focus moved, the visitor did nothing)
-  const quietOpenRef = useRef(false);
   // Where the seam was before a node took it onto its ring, and where it put it (restored on closing, unless moved)
   const nodeSeam = useRef<{ from: number; at: number } | null>(null);
   // The leader from the open panel to its ring on the scheme, as a drawing's detail is called out
@@ -258,8 +256,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   });
   useEffect(() => {
     if (!detail) return;
-    if (!touringRef.current && !quietOpenRef.current) detailCloseRef.current?.focus({ preventScroll: true });
-    quietOpenRef.current = false;
+    if (!touringRef.current) detailCloseRef.current?.focus({ preventScroll: true });
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       closeDetailRef.current();
@@ -290,7 +287,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
 
   return {
     detail, setDetail, detailSheet, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
-    detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef, quietOpenRef,
+    detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef,
     ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto,
   };
 }

@@ -505,10 +505,6 @@ main[data-home="v2"] .hv2-contour-handle {
 main[data-home="v2"] .hv2-contour-handle::before {
   content: ''; position: absolute; inset: 0; z-index: -1; background: var(--hv2-ink); border: 2px solid var(--hv2-copper-text); border-radius: 50%;
 }
-/* The first view's two rings (ProofContour sets data-pulse once, after the glide) */
-main[data-home="v2"] .hv2-contour-handle::after {
-  content: ''; position: absolute; inset: 0; border: 2px solid var(--hv2-copper-text); border-radius: 50%; opacity: 0; pointer-events: none;
-}
 main[data-home="v2"] .hv2-contour-stage[data-dragging] .hv2-contour-handle { cursor: grabbing; }
 /* A mouse over the handle: a heavier disc and a brighter seam say «drag me» */
 @media (hover: hover) and (pointer: fine) {
@@ -526,22 +522,18 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
     transition: --split 420ms var(--sheet-plot);
   }
   main[data-home="v2"] :is(.hv2-contour-canvas > svg, .hv2-proof-labels) { transition: opacity 240ms ease, visibility 240ms; }
-  main[data-home="v2"] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation: hv2-contour-pulse 850ms ease-out 2; }
 }
 @keyframes hv2-contour-pulse { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
 
-/* Arriving (owner review, 04.10 — «шов-плотер»): the sheet plots its picture in, a whole photo (DrawingSheet: 120 +
-   900 ms, the seam held at the right edge by data-sweep="wait"); then the seam sweeps from the right edge across the
-   gable and back to rest, and everything it has passed is the drawing — the tracing, the measured lines, the scheme,
-   whole (ProofContour drives --split). The figures and the names come in when it rests. Once. Without JavaScript or with
-   reduced motion the sheet stands complete at rest. */
+/* Arriving (owner review, 04.10 — «шов-плотер»; Phase 5: one move): the sheet plots its picture in, a whole photo
+   (DrawingSheet: 120 + 900 ms, the seam held at the right edge by data-sweep="wait"); then the seam passes once, slowly,
+   from the right edge to its rest, and everything it has passed is the drawing — the tracing, the measured lines, the
+   scheme, whole (useFirstSweep drives --split). The figures and the names come in together when it rests. Once. Without
+   JavaScript or with reduced motion the sheet stands complete at rest. */
 main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: 100% !important; }
 main[data-home="v2"] .hv2-contour-stage[data-sweep] :is(.hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
 @keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
-  /* The seam as the plotter's head while it sweeps: a soft copper light along it */
-  main[data-home="v2"] .hv2-contour-stage[data-sweep="run"] .hv2-contour-seam { box-shadow: 0 0 16px 3px rgba(224, 164, 122, .5); }
-
   /* The load: a link every 450 ms, the chain over the frame in step; the drops run down the legs three times, then rest
      on the lit path. Replayed on every press of «Сніг» (ProofFrame keys the group) */
   main[data-home="v2"] .hv2-contour-stage[data-layer="load"] .hv2-proof-load > :is(g, path) { animation: hv2-contour-fade 420ms ease calc(200ms + var(--n, 0) * 450ms) backwards; }
@@ -707,6 +699,11 @@ main[data-home="v2"] .hv2-contour-build:disabled { cursor: default; opacity: .45
 main[data-home="v2"] .hv2-contour-tour-btn { color: #f5f2eb; border-color: #f0b48a; background: #3a2b22; }
 /* (a quiet action now: the brief is the sheet's one filled button) */
 main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn { flex: 1 1 100%; justify-content: center; min-height: 40px; color: var(--hv2-text); background: none; border-color: transparent; }
+/* …pressed too: «Зупинити тур» outlined, never filled — on a phone it stood over the brief in the brief's own copper, two
+   «main» buttons in a row (R-UX-06 §07) */
+@media (forced-colors: none) {
+  main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn[aria-pressed="true"] { background: none; border-color: var(--hv2-line-strong); }
+}
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn { min-height: 44px; } }
 @media (min-width: 761px) {
   main[data-home="v2"] .hv2-contour-controls { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
@@ -1137,7 +1134,10 @@ main[data-home="v2"] .hv2-detail:not([data-sheet]) { display: flex; flex-directi
 main[data-home="v2"] .hv2-detail:not([data-sheet]) > * { flex: none; }
 main[data-home="v2"] .hv2-detail:not([data-sheet]) > .hv2-detail-drawing { flex: 0 1 auto; min-height: 0; }
 main[data-home="v2"] .hv2-detail-head { display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--hv2-line-strong); }
-main[data-home="v2"] .hv2-detail-head b { flex: 1; font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+/* its plain name, the draughtsman's term under it (R-UX-06 §07) */
+main[data-home="v2"] .hv2-detail-name { flex: 1; display: grid; gap: 3px; min-width: 0; }
+main[data-home="v2"] .hv2-detail-head b { font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-detail-head small { color: var(--hv2-text-2); font: 500 11.5px/1.25 var(--font-manrope), sans-serif; }
 main[data-home="v2"] .hv2-detail-letter { display: grid; place-items: center; width: 22px; height: 22px; color: var(--hv2-node-ink); background: var(--hv2-node); border-radius: 50%; font: 700 12px/1 var(--font-condensed), sans-serif; }
 main[data-home="v2"] .hv2-detail-close { display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -6px -6px 0; padding: 0; color: var(--hv2-text-2); background: none; border: 0; font: 400 22px/1 var(--font-manrope), sans-serif; cursor: pointer; }
 main[data-home="v2"] .hv2-detail-close:hover { color: var(--hv2-text); }
@@ -1251,6 +1251,10 @@ main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button:is(:hover, [a
 main[data-home="v2"] .hv2-contour-node-letter { display: grid; place-items: center; width: 20px; height: 20px; color: var(--hv2-node-ink); background: var(--hv2-node); border-radius: 50%; font-style: normal; }
 main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button:is(:hover, [aria-expanded="true"]) .hv2-contour-node-letter { background: var(--hv2-node-edge); }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button { height: 44px; } }
+/* (a phone's pills in two rows down to 375 px: with the nodes' plain names the second row — В, Г, Д — left 5 px there in
+   Chrome on macOS and too little on Linux, where Д took a third row, 35 px more; 2 px off each pill's right side up to
+   400 px gives that row ≈ 11 px) */
+@media (max-width: 400px) { main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button { padding-right: 8px; } }
 main[data-home="v2"] .hv2-contour-node-word { font: 600 12px/1 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; }
 
 /* a quiet frame at rest: faint rings, two names; the rest under the cursor (a touch screen has no cursor: it shows all) */
@@ -1260,9 +1264,9 @@ main[data-home="v2"] .hv2-contour-stage:is(:hover, :focus-within, [data-touring]
   main[data-home="v2"] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-tag-leaders > :not([data-tag="truss"], [data-tag="column"]) { opacity: 0 !important; }
   main[data-home="v2"] :is(.hv2-proof-labels > *, .hv2-proof-tag-leaders > *) { transition: opacity 280ms ease; }
 }
-/* the nodes' letters: paper on graphite at rest, their colour under the cursor, in the tour, open — and В once */
-main[data-home="v2"] .hv2-contour-stage:is(:hover, :focus-within, [data-touring], [data-nodes-hint]) .hv2-proof-detail-pin,
-main[data-home="v2"] .hv2-contour-stage[data-nodes-tease] .hv2-proof-detail-pin[data-detail="base"] { color: var(--hv2-node-ink); background: var(--hv2-node); border-color: var(--hv2-node-edge); }
+/* the nodes' letters: paper on graphite at rest, their colour under the cursor, in the tour, open (and Г after the
+   arrival — DEC-42 (a), below) */
+main[data-home="v2"] .hv2-contour-stage:is(:hover, :focus-within, [data-touring], [data-nodes-hint]) .hv2-proof-detail-pin { color: var(--hv2-node-ink); background: var(--hv2-node); border-color: var(--hv2-node-edge); }
 /* (inside the stage, so it outranks the stage's own hover rule above: the letter under the cursor, or open, lightens) */
 main[data-home="v2"] .hv2-contour-stage .hv2-proof-detail-pin:is(:hover, [aria-expanded="true"]) { color: var(--hv2-node-ink); background: var(--hv2-node-light); border-color: var(--hv2-node-edge); }
 
@@ -1281,19 +1285,30 @@ main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
 main[data-home="v2"] .hv2-contour-exit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-exit { min-height: 44px; } }
 
-/* the arrival: one ring from the handle, the way on rings once, the names in the order the frame is built, В calls */
-main[data-home="v2"] .hv2-contour-stage[data-pulse] .hv2-contour-handle::after { animation-iteration-count: 1; }
-@media (prefers-reduced-motion: no-preference) {
-  main[data-home="v2"] .hv2-contour-brief[data-ring] { animation: hv2-brief-ring 1100ms ease-out 1; }
-  main[data-home="v2"] .hv2-contour-stage[data-names-in] :is(.hv2-proof-labels > *, .hv2-proof-tag-leaders > *) { animation: hv2-contour-name 320ms ease both; animation-delay: var(--name-d, 1000ms); }
-  main[data-home="v2"] .hv2-contour-stage[data-nodes-tease] .hv2-proof-detail-pin[data-detail="base"]::after { animation: hv2-contour-pulse 1100ms ease-out 1; }
+/* DEC-42 (a), the owner's choice of 13.10 (Phase 5): the arrival's last word — node Г lit and one line saying what a press does; nothing
+   opens by itself (ProofContour's NODE_HINT). Still: no ring ripples, it only fades in, and it is gone at the visitor's
+   first press or key in the sheet. Its letter and its ring as a pointed-at node's, its pill outlined in the nodes'
+   colour; the line over the photo's top corner, where the tour tells its step — clear of every word of the drawing */
+main[data-home="v2"] .hv2-contour-stage[data-node-hint="ridge"] .hv2-proof-detail-pin[data-detail="ridge"] { color: var(--hv2-node-ink); background: var(--hv2-node); border-color: var(--hv2-node-edge); }
+main[data-home="v2"] .hv2-contour-stage[data-node-hint="ridge"] .hv2-proof-detail-rings [data-detail="ridge"] { stroke-opacity: 1; stroke-width: calc(var(--u) * 3); fill: color-mix(in srgb, var(--hv2-node) 20%, transparent); }
+main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button[data-hint] { border-color: var(--hv2-node); }
+main[data-home="v2"] .hv2-contour-node-hint {
+  position: absolute; z-index: 5; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 4px 11px 4px 4px;
+  color: var(--hv2-text); background: rgba(19, 21, 20, .94); border: 1px solid color-mix(in srgb, var(--hv2-node) 60%, transparent);
+  font: 600 12.5px/1.25 var(--font-manrope), sans-serif; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 240ms;
 }
-main[data-home="v2"] .hv2-contour-stage [data-tag="footing"] { --name-d: 0ms; }
-main[data-home="v2"] .hv2-contour-stage [data-tag="wall"] { --name-d: 200ms; }
-main[data-home="v2"] .hv2-contour-stage [data-tag="column"] { --name-d: 400ms; }
-main[data-home="v2"] .hv2-contour-stage [data-tag="truss"] { --name-d: 600ms; }
-main[data-home="v2"] .hv2-contour-stage [data-tag="bracing"] { --name-d: 800ms; }
-@keyframes hv2-contour-name { from { opacity: 0; transform: translateY(4px); } }
+main[data-home="v2"] .hv2-contour-node-hint[data-on] { opacity: 1; visibility: visible; }
+main[data-home="v2"] .hv2-contour-node-hint .hv2-contour-node-letter { flex: none; font: 700 12px/1 var(--font-condensed), sans-serif; }
+main[data-home="v2"] .hv2-contour-node-hint [data-input="touch"] { display: none; }
+@media (hover: none) {
+  main[data-home="v2"] .hv2-contour-node-hint [data-input="hover"] { display: none; }
+  main[data-home="v2"] .hv2-contour-node-hint [data-input="touch"] { display: inline; }
+}
+/* a phone's close-up has little sky over the gable: the line goes to the photo's foot instead — the retouched gravel — in
+   two lines, short of the seam's handle, which rests at the frame's foot at 62 % (44 px wide) */
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-contour-node-hint { top: auto; bottom: 6px; left: 6px; max-width: calc(62% - 40px); gap: 6px; padding: 3px 8px 3px 3px; font-size: 11.5px; }
+}
 
 /* a phone: the sheet edge to edge, the photo's full height (rows 0–788: the gable whole), the five letters and no numbers
    (words did not fit — each covered a letter at 390 px); «‹ Фото» on the photo's half, the scheme's half has its stamp */

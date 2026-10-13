@@ -22,7 +22,11 @@ export type DetailId = 'bearing' | 'purlin' | 'base' | 'ridge' | 'chord';
 export type ProofDetail = {
   id: DetailId;
   letter: 'А' | 'Б' | 'В' | 'Г' | 'Д';
+  /** The node's one name, in plain words, wherever it is shown — its pill, its letter, its panel (R-UX-06 §07: the pills
+   *  said «Гребінь» and the panel «Коньковий вузол», both a draughtsman's words) */
   title: string;
+  /** …and the draughtsman's name for it, said second: under the panel's title, and to a screen reader with the name */
+  term: string;
   spoken: string;
   /** The load's way through the node, as a short chain in words */
   flow: string;
@@ -852,7 +856,8 @@ export const PROOF_DETAILS: readonly ProofDetail[] = [
   {
     id: 'bearing',
     letter: 'А',
-    title: 'Опора ферми на стіну',
+    title: 'Ферма на стіні',
+    term: 'опора ферми на стіну',
     spoken: 'Кінець легкої сталевої ферми — опорна стійка з поясами й першим розкосом із С-профілів на спільній фасонці, на саморізах і болтах — стоїть на сталевій пластині з ребром, закріпленій анкерами в монолітному армопоясі поверх газобетонної стіни.',
     flow: 'Пояси → стійка → опорна пластина й анкери → армопояс → стіна',
     Drawing: BearingDrawing,
@@ -860,7 +865,8 @@ export const PROOF_DETAILS: readonly ProofDetail[] = [
   {
     id: 'purlin',
     letter: 'Б',
-    title: 'Прогін на вузлі ферми',
+    title: 'Балка даху',
+    term: 'прогін на вузлі ферми',
     spoken: 'Прогін із Z-профілю лежить на верхньому поясі ферми просто над вузлом і тримається коротким кутиком на саморізах; під поясом стійка й розкіс із С-профілів сходяться на сталевій фасонці, скріплені саморізами й болтами.',
     flow: 'Прогін → верхній пояс → фасонка → стійка й розкіс',
     Drawing: PurlinDrawing,
@@ -868,7 +874,8 @@ export const PROOF_DETAILS: readonly ProofDetail[] = [
   {
     id: 'base',
     letter: 'В',
-    title: 'База колони',
+    title: 'Низ колони',
+    term: 'база колони',
     spoken: 'Сталева колона з ребрами жорсткості стоїть на опорній плиті з підливкою під нею, анкерні болти з гайками заходять у бетонний фундамент із підколонником нижче рівня землі, а сам фундамент показано умовно.',
     flow: 'Колона → опорна плита → фундамент → ґрунт',
     Drawing: BaseDrawing,
@@ -876,7 +883,8 @@ export const PROOF_DETAILS: readonly ProofDetail[] = [
   {
     id: 'ridge',
     letter: 'Г',
-    title: 'Коньковий вузол',
+    title: 'Верх даху',
+    term: 'коньковий вузол',
     spoken: 'У коньку два верхні пояси ферми з С-профілів сходяться над стійкою, і всі три з’єднані спільною сталевою фасонкою на болтах і саморізах; над ними по прогону з кожного боку, профільований лист і коньковий елемент.',
     flow: 'Верхні пояси → фасонка → стійка',
     Drawing: RidgeDrawing,
@@ -884,7 +892,8 @@ export const PROOF_DETAILS: readonly ProofDetail[] = [
   {
     id: 'chord',
     letter: 'Д',
-    title: 'Вузол нижнього поясу',
+    title: 'Низ ферми',
+    term: 'вузол нижнього поясу',
     spoken: 'Нижній пояс ферми проходить вузол суцільно, а стійка й два розкоси з С-профілів сходяться на ньому на спільній сталевій фасонці, скріплені саморізами й болтами.',
     flow: 'Розкоси й стійка → фасонка → нижній пояс в обидва боки',
     Drawing: ChordDrawing,
