@@ -124,6 +124,12 @@ const subscribeToNothing = () => () => undefined;
 const nodeLabel = ({ letter, title, term }: (typeof PROOF_DETAILS)[number]) => `Вузол ${letter}: ${title} (${term})`;
 /** How long a smooth scroll to the frame takes before the assembly starts */
 const SCROLL_FIRST = 450;
+/** DEC-42 (a), PROPOSED (Phase 5): after the arrival this node is lit — its letter and its ring on the scheme, its pill —
+ *  and one line over the photo's top corner says what a press does; nothing opens by itself. Until 13.10 it opened over
+ *  the photo on a laptop or a tablet (owner, 09.10: so nobody passes the block without seeing that the scheme opens),
+ *  covering 36–60 % of the photo's half (1440 × 900, 1250 × 613); a phone's letter В called instead. The status is the
+ *  owner's to set */
+const NODE_HINT: DetailId = 'ridge';
 /** The letters А, Б, В ring a few times once the sweep or the assembly has put them up, so the nodes behind them are
  *  found (owner, 05.10: found by chance) */
 const NODES_HINT_MS = 2800;
@@ -216,11 +222,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   });
 
   const { split, setSplit, dragging, setDragging, snap, snapWords, liveRef, dragRef, paneRef, innerRef, railRef, handleRef, splitAt, endDrag, clearLit } = useSeam(stageRef);
-  const touchedRef = useFirstSweep(stageRef, { paneRef, innerRef, railRef, handleRef });
+  // node Г's hint (NODE_HINT): due once the arrival rests, over at the visitor's first own move in the sheet
+  const [nodeHint, setNodeHint] = useState(false);
+  useFirstSweep(stageRef, { paneRef, innerRef, railRef, handleRef }, setNodeHint);
   const room = useRoom(stageRef, layer);
   const {
     detail, setDetail, detailSheet, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
-    detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef, quietOpenRef,
+    detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef,
     ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto,
   } = useNodeDetail(stageRef, rangeRef, { liveRef, handleRef, setSplit });
   // «Жива схема»: what the pointer is over on «Каркас» — the member lit, its name by the pointer (moved by hand, never by a
@@ -501,13 +509,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   };
 
   const { tourStep, calling, toggleTour } = useTour(stageRef, {
-    layerRef, touchedRef, touringRef, quietOpenRef, detail, flowOn, setFlowOn, setSplit, showNode, closeDetail, build, choose, pointAt,
+    touringRef, flowOn, setFlowOn, setSplit, showNode, closeDetail, build, choose, pointAt,
   });
 
   // A node from the title block: the scheme on, its ring in view, the frame on the screen (a phone's sheet covers it)
   const openNode = (id: DetailId) => {
     clearLit();
     dropPoint();
+    setNodeHint(false);
     setChosen('frame');
     if (!phoneNow() && stageRef.current) bringIntoView(stageRef.current);
     showNode(id);
@@ -516,6 +525,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // A node from the scheme itself — its letter, or its ring (audit 08.10, F06: a click on the ring moved the seam and hid
   // the node instead of opening it)
   const pressNode = (id: DetailId) => {
+    // (a finger's tap on a ring is no press on a button: the hint goes here)
+    setNodeHint(false);
     if (detail !== id && !phoneNow() && stageRef.current) bringIntoView(stageRef.current);
     showNode(id);
     if (detail !== id) queueProofEvent('node_open', id);
@@ -533,6 +544,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           aria-label={nodeLabel(item)}
           aria-haspopup="dialog"
           aria-expanded={detail === item.id}
+          data-hint={place === 'block' && hinting && item.id === NODE_HINT ? '' : undefined}
           disabled={!ready}
           onClick={() => openNode(item.id)}
           onPointerEnter={place === 'block' ? () => setPeekNode(item.id) : undefined}
@@ -586,6 +598,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   );
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
   const engaged = loadRun + windRun + buildRun > 0;
+  // Node Г's hint shows on «Каркас» at rest only: not over a node open, the tour or a scope's cell lighting its part
+  const hinting = nodeHint && ready && layer === 'frame' && !detail && tourStep === null && focusPart === null;
+  const hintItem = PROOF_DETAILS.find((entry) => entry.id === NODE_HINT)!;
 
   const sliderLabel = 'Порівняти фото й схему';
 
@@ -680,6 +695,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         data-point={point ? '' : undefined}
         data-pointed={pointed ? '' : undefined}
         data-detail={detail ?? undefined}
+        data-node-hint={hinting ? NODE_HINT : undefined}
         data-hit-node={layer === 'frame' ? hit?.node : undefined}
         data-peek-node={layer === 'frame' && peekNode && !detail ? peekNode : undefined}
         data-step-on={(layer === 'load' || layer === 'wind') && (stepPeek ?? stepOn) !== null ? (stepPeek ?? stepOn)! : undefined}
@@ -793,6 +809,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           </div>
         </div>
         {nodesRow('stage')}
+        {/* Node Г's hint (NODE_HINT): over the photo's top corner, where the tour's step is told — clear of every word of
+            the drawing at every width — for the eye only (the letters and the pills name their nodes to a screen reader) */}
+        <span className="hv2-contour-node-hint" data-on={hinting ? '' : undefined} aria-hidden="true">
+          <i className="hv2-contour-node-letter">{hintItem.letter}</i>
+          <span data-input="hover">Натисніть {hintItem.letter} — покажемо вузол зблизька</span>
+          <span data-input="touch">Торкніться {hintItem.letter} — покажемо вузол зблизька</span>
+        </span>
         {/* «Тур»: the step on, and how far through it */}
         <output className="hv2-contour-tour" data-on={tourStep !== null ? '' : undefined}>
           {tourStep !== null && (

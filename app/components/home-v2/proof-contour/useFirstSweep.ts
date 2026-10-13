@@ -1,5 +1,4 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { sheetNow } from './useNodeDetail';
 import { DEFAULT_SPLIT } from './useSeam';
 
 /** The first view's one move (R-UX-06 §07, Phase 5: «один повільний прохід шва»): once the photo has plotted in
@@ -12,12 +11,11 @@ const SWEEP_AT = 1050;
 const SWEEP_MS = 1400;
 /** The page must have stopped scrolling this long before the sweep: the eye is on the way, not on the seam */
 const SWEEP_QUIET = 250;
-/** …and after it, a moment later, the arrival's last word (owner, 09.10; useTour's AUTO_NODE): a laptop or a tablet opens
- *  a node by itself, a phone's letter В calls once — the names have come in by then (their fade, 240 ms) */
-const TEASE_AT = 1200;
-const TEASE_MS = 2400;
-const AUTO_NODE_AT = 2000;
-export const AUTO_NODE_EVENT = 'hv2:auto-node';
+/** …and once the drawing's names are in (their fade, 240 ms), the arrival's last word: node Г is lit and one line says
+ *  what it does (DEC-42 (a), PROPOSED — ProofContour's NODE_HINT). Nothing opens by itself: the node opened over the photo
+ *  on a laptop (owner, 09.10), 36–60 % of the photo's half on 1440 × 900 and 1250 × 613, and on a phone the letter В
+ *  called instead */
+const HINT_AT = 300;
 
 /** Settles when the sheet's picture has finished plotting in (the transition of DrawingSheet's cover), or at once */
 function plottedIn(sheet: Element) {
@@ -36,33 +34,51 @@ type Carriers = Readonly<{
 // sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
 // never move. It waits until the stage is in view and the page has stopped scrolling. The visitor's own move in the
 // sheet first, or reduced motion: no sweep, the seam at rest.
-// Returns whether the visitor has made a move of their own in the sheet (the arrival's own node asks)
-export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { paneRef, innerRef, railRef, handleRef }: Carriers) {
+// `hint` is told when the node's hint is due (true: the seam has come to rest, or at once with reduced motion — the hint
+// stands still) and when it is over (false: the visitor's own first press or key in the sheet); a visitor who moved
+// first never gets it
+export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { paneRef, innerRef, railRef, handleRef }: Carriers, hint: (on: boolean) => void) {
   const touchedRef = useRef(false);
+  const hintRef = useRef(hint);
+  useEffect(() => {
+    hintRef.current = hint;
+  });
   useEffect(() => {
     const stage = stageRef.current;
     const sheet = stage?.closest<HTMLElement>('figure');
-    if (!stage || !sheet || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!stage || !sheet) return;
     let sweep: Animation[] = [];
     let timer: number | undefined;
     let due = false;
     let visible = false;
     let scrolled = 0;
     let live = true;
-    const after: number[] = [];
-    const release = () => {
-      delete stage.dataset.nodesTease;
-      for (const id of after) window.clearTimeout(id);
-    };
-    stage.dataset.sweep = 'wait';
     const stop = () => {
       touchedRef.current = true;
-      release();
+      hintRef.current(false);
       window.clearTimeout(timer);
       for (const animation of sweep) animation.cancel();
       delete stage.dataset.gliding;
       delete stage.dataset.sweep;
     };
+    // A mouse or a pen pressed anywhere in the sheet is the visitor's own move; a finger only on what it can move (the
+    // handle, a button): elsewhere it scrolls the page. Keys reach the sheet only on its range and buttons
+    const onPointer = (event: PointerEvent) => {
+      if (event.pointerType === 'touch' && !(event.target as Element).closest('.hv2-contour-handle, button')) return;
+      stop();
+    };
+    sheet.addEventListener('pointerdown', onPointer, { passive: true });
+    sheet.addEventListener('keydown', stop);
+    const unlisten = () => {
+      sheet.removeEventListener('pointerdown', onPointer);
+      sheet.removeEventListener('keydown', stop);
+    };
+    // Reduced motion: no move — the sheet stands complete at rest — and the hint is simply there
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      hintRef.current(true);
+      return unlisten;
+    }
+    stage.dataset.sweep = 'wait';
     const run = () => {
       if (touchedRef.current || !due || !visible || sweep.length) return;
       const quiet = performance.now() - scrolled;
@@ -85,14 +101,10 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
         // at rest: the drawing's names, figures and letters come in together (home-v2.css: their fade under data-sweep)
         delete stage.dataset.gliding;
         delete stage.dataset.sweep;
-        // …then a node opens by itself — Г, the ridge — so nobody passes the block without seeing that the scheme opens
-        // (owner, 09.10); a phone's node is a sheet over the page, so there one letter only calls
-        if (sheetNow()) {
-          after.push(
-            window.setTimeout(() => { stage.dataset.nodesTease = ''; }, TEASE_AT),
-            window.setTimeout(() => delete stage.dataset.nodesTease, TEASE_AT + TEASE_MS),
-          );
-        } else after.push(window.setTimeout(() => stage.dispatchEvent(new Event(AUTO_NODE_EVENT)), AUTO_NODE_AT));
+        // …then node Г's hint (see HINT_AT)
+        timer = window.setTimeout(() => {
+          if (live && !touchedRef.current) hintRef.current(true);
+        }, HINT_AT);
       };
     };
     const seen = new IntersectionObserver(([entry]) => {
@@ -116,27 +128,16 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     });
     arrived.observe(sheet, { attributes: true, attributeFilter: ['data-sheet-state'] });
     const onScroll = () => { scrolled = performance.now(); };
-    // A mouse or a pen pressed anywhere in the sheet is the visitor's own move; a finger only on what it can move (the
-    // handle, a button): elsewhere it scrolls the page. Keys reach the sheet only on its range and buttons
-    const onPointer = (event: PointerEvent) => {
-      if (event.pointerType === 'touch' && !(event.target as Element).closest('.hv2-contour-handle, button')) return;
-      stop();
-    };
     window.addEventListener('scroll', onScroll, { passive: true });
-    sheet.addEventListener('pointerdown', onPointer, { passive: true });
-    sheet.addEventListener('keydown', stop);
     return () => {
       live = false;
-      release();
+      unlisten();
       seen.disconnect();
       arrived.disconnect();
       window.clearTimeout(timer);
       for (const animation of sweep) animation.cancel();
       delete stage.dataset.sweep;
       window.removeEventListener('scroll', onScroll);
-      sheet.removeEventListener('pointerdown', onPointer);
-      sheet.removeEventListener('keydown', stop);
     };
   }, [stageRef, paneRef, innerRef, railRef, handleRef]);
-  return touchedRef;
 }
