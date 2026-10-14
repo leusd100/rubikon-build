@@ -222,7 +222,7 @@ Lint, typecheck, unit (88 файлів / 1 382 тести), production build —
 
 ## 12. Докази
 
-Приватний архів (поза git): `RUBIKON-archive/research/performance/2026-10-14-stage05-pr1a-mobile-hero/`, 1 082 файли, `SHA256SUMS` (sha256 самого файлу `cbb06eb8d319ce307ed01bd7d4481967b3c1ec5988e835d2044c68506c2f9846`):
+Приватний архів (поза git): `RUBIKON-archive/research/performance/2026-10-14-stage05-pr1a-mobile-hero/`, 1 082 файли, `SHA256SUMS` (sha256 самого файлу `595a210a09a2f264a234a52df61ee7fd5b44ff084b4e960e2c6ee33b747f04dc`):
 
 - `data/` — геометрія, вибір файлів (до й після виправлення P1), якість, порівняння сторінок, кропи, 112 прогонів A/B;
 - `iso/`, `visual/` — рендери якості й скриншоти героя (lossless WebP, пікселі перевірено на ідентичність з PNG);
