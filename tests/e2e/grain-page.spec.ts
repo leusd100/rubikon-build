@@ -176,6 +176,9 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
 // звертаються» (four situations) and the cost factors — while the process band became «Ви · Ми» with each step's result
 // drawn: 7.63 → 8.95 screens at 1440×900 and 9.84 → 12.51 at 390×844 (macOS). The budgets are 9.0 and 12.6 — content
 // may not grow into that margin.
+// Owner, 14.10 (#191, Typography Stage 04): Fixel Display replaced Jost. At the same size it sets 12–16 % wider, so
+// three section titles and one card title take a line more at 1440 px (+146 px): 8.93 → 9.09 screens on macOS, 9.11 on
+// the Linux CI runner. The desktop budget is 9.15. The phone page stays inside 12.6 (titles × 0.93 there).
 // The page is measured without the cookie banner. While it shows, the footer keeps its clearance below the links
 // (+237 px at 1440×900), and it mounts only after hydration, which can land after `load`; `isVisible()` doesn't wait
 // for it (its timeout is ignored), so the budget used to be measured with or without that padding by chance.
@@ -190,12 +193,12 @@ async function settledHeight(page: Page, path: string) {
 }
 
 test.describe('Grain page height budget', () => {
-  test('desktop 1440×900: within 9.0 screens', async ({ page, isMobile }) => {
+  test('desktop 1440×900: within 9.15 screens', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop budget');
     await page.setViewportSize({ width: 1440, height: 900 });
     const screens = (await settledHeight(page, GRAIN_PAGE)) / 900;
     test.info().annotations.push({ type: 'height', description: `${screens.toFixed(2)} screens` });
-    expect(screens, 'screens at 1440×900').toBeLessThanOrEqual(9.0);
+    expect(screens, 'screens at 1440×900').toBeLessThanOrEqual(9.15);
   });
 
   test('phone 390×844: within 12.6 screens, no overflow at 390 or 360', async ({ page, isMobile }) => {
