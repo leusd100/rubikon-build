@@ -4,7 +4,8 @@
 The approved source images live in public/media/*-source/. The Phase 6 photo
 variant sources live in design-assets/ so they are not deployed as PNGs.
 Landscape variants preserve the complete source. The /napryamky sequence also
-gets portrait crops for tall screens; source artwork is never modified.
+gets portrait crops for tall screens, and the direction page photos get phone
+crops in WebP and AVIF; source artwork is never modified.
 Output filenames are content-hashed for the immutable media-responsive cache policy.
 """
 
@@ -40,6 +41,22 @@ SEQUENCE_CONCEPT_PORTRAIT_POSITIONS = {
     "betonni-roboty": .70,
     "pokrivelni-roboty": .69,
 }
+# Phones draw a direction hero by its height (object-fit: cover): up to 440 px wide its box is at most 0.755 as wide as
+# tall (the hero is at least 660 − 77 = 583 px tall where its height is fixed, more where its copy sets it), so a phone
+# only ever sees a window of the 1536 × 1024 art no wider than 784 px (0.766). That window is shipped at native size:
+# the same pixels, without the half a phone crops away. Placed at x of the spare width, it holds every narrower window
+# that object-position: x% picks from the whole art, so x = mobileFocalPosition in app/data/directionHeroImageManifest.ts.
+DIRECTION_HERO_PORTRAIT_WIDTH = 784
+DIRECTION_HERO_PORTRAIT_POSITIONS = {
+    "angary": .58,
+    "zernoskhovyshcha": .62,
+    "metalokonstruktsii": .58,
+    "betonni-roboty": .55,
+    "pokrivelni-roboty": .57,
+}
+# AVIF twins of the portrait crops, at the lowest quality whose rendered SSIM is not below the WebP's (Stage 03, 13.10):
+# the daylight WebP is q85, the blue-hour WebP q90.
+DIRECTION_HERO_PORTRAIT_AVIF_QUALITY = {"direction-hero-photo-variant": 75, "direction-hero-blue-hour": 85}
 IMAGE_SETS = [
     ("design-assets/direction-hero-blue-hour", "direction-hero-blue-hour", [
         "angary.png",
@@ -89,16 +106,19 @@ IMAGE_SETS = [
 ]
 
 
-def emit_variants(image, prefix, base, widths, results, quality=QUALITY) -> None:
+def emit_variants(image, prefix, base, widths, results, quality=QUALITY, fmt="WEBP") -> None:
     for width in widths:
         target_width = min(width, image.width)
         target_height = round(image.height * (target_width / image.width))
         resized = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
         buffer = io.BytesIO()
-        resized.save(buffer, format="WEBP", quality=quality, method=6)
+        if fmt == "AVIF":
+            resized.save(buffer, format="AVIF", quality=quality, speed=4)
+        else:
+            resized.save(buffer, format="WEBP", quality=quality, method=6)
         encoded = buffer.getvalue()
         digest = hashlib.sha256(encoded).hexdigest()[:8]
-        output_name = f"{prefix}-{base}-{target_width}w.{digest}.webp"
+        output_name = f"{prefix}-{base}-{target_width}w.{digest}.{fmt.lower()}"
         with open(os.path.join(OUT_DIR, output_name), "wb") as output:
             output.write(encoded)
         results.append((f"{prefix}/{base}", output_name, len(encoded)))
@@ -121,6 +141,13 @@ def main() -> None:
             quality = 90 if output_prefix in ("directions-sequence-daylight", "directions-sequence-blue-hour", "direction-hero-blue-hour") else QUALITY
             widths = sorted(set(WIDTHS + ([image.width] if is_sequence else [])))
             emit_variants(image, output_prefix, base, widths, results, quality)
+            if output_prefix in DIRECTION_HERO_PORTRAIT_AVIF_QUALITY:
+                crop_width = DIRECTION_HERO_PORTRAIT_WIDTH
+                left = round((image.width - crop_width) * DIRECTION_HERO_PORTRAIT_POSITIONS[base])
+                portrait = image.crop((left, 0, left + crop_width, image.height))
+                emit_variants(portrait, output_prefix, base + "-portrait", [crop_width], results, quality)
+                emit_variants(portrait, output_prefix, base + "-portrait", [crop_width], results,
+                              DIRECTION_HERO_PORTRAIT_AVIF_QUALITY[output_prefix], fmt="AVIF")
             if is_sequence:
                 crop_width = min(image.width, round(image.height * 3 / 4))
                 positions = SEQUENCE_CONCEPT_PORTRAIT_POSITIONS if output_prefix != "directions-sequence" else SEQUENCE_PORTRAIT_POSITIONS
