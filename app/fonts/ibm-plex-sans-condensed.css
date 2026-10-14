@@ -101,5 +101,7 @@
 }
 
 :root {
-  --font-condensed: 'IBM Plex Sans Condensed', 'IBM Plex Sans Condensed Fallback';
+  /* Arial first (macOS, iOS, Windows), then the Linux and Android faces in app/fonts/fallback-metrics.css. */
+  --font-condensed: 'IBM Plex Sans Condensed', 'IBM Plex Sans Condensed Fallback', 'IBM Plex Sans Condensed Fallback Arial-metric',
+    'IBM Plex Sans Condensed Fallback Roboto', 'IBM Plex Sans Condensed Fallback DejaVu';
 }

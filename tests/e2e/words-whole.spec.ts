@@ -20,14 +20,22 @@ const ROUTES = [
   '/polityka-konfidentsiinosti',
 ];
 
+// 320–1440 px, the range the display face is sized for (Typography v1.1: --display-fit), including 340 (the last
+// width of the ≤ 340 px tier) and 761 (the first desktop width, where the direction cards' title box is narrowest).
 const VIEWPORTS = [
   { width: 320, height: 800 },
+  { width: 340, height: 800 },
   { width: 360, height: 800 },
+  { width: 375, height: 812 },
   { width: 390, height: 844 },
+  { width: 412, height: 915 },
+  { width: 430, height: 932 },
+  { width: 761, height: 1024 },
   { width: 768, height: 1024 },
   { width: 820, height: 1180 },
   { width: 900, height: 1000 },
   { width: 1024, height: 768 },
+  { width: 1440, height: 900 },
 ];
 
 test.describe('words stay whole on public pages', () => {
@@ -35,7 +43,7 @@ test.describe('words stay whole on public pages', () => {
 
   for (const route of ROUTES) {
     test(`${route}`, async ({ page }) => {
-      test.setTimeout(90_000);
+      test.setTimeout(150_000);
       await page.route(/\.mp4(?:\?|$)/, (r) => r.abort());
       await page.addInitScript(() => {
         try {

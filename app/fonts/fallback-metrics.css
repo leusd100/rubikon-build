@@ -1,0 +1,41 @@
+/*
+ * Metric fallbacks for the three brand faces — Fixel Display, Manrope, IBM Plex Sans Condensed — shown only until the
+ * brand files arrive (font-display: swap), so the late swap moves nothing. Typography v1.1 / Stage 03, 13–14.10.
+ *
+ * Three platform families, each listed after the brand face in its stack; a face whose local() source is missing fails
+ * and is skipped:
+ *  - Arial-metric: Arial (macOS, iOS, Windows), Liberation Sans / Arimo (Linux, ChromeOS) — the same metrics.
+ *  - Roboto: Android's sans (for Plex, Roboto Condensed).
+ *  - DejaVu Sans: Linux without Liberation (DebugBear's agent has only DejaVu).
+ *
+ * Per script: the same face needs a different size-adjust for Cyrillic and Latin text (Fixel against Roboto: 105.75 %
+ * on the site's Ukrainian headings, 109.71 % on English test copy), so a fallback is two faces of one family split by
+ * unicode-range. When ranges overlap, the face declared last is tried first: the Latin faces come after.
+ *
+ * Values (size-adjust, ascent-override, descent-override, line-gap-override): the brand face's width on the site's own
+ * copy for that role, divided by the platform face's width; ascent and descent are the brand face's own, divided by that
+ * ratio. Measured in Linux Chromium (Playwright 1.62.1 image) — Fixel and the Latin faces on 14.10 (Typography v1.1),
+ * the Cyrillic Manrope / Plex faces on 13.10 (Performance Stage 03). Fixel carries its 0.29 em hhea line gap, so
+ * line-height: normal matches too. Nothing here is copied from Jost or from another face.
+ */
+
+/* ---------- Fixel Display (display) ---------- */
+@font-face { font-family: 'Fixel Display Fallback Arial-metric'; src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo-Regular"); unicode-range: U+0400-04FF, U+0301, U+2116; size-adjust: 107.79%; ascent-override: 83.5%; descent-override: 17.63%; line-gap-override: 26.9%; }
+@font-face { font-family: 'Fixel Display Fallback Arial-metric'; src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo-Regular"); unicode-range: U+0000-02FF, U+0302-03FF, U+0500-2115, U+2117-10FFFF; size-adjust: 109.76%; ascent-override: 82%; descent-override: 17.31%; line-gap-override: 26.42%; }
+@font-face { font-family: 'Fixel Display Fallback Roboto'; src: local("Roboto"), local("Roboto-Regular"), local("Roboto Regular"); unicode-range: U+0400-04FF, U+0301, U+2116; size-adjust: 105.75%; ascent-override: 85.1%; descent-override: 17.97%; line-gap-override: 27.42%; }
+@font-face { font-family: 'Fixel Display Fallback Roboto'; src: local("Roboto"), local("Roboto-Regular"), local("Roboto Regular"); unicode-range: U+0000-02FF, U+0302-03FF, U+0500-2115, U+2117-10FFFF; size-adjust: 109.71%; ascent-override: 82.03%; descent-override: 17.32%; line-gap-override: 26.43%; }
+@font-face { font-family: 'Fixel Display Fallback DejaVu'; src: local("DejaVu Sans"), local("DejaVuSans"); unicode-range: U+0400-04FF, U+0301, U+2116; size-adjust: 93.23%; ascent-override: 96.53%; descent-override: 20.38%; line-gap-override: 31.11%; }
+@font-face { font-family: 'Fixel Display Fallback DejaVu'; src: local("DejaVu Sans"), local("DejaVuSans"); unicode-range: U+0000-02FF, U+0302-03FF, U+0500-2115, U+2117-10FFFF; size-adjust: 96.17%; ascent-override: 93.58%; descent-override: 19.76%; line-gap-override: 30.15%; }
+
+/* ---------- Manrope (text) — after next/font's own 'Manrope Fallback' (Arial) ---------- */
+/* Arial-metric: the Arial values next/font generates, for both scripts (measured 101.9 % UA / 103.3 % EN). */
+@font-face { font-family: 'Manrope Fallback Arial-metric'; src: local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo-Regular"); size-adjust: 103.19%; ascent-override: 103.31%; descent-override: 29.07%; line-gap-override: 0%; }
+@font-face { font-family: 'Manrope Fallback Roboto'; src: local("Roboto"), local("Roboto-Regular"), local("Roboto Regular"); unicode-range: U+0400-04FF, U+0301, U+2116; size-adjust: 99.89%; ascent-override: 107.11%; descent-override: 30.03%; line-gap-override: 0%; }
+@font-face { font-family: 'Manrope Fallback Roboto'; src: local("Roboto"), local("Roboto-Regular"), local("Roboto Regular"); unicode-range: U+0000-02FF, U+0302-03FF, U+0500-2115, U+2117-10FFFF; size-adjust: 103.58%; ascent-override: 103.3%; descent-override: 28.96%; line-gap-override: 0%; }
+@font-face { font-family: 'Manrope Fallback DejaVu'; src: local("DejaVu Sans"), local("DejaVuSans"); unicode-range: U+0400-04FF, U+0301, U+2116; size-adjust: 88.14%; ascent-override: 121.4%; descent-override: 34.04%; line-gap-override: 0%; }
+@font-face { font-family: 'Manrope Fallback DejaVu'; src: local("DejaVu Sans"), local("DejaVuSans"); unicode-range: U+0000-02FF, U+0302-03FF, U+0500-2115, U+2117-10FFFF; size-adjust: 90.76%; ascent-override: 117.9%; descent-override: 33.06%; line-gap-override: 0%; }
+
+/* ---------- IBM Plex Sans Condensed (labels) — after 'IBM Plex Sans Condensed Fallback' (Arial, ibm-plex-sans-condensed.css) ---------- */
+@font-face { font-family: 'IBM Plex Sans Condensed Fallback Arial-metric'; src: local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo-Regular"); size-adjust: 91.3%; ascent-override: 112.27%; descent-override: 30.12%; line-gap-override: 0%; }
+@font-face { font-family: 'IBM Plex Sans Condensed Fallback Roboto'; src: local("Roboto Condensed"), local("RobotoCondensed-Regular"), local("Roboto Condensed Regular"); size-adjust: 105.64%; ascent-override: 96.56%; descent-override: 25.56%; line-gap-override: 0%; }
+@font-face { font-family: 'IBM Plex Sans Condensed Fallback DejaVu'; src: local("DejaVu Sans"), local("DejaVuSans"); size-adjust: 82.58%; ascent-override: 124.72%; descent-override: 33.9%; line-gap-override: 0%; }

@@ -33,6 +33,13 @@
      takes --hero-title-home. */
   --hero-title: clamp(44px, min(5.8vw, 10.2svh), 86px);
   --hero-title-home: clamp(44px, min(5.2vw, 9.4svh), 78px);
+  /* Display fit (Typography v1.1, Fixel Display): the em width of the longest single word a display heading carries —
+     «Металоконструкції», 8.876 em at -.03em — × 1.04 (Linux renders it ≈ 1.7 % wider than macOS, plus 2 % spare). A
+     direction title or a hero H1 is never larger than its box / this, so that word fits whole at every width without a
+     size per breakpoint; the English test copy's longest word is far shorter (Load-bearing, 5.99 em). */
+  --display-fit: 9.23;
+  /* Phone section titles × this: Fixel's x-height is .52 em, Jost's was .46 — the lowercase keeps Jost's size or more. */
+  --display-phone-scale: .93;
   --hero-lead: 17px;
   --hero-pad-top: calc(101px + clamp(18px, 7svh, 72px));
   --hero-pad-bottom: clamp(56px, 9svh, 110px);
@@ -329,15 +336,21 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .direction-card.roof img { object-position: center 48%; }
 .direction-number { position: absolute; top: 30px; left: 34px; color: white; font: 600 14px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; }
 .direction-provenance { position: absolute; top: 24px; right: 24px; padding: 8px 10px; color: white; background: rgba(13,16,14,.82); border: 1px solid rgba(255,255,255,.5); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .04em; }
-.direction-copy { position: absolute; left: 36px; right: 106px; bottom: 34px; }
-.direction-copy strong { display: block; margin: 0; font: 400 clamp(30px, 3.15vw, 48px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; }
-.direction-card:not(.wide) .direction-copy strong { font-size: clamp(28px, 2.7vw, 40px); }
+.direction-copy { position: absolute; left: 36px; right: 106px; bottom: 34px; container-type: inline-size; }
+/* The title may run --title-overhang past the copy's right inset (into the arrow's reserved column, see below); its size
+   is the tier's --title-size, but never more than that box / --display-fit. */
+.direction-copy strong {
+  --title-size: clamp(30px, 3.15vw, 48px); --title-overhang: 0px;
+  display: block; margin: 0 calc(-1 * var(--title-overhang)) 0 0; letter-spacing: -.03em;
+  font: 400 min(var(--title-size), calc((100cqi + var(--title-overhang)) / var(--display-fit)))/1.06 var(--font-display), var(--font-manrope), sans-serif;
+}
+.direction-card:not(.wide) .direction-copy strong { --title-size: clamp(28px, 2.7vw, 40px); }
 .direction-copy small { display: block; max-width: 620px; margin: 16px 0 0; color: color-mix(in srgb, var(--color-dark-text) 80%, transparent); font-size: 15px; line-height: 1.6; }
 /* The arrow sits beside the description at the bottom of the card, never beside the title, so the title may use the
    inset that is reserved for the arrow (right 106 vs left 36 = 70 px). Without it «Зерносховища» and «Металоконструкції»
    were split mid-word in the narrow right-hand cards between 761 and ~910 px. */
 @media (min-width: 761px) and (max-width: 1050px) {
-  .direction-card:not(.wide) .direction-copy strong { margin-right: -70px; }
+  .direction-card:not(.wide) .direction-copy strong { --title-overhang: 70px; }
 }
 .direction-arrow { position: absolute; right: 28px; bottom: 28px; display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid rgba(255,255,255,.68); border-radius: 50%; font-size: 22px; transition: color .25s ease, background .25s ease, border-color .25s ease; }
 .direction-card:hover .direction-arrow, .direction-card:focus-visible .direction-arrow { color: var(--color-on-action); background: var(--color-action); border-color: var(--color-action); }
@@ -590,6 +603,14 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 .breadcrumb b { color: rgba(255,255,255,.72); font-weight: 800; }
 .breadcrumb i { font-style: normal; }
 .subhero h1, .service-subhero h1 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--hero-title); font-weight: 400; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance; }
+/* The H1's --display-fit container (the phone rule below sizes the H1 to 100cqi / --display-fit). */
+:is(.subhero, .service-subhero) .shell { container-type: inline-size; }
+/* From 761 px a headline's accent phrase stays on one line. Under text-wrap: balance a Fixel headline can be a near tie
+   between two breaks; the metric fallback then broke «комплексної | реалізації» where Fixel did not, and the late swap
+   moved the line (HOME: CLS 0.10–0.13). Kept whole, both faces break in the same place. Phones keep wrapping it. */
+@media (min-width: 761px) {
+  main h1 em { white-space: nowrap; }
+}
 .subhero h1 em, .service-subhero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .subhero-side { padding-top: 24px; border-top: 2px solid var(--color-accent); }
 .subhero-side > p { margin: 0; color: rgba(255,255,255,.7); font-size: 16px; line-height: 1.75; }
@@ -818,7 +839,8 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 }
 
 .privacy-hero { padding: 180px 0 80px; color: var(--color-dark-text); background: var(--color-dark); }
-.privacy-hero h1 { max-width: 980px; margin: 28px 0 24px; font: 400 clamp(56px, 8vw, 106px)/.92 var(--font-display), sans-serif; letter-spacing: -.045em; }
+.privacy-hero > .shell { container-type: inline-size; }
+.privacy-hero h1 { max-width: 980px; margin: 28px 0 24px; font: 400 min(clamp(56px, 8vw, 106px), calc(100cqi / var(--display-fit)))/.92 var(--font-display), sans-serif; letter-spacing: -.045em; }
 .privacy-hero > .shell > p:last-child { margin: 0; color: var(--color-dark-text-secondary); font-size: 13px; }
 .not-found-hero .not-found-lead { display: block; max-width: 560px; margin: 0; color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.6; }
 .not-found-hero .text-link { color: var(--color-dark-text); }
@@ -921,7 +943,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     --section-space: 82px;
     --grid-gap: 44px;
     --radius-lg: 28px;
-    --title-section: clamp(40px, 11vw, 46px);
+    --title-section: calc(clamp(40px, 11vw, 46px) * var(--display-phone-scale));
     --title-page: clamp(42px, 12vw, 56px);
     --hero-title: clamp(38px, 10.6vw, 46px);
     --hero-lead: 16px;
@@ -971,9 +993,9 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .direction-card:first-child { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
   .direction-card:last-child { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
   .direction-copy { left: 24px; right: 82px; bottom: 25px; }
-  .direction-copy strong, .direction-card:not(.wide) .direction-copy strong { font-size: 32px; }
-  /* Same reason as above: «Металоконструкції» (239 px at 32 px) did not fit the 222 px left between the insets at 360 px. */
-  .direction-copy strong { margin-right: -58px; }
+  .direction-copy strong, .direction-card:not(.wide) .direction-copy strong { --title-size: 32px; }
+  /* Same reason as above: «Металоконструкції» did not fit the 222 px left between the insets at 360 px. */
+  .direction-copy strong { --title-overhang: 58px; }
   .direction-copy small { margin-top: 12px; font-size: 16px; line-height: 1.5; }
   .direction-number { top: 24px; left: 24px; }
   .direction-arrow { right: 20px; bottom: 22px; width: 52px; height: 52px; }
@@ -1021,7 +1043,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .breadcrumb, .breadcrumb a { color: rgba(255,255,255,.86); }
   .breadcrumb b { color: #fff; }
   .breadcrumb :is(a, b) { text-shadow: 0 1px 2px rgba(9, 10, 12, .55); }
-  .subhero h1, .service-subhero h1 { font-size: var(--hero-title); }
+  .subhero h1, .service-subhero h1 { font-size: min(var(--hero-title), calc(100cqi / var(--display-fit))); }
   .subhero-side > p { font-size: 15px; }
   .service-subhero-content { padding-top: 126px; padding-bottom: 58px; } /* the crumbs sit 49 px under the 77 px header, as on /angary */
   .direction-hero-image { object-position: var(--direction-hero-image-position-mobile, center 60%) !important; }
@@ -1087,7 +1109,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .cookie-actions button { min-height: 44px; padding: 0 10px; }
   .cookie-toggle-options { max-width: none; }
   .privacy-hero { padding: 132px 0 62px; }
-  .privacy-hero h1 { font-size: clamp(45px, 13vw, 64px); }
+  .privacy-hero h1 { font-size: min(clamp(45px, 13vw, 64px), calc(100cqi / var(--display-fit))); }
   .privacy-content article { grid-template-columns: 1fr; gap: 16px; }
   .logo-lab-intro { padding: 132px 0 68px; }
   .logo-lab-back { margin-bottom: 46px; }
@@ -1278,20 +1300,11 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 }
 
 @media (max-width: 340px) {
-  /* 320 px phones: the page H1 and the /napryamky route titles carry words («МЕТАЛОКОНСТРУКЦІЇ»,
-     «конфіденційності») wider than the 288 px column at their usual size — size them to fit
-     instead of breaking mid-letter or running past the card edge. */
-  .subhero h1, .service-subhero h1 { font-size: 36px; }
-  .privacy-hero h1 { font-size: 36px; }
+  /* 320 px phones: the /napryamky route titles carry «МЕТАЛОКОНСТРУКЦІЇ», wider than the 288 px column at their usual
+     size — size them to fit instead of breaking mid-letter or running past the card edge. (The page and privacy H1s need
+     no size here: --display-fit keeps them inside their column at every width.) */
   .route-service { grid-template-columns: 30px minmax(0, 1fr) 24px; gap: 8px; }
   .route-service h3 { font-size: 21px; }
-  /* HOME's direction cards, same word: at the 32px this tier otherwise sets, «Металоконструкції»
-     (239px) cleared its 240px column by under a pixel on macOS Chromium — Linux's slightly wider
-     rendering of the same CSS pushed it over and split it mid-letter (caught by Main Regression's
-     words-whole.spec.ts, not by pr-critical's own widest-word check, which never runs at 320px).
-     Sized down with real margin (207px of 240px) rather than a razor's edge; all five cards keep
-     one shared size instead of singling this one out. */
-  .direction-copy strong, .direction-card:not(.wide) .direction-copy strong { font-size: 28px; }
 }
 
 /* RoleIcon: a thin line drawing beside a role's label, in the label's quieter tone — never a

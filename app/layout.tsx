@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from 'next';
-import { Jost, Manrope } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 // Self-hosted rather than next/font/google: Google's copy of Plex Sans Condensed has no Cyrillic.
 import './fonts/ibm-plex-sans-condensed.css';
 import condensedBoldCyrillic from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-Bold-Cyrillic.woff2?url';
 import condensedBoldLatin from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-Bold-Latin1.woff2?url';
 import condensedSemiBoldCyrillic from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-SemiBold-Cyrillic.woff2?url';
 import condensedSemiBoldLatin from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-SemiBold-Latin1.woff2?url';
+// Display face, self-hosted (not on Google Fonts): Fixel Display 400 in a Latin and a Cyrillic subset.
+import './fonts/fixel-display.css';
+import displayCyrillic from './fonts/fixel-display/FixelDisplay-Regular-Cyrillic.woff2?url';
+import displayLatin from './fonts/fixel-display/FixelDisplay-Regular-Latin.woff2?url';
+// Metric fallbacks for all three faces on the platforms next/font's Arial face does not cover (Linux, Android).
+import './fonts/fallback-metrics.css';
 import './theme.css';
 import './globals.css';
 import './conversation.css';
@@ -19,15 +25,13 @@ import { company } from './data/company';
 import { directions } from './data/directions';
 import { THEME_INIT_SCRIPT } from './lib/theme';
 
+// `fallback` follows next/font's Arial-based 'Manrope Fallback': the faces for Linux and Android, in
+// app/fonts/fallback-metrics.css. (No comments inside the options object: vinext then cannot read it statically and
+// silently loads the font from Google's CDN, which the CSP blocks.)
 const manrope = Manrope({
   variable: '--font-manrope',
   subsets: ['cyrillic', 'latin'],
-});
-
-const display = Jost({
-  variable: '--font-display',
-  subsets: ['cyrillic', 'latin'],
-  weight: ['400', '500'],
+  fallback: ['Manrope Fallback Arial-metric', 'Manrope Fallback Roboto', 'Manrope Fallback DejaVu'],
 });
 
 export const metadata: Metadata = {
@@ -132,10 +136,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             theme (app/lib/theme.ts, app/theme.css). */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         {/* Plex Condensed sets first-screen text since the UX pass (the «Ілюстрація» stamp, the configurator's eyebrow on
-            a phone). Fetched with the CSS, as next/font does for Manrope and Jost, it is in before the first paint
+            a phone). Fetched with the CSS, as next/font does for Manrope, it is in before the first paint
             instead of swapping in later and shifting the hero (direction-static-hero.spec.ts). Only the faces nearly every
             page sets: 600 and 700, Latin and Cyrillic; 500 and the Pi subsets stay on demand. */}
         {[condensedSemiBoldLatin, condensedSemiBoldCyrillic, condensedBoldLatin, condensedBoldCyrillic].map((href) => (
+          <link key={href} rel="preload" href={href} as="font" type="font/woff2" crossOrigin="anonymous" />
+        ))}
+        {/* The display face sets every page's H1. Both subsets: a Ukrainian heading draws from both (letters from the
+            Cyrillic file, spaces and punctuation from the Latin one) — the same two requests Jost's next/font preloads made. */}
+        {[displayLatin, displayCyrillic].map((href) => (
           <link key={href} rel="preload" href={href} as="font" type="font/woff2" crossOrigin="anonymous" />
         ))}
         <script
@@ -154,7 +163,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
       </head>
-      <body className={`${manrope.variable} ${display.variable}`}>
+      <body className={manrope.variable}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
