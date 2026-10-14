@@ -70,19 +70,39 @@ test.describe('late fonts', () => {
     test(`${route}: the swap from the metric fallbacks keeps CLS under 0.01`, async ({ page }) => {
       test.setTimeout(60_000);
       await page.route(/\.mp4(?:\?|$)/, (r) => r.abort());
-      await page.route(/\.woff2(\?|$)/, async (r) => { await new Promise((res) => setTimeout(res, 3000)); await r.continue(); });
+      const held: Array<Promise<void>> = [];
+      await page.route(/\.woff2(\?|$)/, (r) => {
+        const released = new Promise<void>((res) => setTimeout(res, 3000)).then(() => r.continue());
+        held.push(released);
+        return released;
+      });
       // A first visit: the cookie banner is on screen too, so its Manrope text is part of what must not move.
       await page.addInitScript(() => {
-        (window as unknown as { __shifts: number[] }).__shifts = [];
-        new PerformanceObserver((list) => {
-          for (const entry of list.getEntries() as Array<PerformanceEntry & { value: number; hadRecentInput: boolean }>) {
-            if (!entry.hadRecentInput) (window as unknown as { __shifts: number[] }).__shifts.push(entry.value);
-          }
-        }).observe({ type: 'layout-shift', buffered: true });
+        type Shift = PerformanceEntry & { value: number; hadRecentInput: boolean };
+        const state = window as unknown as { __shifts: number[]; __shiftObserver: PerformanceObserver };
+        const record = (entries: PerformanceEntryList) => {
+          for (const entry of entries as Shift[]) if (!entry.hadRecentInput) state.__shifts.push(entry.value);
+        };
+        state.__shifts = [];
+        state.__shiftObserver = new PerformanceObserver((list) => record(list.getEntries()));
+        state.__shiftObserver.observe({ type: 'layout-shift', buffered: true });
       });
       await page.goto(route, { waitUntil: 'load', timeout: 45_000 });
-      await page.waitForTimeout(1500);
-      const cls = await page.evaluate(() => (window as unknown as { __shifts: number[] }).__shifts.reduce((sum, v) => sum + v, 0));
+      // Every held font released and in use. A face the page asks for later joins `held`, so wait until none is added.
+      for (let count = -1; count !== held.length; ) {
+        count = held.length;
+        await Promise.all(held);
+        await page.evaluate(() => document.fonts.ready);
+      }
+      // The swap laid out (two frames on), and the shifts it caused taken from the observer at once
+      const cls = await page.evaluate(async () => {
+        await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+        const state = window as unknown as { __shifts: number[]; __shiftObserver: PerformanceObserver };
+        for (const entry of state.__shiftObserver.takeRecords() as Array<PerformanceEntry & { value: number; hadRecentInput: boolean }>) {
+          if (!entry.hadRecentInput) state.__shifts.push(entry.value);
+        }
+        return state.__shifts.reduce((sum, v) => sum + v, 0);
+      });
       expect(cls).toBeLessThan(0.01);
     });
   }
