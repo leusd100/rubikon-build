@@ -33,7 +33,10 @@ function pinnedBox(hit: Element, element: Element) {
  */
 function coverAbove(element: Element, box: DOMRect) {
   let bottom = 0;
-  const y = Math.min(Math.max(box.top + 2, 0), window.innerHeight - 1);
+  // 2 px into the control's visible top, also when it starts above the window: there Firefox, once the page is
+  // scrolled, hit-tests the window's first pixel row as <html>, not as the fixed header that covers it (a 175 px format
+  // card on /yak-pratsyuiemo left at -7 px, 14.10)
+  const y = Math.min(Math.max(box.top, 0) + 2, window.innerHeight - 1);
   for (const share of [0.2, 0.5, 0.8]) {
     const hit = document.elementFromPoint(box.left + box.width * share, y);
     if (!hit || element.contains(hit) || hit.contains(element)) continue;

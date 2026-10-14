@@ -1,0 +1,40 @@
+/*
+ * Fixel Display — the display face (h1, h2, direction titles, display h3s), replacing Jost (Typography v1.1, 14.10).
+ *
+ * Source: MacPaw's own release, github.com/macpaw/fixel fonts/webfonts/FixelDisplay-Regular.woff2, font version 1.000,
+ * SIL Open Font License 1.1 without a Reserved Font Name (./fixel-display/OFL.txt) — subsetting and keeping the name
+ * are allowed. Only weight 400 ships: every display rule on the site sets 400.
+ *
+ * Two subsets, built by scripts/fonts/subset_fixel_display.py (provenance and checksums in ./fixel-display/README.md).
+ * A browser downloads a subset only when the page draws a character in its unicode-range: a Ukrainian page takes both
+ * (35 KB, Jost's two Google subsets were 36 KB). app/layout.tsx preloads both on every page, so an English page would
+ * take the Cyrillic file too until its preloads follow the page's language (EN follow-up). Each range is the
+ * file's own cmap; U+00A0 is added to the Latin one because Chrome sets a no-break space with the face's space glyph.
+ * Fixel has no ʼ (U+02BC) and no diagonal arrows ↖ ↗ ↘ ↙: they fall to the metric fallback below, drawn by the
+ * platform's sans at Fixel's size.
+ *
+ * Not next/font: Fixel is not on Google Fonts. Preloaded in app/layout.tsx in place of Jost's next/font preloads.
+ */
+
+@font-face {
+  font-family: 'Fixel Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fixel-display/FixelDisplay-Regular-Latin.woff2') format('woff2');
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00AB, U+00AE-00B4, U+00B6-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2010, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2032-2033, U+2039-203A, U+2044, U+20AC, U+2122, U+2190-2193, U+2212;
+}
+@font-face {
+  font-family: 'Fixel Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fixel-display/FixelDisplay-Regular-Cyrillic.woff2') format('woff2');
+  unicode-range: U+0401-040C, U+040E-044F, U+0451-045C, U+045E-045F, U+0490-0491, U+04B0-04B1, U+20B4, U+2116;
+}
+
+:root {
+  /* The metric fallbacks (app/fonts/fallback-metrics.css) stand in until the files arrive; Manrope and the generic sans
+     follow at each use, as they did after Jost. */
+  --font-display: 'Fixel Display', 'Fixel Display Fallback Arial-metric', 'Fixel Display Fallback Roboto', 'Fixel Display Fallback DejaVu';
+}

@@ -8,7 +8,9 @@
    the aside is laid OVER it, spanning both rows at the right edge, with the figure absolutely positioned inside. The
    aside asks for 236 px of height — a one-line title and its note are lower than that, and the plan would be too
    small to read — and the room it adds goes under the note (the second row is the flexible one), so the title and
-   the note stay together. Shown from 1200 px; below that the header is as it was.
+   the note stay together. The title is kept to the room the plan leaves, less 40 px: in Fixel Display (14.10, ~15 %
+   wider than Jost) «Оберіть потрібний вид робіт» no longer fits that room on one line at 1200 px. Shown from 1200 px;
+   below that the header is as it was.
    No frame, no rule and no title strip: the plan stands free and is named in its own corner. */
 .dkey-host .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
 .dkey-host .section-header.has-aside .section-header-aside { display: none; }
@@ -19,7 +21,7 @@
   }
   .dkey-host .section-header.has-aside { grid-template-rows: auto 1fr; }
   /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
-  .dkey-host .section-header.has-aside .section-header-copy { grid-row: 1; }
+  .dkey-host .section-header.has-aside .section-header-copy { grid-row: 1; max-width: calc(max(58%, 680px) - 40px); }
   .dkey-host .section-header.has-aside .section-header-support { grid-row: 2; }
 }
 
