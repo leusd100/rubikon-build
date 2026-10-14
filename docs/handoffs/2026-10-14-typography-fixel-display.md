@@ -178,7 +178,7 @@ Container units (`cqi`): `container-type: inline-size` на `.direction-copy`, �
 |---|---|
 | Lint · typecheck · unit | eslint 0 помилок · tsc 0 · vitest 87 файлів / 1374 тести |
 | Production build | `vinext build` без помилок |
-| Повний E2E, Linux, desktop + mobile (`--workers=2`) | 1162 passed · 291 skipped · 26 failed. 24 із 26 відтворюються один в один на `main` у тому ж середовищі (hero-відео, `sizes` hero-зображення на /angary 390, тема каруселі при паузі). 1 нестабільний (`home-proof-contour.spec.ts:1985`, таймінг анімації 920 мс проти 900; на повторі проходить і на гілці, і на `main`). 1 — бюджет висоти зерносховищ (§13) |
+| Повний E2E, Linux, desktop + mobile (`--workers=2`) | 1162 passed · 291 skipped · 26 failed. 24 із 26 відтворюються один в один на `main` у тому ж середовищі: 22 hero-відео / медіа (лише Docker — у CI проходять) і 2, що падають і в Main Regression на `main` (§7.6). 1 нестабільний (`home-proof-contour.spec.ts:1985`, таймінг анімації 920 мс проти 900; на повторі проходить і на гілці, і на `main`). 1 — бюджет висоти зерносховищ (§13) |
 | `typography.spec.ts` + `words-whole.spec.ts`, Linux | 45 passed · 27 skipped (тести з явними ширинами — в одному проєкті) |
 | Скриншотні набори `visual-chromium`, Linux | `main`: 66 / 66. Гілка: 27 passed · 39 failed — очікувана зміна шрифту (§8). Еталони не оновлювались |
 | Гліфи display (CDP) | 0 гліфів не з Fixel на HOME, /angary, /metal… × світла / темна; запиту Jost немає |
@@ -186,6 +186,8 @@ Container units (`cqi`): `container-type: inline-size` на `.direction-copy`, �
 | Вага WOFF2 | 36 728 → 35 692 B; preload-ів 8 → 8 |
 | LCP / FCP (лабораторія, UA) | FCP ±16 мс; LCP +16…+72 мс (+0,2…+1,1 %) (§7.4) |
 | Override інтервалів (WCAG 1.4.12) | display-текст у межах на 7 сторінках × 320 / 390 (Linux, телефон) і 5 ширин (macOS) після виправлень §7.2 |
+| Keyboard (Firefox / WebKit), PR Gate | Firefox падав на /yak-pratsyuiemo 390 × 844 — нове в PR, виправлено в `28ab50a` (§7.2); у CI після виправлення обидва зелені |
+| SonarCloud Quality Gate | Maintainability на новому коді B: 1 issue PR виправлено, 26 — нове правило на наявних рядках (§7.5) |
 | Масштаб 125 / 150 / 200 % | 1440 px = 1152 / 960 / 720 px CSS: розривів і бокового скролу немає (UA та EN) |
 | Збільшений базовий шрифт браузера | Не впливає (px-шкала, як на `main`) — backlog EN-3 |
 
@@ -244,9 +246,32 @@ Quality Gate: `new_maintainability_rating` = B (поріг A). Борг ново
 
 Коректне рішення без послаблення Gate: переаналізувати `main` (`SonarQube Cloud` → `workflow_dispatch` на `main`, або наступний push у `main`) і перезапустити аналіз PR. Тоді 26 issues стануть наявними на `main`, а не новими в PR. Що робити з ними далі на `main` (виправити, прийняти окремі як свідомі: `prefers-reduced-motion`, honeypot `.form-trap`), — окреме рішення. Прибирати `!important` з чужих рядків у цьому PR лише заради рейтингу не варто: це зміна поведінки поза обсягом PR.
 
+### 7.6. CI на PR (head `28ab50a`) проти `main` `c03bd8f`
+
+| Перевірка | PR | `main` | Висновок |
+|---|---|---|---|
+| Fast Gate (lint, typecheck, unit, build, `pr-critical`) | ✅ | ✅ | — |
+| Hero playback regression | ✅ | ✅ | Локальні падіння `hero-video` у Docker — лише середовище: у CI проходять |
+| Keyboard (firefox), Keyboard (webkit) | ✅ | на `main` не запускались з 12.10; відтворено локально в образі CI: `main` 15 / 15 | Firefox до `28ab50a` падав — нове в PR, виправлено (§7.2) |
+| Planner regression (1 / 2) | ❌ `grain-page.spec.ts:193` — 9,112 екрана | ✅ | Бюджет висоти — рішення власника (§13); тест не змінено |
+| Planner regression (2 / 2) | ✅ | ✅ | — |
+| Changed-area visual regression | ❌ 39 знімків | ✅ (Main visual 1/2, 2/2) | Очікувана зміна шрифту, огляд усіх 39 — §8; еталони не оновлено (DEC-18) |
+| SonarCloud Code Analysis | ❌ Maintainability B | ✅ | 1 issue PR виправлено; 26 — нове правило `css:S9423` від 14.10 на наявних рядках (§7.5) |
+| CodeQL, SonarQube Cloud Scan, Workers Builds | ✅ | ✅ | — |
+| PR Gate (агрегат) | ❌ | — | Через planner і visual вище |
+
+Повний E2E (у PR Gate не входить): Main Regression на `c03bd8f` сам падає на `direction-static-hero.spec.ts:19` і `directions-hero-sequence.spec.ts:124` (E2E 3/4; так само вночі). Ці два тести падають і на гілці — вони вже були на `main` до цього PR.
+
 ## 8. Візуальні зміни: очікувані й регресії
 
-`visual-chromium` на Linux: `main` 66 / 66; гілка — 39 знімків відрізняються, усі через шрифт і його наслідки для розкладки. Вибірково переглянуто знімки з кожного набору: нічого не накладається, нічого не обрізано.
+`visual-chromium` на Linux: `main` 66 / 66; гілка — 39 знімків відрізняються, усі через шрифт і його наслідки для розкладки. Переглянуто всі 39: нічого не накладається, нічого не обрізано.
+
+Як перевірено: кожен стан знято двічі в тому самому образі CI — з `main` `c03bd8f` і з гілки (у тимчасових копіях дерева, репозиторій не змінювався). Тож видно окремо:
+
+- **справжня зміна від PR** (main ↔ гілка);
+- **давня розбіжність еталона** (збережений еталон ↔ поточний main). У 12 знімків вона 0,4–3,5 %, і на main її приховує допуск тестів (`maxDiffPixelRatio` / `threshold`). Наприклад, еталон Grain Planner desktop ще має стару схему з «ВІДВАНТ.», а код уже малює «ВІДВАНТАЖЕННЯ». Оновлення еталонів прибере й ці розбіжності.
+
+15 знімків конфігуратора (2D і 3D) — лише зсув кадру на 1 px донизу: після зсуву різниця 0,00 %. Повна таблиця з частками й порівняння кожного знімка — у звіті (розділ K) і в архіві (`visual-review/`).
 
 | Набір | Знімків | Що змінилось |
 |---|---:|---|
