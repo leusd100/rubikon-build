@@ -5,8 +5,10 @@
 
    The row costs the header nothing. globals.css would give an aside a grid column of its own from 1051 px; here the
    header keeps its one column and the aside is laid OVER it at the right, as tall as the header's two rows. It is
-   54 % of the header wide — the title, set in a viewport-relative size, never reaches past 43 % — and the note is
-   kept to the rest. Shown from 1200 px, where a sheet is 113 px or more; below that the header is as it was.
+   54 % of the header wide, and the title and the note are kept to the rest (46 % less the gap). The title needs that
+   since Fixel Display (14.10): it sets ~15 % wider than Jost, which never reached past 43 %, so it takes a third line
+   rather than running under the sheets. Shown from 1200 px, where a sheet is 113 px or more; below that the header is
+   as it was.
 
    The sheets are set to the header's own lines: their bottom is the note's bottom, their top the top of the title's
    capitals — 48.6 px of eyebrow above the title, then .15 of the title's size down to the capitals (measured; the
@@ -19,7 +21,7 @@ main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-a
     padding-top: calc(48.6px + .15 * var(--title-section)); pointer-events: none;
   }
   /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
-  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-copy { grid-row: 1; }
+  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-copy { grid-row: 1; max-width: calc(46% - 36px); }
   main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-support { grid-row: 2; max-width: min(640px, calc(46% - 36px)); }
 }
 

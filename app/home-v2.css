@@ -1235,8 +1235,9 @@ main[data-home="v2"] .hv2-contour-nodes[data-place="block"] { flex-wrap: wrap; g
 /* …and where the sheet is tight the row drops its word: the pills say what they are */
 @container sheet (min-width: 1101px) and (max-width: 1300px) {
   main[data-home="v2"] .hv2-contour-nodes[data-place="block"] .hv2-contour-nodes-label { display: none; }
-  /* (the line a size down there: in two lines, or three no taller than the pills' cell) */
-  main[data-home="v2"] .hv2-contour-line { font-size: 17px; line-height: 1.3; }
+  /* (the line a size down there: in two lines, or three no taller than the pills' cell. 15.5 px of Fixel Display has the
+     x-height Jost had at 17 px and its width runs ~15 % wider: at 17 px it took a fourth line at 1440 × 700) */
+  main[data-home="v2"] .hv2-contour-line { font-size: 15.5px; line-height: 1.3; }
 }
 /* outlined at rest — the brief stays the sheet's one filled button — the letter a brass disc as on the scheme; filled
    under the cursor and while its node is open */
