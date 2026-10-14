@@ -607,9 +607,12 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
 :is(.subhero, .service-subhero) .shell { container-type: inline-size; }
 /* From 761 px a headline's accent phrase stays on one line. Under text-wrap: balance a Fixel headline can be a near tie
    between two breaks; the metric fallback then broke «комплексної | реалізації» where Fixel did not, and the late swap
-   moved the line (HOME: CLS 0.10–0.13). Kept whole, both faces break in the same place. Phones keep wrapping it. */
+   moved the line (HOME: CLS 0.10–0.13). Kept whole, both faces break in the same place. Phones keep wrapping it.
+   One unbreakable box as wide as the phrase, never wider than the H1 (not nowrap): a phrase longer than the H1's
+   measure («зрозумілого плану робіт» at 1440 px) or one widened by a reader's text-spacing override wraps inside the
+   H1 instead of running past it. */
 @media (min-width: 761px) {
-  main h1 em { white-space: nowrap; }
+  main h1 em { display: inline-block; width: max-content; max-width: 100%; }
 }
 .subhero h1 em, .service-subhero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .subhero-side { padding-top: 24px; border-top: 2px solid var(--color-accent); }
@@ -759,7 +762,9 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 .direction-editorial-grid[data-layout="media-first"] { grid-template-columns: minmax(0, 1.12fr) minmax(360px, .88fr); }
 .direction-editorial-grid[data-layout="media-first"] .direction-editorial-media { grid-column: 1; grid-row: 1; min-height: 580px; box-shadow: -18px 18px 0 var(--copper-offset); }
 .direction-editorial-grid[data-layout="media-first"] .direction-editorial-copy { grid-column: 2; grid-row: 1; }
-.direction-editorial-copy { align-self: center; }
+/* min-width 0: the copy is a grid item, so a heading word wider than the column (a reader's text-spacing override on a
+   320 px phone) wraps in it instead of widening the column past the page. */
+.direction-editorial-copy { align-self: center; min-width: 0; }
 .direction-editorial-copy h2 { max-width: 650px; margin: 0; font: 400 clamp(38px, 4.1vw, 62px)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 .direction-editorial-copy > p:not(.eyebrow) { max-width: 500px; margin: 28px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.8; }
 .direction-editorial-media { position: relative; min-height: 520px; margin: 0; overflow: hidden; background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 18px 18px 0 var(--copper-offset); }
