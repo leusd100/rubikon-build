@@ -5,12 +5,13 @@
 | Дата | 2026-10-14 / 15 |
 | Виконавець | Claude Code (реалізація, виміри) |
 | Рев'ю | ChatGPT (незалежне, через GitHub), Дмитро (рішення) |
-| PR | https://github.com/leusd100/rubikon-build/pull/192 · draft. **Merge і deploy не виконувались і не дозволені** |
+| PR | https://github.com/leusd100/rubikon-build/pull/192 · Ready for review (15.10, за OK власника). **Merge і deploy не виконувались і не дозволені** |
 | Гілка | `perf/mobile-hero-portrait-crops` |
 | Base | `main` `c6f8654` (#191, Fixel Display) |
 | Код | `518bec9` (генератор + 20 файлів), `0401bd9` (компонент, маніфест, правило кешу, тести), `f80cf29` (виправлення P1 незалежного QA: `src` клієнтського `img`), `868dafb` (вʼюпорт 440 × 480 у тесті); handoff — окремим комітом |
 | Джерело | `rubikon-control`, гілка `audit/2026-10-13-perf-stage03-validation`, коміт `ebcb4ba` (`PR_SPECS_UK.md`, розділ PR-1A) |
 | Звіт | Приватний артефакт для Дмитра (посилання в PR) і PDF в архіві (§12) |
+| Рішення власника | 15.10: 10 кропів затверджено; формат AVIF + WebP затверджено. Далі — незалежне рев'ю ChatGPT (§15) |
 
 Цей файл — канонічний handoff PR-1A для обох агентів. Приватних даних у ньому немає: репозиторій публічний.
 
@@ -237,10 +238,12 @@ Lint, typecheck, unit (88 файлів / 1 382 тести), production build —
 
 ## 13. Що чекає на Дмитра
 
-1. **Затвердити 10 кропів** — аркуш порівняння в приватному звіті (де кроп у кадрі, герой на телефоні `main` / PR, фрагменти 1:1). До OK PR лишається draft.
-2. **Формат:** AVIF + WebP (рекомендую: у лабораторії AVIF швидший за WebP-кроп на 0,09–0,38 с, файли на 5–21 % менші, якість не нижча) чи лише WebP (−1,72 МіБ у репозиторії, простіше, повільніше).
-3. **Погодити відхилення від Stage 03** (§3): межа 440, кроп 784, один файл, правило кешу для `.avif`.
-4. **Рев'ю ChatGPT → Ready for review → merge.** Merge = deploy production — лише за окремим OK. Після deploy: 5 прогонів DebugBear Mobile і Desktop на кожній із п'яти сторінок (AC-1A-4/5 Stage 03), окремо — затримка рендера AVIF.
+**Стан 15.10.** Дмитро: «Approve the 10 crops and the AVIF + WebP format. Next: hand off to ChatGPT for independent review, then Ready for review.» Пункти 1–2 вирішено; PR переведено в Ready for review. Merge і deploy — окремо.
+
+1. **Затвердити 10 кропів** (вирішено 15.10: затверджено) — аркуш порівняння в приватному звіті.
+2. **Формат** (вирішено 15.10: AVIF + WebP). AVIF + WebP (рекомендував: у лабораторії AVIF швидший за WebP-кроп на 0,09–0,38 с, файли на 5–21 % менші, якість не нижча) чи лише WebP (−1,72 МіБ у репозиторії, простіше, повільніше).
+3. **Відхилення від Stage 03** (§3): кроп 784 затверджено разом із кропами; межа 440, один файл і правило кешу для `.avif` — у рев'ю ChatGPT (§15).
+4. **Рев'ю ChatGPT (§15) → merge.** Merge = deploy production — лише за окремим OK. Після deploy: 5 прогонів DebugBear Mobile і Desktop на кожній із п'яти сторінок (AC-1A-4/5 Stage 03), окремо — затримка рендера AVIF.
 5. **TBT:** чи запускати окремі PR T1 (шрифти) і T2 + T3 (виміри й селектори під час гідрації) — §8.
 6. **PR-1B** (одне фото на тему в темній темі) — наступним, окремо.
 7. **Квота DebugBear:** швидкі тести вичерпано («Quick test API limit reached»). Для A/B до deploy — чекати скидання або дозволити аналізи preview через моніторені сторінки (додасть записи в їхню історію).
@@ -252,3 +255,22 @@ Lint, typecheck, unit (88 файлів / 1 382 тести), production build —
 `CURRENT_CHECKPOINT`: Stage 05 PR-1A — draft PR #192, чекає затвердження кропів і формату; TBT — кандидати T1–T5 на рішення; PR-1B не почато.
 
 `DECISIONS.md`: статусів не змінювати.
+
+## 15. Для незалежного рев'ю (ChatGPT)
+
+Рев'ю тільки через GitHub: PR #192, коміти `518bec9`, `0401bd9`, `f80cf29`, `868dafb`, цей файл (`84c4a54` і далі). Код для читання:
+`app/components/DirectionHeroImage.tsx`, `app/data/directionHeroImageManifest.ts`, `scripts/generate-direction-hero-images.py`, `worker/cache-policy.ts`,
+`tests/e2e/direction-static-hero.spec.ts`, `tests/unit/direction-hero-portrait.test.ts`, `tests/unit/asset-cache-policy.test.ts`.
+
+Що перевірити (кожен пункт можна відтворити; методи — §4–§9):
+
+1. **Вибір файлу.** До 440 px за будь-якого DPR — лише `-portrait-784w.*.avif` (WebP, де AVIF немає): один файл у світлій темі, два портрети в темній. Від 441 px — ті самі запити й пікселі, що на `main`. Чи немає шляху, де телефон вантажить і портрет, і альбом (окрім повороту через 440 px, §10)?
+2. **Кадрування.** Кроп `round((1536 − 784) · x)` з x = мобільний `object-position` (unit-тест звіряє генератор і маніфест). До 440 px бокс не ширший за 784 / 1024 (e2e-тест вікна, зокрема 440 × 480 на /angary).
+3. **`src` клієнтського `img` (виправлення P1).** `src` рендериться лише на сервері (`ON_SERVER`, `suppressHydrationWarning`), а ref ставить його клієнтському `img` уже всередині `<picture>`. Перевірити: немає помилок гідрації в консолі production-збірки; серверний `img` зберігає `src` після гідрації; e2e-тест «a phone never fetches the landscape art» падає на `0401bd9` і проходить на `f80cf29`.
+4. **Кеш.** `public, max-age=31536000, immutable` для хешованих `.avif` і `.webp` у `/media-responsive/`, не для нехешованих (unit-тест; заголовки на preview гілки).
+5. **Відтворюваність генератора.** `python3 scripts/generate-direction-hero-images.py --only direction-hero-photo-variant` і `--only direction-hero-blue-hour` (Pillow 12.3, libwebp 1.6.0, libavif 1.4.2) не змінюють жодного наявного файлу.
+6. **Незмінне.** Альбомні джерела, `HERO_SIZES`, пріоритет, логіка теми, шрифти й типографіка #191, desktop і планшети.
+
+Критерії приймання (PR_SPECS Stage 03, з поправками §3): AC-1A-1 вибір файлу — виконано (Chrome, Firefox, WebKit); AC-1A-2 якість — виконано (80 / 80); AC-1A-3 візуальне OK власника — виконано 15.10; AC-1A-4 DebugBear Mobile 5 прогонів до / після — лише після deploy (до deploy n = 1 через квоту, §7); AC-1A-5 desktop без змін — виконано локально, DebugBear Desktop — після deploy.
+
+Відомі обмеження: поворот через 440 px довантажує другий файл (§10); темна тема вантажить два портрети (PR-1B); довша затримка рендера AVIF в одному прогоні DebugBear не відтворилась у лабораторії (§7) — перевірити після deploy; польових даних CWV / INP немає.
