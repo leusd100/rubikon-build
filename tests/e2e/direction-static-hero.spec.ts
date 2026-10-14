@@ -103,6 +103,8 @@ test('direction static heroes use responsive images: a phone gets the window of 
       { width: 412, height: 915 },
       { width: 430, height: 932 },
       { width: 440, height: 956 },
+      // the widest box: /angary's copy-set hero on a short 440 px screen (0.751 of its height, QA 15.10)
+      { width: 440, height: 480 },
       { width: 441, height: 956 },
     ]) {
       await page.setViewportSize(viewport);
