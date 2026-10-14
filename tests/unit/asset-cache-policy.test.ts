@@ -16,7 +16,7 @@ describe('immutable asset cache policy', () => {
     expect(files.length).toBeGreaterThan(0);
 
     for (const filename of files) {
-      const filenameHash = filename.match(/\.([0-9a-f]{8})\.webp$/)?.[1];
+      const filenameHash = filename.match(/\.([0-9a-f]{8})\.(?:webp|avif)$/)?.[1];
       const contentHash = createHash('sha256')
         .update(readFileSync(path.join(directory, filename)))
         .digest('hex')
@@ -31,6 +31,7 @@ describe('immutable asset cache policy', () => {
     '/_next/static/css/index.BpY8H61J.css',
     '/_next/static/_vinext_fonts/manrope-abcd1234/font-1234abcd.woff2',
     '/media-responsive/serhii-prior-hangar-480w.60d83ab6.webp',
+    '/media-responsive/direction-hero-photo-variant-angary-portrait-784w.fc8f2270.avif',
   ])('recognises version-safe asset path %s', (pathname) => {
     expect(isImmutableAssetPathname(pathname)).toBe(true);
   });
@@ -42,6 +43,7 @@ describe('immutable asset cache policy', () => {
     '/media/hero-steel-frame.webp',
     '/media-responsive/serhii-prior-hangar-480w.webp',
     '/media-responsive/serhii-prior-hangar-480w.not-a-hash.webp',
+    '/media-responsive/serhii-prior-hangar-480w.60d83ab6.png',
   ])('does not classify mutable or document path %s as immutable', (pathname) => {
     expect(isImmutableAssetPathname(pathname)).toBe(false);
   });

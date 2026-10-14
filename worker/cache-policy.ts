@@ -2,7 +2,7 @@ export const IMMUTABLE_CACHE_CONTROL =
   'public, max-age=31536000, immutable';
 
 const RESPONSIVE_MEDIA_PATH =
-  /^\/media-responsive\/[^/]+\.[0-9a-f]{8}\.webp$/;
+  /^\/media-responsive\/[^/]+\.[0-9a-f]{8}\.(?:webp|avif)$/;
 
 export function isImmutableAssetPathname(pathname: string) {
   return (
