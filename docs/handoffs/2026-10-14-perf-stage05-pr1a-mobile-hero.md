@@ -271,6 +271,6 @@ Lint, typecheck, unit (88 файлів / 1 382 тести), production build —
 5. **Відтворюваність генератора.** `python3 scripts/generate-direction-hero-images.py --only direction-hero-photo-variant` і `--only direction-hero-blue-hour` (Pillow 12.3, libwebp 1.6.0, libavif 1.4.2) не змінюють жодного наявного файлу.
 6. **Незмінне.** Альбомні джерела, `HERO_SIZES`, пріоритет, логіка теми, шрифти й типографіка #191, desktop і планшети.
 
-Критерії приймання (PR_SPECS Stage 03, з поправками §3): AC-1A-1 вибір файлу — виконано (Chrome, Firefox, WebKit); AC-1A-2 якість — виконано (80 / 80); AC-1A-3 візуальне OK власника — виконано 15.10; AC-1A-4 DebugBear Mobile 5 прогонів до / після — лише після deploy (до deploy n = 1 через квоту, §7); AC-1A-5 desktop без змін — виконано локально, DebugBear Desktop — після deploy.
+Критерії приймання (PR_SPECS Stage 03, з поправками §3): AC-1A-1 вибір файлу — виконано для світлої теми (Chrome, Firefox, WebKit; у темній — два портрети до PR-1B); AC-1A-2 якість — виконано (80 / 80); AC-1A-3 візуальне OK власника — виконано 15.10; AC-1A-4 DebugBear Mobile 5 прогонів до / після — лише після deploy (до deploy n = 1 через квоту, §7); AC-1A-5 desktop без змін — виконано локально, DebugBear Desktop — після deploy.
 
 Відомі обмеження: поворот через 440 px довантажує другий файл (§10); темна тема вантажить два портрети (PR-1B); довша затримка рендера AVIF в одному прогоні DebugBear не відтворилась у лабораторії (§7) — перевірити після deploy; польових даних CWV / INP немає.
