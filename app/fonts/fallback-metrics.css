@@ -28,8 +28,12 @@
 @font-face { font-family: 'Fixel Display Fallback DejaVu'; src: local("DejaVu Sans"), local("DejaVuSans"); unicode-range: U+0000-02FF, U+0302-03FF, U+0500-2115, U+2117-10FFFF; size-adjust: 96.17%; ascent-override: 93.58%; descent-override: 19.76%; line-gap-override: 30.15%; }
 
 /* ---------- Manrope (text) — after next/font's own 'Manrope Fallback' (Arial) ---------- */
-/* Arial-metric: the Arial values next/font generates, for both scripts (measured 101.9 % UA / 103.3 % EN). */
-@font-face { font-family: 'Manrope Fallback Arial-metric'; src: local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo-Regular"); size-adjust: 103.19%; ascent-override: 103.31%; descent-override: 29.07%; line-gap-override: 0%; }
+/* Arial-metric (Linux, ChromeOS only — macOS and Windows take next/font's Arial face first). Linux hints system faces,
+   so at body sizes (11–17 px) their advances round to whole pixels and size-adjust does not scale linearly: next/font's
+   103.19 % drew Liberation 2 % narrower than Manrope at 15 px, a HOME lead line fewer and a taller cookie banner after
+   the swap (Pixel 7: CLS 0.06). Searched on every Manrope run of HOME, /angary and /metalokonstruktsii at its rendered
+   size and weight (Linux Chromium): 104 % comes closest (Liberation 0.85 % wider, fewest runs re-wrapping). */
+@font-face { font-family: 'Manrope Fallback Arial-metric'; src: local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo-Regular"); size-adjust: 104%; ascent-override: 102.51%; descent-override: 28.84%; line-gap-override: 0%; }
 @font-face { font-family: 'Manrope Fallback Roboto'; src: local("Roboto"), local("Roboto-Regular"), local("Roboto Regular"); unicode-range: U+0400-04FF, U+0301, U+2116; size-adjust: 99.89%; ascent-override: 107.11%; descent-override: 30.03%; line-gap-override: 0%; }
 @font-face { font-family: 'Manrope Fallback Roboto'; src: local("Roboto"), local("Roboto-Regular"), local("Roboto Regular"); unicode-range: U+0000-02FF, U+0302-03FF, U+0500-2115, U+2117-10FFFF; size-adjust: 103.58%; ascent-override: 103.3%; descent-override: 28.96%; line-gap-override: 0%; }
 @font-face { font-family: 'Manrope Fallback DejaVu'; src: local("DejaVu Sans"), local("DejaVuSans"); unicode-range: U+0400-04FF, U+0301, U+2116; size-adjust: 88.14%; ascent-override: 121.4%; descent-override: 34.04%; line-gap-override: 0%; }

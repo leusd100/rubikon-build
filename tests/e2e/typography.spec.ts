@@ -70,9 +70,7 @@ test.describe('late fonts', () => {
       test.setTimeout(60_000);
       await page.route(/\.mp4(?:\?|$)/, (r) => r.abort());
       await page.route(/\.woff2(\?|$)/, async (r) => { await new Promise((res) => setTimeout(res, 3000)); await r.continue(); });
-      // Consent given, so the cookie banner is not shown: its own reflow at the swap (bold Manrope buttons, +18 px on a
-      // Pixel 7 with Liberation, before and after this change) is a separate backlog item, not the display face.
-      await consent(page);
+      // A first visit: the cookie banner is on screen too, so its Manrope text is part of what must not move.
       await page.addInitScript(() => {
         (window as unknown as { __shifts: number[] }).__shifts = [];
         new PerformanceObserver((list) => {
