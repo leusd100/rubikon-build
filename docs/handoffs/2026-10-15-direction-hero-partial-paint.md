@@ -113,7 +113,7 @@ CI-значення 0.2474 лежить у цьому ряду. Шрифти р�
 | Новий тест (`3a05bea`; пауза в hero ×5 + у шапці), Docker CI-образ, ×3 | **3 / 3 падають**: 0.2459 на `/angary` (HTML як на `main`, тобто з вирізаним link) | 3 / 3 проходять |
 | Крок CI «direction artwork and sequence» (14 тестів з новим), холодний сервер, `--retries=0`, ×3 | — | 42 / 42 |
 | Інші кроки job Hero playback локально: `theme.spec.ts` desktop + mobile ×3 · `home-proof-contour` «load way waits» | — | 66 пройшли, 6 пропущено · 4 / 4 |
-| PR Gate на `3460e65` (CI) | — | Hero playback regression, Fast Gate, Changed-area visual, PR Gate, SonarCloud — success. CodeQL — 1 critical у проксі тесту, виправлено в `3a05bea` (результат — на наступному прогоні PR Gate) |
+| PR Gate на `3460e65` (CI) | — | Hero playback regression, Fast Gate, Changed-area visual, PR Gate, SonarCloud — success. CodeQL — 1 critical у проксі тесту, виправлено в `3a05bea`: на `d79a281` CodeQL — pass, екземпляр алерту `fixed`, тред закрито |
 | Холодні прогони харнесу (8 CPU + 2 CPU) | 138 завантажень: **7 зсувів від часткового кадру** (3 hero 0.20–0.23, 4 шапка 0.006–0.020) + 2 лише мікро | 150 завантажень: **0 зсувів від часткового кадру**; 6 мікрозсувів шрифту 0.000002–0.000638 (§8.1) |
 | Пауза в hero, рамки крихт по кадрах (CSP знято): Chromium 151 · WebKit 26.5 · Firefox 153 | 681 → 279 · 681 → 279 · 681 → 279 | 279 · 279 · 681 → 279 (Firefox ігнорує `rel=expect`) |
 | Звичайний потоковий HTML, ті самі три рушії | 279 | 279 — без змін |
@@ -150,6 +150,13 @@ CI-значення 0.2474 лежить у цьому ряду. Шрифти р�
    - Ризик: якщо колись штамп приберуть, текст лишиться прихованим.
    - Пропоную окремим PR, лише якщо Firefox важливий.
 3. **Інші hero з текстом унизу** (HOME, `/napryamky`, `/pro-nas`, `/yak-pratsyuiemo`) не перевірялись на цей механізм. Обсяг PR — п'ять сторінок напрямків. Перевірка — окремим кроком.
+4. **SonarCloud: 1 нове зауваження, хибне.** `typescript:S6747` «Unknown property 'blocking'» на `DirectionDetail.tsx:117`.
+   - `blocking` — стандартний атрибут HTML для `<link>`, `<script>`, `<style>`; у типах React 19 він є (`blocking?: "render"`).
+   - Quality Gate — passed.
+   - Код не змінено. Обходити правило spread-трюком означало б ховати атрибут від рев'ю.
+   - Варіанти:
+     - позначити зауваження як False positive у SonarCloud;
+     - або дозволити вузьке ігнорування в `sonar-project.properties`, як уже зроблено для 3D (`r3fIntrinsicProps`). Це зміна конфігурації аналізу, тож лише за OK.
 
 ## 9. Докази (RUBIKON-archive)
 
