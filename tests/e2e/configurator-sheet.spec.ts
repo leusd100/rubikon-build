@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { openControlGroup, scrollToMiniHold } from './configurator.helpers';
+import { getFromServer } from './server.helpers';
 
 // /angary's configurator on the «Креслення» sheet and its first view (owner, 03.10): the preview lies on a drawing
 // sheet — square, no shadow, a dark field in both themes, what is shown and the object in the title block — the phone's
@@ -483,7 +484,7 @@ test.describe('the first view builds the drawing', () => {
 
   test('the server markup is the complete drawing', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'the server markup is viewport-independent');
-    const response = await page.request.get('/angary');
+    const response = await getFromServer(page.request, '/angary');
     expect(response.status()).toBe(200);
     const markup = await response.text();
     // the general view (10.10): its five stages and its sizes, none held back, the drawing not building

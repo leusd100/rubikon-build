@@ -8,6 +8,7 @@ import { directions, undecidedDirection } from '../../app/data/directions';
 import { stubTurnstile } from './turnstile.helpers';
 import { GRAIN_HERO_BOUNDARY } from '../../app/data/grainPage';
 import { FORMAT_WHEN, RESPONSIBILITY_GROUPS, RESPONSIBILITY_ZONES, kindOf, noteOf, wordOf, workName } from '../../app/lib/responsibilityTable';
+import { getFromServer } from './server.helpers';
 
 function collectFatalBrowserErrors(page: Page) {
   const errors: string[] = [];
@@ -129,7 +130,7 @@ const RETIRED_PHRASES = [
  * scripts, so what this reads is what arrives before hydration.
  */
 async function serverText(page: Page, path: string, selectors: Record<string, string>) {
-  const response = await page.request.get(path);
+  const response = await getFromServer(page.request, path);
   expect(response.status(), path).toBe(200);
   return page.evaluate(({ markup, queries }) => {
     const doc = new DOMParser().parseFromString(markup, 'text/html');
@@ -144,7 +145,7 @@ async function serverText(page: Page, path: string, selectors: Record<string, st
 
 test('server HTML of every public route speaks the Delivery Model taxonomy', async ({ request }) => {
   for (const path of PUBLIC_PATHS) {
-    const response = await request.get(path);
+    const response = await getFromServer(request, path);
     expect(response.status(), path).toBe(200);
     const html = await response.text();
 

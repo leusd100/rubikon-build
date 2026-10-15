@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const sequenceNames = [
   'angary',
@@ -121,6 +121,22 @@ for (const viewport of [
   });
 }
 
+/**
+ * Changes the theme through the control a visitor sees, as theme.spec.ts does: the header's switch on a laptop, the
+ * phone menu's options on a phone, where the switch is hidden (the phone run waited for the switch until its timeout on
+ * every Main Regression since #190).
+ */
+async function chooseTheme(page: Page, theme: 'light' | 'dark') {
+  const toggle = page.getByRole('switch', { name: 'Темна тема' });
+  if (await toggle.isVisible()) {
+    await toggle.click();
+    return;
+  }
+  const menu = page.locator('.mobile-menu');
+  if (!(await menu.evaluate((element) => (element as HTMLDetailsElement).open))) await menu.locator('summary').click();
+  await menu.locator('.theme-options').getByLabel(theme === 'dark' ? 'Темна' : 'Світла', { exact: true }).check();
+}
+
 test('changing theme while the carousel is paused preserves the slide and pause state', async ({ page }) => {
   await page.goto('/napryamky', { waitUntil: 'load' });
   const hero = page.locator('.directions-subhero');
@@ -131,7 +147,7 @@ test('changing theme while the carousel is paused preserves the slide and pause 
   await expect(first).toHaveClass(/is-active/);
 
   for (const [theme, style] of [['dark', 'blue-hour'], ['light', 'daylight']] as const) {
-    await page.getByRole('switch', { name: 'Темна тема' }).click();
+    await chooseTheme(page, theme);
     await expect(first).toHaveAttribute('data-art-theme', theme);
     await expect.poll(() => first.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0)).toBe(true);
     expect(await first.evaluate((node: HTMLImageElement) => node.currentSrc)).toContain(`directions-sequence-${style}-angary-`);

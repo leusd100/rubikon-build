@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { GRAIN_HERO_BOUNDARY, GRAIN_RESPONSIBILITY_STATEMENT, GRAIN_WEBSITE_RESPONSIBILITY_STATEMENT } from '../../app/data/grainPage';
 import { GRAIN_PAGE, PREVIEW, collectRuntimeErrors, horizontalOverflow, openPlanner, result, reveal, scenarios } from './grain-planner.helpers';
+import { getFromServer } from './server.helpers';
 
 /** The main bands in DOM order, named by what they are. */
 async function bands(page: Page) {
@@ -76,7 +77,7 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     expect(url.search).toBe('');
     expect(['', '#inquiry']).toContain(url.hash);
     // The page is statically rendered: what a crawler (or the next visitor) gets is the opening picture, no message
-    const html = await (await page.request.get(GRAIN_PAGE)).text();
+    const html = await (await getFromServer(page.request, GRAIN_PAGE)).text();
     expect(html).not.toContain('Зерновий комплекс:');
     expect(html).toContain('Зберіть свій комплекс на кресленні');
     const stored = await page.evaluate(() => [...Object.keys(localStorage), ...Object.keys(sessionStorage)].filter((key) => /grain|complex|kompleks|brief|inquiry/i.test(key)));
@@ -153,7 +154,7 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     await openPlanner(page, GRAIN_PAGE);
     const hrefs = await page.locator('.related-directions-section .related-card').evaluateAll((cards) => cards.map((card) => card.getAttribute('href')));
     expect(hrefs).toEqual(['/betonni-roboty', '/metalokonstruktsii', '/pokrivelni-roboty']);
-    for (const href of hrefs) expect((await request.get(href ?? '')).status()).toBe(200);
+    for (const href of hrefs) expect((await getFromServer(request, href ?? '')).status()).toBe(200);
   });
 });
 
@@ -280,7 +281,7 @@ test.describe('/planner-preview keeps the planner composition', () => {
     const headline = 'окремі партії · очищення + сушіння';
     await expect(page.locator('form.inquiry-form .inquiry-config-brief strong')).toContainText(headline);
     // The page is statically rendered: what a crawler (or the next visitor) gets is the initial state.
-    const html = await (await page.request.get(PREVIEW)).text();
+    const html = await (await getFromServer(page.request, PREVIEW)).text();
     expect(html).not.toContain(headline);
     expect(html).toContain('Що потрібно зберігати?');
     // The brief and the attached card render only in the browser. The RSC payload does name the

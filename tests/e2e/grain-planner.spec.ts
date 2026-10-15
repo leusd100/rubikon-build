@@ -16,6 +16,7 @@ import {
   smallestDiagramLabel,
   tick,
 } from './grain-planner.helpers';
+import { getFromServer } from './server.helpers';
 
 // Runs on desktop-chromium and mobile-chromium. Layout-specific checks guard on the project.
 
@@ -170,8 +171,8 @@ test.describe('Grain Planner — page contract', () => {
   test('stays out of search: noindex, robots disallow, not in the sitemap', async ({ page, request }) => {
     await page.goto(PREVIEW, { waitUntil: 'load' });
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
-    expect(await (await request.get('/robots.txt')).text()).toContain('Disallow: /planner-preview');
-    expect(await (await request.get('/sitemap.xml')).text()).not.toContain('planner-preview');
+    expect(await (await getFromServer(request, '/robots.txt')).text()).toContain('Disallow: /planner-preview');
+    expect(await (await getFromServer(request, '/sitemap.xml')).text()).not.toContain('planner-preview');
   });
 });
 

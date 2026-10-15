@@ -1,6 +1,7 @@
 import { expect, test, type BrowserContext, type Locator, type Page } from '@playwright/test';
 import { homeProofContour } from '../../app/data/homeProofContour';
 import { homeProofDetailSpots, homeProofFrame } from '../../app/data/homeProofFrame';
+import { getFromServer } from './server.helpers';
 
 // The sheet plots in and sweeps before most tests start, and a machine running other suites stretches that: a minute a
 // test unless a test sets its own
@@ -3531,7 +3532,7 @@ test('the sheet stays dark in the light theme', async ({ page }) => {
 test('/?xray=sketch is the default page: no sketch, no concept image', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const server = async (path: string) => {
-    const response = await page.request.get(path);
+    const response = await getFromServer(page.request, path);
     expect(response.status(), path).toBe(200);
     return page.evaluate((markup) => new DOMParser().parseFromString(markup, 'text/html').querySelector('#real-object')?.outerHTML ?? '', await response.text());
   };

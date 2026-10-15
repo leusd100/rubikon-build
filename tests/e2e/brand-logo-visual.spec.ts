@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { getFromServer } from './server.helpers';
 
 const headerViewports = [
   { name: 'mobile-390', width: 390, height: 844 },
@@ -113,7 +114,7 @@ test('web, light, premium, and compact logo contexts', async ({ page }) => {
 test('favicon remains legible at native 16, 32, and 48 pixel sizes', async ({ page, request }) => {
   const sizes = [16, 32, 48] as const;
   const dataUrls = await Promise.all(sizes.map(async (size) => {
-    const response = await request.get(`/favicon-${size}x${size}.png`);
+    const response = await getFromServer(request, `/favicon-${size}x${size}.png`);
     expect(response.ok()).toBe(true);
     return `data:image/png;base64,${(await response.body()).toString('base64')}`;
   }));
