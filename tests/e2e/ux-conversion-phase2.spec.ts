@@ -199,8 +199,10 @@ test.describe('DEC-46 · the closing block', () => {
     await expect(page.locator('#inquiry form fieldset').filter({ hasText: 'Як з вами зв’язатися' }).locator('input[type="radio"]')).toHaveCount(4);
   });
 
-  test('a tap on the call or a channel is still counted once, with its method', async ({ page }, testInfo) => {
+  test('a tap on the call or a channel is still counted once, with its method', async ({ context, page }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop-chromium', 'the test sets its own windows');
+    // Analytics is granted, so the page asks for gtag.js: every Google request is answered here, none leaves the test
+    await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
     await answerCookies(page, 'granted');
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/metalokonstruktsii', { waitUntil: 'load' });

@@ -499,7 +499,6 @@ test.describe('«Ще не визначено» direction', () => {
 
 test.describe('generate_lead with Turnstile', () => {
   test('fires once for one saved lead and never for a verification, API, rate-limit or network failure', async ({ page }) => {
-    await page.route('**/googletagmanager.com/**', (route) => route.abort());
     const responses: Array<() => Parameters<import('@playwright/test').Route['fulfill']>[0] | 'abort'> = [
       () => ({ status: 403, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'verification' }) }),
       () => ({ status: 400, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'validation', fields: ['phone'] }) }),
