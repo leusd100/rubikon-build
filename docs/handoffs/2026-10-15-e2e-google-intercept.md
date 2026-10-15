@@ -1,5 +1,10 @@
 # Handoff · e2e-тести з дозволом аналітики більше не звертаються до Google (PR #194)
 
+> **Closeout · додано 15.10.2026 після merge (факти з GitHub; текст нижче — стан на момент handoff, не змінено).**
+> - PR #194 **злито** 2026-10-15 09:33:44 UTC (`leusd100`): head `d298ce3`, merge-коміт у `main` — `ec2e358`.
+> - Фінальний CI на `ec2e358`: Main Regression run 38713850228 — **failure** у `directions-hero-sequence.spec.ts:124` (mobile, від `c03bd8f`, не цього PR; виправлення — PR #195). SonarQube і PageSpeed цього push скасовані наступним push `9800b28`.
+> - Відкритим лишається рішення власника: `analytics-consent.spec.ts` за задумом вантажить справжній gtag.js без collect-хітів; `first-contact.spec.ts` не входить у PR Gate.
+
 | | |
 |---|---|
 | Дата | 2026-10-15 |
