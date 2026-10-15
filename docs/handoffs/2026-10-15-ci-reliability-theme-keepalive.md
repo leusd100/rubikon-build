@@ -92,7 +92,12 @@ Stage 01 (15.10) зафіксував два збої поточного `main`:
 - Зміна лише в тестах; поведінка сайту, URL, тексти й baseline-и не змінюються.
 - `Connection: close` додає один TCP-handshake на loopback на кожен із 10 запитів: це мікросекунди.
 - Повний Main Regression на гілці не запускався: це робить CI після push. Перший зелений Main Regression можливий лише після merge (окремий OK).
-- Окремо від цього PR у Nightly 15.10 є третій нестабільний тест: `home-proof-contour.spec.ts:1171` (desktop, порядок підсвічування легенди, `1` ↔ `0.14`). Його не досліджено й не змінено. Він винесений у follow-up.
+- Окремо від цього PR є ще два нестабільні тести. Їх не досліджено й не змінено, обидва винесено у follow-up:
+  - `home-proof-contour.spec.ts:1171` — Nightly 15.10, desktop: порядок підсвічування легенди, `1` ↔ `0.14`.
+  - `configurator-3d-buildup.spec.ts:452` — mobile, «a layer switched after the canvas has idled fades…», `still` 2 > 1.
+    - Саме він дав червоний «Configurator regression (2/2)» у PR Gate цього PR (run 38733480644: 1 flaky, 100 passed). Цей файл PR не змінює.
+    - Той самий тест раніше падав на `main` `c6f8654` (14.10) і `2cb1996` (13.10), а також у PR-гілці `ba7d2d5` (13.10).
+    - Повторний запуск CI заради зеленого статусу не робився.
 
 ## 6. Докази
 
