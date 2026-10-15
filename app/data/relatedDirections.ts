@@ -16,7 +16,7 @@ export type RelatedDirection = {
 
 export const relatedDirections: Record<DirectionId, readonly RelatedDirection[]> = {
   angary: [
-    { id: 'betonni-roboty', relation: 'Основа під каркас: фундаменти та промислова підлога споруди.' },
+    { id: 'betonni-roboty', relation: 'Основа під каркас: фундаменти та бетонні основи за проєктом.' },
     { id: 'metalokonstruktsii', relation: 'Несучий каркас ангара — колони, ригелі, ферми та вузли.' },
     { id: 'pokrivelni-roboty', relation: 'Покрівельний контур споруди, його вузли та примикання.' },
   ],
