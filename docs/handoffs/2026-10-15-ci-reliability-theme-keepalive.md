@@ -21,7 +21,7 @@ Stage 01 (15.10) зафіксував два збої поточного `main`:
 | ID | Тест | Симптом у CI | Частота |
 |---|---|---|---|
 | CI-01 | `tests/e2e/directions-hero-sequence.spec.ts:124` «changing theme while the carousel is paused preserves the slide and pause state», `mobile-chromium` | `locator.click: Test timeout of 30000ms exceeded … waiting for getByRole('switch', { name: 'Темна тема' })` у всіх 3 спробах | **7 з 7** прогонів main від `c03bd8f` (13.10): Main Regression на `c03bd8f`, `c6f8654`, `270e54c`, `ec2e358`, `9800b28`; Nightly на `c03bd8f`, `270e54c` |
-| CI-02 | `tests/e2e/grain-page.spec.ts:152` «related directions … every link resolves», `desktop-chromium` | `apiRequestContext.get: socket hang up` на `GET http://127.0.0.1:4173/betonni-roboty`; retry пройшов; `failOnFlakyTests` → exit 1 | 2 скидання з'єднання у ~230 невдалих E2E-jobs з 02.10 (10.10 `b029047`, 15.10 `9800b28`) |
+| CI-02 | `tests/e2e/grain-page.spec.ts:152` «related directions … every link resolves», `desktop-chromium` | `apiRequestContext.get: socket hang up` на `GET http://127.0.0.1:4173/betonni-roboty`; retry пройшов; `failOnFlakyTests` → exit 1 | Скан невдалих jobs з 02.10 (256 рядків, із них 62 E2E-jobs): 1 випадок із цим тестом (15.10, `9800b28`); ще 1 збіг `socket hang up\|ECONNRESET` без назви тесту (10.10, `b029047`) |
 
 ## 2. CI-01 — причина
 
@@ -93,10 +93,10 @@ Stage 01 (15.10) зафіксував два збої поточного `main`:
 - `Connection: close` додає один TCP-handshake на loopback на кожен із 10 запитів: це мікросекунди.
 - Повний Main Regression на гілці не запускався: це робить CI після push. Перший зелений Main Regression можливий лише після merge (окремий OK).
 - Окремо від цього PR є ще два нестабільні тести. Їх не досліджено й не змінено, обидва винесено у follow-up:
-  - `home-proof-contour.spec.ts:1171` — Nightly 15.10, desktop: порядок підсвічування легенди, `1` ↔ `0.14`.
+  - `home-proof-contour.spec.ts:1171` — desktop: порядок підсвічування легенди, `1` ↔ `0.14`. Nightly 15.10 (`270e54c`) і Main Regression 13.10 (`3e56477`).
   - `configurator-3d-buildup.spec.ts:452` — mobile, «a layer switched after the canvas has idled fades…», `still` 2 > 1.
     - Саме він дав червоний «Configurator regression (2/2)» у PR Gate цього PR (run 38733480644: 1 flaky, 100 passed). Цей файл PR не змінює.
-    - Той самий тест раніше падав на `main` `c6f8654` (14.10) і `2cb1996` (13.10), а також у PR-гілці `ba7d2d5` (13.10).
+    - Той самий тест раніше падав на `main` `c6f8654` (14.10, mobile) і `2cb1996` (13.10, desktop), а також у PR-гілці `ba7d2d5` (13.10, mobile).
     - Повторний запуск CI заради зеленого статусу не робився.
 
 ## 6. Докази
@@ -109,6 +109,7 @@ Stage 01 (15.10) зафіксував два збої поточного `main`:
 - `ci01-runs/` — результати Playwright на main і гілці;
 - `history/` — скан невдалих E2E-jobs з 02.10 (`history.tsv`, `scan.py`);
 - `branch-runs/` — логи прогонів змінених файлів.
+- `reruns/` — повторні прогони ввечері 15.10: CI-01 на main (червоний) і на гілці (10/10), guard на main і гілці, вимір idle-close `vinext start` (6001–6004 мс).
 
 ## 7. Пропоновані оновлення control (лише після OK Дмитра)
 
