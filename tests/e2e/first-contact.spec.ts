@@ -148,8 +148,10 @@ test.describe('phone', () => {
     await expect(banner.getByRole('link', { name: 'Докладніше про конфіденційність' })).toBeVisible();
   });
 
-  test('each phone tap is one contact_click with method phone', async ({ page }) => {
-    await page.route('**/googletagmanager.com/**', (route) => route.abort());
+  test('each phone tap is one contact_click with method phone', async ({ context, page }) => {
+    // Analytics is granted, so the page asks for gtag.js: every Google request is answered here, none leaves the test.
+    // A '**/googletagmanager.com/**' glob never matched www.googletagmanager.com.
+    await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
     await answerCookies(page, 'granted');
     // Keep the test page in place: the tracking listener still sees the click.
     await page.addInitScript(() => {
