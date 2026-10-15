@@ -1,4 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { createServer, request as httpRequest } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { expect, test, type Page } from '@playwright/test';
 
 const directions = [
   '/angary',
@@ -15,6 +17,35 @@ const viewports = [
   { name: 'mobile', width: 390, height: 844 },
 ] as const;
 
+type WindowWithDirectionHeroMetrics = Window & { __directionHeroLayoutShifts?: string[] };
+
+// Every layout shift of the page, with what moved (the API's own sources), so a failure names the element
+function recordLayoutShifts() {
+  const metricsWindow = window as WindowWithDirectionHeroMetrics;
+  const layoutShifts = metricsWindow.__directionHeroLayoutShifts ?? [];
+  metricsWindow.__directionHeroLayoutShifts = layoutShifts;
+  const name = (node: Node | null) => {
+    const element = node instanceof Element ? node : node?.parentElement;
+    return element ? element.tagName.toLowerCase() + [...element.classList].map((token) => `.${token}`).join('') : '?';
+  };
+
+  new PerformanceObserver((entries) => {
+    for (const entry of entries.getEntries()) {
+      const layoutShift = entry as PerformanceEntry & {
+        hadRecentInput?: boolean;
+        value?: number;
+        sources?: { node: Node | null; previousRect: DOMRectReadOnly; currentRect: DOMRectReadOnly }[];
+      };
+      if (layoutShift.hadRecentInput || !layoutShift.value) continue;
+      const moved = (layoutShift.sources ?? []).map((source) =>
+        `${name(source.node)} ${Math.round(source.previousRect.x)},${Math.round(source.previousRect.y)} → ${Math.round(source.currentRect.x)},${Math.round(source.currentRect.y)}`);
+      layoutShifts.push(`${layoutShift.value.toFixed(4)} at ${Math.round(layoutShift.startTime)} ms: ${moved.join('; ')}`);
+    }
+  }).observe({ type: 'layout-shift', buffered: true });
+}
+
+const layoutShifts = (page: Page) => page.evaluate(() => (window as WindowWithDirectionHeroMetrics).__directionHeroLayoutShifts ?? []);
+
 for (const viewport of viewports) {
   test(`direction static heroes use responsive images at ${viewport.name}`, async ({ page }) => {
     let mediaRequests: string[] = [];
@@ -25,19 +56,7 @@ for (const viewport of viewports) {
       }
     });
 
-    await page.addInitScript(() => {
-      type WindowWithDirectionHeroMetrics = Window & { __directionHeroLayoutShifts?: number[] };
-      const metricsWindow = window as WindowWithDirectionHeroMetrics;
-      const layoutShifts = metricsWindow.__directionHeroLayoutShifts ?? [];
-      metricsWindow.__directionHeroLayoutShifts = layoutShifts;
-
-      new PerformanceObserver((entries) => {
-        for (const entry of entries.getEntries()) {
-          const layoutShift = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number };
-          if (!layoutShift.hadRecentInput && layoutShift.value) layoutShifts.push(layoutShift.value);
-        }
-      }).observe({ type: 'layout-shift', buffered: true });
-    });
+    await page.addInitScript(recordLayoutShifts);
 
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
 
@@ -81,14 +100,73 @@ for (const viewport of viewports) {
       }
       expect(mediaRequests, `${path} must not request a legacy hero video`).toEqual([]);
 
-      const layoutShifts = await page.evaluate(() => {
-        type WindowWithDirectionHeroMetrics = Window & { __directionHeroLayoutShifts?: number[] };
-        return (window as WindowWithDirectionHeroMetrics).__directionHeroLayoutShifts ?? [];
-      });
-      expect(layoutShifts, `${path} should not shift after its static hero image loads`).toEqual([]);
+      expect(await layoutShifts(page), `${path} should not shift after its static hero image loads`).toEqual([]);
     }
   });
 }
+
+// A stream that stalls — a cold server, a busy one, a slow network — lets the browser paint the half of the HTML it has.
+// The hero's copy sits at the bottom of a full-height box, so a half-parsed hero (crumbs only) is painted low and jumps
+// up when the rest arrives: 0.25 at 1280 × 800 (PR Gate run 38777627096); a half-parsed header moves its nav. The hero
+// holds the first paint until its copy is in (DirectionDetail.tsx); this pauses the HTML inside the header and inside
+// the hero's copy, on a second load so the CSS and fonts are already cached and nothing else holds the paint.
+test('direction static heroes use responsive images: a hero whose HTML arrives in two parts is painted whole', async ({ page, baseURL }) => {
+  test.setTimeout(90_000);
+  let pauseBefore: string | undefined;
+  let paused = false;
+  const proxy = createServer((request, response) => {
+    // agent: false — a reused keep-alive socket can meet the server closing it (the e2e keep-alive race)
+    const upstream = httpRequest(new URL(request.url ?? '/', baseURL), { method: request.method, headers: { ...request.headers, 'accept-encoding': 'identity' }, agent: false }, (served) => {
+      const split = pauseBefore;
+      if (!split || !/text\/html/.test(served.headers['content-type'] ?? '')) {
+        response.writeHead(served.statusCode ?? 502, served.headers);
+        served.pipe(response);
+        return;
+      }
+      const chunks: Buffer[] = [];
+      served.on('data', (chunk: Buffer) => chunks.push(chunk));
+      served.on('end', () => {
+        const html = Buffer.concat(chunks).toString('utf8');
+        const at = html.indexOf(split);
+        const headers = { ...served.headers };
+        delete headers['content-length'];
+        response.writeHead(served.statusCode ?? 502, headers);
+        paused = at > 0;
+        if (!paused) {
+          response.end(html);
+          return;
+        }
+        response.write(html.slice(0, at));
+        setTimeout(() => response.end(html.slice(at)), 1_000);
+      });
+    });
+    upstream.on('error', () => response.destroy());
+    request.pipe(upstream);
+  });
+  await new Promise<void>((listening) => proxy.listen(0, '127.0.0.1', listening));
+  const origin = `http://127.0.0.1:${(proxy.address() as AddressInfo).port}`;
+
+  try {
+    await page.addInitScript(recordLayoutShifts);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const stalls = [
+      ...directions.map((path) => ({ path, before: '<p class="eyebrow light">', where: 'after the crumbs' })),
+      { path: '/angary', before: '<span><strong>', where: 'inside the header phone' },
+    ];
+    for (const { path, before, where } of stalls) {
+      pauseBefore = undefined;
+      await page.goto(origin + path, { waitUntil: 'networkidle' });
+      pauseBefore = before;
+      paused = false;
+      await page.goto(origin + path, { waitUntil: 'networkidle' });
+      // a renamed class would let the whole page through at once and test nothing
+      expect(paused, `${path}: the HTML was paused before ${before}`).toBe(true);
+      expect(await layoutShifts(page), `${path}, its HTML stalled ${where}, should not shift`).toEqual([]);
+    }
+  } finally {
+    await new Promise((closed) => proxy.close(closed));
+  }
+});
 
 // The phone file is the art's 784 × 1024 window at native size. It shows exactly what the landscape file showed only
 // while cover still draws the hero by its height, i.e. while the hero box is at most 784 / 1024 as wide as it is tall.
