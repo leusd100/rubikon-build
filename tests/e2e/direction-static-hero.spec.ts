@@ -1,4 +1,4 @@
-import { createServer, request as httpRequest } from 'node:http';
+import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -108,45 +108,55 @@ for (const viewport of viewports) {
 // A stream that stalls — a cold server, a busy one, a slow network — lets the browser paint the half of the HTML it has.
 // The hero's copy sits at the bottom of a full-height box, so a half-parsed hero (crumbs only) is painted low and jumps
 // up when the rest arrives: 0.25 at 1280 × 800 (PR Gate run 38777627096); a half-parsed header moves its nav. The hero
-// holds the first paint until its copy is in (DirectionDetail.tsx); this pauses the HTML inside the header and inside
-// the hero's copy, on a second load so the CSS and fonts are already cached and nothing else holds the paint.
+// holds the first paint until its copy is in (DirectionDetail.tsx). Here a local server streams the page's own HTML
+// cut inside the header or inside the hero's copy, and sends the rest only once the first part's stylesheets and
+// fonts are in (+300 ms): a browser that paints half a page has then everything it needs to do so. The page's other
+// requests go to the app's server through page.route.
 test('direction static heroes use responsive images: a hero whose HTML arrives in two parts is painted whole', async ({ page, baseURL }) => {
   test.setTimeout(90_000);
-  let pauseBefore: string | undefined;
-  let paused = false;
-  const proxy = createServer((request, response) => {
-    // agent: false — a reused keep-alive socket can meet the server closing it (the e2e keep-alive race)
-    const upstream = httpRequest(new URL(request.url ?? '/', baseURL), { method: request.method, headers: { ...request.headers, 'accept-encoding': 'identity' }, agent: false }, (served) => {
-      const split = pauseBefore;
-      if (!split || !/text\/html/.test(served.headers['content-type'] ?? '')) {
-        response.writeHead(served.statusCode ?? 502, served.headers);
-        served.pipe(response);
-        return;
-      }
-      const chunks: Buffer[] = [];
-      served.on('data', (chunk: Buffer) => chunks.push(chunk));
-      served.on('end', () => {
-        const html = Buffer.concat(chunks).toString('utf8');
-        const at = html.indexOf(split);
-        const headers = { ...served.headers };
-        delete headers['content-length'];
-        response.writeHead(served.statusCode ?? 502, headers);
-        paused = at > 0;
-        if (!paused) {
-          response.end(html);
-          return;
-        }
-        response.write(html.slice(0, at));
-        setTimeout(() => response.end(html.slice(at)), 1_000);
-      });
-    });
-    upstream.on('error', () => response.destroy());
-    request.pipe(upstream);
+  let cut: { first: string; rest: string; headers: Record<string, string>; needs: string[] } | undefined;
+  const delivered = new Set<string>();
+  let onDelivered = () => {};
+  const server = createServer((_request, response) => {
+    const html = cut;
+    if (!html) {
+      response.writeHead(404).end();
+      return;
+    }
+    response.writeHead(200, html.headers);
+    response.write(html.first);
+    const sendRest = () => {
+      clearTimeout(fallback);
+      onDelivered = () => {};
+      setTimeout(() => response.end(html.rest), 300);
+    };
+    const fallback = setTimeout(sendRest, 5_000);
+    onDelivered = () => {
+      if (html.needs.every((path) => delivered.has(path))) sendRest();
+    };
+    onDelivered();
   });
-  await new Promise<void>((listening) => proxy.listen(0, '127.0.0.1', listening));
-  const origin = `http://127.0.0.1:${(proxy.address() as AddressInfo).port}`;
+  await new Promise<void>((listening) => server.listen(0, '127.0.0.1', listening));
+  const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
+  // `connection: close`: Playwright's keep-alive pool reuses a socket the app's server (Node 24) closes after 6 s idle,
+  // and a request sent on it in that moment ends in «socket hang up» (seen here between two pages)
+  const ownConnection = { connection: 'close' };
   try {
+    await page.route(`${origin}/**`, async (route) => {
+      const request = route.request();
+      if (request.isNavigationRequest()) return route.continue();
+      const { pathname, search } = new URL(request.url());
+      try {
+        const response = await route.fetch({ url: new URL(pathname + search, baseURL).href, headers: { ...request.headers(), ...ownConnection } });
+        await route.fulfill({ response });
+        delivered.add(pathname);
+        onDelivered();
+      } catch {
+        // the page moved on while this was in flight; never leave a request hanging
+        await route.abort().catch(() => {});
+      }
+    });
     await page.addInitScript(recordLayoutShifts);
     await page.setViewportSize({ width: 1280, height: 800 });
     const stalls = [
@@ -154,17 +164,23 @@ test('direction static heroes use responsive images: a hero whose HTML arrives i
       { path: '/angary', before: '<span><strong>', where: 'inside the header phone' },
     ];
     for (const { path, before, where } of stalls) {
-      pauseBefore = undefined;
-      await page.goto(origin + path, { waitUntil: 'networkidle' });
-      pauseBefore = before;
-      paused = false;
-      await page.goto(origin + path, { waitUntil: 'networkidle' });
+      const served = await page.request.get(path, { headers: ownConnection });
+      const html = await served.text();
+      const at = html.indexOf(before);
       // a renamed class would let the whole page through at once and test nothing
-      expect(paused, `${path}: the HTML was paused before ${before}`).toBe(true);
+      expect(at, `${path}: the HTML has ${before}`).toBeGreaterThan(0);
+      const first = html.slice(0, at);
+      const needs = [...first.matchAll(/<link rel="(stylesheet|preload)" href="([^"]+)"([^>]*)>/g)]
+        .filter(([, rel, , rest]) => rel === 'stylesheet' || rest.includes('as="font"'))
+        .map(([, , href]) => new URL(href, origin).pathname);
+      const csp = served.headers()['content-security-policy'];
+      cut = { first, rest: html.slice(at), needs, headers: { 'content-type': 'text/html; charset=utf-8', ...(csp ? { 'content-security-policy': csp } : {}) } };
+      delivered.clear();
+      await page.goto(origin + path, { waitUntil: 'networkidle' });
       expect(await layoutShifts(page), `${path}, its HTML stalled ${where}, should not shift`).toEqual([]);
     }
   } finally {
-    await new Promise((closed) => proxy.close(closed));
+    await new Promise((closed) => server.close(closed));
   }
 });
 
