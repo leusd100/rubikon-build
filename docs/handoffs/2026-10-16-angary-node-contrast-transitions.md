@@ -8,7 +8,7 @@
 | PR | https://github.com/leusd100/rubikon-build/pull/202 · ready for review (переведено 10:34 UTC). **Merge і deploy не виконувались і не дозволені**: merge = production deploy, лише за окремим OK Дмитра |
 | Гілка | `test/angary-node-contrast-transitions` |
 | Base | `main` `c4bfaef` (#200) |
-| Рев'ю | Незалежне adversarial-рев'ю (2 рецензенти + суддя) 16.10: **GO_WITH_NOTES**, must-fix немає; тестові пункти внесено в `dc8d2a8` |
+| Внутрішнє рев'ю | Adversarial-рев'ю субагентами цієї сесії (2 рецензенти + суддя), 16.10: **GO_WITH_NOTES**, must-fix немає; тестові пункти внесено в `dc8d2a8`. Це не заміна незалежного QA |
 | Код | `4b64b01` (виправлення) + `dc8d2a8` (посилення за рев'ю) |
 | Змінено | лише `tests/e2e/angary-interactive.spec.ts`. Наявні зчитування кольорів і поріг 4,5 — без змін |
 | Не змінено | `app/`, CSS, токени, поріг 4.5, baseline-и, `playwright.config.ts`, workflows, retries, timeout-и |
