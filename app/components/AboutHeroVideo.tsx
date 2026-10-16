@@ -13,12 +13,14 @@ const STATIC_QUERY = '(max-width: 600px)';
 export const ABOUT_STATIC_SRC = '/media/about/about-phone-still-768w.webp';
 const ABOUT_STATIC_SRCSET = '/media/about/about-phone-still-480w.webp 480w, /media/about/about-phone-still-768w.webp 768w';
 
+// As on HOME, the 0.85 slow-down is in the files (re-timed to an even 30 fps by scripts/retime-hero-clips.py), so the
+// desktop clips play at 1.0 (OD-S1 option B, 15.10)
 const desktopSources = [
-  '/media/about/about-precision-9617516.mp4',
-  '/media/about/about-floor-plan-8725798.mp4',
-  '/media/about/about-grinder-14488798.mp4',
-  '/media/about/about-welding-20507417.mp4',
-  '/media/about/about-structure-40721.mp4',
+  '/media/about/about-precision-9617516-v2.mp4',
+  '/media/about/about-floor-plan-8725798-v2.mp4',
+  '/media/about/about-grinder-14488798-v2.mp4',
+  '/media/about/about-welding-20507417-v2.mp4',
+  '/media/about/about-structure-40721-v2.mp4',
 ];
 
 const variantConfig = {
@@ -78,7 +80,6 @@ export function AboutHeroVideo() {
       clipDurationMs={isDesktop ? 3800 : 2500}
       fadeDurationMs={isDesktop ? 1100 : 800}
       loopSingleSource
-      playbackRate={isDesktop ? 0.85 : 1}
       videoMediaQuery={hasResolvedViewport ? '(min-width: 601px)' : '(min-width: 99999px)'}
     />
   );

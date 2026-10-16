@@ -14,12 +14,16 @@ const STATIC_QUERY = '(max-width: 760px)';
 export const HERO_STATIC_SRC = '/media/home-v2/concepts/hero-mobile-band-752w.webp';
 const HERO_STATIC_SRCSET = '/media/home-v2/concepts/hero-mobile-band-480w.webp 480w, /media/home-v2/concepts/hero-mobile-band-752w.webp 752w';
 
+// The desktop clips carry the hero's 0.85 slow-down in the file: re-timed and motion-interpolated to an even 30 fps
+// (scripts/retime-hero-clips.py), they play at 1.0 and every frame stays on screen for two 60 Hz refreshes. Slowed down
+// in the browser instead, the 24–30 fps footage came out at 20–25 fps, each frame held for three refreshes, and the
+// camera moved in steps (smoothness audit, 15.10, OD-S1 option B).
 const desktopSources = [
-  '/media/about/straight-line-14377591-v2.mp4',
-  '/media/about/blueprint-v2.mp4',
-  '/media/about/drilling-29913842-v2.mp4',
-  '/media/about/welding-v2.mp4',
-  '/media/about/structure-v2.mp4',
+  '/media/about/straight-line-14377591-v3.mp4',
+  '/media/about/blueprint-v3.mp4',
+  '/media/about/drilling-29913842-v3.mp4',
+  '/media/about/welding-v3.mp4',
+  '/media/about/structure-v3.mp4',
 ];
 
 function subscribe(onChange: () => void) {
@@ -64,7 +68,6 @@ export function HomeV2HeroMedia() {
       clipDurationMs={2500}
       fadeDurationMs={800}
       loopSingleSource
-      playbackRate={tablet ? 1 : 0.85}
       videoMediaQuery={hasResolvedViewport ? '(min-width: 761px)' : '(min-width: 99999px)'}
     />
   );
