@@ -261,7 +261,7 @@ const finishAnimations = (target: Locator) => target.evaluate((element) => {
  *  included — waited out, round by round (one that ends can change a property its children inherit and start theirs: the
  *  hint's visibility), for `bound` ms a round at most and up to `rounds` rounds: each one met (what it changes, its kind
  *  and whole time, ms) and what is still there at the end, named. Anything else is not waited for: it fails as met */
-const runOut = (target: Locator, rounds = 10, bound = 5_000) => target.evaluate(async (element, [most, wait]) => {
+const runOut = (target: Locator, rounds = 10, bound = 2_000) => target.evaluate(async (element, [most, wait]) => {
   /** what it changes (or its keyframes' name), on which element, of which kind */
   const name = (animation: Animation) => {
     const effect = animation.effect as KeyframeEffect | null;
@@ -2323,6 +2323,33 @@ test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the
 
 test('with reduced motion the sheet stands static and complete at its resting split', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  // Every CSS transition and animation that starts in the sheet, from the page's first script on, timed off its own
+  // computed style (delay included): one longer than the reduced-motion rule's .01 ms is written down when it starts, so
+  // it fails below even if it has run out before any read of the sheet's animations (a busy CI is slow to get there)
+  await page.addInitScript(() => {
+    const longer: string[] = [];
+    Object.assign(window, { __longerThanReduced: longer });
+    const seconds = (value: string) => value.split(',').map((part) => parseFloat(part) * (part.trim().endsWith('ms') ? 0.001 : 1));
+    const note = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest('#real-object .hv2-contour')) return;
+      const pseudo = (event as TransitionEvent | AnimationEvent).pseudoElement || null;
+      const style = getComputedStyle(target, pseudo);
+      const transition = event.type === 'transitionrun';
+      const name = transition ? (event as TransitionEvent).propertyName : (event as AnimationEvent).animationName;
+      const names = (transition ? style.transitionProperty : style.animationName).split(',').map((part) => part.trim());
+      const durations = seconds(transition ? style.transitionDuration : style.animationDuration);
+      const delays = seconds(transition ? style.transitionDelay : style.animationDelay);
+      const counts = transition ? [1] : style.animationIterationCount.split(',').map((part) => (part.trim() === 'infinite' ? Infinity : Number(part)));
+      let index = names.indexOf(name);
+      if (index < 0) index = names.indexOf('all');
+      if (index < 0) index = 0;
+      const ms = (delays[index % delays.length] + durations[index % durations.length] * counts[index % counts.length]) * 1000;
+      if (!(ms <= 0.0101)) longer.push(`${[target.tagName.toLowerCase(), ...target.classList].join('.')}${pseudo ?? ''} ${name}: ${ms} ms`);
+    };
+    document.addEventListener('transitionrun', note, true);
+    document.addEventListener('animationstart', note, true);
+  });
   const { sheet, stage, slider } = await open(page);
   await expect(sheet).not.toHaveAttribute('data-sheet-state', /.+/);
   await expectSplit(slider, stage, DEFAULT_SPLIT);
@@ -2338,6 +2365,8 @@ test('with reduced motion the sheet stands static and complete at its resting sp
   expect(left).toEqual([]);
   // …and nothing restarts: at the end of each of the next frames, nothing in the sheet plays
   expect(await playingAfterFrames(sheet)).toEqual([]);
+  // …and nothing that started in the sheet since the page began was longer than a reduced-motion step
+  expect(await page.evaluate(() => (window as unknown as { __longerThanReduced: string[] }).__longerThanReduced)).toEqual([]);
   expect(await paths.evaluateAll((elements) => elements.filter((element) => {
     const style = getComputedStyle(element);
     return !/^0(px)?$/.test(style.strokeDashoffset) || style.opacity !== '1';
