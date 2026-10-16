@@ -34,14 +34,26 @@ describe('e2e specs never reach Google', () => {
 
   it('finds the specs that grant Analytics', () => {
     expect(granting).toEqual(expect.arrayContaining([
-      'analytics-consent.spec.ts', 'consent.spec.ts', 'first-contact.spec.ts', 'form.spec.ts', 'ux-conversion-phase2.spec.ts',
+      'analytics-consent.spec.ts', 'analytics-contract.spec.ts', 'consent.spec.ts', 'first-contact.spec.ts', 'form.spec.ts', 'ux-conversion-phase2.spec.ts',
     ]));
   });
 
-  it.each(granting)('%s answers every Google request with a regex route', (file) => {
+  it.each(granting)('%s answers every Google request with a regex route, or denies all outbound through stubGoogle', (file) => {
     const { source } = specs.find((spec) => spec.file === file)!;
     const regexes = routePatterns(source).flatMap((pattern) => pattern.regex ?? []);
-    expect(regexes.some((regex) => GOOGLE_URLS.every((url) => regex.test(url))), `${file}: no route matches ${GOOGLE_URLS.join(', ')}`).toBe(true);
+    const routed = regexes.some((regex) => GOOGLE_URLS.every((url) => regex.test(url)));
+    // google.helpers' stubGoogle routes every request off the app's origin (its own shape is held below)
+    const stubbed = /import\s*\{[^}]*\bstubGoogle\b[^}]*\}\s*from\s*'\.\/google\.helpers'/.test(source) && /\bstubGoogle\(\s*context\b/.test(source);
+    expect(routed || stubbed, `${file}: no route matches ${GOOGLE_URLS.join(', ')}, and no stubGoogle(context, …)`).toBe(true);
+  });
+
+  it('stubGoogle denies all outbound: one context route for every request off the app\'s origin, never passed on to the network, and a stub tag with no transport of its own', () => {
+    const helpers = readFileSync(new URL('google.helpers.ts', E2E_DIR), 'utf8');
+    expect(helpers).toMatch(/context\.route\(\(url\) => url\.origin !== appOrigin,/);
+    expect(helpers).not.toMatch(/route\.(?:fetch|continue|fallback)\(/);
+    const stub = /const GTAG_STUB = `([\s\S]*?)`;/.exec(helpers)?.[1] ?? '';
+    expect(stub).toContain('queue.push = function');
+    expect(stub).not.toMatch(/fetch|XMLHttpRequest|sendBeacon|Image|createElement|\.src\b|WebSocket|EventSource|import\(/);
   });
 
   it('no spec routes Google through a glob', () => {
