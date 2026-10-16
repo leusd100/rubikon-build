@@ -267,6 +267,17 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   expect(await looping()).toBe(0);
 });
 
+/** Every CSS transition in it waited out: their lengths, ms (one replaced by a newer change is cancelled, not finished) */
+function transitionsOut(target: Locator) {
+  return target.evaluate((element) => Promise.all(element.getAnimations({ subtree: true })
+    .filter((animation) => animation instanceof CSSTransition)
+    .map(async (animation) => {
+      const length = Number(animation.effect?.getComputedTiming().endTime);
+      await animation.finished.catch(() => undefined);
+      return length;
+    })));
+}
+
 /** WCAG contrast of two computed rgb() colours */
 function contrastOf(foreground: string, background: string) {
   const luminance = (color: string) => {
@@ -305,8 +316,16 @@ for (const theme of ['light', 'dark'] as const) {
       await page.mouse.click(...centre);
       await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true');
       await expect(frame).toHaveAttribute('data-node', /.+/);
+      // Pressed, the button and the mark change colour by CSS transitions, under reduced motion too (.01 ms, globals.css),
+      // and Chrome holds each pending until it draws a frame: read before that, the button is still the one not pressed —
+      // Deep Graphite words on no fill, which contrastOf reads as black: 1.30 : 1 (Main Regression, 16.10, light; in Dark
+      // the same misread passed, 18.8 : 1). So the colours are read once their own transitions are through, each all but
+      // instant, and a pressed button's fill is a fill
+      expect(Math.max(0, ...await transitionsOut(buttons.nth(index))), `node ${index + 1}'s button`).toBeLessThan(1);
       const colours = await buttons.nth(index).evaluate((button) => ({ text: getComputedStyle(button).color, fill: getComputedStyle(button).backgroundColor }));
+      expect(colours.fill, `node ${index + 1}'s button`).toMatch(/^rgb\(/);
       expect(contrastOf(colours.text, colours.fill), `node ${index + 1}'s button`).toBeGreaterThanOrEqual(4.5);
+      expect(Math.max(0, ...await transitionsOut(frame.locator('.ft-node[data-on]'))), `node ${index + 1}'s mark`).toBeLessThan(1);
       const mark = await frame.locator('.ft-node[data-on]').evaluate((node) => ({
         number: getComputedStyle(node.querySelector('.ft-node-number')!).fill, ring: getComputedStyle(node.querySelector('.ft-node-ring')!).fill,
       }));
