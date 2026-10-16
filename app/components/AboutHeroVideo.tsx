@@ -7,11 +7,12 @@ import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { useViewportVariant, type ViewportVariant } from '../hooks/useViewportVariant';
 
 // /pro-nas hero. Desktop and tablet keep the footage; a phone (≤ 600 px, the hook's phone variant) gets one still
-// instead of the 3.5 MB phone montage (UX pass 2026-10, owner's photo 4: a steel frame at sunset over the anchor bolts).
+// instead of the 3.5 MB phone montage. P5 is the owner-approved AI process illustration: anonymous professionals,
+// not portraits of Serhii/Dmytro and not evidence of a RUBIKON object (design selection, 16.10).
 // As everywhere on this page, the image carries no «Ілюстрація» tag (owner's decision, 30.09) and is decorative.
 const STATIC_QUERY = '(max-width: 600px)';
-export const ABOUT_STATIC_SRC = '/media/about/about-phone-still-768w.webp';
-const ABOUT_STATIC_SRCSET = '/media/about/about-phone-still-480w.webp 480w, /media/about/about-phone-still-768w.webp 768w';
+export const ABOUT_STATIC_SRC = '/media/about/about-p5-1024w.webp';
+const ABOUT_STATIC_SRCSET = '/media/about/about-p5-480w.webp 480w, /media/about/about-p5-768w.webp 768w, /media/about/about-p5-1024w.webp 1024w';
 
 // As on HOME, the 0.85 slow-down is in the files (re-timed to an even 30 fps by scripts/retime-hero-clips.py), so the
 // desktop clips play at 1.0 (OD-S1 option B, 15.10)
@@ -58,6 +59,8 @@ export function AboutHeroVideo() {
         src={ABOUT_STATIC_SRC}
         srcSet={ABOUT_STATIC_SRCSET}
         sizes="100vw"
+        width={1024}
+        height={1536}
         alt=""
         aria-hidden="true"
         loading="eager"
@@ -77,6 +80,10 @@ export function AboutHeroVideo() {
       sources={config.sources}
       poster={config.poster}
       mobilePoster={config.mobilePoster}
+      mobilePosterSrcSet={isDesktop ? ABOUT_STATIC_SRCSET : undefined}
+      mobilePosterSizes="100vw"
+      mobilePosterMediaQuery="(max-width: 600px)"
+      posterMediaQuery="(min-width: 601px)"
       clipDurationMs={isDesktop ? 3800 : 2500}
       fadeDurationMs={isDesktop ? 1100 : 800}
       loopSingleSource
