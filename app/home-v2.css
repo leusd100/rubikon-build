@@ -92,6 +92,7 @@ main[data-home="v2"] .hv2-hero-provenance { display: none; }
   }
   main[data-home="v2"] .phone-hero-scroll { position: absolute; z-index: 3; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); left: calc(50% - 22px); display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-on-dark); font-size: 24px; }
   /* Keep the existing first-visit call guarantee. Consent behavior and wording are unchanged. */
+  body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero .hero-shade { background: linear-gradient(180deg, rgba(18,22,19,.2), rgba(18,22,19,.78) 22%, rgba(18,22,19,.94) 48%, var(--color-dark) 72%); }
   body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero-layout { margin-top: 0; padding-top: 116px; padding-bottom: max(66px, var(--cookie-banner-clearance, 0px)); }
   body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero .hero-actions { order: 1; }
   body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero .hero-lead { order: 2; }
