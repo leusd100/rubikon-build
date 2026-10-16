@@ -59,6 +59,9 @@ function DirectionItemCards({
   );
 }
 
+/** The element right after the hero's copy: the first paint waits for it (DirectionHero) */
+const HERO_COPY_END_ID = 'direction-hero-copy-end';
+
 type DirectionHeroProps = {
   path: string;
   number: string;
@@ -105,6 +108,13 @@ function DirectionHero({
 
   return (
     <section className={classNames('service-subhero', actions?.sectionClassName)}>
+      {/* The first paint waits until the hero's copy is in. The copy sits at the bottom of a full-height box, so when a
+          stream stalls (a cold or busy server, a slow network) and the browser paints the crumbs alone, they are drawn low
+          and jump up as the heading and buttons arrive — 0.25 of the screen at 1280 × 800 — and a half-parsed header
+          moves its nav. React hoists the link into <head>; Chromium lifts the block once it parses the element named
+          by href (its start tag), so that is the stamp after the copy. WebKit honours it too; Firefox ignores it and
+          paints as before. direction-static-hero.spec.ts stalls the HTML on purpose. */}
+      <link rel="expect" href={`#${HERO_COPY_END_ID}`} blocking="render" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
         <DirectionHeroImage asset={heroImage} />
@@ -142,7 +152,7 @@ function DirectionHero({
         {notePhone && <p className="service-subhero-note">{notePhone}</p>}
       </div>
       {/* Every direction hero is a concept image: said in the same quiet stamp as /yak-pratsyuiemo and the HOME phone hero */}
-      <span className="hero-provenance">Ілюстрація</span>
+      <span className="hero-provenance" id={HERO_COPY_END_ID}>Ілюстрація</span>
     </section>
   );
 }
