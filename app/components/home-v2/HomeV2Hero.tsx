@@ -1,5 +1,6 @@
 import { Phone } from 'lucide-react';
 import { HomeV2HeroMedia } from './HomeV2HeroMedia';
+import { HeroHeaderState } from '../HeroHeaderState';
 import { company, companyContactLinks } from '../../data/company';
 
 // HOME v2 hero: one image, one headline, one line of what we build, two actions (call first). The written
@@ -8,6 +9,7 @@ import { company, companyContactLinks } from '../../data/company';
 export function HomeV2Hero() {
   return (
     <section className="hero hv2-hero" id="top">
+      <HeroHeaderState />
       <div className="hero-media">
         <HomeV2HeroMedia />
       </div>
@@ -39,6 +41,7 @@ export function HomeV2Hero() {
       </div>
       {/* Only the ≤760 still is a concept image; the desktop footage is process footage, not an object. */}
       <span className="hv2-hero-provenance">Ілюстрація</span>
+      <a className="phone-hero-scroll" href="#directions" aria-label="До наступного розділу">↓</a>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { AboutHeroVideo } from '../components/AboutHeroVideo';
+import { HeroHeaderState } from '../components/HeroHeaderState';
 import { Breadcrumbs, HeroCallButton, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
@@ -91,6 +92,7 @@ export default function AboutPage() {
 
       {/* 1 · Hero — the names behind the reputation; words and actions under the title, as on /yak-pratsyuiemo */}
       <section className="subhero about-subhero">
+        <HeroHeaderState />
         <div className="about-hero-media">
           <AboutHeroVideo />
         </div>
@@ -115,10 +117,11 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
+        <a className="phone-hero-scroll" href="#about-team" aria-label="До наступного розділу">↓</a>
       </section>
 
       {/* 2 · The two people and what each answers for */}
-      <TeamSection variant="about" />
+      <TeamSection variant="about" id="about-team" />
 
       {/* 3 · What we do ourselves and what we organise, then where: the Delivery Model's capability layers (the five
           directions are on /napryamky, one link away); the region closes the block on a copper line */}

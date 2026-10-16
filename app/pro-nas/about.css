@@ -294,3 +294,44 @@
 }
 @keyframes pd-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes pd-pop { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: none; } }
+
+/* Owner-selected H1/P5 mobile direction, 16.10: the existing tablet/desktop Hero stays intact. */
+@media (max-width: 600px) {
+  body:has(main.about-page) { --phone-hero-header-alpha: 82%; --phone-hero-menu-alpha: 97%; --phone-hero-header-backdrop: none; --phone-hero-safe-top: env(safe-area-inset-top, 0px); }
+  body:has(main.about-page) .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; height: 44px; }
+  .about-page .about-subhero { display: flex; flex-direction: column; align-items: stretch; min-height: 100svh; height: auto; padding-top: calc(77px + var(--phone-hero-safe-top, 0px)); overflow: visible; }
+  .about-page .about-hero-media { inset: 0 0 auto; height: clamp(530px, 77svh, 740px); overflow: hidden; background: var(--color-dark); }
+  .about-page .about-hero-media img { object-fit: cover; object-position: 50% 30%; filter: none; }
+  .about-page .about-subhero .subhero-grid { display: none; }
+  .about-page .about-subhero .subhero-overlay { background: linear-gradient(180deg, rgba(17,21,18,.23), rgba(17,21,18,.33) 22%, rgba(17,21,18,.91) 47%, var(--color-dark) 80%); }
+  .about-page .about-subhero .subhero-layout { width: calc(100% - 40px); display: block; margin: auto auto 0; padding: 120px 0 calc(66px + env(safe-area-inset-bottom, 0px)); }
+  .about-page .about-subhero .breadcrumb { margin-bottom: 26px; min-height: 44px; font-size: .625rem; }
+  .about-page .about-subhero .breadcrumb a { display: inline-flex; align-items: center; min-height: 44px; }
+  .about-page .about-subhero .eyebrow { margin-bottom: 24px; font-size: .7rem; }
+  .about-page .about-subhero h1 { position: relative; isolation: isolate; width: 100vw; max-width: none; margin-inline: calc((100% - 100vw) / 2); padding-inline: calc((100vw - 100%) / 2); font-size: 2.42rem; line-height: 1.055; letter-spacing: -.04em; text-wrap: pretty; overflow-wrap: break-word; }
+  .about-page .about-subhero h1::before { content: ''; position: absolute; z-index: -1; inset: -.8em 0 0; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--color-dark) 94%, transparent) .8em); pointer-events: none; }
+  .about-page .about-subhero .subhero-title-line + .subhero-title-line { margin-top: 0; }
+  .about-page .about-subhero h1 em { color: var(--color-accent-on-dark); }
+  .about-page .about-subhero-side { margin-top: 22px; }
+  .about-page .about-subhero-side > p { font-size: 1rem; line-height: 1.63; color: color-mix(in srgb, var(--color-dark-text) 96%, transparent); }
+  .about-page .about-hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 24px; }
+  .about-page .about-hero-actions .button { width: 100%; min-width: 0; min-height: 56px; padding: 10px 12px; gap: 13px; justify-content: center; text-align: center; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
+  .about-page .about-hero-actions .hero-call-primary { color: var(--color-dark); background: var(--color-accent-on-dark); }
+  .about-page .about-hero-actions .hero-call-primary:hover { background: var(--color-accent-on-dark-hover); }
+  .about-page .about-hero-actions .hero-call-primary > span { min-width: 0; }
+  .about-page .about-hero-actions .hero-call-primary strong { white-space: normal; overflow-wrap: anywhere; }
+  .about-page .phone-hero-scroll { position: absolute; z-index: 3; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); left: calc(50% - 22px); display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-on-dark); font-size: 24px; }
+  #about-team { scroll-margin-top: calc(90px + env(safe-area-inset-top, 0px)); }
+}
+@media (max-width: 359px) {
+  .about-page .about-subhero .subhero-layout { width: calc(100% - 32px); }
+  .about-page .about-subhero h1 { font-size: 2.15rem; }
+  .about-page .about-subhero-side > p { font-size: .9375rem; }
+}
+@media (max-width: 600px) and (max-height: 740px) {
+  .about-page .about-subhero .subhero-layout { padding-top: 58px; padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
+  .about-page .about-subhero .breadcrumb, .about-page .about-subhero .eyebrow { margin-bottom: 16px; }
+  .about-page .about-subhero-side { margin-top: 18px; }
+  .about-page .about-subhero-side > p { font-size: .9375rem; line-height: 1.55; }
+  .about-page .about-hero-actions { margin-top: 20px; }
+}
