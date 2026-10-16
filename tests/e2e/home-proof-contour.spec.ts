@@ -257,6 +257,28 @@ const finishAnimations = (target: Locator) => target.evaluate((element) => {
   }
 });
 
+/** Every animation in it that is a reduced-motion step (a CSS transition of .01 ms at most) waited out, round by round —
+ *  one that ends can change a property its children inherit and start theirs (the hint's visibility) — up to `rounds`:
+ *  each one met (what it changes, its kind and whole length, ms) and how many are left. Anything else is not waited for: it fails as met */
+const runOut = (target: Locator, rounds = 5) => target.evaluate(async (element, most) => {
+  const seen: { property: string; kind: string; length: number }[] = [];
+  for (let round = 0; round < most; round += 1) {
+    const animations = element.getAnimations({ subtree: true });
+    const steps = animations.filter((animation) => animation instanceof CSSTransition && Number(animation.effect?.getComputedTiming().endTime) <= 0.01);
+    for (const animation of animations) {
+      seen.push({
+        property: (animation as CSSTransition).transitionProperty ?? (animation as CSSAnimation).animationName ?? 'script',
+        kind: animation.constructor.name,
+        length: Number(animation.effect?.getComputedTiming().endTime),
+      });
+    }
+    if (!steps.length) break;
+    // a transition replaced by a newer change is cancelled, not finished
+    await Promise.all(steps.map((animation) => animation.finished.catch(() => undefined)));
+  }
+  return { seen, left: element.getAnimations({ subtree: true }).length };
+}, rounds);
+
 /** Where a point of the photo (its own pixels) stands on the screen, read off the right side's canvas */
 function photoPoint(stage: Locator, [x, y]: readonly [number, number]) {
   return stage.evaluate((element, [px, py, width, height]) => {
@@ -2275,7 +2297,15 @@ test('with reduced motion the sheet stands static and complete at its resting sp
   await expect(sheet).not.toHaveAttribute('data-sheet-state', /.+/);
   await expectSplit(slider, stage, DEFAULT_SPLIT);
   const paths = sheet.locator('.hv2-contour-lines path, .hv2-proof-scheme [data-group]');
-  expect(await sheet.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
+  // open()'s Shift — the visitor's first key — stands down the arrival's last word, node Г's hint, which reduced motion
+  // shows from the start (useFirstSweep). What it lit goes back under the site's reduced-motion rule (globals.css: every
+  // transition .01 ms): node Г's ring and letter and the hint's line, 13 CSS transitions, then 2 of visibility.
+  // Chrome holds each pending until it draws a frame, and a busy CI draws none for 100 ms and more: 13 and 2 were read
+  // (Main Regression, 16.10). So: each of them such a step — nothing that moves for longer, nothing that keeps going —
+  // and once they are through, nothing in the sheet plays
+  const { seen, left } = await runOut(sheet);
+  expect(seen.filter((animation) => animation.kind !== 'CSSTransition' || !(animation.length <= 0.01))).toEqual([]);
+  expect(left).toBe(0);
   expect(await paths.evaluateAll((elements) => elements.filter((element) => {
     const style = getComputedStyle(element);
     return !/^0(px)?$/.test(style.strokeDashoffset) || style.opacity !== '1';
