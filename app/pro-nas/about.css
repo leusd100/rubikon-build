@@ -308,7 +308,8 @@
   .about-page .about-subhero .breadcrumb { margin-bottom: 26px; min-height: 44px; font-size: .625rem; }
   .about-page .about-subhero .breadcrumb a { display: inline-flex; align-items: center; min-height: 44px; }
   .about-page .about-subhero .eyebrow { margin-bottom: 24px; font-size: .7rem; }
-  .about-page .about-subhero h1 { max-width: none; font-size: 2.42rem; line-height: 1.055; letter-spacing: -.04em; text-wrap: pretty; overflow-wrap: break-word; }
+  .about-page .about-subhero h1 { position: relative; isolation: isolate; width: 100vw; max-width: none; margin-inline: calc((100% - 100vw) / 2); padding-inline: calc((100vw - 100%) / 2); font-size: 2.42rem; line-height: 1.055; letter-spacing: -.04em; text-wrap: pretty; overflow-wrap: break-word; }
+  .about-page .about-subhero h1::before { content: ''; position: absolute; z-index: -1; inset: -.8em 0 0; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--color-dark) 94%, transparent) .8em); pointer-events: none; }
   .about-page .about-subhero .subhero-title-line + .subhero-title-line { margin-top: 0; }
   .about-page .about-subhero h1 em { color: var(--color-accent-on-dark); }
   .about-page .about-subhero-side { margin-top: 22px; }
