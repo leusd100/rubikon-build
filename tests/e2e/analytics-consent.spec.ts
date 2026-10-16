@@ -16,15 +16,18 @@ type GoogleRequest = { host: string; path: string; type: string; events: string[
 
 async function recordGoogle(context: BrowserContext) {
   const requests: GoogleRequest[] = [];
-  let gtagLoaded = false;
+  // The real gtag.js from Google: not asked for, on its way, loaded, or failed — and why
+  let gtag: { state: 'none' | 'fetching' | 'loaded' | 'failed'; why?: string } = { state: 'none' };
   await context.route(/google|doubleclick|googlesyndication|googleadservices/, async (route) => {
     const url = new URL(route.request().url());
     if (url.hostname === 'www.googletagmanager.com' && url.pathname.startsWith('/gtag/js')) {
+      gtag = { state: 'fetching' };
       try {
         const response = await route.fetch();
-        gtagLoaded = response.ok();
+        gtag = response.ok() ? { state: 'loaded' } : { state: 'failed', why: `HTTP ${response.status()}` };
         return route.fulfill({ response });
-      } catch {
+      } catch (error) {
+        gtag = { state: 'failed', why: String(error).split('\n')[0] };
         return route.abort();
       }
     }
@@ -33,7 +36,15 @@ async function recordGoogle(context: BrowserContext) {
         .map(line => new URLSearchParams(line).get('en'))].filter((event): event is string => event !== null) });
     return route.fulfill({ status: 204, body: '' });
   });
-  return { requests, gtagLoaded: () => gtagLoaded };
+  return { requests, gtag: () => gtag };
+}
+
+/** Until the real gtag.js has come from Google or failed to: networkidle can come before a choice asks for the script,
+ *  and a skip read then said «could not be fetched» while the fetch was still on its way (16.10: the skips on Main
+ *  Regression and its branch runs were this race). Then, if it failed, the skip says why */
+async function skipUnlessGtagLoaded(google: Awaited<ReturnType<typeof recordGoogle>>) {
+  await expect.poll(() => google.gtag().state, { timeout: 15_000 }).toMatch(/^(loaded|failed)$/);
+  test.skip(google.gtag().state !== 'loaded', `gtag.js could not be fetched from Google in this environment: ${google.gtag().why}`);
 }
 
 async function watchCsp(page: Page) {
@@ -68,7 +79,7 @@ test.describe('GA4 consent gating', () => {
 
     await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(0);
     expect(google.requests).toEqual([]);
-    expect(google.gtagLoaded()).toBe(false);
+    expect(google.gtag().state, 'gtag.js never asked for').toBe('none');
   });
 
   test('«Лише необхідні» loads no Google script and sends no Google request', async ({ page, context }) => {
@@ -79,7 +90,7 @@ test.describe('GA4 consent gating', () => {
 
     await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(0);
     expect(google.requests).toEqual([]);
-    expect(google.gtagLoaded()).toBe(false);
+    expect(google.gtag().state, 'gtag.js never asked for').toBe('none');
   });
 
   test('the GA4 config turns off Google signals and ad-personalization signals', async ({ page, context }) => {
@@ -106,7 +117,7 @@ test.describe('GA4 endpoints (real gtag.js, collection answered locally)', () =>
       await choose(page);
       await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(1);
       await page.waitForLoadState('networkidle');
-      test.skip(!google.gtagLoaded(), 'gtag.js could not be fetched from Google in this environment');
+      await skipUnlessGtagLoaded(google);
 
       await expect.poll(() => google.requests.filter((request) => request.path === '/g/collect').length, { timeout: 10_000 }).toBeGreaterThan(0);
       await page.goto('/angary', { waitUntil: 'networkidle' });
@@ -128,7 +139,7 @@ test('an accepted lead queue command reaches real gtag, with collection intercep
   await page.goto('/', { waitUntil: 'load' });
   await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
   await page.waitForLoadState('networkidle');
-  test.skip(!google.gtagLoaded(), 'gtag.js could not be fetched from Google in this environment');
+  await skipUnlessGtagLoaded(google);
   // Phones fold the closing form behind «Залишити запит» (ConversationFormToggle)
   const toggle = page.locator('#inquiry .conversation-form-toggle');
   if (await toggle.isVisible()) await toggle.click();
