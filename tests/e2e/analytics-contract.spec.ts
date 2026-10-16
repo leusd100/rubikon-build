@@ -7,6 +7,12 @@ import { stubTurnstile } from './turnstile.helpers';
 // Google being reachable, or on what Google's tag samples (analytics-consent.spec.ts keeps the live tag's contract: one
 // load in about fifty sends a diagnostic /td or /a image our CSP blocks, which is what failed Nightly 38867707280).
 
+// Nothing in this file may reach the network from the browser itself. Playwright's routes miss what a page sends while it
+// unloads: gtag's keepalive /g/collect on pagehide (scroll, user_engagement) went out past them on / → /angary (16.10,
+// reproduced against a dead-end sink). So DNS is closed to every host but the app's; the real gtag.js still arrives
+// through route.fetch, which Playwright makes outside the browser
+test.use({ launchOptions: { args: ['--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1 , EXCLUDE localhost'] } });
+
 const GA_SCRIPT_SELECTOR = 'script[data-rubikon-analytics="G-WYRXJV71WG"]';
 const CONSENT_DEFAULT = ['consent', 'default', {
   analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', wait_for_update: 500,
