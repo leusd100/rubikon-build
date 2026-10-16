@@ -108,11 +108,16 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
   left: 0;
   right: 0;
   z-index: 50;
+  padding-top: var(--phone-hero-safe-top, 0px);
   color: var(--color-dark-text);
-  background: color-mix(in srgb, var(--color-dark) 90%, transparent);
+  background: color-mix(in srgb, var(--color-dark) var(--phone-hero-header-alpha, 90%), transparent);
   border-bottom: 1px solid rgba(255, 255, 255, .16);
-  backdrop-filter: blur(18px);
+  backdrop-filter: var(--phone-hero-header-backdrop, blur(18px));
 }
+/* Only the two phone Hero pages opt into these variables (their own CSS). */
+:root[data-hero-header="scrolled"] body { --phone-hero-header-alpha: 97%; }
+.site-header:has(.mobile-menu[open]) { --phone-hero-header-alpha: var(--phone-hero-menu-alpha, 90%); }
+.phone-hero-scroll { display: none; }
 .nav-wrap { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: clamp(22px, 2.2vw, 40px); }
 .brand-link { display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 44px; }
 /* Logo colours (BrandLogo.tsx). Light steel is the shipped lockup's own set, for the charcoal header and footer;

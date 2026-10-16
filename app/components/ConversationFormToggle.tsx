@@ -30,6 +30,11 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
   const focusAfterOpen = useRef(false);
 
   useEffect(() => {
+    // A native Hero anchor can be followed before this island hydrates. Honour that intent once
+    // ready, and on later hash navigation, rather than leaving the visitor at a folded form.
+    const openFromHash = () => {
+      if (window.location.hash === '#inquiry') setOpened(true);
+    };
     const openFromLink = (event: MouseEvent) => {
       if (!(event.target instanceof Element) || !event.target.closest('[data-open-inquiry]')) return;
       setOpened(true);
@@ -39,7 +44,12 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
       if (attached) revealAttachedBrief(event, { takeOver: movedAway });
     };
     document.addEventListener('click', openFromLink, true);
-    return () => document.removeEventListener('click', openFromLink, true);
+    window.addEventListener('hashchange', openFromHash);
+    openFromHash();
+    return () => {
+      document.removeEventListener('click', openFromLink, true);
+      window.removeEventListener('hashchange', openFromHash);
+    };
   }, [attached, movedAway]);
 
   // Once a brief has opened the form it stays open: detaching it («Не додавати», «Почати спочатку») must not fold the

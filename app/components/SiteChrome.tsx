@@ -313,12 +313,12 @@ function PersonFocus({ items }: Readonly<{ items?: readonly string[] }>) {
   );
 }
 
-export function TeamSection({ variant = 'home' }: { variant?: TeamVariant }) {
+export function TeamSection({ variant = 'home', id }: { variant?: TeamVariant; id?: string }) {
   const { sergii, dmytro } = teamContent[variant];
   const isHome = variant === 'home';
 
   return (
-    <section className={`team section team-${variant} team-text-only`} id={isHome ? 'about' : undefined}>
+    <section className={`team section team-${variant} team-text-only`} id={id ?? (isHome ? 'about' : undefined)}>
       <div className="shell">
         {/* HOME: the one place the family / responsibility thesis is stated (it used to be split between «Наша основа»
             and this block). Experience is told without a number until Serhii himself confirms one; responsibility is

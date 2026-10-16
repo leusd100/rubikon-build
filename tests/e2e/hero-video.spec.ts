@@ -111,7 +111,7 @@ test('the homepage phone hero has no video and no pause button', async ({ page }
   }
 });
 
-for (const [density, width] of [[1, 480], [2, 752]] as const) {
+for (const [density, width] of [[1, 480], [2, 1024]] as const) {
   test(`HOME first visit at 390 px / DPR ${density} fetches only its selected hero poster`, async ({ browser, baseURL }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop-chromium', 'explicit cold contexts run once per density');
     const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 },
@@ -121,7 +121,7 @@ for (const [density, width] of [[1, 480], [2, 752]] as const) {
       const posters: string[] = [];
       page.on('request', (request) => {
         const path = new URL(request.url()).pathname;
-        if (path.includes('/hero-mobile-band-')) posters.push(path);
+        if (path.includes('/hero-h1-') || path.includes('/hero-mobile-band-')) posters.push(path);
       });
       await page.goto('/');
       const still = page.locator('.hero img.hv2-hero-still');
@@ -129,8 +129,8 @@ for (const [density, width] of [[1, 480], [2, 752]] as const) {
       await expect.poll(() => still.evaluate((element) => {
         const image = element as HTMLImageElement;
         return image.complete && image.naturalWidth > 0 ? new URL(image.currentSrc).pathname : null;
-      })).toBe(`/media/home-v2/concepts/hero-mobile-band-${width}w.webp`);
-      expect(posters).toEqual([`/media/home-v2/concepts/hero-mobile-band-${width}w.webp`]);
+      })).toBe(`/media/home-v2/concepts/hero-h1-${width}w.webp`);
+      expect(posters).toEqual([`/media/home-v2/concepts/hero-h1-${width}w.webp`]);
       await expect(page.locator('.hero video')).toHaveCount(0);
     } finally {
       await context.close();
