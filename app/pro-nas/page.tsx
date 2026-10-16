@@ -92,7 +92,7 @@ export default function AboutPage() {
 
       {/* 1 · Hero — the names behind the reputation; words and actions under the title, as on /yak-pratsyuiemo */}
       <section className="subhero about-subhero">
-        <HeroHeaderState mediaQuery="(max-width: 600px)" />
+        <HeroHeaderState />
         <div className="about-hero-media">
           <AboutHeroVideo />
         </div>

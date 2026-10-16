@@ -403,9 +403,61 @@ for (const target of pages) {
     await page.goto(target.path, { waitUntil: 'load' });
     await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'top');
     await page.setViewportSize({ width: target.path === '/' ? 761 : 601, height: 844 });
-    await expect(page.locator('html')).not.toHaveAttribute('data-hero-header');
-    await expect(header).not.toHaveCSS('backdrop-filter', 'none');
+    await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'top');
+    await expect(header).toHaveCSS('backdrop-filter', 'none');
   });
 }
 
 });
+
+for (const route of ['/', '/pro-nas']) for (const theme of ['light', 'dark']) {
+  test(`${route} ${theme}: wide header reveals the running Hero and becomes solid on scroll`, async ({ page }) => {
+    await page.addInitScript(value => {
+      localStorage.setItem('rubikon-theme', value);
+      localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
+    }, theme);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(route, { waitUntil: 'load' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    const header = page.locator('.site-header');
+    const shade = page.locator(route === '/' ? '.hero-shade' : '.subhero-overlay');
+    const alpha = () => header.evaluate(element => Number(getComputedStyle(element).backgroundColor.match(/\/\s*([\d.]+)/)?.[1] ?? 1));
+    for (const width of route === '/' ? [761, 820, 1024, 1100, 1280, 1440, 1920] : [601, 760, 761, 820, 1024, 1100, 1280, 1440, 1920]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect.poll(alpha).toBeLessThan(.8);
+      await expect(header).toHaveCSS('backdrop-filter', 'none');
+      // Reveal the footage behind the header, not just transparency over an opaque Hero shade.
+      await expect(shade).not.toHaveCSS('mask-image', 'none');
+      const media = page.locator(route === '/' ? '.hero-media' : '.about-hero-media');
+      expect((await media.boundingBox())!.y).toBe(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      if (width === 820) {
+        const menu = header.locator('.mobile-menu');
+        const summary = menu.locator('summary');
+        await summary.click();
+        await expect.poll(alpha).toBeGreaterThan(.94);
+        await page.keyboard.press('Escape');
+        await expect(menu).not.toHaveAttribute('open');
+        await expect(summary).toBeFocused();
+        await expect.poll(alpha).toBeLessThan(.8);
+      }
+    }
+    await expect.poll(() => page.locator('video.direction-hero-video').evaluateAll(elements => elements.some(element => {
+      const video = element as HTMLVideoElement;
+      return !video.paused && video.readyState >= 2;
+    }))).toBe(true);
+    await page.evaluate(() => window.scrollTo(0, 500));
+    await expect.poll(alpha).toBeGreaterThan(.94);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(alpha).toBeLessThan(.8);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect.poll(alpha).toBe(.82);
+    await expect(shade).toHaveCSS('mask-image', 'none');
+    await page.setViewportSize({ width: 1920, height: 900 });
+    await expect.poll(alpha).toBeLessThan(.8);
+    await header.locator('a[href="/napryamky"]').filter({ visible: true }).click();
+    await expect(page).toHaveURL(/\/napryamky$/);
+    await expect(page.locator('html')).not.toHaveAttribute('data-hero-header');
+    await expect(header).not.toHaveCSS('backdrop-filter', 'none');
+  });
+}

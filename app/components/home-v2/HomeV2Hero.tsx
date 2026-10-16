@@ -9,7 +9,7 @@ import { company, companyContactLinks } from '../../data/company';
 export function HomeV2Hero() {
   return (
     <section className="hero hv2-hero" id="top">
-      <HeroHeaderState mediaQuery="(max-width: 760px)" />
+      <HeroHeaderState />
       <div className="hero-media">
         <HomeV2HeroMedia />
       </div>

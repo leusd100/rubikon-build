@@ -2,6 +2,8 @@
 
 Owner-selected direction after a standalone prototype review: A composition, a modest translucent phone header, H1 on HOME and P5 on About. All existing copy, contact routes and form behavior remain. This design approval does not authorize merge/deploy or a bulk visual-baseline update (DEC-18); Stage 01 HOLD is not lifted by this change.
 
+Owner follow-up, 16 October: extend the integrated header to the existing tablet/laptop/desktop videos on both pages. Above each phone still breakpoint the header has a 72% graphite tint, no backdrop blur; at scroll >32px or with the menu open it uses 97%. Restore the existing Hero shade within the final 24px of the header (101px tall; 77px at ≤760px) so the video reaches the logo without weakening heading contrast or creating a bright strip below the header. Desktop contact cells and the tablet call button have a 60% graphite backing. The existing montage, playback policy and media requests are unchanged; other routes retain their header.
+
 ## Media provenance
 
 Both images were generated with the built-in ImageGen tool for this design exploration. H1 is an illustrative industrial hall; it is not a completed RUBIKON object. P5 depicts anonymous illustrative professionals; they are not portraits of Serhii or Dmytro. HOME retains the visible «Ілюстрація» label. About retains its existing decorative-media policy and actual team section; do not reuse P5 as a team portrait or project case.
