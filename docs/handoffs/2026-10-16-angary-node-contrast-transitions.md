@@ -4,7 +4,7 @@
 |---|---|
 | Дата | 2026-10-16 |
 | Виконавець | Claude Code (діагностика, реалізація, перевірка) |
-| Рев'ю | ChatGPT (незалежне, через GitHub), Дмитро (рішення) |
+| Рев'ю | Незалежне — очікується: ChatGPT (через GitHub); рішення — Дмитро |
 | PR | https://github.com/leusd100/rubikon-build/pull/202 · ready for review (переведено 10:34 UTC). **Merge і deploy не виконувались і не дозволені**: merge = production deploy, лише за окремим OK Дмитра |
 | Гілка | `test/angary-node-contrast-transitions` |
 | Base | `main` `c4bfaef` (#200) |
