@@ -25,20 +25,22 @@ export type GtagCommand = { isArguments: boolean; args: unknown[] };
 
 /**
  * Deny-all outbound for one browser context: every request off the app's own origin is recorded and never reaches the
- * network. gtag.js gets the stub above; any other Google request is answered 204, anything else aborted.
+ * network. gtag.js gets the stub above (each load counted); any other Google request is answered 204, anything else aborted.
  */
 export async function stubGoogle(context: BrowserContext, appOrigin: string) {
   const requests: OutboundRequest[] = [];
+  let gtagLoads = 0;
   await context.route((url) => url.origin !== appOrigin, async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     if (url.hostname === 'www.googletagmanager.com' && url.pathname === '/gtag/js') {
+      gtagLoads += 1;
       return route.fulfill({ status: 200, contentType: 'application/javascript; charset=utf-8', body: GTAG_STUB });
     }
     requests.push({ host: url.hostname, path: url.pathname, type: request.resourceType(), method: request.method() });
     return /google|doubleclick/.test(url.hostname) ? route.fulfill({ status: 204, body: '' }) : route.abort('blockedbyclient');
   });
-  return { requests };
+  return { requests, gtagLoads: () => gtagLoads };
 }
 
 /** Every command the page has handed gtag so far, in order; null before the tag has loaded */

@@ -68,6 +68,27 @@ for (const [label, choose, update] of [
     await expect.poll(() => gtagCommands(page).then((next) => next?.map((command) => command.args))).toEqual([CONSENT_DEFAULT, update, ['js', '<Date>'], CONFIG]);
     expect(outbound.requests).toEqual([]);
     expect(await violations()).toEqual([]);
+    // the tag loaded once a document
+    expect(outbound.gtagLoads()).toBe(2);
+  });
+}
+
+for (const [label, choose] of [
+  ['before any choice', async () => {}],
+  ['«Лише необхідні»', (page: Page) => page.getByRole('button', { name: 'Лише необхідні', exact: true }).click()],
+] as const) {
+  test(`${label}: no gtag.js at all, no command handed to it, and nothing leaves the browser`, async ({ page, context, baseURL }) => {
+    const outbound = await stubGoogle(context, new URL(baseURL!).origin);
+    const violations = await watchCsp(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await expect(page.getByRole('button', { name: 'Лише необхідні', exact: true })).toBeVisible();
+    await choose(page);
+    await page.goto('/angary', { waitUntil: 'networkidle' });
+    await expect(page.locator(GA_SCRIPT_SELECTOR)).toHaveCount(0);
+    expect(outbound.gtagLoads()).toBe(0);
+    expect(await gtagCommands(page)).toBeNull();
+    expect(outbound.requests).toEqual([]);
+    expect(await violations()).toEqual([]);
   });
 }
 
@@ -95,6 +116,6 @@ test('an accepted lead reaches gtag\'s queue once, as generate_lead with its met
     .filter((command) => command.args[0] === 'event' && command.args[1] === 'generate_lead'))).toHaveLength(1);
   const [lead] = (await gtagCommands(page))!.filter((command) => command.args[1] === 'generate_lead');
   expect(lead.isArguments).toBe(true);
-  expect(lead.args[2]).toEqual({ contact_method: expect.any(String), project_direction: expect.any(String) });
+  expect(lead.args[2]).toEqual({ contact_method: expect.stringMatching(/.+/), project_direction: expect.stringMatching(/.+/) });
   expect(outbound.requests).toEqual([]);
 });

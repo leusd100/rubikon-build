@@ -34,7 +34,7 @@ describe('e2e specs never reach Google', () => {
 
   it('finds the specs that grant Analytics', () => {
     expect(granting).toEqual(expect.arrayContaining([
-      'analytics-consent.spec.ts', 'consent.spec.ts', 'first-contact.spec.ts', 'form.spec.ts', 'ux-conversion-phase2.spec.ts',
+      'analytics-consent.spec.ts', 'analytics-contract.spec.ts', 'consent.spec.ts', 'first-contact.spec.ts', 'form.spec.ts', 'ux-conversion-phase2.spec.ts',
     ]));
   });
 
