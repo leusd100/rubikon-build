@@ -267,6 +267,33 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   expect(await looping()).toBe(0);
 });
 
+/** Every CSS transition in it — what it changes, on which element — with its whole time, ms, delay included; then each
+ *  waited out, for `bound` ms at most (one replaced by a newer change is cancelled, not finished): what still runs then is
+ *  named in `pending` */
+function transitionsOut(target: Locator, bound = 5_000) {
+  return target.evaluate(async (element, most) => {
+    const name = (animation: Animation) => {
+      const effect = animation.effect as KeyframeEffect | null;
+      const on = effect?.target as Element | null;
+      return `${on ? [on.tagName.toLowerCase(), ...on.classList].join('.') : '?'}${effect?.pseudoElement ?? ''} ${(animation as CSSTransition).transitionProperty}`;
+    };
+    const transitions = element.getAnimations({ subtree: true }).filter((animation) => animation instanceof CSSTransition);
+    const seen = transitions.map((animation) => ({ what: name(animation), length: Number(animation.effect?.getComputedTiming().endTime) }));
+    const timeout = new Promise<void>((resolve) => { setTimeout(resolve, most); });
+    await Promise.race([Promise.all(transitions.map((animation) => animation.finished.catch(() => undefined))), timeout]);
+    return { seen, pending: transitions.filter((animation) => animation.playState === 'running' || animation.playState === 'paused').map(name) };
+  }, bound);
+}
+
+/** All but instant, as the site's reduced-motion rule makes every transition (.01 ms, globals.css), and none left running */
+function expectInstant(settled: Awaited<ReturnType<typeof transitionsOut>>, what: string) {
+  expect(settled.seen.filter((transition) => !(transition.length < 1)), what).toEqual([]);
+  expect(settled.pending, what).toEqual([]);
+}
+
+/** contrastOf reads three channels and drops any alpha: a colour it is given must be an opaque rgb() */
+const expectOpaque = (colour: string, what: string) => expect(colour, what).toMatch(/^rgb\(\d+, \d+, \d+\)$/);
+
 /** WCAG contrast of two computed rgb() colours */
 function contrastOf(foreground: string, background: string) {
   const luminance = (color: string) => {
@@ -302,14 +329,32 @@ for (const theme of ['light', 'dark'] as const) {
         return { node: Boolean(element?.closest('g.ft-node')), cursor: element ? getComputedStyle(element).cursor : '' };
       }, centre);
       expect(hit, `node ${index + 1}`).toEqual({ node: true, cursor: 'pointer' });
+      // a mark lights under the pointer already (:hover and [data-on] share its fills): that change is all but instant too
+      await page.mouse.move(...centre);
+      expectInstant(await transitionsOut(frame), `node ${index + 1}'s mark under the pointer`);
       await page.mouse.click(...centre);
       await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true');
       await expect(frame).toHaveAttribute('data-node', /.+/);
+      // Pressed, the button changes colour by CSS transitions only because the site's reduced-motion rule gives every
+      // property one (.01 ms, globals.css; the button declares none), and Chrome starts them a frame or more later — up to
+      // three, ~90 ms, unloaded. Read before that, the button is still the one not pressed: Deep Graphite words on no fill,
+      // which contrastOf read as black, 1.30 : 1 (Main Regression, 16.10, light; in Dark the same misread passed, 18.8 : 1).
+      // So its colours are read once its own transitions are through, each all but instant, and each colour that goes into
+      // contrastOf is an opaque one — the words, the fill and the node's number on it
+      expectInstant(await transitionsOut(buttons.nth(index)), `node ${index + 1}'s button`);
       const colours = await buttons.nth(index).evaluate((button) => ({ text: getComputedStyle(button).color, fill: getComputedStyle(button).backgroundColor }));
+      expectOpaque(colours.text, `node ${index + 1}'s button`);
+      expectOpaque(colours.fill, `node ${index + 1}'s button`);
       expect(contrastOf(colours.text, colours.fill), `node ${index + 1}'s button`).toBeGreaterThanOrEqual(4.5);
+      const number = await buttons.nth(index).locator('.hc-frame-node-number').evaluate((digit) => getComputedStyle(digit).color);
+      expectOpaque(number, `node ${index + 1}'s number`);
+      expect(contrastOf(number, colours.fill), `node ${index + 1}'s number`).toBeGreaterThanOrEqual(4.5);
+      expectInstant(await transitionsOut(frame.locator('.ft-node[data-on]')), `node ${index + 1}'s mark`);
       const mark = await frame.locator('.ft-node[data-on]').evaluate((node) => ({
         number: getComputedStyle(node.querySelector('.ft-node-number')!).fill, ring: getComputedStyle(node.querySelector('.ft-node-ring')!).fill,
       }));
+      expectOpaque(mark.number, `node ${index + 1}'s mark`);
+      expectOpaque(mark.ring, `node ${index + 1}'s mark`);
       expect(contrastOf(mark.number, mark.ring), `node ${index + 1}'s mark`).toBeGreaterThanOrEqual(4.5);
       // back to the whole frame, from its button
       await buttons.nth(index).click();
