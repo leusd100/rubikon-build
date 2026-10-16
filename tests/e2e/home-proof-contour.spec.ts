@@ -257,6 +257,58 @@ const finishAnimations = (target: Locator) => target.evaluate((element) => {
   }
 });
 
+/** Every animation in it that is a reduced-motion step — a CSS transition that ends within .01 ms of its start, delay
+ *  included — waited out, round by round (one that ends can change a property its children inherit and start theirs: the
+ *  hint's visibility), for `bound` ms a round at most and up to `rounds` rounds: each one met (what it changes, its kind
+ *  and whole time, ms) and what is still there at the end, named. Anything else is not waited for: it fails as met */
+const runOut = (target: Locator, rounds = 10, bound = 2_000) => target.evaluate(async (element, [most, wait]) => {
+  /** what it changes (or its keyframes' name), on which element, of which kind */
+  const name = (animation: Animation) => {
+    const effect = animation.effect as KeyframeEffect | null;
+    const on = effect?.target as Element | null;
+    const what = (animation as CSSTransition).transitionProperty ?? (animation as CSSAnimation).animationName ?? 'script';
+    return `${on ? [on.tagName.toLowerCase(), ...on.classList].join('.') : '?'}${effect?.pseudoElement ?? ''} ${what} (${animation.constructor.name})`;
+  };
+  const seen: { property: string; kind: string; length: number }[] = [];
+  for (let round = 0; round < most; round += 1) {
+    const animations = element.getAnimations({ subtree: true });
+    const steps = animations.filter((animation) => animation instanceof CSSTransition && Number(animation.effect?.getComputedTiming().endTime) <= 0.01);
+    for (const animation of animations) {
+      seen.push({
+        property: (animation as CSSTransition).transitionProperty ?? (animation as CSSAnimation).animationName ?? 'script',
+        kind: animation.constructor.name,
+        length: Number(animation.effect?.getComputedTiming().endTime),
+      });
+    }
+    if (!steps.length) break;
+    // a transition replaced by a newer change is cancelled, not finished
+    await Promise.race([
+      Promise.all(steps.map((animation) => animation.finished.catch(() => undefined))),
+      new Promise<void>((resolve) => { setTimeout(resolve, wait); }),
+    ]);
+  }
+  return { seen, left: element.getAnimations({ subtree: true }).map(name) };
+}, [rounds, bound] as const);
+
+/** Every animation in it at the end of each of `frames` frames — after the page's own frame callbacks and the styles they
+ *  leave, before the next frame starts — named. A script that restyles it frame by frame shows here every time: under the
+ *  reduced-motion rule each change of its is a fresh .01 ms transition, which runOut alone would see end, one by one */
+const playingAfterFrames = (target: Locator, frames = 5) => target.evaluate(async (element, count) => {
+  /** what it changes (or its keyframes' name), on which element, of which kind */
+  const name = (animation: Animation) => {
+    const effect = animation.effect as KeyframeEffect | null;
+    const on = effect?.target as Element | null;
+    const what = (animation as CSSTransition).transitionProperty ?? (animation as CSSAnimation).animationName ?? 'script';
+    return `${on ? [on.tagName.toLowerCase(), ...on.classList].join('.') : '?'}${effect?.pseudoElement ?? ''} ${what} (${animation.constructor.name})`;
+  };
+  const found: string[] = [];
+  for (let frame = 1; frame <= count; frame += 1) {
+    await new Promise<void>((resolve) => { requestAnimationFrame(() => { setTimeout(resolve, 0); }); });
+    for (const animation of element.getAnimations({ subtree: true })) found.push(`frame ${frame}: ${name(animation)}`);
+  }
+  return found;
+}, frames);
+
 /** Where a point of the photo (its own pixels) stands on the screen, read off the right side's canvas */
 function photoPoint(stage: Locator, [x, y]: readonly [number, number]) {
   return stage.evaluate((element, [px, py, width, height]) => {
@@ -2271,11 +2323,50 @@ test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the
 
 test('with reduced motion the sheet stands static and complete at its resting split', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  // Every CSS transition and animation that starts in the sheet, from the page's first script on, timed off its own
+  // computed style (delay included): one longer than the reduced-motion rule's .01 ms is written down when it starts, so
+  // it fails below even if it has run out before any read of the sheet's animations (a busy CI is slow to get there)
+  await page.addInitScript(() => {
+    const longer: string[] = [];
+    Object.assign(window, { __longerThanReduced: longer });
+    const seconds = (value: string) => value.split(',').map((part) => parseFloat(part) * (part.trim().endsWith('ms') ? 0.001 : 1));
+    const note = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest('#real-object .hv2-contour')) return;
+      const pseudo = (event as TransitionEvent | AnimationEvent).pseudoElement || null;
+      const style = getComputedStyle(target, pseudo);
+      const transition = event.type === 'transitionrun';
+      const name = transition ? (event as TransitionEvent).propertyName : (event as AnimationEvent).animationName;
+      const names = (transition ? style.transitionProperty : style.animationName).split(',').map((part) => part.trim());
+      const durations = seconds(transition ? style.transitionDuration : style.animationDuration);
+      const delays = seconds(transition ? style.transitionDelay : style.animationDelay);
+      const counts = transition ? [1] : style.animationIterationCount.split(',').map((part) => (part.trim() === 'infinite' ? Infinity : Number(part)));
+      let index = names.indexOf(name);
+      if (index < 0) index = names.indexOf('all');
+      if (index < 0) index = 0;
+      const ms = (delays[index % delays.length] + durations[index % durations.length] * counts[index % counts.length]) * 1000;
+      if (!(ms <= 0.0101)) longer.push(`${[target.tagName.toLowerCase(), ...target.classList].join('.')}${pseudo ?? ''} ${name}: ${ms} ms`);
+    };
+    document.addEventListener('transitionrun', note, true);
+    document.addEventListener('animationstart', note, true);
+  });
   const { sheet, stage, slider } = await open(page);
   await expect(sheet).not.toHaveAttribute('data-sheet-state', /.+/);
   await expectSplit(slider, stage, DEFAULT_SPLIT);
   const paths = sheet.locator('.hv2-contour-lines path, .hv2-proof-scheme [data-group]');
-  expect(await sheet.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
+  // open()'s Shift — the visitor's first key — stands down the arrival's last word, node Г's hint, which reduced motion
+  // shows from the start (useFirstSweep). What it lit goes back under the site's reduced-motion rule (globals.css: every
+  // transition .01 ms): node Г's ring and letter and the hint's line, 13 CSS transitions, then 2 of visibility.
+  // Chrome starts each a frame or more later, and a busy CI draws none for 100 ms and more: 13 and 2 were read (Main
+  // Regression, 16.10). So: each of them such a step — nothing that moves for longer, nothing that keeps going — and once
+  // they are through, nothing in the sheet plays, for the frames after too
+  const { seen, left } = await runOut(sheet);
+  expect(seen.filter((animation) => animation.kind !== 'CSSTransition' || !(animation.length <= 0.01))).toEqual([]);
+  expect(left).toEqual([]);
+  // …and nothing restarts: at the end of each of the next frames, nothing in the sheet plays
+  expect(await playingAfterFrames(sheet)).toEqual([]);
+  // …and nothing that started in the sheet since the page began was longer than a reduced-motion step
+  expect(await page.evaluate(() => (window as unknown as { __longerThanReduced: string[] }).__longerThanReduced)).toEqual([]);
   expect(await paths.evaluateAll((elements) => elements.filter((element) => {
     const style = getComputedStyle(element);
     return !/^0(px)?$/.test(style.strokeDashoffset) || style.opacity !== '1';
