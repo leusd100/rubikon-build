@@ -4,7 +4,7 @@
 |---|---|
 | Дата | 2026-10-16 |
 | Виконавець | Claude Code (діагностика: агент аналітики Wave 01; реалізація й перевірка) |
-| Рев'ю | Незалежне adversarial-рев'ю PR і верифікація аналізу 16.10 (GO_WITH_NOTES / SOUND_WITH_CORRECTIONS); ChatGPT (через GitHub); Дмитро (рішення) |
+| Рев'ю | Внутрішнє adversarial-рев'ю PR і верифікація аналізу субагентами цієї сесії, 16.10 (GO_WITH_NOTES / SOUND_WITH_CORRECTIONS); незалежне — ChatGPT (через GitHub); Дмитро (рішення) |
 | PR | https://github.com/leusd100/rubikon-build/pull/203 · Draft. **Merge і deploy не виконувались і не дозволені**: merge = production deploy, лише за окремим OK Дмитра |
 | Гілка | `test/analytics-contract-isolation` |
 | Base | `main` `c4bfaef` (#200) |
