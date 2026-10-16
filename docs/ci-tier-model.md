@@ -30,11 +30,15 @@ Push to main / workflow_dispatch
 
 Nightly / workflow_dispatch
 └─ lint + typecheck + coverage + build
-   ├─ full E2E (4 shards)
+   ├─ full E2E (4 shards, including accessibility interaction suites)
    ├─ site-wide visual (2 shards)
-   ├─ accessibility interaction suites
    └─ Lighthouse: home + standard + grain (parallel)
 ```
+
+The full E2E selection already includes the four desktop tests in `configurator-fullscreen-accessibility.spec.ts`
+and `configurator-palette-accessibility.spec.ts`; Nightly does not run a duplicate accessibility job. Its report job
+checks the build result before downloading or merging browser reports, and the final aggregate requires build, E2E,
+visual and Lighthouse success. Failed Lighthouse profiles retain hidden files from `.lighthouseci/` as diagnostics.
 
 SonarQube and GitHub-managed CodeQL continue to report on pull requests but are not part of the
 single aggregate merge gate.

@@ -101,28 +101,6 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  accessibility:
-    name: Nightly accessibility
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    env:
-      PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/setup-ci
-      - uses: actions/download-artifact@v5
-        with:
-          name: nightly-production-build
-          path: dist
-      - uses: ./.github/actions/setup-playwright
-      - name: Run accessibility interaction suites
-        run: >-
-          pnpm exec playwright test --project=desktop-chromium
-          tests/e2e/configurator-fullscreen-accessibility.spec.ts
-          tests/e2e/configurator-palette-accessibility.spec.ts
-
   lighthouse:
     name: Lighthouse (${{ matrix.profile }})
     needs: build
@@ -151,15 +129,24 @@ jobs:
         with:
           name: lighthouse-${{ matrix.profile }}
           path: .lighthouseci/
+          include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14
 
   report:
     name: Nightly Full QA
     if: ${{ !cancelled() }}
-    needs: [e2e, visual, accessibility, lighthouse]
+    needs: [build, e2e, visual, lighthouse]
     runs-on: ubuntu-latest
     steps:
+      - name: Require successful nightly build
+        env:
+          BUILD: ${{ needs.build.result }}
+        run: |
+          if [ "$BUILD" != success ]; then
+            echo "::error::Nightly build did not succeed ($BUILD); skipping Playwright report collection."
+            exit 1
+          fi
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-ci
@@ -179,12 +166,12 @@ jobs:
           retention-days: 14
       - name: Preserve full QA result
         env:
+          BUILD: ${{ needs.build.result }}
           E2E: ${{ needs.e2e.result }}
           VISUAL: ${{ needs.visual.result }}
-          ACCESSIBILITY: ${{ needs.accessibility.result }}
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
         run: >-
+          test "$BUILD" = success &&
           test "$E2E" = success &&
           test "$VISUAL" = success &&
-          test "$ACCESSIBILITY" = success &&
           test "$LIGHTHOUSE" = success
