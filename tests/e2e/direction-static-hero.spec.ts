@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { expect, test, type Page } from '@playwright/test';
+import { getFromServer } from './server.helpers';
 
 const directions = [
   '/angary',
@@ -164,7 +165,7 @@ test('direction static heroes use responsive images: a hero whose HTML arrives i
       { path: '/angary', before: '<span><strong>', where: 'inside the header phone' },
     ];
     for (const { path, before, where } of stalls) {
-      const served = await page.request.get(path, { headers: ownConnection });
+      const served = await getFromServer(page.request, path);
       const html = await served.text();
       const at = html.indexOf(before);
       // a renamed class would let the whole page through at once and test nothing
