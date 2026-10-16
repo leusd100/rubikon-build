@@ -1174,6 +1174,19 @@ test('a word of a load’s way in the legend lights its link alone — pointed a
   const { sheet, stage, layers } = await open(page);
   /** Each step of the way's drawing (ProofFrame's data-step) with its opacity */
   const steps = (load: Load) => stage.locator(`${CHAINS[load].group} [data-step]`).evaluateAll((elements) => elements.map((element) => [element.getAttribute('data-step')!, getComputedStyle(element).opacity]));
+  /** Until the steps' own transitions are over; their durations, in ms. A step's opacity moves by a CSS transition, under
+   *  reduced motion too (.01 ms, globals.css), and Chrome starts one a frame or more after `data-step-on` changes: by the
+   *  third in Docker, the fifth with its GPU process starved. Until then getComputedStyle reads every step as it was under
+   *  the word before (Nightly 15.10: «ферма» lit where «стіни й колони» was). A transition replaced by a newer change is
+   *  cancelled, not finished. */
+  const steppedBack = (load: Load) => stage.locator(`${CHAINS[load].group} [data-step]`).evaluateAll((elements) => Promise.all(elements
+    .flatMap((element) => element.getAnimations())
+    .filter((animation) => animation instanceof CSSTransition)
+    .map(async (animation) => {
+      const duration = Number(animation.effect?.getComputedTiming().duration);
+      await animation.finished.catch(() => undefined);
+      return duration;
+    })));
   /** What the steps look like with step `on` lit alone: its own whole, the drops at .3, every other at .14 */
   const litAlone = async (load: Load, on: number) => (await steps(load)).map(([step]) => {
     if (step === String(on)) return [step, '1'];
@@ -1193,6 +1206,8 @@ test('a word of a load’s way in the legend lights its link alone — pointed a
       await away();
       await expect(words.nth(index), word).toHaveAttribute('aria-pressed', 'true');
       await expect(stage, word).toHaveAttribute('data-step-on', String(n));
+      // waited for, the stepping back is still all but instant under reduced motion
+      expect(Math.max(0, ...await steppedBack(load)), word).toBeLessThan(1);
       expect(await steps(load), word).toEqual(await litAlone(load, n));
       expect(await words.evaluateAll((buttons) => buttons.filter((button) => button.getAttribute('aria-pressed') === 'true').length), word).toBe(1);
     }
