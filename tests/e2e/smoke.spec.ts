@@ -196,9 +196,9 @@ test.describe('public route smoke tests', () => {
             expectedHeroPosterMessage = 'Home should use its static phone still';
             expectedHeroPosterSubstring = '/media/home-v2/concepts/hero-h1-';
           } else if (route.path === '/pro-nas') {
-            // UX pass 2026-10: one still (the owner's photo 4) instead of the phone montage
+            // Owner-approved P5 process illustration instead of the phone montage.
             expectedHeroPosterMessage = 'About should use its static phone still';
-            expectedHeroPosterSubstring = '/media/about/about-phone-still-';
+            expectedHeroPosterSubstring = '/media/about/about-p5-';
           } else {
             expectedHeroPosterMessage = `${route.path} should use its mobile hero poster`;
             expectedHeroPosterSubstring = '-768w.webp';
@@ -456,7 +456,7 @@ test.describe('public route smoke tests', () => {
     const still = hero.locator('img.about-hero-still');
     await expect(still).toBeVisible();
     await expect.poll(() => still.evaluate((element) => (element as HTMLImageElement).currentSrc), { timeout: 10_000 })
-      .toContain('/media/about/about-phone-still-');
+      .toContain('/media/about/about-p5-');
     // Owner's decision (30.09): no «Ілюстрація» tags on /pro-nas; the still is decorative
     await expect(still).toHaveAttribute('alt', '');
   });
@@ -496,7 +496,7 @@ test.describe('public route smoke tests', () => {
     ]);
   });
 
-  test('homepage hero uses one light still on phones, never the video', async ({ page }) => {
+  test('homepage hero uses the H1 still on phones, never the video', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) > 600, 'Phone hero test.');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/', { waitUntil: 'load' });
@@ -507,7 +507,7 @@ test.describe('public route smoke tests', () => {
     const still = hero.locator('img.hv2-hero-still');
     await expect(still).toBeVisible();
     await expect.poll(() => still.evaluate((element) => (element as HTMLImageElement).currentSrc), { timeout: 10_000 })
-      .toContain('/media/home-v2/concepts/hero-mobile-');
+      .toContain('/media/home-v2/concepts/hero-h1-');
     // It is a concept image, so it says so.
     await expect(hero.locator('.hv2-hero-provenance')).toHaveText('Ілюстрація');
   });

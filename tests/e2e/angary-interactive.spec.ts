@@ -609,11 +609,13 @@ test('a chosen option is graphite with a copper tick; a copper fill is left for 
   expect(await action.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(text);
 });
 
-test('on a phone the model stays under the header while the parameters are set, never covers the summary, and lets go above the controls', async ({ page }, testInfo) => {
+for (const safeTop of [0, 47]) test(`on a phone the model stays under the header while the parameters are set, never covers the summary, and lets go above the controls${safeTop ? ' with a simulated safe area' : ''}`, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit mobile viewport runs once');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openHangarPage(page);
+  if (safeTop) await page.addStyleTag({ content: `body { --phone-hero-safe-top: ${safeTop}px !important; }` });
+  await expect(page.locator('.site-header')).toHaveCSS('height', `${67 + safeTop}px`);
   const stage = page.locator('#configurator .hc-preview-surface');
   const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
 
@@ -648,6 +650,22 @@ test('on a phone the model stays under the header while the parameters are set, 
   expect(await summary.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(summaryTop, 0);
   // Back above the controls it lets go, and the model grows in view
   await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page.locator('#configurator .hc-layout')).not.toHaveAttribute('data-configuring', '');
+});
+
+test('the mini preview rebuilds its hold line when only the header safe area changes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit phone viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const safeArea = await page.addStyleTag({ content: 'body { --phone-hero-safe-top: 47px !important; }' });
+  await expect(page.locator('.site-header')).toHaveCSS('height', '114px');
+  await openControlGroup(page, 'scope');
+  await scrollToMiniHold(page, 10);
+  // The controls are just above the old hold line. Removing only header padding puts them below the new line;
+  // the whole sheet must return even though no step, viewport, or drawing size has changed.
+  await safeArea.evaluate((element) => { element.parentNode?.removeChild(element); });
+  await expect(page.locator('.site-header')).toHaveCSS('height', '67px');
   await expect(page.locator('#configurator .hc-layout')).not.toHaveAttribute('data-configuring', '');
 });
 

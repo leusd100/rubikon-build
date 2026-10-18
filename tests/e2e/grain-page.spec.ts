@@ -100,6 +100,20 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     await expect(inquiryComment(page)).toHaveValue('Своїми словами: склад на 3 тис. т');
   });
 
+  for (const safeTop of [0, 47]) test(`on a tall phone the complex drawing sticks directly below the header${safeTop ? ' with a simulated safe area' : ''}`, async ({ page, isMobile }) => {
+    test.skip(isMobile, 'the explicit phone viewport runs once');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openPlanner(page, GRAIN_PAGE);
+    if (safeTop) await page.addStyleTag({ content: `body { --phone-hero-safe-top: ${safeTop}px !important; }` });
+    await expect(page.locator('.site-header')).toHaveCSS('height', `${67 + safeTop}px`);
+    const sheet = complex(page).locator('.gc-sheet');
+    const header = await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().bottom);
+    await sheet.evaluate((element, edge) => window.scrollBy({ top: element.getBoundingClientRect().top - edge + 40, behavior: 'instant' }), header);
+    await expect(sheet).toHaveCSS('position', 'sticky');
+    await expect.poll(() => sheet.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(header, 0);
+  });
+
   test('on a low screen the complex still assembles, and its drawing scrolls away with the page', async ({ page, isMobile }) => {
     test.skip(isMobile, 'the explicit low viewport runs once');
     // a phone on its side; a 1366 × 768 laptop at 200 % is the same (683 × 384)

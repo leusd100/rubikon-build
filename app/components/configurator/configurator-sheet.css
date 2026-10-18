@@ -203,10 +203,10 @@
     letter-spacing: 0;
     text-transform: none;
   }
-  /* A control that takes keyboard focus lands under the mini drawing, not behind it: the site header (77 px), the mini
+  /* A control that takes keyboard focus lands under the mini drawing, not behind it: the site's current header edge, the mini
      drawing (--hc-mini-h, useMiniPreview) and a little air (WCAG 2.4.11; 03.10) */
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-controls :is(a[href], button, summary, input, select, textarea) {
-    scroll-margin-top: calc(var(--hc-mini-h, 0px) + 85px);
+    scroll-margin-top: calc(var(--hc-mini-h, 0px) + var(--compact-hero-header-edge, 77px) + 8px);
   }
 }
 

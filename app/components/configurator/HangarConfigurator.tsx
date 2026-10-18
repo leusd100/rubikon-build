@@ -14,7 +14,7 @@ import { keepShortWords } from '../../lib/typography';
 import { sheetObjectLabel } from './sheetLabels';
 import './configurator-sheet.css';
 
-/** The site header's height on a phone (globals.css): the mini preview is held right under it (configurator-sheet.css) */
+/** Fallback for an absent site header; the live compact/safe-area edge is measured below. */
 const PHONE_HEADER_PX = 77;
 
 /** Where the mini drawing is held: a phone's width, with the height for it. On a short screen — a window zoomed to
@@ -63,11 +63,12 @@ function useMiniPreview(enabled: boolean) {
     const sheet = layout?.querySelector<HTMLElement>('.hc-preview-surface');
     const controls = layout?.querySelector<HTMLElement>('.hc-controls');
     if (!enabled || !layout || !sheet || !controls) return undefined;
+    const header = document.querySelector<HTMLElement>('.site-header');
     const phone = window.matchMedia(MINI_QUERY);
     const tablet = window.matchMedia(TABLET_QUERY);
     const held = () => 'configuring' in layout.dataset;
     /** Where the controls' top holds the sheet for a mini drawing `mini` px high: whole pixels, as Chrome rounds them */
-    const lineFor = (mini: number) => Math.round(PHONE_HEADER_PX + mini + (Number.parseFloat(getComputedStyle(layout).rowGap) || 0));
+    const lineFor = (mini: number) => Math.round((header?.getBoundingClientRect().bottom ?? PHONE_HEADER_PX) + mini + (Number.parseFloat(getComputedStyle(layout).rowGap) || 0));
     let line = 0;
     // The whole sheet's height when the mini drawing was last measured: a let-go brings it back, and needs no new read
     let whole = 0;
@@ -150,14 +151,23 @@ function useMiniPreview(enabled: boolean) {
     };
     // Whenever the sheet's size changes — the step, the readout, a fold, a 3D view, the fonts — and once on observing.
     // A portrait tablet's sheet sticks whole: its height is all the layout needs.
-    const resized = new ResizeObserver(([entry]) => {
-      const height = entry.borderBoxSize[0]?.blockSize ?? sheet.offsetHeight;
-      if (tablet.matches) layout.style.setProperty('--hc-mini-h', `${height}px`);
-      if (!phone.matches) return;
-      if (held()) setMini(height);
-      else if (Math.abs(height - whole) >= 0.5) {
-        whole = height;
-        setMini(measureMini());
+    const resized = new ResizeObserver((entries) => {
+      const entry = entries.find((item) => item.target === sheet);
+      if (entry) {
+        const height = entry.borderBoxSize[0]?.blockSize ?? sheet.offsetHeight;
+        if (tablet.matches) layout.style.setProperty('--hc-mini-h', `${height}px`);
+        if (phone.matches) {
+          if (held()) setMini(height);
+          else if (Math.abs(height - whole) >= 0.5) {
+            whole = height;
+            setMini(measureMini());
+          }
+        }
+      }
+      // Header padding can change by itself, or alongside an unchanged-height sheet entry.
+      if (phone.matches && entries.some((item) => item.target === header)) {
+        const mini = Number.parseFloat(layout.style.getPropertyValue('--hc-mini-h'));
+        if (Number.isFinite(mini)) setMini(mini);
       }
     });
     const update = () => {
@@ -168,6 +178,7 @@ function useMiniPreview(enabled: boolean) {
       }
       if (phone.matches || tablet.matches) {
         resized.observe(sheet);
+        if (header) resized.observe(header, { box: 'border-box' });
         return;
       }
       resized.disconnect();
