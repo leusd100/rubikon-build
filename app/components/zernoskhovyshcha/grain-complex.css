@@ -184,8 +184,8 @@
   .gc-scope-col li { font-size: 14px; }
 }
 
-/* The phone's sheet stays at the top only where it leaves the choices room under it (header 77 + sheet 284 px): a phone on
+/* The phone's sheet stays below the header only where it leaves the choices room under it (sheet 284 px): a phone on
    its side or a laptop at 200 % scrolls it away with the rest, so no choice and no focus ring ever hides behind it */
 @media (max-width: 760px) and (min-height: 560px) {
-  .gc-stage .gc-sheet { position: sticky; z-index: 4; top: 77px; }
+  .gc-stage .gc-sheet { position: sticky; z-index: 4; top: var(--compact-hero-header-edge, 77px); }
 }

@@ -1224,7 +1224,7 @@
 @media (max-width: 760px) {
   .hangar-configurator-embedded .hc-preview-surface { padding: 10px; }
   .hangar-configurator-embedded :is(.hc-preview-svg, .hc-preview-canvas, .hc-preview-loading) { height: 58vw; min-height: 200px; }
-  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-surface { position: sticky; z-index: 6; top: 77px; box-shadow: 0 16px 28px -12px rgba(0, 0, 0, .5); }
+  .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-surface { position: sticky; z-index: 6; top: var(--compact-hero-header-edge, 77px); box-shadow: 0 16px 28px -12px rgba(0, 0, 0, .5); }
 }
 
 /* /angary: the site header is fixed (101 px above 760 px), so the sticky preview pane holds below it, not at 24 px —
