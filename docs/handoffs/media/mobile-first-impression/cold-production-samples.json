@@ -1,0 +1,259 @@
+{
+  "conditions": "Mac M1 local loopback production builds; Chromium; 390\u00d7844 DPR2; cold context and cache disabled; 150ms latency / 1.6Mbit down / 0.75Mbit up; 4\u00d7 CPU throttle; reduced motion; consent denied; 1.5s after networkidle; total initial navigation, not just hero; baseline captured first, selected rerun after final CSS; three runs per page/build, not interleaved across final builds",
+  "samples": [
+    {
+      "run": 1,
+      "name": "home",
+      "build": "baseline",
+      "metrics": {
+        "lcp": 7340,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 119272,
+        "cls": 0
+      },
+      "transferBytes": 1540592,
+      "requests": 63,
+      "poster": "/media/home-v2/concepts/hero-mobile-band-752w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/home-v2/concepts/hero-mobile-band-752w.webp",
+          "bytes": 115490
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 1,
+      "name": "about",
+      "build": "baseline",
+      "metrics": {
+        "lcp": 4512,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 276120,
+        "cls": 0
+      },
+      "transferBytes": 944309,
+      "requests": 58,
+      "poster": "/media/about/about-phone-still-768w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/about/about-phone-still-768w.webp",
+          "bytes": 76500
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 2,
+      "name": "home",
+      "build": "baseline",
+      "metrics": {
+        "lcp": 7324,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 119272,
+        "cls": 0
+      },
+      "transferBytes": 1540592,
+      "requests": 63,
+      "poster": "/media/home-v2/concepts/hero-mobile-band-752w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/home-v2/concepts/hero-mobile-band-752w.webp",
+          "bytes": 115490
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 2,
+      "name": "about",
+      "build": "baseline",
+      "metrics": {
+        "lcp": 4496,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 276120,
+        "cls": 0
+      },
+      "transferBytes": 944309,
+      "requests": 58,
+      "poster": "/media/about/about-phone-still-768w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/about/about-phone-still-768w.webp",
+          "bytes": 76500
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 3,
+      "name": "home",
+      "build": "baseline",
+      "metrics": {
+        "lcp": 7332,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 119272,
+        "cls": 0
+      },
+      "transferBytes": 1540592,
+      "requests": 63,
+      "poster": "/media/home-v2/concepts/hero-mobile-band-752w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/home-v2/concepts/hero-mobile-band-752w.webp",
+          "bytes": 115490
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 3,
+      "name": "about",
+      "build": "baseline",
+      "metrics": {
+        "lcp": 4508,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 276120,
+        "cls": 0
+      },
+      "transferBytes": 944309,
+      "requests": 58,
+      "poster": "/media/about/about-phone-still-768w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/about/about-phone-still-768w.webp",
+          "bytes": 76500
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 1,
+      "name": "home",
+      "build": "selected",
+      "metrics": {
+        "lcp": 7944,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 253853,
+        "cls": 0
+      },
+      "transferBytes": 1570809,
+      "requests": 64,
+      "poster": "/media/home-v2/concepts/hero-h1-1024w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/home-v2/concepts/hero-h1-1024w.webp",
+          "bytes": 140486
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 1,
+      "name": "about",
+      "build": "selected",
+      "metrics": {
+        "lcp": 4512,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 253451,
+        "cls": 0
+      },
+      "transferBytes": 949294,
+      "requests": 59,
+      "poster": "/media/about/about-p5-1024w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/about/about-p5-1024w.webp",
+          "bytes": 74092
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 2,
+      "name": "home",
+      "build": "selected",
+      "metrics": {
+        "lcp": 7964,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 253853,
+        "cls": 0
+      },
+      "transferBytes": 1570809,
+      "requests": 64,
+      "poster": "/media/home-v2/concepts/hero-h1-1024w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/home-v2/concepts/hero-h1-1024w.webp",
+          "bytes": 140486
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 2,
+      "name": "about",
+      "build": "selected",
+      "metrics": {
+        "lcp": 4500,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 253451,
+        "cls": 0
+      },
+      "transferBytes": 949294,
+      "requests": 59,
+      "poster": "/media/about/about-p5-1024w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/about/about-p5-1024w.webp",
+          "bytes": 74092
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 3,
+      "name": "home",
+      "build": "selected",
+      "metrics": {
+        "lcp": 7964,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 253853,
+        "cls": 0
+      },
+      "transferBytes": 1570809,
+      "requests": 64,
+      "poster": "/media/home-v2/concepts/hero-h1-1024w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/home-v2/concepts/hero-h1-1024w.webp",
+          "bytes": 140486
+        }
+      ],
+      "videoRequests": []
+    },
+    {
+      "run": 3,
+      "name": "about",
+      "build": "selected",
+      "metrics": {
+        "lcp": 4504,
+        "lcpElement": "IMG.direction-hero-poster",
+        "lcpSize": 253451,
+        "cls": 0
+      },
+      "transferBytes": 949294,
+      "requests": 59,
+      "poster": "/media/about/about-p5-1024w.webp",
+      "heroRequests": [
+        {
+          "path": "/media/about/about-p5-1024w.webp",
+          "bytes": 74092
+        }
+      ],
+      "videoRequests": []
+    }
+  ],
+  "baseline_commit": "6cf74f2005e6da010405b1e6eea4f516be621447",
+  "selected_code_commit": "b1dbac10e8a325469a1fc98ed2943b46984fff8f"
+}

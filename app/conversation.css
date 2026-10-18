@@ -58,7 +58,7 @@
   transition: background var(--duration-fast) ease;
 }
 .conversation-call .conversation-call-icon svg { width: 22px; height: 22px; flex: none; stroke-width: 1.7; }
-.conversation-call .conversation-call-text { flex: 1 1 auto; display: grid; gap: 7px; padding: 0 20px; text-align: left; }
+.conversation-call .conversation-call-text { flex: 1 1 auto; display: grid; gap: 7px; padding: 0 20px; text-align: center; }
 .conversation-call small { font-size: 11px; letter-spacing: .12em; }
 .conversation-call strong { font-size: 20px; letter-spacing: .025em; }
 .conversation-call .conversation-call-arrow { flex: none; padding: 0 24px 0 8px; font-size: 18px; font-weight: 500; transition: transform var(--duration-fast) ease; }

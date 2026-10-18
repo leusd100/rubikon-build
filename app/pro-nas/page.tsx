@@ -3,6 +3,7 @@ import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, HeroCallButton, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
+import { PhoneHeroScroll } from '../components/PhoneHeroScroll';
 import { CapabilityFigure } from '../components/about/CapabilityFigure';
 import { PrincipleMark } from '../components/about/PrincipleMark';
 import { RegionBlock } from '../components/about/RegionBlock';
@@ -90,13 +91,13 @@ export default function AboutPage() {
       <ProcessMotion root=".about-page" />
 
       {/* 1 · Hero — the names behind the reputation; words and actions under the title, as on /yak-pratsyuiemo */}
-      <section className="subhero about-subhero">
+      <section className="subhero about-subhero phone-hero">
         <div className="about-hero-media">
           <AboutHeroVideo />
         </div>
         <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
-        <div className="shell subhero-layout">
+        <div className="shell subhero-layout phone-hero-content">
           <div className="subhero-copy">
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
@@ -114,11 +115,12 @@ export default function AboutPage() {
               </a>
             </div>
           </div>
+          <PhoneHeroScroll href="#about-team" />
         </div>
       </section>
 
       {/* 2 · The two people and what each answers for */}
-      <TeamSection variant="about" />
+      <TeamSection variant="about" id="about-team" />
 
       {/* 3 · What we do ourselves and what we organise, then where: the Delivery Model's capability layers (the five
           directions are on /napryamky, one link away); the region closes the block on a copper line */}

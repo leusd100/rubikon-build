@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-18",
+  "owner_approval": "Бро все супер, давай тоді завершувати з #205 та #206 pr",
+  "source_head": "93beea38fc0e5350743144dcaebbd5b126227a1f",
+  "source_run": "https://github.com/leusd100/rubikon-build/actions/runs/39120759804",
+  "artifact": "changed-area-visual-diff",
+  "artifact_id": 12134176762,
+  "review": "Codex inspected actual/expected/diff images; only these three Linux baselines accepted. Each actual is byte-identical across all three CI attempts. Darwin and all tolerances/retries remain unchanged.",
+  "snapshots": [
+    {
+      "path": "tests/e2e/brand-logo-visual.spec.ts-snapshots/header-logo-mobile-390-linux.png",
+      "old_size": [
+        193,
+        44
+      ],
+      "new_size": [
+        188,
+        44
+      ],
+      "old_sha256": "e6d99cf9835d1e1cb16c8bfb547817d940f5b8410dc764d37b90ffa0dab53a36",
+      "new_sha256": "7da332f63a05eabb0b9958748e399dd1fc449ca3dc790f6a2e63d3fbce8d1963",
+      "reason": "Approved compact header;188px minimum retained; artwork and44px link target unchanged."
+    },
+    {
+      "path": "tests/e2e/visual.spec.ts-snapshots/homepage-hero-mobile-375-linux.png",
+      "old_size": [
+        375,
+        692
+      ],
+      "new_size": [
+        375,
+        876
+      ],
+      "old_sha256": "e326101ed61cbd2efaffa74e06afa4afb991553b8d10dfb2d6d9ece188de631a",
+      "new_sha256": "bf84cc6a320f38550c86d336117dc1c762f433b66b0baf88037ec676946f2e1c",
+      "reason": "Owner-approved H1 full scene, compact header, continuous gradient, centred call and mobile secondary copy; scene692→876px."
+    },
+    {
+      "path": "tests/e2e/visual.spec.ts-snapshots/process-scope-mobile-375-linux.png",
+      "old_size": [
+        343,
+        1590
+      ],
+      "new_size": [
+        343,
+        1591
+      ],
+      "old_sha256": "a429a4214b2297de85a063bf7a2e9675ec00d700ff0470d64a68f5313d38706f",
+      "new_sha256": "069d9c5e725df355123632bd6eb7626880c68e228842c91b79e2f651826728d7",
+      "reason": "Same content/layout; reviewed fractional screenshot clipping1590→1591px after changed phone scene; only antialias/clip rounding."
+    }
+  ]
+}

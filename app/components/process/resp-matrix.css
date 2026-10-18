@@ -86,7 +86,7 @@
 .resp-matrix-wrap .proc-contract-band { margin-top: 44px; }
 
 @media (max-width: 1050px) { .rm-head { top: 169px; } .rm-when { margin-inline: 0; text-align: left; } }
-@media (max-width: 760px) { .rm-head { top: 143px; } }
+@media (max-width: 760px) { .rm-head { top: calc(var(--compact-hero-header-edge, 77px) + 66px); } }
 
 /* Narrower: the work goes over its row, the three party columns under it — each word over its note */
 @media (max-width: 860px) {

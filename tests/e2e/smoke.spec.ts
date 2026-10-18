@@ -147,7 +147,9 @@ test.describe('public route smoke tests', () => {
         // The call leads every hero (DEC-41, PROPOSED). On a phone /napryamky, /angary and the grain page keep their
         // written link in the DOM but hide it (one call, one tool — the conversation block below carries the written path).
         const callLeads = (page.viewportSize()?.width ?? 0) <= 760;
-        const ctaName = heroInquiryCta[route.path] ?? 'Обговорити задачу';
+        const ctaName = route.path === '/' && callLeads
+          ? 'Обговорити задачу'
+          : heroInquiryCta[route.path] ?? 'Обговорити задачу';
         // A hidden link has no accessible name to match, so the hidden case is found by its text.
         const projectCta = callLeads
           ? hero.locator('a[href="#inquiry"]').filter({ hasText: ctaName })
@@ -190,9 +192,9 @@ test.describe('public route smoke tests', () => {
           heroPosterShouldMatch = true;
         } else if ((page.viewportSize()?.width ?? 0) <= 760) {
           if (route.path === '/') {
-            // HOME v2: one light concept still instead of the phone montage.
+            // HOME v2: the H1 industrial illustration instead of the phone montage.
             expectedHeroPosterMessage = 'Home should use its static phone still';
-            expectedHeroPosterSubstring = '/media/home-v2/concepts/hero-mobile-';
+            expectedHeroPosterSubstring = '/media/home-v2/concepts/hero-h1-';
           } else if (route.path === '/pro-nas') {
             // UX pass 2026-10: one still (the owner's photo 4) instead of the phone montage
             expectedHeroPosterMessage = 'About should use its static phone still';
@@ -242,11 +244,14 @@ test.describe('public route smoke tests', () => {
 
   test('homepage written-contact CTA reaches the inquiry form', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' });
+    const ctaName = (page.viewportSize()?.width ?? 0) <= 760
+      ? 'Обговорити задачу'
+      : 'Написати або залишити запит';
 
     await page
       .locator('main > section')
       .first()
-      .getByRole('link', { name: 'Написати або залишити запит', exact: true })
+      .getByRole('link', { name: ctaName, exact: true })
       .click();
 
     await expect(page).toHaveURL(/\/#inquiry$/);

@@ -32,10 +32,13 @@ export function HomeV2Hero() {
               <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
             </a>
             <a className="button button-outline" href="#inquiry" data-open-inquiry="">
-              Написати або залишити запит <span aria-hidden="true">↓</span>
+              <span className="hv2-inquiry-phone">Обговорити задачу</span>
+              <span className="hv2-inquiry-wide">Написати або залишити запит</span>
+              <span aria-hidden="true">↓</span>
             </a>
           </div>
         </div>
+        <a className="phone-hero-scroll" href="#directions" aria-label="До наступного розділу">↓</a>
       </div>
       {/* Only the ≤760 still is a concept image; the desktop footage is process footage, not an object. */}
       <span className="hv2-hero-provenance">Ілюстрація</span>

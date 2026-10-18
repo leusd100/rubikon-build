@@ -9,6 +9,7 @@ import { DrawingSheet, type SheetCell } from './DrawingSheet';
 import { DirectionNode } from './directions/DirectionNode';
 import { ProcessDrawing } from './directions/ProcessDrawing';
 import { DirectionHeroImage } from './DirectionHeroImage';
+import { PhoneHeroScroll } from './PhoneHeroScroll';
 import { absoluteUrl, siteUrl } from '../lib/seo';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep, ProcessSplit } from '../types/directionPage';
 import { getDirection } from '../lib/directions';
@@ -72,6 +73,7 @@ type DirectionHeroProps = {
   introPhone?: string;
   notePhone?: string;
   heroImage: DirectionHeroImageAsset;
+  nextHref: string;
   actions?: NonNullable<DirectionPageConfig['hero']['actions']>;
 };
 
@@ -85,6 +87,7 @@ function DirectionHero({
   introPhone,
   notePhone,
   heroImage,
+  nextHref,
   actions,
 }: DirectionHeroProps) {
   const serviceData = {
@@ -107,7 +110,7 @@ function DirectionHero({
   };
 
   return (
-    <section className={classNames('service-subhero', actions?.sectionClassName)}>
+    <section className={classNames('service-subhero', actions?.legacyCallLink ? undefined : 'phone-hero', actions?.sectionClassName)}>
       {/* The first paint waits until the hero's copy is in. The copy sits at the bottom of a full-height box, so when a
           stream stalls (a cold or busy server, a slow network) and the browser paints the crumbs alone, they are drawn low
           and jump up as the heading and buttons arrive — 0.25 of the screen at 1280 × 800 — and a half-parsed header
@@ -121,7 +124,7 @@ function DirectionHero({
       </div>
       <div className="service-subhero-overlay" />
       <div className="subhero-grid" aria-hidden="true" />
-      <div className="shell service-subhero-content">
+      <div className="shell service-subhero-content phone-hero-content">
         <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }, { label: breadcrumbLabel, href: path }]} />
         <p className="eyebrow light"><span /> Напрямок {number}</p>
         <h1>{title}<br /><em>{accent}</em></h1>
@@ -150,6 +153,7 @@ function DirectionHero({
           </div>
         )}
         {notePhone && <p className="service-subhero-note">{notePhone}</p>}
+        {!actions?.legacyCallLink && <PhoneHeroScroll href={nextHref} />}
       </div>
       {/* Every direction hero is a concept image: said in the same quiet stamp as /yak-pratsyuiemo and the HOME phone hero */}
       <span className="hero-provenance" id={HERO_COPY_END_ID}>Ілюстрація</span>
@@ -468,6 +472,7 @@ export function DirectionPage({
         notePhone={config.hero.notePhone}
         heroImage={direction.heroImage}
         actions={config.hero.actions}
+        nextHref={config.hero.actions?.items.find(action => !action.openInquiry)?.href ?? (config.entry ? '#direction-entry-title' : '#direction-content')}
       />
 
       {signatureExperience}
@@ -476,7 +481,7 @@ export function DirectionPage({
         <>
           {config.entry && <DirectionEntry entry={config.entry} />}
           {config.overview && (
-          <section className="page-section direction-overview-section">
+          <section className="page-section direction-overview-section phone-hero-target" id="direction-content">
             {config.overview.layout === 'use-cases' ? (
               <>
                 <SectionHeader
