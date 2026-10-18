@@ -4,6 +4,7 @@ import { ConversationSection } from '../components/ConversationSection';
 import { DirectionsCatalog, type CatalogItem } from '../components/directions/DirectionsCatalog';
 import { DirectionsKey } from '../components/home-v2/DirectionsKey';
 import { DirectionsHeroImageSequence } from '../components/DirectionsHeroImageSequence';
+import { PhoneHeroScroll } from '../components/PhoneHeroScroll';
 import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceManifest';
 import { brandedTitle, createPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
@@ -55,10 +56,10 @@ export default function DirectionsPage() {
   return (
     <main className="inner-page directions-page" id="main-content" data-field="" style={{ '--field-name': '"RUBIKON BUILD · Напрямки"' } as CSSProperties}>
       <ProcessMotion root=".directions-page" />
-      <section className="subhero subhero-media directions-subhero">
+      <section className="subhero subhero-media directions-subhero phone-hero">
         <DirectionsHeroImageSequence />
         <div className="subhero-overlay" />
-        <div className="shell subhero-layout">
+        <div className="shell subhero-layout phone-hero-content">
           <div className="subhero-copy">
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }]} />
             <p className="eyebrow light"><span /> Напрями робіт</p>
@@ -79,6 +80,7 @@ export default function DirectionsPage() {
               </a>
             </div>
           </div>
+          <PhoneHeroScroll href="#directions-list" />
         </div>
         <span className="hero-provenance">Ілюстрація</span>
       </section>

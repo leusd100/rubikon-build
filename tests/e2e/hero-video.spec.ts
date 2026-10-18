@@ -638,4 +638,40 @@ test('HOME keeps copy and actions above Safari controls while its photo fills th
   expect(result.width).toBe(390);
 });
 
+for (const route of routes.filter(route => route !== '/')) {
+  test(`${route}: the approved phone scene continues below the fold with reachable actions and a working cue`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(route, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    const hero = page.locator('main > section').first();
+    const cue = hero.locator('.phone-hero-scroll');
+    await expect(cue).toBeVisible();
+    const bounds = await hero.evaluate(element => {
+      const box = element.getBoundingClientRect();
+      const cue = element.querySelector('.phone-hero-scroll')!.getBoundingClientRect();
+      const actions = [...element.querySelectorAll('a.button')].map(e => e.getBoundingClientRect()).filter(r => r.width > 0);
+      const photo = element.querySelector('.service-subhero-media, .about-hero-media, .proc-hero-media, .directions-hero-sequence-image')!.getBoundingClientRect();
+      return { bottom: box.bottom, photoTop: photo.top, photoBottom: photo.bottom, cueBottom: cue.bottom, actionBottom: Math.max(...actions.map(r => r.bottom)) };
+    });
+    expect(bounds.bottom).toBeGreaterThanOrEqual(908);
+    expect(bounds.photoTop).toBe(0);
+    expect(bounds.photoBottom).toBeGreaterThanOrEqual(bounds.bottom - 1);
+    expect(bounds.cueBottom).toBeLessThanOrEqual(832);
+    expect(bounds.actionBottom).toBeLessThanOrEqual(bounds.cueBottom - 60);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+    await expect(hero.locator('.hero-call-primary')).toHaveAttribute('href', 'tel:+380682614264');
+    const href = await cue.getAttribute('href');
+    expect(href).toMatch(/^#[a-z-]+$/);
+    await expect(page.locator(href!)).toHaveCount(1);
+    await cue.click();
+    await expect(page.locator(href!)).toBeInViewport();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    // The configurator reserves room for its sticky preview; preserve each page's own anchor clearance.
+    const landing = href === '#configurator' ? page.locator('#configurator .hc-layout') : page.locator(href!);
+    await expect(landing).toBeInViewport();
+    const top = (await landing.boundingBox())!.y;
+    expect(top).toBeGreaterThanOrEqual((await page.locator('.site-header').boundingBox())!.height - 1);
+  });
+}
+
 });

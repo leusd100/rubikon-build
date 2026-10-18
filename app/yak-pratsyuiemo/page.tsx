@@ -6,6 +6,7 @@ import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
 import { ResponsibilityMatrix } from '../components/process/ResponsibilityMatrix';
 import { ProcessMotion } from '../components/process/ProcessMotion';
+import { PhoneHeroScroll } from '../components/PhoneHeroScroll';
 import { FormatsScope, type FormatTerms } from '../components/directions/FormatsScope';
 import { ProcessDrawing } from '../components/directions/ProcessDrawing';
 import { StartGlyph } from '../components/process/StartGlyph';
@@ -118,7 +119,7 @@ export default function DeliveryModelPage() {
       <FormatSwitchSync />
 
       {/* 1 · Hero */}
-      <section className="proc-hero">
+      <section className="proc-hero phone-hero">
         <div className="proc-hero-media" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element -- pre-generated WebP variants up to 1536w (as the direction heroes), eager: this is the LCP image */}
           <img
@@ -141,7 +142,7 @@ export default function DeliveryModelPage() {
           <path className="ht-dim" d="M1180 250 L1180 170 M1440 120 L1440 40 M1180 190 H1440" pathLength={1} />
           <circle className="ht-node" cx="1180" cy="250" r="5" />
         </svg>
-        <div className="shell proc-hero-layout">
+        <div className="shell proc-hero-layout phone-hero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Як працюємо', href: siteRoutes.process }]} />
           <p className="eyebrow light"><span /> Як працюємо</p>
           <h1>Від задачі — до <em>зрозумілого плану робіт</em></h1>
@@ -153,6 +154,7 @@ export default function DeliveryModelPage() {
             <HeroCallButton />
             <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">Обговорити задачу <span aria-hidden="true">↓</span></a>
           </div>
+          <PhoneHeroScroll href="#proc-start-title" />
         </div>
         <span className="proc-provenance">Ілюстрація</span>
       </section>
