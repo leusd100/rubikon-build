@@ -596,6 +596,21 @@ test('phone and tablet pages share a clear top header and dense scroll/menu stat
   await expect(page.locator('.site-header')).not.toHaveCSS('backdrop-filter', 'none');
 });
 
+test('HOME fills the lower browser area with photo while placing its scroll cue near the visible fold', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+  const bounds = await page.locator('.hv2-hero').evaluate(element => {
+    const rect = (selector: string) => element.querySelector(selector)!.getBoundingClientRect();
+    return { photoBottom: rect('.hero-media').bottom, cueBottom: rect('.phone-hero-scroll').bottom, ctaBottom: rect('a[href="#inquiry"]').bottom };
+  });
+  // Preserve a photo-only tail beyond the browser's content viewport, without pushing controls into it.
+  expect(bounds.photoBottom).toBeGreaterThanOrEqual(908);
+  expect(bounds.cueBottom).toBeGreaterThanOrEqual(816);
+  expect(bounds.cueBottom).toBeLessThanOrEqual(832);
+  expect(bounds.ctaBottom).toBeLessThanOrEqual(bounds.cueBottom - 60);
+});
+
 test('HOME keeps copy and actions above Safari controls while its photo fills the large viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 664 });
   // Append the fixture to the page's own CSS, so hydration cannot replace a temporary injected style.

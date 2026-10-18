@@ -2,7 +2,19 @@
 
 18 October 2026. Continues Draft #206 from exact owner-reviewed preview43635c9. Base remains #205 (`752cc01`). Stage01 HOLD remains; no merge or production deployment.
 
-## Latest owner correction — only the photograph extends below the visible area
+## Latest owner adjustment — cover the pale strip and move content closer to Safari
+
+The next physical iPhone screenshot of preview `8aa8ce00` still exposed the pale next section beneath Safari's floating controls. The owner requested a longer photo scene and lower heading, buttons and scroll cue. HOME is the acceptance sample before applying this composition to other mobile pages.
+
+- Extend the mobile HOME scene by `max(64px, env(safe-area-inset-bottom))` beyond its stable large viewport. The copy wrapper still uses the small visible viewport; the extra tail contains only the photograph. No dynamic viewport script, fixed height or clipping was introduced.
+- Reduce the copy wrapper's bottom reserve from64px (58px on short screens) to12px, plus the existing bottom safe area. Remove the now-unnecessary short-screen padding override. Typography, actions, copy and image focal-point settings remain unchanged.
+- At390×844, heading top282.23→334.23px, secondary CTA bottom712→764px, scroll-cue bottom780→832px; scene/photo height844→908px. The44px cue target ends12px above the emulated visible fold. Safe areas add their existing clearance, and enlarged text can grow and scroll naturally.
+- New regression fails on the previous scene (photo ended at844px), then passes with the tail and lower cue. Production Hero suite59/59 passes; build/lint/typecheck pass. Actual-layout Chromium/WebKit matrix44/44 passes at320/375/390/430 widths, heights664/667/844, both themes,200% text and simulated47/34px safe areas. Local WebKit removes only HTTP `upgrade-insecure-requests` in the test harness; HTTPS preview must be checked without that accommodation.
+- Normal cold local390×844 Chromium observation: CLS0, LCP260ms, unthrottled. This is a diagnostic observation, not a Lighthouse/mobile-network budget sign-off. Earlier delayed-font CLS and Stage01 HOLD remain open. No baselines, retries, CI requirements or performance budgets changed.
+
+Physical iPhone Safari acceptance is still pending. Verify the photograph behind expanded/collapsed controls and the cue's gap above the search/address bar. The longer scene subtly changes `object-fit: cover` cropping. The other pages' composition waits for this HOME review; existing approved shared call centring and translucent phone/tablet headers are retained.
+
+## Previous owner correction — only the photograph extends below the visible area
 
 The owner clarified from the next physical iPhone screenshot: the photo should continue behind Safari's controls, while the heading, description and both CTA buttons must sit higher. This supersedes the previous36.61px downward adjustment described below.
 
