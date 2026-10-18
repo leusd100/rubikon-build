@@ -25,3 +25,7 @@ If recovery is needed after an explicitly authorized release, prepare a revert o
 ## Brand guard retained
 
 Freeze run39120136922 passed63 visual cases and identified two changed snapshots plus the existing mobile logo minimum: the proposed186px lockup fell2px below the188px guard. Keep the guard unchanged and use188px for HOME and opted-in inner-page phone headers; the67px header and44px controls remain. Review the resulting Linux HOME/brand images from this exact revised head before accepting snapshots. The process-scope snapshot differs only by fractional clip rounding (1590→1591px), with its text/layout preserved.
+
+## Reviewed Linux baselines
+
+Artifact `changed-area-visual-diff` (ID12134176762) from app head`93beea3`, [run39120759804](https://github.com/leusd100/rubikon-build/actions/runs/39120759804), supplied exactly three reviewed updates: mobile390 brand lockup193×44→188×44; approved HOME375 scene375×692→375×876; process-scope343×1590→343×1591 fractional clipping with content/layout preserved. Every actual PNG is byte-identical across all three CI attempts. No other Linux or Darwin baseline, tolerance, retry or test assertion was refreshed. [Hashes, dimensions and reasons](media/hero-freeze-2026-10-18.json). The subsequent commit changes snapshots/docs only; require its final green freeze gate before integration.
