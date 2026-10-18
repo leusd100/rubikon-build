@@ -2,6 +2,18 @@
 
 18 October 2026. Continues Draft #206 from exact owner-reviewed preview43635c9. Base remains #205 (`752cc01`). Stage01 HOLD remains; no merge or production deployment.
 
+## Latest owner correction — only the photograph extends below the visible area
+
+The owner clarified from the next physical iPhone screenshot: the photo should continue behind Safari's controls, while the heading, description and both CTA buttons must sit higher. This supersedes the previous36.61px downward adjustment described below.
+
+- Keep the outer scene at `100lvh` (with `100svh` fallback), but size its copy wrapper against `100svh - header`. The extra large-viewport area is photograph only; it no longer pulls the content down.
+- Place the scroll cue in the copy wrapper's normal flow, after the actions, rather than at the bottom of the large scene. Text zoom can grow the wrapper naturally.
+- At390×844, heading top318.23→282.23px and CTA row bottom748→712px. Photo height remains844px. Shared CTA centring and all approved compact/wide header behavior are unchanged.
+- A regression models664px visible space with an844px photo scene and the normal32.37px heading. Before correction the secondary CTA ended at786px. The corrected CTA and scroll cue stay within the visible area while the image still reaches844px. The model is appended to the local CSS response so hydration cannot remove a temporary fixture style.
+- Production Hero suite58/58, unit1393/1393, build/lint/typecheck passed. The regression fixture's readiness and persistence are checked explicitly; a further12/12 Chrome/WebKit model cases pass across three visible heights and both themes. Real Safari browser chrome still requires owner confirmation.
+
+The following sections and comparison describe the previousadbe6c0 iteration and remain as history.
+
 ## Final behavior
 
 - Call CTA icon+label groups are centred consistently, with centred label/number text and symmetric horizontal padding. The shared conversation call label is centred too. Contact destinations, wording and tracking behavior are unchanged.

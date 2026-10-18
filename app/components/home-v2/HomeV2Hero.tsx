@@ -38,10 +38,10 @@ export function HomeV2Hero() {
             </a>
           </div>
         </div>
+        <a className="phone-hero-scroll" href="#directions" aria-label="До наступного розділу">↓</a>
       </div>
       {/* Only the ≤760 still is a concept image; the desktop footage is process footage, not an object. */}
       <span className="hv2-hero-provenance">Ілюстрація</span>
-      <a className="phone-hero-scroll" href="#directions" aria-label="До наступного розділу">↓</a>
     </section>
   );
 }

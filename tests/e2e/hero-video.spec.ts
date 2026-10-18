@@ -596,21 +596,30 @@ test('phone and tablet pages share a clear top header and dense scroll/menu stat
   await expect(page.locator('.site-header')).not.toHaveCSS('backdrop-filter', 'none');
 });
 
-test('HOME content sits lower with room for the scroll cue and the large Safari viewport', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('HOME keeps copy and actions above Safari controls while its photo fills the large viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 664 });
+  // Append the fixture to the page's own CSS, so hydration cannot replace a temporary injected style.
+  await page.route(/\.css(?:\?|$)/, async route => {
+    const response = await route.fetch();
+    await route.fulfill({ response, body: `${await response.text()}\nmain[data-home="v2"] .hv2-hero { min-height: 844px !important; } main[data-home="v2"] .hv2-hero h1 { font-size: 32.37px !important; }` });
+  });
   await page.goto('/', { waitUntil: 'load' });
   await page.evaluate(() => document.fonts.ready);
+  // Model expanded Safari chrome: the visible content viewport is 664px, while the full photo scene is 844px.
+  // Headless browsers have no Safari toolbar, so only the large scene height is supplied by the fixture.
+
   const result = await page.locator('.hv2-hero').evaluate(element => {
     const hero = element.getBoundingClientRect();
-    const title = element.querySelector('h1')!.getBoundingClientRect();
     const last = element.querySelector('a[href="#inquiry"]')!.getBoundingClientRect();
     const cue = element.querySelector('.phone-hero-scroll')!.getBoundingClientRect();
-    return { titleTop: title.top, ctaBottom: last.bottom, cueGap: cue.top - last.bottom, minimum: getComputedStyle(element).minHeight, height: hero.height, width: document.documentElement.scrollWidth };
+    const image = element.querySelector('.hero-media')!.getBoundingClientRect();
+    return { ctaBottom: last.bottom, cueTop: cue.top, cueBottom: cue.bottom, imageBottom: image.bottom, height: hero.height, width: document.documentElement.scrollWidth };
   });
-  expect(result.titleTop).toBeGreaterThan(310);
-  expect(result.ctaBottom).toBeGreaterThan(735);
-  expect(result.cueGap).toBeGreaterThanOrEqual(16);
+  expect(result.ctaBottom).toBeLessThanOrEqual(624);
+  expect(result.cueTop).toBeGreaterThanOrEqual(result.ctaBottom + 16);
+  expect(result.cueBottom).toBeLessThanOrEqual(664);
   expect(result.height).toBeGreaterThanOrEqual(844);
+  expect(result.imageBottom).toBeGreaterThanOrEqual(844);
   expect(result.width).toBe(390);
 });
 
