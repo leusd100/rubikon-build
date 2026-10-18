@@ -15,7 +15,7 @@ The new branch is `design/mobile-hero-refinement-v2`. Its PR targets #205's bran
 - Heading: `clamp(1.8125rem, 8.3vw, 2.1875rem)`, line height 1.08, natural wrapping. Claim unchanged. Description unchanged at 15px / 1.55.
 - **Copy for owner review:** mobile HOME only, «НАПИСАТИ АБО ЗАЛИШИТИ ЗАПИТ» → **«ОБГОВОРИТИ ЗАДАЧУ»**. Same link, `#inquiry`, `data-open-inquiry`, form action and tracking behavior. CSS-hidden label alternatives give one accessible name at each width.
 - HOME mobile header: 77→67px; logo maximum 210→186px, softer borders. Effective call/menu/brand targets remain ≥44px; existing focus, keyboard, menu, scroll and route behavior remain.
-- `min-height:100svh`, safe-area allowances and content-driven growth remain. No fixed clipping, new blur, mobile video, dependencies, analytics/CSP/SEO changes or changes to About/desktop design.
+- `min-height:100svh`, safe-area allowances and content-driven growth remain. The scroll cue uses line-height 1 to keep its enlarged glyph inside the Hero. No fixed clipping, new blur, mobile video, dependencies, analytics/CSP/SEO changes or changes to About/desktop design.
 
 ## Same-size comparison
 
@@ -41,7 +41,18 @@ Chrome mobile emulation, optional cookies denied, same 390×844 viewport. This i
 - Hero suite: 55 tests passed on the production candidate, including both pages' existing playback, picture hydration, consent, themes, safe areas, growth, menu/route/keyboard and scroll contracts.
 - Focused HOME smoke/contact/rhythm and desktop late-font checks: 13 passed. The inherited smoke image-family expectation was reproduced failing on unchanged baseline and updated from `hero-mobile-` to the already-selected `hero-h1-`; eagerness/priority assertions remain.
 - **Inherited failure, not waived:** mobile `typography.spec.ts` late-font HOME test is 0.05784928724246045 CLS on both exact baseline and candidate, against <0.01. Baseline identity independently checked (77px header, old label, shortened image). No assertion/retry/timeout change.
+- Independent browser QA: 64 Chromium layout cases; 28 representative repeats after the contrast correction; 64 WebKit cases. Widths320/375/390/430 × heights667/844/932, plus390×664; both themes and first/denied consent. Additional200% text and47px/34px simulated safe areas. No overflow, image cutoff or clipped copy. Real iPhone/Dynamic Type are not emulated exactly.
+- Screenshot-backed contrast after correction: Chromium large heading/accent ≥3.231:1 and description ≥8.668:1; WebKit ≥3.234:1 /8.677:1. Large-heading criterion3:1; body4.5:1. An initial short-screen reading2.990:1 was fixed by shading .76→.79. Brand colors unchanged.
+- Six HOME1440 /About390+1440 light/dark baseline/candidate pairs are pixel-identical. At200% text the Hero grows naturally (approximately1541–1691px); focus scrolling exposes all actions. The cookie banner initially overlays the scroll cue, as before; normal-size primary/secondary CTAs remain clear.
+- Local WebKit needed a test-harness-only removal of CSP upgrade-insecure-requests because the server was HTTP-only; application CSP was untouched. Baseline had the same restriction (and WebKit blocks port4190, so baseline was also served on4193). Final HTTPS preview must be checked without this accommodation.
+- Final cue-specific follow-up: eight production flow/scroll/keyboard checks pass after the line-height correction. It changes no media or content geometry.
 - No snapshot baseline changes or visual-freeze label (DEC-18). Independent code review found no actionable issues.
+
+## Performance observations
+
+The assets, priority and preload settings are unchanged: one H1 WebP (140,186bytes at390px/DPR2), no phone MP4 or second poster. Local cold diagnostics use Chromium390×844/DPR2,150ms latency,1.6Mbit/s and4×CPU, optional consent denied. CLS was0 in these ordinary loads. These observations are not field p75, the CI Lighthouse profile or a physical iPhone.
+
+The layout changes which element Chromium reports as LCP: baseline reports the poster, while this full-scene composition reports the heading. For example, a paired local observation was7,584ms (poster) versus3,368ms (heading). **Do not interpret that as a proven loading-speed improvement:** the same140KB image is still fetched, and the measured LCP element changed. The existing6,100ms Lighthouse budget is unchanged; a passing CI budget is not claimed. Raw paired samples are included in the owner's local deliverables.
 
 ## Preview safety and existing CI
 

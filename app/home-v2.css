@@ -98,7 +98,7 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
     color: var(--color-dark-text); background: color-mix(in srgb, var(--color-dark) 90%, transparent); border: 1px solid rgba(255,255,255,.3);
     font: 700 10px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase;
   }
-  main[data-home="v2"] .phone-hero-scroll { position: absolute; z-index: 3; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); left: calc(50% - 22px); display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-on-dark); font-size: 24px; }
+  main[data-home="v2"] .phone-hero-scroll { position: absolute; z-index: 3; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); left: calc(50% - 22px); display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-on-dark); font-size: 24px; line-height: 1; }
   /* Keep the existing first-visit call guarantee. Consent behavior and wording are unchanged. */
   body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero-layout { margin-top: 0; padding-top: 116px; padding-bottom: max(66px, var(--cookie-banner-clearance, 0px)); }
   body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero .hero-actions { order: 1; }
