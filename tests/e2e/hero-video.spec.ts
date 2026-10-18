@@ -474,8 +474,8 @@ for (const target of pages) {
     await summary.click();
     await header.locator('.mobile-menu a[href="/napryamky"]').click();
     await expect(page).toHaveURL(/\/napryamky$/);
-    await expect(page.locator('html')).not.toHaveAttribute('data-hero-header');
-    await expect(header).not.toHaveCSS('backdrop-filter', 'none');
+    await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'top');
+    await expect(header).toHaveCSS('backdrop-filter', 'none');
     await page.goto(target.path, { waitUntil: 'load' });
     await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'top');
     await page.setViewportSize({ width: target.path === '/' ? 761 : 601, height: 844 });
@@ -537,3 +537,81 @@ for (const route of ['/', '/pro-nas']) for (const theme of ['light', 'dark']) {
     await expect(header).not.toHaveCSS('backdrop-filter', 'none');
   });
 }
+
+
+test.describe('owner iPhone feedback: shared calls and compact headers', () => {
+
+const routes = ['/', '/napryamky', '/angary', '/metalokonstruktsii', '/zernoskhovyshcha', '/betonni-roboty', '/pokrivelni-roboty', '/yak-pratsyuiemo', '/pro-nas'];
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' })));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+});
+
+test('call label and number are centred on every public Hero', async ({ page }) => {
+  test.setTimeout(90_000);
+  for (const width of [390, 1024, 1440]) for (const route of routes) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(route, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    const call = page.locator('main .hero-call-primary').first();
+    await expect(call).toBeVisible();
+    const geometry = await call.evaluate(element => {
+      const box = element.getBoundingClientRect();
+      const icon = element.querySelector('svg')!.getBoundingClientRect();
+      const label = element.querySelector('span')!;
+      const words = label.getBoundingClientRect();
+      return { alignment: getComputedStyle(label).textAlign, offset: Math.abs((icon.left + words.right) / 2 - (box.left + box.right) / 2), href: element.getAttribute('href') };
+    });
+    expect(geometry.alignment, `${route} at ${width}`).toBe('center');
+    expect(geometry.offset, `${route} at ${width}`).toBeLessThanOrEqual(1);
+    expect(geometry.href).toBe('tel:+380682614264');
+    await expect(page.locator('.conversation-call-text').first()).toHaveCSS('text-align', 'center');
+  }
+});
+
+test('phone and tablet pages share a clear top header and dense scroll/menu states', async ({ page }) => {
+  test.setTimeout(90_000);
+  for (const width of [390, 1024]) for (const route of [...routes, '/polityka-konfidentsiinosti']) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(route, { waitUntil: 'load' });
+    const header = page.locator('.site-header');
+    const alpha = () => header.evaluate(e => Number(getComputedStyle(e).backgroundColor.match(/\/\s*([\d.]+)/)?.[1] ?? 1));
+    await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'top');
+    await expect.poll(alpha).toBe(width <= 760 ? .82 : .72);
+    await expect(header).toHaveCSS('backdrop-filter', 'none');
+    const media = page.locator('.service-subhero-media, .directions-hero-sequence-image, .proc-hero-media').first();
+    if (await media.count()) expect((await media.boundingBox())!.y, `${route}: image extends behind header`).toBe(0);
+    await header.locator('summary').click();
+    await expect.poll(alpha).toBe(.97);
+    await page.keyboard.press('Escape');
+    await expect(header.locator('summary')).toBeFocused();
+    await page.evaluate(() => scrollTo(0, 400));
+    await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'scrolled');
+    await expect.poll(alpha).toBe(.97);
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/napryamky');
+  await expect(page.locator('html')).not.toHaveAttribute('data-hero-header');
+  await expect(page.locator('.site-header')).not.toHaveCSS('backdrop-filter', 'none');
+});
+
+test('HOME content sits lower with room for the scroll cue and the large Safari viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+  const result = await page.locator('.hv2-hero').evaluate(element => {
+    const hero = element.getBoundingClientRect();
+    const title = element.querySelector('h1')!.getBoundingClientRect();
+    const last = element.querySelector('a[href="#inquiry"]')!.getBoundingClientRect();
+    const cue = element.querySelector('.phone-hero-scroll')!.getBoundingClientRect();
+    return { titleTop: title.top, ctaBottom: last.bottom, cueGap: cue.top - last.bottom, minimum: getComputedStyle(element).minHeight, height: hero.height, width: document.documentElement.scrollWidth };
+  });
+  expect(result.titleTop).toBeGreaterThan(310);
+  expect(result.ctaBottom).toBeGreaterThan(735);
+  expect(result.cueGap).toBeGreaterThanOrEqual(16);
+  expect(result.height).toBeGreaterThanOrEqual(844);
+  expect(result.width).toBe(390);
+});
+
+});

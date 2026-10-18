@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
 import { AboutHeroVideo } from '../components/AboutHeroVideo';
-import { HeroHeaderState } from '../components/HeroHeaderState';
 import { Breadcrumbs, HeroCallButton, SectionHeader, TeamSection } from '../components/SiteChrome';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
@@ -92,7 +91,6 @@ export default function AboutPage() {
 
       {/* 1 · Hero — the names behind the reputation; words and actions under the title, as on /yak-pratsyuiemo */}
       <section className="subhero about-subhero">
-        <HeroHeaderState />
         <div className="about-hero-media">
           <AboutHeroVideo />
         </div>

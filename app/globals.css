@@ -283,9 +283,9 @@ body:has(main:is([data-home="v2"], .about-page)) .header-contacts { background: 
    they are calling before the tap. Same box as every .button; only the content is two lines.
    min-width reserves the box: the number is ~4.5 px wider in Plex Condensed than in its fallback,
    and without it the font swap nudged the two actions beside it (a measured layout shift). */
-.hero-call-primary { min-width: 236px; gap: 14px; padding-inline: 22px 26px; }
+.hero-call-primary { min-width: 236px; justify-content: center; gap: 14px; padding-inline: 24px; }
 .hero-call-primary svg { width: 20px; height: 20px; flex: 0 0 20px; stroke-width: 1.8; }
-.hero-call-primary > span { display: grid; gap: 5px; text-align: left; }
+.hero-call-primary > span { display: grid; gap: 5px; text-align: center; }
 .hero-call-primary small { font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
 .hero-call-primary strong { font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
 .button:active, .text-link:active, .section-link:active { transform: translateY(0) scale(.985); }
@@ -964,6 +964,19 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .desktop-nav, .header-actions { display: none; }
   .mobile-menu { display: block; }
   .mobile-call { display: inline-flex; }
+  body {
+    --phone-hero-header-alpha: 72%;
+    --phone-hero-menu-alpha: 97%;
+    --phone-hero-header-backdrop: none;
+    --phone-hero-safe-top: env(safe-area-inset-top, 0px);
+    --compact-hero-header-edge: calc(101px + var(--phone-hero-safe-top));
+  }
+  body .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; background: rgba(17, 21, 18, .6); }
+  body .service-subhero-media { top: 0; }
+  body .directions-page .directions-hero-sequence-image { top: 0; height: 100%; }
+  :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade) {
+    mask-image: linear-gradient(180deg, transparent calc(var(--compact-hero-header-edge) - 24px), #000 var(--compact-hero-header-edge));
+  }
 }
 
 @media (max-width: 760px) {
@@ -982,6 +995,10 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .ghost-word { display: none; }
   section[id], [id="inquiry"] { scroll-margin-top: 88px; }
   a[href], button, summary, input, select, textarea { scroll-margin-top: 88px; }
+  body {
+    --phone-hero-header-alpha: 82%;
+    --compact-hero-header-edge: calc(77px + var(--phone-hero-safe-top, 0px));
+  }
   .nav-wrap { min-height: 76px; gap: 12px; }
   .brand { width: 210px; }
   /* font-size/letter-spacing here are the a11y-legibility values (previously set by a
@@ -1492,7 +1509,7 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .hero-call:hover, .hero-call:focus-visible { color: var(--color-accent-on-dark-hover); border-color: color-mix(in srgb, var(--color-accent-on-dark) 72%, transparent); }
 .hero-call-phone-only { display: none; }
 @media (max-width: 760px) {
-  .hero-call-lead { width: 100%; min-width: 0; justify-content: flex-start; }
+  .hero-call-lead { width: 100%; min-width: 0; justify-content: center; }
   .hero-call-lead ~ .text-link { display: none; }
   .hero-call-phone-only { display: inline-flex; }
   .hero-call-phone-only ~ .hero-call { display: none; }

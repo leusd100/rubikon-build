@@ -64,7 +64,7 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
   main[data-home="v2"] .hv2-hero {
     --hv2-header: calc(67px + var(--phone-hero-safe-top, 0px));
     display: flex; flex-direction: column; align-items: stretch; isolation: isolate;
-    min-height: 100svh; height: auto; padding-top: var(--hv2-header); overflow: visible;
+    min-height: 100svh; min-height: 100lvh; height: auto; padding-top: var(--hv2-header); overflow: visible;
   }
   main[data-home="v2"] .hv2-hero .hero-media {
     position: absolute; inset: 0; height: 100%; overflow: hidden;
@@ -78,8 +78,8 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
     background: linear-gradient(180deg, rgba(18,22,19,.18), rgba(18,22,19,.28) var(--hv2-header), rgba(18,22,19,.79) calc(var(--hv2-header) + 140px), rgba(18,22,19,.82) 60%, rgba(18,22,19,.88));
   }
   main[data-home="v2"] .hv2-hero-layout {
-    display: block; grid-area: auto; min-height: 0; margin: auto;
-    width: calc(100% - 40px); padding: 148px 0 calc(66px + env(safe-area-inset-bottom, 0px));
+    display: block; grid-area: auto; min-height: 0; margin: auto auto 0;
+    width: calc(100% - 40px); padding: 148px 0 calc(96px + env(safe-area-inset-bottom, 0px));
   }
   main[data-home="v2"] .hv2-hero h1 { max-width: 36rem; font-size: clamp(1.8125rem, 8.3vw, 2.1875rem); line-height: 1.08; letter-spacing: -.035em; text-wrap: pretty; overflow-wrap: break-word; }
   main[data-home="v2"] .hv2-nowrap { white-space: normal; }

@@ -1,5 +1,7 @@
 # Mobile HOME Hero refinement v2 · 18 October 2026
 
+Owner follow-up: the subsequent shared-header/call-centering iteration is recorded in [the current handoff](2026-10-18-mobile-owner-feedback.md). The narrow-scope statements below describe the original43635c9 preview, not the expanded follow-up.
+
 Draft for owner review on physical iPhone 12. Stage 01 HOLD remains. No merge or production deployment.
 
 ## Base and scope
