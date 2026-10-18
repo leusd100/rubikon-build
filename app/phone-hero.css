@@ -2,6 +2,7 @@
    The scene and the copy have separate viewport bounds: Safari's lower area contains photo only. */
 @media (max-width: 760px) {
   .phone-hero-target, #direction-entry-title, #proc-start-title { scroll-margin-top: 88px; }
+  body:has(main.inner-page > .phone-hero) { --compact-hero-header-edge: calc(67px + var(--phone-hero-safe-top, 0px)); }
   body:has(main.inner-page > .phone-hero) .site-header .nav-wrap { min-height: 66px; }
   body:has(main.inner-page > .phone-hero) .site-header .brand-link { flex-basis: 186px; }
   body:has(main.inner-page > .phone-hero) .site-header .brand { max-width: 186px; }

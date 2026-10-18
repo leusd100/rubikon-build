@@ -235,8 +235,8 @@
   .proc-start-head > p:last-child { font-size: 16px; }
   .proc-start-list li { grid-template-columns: 44px minmax(0, 1fr); padding: 22px 0; }
   .proc-principle { font-size: clamp(24px, 6.8vw, 28px); }
-  /* Compact under the 77 px header: one row of three */
-  .proc-resp-switch { top: 77px; margin-bottom: 24px; padding: 8px 0; }
+  /* Follow the phone header, including its safe area: one row of three. */
+  .proc-resp-switch { top: var(--compact-hero-header-edge, 77px); margin-bottom: 24px; padding: 8px 0; }
   .proc-resp-switch > div { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
   .proc-resp-switch span { min-height: 48px; padding: 6px; font-size: 12px; letter-spacing: .04em; }
   .proc-terms-image { background-position: center top; background-size: 180% auto; }
