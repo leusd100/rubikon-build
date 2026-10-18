@@ -4,7 +4,7 @@ After #206, full Main Regression39122467033 found seven deterministic Angary min
 
 Embedded phone mini-preview top and focus clearance now use the shared compact header edge; its hold/let-go observer measures the actual header bottom. Header border-box observation updates lines when safe-area padding changes alone or alongside a sheet resize. Existing observer/media cleanup remains. Independent review also identified the live grain drawing's old77px edge; it now shares the compact edge. Legacy77px fallback and tablet101px behavior remain. Generic anchor margins are unchanged.
 
-Smoke expectations now name approved H1/P5 photo families. Existing no-video, pause-control, decorative-alt and illustration-provenance assertions remain. No tests skipped, thresholds/retries/workflows/analytics/security policies or visual baselines changed.
+Smoke expectations now name approved H1/P5 photo families. Existing no-video, pause-control, decorative-alt and illustration-provenance assertions remain. No additional tests skipped; thresholds/retries/workflows/analytics/security policies and visual baselines are unchanged.
 
 Validation: four0/47px sticky cases failed before the fix; header-only safe-area test failed before observer correction. Final complete Angary interactive, configurator-sheet and grain-page desktop suites82passed/1existing skip; complete desktop/mobile smoke42passed/6existing skips. Production build passed. Independent delta review has no remaining findings. CI validation is linked from the PR.
 
