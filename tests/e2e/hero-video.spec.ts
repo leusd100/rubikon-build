@@ -222,6 +222,82 @@ test('a request link followed before hydration still opens the HOME form', async
   await expect(page.locator('#inquiry select[name="direction"]')).toHaveValue('Ще не визначено');
 });
 
+test('HOME inquiry keeps its phone label inside the phone breakpoint and opens the form', async ({ page }) => {
+  await denyOptionalCookies(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'load' });
+  const hero = page.locator('.hv2-hero');
+  const inquiry = hero.locator('a[href="#inquiry"]');
+  for (const { width, name } of [
+    { width: 320, name: 'Обговорити задачу' },
+    { width: 390, name: 'Обговорити задачу' },
+    { width: 760, name: 'Обговорити задачу' },
+    { width: 761, name: 'Написати або залишити запит' },
+    { width: 1440, name: 'Написати або залишити запит' },
+  ]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expect(inquiry).toHaveAccessibleName(name);
+    await expect(inquiry).toHaveAttribute('data-open-inquiry', '');
+    const box = await inquiry.boundingBox();
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await hero.locator('a[href^="tel:"]').focus();
+  await page.keyboard.press('Tab');
+  await expect(inquiry).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#inquiry form.inquiry-form')).toBeVisible();
+  await expect(page.locator('#inquiry select[name="direction"]')).toHaveValue('Ще не визначено');
+});
+
+test('HOME phone image covers the full scene as doubled text grows the hero', async ({ page }) => {
+  await denyOptionalCookies(page);
+  await page.setViewportSize({ width: 320, height: 667 });
+  await page.goto('/', { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+  const hero = page.locator('.hv2-hero');
+  await expect.poll(() => hero.locator('.hv2-hero-still').evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  const initialHeight = (await hero.boundingBox())!.height;
+  for (const doubled of [false, true]) {
+    if (doubled) {
+      // Stress the actual copy, including both buttons, without claiming to emulate Dynamic Type.
+      await hero.evaluate(element => {
+        const nodes = [...element.querySelectorAll<HTMLElement>('h1, p, a.button, a.button small, a.button strong')];
+        const sizes = nodes.map(node => Number.parseFloat(getComputedStyle(node).fontSize));
+        nodes.forEach((node, index) => node.style.setProperty('font-size', `${sizes[index] * 2}px`, 'important'));
+      });
+    }
+    const geometry = await hero.evaluate(element => {
+      const bounds = element.getBoundingClientRect();
+      const media = element.querySelector('.hero-media')!.getBoundingClientRect();
+      const image = element.querySelector('.hv2-hero-still')!.getBoundingClientRect();
+      const call = element.querySelector('a[href^="tel:"]')!.getBoundingClientRect();
+      const inquiry = element.querySelector('a[href="#inquiry"]')!.getBoundingClientRect();
+      const cue = element.querySelector('.phone-hero-scroll')!.getBoundingClientRect();
+      return {
+        height: bounds.height,
+        uncovered: [media, image].map(rect => Math.max(rect.top - bounds.top, rect.left - bounds.left, bounds.bottom - rect.bottom, bounds.right - rect.right)),
+        clipped: element.scrollHeight > element.clientHeight + 1,
+        documentWidth: document.documentElement.scrollWidth,
+        buttonGap: inquiry.top - call.bottom,
+        cueGap: cue.top - inquiry.bottom,
+        cueBottom: bounds.bottom - cue.bottom,
+      };
+    });
+    for (const uncovered of geometry.uncovered) {
+      expect(uncovered, `${doubled ? 'expanded' : 'ordinary'} scene: image and media must reach every hero edge`).toBeLessThanOrEqual(1);
+    }
+    expect(geometry.clipped).toBe(false);
+    expect(geometry.documentWidth).toBeLessThanOrEqual(320);
+    expect(geometry.buttonGap).toBeGreaterThanOrEqual(0);
+    expect(geometry.cueGap).toBeGreaterThanOrEqual(0);
+    expect(geometry.cueBottom).toBeGreaterThanOrEqual(0);
+    if (doubled) expect(geometry.height).toBeGreaterThan(initialHeight);
+  }
+});
+
 for (const deviceScaleFactor of [1, 2]) {
   test.describe(`phone hero at DPR ${deviceScaleFactor}`, () => {
     test.use({ viewport: { width: 390, height: 844 }, deviceScaleFactor });
