@@ -4,8 +4,8 @@
   .phone-hero-target, #direction-entry-title, #proc-start-title { scroll-margin-top: 88px; }
   body:has(main.inner-page > .phone-hero) { --compact-hero-header-edge: calc(67px + var(--phone-hero-safe-top, 0px)); }
   body:has(main.inner-page > .phone-hero) .site-header .nav-wrap { min-height: 66px; }
-  body:has(main.inner-page > .phone-hero) .site-header .brand-link { flex-basis: 186px; }
-  body:has(main.inner-page > .phone-hero) .site-header .brand { max-width: 186px; }
+  body:has(main.inner-page > .phone-hero) .site-header .brand-link { flex-basis: 188px; }
+  body:has(main.inner-page > .phone-hero) .site-header .brand { max-width: 188px; }
   body:has(main.inner-page > .phone-hero) .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; height: 44px; }
 
   main.inner-page > .phone-hero:is(.subhero, .service-subhero, .proc-hero) {

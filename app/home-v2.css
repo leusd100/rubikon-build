@@ -55,8 +55,8 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
     --phone-hero-safe-top: env(safe-area-inset-top, 0px);
   }
   body:has(main[data-home="v2"]) .site-header .nav-wrap { min-height: 66px; }
-  body:has(main[data-home="v2"]) .site-header .brand-link { flex-basis: 186px; }
-  body:has(main[data-home="v2"]) .site-header .brand { max-width: 186px; }
+  body:has(main[data-home="v2"]) .site-header .brand-link { flex-basis: 188px; }
+  body:has(main[data-home="v2"]) .site-header .brand { max-width: 188px; }
   body:has(main[data-home="v2"]) .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; height: 44px; border-color: rgba(255,255,255,.2); }
   body:has(main[data-home="v2"]) .site-header .mobile-call:focus-visible { border-color: var(--color-accent); }
   main[data-home="v2"] .hv2-inquiry-phone { display: inline; }

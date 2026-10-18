@@ -21,3 +21,7 @@ A headless WebKit check is not a physical iPhone test. The owner accepted HOME o
 After green selected checks, preserve all commits when merging the integrated PR. Verify the public HOME and inner routes, phone and wide header states, posters/video policy and contact/navigation access. Existing main analytics/Lighthouse/CLS acceptance remains separate.
 
 If recovery is needed after an explicitly authorized release, prepare a revert of the integrated merge commit (`git revert -m 1 <merge-sha>`) as a separate reviewed change. No data migration is involved. This document does not authorize an independent deploy command or changes to Rulesets.
+
+## Brand guard retained
+
+Freeze run39120136922 passed63 visual cases and identified two changed snapshots plus the existing mobile logo minimum: the proposed186px lockup fell2px below the188px guard. Keep the guard unchanged and use188px for HOME and opted-in inner-page phone headers; the67px header and44px controls remain. Review the resulting Linux HOME/brand images from this exact revised head before accepting snapshots. The process-scope snapshot differs only by fractional clip rounding (1590→1591px), with its text/layout preserved.
