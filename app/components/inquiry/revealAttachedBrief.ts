@@ -13,12 +13,38 @@
 // focus on a brief far above it.
 
 const NARROW = '(max-width: 1180px)';
+/** `Event.CAPTURING_PHASE` */
+const CAPTURING_PHASE = 1;
+
+type LinkClick = Pick<Event, 'preventDefault' | 'stopPropagation' | 'eventPhase'>;
+
+/**
+ * A jump taken over is not made again from the window. From 1181 px the desktop scrolls through Lenis (SmoothScroll.tsx,
+ * `anchors: true`), whose click listener on the window takes every anchor of the page, prevented or not: it carried the
+ * visitor to #inquiry at the end of the page after the form had opened under the stamp, the brief focused 4 800 px above
+ * the window (review 18.10, PDO-02). The click stops at the document — where React and the page's own listeners have
+ * it — as HangarConfigurator's #configurator links do. A capture listener (ConversationFormToggle) sees the click before
+ * the link does, and stopping it there would stop the link's own handlers too (PrefillInquiryLink's text): from there it
+ * is stopped on its way back up instead, by a listener on the document that takes only this click and goes after one.
+ */
+function keepFromWindow(event: LinkClick) {
+  if (event.eventPhase !== CAPTURING_PHASE) {
+    event.stopPropagation();
+    return;
+  }
+  const stopOnWayUp = (click: Event) => {
+    document.removeEventListener('click', stopOnWayUp);
+    if (click === event) click.stopPropagation();
+  };
+  document.addEventListener('click', stopOnWayUp);
+}
 
 /** `event`: the link's click, a React or a DOM one — only its default (the anchor jump) is taken over. */
-export function revealAttachedBrief(event?: Pick<Event, 'preventDefault'>, { takeOver = false }: { takeOver?: boolean } = {}) {
+export function revealAttachedBrief(event?: LinkClick, { takeOver = false }: { takeOver?: boolean } = {}) {
   const own = takeOver || window.matchMedia(NARROW).matches;
   if (own && event) {
     event.preventDefault();
+    keepFromWindow(event);
     window.history.replaceState(null, '', '#inquiry');
   }
   const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
