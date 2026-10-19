@@ -548,6 +548,104 @@ test.describe('generate_lead with Turnstile', () => {
   });
 });
 
+// After a saved request the filled fields go and «Запит надіслано» takes their place. The form is taller than a phone's
+// screen, so the panel was left above the window (390: −423…−266 px), under the header at 1024 and 1440, and the focus
+// fell to the page from the hidden button (review 18.10, PDO-03). The panel comes into view under the header and takes
+// the focus. The lead API is mocked.
+async function submitSaved(page: Page, press: 'click' | 'tap' | 'Enter' = 'click') {
+  await page.route('**/api/leads', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 61, isNew: true }) }));
+  const submit = page.locator('form.inquiry-form').getByRole('button', { name: 'Надіслати запит', exact: true });
+  if (press === 'Enter') {
+    await submit.focus();
+    await page.keyboard.press('Enter');
+  } else if (press === 'tap') await submit.tap();
+  else await submit.click();
+  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+}
+
+async function expectSentPanelInView(page: Page) {
+  const panel = page.locator('.inquiry-sent');
+  await expect(panel).toBeFocused();
+  // a smooth scroll on most screens: once it settles the whole panel is in the window, clear of the header
+  await expect.poll(() => panel.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const header = document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0;
+    return box.top >= header && box.bottom <= window.innerHeight;
+  }), { timeout: 5_000 }).toBe(true);
+  await expect(panel.getByRole('heading', { name: 'Запит надіслано' })).toBeInViewport();
+}
+
+test.describe('«Запит надіслано» after a saved request', () => {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }]) {
+    test(`at ${viewport.width} px comes into view under the header and takes the focus`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto('/', { waitUntil: 'load' });
+      await acceptOnlyEssentialCookies(page);
+      // up to 1180 px the form folds behind «Залишити запит» (ConversationFormToggle)
+      if (viewport.width <= 1180) await page.getByRole('button', { name: /^Залишити запит/ }).click();
+      await fillInquiryFields(page);
+      await submitSaved(page);
+      await expectSentPanelInView(page);
+    });
+  }
+
+  test('sent from the keyboard, the panel takes the focus where the keyboard can see it, and its button still leads back', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+    await submitSaved(page, 'Enter');
+    await expectSentPanelInView(page);
+    expect(await page.locator('.inquiry-sent').evaluate((panel) => panel.matches(':focus-visible'))).toBe(true);
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'Виправити номер або надіслати ще один запит', exact: true })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('form.inquiry-form').getByLabel(/Телефон/)).toBeFocused();
+  });
+
+  test('with reduced motion the panel is there at once', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+    await submitSaved(page);
+    await expect(page.locator('.inquiry-sent')).toBeFocused();
+    await expect(page.locator('.inquiry-sent')).toBeInViewport({ ratio: 1 });
+  });
+
+  test('under the configurator’s stamp on /angary as well', async ({ page }) => {
+    await page.goto('/angary', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
+    const form = page.locator('#hc-inquiry form.inquiry-form');
+    await expect(form.locator('.inquiry-config-brief')).toBeFocused();
+    // the jump to the form is a smooth one at this width: let it end before the fields are filled
+    await page.waitForFunction(() => new Promise<boolean>((resolve) => {
+      const before = window.scrollY;
+      window.setTimeout(() => resolve(window.scrollY === before), 300);
+    }));
+    await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
+    await form.getByLabel(/Телефон/).fill('+380671234567');
+    await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
+    await submitSaved(page);
+    await expectSentPanelInView(page);
+  });
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+    test('the panel, above the window once the form folds, comes into view under the header and takes the focus', async ({ page }) => {
+      await page.goto('/', { waitUntil: 'load' });
+      await acceptOnlyEssentialCookies(page);
+      // a phone folds the form behind «Залишити запит» (ConversationFormToggle)
+      await page.getByRole('button', { name: /^Залишити запит/ }).tap();
+      const form = page.locator('form.inquiry-form');
+      await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
+      await form.getByLabel(/Телефон/).fill('+380671234567');
+      await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
+      await submitSaved(page, 'tap');
+      await expectSentPanelInView(page);
+    });
+  });
+});
+
 
 test('lost acknowledgement retries the same lead and counts its first confirmed success once', async ({ page }) => {
   const ids: string[] = [];
