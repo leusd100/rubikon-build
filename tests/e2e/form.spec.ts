@@ -552,9 +552,34 @@ test.describe('generate_lead with Turnstile', () => {
 // screen, so the panel was left above the window (390: −423…−266 px), under the header at 1024 and 1440, and the focus
 // fell to the page from the hidden button (review 18.10, PDO-03). The panel comes into view under the header and takes
 // the focus. The lead API is mocked.
+/**
+ * Until the page stops moving: it scrolls smoothly (scroll-behavior; from 1181 px through Lenis), and a click while it
+ * still moves can land beside its target. Polled through expect.poll: page.waitForFunction resolves once a returned
+ * promise settles, even with false.
+ */
+async function pageAtRest(page: Page) {
+  await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
+    const before = window.scrollY;
+    window.setTimeout(() => resolve(window.scrollY === before && !document.documentElement.classList.contains('lenis-scrolling')), 300);
+  })), { timeout: 10_000 }).toBe(true);
+}
+
+/** Name, phone and consent — the consent from the keyboard, which a page still scrolling cannot make miss */
+async function fillForSaving(page: Page) {
+  const form = page.locator('form.inquiry-form');
+  await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
+  await form.getByLabel(/Телефон/).fill('+380671234567');
+  const consent = form.getByLabel(/Погоджуюся на обробку персональних даних/);
+  await consent.focus();
+  await page.keyboard.press('Space');
+  await expect(consent).toBeChecked();
+}
+
 async function submitSaved(page: Page, press: 'click' | 'tap' | 'Enter' = 'click') {
   await page.route('**/api/leads', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 61, isNew: true }) }));
   const submit = page.locator('form.inquiry-form').getByRole('button', { name: 'Надіслати запит', exact: true });
+  await submit.scrollIntoViewIfNeeded();
+  await pageAtRest(page);
   if (press === 'Enter') {
     await submit.focus();
     await page.keyboard.press('Enter');
@@ -583,7 +608,7 @@ test.describe('«Запит надіслано» after a saved request', () => {
       await acceptOnlyEssentialCookies(page);
       // up to 1180 px the form folds behind «Залишити запит» (ConversationFormToggle)
       if (viewport.width <= 1180) await page.getByRole('button', { name: /^Залишити запит/ }).click();
-      await fillInquiryFields(page);
+      await fillForSaving(page);
       await submitSaved(page);
       await expectSentPanelInView(page);
     });
@@ -591,7 +616,8 @@ test.describe('«Запит надіслано» after a saved request', () => {
 
   test('sent from the keyboard, the panel takes the focus where the keyboard can see it, and its button still leads back', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' });
-    await fillValidInquiry(page);
+    await acceptOnlyEssentialCookies(page);
+    await fillForSaving(page);
     await submitSaved(page, 'Enter');
     await expectSentPanelInView(page);
     expect(await page.locator('.inquiry-sent').evaluate((panel) => panel.matches(':focus-visible'))).toBe(true);
@@ -601,10 +627,39 @@ test.describe('«Запит надіслано» after a saved request', () => {
     await expect(page.locator('form.inquiry-form').getByLabel(/Телефон/)).toBeFocused();
   });
 
+  // Tab to «Надіслати запит» and Enter at once: the browser's smooth scroll to the button, set for the long form, is still
+  // under way when the request is saved — with the panel already in view, `scrollIntoView({ block: 'nearest' })` had
+  // nothing to do and left it running, and the page coasted on past the panel (found on /angary, 19.10)
+  test('a scroll still under way when the request is saved does not carry the panel away', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    await fillForSaving(page);
+    const form = page.locator('form.inquiry-form');
+    // the form's top well under the header, so the panel that takes the fields' place is already in view
+    await form.evaluate((element) => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - 400, behavior: 'instant' }));
+    await pageAtRest(page);
+    await page.route('**/api/leads', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 62, isNew: true }) }));
+    // a smooth scroll on down starts as the request goes out: the page is still moving when it is saved
+    await page.evaluate(() => {
+      const send = window.fetch;
+      window.fetch = (...request: Parameters<typeof fetch>) => {
+        if (String(request[0]).includes('/api/leads')) window.scrollBy({ top: 1500, behavior: 'smooth' });
+        return send(...request);
+      };
+    });
+    await form.getByRole('button', { name: 'Надіслати запит', exact: true }).evaluate((button) => (button as HTMLButtonElement).click());
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+    await expectSentPanelInView(page);
+    // and it stays there once every scroll has ended
+    await pageAtRest(page);
+    await expectSentPanelInView(page);
+  });
+
   test('with reduced motion the panel is there at once', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/', { waitUntil: 'load' });
-    await fillValidInquiry(page);
+    await acceptOnlyEssentialCookies(page);
+    await fillForSaving(page);
     await submitSaved(page);
     await expect(page.locator('.inquiry-sent')).toBeFocused();
     await expect(page.locator('.inquiry-sent')).toBeInViewport({ ratio: 1 });
@@ -614,16 +669,11 @@ test.describe('«Запит надіслано» after a saved request', () => {
     await page.goto('/angary', { waitUntil: 'load' });
     await acceptOnlyEssentialCookies(page);
     await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
-    const form = page.locator('#hc-inquiry form.inquiry-form');
-    await expect(form.locator('.inquiry-config-brief')).toBeFocused();
-    // the jump to the form is a smooth one at this width: let it end before the fields are filled
-    await page.waitForFunction(() => new Promise<boolean>((resolve) => {
-      const before = window.scrollY;
-      window.setTimeout(() => resolve(window.scrollY === before), 300);
-    }));
-    await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
-    await form.getByLabel(/Телефон/).fill('+380671234567');
-    await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
+    await expect(page.locator('#hc-inquiry form.inquiry-form .inquiry-config-brief')).toBeFocused();
+    // the jump to the form is a smooth one at this width — and until PDO-02 is fixed, Lenis's own jump to the end of the
+    // page runs after it, writing the scroll every frame: let the page come to rest before the form is used
+    await pageAtRest(page);
+    await fillForSaving(page);
     await submitSaved(page);
     await expectSentPanelInView(page);
   });
@@ -636,10 +686,7 @@ test.describe('«Запит надіслано» after a saved request', () => {
       await acceptOnlyEssentialCookies(page);
       // a phone folds the form behind «Залишити запит» (ConversationFormToggle)
       await page.getByRole('button', { name: /^Залишити запит/ }).tap();
-      const form = page.locator('form.inquiry-form');
-      await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
-      await form.getByLabel(/Телефон/).fill('+380671234567');
-      await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
+      await fillForSaving(page);
       await submitSaved(page, 'tap');
       await expectSentPanelInView(page);
     });
