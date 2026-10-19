@@ -452,6 +452,106 @@ test.describe('validation messages', () => {
   });
 });
 
+// The field starts with «+380»; people type the number as it is written, «067…», after it, or paste it with spaces.
+// «0671234567» typed there was sent as «+380067123456» — the 0 kept, the last digit cut by the 13-character limit, the
+// field valid (review 18.10, PDO-01). Typed and pasted keys go through the keyboard, so the browser's own length limit
+// applies as it does for a visitor. Only fictitious numbers.
+async function captureLeads(page: Page) {
+  const phones: string[] = [];
+  await page.route('**/api/leads', async (route) => {
+    phones.push((route.request().postDataJSON() as { phone: string }).phone);
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 51, isNew: true }) });
+  });
+  return phones;
+}
+
+/** Types or pastes `keys` into the phone field: after its «+380», or over all of it */
+async function enterPhone(page: Page, keys: string, { paste = false, over = false } = {}) {
+  const phone = page.locator('form.inquiry-form').getByLabel(/Телефон/);
+  await phone.fill('+380');
+  await phone.focus();
+  await phone.press(over ? 'ControlOrMeta+A' : 'End');
+  if (paste) await page.keyboard.insertText(keys);
+  else await phone.pressSequentially(keys);
+  return phone;
+}
+
+test.describe('phone number as people type it', () => {
+  for (const send of ['button', 'Enter in the field', 'after leaving the field'] as const) {
+    test(`«0XX…» typed after +380 goes out as +380XXXXXXXXX — ${send}`, async ({ page }) => {
+      const phones = await captureLeads(page);
+      await page.goto('/', { waitUntil: 'load' });
+      await fillValidInquiry(page);
+      const phone = await enterPhone(page, '0671234567');
+
+      if (send === 'Enter in the field') await phone.press('Enter');
+      else {
+        if (send === 'after leaving the field') {
+          await phone.press('Tab');
+          // corrected where the visitor can see it, before anything is sent
+          await expect(phone).toHaveValue('+380671234567');
+        }
+        await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+      }
+
+      await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+      expect(phones).toEqual(['+380671234567']);
+      await expect(page.locator('.inquiry-sent')).toContainText('+380671234567');
+    });
+  }
+
+  test('a number pasted with spaces, without the prefix or after it goes out as +380XXXXXXXXX', async ({ page }) => {
+    const phones = await captureLeads(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+    for (const [keys, over] of [['+38 067 123 45 67', true], ['0671234567', true], ['+380671234567', false]] as const) {
+      const phone = await enterPhone(page, keys, { paste: true, over });
+      await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+      await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+      expect(phones.at(-1), keys).toBe('+380671234567');
+      await sendAnother(page);
+      await expect(phone).toHaveValue('+380671234567');
+    }
+    expect(phones).toHaveLength(3);
+  });
+
+  test('a digit too many is not cut off into a valid-looking number: the field names the format, nothing is sent', async ({ page }) => {
+    const phones = await captureLeads(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+    const phone = await enterPhone(page, '6712345678');
+
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+
+    await expect(phone).toBeFocused();
+    await expect(phone).toHaveValue('+3806712345678');
+    expect(await phone.evaluate((field) => (field as HTMLInputElement).validationMessage)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    await expect(page.locator('#inquiry-phone-error')).toHaveText('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    expect((await turnstileLog(page)).executes).toBe(0);
+    expect(phones).toHaveLength(0);
+  });
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+    test('«0XX…» typed after +380 goes out as +380XXXXXXXXX', async ({ page }) => {
+      const phones = await captureLeads(page);
+      await page.goto('/', { waitUntil: 'load' });
+      await acceptOnlyEssentialCookies(page);
+      // a phone folds the form behind «Залишити запит» (ConversationFormToggle)
+      await page.getByRole('button', { name: /^Залишити запит/ }).tap();
+      const form = page.locator('form.inquiry-form');
+      await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
+      await enterPhone(page, '0671234567');
+      await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
+      await form.getByRole('button', { name: 'Надіслати запит', exact: true }).tap();
+
+      await expect(page.locator('.inquiry-status')).toContainText('Дякуємо!');
+      expect(phones).toEqual(['+380671234567']);
+    });
+  });
+});
+
 test.describe('«Ще не визначено» direction', () => {
   test('is offered after the other directions and submitted as a normal value', async ({ page }) => {
     let submittedPayload: { direction?: string } | undefined;
