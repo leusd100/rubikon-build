@@ -11,6 +11,7 @@ import { filterAttributionForConsent, readAttribution } from '../lib/attribution
 import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
 import { queueInquiryAnalyticsEvent } from '../lib/inquiry/analytics';
 import { toInquiryAttachmentPayload } from '../lib/inquiry/attachment';
+import { normalizeUaPhone } from '../lib/inquiry/phone';
 import { createSubmissionId, nextSubmissionIdAfterSuccess } from '../lib/inquiry/submissionId';
 import { dimensionsFieldView } from './inquiry/formAttachment';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
@@ -216,6 +217,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const lastAttempt = useRef<{ id: string; signature: string } | null>(null);
   const acknowledgedLeadIds = useRef(new Set<number>());
   const formRef = useRef<HTMLFormElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstile = useTurnstile(turnstileRef);
   const { prepare: prepareTurnstile } = turnstile;
@@ -242,6 +244,20 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       form.removeEventListener('focusin', start);
     };
   }, [prepareTurnstile]);
+
+  // «0XX…» typed after the field's «+380», a number pasted with spaces: put as +380XXXXXXXXX where the visitor sees it, on
+  // leaving the field and on «Надіслати запит» — the button's click, not the submit: the browser checks the fields
+  // between the two, and Enter in a field comes through the button's click too (review 18.10, PDO-01)
+  const tidyPhone = () => {
+    const field = phoneRef.current;
+    if (!field) return;
+    const tidy = normalizeUaPhone(field.value);
+    if (tidy === field.value) return;
+    field.value = tidy;
+    // as an edit: the field is checked afresh
+    field.setCustomValidity('');
+    report('phone', null);
+  };
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -414,11 +430,14 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
               <label className={phoneState.invalidClass}>
                 <span>Телефон *</span>
                 <input
+                  ref={phoneRef}
                   name={enabledFieldName(jsReady, 'phone')}
                   type="tel"
                   inputMode="tel"
                   pattern="\+380[0-9]{9}"
-                  maxLength={13}
+                  // room for a number as people write it, «+38 (067) 123-45-67»: 13 cut the last digit off the usual
+                  // «0XX…» typed after the prefix, and the field held a valid-looking wrong number (PDO-01)
+                  maxLength={20}
                   defaultValue="+380"
                   title="Введіть номер у форматі +380XXXXXXXXX"
                   aria-describedby={phoneState.describedBy}
@@ -426,6 +445,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                   autoComplete="tel"
                   required
                   {...PHONE_VALIDITY}
+                  onBlur={tidyPhone}
                 />
                 {/* the error takes the hint's place: one line under the field, never the same thing said twice (08.10) */}
                 {phoneState.note}
@@ -584,7 +604,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
               <div ref={turnstileRef} className="inquiry-turnstile" data-turnstile-state={turnstile.state} />
               {/* busy, not disabled, while sending: a disabled button drops the keyboard focus (08.10, audit F157); a
                   second press is ignored by handleSubmit */}
-              <button className="button button-primary inquiry-submit" type="submit" disabled={!jsReady} aria-disabled={isSubmitting || undefined}>
+              <button className="button button-primary inquiry-submit" type="submit" disabled={!jsReady} aria-disabled={isSubmitting || undefined} onClick={tidyPhone}>
                 {isSubmitting ? 'Надсилаємо…' : 'Надіслати запит'}{' '}
                 {!isSubmitting && <Send aria-hidden="true" />}
               </button>
