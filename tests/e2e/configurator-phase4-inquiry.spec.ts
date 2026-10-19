@@ -93,6 +93,58 @@ test('the line in the closing block, the route node and the cost CTA take the vi
   }
 });
 
+// From 1181 px, without reduced motion, the desktop scrolls through Lenis (SmoothScroll.tsx), which takes every anchor
+// click on this page at the window — prevented or not — and made the jump to #inquiry, the end of the page, after the
+// form had opened under the stamp: the brief focused 4 800 px above the window (review 18.10, PDO-02). The tests above
+// run with reduced motion, where Lenis never starts, and could not see it.
+const briefTop = (page: Page) => brief(page).evaluate((element) => Math.round(element.getBoundingClientRect().top));
+const headerBottom = (page: Page) => page.locator('.site-header').evaluate((header) => Math.round(header.getBoundingClientRect().bottom));
+
+async function expectBriefUnderHeader(page: Page) {
+  await expect(brief(page)).toBeFocused();
+  // the jump is smooth: once it settles, the brief stands just under the header — not above the window
+  await expect.poll(async () => {
+    const top = await briefTop(page);
+    return top >= (await headerBottom(page)) && top < 160;
+  }, { timeout: 5_000 }).toBe(true);
+  await expect(page.locator('#hc-inquiry form.inquiry-form')).toBeInViewport();
+}
+
+for (const viewport of [{ width: 1181, height: 800 }, { width: 1920, height: 1080 }]) {
+  test(`at ${viewport.width} px with smooth scrolling «Обговорити» stays at the stamp, the brief under the header`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the desktop widths run once');
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await openHangarPage(page);
+    await expect(page.locator('html')).toHaveClass(/\blenis\b/);
+    await discuss(page).click();
+    await expectBriefUnderHeader(page);
+    await expect(page).toHaveURL(/#inquiry$/);
+  });
+}
+
+test('with smooth scrolling every way to the attached brief lands on it under the stamp, not at the end of the page', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the desktop contract runs once');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await openHangarPage(page);
+  await expect(page.locator('html')).toHaveClass(/\blenis\b/);
+  await discuss(page).click();
+  await expectBriefUnderHeader(page);
+
+  for (const link of [
+    page.locator('#inquiry .conversation-form-moved a'),
+    page.locator('#process li').first().locator('a.angary-route-brief-action', { hasText: 'Надіслати бриф ↑' }),
+    // these three go through the form toggle's capture listener (data-open-inquiry), not their own onClick
+    page.locator('#vartist a[data-open-inquiry]'),
+    page.locator('a.angary-stamp-cta[data-open-inquiry]'),
+    page.locator('a.faq-ask-write[data-open-inquiry]'),
+  ]) {
+    await link.scrollIntoViewIfNeeded();
+    await link.click();
+    await expectBriefUnderHeader(page);
+  }
+});
+
 test('the lead sent from under the stamp tells the visitor’s width from the example’s length and wall height', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the payload contract runs once');
   const leads = await interceptLeads(page);
