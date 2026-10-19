@@ -52,7 +52,7 @@ pull-request diff.
 | --- | --- | --- |
 | Planner | `app/components/grain-planner/`, `app/components/planner/`, `app/lib/planner/`, `app/zernoskhovyshcha/` | Grain page, planner, mobile, stabilization, handoff and planner visual suites |
 | Inquiry | `ProjectInquiryForm`, `ConversationSection`, conversation data/CSS, `app/components/inquiry/`, `app/lib/inquiry/`, conversion Phase 2 test | Form, consent, GA endpoint checks, both attachment handoff suites and conversion Phase 2 (including centered contact rows at 320–1440 px) |
-| Leads API | `app/api/leads/`, `drizzle/`, `migrations/`, leads route unit test | Full unit gate plus mocked browser lead submission |
+| Leads API | `app/api/leads/`, `drizzle/`, `migrations/`, leads route unit test | Full unit gate plus mocked browser lead submission; when Inquiry is also selected, its identical desktop form suite owns the browser execution and the standalone Leads job is skipped with an explanation in the PR Gate summary |
 | Configurator | `app/components/configurator/`, `app/lib/configurator/`, configurator preview, `/angary` composition and tests | Configurator, 3D, build-up, accessibility, handoff and polish suites in two shards |
 | Brand visual | `public/brand/`, `SiteChrome`, favicon and brand snapshots | Brand visual suite |
 | Shared/global visual | any CSS, root layout/page, top-level shared components, nested HOME v2 components, HOME proof tests, theme implementation/tests, app data and shared media | Complete visual suites (deferred for a design/* prototype) plus hero playback, theme behavior (three runs without retries) and node assembly ordering on desktop/mobile (every mode) |

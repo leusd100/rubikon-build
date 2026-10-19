@@ -152,7 +152,9 @@ jobs:
 
   leads:
     name: Leads API regression
-    if: needs.classify.outputs.leads == 'true'
+    # Inquiry runs the identical desktop form suite against the same production artifact.
+    # Keep the standalone job for leads-only changes; co-selected changes need one execution.
+    if: needs.classify.outputs.leads == 'true' && needs.classify.outputs.inquiry != 'true'
     needs: [classify, fast]
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -278,6 +280,8 @@ jobs:
           PLANNER: ${{ needs.planner.result }}
           INQUIRY: ${{ needs.inquiry.result }}
           LEADS: ${{ needs.leads.result }}
+          LEADS_SELECTED: ${{ needs.classify.outputs.leads }}
+          INQUIRY_SELECTED: ${{ needs.classify.outputs.inquiry }}
           CONFIGURATOR: ${{ needs.configurator.result }}
           HERO: ${{ needs.hero.result }}
           VISUAL: ${{ needs.visual.result }}
@@ -285,6 +289,9 @@ jobs:
           VISUAL_DEFERRED: ${{ needs.classify.outputs.visual_deferred }}
         run: |
           echo "Visual mode: $VISUAL_MODE (visual regression deferred: $VISUAL_DEFERRED)" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$LEADS_SELECTED" = true ] && [ "$INQUIRY_SELECTED" = true ]; then
+            echo "Leads API regression: standalone job skipped; desktop form suite is owned by Inquiry regression (result: $INQUIRY)." >> "$GITHUB_STEP_SUMMARY"
+          fi
           test "$CLASSIFY" = success
           test "$FAST" = success
           for result in "$PLANNER" "$INQUIRY" "$LEADS" "$CONFIGURATOR" "$HERO" "$VISUAL"; do
