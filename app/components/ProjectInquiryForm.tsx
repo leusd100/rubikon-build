@@ -371,7 +371,9 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   // The saved request's panel takes the fields' place: the form shrinks by its whole height, and the panel was left above
   // the window on a phone (the form is taller than a screen), under the header at 1024 and 1440 px, the focus fallen from
   // the hidden button to the page (review 18.10, PDO-03). It comes into view under the header (its scroll-margin-top) and
-  // takes the focus — once, after the submit that saved it.
+  // takes the focus — once, after the submit that saved it. Always to its start, even when it is already in view: the
+  // page scrolls smoothly (scroll-behavior), and a scroll still on its way to the button — set for the long form, now
+  // past the panel — runs on unless a new one takes it over; `nearest` with nothing to do left it running.
   useEffect(() => {
     if (!revealSent.current) return;
     revealSent.current = false;
@@ -379,7 +381,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     if (!shownSent || !panel) return;
     panel.focus({ preventScroll: true });
     const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    panel.scrollIntoView({ block: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
+    panel.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
   }, [sentPanel, shownSent]);
 
   return (
