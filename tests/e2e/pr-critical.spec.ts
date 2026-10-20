@@ -459,7 +459,73 @@ test('/napryamky rows carry their scheme sheets; hero slides name their directio
   await expect(page.locator('#directions-list .route-service .dcat-thumb svg')).toHaveCount(directions.length);
   if (testInfo.project.name === 'desktop-chromium') {
     await expect(page.locator('#betonni-roboty .dcat-kinds li')).toHaveText(['Фундаменти', 'Основи під обладнання', 'Промислові підлоги', 'Монолітні ділянки']);
+    // PDO-07 (B′): the roofing page lost its «Склад робіт» block, its row keeps the same four kinds (catalogKinds)
+    await expect(page.locator('#pokrivelni-roboty .dcat-kinds li')).toHaveText(['Нові покрівлі', 'Ремонт і заміна', 'Вузли й примикання', 'Водовідведення']);
   }
+});
+
+// PDO-07 (owner, 20.10): roofing and concrete say each thing once. Roofing goes from «З чим звертаються» straight to its
+// node: the «Склад робіт» block after it repeated two of the three situations word for word. Concrete's «Що виконуємо»
+// has no lead and its process runs «Від замірів до приймання робіт», so «перевіряємо до бетонування» no longer stands in
+// four blocks in a row. Each hero's full intro is also the page's Service description.
+
+/** Sentences of four words or more that stand in two neighbouring blocks of the page, as a visitor reads them */
+async function sentencesRepeatedNextDoor(page: Page) {
+  return page.locator('main#main-content > section').evaluateAll((sections) => {
+    const sentencesOf = (section: HTMLElement) => new Set(section.innerText.split(/\n+/)
+      .flatMap((line) => line.split(/(?<=[.!?…])\s+/))
+      .map((sentence) => sentence.toLowerCase().replace(/\s+/g, ' ').replace(/[\s.!?…:;,]+$/, '').trim())
+      .filter((sentence) => (sentence.match(/[a-zа-яіїєґ’'ʼ]+/gi) ?? []).length >= 4));
+    const blocks = (sections as HTMLElement[]).filter((section) => section.offsetHeight > 0).map(sentencesOf);
+    return blocks.flatMap((block, index) => (index ? [...block].filter((sentence) => blocks[index - 1].has(sentence)) : []));
+  });
+}
+
+/** The description of the Service node among a route's JSON-LD scripts */
+function serviceDescription(scripts: string[]) {
+  const nodes = scripts.map((script) => JSON.parse(script) as { '@type'?: string; description?: string });
+  return nodes.filter((node) => node['@type'] === 'Service').map((node) => node.description);
+}
+
+test('/pokrivelni-roboty goes from the situations straight to the node and says nothing twice next door (PDO-07)', async ({ page }) => {
+  const html = await serverText(page, '/pokrivelni-roboty', {
+    overview: '#direction-content',
+    headings: 'main h2',
+    entryLead: '.direction-entry .section-header-support',
+    intro: '.service-subhero-lead .lead-full',
+    data: 'script[type="application/ld+json"]',
+  });
+  expect(html.overview).toEqual([]);
+  expect(html.headings).not.toContain('Надійний контур без слабких примикань');
+  expect(html.entryLead).toEqual(['Оберіть найближчу ситуацію — з неї почнемо розмову.']);
+  expect(html.intro).toEqual(['Монтуємо й ремонтуємо покрівлі промислових, складських і комерційних об’єктів. Можемо виконати покрівлю під час будівництва всього об’єкта або взяти її окремим підрядом.']);
+  expect(serviceDescription(html.data)).toEqual(html.intro);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/pokrivelni-roboty', { waitUntil: 'load' });
+  await expect(page.locator('main#main-content > section.direction-entry + section')).toHaveClass(/\bdn-section\b/);
+  expect(await sentencesRepeatedNextDoor(page)).toEqual([]);
+});
+
+test('/betonni-roboty: «Що виконуємо» without a lead, the process from measuring to acceptance (PDO-07)', async ({ page }) => {
+  const html = await serverText(page, '/betonni-roboty', {
+    overviewTitle: '#direction-content h2',
+    overviewLead: '#direction-content .lead-copy',
+    processTitle: 'section:has(.process-split) .page-heading h2',
+    intro: '.service-subhero-lead .lead-full',
+    data: 'script[type="application/ld+json"]',
+  });
+  expect(html.overviewTitle).toEqual(['Основа, від якої залежить весь об’єкт']);
+  expect(html.overviewLead).toEqual([]);
+  expect(html.processTitle).toEqual(['Від замірів до приймання робіт']);
+  expect(html.intro).toEqual(['Виконуємо типові фундаменти й бетонні основи для промислових, складських, аграрних і комерційних об’єктів — комплексно або окремим підрядом. Основні параметри перевіряються до подачі бетону.']);
+  expect(serviceDescription(html.data)).toEqual(html.intro);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/betonni-roboty', { waitUntil: 'load' });
+  await expect(page.locator('#direction-content h2')).toBeVisible();
+  await expect(page.locator('#direction-content .feature-list article')).toHaveCount(4);
+  expect(await sentencesRepeatedNextDoor(page)).toEqual([]);
 });
 
 test('homepage separates labelled illustrations from the one real photo', async ({ page }) => {

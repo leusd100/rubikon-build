@@ -84,8 +84,13 @@ export type DirectionPageConfig = {
   hideJourney?: boolean;
   /** Optional for a page whose own editorial architecture replaces the overview band. */
   overview?: DirectionOverview;
+  /**
+   * The kinds of work the direction's row on /napryamky lists, for a page with no overview band to take them from
+   * (roofing since PDO-07: its «Склад робіт» block repeated the situations). Without it the row takes overview's titles.
+   */
+  catalogKinds?: readonly string[];
   /** Roofing: the three situations people call with, each with its first step (UX pass 2026-10). Words only from the
-   *  page's own overview, process and FAQ. */
+   *  page's own process and FAQ and its former «Склад робіт» block (removed in PDO-07). */
   entry?: {
     eyebrow: string;
     title: string;
