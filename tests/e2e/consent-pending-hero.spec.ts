@@ -102,8 +102,10 @@ for (const path of ['/', '/metalokonstruktsii']) {
       await page.setViewportSize(viewport);
       await page.goto(path, { waitUntil: 'load' });
       await firstVisitBanner(page);
-      // the banner's height becomes --cookie-banner-clearance in an effect after it mounts; give that a few frames
-      await page.waitForTimeout(750);
+      // the banner's height becomes --cookie-banner-clearance in an effect after it mounts: wait for exactly that, then
+      // two frames for its layout and one task for the layout-shift observer to deliver (no fixed wait)
+      await expect.poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--cookie-banner-clearance')), { timeout: 5_000 }).not.toBe('');
+      await page.evaluate(() => new Promise<void>((resolve) => { requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0))); }));
       const { shifts, pendingAtBody } = await page.evaluate(() => {
         const record = window as unknown as { __shifts: string[]; __pendingAtBody: boolean | null };
         return { shifts: record.__shifts, pendingAtBody: record.__pendingAtBody };
