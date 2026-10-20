@@ -115,15 +115,16 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
   border-bottom: 1px solid rgba(255, 255, 255, .16);
   backdrop-filter: var(--phone-hero-header-backdrop, none);
 }
-/* HOME and About integrate the fixed header with their Hero at every width. Phone pages retain their 82% tint. */
+/* HOME and About integrate the fixed header with their Hero at every width. Phone pages retain their 82% tint.
+   Over a picture the written channels keep a plate of their own, as the number does (PDO-19): a grey Telegram icon on
+   a light frame was 2.24 : 1 without one. A page whose header lies on its picture sets it; a solid header has none. */
 body:has(main:is([data-home="v2"], .about-page)) {
   --phone-hero-header-alpha: 72%;
   --phone-hero-menu-alpha: 97%;
   --phone-hero-header-backdrop: none;
+  --header-channels-plate: rgba(17, 21, 18, .6);
+  --header-channels-inset: 0px;
 }
-/* Over a picture the written channels keep a plate of their own, as the number does (PDO-19): a grey Telegram icon on
-   a light frame was 2.24 : 1 without one. A page whose header lies on its picture sets it; a solid header has none. */
-body:has(main:is([data-home="v2"], .about-page)) { --header-channels-plate: rgba(17, 21, 18, .6); --header-channels-inset: 0px; }
 .site-header :is(.header-messengers, .header-email) { background: var(--header-channels-plate, transparent); }
 :root[data-hero-header="scrolled"] body { --phone-hero-header-alpha: 97%; }
 .site-header:has(.mobile-menu[open]) { --phone-hero-header-alpha: var(--phone-hero-menu-alpha, 90%); }
