@@ -243,3 +243,36 @@
 - Згода cookie задана як «лише необхідні». «Прийняти все» не натискали.
 - Форм не надсилали.
 - Еталони не оновлювали: `--update-snapshots` не запускали, PNG у репозиторій не додавали.
+
+
+## Еталони: погоджено власником 20.10 (DEC-18)
+
+Власник переглянув пари «зараз / новий» і погодив **21 ціль**: «Погоджую 21 еталон для #217 (DEC-18)». Їх на 2 більше, ніж передбачав локальний прогін на Mac: `homepage-inquiry-tablet-768` і `homepage-real-object-tablet-768` на Linux виходять за допуск, а `grain-planner-mobile-390-initial` (`/planner-preview`) бере той самий токен H2.
+
+Нові PNG — фактичні Linux-рендери з артефактів `main-visual-blob-1/2` прогону Main Regression [39413801403](https://github.com/leusd100/rubikon-build/actions/runs/39413801403) на голові гілки `9e97bee`. Кожен рендер побайтово однаковий в усіх спробах. Перед заміною кожен `-expected.png` з CI звірено з файлом у репозиторії. Між `9e97bee` і фінальною головою влито лише main з #218: він знімків не змінює, бо `visual.spec` знімає після «Лише необхідні». Фінальний PR Gate з `visual-freeze` перевіряє ці еталони на останньому коміті.
+
+| Ціль | SHA-256 (16) |
+|---|---|
+| `grain-planner-mobile-390-initial` | `4edc029dee9a9e24` |
+| `direction-cost-mobile-375` | `6e6bac4006516330` |
+| `direction-cost-tablet-768` | `d8af2439ef4ec0a3` |
+| `direction-faq-mobile-375` | `a862e8ad63e6fa43` |
+| `direction-faq-tablet-768` | `8427fc9217213a21` |
+| `directions-hub-mobile-375` | `c605c88c8d944541` |
+| `directions-hub-tablet-768` | `b096ae5d53752589` |
+| `homepage-directions-mobile-375` | `7f685f8fd45a7de2` |
+| `homepage-directions-tablet-768` | `7f5036967ed0a1c4` |
+| `homepage-hero-desktop-1440` | `ab2c0cbd9a7910d4` |
+| `homepage-inquiry-mobile-375` | `96cf013ae0807281` |
+| `homepage-inquiry-tablet-768` | `ea58e6094fd68148` |
+| `homepage-real-object-tablet-768` | `700c55fd7f843aea` |
+| `process-responsibility-mobile-375` | `9199ed4b461bca9a` |
+| `process-responsibility-tablet-768` | `12c3796ba1cff379` |
+| `process-route-mobile-375` | `c1fd355dccc080c7` |
+| `process-route-tablet-768` | `d879f4b481ab455a` |
+| `process-scope-mobile-375` | `b1f2690e16b89492` |
+| `process-scope-tablet-768` | `a6a340a2c5e15362` |
+| `process-terms-mobile-375` | `4c2b645e3665d193` |
+| `process-terms-tablet-768` | `e1176747a9044643` |
+
+Darwin-еталони, пороги й ретраї не змінювались.
