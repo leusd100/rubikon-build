@@ -9,7 +9,7 @@ export const metadata = createPageMetadata({
   path: siteRoutes.privacy,
   title: brandedTitle('Політика конфіденційності'),
   description: `Інформація про обробку даних і використання Google Analytics на сайті ${company.name}.`,
-  image: '/og.jpg?v=rubikon-02',
+  image: '/og.jpg?v=rubikon-03',
   imageAlt: `${company.name} — промислове будівництво у Дніпрі`,
 });
 

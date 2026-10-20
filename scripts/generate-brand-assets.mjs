@@ -138,6 +138,9 @@ for (const [name, { source, rasterWidth }] of Object.entries(variants)) {
 // not silently change Open Graph media without explicit approval.
 if (process.argv.includes('--social')) {
   const socialBackground = await readFile(path.join(brand, 'og-social-background.jpg'));
+  // The background has an older wordmark and tagline baked in; the band covers both, the logo and the approved tagline
+  // layer go on top (render-og-tagline.mjs; review 18.10, PDO-32: no «ПІД КЛЮЧ»)
+  const socialTagline = await readFile(path.join(brand, 'og-tagline-uk.png'));
   const socialLogo = await sharp(Buffer.from(horizontalDark), { density: 288 })
     .resize({ width: 670 })
     .png()
@@ -149,7 +152,7 @@ if (process.argv.includes('--social')) {
           <feGaussianBlur stdDeviation="12"/>
         </filter>
       </defs>
-      <rect x="78" y="233" width="870" height="136" fill="#111416" filter="url(#soft-cover)"/>
+      <rect x="78" y="233" width="870" height="197" fill="#111416" filter="url(#soft-cover)"/>
     </svg>
   `);
   const socialPng = await sharp(socialBackground)
@@ -157,6 +160,7 @@ if (process.argv.includes('--social')) {
     .composite([
       { input: socialCover, top: 0, left: 0 },
       { input: socialLogo, top: 204, left: 110 },
+      { input: socialTagline, top: 0, left: 0 },
     ])
     .png()
     .toBuffer();
