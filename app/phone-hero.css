@@ -73,6 +73,28 @@
 @media (max-width: 760px) and (max-height: 740px) {
   main.inner-page > .phone-hero h1 { font-size: 1.8125rem; }
 }
+/* First visit (PDO-09, owner 20.10). The cookie banner mounts only after hydration and lay over the hero's actions.
+   data-consent-pending is on <html> from <head>, before the first paint, while no choice is stored
+   (app/lib/consentStorage.ts): the hero keeps the banner's room from the first frame, so nothing moves when it appears,
+   and the choice gives it back — the approved composition above returns as it was. The room is the banner's height
+   plus 12 px: 133 px, or 121 px under its own short-phone rule (globals.css; at 412 px and wider it is 115 px). HOME
+   reads the same reserve (home-v2.css). */
+@media (max-width: 760px) {
+  :root[data-consent-pending] { --consent-banner-reserve: calc(145px + env(safe-area-inset-bottom, 0px)); }
+  :root[data-consent-pending] main.inner-page > .phone-hero > .phone-hero-content { padding-bottom: var(--consent-banner-reserve); }
+}
+@media (max-width: 760px) and (max-height: 740px) and (orientation: portrait) {
+  :root[data-consent-pending] { --consent-banner-reserve: calc(133px + env(safe-area-inset-bottom, 0px)); }
+}
+/* A short phone: the hero is taller than what the banner leaves, so the actions come before the lead, as on HOME. On
+   /napryamky and /pro-nas the lead and the actions share .subhero-side, which steps aside for that. */
+@media (max-width: 760px) and (max-height: 740px) {
+  :root[data-consent-pending] main.inner-page > .phone-hero .subhero-side { display: contents; }
+  :root[data-consent-pending] main.inner-page > .phone-hero :is(.hero-action-row, .angary-hero-actions, .grain-hero-actions, .directions-hero-actions, .about-hero-actions, .proc-hero-actions) { order: 2; }
+  :root[data-consent-pending] main.inner-page > .phone-hero :is(.service-subhero-lead, .proc-hero-lead, .service-subhero-note, .subhero-side > p) { order: 3; }
+  :root[data-consent-pending] main.inner-page > .phone-hero .subhero-side > p { margin-top: 18px; }
+  :root[data-consent-pending] main.inner-page > .phone-hero .phone-hero-scroll { order: 4; }
+}
 /* About already plays footage from601px; keep its established reveal behind the translucent header. */
 @media (min-width: 601px) and (max-width: 760px) {
   main.inner-page > .about-subhero.phone-hero .subhero-overlay {

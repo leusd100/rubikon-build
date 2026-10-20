@@ -1,6 +1,7 @@
 'use client';
 
 import { queueGoogleCommand } from './googleCommand';
+import { CONSENT_STORAGE_KEY, LEGACY_ANALYTICS_STORAGE_KEY } from './consentStorage';
 
 // Single source of truth for the site's cookie-consent state: category shape, localStorage
 // read/write, migration from the single-flag consent this project shipped before the
@@ -18,11 +19,9 @@ export type ConsentState = {
   advertising: ConsentCategory;
 };
 
-export const CONSENT_STORAGE_KEY = 'rubikon-consent-state';
-// Superseded by CONSENT_STORAGE_KEY. Kept only so a visitor who already made a choice under the
-// old single-flag banner gets migrated instead of re-prompted — never written to by this version
-// of the code.
-export const LEGACY_ANALYTICS_STORAGE_KEY = 'rubikon-analytics-consent';
+// The two storage keys are defined in consentStorage.ts (no 'use client'), which also builds the inline script that
+// flags a first visit on <html> before the first paint from the same keys (PDO-09).
+export { CONSENT_STORAGE_KEY, LEGACY_ANALYTICS_STORAGE_KEY };
 
 declare global {
   interface Window {

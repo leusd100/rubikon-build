@@ -111,10 +111,13 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
     font: 700 10px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase;
   }
   main[data-home="v2"] .phone-hero-scroll { position: relative; z-index: 3; flex: none; align-self: center; margin-top: 24px; display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-on-dark); font-size: 24px; line-height: 1; }
-  /* Keep the existing first-visit call guarantee. Consent behavior and wording are unchanged. */
-  body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero-layout { margin-top: 0; padding-top: 116px; padding-bottom: max(66px, var(--cookie-banner-clearance, 0px)); }
-  body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero .hero-actions { order: 1; }
-  body:has(> .cookie-banner) main[data-home="v2"] .hv2-hero .hero-lead { order: 2; }
+  /* Keep the existing first-visit call guarantee, now from the first frame: data-consent-pending is set in <head> before
+     the first paint (PDO-09), where body:has(> .cookie-banner) applied it only once the banner had mounted after
+     hydration and moved the hero (layout shift 0.09–0.20). The room is the banner's, as on the inner pages
+     (--consent-banner-reserve, phone-hero.css). Consent behavior and wording are unchanged. */
+  :root[data-consent-pending] main[data-home="v2"] .hv2-hero-layout { margin-top: 0; padding-top: 116px; padding-bottom: var(--consent-banner-reserve); }
+  :root[data-consent-pending] main[data-home="v2"] .hv2-hero .hero-actions { order: 1; }
+  :root[data-consent-pending] main[data-home="v2"] .hv2-hero .hero-lead { order: 2; }
 }
 @media (max-width: 359px) {
   main[data-home="v2"] .hv2-hero-layout { width: calc(100% - 32px); }
