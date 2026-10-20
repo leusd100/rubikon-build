@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     url: '/',
     images: [
       {
-        url: '/og.jpg?v=rubikon-02',
+        url: '/og.jpg?v=rubikon-03',
         width: 1200,
         height: 630,
         alt: `${company.name} — промислове будівництво у Дніпрі`,
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: `Промислове будівництво у Дніпрі | ${company.name}`,
     description: company.description,
-    images: ['/og.jpg?v=rubikon-02'],
+    images: ['/og.jpg?v=rubikon-03'],
   },
 };
 
@@ -104,7 +104,7 @@ const organizationData = {
     width: 512,
     height: 512,
   },
-  image: `${company.siteUrl}/og.jpg?v=rubikon-02`,
+  image: `${company.siteUrl}/og.jpg?v=rubikon-03`,
   telephone: company.phone.international,
   email: company.email,
   description: company.description,
