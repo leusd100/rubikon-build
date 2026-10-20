@@ -15,6 +15,7 @@ import {
   type ConsentCategory,
   type ConsentState,
 } from '../lib/consent';
+import { clearConsentPending } from '../lib/consentStorage';
 
 const settingsEvent = 'rubikon:cookie-settings';
 const measurementId = 'G-WYRXJV71WG';
@@ -136,6 +137,8 @@ export default function AnalyticsConsent() {
       setShowBanner(saved === null);
       setDraft(saved ?? DENY_ALL_STATE);
       if (saved) {
+        // The head script reads the same keys and normally agrees; should it not, no room is kept for a banner that never shows
+        clearConsentPending();
         updateGoogleConsent(saved);
         if (saved.analytics === 'granted') loadAnalytics();
       }
@@ -160,6 +163,7 @@ export default function AnalyticsConsent() {
         && event.key !== LEGACY_ANALYTICS_STORAGE_KEY) return;
       window.cancelAnimationFrame(frame);
       const current = readConsentState();
+      if (current) clearConsentPending();
       setState(current);
       setDraft(current ?? DENY_ALL_STATE);
       setShowBanner(current === null);
@@ -235,6 +239,8 @@ export default function AnalyticsConsent() {
 
   function applyChoice(next: ConsentState) {
     writeConsentState(next);
+    // The phone heroes give back the room they kept for the banner (data-consent-pending, PDO-09) as it closes
+    clearConsentPending();
     ensureAttributionCaptured(next.advertising === 'granted');
     setState(next);
     setShowBanner(false);

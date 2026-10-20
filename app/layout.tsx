@@ -25,6 +25,7 @@ import { SmoothScroll } from './components/SmoothScroll';
 import { company } from './data/company';
 import { directions } from './data/directions';
 import { THEME_INIT_SCRIPT } from './lib/theme';
+import { CONSENT_PENDING_INIT_SCRIPT } from './lib/consentStorage';
 
 // `fallback` follows next/font's Arial-based 'Manrope Fallback': the faces for Linux and Android, in
 // app/fonts/fallback-metrics.css. (No comments inside the options object: vinext then cannot read it statically and
@@ -136,6 +137,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {/* Resolves system/light/dark onto <html> before the first paint, so the first frame already has the right
             theme (app/lib/theme.ts, app/theme.css). */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* A first visit (no consent choice stored) is flagged on <html> before the first paint too, so the phone heroes keep
+            the cookie banner's room from the first frame instead of moving once it mounts after hydration
+            (app/lib/consentStorage.ts, phone-hero.css; PDO-09). */}
+        <script dangerouslySetInnerHTML={{ __html: CONSENT_PENDING_INIT_SCRIPT }} />
         {/* Plex Condensed sets first-screen text since the UX pass (the «Ілюстрація» stamp, the configurator's eyebrow on
             a phone). Fetched with the CSS, as next/font does for Manrope, it is in before the first paint
             instead of swapping in later and shifting the hero (direction-static-hero.spec.ts). Only the faces nearly every
