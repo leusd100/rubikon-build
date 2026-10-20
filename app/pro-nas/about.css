@@ -335,3 +335,10 @@
   .about-page .about-subhero-side > p { font-size: .9375rem; line-height: 1.55; }
   .about-page .about-hero-actions { margin-top: 20px; }
 }
+
+/* The phone still's provenance stamp (review 18.10, PDO-04): the still exists only up to 600 px (AboutHeroVideo), so does
+   the stamp; its place and look are the shared phone-hero stamp's (globals.css .hero-provenance, phone-hero.css) */
+.about-hero-provenance { display: none; }
+@media (max-width: 600px) {
+  .about-hero-provenance { display: block; }
+}
