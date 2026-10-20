@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type Ref, type SyntheticEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
@@ -148,9 +148,10 @@ function taskPlaceholder(otherPurpose: boolean) {
 }
 
 /** After a saved request: what went out, in place of the filled form (08.10, audit F155) */
-function InquirySentPanel({ sent, onAnother }: Readonly<{ sent: SentRequest; onAnother: () => void }>) {
+function InquirySentPanel({ sent, onAnother, panelRef }: Readonly<{ sent: SentRequest; onAnother: () => void; panelRef: Ref<HTMLElement> }>) {
   return (
-    <section className="inquiry-sent" aria-labelledby="inquiry-sent-title">
+    // focused by script once the request is saved (tabIndex -1: not a stop on the keyboard's way)
+    <section ref={panelRef} className="inquiry-sent" aria-labelledby="inquiry-sent-title" tabIndex={-1}>
       <h3 id="inquiry-sent-title">Запит надіслано</h3>
       <dl>
         {sent.brief && <div><dt>Конфігурація</dt><dd translate="no">{sent.brief}</dd></div>}
@@ -197,6 +198,10 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   const [consentError, setConsentError] = useState(false);
   // After a saved request: what went out, shown in place of the filled form (08.10, audit F155)
   const [sentPanel, setSentPanel] = useState<SentRequest | null>(null);
+  const sentPanelRef = useRef<HTMLElement>(null);
+  // set by a saved submit, taken by the effect that brings the panel into view: the panel comes back by itself too (a
+  // configuration changed and changed back), and that must not move the page
+  const revealSent = useRef(false);
   // The fields' own messages, kept under them while they stand (07.10)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const report = (key: FieldKey, message: string | null) => setFieldErrors((current) => withFieldError(current, key, message));
@@ -372,11 +377,28 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     lastAttempt.current = null;
     setSubmissionId(() => nextSubmissionIdAfterSuccess());
     setStatus(successMessage);
+    revealSent.current = true;
     setSentPanel({ phone, method: contactMethod, brief: leadAttachment?.headline ?? null });
     // The brief this lead carried counts as sent: route node 01 and the phone «До заявки» stop asking to send it, and a
     // later submit — a new lead, as above — goes without it unless the configuration changes (04.10)
     if (leadAttachment) inquiryAttachment?.markSent(leadAttachment);
   }
+
+  // The saved request's panel takes the fields' place: the form shrinks by its whole height, and the panel was left above
+  // the window on a phone (the form is taller than a screen), under the header at 1024 and 1440 px, the focus fallen from
+  // the hidden button to the page (review 18.10, PDO-03). It comes into view under the header (its scroll-margin-top) and
+  // takes the focus — once, after the submit that saved it. Always to its start, even when it is already in view: the
+  // page scrolls smoothly (scroll-behavior), and a scroll still on its way to the button — set for the long form, now
+  // past the panel — runs on unless a new one takes it over; `nearest` with nothing to do left it running.
+  useEffect(() => {
+    if (!revealSent.current) return;
+    revealSent.current = false;
+    const panel = sentPanelRef.current;
+    if (!shownSent || !panel) return;
+    panel.focus({ preventScroll: true });
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    panel.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+  }, [sentPanel, shownSent]);
 
   return (
     <form ref={formRef} className="inquiry-form" aria-label="Короткий запит" method="post" onSubmit={(event) => void handleSubmit(event)}>
@@ -387,6 +409,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
 
       {shownSent && (
         <InquirySentPanel
+          panelRef={sentPanelRef}
           sent={shownSent}
           onAnother={() => {
             setSentPanel(null);
