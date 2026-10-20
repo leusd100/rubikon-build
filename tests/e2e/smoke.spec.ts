@@ -457,8 +457,30 @@ test.describe('public route smoke tests', () => {
     await expect(still).toBeVisible();
     await expect.poll(() => still.evaluate((element) => (element as HTMLImageElement).currentSrc), { timeout: 10_000 })
       .toContain('/media/about/about-p5-');
-    // Owner's decision (30.09): no «Ілюстрація» tags on /pro-nas; the still is decorative
+    // The still is decorative for a screen reader (no alt), but a sighted visitor is told what it is: generated people
+    // under «своїми іменами» must not read as the team (owner, 20.10, OD-PX-12 A; review 18.10, PDO-04). The stamp sits in the first screen,
+    // under the compact header, clear of the crumbs and the title
     await expect(still).toHaveAttribute('alt', '');
+    const stamp = hero.locator('.about-hero-provenance');
+    await expect(stamp).toBeVisible();
+    await expect(stamp).toHaveText('Ілюстрація');
+    const box = async (selector: string) => (await page.locator(selector).first().boundingBox())!;
+    const [stampBox, headerBox, crumbsBox, titleBox] = await Promise.all(['.about-subhero .about-hero-provenance', '.site-header', '.about-subhero .breadcrumb', '.about-subhero h1'].map(box));
+    const viewport = page.viewportSize()!;
+    expect(stampBox.y).toBeGreaterThanOrEqual(headerBox.y + headerBox.height);
+    expect(stampBox.y + stampBox.height).toBeLessThanOrEqual(viewport.height);
+    expect(stampBox.x + stampBox.width).toBeLessThanOrEqual(viewport.width);
+    for (const other of [crumbsBox, titleBox]) {
+      const apart = stampBox.y + stampBox.height <= other.y || other.y + other.height <= stampBox.y || stampBox.x + stampBox.width <= other.x || other.x + other.width <= stampBox.x;
+      expect(apart).toBe(true);
+    }
+  });
+
+  test('about hero stamp belongs to the phone still only', async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) <= 600, 'Wider than the phone still.');
+    await page.goto('/pro-nas', { waitUntil: 'load' });
+    // The footage above 600 px has its own media policy (review 18.10, PDO-39), so the phone still's stamp stays hidden
+    await expect(page.locator('.about-subhero .about-hero-provenance')).toBeHidden();
   });
 
   test('about hero switches between portrait tablet and landscape media', async ({ page }, testInfo) => {

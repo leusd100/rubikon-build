@@ -23,7 +23,8 @@ import './about.css';
 // directions' card copy and company data).
 // Owner's decisions (30.09): no object photo here until RUBIKON BUILD has objects of its own to show — the one real
 // photo, from Serhii's work before the company, stays on HOME with its attribution; and the imagery, all of it
-// illustrative, carries no «Ілюстрація» tag here — the conceptual image says so in its alt text.
+// illustrative, carried no «Ілюстрація» tag here. Revised for the phone still (owner, 20.10, OD-PX-12 A; review 18.10, PDO-04): it shows
+// generated people right under «своїми іменами», so it carries the stamp every other concept hero carries.
 
 export const metadata = createPageMetadata({
   path: '/pro-nas',
@@ -97,6 +98,8 @@ export default function AboutPage() {
         </div>
         <div className="subhero-overlay" aria-hidden="true" />
         <div className="subhero-grid" aria-hidden="true" />
+        {/* Shown only where the phone still is (≤ 600 px, about.css): the footage above that has its own media policy (PDO-39) */}
+        <span className="hero-provenance about-hero-provenance">Ілюстрація</span>
         <div className="shell subhero-layout phone-hero-content">
           <div className="subhero-copy">
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
