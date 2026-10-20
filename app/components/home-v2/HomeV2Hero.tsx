@@ -14,8 +14,10 @@ export function HomeV2Hero() {
       <div className="hero-shade" aria-hidden="true" />
       <div className="hero-grid" aria-hidden="true" />
       <div className="shell hero-layout hv2-hero-layout">
+        {/* PDO-44 п. 1: from 761 px «від окремих» and «до комплексної» stay together (.hv2-keep, home-v2.css); one accent
+            <em> inside the second pair, not two. Phones keep Mobile Hero v2's breaks: the spans carry no phone style. */}
         <h1>
-          Промислове <span className="hv2-nowrap">будівництво —</span> від окремих робіт до <em>комплексної реалізації</em> об’єкта
+          Промислове <span className="hv2-nowrap">будівництво —</span> <span className="hv2-keep">від окремих</span> робіт <span className="hv2-keep">до <em>комплексної реалізації</em></span> об’єкта
         </h1>
         <div className="hero-copy">
           {/* Iteration 3: shorter, so the call fits a narrow phone's first screen. The team's own core works and the

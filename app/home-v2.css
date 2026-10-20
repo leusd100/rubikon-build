@@ -37,6 +37,14 @@ main[data-home="v2"] {
 }
 
 main[data-home="v2"] .hv2-nowrap { white-space: nowrap; }
+/* The H1's pairs «від окремих» / «до комплексної» (PDO-44 п. 1, from 761 px; phones unchanged — OD-PX-15): each pair is
+   one unbreakable box as wide as the phrase and never wider than the H1, as the accent's guard in globals.css (main h1
+   em). Not nowrap: under a reader's text-spacing override a pair wraps inside the H1 instead of running past it. The
+   accent inside the second pair goes back to inline, so the pair, not the accent alone, is the box. Ukrainian only. */
+@media (min-width: 761px) {
+  main[data-home="v2"] .hv2-keep:lang(uk) { display: inline-block; width: max-content; max-width: 100%; }
+  main[data-home="v2"] .hv2-keep:lang(uk) em { display: inline; }
+}
 
 main[data-home="v2"] .hv2-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--hv2-copper-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 main[data-home="v2"] .hv2-kicker > span { width: 26px; height: 2px; flex: none; background: var(--hv2-copper); }
@@ -1012,7 +1020,7 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 
 @media (max-width: 760px) {
   main[data-home="v2"] .hv2-signature-head { gap: 16px; padding-bottom: 24px; }
-  main[data-home="v2"] .hv2-signature-head h2 { font-size: clamp(36px, 10.5vw, 44px); line-height: 1.02; }
+  main[data-home="v2"] .hv2-signature-head h2 { font-size: var(--title-section); line-height: 1.02; }
   main[data-home="v2"] .hv2-signature-support { padding-left: 16px; }
   main[data-home="v2"] .hv2-proof { margin-top: 26px; }
   /* The sheet keeps the page's gutter (the photo used to run edge to edge as a bare picture) */

@@ -120,7 +120,10 @@ describe('display sizing tokens', () => {
     expect(globals).toMatch(/--display-fit:\s*9\.23;/);
     expect(globals).toMatch(/calc\(\(100cqi \+ var\(--title-overhang\)\) \/ var\(--display-fit\)\)/);
     expect(globals).toMatch(/\.subhero h1, \.service-subhero h1 \{ font-size: min\(var\(--hero-title\), calc\(100cqi \/ var\(--display-fit\)\)\); \}/);
-    expect(globals).toMatch(/--title-section: calc\(clamp\(40px, 11vw, 46px\) \* var\(--display-phone-scale\)\)/);
+    // Section titles (PDO-05): on a phone 28–32 px in rem, never larger than the phone H1; from 761 px a 38 px floor
+    expect(globals).toMatch(/--title-section: clamp\(1\.75rem, 7\.4vw, 2rem\);/);
+    expect(globals).toMatch(/--title-section: clamp\(2\.375rem, 4\.5vw, 4\.5rem\);/);
+    expect(globals).not.toMatch(/--display-phone-scale/);
     // The Jost-era fixed sizes for 320 px are gone: the token covers them.
     expect(globals).not.toMatch(/\.subhero h1, \.service-subhero h1 \{ font-size: 36px; \}/);
     expect(readFileSync(path.join(process.cwd(), 'app/home-v2.css'), 'utf8')).not.toMatch(/10\.9vw - 11\.6px/);
