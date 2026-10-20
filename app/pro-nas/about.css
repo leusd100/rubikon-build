@@ -318,8 +318,6 @@
   .about-page .about-subhero-side > p { font-size: 1rem; line-height: 1.63; color: color-mix(in srgb, var(--color-dark-text) 96%, transparent); }
   .about-page .about-hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 24px; }
   .about-page .about-hero-actions .button { width: 100%; min-width: 0; min-height: 56px; padding: 10px 12px; gap: 13px; justify-content: center; text-align: center; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
-  .about-page .about-hero-actions .hero-call-primary { color: var(--color-dark); background: var(--color-accent-on-dark); }
-  .about-page .about-hero-actions .hero-call-primary:hover { background: var(--color-accent-on-dark-hover); }
   .about-page .about-hero-actions .hero-call-primary > span { min-width: 0; }
   .about-page .about-hero-actions .hero-call-primary strong { white-space: normal; overflow-wrap: anywhere; }
   .about-page .phone-hero-scroll { position: absolute; z-index: 3; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); left: calc(50% - 22px); display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-on-dark); font-size: 24px; }
