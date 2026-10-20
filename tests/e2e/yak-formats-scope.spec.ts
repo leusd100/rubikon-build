@@ -241,8 +241,8 @@ test('with reduced motion nothing in the scope block animates after a tap', asyn
       expect(animation.duration).toBeLessThanOrEqual(1);
       expect(Number.isFinite(animation.iterations)).toBe(true);
     }
-    await page.waitForTimeout(400);
-    expect((await motion()).filter((animation) => animation.state === 'running')).toEqual([]);
+    // and nothing is left running: polled on the page's own animation list, not a fixed wait
+    await expect.poll(async () => (await motion()).filter((animation) => animation.state === 'running'), { timeout: 2_000 }).toEqual([]);
   }
 });
 
