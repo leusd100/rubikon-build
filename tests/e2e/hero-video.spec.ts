@@ -533,8 +533,10 @@ for (const route of ['/', '/pro-nas']) for (const theme of ['light', 'dark']) {
     await expect.poll(alpha).toBeLessThan(.8);
     await header.locator('a[href="/napryamky"]').filter({ visible: true }).click();
     await expect(page).toHaveURL(/\/napryamky$/);
-    await expect(page.locator('html')).not.toHaveAttribute('data-hero-header');
-    await expect(header).not.toHaveCSS('backdrop-filter', 'none');
+    // one header model on the inner heroes too (PDO-18): on the picture, no blur
+    await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'top');
+    await expect(header).toHaveCSS('backdrop-filter', 'none');
+    await expect.poll(alpha).toBeLessThan(.8);
   });
 }
 
@@ -590,10 +592,11 @@ test('phone and tablet pages share a clear top header and dense scroll/menu stat
     await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'scrolled');
     await expect.poll(alpha).toBe(.97);
   }
+  // …and so do the wide screens since PDO-18 (one header model; /zernoskhovyshcha keeps its band until W2-12)
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/napryamky');
-  await expect(page.locator('html')).not.toHaveAttribute('data-hero-header');
-  await expect(page.locator('.site-header')).not.toHaveCSS('backdrop-filter', 'none');
+  await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'top');
+  await expect(page.locator('.site-header')).toHaveCSS('backdrop-filter', 'none');
 });
 
 test('HOME fills the lower browser area with photo while placing its scroll cue near the visible fold', async ({ page }) => {

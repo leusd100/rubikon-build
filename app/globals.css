@@ -110,9 +110,10 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
   z-index: 50;
   padding-top: var(--phone-hero-safe-top, 0px);
   color: var(--color-dark-text);
-  background: color-mix(in srgb, var(--color-dark) var(--phone-hero-header-alpha, 90%), transparent);
+  /* A page without a hero (privacy, 404, the error page): 94 %, no blur (PDO-18). Pages with a hero set their own. */
+  background: color-mix(in srgb, var(--color-dark) var(--phone-hero-header-alpha, 94%), transparent);
   border-bottom: 1px solid rgba(255, 255, 255, .16);
-  backdrop-filter: var(--phone-hero-header-backdrop, blur(18px));
+  backdrop-filter: var(--phone-hero-header-backdrop, none);
 }
 /* HOME and About integrate the fixed header with their Hero at every width. Phone pages retain their 82% tint. */
 body:has(main:is([data-home="v2"], .about-page)) {
@@ -665,7 +666,7 @@ body:has(main:is([data-home="v2"], .about-page)) { --header-channels-plate: rgba
 .subhero-side > p { margin: 0; color: rgba(255,255,255,.7); font-size: 16px; line-height: 1.75; }
 
 .service-subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
-.service-subhero-media { position: absolute; inset: 101px 0 0; } /* under the fixed header, not behind it: the picture's top stays in view */
+.service-subhero-media { position: absolute; inset: 101px 0 0; } /* under the fixed header: /zernoskhovyshcha ≥1100 px until W2-12; every other hero starts at y 0 behind it (PDO-18, «One header model») */
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
 .direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%) !important; }
@@ -1006,6 +1007,25 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   body .directions-page .directions-hero-sequence-image { top: 0; height: 100%; }
   :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade) {
     mask-image: linear-gradient(180deg, transparent calc(var(--compact-hero-header-edge) - 24px), #000 var(--compact-hero-header-edge));
+  }
+}
+/* One header model (PDO-18, OD-PX-09 a). From 1100 px the inner heroes take what HOME, /pro-nas and every narrower
+   screen already had: the picture from y 0 under a 72 % header without blur (the 90 % band with blur(18px) cut the top
+   13–16 % off the picture and its blur was near invisible), the hero's shade cleared behind the header as on HOME. After
+   32 px of scroll the header is solid — 100 %, no blur, no plate under the channels (a 97 % header without blur let the
+   text under it show as a ghost). /zernoskhovyshcha keeps its band until its hero is reframed (W2-12, PDO-48). */
+@media (min-width: 1100px) {
+  body:has(main :is(.service-subhero, .directions-subhero, .proc-hero)):not(:has(main.grain-page)) {
+    --phone-hero-header-alpha: 72%;
+    --phone-hero-header-backdrop: none;
+    --header-channels-plate: rgba(17, 21, 18, .6);
+    --header-channels-inset: 0px;
+  }
+  body:has(main.grain-page) { --phone-hero-header-alpha: 90%; --phone-hero-header-backdrop: blur(18px); }
+  :root[data-hero-header="scrolled"] .site-header { --phone-hero-header-alpha: 100%; --phone-hero-header-backdrop: none; --header-channels-plate: transparent; }
+  main:not(.grain-page) .service-subhero-media { top: 0; }
+  main:not(.grain-page) :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade) {
+    mask-image: linear-gradient(180deg, transparent 77px, #000 101px);
   }
 }
 
