@@ -228,6 +228,8 @@
 
 /* ---------------------------------------------------------------- Phone */
 @media (max-width: 760px) {
+  /* The story's title takes the site's phone section size (PDO-05): its own clamp() kept it at 40 px over a 29 px H1 */
+  .about-story-copy h2 { font-size: var(--title-section); }
   .team-about .team-stories { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 64px; }
   .team-about .person-info h3 { white-space: normal; }
   .about-page .about-subhero-side { margin-top: 22px; }

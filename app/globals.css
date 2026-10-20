@@ -25,7 +25,9 @@
   --text-sm: 14px;
   --text-md: 16px;
   --text-lg: 18px;
-  --title-section: clamp(46px, 4.5vw, 72px);
+  /* Section titles (H2). The floor is 38 px (it was 46): on a 768 px tablet an H2 is never larger than the page's H1
+     (HOME 44 px, a direction 44.54 px; PDO-05, OD-PX-14). From ≈1022 px 4.5vw is above 46 px and nothing changes. */
+  --title-section: clamp(2.375rem, 4.5vw, 4.5rem);
   --title-page: clamp(58px, 6vw, 92px);
   /* Hero standard (UX pass 2026-10; the owner's model is /yak-pratsyuiemo): one title, lead and rhythm for every page's
      first block. The sizes follow the window's height as well as its width, so the whole block — crumbs to actions —
@@ -38,8 +40,6 @@
      direction title or a hero H1 is never larger than its box / this, so that word fits whole at every width without a
      size per breakpoint; the English test copy's longest word is far shorter (Load-bearing, 5.99 em). */
   --display-fit: 9.23;
-  /* Phone section titles × this: Fixel's x-height is .52 em, Jost's was .46 — the lowercase keeps Jost's size or more. */
-  --display-phone-scale: .93;
   --hero-lead: 17px;
   --hero-pad-top: calc(101px + clamp(18px, 7svh, 72px));
   --hero-pad-bottom: clamp(56px, 9svh, 110px);
@@ -985,7 +985,10 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     --section-space: 82px;
     --grid-gap: 44px;
     --radius-lg: 28px;
-    --title-section: calc(clamp(40px, 11vw, 46px) * var(--display-phone-scale));
+    /* 28 / 28 / 28.86 / 31.82 px at 320 / 375 / 390 / 430, never larger than the phone H1 (29–35 px: home-v2.css,
+       phone-hero.css; PDO-05 variant A). In rem like that H1, so a larger browser text size keeps H1 ≥ H2. The local
+       phone H2 rules (conversation, HOME signature, /angary, grain band, /pro-nas story, configurator band) use it. */
+    --title-section: clamp(1.75rem, 7.4vw, 2rem);
     --title-page: clamp(42px, 12vw, 56px);
     --hero-title: clamp(38px, 10.6vw, 46px);
     --hero-lead: 16px;

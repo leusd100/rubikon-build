@@ -46,6 +46,8 @@
 .related-directions-section .related-card:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--color-surface-elevated) 55%, transparent); }
 .related-directions-section .related-card:is(:hover, :focus-visible) h3 { color: var(--color-accent-strong); }
 @media (max-width: 760px) {
+  /* «Пов’язані напрямки» one step under the phone section titles (28–32 px; PDO-05) */
+  .related-directions-section .related-directions-title { font-size: 1.625rem; }
   .related-directions-section .related-grid { grid-template-columns: 1fr; }
   .related-directions-section .related-card, .related-directions-section .related-card:first-child { padding: 20px 0; border-left: 0; border-top: 1px solid var(--color-border-strong); }
   .related-directions-section .related-card:first-child { border-top: 0; }
