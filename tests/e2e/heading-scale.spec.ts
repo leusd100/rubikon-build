@@ -166,7 +166,7 @@ test.describe('HOME H1 on a phone: the pairs change none of its line breaks', ()
       await page.evaluate(() => {
         for (const span of document.querySelectorAll('main .hv2-hero h1 .hv2-keep')) span.replaceWith(...span.childNodes);
       });
-      expect(await page.locator('main .hv2-hero h1 .hv2-keep').count()).toBe(0);
+      await expect(page.locator('main .hv2-hero h1 .hv2-keep')).toHaveCount(0);
       expect(withPairs, `${viewport.width}×${viewport.height}`).toEqual(await h1Lines(page));
     }
   });
