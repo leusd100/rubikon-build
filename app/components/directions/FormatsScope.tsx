@@ -17,9 +17,11 @@ import type { DeliveryFormatId } from '../../types/deliveryModel';
 // Under the drawing the two facts that tell the formats apart — the other party of the contract and who coordinates
 // the object — in the Delivery Model's words, and the three packages as tags that light with the drawing.
 //
-// Each format is a button (title + the model's summary); pointing at, focusing or pressing one selects it. The first
-// time the block comes into view it walks through the three formats once and returns to the first; any pointing ends
-// the walk. Nothing moves with reduced motion or out of sight. The drawing is decorative (aria-hidden): the buttons
+// Each format is a button (title + the model's summary); pointing at, focusing or pressing one selects it. On a wide
+// screen, the first time the block comes into view it walks through the three formats once and returns to the first;
+// any pointing ends the walk. At ≤ 1050 px the buttons are one segmented row above the drawing (formats-scope.css) and
+// there is no walk: the row is the control, the drawing under it the answer, and nothing changes but by a tap (PDO-06,
+// owner 20.10). Nothing moves with reduced motion or out of sight. The drawing is decorative (aria-hidden): the buttons
 // and the two facts carry every word.
 //
 // On /yak-pratsyuiemo the block stands in place of the three scope cards (owner, 05.10: «перегружений, втрачається
@@ -108,14 +110,14 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
     return () => { cancelAnimationFrame(restore); document.removeEventListener('change', follow); };
   }, [mirror, formats]);
 
-  // On screen or not; and, the first time half of the drawing is, one walk through the formats. The drawing, not the
-  // whole block: stacked on a phone the block is taller than two screens and half of it is never in view.
+  // On screen or not; and, the first time half of the drawing is, one walk through the formats — on a wide screen
+  // only (read once, on mount): at ≤ 1050 px the formats are a row above the drawing and change only when tapped.
   useEffect(() => {
     const root = figureRef.current;
     if (!root) return undefined;
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let timers: number[] = [];
-    let walked = still;
+    let walked = still || window.matchMedia('(max-width: 1050px)').matches;
     const observer = new IntersectionObserver(([entry]) => {
       setInView(Boolean(entry?.isIntersecting));
       if (walked || !entry?.isIntersecting || entry.intersectionRatio < 0.5) return;
@@ -138,7 +140,7 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
 
   return (
     <div className="dfmt-grid" data-motion>
-      <ol className="dfmt-list">
+      <ol className="dfmt-list" aria-label="Формат участі">
         {formats.map((format) => (
           <li key={format.id}>
             <button
@@ -182,6 +184,11 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
             {(id) => { const format = formats.find((item) => item.id === id)!; return <><i>{format.number}</i> {format.title}</>; }}
           </Shown>
         </figcaption>
+        {/* The chosen format's summary, shown only where the formats are a row and their buttons show the titles alone
+            (≤ 1050 px); every button keeps its summary in its name, so this copy is out of the accessibility tree */}
+        <p className="dfmt-chosen" aria-hidden="true">
+          <Shown keys={formats.map((format) => format.id)} on={active}>{(id) => formats.find((item) => item.id === id)!.text}</Shown>
+        </p>
         {/* The words under the drawing repeat what the pressed button says (each button carries its format's two facts
             as hidden text); they change with the format, so this copy is kept out of the accessibility tree */}
         <div className="dfmt-facts" aria-hidden="true">

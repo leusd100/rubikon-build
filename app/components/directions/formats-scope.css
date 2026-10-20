@@ -78,11 +78,36 @@
 /* A page may put its own way on under the facts (/yak-pratsyuiemo: «Обговорити цей формат») */
 .dfmt-figure > .proc-scope-cta { display: inline-flex; margin-top: 18px; }
 
-/* One column: the drawing first, then the buttons */
+/* The chosen format's summary under the drawing, where the formats are a row (below); hidden on a wide screen, where
+   each button says it */
+.dfmt-chosen { display: none; margin: 10px 0 0; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
+
+/* One column (PDO-06, owner 20.10): the formats first, as one segmented row in the manner of the responsibility map's
+   switcher, then the drawing right under it, so a tap redraws what is under the finger (until then the drawing stood
+   above a list taller than the screen, and a tap redrew it out of sight). Keyed on :root[data-theme], which only the
+   head script sets: without JavaScript the formats stay a list with their summaries. The summary stays in each
+   button's name (hidden to the eye only); the line under the caption shows the chosen one's. Heights are minimums: a
+   longer title wraps to a second or third line. */
 @media (max-width: 1050px) {
-  .dfmt-grid { grid-template-columns: minmax(0, 1fr); }
-  .dfmt-figure { order: -1; }
+  .dfmt-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  :root[data-theme] .dfmt-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); }
+  :root[data-theme] .dfmt-list li { min-width: 0; border-bottom: 0; }
+  :root[data-theme] .dfmt-list li + li { border-left: 1px solid var(--color-border-control); }
+  :root[data-theme] .dfmt-option { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 58px; height: 100%; padding: 8px 6px; text-align: center; }
+  :root[data-theme] .dfmt-num { padding: 0; font-size: 11px; line-height: 1; }
+  :root[data-theme] .dfmt-title { max-width: 100%; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; overflow-wrap: anywhere; }
+  /* Hyphens for an English title only: WebKit breaks Ukrainian ones badly («РЕА-ЛІЗАЦІЯ») */
+  :root[data-theme] .dfmt-title:lang(en) { hyphens: auto; }
+  :root[data-theme] .dfmt-option .dfmt-text { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :root[data-theme] .dfmt-option[aria-pressed="true"] { background-color: var(--color-text); box-shadow: none; }
+  :root[data-theme] .dfmt-option[aria-pressed="true"] :is(.dfmt-title, .dfmt-num) { color: var(--color-bg); }
+  /* The site's own two-tone ring, outside the segment and over its neighbours — not the map switcher's inset one, which
+     on the chosen (dark) segment would be under 3:1 */
+  :root[data-theme] .dfmt-option:focus-visible { position: relative; z-index: 1; box-shadow: 0 0 0 2px var(--focus-gap); }
+  :root[data-theme] .dfmt-chosen { display: block; }
 }
 @media (max-width: 760px) {
   .dfmt-option { padding: 18px 12px 20px; }
+  :root[data-theme] .dfmt-option { padding: 6px 4px; }
+  :root[data-theme] .dfmt-title { font-size: 12px; letter-spacing: .04em; }
 }
