@@ -37,3 +37,32 @@ export function DirectionsSheets() {
     </div>
   );
 }
+
+// On a phone (≤ 760 px; PDO-42 a, owner 20.10: «мініаркуші-креслення на ≤760 px») the same five sheets are the band
+// itself: a list of five link rows in place of the sideways rail of image cards, so every direction is in reach without a
+// swipe. A row is the direction's scheme in a small framed sheet, its name, the sheet's strip «Аркуш NN · Схема» and a
+// copper arrow; it links where its card does. Unlike the header row above it is in the tab order and the accessibility
+// tree — the cards are not shown there — and its accessible name is the direction's name alone (the scheme, the strip
+// and the arrow are decoration). Shown up to 760 px only (directions-sheets.css); the drawings stand as drawn, no
+// plot-in. A server component. role="list" keeps the list a list for VoiceOver, which drops it under list-style: none.
+export function DirectionsSheetList() {
+  return (
+    <ul className="dsl" role="list">
+      {directions.map((direction) => (
+        <li key={direction.id}>
+          <a className="dsl-row" href={direction.href}>
+            <span className="dsl-draw" aria-hidden="true"><CatalogDrawing id={direction.id} /></span>
+            <span className="dsl-block">
+              <span className="dsl-name">{direction.cardTitle}</span>
+              <span className="dsl-strip" aria-hidden="true">
+                <span>Аркуш {direction.number}</span>
+                <span>Схема</span>
+              </span>
+            </span>
+            <span className="dsl-arrow" aria-hidden="true">↗</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}

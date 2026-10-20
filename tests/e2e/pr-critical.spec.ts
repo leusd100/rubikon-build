@@ -568,15 +568,18 @@ test('homepage places its calls once: in the hero and in the closing conversatio
 // The five direction cards on the homepage keep every title word whole. The title shares the card's inset with the
 // arrow; in the narrow right-hand cards «Зерносховища» and «Металоконструкції» used to split mid-word around 768 px
 // (and the latter below ~375 px). Measured like the H1: each word on its own must fit the title's own width.
-for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 820, height: 1180 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+// On a phone (≤ 760 px) the cards are not shown since PDO-42 (a): there the five names are the list rows', measured the
+// same way against their own arrow (320 px added: the narrowest row).
+for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 800 }, { width: 375, height: 812 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 820, height: 1180 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
   test(`homepage direction-card titles keep their words whole at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await page.goto('/', { waitUntil: 'load' });
     await page.evaluate(() => document.fonts.ready);
 
-    const cards = await page.locator('#directions .direction-card').evaluateAll((elements) => elements.map((card) => {
-      const title = card.querySelector<HTMLElement>('.direction-copy strong')!;
-      const arrow = card.querySelector<HTMLElement>('.direction-arrow')!;
+    const phone = viewport.width <= 760;
+    const cards = await page.locator(phone ? '#directions .dsl-row' : '#directions .direction-card').evaluateAll((elements, phone) => elements.map((card) => {
+      const title = card.querySelector<HTMLElement>(phone ? '.dsl-name' : '.direction-copy strong')!;
+      const arrow = card.querySelector<HTMLElement>(phone ? '.dsl-arrow' : '.direction-arrow')!;
       const probe = document.createElement('span');
       probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap';
       title.appendChild(probe);
@@ -589,10 +592,12 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 375, height: 812 }
       const t = title.getBoundingClientRect();
       const a = arrow.getBoundingClientRect();
       const overlapsArrow = t.right > a.left && t.left < a.right && t.bottom > a.top && t.top < a.bottom;
-      return { title: (title.textContent ?? '').trim(), widest, available: title.clientWidth, overlapsArrow };
-    }));
+      return { title: (title.textContent ?? '').trim(), widest, available: title.clientWidth, overlapsArrow, shown: title.getClientRects().length > 0 };
+    }), phone);
 
     expect(cards).toHaveLength(5);
+    // Measured where they are shown: a hidden title would pass every check below with zero widths
+    expect(cards.map((card) => card.shown)).toEqual([true, true, true, true, true]);
     // The title may use the space reserved for the arrow only where the arrow is not: it must never sit on it.
     for (const card of cards) {
       expect(card.widest, `${card.title}: widest word ${Math.round(card.widest)}px in ${card.available}px`).toBeLessThanOrEqual(card.available);

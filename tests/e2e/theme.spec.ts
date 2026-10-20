@@ -6,6 +6,8 @@ import { expect, test, type Page } from '@playwright/test';
 const KEY = 'rubikon-theme';
 const LIGHT_BG = 'rgb(243, 240, 233)';
 const DARK_BG = 'rgb(23, 25, 24)';
+// HOME's link to /metalokonstruktsii that is shown at this width: the mosaic's card, or the phone list's row (PDO-42 a)
+const DIRECTION_LINK = '#directions a:is(.direction-card, .dsl-row)[href="/metalokonstruktsii"]:visible';
 
 async function open(page: Page, path = '/pro-nas') {
   await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
@@ -157,8 +159,9 @@ test.describe('site-wide theme', () => {
     await page.emulateMedia({ colorScheme: 'light' });
     await open(page, '/');
     await choose(page, 'Темна');
-    // the card: since 05.10 the header's scheme sheet links there too, and it is not shown on a phone
-    await page.locator('main a.direction-card[href="/metalokonstruktsii"]').click();
+    // the direction's one shown link: the card from 761 px (since 05.10 the header's scheme sheet links there too, out of
+    // the tab order), the list row on a phone (PDO-42 a: the cards are not shown there)
+    await page.locator(DIRECTION_LINK).click();
     await page.waitForURL('**/metalokonstruktsii');
     await expectTheme(page, 'dark', 'dark');
     await goBackTo(page, '/');
@@ -167,7 +170,7 @@ test.describe('site-wide theme', () => {
 
   test('going back waits for HOME itself, not for a history write on the page it leaves', async ({ page }) => {
     await open(page, '/');
-    await page.locator('main a.direction-card[href="/metalokonstruktsii"]').click();
+    await page.locator(DIRECTION_LINK).click();
     await page.waitForURL('**/metalokonstruktsii');
     // The CI order of 12.10, made certain: the service page writes its history entry in place once the way back has
     // begun — as vinext's first hydrated commit does (history.replaceState) when it lands after `load` on a slow runner
