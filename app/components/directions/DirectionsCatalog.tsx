@@ -38,7 +38,8 @@ export function DirectionsCatalog({ items }: Readonly<{ items: readonly CatalogI
             <div>
               <h3>{item.title}</h3>
               <p>{item.routeText}</p>
-              {/* The kinds repeat the direction page's own list; hidden from the link's name so it stays short */}
+              {/* The kinds of work the direction's page names (its catalogKinds or its overview's titles); hidden from
+                  the link's name so it stays short */}
               <ul className="dcat-kinds dcat-kinds-row" aria-hidden="true">
                 {item.kinds.map((kind) => <li key={kind}>{kind}</li>)}
               </ul>

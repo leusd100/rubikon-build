@@ -25,15 +25,18 @@ import './directions.css';
 // conversation, its form starting on «Ще не визначено», with the four after-contact steps every page shows. Every word
 // is the page's previous copy, /yak-pratsyuiemo's, the directions' own data or the Delivery Model.
 
-/** Each direction's row: its card copy and the kinds of work its page lists. */
-const catalog: CatalogItem[] = directions.map((direction) => ({
-  id: direction.id,
-  number: direction.number,
-  href: direction.href,
-  title: direction.serviceTitle,
-  routeText: direction.routeText,
-  kinds: (directionPages[direction.id].overview?.items ?? []).map((item) => item[1]),
-}));
+/** Each direction's row: its card copy and the kinds of work its page lists (catalogKinds, or its overview's titles). */
+const catalog: CatalogItem[] = directions.map((direction) => {
+  const config = directionPages[direction.id];
+  return {
+    id: direction.id,
+    number: direction.number,
+    href: direction.href,
+    title: direction.serviceTitle,
+    routeText: direction.routeText,
+    kinds: config.catalogKinds ?? (config.overview?.items ?? []).map((item) => item[1]),
+  };
+});
 
 /** The band's ways to /yak-pratsyuiemo: formats, stages and responsibility, each to its own section there */
 const HOW_LINKS = [

@@ -4,7 +4,8 @@ import { SectionHeader } from '../SiteChrome';
 import { PrefillInquiryLink } from './PrefillInquiryLink';
 
 // «З чим звертаються» (roofing): the situations a call starts from, each with what happens first and a link that
-// opens the form with the situation already written. The words are the page's own (overview, process, FAQ).
+// opens the form with the situation already written. The words are the page's own (process, FAQ, and the former
+// «Склад робіт» block, removed in PDO-07).
 export function DirectionEntry({ entry }: Readonly<{ entry: NonNullable<DirectionPageConfig['entry']> }>) {
   return (
     <section className="page-section direction-entry" aria-labelledby="direction-entry-title">
