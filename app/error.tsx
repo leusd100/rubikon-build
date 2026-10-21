@@ -26,10 +26,12 @@ export default function PageError({ reset }: Readonly<{ error: Error & { digest?
               ? 'Оновлюємо сторінку…'
               : 'Частина сторінки не довантажилась — так буває при обриві зв’язку. Оновіть сторінку або зв’яжіться з нами напряму.'}
           </output>
-          <div className="hero-action-row">
+          {/* #inquiry: the header's «Контакти» is page-relative (app/data/navigation.ts), as on the 404 page — here it led
+              nowhere (PDO-10) */}
+          <div className="hero-action-row" id="inquiry">
             <button className="button button-primary" type="button" onClick={() => { reset(); window.location.reload(); }}>Оновити сторінку</button>
             <a className="text-link" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>{company.phone.display}</a>
-            <a className="text-link" href={companyContactLinks.email}>{company.email}</a>
+            <a className="text-link not-found-email" href={companyContactLinks.email}>{company.email}</a>
           </div>
         </div>
       </section>
