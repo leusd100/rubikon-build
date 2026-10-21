@@ -674,6 +674,12 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
 .direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%) !important; }
+/* Art set down under the header (artTop: /angary, /metalokonstruktsii) fades in over the 44 px under its top edge: the strip
+   above it is the hero's own graphite, 4 levels darker through the 92 % header than the sky beside it, and a hard edge
+   there read as a band inside the header. Where no artTop is given the gradient is invalid and no mask applies. */
+@media (min-width: 761px) {
+  .direction-hero-image { mask-image: linear-gradient(180deg, transparent var(--direction-hero-image-top), #000 calc(var(--direction-hero-image-top) + 44px)); }
+}
 .service-subhero-media .direction-hero-image[data-art-theme="dark"] { filter: saturate(.88) contrast(1.02); }
 /* Conceal the server's light fallback until the saved theme selects its artwork. */
 :root[data-theme="dark"] .direction-hero-image[data-art-theme="light"],

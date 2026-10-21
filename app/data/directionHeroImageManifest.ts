@@ -9,11 +9,17 @@ export type DirectionHeroImageAsset = {
   /** Desktop object-position (from 761 px). The y keeps the structure's top in frame: a wide window crops the art top
    *  and bottom (UX pass 2026-10 — the hangar and the steel frame lost their roofs). Since the picture starts at y 0
    *  behind the 92 % header (PDO-18, «Збалансована» 21.10), the hangar's apex and the frame's top node sat under it at
-   *  every width from 768 to 1920 px: their y is a length, 56 px, which sets the art's top edge that far down, so the
+   *  every width from 768 to 1920 px: their y is a length, ART_TOP, which sets the art's top edge that far down, so the
    *  apex clears the 101 px header with room to spare whatever the window's shape. */
   focalPosition: string;
   mobileFocalPosition: string;
+  /** The art's top edge when it is set down (ART_TOP): the art fades in over the 44 px under it (globals.css), so the strip
+   *  above it — the hero's own graphite, under the header — leaves no seam through the 92 % header. */
+  artTop?: string;
 };
+
+/** How far the hangar's and the steel frame's art is set down under the header from 761 px (see focalPosition) */
+const ART_TOP = '56px';
 
 const responsiveSrcSet = (name: string, variants: { w480: string; w768: string; w1200: string; w1536: string }) =>
   [
@@ -47,8 +53,9 @@ export const directionHeroImageAssets = {
       w480: 'e1c31e55', w768: '9908c455', w1200: '6e7f3686', w1536: 'b4e0c501',
     }),
     portrait: portrait('direction-hero-photo-variant', 'angary', { avif: 'fc8f2270', webp: '9643c898' }),
-    focalPosition: '56% 56px',
+    focalPosition: `56% ${ART_TOP}`,
     mobileFocalPosition: '58% center',
+    artTop: ART_TOP,
   },
   zernoskhovyshcha: {
     dark: blueHour('zernoskhovyshcha', ['262dafeb', 'cea9cba2', 'c879a152', '731f0864'], { avif: '104a3372', webp: '8c9c8882' }),
@@ -67,8 +74,9 @@ export const directionHeroImageAssets = {
       w480: 'f09543fd', w768: '6df1407d', w1200: 'c4c53f5e', w1536: 'd2fbc0e0',
     }),
     portrait: portrait('direction-hero-photo-variant', 'metalokonstruktsii', { avif: 'c6e7a820', webp: '65df7e70' }),
-    focalPosition: '55% 56px',
+    focalPosition: `55% ${ART_TOP}`,
     mobileFocalPosition: '58% center',
+    artTop: ART_TOP,
   },
   'betonni-roboty': {
     dark: blueHour('betonni-roboty', ['fd4ed433', '2a32c945', '9a9fb729', 'de3f3916'], { avif: 'bb4408e1', webp: '7066e860' }),
