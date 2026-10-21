@@ -31,7 +31,7 @@ export default function PageError({ reset }: Readonly<{ error: Error & { digest?
           <div className="hero-action-row" id="inquiry">
             <button className="button button-primary" type="button" onClick={() => { reset(); window.location.reload(); }}>Оновити сторінку</button>
             <a className="text-link" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>{company.phone.display}</a>
-            <a className="text-link" href={companyContactLinks.email}>{company.email}</a>
+            <a className="text-link not-found-email" href={companyContactLinks.email}>{company.email}</a>
           </div>
         </div>
       </section>

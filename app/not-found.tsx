@@ -26,7 +26,7 @@ export default function NotFound() {
             <a className="button button-primary" href={siteRoutes.home}>На головну</a>
             <a className="text-link" href={siteRoutes.directions}>Напрямки робіт</a>
             <a className="text-link" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>{company.phone.display}</a>
-            <a className="text-link" href={companyContactLinks.email}>{company.email}</a>
+            <a className="text-link not-found-email" href={companyContactLinks.email}>{company.email}</a>
           </div>
         </div>
       </section>
