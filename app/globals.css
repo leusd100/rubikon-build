@@ -1078,7 +1078,8 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   /* font-size/letter-spacing here are the a11y-legibility values (previously set by a
      duplicate, separately-declared max-width:760px block further down the file — merged in
      place; computed output is unchanged). */
-  .mobile-menu summary { min-width: 92px; height: 42px; padding-inline: 13px; }
+  /* «Меню» is 12 px (W2-14): the button keeps its width by a tighter inside, so the logo beside it keeps its 188 px */
+  .mobile-menu summary { min-width: 92px; height: 42px; gap: 9px; padding-inline: 10px; }
   /* the panel the width of the column (it was 310 px in a 358 px column, with a strip of the hero beside it) */
   .mobile-menu nav { width: calc(100vw - 32px); }
   .mobile-call { width: 44px; height: 42px; }
@@ -1262,7 +1263,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
      duplicate, separately-declared max-width:380px block further down the file — merged in
      place; computed output is unchanged; margin-top is unset here so it keeps inheriting the
      760px tier's 6px). */
-  .mobile-menu summary { min-width: 82px; padding-inline: 10px; }
+  .mobile-menu summary { min-width: 82px; gap: 8px; padding-inline: 7px; }
   .footer-contact-stack { gap: 10px 12px; }
   .footer-phone, .footer-email { font-size: 14px; }
   .footer-messengers .messenger-link { width: 38px; height: 38px; }
