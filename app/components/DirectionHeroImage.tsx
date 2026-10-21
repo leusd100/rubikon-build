@@ -27,6 +27,7 @@ export function DirectionHeroImage({ asset }: DirectionHeroImageProps) {
   const style = {
     '--direction-hero-image-position': asset.focalPosition,
     '--direction-hero-image-position-mobile': asset.mobileFocalPosition,
+    '--direction-hero-image-top': asset.artTop,
   } as CSSProperties;
   // Only the server's markup carries src, so the preload scanner and readers without JS still get the art. React sets a
   // client-made img's attributes (the dark art after hydration, any theme change) before the img is inside the
