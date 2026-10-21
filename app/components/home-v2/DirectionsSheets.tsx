@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { directions } from '../../data/directions';
 import { CatalogDrawing } from '../directions/CatalogDrawing';
+import { DirectionsIndex } from './DirectionsIndex';
 // The row's whole stylesheet. One importer only (see CatalogDrawing.tsx).
 import './directions-sheets.css';
 
@@ -35,5 +36,20 @@ export function DirectionsSheets() {
         </a>
       ))}
     </div>
+  );
+}
+
+// On a phone (≤ 760 px; owner 21.10: B «Один аркуш + індекс», one action per row) the band is one large scheme sheet over
+// an index of the five directions (DirectionsIndex, a client component): a row picks the direction and the sheet shows its
+// scheme, number and name; the sheet is the one link to the picked page («Про напрям»). It replaces the image cards there,
+// which are not shown (home-v2.css). The five drawings are drawn here, on the server, and handed over in the directions'
+// order, so the client chunk carries the picking only. Shown up to 760 px only (directions-sheets.css).
+export function DirectionsSheetIndex() {
+  return (
+    <DirectionsIndex items={directions.map(({ id, number, href, cardTitle }) => ({ id, number, href, name: cardTitle }))}>
+      {directions.map((direction) => (
+        <span className="dxi-drawing" data-id={direction.id} key={direction.id}><CatalogDrawing id={direction.id} /></span>
+      ))}
+    </DirectionsIndex>
   );
 }
