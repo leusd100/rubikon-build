@@ -9,6 +9,12 @@ const DARK_BG = 'rgb(23, 25, 24)';
 /** HOME → /metalokonstruktsii by the way shown at this width: the mosaic's card from 761 px; on a phone the index row picks
  *  the direction and its sheet links there (B «Один аркуш + індекс», owner 21.10) — the pick is repeated until hydration */
 async function openMetalDirection(page: Page) {
+  // A theme picked in the phone menu leaves the menu open; the page under it is dimmed and a tap there only closes the
+  // menu (W2-14), so close it first, as a visitor would
+  if (await page.locator('.site-header .mobile-menu[open]').count()) {
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.site-header .mobile-menu')).not.toHaveAttribute('open');
+  }
   const pick = page.locator('#directions .dxi-row', { hasText: 'Металоконструкції' });
   if (await pick.isVisible()) {
     const sheet = page.locator('#directions a.dxi-sheet');
