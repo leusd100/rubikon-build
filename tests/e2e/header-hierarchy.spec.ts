@@ -128,8 +128,8 @@ test.describe('PDO-19 · header hierarchy', () => {
         await page.evaluate(() => window.scrollTo(0, 0));
       }
     }
-    // the number: light words in its frame, a light copper icon, no fill — at rest and on hover; the mail icon and the
-    // theme switch's knob stay grey
+    // the number: light words in its frame, a light copper icon, no fill — at rest and on hover; the mail icon copper as
+    // the number's icon (owner 21.10), the theme switch's knob grey
     const phone = page.locator('.site-header .header-phone');
     await expect(phone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(phone.locator('svg')).toHaveCSS('color', 'rgb(204, 132, 85)');
@@ -138,7 +138,9 @@ test.describe('PDO-19 · header hierarchy', () => {
     await expect(phone).toHaveCSS('border-top-color', 'rgb(204, 132, 85)');
     await expect(phone.locator('strong')).toHaveCSS('color', 'rgb(245, 242, 235)');
     await page.mouse.move(700, 600);
-    await expect(page.locator('.site-header .header-email svg')).toHaveCSS('color', 'rgb(189, 183, 172)');
+    await expect(page.locator('.site-header .header-email svg')).toHaveCSS('color', 'rgb(204, 132, 85)');
+    // no rule between the number and the messengers (owner 21.10)
+    await expect(page.locator('.site-header .header-messengers')).toHaveCSS('border-left-width', '0px');
     await expect(page.locator('.site-header .theme-switch-knob')).toHaveCSS('background-color', 'rgb(158, 152, 141)');
   });
 

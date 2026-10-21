@@ -160,7 +160,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
   --logo-rule: #857F76;
 }
 /* Header hierarchy (PDO-19, OD-PX-08 a; «Збалансована», owner 21.10): who (the logo) → where (the navigation, 600) → how
-   to reach us (the number, the one framed element, then the messengers in their own colours and a grey mail icon) → the
+   to reach us (the number, the one framed element, then the messengers in their own colours and a copper mail icon) → the
    theme switch, a quiet utility */
 .desktop-nav { display: flex; align-items: center; gap: clamp(24px, 2.15vw, 40px); font-size: 16px; font-weight: 600; letter-spacing: .012em; }
 /* 44 px tall targets (UX sweep 2026-10: the links were 23–24 px boxes); the underline stays where it was under the text */
@@ -185,8 +185,8 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .header-phone svg { color: var(--color-accent-on-dark); }
 .header-phone strong { color: var(--color-dark-text); font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
 .header-phone:is(:hover, :focus-visible) { border-color: var(--color-accent-on-dark); background: rgba(245, 242, 235, .06); }
-/* one hairline divides the number from the written channels; the cells themselves have no rules */
-.header-messengers { display: flex; align-items: stretch; margin-left: 10px; padding-left: 4px; border-left: 1px solid rgba(245, 242, 235, .18); }
+/* the written channels follow the number after a plain gap: no rule between them (owner 21.10), nor between the cells */
+.header-messengers { display: flex; align-items: stretch; margin-left: 8px; }
 .messenger-link { display: grid; place-items: center; padding: 0; color: rgba(255,255,255,.78); border: 0; border-radius: 0; background: transparent; font: inherit; cursor: pointer; appearance: none; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .messenger-brand-icon { width: 21px; height: 21px; display: block; object-fit: contain; transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease; }
 .messenger-link span { font-size: 10px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
@@ -195,9 +195,10 @@ body:has(main:is([data-home="v2"], .about-page)) {
 /* the messengers at 23 px in the header (21 px in its first desktop tier, further down) */
 .header-messengers .messenger-brand-icon { width: 23px; height: 23px; }
 .header-email { width: 44px; height: 44px; }
-/* copper stays beside the number only: the mail icon is grey, and takes the copper back on hover / focus */
-.header-email svg { width: 18px; height: 18px; color: var(--color-dark-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
-.header-email:is(:hover, :focus-visible) svg { color: var(--color-accent-on-dark); }
+/* the mail icon is copper, as it was before PDO-19 (owner 21.10), in the same light copper as the number's icon; lighter on
+   hover / focus */
+.header-email svg { width: 18px; height: 18px; color: var(--color-accent-on-dark); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
+.header-email:is(:hover, :focus-visible) svg { color: var(--color-accent-on-dark-hover); }
 .messenger-link:hover, .messenger-link:focus-visible { color: var(--color-dark-text); background: rgba(255,255,255,.08); }
 .messenger-link:hover .messenger-brand-icon, .messenger-link:focus-visible .messenger-brand-icon { transform: translateY(-1px) scale(1.08); filter: saturate(1.15) brightness(1.08); }
 /* The messengers on the charcoal band (header, its menu, footer) keep the brands' own blue, green and purple at rest —
