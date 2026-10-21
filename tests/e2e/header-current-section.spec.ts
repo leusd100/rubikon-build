@@ -53,7 +53,7 @@ test.describe('PDO-57 · the current section', () => {
     // The review's case (#220, 20.10): at 1180 px in Light the decorative #B76432 under «Напрямки» on /betonni-roboty was
     // 2.21 : 1 against the 72 % header over a light frame. The rule is now #CC8455 on the 92 % header. Measured on the
     // rendered pixels of the header just under the rule (the header's own colour there, picture included), never one
-    // frame only: /napryamky's slides are read twice, 2.5 s apart.
+    // frame only: /napryamky is read on two slides.
     const contrast = (a: number[], b: number[]) => {
       const lum = (c: number[]) => {
         const [r, g, bl] = c.map((v) => { const x = v / 255; return x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; });
@@ -87,10 +87,17 @@ test.describe('PDO-57 · the current section', () => {
         await expect(page.locator('.desktop-nav a[aria-current]'), path).toHaveCount(1);
         expect(await page.locator('.desktop-nav a[aria-current]').evaluate((link) => getComputedStyle(link, '::after').backgroundColor), path).toBe('rgb(204, 132, 85)');
         const reads = [await under()];
-        if (path === '/napryamky') { await page.waitForTimeout(2_500); reads.push(await under()); }
+        if (path === '/napryamky') {
+          // the next slide: wait until another image of the sequence is the active one, then read again
+          const active = () => page.locator('.directions-hero-sequence-image').evaluateAll((images) => images.findIndex((image) => image.classList.contains('is-active')));
+          const first = await active();
+          await expect.poll(active, { timeout: 15_000 }).not.toBe(first);
+          reads.push(await under());
+        }
         await page.evaluate(() => window.scrollTo(0, 600));
         await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'scrolled');
-        await page.waitForTimeout(100);
+        // the solid header is painted: its own background has no alpha any more
+        await expect.poll(() => page.locator('.site-header').evaluate((element) => getComputedStyle(element).backgroundColor)).not.toMatch(/\/\s*0?\.\d+\)$|,\s*0?\.\d+\)$/);
         reads.push(await under());
         const worst = Math.min(...reads.flat().map((pixel) => contrast(copper, pixel)));
         expect(worst, `${path} ${theme}: the rule against the header under it`).toBeGreaterThanOrEqual(4.5);
