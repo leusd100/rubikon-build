@@ -66,34 +66,75 @@ main[data-home="v2"] .hv2-directions .dsh[data-motion-state="on"] .dsh-sheet { a
 @keyframes dsh-in { from { opacity: 0; transform: translateY(12px); } }
 @media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-directions .dsh-sheet { transition: none; } }
 
-/* ---- On a phone (≤ 760 px): the five sheets as the band's list of links (DirectionsSheetList; PDO-42 a, owner 20.10).
-   It stands in for the image cards, which are not shown there (home-v2.css). A row is 80 px: the scheme in a 72 × 60 framed
-   sheet, the direction's name in the display face over the sheet's strip, a copper arrow; hairlines between the rows, the
-   strong line over the first. Hidden from 761 px, where the mosaic and the header's sheets are the band. ---- */
-main[data-home="v2"] .hv2-directions .dsl { display: none; }
+/* ---- On a phone (≤ 760 px): one large scheme sheet over an index of the five directions (DirectionsIndex; owner 21.10,
+   B «Один аркуш + індекс»). It stands in for the image cards, which are not shown there (home-v2.css); hidden from 761 px,
+   where the mosaic and the header's sheets are the band.
+   The sheet is the one link to the picked direction: its strip («Аркуш NN · Умовна схема»), the scheme, and its foot —
+   the direction's name and «Про напрям» with the site's arrow (an SVG in currentColor, never the ↗ character, which iOS
+   draws as a blue emoji). Every drawing and every name stand in one grid cell and only the picked one is visible, so the
+   sheet keeps one height whichever row is picked and nothing under it moves. A row only picks: 48 px, its number and
+   the direction's name; the picked row has a copper bar beside its number and copper words. ---- */
+main[data-home="v2"] .hv2-directions .dxi { display: none; }
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-directions .dsl { display: block; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
-  main[data-home="v2"] .hv2-directions .dsl-row {
-    display: grid; grid-template-columns: 72px minmax(0, 1fr) 28px; align-items: center; column-gap: 14px; min-height: 80px;
-    padding: 8px 0; color: inherit; text-decoration: none; border-bottom: 1px solid var(--color-border);
+  main[data-home="v2"] .hv2-directions .dxi { display: block; }
+  main[data-home="v2"] .hv2-directions .dxi-sheet {
+    display: block; padding: 12px 14px 0; color: inherit; text-decoration: none; container-type: inline-size;
+    background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color var(--duration-fast) ease;
   }
-  main[data-home="v2"] .hv2-directions .dsl-draw {
-    display: grid; align-items: center; width: 72px; height: 60px; background: var(--color-surface-elevated);
-    border: 1px solid var(--color-border-strong); transition: border-color var(--duration-fast) ease;
+  main[data-home="v2"] .hv2-directions .dxi-sheet:focus-visible { outline-offset: 3px; }
+  main[data-home="v2"] .hv2-directions .dxi-strip {
+    display: flex; justify-content: space-between; gap: 12px; color: var(--color-text-muted);
+    font: 600 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
   }
-  main[data-home="v2"] .hv2-directions .dsl .cdw { padding: 3px 5px; }
-  main[data-home="v2"] .hv2-directions .dsl-block { display: block; min-width: 0; container-type: inline-size; }
-  /* 21 px, never more than the name's column / 9.59: «Металоконструкції» at -.01em is 9.22 em (measured) × 1.04 — the
-     margin of --display-fit (Linux renders ≈ 1.7 % wider, plus 2 % spare) — so it stays one word on one line at every
-     width (≈ 18 px at 320, 20–21 px from 340, 21 px from 362) */
-  main[data-home="v2"] .hv2-directions .dsl-name { display: block; padding-bottom: 4px; color: var(--color-text); font: 400 min(21px, calc(100cqi / 9.59))/1.15 var(--font-display), sans-serif; letter-spacing: -.01em; text-wrap: balance; }
-  main[data-home="v2"] .hv2-directions .dsl-strip { display: flex; gap: 12px; color: var(--color-text-muted); font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-  main[data-home="v2"] .hv2-directions .dsl-arrow { color: var(--color-accent-strong); font-size: 20px; line-height: 1; text-align: right; }
-  /* Reached by the keyboard (or pointed at, where there is a pointer), the row's sheet is framed in copper — as a card
-     frames its sheet on a wide screen */
-  main[data-home="v2"] .hv2-directions .dsl-row:focus-visible .dsl-draw { border-color: var(--color-accent); }
-  @media (hover: hover) { main[data-home="v2"] .hv2-directions .dsl-row:hover .dsl-draw { border-color: var(--color-accent); } }
+  main[data-home="v2"] .hv2-directions .dxi-strip b { color: var(--color-accent-strong); font-weight: 600; }
+  /* The scheme: 180 × 126 drawn, set in a band as tall as 42 % of the sheet's width (132–176 px) */
+  main[data-home="v2"] .hv2-directions .dxi-draw { display: grid; height: clamp(132px, 42cqi, 176px); margin: 6px 0 8px; container-type: size; }
+  /* A pick swaps the visible drawing and name at once: no transition on them (the reduced-motion reset would otherwise give
+     their visibility .01 ms, two names for a frame) */
+  main[data-home="v2"] .hv2-directions .dxi-drawing { grid-area: 1 / 1; display: grid; place-items: center; min-height: 0; visibility: hidden; transition: none; }
+  main[data-home="v2"] .hv2-directions .dxi .cdw { width: auto; height: 100cqb; max-width: 100%; padding: 4px 0; }
+  /* The direction's name and «Про напрям» share a line where both fit (375 px and up); where they do not, «Про напрям»
+     takes a line of its own under the name. The names' cell is as wide as the widest of the five, so that choice is the
+     same for all five. */
+  main[data-home="v2"] .hv2-directions .dxi-foot {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px;
+    padding: 4px 0; border-top: 1px solid var(--color-border);
+  }
+  main[data-home="v2"] .hv2-directions .dxi-names { display: grid; padding: 8px 0; }
+  main[data-home="v2"] .hv2-directions .dxi-name { grid-area: 1 / 1; visibility: hidden; transition: none; color: var(--color-text); font: 400 19px/1.2 var(--font-display), sans-serif; letter-spacing: -.01em; }
+  main[data-home="v2"] .hv2-directions .dxi-name.is-active { visibility: visible; }
+  main[data-home="v2"] .hv2-directions .dxi-more {
+    display: inline-flex; align-items: center; gap: 7px; min-height: 44px; margin-left: auto; color: var(--color-accent-strong);
+    font: 600 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+  }
+  main[data-home="v2"] .hv2-directions .dxi-more svg { width: 18px; height: 18px; flex: none; stroke-width: 1.8; transition: transform var(--duration-fast) ease; }
+  @media (hover: hover) {
+    main[data-home="v2"] .hv2-directions .dxi-sheet:hover { border-color: var(--color-accent); }
+    main[data-home="v2"] .hv2-directions .dxi-sheet:hover .dxi-more svg { transform: translateX(3px); }
+  }
+
+  main[data-home="v2"] .hv2-directions .dxi-list { margin: 16px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
+  main[data-home="v2"] .hv2-directions .dxi-row {
+    position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; width: 100%; min-height: 48px;
+    padding: 6px 0 6px 12px; color: var(--color-text); text-align: left; background: none; border: 0; border-bottom: 1px solid var(--color-border);
+    border-radius: 0; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  main[data-home="v2"] .hv2-directions .dxi-row:focus-visible { outline-offset: -3px; box-shadow: none; }
+  main[data-home="v2"] .hv2-directions .dxi-num { color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+  main[data-home="v2"] .hv2-directions .dxi-row-name { font: 400 19px/1.2 var(--font-display), sans-serif; letter-spacing: -.01em; }
+  main[data-home="v2"] .hv2-directions .dxi-row[aria-pressed="true"] { color: var(--color-accent-strong); }
+  main[data-home="v2"] .hv2-directions .dxi-row[aria-pressed="true"] .dxi-num { color: var(--color-accent-strong); }
+  main[data-home="v2"] .hv2-directions .dxi-row[aria-pressed="true"]::before {
+    content: ''; position: absolute; left: 0; top: 50%; width: 3px; height: 20px; background: var(--color-accent); transform: translateY(-50%);
+  }
+  @media (hover: hover) { main[data-home="v2"] .hv2-directions .dxi-row:hover { background: color-mix(in srgb, var(--color-accent) 7%, transparent); } }
 }
-/* Up to 360 px the gaps and the arrow's column give the name 14 px more, so it keeps more of its 21 px */
-@media (max-width: 360px) { main[data-home="v2"] .hv2-directions .dsl-row { grid-template-columns: 72px minmax(0, 1fr) 22px; column-gap: 10px; } }
-@media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-directions .dsl-draw { transition: none; } }
+/* The picked direction's scheme. It comes in with a short fade, once per pick (no motion when reduced). */
+main[data-home="v2"] .hv2-directions .dxi[data-active="angary"] .dxi-drawing[data-id="angary"],
+main[data-home="v2"] .hv2-directions .dxi[data-active="zernoskhovyshcha"] .dxi-drawing[data-id="zernoskhovyshcha"],
+main[data-home="v2"] .hv2-directions .dxi[data-active="metalokonstruktsii"] .dxi-drawing[data-id="metalokonstruktsii"],
+main[data-home="v2"] .hv2-directions .dxi[data-active="betonni-roboty"] .dxi-drawing[data-id="betonni-roboty"],
+main[data-home="v2"] .hv2-directions .dxi[data-active="pokrivelni-roboty"] .dxi-drawing[data-id="pokrivelni-roboty"] { visibility: visible; animation: var(--dxi-in, none); }
+@keyframes dxi-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-directions .dxi { --dxi-in: dxi-in 200ms ease; } }
+@media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-directions :is(.dxi-sheet, .dxi-more svg) { transition: none; } }

@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { DirectionImageCards } from './components/DirectionCards';
-import { DirectionsSheetList, DirectionsSheets } from './components/home-v2/DirectionsSheets';
+import { DirectionsSheetIndex, DirectionsSheets } from './components/home-v2/DirectionsSheets';
 import { SectionHeader } from './components/SiteChrome';
 import { ConversationSection } from './components/ConversationSection';
 import { EngineeringSignature } from './components/home-v2/EngineeringSignature';
@@ -26,9 +26,9 @@ export default function Home() {
       <HomeV2Hero />
 
       {/* The direction images are concept illustrations of the service directions, not project evidence — each card
-          keeps its «Ілюстрація» tag and the intro says so in words. On a phone (≤ 760 px; PDO-42 a, owner 20.10) the
-          five directions are a list of their scheme sheets instead of the image cards, so the intro's sentence about the
-          images is not shown there (.hv2-image-note; its words stay in the page). */}
+          keeps its «Ілюстрація» tag and the intro says so in words. On a phone (≤ 760 px; owner 21.10, B «Один аркуш +
+          індекс») the five directions are one scheme sheet over an index of their names instead of the image cards, so
+          the intro's sentence about the images is not shown there (.hv2-image-note; its words stay in the page). */}
       <section className="directions section hv2-directions" id="directions">
         <div className="shell">
           <SectionHeader
@@ -38,7 +38,7 @@ export default function Home() {
             inverse
             aside={<DirectionsSheets />}
           />
-          <DirectionsSheetList />
+          <DirectionsSheetIndex />
           <DirectionImageCards />
           {/* Where we work, said once after the directions (owner, 02.10: it sat oddly in the hero) */}
           <p className="bond-line hv2-geo-bond"><span>{company.geographyShort}</span></p>

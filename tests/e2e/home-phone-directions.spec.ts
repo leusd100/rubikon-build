@@ -1,18 +1,17 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { directions } from '../../app/data/directions';
 
-// PDO-42 (a) — HOME «П’ять напрямів» on a phone (≤ 760 px). Owner, 20.10: «мініаркуші-креслення на ≤760 px, речення про
-// ілюстрації сховати на телефоні, десктопне бенто без змін». Before: a sideways rail of 4 : 5 image cards, one of five in
-// view (390×844: the first card and a strip of the second; the fifth four swipes away), with «01 / 05», dots and
-// «Гортайте →». Now: a list of five link rows — each the direction's own scheme sheet, its name and «Аркуш NN · Схема» —
-// every name in reach without a sideways gesture, in the tab order, each row a full-width target. The intro's second
-// sentence speaks of the card images, so it is not shown where there are none; its words are unchanged.
+// HOME «П’ять напрямів» on a phone (≤ 760 px) — B «Один аркуш + індекс» (owner 21.10, after PDO-42 a's five mini sheets of
+// 20.10). One large scheme sheet over an index of the five directions, one action per control: a row only picks the
+// direction (its sheet takes the scheme, number and name; nothing scrolls, nothing under the sheet moves, the change is
+// read out), and the sheet is the one link to the picked direction's page, «Про напрям», with the site's SVG arrow — the
+// bare ↗ of #219 became a blue emoji on the owner's iPhone. The first direction is picked from the first paint. The
+// intro's second sentence speaks of the card images, so it is not shown where there are none; its words are unchanged.
 // From 761 px nothing changes: the mosaic, its labelled illustrations and the wide-screen sheets.
 
 const SUPPORT_FIRST = 'Оберіть напрям, найближчий до вашої задачі.';
 const SUPPORT_FULL = `${SUPPORT_FIRST} Зображення на картках — ілюстрації, а не фото виконаних об’єктів.`;
-// The fixed site header on a phone
-const HEADER = 67;
+const PHONES = [{ width: 320, height: 568 }, { width: 375, height: 667 }, { width: 390, height: 844 }, { width: 430, height: 932 }];
 
 const consent = (page: Page) => page.addInitScript(() => {
   try { localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' })); } catch { /* storage unavailable */ }
@@ -26,153 +25,198 @@ async function open(page: Page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-/** The section's top just under the fixed header, as a jump to #directions leaves it */
-const jumpToDirections = (page: Page) => page.evaluate((header) => {
-  const section = document.querySelector('#directions')!;
-  scrollTo({ top: section.getBoundingClientRect().top + scrollY - header, behavior: 'instant' });
-}, HEADER);
+const band = (page: Page) => page.locator('#directions');
+const sheet = (page: Page) => band(page).locator('a.dxi-sheet');
+const rows = (page: Page) => band(page).getByRole('list').getByRole('button');
 
-/** Every rendered direction name in #directions, with its box in the viewport */
-const names = (page: Page) => page.locator('#directions').evaluate((section) => {
-  const out: Array<{ text: string; top: number; bottom: number; left: number; right: number }> = [];
-  for (const el of section.querySelectorAll<HTMLElement>('a')) {
-    if (!el.getClientRects().length || el.closest('[aria-hidden="true"]')) continue;
-    // A link's direction name: the card's title, or the row's one text that is not decoration
-    const title = el.querySelector<HTMLElement>('.direction-copy strong')
-      ?? [...el.querySelectorAll<HTMLElement>('*')].find((c) => !c.closest('[aria-hidden="true"]') && c.textContent?.trim() && !c.children.length);
-    if (!title) continue;
-    const range = document.createRange();
-    range.selectNodeContents(title);
-    const rects = [...range.getClientRects()].filter((r) => r.width > 0);
-    if (!rects.length) continue;
-    out.push({
-      text: title.textContent?.trim() ?? '',
-      top: Math.min(...rects.map((r) => r.top)),
-      bottom: Math.max(...rects.map((r) => r.bottom)),
-      left: Math.min(...rects.map((r) => r.left)),
-      right: Math.max(...rects.map((r) => r.right)),
-    });
-  }
-  return out;
+/** Picks a row; the first picks may land before hydration, so the pick is repeated until the sheet follows */
+async function pick(page: Page, row: Locator, href: string) {
+  await expect(async () => {
+    await row.click();
+    await expect(sheet(page)).toHaveAttribute('href', href, { timeout: 1_000 });
+  }).toPass();
+}
+
+/** The section scrolled so its index stands wholly in the window, under the fixed header */
+const showIndex = (page: Page) => page.evaluate(() => {
+  const list = document.querySelector('#directions .dxi-list')!.getBoundingClientRect();
+  scrollBy({ top: list.bottom - innerHeight + 8, behavior: 'instant' });
 });
 
-const inView = (page: Page) => names(page).then(async (list) => {
-  const { width, height } = page.viewportSize()!;
-  return list.filter((n) => n.top >= HEADER - 0.5 && n.bottom <= height + 0.5 && n.left >= -0.5 && n.right <= width + 0.5).map((n) => n.text);
+/** What the sheet shows: its href, its visible strip, name and drawing, its box, and the index's box */
+const shown = (page: Page) => page.evaluate(() => {
+  const root = document.querySelector('#directions .dxi')!;
+  const link = root.querySelector<HTMLAnchorElement>('a.dxi-sheet')!;
+  const visible = (el: Element) => getComputedStyle(el).visibility === 'visible' && el.getClientRects().length > 0;
+  const box = (el: Element) => { const r = el.getBoundingClientRect(); return { top: Math.round(r.top * 10) / 10, height: Math.round(r.height * 10) / 10 }; };
+  return {
+    href: link.getAttribute('href'),
+    label: link.getAttribute('aria-label'),
+    strip: [...root.querySelector('.dxi-strip')!.children].map((part) => part.textContent?.trim()).join(' · '),
+    names: [...root.querySelectorAll('.dxi-name')].filter(visible).map((el) => el.textContent?.trim()),
+    drawings: [...root.querySelectorAll<HTMLElement>('.dxi-drawing')].filter(visible).map((el) => el.dataset.id),
+    sheet: box(link),
+    list: box(root.querySelector('.dxi-list')!),
+    scrollY,
+    live: root.querySelector('[aria-live]')!.textContent,
+  };
 });
 
-test.describe('HOME directions on a phone: a list of five scheme sheets (PDO-42 a)', () => {
+test.describe('HOME directions on a phone: one sheet and an index (B)', () => {
   test.skip(({ isMobile }) => !isMobile, 'a phone check; the mobile project runs it');
 
-  // 390×844 and 430×932: all five names in view right after the jump. 320×568 and 375×667 are short windows: the
-  // section's title and intro fill the first screen there, so the five names come in together with one vertical
-  // scroll of under half a screen — never a sideways gesture.
-  for (const viewport of [{ width: 320, height: 568 }, { width: 375, height: 667 }, { width: 390, height: 844 }, { width: 430, height: 932 }]) {
-    test(`${viewport.width}×${viewport.height}: five link rows, every name in reach without a sideways gesture`, async ({ page }) => {
+  for (const viewport of PHONES) {
+    test(`${viewport.width}×${viewport.height}: one sheet link and five pick buttons, the first picked, no rail and no sideways scroll`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await open(page);
-      const section = page.locator('#directions');
+      const section = band(page);
 
-      // One list of five rows, each a link to its direction named by the direction alone
+      // One list: the five directions by their full names, in order, as pick buttons; the first is the picked one
       const list = section.getByRole('list');
       await expect(list).toHaveCount(1);
-      await expect(list).toBeVisible();
       await expect(list.getByRole('listitem')).toHaveCount(directions.length);
-      for (const { cardTitle, href } of directions) {
-        const link = section.getByRole('link', { name: cardTitle, exact: true });
-        await expect(link, cardTitle).toHaveCount(1);
-        await expect(link, cardTitle).toBeVisible();
-        await expect(link, cardTitle).toHaveAttribute('href', href);
-      }
-      expect(await list.getByRole('link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(directions.map(({ href }) => href));
+      await expect(rows(page).locator('.dxi-row-name')).toHaveText(directions.map(({ cardTitle }) => cardTitle));
+      // each named by the direction alone: its number is a mark for the eye
+      for (const { cardTitle } of directions) await expect(list.getByRole('button', { name: cardTitle, exact: true }), cardTitle).toHaveCount(1);
+      expect(await rows(page).evaluateAll((buttons) => buttons.map((b) => b.getAttribute('aria-pressed')))).toEqual(directions.map((_, i) => String(i === 0)));
+      await expect(list.getByRole('link')).toHaveCount(0);
 
-      // No rail: no image card, position counter or dot shows, and nothing in the section scrolls sideways
+      // The sheet: the one link of the band, to the first direction, «Аркуш 01 · Умовна схема», its name and «Про напрям»
+      const [first] = directions;
+      await expect(section.getByRole('link')).toHaveCount(1);
+      await expect(section.getByRole('link', { name: `Про напрям: ${first.cardTitle}`, exact: true })).toHaveAttribute('href', first.href);
+      const state = await shown(page);
+      expect(state.strip).toBe(`Аркуш ${first.number} · Умовна схема`);
+      expect(state.names).toEqual([first.cardTitle]);
+      expect(state.drawings).toEqual([first.id]);
+      await expect(sheet(page).locator('.dxi-more')).toHaveText('Про напрям');
+      // its arrow is the site's SVG in currentColor — no arrow character for iOS to draw as an emoji
+      await expect(sheet(page).locator('.dxi-more svg')).toHaveCount(1);
+      expect(await section.locator('.dxi').innerText()).not.toMatch(/[↗→➔➜⇨]/u);
+      // the sheet holds nothing else to press
+      await expect(sheet(page).locator('a, button, input, [tabindex]')).toHaveCount(0);
+
+      // No rail: no image card, image or sideways scroller in the band, and the page never scrolls sideways
       await expect(section.locator('.direction-card:visible')).toHaveCount(0);
+      expect(await section.locator('img:visible').count()).toBe(0);
       expect(await section.evaluate((root) => [...root.querySelectorAll<HTMLElement>('*')]
         .filter((el) => el.getClientRects().length && /auto|scroll/.test(getComputedStyle(el).overflowX) && el.scrollWidth > el.clientWidth + 1)
         .map((el) => el.className))).toEqual([]);
-      for (const name of ['button', 'img']) expect(await section.locator(`${name}:visible`).count(), `no ${name} in the band`).toBe(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
-      // Every row is a full-width target, at least 44 px tall
-      const targets = await list.getByRole('link').evaluateAll((links) => links.map((link) => {
-        const r = link.getBoundingClientRect();
-        return { width: r.width, height: r.height };
-      }));
-      for (const target of targets) {
+      // Targets: every row full width and at least 44 px tall, and so is «Про напрям» inside the sheet
+      for (const target of await rows(page).evaluateAll((buttons) => buttons.map((b) => { const r = b.getBoundingClientRect(); return { width: r.width, height: r.height }; }))) {
         expect(target.height).toBeGreaterThanOrEqual(44);
         expect(target.width).toBeGreaterThanOrEqual(viewport.width * 0.8);
       }
-
-      await jumpToDirections(page);
-      const all = directions.map(({ cardTitle }) => cardTitle);
-      const first = await names(page);
-      expect(first.map((n) => n.text)).toEqual(all);
-      if (viewport.height >= 800) {
-        expect(await inView(page)).toEqual(all);
-      } else {
-        // The five names fit one screen under the header; one vertical scroll of under half a screen brings them in
-        const span = Math.max(...first.map((n) => n.bottom)) - Math.min(...first.map((n) => n.top));
-        expect(span).toBeLessThanOrEqual(viewport.height - HEADER);
-        const scroll = Math.max(...first.map((n) => n.bottom)) - viewport.height;
-        expect(scroll).toBeLessThanOrEqual(viewport.height / 2);
-        await page.evaluate((y) => scrollBy({ top: y, behavior: 'instant' }), Math.ceil(scroll) + 1);
-        expect(await inView(page)).toEqual(all);
-      }
-      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+      expect((await sheet(page).locator('.dxi-more').boundingBox())!.height).toBeGreaterThanOrEqual(44);
     });
   }
 
-  test('390: Tab walks the five rows in order, each with a visible focus ring, then leaves the band', async ({ page }) => {
+  for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 568 }]) {
+    test(`${viewport.width}×${viewport.height}: each row picks its direction — the sheet follows, nothing scrolls or moves, the change is read out`, async ({ page }) => {
+      test.setTimeout(60_000);
+      await page.setViewportSize(viewport);
+      await open(page);
+      await showIndex(page);
+      const before = await shown(page);
+      expect(before.live, 'nothing is read out before a pick').toBe('');
+      for (const index of [2, 4, 1, 3, 0]) {
+        const direction = directions[index];
+        const row = rows(page).nth(index);
+        await pick(page, row, direction.href);
+        const after = await shown(page);
+        expect(after.label).toBe(`Про напрям: ${direction.cardTitle}`);
+        expect(after.strip).toBe(`Аркуш ${direction.number} · Умовна схема`);
+        expect(after.names).toEqual([direction.cardTitle]);
+        expect(after.drawings).toEqual([direction.id]);
+        expect(after.live).toBe(`Показано схему: ${direction.cardTitle}`);
+        expect(await rows(page).evaluateAll((buttons) => buttons.map((b) => b.getAttribute('aria-pressed')))).toEqual(directions.map((_, i) => String(i === index)));
+        // the picked row has a mark of its own beside its number, not only its colour
+        expect(await row.evaluate((b) => getComputedStyle(b, '::before').content)).not.toBe('none');
+        expect(await rows(page).nth((index + 1) % directions.length).evaluate((b) => getComputedStyle(b, '::before').content)).toBe('none');
+        // no scroll, and the sheet and the index keep their place and size
+        expect(after.scrollY, `${direction.cardTitle}: no scroll`).toBe(before.scrollY);
+        expect(after.sheet, `${direction.cardTitle}: the sheet`).toEqual(before.sheet);
+        expect(after.list, `${direction.cardTitle}: the index`).toEqual(before.list);
+        await expect(row).toBeFocused();
+      }
+    });
+  }
+
+  test('390: Tab reaches the sheet, then the five rows in order, each with a visible focus ring; Enter and Space pick, Enter on the sheet opens the picked page', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page);
     // Start from the intro (not focusable itself), so the next Tab is the band's first stop
     await page.locator('#directions .section-header-support').evaluate((el) => { el.setAttribute('tabindex', '-1'); (el as HTMLElement).focus(); });
     const stops: string[] = [];
-    for (let i = 0; i < directions.length; i += 1) {
+    for (let i = 0; i <= directions.length; i += 1) {
       await page.keyboard.press('Tab');
       stops.push(await page.evaluate(() => {
         const el = document.activeElement as HTMLElement;
-        const r = el.getBoundingClientRect();
-        const inList = Boolean(el.closest('#directions ul'));
-        const ring = getComputedStyle(el).outlineStyle !== 'none' && parseFloat(getComputedStyle(el).outlineWidth) >= 2;
-        return `${el.getAttribute('href')} ${inList && r.height > 0 ? 'row' : 'other'} ${ring ? 'ring' : 'no-ring'}`;
+        const style = getComputedStyle(el);
+        const ring = style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2;
+        const what = el.matches('a.dxi-sheet') ? 'sheet' : el.matches('#directions ul button') ? `row ${el.textContent?.trim()}` : 'other';
+        return `${what} ${ring ? 'ring' : 'no-ring'}`;
       }));
     }
-    expect(stops).toEqual(directions.map(({ href }) => `${href} row ring`));
+    expect(stops).toEqual(['sheet ring', ...directions.map(({ number, cardTitle }) => `row ${number}${cardTitle} ring`)]);
     await page.keyboard.press('Tab');
-    expect(await page.evaluate(() => Boolean(document.activeElement?.closest('#directions .direction-grid')))).toBe(false);
+    expect(await page.evaluate(() => Boolean(document.activeElement?.closest('#directions .dxi')))).toBe(false);
+
+    // Enter on the fourth row and Space on the third pick them; the focus stays on the row
+    await rows(page).nth(3).focus();
+    await expect(async () => {
+      await page.keyboard.press('Enter');
+      await expect(sheet(page)).toHaveAttribute('href', directions[3].href, { timeout: 1_000 });
+    }).toPass();
+    await expect(rows(page).nth(3)).toBeFocused();
+    await rows(page).nth(2).focus();
+    await page.keyboard.press('Space');
+    await expect(sheet(page)).toHaveAttribute('href', directions[2].href);
+    await expect(rows(page).nth(2)).toHaveAttribute('aria-pressed', 'true');
+    // Enter on the sheet opens the picked direction
+    await sheet(page).focus();
+    await page.keyboard.press('Enter');
+    await page.waitForURL(`**${directions[2].href}`);
   });
 
-  test('320: every name stays whole, «Металоконструкції» one word on one line, clear of the sheet and the arrow', async ({ page }) => {
+  test('320: every name stays whole in the index and on the sheet — «Металоконструкції» one word on one line, clear of its neighbours', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await open(page);
-    const rows = await page.locator('#directions').getByRole('list').getByRole('link').evaluateAll((links) => links.map((link) => {
-      const parts = [...link.querySelectorAll<HTMLElement>('*')].filter((el) => el.getClientRects().length);
-      const name = parts.find((el) => el.textContent?.trim() && !el.closest('[aria-hidden="true"]') && !el.querySelector('*'))!;
-      const words: Array<{ word: string; lines: number; right: number }> = [];
-      const node = name.firstChild!;
-      const text = node.textContent ?? '';
-      for (const m of text.matchAll(/\S+/g)) {
-        const range = document.createRange();
-        range.setStart(node, m.index!);
-        range.setEnd(node, m.index! + m[0].length);
-        const rects = [...range.getClientRects()].filter((r) => r.width > 0.5);
-        words.push({ word: m[0], lines: new Set(rects.map((r) => Math.round(r.top))).size, right: Math.max(...rects.map((r) => r.right)) });
+    await pick(page, rows(page).nth(2), directions[2].href);
+    const measured = await band(page).evaluate((root) => {
+      const words = (el: Element) => {
+        const node = el.firstChild!;
+        return [...(node.textContent ?? '').matchAll(/\S+/g)].map((m) => {
+          const range = document.createRange();
+          range.setStart(node, m.index!);
+          range.setEnd(node, m.index! + m[0].length);
+          const rects = [...range.getClientRects()].filter((r) => r.width > 0.5);
+          return { word: m[0], lines: new Set(rects.map((r) => Math.round(r.top))).size, right: Math.max(...rects.map((r) => r.right)) };
+        });
+      };
+      const clear = (a: DOMRect, b: DOMRect) => a.right <= b.left + 0.5 || b.right <= a.left + 0.5 || a.bottom <= b.top + 0.5 || b.bottom <= a.top + 0.5;
+      const index = [...root.querySelectorAll('.dxi-row')].map((row) => {
+        const name = row.querySelector('.dxi-row-name')!;
+        return { name: name.textContent?.trim(), words: words(name), right: row.getBoundingClientRect().right, clear: clear(name.getBoundingClientRect(), row.querySelector('.dxi-num')!.getBoundingClientRect()) };
+      });
+      const sheetName = root.querySelector('.dxi-name.is-active')!;
+      const sheetBox = root.querySelector('.dxi-sheet')!.getBoundingClientRect();
+      return {
+        index,
+        sheet: { name: sheetName.textContent?.trim(), words: words(sheetName), right: sheetBox.right, clear: clear(sheetName.getBoundingClientRect(), root.querySelector('.dxi-more')!.getBoundingClientRect()) },
+      };
+    });
+    for (const entry of [...measured.index, measured.sheet]) {
+      for (const word of entry.words) {
+        expect(word.lines, `${entry.name}: «${word.word}» on one line`).toBe(1);
+        expect(word.right, `${entry.name}: «${word.word}» inside its box`).toBeLessThanOrEqual(entry.right + 0.5);
       }
-      const box = name.getBoundingClientRect();
-      const decorations = parts.filter((el) => el.getAttribute('aria-hidden') === 'true' && el.parentElement === link).map((el) => el.getBoundingClientRect());
-      const overlaps = decorations.filter((d) => d.left < box.right - 0.5 && d.right > box.left + 0.5 && d.top < box.bottom - 0.5 && d.bottom > box.top + 0.5).length;
-      return { name: name.textContent?.trim(), words, nameRight: box.right, overlaps };
-    }));
-    expect(rows.map((row) => row.name)).toEqual(directions.map(({ cardTitle }) => cardTitle));
-    for (const row of rows) {
-      for (const word of row.words) {
-        expect(word.lines, `${row.name}: «${word.word}» on one line`).toBe(1);
-        expect(word.right, `${row.name}: «${word.word}» inside its box`).toBeLessThanOrEqual(row.nameRight + 0.5);
-      }
-      expect(row.overlaps, `${row.name} clear of the sheet and the arrow`).toBe(0);
+      expect(entry.clear, `${entry.name} clear of its neighbour`).toBe(true);
     }
-    expect(rows.find((row) => row.name === 'Металоконструкції')!.words).toHaveLength(1);
+    expect(measured.sheet.name).toBe('Металоконструкції');
+    expect(measured.sheet.words).toHaveLength(1);
   });
 
   for (const width of [320, 390, 760]) {
@@ -186,15 +230,16 @@ test.describe('HOME directions on a phone: a list of five scheme sheets (PDO-42 
   }
 });
 
-test.describe('HOME directions from 761 px: the mosaic as it was (PDO-42 a)', () => {
+test.describe('HOME directions from 761 px: the mosaic as it was', () => {
   test.skip(({ isMobile }) => isMobile, 'a desktop and tablet check; the desktop project runs it');
 
   for (const viewport of [{ width: 761, height: 1024 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
-    test(`${viewport.width}: five labelled illustration cards in the mosaic, the intro whole, no phone list`, async ({ page }) => {
+    test(`${viewport.width}: five labelled illustration cards in the mosaic, the intro whole, no phone sheet or index`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await open(page);
       const section = page.locator('#directions');
       await expect(section.getByRole('list')).toHaveCount(0);
+      await expect(section.locator('.dxi')).toBeHidden();
       const support = section.locator('.section-header-support');
       await expect(support).toHaveText(SUPPORT_FULL);
       expect((await support.innerText()).replace(/\s+/g, ' ').trim()).toBe(SUPPORT_FULL);
@@ -226,7 +271,7 @@ test.describe('HOME directions from 761 px: the mosaic as it was (PDO-42 a)', ()
       geometry.forEach((box, index) => box.forEach((value, k) => expect(Math.abs(value - expected[index][k]), `card ${index + 1} [${k}]`).toBeLessThanOrEqual(0.5)));
 
       // The band's tab stops are the five cards (the wide-screen sheets are a pointer's shortcut, out of the tab order)
-      expect(await section.evaluate((root) => [...root.querySelectorAll<HTMLAnchorElement>('a')]
+      expect(await section.evaluate((root) => [...root.querySelectorAll<HTMLElement>('a, button')]
         .filter((a) => a.tabIndex >= 0 && a.getClientRects().length)
         .map((a) => a.getAttribute('href')))).toEqual(directions.map(({ href }) => href));
     });

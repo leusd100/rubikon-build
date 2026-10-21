@@ -568,8 +568,8 @@ test('homepage places its calls once: in the hero and in the closing conversatio
 // The five direction cards on the homepage keep every title word whole. The title shares the card's inset with the
 // arrow; in the narrow right-hand cards «Зерносховища» and «Металоконструкції» used to split mid-word around 768 px
 // (and the latter below ~375 px). Measured like the H1: each word on its own must fit the title's own width.
-// On a phone (≤ 760 px) the cards are not shown since PDO-42 (a): there the five names are the list rows', measured the
-// same way against their own arrow (320 px added: the narrowest row).
+// On a phone (≤ 760 px) the cards are not shown: there the five names are the index rows' (B «Один аркуш + індекс», owner
+// 21.10), measured the same way against the row's number beside them (320 px added: the narrowest row).
 for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 800 }, { width: 375, height: 812 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 820, height: 1180 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
   test(`homepage direction-card titles keep their words whole at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
@@ -577,9 +577,9 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 800 }
     await page.evaluate(() => document.fonts.ready);
 
     const phone = viewport.width <= 760;
-    const cards = await page.locator(phone ? '#directions .dsl-row' : '#directions .direction-card').evaluateAll((elements, phone) => elements.map((card) => {
-      const title = card.querySelector<HTMLElement>(phone ? '.dsl-name' : '.direction-copy strong')!;
-      const arrow = card.querySelector<HTMLElement>(phone ? '.dsl-arrow' : '.direction-arrow')!;
+    const cards = await page.locator(phone ? '#directions .dxi-row' : '#directions .direction-card').evaluateAll((elements, phone) => elements.map((card) => {
+      const title = card.querySelector<HTMLElement>(phone ? '.dxi-row-name' : '.direction-copy strong')!;
+      const arrow = card.querySelector<HTMLElement>(phone ? '.dxi-num' : '.direction-arrow')!;
       const probe = document.createElement('span');
       probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap';
       title.appendChild(probe);

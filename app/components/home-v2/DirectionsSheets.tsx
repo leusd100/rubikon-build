@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { directions } from '../../data/directions';
 import { CatalogDrawing } from '../directions/CatalogDrawing';
+import { DirectionsIndex } from './DirectionsIndex';
 // The row's whole stylesheet. One importer only (see CatalogDrawing.tsx).
 import './directions-sheets.css';
 
@@ -38,31 +39,17 @@ export function DirectionsSheets() {
   );
 }
 
-// On a phone (≤ 760 px; PDO-42 a, owner 20.10: «мініаркуші-креслення на ≤760 px») the same five sheets are the band
-// itself: a list of five link rows in place of the sideways rail of image cards, so every direction is in reach without a
-// swipe. A row is the direction's scheme in a small framed sheet, its name, the sheet's strip «Аркуш NN · Схема» and a
-// copper arrow; it links where its card does. Unlike the header row above it is in the tab order and the accessibility
-// tree — the cards are not shown there — and its accessible name is the direction's name alone (the scheme, the strip
-// and the arrow are decoration). Shown up to 760 px only (directions-sheets.css); the drawings stand as drawn, no
-// plot-in. A server component. role="list" keeps the list a list for VoiceOver, which drops it under list-style: none.
-export function DirectionsSheetList() {
+// On a phone (≤ 760 px; owner 21.10: B «Один аркуш + індекс», one action per row) the band is one large scheme sheet over
+// an index of the five directions (DirectionsIndex, a client component): a row picks the direction and the sheet shows its
+// scheme, number and name; the sheet is the one link to the picked page («Про напрям»). It replaces the image cards there,
+// which are not shown (home-v2.css). The five drawings are drawn here, on the server, and handed over in the directions'
+// order, so the client chunk carries the picking only. Shown up to 760 px only (directions-sheets.css).
+export function DirectionsSheetIndex() {
   return (
-    <ul className="dsl" role="list">
+    <DirectionsIndex items={directions.map(({ id, number, href, cardTitle }) => ({ id, number, href, name: cardTitle }))}>
       {directions.map((direction) => (
-        <li key={direction.id}>
-          <a className="dsl-row" href={direction.href}>
-            <span className="dsl-draw" aria-hidden="true"><CatalogDrawing id={direction.id} /></span>
-            <span className="dsl-block">
-              <span className="dsl-name">{direction.cardTitle}</span>
-              <span className="dsl-strip" aria-hidden="true">
-                <span>Аркуш {direction.number}</span>
-                <span>Схема</span>
-              </span>
-            </span>
-            <span className="dsl-arrow" aria-hidden="true">↗</span>
-          </a>
-        </li>
+        <span className="dxi-drawing" data-id={direction.id} key={direction.id}><CatalogDrawing id={direction.id} /></span>
       ))}
-    </ul>
+    </DirectionsIndex>
   );
 }
