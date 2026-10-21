@@ -110,18 +110,21 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
   z-index: 50;
   padding-top: var(--phone-hero-safe-top, 0px);
   color: var(--color-dark-text);
-  background: color-mix(in srgb, var(--color-dark) var(--phone-hero-header-alpha, 90%), transparent);
+  /* A page without a hero (privacy, 404, the error page): 94 %, no blur (PDO-18). Pages with a hero set their own. */
+  background: color-mix(in srgb, var(--color-dark) var(--phone-hero-header-alpha, 94%), transparent);
   border-bottom: 1px solid rgba(255, 255, 255, .16);
-  backdrop-filter: var(--phone-hero-header-backdrop, blur(18px));
+  backdrop-filter: var(--phone-hero-header-backdrop, none);
 }
-/* HOME and About integrate the fixed header with their Hero at every width. Phone pages retain their 82% tint. */
+/* «Збалансована» header (owner 21.10): over a hero, at every width and on every page that has one, graphite at 92 %
+   without blur; after 32 px of scroll it is solid (100 %). HOME and About lie under it at every width; the inner heroes
+   from 1100 px further down, the phones in the ≤1099 / ≤760 blocks. The dense band is the channels' ground too: the
+   messengers keep their own colours on it, with no plate of their own (the 72 % header needed one, PDO-19). */
 body:has(main:is([data-home="v2"], .about-page)) {
-  --phone-hero-header-alpha: 72%;
+  --phone-hero-header-alpha: 92%;
   --phone-hero-menu-alpha: 97%;
   --phone-hero-header-backdrop: none;
 }
-body:has(main:is([data-home="v2"], .about-page)) .header-contacts { background: rgba(17, 21, 18, .6); }
-:root[data-hero-header="scrolled"] body { --phone-hero-header-alpha: 97%; }
+:root[data-hero-header="scrolled"] body { --phone-hero-header-alpha: 100%; }
 .site-header:has(.mobile-menu[open]) { --phone-hero-header-alpha: var(--phone-hero-menu-alpha, 90%); }
 .phone-hero-scroll { display: none; }
 /* The footage already reaches y=0. Clear only its shade behind the header, then restore the existing text contrast.
@@ -147,37 +150,57 @@ body:has(main:is([data-home="v2"], .about-page)) .header-contacts { background: 
   --logo-word-0: #F8F9F9; --logo-word-1: #E1E5E7; --logo-word-2: #F4F5F5;
   --logo-rule: #A6A7A5;
 }
+/* The header's lockup on a desktop row: 250 px («Збалансована», owner 21.10: 226–250), 226 px in the ≤1180 tier below */
+@media (min-width: 1181px) { .site-header .brand { width: 250px; } }
 .brand-on-light .brand {
   --logo-mark-0: #3A3E3C; --logo-mark-1: #202321; --logo-mark-2: #4A4E4B; --logo-mark-3: #1B1E1C; --logo-mark-4: #343836;
   --logo-word-0: #2A2D2B; --logo-word-1: #1D201E; --logo-word-2: #2E312F;
   --logo-rule: #857F76;
 }
-.desktop-nav { display: flex; align-items: center; gap: clamp(24px, 2.15vw, 40px); font-size: 16px; font-weight: 720; letter-spacing: .012em; }
+/* Header hierarchy (PDO-19, OD-PX-08 a; «Збалансована», owner 21.10): who (the logo) → where (the navigation, 600) → how
+   to reach us (the number, the one framed element, then the messengers in their own colours and a grey mail icon) → the
+   theme switch, a quiet utility */
+.desktop-nav { display: flex; align-items: center; gap: clamp(24px, 2.15vw, 40px); font-size: 16px; font-weight: 600; letter-spacing: .012em; }
 /* 44 px tall targets (UX sweep 2026-10: the links were 23–24 px boxes); the underline stays where it was under the text */
 .desktop-nav a { position: relative; display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
-.desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: 3px; height: 2px; background: var(--color-accent); transition: right .25s ease; }
+.desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: 3px; height: 2px; background: var(--color-accent-on-dark); transition: right .25s ease; }
+/* The current section keeps its copper rule (PDO-57): the page in view (aria-current="page") or, on a direction's page,
+   «Напрямки» as its section (aria-current="true"). The rule is the light copper (#CC8455): the decorative #B76432 was
+   2.21 : 1 against the header over a light frame (/betonni-roboty, 1180 px, Light). In the menu the marked link is
+   copper (5.89 : 1 on the band). */
+.desktop-nav a[aria-current]::after { right: 0; }
 .desktop-nav a:hover::after, .desktop-nav a:focus-visible::after { right: 0; }
-.header-contacts { display: flex; align-items: stretch; font-style: normal; border: 1px solid rgba(255,255,255,.26); background: rgba(255,255,255,.045); }
+.header-contacts { display: flex; align-items: center; font-style: normal; }
 .header-contact { min-width: 132px; display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 10px; padding: 11px 14px; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .header-contact + .header-contact { border-left: 1px solid rgba(255,255,255,.18); }
 .header-contact svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.7; }
 .header-contact span { display: grid; gap: 3px; }
 .header-contact small { color: rgba(255,255,255,.78); font-size: 9px; font-weight: 800; line-height: 1; letter-spacing: .09em; text-transform: uppercase; }
 .header-contact strong { color: var(--color-dark-text-muted); font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: .07em; text-transform: uppercase; }
-.header-phone { min-width: 178px; }
-.header-phone strong { color: var(--color-dark-text); font-size: 16px; font-weight: 750; letter-spacing: .01em; text-transform: none; white-space: nowrap; }
-.header-contact:hover { color: var(--color-on-action); background: var(--color-action); }
-.header-contact:hover svg, .header-contact:hover small, .header-contact:hover strong { color: var(--color-on-action); }
-.header-messengers { display: flex; align-items: stretch; }
+/* The number in its own frame, in the face of the heroes' copper call (Plex Condensed 600 17 px): light words, a light
+   copper icon, no fill — at rest and on hover, where only the frame turns copper (the filled copper is the hero's call) */
+.header-phone { min-width: 178px; min-height: 44px; padding: 0 14px; border: 1px solid rgba(245, 242, 235, .34); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.header-phone svg { color: var(--color-accent-on-dark); }
+.header-phone strong { color: var(--color-dark-text); font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
+.header-phone:is(:hover, :focus-visible) { border-color: var(--color-accent-on-dark); background: rgba(245, 242, 235, .06); }
+/* one hairline divides the number from the written channels; the cells themselves have no rules */
+.header-messengers { display: flex; align-items: stretch; margin-left: 10px; padding-left: 4px; border-left: 1px solid rgba(245, 242, 235, .18); }
 .messenger-link { display: grid; place-items: center; padding: 0; color: rgba(255,255,255,.78); border: 0; border-radius: 0; background: transparent; font: inherit; cursor: pointer; appearance: none; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .messenger-brand-icon { width: 21px; height: 21px; display: block; object-fit: contain; transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease; }
 .messenger-link span { font-size: 10px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
-.header-messengers .messenger-link { width: 44px; border-left: 1px solid rgba(255,255,255,.18); }
+.header-messengers .messenger-link { width: 44px; height: 44px; }
 .header-messengers .messenger-link span { display: none; }
-.header-email { width: 44px; border-left: 1px solid rgba(255,255,255,.18); }
-.header-email svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.7; }
+/* the messengers at 23 px in the header (21 px in its first desktop tier, further down) */
+.header-messengers .messenger-brand-icon { width: 23px; height: 23px; }
+.header-email { width: 44px; height: 44px; }
+/* copper stays beside the number only: the mail icon is grey, and takes the copper back on hover / focus */
+.header-email svg { width: 18px; height: 18px; color: var(--color-dark-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
+.header-email:is(:hover, :focus-visible) svg { color: var(--color-accent-on-dark); }
 .messenger-link:hover, .messenger-link:focus-visible { color: var(--color-dark-text); background: rgba(255,255,255,.08); }
 .messenger-link:hover .messenger-brand-icon, .messenger-link:focus-visible .messenger-brand-icon { transform: translateY(-1px) scale(1.08); filter: saturate(1.15) brightness(1.08); }
+/* The messengers on the charcoal band (header, its menu, footer) keep the brands' own blue, green and purple at rest —
+   no grey, no lowered saturation, no opacity (owner 21.10, «Оригінальний колір»): a visitor finds the channel by its colour
+   on a phone too, where there is no hover. */
 .messenger-link:active .messenger-brand-icon { transform: translateY(0) scale(.96); }
 .mobile-menu { position: relative; display: none; }
 .mobile-menu summary { min-width: 106px; height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 15px; border: 1px solid rgba(255,255,255,.3); cursor: pointer; list-style: none; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
@@ -191,6 +214,7 @@ body:has(main:is([data-home="v2"], .about-page)) .header-contacts { background: 
 .mobile-menu nav { position: absolute; top: calc(100% + 14px); right: 0; width: min(310px, calc(100vw - 32px)); padding: 8px 20px; color: var(--color-dark-text); background: color-mix(in srgb, var(--color-dark) 98%, transparent); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 24px 54px rgba(0,0,0,.34); }
 .mobile-menu nav a { min-height: 58px; display: grid; grid-template-columns: 30px 1fr; align-items: center; border-bottom: 1px solid rgba(255,255,255,.12); font-size: 16px; font-weight: 680; }
 .mobile-menu nav a:last-child { border-bottom: 0; }
+.mobile-menu nav a[aria-current] { color: var(--color-accent-on-dark); }
 .mobile-menu nav small { color: var(--color-accent-on-dark); font-size: 9px; font-weight: 800; letter-spacing: .08em; }
 .mobile-messengers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px 0 8px; border-top: 1px solid rgba(255,255,255,.12); }
   .mobile-menu nav .mobile-messengers .messenger-link { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(255,255,255,.15); font-size: 8px; }
@@ -205,13 +229,14 @@ body:has(main:is([data-home="v2"], .about-page)) .header-contacts { background: 
 .mobile-call { display: none; width: 46px; height: 46px; flex: 0 0 auto; align-items: center; justify-content: center; margin-left: auto; color: var(--color-dark-text); border: 1px solid rgba(255,255,255,.3); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .mobile-call svg { width: 19px; height: 19px; color: var(--color-accent); stroke-width: 1.8; }
 .mobile-call:hover, .mobile-call:focus-visible { border-color: var(--color-accent); background: rgba(255,255,255,.06); }
-/* Theme switch (ThemeControl.tsx) — its own pill beside the contacts box, not a cell inside it: a sun|moon track with a
-   paper knob reads as a switch, never as one more contact. No copper, so it never competes with the phone. The knob
-   follows data-theme (set before paint). On phones the three options sit at the end of the menu. */
+/* Theme switch (ThemeControl.tsx) — its own pill beside the contacts, not a cell among them: a sun|moon track with a
+   knob reads as a switch, never as one more contact. A quiet utility (PDO-19): a faint track and a grey knob, no copper,
+   so it never competes with the number. The knob follows data-theme (set before paint). On phones the three options sit
+   at the end of the menu. */
 .header-actions { display: flex; align-items: center; gap: 12px; }
 .theme-switch { --ts-w: 52px; --ts-h: 28px; position: relative; width: var(--ts-w); height: 44px; display: grid; place-items: center; flex: none; padding: 0; color: var(--color-dark-text-secondary); border: 0; background: transparent; cursor: pointer; }
-.theme-switch-track { position: relative; width: var(--ts-w); height: var(--ts-h); display: block; border: 1px solid rgba(245, 242, 235, .3); border-radius: 999px; background: rgba(245, 242, 235, .045); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
-.theme-switch-knob { position: absolute; top: 2px; left: 2px; width: calc(var(--ts-h) - 6px); height: calc(var(--ts-h) - 6px); border-radius: 50%; background: var(--color-dark-text); transition: transform .28s cubic-bezier(.3, .7, .2, 1); }
+.theme-switch-track { position: relative; width: var(--ts-w); height: var(--ts-h); display: block; border: 1px solid rgba(245, 242, 235, .2); border-radius: 999px; background: transparent; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.theme-switch-knob { position: absolute; top: 2px; left: 2px; width: calc(var(--ts-h) - 6px); height: calc(var(--ts-h) - 6px); border-radius: 50%; background: var(--color-dark-text-muted); transition: transform .28s cubic-bezier(.3, .7, .2, 1); }
 .theme-switch-track svg { position: absolute; top: 50%; width: calc(var(--ts-h) - 14px); height: calc(var(--ts-h) - 14px); stroke-width: 1.9; transform: translateY(-50%); transition: color .28s ease; }
 .theme-switch-sun { left: 6px; }
 .theme-switch-moon { right: 6px; }
@@ -643,7 +668,7 @@ body:has(main:is([data-home="v2"], .about-page)) .header-contacts { background: 
 .subhero-side > p { margin: 0; color: rgba(255,255,255,.7); font-size: 16px; line-height: 1.75; }
 
 .service-subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
-.service-subhero-media { position: absolute; inset: 101px 0 0; } /* under the fixed header, not behind it: the picture's top stays in view */
+.service-subhero-media { position: absolute; inset: 101px 0 0; } /* under the fixed header: /zernoskhovyshcha ≥1100 px until W2-12; every other hero starts at y 0 behind it (PDO-18, «One header model») */
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
 .direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%) !important; }
@@ -812,6 +837,9 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-nav a:hover, .footer-directions a:hover { color: var(--color-dark-text); }
 .footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
 .footer-phone, .footer-email { display: inline-flex; align-items: center; min-height: 24px; gap: 9px; color: var(--color-dark-text); font-size: 15px; font-weight: 700; letter-spacing: .025em; }
+/* the number in one face across the site — the header's and the heroes' Plex Condensed 600 (PDO-19); a pixel larger than
+   the mail beside it, as the condensed face is narrower */
+.footer-phone span { font-family: var(--font-condensed), sans-serif; font-size: calc(1em + 1px); font-weight: 600; letter-spacing: .03em; }
 .footer-phone svg, .footer-email svg { width: 17px; height: 17px; color: var(--color-accent); stroke-width: 1.7; }
 .footer-messengers { display: flex; gap: 7px; }
 .footer-messengers .messenger-link { width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.16); }
@@ -938,10 +966,10 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .header-email { width: 40px; }
 }
 
-/* Nav switches to the mobile menu at the wider max-width:1099px block below (960 < 1099, so
+/* Nav switches to the mobile menu at the wider max-width:1179px block below (960 < 1179, so
    that block already covers this whole range) — this block now only owns the footer's tablet
-   layout. The two thresholds are deliberately different: 1099/1100px is where the compact
-   desktop header itself runs out of room; 960px is where the footer's own 3-column tablet
+   layout. The two thresholds are deliberately different: 1179/1180px is where the desktop
+   header's groups stop standing apart (GLB-03 A); 960px is where the footer's own 3-column tablet
    composition starts looking right. Kept distinct rather than merged into one number. */
 @media (max-width: 960px) {
   .subhero-layout, .about-subhero .subhero-layout { grid-template-columns: 1fr; gap: 36px; }
@@ -959,23 +987,43 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .footer-phone, .footer-email { white-space: nowrap; }
 }
 
-/* The compact desktop header reaches its safe minimum at 1100px (see «Desktop header tiers» near the end). */
-@media (max-width: 1099px) {
+/* The compact header — the call and «Меню» — runs to 1179 px (GLB-03 A, OD-PX-08 a): at 1100–1179 the full row had
+   11 px between the navigation's items and 13 px between its groups, so logo, navigation and contacts ran together.
+   From 1180 px the desktop row has room to separate its three groups (see «Desktop header tiers» near the end). */
+@media (max-width: 1179px) {
   .desktop-nav, .header-actions { display: none; }
   .mobile-menu { display: block; }
   .mobile-call { display: inline-flex; }
+  body { --phone-hero-menu-alpha: 97%; }
+  body .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; background: rgba(17, 21, 18, .6); }
+}
+/* The header over the picture up to 1099 px: 92 % without blur (wider screens: «One header model» further down) */
+@media (max-width: 1099px) {
   body {
-    --phone-hero-header-alpha: 72%;
-    --phone-hero-menu-alpha: 97%;
+    --phone-hero-header-alpha: 92%;
     --phone-hero-header-backdrop: none;
     --phone-hero-safe-top: env(safe-area-inset-top, 0px);
     --compact-hero-header-edge: calc(101px + var(--phone-hero-safe-top));
   }
-  body .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; background: rgba(17, 21, 18, .6); }
   body .service-subhero-media { top: 0; }
   body .directions-page .directions-hero-sequence-image { top: 0; height: 100%; }
   :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade) {
     mask-image: linear-gradient(180deg, transparent calc(var(--compact-hero-header-edge) - 24px), #000 var(--compact-hero-header-edge));
+  }
+}
+/* One header model (PDO-18, OD-PX-09 a; «Збалансована», owner 21.10). From 1100 px the inner heroes take what HOME,
+   /pro-nas and every narrower screen have: the picture from y 0 under a 92 % graphite header without blur (the 90 % band
+   with blur(18px) cut the top 13–16 % off the picture and its blur was near invisible), the hero's shade cleared behind the
+   header as on HOME. After 32 px of scroll the header is solid — 100 %, no blur (a 97 % header without blur let the text
+   under it show as a ghost). The grain hero (main.grain-page: /zernoskhovyshcha and /planner-preview, which renders the
+   same page) keeps one exception only, its framing: its picture starts under the header until it is reframed (W2-12,
+   PDO-48). Its header is the same — 92 % at the top (there over the hero's own graphite), solid after scroll. */
+@media (min-width: 1100px) {
+  body:has(main :is(.service-subhero, .directions-subhero, .proc-hero)) { --phone-hero-header-alpha: 92%; --phone-hero-header-backdrop: none; }
+  :root[data-hero-header="scrolled"] .site-header { --phone-hero-header-alpha: 100%; --phone-hero-header-backdrop: none; }
+  main:not(.grain-page) .service-subhero-media { top: 0; }
+  main:not(.grain-page) :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade) {
+    mask-image: linear-gradient(180deg, transparent 77px, #000 101px);
   }
 }
 
@@ -999,7 +1047,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   section[id], [id="inquiry"] { scroll-margin-top: 88px; }
   a[href], button, summary, input, select, textarea { scroll-margin-top: 88px; }
   body {
-    --phone-hero-header-alpha: 82%;
+    --phone-hero-header-alpha: 92%;
     --compact-hero-header-edge: calc(77px + var(--phone-hero-safe-top, 0px));
   }
   .nav-wrap { min-height: 76px; gap: 12px; }
@@ -1462,29 +1510,25 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
   .mobile-menu summary > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
-/* Desktop header tiers — kept at the end, so they outrank the header's own ≤1180 tier. Measured (2026-10-06, with the
-   theme switch outside the contacts box): logo + nav + contacts + switch need ~1003 px at the compact values, so the
-   burger header now runs to 1099 px (at 1001 the old desktop row already ran 21 px past the shell). 1100–1279: 36 px
-   icon cells and the compact switch; the gaps step down where each tier starts tight (1100, 1181, 1280). The logo
-   keeps its 226 px (the brand test holds it at ≥225 px on desktop). */
-@media (min-width: 1100px) and (max-width: 1279px) {
+/* Desktop header tiers — kept at the end, so they outrank the header's own ≤1180 tier. The desktop row starts at
+   1180 px (GLB-03 A: below it the compact header). 1180–1279: the navigation at 15 px with 14 px between its items, 36 px
+   icon cells, the compact switch and the 15 px number; 1280–1439: 16 px between the items and 40 px cells — so the three
+   groups (logo, navigation, contacts) stand apart by at least twice the items' step (PDO-19; at 1181 px 18 px steps left
+   11 px between the groups). The logo keeps its 226 px at 1180 (the brand test holds it at ≥225 px on desktop). */
+@media (min-width: 1180px) and (max-width: 1279px) {
   .nav-wrap { gap: 10px; }
+  .desktop-nav { gap: 14px; font-size: 15px; }
   .header-contact { padding-inline: 10px; }
   .header-phone { min-width: 150px; }
   :is(.header-messengers .messenger-link, .header-email) { width: 36px; }
+  .header-messengers .messenger-brand-icon { width: 21px; height: 21px; }
   .header-actions { gap: 8px; }
   .theme-switch { --ts-w: 46px; --ts-h: 26px; }
 }
-@media (min-width: 1100px) and (max-width: 1180px) {
-  .desktop-nav { gap: 11px; }
-  .header-actions { gap: 6px; }
-}
-@media (min-width: 1181px) and (max-width: 1279px) {
-  .desktop-nav { gap: 18px; }
-}
 @media (min-width: 1280px) and (max-width: 1439px) {
   .nav-wrap { gap: 12px; }
-  .desktop-nav { gap: 22px; }
+  .desktop-nav { gap: 16px; }
+  :is(.header-messengers .messenger-link, .header-email) { width: 40px; }
 }
 
 /* ── Phase 2 · One action language (DEC-41, PROPOSED) ───────────────────────────────────────────────────────────────
@@ -1532,8 +1576,8 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .page-section-dark .bond-line > span { color: var(--color-accent-on-dark); }
 .footer-geo { margin: 0 0 6px; color: var(--color-dark-text-secondary); font-size: 13px; line-height: 1.45; max-width: 260px; }
 
-/* Header phone: 16 px where the header has room; the compact desktop tiers step it down so the row still fits. */
-@media (min-width: 1100px) and (max-width: 1279px) { .header-phone { min-width: 0; } .header-phone strong { font-size: 15px; } }
+/* Header phone: 17 px where the header has room; the first desktop tier steps it down to 15 px so the row still fits. */
+@media (min-width: 1180px) and (max-width: 1279px) { .header-phone { min-width: 0; padding-inline: 10px; } .header-phone strong { font-size: 15px; } }
 
 /* ── UX pass 2026-10 · Phone fields at 16 px ─────────────────────────────────────────────────────────────────────────
    iOS Safari zooms the page into any field whose text is under 16 px. Every text field, select and textarea on a phone

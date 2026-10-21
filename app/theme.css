@@ -166,3 +166,14 @@
   --focus-ring: var(--color-accent-on-dark);
   --focus-gap: var(--color-dark);
 }
+
+/* ---------- The primary action on charcoal (PDO-17, OD-PX-10 a) ----------
+   On the dark surfaces the copper fill is the light copper with a graphite label (5.89 : 1, hover 8.01) — the phone
+   heroes' button since #206 — so one action has one look on one surface, at every width and in both modes; on paper it
+   stays #A0522A with a paper label. The header and the footer hold no filled button and are left out, and so is the
+   cookie banner: its «Прийняти все» must not grow stronger. */
+:is(.hero, .subhero, .service-subhero, .proc-hero, .privacy-hero, .page-section-dark, .angary-process) {
+  --color-action: var(--color-accent-on-dark);
+  --color-action-hover: var(--color-accent-on-dark-hover);
+  --color-on-action: var(--color-dark);
+}

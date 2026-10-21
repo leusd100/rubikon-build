@@ -48,9 +48,9 @@ test.describe('the corporate email', () => {
   });
 
   test('the desktop header has a mail button next to the messengers, without crowding it', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'below 1100 px the header contacts move into the menu');
-    // From 1100 px (owner 06.10: the theme switch stands beside the contacts box, so the burger header runs to 1099)
-    for (const width of [1100, 1181, 1280, 1440]) {
+    test.skip(isMobile, 'below 1180 px the header contacts move into the menu');
+    // From 1180 px (PDO-19, OD-PX-08 a: the compact header runs to 1179, GLB-03 A; before it, to 1099 — owner 06.10)
+    for (const width of [1180, 1181, 1280, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/', { waitUntil: 'load' });
       const button = page.locator('.header-contacts').getByRole('link', { name: EMAIL });
