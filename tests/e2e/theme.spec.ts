@@ -6,6 +6,21 @@ import { expect, test, type Page } from '@playwright/test';
 const KEY = 'rubikon-theme';
 const LIGHT_BG = 'rgb(243, 240, 233)';
 const DARK_BG = 'rgb(23, 25, 24)';
+/** HOME → /metalokonstruktsii by the way shown at this width: the mosaic's card from 761 px; on a phone the index row picks
+ *  the direction and its sheet links there (B «Один аркуш + індекс», owner 21.10) — the pick is repeated until hydration */
+async function openMetalDirection(page: Page) {
+  const pick = page.locator('#directions .dxi-row', { hasText: 'Металоконструкції' });
+  if (await pick.isVisible()) {
+    const sheet = page.locator('#directions a.dxi-sheet');
+    await expect(async () => {
+      await pick.click();
+      await expect(sheet).toHaveAttribute('href', '/metalokonstruktsii', { timeout: 1_000 });
+    }).toPass();
+    await sheet.click();
+  } else {
+    await page.locator('#directions a.direction-card[href="/metalokonstruktsii"]').click();
+  }
+}
 
 async function open(page: Page, path = '/pro-nas') {
   await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
@@ -157,8 +172,9 @@ test.describe('site-wide theme', () => {
     await page.emulateMedia({ colorScheme: 'light' });
     await open(page, '/');
     await choose(page, 'Темна');
-    // the card: since 05.10 the header's scheme sheet links there too, and it is not shown on a phone
-    await page.locator('main a.direction-card[href="/metalokonstruktsii"]').click();
+    // the direction's one shown way: the card from 761 px (since 05.10 the header's scheme sheet links there too, out of
+    // the tab order), the index and its sheet on a phone (the cards are not shown there)
+    await openMetalDirection(page);
     await page.waitForURL('**/metalokonstruktsii');
     await expectTheme(page, 'dark', 'dark');
     await goBackTo(page, '/');
@@ -167,7 +183,7 @@ test.describe('site-wide theme', () => {
 
   test('going back waits for HOME itself, not for a history write on the page it leaves', async ({ page }) => {
     await open(page, '/');
-    await page.locator('main a.direction-card[href="/metalokonstruktsii"]').click();
+    await openMetalDirection(page);
     await page.waitForURL('**/metalokonstruktsii');
     // The CI order of 12.10, made certain: the service page writes its history entry in place once the way back has
     // begun — as vinext's first hydrated commit does (history.replaceState) when it lands after `load` on a slow runner
