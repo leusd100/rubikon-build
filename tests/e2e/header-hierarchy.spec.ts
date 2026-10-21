@@ -95,30 +95,59 @@ test.describe('PDO-19 · header hierarchy', () => {
     await expect(page.locator('.site-header .header-phone')).toBeVisible();
   });
 
-  test('the messengers are grey at rest and take their colour back on hover and on keyboard focus', async ({ page }) => {
-    test.setTimeout(60_000);
+  test('the messengers keep their own colours at rest — header, menu and footer — with no plate, filter or opacity', async ({ page }) => {
+    test.setTimeout(90_000);
+    // «Збалансована» with «Оригінальний колір» (owner 21.10): the brands' blue, green and purple without a hover, on the
+    // 92 % header itself (no plate of their own), and the same in the footer
+    const untouched = (icon: Locator) => icon.evaluate((element) => {
+      const chain: string[] = [];
+      for (let node: Element | null = element; node && node !== document.body; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        if (style.filter !== 'none') chain.push(`${node.className} filter ${style.filter}`);
+        if (Number(style.opacity) < 1) chain.push(`${node.className} opacity ${style.opacity}`);
+      }
+      return chain;
+    });
     for (const path of ['/metalokonstruktsii', '/']) {
       await open(page, path, 1440);
+      await page.mouse.move(700, 600);
+      await expect(page.locator('.site-header .header-messengers')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+      await expect(page.locator('.site-header .header-email')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
       for (const kind of ['telegram', 'whatsapp', 'viber']) {
-        const link = page.locator(`.site-header .header-messengers .messenger-${kind}`);
-        const icon = link.locator('.messenger-brand-icon');
-        await page.mouse.move(700, 600);
-        await expect.poll(() => saturatedShare(page, icon), `${path} ${kind} at rest`).toBeLessThanOrEqual(.005);
-        await link.hover();
-        await expect.poll(() => saturatedShare(page, icon), `${path} ${kind} on hover`).toBeGreaterThan(.1);
-        await page.mouse.move(700, 600);
-        await page.keyboard.press('Shift');
-        await link.focus();
-        expect(await link.evaluate((element) => element.matches(':focus-visible')), `${path} ${kind} focus-visible`).toBe(true);
-        await expect.poll(() => saturatedShare(page, icon), `${path} ${kind} on keyboard focus`).toBeGreaterThan(.1);
-        await link.blur();
+        const icon = page.locator(`.site-header .header-messengers .messenger-${kind} .messenger-brand-icon`);
+        await expect(icon, `${path} ${kind}`).toHaveCSS('width', '23px');
+        expect(await untouched(icon), `${path} ${kind}`).toEqual([]);
+        await expect.poll(() => saturatedShare(page, icon), `${path} ${kind} at rest`).toBeGreaterThan(.1);
+        const footer = page.locator(`footer .messenger-${kind} .messenger-brand-icon`);
+        await footer.scrollIntoViewIfNeeded();
+        expect(await untouched(footer), `footer ${kind}`).toEqual([]);
+        await expect.poll(() => saturatedShare(page, footer), `footer ${kind} at rest`).toBeGreaterThan(.1);
+        await page.evaluate(() => window.scrollTo(0, 0));
       }
     }
-    // the same grey in the footer; the mail icon and the theme switch's knob are grey too — copper is the number's
-    for (const kind of ['telegram', 'whatsapp', 'viber']) {
-      await expect(page.locator(`footer .messenger-${kind} .messenger-brand-icon`)).toHaveCSS('filter', /grayscale\(1\)/);
-    }
+    // the number: light words in its frame, a light copper icon, no fill — at rest and on hover; the mail icon and the
+    // theme switch's knob stay grey
+    const phone = page.locator('.site-header .header-phone');
+    await expect(phone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(phone.locator('svg')).toHaveCSS('color', 'rgb(204, 132, 85)');
+    await expect(phone.locator('strong')).toHaveCSS('color', 'rgb(245, 242, 235)');
+    await phone.hover();
+    await expect(phone).toHaveCSS('border-top-color', 'rgb(204, 132, 85)');
+    await expect(phone.locator('strong')).toHaveCSS('color', 'rgb(245, 242, 235)');
+    await page.mouse.move(700, 600);
     await expect(page.locator('.site-header .header-email svg')).toHaveCSS('color', 'rgb(189, 183, 172)');
     await expect(page.locator('.site-header .theme-switch-knob')).toHaveCSS('background-color', 'rgb(158, 152, 141)');
+  });
+
+  test('in the menu the messengers keep their own colours and their short names', async ({ page }) => {
+    await open(page, '/metalokonstruktsii', 1179);
+    await page.locator('.site-header .mobile-menu summary').click();
+    for (const [kind, name] of [['telegram', 'TG'], ['whatsapp', 'WA'], ['viber', 'VB']] as const) {
+      const link = page.locator(`.mobile-menu .mobile-messengers .messenger-${kind}`);
+      await expect(link, kind).toBeVisible();
+      await expect(link, kind).toContainText(name);
+      await expect(link.locator('.messenger-brand-icon'), kind).toHaveCSS('filter', 'none');
+      await expect.poll(() => saturatedShare(page, link.locator('.messenger-brand-icon')), `menu ${kind}`).toBeGreaterThan(.1);
+    }
   });
 });

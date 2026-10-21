@@ -299,7 +299,7 @@
 
 /* Owner-selected H1/P5 mobile direction, 16.10: the existing tablet/desktop Hero stays intact. */
 @media (max-width: 600px) {
-  body:has(main.about-page) { --phone-hero-header-alpha: 82%; --phone-hero-menu-alpha: 97%; --phone-hero-header-backdrop: none; --phone-hero-safe-top: env(safe-area-inset-top, 0px); }
+  body:has(main.about-page) { --phone-hero-header-alpha: 92%; --phone-hero-menu-alpha: 97%; --phone-hero-header-backdrop: none; --phone-hero-safe-top: env(safe-area-inset-top, 0px); }
   body:has(main.about-page) .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; height: 44px; }
   .about-page .about-subhero { display: flex; flex-direction: column; align-items: stretch; min-height: 100svh; height: auto; padding-top: calc(77px + var(--phone-hero-safe-top, 0px)); overflow: visible; }
   .about-page .about-hero-media { inset: 0 0 auto; height: clamp(530px, 77svh, 740px); overflow: hidden; background: var(--color-dark); }

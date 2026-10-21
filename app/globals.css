@@ -115,18 +115,16 @@ a[href], button, summary, input, select, textarea { scroll-margin-top: 116px; }
   border-bottom: 1px solid rgba(255, 255, 255, .16);
   backdrop-filter: var(--phone-hero-header-backdrop, none);
 }
-/* HOME and About integrate the fixed header with their Hero at every width. Phone pages retain their 82% tint.
-   Over a picture the written channels keep a plate of their own, as the number does (PDO-19): a grey Telegram icon on
-   a light frame was 2.24 : 1 without one. A page whose header lies on its picture sets it; a solid header has none. */
+/* «Збалансована» header (owner 21.10): over a hero, at every width and on every page that has one, graphite at 92 %
+   without blur; after 32 px of scroll it is solid (100 %). HOME and About lie under it at every width; the inner heroes
+   from 1100 px further down, the phones in the ≤1099 / ≤760 blocks. The dense band is the channels' ground too: the
+   messengers keep their own colours on it, with no plate of their own (the 72 % header needed one, PDO-19). */
 body:has(main:is([data-home="v2"], .about-page)) {
-  --phone-hero-header-alpha: 72%;
+  --phone-hero-header-alpha: 92%;
   --phone-hero-menu-alpha: 97%;
   --phone-hero-header-backdrop: none;
-  --header-channels-plate: rgba(17, 21, 18, .6);
-  --header-channels-inset: 0px;
 }
-.site-header :is(.header-messengers, .header-email) { background: var(--header-channels-plate, transparent); }
-:root[data-hero-header="scrolled"] body { --phone-hero-header-alpha: 97%; }
+:root[data-hero-header="scrolled"] body { --phone-hero-header-alpha: 100%; }
 .site-header:has(.mobile-menu[open]) { --phone-hero-header-alpha: var(--phone-hero-menu-alpha, 90%); }
 .phone-hero-scroll { display: none; }
 /* The footage already reaches y=0. Clear only its shade behind the header, then restore the existing text contrast.
@@ -152,19 +150,24 @@ body:has(main:is([data-home="v2"], .about-page)) {
   --logo-word-0: #F8F9F9; --logo-word-1: #E1E5E7; --logo-word-2: #F4F5F5;
   --logo-rule: #A6A7A5;
 }
+/* The header's lockup on a desktop row: 250 px («Збалансована», owner 21.10: 226–250), 226 px in the ≤1180 tier below */
+@media (min-width: 1181px) { .site-header .brand { width: 250px; } }
 .brand-on-light .brand {
   --logo-mark-0: #3A3E3C; --logo-mark-1: #202321; --logo-mark-2: #4A4E4B; --logo-mark-3: #1B1E1C; --logo-mark-4: #343836;
   --logo-word-0: #2A2D2B; --logo-word-1: #1D201E; --logo-word-2: #2E312F;
   --logo-rule: #857F76;
 }
-/* Header hierarchy (PDO-19, OD-PX-08 a): who (the logo) → where (the navigation, 600) → how to reach us (the number, the
-   one framed element; the written channels grey until hover or keyboard focus; the theme switch a quiet utility) */
+/* Header hierarchy (PDO-19, OD-PX-08 a; «Збалансована», owner 21.10): who (the logo) → where (the navigation, 600) → how
+   to reach us (the number, the one framed element, then the messengers in their own colours and a grey mail icon) → the
+   theme switch, a quiet utility */
 .desktop-nav { display: flex; align-items: center; gap: clamp(24px, 2.15vw, 40px); font-size: 16px; font-weight: 600; letter-spacing: .012em; }
 /* 44 px tall targets (UX sweep 2026-10: the links were 23–24 px boxes); the underline stays where it was under the text */
 .desktop-nav a { position: relative; display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
-.desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: 3px; height: 2px; background: var(--color-accent); transition: right .25s ease; }
+.desktop-nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: 3px; height: 2px; background: var(--color-accent-on-dark); transition: right .25s ease; }
 /* The current section keeps its copper rule (PDO-57): the page in view (aria-current="page") or, on a direction's page,
-   «Напрямки» as its section (aria-current="true"). In the menu the marked link is copper (5.89 : 1 on the band). */
+   «Напрямки» as its section (aria-current="true"). The rule is the light copper (#CC8455): the decorative #B76432 was
+   2.21 : 1 against the header over a light frame (/betonni-roboty, 1180 px, Light). In the menu the marked link is
+   copper (5.89 : 1 on the band). */
 .desktop-nav a[aria-current]::after { right: 0; }
 .desktop-nav a:hover::after, .desktop-nav a:focus-visible::after { right: 0; }
 .header-contacts { display: flex; align-items: center; font-style: normal; }
@@ -174,32 +177,30 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .header-contact span { display: grid; gap: 3px; }
 .header-contact small { color: rgba(255,255,255,.78); font-size: 9px; font-weight: 800; line-height: 1; letter-spacing: .09em; text-transform: uppercase; }
 .header-contact strong { color: var(--color-dark-text-muted); font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: .07em; text-transform: uppercase; }
-/* The number in its own frame, in the face of the heroes' copper call (Plex Condensed 600 17 px) */
-.header-phone { min-width: 178px; min-height: 44px; padding: 0 14px; border: 1px solid rgba(245, 242, 235, .34); background: rgba(17, 21, 18, .6); }
+/* The number in its own frame, in the face of the heroes' copper call (Plex Condensed 600 17 px): light words, a light
+   copper icon, no fill — at rest and on hover, where only the frame turns copper (the filled copper is the hero's call) */
+.header-phone { min-width: 178px; min-height: 44px; padding: 0 14px; border: 1px solid rgba(245, 242, 235, .34); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.header-phone svg { color: var(--color-accent-on-dark); }
 .header-phone strong { color: var(--color-dark-text); font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
-.header-contact:hover { color: var(--color-on-action); background: var(--color-action); }
-.header-contact:hover svg, .header-contact:hover small, .header-contact:hover strong { color: var(--color-on-action); }
+.header-phone:is(:hover, :focus-visible) { border-color: var(--color-accent-on-dark); background: rgba(245, 242, 235, .06); }
 /* one hairline divides the number from the written channels; the cells themselves have no rules */
-.header-messengers { display: flex; align-items: stretch; margin-left: 10px; padding-left: var(--header-channels-inset, 4px); border-left: 1px solid rgba(245, 242, 235, .18); }
+.header-messengers { display: flex; align-items: stretch; margin-left: 10px; padding-left: 4px; border-left: 1px solid rgba(245, 242, 235, .18); }
 .messenger-link { display: grid; place-items: center; padding: 0; color: rgba(255,255,255,.78); border: 0; border-radius: 0; background: transparent; font: inherit; cursor: pointer; appearance: none; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .messenger-brand-icon { width: 21px; height: 21px; display: block; object-fit: contain; transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease; }
 .messenger-link span { font-size: 10px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
 .header-messengers .messenger-link { width: 44px; height: 44px; }
 .header-messengers .messenger-link span { display: none; }
+/* the messengers at 23 px in the header (21 px in its first desktop tier, further down) */
+.header-messengers .messenger-brand-icon { width: 23px; height: 23px; }
 .header-email { width: 44px; height: 44px; }
 /* copper stays beside the number only: the mail icon is grey, and takes the copper back on hover / focus */
 .header-email svg { width: 18px; height: 18px; color: var(--color-dark-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
 .header-email:is(:hover, :focus-visible) svg { color: var(--color-accent-on-dark); }
 .messenger-link:hover, .messenger-link:focus-visible { color: var(--color-dark-text); background: rgba(255,255,255,.08); }
 .messenger-link:hover .messenger-brand-icon, .messenger-link:focus-visible .messenger-brand-icon { transform: translateY(-1px) scale(1.08); filter: saturate(1.15) brightness(1.08); }
-/* The messengers on the charcoal band (header, its menu, footer): one warm grey at rest, as in the closing contact block
-   (conversation.css, DEC-46 PROPOSED), so the brand blue / green / purple never outshout the number. Each brand's grey
-   luminance differs, so each gets its own brightness (Telegram 1.1, not the block's 1.35: a heavy light disc). The colour
-   comes back on hover and on keyboard focus — for whoever looks for the channel by its colour. */
-:is(.site-header, footer) .messenger-telegram .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(1.1); }
-:is(.site-header, footer) .messenger-whatsapp .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(1.2); }
-:is(.site-header, footer) .messenger-viber .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(1.82); }
-:is(.site-header, footer) .messenger-link:is(:hover, :focus-visible) .messenger-brand-icon { filter: none; }
+/* The messengers on the charcoal band (header, its menu, footer) keep the brands' own blue, green and purple at rest —
+   no grey, no lowered saturation, no opacity (owner 21.10, «Оригінальний колір»): a visitor finds the channel by its colour
+   on a phone too, where there is no hover. */
 .messenger-link:active .messenger-brand-icon { transform: translateY(0) scale(.96); }
 .mobile-menu { position: relative; display: none; }
 .mobile-menu summary { min-width: 106px; height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 15px; border: 1px solid rgba(255,255,255,.3); cursor: pointer; list-style: none; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
@@ -996,10 +997,10 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   body { --phone-hero-menu-alpha: 97%; }
   body .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; background: rgba(17, 21, 18, .6); }
 }
-/* The header over the picture up to 1099 px, as before PDO-19 (wider screens: «One header model» further down) */
+/* The header over the picture up to 1099 px: 92 % without blur (wider screens: «One header model» further down) */
 @media (max-width: 1099px) {
   body {
-    --phone-hero-header-alpha: 72%;
+    --phone-hero-header-alpha: 92%;
     --phone-hero-header-backdrop: none;
     --phone-hero-safe-top: env(safe-area-inset-top, 0px);
     --compact-hero-header-edge: calc(101px + var(--phone-hero-safe-top));
@@ -1010,20 +1011,16 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     mask-image: linear-gradient(180deg, transparent calc(var(--compact-hero-header-edge) - 24px), #000 var(--compact-hero-header-edge));
   }
 }
-/* One header model (PDO-18, OD-PX-09 a). From 1100 px the inner heroes take what HOME, /pro-nas and every narrower
-   screen already had: the picture from y 0 under a 72 % header without blur (the 90 % band with blur(18px) cut the top
-   13–16 % off the picture and its blur was near invisible), the hero's shade cleared behind the header as on HOME. After
-   32 px of scroll the header is solid — 100 %, no blur, no plate under the channels (a 97 % header without blur let the
-   text under it show as a ghost). /zernoskhovyshcha keeps its band until its hero is reframed (W2-12, PDO-48). */
+/* One header model (PDO-18, OD-PX-09 a; «Збалансована», owner 21.10). From 1100 px the inner heroes take what HOME,
+   /pro-nas and every narrower screen have: the picture from y 0 under a 92 % graphite header without blur (the 90 % band
+   with blur(18px) cut the top 13–16 % off the picture and its blur was near invisible), the hero's shade cleared behind the
+   header as on HOME. After 32 px of scroll the header is solid — 100 %, no blur (a 97 % header without blur let the text
+   under it show as a ghost). The grain hero (main.grain-page: /zernoskhovyshcha and /planner-preview, which renders the
+   same page) keeps one exception only, its framing: its picture starts under the header until it is reframed (W2-12,
+   PDO-48). Its header is the same — 92 % at the top (there over the hero's own graphite), solid after scroll. */
 @media (min-width: 1100px) {
-  body:has(main :is(.service-subhero, .directions-subhero, .proc-hero)):not(:has(main.grain-page)) {
-    --phone-hero-header-alpha: 72%;
-    --phone-hero-header-backdrop: none;
-    --header-channels-plate: rgba(17, 21, 18, .6);
-    --header-channels-inset: 0px;
-  }
-  body:has(main.grain-page) { --phone-hero-header-alpha: 90%; --phone-hero-header-backdrop: blur(18px); }
-  :root[data-hero-header="scrolled"] .site-header { --phone-hero-header-alpha: 100%; --phone-hero-header-backdrop: none; --header-channels-plate: transparent; }
+  body:has(main :is(.service-subhero, .directions-subhero, .proc-hero)) { --phone-hero-header-alpha: 92%; --phone-hero-header-backdrop: none; }
+  :root[data-hero-header="scrolled"] .site-header { --phone-hero-header-alpha: 100%; --phone-hero-header-backdrop: none; }
   main:not(.grain-page) .service-subhero-media { top: 0; }
   main:not(.grain-page) :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade) {
     mask-image: linear-gradient(180deg, transparent 77px, #000 101px);
@@ -1050,7 +1047,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   section[id], [id="inquiry"] { scroll-margin-top: 88px; }
   a[href], button, summary, input, select, textarea { scroll-margin-top: 88px; }
   body {
-    --phone-hero-header-alpha: 82%;
+    --phone-hero-header-alpha: 92%;
     --compact-hero-header-edge: calc(77px + var(--phone-hero-safe-top, 0px));
   }
   .nav-wrap { min-height: 76px; gap: 12px; }
@@ -1524,6 +1521,7 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
   .header-contact { padding-inline: 10px; }
   .header-phone { min-width: 150px; }
   :is(.header-messengers .messenger-link, .header-email) { width: 36px; }
+  .header-messengers .messenger-brand-icon { width: 21px; height: 21px; }
   .header-actions { gap: 8px; }
   .theme-switch { --ts-w: 46px; --ts-h: 26px; }
 }

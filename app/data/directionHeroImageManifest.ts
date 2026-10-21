@@ -6,8 +6,11 @@ export type DirectionHeroImageAsset = {
   srcSet: string;
   portrait: PortraitSources;
   dark: { fallbackSrc: string; srcSet: string; portrait: PortraitSources };
-  /** Desktop object-position. The y keeps the structure's top in frame: the image starts under the header and a wide
-   *  window crops it top and bottom (UX pass 2026-10 — the hangar and the steel frame lost their roofs). */
+  /** Desktop object-position (from 761 px). The y keeps the structure's top in frame: a wide window crops the art top
+   *  and bottom (UX pass 2026-10 — the hangar and the steel frame lost their roofs). Since the picture starts at y 0
+   *  behind the 92 % header (PDO-18, «Збалансована» 21.10), the hangar's apex and the frame's top node sat under it at
+   *  every width from 768 to 1920 px: their y is a length, 56 px, which sets the art's top edge that far down, so the
+   *  apex clears the 101 px header with room to spare whatever the window's shape. */
   focalPosition: string;
   mobileFocalPosition: string;
 };
@@ -44,7 +47,7 @@ export const directionHeroImageAssets = {
       w480: 'e1c31e55', w768: '9908c455', w1200: '6e7f3686', w1536: 'b4e0c501',
     }),
     portrait: portrait('direction-hero-photo-variant', 'angary', { avif: 'fc8f2270', webp: '9643c898' }),
-    focalPosition: '56% 6%',
+    focalPosition: '56% 56px',
     mobileFocalPosition: '58% center',
   },
   zernoskhovyshcha: {
@@ -64,7 +67,7 @@ export const directionHeroImageAssets = {
       w480: 'f09543fd', w768: '6df1407d', w1200: 'c4c53f5e', w1536: 'd2fbc0e0',
     }),
     portrait: portrait('direction-hero-photo-variant', 'metalokonstruktsii', { avif: 'c6e7a820', webp: '65df7e70' }),
-    focalPosition: '55% 6%',
+    focalPosition: '55% 56px',
     mobileFocalPosition: '58% center',
   },
   'betonni-roboty': {
