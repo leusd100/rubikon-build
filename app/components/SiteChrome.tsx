@@ -12,6 +12,9 @@ import { directions } from '../data/directions';
 import { messengerContacts } from '../data/contactMethods';
 import { primaryNavigation, siteRoutes } from '../data/navigation';
 
+/** The direction pages, which the navigation marks as the «Напрямки» section (PDO-57) */
+const directionPaths = directions.map((direction) => direction.href);
+
 const messengerLinks = [
   ['telegram', messengerContacts.telegram],
   ['whatsapp', messengerContacts.whatsapp],
@@ -121,7 +124,7 @@ export function SiteHeader() {
           <Brand idPrefix="header" />
         </a>
         <nav className="desktop-nav" aria-label="Основна навігація">
-          <PrimaryNavLinks />
+          <PrimaryNavLinks directionPaths={directionPaths} />
         </nav>
         <div className="header-actions">
           {/* <address> is a group in ARIA, so its name is read out (ARIA 1.2 does not name a plain div; axe
@@ -148,7 +151,7 @@ export function SiteHeader() {
             <i aria-hidden="true"><b /><b /></i>
           </summary>
           <nav aria-label="Мобільна навігація">
-            <PrimaryNavLinks numbered />
+            <PrimaryNavLinks numbered directionPaths={directionPaths} />
             <a className="mobile-phone" href={companyContactLinks.phone}><Phone aria-hidden="true" /> {company.phone.display}</a>
             <MessengerLinks className="mobile-messengers" />
             <a className="mobile-email" href={companyContactLinks.email}><Mail aria-hidden="true" /> {company.email}</a>

@@ -59,7 +59,7 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
 
 @media (max-width: 760px) {
   body:has(main[data-home="v2"]) {
-    --phone-hero-header-alpha: 82%; --phone-hero-menu-alpha: 97%; --phone-hero-header-backdrop: none;
+    --phone-hero-header-alpha: 92%; --phone-hero-menu-alpha: 97%; --phone-hero-header-backdrop: none;
     --phone-hero-safe-top: env(safe-area-inset-top, 0px);
   }
   body:has(main[data-home="v2"]) .site-header .nav-wrap { min-height: 66px; }
@@ -101,8 +101,6 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
   main[data-home="v2"] .hv2-lead-intro { display: none; }
   main[data-home="v2"] .hv2-hero .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0; }
   main[data-home="v2"] .hv2-hero .hero-actions .button { min-width: 0; width: 100%; min-height: 56px; padding: 10px 12px; gap: 13px; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
-  main[data-home="v2"] .hv2-hero .hero-call-primary { color: var(--color-dark); background: var(--color-accent-on-dark); }
-  main[data-home="v2"] .hv2-hero .hero-call-primary:hover { background: var(--color-accent-on-dark-hover); }
   main[data-home="v2"] .hv2-hero .hero-call-primary > span { min-width: 0; }
   main[data-home="v2"] .hv2-hero .hero-call-primary strong { white-space: normal; overflow-wrap: anywhere; }
   main[data-home="v2"] .hv2-hero-provenance {
@@ -659,13 +657,15 @@ main[data-home="v2"] .hv2-contour-controls button:disabled { cursor: default; op
 /* The way on to the visitor's own hangar, in the toggle's old place: the sheet's one filled button; once a load or the
    assembly has played it rings twice */
 main[data-home="v2"] .hv2-contour-brief {
-  display: inline-grid; align-content: center; gap: 4px; min-height: 52px; padding: 8px 16px 8px 14px; color: #f5f2eb; text-decoration: none;
-  background: var(--hv2-copper-fill); border: 1px solid #f0b48a; transition: background-color 200ms ease;
+  display: inline-grid; align-content: center; gap: 4px; min-height: 52px; padding: 8px 16px 8px 14px; color: var(--hv2-ink); text-decoration: none;
+  /* the sheet's one filled button is the light copper of every action on charcoal, with a graphite label (6.17 : 1;
+     PDO-17 — warm white on #A0522A, and 3.85 : 1 on the #B76432 hover, was below AA for its 12–13 px words) */
+  background: var(--color-accent-on-dark); border: 1px solid #f0b48a; transition: background-color 200ms ease;
 }
 main[data-home="v2"] .hv2-contour-brief small { font: 600 12px/1.1 var(--font-manrope), sans-serif; letter-spacing: 0; }
 main[data-home="v2"] .hv2-contour-brief span { display: inline-flex; align-items: center; gap: 8px; font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 main[data-home="v2"] .hv2-contour-brief i { font-style: normal; font-size: 16px; transition: transform 200ms ease; }
-main[data-home="v2"] .hv2-contour-brief:hover { background: var(--hv2-copper); }
+main[data-home="v2"] .hv2-contour-brief:hover { background: var(--color-accent-on-dark-hover); }
 main[data-home="v2"] .hv2-contour-brief:hover i { transform: translateX(3px); }
 main[data-home="v2"] .hv2-contour-brief:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 @media (prefers-reduced-motion: no-preference) {
