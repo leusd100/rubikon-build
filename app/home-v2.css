@@ -143,44 +143,16 @@ main[data-home="v2"] .hv2-directions .direction-card { color: var(--color-dark-t
 main[data-home="v2"] .hv2-directions .direction-card:is(:hover, :focus-visible) { box-shadow: 0 24px 48px rgba(20, 22, 21, .22); }
 main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-color: var(--color-focus); }
 
+/* On a phone (≤ 760 px; PDO-42 a, owner 20.10) the five directions are a list of their scheme sheets
+   (DirectionsSheetList, directions-sheets.css) instead of the image cards — the sideways rail with «01 / 05», dots and
+   «Гортайте →» showed one card of five. The cards are not shown there, so neither is the intro's sentence about their
+   images (its words stay in the page). The header's own hairline gives way to the list's strong line, 30 px under the
+   intro, and the geography line follows 32 px under the last row. */
 @media (max-width: 760px) {
-  /* A swipe row instead of five full-width cards: the images stay large (4:5, 84% of the width, the next card
-     peeks), and the section drops from ~2 540 px to ~1 000 px at 390. */
-  main[data-home="v2"] .hv2-directions .section-header { margin-bottom: 28px; padding-bottom: 24px; }
-  main[data-home="v2"] .hv2-directions .direction-grid {
-    display: flex; gap: 12px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
-    margin-inline: calc(50% - 50vw); padding: 4px calc(50vw - 50%) 8px; scroll-padding-inline: calc(50vw - 50%);
-    scrollbar-width: none;
-  }
-  main[data-home="v2"] .hv2-directions .direction-grid::-webkit-scrollbar { display: none; }
-  main[data-home="v2"] .hv2-directions .direction-card,
-  main[data-home="v2"] .hv2-directions .direction-card.wide {
-    flex: 0 0 84%; min-height: 0; aspect-ratio: 4 / 5; scroll-snap-align: start; border-radius: var(--radius-md);
-  }
-  main[data-home="v2"] .hv2-directions .direction-card:nth-child(n) { border-radius: var(--radius-md); }
-  main[data-home="v2"] .hv2-directions .direction-card:hover { transform: none; }
-  /* Up to 29 px, and never more than the swipe card's title box (the copy plus its 48 px overhang) / --display-fit,
-     so the longest title word fits whole at every phone width, 320 px included. */
-  main[data-home="v2"] .hv2-directions .direction-copy strong,
-  main[data-home="v2"] .hv2-directions .direction-card:not(.wide) .direction-copy strong { --title-overhang: 48px; --title-size: 29px; }
-  main[data-home="v2"] .hv2-directions .direction-copy small { font-size: 15px; }
-  /* Position: «02 / 05» + five dots that also jump to a card (DirectionsRail) */
-  main[data-home="v2"] .hv2-rail-nav { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
-  main[data-home="v2"] .hv2-rail-count { margin: 0; color: var(--color-text-muted); font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
-  main[data-home="v2"] .hv2-rail-count b { color: var(--color-text); font-weight: 700; }
-  main[data-home="v2"] .hv2-rail-dots { display: flex; }
-  main[data-home="v2"] .hv2-rail-dots button { width: 28px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; }
-  main[data-home="v2"] .hv2-rail-dots button span { width: 8px; height: 8px; border-radius: 4px; background: var(--color-border-control); transition: width var(--duration-fast) ease, background var(--duration-fast) ease; }
-  main[data-home="v2"] .hv2-rail-dots button[aria-current="true"] span { width: 22px; background: var(--color-accent); }
-  main[data-home="v2"] .hv2-rail-hint { margin: 0 0 0 auto; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
-}
-main[data-home="v2"] .hv2-rail-nav { display: none; }
-@media (max-width: 760px) { main[data-home="v2"] .hv2-rail-nav { display: flex; } }
-/* 320 px: the title box in an 84% swipe card was 184 px and «Металоконструкції» (≈ 187 px at 25 px, 217 px at 29 px)
-   split mid-word (words-whole). A slightly wider card and 24 px leave it ≈ 16 px to spare. */
-@media (max-width: 340px) {
-  main[data-home="v2"] .hv2-directions .direction-card,
-  main[data-home="v2"] .hv2-directions .direction-card.wide { flex-basis: 88%; }
+  main[data-home="v2"] .hv2-directions .section-header { margin-bottom: 30px; padding-bottom: 0; border-bottom: 0; }
+  main[data-home="v2"] .hv2-directions .direction-grid,
+  main[data-home="v2"] .hv2-directions .hv2-image-note { display: none; }
+  main[data-home="v2"] .hv2-directions .hv2-geo-bond { margin-top: 32px; }
 }
 
 /* ======================= 3 · ENGINEERING SIGNATURE + REAL OBJECT ======================= */

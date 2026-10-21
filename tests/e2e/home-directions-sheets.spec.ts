@@ -103,6 +103,8 @@ test('every card frames its own sheet in copper, by keyboard as well as by point
   await expect.poll(async () => (await frames())[0]).toBe(accent);
 });
 
+// Below 1200 px the header row is not shown. On a phone the band is one scheme sheet over an index of the five directions,
+// under the header (B, owner 21.10) — home-phone-directions.spec.ts; the header itself stays as it was.
 for (const width of [1199, 768, 390]) {
   test(`at ${width}px the header is as it was: no sheets`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
