@@ -150,8 +150,10 @@ body:has(main:is([data-home="v2"], .about-page)) {
   --logo-word-0: #F8F9F9; --logo-word-1: #E1E5E7; --logo-word-2: #F4F5F5;
   --logo-rule: #A6A7A5;
 }
-/* The header's lockup on a desktop row: 250 px («Збалансована», owner 21.10: 226–250), 226 px in the ≤1180 tier below */
-@media (min-width: 1181px) { .site-header .brand { width: 250px; } }
+/* The header's lockup («Збалансована», owner 21.10: 226–250 px by width): 226 px up to 1279 px — at 1181 px a 250 px logo
+   left 36 px to the navigation and 32 px from it to the number (46 and 43 px at 226) — and 250 px from 1280 px */
+@media (min-width: 1181px) { .site-header .brand { width: 226px; } }
+@media (min-width: 1280px) { .site-header .brand { width: 250px; } }
 .brand-on-light .brand {
   --logo-mark-0: #3A3E3C; --logo-mark-1: #202321; --logo-mark-2: #4A4E4B; --logo-mark-3: #1B1E1C; --logo-mark-4: #343836;
   --logo-word-0: #2A2D2B; --logo-word-1: #1D201E; --logo-word-2: #2E312F;
