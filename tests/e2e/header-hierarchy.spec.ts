@@ -42,7 +42,7 @@ test.describe('PDO-19 · header hierarchy', () => {
 
   test('the number is the one framed element of the header, in the heroes’ face, and the groups stand apart', async ({ page }) => {
     test.setTimeout(60_000);
-    for (const width of [1180, 1280, 1440, 1920]) {
+    for (const width of [1180, 1181, 1279, 1280, 1440, 1920]) {
       await open(page, '/metalokonstruktsii', width);
       const header = await page.locator('.site-header').evaluate((element) => {
         const shown = (node: Element) => {
@@ -68,6 +68,7 @@ test.describe('PDO-19 · header hierarchy', () => {
           framed: framed.map((node) => (node.classList.contains('header-phone') ? 'header-phone' : node.className.toString())),
           face: strong.fontFamily, weight: strong.fontWeight, size: strong.fontSize,
           navWeight: getComputedStyle(element.querySelector('.desktop-nav')!).fontWeight,
+          logo: Math.round(element.querySelector('.brand-link .brand')!.getBoundingClientRect().width),
           step: Math.max(...steps), groups: [items[0].left - logo.right, contacts.left - items.at(-1)!.right],
           overflow: document.documentElement.scrollWidth - window.innerWidth,
         };
@@ -77,6 +78,8 @@ test.describe('PDO-19 · header hierarchy', () => {
       expect(header.weight, `${width}px`).toBe('600');
       expect(header.size, `${width}px`).toBe(width < 1280 ? '15px' : '17px');
       expect(header.navWeight, `${width}px`).toBe('600');
+      // the lockup: 226 px up to 1279 px, 250 px from 1280 px («Збалансована», 226–250 by width)
+      expect(header.logo, `${width}px logo`).toBe(width < 1280 ? 226 : 250);
       for (const gap of header.groups) expect(gap, `${width}px: groups at least twice the items' step`).toBeGreaterThanOrEqual(2 * header.step - 0.5);
       expect(header.overflow, `${width}px`).toBeLessThanOrEqual(0);
     }
