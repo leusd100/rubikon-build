@@ -859,7 +859,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-messengers .messenger-link span { display: none; }
 /* Who we are (PDO-46): the logo over the approved company description. Desktop and phones show the sentence; tablets
    keep the logo alone, as before (owner 21.10: their composition was the more balanced one). */
-.footer-brand { display: grid; align-content: start; gap: 20px; min-width: 0; }
+.footer-brand { display: grid; align-content: start; justify-items: start; gap: 20px; min-width: 0; }
 .footer-about { max-width: 36ch; margin: 0; color: var(--color-dark-text-secondary); font-size: 14px; line-height: 1.6; }
 /* The legal level on a line of its own under the rest: © on the left, the policy and the cookie settings on the right */
 .footer-bottom { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.12); color: var(--color-dark-text-muted); font-size: 13px; letter-spacing: .02em; }
