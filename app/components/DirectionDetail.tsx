@@ -353,15 +353,7 @@ export function DirectionFaq({
           <p className="eyebrow"><span /> Питання</p>
           <h2>{title}</h2>
           {/* The column under the title was empty: the next step for a question the list does not answer */}
-          {collapsible && (
-            <div className="faq-ask">
-              <p>Не знайшли свого питання? Зателефонуйте або залиште запит — розберемо вашу задачу.</p>
-              <div>
-                <a className="faq-ask-call" href={companyContactLinks.phone}>{company.phone.display}</a>
-                <a className="faq-ask-write" href="#inquiry" data-open-inquiry="">Залишити запит <span aria-hidden="true">↓</span></a>
-              </div>
-            </div>
-          )}
+          {collapsible && <FaqAsk place="side" />}
         </div>
         <div className="faq-list" data-motion={collapsible ? '' : undefined}>
           {items.map(([question, answer], index) => collapsible ? (
@@ -377,8 +369,26 @@ export function DirectionFaq({
             <article key={question}><h3>{question}</h3><p>{answer}</p></article>
           ))}
         </div>
+        {collapsible && <FaqAsk place="end" />}
       </div>
     </section>
+  );
+}
+
+/** «Не знайшли свого питання?»: under the title beside the list (768 px and wider), after the list on a phone (PDO-14 A,
+    owner 22.10) — a question the list does not answer only makes sense once the list is read. Two copies, one shown per
+    width (faq.css): the hidden one is display: none, out of the tab order and the accessibility tree, so a phone tabs
+    through the questions before the call; moving one copy with `order` would have left it first in the tab order, and
+    the grid could not keep the title column sticky (/angary, the grain store) with the block in a row of its own. */
+function FaqAsk({ place }: Readonly<{ place: 'side' | 'end' }>) {
+  return (
+    <div className={`faq-ask faq-ask-${place}`}>
+      <p>Не знайшли свого питання? Зателефонуйте або залиште запит — розберемо вашу задачу.</p>
+      <div>
+        <a className="faq-ask-call" href={companyContactLinks.phone}>{company.phone.display}</a>
+        <a className="faq-ask-write" href="#inquiry" data-open-inquiry="">Залишити запит <span aria-hidden="true">↓</span></a>
+      </div>
+    </div>
   );
 }
 

@@ -100,6 +100,13 @@
   .dn-steps { max-width: none; margin-top: 20px; }
   .dn-step { padding: 13px 8px; }
   .dn-step b { font-size: 15px; }
+  /* The overview at phone scale (PDO-20 C′, owner 22.10): the 1800-unit drawing sits at about 0.18 in a 324 px frame, so
+     the flag «Зварний шов» set at 4 px and «Вигляд з торця» at 6 px. In the overview they double (8 and 9 px at 390) and
+     the numbered badges grow by half (15 → 23 px); a step keeps the words as they were — the camera already shows them at
+     9–15 px there, and the doubled words ran off the pushed-in frame. */
+  .dn:not([data-step]) .node-drawing .nd-note { font-size: 44px; }
+  .dn:not([data-step]) .node-drawing .nd-title { font-size: 52px; }
+  .dn-badge { scale: 1.5; }
 }
 
 /* The node as a drawing (NodeDrawing.tsx, UX pass 2026-10): graphite on the sheet, the shown step's parts in copper. No

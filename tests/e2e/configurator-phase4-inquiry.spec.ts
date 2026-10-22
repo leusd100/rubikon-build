@@ -137,7 +137,7 @@ test('with smooth scrolling every way to the attached brief lands on it under th
     // these three go through the form toggle's capture listener (data-open-inquiry), not their own onClick
     page.locator('#vartist a[data-open-inquiry]'),
     page.locator('a.angary-stamp-cta[data-open-inquiry]'),
-    page.locator('a.faq-ask-write[data-open-inquiry]'),
+    page.locator('a.faq-ask-write[data-open-inquiry]:visible'),
   ]) {
     await link.scrollIntoViewIfNeeded();
     await link.click();

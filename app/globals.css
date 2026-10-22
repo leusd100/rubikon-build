@@ -1223,6 +1223,11 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .cost-list article { grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 12px; padding: 18px 0; }
   .cost-list h3 { grid-column: 2; }
   .cost-list p { grid-column: 1 / -1; margin-top: 8px; }
+  /* «Що виконуємо» as the cost list beside it (PDO-51 V2, owner 22.10): the number and the title on one line, the text the
+     full width — the 54 px number column took a fifth of a 390 px column and left the text 280 px (210 at 320) */
+  .feature-list article { grid-template-columns: 26px minmax(0, 1fr); column-gap: 12px; align-items: baseline; }
+  .feature-list span { grid-row: auto; }
+  .feature-list p { grid-column: 1 / -1; }
   /* minmax(0, 1fr), not 1fr: a 1fr track can't shrink below the title's longest word, so at 360–375px
      «МЕТАЛОКОНСТРУКЦІЇ» (~246px) widened it and pushed the ↗ column past the card and the viewport. */
   .route-service { grid-template-columns: 48px minmax(0, 1fr) 30px; min-height: 190px; gap: 12px; --route-bleed: 12px; }

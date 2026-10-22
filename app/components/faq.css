@@ -40,10 +40,15 @@
 .faq-ask-call { color: var(--color-text); border-bottom: 1px solid var(--color-accent); }
 .faq-ask-write { color: var(--color-accent-strong); text-transform: uppercase; font-size: 13px; letter-spacing: .08em; }
 .faq-ask a:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+/* One copy shown per width (FaqAsk, PDO-14 A): beside the list under the title, after the list on a phone */
+.faq-ask-end { display: none; }
 
 @media (max-width: 760px) {
   .faq-list summary { grid-template-columns: 26px minmax(0, 1fr) 32px; gap: 12px; padding: 18px 0; }
   .faq-toggle { width: 32px; height: 32px; }
   .faq-list details > p { margin: 0 0 20px 38px; padding-left: 14px; }
   .faq-ask { max-width: none; margin-top: 24px; }
+  /* after the list the grid's own gap stands between them, and the list's closing rule is the line above */
+  .faq-ask-side { display: none; }
+  .faq-ask-end { display: block; margin-top: 0; padding-top: 0; border-top: 0; }
 }
