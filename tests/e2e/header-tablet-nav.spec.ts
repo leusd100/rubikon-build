@@ -50,8 +50,9 @@ test.describe('the tablet header row', () => {
         expect(new Set(links.map((link) => link.top)).size, `${label}: one row`).toBe(1);
         for (const link of links) expect(link.height, `${label}: ${link.label}`).toBeGreaterThanOrEqual(44);
         expect(fontSize, label).toBe('15px');
-        // 42 px at 960 on macOS (twice the 20 px step); at 900 it would have been about 12 px, hence the 960 threshold
-        expect(links[0].left - brandRight, `${label}: from the logo`).toBeGreaterThanOrEqual(32);
+        // At 960 px: 42 px on macOS, 31 px on Linux (CI), whose text sets the row about 11 px wider — wider than the 20 px
+        // step between the items either way. At 900 it would have been about 12 px, hence the 960 threshold.
+        expect(links[0].left - brandRight, `${label}: from the logo`).toBeGreaterThanOrEqual(24);
         expect(callLeft - links[3].right, `${label}: to the call`).toBeGreaterThanOrEqual(16);
         expect(headerHeight, label).toBeLessThanOrEqual(101);
         expect(pageWidth, label).toBeLessThanOrEqual(width);
