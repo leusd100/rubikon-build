@@ -85,13 +85,14 @@ test.describe('PDO-19 · header hierarchy', () => {
     }
   });
 
-  test('below 1180 px the compact header calls in place of the number (GLB-03 A)', async ({ page }) => {
-    for (const width of [1100, 1179]) {
+  test('below 1180 px the compact header calls in place of the number (GLB-03 A); from 960 px its sections show in one row (owner 22.10)', async ({ page }) => {
+    for (const width of [959, 1100, 1179]) {
       await open(page, '/metalokonstruktsii', width);
       await expect(page.locator('.site-header .mobile-call'), `${width}px`).toBeVisible();
       await expect(page.locator('.site-header .mobile-menu summary'), `${width}px`).toBeVisible();
-      await expect(page.locator('.site-header .desktop-nav'), `${width}px`).toBeHidden();
       await expect(page.locator('.site-header .header-phone'), `${width}px`).toBeHidden();
+      if (width >= 960) await expect(page.locator('.site-header .desktop-nav'), `${width}px`).toBeVisible();
+      else await expect(page.locator('.site-header .desktop-nav'), `${width}px`).toBeHidden();
     }
     await open(page, '/metalokonstruktsii', 1180);
     await expect(page.locator('.site-header .mobile-call')).toBeHidden();
