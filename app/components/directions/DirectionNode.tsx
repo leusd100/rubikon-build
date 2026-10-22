@@ -27,11 +27,16 @@ import { ScopeKey } from './ScopeKey';
 const pad = (value: number) => String(value).padStart(2, '0');
 
 /** What each view of a drawing must show: the overview — every mark with its number, every part a step lights and
- *  every label; a step — its mark and the labels of its parts (a step's parts may lie on both sides, as the concrete's
- *  formwork: its mark says which it shows) */
+ *  every label; a step — its mark, the labels of its parts (a step's parts may lie on both sides, as the concrete's
+ *  formwork: its mark says which it shows) and the words of the view it looks at (data-view: the end view's title and
+ *  letters for the steel's holes), clear of the step bars (.dn-progress: 14 px from the top, 3 px tall) and with air
+ *  round it (owner 22.10: the steps were pushed in so far that a mark ran to the frame's edge and «Вигляд з торця» lay
+ *  under the bars) */
 const NEEDS: ViewNeeds = {
   overview: '.dn-mark, .node-drawing [data-part], .node-drawing text',
-  step: (index) => `.dn-mark-${index} .dn-line, .node-drawing [data-part="${index}"] text`,
+  step: (index) => `.dn-mark-${index} .dn-line, .node-drawing [data-part="${index}"] text, .node-drawing [data-view="${index}"]`,
+  stepTop: 19,
+  stepMargin: 16,
 };
 
 export function DirectionNode({

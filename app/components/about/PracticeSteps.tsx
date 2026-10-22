@@ -37,8 +37,11 @@ const IMAGE = { width: 1440, height: 1800 };
  *  step bars (.ps-progress: 16 px from the top, 3 px tall) */
 const NEEDS: ViewNeeds = {
   overview: '.aqc-mark, .practice-drawing [data-part], .practice-drawing text',
-  step: (index) => `.aqc-mark-${index} :is(.aqc-line, .aqc-step), .practice-drawing [data-part="${index}"]`,
+  step: (index) => `.aqc-mark-${index} :is(.aqc-line, .aqc-step), .practice-drawing [data-part="${index}"], .practice-drawing [data-view="${index}"]`,
   stepTop: 19,
+  // air round a step's view, as on the direction nodes (owner 22.10); a step takes its view's dimension in (data-view:
+  // the span «L» for step 2, the beam's «h» for step 3) and shows no other — «L» lay under the bars, «h» at the edge
+  stepMargin: 16,
 };
 const pad = (value: number) => String(value).padStart(2, '0');
 

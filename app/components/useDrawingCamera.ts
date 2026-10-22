@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { drawingTransform, drawingView, type PictureBox } from '../lib/drawingCamera';
+import { drawingTransform, drawingView, FRAME_MARGIN, type PictureBox } from '../lib/drawingCamera';
 import { stageTransform, type StageSize, type TourFocus } from './useDrawingTour';
 
 // The camera of a drawing tour that keeps what each view must show whole in its frame (drawingTransform,
@@ -20,6 +20,9 @@ export type ViewNeeds = {
   /** Pixels at the frame's top that are covered while a step shows (its progress bars): a step's view keeps what it
    *  must show clear of them, FRAME_MARGIN below */
   stepTop?: number;
+  /** Pixels of air a step's view keeps round what it must show (FRAME_MARGIN by default): with 8 px a step's mark ran
+   *  to the frame's edge */
+  stepMargin?: number;
 };
 
 /** What each view must show, measured, in the drawing's own units: the overview's box and each step's */
@@ -34,13 +37,14 @@ export function cameraTransform(
   step: number,
   need: DrawingNeed | null,
   stepTop = 0,
+  stepMargin = FRAME_MARGIN,
 ) {
   const active = step ? steps[step - 1] : undefined;
   if (!need) return stageTransform(size, picture, active);
   if (!active) return drawingTransform(size, picture, undefined, need.overview);
   const box = need.steps[step - 1];
-  const scale = size && stepTop ? drawingView(size, picture, active, box).scale : 0;
-  return drawingTransform(size, picture, active, scale ? [box[0], box[1] - stepTop / scale, box[2], box[3]] : box);
+  const scale = size && stepTop ? drawingView(size, picture, active, box, stepMargin).scale : 0;
+  return drawingTransform(size, picture, active, scale ? [box[0], box[1] - stepTop / scale, box[2], box[3]] : box, stepMargin);
 }
 
 /** An element's box in its svg's own units (the drawing's), whatever the stage's transform is */
@@ -70,6 +74,9 @@ export function useDrawingCamera(size: StageSize | null, picture: StageSize, ste
   const [need, setNeed] = useState<DrawingNeed | null>(null);
   const [placed, setPlaced] = useState(false);
   const count = steps.length;
+  // measured again when the frame changes size: a phone's drawing words are set larger (direction-node.css), so turning
+  // a phone from landscape to portrait changes what a step must hold
+  const [frameWidth, frameHeight] = [size?.width, size?.height];
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -83,7 +90,7 @@ export function useDrawingCamera(size: StageSize | null, picture: StageSize, ste
     return () => {
       live = false;
     };
-  }, [needs, count]);
+  }, [needs, count, frameWidth, frameHeight]);
 
   const ready = Boolean(size && need);
   useEffect(() => {
@@ -94,5 +101,5 @@ export function useDrawingCamera(size: StageSize | null, picture: StageSize, ste
     return () => cancelAnimationFrame(frame);
   }, [ready, placed]);
 
-  return { stageRef, transform: cameraTransform(size, picture, steps, step, need, needs?.stepTop), placed: placed || !needs };
+  return { stageRef, transform: cameraTransform(size, picture, steps, step, need, needs?.stepTop, needs?.stepMargin), placed: placed || !needs };
 }

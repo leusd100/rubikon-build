@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { stageTransform } from '../../app/components/useDrawingTour';
 import { directionPages } from '../../app/data/directionPages';
 import { grainPage } from '../../app/data/grainPage';
+import { cameraTransform } from '../../app/components/useDrawingCamera';
 import { drawingTransform, drawingView, FRAME_MARGIN, type DrawingView, type FrameSize, type PictureBox } from '../../app/lib/drawingCamera';
 import type { DirectionNode } from '../../app/types/directionPage';
 
@@ -72,11 +73,11 @@ function viewOf(transform: string | undefined, size: FrameSize, picture: FrameSi
 const toFrame = (view: DrawingView, size: FrameSize, [u, v]: readonly [number, number]) =>
   [size.width / 2 + (u - view.centre[0]) * view.scale, size.height / 2 + (v - view.centre[1]) * view.scale] as const;
 
-/** `need` whole in the frame, FRAME_MARGIN clear of each edge — or as clear as the picture's own edge allows */
-function holds(view: DrawingView, size: FrameSize, picture: FrameSize, need: PictureBox) {
+/** `need` whole in the frame, `margin` (FRAME_MARGIN) clear of each edge — or as clear as the picture's own edge allows */
+function holds(view: DrawingView, size: FrameSize, picture: FrameSize, need: PictureBox, margin = FRAME_MARGIN) {
   const [left, top] = toFrame(view, size, [need[0], need[1]]);
   const [right, bottom] = toFrame(view, size, [need[2], need[3]]);
-  const room = (units: number) => Math.min(FRAME_MARGIN, units * view.scale) - 1e-6;
+  const room = (units: number) => Math.min(margin, units * view.scale) - 1e-6;
   return left >= room(need[0]) && top >= room(need[1])
     && size.width - right >= room(picture.width - need[2]) && size.height - bottom >= room(picture.height - need[3]);
 }
@@ -166,9 +167,11 @@ describe('the «Вузол напряму» drawing camera', () => {
 
   it('the grain store\'s third step: its mark, too wide to sit off-centre in the zoomed window, was cut in every frame', () => {
     const { node, steps } = CASES[3];
+    // at the step's zoom of the time (1.7; 1.35 since 22.10, when the tours' own camera holds it on a phone too)
+    const step = { ...node.steps[2], zoom: 1.7 };
     for (const size of FRAMES) {
-      expect(holds(viewOf(stageTransform(size, node, node.steps[2]), size, node), size, node, steps[2]), `own ${size.width}`).toBe(false);
-      expect(holds(drawingView(size, node, node.steps[2], steps[2]), size, node, steps[2]), `camera ${size.width}`).toBe(true);
+      expect(holds(viewOf(stageTransform(size, node, step), size, node), size, node, steps[2]), `own ${size.width}`).toBe(false);
+      expect(holds(drawingView(size, node, step, steps[2]), size, node, steps[2]), `camera ${size.width}`).toBe(true);
     }
   });
 
@@ -196,5 +199,21 @@ describe('the «Вузол напряму» drawing camera', () => {
     const { node, overview } = CASES[0];
     expect(drawingTransform(null, node, undefined, overview)).toBeUndefined();
     expect(drawingTransform(null, node, node.steps[0], overview)).toBeUndefined();
+  });
+  // owner 22.10: the direction pages' steps ask for 16 px of air and keep clear of the step bars (DirectionNode NEEDS)
+  it('a step that asks for more air holds what it must show that far clear, and never pushes in further than before', () => {
+    for (const { name, node, steps } of CASES) for (const size of FRAMES) steps.forEach((need, index) => {
+      const view = drawingView(size, node, node.steps[index], need, 16);
+      expect(holds(view, size, node, need, 16), `${name} step ${index + 1} ${size.width}×${size.height}`).toBe(true);
+      expect(view.scale).toBeLessThanOrEqual(drawingView(size, node, node.steps[index], need).scale + 1e-9);
+    });
+  });
+
+  it('a step\'s view keeps what it must show below the step bars (19 px), as far as the picture allows', () => {
+    for (const { name, node, overview, steps } of CASES) for (const size of FRAMES) steps.forEach((need, index) => {
+      const view = viewOf(cameraTransform(size, node, node.steps, index + 1, { overview, steps }, 19, 16), size, node);
+      const [, top] = toFrame(view, size, [need[0], need[1]]);
+      expect(top, `${name} step ${index + 1} ${size.width}×${size.height}`).toBeGreaterThanOrEqual(Math.min(19, need[1] * view.scale) - 1e-6);
+    });
   });
 });
