@@ -35,10 +35,10 @@ export function PracticeDrawing() {
         ))}
       </g>
       {/* a dimension chain over the frame, letters only */}
-      <path className="pd-dim" d="M270 240H1040M270 226v28M1040 226v28" />
-      <text className="pd-text" x="640" y="226">L</text>
-      <path className="pd-dim" d="M1180 470V590M1166 470h28M1166 590h28" />
-      <text className="pd-text" x="1200" y="542">h</text>
+      <path className="pd-dim" d="M270 240H1040M270 226v28M1040 226v28" data-view="2" />
+      <text className="pd-text" x="640" y="226" data-view="2">L</text>
+      <path className="pd-dim" d="M1180 470V590M1166 470h28M1166 590h28" data-view="3" />
+      <text className="pd-text" x="1200" y="542" data-view="3">h</text>
 
       {/* ── step 1 — the working drawing: the sheet, its grid of axes, a dimension chain, the title block ── */}
       <g className="pd-sheet">
