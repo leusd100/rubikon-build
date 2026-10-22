@@ -14,8 +14,10 @@ export function DirectionEntry({ entry }: Readonly<{ entry: NonNullable<Directio
         <ol className="direction-entry-list" data-motion>
           {entry.items.map((item, index) => (
             <li key={item.situation} style={{ '--i': index } as CSSProperties}>
-              <h3>{item.situation}</h3>
-              <p>{item.text}</p>
+              <div className="direction-entry-copy">
+                <h3>{item.situation}</h3>
+                <p>{item.text}</p>
+              </div>
               <p className="direction-entry-start"><b>Почнемо з</b> {item.start}</p>
               <PrefillInquiryLink className="direction-entry-link" text={`${item.situation}. `}>
                 Обговорити <span aria-hidden="true">↓</span>

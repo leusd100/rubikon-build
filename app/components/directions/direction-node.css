@@ -94,6 +94,22 @@
   .dn[data-step="4"] .dn-mark-4 .dn-line { animation: dn-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
 }
 
+/* A portrait tablet (PDO-43 S2, owner 22.10): the text and the three steps side by side, the sheet under them the full
+   width in its 3 : 2 frame. In the two columns the sheet was 258 px wide and as tall as the text beside it (258 × 548 at
+   768), the drawing filling a third of it. Up to 900 px: from 901 the sheet beside the text is wide enough again (411 × 568
+   at 960, 441 × 547 at 1024). The grain store's sheet with its key (.dn-media) has its own tablet layout and stays. */
+@media (min-width: 761px) and (max-width: 900px) {
+  .dn.direction-editorial-grid[data-layout]:has(> .dn-sheet) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "copy steps" "media media"; column-gap: 32px; row-gap: 36px;
+  }
+  .dn.direction-editorial-grid[data-layout]:has(> .dn-sheet) .direction-editorial-copy { align-self: start; }
+  .dn.direction-editorial-grid[data-layout]:has(> .dn-sheet) .dn-steps { max-width: none; margin-top: 0; }
+  /* as on a phone (drawing-sheet.css): the frame keeps the drawing's proportion and the sheet grows around it — without
+     the frame rule the image box (flex: 1, min-height: 0) collapses to nothing once the sheet stops taking the text's height */
+  .dn.direction-editorial-grid[data-layout] > .direction-editorial-media.sheet { min-height: 0; aspect-ratio: auto; }
+  .dn.direction-editorial-grid[data-layout] > .direction-editorial-media.sheet .sheet-image { flex: none; aspect-ratio: 3 / 2; }
+}
+
 @media (max-width: 760px) {
   .dn.direction-editorial-grid[data-layout] { grid-template-rows: none; grid-template-areas: "copy" "media" "steps"; }
   .dn.direction-editorial-grid[data-layout] .dn-sheet { margin-top: 28px; }
