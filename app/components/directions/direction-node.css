@@ -100,12 +100,13 @@
   .dn-steps { max-width: none; margin-top: 20px; }
   .dn-step { padding: 13px 8px; }
   .dn-step b { font-size: 15px; }
-  /* The overview at phone scale (PDO-20 C′, owner 22.10): the 1800-unit drawing sits at about 0.18 in a 324 px frame, so
-     the flag «Зварний шов» set at 4 px and «Вигляд з торця» at 6 px. In the overview they double (8 and 9 px at 390) and
-     the numbered badges grow by half (15 → 23 px); a step keeps the words as they were — the camera already shows them at
-     9–15 px there, and the doubled words ran off the pushed-in frame. */
-  .dn:not([data-step]) .node-drawing .nd-note { font-size: 44px; }
-  .dn:not([data-step]) .node-drawing .nd-title { font-size: 52px; }
+  /* The drawing's words at phone scale (PDO-20 C′, owner 22.10): the 1800-unit drawing sits at about 0.18 in a 324 px
+     frame, so the flag «Зварний шов» set at 4 px and «Вигляд з торця» at 6 px. They double (8 and 9 px at 390 in the
+     overview) and the numbered badges grow by half (15 → 23 px). Steps keep the doubled words too since the camera holds
+     each step's own words in its view (DirectionNode NEEDS, owner 22.10): kept to the overview, the words shrank as a
+     step pushed in. */
+  .dn .node-drawing .nd-note { font-size: 44px; }
+  .dn .node-drawing .nd-title { font-size: 52px; }
   .dn-badge { scale: 1.5; }
 }
 
@@ -145,6 +146,14 @@
 /* A word on the drawing that says what a sign is (the weld's flag); it lights with its step */
 .node-drawing .nd-note { fill: var(--color-text-secondary); stroke: none; font: 600 22px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dn[data-step="3"] .node-drawing [data-part="3"] .nd-note { fill: var(--color-accent-strong); }
+/* A step shows its own words only (owner 22.10): with the camera pulled back, another step's flag («зварний шов» on the
+   steel) and another view's title («Вигляд з торця», doubled on a phone) came into the frame at its edge, cut or under
+   the bars. Its own: its parts' flags and its view's words (data-view). */
+.dn[data-step] .node-drawing :is(.nd-note, [data-view]) { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) { .node-drawing :is(.nd-note, [data-view]) { transition: opacity .3s ease; } }
+.dn[data-step="1"] .node-drawing :is([data-part="1"] .nd-note, [data-view="1"]),
+.dn[data-step="2"] .node-drawing :is([data-part="2"] .nd-note, [data-view="2"]),
+.dn[data-step="3"] .node-drawing :is([data-part="3"] .nd-note, [data-view="3"]) { opacity: 1; }
 /* A shown step lights its parts and the rest of the drawing steps back */
 .dn[data-step] .node-drawing .nd-part { opacity: .38; }
 .dn[data-step="1"] .node-drawing [data-part="1"], .dn[data-step="2"] .node-drawing [data-part="2"], .dn[data-step="3"] .node-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }
