@@ -110,4 +110,8 @@
   .dfmt-option { padding: 18px 12px 20px; }
   :root[data-theme] .dfmt-option { padding: 6px 4px; }
   :root[data-theme] .dfmt-title { font-size: 12px; letter-spacing: .04em; }
+  /* The frames' names at phone scale (PDO-20, owner 22.10): 11 units in the 460-unit drawing were 7.7 px at 390 and 6 px
+     at 320 — the only words that say what the dashed frames are. 16 units: 11 px at 390; in «Субпідряд» both names still
+     clear each other and the drawing's edge at 320. */
+  .dfmt-grid .fs-label { font-size: 16px; }
 }

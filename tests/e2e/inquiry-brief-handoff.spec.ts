@@ -150,7 +150,7 @@ test('on a phone the sent brief hides «До заявки», and every CTA to th
   for (const link of [
     page.locator('#vartist a[data-open-inquiry]'),
     page.locator('#responsibility a[data-open-inquiry]'),
-    page.locator('a.faq-ask-write'),
+    page.locator('a.faq-ask-write:visible'),
   ]) {
     await page.locator('#inquiry-brief-status').evaluate((status) => { status.textContent = ''; });
     await link.scrollIntoViewIfNeeded();
