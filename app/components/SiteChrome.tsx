@@ -193,9 +193,14 @@ export function SiteFooter() {
     <footer>
       <SectionDivider variant="accent" />
       <div className="shell footer-grid">
-        <a className="brand-link" href={siteRoutes.home}>
-          <Brand idPrefix="footer" />
-        </a>
+        {/* Who we are: the logo over the company's approved one-sentence description (the site's meta description,
+            company.ts — no new facts). Desktop and phones show it; tablets keep the logo alone (PDO-46, owner 21.10). */}
+        <div className="footer-brand">
+          <a className="brand-link" href={siteRoutes.home}>
+            <Brand idPrefix="footer" />
+          </a>
+          <p className="footer-about">{company.description}</p>
+        </div>
         {/* Two peer link groups, both labelled, so the footer reads as a small site map rather
             than one titled block sitting next to an untitled one. */}
         <nav className="footer-nav" aria-label="Навігація в нижній частині сайту">
@@ -222,11 +227,14 @@ export function SiteFooter() {
             <span>{company.email}</span>
           </a>
           <MessengerLinks className="footer-messengers" />
+        </div>
+        {/* The legal level on a line of its own under the rest, apart from the ways to reach us (PDO-46) */}
+        <div className="footer-bottom">
+          <span>© {new Date().getFullYear()} {company.name}</span>
           <div className="footer-legal">
             <a href={siteRoutes.privacy}>Політика конфіденційності</a>
             <CookieSettingsButton />
           </div>
-          <span>© {new Date().getFullYear()} {company.name}</span>
         </div>
       </div>
     </footer>
