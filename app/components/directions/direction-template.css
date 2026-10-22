@@ -59,12 +59,25 @@
 .direction-entry-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--color-border-strong); }
 .direction-entry-list li { display: flex; flex-direction: column; gap: 14px; min-width: 0; padding: 0 32px 32px; border-left: 1px solid var(--color-border-strong); }
 .direction-entry-list li:first-child { padding-left: 0; border-left: 0; }
+/* the situation and its text as one block, so the rows that follow can line up across the columns */
+.direction-entry-copy { display: grid; gap: 14px; align-content: start; }
 .direction-entry-list h3 { margin: 0; font: 400 clamp(26px, 2.2vw, 32px)/1.1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
 .direction-entry-list p { margin: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 .direction-entry-list .direction-entry-start { padding-top: 12px; border-top: 1px dashed var(--color-border-strong); color: var(--color-text); font-size: 15px; }
 .direction-entry-start b { display: block; margin-bottom: 4px; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
 .direction-entry-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 14px; min-height: 44px; margin-top: auto; padding-bottom: 6px; border-bottom: 1px solid currentColor; font: 800 12px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .direction-entry-link:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+/* Side by side (PDO-50, owner 22.10): each card's «Почнемо з» and its link on one line with the others' — a two-line
+   situation or a longer text left them stepped 56–110 px apart (88 at 1440). The list gives three rows (the copy,
+   «Почнемо з», the link) and every card takes them as its own (subgrid); a browser without subgrid keeps the cards as
+   they were. */
+@supports (grid-template-rows: subgrid) {
+  @media (min-width: 901px) {
+    .direction-entry-list { grid-template-rows: repeat(3, auto); }
+    .direction-entry-list li { display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: 14px; align-content: start; }
+    .direction-entry-list .direction-entry-link { margin-top: 0; align-self: end; justify-self: start; }
+  }
+}
 @media (max-width: 900px) {
   .direction-entry-list { grid-template-columns: 1fr; }
   .direction-entry-list li, .direction-entry-list li:first-child { padding: 24px 0; border-left: 0; border-top: 1px solid var(--color-border-strong); }

@@ -90,12 +90,18 @@
 .grain-page .direction-entry-list li:first-child { padding-left: 0; }
 .grain-page .direction-entry-list h3 { font-size: clamp(24px, 2vw, 28px); }
 .grain-page .direction-entry-list p { font-size: 15px; line-height: 1.6; }
+.grain-page .direction-entry-copy { gap: 12px; }
+@supports (grid-template-rows: subgrid) { @media (min-width: 901px) { .grain-page .direction-entry-list li { row-gap: 12px; } } }
+/* The card without a left padding (the first of a row) drew its situation 26 px wider and so taller, setting its title
+   13 px under the others' (PDO-50): the same width for every drawing */
+@media (min-width: 1051px) { .grain-page .direction-entry-list li:first-child .gs-drawing { width: calc(100% - 26px); } }
 @media (min-width: 761px) and (max-width: 1050px) {
   .grain-page .direction-entry-list { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 26px; }
   /* two columns at every tablet width: the template's single-column rules below 900 px (a rule over each card but the
      first, no divider) give way to the divider between the columns */
   .grain-page .direction-entry-list li, .grain-page .direction-entry-list li:first-child { padding: 0 26px 26px; border-top: 0; border-left: 1px solid var(--color-border-strong); }
   .grain-page .direction-entry-list li:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .grain-page .direction-entry-list li:nth-child(odd) .gs-drawing { width: calc(100% - 26px); }
 }
 /* Each situation over a drawing of itself (GrainSituations); the whole card is the way into the form */
 .gs-card { position: relative; transition: background-color var(--duration-fast) ease; }

@@ -75,9 +75,11 @@ export function GrainSituations({ entry }: Readonly<{ entry: NonNullable<Directi
         <ol className="direction-entry-list gs-list" data-motion>
           {entry.items.map((item, index) => (
             <li key={item.situation} className="gs-card" style={{ '--i': index } as CSSProperties}>
-              <SituationDrawing kind={KINDS[index] ?? 'new'} />
-              <h3>{item.situation}</h3>
-              <p>{item.text}</p>
+              <div className="direction-entry-copy">
+                <SituationDrawing kind={KINDS[index] ?? 'new'} />
+                <h3>{item.situation}</h3>
+                <p>{item.text}</p>
+              </div>
               <p className="direction-entry-start"><b>Почнемо з</b> {item.start}</p>
               <PrefillInquiryLink className="direction-entry-link" text={`${item.situation}. `}>
                 Обговорити <span aria-hidden="true">↓</span>

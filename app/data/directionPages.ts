@@ -379,14 +379,16 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     // The three situations a roofing call starts from, each with its first step — the page's own words (process step
     // 01, FAQ; situations 2 and 3 carry the texts of the «Склад робіт» block PDO-07 removed). UX pass 2026-10: roofing
     // opens from the problem, not from the catalogue.
+    // «Почнемо з» takes the genitive, as on the grain store (PDO-50, owner 22.10: OD-PX-39); situation 2 no longer repeats
+    // its «Почнемо з» as a second sentence
     entry: {
       eyebrow: 'З чим звертаються',
       title: 'Що відбувається з вашою покрівлею?',
       text: 'Оберіть найближчу ситуацію — з неї почнемо розмову.',
       items: [
-        { situation: 'Покрівля протікає', text: 'Оглядаємо основу й вузли, визначаємо причину та пропонуємо ремонт або поетапну заміну ділянки залежно від стану конструкції.', start: 'Огляд і заміри: площа, ухили, стан основи, примикання' },
-        { situation: 'Потрібен ремонт або заміна', text: 'Локальний ремонт пошкоджених ділянок або поетапна заміна наявного покриття. Обсяг визначаємо після огляду стану основи й покриття.', start: 'Огляд основи й покриття — тоді обсяг ремонту' },
-        { situation: 'Нова покрівля', text: 'Монтаж профільованого листа або утепленої системи на підготовлену несучу основу.', start: 'Площа й ухил даху, тип основи, бажаний тип покриття' },
+        { situation: 'Покрівля протікає', text: 'Оглядаємо основу й вузли, визначаємо причину та пропонуємо ремонт або поетапну заміну ділянки залежно від стану конструкції.', start: 'огляду й замірів: площа, ухили, стан основи, примикання' },
+        { situation: 'Потрібен ремонт або заміна', text: 'Локальний ремонт пошкоджених ділянок або поетапна заміна наявного покриття.', start: 'огляду основи й покриття — тоді визначимо обсяг ремонту' },
+        { situation: 'Нова покрівля', text: 'Монтаж профільованого листа або утепленої системи на підготовлену несучу основу.', start: 'площі й ухилу даху, типу основи, бажаного покриття' },
       ],
     },
     // No «Склад робіт» block (PDO-07, owner 20.10, B′): it repeated two of the situations above word for word, and the
