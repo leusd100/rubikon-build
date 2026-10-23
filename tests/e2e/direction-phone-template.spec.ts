@@ -100,7 +100,7 @@ test.describe('PDO-20 · drawings on a phone', () => {
   }));
   const badge = (page: Page) => page.locator('.dn-badge circle').first().evaluate((circle) => Math.round(circle.getBoundingClientRect().width));
 
-  test('the node overview doubles its words and grows its badges; a step keeps the words as they were', async ({ page }) => {
+  test('the node doubles its words and grows its badges, in the overview and on a step', async ({ page }) => {
     await open(page, '/metalokonstruktsii', 390, 844);
     await page.locator('.dn-sheet').scrollIntoViewIfNeeded();
     await expect(page.locator('.dn')).not.toHaveAttribute('data-step', /.+/);
@@ -108,7 +108,7 @@ test.describe('PDO-20 · drawings on a phone', () => {
     expect(await badge(page)).toBeGreaterThanOrEqual(22);
     await page.locator('.dn-step').nth(2).click();
     await expect(page.locator('.dn')).toHaveAttribute('data-step', '3');
-    expect(await words(page)).toEqual({ note: '22px', title: '34px' });
+    expect(await words(page)).toEqual({ note: '44px', title: '52px' });
     for (const path of ['/betonni-roboty', '/pokrivelni-roboty']) {
       await open(page, path, 390, 844);
       expect(await badge(page), path).toBeGreaterThanOrEqual(22);

@@ -290,6 +290,11 @@
 .practice-drawing .pd-dim { stroke: var(--color-text-muted); stroke-width: 2; }
 .practice-drawing .pd-hatch { stroke: var(--color-text-muted); stroke-width: 1.6; opacity: .7; }
 .practice-drawing .pd-text { fill: var(--color-text-muted); font: italic 500 40px var(--font-manrope), sans-serif; }
+/* A step shows the dimensions of its own view only (data-view: the span «L» is step 2's, the beam's «h» step 3's; owner
+   22.10): pulled back, the other's letter came into the frame at its edge or under the bars */
+.ps[data-step] .practice-drawing [data-view] { opacity: 0; }
+.ps[data-step="1"] .practice-drawing [data-view="1"], .ps[data-step="2"] .practice-drawing [data-view="2"], .ps[data-step="3"] .practice-drawing [data-view="3"] { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) { .practice-drawing [data-view] { transition: opacity .3s ease; } }
 .practice-drawing .pd-paper { fill: color-mix(in srgb, var(--color-text) 4%, transparent); stroke: var(--color-border-strong); stroke-width: 2; }
 .practice-drawing .pd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke .3s ease, opacity .3s ease; }
 .practice-drawing .pd-part circle { fill: color-mix(in srgb, var(--color-text) 12%, transparent); }

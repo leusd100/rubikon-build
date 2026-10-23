@@ -193,8 +193,8 @@ export default function DeliveryModelPage() {
         <div className="shell">
           <SectionHeader
             inverse
-            eyebrow="Що буде після звернення"
-            title="Від задачі до будівництва"
+            eyebrow="Від задачі до будівництва"
+            title="Що буде після звернення"
             titleId="proc-route-title"
             supporting="Після кожного кроку зрозуміло, що вже вирішено і що потрібно для наступного."
           />
@@ -242,11 +242,12 @@ export default function DeliveryModelPage() {
         </div>
       </section>
 
-      {/* 5 · Signature responsibility map */}
+      {/* 5 · Signature responsibility map — the second half of «Наш обсяг» (PDO-101, owner 23.10): one band with the
+          scope above, its title a subheading; the hint stays, as the switch's legend is for a screen reader only */}
       <section className="page-section proc-responsibility" id="vidpovidalnist" aria-labelledby="proc-responsibility-title">
         <div className="shell">
           <SectionHeader
-            eyebrow="Хто за що відповідає"
+            level={3}
             title="Відповідальність без дрібного шрифту"
             titleId="proc-responsibility-title"
             supporting="Оберіть формат — таблиця покаже, що робимо ми, що лишається на вас і що виконують профільні спеціалісти."
@@ -275,7 +276,6 @@ export default function DeliveryModelPage() {
             eyebrow="Кошторис і строки"
             title="Від чого залежать кошторис і строки"
             titleId="proc-terms-title"
-            supporting="Нижче — що враховуємо в розрахунку, як із цього виходять кошторис і графік і що буде, якщо щось зміниться."
           />
           {/* The seven factors beside one drawing of a hangar on its site, each numbered where it acts */}
           <CostFactorsFigure factors={costFactors().map((factor) => ({ key: factor.ids[0], title: factor.title, detail: factor.detail }))} />

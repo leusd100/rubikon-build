@@ -15,7 +15,9 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI
     ? useBlobReporter
-      ? [['blob']]
+      ? // `list` prints every finished test and retry to the job log as it goes, so a shard cut off by the job
+        // limit (which uploads no blob) still names the test it was failing.
+        [['blob'], ['list']]
       : [['github'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],
   snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}',
