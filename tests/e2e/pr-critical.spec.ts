@@ -327,7 +327,8 @@ test('the conversation intro never slides over the steps, and sticks only where 
 test('/pro-nas shows who answers for what, what we build and where, principles with their mechanisms', async ({ page }) => {
   await page.goto('/pro-nas', { waitUntil: 'load' });
   await expect(page.locator('.team-about .person-story')).toHaveCount(2);
-  await expect(page.locator('.team-about .person-focus')).toHaveCount(2);
+  // the paragraph says what each answers for; the chips that repeated it are gone (PDO-101, ABT-05 B, owner 23.10)
+  await expect(page.locator('.team-about .person-focus')).toHaveCount(0);
   await expect(page.locator('.team-bond')).toHaveText('Два покоління — одна відповідальність');
 
   // Owner's decision (30.09): no object photo here until RUBIKON BUILD has objects of its own — the one real photo,
