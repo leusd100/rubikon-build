@@ -28,14 +28,14 @@ jobs:
           retention-days: 2
 
   e2e:
-    name: Main E2E (${{ matrix.shard }}/4)
+    name: Main E2E (${{ matrix.shard }}/6)
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     env:
       PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
       PLAYWRIGHT_BLOB_REPORT: 'true'
@@ -49,7 +49,9 @@ jobs:
           path: dist
       - uses: ./.github/actions/setup-playwright
       - name: Run full E2E shard
-        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --shard=${{ matrix.shard }}/4
+        # 12 min of tests + ~1 min of setup and upload fit the 15-min job limit: a slow shard fails with a named
+        # global timeout and still uploads its blob report, instead of being cancelled without one.
+        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --shard=${{ matrix.shard }}/6 --global-timeout=720000
       - name: Upload shard report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
