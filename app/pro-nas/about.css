@@ -219,7 +219,6 @@
 
 /* ---------------------------------------------------------------- Tablet */
 @media (max-width: 1050px) {
-  .about-story-layout { grid-template-columns: minmax(0, 1fr); }
   /* Full width: the image's own 4 : 5 up to 640 px tall, then wider than the drawing (1.41 at 1024) — the camera
      (useDrawingCamera) keeps every mark and label in the frame there */
   .about-story-section .promise-visual { min-height: 0; aspect-ratio: 4 / 5; max-height: 640px; }

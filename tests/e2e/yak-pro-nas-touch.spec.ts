@@ -32,9 +32,10 @@ test.describe('/yak-pratsyuiemo · «Якщо щось змінюється» on
     await expect(details).toHaveCount(4);
     for (let index = 0; index < 4; index += 1) await expect(details.nth(index)).toBeVisible();
     await page.locator('.cs').scrollIntoViewIfNeeded();
-    await page.waitForTimeout(2500);
-    await expect(page.locator('.cs')).toHaveAttribute('data-reached', '1 2 3 4');
+    // a tour arms the block as soon as the page is hydrated (data-hero-header is set from an effect then)
+    await page.waitForFunction(() => document.documentElement.dataset.heroHeader);
     await expect(page.locator('.cs')).not.toHaveAttribute('data-armed', /.*/);
+    await expect(page.locator('.cs')).toHaveAttribute('data-reached', '1 2 3 4');
   });
 
   test('from 761 px the procedure stands beside the sheets and the tour still plays', async ({ page }) => {
