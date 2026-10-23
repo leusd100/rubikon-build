@@ -128,10 +128,13 @@
   .cs-sheets { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .cs-order { grid-column: 1 / -1; grid-row: 3; justify-self: start; width: min(100%, 320px); margin-top: 24px; }
 }
-/* Phone: the procedure first (its steps fold to their titles, the chosen one opens), then the sheets it acts on */
+/* Phone: the sheets first, as the procedure leaves them (PDO-100 A, owner 23.10), then the procedure with every step's
+   words open — a tap here changed sheets that stood 800–960 px further down, off the screen, and no tour runs here
+   (ChangeSheets) */
 @media (max-width: 760px) {
   .cs { gap: 26px; }
-  .cs-change { order: -1; padding: 28px 18px 18px; }
+  .cs-change { padding: 28px 18px 18px; }
+  .cs-hint { display: none; }
   .cs-sheets { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 0; }
   .cs-sheet { grid-row: auto; grid-template-rows: auto auto; }
   .cs-estimate, .cs-schedule { grid-column: 1; }
@@ -141,12 +144,7 @@
   .cs-steps::before { top: calc(var(--rail) / 2); bottom: calc(var(--rail) / 2); left: calc(var(--rail) / 2 - .75px); right: auto; width: 1.5px; height: auto; }
   .cs-node { font-size: 15px; }
   .cs-steps button { grid-template-columns: var(--rail) minmax(0, 1fr); justify-items: start; align-items: center; gap: 2px 12px; padding: 7px 0; text-align: left; }
-  /* the steps fold to their titles; the chosen one's words show under them (.cs-said), the buttons keep theirs for a
-     screen reader */
-  .cs-steps .cs-detail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .cs-said { display: grid; margin: 8px 0 0 calc(var(--rail) + 12px); }
-  .cs-said > p { grid-area: 1 / 1; margin: 0; color: var(--color-text-secondary); font-size: 14.5px; line-height: 1.5; visibility: hidden; opacity: 0; }
-  .cs-said > p[data-on] { visibility: visible; opacity: 1; }
+  .cs-steps .cs-detail { grid-column: 2; }
   .cs-paper { padding: 14px 14px 16px; }
   .cs-gantt { --name: 40%; }
   .cs-lane-name, .cs-name { font-size: 12.5px; }

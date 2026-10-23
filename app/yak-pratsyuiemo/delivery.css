@@ -148,6 +148,13 @@
    scrolls by. The section's supporting text already asks to choose a format, so its legend is for assistive technology
    only. On a wide screen only the control floats (the strip beside it lets the pointer through to the cards). */
 .proc-resp-switch { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; margin: 0 0 44px; padding: 0; border: 0; position: sticky; z-index: 5; top: 113px; container-type: scroll-state; pointer-events: none; }
+/* On a wide screen the switcher stands on a solid band right under the header (PDO-52 variant 1, owner 23.10): the strip
+   beside the control was see-through, so the table's rows showed between the header (101 px) and the table head. The
+   band takes the section's own background (inherited through the shell), whatever the theme. */
+@media (min-width: 1051px) {
+  .proc-responsibility > .shell { background-color: inherit; }
+  .proc-resp-switch { top: 101px; padding: 12px 0; background-color: inherit; box-shadow: 0 1px 0 var(--color-border); pointer-events: auto; }
+}
 .proc-resp-switch legend { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .proc-resp-switch > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); pointer-events: auto; }
 .proc-resp-switch label { position: relative; cursor: pointer; }

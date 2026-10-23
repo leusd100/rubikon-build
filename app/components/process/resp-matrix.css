@@ -22,7 +22,8 @@
 .resp-matrix { border-top: 1px solid var(--color-border-strong); }
 .rm-head, .rm-row { display: grid; grid-template-columns: var(--rm-cols); align-items: start; column-gap: 0; }
 /* sticks right under the format switcher, which itself sticks under the header (measured: 161 px ≥1051, 169 px ≤1050, 143 px on phones) */
-.rm-head { position: sticky; z-index: 3; top: 162px; padding: 14px 0 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border-strong); }
+/* top: under the switcher's band on a wide screen (101 + 72 px, delivery.css) */
+.rm-head { position: sticky; z-index: 3; top: 173px; padding: 14px 0 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border-strong); }
 .rm-head > span { display: grid; gap: 6px; min-width: 0; padding: 0 12px; }
 .rm-work-head { padding-left: 0 !important; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
 .rm-col { justify-items: start; padding-left: 16px !important; }
