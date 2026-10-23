@@ -26,7 +26,7 @@ Pull request (opened, synchronize, reopened, ready for review, labeled, unlabele
 └─ PR Gate: stable aggregate result for branch protection
 
 Push to main / workflow_dispatch
-└─ build → full E2E (4 shards) + all visual (2 shards) → merged report
+└─ build → full E2E (6 shards) + all visual (2 shards) → merged report
 
 Nightly / workflow_dispatch
 └─ lint + typecheck + coverage + build
