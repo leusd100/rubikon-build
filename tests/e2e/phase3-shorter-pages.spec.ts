@@ -18,7 +18,7 @@ const yak = '/yak-pratsyuiemo';
 /** /napryamky's links to /yak-pratsyuiemo: the section, the link's name and that section's heading */
 const LINKS = [
   ['#obsiah', 'Формати участі', 'Який обсяг робіт можемо взяти на себе'],
-  ['#etapy', 'Етапи роботи', 'Від задачі до будівництва'],
+  ['#etapy', 'Етапи роботи', 'Що буде після звернення'],
   ['#vidpovidalnist', 'Хто за що відповідає', 'Відповідальність без дрібного шрифту'],
 ] as const;
 
@@ -46,7 +46,8 @@ test.describe('/napryamky leaves formats, stages and responsibility to /yak-prat
       await page.locator('.dhow-links').getByRole('link', { name, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`${yak}${target}$`));
       await expect(page.locator(target)).toBeInViewport();
-      await expect(page.locator(`${target} h2`)).toHaveText(heading);
+      // the responsibility map's title is a subheading of «Наш обсяг» since PDO-101 (h3)
+      await expect(page.locator(`${target} :is(h2, h3)`).first()).toHaveText(heading);
     }
   });
 

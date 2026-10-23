@@ -132,7 +132,11 @@
 
 
 /* ---------------------------------------------------------------- 5 · Who answers for what (signature) */
-.proc-responsibility { background: var(--color-surface); }
+/* «Наш обсяг» and the responsibility map read as one band (PDO-101, owner 23.10): the scope's background, no seam
+   between them, the map's title a subheading (an h3, without an eyebrow) */
+.proc-scope.page-section { padding-bottom: 0; }
+.proc-responsibility.page-section { padding-top: 72px; background: var(--color-bg); }
+.proc-responsibility .section-header h3 { max-width: 15em; margin: 0; font: 400 clamp(26px, 2.5vw, 36px)/1.12 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.025em; text-wrap: balance; }
 .proc-principle {
   max-width: 860px; margin: 0 auto; font: 400 clamp(26px, 2.6vw, 38px)/1.22 var(--font-display), var(--font-manrope), sans-serif;
   letter-spacing: -.02em; text-align: center; text-wrap: balance;
@@ -189,10 +193,12 @@
 /* ---------------------------------------------------------------- Dark: neighbouring sections sit close in tone, so a
    hairline marks each seam and the scope zone takes the alternate surface (bg → band → alt → surface → bg). */
 :root[data-theme="dark"] .process-page > section + section { border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
-:root[data-theme="dark"] .proc-scope { background: var(--color-surface-alt); }
+:root[data-theme="dark"] :is(.proc-scope, .proc-responsibility) { background: var(--color-surface-alt); }
+:root[data-theme="dark"] .process-page > .proc-responsibility { border-top: 0; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .process-page > section + section { border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
-  :root:not([data-theme="light"]) .proc-scope { background: var(--color-surface-alt); }
+  :root:not([data-theme="light"]) :is(.proc-scope, .proc-responsibility) { background: var(--color-surface-alt); }
+  :root:not([data-theme="light"]) .process-page > .proc-responsibility { border-top: 0; }
 }
 
 /* ---------------------------------------------------------------- FAQ (collapsible, as on the flagship pages) */
@@ -219,6 +225,10 @@
 /* ---------------------------------------------------------------- Phone */
 @media (max-width: 760px) {
   .process-page { --section-space: 72px; }
+  /* the «Далі — один зрозумілий процес» plate only scrolled to the next block here (PDO-101); the desktop keeps it as the
+     diagram's last link */
+  .proc-start-merge { display: none; }
+  .proc-responsibility.page-section { padding-top: 48px; }
   /* The call stays above the first-visit cookie banner, as on HOME */
   .proc-hero { min-height: calc(100svh - 120px); }
   .proc-hero-layout { padding-top: 124px; padding-bottom: 72px; }

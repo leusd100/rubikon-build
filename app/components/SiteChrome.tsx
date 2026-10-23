@@ -57,6 +57,7 @@ function Brand({ idPrefix }: Readonly<{ idPrefix: string }>) {
 export function SectionHeader({
   eyebrow,
   title,
+  level = 2,
   supporting,
   inverse = false,
   className = '',
@@ -64,9 +65,13 @@ export function SectionHeader({
   titleId,
   aside,
 }: {
-  eyebrow: string;
+  /** The small label over the title; a subsection of the band before goes without (PDO-101) */
+  eyebrow?: string;
   title: ReactNode;
-  supporting: ReactNode;
+  /** h2 for a section; h3 where the section continues the one before it under its own subheading */
+  level?: 2 | 3;
+  /** The lead under the title; a section whose title says it all goes without (PDO-101) */
+  supporting?: ReactNode;
   inverse?: boolean;
   className?: string;
   /** A small decorative drawing in the empty right of the header (wide screens only; UX pass 2026-10) */
@@ -79,10 +84,10 @@ export function SectionHeader({
   return (
     <div className={['section-header', inverse && 'section-header-inverse', aside && 'has-aside', className].filter(Boolean).join(' ')}>
       <div className="section-header-copy">
-        <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {icon}{eyebrow}</p>
-        <h2 id={titleId}>{title}</h2>
+        {eyebrow && <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {icon}{eyebrow}</p>}
+        {level === 3 ? <h3 id={titleId}>{title}</h3> : <h2 id={titleId}>{title}</h2>}
       </div>
-      <p className="section-header-support">{supporting}</p>
+      {supporting && <p className="section-header-support">{supporting}</p>}
       {aside && <div className="section-header-aside" aria-hidden="true">{aside}</div>}
     </div>
   );
@@ -296,20 +301,20 @@ const teamContent: Record<TeamVariant, { sergii: TeamBio; dmytro: TeamBio }> = {
       ],
     },
   },
+  // /pro-nas keeps the fuller paragraph and no «Відповідає за» chips (PDO-101, ABT-05 B, owner 23.10): the chips
+  // repeated the paragraph, Serhii's four areas word for word
   about: {
     sergii: {
       role: 'Засновник / керівник будівельного напряму',
       paragraphs: [
         'Керує будівельним напрямом. Його практичний досвід охоплює організацію робіт на майданчику, бригади, якість виконання та складні конструктивні вузли.',
       ],
-      focus: ['Організація робіт на майданчику', 'Бригади', 'Якість виконання', 'Складні конструктивні вузли'],
     },
     dmytro: {
       role: 'Розвиток компанії / робота з клієнтами',
       paragraphs: [
         'Веде розвиток RUBIKON і роботу з клієнтами. Допомагає перетворити початкову задачу, креслення або наявні матеріали на зрозумілу основу для предметної розмови про роботи.',
       ],
-      focus: ['Робота з клієнтами', 'Розбір завдання й наявних матеріалів', 'Предметна розмова про роботи', 'Розвиток компанії'],
     },
   },
 };

@@ -150,4 +150,8 @@
   .cs-paper { padding: 14px 14px 16px; }
   .cs-gantt { --name: 40%; }
   .cs-lane-name, .cs-name { font-size: 12.5px; }
+  /* «Кошторис» compact (PDO-101): 24 px rows, the name only on the changed one — the sheet is a picture (aria-hidden)
+     and the list above it names all seven; the hidden names keep to one line, or a two-line name held its row at 32 px */
+  .cs-estimate .cs-rows li { min-height: 24px; }
+  .cs-estimate .cs-rows li:not(.cs-hot) .cs-name { overflow: hidden; white-space: nowrap; visibility: hidden; }
 }
