@@ -48,7 +48,7 @@ function SteelJoint() {
       {/* the end plate seen from the beam's end, its holes and their spacing. (Until 05.10 this was «Вид А» with an
           arrow «А» over the joint; the arrow stopped short of the plate and read as a pointer to the weld's circle.) */}
       {/* «вигляд», as drawings say it (10.10, audit F39) */}
-      <text className="nd-title" x="1430" y="282" textAnchor="middle">Вигляд з торця</text>
+      <text className="nd-title" x="1430" y="282" textAnchor="middle" data-view="1">Вигляд з торця</text>
       <path className="nd-cut" d="M1300 330H1560V870H1300Z" />
       <path className="nd-hidden" d="M1300 380H1560M1300 410H1560M1300 790H1560M1300 820H1560" />
       <g className="nd-part" data-part="1">
@@ -56,9 +56,9 @@ function SteelJoint() {
         <path pathLength={1} d="M1365 940H1495M1365 928v24M1495 928v24" />
         <path pathLength={1} d="M1610 360V840M1596 360h28M1596 470h28M1596 730h28M1596 840h28" />
       </g>
-      <text className="nd-text" x="1420" y="924">g</text>
-      <text className="nd-text" x="1620" y="424">p</text>
-      <text className="nd-text" x="1620" y="794">p</text>
+      <text className="nd-text" x="1420" y="924" data-view="1">g</text>
+      <text className="nd-text" x="1620" y="424" data-view="1">p</text>
+      <text className="nd-text" x="1620" y="794" data-view="1">p</text>
     </>
   );
 }

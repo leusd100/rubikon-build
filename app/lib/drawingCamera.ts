@@ -23,21 +23,23 @@ export const FRAME_MARGIN = 8;
 
 /** The largest scale at which [low, high] and its margins fit in `frame` pixels — no margin is asked for past the
  *  picture's own edge (0 … extent): the span is min(high + m, extent) − max(low − m, 0), m = margin / scale */
-function fitScale(frame: number, extent: number, low: number, high: number) {
+function fitScale(frame: number, extent: number, low: number, high: number, margin: number) {
   return Math.max(
-    (frame - 2 * FRAME_MARGIN) / (high - low),
-    (frame - FRAME_MARGIN) / high,
-    (frame - FRAME_MARGIN) / (extent - low),
+    (frame - 2 * margin) / (high - low),
+    (frame - margin) / high,
+    (frame - margin) / (extent - low),
     frame / extent,
   );
 }
 
-export function drawingView(size: FrameSize, picture: FrameSize, step: CameraFocus | undefined, need: PictureBox): DrawingView {
+/** `edge`: the room to keep between what must be seen and the frame's edge — FRAME_MARGIN unless a tour asks for more
+ *  air round a step (useDrawingCamera's `stepMargin`) */
+export function drawingView(size: FrameSize, picture: FrameSize, step: CameraFocus | undefined, need: PictureBox, edge = FRAME_MARGIN): DrawingView {
   const { width, height } = size;
   const cover = Math.max(width / picture.width, height / picture.height);
-  const fit = Math.min(fitScale(width, picture.width, need[0], need[2]), fitScale(height, picture.height, need[1], need[3]));
+  const fit = Math.min(fitScale(width, picture.width, need[0], need[2], edge), fitScale(height, picture.height, need[1], need[3], edge));
   const scale = Math.min(cover * (step?.zoom ?? 1), fit);
-  const margin = FRAME_MARGIN / scale;
+  const margin = edge / scale;
   const centre = (frame: number, extent: number, focus: number, low: number, high: number) => {
     const half = frame / (2 * scale);
     const shown = frame / (2 * cover); // half of what cover shows
@@ -56,11 +58,11 @@ export function drawingView(size: FrameSize, picture: FrameSize, step: CameraFoc
 
 /** drawingView as the stage's transform, in stageTransform's form (the stage is the frame, the picture laid in it by
  *  cover); undefined before the frame is measured, and for an overview that is cover itself */
-export function drawingTransform(size: FrameSize | null, picture: FrameSize, step: CameraFocus | undefined, need: PictureBox) {
+export function drawingTransform(size: FrameSize | null, picture: FrameSize, step: CameraFocus | undefined, need: PictureBox, edge = FRAME_MARGIN) {
   if (!size) return undefined;
   const { width, height } = size;
   const cover = Math.max(width / picture.width, height / picture.height);
-  const { scale, centre } = drawingView(size, picture, step, need);
+  const { scale, centre } = drawingView(size, picture, step, need, edge);
   const zoom = scale / cover;
   // the centre in the stage's pixels
   const x = (centre[0] - picture.width / 2) * cover + width / 2;
