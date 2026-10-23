@@ -68,7 +68,7 @@ test.describe('/yak-pratsyuiemo says each thing once', () => {
       hot: item.classList.contains('cs-hot'),
       named: getComputedStyle(item.querySelector('.cs-name')!).visibility === 'visible',
     })));
-    expect(rows.length).toBe(7);
+    expect(rows).toHaveLength(7);
     for (const row of rows.filter((item) => !item.hot)) expect(row.height).toBeLessThan(26);
     expect(rows.filter((row) => row.named).map((row) => row.hot)).toEqual([true]);
     // the list above the sheet still names all seven
