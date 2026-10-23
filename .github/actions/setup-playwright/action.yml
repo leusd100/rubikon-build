@@ -10,9 +10,45 @@ runs:
         path: ~/.cache/ms-playwright
         key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
 
+    # The Azure apt mirror at times serves the ~26 MB of Chromium dependency archives at 26–560 kB/s
+    # (docs/handoffs/2026-10-23-chromium-apt-cache.md). Earlier jobs' archives are reused once verified;
+    # install-deps still resolves and installs the same packages from the live index.
+    - name: Name Chromium dependency archive cache
+      id: apt-cache-name
+      shell: bash
+      run: echo "prefix=chromium-apt-${RUNNER_OS}-${RUNNER_ARCH}-${ImageOS:-unknown}-" >> "$GITHUB_OUTPUT"
+
+    - name: Restore Chromium dependency archives
+      id: apt-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ~/.cache/chromium-apt
+        key: ${{ steps.apt-cache-name.outputs.prefix }}
+        restore-keys: ${{ steps.apt-cache-name.outputs.prefix }}
+
+    - name: Seed apt with verified cached archives
+      shell: bash
+      run: bash "$GITHUB_ACTION_PATH/seed-apt-archives.sh" ~/.cache/chromium-apt
+
     - name: Install Chromium system dependencies
       shell: bash
       run: pnpm exec playwright install-deps chromium
+
+    - name: Collect Chromium dependency archives
+      id: apt-collect
+      shell: bash
+      env:
+        PREFIX: ${{ steps.apt-cache-name.outputs.prefix }}
+      run: |
+        suffix="$(bash "$GITHUB_ACTION_PATH/collect-apt-archives.sh" ~/.cache/chromium-apt)"
+        if [ -n "$suffix" ]; then echo "key=$PREFIX$suffix" >> "$GITHUB_OUTPUT"; fi
+
+    - name: Save Chromium dependency archives
+      if: steps.apt-collect.outputs.key != '' && steps.apt-collect.outputs.key != steps.apt-cache.outputs.cache-matched-key
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.cache/chromium-apt
+        key: ${{ steps.apt-collect.outputs.key }}
 
     - name: Ensure Chromium is installed
       shell: bash
