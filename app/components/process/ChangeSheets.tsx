@@ -95,7 +95,8 @@ export function ChangeSheets({ rows, estimate, schedule, principle, steps, back 
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    // no tour without motion, nor on a phone, where the sheets stand first in their final state (PDO-100 A)
+    if (!root || window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)').matches) return undefined;
     // Hold the marks back until the block is seen, then walk the procedure once
     const arm = window.requestAnimationFrame(() => { setArmed(true); setStep(0); });
     const walk = (next: number) => {

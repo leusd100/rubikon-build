@@ -948,7 +948,7 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     await expect(page.locator('.rm-col-client .rm-coordinator:visible')).toBeVisible();
   });
 
-  test('on a wide screen the switcher floats under the header and the table head sticks under it', async ({ page, isMobile }) => {
+  test('on a wide screen the switcher stands on a solid band under the header and the table head sticks under it', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop layout');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
@@ -960,13 +960,16 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     const header = await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().height));
     const control = page.locator('.proc-resp-switch > div');
     expect(await control.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(header + 12);
-    // Only the control takes the pointer: the strip beside it does not cover the table
-    await expect(page.locator('.proc-resp-switch')).toHaveCSS('pointer-events', 'none');
-    await expect(control).toHaveCSS('pointer-events', 'auto');
-    const controlBottom = await control.evaluate((element) => element.getBoundingClientRect().bottom);
+    // The band under it is solid (PDO-52 variant 1, owner 23.10): the section's own colour from the header down to the
+    // table head, so no row shows between them
+    const band = await page.locator('.proc-resp-switch').evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      return { top: Math.round(box.top), bottom: box.bottom, colour: getComputedStyle(element).backgroundColor, section: getComputedStyle(element.closest('section')!).backgroundColor };
+    });
+    expect(band.top).toBe(header);
+    expect(band.colour).toBe(band.section);
     const headTop = await page.locator('.rm-head').evaluate((element) => element.getBoundingClientRect().top);
-    expect(headTop).toBeGreaterThanOrEqual(controlBottom);
-    expect(headTop - controlBottom).toBeLessThan(4);
+    expect(Math.abs(headTop - band.bottom)).toBeLessThan(1);
   });
 
   test('the scope drawing and the responsibility table hold one choice of format', async ({ page }) => {

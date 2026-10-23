@@ -224,6 +224,15 @@
      (useDrawingCamera) keeps every mark and label in the frame there */
   .about-story-section .promise-visual { min-height: 0; aspect-ratio: 4 / 5; max-height: 640px; }
   .about-principles-grid { grid-template-columns: minmax(0, 1fr); }
+  /* the marks at most 420 px wide (PDO-54): across the whole card they grew to 652 × 245 px at 768 */
+  .principle-mark { max-width: 420px; }
+  /* The practice: the label, title and lead before the drawing, the steps under it (PDO-100 A, owner 23.10) — the
+     drawing stood first without its title, and a tapped step changed it above the screen */
+  .about-story-layout { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+  .about-story-copy { display: contents; }
+  .about-story-layout > .ps-sheet { order: 1; margin-top: 30px; }
+  .about-before { order: 2; margin-top: 30px; }
+  .about-story-support { order: 3; }
 }
 
 /* ---------------------------------------------------------------- Phone */
@@ -231,6 +240,11 @@
   /* The story's title takes the site's phone section size (PDO-05): its own clamp() kept it at 40 px over a 29 px H1 */
   .about-story-copy h2 { font-size: var(--title-section); }
   .team-about .team-stories { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 64px; }
+  /* «Два покоління — одна відповідальність» under a full-width rule (PDO-53): beside the words the two rules had no width
+     left on a phone (0 px at 320–390) */
+  .team-bond { flex-direction: column; gap: 12px; }
+  .team-bond::before { flex: none; align-self: stretch; transform-origin: center; }
+  .team-bond::after { display: none; }
   .team-about .person-info h3 { white-space: normal; }
   .about-page .about-subhero-side { margin-top: 22px; }
   .about-hero-actions { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 28px; }
