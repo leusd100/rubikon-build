@@ -647,7 +647,7 @@ test('HOME fills the lower browser area with photo while placing its scroll cue 
   expect(bounds.photoBottom).toBeGreaterThanOrEqual(908);
   expect(bounds.cueBottom).toBeGreaterThanOrEqual(816);
   expect(bounds.cueBottom).toBeLessThanOrEqual(832);
-  expect(bounds.ctaBottom).toBeLessThanOrEqual(bounds.cueBottom - 60);
+  expect(bounds.ctaBottom).toBeLessThanOrEqual(bounds.cueBottom - 56);
 });
 
 test('HOME keeps copy and actions above Safari controls while its photo fills the large viewport', async ({ page }) => {
@@ -670,7 +670,7 @@ test('HOME keeps copy and actions above Safari controls while its photo fills th
     return { ctaBottom: last.bottom, cueTop: cue.top, cueBottom: cue.bottom, imageBottom: image.bottom, height: hero.height, width: document.documentElement.scrollWidth };
   });
   expect(result.ctaBottom).toBeLessThanOrEqual(624);
-  expect(result.cueTop).toBeGreaterThanOrEqual(result.ctaBottom + 16);
+  expect(result.cueTop).toBeGreaterThanOrEqual(result.ctaBottom + 12);
   expect(result.cueBottom).toBeLessThanOrEqual(664);
   expect(result.height).toBeGreaterThanOrEqual(844);
   expect(result.imageBottom).toBeGreaterThanOrEqual(844);
@@ -701,8 +701,8 @@ for (const route of routes.filter(route => route !== '/')) {
       expect(bounds.photoBottom).toBeGreaterThanOrEqual(bounds.bottom - 1);
     }
     expect(bounds.cueBottom).toBeLessThanOrEqual(832);
-    // About's owner-requested tighter gap still leaves the complete 44px cue target separate from the CTA.
-    expect(bounds.actionBottom).toBeLessThanOrEqual(bounds.cueBottom - (route === '/pro-nas' ? 56 : 60));
+    // The shared12px gap leaves the complete44px cue target separate from every CTA.
+    expect(bounds.actionBottom).toBeLessThanOrEqual(bounds.cueBottom - 56);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
     await expect(hero.locator('.hero-call-primary')).toHaveAttribute('href', 'tel:+380682614264');
     const href = await cue.getAttribute('href');

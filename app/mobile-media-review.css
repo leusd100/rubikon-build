@@ -1,5 +1,5 @@
 /* Mobile media selection prototype, pending owner preview (24.10).
-   No text, header, scene height, desktop or tablet layout changes. */
+   No text or header changes. Desktop and tablet layouts are unchanged. */
 @media (max-width: 440px) {
   .direction-hero-image {
     object-position: var(--direction-phone-image-position, var(--direction-hero-image-position-mobile, center 60%)) !important;
@@ -15,11 +15,40 @@
     background: #121613;
     filter: none;
   }
-  main[data-home="v2"] .hero.hv2-hero .hero-shade {
-    background: linear-gradient(180deg, rgba(18,22,19,.03) var(--hv2-header),
-      rgba(18,22,19,.08) clamp(80px, calc(100svh - 39.375rem), 300px),
-      rgba(18,22,19,.88) clamp(140px, calc(100svh - 32.5rem), 420px),
-      #121613 clamp(300px, calc(100svh - 23rem), 550px));
+  /* One phone composition: an open image, gradual shade under copy, and a compact scroll cue.
+     Keep the early rem clamps for enlarged copy and the first-paint cookie reserve for first visits. */
+  main[data-home="v2"] .hero.hv2-hero,
+  main.inner-page > .phone-hero {
+    --phone-media-header: var(--phone-scene-header, var(--hv2-header));
+    --phone-media-copy-rise: 0rem;
+    --phone-media-copy-shade: .58;
+    --phone-media-shade: linear-gradient(180deg,
+      rgba(18,22,19,.03) var(--phone-media-header),
+      rgba(18,22,19,.06) clamp(80px, calc(100svh - 39.375rem - var(--phone-media-copy-rise) - var(--consent-banner-reserve, 0px)), 300px),
+      rgba(18,22,19,var(--phone-media-copy-shade)) clamp(140px, calc(100svh - 32.5rem - var(--phone-media-copy-rise) - var(--consent-banner-reserve, 0px)), 420px),
+      rgba(18,22,19,.85) clamp(300px, calc(100svh - 19rem - var(--phone-media-copy-rise) - var(--consent-banner-reserve, 0px)), 660px),
+      #121613 clamp(450px, calc(100svh - 8rem - var(--phone-media-copy-rise) - var(--consent-banner-reserve, 0px)), 850px));
+  }
+  /* Brighter service scenes need a little more shade behind copper titles than the C artwork. */
+  main.inner-page.direction-page > .phone-hero { --phone-media-copy-shade: .62; }
+  /* Grain's longer copy starts earlier. Preserve its existing mask over the invented drawing strip. */
+  main.inner-page.grain-page > .phone-hero {
+    --phone-media-copy-rise: 5.25rem;
+    --phone-media-copy-shade: .64;
+  }
+  main.inner-page.process-page > .phone-hero { --phone-media-copy-shade: .66; }
+  :root[data-consent-pending] main[data-home="v2"] .hero.hv2-hero { --phone-media-copy-shade: .66; }
+  main[data-home="v2"] .hero.hv2-hero .hero-shade,
+  main.inner-page:not(.directions-page):not(.about-page) > .phone-hero :is(.service-subhero-overlay, .proc-hero-shade) {
+    background: var(--phone-media-shade);
+  }
+  /* Direction slides keep their reviewed 3:2 window and its frame-specific shade. */
+  main[data-home="v2"] .hero.hv2-hero .phone-hero-scroll,
+  main.inner-page > .phone-hero .phone-hero-scroll {
+    margin-top: 12px;
+  }
+  main.inner-page > .phone-hero :is(.eyebrow.light, .breadcrumb, .breadcrumb a) {
+    color: var(--color-dark-text);
   }
 }
 @media (max-width: 600px) {
@@ -30,19 +59,6 @@
     background: #121613;
     filter: none;
   }
-  main.about-page .about-subhero .subhero-overlay {
-    /* The first-visit cookie reserve lifts the copy; move its shade with it before first paint. */
-    background: linear-gradient(180deg, rgba(18,22,19,.03) var(--phone-scene-header),
-      rgba(18,22,19,.06) clamp(80px, calc(100svh - 39.375rem - var(--consent-banner-reserve, 0px)), 300px),
-      rgba(18,22,19,.58) clamp(140px, calc(100svh - 32.5rem - var(--consent-banner-reserve, 0px)), 420px),
-      rgba(18,22,19,.85) clamp(300px, calc(100svh - 19rem - var(--consent-banner-reserve, 0px)), 660px),
-      #121613 clamp(450px, calc(100svh - 8rem - var(--consent-banner-reserve, 0px)), 850px));
-  }
-  /* Retain the 44px touch target and Safari tail; only close the CTA-to-cue gap. */
-  main.inner-page.about-page > .phone-hero .phone-hero-scroll {
-    margin-top: 12px;
-  }
-  main.inner-page.about-page > .phone-hero :is(.eyebrow.light, .breadcrumb, .breadcrumb a) {
-    color: var(--color-dark-text);
-  }
+  /* About stills end at600px; its tablet footage retains the approved treatment. */
+  main.about-page .about-subhero .subhero-overlay { background: var(--phone-media-shade); }
 }
