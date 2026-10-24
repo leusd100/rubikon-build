@@ -5,6 +5,8 @@ import { siteRoutes } from '../data/navigation';
 export const metadata = createBasicPageMetadata({
   title: brandedTitle('Фірмовий знак'),
   description: 'Затверджений логотип RUBIKON BUILD. Основний горизонтальний знак і компактна літера R.',
+  // its own canonical, not the layout's «/» (X-01 · PDO-29): a noindex page claimed to be the home page
+  path: '/logo-variants',
   robots: { index: false, follow: false },
 });
 
