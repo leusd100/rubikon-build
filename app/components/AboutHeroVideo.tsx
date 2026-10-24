@@ -6,14 +6,13 @@ import { useSyncExternalStore } from 'react';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { useViewportVariant, type ViewportVariant } from '../hooks/useViewportVariant';
 
-// /pro-nas hero. Desktop and tablet keep the footage; a phone (≤ 600 px, the hook's phone variant) gets one still
-// instead of the 3.5 MB phone montage. P5 is the owner-approved AI process illustration: anonymous professionals,
-// not portraits of Serhii/Dmytro and not evidence of a RUBIKON object (design selection, 16.10).
-// The still stays decorative for a screen reader (alt=""); the hero's visible «Ілюстрація» stamp (pro-nas/page.tsx, ≤ 600 px)
-// tells a sighted visitor these are not the team (owner, 20.10, OD-PX-12 A; review 18.10, PDO-04 — revises the no-tag decision of 30.09).
+// Owner selected creative direction C, 24.10: a distinct line-to-material architectural concept.
+// It has no people and makes no claim to show a completed RUBIKON project; the existing
+// visible «Ілюстрація» label remains. Desktop/tablet footage and the 600px boundary are unchanged.
+// Owner preview is required before merging this selection.
 const STATIC_QUERY = '(max-width: 600px)';
-export const ABOUT_STATIC_SRC = '/media/about/about-p5-1024w.webp';
-const ABOUT_STATIC_SRCSET = '/media/about/about-p5-480w.webp 480w, /media/about/about-p5-768w.webp 768w, /media/about/about-p5-1024w.webp 1024w';
+export const ABOUT_STATIC_SRC = '/media/about/about-line-concept-v3-1024w.webp';
+const ABOUT_STATIC_SRCSET = '/media/about/about-line-concept-v3-480w.webp 480w, /media/about/about-line-concept-v3-768w.webp 768w, /media/about/about-line-concept-v3-1024w.webp 1024w';
 
 // As on HOME, the 0.85 slow-down is in the files (re-timed to an even 30 fps by scripts/retime-hero-clips.py), so the
 // desktop clips play at 1.0 (OD-S1 option B, 15.10)

@@ -1,0 +1,42 @@
+/* Mobile media review: keep the existing five scenes and their timing. Their 3:2 right-hand windows show the
+   structure above the copy instead of stretching a narrow portrait across the full phone height. The copy, header,
+   controls and scene tail keep the existing phone-hero geometry; tablet and desktop are unchanged. */
+@media (max-width: 760px) {
+  main.inner-page.directions-page > .phone-hero {
+    --directions-phone-early-shade: linear-gradient(180deg,
+      rgba(18, 22, 19, .18) 0,
+      rgba(18, 22, 19, .2) calc(var(--phone-scene-header) + 55px),
+      rgba(18, 22, 19, .68) calc(var(--phone-scene-header) + 85px),
+      rgba(18, 22, 19, .85) calc(var(--phone-scene-header) + 150px),
+      #121613 calc(var(--phone-scene-header) + 100vw * 2 / 3));
+  }
+  main.inner-page.directions-page > .phone-hero .hero-video-control-label {
+    padding: 5px 7px;
+    background: rgba(18, 22, 19, .9);
+  }
+  main.inner-page.directions-page > .phone-hero .directions-hero-sequence-image {
+    top: var(--phone-scene-header);
+    height: calc(100vw * 2 / 3);
+    object-position: 50% 50%;
+    filter: saturate(.88) contrast(1.02);
+    mask-image: linear-gradient(#000 0%, #000 72%, transparent 100%);
+  }
+  main.inner-page.directions-page > .phone-hero .subhero-overlay {
+    background: linear-gradient(180deg,
+      rgba(18, 22, 19, .18) 0,
+      rgba(18, 22, 19, .18) calc(var(--phone-scene-header) + 110px),
+      rgba(18, 22, 19, .45) calc(var(--phone-scene-header) + 170px),
+      rgba(18, 22, 19, .8) calc(var(--phone-scene-header) + 260px),
+      #121613 calc(var(--phone-scene-header) + 100vw * 2 / 3));
+  }
+  /* The first-visit reserve puts the breadcrumb over the scene, even on tall phones. */
+  :root[data-consent-pending] main.inner-page.directions-page > .phone-hero .subhero-overlay {
+    background: var(--directions-phone-early-shade);
+  }
+}
+/* Short phones put the breadcrumb and eyebrow over the scene. Their earlier shade does not move those words. */
+@media (max-width: 760px) and (max-height: 740px) {
+  main.inner-page.directions-page > .phone-hero .subhero-overlay {
+    background: var(--directions-phone-early-shade);
+  }
+}

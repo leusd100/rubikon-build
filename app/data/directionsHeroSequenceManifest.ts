@@ -10,6 +10,7 @@ type SequenceMedia = {
   fallbackSrc: string;
   srcSet: string;
   portraitSrcSet: string;
+  mobile: { avif: string; webp: string };
   width: number;
   height: number;
 };
@@ -20,10 +21,56 @@ const responsiveSrcSet = (style: string, name: string, variants: ResponsiveVaria
     `/media-responsive/directions-sequence-${style}-${name}${portrait ? "-portrait" : ""}-${width}w.${hash}.webp ${width}w`,
   ).join(', ');
 
+// Mobile review: right-hand 3:2 windows of the existing 1881 × 836 masters (x 627…1881, y 0…836).
+// No generated pixels. 480/960 widths; WebP q82 / AVIF q58. The same crop is used in both existing themes.
+const mobileSources: Record<string, { avif: string; webp: string }> = {
+  'daylight/angary': {
+    avif: '/media-responsive/mobile-directions-daylight-angary-480w.b187be26.avif 480w, /media-responsive/mobile-directions-daylight-angary-960w.c8cc5940.avif 960w',
+    webp: '/media-responsive/mobile-directions-daylight-angary-480w.864601ff.webp 480w, /media-responsive/mobile-directions-daylight-angary-960w.42ab0566.webp 960w',
+  },
+  'daylight/zernoskhovyshcha': {
+    avif: '/media-responsive/mobile-directions-daylight-zernoskhovyshcha-480w.75966812.avif 480w, /media-responsive/mobile-directions-daylight-zernoskhovyshcha-960w.8d8b610d.avif 960w',
+    webp: '/media-responsive/mobile-directions-daylight-zernoskhovyshcha-480w.66a54628.webp 480w, /media-responsive/mobile-directions-daylight-zernoskhovyshcha-960w.8315478a.webp 960w',
+  },
+  'daylight/metalokonstruktsii': {
+    avif: '/media-responsive/mobile-directions-daylight-metalokonstruktsii-480w.574b5514.avif 480w, /media-responsive/mobile-directions-daylight-metalokonstruktsii-960w.c06f3710.avif 960w',
+    webp: '/media-responsive/mobile-directions-daylight-metalokonstruktsii-480w.3f68749a.webp 480w, /media-responsive/mobile-directions-daylight-metalokonstruktsii-960w.3a8c5c8a.webp 960w',
+  },
+  'daylight/betonni-roboty': {
+    avif: '/media-responsive/mobile-directions-daylight-betonni-roboty-480w.194c41b8.avif 480w, /media-responsive/mobile-directions-daylight-betonni-roboty-960w.b1d42755.avif 960w',
+    webp: '/media-responsive/mobile-directions-daylight-betonni-roboty-480w.ddc16bbe.webp 480w, /media-responsive/mobile-directions-daylight-betonni-roboty-960w.fc45fb66.webp 960w',
+  },
+  'daylight/pokrivelni-roboty': {
+    avif: '/media-responsive/mobile-directions-daylight-pokrivelni-roboty-480w.18b6556f.avif 480w, /media-responsive/mobile-directions-daylight-pokrivelni-roboty-960w.005df7b6.avif 960w',
+    webp: '/media-responsive/mobile-directions-daylight-pokrivelni-roboty-480w.8ff21b10.webp 480w, /media-responsive/mobile-directions-daylight-pokrivelni-roboty-960w.82f85427.webp 960w',
+  },
+  'blue-hour/angary': {
+    avif: '/media-responsive/mobile-directions-blue-hour-angary-480w.e7ff62d1.avif 480w, /media-responsive/mobile-directions-blue-hour-angary-960w.5e1fa046.avif 960w',
+    webp: '/media-responsive/mobile-directions-blue-hour-angary-480w.93531db3.webp 480w, /media-responsive/mobile-directions-blue-hour-angary-960w.c083a069.webp 960w',
+  },
+  'blue-hour/zernoskhovyshcha': {
+    avif: '/media-responsive/mobile-directions-blue-hour-zernoskhovyshcha-480w.f063bc3f.avif 480w, /media-responsive/mobile-directions-blue-hour-zernoskhovyshcha-960w.798ade0d.avif 960w',
+    webp: '/media-responsive/mobile-directions-blue-hour-zernoskhovyshcha-480w.f67bb238.webp 480w, /media-responsive/mobile-directions-blue-hour-zernoskhovyshcha-960w.7720febb.webp 960w',
+  },
+  'blue-hour/metalokonstruktsii': {
+    avif: '/media-responsive/mobile-directions-blue-hour-metalokonstruktsii-480w.6f3f7efc.avif 480w, /media-responsive/mobile-directions-blue-hour-metalokonstruktsii-960w.9ac98540.avif 960w',
+    webp: '/media-responsive/mobile-directions-blue-hour-metalokonstruktsii-480w.410873fc.webp 480w, /media-responsive/mobile-directions-blue-hour-metalokonstruktsii-960w.944214df.webp 960w',
+  },
+  'blue-hour/betonni-roboty': {
+    avif: '/media-responsive/mobile-directions-blue-hour-betonni-roboty-480w.f05c4809.avif 480w, /media-responsive/mobile-directions-blue-hour-betonni-roboty-960w.e8c9bd78.avif 960w',
+    webp: '/media-responsive/mobile-directions-blue-hour-betonni-roboty-480w.7312400e.webp 480w, /media-responsive/mobile-directions-blue-hour-betonni-roboty-960w.f09632e1.webp 960w',
+  },
+  'blue-hour/pokrivelni-roboty': {
+    avif: '/media-responsive/mobile-directions-blue-hour-pokrivelni-roboty-480w.8e29881a.avif 480w, /media-responsive/mobile-directions-blue-hour-pokrivelni-roboty-960w.fe58cfa3.avif 960w',
+    webp: '/media-responsive/mobile-directions-blue-hour-pokrivelni-roboty-480w.d0f0fd54.webp 480w, /media-responsive/mobile-directions-blue-hour-pokrivelni-roboty-960w.67c69a8b.webp 960w',
+  },
+};
+
 const media = (style: string, name: string, landscape: ResponsiveVariants, portrait: ResponsiveVariants): SequenceMedia => ({
   fallbackSrc: `/media-responsive/directions-sequence-${style}-${name}-1536w.${landscape[3][1]}.webp`,
   srcSet: responsiveSrcSet(style, name, landscape),
   portraitSrcSet: responsiveSrcSet(style, name, portrait, true),
+  mobile: mobileSources[`${style}/${name}`],
   width: 1881,
   height: 836,
 });
