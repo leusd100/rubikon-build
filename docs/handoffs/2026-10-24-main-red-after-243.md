@@ -15,7 +15,7 @@
 
 Жодне з трьох падінь не є регресією сайту. #243 свідомо змінив телефонний hero (handoff-и `2026-10-24-unified-mobile-heroes.md`, `2026-10-24-selected-c-mobile-heroes.md`, `2026-10-24-mobile-media-review.md`). Тести й еталон лишилися на старих правилах. Два тести оновлено так, щоб вони описували нові правила. Еталон чекає OK власника (DEC-18).
 
-#243 не запускав Main Regression, а «Changed-area visual regression» на ньому мав статус SKIPPED. Тому PR був зеленим, а main став червоним одразу після merge.
+#243 не запускав Main Regression, а «Changed-area visual regression» на ньому мав статус SKIPPED. Це правило PR Gate (`.github/workflows/pr-gate.yml`, `docs/ci-tier-model.md`): гілка `design/*` без мітки `visual-freeze` відкладає скриншотні набори. #243 злили без цієї мітки. Тому PR був зеленим, а main став червоним одразу після merge.
 
 ## 1. `responsive-a11y-phase1.spec.ts:281` — крихти над телефонним hero
 
@@ -63,7 +63,7 @@
 
 ## Поза цим PR
 
-- PR Gate не запускав візуальну перевірку для #243, хоча PR змінив hero HOME (CSS + медіа). Варто окремо перевірити класифікатор змінених областей.
+- Питання до власника про процес: чи вимагати перед merge `design/*` мітку `visual-freeze` або прогін Main Regression? Тоді застарілі тести й еталони видно ще в PR, а не на main.
 - Draft #244 (W2-17) успадковує ці ж три падіння від main. Після merge цього PR і оновлення еталона його треба синхронізувати з main.
 
 ## Відкат
