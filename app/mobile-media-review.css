@@ -1,0 +1,10 @@
+/* Mobile media selection prototype, pending owner preview (24.10).
+   No text, header, scene height, desktop or tablet layout changes. */
+@media (max-width: 440px) {
+  .direction-hero-image {
+    object-position: var(--direction-phone-image-position, var(--direction-hero-image-position-mobile, center 60%)) !important;
+  }
+}
+@media (max-width: 600px) {
+  .about-hero-media > .about-hero-still { object-position: 48% 38%; }
+}

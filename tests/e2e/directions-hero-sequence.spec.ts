@@ -114,8 +114,8 @@ for (const viewport of [
       await expect(frame).toHaveAttribute('data-art-theme', 'dark');
       await expect.poll(() => frame.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0)).toBe(true);
       const src = await frame.evaluate((node: HTMLImageElement) => node.currentSrc);
-      expect(src).toContain(`directions-sequence-blue-hour-${sequenceNames[index]}-`);
-      expect(src.includes('-portrait-')).toBe(viewport.width < viewport.height);
+      expect(src).toContain(`${viewport.width <= 760 ? 'mobile-directions' : 'directions-sequence'}-blue-hour-${sequenceNames[index]}-`);
+      expect(src.includes('-portrait-')).toBe(viewport.width > 760 && viewport.width < viewport.height);
       if (index < sequenceNames.length - 1) await page.clock.fastForward(6000);
     }
   });
@@ -150,7 +150,7 @@ test('changing theme while the carousel is paused preserves the slide and pause 
     await chooseTheme(page, theme);
     await expect(first).toHaveAttribute('data-art-theme', theme);
     await expect.poll(() => first.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0)).toBe(true);
-    expect(await first.evaluate((node: HTMLImageElement) => node.currentSrc)).toContain(`directions-sequence-${style}-angary-`);
+    expect(await first.evaluate((node: HTMLImageElement) => node.currentSrc)).toContain(`${page.viewportSize()!.width <= 760 ? 'mobile-directions' : 'directions-sequence'}-${style}-angary-`);
     await expect(first).toHaveClass(/is-active/);
     await expect(hero.getByRole('button', { name: 'Відтворити показ напрямів' })).toBeVisible();
   }
@@ -188,7 +188,8 @@ for (const viewport of [
     const necessaryCookies = page.getByRole('button', { name: 'Лише необхідні', exact: true });
     if (await necessaryCookies.isVisible()) await necessaryCookies.click();
     const frames = hero.locator('img.directions-hero-sequence-image');
-    const portrait = viewport.width <= 1050 && viewport.height >= viewport.width;
+    const phone = viewport.width <= 760;
+    const portrait = !phone && viewport.width <= 1050 && viewport.height >= viewport.width;
 
     for (let index = 0; index < sequenceNames.length; index++) {
       const frame = frames.nth(index);
@@ -198,8 +199,17 @@ for (const viewport of [
       // Loading and the active class alone can pass before the crossfade has painted.
       await expect(frame).toHaveCSS('opacity', '1');
       const source = await frame.evaluate((image: HTMLImageElement) => image.currentSrc);
-      expect(source).toContain(`directions-sequence-daylight-${sequenceNames[index]}-`);
+      expect(source).toContain(`${phone ? 'mobile-directions' : 'directions-sequence'}-daylight-${sequenceNames[index]}-`);
       expect(source.includes('-portrait-')).toBe(portrait);
+      if (phone) {
+        expect(source).toMatch(/-(480|960)w\.[0-9a-f]{8}\.avif$/);
+        const image = await frame.evaluate((node: HTMLImageElement) => {
+          const box = node.getBoundingClientRect();
+          return { sourceRatio: node.naturalWidth / node.naturalHeight, boxRatio: box.width / box.height };
+        });
+        expect(image.sourceRatio, 'the mobile file preserves its 3:2 window').toBeCloseTo(1.5, 2);
+        expect(image.boxRatio, 'each mobile slide displays that full window').toBeCloseTo(1.5, 2);
+      }
 
       const suffix = index === 0 ? '' : `-${sequenceNames[index]}`;
       await page.screenshot({
