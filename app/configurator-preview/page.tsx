@@ -7,6 +7,8 @@ import './configurator.css';
 export const metadata = createBasicPageMetadata({
   title: brandedTitle('Конфігуратор ангара (POC)'),
   description: 'Внутрішній proof of concept живого конфігуратора ангара — не production-сторінка.',
+  // its own canonical, not the layout's «/» (X-01 · PDO-29): a noindex page claimed to be the home page
+  path: '/configurator-preview',
   robots: { index: false, follow: false },
 });
 
