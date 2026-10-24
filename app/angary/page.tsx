@@ -17,16 +17,15 @@ import './angary-editorial.css';
 
 export const metadata = createDirectionMetadata('angary');
 
-// What each cost factor covers on /angary (owner 24.10, W2-01 · PDO-12 A), in words the page already says: the
-// configurator's sizes, frame, cladding and gates and its note on the foundation, and the Delivery Model's names. The
-// shared costFactors() (also on /yak) keeps its own detail — here only «Умови майданчика», which has no entry.
+// What each cost factor covers on /angary (owner 24.10, W2-01 · PDO-12 A), said for a hangar in words the page already
+// says: the configurator's sizes, frame, cladding and gates and its note on the foundation, and the Delivery Model's
+// names. The shared costFactors() says it in general words for /yak; the site and the dependencies keep the shared lines.
 const COST_FACTOR_DETAILS: Readonly<Record<string, string>> = {
   dimensions: 'довжина, ширина, висота стін і в конику',
   structure: 'проліт без колон чи з рядом колон, сніг, вітер, кран-балка',
   foundation: 'визначає проєктувальник після розрахунку навантажень і з урахуванням умов майданчика',
   insulation: 'профнастил чи сендвіч-панель для стін і покрівлі',
   technology: 'ворота, двері, спеціалізоване обладнання',
-  timeline: 'строки, залежності між підрядниками',
 };
 
 export default function HangarsPage() {

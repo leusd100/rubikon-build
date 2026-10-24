@@ -1,10 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { openControlGroup } from './configurator.helpers';
 
-// W2-01 · the /angary cost factors (owner 24.10: PDO-12 A). Every one of the seven factors has a line saying what it
-// covers, in words the page already says (the configurator's and the Delivery Model's); the visitor's own note («У вашій
-// конфігурації: …») stands under that line. The shared list on /yak keeps its own lines. Every test denies the optional
-// cookies and answers any Google request with an empty 200, so no tag can load.
+// W2-01 · the cost factors (owner 24.10: PDO-12 A, then /yak). Every one of the seven factors has a line saying what it
+// covers: on /angary for a hangar, in words the page already says (the configurator's and the Delivery Model's), with the
+// visitor's own note («У вашій конфігурації: …») under it; on /yak-pratsyuiemo in general words, for every direction.
+// Every test denies the optional cookies and answers any Google request with an empty 200, so no tag can load.
 
 test.beforeEach(async ({ context, isMobile }) => {
   test.skip(isMobile, 'each test sets its own windows');
@@ -20,12 +20,22 @@ async function open(page: Page, path: string, width: number, height = 900) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-const LINES = [
+const ANGARY = [
   ['Габарити', 'довжина, ширина, висота стін і в конику'],
   ['Конструктив і навантаження', 'проліт без колон чи з рядом колон, сніг, вітер, кран-балка'],
   ['Фундамент', 'визначає проєктувальник після розрахунку навантажень і з урахуванням умов майданчика'],
   ['Утеплення', 'профнастил чи сендвіч-панель для стін і покрівлі'],
   ['Технологія й обладнання', 'ворота, двері, спеціалізоване обладнання'],
+  ['Умови майданчика', 'логістика, роботи на діючому об’єкті, доступність майданчика, монтажні обмеження'],
+  ['Залежності від інших робіт і строки', 'строки, залежності між підрядниками'],
+];
+
+const GENERAL = [
+  ['Габарити', 'площа, прольоти, висота об’єкта'],
+  ['Конструктив і навантаження', 'схема каркаса чи основи; сніг, вітер, обладнання на конструкції'],
+  ['Фундамент', 'визначає проєктувальник після розрахунку навантажень і з урахуванням умов майданчика'],
+  ['Утеплення', 'з утепленням чи без, для стін і покрівлі'],
+  ['Технологія й обладнання', 'технологічні вимоги, спеціалізоване обладнання'],
   ['Умови майданчика', 'логістика, роботи на діючому об’єкті, доступність майданчика, монтажні обмеження'],
   ['Залежності від інших робіт і строки', 'строки, залежності між підрядниками'],
 ];
@@ -36,11 +46,11 @@ const rows = (page: Page, list: string) => page.locator(`${list} .proc-factors l
   return [item.querySelector('b')!.textContent, detail && detail.getBoundingClientRect().height > 0 ? detail.textContent : null];
 }));
 
-test.describe('/angary · what each cost factor covers (PDO-12 A)', () => {
+test.describe('what each cost factor covers (PDO-12 A)', () => {
   test('on a phone and a desktop all seven factors have their line', async ({ page }) => {
     for (const width of [390, 1440]) {
       await open(page, '/angary', width, width < 761 ? 844 : 900);
-      expect(await rows(page, '#vartist'), `${width}px`).toEqual(LINES);
+      expect(await rows(page, '#vartist'), `${width}px`).toEqual(ANGARY);
     }
   });
 
@@ -55,8 +65,10 @@ test.describe('/angary · what each cost factor covers (PDO-12 A)', () => {
     expect(note.top).toBeGreaterThanOrEqual(line.bottom - 0.5);
   });
 
-  test('/yak-pratsyuiemo keeps the shared list: a line only under «Умови майданчика»', async ({ page }) => {
-    await open(page, '/yak-pratsyuiemo', 1440);
-    expect(await rows(page, '#koshtorys')).toEqual(LINES.map(([title, line]) => [title, title === 'Умови майданчика' ? line : null]));
+  test('/yak-pratsyuiemo gives every factor its general line, on a phone and a desktop', async ({ page }) => {
+    for (const width of [390, 1440]) {
+      await open(page, '/yak-pratsyuiemo', width, width < 761 ? 844 : 900);
+      expect(await rows(page, '#koshtorys'), `${width}px`).toEqual(GENERAL);
+    }
   });
 });
