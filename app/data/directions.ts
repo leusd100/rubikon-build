@@ -74,7 +74,8 @@ export const directions: readonly Direction[] = [
     title: 'Металоконструкції',
     formLabel: 'Металоконструкції',
     serviceTitle: 'Металоконструкції',
-    routeText: 'Виготовлення або монтаж каркасів, ферм і окремих вузлів — за погодженою документацією.',
+    // as HOME and the page say it — we organise the fabrication, we do the erection (owner 24.10, W2-04 · PDO-66)
+    routeText: 'Монтуємо каркаси, ферми й окремі вузли; виготовлення організовуємо — за погодженою документацією.',
     cardTitle: 'Металоконструкції',
     cardText: 'Організовуємо виготовлення й монтуємо каркаси, ферми та вузли за документацією замовника.',
     image: '/media/concepts/direction-steel-v2.jpg',

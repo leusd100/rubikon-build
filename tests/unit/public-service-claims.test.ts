@@ -25,6 +25,9 @@ const forbidden: readonly [RegExp, string][] = [
   [/повн(?:ий|ого)\s+цикл[^.]*про[єе]ктуван/iu, 'Повний цикл від проєктування до здачі'],
   [/по\s+всій\s+Україні|Дніпрі\s+та\s+Україні/iu, 'Працюємо по всій Україні'],
   [/30\s*\+\s*(?:років)?|понад\s+30\s+рок|(?:з\s+)?1995/iu, 'з 1995 року'],
+  // the floors' boundary (W2-04 · PDO-33): a floor's evenness class reads as a finished-floor promise; the base's evenness
+  // is ours, the specialised floor stages are agreed separately
+  [/клас\w*\s+рівності/iu, 'Клас рівності промислової підлоги'],
 ];
 
 describe('P01 public claim boundaries', () => {

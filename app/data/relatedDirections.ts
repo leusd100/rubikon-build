@@ -28,6 +28,8 @@ export const relatedDirections: Record<DirectionId, readonly RelatedDirection[]>
   metalokonstruktsii: [
     { id: 'angary', relation: 'Готова споруда, для якої виготовляється й монтується каркас.' },
     { id: 'zernoskhovyshcha', relation: 'Каркас і опорні конструкції в будівельній частині зерносховища.' },
+    // the frame stands on the foundation's anchors (owner 24.10, W2-04 · PDO-67)
+    { id: 'betonni-roboty', relation: 'Основа під каркас: фундаменти та бетонні основи за проєктом.' },
   ],
   'betonni-roboty': [
     { id: 'angary', relation: 'Споруда, яку зводять на підготовленій основі.' },
