@@ -701,7 +701,8 @@ for (const route of routes.filter(route => route !== '/')) {
       expect(bounds.photoBottom).toBeGreaterThanOrEqual(bounds.bottom - 1);
     }
     expect(bounds.cueBottom).toBeLessThanOrEqual(832);
-    expect(bounds.actionBottom).toBeLessThanOrEqual(bounds.cueBottom - 60);
+    // About's owner-requested tighter gap still leaves the complete 44px cue target separate from the CTA.
+    expect(bounds.actionBottom).toBeLessThanOrEqual(bounds.cueBottom - (route === '/pro-nas' ? 56 : 60));
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
     await expect(hero.locator('.hero-call-primary')).toHaveAttribute('href', 'tel:+380682614264');
     const href = await cue.getAttribute('href');
