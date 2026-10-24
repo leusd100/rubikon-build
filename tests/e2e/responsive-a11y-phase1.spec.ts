@@ -284,9 +284,12 @@ test.describe('anchors and contrast', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/napryamky', { waitUntil: 'load' });
     const colors = () => page.evaluate(() => [...document.querySelectorAll('nav.breadcrumb :is(a, b)')].map((element) => getComputedStyle(element).color));
-    for (const color of await colors()) expect(['rgba(255, 255, 255, 0.86)', 'rgb(255, 255, 255)']).toContain(color);
+    // One phone-hero treatment (#243, 24.10): the links take the band's text token --color-dark-text (#F5F2EB) instead of
+    // 86 % white; the current page stays #fff
+    const light = ['rgb(245, 242, 235)', 'rgb(255, 255, 255)'];
+    for (const color of await colors()) expect(light).toContain(color);
     await page.setViewportSize({ width: 1250, height: 613 });
-    await expect.poll(colors).not.toContain('rgba(255, 255, 255, 0.86)');
+    await expect.poll(async () => (await colors()).filter((color) => light.includes(color))).toEqual([]);
   });
 });
 

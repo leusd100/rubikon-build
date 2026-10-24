@@ -183,8 +183,11 @@ test.describe('public route smoke tests', () => {
         let heroPosterShouldMatch: boolean;
 
         if (route.path === '/napryamky') {
+          // Up to 760 px the scenes are their 3:2 phone windows, mobile-directions-* (#243, 24.10)
           expectedHeroPosterMessage = 'Directions should use its responsive static hero sequence';
-          expectedHeroPosterSubstring = '/media-responsive/directions-sequence-';
+          expectedHeroPosterSubstring = (page.viewportSize()?.width ?? 0) <= 760
+            ? '/media-responsive/mobile-directions-'
+            : '/media-responsive/directions-sequence-';
           heroPosterShouldMatch = true;
         } else if (staticDirectionPaths.has(route.path)) {
           expectedHeroPosterMessage = `${route.path} should use its responsive static hero`;
