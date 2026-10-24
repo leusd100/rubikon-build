@@ -86,7 +86,7 @@
 
 ## Еталони (DEC-18)
 
-Не оновлено. Linux-рендери з CI — власнику до оновлення.
+Оновлено 24.10 з OK Дмитра: п’ять Linux-рендерів з CI `40074060231` (`process-terms-*` ×3, `direction-faq-mobile-375`, `direction-faq-tablet-768`), мітка `visual-freeze`.
 
 - **/yak, `process-terms-mobile-375`, `process-terms-tablet-768`, `process-terms-desktop-1440`** (`#koshtorys`). Змінюються по суті: у списку чинників з’являються рядки.
   - **Рендери.** Main Regression `40074060231` (`36b95de`), Main visual (2/2). 375: 343 × 2736 → 2978 (+242). 768: 712 × 2410 → 2564 (+154). 1440: 1332 × 1718 → 1833 (+115).
