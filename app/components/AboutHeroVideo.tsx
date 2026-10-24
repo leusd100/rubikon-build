@@ -6,13 +6,13 @@ import { useSyncExternalStore } from 'react';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { useViewportVariant, type ViewportVariant } from '../hooks/useViewportVariant';
 
-// Mobile media review, 24.10: candidate A reuses HOME's approved H1 industrial interior.
+// Owner revision, 24.10: a distinct generated exterior frame concept replaces the repeated HOME H1.
 // It has no people and makes no claim to show a completed RUBIKON project; the existing
 // visible «Ілюстрація» label remains. Desktop/tablet footage and the 600px boundary are unchanged.
 // Owner preview is required before merging this selection.
 const STATIC_QUERY = '(max-width: 600px)';
-export const ABOUT_STATIC_SRC = '/media/home-v2/concepts/hero-h1-1024w.webp';
-const ABOUT_STATIC_SRCSET = '/media/home-v2/concepts/hero-h1-480w.webp 480w, /media/home-v2/concepts/hero-h1-768w.webp 768w, /media/home-v2/concepts/hero-h1-1024w.webp 1024w';
+export const ABOUT_STATIC_SRC = '/media/about/about-frame-concept-v2-1024w.webp';
+const ABOUT_STATIC_SRCSET = '/media/about/about-frame-concept-v2-480w.webp 480w, /media/about/about-frame-concept-v2-768w.webp 768w, /media/about/about-frame-concept-v2-1024w.webp 1024w';
 
 // As on HOME, the 0.85 slow-down is in the files (re-timed to an even 30 fps by scripts/retime-hero-clips.py), so the
 // desktop clips play at 1.0 (OD-S1 option B, 15.10)

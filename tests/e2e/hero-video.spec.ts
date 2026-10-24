@@ -210,8 +210,31 @@ async function denyOptionalCookies(page: Page) {
 
 const pages = [
   { path: '/', hero: '.hv2-hero', image: '.hv2-hero-still', family: 'hero-h1-', old: 'hero-mobile-band-' },
-  { path: '/pro-nas', hero: '.about-subhero', image: '.about-hero-still', family: 'hero-h1-', old: 'about-p5-' },
+  { path: '/pro-nas', hero: '.about-subhero', image: '.about-hero-still', family: 'about-frame-concept-v2-', old: 'about-p5-' },
 ] as const;
+
+test('About phone concept keeps its full framing before and after hydration', async ({ browser, baseURL }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'compare explicit phone contexts once');
+  const framing = [];
+  for (const javaScriptEnabled of [false, true]) {
+    const context = await browser.newContext({ baseURL, javaScriptEnabled, viewport: { width: 390, height: 844 } });
+    try {
+      const page = await context.newPage();
+      await page.goto('/pro-nas', { waitUntil: 'load' });
+      const image = page.locator(javaScriptEnabled ? '.about-hero-still' : '.about-hero-media img.direction-hero-poster');
+      await expect(image).toBeVisible();
+      framing.push(await image.evaluate(element => {
+        const image = element as HTMLImageElement;
+        const style = getComputedStyle(image), rect = image.getBoundingClientRect();
+        return { source: new URL(image.currentSrc).pathname, fit: style.objectFit, position: style.objectPosition,
+          width: rect.width, height: rect.height, x: rect.x, y: rect.y };
+      }));
+    } finally { await context.close(); }
+  }
+  expect(framing[0]).toEqual(framing[1]);
+  expect(framing[1].fit).toBe('contain');
+  expect(framing[1].height).toBe(585);
+});
 
 test('a request link followed before hydration still opens the HOME form', async ({ page }) => {
   await denyOptionalCookies(page);
@@ -309,7 +332,8 @@ for (const deviceScaleFactor of [1, 2]) {
         const videos: string[] = [];
         page.on('request', request => {
           const path = new URL(request.url()).pathname;
-          if (path.includes(target.family) || path.includes(target.old)) posters.push(path);
+          if (path.includes(target.family) || path.includes(target.old)
+            || (target.path === '/pro-nas' && path.includes('/hero-h1-'))) posters.push(path);
           if (/\.(mp4|m4v)$/.test(path)) videos.push(path);
         });
         await page.goto(target.path, { waitUntil: 'load' });
@@ -330,7 +354,7 @@ for (const deviceScaleFactor of [1, 2]) {
 
 for (const target of [
   { path: '/', width: 761, family: 'hero-h1-' },
-  { path: '/pro-nas', width: 601, family: 'hero-h1-' },
+  { path: '/pro-nas', width: 601, family: 'about-frame-concept-v2-' },
 ]) {
   test(`${target.path}: the phone poster is not fetched above its ${target.width - 1}px boundary`, async ({ page }) => {
     await denyOptionalCookies(page);

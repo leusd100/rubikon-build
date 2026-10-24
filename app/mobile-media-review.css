@@ -6,5 +6,11 @@
   }
 }
 @media (max-width: 600px) {
-  .about-hero-media > .about-hero-still { object-position: 48% 38%; }
+  /* Keep the full gable inside narrow/tall phones instead of cropping its columns.
+     The existing hero overlay continues over the quiet lower text area. */
+  main.about-page .about-hero-media img.direction-hero-poster {
+    height: min(150vw, 100%) !important;
+    object-fit: contain;
+    object-position: center top;
+  }
 }

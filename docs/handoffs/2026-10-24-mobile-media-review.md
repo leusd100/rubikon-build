@@ -1,5 +1,7 @@
 # Mobile Hero Media — prototype for owner review (24.10.2026)
 
+> **Оновлення за зауваженням власника:** повтор HOME на About відхилено. Новий окремий рендер — About A у галереї другого раунду. Далі наведено історичний огляд першого раунду; його рекомендація H1 для About вже не актуальна. Нові HOME/About та зум хаба ще чекають вибору.
+
 Три зміни: `/pro-nas` отримує people-free H1 на телефоні; `/napryamky` показує всі п’ять конструкцій у мобільному полі 3:2; `/pokrivelni-roboty` має окремий crop з меншим небом. Вихідні ілюстрації вже наявні в сайті. Зміна візуальних рішень потребує owner preview перед merge. Desktop, tablet >760 px, тексти, шапка та CTA geometry збережені. Еталони DEC-18 не оновлено.
 
 ![Усі маршрути до/після light](media/mobile-media-review/before-after-all-routes-light.jpg)
