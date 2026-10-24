@@ -270,7 +270,6 @@ export default function DeliveryModelPage() {
 
       {/* 6 · Cost, time, changes */}
       <section className="page-section proc-terms" id="koshtorys" aria-labelledby="proc-terms-title">
-        <div className="proc-terms-bg" aria-hidden="true"><div className="proc-terms-image" /></div>
         <div className="shell">
           <SectionHeader
             eyebrow="Кошторис і строки"

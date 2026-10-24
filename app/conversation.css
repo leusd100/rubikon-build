@@ -5,26 +5,13 @@
    and «Що буде після звернення» under the call. Pages change only the words: heading, lead, the preselected direction
    and the four step texts (app/data/conversation.ts). Colours come from the theme roles (app/theme.css). */
 
-/* Paper in Light (graphite in Dark), with the desk-and-drawings photo turned into a faint sheet texture: visible
-   on the right behind the form, almost gone behind the text. Decorative only — never evidence. */
+/* Paper in Light, graphite in Dark — no picture behind the form (owner 24.10, W2-17 · PDO-92 B): the stock frame of hands
+   on a drawing was the last backdrop under content; the sheet's own marks stay in the margins (sheet-field.css). */
 .conversation {
   /* clip, not hidden: hidden would make this section the scroll container and break the sticky intro */
   position: relative; overflow: clip; isolation: isolate; color: var(--color-text); background: var(--color-bg);
   --conv-tg: .57; --conv-wa: .51; --conv-vb: .77; /* messenger-icon greys, see the channels below */
 }
-.conversation-bg { position: absolute; z-index: -1; inset: 0; }
-.conversation-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 45%; filter: grayscale(1) sepia(.25) contrast(.92) brightness(1.08); }
-.conversation-bg::after {
-  content: ''; position: absolute; inset: 0;
-  background:
-    linear-gradient(90deg,
-      color-mix(in srgb, var(--color-bg) 97%, transparent) 0%,
-      color-mix(in srgb, var(--color-bg) 93%, transparent) 36%,
-      color-mix(in srgb, var(--color-bg) 72%, transparent) 64%,
-      color-mix(in srgb, var(--color-bg) 80%, transparent) 100%),
-    linear-gradient(0deg, color-mix(in srgb, var(--color-bg) 70%, transparent) 0%, transparent 40%);
-}
-:root[data-theme="dark"] .conversation-bg img { filter: grayscale(.6) sepia(.2) brightness(.55); }
 .conversation-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .conversation-kicker > span { width: 26px; height: 2px; flex: none; background: var(--color-accent); }
 /* Desktop: the steps sit under the call as a 2 × 2 title block, so the left column ends with the form. Tablet: the
@@ -143,9 +130,6 @@
 }
 @media (max-width: 760px) {
   .conversation h2 { font-size: var(--title-section); }
-  .conversation-bg img { object-position: 50% 30%; }
-  /* 90 % at the top, was 80: the 12 px copper kicker «Обговорити …» sat on the photo's darker greys at 4,2 : 1 (sweep 03.10) */
-  .conversation-bg::after { background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg) 90%, transparent) 0%, color-mix(in srgb, var(--color-bg) 92%, transparent) 38%, color-mix(in srgb, var(--color-bg) 97%, transparent) 100%); }
   .conversation-lead { margin-top: 16px; }
   .conversation-contact { width: 100%; margin-top: 24px; }
   .conversation-call .conversation-call-icon { width: 58px; }
