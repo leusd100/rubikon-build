@@ -5,12 +5,35 @@
     object-position: var(--direction-phone-image-position, var(--direction-hero-image-position-mobile, center 60%)) !important;
   }
 }
-@media (max-width: 600px) {
-  /* Keep the full gable inside narrow/tall phones instead of cropping its columns.
-     The existing hero overlay continues over the quiet lower text area. */
-  main.about-page .about-hero-media img.direction-hero-poster {
-    height: min(150vw, 100%) !important;
+/* Direction C: retain the entire line-to-material illustration in the upper scene.
+   The graphite image background fills the hero tail even with enlarged copy. */
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-hero .hero-media img.direction-hero-poster {
+    height: 100% !important;
     object-fit: contain;
-    object-position: center top;
+    object-position: center var(--hv2-header);
+    background: #121613;
+    filter: none;
+  }
+  main[data-home="v2"] .hero.hv2-hero .hero-shade {
+    background: linear-gradient(180deg, rgba(18,22,19,.03) var(--hv2-header),
+      rgba(18,22,19,.08) clamp(80px, calc(100svh - 39.375rem), 300px),
+      rgba(18,22,19,.88) clamp(140px, calc(100svh - 32.5rem), 420px),
+      #121613 clamp(300px, calc(100svh - 23rem), 550px));
+  }
+}
+@media (max-width: 600px) {
+  main.about-page .about-hero-media img.direction-hero-poster {
+    height: 100% !important;
+    object-fit: contain;
+    object-position: center var(--phone-scene-header);
+    background: #121613;
+    filter: none;
+  }
+  main.about-page .about-subhero .subhero-overlay {
+    background: linear-gradient(180deg, rgba(18,22,19,.03) var(--phone-scene-header),
+      rgba(18,22,19,.08) clamp(80px, calc(100svh - 39.375rem), 300px),
+      rgba(18,22,19,.88) clamp(140px, calc(100svh - 32.5rem), 420px),
+      #121613 clamp(300px, calc(100svh - 23rem), 550px));
   }
 }

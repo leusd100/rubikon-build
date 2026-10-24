@@ -121,7 +121,7 @@ for (const [density, width] of [[1, 480], [2, 1024]] as const) {
       const posters: string[] = [];
       page.on('request', (request) => {
         const path = new URL(request.url()).pathname;
-        if (path.includes('/hero-h1-') || path.includes('/hero-mobile-band-')) posters.push(path);
+        if (path.includes('/hero-line-concept-v3-') || path.includes('/hero-h1-') || path.includes('/hero-mobile-band-')) posters.push(path);
       });
       await page.goto('/');
       const still = page.locator('.hero img.hv2-hero-still');
@@ -129,8 +129,8 @@ for (const [density, width] of [[1, 480], [2, 1024]] as const) {
       await expect.poll(() => still.evaluate((element) => {
         const image = element as HTMLImageElement;
         return image.complete && image.naturalWidth > 0 ? new URL(image.currentSrc).pathname : null;
-      })).toBe(`/media/home-v2/concepts/hero-h1-${width}w.webp`);
-      expect(posters).toEqual([`/media/home-v2/concepts/hero-h1-${width}w.webp`]);
+      })).toBe(`/media/home-v2/concepts/hero-line-concept-v3-${width}w.webp`);
+      expect(posters).toEqual([`/media/home-v2/concepts/hero-line-concept-v3-${width}w.webp`]);
       await expect(page.locator('.hero video')).toHaveCount(0);
     } finally {
       await context.close();
@@ -209,8 +209,8 @@ async function denyOptionalCookies(page: Page) {
 }
 
 const pages = [
-  { path: '/', hero: '.hv2-hero', image: '.hv2-hero-still', family: 'hero-h1-', old: 'hero-mobile-band-' },
-  { path: '/pro-nas', hero: '.about-subhero', image: '.about-hero-still', family: 'about-frame-concept-v2-', old: 'about-p5-' },
+  { path: '/', hero: '.hv2-hero', image: '.hv2-hero-still', family: 'hero-line-concept-v3-', old: 'hero-mobile-band-' },
+  { path: '/pro-nas', hero: '.about-subhero', image: '.about-hero-still', family: 'about-line-concept-v3-', old: 'about-p5-' },
 ] as const;
 
 test('About phone concept keeps its full framing before and after hydration', async ({ browser, baseURL }, testInfo) => {
@@ -233,7 +233,8 @@ test('About phone concept keeps its full framing before and after hydration', as
   }
   expect(framing[0]).toEqual(framing[1]);
   expect(framing[1].fit).toBe('contain');
-  expect(framing[1].height).toBe(585);
+  expect(framing[1].position).toBe('50% 67px');
+  expect(framing[1].height).toBe(908);
 });
 
 test('a request link followed before hydration still opens the HOME form', async ({ page }) => {
@@ -332,8 +333,9 @@ for (const deviceScaleFactor of [1, 2]) {
         const videos: string[] = [];
         page.on('request', request => {
           const path = new URL(request.url()).pathname;
-          if (path.includes(target.family) || path.includes(target.old)
-            || (target.path === '/pro-nas' && path.includes('/hero-h1-'))) posters.push(path);
+          if (path.includes(target.family)
+            || ['hero-h1-', 'hero-mobile-band-', 'about-p5-', 'about-frame-concept-v2-'].some(family => path.includes(family))
+            || (target.path === '/pro-nas' && path.includes('/hero-line-concept-v3-'))) posters.push(path);
           if (/\.(mp4|m4v)$/.test(path)) videos.push(path);
         });
         await page.goto(target.path, { waitUntil: 'load' });
@@ -353,8 +355,8 @@ for (const deviceScaleFactor of [1, 2]) {
 }
 
 for (const target of [
-  { path: '/', width: 761, family: 'hero-h1-' },
-  { path: '/pro-nas', width: 601, family: 'about-frame-concept-v2-' },
+  { path: '/', width: 761, family: 'hero-line-concept-v3-' },
+  { path: '/pro-nas', width: 601, family: 'about-line-concept-v3-' },
 ]) {
   test(`${target.path}: the phone poster is not fetched above its ${target.width - 1}px boundary`, async ({ page }) => {
     await denyOptionalCookies(page);
