@@ -5,7 +5,7 @@
 | Дата | 2026-10-24 |
 | Виконавець | Claude Code |
 | Підстава | Main Regression [40101480447](https://github.com/leusd100/rubikon-build/actions/runs/40101480447) на `84a2fcc` (#243 «єдиний підхід до hero та обрані ілюстрації C») — три падіння |
-| PR | Draft. **Merge — лише з окремого OK Дмитра** |
+| PR | [#245](https://github.com/leusd100/rubikon-build/pull/245), Ready for review (позначено власником). **Merge — лише з окремого OK Дмитра** |
 | Гілка / base | `fix/main-red-after-243` від `main` `84a2fcc` |
 | Коміти | **`dede882`** — тести · цей handoff |
 | Змінено | `tests/e2e/responsive-a11y-phase1.spec.ts`, `tests/e2e/smoke.spec.ts` |
