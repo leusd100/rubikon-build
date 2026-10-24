@@ -18,9 +18,11 @@ async function acceptAllCookies(page: Page) {
 async function fillInquiryFields(page: Page) {
   const form = page.locator('form.inquiry-form');
 
-  await form.getByText('Telegram', { exact: true }).click();
+  // the reply-method radios, by their group: the comment's hint has a «Telegram» link of its own (W2-04 · PDO-31)
+  const contact = form.getByLabel('Контакт', { exact: true });
+  await contact.getByText('Telegram', { exact: true }).click();
   await expect(form.getByRole('radio', { name: 'Telegram', exact: true })).toBeChecked();
-  await form.getByText('Дзвінок', { exact: true }).click();
+  await contact.getByText('Дзвінок', { exact: true }).click();
   await expect(form.getByRole('radio', { name: 'Дзвінок', exact: true })).toBeChecked();
   await expect(form.getByRole('button', { name: 'Надіслати запит', exact: true })).toBeVisible();
 

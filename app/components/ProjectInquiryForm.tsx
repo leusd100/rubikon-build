@@ -535,8 +535,11 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                 placeholder={taskPlaceholder(otherPurpose)}
                 aria-describedby="inquiry-comment-hint"
               />
+              {/* where the drawings can go now, by the same links (and contact_click) as the header's (owner 24.10, W2-04 ·
+                  PDO-31 A′): the form takes no files, and «узгодимо передачу файлів у відповідь» put them off */}
               <small id="inquiry-comment-hint" className="inquiry-field-hint">
-                Якщо маєте креслення або специфікацію, напишіть про це — узгодимо передачу файлів у відповідь.
+                Креслення можна надіслати на <a href={companyContactLinks.email} data-contact-method="email">{company.email}</a> або в{' '}
+                <a href={messengerContacts.telegram.href} data-contact-method="telegram" target="_blank" rel="noreferrer">Telegram</a>.
               </small>
             </div>
 

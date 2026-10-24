@@ -500,6 +500,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-form input:focus, .inquiry-form select:focus, .inquiry-form textarea:focus { border-color: var(--color-focus); background: var(--color-field); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 26%, transparent); }
 .inquiry-form input::placeholder, .inquiry-form textarea::placeholder { color: var(--color-text-muted); opacity: 1; }
 .inquiry-field-hint { margin-top: -3px; color: var(--color-text-muted); font-size: 13px; line-height: 1.4; }
+/* the hint's email and Telegram: text-coloured, underlined, copper under the pointer */
+.inquiry-field-hint a { color: var(--color-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.inquiry-field-hint a:hover { color: var(--color-accent-strong); }
 .inquiry-form :is(input, select, textarea):user-invalid { border-color: var(--color-error); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 16%, transparent); }
 .inquiry-choice { margin: 22px 0 0; padding: 0; border: 0; }
 .inquiry-choice legend { margin-bottom: 10px; }
