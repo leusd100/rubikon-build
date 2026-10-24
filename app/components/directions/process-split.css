@@ -73,14 +73,16 @@
 
 /* Phone (Phase 3, PROPOSED): the same words and drawings in less height — the step's drawing stands beside its title and
    outcome instead of on a row of its own, and «Ви» / «Ми» lead their lines instead of standing over them. Every text
-   stays; the /angary route keeps its own layout (its brief action sits in «Ви»). */
+   stays. The /angary route too since 24.10 (owner, W2-01 · PDO-11 A): its brief action stays under the sentence in «Ви».
+   The doubled class keeps the weight these rules had with :not(.angary-route), so the last step still keeps its 26 px
+   over the 1050 px rule's `li:last-child` and the other pages do not change. */
 @media (max-width: 760px) {
-  .process-split:not(.angary-route) li { grid-template-columns: minmax(0, 1fr) 96px; grid-template-areas: "title node" "result node" "you you" "we we"; column-gap: 12px; padding-bottom: 26px; }
-  .process-split:not(.angary-route) h3 { padding-bottom: 6px; }
-  .process-split:not(.angary-route) .ps-result { align-self: start; padding: 0 0 4px; }
-  .process-split:not(.angary-route) .ps-node { align-self: start; height: 60px; }
-  .process-split:not(.angary-route) .ps-node .pd { left: auto; right: 0; width: 96px; height: 60px; }
-  .process-split:not(.angary-route) .ps-you { padding: 10px 0 0; }
-  .process-split:not(.angary-route) .ps-we { padding-top: 6px; }
-  .process-split:not(.angary-route) :is(.ps-you, .ps-we) small { display: inline; margin: 0 8px 0 0; }
+  .process-split.process-split li { grid-template-columns: minmax(0, 1fr) 96px; grid-template-areas: "title node" "result node" "you you" "we we"; column-gap: 12px; padding-bottom: 26px; }
+  .process-split.process-split h3 { padding-bottom: 6px; }
+  .process-split.process-split .ps-result { align-self: start; padding: 0 0 4px; }
+  .process-split.process-split .ps-node { align-self: start; height: 60px; }
+  .process-split.process-split .ps-node .pd { left: auto; right: 0; width: 96px; height: 60px; }
+  .process-split.process-split .ps-you { padding: 10px 0 0; }
+  .process-split.process-split .ps-we { padding-top: 6px; }
+  .process-split.process-split :is(.ps-you, .ps-we) small { display: inline; margin: 0 8px 0 0; }
 }
