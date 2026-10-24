@@ -194,6 +194,8 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
 // Owner, 14.10 (#191, Typography Stage 04): Fixel Display replaced Jost. At the same size it sets 12–16 % wider, so
 // three section titles and one card title take a line more at 1440 px (+146 px): 8.93 → 9.09 screens on macOS, 9.11 on
 // the Linux CI runner. The desktop budget is 9.15. The phone page stays inside 12.6 (titles × 0.93 there).
+// Owner, 24.10 (W2-07): the complex's choices wrap on a phone so every option is in sight, its caveat stands under the
+// drawing and its lists are 15 px — 12.09 → 12.40 screens at 390×844, allowed into the phone margin; 12.6 stays the cap.
 // The page is measured without the cookie banner. While it shows, the footer keeps its clearance below the links
 // (+237 px at 1440×900), and it mounts only after hydration, which can land after `load`; `isVisible()` doesn't wait
 // for it (its timeout is ignored), so the budget used to be measured with or without that padding by chance.

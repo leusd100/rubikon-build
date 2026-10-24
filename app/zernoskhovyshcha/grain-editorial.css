@@ -63,6 +63,9 @@
 .dn[data-step="4"] .node-drawing-grain-store [data-show="4"] { opacity: 1; }
 /* The overview shows the steps' numbers only; a step draws its own mark */
 .grain-implementation-band .dn:not([data-step]) .dn-line { opacity: 0; }
+/* …and the building in copper, as the key under it says («мідна лінія — Будівельна частина RUBIKON»): it was graphite
+   until a step lit its part, and with reduced motion no step ever does (owner 24.10, W2-07 · PDO-49 A) */
+.grain-implementation-band .dn:not([data-step]) .node-drawing-grain-store .nd-part { stroke: var(--color-accent); }
 /* Steps 1–3 are the building's: the equipment steps back. Step 4 is where the two meet: the equipment comes forward and
    the building (no part of its own in this step) steps back with the other parts. */
 .dn[data-step]:not([data-step="4"]) .node-drawing-grain-store .gsd-equip { opacity: .38; }

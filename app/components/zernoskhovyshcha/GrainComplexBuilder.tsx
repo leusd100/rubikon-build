@@ -34,14 +34,19 @@ const CROP_ICONS: Record<GrainCrop, ReactNode> = {
 const GLIDE_MS = 3600;
 /** How long a changed module flashes and a new line in «Будує RUBIKON» stays lit */
 const FLASH_MS = 1400;
-/** A tip shown by a touch stays this long (a finger has no «leave» to wait for) */
-const TOUCH_TIP_MS = 2600;
+/** A tip shown by a touch stays this long (a finger has no «leave» to wait for), unless a tap elsewhere or a scroll
+ *  closes it first: its 17 words did not fit the 2.6 s it had (W2-07 · PDO-100) */
+const TOUCH_TIP_MS = 6000;
 /** The tip's distance from its module, and from the drawing's edges it never crosses */
 const TIP_GAP = 10;
 const TIP_EDGE = 8;
 
-/** The module a tip names, and where the phone's sideways view is going if a press just sent it there */
-type Tip = { key: GrainModuleKey; view: number | null };
+/** What the drawing is not: said under it on a phone, at the end of the block on a wider screen */
+const GRAIN_SCALE_CAVEAT = 'Схема без масштабу: кількість силосів і розміри визначає проєкт.';
+
+/** The module a tip names, where the phone's sideways view is going if a press just sent it there, and whether a finger
+ *  opened it (its next tap on the module is the press) */
+type Tip = { key: GrainModuleKey; view: number | null; touch: boolean };
 
 // The block's working part: the choices as real form controls, the drawing that follows them — and answers a pointer
 // itself (owner, 06.10: «креслення як пульт»): a module names who builds what in it, a press adds or removes cleaning
@@ -210,11 +215,24 @@ export function GrainComplexBuilder() {
     update({ crops: on ? [...state.crops, crop] : state.crops.filter((item) => item !== crop) }, 'storage');
 
   // A mouse or a pen names a module by pointing at it; a finger only by a tap — sliding the drawing sideways names nothing —
-  // and its tip goes by itself, as a finger has no «leave»
+  // and its tip goes by itself, as a finger has no «leave»: after a while, at a tap anywhere but a module, or as the page
+  // scrolls
+  useEffect(() => {
+    if (!tip?.touch) return;
+    const close = () => { window.clearTimeout(tipTimer.current); setTip(null); };
+    const away = (event: PointerEvent) => { if (!(event.target instanceof Element && event.target.closest('.gc-hit'))) close(); };
+    document.addEventListener('pointerdown', away);
+    window.addEventListener('scroll', close, { passive: true });
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      window.removeEventListener('scroll', close);
+    };
+  }, [tip]);
   const showTip = (key: GrainModuleKey, view: number | null) => {
     window.clearTimeout(tipTimer.current);
-    setTip({ key, view });
-    if (pointerRef.current === 'touch') tipTimer.current = window.setTimeout(() => setTip(null), TOUCH_TIP_MS);
+    const touch = pointerRef.current === 'touch';
+    setTip({ key, view, touch });
+    if (touch) tipTimer.current = window.setTimeout(() => setTip(null), TOUCH_TIP_MS);
   };
   const enter = (key: GrainModuleKey, pointerType: string) => {
     pointerRef.current = pointerType;
@@ -225,12 +243,19 @@ export function GrainComplexBuilder() {
     window.clearTimeout(tipTimer.current);
     setTip(null);
   };
+  // A mouse presses what it points at. A finger's first tap only names the module — a tap that changed the complex at once
+  // took a module out of the chain, and out of the message, before its tip could be read — and a second tap on the module
+  // whose tip is open changes it (owner 23.10: OD-PX-23 (a), W2-07 · PDO-100)
   const press = (key: GrainModuleKey) => {
+    if (pointerRef.current === 'touch' && tip?.key !== key) {
+      showTip(key, null);
+      return;
+    }
     const patch = grainModulePress(key, state);
     showTip(key, patch ? update(patch, key) : null);
   };
 
-  const info = tip ? grainModuleInfo(tip.key, state) : null;
+  const info = tip ? grainModuleInfo(tip.key, state, tip.touch) : null;
   const crops = GRAIN_CROP_OPTIONS.filter((option) => state.crops.includes(option.value)).map((option) => option.genitive).join(', ');
   const lit = (item: string) => (fresh.includes(item) ? { key: `${item}-${pulse}`, className: 'is-new' } : { key: item });
   const pause = motion && <TourControl touring={running} toggle={() => setRunning(!running)} what="руху зерна" />;
@@ -289,6 +314,8 @@ export function GrainComplexBuilder() {
         <p className="sr-only" aria-live="polite">Ланцюг: {model.chain.join(', ')}</p>
 
         <div className="gc-controls">
+          {/* on a phone the drawing's caveat, right under it: its title block, which says «умовно», is hidden there */}
+          <p className="gc-caption-phone">{GRAIN_SCALE_CAVEAT}</p>
           {/* each crop keeps its own silo (or zone) and colour on the drawing; its icon on the chip is in that colour */}
           <fieldset className="gc-group gc-group-crops">
             <legend>Що зберігаєте</legend>
@@ -350,9 +377,9 @@ export function GrainComplexBuilder() {
           <ul>{model.partners.map((item) => { const { key, className } = lit(item); return <li key={key} className={className}>{item}</li>; })}</ul>
         </div>
         <p className="gc-next">
-          Схема без масштабу: кількість силосів і розміри визначає проєкт.{' '}
+          <span className="gc-next-scale">{GRAIN_SCALE_CAVEAT} </span>
           <span className="gc-next-pointer">Наведіть на модуль креслення — побачите, хто що в ньому робить; натисніть — додасте чи приберете його.</span>
-          <span className="gc-next-touch">Торкніться модуля креслення — побачите, хто що в ньому робить, і додасте чи приберете його.</span>
+          <span className="gc-next-touch">Торкніться модуля креслення — побачите, хто що в ньому робить; торкніться ще раз — додасте чи приберете його.</span>
         </p>
       </div>
     </div>
