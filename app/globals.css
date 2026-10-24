@@ -510,7 +510,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
   background-repeat: no-repeat;
 }
 @media (forced-colors: active) {
-  .inquiry-form select { appearance: auto; -webkit-appearance: auto; padding-right: 14px; }
+  .inquiry-form select { appearance: auto; padding-right: 14px; }
 }
 .inquiry-field-hint { margin-top: -3px; color: var(--color-text-muted); font-size: 13px; line-height: 1.4; }
 /* the hint's email and Telegram: text-coloured, underlined, copper under the pointer */
