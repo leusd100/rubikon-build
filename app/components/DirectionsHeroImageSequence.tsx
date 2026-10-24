@@ -12,7 +12,8 @@ const FADE_DURATION_MS = 2000;
 // Cover scales to the hero's height as well as its width; 100vw alone downloaded a tiny,
 // heavily stretched landscape on tall screens. Portrait sources keep a native-height crop.
 const LANDSCAPE_SIZES = '(min-aspect-ratio: 23/10) 100vw, 230svh';
-const PORTRAIT_SIZES = '(max-width: 760px) 640px, 100vw';
+const PORTRAIT_SIZES = '100vw';
+const ON_SERVER = typeof window === 'undefined';
 const pad = (value: number) => String(value).padStart(2, '0');
 
 /** The slide order follows the five direction records. */
@@ -76,14 +77,23 @@ export function DirectionsHeroImageSequence() {
         return (
           // Keep decoded pixels scoped to their theme, including during hydration.
           <picture key={`${asset.id}-${theme}`}>
-            {shouldAttachSource && <source media="(max-width: 1050px) and (orientation: portrait)" type="image/webp" srcSet={art.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
+            {shouldAttachSource && <source media="(max-width: 760px)" type="image/avif" srcSet={art.mobile.avif} sizes="100vw" />}
+            {shouldAttachSource && <source media="(max-width: 760px)" type="image/webp" srcSet={art.mobile.webp} sizes="100vw" />}
+            {shouldAttachSource && <source media="(min-width: 761px) and (max-width: 1050px) and (orientation: portrait)" type="image/webp" srcSet={art.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
             {shouldAttachSource && <source type="image/webp" srcSet={art.srcSet} sizes={LANDSCAPE_SIZES} />}
             <img
-              ref={index === 0 ? firstImageRef : undefined}
+              ref={(image) => {
+                if (index === 0) firstImageRef.current = image;
+                // Give client-created images their fallback only after the picture sources are in place.
+                // Otherwise WebKit can fetch the landscape fallback as well as the mobile source on a theme change.
+                if (image && !shouldAttachSource) image.removeAttribute('src');
+                else if (image && !image.hasAttribute('src')) image.src = art.fallbackSrc;
+              }}
               aria-hidden="true"
               className={`directions-hero-sequence-image${index === visibleIndex ? ' is-active' : ''}`}
               data-art-theme={theme}
-              src={shouldAttachSource ? art.fallbackSrc : undefined}
+              src={ON_SERVER && shouldAttachSource ? art.fallbackSrc : undefined}
+              suppressHydrationWarning
               alt=""
               width={art.width}
               height={art.height}

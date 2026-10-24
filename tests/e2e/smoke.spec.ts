@@ -196,9 +196,9 @@ test.describe('public route smoke tests', () => {
             expectedHeroPosterMessage = 'Home should use its static phone still';
             expectedHeroPosterSubstring = '/media/home-v2/concepts/hero-h1-';
           } else if (route.path === '/pro-nas') {
-            // Owner-approved P5 process illustration instead of the phone montage.
+            // Distinct people-free About concept instead of the phone montage or HOME illustration.
             expectedHeroPosterMessage = 'About should use its static phone still';
-            expectedHeroPosterSubstring = '/media/about/about-p5-';
+            expectedHeroPosterSubstring = '/media/about/about-frame-concept-v2-';
           } else {
             expectedHeroPosterMessage = `${route.path} should use its mobile hero poster`;
             expectedHeroPosterSubstring = '-768w.webp';
@@ -456,9 +456,9 @@ test.describe('public route smoke tests', () => {
     const still = hero.locator('img.about-hero-still');
     await expect(still).toBeVisible();
     await expect.poll(() => still.evaluate((element) => (element as HTMLImageElement).currentSrc), { timeout: 10_000 })
-      .toContain('/media/about/about-p5-');
-    // The still is decorative for a screen reader (no alt), but a sighted visitor is told what it is: generated people
-    // under «своїми іменами» must not read as the team (owner, 20.10, OD-PX-12 A; review 18.10, PDO-04). The stamp sits in the first screen,
+      .toContain('/media/about/about-frame-concept-v2-');
+    // The still is decorative for a screen reader (no alt), but a sighted visitor is told it is an illustration.
+    // The people-free candidate preserves the provenance decision of 20.10 (OD-PX-12 A; PDO-04). The stamp sits in the first screen,
     // under the compact header, clear of the crumbs and the title
     await expect(still).toHaveAttribute('alt', '');
     const stamp = hero.locator('.about-hero-provenance');

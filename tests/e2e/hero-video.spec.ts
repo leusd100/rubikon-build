@@ -210,8 +210,31 @@ async function denyOptionalCookies(page: Page) {
 
 const pages = [
   { path: '/', hero: '.hv2-hero', image: '.hv2-hero-still', family: 'hero-h1-', old: 'hero-mobile-band-' },
-  { path: '/pro-nas', hero: '.about-subhero', image: '.about-hero-still', family: 'about-p5-', old: 'about-phone-still-' },
+  { path: '/pro-nas', hero: '.about-subhero', image: '.about-hero-still', family: 'about-frame-concept-v2-', old: 'about-p5-' },
 ] as const;
+
+test('About phone concept keeps its full framing before and after hydration', async ({ browser, baseURL }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'compare explicit phone contexts once');
+  const framing = [];
+  for (const javaScriptEnabled of [false, true]) {
+    const context = await browser.newContext({ baseURL, javaScriptEnabled, viewport: { width: 390, height: 844 } });
+    try {
+      const page = await context.newPage();
+      await page.goto('/pro-nas', { waitUntil: 'load' });
+      const image = page.locator(javaScriptEnabled ? '.about-hero-still' : '.about-hero-media img.direction-hero-poster');
+      await expect(image).toBeVisible();
+      framing.push(await image.evaluate(element => {
+        const image = element as HTMLImageElement;
+        const style = getComputedStyle(image), rect = image.getBoundingClientRect();
+        return { source: new URL(image.currentSrc).pathname, fit: style.objectFit, position: style.objectPosition,
+          width: rect.width, height: rect.height, x: rect.x, y: rect.y };
+      }));
+    } finally { await context.close(); }
+  }
+  expect(framing[0]).toEqual(framing[1]);
+  expect(framing[1].fit).toBe('contain');
+  expect(framing[1].height).toBe(585);
+});
 
 test('a request link followed before hydration still opens the HOME form', async ({ page }) => {
   await denyOptionalCookies(page);
@@ -309,7 +332,8 @@ for (const deviceScaleFactor of [1, 2]) {
         const videos: string[] = [];
         page.on('request', request => {
           const path = new URL(request.url()).pathname;
-          if (path.includes(target.family) || path.includes(target.old)) posters.push(path);
+          if (path.includes(target.family) || path.includes(target.old)
+            || (target.path === '/pro-nas' && path.includes('/hero-h1-'))) posters.push(path);
           if (/\.(mp4|m4v)$/.test(path)) videos.push(path);
         });
         await page.goto(target.path, { waitUntil: 'load' });
@@ -330,7 +354,7 @@ for (const deviceScaleFactor of [1, 2]) {
 
 for (const target of [
   { path: '/', width: 761, family: 'hero-h1-' },
-  { path: '/pro-nas', width: 601, family: 'about-p5-' },
+  { path: '/pro-nas', width: 601, family: 'about-frame-concept-v2-' },
 ]) {
   test(`${target.path}: the phone poster is not fetched above its ${target.width - 1}px boundary`, async ({ page }) => {
     await denyOptionalCookies(page);
@@ -585,7 +609,15 @@ test('phone and tablet pages share a clear top header and dense scroll/menu stat
     await expect.poll(alpha).toBe(.92);
     await expect(header).toHaveCSS('backdrop-filter', 'none');
     const media = page.locator('.service-subhero-media, .directions-hero-sequence-image, .proc-hero-media').first();
-    if (await media.count()) expect((await media.boundingBox())!.y, `${route}: image extends behind header`).toBe(0);
+    if (await media.count()) {
+      const box = (await media.boundingBox())!;
+      if (route === '/napryamky' && width <= 760) {
+        expect(box.y, 'mobile hub scene starts at the header edge').toBeCloseTo((await header.boundingBox())!.height, 0);
+        expect(box.height, 'mobile hub preserves the full 3:2 scene').toBeCloseTo(width * 2 / 3, 0);
+      } else {
+        expect(box.y, `${route}: image extends behind header`).toBe(0);
+      }
+    }
     await header.locator('summary').click();
     await expect.poll(alpha).toBe(.97);
     await page.keyboard.press('Escape');
@@ -659,8 +691,13 @@ for (const route of routes.filter(route => route !== '/')) {
       return { bottom: box.bottom, photoTop: photo.top, photoBottom: photo.bottom, cueBottom: cue.bottom, actionBottom: Math.max(...actions.map(r => r.bottom)) };
     });
     expect(bounds.bottom).toBeGreaterThanOrEqual(908);
-    expect(bounds.photoTop).toBe(0);
-    expect(bounds.photoBottom).toBeGreaterThanOrEqual(bounds.bottom - 1);
+    if (route === '/napryamky') {
+      expect(bounds.photoTop).toBeCloseTo((await page.locator('.site-header').boundingBox())!.height, 0);
+      expect(bounds.photoBottom - bounds.photoTop).toBeCloseTo(390 * 2 / 3, 0);
+    } else {
+      expect(bounds.photoTop).toBe(0);
+      expect(bounds.photoBottom).toBeGreaterThanOrEqual(bounds.bottom - 1);
+    }
     expect(bounds.cueBottom).toBeLessThanOrEqual(832);
     expect(bounds.actionBottom).toBeLessThanOrEqual(bounds.cueBottom - 60);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);

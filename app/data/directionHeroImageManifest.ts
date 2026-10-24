@@ -6,6 +6,8 @@ export type DirectionHeroImageAsset = {
   srcSet: string;
   portrait: PortraitSources;
   dark: { fallbackSrc: string; srcSet: string; portrait: PortraitSources };
+  /** Optional phone-only art window; existing tablet and desktop compositions remain intact. */
+  phoneCrop?: { light: PortraitSources; dark: PortraitSources; position: string };
   /** Desktop object-position (from 761 px). The y keeps the structure's top in frame: a wide window crops the art top
    *  and bottom (UX pass 2026-10 — the hangar and the steel frame lost their roofs). Since the picture starts at y 0
    *  behind the 92 % header (PDO-18, «Збалансована» 21.10), the hangar's apex and the frame's top node sat under it at
@@ -89,6 +91,17 @@ export const directionHeroImageAssets = {
     mobileFocalPosition: '55% center',
   },
   'pokrivelni-roboty': {
+    phoneCrop: {
+      light: {
+        avif: '/media-responsive/direction-hero-roof-mobile-light-784w.cadd63a3.avif',
+        webp: '/media-responsive/direction-hero-roof-mobile-light-784w.a91d7c08.webp',
+      },
+      dark: {
+        avif: '/media-responsive/direction-hero-roof-mobile-dark-784w.752881d0.avif',
+        webp: '/media-responsive/direction-hero-roof-mobile-dark-784w.89d72003.webp',
+      },
+      position: '45% center',
+    },
     dark: blueHour('pokrivelni-roboty', ['98a4ea3b', '690f84d1', '6fd2fef5', '25db180e'], { avif: 'fdead887', webp: 'efc25e91' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-pokrivelni-roboty-1536w.9e89e366.webp',
     srcSet: responsiveSrcSet('pokrivelni-roboty', {

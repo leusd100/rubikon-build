@@ -1,0 +1,98 @@
+<!doctype html><html lang="uk"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RUBIKON · вибір мобільного hero</title>
+<style>:root{color-scheme:light;--bg:#f2eee5;--ink:#1a211c;--muted:#596158;--line:#d8cebd;--copper:#97582f}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}main{max-width:1320px;margin:auto;padding:28px 20px 60px}.eyebrow{font-size:12px;font-weight:750;letter-spacing:.13em;color:var(--copper)}h1{font-size:clamp(30px,5vw,54px);letter-spacing:-.045em;line-height:1.08;max-width:900px;margin:12px 0 18px}h2{font-size:25px;margin:38px 0 12px}p{max-width:920px}.intro{color:var(--muted)}a{color:var(--copper);text-underline-offset:4px}button,select{font:inherit;color:inherit;border:1px solid #b6ac9d;background:#faf7f0;padding:10px 14px;cursor:pointer}button[aria-pressed=true]{background:#202a23;color:#fff;border-color:#202a23}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:22px 0 16px}.filters{display:flex;align-items:end;flex-wrap:wrap;gap:12px;padding:14px 0;border-block:1px solid var(--line)}label{display:grid;gap:4px;font-size:12px;font-weight:700}select{font-size:15px}.slides{display:flex;gap:6px;flex-wrap:wrap;margin:15px 0}.slides button{padding:7px 12px}.note{padding:12px 16px;background:#e8dfd0;border-left:3px solid var(--copper);font-size:14px}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:24px 0}.card{min-width:0;border:1px solid var(--line);padding:13px;background:#e9e3d8}.card.chosen{outline:3px solid var(--copper);outline-offset:1px}.letter{display:inline-flex;align-items:center;justify-content:center;background:#242d26;color:#fff;width:30px;height:30px;font-weight:800}.card h3{font-size:20px;margin:9px 0}.card p{font-size:14px;min-height:64px;margin:0 0 12px}.card img{display:block;width:100%;max-width:390px;height:auto;margin:auto}.card button{width:100%;margin:12px 0 0;background:#f8f3e9}.card a{display:block}.sheet{display:block;max-width:100%;height:auto;margin:16px 0}.choice{padding:17px;background:#212b24;color:#f8f1e5}.choice strong{color:#efb589}.links{display:flex;gap:14px;flex-wrap:wrap;font-size:14px}footer{margin-top:35px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}.hidden{display:none!important}@media(max-width:700px){main{padding:22px 12px}.cards{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 4px 15px;margin-inline:-4px;gap:12px}.card{flex:0 0:91%;scroll-snap-align:start}.card p{min-height:0}.tabs button{padding:10px;font-size:14px}.filters{gap:8px}.cards:after{content:'';min-width:2px}}@media(prefers-reduced-motion:no-preference){button{transition:background .15s}}
+</style><main><div class="eyebrow">RUBIKON BUILD · ПРОТОТИПИ ДЛЯ ВИБОРУ · 24.10.2026</div><p class="note"><a href="../creative-hero-options/index.html"><strong>НОВЕ: творчий раунд 3 для головної та About →</strong></a><br>Цей раунд HOME/About відхилено. Варіанти зуму «Напрямків» лишаються для вибору.</p><h1>Більше масштабу.<br>Твій вибір для кожної сторінки.</h1>
+<p class="intro">Три варіанти для «Напрямків», головної та «Про компанію». Спочатку порівняй на 390 px, потім перевір 320 / 430 і темну тему. На телефоні гортай картки A → B → C.</p>
+<p class="note">Це реальні знімки браузера з прототипами. Варіанти B/C — симуляції композицій; текст і кнопки всередині знімків не інтерактивні. Нові рендери — ілюстрації, не виконані об’єкти. Вибір тут зберігається лише у твоєму браузері.</p>
+<nav class="tabs" aria-label="Сторінка"><button data-route="hub">Напрямки</button><button data-route="home">Головна</button><button data-route="about">Про компанію</button></nav>
+<div class="filters"><label>Ширина телефона<select id="width"><option>320</option><option selected>390</option><option>430</option></select></label><label>Тема<select id="theme"><option value="light">Світла</option><option value="dark">Темна</option></select></label><label id="text-label">Збільшений текст<select id="text"><option value="normal">Звичайний</option><option value="200">200% · 390 px · light</option></select></label></div>
+<div id="slideshow"><div class="slides" aria-label="Кадр напрямків"></div><button id="play">Автопоказ усіх 5 кадрів</button><p class="intro" style="font-size:13px">Автопоказ перемикає стабільні знімки кожні 6 секунд. Реальний crossfade залишається в чинному preview сайту.</p></div>
+<h2 id="route-title"></h2><div class="cards" id="cards"></div>
+<div class="choice">Мій вибір: <strong id="choice"></strong><p style="margin:8px 0 0;font-size:14px">Після перегляду напиши в чат, наприклад: «Напрямки B, головна C, про компанію A».</p></div>
+<section id="all-slides"><h2>Усі п’ять сцен поруч</h2><p>Ряд A — поточний масштаб, B — +15%, C — +30%. Ті самі вихідні ілюстрації в обох темах.</p><a id="all-link"><img class="sheet" id="all-image" alt="Три рівні наближення всіх п’яти сцен напрямків"></a></section>
+<h2>Чисті нові рендери</h2><div class="links"><a href="assets/home-power-1024.webp">Головна · ферма</a><a href="assets/about-frame-1024.webp">About A · відкритий каркас</a><a href="assets/about-solid-1024.webp">About B/C · облицювання</a></div>
+<footer>Прототипи: Chromium на 320/390/430 px у двох темах; HOME/About також у WebKit на 390 px та з текстом 200%. Це емуляція, фізичний iPhone 12 потребує твого перегляду. Схвалення варіанта в чаті визначить наступне оновлення Draft PR №243. <a href="https://github.com/leusd100/rubikon-build/pull/243">Відкрити Draft PR</a>.</footer></main>
+<script>const cfg = {"hub": {"name": "Напрямки", "path": "/napryamky", "variants": {"A": {"title": "Ціла споруда · 100%", "note": "Поточний прототип, який сподобався. Найбільше контексту, найспокійніший кадр."}, "B": {"title": "Ближче · +15%", "note": "Помірне наближення. Конструкція виразніша; частина крайніх прольотів виходить за кадр."}, "C": {"title": "Сильний акцент · +30%", "note": "Споруда більша. Втрачає більше країв: порівняй особливо каркас і покрівлю на всіх п’яти кадрах."}}}, "home": {"name": "Головна", "path": "/", "variants": {"A": {"title": "Поточний інтер’єр H1", "note": "Контрольний варіант: глибока перспектива, спокійна композиція."}, "B": {"title": "Масштаб · нова ферма", "note": "Новий рендер. Повний структурний проліт і важка ферма; нижче — спокійна зона для тексту."}, "C": {"title": "Потужний крупний план", "note": "Той самий новий рендер у ближчому кадрі. Ферма домінує; крайні колони залишаються за кадром."}}}, "about": {"name": "Про компанію", "path": "/pro-nas", "variants": {"A": {"title": "Відкритий каркас", "note": "Новий окремий рендер. Виразний фронтон, видно основу й конструкцію. Не повторює HOME."}, "B": {"title": "Солідність · облицювання", "note": "Інший новий рендер: каркас, стінові панелі й широкий проріз. Більш завершений архітектурний образ."}, "C": {"title": "Ближче до конструкції", "note": "Крупніший кадр рендера B. Акцент на колоні, ригелі та примиканні; це фрагмент будівлі, а не загальний вид."}}}};
+const q = id => document.getElementById(id);
+const subjectNames = ['Ангари', 'Зерносховища', 'Металоконструкції', 'Бетон', 'Покрівлі'];
+let route = new URLSearchParams(location.search).get('route') || Object.keys(cfg)[0];
+if (!Object.hasOwn(cfg, route)) route = Object.keys(cfg)[0];
+let slide = 1, timer = null;
+let choices = {};
+try {
+  const saved = JSON.parse(localStorage.getItem('rubikon-hero-options-choice') || '{}');
+  for (const key of Object.keys(cfg)) {
+    if (saved && ['A', 'B', 'C'].includes(saved[key])) choices[key] = saved[key];
+  }
+} catch {}
+
+function element(tag, text, className) {
+  const node = document.createElement(tag);
+  if (text !== undefined) node.textContent = text;
+  if (className) node.className = className;
+  return node;
+}
+function summary() {
+  q('choice').textContent = Object.entries(cfg).map(([key, value]) => value.name + ' ' + (choices[key] || '—')).join(' · ');
+}
+function stop() {
+  if (timer) clearInterval(timer);
+  timer = null;
+  q('play').textContent = 'Автопоказ усіх 5 кадрів';
+}
+function render() {
+  const enlarged = route !== 'hub' && q('text').value === '200';
+  if (enlarged) { q('width').value = '390'; q('theme').value = 'light'; }
+  const width = ['320', '390', '430'].includes(q('width').value) ? q('width').value : '390';
+  const theme = q('theme').value === 'dark' ? 'dark' : 'light';
+  document.querySelectorAll('[data-route]').forEach(button => button.setAttribute('aria-pressed', button.dataset.route === route));
+  q('route-title').textContent = cfg[route].name + ' · A / B / C';
+  q('slideshow').classList.toggle('hidden', route !== 'hub');
+  q('all-slides').classList.toggle('hidden', route !== 'hub');
+  q('text-label').classList.toggle('hidden', route === 'hub');
+  q('cards').replaceChildren();
+  for (const [variant, option] of Object.entries(cfg[route].variants)) {
+    const card = element('article', undefined, 'card' + (choices[route] === variant ? ' chosen' : ''));
+    const file = `screens/${route}-${variant}-${width}-${theme}${route === 'hub' ? '-s' + slide : ''}${enlarged ? '-text200' : ''}.jpg`;
+    card.append(element('span', variant, 'letter'), element('h3', option.title), element('p', option.note));
+    const link = element('a');
+    link.href = file;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    const image = element('img');
+    image.src = file;
+    image.alt = `${cfg[route].name}: варіант ${variant}, ${width} px, ${theme}${route === 'hub' ? ', кадр ' + slide : ''}`;
+    image.loading = 'eager';
+    link.append(image);
+    const button = element('button', choices[route] === variant ? 'Позначено ' + variant : 'Мій варіант ' + variant);
+    button.type = 'button';
+    button.onclick = () => {
+      choices[route] = variant;
+      try { localStorage.setItem('rubikon-hero-options-choice', JSON.stringify(choices)); } catch {}
+      render();
+    };
+    card.append(link, button);
+    q('cards').append(card);
+  }
+  q('all-image').src = `hub-all-slides-${theme}.jpg`;
+  q('all-link').href = q('all-image').src;
+  document.querySelectorAll('[data-slide]').forEach(button => button.setAttribute('aria-pressed', Number(button.dataset.slide) === slide));
+  summary();
+}
+document.querySelectorAll('[data-route]').forEach(button => {
+  button.onclick = () => { stop(); route = button.dataset.route; q('text').value = 'normal'; render(); };
+});
+for (let index = 1; index <= 5; index++) {
+  const button = element('button', index + ' · ' + subjectNames[index - 1]);
+  button.dataset.slide = index;
+  button.onclick = () => { stop(); slide = index; render(); };
+  document.querySelector('.slides').append(button);
+}
+q('play').onclick = () => {
+  if (timer) { stop(); return; }
+  q('play').textContent = 'Зупинити автопоказ';
+  timer = setInterval(() => { slide = slide % 5 + 1; render(); }, 6000);
+};
+for (const id of ['width', 'theme', 'text']) q(id).onchange = render;
+document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+render();
+</script></html>

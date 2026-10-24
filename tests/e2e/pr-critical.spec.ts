@@ -360,8 +360,8 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   await expect(region.locator('figcaption')).toContainText('© учасники OpenStreetMap');
   // The family thesis is said once — by the copper line under the people — not in the heading as well
   await expect(page.locator('main').getByText(/Два покоління/)).toHaveCount(1);
-  // One provenance stamp and only one: the phone hero's still shows generated people under «своїми іменами», so it says
-  // «Ілюстрація» like every other concept hero (owner, 20.10, OD-PX-12 A — revises the no-tag decision of 30.09; review 18.10, PDO-04).
+  // One provenance stamp and only one: the phone hero's people-free candidate is still an illustration, not a project case.
+  // Keep «Ілюстрація» (owner, 20.10, OD-PX-12 A — revises the no-tag decision of 30.09; review 18.10, PDO-04).
   // Nothing else on the page is tagged — the stamp is the hero's, shown only where that still is (≤ 600 px)
   await expect(page.locator('main').getByText('Ілюстрація', { exact: true })).toHaveCount(1);
   await expect(page.locator('.about-subhero .about-hero-provenance')).toHaveText('Ілюстрація');

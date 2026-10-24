@@ -95,7 +95,9 @@ for (const viewport of viewports) {
       expect(imageState.imageWidth).toBe(imageState.heroWidth);
       expect(imageState.heroHeight).toBeGreaterThan(0);
       if (viewport.width === 390) {
-        expect(imageState.currentSrc, `${path} should receive the phone window of the art`).toMatch(/-portrait-784w\.[0-9a-f]{8}\.avif$/);
+        expect(imageState.currentSrc, `${path} should receive its selected phone window`).toMatch(path === '/pokrivelni-roboty'
+          ? /direction-hero-roof-mobile-light-784w\.[0-9a-f]{8}\.avif$/
+          : /-portrait-784w\.[0-9a-f]{8}\.avif$/);
       } else {
         expect(imageState.currentSrc, `${path} keeps the landscape art from ${viewport.width} px`).not.toContain('-portrait-');
       }
@@ -208,14 +210,19 @@ test('direction static heroes use responsive images: a phone gets the window of 
       await expect.poll(() => image.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0)).toBe(true);
       const state = await image.evaluate((node: HTMLImageElement) => {
         const box = node.getBoundingClientRect();
-        return { src: node.currentSrc, aspect: box.width / box.height };
+        return { src: node.currentSrc, aspect: box.width / box.height, naturalWidth: node.naturalWidth, naturalHeight: node.naturalHeight };
       });
       const label = `${path} at ${viewport.width} × ${viewport.height}`;
       if (viewport.width <= 440) {
-        expect(state.src, label).toMatch(/-portrait-784w\.[0-9a-f]{8}\.avif$/);
-        expect(state.aspect, `${label}: the box must not be wider than the phone window`).toBeLessThanOrEqual(784 / 1024);
+        const roof = path === '/pokrivelni-roboty';
+        expect(state.src, label).toMatch(roof
+          ? /direction-hero-roof-mobile-light-784w\.[0-9a-f]{8}\.avif$/
+          : /-portrait-784w\.[0-9a-f]{8}\.avif$/);
+        expect(state.naturalWidth, label).toBe(784);
+        expect(state.naturalHeight, label).toBe(roof ? 844 : 1024);
+        expect(state.aspect, `${label}: the box must not be wider than the selected phone window`).toBeLessThanOrEqual(784 / (roof ? 844 : 1024));
       } else {
-        expect(state.src, label).not.toContain('-portrait-');
+        expect(state.src, label).not.toMatch(/-portrait-|-roof-mobile-/);
       }
     }
   }
@@ -265,7 +272,7 @@ test('direction static heroes use responsive images: a phone never fetches the l
   await page.goto('/pokrivelni-roboty', { waitUntil: 'load' });
   await heroReady('dark');
 
-  expect(requests.filter((file) => !/-portrait-784w\./.test(file)), 'landscape hero files fetched on a phone').toEqual([]);
+  expect(requests.filter((file) => !/(?:-portrait-784w|-roof-mobile-(?:light|dark)-784w)\./.test(file)), 'landscape hero files fetched on a phone').toEqual([]);
   const sets = await page.evaluate(() => (window as Window & { __heroSrcSets?: { file: string; inPicture: boolean }[] }).__heroSrcSets ?? []);
   expect(sets.length, 'the client-made heroes got their src').toBeGreaterThan(0);
   expect(sets.filter((set) => !set.inPicture), 'src set before the img was inside its <picture>').toEqual([]);
@@ -306,7 +313,10 @@ for (const viewport of [
       await expect.poll(() => image.evaluate((node: HTMLImageElement) =>
         node.complete && node.naturalWidth > 0)).toBe(true);
       const src = await image.evaluate((node: HTMLImageElement) => node.currentSrc);
-      expect(src, path).toContain(path === '/napryamky' ? 'directions-sequence-blue-hour-' : 'direction-hero-blue-hour-');
+      const family = path === '/napryamky'
+        ? viewport.width <= 760 ? 'mobile-directions-blue-hour-' : 'directions-sequence-blue-hour-'
+        : path === '/pokrivelni-roboty' && viewport.width <= 440 ? 'direction-hero-roof-mobile-dark-' : 'direction-hero-blue-hour-';
+      expect(src, path).toContain(family);
     }
   });
 }

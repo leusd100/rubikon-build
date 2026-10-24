@@ -1,0 +1,16 @@
+/* Mobile media selection prototype, pending owner preview (24.10).
+   No text, header, scene height, desktop or tablet layout changes. */
+@media (max-width: 440px) {
+  .direction-hero-image {
+    object-position: var(--direction-phone-image-position, var(--direction-hero-image-position-mobile, center 60%)) !important;
+  }
+}
+@media (max-width: 600px) {
+  /* Keep the full gable inside narrow/tall phones instead of cropping its columns.
+     The existing hero overlay continues over the quiet lower text area. */
+  main.about-page .about-hero-media img.direction-hero-poster {
+    height: min(150vw, 100%) !important;
+    object-fit: contain;
+    object-position: center top;
+  }
+}

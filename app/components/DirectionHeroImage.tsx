@@ -24,10 +24,12 @@ type DirectionHeroImageProps = {
 export function DirectionHeroImage({ asset }: DirectionHeroImageProps) {
   const theme = useSyncExternalStore(subscribeTheme, readEffectiveTheme, () => 'light' as const);
   const art = theme === 'dark' ? asset.dark : asset;
+  const phoneArt = asset.phoneCrop?.[theme] ?? art.portrait;
   const style = {
     '--direction-hero-image-position': asset.focalPosition,
     '--direction-hero-image-position-mobile': asset.mobileFocalPosition,
     '--direction-hero-image-top': asset.artTop,
+    '--direction-phone-image-position': asset.phoneCrop?.position,
   } as CSSProperties;
   // Only the server's markup carries src, so the preload scanner and readers without JS still get the art. React sets a
   // client-made img's attributes (the dark art after hydration, any theme change) before the img is inside the
@@ -41,8 +43,8 @@ export function DirectionHeroImage({ asset }: DirectionHeroImageProps) {
     // A new image element cannot retain the previously decoded light bitmap while
     // its dark source loads. Updating src and data-art-theme on one node could.
     <picture key={`${asset.fallbackSrc}-${theme}`}>
-      <source media={PHONE} type="image/avif" srcSet={art.portrait.avif} />
-      <source media={PHONE} type="image/webp" srcSet={art.portrait.webp} />
+      <source media={PHONE} type="image/avif" srcSet={phoneArt.avif} />
+      <source media={PHONE} type="image/webp" srcSet={phoneArt.webp} />
       <source type="image/webp" srcSet={art.srcSet} sizes={HERO_SIZES} />
       <img
         aria-hidden="true"

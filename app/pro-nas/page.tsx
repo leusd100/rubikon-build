@@ -24,7 +24,7 @@ import './about.css';
 // Owner's decisions (30.09): no object photo here until RUBIKON BUILD has objects of its own to show — the one real
 // photo, from Serhii's work before the company, stays on HOME with its attribution; and the imagery, all of it
 // illustrative, carried no «Ілюстрація» tag here. Revised for the phone still (owner, 20.10, OD-PX-12 A; review 18.10, PDO-04): it shows
-// generated people right under «своїми іменами», so it carries the stamp every other concept hero carries.
+// a people-free industrial illustration under «своїми іменами», with the same honest illustration stamp.
 
 export const metadata = createPageMetadata({
   path: '/pro-nas',
