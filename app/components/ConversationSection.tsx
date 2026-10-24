@@ -37,19 +37,6 @@ export function ConversationSection({
 }: Readonly<ConversationSectionProps>) {
   return (
     <section className={`conversation section${showJourney ? '' : ' conversation-no-journey'}`} id="inquiry" aria-labelledby="conversation-title">
-      <div className="conversation-bg" aria-hidden="true">
-        <picture>
-          <source media="(max-width: 760px)" srcSet="/media/home-v2/conversation-bg-portrait-720w.webp" />
-          <img
-            src="/media/home-v2/conversation-bg-1600w.webp"
-            srcSet="/media/home-v2/conversation-bg-960w.webp 960w, /media/home-v2/conversation-bg-1600w.webp 1600w"
-            sizes="100vw"
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-        </picture>
-      </div>
       <div className="shell conversation-grid">
         <div className="conversation-intro">
           <p className="conversation-kicker"><span aria-hidden="true" /> {kicker}</p>

@@ -185,13 +185,7 @@
 
 /* ---------------------------------------------------------------- 6 · Cost, time, changes */
 .proc-terms { position: relative; overflow: hidden; isolation: isolate; background: var(--color-bg); }
-.proc-terms-bg { position: absolute; z-index: -1; inset: 0; overflow: hidden; }
-.proc-terms-image { position: absolute; inset: 0; background: url('/media/about-industrial-concept.webp') right 8% center / auto 118% no-repeat; filter: grayscale(.5) contrast(.95); }
-.proc-terms-bg::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 98%, transparent) 0%, color-mix(in srgb, var(--color-bg) 94%, transparent) 50%, color-mix(in srgb, var(--color-bg) 80%, transparent) 100%);
-}
-:root[data-theme="dark"] .proc-terms-image { filter: grayscale(.6) brightness(.5); }
+/* No picture behind «Кошторис і строки» (owner 24.10, W2-17 · PDO-92 B): the AI watercolour competed with the block's own drawing */
 /* The estimate and the schedule as sheets with the change procedure acting on them: components/process/change-sheets.css */
 .proc-factors-title.proc-terms-flow-title { margin-top: 48px; }
 /* .proc-factors / .cf-* moved to app/components/process/cost-factors.css (imported by CostFactorsFigure) */
@@ -256,6 +250,5 @@
   .proc-resp-switch { top: var(--compact-hero-header-edge, 77px); margin-bottom: 24px; padding: 8px 0; }
   .proc-resp-switch > div { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
   .proc-resp-switch span { min-height: 48px; padding: 6px; font-size: 12px; letter-spacing: .04em; }
-  .proc-terms-image { background-position: center top; background-size: 180% auto; }
   .proc-hero-trace { display: none; }
 }

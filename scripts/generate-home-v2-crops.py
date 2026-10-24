@@ -6,8 +6,7 @@ Crop and resize only: no retouching, no compositing, no generated pixels. Source
   concepts/hero-mobile-band media/directions-sequence-source/angary.png   (720, 84, 1472, 762) concept render, phone band
   hangar-wide               photos/serhii-prior-hangar.jpeg               (0, 440, 1550, 1060) the approved frame, sky/ground trimmed
   hangar-narrow             photos/serhii-prior-hangar.jpeg               (20, 455, 1020, 1122)
-  conversation-bg           media/engineering-planning.jpg                (0, 600, 1800, 1800) decorative
-  conversation-bg-portrait  media/engineering-planning.jpg                (0, 300, 1800, 2700) decorative
+  (conversation-bg and conversation-bg-portrait went 24.10: no picture behind the form, W2-17 · PDO-92 B)
 
 Iteration 3 (made once by hand, sources live outside the repo, so they are not in JOBS below):
   photos/serhii-prior-hangar-retouched.jpeg + hangar-retouched-{960,1536}w  owner-supplied CLEANED version of DSCF7654,
@@ -47,8 +46,6 @@ JOBS = [
     ('concepts/hero-mobile-band', 'media/directions-sequence-source/angary.png', (720, 84, 1472, 762), [480, 752], 80),
     ('hangar-wide', 'photos/serhii-prior-hangar.jpeg', (0, 440, 1550, 1060), [960, 1550], 80),
     ('hangar-narrow', 'photos/serhii-prior-hangar.jpeg', (20, 455, 1020, 1122), [640, 1000], 80),
-    ('conversation-bg', 'media/engineering-planning.jpg', (0, 600, 1800, 1800), [960, 1600], 72),
-    ('conversation-bg-portrait', 'media/engineering-planning.jpg', (0, 300, 1800, 2700), [720], 70),
 ]
 
 for name, source, box, widths, quality in JOBS:
