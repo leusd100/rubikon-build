@@ -11,6 +11,12 @@ import { stubTurnstile } from './turnstile.helpers';
 const GA_SCRIPT_SELECTOR = 'script[data-rubikon-analytics="G-WYRXJV71WG"]';
 const CORE_GA_HOST = /(^|\.)google-analytics\.com$/;
 const ADVERTISING = /doubleclick\.net|ga-audiences|googlesyndication|googleadservices|\/pagead\//;
+/**
+ * Google's tag at times adds a diagnostics beacon — an image from www.googletagmanager.com/td (seen 24.10 on the runs of
+ * #237 and #238). The site's CSP blocks it before it leaves the browser, so nothing it carries reaches Google: that one
+ * blocked beacon is the policy doing its job, not a failure. Every other blocked Google request still fails the test.
+ */
+const TAG_DIAGNOSTICS = /^img-src https:\/\/www\.googletagmanager\.com\/td(?:\?|$)/;
 
 // Nothing in this file may reach the network from the browser itself. Playwright's routes miss what a page sends while it
 // unloads: gtag's keepalive /g/collect on pagehide (scroll, user_engagement) went out past them on / → /angary (16.10,
@@ -132,7 +138,7 @@ test.describe('GA4 endpoints (real gtag.js, collection answered locally)', () =>
       expect(collect.every((request) => CORE_GA_HOST.test(request.host)), JSON.stringify(collect)).toBe(true);
       expect(google.requests.filter((request) => ADVERTISING.test(`${request.host}${request.path}`)), 'advertising / signals requests').toEqual([]);
       expect(google.requests.filter((request) => !CORE_GA_HOST.test(request.host)), 'Google requests outside *.google-analytics.com').toEqual([]);
-      expect((await violations()).filter((violation) => /google|doubleclick/.test(violation))).toEqual([]);
+      expect((await violations()).filter((violation) => /google|doubleclick/.test(violation) && !TAG_DIAGNOSTICS.test(violation))).toEqual([]);
     });
   }
 });
