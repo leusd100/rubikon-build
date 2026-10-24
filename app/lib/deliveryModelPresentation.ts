@@ -556,14 +556,20 @@ export function responsibilityMap(): { principle: string; areas: readonly Respon
 
 export type CostFactor = { title: string; detail?: string; ids: readonly string[] };
 
-/** What drives cost and time, as seven scannable factors covering all thirteen model factors once. */
+/**
+ * What drives cost and time, as seven scannable factors covering all thirteen model factors once, each with a line on
+ * what it covers (owner 24.10, W2-01). The lines are general, for every direction: /angary says them for a hangar
+ * (app/angary/page.tsx). «Умови майданчика» names its four model factors.
+ */
 export function costFactors(): readonly CostFactor[] {
-  const groups: readonly { title: string; ids: readonly string[] }[] = [
-    { title: 'Габарити', ids: ['dimensions'] },
-    { title: 'Конструктив і навантаження', ids: ['structure', 'loads'] },
-    { title: 'Фундамент', ids: ['foundation'] },
-    { title: 'Утеплення', ids: ['insulation'] },
-    { title: 'Технологія й обладнання', ids: ['technology', 'special-equipment'] },
+  const groups: readonly { title: string; ids: readonly string[]; detail?: string }[] = [
+    { title: 'Габарити', ids: ['dimensions'], detail: 'площа, прольоти, висота об’єкта' },
+    { title: 'Конструктив і навантаження', ids: ['structure', 'loads'], detail: 'схема каркаса чи основи; сніг, вітер, обладнання на конструкції' },
+    // the rule the configurator's note states, true of every building
+    { title: 'Фундамент', ids: ['foundation'], detail: 'визначає проєктувальник після розрахунку навантажень і з урахуванням умов майданчика' },
+    { title: 'Утеплення', ids: ['insulation'], detail: 'з утепленням чи без, для стін і покрівлі' },
+    // the model's «Технологічні вимоги» (inputs) and «Спеціалізоване обладнання» (budget factor)
+    { title: 'Технологія й обладнання', ids: ['technology', 'special-equipment'], detail: 'технологічні вимоги, спеціалізоване обладнання' },
     { title: 'Умови майданчика', ids: ['logistics', 'operating-facility', 'site-access', 'installation-constraints'] },
     { title: 'Залежності від інших робіт і строки', ids: ['timeline', 'contractor-dependencies'] },
   ];
@@ -575,7 +581,7 @@ export function costFactors(): readonly CostFactor[] {
   return groups.map((group) => ({
     title: group.title,
     ids: group.ids,
-    detail: group.ids.length > 2 ? group.ids.map(label).join(', ').toLowerCase() : undefined,
+    detail: group.detail ?? group.ids.map(label).join(', ').toLowerCase(),
   }));
 }
 

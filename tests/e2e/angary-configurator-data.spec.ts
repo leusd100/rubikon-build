@@ -130,22 +130,25 @@ test('sizes keep the decimal comma and hold their units in the stamp, the cost n
 test('the cost notes speak only of what the visitor answered, never of the example’s defaults', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
   await openHangarPage(page);
-  const notes = costList(page).locator('.proc-factors');
+  // the visitor's notes alone: since 24.10 each /angary factor has its own line as well (W2-01 · PDO-12), and the
+  // insulation's says «профнастил чи сендвіч-панель…» whatever the visitor answered
+  // (spaces normalised as toContainText does: the sizes are joined with no-break spaces)
+  const notes = () => costList(page).locator('.proc-factors .cf-note').allTextContents().then((texts) => texts.join(' · ').replace(/\s+/g, ' '));
   // the untouched example: the cost factors stay general
-  await expect(notes).not.toContainText('У вашій конфігурації');
-  await expect(notes).not.toContainText('У попередній схемі');
+  await expect.poll(notes).not.toContain('У вашій конфігурації');
+  await expect.poll(notes).not.toContain('У попередній схемі');
 
   await typeSize(page, 'width', '12');
-  await expect(notes).toContainText('У вашій конфігурації: 12 × 60 × 8 м, коник');
+  await expect.poll(notes).toContain('У вашій конфігурації: 12 × 60 × 8 м, коник');
   // the insulation, the cladding and the gates nobody touched say nothing
-  await expect(notes).not.toContainText('профнастил');
-  await expect(notes).not.toContainText('Ворота');
-  await expect(notes).not.toContainText('Ви вказали');
+  await expect.poll(notes).not.toContain('профнастил');
+  await expect.poll(notes).not.toContain('Ворота');
+  await expect.poll(notes).not.toContain('Ви вказали');
 
   // the example's own answer to «Який ангар потрібен?» pressed again is an answer, in the stamp's words
   await openControlGroup(page, 'envelope');
   await page.locator('#hc-envelope-panel label').filter({ hasText: 'Без утеплення' }).click();
-  await expect(notes).toContainText('У вашій конфігурації: без утеплення, профнастил');
+  await expect.poll(notes).toContain('У вашій конфігурації: без утеплення, профнастил');
   await expect(stampFact(page, 'Утеплення').locator('dd')).toHaveText('Без утеплення');
   await expect(stampFact(page, 'Утеплення')).not.toContainText('з прикладу');
   // the tile brings its material with it (10.10, «Без утеплення · профнастил»): the cladding is answered too…
@@ -163,7 +166,7 @@ test('the cost notes speak only of what the visitor answered, never of the examp
   await page.getByRole('checkbox', { name: 'Покрівля', exact: true }).uncheck();
   await expect(stampFacts(page)).not.toContainText('Утеплення');
   await expect(stampFacts(page)).not.toContainText('Стіни й покрівля');
-  await expect(notes).toContainText('Стіни й покрівля поза обсягом робіт');
+  await expect.poll(notes).toContain('Стіни й покрівля поза обсягом робіт');
 });
 
 test('openings: «одні / двоє», one sign per size, the door placed where it goes, «Так / Ні» on one line', async ({ page }, testInfo) => {

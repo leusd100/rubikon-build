@@ -294,6 +294,16 @@ describe('delivery page v2: the public projection', () => {
     expect(factors.flatMap((factor) => factor.ids).sort()).toEqual(deliveryModel.budgetFactors.map((factor) => factor.id).sort());
   });
 
+  it('gives every cost factor a line; the site and the dependencies name their model factors', () => {
+    const factors = costFactors();
+    for (const factor of factors) expect(factor.detail, factor.title).toMatch(/\S/);
+    const label = (id: string) => deliveryModel.budgetFactors.find((factor) => factor.id === id)!.label.toLowerCase();
+    for (const title of ['Умови майданчика', 'Залежності від інших робіт і строки']) {
+      const factor = factors.find((item) => item.title === title)!;
+      expect(factor.detail).toBe(factor.ids.map(label).join(', '));
+    }
+  });
+
   it('places each work of the switcher only in the zones the matrix names, per format', () => {
     const { formats, items } = responsibilityByFormat();
     const zoneOf = (holder: string) => (holder.startsWith('rubikon') ? 'rubikon' : holder === 'partner' ? 'specialists' : ['client', 'general-contractor'].includes(holder) ? 'client' : null);

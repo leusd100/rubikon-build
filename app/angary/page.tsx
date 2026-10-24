@@ -17,6 +17,17 @@ import './angary-editorial.css';
 
 export const metadata = createDirectionMetadata('angary');
 
+// What each cost factor covers on /angary (owner 24.10, W2-01 · PDO-12 A), said for a hangar in words the page already
+// says: the configurator's sizes, frame, cladding and gates and its note on the foundation, and the Delivery Model's
+// names. The shared costFactors() says it in general words for /yak; the site and the dependencies keep the shared lines.
+const COST_FACTOR_DETAILS: Readonly<Record<string, string>> = {
+  dimensions: 'довжина, ширина, висота стін і в конику',
+  structure: 'проліт без колон чи з рядом колон, сніг, вітер, кран-балка',
+  foundation: 'визначає проєктувальник після розрахунку навантажень і з урахуванням умов майданчика',
+  insulation: 'профнастил чи сендвіч-панель для стін і покрівлі',
+  technology: 'ворота, двері, спеціалізоване обладнання',
+};
+
 export default function HangarsPage() {
   const config = getDirectionPage('angary');
   // Resolved here, on the server: the client sections get the Delivery Model's words as plain strings
@@ -24,7 +35,7 @@ export default function HangarsPage() {
     cost: {
       title: config.cost?.title ?? '',
       text: config.cost?.text ?? '',
-      factors: costFactors().map((factor) => ({ key: factor.ids[0], title: factor.title, detail: factor.detail })),
+      factors: costFactors().map((factor) => ({ key: factor.ids[0], title: factor.title, detail: COST_FACTOR_DETAILS[factor.ids[0]] ?? factor.detail })),
       customerScope: deliveryModel.statements.customerScope,
     },
     route: {
