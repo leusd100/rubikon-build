@@ -7,13 +7,13 @@
 | Підстава | Main Regression [40101480447](https://github.com/leusd100/rubikon-build/actions/runs/40101480447) на `84a2fcc` (#243 «єдиний підхід до hero та обрані ілюстрації C») — три падіння |
 | PR | [#245](https://github.com/leusd100/rubikon-build/pull/245), Ready for review (позначено власником). **Merge — лише з окремого OK Дмитра** |
 | Гілка / base | `fix/main-red-after-243` від `main` `84a2fcc` |
-| Коміти | **`dede882`** — тести · цей handoff |
-| Змінено | `tests/e2e/responsive-a11y-phase1.spec.ts`, `tests/e2e/smoke.spec.ts` |
-| Не змінено | Сайт (код, CSS, медіа), еталони DEC-18 |
+| Коміти | **`dede882`** — тести · **`ff095db`** — еталон hero-375 (OK власника 24.10) · handoff |
+| Змінено | `tests/e2e/responsive-a11y-phase1.spec.ts`, `tests/e2e/smoke.spec.ts`, `tests/e2e/visual.spec.ts-snapshots/homepage-hero-mobile-375-linux.png` |
+| Не змінено | Сайт (код, CSS, медіа), решта еталонів DEC-18, darwin-еталони |
 
 ## Висновок
 
-Жодне з трьох падінь не є регресією сайту. #243 свідомо змінив телефонний hero (handoff-и `2026-10-24-unified-mobile-heroes.md`, `2026-10-24-selected-c-mobile-heroes.md`, `2026-10-24-mobile-media-review.md`). Тести й еталон лишилися на старих правилах. Два тести оновлено так, щоб вони описували нові правила. Еталон чекає OK власника (DEC-18).
+Жодне з трьох падінь не є регресією сайту. #243 свідомо змінив телефонний hero (handoff-и `2026-10-24-unified-mobile-heroes.md`, `2026-10-24-selected-c-mobile-heroes.md`, `2026-10-24-mobile-media-review.md`). Тести й еталон лишилися на старих правилах. Два тести оновлено так, щоб вони описували нові правила. Еталон оновлено за OK власника (DEC-18).
 
 #243 не запускав Main Regression, а «Changed-area visual regression» на ньому мав статус SKIPPED. Це правило PR Gate (`.github/workflows/pr-gate.yml`, `docs/ci-tier-model.md`): гілка `design/*` без мітки `visual-freeze` відкладає скриншотні набори. #243 злили без цієї мітки. Тому PR був зеленим, а main став червоним одразу після merge.
 
@@ -37,7 +37,7 @@
 
 **Що змінено в тесті:** до 760 px очікується `/media-responsive/mobile-directions-`, від 761 px — `/media-responsive/directions-sequence-`. На телефоні перевірка тепер точніша: вона вимагає саме мобільне вікно, а не будь-який файл послідовності.
 
-## 3. Візуальний еталон `homepage-hero-mobile-375` — потрібен OK власника
+## 3. Візуальний еталон `homepage-hero-mobile-375` — оновлено за OK власника
 
 ![Еталон у репозиторії · Linux-рендер CI · diff](media/main-red-after-243/homepage-hero-mobile-375-baseline-ci-diff.jpg)
 
@@ -48,7 +48,7 @@
 - Що змінилося на рендері — усе навмисне з #243: обрана ілюстрація C замість H1; м'яке затемнення під текстом; текстовий блок на 12 px нижче, бо відступ CTA → стрілка тепер 12 px замість 24 px. Стрілка на тому самому місці.
 - Шапка на рендері відрізняється від еталона, але не через #243. Еталон зроблено ще в #206. Геометрія шапки на 375×812 виміряна локально на `b826f8d` (до #243) і на `84a2fcc`. Вона однакова: логотип 188×40.3, дзвінок 44×44 на x 218, «Меню» 85×44 на x 274, Manrope 800 12 px. Різниця з еталоном накопичилася раніше й не виходила за межі допуску (`maxDiffPixelRatio 0.02`, `threshold 0.25`).
 
-**Рішення власника:** чи погоджуєте цей рендер як новий `homepage-hero-mobile-375-linux.png`? За OK окремим комітом у цей PR покладу саме actual із CI (SHA-256 `1a8d391b…`). До цього «Main visual (2/2)» лишається червоним.
+**Рішення власника (24.10):** OK. Комітом `ff095db` у репозиторій покладено саме actual із CI (SHA-256 `1a8d391b…65540cda`, перевірено після копіювання). Перший прогін Main Regression на гілці (на `7018dc6`, до оновлення еталона) впав у «Main visual (2/2)» лише на цьому знімку: 1 failed, 32 passed.
 
 ## Перевірка
 
@@ -59,7 +59,7 @@
 | Мутація: тимчасово прибрано правило крихт і мобільні `<source>` хаба, перезібрано | обидва оновлені тести падають; зміни повернуто, build перезібрано |
 | `eslint` двох spec-файлів, `tsc --noEmit` | чисто |
 | `tests/unit/e2e-google-intercept.test.ts` | 12 passed |
-| Main Regression на гілці | запущено; результат — у PR |
+| Main Regression на гілці | до еталона: червоний лише `homepage-hero-mobile-375`; повторний прогін після `ff095db` — у PR |
 
 ## Поза цим PR
 
@@ -68,4 +68,4 @@
 
 ## Відкат
 
-`git revert dede882`.
+`git revert ff095db dede882`.
