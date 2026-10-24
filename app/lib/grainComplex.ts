@@ -150,28 +150,30 @@ export type GrainModuleInfo = {
 
 /**
  * Who does what in one module, for the drawing's pointer tip (owner, 06.10: «креслення як пульт»). The building part is
- * RUBIKON's, the equipment the specialists'; the action says what a press on the module would change.
+ * RUBIKON's, the equipment the specialists'; the action says what a press on the module would change — for a finger, a
+ * second tap, as its first only opened the tip (W2-07 · PDO-100).
  */
-export function grainModuleInfo(key: GrainModuleKey, state: GrainComplexState): GrainModuleInfo {
+export function grainModuleInfo(key: GrainModuleKey, state: GrainComplexState, touch = false): GrainModuleInfo {
+  const press = touch ? 'Торкніться ще раз' : 'Натисніть';
   switch (key) {
     case 'receiving':
       return { name: 'Приймання', own: 'Приймальний бункер і майданчик розвантаження', partners: 'Конвеєр у тунелі' };
     case 'cleaning':
       return {
         name: 'Очищення', own: 'Майданчик, опори й приямок норії', partners: 'Машина очищення й норія',
-        action: state.cleaning ? 'Натисніть, щоб прибрати з ланцюга' : 'Натисніть, щоб додати в ланцюг',
+        action: `${press}, щоб ${state.cleaning ? 'прибрати з ланцюга' : 'додати в ланцюг'}`,
       };
     case 'drying':
       return {
         name: 'Сушіння', own: 'Фундамент під сушарку, приямок і щогла норії', partners: 'Зерносушарка й норія',
-        action: state.drying ? 'Натисніть, щоб прибрати з ланцюга' : 'Натисніть, щоб додати в ланцюг',
+        action: `${press}, щоб ${state.drying ? 'прибрати з ланцюга' : 'додати в ланцюг'}`,
       };
     case 'feed':
       return { name: 'Подача в сховище', own: 'Приямок і щогла норії, тунель конвеєра', partners: 'Норія й галерея' };
     case 'storage':
-      if (state.storage === 'silos') return { name: 'Силоси', own: 'Бетонні основи й тунель під силосами', partners: 'Силоси й конвеєри', action: 'Натисніть — підлогове сховище' };
-      if (state.storage === 'floor') return { name: 'Підлогове сховище', own: 'Будівля: фундаменти, підпірні стіни, каркас, покрівля', partners: 'Аерація й конвеєри', action: 'Натисніть — силоси' };
-      return { name: 'Сховище', own: 'Основа або будівля — щойно визначите тип', action: 'Натисніть — силоси' };
+      if (state.storage === 'silos') return { name: 'Силоси', own: 'Бетонні основи й тунель під силосами', partners: 'Силоси й конвеєри', action: `${press} — підлогове сховище` };
+      if (state.storage === 'floor') return { name: 'Підлогове сховище', own: 'Будівля: фундаменти, підпірні стіни, каркас, покрівля', partners: 'Аерація й конвеєри', action: `${press} — силоси` };
+      return { name: 'Сховище', own: 'Основа або будівля — щойно визначите тип', action: `${press} — силоси` };
     case 'shipping':
       return { name: 'Відвантаження', own: 'Опори бункера й тунель під сховищем', partners: 'Бункер і похилий конвеєр' };
   }

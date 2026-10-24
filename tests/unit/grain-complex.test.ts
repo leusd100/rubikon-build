@@ -137,6 +137,8 @@ describe('the drawing as a control panel', () => {
         if (key === 'cleaning' || key === 'drying') {
           expect(next[key]).toBe(!state[key]);
           expect(info.action).toBe(state[key] ? 'Натисніть, щоб прибрати з ланцюга' : 'Натисніть, щоб додати в ланцюг');
+          // a finger's first tap only opened the tip: its press is the second tap
+          expect(grainModuleInfo(key, state, true).action).toBe(state[key] ? 'Торкніться ще раз, щоб прибрати з ланцюга' : 'Торкніться ще раз, щоб додати в ланцюг');
         } else {
           // the storage swaps between silos and the floor store; an undecided one becomes silos
           expect(next.storage).toBe(state.storage === 'silos' ? 'floor' : 'silos');

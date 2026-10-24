@@ -59,7 +59,8 @@
 
 /* The drawing answers a pointer (owner, 06.10): a module under it is lit and named in a tip; a press changes it and the
    changed module flashes. Pointer only — the chips are the same choices for a keyboard and a screen reader. */
-.gc-drawing .gc-hit { fill: transparent; stroke: none; cursor: pointer; pointer-events: all; transition: fill .2s ease; }
+/* touch-action: a second tap on a module is a press, not iOS's double-tap zoom (PDO-100) */
+.gc-drawing .gc-hit { fill: transparent; stroke: none; cursor: pointer; pointer-events: all; touch-action: manipulation; transition: fill .2s ease; }
 .gc-drawing .gc-hit.is-hover { fill: color-mix(in srgb, var(--color-accent) 7%, transparent); }
 @keyframes gc-flash { from { fill: color-mix(in srgb, var(--color-accent) 26%, transparent); } to { fill: transparent; } }
 .gc-drawing .gc-hit.is-flash { animation: gc-flash 1.4s ease-out; }
@@ -127,8 +128,11 @@
   border: 1px solid var(--color-border-control); font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .03em;
   transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
-.gc-chip:hover span { border-color: var(--color-accent); }
-.gc-chip input:checked + span { color: var(--color-accent-hover); background: color-mix(in srgb, var(--color-accent) 11%, var(--color-surface-elevated)); border-color: var(--color-accent); box-shadow: inset 0 -3px 0 var(--color-accent); }
+.gc-chip:hover input:not(:checked) + span { border-color: var(--color-accent); }
+/* a chosen option is graphite, as in /angary's configurator and the form: copper is left for the action and for RUBIKON's
+   part on the drawings (owner 24.10, W2-07 · PDO-49). The crop's icon keeps its colour, the drawing's silo colour (A′); it
+   is decorative — the chip's words say the crop */
+.gc-chip input:checked + span { color: var(--color-bg); background: var(--color-text); border-color: var(--color-text); }
 .gc-chip input:focus-visible + span { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 
 /* Who builds what, and the way on */
@@ -141,6 +145,8 @@
 .gc-scope-col li::before { position: absolute; top: .62em; left: 0; width: 7px; height: 7px; content: ''; background: var(--color-accent); }
 .gc-scope-col[data-tone="partner"] li::before { background: none; border: 1.5px solid var(--color-text-muted); }
 .gc-scope .gc-next { margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.55; }
+/* «Схема без масштабу…» stands under the drawing on a phone (below), so the line at the end keeps only how to use it */
+.gc-caption-phone { display: none; }
 /* the drawing answers a mouse's pointing, a finger's tap: the note says the one this screen has */
 .gc-next-touch { display: none; }
 @media (hover: none) {
@@ -167,11 +173,12 @@
   .gc-pause .dn-control { padding: 2px; }
   .gc-pause .dn-control-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .gc-cta-phone { display: flex; width: 100%; justify-content: space-between; }
-  .gc-tip { width: 220px; font-size: 12px; }
-  /* each group of choices one row that scrolls sideways */
-  .gc-options { flex-wrap: nowrap; margin-inline: -16px; padding: 4px 16px; overflow-x: auto; scrollbar-width: none; }
-  .gc-options::-webkit-scrollbar { display: none; }
-  .gc-chip { flex: none; }
+  .gc-tip { width: 240px; font-size: 13px; }
+  /* every option in sight: the groups wrap into rows (owner 24.10, W2-07 · PDO-13 A) — they scrolled sideways, and a
+     phone showed 2 of the 6 crops */
+  /* the drawing's caveat right under it, where the title block that says «умовно» is hidden (PDO-82) */
+  .gc-caption-phone { display: block; margin: -8px 0 0; color: var(--color-text-muted); font-size: 13px; line-height: 1.45; }
+  .gc-next-scale { display: none; }
   /* the elevation scrolls sideways at a width its words can be read at */
   .gc-sheet .gc-visual { aspect-ratio: auto; height: 250px; }
   .gc-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
@@ -181,7 +188,6 @@
   .gc-chip span { min-height: 44px; padding: 0 14px; font-size: 14px; }
   .gc-scope { grid-template-columns: 1fr; gap: 20px; padding-top: 20px; }
   .gc-scope-col ul { gap: 4px; }
-  .gc-scope-col li { font-size: 14px; }
 }
 
 /* The phone's sheet stays below the header only where it leaves the choices room under it (sheet 284 px): a phone on
