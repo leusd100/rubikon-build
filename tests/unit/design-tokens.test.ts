@@ -100,10 +100,17 @@ describe('type scale and labels (W3-02)', () => {
     expect(globals).toMatch(/\.about-story-copy h2 \{[^}]*font-size: var\(--type-h2-compact\)/);
     expect(css['pro-nas/about.css']).toMatch(/\.about-story-copy h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
     expect(css['conversation.css']).toMatch(/\.conversation h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
-    expect(css['configurator-preview/configurator.css']).toMatch(/\.hangar-configurator-embedded \.hc-hero h2 \{ font-size: var\(--type-h2-compact\); \}/);
-    // …and on a short laptop window it steps down to the minor level, not to a size of its own (34 px before)
-    const shortLaptop = css['components/configurator/configurator-sheet.css'].match(/@media \(min-width: 1024px\) and \(max-height: 760px\) \{([\s\S]*?)\n\}/)![1];
+    // …and on a short laptop window it steps down to the minor level, not to a size of its own (34 px before): both rules
+    // in configurator-sheet.css, the compact one first — they are equally specific, and configurator.css's order against
+    // that file is not promised, so configurator.css sets no size for the band's title
+    const sheetCss = css['components/configurator/configurator-sheet.css'];
+    const compactAt = sheetCss.search(/\n\.hangar-configurator-embedded \.hc-hero h2 \{ font-size: var\(--type-h2-compact\); \}/);
+    const shortLaptopAt = sheetCss.search(/@media \(min-width: 1024px\) and \(max-height: 760px\) \{/);
+    expect(compactAt).toBeGreaterThan(-1);
+    expect(shortLaptopAt).toBeGreaterThan(compactAt);
+    const shortLaptop = sheetCss.slice(shortLaptopAt).match(/\{([\s\S]*?)\n\}/)![1];
     expect(shortLaptop).toMatch(/\.hangar-configurator-embedded \.hc-hero :is\(h1, h2\) \{ font-size: var\(--type-h2-minor\);/);
+    expect(css['configurator-preview/configurator.css']).not.toMatch(/\.hangar-configurator-embedded \.hc-hero (h2|:is\(h1, h2\)) \{[^}]*font-size/);
     expect(css['components/directions/direction-template.css']).toMatch(/\.related-directions-title \{[^}]*font: 400 var\(--type-h2-minor\)/);
     expect(css['components/directions/direction-template.css']).toMatch(/\.direction-entry-list h3 \{[^}]*font: 400 var\(--type-h3\)/);
     expect(css['home-v2.css']).toMatch(/\.hv2-evidence-lead h3 \{[^}]*font: 400 var\(--type-h3\)/);

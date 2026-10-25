@@ -436,6 +436,12 @@
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet.is-folded :is(.sheet-image, .sheet-ruler) { display: none; }
 }
 
+/* On /angary the band's title is a section title beside the sheet: the compact H2 (W3-02 T4; on a phone the site's
+   phone H2 size, PDO-05). Only the embedded band (an h2): /configurator-preview's own h1 and its configurator-visual
+   shots keep theirs. Here, not in configurator.css, so the short laptop's size below follows it in one file: the two
+   are equally specific, and the two files' order is not promised. */
+.hangar-configurator-embedded .hc-hero h2 { font-size: var(--type-h2-compact); }
+
 /* ── A short laptop (07.10): the configurator's own heading gives the room to the step ──────────────────────────────── */
 @media (min-width: 1024px) and (max-height: 760px) {
   /* a jump to #configurator lands just under the header, on a band with less paper above its heading */
