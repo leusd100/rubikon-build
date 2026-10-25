@@ -430,13 +430,17 @@ body:has(main:is([data-home="v2"], .about-page)) {
    a wide empty gap between the two; a multi-line title's box cannot shrink to its longest line, so a side-by-side note
    always kept that gap). */
 .section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--rhythm-lead); margin-bottom: var(--rhythm-header); padding-bottom: var(--rhythm-lead); border-bottom: 1px solid var(--color-border); }
-/* One rule (PDO-21, W3-03, 25.10): when the content opens with its own top edge — the cost list, the grain complex sheet
-   and situations, the /pro-nas ledger and principles, the /yak formats, responsibility switch and cost factors, HOME's
-   directions (the phone's sheet list .dxi, always the header's neighbour, and from 761 px the image cards after it) —
-   that edge takes the header's place: the header's rule and the space above it go. The /napryamky list keeps the
-   header's rule: its rows are ruled only between them, so the rule is the list's top. Without :has() the header keeps
-   its rule, as before. */
-.section-header:has(+ :is(.cost-list, .gc, .gs-list, .about-cap, .about-principles-grid, .dfmt-grid, .proc-resp-switch, .proc-factors, .dxi, .direction-grid)) { padding-bottom: 0; border-bottom: 0; }
+/* One rule (PDO-21, W3-03, 25.10): when the content opens with its own top edge — the cost list, the grain complex sheet,
+   the /pro-nas ledger and principles, the /yak formats and responsibility switch, HOME's directions (the phone's sheet
+   list .dxi, always the header's neighbour, and from 761 px the image cards after it) — that edge takes the header's
+   place: the header's rule and the space above it go. Two only where they have that edge: the grain situations on a
+   phone (their cards' frames; from 761 px they are open columns with no top rule) and the /yak cost factors up to
+   1050 px (their drawing's frame, under its caption; from 1051 px the columns open with that caption and the factor
+   list, no frame on top). The /napryamky list keeps the header's rule: its rows are ruled only between them, so the
+   rule is the list's top. Without :has() the header keeps its rule, as before. */
+.section-header:has(+ :is(.cost-list, .gc, .about-cap, .about-principles-grid, .dfmt-grid, .proc-resp-switch, .dxi, .direction-grid)) { padding-bottom: 0; border-bottom: 0; }
+@media (max-width: 1050px) { .section-header:has(+ .proc-factors) { padding-bottom: 0; border-bottom: 0; } }
+@media (max-width: 760px) { .section-header:has(+ .gs-list) { padding-bottom: 0; border-bottom: 0; } }
 .section-header-copy { min-width: 0; max-width: 980px; }
 /* A header with a decorative drawing (SectionHeader aside): title and note on the left, the drawing on the right, standing
    on the header's bottom rule (on HOME, where the cards' edge replaces that rule, on the header's bottom); wide screens

@@ -191,9 +191,14 @@ describe('section rhythm (W3-03)', () => {
 
   it('drops the header’s rule where the content opens with its own, and only with :has()', () => {
     const one = globals.match(/\n\.section-header:has\(\+ :is\(([^)]*)\)\) \{ padding-bottom: 0; border-bottom: 0; \}/);
-    expect(one?.[1].split(', ')).toEqual(['.cost-list', '.gc', '.gs-list', '.about-cap', '.about-principles-grid', '.dfmt-grid', '.proc-resp-switch', '.proc-factors', '.dxi', '.direction-grid']);
+    expect(one?.[1].split(', ')).toEqual(['.cost-list', '.gc', '.about-cap', '.about-principles-grid', '.dfmt-grid', '.proc-resp-switch', '.dxi', '.direction-grid']);
     // the /napryamky list is ruled only between its rows: the header's rule is its top
     expect(one?.[1]).not.toMatch(/dcat/);
+    // two have that edge only up to a width: the grain situations' card frames on a phone (from 761 px they are open
+    // columns) and the /yak cost factors' drawing frame up to 1050 px (wider, the columns open with its caption)
+    expect(globals).toMatch(/\n@media \(max-width: 760px\) \{ \.section-header:has\(\+ \.gs-list\) \{ padding-bottom: 0; border-bottom: 0; \} \}/);
+    expect(globals).toMatch(/\n@media \(max-width: 1050px\) \{ \.section-header:has\(\+ \.proc-factors\) \{ padding-bottom: 0; border-bottom: 0; \} \}/);
+    expect(globals.match(/\.section-header:has\([^{]*(gs-list|proc-factors)/g)).toHaveLength(2);
   });
 
   it('has one phone scale, 72 / 56, set in one place', () => {
