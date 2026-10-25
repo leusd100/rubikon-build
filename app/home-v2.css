@@ -672,7 +672,8 @@ main[data-home="v2"] .hv2-contour-controls button:disabled { cursor: default; op
 /* The way on to the visitor's own hangar, in the toggle's old place: the sheet's one filled button; once a load or the
    assembly has played it rings twice */
 main[data-home="v2"] .hv2-contour-brief {
-  display: inline-grid; align-content: center; gap: 4px; min-height: 52px; padding: 8px 16px 8px 14px; color: var(--hv2-ink); text-decoration: none;
+  /* a sheet's button: M (W3-06, PDO-99: 52 → 48; its two lines are 33 px, so 6 px above and below) */
+  display: inline-grid; align-content: center; gap: 4px; min-height: var(--button-h-m); padding: 6px 16px 6px 14px; color: var(--hv2-ink); text-decoration: none;
   /* the sheet's one filled button is the light copper of every action on charcoal, with a graphite label (6.17 : 1;
      PDO-17 — warm white on #A0522A, and 3.85 : 1 on the #B76432 hover, was below AA for its 12–13 px words) */
   background: var(--color-accent-on-dark); border: 1px solid #f0b48a; transition: background-color 200ms ease;

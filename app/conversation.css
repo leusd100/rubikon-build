@@ -36,7 +36,7 @@
 /* The closing contact block: one column of fixed width — the call, and under it one quiet line of written channels. */
 .conversation-contact { display: grid; gap: 12px; width: min(100%, 520px); margin-top: 32px; }
 /* The call: a segmented button — icon cell | label + number | arrow. Colours stay the theme's action role. */
-.conversation-call { width: 100%; min-width: 0; min-height: 62px; justify-content: flex-start; gap: 0; padding: 0; }
+.conversation-call { width: 100%; min-width: 0; min-height: var(--button-h-l); justify-content: flex-start; gap: 0; padding: 0; } /* L, as every page button (W3-06, PDO-99: 62 → 56) */
 .conversation-call > span { display: flex; align-items: center; }
 .conversation-call .conversation-call-icon {
   align-self: stretch; width: 66px; flex: none; justify-content: center;

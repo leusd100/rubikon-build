@@ -1143,7 +1143,8 @@
 
 .hc-summary-flagship .hc-summary-handoff { grid-column: 1 / -1; }
 
-.hc-summary-action { min-height: 52px; }
+/* a tool's button: the M height (W3-06, PDO-99: 52 → 48) */
+.hc-summary-action { min-height: var(--button-h-m); }
 
 .hc-summary-handoff p {
   margin: 0;
