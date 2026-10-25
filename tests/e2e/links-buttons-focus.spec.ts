@@ -107,12 +107,16 @@ test('«Залишити запит» in the FAQ is the arrow link (13 px), the 
 });
 
 test('HOME: under the sheet\'s note the link keeps the title block\'s height; in a short window\'s narrow note it drops the capitals and stays one line', async ({ page }) => {
-  for (const [width, height, capitals] of [[1440, 900, true], [1280, 720, true], [1440, 700, false], [1250, 613, false]] as const) {
+  // The capitals follow the note's own width (@container ≤ 290 px), not the window: fonts set it a few px apart on macOS
+  // and Linux, so 1280×720 (≈ 298 px on macOS) may fall either side. The wide and the narrow windows are clear of it.
+  for (const [width, height, capitals] of [[1440, 900, true], [1280, 720, null], [1440, 700, false], [1250, 613, false]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto('/', { waitUntil: 'load' });
     const link = page.locator('.hv2-contour-exit[data-place="line"]');
     await link.scrollIntoViewIfNeeded();
-    await expect(link, `${width}×${height}`).toHaveCSS('text-transform', capitals ? 'uppercase' : 'none');
+    const note = await link.evaluate((element) => element.closest('.sheet-cell-note b')!.getBoundingClientRect().width);
+    if (capitals !== null) expect(note > 290, `${width}×${height}: note ${note}`).toBe(capitals);
+    await expect(link, `${width}×${height}`).toHaveCSS('text-transform', note > 290 ? 'uppercase' : 'none');
     // one line: its words, 8 px and the rule
     expect(Math.round((await link.boundingBox())!.height), `${width}×${height}`).toBe(25);
   }

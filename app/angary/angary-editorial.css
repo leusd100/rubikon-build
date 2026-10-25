@@ -14,11 +14,14 @@
 
 /* ---------- Cost (UX review 2026-10): the /yak cost-factor drawing, the customer's side, the way on ---------- */
 .angary-cost { background: var(--color-surface-alt); }
-.angary-cost-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px 40px; align-items: center; margin-top: 36px; padding-top: 26px; border-top: 1px solid var(--color-border-strong); }
+/* the text keeps a readable column (≥ 420 px; the 13 px actions are wider than they were) — the actions wrap first */
+.angary-cost-foot { display: grid; grid-template-columns: minmax(min(26.25rem, 100%), 1fr) auto; gap: 20px 40px; align-items: center; margin-top: 36px; padding-top: 26px; border-top: 1px solid var(--color-border-strong); }
 .angary-cost-foot p { max-width: 62ch; margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.65; }
 .angary-cost-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
 /* (.angary-text-link, .angary-route-more, .angary-stamp-link are arrow links: .link-arrow; beside the button its words
    take the button's line) */
+/* the button's words and arrow 16 px apart here, as the form's submit (W3-02): the row stays one line on Linux at 1280 */
+.angary-cost-actions .button { gap: 16px; }
 .angary-cost-actions .angary-text-link { margin-top: -10px; }
 
 /* ---------- The frame (FrameTour.tsx, frame-tour.css): a direction-node tour on the page's own ground ---------- */
