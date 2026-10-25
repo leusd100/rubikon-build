@@ -8,8 +8,8 @@
 
 /* ---------- Shared flagship editorial heading ---------- */
 .angary-section-heading { max-width: 890px; margin-bottom: clamp(48px, 5vw, 72px); }
-.angary-section-heading h2 { max-width: 850px; margin: 0; font: 400 var(--title-section)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
-.angary-section-heading > p:not(.eyebrow) { max-width: 650px; margin: 28px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.75; }
+.angary-section-heading h2 { max-width: 850px; margin: 0; font: 400 var(--type-h2)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
+.angary-section-heading > p:not(.eyebrow) { max-width: 650px; margin: var(--rhythm-lead) 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.75; }
 .angary-section-heading.is-inverse h2 { color: var(--color-dark-text); }
 
 /* ---------- Cost (UX review 2026-10): the /yak cost-factor drawing, the customer's side, the way on ---------- */
@@ -31,7 +31,7 @@
 /* The record's whole frame (1536 × 788): evidence, so not cropped while there is room */
 .angary-real-sheet .angary-real-media { flex: none; aspect-ratio: 1536 / 788; height: auto; }
 .angary-real-facts .eyebrow { margin-bottom: 18px; }
-.angary-real-facts h2 { margin: 0; font: 400 clamp(28px, 2.5vw, 38px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; text-wrap: balance; }
+.angary-real-facts h2 { margin: 0; font: 400 var(--type-h2-minor)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; text-wrap: balance; }
 .angary-real-facts > p:not(.eyebrow) { max-width: 520px; margin: 16px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.6; }
 /* HOME's scope cells (ScopeCells.tsx; HOME's styles stay on HOME): the building, and in copper the part each confirmed
    work names. Drawn complete here — the frame tour above is the page's one moving drawing. */
@@ -58,7 +58,7 @@
 /* ---------- The route's title block: who answers for the agreed scope (it replaced the separate people section) ---------- */
 /* #responsibility is an anchor of its own: it lands under the site header, as the sections do (04.10) */
 .angary-stamp { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: clamp(44px, 5vw, 64px); border: 1px solid var(--color-dark-line); scroll-margin-top: 116px; }
-.angary-stamp-title { grid-column: 1 / -1; margin: 0; padding: 12px 18px; color: var(--color-accent-on-dark); border-bottom: 1px solid var(--color-dark-line); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.angary-stamp-title { grid-column: 1 / -1; margin: 0; padding: 12px 18px; color: var(--color-accent-on-dark); border-bottom: 1px solid var(--color-dark-line); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .angary-stamp dl { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, .8fr) minmax(0, 1.6fr); margin: 0; }
 /* the roles in one row and the names in the next, across the cells: a role that wraps to two lines no longer drops its
    name 14 px below the other (1280–1440 px, 04.10) */
@@ -108,10 +108,10 @@
   .angary-page .service-subhero-content { padding-top: 126px; padding-bottom: 50px; }
   .angary-page .angary-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 30px; }
   .angary-page .hangar-configurator-embedded { padding-block: 48px 82px; }
-  .angary-page :is(.angary-section-heading h2, .faq-grid h2) { font-size: var(--title-section); }
+  .angary-page :is(.angary-section-heading h2, .faq-grid h2) { font-size: var(--type-h2); }
   .angary-section-heading { margin-bottom: 38px; }
   /* 16 px on phones, as every lead on the site (HOME's mobile standard); at 14 px the cost lead was the smallest */
-  .angary-section-heading > p:not(.eyebrow) { margin-top: 22px; font-size: 16px; line-height: 1.6; }
+  .angary-section-heading > p:not(.eyebrow) { margin-top: var(--rhythm-lead); font-size: 16px; line-height: 1.6; }
   .angary-process .angary-section-heading { margin-bottom: 50px; }
   .angary-cost-foot { margin-top: 28px; }
   .angary-cost-actions .button { width: 100%; justify-content: space-between; }
@@ -130,7 +130,7 @@
   /* A phone crops to 4:3 at HOME's point, the gable end with its gates */
   .angary-real-sheet .angary-real-media { aspect-ratio: 4 / 3; }
   .angary-real-media img { object-position: 86% 55%; }
-  .angary-real-facts h2 { font-size: clamp(26px, 7.4vw, 30px); }
+  .angary-real-facts h2 { font-size: var(--type-h2-minor); }
   .angary-real .hv2-scope-chips { margin-top: 22px; }
   .angary-real .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
   .angary-page .faq-heading { position: static; margin-bottom: 36px; }

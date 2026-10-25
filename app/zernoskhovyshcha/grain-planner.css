@@ -31,7 +31,7 @@
 .grain-planner-root .button:disabled { cursor: not-allowed; opacity: .45; transform: none; }
 .grain-planner-root .planner-button-dark { color: var(--color-dark-text); background: var(--color-dark); }
 .grain-planner-root .planner-button-dark:hover { background: var(--color-dark-surface); }
-.grain-planner-root .planner-button-outline { min-height: 48px; gap: 12px; color: var(--color-text); border-color: var(--color-border-control); background: transparent; }
+.grain-planner-root .planner-button-outline { min-height: var(--button-h-m); gap: 12px; color: var(--color-text); border-color: var(--color-border-control); background: transparent; }
 .grain-planner-root .planner-button-outline:hover { color: var(--color-accent-strong); border-color: var(--color-accent); }
 
 /* ── Layout: consultation + live understanding ───────────────────────────────────────── */

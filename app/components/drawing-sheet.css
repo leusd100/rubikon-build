@@ -8,7 +8,7 @@
   --sheet-paper: var(--color-surface-elevated);
   --sheet-ink: var(--color-border-strong);
   --sheet-mark: var(--color-accent);
-  --sheet-plot: cubic-bezier(.55, 0, .25, 1); /* an even pen, as the region map's outline */
+  --sheet-plot: var(--ease-plot); /* an even pen, as the region map's outline */
   position: relative;
   display: flex;
   flex-direction: column;

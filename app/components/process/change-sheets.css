@@ -11,7 +11,7 @@
 .cs-schedule { grid-column: 2; }
 .cs-paper { position: relative; padding: 16px 20px 18px; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); box-shadow: 0 14px 34px rgba(20, 18, 15, .07); }
 .cs-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--cs-faint); }
-.cs-head b { color: var(--color-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.cs-head b { color: var(--color-text); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .cs-head span { color: var(--color-text-muted); font: 600 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; }
 .cs-sheet figcaption { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 0 6px; margin-top: 16px; }
 .cs-sheet figcaption > b { color: var(--cs-copper-ink); font: 700 13px/1.5 var(--font-condensed), sans-serif; letter-spacing: .12em; }

@@ -68,7 +68,7 @@
   .dfmt-figure[data-live] .fs[data-format="comprehensive"] .fs-inner { animation: dfmt-march 1.4s linear infinite; }
   /* The sheet arrives once (the page's ProcessMotion) */
   [data-motion-ready] .dfmt-grid:not([data-motion-state="on"]) .dfmt-figure { opacity: 0; }
-  .dfmt-grid[data-motion-state="on"] .dfmt-figure { animation: dfmt-rise 520ms cubic-bezier(.2, .7, .1, 1) backwards; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-figure { animation: dfmt-rise 520ms var(--ease-premium) backwards; }
 }
 
 /* Each button's two facts as text for a screen reader only (the visible copy under the drawing is aria-hidden). The

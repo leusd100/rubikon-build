@@ -12,6 +12,35 @@
   --section-space-compact: clamp(72px, 6vw, 96px);
   --grid-gap: clamp(44px, 6vw, 88px);
   --hero-bottom-space: clamp(64px, 8vh, 88px);
+  /* The fixed header from 761 px: its 100 px row and 1 px rule (PDO-98). The phones' 67 / 77 px header is
+     --compact-hero-header-edge; a lower header on short laptop windows and tablets is PDO-98's later step. */
+  --header-h: 101px;
+
+  /* Design tokens, Wave 03 (W3-01, 25.10): declared with the values in use today — no visible change. The visible steps
+     set their values: W3-02 the type and label roles, W3-03 the rhythm, W3-06 the buttons. A rule takes a token only
+     where its value is that token's today; the other literals move when their file changes for a visible step. */
+
+  /* Spacing scale (PDO-62): 4 px steps up to 24, then 32 / 40 / 48 / 64 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+  /* Rhythm roles (PDO-62), phones in the ≤760 block. W3-03 sets 20 / 16, 24 / 20 and 32 / 24 (from 761 px / phone). */
+  --rhythm-label: var(--space-6);   /* label → heading: .eyebrow */
+  --rhythm-lead: 28px;              /* heading → lead: .direction-editorial-copy, .angary-section-heading (22 on phones) */
+  --rhythm-cta: 34px;               /* content → its link: .section-link */
+  --card-pad: 28px;                 /* a card's inside: the «Пов’язані напрямки» row (20 on phones) */
+  --card-gap: 24px;                 /* between cards: the grain entries' phone row (12 on phones) */
+  /* Buttons (PDO-99): the two heights. The large is .button's; the medium the planner's outline button. W3-06 moves the
+     grain sheet's 44 and the brief's 52 px buttons onto the medium. */
+  --button-h-l: 56px;
+  --button-h-m: 48px;
 
   /* Shape and elevation */
   --radius-sm: 12px;
@@ -20,36 +49,61 @@
   --shadow-card: 0 24px 64px var(--color-shadow);
   --copper-offset: color-mix(in srgb, var(--color-accent) 12%, transparent);
 
-  /* Type scale */
-  --text-xs: 11px;
-  --text-sm: 14px;
-  --text-md: 16px;
-  --text-lg: 18px;
+  /* Type scale (PDO-60), in rem: the px are the same at the default 16 px root, and a larger browser text size now
+     reaches the roles. Phones in the ≤760 block. */
   /* Section titles (H2). The floor is 38 px (it was 46): on a 768 px tablet an H2 is never larger than the page's H1
      (HOME 44 px, a direction 44.54 px; PDO-05, OD-PX-14). From ≈1022 px 4.5vw is above 46 px and nothing changes. */
-  --title-section: clamp(2.375rem, 4.5vw, 4.5rem);
-  --title-page: clamp(58px, 6vw, 92px);
+  --type-h2: clamp(2.375rem, 4.5vw, 4.5rem);
+  /* The smaller H2 levels and the display H3, each at the value of the rule that holds the role today: the laptop
+     inquiry block (44–52 px from 1181 px wide), /angary's real object (28–38) and the grain entries (24–28). W3-02 sets
+     36–52 (51.84 at 1440), 28–36 (36 at 1440) and 24–28 and moves the other H2 / H3 sizes onto them. */
+  --type-h2-compact: clamp(2.75rem, 3.6vw, 3.25rem);
+  --type-h2-minor: clamp(1.75rem, 2.5vw, 2.375rem);
+  --type-h3: clamp(1.5rem, 2vw, 1.75rem);
   /* Hero standard (UX pass 2026-10; the owner's model is /yak-pratsyuiemo): one title, lead and rhythm for every page's
      first block. The sizes follow the window's height as well as its width, so the whole block — crumbs to actions —
      fits a short laptop window (1280×720, 1600×760) instead of running past its bottom edge. HOME's longer statement
-     takes --hero-title-home. */
-  --hero-title: clamp(44px, min(5.8vw, 10.2svh), 86px);
-  --hero-title-home: clamp(44px, min(5.2vw, 9.4svh), 78px);
+     takes --type-display-home. */
+  --type-h1: clamp(2.75rem, min(5.8vw, 10.2svh), 5.375rem);
+  --type-display-home: clamp(2.75rem, min(5.2vw, 9.4svh), 4.875rem);
+  /* Labels (PDO-63): three roles, each a weight, a size and a tracking — letter-spacing has no place in the font
+     shorthand, and a rule that takes them keeps its own line-height and family (--font-manrope is set on <body>, not
+     on :root, so a token here cannot name it). The UI label is the eyebrow (Manrope 800 12 / .13em), the action
+     .button and .section-link (Manrope 800 12 / .06em), the technical label a drawing's: the sheets' heads and the
+     /angary stamp (Plex 700 12 / .14em). W3-02 sets 12 / .10em, 13 / .06em and 12 / .08em and moves the other labels
+     onto them — the conversation and form kickers (Plex 700 12 / .14em today) onto the UI label, in Manrope. */
+  --type-label-ui-weight: 800;
+  --type-label-ui-size: .75rem;
+  --type-label-ui-track: .13em;
+  --type-action-weight: 800;
+  --type-action-size: .75rem;
+  --type-action-track: .06em;
+  --type-label-tech-weight: 700;
+  --type-label-tech-size: .75rem;
+  --type-label-tech-track: .14em;
   /* Display fit (Typography v1.1, Fixel Display): the em width of the longest single word a display heading carries —
      «Металоконструкції», 8.876 em at -.03em — × 1.04 (Linux renders it ≈ 1.7 % wider than macOS, plus 2 % spare). A
      direction title or a hero H1 is never larger than its box / this, so that word fits whole at every width without a
      size per breakpoint; the English test copy's longest word is far shorter (Load-bearing, 5.99 em). */
   --display-fit: 9.23;
-  --hero-lead: 17px;
-  --hero-pad-top: calc(101px + clamp(18px, 7svh, 72px));
+  --hero-lead: 1.0625rem;
+  --hero-pad-top: calc(var(--header-h) + clamp(18px, 7svh, 72px));
   --hero-pad-bottom: clamp(56px, 9svh, 110px);
   --hero-gap-crumb: clamp(16px, 3.6svh, 40px);
   --hero-gap-lead: clamp(16px, 3.2svh, 30px);
   --hero-gap-actions: clamp(20px, 4.2svh, 38px);
 
-  /* Motion */
+  /* Motion (PDO-64): the durations and curves of Motion v1, declared. The pages' own --m-reveal / --m-draw (about.css,
+     delivery.css, direction-template.css) keep their values: moving them onto these changes their pace (W3-10). */
+  --motion-micro: 200ms;
+  --motion-reveal: 420ms;
+  --motion-draw: 900ms;
+  --motion-draw-long: 1400ms;
+  --motion-media-fade: 800ms;
   --ease-premium: cubic-bezier(.2, .7, .1, 1);
-  --duration-fast: 200ms;
+  --ease-plot: cubic-bezier(.55, 0, .25, 1);      /* an even pen: the sheets' plotter, the region map, the node lines */
+  --ease-standard: cubic-bezier(.4, 0, .2, 1);    /* media fades and crossfades, the HOME chips' glint */
+  --duration-fast: var(--motion-micro);
   --duration-medium: 360ms;
 }
 
@@ -131,11 +185,11 @@ body:has(main:is([data-home="v2"], .about-page)) {
    These ranges match each page's video breakpoint; phone stills keep the approved composition. */
 @media (min-width: 761px) {
   body:has(main[data-home="v2"]) .mobile-call { background: rgba(17, 21, 18, .6); }
-  main[data-home="v2"] .hero-shade { mask-image: linear-gradient(180deg, transparent 77px, #000 101px); }
+  main[data-home="v2"] .hero-shade { mask-image: linear-gradient(180deg, transparent calc(var(--header-h) - 24px), #000 var(--header-h)); }
 }
 @media (min-width: 601px) {
   body:has(main.about-page) .mobile-call { background: rgba(17, 21, 18, .6); }
-  .about-page .about-subhero .subhero-overlay { mask-image: linear-gradient(180deg, transparent 77px, #000 101px); }
+  .about-page .about-subhero .subhero-overlay { mask-image: linear-gradient(180deg, transparent calc(var(--header-h) - 24px), #000 var(--header-h)); }
 }
 @media (min-width: 601px) and (max-width: 760px) {
   .about-page .about-subhero .subhero-overlay { mask-image: linear-gradient(180deg, transparent 53px, #000 77px); }
@@ -220,7 +274,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
    without passing the scroll on to the page. The top is the button's: the header's edge plus the 14 px gap. */
 .mobile-menu nav {
   position: absolute; top: calc(100% + 14px); right: 0; width: min(310px, calc(100vw - 32px)); padding: 8px 20px;
-  max-height: calc(100vh - 110px); max-height: calc(100dvh - var(--compact-hero-header-edge, 101px) - 22px);
+  max-height: calc(100vh - 110px); max-height: calc(100dvh - var(--compact-hero-header-edge, var(--header-h)) - 22px);
   overflow-y: auto; overscroll-behavior: contain;
   color: var(--color-dark-text); background: var(--color-dark); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 24px 54px rgba(0,0,0,.34);
 }
@@ -307,7 +361,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-grid { position: absolute; z-index: 1; inset: 0; opacity: .21; background-image: linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px); background-size: 96px 96px; mask-image: linear-gradient(90deg, black, transparent 82%); pointer-events: none; }
 .hero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(292px, 320px); min-height: 100%; align-items: end; gap: var(--grid-gap); padding-top: 180px; padding-bottom: var(--hero-bottom-space); }
 .hero-copy { position: relative; min-width: 0; }
-.eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 24px; color: var(--color-text-muted); font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 var(--rhythm-label); color: var(--color-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .eyebrow span { width: 24px; height: 2px; background: var(--color-accent); }
 .eyebrow.light { color: var(--color-dark-text-secondary); }
 .hero .eyebrow { color: rgba(255,255,255,.66); }
@@ -315,7 +369,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .hero-lead { max-width: 650px; margin: 34px 0 0; color: color-mix(in srgb, var(--color-dark-text) 90%, transparent); font-size: 17px; line-height: 1.7; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: 40px; }
-.button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: 56px; padding-inline: 24px; border: 1px solid transparent; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: var(--button-h-l); padding-inline: 24px; border: 1px solid transparent; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .button-primary { color: var(--color-on-action); background: var(--color-action); }
 .button-primary:hover { background: var(--color-action-hover); transform: translateY(-2px); }
 /* The quieter button on a dark hero: same size as the primary, outline only. */
@@ -379,7 +433,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .section-header-inverse { border-bottom-color: rgba(255,255,255,.18); }
 .section-header-inverse .section-header-support { color: var(--color-dark-text-secondary); }
 
-.section-link { display: inline-flex; align-items: center; gap: 22px; margin-top: 34px; padding-bottom: 8px; border-bottom: 1px solid currentColor; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.section-link { display: inline-flex; align-items: center; gap: 22px; margin-top: var(--rhythm-cta); padding-bottom: 8px; border-bottom: 1px solid currentColor; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
 .section-link span { color: var(--color-accent-strong); }
 
 .directions { color: var(--color-dark-text); background: var(--color-dark); }
@@ -624,12 +678,12 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .subhero-grid { position: absolute; inset: 0; opacity: .16; background-image: linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px); background-size: 96px 96px; mask-image: linear-gradient(90deg, black, transparent 82%); pointer-events: none; }
 .subhero-media > img,
 .subhero-media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.45) contrast(1.08); }
-.directions-hero-sequence-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--directions-hero-image-position, center 60%); filter: saturate(.45) contrast(1.08) brightness(.94) blur(.7px); opacity: 0; transition: opacity .7s cubic-bezier(.4, 0, .2, 1), filter .7s cubic-bezier(.4, 0, .2, 1); }
+.directions-hero-sequence-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--directions-hero-image-position, center 60%); filter: saturate(.45) contrast(1.08) brightness(.94) blur(.7px); opacity: 0; transition: opacity .7s var(--ease-standard), filter .7s var(--ease-standard); }
 .directions-hero-sequence-image.is-active { filter: saturate(.45) contrast(1.08); opacity: 1; }
-.direction-hero-poster { z-index: 0; opacity: 1; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); transition: opacity .8s cubic-bezier(.4, 0, .2, 1); }
+.direction-hero-poster { z-index: 0; opacity: 1; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); transition: opacity var(--motion-media-fade) var(--ease-standard); }
 .direction-hero-poster.is-hidden { opacity: 0; }
 .hero-media .direction-hero-poster { object-position: 60% center; filter: saturate(.66) contrast(1.1) brightness(.82); }
-.direction-hero-video { z-index: 1; opacity: 0; transition: opacity 1.1s cubic-bezier(.4, 0, .2, 1); }
+.direction-hero-video { z-index: 1; opacity: 0; transition: opacity 1.1s var(--ease-standard); }
 .direction-hero-video.is-active { opacity: 1; }
 /* The hero footage's pause / play (DirectionHeroVideo), bottom right: the word for the next action beside its icon in
    a circle. The icon is the circle's only content, so it sits on the centre; the play triangle is nudged 1.5 px right,
@@ -684,7 +738,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .breadcrumb a:hover { color: var(--color-dark-text); }
 .breadcrumb b { color: rgba(255,255,255,.72); font-weight: 800; }
 .breadcrumb i { font-style: normal; }
-.subhero h1, .service-subhero h1 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--hero-title); font-weight: 400; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance; }
+.subhero h1, .service-subhero h1 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--type-h1); font-weight: 400; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance; }
 /* The H1's --display-fit container (the phone rule below sizes the H1 to 100cqi / --display-fit). */
 :is(.subhero, .service-subhero) .shell { container-type: inline-size; }
 /* From 761 px a headline's accent phrase stays on one line. Under text-wrap: balance a Fixel headline can be a near tie
@@ -701,7 +755,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .subhero-side > p { margin: 0; color: rgba(255,255,255,.7); font-size: 16px; line-height: 1.75; }
 
 .service-subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
-.service-subhero-media { position: absolute; inset: 101px 0 0; } /* under the fixed header: /zernoskhovyshcha ≥1100 px until W2-12; every other hero starts at y 0 behind it (PDO-18, «One header model») */
+.service-subhero-media { position: absolute; inset: var(--header-h) 0 0; } /* under the fixed header: /zernoskhovyshcha ≥1100 px until W2-12; every other hero starts at y 0 behind it (PDO-18, «One header model») */
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
 .direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%) !important; }
@@ -734,7 +788,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .page-section-dark .eyebrow { color: var(--color-dark-text-secondary); }
 .page-two-col { display: grid; grid-template-columns: .92fr 1.08fr; align-items: center; gap: var(--grid-gap); }
 .page-two-col.align-start { align-items: start; }
-.copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--title-section); font-weight: 400; line-height: 1.05; letter-spacing: -.035em; text-wrap: balance; }
+.copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--type-h2); font-weight: 400; line-height: 1.05; letter-spacing: -.035em; text-wrap: balance; }
 .copy-column > p:not(.eyebrow) { margin: 22px 0 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.85; }
 .copy-column .lead-copy { margin-top: 32px; color: var(--color-text-secondary); font-size: 18px; line-height: 1.7; }
 .page-heading { margin-bottom: 54px; }
@@ -800,9 +854,9 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 /* Related directions — compact cross-navigation between adjacent stages of one object.
    Reuses the .cost-grid hairline vocabulary (container border-top/left, cell border-right/bottom)
    so it reads as part of the existing system; capped column width keeps it visibly lighter than
-   /napryamky's full-width .route-service list. */
+   /napryamky's full-width .route-service list. The title's one rule is in direction-template.css (Fixel); the Plex one
+   here always lost to it and is gone (W3-01). */
 .related-directions-section { background: var(--color-surface-alt); }
-.related-directions-title { margin: 14px 0 32px; font: 600 clamp(24px, 2.5vw, 32px)/1.1 var(--font-condensed), sans-serif; text-transform: none; }
 .related-grid { display: flex; flex-wrap: wrap; gap: 14px; }
 /* Exactly-3-item variant (angary is currently the only direction page with 3 related entries,
    every other page has 2 — see relatedDirections.ts): the shared flex-wrap layout above is
@@ -854,7 +908,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
    320 px phone) wraps in it instead of widening the column past the page. */
 .direction-editorial-copy { align-self: center; min-width: 0; }
 .direction-editorial-copy h2 { max-width: 650px; margin: 0; font: 400 clamp(38px, 4.1vw, 62px)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
-.direction-editorial-copy > p:not(.eyebrow) { max-width: 500px; margin: 28px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.8; }
+.direction-editorial-copy > p:not(.eyebrow) { max-width: 500px; margin: var(--rhythm-lead) 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.8; }
 .direction-editorial-media { position: relative; min-height: 520px; margin: 0; overflow: hidden; background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 18px 18px 0 var(--copper-offset); }
 .direction-editorial-media::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(21,24,22,.09); }
 .direction-editorial-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -1069,7 +1123,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     --phone-hero-header-alpha: 92%;
     --phone-hero-header-backdrop: none;
     --phone-hero-safe-top: env(safe-area-inset-top, 0px);
-    --compact-hero-header-edge: calc(101px + var(--phone-hero-safe-top));
+    --compact-hero-header-edge: calc(var(--header-h) + var(--phone-hero-safe-top));
   }
   body .service-subhero-media { top: 0; }
   body .directions-page .directions-hero-sequence-image { top: 0; height: 100%; }
@@ -1089,7 +1143,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   :root[data-hero-header="scrolled"] .site-header { --phone-hero-header-alpha: 100%; --phone-hero-header-backdrop: none; }
   main:not(.grain-page) .service-subhero-media { top: 0; }
   main:not(.grain-page) :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade) {
-    mask-image: linear-gradient(180deg, transparent 77px, #000 101px);
+    mask-image: linear-gradient(180deg, transparent calc(var(--header-h) - 24px), #000 var(--header-h));
   }
 }
 
@@ -1102,10 +1156,14 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     /* 28 / 28 / 28.86 / 31.82 px at 320 / 375 / 390 / 430, never larger than the phone H1 (29–35 px: home-v2.css,
        phone-hero.css; PDO-05 variant A). In rem like that H1, so a larger browser text size keeps H1 ≥ H2. The local
        phone H2 rules (conversation, HOME signature, /angary, grain band, /pro-nas story, configurator band) use it. */
-    --title-section: clamp(1.75rem, 7.4vw, 2rem);
-    --title-page: clamp(42px, 12vw, 56px);
-    --hero-title: clamp(38px, 10.6vw, 46px);
-    --hero-lead: 16px;
+    --type-h2: clamp(1.75rem, 7.4vw, 2rem);
+    --type-h2-minor: clamp(1.625rem, 7.4vw, 1.875rem);
+    --type-h3: 1.5rem;
+    --type-h1: clamp(2.375rem, 10.6vw, 2.875rem);
+    --hero-lead: 1rem;
+    --rhythm-lead: 22px;
+    --card-pad: 20px;
+    --card-gap: 12px;
   }
   .shell { width: min(100% - 32px, 620px); }
   .section { padding-block: var(--section-space); }
@@ -1151,7 +1209,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.86), rgba(10,11,12,.58)), linear-gradient(0deg, rgba(10,11,12,.78), transparent 66%); }
   .section-header { grid-template-columns: 1fr; gap: 26px; margin-bottom: 42px; padding-bottom: 28px; }
   .section-header-copy .eyebrow { margin-bottom: 22px; }
-  .section-header h2 { font-size: var(--title-section); line-height: 1.02; }
+  .section-header h2 { font-size: var(--type-h2); line-height: 1.02; }
   .section-header-support { max-width: 560px; margin-top: 0; padding-left: 20px; font-size: 16px; }
   .direction-grid { grid-template-columns: 1fr; grid-template-rows: none; }
   .direction-card, .direction-card.wide { grid-row: auto; min-height: 390px; }
@@ -1209,7 +1267,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .breadcrumb, .breadcrumb a { color: rgba(255,255,255,.86); }
   .breadcrumb b { color: #fff; }
   .breadcrumb :is(a, b) { text-shadow: 0 1px 2px rgba(9, 10, 12, .55); }
-  .subhero h1, .service-subhero h1 { font-size: min(var(--hero-title), calc(100cqi / var(--display-fit))); }
+  .subhero h1, .service-subhero h1 { font-size: min(var(--type-h1), calc(100cqi / var(--display-fit))); }
   .subhero-side > p { font-size: 15px; }
   .service-subhero-content { padding-top: 126px; padding-bottom: 58px; } /* the crumbs sit 49 px under the 77 px header, as on /angary */
   .direction-hero-image { object-position: var(--direction-hero-image-position-mobile, center 60%) !important; }
@@ -1220,7 +1278,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .service-subhero-content > p.service-subhero-note { display: block; max-width: 560px; margin: 16px 0 0; padding-top: 12px; color: rgba(255, 255, 255, .78); border-top: 1px solid rgba(255, 255, 255, .22); font-size: 14px; line-height: 1.6; }
   .page-section { padding-block: var(--section-space); }
   .page-two-col, .faq-grid { grid-template-columns: 1fr; gap: 44px; }
-  .copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { font-size: var(--title-section); }
+  .copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { font-size: var(--type-h2); }
   .copy-column .lead-copy { font-size: 16px; }
   .page-heading { margin-bottom: 42px; }
   .use-case-grid { grid-template-columns: 1fr; }
@@ -1229,8 +1287,8 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .direction-editorial-grid[data-layout="media-first"] .direction-editorial-copy { grid-column: 1; grid-row: 1; }
   .direction-editorial-grid[data-layout="media-first"] .direction-editorial-media { grid-column: 1; grid-row: 2; min-height: 0; box-shadow: 10px 10px 0 var(--copper-offset); }
   .direction-editorial-copy { padding: 0; }
-  .direction-editorial-copy h2 { font-size: var(--title-section); }
-  .direction-editorial-copy > p:not(.eyebrow) { margin-top: 22px; font-size: 16px; }
+  .direction-editorial-copy h2 { font-size: var(--type-h2); }
+  .direction-editorial-copy > p:not(.eyebrow) { margin-top: var(--rhythm-lead); font-size: 16px; }
   .direction-editorial-media { min-height: 0; aspect-ratio: 3 / 2; border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 10px 10px 0 var(--copper-offset); }
   .cost-grid { grid-template-columns: 1fr; }
   .use-case-grid article { min-height: 245px; }
@@ -1404,7 +1462,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     column-gap: clamp(30px, 4vw, 48px);
     row-gap: var(--hero-gap-lead);
   }
-  .hero h1 { grid-area: title; max-width: none; font-size: var(--hero-title-home); line-height: 1.02; }
+  .hero h1 { grid-area: title; max-width: none; font-size: var(--type-display-home); line-height: 1.02; }
   /* The gap keeps the lead off the actions when the (now shorter) contact card no longer stretches this row. */
   .hero-copy { grid-area: copy; min-width: 0; display: flex; flex-direction: column; align-self: stretch; gap: var(--hero-gap-actions); }
   .hero-lead { align-self: start; margin-top: 0; }
@@ -1671,9 +1729,9 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 
 /* ── UX pass 2026-10 · One H2 scale ───────────────────────────────────────────────────────────────────────────────
    The section headings had nine sizes. The large ones (section header 74 px, /yak start 74 px, /angary people 84 px)
-   come down to the site's one section size, var(--title-section); editorial and conversation headings stay one step
+   come down to the site's one section size, var(--type-h2); editorial and conversation headings stay one step
    smaller. */
-.section-header h2, .process-page .proc-start-head h2, .angary-page .angary-people-copy h2 { font-size: var(--title-section); line-height: 1.02; }
+.section-header h2, .process-page .proc-start-head h2, .angary-page .angary-people-copy h2 { font-size: var(--type-h2); line-height: 1.02; }
 
 /* ── UX pass 2026-10 · One provenance stamp on concept heroes ───────────────────────────────────────────────────────
    The five direction heroes and the /napryamky slides are concept images, like the /yak-pratsyuiemo hero that already

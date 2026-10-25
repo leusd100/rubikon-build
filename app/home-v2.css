@@ -15,7 +15,7 @@ main[data-home="v2"] {
      (owner, 05.10: «сніг синім»), the wind turquoise, both cold and never read as one, each with a light tone for what
      runs along its way. The nodes drawn as details (А–Д): a magenta of their own (owner, 05.10: a node's copper ring read
      as one of the copper lines behind the gable) */
-  --hv2-load: #5aa8ff; --hv2-load-light: #e3f0ff; --hv2-wind: #4fd8c8; --hv2-wind-light: #dcfbf6;
+  --hv2-load: var(--color-load); --hv2-load-light: #e3f0ff; --hv2-wind: var(--color-wind); --hv2-wind-light: #dcfbf6;
   /* (a calm drawing blue — owner, 06.10: the magenta «прикольно, але занадто», the gold before it too close to the copper
      and the photo's yellow strips; a periwinkle, apart from the snow's azure — which never shows with the nodes — as from
      the wind and the copper; dark letters on it) */
@@ -28,11 +28,13 @@ main[data-home="v2"] {
   --hv2-graphite-3: #242825;
   --hv2-line: rgba(245, 242, 235, .12);
   --hv2-line-strong: rgba(245, 242, 235, .24);
-  --hv2-text: #f5f2eb;
-  --hv2-text-2: #bdb7ac;   /* ≥ 8:1 on the graphite surfaces */
-  --hv2-text-3: #9e988d;   /* ≥ 5.9:1 */
-  --hv2-copper: #b76432;   /* decorative: rules, dots, bars */
-  --hv2-copper-text: #cc8455; /* copper text on charcoal: 5.9:1 */
+  /* The charcoal band's roles (theme.css), the same in both modes (W3-01, PDO-87). The brief's fill stays a literal: the
+     role --color-action turns #CC8455 in Dark, under these light labels (W1-09 decides it). */
+  --hv2-text: var(--color-dark-text);
+  --hv2-text-2: var(--color-dark-text-secondary);   /* ≥ 8:1 on the graphite surfaces */
+  --hv2-text-3: var(--color-dark-text-muted);       /* ≥ 5.9:1 */
+  --hv2-copper: var(--color-accent);                /* decorative: rules, dots, bars */
+  --hv2-copper-text: var(--color-accent-on-dark);   /* copper text on charcoal: 5.9:1 */
   --hv2-copper-fill: #a0522a; /* copper fill under warm-white text: 5.03:1 */
 }
 
@@ -132,7 +134,7 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
    title and the call share the first screen at 844×390 and 915×412. From 461 px high (1024×480 included) as before. */
 @media (min-width: 761px) and (max-width: 1099px) and (max-height: 460px) {
   main[data-home="v2"] .hv2-hero { height: auto; min-height: 100svh; }
-  main[data-home="v2"] .hv2-hero .hv2-hero-layout { padding-top: calc(var(--compact-hero-header-edge, 101px) + 20px); padding-bottom: 20px; }
+  main[data-home="v2"] .hv2-hero .hv2-hero-layout { padding-top: calc(var(--compact-hero-header-edge, var(--header-h)) + 20px); padding-bottom: 20px; }
   main[data-home="v2"] .hv2-hero h1 { font-size: 30px; line-height: 1.06; }
   main[data-home="v2"] .hv2-hero .hero-lead { margin-top: 10px; font-size: 15px; }
   main[data-home="v2"] .hv2-hero .hero-actions { margin-top: 14px; }
@@ -187,7 +189,7 @@ main[data-home="v2"] .hv2-signature-head {
 }
 main[data-home="v2"] .hv2-signature-head .hv2-kicker { grid-column: 1 / -1; }
 main[data-home="v2"] .hv2-signature-head h2 {
-  margin: 0; font: 400 var(--title-section)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance;
+  margin: 0; font: 400 var(--type-h2)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance;
 }
 main[data-home="v2"] .hv2-signature-support { max-width: 460px; margin: 0; padding-left: 24px; color: var(--hv2-text-2); border-left: 2px solid var(--hv2-copper); font-size: 16px; line-height: 1.7; }
 
@@ -978,7 +980,7 @@ main[data-home="v2"] .hv2-scope-chips[data-draw="on"] .hv2-scope-part { animatio
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   main[data-home="v2"] .hv2-scope-chips:not([data-draw="armed"], [data-draw="on"]) li:hover .hv2-scope-glint { animation: hv2-scope-glint 1100ms ease both; }
-  main[data-home="v2"] .hv2-scope-chips:not([data-draw="armed"], [data-draw="on"]) li:hover .hv2-scope-glint path { animation: hv2-scope-run 1100ms cubic-bezier(.4, 0, .2, 1) both; }
+  main[data-home="v2"] .hv2-scope-chips:not([data-draw="armed"], [data-draw="on"]) li:hover .hv2-scope-glint path { animation: hv2-scope-run 1100ms var(--ease-standard) both; }
 }
 @keyframes hv2-scope-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes hv2-scope-glint { 0% { opacity: 0; } 15%, 75% { opacity: 1; } 100% { opacity: 0; } }
@@ -1006,7 +1008,7 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
 
 @media (max-width: 760px) {
   main[data-home="v2"] .hv2-signature-head { gap: 16px; padding-bottom: 24px; }
-  main[data-home="v2"] .hv2-signature-head h2 { font-size: var(--title-section); line-height: 1.02; }
+  main[data-home="v2"] .hv2-signature-head h2 { font-size: var(--type-h2); line-height: 1.02; }
   main[data-home="v2"] .hv2-signature-support { padding-left: 16px; }
   main[data-home="v2"] .hv2-proof { margin-top: 26px; }
   /* The sheet keeps the page's gutter (the photo used to run edge to edge as a bare picture) */
@@ -1154,7 +1156,7 @@ main[data-home="v2"] .hv2-detail-again span { font-size: 14px; letter-spacing: 0
 main[data-home="v2"] .hv2-detail-again:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
 /* A pressed toggle takes the node's own colour, and «Навантаження» the load's */
 main[data-home="v2"] .hv2-detail-again[aria-pressed="true"] { color: var(--hv2-node-ink); background: var(--hv2-node); border-color: var(--hv2-node); }
-main[data-home="v2"] .hv2-detail-again[data-kind="load"][aria-pressed="true"] { color: #141615; background: var(--hv2-load, #5aa8ff); border-color: var(--hv2-load, #5aa8ff); }
+main[data-home="v2"] .hv2-detail-again[data-kind="load"][aria-pressed="true"] { color: #141615; background: var(--hv2-load, var(--color-load)); border-color: var(--hv2-load, var(--color-load)); }
 main[data-home="v2"] .hv2-detail-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 /* ‹ › — the previous node and the next, round the five (a finger swipes the sheet too) */
 main[data-home="v2"] .hv2-detail-steps { display: inline-flex; gap: 2px; margin-right: 2px; }
@@ -1165,7 +1167,7 @@ main[data-home="v2"] .hv2-detail-step {
 main[data-home="v2"] .hv2-detail-step:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-detail-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-detail-step { width: 40px; height: 40px; } }
-main[data-home="v2"] .hv2-detail-flow-words { margin: 0; color: var(--hv2-load, #5aa8ff); font: 600 12px/1.35 var(--font-manrope), sans-serif; opacity: 0; transition: opacity 300ms ease; }
+main[data-home="v2"] .hv2-detail-flow-words { margin: 0; color: var(--hv2-load, var(--color-load)); font: 600 12px/1.35 var(--font-manrope), sans-serif; opacity: 0; transition: opacity 300ms ease; }
 /* its line kept while the node comes together, the words in once the way shows */
 main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-flow-words { opacity: 1; }
 /* The open node's ring on the photo's side, the seam standing on it (ProofContour's showNode): a light ring on a dark

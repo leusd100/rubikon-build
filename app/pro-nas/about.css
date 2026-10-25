@@ -172,7 +172,7 @@
   .ps-stage { transition: transform 1100ms cubic-bezier(.65, 0, .25, 1); }
   .ps[data-step="1"] .aqc-mark-1 .aqc-line,
   .ps[data-step="2"] .aqc-mark-2 .aqc-line,
-  .ps[data-step="3"] .aqc-mark-3 .aqc-line { animation: ps-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
+  .ps[data-step="3"] .aqc-mark-3 .aqc-line { animation: ps-draw var(--motion-draw) var(--ease-plot) 650ms backwards; }
   /* the route runs with the frame: each number lands as its part draws */
   .ps[data-step="2"] .aqc-mark-2 .aqc-line { animation-duration: 1300ms; animation-delay: 700ms; animation-timing-function: linear; }
   .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { animation: ps-pop 320ms ease 700ms backwards; }
@@ -237,7 +237,7 @@
 /* ---------------------------------------------------------------- Phone */
 @media (max-width: 760px) {
   /* The story's title takes the site's phone section size (PDO-05): its own clamp() kept it at 40 px over a 29 px H1 */
-  .about-story-copy h2 { font-size: var(--title-section); }
+  .about-story-copy h2 { font-size: var(--type-h2); }
   .team-about .team-stories { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 64px; }
   /* «Два покоління — одна відповідальність» under a full-width rule (PDO-53): beside the words the two rules had no width
      left on a phone (0 px at 320–390) */
