@@ -1278,9 +1278,10 @@ main[data-home="v2"] .hv2-contour-stage:is(:hover, :focus-within, [data-touring]
 main[data-home="v2"] .hv2-contour-stage .hv2-proof-detail-pin:is(:hover, [aria-expanded="true"]) { color: var(--hv2-node-ink); background: var(--hv2-node-light); border-color: var(--hv2-node-edge); }
 
 /* a quiet way out for another task: an arrow link (.link-arrow) in the secondary ink; under the line it stands in the
-   note's <b>, whose overflow (kept for the other cells' ellipsis) would cut the focus ring */
+   note's <b>, whose overflow (kept for the other cells' ellipsis) would cut the focus ring. The <b> is also the link's
+   container (container-type, for the short laptop below). */
 main[data-home="v2"] .hv2-contour-exit { --link-ink: var(--hv2-text-2); align-self: start; }
-main[data-home="v2"] .hv2-contour .sheet-cell-note b { overflow: visible; }
+main[data-home="v2"] .hv2-contour .sheet-cell-note b { overflow: visible; container-type: inline-size; }
 /* Under the line the title block's height sizes the picture on a laptop, so there the link keeps its 25.25 px box (its
    words, 8 px, the rule) and its 44 px target is an invisible zone centred on it, as the configurator sheet's chips: a
    44 px box pushed the block 16–22 px taller, and one reaching up over the line had its focus ring across the words.
@@ -1289,8 +1290,7 @@ main[data-home="v2"] .hv2-contour .sheet-cell-note b { overflow: visible; }
 main[data-home="v2"] .hv2-contour-exit[data-place="line"] { position: relative; min-height: 0; margin-top: 4.75px; }
 /* A short laptop window narrows the sheet to 1147 px and the note to 256 px: there the link's words in capitals (291 px)
    would take two lines and push the block 16 px taller, past the window the owner asked it to fit (06.10), so they drop
-   the capitals and the tracking (235 px) and stay one line */
-main[data-home="v2"] .hv2-contour .sheet-cell-note b { container-type: inline-size; }
+   the capitals and the tracking (235 px) and stay one line (the note's <b> is the container, above) */
 @container (max-width: 290px) { main[data-home="v2"] .hv2-contour-exit[data-place="line"] { letter-spacing: 0; text-transform: none; } }
 main[data-home="v2"] .hv2-contour-exit[data-place="line"]::after { position: absolute; top: 50%; right: 0; left: 0; height: 44px; content: ''; translate: 0 -50%; }
 main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
