@@ -217,10 +217,11 @@ describe('section rhythm (W3-03)', () => {
     expect(grain.match(/@media \(min-width: 761px\) \{ \.grain-page[^{]*\{ padding-block: var\(--section-space-compact\); \} \}/g)).toHaveLength(5);
   });
 
-  it('joins two neighbours of one tone at the compact space on both sides', () => {
-    for (const [upper, lower] of [['.cost-section', '.faq-section'], ['.faq-section', '.related-directions-section'], ['.gc-band', '.direction-entry']]) {
-      expect(rules(globals, new RegExp(`\\${upper}:has\\(\\+ \\${lower}\\)`))[0], upper).toMatch(/padding-bottom: var\(--section-space-compact\)/);
-      expect(rules(globals, new RegExp(`\\${upper} \\+ \\${lower}`))[0], lower).toMatch(/padding-top: var\(--section-space-compact\)/);
-    }
+  it('joins two neighbours of one tone at the compact space on both sides, and leaves the grain bands their own rhythm', () => {
+    expect(rules(globals, /\.cost-section:has\(\+ \.faq-section\)/)).toEqual([' padding-bottom: var(--section-space-compact); ']);
+    expect(rules(globals, /\.cost-section \+ \.faq-section/)).toEqual([' padding-top: var(--section-space-compact); ']);
+    // the grain complex → its situations and the FAQ → «Пов’язані» are grain's seams only: compact from 761 px with every
+    // grain band, 72 on both sides on a phone («смуги зерна лишаються 72», OD-PX-17 A)
+    expect(globals).not.toMatch(/\.gc-band(:has\(| \+)|\.faq-section(:has\(\+ \.related| \+ \.related)/);
   });
 });

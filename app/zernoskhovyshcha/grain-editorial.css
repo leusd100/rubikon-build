@@ -22,8 +22,9 @@
 
 /* ---------- 04 Як RUBIKON реалізує: the building part as a tour of one drawing (GrainStoreDrawing in DirectionNode) ---------- */
 /* The grain bands are compact from 761 px only (the page's height budget, grain-page.spec.ts: a documented exception);
-   on a phone they take the section space, 72, like every page (PDO-22 A, W3-03: the phone's compact 56 for every band
-   would have taken 224 px off this page alone), and two neighbours of one tone meet at the compact seam (globals.css) */
+   on a phone they take the section space, 72, like every page, on both sides of every seam — the complex → its
+   situations and the FAQ → «Пов’язані» too (PDO-22 A, OD-PX-17 A: «смуги зерна лишаються 72»; the phone's compact 56
+   for every band would have taken 224 px off this page alone) */
 @media (min-width: 761px) { .grain-page .grain-implementation-band { padding-block: var(--section-space-compact); } }
 .grain-page .grain-implementation-band .direction-editorial-copy > p:not(.eyebrow) { margin-top: 18px; font-size: 15px; line-height: 1.7; }
 .grain-page .grain-implementation-band .dn-steps { margin-top: 22px; }
