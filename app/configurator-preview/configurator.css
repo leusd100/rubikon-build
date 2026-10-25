@@ -183,11 +183,16 @@
      figures keep the digits from shifting as the value changes. */
   text-align: right;
   font-variant-numeric: tabular-nums;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
 
-.hc-field-controls input[type='text']:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 1px;
+/* The inquiry form's focus, as the select's (25.10, W3-07 · PDO-24, configurator-controls.css): a copper border and a
+   3 px halo in place of a 2 px copper outline; the outline stays, transparent, for forced colours */
+.hc-field-controls input[type='text']:focus {
+  border-color: var(--color-focus);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 26%, transparent);
 }
 
 /* Range for a field whose limits move with other fields (the ridge) — kept quiet so it reads as
