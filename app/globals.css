@@ -714,7 +714,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-turnstile { min-width: 0; }
 .inquiry-form-submit-layout.has-turnstile-challenge { grid-template-columns: 1fr; }
 .inquiry-form-submit-layout.has-turnstile-challenge .inquiry-turnstile { margin-bottom: 14px; }
-.inquiry-submit { width: 100%; margin-top: 0; border: 0; cursor: pointer; }
+/* gap 16 (W3-02, 25.10; .button's 28 before): at the 13 px action «Надіслати запит» took two lines at 1262–1315 px wide,
+   where in 12 px it had one — now one line wherever main has it (two at 1181–1253 px, main 1181–1261) */
+.inquiry-submit { width: 100%; margin-top: 0; gap: 16px; border: 0; cursor: pointer; }
 .inquiry-submit svg { width: 17px; height: 17px; }
 .inquiry-submit-note { margin: 10px 0 0; color: var(--color-text-muted); font-size: 13px; line-height: 1.5; text-align: center; }
 .inquiry-noscript { margin: 10px 0 0; padding: 10px 12px; color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 9%, transparent); border-left: 3px solid var(--color-accent); font-size: 13px; line-height: 1.5; }
@@ -1746,8 +1748,13 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
    (W3-06, PDO-99: HOME's .hero .button-outline was a copy of this rule) */
 .button-hero-secondary { color: var(--color-dark-text); background: transparent; border-color: rgba(245, 242, 235, .4); text-align: center; }
 .button-hero-secondary:hover { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .72); }
-/* The quiet second action beside the call: an arrow link (.link-arrow) */
-:is(.angary-hero-actions, .grain-hero-actions) > .text-link { --link-ink: var(--color-dark-text); align-self: center; margin: -10px 0 0 12px; white-space: nowrap; }
+/* The quiet second action beside the call: an arrow link (.link-arrow), its words on the buttons' line (margin-top -10px).
+   /angary and the grain store put a third action in the row: at the 13 px action (W3-02, 25.10) the three no longer
+   fitted a tablet's row (/angary 761–771 px, grain 786–821 px: the link went to a second row, 12 px in from its edge).
+   The row's own 12 px gap separates the link, so it has no side margin of its own; the link's arrow sits 10 px from its
+   words, as .angary-text-link's, and the outline's 14 px, as the call's icon beside it. */
+:is(.angary-hero-actions, .grain-hero-actions) > .text-link { --link-ink: var(--color-dark-text); align-self: center; gap: 10px; margin: -10px 0 0; white-space: nowrap; }
+:is(.angary-hero-actions, .grain-hero-actions) > .button-hero-secondary { gap: 14px; }
 /* The 404 / page error row */
 .hero-action-row > .text-link { align-self: center; margin: 0 0 0 12px; white-space: nowrap; }
 .not-found-hero .hero-action-row > .text-link:is(:hover, :focus-visible) { color: var(--color-accent-on-dark-hover); }

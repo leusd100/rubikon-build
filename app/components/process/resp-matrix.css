@@ -113,7 +113,9 @@
   .rm-group > span { padding-top: 22px; }
 }
 /* From 375 px the marks and the coordinator line have the room for the floor of a drawing-like table (PDO-16, W3-02): 12 and
-   11 px, +14 % without a new line; the narrowest phones keep 10.5 and 10 px, where «Організовуємо» fills its column */
+   11 px, +14 % without a new line. The narrowest phones keep 10.5 and 10 px: in 12 px «Координуємо» (the comprehensive
+   format, in a group folded at first) runs up to 9 px into the next column's mark at 320–346 px and leaves it 0–4 px
+   at 347–359 (9 px at 375) */
 @media (min-width: 375px) and (max-width: 860px) {
   .rm-mark::before { font-size: 12px; }
   .rm-coordinator { font-size: 11px; }

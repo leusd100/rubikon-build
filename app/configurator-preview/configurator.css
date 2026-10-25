@@ -36,10 +36,7 @@
 /* On /angary the band's eyebrow is the site's UI label in its copper (W3-02, PDO-63); /configurator-preview keeps its own */
 .hangar-configurator-embedded .hc-eyebrow { grid-area: eyebrow; font: var(--type-label-ui-weight) var(--type-label-ui-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); }
 .hangar-configurator-embedded .hc-hero :is(h1, h2) { grid-area: title; margin: 0; max-width: 14ch; }
-/* On /angary the band's title is a section title beside the sheet: the compact H2 (W3-02 T4; on a phone the site's
-   phone H2 size, PDO-05). Only the embedded band (an h2): /configurator-preview's own h1 and its configurator-visual
-   shots keep theirs. */
-.hangar-configurator-embedded .hc-hero h2 { font-size: var(--type-h2-compact); }
+/* /angary's band title (the compact H2, W3-02) is in configurator-sheet.css, beside its short-laptop size */
 .hangar-configurator-embedded .hc-lede { grid-area: lede; margin: 0; }
 
 
@@ -1294,7 +1291,10 @@
 .hc-stamp-row .hc-summary-facts dt { font-size: var(--type-label-tech-size); font-weight: var(--type-label-tech-weight); letter-spacing: var(--type-label-tech-track); }
 .hc-stamp-row .hc-summary-facts dd { max-width: none; font-size: 14px; text-align: left; }
 .hc-stamp-row .hc-summary-handoff { grid-column: auto; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 10px; margin: 0; padding: 18px 22px; border-top: 0; border-left: 1px solid var(--color-border); }
-.hc-stamp-row .hc-summary-action { width: 100%; justify-content: space-between; }
+/* the arrow is at the line's end anyway (space-between): the gap is only the least room the words leave it — 8 px, so
+   «Обговорити цю конфігурацію» at the 13 px action (W3-02) keeps the one line it had in 12 px (with .button's 28 it took
+   two at 372–390, 922–971 and 1181–1298 px wide) */
+.hc-stamp-row .hc-summary-action { width: 100%; justify-content: space-between; gap: 8px; }
 .hc-stamp-row .hc-summary-disclaimer { margin: 0; padding: 12px 22px; border-top: 1px solid var(--color-border); font-size: 13px; line-height: 1.55; }
 /* The stamp's thumbnail: section and plan of the configured hangar, to proportion */
 .hc-sketch { display: block; width: 100%; max-width: 240px; height: auto; margin-top: 14px; overflow: visible; }
