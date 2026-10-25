@@ -18,12 +18,13 @@ export function CornCobIcon() {
       aria-hidden="true"
       focusable="false"
     >
-      {/* the ear, its rows of kernels, the two husk leaves and the stalk */}
-      <path d="M12 2.5c2.3 0 3.6 2.8 3.6 6.8 0 3.6-1.5 6.7-3.6 6.7s-3.6-3.1-3.6-6.7c0-4 1.3-6.8 3.6-6.8z" />
-      <path d="M8.6 7.5h6.8M8.4 10.5h7.2M9 13.5h6M12 3v12.5" />
-      <path d="M8.6 10.8C6.3 12 5.2 14.8 5.6 19.5c2.6-.4 4.8-1.6 6.4-3.5" />
-      <path d="M15.4 10.8c2.3 1.2 3.4 4 3 8.7-2.6-.4-4.8-1.6-6.4-3.5" />
-      <path d="M12 16v5.5" />
+      {/* the ear, its rows of kernels, the two husk leaves and the stalk. It fills the grid as wheat and rapeseed do
+          (x 3.6–20.4, y 2–22; it was 5.6–18.4 and read small beside them, W3-06 review) */}
+      <path d="M12 2c2.8 0 4.4 3 4.4 7.2 0 4-1.8 7.3-4.4 7.3s-4.4-3.3-4.4-7.3C7.6 5 9.2 2 12 2z" />
+      <path d="M7.9 7h8.2M7.7 10.3h8.6M8.6 13.6h6.8M12 2.6v13.8" />
+      <path d="M7.7 11C5 12.3 3.4 15.4 3.6 20.6c3.2-.3 6.2-1.8 8.4-4.1" />
+      <path d="M16.3 11c2.7 1.3 4.3 4.4 4.1 9.6-3.2-.3-6.2-1.8-8.4-4.1" />
+      <path d="M12 16.5V22" />
     </svg>
   );
 }
