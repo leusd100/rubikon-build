@@ -669,7 +669,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-turnstile { min-width: 0; }
 .inquiry-form-submit-layout.has-turnstile-challenge { grid-template-columns: 1fr; }
 .inquiry-form-submit-layout.has-turnstile-challenge .inquiry-turnstile { margin-bottom: 14px; }
-.inquiry-submit { width: 100%; margin-top: 0; border: 0; cursor: pointer; }
+/* gap 16 (W3-02, 25.10; .button's 28 before): at the 13 px action «Надіслати запит» took two lines at 1262–1315 px wide,
+   where in 12 px it had one — now one line wherever main has it (two at 1181–1253 px, main 1181–1261) */
+.inquiry-submit { width: 100%; margin-top: 0; gap: 16px; border: 0; cursor: pointer; }
 .inquiry-submit svg { width: 17px; height: 17px; }
 .inquiry-submit-note { margin: 10px 0 0; color: var(--color-text-muted); font-size: 13px; line-height: 1.5; text-align: center; }
 .inquiry-noscript { margin: 10px 0 0; padding: 10px 12px; color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 9%, transparent); border-left: 3px solid var(--color-accent); font-size: 13px; line-height: 1.5; }
