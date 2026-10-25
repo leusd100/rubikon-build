@@ -1,6 +1,6 @@
 'use client';
 
-import { Bean, Flower, Flower2, Sprout, Vegan, Wheat } from 'lucide-react';
+import { Bean, Flower, Flower2, Sprout, Wheat } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import {
   GRAIN_COMPLEX_DEFAULT,
@@ -19,12 +19,13 @@ import { PrefillInquiryLink } from '../directions/PrefillInquiryLink';
 import { TourControl } from '../directions/TourParts';
 import { keepHeadingWords } from '../../lib/typography';
 import { GrainComplexDrawing, grainModuleCentre } from './GrainComplexDrawing';
+import { CornCobIcon } from '../CornCobIcon';
 import './grain-complex.css';
 
 /** Each crop's icon on its chip — the planner's own (StorageQuestion), rapeseed's added — drawn in the crop's colour */
 const CROP_ICONS: Record<GrainCrop, ReactNode> = {
   wheat: <Wheat />,
-  corn: <Vegan />,
+  corn: <CornCobIcon />,
   sunflower: <Flower2 />,
   barley: <Sprout />,
   rapeseed: <Flower />,

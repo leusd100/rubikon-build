@@ -106,7 +106,7 @@ main[data-home="v2"] .hv2-directions .dxi { display: none; }
     display: inline-flex; align-items: center; gap: 7px; min-height: 44px; margin-left: auto; color: var(--color-accent-strong);
     font: 600 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
   }
-  main[data-home="v2"] .hv2-directions .dxi-more svg { width: 18px; height: 18px; flex: none; stroke-width: 1.8; transition: transform var(--duration-fast) ease; }
+  main[data-home="v2"] .hv2-directions .dxi-more svg { width: 18px; height: 18px; flex: none; transition: transform var(--duration-fast) ease; }
   @media (hover: hover) {
     main[data-home="v2"] .hv2-directions .dxi-sheet:hover { border-color: var(--color-accent); }
     main[data-home="v2"] .hv2-directions .dxi-sheet:hover .dxi-more svg { transform: translateX(3px); }

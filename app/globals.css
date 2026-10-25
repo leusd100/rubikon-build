@@ -146,6 +146,9 @@ img { display: block; }
 }
 /* Two rings in all (W3-06, PDO-88): this outer one, and the inner one (outline-offset: -4px) for what fills its row or its
    frame — a cell, a segment, a tab, a full-width row — set where that component lives. Form fields show a halo instead. */
+/* One stroke for the interface's icons (W3-06, PDO-89): lucide's 2 thinned to 1.75 at every size, as the 1.7–1.9 the
+   components had set one by one; the drawings, the logo and the role icons keep their own lines */
+svg.lucide { stroke-width: 1.75; }
 .skip-link { position: fixed; z-index: 1000; top: 12px; left: 12px; padding: 12px 16px; color: var(--color-text); background: var(--color-surface-elevated); border: 2px solid var(--color-accent); font-weight: 800; transform: translateY(-160%); transition: transform var(--duration-fast) ease; }
 .skip-link:focus { transform: translateY(0); }
 /* SmoothScroll's shield: over the page, under the header, while the page scrolls under a resting mouse — so what passes
@@ -239,7 +242,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .header-contacts { display: flex; align-items: center; font-style: normal; }
 .header-contact { min-width: 132px; display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 10px; padding: 11px 14px; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .header-contact + .header-contact { border-left: 1px solid rgba(255,255,255,.18); }
-.header-contact svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.7; }
+.header-contact svg { width: 18px; height: 18px; color: var(--color-accent); }
 .header-contact span { display: grid; gap: 3px; }
 .header-contact small { color: rgba(255,255,255,.78); font-size: 9px; font-weight: 800; line-height: 1; letter-spacing: .09em; text-transform: uppercase; }
 .header-contact strong { color: var(--color-dark-text-muted); font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: .07em; text-transform: uppercase; }
@@ -261,7 +264,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .header-email { width: 44px; height: 44px; }
 /* the mail icon is copper, as it was before PDO-19 (owner 21.10), in the same light copper as the number's icon; lighter on
    hover / focus */
-.header-email svg { width: 18px; height: 18px; color: var(--color-accent-on-dark); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
+.header-email svg { width: 18px; height: 18px; color: var(--color-accent-on-dark); transition: color var(--duration-fast) ease; }
 .header-email:is(:hover, :focus-visible) svg { color: var(--color-accent-on-dark-hover); }
 .messenger-link:hover, .messenger-link:focus-visible { color: var(--color-dark-text); background: rgba(255,255,255,.08); }
 .messenger-link:hover .messenger-brand-icon, .messenger-link:focus-visible .messenger-brand-icon { transform: translateY(-1px) scale(1.08); filter: saturate(1.15) brightness(1.08); }
@@ -302,13 +305,13 @@ body:has(main:is([data-home="v2"], .about-page)) {
 /* The messengers by their own icons alone (owner 21.10): the name stays in each link's aria-label and title */
 .mobile-menu nav .mobile-messengers .messenger-link span { display: none; }
 .mobile-menu nav .mobile-email { border-top: 1px solid rgba(255,255,255,.12); font-size: 14px; font-weight: 600; letter-spacing: .01em; }
-.mobile-menu nav .mobile-email svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.7; }
+.mobile-menu nav .mobile-email svg { width: 18px; height: 18px; color: var(--color-accent); }
 /* The phone in the menu, as text, just above the messengers; the messengers' own top rule separates them. */
 .mobile-menu nav .mobile-phone { border-bottom: 0; font-size: 16px; font-weight: 700; letter-spacing: .01em; }
-.mobile-menu nav .mobile-phone svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.7; }
+.mobile-menu nav .mobile-phone svg { width: 18px; height: 18px; color: var(--color-accent); }
 /* One-tap call in the phone header: a quiet square beside «Меню», only where the desktop contacts are hidden. */
 .mobile-call { display: none; width: 46px; height: 46px; flex: 0 0 auto; align-items: center; justify-content: center; margin-left: auto; color: var(--color-dark-text); border: 1px solid rgba(255,255,255,.3); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
-.mobile-call svg { width: 19px; height: 19px; color: var(--color-accent); stroke-width: 1.8; }
+.mobile-call svg { width: 19px; height: 19px; color: var(--color-accent); }
 .mobile-call:hover, .mobile-call:focus-visible { border-color: var(--color-accent); background: rgba(255,255,255,.06); }
 /* Theme switch (ThemeControl.tsx) — its own pill beside the contacts, not a cell among them: a sun|moon track with a
    knob reads as a switch, never as one more contact. A quiet utility (PDO-19): a faint track and a grey knob, no copper,
@@ -318,7 +321,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .theme-switch { --ts-w: 52px; --ts-h: 28px; position: relative; width: var(--ts-w); height: 44px; display: grid; place-items: center; flex: none; padding: 0; color: var(--color-dark-text-secondary); border: 0; background: transparent; cursor: pointer; }
 .theme-switch-track { position: relative; width: var(--ts-w); height: var(--ts-h); display: block; border: 1px solid rgba(245, 242, 235, .2); border-radius: 999px; background: transparent; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .theme-switch-knob { position: absolute; top: 2px; left: 2px; width: calc(var(--ts-h) - 6px); height: calc(var(--ts-h) - 6px); border-radius: 50%; background: var(--color-dark-text-muted); transition: transform .28s cubic-bezier(.3, .7, .2, 1); }
-.theme-switch-track svg { position: absolute; top: 50%; width: calc(var(--ts-h) - 14px); height: calc(var(--ts-h) - 14px); stroke-width: 1.9; transform: translateY(-50%); transition: color .28s ease; }
+.theme-switch-track svg { position: absolute; top: 50%; width: calc(var(--ts-h) - 14px); height: calc(var(--ts-h) - 14px); transform: translateY(-50%); transition: color .28s ease; }
 .theme-switch-sun { left: 6px; }
 .theme-switch-moon { right: 6px; }
 :root[data-theme="dark"] .theme-switch-knob { transform: translateX(calc(var(--ts-w) - var(--ts-h))); }
@@ -387,7 +390,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
    min-width reserves the box: the number is ~4.5 px wider in Plex Condensed than in its fallback,
    and without it the font swap nudged the two actions beside it (a measured layout shift). */
 .hero-call-primary { min-width: 236px; justify-content: center; gap: 14px; padding-inline: 24px; }
-.hero-call-primary svg { width: 20px; height: 20px; flex: 0 0 20px; stroke-width: 1.8; }
+.hero-call-primary svg { width: 20px; height: 20px; flex: 0 0 20px; }
 .hero-call-primary > span { display: grid; gap: 5px; text-align: center; }
 .hero-call-primary small { line-height: 1; font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); }
 .hero-call-primary strong { font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
@@ -632,7 +635,6 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-choice input { position: absolute; opacity: 0; pointer-events: none; }
 .inquiry-choice label > span { min-height: var(--control-min-height); display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px; color: var(--color-text-secondary); border: 1px solid var(--color-border-control); background: var(--color-field); font-size: var(--type-action-size); text-align: center; transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .inquiry-choice label > span svg, .inquiry-choice label > span img { flex: 0 0 auto; width: 17px; height: 17px; }
-.inquiry-choice label > span svg { stroke-width: 1.8; }
 .inquiry-choice input:checked + span { color: var(--color-bg); border-color: var(--color-text); background: var(--color-text); }
 .inquiry-choice input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 1px var(--focus-gap); }
 .inquiry-select { margin-top: 0; }
@@ -948,7 +950,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
    as unfinished) */
 .detail-steps li:is(:first-child, :last-child) span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
 /* Shared icon token for .cost-grid / .use-case-grid (bordered-card families). */
-.card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); stroke-width: 1.45; }
+.card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); }
 .detail-steps h3 { margin: 0 0 12px; font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }
 .detail-steps p { max-width: 300px; margin: 0 auto; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.7; }
 .use-case-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--color-border); border-left: 1px solid var(--color-border); }
@@ -994,7 +996,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 /* the number in one face across the site — the header's and the heroes' Plex Condensed 600 (PDO-19); a pixel larger than
    the mail beside it, as the condensed face is narrower */
 .footer-phone span { font-family: var(--font-condensed), sans-serif; font-size: calc(1em + 1px); font-weight: 600; letter-spacing: .03em; }
-.footer-phone svg, .footer-email svg { width: 17px; height: 17px; color: var(--color-accent); stroke-width: 1.7; }
+.footer-phone svg, .footer-email svg { width: 17px; height: 17px; color: var(--color-accent); }
 .footer-messengers { display: flex; gap: 7px; }
 .footer-messengers .messenger-link { width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.16); }
 .footer-messengers .messenger-brand-icon { width: 19px; height: 19px; }
@@ -1627,7 +1629,7 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .contact-bridge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 32px; }
 .contact-bridge-actions .section-link { margin-top: -10px; } /* its words on the call's line (.link-arrow) */
 .contact-bridge-call { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-text); font: 600 22px/1 var(--font-condensed), sans-serif; letter-spacing: .02em; white-space: nowrap; }
-.contact-bridge-call svg { width: 20px; height: 20px; color: var(--color-accent-strong); stroke-width: 1.7; }
+.contact-bridge-call svg { width: 20px; height: 20px; color: var(--color-accent-strong); }
 .contact-bridge-call:hover span { text-decoration: underline; text-underline-offset: 5px; }
 
 .home-proof { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); margin: 48px 0 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
@@ -1652,7 +1654,7 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 /* Two columns only where the column is wide enough to hold them: 820 px keeps this block beside the «Що буде далі» card. */
 .prep-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 22px 28px; margin: 22px 0 0; padding: 0; list-style: none; }
 .prep-list li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 0 12px; align-items: start; }
-.prep-icon { width: 24px; height: 24px; color: var(--color-accent-strong); stroke-width: 1.5; }
+.prep-icon { width: 24px; height: 24px; color: var(--color-accent-strong); }
 .prep-list h3 { margin: 0 0 4px; font: 600 15px/1.2 var(--font-condensed), sans-serif; letter-spacing: .04em; text-transform: none; }
 .prep-list p { margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.6; }
 .first-conversation .copy-column > p.first-conversation-call { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin-top: 34px; padding-top: 24px; border-top: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
@@ -1752,7 +1754,7 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 /* /planner-preview keeps its pre-Phase-2 hero while D-04 is open (DirectionPageConfig legacyCallLink): the tool in
    copper, the call as a quiet link beside it, and the copper call only on a phone, where the tool steps down */
 .hero-call { width: fit-content; min-height: 48px; display: grid; grid-template-columns: 18px auto; align-items: center; gap: 12px; margin: 0 0 0 20px; align-self: center; padding: 6px 2px 8px; color: var(--color-dark-text); border-bottom: 1px solid rgba(255,255,255,.3); transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease; }
-.hero-call svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.8; }
+.hero-call svg { width: 18px; height: 18px; color: var(--color-accent); }
 .hero-call span { display: grid; gap: 6px; }
 .hero-call small { color: var(--color-dark-text-muted); line-height: 1; font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .hero-call strong { font: 500 19px/1 var(--font-condensed), sans-serif; letter-spacing: .035em; }

@@ -23,7 +23,7 @@
 .gc-crop-soy { --crop: var(--crop-soy); }
 .gc-crop-mixed { --crop: var(--crop-mixed); }
 .gc-crop-icon { display: inline-grid; flex: none; place-items: center; width: 22px; height: 22px; margin-right: 9px; color: var(--crop); }
-.gc-crop-icon svg { width: 20px; height: 20px; stroke-width: 1.8; }
+.gc-crop-icon svg { width: 20px; height: 20px; }
 
 /* The sheet: a light drawing on paper (the sheet's image area is dark by default, for photographs) at the elevation's
    own 3 : 1 */

@@ -44,7 +44,7 @@
   border-right: 1px solid color-mix(in srgb, var(--color-on-action) 26%, transparent);
   transition: background var(--duration-fast) ease;
 }
-.conversation-call .conversation-call-icon svg { width: 22px; height: 22px; flex: none; stroke-width: 1.7; }
+.conversation-call .conversation-call-icon svg { width: 22px; height: 22px; flex: none; }
 .conversation-call .conversation-call-text { flex: 1 1 auto; display: grid; gap: 7px; padding: 0 20px; text-align: center; }
 .conversation-call small { font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); }
 .conversation-call strong { font-size: 20px; letter-spacing: .025em; }
@@ -78,7 +78,7 @@
 .conversation-channels .messenger-whatsapp .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--conv-wa)); }
 .conversation-channels .messenger-viber .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--conv-vb)); }
 .conversation-channels .messenger-link:is(:hover, :focus-visible) .messenger-brand-icon { filter: none; transform: none; }
-.conversation-channels .conversation-email svg { width: 18px; height: 18px; flex: none; color: var(--color-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
+.conversation-channels .conversation-email svg { width: 18px; height: 18px; flex: none; color: var(--color-text-secondary); transition: color var(--duration-fast) ease; }
 .conversation-channels .conversation-email:is(:hover, :focus-visible) svg { color: var(--color-accent-strong); }
 /* The four steps as the title block of a drawing sheet: one outlined strip, hairline cells, the number in the corner. */
 .conversation-journey {
