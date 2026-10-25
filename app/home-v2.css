@@ -863,16 +863,17 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
     max-width: max(min(100%, 1147px), calc((100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))) * 1536 / 560 + 46px));
     margin-inline: auto;
     /* …the usual rest by width, so the server's picture is the hydrated one's (measured 05.10 on every layer: 169 from
-       1400 px, 170 at 1280–1366, 220–240 at 1100–1200, 260 below) */
-    --hv2-sheet-rest-0: 170px;
+       1400 px, 170 at 1280–1366, 220–240 at 1100–1200, 260 below; 166 since W3-06, the brief's button 52 → 48) */
+    --hv2-sheet-rest-0: 166px;
   }
   main[data-home="v2"] .hv2-contour .sheet-image {
     flex: none; aspect-ratio: auto;
     height: clamp(calc(100cqw * 560 / 1536), calc(100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))), calc(100cqw * 788 / 1536));
   }
 }
-/* (measured 09.10 on the one-line title block: 170 px from 1239 px, 240–241 px from 832, 266–267 px below) */
-@media (min-width: 761px) and (max-width: 1238px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 241px; } }
+/* (measured 09.10 on the one-line title block: 170 px from 1239 px, 240–241 px from 832, 266–267 px below; W3-06: 166 and
+   237, the brief 4 px lower) */
+@media (min-width: 761px) and (max-width: 1238px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 237px; } }
 @media (min-width: 761px) and (max-width: 831px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 266px; } }
 @media (min-width: 761px) {
   main[data-home="v2"] .hv2-contour-canvas { top: calc((100% - 100cqw * 788 / 1536) * .367); }
@@ -890,7 +891,7 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
   main[data-home="v2"] .hv2-contour .sheet-stamp { margin-top: 8px; }
   main[data-home="v2"] .hv2-contour .sheet-stamp > :is(.sheet-cell, .sheet-action) { padding-block: 4px; }
   main[data-home="v2"] .hv2-contour .sheet-cell-note b { line-height: 1.3; }
-  main[data-home="v2"] .hv2-contour-exit[data-place="line"] { margin-top: 4px; }
+  main[data-home="v2"] .hv2-contour-exit[data-place="line"] { margin-top: .75px; } /* 4 px and 22 px before, as above */
   main[data-home="v2"] .hv2-contour-brief { min-height: 46px; padding-block: 5px; }
   @media (pointer: fine) { main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn { min-height: 34px; } }
 }
@@ -1280,11 +1281,22 @@ main[data-home="v2"] .hv2-contour-stage .hv2-proof-detail-pin:is(:hover, [aria-e
    note's <b>, whose overflow (kept for the other cells' ellipsis) would cut the focus ring */
 main[data-home="v2"] .hv2-contour-exit { --link-ink: var(--hv2-text-2); align-self: start; }
 main[data-home="v2"] .hv2-contour .sheet-cell-note b { overflow: visible; }
-main[data-home="v2"] .hv2-contour-exit[data-place="line"] { margin-top: 8px; }
+/* Under the line the title block's height sizes the picture on a laptop, so there the link keeps its 25.25 px box (its
+   words, 8 px, the rule) and its 44 px target is an invisible zone centred on it, as the configurator sheet's chips: a
+   44 px box pushed the block 16–22 px taller, and one reaching up over the line had its focus ring across the words.
+   4.75 px over it: with the 8 px of air and the 22 px link before, the cell keeps its height; the ring stays in the
+   line's lower leading (W3-06) */
+main[data-home="v2"] .hv2-contour-exit[data-place="line"] { position: relative; min-height: 0; margin-top: 4.75px; }
+/* A short laptop window narrows the sheet to 1147 px and the note to 256 px: there the link's words in capitals (291 px)
+   would take two lines and push the block 16 px taller, past the window the owner asked it to fit (06.10), so they drop
+   the capitals and the tracking (235 px) and stay one line */
+main[data-home="v2"] .hv2-contour .sheet-cell-note b { container-type: inline-size; }
+@container (max-width: 290px) { main[data-home="v2"] .hv2-contour-exit[data-place="line"] { letter-spacing: 0; text-transform: none; } }
+main[data-home="v2"] .hv2-contour-exit[data-place="line"]::after { position: absolute; top: 50%; right: 0; left: 0; height: 44px; content: ''; translate: 0 -50%; }
 main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
 @media (max-width: 760px) {
   main[data-home="v2"] .hv2-contour-exit[data-place="line"] { display: none; }
-  main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: inline-flex; align-self: center; }
+  main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: inline-flex; flex-shrink: 1; align-self: center; } /* 320: two even lines, not past the cell */
 }
 
 /* DEC-42 (a), the owner's choice of 13.10 (Phase 5): the arrival's last word — node Г lit and one line saying what a press does; nothing
