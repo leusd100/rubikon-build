@@ -94,6 +94,7 @@ describe('type scale and labels (W3-02)', () => {
     expect(value(phoneRoot, '--type-h2-minor')).toBe('clamp(1.625rem, 7vw, 1.75rem)');
     expect(value(phoneRoot, '--type-h3')).toBe('1.5rem');
   });
+
   it('puts the titles beside a figure or a form on the compact level, and the closing ones on the minor', () => {
     expect(globals).toMatch(/\.direction-editorial-copy h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
     expect(globals).toMatch(/\.about-story-copy h2 \{[^}]*font-size: var\(--type-h2-compact\)/);
@@ -107,11 +108,13 @@ describe('type scale and labels (W3-02)', () => {
     // the grain band's own 34–48 px clamp is gone: the band takes the node's compact level
     expect(css['zernoskhovyshcha/grain-editorial.css']).not.toMatch(/grain-implementation-band \.direction-editorial-copy h2 \{ font-size/);
   });
+
   it('gives the three labels their values: UI 800 12 / .10em, action 800 13 / .06em, technical 700 12 / .08em', () => {
     expect([value(rootBlock, '--type-label-ui-weight'), value(rootBlock, '--type-label-ui-size'), value(rootBlock, '--type-label-ui-track')]).toEqual(['800', '.75rem', '.1em']);
     expect([value(rootBlock, '--type-action-weight'), value(rootBlock, '--type-action-size'), value(rootBlock, '--type-action-track')]).toEqual(['800', '.8125rem', '.06em']);
     expect([value(rootBlock, '--type-label-tech-weight'), value(rootBlock, '--type-label-tech-size'), value(rootBlock, '--type-label-tech-track')]).toEqual(['700', '.75rem', '.08em']);
   });
+
   it('sets the kickers in Manrope on the UI label and the form labels on the action', () => {
     expect(css['conversation.css']).toMatch(/\.conversation-kicker \{[^}]*font: var\(--type-label-ui-weight\) var\(--type-label-ui-size\)\/1\.2 var\(--font-manrope\)/);
     expect(globals).toMatch(/\.inquiry-form-kicker \{[^}]*font: var\(--type-label-ui-weight\) var\(--type-label-ui-size\)\/1 var\(--font-manrope\)/);
@@ -121,6 +124,7 @@ describe('type scale and labels (W3-02)', () => {
     // the consent sentence keeps its own sentence case
     expect(globals).toMatch(/\.inquiry-consent > span \{[^}]*text-transform: none !important/);
   });
+
   it('keeps the floor: fields 16 px at every width, the crumbs and eyebrow of a phone hero on the UI label', () => {
     expect(globals).toMatch(/\.inquiry-form input, \.inquiry-form select, \.inquiry-form textarea \{[^}]*font: 500 16px\/1\.4/);
     expect(css['phone-hero.css']).not.toMatch(/\.breadcrumb \{[^}]*font-size/);

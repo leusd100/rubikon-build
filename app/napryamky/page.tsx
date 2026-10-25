@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Breadcrumbs, HeroCallButton, SectionHeader } from '../components/SiteChrome';
+import { keepHeadingWords, keepShortWords } from '../lib/typography';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionsCatalog, type CatalogItem } from '../components/directions/DirectionsCatalog';
 import { DirectionsKey } from '../components/home-v2/DirectionsKey';
@@ -67,12 +68,12 @@ export default function DirectionsPage() {
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }]} />
             <p className="eyebrow light"><span /> Напрями робіт</p>
             <h1>
-              <span className="subhero-title-line">Від фундаменту</span>
+              <span className="subhero-title-line">{keepHeadingWords('Від фундаменту')}</span>
               <span className="subhero-title-line">до <em>покрівлі</em></span>
             </h1>
           </div>
           <div className="subhero-side directions-subhero-side">
-            <p>Ангари й склади, зерносховища, металоконструкції, бетонні й покрівельні роботи — окремим етапом або погодженим комплексом. Не знаєте, з чого почати? Опишіть завдання — допоможемо визначити склад робіт.</p>
+            <p>{keepShortWords('Ангари й склади, зерносховища, металоконструкції, бетонні й покрівельні роботи — окремим етапом або погодженим комплексом. Не знаєте, з чого почати? Опишіть завдання — допоможемо визначити склад робіт.')}</p>
             <div className="directions-hero-actions" data-hero-actions>
               <HeroCallButton />
               <a className="button button-hero-secondary subhero-side-cta" href="#directions-list">
@@ -117,7 +118,7 @@ export default function DirectionsPage() {
             {formatCards().map((format) => (
               <li key={format.id}>
                 <span className="dhow-number" aria-hidden="true">{format.number}</span>
-                <h3>{format.title}</h3>
+                <h3>{keepHeadingWords(format.title)}</h3>
                 <p>{format.text}</p>
               </li>
             ))}

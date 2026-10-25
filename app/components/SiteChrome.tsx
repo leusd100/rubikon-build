@@ -11,6 +11,7 @@ import { company, companyContactLinks } from '../data/company';
 import { directions } from '../data/directions';
 import { messengerContacts } from '../data/contactMethods';
 import { primaryNavigation, siteRoutes } from '../data/navigation';
+import { keepHeadingWords, keepShortWords } from '../lib/typography';
 
 /** The direction pages, which the navigation marks as the «Напрямки» section (PDO-57) */
 const directionPaths = directions.map((direction) => direction.href);
@@ -81,13 +82,17 @@ export function SectionHeader({
   /** For a section that names itself by its heading (aria-labelledby). */
   titleId?: string;
 }) {
+  // No short word left at a line's end (PDO-44 п. 2): set (b) in the title, set (a) in the lead — at render, so the data
+  // stays plain for metadata and structured data
+  const heading = typeof title === 'string' ? keepHeadingWords(title) : title;
+  const lead = typeof supporting === 'string' ? keepShortWords(supporting) : supporting;
   return (
     <div className={['section-header', inverse && 'section-header-inverse', aside && 'has-aside', className].filter(Boolean).join(' ')}>
       <div className="section-header-copy">
         {eyebrow && <p className={`eyebrow${inverse ? ' light' : ''}`}><span /> {icon}{eyebrow}</p>}
-        {level === 3 ? <h3 id={titleId}>{title}</h3> : <h2 id={titleId}>{title}</h2>}
+        {level === 3 ? <h3 id={titleId}>{heading}</h3> : <h2 id={titleId}>{heading}</h2>}
       </div>
-      {supporting && <p className="section-header-support">{supporting}</p>}
+      {lead && <p className="section-header-support">{lead}</p>}
       {aside && <div className="section-header-aside" aria-hidden="true">{aside}</div>}
     </div>
   );

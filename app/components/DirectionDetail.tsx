@@ -11,6 +11,7 @@ import { ProcessDrawing } from './directions/ProcessDrawing';
 import { DirectionHeroImage } from './DirectionHeroImage';
 import { PhoneHeroScroll } from './PhoneHeroScroll';
 import { absoluteUrl, siteUrl } from '../lib/seo';
+import { keepHeadingWords, keepShortWords } from '../lib/typography';
 import type { DirectionFaqItem, DirectionItem, DirectionPageConfig, DirectionStep, ProcessSplit } from '../types/directionPage';
 import { getDirection } from '../lib/directions';
 import { faqAnswerText } from '../lib/deliveryModelPresentation';
@@ -52,7 +53,7 @@ function DirectionItemCards({
         <article key={number} style={{ '--i': index } as CSSProperties}>
           <span>{number}</span>
           {Icon && <Icon className="card-icon" aria-hidden="true" />}
-          <h3>{title}</h3>
+          <h3>{keepHeadingWords(title)}</h3>
           <p>{text}</p>
         </article>
       ))}
@@ -127,11 +128,12 @@ function DirectionHero({
       <div className="shell service-subhero-content phone-hero-content">
         <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }, { label: breadcrumbLabel, href: path }]} />
         <p className="eyebrow light"><span /> Напрямок {number}</p>
-        <h1>{title}<br /><em>{accent}</em></h1>
+        {/* No short word at a line's end (PDO-44 п. 2): the visible words only — the JSON-LD above keeps the plain data */}
+        <h1>{keepHeadingWords(title)}<br /><em>{keepHeadingWords(accent)}</em></h1>
         {/* A phone gets the shorter lead (introPhone) so the call stays on the first screen; both are in the markup and
             CSS shows one, so the words never depend on JavaScript */}
         <p className="service-subhero-lead">
-          {introPhone ? <><span className="lead-full">{intro}</span><span className="lead-phone">{introPhone}</span></> : intro}
+          {introPhone ? <><span className="lead-full">{keepShortWords(intro)}</span><span className="lead-phone">{keepShortWords(introPhone)}</span></> : keepShortWords(intro)}
         </p>
         {actions ? (
           <div className={actions.className}>
@@ -192,7 +194,7 @@ export function DirectionProcess({
             <ol className="process-split" data-motion>
               {steps.map(([stepNumber, stepTitle, stepText], index) => (
                 <li key={stepNumber} style={{ '--i': index } as CSSProperties}>
-                  <h3><b>{stepNumber}</b>{stepTitle}</h3>
+                  <h3><b>{stepNumber}</b>{keepHeadingWords(stepTitle)}</h3>
                   <p className="ps-you"><small>Ви</small>{sides[index].you}</p>
                   <div className="ps-node">
                     <ProcessDrawing kind={sides[index].drawing} />
@@ -208,7 +210,7 @@ export function DirectionProcess({
           <ol className="detail-steps" data-motion>
             {/* A sequence on one rail (globals.css .detail-steps); in view, the rail draws from node to node */}
             {steps.map(([stepNumber, stepTitle, stepText], index) => (
-              <li key={stepNumber} style={{ '--i': index } as CSSProperties}><span>{stepNumber}</span><h3>{stepTitle}</h3><p>{stepText}</p></li>
+              <li key={stepNumber} style={{ '--i': index } as CSSProperties}><span>{stepNumber}</span><h3>{keepHeadingWords(stepTitle)}</h3><p>{stepText}</p></li>
             ))}
           </ol>
         )}
@@ -250,7 +252,7 @@ export function DirectionCostSection({
             <article key={number} style={{ '--i': index } as CSSProperties}>
               <span>{number}</span>
               {glyphs?.[index] && <CostGlyph kind={glyphs[index]} />}
-              <h3>{itemTitle}</h3>
+              <h3>{keepHeadingWords(itemTitle)}</h3>
               <p>{itemText}</p>
             </article>
           ))}
@@ -300,12 +302,12 @@ export function DirectionEditorial({
       <div className="shell direction-editorial-grid" data-layout={layout}>
         <div className="direction-editorial-copy">
           <p className="eyebrow"><span /> {editorial.eyebrow}</p>
-          <h2>{editorial.title}</h2>
+          <h2>{keepHeadingWords(editorial.title)}</h2>
           <p>{editorial.text}</p>
           {editorial.points && (
             <ol className="direction-editorial-points">
               {editorial.points.map(([number, title, text]) => (
-                <li key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></li>
+                <li key={number}><span>{number}</span><h3>{keepHeadingWords(title)}</h3><p>{text}</p></li>
               ))}
             </ol>
           )}
@@ -351,7 +353,7 @@ export function DirectionFaq({
       <div className="shell faq-grid">
         <div className="faq-heading">
           <p className="eyebrow"><span /> Питання</p>
-          <h2>{title}</h2>
+          <h2>{keepHeadingWords(title)}</h2>
           {/* The column under the title was empty: the next step for a question the list does not answer */}
           {collapsible && <FaqAsk place="side" />}
         </div>
@@ -360,13 +362,13 @@ export function DirectionFaq({
             <details key={question} style={{ '--i': index } as CSSProperties}>
               <summary>
                 <span className="faq-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <h3>{question}</h3>
+                <h3>{keepHeadingWords(question)}</h3>
                 <span className="faq-toggle" aria-hidden="true" />
               </summary>
               <p>{answer}</p>
             </details>
           ) : (
-            <article key={question}><h3>{question}</h3><p>{answer}</p></article>
+            <article key={question}><h3>{keepHeadingWords(question)}</h3><p>{answer}</p></article>
           ))}
         </div>
         {collapsible && <FaqAsk place="end" />}
@@ -418,7 +420,7 @@ function RelatedDirections({
     <section className={classNames('page-section related-directions-section', compact ? 'is-compact' : undefined, closing ? 'is-closing' : undefined)}>
       <div className="shell">
         <p className="eyebrow"><span /> {eyebrow}</p>
-        <h2 className="related-directions-title">{title}</h2>
+        <h2 className="related-directions-title">{keepHeadingWords(title)}</h2>
         {text && <p className="related-directions-text">{text}</p>}
         {/* data-count drives the exactly-3-item grid variant in globals.css (.related-grid[data-count="3"])
             — angary is currently the only direction with 3 related entries; every other count keeps the
@@ -429,7 +431,7 @@ function RelatedDirections({
 
             return (
               <a className="related-card" href={direction.href} key={relatedId}>
-                <h3>{direction.title}</h3>
+                <h3>{keepHeadingWords(direction.title)}</h3>
                 <span aria-hidden="true">↗</span>
                 <p>{relation}</p>
               </a>
@@ -506,8 +508,8 @@ export function DirectionPage({
               <div className="shell page-two-col align-start">
                 <div className="sticky-heading">
                   <p className="eyebrow"><span /> {config.overview.eyebrow}</p>
-                  <h2>{config.overview.title}</h2>
-                  {config.overview.text && <p className="lead-copy">{config.overview.text}</p>}
+                  <h2>{keepHeadingWords(config.overview.title)}</h2>
+                  {config.overview.text && <p className="lead-copy">{keepShortWords(config.overview.text)}</p>}
                   {/* The direction's drawing fragment fills the column under the heading (it replaced the ghost word) */}
                   {hasSectionDrawing(config.id) && <DirectionSectionDrawing id={config.id} number={direction.number} />}
                 </div>

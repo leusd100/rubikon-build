@@ -17,6 +17,7 @@ import {
 import { DrawingSheet } from '../DrawingSheet';
 import { PrefillInquiryLink } from '../directions/PrefillInquiryLink';
 import { TourControl } from '../directions/TourParts';
+import { keepHeadingWords } from '../../lib/typography';
 import { GrainComplexDrawing, grainModuleCentre } from './GrainComplexDrawing';
 import './grain-complex.css';
 
@@ -373,7 +374,7 @@ export function GrainComplexBuilder() {
           <ul>{model.own.map((item) => { const { key, className } = lit(item); return <li key={key} className={className}>{item}</li>; })}</ul>
         </div>
         <div className="gc-scope-col" data-tone="partner">
-          <h3>Постачають і монтують профільні спеціалісти</h3>
+          <h3>{keepHeadingWords('Постачають і монтують профільні спеціалісти')}</h3>
           <ul>{model.partners.map((item) => { const { key, className } = lit(item); return <li key={key} className={className}>{item}</li>; })}</ul>
         </div>
         <p className="gc-next">

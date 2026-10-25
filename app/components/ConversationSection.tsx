@@ -6,6 +6,7 @@ import { ConversationJourney } from './ConversationJourney';
 import { ConversationFormToggle } from './ConversationFormToggle';
 import { DEFAULT_JOURNEY, type JourneyTexts } from '../data/conversation';
 import { cooperationOptions, inquirySuccessMessage } from '../lib/deliveryModelPresentation';
+import { keepHeadingWords, keepShortWords } from '../lib/typography';
 
 const DEFAULT_LEAD = 'Можна почати з ідеї або з готового проєкту. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит.';
 
@@ -40,8 +41,8 @@ export function ConversationSection({
       <div className="shell conversation-grid">
         <div className="conversation-intro">
           <p className="conversation-kicker"><span aria-hidden="true" /> {kicker}</p>
-          <h2 id="conversation-title">{title}</h2>
-          <p className="conversation-lead">{lead}</p>
+          <h2 id="conversation-title">{keepHeadingWords(title)}</h2>
+          <p className="conversation-lead">{keepShortWords(lead)}</p>
           {/* The call is the one action; the written channels follow as a single quieter line (DEC-46, PROPOSED, Phase 2:
               until then four equal buttons under the call). The form's own channel choice stays: a reply needs it. */}
           <div className="conversation-contact">

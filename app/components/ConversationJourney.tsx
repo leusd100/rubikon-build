@@ -2,6 +2,7 @@
 
 import { useId, useState } from 'react';
 import { JOURNEY_TITLES, type JourneyTexts } from '../data/conversation';
+import { keepHeadingWords } from '../lib/typography';
 
 /**
  * «Що буде після звернення». Desktop and tablet: a strip of four cells under the form, drawn like the title block of a
@@ -21,7 +22,7 @@ export function ConversationJourney({ journey }: Readonly<{ journey: JourneyText
           <li key={stepTitle}>
             <span className="conversation-journey-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
             <div>
-              <h3>{stepTitle}</h3>
+              <h3>{keepHeadingWords(stepTitle)}</h3>
               <p>{journey[index]}</p>
             </div>
           </li>

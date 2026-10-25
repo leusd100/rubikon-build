@@ -5,6 +5,7 @@ import { PracticeDrawing } from './PracticeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
 import { useDrawingCamera, type ViewNeeds } from '../useDrawingCamera';
 import { useDrawingTour } from '../useDrawingTour';
+import { keepHeadingWords } from '../../lib/typography';
 
 // /pro-nas «Досвід працює ще до початку робіт»: the illustration answers the list one step at a time. The camera
 // pushes in on that step's place in the image — the drawing under the hands, the order the frame goes up (base
@@ -137,7 +138,7 @@ export function PracticeSteps({
       </DrawingSheet>
       <div className="about-story-copy">
         <p className="eyebrow"><span /> {eyebrow}</p>
-        <h2 id={titleId}>{title}</h2>
+        <h2 id={titleId}>{keepHeadingWords(title)}</h2>
         <p className="about-story-lead">{lead}</p>
         <ol className="about-before">
           {steps.map((item, index) => (

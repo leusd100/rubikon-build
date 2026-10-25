@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import type { DirectionPageConfig } from '../../types/directionPage';
 import { SectionHeader } from '../SiteChrome';
 import { PrefillInquiryLink } from '../directions/PrefillInquiryLink';
+import { keepHeadingWords } from '../../lib/typography';
 
 // «Яка у вас ситуація?» on /zernoskhovyshcha (owner, 06.10: «можна поцікавіше зробити цей блок»): the four situations of
 // DirectionEntry, each over a small drawing of itself in the page's key — copper for the building part RUBIKON does,
@@ -77,7 +78,7 @@ export function GrainSituations({ entry }: Readonly<{ entry: NonNullable<Directi
             <li key={item.situation} className="gs-card" style={{ '--i': index } as CSSProperties}>
               <div className="direction-entry-copy">
                 <SituationDrawing kind={KINDS[index] ?? 'new'} />
-                <h3>{item.situation}</h3>
+                <h3>{keepHeadingWords(item.situation)}</h3>
                 <p>{item.text}</p>
               </div>
               <p className="direction-entry-start"><b>Почнемо з</b> {item.start}</p>

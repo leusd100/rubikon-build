@@ -14,6 +14,7 @@ import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { ProcessDrawing } from '../directions/ProcessDrawing';
 import type { ProcessSplit } from '../../types/directionPage';
+import { keepHeadingWords } from '../../lib/typography';
 
 // /angary below the configurator (UX review 2026-10, report «/angary по блоках»): the visitor's frame from roof to
 // footing, a real hangar built that way, what drives the cost, and the route from the brief to handed-over works with
@@ -75,7 +76,7 @@ export function HangarEditorialArchitecture({
         <div className="shell">
           <header className="angary-section-heading">
             <p className="eyebrow"><span /> Вартість</p>
-            <h2 id="angary-cost-title">{content.cost.title}</h2>
+            <h2 id="angary-cost-title">{keepHeadingWords(content.cost.title)}</h2>
             <p>{content.cost.text}</p>
           </header>
           <CostFactorsFigure factors={content.cost.factors} title={null} tour={false} notes={notes} sheet />
@@ -97,7 +98,7 @@ export function HangarEditorialArchitecture({
         <div className="shell">
           <header className="angary-section-heading is-inverse">
             <p className="eyebrow light"><span /> Від брифу до об’єкта</p>
-            <h2 id="angary-process-title">Зрозумілий шлях від першого брифу</h2>
+            <h2 id="angary-process-title">{keepHeadingWords('Зрозумілий шлях від першого брифу')}</h2>
           </header>
           {/* «Ви · Ми» (owner, 06.10, as on the other direction pages): over the rail what you do, under it what we do — the
               Delivery Model's steps word for word — and on it what you get, drawn small. 01 is the visitor's own brief: its
@@ -137,7 +138,7 @@ export function HangarEditorialArchitecture({
             </li>
             {content.route.steps.map((step, index) => (
               <li key={step.title} style={{ '--i': index + 1 } as CSSProperties}>
-                <h3><b>{pad(index + 2)}</b>{step.title}</h3>
+                <h3><b>{pad(index + 2)}</b>{keepHeadingWords(step.title)}</h3>
                 <p className="ps-you"><small>Ви</small>{content.route.sides[index]?.you}</p>
                 <div className="ps-node">{content.route.sides[index] && <ProcessDrawing kind={content.route.sides[index].drawing} />}</div>
                 <p className="ps-result"><span className="sr-only">Результат: </span>{content.route.sides[index]?.result}</p>

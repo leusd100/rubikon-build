@@ -68,7 +68,7 @@ import {
   type GateType,
   type GatesCount,
 } from '../../lib/configurator/types';
-import { keepShortWords } from '../../lib/typography';
+import { keepHeadingWords, keepShortWords } from '../../lib/typography';
 import { formatNumber } from '../../lib/configurator/formatNumber';
 import './configurator-controls.css';
 
@@ -281,7 +281,7 @@ function ControlGroup({ id, children }: Readonly<{ id: ControlGroupId; children:
   // as the tab, the region and the heading in a row. The heading still opens the group.
   return (
     <section className="hc-control-group" data-group={id}>
-      <h3 id={headingId}>{CONTROL_GROUP_TITLES[id]}</h3>
+      <h3 id={headingId}>{keepHeadingWords(CONTROL_GROUP_TITLES[id])}</h3>
       <div className="hc-group-panel" id={`hc-${id}-panel`}>
         {children}
       </div>

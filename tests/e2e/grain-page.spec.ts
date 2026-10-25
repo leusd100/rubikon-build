@@ -79,7 +79,8 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     // The page is statically rendered: what a crawler (or the next visitor) gets is the opening picture, no message
     const html = await (await getFromServer(page.request, GRAIN_PAGE)).text();
     expect(html).not.toContain('Зерновий комплекс:');
-    expect(html).toContain('Зберіть свій комплекс на кресленні');
+    // (its title keeps «на» with its word by a no-break space, W3-02 — compared with plain spaces)
+    expect(html.replaceAll('\u00A0', ' ')).toContain('Зберіть свій комплекс на кресленні');
     const stored = await page.evaluate(() => [...Object.keys(localStorage), ...Object.keys(sessionStorage)].filter((key) => /grain|complex|kompleks|brief|inquiry/i.test(key)));
     expect(stored).toEqual([]);
   });

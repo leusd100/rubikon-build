@@ -757,6 +757,10 @@ body:has(main:is([data-home="v2"], .about-page)) {
    H1 instead of running past it. */
 @media (min-width: 761px) {
   main h1 em { display: inline-block; width: max-content; max-width: 100%; }
+  /* A short word before the accent («до» on /yak-pratsyuiemo) and the accent are one such box (PDO-44 п. 2, W3-02, as
+     HOME's .hv2-keep): a no-break space before the accent's own box did not hold in Chromium or WebKit. */
+  main h1 .keep-pair { display: inline-block; width: max-content; max-width: 100%; }
+  main h1 .keep-pair em { display: inline; }
 }
 .subhero h1 em, .service-subhero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .subhero-side { padding-top: 24px; border-top: 2px solid var(--color-accent); }
