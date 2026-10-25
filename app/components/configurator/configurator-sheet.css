@@ -439,7 +439,10 @@
   /* «Ще не знаю» among the answers says they can be skipped */
   .hangar-configurator-embedded .hc-object-note { display: none; }
   .hangar-configurator-embedded .hc-hero { gap: 8px var(--grid-gap); margin-bottom: 18px; }
-  .hangar-configurator-embedded .hc-hero :is(h1, h2) { font-size: 34px; max-width: none; }
+  /* …one step down the H2 scale, to the minor level (W3-02, 25.10: 32 / 34.15 / 36 px at 1280 / 1366 / 1536; it was 34
+     px, a fourth H2 size on the page and under the minor one at 1536). One line beside the lede, so the band keeps its
+     height; the compact level wrapped it to two and pushed the steps 13–25 px further down. */
+  .hangar-configurator-embedded .hc-hero :is(h1, h2) { font-size: var(--type-h2-minor); max-width: none; }
   .hangar-configurator-embedded .hc-lede { font-size: 14px; line-height: 1.5; }
   /* the step tabs' own short-screen sizes are with the stepper (configurator-controls.css) */
   .hangar-configurator-embedded .hc-step-panel .hc-control-group { padding-block: 16px 18px; }

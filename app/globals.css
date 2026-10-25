@@ -515,7 +515,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .person-story { display: grid; grid-template-columns: minmax(360px, .82fr) minmax(0, 1.18fr); align-items: center; border-top: 1px solid var(--color-border); }
 .person-story-reverse { grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr); }
 .person-info { position: relative; display: flex; flex-direction: column; justify-content: center; min-height: 440px; padding: clamp(44px, 6vw, 88px); }
-.person-info > span { max-width: 440px; color: var(--color-accent-strong); font-size: 12px; font-weight: 800; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; }
+.person-info > span { max-width: 440px; color: var(--color-accent-strong); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); line-height: 1.5; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .person-info h3 { max-width: 620px; margin: 20px 0 24px; font: 600 clamp(34px, 3.25vw, 48px)/1.06 var(--font-condensed), sans-serif; text-transform: none; }
 .person-info p { max-width: 610px; margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.75; }
 .person-info p:first-of-type { color: var(--color-text); font-size: 16px; }
@@ -571,7 +571,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-form input, .inquiry-form select, .inquiry-form textarea { width: 100%; min-width: 0; border: 1px solid var(--color-border-control); border-radius: 0; outline: none; color: var(--color-text); background: var(--color-field); font: 500 16px/1.4 var(--font-manrope), sans-serif; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
 .inquiry-form input, .inquiry-form select { min-height: 54px; padding: 0 14px; }
 .inquiry-form textarea { resize: vertical; min-height: 108px; padding: 13px 14px; }
-.inquiry-form input:focus, .inquiry-form select:focus, .inquiry-form textarea:focus { border-color: var(--color-focus); background: var(--color-field); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 26%, transparent); }
+/* The field's focus: a copper border and a 3 px halo. The outline is transparent, not none: forced colours drop the halo
+   and draw the outline instead (25.10, W3-07) — the configurator's select and fields take this same focus */
+.inquiry-form input:focus, .inquiry-form select:focus, .inquiry-form textarea:focus { border-color: var(--color-focus); outline: 2px solid transparent; outline-offset: 2px; background: var(--color-field); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 26%, transparent); }
 .inquiry-form input::placeholder, .inquiry-form textarea::placeholder { color: var(--color-text-muted); opacity: 1; }
 /* The selects drawn like the fields beside them (owner 24.10, PDO-24): Safari's own menu ignored min-height and shrank
    «Напрям робіт» to ~24 px beside 50–54 px inputs. The chevron is two gradient halves in the label colour, so it follows the
@@ -590,6 +592,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 /* the hint's email and Telegram: text-coloured, underlined, copper under the pointer */
 .inquiry-field-hint a { color: var(--color-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 .inquiry-field-hint a:hover { color: var(--color-accent-strong); }
+/* the consent's box keeps this soft ring; a field is framed instead (below, beside .inquiry-field-error) */
 .inquiry-form :is(input, select, textarea):user-invalid { border-color: var(--color-error); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 16%, transparent); }
 .inquiry-choice { margin: 22px 0 0; padding: 0; border: 0; }
 .inquiry-choice legend { margin-bottom: 10px; }
@@ -668,7 +671,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-consent input:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .inquiry-consent > span { color: var(--color-text-muted) !important; font-size: 13px !important; font-weight: 500 !important; line-height: 1.55; letter-spacing: 0 !important; text-transform: none !important; }
 .inquiry-consent a { color: var(--color-accent-strong); font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
-.inquiry-consent > small { grid-column: 2; margin-top: -4px; color: var(--color-error); font-size: 13px; font-weight: 750; line-height: 1.45; }
+/* the message spans both columns, mirroring them: its «!» (W3-07, beside .inquiry-field-error) under the box, its words
+   under the text at their full width */
+.inquiry-consent > small { display: grid; grid-column: 1 / -1; grid-template-columns: 18px minmax(0, 1fr); column-gap: 10px; align-items: start; margin-top: -4px; color: var(--color-error); font-size: 13px; font-weight: 750; line-height: 1.45; }
 .inquiry-consent.is-invalid { padding: 10px; background: color-mix(in srgb, var(--color-error) 8%, transparent); border-left: 3px solid var(--color-error); }
 .inquiry-submit-group { min-width: 0; }
 /* Turnstile (interaction-only): zero-height unless Cloudflare asks for an interaction. Its widget
@@ -1265,7 +1270,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .team-home .team-stories { grid-template-columns: 1fr; gap: 48px; }
   .team-about .team-stories { grid-template-columns: 1fr; gap: 48px; }
   .person-info { justify-content: flex-start; padding: 28px 20px 20px; border-bottom: 0; }
-  .person-info > span { max-width: none; font-size: 12px; line-height: 1.45; letter-spacing: .09em; }
+  .person-info > span { max-width: none; line-height: 1.45; } /* the UI label at every width (W3-02: .09em on a phone before) */
   .person-info h3 { margin: 18px 0; font-size: clamp(32px, 8.4vw, 38px); line-height: 1.02; }
   .team-about .person-info h3 { font-size: clamp(30px, 8.2vw, 38px); letter-spacing: normal; white-space: normal; }
   .person-info p, .person-info p:first-of-type { font-size: 16px; line-height: 1.65; }
@@ -1804,8 +1809,32 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 
 /* The form's fields keep their message under them while it stands, as the consent does (07.10); a field focused to fix
    it lands with its label clear of the fixed header, not under it */
-.inquiry-field-error { display: block; margin-top: 6px; color: var(--color-error); font: 600 13px/1.4 var(--font-manrope), sans-serif; }
+.inquiry-field-error { display: flow-root; margin-top: 6px; color: var(--color-error); font: 600 13px/1.4 var(--font-manrope), sans-serif; }
 .inquiry-form label.is-invalid :is(input, select) { border-color: var(--color-error); }
+/* An error is told from the copper titles beside it by more than its colour, which stays (25.10, W3-07 · PDO-86 B): each
+   message, the consent's too, opens with a «!» in a 14 px disc of the error colour, and an invalid field is framed 2 px:
+   its 1 px border and 1 px inside it, so the field does not grow. With the cursor in it the focus halo stays round the
+   frame. The mark is not read out: the message says it. Forced colours would paint the disc in the page's own colour, so
+   there it takes the text's.
+   A field's mark floats on the message's first line, as in the brief's frame: it takes 20 px from that line only, and no
+   line grows (the message is a flow root, so the float stays in it). The consent's mark stands in the checkbox's column,
+   so its words keep their full width (sweep 320–1920 px). */
+.inquiry-field-error::before, .inquiry-consent > small::before {
+  display: grid; place-items: center; width: 14px; height: 14px; margin-top: 2px; border-radius: 50%;
+  color: var(--color-bg); background: var(--color-error); font: 800 10px/1 var(--font-manrope), sans-serif;
+  content: '!'; content: '!' / '';
+}
+.inquiry-field-error::before { float: left; margin-right: 6px; }
+.inquiry-consent > small::before { justify-self: center; }
+@media (forced-colors: active) {
+  .inquiry-field-error::before, .inquiry-consent > small::before { forced-color-adjust: none; color: Canvas; background: CanvasText; }
+}
+.inquiry-form label.is-invalid :is(input:not([type='checkbox'], [type='radio']), select),
+.inquiry-form :is(input:not([type='checkbox'], [type='radio']), select, textarea):user-invalid { box-shadow: inset 0 0 0 1px var(--color-error); }
+.inquiry-form label.is-invalid :is(input:not([type='checkbox'], [type='radio']), select):focus,
+.inquiry-form :is(input:not([type='checkbox'], [type='radio']), select, textarea):user-invalid:focus {
+  box-shadow: inset 0 0 0 1px var(--color-error), 0 0 0 3px color-mix(in srgb, var(--color-focus) 26%, transparent);
+}
 .inquiry-form :is(input, select, textarea) { scroll-margin-top: 156px; }
 @media (max-width: 760px) { .inquiry-form :is(input, select, textarea) { scroll-margin-top: 118px; } }
 

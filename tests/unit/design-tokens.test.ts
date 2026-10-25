@@ -101,6 +101,9 @@ describe('type scale and labels (W3-02)', () => {
     expect(css['pro-nas/about.css']).toMatch(/\.about-story-copy h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
     expect(css['conversation.css']).toMatch(/\.conversation h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
     expect(css['configurator-preview/configurator.css']).toMatch(/\.hangar-configurator-embedded \.hc-hero h2 \{ font-size: var\(--type-h2-compact\); \}/);
+    // …and on a short laptop window it steps down to the minor level, not to a size of its own (34 px before)
+    const shortLaptop = css['components/configurator/configurator-sheet.css'].match(/@media \(min-width: 1024px\) and \(max-height: 760px\) \{([\s\S]*?)\n\}/)![1];
+    expect(shortLaptop).toMatch(/\.hangar-configurator-embedded \.hc-hero :is\(h1, h2\) \{ font-size: var\(--type-h2-minor\);/);
     expect(css['components/directions/direction-template.css']).toMatch(/\.related-directions-title \{[^}]*font: 400 var\(--type-h2-minor\)/);
     expect(css['components/directions/direction-template.css']).toMatch(/\.direction-entry-list h3 \{[^}]*font: 400 var\(--type-h3\)/);
     expect(css['home-v2.css']).toMatch(/\.hv2-evidence-lead h3 \{[^}]*font: 400 var\(--type-h3\)/);
@@ -121,6 +124,9 @@ describe('type scale and labels (W3-02)', () => {
     expect(globals).toMatch(/\.inquiry-form-section-title \{[^}]*color: var\(--color-accent-strong\); font: var\(--type-label-ui-weight\)/);
     expect(css['home-v2.css']).toMatch(/\.hv2-kicker \{[^}]*var\(--type-label-ui-size\)\/1\.2 var\(--font-manrope\)/);
     expect(globals).toMatch(/\.inquiry-form label > span, \.inquiry-choice legend \{[^}]*font-size: var\(--type-action-size\)/);
+    // a person's role over the name is the UI label at every width (a phone had its own .09em)
+    expect(globals).toMatch(/\.person-info > span \{[^}]*font-size: var\(--type-label-ui-size\); font-weight: var\(--type-label-ui-weight\);[^}]*letter-spacing: var\(--type-label-ui-track\)/);
+    expect(globals).not.toMatch(/\.person-info > span \{[^}]*letter-spacing: \.09em/);
     // the consent sentence keeps its own sentence case
     expect(globals).toMatch(/\.inquiry-consent > span \{[^}]*text-transform: none !important/);
   });
@@ -133,10 +139,10 @@ describe('type scale and labels (W3-02)', () => {
     for (const [file, text] of Object.entries(css)) {
       if (/r3f-spike|planner|logo/.test(file)) continue;
       // Nothing under 11 px but what is known: an SVG drawing's own text and the sheet field's marks, the configurator
-      // sheet's quiet sizes line (its configurator-3d shots), the matrix's coordinator under 375 px, and the header,
-      // menu and cookie bar (PDO-47, not this step)
+      // sheet's quiet sizes line (its configurator-3d shots), the matrix's coordinator under 375 px, the form error's
+      // «!» (a glyph in its 14 px disc, W3-07), and the header, menu and cookie bar (PDO-47, not this step)
       for (const [rule] of text.matchAll(/[^{}]+\{[^}]*\b(?:9(?:\.\d)?|10)px\b[^}]*\}/g)) {
-        if (/text\b|\.pd-|\.dkey|hv2-detail-(label|part)|sheet-field|hc-preview-sheet \.hc-three-overlay dt|\.rm-coordinator \{ font-size: 10px|header-contact|messenger-link span|logo-lab|cookie|mobile-menu|theme-options/.test(rule)) continue;
+        if (/text\b|\.pd-|\.dkey|hv2-detail-(label|part)|sheet-field|hc-preview-sheet \.hc-three-overlay dt|\.rm-coordinator \{ font-size: 10px|header-contact|messenger-link span|logo-lab|cookie|mobile-menu|theme-options|inquiry-field-error::before/.test(rule)) continue;
         if (!/font(-size)?:[^;]*\b(?:9(?:\.\d)?|10)px/.test(rule)) continue;
         expect(`${file}: ${rule.trim().slice(0, 120)}`).toBe('');
       }
