@@ -40,12 +40,15 @@ for (const path of DIRECTIONS) {
     expect(tail[3].closing).toBe(true);
     await expect(page.locator('.related-directions-section').getByRole('heading', { level: 2 })).toHaveText('Пов’язані напрямки');
 
-    // the FAQ's «Залишити запит ↓» still lands on the form, under the fixed header
-    await page.locator('.faq-ask-write:visible').click();
-    await expect.poll(async () => {
-      const top = await page.locator('#inquiry').evaluate((el) => Math.round(el.getBoundingClientRect().top));
-      return top >= 100 && top <= 130 ? 'under the header' : top;
-    }).toBe('under the header');
+    // the FAQ's «Залишити запит ↓» still lands on the form, under the fixed header (101 px on a laptop, 67 on a phone)
+    for (const [width, min, max] of [[1440, 100, 130], [390, 70, 100]] as const) {
+      if (width !== 1440) await open(page, path, width);
+      await page.locator('.faq-ask-write:visible').click();
+      await expect.poll(async () => {
+        const top = await page.locator('#inquiry').evaluate((el) => Math.round(el.getBoundingClientRect().top));
+        return top >= min && top <= max ? 'under the header' : `${width}: ${top}`;
+      }).toBe('under the header');
+    }
   });
 }
 
@@ -79,9 +82,16 @@ for (const { width, label, lead, header, costToFaq, compact } of [
     expect(Math.abs(cost.bottom - compact)).toBeLessThanOrEqual(1);
     expect(Math.abs(faq.top - compact)).toBeLessThanOrEqual(1);
 
-    // a list ruled only between its rows keeps the header's rule as its top: the /napryamky catalogue
+    // a list ruled only between its rows keeps the header's rule as its top: the /napryamky catalogue; so do content
+    // that has a top edge only on a phone or a tablet: the grain situations (card frames up to 760 px, open columns
+    // wider) and the /yak cost factors (the drawing's frame up to 1050 px, its caption and the list wider)
+    const rule = (selector: string) => page.locator(selector).evaluate((header) => parseFloat(getComputedStyle(header).borderBottomWidth));
     await open(page, '/napryamky', width);
-    expect(await page.locator('#directions-list .section-header').evaluate((header) => parseFloat(getComputedStyle(header).borderBottomWidth))).toBe(1);
+    expect(await rule('#directions-list .section-header')).toBe(1);
+    await open(page, '/zernoskhovyshcha', width);
+    expect(await rule('.section-header:has(+ .gs-list)')).toBe(width > 760 ? 1 : 0);
+    await open(page, '/yak-pratsyuiemo', width);
+    expect(await rule('.section-header:has(+ .proc-factors)')).toBe(width > 1050 ? 1 : 0);
   });
 }
 
@@ -96,4 +106,13 @@ test('390px: one phone scale — every section 72, a seam of one tone and /angar
     }
   }
   expect([...seen].sort((a, b) => a - b)).toEqual([0, 48, 56, 72]);
+
+  // the grain bands keep 72 on both sides of every seam on a phone, the complex → its situations and the FAQ →
+  // «Пов’язані» too (OD-PX-17 A: «смуги зерна лишаються 72»); from 761 px they are compact for the height budget
+  await open(page, '/zernoskhovyshcha', 390);
+  for (const section of (await sections(page)).slice(1)) expect([section.name, section.top, section.bottom]).toEqual([section.name, 72, 72]);
+  expect(await page.evaluate(() => ['.gc-band', '.direction-entry', '.faq-section', '.related-directions-section'].map((selector) => {
+    const style = getComputedStyle(document.querySelector(`main > ${selector}`)!);
+    return `${selector} ${Math.round(parseFloat(style.paddingTop))} / ${Math.round(parseFloat(style.paddingBottom))}`;
+  }))).toEqual(['.gc-band 72 / 72', '.direction-entry 72 / 72', '.faq-section 72 / 72', '.related-directions-section 72 / 72']);
 });
