@@ -212,16 +212,26 @@ never in metadata, JSON-LD or aria-labels.
 | `--rhythm-lead` | 24 / 20 px | H2 → lead in a section header (its `gap`, and its space over its rule), the direction node's and /angary's leads |
 | `--rhythm-header` | 40 / 32 px | section header → its content (`.section-header`, `.page-heading`, the /pro-nas team) |
 | `--section-space` | `clamp(92px, 8vw, 128px)` / **72 px** | every section; no page sets its own on a phone. Never under 72 (KEEP 38: 64 is not offered) |
-| `--section-space-compact` | `clamp(72px, 6vw, 96px)` / **56 px** | the seam of two neighbours of one tone (cost → FAQ, FAQ → «Пов’язані», the grain complex → its situations), /angary's closing «Пов’язані» and every grain band from 761 px (its height budget) |
+| `--section-space-compact` | `clamp(72px, 6vw, 96px)` / **56 px** | the seam of two neighbours of one tone (cost → FAQ on metal, concrete and roofing), /angary's closing «Пов’язані» and every grain band from 761 px (its height budget); on a phone the grain bands keep 72 on both sides of every seam |
 
 - **One rule.** When the content under a section header opens with its own top edge (the cost list,
-  the grain sheet and situations, the /pro-nas ledger and principles, the /yak formats, responsibility
-  switch and cost factors, HOME's directions), the header loses its rule and the space above it
-  (`.section-header:has(+ :is(…))`). Without `:has()` the header keeps its rule. A list ruled only
-  between its rows (the /napryamky catalogue) keeps the header's rule as its top.
+  the grain complex sheet, the /pro-nas ledger and principles, the /yak formats and responsibility
+  switch, HOME's directions), the header loses its rule and the space above it
+  (`.section-header:has(+ :is(…))`). Content with that edge only up to a width is named with its
+  width: the grain situations up to 760 px (card frames; wider they are open columns) and the /yak
+  cost factors up to 1050 px (the drawing's frame; wider the columns open with its caption and the
+  list). Without `:has()` the header keeps its rule (HOME's phone directions drop it in that case too,
+  as before: `@supports not selector(:has(*))`). A list ruled only between its rows (the /napryamky
+  catalogue) keeps the header's rule as its top. Content that opens with a label or an open column
+  keeps it as well.
 - **The tail of a direction page.** On metal, concrete and roofing the FAQ leads straight into the form;
   «Пов’язані напрямки» close the page after it with the compact space (`related.placement:
   'after-inquiry'`, as /angary).
+- **Not a section seam (documented exceptions).** The /angary configurator's phone padding, 48 / 82 px
+  (`angary-editorial.css`): a composed join, not a section's space — the stage opens right under the
+  hero, and under it the real object follows with no top padding and its own rule, so the 82 is the
+  configurator's bottom margin to that rule. The /pro-nas team's bottom (64 px and the stories' own
+  64) is the same kind of join. Neither moves onto `--section-space`.
 - Not on the tokens yet: the other eyebrows (heroes, FAQ, sticky and editorial headings) keep 24 px;
   `--rhythm-cta` keeps 34 px; the laptop conversation keeps its 16 / 16.
 
