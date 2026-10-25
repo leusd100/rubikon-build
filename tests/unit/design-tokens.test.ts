@@ -78,3 +78,33 @@ describe('design tokens (W3-01)', () => {
     expect(css['components/angary/frame-tour.css']).toMatch(/--ft-snow: var\(--color-load\); --ft-wind: var\(--color-wind\);/);
   });
 });
+
+// W3-02 (25.10, PDO-60 T4, PDO-16, PDO-63; OD-PX-16 a): the values the visible pass gave the roles
+describe('type scale and labels (W3-02)', () => {
+  const phoneRoot = globals.match(/@media \(max-width: 760px\) \{\n {2}:root \{([^}]*)\}/)![1];
+  const value = (block: string, name: string) => block.match(new RegExp(`${name}: ([^;]+);`))?.[1];
+
+  it('has three H2 levels and one display H3: 64.8 / 51.84 / 36 and 28 px at 1440', () => {
+    expect(value(rootBlock, '--type-h2')).toBe('clamp(2.375rem, 4.5vw, 4.5rem)');
+    expect(value(rootBlock, '--type-h2-compact')).toBe('clamp(2.25rem, 3.6vw, 3.25rem)');
+    expect(value(rootBlock, '--type-h2-minor')).toBe('clamp(1.75rem, 2.5vw, 2.25rem)');
+    expect(value(rootBlock, '--type-h3')).toBe('clamp(1.5rem, 1.95vw, 1.75rem)');
+    // a phone: the compact level is the section size, the minor one step under it, the H3 24 px
+    expect(value(phoneRoot, '--type-h2-compact')).toBe('var(--type-h2)');
+    expect(value(phoneRoot, '--type-h2-minor')).toBe('clamp(1.625rem, 7vw, 1.75rem)');
+    expect(value(phoneRoot, '--type-h3')).toBe('1.5rem');
+  });
+  it('puts the titles beside a figure or a form on the compact level, and the closing ones on the minor', () => {
+    expect(globals).toMatch(/\.direction-editorial-copy h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
+    expect(globals).toMatch(/\.about-story-copy h2 \{[^}]*font-size: var\(--type-h2-compact\)/);
+    expect(css['pro-nas/about.css']).toMatch(/\.about-story-copy h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
+    expect(css['conversation.css']).toMatch(/\.conversation h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
+    expect(css['configurator-preview/configurator.css']).toMatch(/\.hangar-configurator-embedded \.hc-hero h2 \{ font-size: var\(--type-h2-compact\); \}/);
+    expect(css['components/directions/direction-template.css']).toMatch(/\.related-directions-title \{[^}]*font: 400 var\(--type-h2-minor\)/);
+    expect(css['components/directions/direction-template.css']).toMatch(/\.direction-entry-list h3 \{[^}]*font: 400 var\(--type-h3\)/);
+    expect(css['home-v2.css']).toMatch(/\.hv2-evidence-lead h3 \{[^}]*font: 400 var\(--type-h3\)/);
+    expect(css['napryamky/directions.css']).toMatch(/\.dhow-formats h3 \{[^}]*font: 400 var\(--type-h3\)/);
+    // the grain band's own 34–48 px clamp is gone: the band takes the node's compact level
+    expect(css['zernoskhovyshcha/grain-editorial.css']).not.toMatch(/grain-implementation-band \.direction-editorial-copy h2 \{ font-size/);
+  });
+});

@@ -12,7 +12,7 @@
   background: none; border: 0; font: inherit; cursor: pointer; transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
 .dfmt-num { grid-row: span 2; padding-top: 6px; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
-.dfmt-title { color: var(--color-text); font: 400 clamp(26px, 2.3vw, 36px)/1.05 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; transition: color var(--duration-fast) ease; }
+.dfmt-title { color: var(--color-text); font: 400 var(--type-h3)/1.05 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; transition: color var(--duration-fast) ease; }
 .dfmt-text { max-width: 520px; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
 .dfmt-option[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 9%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
 .dfmt-option[aria-pressed="true"] .dfmt-title { color: var(--color-accent-strong); }

@@ -35,6 +35,10 @@
 
 .hangar-configurator-embedded .hc-eyebrow { grid-area: eyebrow; }
 .hangar-configurator-embedded .hc-hero :is(h1, h2) { grid-area: title; margin: 0; max-width: 14ch; }
+/* On /angary the band's title is a section title beside the sheet: the compact H2 (W3-02 T4; on a phone the site's
+   phone H2 size, PDO-05). Only the embedded band (an h2): /configurator-preview's own h1 and its configurator-visual
+   shots keep theirs. */
+.hangar-configurator-embedded .hc-hero h2 { font-size: var(--type-h2-compact); }
 .hangar-configurator-embedded .hc-lede { grid-area: lede; margin: 0; }
 
 
@@ -1261,9 +1265,6 @@
 .hangar-configurator-embedded :is(.hc-hero, .hc-layout, .hc-stamp-row) { width: min(var(--container-max), calc(100% - var(--container-gutter) * 2)); max-width: none; padding-inline: 0; }
 @media (max-width: 760px) {
   .hangar-configurator-embedded :is(.hc-hero, .hc-layout, .hc-stamp-row) { width: min(100% - 32px, 620px); }
-  /* On /angary the band's title is a section title: the site's phone H2 size (PDO-05), not 34 px over a 29–32 px H1.
-     Only the embedded band (an h2): /configurator-preview's own h1 and its configurator-visual shots keep theirs. */
-  .hangar-configurator-embedded .hc-hero h2 { font-size: var(--type-h2); }
 }
 .hc-stamp-row .hc-summary-flagship { padding: 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); border-radius: 0; box-shadow: none; }
 .hc-stamp-row .hc-summary-grid { grid-template-columns: minmax(230px, .9fr) minmax(0, 2.4fr) minmax(250px, .9fr); column-gap: 0; align-items: stretch; }

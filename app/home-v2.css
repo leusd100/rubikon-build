@@ -941,7 +941,7 @@ main[data-home="v2"] .hv2-proof-facts {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 400px); gap: 28px clamp(32px, 4vw, 64px); margin-top: 8px;
   padding: 22px 0 0; background: none; border: 0;
 }
-main[data-home="v2"] .hv2-evidence-lead h3 { margin: 14px 0 10px; font: 400 clamp(26px, 2.3vw, 36px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+main[data-home="v2"] .hv2-evidence-lead h3 { margin: 14px 0 10px; font: 400 var(--type-h3)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
 main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { max-width: 560px; margin: 0; color: var(--hv2-text-2); font-size: 16px; line-height: 1.6; }
 /* The scope as the building it made (UX pass 2026-10): three cells, the same hangar in each, the named part in copper */
 main[data-home="v2"] .hv2-scope-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin: 26px 0 0; padding: 0; list-style: none; border: 1px solid var(--hv2-line-strong); }

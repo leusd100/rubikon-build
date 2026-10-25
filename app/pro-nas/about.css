@@ -91,7 +91,7 @@
 .about-story-layout { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); align-items: center; gap: var(--grid-gap); }
 .about-story-section .promise-visual { min-height: 560px; }
 .about-story-copy .eyebrow { margin-bottom: 22px; }
-.about-story-copy h2 { max-width: 760px; margin: 0; font: 400 clamp(40px, 4vw, 60px)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
+.about-story-copy h2 { max-width: 760px; margin: 0; font: 400 var(--type-h2-compact)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 .about-story-lead { margin: 26px 0 16px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 .about-before { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
 .about-before li { border-bottom: 1px solid var(--color-border); }
@@ -236,8 +236,6 @@
 
 /* ---------------------------------------------------------------- Phone */
 @media (max-width: 760px) {
-  /* The story's title takes the site's phone section size (PDO-05): its own clamp() kept it at 40 px over a 29 px H1 */
-  .about-story-copy h2 { font-size: var(--type-h2); }
   .team-about .team-stories { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 64px; }
   /* «Два покоління — одна відповідальність» under a full-width rule (PDO-53): beside the words the two rules had no width
      left on a phone (0 px at 320–390) */

@@ -88,7 +88,7 @@
 .dhow-formats li { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-content: start; gap: 8px 12px; padding: 22px clamp(18px, 2vw, 30px) 24px 0; }
 .dhow-formats li + li { padding-left: clamp(18px, 2vw, 30px); border-left: 1px solid var(--color-dark-line); }
 .dhow-number { grid-row: 1 / span 2; padding-top: 5px; color: var(--color-accent-on-dark); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
-.dhow-formats h3 { margin: 0; color: var(--color-dark-text); font: 400 clamp(22px, 1.9vw, 27px)/1.15 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+.dhow-formats h3 { margin: 0; color: var(--color-dark-text); font: 400 var(--type-h3)/1.15 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
 .dhow-formats p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15.5px; line-height: 1.6; }
 .dhow-start { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 18px clamp(24px, 4vw, 64px); margin-top: clamp(8px, 1vw, 14px); padding-top: clamp(22px, 2.4vw, 30px); border-top: 1px solid var(--color-dark-line); }
 .dhow-start p { max-width: 760px; margin: 0; color: var(--color-dark-text-secondary); font-size: 16px; line-height: 1.7; }
