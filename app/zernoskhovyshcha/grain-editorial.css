@@ -185,7 +185,6 @@
   /* 126 px like every direction hero, so the crumbs sit under the «Ілюстрація» stamp (UX pass 2026-10) */
   .grain-page .service-subhero-content { padding-top: 126px; padding-bottom: 44px; }
   .grain-page .grain-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 24px; }
-  .grain-page .grain-process-band .section-header { margin-bottom: 28px; padding-bottom: 22px; }
   .grain-page .faq-heading { margin-bottom: 22px; }
   .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
   .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--color-border-strong); }
