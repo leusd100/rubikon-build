@@ -303,7 +303,7 @@ export function DirectionEditorial({
         <div className="direction-editorial-copy">
           <p className="eyebrow"><span /> {editorial.eyebrow}</p>
           <h2>{keepHeadingWords(editorial.title)}</h2>
-          <p>{editorial.text}</p>
+          <p>{keepShortWords(editorial.text)}</p>
           {editorial.points && (
             <ol className="direction-editorial-points">
               {editorial.points.map(([number, title, text]) => (
