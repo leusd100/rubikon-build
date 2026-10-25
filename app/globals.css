@@ -445,9 +445,11 @@ body:has(main:is([data-home="v2"], .about-page)) {
    13 px, .06em, capitals: the buttons' voice), a 44 px target with its words and a copper rule at the foot, and a copper
    arrow. Hover and keyboard focus answer in copper and nudge the arrow the way it points (its span's data-arrow); under
    reduced motion only the colour changes. The page's own class keeps its place: margins, alignment in its row, and the
-   ink (--link-ink) where the link is quieter or louder than its text. Its words sit 5 px under the box's middle, so in a
-   row centred on buttons or a number the link takes margin-top: -10px and its words meet theirs on one line. display
-   sits in :where(), so a rule that hides a link (one copy per width) always outranks it. */
+   ink (--link-ink) where the link is quieter or louder than its text, and a hover ink of its own (--link-hover-ink)
+   where it already rests in copper: under reduced motion the colour is the only answer, so it must change. Its words
+   sit 5 px under the box's middle, so in a row centred on buttons or a number the link takes margin-top: -10px and its
+   words meet theirs on one line. display sits in :where(), so a rule that hides a link (one copy per width) always
+   outranks it. */
 :where(.link-arrow) { display: inline-flex; }
 .link-arrow {
   align-items: flex-end; gap: 14px; min-height: 44px; padding: 0 0 8px; color: var(--link-ink, currentColor); border-bottom: 1px solid var(--color-accent);
@@ -455,7 +457,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
   text-wrap: balance; transition: color var(--duration-fast) ease;
 }
 .link-arrow > [data-arrow] { flex: none; color: var(--color-accent-strong); transition: transform var(--duration-fast) var(--ease-standard); }
-.link-arrow:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+.link-arrow:is(:hover, :focus-visible) { color: var(--link-hover-ink, var(--color-accent-strong)); }
 @media (prefers-reduced-motion: no-preference) {
   .link-arrow:is(:hover, :focus-visible) > [data-arrow="up-right"] { transform: translate(3px, -3px); }
   .link-arrow:is(:hover, :focus-visible) > [data-arrow="down"] { transform: translateY(3px); }

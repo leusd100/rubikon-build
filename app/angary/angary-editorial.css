@@ -50,7 +50,7 @@
 /* The route is the direction pages' «Ви · Ми» (direction-template.css .process-split), five steps; 01 is the brief */
 /* 01's action follows the brief's state (owner, 03.10): up to the configurator, or down to the attached brief */
 /* (an arrow link: .link-arrow, in copper as the step's way on) */
-.angary-route-brief-action { --link-ink: var(--color-accent-on-dark); margin-top: 8px; }
+.angary-route-brief-action { --link-ink: var(--color-accent-on-dark); --link-hover-ink: var(--color-dark-text); margin-top: 8px; } /* copper at rest, light on hover and focus */
 /* in the brief's «Ви», under its sentence */
 .process-split .ps-you .angary-route-brief-action { display: flex; width: fit-content; margin-top: 10px; }
 /* «Усі етапи, документи й відповідальність»: two even lines where it wraps, 390 px and narrower (.link-arrow balances) */
