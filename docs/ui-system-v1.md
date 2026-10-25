@@ -181,6 +181,29 @@ token's today; other literals move onto a token when their file changes for a vi
 The type roles are in `rem`: at the default 16 px root the px are the same as before, and a larger
 browser text size now reaches them (the header and the other px rules stay as they were).
 
+**W3-02 values (T4, 25.10).** Three H2 levels and one display H3 per width:
+
+| Role | Value | 1440 / 768 / 390 | Takes it |
+|---|---|---|---|
+| `--type-h2` | `clamp(2.375rem, 4.5vw, 4.5rem)` | 64.8 / 38 / 28.86 | section headers, FAQ, /angary sections |
+| `--type-h2-compact` | `clamp(2.25rem, 3.6vw, 3.25rem)`; phone `var(--type-h2)` | 51.84 / 36 / 28.86 | a title beside a figure or a form: direction node, grain band, /pro-nas story, /angary configurator, the inquiry block |
+| `--type-h2-minor` | `clamp(1.75rem, 2.5vw, 2.25rem)`; phone `clamp(1.625rem, 7vw, 1.75rem)` | 36 / 28 / 27.3 | «Пов’язані напрямки», /angary's real object |
+| `--type-h3` (Fixel) | `clamp(1.5rem, 1.95vw, 1.75rem)`; phone `1.5rem` | 28 / 24 / 24 | HOME evidence, direction entries, /napryamky formats, the /yak formats switch from 1051 px |
+
+Labels, three roles (each rule keeps its own family and line-height):
+
+| Role | Weight / size / tracking | Family | Takes it |
+|---|---|---|---|
+| UI | 800 / 12 px / .10em | Manrope | eyebrows, crumbs, kickers (conversation, form, HOME, configurator), the form's group titles, the footer's group titles, «Зателефонувати» over a number, table and builder group titles |
+| action | 800 / 13 px / .06em | Manrope | `.button`, `.text-link`, `.section-link`, the form toggle, field labels and legends, reply-method choices, entry and principle links |
+| technical | 700 / 12 px / .08em | IBM Plex Sans Condensed | «Ілюстрація» stamps (box reserved at 8.75em against the late swap), «Ви / Ми», the process key, a step's result, drawing captions, sheet heads, the /angary stamp |
+
+The floor (PDO-16): no text outside a drawing under 12 px; actions and field labels 13 px; inside a
+drawing-like HTML sheet (stamps, the /yak change sheet, HOME's direction strips, the configurator's
+section callout) 11 px. Form fields are 16 px at every width. H1–H3 glue the short words of set (b)
+and leads those of set (a) at render (`app/lib/typography.ts`: `keepHeadingWords`, `keepShortWords`),
+never in metadata, JSON-LD or aria-labels.
+
 ## Accessibility (already in place, keep it that way)
 
 Global `:focus-visible` ring (3px outline, 2px box-shadow gap) on every interactive element;
