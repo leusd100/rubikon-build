@@ -3,7 +3,7 @@
    up across the steps (subgrid), so the rail is one line and the drawings stand on it. Used by DirectionProcess (`split`),
    the /angary route and /yak-pratsyuiemo «Від задачі до будівництва» (owner 06.10: «спростити… з вау ефектом»). Always on a
    dark band, so the inks are the band's in both themes. ── */
-.process-key { display: flex; gap: 28px; margin: -6px 0 28px; color: var(--color-dark-text-secondary); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.process-key { display: flex; gap: 28px; margin: -6px 0 28px; color: var(--color-dark-text-secondary); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .process-key span::before { display: inline-block; width: 22px; margin-right: 10px; vertical-align: middle; content: ''; border-top: 1px solid var(--color-dark-text-muted); }
 .process-key span:last-child::before { border-top: 2px solid var(--color-accent-on-dark); }
 .process-split { --gap: clamp(24px, 3vw, 44px); position: relative; display: grid; grid-template-columns: repeat(var(--steps, 4), minmax(0, 1fr)); grid-template-rows: repeat(5, auto); column-gap: var(--gap); margin: 0; padding: 0; list-style: none; container-type: inline-size; }
@@ -13,7 +13,8 @@
 .process-split :is(.ps-you, .ps-we) { margin: 0; font-size: 15px; line-height: 1.55; }
 .process-split .ps-you { padding-bottom: 6px; color: var(--color-dark-text); }
 .process-split .ps-we { padding-top: 14px; color: var(--color-dark-text-secondary); }
-.process-split small { display: block; margin-bottom: 5px; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+/* «Ви» / «Ми» and the result under the drawing: the technical label (W3-02, PDO-63; they were 11 px / .18em and 600) */
+.process-split small { display: block; margin-bottom: 5px; font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .process-split .ps-you small { color: var(--color-dark-text-muted); }
 .process-split .ps-we small { color: var(--color-accent-on-dark); }
 .ps-node { position: relative; height: 96px; }
@@ -22,7 +23,7 @@
 /* centred over its column, its ground (y 92 of 110) exactly on the rail's line: 140 × 87.5 keeps the box's 1.6, the ground
    sits 73.2 px down it, the 1 px rail's middle 0.5 px over the node's foot (owner, 06.10: «лінія йде не по самому низу») */
 .ps-node .pd { position: absolute; bottom: -13.8px; left: 50%; width: 140px; height: 87.5px; overflow: visible; transform: translateX(-50%); }
-.ps-result { display: flex; align-items: center; gap: 9px; margin: 0; padding-top: 14px; color: var(--color-dark-text); font: 600 12px/1.25 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.ps-result { display: flex; align-items: center; gap: 9px; margin: 0; padding-top: 14px; color: var(--color-dark-text); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.25 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .ps-result::before { flex: none; width: 9px; height: 9px; content: ''; background: var(--color-accent-on-dark); border-radius: 50%; }
 /* the small drawings' ink, on the dark band in both themes */
 .pd :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }

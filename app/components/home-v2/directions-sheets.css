@@ -33,7 +33,7 @@ main[data-home="v2"] .hv2-directions .dsh .cdw { padding: 4px 7px; }
 /* The title block: the direction's name (two lines kept, so the five blocks are one height), then the sheet's strip */
 main[data-home="v2"] .hv2-directions .dsh-block { display: block; border-top: 1px solid var(--color-border-strong); }
 main[data-home="v2"] .hv2-directions .dsh-name { display: flex; align-items: center; min-height: calc(2.3em + 12px); padding: 6px 8px; color: var(--color-text); font: 600 12.5px/1.15 var(--font-condensed), sans-serif; letter-spacing: .01em; text-wrap: balance; }
-main[data-home="v2"] .hv2-directions .dsh-strip { display: flex; justify-content: space-between; gap: 6px; padding: 0 8px 7px; color: var(--color-text-muted); font: 600 9.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+main[data-home="v2"] .hv2-directions .dsh-strip { display: flex; justify-content: space-between; gap: 6px; padding: 0 8px 7px; color: var(--color-text-muted); font: 600 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; } /* a sheet's strip: the drawings' floor, 11 px (PDO-16; 9.5 before) */
 main[data-home="v2"] .hv2-directions .dsh-strip i { font-style: normal; }
 /* Under 124 px a sheet's strip keeps the number and «Схема» */
 @media (max-width: 1359px) { main[data-home="v2"] .hv2-directions .dsh-strip i { display: none; } }

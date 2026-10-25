@@ -253,13 +253,12 @@
   .hc-frame-panel { padding: 20px 20px 4px; }
 }
 /* A phone's small print (10.10, audit F54): the hints and notes a choice depends on, the line under «Обговорити» and the
-   disclaimer in 14 px — no larger than the answers (14 px) — and the stamp's «з прикладу» / «попередньо» in 12; they
-   were 13 and 11 px while the site's phone copy went to 16. The nodes' buttons stay at 13: in 14 their row wrapped once
+   disclaimer in 14 px — no larger than the answers (14 px); they were 13 px while the site's phone copy went to 16 (the
+   stamp's «з прикладу» / «попередньо» are 12 px at every width since W3-02, PDO-16). The nodes' buttons stay at 13: in 14 their row wrapped once
    more at 360 px (four rows to five). The stamp's labels stay, and the site's buttons are the owner's own decision. */
 @media (max-width: 760px) {
   .hangar-configurator-embedded :is(.hc-field-hint, .hc-field-note) { font-size: 14px; }
   .hc-stamp-row :is(.hc-summary-handoff p, .hc-summary-disclaimer) { font-size: 14px; }
-  .hc-stamp-row .hc-fact-status { font-size: 12px; }
 }
 
 /* ── What the visitor chose, and what they did not (07.10) ────────────────────────────────────────────────────────────
@@ -267,7 +266,7 @@
    steps back a shade. The visitor's own answers stand plain. */
 .hc-fact-status {
   display: inline-block; margin-left: 6px; padding: 2px 6px; border: 1px dashed var(--color-border-strong); border-radius: 0;
-  color: var(--color-text-muted); font: 600 11px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; vertical-align: 1px;
+  color: var(--color-text-muted); font: 600 12px/1.2 var(--font-manrope), sans-serif; letter-spacing: 0; text-transform: none; vertical-align: 1px;
 }
 .hc-summary-facts > div:is([data-status='example'], [data-status='suggested']) dd { color: var(--color-text-secondary); }
 .hc-summary-dimensions-status { margin: 4px 0 0; }
@@ -559,11 +558,7 @@
 .hc-inquiry:focus { outline: none; }
 .hc-inquiry > .inquiry-form { grid-column: 1; min-width: 0; }
 .hc-inquiry > .hc-inquiry-next { grid-column: 3; margin: 0; padding: 18px 22px 0; border-top: 0; }
-.hc-inquiry :is(.inquiry-form label > span, .inquiry-choice legend) { font-size: 12.5px; letter-spacing: .06em; }
-.hc-inquiry .inquiry-choice label > span { font-size: 12px; }
-.hc-inquiry .inquiry-form-section-title { font-size: 12.5px; }
-.hc-inquiry :is(.inquiry-form-kicker, .inquiry-required-note) { font-size: 13px; }
-.hc-inquiry .inquiry-field-hint { font-size: 13px; }
+/* Labels, kicker and group titles: the label roles of globals.css, as in the closing conversation (W3-02, PDO-63) */
 @media (max-width: 1180px) {
   .hangar-configurator-embedded .hc-inquiry { grid-template-columns: minmax(0, 760px); }
   .hc-inquiry > .hc-inquiry-next { display: none; }

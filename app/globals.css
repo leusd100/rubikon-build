@@ -71,19 +71,24 @@
   --type-display-home: clamp(2.75rem, min(5.2vw, 9.4svh), 4.875rem);
   /* Labels (PDO-63): three roles, each a weight, a size and a tracking — letter-spacing has no place in the font
      shorthand, and a rule that takes them keeps its own line-height and family (--font-manrope is set on <body>, not
-     on :root, so a token here cannot name it). The UI label is the eyebrow (Manrope 800 12 / .13em), the action
-     .button and .section-link (Manrope 800 12 / .06em), the technical label a drawing's: the sheets' heads and the
-     /angary stamp (Plex 700 12 / .14em). W3-02 sets 12 / .10em, 13 / .06em and 12 / .08em and moves the other labels
-     onto them — the conversation and form kickers (Plex 700 12 / .14em today) onto the UI label, in Manrope. */
+     on :root, so a token here cannot name it). Values of W3-02 (PDO-63, OD-PX-16 a):
+     - UI, Manrope 800 12 / .10em: eyebrows, crumbs, the conversation, form and HOME kickers, the form's group titles
+       (in copper), the footer's group titles, the small «Зателефонувати» over a number;
+     - action, Manrope 800 13 / .06em: buttons, text and section links, the form toggle, field labels and legends, the
+       reply-method choices (never the consent sentence);
+     - technical, Plex 700 12 / .08em: the «Ілюстрація» stamps, «Ви / Ми» and the process key, a step's result, the
+       sheets' heads and the /angary stamp.
+     The floor beside them (PDO-16): no text outside a drawing under 12 px, actions and field labels 13 px; inside a
+     drawing-like HTML sheet (stamps, the /yak change sheet, HOME's direction strips) 11 px. */
   --type-label-ui-weight: 800;
   --type-label-ui-size: .75rem;
-  --type-label-ui-track: .13em;
+  --type-label-ui-track: .1em;
   --type-action-weight: 800;
-  --type-action-size: .75rem;
+  --type-action-size: .8125rem;
   --type-action-track: .06em;
   --type-label-tech-weight: 700;
   --type-label-tech-size: .75rem;
-  --type-label-tech-track: .14em;
+  --type-label-tech-track: .08em;
   /* Display fit (Typography v1.1, Fixel Display): the em width of the longest single word a display heading carries —
      «Металоконструкції», 8.876 em at -.03em — × 1.04 (Linux renders it ≈ 1.7 % wider than macOS, plus 2 % spare). A
      direction title or a hero H1 is never larger than its box / this, so that word fits whole at every width without a
@@ -385,10 +390,10 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-call-primary { min-width: 236px; justify-content: center; gap: 14px; padding-inline: 24px; }
 .hero-call-primary svg { width: 20px; height: 20px; flex: 0 0 20px; stroke-width: 1.8; }
 .hero-call-primary > span { display: grid; gap: 5px; text-align: center; }
-.hero-call-primary small { font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
+.hero-call-primary small { line-height: 1; font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); }
 .hero-call-primary strong { font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
 .button:active, .text-link:active, .section-link:active { transform: translateY(0) scale(.985); }
-.text-link { padding-block: 10px; border-bottom: 1px solid currentColor; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.text-link { padding-block: 10px; border-bottom: 1px solid currentColor; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
 .text-link span { margin-left: 18px; color: var(--color-accent-strong); }
 .hero-actions .text-link { display: inline-flex; align-items: center; justify-content: space-between; gap: 18px; white-space: nowrap; }
 .hero-actions > a > span[aria-hidden="true"] { width: 20px; height: 20px; display: inline-grid; place-items: center; flex: 0 0 20px; color: var(--color-dark-text); font-size: 16px; font-weight: 500; line-height: 1; }
@@ -540,17 +545,17 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-form { overflow: hidden; color: var(--color-text); background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); border-top: 2px solid var(--color-accent); border-radius: 0; box-shadow: none; }
 .inquiry-form-heading { min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px clamp(24px, 2.5vw, 36px); }
 .inquiry-form-heading p { margin: 0; }
-.inquiry-form-kicker { display: flex; align-items: center; gap: 10px; color: var(--color-text); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.inquiry-form-kicker { display: flex; align-items: center; gap: 10px; color: var(--color-text); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .inquiry-form-kicker span { width: 18px; height: 2px; background: var(--color-accent); }
 .inquiry-required-note { color: var(--color-text-muted); font-size: 13px; }
 .inquiry-form-section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 26px clamp(24px, 2.5vw, 36px) 28px; border-top: 1px solid var(--color-border); }
 /* One column: a small title over the fields, no step numbers (the steps after sending are numbered beside it). */
-.inquiry-form-section-title { margin: 0; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.inquiry-form-section-title { margin: 0; color: var(--color-accent-strong); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .inquiry-form-section-body { min-width: 0; }
 .inquiry-fields { display: grid; align-items: start; gap: 16px; }
 .inquiry-fields-two { grid-template-columns: 1fr 1fr; }
 .inquiry-form label, .inquiry-select { display: grid; align-content: start; gap: 8px; }
-.inquiry-form label > span, .inquiry-choice legend { color: var(--color-text-secondary); font-size: 12.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.inquiry-form label > span, .inquiry-choice legend { color: var(--color-text-secondary); font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
 .inquiry-form input, .inquiry-form select, .inquiry-form textarea { width: 100%; min-width: 0; border: 1px solid var(--color-border-control); border-radius: 0; outline: none; color: var(--color-text); background: var(--color-field); font: 500 14px/1.4 var(--font-manrope), sans-serif; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
 .inquiry-form input, .inquiry-form select { min-height: 54px; padding: 0 14px; }
 .inquiry-form textarea { resize: vertical; min-height: 108px; padding: 13px 14px; }
@@ -579,7 +584,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-choice > div { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .inquiry-choice label { position: relative; display: block; cursor: pointer; }
 .inquiry-choice input { position: absolute; opacity: 0; pointer-events: none; }
-.inquiry-choice label > span { min-height: var(--control-min-height); display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px; color: var(--color-text-secondary); border: 1px solid var(--color-border-control); background: var(--color-field); font-size: 12px; text-align: center; transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.inquiry-choice label > span { min-height: var(--control-min-height); display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px; color: var(--color-text-secondary); border: 1px solid var(--color-border-control); background: var(--color-field); font-size: var(--type-action-size); text-align: center; transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .inquiry-choice label > span svg, .inquiry-choice label > span img { flex: 0 0 auto; width: 17px; height: 17px; }
 .inquiry-choice label > span svg { stroke-width: 1.8; }
 .inquiry-choice input:checked + span { color: var(--color-bg); border-color: var(--color-text); background: var(--color-text); }
@@ -634,7 +639,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-config-edit { grid-column: 1 / -1; width: fit-content; color: var(--color-accent-strong); font-size: 12px; font-weight: 800; line-height: 1.3; letter-spacing: .04em; text-decoration: underline; text-underline-offset: 4px; text-transform: uppercase; }
 .inquiry-field-full { grid-column: 1 / -1; }
 .inquiry-details { margin-top: 20px; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
-.inquiry-details summary { min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 18px; cursor: pointer; list-style: none; color: var(--color-text); font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.inquiry-details summary { min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 18px; cursor: pointer; list-style: none; color: var(--color-text); font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
 .inquiry-details summary::-webkit-details-marker { display: none; }
 .inquiry-details summary svg { width: 18px; height: 18px; color: var(--color-accent); transition: transform .25s ease; }
 .inquiry-details[open] summary svg { transform: rotate(180deg); }
@@ -694,7 +699,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-video-control {
   position: absolute; right: 24px; bottom: 24px; z-index: 3; display: inline-flex; align-items: center; gap: 12px;
   min-height: var(--control-min-height, 44px); padding: 0 0 0 14px; color: var(--color-dark-text); background: none; border: 0; border-radius: 22px;
-  font: 700 11.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+  font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; cursor: pointer; /* the technical label (W3-02; 11.5 / .14em before) */
 }
 .hero-video-control-label { color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); transition: color var(--duration-fast) ease; }
 .hero-video-control-icon {
@@ -735,7 +740,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .about-subhero h1 { max-width: 860px; }
 .about-subhero .subhero-grid { z-index: 1; opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
 .about-subhero .subhero-overlay { z-index: 1; background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
-.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 var(--hero-gap-crumb); color: var(--color-dark-text-muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 var(--hero-gap-crumb); color: var(--color-dark-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .breadcrumb span { display: inline-flex; align-items: center; gap: 8px; }
 .breadcrumb a { display: inline-flex; align-items: center; min-height: 24px; margin-block: -4px; transition: color var(--duration-fast) ease; }
 .breadcrumb a:hover { color: var(--color-dark-text); }
@@ -931,7 +936,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 @media (min-width: 1181px) { .footer-grid { grid-template-columns: minmax(260px, 1.2fr) auto auto auto; row-gap: 36px; } }
 @media (min-width: 761px) and (max-width: 1180px) { .footer-about { display: none; } }
 .footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 3px; padding-top: 3px; color: var(--color-dark-text-secondary); font-size: 12px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
-.footer-group-title { margin-bottom: 7px; color: var(--color-dark-text-muted); font-size: 11px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
+.footer-group-title { margin-bottom: 7px; color: var(--color-dark-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); white-space: nowrap; }
 .footer-nav a, .footer-directions a { display: flex; align-items: center; min-height: 24px; white-space: nowrap; transition: color var(--duration-fast) ease; }
 .footer-nav a:hover, .footer-directions a:hover { color: var(--color-dark-text); }
 .footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
@@ -1697,7 +1702,7 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .hero-call { width: fit-content; min-height: 48px; display: grid; grid-template-columns: 18px auto; align-items: center; gap: 12px; margin: 0 0 0 20px; align-self: center; padding: 6px 2px 8px; color: var(--color-dark-text); border-bottom: 1px solid rgba(255,255,255,.3); transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease; }
 .hero-call svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.8; }
 .hero-call span { display: grid; gap: 6px; }
-.hero-call small { color: var(--color-dark-text-muted); font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .12em; text-transform: uppercase; }
+.hero-call small { color: var(--color-dark-text-muted); line-height: 1; font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .hero-call strong { font: 500 19px/1 var(--font-condensed), sans-serif; letter-spacing: .035em; }
 .hero-call:hover, .hero-call:focus-visible { color: var(--color-accent-on-dark-hover); border-color: color-mix(in srgb, var(--color-accent-on-dark) 72%, transparent); }
 .hero-call-phone-only { display: none; }
@@ -1745,7 +1750,11 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .hero-provenance {
   position: absolute; z-index: 3; right: var(--container-gutter); bottom: 20px; padding: 5px 8px; pointer-events: none;
   color: color-mix(in srgb, var(--color-dark-text) 86%, transparent); background: rgba(13, 16, 14, .72); border: 1px solid rgba(255, 255, 255, .18);
-  font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase;
+  font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase;
+  /* The technical label is Plex 700 (W3-02): «Ілюстрація» is 3 px wider in it than in its metric fallback, and a box held
+     by its right edge moved its left one at the late swap (CLS 0.0578 → 0.0596 on a Pixel 7). The box is reserved,
+     as .hero-call-primary's: 8.75em, wider than the word in either face. */
+  min-width: 8.75em; text-align: center;
 }
 .directions-subhero .hero-provenance { top: 196px; bottom: auto; }
 @media (max-width: 760px) {

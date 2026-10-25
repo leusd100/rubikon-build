@@ -33,7 +33,8 @@
   margin-bottom: 40px;
 }
 
-.hangar-configurator-embedded .hc-eyebrow { grid-area: eyebrow; }
+/* On /angary the band's eyebrow is the site's UI label in its copper (W3-02, PDO-63); /configurator-preview keeps its own */
+.hangar-configurator-embedded .hc-eyebrow { grid-area: eyebrow; font: var(--type-label-ui-weight) var(--type-label-ui-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); }
 .hangar-configurator-embedded .hc-hero :is(h1, h2) { grid-area: title; margin: 0; max-width: 14ch; }
 /* On /angary the band's title is a section title beside the sheet: the compact H2 (W3-02 T4; on a phone the site's
    phone H2 size, PDO-05). Only the embedded band (an h2): /configurator-preview's own h1 and its configurator-visual
@@ -1269,7 +1270,7 @@
 .hc-stamp-row .hc-summary-flagship { padding: 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); border-radius: 0; box-shadow: none; }
 .hc-stamp-row .hc-summary-grid { grid-template-columns: minmax(230px, .9fr) minmax(0, 2.4fr) minmax(250px, .9fr); column-gap: 0; align-items: stretch; }
 .hc-stamp-row .hc-summary-selected { padding: 18px 22px; }
-.hc-stamp-row .hc-summary-title { margin: 0 0 10px; color: var(--color-text-muted); font-size: 11px; }
+.hc-stamp-row .hc-summary-title { margin: 0 0 10px; color: var(--color-text-muted); font-size: var(--type-label-tech-size); font-weight: var(--type-label-tech-weight); letter-spacing: var(--type-label-tech-track); }
 .hc-stamp-row .hc-summary-dimensions { margin: 0; font-size: clamp(26px, 2.4vw, 34px); }
 .hc-stamp-row .hc-summary-area { margin: 8px 0 0; font-size: 13px; font-variant-numeric: tabular-nums; }
 /* A row's values on one line (10.10, audit F108): a label with its «з прикладу» or «попередньо» is taller than one
@@ -1283,7 +1284,8 @@
   border-left: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);
 }
 .hc-stamp-row .hc-summary-facts > .is-wide { grid-column: span 2; }
-.hc-stamp-row .hc-summary-facts dt { font-size: 11px; letter-spacing: .08em; }
+/* the title block's names: the technical label (W3-02, PDO-63) */
+.hc-stamp-row .hc-summary-facts dt { font-size: var(--type-label-tech-size); font-weight: var(--type-label-tech-weight); letter-spacing: var(--type-label-tech-track); }
 .hc-stamp-row .hc-summary-facts dd { max-width: none; font-size: 14px; text-align: left; }
 .hc-stamp-row .hc-summary-handoff { grid-column: auto; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 10px; margin: 0; padding: 18px 22px; border-top: 0; border-left: 1px solid var(--color-border); }
 .hc-stamp-row .hc-summary-action { width: 100%; justify-content: space-between; }

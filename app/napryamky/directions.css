@@ -73,7 +73,7 @@
 /* The sheet keeps its own paper when its row turns dark (pointer or keyboard), and that state swaps the copper text
    token for the on-dark one. The list holds the paper's copper, resolved above the row, for the one copper letter. */
 .dcat-list { --dcat-sheet-copper: var(--color-accent-strong); }
-.dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 10.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .dcat-strip span:first-child { color: var(--color-text); }
 @media (prefers-reduced-motion: no-preference) {
   .dcat-list a.route-service { transition: color .25s ease; }

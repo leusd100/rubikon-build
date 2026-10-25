@@ -210,7 +210,7 @@
 .about-principles-grid p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.65; }
 .about-principle-link {
   justify-self: start; display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 18px; color: var(--color-dark-text);
-  border-bottom: 1px solid var(--color-accent-on-dark); font: 700 12px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase;
+  border-bottom: 1px solid var(--color-accent-on-dark); font: var(--type-action-weight) var(--type-action-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-action-track); text-transform: uppercase;
 }
 .about-principle-link span { color: var(--color-accent-on-dark); transition: transform var(--duration-fast) var(--m-ease); }
 .about-principle-link:hover span, .about-principle-link:focus-visible span { transform: translate(3px, -3px); }
@@ -323,9 +323,9 @@
   .about-page .about-subhero .subhero-grid { display: none; }
   .about-page .about-subhero .subhero-overlay { background: linear-gradient(180deg, rgba(17,21,18,.23), rgba(17,21,18,.33) 22%, rgba(17,21,18,.91) 47%, var(--color-dark) 80%); }
   .about-page .about-subhero .subhero-layout { width: calc(100% - 40px); display: block; margin: auto auto 0; padding: 120px 0 calc(66px + env(safe-area-inset-bottom, 0px)); }
-  .about-page .about-subhero .breadcrumb { margin-bottom: 26px; min-height: 44px; font-size: .625rem; }
+  .about-page .about-subhero .breadcrumb { margin-bottom: 26px; min-height: 44px; }
   .about-page .about-subhero .breadcrumb a { display: inline-flex; align-items: center; min-height: 44px; }
-  .about-page .about-subhero .eyebrow { margin-bottom: 24px; font-size: .7rem; }
+  .about-page .about-subhero .eyebrow { margin-bottom: 24px; }
   .about-page .about-subhero h1 { position: relative; isolation: isolate; width: 100vw; max-width: none; margin-inline: calc((100% - 100vw) / 2); padding-inline: calc((100vw - 100%) / 2); font-size: 2.42rem; line-height: 1.055; letter-spacing: -.04em; text-wrap: pretty; overflow-wrap: break-word; }
   .about-page .about-subhero h1::before { content: ''; position: absolute; z-index: -1; inset: -.8em 0 0; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--color-dark) 94%, transparent) .8em); pointer-events: none; }
   .about-page .about-subhero .subhero-title-line + .subhero-title-line { margin-top: 0; }

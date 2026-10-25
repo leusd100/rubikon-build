@@ -1,7 +1,7 @@
 /* The cost-factor drawing (CostFactorsFigure.tsx), shared by /yak-pratsyuiemo «Що враховуємо в розрахунку» and the /angary
    cost block. Moved out of delivery.css (2026-10) so /angary can use it. */
 .proc-factors { margin-top: 0; }
-.proc-factors-title { margin: 0 0 14px; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.proc-factors-title { margin: 0 0 14px; color: var(--color-text-muted); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 /* «Що враховуємо в розрахунку» (CostFactorsFigure.tsx): the drawing on a sheet, the numbered list beside it. One factor
    at a time lights in copper — the one pointed at, or the tour's — and the rest of the drawing steps back. */
 .cf-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(24px, 3vw, 44px); align-items: center; }

@@ -101,8 +101,13 @@
   background: none; border: 0; backdrop-filter: none;
 }
 :is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay > div { display: flex; align-items: baseline; gap: 6px; }
-:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dt { margin: 0; font-size: 10px; letter-spacing: .1em; }
-:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dd { font-size: 13px; }
+:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dt { margin: 0; letter-spacing: .1em; }
+/* The sheet on the page keeps its quiet line (as in the configurator-3d shots); the expanded view is opened to look closer,
+   so its line is at the floor (PDO-16, W3-02: 12 / 14 px, it was 10 / 13) */
+.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay dt { font-size: 10px; }
+.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay dd { font-size: 13px; }
+.hc-fullscreen-sheet .hc-three-overlay dt { font-size: 12px; }
+.hc-fullscreen-sheet .hc-three-overlay dd { font-size: 14px; }
 /* «Сховати розміри» is not on the sheet (10.10): its 3D shows the sizes as this one quiet line; the expanded view keeps
    the toggle */
 .hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle { display: none; }
@@ -119,7 +124,7 @@
 /* choice targets of 44 px (03.10: swatches 30–36 px, the scale figure's row 15 px, «Закрити» 36 px) */
 .hangar-configurator-embedded .hc-material-swatch-row button { min-height: 44px; padding-inline: 10px 12px; }
 .hangar-configurator-embedded .hc-scale-figure-toggle { min-height: 44px; }
-.hc-fullscreen-sheet .hc-fullscreen-close { min-height: 44px; }
+.hc-fullscreen-sheet .hc-fullscreen-close { min-height: 44px; font-size: 13px; }
 
 /* A narrow sheet puts «Що показано» on its own row — from 640 px here, not drawing-sheet.css's 480: beside the object
    and the switch on a 1024–1200 px window it was squeezed into a 128 px column of four lines (03.10) */
@@ -269,7 +274,7 @@
 .hc-section figcaption {
   margin-bottom: 8px;
   color: var(--color-dark-text-muted);
-  font: 700 10px/1 var(--font-condensed), sans-serif;
+  font: 700 11px/1 var(--font-condensed), sans-serif; /* the drawings' floor (PDO-16; 10 before) */
   letter-spacing: .14em;
   text-transform: uppercase;
 }
@@ -294,7 +299,7 @@
      wrapping, in the width under the drawing it had left empty. The glyphs alone did not say what the material was.
      The mini drawing keeps the glyphs alone (below). */
   .hc-section-row { grid-template-columns: 52px minmax(0, 1fr); align-items: start; column-gap: 8px; }
-  .hc-section-row dt { font-size: 10px; line-height: 16px; letter-spacing: .04em; white-space: nowrap; }
+  .hc-section-row dt { font-size: 11px; line-height: 16px; letter-spacing: .04em; white-space: nowrap; } /* the drawings' floor (PDO-16; 10 before) */
   .hc-section-row dd { flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12.5px; line-height: 1.3; white-space: normal; }
   .hc-section-glyph { width: 48px; height: 16px; }
   .hc-preview-image > .hc-section { max-width: calc(100% - 20px); }

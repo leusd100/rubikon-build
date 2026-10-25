@@ -36,7 +36,7 @@
 /* HOME's scope cells (ScopeCells.tsx; HOME's styles stay on HOME): the building, and in copper the part each confirmed
    work names. Drawn complete here — the frame tour above is the page's one moving drawing. */
 .angary-real .hv2-scope-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 26px 0 0; padding: 0; list-style: none; border: 1px solid var(--color-border-strong); }
-.angary-real .hv2-scope-chips li { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 16px 18px 14px; color: var(--color-text); font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.angary-real .hv2-scope-chips li { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 16px 18px 14px; color: var(--color-text); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .angary-real .hv2-scope-chips li + li { border-left: 1px solid var(--color-border-strong); }
 .angary-real .hv2-scope-glyph { display: block; width: 100%; max-width: 132px; height: auto; overflow: visible; }
 .angary-real .hv2-scope-glyph path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -132,7 +132,7 @@
   .angary-real-media img { object-position: 86% 55%; }
   .angary-real-facts h2 { font-size: var(--type-h2-minor); }
   .angary-real .hv2-scope-chips { margin-top: 22px; }
-  .angary-real .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
+  .angary-real .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; }
   .angary-page .faq-heading { position: static; margin-bottom: 36px; }
   .angary-stamp { scroll-margin-top: 88px; }
   /* While «До заявки» is fixed over the bottom of the screen, what takes the focus scrolls clear of it (04.10: a focused

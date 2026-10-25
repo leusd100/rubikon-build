@@ -107,4 +107,18 @@ describe('type scale and labels (W3-02)', () => {
     // the grain band's own 34–48 px clamp is gone: the band takes the node's compact level
     expect(css['zernoskhovyshcha/grain-editorial.css']).not.toMatch(/grain-implementation-band \.direction-editorial-copy h2 \{ font-size/);
   });
+  it('gives the three labels their values: UI 800 12 / .10em, action 800 13 / .06em, technical 700 12 / .08em', () => {
+    expect([value(rootBlock, '--type-label-ui-weight'), value(rootBlock, '--type-label-ui-size'), value(rootBlock, '--type-label-ui-track')]).toEqual(['800', '.75rem', '.1em']);
+    expect([value(rootBlock, '--type-action-weight'), value(rootBlock, '--type-action-size'), value(rootBlock, '--type-action-track')]).toEqual(['800', '.8125rem', '.06em']);
+    expect([value(rootBlock, '--type-label-tech-weight'), value(rootBlock, '--type-label-tech-size'), value(rootBlock, '--type-label-tech-track')]).toEqual(['700', '.75rem', '.08em']);
+  });
+  it('sets the kickers in Manrope on the UI label and the form labels on the action', () => {
+    expect(css['conversation.css']).toMatch(/\.conversation-kicker \{[^}]*font: var\(--type-label-ui-weight\) var\(--type-label-ui-size\)\/1\.2 var\(--font-manrope\)/);
+    expect(globals).toMatch(/\.inquiry-form-kicker \{[^}]*font: var\(--type-label-ui-weight\) var\(--type-label-ui-size\)\/1 var\(--font-manrope\)/);
+    expect(globals).toMatch(/\.inquiry-form-section-title \{[^}]*color: var\(--color-accent-strong\); font: var\(--type-label-ui-weight\)/);
+    expect(css['home-v2.css']).toMatch(/\.hv2-kicker \{[^}]*var\(--type-label-ui-size\)\/1\.2 var\(--font-manrope\)/);
+    expect(globals).toMatch(/\.inquiry-form label > span, \.inquiry-choice legend \{[^}]*font-size: var\(--type-action-size\)/);
+    // the consent sentence keeps its own sentence case
+    expect(globals).toMatch(/\.inquiry-consent > span \{[^}]*text-transform: none !important/);
+  });
 });
