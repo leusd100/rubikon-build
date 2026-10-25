@@ -37,17 +37,27 @@ function arrowLinks(page: Page) {
     })
     .map((link) => {
       const style = getComputedStyle(link);
+      // the target as a finger meets it: the box, or an invisible zone round it (HOME's link under the sheet's note)
+      link.scrollIntoView({ block: 'center', behavior: 'instant' });
+      const box = link.getBoundingClientRect();
+      const x = box.left + Math.min(box.width / 2, 40);
+      const hits = (y: number) => link.contains(document.elementFromPoint(x, y));
+      let top = box.top + box.height / 2, bottom = top;
+      while (top > box.top - 30 && hits(top - 1)) top -= 1;
+      while (bottom < box.bottom + 30 && hits(bottom + 1)) bottom += 1;
       return {
         name: `${link.className} «${(link.textContent ?? '').replace(/\s+/g, ' ').trim()}»`,
         arrowLink: link.classList.contains('link-arrow'),
         type: `${style.fontFamily.split(',')[0].replace(/"/g, '')} ${style.fontWeight} ${style.fontSize} ${style.letterSpacing} ${style.textTransform}`,
-        height: link.getBoundingClientRect().height,
+        target: Math.round(bottom - top + 1),
       };
     }));
 }
 
-test('every arrow link is one .link-arrow: Manrope 800 13 px, .06em, capitals, 44 px', async ({ page }) => {
+test('every arrow link is one .link-arrow: Manrope 800 13 px, .06em, capitals, a 44 px target', async ({ page }) => {
   test.setTimeout(120_000);
+  // the pages' final state, and an instant scroll for the targets
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   for (const width of [1440, 390]) {
     for (const path of PAGES) {
       await open(page, path, width);
@@ -55,7 +65,7 @@ test('every arrow link is one .link-arrow: Manrope 800 13 px, .06em, capitals, 4
       for (const link of links) {
         expect(link.arrowLink, `${width} ${path} ${link.name}`).toBe(true);
         expect(link.type, `${width} ${path} ${link.name}`).toBe('Manrope 800 13px 0.78px uppercase');
-        expect(link.height, `${width} ${path} ${link.name}`).toBeGreaterThanOrEqual(44);
+        expect(link.target, `${width} ${path} ${link.name}`).toBeGreaterThanOrEqual(44);
       }
     }
   }
@@ -70,6 +80,18 @@ test('«Залишити запит» in the FAQ is the arrow link (13 px), the 
   // the two stand their words on their rules: the same bottom, the words 8 px over it
   const bottoms = await page.locator('.faq-ask-side').evaluate((block) => [...block.querySelectorAll('a')].map((link) => Math.round(link.getBoundingClientRect().bottom)));
   expect(new Set(bottoms).size).toBe(1);
+});
+
+test('HOME: under the sheet\'s note the link keeps the title block\'s height; in a short window\'s narrow note it drops the capitals and stays one line', async ({ page }) => {
+  for (const [width, height, capitals] of [[1440, 900, true], [1280, 720, true], [1440, 700, false], [1250, 613, false]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/', { waitUntil: 'load' });
+    const link = page.locator('.hv2-contour-exit[data-place="line"]');
+    await link.scrollIntoViewIfNeeded();
+    await expect(link, `${width}×${height}`).toHaveCSS('text-transform', capitals ? 'uppercase' : 'none');
+    // one line: its words, 8 px and the rule
+    expect(Math.round((await link.boundingBox())!.height), `${width}×${height}`).toBe(25);
+  }
 });
 
 test('a copy of a link hidden at one width stays hidden', async ({ page }) => {
